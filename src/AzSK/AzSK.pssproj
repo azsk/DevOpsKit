@@ -1,0 +1,308 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>6CAFC0C6-A428-4d30-A9F9-700E829FEA51</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>MyApplication</RootNamespace>
+    <AssemblyName>MyApplication</AssemblyName>
+    <Name>AzSK</Name>
+    <Author>Microsoft</Author>
+    <CompanyName />
+    <Copyright />
+    <Description />
+    <Guid>b54a205a-9a09-4f28-87bc-006771b42c52</Guid>
+    <StartupFile>
+    </StartupFile>
+    <ProjectHome />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="AlertMonitoring\" />
+    <Folder Include="ContinuousAssurance\" />
+    <Folder Include="Framework\" />
+    <Folder Include="Framework\Abstracts\" />
+    <Folder Include="Framework\Abstracts\FixControl\" />
+    <Folder Include="Framework\Configurations\" />
+    <Folder Include="Framework\Configurations\ContinuousAssurance\" />
+    <Folder Include="Framework\Configurations\AlertMonitoring\" />
+    <Folder Include="Framework\Configurations\AutoUpdate\" />
+    <Folder Include="Framework\Configurations\Migration\" />
+    <Folder Include="Framework\Configurations\ARMChecker\" />
+    <Folder Include="Framework\Configurations\SubscriptionSecurity\" />
+    <Folder Include="Framework\Configurations\SVT\" />
+    <Folder Include="Framework\Configurations\SVT\AzSKCfg\" />
+    <Folder Include="Framework\Configurations\SVT\Services\" />
+    <Folder Include="Framework\Configurations\SVT\SubscriptionCore\" />
+    <Folder Include="Framework\Core\" />
+    <Folder Include="Framework\Core\AzureMonitoring\" />
+    <Folder Include="Framework\Core\ContinuousAssurance\" />
+    <Folder Include="Framework\Core\FixControl\" />
+    <Folder Include="Framework\Core\FixControl\Services\" />
+    <Folder Include="Framework\Core\MetadataInfo\" />
+    <Folder Include="Framework\Core\ARMChecker\" />
+    <Folder Include="Framework\Core\PolicySetup\" />
+    <Folder Include="Framework\Core\SubscriptionSecurity\" />
+    <Folder Include="Framework\Core\SVT\" />
+    <Folder Include="Framework\Core\SVT\AzSKCfg\" />
+    <Folder Include="Framework\Core\SVT\Services\" />
+    <Folder Include="Framework\Core\SVT\SubscriptionCore\" />
+    <Folder Include="Framework\Helpers\" />
+    <Folder Include="Framework\Listeners\" />
+    <Folder Include="Framework\Listeners\EventHub\" />
+    <Folder Include="Framework\Listeners\CA\" />
+    <Folder Include="Framework\Listeners\FixControl\" />
+    <Folder Include="Framework\Listeners\FixControl\FixControlScripts\" />
+    <Folder Include="Framework\Listeners\RemoteReports\" />
+    <Folder Include="Framework\Listeners\OMS\" />
+    <Folder Include="Framework\Listeners\UserReports\" />
+    <Folder Include="Framework\Listeners\Webhook\" />
+    <Folder Include="Framework\Managers\" />
+    <Folder Include="Framework\Models\" />
+    <Folder Include="Framework\Models\ContinuousAssurance\" />
+    <Folder Include="Framework\Models\Exception\" />
+    <Folder Include="Framework\Models\FixControl\" />
+    <Folder Include="Framework\Models\RemoteReports\" />
+    <Folder Include="Framework\Models\SubscriptionSecurity\" />
+    <Folder Include="Framework\Models\SVT\" />
+    <Folder Include="Framework\Models\SubscriptionCore\" />
+    <Folder Include="MetadataInfo\" />
+    <Folder Include="ARMCheckerLib\" />
+    <Folder Include="ARMChecker\" />
+    <Folder Include="PolicySetup\" />
+    <Folder Include="SubscriptionSecurity\" />
+    <Folder Include="SVT\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AlertMonitoring\EventHubSetup.ps1" />
+    <Compile Include="AlertMonitoring\OMS.ps1" />
+    <Compile Include="AlertMonitoring\WebhookSetup.ps1" />
+    <Compile Include="ARMChecker\ARMChecker.ps1" />
+    <Compile Include="AzSKStaging.psd1" />
+    <Compile Include="AzSK.psm1" />
+    <Compile Include="Framework\Configurations\ContinuousAssurance\Alert_Runbook.ps1" />
+    <Compile Include="Framework\Configurations\Migration\Migration.ps1" />
+    <Compile Include="Framework\Configurations\Migration\PolicyMigration.ps1" />
+    <Compile Include="Framework\Core\ARMChecker\ARMCheckerStatus.ps1" />
+    <Compile Include="Framework\Core\FixControl\Services\CDNFix.ps1" />
+    <Compile Include="Framework\Core\FixControl\Services\TrafficManagerFix.ps1" />
+    <Compile Include="Framework\Core\FixControl\Services\RedisCacheFix.ps1" />
+    <Compile Include="Framework\Configurations\Migration\Migration.ps1" />
+    <Compile Include="Framework\Core\MetadataInfo\BasicInfo.ps1" />
+    <Compile Include="Framework\Core\MetadataInfo\ControlsInfo.ps1" />
+    <Compile Include="Framework\Core\MetadataInfo\EnvironmentInfo.ps1" />
+    <Compile Include="Framework\Core\PolicySetup\AzSKStaging-EasyInstaller.ps1" />
+    <Compile Include="Framework\Core\SVT\AzSKCfg\AzSKCfg.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\APIConnection.ps1" />
+    <Compile Include="Framework\Helpers\AliasHelper.ps1" />
+    <Compile Include="Framework\Helpers\OldConstants.ps1" />
+    <Compile Include="Framework\Helpers\OMSHelper.ps1" />
+    <Compile Include="Framework\Helpers\UserSubscriptionDataHelper.ps1" />
+    <Compile Include="MetadataInfo\GetMetadataInfo.ps1" />
+    <Compile Include="ContinuousAssurance\ContinuousAssurance.ps1" />
+    <Compile Include="Framework\Abstracts\FixControl\FixControlBase.ps1" />
+    <Compile Include="Framework\Abstracts\FixControl\FixServicesBase.ps1" />
+    <Compile Include="Framework\Abstracts\FixControl\FixSubscriptionBase.ps1" />
+    <Compile Include="Framework\Abstracts\SVTCommandBase.ps1" />
+    <Compile Include="Framework\Abstracts\CommandBase.ps1" />
+    <Compile Include="Framework\Abstracts\EventBase.ps1" />
+    <Compile Include="Framework\Abstracts\AzSkRoot.ps1" />
+    <Compile Include="Framework\Abstracts\FileOutputBase.ps1" />
+    <Compile Include="Framework\Abstracts\ListenerBase.ps1" />
+    <Compile Include="Framework\Abstracts\SVTBase.ps1" />
+    <Compile Include="Framework\Configurations\ContinuousAssurance\Continuous_Assurance_Runbook.ps1" />
+    <Compile Include="Framework\Configurations\ContinuousAssurance\RunbookCoreSetup.ps1" />
+    <Compile Include="Framework\Configurations\ContinuousAssurance\RunbookScanAgent.ps1" />
+    <Compile Include="Framework\Configurations\AutoUpdate\ModuleAutoUpdate.ps1" />
+    <Compile Include="Framework\Configurations\ServerConfigMetadata.json" />
+    <Compile Include="Framework\Configurations\SVT\ControlStats.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\Automation.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\LogicApps.Connectors.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\ODG.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\CosmosDB.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\ServiceFabric.json" />
+    <Compile Include="Framework\Configurations\SubscriptionSecurity\Subscription.ARMPolicies.json" />
+    <Compile Include="Framework\Configurations\SubscriptionSecurity\Subscription.InsAlerts.json" />
+    <Compile Include="Framework\Configurations\SVT\SubscriptionCore\SubscriptionCore.json" />
+    <Compile Include="Framework\Configurations\SubscriptionSecurity\Subscription.RBAC.json" />
+    <Compile Include="Framework\Configurations\SubscriptionSecurity\Subscription.RBAC.sample.json" />
+    <Compile Include="Framework\Core\ContinuousAssurance\CAAutomation.ps1" />
+    <Compile Include="Framework\Core\AzureMonitoring\OMSMonitoring.ps1" />
+    <Compile Include="Framework\Core\PrivacyNotice.ps1" />
+    <Compile Include="Framework\Core\FixControl\Services\AppServiceFix.ps1" />
+    <Compile Include="Framework\Core\FixControl\Services\StorageFix.ps1" />
+    <Compile Include="Framework\Core\FixControl\Services\SQLDatabaseFix.ps1" />
+    <Compile Include="Framework\Core\FixControl\Services\SubscriptionCoreFix.ps1" />
+    <Compile Include="Framework\Core\FixControl\FixControlConfigResolver.ps1" />
+    <Compile Include="Framework\Core\PolicySetup\EasyInstaller.ps1" />
+    <Compile Include="Framework\Core\PolicySetup\PolicySetup.ps1" />
+    <Compile Include="Framework\Core\SubscriptionSecurity\Alerts.ps1" />
+    <Compile Include="Framework\Core\SubscriptionSecurity\ARMPolicies.ps1" />
+    <Compile Include="Framework\Core\SubscriptionSecurity\RBAC.ps1" />
+    <Compile Include="Framework\Core\SubscriptionSecurity\SubscriptionSecurity.ps1" />
+    <Compile Include="Framework\Core\SubscriptionSecurity\SecurityCenterStatus.ps1" />
+    <Compile Include="Framework\Core\SubscriptionSecurity\SecurityCenter.ps1" />
+    <Compile Include="Framework\Core\FixControl\ControlSecurityFixes.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\Automation.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\CDN.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\CloudService.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\CosmosDb.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\EventHub.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\ERvNet.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\LoadBalancer.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\ODG.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\RedisCache.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\ServiceBus.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\ServiceFabric.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\StreamAnalytics.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\TrafficManager.ps1" />
+    <Compile Include="Framework\Core\SVT\SubscriptionCore\SubscriptionCore.ps1" />
+    <Compile Include="Framework\Core\SVT\SVTControlAttestation.ps1" />
+    <Compile Include="Framework\Core\SVT\SVTStatusReport.ps1" />
+    <Compile Include="Framework\Core\SVT\SubscriptionSecurityStatus.ps1" />
+    <Compile Include="Framework\Core\SVT\SVTIaasBase.ps1" />
+    <Compile Include="Framework\Configurations\AzSK.json" />
+    <Compile Include="Framework\Configurations\SVT\ControlSettings.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\DataLakeAnalytics.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\DataLakeStore.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\AnalysisServices.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\AppService.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\Batch.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\DataFactory.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\KeyVault.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\NotificationHub.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\Search.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\SQLDatabase.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\Storage.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\VirtualMachine.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\VirtualNetwork.json" />
+    <Compile Include="Framework\Core\SVT\ServicesSecurityStatus.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\DataLakeAnalytics.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\DataLakeStore.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\AnalysisServices.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\AppService.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\Batch.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\DataFactory.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\KeyVault.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\LogicApps.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\NotificationHub.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\Search.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\SQLDatabase.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\Storage.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\VirtualMachine.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\VirtualNetwork.ps1" />
+    <Compile Include="Framework\Core\SVT\SVTResourceResolver.ps1" />
+    <Compile Include="Framework\Framework.ps1" />
+    <Compile Include="Framework\Helpers\ActiveDirectoryHelper.ps1" />
+    <Compile Include="Framework\Helpers\AIOrgTelemetryHelper.ps1" />
+    <Compile Include="Framework\Helpers\ConfigOverride.ps1" />
+    <Compile Include="Framework\Helpers\ConfigurationHelper.ps1" />
+    <Compile Include="Framework\Helpers\Constants.ps1" />
+    <Compile Include="Framework\Helpers\ResourceHelper.ps1" />
+    <Compile Include="Framework\Helpers\Helpers.ps1" />
+    <Compile Include="Framework\Helpers\IdentityHelpers.ps1" />
+    <Compile Include="Framework\Helpers\RemoteApiHelper.ps1" />
+    <Compile Include="Framework\Helpers\RoleAssignmentHelper.ps1" />
+    <Compile Include="Framework\Helpers\SecurityCenterHelper.ps1" />
+    <Compile Include="Framework\Helpers\CommandHelper.ps1" />
+    <Compile Include="Framework\Helpers\SVTMapping.ps1" />
+    <Compile Include="Framework\Helpers\WebRequestHelper.ps1" />
+    <Compile Include="Framework\Listeners\CA\WriteCAStatus.ps1" />
+    <Compile Include="Framework\Listeners\EventHub\EventHubOutput.ps1" />
+    <Compile Include="Framework\Listeners\FixControl\WriteFixControlFiles.ps1" />
+    <Compile Include="Framework\Listeners\RemoteReports\AIOrgTelemetry.ps1" />
+    <Compile Include="Framework\Helpers\RemoteReportHelper.ps1" />
+    <Compile Include="Framework\Listeners\RemoteReports\TelemetryStrings.ps1" />
+    <Compile Include="Framework\Listeners\RemoteReports\UsageTelemetry.ps1" />
+    <Compile Include="Framework\Listeners\RemoteReports\RemoteReportsListener.ps1" />
+    <Compile Include="Framework\Listeners\ListenerHelper.ps1" />
+    <Compile Include="Framework\Listeners\OMS\OMSOutput.ps1" />
+    <Compile Include="Framework\Listeners\UserReports\WriteDataFile.ps1" />
+    <Compile Include="Framework\Listeners\UserReports\WriteDetailedLog.ps1" />
+    <Compile Include="Framework\Listeners\UserReports\WriteEnvironmentFile.ps1" />
+    <Compile Include="Framework\Listeners\UserReports\WriteFolderPath.ps1" />
+    <Compile Include="Framework\Listeners\UserReports\WritePsConsole.ps1" />
+    <Compile Include="Framework\Listeners\UserReports\WriteSummaryFile.ps1" />
+    <Compile Include="Framework\Listeners\Webhook\WebhookOutput.ps1" />
+    <Compile Include="Framework\Managers\AzSKPDFExtension.ps1" />
+    <Compile Include="Framework\Managers\ConfigurationManager.ps1" />
+    <Compile Include="Framework\Managers\PartialScanManager.ps1" />
+    <Compile Include="Framework\Managers\ControlStateExtension.ps1" />
+    <Compile Include="Framework\Models\AzSKConfig.ps1" />
+    <Compile Include="Framework\Models\AzSkGenericEvent.ps1" />
+    <Compile Include="Framework\Models\AzSKEvent.ps1" />
+    <Compile Include="Framework\Models\AzSKSettings.ps1" />
+    <Compile Include="Framework\Models\CommandDetails.ps1" />
+    <Compile Include="Framework\Models\ContinuousAssurance\AutomationAccount.ps1" />
+    <Compile Include="Framework\Models\ControlState.ps1" />
+    <Compile Include="Framework\Models\Exception\SuppressedException.ps1" />
+    <Compile Include="Framework\Models\FixControl\FixControlModel.ps1" />
+    <Compile Include="Framework\Models\Enums.ps1" />
+    <Compile Include="Framework\Models\RemoteReports\ScanResultModels.ps1" />
+    <Compile Include="Framework\Models\SubscriptionSecurity\SubscriptionRBAC.ps1" />
+    <Compile Include="Framework\Models\SVT\AttestationOptions.ps1" />
+    <Compile Include="Framework\Models\SVT\PartialScanResourceMap.ps1" />
+    <Compile Include="Framework\Models\SVT\SVTConfig.ps1" />
+    <Compile Include="Framework\Models\SVT\SVTEvent.ps1" />
+    <Compile Include="Framework\Models\SVT\SVTResource.ps1" />
+    <Compile Include="Framework\Models\SubscriptionCore\AzureSecurityCenter.ps1" />
+    <Compile Include="Framework\Models\SubscriptionCore\ManagementCertificate.ps1" />
+    <Compile Include="Framework\Models\SVT\PSCloudService.ps1" />
+    <Compile Include="PolicySetup\PolicySetup.ps1" />
+    <Compile Include="SubscriptionSecurity\SubscriptionSecurity.ps1" />
+    <Compile Include="SubscriptionSecurity\Alerts.ps1" />
+    <Compile Include="SubscriptionSecurity\ARMPolicies.ps1" />
+    <Compile Include="SubscriptionSecurity\SecurityCenter.ps1" />
+    <Compile Include="SubscriptionSecurity\RBAC.ps1" />
+    <Compile Include="SVT\FixControl.ps1" />
+    <Compile Include="SVT\SVT.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ARMCheckerLib\AzSK.ARMChecker.Lib.dll" />
+    <Content Include="ARMCheckerLib\controls.gen.json" />
+    <Content Include="ARMCheckerLib\Newtonsoft.Json.dll" />
+    <Content Include="Framework\Configurations\AlertMonitoring\AZSK.AM.OMS.GenericView.V2.omsview" />
+    <Content Include="Framework\Configurations\AlertMonitoring\OMSSettings.json" />
+    <Content Include="Framework\Configurations\ARMChecker\ARMControls.json" />
+    <Content Include="Framework\Configurations\AzSKSettings.json" />
+    <Content Include="Framework\Configurations\SubscriptionSecurity\SecurityCenter.json" />
+    <Content Include="Framework\Configurations\SubscriptionSecurity\Subscription.AlertActionGroup.json" />
+    <Content Include="Framework\Configurations\SubscriptionSecurity\Subscription.AlertARM.json" />
+    <Content Include="Framework\Configurations\SubscriptionSecurity\Subscription.InsARMAlerts.json" />
+    <Content Include="Framework\Configurations\SVT\AllResourceTypes.json" />
+    <Content Include="Framework\Configurations\SVT\AzSKCfg\AzSKCfg.json" />
+    <Content Include="Framework\Configurations\SVT\Services\APIConnection.json" />
+    <Content Include="Framework\Configurations\SVT\Services\CDN.json" />
+    <Content Include="Framework\Configurations\SVT\Services\CloudService.json" />
+    <Content Include="Framework\Configurations\SVT\Services\EventHub.json" />
+    <Content Include="Framework\Configurations\SVT\Services\ERvNet.json" />
+    <Content Include="Framework\Configurations\SVT\Services\LoadBalancer.json" />
+    <Content Include="Framework\Configurations\SVT\Services\LogicApps.json" />
+    <Content Include="Framework\Configurations\SVT\Services\RedisCache.json" />
+    <Content Include="Framework\Configurations\SVT\Services\ServiceBus.json" />
+    <Content Include="Framework\Configurations\SVT\Services\StreamAnalytics.json" />
+    <Content Include="Framework\Configurations\SVT\Services\TrafficManager.json" />
+    <Content Include="Framework\Core\PolicySetup\README.txt" />
+    <Content Include="Framework\Listeners\UserReports\README.txt" />
+    <Content Include="Framework\Listeners\FixControl\FixControlScripts\README.txt" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Target Name="Build" />
+</Project>

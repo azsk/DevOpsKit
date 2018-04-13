@@ -1,0 +1,562 @@
+{
+  "resourceControlSets": [
+    {
+      "resourceType": "Microsoft.Storage/storageAccounts",
+      "apiVersions": [ "2017-10-01" ],
+      "controls": [
+        {
+          "id": "AzureStorage140",
+          "controlId": "Azure_Storage_DP_Encrypt_At_Rest_Blob",
+          "isEnabled": true,
+          "description": "Sensitive data in Storage Blob must be encrypted at rest",
+          "rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
+          "recommendation": "Run command 'Set-AzureRmStorageAccount -Name '<StorageAccountName>' -ResourceGroupName '<RGName>' -StorageEncryption -EnableEncryptionService 'Blob''. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help. Note that after enabling Storage Service Encryption, only new data will be encrypted, and any existing files in this storage account will remain unencrypted.",
+          "severity": "High",
+          "jsonPath": "$.properties.encryption.services.blob.enabled",
+          "matchType": "Boolean",
+          "data": { "value": true }
+        },
+        {
+          "id": "AzureStorage160",
+          "controlId": "Azure_Storage_DP_Encrypt_In_Transit",
+          "isEnabled": true,
+          "description": "HTTPS protocol must be used for accessing Storage Account resources",
+          "rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks. When enabling HTTPS one must remember to simultaneously disable access over plain HTTP else data can still be subject to compromise over clear text connections.",
+          "recommendation": "Run command 'Set-AzureRmStorageAccount -ResourceGroupName <RGName> -name <StorageAccountName> -EnableHttpsTrafficOnly `$true'. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help.",
+          "severity": "Medium",
+          "jsonPath": "$.properties.supportsHttpsTrafficOnly",
+          "matchType": "Boolean",
+          "data": { "value": true }
+        },
+        {
+          "id": "AzureStorage240",
+          "controlId": "Azure_Storage_DP_Encrypt_At_Rest_File",
+          "isEnabled": true,
+          "description": "Sensitive data in Storage File must be encrypted at rest",
+          "rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
+          "recommendation": "Run command 'Set-AzureRmStorageAccount -Name '<StorageAccountName>' -ResourceGroupName '<RGName>' -StorageEncryption -EnableEncryptionService 'File''. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help. Note that after enabling Storage Service Encryption, only new data will be encrypted, and any existing files in this storage account will remain unencrypted.",
+          "severity": "High",
+          "jsonPath": "$.properties.encryption.services.file.enabled",
+          "matchType": "Boolean",
+          "data": { "value": true }
+        }
+      ]
+    },
+    {
+      "resourceType": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersions": [ "2015-04-08" ],
+      "controls": [
+        {
+          "id": "CosmosDb110",
+          "controlId": "Azure_CosmosDB_AuthZ_Enable_Firewall",
+          "isEnabled": true,
+          "description": "Cosmos DB firewall should be enabled",
+          "rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets.",
+          "recommendation": "Azure Portal --> Resource --> Firewall. Turn 'ON' - 'Enable IP Access Control' and provide required IP addresses and/or ranges and save.",
+          "severity": "High",
+          "jsonPath": "$.properties.ipRangeFilter",
+          "matchType": "StringWhitespace",
+          "data": { "value": false }
+        },
+        {
+          "id": "CosmosDb120",
+          "controlId": "Azure_CosmosDB_AuthZ_Verify_IP_Range",
+          "isEnabled": true,
+          "description": "Configure only the required IP addresses on Cosmos DB firewall",
+          "rationale": "",
+          "recommendation": "Do not use high ranges like 0.0.0.0/0, 0.0.0.0/1, 128.0.0.0/1, etc. Maximum IPs in a range should be less that 256 and total IPs including all ranges should be less than 2048. To modify - Azure Portal --> Resource --> Firewall. Turn 'ON' - 'Enable IP Access Control' and add/or remove IP addresses and/or ranges and save.",
+          "severity": "High",
+          "jsonPath": "$.properties.ipRangeFilter",
+          "matchType": "VerifiableSingleToken",
+          "data": {}
+        },
+        {
+          "id": "CosmosDb130",
+          "controlId": "Azure_CosmosDB_Config_Default_Consistency",
+          "isEnabled": true,
+          "description": "Do not use 'Eventual' consistency",
+          "rationale": "",
+          "recommendation": "Using Eventual consistency might cause undesired effects due to its ordering guarantees. To modify - Azure Portal --> Resource --> Default consistency. Select 'Session' and save. Refer: https://docs.microsoft.com/en-in/azure/cosmos-db/consistency-levels",
+          "severity": "High",
+          "jsonPath": "$.properties.consistencyPolicy.defaultConsistencyLevel",
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "NotAllow",
+            "value": "Eventual",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "CosmosDb140",
+          "controlId": "Azure_CosmosDB_Deploy_Use_Replication",
+          "isEnabled": true,
+          "description": "Use global replication",
+          "rationale": "",
+          "recommendation": "Replication ensures the continuity and rapid recovery during disasters. To add - Azure Portal --> Resource -> Replicate data globally. Select a secondary read region and save. Refer: https://docs.microsoft.com/en-in/azure/cosmos-db/distribute-data-globally",
+          "severity": "Medium",
+          "jsonPath": "$.properties.locations",
+          "matchType": "ItemCount",
+          "data": {
+            "type": "GreaterThan",
+            "value": 1
+          }
+        },
+        {
+          "id": "CosmosDb150",
+          "controlId": "Azure_CosmosDB_Deploy_Use_Automatic_Failover",
+          "isEnabled": true,
+          "description": "Use automatic failover",
+          "rationale": "",
+          "recommendation": "Automatic failover ensures the continuity and auto recovery during disasters. To configure, you must have at least 1 secondary replica enabled. To enabled replica - Azure Portal --> Resource -> Replicate data globally. Select a secondary read region and save. To set automatic failover - Azure Portal --> Resource -> Replicate data globally --> Automatic Failover. Turn 'ON' - 'Enable Automatic Failover', set the priorities and click 'OK'.",
+          "severity": "Medium",
+          "jsonPath": "$.properties.enableAutomaticFailover",
+          "matchType": "Boolean",
+          "data": { "value": true }
+        }
+      ]
+    },
+    {
+      "resourceType": "Microsoft.Web/sites",
+      "apiVersions": [ "2016-08-01" ],
+      "controls": [
+        {
+          "id": "AppService210",
+          "controlId": "Azure_AppService_Config_Disable_Remote_Debugging",
+          "isEnabled": true,
+          "description": "Remote debugging must be turned off for App Service",
+          "rationale": "Remote debugging requires inbound ports to be opened on App Service. These ports become easy targets for compromise from various internet based attacks.",
+          "recommendation": "Go to Azure Portal --> your App Service --> Settings --> Application Settings --> Remote Debugging --> Click on 'OFF'.",
+          "severity": "High",
+          "jsonPath": "$.properties.siteConfig.remoteDebuggingEnabled",
+          "matchType": "Boolean",
+          "data": { "value": false }
+        },
+        {
+          "id": "AppService220",
+          "controlId": "Azure_AppService_Config_Disable_Web_Sockets",
+          "isEnabled": true,
+          "description": "Web Sockets should be disabled for App Service",
+          "rationale": "",
+          "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -WebSocketsEnabled `$false'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+          "severity": "Medium",
+          "jsonPath": "$.properties.siteConfig.webSocketsEnabled",
+          "matchType": "Boolean",
+          "data": { "value": false }
+        },
+        {
+          "id": "AppService230",
+          "controlId": "Azure_AppService_BCDR_Use_AlwaysOn",
+          "isEnabled": true,
+          "description": "'Always On' should be configured for App Service",
+          "rationale": "By default, websites are unloaded if they have been idle for some period of time. However, this may not be ideal for 'high availability' requirements. Configuring 'Always On' can help prevent app services from getting timed out.",
+          "recommendation": "Go to Azure Portal --> your App Service --> Settings --> Application Settings --> Always On --> Click on 'ON'.",
+          "severity": "Medium",
+          "jsonPath": "$.properties.siteConfig.alwaysOn",
+          "matchType": "Boolean",
+          "data": { "value": true }
+        },
+        {
+          "id": "AppService240",
+          "controlId": "Azure_AppService_Deploy_Use_Latest_Version",
+          "isEnabled": true,
+          "description": "The latest version of .NET framework version should be used for App Service",
+          "rationale": "",
+          "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.0''. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+          "severity": "Low",
+          "jsonPath": "$.properties.siteConfig.netFrameworkVersion",
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "v4.6",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "AppService290",
+          "controlId": "Azure_AppService_Audit_Enable_Logging_and_Monitoring",
+          "isEnabled": true,
+          "description": "Auditing and Monitoring must be enabled for App Service",
+          "rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
+          "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+          "severity": "Medium",
+          "jsonPath": "$.properties.siteConfig.requestTracingEnabled",
+          "matchType": "Boolean",
+          "data": { "value": true }
+        },
+        {
+          "id": "AppService290",
+          "controlId": "Azure_AppService_Audit_Enable_Logging_and_Monitoring",
+          "isEnabled": true,
+          "description": "Auditing and Monitoring must be enabled for App Service",
+          "rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
+          "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+          "severity": "Medium",
+          "jsonPath": "$.properties.siteConfig.httpLoggingEnabled",
+          "matchType": "Boolean",
+          "data": { "value": true }
+        },
+        {
+          "id": "AppService290",
+          "controlId": "Azure_AppService_Audit_Enable_Logging_and_Monitoring",
+          "isEnabled": true,
+          "description": "Auditing and Monitoring must be enabled for App Service",
+          "rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
+          "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+          "severity": "Medium",
+          "jsonPath": "$.properties.siteConfig.detailedErrorLoggingEnabled",
+          "matchType": "Boolean",
+          "data": { "value": true }
+        },
+        {
+          "id": "AppService310",
+          "controlId": "Azure_AppService_DP_Dont_Allow_HTTP_Access",
+          "isEnabled": true,
+          "description": "App Service must only be accessible over HTTPS",
+          "rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer eavesdropping attacks.",
+          "recommendation": "",
+          "severity": "High",
+          "jsonPath": "$.properties.httpsOnly",
+          "matchType": "Boolean",
+          "data": {
+            "value": true
+          }
+        },
+        {
+          "id": "AppService130",
+          "controlId": "Azure_AppService_AuthN_Use_AAD_for_Client_AuthN",
+          "isEnabled": true,
+          "description": "App Service must authenticate users using Azure Active Directory backed credentials",
+          "rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+          "recommendation": "",
+          "severity": "High",
+          "jsonPath": "$.properties.siteConfig.siteAuthEnabled",
+          "matchType": "Boolean",
+          "data": {
+            "value": true
+          }
+        },
+        {
+          "id": "AppService130",
+          "controlId": "Azure_AppService_AuthN_Use_AAD_for_Client_AuthN",
+          "isEnabled": true,
+          "description": "App Service must authenticate users using Azure Active Directory backed credentials",
+          "rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+          "recommendation": "",
+          "severity": "High",
+          "jsonPath": "$.properties.siteConfig.siteAuthSettings.clientId",
+          "matchType": "StringWhitespace",
+          "data": {
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Microsoft.Web/serverfarms",
+      "apiVersions": [ "2016-09-01" ],
+      "controls": [
+         {
+            "id": "AppService270",
+            "controlId": "Azure_AppService_BCDR_Use_Multiple_Instances",
+            "isEnabled": true,
+            "description": "App Service must be deployed on a minimum of two instances to ensure availability",
+            "rationale": "App Service deployed on multiple instances ensures that the App Service remains available even if an instance is down.",
+            "recommendation": "Run command 'Set-AzureRmAppServicePlan -Name '<AppServicePlanName>' -ResourceGroupName '<RGName>' -NumberofWorkers '<NumberofInstances>''. Run 'Get-Help Set-AzureRmAppServicePlan -full' for more help.",
+            "severity": "Medium",
+            "jsonPath": "$.sku.capacity",
+            "matchType": "IntegerValue",
+            "data": {
+               "type": "GreaterThan",
+               "value": 1
+            }
+         }
+      ]
+    },
+    {
+      "resourceType": "Microsoft.Cache/Redis",
+      "apiVersions": [ "2015-08-01" ],
+      "controls": [
+        {
+          "id": "RedisCache150",
+          "controlId": "Azure_RedisCache_DP_Use_SSL_Port",
+          "isEnabled": true,
+          "description": "Non-SSL port must not be enabled",
+          "rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
+          "recommendation": "To disable Non-SSL port for Redis Cache, run command : Set-AzureRmRedisCache -ResourceGroupName <String> -Name <String> -EnableNonSslPort $false",
+          "severity": "High",
+          "jsonPath": "$.properties.enableNonSslPort",
+          "matchType": "Boolean",
+          "data": {
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Microsoft.Cdn/profiles",
+      "apiVersions": [ "2016-04-02" ],
+      "controls": [],
+      "NestedResourcesControlSet": [
+        {
+          "resourceType": "endpoints",
+          "apiVersions": [ "2016-04-02" ],
+          "controls": [
+            {
+              "id": "CDN140",
+              "controlId": "Azure_CDN_DP_Enable_Https",
+              "isEnabled": true,
+              "description": "CDN endpoints must use HTTPS protocol while providing data to the client browser/machine or while fetching data from the origin server",
+              "rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
+              "recommendation": "To enable HTTPS protocol: Go to Azure Portal --> your CDN Profile --> your CDN Endpoint --> Origin --> Select HTTPS --> Save. Else implement through PowerShell as follows: `$ce= Get-AzureRmCdnEndpoint -EndpointName $_.Name �ProfileName <CDNprofile> -ResourceGroupName <RGName>; `$ce.IsHttpAllowed =$false; `$ce.IsHttpsAllowed =$true; Set-AzureRmCdnEndpoint -CdnEndpoint `$ce",
+              "severity": "High",
+              "jsonPath": "$.properties.isHttpsAllowed",
+              "matchType": "Boolean",
+              "data": {
+                "value": true
+              }
+            }
+          ]
+        }
+      ]
+
+    },
+    {
+      "resourceType": "Microsoft.DataLakeStore/accounts",
+      "apiVersions": [ "2016-11-01" ],
+      "controls": [
+        {
+          "id": "DataLakeStore180",
+          "controlId": "Azure_DataLakeStore_DP_Encrypt_At_Rest",
+          "isEnabled": true,
+          "description": "Sensitive data must be encrypted at rest",
+          "rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
+          "recommendation": "Ensure that encryption is not disabled when creating a new Data Lake Store. Refer: https://docs.microsoft.com/en-us/azure/data-lake-store/data-lake-store-security-overview#data-protection. Encryption cannot be enabled after the fact for Data Lake Store.",
+          "severity": "High",
+          "jsonPath": "$.properties.encryptionState",
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "Enabled",
+            "isCaseSensitive": false
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Microsoft.Network/trafficManagerProfiles",
+      "apiVersions": [ "2017-03-01" ],
+      "controls": [
+        {
+          "id": "TrafficManager120",
+          "controlId": "Azure_TrafficManager_DP_Enable_HTTPS",
+          "isEnabled": true,
+          "description": "Traffic Manager profile should use HTTPS protocol for endpoint monitoring",
+          "rationale": "",
+          "recommendation": "",
+          "severity": "High",
+          "jsonPath": "$.properties.monitorConfig.protocol",
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "HTTPS",
+            "isCaseSensitive": false
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Microsoft.Sql/servers",
+      "apiVersions": [ "2014-04-01-preview" ],
+      "controls": [
+
+      ],
+      "NestedResourcesControlSet": [
+        {
+          "resourceType": "administrators",
+          "apiVersions": [ "2014-04-01-preview" ],
+          "controls": [
+            {
+              "id": "SQLDatabase120",
+              "controlId": "Azure_SQLDatabase_AuthZ_Use_AAD_Admin",
+              "isEnabled": true,
+              "description": "Enable Azure AD admin for the SQL Database",
+              "rationale": "",
+              "recommendation": "",
+              "severity": "High",
+              "jsonPath": "$.properties.administratorType",
+              "matchType": "StringSingleToken",
+              "data": {
+                "type": "Allow",
+                "value": "ActiveDirectory",
+                "isCaseSensitive": false
+              }
+            }
+          ]
+        },
+        {
+          "resourceType": "securityAlertPolicies",
+         "apiVersions": [ "2015-05-01-preview" ],
+          "controls": [
+            {
+              "id": "SQLDatabase160",
+              "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
+              "isEnabled": true,
+              "description": "Enable SQL Server threat detection with email admins option. Do not exclude any detection types",
+              "rationale": "",
+              "recommendation": "",
+              "severity": "High",
+              "jsonPath": "$.properties.state",
+              "matchType": "StringSingleToken",
+              "data": {
+                "type": "Allow",
+                "value": "Enabled",
+                "isCaseSensitive": false
+              }
+            },
+            {
+              "id": "SQLDatabase160",
+              "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
+              "isEnabled": true,
+              "description": "Enable SQL Server threat detection with email admins option. Do not exclude any detection types",
+              "rationale": "",
+              "recommendation": "",
+              "severity": "High",
+              "jsonPath": "$.properties.emailAccountAdmins",
+              "matchType": "StringSingleToken",
+              "data": {
+                "type": "Allow",
+                "value": "Enabled",
+                "isCaseSensitive": false
+              }
+            },
+            {
+              "id": "SQLDatabase160",
+              "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
+              "isEnabled": true,
+              "description": "Enable SQL Server threat detection with email admins option. Do not exclude any detection types",
+              "rationale": "",
+              "recommendation": "",
+              "severity": "High",
+              "jsonPath": "$.properties.emailAddresses",
+              "matchType": "StringWhitespace",
+              "data": {
+                "value": false
+              }
+            },
+            {
+              "id": "SQLDatabase160",
+              "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
+              "isEnabled": true,
+              "description": "Enable SQL Server threat detection with email admins option. Do not exclude any detection types",
+              "rationale": "",
+              "recommendation": "",
+              "severity": "High",
+              "jsonPath": "$.properties.disabledAlerts",
+              "matchType": "StringWhitespace",
+              "data": {
+                "value": true
+              }
+            }
+          ]
+        },
+        {
+          "resourceType": "databases",
+          "apiVersions": [ "2014-04-01-preview" ],
+          "controls": [
+
+          ],
+          "NestedResourcesControlSet": [
+            {
+              "resourceType": "transparentDataEncryption",
+              "apiVersions": [ "2014-04-01-preview" ],
+              "controls": [
+                {
+                  "id": "SQLDatabase150",
+                  "controlId": "Azure_SQLDatabase_DP_Enable_TDE",
+                  "isEnabled": true,
+                  "description": "Transparent data encryption (TDE) must be enabled",
+                  "rationale": "",
+                  "recommendation": "",
+                  "severity": "High",
+                  "jsonPath": "$.properties.status",
+                  "matchType": "StringSingleToken",
+                  "data": {
+                    "type": "Allow",
+                    "value": "Enabled",
+                    "isCaseSensitive": false
+                  }
+                }
+              ]
+            },
+            {
+              "resourceType": "securityAlertPolicies",
+              "apiVersions": [ "2014-04-01-preview" ],
+              "controls": [
+                {
+                  "id": "SQLDatabase170",
+                  "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_DB",
+                  "isEnabled": true,
+                  "description": "Enable SQL Database threat detection with email admins option. Do not exclude any detection types",
+                  "rationale": "",
+                  "recommendation": "",
+                  "severity": "High",
+                  "jsonPath": "$.properties.state",
+                  "matchType": "StringSingleToken",
+                  "data": {
+                    "type": "Allow",
+                    "value": "Enabled",
+                    "isCaseSensitive": false
+                  }
+                },
+                {
+                  "id": "SQLDatabase170",
+                  "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_DB",
+                  "isEnabled": true,
+                  "description": "Enable SQL Database threat detection with email admins option. Do not exclude any detection types",
+                  "rationale": "",
+                  "recommendation": "",
+                  "severity": "High",
+                  "jsonPath": "$.properties.emailAccountAdmins",
+                  "matchType": "StringSingleToken",
+                  "data": {
+                    "type": "Allow",
+                    "value": "Enabled",
+                    "isCaseSensitive": false
+                  }
+                },
+                {
+                  "id": "SQLDatabase170",
+                  "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_DB",
+                  "isEnabled": true,
+                  "description": "Enable SQL Database threat detection with email admins option. Do not exclude any detection types",
+                  "rationale": "",
+                  "recommendation": "",
+                  "severity": "High",
+                  "jsonPath": "$.properties.emailAddresses",
+                  "matchType": "StringWhitespace",
+                  "data": {
+                    "value": false
+                  }
+                },
+                {
+                  "id": "SQLDatabase170",
+                  "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_DB",
+                  "isEnabled": true,
+                  "description": "Enable SQL Database threat detection with email admins option. Do not exclude any detection types",
+                  "rationale": "",
+                  "recommendation": "",
+                  "severity": "High",
+                  "jsonPath": "$.properties.disabledAlerts",
+                  "matchType": "StringWhitespace",
+                  "data": {
+                    "value": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+﻿{
+   "ActiveCentralAccountsVersion": "2.1709.0",
+   "DeprecatedAccountsVersion": "2.1709.0",
+   "ValidActiveAccounts": [
+      {
+         "Name": "Name of the account to be provisioned or checked for. E.g., Contoso Cost Trackers",
+         "Description": "Description for your account. E.g., This AAD group account is deployed as Reader on all subscriptions at Contoso.",
+         "ObjectId": "object_id_for_user_or_group_or_SPN_in_tenant",
+         "ObjectType": "ServicePrincipal or User or Group. E.g., Group",
+         "RoleDefinitionName": "Subscription RBAC rolename. E.g., Reader",
+         "Scope": "Scope of access. E.g., /subscriptions/$subscriptionId",
+         "Type": "Provision or Validate. E.g., Provision",
+         "Tags": [ "Commma separated list of tags each in double quotes. The tag 'Mandatory' means this account is deployed by default and always checked during verification. Note: Remember to toggle the Enabled flag on the next line to turn this rule ON." ],
+         "Enabled": false
+      }
+   ],
+   "DeprecatedAccounts": [
+      {
+         "Name": "Name of the account that is considered deprecated and must be deprovisioned. E.g., AutoDeploySPN",
+         "Description": "Description for the account. E.g., This was used for automated deployments in the past. It must be removed from all subscriptions.",
+         "ObjectId": "object_id_for_user_or_group_or_SPN_in_tenant",
+         "ObjectType": "ServicePrincipal or User or Group, E.g., ServicePrincipal",
+         "Enabled": false
+      }
+   ]
+}
+

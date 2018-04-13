@@ -1,0 +1,60 @@
+{
+  "FeatureName": "AzSKCfg",
+  "Reference": "aka.ms/azsktcp",
+  "IsManintenanceMode": false,
+  "Controls": [
+    {
+      "ControlID": "Azure_AzSKCfg_Check_Presence_of_CA",
+      "Description": "Continuous Assurance automation account must be present in the subscription",
+      "Id": "AzSKCfg110",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckifCAPresent",
+      "Recommendation": "To install Continuous Assurance automation account, run command: Install-AzSKContinuousAssurance.For more details, please refer https://github.com/azsdk/azsdk-docs/blob/master/04-Continous-Assurance/Readme.md#setting-up-continuous-assurance---step-by-step",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AzSKCfgControl"
+      ],
+      "Enabled": true,
+      "Rationale": "Presence of CA ensures that regular scan is happening for your cloud subscription and resources."
+    },
+    {
+      "ControlID": "Azure_AzSKCfg_Check_Health_of_CA",
+      "Description": "Continuous Assurance automation account must be in a healthy state",
+      "Id": "AzSKCfg120",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckHealthofCA",
+      "Recommendation": "Run command: 'Get-AzSKContinuousAssurance -SubscriptionId <subId>'.Follow the recommendation given to bring CA in healthy state",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "GraphRead",
+        "AzSKCfgControl"
+      ],
+      "Enabled": true,
+      "Rationale": "Presence of CA ensures that regular scan is happening for your cloud subscription and resources."
+    },
+    {
+      "ControlID": "Azure_AzSKCfg_Check_Presence_of_Latest_AzSK_Module",
+      "Description": "AzSK scans must use latest version of the AzSK Module",
+      "Id": "AzSKCfg130",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckifLatestModulePresent",
+      "Recommendation": "Re-run install command to get latest AzSK module",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AzSKCfgControl"
+      ],
+      "Enabled": true,
+      "Rationale": "With each release new security updates are being added. Using the latest AzSK module ensures that your cloud subscription and resources are scanned with the latest controls."
+    }
+
+  ]
+}

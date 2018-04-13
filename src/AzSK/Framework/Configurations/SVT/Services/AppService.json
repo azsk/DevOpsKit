@@ -1,0 +1,558 @@
+  {
+  "FeatureName": "AppService",
+  "Reference": "aka.ms/azsktcp/appservice",
+  "IsManintenanceMode": false,
+    "Controls": [
+      {
+        "ControlID": "Azure_AppService_AuthZ_Grant_Min_RBAC_Access",
+        "Description": "All users/identities must be granted minimum required permissions using Role Based Access Control (RBAC)",
+        "Id": "AppService110",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckRBACAccess",
+        "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+        "Recommendation": "Remove any excessive privileges granted on the App Service. Run command: Remove-AzureRmRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthZ",
+          "RBAC",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_AppService_DP_Use_CNAME_With_SSL",
+        "Description": "Custom domain with SSL binding must be configured for App Service",
+        "Id": "AppService120",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceCustomDomainWithSSLConfig",
+        "Rationale": "Use of custom domain protects a web application from common attacks such as phishing, session hijacking and other DNS-related attacks.",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Custom Domains and follow the steps mentioned to configure a custom domain. Run command 'New-AzureRmWebAppSSLBinding' to enable the SSL binding for your custom domain. Run 'Get-Help New-AzureRmWebAppSSLBinding -full' for more help.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "DP",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_AppService_AuthN_Use_AAD_for_Client_AuthN",
+        "Description": "App Service must authenticate users using Azure Active Directory backed credentials",
+        "Id": "AppService130",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceADAuthentication",
+        "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Authentication/Authorization --> turn on 'App Service Authentication' --> Click on 'Azure Active Directory' under Authentication Providers to configure the AAD authentication. Note: If you are implementing this control via code, then you can attest to the same and mark this as passed. Note: In case of Functions apps, AAD authentication is required only for 'Http Trigger' functions.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthN",
+          "OwnerAccess",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_AppService_Deploy_Dont_Use_Publish_Profiles",
+        "Description": "Publish profile credentials must not be used for App Service deployment",
+        "Id": "AppService140",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Publish profile of App Services contains deployment and FTP credentials. There are 2 risks with this. First, the credentials can get easily leaked during the various workflows involving the publish profile. Secondly, use of public profiles weakens auditability of deployment actions.",
+        "Recommendation": "No predefined role should be present in the App Service and all the custom roles must have all 'publishxml' operations added as the Non Actions, e.g. 'microsoft.web/sites/publishxml/read'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "Deploy",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_AppService_AuthZ_Trigger_Url_AuthN",
+        "Description": "Trigger URL for the App Service Web Job must require authentication",
+        "Id": "AppService150",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Scheduled WebJobs can be triggered by specific scheduled time or by triggered URL. WebJob triggered URL can be authenticated by AAD authentication (bearer token) or by App Services deployment credentials. Since its not recommended to use publish profiles, WebJob triggered URL must be authenticated by AAD authentication.",
+        "Recommendation": "Use bearer tokens and AAD-based authentication to in the trigger.",
+        "Tags": [
+          "SDL",
+          "Information",
+          "Manual",
+          "AuthZ",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_AppService_DP_Encrypt_In_Transit_Webhook",
+        "Description": "The webhook used for a Web Job must encrypt sensitive data in transit",
+        "Id": "AppService180",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
+        "Recommendation": "Encryption in transit in the context of webhooks can be achieved by using HTTPS URLs.",
+        "Tags": [
+          "SDL",
+          "Information",
+          "Manual",
+          "DP",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_AppService_DP_Store_Secrets_in_Key_Vault",
+        "Description": "All App Service secrets should be stored in Key Vault",
+        "Id": "AppService190",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Keeping secrets such as DB connection strings, passwords, keys, etc. in clear text can lead to easy compromise at various avenues during an application's lifecycle. Storing them in a key vault ensures that they are protected at rest.",
+        "Recommendation": "Refer https://azure.microsoft.com/en-in/documentation/articles/key-vault-get-started/ for configuring Key Vault and storing secrets.",
+        "Tags": [
+          "SDL",
+          "Best Practice",
+          "Manual",
+          "DP",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_AppService_Deploy_Use_Notification_Hub",
+        "Description": "App Service should use Notification Hub for push notification (instead of directly using Push Notification Service)",
+        "Id": "AppService200",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Notification Hub provides a better mechanism to manage the keys related Push Notification Systems (PNS).",
+        "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/notification-hubs/ for details on configuring Notification Hub for push notifications.",
+        "Tags": [
+          "SDL",
+          "Best Practice",
+          "Manual",
+          "Deploy",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_AppService_Config_Disable_Remote_Debugging",
+        "Description": "Remote debugging must be turned off for App Service",
+        "Id": "AppService210",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceRemoteDebuggingConfiguration",
+        "Rationale": "Remote debugging requires inbound ports to be opened on App Service. These ports become easy targets for compromise from various internet based attacks.",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Application Settings --> Remote Debugging --> Click on 'OFF'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "Config",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_AppService_Config_Disable_Web_Sockets",
+        "Description": "Web Sockets should be disabled for App Service",
+        "Id": "AppService220",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceWebSocketsConfiguration",
+        "Rationale": "WebSockets protocol (WS) is vulnerable to different types of security attacks. Usage of Web Sockets with in web applications has to be carefully reviewed.",
+        "Recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -WebSocketsEnabled `$false'. Run 'Get-Help Set-AzureRmWebApp -full' for more help. Refer: https://www.owasp.org/index.php/HTML5_Security_Cheat_Sheet#WebSockets",
+        "Tags": [
+          "SDL",
+          "Best Practice",
+          "Automated",
+          "Config",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true,
+        "FixControl": {
+          "FixMethodName": "DisableWebSocket",
+          "FixControlImpact": "High"
+        }
+      },
+      {
+        "ControlID": "Azure_AppService_BCDR_Use_AlwaysOn",
+        "Description": "'Always On' should be configured for App Service",
+        "Id": "AppService230",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceAlwaysOnConfiguration",
+        "Rationale": "By default, websites are unloaded if they have been idle for some period of time. However, this may not be ideal for 'high availability' requirements. Configuring 'Always On' can help prevent app services from getting timed out.",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Application Settings --> Always On --> Click on 'ON'.",
+        "Tags": [
+          "SDL",
+          "Best Practice",
+          "Automated",
+          "BCDR",
+          "AppService"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_AppService_Deploy_Use_Latest_Version",
+        "Description": "The latest version of .NET framework version should be used for App Service",
+        "Id": "AppService240",
+        "ControlSeverity": "Low",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceDotNetFrameworkVersion",
+        "Rationale": "Running on older .Net versions could mean you are not using latest security classes. Usage of such old classes and types can make your application vulnerable.",
+        "Recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.0''. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+        "Tags": [
+          "SDL",
+          "Best Practice",
+          "Automated",
+          "Deploy",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true,
+        "FixControl": {
+          "FixMethodName": "SetLatestDotNetVersion",
+          "FixControlImpact": "Medium"
+        }
+      },
+      {
+        "ControlID": "Azure_AppService_Deploy_Use_ARM_Template",
+        "Description": "Deployment of App Service should be done using ARM template",
+        "Id": "AppService260",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Deployment using ARM template is more secure than using publish profiles. This is because the former uses user/SPN credentials which can be protected better than publish profiles and provide a better audit trail of deployment activity.",
+        "Recommendation": "Use an ARM Template to ensure fully repeatable and secured configuration of a deployment. Refer https://azure.microsoft.com/en-gb/resources/templates/ to get sample quickstart templates.",
+        "Tags": [
+          "SDL",
+          "Best Practice",
+          "Manual",
+          "Deploy",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_AppService_BCDR_Use_Multiple_Instances",
+        "Description": "App Service must be deployed on a minimum of two instances to ensure availability",
+        "Id": "AppService270",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceInstanceCount",
+        "Rationale": "App Service deployed on multiple instances ensures that the App Service remains available even if an instance is down.",
+        "Recommendation": "Run command 'Set-AzureRmAppServicePlan -Name '<AppServicePlanName>' -ResourceGroupName '<RGName>' -NumberofWorkers '<NumberofInstances>''. Run 'Get-Help Set-AzureRmAppServicePlan -full' for more help.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "BCDR",
+          "AppService"
+        ],
+        "Enabled": true,
+        "FixControl": {
+          "FixMethodName": "SetMultipleInstances",
+          "FixControlImpact": "Medium"
+        }
+      },
+      {
+        "ControlID": "Azure_AppService_BCDR_Use_App_Backup",
+        "Description": "Backup feature must be configured to backup data for App Service",
+        "Id": "AppService280",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceBackupConfiguration",
+        "Rationale": "Enabling backup on App Service ensures that there is always a previous snapshot of App Service data that can be leveraged towards recovery scenarios.",
+        "Recommendation": "Run command 'Edit-AzureRmWebAppBackupConfiguration -FrequencyInterval '1' -FrequencyUnit 'Day' -RetentionPeriodInDays '<0 or 365>' -StartTime '<TimeLessThanOrEqualToCurrentTime>' -Name '<WebAppName>' -ResourceGroupName '<RGName>' -StorageAccountUrl '<StorageAccountUrl>' -KeepAtLeastOneBackup'. Run 'Get-Help Edit-AzureRmWebAppBackupConfiguration -full' for more help.",
+        "Tags": [
+          "SDL",
+          "Best Practice",
+          "Automated",
+          "BCDR",
+          "OwnerAccess",
+          "AppService"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_AppService_Audit_Enable_Logging_and_Monitoring",
+        "Description": "Auditing and Monitoring must be enabled for App Service",
+        "Id": "AppService290",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceDiagnosticLogsConfiguration",
+        "Rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
+        "Recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "Audit",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true,
+        "FixControl": {
+          "FixMethodName": "EnableLogging",
+          "FixControlImpact": "Low"
+        }
+      },
+      {
+        "ControlID": "Azure_AppService_BCDR_Configure_Auto_Healing",
+        "Description": "Auto healing should be configured for App Service",
+        "Id": "AppService300",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "With the use of Auto-Healing, a website can automatically recover from long running/blocked states. Auto-Healing enables automatic recycling of the worker process hosting your web application based on certain events. E.g. 1. When request count breaches a certain limit 2. When requests are running slower that expected 3. When an unexpected http status code is received X number of times 4. When the process consumes more than expected memory",
+        "Recommendation": "Refer https://azure.microsoft.com/en-in/blog/auto-healing-windows-azure-web-sites/ for details on configuring auto healing.",
+        "Tags": [
+          "SDL",
+          "Best Practice",
+          "Manual",
+          "BCDR",
+          "AppService"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_AppService_DP_Dont_Allow_HTTP_Access",
+        "Description": "App Service must only be accessible over HTTPS",
+        "Id": "AppService310",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceHttpCertificateSSL",
+        "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer eavesdropping attacks.",
+        "Recommendation": "Run command 'Set-AzureRmResource -ResourceName '<WebAppName>' -ResourceGroupName '<RGName>' -ResourceType 'Microsoft.Web/sites' -Properties @{httpsOnly='true'} -Force '. Run 'Get-Help Set-AzureRmResource -full' for more help.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "DP",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true,
+        "FixControl": {
+          "FixMethodName": "EnableHttpsFlag",
+          "FixControlImpact": "High"
+        }
+      },
+     
+      {
+        "ControlID": "Azure_AppService_DP_Website_Load_Certificates_Not_All",
+        "Description": "WEBSITE_LOAD_CERTIFICATES parameter must not be set to '*' (i.e. all) for App Service",
+        "Id": "AppService320",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceLoadCertAppSettings",
+        "Rationale": "Using '*' for this parameter means that all certificates will get uploaded to the VM running the website. This will most likely lead to abuse of the principle of least privilege as it is unlikely that the site needs access to all certificates at runtime.",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Application Settings --> App Settings --> Check for 'WEBSITE_LOAD_CERTIFICATES' key and make sure that value is not set to '*'. Instead choose the specific certificate that is required by the App Service. Refer https://msftplayground.com/2016/11/using-certificates-azure-app-services/ for more details.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "DP",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true
+      },
+
+      {
+        "ControlID": "Azure_AppService_DP_Configure_Rotate_Keys_Fn",
+        "Description": "Keys should be renewed after a regular interval",
+        "Id": "AppService330",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook#working-with-keys for details on Host keys in Functions app.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "DP",
+          "FunctionApp"
+        ],
+        "Enabled": true,
+        "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks."
+      },
+      {
+        "ControlID": "Azure_AppService_DP_Dont_Share_HostKeys_Fn",
+        "Description": "Host key access should not be shared with individual clients",
+        "Id": "AppService340",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook#working-with-keys for details on Host keys in Functions app.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "DP",
+          "FunctionApp"
+        ],
+        "Enabled": true,
+        "Rationale": "Host Keys grant full access to all the functions within a function app. Not sharing this key with individual clients ensures that clients are granted just enough permissions to invoke a particular function"
+      },
+      {
+        "ControlID": "Azure_AppService_Authz_Use_Function_Authorization_level_Fn",
+        "Description": "Authorization level for HTTP Trigger function in a function app should be set to 'Function'",
+        "Id": "AppService350",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",   
+        "MethodName": "CheckFunctionsAuthorizationLevel",
+        "Recommendation": "Go to Azure Portal --> your Functions App --> your HTTP Trigger Function --> Integrate --> Change Authorization level.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "Config",
+          "AuthZ",
+          "OwnerAccess",
+          "FunctionApp"
+          ],
+        "Enabled": true,
+        "Rationale": "Use 'Function' authorization level to ensure that users with minimum of function keys should only be able to invoke the function. This is in accordance with the principle of least privilege."
+      },
+
+      {
+        "ControlID": "Azure_AppService_Configure_EditMode_ReadOnly_Fn",
+        "Description": "Functions app edit mode should be set to Read Only",
+        "Id": "AppService360",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckFunctionsEditMode",
+        "Recommendation": "Go to Azure Portal --> your Functions App --> Functions app settings --> Function app edit mode --> Click on 'Read Only'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "Config",
+          "FunctionApp"
+        ],
+        "Enabled": true,
+        "Rationale": "Using 'Read Only' mode ensures that source code is changes come in via a CICD pipeline and not directly through portal. This ensures that code changes are properly audited."
+      },
+      {
+        "ControlID": "Azure_AppService_DP_Use_Individual_FunctionKeys_Fn",
+        "Description": "Different functions keys must be generated and shared with individual clients.",
+        "Id": "AppService370",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Recommendation": "Go to Azure Portal --> your Functions App --> your Function --> Manage --> Add New Function Key.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "DP",
+          "FunctionApp"
+        ],
+        "Enabled": true,
+        "Rationale": "Different function keys for individual clients promotes separation of concerns. It also makes revocation easier to manage in the event of a compromise of one client."
+      },
+      {
+        "ControlID": "Azure_AppService_DP_Restrict_CORS_Access",
+        "Description": "Ensure that CORS access is granted to a limited set of trusted origins.",
+        "Id": "AppService380",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceCORSAllowed",
+        "Recommendation": "Go to Azure Portal --> your App Service --> API --> CORS --> Provide the specific domain names that should be allowed to make cross-origin calls. Note: No action is needed if you are not using CORS for your app.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "DP",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true,
+        "Rationale": "CORS enables applications running under one domain to access a resource under another domain. Using '*' (allow all) for CORS setting means that an application running under any domain can have access to your application's resources and data. Restricting allowed origins to the specific set that needs access aligns with the principle of least privilege."
+      },
+      {
+        "ControlID": "Azure_AppService_Configure_Important_Alerts",
+        "Description": "Alerts should be configured to track unauthorized access attempts for the AppService.",
+        "Id": "AppService390",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Monitoring --> Alerts --> Add Alert. Set alert on metrics with name 'Http 403'(unauthorized response) and 'Http 401'(forbidden response).",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Config",
+          "AppService",
+          "Manual"
+        ],
+        "Enabled": true,
+        "Rationale": "Alert rules for unauthorized requests enable you to detect any suspicious and malicious activity early enough."
+      },
+      {
+        "ControlID": "Azure_AppService_AuthN_Use_Managed_Service_Identity",
+        "Description": "Use Managed Service Identity (MSI) for accessing other AAD-protected resources from the app service.",
+        "Id": "AppService400",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceMsiEnabled",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Managed Service Identity --> Register with AAD --> ON",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "Config",
+          "AppService",
+          "FunctionApp"
+        ],
+        "Enabled": true,
+        "Rationale": "Managed Service Identity (MSI) allows your app to easily access other AAD-protected resources such as Azure Key Vault. The identity is managed by the Azure platform and eliminates the need to provision/manage/rotate any secrets thus reducing the overall risk. "
+      },
+        {
+        "ControlID": "Azure_AppService_DP_Dont_Allow_HTTP_Access_Fn",
+        "Description": "Function App must only be accessible over HTTPS",
+        "Id": "AppService410",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckFunctionsAppHttpCertificateSSL",
+        "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer eavesdropping attacks.",
+        "Recommendation": "Run command 'Set-AzureRmResource -ResourceName '<WebAppName>' -ResourceGroupName '<RGName>' -ResourceType 'Microsoft.Web/sites' -Properties @{httpsOnly='true'} -Force '. Run 'Get-Help Set-AzureRmResource -full' for more help. Note:'HttpsOnly' is required only for 'Http Trigger' functions.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "DP",
+          "OwnerAccess",
+          "FunctionApp"
+        ],
+        "Enabled": true
+      }
+     
+    ]
+}

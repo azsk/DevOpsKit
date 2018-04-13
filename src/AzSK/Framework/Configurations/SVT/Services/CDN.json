@@ -1,0 +1,114 @@
+﻿{
+  "FeatureName": "CDN",
+  "Reference": "aka.ms/azsktcp/cdn",
+  "IsManintenanceMode": false,
+  "Controls": [
+    {
+      "ControlID": "Azure_CDN_AuthZ_Grant_Min_RBAC_Access",
+      "Description": "All users/identities must be granted minimum required permissions using Role Based Access Control (RBAC)",
+      "Id": "CDN110",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckRBACAccess",
+      "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+      "Recommendation": "Remove any excessive privileges granted on the CDN. Run command Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_CDN_AuthN_Config_Token_AuthN",
+      "Description": "CDN profile endpoints must use token authentication",
+      "Id": "CDN120",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Using token authentication prevents Azure CDN from serving assets to unauthorized clients. This keeps other sites from 'hotlinking' content and using your assets without permission",
+      "Recommendation": "To enable token authentication (currently available on Premium Verizon tier), go to Azure Portal --> your CDN Profile --> Manage --> HTTP LARGE --> Token Auth. Please refer https://docs.microsoft.com/en-us/azure/cdn/cdn-token-auth for more details on token authentication.",
+      "Tags": [
+        "SDL",
+        "Best Practice",
+        "Manual",
+        "AuthN"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_CDN_DP_TokenKey_Protection",
+      "Description": "Token encryption key must be protected in a key vault (when a website generates tokens via code).",
+      "Id": "CDN130",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Keeping secrets such as DB connection strings, passwords, keys, etc. in clear text can lead to easy compromise at various avenues during an application's lifecycle. Storing them in a key vault ensures that they are protected at rest.",
+      "Recommendation": "Refer https://azure.microsoft.com/en-in/documentation/articles/key-vault-get-started/ (Key Vault) and  https://docs.microsoft.com/en-us/azure/cdn/cdn-token-auth (token-based authentication in CDN).",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_CDN_DP_Enable_Https",
+      "Description": "CDN endpoints must use HTTPS protocol while providing data to the client browser/machine or while fetching data from the origin server",
+      "Id": "CDN140",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckCDNHttpsProtocol",
+      "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
+      "Recommendation": "To enable HTTPS protocol: Go to Azure Portal --> your CDN Profile --> your CDN Endpoint --> Origin --> Select HTTPS --> Save. Else implement through PowerShell as follows: `$ce= Get-AzureRmCdnEndpoint -EndpointName $_.Name –ProfileName <CDNprofile> -ResourceGroupName <RGName>; `$ce.IsHttpAllowed =$false; `$ce.IsHttpsAllowed =$true; Set-AzureRmCdnEndpoint -CdnEndpoint `$ce",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "DP"
+      ],
+      "Enabled": true,
+      "FixControl": {
+        "FixMethodName": "EnableHttpsProtocol",
+        "FixControlImpact": "Medium"
+      }
+    },
+    {
+      "ControlID": "Azure_CDN_DP_Use_Only_For_Public_Data",
+      "Description": "Do not put any sensitive data in a CDN. CDN is suitable only for resources where anonymous access is not a concern",
+      "Id": "CDN150",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Azure CDN does not provide any access control feature to restrict/secure access to content. Thus no private data should be stored in CDN.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-gb/azure/architecture/best-practices/cdn.",
+      "Tags": [
+        "SDL",
+        "Best Practice",
+        "Manual",
+        "DP"
+      ],
+       "Enabled": true
+    },
+    {
+      "ControlID": "Azure_CDN_Audit_Configure_Real_Time_Alerts",
+      "Description": "Configure real time alerts on status code 403 to be observant of any unauthorized request for CDN endpoint",
+      "Id": "CDN170",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Setting up real-time alerts provides real-time notifications about the performance of the endpoints and any unauthorized request in your CDN profile.",
+      "Recommendation": "To set up alerts: Go to Azure Portal --> your CDN Profile --> Manage --> Analytics --> Real-Time Stats --> Real-Time Alerts.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "Audit"
+      ],
+      "Enabled": true
+    }
+  ]
+}

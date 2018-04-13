@@ -1,0 +1,42 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "resources": [
+    {
+      "type": "Microsoft.Insights/activityLogAlerts",
+      "apiVersion": "2017-04-01",
+      "name": "",
+      "location": "Global",
+      "properties": {
+         "enabled": true,
+         "description": "",         
+         "scopes": [
+            "[subscription().id]"
+         ],
+    "condition": {
+      "allOf": [
+         {
+            "field": "category",
+            "equals": "Administrative"
+         },
+         {
+            "field": "status",
+            "equals": "Started"
+         },
+         {
+            "anyOf": []
+         }
+      ]
+    },
+         "actions": {
+            "actionGroups": [
+               {
+                  "actionGroupId": "",
+                  "webhookProperties": {}
+               }
+            ]
+         }
+      }
+    }
+  ]
+}

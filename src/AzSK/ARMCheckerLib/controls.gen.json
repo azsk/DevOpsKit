@@ -1,0 +1,262 @@
+{
+   "resourceControlSets": [
+      {
+         "resourceType": "Microsoft.Storage/storageAccounts",
+         "apiVersions": [ "2017-06-01" ],
+         "controls": [
+            {
+               "id": "AzureStorage130",
+               "controlId": "Azure_Storage_Deploy_Use_Geo_Redundant",
+               "isEnabled": true,
+               "description": "Use geo-redundant storage accounts",
+               "rationale": "Use of geo-redundant storage (GRS) accounts, ensures that data is not completely lost in the event of a regional disaster.",
+               "recommendation": "Run command 'Set-AzureRmStorageAccount -Name '<StorageAccountName>' -ResourceGroupName '<RGName>' -SkuName '<Standard_GRS/Standard_RAGRS>''. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help.",
+               "severity": "High",
+               "jsonPath": "$.sku.name",
+               "matchType": "StringSingleToken",
+               "data": {
+                  "type": "NotAllow",
+                  "value": "Standard_LRS",
+                  "isCaseSensitive": false
+               }
+            },
+            {
+               "id": "AzureStorage140",
+               "controlId": "Azure_Storage_DP_Encrypt_At_Rest_Blob",
+               "isEnabled": true,
+               "description": "Sensitive data in Storage Blob must be encrypted at rest",
+               "rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
+               "recommendation": "Run command 'Set-AzureRmStorageAccount -Name '<StorageAccountName>' -ResourceGroupName '<RGName>' -StorageEncryption -EnableEncryptionService 'Blob''. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help. Note that after enabling Storage Service Encryption, only new data will be encrypted, and any existing files in this storage account will remain unencrypted.",
+               "severity": "High",
+               "jsonPath": "$.properties.encryption.services.blob.enabled",
+               "matchType": "Boolean",
+               "data": { "value": true }
+            },
+            {
+               "id": "AzureStorage160",
+               "controlId": "Azure_Storage_DP_Encrypt_In_Transit",
+               "isEnabled": true,
+               "description": "HTTPS protocol must be used for accessing Storage Account resources",
+               "rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks. When enabling HTTPS one must remember to simultaneously disable access over plain HTTP else data can still be subject to compromise over clear text connections.",
+               "recommendation": "Run command 'Set-AzureRmStorageAccount -ResourceGroupName <RGName> -name <StorageAccountName> -EnableHttpsTrafficOnly `$true'. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help.",
+               "severity": "High",
+               "jsonPath": "$.properties.supportsHttpsTrafficOnly",
+               "matchType": "Boolean",
+               "data": { "value": true }
+            },
+            {
+               "id": "AzureStorage240",
+               "controlId": "Azure_Storage_DP_Encrypt_At_Rest_File",
+               "isEnabled": true,
+               "description": "Sensitive data in Storage File must be encrypted at rest",
+               "rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
+               "recommendation": "Run command 'Set-AzureRmStorageAccount -Name '<StorageAccountName>' -ResourceGroupName '<RGName>' -StorageEncryption -EnableEncryptionService 'File''. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help. Note that after enabling Storage Service Encryption, only new data will be encrypted, and any existing files in this storage account will remain unencrypted.",
+               "severity": "High",
+               "jsonPath": "$.properties.encryption.services.file.enabled",
+               "matchType": "Boolean",
+               "data": { "value": true }
+            }
+         ]
+      },
+      {
+         "resourceType": "Microsoft.DocumentDB/databaseAccounts",
+         "apiVersions": [ "2015-04-08" ],
+         "controls": [
+            {
+               "id": "CosmosDb110",
+               "controlId": "Azure_CosmosDB_AuthZ_Enable_Firewall",
+               "isEnabled": true,
+               "description": "Cosmos DB firewall should be enabled",
+               "rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets.",
+               "recommendation": "Azure Portal --> Resource --> Firewall. Turn 'ON' - 'Enable IP Access Control' and provide required IP addresses and/or ranges and save.",
+               "severity": "High",
+               "jsonPath": "$.properties.ipRangeFilter",
+               "matchType": "StringWhitespace",
+               "data": { "value": false }
+            },
+            {
+               "id": "CosmosDb120",
+               "controlId": "Azure_CosmosDB_AuthZ_Verify_IP_Range",
+               "isEnabled": true,
+               "description": "Configure only the required IP addresses on Cosmos DB firewall",
+               "rationale": "",
+               "recommendation": "Do not use high ranges like 0.0.0.0/0, 0.0.0.0/1, 128.0.0.0/1, etc. Maximum IPs in a range should be less that 256 and total IPs including all ranges should be less than 2048. To modify - Azure Portal --> Resource --> Firewall. Turn 'ON' - 'Enable IP Access Control' and add/or remove IP addresses and/or ranges and save.",
+               "severity": "High",
+               "jsonPath": "$.properties.ipRangeFilter",
+               "matchType": "VerifiableSingleToken",
+               "data": {}
+            },
+            {
+               "id": "CosmosDb130",
+               "controlId": "Azure_CosmosDB_Config_Default_Consistency",
+               "isEnabled": true,
+               "description": "Do not use 'Eventual' consistency",
+               "rationale": "",
+               "recommendation": "Using Eventual consistency might cause undesired effects due to its ordering guarantees. To modify - Azure Portal --> Resource --> Default consistency. Select 'Session' and save. Refer: https://docs.microsoft.com/en-in/azure/cosmos-db/consistency-levels",
+               "severity": "High",
+               "jsonPath": "$.properties.consistencyPolicy.defaultConsistencyLevel",
+               "matchType": "StringSingleToken",
+               "data": {
+                  "type": "NotAllow",
+                  "value": "Eventual",
+                  "isCaseSensitive": false
+               }
+            },
+            {
+               "id": "CosmosDb140",
+               "controlId": "Azure_CosmosDB_Deploy_Use_Replication",
+               "isEnabled": true,
+               "description": "Use global replication",
+               "rationale": "",
+               "recommendation": "Replication ensures the continuity and rapid recovery during disasters. To add - Azure Portal --> Resource -> Replicate data globally. Select a secondary read region and save. Refer: https://docs.microsoft.com/en-in/azure/cosmos-db/distribute-data-globally",
+               "severity": "Medium",
+               "jsonPath": "$.properties.locations",
+               "matchType": "ItemCount",
+               "data": {
+                  "type": "GreaterThan",
+                  "value": 1
+               }
+            },
+            {
+               "id": "CosmosDb150",
+               "controlId": "Azure_CosmosDB_Deploy_Use_Automatic_Failover",
+               "isEnabled": true,
+               "description": "Use automatic failover",
+               "rationale": "",
+               "recommendation": "Automatic failover ensures the continuity and auto recovery during disasters. To configure, you must have at least 1 secondary replica enabled. To enabled replica - Azure Portal --> Resource -> Replicate data globally. Select a secondary read region and save. To set automatic failover - Azure Portal --> Resource -> Replicate data globally --> Automatic Failover. Turn 'ON' - 'Enable Automatic Failover', set the priorities and click 'OK'.",
+               "severity": "Medium",
+               "jsonPath": "$.properties.enableAutomaticFailover",
+               "matchType": "Boolean",
+               "data": { "value": true }
+            }
+         ]
+      },
+      {
+         "resourceType": "Microsoft.Web/sites",
+         "apiVersions": [ "2016-08-01" ],
+         "controls": [
+            {
+               "id": "AppService210",
+               "controlId": "Azure_AppService_Config_Disable_Remote_Debugging",
+               "isEnabled": true,
+               "description": "Remote debugging must be turned off for App Service",
+               "rationale": "Remote debugging requires inbound ports to be opened on App Service. These ports become easy targets for compromise from various internet based attacks.",
+               "recommendation": "Go to Azure Portal --> your App Service --> Settings --> Application Settings --> Remote Debugging --> Click on 'OFF'.",
+               "severity": "High",
+               "jsonPath": "$.properties.siteConfig.remoteDebuggingEnabled",
+               "matchType": "Boolean",
+               "data": { "value": false }
+            },
+            {
+               "id": "AppService220",
+               "controlId": "Azure_AppService_Config_Disable_Web_Sockets",
+               "isEnabled": true,
+               "description": "Web Sockets should be disabled for App Service",
+               "rationale": "",
+               "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -WebSocketsEnabled `$false'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+               "severity": "Medium",
+               "jsonPath": "$.properties.siteConfig.webSocketsEnabled",
+               "matchType": "Boolean",
+               "data": { "value": false }
+            },
+            {
+               "id": "AppService230",
+               "controlId": "Azure_AppService_BCDR_Use_AlwaysOn",
+               "isEnabled": true,
+               "description": "'Always On' should be configured for App Service",
+               "rationale": "By default, websites are unloaded if they have been idle for some period of time. However, this may not be ideal for 'high availability' requirements. Configuring 'Always On' can help prevent app services from getting timed out.",
+               "recommendation": "Go to Azure Portal --> your App Service --> Settings --> Application Settings --> Always On --> Click on 'ON'.",
+               "severity": "Medium",
+               "jsonPath": "$.properties.siteConfig.alwaysOn",
+               "matchType": "Boolean",
+               "data": { "value": true }
+            },
+            {
+               "id": "AppService240",
+               "controlId": "Azure_AppService_Deploy_Use_Latest_Version",
+               "isEnabled": true,
+               "description": "The latest version of .NET framework version should be used for App Service",
+               "rationale": "",
+               "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.0''. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+               "severity": "Low",
+               "jsonPath": "$.properties.siteConfig.netFrameworkVersion",
+               "matchType": "StringSingleToken",
+               "data": {
+                  "type": "Allow",
+                  "value": "v4.6",
+                  "isCaseSensitive": false
+               }
+            },
+            {
+               "id": "AppService250",
+               "controlId": "Azure_AppService_Deploy_Use_64_bit",
+               "isEnabled": true,
+               "description": "64-bit platform should be used for App Service",
+               "rationale": "",
+               "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -Use32BitWorkerProcess `$false'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+               "severity": "Low",
+               "jsonPath": "$.properties.siteConfig.use32BitWorkerProcess",
+               "matchType": "Boolean",
+               "data": { "value": false }
+            },
+            {
+               "id": "AppService290",
+               "controlId": "Azure_AppService_Audit_Enable_Logging_and_Monitoring",
+               "isEnabled": true,
+               "description": "Auditing and Monitoring must be enabled for App Service",
+               "rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
+               "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+               "severity": "Medium",
+               "jsonPath": "$.properties.siteConfig.requestTracingEnabled",
+               "matchType": "Boolean",
+               "data": { "value": true }
+            },
+            {
+               "id": "AppService290",
+               "controlId": "Azure_AppService_Audit_Enable_Logging_and_Monitoring",
+               "isEnabled": true,
+               "description": "Auditing and Monitoring must be enabled for App Service",
+               "rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
+               "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+               "severity": "Medium",
+               "jsonPath": "$.properties.siteConfig.httpLoggingEnabled",
+               "matchType": "Boolean",
+               "data": { "value": true }
+            },
+            {
+               "id": "AppService290",
+               "controlId": "Azure_AppService_Audit_Enable_Logging_and_Monitoring",
+               "isEnabled": true,
+               "description": "Auditing and Monitoring must be enabled for App Service",
+               "rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
+               "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+               "severity": "Medium",
+               "jsonPath": "$.properties.siteConfig.detailedErrorLoggingEnabled",
+               "matchType": "Boolean",
+               "data": { "value": true }
+            }
+         ]
+      },
+      {
+         "resourceType": "Microsoft.Web/serverfarms",
+         "apiVersions": [ "2016-09-01" ],
+         "controls": [
+            {
+               "id": "AppService270",
+               "controlId": "Azure_AppService_BCDR_Use_Multiple_Instances",
+               "isEnabled": true,
+               "description": "App Service must be deployed on a minimum of two instances to ensure availability",
+               "rationale": "App Service deployed on multiple instances ensures that the App Service remains available even if an instance is down.",
+               "recommendation": "Run command 'Set-AzureRmAppServicePlan -Name '<AppServicePlanName>' -ResourceGroupName '<RGName>' -NumberofWorkers '<NumberofInstances>''. Run 'Get-Help Set-AzureRmAppServicePlan -full' for more help.",
+               "severity": "Medium",
+               "jsonPath": "$.sku.capacity",
+               "matchType": "IntegerValue",
+               "data": {
+                  "type": "GreaterThan",
+                  "value": 1
+               }
+            }
+         ]
+      }
+   ]
+}

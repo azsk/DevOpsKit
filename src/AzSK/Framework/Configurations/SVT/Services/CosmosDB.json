@@ -1,0 +1,165 @@
+{
+   "FeatureName": "CosmosDB",
+   "Reference": "aka.ms/azsktcp/cosmosdb",
+   "IsManintenanceMode": false,
+   "Controls": [
+      {
+         "ControlID": "Azure_CosmosDB_AuthZ_Enable_Firewall",
+         "Description": "Cosmos DB firewall should be enabled",
+         "Id": "CosmosDb110",
+         "ControlSeverity": "High",
+         "Automated": "Yes",
+         "MethodName": "CheckCosmosDbFirewallState",
+         "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets.",
+         "Recommendation": "Azure Portal --> Resource --> Firewall. Turn 'ON' - 'Enable IP Access Control' and provide required IP addresses and/or ranges and save.",
+         "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthZ"
+         ],
+         "Enabled": true
+      },
+      {
+         "ControlID": "Azure_CosmosDB_AuthZ_Verify_IP_Range",
+         "Description": "Configure only the required IP addresses on Cosmos DB firewall",
+         "Id": "CosmosDb120",
+         "ControlSeverity": "High",
+         "Automated": "Yes",
+         "MethodName": "CheckCosmosDbFirewallIpRange",
+         "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. For effective usage, whitelist only the required IPs. Whitelisting larger ranges like 0.0.0.0/0, 0.0.0.0/1, 128.0.0.0/1, etc. will defeat the purpose.",
+         "Recommendation": "Do not use high ranges like 0.0.0.0/0, 0.0.0.0/1, 128.0.0.0/1, etc. Maximum IPs in a range should be less that 256 and total IPs including all ranges should be less than 2048. To modify - Azure Portal --> Resource --> Firewall. Turn 'ON' - 'Enable IP Access Control' and add/or remove IP addresses and/or ranges and save.",
+         "Tags": [
+            "SDL",
+            "Best Practice",
+            "Automated",
+            "StateManagement",
+            "AuthZ"
+         ],
+         "Enabled": true
+      },
+      {
+         "ControlID": "Azure_CosmosDB_Config_Default_Consistency",
+         "Description": "Do not use 'Eventual' consistency",
+         "Id": "CosmosDb130",
+         "ControlSeverity": "High",
+         "Automated": "Yes",
+         "MethodName": "CheckCosmosDbConsistency",
+         "Rationale": "Using Eventual consistency might cause undesired effects due to its ordering guarantees. This consistency is the weakest of all and the values returned in reads are always not guaranteed to be latest write.",
+         "Recommendation": "Using Eventual consistency might cause undesired effects due to its ordering guarantees. To modify - Azure Portal --> Resource --> Default consistency. Select 'Session' and save. Refer: https://docs.microsoft.com/en-in/azure/cosmos-db/consistency-levels",
+         "Tags": [
+            "SDL",
+            "Best Practice",
+            "Automated",
+            "Config"
+         ],
+         "Enabled": true
+      },
+      {
+         "ControlID": "Azure_CosmosDB_Deploy_Use_Replication",
+         "Description": "Use global replication",
+         "Id": "CosmosDb140",
+         "ControlSeverity": "Medium",
+         "Automated": "Yes",
+         "MethodName": "CheckCosmosDbReplication",
+         "Rationale": "Replication ensures continuity and rapid recovery during disasters.",
+         "Recommendation": "Replication ensures the continuity and rapid recovery during disasters. To add - Azure Portal --> Resource -> Replicate data globally. Select a secondary read region and save. Refer: https://docs.microsoft.com/en-in/azure/cosmos-db/distribute-data-globally",
+         "Tags": [
+            "SDL",
+            "Best Practice",
+            "Automated",
+            "Deploy"
+         ],
+         "Enabled": true
+      },
+      {
+         "ControlID": "Azure_CosmosDB_Deploy_Use_Automatic_Failover",
+         "Description": "Use automatic failover",
+         "Id": "CosmosDb150",
+         "ControlSeverity": "Medium",
+         "Automated": "Yes",
+         "MethodName": "CheckCosmosDbAutomaticFailover",
+         "Rationale": "Automatic failover ensures continuity and auto recovery during disasters.",
+         "Recommendation": "Automatic failover ensures the continuity and auto recovery during disasters. To configure, you must have at least 1 secondary replica enabled. To enabled replica - Azure Portal --> Resource -> Replicate data globally. Select a secondary read region and save. To set automatic failover - Azure Portal --> Resource -> Replicate data globally --> Automatic Failover. Turn 'ON' - 'Enable Automatic Failover', set the priorities and click 'OK'.",
+         "Tags": [
+            "SDL",
+            "Best Practice",
+            "Automated",
+            "Deploy"
+         ],
+         "Enabled": true
+      },
+      {
+         "ControlID": "Azure_CosmosDB_DP_Parameterized_Queries",
+         "Description": "Use parameterized SQL queries",
+         "Id": "CosmosDb310",
+         "ControlSeverity": "High",
+         "Automated": "No",
+         "MethodName": "",
+         "Rationale": "Parameterized SQL queries nullify the possibility of SQL injection by pre-compling the query. This will treat user input values purely as data.",
+         "Recommendation": "Injection attacks are possible when using SQL queries. Use parameterized SQL queries to pass user inputs to the query. Refer: https://docs.microsoft.com/en-us/azure/cosmos-db/documentdb-sql-query#parameterized-sql-queries and https://docs.microsoft.com/en-us/azure/cosmos-db/documentdb-sql-query#a-iddotnetsdkac-net-sdk",
+         "Tags": [
+            "SDL",
+            "Best Practice",
+            "Development",
+            "Manual",
+            "DP"
+         ],
+         "Enabled": true
+      },
+      {
+         "ControlID": "Azure_CosmosDB_DP_Rotate_Keys",
+         "Description": "CosmosDb Account keys must be rotated periodically",
+         "Id": "CosmosDb320",
+         "ControlSeverity": "Medium",
+         "Automated": "No",
+         "MethodName": "",
+         "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
+         "Recommendation": "Rotate Cosmos DB account keys on a periodic basis. Refer: https://docs.microsoft.com/en-us/azure/cosmos-db/manage-account#regenerate-access-keys",
+         "Tags": [
+            "SDL",
+            "Best Practice",
+            "StateManagement",
+            "DP",
+            "Manual"
+         ],
+         "Enabled": true
+      },
+      {
+         "ControlID": "Azure_CosmosDB_AuthZ_Allow_Limited_Access_Resource_Token",
+         "Description": "Generate resource tokens with just enough privileges and expiry needed by clients",
+         "Id": "CosmosDb330",
+         "ControlSeverity": "High",
+         "Automated": "No",
+         "MethodName": "",
+         "Rationale": "Using appropriate ACLs ensures that data is protected and accessible only to the entities with the appropriate level of access.",
+         "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/cosmos-db/secure-access-to-data#resource-tokens",
+         "Tags": [
+            "SDL",
+            "Best Practice",
+            "Development",
+            "AuthZ",
+            "Manual"
+         ],
+         "Enabled": true
+      },
+      {
+         "ControlID": "Azure_CosmosDB_DP_TTL_Dont_Send_RW_Resource_Tokens",
+         "Description": "Do not send resource token with read write (RW) permission to untrusted clients",
+         "Id": "CosmosDb340",
+         "ControlSeverity": "High",
+         "Automated": "No",
+         "MethodName": "",
+         "Rationale": "An untrusted client might use the read-write resource tokens that it received to make undesirable updates to the resource.",
+         "Recommendation": "Manage all writes to Cosmos DB for untrusted clients from the middle tier (server side).",
+         "Tags": [
+            "SDL",
+            "Best Practice",
+            "Development",
+            "DP",
+            "Manual"
+         ],
+         "Enabled": true
+      }
+   ]
+}

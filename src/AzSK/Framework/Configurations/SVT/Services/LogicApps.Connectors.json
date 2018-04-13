@@ -1,0 +1,196 @@
+{
+    "ApprovedConnectors": [
+        {
+            "ConnectorName": "Request",
+            "ApplicableControls": [
+                {
+                    "Name": "EncryptionTransit",
+                    "Automated": false,
+                    "MethodName": "DefaultPassed",
+                    "Remarks": "Data in transit is secured"
+                }
+            ],
+            "NotApplicableControls": [
+                {
+                    "Name": "AAD",
+                    "Automated": false,
+                    "MethodName": "DefaultPassed",
+                    "Remarks": ""
+                }
+            ]
+        },
+        {
+            "ConnectorName": "Recurrence",
+            "ApplicableControls": [],
+            "NotApplicableControls": [
+                {
+                    "Name": "AAD",
+                    "Automated": false,
+                    "MethodName": "DefaultPassed",
+                    "Remarks": ""
+                },
+                {
+                    "Name": "EncryptionTransit",
+                    "Automated": false,
+                    "MethodName": "DefaultPassed",
+                    "Remarks": ""
+                }
+            ]
+        },
+        {
+            "ConnectorName": "Http",
+            "ApplicableControls": [
+                {
+                    "Name": "AAD",
+                    "Automated": true,
+                    "MethodName": "CheckAadAuthForHttp",
+                    "Remarks": ""
+                },
+                {
+                    "Name": "EncryptionTransit",
+                    "Automated": true,
+                    "MethodName": "CheckEncryptionTransitForHttp",
+                    "Remarks": ""
+                }
+            ],
+            "NotApplicableControls": []
+        },
+        {
+            "ConnectorName": "servicebus",
+            "ApplicableControls": [
+                {
+                    "Name": "EncryptionTransit",
+                    "Automated": true,
+                    "MethodName": "DefaultManual",
+                    "Remarks": "Manually verify that Service Bus URI is secure (HTTPS)"
+                }
+            ],
+            "NotApplicableControls": [
+                {
+                    "Name": "AAD",
+                    "Automated": false,
+                    "MethodName": "DefaultPassed",
+                    "Remarks": ""
+                }
+            ]
+        },
+        {
+            "ConnectorName": "azureblob",
+            "ApplicableControls": [
+                {
+                    "Name": "EncryptionTransit",
+                    "Automated": false,
+                    "MethodName": "DefaultPassed",
+                    "Remarks": "Data in transit is secured"
+                }
+            ],
+            "NotApplicableControls": [
+                {
+                    "Name": "AAD",
+                    "Automated": false,
+                    "MethodName": "DefaultPassed",
+                    "Remarks": ""
+                }
+            ]
+        },
+        {
+            "ConnectorName": "sql",
+            "ApplicableControls": [
+                {
+                    "Name": "EncryptionTransit",
+                    "Automated": false,
+                    "MethodName": "DefaultPassed",
+                    "Remarks": "Data in transit is secured"
+                }
+            ],
+            "NotApplicableControls": [
+                {
+                    "Name": "AAD",
+                    "Automated": false,
+                    "MethodName": "DefaultPassed",
+                    "Remarks": "AAD authentication is not supported by SQL connector. For on-premise SQL Server connections, Windows Authentication is recommended"
+                }
+            ]
+        },
+        {
+            "ConnectorName": "office365",
+            "ApplicableControls": [
+                {
+                    "Name": "AAD",
+                    "Automated": false,
+                    "MethodName": "DefaultPassed",
+                    "Remarks": ""
+                },
+                {
+                    "Name": "EncryptionTransit",
+                    "Automated": false,
+                    "MethodName": "DefaultPassed",
+                    "Remarks": "Data in transit is secured"
+                }
+            ],
+            "NotApplicableControls": []
+        },
+        {
+            "ConnectorName": "Response",
+            "ApplicableControls": [
+                {
+                    "Name": "EncryptionTransit",
+                    "Automated": false,
+                    "MethodName": "DefaultPassed",
+                    "Remarks": "Data in transit is secured"
+                }
+            ],
+            "NotApplicableControls": [
+                {
+                    "Name": "AAD",
+                    "Automated": false,
+                    "MethodName": "DefaultPassed",
+                    "Remarks": ""
+                }
+            ]
+        },
+        {
+            "ConnectorName": "sftp",
+            "ApplicableControls": [
+                {
+                    "Name": "EncryptionTransit",
+                    "Automated": false,
+                    "MethodName": "DefaultManual",
+                    "Remarks": ""
+                }
+            ],
+            "NotApplicableControls": [
+                {
+                    "Name": "AAD",
+                    "Automated": false,
+                    "MethodName": "DefaultPassed",
+                    "Remarks": ""
+                }
+            ]
+        },
+        {
+            "ConnectorName": "HttpWebhook",
+            "ApplicableControls": [
+                {
+                    "Name": "AAD",
+                    "Automated": false,
+                    "MethodName": "DefaultManual",
+                    "Remarks": "Manually verify that Webhook connector uses AAD Authentication"
+                },
+                {
+                    "Name": "EncryptionTransit",
+                    "Automated": false,
+                    "MethodName": "CheckEncryptionTransitForWebhook",
+                    "Remarks": ""
+                }
+            ],
+            "NotApplicableControls": []
+        }
+    ],
+    "NotApprovedConnectors": [
+        {
+            "ConnectorName": "ftp",
+            "Remarks": "The FTP connector must not be used because the FTP protocol does not support a strong authentication mechanism"
+        }
+    ]
+}

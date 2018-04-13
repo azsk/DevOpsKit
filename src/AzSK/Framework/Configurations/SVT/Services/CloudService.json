@@ -1,0 +1,163 @@
+﻿{
+  "FeatureName": "CloudService",
+  "Reference": "aka.ms/azsktcp/cloudservice",
+  "IsManintenanceMode": false,
+  "Controls": [
+    {
+      "ControlID": "Azure_CloudService_AuthN_Use_AAD_for_Client_AuthN",
+      "Description": "Cloud Service must authenticate users using Azure Active Directory backed credentials",
+      "Id": "CloudService01",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+      "Recommendation": "Create an AAD App. Configure the App with your cloud service URLs to enforce AAD auth for every request. Refer: https://blogs.msdn.microsoft.com/visualstudio/2014/11/19/connecting-to-cloud-services/",
+      "Tags": [
+        "SDL",
+        "AuthN",
+        "Classic",
+        "Manual"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_CloudService_DP_DontAllow_HTTP_Access_InputEndpoints",
+      "Description": "Cloud Service must only be accessible over HTTPS. Enable https for InputEndpoints.",
+      "Id": "CloudService03",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
+      "Recommendation": "Get an SSL certificate from a trusted certificate provider. Upload that certificate to cloud service. Update input endpoints by renaming HTTP to HTTPS in .csdef. Refer: https://docs.microsoft.com/en-us/azure/cloud-services/cloud-services-configure-ssl-certificate",
+      "Tags": [
+        "SDL",
+        "Automated",
+        "DP",
+        "Classic"
+      ],
+      "Enabled": true,
+      "MethodName": "CheckCloudServiceHttpCertificateSSLOnInputEndpoints"
+    },
+    {
+      "ControlID": "Azure_CloudService_SI_Validate_InternalEndpoints",
+      "Description": "Remove unused internal endpoints",
+      "Id": "CloudService04",
+      "ControlSeverity": "Medium",
+      "Rationale": "Internal endpoints are available for instance-to-instance communication with in cloud service. Exploitation of one such internal instance can put all the other internal instances at risk with which it has open communication channels.",
+      "Recommendation": "Remove unused internal endpoints from .csdef and redeploy your cloud service to reflect the new changes. Refer: https://azure.microsoft.com/en-us/documentation/articles/cloud-services-enable-communication-role-instances",
+      "Automated": "Yes",
+      "Tags": [
+        "SDL",
+        "Automated",
+        "Classic",
+        "OwnerAccess",
+        "SI"
+      ],
+      "Enabled": true,
+      "MethodName": "CheckCloudServiceInstanceEndpoints"
+    },
+    {
+      "ControlID": "Azure_CloudService_SI_Validate_InputEndpoints",
+      "Description": "Remove unused input endpoints",
+      "Id": "CloudService05",
+      "ControlSeverity": "Medium",
+      "Rationale": "The input endpoint is used when you want to expose a port to the outside from a cloud service. Such unintended open connections expose cloud service instances to a high level of risk from internet-based attacks that attempt to brute force credentials to gain access to the machine.",
+      "Recommendation": "Remove unused input endpoints from .csdef and redeploy your cloud service to reflect the new changes. Refer: https://azure.microsoft.com/en-us/documentation/articles/cloud-services-enable-communication-role-instances",
+      "Automated": "Yes",
+      "Tags": [
+        "SDL",
+        "Automated",
+        "SI",
+        "Classic"
+      ],
+      "Enabled": true,
+      "MethodName": "CheckCloudServiceInputEndpoints"
+    },
+    {
+      "ControlID": "Azure_CloudService_SI_Disable_RemoteDebugging",
+      "Description": "Remote debugging must be turned off",
+      "Id": "CloudService06",
+      "ControlSeverity": "High",
+      "Rationale": "Remote debugging requires inbound ports to be opened. These ports become easy targets for compromise from various internet based attacks.",
+      "Recommendation": "Remove [Microsoft.WindowsAzure.Plugins.RemoteDebugger*] endpoints from .csdef and redeploy your cloud service to reflect the new changes. Refer: https://docs.microsoft.com/en-us/azure/vs-azure-tools-debug-cloud-services-virtual-machines",
+      "Automated": "Yes",
+      "Tags": [
+        "SDL",
+        "Automated",
+        "Classic",
+        "OwnerAccess",
+        "SI"
+      ],
+      "Enabled": true,
+      "MethodName": "CheckCloudServiceRemoteDebuggingStatus"
+    },
+    {
+      "ControlID": "Azure_CloudService_DP_CNAME_with_SSL",
+      "Description": "A CNAME should be configured for the cloud service.",
+      "Id": "CloudService07",
+      "ControlSeverity": "Medium",
+      "Rationale": "Use of custom domain protects a web application from common attacks such as phishing, session hijacking and other DNS-related attacks.",
+      "Recommendation": "Get an SSL certificate for your CNAME from a trusted certificate provider and upload the same to your cloud service. Map the VIP of your cloud service at your DNS registrar's website. Refer: https://docs.microsoft.com/en-us/azure/cloud-services/cloud-services-custom-domain-name",
+      "Automated": "No",
+      "Tags": [
+        "SDL",
+        "Classic",
+        "OwnerAccess",
+        "Manual",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_CloudService_SI_Auto_OSUpdate",
+      "Description": "OS version should be set to automatic.",
+      "Id": "CloudService08",
+      "ControlSeverity": "High",
+      "Rationale": "Cloud services where automatic updates are disabled are likely to miss important security patches (human error, forgetfulness). This may lead to compromise from various malware/trojan attacks that exploit known vulnerabilities in operating systems and related software.",
+      "Recommendation": "To enable automatic updates: Go to manage Azure portal --> your cloud service --> under configure tab --> set operating system version to automatic.",
+      "Automated": "Yes",
+      "Tags": [
+        "SDL",
+        "Automated",
+        "SI",
+        "Classic"
+      ],
+      "Enabled": true,
+      "MethodName": "CheckCloudServiceOSPatchStatus"
+    },
+    {
+      "ControlID": "Azure_CloudService_SI_Enable_AntiMalware",
+      "Description": "Enable the Antimalware extension for the cloud service roles",
+      "Id": "CloudService09",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "Rationale": "Antimalware provides real-time protection, scheduled scanning, malware remediation, signature updates, engine updates, samples reporting, exclusion event collection etc.",
+      "Recommendation": "To enable Antimalware: Go to Azure portal --> your cloud service --> Antimalware under Settings section--> select role and enable Antimalware.",
+      "Tags": [
+        "SDL",
+        "Automated",
+        "Classic",
+        "OwnerAccess",
+        "SI"
+      ],
+      "Enabled": true,
+      "MethodName": "CheckCloudServiceAntiMalwareStatus"
+    },
+    {
+      "ControlID": "Azure_CloudService_SI_Disable_RemoteDesktop_Access",
+      "Description": "Remote Desktop (RDP) access must be disabled on cloud service roles",
+      "Id": "CloudService10",
+      "ControlSeverity": "High",
+      "Rationale": "Remote desktop access requires inbound ports to be opened. These ports become easy targets for compromise from various internet based attacks.",
+      "Recommendation": "Go to Azure portal --> your cloud service --> Remote Desktop under Settings section --> disable Remote Desktop",
+      "Automated": "Yes",
+      "Tags": [
+        "SDL",
+        "Automated",
+        "Classic",
+        "OwnerAccess",
+        "SI"
+      ],
+      "Enabled": true,
+      "MethodName": "CheckCloudServiceRemoteDesktopAccess"
+    }
+  ]
+}

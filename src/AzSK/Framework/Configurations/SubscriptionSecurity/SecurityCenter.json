@@ -1,0 +1,13 @@
+﻿{
+   "Version": "2.1709.0",
+   "properties": {
+      "logCollection": "On",
+      "recommendations": {
+      },
+      "securityContactConfiguration": {
+         "securityContactEmails": [],
+         "areNotificationsOn": true,
+         "sendToAdminOn": true
+      }
+   }
+}

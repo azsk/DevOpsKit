@@ -1,0 +1,187 @@
+{
+  "FeatureName": "EventHub",
+  "Reference": "aka.ms/azsktcp/eventhub",
+  "IsManintenanceMode": false,
+  "Controls": [       
+    {
+      "ControlID": "Azure_EventHub_AuthZ_Dont_Use_Policies_At_SB_Namespace",
+      "Description": "Event Hub clients (event senders or receivers) must not use 'namespace' level access policies",
+      "Id": "EventHub130",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckEventHubRootPolicy",
+      "Rationale": "A 'namespace' level access policy provides access to all Queues/Topics in a namespace. However, using an access policy at entity (Queue/Topic) level provides access only to the specific entity. Thus using the latter is inline with the principle of least privilege.",
+      "Recommendation": "Remove all the authorization rules from Service Bus namespace except RootManageSharedAccessKey using Remove-AzureRmEventHubAuthorizationRule command. Run 'Get-Help Remove-AzureRmEventHubAuthorizationRule -full' for more help. Use the Azure portal to configure shared access policies with appropriate claims at the specific Event Hub scope.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ"
+      ],
+      "Enabled": true,
+      "DataObjectProperties": [
+        "Id",
+        "Rights"
+      ]
+    },
+    {
+      "ControlID": "Azure_EventHub_AuthZ_Use_Min_Permissions_Access_Policies",
+      "Description": "Access policies must be defined with minimum required permissions to the Event Hub",
+      "Id": "EventHub140",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckEventHubAuthorizationRule",
+      "Rationale": "Granting minimum access ensures that users are granted just enough permissions to perform their tasks. This minimizes the set of operations that can be preformed on the resource by an attacker in case of access policy key compromise.",
+      "Recommendation": "Ensure that client apps use shared access policies with the least required privilege and at the Event Hub scope. For instance, if the client app is only reading events from the event hub (as opposed to sending), then the policy used must only include the 'Listen' claim. Refer: https://docs.microsoft.com/en-us/azure/event-hubs/event-hubs-authentication-and-security-model-overview",
+      "Tags": [
+         "SDL",
+         "TCP",
+         "Automated",
+         "AuthZ"
+      ],
+      "Enabled": true,
+      "DataObjectProperties": [
+        "Id",
+        "Rights"
+      ]
+    },
+    {
+      "ControlID": "Azure_EventHub_DP_Protect_Keys_At_Rest",
+      "Description": "Access policy keys must be protected at rest",
+      "Id": "EventHub150",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
+      "Recommendation": "Access policy keys must be handled in a secure manner. E.g., Access policy keys can be stored in the application settings on the Azure portal for a Web App, or can be stored in a Key Vault. The approach to protect the key may vary based on the Azure feature and scenario from where Event Hubs are consumed.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_EventHub_DP_Rotate_Keys",
+      "Description": "Access policy keys must be rotated periodically",
+      "Id": "EventHub160",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
+      "Recommendation": "Use New-AzureRmEventHubKey -ResourceGroupName <ResourceGroupName> -Namespace <NamespaceName> -EventHub <EventHubName> -Name <AuthorizationRuleName> -RegenerateKey PrimaryKey/SecondaryKey to regenerate Event Hub key. Use New-AzureRmEventHubKey -ResourceGroupName <ResourceGroupName> -Namespace <NamespaceName> -Name <AuthorizationRuleName> -RegenerateKeys PrimaryKey/SecondaryKey to regenerate namespace key. Caution: Make sure that the newly generated keys are seamlessly deployed to clients to avoid disruption of functionality.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_EventHub_Audit_Review_Logs",
+      "Description": "Audit logs for Event Hub entities should be reviewed periodically",
+      "Id": "EventHub170",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Periodic reviews of diagnostics, activity and audit logs ensures that anomalous activity can be identified early enough instead of after a major compromise.",
+      "Recommendation": "Audit log can be reviewed at Portal -> Event Hub -> <Your Event Hub Name> -> Diagnostics Logs",
+      "Tags": [
+        "SDL",
+        "Best Practice",
+        "Manual",
+        "Audit"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_EventHub_DP_Encrypt_In_Transit",
+      "Description": "Sensitive data must be encrypted in transit",
+      "Id": "EventHub190",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
+      "Recommendation": "Default behavior. No action required.",
+      "Tags": [
+        "SDL",
+        "Information",
+        "Manual",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_EventHub_AuthZ_Use_Min_Token_Lifetime",
+      "Description": "Expiry time of SAS token should be minimum required",
+      "Id": "EventHub200",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "If SAS token gets compromised, unauthorized users can access Event Hub entities. Minimizing the validity period of the SAS token ensures that the window of time available to an attacker in the event of compromise is minimized.",
+      "Recommendation": "Set expiry time of SAS tokens to the minimum required in context of the scenario. Refer: https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-sas#generate-a-shared-access-signature-token",
+      "Tags": [
+        "SDL",
+        "Best Practice",
+        "Manual",
+        "AuthZ"
+      ],
+      "Enabled": true
+    },
+   {
+      "ControlID": "Azure_EventHub_AuthN_Use_Publisher_Token",
+      "Description": "Use 'Publisher' tokens to authenticate senders instead of 'Access Policy' tokens",
+      "Id": "EventHub210",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Publisher tokens offer a scalable option when there are a large number of senders involved. Individual time-bound SAS tokens can be created via inheritance from a shared policy so the damage from compromise of any single token is contained. Also, all publisher tokens generated by same policy can be decommisioned by simply decommisioning the corresponding access policy.",
+      "Recommendation": "Generate 'Publisher' tokens by combining an access policy that has 'Send' claim with an event publisher ID for each publisher. Using this mechanism each publisher will be able to send to only its own virtual endpoint. Refer: https://blogs.msdn.microsoft.com/servicebus/2015/02/02/event-hub-publisher-policy-in-action/",
+      "Tags": [
+         "SDL",
+         "Best Practice",
+         "Manual",
+         "AuthN"
+      ],
+      "Enabled": true
+   },
+    {
+      "ControlID": "Azure_EventHub_AuthZ_Grant_Min_RBAC_Access",
+      "Description": "All users/identities must be granted minimum required permissions using Role Based Access Control (RBAC)",
+      "Id": "EventHub220",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckRBACAccess",
+      "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+      "Recommendation": "Administrator should assign 'Owner' role to Event Hub at the 'resource' scope. Application developers should not have direct access to the Event Hub resource (they should just be provided the required shared access policy for a non-production event hub). Auditors should have 'Monitor Contributor Service Role' or 'Monitor Reader Service Role' based on their role.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_EventHub_Audit_Enable_Diagnostics_Log",
+      "Description": "Diagnostics logs must be enabled with a retention period of at least $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) days",
+      "Id": "EventHub230",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckDiagnosticsSettings",
+      "Rationale": "Logs should be retained for a long enough period so that activity trail can be recreated when investigations are required in the event of an incident or a compromise. A period of 1 year is typical for several compliance requirements as well.",
+      "Recommendation": "Run command: Set-AzureRmDiagnosticSetting -ResourceId {'ResourceId'} -Enable `$true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled `$true",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "Audit",
+        "Diagnostics"
+      ],
+      "Enabled": true
+    }
+  ]
+}

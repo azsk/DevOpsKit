@@ -1,0 +1,279 @@
+{
+  "FeatureName": "ServiceFabric",
+  "Reference": "aka.ms/azsktcp/servicefabric",
+  "IsManintenanceMode": false,
+  "Controls": [
+    {
+      "ControlID": "Azure_ServiceFabric_AuthN_Publicly_Exposed_MicroSvc",
+      "Description": "Publicly exposed microservice endpoints must have authentication and authorization enforced",
+      "Id": "ServiceFabric110",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "If authentication and authorization are not correctly implemented, microservice endpoints may be easily accessed by anyone on the internet leading to compromise of sensitive data.",
+      "Recommendation": "Authentication and access control must be implemented on publicly exposed microservices using standard mechanisms for user/client authentication.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "AuthN"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_DP_Exposed_Endpoint_SSL_Secured",
+      "Description": "Publicly exposed endpoints must be secured using SSL",
+      "Id": "ServiceFabric120",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale":  "Use of SSL ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
+      "Recommendation": "Azure Service Fabric supports configuration of endpoints for microservices. To provide end to end encryption and data integrity, all publicly exposed endpoints must be secured using SSL. Steps to configure SSL: (1) Specify HTTPS endpoint in ServiceManifest.xml at ServiceManifest --> Resources --> Endpoints, (2) Specify certificate details in ApplicationManifest.xml <i> Add an EndpointBindingPolicy at ApplicationManifest --> ServiceManifestImport --> Policies <ii> Add an EndpointCertificate at ApplicationManifest --> Certificates (3) Upload certificate to cluster (Refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-service-manifest-resources/#example-specifying-an-https-endpoint-for-your-service)",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_DP_App_Secrets_Cert_Encrypted",
+      "Description": "Application secrets must be encrypted with a certificate",
+      "Id": "ServiceFabric130",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Protecting the connection string, storage account keys, password, etc., (stored in Settings.xml file in ConfigPackage of microservice, ServiceManifest.xml and ApplicationManifest.xml) ensures that these secrets do not get compromised through copies of the settings/manifest files that might be left unprotected on various systems.",
+      "Recommendation": "An application typically contains secrets, such as connection string, storage account keys, password etc., which are required at runtime. Application secrets can be stored in Settings.xml file in ConfigPackage of microservice, ServiceManifest.xml and ApplicationManifest.xml. These secrets must be encrypted with a certificate. Steps to encrypt a secret: (1) Obtain a data encipherment certificate. (2) Install the certificate on cluster. (3) Encrypt secret values when deploying an application with the certificate and inject them into Settings.xml/ServiceManifest.xml/ApplicationManifest.xml file. (4) Read encrypted values out of Settings.xml and decrypt them with the same encipherment certificate. Refer:  https://azure.microsoft.com/en-us/documentation/articles/service-fabric-application-secret-management/",
+      "Tags": [
+         "SDL",
+         "TCP",
+         "Manual",
+         "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_DP_Data_Replication_Cert_Secured",
+      "Description": "Data replication must be secured with certificate",
+      "Id": "ServiceFabric140",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "The replication traffic of microservices must be protected using a certificate so that microservices are not be able to see each others' replication traffic.",
+      "Recommendation": "Service Fabric Replicator Service is responsible for making the state of Stateful service highly reliable. Replicator security configurations must be used to secure the communication channel that is used during replication. Doing this ensures that services within the same cluster will not be able to see each other's replication traffic, ensuring that the data that is made highly available is also secure. Note that by default an empty security configuration section implies no replication security. Refer 'Sample configuration file' at:  https://azure.microsoft.com/en-in/documentation/articles/service-fabric-reliable-services-configuration/#_replicator-security-configuration",
+      "Tags": [
+         "SDL",
+         "TCP",
+         "Manual",
+         "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_DP_Sensitive_Data_Dont_Store_In_DataPackage",
+      "Description": "Sensitive data must not be stored inside DataPackage",
+      "Id": "ServiceFabric150",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "DataPackage files can be accessed from other microservices running on same node (VM). DataPackage files get distributed along with the application package while publishing/deployment. This can lead to compromise of any sensitive data as copies of these deployment packages are often left unprotected.",
+      "Recommendation": "DataPackage is intended to store static files which are required by microservices at runtime. Files inside DataPackage are NOT intended to be modified at runtime. DataPackage must not contain any file containing sensitive data, because: (1) DataPackage files can be accessed from other microservices running on same node (VM) and (2) DataPackage files gets distributed along with the application package when the application is published.",
+      "Tags": [
+         "SDL",
+         "TCP",
+         "Manual",
+         "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_Availability_Replica_Stateful_Size_Set_Min_3",
+      "Description": "Replica set size for stateful services must be set to a minimum of 3",
+      "Id": "ServiceFabric160",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "CheckStatefulServiceReplicaSetSize",
+      "Rationale": "A replica set size of 3 or more in the case of stateful services ensures that data is not lost in the event of a single node failure.",
+      "Recommendation": "The replica set size of a Stateful service indicates the number of copies of reliable service data maintained by Service Fabric. The data in reliable service must not be lost even if a node (VM) goes down. However, if the replica set size is 1, data loss is possible. To achieve high availability, each stateful service must have a target and minimum replica set size of at least 3. Set the values for all Stateful services in ApplicationManifest.xml file as below: (1) ApplicationManifest --> DefaultServices --> Service --> StatefulService --> MinReplicaSetSize, (2) ApplicationManifest --> DefaultServices --> Service --> StatefulService --> TargetReplicaSetSize. Refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-concepts-partitioning/",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "Availability"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_Availability_Instance_Stateless_Size_Set_Min_3",
+      "Description": "Instance count for stateless service must be set to a minimum of 3",
+      "Id": "ServiceFabric170",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "An instance count of 3 or more guarantees high availability for stateless services in the event of a single node failure.",
+      "Recommendation": "The instance count reflects the number of instances of a stateless service that should be running in the cluster. To achieve high availability, each stateless service must have an instance count of at least 3. Set this value to 3 for all stateless services in ApplicationManifest.xml file at ApplicationManifest --> DefaultServices --> Service --> StatelessService --> InstanceCount",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "Availability"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_AuthZ_Security_Mode_Enabled",
+      "Description": "Service Fabric cluster security must be enabled using security mode option",
+      "Id": "ServiceFabric190",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckSecurityMode",
+      "Rationale":  "A secure cluster prevents unauthorized access to management operations, which includes deployment, upgrade, and deletion of microservices. Also provides encryption for node-to-node communication, client-to-node communication etc. In oppose to unsecure cluster which can be connected by any anonymous user.",
+      "Recommendation": "A secure cluster must be created to prevent unauthorized access to management operations (e.g., deployment, upgrade or deletion of microservices). A secure cluster also provides encryption for node-to-node communication, client-to-node communication, etc. An insecure cluster is open to be connected by any anonymous user. An insecure cluster cannot be secured at a later time. For creating a secure cluster using (1) Azure Portal, refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-cluster-creation-via-portal/#_3-security or using (2) ARM template refer:https://azure.microsoft.com/en-in/documentation/articles/service-fabric-cluster-creation-via-arm/",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_AuthZ_Microservice_Trust",
+      "Description": "Service Fabric cluster must contain only microservices which trust each other",
+      "Id": "ServiceFabric200",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Microservice hosted on same Service Fabric cluster can monitor traffic of other microservices and access the files hosted on cluster. Hence the same Service Fabric cluster must not host microservices which do not trust each other.",
+      "Recommendation": "Microservices hosted on same Service Fabric cluster can monitor traffic of other microservices and access the files hosted on cluster. Hence a Service Fabric cluster must contain only those microservices which trust each other.",
+      "Tags": [
+         "SDL",
+         "TCP",
+         "Manual",
+         "AuthZ"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_AuthN_Self_Signed_Cert",
+      "Description": "Self-signed certs must not be used for Service Fabric cluster primary certificate",
+      "Id": "ServiceFabric210",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckClusterCertificateSSL",
+      "Rationale": "The primary certificate of Service Fabric must be obtained from a trusted certification authority. This ensures that client applications/endpoints can validate the identities of microservices in the cluster in a secure manner.",
+      "Recommendation": "Service Fabric uses an X.509 certificate for cluster security in a couple of ways: (1) Cluster authentication: For authentication of node-to-node communication and (2) Server authentication: For authentication of cluster management endpoints to management clients. The primary certificate is also for the HTTPS access to the management API and the Service Fabric Explorer. This certificate must be obtained from an approved Certificate Authority for a custom domain name for your cluster.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthN"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_AuthN_Client_AuthN_AAD_Only",
+      "Description": "Client authentication must be performed only via Azure Active Directory",
+      "Id": "ServiceFabric220",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckAADClientAuthentication",
+      "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control. All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+      "Recommendation": "A Service Fabric cluster offers several entry points to its management functionality, including the web-based Service Fabric Explorer, Visual Studio and PowerShell. Access to the cluster must be controlled using AAD. Refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-cluster-creation-via-arm/#_set-up-azure-active-directory-for-client-authentication",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthN"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_DP_Set_Property_ClusterProtectionLevel",
+      "Description": "The ClusterProtectionLevel property must be set to EncryptAndSign",
+      "Id": "ServiceFabric230",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckClusterProtectionLevel",
+      "Rationale": "With cluster protection level set to 'EncryptAndSign', all the node-to-node messages are encrypted and digitally signed. This protects the intra-cluster communication from eavesdropping/tampering/man-in-the-middle attacks on the network.",
+      "Recommendation": "Service Fabric provides three levels of protection (None, Sign and EncryptAndSign) for node to node communication using cluster primary certificate. The protection level can be specified using property 'ClusterProtectionLevel' inside Service Fabric ARM template. The value of 'ClusterProtectionLevel' must be set to 'EncryptAndSign' to ensure that all the node-to-node messages are encrypted and digitally signed. Configure 'ClusterProtectionLevel' using ARM template as follows: ARM Template --> Resources --> Select resource type 'Microsoft.ServiceFabric/clusters' --> 'fabricSettings' --> Add 'ClusterProtectionLevel' property with value 'EncryptAndSign'.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_AuthN_NSG_Enabled",
+      "Description": "Network security group (NSG) must be enabled on subnets of Service Fabric cluster",
+      "Id": "ServiceFabric240",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckNSGConfigurations",
+      "Rationale": "Use of appropriate NSG rules can limit exposure of Service Fabric cluster in multiple scenarios. For example, RDP connections can be restricted only for specific admin machines. Incoming requests to microservices may be restricted to specific clients. Also, deployments can be restricted to happen only from an allowed range of IP addresses.",
+      "Recommendation": "NSG contains a list of Access Control List (ACL) rules that allow or deny network traffic to Service Fabric node instances in a Virtual Network. NSGs can be associated with either subnets or individual node/VM instances within a subnet. NSG must be used in following scenarios: (1) Restrict RDP connection only from admin machine IP,  (2) Restrict microservice incoming request from trusted source IP, (3(.) Lock down the remote address ranges allowed for microservice deployments. Refer: https://azure.microsoft.com/en-in/documentation/articles/virtual-networks-create-nsg-arm-pportal/",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthN"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_DP_Enable_Encryption_Stg_Acc_Store_VHD",
+      "Description": "Encryption must be enabled on all storage accounts which store VHDs of Service Fabric cluster VMs",
+      "Id": "ServiceFabric250",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckStorageEncryption",
+      "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
+      "Recommendation": "Enabling encryption on storage accounts which contain VHDs ensures that underlying OS and data disks for IaaS VMs of Service Fabric nodes are encrypted. Follow these steps: Azure Portal --> Storage Accounts --> <Storage Account Name> --> Encryption --> Set 'Server-side encryption' to 'Enabled'.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_Audit_Use_Diagnostics_Log",
+      "Description": "Diagnostics must be enabled for Service Fabric cluster",
+      "Id": "ServiceFabric260",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckVmssDiagnostics",
+      "Rationale": "Diagnostics logs are needed for creating activity trail while investigating an incident or a compromise.",
+      "Recommendation": "Diagnostics must be enabled to get logs of these events: (1) Service Fabric events: Emitted by the platform to standard ETW and event source channels. E.g., Node Down/Up etc. (2) Application events: Events emitted from the microservice code. E.g., Application Created, Service Created/Deleted, etc. Diagnostics extension must be deployed on all VMs in the Service Fabric cluster. It collect logs from all the VMs and uploads them to the Azure Storage Account. Enable Diagnostics while creating Service Fabric using either the Azure Portal or an ARM template. (1) For Azure Portal refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-diagnostics-how-to-setup-wad/#_deploy-the-diagnostics-extension-as-part-of-cluster-creation-through-the-portal (2) For ARM Template, refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-diagnostics-how-to-setup-wad/#_deploy-the-diagnostics-extension-as-part-of-cluster-creation-by-using-azure-resource-manager",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "Audit"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_Audit_Publicly_Exposed_Load_Balancer_Ports",
+      "Description": "Monitor publicly exposed ports on load balancers used by Service Fabric cluster",
+      "Id": "ServiceFabric270",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale":  "Publically exposed ports must be monitored to detect suspicious and malicious activities early and respond in a timely manner.",
+      "Recommendation": "Azure load balancer maps the public IP address and port number of incoming traffic to the private IP address and port number of the Service Fabric nodes (ports number opened by microservices). Intranet microservice ports must not be exposed to the internet. Moreover, publicly exposed IP address/port numbers must be monitored using Azure load balancer rules as follows: Azure Portal --> Load Balancers --> <Load Balancer Name> --> Load Balancing Rules --> Validate mapping of public end port with backend port.",
+      "Tags": [
+         "SDL",
+         "TCP",
+         "Manual",
+         "Audit"
+      ],
+      "Enabled": true
+    }
+  ]
+}
