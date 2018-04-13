@@ -145,7 +145,7 @@ class PolicySetup: CommandBase
 					$localPolicyFolderPath += "\";
 				}
 
-				$localPolicyFolderPath += $prefix + "-Policy\";
+				#$localPolicyFolderPath += $prefix + "-Policy\";
 
 				if (-not (Test-Path $localPolicyFolderPath))
 				{
