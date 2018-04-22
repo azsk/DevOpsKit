@@ -66,7 +66,7 @@ function Get-AzSKARMTemplateSecurityStatus
 	}
 	End
 	{
-		
+		#tobedeleted
 	}
 }
 
