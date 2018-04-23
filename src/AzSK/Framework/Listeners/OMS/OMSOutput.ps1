@@ -108,10 +108,11 @@ class OMSOutput: ListenerBase
 			{
 				$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
 				$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
-				foreach($svtEventContext in $SVTEventContexts)
-				{
-					$currentInstance.WriteControlResult($svtEventContext);
-				}
+				#foreach($svtEventContext in $SVTEventContexts)
+				#{
+				#	$currentInstance.WriteControlResult($svtEventContext);
+				#}
+				$currentInstance.WriteControlResult($SVTEventContexts);
 			}
 			catch
 			{
@@ -137,46 +138,41 @@ class OMSOutput: ListenerBase
 		});
 	}
 
-	hidden [void] WriteControlResult([SVTEventContext] $eventContext)
+	hidden [void] WriteControlResult([SVTEventContext[]] $eventContextAll)
 	{
 		try
 		{
 			$settings = [ConfigurationManager]::GetAzSKSettings()
-			if((-not [string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId)) -or (-not [string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId)))
+            $tempBodyObjectsAll = [System.Collections.ArrayList]::new()
+			if(-not [string]::IsNullOrWhiteSpace($settings.EventHubSource))
 			{
-				$tempBodyObjects = [OMSHelper]::GetOMSBodyObjects($eventContext,$this.GetAzSKContextDetails()) #need to prioritize this
-				$tempBodyObjects | ForEach-Object{
-					Set-Variable -Name tempBody -Value $_ -Scope Local
-					$body = $tempBody | ConvertTo-Json
-					$omsBodyByteArray = ([System.Text.Encoding]::UTF8.GetBytes($body))
-					try{
-						#publish to primary workspace
-						if(-not [string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId))
-						{
-							[OMSHelper]::PostOMSData($settings.OMSWorkspaceId, $settings.OMSSharedKey, $omsBodyByteArray, $settings.OMSType)
-						}
+				$this.EventHubSource = $settings.EventHubSource
+			}
 
-						#publish to secondary workspace
-						if(-not [string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId))
-						{
-							[OMSHelper]::PostOMSData($settings.AltOMSWorkspaceId, $settings.AltOMSSharedKey, $omsBodyByteArray, $settings.OMSType)
-						}
-					}
-					catch
-					{
-						if(-not [OMSOutput]::IsIssueLogged)
-						{
-							$this.PublishCustomMessage("An error occurred while pushing data to OMS. Please check logs for more details. AzSK control evaluation results will not be sent to the configured OMS workspace from this environment until the error is resolved.", [MessageType]::Error);
-							$this.PublishException($_);
-							[OMSOutput]::IsIssueLogged = $true
-						}
-					}
-				}            
+			if(-not [string]::IsNullOrWhiteSpace($settings.EventHubNamespace))
+			{
+                $eventContextAll | ForEach-Object{
+                    $eventContext = $_
+                    $tempBodyObjects = $this.GetEventHubBodyObjects($this.EventHubSource,$eventContext) #need to prioritize this
+				    $tempBodyObjects | ForEach-Object{
+					    Set-Variable -Name tempBody -Value $_ -Scope Local
+					    #$body = $tempBody | ConvertTo-Json
+                        $tempBodyObjectsAll.Add($tempBody)
+				    } 
+                }
+                $body = $tempBodyObjectsAll | ConvertTo-Json
+                [EventHubOutput]::PostEventHubData(`
+                                $settings.EventHubNamespace, `
+                                $settings.EventHubName, `
+                                $settings.EventHubSendKeyName, `
+                                $settings.EventHubSendKey,`
+                                $body, `
+                                $settings.EventHubType)          
 			}
 		}
 		catch
 		{
-			[Exception] $ex = [Exception]::new(("Invalid OMS Settings: " + $_.Exception.ToString()), $_.Exception)
+			[Exception] $ex = [Exception]::new(("Invalid EventHub Settings: " + $_.Exception.ToString()), $_.Exception)
 			throw [SuppressedException] $ex
 		}
 
