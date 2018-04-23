@@ -138,7 +138,7 @@ class OMSOutput: ListenerBase
 		});
 	}
 
-	hidden [void] WriteControlResult([SVTEventContext[]] $eventContext)
+	hidden [void] WriteControlResult([SVTEventContext[]] $eventContextAll)
 	{
 		try
 		{
