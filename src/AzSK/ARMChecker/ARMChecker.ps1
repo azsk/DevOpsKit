@@ -39,7 +39,12 @@ function Get-AzSKARMTemplateSecurityStatus
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not")]
-		$DoNotOpenOutputFolder
+		$DoNotOpenOutputFolder,
+
+		[Parameter(Mandatory = $false, HelpMessage = "Path to ARM Template file or folder")]
+        [string]        
+        $ExemptControlListPath
+
     )
 
 	Begin
@@ -54,7 +59,7 @@ function Get-AzSKARMTemplateSecurityStatus
 			$armStatus = [ARMCheckerStatus]::new($PSCmdlet.MyInvocation);
 			if ($armStatus) 
 			{
-				return $armStatus.EvaluateStatus($ARMTemplatePath, $Recurse);				
+				return $armStatus.EvaluateStatus($ARMTemplatePath, $Recurse,$ExemptControlListPath);				
 			}    
 		}
 		catch 
@@ -66,7 +71,7 @@ function Get-AzSKARMTemplateSecurityStatus
 	}
 	End
 	{
-		#tobedeleted
+		
 	}
 }
 

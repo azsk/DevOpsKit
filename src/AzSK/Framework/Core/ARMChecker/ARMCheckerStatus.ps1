@@ -46,7 +46,7 @@ class ARMCheckerStatus: EventBase
 	}
 
 
-	[string] EvaluateStatus([string] $armTemplatePath,[Boolean]  $isRecurse)
+	[string] EvaluateStatus([string] $armTemplatePath,[Boolean]  $isRecurse,[string] $ExemptControlListPath)
 	{
 	    if(-not (Test-Path -path $armTemplatePath))
 		{
@@ -102,7 +102,7 @@ class ARMCheckerStatus: EventBase
 						$csvResultItem.ExpectedValue = $result.ExpectedValue
 						$csvResultItem.Severity = $result.Severity.ToString()
 						$csvResultItem.Status = $result.VerificationResult
-						$csvResultItem.FilePath = $armFileName
+						$csvResultItem.FilePath = $armFileName					
 
 						if($result.ResultDataMarkers.Count -gt 0)
 						{
@@ -153,8 +153,28 @@ class ARMCheckerStatus: EventBase
 				$skippedFiles += $armFileName;
 			}		
 		}
+		# Read Exempt Control List File here	
+		$EffectiveResults=@()
+		if(-not([string]::IsNullOrEmpty($ExemptControlListPath)) -and (Test-Path -path $ExemptControlListPath))
+		{
+			$exemptControlList=Get-Content $ExemptControlListPath | ConvertFrom-Csv
+            $EffectiveResults = Compare-Object -ReferenceObject $csvResults -DifferenceObject $exemptControlList -PassThru -IncludeEqual -Property ControlId,PropertyPath,FilePath 
+		     $EffectiveResults| ForEach-Object {
+		         if($_.SideIndicator -eq "==")
+			    {
+			     $_.Status= "Exempted"
+			   }
+		    }
+		      $EffectiveResults=   $EffectiveResults | Select-Object "ControlId", "Status", "ResourceType",  "Severity", `
+															"PropertyPath", "LineNumber", "CurrentValue", "ExpectedValue", `
+															"ResourcePath", "ResourceLineNumber", "Description","FilePath"
+			}
 		
-		$csvResults | Export-Csv $csvFilePath -NoTypeInformation -Force
+		if(($EffectiveResults |Measure-Object).Count -eq 0)
+		{
+		  $EffectiveResults=$csvResults
+		}
+		 $EffectiveResults| Export-Csv $csvFilePath -NoTypeInformation -Force
 
 		if($skippedFiles.Count -ne 0)
 		{
@@ -174,10 +194,10 @@ class ARMCheckerStatus: EventBase
 		if($csvResults.Count -ne 0)
 		{
 			$this.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info);
-			$this.WriteSummary($csvResults, "Severity", "Status");
+			$this.WriteSummary($EffectiveResults, "Severity", "Status");
 			$this.WriteMessage("Total scanned file(s): $scannedFileCount", [MessageType]::Info);
 
-			$resultsGroup = $csvResults | Group-Object Status | ForEach-Object {
+			$resultsGroup = $EffectiveResults | Group-Object Status | ForEach-Object {
 				$teleEvent.Properties.Add($_.Name, $_.Count);
 			};
 		}
