@@ -151,7 +151,7 @@ class OMSOutput: ListenerBase
 				{
 					$eventContextAll | ForEach-Object{
 					$eventContext = $_
-						$tempBodyObjects = [OMSHelper]::GetOMSBodyObjects($eventContext,$this.GetAzSKContextDetails()) #need to prioritize this
+						$tempBodyObjects = [OMSHelper]::GetOMSBodyObjects($eventContext,$this.GetAzSKContextDetails())
                     
 						$tempBodyObjects | ForEach-Object{
 							Set-Variable -Name tempBody -Value $_ -Scope Local
