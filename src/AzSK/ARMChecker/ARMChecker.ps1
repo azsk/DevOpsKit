@@ -20,6 +20,12 @@ function Get-AzSKARMTemplateSecurityStatus
 	.PARAMETER DoNotOpenOutputFolder
 		Switch to specify whether to open output folder containing all security evaluation report or not
 
+    .PARAMETER ExcludeFiles
+		File Names to exclude from scan
+
+    .PARAMETER SkipControlsListFile
+		Path to file containing list of controls to skip
+
 	.LINK
 	https://aka.ms/azskossdocs 
 
@@ -41,10 +47,13 @@ function Get-AzSKARMTemplateSecurityStatus
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not")]
 		$DoNotOpenOutputFolder,
 
-		[Parameter(Mandatory = $false, HelpMessage = "Path to ARM Template file or folder")]
+		[Parameter(Mandatory = $false, HelpMessage = "File Names to exclude from scan")]
         [string]        
-        $ExemptControlListPath
+        $ExcludeFiles,
 
+		[Parameter(Mandatory = $false, HelpMessage = "Path to file containing list of controls to skip")]
+        [string]        
+        $SkipControlsListFile
     )
 
 	Begin
@@ -59,7 +68,7 @@ function Get-AzSKARMTemplateSecurityStatus
 			$armStatus = [ARMCheckerStatus]::new($PSCmdlet.MyInvocation);
 			if ($armStatus) 
 			{
-				return $armStatus.EvaluateStatus($ARMTemplatePath, $Recurse,$ExemptControlListPath);				
+				return $armStatus.EvaluateStatus($ARMTemplatePath, $Recurse,$SkipControlsListFile,$ExcludeFiles);				
 			}    
 		}
 		catch 

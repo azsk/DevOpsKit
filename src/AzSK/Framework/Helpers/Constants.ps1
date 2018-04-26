@@ -15,6 +15,14 @@ class Constants
 "        d) If the control status says 'Manual', it means that AzSK (currently) does not cover the control via automation OR AzSK is not able to fetch the data. You need to manually implement/verify it.`r`n" +
 "`r`nNote: The 'Recommendation' column in the CSV file provides basic (generic) guidance that can help you fix a failed control. You can also use standard Azure product documentation. You should carefully consider the implications of making the required change in the context of your application. `r`n"
 
+    static [string] $RemediationMsgForARMChekcer = "** Next steps **`r`n" + 
+"Look at the individual control evaluation status in the CSV file.`r`n" +
+"        a) If the control has passed, no action is necessary.`r`n" +
+"        b) If the control has failed, look at the control evaluation detail (like LineNumber, Expected Value, CurrentValue etc) in the CSV file to understand why.`r`n" +
+"        c) If the control status says 'Verify', it means that human judgement is required to determine the final control status.`r`n" +
+"        d) If the control status says 'Skipped', it means that You have chosen to skip certain control(s) during scan based on the context of your application. You .`r`n" 
+
+
 	static [string] $DefaultInfoCmdMsg = "This command provides overall information about different components of the AzSK which includes subscription information, security controls information, attestation information, host information. 'Get-AzSKInfo' command can be used with 'InfoType' parameter to fetch information.`r`n" + 
 					"`r`nFollowing InfoType parameter values are currently supported by Get-AzSKInfo cmdlet.`r`n" +
 					"`tSubscriptionInfo : To get version details about different component of AzSK configured in Subscription.`r`n" +
@@ -83,6 +91,7 @@ class Constants
 	static [string] $AzSKRGLocation = "eastus2";
 	static [string] $OMSRequestURI = "https://management.azure.com/{0}?api-version=2015-03-20";
 	static [string] $NewStorageSku = "Standard_LRS";
+	static [string] $ARMControlsFileURI = "https://azsdkossepstaging.azureedge.net/0.0.0/ARMControls.json";
 	#V1 alert RG name constant is temporary and added for backward compatibility	
 	static [string] $AlertActionGroupName = "AzSKAlertActionGroup"
 	static [string] $CriticalAlertActionGroupName = "AzSKCriticalAlertActionGroup"

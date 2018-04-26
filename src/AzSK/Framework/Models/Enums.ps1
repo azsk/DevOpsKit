@@ -10,7 +10,7 @@ enum VerificationResult
 	Disabled
 	Exception
 	Remediate
-	Exempted
+	Skipped
 	NotScanned
 }
 

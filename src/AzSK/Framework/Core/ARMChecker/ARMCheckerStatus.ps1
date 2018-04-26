@@ -5,6 +5,7 @@ class ARMCheckerStatus: EventBase
 {
 	hidden [string] $ARMControls;
 	hidden [string] $PSLogPath;
+	hidden [string] $SFLogPath;
 	[bool] $DoNotOpenOutputFolder = $false;
 
 	ARMCheckerStatus([InvocationInfo] $invocationContext) 
@@ -16,7 +17,8 @@ class ARMCheckerStatus: EventBase
         $this.InvocationContext = $invocationContext;
 
 		#load config file here.
-		$this.ARMControls = [ConfigurationHelper]::LoadOfflineConfigFile("ARMControls.json", $false);
+		$this.ARMControls=$this.LoadARMControlsFile();
+		#$this.ARMControls = [ConfigurationHelper]::LoadOfflineConfigFile("ARMControls.json", $false);
 		if([string]::IsNullOrWhiteSpace($this.ARMControls))
 		{
 			throw ([SuppressedException]::new(("There are no controls to evaluate in ARM checker. Please contact support team."), [SuppressedExceptionType]::InvalidOperation))
@@ -40,13 +42,15 @@ class ARMCheckerStatus: EventBase
 
 	hidden [void] CommandCompletedAction($resultsFolder)
 	{
+	    $this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info);
+		$this.WriteMessage([Constants]::RemediationMsgForARMChekcer, [MessageType]::Info);
 		$this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info);
 		$this.WriteMessage("Status and detailed logs have been exported to path - $($resultsFolder)", [MessageType]::Info);
 		$this.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info);
 	}
 
 
-	[string] EvaluateStatus([string] $armTemplatePath,[Boolean]  $isRecurse,[string] $ExemptControlListPath)
+	[string] EvaluateStatus([string] $armTemplatePath,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles)
 	{
 	    if(-not (Test-Path -path $armTemplatePath))
 		{
@@ -71,17 +75,34 @@ class ARMCheckerStatus: EventBase
 		$csvFilePath = $resultsFolder + "ARMCheckerResults_" + $timeMarker + ".csv";
 		[System.IO.Directory]::CreateDirectory($resultsFolder) | Out-Null
 		$this.PSLogPath = $resultsFolder + "PowerShellOutput.LOG";
+		$this.SFLogPath = $resultsFolder + "SkippedFiles.LOG";
 		$this.CommandStartedAction();
 		$csvResults = @();
 		$armcheckerscantelemetryEvents = [System.Collections.ArrayList]::new()
 		$scannedFileCount = 0
-
+		$exemptControlList=@()
+		$filesToExclude=@()
+		$filesToExcludeCount=0
+		$excludedFiles=@()
+		if(-not([string]::IsNullOrEmpty($exemptControlListPath)) -and (Test-Path -path $exemptControlListPath))
+		{
+		  $exemptControlList=Get-Content $exemptControlListPath | ConvertFrom-Csv
+	      $exemptControlList=$exemptControlList| where{$_.Status -eq "Failed"}
+		}
+		if(-not([string]::IsNullOrEmpty($ExcludeFiles)))
+		{
+	  	$filesToExclude = $this.ConvertToStringArray($ExcludeFiles);
+		$filesToExcludeCount = ($filesToExclude| Measure-Object).Count 
+		}
 		foreach($armTemplate in $ARMTemplates)
 		{
-			$armFileName = $armTemplate.FullName.Replace($baseDirectory, "");
+		    $armFileName = $armTemplate.FullName.Replace($baseDirectory, "");
+		    if(($filesToExcludeCount -eq 0) -or (-not $filesToExclude.Contains($armTemplate.Name)))
+			{		
 			try
 			{
 				$results = @();
+				$csvResultsForCurFile=@();
 				$armTemplateContent = Get-Content $armTemplate.FullName -Raw		
 				$libResults = $armEvaluator.Evaluate($armTemplateContent, $null);
 				$results += $libResults | Where-Object {$_.VerificationResult -ne "NotSupported"} | Select-Object -ExcludeProperty "IsEnabled"		
@@ -91,7 +112,7 @@ class ARMCheckerStatus: EventBase
 				if($results.Count -gt 0)
 				{
 					foreach($result in $results)
-					{
+					{				       
 						$csvResultItem = "" | Select-Object "ControlId", "Status", "ResourceType",  "Severity", `
 															"PropertyPath", "LineNumber", "CurrentValue", "ExpectedValue", `
 															"ResourcePath", "ResourceLineNumber", "Description","FilePath"
@@ -124,15 +145,29 @@ class ARMCheckerStatus: EventBase
 							$csvResultItem.CurrentValue = ""
 						}
 						$csvResultItem.ResourceLineNumber = $result.ResourceDataMarker.LineNumber
-						$csvResultItem.ResourcePath = $result.ResourceDataMarker.JsonPath
+						$csvResultItem.ResourcePath = $result.ResourceDataMarker.JsonPath	
+						if(($exemptControlList|Measure-Object).Count -gt 0)
+						{				
+                         $csvResultItem = Compare-Object -ReferenceObject $csvResultItem -DifferenceObject $exemptControlList -PassThru -IncludeEqual -Property ControlId,PropertyPath,FilePath 
+		                 $csvResultItem| ForEach-Object {
+		                               if($_.SideIndicator -eq "==")
+			                           {
+			                             $_.Status = "Skipped"
+			                           }
+		                  }
+			             $csvResultItem =$csvResultItem | where {$_.SideIndicator -eq "==" -or $_.SideIndicator -eq "<="}
+						 $csvResultItem =$csvResultItem | Select-Object "ControlId", "Status", "ResourceType",  "Severity", `
+															"PropertyPath", "LineNumber", "CurrentValue", "ExpectedValue", `
+															"ResourcePath", "ResourceLineNumber", "Description","FilePath"
+					    }
 						$csvResults += $csvResultItem;
-
-						$this.WriteResult($result);
+						$this.WriteResult($csvResultItem);
+						$csvResultsForCurFile+=$csvResultItem;
 
 						$properties = @{};
-						$properties.Add("ResourceType", $result.ResourceType)
-						$properties.Add("ControlId", $result.ControlId)
-						$properties.Add("VerificationResult", $result.VerificationResult);
+						$properties.Add("ResourceType", $csvResultItem.ResourceType)
+						$properties.Add("ControlId", $csvResultItem.ControlId)
+						$properties.Add("VerificationResult", $csvResultItem.Status);
 
 						$telemetryEvent = "" | Select-Object Name, Properties, Metrics
 						$telemetryEvent.Name = "ARMChecker Control Scanned"
@@ -140,7 +175,7 @@ class ARMCheckerStatus: EventBase
 						$armcheckerscantelemetryEvents.Add($telemetryEvent)
 					}
 					$this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info);
-					$this.WriteSummary($results, "Severity", "VerificationResult");
+					$this.WriteSummary($csvResultsForCurFile, "Severity", "Status");
 				}
 				else
 				{
@@ -151,30 +186,25 @@ class ARMCheckerStatus: EventBase
 			{
 				#Write-Host ([Helpers]::ConvertObjectToString($_, $false)) -ForegroundColor Red
 				$skippedFiles += $armFileName;
-			}		
-		}
-		# Read Exempt Control List File here	
-		$EffectiveResults=@()
-		if(-not([string]::IsNullOrEmpty($ExemptControlListPath)) -and (Test-Path -path $ExemptControlListPath))
-		{
-			$exemptControlList=Get-Content $ExemptControlListPath | ConvertFrom-Csv
-            $EffectiveResults = Compare-Object -ReferenceObject $csvResults -DifferenceObject $exemptControlList -PassThru -IncludeEqual -Property ControlId,PropertyPath,FilePath 
-		     $EffectiveResults| ForEach-Object {
-		         if($_.SideIndicator -eq "==")
-			    {
-			     $_.Status= "Exempted"
-			   }
-		    }
-		      $EffectiveResults=   $EffectiveResults | Select-Object "ControlId", "Status", "ResourceType",  "Severity", `
-															"PropertyPath", "LineNumber", "CurrentValue", "ExpectedValue", `
-															"ResourcePath", "ResourceLineNumber", "Description","FilePath"
+			}	
 			}
-		
-		if(($EffectiveResults |Measure-Object).Count -eq 0)
-		{
-		  $EffectiveResults=$csvResults
+			else
+			{
+			  $excludedFiles += $armFileName;
+			}	
 		}
-		 $EffectiveResults| Export-Csv $csvFilePath -NoTypeInformation -Force
+		
+		$csvResults| Export-Csv $csvFilePath -NoTypeInformation -Force
+
+		if($excludedFiles.Count -ne 0)
+		{
+			$this.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Warning);
+			$this.WriteMessage("Excluded file(s): $($excludedFiles.Count)", [MessageType]::Warning);
+			$excludedFiles | ForEach-Object {
+				$this.WriteMessage($_, [MessageType]::Warning);
+			};
+			$this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Warning);
+		}
 
 		if($skippedFiles.Count -ne 0)
 		{
@@ -182,9 +212,14 @@ class ARMCheckerStatus: EventBase
 			$this.WriteMessage("Skipped file(s): $($skippedFiles.Count)", [MessageType]::Warning);
 			$skippedFiles | ForEach-Object {
 				$this.WriteMessage($_, [MessageType]::Warning);
+				$this.AddSkippedFilesLog([Helpers]::ConvertObjectToString($_, $false));
 			};
 			$this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Warning);
+			$this.WriteMessage("One or More File(s) are Skipped during scan either file(s) are inavlid ARM Template(s) or skipped ARM Template(s) are currently not supported by this command. Please verify file(s) and re-run the command by passing name of these file in -ExcludeFile parameter.",[MessageType]::Error);
+			$this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Warning);
 		}
+
+		
 
 		$teleEvent = "" | Select-Object Name, Properties, Metrics
 		$teleEvent.Name = "ARMChecker Command Completed"
@@ -194,10 +229,10 @@ class ARMCheckerStatus: EventBase
 		if($csvResults.Count -ne 0)
 		{
 			$this.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info);
-			$this.WriteSummary($EffectiveResults, "Severity", "Status");
+			$this.WriteSummary($csvResults, "Severity", "Status");
 			$this.WriteMessage("Total scanned file(s): $scannedFileCount", [MessageType]::Info);
 
-			$resultsGroup = $EffectiveResults | Group-Object Status | ForEach-Object {
+			$resultsGroup = $csvResults | Group-Object Status | ForEach-Object {
 				$teleEvent.Properties.Add($_.Name, $_.Count);
 			};
 		}
@@ -228,7 +263,7 @@ class ARMCheckerStatus: EventBase
 	hidden [void] WriteResult($result)
 	{
 		$messageType = [MessageType]::Info;
-		switch ($result.VerificationResult)
+		switch ($result.Status)
 		{
 			Passed
 			{ 
@@ -242,8 +277,12 @@ class ARMCheckerStatus: EventBase
 			{
 				$messageType = [MessageType]::Error;
 			}
+			Exempted
+			{
+				$messageType = [MessageType]::Update;
+			}
 		}
-		$this.WriteMessage("$($result.VerificationResult): [$($result.ControlId)]", $messageType);
+		$this.WriteMessage("$($result.Status): [$($result.ControlId)]", $messageType);
 	}
 	hidden [void] WriteSummary($summary, $severityPropertyName, $resultPropertyName)
 	{
@@ -365,5 +404,38 @@ class ARMCheckerStatus: EventBase
              
         Add-Content -Value $message -Path $this.PSLogPath        
     } 
+	hidden [void] AddSkippedFilesLog([string] $message)   
+    {
+        if([string]::IsNullOrEmpty($message) -or [string]::IsNullOrEmpty($this.PSLogPath))
+        {
+            return;
+        }
+             
+        Add-Content -Value $message -Path $this.SFLogPath        
+    } 
+	hidden [string] LoadARMControlsFile()
+	{ 	
+	   $serverFileContent=$null;
+	   $ARMControlsFileURI = [Constants]::ARMControlsFileURI
+	   try
+	   {
+	    $serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($ARMControlsFileURI, '', '', '');
+	   }
+	   catch
+	   {
+	    # No Need to break Execution
+		# Load Offline File
+	   }
+	   if($null -ne $serverFileContent)
+	   {
+	     $serverFileContent = $serverFileContent | ConvertTo-Json -Depth 10
+	   }else
+	   {
+	     $serverFileContent = [ConfigurationHelper]::LoadOfflineConfigFile("ARMControls.json", $false);
+	   }
+
+	   return $serverFileContent;
+	}
+
 }
 
