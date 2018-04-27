@@ -41,7 +41,6 @@ If you find your issue already exists, make relevant comments and mention if som
 #### Writing Good Bug Reports
 
  Try giving appropriate title to the issue for others facing similar issue to identify it. File a single issue per problem and a feature request. Do not add multiple bugs under same issue as the bugs may look similar but their root cause might be different.We have created an [issue template] to make sure that you follow the below described best practices while creating an issue:
-
 ##### Best Practices
 	• Always try to specify for which version you faced the issue
 	• Steps to reproduce the issue like the commands you ran, parameters you passed when you encountered this issue
@@ -60,7 +59,7 @@ You can find all the pull request raised in the Pull Request Section. If you wan
 * The pull request template is placed with the intent to be followed while creating a pull request and if you delete or ignore the template, your pull request might not be considered.
 * The SLA for the pull request depends upon various criteria. For more details on SLA you can refer SLA and issue tracking
 	
-There might be chances that your pull request is not getting accepted, Below mentioned are the most basic acceptance criteria: 
+There might be chances that your pull request is not getting accepted. Below mentioned are the most basic acceptance criteria: 
 *  The code changes should not impacts performance in negative way, it should perform well in both real and perceived performance.
 *  The code changes should not break existing code flow.
 *  The team needs to agree with any architectural impact a change may make. Things like new extension APIs must be discussed with and agreed upon by the feature owner.
