@@ -38,15 +38,15 @@ Before you create a new issue, please do a search in [issues](https://github.com
 Be sure to scan through the [most popular]() feature requests.
 If you find your issue already exists, make relevant comments and mention if something is still missing there.
 
-#### Writing Good Bug Reports and Feature Requests
+#### Writing Good Bug Reports
 
- Try giving appropriate title to the issue for others facing similar issue to identify it. File a single issue per problem and a feature request. Do not add multiple bugs under same issue as the bugs may look similar but their root cause might be different.
+ Try giving appropriate title to the issue for others facing similar issue to identify it. File a single issue per problem and a feature request. Do not add multiple bugs under same issue as the bugs may look similar but their root cause might be different.We have created an [issue template] to make sure that you follow the below described best practices while creating an issue
 
-#### Best Practices
+##### Best Practices
 	• Always try to specify for which version you faced the issue
 	• Steps to reproduce the issue
-	• Specify the ideal behavior which according to you that should have been there
-	• Code snippet, specially the command you ran, the parameters you provided 
+	• Modules that were present in the session while you ran the command
+	• Output
 
 #### Contributing Fixes
 
