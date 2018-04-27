@@ -47,11 +47,11 @@ function Get-AzSKARMTemplateSecurityStatus
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not")]
 		$DoNotOpenOutputFolder,
 
-		[Parameter(Mandatory = $false, HelpMessage = "File Names to exclude from scan")]
+		[Parameter(Mandatory = $false, HelpMessage = "File Names to be excluded from Scan")]
         [string]        
         $ExcludeFiles,
 
-		[Parameter(Mandatory = $false, HelpMessage = "Path to file containing list of controls to skip")]
+		[Parameter(Mandatory = $false, HelpMessage = "Path to file containing list of controls to Skip")]
         [string]        
         $SkipControlsListFile
     )

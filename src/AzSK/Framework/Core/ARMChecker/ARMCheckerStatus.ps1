@@ -108,9 +108,8 @@ class ARMCheckerStatus: EventBase
 				$results += $libResults | Where-Object {$_.VerificationResult -ne "NotSupported"} | Select-Object -ExcludeProperty "IsEnabled"		
 		
 				$this.WriteMessage(([Constants]::DoubleDashLine + "`r`nStarting analysis: [FileName: $armFileName] `r`n" + [Constants]::SingleDashLine), [MessageType]::Info);
-				$scannedFileCount += 1;
 				if($results.Count -gt 0)
-				{
+				{   $scannedFileCount += 1;
 					foreach($result in $results)
 					{				       
 						$csvResultItem = "" | Select-Object "ControlId", "Status", "ResourceType",  "Severity", `
@@ -179,12 +178,12 @@ class ARMCheckerStatus: EventBase
 				}
 				else
 				{
+				    $skippedFiles += $armFileName;
 					$this.WriteMessage("No controls have been evaluated for file: $armFileName", [MessageType]::Info);
 				}
 			}
 			catch
 			{
-				#Write-Host ([Helpers]::ConvertObjectToString($_, $false)) -ForegroundColor Red
 				$skippedFiles += $armFileName;
 			}	
 			}
