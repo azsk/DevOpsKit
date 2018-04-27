@@ -20,7 +20,7 @@ Code of Conduct is necessary so as to encourage a healthy environment for end us
 There are many ways that you can contribute, other than writing code. You can contribute to Blogs, Documentation , Videos that may help end users like you to contribute or get started with the tool. The goal of this document is to provide a high-level overview of how you can get involved in contribution.
  * Blogs and Documents: Do you think we missed in some documentation, If you are a blogger and want to contribute to blogs or documents that provides good insights to end users.
   You can always submit your writings to our [documentation repository](https://github.com/azsk/DevOpsKit-docs). Blogs can be submitted to [Blogs](https://github.com/azsk/DevOpsKit-docs/tree/master/Blogs). For video contribution you can upload your video at [Video](https://github.com/azsk/DevOpsKit-docs/tree/master/Videos).
-* Contribute to Code:  If you want to write fix for a bug, extend exisiting control etc, you can contribute to our code refer [Contribute To Code]() to know more about contribution guidelines. 
+* Contribute to Code:  If you want to write fix for a bug, extend exisiting control etc, you can contribute to our code refer [Contribution Guidelines]() to know more about contribution guidelines. 
 
 
 ### Asking Questions
