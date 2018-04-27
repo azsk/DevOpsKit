@@ -18,9 +18,8 @@ class Constants
     static [string] $RemediationMsgForARMChekcer = "** Next steps **`r`n" + 
 "Look at the individual control evaluation status in the CSV file.`r`n" +
 "        a) If the control has passed, no action is necessary.`r`n" +
-"        b) If the control has failed, look at the control evaluation detail (like LineNumber, Expected Value, CurrentValue etc) in the CSV file to understand why.`r`n" +
-"        c) If the control status says 'Verify', it means that human judgement is required to determine the final control status.`r`n" +
-"        d) If the control status says 'Skipped', it means that You have chosen to skip certain control(s) during scan based on the context of your application. You .`r`n" 
+"        b) b) If the control has failed, look at the control evaluation detail in the CSV file (LineNumber, ExpectedValue, CurrentValue, etc.) and fix the issue.`r`n" +
+"        c) If the control status says 'Skipped', it means that you have chosen to skip certain controls using the '-SkipControlsFromFile' parameter.`r`n" 
 
 
 	static [string] $DefaultInfoCmdMsg = "This command provides overall information about different components of the AzSK which includes subscription information, security controls information, attestation information, host information. 'Get-AzSKInfo' command can be used with 'InfoType' parameter to fetch information.`r`n" + 
@@ -91,7 +90,7 @@ class Constants
 	static [string] $AzSKRGLocation = "eastus2";
 	static [string] $OMSRequestURI = "https://management.azure.com/{0}?api-version=2015-03-20";
 	static [string] $NewStorageSku = "Standard_LRS";
-	static [string] $ARMControlsFileURI = "https://azsdkossepstaging.azureedge.net/0.0.0/ARMControls.json";
+	static [string] $ARMControlsFileURI = "https://azsdkossep.azureedge.net/1.0.0/ARMControls.json";
 	#V1 alert RG name constant is temporary and added for backward compatibility	
 	static [string] $AlertActionGroupName = "AzSKAlertActionGroup"
 	static [string] $CriticalAlertActionGroupName = "AzSKCriticalAlertActionGroup"

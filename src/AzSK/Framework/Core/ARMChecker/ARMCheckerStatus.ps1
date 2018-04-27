@@ -214,7 +214,7 @@ class ARMCheckerStatus: EventBase
 				$this.AddSkippedFilesLog([Helpers]::ConvertObjectToString($_, $false));
 			};
 			$this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Warning);
-			$this.WriteMessage("One or More File(s) are Skipped during scan either file(s) are inavlid ARM Template(s) or skipped ARM Template(s) are currently not supported by this command. Please verify file(s) and re-run the command by passing name of these file in -ExcludeFile parameter.",[MessageType]::Error);
+			$this.WriteMessage("One or more files were skipped during the scan. Either the files are invalid as ARM templates or those resource types are currently not supported by this command.`nPlease verify the files and re-run the command. For files that should not be included in the scan, you can use the '-ExcludeFiles' parameter.",[MessageType]::Error);
 			$this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Warning);
 		}
 
