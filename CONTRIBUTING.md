@@ -55,15 +55,15 @@ please see [Contribution Guidelines]() to understand more about where and how we
 
 #### Submitting Changes
 You can find all the pull request raised in the Pull Request Section. If you want submit your changes or bug fixes you would have to create a pull request for the same. Follow the below steps while creating a pull request for reviewers to understand your request.
-	* Make sure that you are pointing towards the right fork and branch where your changes were made.
-	* Point to <> branch such that your changes are merged into that after your pull request is accepted. If you point to any other branch  than <>, your pull request might not be considered.
-	* The pull request template is placed with the intent to be followed while creating a pull request and if you delete or ignore the template, your pull request might not be considered.
-	* The SLA for the pull request depends upon various criteria. For more details on SLA you can refer SLA and issue tracking
+* Make sure that you are pointing towards the right fork and branch where your changes were made.
+* Point to <> branch such that your changes are merged into that after your pull request is accepted. If you point to any other branch  than <>, your pull request might not be considered.
+* The pull request template is placed with the intent to be followed while creating a pull request and if you delete or ignore the template, your pull request might not be considered.
+* The SLA for the pull request depends upon various criteria. For more details on SLA you can refer SLA and issue tracking
 	
-There might be chance that your pull request is not getting accepted, the most basic acceptance criteria are.
-	*  The code changes should not impacts performance in negative way, it should perform well in both real and perceived performance.
-	*  The code changes should not break existing code flow.
-	*  The team and/or feature owner needs to agree with any architectural impact a change may make. Things like new extension APIs must be discussed with and agreed upon by the feature owner.
+There might be chances that your pull request is not getting accepted, Below mentioned are the most basic acceptance criteria: 
+*  The code changes should not impacts performance in negative way, it should perform well in both real and perceived performance.
+*  The code changes should not break existing code flow.
+*  The team needs to agree with any architectural impact a change may make. Things like new extension APIs must be discussed with and agreed upon by the feature owner.
 
 
 ### Thank You !
