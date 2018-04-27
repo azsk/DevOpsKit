@@ -113,12 +113,13 @@ class ARMCheckerStatus: EventBase
 					foreach($result in $results)
 					{				       
 						$csvResultItem = "" | Select-Object "ControlId", "Status", "ResourceType",  "Severity", `
-															"PropertyPath", "LineNumber", "CurrentValue", "ExpectedValue", `
+															"PropertyPath", "LineNumber", "CurrentValue", "ExpectedProperty", "ExpectedValue", `
 															"ResourcePath", "ResourceLineNumber", "Description","FilePath"
 
 						$csvResultItem.ResourceType = $result.ResourceType
 						$csvResultItem.ControlId = $result.ControlId
 						$csvResultItem.Description = $result.Description
+						$csvResultItem.ExpectedProperty = $result.ExpectedProperty
 						$csvResultItem.ExpectedValue = $result.ExpectedValue
 						$csvResultItem.Severity = $result.Severity.ToString()
 						$csvResultItem.Status = $result.VerificationResult
@@ -156,7 +157,7 @@ class ARMCheckerStatus: EventBase
 		                  }
 			             $csvResultItem =$csvResultItem | where {$_.SideIndicator -eq "==" -or $_.SideIndicator -eq "<="}
 						 $csvResultItem =$csvResultItem | Select-Object "ControlId", "Status", "ResourceType",  "Severity", `
-															"PropertyPath", "LineNumber", "CurrentValue", "ExpectedValue", `
+															"PropertyPath", "LineNumber", "CurrentValue", "ExpectedProperty", "ExpectedValue", `
 															"ResourcePath", "ResourceLineNumber", "Description","FilePath"
 					    }
 						$csvResults += $csvResultItem;
