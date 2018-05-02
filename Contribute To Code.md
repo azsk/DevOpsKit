@@ -4,7 +4,6 @@ There are many ways in which you can contribute to the Code project: logging bug
 This document gives an overview about contribution areas and contribution guidelines
 
 ## Table of Content
-* [Getting the source](#getting-the-sources)
 * [Prerequisites]()
 * [Contribution Guide]()
   * [SVT](#svt)
@@ -15,14 +14,12 @@ This document gives an overview about contribution areas and contribution guidel
         * [Add Automated Control](#add-automated-control)
       <!-- TODO * Add new services in AzSK with controls -->		
   * [OMS Views/Queries](#oms-viewsqueries)
-    * [Enhance or add OMS Views/Queries](#enhance-or-add-oms-blade-in-oms-azsk-oms-view)
+    * [Enhance or add OMS Views/Queries](#enhance-or-add-oms-viewsqueries)
     * [Suggesting Useful OMS Queries](#suggesting-useful-oms-queries)
 * [Pull Requests](#pull-requests)
 * [Suggestions](#suggestions)
 * [Discussion Etiquette](#discussion-etiquette)
 
-## Getting the sources
-git clone https://github.com/azsk/DevOpsKit.git
 
 ## Prerequisites
 * Visual Studio 
