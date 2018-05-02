@@ -35,6 +35,7 @@ class CloudService: SVTBase
 	{
 		if($null -ne $this.ResourceObject -and ( $this.ResourceObject.DeploymentSlots | Measure-Object).Count -gt 0)
 		{
+			# ignoring "VirtualMachine" slot in cloud service as it contains only classic VM roles.
 			$this.ResourceObject.DeploymentSlots = $this.ResourceObject.DeploymentSlots | Where-Object { $_.SlotType -ne "VirtualMachine" }
 		}
 		
