@@ -170,6 +170,7 @@ class WriteSummaryFile: FileOutputBase
 					{
 						$csvItem.ResourceName = $item.ResourceContext.ResourceName;
                         $csvItem.ResourceGroupName = $item.ResourceContext.ResourceGroupName;
+						$csvItem.ResourceId = $item.ResourceContext.ResourceId;
 						$csvItem.DetailedLogFile = "/$([Helpers]::SanitizeFolderName($item.ResourceContext.ResourceGroupName))/$($item.FeatureName).LOG";
 					}
 					else
@@ -221,6 +222,7 @@ class CsvOutputItem
     [string] $FeatureName = ""
     [string] $ResourceGroupName = ""
     [string] $ResourceName = ""
+	[string] $ResourceId = ""
     [string] $ChildResourceName = ""
     [string] $ControlSeverity = ""
 	[string] $IsBaselineControl = ""
