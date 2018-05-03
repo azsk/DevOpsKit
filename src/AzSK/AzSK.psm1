@@ -475,4 +475,11 @@ function Set-AzSKPrivacyNoticeResponse {
         [ListenerHelper]::UnregisterListeners();
     }
 }
+
+function Clear-AzSKCache {
+    [AzSKSettings]::Instance = $null
+    [AzSKConfig]::Instance = $null
+    [ConfigurationHelper]::ServerConfigMetadata = $null
+}
+
 . $PSScriptRoot\Framework\Helpers\AliasHelper.ps1
