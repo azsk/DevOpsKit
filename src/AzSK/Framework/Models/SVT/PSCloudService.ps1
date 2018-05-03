@@ -47,6 +47,12 @@ class PSCloudService
 						}						
 					}
 				}
+				
+				if(([Helpers]::CheckMember($cloudSlot,"Properties")) -and ([Helpers]::CheckMember($cloudSlot.Properties,"slotType")))
+				{
+					$DeploymentSlot.SlotType = $cloudSlot.Properties.slotType
+				}
+
 				#get roles
 				$cloudServiceRoles = Get-AzureRmResource -ResourceGroupName $this.CloudServiceRGName `
 										-ResourceName "$($this.CloudServiceName)/$($DeploymentSlot.SlotName)" `
@@ -255,4 +261,5 @@ class DeploymentSlot
 	[PSObject] $CloudCSCFG 
 	[Role[]] $Roles
 	[bool] $IsOSAutoUpdateTurnedOn
+	[string] $SlotType
 }
