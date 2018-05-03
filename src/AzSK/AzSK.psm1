@@ -475,4 +475,22 @@ function Set-AzSKPrivacyNoticeResponse {
         [ListenerHelper]::UnregisterListeners();
     }
 }
+
+function Clear-AzSKCache {
+    <#
+	.SYNOPSIS
+	This command would clear AzSK session cache 
+	.DESCRIPTION
+	This command would clear AzSK session objects created during command execution.
+
+	.LINK
+	https://aka.ms/azskossdocs
+
+	#>
+	
+    [AzSKSettings]::Instance = $null
+    [AzSKConfig]::Instance = $null
+    [ConfigurationHelper]::ServerConfigMetadata = $null
+}
+
 . $PSScriptRoot\Framework\Helpers\AliasHelper.ps1
