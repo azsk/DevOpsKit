@@ -10,7 +10,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckifCAPresent",
-      "Recommendation": "To install Continuous Assurance automation account, run command: Install-AzSKContinuousAssurance.For more details, please refer https://github.com/azsdk/azsdk-docs/blob/master/04-Continous-Assurance/Readme.md#setting-up-continuous-assurance---step-by-step",
+      "Recommendation": "To install Continuous Assurance automation account, run command: Install-AzSKContinuousAssurance.For more details, please refer https://github.com/azsk/DevOpsKit-docs/blob/master/04-Continous-Assurance/Readme.md#setting-up-continuous-assurance---step-by-step",
       "Tags": [
         "SDL",
         "TCP",
