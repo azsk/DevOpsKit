@@ -76,7 +76,6 @@ class SubscriptionCore: SVTBase
 	{
 		$this.GetRoleAssignments()
 		$this.LoadRBACConfig()
-        throw "Custome error"
 		#Excessive number of admins (> 5)
 
 		$scope = $this.SubscriptionContext.Scope;
