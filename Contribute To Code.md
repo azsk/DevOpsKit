@@ -31,7 +31,9 @@ Following section guides you on how and where you can contribute in code:
 
 ### SVT
 Before contributing to code you must understand the structure of tool. Basically we have defined security controls for Azure services like App Service, KeyVault, Storage etc. For each service, AzSK defines controls using two main parts :
-###### 1.Policy/Configuration:
+
+**1.Policy/Configuration:**
+
 It is a json file which contains set of controls for service. For each control in a service there is an entry in Policy/Configuration json file having properties like ControlId, Description, Recommendation, Rationale etc. 
 You can find the configuration for service under below path
 "AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"          
@@ -75,9 +77,8 @@ Now let's understand the properties defined for controls:
   |SI|System Integrity|Azure_CloudService_SI_Validate_InternalEndpoints|
   |Deploy|Deployment|Azure_AppService_Deploy_Dont_Use_Publish_Profiles|  
 
+**2. Core Logic** 
 
-
-###### 2. Core Logic
 Each supported Azure Service will be having core logic defined for evaluating automated controls. You can find it under path 
 "AzSK\Framework\Core\SVT\Services\<FeatureName>.ps1".  Each automated control will have MethodName, where in you can see the logic defined for control.
 
