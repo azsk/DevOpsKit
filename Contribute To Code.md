@@ -194,7 +194,7 @@ If you are adding a new control ,please make sure that the pull request descript
 Never merge multiple requests in one unless they have the same root cause. Pull requests should contain tests whenever possible.
 
 ## Suggestions
-We're also interested in your feedback for the future of tool. You can submit a suggestion or feature request. To make this process more effective, we're asking that these include more information to help define them more clearly. For example one can add the need, impact and advantages or the feature being requeseted.  
+We're also interested in your feedback for the future of tool. You can submit a suggestion or feature request at <azsdksupext@microsoft.com>. To make this process more effective, we're asking that these include more information to help define them more clearly. For example one can add the need, impact and advantages or the feature being requeseted.  
 
 ## Discussion Etiquette
 Try keeping the discussion clear and transparent, focused around issues, feedback or suggestion. Be considerate to others and try to be courteous and professional at all times. For more details on Code of Conduct you can refer:
