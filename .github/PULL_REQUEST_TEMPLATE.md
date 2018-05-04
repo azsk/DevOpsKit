@@ -1,7 +1,6 @@
 ## Description
-```
+</br>
  Brief description of the requested change.
-```
 
 ## Checklist
 - [ ] I have read the instructions mentioned in [Contribute to Code](/CONTRIBUTING.md).
