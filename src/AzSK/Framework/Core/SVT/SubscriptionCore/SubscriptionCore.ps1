@@ -18,7 +18,7 @@ class SubscriptionCore: SVTBase
 	SubscriptionCore([string] $subscriptionId):
         Base($subscriptionId)
     {
-        $this.GetResourceObject();
+		$this.GetResourceObject();		
     }
 
 	hidden [void] GetResourceObject()
@@ -76,7 +76,7 @@ class SubscriptionCore: SVTBase
 	{
 		$this.GetRoleAssignments()
 		$this.LoadRBACConfig()
-
+        throw "Custome error"
 		#Excessive number of admins (> 5)
 
 		$scope = $this.SubscriptionContext.Scope;

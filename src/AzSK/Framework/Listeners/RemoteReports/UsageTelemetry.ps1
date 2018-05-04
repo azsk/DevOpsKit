@@ -19,7 +19,8 @@ class UsageTelemetry: ListenerBase {
 
     [void] RegisterEvents() {
         $this.UnregisterEvents();
-
+		$azskSettings = [ConfigurationManager]::GetAzSKSettings();
+		if($azskSettings.UsageTelemetryLevel -ne "Anonymous") { return; }
         $this.RegisterEvent([AzSKRootEvent]::GenerateRunIdentifier, {
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
@@ -33,9 +34,7 @@ class UsageTelemetry: ListenerBase {
             }
         });
 
-		$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
-			$azskSettings = [ConfigurationManager]::GetAzSKSettings();
-			if($azskSettings.UsageTelemetryLevel -ne "Anonymous") { return; }
+		$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {			
 			$currentInstance = [UsageTelemetry]::GetInstance();
 			try
 			{
@@ -62,6 +61,24 @@ class UsageTelemetry: ListenerBase {
             try
             {
 				[System.Management.Automation.ErrorRecord] $er = ($Event.SourceArgs | Select-Object -First 1)
+				try {
+					if([Helpers]::CheckMember($er,"innermostMessage"))
+					{
+						$er.innermostMessage = [RemoteReportHelper]::Mask($er.innermostMessage)
+					}
+					if([Helpers]::CheckMember($er,"details"))
+					{
+						$er.details = $null
+					}
+					if([Helpers]::CheckMember($er,"outerMessage"))
+					{
+						$er.outerMessage = [RemoteReportHelper]::Mask($er.outerMessage)
+					}
+				}
+				catch {
+					# Handling error while masking exception message
+				}			
+
 				[UsageTelemetry]::PushException($currentInstance, @{}, @{}, $er);
             }
             catch
@@ -75,7 +92,7 @@ class UsageTelemetry: ListenerBase {
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
-				[System.Management.Automation.ErrorRecord] $er = $Event.SourceArgs.ExceptionMessage
+				[System.Management.Automation.ErrorRecord] $er = [RemoteReportHelper]::Mask($Event.SourceArgs.ExceptionMessage)
 				[UsageTelemetry]::PushException($currentInstance, @{}, @{}, $er);
             }
             catch
@@ -89,7 +106,7 @@ class UsageTelemetry: ListenerBase {
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
-				[System.Management.Automation.ErrorRecord] $er = $Event.SourceArgs.ExceptionMessage
+				[System.Management.Automation.ErrorRecord] $er = [RemoteReportHelper]::Mask($Event.SourceArgs.ExceptionMessage)
 				[UsageTelemetry]::PushException($currentInstance, @{}, @{}, $er);
             }
             catch
@@ -103,7 +120,7 @@ class UsageTelemetry: ListenerBase {
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
-				[System.Management.Automation.ErrorRecord] $er = $Event.SourceArgs.ExceptionMessage
+				[System.Management.Automation.ErrorRecord] $er = [RemoteReportHelper]::Mask($Event.SourceArgs.ExceptionMessage)
 				[UsageTelemetry]::PushException($currentInstance, @{}, @{}, $er);
             }
             catch
@@ -117,7 +134,7 @@ class UsageTelemetry: ListenerBase {
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
-				[System.Management.Automation.ErrorRecord] $er = $Event.SourceArgs.ExceptionMessage
+				[System.Management.Automation.ErrorRecord] $er = [RemoteReportHelper]::Mask($Event.SourceArgs.ExceptionMessage)
 				[UsageTelemetry]::PushException($currentInstance, @{}, @{}, $er);
             }
             catch
