@@ -35,8 +35,7 @@ Before contributing to code you must understand the structure of tool. Basically
 **1.Policy/Configuration:**
 
 It is a json file which contains set of controls for service. For each control in a service there is an entry in Policy/Configuration json file having properties like ControlId, Description, Recommendation, Rationale etc. 
-You can find the configuration for service under below path
-"AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"          
+You can find the configuration for service under :"AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"          
 Now let's understand the properties defined for controls:
 ```
 {                                                                                                                                                                                                                                   
