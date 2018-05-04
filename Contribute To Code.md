@@ -30,9 +30,8 @@ This document gives an overview about contribution areas and contribution guidel
 Following section guides you on how and where you can contribute in code:		
 
 ### SVT
-Before contributing to any control you must understand the structure of controls. For each supported Azure service ( like Storage, AppService). 
-AzSK defines controls using two main parts  
-**1.Policy/Configuration**:</br>
+Before contributing to code you must understand the structure of tool. Basically we have defined security controls for Azure services like App Service, KeyVault, Storage etc. For each service, AzSK defines controls using two main parts :
+###### 1.Policy/Configuration:
 It is a json file which contains set of controls for service. For each control in a service there is an entry in Policy/Configuration json file having properties like ControlId, Description, Recommendation, Rationale etc. 
 You can find the configuration for service under below path
 "AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"          
@@ -59,7 +58,9 @@ Now let's understand the properties defined for controls:
   }
 ```
 
-	You can follow below Acronym for control type:
+ Following Acronym are used for control type:
+ 
+ 
   |Acronym|Full Name|Examples|
   |---|---|---|
   |AuthN|Authentication|Azure_Storage_AuthN_Dont_Allow_Anonymous|
@@ -71,42 +72,40 @@ Now let's understand the properties defined for controls:
   |Audit|Auditing and logging|Azure_Storage_Audit_AuthN_Requests|
   |Availability|Availability|Azure_ServiceFabric_Availability_Replica_Stateful_Size_Set_Min_3|
   |Config|Configuration|Azure_VirtualMachine_Config_OS_Auto_Update|
-  |SI|---|Azure_CloudService_SI_Validate_InternalEndpoints|
+  |SI|System Integrity|Azure_CloudService_SI_Validate_InternalEndpoints|
   |Deploy|Deployment|Azure_AppService_Deploy_Dont_Use_Publish_Profiles|  
 
->  **DONT'S:**
-> * Do not change values for fixed variables e.g.. FeatureName, ControlID, Id  and MethodaName. These values are referenced at different places in framework.
-> * Control Policy is strongly typed schema, new property or renaming of the property is not allowed
-> * ControlId, Id should not be repeated/duplicated
 
 
-**2. Core Logic** </br>
-	Each supported Azure Service will be having core logic defined for evaluating automated controls.  You will be able to get it under path 
-	"AzSK\Framework\Core\SVT\Services\<FeatureName>.ps1".  Each automated control will have MethodName, you will be able to see the logic defined for control 
+###### 2. Core Logic
+Each supported Azure Service will be having core logic defined for evaluating automated controls. You can find it under path 
+"AzSK\Framework\Core\SVT\Services\<FeatureName>.ps1".  Each automated control will have MethodName, where in you can see the logic defined for control.
 
+Having understanding of the control working will accelerate your contribution.The Following are the different areas where you contribute to AzSK.
 
 #### Enhance controls for supported resources 
-Since Azure services keeps on updating with latest security features and automation options, AzSK controls needs to be upgraded with latest bits for control validation or recommendation or change in control description.
+Since Azure services keep on evolving with latest security features and automation options, AzSK controls needs to be upgraded with latest bits for control validation or recommendation or change in control description.
 Following are the ways you can enhance controls for supported resources:
 
 ##### Update existing control
-You can contribute in the below areas to update existing controls:
+There are various ways in which can update an existing control:
   * Update recommendations as per latest options/PowerShell command available: This is as simple as updating Control Json file. (Refer Policy/Configuration )
   * Update core logic defined to cover different/missing scenarios for control evaluation or bug fixes: You can navigate to core logic for specific control by finding the ControlId in Policy/Configuration.json file and then in the MethodName property you will be able to find the method that contains the logic to evaluate that particular control.
   
 ##### Add new controls for existing supported resources</br>
-  * You can add your security practices as control. Before adding control to AzSK, you should come up with below basic details:
+  * You can add your security practices as control for a particular Azure Service. Before adding control to AzSK, you should come up with below basic details:
 	1. Control Description 
 	2. Rationale behind the control
 	3. Recommendation to be followed  to fix control
 	4. Define level(TCP/Best Practice/Information) and severity(Critical/High/Medium/Low) of the control
-	5. Can control be validated using Azure cmdlet or API. Based on this control can be added as a Manual or Automated Control.
+	5. Can control be validated using Azure cmdlet or API. Based on this control can be added as a Manual or Automated control.
 
-Following sections gives an overview on how an autormated or manual control is added to supported resource
+The control you are thinking to add may be Manual or Automated control, based upon that you can go through the below given description to add Manual or Automated control.
+
 ###### Add Manual Control
 Adding manual control is as easy as updating Policy Json. Follow below steps to add manual control</br>
-**a.** Open Policy config of Azure Service by navigating to path:	"AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"</vr>
-**b.** Add entry under Controls section. Sample shown below 	
+**a.** Open Policy config of Azure Service by navigating to path: "AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"</vr>
+**b.** Add entry under Controls section. Sample shown below 
 ```
 {                                                                                                                                                                                                              
    "ControlID": "Azure_<FeatureName>_<ControlTypeAcronym>_ControlShortName",
@@ -120,6 +119,11 @@ Adding manual control is as easy as updating Policy Json. Follow below steps to 
    "Recommendation":"<Recommendation To Fix Control>", 
 }	
 ```
+>  **DONT'S:**
+> * Do not change values for fixed variables e.g.. FeatureName, ControlID, Id  and MethodaName. These values are referenced at different places in framework.
+> * Control Policy is strongly typed schema, new property or renaming of the property is not allowed
+> * ControlId, Id should not be repeated/duplicated
+
 ###### Add Automated Control
 If you have analyzed that control can be automated using PowerShell with help of Azure cmdlet or API, you can follow steps defined below to add automated control. Before automating control make sure you have below data available
 1. Permissions(Reader/Contributor/Owner/Graph API access etc.) required to validate the control
@@ -140,6 +144,12 @@ Follow below steps to add automated control</br>
 	 "MethodName": "<ControlMethodName>"  // The method which will contain control evaluation logic.
 }
 ```
+>  **DONT'S:**
+> * Do not change values for fixed variables e.g.. FeatureName, ControlID, Id  and MethodaName. These values are referenced at different places in framework.
+> * Control Policy is strongly typed schema, new property or renaming of the property is not allowed
+> * ControlId, Id should not be repeated/duplicated
+
+
 **2.**  Add Core logic for evaluating control 
 </br>Below is the stucture of a function defined for an SVT TCP. 
 
