@@ -187,9 +187,11 @@ You can add a blade by adding entry in "Dashboard" array in the json file for th
 If you have created a query that you want to share with others that can help them to monitor the health status of their subscription or resources, you can create a pull request submitting the suggested query and that would be added to the [documentation repository](https://github.com/azsk/DevOpsKit-docs/blob/master/05-Alerting-and-Monitoring/OMSQueries.md)
 
 ## Pull Requests
-All pull request should be raised to <> branch.Make sure that you donot delete the Pull Request Template when creating a request.
-Before we can accept a pull request from you, we would be reviewing the request and based upon the impact of the request we would be closing request in the time specified. For more details you can refer issue tracking and SLA.
-To enable us to quickly review and accept your pull requests, always create one pull request per issue and link the issue in the pull request. Never merge multiple requests in one unless they have the same root cause. Pull requests should contain tests whenever possible.
+Any pull request should be raised to External Contribution branch.Make sure that you donot delete the Pull Request Template when creating a request.
+Once you create a pull request, that pull request would be reviewed and based upon the impact of the request in terms of quality  we would be closing request. <!--For more details you can refer issue tracking and SLA.-->
+To enable us to quickly review your pull requests, always create one pull request per issue and link the issue in the pull request.
+If you are adding a new control ,please make sure that the pull request description clearly describes the intent of the control, any documentation link that describes the need of the control.
+Never merge multiple requests in one unless they have the same root cause. Pull requests should contain tests whenever possible.
 
 ## Suggestions
 We're also interested in your feedback for the future of tool. You can submit a suggestion or feature request. To make this process more effective, we're asking that these include more information to help define them more clearly. For example one can add the need, impact and advantages or the feature being requeseted.  
