@@ -81,8 +81,7 @@ Now let's understand the properties defined for controls:
 
 Each supported Azure Service will be having core logic defined for evaluating automated controls. You can find it under path 
 "AzSK\Framework\Core\SVT\Services\<FeatureName>.ps1".  Each automated control will have MethodName, where in you can see the logic defined for control.
-
-Having understanding of the control working will accelerate your contribution.The Following are the different areas where you contribute to AzSK.
+The Following are the different areas where you contribute to AzSK.
 
 #### Enhance controls for supported resources 
 Since Azure services keep on evolving with latest security features and automation options, AzSK controls needs to be upgraded with latest bits for control validation or recommendation or change in control description.
