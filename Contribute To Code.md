@@ -83,16 +83,16 @@ Each supported Azure Service will be having core logic defined for evaluating au
 "AzSK\Framework\Core\SVT\Services\<FeatureName>.ps1".  Each automated control will have MethodName, where in you can see the logic defined for control.
 The Following are the different areas where you contribute to AzSK.
 
-#### Enhance controls for supported resources 
+### Enhance controls for supported resources 
 Since Azure services keep on evolving with latest security features and automation options, AzSK controls needs to be upgraded with latest bits for control validation or recommendation or change in control description.
 Following are the ways you can enhance controls for supported resources:
 
-##### Update existing control
+#### Update existing control
 There are various ways in which can update an existing control:
   * Update recommendations as per latest options/PowerShell command available: This is as simple as updating Control Json file. (Refer Policy/Configuration )
   * Update core logic defined to cover different/missing scenarios for control evaluation or bug fixes: You can navigate to core logic for specific control by finding the ControlId in Policy/Configuration.json file and then in the MethodName property you will be able to find the method that contains the logic to evaluate that particular control.
   
-##### Add new controls for existing supported resources</br>
+#### Add new controls for existing supported resources</br>
   * You can add your security practices as control for a particular Azure Service. Before adding control to AzSK, you should come up with below basic details:
 	1. Control Description 
 	2. Rationale behind the control
@@ -102,7 +102,7 @@ There are various ways in which can update an existing control:
 
 The control you are thinking to add may be Manual or Automated control, based upon that you can go through the below given description to add Manual or Automated control.
 
-###### Add Manual Control
+##### Add Manual Control
 Adding manual control is as easy as updating Policy Json. Follow below steps to add manual control</br>
 **a.** Open Policy config of Azure Service by navigating to path: "AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"</vr>
 **b.** Add entry under Controls section. Sample shown below 
@@ -124,7 +124,7 @@ Adding manual control is as easy as updating Policy Json. Follow below steps to 
 > * Control Policy is strongly typed schema, new property or renaming of the property is not allowed
 > * ControlId, Id should not be repeated/duplicated
 
-###### Add Automated Control
+##### Add Automated Control
 If you have analyzed that control can be automated using PowerShell with help of Azure cmdlet or API, you can follow steps defined below to add automated control. Before automating control make sure you have below data available
 1. Permissions(Reader/Contributor/Owner/Graph API access etc.) required to validate the control
 
