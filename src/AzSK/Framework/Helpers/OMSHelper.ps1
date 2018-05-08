@@ -129,9 +129,8 @@ Class OMSHelper{
 			}
 		}
 		catch
-		{
-			[Exception] $ex = [Exception]::new(("Invalid OMS Settings: " + $_.Exception.ToString()), $_.Exception)
-			throw [SuppressedException] $ex
+		{			
+			throw ([SuppressedException]::new("Invalid OMS Settings"));
 		}
 	}
 

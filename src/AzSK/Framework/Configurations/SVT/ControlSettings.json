@@ -225,14 +225,14 @@
    "Automation": {
       "WebhookValidityInDays": 60
    },
-   "BaselineControls": {
-      "ResourceTypeControlIdMappingList": [
+  "BaselineControls": {
+    "ResourceTypeControlIdMappingList": [
 
-      ],
-      "SubscriptionControlIdList": [],
-      "ExpiryInDays": 2,
-      "SupportedSources": []
-   },
+    ],
+    "SubscriptionControlIdList": [],
+    "ExpiryInDays": 2,
+    "SupportedSources": []
+  },
    "CloudService": {
       "LatestOSSKUIDs": [ "WA-GUEST-OS-4.44_201707-01" ]
    },
