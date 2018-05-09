@@ -17,13 +17,13 @@ The goal of this document is to provide a high-level overview of how you can get
 Code of Conduct is necessary so as to encourage a healthy environment for end users to contribute to the project. Thus members and contributors must adhere to code of conduct while reporting any issue, engaging in a discussion or commenting on issues or involving in whatever means.
 
 ### Contribution Area
-You can contribute to blogs, documentation or code of DevOps Kit. 
+You can contribute to blogs, documentation or code of Secure DevOps Kit. 
 * Blogs and Documents: You can contribute to blogs or documents to enhance current documentation by creating a pull request to our [documentation repository](https://github.com/azsk/DevOpsKit-docs).
 * Contribute to code:To contribute to code you can refer [Contributing to code](#contributing-to-code) to know more about how and where to contribute. 
 
 
 ### Reporting Issues
-Have you identified a reproducible bug in DevOps Kit? We want to hear about it! Here's how you can make reporting your issue as effective as possible.
+Have you identified a reproducible bug in Secure DevOps Kit? We want to hear about it! Here's how you can make reporting your issue as effective as possible.
 #### Look for an existing issue
 Before creating a new issue, search in [issues](https://github.com/azsk/DevOpsKit/issues) to see if the issue already been created.
 Be sure to scan through the [most popular]() feature requests.
@@ -88,10 +88,10 @@ Now let's understand the various properties defined for controls:
 Each supported Azure service has core logic defined for evaluating **automated controls**. You can find it under path 
 "AzSK\Framework\Core\SVT\Services\<FeatureName>.ps1".
 
-Having understood the basic structure of DevOps Kit code, you can now go ahead with the contribution.
+Having understood the basic structure of Secure DevOps Kit code, you can now go ahead with the contribution.
 
 ### Enhance controls for supported resources 
-Since Azure services keep on updating with latest security features and automation options, therefore DevOps Kit controls need to be upgraded with latest bits for control validation or recommendation or change in control description.
+Since Azure services keep on updating with latest security features and automation options, therefore Secure DevOps Kit controls need to be upgraded with latest bits for control validation or recommendation or change in control description.
 Following are the ways you can enhance controls for supported resources
 
 #### Update existing control
@@ -191,7 +191,7 @@ Below mentioned are the most basic acceptance criteria for a pull request:
 *  The team needs to agree with any architectural impact a change may make. Things like new extension APIs must be discussed with and agreed upon by the core team.
 
 ### Suggestions
-We're also interested in your feedback for the future of tool. You can submit a suggestion or feature request at <azsdksupext@microsoft.com>. To make this process more effective, we're asking that these include more information to help define them more clearly. For example one can add the need, impact and advantages or the feature being requeseted.  
+We're also interested in your feedback for the future of tool. You can submit a suggestion or feature request at <azsdksupext@microsoft.com>. To make this process more effective, try to include more information to describe the suggestion more clearly. For example one can add the need, impact and advantages or the feature being requeseted.  
 
 ### Thank You !
 Your contributions are really appreciated.
