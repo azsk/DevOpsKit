@@ -85,7 +85,7 @@ class ARMCheckerStatus: EventBase
 		$filesToExcludeCount=0
 		$excludedFiles=@()
 		try{
-		  if(-not([string]::IsNullOrEmpty($exemptControlListPath)) -and (Test-Path -path $exemptControlListPath))
+		  if(-not([string]::IsNullOrEmpty($exemptControlListPath)) -and (Test-Path -path $exemptControlListPath -PathType Leaf))
 		  {
 		    $exemptControlListFile=Get-Content $exemptControlListPath | ConvertFrom-Csv
 	        $exemptControlList=$exemptControlListFile| where{$_.Status -eq "Failed"}
