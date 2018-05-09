@@ -1,6 +1,6 @@
 # Contributing to DevOps Kit 
 
-Welcome, and thank you for showing interest in contributing to DevOps Kit ! 
+Welcome, and thank you for showing interest in contributing to Secure DevOps Kit ! 
 To get an overview of Secure DevOps Kit you can refer to our [documentation repository]( https://github.com/azsk/DevOpsKit-docs.)
 The goal of this document is to provide a high-level overview of how you can get involved in contribution.
 
@@ -30,7 +30,7 @@ Be sure to scan through the [most popular]() feature requests.
 If you find your issue already exists, make relevant comments and mention if something is still missing there.
 #### Write good bug reports
 Writing a good issue will help others including reviewers to have better understanding of the issue, for example giving an appropriate  issue title may help others facing similar issue to find and comment on it. We have created an [issue template] to make sure that important piece of information are not missed while creating an issue:
-##### Best Practices
+##### Best practices
 * File a single issue per problem. Do not add multiple bugs under same issue as the bugs may look similar but their root cause might be different
 * Always try to specify the AzSK version for which you faced the issue.
 * Steps to reproduce the issue like the commands you ran, parameters you passed when you encountered this issue
@@ -91,25 +91,24 @@ Each supported Azure Service has core logic defined for evaluating **automated c
 Having understood the basic structure of DevOps Kit code, you can now go ahead with the contribution.
 
 ### Enhance controls for supported resources 
-Since Azure services keep on evolving with latest security features and automation options, therefore DevOps Kit controls need to be upgraded with latest bits for control validation or recommendation or change in control description.
+Since Azure services keep on updating with latest security features and automation options, therefore DevOps Kit controls need to be upgraded with latest bits for control validation or recommendation or change in control description.
 Following are the ways you can enhance controls for supported resources
 
 #### Update existing control
 There are various ways in which you can update an existing control:
-  * Update recommendations as per latest options/PowerShell command available: This is as simple as updating Control Json file. (Refer Policy/Configuration )
+  * Update recommendations as per latest options/PowerShell command available: This is as simple as updating Policy/Configuration Json file. (Refer Policy/Configuration )
   * Update core logic defined to cover different/missing scenarios for control evaluation or bug fixes: You can navigate to core logic for specific control by finding the ControlId in Policy/Configuration.json file and then in the MethodName property you will be able to find the method that contains the logic to evaluate that particular control.  
   
 #### Add new controls for existing supported resources</br>
   * You can add your security practices as control for a particular Azure Service. Before adding control to AzSK, you should come up with below basic details:
-	1. Control Description 
+	1. Control description 
 	2. Rationale behind the control
 	3. Recommendation to be followed  to fix control
 	4. Define level(TCP/Best Practice/Information) and severity(Critical/High/Medium/Low) of the control
-	5. Can control be validated using Azure cmdlet or API. Based on this control can be added as a Manual or Automated control.
-
+	5. Can control be validated using Azure cmdlet or API. Based on this control can be added as a **Manual or Automated** control.
 The control you are thinking to add may be Manual or Automated control, based upon that you can go through the below given description to add Manual or Automated control.
 
-##### Add manual control
+**Add manual control**</br>
 Adding manual control is as easy as updating Policy Json. Follow below steps to add manual control</br>
 **a.** Open Policy config of Azure Service by navigating to path: "AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"</vr>
 **b.** Add entry under Controls section. Sample shown below 
@@ -131,7 +130,7 @@ Adding manual control is as easy as updating Policy Json. Follow below steps to 
 > * Control Policy is strongly typed schema, new property or renaming of the property is not allowed
 > * ControlId, Id should not be repeated/duplicated
 
-##### Add automated control
+**Add automated control**</br>
 If you have analyzed that control can be automated using PowerShell with help of Azure cmdlet or API, you can follow steps defined below to add automated control. Before automating control make sure you have below data available
 1. Permissions(Reader/Contributor/Owner/Graph API access etc.) required to validate the control
 
@@ -156,7 +155,7 @@ Follow below steps to add automated control</br>
 > * Control Policy is strongly typed schema, new property or renaming of the property is not allowed
 > * ControlId, Id should not be repeated/duplicated
 
-**2.**  Add Core logic for evaluating control 
+**2.**  Add core logic for evaluating control 
 </br>Below is the stucture of a function defined for an SVT TCP. 
 
 ```powershell  
@@ -181,10 +180,8 @@ hidden [ControlResult] <ControlMethodName>([ControlResult] $controlResult)
 	  }
 ```
 
-
-
 ### Submitting changes
-Once you have done the code changes, tested them thouroughly and want to submit your changes or bug fix you can create a pull request. Follow the below steps while creating a pull request for reviewers to have better understanding of your request:
+Once you have done the code changes, tested them and want to submit your changes or bug fix you can create a pull request. Follow the below steps while creating a pull request for reviewers to have better understanding of your request:
 * Point to 'External Contribution' branch so that your changes are merged into it after your pull request is accepted. If you point to any other branch, your pull request might not be considered.
 * The pull request template is placed with the intent to be followed while creating a pull request and if you delete or ignore the template, your pull request might not be considered.
 	
