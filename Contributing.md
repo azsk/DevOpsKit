@@ -41,7 +41,7 @@ Writing a good issue will help others including reviewers to have better underst
 ### Contributing to code
 #### Understanding the structure of DevOps Kit
 Before contributing to code you must understand the structure of DevOps Kit. DevOps Kit evaluates security controls for Azure services like App Service, KeyVault, Storage etc. For each service, AzSK defines controls using two main parts:
-**1.Policy/Configuration:**
+**1.Policy/Configuration:**</br>
 It is a json file that has a set of security controls for an Azure service. For each control in a service there is an entry in Policy/Configuration json file having properties like ControlId, Description, Recommendation, Rationale etc. 
 You can find the configuration for service under :"AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"          
 Now let's understand the various properties defined for controls:
@@ -84,8 +84,8 @@ Now let's understand the various properties defined for controls:
   |SI|System Integrity|Azure_CloudService_SI_Validate_InternalEndpoints|
   |Deploy|Deployment|Azure_AppService_Deploy_Dont_Use_Publish_Profiles|  
 
-**2. Core Logic** 
-Each supported Azure Service has core logic defined for evaluating **automated controls**. You can find it under path 
+**2. Core Logic** </br>
+Each supported Azure service has core logic defined for evaluating **automated controls**. You can find it under path 
 "AzSK\Framework\Core\SVT\Services\<FeatureName>.ps1".
 
 Having understood the basic structure of DevOps Kit code, you can now go ahead with the contribution.
@@ -164,7 +164,7 @@ hidden [ControlResult] <ControlMethodName>([ControlResult] $controlResult)
    {
 		  # SVT implementation goes here 
 		  # Update the result of TCP control in object $controlResult
-		  $controlResult.VerificationResult = [VerificationResult]::Verify;	# Valid values are - Passed, Verify, Failed, Unknown 
+		  $controlResult.VerificationResult = [VerificationResult]::Verify;  # Valid values are - Passed, Verify, Failed, Unknown 
 
 		  # Add any number of messages and data objects using function $controlResult.AddMessage(). 
 		  #	Refer file 'AzSDK\Framework\Models\AzSdkEvent.ps1' for definition of 'MessageData' class and its possible contractors. 
