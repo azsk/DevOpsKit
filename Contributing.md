@@ -21,7 +21,7 @@ Code of Conduct is necessary so as to encourage a healthy environment for end us
 ### Contribution Area
 You can contribute to blogs, documentation or code of Secure DevOps Kit. 
 * Blogs and Documents: You can contribute to blogs or documents to enhance current documentation by creating a pull request to our [documentation repository](https://github.com/azsk/DevOpsKit-docs).
-* Contribute to code:To contribute to code you can refer [Contributing to code](#contributing-to-code) to know more about how and where to contribute. 
+* Contribute to code: To contribute to code you can refer [Contributing to code](#contributing-to-code) to know more about how and where to contribute. 
 
 
 ### Reporting Issues
@@ -46,7 +46,7 @@ Before contributing to code you must understand the structure of Secure DevOps K
 
 **1. Policy/Configuration:**</br>
 It is a json file that has a set of security controls for an Azure service. For each control in a service there is an entry in Policy/Configuration json file having properties like ControlId, Description, Recommendation, Rationale etc. 
-You can find the configuration for service under :"AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"          
+You can find the configuration for service under: "AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"          
 Now let's understand the various properties defined for controls:
 ```
 {                                                                                                                                                                                                                                   
@@ -59,11 +59,11 @@ Now let's understand the various properties defined for controls:
         "Id": "FeatureName01",	// Id being used by framework internally                                  
         "Description": "<Control Description here>",                                                                                                                 
         "ControlSeverity": "High",   // Defines the severity of control with values: Critical, High, Medium and Low                                                                                      
-        "Rationale":"<Control Rationale>", // Rationale behind the control                                                    
+        "Rationale": "<Control Rationale>", // Rationale behind the control                                                    
         "Automated" : "Yes",	// Possible values are: Yes, No                                                      
-        "Tags":["SDL"],		// Tags related to Control                                                              
+        "Tags": ["SDL"],		// Tags related to Control                                                              
         "Enabled": true,					                                                                                                      
-        "Recommendation":"<Recommendation To Fix Control>", // Steps to fix control using PowerShell Script or Portal Options or other manual steps				
+        "Recommendation": "<Recommendation To Fix Control>", // Steps to fix control using PowerShell Script or Portal Options or other manual steps				
         "MethodName": "<ControlMethodName>"		 // Name of method which will be called to evaluate control  
       },												
     ]
@@ -120,11 +120,11 @@ Adding manual control is as easy as updating Policy Json. Follow below steps to 
    "Id": "FeatureName<NextId>",	
    "Description": "<Control Description here>",
    "ControlSeverity": "Critical/High/Medium/Low",
-   "Rationale":"<Control Rationale>",                                                                                        
+   "Rationale": "<Control Rationale>",                                                                                        
    "Automated" : "No",					                                                      
-   "Tags":["SDL", "Manual", "TCP/Best Practice/Information"],                                                              
+   "Tags": ["SDL", "Manual", "TCP/Best Practice/Information"],                                                              
    "Enabled": true,					                                       
-   "Recommendation":"<Recommendation To Fix Control>", 
+   "Recommendation": "<Recommendation To Fix Control>", 
 }	
 ```
 >  **DONT'S:**
@@ -144,11 +144,11 @@ Follow below steps to add automated control</br>
 	  "Id": "FeatureName<NextId>",	
 	  "Description": "<Control Description here>",
 	  "ControlSeverity": "Critical/High/Medium/Low",
-	 "Rationale":"<Control Rationale>",                                                                                        
+	 "Rationale": "<Control Rationale>",                                                                                        
 	  "Automated" : "Yes",					                                                      
-	  "Tags":["SDL", "Automated", "TCP/Best Practice/Information"],                                                              
+	  "Tags": ["SDL", "Automated", "TCP/Best Practice/Information"],                                                              
 	  "Enabled": true,					                                       
-	  "Recommendation":"<Recommendation To Fix Control>", 
+	  "Recommendation": "<Recommendation To Fix Control>", 
 	 "MethodName": "<ControlMethodName>"  // The method which will contain control evaluation logic.
 }
 ```
@@ -196,4 +196,4 @@ Below mentioned are the most basic acceptance criteria for a pull request:
 We're also interested in your feedback for the future of tool. You can submit a suggestion or feature request at <azsdksupext@microsoft.com>. To make this process more effective, try to include more information to describe the suggestion more clearly. For example one can add the need, impact and advantages or the feature being requeseted.  
 
 ### Thank You!
-Your contributions are really appreciated.
+Your contribution is really appreciated.
