@@ -43,6 +43,7 @@ Writing a good issue will help others including reviewers to have better underst
 ### Contributing to code
 #### Understanding the structure of Secure DevOps Kit
 Before contributing to code you must understand the structure of Secure DevOps Kit. It evaluates security controls for Azure services like App Service, KeyVault, Storage etc. For each service, Secure DevOps Kit defines controls using two main parts:
+
 **1. Policy/Configuration:**</br>
 It is a json file that has a set of security controls for an Azure service. For each control in a service there is an entry in Policy/Configuration json file having properties like ControlId, Description, Recommendation, Rationale etc. 
 You can find the configuration for service under :"AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"          
@@ -194,5 +195,5 @@ Below mentioned are the most basic acceptance criteria for a pull request:
 ### Suggestions
 We're also interested in your feedback for the future of tool. You can submit a suggestion or feature request at <azsdksupext@microsoft.com>. To make this process more effective, try to include more information to describe the suggestion more clearly. For example one can add the need, impact and advantages or the feature being requeseted.  
 
-### Thank You !
+### Thank You!
 Your contributions are really appreciated.
