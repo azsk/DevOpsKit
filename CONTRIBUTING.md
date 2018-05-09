@@ -29,7 +29,7 @@ Before creating a new issue, search in [issues](https://github.com/azsk/DevOpsKi
 Be sure to scan through the [most popular]() feature requests.
 If you find your issue already exists, make relevant comments and mention if something is still missing there.
 #### Write good bug reports
-Writing a good issue will help others and the core team to go through the issue raised for example by giving appropriate title to the issue may help others facing similar issue can find and comment on it. We have created an [issue template] to make sure that you follow do not miss the important piece of information while creating an issue:
+Writing a good issue will help others including reviewers to have better understanding of the issue, for example giving an appropriate  issue title may help others facing similar issue to find and comment on it. We have created an [issue template] to make sure that important piece of information are not missed while creating an issue:
 ##### Best Practices
 * File a single issue per problem. Do not add multiple bugs under same issue as the bugs may look similar but their root cause might be different
 * Always try to specify the AzSK version for which you faced the issue.
