@@ -39,8 +39,8 @@ Writing a good issue will help others including reviewers to have better underst
 
 
 ### Contributing to code
-#### Understanding the structure of DevOps Kit
-Before contributing to code you must understand the structure of DevOps Kit. DevOps Kit evaluates security controls for Azure services like App Service, KeyVault, Storage etc. For each service, AzSK defines controls using two main parts:
+#### Understanding the structure of Secure DevOps Kit
+Before contributing to code you must understand the structure of Secure DevOps Kit. It evaluates security controls for Azure services like App Service, KeyVault, Storage etc. For each service, Secure DevOps Kit defines controls using two main parts:
 **1.Policy/Configuration:**</br>
 It is a json file that has a set of security controls for an Azure service. For each control in a service there is an entry in Policy/Configuration json file having properties like ControlId, Description, Recommendation, Rationale etc. 
 You can find the configuration for service under :"AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"          
@@ -100,7 +100,7 @@ There are various ways in which you can update an existing control:
   * Update core logic defined to cover different/missing scenarios for control evaluation or bug fixes: You can navigate to core logic for specific control by finding the ControlId in Policy/Configuration.json file and then in the MethodName property you will be able to find the method that contains the logic to evaluate that particular control.  
   
 #### Add new controls for existing supported resources</br>
-  * You can add your security practices as control for a particular Azure Service. Before adding control to AzSK, you should come up with below basic details:
+  * You can add your security practices as control for a particular Azure Service. Before adding control to code, you should come up with below basic details:
 	1. Control description 
 	2. Rationale behind the control
 	3. Recommendation to be followed  to fix control
