@@ -15,7 +15,7 @@ To get an overview of Secure DevOps Kit you can refer to our [documentation repo
 Code of Conduct is necessary so as to encourage a healthy environment for end users to contribute to the project.Thus contributors must adhere to code of conduct while reporting any issue, engaging in a discussion or commenting on issues or involving in whatever means.
 
 ### Contribution Area
-There are many ways that you can contribute, other than writing code. You can contribute to Blogs, Documentation , Videos that may help end users like you to contribute or get started with the tool. The goal of this document is to provide a high-level overview of how you can get involved in contribution.
+You can contribute to Blogs, Documentation that may help end users get started with the tool. The goal of this document is to provide a high-level overview of how you can get involved in contribution.
  * Blogs and Documents: You can contribute to blogs or documents to enhance current documentation by creating a pull request to our [documentation repository](https://github.com/azsk/DevOpsKit-docs).
 * Contribute to code:  If you want to write fix for a bug or enhance SVT etc, you can refer [Contribution to code]() to know more about how and where to contribute. 
 
@@ -42,12 +42,12 @@ If you are interested in writing code to fix issues, or contribute to the DevOps
 please see [Contribute to code]() to understand more about where and how we expect your contribution.
 
 ### Submitting Changes
-You can find all the pull request raised in the Pull request section. If you want submit your changes or bug fixes you will have to create a pull request for the same. Follow the below steps while creating a pull request for reviewers to understand your request:
+If you want to submit your changes or bug fixes, follow the below steps while creating a pull request for reviewers to understand your request:
 * Point to 'External Contribution' branch so that your changes are merged into it after your pull request is accepted. If you point to any other branch, your pull request might not be considered.
 * The pull request template is placed with the intent to be followed while creating a pull request and if you delete or ignore the template, your pull request might not be considered.
 	
 Below mentioned are the most basic acceptance criteria for a pull request: 
-*  The code changes should not impacts performance in negative way, it should perform well in both real and perceived performance.
+*  The code changes should not impacts performance in negative way.
 *  The code changes should not break existing code flow.
 *  The team needs to agree with any architectural impact a change may make. Things like new extension APIs must be discussed with and agreed upon by the core team.
 
