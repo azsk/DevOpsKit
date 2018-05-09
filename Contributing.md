@@ -1,14 +1,16 @@
 # Contributing to DevOps Kit 
 
-Welcome, and thank you for showing interest in contributing to Secure DevOps Kit ! 
-To get an overview of Secure DevOps Kit you can refer to our [documentation repository]( https://github.com/azsk/DevOpsKit-docs.)
-The goal of this document is to provide a high-level overview of how you can get involved in contribution.
+Welcome, and thank you for showing interest in contributing to Secure DevOps Kit! To get an overview of Secure DevOps Kit you can refer to our [documentation repository]( https://github.com/azsk/DevOpsKit-docs.). The goal of this document is to provide a high-level overview of how you can get involved in contribution.
 
 ## Table of Content
  * [Code of Conduct](/CONTRIBUTING.md#code-of-conduct)
  * [Contribution Area](/CONTRIBUTING.md#asking-questions)
  * [Reporting Issues](/CONTRIBUTING.md#submitting-changes)
  * [Contributing to code](/CONTRIBUTING.md#contributing-to-code)
+ 	* [Understanding the structure of Secure DevOps Kit](#understanding-the-structure-of-secure-devops-kit)
+ 	* [Enhance controls for supported resources](#enhance-controls-for-supported-resources)
+	   * [Update existing control](#update-existing-control)
+	   * [Add new controls for existing supported resources](#add-new-controls-for-existing-supported-resources)   
  * [Submitting Changes](/CONTRIBUTING.md#submitting-changes)
  * [Suggestions](/CONTRIBUTING.md#suggestions)
 	
@@ -41,7 +43,7 @@ Writing a good issue will help others including reviewers to have better underst
 ### Contributing to code
 #### Understanding the structure of Secure DevOps Kit
 Before contributing to code you must understand the structure of Secure DevOps Kit. It evaluates security controls for Azure services like App Service, KeyVault, Storage etc. For each service, Secure DevOps Kit defines controls using two main parts:
-**1.Policy/Configuration:**</br>
+**1. Policy/Configuration:**</br>
 It is a json file that has a set of security controls for an Azure service. For each control in a service there is an entry in Policy/Configuration json file having properties like ControlId, Description, Recommendation, Rationale etc. 
 You can find the configuration for service under :"AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"          
 Now let's understand the various properties defined for controls:
@@ -105,8 +107,7 @@ There are various ways in which you can update an existing control:
 	2. Rationale behind the control
 	3. Recommendation to be followed  to fix control
 	4. Define level(TCP/Best Practice/Information) and severity(Critical/High/Medium/Low) of the control
-	5. Can control be validated using Azure cmdlet or API. Based on this control can be added as a **Manual or Automated** control.
-The control you are thinking to add may be Manual or Automated control, based upon that you can go through the below given description to add Manual or Automated control.
+	5. Can control be validated using Azure cmdlet or API. Based on this control can be added as a **Manual or Automated** control. The control you are thinking to add may be Manual or Automated control, based upon that you can go through the below given description to add Manual or Automated control.
 
 **Add manual control**</br>
 Adding manual control is as easy as updating Policy Json. Follow below steps to add manual control</br>
@@ -126,7 +127,7 @@ Adding manual control is as easy as updating Policy Json. Follow below steps to 
 }	
 ```
 >  **DONT'S:**
-> * Do not change values for fixed variables e.g.. FeatureName, ControlID, Id  and MethodaName. These values are referenced at different places in framework.
+> * Do not change values for fixed variables e.g. FeatureName, ControlID, Id  and MethodaName. These values are referenced at different places in framework.
 > * Control Policy is strongly typed schema, new property or renaming of the property is not allowed
 > * ControlId, Id should not be repeated/duplicated
 
@@ -151,7 +152,7 @@ Follow below steps to add automated control</br>
 }
 ```
 >  **DONT'S:**
-> * Do not change values for fixed variables e.g.. FeatureName, ControlID, Id  and MethodaName. These values are referenced at different places in framework.
+> * Do not change values for fixed variables e.g. FeatureName, ControlID, Id  and MethodaName. These values are referenced at different places in framework.
 > * Control Policy is strongly typed schema, new property or renaming of the property is not allowed
 > * ControlId, Id should not be repeated/duplicated
 
