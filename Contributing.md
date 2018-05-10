@@ -1,6 +1,6 @@
 # Contributing to DevOps Kit 
 
-Welcome, and thank you for showing interest in contributing to Secure DevOps Kit! To get an overview of Secure DevOps Kit you can refer to our [documentation repository]( https://github.com/azsk/DevOpsKit-docs.). The goal of this document is to provide a high-level overview of how you can get involved in contribution.
+Welcome, and thank you for showing interest in contributing to Secure DevOps Kit for Azure! To get an overview of Secure DevOps Kit you can refer to our [documentation repository]( https://github.com/azsk/DevOpsKit-docs.). The goal of this document is to provide a high-level overview of how you can get involved in contribution.
 
 ## Table of Content
  * [Code of Conduct](/CONTRIBUTING.md#code-of-conduct)
@@ -16,7 +16,7 @@ Welcome, and thank you for showing interest in contributing to Secure DevOps Kit
 	
 	
 ### Code of Conduct
-Code of Conduct is necessary so as to encourage a healthy environment for end users to contribute to the project. Thus members and contributors must adhere to code of conduct while reporting any issue, engaging in a discussion or commenting on issues or involving in whatever means.
+Code of Conduct is necessary so as to encourage a healthy environment for end users to contribute to the project. Thus members and contributors must adhere to code of conduct while reporting any issue, engaging in a discussion or commenting on issues or involving via any other means.
 
 ### Contribution Area
 You can contribute to blogs, documentation or code of Secure DevOps Kit. 
@@ -27,17 +27,17 @@ You can contribute to blogs, documentation or code of Secure DevOps Kit.
 ### Reporting Issues
 Have you identified a reproducible bug in Secure DevOps Kit? We want to hear about it! Here's how you can make reporting your issue as effective as possible.
 #### Look for an existing issue
-Before creating a new issue, search in [issues](https://github.com/azsk/DevOpsKit/issues) to see if the issue already been created.
+Before creating a new issue, search in [issues](https://github.com/azsk/DevOpsKit/issues) to see if the issue has already been created.
 Be sure to scan through the [most popular]() feature requests.
 If you find your issue already exists, make relevant comments and mention if something is still missing there.
 #### Write good bug reports
-Writing a good issue will help others including reviewers to have better understanding of the issue, for example giving an appropriate  issue title may help others facing similar issue to find and comment on it. We have created an [issue template] to make sure that important piece of information are not missed while creating an issue:
+Writing a good issue will help others including reviewers to have better understanding of the issue, for example giving an appropriate  issue title may help others facing similar issue to find and comment on it. We have created an [issue template] to make sure that important pieces of information are not missed while creating an issue:
 ##### Best practices
-* File a single issue per problem. Do not add multiple bugs under same issue as the bugs may look similar but their root cause might be different
-* Always try to specify the AzSK version for which you faced the issue.
-* Steps to reproduce the issue like the commands you ran, parameters you passed when you encountered this issue
-* Modules that were present in the powershell session while you ran the command
-* Output
+* File a single issue per problem. Do not add multiple bugs under same issue as the bugs may look similar but their root cause might be different.
+* Always specify the AzSK version for which you faced the issue.
+* Steps to reproduce the issue like the commands you ran, parameters you passed when you encountered this issue.
+* Modules that were present in the powershell session while you ran the command.
+* Output.
 
 
 ### Contributing to code
@@ -73,7 +73,7 @@ Now let's understand the various properties defined for controls:
  Following acronym are used for control type:
  
  
-  |Acronym|Full Name|Examples|
+  |Acronym|Full Name|Example|
   |---|---|---|
   |AuthN|Authentication|Azure_Storage_AuthN_Dont_Allow_Anonymous|
   |AuthZ|Authorization|Azure_Batch_AuthZ_Grant_Min_RBAC_Access|
@@ -99,15 +99,15 @@ Following are the ways you can enhance controls for supported resources
 
 #### Update existing control
 There are various ways in which you can update an existing control:
-  * Update recommendations as per latest options/PowerShell command available: This is as simple as updating Policy/Configuration Json file. (Refer Policy/Configuration )
+  * Update recommendations as per latest options/PowerShell command available: This is as simple as updating Policy/Configuration Json file. (Refer Policy/Configuration ).
   * Update core logic defined to cover different/missing scenarios for control evaluation or bug fixes: You can navigate to core logic for specific control by finding the ControlId in Policy/Configuration.json file and then in the MethodName property you will be able to find the method that contains the logic to evaluate that particular control.  
   
 #### Add new controls for existing supported resources</br>
   * You can add your security practices as control for a particular Azure Service. Before adding control to code, you should come up with below basic details:
-	1. Control description 
-	2. Rationale behind the control
-	3. Recommendation to be followed  to fix control
-	4. Define level(TCP/Best Practice/Information) and severity(Critical/High/Medium/Low) of the control
+	1. Control description.
+	2. Rationale behind the control.
+	3. Recommendation to be followed  to fix control.
+	4. Define level(TCP/Best Practice/Information) and severity(Critical/High/Medium/Low) of the control.
 	5. Can control be validated using Azure cmdlet or API. Based on this control can be added as a **Manual or Automated** control. The control you are thinking to add may be Manual or Automated control, based upon that you can go through the below given description to add Manual or Automated control.
 
 **Add manual control**</br>
@@ -129,15 +129,15 @@ Adding manual control is as easy as updating Policy Json. Follow below steps to 
 ```
 >  **DONT'S:**
 > * Do not change values for fixed variables e.g. FeatureName, ControlID, Id  and MethodaName. These values are referenced at different places in framework.
-> * Control Policy is strongly typed schema, new property or renaming of the property is not allowed
-> * ControlId, Id should not be repeated/duplicated
+> * Control Policy is strongly typed schema, new property or renaming of the property is not allowed.
+> * ControlId, Id should not be repeated/duplicated.
 
 **Add automated control**</br>
 If you have analyzed that control can be automated using PowerShell with help of Azure cmdlet or API, you can follow steps defined below to add automated control. Before automating control make sure you have below data available
-1. Permissions(Reader/Contributor/Owner/Graph API access etc.) required to validate the control
+1. Permissions(Reader/Contributor/Owner/Graph API access etc.) required to validate the control.
 
 Follow below steps to add automated control</br>
-**1.** Add Control entry in Azure Service Policy config under the path "AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"
+**1.** Add Control entry in Azure Service Policy config under the path "AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json".
 ```
 {                                                                                                                                                                                                              
 	  "ControlID": "Azure_<FeatureName>_<ControlTypeAcronym>_ControlShortName",
@@ -154,8 +154,8 @@ Follow below steps to add automated control</br>
 ```
 >  **DONT'S:**
 > * Do not change values for fixed variables e.g. FeatureName, ControlID, Id  and MethodaName. These values are referenced at different places in framework.
-> * Control Policy is strongly typed schema, new property or renaming of the property is not allowed
-> * ControlId, Id should not be repeated/duplicated
+> * Control Policy is strongly typed schema, new property or renaming of the property is not allowed.
+> * ControlId, Id should not be repeated/duplicated.
 
 **2.**  Add core logic for evaluating control 
 </br>Below is the stucture of a function defined for an SVT TCP. 
@@ -183,17 +183,16 @@ hidden [ControlResult] <ControlMethodName>([ControlResult] $controlResult)
 ```
 
 ### Submitting changes
-Once you have done the code changes, tested them and want to submit your changes or bug fix you can create a pull request. Follow the below steps while creating a pull request for reviewers to have better understanding of your request:
-* Point to 'External Contribution' branch so that your changes are merged into it after your pull request is accepted. If you point to any other branch, your pull request might not be considered.
-* The pull request template is placed with the intent to be followed while creating a pull request and if you delete or ignore the template, your pull request might not be considered.
+Once you have done the code changes, tested them or you want to fix a bug  you can create a pull request. Follow the below steps while creating a pull request for reviewers to have better understanding of your request:
+* Point to 'External Contribution' branch so that your changes are merged into it after your pull request is accepted. If you point to any other branch, your pull request would most likely be not considered.
+* The pull request template is placed with the intent to be followed while creating a pull request and if you delete or ignore the template, your pull request would most likely be not considered.
 	
 Below mentioned are the most basic acceptance criteria for a pull request: 
-*  The code changes should not impacts performance in negative way.
+*  The code changes should not impact the performance in a negative way.
 *  The code changes should not break existing code flow.
-*  The team needs to agree with any architectural impact a change may make. Things like new extension APIs must be discussed with and agreed upon by the core team.
+*  The core team needs to agree with any architectural impact a change may make. Things like new extension or APIs must be discussed with and agreed upon by the core team.
 
 ### Suggestions
-We're also interested in your feedback for the future of tool. You can submit a suggestion or feature request at <azsdksupext@microsoft.com>. To make this process more effective, try to include more information to describe the suggestion more clearly. For example one can add the need, impact and advantages or the feature being requeseted.  
+We're also interested in your feedback. You can submit a suggestion or a feature request at <azsksup@microsoft.com>. To make the feedback process more effective, try to include as much information as you can. For example one can add the need, impact and advantages or the feature being requested.  
 
-### Thank You!
 Your contribution is really appreciated.
