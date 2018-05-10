@@ -3,16 +3,16 @@
 Welcome, and thank you for showing interest in contributing to Secure DevOps Kit for Azure! To get an overview of Secure DevOps Kit you can refer to our [documentation repository]( https://github.com/azsk/DevOpsKit-docs.). The goal of this document is to provide a high-level overview of how you can get involved in contribution.
 
 ## Table of Content
- * [Code of Conduct](/CONTRIBUTING.md#code-of-conduct)
- * [Contribution Area](/CONTRIBUTING.md#asking-questions)
- * [Reporting Issues](/CONTRIBUTING.md#submitting-changes)
- * [Contributing to code](/CONTRIBUTING.md#contributing-to-code)
+ * [Code of Conduct](#code-of-conduct)
+ * [Contribution Area](#contribution-area)
+ * [Reporting Issues](#reporting-issues)
+ * [Contributing to code](#contributing-to-code)
  	* [Understanding the structure of Secure DevOps Kit](#understanding-the-structure-of-secure-devops-kit)
  	* [Enhance controls for supported resources](#enhance-controls-for-supported-resources)
 	   * [Update existing control](#update-existing-control)
 	   * [Add new controls for existing supported resources](#add-new-controls-for-existing-supported-resources)   
- * [Submitting Changes](/CONTRIBUTING.md#submitting-changes)
- * [Suggestions](/CONTRIBUTING.md#suggestions)
+ * [Submitting Changes](#submitting-changes)
+ * [Suggestions](#suggestions)
 	
 	
 ### Code of Conduct
