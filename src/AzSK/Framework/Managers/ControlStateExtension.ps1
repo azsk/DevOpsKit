@@ -245,9 +245,9 @@ class ControlStateExtension
 			{
 				$indexes = @();
 				$indexes += $this.ControlStateIndexer 
-
-				$selectedIndex = $indexes | Where-Object { $_.ResourceId -eq $id}
-
+				$hashId = [Helpers]::ComputeHash($id.ToLower())
+				$selectedIndex = $indexes | Where-Object { $_.HashId -eq $hashId}
+				
 				if(($selectedIndex | Measure-Object).Count -gt 0)
 				{
 					$hashId = $selectedIndex.HashId | Select-Object -Unique
@@ -338,7 +338,7 @@ class ControlStateExtension
 			Remove-Item -Path "$AzSKTemp\ControlState\*" -Force -Recurse 
 		}
 
-		$hash = [Helpers]::ComputeHash($id);
+		$hash = [Helpers]::ComputeHash($id.ToLower());
 		$indexerPath = "$AzSKTemp\ControlState\$($this.IndexerBlobName)"
 		$fileName = "$AzSKTemp\ControlState\$hash.json"	
 		
@@ -420,7 +420,7 @@ class ControlStateExtension
 			Remove-Item -Path "$AzSKTemp\ControlState\*" -Force 
 		}
 
-		$hash = [Helpers]::ComputeHash($id);
+		$hash = [Helpers]::ComputeHash($id.ToLower());
 		$indexerPath = "$AzSKTemp\ControlState\$($this.IndexerBlobName)"
 		$fileName = "$AzSKTemp\ControlState\$hash.json"	
 		
@@ -556,7 +556,7 @@ class ControlStateExtension
 		}
 		if($retVal)
 		{				
-			$tempHash = [Helpers]::ComputeHash($id);
+			$tempHash = [Helpers]::ComputeHash($id.ToLower());
 			#take the current indexer value
 			$filteredIndexerObject = $this.ControlStateIndexer | Where-Object { $_.HashId -eq $tempHash}
 			#remove the current index from the list
