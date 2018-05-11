@@ -454,7 +454,6 @@ class PolicySetup: CommandBase
 		$parameters.Add("ResourceGroups",$this.ResourceGroupName)
 		$parameters.Add("AIName",$this.AppInsightName)		
 		$parameters.Add("DashboardTitle","DevOps Kit Monitoring Dashboard - $($this.OrgFullName)")
-		$TemplatePath = "C:\Branches\ContosoDashboard\DevOpsKit\src\AzSK\Framework\Configurations\PolicySetup\MonitoringDashboard.json"
 		New-AzureRmResourceGroupDeployment -Name "MonitoringDashboard" -TemplateFile $MonitoringDashboardTemplatePath   -ResourceGroupName $($this.ResourceGroupName) -TemplateParameterObject $parameters   
 		$this.PublishCustomMessage(" `r`n Completed Setting up monitoring dashboard", [MessageType]::Update);
 	}
