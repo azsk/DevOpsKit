@@ -2925,7 +2925,7 @@ class CCAutomation: CommandBase
 		$ccRunbook = $this.LoadServerConfigFile($fileName)
 		#append escape character (`) before '$' symbol
 		$policyStoreUrl	= [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl.Replace('$',"``$")		
-		$OSSPolicyStoreUrl = [ConfigurationManager]::GetAzSKConfigData().CASetupRunbookURL.Replace('$',"``$")
+		$CoreSetupSrcUrl = [ConfigurationManager]::GetAzSKConfigData().CASetupRunbookURL.Replace('$',"``$")
 		$AzSKCARunbookVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion
 		$telemetryKey = ""
 		if([RemoteReportHelper]::IsAIOrgTelemetryEnabled())
@@ -2936,7 +2936,7 @@ class CCAutomation: CommandBase
 			$temp1 = $_ -replace "\[#automationAccountRG#\]",$this.AutomationAccount.ResourceGroup;
 			$temp2 = $temp1 -replace "\[#automationAccountName#\]",$this.AutomationAccount.Name;
 			$temp3 = $temp2 -replace "\[#OnlinePolicyStoreUrl#\]",$policyStoreUrl;
-			$temp4 = $temp3 -replace "\[#OSSPolicyStoreUrl#\]",$OSSPolicyStoreUrl;
+			$temp4 = $temp3 -replace "\[#CoreSetupSrcUrl#\]",$CoreSetupSrcUrl;
 			$temp5 = $temp4 -replace "\[#EnableAADAuthForOnlinePolicyStore#\]",$this.ConvertBooleanToString([ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore);
 			$temp6 = $temp5 -replace "\[#UpdateToLatestVersion#]",$this.ConvertBooleanToString([ConfigurationManager]::GetAzSKConfigData().UpdateToLatestVersion);
 			$temp7 = $temp6 -replace "\[#telemetryKey#\]",$telemetryKey;
@@ -3568,6 +3568,16 @@ class CCAutomation: CommandBase
 		if(($spPermissions|measure-object).count -gt 0)
 		{
 			$haveSubscriptionAccess = ($spPermissions | Where-Object {$_.scope -eq "/subscriptions/$($currentContext.Subscription.Id)" -and $_.RoleDefinitionName -eq "Reader"}|Measure-Object).count -gt 0
+			if(($spPermissions | Where-Object {$_.scope -eq "/subscriptions/$($currentContext.Subscription.Id)" -and $_.RoleDefinitionName -eq "Contributor"}|Measure-Object).count -gt 0)
+			{
+				$this.PublishCustomMessage("WARNING: Service principal (Name: $($spPermissions[0].DisplayName)) configured as the CA RunAs Account has 'Contributor' access. This is not recommended.`r`nCA only requires 'Reader' permission at subscription scope for the RunAs account/SPN.",[MessageType]::Warning);
+				$haveSubscriptionAccess = $true;
+			}
+			if(($spPermissions | Where-Object {$_.scope -eq "/subscriptions/$($currentContext.Subscription.Id)" -and $_.RoleDefinitionName -eq "Owner"}|Measure-Object).count -gt 0)
+			{
+				$this.PublishCustomMessage("WARNING: Service principal (Name: $($spPermissions[0].DisplayName)) configured as the CA RunAs Account has 'Owner' access. This is not recommended.`r`nCA only requires 'Reader' permission at subscription scope for the RunAs account/SPN.",[MessageType]::Warning);
+				$haveSubscriptionAccess = $true;
+			}
 			return $haveSubscriptionAccess	
 		}
 		else

@@ -26,11 +26,11 @@ class EventHubOutput: ListenerBase
 	{
 		$this.UnregisterEvents();
 
-		$this.RegisterEvent([SVTEvent]::ControlCompleted, {
+		$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
 			$currentInstance = [EventHubOutput]::GetInstance();
 			try
 			{
-				$currentInstance.WriteControlResult([SVTEventContext] ($Event.SourceArgs | Select-Object -First 1));
+				$currentInstance.WriteControlResult([SVTEventContext[]] ($Event.SourceArgs));
 			}
 			catch
 			{
@@ -39,11 +39,13 @@ class EventHubOutput: ListenerBase
 		});
 	}
 
-	hidden [void] WriteControlResult([SVTEventContext] $eventContext)
+	hidden [void] WriteControlResult([SVTEventContext[]] $eventContextAll)
 	{
 		try
 		{
 			$settings = [ConfigurationManager]::GetAzSKSettings()
+			$tempBodyObjectsAll = [System.Collections.ArrayList]::new()
+
 			if(-not [string]::IsNullOrWhiteSpace($settings.EventHubSource))
 			{
 				$this.EventHubSource = $settings.EventHubSource
@@ -51,18 +53,24 @@ class EventHubOutput: ListenerBase
 
 			if(-not [string]::IsNullOrWhiteSpace($settings.EventHubNamespace))
 			{
-				$tempBodyObjects = $this.GetEventHubBodyObjects($this.EventHubSource,$eventContext) #need to prioritize this
+				$eventContextAll | ForEach-Object{
+				$eventContext = $_
+
+				$tempBodyObjects = $this.GetEventHubBodyObjects($this.EventHubSource,$eventContext) 
 				$tempBodyObjects | ForEach-Object{
 					Set-Variable -Name tempBody -Value $_ -Scope Local
-					$body = $tempBody | ConvertTo-Json
-					[EventHubOutput]::PostEventHubData(`
+					$tempBodyObjectsAll.Add($tempBody)
+					}
+				}
+				
+				$body = $tempBodyObjectsAll | ConvertTo-Json
+				[EventHubOutput]::PostEventHubData(`
                             $settings.EventHubNamespace, `
                             $settings.EventHubName, `
                             $settings.EventHubSendKeyName, `
                             $settings.EventHubSendKey,`
                             $body, `
                             $settings.EventHubType)
-				}            
 			}
 		}
 		catch

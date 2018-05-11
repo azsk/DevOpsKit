@@ -329,10 +329,11 @@ function Set-AzSKUserPreference {
 	This command would help to set user preferences for AzSK.
 
 	.PARAMETER OutputFolderPath
-		Provide the custom folder path for output files generated from AzSK
+    Provide the custom folder path for output files generated from AzSK
 	.PARAMETER ResetOutputFolderPath
-			Reset the output folder path to default value
-
+    Reset the output folder path to default value
+    .PARAMETER DoNotOpenOutputFolder
+    Switch to specify whether to open output folder.
 	.LINK
 	https://aka.ms/azskossdocs
 
@@ -345,7 +346,10 @@ function Set-AzSKUserPreference {
 
         [Parameter(Mandatory = $true, ParameterSetName = "Reset OutputFolderPath", HelpMessage = "Reset the output folder path to default value")]
         [switch]
-        $ResetOutputFolderPath
+        $ResetOutputFolderPath,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
+		$DoNotOpenOutputFolder
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
@@ -475,4 +479,9 @@ function Set-AzSKPrivacyNoticeResponse {
         [ListenerHelper]::UnregisterListeners();
     }
 }
+
+function Clear-AzSKCache {
+    [ConfigOverride]::ClearConfigInstance()
+}
+
 . $PSScriptRoot\Framework\Helpers\AliasHelper.ps1

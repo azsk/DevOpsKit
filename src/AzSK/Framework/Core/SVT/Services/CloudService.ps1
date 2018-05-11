@@ -35,17 +35,8 @@ class CloudService: SVTBase
 	{
 		if($null -ne $this.ResourceObject -and ( $this.ResourceObject.DeploymentSlots | Measure-Object).Count -gt 0)
 		{
-			if(($this.ResourceObject.DeploymentSlots.Roles | Measure-Object).Count -eq 1 )
-			{
-				$roleName = $this.ResourceObject.DeploymentSlots.Roles[0].RoleType
-				# exclude controls for classic VM cloud service
-				if($null -ne $roleName -and $roleName -eq 'PersistentVMRole')
-				{
-					$result = @();
-					$result += $controls | Where-Object { $_.Tags -contains "ClassicVirtualMachine" };
-					return $result;
-				}
-			}
+			# ignoring "VirtualMachine" slot in cloud service as it contains only classic VM roles.
+			$this.ResourceObject.DeploymentSlots = $this.ResourceObject.DeploymentSlots | Where-Object { $_.SlotType -ne "VirtualMachine" }
 		}
 		
 		return $controls;
