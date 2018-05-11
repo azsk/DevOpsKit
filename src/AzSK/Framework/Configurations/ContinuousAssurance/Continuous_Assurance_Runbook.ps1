@@ -137,14 +137,27 @@ function InvokeScript($accessToken, $policyStoreURL,$fileName, $version)
 
 function ConvertStringToBoolean($strToConvert)
 {
-	switch($strToConvert)
-	{
-		"true" {return $true}
-		"false" {return $false}
-	}
-	return $false #adding this to prevent error all path doesn't return value"
+    if ($str -eq 'true')
+    {
+        return $true
+    }
+    else
+    {
+        return $false
+    }
 }
 
+######################################################################################################################
+#Core runbook code. 
+#This is built using the runbook code template inside \Modules\AzSK\<version>\Framework\Configurations\ContinuousAssurance
+#The placeholder values for various important variables are determined 'on the fly' based on the defaults that ship in AzSK.JSON
+#file in the \Modules\AzSK\<version>\Framework\Configurations folder and the local AzSKSettings.JSON file in the %localappdata%\Microsoft\AzSK
+#folder for the user setting up CA. 
+
+#In an org-specific installation, various values from AzSK.JSON can be overridden in org policy and
+#are picked up from the org-specific AzSK.JSON obtained from the serverUrl location (in AzSKSettings.JSON). 
+#In generic (org-neutral) setups these values are obtained from AzSK.JSON on a public CDN endpoint.
+######################################################################################################################
 try
 {
 	#start job timer
@@ -154,34 +167,63 @@ try
 	$automationAccountRG =  "[#automationAccountRG#]"
 	$automationAccountName="[#automationAccountName#]"
 	$telemetryKey ="[#telemetryKey#]"
+	
+	#This is the location from where policy is fetched at runtime. 
+	#This can be an org-specific URL (when org policy is set up) or, if generic org-neutral mode is used, it will just match the CoreSetupSrcUrl (below) 
+	#We will refer to this as org-policy store or org-policy url in comments below (with the above understanding)
 	$onlinePolicyStoreUrl = "[#onlinePolicyStoreUrl#]"
-	$OSSPolicyStoreUrl = "[#OSSPolicyStoreUrl#]"
+
+    #This is the org-neutral CDN endpoint. This gets overridden in org-policy setup.
+	$CoreSetupSrcUrl = "[#CoreSetupSrcUrl#]"
+
+	#This setting determines if the policy store enforces authentication. Generally 'false' for org-policy or OSS (org-neutral) context.
 	$enableAADAuthForOnlinePolicyStore = "[#enableAADAuthForOnlinePolicyStore#]"
+
+	#This is the script that is primarily responsible for setting up AzSK module in the automation account.
 	$runbookCoreSetupScript = "RunbookCoreSetup.ps1"
+
+	#This is the script that is run to peform the actual scanning. This is fetched from the org-policy store if org-policy 
+	#is in use. If not, it is fetched from the default AzSK CDN. 
+	#This script basically allows orgs to customize/tweak the scripts that are run to perform the daily CA scans.
 	$runbookScanAgentScript = "RunbookScanAgent.ps1"
+
 	$RunbookName = "Continuous_Assurance_Runbook"
+
+	#This schedule ensures that CA activity initiated by the Scan_Schedule actually completes. 
+	#It is handy in situations where the job got terminated due to a long running scan, etc. and 
+	#a bunch of other situations (import of all modules into the CA account, etc.)
 	$CAHelperScheduleName = "CA_Helper_Schedule"
+
+	#This setting allows org policy owners to explore the latest version of AzSK (while users
+	#in the org may be setup to use an older version - see comment in RunbookCoreSetup.PS1)
 	$UpdateToLatestVersion = "[#UpdateToLatestVersion#]"	
+
 	$azureRmResourceURI = "https://management.core.windows.net/"
+	
+	#This is the Run-As (SPN) account for the runbook. It is read from the CA Automation account.
 	$RunAsConnection = Get-AutomationConnection -Name "AzureRunAsConnection"
 
 	#-----------------------------------Config end-------------------------------------------------------------------------
 
 	#-----------------------------------Telemetry script-------------------------------------------------------------------
 	PublishEvent -EventName "CA Job Started" -Properties @{
-	"OnlinePolicyStoreUrl"=$OnlinePolicyStoreUrl; `
-    "AzureADAppId"=$RunAsConnection.ApplicationId
+		"OnlinePolicyStoreUrl"=$OnlinePolicyStoreUrl; `
+ 	   "AzureADAppId"=$RunAsConnection.ApplicationId
 	}
 
 	#------------------------------------Execute RunbookCoreSetup.ps1 to download required modules-------------------------
-	#Login
+	
+	#Login to Azure
 	if(!$RunAsConnection)
 	{
 		throw "Cannot login to Azure from AzSK CA runbook. Connection info for AzureRunAsConnection not found."
 	}
 	try
 	{
-		"Logging in to Azure..."
+		Write-Output("RB: Started runbook execution...")
+		
+		$appId = $RunAsConnection.ApplicationId 
+        Write-Output ("RB: Logging in to Azure for appId: $appId")
 		Add-AzureRmAccount `
 			-ServicePrincipal `
 			-TenantId $RunAsConnection.TenantId `
@@ -192,46 +234,46 @@ try
 	}
 	catch
 	{
-		Write-Output ("Failed to login to Azure with AzSK CA Runtime account.")
+		Write-Output ("RB: Failed to login to Azure with AzSK AppId: $appId.")
 		throw $_.Exception
 	}
 
-	#create helper schedule to run job again after 30 minutes in case online policy URL is down
 
-    "Validating installed AzSK version..."
-	#Step 1: Get module version from installed AzSK module
-	$module = Get-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG `
-			-AutomationAccountName $AutomationAccountName | `
-			Where-Object { $_.Name -like "azsk*"}
-
-	$moduleVersion = "1.0.0"
+	#This is a 'pseudo-version' and corresponds to the folder on the online policy store
+	#from where the current CA core setup and scan agent scripts will be fetched.
+	$caScriptsFolder = "1.0.0"
+	#This is used *inside* the CoreSetup invocation below to control the version update for AzSK
 	$UpdateToLatestVersion = ConvertStringToBoolean($UpdateToLatestVersion)
 
+	#------------------------------------Invoke CoreSetup script to ensure AzSK is up to date and ready for the scan -------------------
 	PublishEvent -EventName "CA Job Invoke Setup Started"
-	Write-Output ("Starting invocation: policyStoreURL=$OSSPolicyStoreUrl")
-	InvokeScript -policyStoreURL $OSSPolicyStoreUrl -fileName $runbookCoreSetupScript -version $moduleVersion
-	Write-Output ("Completed runbook setup script.")
+	Write-Output ("RB: Invoking core setup using policyStoreURL: {$CoreSetupSrcUrl}")
+	InvokeScript -policyStoreURL $CoreSetupSrcUrl -fileName $runbookCoreSetupScript -version $caScriptsFolder
+	Write-Output ("RB: Completed core setup script.")
 	PublishEvent -EventName "CA Job Invoke Setup Completed"
 
 	#------------------------------------Execute RunbookScanAgent.ps1 to scan subscription and resources-------------------
+	#We start with a check for 'Get-AzSKAccessToken' to ensure that AzSK module is ready (and loaded)
 	if((Get-Command -Name "Get-AzSKAccessToken" -ErrorAction SilentlyContinue|Measure-Object).Count -gt 0)
 	{
+		#If policy store authN is set to true, get a token. (mostly for org policy/OSS, this will be 'false')
 		if($enableAADAuthForOnlinePolicyStore -eq "true")
 		{
+			Write-Output("RB: Getting token for authN to online policy store.")
 			$accessToken = Get-AzSKAccessToken -ResourceAppIdURI $azureRmResourceURI
 		}
+
 		PublishEvent -EventName "CA Job Invoke Scan Started"
-		Write-Output ("Starting invocation: policyStoreURL=$onlinePolicyStoreUrl")
-		Write-Output ("Starting CA scan...")
-		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName $runbookScanAgentScript -version $moduleVersion
-		Write-Output ("CA scan completed.")
+		Write-Output ("RB: Invoking scan agent script: policyStoreURL={" + $onlinePolicyStoreUrl.Substring(0,15) + ($onlinePolicyStoreUrl.Substring(16) -replace "\w","*") + "}")
+		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName $runbookScanAgentScript -version $caScriptsFolder
+		Write-Output ("RB: Scan agent script completed.")
 		PublishEvent -EventName "CA Job Invoke Scan Completed"
 	}
 	else
 	{
-		Write-Output("Not triggering a scan. AzSK module not yet ready in the account.")
+		Write-Output("RB: Not triggering a scan. AzSK module not yet ready in the automation account.")
 	}
-	Write-Output ("CA job completed.")
+	Write-Output("RB: Runbook execution completed...")
 	PublishEvent -EventName "CA Job Completed" -Metrics @{
 	"TimeTakenInMs" = $jobTimer.ElapsedMilliseconds; `
 	"SuccessCount" = 1
@@ -239,8 +281,7 @@ try
 }
 catch
 {
-	Write-Output ("Exception happened in runbook...")
-	$_
+	Write-Output ("RB: Exception happened in CA runbook...`r`nError details: " + ($_ | Out-String))
 	PublishEvent -EventName "CA Job Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) } -Metrics @{"TimeTakenInMs" =$jobTimer.ElapsedMilliseconds; "SuccessCount" = 0}
 	throw;
 }
