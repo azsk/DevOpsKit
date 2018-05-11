@@ -24,7 +24,10 @@ function Repair-AzSKAzureServicesSecurity
 	.PARAMETER ControlIds
 			Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.
 	.PARAMETER Force
-	        Bypass consent to modify Azure resources.
+			Bypass consent to modify Azure resources.
+
+	.PARAMETER DoNotOpenOutputFolder
+		Switch to specify whether to open output folder.
 	
 	.NOTES
 	This command helps the application team to fix the Azure resources for security compliance 
@@ -67,7 +70,10 @@ function Repair-AzSKAzureServicesSecurity
 
 		[switch] 
 		[Parameter(Mandatory = $false, HelpMessage = "Bypass consent to modify Azure resources.")]
-		$Force
+		$Force,
+
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
+		$DoNotOpenOutputFolder
     )
 
 	Begin
@@ -121,7 +127,8 @@ function Repair-AzSKSubscriptionSecurity
 	.PARAMETER ParameterFilePath
 		ResourceGroups for which the security evaluation has to be performed. Comma separated values are supported. Wildcards are not permitted. By default, the command gets all resources in the subscription.
 	.PARAMETER Force
-	        Bypass consent to modify Azure resources.
+			Bypass consent to modify Azure resources.
+	
 
 	.LINK
 	https://aka.ms/azskossdocs 
@@ -145,7 +152,10 @@ function Repair-AzSKSubscriptionSecurity
 
 		[switch] 
 		[Parameter(Mandatory = $false, HelpMessage = "Bypass consent to modify Azure resources.")]
-		$Force
+		$Force,
+
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
+		$DoNotOpenOutputFolder
     )
 
 	Begin

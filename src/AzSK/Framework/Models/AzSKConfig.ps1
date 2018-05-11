@@ -2,7 +2,6 @@
 class AzSKConfig
 {
     [string] $MaintenanceMessage
-	[Environment] $Environment
 	[string] $AzSKRGName
 	[string] $AzSKRepoURL
 	[string] $AzSKServerVersion

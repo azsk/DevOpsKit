@@ -46,7 +46,8 @@ function Install-AzSKContinuousAssurance
 		Comma separated values of target subscriptionIds that will be monitored through CA from a central subscription.
 	.PARAMETER CentralScanMode
 		This enables AzSK CA in central scanning mode. Use this switch along with TargetSubscriptionIds param to register target subscriptions in the central CA.
-	
+	.PARAMETER DoNotOpenOutputFolder
+		Switch to specify whether to open output folder.
 	.NOTES
 	
 
@@ -166,7 +167,11 @@ function Install-AzSKContinuousAssurance
 		[Parameter(Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="This enables AzSK CA in central scanning mode. Use this switch along with TargetSubscriptionIds param to register target subscriptions in the central CA.")]
 		[switch]
 		[Alias("csm")]
-		$CentralScanMode
+		$CentralScanMode,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode", HelpMessage = "Switch to specify whether to open output folder.")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
+		$DoNotOpenOutputFolder
     )
 	Begin
 	{
@@ -262,12 +267,13 @@ function Update-AzSKContinuousAssurance
 	.PARAMETER CentralScanMode
 		This switch is required to update AzSK CA running in central scanning mode.
 	.PARAMETER FixRuntimeAccount
-		 Use this switch to fix CA runtime account in case of below issues. 1. Runtime account deleted (Permissions required: Subscription owner) 2. Runtime account permissions missing (Permissions required: Subscription owner and AD App owner) 3. Certificate deleted/expired (Permissions required: Subscription owner and AD App owner)
+		Use this switch to fix CA runtime account in case of below issues. 1. Runtime account deleted (Permissions required: Subscription owner) 2. Runtime account permissions missing (Permissions required: Subscription owner and AD App owner) 3. Certificate deleted/expired (Permissions required: Subscription owner and AD App owner)
 	.PARAMETER RenewCertificate
 			 Renews certificate credential of CA SPN if the caller is Owner of the AAD Application (SPN). If the caller is not Owner, a new application is created with a corresponding SPN and a certificate owned by the caller. CA uses the updated credential going forward.
 	.PARAMETER FixModules
 			 Use this switch in case 'AzureRm.Automation' module extraction fails in CA Automation Account. 
-
+	.PARAMETER DoNotOpenOutputFolder
+		Switch to specify whether to open output folder.
 	.NOTES
 	
 
@@ -397,7 +403,11 @@ function Update-AzSKContinuousAssurance
 		[Parameter(Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="This switch is required to update AzSK CA running in central scanning mode.")]
 		[switch]
 		[Alias("csm")]
-		$CentralScanMode
+		$CentralScanMode,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode", HelpMessage = "Switch to specify whether to open output folder.")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
+		$DoNotOpenOutputFolder
     )
 	Begin
 	{
@@ -463,6 +473,8 @@ function Get-AzSKContinuousAssurance
 		Name of AutomationAccount. Default value is AzSKContinuousAssurance.
 	.PARAMETER ExhaustiveCheck
 		By appending this switch it would check whether all the modules installed in central automation account are up to date. Only include if default diagnosis is not resulting in any issue.
+	.PARAMETER DoNotOpenOutputFolder
+		Switch to specify whether to open output folder.
 	.LINK
 	https://aka.ms/azskossdocs 
 
@@ -486,7 +498,10 @@ function Get-AzSKContinuousAssurance
 		[Parameter(Mandatory = $false)]
 		[switch]
 		[Alias("ec")]
-		$ExhaustiveCheck		
+		$ExhaustiveCheck,
+		
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
+		$DoNotOpenOutputFolder
     )
 	Begin
 	{
@@ -580,7 +595,11 @@ function Remove-AzSKContinuousAssurance
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]		
 		[switch]
 		[Alias("f")]
-		$Force	
+		$Force,
+		
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
+		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode", HelpMessage = "Switch to specify whether to open output folder.")]
+		$DoNotOpenOutputFolder
     )
 	Begin
 	{
