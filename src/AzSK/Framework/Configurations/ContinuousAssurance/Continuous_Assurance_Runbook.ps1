@@ -281,7 +281,7 @@ try
 }
 catch
 {
-	Write-Output ("RB: Exception happened in CA runbook...`r`nError details: " + ($_ | Out-String))
+	Write-Output ("RB: Exception occurred in CA runbook...`r`nError details: " + ($_ | Out-String))
 	PublishEvent -EventName "CA Job Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) } -Metrics @{"TimeTakenInMs" =$jobTimer.ElapsedMilliseconds; "SuccessCount" = 0}
 	throw;
 }
