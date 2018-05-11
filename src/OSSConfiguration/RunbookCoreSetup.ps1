@@ -372,17 +372,17 @@ try
 						-AutomationAccountName $AutomationAccountName `
 						-ErrorAction SilentlyContinue | Where-Object { $_.Name -ilike "azsk*" }  
 
-	Write-Ouput("CS: Looking for module: $AzSKModuleName in account: $AutomationAccountName in RG: $AutomationAccountRG")
+	Write-Output("CS: Looking for module: $AzSKModuleName in account: $AutomationAccountName in RG: $AutomationAccountRG")
 	if($azskModules.Count -gt 1)
 	{
 		#Multiple modules! This anomaly can happen, for e.g., if someone setup AzSKPreview and then switched to AzSK (prod).
 		#Clean up all AzSK* modules.
-		Write-Ouput("CS: Found mulitple AzSK* modules in the automation account. Cleaning them up and importing a fresh one.")
+		Write-Output("CS: Found mulitple AzSK* modules in the automation account. Cleaning them up and importing a fresh one.")
 		$azskModules | ForEach-Object { Remove-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $_.Name -ErrorAction SilentlyContinue -Force }
 	}
 	elseif($azskModules.Count -eq 1 -and $azskModules[0].Name -ne $AzSKModuleName)
 	{
-		Write-Ouput("CS: Found $($azskModules[0].Name) in the automation account when looking for: $AzSKModuleName. Cleaning it up and importing a fresh one.")
+		Write-Output("CS: Found $($azskModules[0].Name) in the automation account when looking for: $AzSKModuleName. Cleaning it up and importing a fresh one.")
 		Remove-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $azskModules[0].Name -ErrorAction SilentlyContinue -Force
 	}
 
@@ -451,12 +451,12 @@ try
 	#Let us be really sure AzSK is ready to run cmdlets before calling it done!
 	elseif((Get-Command -Name "Get-AzSKAzureServicesSecurityStatus" -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
 	{
-		Write-Ouput("CS: AzSK not fully ready to run. Creating helper schedule for another retry...")
+		Write-Output("CS: AzSK not fully ready to run. Creating helper schedule for another retry...")
 		CreateHelperSchedule -nextRetryIntervalInMinutes $retryDownloadIntervalMins
 	}
 	else
 	{
-		Write-Ouput("CS: CA core setup completed.")
+		Write-Output("CS: CA core setup completed.")
 		PublishEvent -EventName "CA Setup Succeeded" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 	}	
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
