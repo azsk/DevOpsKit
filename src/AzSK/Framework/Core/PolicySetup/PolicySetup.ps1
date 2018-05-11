@@ -405,6 +405,7 @@ class PolicySetup: CommandBase
 			$this.PublishCustomMessage(" `r`n.No configuration files found under folder [$($this.ConfigFolderPath)]", [MessageType]::Warning);
 		}
 
+		$this.CreateMonitoringDashboard()
 		$this.PublishCustomMessage(" `r`nThe setup has been completed and policies have been copied to [$($this.FolderPath)].`r`nRun the command below to install Organization specific version.`r`n$($this.IWRCommand)", [MessageType]::Update);
 		$this.PublishCustomMessage(" `r`nNote: This is a basic setup and uses a public access blob for storing your org's installer. Once you have richer org policies, consider using a location/end-point protected by your tenant authentication.", [MessageType]::Warning);
 		return @();
@@ -433,6 +434,29 @@ class PolicySetup: CommandBase
 			Invoke-Expression $mgrationScript
 		}
 		$this.PublishAzSKRootEvent([AzSKRootEvent]::PolicyMigrationCommandCompleted, $this.OrgFullName);
+	}
+
+	[void] CreateMonitoringDashboard()
+	{
+		$this.PublishCustomMessage(" `r`n Setting up monitoring dashboard", [MessageType]::Warning);
+		$MonitoringDashboardTemplatePath = [Constants]::AzSKTempFolderPath + "\MonitoringDashboard";
+		if(-not (Test-Path -Path $MonitoringDashboardTemplatePath))
+		{
+			mkdir -Path $MonitoringDashboardTemplatePath -Force | Out-Null
+		}
+					
+		$MonitoringDashboardTemplateObj = [ConfigurationManager]::LoadServerConfigFile("MonitoringDashboard.json"); 				
+		$MonitoringDashboardTemplatePath = $MonitoringDashboardTemplatePath+"\MonitoringDashboard.json";
+		$MonitoringDashboardTemplateObj | ConvertTo-Json -Depth 100 | Out-File $MonitoringDashboardTemplatePath 
+
+		$parameters = New-Object -TypeName Hashtable
+		$parameters.Add("SubscriptionId", $this.SubscriptionContext.SubscriptionId)
+		$parameters.Add("ResourceGroups",$this.ResourceGroupName)
+		$parameters.Add("AIName",$this.AppInsightName)		
+		$parameters.Add("DashboardTitle","DevOps Kit Monitoring Dashboard - $($this.OrgFullName)")
+		$TemplatePath = "C:\Branches\ContosoDashboard\DevOpsKit\src\AzSK\Framework\Configurations\PolicySetup\MonitoringDashboard.json"
+		New-AzureRmResourceGroupDeployment -Name "MonitoringDashboard" -TemplateFile $MonitoringDashboardTemplatePath   -ResourceGroupName $($this.ResourceGroupName) -TemplateParameterObject $parameters   
+		$this.PublishCustomMessage(" `r`n Completed Setting up monitoring dashboard", [MessageType]::Update);
 	}
 }
 

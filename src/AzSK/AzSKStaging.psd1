@@ -135,7 +135,8 @@
 		'Send-AzSKInternalData',
         'Set-AzSKAlertMonitoring',
 		'Remove-AzSKAlertMonitoring'
-		'Get-AzSKARMTemplateSecurityStatus'
+        'Get-AzSKARMTemplateSecurityStatus',
+        'Clear-AzSKCache'
     )
 
     # Cmdlets to export from this module

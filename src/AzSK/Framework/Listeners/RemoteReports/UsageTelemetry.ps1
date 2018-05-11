@@ -60,24 +60,7 @@ class UsageTelemetry: ListenerBase {
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
-				[System.Management.Automation.ErrorRecord] $er = ($Event.SourceArgs | Select-Object -First 1)
-				try {
-					if([Helpers]::CheckMember($er,"innermostMessage"))
-					{
-						$er.innermostMessage = [RemoteReportHelper]::Mask($er.innermostMessage)
-					}
-					if([Helpers]::CheckMember($er,"details"))
-					{
-						$er.details = $null
-					}
-					if([Helpers]::CheckMember($er,"outerMessage"))
-					{
-						$er.outerMessage = [RemoteReportHelper]::Mask($er.outerMessage)
-					}
-				}
-				catch {
-					# Handling error while masking exception message
-				}			
+				[System.Management.Automation.ErrorRecord] $er = ($Event.SourceArgs | Select-Object -First 1)	
 
 				[UsageTelemetry]::PushException($currentInstance, @{}, @{}, $er);
             }
@@ -361,7 +344,7 @@ class UsageTelemetry: ListenerBase {
 		try{
 			[UsageTelemetry]::SetCommonProperties($Publisher, $Properties);
 			$ex = [Microsoft.ApplicationInsights.DataContracts.ExceptionTelemetry]::new()
-			$ex.Exception = $ErrorRecord.Exception
+			$ex.Exception = [System.Exception]::new( [RemoteReportHelper]::Mask($ErrorRecord.Exception.ToString()))
 			try{
 				$ex.Properties.Add("ScriptStackTrace", [UsageTelemetry]::AnonScriptStackTrace($ErrorRecord.ScriptStackTrace))
 			}

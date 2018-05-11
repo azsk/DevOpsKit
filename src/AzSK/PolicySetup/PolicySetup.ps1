@@ -23,6 +23,8 @@ function Install-AzSKOrganizationPolicy
 			Specify the name for policy storage account
 	.PARAMETER AppInsightName
 			Specify the name for application insight where telemetry data will be pushed
+	.PARAMETER DoNotOpenOutputFolder
+		Switch to specify whether to open output folder.
 
 	#>
 	
@@ -68,7 +70,13 @@ function Install-AzSKOrganizationPolicy
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
         [string]
-		$PolicyFolderPath
+		$PolicyFolderPath,
+
+		[switch]
+		[Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Switch to specify whether to open output folder.")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
+		$DoNotOpenOutputFolder
+
     )
 
 	Begin
@@ -165,7 +173,13 @@ function Update-AzSKOrganizationPolicy
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
 		[string]
-		$MigrationScriptPath
+		$MigrationScriptPath,
+
+		[switch]
+		[Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Switch to specify whether to open output folder.")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Migrate", HelpMessage = "Switch to specify whether to open output folder.")]
+		$DoNotOpenOutputFolder
     )
 	Begin
 	{
