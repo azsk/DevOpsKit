@@ -267,7 +267,7 @@ function Update-AzSKContinuousAssurance
 	.PARAMETER CentralScanMode
 		This switch is required to update AzSK CA running in central scanning mode.
 	.PARAMETER FixRuntimeAccount
-		�Use this switch to fix CA runtime account in case of below issues. 1. Runtime account deleted (Permissions required: Subscription owner) 2. Runtime account permissions missing (Permissions required: Subscription owner and AD App owner) 3. Certificate deleted/expired (Permissions required: Subscription owner and AD App owner)
+		Use this switch to fix CA runtime account in case of below issues. 1. Runtime account deleted (Permissions required: Subscription owner) 2. Runtime account permissions missing (Permissions required: Subscription owner and AD App owner) 3. Certificate deleted/expired (Permissions required: Subscription owner and AD App owner)
 	.PARAMETER RenewCertificate
 			 Renews certificate credential of CA SPN if the caller is Owner of the AAD Application (SPN). If the caller is not Owner, a new application is created with a corresponding SPN and a certificate owned by the caller. CA uses the updated credential going forward.
 	.PARAMETER FixModules
