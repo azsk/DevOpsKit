@@ -482,20 +482,20 @@ function PersistSubscriptionSnapshot
 				{	
 					#This will never get double-called since we call only upon first time transition to 'INP'
 					$matchedSubId[0].StartedTime = [DateTime]::UtcNow.ToString('s');
-				}				
+				}
+				
+				if($Status -eq "ERR")
+				{
+					Write-Output("SA: Unable to scan subscription: {$SubscriptionID}. Moving on to the next one...")					
+				}
 			}
-			if($Status -eq "ERR")
-			{
-				Write-Output("SA: Unable to scan subscription: {$SubscriptionID}. Moving on to the next one...")
-				#??? But why this message from a PersistSnapshot helper func?
-				#??? Also, should this not be inside the above if{}? - Ask Byna
-			}
+
 			
 			#Write the updated status back to the storage blob  
 			$activeScanObjects | ConvertTo-Json -Depth 10 | Out-File $CAActiveScanSnapshotBlobPath
 			Set-AzureStorageBlobContent -File $CAActiveScanSnapshotBlobPath -Blob $CAActiveScanSnapshotBlobName -Container $CAMultiSubScanConfigContainerName -BlobType Block -Context $StorageContext -Force
 
-			#??? If nothing else is left to scan? (Why don't we make this determination outside??) - Ask Byna
+			#This is the last persist status. Archiving it for diagnosys purpose.
 			if(($activeScanObjects | Where-Object { $_.Status -notin ("COM","ERR")} | Measure-Object).Count -eq 0)
 			{
 				$errSubsCount = ($activeScanObjects | Where-Object { $_.Status -eq "ERR"} | Measure-Object).Count
@@ -633,7 +633,7 @@ try {
 	#Defaults.
     	$AzSKModuleName = "AzSK"
 	$StorageAccountRG = "AzSKRG"
-	#In case of multiple CAs in single sub we use sub-container to host artifacts for each individual CA 
+	#In case of multiple CAs in single sub we use sub-container to host working files for each individual CA 
 	#Sub-container has the same name as each CA automation account RG (hence guaranteed to be unique)
 	$SubContainerName = $AutomationAccountRG
 	
