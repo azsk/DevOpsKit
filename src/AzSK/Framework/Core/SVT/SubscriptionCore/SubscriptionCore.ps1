@@ -477,7 +477,7 @@ class SubscriptionCore: SVTBase
 		{
 			$controlResult.AddMessage([MessageData]::new("Security center policies must be configured with settings mentioned below:", $this.SecurityCenterInstance.Policy.properties));			
 
-			if(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0 -and $this.SecurityCenterInstance.IsLatestVersion)
+			if(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0)
 			{
 				$controlResult.EnableFixControl = $true;
 
