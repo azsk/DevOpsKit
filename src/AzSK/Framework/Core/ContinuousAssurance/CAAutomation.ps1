@@ -319,11 +319,11 @@ class CCAutomation: CommandBase
 				$i = 0;
 				$this.OutputObject.TargetSubs = @()
 				$caSubs | ForEach-Object {
+					$caSubId = $_;
 					try
 					{
 						$out = "" | Select-Object CentralSubscriptionId, TargetSubscriptionId, StorageAccountName, LoggingOption
 						$i = $i + 1
-						$caSubId = $_;
 						$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`n[$i/$count] Configuring subscription for central scan: [$caSubId] `r`n"+[Constants]::DoubleDashLine);
 						$out.CentralSubscriptionId = $this.SubscriptionContext.SubscriptionId;
 						$out.TargetSubscriptionId = $caSubId;
@@ -387,7 +387,7 @@ class CCAutomation: CommandBase
 									"CreationTime"=$timestamp;
 									"LastModified"=$timestamp
 									}
-									Set-AzureRmStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
+									[Helpers]::SetResourceTags($newStorage.Id, $this.reportStorageTags, $false, $true);
 								} 
 								$out.StorageAccountName = $caStorageAccountName;
 							}
@@ -404,7 +404,7 @@ class CCAutomation: CommandBase
 					}
 					catch
 					{
-						$this.PublishCustomMessage("Failed to setup scan for $($this.SubscriptionContext.SubscriptionId)");
+						$this.PublishCustomMessage("Failed to setup scan for $caSubId");
 						$this.PublishException($_)
 					}
 				}
