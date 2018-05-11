@@ -33,6 +33,7 @@ class CCAutomation: CommandBase
 	hidden [string] $AzSKCATempFolderPath = ($env:temp + "\AzSKTemp\")
 	[bool] $SkipTargetSubscriptionConfig = $false;
 	[bool] $IsCentralScanModeOn = $false;
+	[bool] $IsCustomAADAppName = $false;
 	[bool] $ExhaustiveCheck = $false;
 	[CAReportsLocation] $LoggingOption = [CAReportsLocation]::CentralSub;
 
@@ -57,6 +58,14 @@ class CCAutomation: CommandBase
 		{
 			$ScanIntervalInHours = $this.defaultScanIntervalInHours;
 		}
+
+		$caAADAppName = $this.InvocationContext.BoundParameters["AzureADAppName"];
+
+		if(-not [string]::IsNullOrWhiteSpace($caAADAppName))
+		{
+			$this.IsCustomAADAppName = $true;
+		}
+		
 		$this.AutomationAccount = [AutomationAccount]@{
             Name = ([UserSubscriptionDataHelper]::GetCAName());
 			CoreResourceGroup = ([UserSubscriptionDataHelper]::GetUserSubscriptionRGName());
@@ -95,6 +104,14 @@ class CCAutomation: CommandBase
         }
 		$this.UserConfig = [UserConfig]::new();
 		$this.DoNotOpenOutputFolder = $true;
+
+		$caAADAppName = $this.InvocationContext.BoundParameters["AzureADAppName"];
+
+		if(-not [string]::IsNullOrWhiteSpace($caAADAppName))
+		{
+			$this.IsCustomAADAppName = $true;
+		}
+
 	}
 	
 	CCAutomation(
@@ -123,6 +140,13 @@ class CCAutomation: CommandBase
 		}
 		$this.UserConfig = [UserConfig]::new();
 		$this.DoNotOpenOutputFolder = $true;
+
+		$caAADAppName = $this.InvocationContext.BoundParameters["AzureADAppName"];
+
+		if(-not [string]::IsNullOrWhiteSpace($caAADAppName))
+		{
+			$this.IsCustomAADAppName = $true;
+		}
 	}
 
 	hidden [void] SetOMSSettings([string] $OMSWorkspaceId, [string] $OMSSharedKey,[string] $AltOMSWorkspaceId, [string] $AltOMSSharedKey)
@@ -453,7 +477,7 @@ class CCAutomation: CommandBase
 					}
 				}
 				#clean AD App only if AD App was newly created
-				if(![string]::IsNullOrWhiteSpace($this.AutomationAccount.AzureADAppName) -and !$this.isExistingADApp)
+				if(![string]::IsNullOrWhiteSpace($this.AutomationAccount.AzureADAppName) -and !$this.IsCustomAADAppName)
 				{
 					$ADApplication = Get-AzureRmADApplication -DisplayNameStartWith $this.AutomationAccount.AzureADAppName -ErrorAction SilentlyContinue | Where-Object -Property DisplayName -eq $this.AutomationAccount.AzureADAppName
 					if($ADApplication)
