@@ -78,7 +78,9 @@ function Set-AzSKAlerts
 			$alertObj = [Alerts]::new($SubscriptionId, $PSCmdlet.MyInvocation, $modifiedTags);
 			if ($alertObj) 
 			{
-				return $alertObj.InvokeFunction($alertObj.SetAlerts, @($SecurityContactEmails,$SecurityPhoneNumbers, $AlertResourceGroupLocation));				
+			    # Turning Off this feature forcefully by initializing TargetResourceGroup as null
+			    $TargetResourceGroup=$null;
+				return $alertObj.InvokeFunction($alertObj.SetAlerts, @($TargetResourceGroup,$SecurityContactEmails,$SecurityPhoneNumbers, $AlertResourceGroupLocation));				
 			}
 		}
 		catch 

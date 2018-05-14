@@ -421,10 +421,7 @@ class Alerts: CommandBase
     {
 		return $this.SetAlerts($targetResourceGroup,$securityContactEmails,$SecurityPhoneNumbers,$alertResourceGroupLocation, $null, $null, $null);
 	}
-	[MessageData[]] SetAlerts([string] $securityContactEmails, [string] $SecurityPhoneNumbers, [string] $alertResourceGroupLocation)
-    {
-		return $this.SetAlerts($null,$securityContactEmails,$SecurityPhoneNumbers,$alertResourceGroupLocation, $null, $null, $null);
-	}
+
 	[MessageData[]] SetAlerts([PSObject] $emailReceivers, [PSObject] $smsReceivers, [string] $webhookUri)
 	{
 		return $this.SetAlerts($null, $null ,$null, $null, $emailReceivers, $smsReceivers, $webhookUri);
