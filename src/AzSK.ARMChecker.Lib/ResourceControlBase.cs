@@ -10,8 +10,7 @@ namespace AzSK.ARMChecker.Lib
 		public string Description { get; set; }
 		public string Rationale { get; set; }
 		public string Recommendation { get; set; }
-        public string ExpectedProperty { get; set; }
-        public string ExpectedValue { get; set; }
+		public string ExpectedValue { get; set; }
         public ControlSeverity Severity { get; set; }
 		public string ResourceType { get; set; }
 	}

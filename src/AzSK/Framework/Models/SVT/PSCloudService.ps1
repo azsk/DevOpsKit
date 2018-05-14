@@ -181,15 +181,9 @@ class PSCloudService
 							
 							$Role.RoleInstances += $roleInstance		        
 							
-                            if([Helpers]::CheckMember($svc, "VirtualIPs") -and [Helpers]::CheckMember($svc.VirtualIPs, "VirtualIP"))
-                            {
-							    $Role.VirtualIPs = [array]($svc.VirtualIPs.VirtualIP | Select-Object Address, IsDnsProgrammed)
-                            }
+							$Role.VirtualIPs = [array]($svc.VirtualIPs.VirtualIP | Select-Object Address, IsDnsProgrammed)
 
-                            if([Helpers]::CheckMember($svc, "UpgradeDomainCount"))
-                            {
-							    $Role.UpgradeDomainCount = $svc.UpgradeDomainCount
-                            }
+							$Role.UpgradeDomainCount = $svc.UpgradeDomainCount
 
 							#    Write-Host `nRole Extensions: -ForegroundColor DarkYellow
 							#    Write-Host ------------------

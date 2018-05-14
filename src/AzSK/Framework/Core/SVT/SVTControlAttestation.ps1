@@ -360,7 +360,7 @@ class SVTControlAttestation
 						
 									$controlState.AttestationStatus = $controlResult.AttestationStatus
 									$controlState.EffectiveVerificationResult = $controlResult.VerificationResult
-									$controlState.HashId = [Helpers]::ComputeHash($resourceValueKey.ToLower());
+									$controlState.HashId = [Helpers]::ComputeHash($resourceValueKey);
 									$controlState.ResourceId = $resourceValueKey;
 									if($this.bulkAttestMode)
 									{

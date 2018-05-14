@@ -488,13 +488,6 @@ class SubscriptionCore: SVTBase
 				$this.PublishCustomMessage("WARNING: The Azure Security Center policies in your subscription are out of date.`nPlease update to the latest version by running command Update-AzSKSubscriptionSecurity.", [MessageType]::Warning);
 				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Current security center policies are configured as per older policy. To update as per latest configuration, run command Update-AzSKSubscriptionSecurity."));
 			}
-			elseif(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0)
-			{
-				$controlResult.EnableFixControl = $true;
-
-				$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredASCPolicies);
-				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredASCPolicies));
-			}
 			else
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("All security center policies are correctly configured."));

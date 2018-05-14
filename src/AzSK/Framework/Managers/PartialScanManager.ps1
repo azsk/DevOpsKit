@@ -103,6 +103,7 @@ class PartialScanManager
 		$this.GetResourceScanTrackerObject();
 		if($this.IsListAvailableAndActive())
 		{
+			#$idHash = [Helpers]::ComputeHash($resourceId)
 			$resourceValue = $this.ResourceScanTrackerObj.ResourceMapTable | Where-Object { $_.Id -eq $resourceId};
 			if($null -ne $resourceValue)
 			{
@@ -130,6 +131,7 @@ class PartialScanManager
 		$this.GetResourceScanTrackerObject();
 		if($this.IsListAvailableAndActive())
 		{
+			#$idHash = [Helpers]::ComputeHash($resourceId)
 			$resourceValue = $this.ResourceScanTrackerObj.ResourceMapTable | Where-Object { $_.Id -eq $resourceId};
 			if($null -ne $resourceValue)
 			{
@@ -183,6 +185,7 @@ class PartialScanManager
 			$resourceIdMap = @();
 			$resourceIds | ForEach-Object {
 				$resourceId = $_;
+				#$hashId = [Helpers]::ComputeHash($resourceId);
 				$resourceValue = [PartialScanResource]@{
 					Id = $resourceId;
 					State = [ScanState]::INIT;

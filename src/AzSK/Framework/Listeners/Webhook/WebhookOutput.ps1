@@ -26,11 +26,11 @@ class WebhookOutput: ListenerBase
 	{
 		$this.UnregisterEvents();
 
-		$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
+		$this.RegisterEvent([SVTEvent]::ControlCompleted, {
 			$currentInstance = [WebhookOutput]::GetInstance();
 			try
 			{
-				$currentInstance.WriteControlResult([SVTEventContext[]] ($Event.SourceArgs));
+				$currentInstance.WriteControlResult([SVTEventContext] ($Event.SourceArgs | Select-Object -First 1));
 			}
 			catch
 			{
@@ -39,13 +39,11 @@ class WebhookOutput: ListenerBase
 		});
 	}
 
-	hidden [void] WriteControlResult([SVTEventContext[]] $eventContextAll)
+	hidden [void] WriteControlResult([SVTEventContext] $eventContext)
 	{
 		try
 		{
 			$settings = [ConfigurationManager]::GetAzSKSettings()
-			$tempBodyObjectsAll = [System.Collections.ArrayList]::new()
-
 			if(-not [string]::IsNullOrWhiteSpace($settings.WebhookSource))
 			{
 				$this.WebhookSource = $settings.WebhookSource
@@ -53,24 +51,18 @@ class WebhookOutput: ListenerBase
 
 			if(-not [string]::IsNullOrWhiteSpace($settings.WebhookUrl))
 			{
-				$eventContextAll | ForEach-Object{
-				$eventContext = $_
-					$tempBodyObjects = $this.GetWebhookBodyObjects($this.WebhookSource,$eventContext) #need to prioritize this
-					$tempBodyObjects | ForEach-Object{
+				$tempBodyObjects = $this.GetWebhookBodyObjects($this.WebhookSource,$eventContext) #need to prioritize this
+				$tempBodyObjects | ForEach-Object{
 					Set-Variable -Name tempBody -Value $_ -Scope Local
-					$tempBodyObjectsAll.Add($tempBody)
 					
-				}
-				}
-
-				PostWebhookData `
+					PostWebhookData `
 						-webHookUrl $settings.WebhookUrl `
 						-authZHeaderName $settings.WebhookAuthZHeaderName `
 						-authZHeaderValue $settings.WebhookAuthZHeaderValue `
-						-eventBody $tempBodyObjectsAll `
+						-eventBody $tempBody `
 						-logType $settings.WebhookType
 						#Currently logType param is not used
-				          
+				}            
 			}
 		}
 		catch

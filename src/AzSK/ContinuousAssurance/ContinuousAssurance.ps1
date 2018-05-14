@@ -59,7 +59,7 @@ function Install-AzSKContinuousAssurance
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Default", HelpMessage="Id of the subscription in which Automation Account needs to be installed.")]
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Id of the subscription in which Automation Account needs to be installed.")]
         [string]
-		[Alias("sid", "HostSubscriptionId", "hsid")]
+		[Alias("sid")]
 		$SubscriptionId ,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Comma separated values of target subscriptionIds that will be monitored through CA from a central subscription.")]
@@ -285,7 +285,7 @@ function Update-AzSKContinuousAssurance
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Default", HelpMessage="Subscription id in which Automation Account exists")]
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Subscription id in which Automation Account exists")]
         [string]
-		[Alias("sid", "HostSubscriptionId", "hsid")]
+		[Alias("sid")]
 		$SubscriptionId,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Comma separated values of targetsubscriptionIds that will get monitored from the central subscription through CA. Use this switch along with CentralScanMode switch.")]
@@ -370,7 +370,7 @@ function Update-AzSKContinuousAssurance
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
         [switch]
-		[Alias("fra","ConfigureRuntimeAccount", "cra")]
+		[Alias("fra")]
 		$FixRuntimeAccount,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
@@ -560,7 +560,7 @@ function Remove-AzSKContinuousAssurance
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Default", HelpMessage="Subscription id in which Automation Account exists")]
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Subscription id in which Automation Account exists")]
         [string]
-		[Alias("sid", "HostSubscriptionId", "hsid")]
+		[Alias("sid")]
 		$SubscriptionId,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
