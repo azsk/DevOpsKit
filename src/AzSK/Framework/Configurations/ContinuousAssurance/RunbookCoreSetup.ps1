@@ -24,7 +24,7 @@
 		#module is in extraction state
 		if($Module.ProvisioningState -ne "Failed" -and $Module.ProvisioningState -ne "Succeeded" -and $Module.ProvisioningState -ne "Created")
 		{
-			Write-Output("CS: Current provisioning state for module $ModuleName is $($Module.ProvisioningState)")
+			Write-Output("CS: Current provisioning state for module: [$ModuleName] is: [$($Module.ProvisioningState)]")
 		}
 		#Check if module with specified version already exists
         elseif(IsModuleHealthy -ModuleName $ModuleName -ModuleVersion $ModuleVersion)
@@ -81,7 +81,7 @@ function DownloadModule
 					-ContentLink $ActualUrl
 		} while($null -eq $AutomationModule -and $retryCount -le 3)
 
-		Write-Output("CS: Importing module: "+ $ModuleName + " Version " + $ModuleVersion + " into the CA automation account.")
+		Write-Output("CS: Importing module: [$ModuleName] Version: [$ModuleVersion] into the CA automation account.")
 
 		if($Sync)
 		{
@@ -97,7 +97,7 @@ function DownloadModule
                 }
                 if($AutomationModule.ProvisioningState -eq "Failed")
                 {
-					Write-Output ("CS: Failed to import: "+ $AutomationModule +" into the automation account. Will retry in a bit.")
+					Write-Output ("CS: Failed to import: [$AutomationModule] into the automation account. Will retry in a bit.")
 					return;
                 }
 		}
@@ -168,7 +168,7 @@ function SearchModule
 		{
 			#Download AzSKConfig.JSON to get the desired AzSK module version
 			$uri = $global:ExecutionContext.InvokeCommand.ExpandString($azskVersionForOrg)
-			Write-Output("CS: Reading specific AzSK version to use in CA from org settings at: $uri")
+			Write-Output("CS: Reading specific AzSK version to use in CA from org settings at: [$uri]")
 
 			[System.Uri] $validatedUri = $null;
 			if([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri))
@@ -185,14 +185,14 @@ function SearchModule
 						if(-not [string]::IsNullOrWhiteSpace($serverFileContent.CurrentVersionForOrg))
 						{
 							$ModuleVersion = $serverFileContent.CurrentVersionForOrg
-							Write-Output("CS: Desired AzSK version: $ModuleVersion")
+							Write-Output("CS: Desired AzSK version: [$ModuleVersion]")
 						}
 					}
 				}
 				catch
 				{
 					# If unable to fetch server config file or module version property then continue and download latest version module.
-					Write-Output("CS: Failed in the attempt to fetch the org-specific AzSK version from org policy location: $validatedUri")
+					Write-Output("CS: Failed in the attempt to fetch the org-specific AzSK version from org policy location: [$validatedUri]")
 					Write-Output("CS: Attempting to get the latest version of AzSK from PSGallery as fallback.")
 				}
 			}
@@ -372,7 +372,7 @@ try
 						-AutomationAccountName $AutomationAccountName `
 						-ErrorAction SilentlyContinue | Where-Object { $_.Name -ilike "azsk*" }  
 
-	Write-Output ("CS: Looking for module: $AzSKModuleName in account: $AutomationAccountName in RG: $AutomationAccountRG")
+	Write-Output ("CS: Looking for module: [$AzSKModuleName] in account: [$AutomationAccountName] in RG: [$AutomationAccountRG]")
 	if($azskModules.Count -gt 1)
 	{
 		#Multiple modules! This anomaly can happen, for e.g., if someone setup AzSKPreview and then switched to AzSK (prod).
@@ -382,7 +382,7 @@ try
 	}
 	elseif($azskModules.Count -eq 1 -and $azskModules[0].Name -ne $AzSKModuleName)
 	{
-		Write-Output ("CS: Found $($azskModules[0].Name) in the automation account when looking for: $AzSKModuleName. Cleaning it up and importing a fresh one.")
+		Write-Output ("CS: Found [$($azskModules[0].Name)] in the automation account when looking for: [$AzSKModuleName]. Cleaning it up and importing a fresh one.")
 		Remove-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $azskModules[0].Name -ErrorAction SilentlyContinue -Force
 	}
 
@@ -411,7 +411,7 @@ try
 	#endregion
 	if($azskModule -and ($azskModule.Version -ne  $desiredAzSKVersion))
 	{
-		Write-Output ("CS: $AzSKModuleName version present: " + $azskModule.Version + " in provisioning state: " + $azskModule.ProvisioningState + ". Expected version: " + $desiredAzSKVersion)
+		Write-Output ("CS: Installed $AzSKModuleName version: [" + $azskModule.Version + "] in provisioning state: [" + $azskModule.ProvisioningState + "]. Expected version: [$desiredAzSKVersion])
 	}
 	#Telemetry
 	PublishEvent -EventName "CA Setup Required Modules State" -Properties @{
