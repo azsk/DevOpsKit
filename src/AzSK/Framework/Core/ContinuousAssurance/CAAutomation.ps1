@@ -33,6 +33,7 @@ class CCAutomation: CommandBase
 	hidden [string] $AzSKCATempFolderPath = ($env:temp + "\AzSKTemp\")
 	[bool] $SkipTargetSubscriptionConfig = $false;
 	[bool] $IsCentralScanModeOn = $false;
+	[bool] $IsCustomAADAppName = $false;
 	[bool] $ExhaustiveCheck = $false;
 	[CAReportsLocation] $LoggingOption = [CAReportsLocation]::CentralSub;
 
@@ -57,6 +58,14 @@ class CCAutomation: CommandBase
 		{
 			$ScanIntervalInHours = $this.defaultScanIntervalInHours;
 		}
+
+		$caAADAppName = $this.InvocationContext.BoundParameters["AzureADAppName"];
+
+		if(-not [string]::IsNullOrWhiteSpace($caAADAppName))
+		{
+			$this.IsCustomAADAppName = $true;
+		}
+		
 		$this.AutomationAccount = [AutomationAccount]@{
             Name = ([UserSubscriptionDataHelper]::GetCAName());
 			CoreResourceGroup = ([UserSubscriptionDataHelper]::GetUserSubscriptionRGName());
@@ -95,6 +104,14 @@ class CCAutomation: CommandBase
         }
 		$this.UserConfig = [UserConfig]::new();
 		$this.DoNotOpenOutputFolder = $true;
+
+		$caAADAppName = $this.InvocationContext.BoundParameters["AzureADAppName"];
+
+		if(-not [string]::IsNullOrWhiteSpace($caAADAppName))
+		{
+			$this.IsCustomAADAppName = $true;
+		}
+
 	}
 	
 	CCAutomation(
@@ -123,6 +140,13 @@ class CCAutomation: CommandBase
 		}
 		$this.UserConfig = [UserConfig]::new();
 		$this.DoNotOpenOutputFolder = $true;
+
+		$caAADAppName = $this.InvocationContext.BoundParameters["AzureADAppName"];
+
+		if(-not [string]::IsNullOrWhiteSpace($caAADAppName))
+		{
+			$this.IsCustomAADAppName = $true;
+		}
 	}
 
 	hidden [void] SetOMSSettings([string] $OMSWorkspaceId, [string] $OMSSharedKey,[string] $AltOMSWorkspaceId, [string] $AltOMSSharedKey)
@@ -295,11 +319,11 @@ class CCAutomation: CommandBase
 				$i = 0;
 				$this.OutputObject.TargetSubs = @()
 				$caSubs | ForEach-Object {
+					$caSubId = $_;
 					try
 					{
 						$out = "" | Select-Object CentralSubscriptionId, TargetSubscriptionId, StorageAccountName, LoggingOption
 						$i = $i + 1
-						$caSubId = $_;
 						$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`n[$i/$count] Configuring subscription for central scan: [$caSubId] `r`n"+[Constants]::DoubleDashLine);
 						$out.CentralSubscriptionId = $this.SubscriptionContext.SubscriptionId;
 						$out.TargetSubscriptionId = $caSubId;
@@ -363,7 +387,7 @@ class CCAutomation: CommandBase
 									"CreationTime"=$timestamp;
 									"LastModified"=$timestamp
 									}
-									Set-AzureRmStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
+									[Helpers]::SetResourceTags($newStorage.Id, $this.reportStorageTags, $false, $true);
 								} 
 								$out.StorageAccountName = $caStorageAccountName;
 							}
@@ -380,7 +404,7 @@ class CCAutomation: CommandBase
 					}
 					catch
 					{
-						$this.PublishCustomMessage("Failed to setup scan for $($this.SubscriptionContext.SubscriptionId)");
+						$this.PublishCustomMessage("Failed to setup scan for $caSubId");
 						$this.PublishException($_)
 					}
 				}
@@ -453,7 +477,7 @@ class CCAutomation: CommandBase
 					}
 				}
 				#clean AD App only if AD App was newly created
-				if(![string]::IsNullOrWhiteSpace($this.AutomationAccount.AzureADAppName) -and !$this.isExistingADApp)
+				if(![string]::IsNullOrWhiteSpace($this.AutomationAccount.AzureADAppName) -and !$this.IsCustomAADAppName)
 				{
 					$ADApplication = Get-AzureRmADApplication -DisplayNameStartWith $this.AutomationAccount.AzureADAppName -ErrorAction SilentlyContinue | Where-Object -Property DisplayName -eq $this.AutomationAccount.AzureADAppName
 					if($ADApplication)
@@ -1237,7 +1261,7 @@ class CCAutomation: CommandBase
 
 		#region:Step 1.2: Check for the presence of locks on the AzSKRG
 		$stepCount++		
-		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Checking the presence of Resource locks.", [MessageType]::Info);
+		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Checking the presence of resource locks.", [MessageType]::Info);
 		$messages += $currentMessage;
 		$this.PublishCustomMessage($currentMessage);
 		$azskRGScope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourceGroups/$($this.AutomationAccount.CoreResourceGroup)"
@@ -1245,9 +1269,9 @@ class CCAutomation: CommandBase
 		$resourceLocks += Get-AzureRmResourceLock -Scope $azskRGScope
 		if($resourceLocks.Count -gt 0)
 		{
-			$failMsg = "Resource locks found on DevOpsKit RG. You need to remove these locks for CA to work properly."
+			$failMsg = "resource locks found on DevOpsKit RG. You need to remove these locks for CA to work properly."
 
-			$currentMessage = [MessageData]::new("Resource locks found on the subscription:", $resourceLocks);
+			$currentMessage = [MessageData]::new("resource locks found on the subscription:", $resourceLocks);
 			$messages += $currentMessage;
 
 			$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`n.", [MessageType]::Error);
@@ -1265,7 +1289,7 @@ class CCAutomation: CommandBase
 		}
 		else
 		{
-			$passMsg = "No blocking Resource locks found on the DevOpsKit RG"
+			$passMsg = "No blocking resource locks found on the DevOpsKit RG"
 			$currentMessage = [MessageData]::new("Status:   OK. $passMsg",  [MessageType]::Update);
 			$messages += $currentMessage;
 			$this.PublishCustomMessage($currentMessage);
@@ -2925,7 +2949,7 @@ class CCAutomation: CommandBase
 		$ccRunbook = $this.LoadServerConfigFile($fileName)
 		#append escape character (`) before '$' symbol
 		$policyStoreUrl	= [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl.Replace('$',"``$")		
-		$OSSPolicyStoreUrl = [ConfigurationManager]::GetAzSKConfigData().CASetupRunbookURL.Replace('$',"``$")
+		$CoreSetupSrcUrl = [ConfigurationManager]::GetAzSKConfigData().CASetupRunbookURL.Replace('$',"``$")
 		$AzSKCARunbookVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion
 		$telemetryKey = ""
 		if([RemoteReportHelper]::IsAIOrgTelemetryEnabled())
@@ -2936,7 +2960,7 @@ class CCAutomation: CommandBase
 			$temp1 = $_ -replace "\[#automationAccountRG#\]",$this.AutomationAccount.ResourceGroup;
 			$temp2 = $temp1 -replace "\[#automationAccountName#\]",$this.AutomationAccount.Name;
 			$temp3 = $temp2 -replace "\[#OnlinePolicyStoreUrl#\]",$policyStoreUrl;
-			$temp4 = $temp3 -replace "\[#OSSPolicyStoreUrl#\]",$OSSPolicyStoreUrl;
+			$temp4 = $temp3 -replace "\[#CoreSetupSrcUrl#\]",$CoreSetupSrcUrl;
 			$temp5 = $temp4 -replace "\[#EnableAADAuthForOnlinePolicyStore#\]",$this.ConvertBooleanToString([ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore);
 			$temp6 = $temp5 -replace "\[#UpdateToLatestVersion#]",$this.ConvertBooleanToString([ConfigurationManager]::GetAzSKConfigData().UpdateToLatestVersion);
 			$temp7 = $temp6 -replace "\[#telemetryKey#\]",$telemetryKey;
