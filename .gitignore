@@ -195,3 +195,5 @@ ModelManifest.xml
 **/packages/*
 .vs/
 /AzSK
+/src/AzSK.sln
+/src/AzSK.Debug
