@@ -137,10 +137,13 @@ function RunAzSKScan() {
 					
 				Write-Output ("SA: Scan status details:")
 				Write-Output ("SA: Subscription id - " + $subId)
-				Write-Output ("SA: Existing status - "+ $_.Status)
-				if($preStatus -ne 'RES'){Write-Output ("SA: New status - " + $preStatus)}
-				Write-Output ("SA: Scan allowed? - "+ $isScanAllowed) 
-				Write-Output ("SA: Post scan status - " + $postStatus)
+				
+				if($preStatus -ne 'RES'){
+					Write-Output ("SA: Existing status - "+ $_.Status + ", New status - " + $preStatus+ ", Scan allowed? - "+ $isScanAllowed + ", Post scan status - " + $postStatus)
+				}
+				else{
+					Write-Output ("SA: Existing status - "+ $_.Status + ", Scan allowed? - "+ $isScanAllowed + ", Post scan status - " + $postStatus)
+				}
 
 				# $PreStatus will be 'RES' in case when scan is in progress and max-duration has not been consumed
 				# We skip updating scan tracker in this scenario.
@@ -363,7 +366,7 @@ function CheckForSubscriptionsSnapshotData()
 		$destinationFolderPath = $env:temp + "\AzSKTemp\"
 		if(-not (Test-Path -Path $destinationFolderPath))
 		{
-			mkdir -Path $destinationFolderPath -Force
+			mkdir -Path $destinationFolderPath -Force | Out-Null
 		}
 
 		$CAActiveScanSnapshotBlobPath = "$destinationFolderPath\$CAActiveScanSnapshotBlobName"
@@ -421,7 +424,7 @@ function CheckForSubscriptionsSnapshotData()
                         $Global:activeScanObjects += $out;
 				}				
 				$Global:activeScanObjects | ConvertTo-Json -Depth 10 | Out-File $CAActiveScanSnapshotBlobPath
-				Set-AzureStorageBlobContent -File $CAActiveScanSnapshotBlobPath -Blob $CAActiveScanSnapshotBlobName -Container $CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
+				Set-AzureStorageBlobContent -File $CAActiveScanSnapshotBlobPath -Blob $CAActiveScanSnapshotBlobName -Container $CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force | Out-Null
 			}
 			Write-Output("SA: Multi-sub scan. New progress tracking file uploaded to container...")
 
@@ -456,7 +459,7 @@ function PersistSubscriptionSnapshot
 
 		if(-not (Test-Path -Path $destinationFolderPath))
 		{
-			mkdir -Path $destinationFolderPath -Force
+			mkdir -Path $destinationFolderPath -Force | Out-Null
 		}
 		$CAActiveScanSnapshotBlobPath = "$destinationFolderPath\$CAActiveScanSnapshotBlobName"
 		
@@ -531,7 +534,7 @@ function ArchiveBlob
 			$ArchiveTemp = $env:temp + "\AzSKTemp\Archive"
 			if(-not (Test-Path -Path $ArchiveTemp))
 			{
-				mkdir -Path $ArchiveTemp -Force
+				mkdir -Path $ArchiveTemp -Force | Out-Null
 			}			
 		
 			$archiveName =  $activeSnapshotBlob + "_" +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + ".ERR.json";
@@ -545,7 +548,7 @@ function ArchiveBlob
 			if($null -ne $activeSnapshotBlob)
 			{
 				Get-AzureStorageBlobContent -CloudBlob $activeSnapshotBlob.ICloudBlob -Context $StorageContext -Destination $masterFilePath -Force | Out-Null			
-				Set-AzureStorageBlobContent -File $masterFilePath -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotArchiveBlobName -BlobType Block -Context $StorageContext -Force
+				Set-AzureStorageBlobContent -File $masterFilePath -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotArchiveBlobName -BlobType Block -Context $StorageContext -Force | Out-Null
 			}
 		}
 		catch

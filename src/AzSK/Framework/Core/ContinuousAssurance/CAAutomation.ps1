@@ -1237,7 +1237,7 @@ class CCAutomation: CommandBase
 
 		#region:Step 1.2: Check for the presence of locks on the AzSKRG
 		$stepCount++		
-		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Checking the presence of Resource locks.", [MessageType]::Info);
+		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Checking the presence of resource locks.", [MessageType]::Info);
 		$messages += $currentMessage;
 		$this.PublishCustomMessage($currentMessage);
 		$azskRGScope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourceGroups/$($this.AutomationAccount.CoreResourceGroup)"
@@ -1245,9 +1245,9 @@ class CCAutomation: CommandBase
 		$resourceLocks += Get-AzureRmResourceLock -Scope $azskRGScope
 		if($resourceLocks.Count -gt 0)
 		{
-			$failMsg = "Resource locks found on DevOpsKit RG. You need to remove these locks for CA to work properly."
+			$failMsg = "resource locks found on DevOpsKit RG. You need to remove these locks for CA to work properly."
 
-			$currentMessage = [MessageData]::new("Resource locks found on the subscription:", $resourceLocks);
+			$currentMessage = [MessageData]::new("resource locks found on the subscription:", $resourceLocks);
 			$messages += $currentMessage;
 
 			$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`n.", [MessageType]::Error);
@@ -1265,7 +1265,7 @@ class CCAutomation: CommandBase
 		}
 		else
 		{
-			$passMsg = "No blocking Resource locks found on the DevOpsKit RG"
+			$passMsg = "No blocking resource locks found on the DevOpsKit RG"
 			$currentMessage = [MessageData]::new("Status:   OK. $passMsg",  [MessageType]::Update);
 			$messages += $currentMessage;
 			$this.PublishCustomMessage($currentMessage);

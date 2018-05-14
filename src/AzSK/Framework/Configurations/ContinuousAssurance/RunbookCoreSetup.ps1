@@ -409,8 +409,10 @@ try
 	$azskSearchResult = SearchModule -ModuleName $AzSKModuleName
     $desiredAzSKVersion = $azskSearchResult.properties.Version  #Note this may not be literally the latest version if org-policy prefers otherwise!
 	#endregion
-
-	Write-Output ("CS: AzSK version present: " + $azskModule.Version + " in provisioning state: " + $azskModule.ProvisioningState + ". Expected version: " + $desiredAzSKVersion)
+	if($azskModule -and ($azskModule.Version -ne  $desiredAzSKVersion))
+	{
+		Write-Output ("CS: $AzSKModuleName version present: " + $azskModule.Version + " in provisioning state: " + $azskModule.ProvisioningState + ". Expected version: " + $desiredAzSKVersion)
+	}
 	#Telemetry
 	PublishEvent -EventName "CA Setup Required Modules State" -Properties @{
 	"ModuleStateAzSK"= $azskModule.ProvisioningState; `
