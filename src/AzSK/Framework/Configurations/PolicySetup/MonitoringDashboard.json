@@ -1,0 +1,351 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "SubscriptionId": {
+      "type": "string",
+      "metadata": {
+        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+      }
+    },
+    "ResourceGroups": {
+      "type": "string",
+      "metadata": {
+        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+      }
+    },
+    "AIName": {
+      "type": "string",
+      "metadata": {
+        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+      }
+    },
+    "DashboardName":{
+      "type": "string",
+      "metadata": {
+        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+      },
+      "defaultValue" : "DevOpsKitMonitoring"
+    },
+    "DashboardTitle":{
+      "type": "string",
+      "metadata": {
+        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+      },
+      "defaultValue" : "DevOps Kit Monitoring Dashboard"
+
+    }
+  },
+  "resources": [
+    {
+      "properties": {
+        "lenses": {
+          "0": {
+            "order": 0,
+            "parts": {
+              "0": {
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "colSpan": 5,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [],
+                  "type": "Extension[azure]/HubsExtension/PartType/MarkdownPart",
+                  "settings": {
+                    "content": {
+                      "settings": {
+                        "content": "__How to use this dashboard...__\n\nThis dashboard lets you monitor health of Org-Policy (OrgName) and CA health. \n\nBelow are the some important links you may need to follow to keep you updated \n\n__Release notes__ : [Link](https://azsk.azurewebsites.net/ReleaseNotes/RN180416.html)\n\n__Org Policy Guide__ : [Link](https://github.com/azsk/DevOpsKit-docs/tree/master/07-Customizing-AzSK-for-your-Org)\n\n__Documentation__ : [Link](http://aka.ms/devopskit/docs)\n\n__Support__ : [Link]()\n",
+                        "title": "Contoso Org Monitoring  ",
+                        "subtitle": "Instructions Guide"
+                      }
+                    }
+                  }
+                }
+              },
+              "1": {
+                "position": {
+                  "x": 5,
+                  "y": 0,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                        "SubscriptionId": "[parameters('SubscriptionId')]",
+                        "ResourceGroup": "[parameters('ResourceGroups')]",
+                        "Name": "[parameters('AIName')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "customEvents\r\n| where timestamp > ago(15d) and name == \"Control Scanned\" and customDimensions.ScanSource== \"Runbook\"\r\n| summarize count()  by bin(timestamp, 1d),tostring(customDimensions.SubscriptionId)\r\n| summarize TotalCount=count() by timestamp\r\n| render barchart\n"
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "timestamp",
+                          "type": "DateTime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "TotalCount",
+                            "type": "Int64"
+                          }
+                        ],
+                        "splitBy": [],
+                        "aggregation": "Sum"
+                      }
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
+                    },
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "components"
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsBarChartPart",
+                  "settings": {
+                    "content": {
+                      "dashboardPartTitle": "Number of subscriptions reporting scan using CA",
+                      "dashboardPartSubTitle": "Daily Basis Summary"
+                    }
+                  },
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              },
+              "2": {
+                "position": {
+                  "x": 11,
+                  "y": 0,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                        "SubscriptionId": "[parameters('SubscriptionId')]",
+                        "ResourceGroup": "[parameters('ResourceGroups')]",
+                        "Name": "[parameters('AIName')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "exceptions\n| where timestamp > ago(7d)\n| summarize Count=count() by tostring(outerMessage),Date=bin(timestamp,1d)\n"
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "Date",
+                          "type": "DateTime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "Count",
+                            "type": "Int64"
+                          }
+                        ],
+                        "splitBy": [
+                          {
+                            "name": "outerMessage",
+                            "type": "String"
+                          }
+                        ],
+                        "aggregation": "Sum"
+                      }
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
+                    },
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "components"
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsBarChartPart",
+                  "settings": {
+                    "content": {
+                      "dashboardPartTitle": "Exceptions durring scanning",
+                      "dashboardPartSubTitle": "Daily Basis Summary"
+                    }
+                  },
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              },
+              "3": {
+                "position": {
+                  "x": 0,
+                  "y": 4,
+                  "colSpan": 5,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "resourceGroup",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "id",
+                      "value": "[concat(subscription().id,'/resourceGroups/',parameters('ResourceGroups'))]",
+                      "isOptional": true
+                    }
+                  ],
+                  "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
+                }
+              },
+              "4": {
+                "position": {
+                  "x": 5,
+                  "y": 4,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                        "SubscriptionId": "[parameters('SubscriptionId')]",
+                        "ResourceGroup": "[parameters('ResourceGroups')]",
+                        "Name": "[parameters('AIName')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "customEvents\r\n| where name == \"CA Job Error\"\r\n| where timestamp > ago(7d)\r\n| extend SubId=tostring(customDimensions.SubscriptionId)\r\n| summarize Count=count() by tostring(customDimensions.ErrorRecord),Date=bin(timestamp,1d)\r\n| order by Date,Count"
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "Date",
+                          "type": "DateTime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "Count",
+                            "type": "Int64"
+                          }
+                        ],
+                        "splitBy": [
+                          {
+                            "name": "customDimensions_ErrorRecord",
+                            "type": "String"
+                          }
+                        ],
+                        "aggregation": "Sum"
+                      }
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
+                    },
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "components"
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsBarChartPart",
+                  "settings": {
+                    "content": {
+                      "dashboardPartTitle": "Exceptions occurred in CA ",
+                      "dashboardPartSubTitle": "Daily basis summary"
+                    }
+                  },
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              },
+              "5": {
+                "position": {
+                  "x": 11,
+                  "y": 4,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                        "SubscriptionId": "[parameters('SubscriptionId')]",
+                        "ResourceGroup": "[parameters('ResourceGroups')]",
+                        "Name": "[parameters('AIName')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "customEvents\r\n| where timestamp > ago(90d) \r\n| where  customDimensions.ScanSource ==\"Runbook\" and name == \"Control Scanned\"\r\n| summarize LastScanDate = max(timestamp) by tostring(customDimensions.SubscriptionId),tostring(customDimensions.SubscriptionName)\r\n| where LastScanDate <= ago(2d)\r\n| order by LastScanDate desc \r\n| project SubId = customDimensions_SubscriptionId,SubName= customDimensions_SubscriptionName,LastScanDate\n"
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
+                    },                    
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "components"
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsGridPart",
+                  "settings": {
+                    "content": {
+                      "dashboardPartTitle": "CA scan stopped subscription list",
+                      "dashboardPartSubTitle": "Subscription which has not reported scan in last two days"
+                    }
+                  },
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "name": "[parameters('DashboardName')]",
+      "type": "Microsoft.Portal/dashboards",
+      "location": "eastus",
+      "tags": {
+        "hidden-title": "[parameters('DashboardTitle')]"
+      },
+      "apiVersion": "2015-08-01-preview"
+    }
+  ]
+}

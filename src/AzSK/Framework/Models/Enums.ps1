@@ -50,12 +50,6 @@ enum ControlSeverity
 	Low
 }
 
-enum Environment
-{
-	SDL
-	CICD
-	CC
-}
 
 enum ScanSource
 {
