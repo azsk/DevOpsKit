@@ -272,7 +272,7 @@ try
 	$CAHelperScheduleName = "CA_Helper_Schedule"
 	$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
 	$PublicPSGalleryUrl = "https://www.powershellgallery.com"
-	$AzSKConfigURL = "https://azsdkossep.azureedge.net/1.0.0/AzSKConfig.json"
+	$AzSKConfigURL = "https://azsdkossep.azureedge.net/1.0.0/AzSK.Pre.json"
 	$Global:FoundExistingJob = $false;
 	#config end
 

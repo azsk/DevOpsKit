@@ -334,7 +334,7 @@ class PolicySetup: CommandBase
 			}
 
 			#Upload AzSKConfig with version details 
-			if((Get-ChildItem $this.RunbookFolderPath -Recurse -Force | Where-Object { $_.Name -eq "AzSKConfig.json" } | Measure-Object).Count -eq 0)
+			if((Get-ChildItem $this.RunbookFolderPath -Recurse -Force | Where-Object { $_.Name -eq "AzSK.Pre.json" } | Measure-Object).Count -eq 0)
 			{			
 				#Get AzSK Module Version				
 				$moduleVersion = "0.0.0"
@@ -351,7 +351,7 @@ class PolicySetup: CommandBase
 					}
 				}
 				$azskConfig= @{ "CurrentVersionForOrg"= $moduleVersion};
-				$azskConfig | ConvertTo-Json | Out-File "$($this.RunbookFolderPath)\AzSKConfig.json" -Force
+				$azskConfig | ConvertTo-Json | Out-File "$($this.RunbookFolderPath)\AzSK.Pre.json" -Force
 			}
 
 			$allCAFiles = @();
@@ -381,7 +381,7 @@ class PolicySetup: CommandBase
 		if($container -and $container.CloudBlobContainer)
 		{
 			$this.PolicyUrl = $container.CloudBlobContainer.Uri.AbsoluteUri + "/```$(```$Version)/```$(```$FileName)" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
-			$this.AzSKConfigURL = $container.CloudBlobContainer.Uri.AbsoluteUri + "/$($this.RunbookBaseVersion)/AzSKConfig.json" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
+			$this.AzSKConfigURL = $container.CloudBlobContainer.Uri.AbsoluteUri + "/$($this.RunbookBaseVersion)/AzSK.Pre.json" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
 		}
 
 		$this.ModifyInstaller($moduleName);
