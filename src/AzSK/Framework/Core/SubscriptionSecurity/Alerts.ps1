@@ -95,13 +95,20 @@ class Alerts: CommandBase
 				}
 			}		
 			$policyList=@();
-			ForEach($Tag in $this.FilterTags)
-			{
-		      $policyList+= $this.Policy | Where-Object { $Tag -In $_.Tags }
-			}	
-			$this.Policy=$policyList| Select-Object * -Unique	
-			$this.Policy |ForEach-Object {
-			               $alertNameArray+=$_.Name }
+		    if(($this.FilterTags|Measure-Object).Count -gt 0)
+            {
+			 ForEach($Tag in $this.FilterTags)
+			 {
+		       $policyList+= $this.Policy | Where-Object { $Tag -In $_.Tags }
+               $this.Policy=$policyList| Select-Object * -Unique	
+			   $this.Policy |ForEach-Object { $alertNameArray+=$_.Name }
+			 }	
+            }
+            else
+            {
+              $policyList+= $this.Policy
+              $this.Policy=$policyList| Select-Object * -Unique
+            }
 
 			# User wants to remove only specific alerts
 			if(($this.Policy | Measure-Object).Count -ne 0)
@@ -414,7 +421,10 @@ class Alerts: CommandBase
     {
 		return $this.SetAlerts($targetResourceGroup,$securityContactEmails,$SecurityPhoneNumbers,$alertResourceGroupLocation, $null, $null, $null);
 	}
-
+	[MessageData[]] SetAlerts([string] $securityContactEmails, [string] $SecurityPhoneNumbers, [string] $alertResourceGroupLocation)
+    {
+		return $this.SetAlerts($null,$securityContactEmails,$SecurityPhoneNumbers,$alertResourceGroupLocation, $null, $null, $null);
+	}
 	[MessageData[]] SetAlerts([PSObject] $emailReceivers, [PSObject] $smsReceivers, [string] $webhookUri)
 	{
 		return $this.SetAlerts($null, $null ,$null, $null, $emailReceivers, $smsReceivers, $webhookUri);
