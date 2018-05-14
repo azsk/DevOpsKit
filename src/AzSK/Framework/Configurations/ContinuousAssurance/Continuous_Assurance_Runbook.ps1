@@ -223,7 +223,7 @@ try
 		Write-Output("RB: Started runbook execution...")
 		
 		$appId = $RunAsConnection.ApplicationId 
-        Write-Output ("RB: Logging in to Azure for appId: $appId")
+        Write-Output ("RB: Logging in to Azure for appId: [$appId]")
 		Add-AzureRmAccount `
 			-ServicePrincipal `
 			-TenantId $RunAsConnection.TenantId `
@@ -234,7 +234,7 @@ try
 	}
 	catch
 	{
-		Write-Output ("RB: Failed to login to Azure with AzSK AppId: $appId.")
+		Write-Output ("RB: Failed to login to Azure with AzSK AppId: [$appId].")
 		throw $_.Exception
 	}
 
@@ -247,7 +247,7 @@ try
 
 	#------------------------------------Invoke CoreSetup script to ensure AzSK is up to date and ready for the scan -------------------
 	PublishEvent -EventName "CA Job Invoke Setup Started"
-	Write-Output ("RB: Invoking core setup using policyStoreURL: {$CoreSetupSrcUrl}")
+	Write-Output ("RB: Invoking core setup using policyStoreURL: [" + $CoreSetupSrcUrl.Substring(0,15) + "*****]")
 	InvokeScript -policyStoreURL $CoreSetupSrcUrl -fileName $runbookCoreSetupScript -version $caScriptsFolder
 	Write-Output ("RB: Completed core setup script.")
 	PublishEvent -EventName "CA Job Invoke Setup Completed"
@@ -264,14 +264,14 @@ try
 		}
 
 		PublishEvent -EventName "CA Job Invoke Scan Started"
-		Write-Output ("RB: Invoking scan agent script: policyStoreURL={" + $onlinePolicyStoreUrl.Substring(0,15) + ($onlinePolicyStoreUrl.Substring(16) -replace "\w","*") + "}")
+		Write-Output ("RB: Invoking scan agent script. PolicyStoreURL: [" + $onlinePolicyStoreUrl.Substring(0,15) + "*****]")
 		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName $runbookScanAgentScript -version $caScriptsFolder
 		Write-Output ("RB: Scan agent script completed.")
 		PublishEvent -EventName "CA Job Invoke Scan Completed"
 	}
 	else
 	{
-		Write-Output("RB: Not triggering a scan. AzSK module not yet ready in the automation account.")
+		Write-Output("RB: Not triggering a scan. AzSK module not yet ready in the automation account. Will retry in the next run.")
 	}
 	Write-Output("RB: Runbook execution completed...")
 	PublishEvent -EventName "CA Job Completed" -Metrics @{
