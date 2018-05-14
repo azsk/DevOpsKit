@@ -1,0 +1,75 @@
+{
+   "FeatureName": "BotService",
+   "Reference": "aka.ms/azsktcp/botservice",
+   "IsManintenanceMode": false,
+   "Controls": [
+    {
+      "ControlID": "Azure_BotService_DP_Dont_Allow_HTTP_Access",
+      "Description": "BOT Service API must only be accessible over HTTPS",
+      "Id": "BotService110",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer eavesdropping attacks.",
+      "Recommendation": "Make Web App linked to BOT Service to use Https using command 'Set-AzureRmResource -ResourceName '<WebAppName>' -ResourceGroupName '<RGName>' -ResourceType 'Microsoft.Web/sites' -Properties @{httpsOnly='true'} -Force '. Run 'Get-Help Set-AzureRmResource -full' for more help.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "BotService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_BotService_DP_Encrpyt_At_Rest",
+      "Description": "Ensure to use own storage adapter instead of BOT Framework State Service API.",
+      "Id": "BotService120",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "?",
+      "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/bot-service/dotnet/bot-builder-dotnet-state for implemeting state for BOT Service.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "BotService"
+      ],
+      "Enabled": true
+    },
+    {
+        "ControlID": "Azure_BotService_DP_Store_Secrets_in_Key_Vault",
+        "Description": "Microsoft BOT App ID Password must be stored in Key Vault.",
+        "Id": "BotService130",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Keeping secrets such as passwords, keys, etc. in clear text can lead to easy compromise at various avenues during an application's lifecycle. Storing them in a key vault ensures that they are protected at rest.",
+        "Recommendation": "Refer https://azure.microsoft.com/en-in/documentation/articles/key-vault-get-started/ for configuring Key Vault and storing secrets.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "BotService"
+        ],
+        "Enabled": "true"
+    },
+    {
+      "ControlID": "Azure_BotService_Audit_Enable_Logging_and_Monitoring",
+      "Description": "Application Insight should be enabled for BOT Service",
+      "Id": "BotService140",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Analytics provides conversation-level reporting on user, message, and channel data.",
+      "Recommendation": "Follow https://docs.microsoft.com/en-us/azure/bot-service/bot-service-manage-analytics?view=azure-bot-service-3.0 for configuring Application Insight with BOT Service.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "BotService"
+      ],
+      "Enabled": "true"
+    }
+   ]
+}

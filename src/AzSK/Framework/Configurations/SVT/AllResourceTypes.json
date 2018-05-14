@@ -37,5 +37,6 @@
   "Microsoft.Batch/batchAccounts",
   "Microsoft.DataLakeAnalytics/accounts",
   "Microsoft.ClassicCompute/domainNames",
-  "Microsoft.Web/connectionGateways"
+  "Microsoft.Web/connectionGateways",
+  "Microsoft.BotService/botServices"
 ]
