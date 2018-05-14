@@ -245,9 +245,9 @@ class ControlStateExtension
 			{
 				$indexes = @();
 				$indexes += $this.ControlStateIndexer 
-
-				$selectedIndex = $indexes | Where-Object { $_.ResourceId -eq $id -and $_.ExpiryTime -gt [DateTime]::UtcNow}
-
+				$hashId = [Helpers]::ComputeHash($id.ToLower())
+				$selectedIndex = $indexes | Where-Object { $_.HashId -eq $hashId}
+				
 				if(($selectedIndex | Measure-Object).Count -gt 0)
 				{
 					$hashId = $selectedIndex.HashId | Select-Object -Unique
@@ -338,7 +338,7 @@ class ControlStateExtension
 			Remove-Item -Path "$AzSKTemp\ControlState\*" -Force -Recurse 
 		}
 
-		$hash = [Helpers]::ComputeHash($id);
+		$hash = [Helpers]::ComputeHash($id.ToLower());
 		$indexerPath = "$AzSKTemp\ControlState\$($this.IndexerBlobName)"
 		$fileName = "$AzSKTemp\ControlState\$hash.json"	
 		
@@ -420,7 +420,7 @@ class ControlStateExtension
 			Remove-Item -Path "$AzSKTemp\ControlState\*" -Force 
 		}
 
-		$hash = [Helpers]::ComputeHash($id);
+		$hash = [Helpers]::ComputeHash($id.ToLower());
 		$indexerPath = "$AzSKTemp\ControlState\$($this.IndexerBlobName)"
 		$fileName = "$AzSKTemp\ControlState\$hash.json"	
 		
@@ -556,31 +556,36 @@ class ControlStateExtension
 		}
 		if($retVal)
 		{				
-			$tempHash = [Helpers]::ComputeHash($id);			
-			$filteredIndexerObject = $this.ControlStateIndexer | Where-Object { (($_.HashId -eq $tempHash -and -not $ToBeDeleted) -or ($ToBeDeleted -and $_.HashId -ne $tempHash))}
-			if($null -ne $filteredIndexerObject)
-			{
-				if(($controlStates | Measure-Object).Count -le 0)
+			$tempHash = [Helpers]::ComputeHash($id.ToLower());
+			#take the current indexer value
+			$filteredIndexerObject = $this.ControlStateIndexer | Where-Object { $_.HashId -eq $tempHash}
+			#remove the current index from the list
+			$this.ControlStateIndexer = $this.ControlStateIndexer | Where-Object { $_.HashId -ne $tempHash}
+			if(-not $ToBeDeleted)
+			{	
+				#check if there is an existing index and the controlstates are present for that index resource
+				if(($filteredIndexerObject | Measure-Object).Count -gt 0 -and ($controlStates | Measure-Object).Count -gt 0)
 				{
-					$this.ControlStateIndexer = $this.ControlStateIndexer | Where-Object { $_.HashId -ne $tempHash}
+					$currentIndexObject = $filteredIndexerObject;
+					if(($filteredIndexerObject | Measure-Object).Count -gt 1)
+					{
+						$currentIndexObject = $filteredIndexerObject | Select-Object -Last 1
+					}					
+					$currentIndexObject.ExpiryTime = [DateTime]::UtcNow.AddMonths(3);
+					$currentIndexObject.AttestedBy =  [Helpers]::GetCurrentSessionUser();
+					$currentIndexObject.AttestedDate = [DateTime]::UtcNow;
+					$currentIndexObject.Version = "1.0";
 				}
 				else
 				{
-					$filteredIndexerObject.ExpiryTime = [DateTime]::UtcNow.AddMonths(3);
-					$filteredIndexerObject.AttestedBy =  [Helpers]::GetCurrentSessionUser();
-					$filteredIndexerObject.AttestedDate = [DateTime]::UtcNow;
-					$filteredIndexerObject.Version = "1.0";
+					$currentIndexObject = [ControlStateIndexer]::new();
+					$currentIndexObject.ResourceId = $id
+					$currentIndexObject.HashId = $tempHash;
+					$currentIndexObject.ExpiryTime = [DateTime]::UtcNow.AddMonths(3);
+					$currentIndexObject.AttestedBy = [Helpers]::GetCurrentSessionUser();
+					$currentIndexObject.AttestedDate = [DateTime]::UtcNow;
+					$currentIndexObject.Version = "1.0";
 				}
-			}
-			else
-			{
-				$currentIndexObject = [ControlStateIndexer]::new();
-				$currentIndexObject.ResourceId = $id
-				$currentIndexObject.HashId = $tempHash;
-				$currentIndexObject.ExpiryTime = [DateTime]::UtcNow.AddMonths(3);
-				$currentIndexObject.AttestedBy = [Helpers]::GetCurrentSessionUser();
-				$currentIndexObject.AttestedDate = [DateTime]::UtcNow;
-				$currentIndexObject.Version = "1.0";
 				$this.ControlStateIndexer += $currentIndexObject;			
 			}
 		}
