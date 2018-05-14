@@ -56,9 +56,9 @@
                   "settings": {
                     "content": {
                       "settings": {
-                        "content": "__How to use this dashboard...__\n\nThis dashboard lets you monitor health of Org-Policy (OrgName) and CA health. \n\nBelow are the some important links you may need to follow to keep you updated \n\n__Release notes__ : [Link](https://azsk.azurewebsites.net/ReleaseNotes/RN180416.html)\n\n__Org Policy Guide__ : [Link](https://github.com/azsk/DevOpsKit-docs/tree/master/07-Customizing-AzSK-for-your-Org)\n\n__Documentation__ : [Link](http://aka.ms/devopskit/docs)\n\n__Support__ : [Link]()\n",
-                        "title": "Contoso Org Monitoring  ",
-                        "subtitle": "Instructions Guide"
+                        "content": "__How to use this dashboard:__\n\nThis dashboard lets you monitor the operations for various DevOps Kit workflows at your org. Each blade lets you monitor the health of some aspect of your DevOps Kit deployment (e.g., CA issues, anomalous control drifts, evaluation errors, etc.). You can click on the 'Open Chart in Analytics' link at the top right corner of any view to see the underlying data/query. (Note that some views will show 'error retrieving data' initially.)\n\n__Useful Links__: \n<br>\n[Updates on Org Policy](https://aka.ms/devopskit/orgpolicy/updates)\n<br>[Release Notes](https://aka.ms/devopskit/releasenotes)\n<br>[Org Policy Docs](https://aka.ms/devopskit/orgpolicy/docs)\n<br>[DevOps Kit Docs](http://aka.ms/devopskit/docs)\n<br>[Support](mailto:azsksup@microsoft.com)\n\n",
+                        "title": "Monitoring your Org AzSK Setup",
+                        "subtitle": "Instructions"
                       }
                     }
                   }
@@ -76,8 +76,8 @@
                     {
                       "name": "ComponentId",
                       "value": {
-                        "SubscriptionId": "[parameters('SubscriptionId')]",
-                        "ResourceGroup": "[parameters('ResourceGroups')]",
+                       "SubscriptionId": "[parameters('SubscriptionId')]",
+                       "ResourceGroup": "[parameters('ResourceGroups')]",
                         "Name": "[parameters('AIName')]"
                       }
                     },
@@ -118,8 +118,8 @@
                   "type": "Extension/AppInsightsExtension/PartType/AnalyticsBarChartPart",
                   "settings": {
                     "content": {
-                      "dashboardPartTitle": "Number of subscriptions reporting scan using CA",
-                      "dashboardPartSubTitle": "Daily Basis Summary"
+                      "dashboardPartTitle": "CA - Subs Reporting Scans",
+                      "dashboardPartSubTitle": "Number of subscriptions reporting CA scans"
                     }
                   },
                   "asset": {
@@ -141,7 +141,66 @@
                       "name": "ComponentId",
                       "value": {
                         "SubscriptionId": "[parameters('SubscriptionId')]",
-                        "ResourceGroup": "[parameters('ResourceGroups')]",
+                       "ResourceGroup": "[parameters('ResourceGroups')]",
+                        "Name": "[parameters('AIName')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "let ControlResults = customEvents\n| where timestamp < ago(2d) and timestamp >= ago(4d)\n| where name == \"Control Scanned\" and customDimensions.HasAttestationReadPermissions == \"True\" and customDimensions.HasRequiredAccess == \"True\"\n| summarize arg_max(timestamp, *) by tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName), tostring(customDimensions.ControlId)\n| project tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName),tostring(customDimensions.ResourceId), tostring(customDimensions.ControlId), Oldresult =tostring(customDimensions.VerificationResult)\n| join\n(\n    customEvents\n    | where timestamp >= ago(2d)\n    | where name == \"Control Scanned\" and customDimensions.HasAttestationReadPermissions == \"True\" and customDimensions.HasRequiredAccess == \"True\"\n    | summarize arg_max(timestamp, *) by tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName), tostring(customDimensions.ControlId)\n    | project tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName),tostring(customDimensions.ResourceId), tostring(customDimensions.ControlId), Latestresult = tostring(customDimensions.VerificationResult)\n)\non customDimensions_SubscriptionId, customDimensions_SubscriptionName,customDimensions_ResourceId, customDimensions_ControlId\n| project tostring(customDimensions_SubscriptionId), tostring(customDimensions_SubscriptionName),tostring(customDimensions_ResourceId), tostring(customDimensions_ControlId),Oldresult,Latestresult;\nlet OldScan = ControlResults\n| where Oldresult == \"Passed\"\n| summarize OldScanCount = count() by tostring(customDimensions_ControlId);\nlet LatestScan = ControlResults\n| where Latestresult == \"Passed\"\n| summarize LatestScanCount = count() by tostring(customDimensions_ControlId);\nOldScan\n| join\n(\n    LatestScan\n)\non customDimensions_ControlId\n| project ControlId=tostring(customDimensions_ControlId),OldStatusCount=OldScanCount,LatestStatusCount=LatestScanCount\n| where OldStatusCount != LatestStatusCount\n| extend Change =iff(OldStatusCount>LatestStatusCount,(OldStatusCount-LatestStatusCount),(LatestStatusCount-OldStatusCount))\n| order by Change desc\n| project ControlId,OldStatusCount,LatestStatusCount,Change\n"
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
+                    },
+                    {
+                      "name": "PartId",
+                      "value": "038d1915-4387-402f-88e1-0b0f029afc36"
+                    },
+                    {
+                      "name": "PartTitle",
+                      "value": "Analytics"
+                    },
+                    {
+                      "name": "PartSubTitle",
+                      "value": "azsdkappinsightsms"
+                    },
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "components"
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsGridPart",
+                  "settings": {
+                    "content": {
+                      "dashboardPartTitle": "Negative Drift for Controls",
+                      "dashboardPartSubTitle": "Shows controls drifting from 'passed' to 'not passed' in the 2 Days"
+                    }
+                  },
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              },
+              "3": {
+                "position": {
+                  "x": 17,
+                  "y": 0,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                       "SubscriptionId": "[parameters('SubscriptionId')]",
+                       "ResourceGroup": "[parameters('ResourceGroups')]",
                         "Name": "[parameters('AIName')]"
                       }
                     },
@@ -187,8 +246,8 @@
                   "type": "Extension/AppInsightsExtension/PartType/AnalyticsBarChartPart",
                   "settings": {
                     "content": {
-                      "dashboardPartTitle": "Exceptions durring scanning",
-                      "dashboardPartSubTitle": "Daily Basis Summary"
+                      "dashboardPartTitle": "Exceptions Summary",
+                      "dashboardPartSubTitle": "Errors during DevOps Kit cmdlet execution"
                     }
                   },
                   "asset": {
@@ -197,7 +256,7 @@
                   }
                 }
               },
-              "3": {
+              "4": {
                 "position": {
                   "x": 0,
                   "y": 4,
@@ -219,7 +278,7 @@
                   "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
                 }
               },
-              "4": {
+              "5": {
                 "position": {
                   "x": 5,
                   "y": 4,
@@ -231,8 +290,102 @@
                     {
                       "name": "ComponentId",
                       "value": {
+                       "SubscriptionId": "[parameters('SubscriptionId')]",
+                       "ResourceGroup": "[parameters('ResourceGroups')]",
+                        "Name": "[parameters('AIName')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "customEvents\r\n| where timestamp > ago(90d) \r\n| where  customDimensions.ScanSource ==\"Runbook\" and name == \"Control Scanned\"\r\n| summarize LastScanDate = max(timestamp) by tostring(customDimensions.SubscriptionId),tostring(customDimensions.SubscriptionName)\r\n| where LastScanDate <= ago(2d)\r\n| order by LastScanDate desc \r\n| project SubId = customDimensions_SubscriptionId,SubName= customDimensions_SubscriptionName,LastScanDate\n"
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
+                    },
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "components"
+                    }
+                  ],    
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsGridPart",
+                  "settings": {
+                    "content": {
+                      "dashboardPartTitle": "CA - No Recent Scans",
+                      "dashboardPartSubTitle": "Subscriptions that have not reported scan events in last the 2 days"
+                    }
+                  },
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              },
+              "6": {
+                "position": {
+                  "x": 11,
+                  "y": 4,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
                         "SubscriptionId": "[parameters('SubscriptionId')]",
-                        "ResourceGroup": "[parameters('ResourceGroups')]",
+                       "ResourceGroup": "[parameters('ResourceGroups')]",
+                        "Name": "[parameters('AIName')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "let combinedResult = customEvents\n| where timestamp < ago(2d) and timestamp >= ago(4d)\n| where name == \"Control Scanned\" and customDimensions.HasAttestationReadPermissions == \"True\" and customDimensions.HasRequiredAccess == \"True\"\n| summarize arg_max(timestamp, *) by tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName), tostring(customDimensions.ControlId)\n| project tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName),tostring(customDimensions.ResourceId), tostring(customDimensions.ControlId), oldresult =tostring(customDimensions.VerificationResult)\n| join\n(\n    customEvents\n    | where timestamp >= ago(2d)\n    | where name == \"Control Scanned\" and customDimensions.HasAttestationReadPermissions == \"True\" and customDimensions.HasRequiredAccess == \"True\"\n    | summarize arg_max(timestamp, *) by tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName), tostring(customDimensions.ControlId)\n    | project tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName),tostring(customDimensions.ResourceId), tostring(customDimensions.ControlId), Latestresult = tostring(customDimensions.VerificationResult)\n)\non customDimensions_SubscriptionId, customDimensions_SubscriptionName,customDimensions_ResourceId, customDimensions_ControlId\n| project tostring(customDimensions_SubscriptionId), tostring(customDimensions_SubscriptionName),tostring(customDimensions_ResourceId), tostring(customDimensions_ControlId),oldresult,Latestresult;\nlet oldScan = combinedResult\n| where oldresult == \"Failed\"\n| summarize oldScanCount = count() by tostring(customDimensions_ControlId);\nlet LatestScan = combinedResult\n| where Latestresult == \"Failed\"\n| summarize LatestScanCount = count() by tostring(customDimensions_ControlId);\noldScan\n| join\n(\n    LatestScan\n)\non customDimensions_ControlId\n| project ControlId=tostring(customDimensions_ControlId),OldStatusCount=oldScanCount,LatestStatusCount=LatestScanCount\n| where OldStatusCount != LatestStatusCount\n| extend Change =iff(OldStatusCount>LatestStatusCount,(OldStatusCount-LatestStatusCount),(LatestStatusCount-OldStatusCount))\n| order by Change desc\n| project ControlId,OldStatusCount,LatestStatusCount,Change\n"
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
+                    },                   
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "components"
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsGridPart",
+                  "settings": {
+                    "content": {
+                      "dashboardPartTitle": "Positive Drift for Controls",
+                      "dashboardPartSubTitle": "Shows controls drifting from 'not passed' to 'passed' in the 2 days"
+                    }
+                  },
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              },
+              "7": {
+                "position": {
+                  "x": 17,
+                  "y": 4,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                       "SubscriptionId": "[parameters('SubscriptionId')]",
+                       "ResourceGroup": "[parameters('ResourceGroups')]",
                         "Name": "[parameters('AIName')]"
                       }
                     },
@@ -278,55 +431,8 @@
                   "type": "Extension/AppInsightsExtension/PartType/AnalyticsBarChartPart",
                   "settings": {
                     "content": {
-                      "dashboardPartTitle": "Exceptions occurred in CA ",
-                      "dashboardPartSubTitle": "Daily basis summary"
-                    }
-                  },
-                  "asset": {
-                    "idInputName": "ComponentId",
-                    "type": "ApplicationInsights"
-                  }
-                }
-              },
-              "5": {
-                "position": {
-                  "x": 11,
-                  "y": 4,
-                  "colSpan": 6,
-                  "rowSpan": 4
-                },
-                "metadata": {
-                  "inputs": [
-                    {
-                      "name": "ComponentId",
-                      "value": {
-                        "SubscriptionId": "[parameters('SubscriptionId')]",
-                        "ResourceGroup": "[parameters('ResourceGroups')]",
-                        "Name": "[parameters('AIName')]"
-                      }
-                    },
-                    {
-                      "name": "Query",
-                      "value": "customEvents\r\n| where timestamp > ago(90d) \r\n| where  customDimensions.ScanSource ==\"Runbook\" and name == \"Control Scanned\"\r\n| summarize LastScanDate = max(timestamp) by tostring(customDimensions.SubscriptionId),tostring(customDimensions.SubscriptionName)\r\n| where LastScanDate <= ago(2d)\r\n| order by LastScanDate desc \r\n| project SubId = customDimensions_SubscriptionId,SubName= customDimensions_SubscriptionName,LastScanDate\n"
-                    },
-                    {
-                      "name": "Version",
-                      "value": "1.0"
-                    },
-                    {
-                      "name": "DashboardId",
-                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
-                    },                    
-                    {
-                      "name": "resourceTypeMode",
-                      "value": "components"
-                    }
-                  ],
-                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsGridPart",
-                  "settings": {
-                    "content": {
-                      "dashboardPartTitle": "CA scan stopped subscription list",
-                      "dashboardPartSubTitle": "Subscription which has not reported scan in last two days"
+                      "dashboardPartTitle": "CA Exceptions",
+                      "dashboardPartSubTitle": "Errors during CA runbook execution"
                     }
                   },
                   "asset": {
