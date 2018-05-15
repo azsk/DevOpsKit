@@ -411,7 +411,7 @@ try
 	#endregion
 	if($azskModule -and ($azskModule.Version -ne  $desiredAzSKVersion))
 	{
-		Write-Output ("CS: Installed $AzSKModuleName version: [" + $azskModule.Version + "] in provisioning state: [" + $azskModule.ProvisioningState + "]. Expected version: [$desiredAzSKVersion])
+		Write-Output ("CS: Installed $AzSKModuleName version: [" + $azskModule.Version + "] in provisioning state: [" + $azskModule.ProvisioningState + "]. Expected version: [$desiredAzSKVersion]")
 	}
 	#Telemetry
 	PublishEvent -EventName "CA Setup Required Modules State" -Properties @{
