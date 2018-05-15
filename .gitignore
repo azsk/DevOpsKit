@@ -188,7 +188,6 @@ GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
 
-# Added by OneITVSO 
 *.dll
 *.exe
 *.pubxml
