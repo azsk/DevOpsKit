@@ -896,7 +896,7 @@ class CCAutomation: CommandBase
 							$out.TargetSubscriptionId = $caSubId;
 							$out.LoggingOption = $this.LoggingOption.ToString();
 							$out.StorageAccountName = $this.UserConfig.StorageAccountName;		
-							if(-not $SkipTargetSubscriptionConfig)
+							if(-not $this.SkipTargetSubscriptionConfig)
 							{
 								Select-AzureRmSubscription -SubscriptionId $caSubId | Out-Null
 								#region :create new resource group/check if RG exists# 

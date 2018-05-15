@@ -83,6 +83,7 @@ function Get-AzSKInfo
 		[string]
 		$ControlIdContains,
 
+		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
 		$DoNotOpenOutputFolder
     )
