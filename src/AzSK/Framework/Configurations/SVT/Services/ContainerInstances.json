@@ -9,13 +9,14 @@
       "Id": "ContainerInstances110",
       "ControlSeverity": "High",
       "Enabled": true,
-      "Automated": "No",
+      "Automated": "Yes",
+      "MethodName": "CheckPublicIPAndPorts",
       "Rationale": "Public IP address provides direct access over the internet exposing the container to all type of attacks over the public network.",
       "Recommendation": "Add public IP address and ports to a container only as required. Ensure that the resulting data flows are carefully reviewed.",
       "Tags": [
         "SDL",
         "TCP",
-        "Manual",
+        "Automated",
         "NetSec"
       ]
     },
