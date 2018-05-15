@@ -560,7 +560,9 @@ class ControlStateExtension
 			#take the current indexer value
 			$filteredIndexerObject = $this.ControlStateIndexer | Where-Object { $_.HashId -eq $tempHash}
 			#remove the current index from the list
-			$this.ControlStateIndexer = $this.ControlStateIndexer | Where-Object { $_.HashId -ne $tempHash}
+			$filteredIndexerObject2 = $this.ControlStateIndexer | Where-Object { $_.HashId -ne $tempHash}
+			$this.ControlStateIndexer = @();
+			$this.ControlStateIndexer += $filteredIndexerObject2
 			if(-not $ToBeDeleted)
 			{	
 				#check if there is an existing index and the controlstates are present for that index resource
