@@ -31,20 +31,20 @@
       "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/bot-service/dotnet/bot-builder-dotnet-state for implemeting state for BOT Service.",
       "Tags": [
         "SDL",
-        "TCP",
+        "Information",
         "Manual",
         "BotService"
       ],
       "Enabled": true
     },
     {
-        "ControlID": "Azure_BotService_DP_Store_Secrets_in_Key_Vault",
-        "Description": "Microsoft BOT App ID Password must be stored in Key Vault.",
+        "ControlID": "Azure_BotService_DP_Manage_Secrets",
+        "Description": "Make sure secrets are not exposed.",
         "Id": "BotService130",
         "ControlSeverity": "High",
         "Automated": "No",
         "MethodName": "",
-        "Rationale": "Keeping secrets such as passwords, keys, etc. in clear text can lead to easy compromise at various avenues during an application's lifecycle. Storing them in a key vault ensures that they are protected at rest.",
+        "Rationale": "Keeping secrets such as passwords, keys, etc. in clear text can lead to easy compromise at various avenues during an application's lifecycle.",
         "Recommendation": "Refer https://azure.microsoft.com/en-in/documentation/articles/key-vault-get-started/ for configuring Key Vault and storing secrets.",
         "Tags": [
           "SDL",
@@ -55,13 +55,13 @@
         "Enabled": "true"
     },
     {
-      "ControlID": "Azure_BotService_Audit_Enable_Logging_and_Monitoring",
-      "Description": "Application Insight should be enabled for BOT Service",
+      "ControlID": "Azure_BotService_Audit_Enable_Monitoring",
+      "Description": "Make sure important activities and events during Bot interactions are logged.",
       "Id": "BotService140",
       "ControlSeverity": "Medium",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "Analytics provides conversation-level reporting on user, message, and channel data.",
+      "Rationale": "Analytics can be useful to detect unusual usage behavior patterns.",
       "Recommendation": "Follow https://docs.microsoft.com/en-us/azure/bot-service/bot-service-manage-analytics?view=azure-bot-service-3.0 for configuring Application Insight with BOT Service.",
       "Tags": [
         "SDL",
