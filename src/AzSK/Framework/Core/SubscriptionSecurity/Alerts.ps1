@@ -99,10 +99,10 @@ class Alerts: CommandBase
             {
 			 ForEach($Tag in $this.FilterTags)
 			 {
-		       $policyList+= $this.Policy | Where-Object { $Tag -In $_.Tags }
-               $this.Policy=$policyList| Select-Object * -Unique	
-			   $this.Policy |ForEach-Object { $alertNameArray+=$_.Name }
+		       $policyList+= $this.Policy | Where-Object { $Tag -In $_.Tags }          
 			 }	
+			  $this.Policy=$policyList| Select-Object * -Unique	
+			  $this.Policy |ForEach-Object { $alertNameArray+=$_.Name }
             }
             else
             {
