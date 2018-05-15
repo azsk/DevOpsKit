@@ -438,24 +438,35 @@ class PolicySetup: CommandBase
 
 	[void] CreateMonitoringDashboard()
 	{
-		$this.PublishCustomMessage(" `r`n Setting up monitoring dashboard", [MessageType]::Warning);
-		$MonitoringDashboardTemplatePath = [Constants]::AzSKTempFolderPath + "\MonitoringDashboard";
-		if(-not (Test-Path -Path $MonitoringDashboardTemplatePath))
+		#Validate if monitoring dashboard is already created
+		$dashboardResource = Get-AzureRmResource -ResourceType "Microsoft.Portal/dashboards" -ResourceGroupName $($this.ResourceGroupName) -ErrorAction SilentlyContinue
+		if(($dashboardResource | Measure-Object).Count -eq 0 )
 		{
-			mkdir -Path $MonitoringDashboardTemplatePath -Force | Out-Null
-		}
-					
-		$MonitoringDashboardTemplateObj = [ConfigurationManager]::LoadServerConfigFile("MonitoringDashboard.json"); 				
-		$MonitoringDashboardTemplatePath = $MonitoringDashboardTemplatePath+"\MonitoringDashboard.json";
-		$MonitoringDashboardTemplateObj | ConvertTo-Json -Depth 100 | Out-File $MonitoringDashboardTemplatePath 
+			$this.PublishCustomMessage("Creating DevOps Kit ops monitoring dashboard in the policy host subscription...");
+			
+			#Store dashboard template to temp location
+			$MonitoringDashboardTemplatePath = [Constants]::AzSKTempFolderPath + "\MonitoringDashboard";
+			if(-not (Test-Path -Path $MonitoringDashboardTemplatePath))
+			{
+				mkdir -Path $MonitoringDashboardTemplatePath -Force | Out-Null
+			}						
+			$MonitoringDashboardTemplateObj = [ConfigurationManager]::LoadServerConfigFile("MonitoringDashboard.json"); 				
+			$MonitoringDashboardTemplatePath = $MonitoringDashboardTemplatePath+"\MonitoringDashboard.json";
+			$MonitoringDashboardTemplateObj | ConvertTo-Json -Depth 100 | Out-File $MonitoringDashboardTemplatePath 
 
-		$parameters = New-Object -TypeName Hashtable
-		$parameters.Add("SubscriptionId", $this.SubscriptionContext.SubscriptionId)
-		$parameters.Add("ResourceGroups",$this.ResourceGroupName)
-		$parameters.Add("AIName",$this.AppInsightName)		
-		$parameters.Add("DashboardTitle","DevOps Kit Monitoring Dashboard - $($this.OrgFullName)")
-		New-AzureRmResourceGroupDeployment -Name "MonitoringDashboard" -TemplateFile $MonitoringDashboardTemplatePath   -ResourceGroupName $($this.ResourceGroupName) -TemplateParameterObject $parameters   
-		$this.PublishCustomMessage(" `r`n Completed Setting up monitoring dashboard", [MessageType]::Update);
+			#Create arm template parameter specific to the org
+			$parameters = New-Object -TypeName Hashtable
+			$parameters.Add("SubscriptionId", $this.SubscriptionContext.SubscriptionId)
+			$parameters.Add("ResourceGroups",$this.ResourceGroupName)
+			$parameters.Add("AIName",$this.AppInsightName)		
+			$parameters.Add("DashboardTitle","DevOps Kit Monitoring Dashboard [$($this.OrgFullName)]")
+			New-AzureRmResourceGroupDeployment -Name "MonitoringDashboard" -TemplateFile $MonitoringDashboardTemplatePath   -ResourceGroupName $($this.ResourceGroupName) -TemplateParameterObject $parameters   
+			$this.PublishCustomMessage("Successfully created dashboard. You can access it through this link: ", [MessageType]::Update);
+			$rmContext = [Helpers]::GetCurrentRMContext();
+			$tenantId = $rmContext.Tenant.Id
+			$this.PublishCustomMessage("https://ms.portal.azure.com/#$($tenantId)/dashboard/arm/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($this.ResourceGroupName)/providers/microsoft.portal/dashboards/devopskitmonitoring",[MessageType]::Update)
+		}
+		
 	}
 }
 
