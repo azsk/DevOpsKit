@@ -497,7 +497,7 @@ function PersistSubscriptionSnapshot
 			
 			#Write the updated status back to the storage blob  
 			$activeScanObjects | ConvertTo-Json -Depth 10 | Out-File $CAActiveScanSnapshotBlobPath
-			Set-AzureStorageBlobContent -File $CAActiveScanSnapshotBlobPath -Blob $CAActiveScanSnapshotBlobName -Container $CAMultiSubScanConfigContainerName -BlobType Block -Context $StorageContext -Force
+			Set-AzureStorageBlobContent -File $CAActiveScanSnapshotBlobPath -Blob $CAActiveScanSnapshotBlobName -Container $CAMultiSubScanConfigContainerName -BlobType Block -Context $StorageContext -Force | Out-Null
 
 			#This is the last persist status. Archiving it for diagnosys purpose.
 			if(($activeScanObjects | Where-Object { $_.Status -notin ("COM","ERR")} | Measure-Object).Count -eq 0)
