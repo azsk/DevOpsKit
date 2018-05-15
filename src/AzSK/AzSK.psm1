@@ -480,7 +480,7 @@ function Set-AzSKPrivacyNoticeResponse {
     }
 }
 
-function Clear-AzSKState {
+function Clear-AzSKSessionState {
     [ConfigOverride]::ClearConfigInstance()
 }
 

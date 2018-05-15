@@ -165,8 +165,8 @@ class CommandHelper
 		},
 		[CommandDetails]@{
             Verb = "Clear";
-            Noun = "AzSKState";
-            ShortName = "CAS";
+            Noun = "AzSKSessionState";
+            ShortName = "CSS";
 			IsLatestRequired = $false;
         }
     );
