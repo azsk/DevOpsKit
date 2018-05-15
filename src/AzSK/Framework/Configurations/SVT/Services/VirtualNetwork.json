@@ -1,7 +1,7 @@
 {
   "FeatureName": "VirtualNetwork",
   "Reference": "aka.ms/azsktcp/virtualnetwork",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
   "Controls": [
     {
       "ControlID": "Azure_VNet_NetSec_Justify_PublicIPs",

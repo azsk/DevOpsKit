@@ -1,7 +1,7 @@
 {
   "FeatureName": "ServiceBus",
   "Reference": "aka.ms/azsktcp/servicebus",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
   "Controls": [      
     {
       "ControlID": "Azure_ServiceBus_AuthZ_Dont_Use_Policies_At_SB_Namespace",

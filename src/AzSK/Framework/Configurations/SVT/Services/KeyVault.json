@@ -1,7 +1,7 @@
 {
     "FeatureName":  "KeyVault",
     "Reference":  "aka.ms/azsktcp/keyvault",
-    "IsManintenanceMode":  false,
+    "IsMaintenanceMode":  false,
     "Controls":  [
                      {
                          "ControlID":  "Azure_KeyVault_AuthN_Use_Cert_Auth_for_Apps",

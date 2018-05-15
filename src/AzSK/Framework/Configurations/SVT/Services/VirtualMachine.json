@@ -1,7 +1,7 @@
 {
   "FeatureName": "VirtualMachine",
   "Reference": "aka.ms/azsktcp/virtualmachine",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
    "Controls": [
       {
          "ControlID": "Azure_VirtualMachine_Deploy_Latest_OS_Version",

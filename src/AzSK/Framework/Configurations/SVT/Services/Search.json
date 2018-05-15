@@ -1,7 +1,7 @@
 {
     "FeatureName":  "Search",
     "Reference":  "aka.ms/azsktcp/search",
-    "IsManintenanceMode":  false,
+    "IsMaintenanceMode":  false,
     "Controls":  [
       {
         "ControlID": "Azure_Search_AuthZ_Grant_Min_RBAC_Access",

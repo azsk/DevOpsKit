@@ -1,7 +1,7 @@
 {
   "FeatureName": "ServiceFabric",
   "Reference": "aka.ms/azsktcp/servicefabric",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
   "Controls": [
     {
       "ControlID": "Azure_ServiceFabric_AuthN_Publicly_Exposed_MicroSvc",

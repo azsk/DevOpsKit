@@ -1,7 +1,7 @@
 {
    "FeatureName": "SubscriptionCore",
    "Reference": "aka.ms/azsktcp/sshealth",
-   "IsManintenanceMode": false,
+   "IsMaintenanceMode": false,
    "Controls": [
       {
          "ControlID": "Azure_Subscription_AuthZ_Limit_Admin_Owner_Count",

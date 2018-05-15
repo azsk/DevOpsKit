@@ -28,11 +28,11 @@ class FixControlBase: AzSKRoot
 
     [bool] ValidateMaintenanceState()
     {  
-        if ($this.SVTConfig.IsManintenanceMode) 
+        if ($this.SVTConfig.IsMaintenanceMode) 
 		{
             $this.PublishCustomMessage(([ConfigurationManager]::GetAzSKConfigData().MaintenanceMessage -f $this.SVTConfig.FeatureName), [MessageType]::Warning);
         }
-        return $this.SVTConfig.IsManintenanceMode;
+        return $this.SVTConfig.IsMaintenanceMode;
     }  
 
     [MessageData[]] FixAllControls()

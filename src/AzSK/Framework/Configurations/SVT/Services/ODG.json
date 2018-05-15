@@ -1,7 +1,7 @@
 {
   "FeatureName": "ODG",
   "Reference": "aka.ms/azsktcp/odg",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
   "Controls": [
     {
       "ControlID": "Azure_ODG_Config_Lockdown_Server",
