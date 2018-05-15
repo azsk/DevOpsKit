@@ -225,6 +225,12 @@ class SVTMapping
 			ClassName = "AzSKCfg";
 			JsonFileName = "AzSKCfg.json";
 			ResourceTypeName = "AzSKCfg";
+        },
+		[ResourceTypeMapping]@{
+            ResourceType = "Microsoft.ContainerInstance/containerGroups";
+			ClassName = "ContainerInstances";
+			JsonFileName = "ContainerInstances.json";
+			ResourceTypeName = "ContainerInstances";
         }
     );
 

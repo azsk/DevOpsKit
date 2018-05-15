@@ -281,7 +281,7 @@
             "SI"
          ],
          "Enabled": true,
-         "Rationale": "A resource lock protects a resource from getting accidentally deleted. With proper RBAC configuration, it is possible to setup critical resources in a subscription in such a way that people can perform most operations on them but cannot delete them. Resource locks can help ensure that important data is not lost by accidental/malicious deletion of such resources (thus ensuring that availability is not impacted)."
+         "Rationale": "A resource lock protects a resource from getting accidentally deleted. With proper RBAC configuration, it is possible to setup critical resources in a subscription in such a way that people can perform most operations on them but cannot delete them. resource locks can help ensure that important data is not lost by accidental/malicious deletion of such resources (thus ensuring that availability is not impacted)."
       },
       {
          "ControlID": "Azure_Subscription_Config_ARM_Policy",

@@ -1,0 +1,41 @@
+{
+  "FeatureName": "ContainerInstances",
+  "Reference": "aka.ms/azsktcp/containerinstances",
+  "IsManintenanceMode": false,
+  "Controls": [
+    {
+      "ControlID": "Azure_ContainerInstances_NetSec_Justify_PublicIP_and_Ports",
+      "Description": "Use of public IP address and ports should be carefully reviewed",
+      "Id": "ContainerInstances110",
+      "ControlSeverity": "High",
+      "Enabled": true,
+      "Automated": "Yes",
+      "MethodName": "CheckPublicIPAndPorts",
+      "Rationale": "Public IP address provides direct access over the internet exposing the container to all type of attacks over the public network.",
+      "Recommendation": "Add public IP address and ports to a container only as required. Ensure that the resulting data flows are carefully reviewed.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "NetSec"
+      ]
+    },
+    {
+      "ControlID": "Azure_ContainerInstances_SI_Review_Image",
+      "Description": "Make sure container images (including nested images) are from a trustworthy source",
+      "Id": "ContainerInstances120",
+      "ControlSeverity": "High",
+      "Enabled": true,
+      "Automated": "Yes",
+      "MethodName": "CheckContainerImage",
+      "Rationale": "If a container runs an untrusted image (or an untrusted nested image), it can violate integrity of the infrastructure and lead to all types of security attacks.",
+      "Recommendation": "Ensure that the image source(s) for the image comprising the container are trustworthy. Review image configurations carefully for any misconfigurations.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "SI"
+      ]
+    }
+  ]
+}

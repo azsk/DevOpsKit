@@ -222,7 +222,6 @@ class CsvOutputItem
     [string] $FeatureName = ""
     [string] $ResourceGroupName = ""
     [string] $ResourceName = ""
-	[string] $ResourceId = ""
     [string] $ChildResourceName = ""
     [string] $ControlSeverity = ""
 	[string] $IsBaselineControl = ""
@@ -234,5 +233,6 @@ class CsvOutputItem
 	[string] $AttestedBy = ""
 	[string] $AttesterJustification = ""
     [string] $Recommendation = ""
+	[string] $ResourceId = ""
     [string] $DetailedLogFile = ""
 }
