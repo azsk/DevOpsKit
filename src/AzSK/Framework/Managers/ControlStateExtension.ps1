@@ -629,11 +629,17 @@ class ControlStateExtension
 
 	hidden [void] CleanTempFolder()
 	{
-		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp";				
-		if(Test-Path "$AzSKTemp")
+		try
 		{
-			Remove-Item -Path $AzSKTemp -Recurse -Force -ErrorAction Stop | Out-Null
+			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp";				
+			if(Test-Path "$AzSKTemp")
+			{
+				Remove-Item -Path $AzSKTemp -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+			}
 		}
+		catch{
+			#this call happens from finally block. Try to clean the files, if it dont happen it would get cleaned in the next attempt
+		}	
 
 	}
 
