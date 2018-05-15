@@ -72,6 +72,7 @@ function Repair-AzSKAzureServicesSecurity
 		[Parameter(Mandatory = $false, HelpMessage = "Bypass consent to modify Azure resources.")]
 		$Force,
 
+		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
 		$DoNotOpenOutputFolder
     )
@@ -154,6 +155,7 @@ function Repair-AzSKSubscriptionSecurity
 		[Parameter(Mandatory = $false, HelpMessage = "Bypass consent to modify Azure resources.")]
 		$Force,
 
+		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
 		$DoNotOpenOutputFolder
     )

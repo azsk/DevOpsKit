@@ -215,6 +215,7 @@ class PolicySetup: CommandBase
 				$azskOverride.UpdatePropertyValue("CASetupRunbookURL",$this.CASetupRunbookURL)
 			}
 			$azskOverride.UpdatePropertyValue("PolicyOrgName",$this.OrgFullName)
+			$azskOverride.UpdatePropertyValue("AzSKConfigURL",$this.AzSKConfigURL)
 			$azskOverride.WriteToFolder($this.ConfigFolderPath);
 		}
 		elseif($this.IsMigrationOn)
@@ -242,6 +243,7 @@ class PolicySetup: CommandBase
 				$azskOverride.UpdatePropertyValue("CASetupRunbookURL",$this.CASetupRunbookURL)
 			}
 			$azskOverride.UpdatePropertyValue("PolicyOrgName",$this.OrgFullName)
+			$azskOverride.UpdatePropertyValue("AzSKConfigURL",$this.AzSKConfigURL)
 			$azskOverride.WriteToFolder($this.ConfigFolderPath);
 		}
 

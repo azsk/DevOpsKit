@@ -348,6 +348,7 @@ function Set-AzSKUserPreference {
         [switch]
         $ResetOutputFolderPath,
 
+        [switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
 		$DoNotOpenOutputFolder
     )
