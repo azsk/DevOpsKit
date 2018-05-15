@@ -51,5 +51,29 @@ class ContainerInstances: SVTBase
         return $controlResult;
     }
 
-	
+	hidden [ControlResult] CheckContainerImage([ControlResult] $controlResult)
+    {
+		$controlResult.VerificationResult = [VerificationResult]::Verify; 
+		if([Helpers]::CheckMember($this.ResourceObject, "properties.containers"))
+		{
+			$containerImages = @();
+			$containerImages += $this.ResourceObject.properties.containers | Select-Object name, @{ Label="image"; Expression={ $_.properties.image } };
+			if($containerImages.Count -ne 0)
+			{
+				$controlResult.SetStateData("Containers and their images", $containerImages);
+				$controlResult.AddMessage([MessageData]::new("Review following images utilized by containers. Make sure their source is trustworthy.",
+									$containerImages));
+			}
+			else
+			{
+				$controlResult.AddMessage([MessageData]::new("No containers are found under container group - ["+ $this.ResourceContext.ResourceName +"]"));
+			}	
+		}
+		else
+		{
+			$controlResult.AddMessage([MessageData]::new("No containers are found under container group - ["+ $this.ResourceContext.ResourceName +"]"));
+		}
+  
+        return $controlResult;
+    }	
 }

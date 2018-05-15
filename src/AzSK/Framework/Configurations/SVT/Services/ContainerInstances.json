@@ -26,13 +26,14 @@
       "Id": "ContainerInstances120",
       "ControlSeverity": "High",
       "Enabled": true,
-      "Automated": "No",
+      "Automated": "Yes",
+      "MethodName": "CheckContainerImage",
       "Rationale": "If a container runs an untrusted image (or an untrusted nested image), it can violate integrity of the infrastructure and lead to all types of security attacks.",
       "Recommendation": "Ensure that the image source(s) for the image comprising the container are trustworthy. Review image configurations carefully for any misconfigurations.",
       "Tags": [
         "SDL",
         "TCP",
-        "Manual",
+        "Automated",
         "SI"
       ]
     }
