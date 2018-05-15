@@ -580,7 +580,7 @@ function UpdateAlertMonitoring
 	    $AlertRunbookPresent= Get-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $ResourceGroup -Name $AlertRunBookFullName -ErrorAction SilentlyContinue
 	    if(-not $AlertRunbookPresent)
 	    {
-	      Set-AzSKAlertMonitoring -SubscriptionId $SubscriptionID -Force
+	      Set-AzSKAlertMonitoring -SubscriptionId $SubscriptionID -Force | Out-Null
 		  PublishEvent -EventName "Alert Monitoring Enabled" -Properties @{ "SubscriptionId" = $SubscriptionID }
 	    }
  	    else
@@ -589,7 +589,7 @@ function UpdateAlertMonitoring
           if(($null -ne $ExistingWebhook) -and ((Get-Date).AddHours(24) -gt $ExistingWebhook.ExpiryTime.DateTime))
           {
              #update existing webhook for alert runbook
-			 Set-AzSKAlertMonitoring -SubscriptionId $SubscriptionID
+			 Set-AzSKAlertMonitoring -SubscriptionId $SubscriptionID | Out-Null
 			 PublishEvent -EventName "Alert Monitoring Updated Webhook" -Properties @{ "SubscriptionId" = $SubscriptionID }
           }
 		}
