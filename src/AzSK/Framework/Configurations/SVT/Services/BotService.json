@@ -39,13 +39,13 @@
     },
     {
         "ControlID": "Azure_BotService_DP_Protect_Secrets",
-        "Description": "Handle secrets used in Bot Service carefully.",
+        "Description": "Secrets in Bot Service must be handled properly.",
         "Id": "BotService130",
         "ControlSeverity": "High",
         "Automated": "No",
         "MethodName": "",
         "Rationale": "Keeping secrets such as passwords, keys, etc. in clear text can lead to easy compromise at various avenues during an application's lifecycle.",
-        "Recommendation": "It is recommended to protect secrets.",
+        "Recommendation": "It is recommended to handle the secrets properly.",
         "Tags": [
           "SDL",
           "TCP",
