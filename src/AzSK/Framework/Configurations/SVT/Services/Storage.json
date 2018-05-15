@@ -1,7 +1,7 @@
 {
   "FeatureName": "Storage",
   "Reference": "aka.ms/azsktcp/storage",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
   "Controls": [
    {
       "ControlID": "Azure_Storage_AuthN_Dont_Allow_Anonymous",
