@@ -16,7 +16,7 @@ Welcome, and thank you for showing interest in contributing to Secure DevOps Kit
 	
 	
 ### Code of Conduct
-Code of Conduct is necessary so as to encourage a healthy environment for end users to contribute to the project. Our Code of Conduct can be found [here](DevOpsKit/CODE_OF_CONDUCT.md)
+Code of Conduct is necessary so as to encourage a healthy environment for end users to contribute to the project. Our Code of Conduct can be found [here](DevOpsKit/CODE_OF_CONDUCT.md).
 
 ### Contribution area
 You can contribute to blogs, documentation or code of Secure DevOps Kit. 
@@ -28,9 +28,9 @@ You can contribute to blogs, documentation or code of Secure DevOps Kit.
 Have you identified a reproducible bug in Secure DevOps Kit? We want to hear about it! Here's how you can make reporting your issue as effective as possible.
 #### Look for an existing issue
 Before creating a new issue, search in [issues](https://github.com/azsk/DevOpsKit/issues) to see if the issue has already been created.
-If you find your issue already exists, make relevant comments and mention if something is still missing there.
+If you find that the issue already exists, make relevant comments and mention if something is still missing there.
 #### Write good bug reports
-Writing a good issue will help others including reviewers to have better understanding of the issue, for example giving an appropriate  issue title may help others facing similar issue to find and comment on it. We have created an [issue template](DevOpsKit/.github/issue_template.md) to make sure that important pieces of information are not missed while creating an issue:
+Writing a good issue/bug report will help others including reviewers to have better understanding of the issue, for example giving an appropriate  issue title may help others facing similar issue to find and comment on it. We have created an [issue template](DevOpsKit/.github/issue_template.md) to make sure that important pieces of information are not missed while creating an issue:
 ##### Best practices
 * File a single issue per problem. Do not add multiple bugs under same issue as the bugs may look similar but their root cause might be different.
 * Always specify the AzSK version for which you faced the issue.
@@ -93,26 +93,26 @@ Each supported Azure service has core logic defined for evaluating **automated c
 Having understood the basic structure of Secure DevOps Kit code, you can now go ahead with the contribution.
 
 ### Enhance controls for supported resources 
-Since Azure services keep on updating with latest security features and automation options, therefore Secure DevOps Kit controls need to be upgraded with latest bits for control validation or recommendation or change in control description.
-Following are the ways you can enhance controls for supported resources
+Since Azure services keep on updating with latest security features and automation options, Secure DevOps Kit controls also need to be upgraded with latest bits for control validation or change in control description or recommendation.
+Following are the ways you can enhance controls for supported resources:
 
 #### Update existing control
 There are various ways in which you can update an existing control:
   * Update recommendations as per latest options/PowerShell command available: This is as simple as updating Policy/Configuration Json file.
-  * Update core logic defined to cover different/missing scenarios for control evaluation or bug fixes: You can navigate to core logic file. The methodname for specific control can be found in the ControlId property in Policy/Configuration.json file.  
+  * Update core logic defined to cover different/missing scenarios for control evaluation or bug fixes: You can navigate to core logic file for that service. The name of method where the core logic is defined for specific control can be found in the MethodName property of that control in Policy/Configuration.json file.  
   
 #### Add new controls for existing supported resources</br>
-  * You can add your security practices as control for a particular Azure Service. Before adding control to code, you should come up with below basic details:
+  * You can add your security practices as control for a particular Azure service. Before adding control to code, you should come up with below basic details:
 	1. Control description.
 	2. Rationale behind the control.
 	3. Recommendation to be followed  to fix control.
 	4. Define level(TCP/Best Practice/Information) and severity(Critical/High/Medium/Low) of the control.
-	5. Can control be validated using Azure cmdlet or API. Based on this control can be added as a **Manual or Automated** control. The control you are thinking to add may be Manual or Automated control, based upon that you can go through the below given description to add **manual** or **automated** control.
+	5. Can control be validated using Azure cmdlet or API. Based on this control can be added as a **manual or automated** control. 
 
 **Add manual control**</br>
-Adding manual control is as easy as updating Policy Json. Follow below steps to add manual control</br>
-**a.** Open Policy config of Azure Service by navigating to path: "AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"</br>
-**b.** Add entry under Controls section. Sample is shown below:  
+Follow below steps to add manual control</br>
+**a.** Open Policy config of Azure service by navigating to path: "AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"</br>
+**b.** Add an entry under Controls section. Sample is shown below:  
 ```
 {                                                                                                                                                                                                              
    "ControlID": "Azure_<FeatureName>_<ControlTypeAcronym>_ControlShortName",
@@ -132,9 +132,7 @@ Adding manual control is as easy as updating Policy Json. Follow below steps to 
 > * ControlId, Id should not be repeated/duplicated.
 
 **Add automated control**</br>
-If you have analyzed that control can be automated using PowerShell with help of Azure cmdlet or API. Before automating control make sure you have below data available
-1. Permissions(Reader/Contributor/Owner/Graph API access etc.) required to validate the control.
-
+If you have analyzed that control can be automated using PowerShell with help of Azure cmdlet or API. Before automating control make sure you have knowledge about the permissions/access required to validate the control.
 Follow below steps to add automated control</br>
 **1.** Add control entry in Policy of the Azure Service config file that can be found under the path "AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json".
 ```
