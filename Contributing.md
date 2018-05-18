@@ -60,7 +60,7 @@ Now let's understand the various properties defined for controls:
         "ControlSeverity": "High",   // Defines the severity of control with values: Critical, High, Medium and Low                                                                                      
         "Rationale": "<Control Rationale>", // Rationale behind the control                                                    
         "Automated" : "Yes",	// Possible values are: Yes, No                                                      
-        "Tags": ["SDL"],		// Tags related to Control                                                              
+        "Tags": ["SDL"],		// Tags related to control                                                              
         "Enabled": true,					                                                                                                      
         "Recommendation": "<Recommendation To Fix Control>", // Steps to fix control using PowerShell Script or Portal Options or other manual steps				
         "MethodName": "<ControlMethodName>"		 // Name of method which will be called to evaluate control  
