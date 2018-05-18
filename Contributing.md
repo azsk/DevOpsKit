@@ -54,7 +54,7 @@ Now let's understand the various properties defined for controls:
     "IsManintenanceMode": false,                                                                                                                                                                 
     "Controls": [			// List of controls defined for feature                                                     
      {                                                                                                                                                                                                              
-        "ControlID": "Azure_<FeatureName>_<ControlTypeAcronym>_ControlShortName",	// TCP control Id. Make sure its unique                                    
+        "ControlID": "Azure_<FeatureName>_<ControlTypeAcronym>_ControlShortName",	// TCP ControlID. Make sure it is unique                                    
         "Id": "FeatureName01",	// Id being used by framework internally                                  
         "Description": "<Control Description here>",                                                                                                                 
         "ControlSeverity": "High",   // Defines the severity of control with values: Critical, High, Medium and Low                                                                                      
@@ -159,7 +159,7 @@ Follow below steps to add automated control</br>
 
 ```powershell  
 hidden [ControlResult] <ControlMethodName>([ControlResult] $controlResult)
- # ControlMethodName needs to configured in Policy Config against "MethodName 
+ # ControlMethodName needs to configured in Policy Config against "MethodName" 
    {
 		  # SVT implementation goes here 
 		  # Update the result of TCP control in object $controlResult
