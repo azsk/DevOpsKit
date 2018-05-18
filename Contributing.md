@@ -190,6 +190,6 @@ Below mentioned are the most basic acceptance criteria for a pull request:
 *  The core team needs to agree with any architectural impact a change may make. Things like new extension or APIs must be discussed with and agreed upon by the core team.
 
 ### Suggestions
-You can submit a suggestion or a feature request at <azsksup@microsoft.com>. To make the feedback process more effective, try to include as much information as you can. For example one can add the need, impact and advantages or the feature being requested.  
+You can submit a suggestion or a feature request at <azsksup@microsoft.com>. To make the feedback process more effective, try to include as much information as you can. For example one can add the need, impact and advantages of the feature being requested.  
 
 Your contribution is really appreciated.
