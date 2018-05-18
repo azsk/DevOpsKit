@@ -44,17 +44,17 @@ Writing a good issue/bug report will help others including reviewers to have bet
 Before contributing to code you must understand the structure of Secure DevOps Kit. Secure DevOps Kit evaluates security controls for Azure services like App Service, KeyVault, Storage etc. For each service, controls are defined using two main parts:
 
 **1. Policy/Configuration:**</br>
-It is a json file that has a set of security controls for an Azure service. For each control in a service there is an entry in Policy/Configuration json file having properties like ControlId, Description, Recommendation, Rationale etc. 
+It is a json file that has a set of security controls for an Azure service. For each control in a service there is an entry in Policy/Configuration json file having properties like ControlID, Description, Recommendation, Rationale etc. 
 You can find the configuration for service under: "AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json"          
 Now let's understand the various properties defined for controls:
 ```
 {                                                                                                                                                                                                                                   
     "FeatureName": "<Feature Name>",	//  Azure Feature Name                 
-    "Reference" : "aka.ms/azsktcp/<FeatureName>",	  //  Reference link to Azure Feature Control documentation                   
+    "Reference" : "aka.ms/azsktcp/<FeatureName>",	  //  Reference link to Azure Feature control documentation                   
     "IsManintenanceMode": false,                                                                                                                                                                 
     "Controls": [			// List of controls defined for feature                                                     
      {                                                                                                                                                                                                              
-        "ControlID": "Azure_<FeatureName>_<ControlTypeAcronym>_ControlShortName",	// TCP Control Id. Make sure its unique                                    
+        "ControlID": "Azure_<FeatureName>_<ControlTypeAcronym>_ControlShortName",	// TCP control Id. Make sure its unique                                    
         "Id": "FeatureName01",	// Id being used by framework internally                                  
         "Description": "<Control Description here>",                                                                                                                 
         "ControlSeverity": "High",   // Defines the severity of control with values: Critical, High, Medium and Low                                                                                      
@@ -62,7 +62,7 @@ Now let's understand the various properties defined for controls:
         "Automated" : "Yes",	// Possible values are: Yes, No                                                      
         "Tags": ["SDL"],		// Tags related to control                                                              
         "Enabled": true,					                                                                                                      
-        "Recommendation": "<Recommendation To Fix Control>", // Steps to fix control using PowerShell Script or Portal Options or other manual steps				
+        "Recommendation": "<Recommendation To Fix Control>", // Steps to fix control using PowerShell Script or Azure Portal Options or other manual steps				
         "MethodName": "<ControlMethodName>"		 // Name of method which will be called to evaluate control  
       },												
     ]
