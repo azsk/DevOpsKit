@@ -69,7 +69,7 @@ Now let's understand the various properties defined for controls:
   }
 ```
 
- Following acronym are used for control type:
+ Following acronyms are used for control type:
  
  
   |Acronym|Full Name|Example|
