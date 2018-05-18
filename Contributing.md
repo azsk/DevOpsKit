@@ -129,7 +129,7 @@ Follow below steps to add manual control</br>
 >  **DONT'S:**
 > * Do not change values for fixed variables e.g. FeatureName, ControlID, Id  and MethodName. These values are referenced at different places in framework.
 > * Control Policy is strongly typed schema, new property or renaming of the property is not allowed.
-> * ControlId, Id should not be repeated/duplicated.
+> * ControlID, Id should not be repeated/duplicated.
 
 **Add automated control**</br>
 If you have analyzed that control can be automated using PowerShell with help of Azure cmdlet or API. Before automating control make sure you have knowledge about the permissions/access required to validate the control.
@@ -152,7 +152,7 @@ Follow below steps to add automated control</br>
 >  **DONT'S:**
 > * Do not change values for fixed variables e.g. FeatureName, ControlID, Id  and MethodName. These values are referenced at different places in framework.
 > * Control Policy is strongly typed schema, new property or renaming of the property is not allowed.
-> * ControlId, Id should not be repeated/duplicated.
+> * ControlID, Id should not be repeated/duplicated.
 
 **2.**  Add core logic for evaluating control 
 </br>Below is the stucture of a function defined for an SVT TCP. 
