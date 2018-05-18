@@ -32,7 +32,7 @@ If you find that the issue already exists, make relevant comments and mention if
 #### Write good bug reports
 Writing a good issue/bug report will help others including reviewers to have better understanding of the issue, for example giving an appropriate  issue title may help others facing similar issue to find and comment on it. We have created an [issue template](DevOpsKit/.github/issue_template.md) to make sure that important pieces of information are not missed while creating an issue:
 ##### Best practices
-* File a single issue per problem. Do not add multiple bugs under same issue as the bugs may look similar but their root cause might be different.
+* File a single issue per problem. Do not add multiple bugs under same issue as bugs may look similar but their root cause might be different.
 * Always specify the AzSK version for which you faced the issue.
 * Provide the steps to reproduce the issue like the commands you ran, parameters you passed when you encountered this issue.
 * Mention the modules that were present in the powershell session while you ran the command.
