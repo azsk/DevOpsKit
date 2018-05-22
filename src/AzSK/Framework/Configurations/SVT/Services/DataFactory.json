@@ -1,7 +1,7 @@
 {
   "FeatureName": "DataFactory",
   "Reference": "aka.ms/azsktcp/datafactory",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
   "Controls": [
     {
       "ControlID": "Azure_DataFactory_DP_LinkSvc_Encrypt_In_Transit",

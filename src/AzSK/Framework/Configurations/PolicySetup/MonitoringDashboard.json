@@ -1,0 +1,457 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "SubscriptionId": {
+      "type": "string",
+      "metadata": {
+        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+      }
+    },
+    "ResourceGroups": {
+      "type": "string",
+      "metadata": {
+        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+      }
+    },
+    "AIName": {
+      "type": "string",
+      "metadata": {
+        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+      }
+    },
+    "DashboardName":{
+      "type": "string",
+      "metadata": {
+        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+      },
+      "defaultValue" : "DevOpsKitMonitoring"
+    },
+    "DashboardTitle":{
+      "type": "string",
+      "metadata": {
+        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+      },
+      "defaultValue" : "DevOps Kit Monitoring Dashboard"
+
+    }
+  },
+  "resources": [
+    {
+      "properties": {
+        "lenses": {
+          "0": {
+            "order": 0,
+            "parts": {
+              "0": {
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "colSpan": 5,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [],
+                  "type": "Extension[azure]/HubsExtension/PartType/MarkdownPart",
+                  "settings": {
+                    "content": {
+                      "settings": {
+                        "content": "__How to use this dashboard:__\n\nThis dashboard lets you monitor the operations for various DevOps Kit workflows at your org. Each blade lets you monitor the health of some aspect of your DevOps Kit deployment (e.g., CA issues, anomalous control drifts, evaluation errors, etc.). You can click on the 'Open Chart in Analytics' link at the top right corner of any view to see the underlying data/query. (Note that some views will show 'error retrieving data' initially.)\n\n__Useful Links__: \n<br>\n[Updates on Org Policy](https://aka.ms/devopskit/orgpolicy/updates)\n<br>[Release Notes](https://aka.ms/devopskit/releasenotes)\n<br>[Org Policy Docs](https://aka.ms/devopskit/orgpolicy/docs)\n<br>[DevOps Kit Docs](http://aka.ms/devopskit/docs)\n<br>[Support](mailto:azsksup@microsoft.com)\n\n",
+                        "title": "Monitoring your Org AzSK Setup",
+                        "subtitle": "Instructions"
+                      }
+                    }
+                  }
+                }
+              },
+              "1": {
+                "position": {
+                  "x": 5,
+                  "y": 0,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                       "SubscriptionId": "[parameters('SubscriptionId')]",
+                       "ResourceGroup": "[parameters('ResourceGroups')]",
+                        "Name": "[parameters('AIName')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "customEvents\r\n| where timestamp > ago(15d) and name == \"Control Scanned\" and customDimensions.ScanSource== \"Runbook\"\r\n| summarize count()  by bin(timestamp, 1d),tostring(customDimensions.SubscriptionId)\r\n| summarize TotalCount=count() by timestamp\r\n| render barchart\n"
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "timestamp",
+                          "type": "DateTime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "TotalCount",
+                            "type": "Int64"
+                          }
+                        ],
+                        "splitBy": [],
+                        "aggregation": "Sum"
+                      }
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
+                    },
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "components"
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsBarChartPart",
+                  "settings": {
+                    "content": {
+                      "dashboardPartTitle": "CA - Subs Reporting Scans",
+                      "dashboardPartSubTitle": "Number of subscriptions reporting CA scans"
+                    }
+                  },
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              },
+              "2": {
+                "position": {
+                  "x": 11,
+                  "y": 0,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                        "SubscriptionId": "[parameters('SubscriptionId')]",
+                       "ResourceGroup": "[parameters('ResourceGroups')]",
+                        "Name": "[parameters('AIName')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "//Negative Drift\nlet ControlResults = customEvents\n| where timestamp < ago(2d) and timestamp >= ago(4d)\n| where name == \"Control Scanned\" and customDimensions.HasAttestationReadPermissions == \"True\" and customDimensions.HasRequiredAccess == \"True\"\n| summarize arg_max(timestamp, *) by tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName), tostring(customDimensions.ControlId)\n| project tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName),tostring(customDimensions.ResourceId), tostring(customDimensions.ControlId), Oldresult =tostring(customDimensions.VerificationResult)\n| join\n(\n    customEvents\n    | where timestamp >= ago(2d)\n    | where name == \"Control Scanned\" and customDimensions.HasAttestationReadPermissions == \"True\" and customDimensions.HasRequiredAccess == \"True\"\n    | summarize arg_max(timestamp, *) by tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName), tostring(customDimensions.ControlId)\n    | project tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName),tostring(customDimensions.ResourceId), tostring(customDimensions.ControlId), Latestresult = tostring(customDimensions.VerificationResult)\n)\non customDimensions_SubscriptionId, customDimensions_SubscriptionName,customDimensions_ResourceId, customDimensions_ControlId\n| project tostring(customDimensions_SubscriptionId), tostring(customDimensions_SubscriptionName),tostring(customDimensions_ResourceId), tostring(customDimensions_ControlId),Oldresult,Latestresult;\nlet OldScan = ControlResults\n| where Oldresult == \"Passed\"\n| summarize OldScanCount = count() by tostring(customDimensions_ControlId);\nlet LatestScan = ControlResults\n| where Latestresult == \"Passed\"\n| summarize LatestScanCount = count() by tostring(customDimensions_ControlId);\nOldScan\n| join\n(\n    LatestScan\n)\non customDimensions_ControlId\n| project ControlId=tostring(customDimensions_ControlId),OldStatusCount=OldScanCount,LatestStatusCount=LatestScanCount\n| where OldStatusCount != LatestStatusCount and LatestStatusCount < OldStatusCount\n| extend Change =OldStatusCount-LatestStatusCount\n| order by Change desc\n| project ControlId,OldStatusCount,LatestStatusCount,Change\n"
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
+                    },
+                    {
+                      "name": "PartId",
+                      "value": "038d1915-4387-402f-88e1-0b0f029afc36"
+                    },
+                    {
+                      "name": "PartTitle",
+                      "value": "Analytics"
+                    },
+                    {
+                      "name": "PartSubTitle",
+                      "value": "azsdkappinsightsms"
+                    },
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "components"
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsGridPart",
+                  "settings": {
+                    "content": {
+                      "dashboardPartTitle": "Negative Drift for Controls",
+                      "dashboardPartSubTitle": "Shows controls drifting from 'passed' to 'not passed' in the 2 Days"
+                    }
+                  },
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              },
+              "3": {
+                "position": {
+                  "x": 17,
+                  "y": 0,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                       "SubscriptionId": "[parameters('SubscriptionId')]",
+                       "ResourceGroup": "[parameters('ResourceGroups')]",
+                        "Name": "[parameters('AIName')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "exceptions\n| where timestamp > ago(7d)\n| summarize Count=count() by tostring(outerMessage),Date=bin(timestamp,1d)\n"
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "Date",
+                          "type": "DateTime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "Count",
+                            "type": "Int64"
+                          }
+                        ],
+                        "splitBy": [
+                          {
+                            "name": "outerMessage",
+                            "type": "String"
+                          }
+                        ],
+                        "aggregation": "Sum"
+                      }
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
+                    },
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "components"
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsBarChartPart",
+                  "settings": {
+                    "content": {
+                      "dashboardPartTitle": "Exceptions Summary",
+                      "dashboardPartSubTitle": "Errors during DevOps Kit cmdlet execution"
+                    }
+                  },
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              },
+              "4": {
+                "position": {
+                  "x": 0,
+                  "y": 4,
+                  "colSpan": 5,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "resourceGroup",
+                      "isOptional": true
+                    },
+                    {
+                      "name": "id",
+                      "value": "[concat(subscription().id,'/resourceGroups/',parameters('ResourceGroups'))]",
+                      "isOptional": true
+                    }
+                  ],
+                  "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
+                }
+              },
+              "5": {
+                "position": {
+                  "x": 5,
+                  "y": 4,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                       "SubscriptionId": "[parameters('SubscriptionId')]",
+                       "ResourceGroup": "[parameters('ResourceGroups')]",
+                        "Name": "[parameters('AIName')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "customEvents\r\n| where timestamp > ago(90d) \r\n| where  customDimensions.ScanSource ==\"Runbook\" and name == \"Control Scanned\"\r\n| summarize LastScanDate = max(timestamp) by tostring(customDimensions.SubscriptionId),tostring(customDimensions.SubscriptionName)\r\n| where LastScanDate <= ago(2d)\r\n| order by LastScanDate desc \r\n| project SubId = customDimensions_SubscriptionId,SubName= customDimensions_SubscriptionName,LastScanDate\n"
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
+                    },
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "components"
+                    }
+                  ],    
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsGridPart",
+                  "settings": {
+                    "content": {
+                      "dashboardPartTitle": "CA - No Recent Scans",
+                      "dashboardPartSubTitle": "Subscriptions that have not reported scan events in last the 2 days"
+                    }
+                  },
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              },
+              "6": {
+                "position": {
+                  "x": 11,
+                  "y": 4,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                        "SubscriptionId": "[parameters('SubscriptionId')]",
+                       "ResourceGroup": "[parameters('ResourceGroups')]",
+                        "Name": "[parameters('AIName')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "//Positive Drift\nlet ControlResults = customEvents\n| where timestamp < ago(2d) and timestamp >= ago(4d)\n| where name == \"Control Scanned\" and customDimensions.HasAttestationReadPermissions == \"True\" and customDimensions.HasRequiredAccess == \"True\"\n| summarize arg_max(timestamp, *) by tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName), tostring(customDimensions.ControlId)\n| project tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName),tostring(customDimensions.ResourceId), tostring(customDimensions.ControlId), oldresult =tostring(customDimensions.VerificationResult)\n| join\n(\n    customEvents\n    | where timestamp >= ago(2d)\n    | where name == \"Control Scanned\" and customDimensions.HasAttestationReadPermissions == \"True\" and customDimensions.HasRequiredAccess == \"True\"\n    | summarize arg_max(timestamp, *) by tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName), tostring(customDimensions.ControlId)\n    | project tostring(customDimensions.SubscriptionId), tostring(customDimensions.SubscriptionName),tostring(customDimensions.ResourceId), tostring(customDimensions.ControlId), Latestresult = tostring(customDimensions.VerificationResult)\n)\non customDimensions_SubscriptionId, customDimensions_SubscriptionName,customDimensions_ResourceId, customDimensions_ControlId\n| project tostring(customDimensions_SubscriptionId), tostring(customDimensions_SubscriptionName),tostring(customDimensions_ResourceId), tostring(customDimensions_ControlId),oldresult,Latestresult;\nlet oldScan = ControlResults\n| where oldresult == \"Passed\"\n| summarize oldScanCount = count() by tostring(customDimensions_ControlId);\nlet LatestScan = ControlResults\n| where Latestresult == \"Passed\"\n| summarize LatestScanCount = count() by tostring(customDimensions_ControlId);\noldScan\n| join\n(\n    LatestScan\n)\non customDimensions_ControlId\n| project ControlId=tostring(customDimensions_ControlId),OldStatusCount=oldScanCount,LatestStatusCount=LatestScanCount\n| where OldStatusCount != LatestStatusCount and LatestStatusCount > OldStatusCount\n| extend Change =LatestStatusCount-OldStatusCount\n| order by Change desc\n| project ControlId,OldStatusCount,LatestStatusCount,Change\n"
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
+                    },                   
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "components"
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsGridPart",
+                  "settings": {
+                    "content": {
+                      "dashboardPartTitle": "Positive Drift for Controls",
+                      "dashboardPartSubTitle": "Shows controls drifting from 'not passed' to 'passed' in the 2 days"
+                    }
+                  },
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              },
+              "7": {
+                "position": {
+                  "x": 17,
+                  "y": 4,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                       "SubscriptionId": "[parameters('SubscriptionId')]",
+                       "ResourceGroup": "[parameters('ResourceGroups')]",
+                        "Name": "[parameters('AIName')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "customEvents\r\n| where name == \"CA Job Error\"\r\n| where timestamp > ago(7d)\r\n| extend SubId=tostring(customDimensions.SubscriptionId)\r\n| summarize Count=count() by tostring(customDimensions.ErrorRecord),Date=bin(timestamp,1d)\r\n| order by Date,Count"
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "Date",
+                          "type": "DateTime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "Count",
+                            "type": "Int64"
+                          }
+                        ],
+                        "splitBy": [
+                          {
+                            "name": "customDimensions_ErrorRecord",
+                            "type": "String"
+                          }
+                        ],
+                        "aggregation": "Sum"
+                      }
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
+                    },
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "components"
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsBarChartPart",
+                  "settings": {
+                    "content": {
+                      "dashboardPartTitle": "CA Exceptions",
+                      "dashboardPartSubTitle": "Errors during CA runbook execution"
+                    }
+                  },
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "name": "[parameters('DashboardName')]",
+      "type": "Microsoft.Portal/dashboards",
+      "location": "eastus",
+      "tags": {
+        "hidden-title": "[parameters('DashboardTitle')]"
+      },
+      "apiVersion": "2015-08-01-preview"
+    }
+  ]
+}

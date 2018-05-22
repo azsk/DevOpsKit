@@ -1,7 +1,7 @@
 {
   "FeatureName": "Storage",
   "Reference": "aka.ms/azsktcp/storage",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
   "Controls": [
    {
       "ControlID": "Azure_Storage_AuthN_Dont_Allow_Anonymous",
@@ -54,30 +54,6 @@
         "FixControlImpact": "Low"
       }
     },   
-   {
-      "ControlID": "Azure_Storage_DP_Encrypt_At_Rest_Blob",
-      "Description": "Sensitive data in Storage Blob must be encrypted at rest",
-      "Id": "AzureStorage140",
-      "ControlSeverity": "High",
-      "Automated": "Yes",
-      "MethodName": "CheckStorageBlobEncryptionEnabled",
-      "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-      "Recommendation": "Run command 'Set-AzureRmStorageAccount -Name '<StorageAccountName>' -ResourceGroupName '<RGName>' -StorageEncryption -EnableEncryptionService 'Blob''. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help. Note that after enabling Storage Service Encryption, only new data will be encrypted, and any existing files in this Storage Account will remain unencrypted.",
-      "Tags": [
-         "SDL",
-         "TCP",
-         "Automated",
-         "DP",
-         "StandardSku",
-         "GeneralPurposeStorage",
-         "BlobStorage"
-      ],
-      "Enabled": true,
-      "FixControl": {
-         "FixMethodName": "EnableBlobEncryption",
-         "FixControlImpact": "Low"
-      }
-   },
     {
       "ControlID": "Azure_Storage_Audit_AuthN_Requests",
       "Description": "Storage Account must be configured to log and monitor authentication request data",
@@ -212,70 +188,6 @@
         "BlobStorage"
       ],
       "Enabled": true
-    },
-    {
-      "ControlID": "Azure_Storage_DP_Encrypt_At_Rest_Table",
-      "Description": "Sensitive data in Storage Table must be encrypted at rest",
-      "Id": "AzureStorage220",
-      "ControlSeverity": "High",
-      "Automated": "No",
-      "MethodName": "",
-      "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-      "Recommendation": "Server side encryption is not availble for Queues. Apps may leverage client-side encryption instead. Refer: https://docs.microsoft.com/en-us/azure/storage/storage-client-side-encryption.",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Manual",
-        "DP",
-        "StandardSku",
-        "PremiumSku",
-        "GeneralPurposeStorage"
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "Azure_Storage_DP_Encrypt_At_Rest_Queue",
-      "Description": "Sensitive data in Storage Queue must be encrypted at rest",
-      "Id": "AzureStorage230",
-      "ControlSeverity": "High",
-      "Automated": "No",
-      "MethodName": "",
-      "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-      "Recommendation": "Server side encryption is not availble for Queues. Apps may leverage client-side encryption instead. Refer: https://docs.microsoft.com/en-us/azure/storage/storage-client-side-encryption.",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Manual",
-        "DP",
-        "StandardSku",
-        "PremiumSku",
-        "GeneralPurposeStorage"
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "Azure_Storage_DP_Encrypt_At_Rest_File",
-      "Description": "Sensitive data in Storage File must be encrypted at rest",
-      "Id": "AzureStorage240",
-      "ControlSeverity": "High",
-      "Automated": "Yes",
-      "MethodName": "CheckStorageFileEncryptionEnabled",
-      "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-      "Recommendation": "Run command 'Set-AzureRmStorageAccount -Name '<StorageAccountName>' -ResourceGroupName '<RGName>' -StorageEncryption -EnableEncryptionService 'File''. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help. Note that after enabling Storage Service Encryption, only new data will be encrypted, and any existing files in this Storage Account will remain unencrypted.",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "DP",
-        "StandardSku",
-        "PremiumSku",
-        "GeneralPurposeStorage"
-      ],
-      "Enabled": true,
-      "FixControl": {
-        "FixMethodName": "EnableFileEncryption",
-        "FixControlImpact": "Low"
-      }
     },
     {
       "ControlID": "Azure_Storage_DP_Restrict_CORS_Access",

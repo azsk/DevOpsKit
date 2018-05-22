@@ -18,7 +18,9 @@ function Set-AzSKEventHubSettings
 	.PARAMETER Source
 		Provide the source of EventHub Events.(e.g. CC,CICD,SDL)
 	.PARAMETER Disable
-		Use -Disable option to clean the EventHub setting under the current instance.	
+		Use -Disable option to clean the EventHub setting under the current instance.
+	.PARAMETER DoNotOpenOutputFolder
+		Switch to specify whether to open output folder.
 
 	.LINK
 	https://aka.ms/azskossdocs 
@@ -53,7 +55,11 @@ function Set-AzSKEventHubSettings
 
         [Parameter(Mandatory = $true, HelpMessage="Use -Disable option to clean the EventHub setting under the current instance.", ParameterSetName = "Disable")]
         [switch]
-        $Disable
+		$Disable,
+		
+		[switch]
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
+		$DoNotOpenOutputFolder
     )
 	Begin
 	{

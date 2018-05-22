@@ -162,6 +162,12 @@ class CommandHelper
             Noun = "AzSKInfo";
             ShortName = "GAI";
 			IsLatestRequired = $false;
+		},
+		[CommandDetails]@{
+            Verb = "Clear";
+            Noun = "AzSKSessionState";
+            ShortName = "CSS";
+			IsLatestRequired = $false;
         }
     );
 

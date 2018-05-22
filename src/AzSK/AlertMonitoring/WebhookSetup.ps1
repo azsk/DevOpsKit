@@ -18,7 +18,9 @@ function Set-AzSKWebhookSettings
 	.PARAMETER AllowSelfSignedWebhookCertificate
 		Use -AllowSelfSignedWebhookCertificate option to allow a self-signed certificate for webhooks. This setting is to facilitate development/testing and is *not* recommended for production environments.
 	.PARAMETER Disable
-		Use -Disable option to clean the Webhook setting under the current instance.	
+		Use -Disable option to clean the Webhook setting under the current instance.
+	.PARAMETER DoNotOpenOutputFolder
+		Switch to specify whether to open output folder.	
 
 	.LINK
 	https://aka.ms/azskossdocs 

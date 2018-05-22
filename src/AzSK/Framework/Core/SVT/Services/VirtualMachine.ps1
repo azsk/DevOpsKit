@@ -582,54 +582,61 @@ class VirtualMachine: SVTBase
 	{
 		#Do not check for deallocated status for the VM and directly show the status from ASC
 		$isVerify = $false;
-		$ASCSettingsforVM=$this.ASCSettings;
 		$ASCApprovedPatchStatus=$this.VMControlSettings.ASCApprovedPatchingHealthStatuses;
-		$VMSecurityStatus=$ASCSettingsforVM.DetailedStatus;
-		# workspace associated by ASC to send logs for this VM
-		$workspaceId=$VMSecurityStatus.Workspace;
-		$queryforPatchDetails=[string]::Format($this.VMControlSettings.QueryforMissingPatches,($this.ResourceContext.ResourceId).ToLower());       		
-
-		if($null -ne $VMSecurityStatus.SystemUpdates -and $VMSecurityStatus.SystemUpdates -in $ASCApprovedPatchStatus)
+		#Get VM ASC Setting
+		$ASCSettingsforVM=$this.ASCSettings;
+		if($null -ne $ASCSettingsforVM)
 		{
-			$controlResult.VerificationResult = [VerificationResult]::Passed	
+				$VMSecurityStatus=$ASCSettingsforVM.DetailedStatus;
+				# workspace associated by ASC to send logs for this VM
+				$workspaceId=$VMSecurityStatus.Workspace;
+				$queryforPatchDetails=[string]::Format($this.VMControlSettings.QueryforMissingPatches,($this.ResourceContext.ResourceId).ToLower());       		
+
+				if($null -ne $VMSecurityStatus.SystemUpdates -and $VMSecurityStatus.SystemUpdates -in $ASCApprovedPatchStatus)
+				{
+					$controlResult.VerificationResult = [VerificationResult]::Passed	
+				}
+				else
+				{
+					$isVerify=$true;
+					if(-not [string]::IsNullOrEmpty($workspaceId))
+					{
+						try
+						{
+							$result = [OMSHelper]::QueryStatusfromWorkspace($workspaceId,$queryforPatchDetails);
+							if($null -ne $result -and ($result.Values| Measure-Object).Count -gt 0)
+							{
+								$vmobject =$result.Values;
+								$missingUpdates=@{};
+								$isVerify=$false;
+								$missingUpdates=$vmobject|Select-Object -Property Title,UpdateId
+								$controlResult.VerificationResult=[VerificationResult]::Failed;
+								$controlResult.AddMessage("Details of missing OS patches for Virtual Machine [$($this.ResourceContext.ResourceName)]:", $missingUpdates);
+							}
+							else
+							{
+								$controlResult.AddMessage("Unable to validate missing patch status.Please Verify");
+							}						
+						}
+						catch
+						{
+							$this.PublishException($_)
+						}
+					}
+				}
+				if($isVerify)
+				{
+					$controlResult.VerificationResult=[VerificationResult]::Verify;
+					$controlResult.AddMessage("Details of missing patches can be obtained from the following workspace");
+					$controlResult.AddMessage("Workspace : ",$workspaceId);
+					$controlResult.AddMessage("The following query can be used to obtain patch details:");
+					$controlResult.AddMessage("Query : ",$queryforPatchDetails);
+				}
 		}
 		else
 		{
-			$isVerify=$true;
-			if(-not [string]::IsNullOrEmpty($workspaceId))
-			{
-				try
-				{
-					$result = [OMSHelper]::QueryStatusfromWorkspace($workspaceId,$queryforPatchDetails);
-					if($null -ne $result -and ($result.Values| Measure-Object).Count -gt 0)
-					{
-						$vmobject =$result.Values;
-						$missingUpdates=@{};
-						$isVerify=$false;
-						$missingUpdates=$vmobject|Select-Object -Property Title,UpdateId
-						$controlResult.VerificationResult=[VerificationResult]::Failed;
-						$controlResult.AddMessage("Details of missing OS patches for Virtual Machine [$($this.ResourceContext.ResourceName)]:", $missingUpdates);
-					}
-					else
-					{
-						$controlResult.AddMessage("Unable to validate missing patch status.Please Verify");
-					}						
-				}
-				catch
-				{
-					$this.PublishException($_)
-				}
-			}
+			$controlResult.AddMessage([VerificationResult]::Manual, "We are not able to check Security Center status right now. Please validate manually.");
 		}
-		if($isVerify)
-		{
-			$controlResult.VerificationResult=[VerificationResult]::Verify;
-			$controlResult.AddMessage("Details of missing patches can be obtained from the following workspace");
-			$controlResult.AddMessage("Workspace : ",$workspaceId);
-			$controlResult.AddMessage("The following query can be used to obtain patch details:");
-			$controlResult.AddMessage("Query : ",$queryforPatchDetails);
-		}
-		
 	  return $controlResult;
 	}
 
@@ -684,72 +691,80 @@ class VirtualMachine: SVTBase
 		$isVerfiy= $false;
 		$baselineIds = @();
 		$baselineIds += $this.VMControlSettings.BaselineIds
-		$ASCSettingsforVM=$this.ASCSettings;
-		$VMSecurityStatus=$ASCSettingsforVM.DetailedStatus;
-
-		# workspace associated by ASC to send logs for this VM
-		$workspaceId=$VMSecurityStatus.Workspace;
 		$queryforFailingBaseline=[string]::Format($this.VMControlSettings.QueryforBaselineRule,($this.ResourceContext.ResourceId).ToLower());
 		$ASCApprovedStatuses=$this.VMControlSettings.ASCApprovedBaselineStatuses
+		# Get ASC Settings for the VM
+		$ASCSettingsforVM=$this.ASCSettings;
 
-		if($null-ne $VMSecurityStatus.Monitored -and $VMSecurityStatus.Monitored -in  $ASCApprovedStatuses)
+		if($null -ne $ASCSettingsforVM)
 		{
-			$controlResult.VerificationResult = [VerificationResult]::Passed
-		}
-		else 
-		{
-			$isVerfiy= $true;
-			if(-not([string]::IsNullOrEmpty($workspaceId)))
-			{
-				try
-				{
-					$result = [OMSHelper]::QueryStatusfromWorkspace($workspaceId,$queryforFailingBaseline);
-					if($null -ne $result -and ($result.Values | Measure-Object).Count -gt 0)
+			$VMSecurityStatus=$ASCSettingsforVM.DetailedStatus;
+			# workspace associated by ASC to send logs for this VM
+			$workspaceId=$VMSecurityStatus.Workspace;
+
+			if($null-ne $VMSecurityStatus.Monitored -and $VMSecurityStatus.Monitored -in  $ASCApprovedStatuses)
+			  {
+					$controlResult.VerificationResult = [VerificationResult]::Passed
+				}
+			else 
+			  {
+					$isVerfiy= $true;
+					if(-not([string]::IsNullOrEmpty($workspaceId)))
 					{
-						$vmobject = $result.Values;
-						$failedRules=$vmobject|Select-Object -Property CceId,Description	
-										
-						if($baselineIds.Count -gt 0)
+						try
 						{
-							$missingBaselines = @();
-							$foundMissingBaseline = $false;
-							$failedBaseline = $vmobject|Where-Object { -not [string]::IsNullOrWhiteSpace($_.CceId) }
-							$failedBaseline|ForEach-Object{
-								$baselineId=$_;
-								if($baselineId.CceId -in $baselineIds)
-								{										
-									$foundMissingBaseline = $true;
-									$missingBaselines += $baselineId;
+							$result = [OMSHelper]::QueryStatusfromWorkspace($workspaceId,$queryforFailingBaseline);
+							if($null -ne $result -and ($result.Values | Measure-Object).Count -gt 0)
+							{
+								$vmobject = $result.Values;
+								$failedRules=$vmobject|Select-Object -Property CceId,Description	
+										
+								if($baselineIds.Count -gt 0)
+								{
+									$missingBaselines = @();
+									$foundMissingBaseline = $false;
+									$failedBaseline = $vmobject|Where-Object { -not [string]::IsNullOrWhiteSpace($_.CceId) }
+									$failedBaseline|ForEach-Object{
+										$baselineId=$_;
+										if($baselineId.CceId -in $baselineIds)
+										{										
+											$foundMissingBaseline = $true;
+											$missingBaselines += $baselineId;
+										}
+									}
+																		
+									if($foundMissingBaseline)
+									{
+										$isVerfiy= $false;
+										$controlResult.VerificationResult = [VerificationResult]::Failed
+										$failedRules=$missingBaselines|Select-Object -Property Cceid,Description
+										$controlResult.AddMessage("Details of failing Security Center baseline rules for Virtual Machine [$($this.ResourceContext.ResourceName)]:",$failedRules );
+									}
+									else
+									{
+										$isVerfiy= $false;
+										$controlResult.VerificationResult = [VerificationResult]::Passed
+									}
 								}
 							}
-																		
-							if($foundMissingBaseline)
-							{
-								$isVerfiy= $false;
-								$controlResult.VerificationResult = [VerificationResult]::Failed
-								$failedRules=$missingBaselines|Select-Object -Property Cceid,Description
-								$controlResult.AddMessage("Details of failing Security Center baseline rules for Virtual Machine [$($this.ResourceContext.ResourceName)]:",$failedRules );
-							}
-							else
-							{
-								$isVerfiy= $false;
-								$controlResult.VerificationResult = [VerificationResult]::Passed
-							}
+						}						
+						catch
+						{
+							$this.PublishException($_)
 						}
 					}
-				}						
-				catch
-				{
-					$this.PublishException($_)
 				}
-			}
+		 if($isVerfiy)
+			{
+					$controlResult.VerificationResult = [VerificationResult]::Verify
+					$controlResult.AddMessage("Unable to validate baseline status from workspace.Please verify.");
+					$controlResult.AddMessage("Details of failing baseline rules can be obtained from OMS workspace :" ,$workspaceId);
+					$controlResult.AddMessage("The following query can be used to obtain failing baseline rules :  ",$queryforFailingBaseline);
+				}
 		}
-		if($isVerfiy)
+		else
 		{
-			$controlResult.VerificationResult = [VerificationResult]::Verify
-			$controlResult.AddMessage("Unable to validate baseline status from workspace.Please verify.");
-			$controlResult.AddMessage("Details of failing baseline rules can be obtained from OMS workspace :" ,$workspaceId);
-			$controlResult.AddMessage("The following query can be used to obtain failing baseline rules :  ",$queryforFailingBaseline);
+			$controlResult.AddMessage([VerificationResult]::Manual, "We are not able to check Security Center status right now. Please validate manually.");
 		}
 		return $controlResult;
 	}

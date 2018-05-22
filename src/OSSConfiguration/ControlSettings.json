@@ -43,15 +43,7 @@
             "ResourceType": "Storage",
             "ControlIds": [
                "Azure_Storage_AuthN_Dont_Allow_Anonymous",
-               "Azure_Storage_DP_Encrypt_At_Rest_Blob",
-               "Azure_Storage_DP_Encrypt_At_Rest_File",
                "Azure_Storage_DP_Encrypt_In_Transit"
-            ]
-         },
-         {
-            "ResourceType": "VirtualMachine",
-            "ControlIds": [
-               "Azure_VirtualMachine_SI_Missing_OS_Patches"
             ]
          }
       ],

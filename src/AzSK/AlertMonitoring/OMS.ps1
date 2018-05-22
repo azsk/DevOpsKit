@@ -141,6 +141,8 @@ function Install-AzSKOMSSolution
 		Provide the custom name for your DevOps Kit security view.
 	.PARAMETER ValidateOnly
 		Provide this debug switch to validate the deployment. It is a predeployment check which validates all the provided params.
+	.PARAMETER DoNotOpenOutputFolder
+		Switch to specify whether to open output folder.
 	.EXAMPLE
     
 	.NOTES
@@ -172,7 +174,11 @@ function Install-AzSKOMSSolution
                 		
 		[switch]
 		[Parameter(Mandatory = $False, HelpMessage="Provide this debug switch to validate the deployment. It is a predeployment check which validates all the provided params.")]
-        $ValidateOnly
+		$ValidateOnly,
+		
+		[switch]
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
+		$DoNotOpenOutputFolder
     )
 	Begin
 	{

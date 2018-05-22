@@ -18,8 +18,7 @@ class UsageTelemetry: ListenerBase {
     }
 
     [void] RegisterEvents() {
-        $this.UnregisterEvents();
-
+        $this.UnregisterEvents();		
         $this.RegisterEvent([AzSKRootEvent]::GenerateRunIdentifier, {
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
@@ -34,8 +33,7 @@ class UsageTelemetry: ListenerBase {
         });
 
 		$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
-			$azskSettings = [ConfigurationManager]::GetAzSKSettings();
-			if($azskSettings.UsageTelemetryLevel -ne "Anonymous") { return; }
+			if(-not $this.IsAnonymousTelemetryActive) { return; }
 			$currentInstance = [UsageTelemetry]::GetInstance();
 			try
 			{
@@ -58,10 +56,12 @@ class UsageTelemetry: ListenerBase {
 		});
 
 		$this.RegisterEvent([AzSKGenericEvent]::Exception, {
+			if(-not $this.IsAnonymousTelemetryActive) { return; }
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
-				[System.Management.Automation.ErrorRecord] $er = ($Event.SourceArgs | Select-Object -First 1)
+				[System.Management.Automation.ErrorRecord] $er = ($Event.SourceArgs | Select-Object -First 1)	
+
 				[UsageTelemetry]::PushException($currentInstance, @{}, @{}, $er);
             }
             catch
@@ -72,10 +72,11 @@ class UsageTelemetry: ListenerBase {
         });
 
 		$this.RegisterEvent([AzSKRootEvent]::CommandError, {
+			if(-not $this.IsAnonymousTelemetryActive) { return; }
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
-				[System.Management.Automation.ErrorRecord] $er = $Event.SourceArgs.ExceptionMessage
+				[System.Management.Automation.ErrorRecord] $er = [RemoteReportHelper]::Mask($Event.SourceArgs.ExceptionMessage)
 				[UsageTelemetry]::PushException($currentInstance, @{}, @{}, $er);
             }
             catch
@@ -86,10 +87,11 @@ class UsageTelemetry: ListenerBase {
         });
 
 		$this.RegisterEvent([SVTEvent]::CommandError, {
+			if(-not $this.IsAnonymousTelemetryActive) { return; }
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
-				[System.Management.Automation.ErrorRecord] $er = $Event.SourceArgs.ExceptionMessage
+				[System.Management.Automation.ErrorRecord] $er = [RemoteReportHelper]::Mask($Event.SourceArgs.ExceptionMessage)
 				[UsageTelemetry]::PushException($currentInstance, @{}, @{}, $er);
             }
             catch
@@ -100,10 +102,11 @@ class UsageTelemetry: ListenerBase {
         });
 
 		$this.RegisterEvent([SVTEvent]::EvaluationError, {
+			if(-not $this.IsAnonymousTelemetryActive) { return; }
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
-				[System.Management.Automation.ErrorRecord] $er = $Event.SourceArgs.ExceptionMessage
+				[System.Management.Automation.ErrorRecord] $er = [RemoteReportHelper]::Mask($Event.SourceArgs.ExceptionMessage)
 				[UsageTelemetry]::PushException($currentInstance, @{}, @{}, $er);
             }
             catch
@@ -114,10 +117,11 @@ class UsageTelemetry: ListenerBase {
         });
 
 		$this.RegisterEvent([SVTEvent]::ControlError, {
+			if(-not $this.IsAnonymousTelemetryActive) { return; }
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
-				[System.Management.Automation.ErrorRecord] $er = $Event.SourceArgs.ExceptionMessage
+				[System.Management.Automation.ErrorRecord] $er = [RemoteReportHelper]::Mask($Event.SourceArgs.ExceptionMessage)
 				[UsageTelemetry]::PushException($currentInstance, @{}, @{}, $er);
             }
             catch
@@ -128,6 +132,7 @@ class UsageTelemetry: ListenerBase {
         });
 
 		$this.RegisterEvent([AzSKRootEvent]::PolicyMigrationCommandStarted, {
+			if(-not $this.IsAnonymousTelemetryActive) { return; }
             $currentInstance = [UsageTelemetry]::GetInstance();
            	try{
 			$Properties = @{			
@@ -152,6 +157,7 @@ class UsageTelemetry: ListenerBase {
         });
 
 		$this.RegisterEvent([AzSKRootEvent]::PolicyMigrationCommandCompleted, {
+			if(-not $this.IsAnonymousTelemetryActive) { return; }
             $currentInstance = [UsageTelemetry]::GetInstance();
            	try{
 			$Properties = @{			
@@ -173,6 +179,16 @@ class UsageTelemetry: ListenerBase {
 		}
         });
     }
+
+	[bool] IsAnonymousTelemetryActive()
+	{
+		$azskSettings = [ConfigurationManager]::GetAzSKSettings();
+		if($azskSettings.UsageTelemetryLevel -eq "anonymous") { return true; }
+		else
+		{
+			return false;
+		}
+	}
 
 	static [void] PushSubscriptionScanResults(
 		[UsageTelemetry] $Publisher, `
@@ -344,7 +360,7 @@ class UsageTelemetry: ListenerBase {
 		try{
 			[UsageTelemetry]::SetCommonProperties($Publisher, $Properties);
 			$ex = [Microsoft.ApplicationInsights.DataContracts.ExceptionTelemetry]::new()
-			$ex.Exception = $ErrorRecord.Exception
+			$ex.Exception = [System.Exception]::new( [RemoteReportHelper]::Mask($ErrorRecord.Exception.ToString()))
 			try{
 				$ex.Properties.Add("ScriptStackTrace", [UsageTelemetry]::AnonScriptStackTrace($ErrorRecord.ScriptStackTrace))
 			}

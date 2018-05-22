@@ -145,7 +145,7 @@ class PolicySetup: CommandBase
 					$localPolicyFolderPath += "\";
 				}
 
-				$localPolicyFolderPath += $prefix + "-Policy\";
+				#$localPolicyFolderPath += $prefix + "-Policy\";
 
 				if (-not (Test-Path $localPolicyFolderPath))
 				{
@@ -215,6 +215,7 @@ class PolicySetup: CommandBase
 				$azskOverride.UpdatePropertyValue("CASetupRunbookURL",$this.CASetupRunbookURL)
 			}
 			$azskOverride.UpdatePropertyValue("PolicyOrgName",$this.OrgFullName)
+			$azskOverride.UpdatePropertyValue("AzSKConfigURL",$this.AzSKConfigURL)
 			$azskOverride.WriteToFolder($this.ConfigFolderPath);
 		}
 		elseif($this.IsMigrationOn)
@@ -242,6 +243,7 @@ class PolicySetup: CommandBase
 				$azskOverride.UpdatePropertyValue("CASetupRunbookURL",$this.CASetupRunbookURL)
 			}
 			$azskOverride.UpdatePropertyValue("PolicyOrgName",$this.OrgFullName)
+			$azskOverride.UpdatePropertyValue("AzSKConfigURL",$this.AzSKConfigURL)
 			$azskOverride.WriteToFolder($this.ConfigFolderPath);
 		}
 
@@ -334,7 +336,7 @@ class PolicySetup: CommandBase
 			}
 
 			#Upload AzSKConfig with version details 
-			if((Get-ChildItem $this.RunbookFolderPath -Recurse -Force | Where-Object { $_.Name -eq "AzSKConfig.json" } | Measure-Object).Count -eq 0)
+			if((Get-ChildItem $this.RunbookFolderPath -Recurse -Force | Where-Object { $_.Name -eq "AzSK.Pre.json" } | Measure-Object).Count -eq 0)
 			{			
 				#Get AzSK Module Version				
 				$moduleVersion = "0.0.0"
@@ -351,7 +353,7 @@ class PolicySetup: CommandBase
 					}
 				}
 				$azskConfig= @{ "CurrentVersionForOrg"= $moduleVersion};
-				$azskConfig | ConvertTo-Json | Out-File "$($this.RunbookFolderPath)\AzSKConfig.json" -Force
+				$azskConfig | ConvertTo-Json | Out-File "$($this.RunbookFolderPath)\AzSK.Pre.json" -Force
 			}
 
 			$allCAFiles = @();
@@ -381,7 +383,7 @@ class PolicySetup: CommandBase
 		if($container -and $container.CloudBlobContainer)
 		{
 			$this.PolicyUrl = $container.CloudBlobContainer.Uri.AbsoluteUri + "/```$(```$Version)/```$(```$FileName)" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
-			$this.AzSKConfigURL = $container.CloudBlobContainer.Uri.AbsoluteUri + "/$($this.RunbookBaseVersion)/AzSKConfig.json" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
+			$this.AzSKConfigURL = $container.CloudBlobContainer.Uri.AbsoluteUri + "/$($this.RunbookBaseVersion)/AzSK.Pre.json" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
 		}
 
 		$this.ModifyInstaller($moduleName);
@@ -405,6 +407,7 @@ class PolicySetup: CommandBase
 			$this.PublishCustomMessage(" `r`n.No configuration files found under folder [$($this.ConfigFolderPath)]", [MessageType]::Warning);
 		}
 
+		$this.CreateMonitoringDashboard()
 		$this.PublishCustomMessage(" `r`nThe setup has been completed and policies have been copied to [$($this.FolderPath)].`r`nRun the command below to install Organization specific version.`r`n$($this.IWRCommand)", [MessageType]::Update);
 		$this.PublishCustomMessage(" `r`nNote: This is a basic setup and uses a public access blob for storing your org's installer. Once you have richer org policies, consider using a location/end-point protected by your tenant authentication.", [MessageType]::Warning);
 		return @();
@@ -433,6 +436,39 @@ class PolicySetup: CommandBase
 			Invoke-Expression $mgrationScript
 		}
 		$this.PublishAzSKRootEvent([AzSKRootEvent]::PolicyMigrationCommandCompleted, $this.OrgFullName);
+	}
+
+	[void] CreateMonitoringDashboard()
+	{
+		#Validate if monitoring dashboard is already created
+		$dashboardResource = Get-AzureRmResource -ResourceType "Microsoft.Portal/dashboards" -ResourceGroupName $($this.ResourceGroupName) -ErrorAction SilentlyContinue
+		if(($dashboardResource | Measure-Object).Count -eq 0 )
+		{
+			$this.PublishCustomMessage("Creating DevOps Kit ops monitoring dashboard in the policy host subscription...");
+			
+			#Store dashboard template to temp location
+			$MonitoringDashboardTemplatePath = [Constants]::AzSKTempFolderPath + "\MonitoringDashboard";
+			if(-not (Test-Path -Path $MonitoringDashboardTemplatePath))
+			{
+				mkdir -Path $MonitoringDashboardTemplatePath -Force | Out-Null
+			}						
+			$MonitoringDashboardTemplateObj = [ConfigurationManager]::LoadServerConfigFile("MonitoringDashboard.json"); 				
+			$MonitoringDashboardTemplatePath = $MonitoringDashboardTemplatePath+"\MonitoringDashboard.json";
+			$MonitoringDashboardTemplateObj | ConvertTo-Json -Depth 100 | Out-File $MonitoringDashboardTemplatePath 
+
+			#Create arm template parameter specific to the org
+			$parameters = New-Object -TypeName Hashtable
+			$parameters.Add("SubscriptionId", $this.SubscriptionContext.SubscriptionId)
+			$parameters.Add("ResourceGroups",$this.ResourceGroupName)
+			$parameters.Add("AIName",$this.AppInsightName)		
+			$parameters.Add("DashboardTitle","DevOps Kit Monitoring Dashboard [$($this.OrgFullName)]")
+			New-AzureRmResourceGroupDeployment -Name "MonitoringDashboard" -TemplateFile $MonitoringDashboardTemplatePath   -ResourceGroupName $($this.ResourceGroupName) -TemplateParameterObject $parameters   
+			$this.PublishCustomMessage("Successfully created dashboard. You can access it through this link: ", [MessageType]::Update);
+			$rmContext = [Helpers]::GetCurrentRMContext();
+			$tenantId = $rmContext.Tenant.Id
+			$this.PublishCustomMessage("https://ms.portal.azure.com/#$($tenantId)/dashboard/arm/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($this.ResourceGroupName)/providers/microsoft.portal/dashboards/devopskitmonitoring",[MessageType]::Update)
+		}
+		
 	}
 }
 

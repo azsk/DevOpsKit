@@ -120,7 +120,38 @@ class AIOrgTelemetry: ListenerBase {
 				# Handling error while registration of ControlError event at SVT.
 				# No need to break execution
             }
-        });
+		});
+		
+		$this.RegisterEvent([SVTEvent]::CommandStarted, {
+			$currentInstance = [RemoteReportsListener]::GetInstance();
+		   try
+		   {
+			   $scanSource = [RemoteReportHelper]::GetScanSource();
+			   if($scanSource -ne [ScanSource]::Runbook) { return; }
+			   $resources= Find-AzureRMResource
+			   $telemetryEvents = [System.Collections.ArrayList]::new()
+					   foreach($res in $resources){
+						   $resourceProperties = @{
+						   "Name" = $res.Name;
+						   "ResourceId" = $res.ResourceId;
+						   "ResourceName" = $res.ResourceName;
+						   "ResourceType" = $res.ResourceType;
+						   "ResourceGroupName" = $res.ResourceGroupName;
+						   "Location" = $res.Location;
+						   "SubscriptionId" = $res.SubscriptionId
+					   }
+					   $telemetryEvent = "" | Select-Object Name, Properties, Metrics
+					   $telemetryEvent.Name = "Resource Inventory"
+					   $telemetryEvent.Properties = $resourceProperties
+					   $telemetryEvents.Add($telemetryEvent) | Out-Null			   
+					   }
+				[AIOrgTelemetryHelper]::TrackEvents($telemetryEvents);
+
+		   }
+		   catch{
+			$currentInstance.PublishException($_);
+		   }
+		});
     }
 
 	hidden [void] PushSubscriptionScanResults([SVTEventContext[]] $SVTEventContexts)

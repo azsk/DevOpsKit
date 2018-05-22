@@ -70,7 +70,7 @@
                     "Label": "Security Monitoring using the AzSK",
                     "Link": {
                       "Label": "More info",
-                      "Url": " https://github.com/azsdk/azsdk-docs/tree/master/05-Alerting-and-Monitoring "
+                      "Url": " https://github.com/azsk/DevOpsKit-docs/tree/master/05-Alerting-and-Monitoring "
                     }
                   },
                   "List": [

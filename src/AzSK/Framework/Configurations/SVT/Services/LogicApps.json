@@ -1,7 +1,7 @@
 {
   "FeatureName": "LogicApps",
   "Reference": "aka.ms/azsktcp/logicapps",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
   "Controls": [
     {
       "ControlID": "Azure_LogicApps_Deploy_Dont_Use_Apps_In_Same_RG_Unless_Trust",

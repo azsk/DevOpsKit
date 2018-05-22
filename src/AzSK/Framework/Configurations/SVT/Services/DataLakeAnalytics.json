@@ -1,7 +1,7 @@
 {
   "FeatureName": "DataLakeAnalytics",
   "Reference": "aka.ms/azsktcp/datalakeanalytics",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
   "Controls": [
     {
       "ControlID": "Azure_DataLakeAnalytics_AuthZ_Assign_Required_RBAC_To_Creator",
