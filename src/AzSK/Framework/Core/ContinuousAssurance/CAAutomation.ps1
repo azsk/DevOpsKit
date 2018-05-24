@@ -424,7 +424,7 @@ class CCAutomation: CommandBase
 				Set-AzureStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
 			}
 
-			#endregion		
+					
 
 
 			# Added Security centre provider registration to avoid error while running SSCore command in CA
