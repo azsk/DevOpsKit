@@ -10,8 +10,8 @@ class CCAutomation: CommandBase
 	hidden [string] $ScheduleName = "CA_Scan_Schedule"
 	hidden [Variable[]] $Variables = @()
 	hidden [UserConfig] $UserConfig 
-	hidden [string] $AzSKCCRGName = "AzSKCCRG"
-	hidden [string] $deprecatedAccountName = "AzSKCCAutomationAccount"
+	#hidden [string] $AzSKCCRGName = "AzSKCCRG"
+	#hidden [string] $deprecatedAccountName = "AzSKCCAutomationAccount"
 	hidden [PSObject] $OutputObject = @{}
 	hidden [SelfSignedCertificate] $certificateDetail = [SelfSignedCertificate]::new()
 	hidden [Hashtable] $reportStorageTags = @{}
@@ -33,6 +33,7 @@ class CCAutomation: CommandBase
 	hidden [string] $AzSKCATempFolderPath = ($env:temp + "\AzSKTemp\")
 	[bool] $SkipTargetSubscriptionConfig = $false;
 	[bool] $IsCentralScanModeOn = $false;
+	[bool] $IsMultiCAModeOn = $false;
 	[bool] $IsCustomAADAppName = $false;
 	[bool] $ExhaustiveCheck = $false;
 	[CAReportsLocation] $LoggingOption = [CAReportsLocation]::CentralSub;
@@ -84,7 +85,8 @@ class CCAutomation: CommandBase
 		}
 		if($this.AutomationAccount.ResourceGroup -ne $this.AutomationAccount.CoreResourceGroup)
 		{
-			$this.CATargetSubsBlobName = "$($this.AutomationAccount.ResourceGroup)\$([Constants]::CATargetSubsBlobName)";
+			$this.IsMultiCAModeOn = $true
+            $this.CATargetSubsBlobName = "$($this.AutomationAccount.ResourceGroup)\$([Constants]::CATargetSubsBlobName)";
 		}
 		$this.UserConfig = [UserConfig]@{			
 			ResourceGroupNames = $ResourceGroupNames
@@ -136,10 +138,11 @@ class CCAutomation: CommandBase
 		}
 		if($this.AutomationAccount.ResourceGroup -ne $this.AutomationAccount.CoreResourceGroup)
 		{
-			$this.CATargetSubsBlobName = "$($this.AutomationAccount.ResourceGroup)\$([Constants]::CATargetSubsBlobName)";
+			$this.IsMultiCAModeOn = $true
+            $this.CATargetSubsBlobName = "$($this.AutomationAccount.ResourceGroup)\$([Constants]::CATargetSubsBlobName)";
 		}
 		$this.UserConfig = [UserConfig]::new();
-		$this.DoNotOpenOutputFolder = $true;
+		#$this.DoNotOpenOutputFolder = $true;
 
 		$caAADAppName = $this.InvocationContext.BoundParameters["AzureADAppName"];
 
@@ -178,7 +181,7 @@ class CCAutomation: CommandBase
 
 	hidden [void] RecoverCASPN()
 	{
-		$automationAcc = Get-AzureRmAutomationAccount -ResourceGroupName $($this.AutomationAccount.ResourceGroup) -Name $($this.AutomationAccount.Name) -ErrorAction SilentlyContinue
+		$automationAcc = $this.GetCAResourceObject()
 		if($null -ne $automationAcc)
 		{
 			$runAsConnection = $this.GetRunAsConnection()
@@ -195,7 +198,7 @@ class CCAutomation: CommandBase
 			{
 				$this.SetServicePrincipalRGAccess($existingAppId)
 			}
-			if($this.AutomationAccount.ResourceGroup -ne $this.AutomationAccount.CoreResourceGroup)
+			if($this.IsMultiCAModeOn)
 			{
 				$haveAARGAccess = $this.CheckServicePrincipalRGAccess($existingAppId, $this.AutomationAccount.ResourceGroup, "Contributor")
 				if(!$haveAARGAccess)
@@ -211,37 +214,34 @@ class CCAutomation: CommandBase
 		[MessageData[]] $messages = @();
 		try
 		{
-			#region :create new resource group/check if RG exists# 
+			#region :validation/RG creation
 			
-			$this.UserConfig.StorageAccountRG = $this.AutomationAccount.CoreResourceGroup
-
-
-			if((Get-AzureRmResourceGroup -Name $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0)
+			if(!$this.IsCAInstallationValid())
 			{
-				$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nStarted setting up Automation Account for Continuous Assurance (CA)`r`n"+[Constants]::DoubleDashLine);
-				[Helpers]::NewAzSKResourceGroup($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
+				$this.cleanupFlag = $false
+				#ask user run update command
+				throw ([SuppressedException]::new(("One or more automation account found in resource group [$($this.AutomationAccount.ResourceGroup)]	." + `
+				"`r`nIf you want to update the existing account, please run command: '"+$this.updateCommandName+"'."), [SuppressedExceptionType]::InvalidOperation))
 			}
 			else
 			{
-				#Check if automation account exists in RG and code to be updated after 06/30/2017 
-				$existingAccount = Find-AzureRMresource -ResourceGroupName $this.AutomationAccount.ResourceGroup -ResourceType "Microsoft.Automation/automationAccounts" | where-object{$_.ResourceName -in ($this.AutomationAccount.Name, $this.deprecatedAccountName)} 
-				if(($existingAccount|Measure-Object).Count -gt 0)
+			    $this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nStarted setting up Automation Account for Continuous Assurance (CA)`r`n"+[Constants]::DoubleDashLine);
+                
+                #create AzSKRG resource group
+				$this.CreateCoreResourceGroupIfNotExists()	
+				
+				#create RG given by user
+				if($this.IsMultiCAModeOn)
 				{
-					$existingAccount | ForEach-Object{
-						$tags = $_.Tags
-						$this.cleanupFlag = $false
-						#need to run update command
-						throw ([SuppressedException]::new(("Automation Account: [$($this.AutomationAccount.Name)] for Continuous Assurance already exists in this subscription.`r`nIf you want to update the existing account, please run command: '"+$this.updateCommandName+"'."), [SuppressedExceptionType]::InvalidOperation))
-					}
+					$this.CreateCustomResourceGroupIfNotExists()
+                    #[Helpers]::NewAzSKResourceGroup($this.AutomationAccount.ResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
 				}
-				else
-				{
-					$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nStarted setting up Automation Account for Continuous Assurance (CA)`r`n"+[Constants]::DoubleDashLine);
-					$this.OutputObject.ResourceGroup = $null
-				}
-			}		
 
-			if((Get-AzureRmResourceGroup -Name $this.AutomationAccount.ResourceGroup -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0 -and $this.AutomationAccount.CoreResourceGroup -ne $this.AutomationAccount.ResourceGroup)
+			}
+			
+			$this.UserConfig.StorageAccountRG = $this.AutomationAccount.CoreResourceGroup
+
+			if((Get-AzureRmResourceGroup -Name $this.AutomationAccount.ResourceGroup -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0 -and $this.IsMultiCAModeOn)
 			{
 				[Helpers]::NewAzSKResourceGroup($this.AutomationAccount.ResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
 			}
@@ -343,22 +343,10 @@ class CCAutomation: CommandBase
 							#endregion
 
 
-							$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
+							#$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
 							#CAAADApplicaitonID is being set in the above call while setting the RunAsConnection
-							$haveSubscriptionAccess = $this.CheckServicePrincipalSubscriptionAccess($this.CAAADApplicationID)
-							$haveRGAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID)
-							#assign SP permissions
-							if(!$haveSubscriptionAccess)
-							{
-								$this.SetServicePrincipalSubscriptionAccess($this.CAAADApplicationID)
-							} 
-							if(!$haveRGAccess)
-							{
-								$this.SetServicePrincipalRGAccess($this.CAAADApplicationID)
-							}							
-
-							#region: Create/reuse existing storage account (Added this before creating variables since it's value is used in it)
-							$this.UserConfig.StorageAccountRG = $this.AutomationAccount.CoreResourceGroup
+                            
+							$this.SetCASPNPermissions($this.CAAADApplicationID)					
 						
 							$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 							if(($existingStorage | Measure-Object).Count -gt 0)
@@ -470,7 +458,7 @@ class CCAutomation: CommandBase
 				$this.PublishCustomMessage("Error occurred. Rolling back the changes.",[MessageType]::error)
 				if(![string]::IsNullOrWhiteSpace($this.AutomationAccount.ResourceGroup))
 				{
-					$account = Get-AzureRMAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -ErrorAction silentlycontinue
+					$account = $this.GetCAResourceObject()
 					if(($account|Measure-Object).Count -gt 0)
 					{
 						$account | Remove-AzureRmAutomationAccount -Force -ErrorAction SilentlyContinue
@@ -492,20 +480,20 @@ class CCAutomation: CommandBase
 		return $messages;
 	}	
 
-	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$RenewCertificate,$FixModules)
+	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$CreateDefaultRuntimeAccount,$RenewCertificate,$FixModules)
 	{
 		[MessageData[]] $messages = @();
 		try
 		{
-			#set default automation account properties
-
 			#region :Check if automation account is compatible for update
-			$existingAccount = Find-AzureRMresource -ResourceGroupName $this.AutomationAccount.ResourceGroup -ResourceType "Microsoft.Automation/automationAccounts" | where-object{$_.ResourceName -in ($this.AutomationAccount.Name,$this.deprecatedAccountName)} 
+			$existingAccount = $this.GetCAResourceObject()
 			$automationTags = @()
-			if(($existingAccount|Measure-Object).Count -gt 0)
+			if(($existingAccount|Measure-Object).Count -eq 0)
 			{
+				throw ([SuppressedException]::new(("Continuous Assurance(CA) is not configured in this subscription. Please install using '"+ $this.installCommandName +"' command with required parameters."), [SuppressedExceptionType]::InvalidOperation))
+				
 				#Check if deprecated version found (old accounts don't have tags)
-				$existingAccount | ForEach-Object{
+				<#$existingAccount | ForEach-Object{
 					$automationTags = $_.Tags
 					if($_.ResourceName-eq $this.deprecatedAccountName -or `
 					($automationTags.Count -gt 0 -and $automationTags.Contains("AzSKVersion") -and `
@@ -513,11 +501,11 @@ class CCAutomation: CommandBase
 					{
 						throw ([SuppressedException]::new(("Deprecated and incompatible version of Continuous Assurance Automation Account: [$($_.ResourceName)] found. Please remove this account using '"+$this.removeCommandName+"' command and install latest version using '"+$this.installCommandName+"' command with required parameters."), [SuppressedExceptionType]::InvalidOperation))
 					} 
-				}
+				}#>
 			}
 			else
 			{
-				throw ([SuppressedException]::new(("Continuous Assurance(CA) is not configured in this subscription. Please install using '"+ $this.installCommandName +"' command with required parameters."), [SuppressedExceptionType]::InvalidOperation))
+				$automationTags = $existingAccount.Tags
 			}
 
 			$this.AutomationAccount.Location = $existingAccount.Location
@@ -550,6 +538,10 @@ class CCAutomation: CommandBase
 			{
 				$this.NewCCAzureRunAsAccount()
 			}
+            elseif($CreateDefaultRuntimeAccount)
+            {
+                $this.NewCCAzureRunAsAccount($CreateDefaultRuntimeAccount)
+            }
 			else
 			{
 				if($RenewCertificate)
@@ -561,7 +553,7 @@ class CCAutomation: CommandBase
 						$this.PublishCustomMessage("Trying to renew certificate in the CA Automation Account...")
 						try
 						{
-							$this.UpdateCCAzureRunAsAccount("")
+							$this.UpdateCCAzureRunAsAccount()
 							$this.PublishCustomMessage("Successfully renewed certificate (new expiry date: $((Get-Date).AddMonths(6).AddDays(1).ToString("yyyy-MM-dd"))) in the CA Automation Account.")
 							$this.isExistingADApp = $true
 						}
@@ -637,7 +629,7 @@ class CCAutomation: CommandBase
 							{
 								$this.SetServicePrincipalRGAccess($existingAppId)
 							}
-							if($this.AutomationAccount.ResourceGroup -ne $this.AutomationAccount.CoreResourceGroup)
+							if($this.IsMultiCAModeOn)
 							{
 								$haveAARGAccess = $this.CheckServicePrincipalRGAccess($existingAppId, $this.AutomationAccount.ResourceGroup, "Contributor")
 								if(!$haveAARGAccess)
@@ -910,20 +902,17 @@ class CCAutomation: CommandBase
 								#endregion
 
 								#region: recheck permissions
-								if($FixRuntimeAccount)
+								$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
+								$haveSubscriptionAccess = $this.CheckServicePrincipalSubscriptionAccess($this.CAAADApplicationID)
+								$haveRGAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID)
+								#assign SP permissions
+								if(!$haveSubscriptionAccess)
 								{
-									$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
-									$haveSubscriptionAccess = $this.CheckServicePrincipalSubscriptionAccess($this.CAAADApplicationID)
-									$haveRGAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID)
-									#assign SP permissions
-									if(!$haveSubscriptionAccess)
-									{
-										$this.SetServicePrincipalSubscriptionAccess($this.CAAADApplicationID)
-									} 
-									if(!$haveRGAccess)
-									{
-										$this.SetServicePrincipalRGAccess($this.CAAADApplicationID)
-									}
+									$this.SetServicePrincipalSubscriptionAccess($this.CAAADApplicationID)
+								} 
+								if(!$haveRGAccess)
+								{
+									$this.SetServicePrincipalRGAccess($this.CAAADApplicationID)
 								}
 								#endregion														
 								#region: Create/reuse existing storage account (Added this before creating variables since it's value is used in it)				
@@ -1084,7 +1073,7 @@ class CCAutomation: CommandBase
 		
 			#region :update CA Account tags
 		
-			$modifyTimestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
+			<#$modifyTimestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
 			if($automationTags.ContainsKey("LastModified"))
 			{
 				$automationTags["LastModified"] = $modifyTimestamp;
@@ -1092,7 +1081,7 @@ class CCAutomation: CommandBase
 			else
 			{
 				$automationTags.Add("LastModified",$modifyTimestamp)
-			}
+			}#>
 			if($automationTags.ContainsKey("AzSKVersion"))
 			{
 				$automationTags["AzSKVersion"] = $this.GetCurrentModuleVersion();
@@ -1140,7 +1129,7 @@ class CCAutomation: CommandBase
 		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Presence of CA Automation Account.",  [MessageType]::Info);
 		$messages += $currentMessage;
 		$this.PublishCustomMessage($currentMessage);
-		$caAutomationAccount = Get-AzureRmAutomationAccount -Name $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup -ErrorAction SilentlyContinue
+		$caAutomationAccount = $this.GetCAResourceObject()
 		if($caAutomationAccount)
 		{
 			$caInstalledTimeInterval = ($(get-date).ToUniversalTime() - $caAutomationAccount.CreationTime.UtcDateTime).TotalMinutes
@@ -2104,7 +2093,7 @@ class CCAutomation: CommandBase
 		try
 		{
 			#region:Step 1: Check if Automation Account with name "AzSKContinuousAssurance" exists in "AzSKRG", if no then display error message and quit, if yes proceed further
-			$caAutomationAccount = Get-AzureRmAutomationAccount -Name $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup -ErrorAction SilentlyContinue
+			$caAutomationAccount = $this.GetCAResourceObject()
 			if(($caAutomationAccount | Measure-Object).Count -le 0)
 			{
 				$isHealthy = $false;
@@ -2162,7 +2151,7 @@ class CCAutomation: CommandBase
 		$runAsConnection = $null;
 				
 		#filter accounts with old/new name
-		$existingAutomationAccount = Get-AzureRMAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup -ErrorAction silentlycontinue | where-object{$_.AutomationAccountName -in ($this.AutomationAccount.Name,$this.deprecatedAccountName)} 
+		$existingAutomationAccount = $this.GetCAResourceObject()
 
 		#region: check if central scanning mode is enabled on this subscription
 		$CAScanDataBlobContent = $null;
@@ -2534,12 +2523,36 @@ class CCAutomation: CommandBase
 		return $true;		
 	}
 	
-	#region: Internal functions for install account
-	hidden [void] DeleteResourceGroup($resourceGroupName)
+	#region: Internal functions for install/update CA
+
+	hidden [PSObject] GetCAResourceObject()
 	{
-		if((Get-AzureRmResourceGroup -Name $resourceGroupName -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0)
+		$caAccount = Get-AzureRMAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -ErrorAction silentlycontinue
+		return $caAccount 
+	}
+
+	hidden [bool] IsCAInstallationValid()
+	{
+		$isValid = $true
+		$automationResources = Find-AzureRmresource -ResourceGroupNameEquals $this.AutomationAccount.ResourceGroup -ResourceType "Microsoft.Automation/automationAccounts"
+		if($null -ne $automationResources)
 		{
-			Remove-AzureRmResourceGroup -Name $resourceGroupName -Force -ErrorAction Stop | Out-Null
+			$isValid = $false
+		}
+		return $isValid
+	}
+	hidden [void] CreateCoreResourceGroupIfNotExists()
+	{
+		if((Get-AzureRmResourceGroup -Name $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0)
+		{
+			[Helpers]::NewAzSKResourceGroup($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
+		}
+	}
+    hidden [void] CreateCustomResourceGroupIfNotExists()
+	{
+		if((Get-AzureRmResourceGroup -Name $this.AutomationAccount.ResourceGroup -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0)
+		{
+			[Helpers]::NewAzSKResourceGroup($this.AutomationAccount.ResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
 		}
 	}
 	hidden [void] DeployCCAutomationAccountItems()
@@ -2773,8 +2786,14 @@ class CCAutomation: CommandBase
 			}
 			$this.Variables += @($varWebhookAuthZHeaderName, $varWebhookAuthZHeaderValue)
 		}
-		
-	
+		#UpdateToLatestVersion flag
+        <#$varUpdateToLatestFlag = [Variable]@{
+				Name = [Constants]::UpdateToLatestVersion;
+				Value = [ConfigurationManager]::GetAzSKConfigData().UpdateToLatestVersion
+				IsEncrypted = $false;
+				Description ="CA will download latest available AzSK module from PSGallery if specified value is 'True'"
+			}	#>
+
 		$this.Variables|ForEach-Object{
 
 			New-AzureRmAutomationVariable -Name $_.Name -Encrypted $_.IsEncrypted `
@@ -2786,142 +2805,212 @@ class CCAutomation: CommandBase
 		}
 		$this.OutputObject.Variables = $this.Variables | Select-Object Name,Description
 	}
-	hidden [void] NewCCAzureRunAsAccount()
+	hidden [void] NewCCAzureRunAsAccount($createDefaultRuntimeAccount)
 	{		
 		#Handle the case when user hasn't specified the AAD App name for CA.
-		if([string]::IsNullOrWhiteSpace($this.AutomationAccount.AzureADAppName))
-		{		
-			$subscriptionScope = "/subscriptions/{0}" -f $this.SubscriptionContext.SubscriptionId
-
-			$azskspnformatstring = $this.AzSKLocalSPNFormatString
-			if($this.IsCentralScanModeOn)
-			{
-				$azskspnformatstring = $this.AzSKCentralSPNFormatString				
-			}
-			$azskRoleAssignments = Get-AzureRmRoleAssignment -Scope $subscriptionScope -RoleDefinitionName Reader | Where-Object { $_.DisplayName -like "$($azskspnformatstring)*" }
-			$cnt = ($azskRoleAssignments | Measure-Object).Count
-			if($cnt -gt 0)
-			{				
-				$this.PublishCustomMessage("Configuring the runtime account for CA...")
-				$this.PublishCustomMessage("Found $cnt previously setup runtime accounts for AzSK CA. Checking if one of them can be reused...")
-				foreach($azskRoleAssignment  in $azskRoleAssignments)
-				{	
-					try
-					{
-						$this.PublishCustomMessage("Trying account: ["+ $azskRoleAssignment.DisplayName +"]")
-						$this.UpdateCCAzureRunAsAccount($azskRoleAssignment.DisplayName);
-						$this.PublishCustomMessage("Successfully configured AzSK CA Automation Account with SPN.")
-						#Returning from here as the below steps of updating automation account are already completed as part of the UpdateCCAzureRunAsAccount command.
-						#set this flag to identify whether clean up AD App is needed in case of exception 
-						$this.isExistingADApp = $true
-						return;
-					}	
-					catch
-					{
-						#left blank intentionally to continue checking next SP
-					}	
+        $azskADAppName = ""
+        $spnReused = $false
+        $appID = ""
+        try
+		{	
+            $azskspnformatstring = $this.AzSKLocalSPNFormatString
+            if($this.IsCentralScanModeOn)
+            {
+                $azskspnformatstring = $this.AzSKCentralSPNFormatString				
+            }	
+            if(![string]::IsNullOrWhiteSpace($this.AutomationAccount.AzureADAppName))
+            {
+                $azskADAppName = $this.AutomationAccount.AzureADAppName
+            }
+            elseif($createDefaultRuntimeAccount)
+            {
+                $azskADAppName = ($azskspnformatstring + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"))	
+            }
+            else
+            {
+                
+                $subscriptionScope = "/subscriptions/{0}" -f $this.SubscriptionContext.SubscriptionId
+                
+                $azskRoleAssignments = Get-AzureRmRoleAssignment -Scope $subscriptionScope -RoleDefinitionName Reader | Where-Object { $_.DisplayName -like "$($azskspnformatstring)*" }
+			    $cnt = ($azskRoleAssignments | Measure-Object).Count
+			    if($cnt -gt 0)
+			    {				
+				    $this.PublishCustomMessage("Configuring the runtime account for CA...")
+				    $this.PublishCustomMessage("Found $cnt previously setup runtime accounts for AzSK CA. Checking if one of them can be reused...")
+				    foreach($azskRoleAssignment  in $azskRoleAssignments)
+				    {	
+					    try
+					    {
+						    $this.PublishCustomMessage("Trying account: ["+ $azskRoleAssignment.DisplayName +"]")
+                            $aadApplication = Get-AzureRmADApplication -DisplayNameStartWith $azskRoleAssignment.DisplayName  | Where-Object -Property DisplayName -eq $azskRoleAssignment.DisplayName 
+		                    if($aadApplication)
+		                    {
+                               $this.SetCAAzureRunAsAccount($azskRoleAssignment.DisplayName,$aadApplication.ApplicationId)
+                            }
+                            $spnReused = $true
+                            $appID = $aadApplication.ApplicationId
+                            $this.PublishCustomMessage("You have 'Owner' permission on [$($azskRoleAssignment.DisplayName)]. Configuring CA with this SPN.")
+                            break;
+						    #set this flag to identify whether clean up AD App is needed in case of exception 
+						    #$this.isExistingADApp = $true
+					    }	
+					    catch
+					    {
+						    #left blank intentionally to continue checking next SP
+					    }	
 					
-				}
-			}
-			#Compute the new AAD CA App name. As there was no pre-configured CA AAD App on this subscription or didn't have the permission to update the existing AAD app
-			$CARunAsAccountName = ($azskspnformatstring + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"))			
-			$this.AutomationAccount.AzureADAppName = $CARunAsAccountName;
-		}		
-		
-		$pfxFilePath = $null
-		$thumbPrint = $null
-		$ADApplication = $null
-		try
-		{
-			$ADApplication = Get-AzureRmADApplication -DisplayNameStartWith $this.AutomationAccount.AzureADAppName | Where-Object -Property DisplayName -eq $this.AutomationAccount.AzureADAppName
-			if($ADApplication)
-			{
-				$this.PublishCustomMessage("Found AAD application in the directory: ["+ $this.AutomationAccount.AzureADAppName +"]")
+				    }
+			    }
+			    #Compute the new AAD CA App name. As there was no pre-configured CA AAD App on this subscription or didn't have the permission to update the existing AAD app
+                if(!$spnReused)
+                {
+                    $azskADAppName = ($azskspnformatstring + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"))	
+                }
+		    
+            }
+            if(!$spnReused)
+            {
+                $appID = $this.CreateServicePrincipalIfNotExists($azskADAppName)
+	            $this.SetCAAzureRunAsAccount($azskADAppName,$appID)
+            }
+            #assign SPN permissions
+            $this.SetCASPNPermissions($appID)
+            if($this.IsMultiCAModeOn)
+            {
+	            $haveAARGAccess = $this.CheckServicePrincipalRGAccess($appID, $this.AutomationAccount.ResourceGroup, "Contributor")
+	            if(!$haveAARGAccess)
+	            {
+		            $this.SetServicePrincipalRGAccess($appID, $this.AutomationAccount.ResourceGroup, "Contributor")
+	            }
+            }
+            $this.PublishCustomMessage("Successfully configured AzSK CA Automation Account with SPN.")
 
-				#set this flag to identify whether clean up AD App is needed in case of exception 
-				$this.isExistingADApp = $true
-			}
-			else
-			{
-				$this.PublishCustomMessage("Creating new AAD application: ["+ $this.AutomationAccount.AzureADAppName +"]. This may take a few min...")
-				
-				#create new AD App
-				$ADApplication = New-AzureRmADApplication -DisplayName $this.AutomationAccount.AzureADAppName `
-				-HomePage ("https://" + $this.AutomationAccount.AzureADAppName) `
-				-IdentifierUris ("https://" + $this.AutomationAccount.AzureADAppName) -ErrorAction Stop
-				
-				Start-Sleep -Seconds 30
-
-				#create new SP
-				$this.PublishCustomMessage("Creating new service principal (SPN) for the AAD application. This will be used as the runtime account for AzSK CA")
-				New-AzureRMADServicePrincipal -ApplicationId $ADApplication.ApplicationId -ErrorAction Stop | Out-Null   
-				
-				Start-Sleep -Seconds 30                         
-			}
-			$this.PublishCustomMessage("Generating new credential for AzSK CA SPN")
-			$selfsignedCertificate =  [ActiveDirectoryHelper]::NewSelfSignedCertificate($this.AutomationAccount.AzureADAppName,$this.certificateDetail.CertStartDate,$this.certificateDetail.CertEndDate,$this.certificateDetail.Provider)			
-			#create password
-			     
-			$secureCertPassword = [Helpers]::NewSecurePassword()
-		
-			$pfxFilePath = $env:TEMP+ "\temp.pfx"
-			Export-PfxCertificate -Cert $selfsignedCertificate -Password $secureCertPassword -FilePath $pfxFilePath | Out-Null 
-			$publicCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(,$selfsignedCertificate.GetRawCertData())
-			
-			#Authenticating AAD App service principal with newly created certificate credential  
-			[ActiveDirectoryHelper]::UpdateADAppCredential($ADApplication.ApplicationId,$publicCert,$this.certificateDetail.CredStartDate,$this.certificateDetail.CredEndDate,"False")
-
-			$this.CAAADApplicationID = $ADApplication.ApplicationId;
-			$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
-
-			$haveSubscriptionAccess = $this.CheckServicePrincipalSubscriptionAccess($ADApplication.ApplicationId)
-			$haveRGAccess = $this.CheckServicePrincipalRGAccess($ADApplication.ApplicationId)
-			#assign SP permissions
-			if(!$haveSubscriptionAccess)
-			{
-				$this.SetServicePrincipalSubscriptionAccess($ADApplication.ApplicationId)
-			} 
-			if(!$haveRGAccess)
-			{
-				$this.SetServicePrincipalRGAccess($ADApplication.ApplicationId)
-			}
-
-
-			if($this.AutomationAccount.ResourceGroup -ne $this.AutomationAccount.CoreResourceGroup)
-			{
-				$haveAARGAccess = $this.CheckServicePrincipalRGAccess($ADApplication.ApplicationId, $this.AutomationAccount.ResourceGroup, "Contributor")
-				if(!$haveAARGAccess)
-				{
-					$this.SetServicePrincipalRGAccess($ADApplication.ApplicationId, $this.AutomationAccount.ResourceGroup, "Contributor")
-				}
-			}
-
-			
-			$thumbPrint =  $publicCert.thumbPrint.ToString()
-		
-			#create certificate asset 
-
-			$this.PublishCustomMessage("Configuring AzSK CA Automation Account with SPN credential")
-			#below function call is added because this function is used in Update-CA as well
-			$this.RemoveCCAzureRunAsCertificateIfExists()
-			$newCertificateAsset = $this.NewCCCertificate($pfxFilePath,$secureCertPassword)
-			
-			# Create a Automation connection asset. This connection uses the service principal.
-			#below function call is added because this function is used in Update-CA as well
-			$this.RemoveCCAzureRunAsConnectionIfExists()
-			$newConnectionAsset = $this.NewCCConnection($ADApplication.ApplicationId,$thumbPrint)
-
-			$this.OutputObject.AzureADAppName = $this.AutomationAccount.AzureADAppName 
-			$this.OutputObject.AzureRunAsConnection = $newConnectionAsset | Select-Object Name,Description,ConnectionTypeName
 		}		
 		catch
 		{
 			$this.PublishCustomMessage("There was an error while setting up the AzSK CA SPN")
 			throw ($_)
 		}
-		finally
+	}
+    hidden [void] NewCCAzureRunAsAccount()
+    {
+       #by default createDefaultRuntimeAccount = false, reuse the SPN if found
+       $this.NewCCAzureRunAsAccount($false)
+    }
+
+	hidden [void] UpdateCCAzureRunAsAccount()
+	{
+		try
 		{
-			#cleanup pfx file 
+			#fetch existing AD App used in connection
+			$appID = ""
+			$connection = Get-AzureRmAutomationConnection -AutomationAccountName $this.AutomationAccount.Name `
+			-ResourceGroupName  $this.AutomationAccount.ResourceGroup -Name $this.connectionAssetName -ErrorAction Stop
+		
+			$appID = $connection.FieldDefinitionValues.ApplicationId
+			$azskADAppName = (Get-AzureRmADApplication -ApplicationId $connection.FieldDefinitionValues.ApplicationId -ErrorAction stop).DisplayName
+		
+			$this.CAAADApplicationID = $appID;
+		
+			$this.SetCAAzureRunAsAccount($azskADAppName,$appID)
+
+            #assign SPN permissions
+            $this.SetCASPNPermissions($appID)
+            if($this.IsMultiCAModeOn)
+            {
+	            $haveAARGAccess = $this.CheckServicePrincipalRGAccess($appID, $this.AutomationAccount.ResourceGroup, "Contributor")
+	            if(!$haveAARGAccess)
+	            {
+		            $this.SetServicePrincipalRGAccess($appID, $this.AutomationAccount.ResourceGroup, "Contributor")
+	            }
+            }
+		
+		}	
+		catch
+		{
+			$this.PublishCustomMessage("There was an error while setting up the AzSK CA SPN")
+			throw ($_)
+		}	
+	}
+	
+    hidden [string] CreateServicePrincipalIfNotExists([string] $azSKADAppName)
+    {
+		$aadApplication = Get-AzureRmADApplication -DisplayNameStartWith $azskADAppName | Where-Object -Property DisplayName -eq $azskADAppName
+		if($aadApplication)
+		{
+			$this.PublishCustomMessage("Found AAD application in the directory: [$azskADAppName]")
+
+			#set this flag to identify whether clean up AD App is needed in case of exception 
+			$this.isExistingADApp = $true
+		}
+		else
+		{
+			$this.PublishCustomMessage("Creating new AAD application: [$azskADAppName]. This may take a few min...")
+				
+			#create new AAD App
+			$aadApplication = New-AzureRmADApplication -DisplayName $azskADAppName `
+			-HomePage ("https://" + $azskADAppName) `
+			-IdentifierUris ("https://" + $azskADAppName) -ErrorAction Stop
+				
+			Start-Sleep -Seconds 30
+
+			#create new SP
+			$this.PublishCustomMessage("Creating new service principal (SPN) for the AAD application. This will be used as the runtime account for AzSK CA")
+			New-AzureRMADServicePrincipal -ApplicationId $aadApplication.ApplicationId -ErrorAction Stop | Out-Null   
+				
+			Start-Sleep -Seconds 30                         
+		}
+        return $aadApplication.ApplicationId
+    }
+
+    hidden [void] SetCAAzureRunAsAccount([string] $azskADAppName, [string] $appID)
+    {
+        $pfxFilePath = $null
+		$thumbPrint = $null
+        try
+        {
+            #create new self-signed certificate 
+            $this.PublishCustomMessage("Generating new credential for AzSK CA SPN")
+		    $selfsignedCertificate = [ActiveDirectoryHelper]::NewSelfSignedCertificate($azskADAppName,$this.certificateDetail.CertStartDate,$this.certificateDetail.CertEndDate,$this.certificateDetail.Provider)
+			
+		    #create password
+			     
+		    $secureCertPassword = [Helpers]::NewSecurePassword()
+
+		    $pfxFilePath = $env:TEMP+ "\temp.pfx"
+		    Export-PfxCertificate -Cert $selfsignedCertificate -Password $secureCertPassword -FilePath $pfxFilePath | Out-Null 
+		    $publicCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(,$selfsignedCertificate.GetRawCertData())
+			
+            try
+            {
+                #Authenticating AAD App service principal with newly created certificate credential  
+		        [ActiveDirectoryHelper]::UpdateADAppCredential($appID,$publicCert,$this.certificateDetail.CredStartDate,$this.certificateDetail.CredEndDate,"False")
+            }
+            catch
+            {
+                $this.PublishCustomMessage("There was an error while updating its credentials. You may not have 'Owner' permission on it.");
+			    throw;
+            }
+        
+		    $thumbPrint =  $publicCert.thumbPrint
+        
+            #remove existing certificate if exists
+		    $this.RemoveCCAzureRunAsCertificateIfExists()
+
+		    #create certificate asset 
+		    $newCertificateAsset = $this.NewCCCertificate($pfxFilePath,$secureCertPassword)
+
+		    # Remove existing connection
+		    $this.RemoveCCAzureRunAsConnectionIfExists()
+		
+		    # Create a Automation connection asset named AzureRunAsConnection in the Automation account. This connection uses the updated service principal.
+		    $newConnectionAsset = $this.NewCCConnection($appID,$thumbPrint)
+        
+            $this.CAAADApplicationID = $appID;
+    	}
+        finally
+        {
+            #cleanup pfx file 
 			if($pfxFilePath)
 			{
 				Remove-Item -Path $pfxFilePath -Force -ErrorAction SilentlyContinue
@@ -2938,10 +3027,31 @@ class CCAutomation: CommandBase
 					$CertStore.Remove($tempCert[0]) 
 				}
 			}
+        }     
+        #	$this.OutputObject.AzureADAppName = $this.AutomationAccount.AzureADAppName 
+        #	$this.OutputObject.AzureRunAsConnection = $newConnectionAsset |  Select-Object Name,Description,ConnectionTypeName
+        #	$this.OutputObject.AzureRunAsCertificate = $newCertificateAsset | Select-Object Name,Description,CreationTime,ExpiryTime,LastModifiedTime		
+
+    }
+    
+    hidden [void] SetCASPNPermissions([string] $appID)
+    {
+		$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
+
+		#check SP permissions
+		$haveSubscriptionAccess = $this.CheckServicePrincipalSubscriptionAccess($appID)
+		$haveRGAccess = $this.CheckServicePrincipalRGAccess($appID)
+		#assign SP permissions
+		if(!$haveSubscriptionAccess)
+		{
+			$this.SetServicePrincipalSubscriptionAccess($appID)
+		} 
+		if(!$haveRGAccess)
+		{
+			$this.SetServicePrincipalRGAccess($appID)
 		}
-	}
-	
-	
+    }
+    
 	hidden [string] AddConfigValues([string]$fileName)
 	{
 		$outputFilePath = "$Env:LOCALAPPDATA\$fileName";
@@ -2979,10 +3089,6 @@ class CCAutomation: CommandBase
 		return "false" #adding this to prevent error all path doesn't return value"
 	}
 	
-	#endregion
-
-	#region: Internal functions for Update-CA
-
 	hidden [void] UpdateVariable($VariableObj)
 	{	
 		#remove existing and create new variable
@@ -3021,114 +3127,7 @@ class CCAutomation: CommandBase
 			-AutomationAccountName $this.AutomationAccount.Name -Name $this.certificateAssetName -ErrorAction SilentlyContinue
 		}
 	}
-	hidden [void] UpdateCCAzureRunAsAccount([string] $azSKADAppName)
-	{
-		$pfxFilePath = $null
-		$thumbPrint = $null
-		try
-		{
-			#fetch existing AD App used in connection
-			$appID = ""
-			if([string]::IsNullOrWhiteSpace($azSKADAppName))
-			{
-				$connection = Get-AzureRmAutomationConnection -AutomationAccountName $this.AutomationAccount.Name `
-				-ResourceGroupName  $this.AutomationAccount.ResourceGroup -Name $this.connectionAssetName -ErrorAction Stop
-		
-				$appID = $connection.FieldDefinitionValues.ApplicationId
-				$this.AutomationAccount.AzureADAppName = (Get-AzureRmADApplication -ApplicationId $connection.FieldDefinitionValues.ApplicationId -ErrorAction stop).DisplayName
-			}
-			else
-			{
-				$ADAppObject = Get-AzureRmADApplication -DisplayNameStartWith $azSKADAppName -ErrorAction stop
-				$this.AutomationAccount.AzureADAppName = $azSKADAppName
-				#Assuming that the APP would always be there as this value is populated from the roleassignment itself.
-				$appID = $ADAppObject[0].ApplicationId
-			}
-
-			$this.CAAADApplicationID = $appID;
-		
-			#create new self-signed certificate 
-			$selfsignedCertificate = [ActiveDirectoryHelper]::NewSelfSignedCertificate($this.AutomationAccount.AzureADAppName,$this.certificateDetail.CertStartDate,$this.certificateDetail.CertEndDate,$this.certificateDetail.Provider)
-			
-			#create password
-			     
-			$secureCertPassword = [Helpers]::NewSecurePassword()
-
-			$pfxFilePath = $env:TEMP+ "\temp.pfx"
-			Export-PfxCertificate -Cert $selfsignedCertificate -Password $secureCertPassword -FilePath $pfxFilePath | Out-Null 
-			$publicCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(,$selfsignedCertificate.GetRawCertData())
-			
-			#Authenticating AAD App service principal with newly created certificate credential  
-			[ActiveDirectoryHelper]::UpdateADAppCredential($appID,$publicCert,$this.certificateDetail.CredStartDate,$this.certificateDetail.CredEndDate,"False")
 	
-			$thumbPrint =  $publicCert.thumbPrint
-			$this.PublishCustomMessage("You have 'Owner' permission on [$($this.AutomationAccount.AzureADAppName)]. Configuring CA with this SPN.")
-			$this.PublishCustomMessage("Validating subscription access for CA SPN. This may take a few min...")
-
-			#check SP permissions
-			$haveSubscriptionAccess = $this.CheckServicePrincipalSubscriptionAccess($appID)
-			$haveRGAccess = $this.CheckServicePrincipalRGAccess($appID)
-			#assign SP permissions
-			if(!$haveSubscriptionAccess)
-			{
-				$this.SetServicePrincipalSubscriptionAccess($appID)
-			} 
-			if(!$haveRGAccess)
-			{
-				$this.SetServicePrincipalRGAccess($appID)
-			}
-
-			if($this.AutomationAccount.ResourceGroup -ne $this.AutomationAccount.CoreResourceGroup)
-			{
-				$haveAARGAccess = $this.CheckServicePrincipalRGAccess($appID, $this.AutomationAccount.ResourceGroup, "Contributor")
-				if(!$haveAARGAccess)
-				{
-					$this.SetServicePrincipalRGAccess($appID, $this.AutomationAccount.ResourceGroup, "Contributor")
-				}
-			}
-
-			#remove existing certificate if exists
-			$this.RemoveCCAzureRunAsCertificateIfExists()
-
-			#create certificate asset 
-			$newCertificateAsset = $this.NewCCCertificate($pfxFilePath,$secureCertPassword)
-
-			# Remove existing connection
-			$this.RemoveCCAzureRunAsConnectionIfExists()
-		
-			# Create a Automation connection asset named AzureRunAsConnection in the Automation account. This connection uses the updated service principal.
-			$newConnectionAsset = $this.NewCCConnection($appID,$thumbPrint)
-		
-			$this.OutputObject.AzureADAppName = $this.AutomationAccount.AzureADAppName 
-			$this.OutputObject.AzureRunAsConnection = $newConnectionAsset |  Select-Object Name,Description,ConnectionTypeName
-			$this.OutputObject.AzureRunAsCertificate = $newCertificateAsset | Select-Object Name,Description,CreationTime,ExpiryTime,LastModifiedTime		
-		}	
-		catch
-		{
-			$this.PublishCustomMessage("There was an error while updating its credentials. You may not have 'Owner' permission on it.");
-			throw;
-		}	
-		finally
-		{
-			#cleanup pfx file 
-			if($pfxFilePath)
-			{
-				Remove-Item -Path $pfxFilePath -Force -ErrorAction SilentlyContinue
-			}
-
-			#cleanup certificate
-			$CertStore = New-Object System.Security.Cryptography.X509Certificates.X509Store([System.Security.Cryptography.X509Certificates.StoreName]::My,[System.Security.Cryptography.X509Certificates.StoreLocation]::CurrentUser)
-			$CertStore.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-			if($thumbPrint)
-			{
-				$tempCert = $CertStore.Certificates.Find("FindByThumbprint",$thumbPrint,$FALSE)
-				if($tempCert)
-				{
-					$CertStore.Remove($tempCert[0]) 
-				}
-			}
-		}
-	}
 	hidden [PSObject] NewCCConnection($appId,$thumbPrint)
 	{
 		
@@ -3144,7 +3143,7 @@ class CCAutomation: CommandBase
 	hidden [PSObject] NewCCCertificate($pfxFilePath,[Security.SecureString]$secureCertPassword)
 	{
 		$newCertificateAsset = New-AzureRmAutomationCertificate -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name `
-		-Path $pfxFilePath -Name $this.certificateAssetName -Password $secureCertPassword -Exportable -ErrorAction Stop
+		-Path $pfxFilePath -Name $this.certificateAssetName -Password $secureCertPassword -ErrorAction Stop
 
 		return $newCertificateAsset
 	}
