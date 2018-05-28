@@ -529,8 +529,6 @@ class CCAutomation: CommandBase
 						$this.PublishCustomMessage("Trying to renew certificate in the CA Automation Account...")
 						try
 						{
-                            #TOREMOVE
-							throw;
                             $this.UpdateCCAzureRunAsAccount()
 							$this.PublishCustomMessage("Successfully renewed certificate (new expiry date: $((Get-Date).AddMonths(6).AddDays(1).ToString("yyyy-MM-dd"))) in the CA Automation Account.")
 							$this.isExistingADApp = $true
