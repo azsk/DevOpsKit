@@ -10,8 +10,6 @@ class CCAutomation: CommandBase
 	hidden [string] $ScheduleName = "CA_Scan_Schedule"
 	hidden [Variable[]] $Variables = @()
 	hidden [UserConfig] $UserConfig 
-	#hidden [string] $AzSKCCRGName = "AzSKCCRG"
-	#hidden [string] $deprecatedAccountName = "AzSKCCAutomationAccount"
 	hidden [PSObject] $OutputObject = @{}
 	hidden [SelfSignedCertificate] $certificateDetail = [SelfSignedCertificate]::new()
 	hidden [Hashtable] $reportStorageTags = @{}
@@ -91,7 +89,7 @@ class CCAutomation: CommandBase
 		$this.UserConfig = [UserConfig]@{			
 			ResourceGroupNames = $ResourceGroupNames
 		}
-		$this.DoNotOpenOutputFolder = $true;
+		#$this.DoNotOpenOutputFolder = $true;
 	}
 
 	CCAutomation(
@@ -186,25 +184,10 @@ class CCAutomation: CommandBase
 		{
 			$runAsConnection = $this.GetRunAsConnection()
 			$existingAppId = $runAsConnection.FieldDefinitionValues.ApplicationId
-			#check SP permissions
-			$haveSubscriptionAccess = $this.CheckServicePrincipalSubscriptionAccess($existingAppId)
-			$haveRGAccess = $this.CheckServicePrincipalRGAccess($existingAppId)
-			#assign SP permissions
-			if(!$haveSubscriptionAccess)
-			{
-				$this.SetServicePrincipalSubscriptionAccess($existingAppId)
-			} 
-			if(!$haveRGAccess)
-			{
-				$this.SetServicePrincipalRGAccess($existingAppId)
-			}
+			$this.SetCASPNPermissions()
 			if($this.IsMultiCAModeOn)
 			{
-				$haveAARGAccess = $this.CheckServicePrincipalRGAccess($existingAppId, $this.AutomationAccount.ResourceGroup, "Contributor")
-				if(!$haveAARGAccess)
-				{
-					$this.SetServicePrincipalRGAccess($existingAppId, $this.AutomationAccount.ResourceGroup, "Contributor")
-				}
+                $this.SetSPNRGAccessIfNotAssigned($existingAppId,$this.AutomationAccount.ResourceGroup, "Contributor")
 			}
 		}
 	}
@@ -228,23 +211,16 @@ class CCAutomation: CommandBase
 			    $this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nStarted setting up Automation Account for Continuous Assurance (CA)`r`n"+[Constants]::DoubleDashLine);
                 
                 #create AzSKRG resource group
-				$this.CreateCoreResourceGroupIfNotExists()	
+                [Helpers]::CreateNewResourceGroupIfNotExists($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
 				
 				#create RG given by user
 				if($this.IsMultiCAModeOn)
 				{
-					$this.CreateCustomResourceGroupIfNotExists()
-                    #[Helpers]::NewAzSKResourceGroup($this.AutomationAccount.ResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
-				}
-
+                    [Helpers]::CreateNewResourceGroupIfNotExists($this.AutomationAccount.ResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
+                }
 			}
 			
 			$this.UserConfig.StorageAccountRG = $this.AutomationAccount.CoreResourceGroup
-
-			if((Get-AzureRmResourceGroup -Name $this.AutomationAccount.ResourceGroup -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0 -and $this.IsMultiCAModeOn)
-			{
-				[Helpers]::NewAzSKResourceGroup($this.AutomationAccount.ResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
-			}
 			
 			#endregion
 
@@ -424,7 +400,7 @@ class CCAutomation: CommandBase
 				Set-AzureStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
 			}
 
-					
+			#endregion		
 
 
 			# Added Security centre provider registration to avoid error while running SSCore command in CA
@@ -517,13 +493,13 @@ class CCAutomation: CommandBase
 			$this.CleanUpOlderAssets();
 			#endregion
 
-			#region: Check AzureRM.Automation and dependent modules health
+			#region: Check AzureRM.Automation/AzureRm.Profile and its dependent modules health
 			if($FixModules)
 			{
 				$this.PublishCustomMessage("Inspecting CA module: [AzureRM.Automation]")
 				try
 				{
-					$this.ResolveAutomationModule()
+					$this.FixCAModules()
 				}
 				catch
 				{
@@ -553,15 +529,16 @@ class CCAutomation: CommandBase
 						$this.PublishCustomMessage("Trying to renew certificate in the CA Automation Account...")
 						try
 						{
-							$this.UpdateCCAzureRunAsAccount()
+                            #TOREMOVE
+							throw;
+                            $this.UpdateCCAzureRunAsAccount()
 							$this.PublishCustomMessage("Successfully renewed certificate (new expiry date: $((Get-Date).AddMonths(6).AddDays(1).ToString("yyyy-MM-dd"))) in the CA Automation Account.")
 							$this.isExistingADApp = $true
 						}
 						catch
 						{
-							$this.PublishCustomMessage("Could not renew certificate for the currently configured SPN. Trying if another existing SPN can be reused with new credentials...")
-							$this.AutomationAccount.AzureADAppName = ""
-							$this.NewCCAzureRunAsAccount()
+							$this.PublishCustomMessage("WARNING: Could not renew certificate for the currently configured SPN (App Id: $($runAsConnection.FieldDefinitionValues.ApplicationId)). You may not have 'Owner' permission on it. `r`n" `
+                            + "You can setup new credentials using command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -CreateDefaultRuntimeAccount' or '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -AzureADAppName <AzureADAppName>'.",[MessageType]::Warning)
 						}
 					}
 					else
@@ -617,26 +594,11 @@ class CCAutomation: CommandBase
 						$ServicePrincipal = Get-AzureRmADServicePrincipal -ServicePrincipalName $existingAppId -ErrorAction SilentlyContinue
 						if($ADApp -and $ServicePrincipal)
 						{
-							#check SP permissions
-							$haveSubscriptionAccess = $this.CheckServicePrincipalSubscriptionAccess($existingAppId)
-							$haveRGAccess = $this.CheckServicePrincipalRGAccess($existingAppId)
-							#assign SP permissions
-							if(!$haveSubscriptionAccess)
-							{
-								$this.SetServicePrincipalSubscriptionAccess($existingAppId)
-							} 
-							if(!$haveRGAccess)
-							{
-								$this.SetServicePrincipalRGAccess($existingAppId)
-							}
-							if($this.IsMultiCAModeOn)
-							{
-								$haveAARGAccess = $this.CheckServicePrincipalRGAccess($existingAppId, $this.AutomationAccount.ResourceGroup, "Contributor")
-								if(!$haveAARGAccess)
-								{
-									$this.SetServicePrincipalRGAccess($existingAppId, $this.AutomationAccount.ResourceGroup, "Contributor")
-								}
-							}
+							$this.SetCASPNPermissions()
+			                if($this.IsMultiCAModeOn)
+			                {
+                                $this.SetSPNRGAccessIfNotAssigned($existingAppId,$this.AutomationAccount.ResourceGroup, "Contributor")
+			                }
 						}
 						else
 						{
@@ -891,30 +853,13 @@ class CCAutomation: CommandBase
 							if(-not $this.SkipTargetSubscriptionConfig)
 							{
 								Select-AzureRmSubscription -SubscriptionId $caSubId | Out-Null
-								#region :create new resource group/check if RG exists# 
+								#create new resource group/check if RG exists# 
 			
-								if((Get-AzureRmResourceGroup -Name $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
-								{
-									$this.PublishCustomMessage("Creating AzSK RG...");
-									[Helpers]::NewAzSKResourceGroup($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
-								}					
-			
-								#endregion
-
-								#region: recheck permissions
-								$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
-								$haveSubscriptionAccess = $this.CheckServicePrincipalSubscriptionAccess($this.CAAADApplicationID)
-								$haveRGAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID)
-								#assign SP permissions
-								if(!$haveSubscriptionAccess)
-								{
-									$this.SetServicePrincipalSubscriptionAccess($this.CAAADApplicationID)
-								} 
-								if(!$haveRGAccess)
-								{
-									$this.SetServicePrincipalRGAccess($this.CAAADApplicationID)
-								}
-								#endregion														
+								[Helpers]::CreateNewResourceGroupIfNotExists($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())			
+								
+								#recheck permissions
+								$this.SetCASPNPermissions($this.CAAADApplicationID)	
+																					
 								#region: Create/reuse existing storage account (Added this before creating variables since it's value is used in it)				
 								$newStorageName = [string]::Empty
 								#Check if storage exists
@@ -1073,7 +1018,7 @@ class CCAutomation: CommandBase
 		
 			#region :update CA Account tags
 		
-			<#$modifyTimestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
+			$modifyTimestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
 			if($automationTags.ContainsKey("LastModified"))
 			{
 				$automationTags["LastModified"] = $modifyTimestamp;
@@ -1081,7 +1026,7 @@ class CCAutomation: CommandBase
 			else
 			{
 				$automationTags.Add("LastModified",$modifyTimestamp)
-			}#>
+			}
 			if($automationTags.ContainsKey("AzSKVersion"))
 			{
 				$automationTags["AzSKVersion"] = $this.GetCurrentModuleVersion();
@@ -2527,33 +2472,19 @@ class CCAutomation: CommandBase
 
 	hidden [PSObject] GetCAResourceObject()
 	{
-		$caAccount = Get-AzureRMAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -ErrorAction silentlycontinue
-		return $caAccount 
+        $CAResourceObject = Get-AzureRMAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -ErrorAction silentlycontinue
+		return $CAResourceObject
 	}
 
 	hidden [bool] IsCAInstallationValid()
 	{
 		$isValid = $true
 		$automationResources = Find-AzureRmresource -ResourceGroupNameEquals $this.AutomationAccount.ResourceGroup -ResourceType "Microsoft.Automation/automationAccounts"
-		if($null -ne $automationResources)
+		if(($automationResources|Measure-Object).Count)
 		{
 			$isValid = $false
 		}
 		return $isValid
-	}
-	hidden [void] CreateCoreResourceGroupIfNotExists()
-	{
-		if((Get-AzureRmResourceGroup -Name $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0)
-		{
-			[Helpers]::NewAzSKResourceGroup($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
-		}
-	}
-    hidden [void] CreateCustomResourceGroupIfNotExists()
-	{
-		if((Get-AzureRmResourceGroup -Name $this.AutomationAccount.ResourceGroup -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0)
-		{
-			[Helpers]::NewAzSKResourceGroup($this.AutomationAccount.ResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
-		}
 	}
 	hidden [void] DeployCCAutomationAccountItems()
 	{				
@@ -2842,7 +2773,15 @@ class CCAutomation: CommandBase
 					    try
 					    {
 						    $this.PublishCustomMessage("Trying account: ["+ $azskRoleAssignment.DisplayName +"]")
-                            $aadApplication = Get-AzureRmADApplication -DisplayNameStartWith $azskRoleAssignment.DisplayName  | Where-Object -Property DisplayName -eq $azskRoleAssignment.DisplayName 
+                            #get aad app id from service principal object detail
+                            $aadApplication = $null
+                            $spDetail = Get-AzureRmADServicePrincipal -ObjectId $azskRoleAssignment.ObjectId
+                            if($spDetail)
+                            {
+                                $aadApplication = Get-AzureRmADApplication -ApplicationId $spDetail.ApplicationId
+                            }
+                            else
+                            {throw;}
 		                    if($aadApplication)
 		                    {
                                $this.SetCAAzureRunAsAccount($azskRoleAssignment.DisplayName,$aadApplication.ApplicationId)
@@ -3007,6 +2946,9 @@ class CCAutomation: CommandBase
 		    $newConnectionAsset = $this.NewCCConnection($appID,$thumbPrint)
         
             $this.CAAADApplicationID = $appID;
+
+            $this.OutputObject.AzureRunAsConnection = $newConnectionAsset |  Select-Object Name,Description,ConnectionTypeName
+            $this.OutputObject.AzureRunAsCertificate = $newCertificateAsset | Select-Object Name,Description,CreationTime,ExpiryTime,LastModifiedTime
     	}
         finally
         {
@@ -3028,28 +2970,13 @@ class CCAutomation: CommandBase
 				}
 			}
         }     
-        #	$this.OutputObject.AzureADAppName = $this.AutomationAccount.AzureADAppName 
-        #	$this.OutputObject.AzureRunAsConnection = $newConnectionAsset |  Select-Object Name,Description,ConnectionTypeName
-        #	$this.OutputObject.AzureRunAsCertificate = $newCertificateAsset | Select-Object Name,Description,CreationTime,ExpiryTime,LastModifiedTime		
-
     }
     
     hidden [void] SetCASPNPermissions([string] $appID)
     {
 		$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
-
-		#check SP permissions
-		$haveSubscriptionAccess = $this.CheckServicePrincipalSubscriptionAccess($appID)
-		$haveRGAccess = $this.CheckServicePrincipalRGAccess($appID)
-		#assign SP permissions
-		if(!$haveSubscriptionAccess)
-		{
-			$this.SetServicePrincipalSubscriptionAccess($appID)
-		} 
-		if(!$haveRGAccess)
-		{
-			$this.SetServicePrincipalRGAccess($appID)
-		}
+		$this.SetSPNSubscriptionAccessIfNotAssigned($appID)
+        $this.SetSPNRGAccessIfNotAssigned($appID)
     }
     
 	hidden [string] AddConfigValues([string]$fileName)
@@ -3310,10 +3237,11 @@ class CCAutomation: CommandBase
         }
 		return $depModuleList
 	}
-	hidden [void] ResolveAutomationModule()
+	hidden [void] FixCAModules()
 	{
 		$automationModuleName = "AzureRM.Automation"
 		$storageModuleName = "Azure.Storage"
+        $profileModuleName = "AzureRm.profile"
 		$dependentModules = @()
 		$this.OutputObject.Modules = @() 
 		
@@ -3324,6 +3252,7 @@ class CCAutomation: CommandBase
 		#check health of dependent modules and fix if unhealthy
 		$dependentModules|ForEach-Object{
 			$currentModuleName = $_.Name
+            $this.PublishCustomMessage("Inspecting CA module: [$currentModuleName]")
 			$dependentModuleResult = $this.CheckCAModuleHealth($currentModuleName)
 			#dependent module is not in expected state
 			if($dependentModuleResult.isModuleValid -ne $true)
@@ -3342,6 +3271,18 @@ class CCAutomation: CommandBase
 		{
 			$this.UploadModule($automationModuleName,$automationModuleResult.moduleVersion)
 		}
+
+        #remove AzSK/AzureRm modules so that runbook can fix all the modules
+		$deleteModuleList = Get-AzureRmAutomationModule -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name  -ErrorAction SilentlyContinue | `
+        Where-Object {$_.Name -eq "AzureRm" -or $_.Name -ilike 'azsk*'} 
+        
+        if(($deleteModuleList|Measure-Object).Count)
+        {
+            $deleteModuleList | ForEach-Object{
+                $this.PublishCustomMessage("Removing CA module: [$($_.Name)]. CA job will download fresh modules in next run.")   
+                Remove-AzureRmAutomationModule -Name $deleteModuleList.Name -AutomationAccountName $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup -Force -ErrorAction SilentlyContinue
+            }
+        }
 	}
 	
 	hidden [void] ResolveStorageCompliance($storageName,$ResourceId,$resourceGroup,$containerName)
@@ -3678,6 +3619,28 @@ class CCAutomation: CommandBase
 			throw ([SuppressedException]::new(("SPN permission could not be set"), [SuppressedExceptionType]::InvalidOperation))
 		}
 	}
+    hidden [void] SetSPNSubscriptionAccessIfNotAssigned($applicationId)
+	{
+        #check SP permission
+		$haveSubscriptionAccess = $this.CheckServicePrincipalSubscriptionAccess($applicationId)
+		#assign SP permission
+		if(!$haveSubscriptionAccess)
+		{
+			$this.SetServicePrincipalSubscriptionAccess($applicationId)
+		} 
+    }
+    hidden [void] SetSPNRGAccessIfNotAssigned($applicationId)
+	{
+        $this.SetSPNRGAccessIfNotAssigned($applicationId, $this.AutomationAccount.CoreResourceGroup, "Contributor");
+    }
+    hidden [void] SetSPNRGAccessIfNotAssigned($applicationId,$rgName, $roleName)
+	{
+		$haveRGAccess = $this.CheckServicePrincipalRGAccess($applicationId,$rgName, $roleName)
+        if(!$haveRGAccess)
+		{
+			$this.SetServicePrincipalRGAccess($applicationId,$rgName, $roleName)
+		}
+    }
 	hidden [void] SetRunbookVersionTag()
 	{
 		#update version in AzSKRG 
