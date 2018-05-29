@@ -2474,7 +2474,7 @@ class CCAutomation: CommandBase
 
 	hidden [PSObject] GetCAResourceObject()
 	{
-        if(($null -ne $this.AutomationAccount) -and ($null -eq $this.AutomationAccount.AutomationAccountInstance))
+        if($null -eq $this.AutomationAccount.AutomationAccountInstance)
         {
             $this.AutomationAccount.AutomationAccountInstance = Get-AzureRMAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -ErrorAction silentlycontinue
         }
