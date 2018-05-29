@@ -19,7 +19,7 @@
         "AuthZ",
         "RBAC"
       ],
-      "InvalidAttestationState": "",
+      "InvalidAttestationStates": "",
       "Enabled": true
     },
     {
