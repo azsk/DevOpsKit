@@ -1015,14 +1015,8 @@ class CCAutomation: CommandBase
 			#endregion
 		
 			#region :update CA Account tags
-		    $timestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
-			$automationTags += @{
-			"AzSKFeature" = "ContinuousAssuranceStorage";
-			"CreationTime"=$timestamp;
-			"LastModified"=$timestamp
-			}
-			$modifyTimestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
 
+			$modifyTimestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
 			if($automationTags.ContainsKey("LastModified"))
 			{
 				$automationTags["LastModified"] = $modifyTimestamp;
