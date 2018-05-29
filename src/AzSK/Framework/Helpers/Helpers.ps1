@@ -1088,6 +1088,10 @@ class Helpers {
                     $result = [VerificationResult]::Remediate;
                     break;
                 }
+				([AttestationStatus]::NotApplicable) {
+                    $result = [VerificationResult]::Passed;
+                    break;
+                }
             }
             #}
             #elseif($verificationResult -eq [VerificationResult]::Failed -or $verificationResult -eq [VerificationResult]::Error)

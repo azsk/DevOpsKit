@@ -48,7 +48,7 @@ function Get-AzSKAzureServicesSecurityStatus
 	.PARAMETER JustificationText
 		Use this option to provide an apt justification with proper business reason.
 	.PARAMETER AttestationStatus
-		Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater)
+		Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater,NotApplicable)
 
 	.NOTES
 	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
@@ -142,8 +142,8 @@ function Get-AzSKAzureServicesSecurityStatus
 		[Alias("jt")]
 		$JustificationText,
 
-		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater")] 
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater)")]
+		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater","NotApplicable")] 
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater and NotApplicable(if valid for the control))")]
 		[Alias("as")]
 		$AttestationStatus = [AttestationStatus]::None,
 
@@ -301,8 +301,8 @@ function Get-AzSKSubscriptionSecurityStatus
 		[Alias("jt")]
 		$JustificationText,
 
-		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater")] 
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater)")]
+		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater","NotApplicable")] 
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater and NotApplicable(if valid for the control))")]
 		[Alias("as")]
 		$AttestationStatus = [AttestationStatus]::None,
 			
@@ -515,7 +515,7 @@ function Get-AzSKControlsStatus
 	.PARAMETER JustificationText
 			Use this option to provide an apt justification with proper business reason.
 	.PARAMETER AttestationStatus
-			Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater)
+			Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater,NotApplicable)
 
 	.NOTES
 	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
@@ -600,8 +600,8 @@ function Get-AzSKControlsStatus
 		[Alias("jt")]
 		$JustificationText,
 
-		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater")] 
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater)")]
+		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater","NotApplicable")] 
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater and NotApplicable(if valid for the control))")]
 		[Alias("as")]
 		$AttestationStatus = [AttestationStatus]::None,
 

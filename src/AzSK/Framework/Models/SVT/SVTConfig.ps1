@@ -30,6 +30,7 @@ class ControlItem
     hidden [FixControl] $FixControl = $null;
 	[int] $AttestationExpiryPeriodInDays
 	[bool] $IsBaselineControl
+	[string[]] $InvalidAttestationStates 
 }
 
 class FixControl
