@@ -89,7 +89,7 @@ class CCAutomation: CommandBase
 		$this.UserConfig = [UserConfig]@{			
 			ResourceGroupNames = $ResourceGroupNames
 		}
-		#$this.DoNotOpenOutputFolder = $true;
+		$this.DoNotOpenOutputFolder = $true;
 	}
 
 	CCAutomation(
@@ -140,7 +140,7 @@ class CCAutomation: CommandBase
             $this.CATargetSubsBlobName = "$($this.AutomationAccount.ResourceGroup)\$([Constants]::CATargetSubsBlobName)";
 		}
 		$this.UserConfig = [UserConfig]::new();
-		#$this.DoNotOpenOutputFolder = $true;
+		$this.DoNotOpenOutputFolder = $true;
 
 		$caAADAppName = $this.InvocationContext.BoundParameters["AzureADAppName"];
 
@@ -456,7 +456,7 @@ class CCAutomation: CommandBase
 		return $messages;
 	}	
 
-	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$CreateDefaultRuntimeAccount,$RenewCertificate,$FixModules)
+	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules)
 	{
 		[MessageData[]] $messages = @();
 		try
@@ -514,9 +514,9 @@ class CCAutomation: CommandBase
 			{
 				$this.NewCCAzureRunAsAccount()
 			}
-            elseif($CreateDefaultRuntimeAccount)
+            elseif($NewRuntimeAccount)
             {
-                $this.NewCCAzureRunAsAccount($CreateDefaultRuntimeAccount)
+                $this.NewCCAzureRunAsAccount($NewRuntimeAccount)
             }
 			else
 			{
@@ -536,7 +536,7 @@ class CCAutomation: CommandBase
 						catch
 						{
 							$this.PublishCustomMessage("WARNING: Could not renew certificate for the currently configured SPN (App Id: $($runAsConnection.FieldDefinitionValues.ApplicationId)). You may not have 'Owner' permission on it. `r`n" `
-                            + "You can setup new credentials using command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -CreateDefaultRuntimeAccount' or '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -AzureADAppName <AzureADAppName>'.",[MessageType]::Warning)
+                            + "You can setup new credentials using command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -NewRuntimeAccount' or '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -AzureADAppName <AzureADAppName>'.",[MessageType]::Warning)
 						}
 					}
 					else
@@ -1015,8 +1015,14 @@ class CCAutomation: CommandBase
 			#endregion
 		
 			#region :update CA Account tags
-		
+		    $timestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
+			$automationTags += @{
+			"AzSKFeature" = "ContinuousAssuranceStorage";
+			"CreationTime"=$timestamp;
+			"LastModified"=$timestamp
+			}
 			$modifyTimestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
+
 			if($automationTags.ContainsKey("LastModified"))
 			{
 				$automationTags["LastModified"] = $modifyTimestamp;
@@ -1033,7 +1039,11 @@ class CCAutomation: CommandBase
 			{
 				$automationTags.Add("AzSKVersion",$this.GetCurrentModuleVersion())
 			}
-			Set-AzureRmAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -Tags $automationTags -ErrorAction SilentlyContinue
+            $resourceObj = Find-AzureRmResource -ResourceNameEquals $this.AutomationAccount.Name -ResourceGroupNameEquals $this.AutomationAccount.ResourceGroup
+            if($resourceObj)
+            {
+			    [Helpers]::SetResourceTags($resourceObj.ResourceId, $automationTags, $false, $true);
+            }
 		
 			#endregion
 
@@ -2470,8 +2480,11 @@ class CCAutomation: CommandBase
 
 	hidden [PSObject] GetCAResourceObject()
 	{
-        $CAResourceObject = Get-AzureRMAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -ErrorAction silentlycontinue
-		return $CAResourceObject
+        if(($null -ne $this.AutomationAccount) -and ($null -eq $this.AutomationAccount.AutomationAccountInstance))
+        {
+            $this.AutomationAccount.AutomationAccountInstance = Get-AzureRMAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -ErrorAction silentlycontinue
+        }
+		return $this.AutomationAccount.AutomationAccountInstance
 	}
 
 	hidden [bool] IsCAInstallationValid()
@@ -2734,7 +2747,7 @@ class CCAutomation: CommandBase
 		}
 		$this.OutputObject.Variables = $this.Variables | Select-Object Name,Description
 	}
-	hidden [void] NewCCAzureRunAsAccount($createDefaultRuntimeAccount)
+	hidden [void] NewCCAzureRunAsAccount($NewRuntimeAccount)
 	{		
 		#Handle the case when user hasn't specified the AAD App name for CA.
         $azskADAppName = ""
@@ -2751,7 +2764,7 @@ class CCAutomation: CommandBase
             {
                 $azskADAppName = $this.AutomationAccount.AzureADAppName
             }
-            elseif($createDefaultRuntimeAccount)
+            elseif($NewRuntimeAccount)
             {
                 $azskADAppName = ($azskspnformatstring + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"))	
             }
@@ -2779,7 +2792,7 @@ class CCAutomation: CommandBase
                                 $aadApplication = Get-AzureRmADApplication -ApplicationId $spDetail.ApplicationId
                             }
                             else
-                            {throw;}
+                            {throw;}#SP not found, continue to next SP
 		                    if($aadApplication)
 		                    {
                                $this.SetCAAzureRunAsAccount($azskRoleAssignment.DisplayName,$aadApplication.ApplicationId)
@@ -2831,7 +2844,7 @@ class CCAutomation: CommandBase
 	}
     hidden [void] NewCCAzureRunAsAccount()
     {
-       #by default createDefaultRuntimeAccount = false, reuse the SPN if found
+       #by default NewRuntimeAccount = false, reuse the SPN if found
        $this.NewCCAzureRunAsAccount($false)
     }
 
