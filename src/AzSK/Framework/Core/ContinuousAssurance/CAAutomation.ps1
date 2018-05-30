@@ -179,7 +179,7 @@ class CCAutomation: CommandBase
 
 	hidden [void] RecoverCASPN()
 	{
-		$automationAcc = $this.GetCAResourceObject()
+		$automationAcc = $this.GetCABasicResourceInstance()
 		if($null -ne $automationAcc)
 		{
 			$runAsConnection = $this.GetRunAsConnection()
@@ -434,7 +434,7 @@ class CCAutomation: CommandBase
 				$this.PublishCustomMessage("Error occurred. Rolling back the changes.",[MessageType]::error)
 				if(![string]::IsNullOrWhiteSpace($this.AutomationAccount.ResourceGroup))
 				{
-					$account = $this.GetCAResourceObject()
+					$account = $this.GetCADetailedResourceInstance()
 					if(($account|Measure-Object).Count -gt 0)
 					{
 						$account | Remove-AzureRmAutomationAccount -Force -ErrorAction SilentlyContinue
@@ -462,7 +462,7 @@ class CCAutomation: CommandBase
 		try
 		{
 			#region :Check if automation account is compatible for update
-			$existingAccount = $this.GetCAResourceObject()
+			$existingAccount = $this.GetCABasicResourceInstance()
 			$automationTags = @()
 			if(($existingAccount|Measure-Object).Count -eq 0)
 			{
@@ -1033,10 +1033,10 @@ class CCAutomation: CommandBase
 			{
 				$automationTags.Add("AzSKVersion",$this.GetCurrentModuleVersion())
 			}
-            $resourceObj = Find-AzureRmResource -ResourceNameEquals $this.AutomationAccount.Name -ResourceGroupNameEquals $this.AutomationAccount.ResourceGroup
-            if($resourceObj)
+            $resourceInstance = $this.GetCABasicResourceInstance()
+            if($resourceInstance)
             {
-			    [Helpers]::SetResourceTags($resourceObj.ResourceId, $automationTags, $false, $true);
+			    [Helpers]::SetResourceTags($resourceInstance.ResourceId, $automationTags, $false, $true);
             }
 		
 			#endregion
@@ -1076,7 +1076,7 @@ class CCAutomation: CommandBase
 		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Presence of CA Automation Account.",  [MessageType]::Info);
 		$messages += $currentMessage;
 		$this.PublishCustomMessage($currentMessage);
-		$caAutomationAccount = $this.GetCAResourceObject()
+		$caAutomationAccount = $this.GetCADetailedResourceInstance()
 		if($caAutomationAccount)
 		{
 			$caInstalledTimeInterval = ($(get-date).ToUniversalTime() - $caAutomationAccount.CreationTime.UtcDateTime).TotalMinutes
@@ -2040,7 +2040,7 @@ class CCAutomation: CommandBase
 		try
 		{
 			#region:Step 1: Check if Automation Account with name "AzSKContinuousAssurance" exists in "AzSKRG", if no then display error message and quit, if yes proceed further
-			$caAutomationAccount = $this.GetCAResourceObject()
+			$caAutomationAccount = $this.GetCABasicResourceInstance()
 			if(($caAutomationAccount | Measure-Object).Count -le 0)
 			{
 				$isHealthy = $false;
@@ -2098,7 +2098,7 @@ class CCAutomation: CommandBase
 		$runAsConnection = $null;
 				
 		#filter accounts with old/new name
-		$existingAutomationAccount = $this.GetCAResourceObject()
+		$existingAutomationAccount = $this.GetCADetailedResourceInstance()
 
 		#region: check if central scanning mode is enabled on this subscription
 		$CAScanDataBlobContent = $null;
@@ -2472,15 +2472,22 @@ class CCAutomation: CommandBase
 	
 	#region: Internal functions for install/update CA
 
-	hidden [PSObject] GetCAResourceObject()
+	hidden [PSObject] GetCABasicResourceInstance()
 	{
-        if($null -eq $this.AutomationAccount.AutomationAccountInstance)
+        if(($null -ne $this.AutomationAccount) -and ($null -eq $this.AutomationAccount.BasicResourceInstance))
         {
-            $this.AutomationAccount.AutomationAccountInstance = Get-AzureRMAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -ErrorAction silentlycontinue
+            $this.AutomationAccount.BasicResourceInstance = Find-AzureRmResource -ResourceGroupNameEquals $this.AutomationAccount.ResourceGroup -ResourceNameEquals $this.AutomationAccount.Name -ErrorAction silentlycontinue
         }
-		return $this.AutomationAccount.AutomationAccountInstance
+		return $this.AutomationAccount.BasicResourceInstance
 	}
-
+    hidden [PSObject] GetCADetailedResourceInstance()
+	{
+        if(($null -ne $this.AutomationAccount) -and ($null -eq $this.AutomationAccount.DetailedResourceInstance))
+        {
+            $this.AutomationAccount.DetailedResourceInstance = Get-AzureRMAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -ErrorAction silentlycontinue
+        }
+		return $this.AutomationAccount.DetailedResourceInstance
+	}
 	hidden [bool] IsCAInstallationValid()
 	{
 		$isValid = $true
