@@ -30,6 +30,9 @@ class ControlItem
     hidden [FixControl] $FixControl = $null;
 	[int] $AttestationExpiryPeriodInDays
 	[bool] $IsBaselineControl
+	[DateTime] $GraceExpiryDate
+	[int] $NewControlGracePeriodInDays
+	[int] $AttestationPeriodInDays
 }
 
 class FixControl

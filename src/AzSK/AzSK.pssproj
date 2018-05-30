@@ -70,6 +70,7 @@
     <Folder Include="Framework\Listeners\CA\" />
     <Folder Include="Framework\Listeners\FixControl\" />
     <Folder Include="Framework\Listeners\FixControl\FixControlScripts\" />
+    <Folder Include="Framework\Listeners\LocalSubscriptionReport\" />
     <Folder Include="Framework\Listeners\RemoteReports\" />
     <Folder Include="Framework\Listeners\OMS\" />
     <Folder Include="Framework\Listeners\UserReports\" />
@@ -79,6 +80,7 @@
     <Folder Include="Framework\Models\ContinuousAssurance\" />
     <Folder Include="Framework\Models\Exception\" />
     <Folder Include="Framework\Models\FixControl\" />
+    <Folder Include="Framework\Models\LocalSubscriptionReport\" />
     <Folder Include="Framework\Models\RemoteReports\" />
     <Folder Include="Framework\Models\SubscriptionSecurity\" />
     <Folder Include="Framework\Models\SVT\" />
@@ -114,7 +116,10 @@
     <Compile Include="Framework\Helpers\AliasHelper.ps1" />
     <Compile Include="Framework\Helpers\OldConstants.ps1" />
     <Compile Include="Framework\Helpers\OMSHelper.ps1" />
+    <Compile Include="Framework\Helpers\StorageReportHelper.ps1" />
     <Compile Include="Framework\Helpers\UserSubscriptionDataHelper.ps1" />
+    <Compile Include="Framework\Listeners\LocalSubscriptionReport\StorageReport.ps1" />
+    <Compile Include="Framework\Models\RemoteReports\LSRScanResultModel.ps1" />
     <Compile Include="MetadataInfo\GetMetadataInfo.ps1" />
     <Compile Include="ContinuousAssurance\ContinuousAssurance.ps1" />
     <Compile Include="Framework\Abstracts\FixControl\FixControlBase.ps1" />

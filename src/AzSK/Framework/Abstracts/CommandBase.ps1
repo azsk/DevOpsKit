@@ -121,6 +121,8 @@ class CommandBase: AzSKRoot {
 			}
 		}
         return $folderPath;
+
+		# Call clear temp folder function.
     }
 
 	[void] PostCommandStartedAction()
