@@ -134,7 +134,8 @@ class WriteSummaryFile: FileOutputBase
                         Description = $item.ControlItem.Description;
                         FeatureName = $item.FeatureName;
                         ChildResourceName = $_.ChildResourceName;
-						Recommendation = $item.ControlItem.Recommendation;						
+						Recommendation = $item.ControlItem.Recommendation;	
+						UserComments=$_.UserComments;					
                     };
 					if($_.VerificationResult -ne [VerificationResult]::NotScanned)
 					{
@@ -235,4 +236,5 @@ class CsvOutputItem
     [string] $Recommendation = ""
 	[string] $ResourceId = ""
     [string] $DetailedLogFile = ""
+	[string] $UserComments = ""
 }

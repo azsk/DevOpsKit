@@ -16,6 +16,7 @@ class SVTBase: AzSKRoot
 	[string[]] $ExcludeTags = @();
 	[string[]] $ControlIds = @();
 	[bool] $GenerateFixScript = $false;
+	[bool] $IncludeUserComments = $false;
 	[string] $PartialScanIdentifier = [string]::Empty
 
     SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
@@ -303,6 +304,11 @@ class SVTBase: AzSKRoot
 				$this.EvaluationStarted();
 				$resourceSecurityResult += $this.GetAutomatedSecurityStatus();
 				$resourceSecurityResult += $this.GetManualSecurityStatus();
+				# This will be called for each unique resource id
+				if($this.IncludeUserComments -eq $true)
+				{
+				 $resourceSecurityResult=$this.GetUserComments($resourceSecurityResult);
+				}
 				$this.PostEvaluationCompleted($resourceSecurityResult);
 				$this.EvaluationCompleted($resourceSecurityResult);
 			}
@@ -1103,7 +1109,16 @@ class SVTBase: AzSKRoot
 		$this.ResourceContext.ResourceMetadata = $resourceMetadata
 
 	}
-
+	 hidden [SVTEventContext[]] GetUserComments([SVTEventContext[]] $arguments)
+    {
+	    [SVTEventContext[]] $controlsResultSet = @();
+		$arguments | ForEach-Object{      
+		  $currentItem=$_;
+		  $currentItem.ControlResults[0].UserComments="It Will Work..!!"
+		  $controlsResultSet+=$currentItem
+		};
+        return $controlsResultSet;
+    }
 
 	
 }

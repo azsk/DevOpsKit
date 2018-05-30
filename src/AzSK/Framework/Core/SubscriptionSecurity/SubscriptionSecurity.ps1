@@ -314,4 +314,38 @@ class SubscriptionSecurity: CommandBase
 		$AzureADAppName = $this.InvocationContext.BoundParameters["AADAppName"];
 		Invoke-Expression $mgrationScript		
 	}
+
+	[MessageData[]] UpdateStorage([string] $filePath)
+    {	
+	   [MessageData[]] $messages = @();
+
+		#Check for file path exist
+		 if(-not (Test-Path -path $filePath))
+		{  
+			$this.WriteMessage("Provided file path is empty, Please re-run the command with correct path.", [MessageType]::Error);
+			return $messages;
+		}
+		# Add check for write permissions
+		$controlResultSet = Get-ChildItem -Path $filePath -Filter '*.csv' -Force | Get-Content | Convertfrom-csv
+        $resultsGroups=$controlResultSet | Group-Object -Property ResourceId
+        foreach ($resultGroup in $resultsGroups) {
+		            $ControlResultSet=@()
+                    $resultGroup.Group | ForEach-Object{
+
+					$controlresult = [ControlState]::new($_.ControlID,$_.ControlID,"",$_.Status,"1.0")
+					$statedata=[StateData]::new()
+					$statedata.ProgressTags="Lets wait..."
+					$statedata.AttestedDate=[DateTime]::UtcNow;
+					$controlresult.State=$statedata
+					$controlresult.HashId=[Helpers]::ComputeHash($_.ResourceId);
+					$controlresult.ResourceId=$_.ResourceId
+					$ControlResultSet+=$controlresult
+                     #$tempcontrol= [ControlState] $_;
+                    }
+					# Create function to update scan result
+					$this.SetControlState($resultGroup.Name,$ControlResultSet,$false)
+                }
+
+		return $messages;
+    }
 }

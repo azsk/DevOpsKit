@@ -169,7 +169,11 @@ function Get-AzSKAzureServicesSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("gfs")]
-		$GenerateFixScript
+		$GenerateFixScript,
+
+		[switch]
+        [Parameter(Mandatory = $false)]
+		$IncludeUserComments
     )
 
 	Begin
@@ -195,6 +199,8 @@ function Get-AzSKAzureServicesSecurityStatus
 				$secStatus.ExcludeTags = $ExcludeTags;
 				$secStatus.ControlIdString = $ControlIds;
 				$secStatus.GenerateFixScript = $GenerateFixScript;
+
+				$secStatus.IncludeUserComments =$IncludeUserComments;
 
 				[AttestationOptions] $attestationOptions = [AttestationOptions]::new();
 				$attestationOptions.AttestControls = $ControlsToAttest				
@@ -323,7 +329,11 @@ function Get-AzSKSubscriptionSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("gfs")]
-		$GenerateFixScript
+		$GenerateFixScript,
+
+		[switch]
+        [Parameter(Mandatory = $false)]
+		$IncludeUserComments
 	)
 	Begin
 	{
@@ -341,6 +351,8 @@ function Get-AzSKSubscriptionSecurityStatus
 				$sscore.FilterTags = $FilterTags;
 				$sscore.ExcludeTags = $ExcludeTags;
 				$sscore.ControlIdString = $ControlIds;
+
+                $sscore.IncludeUserComments =$IncludeUserComments;
 
 				#build the attestation options object
 				[AttestationOptions] $attestationOptions = [AttestationOptions]::new();

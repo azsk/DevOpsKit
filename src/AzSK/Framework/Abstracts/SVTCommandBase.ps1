@@ -12,6 +12,7 @@ class SVTCommandBase: CommandBase {
     hidden [ControlStateExtension] $ControlStateExt;
     hidden [bool] $UserHasStateAccess = $false;
     [bool] $GenerateFixScript = $false;
+	[bool] $IncludeUserComments = $false;
     [AttestationOptions] $AttestationOptions;
 
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
@@ -83,6 +84,7 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlIds += $this.ControlIds;
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
+		$svtObject.IncludeUserComments =$this.IncludeUserComments;
 
         #Include Server Side Exclude Tags
         $svtObject.ExcludeTags += [ConfigurationManager]::GetAzSKConfigData().DefaultControlExculdeTags

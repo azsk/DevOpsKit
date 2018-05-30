@@ -46,6 +46,7 @@ class ControlResult
 	[StateManagement] $StateManagement = [StateManagement]::new();
 	hidden [PSObject] $FixControlParameters = $null;
 	hidden [bool] $EnableFixControl = $false;
+	[string] $UserComments ="";
 
     [MessageData[]] $Messages = @();
 
