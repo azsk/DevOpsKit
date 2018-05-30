@@ -73,7 +73,11 @@
         "Automated",
         "DP"
       ],
-      "InvalidAttestationStates": "NotAnIssue,WillNotFix,NotApplicable",
+      "InvalidAttestationStates": [
+        "NotAnIssue",
+        "WillNotFix",
+        "NotApplicable"
+      ],
       "Enabled": true,
       "FixControl": {
         "FixMethodName": "EnableHttpsProtocol",
