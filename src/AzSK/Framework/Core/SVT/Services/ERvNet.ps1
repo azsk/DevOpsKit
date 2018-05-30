@@ -357,17 +357,17 @@ class ERvNet : SVTIaasBase
 
         if($null -eq $locks -or $locks.Length -le 0)
         {
-			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("No Resource locks are configured at the ResourceGroup scope for - ["+ $this.ResourceContext.ResourceName +"]"));
+			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("No resource locks are configured at the ResourceGroup scope for - ["+ $this.ResourceContext.ResourceName +"]"));
         }
         else
 		{
 			if(($locks | Where-Object {$_.Properties.Level -eq $this.ControlSettings.ERvNet.ResourceLockLevel } | Measure-Object).Count -gt 0)
 			{
-				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Found Resource locks configured at the ResourceGroup scope for - ["+ $this.ResourceContext.ResourceName +"]", $locks));
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Found resource locks configured at the ResourceGroup scope for - ["+ $this.ResourceContext.ResourceName +"]", $locks));
 			}
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("No *$($this.ControlSettings.ERvNet.ResourceLockLevel)* Resource locks are configured at the ResourceGroup scope for - ["+ $this.ResourceContext.ResourceName +"]"));
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("No *$($this.ControlSettings.ERvNet.ResourceLockLevel)* resource locks are configured at the ResourceGroup scope for - ["+ $this.ResourceContext.ResourceName +"]"));
 			}
         }
 

@@ -39,6 +39,7 @@ Import-Module AzureRM.StreamAnalytics -RequiredVersion 4.0.2
 Import-Module AzureRM.Tags -RequiredVersion 4.0.0
 Import-Module AzureRM.TrafficManager -RequiredVersion 4.0.1
 Import-Module AzureRM.Websites -RequiredVersion 4.1.0
+Import-Module AzureRM.ContainerInstance -RequiredVersion 0.2.2
 
 . $PSScriptRoot\Framework\Framework.ps1
 
@@ -348,6 +349,7 @@ function Set-AzSKUserPreference {
         [switch]
         $ResetOutputFolderPath,
 
+        [switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
 		$DoNotOpenOutputFolder
     )
@@ -480,7 +482,7 @@ function Set-AzSKPrivacyNoticeResponse {
     }
 }
 
-function Clear-AzSKCache {
+function Clear-AzSKSessionState {
     [ConfigOverride]::ClearConfigInstance()
 }
 

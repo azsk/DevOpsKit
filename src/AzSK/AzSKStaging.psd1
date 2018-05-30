@@ -79,7 +79,8 @@
 		@{ModuleName = 'AzureRM.StreamAnalytics'; RequiredVersion = '4.0.2'}
 		@{ModuleName = 'AzureRM.Tags'; RequiredVersion = '4.0.0'}
 		@{ModuleName = 'AzureRM.TrafficManager'; RequiredVersion = '4.0.1'}		
-		@{ModuleName = 'AzureRM.Websites'; RequiredVersion = '4.1.0'}		
+		@{ModuleName = 'AzureRM.Websites'; RequiredVersion = '4.1.0'}	
+		@{ModuleName = 'AzureRM.ContainerInstance'; RequiredVersion = '0.2.2'}	
     )
 
     # Assemblies that must be loaded prior to importing this module
@@ -136,7 +137,7 @@
         'Set-AzSKAlertMonitoring',
 		'Remove-AzSKAlertMonitoring'
         'Get-AzSKARMTemplateSecurityStatus',
-        'Clear-AzSKCache'
+        'Clear-AzSKSessionState'
     )
 
     # Cmdlets to export from this module

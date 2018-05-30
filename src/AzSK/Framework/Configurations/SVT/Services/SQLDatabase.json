@@ -1,7 +1,7 @@
 {
     "FeatureName":  "SQLDatabase",
     "Reference":  "aka.ms/azsktcp/sqldatabase",
-    "IsManintenanceMode":  false,
+    "IsMaintenanceMode":  false,
   "Controls": [
     {
       "ControlID": "Azure_SQLDatabase_AuthZ_Use_AAD_Admin",

@@ -1030,6 +1030,14 @@ class Helpers {
 
     }
 
+    static [void] CreateNewResourceGroupIfNotExists([string]$ResourceGroup, [string]$Location, [string] $Version) 
+    {
+       if((Get-AzureRmResourceGroup -Name $ResourceGroup -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0)
+	    {
+		    [Helpers]::NewAzSKResourceGroup($ResourceGroup,$Location,$Version)
+	    }  
+    }
+
     static [string] ComputeHash([String] $data) {
         $HashValue = [System.Text.StringBuilder]::new()
         [System.Security.Cryptography.HashAlgorithm]::Create("SHA256").ComputeHash([System.Text.Encoding]::UTF8.GetBytes($data))| ForEach-Object {

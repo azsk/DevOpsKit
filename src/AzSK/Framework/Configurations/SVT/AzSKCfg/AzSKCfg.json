@@ -1,7 +1,7 @@
 {
   "FeatureName": "AzSKCfg",
   "Reference": "aka.ms/azsktcp",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
   "Controls": [
     {
       "ControlID": "Azure_AzSKCfg_Check_Presence_of_CA",

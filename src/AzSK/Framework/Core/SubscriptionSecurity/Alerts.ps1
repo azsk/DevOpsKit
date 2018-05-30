@@ -95,13 +95,20 @@ class Alerts: CommandBase
 				}
 			}		
 			$policyList=@();
-			ForEach($Tag in $this.FilterTags)
-			{
-		      $policyList+= $this.Policy | Where-Object { $Tag -In $_.Tags }
-			}	
-			$this.Policy=$policyList| Select-Object * -Unique	
-			$this.Policy |ForEach-Object {
-			               $alertNameArray+=$_.Name }
+		    if(($this.FilterTags|Measure-Object).Count -gt 0)
+            {
+			 ForEach($Tag in $this.FilterTags)
+			 {
+		       $policyList+= $this.Policy | Where-Object { $Tag -In $_.Tags }          
+			 }	
+			  $this.Policy=$policyList| Select-Object * -Unique	
+			  $this.Policy |ForEach-Object { $alertNameArray+=$_.Name }
+            }
+            else
+            {
+              $policyList+= $this.Policy
+              $this.Policy=$policyList| Select-Object * -Unique
+            }
 
 			# User wants to remove only specific alerts
 			if(($this.Policy | Measure-Object).Count -ne 0)

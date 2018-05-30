@@ -69,7 +69,8 @@ function Install-AzSKOrganizationPolicy
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
-        [string]
+		[Alias("PolicyFolderName")]
+		[string]
 		$PolicyFolderPath,
 
 		[switch]
@@ -164,7 +165,8 @@ function Update-AzSKOrganizationPolicy
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
-        [string]
+		[Alias("PolicyFolderName")]
+		[string]
 		$PolicyFolderPath,
 		
 		[Parameter(Mandatory = $true, ParameterSetName = "Migrate")]

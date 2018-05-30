@@ -1,7 +1,7 @@
   {
   "FeatureName": "AppService",
   "Reference": "aka.ms/azsktcp/appservice",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
     "Controls": [
       {
         "ControlID": "Azure_AppService_AuthZ_Grant_Min_RBAC_Access",

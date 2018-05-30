@@ -1,7 +1,7 @@
 ﻿{
   "FeatureName": "CDN",
   "Reference": "aka.ms/azsktcp/cdn",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
   "Controls": [
     {
       "ControlID": "Azure_CDN_AuthZ_Grant_Min_RBAC_Access",

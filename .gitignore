@@ -188,10 +188,11 @@ GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
 
-# Added by OneITVSO 
 *.dll
 *.exe
 *.pubxml
 **/packages/*
 .vs/
 /AzSK
+/src/AzSK.sln
+/src/AzSK.Debug

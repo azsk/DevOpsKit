@@ -214,11 +214,23 @@ class SVTMapping
             ClassName = "APIConnection";
 			ResourceTypeName = [SVTMapping]::APIConnectionTypeName;
         },
+        [ResourceTypeMapping]@{
+            ResourceType = "Microsoft.BotService/botServices";
+            JsonFileName = "BotService.json";
+            ClassName = "BotService";
+			ResourceTypeName = "BotService";
+        },
 		[ResourceTypeMapping]@{
             ResourceType = "AzSKCfg";
 			ClassName = "AzSKCfg";
 			JsonFileName = "AzSKCfg.json";
 			ResourceTypeName = "AzSKCfg";
+        },
+		[ResourceTypeMapping]@{
+            ResourceType = "Microsoft.ContainerInstance/containerGroups";
+			ClassName = "ContainerInstances";
+			JsonFileName = "ContainerInstances.json";
+			ResourceTypeName = "ContainerInstances";
         }
     );
 

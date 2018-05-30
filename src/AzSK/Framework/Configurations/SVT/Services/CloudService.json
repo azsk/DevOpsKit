@@ -1,7 +1,7 @@
 ﻿{
   "FeatureName": "CloudService",
   "Reference": "aka.ms/azsktcp/cloudservice",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
   "Controls": [
     {
       "ControlID": "Azure_CloudService_AuthN_Use_AAD_for_Client_AuthN",

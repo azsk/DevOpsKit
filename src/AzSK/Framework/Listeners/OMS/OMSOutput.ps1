@@ -179,7 +179,7 @@ class OMSOutput: ListenerBase
 			{
 				if(-not [OMSOutput]::IsIssueLogged)
 				{
-					$this.PublishCustomMessage("An error occurred while pushing data to OMS. Please check logs for more details. AzSK control evaluation results will not be sent to the configured OMS workspace from this environment until the error is resolved.", [MessageType]::Error);
+					$this.PublishCustomMessage("An error occurred while pushing data to OMS. Please check logs for more details. AzSK control evaluation results will not be sent to the configured OMS workspace from this environment until the error is resolved.", [MessageType]::Warning);
 					$this.PublishException($_);
 					[OMSOutput]::IsIssueLogged = $true
 				}

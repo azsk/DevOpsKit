@@ -20,8 +20,6 @@ function Set-AzSKAlerts
 			Provide a security contact email address. Recommended a mail enabled Security Group with receiving of external emails option turned ON.
 	.PARAMETER SecurityPhoneNumbers
 	        Provide a security contact international information phone number (for example, 425-1234567). Note that only the country code '1' is currently supported for SMS.
-	.PARAMETER TargetResourceGroup
-			Provide the ResourceGroup on which the AlertPackage must be configured
 	.PARAMETER AlertResourceGroupLocation
 	        Provide the location for alert ResourceGroup
 	
@@ -47,10 +45,6 @@ function Set-AzSKAlerts
 		[string] 
 		[Parameter(Mandatory = $false, HelpMessage = "Provide tag names for processing specific policies. Comma separated values are supported.")]
 		$Tags,
-
-		[string] 
-		[Parameter(Mandatory = $false, HelpMessage = "Provide the ResourceGroup on which the AlertPackage has to be configured")]
-		$TargetResourceGroup,
 
 		[string] 
 		[Parameter(Mandatory = $false, HelpMessage = "Provide the location for alert ResourceGroup")]
@@ -84,7 +78,9 @@ function Set-AzSKAlerts
 			$alertObj = [Alerts]::new($SubscriptionId, $PSCmdlet.MyInvocation, $modifiedTags);
 			if ($alertObj) 
 			{
-				return $alertObj.InvokeFunction($alertObj.SetAlerts, @($TargetResourceGroup, $SecurityContactEmails,$SecurityPhoneNumbers, $AlertResourceGroupLocation));				
+			    # Turning Off this feature forcefully by initializing TargetResourceGroup as null
+			    $TargetResourceGroup=$null;
+				return $alertObj.InvokeFunction($alertObj.SetAlerts, @($TargetResourceGroup,$SecurityContactEmails,$SecurityPhoneNumbers, $AlertResourceGroupLocation));				
 			}
 		}
 		catch 
