@@ -302,7 +302,7 @@ class SVTBase: AzSKRoot
 			else
 			{
 				$this.EvaluationStarted();
-				$resourceSecurityResult += $this.GetAutomatedSecurityStatus();
+				 $resourceSecurityResult += $this.GetAutomatedSecurityStatus();
 				$resourceSecurityResult += $this.GetManualSecurityStatus();
 				# This will be called for each unique resource id
 				if($this.IncludeUserComments -eq $true)
@@ -1112,9 +1112,17 @@ class SVTBase: AzSKRoot
 	 hidden [SVTEventContext[]] GetUserComments([SVTEventContext[]] $arguments)
     {
 	    [SVTEventContext[]] $controlsResultSet = @();
+		# Read file here Scan report
 		$arguments | ForEach-Object{      
 		  $currentItem=$_;
-		  $currentItem.ControlResults[0].UserComments="It Will Work..!!"
+		  [ControlResult[]] $controlsResults = @();
+		  #$currentItem.ControlResults[0].UserComments="It Will Work..!!"
+		  $currentItem.ControlResults | ForEach-Object {
+		  $currentControl=$_
+		  $currentControl.UserComments="It Will Work..!!"
+		  $controlsResults+=$currentControl
+		  }
+		  $currentItem.ControlResults=$controlsResults 
 		  $controlsResultSet+=$currentItem
 		};
         return $controlsResultSet;
