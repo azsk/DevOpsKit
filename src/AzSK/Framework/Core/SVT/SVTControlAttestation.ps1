@@ -33,6 +33,7 @@ class SVTControlAttestation
 			"1" { return [AttestationStatus]::NotAnIssue;}
 			"2" { return [AttestationStatus]::WillNotFix;}
 			"3" { return [AttestationStatus]::WillFixLater;}
+			"4" { return [AttestationStatus]::NotApplicable;}
 			"9" { 
 					$this.abortProcess = $true;
 					return [AttestationStatus]::None;
@@ -109,12 +110,14 @@ class SVTControlAttestation
 		$Justification=""
 		$Attestationstate=""
 		$message = ""
-		[String[]]$attestationOptions = Compare-Object -ReferenceObject ([AttestationStatus].GetEnumNames()) -DifferenceObject $controlItem.ControlItem.InvalidAttestationStates -PassThru | Where-Object {$_.SideIndicator -EQ "<="} | Where-Object {$_ -notin @("None","NotFixed")}
-		$attestationOptions | ForEach-Object { $message += "`n[{0}] {1}" -f ($attestationOptions.IndexOf($_)+1),$_ }
-		$attestationhashtable = @{
+		[String[]]$applicableAttestation = Compare-Object -ReferenceObject ([AttestationStatus].GetEnumNames()) -DifferenceObject $controlItem.ControlItem.InvalidAttestationStates -PassThru | Where-Object {$_.SideIndicator -EQ "<="} | Where-Object {$_ -notin @("None","NotFixed")}
+		$applicableAttestation | ForEach-Object { $message += "`n[{0}] {1}" -f ($applicableAttestation.IndexOf($_)+1),$_ }
+		$attestationHashtable = @{
 			"NotAnIssue" = "1";
 			"WillNotFix" = "2";
-			"WillFixLater" = "3"}
+			"WillFixLater" = "3";
+			"NotApplicable" = "4"
+		}
 		switch ($userChoice.ToUpper()){
 			"0" #None
 			{				
@@ -123,13 +126,13 @@ class SVTControlAttestation
 			"1" #Attest
 			{
 				$attestationState = -1
-				while($attestationState -notin 0..($attestationOptions.Count) -and $attestationState -ne 9 )
+				while($attestationState -notin 0..($applicableAttestation.Count) -and $attestationState -ne 9 )
 				{
 					Write-Host "`nPlease select an attestation status from below: `n[0]: Skip$message" -ForegroundColor Cyan
 					$attestationState = Read-Host "User Choice"
 				}
 				if($attestationState -ne 0 -and $attestationState -ne 9){
-					$attestationState = $attestationhashtable.($attestationOptions.GetValue($attestationState-1))
+					$attestationState = $attestationHashtable.($applicableAttestation.GetValue($attestationState-1))
 				}
 				$attestValue = $this.GetAttestationValue($attestationState);
 				if($attestValue -ne [AttestationStatus]::None)
