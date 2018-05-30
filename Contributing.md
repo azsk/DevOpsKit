@@ -6,10 +6,10 @@ Welcome, and thank you for showing interest in contributing to the Secure DevOps
 
 ## Table of Contents
  * [Code of Conduct](#code-of-conduct)
- * [Contribution areas](#contribution-area)
+ * [Contribution areas](#contribution-areas)
  * [Reporting issues](#reporting-issues)
  * [Contributing to code](#contributing-to-code)
- 	* [Understanding the structure of the DevOps Kit](#understanding-the-structure-of-secure-devops-kit)
+ 	* [Understanding the structure of the DevOps Kit](understanding-the-structure-of-the-devops-kit)
  	* [Enhance controls for supported resources](#enhance-controls-for-supported-resources)
 	   * [Update existing controls](#update-existing-controls)
 	   * [Add new controls for existing supported resources](#add-new-controls-for-existing-supported-resources)   
@@ -18,7 +18,7 @@ Welcome, and thank you for showing interest in contributing to the Secure DevOps
 	
 	
 ### Code of Conduct
-Code of Conduct is necessary so as to encourage a healthy environment for end users to contribute to the project. Our Code of Conduct can be found [here](DevOpsKit/CODE_OF_CONDUCT.md).
+Code of Conduct is necessary so as to encourage a healthy environment for end users to contribute to the project. Our Code of Conduct can be found [here](https://github.com/azsk/DevOpsKit/blob/master/CODE_OF_CONDUCT.md).
 
 ### Contribution areas
 You can contribute to the DevOps Kit project through blogs, documentation, or code. 
@@ -34,7 +34,7 @@ Before creating a new issue, search in [issues](https://github.com/azsk/DevOpsKi
 If you find that the issue already exists, make relevant comments and mention if something is still missing there.
 
 #### Write good bug reports
-Writing a good issue/bug report will help others (including reviewers) get a better understanding of the issue. For example, giving an appropriate  issue title may help others facing a similar issue to find and comment on it. We have created an [issue template](DevOpsKit/.github/issue_template.md) to make sure that important pieces of information are not missed while creating an issue.
+Writing a good issue/bug report will help others (including reviewers) get a better understanding of the issue. For example, giving an appropriate  issue title may help others facing a similar issue to find and comment on it. We have created an issue template to make sure that important pieces of information are not missed while creating an issue.
 
 ##### Best practices
 * File a single issue per problem. Do not add multiple bugs under the same issue as bugs may look similar but their root causes might be different.
@@ -173,7 +173,8 @@ hidden [ControlResult] <ControlMethodName>([ControlResult] $controlResult)
    {
 		  # SVT implementation goes here 
 		  # Update the result of TCP control in object $controlResult
-		  $controlResult.VerificationResult = [VerificationResult]::Verify;  # Valid values are - Passed, Verify, Failed, Unknown 
+		  $controlResult.VerificationResult = [VerificationResult]::Verify;  # Valid values are - Verify,Failed, NotSupported,
+        Error 
 
 		  # Add any number of messages and data objects using function $controlResult.AddMessage(). 
 		  #	Refer file 'AzSDK\Framework\Models\AzSdkEvent.ps1' for definition of 'MessageData' class and its possible contractors. 

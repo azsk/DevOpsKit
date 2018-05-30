@@ -374,6 +374,13 @@ function Update-AzSKContinuousAssurance
 		[Alias("fra","ConfigureRuntimeAccount", "cra")]
 		$FixRuntimeAccount,
 
+        [Parameter(Mandatory = $false, ParameterSetName = "Default")]
+		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
+        [switch]
+		[Alias("dra","DefaultRuntimeAccount", "cdra")]
+		$CreateDefaultRuntimeAccount,
+
+
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
         [switch]
@@ -445,7 +452,7 @@ function Update-AzSKContinuousAssurance
 						$ccAccount.LoggingOption = $LoggingOption;
 					}
 				}
-				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$RenewCertificate,$FixModules));
+				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$CreateDefaultRuntimeAccount,$RenewCertificate,$FixModules));
 			}
 			
 		}
