@@ -79,14 +79,22 @@ class SVTControlAttestation
 			{
 				$tempAttestationStatus = [AttestationStatus]::WillNotFix;
 			}
-			
-			while($userChoice -ne '0' -and $userChoice -ne '1' -and $userChoice -ne '2' -and $userChoice -ne '9' )
+			if(-not $this.isControlAttestable()){
+				while($userChoice -ne '0' -and $userChoice -ne '1' -and $userChoice -ne '2' -and $userChoice -ne '9' )
+				{
+					Write-Host "Existing attestation details:" -ForegroundColor Cyan
+					Write-Host "Attestation Status: $tempAttestationStatus`nVerificationResult: $($controlState.EffectiveVerificationResult)`nAttested By       : $($controlState.State.AttestedBy)`nJustification     : $($controlState.State.Justification)`n"
+					Write-Host "Please select an action from below: `n[0]: Skip`n[1]: Attest`n[2]: Clear Attestation" -ForegroundColor Cyan
+					$userChoice = Read-Host "User Choice"
+					$userChoice = $userChoice.Trim();
+				}
+			}
+			else
 			{
 				Write-Host "Existing attestation details:" -ForegroundColor Cyan
 				Write-Host "Attestation Status: $tempAttestationStatus`nVerificationResult: $($controlState.EffectiveVerificationResult)`nAttested By       : $($controlState.State.AttestedBy)`nJustification     : $($controlState.State.Justification)`n"
-				Write-Host "Please select an action from below: `n[0]: Skip`n[1]: Attest`n[2]: Clear Attestation" -ForegroundColor Cyan
-				$userChoice = Read-Host "User Choice"
-				$userChoice = $userChoice.Trim();
+				Write-Host "This control can no longer be attested as you have exceed the 90 days attestation policy." -ForegroundColor Cyan
+				return $null
 			}
 		}
 		else
@@ -100,6 +108,13 @@ class SVTControlAttestation
 		}
 		$Justification=""
 		$Attestationstate=""
+		$message = ""
+		[String[]]$attestationOptions = Compare-Object -ReferenceObject ([AttestationStatus].GetEnumNames()) -DifferenceObject $controlItem.ControlItem.InvalidAttestationStates -PassThru | Where-Object {$_.SideIndicator -EQ "<="} | Where-Object {$_ -notin @("None","NotFixed")}
+		$attestationOptions | ForEach-Object { $message += "`n[{0}] {1}" -f ($attestationOptions.IndexOf($_)+1),$_ }
+		$attestationhashtable = @{
+			"NotAnIssue" = "1";
+			"WillNotFix" = "2";
+			"WillFixLater" = "3"}
 		switch ($userChoice.ToUpper()){
 			"0" #None
 			{				
@@ -107,12 +122,14 @@ class SVTControlAttestation
 			}
 			"1" #Attest
 			{
-				$attestationState = ""
-				while($attestationState -ne '0' -and $attestationState -ne '1' -and $attestationState -ne '2' -and  $attestationState -ne '3' -and $attestationState -ne '9' )
+				$attestationState = -1
+				while($attestationState -notin 0..($attestationOptions.Count) -and $attestationState -ne 9 )
 				{
-					Write-Host "`nPlease select an attestation status from below: `n[0]: Skip`n[1]: NotAnIssue`n[2]: WillNotFix`n[3]: WillFixLater" -ForegroundColor Cyan
+					Write-Host "`nPlease select an attestation status from below: `n[0]: Skip$message" -ForegroundColor Cyan
 					$attestationState = Read-Host "User Choice"
-					$attestationState = $attestationState.Trim();
+				}
+				if($attestationState -ne 0 -and $attestationState -ne 9){
+					$attestationState = $attestationhashtable.($attestationOptions.GetValue($attestationState-1))
 				}
 				$attestValue = $this.GetAttestationValue($attestationState);
 				if($attestValue -ne [AttestationStatus]::None)
@@ -431,4 +448,9 @@ class SVTControlAttestation
 		}
 
 	}	
+
+	[bool] isControlAttestable()
+	{
+		return $false;
+	}
 }
