@@ -47,7 +47,7 @@ function Install-AzSKContinuousAssurance
 	.PARAMETER CentralScanMode
 		This enables AzSK CA in central scanning mode. Use this switch along with TargetSubscriptionIds param to register target subscriptions in the central CA.
 	.PARAMETER DoNotOpenOutputFolder
-		Switch to specify whether to open output folder
+		Switch to specify whether to open output folder.
 	.NOTES
 	
 
@@ -275,7 +275,7 @@ function Update-AzSKContinuousAssurance
 	.PARAMETER FixModules
 			 Use this switch in case 'AzureRm.Automation' module extraction fails in CA Automation Account. 
 	.PARAMETER DoNotOpenOutputFolder
-		Switch to specify whether to open output folder
+		Switch to specify whether to open output folder.
 	.NOTES
 	
 
@@ -483,7 +483,7 @@ function Get-AzSKContinuousAssurance
 	.PARAMETER ExhaustiveCheck
 		By appending this switch it would check whether all the modules installed in central automation account are up to date. Only include if default diagnosis is not resulting in any issue.
 	.PARAMETER DoNotOpenOutputFolder
-		Switch to specify whether to open output folder
+		Switch to specify whether to open output folder.
 	.LINK
 	https://aka.ms/azskossdocs 
 
@@ -563,7 +563,7 @@ function Remove-AzSKContinuousAssurance
 	.PARAMETER CentralScanMode
 		This switch is required if AzSK CA is running in central scanning mode. 
 	.PARAMETER DoNotOpenOutputFolder
-		Switch to specify whether to open output folder
+		Switch to specify whether to open output folder.
 	.LINK
 	https://aka.ms/azskossdocs 
 
