@@ -213,9 +213,11 @@ class StorageReportHelper
                 }
             }
             $fileName = $AzSKTemp+"\"+$StorageReportBlobName
-            $StorageReportJson = [LocalSubscriptionReport] (Get-ChildItem -Path $fileName -Force | Get-Content | ConvertFrom-Json)
+            $StorageReportJson = (Get-ChildItem -Path $fileName -Force | Get-Content | ConvertFrom-Json)
             
-			return $StorageReportJson;
+            $storageReport = [LocalSubscriptionReport] $StorageReportJson
+
+			return $storageReport;
 		}
 		finally{
 		
