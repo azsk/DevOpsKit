@@ -1111,15 +1111,28 @@ class SVTBase: AzSKRoot
 	}
 	 hidden [SVTEventContext[]] GetUserComments([SVTEventContext[]] $arguments)
     {
+	    $invocationcontext=$this.ControlStateExt.InvocationContext
+		# $storageReportHelper = [StorageReportHelper]::new( $invocationcontext); 	
+		# $StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
+		# $StorageReportJson = Get-ChildItem -Path "C:\Users\v-tashuk\Downloads\scanresult.json" -Force | Get-Content | ConvertFrom-Json    
+		# $ResourceData=$StorageReportJson.Subscription.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}
 	    [SVTEventContext[]] $controlsResultSet = @();
-		# Read file here Scan report
 		$arguments | ForEach-Object{      
 		  $currentItem=$_;
 		  [ControlResult[]] $controlsResults = @();
-		  #$currentItem.ControlResults[0].UserComments="It Will Work..!!"
 		  $currentItem.ControlResults | ForEach-Object {
 		  $currentControl=$_
-		  $currentControl.UserComments="It Will Work..!!"
+		  #$matchedControlResult=$ResourceData.ResourceScanResult | Where-Object {
+		  #$_.ControlId -eq $currentControl.ControlId
+		  #}
+		  if($null -ne  $matchedControlResult)
+		  {
+		   $currentControl.UserComments=$matchedControlResult.UserComments
+		  }else
+		  {
+		   $currentControl.UserComments="It Will Work..!!"
+		  }
+		 
 		  $controlsResults+=$currentControl
 		  }
 		  $currentItem.ControlResults=$controlsResults 
