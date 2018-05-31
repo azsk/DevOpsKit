@@ -170,7 +170,7 @@ function Install-AzSKContinuousAssurance
 		$CentralScanMode,
 
 		[switch]
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		$DoNotOpenOutputFolder
     )
 	Begin
@@ -415,7 +415,7 @@ function Update-AzSKContinuousAssurance
 		$CentralScanMode,
 
 		[switch]
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		$DoNotOpenOutputFolder
     )
 	Begin
@@ -510,7 +510,7 @@ function Get-AzSKContinuousAssurance
 		$ExhaustiveCheck,
 
 		[switch]
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		$DoNotOpenOutputFolder
     )
 	Begin
@@ -610,7 +610,7 @@ function Remove-AzSKContinuousAssurance
 		$Force,
 
 		[switch]
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		$DoNotOpenOutputFolder
     )
 	Begin
