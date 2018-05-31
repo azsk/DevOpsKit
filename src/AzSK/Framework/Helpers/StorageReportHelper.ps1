@@ -6,8 +6,8 @@ class StorageReportHelper
 	hidden [PSObject] $AzSKStorageAccount = $null;
 	hidden [PSObject] $AzSKStorageContainer = $null;
 	hidden [PSObject] $ControlStateIndexer = $null;	
-	hidden [int] $HasControlStateReadPermissions = -1;
-	hidden [int] $HasControlStateWritePermissions = -1;
+	hidden [int] $HasStorageReportReadPermissions = -1;
+	hidden [int] $HasStorageReportWritePermissions = -1;
 	hidden [string]	$IndexerBlobName ="Resource.index.json"
     hidden [int] $retryCount = 3;
     
@@ -15,7 +15,6 @@ class StorageReportHelper
 
     StorageReportHelper([InvocationInfo] $invocationContext)
 	{
-		$this.SubscriptionContext = $subscriptionContext;
 		$this.InvocationContext = $invocationContext;
     }
     
@@ -213,7 +212,8 @@ class StorageReportHelper
                     #eat this exception and retry
                 }
             }
-            $StorageReportJson = Get-ChildItem -Path "$AzSKTemp\$StorageReportBlobName" -Force | Get-Content | ConvertFrom-Json 
+            $fileName = $AzSKTemp+"\"+$StorageReportBlobName
+            $StorageReportJson = [LocalSubscriptionReport] (Get-ChildItem -Path $fileName -Force | Get-Content | ConvertFrom-Json)
             
 			return $StorageReportJson;
 		}

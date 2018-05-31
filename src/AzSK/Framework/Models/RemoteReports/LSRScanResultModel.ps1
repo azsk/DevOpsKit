@@ -50,7 +50,6 @@ class LSRControlResultBase
     [string] $AttestedBy;
 	[DateTime] $AttestedDate;
     [string] $Justification;
-    [string] $AttestationStatus;
     [string] $PreviousVerificationResult;
 	[PSObject] $AttestationData;
 
