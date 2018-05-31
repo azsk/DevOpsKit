@@ -143,7 +143,7 @@ class Constants
 			"Recommendation: Please start a fresh PS session and run 'Import-Module {2}' first to avoid getting into this situation.`r`n"
 
 	# Local Subscription Report Constants
-	static [string] $StorageReportContainerName = "scan-data"
+	static [string] $StorageReportContainerName = "scan-report"
 	static [string] $StorageReportBlobName = "scanresult"
 
 	static [void] SetAzSKModuleName($moduleName)

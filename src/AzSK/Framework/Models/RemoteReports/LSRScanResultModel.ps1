@@ -1,15 +1,15 @@
 class LocalSubscriptionReport
 {
-	[LSRSubscription[]] $Subscriptions;
+	[LSRSubscription[]] $Subscriptions = @();
 }
 
 class LSRSubscription
 {
-	[string] $SubscriptionId;
-	[string] $SubscriptionName;
-	[LSRScanDetails] $LSRScanDetails;
-	[string] $SubscriptionMetadata;
-	[string] $SchemaVersion;
+	[string] $SubscriptionId = "";
+	[string] $SubscriptionName = "";
+	[LSRScanDetails] $ScanDetails = $null;
+	[string] $SubscriptionMetadata = "";
+	[string] $SchemaVersion = "";
 
 
 	LSRSubscription() {
@@ -19,39 +19,38 @@ class LSRSubscription
 
 class LSRScanDetails
 {
-	[LSRSubscriptionControlResult[]] $SubscriptionScanResult;
-	[LSRResources[]] $Resources;
+	[LSRSubscriptionControlResult[]] $SubscriptionScanResult = @();
+	[LSRResources[]] $Resources = @();;
 }
 
 class LSRResources
 {
-	[string] $HashId;
-	[string] $ResourceId;
+	[string] $HashId = "";
+	[string] $ResourceId = "";
 	[DateTime] $LastEventOn;
 	[DateTime] $FirstScannedOn;
 	
-	[string] $ResourceGroupName;
-	[string] $ResourceName;
-	[string] $ResourceMetadata;
+	[string] $ResourceGroupName = "";
+	[string] $ResourceName = "";
+	[string] $ResourceMetadata = "";
 
-	[LSRResourceScanResult[]] $ResourceScanResult;
+	[LSRResourceScanResult[]] $ResourceScanResult = @();
 }
  
 class LSRControlResultBase 
 {
     #Default control values
-	[string] $ControlId;
-    [string] $ControlIntId;
+	[string] $ControlId = "";
+    [string] $ControlIntId = "";
 	[DateTime] $ControlUpdatedOn;
-    [ControlSeverity] $ControlSeverity;
-    [VerificationResult] $ActualVerificationResult;
-    [AttestationStatus] $AttestationStatus;
-    [VerificationResult] $VerificationResult;
-    [string] $AttestedBy;
+    [ControlSeverity] $ControlSeverity = [ControlSeverity]::High
+    [VerificationResult] $ActualVerificationResult= [VerificationResult]::Manual;
+    [AttestationStatus] $AttestationStatus = [AttestationStatus]::None;
+    [VerificationResult] $VerificationResult = [VerificationResult]::Manual;
+    [string] $AttestedBy = "";
 	[DateTime] $AttestedDate;
-    [string] $Justification;
-    [string] $AttestationStatus;
-    [string] $PreviousVerificationResult;
+    [string] $Justification = "";
+    [string] $PreviousVerificationResult = [VerificationResult]::Manual;
 	[PSObject] $AttestationData;
 
 	#Tracking information
@@ -63,19 +62,19 @@ class LSRControlResultBase
 	[int] $AttestCounterInDays;
 
 	#Other  information
-	[string] $ScannedBy;
+	[string] $ScannedBy = "";
 	[ScanSource] $ScanSource;
-	[string] $ScannerModuleName;
-	[string] $ScannerVersion;
-	[string] $ControlVersion;
+	[string] $ScannerModuleName = "";
+	[string] $ScannerVersion = "";
+	[string] $ControlVersion = "";
 	[bool] $IsLatestPSModule;
 	[bool] $HasRequiredPermissions;
 	[bool] $HasAttestationWritePermissions;
 	[bool] $HasAttestationReadPermissions;
 
 
-	[string] $UserComments;
-	[string] $Metadata;
+	[string] $UserComments = "";
+	[string] $Metadata = "";
 }
 
 class LSRSubscriptionControlResult : LSRControlResultBase {
@@ -84,5 +83,5 @@ class LSRSubscriptionControlResult : LSRControlResultBase {
 
 class LSRResourceScanResult : LSRControlResultBase {
 	[ServiceScanKind] $ScanKind;
-	[string] $ChildResourceName;    
+	[string] $ChildResourceName = "";
 }
