@@ -1,7 +1,7 @@
 {
   "FeatureName": "ContainerInstances",
   "Reference": "aka.ms/azsktcp/containerinstances",
-  "IsManintenanceMode": false,
+  "IsMaintenanceMode": false,
   "Controls": [
     {
       "ControlID": "Azure_ContainerInstances_NetSec_Justify_PublicIP_and_Ports",
