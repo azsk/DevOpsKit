@@ -27,8 +27,8 @@ class LSRResources
 {
 	[string] $HashId = "";
 	[string] $ResourceId = "";
-	[DateTime] $LastEventOn;
-	[DateTime] $FirstScannedOn;
+	[DateTime] $LastEventOn = [Constants]::AzSKDefaultDateTime;
+	[DateTime] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
 	
 	[string] $ResourceGroupName = "";
 	[string] $ResourceName = "";
@@ -42,24 +42,24 @@ class LSRControlResultBase
     #Default control values
 	[string] $ControlId = "";
     [string] $ControlIntId = "";
-	[DateTime] $ControlUpdatedOn;
+	[DateTime] $ControlUpdatedOn = [Constants]::AzSKDefaultDateTime;
     [ControlSeverity] $ControlSeverity = [ControlSeverity]::High
     [VerificationResult] $ActualVerificationResult= [VerificationResult]::Manual;
     [AttestationStatus] $AttestationStatus = [AttestationStatus]::None;
     [VerificationResult] $VerificationResult = [VerificationResult]::Manual;
     [string] $AttestedBy = "";
-	[DateTime] $AttestedDate;
+	[DateTime] $AttestedDate = [Constants]::AzSKDefaultDateTime;
     [string] $Justification = "";
     [string] $PreviousVerificationResult = [VerificationResult]::Manual;
 	[PSObject] $AttestationData;
 
 	#Tracking information
-	[DateTime] $LastResultTransitionOn;
-	[DateTime] $LastScannedOn;
-	[DateTime] $FirstScannedOn;
-	[DateTime] $FirstFailedOn;
-	[DateTime] $FirstAttestedOn;
-	[int] $AttestCounterInDays;
+	[DateTime] $LastResultTransitionOn = [Constants]::AzSKDefaultDateTime;
+	[DateTime] $LastScannedOn = [Constants]::AzSKDefaultDateTime;
+	[DateTime] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
+	[DateTime] $FirstFailedOn = [Constants]::AzSKDefaultDateTime;
+	[DateTime] $FirstAttestedOn = [Constants]::AzSKDefaultDateTime;
+	[int] $AttestationCounter;
 
 	#Other  information
 	[string] $ScannedBy = "";
