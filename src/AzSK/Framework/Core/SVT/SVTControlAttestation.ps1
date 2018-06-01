@@ -110,7 +110,14 @@ class SVTControlAttestation
 		$Justification=""
 		$Attestationstate=""
 		$message = ""
-		[String[]]$applicableAttestation = Compare-Object -ReferenceObject ([AttestationStatus].GetEnumNames()) -DifferenceObject $controlItem.ControlItem.InvalidAttestationStates -PassThru | Where-Object {$_.SideIndicator -EQ "<="} | Where-Object {$_ -notin @("None","NotFixed")}
+		if($null -ne $controlItem.ControlItem.InvalidAttestationStates)
+		{
+			[String[]]$applicableAttestation = Compare-Object -ReferenceObject ([AttestationStatus].GetEnumNames()) -DifferenceObject $controlItem.ControlItem.InvalidAttestationStates -PassThru | Where-Object {$_.SideIndicator -EQ "<="} | Where-Object {$_ -notin @("None","NotFixed")} | Select-Object -Unique
+		}
+		else
+		{
+			[String[]]$applicableAttestation = Compare-Object -ReferenceObject ([AttestationStatus].GetEnumNames()) -DifferenceObject "" -PassThru | Where-Object {$_.SideIndicator -EQ "<="} | Where-Object {$_ -notin @("None","NotFixed")} | Select-Object -Unique
+		}
 		$applicableAttestation | ForEach-Object { $message += "`n[{0}] {1}" -f ($applicableAttestation.IndexOf($_)+1),$_ }
 		$attestationHashtable = @{
 			"NotAnIssue" = "1";
