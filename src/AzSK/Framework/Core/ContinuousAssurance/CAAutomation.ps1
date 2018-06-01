@@ -184,7 +184,7 @@ class CCAutomation: CommandBase
 		{
 			$runAsConnection = $this.GetRunAsConnection()
 			$existingAppId = $runAsConnection.FieldDefinitionValues.ApplicationId
-			$this.SetCASPNPermissions()
+			$this.SetCASPNPermissions($existingAppId)
 			if($this.IsMultiCAModeOn)
 			{
                 $this.SetSPNRGAccessIfNotAssigned($existingAppId,$this.AutomationAccount.ResourceGroup, "Contributor")
@@ -202,9 +202,14 @@ class CCAutomation: CommandBase
 			if(!$this.IsCAInstallationValid())
 			{
 				$this.cleanupFlag = $false
-				#ask user run update command
-				throw ([SuppressedException]::new(("One or more automation account found in resource group [$($this.AutomationAccount.ResourceGroup)]	." + `
-				"`r`nIf you want to update the existing account, please run command: '"+$this.updateCommandName+"'."), [SuppressedExceptionType]::InvalidOperation))
+				if($this.IsMultiCAModeOn)
+				{
+					throw ([SuppressedException]::new(("The specified resource group already contains an automation account. Please specify a different automation account and resource group combination."), [SuppressedExceptionType]::InvalidOperation))
+				}
+				else
+				{
+					throw ([SuppressedException]::new(("CA has been already setup in this subscription. If you need to change CA configuration, use 'Update-AzSKContinuousAssurance' command."), [SuppressedExceptionType]::InvalidOperation))
+				}
 			}
 			else
 			{
@@ -461,6 +466,11 @@ class CCAutomation: CommandBase
 		[MessageData[]] $messages = @();
 		try
 		{
+            #Always assign permissions if CA is in central scan mode
+            if($this.IsCentralScanModeOn)
+            {
+                $FixRuntimeAccount = $true
+            }
 			#region :Check if automation account is compatible for update
 			$existingAccount = $this.GetCABasicResourceInstance()
 			$automationTags = @()
@@ -496,7 +506,7 @@ class CCAutomation: CommandBase
 			#region: Check AzureRM.Automation/AzureRm.Profile and its dependent modules health
 			if($FixModules)
 			{
-				$this.PublishCustomMessage("Inspecting CA module: [AzureRM.Automation]")
+				$this.PublishCustomMessage("Inspecting modules present in the CA automation account…")
 				try
 				{
 					$this.FixCAModules()
@@ -535,8 +545,8 @@ class CCAutomation: CommandBase
 						}
 						catch
 						{
-							$this.PublishCustomMessage("WARNING: Could not renew certificate for the currently configured SPN (App Id: $($runAsConnection.FieldDefinitionValues.ApplicationId)). You may not have 'Owner' permission on it. `r`n" `
-                            + "You can setup new credentials using command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -NewRuntimeAccount' or '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -AzureADAppName <AzureADAppName>'.",[MessageType]::Warning)
+							$this.PublishCustomMessage("WARNING:  Could not renew certificate for the currently configured SPN (App Id: $($runAsConnection.FieldDefinitionValues.ApplicationId)). You may not have 'Owner' permission on it. `r`n" `
+                            + "You can either get the owner of the above SPN to run this command or run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -NewRuntimeAccount'.",[MessageType]::Warning)
 						}
 					}
 					else
@@ -592,7 +602,7 @@ class CCAutomation: CommandBase
 						$ServicePrincipal = Get-AzureRmADServicePrincipal -ServicePrincipalName $existingAppId -ErrorAction SilentlyContinue
 						if($ADApp -and $ServicePrincipal)
 						{
-							$this.SetCASPNPermissions()
+							$this.SetCASPNPermissions($this.CAAADApplicationID)
 			                if($this.IsMultiCAModeOn)
 			                {
                                 $this.SetSPNRGAccessIfNotAssigned($existingAppId,$this.AutomationAccount.ResourceGroup, "Contributor")
@@ -789,7 +799,7 @@ class CCAutomation: CommandBase
 			}
 			#endregion
 
-			#region: Update CA Scan objects in central scan mode mode
+			#region: Update CA target subs in central scan mode
 			if($this.IsCentralScanModeOn)
 			{
 				try
@@ -856,6 +866,7 @@ class CCAutomation: CommandBase
 								[Helpers]::CreateNewResourceGroupIfNotExists($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())			
 								
 								#recheck permissions
+								$this.PublishCustomMessage("Checking SPN (AAD app id: $($this.CAAADApplicationID)) permissions on target subscriptions...")
 								$this.SetCASPNPermissions($this.CAAADApplicationID)	
 																					
 								#region: Create/reuse existing storage account (Added this before creating variables since it's value is used in it)				
@@ -1466,7 +1477,7 @@ class CCAutomation: CommandBase
 			$haveSubscriptionRBACAccess = $true;
 			$haveRGRBACAccess = $true;
 			$subRBACoutputs = @();			
-			if($this.IsCentralScanModeOn)
+			if($this.IsCentralScanModeOn -and $this.ExhaustiveCheck)
 			{			
 				try
 				{					
@@ -1512,6 +1523,12 @@ class CCAutomation: CommandBase
 			}
 			else
 			{
+				if($this.IsCentralScanModeOn -and !$this.ExhaustiveCheck)
+				{
+					$currentMessage = [MessageData]::new("Warning: Skipped target subscriptions SPN permissions check. Use -ExhaustiveCheck option to include this.", [MessageType]::Warning);
+					$messages += $currentMessage;
+					$this.PublishCustomMessage($currentMessage);
+				}
 				$haveSubscriptionRBACAccess = $this.CheckServicePrincipalSubscriptionAccess($this.CAAADApplicationID)
 				$haveRGRBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID)				
 			}
@@ -2887,7 +2904,12 @@ class CCAutomation: CommandBase
     hidden [string] CreateServicePrincipalIfNotExists([string] $azSKADAppName)
     {
 		$aadApplication = Get-AzureRmADApplication -DisplayNameStartWith $azskADAppName | Where-Object -Property DisplayName -eq $azskADAppName
-		if($aadApplication)
+		if(($aadApplication|measure-object).Count -gt 1)
+		{
+			$this.PublishCustomMessage("Found more than one AAD applications with name: [$azskADAppName] in the directory. Can't reuse AAD app.")
+			throw;
+		}
+		elseif(($aadApplication|measure-object).Count -eq 1)
 		{
 			$this.PublishCustomMessage("Found AAD application in the directory: [$azskADAppName]")
 
@@ -3089,7 +3111,7 @@ class CCAutomation: CommandBase
 	
 	hidden [void] UploadModule($moduleName,$moduleVersion)
 	{
-		$this.PublishCustomMessage("Adding CA module: [$moduleName]. This may take a few min...")
+		$this.PublishCustomMessage("Could not find required module: [$moduleName] version: [$moduleVersion]. Adding it. This may take a few min...")
 		$searchResult = $this.SearchModule($moduleName,$moduleVersion)
 		if($searchResult)
 		{
@@ -3273,6 +3295,10 @@ class CCAutomation: CommandBase
 				$this.ConvertToGlobalModule($storageModuleName)
 				$this.UploadModule($_.Name,$dependentModuleResult.moduleVersion)
 			}
+			else
+			{
+				$this.PublishCustomMessage("Found module: [$currentModuleName]")
+			}
 		}
 		$storageModuleResult = $this.CheckCAModuleHealth($storageModuleName)
 		if($storageModuleResult.isModuleValid -ne $true)
@@ -3291,9 +3317,10 @@ class CCAutomation: CommandBase
         if(($deleteModuleList|Measure-Object).Count)
         {
             $deleteModuleList | ForEach-Object{
-                $this.PublishCustomMessage("Removing CA module: [$($_.Name)]. CA job will download fresh modules in next run.")   
+                $this.PublishCustomMessage("Deleting module: [$($_.Name)] from the account...")   
                 Remove-AzureRmAutomationModule -Name $deleteModuleList.Name -AutomationAccountName $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup -Force -ErrorAction SilentlyContinue
-            }
+			}
+			$this.PublishCustomMessage("Required modules will be imported automatically when the next CA scan commences.")
         }
 	}
 	

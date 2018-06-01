@@ -284,6 +284,58 @@ function AddDependentModules
    return $ResultModuleList
 }
 
+function CreateNewSchedule($scheduleName,$startTime)
+{
+	New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleName `
+                    -ResourceGroupName $AutomationAccountRG -StartTime $startTime `
+					-HourInterval 1 -Description "This schedule ensures that CA activity initiated by the Scan_Schedule actually completes. Do not disable/delete this schedule." `
+					-ErrorAction Stop | Out-Null
+	$isRegistered = (Get-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG `
+					-RunbookName $RunbookName -ScheduleName $scheduleName | Measure-Object).Count -gt 0
+	if(!$isRegistered)
+	{
+		Register-AzureRmAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $scheduleName `
+		-ResourceGroupName $AutomationAccountRG `
+		-AutomationAccountName $AutomationAccountName -ErrorAction Stop | Out-Null
+	}
+}
+function CreateHelperSchedules()
+{
+	for($i = 1;$i -le 4; $i++)
+	{
+		$scheduleName = [string]::Concat($CAHelperScheduleName,"_$i")
+		$startTime = $(get-date).AddMinutes(15*$i)
+		CreateNewSchedule -scheduleName $scheduleName -startTime $startTime
+	}
+}
+
+function DisableHelperSchedules()
+{
+	Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
+	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*"} | `
+	Set-AzureRmAutomationSchedule -IsEnabled $false | Out-Null
+	
+}
+
+function ScheduleNewJob($intervalInMins)
+{
+	$scheduleList = Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
+	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*" -and $_.ExpiryTime.UtcDateTime -gt $(get-date).ToUniversalTime()} | Sort-Object -Property NextRun 
+	$desiredNextRun = $(get-date).ToUniversalTime().AddMinutes($intervalInMins)
+	if(($scheduleList|Measure-Object).Count)
+	{
+		$scheduleList | ForEach-Object {
+			if($_.NextRun.UtcDateTime -ge $desiredNextRun)
+			{
+				Set-AzureRmAutomationSchedule -Name $_.Name -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true
+				PublishEvent -EventName "CA Job Rescheduled" -Properties @{"IntervalInMinutes" = $intervalInMins}
+				return; 
+			}
+		}
+	}
+	CreateHelperSchedules
+}
+
 try
 {
 	$setupTimer = [System.Diagnostics.Stopwatch]::StartNew();
@@ -312,7 +364,11 @@ try
 	$ResultModuleList = [ordered]@{}
 	$retryDownloadIntervalMins = 10
 	$monitorjobIntervalMins = 45
-
+	$tempUpdateToLatestVersion = Get-AutomationVariable -Name UpdateToLatestAzSKVersion -ErrorAction SilentlyContinue
+    if($null -ne $tempUpdateToLatestVersion)
+    {
+		$UpdateToLatestVersion = ConvertStringToBoolean($tempUpdateToLatestVersion)
+    }
 	#Find out how many times has CA runbook run today for this account...
 	$jobs = Get-AzureRmAutomationJob -ResourceGroupName $AutomationAccountRG `
 		-AutomationAccountName $AutomationAccountName -RunbookName $RunbookName | `
@@ -329,19 +385,14 @@ try
 		PublishEvent -EventName "CA Setup Fatal Error" -Properties @{"JobsCount"=$jobs.Count} -Metrics @{"TimeTakenInMs" =$setupTimer.ElapsedMilliseconds; "SuccessCount" = 0}
 		
 		#Disable the helper schedule
-		$helperSchedule = Get-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName `
-							-ResourceGroupName $AutomationAccountRG -Name $CAHelperScheduleName -ErrorAction SilentlyContinue
-		if(($helperSchedule|Measure-Object).Count -gt 0)
-		{
-			Set-AzureRmAutomationSchedule -Name $helperSchedule.Name -IsEnabled $false -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | Out-Null
-		}
+		DisableHelperSchedules
 		return;
 	}
 	
 	#Check if a scan job is already running. If so, we don't need to duplicate effort!
 	$jobs = Get-AzureRmAutomationJob -Name $RunbookName -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | Where-Object { $_.Status -in ("Queued", "Starting", "Resuming", "Running",  "Activating")}
 
-	CreateHelperSchedule -nextRetryIntervalInMinutes $monitorjobIntervalMins
+	ScheduleNewJob -intervalInMins $monitorjobIntervalMins
 	if(($jobs|Measure-Object).Count -gt 1)
 	{
 		$jobs|ForEach-Object{
@@ -447,14 +498,14 @@ try
 		SetModules -ModuleList $finalModuleList -SyncModuleList $syncModules
 
 		Write-Output("CS: Creating helper schedule for importing modules into the automation account...")
-		CreateHelperSchedule -nextRetryIntervalInMinutes $retryDownloadIntervalMins
+		ScheduleNewJob -intervalInMins $retryDownloadIntervalMins
 
 	}
 	#Let us be really sure AzSK is ready to run cmdlets before calling it done!
 	elseif((Get-Command -Name "Get-AzSKAzureServicesSecurityStatus" -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
 	{
 		Write-Output ("CS: AzSK not fully ready to run. Creating helper schedule for another retry...")
-		CreateHelperSchedule -nextRetryIntervalInMinutes $retryDownloadIntervalMins
+		ScheduleNewJob -intervalInMins $retryDownloadIntervalMins
 	}
 	else
 	{
