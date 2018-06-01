@@ -1111,26 +1111,52 @@ class SVTBase: AzSKRoot
 	}
 	 hidden [SVTEventContext[]] GetUserComments([SVTEventContext[]] $arguments)
     {
-	    $invocationcontext=$this.ControlStateExt.InvocationContext
-		# $storageReportHelper = [StorageReportHelper]::new( $invocationcontext); 	
-		# $StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
-		# $StorageReportJson = Get-ChildItem -Path "C:\Users\v-tashuk\Downloads\scanresult.json" -Force | Get-Content | ConvertFrom-Json    
-		# $ResourceData=$StorageReportJson.Subscription.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}
-	    [SVTEventContext[]] $controlsResultSet = @();
-		$arguments | ForEach-Object{      
+	    #Read SubscriptionScanReport Snapshot from storage
+
+	     $invocationcontext=$this.ControlStateExt.InvocationContext
+	     $storageReportHelper = [StorageReportHelper]::new($invocationcontext); 
+		 $storageReportHelper.Initialize($false);	
+		 $StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
+
+		 #Filter out current Subscription
+		 $SelectedSubscription=$StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
+	
+		 if($this.SVTConfig.FeatureName -eq "SubscriptionCore")
+		 {
+		  $ResourceData=$SelectedSubscription.ScanDetails.SubscriptionScanResult
+		  $ResourceScanResult=$ResourceData
+		 }else
+		 {
+          $ResourceData=$SelectedSubscription.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}	  
+		  if(($ResourceData | Measure-Object).Count -gt 0 )
+		  {
+		  $ResourceScanResult=$ResourceData.ResourceScanResult
+		  }
+		  else
+		  {
+		  return $arguments
+		  }
+		 }
+		 [SVTEventContext[]] $controlsResultSet = @();
+		 if(($ResourceScanResult | Measure-Object).Count -gt 0)
+		 {
+		  # Verify if any check clause required here    
+		  $arguments | ForEach-Object{      
 		  $currentItem=$_;
 		  [ControlResult[]] $controlsResults = @();
 		  $currentItem.ControlResults | ForEach-Object {
 		  $currentControl=$_
-		  #$matchedControlResult=$ResourceData.ResourceScanResult | Where-Object {
-		  #$_.ControlId -eq $currentControl.ControlId
-		  #}
+		 
+		  $matchedControlResult=$ResourceScanResult | Where-Object {
+		  $_.ControlIntId -eq $currentItem.ControlItem.Id -and (([Helpers]::CheckMember($_, "ChildResourceName") -and $_.ChildResourceName -eq $currentControl.ChildResourceName) -or -not( [Helpers]::CheckMember($_, "ChildResourceName")))
+		  }
+		 
 		  if($null -ne  $matchedControlResult)
 		  {
 		   $currentControl.UserComments=$matchedControlResult.UserComments
 		  }else
 		  {
-		   $currentControl.UserComments="It Will Work..!!"
+		   $currentControl.UserComments="  "
 		  }
 		 
 		  $controlsResults+=$currentControl
@@ -1138,6 +1164,11 @@ class SVTBase: AzSKRoot
 		  $currentItem.ControlResults=$controlsResults 
 		  $controlsResultSet+=$currentItem
 		};
+		}
+		else
+		{
+		 $controlsResultSet=$arguments
+		}
         return $controlsResultSet;
     }
 

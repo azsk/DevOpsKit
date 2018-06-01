@@ -322,30 +322,55 @@ class SubscriptionSecurity: CommandBase
 		#Check for file path exist
 		 if(-not (Test-Path -path $filePath))
 		{  
-			$this.WriteMessage("Provided file path is empty, Please re-run the command with correct path.", [MessageType]::Error);
+			$this.PublishCustomException("Provided file path is empty, Please re-run the command with correct path.", [MessageType]::Error);
 			return $messages;
 		}
-		# Add check for write permissions
+		# Read Local CSV file
 		$controlResultSet = Get-ChildItem -Path $filePath -Filter '*.csv' -Force | Get-Content | Convertfrom-csv
-        $resultsGroups=$controlResultSet | Group-Object -Property ResourceId
+		# Read file from Storage
+		$invocationcontext=$this.InvocationContext
+	    $storageReportHelper = [StorageReportHelper]::new($invocationcontext); 
+		$storageReportHelper.Initialize($false);	
+		$StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
+		$resultsGroups=$null;
+		$SelectedSubscription=$null;
+		$isSubscriptionCoreFile=$false;
+        if([Helpers]::CheckMember($controlResultSet, "ResourceId"))
+		{
+		  $SelectedSubscription = $StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
+		  $resultsGroups=$controlResultSet | Group-Object -Property ResourceId   
+        }else
+		{
+		  $isSubscriptionCoreFile=$true;
+		  $SelectedSubscription = $StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId} 
+		  $resultsGroups=$controlResultSet | Group-Object -Property FeatureName
+		}
+   
         foreach ($resultGroup in $resultsGroups) {
-		            $ControlResultSet=@()
+
+		            if($isSubscriptionCoreFile)
+					{
+					  $ResourceData=$SelectedSubscription.ScanDetails.SubscriptionScanResult
+					  $ResourceScanResult=$ResourceData
+					}else
+					{
+					  $ResourceData=$SelectedSubscription.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $resultGroup.Name}	  
+		              if(($ResourceData | Measure-Object).Count -gt 0 )
+		              {
+		                  $ResourceScanResult=$ResourceData.ResourceScanResult
+		              }
+					}
                     $resultGroup.Group | ForEach-Object{
-
-					$controlresult = [ControlState]::new($_.ControlID,$_.ControlID,"",$_.Status,"1.0")
-					$statedata=[StateData]::new()
-					$statedata.ProgressTags="Lets wait..."
-					$statedata.AttestedDate=[DateTime]::UtcNow;
-					$controlresult.State=$statedata
-					$controlresult.HashId=[Helpers]::ComputeHash($_.ResourceId);
-					$controlresult.ResourceId=$_.ResourceId
-					$ControlResultSet+=$controlresult
-                     #$tempcontrol= [ControlState] $_;
+					$currentItem=$_
+					$matchedControlResult=$ResourceScanResult | Where-Object {
+	 	            $_.ControlID -eq $currentItem.ControlID -and (([Helpers]::CheckMember($_, "ChildResourceName") -and $_.ChildResourceName -eq $currentItem.ChildResourceName) -or -not( [Helpers]::CheckMember($_, "ChildResourceName")))
+		            }
+					$matchedControlResult.UserComments=$currentItem.UserComments
                     }
-					# Create function to update scan result
-					$this.SetControlState($resultGroup.Name,$ControlResultSet,$false)
                 }
-
+				$StorageReportJson =[LocalSubscriptionReport] $StorageReportJson
+				$storageReportHelper.SetLocalSubscriptionScanReport($StorageReportJson);
+		
 		return $messages;
     }
 }
