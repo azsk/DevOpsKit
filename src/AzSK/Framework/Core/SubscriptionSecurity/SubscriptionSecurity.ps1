@@ -329,7 +329,7 @@ class SubscriptionSecurity: CommandBase
 		$controlResultSet = Get-ChildItem -Path $filePath -Filter '*.csv' -Force | Get-Content | Convertfrom-csv
 		# Read file from Storage
 		$invocationcontext=$this.InvocationContext
-	    $storageReportHelper = [StorageReportHelper]::new($invocationcontext); 
+	    $storageReportHelper = [StorageReportHelper]::new(); 
 		$storageReportHelper.Initialize($false);	
 		$StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
 		$resultsGroups=$null;

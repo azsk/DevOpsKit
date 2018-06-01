@@ -1114,7 +1114,8 @@ class SVTBase: AzSKRoot
 	    #Read SubscriptionScanReport Snapshot from storage
 
 	     $invocationcontext=$this.ControlStateExt.InvocationContext
-	     $storageReportHelper = [StorageReportHelper]::new($invocationcontext); 
+	     #$storageReportHelper = [StorageReportHelper]::new($invocationcontext); 
+		 $storageReportHelper = [StorageReportHelper]::new();
 		 $storageReportHelper.Initialize($false);	
 		 $StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
 
