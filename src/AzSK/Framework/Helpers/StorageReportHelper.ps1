@@ -298,7 +298,6 @@ class StorageReportHelper
             $subscriptionScanResult.ScanSource = $scanResult.Source
             $subscriptionScanResult.ScannerVersion = $scanResult.ScannerVersion 
             $subscriptionScanResult.ControlVersion = $scanResult.ControlVersion
-            $subscriptionScanResult.ChildResourceName = $serviceControlResult.NestedResourceName 
             $subscriptionScanResult.ControlId = $serviceControlResult.ControlId 
             $subscriptionScanResult.ControlIntId = $serviceControlResult.ControlIntId 
             $subscriptionScanResult.ControlSeverity = $serviceControlResult.ControlSeverity 
@@ -496,8 +495,6 @@ class StorageReportHelper
                         if((($_oldScanRerportSubscription.ScanDetails.Resources | Where-Object { $resource.HashId -contains $_.HashId }) | Measure-Object).Count -gt0)
                         {
                             $_ORresource = $_oldScanRerportSubscription.ScanDetails.Resources | Where-Object { $resource.HashId -contains $_.HashId }
-
-                            $controlsToBeMerged = $_ORresource.ResourceScanResult | Where-Object { $resource.ControlIntId -contains $_.ControlIntId -and $_.ChildResourceName -eq $_oldControlResult.ChildResourceName }
 
                             $resource.ResourceScanResult | ForEach-Object {
 
