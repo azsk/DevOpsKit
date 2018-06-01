@@ -298,7 +298,6 @@ class StorageReportHelper
             $subscriptionScanResult.ScanSource = $scanResult.Source
             $subscriptionScanResult.ScannerVersion = $scanResult.ScannerVersion 
             $subscriptionScanResult.ControlVersion = $scanResult.ControlVersion
-            $subscriptionScanResult.ChildResourceName = $serviceControlResult.NestedResourceName 
             $subscriptionScanResult.ControlId = $serviceControlResult.ControlId 
             $subscriptionScanResult.ControlIntId = $serviceControlResult.ControlIntId 
             $subscriptionScanResult.ControlSeverity = $serviceControlResult.ControlSeverity 
@@ -497,8 +496,6 @@ class StorageReportHelper
                         {
                             $_ORresource = $_oldScanRerportSubscription.ScanDetails.Resources | Where-Object { $resource.HashId -contains $_.HashId }
 
-                            $controlsToBeMerged = $_ORresource.ResourceScanResult | Where-Object { $resource.ControlIntId -contains $_.ControlIntId -and $_.ChildResourceName -eq $_oldControlResult.ChildResourceName }
-
                             $resource.ResourceScanResult | ForEach-Object {
 
                                 $newControlResult = [LSRResourceScanResult] $_
@@ -509,8 +506,6 @@ class StorageReportHelper
                                 else
                                 {
                                     $_oldControlResult = $_ORresource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $newControlResult.ControlIntId -and $_.ChildResourceName -eq $newControlResult.ChildResourceName }
-
-                                    ##################################
 
                                     $_oldControlResult.ScanKind = $newControlResult.ScanKind
                                     $_oldControlResult.ControlIntId = $newControlResult.ControlIntId
@@ -568,8 +563,6 @@ class StorageReportHelper
 
                                     $_ORresource.ResourceScanResult = $_ORresource.ResourceScanResult | Where-Object { $_.ControlIntId -ne $_oldControlResult.ControlIntId -or  $_.ChildResourceName -ne  $_oldControlResult.ChildResourceName }
                                     $_ORresource.ResourceScanResult += $_oldControlResult
-
-                                    ##################################
                                 }
                             }
                             
