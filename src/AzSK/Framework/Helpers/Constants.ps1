@@ -145,6 +145,7 @@ class Constants
 	# Local Subscription Report Constants
 	static [string] $StorageReportContainerName = "scan-report"
 	static [string] $StorageReportBlobName = "scanresult"
+	static [DateTime] $AzSKDefaultDateTime = '1900-01-01T00:00:00'
 
 	static [void] SetAzSKModuleName($moduleName)
 	{
