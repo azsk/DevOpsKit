@@ -52,6 +52,7 @@ class LSRControlResultBase
     [string] $Justification = "";
     [string] $PreviousVerificationResult = [VerificationResult]::Manual;
 	[PSObject] $AttestationData;
+	[bool] $IsBaselineControl;
 
 	#Tracking information
 	[DateTime] $LastResultTransitionOn = [Constants]::AzSKDefaultDateTime;
