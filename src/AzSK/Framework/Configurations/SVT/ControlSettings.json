@@ -236,15 +236,16 @@
    "CloudService": {
       "LatestOSSKUIDs": [ "WA-GUEST-OS-4.44_201707-01" ]
    },
-   "AttestationExpiryPeriodInDays": {
-      "Default": 90,
-      "ControlSeverity": {
-         "Critical": 7,
-         "High": 30,
-         "Medium": 60,
-         "Low": 90
-      }
-   },
+  "AttestationExpiryPeriodInDays": {
+    "Default": 90,
+    "ControlSeverity": {
+      "Critical": 7,
+      "High": 30,
+      "Medium": 60,
+      "Low": 90
+    }
+  },
+  "DefaultValidAttestationStates": ["NotAnIssue","WillFixLater","WillNotFix"],
    "SubscriptionCore": {
       "EnableV1AlertFailure": false
    },

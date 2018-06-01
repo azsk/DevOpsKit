@@ -19,8 +19,7 @@
         "AuthZ",
         "RBAC"
       ],
-      "InvalidAttestationStates": "",
-      "Enabled": true
+         "Enabled": true
     },
     {
       "ControlID": "Azure_CDN_AuthN_Config_Token_AuthN",
@@ -37,7 +36,6 @@
         "Manual",
         "AuthN"
       ],
-      "InvalidAttestationStates": "",
       "Enabled": true
     },
     {
@@ -55,7 +53,6 @@
         "Manual",
         "DP"
       ],
-      "InvalidAttestationStates": "",
       "Enabled": true
     },
     {
@@ -73,7 +70,7 @@
         "Automated",
         "DP"
       ],
-      "InvalidAttestationStates": [
+      "ValidAttestationStates": [
         "NotAnIssue",
         "WillNotFix",
         "NotApplicable"
@@ -99,7 +96,6 @@
         "Manual",
         "DP"
       ],
-      "InvalidAttestationStates": "",
       "Enabled": true
     },
     {
@@ -117,7 +113,7 @@
         "Manual",
         "Audit"
       ],
-      "InvalidAttestationStates": "",
+      
       "Enabled": true
     }
   ]
