@@ -23,16 +23,12 @@ class ControlResultBase {
     [ControlSeverity] $ControlSeverity;
     [VerificationResult] $ActualVerificationResult;
     [AttestationStatus] $AttestationStatus;
-	[DateTime] $AttestedDate = [Constants]::AzSKDefaultDateTime;
     [VerificationResult] $VerificationResult;
 	[bool] $HasRequiredAccess = $true;
     [string] $AttestedBy;
     [string] $Justification;
     [string] $AttestedState;
     [string] $CurrentState;
-	[bool] $IsBaselineControl 
-
-	[string] $UserComments
 }
 
 class SubscriptionControlResult : ControlResultBase {

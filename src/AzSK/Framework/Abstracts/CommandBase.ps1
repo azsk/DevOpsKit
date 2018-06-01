@@ -140,7 +140,7 @@ class CommandBase: AzSKRoot {
 		$currentModuleVersion = [System.Version] $this.GetCurrentModuleVersion()
 		$serverVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($this.GetModuleName()));
 		$currentModuleVersion = [System.Version] $this.GetCurrentModuleVersion() 
-        if($currentModuleVersion -ne "2.0.0.0" -and $serverVersion -gt $this.GetCurrentModuleVersion()) {
+        if($currentModuleVersion -ne "0.0.0.0" -and $serverVersion -gt $this.GetCurrentModuleVersion()) {
 			$this.RunningLatestPSModule = $false;
 			$this.InvokeAutoUpdate()
 			$this.PublishCustomMessage(([Constants]::VersionCheckMessage -f $serverVersion), [MessageType]::Warning);

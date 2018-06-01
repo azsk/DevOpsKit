@@ -303,13 +303,6 @@ class SVTBase: AzSKRoot
 				$this.EvaluationStarted();
 				$resourceSecurityResult += $this.GetAutomatedSecurityStatus();
 				$resourceSecurityResult += $this.GetManualSecurityStatus();
-				
-				# $StorageReportHelper = [StorageReportHelper]::new();
-				# $StorageReportHelper.Initialize($false);
-				# $obj = $StorageReportHelper.GetLocalSubscriptionScanReport();
-				# $obj.Subscriptions[0].SubscriptionName = 'MSFT - SECURITY REFERENCE ARCHITECTURE - 02'
-				# $StorageReportHelper.SetLocalSubscriptionScanReport($obj);
-
 				$this.PostEvaluationCompleted($resourceSecurityResult);
 				$this.EvaluationCompleted($resourceSecurityResult);
 			}

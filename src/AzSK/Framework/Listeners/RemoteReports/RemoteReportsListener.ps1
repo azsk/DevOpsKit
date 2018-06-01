@@ -2,7 +2,6 @@ Set-StrictMode -Version Latest
 
 class RemoteReportsListener: ListenerBase {
 
-	
     hidden RemoteReportsListener() {
     }
 
@@ -169,11 +168,6 @@ class RemoteReportsListener: ListenerBase {
 			}
 		}
 		$scanResult.ControlResults = [SubscriptionControlResult[]] $results
-
-		$StorageReportHelper = [StorageReportHelper]::new();
-		$StorageReportHelper.Initialize($false);
-		$StorageReportHelper.PostSubscriptionScanReport($scanResult)
-
 		[RemoteApiHelper]::PostSubscriptionScanResult($scanResult)
 	}
 
@@ -241,11 +235,6 @@ class RemoteReportsListener: ListenerBase {
 			}
 		}
 		$scanResult.ControlResults = [ServiceControlResult[]] $results
-
-		$StorageReportHelper = [StorageReportHelper]::new();
-		$StorageReportHelper.Initialize($false);
-		$StorageReportHelper.PostServiceScanReport($scanResult)
-
 		[RemoteApiHelper]::PostServiceScanResult($scanResult)
 	}
 }
