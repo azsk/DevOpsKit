@@ -327,27 +327,18 @@ class SubscriptionSecurity: CommandBase
 		}
 		# Read Local CSV file
 		$controlResultSet = Get-ChildItem -Path $filePath -Filter '*.csv' -Force | Get-Content | Convertfrom-csv
+		$resultsGroups=$controlResultSet | Group-Object -Property ResourceId 
 		# Read file from Storage
 	    $storageReportHelper = [StorageReportHelper]::new(); 
 		$storageReportHelper.Initialize($false);	
 		$StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
-		$resultsGroups=$null;
-		$SelectedSubscription=$null;
+		$SelectedSubscription = $StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
 		$isSubscriptionCoreFile=$false;
-        if([Helpers]::CheckMember($controlResultSet, "ResourceId"))
-		{
-		  $SelectedSubscription = $StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
-		  $resultsGroups=$controlResultSet | Group-Object -Property ResourceId   
-        }else
-		{
-		  $isSubscriptionCoreFile=$true;
-		  $SelectedSubscription = $StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId} 
-		  $resultsGroups=$controlResultSet | Group-Object -Property FeatureName
-		}
-   
+		$erroredControls=@();
+      
         foreach ($resultGroup in $resultsGroups) {
 
-		            if($isSubscriptionCoreFile)
+		            if($resultGroup.Group[0].FeatureName -eq "SubscriptionCore")
 					{
 					  $ResourceData=$SelectedSubscription.ScanDetails.SubscriptionScanResult
 					  $ResourceScanResult=$ResourceData
@@ -360,20 +351,41 @@ class SubscriptionSecurity: CommandBase
 		              }
 					}
                     $resultGroup.Group | ForEach-Object{
-					$currentItem=$_
-					$matchedControlResult=$ResourceScanResult | Where-Object {		
-	 	            ($_.ControlID -eq $currentItem.ControlID -and (  ([Helpers]::CheckMember($currentItem, "ChildResourceName") -and $_.ChildResourceName -eq $currentItem.ChildResourceName) -or (-not([Helpers]::CheckMember($currentItem, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
-		            }
-									
-					if(($matchedControlResult|Measure-Object).Count -gt 0)
+					try
 					{
-					$matchedControlResult.UserComments=$currentItem.UserComments
-					}
-								
+					     $currentItem=$_
+				    	 $matchedControlResult=$ResourceScanResult | Where-Object {		
+	 	                   ($_.ControlID -eq $currentItem.ControlID -and (  ([Helpers]::CheckMember($currentItem, "ChildResourceName") -and $_.ChildResourceName -eq $currentItem.ChildResourceName) -or (-not([Helpers]::CheckMember($currentItem, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
+		                 }
+									
+					     if(($matchedControlResult|Measure-Object).Count -eq 1)
+					     {
+					      $matchedControlResult.UserComments=$currentItem.UserComments
+					     }else
+						 {
+						  # throw error here
+						  $this.PublishCustomMessage("Updation of User Comments failed for "+ "ControlID: "+$currentItem.ControlId+" ResourceName: "+$currentItem.ResourceName, [MessageType]::Warning);
+						  $erroredControls+=$currentItem			 
+						 }
+				    }catch{
+					$this.PublishCustomException($_);
+					# Add this control list to error log file
+				    $erroredControls+=$currentItem
+					}		
                     }
                 }
 				$StorageReportJson =[LocalSubscriptionReport] $StorageReportJson
 				$storageReportHelper.SetLocalSubscriptionScanReport($StorageReportJson);
+				# If updation failed for any control, genearte error file
+				if(($erroredControls | Measure-Object).Count -gt 0)
+				{
+				  $controlCSV = New-Object -TypeName WriteCSVData
+		          $controlCSV.FileName = 'Errored_Controls'
+			      $controlCSV.FileExtension = 'csv'
+			      $controlCSV.FolderPath = ''
+			      $controlCSV.MessageData = $erroredControls
+			      $this.PublishAzSKRootEvent([AzSKRootEvent]::WriteCSV, $controlCSV);
+				}
 		
 		return $messages;
     }
