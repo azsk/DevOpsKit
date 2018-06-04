@@ -176,6 +176,7 @@ class WriteSummaryFile: FileOutputBase
 					}
 					else
 					{
+					    $csvItem.ResourceId = $item.SubscriptionContext.scope;
 						$csvItem.DetailedLogFile = "/$([Helpers]::SanitizeFolderName($item.SubscriptionContext.SubscriptionName))/$($item.FeatureName).LOG"
 					}
 
@@ -209,7 +210,10 @@ class WriteSummaryFile: FileOutputBase
 					$nonNullProps += $propName;
 				}
 			};
-
+			if($this.InvocationContext.BoundParameters['IncludeUserComments'] -ne $null -and $this.InvocationContext.BoundParameters['IncludeUserComments'] -eq $true -and -not ([Helpers]::CheckMember($nonNullProps, "UserComments")))
+			{
+			  $nonNullProps += "UserComments";
+			}
             $csvItems | Select-Object -Property $nonNullProps | Export-Csv $this.FilePath -NoTypeInformation
         }
     }

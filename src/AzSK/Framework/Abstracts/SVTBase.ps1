@@ -1111,10 +1111,7 @@ class SVTBase: AzSKRoot
 	}
 	 hidden [SVTEventContext[]] GetUserComments([SVTEventContext[]] $arguments)
     {
-	    #Read SubscriptionScanReport Snapshot from storage
-
-	     $invocationcontext=$this.ControlStateExt.InvocationContext
-	     #$storageReportHelper = [StorageReportHelper]::new($invocationcontext); 
+	     #Read SubscriptionScanReport Snapshot from storage
 		 $storageReportHelper = [StorageReportHelper]::new();
 		 $storageReportHelper.Initialize($false);	
 		 $StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
@@ -1149,7 +1146,7 @@ class SVTBase: AzSKRoot
 		  $currentControl=$_
 		 
 		  $matchedControlResult=$ResourceScanResult | Where-Object {
-		  $_.ControlIntId -eq $currentItem.ControlItem.Id -and (([Helpers]::CheckMember($_, "ChildResourceName") -and $_.ChildResourceName -eq $currentControl.ChildResourceName) -or -not( [Helpers]::CheckMember($_, "ChildResourceName")))
+		  ($_.ControlIntId -eq $currentItem.ControlItem.Id -and (  ([Helpers]::CheckMember($currentControl, "ChildResourceName") -and $_.ChildResourceName -eq $currentControl.ChildResourceName) -or (-not([Helpers]::CheckMember($currentControl, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
 		  }
 		 
 		  if($null -ne  $matchedControlResult)
@@ -1157,6 +1154,7 @@ class SVTBase: AzSKRoot
 		   $currentControl.UserComments=$matchedControlResult.UserComments
 		  }else
 		  {
+		   #If Place holder required , else remove else block
 		   $currentControl.UserComments="  "
 		  }
 		 

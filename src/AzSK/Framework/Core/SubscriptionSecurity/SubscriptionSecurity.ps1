@@ -328,7 +328,6 @@ class SubscriptionSecurity: CommandBase
 		# Read Local CSV file
 		$controlResultSet = Get-ChildItem -Path $filePath -Filter '*.csv' -Force | Get-Content | Convertfrom-csv
 		# Read file from Storage
-		$invocationcontext=$this.InvocationContext
 	    $storageReportHelper = [StorageReportHelper]::new(); 
 		$storageReportHelper.Initialize($false);	
 		$StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
@@ -362,10 +361,15 @@ class SubscriptionSecurity: CommandBase
 					}
                     $resultGroup.Group | ForEach-Object{
 					$currentItem=$_
-					$matchedControlResult=$ResourceScanResult | Where-Object {
-	 	            $_.ControlID -eq $currentItem.ControlID -and (([Helpers]::CheckMember($_, "ChildResourceName") -and $_.ChildResourceName -eq $currentItem.ChildResourceName) -or -not( [Helpers]::CheckMember($_, "ChildResourceName")))
+					$matchedControlResult=$ResourceScanResult | Where-Object {		
+	 	            ($_.ControlID -eq $currentItem.ControlID -and (  ([Helpers]::CheckMember($currentItem, "ChildResourceName") -and $_.ChildResourceName -eq $currentItem.ChildResourceName) -or (-not([Helpers]::CheckMember($currentItem, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
 		            }
+									
+					if(($matchedControlResult|Measure-Object).Count -gt 0)
+					{
 					$matchedControlResult.UserComments=$currentItem.UserComments
+					}
+								
                     }
                 }
 				$StorageReportJson =[LocalSubscriptionReport] $StorageReportJson
