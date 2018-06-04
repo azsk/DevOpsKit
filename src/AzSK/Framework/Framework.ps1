@@ -37,7 +37,7 @@ catch
 . $PSScriptRoot\Models\SVT\AttestationOptions.ps1
 . $PSScriptRoot\Models\SVT\PSCloudService.ps1
 . $PSScriptRoot\Models\SVT\PartialScanResourceMap.ps1
-
+. $PSScriptRoot\Models\RemoteReports\LSRScanResultModel.ps1
 . $PSScriptRoot\Models\SubscriptionCore\AzureSecurityCenter.ps1
 . $PSScriptRoot\Models\SubscriptionCore\ManagementCertificate.ps1
 . $PSScriptRoot\Models\SubscriptionSecurity\SubscriptionRBAC.ps1
@@ -59,11 +59,13 @@ catch
 . $PSScriptRoot\Helpers\ConfigOverride.ps1
 
 
+
 #Managers
 . $PSScriptRoot\Managers\ConfigurationManager.ps1
 . $PSScriptRoot\Managers\ControlStateExtension.ps1
 . $PSScriptRoot\Managers\AzSKPDFExtension.ps1
 . $PSScriptRoot\Managers\PartialScanManager.ps1
+. $PSScriptRoot\Helpers\StorageReportHelper.ps1
 
 . $PSScriptRoot\Helpers\OMSHelper.ps1
 . $PSScriptRoot\Helpers\RemoteReportHelper.ps1

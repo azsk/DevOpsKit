@@ -142,6 +142,11 @@ class Constants
 			"Stopping cmdlet execution.`r`n"+
 			"Recommendation: Please start a fresh PS session and run 'Import-Module {2}' first to avoid getting into this situation.`r`n"
 
+	# Local Subscription Report Constants
+	static [string] $StorageReportContainerName = "scan-report"
+	static [string] $StorageReportBlobName = "scanresult"
+	static [DateTime] $AzSKDefaultDateTime = '1900-01-01T00:00:00'
+
 	static [void] SetAzSKModuleName($moduleName)
 	{
 		if(-not [string]::IsNullOrWhiteSpace($moduleName))
