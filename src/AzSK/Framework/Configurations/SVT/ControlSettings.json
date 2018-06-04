@@ -95,70 +95,70 @@
          "SendToServiceOwners": true
       },
       "Batch": [
-         {
-            "Condition": {
-               "DataSource": {
-                  "MetricName": "PoolDeleteCompleteEvent"
-               },
-               "Operator": "GreaterThan",
-               "Threshold": 0,
-               "TimeAggregation": "Total",
-               "WindowsSize": "01:00:00"
+        {
+          "Condition": {
+            "DataSource": {
+              "MetricName": "PoolDeleteCompleteEvent"
             },
-            "Status": "Enabled"
-         },
-         {
-            "Condition": {
-               "DataSource": {
-                  "MetricName": "PoolDeleteStartEvent"
-               },
-               "Operator": "GreaterThan",
-               "Threshold": 0,
-               "TimeAggregation": "Total",
-               "WindowsSize": "01:00:00"
+            "OperatorProperty": "GreaterThan",
+            "Threshold": 0,
+            "TimeAggregation": "Total",
+            "WindowSize": "01:00:00"
+          },
+          "IsEnabled": true
+        },
+        {
+          "Condition": {
+            "DataSource": {
+              "MetricName": "PoolDeleteStartEvent"
             },
-            "Status": "Enabled"
-         }
+            "OperatorProperty": "GreaterThan",
+            "Threshold": 0,
+            "TimeAggregation": "Total",
+            "WindowSize": "01:00:00"
+          },
+          "IsEnabled": true
+        }
       ],
       "Storage": [
-         {
-            "Condition": {
-               "DataSource": {
-                  "MetricName": "AnonymousSuccess"
-               },
-               "Operator": "GreaterThan",
-               "Threshold": 0,
-               "TimeAggregation": "Total",
-               "WindowsSize": "01:00:00"
+        {
+          "Condition": {
+            "DataSource": {
+              "MetricName": "AnonymousSuccess"
             },
-            "Status": "Enabled"
-         }
+            "OperatorProperty": "GreaterThan",
+            "Threshold": 0,
+            "TimeAggregation": "Total",
+            "WindowSize": "01:00:00"
+          },
+          "IsEnabled": true
+        }
       ],
       "StreamAnalytics": [
-         {
-            "Condition": {
-               "DataSource": {
-                  "MetricName": "AMLCalloutFailedRequests"
-               },
-               "Operator": "GreaterThan",
-               "Threshold": 0,
-               "TimeAggregation": "Total",
-               "WindowsSize": "00:05:00"
+        {
+          "Condition": {
+            "DataSource": {
+              "MetricName": "AMLCalloutFailedRequests"
             },
-            "Status": "Enabled"
-         },
-         {
-            "Condition": {
-               "DataSource": {
-                  "MetricName": "Errors"
-               },
-               "Operator": "GreaterThan",
-               "Threshold": 0,
-               "TimeAggregation": "Total",
-               "WindowsSize": "00:05:00"
+            "OperatorProperty": "GreaterThan",
+            "Threshold": 0,
+            "TimeAggregation": "Total",
+            "WindowSize": "00:05:00"
+          },
+          "IsEnabled": true
+        },
+        {
+          "Condition": {
+            "DataSource": {
+              "MetricName": "Errors"
             },
-            "Status": "Enabled"
-         }
+            "OperatorProperty": "GreaterThan",
+            "Threshold": 0,
+            "TimeAggregation": "Total",
+            "WindowSize": "00:05:00"
+          },
+          "IsEnabled": true
+        }
       ]
    },
    "StorageKindMapping": [
