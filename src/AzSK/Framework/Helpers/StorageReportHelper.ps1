@@ -218,7 +218,21 @@ class StorageReportHelper
 		
 		}
     }
-    
+
+    hidden [LSRSubscription] GetLocalSubscriptionScanReport([string] $subscriptionId)
+    {
+        $fullScanResult = $this.GetLocalSubscriptionScanReport()
+        if([Helpers]::CheckMember($fullScanResult,"Subscriptions") -and ($fullScanResult.Subscriptions | Measure-Object ).Count -gt 0)
+        {
+            return $fullScanResult.Subscriptions | Where-Object { $_.SubscriptionId -eq $subscriptionId }
+        }
+        else
+        {
+            return $fullScanResult
+        }
+        
+    }
+
     hidden [void] SetLocalSubscriptionScanReport([LocalSubscriptionReport] $scanResultForStorage)
 	{		
 		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\StorageReport";				
@@ -241,7 +255,7 @@ class StorageReportHelper
 			$ContainerName = $this.AzSKStorageContainer.Name
 		}
 
-        [Helpers]::ConvertToJsonCustom($scanResultForStorage) | Out-File $fileName -Force
+        [Helpers]::ConvertToJsonCustomCompressed($scanResultForStorage) | Out-File $fileName -Force
 
         $loopValue = $this.retryCount;
         while($loopValue -gt 0)
@@ -406,12 +420,14 @@ class StorageReportHelper
     {
         $_oldScanReport = $this.GetLocalSubscriptionScanReport();
 
-        if((($_oldScanReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $scanReport.SubscriptionId }) | Measure-Object).Count -gt 0)
+        if([Helpers]::CheckMember($_oldScanReport,"Subscriptions") -and (($_oldScanReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $scanReport.SubscriptionId }) | Measure-Object).Count -gt 0)
         {
             $_oldScanRerportSubscription = $_oldScanReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $scanReport.SubscriptionId }
-            if(($scanReport.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
+            if([Helpers]::CheckMember($scanReport,"ScanDetails") -and [Helpers]::CheckMember($scanReport.ScanDetails,"SubscriptionScanResult") `
+                    -and ($scanReport.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
             {
-                if(($_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
+                if([Helpers]::CheckMember($_oldScanRerportSubscription,"ScanDetails") -and [Helpers]::CheckMember($_oldScanRerportSubscription.ScanDetails,"SubscriptionScanResult") `
+                        -and ($_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
                 {
                     $scanReport.ScanDetails.SubscriptionScanResult | ForEach-Object {
                         $subcriptionScanResult = [LSRSubscriptionControlResult] $_
@@ -485,21 +501,23 @@ class StorageReportHelper
                 }
             }
 
-            if(($scanReport.ScanDetails.Resources | Measure-Object).Count -gt 0)
+            if([Helpers]::CheckMember($scanReport,"ScanDetails")  -and [Helpers]::CheckMember($scanReport.ScanDetails,"Resources") `
+                -and ($scanReport.ScanDetails.Resources | Measure-Object).Count -gt 0)
             {
-                if(($_oldScanRerportSubscription.ScanDetails.Resources | Measure-Object).Count -gt 0)
+                if([Helpers]::CheckMember($_oldScanRerportSubscription,"ScanDetails") -and [Helpers]::CheckMember($_oldScanRerportSubscription.ScanDetails,"Resources") `
+                         -and ($_oldScanRerportSubscription.ScanDetails.Resources | Measure-Object).Count -gt 0)
                 {
                     $scanReport.ScanDetails.Resources | Foreach-Object {
                         $resource = [LSRResources] $_
 
-                        if((($_oldScanRerportSubscription.ScanDetails.Resources | Where-Object { $resource.HashId -contains $_.HashId }) | Measure-Object).Count -gt0)
+                        if([Helpers]::CheckMember($_oldScanRerportSubscription.ScanDetails,"Resources") -and (($_oldScanRerportSubscription.ScanDetails.Resources | Where-Object { $resource.HashId -contains $_.HashId }) | Measure-Object).Count -gt0)
                         {
                             $_ORresource = $_oldScanRerportSubscription.ScanDetails.Resources | Where-Object { $resource.HashId -contains $_.HashId }
 
                             $resource.ResourceScanResult | ForEach-Object {
 
                                 $newControlResult = [LSRResourceScanResult] $_
-                                if((($_ORresource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $newControlResult.ControlIntId -and $_.ChildResourceName -eq $newControlResult.ChildResourceName }) | Measure-Object).Count -eq 0)
+                                if([Helpers]::CheckMember($_ORresource,"ResourceScanResult") -and (($_ORresource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $newControlResult.ControlIntId -and $_.ChildResourceName -eq $newControlResult.ChildResourceName }) | Measure-Object).Count -eq 0)
                                 {
                                     $_ORresource.ResourceScanResult += $newControlResult
                                 }
@@ -584,9 +602,42 @@ class StorageReportHelper
         }
         else
         {
-            $_oldScanReport.Subscriptions += $scanReport;
+            if([Helpers]::CheckMember($_oldScanReport,"Subscriptions"))
+            {
+                $_oldScanReport.Subscriptions += $scanReport;
+            }
+            else
+            {
+                $_oldScanReport = [LocalSubscriptionReport]::new()
+                $_oldScanReport.Subscriptions += $scanReport;
+            }
+            
         }
 
         return $_oldScanReport
     }
+
+    [bool] HasStorageReportReadAccessPermissions()
+	{
+		if($this.HasStorageReportReadPermissions -le 0)
+		{
+			return $false;
+		}
+		else
+		{
+			return $true;
+		}
+	}
+
+	[bool] HasStorageReportWriteAccessPermissions()
+	{		
+		if($this.HasStorageReportWritePermissions -le 0)
+		{
+			return $false;
+		}
+		else
+		{
+			return $true;
+		}
+	}
 }
