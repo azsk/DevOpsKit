@@ -9,8 +9,7 @@ class SVTControlAttestation
 	hidden [AttestControls] $AttestControlsChoice;
 	hidden [bool] $bulkAttestMode = $false;
 	[AttestationOptions] $attestOptions;
-
-	
+	hidden [PSObject] $ControlSettings ; 
 	hidden [SubscriptionContext] $SubscriptionContext;
     hidden [InvocationInfo] $InvocationContext;
 
@@ -18,12 +17,12 @@ class SVTControlAttestation
 	{
 		$this.SubscriptionContext = $subscriptionContext;
 		$this.InvocationContext = $invocationContext;
-
 		$this.ControlResults = $ctrlResults;
 		$this.AttestControlsChoice = $attestationOptions.AttestControls;
 		$this.attestOptions = $attestationOptions;
 		$this.controlStateExtension = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext)
 		$this.controlStateExtension.Initialize($true)
+		$this.ControlSettings=$ControlSettingsJson = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 	}
 
 	[AttestationStatus] GetAttestationValue([string] $AttestationCode)
@@ -238,36 +237,63 @@ class SVTControlAttestation
 			$controlState.AttestationStatus = [AttestationStatus]::None
 			return $controlState;
 		}
-		
-		$controlState.AttestationStatus = $this.attestOptions.AttestationStatus;
-		$controlState.EffectiveVerificationResult = [Helpers]::EvaluateVerificationResult($controlState.ActualVerificationResult,$controlState.AttestationStatus);
-				
-		if($null -ne $controlResult.StateManagement -and $null -ne $controlResult.StateManagement.CurrentStateData)
+		$defaultValidStates=$this.ControlSettings.DefaultValidAttestationStates;
+		if($this.isControlAttestable())
 		{
-			$controlState.State = $controlResult.StateManagement.CurrentStateData;
-		}
+			if($null -ne $controlItem.ControlItem.ValidAttestationStates )
+			{
+					$validAttestationSet =  Compare-Object $defaultValidStates $controlItem.ControlItem.ValidAttestationStates  -PassThru -IncludeEqual
+			}
+			else
+			{
+				$validAttestationSet=$defaultValidStates
+			}
+			if( $this.attestOptions.AttestationStatus -in $validAttestationSet)
+			{
+			
+						$controlState.AttestationStatus = $this.attestOptions.AttestationStatus;
+						$controlState.EffectiveVerificationResult = [Helpers]::EvaluateVerificationResult($controlState.ActualVerificationResult,$controlState.AttestationStatus);
+				
+						if($null -ne $controlResult.StateManagement -and $null -ne $controlResult.StateManagement.CurrentStateData)
+						{
+							$controlState.State = $controlResult.StateManagement.CurrentStateData;
+						}
 
-		if($null -eq $controlState.State)
-		{
-			$controlState.State = [StateData]::new();
+						if($null -eq $controlState.State)
+						{
+							$controlState.State = [StateData]::new();
+						}
+						$this.dirtyCommitState = $true
+						$controlState.State.AttestedBy = [Helpers]::GetCurrentSessionUser();
+						$controlState.State.AttestedDate = [DateTime]::UtcNow;
+						$controlState.State.Justification = $this.attestOptions.JustificationText				
+			}
+			else
+			{
+				$outvalidSet=$ValidAttestationSet -join "," ;
+				Write-Host "This attestation state is not legitimate for this control, the valid attestation states for this control are $outvalidSet";
+				return $controlState ;
+			}
 		}
-		$this.dirtyCommitState = $true
-		$controlState.State.AttestedBy = [Helpers]::GetCurrentSessionUser();
-		$controlState.State.AttestedDate = [DateTime]::UtcNow;
-		$controlState.State.Justification = $this.attestOptions.JustificationText				
-				
+		else
+		{
+			$controlId=$controlItem.ControlItem.ControlId
+			Write-Host "Attestation is not allowed for the control: $controlId ";
+		}
 		return $controlState;
 	}
 	
 	[void] StartControlAttestation()
 	{
+	
+		
 		try
 		{
 			#user provided justification text would be available only in bulk attestation mode.
 			if($null -ne $this.attestOptions -and  (-not [string]::IsNullOrWhiteSpace($this.attestOptions.JustificationText) -or $this.attestOptions.IsBulkClearModeOn))
 			{
 				$this.bulkAttestMode = $true;				
-				Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Yellow
+					Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Yellow				
 			}
 			else
 			{
