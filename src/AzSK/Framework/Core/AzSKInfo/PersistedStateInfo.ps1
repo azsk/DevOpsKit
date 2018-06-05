@@ -35,6 +35,8 @@ class PersistedStateInfo: CommandBase
 		$SelectedSubscription = $StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
 		$erroredControls=@();
 		$ResourceScanResult=$null;
+		$successCount=0;
+		$totalCount=($controlResultSet | Measure-Object).Count
         foreach ($resultGroup in $resultsGroups) {
 
 		            if($resultGroup.Group[0].FeatureName -eq "SubscriptionCore")
@@ -61,6 +63,7 @@ class PersistedStateInfo: CommandBase
 									
 					     if(($matchedControlResult|Measure-Object).Count -eq 1)
 					     {
+						  $successCount+=1;
 					      $matchedControlResult.UserComments=$currentItem.UserComments
 					     }else
 						 {
@@ -73,9 +76,15 @@ class PersistedStateInfo: CommandBase
 					}		
                     }
 					}
+					else{
+					$erroredControls+=$resultGroup.Group
+					}
                 }
-				$StorageReportJson =[LocalSubscriptionReport] $StorageReportJson
-				$storageReportHelper.SetLocalSubscriptionScanReport($StorageReportJson);
+				if($successCount -gt 0)
+				{
+			    	$StorageReportJson =[LocalSubscriptionReport] $StorageReportJson
+				    $storageReportHelper.SetLocalSubscriptionScanReport($StorageReportJson);
+				}
 				# If updation failed for any control, genearte error file
 				if(($erroredControls | Measure-Object).Count -gt 0)
 				{
@@ -85,9 +94,11 @@ class PersistedStateInfo: CommandBase
 			      $controlCSV.FolderPath = ''
 			      $controlCSV.MessageData = $erroredControls
 			      $this.PublishAzSKRootEvent([AzSKRootEvent]::WriteCSV, $controlCSV);
+				  $this.PublishCustomMessage("$(($erroredControls | Measure-Object).Count)/$totalCount User Comments have not been Updated.", [MessageType]::Warning);
+				  $this.PublishCustomMessage("$successCount/$totalCount User Comments have been Updated successfully.", [MessageType]::Update);
 				}else
 				{
-				  $this.PublishCustomMessage("All UserComments updated successfully.", [MessageType]::Update);
+				  $this.PublishCustomMessage("All User Comments have been updated successfully.", [MessageType]::Update);
 				}
 		
 		return $messages;
