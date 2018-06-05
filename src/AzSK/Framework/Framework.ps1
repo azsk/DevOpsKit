@@ -1,7 +1,18 @@
 Set-StrictMode -Version Latest
 
-Write-Host "Importing AzureRM modules. This may take a while..." -ForegroundColor Yellow
-# Hack to load AI dlls
+$resetAzureDataCollectionFlag = $false
+$dataCollectionPath = "$env:APPDATA\Windows Azure Powershell\AzureDataCollectionProfile.json"
+if(Test-Path -Path $dataCollectionPath)
+{
+    $dataCollectionProfile = Get-Content -path $dataCollectionPath | ConvertFrom-Json
+    if($dataCollectionProfile.enableAzureDataCollection)
+    {
+    $resetAzureDataCollectionFlag = $true
+    Disable-AzureRmDataCollection  | Out-Null
+    }
+}
+
+# load AI dlls using context
 try {Get-AzureRmContext -ErrorAction SilentlyContinue | Out-Null }
 catch 
 { 
