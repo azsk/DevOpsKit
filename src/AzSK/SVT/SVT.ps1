@@ -49,6 +49,8 @@ function Get-AzSKAzureServicesSecurityStatus
 		Use this option to provide an apt justification with proper business reason.
 	.PARAMETER AttestationStatus
 		Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater)
+	.PARAMETER IncludeUserComments
+		Use this switch to display previously stored user comments for controls.
 
 	.NOTES
 	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
@@ -258,7 +260,8 @@ function Get-AzSKSubscriptionSecurityStatus
 		Switch to specify whether to generate script to fix the control or not.
 	.PARAMETER ControlsToAttest
 		Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
-
+    .PARAMETER IncludeUserComments
+		Use this switch to display previously stored user comments for controls.
 	.NOTES
 	This command helps the application team to verify whether their Azure subscription are compliant with the security guidance or not 
 
@@ -528,7 +531,8 @@ function Get-AzSKControlsStatus
 			Use this option to provide an apt justification with proper business reason.
 	.PARAMETER AttestationStatus
 			Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater)
-
+    .PARAMETER IncludeUserComments
+		Use this switch to display previously stored user comments for controls.
 	.NOTES
 	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
 
