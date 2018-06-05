@@ -134,13 +134,17 @@ class WriteSummaryFile: FileOutputBase
                         Description = $item.ControlItem.Description;
                         FeatureName = $item.FeatureName;
                         ChildResourceName = $_.ChildResourceName;
-						Recommendation = $item.ControlItem.Recommendation;						
+						Recommendation = $item.ControlItem.Recommendation;	
+				
                     };
 					if($_.VerificationResult -ne [VerificationResult]::NotScanned)
 					{
 						$csvItem.Status = $_.VerificationResult.ToString();
 					}
-
+					if($this.InvocationContext.BoundParameters['IncludeUserComments'] -eq $True)
+					{
+                      UserComments=$_.UserComments;	
+					}
 					#if($anyFixableControls)
 					#{
 					if($item.ControlItem.FixControl)
@@ -185,6 +189,7 @@ class WriteSummaryFile: FileOutputBase
 					}
 					else
 					{
+					    $csvItem.ResourceId = $item.SubscriptionContext.scope;
 						$csvItem.DetailedLogFile = "/$([Helpers]::SanitizeFolderName($item.SubscriptionContext.SubscriptionName))/$($item.FeatureName).LOG"
 					}
 
@@ -218,7 +223,10 @@ class WriteSummaryFile: FileOutputBase
 					$nonNullProps += $propName;
 				}
 			};
-
+			if($this.InvocationContext.BoundParameters['IncludeUserComments'] -ne $null -and $this.InvocationContext.BoundParameters['IncludeUserComments'] -eq $true -and -not ([Helpers]::CheckMember($nonNullProps, "UserComments")))
+			{
+			  $nonNullProps += "UserComments";
+			}
             $csvItems | Select-Object -Property $nonNullProps | Export-Csv $this.FilePath -NoTypeInformation
         }
     }
@@ -246,4 +254,5 @@ class CsvOutputItem
 	[string] $ResourceId = ""
     [string] $DetailedLogFile = ""
 	[string] $IsControlInGrace
+	[string] $UserComments = ""
 }
