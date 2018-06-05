@@ -6,6 +6,7 @@ class RemoteReportsListener: ListenerBase {
     }
 
     hidden static [RemoteReportsListener] $Instance = $null;
+	hidden static [StorageReportHelper] $StorageReportHelperInstance = $null;
 
     static [RemoteReportsListener] GetInstance() {
         if ( $null  -eq [RemoteReportsListener]::Instance  ) {
@@ -13,6 +14,15 @@ class RemoteReportsListener: ListenerBase {
         }
         return [RemoteReportsListener]::Instance
     }
+
+	static [StorageReportHelper] GetStorageReportHelperInstance()
+	{
+		if ( $null  -eq [RemoteReportsListener]::StorageReportHelperInstance  ) {
+				[RemoteReportsListener]::StorageReportHelperInstance = [StorageReportHelper]::new();
+				[RemoteReportsListener]::StorageReportHelperInstance.Initialize($false);
+        }
+        return [RemoteReportsListener]::StorageReportHelperInstance
+	}
 
     [void] RegisterEvents() {
         $this.UnregisterEvents();
@@ -168,6 +178,10 @@ class RemoteReportsListener: ListenerBase {
 			}
 		}
 		$scanResult.ControlResults = [SubscriptionControlResult[]] $results
+
+		[RemoteReportsListener]::GetStorageReportHelperInstance();
+		[RemoteReportsListener]::StorageReportHelperInstance.PostSubscriptionScanReport($scanResult)
+
 		[RemoteApiHelper]::PostSubscriptionScanResult($scanResult)
 	}
 
@@ -234,7 +248,11 @@ class RemoteReportsListener: ListenerBase {
 				}
 			}
 		}
+
 		$scanResult.ControlResults = [ServiceControlResult[]] $results
+
+		[RemoteReportsListener]::GetStorageReportHelperInstance();
+		[RemoteReportsListener]::StorageReportHelperInstance.PostServiceScanReport($scanResult)
 		[RemoteApiHelper]::PostServiceScanResult($scanResult)
 	}
 }

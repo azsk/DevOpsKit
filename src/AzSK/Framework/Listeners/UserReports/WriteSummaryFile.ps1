@@ -153,6 +153,7 @@ class WriteSummaryFile: FileOutputBase
 						$csvItem.SupportsAutoFix = "No";
 					}
 					#}
+					
 					if($item.ControlItem.IsBaselineControl)
 					{
 						$csvItem.IsBaselineControl = "Yes";
@@ -160,6 +161,15 @@ class WriteSummaryFile: FileOutputBase
 					else
 					{
 						$csvItem.IsBaselineControl = "No";
+					}
+
+					if($_.IsControlInGrace)
+					{
+						$csvItem.IsControlInGrace = "Yes";
+					}
+					else
+					{
+						$csvItem.IsControlInGrace = "No";
 					}
 
 					if($anyAttestedControls)
@@ -240,5 +250,6 @@ class CsvOutputItem
     [string] $Recommendation = ""
 	[string] $ResourceId = ""
     [string] $DetailedLogFile = ""
+	[string] $IsControlInGrace
 	[string] $UserComments = ""
 }

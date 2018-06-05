@@ -20,7 +20,7 @@ class LSRSubscription
 class LSRScanDetails
 {
 	[LSRSubscriptionControlResult[]] $SubscriptionScanResult = @();
-	[LSRResources[]] $Resources = @();;
+	[LSRResources[]] $Resources = @();
 }
 
 class LSRResources

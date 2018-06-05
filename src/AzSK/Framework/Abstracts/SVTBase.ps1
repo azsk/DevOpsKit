@@ -7,6 +7,9 @@ class SVTBase: AzSKRoot
     hidden [PSObject] $ControlSettings
 
 	hidden [ControlStateExtension] $ControlStateExt;
+	hidden [StorageReportHelper] $StorageReportHelper;
+	hidden [LSRSubscription] $StorageReportData;
+
 	hidden [ControlState[]] $ResourceState;
 	hidden [ControlState[]] $DirtyResourceStates;
 
@@ -23,12 +26,14 @@ class SVTBase: AzSKRoot
         Base($subscriptionId)
     {
 		$this.CreateInstance($svtResource);
+		$this.GetLocalSubscriptionData();
     }
 
 	SVTBase([string] $subscriptionId):
         Base($subscriptionId)
     {
 		$this.CreateInstance();
+		$this.GetLocalSubscriptionData();
     }
 
 	SVTBase([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
@@ -38,6 +43,7 @@ class SVTBase: AzSKRoot
 			ResourceGroupName = $resourceGroupName;
             ResourceName = $resourceName;
 		});
+		$this.GetLocalSubscriptionData();
     }
 	hidden [void] CreateInstance()
 	{
@@ -45,6 +51,7 @@ class SVTBase: AzSKRoot
 
         $this.LoadSvtConfig([SVTMapping]::SubscriptionMapping.JsonFileName);
 	}
+
 	hidden [void] CreateInstance([SVTResource] $svtResource)
 	{
 		[Helpers]::AbstractClass($this, [SVTBase]);
@@ -85,7 +92,6 @@ class SVTBase: AzSKRoot
 
         $this.LoadSvtConfig($svtResource.ResourceTypeMapping.JsonFileName);
 
-
         $this.ResourceContext = [ResourceContext]@{
             ResourceGroupName = $svtResource.ResourceGroupName;
             ResourceName = $svtResource.ResourceName;
@@ -93,7 +99,6 @@ class SVTBase: AzSKRoot
             ResourceTypeName = $svtResource.ResourceTypeMapping.ResourceTypeName;
         };
 		$this.ResourceContext.ResourceId = $this.GetResourceId();
-
 	}
 
     hidden [void] LoadSvtConfig([string] $controlsJsonFileName)
@@ -118,6 +123,33 @@ class SVTBase: AzSKRoot
             }
         }
     }
+
+	hidden [void] GetLocalSubscriptionData()
+	{
+		if ( $null  -eq $this.StorageReportHelper) 
+		{
+			$this.StorageReportHelper = [StorageReportHelper]::new();
+			$this.StorageReportHelper.Initialize($false);
+        }
+		if($this.StorageReportHelper.HasStorageReportReadAccessPermissions())
+		{
+			$this.StorageReportData =  $this.StorageReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId)
+		}
+	}
+
+	hidden [void] SetLocalSubscriptionData([LSRSubscription] $scanData)
+	{
+		if ( $null  -eq $this.StorageReportHelper) 
+		{
+			$this.StorageReportHelper = [StorageReportHelper]::new();
+			$this.StorageReportHelper.Initialize($false);
+        }
+		if($this.StorageReportHelper.HasStorageReportWriteAccessPermissions())
+		{
+			$finalScanResult = $this.StorageReportHelper.MergeScanReport($scanData)
+			$this.StorageReportData =  $this.StorageReportHelper.SetLocalSubscriptionScanReport($finalScanResult)	
+		}
+	}
 
 	hidden [bool] CheckBaselineControl($controlId)
 	{
@@ -527,6 +559,8 @@ class SVTBase: AzSKRoot
                 $this.ControlError($controlItem, $_);
             }
 			$this.PostProcessData($singleControlResult);
+
+			$this.GetDataFromSubscriptionReport($singleControlResult);
 
 			# Check for the control which requires elevated permission to modify 'Recommendation' so that user can know it is actually automated if they have the right permission
 			if($singleControlResult.ControlItem.Automated -eq "Yes")
@@ -1109,67 +1143,72 @@ class SVTBase: AzSKRoot
 		$this.ResourceContext.ResourceMetadata = $resourceMetadata
 
 	}
-	 hidden [SVTEventContext[]] GetUserComments([SVTEventContext[]] $arguments)
+
+	hidden [void] GetDataFromSubscriptionReport($singleControlResult)
     {
-	     #Read SubscriptionScanReport Snapshot from storage
-		 $storageReportHelper = [StorageReportHelper]::new();
-		 $storageReportHelper.Initialize($false);	
-		 $StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
-
-		 #Filter out current Subscription
-		 $SelectedSubscription=$StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
-	
-		 if($this.SVTConfig.FeatureName -eq "SubscriptionCore")
-		 {
-		  $ResourceData=$SelectedSubscription.ScanDetails.SubscriptionScanResult
-		  $ResourceScanResult=$ResourceData
-		 }else
-		 {
-          $ResourceData=$SelectedSubscription.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}	  
-		  if(($ResourceData | Measure-Object).Count -gt 0 )
-		  {
-		  $ResourceScanResult=$ResourceData.ResourceScanResult
-		  }
-		  else
-		  {
-		  return $arguments
-		  }
-		 }
-		 [SVTEventContext[]] $controlsResultSet = @();
-		 if(($ResourceScanResult | Measure-Object).Count -gt 0)
-		 {
-		  # Verify if any check clause required here    
-		  $arguments | ForEach-Object{      
-		  $currentItem=$_;
-		  [ControlResult[]] $controlsResults = @();
-		  $currentItem.ControlResults | ForEach-Object {
-		  $currentControl=$_
-		 
-		  $matchedControlResult=$ResourceScanResult | Where-Object {
-		  ($_.ControlIntId -eq $currentItem.ControlItem.Id -and (  ([Helpers]::CheckMember($currentControl, "ChildResourceName") -and $_.ChildResourceName -eq $currentControl.ChildResourceName) -or (-not([Helpers]::CheckMember($currentControl, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
-		  }
-		 
-		  if($null -ne  $matchedControlResult)
-		  {
-		   $currentControl.UserComments=$matchedControlResult.UserComments
-		  }else
-		  {
-		   #If Place holder required , else remove else block
-		   $currentControl.UserComments="  "
-		  }
-		 
-		  $controlsResults+=$currentControl
-		  }
-		  $currentItem.ControlResults=$controlsResults 
-		  $controlsResultSet+=$currentItem
-		};
-		}
-		else
+		if([Helpers]::CheckMember($this.StorageReportData,"ScanDetails"))
 		{
-		 $controlsResultSet=$arguments
-		}
-        return $controlsResultSet;
-    }
+			$ResourceData = @();
+			if($singleControlResult.FeatureName -eq "SubscriptionCore")
+			{
+				if([Helpers]::CheckMember($this.StorageReportData.ScanDetails,"SubscriptionScanResult"))
+				{
+					$ResourceData = $this.StorageReportData.ScanDetails.SubscriptionScanResult
+				}
+			}
+			else
+			{
+				if([Helpers]::CheckMember($this.StorageReportData.ScanDetails,"Resources"))
+				{
+					$ResourceData = $this.StorageReportData.ScanDetails.Resources
+				}
 
+				$ResourceData = $this.StorageReportData.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}	  
+				if(($ResourceData | Measure-Object).Count -gt 0 )
+				{
+					$ResourceScanResult=$ResourceData.ResourceScanResult
+					if(($ResourceScanResult | Measure-Object).Count -gt 0)
+					{
+						[ControlResult[]] $controlsResults = @();
+						$singleControlResult.ControlResults | ForEach-Object {
+							$currentControl=$_
+		
+							$matchedControlResult=$ResourceScanResult | Where-Object {
+							($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (  ([Helpers]::CheckMember($currentControl, "ChildResourceName") -and $_.ChildResourceName -eq $currentControl.ChildResourceName) -or (-not([Helpers]::CheckMember($currentControl, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
+							}
+		
+							if($null -ne  $matchedControlResult)
+							{
+								$currentControl.UserComments = $matchedControlResult.UserComments
+								$currentControl.FirstFailedOn = $matchedControlResult.FirstFailedOn
+								$currentControl.FirstScannedOn = $matchedControlResult.FirstScannedOn
+
+								$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
+
+								$permittedDays = 90;
+
+								if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays.ControlSeverity") -and [Helpers]::CheckMember($this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity,$currentControl.ControlItem.Severity))
+								{
+									$permittedDays = $this.ControlSetting.NewControlGracePeriodInDays.$currentControl.ControlItem.Severity
+									
+								}
+								if($scanFromDays -ge $permittedDays)
+								{
+									$currentControl.IsControlInGrace = $false
+								}
+								else
+								{
+									$currentControl.IsControlInGrace = $true
+								}
+							}
+							$controlsResults+=$currentControl
+						}
+						$singleControlResult.ControlResults=$controlsResults 
+					}
+				}
+			}
+		}
+		
+    }
 	
 }
