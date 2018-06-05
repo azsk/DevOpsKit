@@ -77,7 +77,13 @@ class Constants
 	static [string] $CAScanProgressSnapshotsContainerName = "ca-scan-checkpoints"
 	static [string] $CAScanOutputLogsContainerName= "ca-scan-logs"
 	static [string] $ResourceScanTrackerBlobName = "ResourceScanTracker.json"
-	static [string] $ResourceScanTrackerCMBlobName = "ResourceScanTracker_CentralMode.json"	
+	static [string] $ResourceScanTrackerCMBlobName = "ResourceScanTracker_CentralMode.json"
+	static [hashtable] $AttestationStatusHashMap = @{
+			"NotAnIssue"   ="1";
+			"WillNotFix"   ="2";
+			"WillFixLater" ="3";
+			"NotApplicable"="4";
+	}
 
 	static [string] $StorageAccountPreName= "azsk"
 	static [string] $AzSKAppFolderPath = $Env:LOCALAPPDATA + "\Microsoft\" + [Constants]::AzSKModuleName
