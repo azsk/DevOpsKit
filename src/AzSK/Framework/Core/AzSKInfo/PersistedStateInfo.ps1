@@ -22,7 +22,7 @@ class PersistedStateInfo: CommandBase
 		#Check for file path exist
 		 if(-not (Test-Path -path $filePath))
 		{  
-			$this.PublishException("Provided file path is empty, Please re-run the command with correct path.");
+			$this.PublishCustomMessage("Provided file path is empty, Please re-run the command with correct path.",[MessageType]::Error);
 			return $messages;
 		}
 		# Read Local CSV file
@@ -32,24 +32,37 @@ class PersistedStateInfo: CommandBase
 	    $storageReportHelper = [StorageReportHelper]::new(); 
 		$storageReportHelper.Initialize($false);	
 		$StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
-		$SelectedSubscription = $StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
+		$SelectedSubscription=$null;
 		$erroredControls=@();
 		$ResourceScanResult=$null;
+		$ResourceData=@();
 		$successCount=0;
+		if($null -ne $StorageReportJson -and [Helpers]::CheckMember($StorageReportJson,"Subscriptions"))
+		{
+	    	$SelectedSubscription = $StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
+		}
+		if(($SelectedSubscription|Measure-Object).Count -gt 0)
+		{
 		$totalCount=($controlResultSet | Measure-Object).Count
         foreach ($resultGroup in $resultsGroups) {
 
 		            if($resultGroup.Group[0].FeatureName -eq "SubscriptionCore")
 					{
-					  $ResourceData=$SelectedSubscription.ScanDetails.SubscriptionScanResult
-					  $ResourceScanResult=$ResourceData
+						if([Helpers]::CheckMember($SelectedSubscription.ScanDetails,"SubscriptionScanResult"))
+						{
+						  $ResourceData=$SelectedSubscription.ScanDetails.SubscriptionScanResult
+						  $ResourceScanResult=$ResourceData
+						 }
 					}else
 					{
-					  $ResourceData=$SelectedSubscription.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $resultGroup.Name}	  
-		              if(($ResourceData | Measure-Object).Count -gt 0 )
-		              {
-		                  $ResourceScanResult=$ResourceData.ResourceScanResult
-		              }
+						 if([Helpers]::CheckMember($SelectedSubscription.ScanDetails,"Resources"))
+						 {
+						  $ResourceData=$SelectedSubscription.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $resultGroup.Name}	 
+						  } 
+						  if(($ResourceData | Measure-Object).Count -gt 0 )
+						  {
+							  $ResourceScanResult=$ResourceData.ResourceScanResult
+						  }
 					}
 					if(($ResourceScanResult | Measure-Object).Count -gt 0)
 					{
@@ -100,7 +113,10 @@ class PersistedStateInfo: CommandBase
 				{
 				  $this.PublishCustomMessage("All User Comments have been updated successfully.", [MessageType]::Update);
 				}
-		
+		}else
+		{
+		 $this.PublishEvent([AzSKGenericEvent]::Exception, "Unable to update User Comments as scan file from storage can't be retrieved.");
+		}
 		return $messages;
     }
 }
