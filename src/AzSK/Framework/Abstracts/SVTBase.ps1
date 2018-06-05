@@ -335,12 +335,7 @@ class SVTBase: AzSKRoot
 			{
 				$this.EvaluationStarted();
 				 $resourceSecurityResult += $this.GetAutomatedSecurityStatus();
-				$resourceSecurityResult += $this.GetManualSecurityStatus();
-				# This will be called for each unique resource id
-				if($this.IncludeUserComments -eq $true)
-				{
-				 $resourceSecurityResult=$this.GetUserComments($resourceSecurityResult);
-				}
+				$resourceSecurityResult += $this.GetManualSecurityStatus();			
 				$this.PostEvaluationCompleted($resourceSecurityResult);
 				$this.EvaluationCompleted($resourceSecurityResult);
 			}
@@ -1187,11 +1182,11 @@ class SVTBase: AzSKRoot
 
 								$permittedDays = 90;
 
-								if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays.ControlSeverity") -and [Helpers]::CheckMember($this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity,$currentControl.ControlItem.Severity))
+								<#if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays.ControlSeverity") -and [Helpers]::CheckMember($this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity,$currentControl.ControlItem.Severity))
 								{
 									$permittedDays = $this.ControlSetting.NewControlGracePeriodInDays.$currentControl.ControlItem.Severity
 									
-								}
+								}#>
 								if($scanFromDays -ge $permittedDays)
 								{
 									$currentControl.IsControlInGrace = $false

@@ -135,13 +135,16 @@ class WriteSummaryFile: FileOutputBase
                         FeatureName = $item.FeatureName;
                         ChildResourceName = $_.ChildResourceName;
 						Recommendation = $item.ControlItem.Recommendation;	
-						UserComments=$_.UserComments;					
+				
                     };
 					if($_.VerificationResult -ne [VerificationResult]::NotScanned)
 					{
 						$csvItem.Status = $_.VerificationResult.ToString();
 					}
-
+					if($this.InvocationContext.BoundParameters['IncludeUserComments'] -eq $True)
+					{
+                      UserComments=$_.UserComments;	
+					}
 					#if($anyFixableControls)
 					#{
 					if($item.ControlItem.FixControl)
