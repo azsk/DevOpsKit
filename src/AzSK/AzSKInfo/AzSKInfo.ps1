@@ -243,10 +243,10 @@ function Update-AzSKPersistedState
 	{
 		try 
 		{
-			$basicInfo = [PersistedStateInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation);
-			if ($basicInfo -and $StateType -eq "UserComments") 
+			$persistedStateInfo = [PersistedStateInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+			if ($persistedStateInfo -and $StateType -eq "UserComments") 
 			{
-				return $basicInfo.InvokeFunction($basicInfo.UpdatePersistedState,@($FilePath));
+				return $persistedStateInfo.InvokeFunction($persistedStateInfo.UpdatePersistedState,@($FilePath));
 			}
 		}
 		catch 
