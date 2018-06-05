@@ -84,7 +84,7 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlIds += $this.ControlIds;
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
-		$svtObject.IncludeUserComments =$this.IncludeUserComments;
+		$svtObject.IncludeUserComments =$this.InvocationContext.BoundParameters['IncludeUserComments'];
 
         #Include Server Side Exclude Tags
         $svtObject.ExcludeTags += [ConfigurationManager]::GetAzSKConfigData().DefaultControlExculdeTags

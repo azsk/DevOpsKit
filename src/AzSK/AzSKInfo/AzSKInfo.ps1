@@ -189,3 +189,74 @@ function Get-AzSKInfo
 		[ListenerHelper]::UnregisterListeners();
 	}
 }
+function Update-AzSKPersistedState 
+{	
+	<#
+	.SYNOPSIS
+	This command would help in updating all the critical AzSK packages which includes subscription security (RBAC, ARM Policies, Alerts, Security center configuration) and  Continuous Assurance (CA) automation runbook.
+
+	.DESCRIPTION
+	This command would help in updating all the critical AzSK packages which includes subscription security (RBAC, ARM Policies, Alerts, Security center configuration) and  Continuous Assurance (CA) automation runbook.
+	
+	.PARAMETER SubscriptionId
+		Subscription id for which subscription security configuration has to be updated.
+	.PARAMETER FilePath
+		Migrates CA with the specified AADAppName
+	.PARAMETER UserComments
+		Migrates older AzSDK resources to new AzSK resources
+	.PARAMETER DoNotOpenOutputFolder
+		Switch to specify whether to open output folder containing all security evaluation report or not.
+
+	.LINK
+	https://aka.ms/azskossdocs 
+	#>
+	Param(
+
+		[string]
+        [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which subscription security configuration has to be updated.", ParameterSetName = "Default")]
+        [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which subscription security configuration has to be updated.", ParameterSetName = "UserComments")]
+		[ValidateNotNullOrEmpty()]
+		[Alias("sid")]
+		$SubscriptionId,
+
+		[string]
+		[Parameter(Mandatory = $false, HelpMessage = "Migrates CA with the specified AADAppName", ParameterSetName = "UserComments")]
+		$FilePath,
+
+		[ValidateSet("UserComments")]
+		[Parameter(Mandatory = $true, HelpMessage = "Migrates older AzSDK resources to new AzSK resources", ParameterSetName = "UserComments")]
+		$StateType,
+	
+		[switch]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.", ParameterSetName = "Default")]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.", ParameterSetName = "UserComments")]
+		$DoNotOpenOutputFolder
+    )
+
+	Begin
+	{
+		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
+		[ListenerHelper]::RegisterListeners();
+	}
+
+	Process
+	{
+		try 
+		{
+			$basicInfo = [PersistedStateInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+			if ($basicInfo -and $StateType -eq "UserComments") 
+			{
+				return $basicInfo.InvokeFunction($basicInfo.UpdatePersistedState,@($FilePath));
+			}
+		}
+		catch 
+		{
+			[EventBase]::PublishGenericException($_);
+		}  		
+	}
+
+	End
+	{
+		[ListenerHelper]::UnregisterListeners();
+	}
+}

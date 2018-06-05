@@ -175,6 +175,12 @@ class CommandHelper
             Noun = "AzSKStorage";
             ShortName = "US";
 			IsLatestRequired = $false;
+        },
+		[CommandDetails]@{
+            Verb = "Update";
+            Noun = "AzSKPersistedState";
+            ShortName = "UPS";
+			IsLatestRequired = $false;
         }
     );
 

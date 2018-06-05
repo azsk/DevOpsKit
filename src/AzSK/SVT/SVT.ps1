@@ -639,7 +639,11 @@ function Get-AzSKControlsStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("gfs")]
-		$GenerateFixScript
+		$GenerateFixScript,
+
+		[switch]
+        [Parameter(Mandatory = $false)]
+		$IncludeUserComments
     )
 	Begin
 	{
@@ -663,6 +667,7 @@ function Get-AzSKControlsStatus
 				$controlReport.ExcludeTags = $ExcludeTags;
 				$controlReport.ControlIdString = $ControlIds;
 				$controlReport.GenerateFixScript = $GenerateFixScript;
+				$controlReport.IncludeUserComments =$IncludeUserComments;
 
 				#build the attestation options object
 				[AttestationOptions] $attestationOptions = [AttestationOptions]::new();
