@@ -17,7 +17,7 @@ class SVTBase: AzSKRoot
 	[string[]] $ControlIds = @();
 	[bool] $GenerateFixScript = $false;
 	[string] $PartialScanIdentifier = [string]::Empty
-
+	[SVTEventContext[]] $ChildSvtObjects = @();
     SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId)
     {
@@ -1104,6 +1104,20 @@ class SVTBase: AzSKRoot
 
 	}
 
+	hidden [SVTResource] CreateSVTResource([string] $ConnectionResourceId,[string] $ResourceGroupName, [string] $ConnectionResourceName, [string] $ResourceType, [string] $Location, [string] $MappingName)
+	{
+		$svtResource = [SVTResource]::new();
+		$svtResource.ResourceId = $ConnectionResourceId; 
+		$svtResource.ResourceGroupName = $ResourceGroupName;
+		$svtResource.ResourceName = $ConnectionResourceName
+		$svtResource.ResourceType = $ResourceType; # 
+		$svtResource.Location = $Location;
+		$svtResource.ResourceTypeMapping = ([SVTMapping]::Mapping |
+						Where-Object { $_.ResourceTypeName -eq $MappingName } |
+						Select-Object -First 1);
+
+		return $svtResource;
+	}
 
 	
 }

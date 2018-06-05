@@ -140,65 +140,7 @@ class ServicesSecurityStatus: SVTCommandBase
 
 				try
 				{
-						$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
-
-						# Add all the LogicApps connectors if Resource Type is LogicApps
-						$childSvtObjects = @()
-						if( $_.ResourceTypeMapping.ResourceTypeName -eq [SVTMapping]::LogicAppsTypeName)
-						{
-							$resource = $_
-							$resourceObject = Get-AzureRmResource -Name $resource.ResourceName `
-													-ResourceGroupName $resource.ResourceGroupName -ResourceType $resource.ResourceType
-
-							if($null -ne $resourceObject)
-							{
-								if(Get-Member -InputObject $resourceObject.Properties.parameters -Name '$connections' -MemberType Properties)
-								{
-									$apiConnections = $resourceObject.Properties.parameters.'$connections'.value
-									if($null -ne $apiConnections)
-									{
-										$apiConnections | Get-Member -MemberType *Property | ForEach-Object{  
-											try
-											{
-												$apiConId = ($apiConnections.($_.name) | Select-Object connectionId).connectionId
-												$childSvtObject = $this.CreateSVTResource($apiConId, $resource.ResourceGroupName, $resource.ResourceName + "/" + $_.name, "Microsoft.Web/connections", $resource.Location, "APIConnection")
-												$childSvtObjects += New-Object -TypeName $($childSvtObject.ResourceTypeMapping.ClassName) -ArgumentList $this.SubscriptionContext.SubscriptionId, $childSvtObject
-											}
-											catch
-											{
-												#Consuming the exception intentionally to prevent adding deleted connections
-											}
-										}
-									}
-								}
-								$Definition=$resourceObject.Properties.definition
-								if($null -ne $Definition.Actions -and -not[string]::IsNullOrEmpty($resourceObject.Properties.definition.actions))
-								{
-									$Definition.Actions | Get-Member -MemberType *Property | ForEach-Object{ 
-										$Name=$_.name
-										if($Definition.Actions.$Name.type -ne 'ApiConnection')	
-										{				
-											$newResourceId = $resource.ResourceId.replace($resource.ResourceName,$_.name).replace("Microsoft.Logic/workflows/","Microsoft.Web/connections/custom/")
-											$childSvtObject = $this.CreateSVTResource($newResourceId, $resource.ResourceGroupName, $resource.ResourceName + "/" + $_.name, "Microsoft.Web/connections", $resource.Location, "APIConnection")
-											$childSvtObjects += New-Object -TypeName $($childSvtObject.ResourceTypeMapping.ClassName) -ArgumentList $this.SubscriptionContext.SubscriptionId, $childSvtObject
-										}
-									}
-								}
-								if($null -ne $Definition.triggers -and -not[string]::IsNullOrEmpty($resourceObject.Properties.definition.triggers))
-								{
-									$Definition.Triggers | Get-Member -MemberType *Property | ForEach-Object{ 
-										$Name=$_.name
-										if($Definition.Triggers.$Name.type -ne 'ApiConnection')	
-										{						
-											$newResourceId = $resource.ResourceId.replace($resource.ResourceName,$_.name).replace("Microsoft.Logic/workflows/","Microsoft.Web/connections/custom/")
-											$childSvtObject = $this.CreateSVTResource($newResourceId, $resource.ResourceGroupName, $resource.ResourceName + "/" + $_.name, "Microsoft.Web/connections", $resource.Location, "APIConnection")
-											$childSvtObjects += New-Object -TypeName $($childSvtObject.ResourceTypeMapping.ClassName) -ArgumentList $this.SubscriptionContext.SubscriptionId, $childSvtObject
-										}
-									}
-								}
-							}
-						}
-
+					$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
 				}
 				catch
 				{
@@ -213,7 +155,7 @@ class ServicesSecurityStatus: SVTCommandBase
 					$this.SetSVTBaseProperties($svtObject);
 
 					$result += $svtObject.$methodNameToCall();
-					$childSvtObjects | ForEach-Object {
+					$svtObject.ChildSvtObjects | ForEach-Object {
 						$_.RunningLatestPSModule = $this.RunningLatestPSModule
 						$this.SetSVTBaseProperties($_)
 						$result += $_.$methodNameToCall();
@@ -360,21 +302,5 @@ class ServicesSecurityStatus: SVTCommandBase
 		{
 			$partialScanMngr.PersistStorageBlob();
 		}
-	}
-
-	hidden [SVTResource] CreateSVTResource([string] $ConnectionResourceId,[string] $ResourceGroupName, [string] $ConnectionResourceName, [string] $ResourceType, [string] $Location, [string] $MappingName)
-	{
-		$svtResource = [SVTResource]::new();
-		$svtResource.ResourceId = $ConnectionResourceId; 
-		$svtResource.ResourceGroupName = $ResourceGroupName;
-		$svtResource.ResourceName = $ConnectionResourceName
-		$svtResource.ResourceType = $ResourceType; # 
-		$svtResource.Location = $Location;
-		$svtResource.ResourceTypeMapping = ([SVTMapping]::Mapping |
-						Where-Object { $_.ResourceTypeName -eq $MappingName } |
-						Select-Object -First 1);
-
-		return $svtResource;
-	}
-		
+	}		
 }
