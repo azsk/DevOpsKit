@@ -143,7 +143,7 @@ class WriteSummaryFile: FileOutputBase
 					}
 					if($this.InvocationContext.BoundParameters['IncludeUserComments'] -eq $True)
 					{
-                      UserComments=$_.UserComments;	
+                      $csvItem.UserComments=$_.UserComments;	
 					}
 					#if($anyFixableControls)
 					#{
