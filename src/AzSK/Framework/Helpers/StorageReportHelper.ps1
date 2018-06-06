@@ -174,6 +174,10 @@ class StorageReportHelper
             {
                 $ContainerName = $this.AzSKStorageContainer.Name
             }
+            else
+            {
+                return [LocalSubscriptionReport]::new();
+            }
 
             $loopValue = $this.retryCount;
             $StorageReportBlob = $null;
@@ -185,7 +189,7 @@ class StorageReportHelper
 
             if($null -eq $StorageReportBlob)
             {
-                return $null;
+                return [LocalSubscriptionReport]::new();
             }
             $AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\StorageReport";
             if(-not (Test-Path -Path $AzSKTemp))
@@ -228,7 +232,7 @@ class StorageReportHelper
         }
         else
         {
-            return $fullScanResult
+            return [LSRSubscription]::new()
         }
         
     }
@@ -338,6 +342,7 @@ class StorageReportHelper
             if($subscriptionScanResult.AttestationStatus -ne [AttestationStatus]::None)
             {
                 $subscriptionScanResult.FirstAttestedOn = [DateTime]::UtcNow
+                $subscriptionScanResult.AttestationCounter = 1
             }
 
             $subscriptionScanResult.FirstScannedOn = [DateTime]::UtcNow
@@ -404,6 +409,7 @@ class StorageReportHelper
                 if($resourceScanResult.AttestationStatus -ne [AttestationStatus]::None)
                 {
                     $resourceScanResult.FirstAttestedOn = [DateTime]::UtcNow
+                    $resourceScanResult.AttestationCounter = 1
                 }
 
                 $resourceScanResult.FirstScannedOn = [DateTime]::UtcNow
@@ -445,13 +451,9 @@ class StorageReportHelper
                             $_ORsubcriptionScanResult.ControlUpdatedOn = $subcriptionScanResult.ControlUpdatedOn
                             $_ORsubcriptionScanResult.ControlSeverity = $subcriptionScanResult.ControlSeverity
 
-                            if($subcriptionScanResult.AttestationStatus -ne $_ORsubcriptionScanResult.AttestationStatus -or $subcriptionScanResult.Justification -ne $_ORsubcriptionScanResult.Justification)
+                            if($subcriptionScanResult.AttestationStatus -ne [AttestationStatus]::None -and ($subcriptionScanResult.AttestationStatus -ne $_ORsubcriptionScanResult.AttestationStatus -or $subcriptionScanResult.Justification -ne $_ORsubcriptionScanResult.Justification))
                             {
-                                $_ORsubcriptionScanResult.AttestationCounter++
-                            }
-                            if($subcriptionScanResult.AttestationStatus -ne [AttestationStatus]::None)
-                            {
-                                $_ORsubcriptionScanResult.AttestationCounter = $this.GetAttestationCounterDays($_ORsubcriptionScanResult.AttestationCounter, $_ORsubcriptionScanResult.LastScannedOn)
+                                $_ORsubcriptionScanResult.AttestationCounter = $_ORsubcriptionScanResult.AttestationCounter + 1
                             }
                             if($_ORsubcriptionScanResult.VerificationResult -ne $subcriptionScanResult.VerificationResult)
                             {
@@ -536,9 +538,9 @@ class StorageReportHelper
                                     $_oldControlResult.ControlUpdatedOn = $newControlResult.ControlUpdatedOn
                                     $_oldControlResult.ControlSeverity = $newControlResult.ControlSeverity
 
-                                    if($newControlResult.AttestationStatus -ne $_oldControlResult.AttestationStatus -or $newControlResult.Justification -ne $_oldControlResult.Justification)
+                                    if($newControlResult.AttestationStatus -ne [AttestationStatus]::None -and($newControlResult.AttestationStatus -ne $_oldControlResult.AttestationStatus -or $newControlResult.Justification -ne $_oldControlResult.Justification))
                                     {
-                                        $_oldControlResult.AttestationCounter++
+                                        $_oldControlResult.AttestationCounter = $_oldControlResult.AttestationCounter + 1 
                                     }
                                     if($_oldControlResult.VerificationResult -ne $newControlResult.VerificationResult)
                                     {

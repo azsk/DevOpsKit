@@ -11,18 +11,20 @@ class ComplianceInfo: CommandBase
 	hidden [string[]] $ControlIds = @();
 	hidden [ComplianceMessageSummary[]] $ComplianceMessageSummary = @();
 	hidden [ComplianceResult[]] $ComplianceScanResult = @();
+	hidden [string] $SubscriptionId
 
 
 	ComplianceInfo([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $resourceTypeName, [string] $resourceType, [string] $controlIds, [bool] $baslineControls,
 					[string] $controlSeverity, [string] $controlIdContains): 
         Base($subscriptionId, $invocationContext) 
     { 
-		$this.GetComplianceScanData();	
+		
 		
 		$this.ResourceTypeName = $resourceTypeName;
 		$this.BaslineControls = $baslineControls;
 		$this.ControlSeverity = $controlSeverity;
 		$this.ControlIdContains = $controlIdContains
+		$this.SubscriptionId = $subscriptionId
 
 		if(-not [string]::IsNullOrEmpty($controlIds))
         {
@@ -78,18 +80,28 @@ class ComplianceInfo: CommandBase
 	{
 		$complianceResult.PSObject.Properties | ForEach-Object {
 			$property = $_
-			if([Helpers]::CheckMember($scannedControlResult,$property.Name))
+			if([Helpers]::CheckMember($scannedControlResult,$property.Name) -or $property.Name -eq "VerificationResult" -or $property.Name -eq "AttestationStatus" -or $property.Name -eq "ControlSeverity" )
 			{
 				$propValue= $scannedControlResult | Select-Object -ExpandProperty $property.Name
-				$_.Value = $propValue
+				if([Constants]::AzSKDefaultDateTime -eq $propValue)
+				{
+					$_.Value = ""
+				}
+				else
+				{
+					$_.Value = $propValue
+				}
+				
 			}	
 		}
 	}
 
 	GetComplianceInfo()
 	{
-		$this.PublishCustomMessage("`r`nFetching compliance info for current subscription...", [MessageType]::Default);
+		$this.PublishCustomMessage("`r`nFetching compliance info for subscription "+ $this.SubscriptionId  +" ...", [MessageType]::Default);
 		$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
+
+		$this.GetComplianceScanData();	
 
 		$resourcetypes = @() 
 		$SVTConfig = @{} 
@@ -164,8 +176,8 @@ class ComplianceInfo: CommandBase
 
 	GetComplianceSummary()
 	{
-		$totalCompliance = 0
-		$baselineCompliance = 0
+		$totalCompliance = 0.0
+		$baselineCompliance = 0.0
 		$passControlCount = 0
 		$failedControlCount = 0
 		$baselinePassedControlCount = 0
@@ -176,14 +188,14 @@ class ComplianceInfo: CommandBase
 		if(($this.ComplianceScanResult |  Measure-Object).Count -gt 0)
 		{
 			$totalControlCount = ($this.ComplianceScanResult |  Measure-Object).Count
-			$passControlCount = (($this.ComplianceScanResult | Where-Object { $_.VerificationResult -eq [VerificationResult]::Passed }) | Measure-Object).Count
+			$passControlCount = (($this.ComplianceScanResult | Where-Object { $_.VerificationResult -eq [VerificationResult]::Passed -or $_.VerificationResult -eq [VerificationResult]::Disabled -or $_.IsControlInGrace }) | Measure-Object).Count
 			$failedControlCount = $totalControlCount - $passControlCount
 			$totalCompliance = (100 * $passControlCount)/$totalControlCount
 
-			$baselineControlCount = (($this.ComplianceScanResult | Where-Object { $_.IsBaselineControl }) | Measure-Object).Count
-			$baselinePassedControlCount = (($this.ComplianceScanResult | Where-Object { $_.VerificationResult -eq [VerificationResult]::Passed -and $_.IsBaselineControl }) | Measure-Object).Count
-			$baselineFailedControlCount = $baselineControlCount - $baselinePassedControlCount
-			$baselineCompliance = (100 * $baselinePassedControlCount)/$baselineControlCount
+			 $baselineControlCount = (($this.ComplianceScanResult | Where-Object { $_.IsBaselineControl }) | Measure-Object).Count
+			 $baselinePassedControlCount = (($this.ComplianceScanResult | Where-Object { ($_.VerificationResult -eq [VerificationResult]::Passed -or $_.VerificationResult -eq [VerificationResult]::Disabled -or $_.IsControlInGrace) -and $_.IsBaselineControl }) | Measure-Object).Count
+			 $baselineFailedControlCount = $baselineControlCount - $baselinePassedControlCount
+			 $baselineCompliance = (100 * $baselinePassedControlCount)/$baselineControlCount
 			
 			$attestedControlCount = (($this.ComplianceScanResult | Where-Object { $_.AttestationStatus -ne [AttestationStatus]::None}) | Measure-Object).Count
 			$gracePeriodControlCount = (($this.ComplianceScanResult | Where-Object { $_.IsControlInGrace }) | Measure-Object).Count
@@ -191,10 +203,10 @@ class ComplianceInfo: CommandBase
 		
 		
 		$comment = ""
-		$this.AddComplianceMessage("Total compliance:",$totalCompliance , $comment)
+		$this.AddComplianceMessage("Total compliance:", [math]::Round($totalCompliance,2) , $comment)
 		$this.AddComplianceMessage("Pass control count:", $passControlCount, $comment);
 		$this.AddComplianceMessage("Failed control count:", $failedControlCount, $comment);
-		$this.AddComplianceMessage("Baseline compliance:",$baselineCompliance, $comment);
+		$this.AddComplianceMessage("Baseline compliance:",[math]::Round($baselineCompliance,2), $comment);
 		$this.AddComplianceMessage("Baseline pass control count:", $baselinePassedControlCount, $comment);
 		$this.AddComplianceMessage("Baseline failed control count:", $baselineFailedControlCount, $comment);
 		$this.AddComplianceMessage("Attested control count: ", $attestedControlCount, $comment);
@@ -211,6 +223,20 @@ class ComplianceInfo: CommandBase
 
 	ExportComplianceResultCSV()
 	{
+		$this.ComplianceScanResult | ForEach-Object {
+			if($_.IsBaselineControl.ToLower() -eq "true")
+			{
+				$_.IsBaselineControl = "Yes"
+			}
+			if($_.IsControlInGrace.ToLower() -eq "true")
+			{
+				$_.IsControlInGrace = "Yes"
+			}
+			if($_.AttestationStatus.ToLower() -eq "none")
+			{
+				$_.AttestationStatus = ""
+			}
+		}
 		$controlCSV = New-Object -TypeName WriteCSVData
 		$controlCSV.FileName = 'Compliance Details'
 		$controlCSV.FileExtension = 'csv'
@@ -247,22 +273,22 @@ class ComplianceResult
 	[string] $ResourceGroupName = ""
 	[string] $ResourceName = ""
 	[string] $ChildResourceName = ""
-	[bool] $IsBaselineControl 
+	[string] $IsBaselineControl = ""
 	[ControlSeverity] $ControlSeverity = [ControlSeverity]::High
 
-	[int] $AttestationCounter
-	[AttestationStatus] $AttestationStatus = [AttestationStatus]::None;
-	[string] $AttestedBy
-	[DateTime] $AttestedDate = [Constants]::AzSKDefaultDateTime;
-	[string] $Justification
+	[string] $AttestationCounter = ""
+	[string] $AttestationStatus = ""
+	[string] $AttestedBy = ""
+	[string] $AttestedDate = ""
+	[string] $Justification = ""
 
-	[String] $UserComments
+	[String] $UserComments = ""
 
-	[DateTime] $LastScanDate = [Constants]::AzSKDefaultDateTime;
-	[DateTime] $FistScannedOn = [Constants]::AzSKDefaultDateTime;
-	[DateTime] $FirstFailedOn = [Constants]::AzSKDefaultDateTime;
-	[DateTime] $FirstAttestedOn = [Constants]::AzSKDefaultDateTime;
-	[DateTime] $LastResultTransitionOn = [Constants]::AzSKDefaultDateTime;
+	[string] $LastScannedOn = ""
+	[string] $FirstScannedOn = ""
+	[string] $FirstFailedOn = ""
+	[string] $FirstAttestedOn = ""
+	[string] $LastResultTransitionOn = ""
 	
-	[bool] $IsControlInGrace
+	[string] $IsControlInGrace = ""
 }
