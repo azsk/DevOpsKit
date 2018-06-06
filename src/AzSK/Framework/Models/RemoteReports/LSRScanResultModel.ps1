@@ -33,6 +33,7 @@ class LSRResources
 	[string] $ResourceGroupName = "";
 	[string] $ResourceName = "";
 	[string] $ResourceMetadata = "";
+	[string] $FeatureName = "";
 
 	[LSRResourceScanResult[]] $ResourceScanResult = @();
 }
