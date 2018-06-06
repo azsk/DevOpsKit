@@ -73,7 +73,8 @@
       "ValidAttestationStates": [
         "NotAnIssue",
         "WillNotFix",
-        "NotApplicable"
+        "NotApplicable",
+        "WillFixLater"
       ],
       "Enabled": true,
       "FixControl": {

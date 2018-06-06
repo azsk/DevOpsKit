@@ -83,6 +83,7 @@ class Constants
 			"WillNotFix"   ="2";
 			"WillFixLater" ="3";
 			"NotApplicable"="4";
+			"StateConfirmed"="5";
 	}
 
 	static [string] $StorageAccountPreName= "azsk"

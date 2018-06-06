@@ -558,7 +558,7 @@ class SVTBase: AzSKRoot
 					if($null -ne $currentControlStateValue)
 					{
 						#assign expiry date
-						$expiryIndays=$this.CalculateExpirationInDays($singleControlResult.ControlItem,$currentControlStateValue);
+						$expiryIndays=$this.CalculateExpirationInDays($singleControlResult,$currentControlStateValue);
 						if($expiryIndays -ne -1)
 						{
 							$currentControlStateValue.State.ExpiryDate = ($currentControlStateValue.State.AttestedDate.AddDays($expiryIndays)).ToString("MM/dd/yyyy");
@@ -662,7 +662,7 @@ class SVTBase: AzSKRoot
 					$currentControlStateValue = $_;
 					if($null -ne $currentControlStateValue)
 					{
-						if($this.IsStateActive($eventContext.ControlItem, $currentControlStateValue))
+						if($this.IsStateActive($eventContext, $currentControlStateValue))
 						{
 							$controlState += $currentControlStateValue;
 						}
@@ -823,11 +823,11 @@ class SVTBase: AzSKRoot
 	}
 
 	#Function to validate attestation data expiry validation
-	hidden [bool] IsStateActive([ControlItem] $controlItem,[ControlState] $controlState)
+	hidden [bool] IsStateActive([SVTEventContext] $eventcontext,[ControlState] $controlState)
 	{
 		try
 		{
-			$expiryIndays = $this.CalculateExpirationInDays([ControlItem] $controlItem,[ControlState] $controlState)
+			$expiryIndays = $this.CalculateExpirationInDays([SVTEventContext] $eventcontext,[ControlState] $controlState);
 			#Validate if expiry period is passed
 			if($expiryIndays -ne -1 -and $controlState.State.AttestedDate.AddDays($expiryIndays) -lt [DateTime]::UtcNow)
 			{
@@ -845,55 +845,74 @@ class SVTBase: AzSKRoot
 		}
 	}
 
-	hidden [int] CalculateExpirationInDays([ControlItem] $controlItem,[ControlState] $controlState)
+	hidden [int] CalculateExpirationInDays([SVTEventContext] $eventcontext,[ControlState] $controlState)
 	{
 		try
 		{
 			#Get controls expiry period. Default value is zero
-			$controlAttestationExpiry = $controlItem.AttestationExpiryPeriodInDays
-			$controlSeverity = $controlItem.ControlSeverity
+			$controlAttestationExpiry = $eventcontext.controlItem.AttestationExpiryPeriodInDays
+			$controlSeverity = $eventcontext.controlItem.ControlSeverity
 			$controlSeverityExpiryPeriod = 0
 			$defaultAttestationExpiryInDays = [Constants]::DefaultControlExpiryInDays;
 			$expiryInDays=-1;
-
+			$gracePeriod=0;
+			$singleControlResult=$eventcontext.ControlResults;
+			$controlResult=$singleControlResult.ControlResult;
+			$isControlinGrace=$this.isControlinGrace($eventcontext);
+			
 			if([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays") `
 					-and [Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays,"Default") `
 					-and $this.ControlSettings.AttestationExpiryPeriodInDays.Default -gt 0)
 			{
 				$defaultAttestationExpiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.Default
 			}
-
-			#Check the default expiry in the case of NotAnIssue state.
-			if($controlState.AttestationStatus -eq [AttestationStatus]::NotAnIssue)
+			
+			#Expiry in the case of WillFixLater or StateConfirmed/Recurring Attestation state will be based on Control Severity.
+			if($controlState.AttestationStatus -eq [AttestationStatus]::StateConfirmed -or $controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater )
 			{
-				$expiryInDays = $defaultAttestationExpiryInDays
-			}
-			else
-			{
-				#Check if control severity expiry is not default value zero
-				if($controlAttestationExpiry -ne 0)
-				{
-					$expiryInDays = $controlAttestationExpiry
-				}
-				elseif([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays"))
-				{
-					#Check if control severity has expiry period
-					if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
-					{
-						$expiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity.$controlSeverity
+				if($controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater -and -not($isControlinGrace))
+					{	
+						$expiryInDays=0;
 					}
-					#If control item and severity does not contain expiry period, assign default value
+				else {
+					#$expiryInDays = -1;
+					if($controlAttestationExpiry -ne 0)
+					{
+						$expiryInDays = $controlAttestationExpiry
+					}
+					elseif([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays"))
+					{
+						#Check if control severity has expiry period
+						if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
+						{
+							$expiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity.$controlSeverity
+						}
+										
+						#Check if control severity has expiry period
+						if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
+						{
+							$expiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity.$controlSeverity
+						}
+						#If control item and severity does not contain expiry period, assign default value
+						else
+						{
+							$expiryInDays = $defaultAttestationExpiryInDays
+						}
+					}
+					#Return -1 when expiry is not defined
 					else
 					{
-						$expiryInDays = $defaultAttestationExpiryInDays
+						$expiryInDays = -1
 					}
+				
 				}
-				#Return -1 when expiry is not defined
-				else
-				{
-					$expiryInDays = -1
-				}
+
 			}
+			else
+			{ 
+						$expiryInDays = -1
+			}
+					
 		}
 		catch{
 			#if any exception occurs while getting/validating expiry period, return -1.
@@ -1104,6 +1123,26 @@ class SVTBase: AzSKRoot
 
 	}
 
-
+	[bool] hidden isControlinGrace([SVTEventContext] $context)
+	{
+		$isControlinGrace=false;
+		$controlResult=$context.ControlResults.ControlResult;
+		$gracePeriod=0;
+		$controlSeverity=$context.controlItem.ControlSeverity;
+		if(($null -eq $ControlSeverity) -or ($ControlSeverity -notin [ControlSeverity].GetEnumNames()))
+	    {
+	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.Default
+	    }
+	    else
+	    {
+	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity
+		}
+		if(($null -ne $controlResult.FirstFailedOn) -and ([DateTime]::UtcNow -gt $controlResult.FirstFailedOn.addDays($gracePeriod)))
+	    {
+			$isControlinGrace=true;
+			return $isControlinGrace;
+		}
+		return $isControlinGrace;
+	}
 	
 }

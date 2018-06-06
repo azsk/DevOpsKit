@@ -33,6 +33,7 @@ class SVTControlAttestation
 			"2" { return [AttestationStatus]::WillNotFix;}
 			"3" { return [AttestationStatus]::WillFixLater;}
 			"4" { return [AttestationStatus]::NotApplicable;}
+			"5" { return [AttestationStatus]::NotStateConfirmed;}
 			"9" { 
 					$this.abortProcess = $true;
 					return [AttestationStatus]::None;
@@ -232,9 +233,10 @@ class SVTControlAttestation
 			return $controlState;
 		}
 		$defaultValidStates=$this.ControlSettings.DefaultValidAttestationStates;
-		if($this.isControlAttestable())
+		$ValidAttestationStates = $this.ComputeEligibleAttestationState($controlItem, $ControlSeverity, $controlResult);
+		if(-not $this.isControlAttestable($controlItem, $controlResult))
 		{
-			if($null -ne $controlItem.ControlItem.ValidAttestationStates )
+			if($null -ne $ValidAttestationStates )
 			{
 					$validAttestationSet =  Compare-Object $defaultValidStates $controlItem.ControlItem.ValidAttestationStates  -PassThru -IncludeEqual
 			}
