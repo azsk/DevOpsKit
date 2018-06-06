@@ -253,6 +253,7 @@
     "TimeOut": 60,
     "APIVersion": "2014-01"
   },
+  "DefaultValidAttestationStates": ["NotAnIssue","WillFixLater","WillNotFix"],
   "NewControlGracePeriodInDays": {
       "Default": 60,
       "ControlSeverity": {
