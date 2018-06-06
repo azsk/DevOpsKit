@@ -30,6 +30,12 @@ class PersistedStateInfo: CommandBase
 		# Read Local CSV file
 		$controlResultSet = Get-ChildItem -Path $filePath -Filter '*.csv' -Force | Get-Content | Convertfrom-csv
 		$resultsGroups=$controlResultSet | Group-Object -Property ResourceId 
+		$totalCount=($controlResultSet | Measure-Object).Count
+		if($totalCount -eq 0)
+		{
+		  $this.PublishCustomMessage("Could not find any control in file: $filePath .",[MessageType]::Error);
+		  return $messages;
+		}
 		# Read file from Storage
 	    $storageReportHelper = [StorageReportHelper]::new(); 
 		$storageReportHelper.Initialize($false);	
@@ -39,7 +45,6 @@ class PersistedStateInfo: CommandBase
 		$ResourceScanResult=$null;
 		$ResourceData=@();
 		$successCount=0;
-		$totalCount=($controlResultSet | Measure-Object).Count
 		if($null -ne $StorageReportJson -and [Helpers]::CheckMember($StorageReportJson,"Subscriptions"))
 		{
 	    	$SelectedSubscription = $StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
