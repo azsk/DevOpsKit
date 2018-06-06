@@ -52,7 +52,7 @@ class SVTControlAttestation
 			Write-Host ([Constants]::CoAdminElevatePermissionMsg) -ForegroundColor Yellow
 			return $controlState;
 		}
-		if(-not $this.isControlAttestable($controlItem))
+		if(-not $this.isControlAttestable($controlItem, $controlResult))
 		{
 			Write-Host "The attestation for this control has been disabled. Please follow the recommendation given to bring '$($controlState.ControlId)' control in healthy state. It is important that these recommendations are resolved promptly in order to eliminate the exposure to attacks." -ForegroundColor Red
 			return $controlState;
@@ -472,8 +472,13 @@ class SVTControlAttestation
 
 	}	
 
-	[bool] isControlAttestable([SVTEventContext] $controlItem)
+	[bool] isControlAttestable([SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
+		#sometime when we have error in some of our control we put that control in grace period to maintain the compliance dashboard
+		if($controlResult.IsControlInGrace -eq $true)
+		{
+			return $true
+		}
         if($null -ne $controlItem.ControlItem.ValidAttestationStates -and $controlItem.ControlItem.ValidAttestationStates -contains [AttestationStatus]::None)
 	    { 
             return $false
