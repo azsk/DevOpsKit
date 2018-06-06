@@ -19,6 +19,8 @@ class PersistedStateInfo: CommandBase
 	[MessageData[]] UpdatePersistedState([string] $filePath)
     {	
 	   [MessageData[]] $messages = @();
+	   try
+	   {
 		#Check for file path exist
 		 if(-not (Test-Path -path $filePath))
 		{  
@@ -118,6 +120,11 @@ class PersistedStateInfo: CommandBase
 		}else
 		{
 		 $this.PublishEvent([AzSKGenericEvent]::Exception, "Unable to update user comments. Could not find previous persisted state in DevOps Kit storage.");
+		}
+		}
+		catch
+		{
+		 $this.PublishException($_);
 		}
 		return $messages;
     }
