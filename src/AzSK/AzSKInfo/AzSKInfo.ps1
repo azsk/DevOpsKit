@@ -49,7 +49,7 @@ function Get-AzSKInfo
 	#>
 	Param(
 		[Parameter(Mandatory = $false)]
-		[ValidateSet("SubscriptionInfo", "ControlInfo", "HostInfo" , "AttestationInfo")] 
+		[ValidateSet("SubscriptionInfo", "ControlInfo", "HostInfo" , "AttestationInfo", "ComplianceInfo")] 
 		$InfoType,
 
 		[ResourceTypeName]
@@ -100,7 +100,7 @@ function Get-AzSKInfo
 		{
 			if ([string]::IsNullOrEmpty($SubscriptionId))
 			{
-				if((-not [string]::IsNullOrEmpty($InfoType)) -and $InfoType.ToString() -eq 'AttestationInfo')
+				if((-not [string]::IsNullOrEmpty($InfoType)) -and ($InfoType.ToString() -eq 'AttestationInfo' -or $InfoType.ToString() -eq 'ComplianceInfo'))
 				{
 					$SubscriptionId = Read-Host "SubscriptionId"
 					$SubscriptionId = $SubscriptionId.Trim()
@@ -166,6 +166,14 @@ function Get-AzSKInfo
 							$attestationReport.AttestationOptions = $attestationOptions;		
 							return  ([CommandBase]$attestationReport).InvokeFunction($attestationReport.FetchAttestationInfo);	
 						}     
+					}
+					ComplianceInfo
+					{
+						$complianceInfo = [ComplianceInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation, $ResourceTypeName, $ResourceType, $ControlIds, $UseBaselineControls, $ControlSeverity, $ControlIdContains);
+						if ($complianceInfo) 
+						{
+							return $complianceInfo.InvokeFunction($complianceInfo.GetComplianceInfo);
+						}
 					}
 					Default
 					{

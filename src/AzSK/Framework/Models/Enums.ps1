@@ -106,6 +106,7 @@ enum InfoType
 	ControlInfo
 	HostInfo
 	AttestationInfo
+	ComplianceInfo
 }
 
 enum AutoUpdate

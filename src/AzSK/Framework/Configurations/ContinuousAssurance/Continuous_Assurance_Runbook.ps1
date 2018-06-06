@@ -137,9 +137,9 @@ function InvokeScript($accessToken, $policyStoreURL,$fileName, $version)
 
 function ConvertStringToBoolean($strToConvert)
 {
-    if ($str -eq 'true')
+   if([bool]::TryParse($strToConvert, [ref] $strToConvert))
     {
-        return $true
+        return $strToConvert
     }
     else
     {

@@ -317,7 +317,7 @@ class StorageReportHelper
             $subscriptionScanResult.ControlSeverity = $serviceControlResult.ControlSeverity 
             $subscriptionScanResult.ActualVerificationResult = $serviceControlResult.ActualVerificationResult 
             $subscriptionScanResult.AttestedBy =  $serviceControlResult.AttestedBy 
-            #$subscriptionScanResult.AttestedDate = $serviceControlResult.AttestedBy
+            $subscriptionScanResult.AttestedDate = $serviceControlResult.AttestedDate
             $subscriptionScanResult.Justification = $serviceControlResult.Justification
             $subscriptionScanResult.AttestationStatus = $serviceControlResult.AttestationStatus
             $subscriptionScanResult.AttestationData = $serviceControlResult.AttestedState
@@ -325,10 +325,11 @@ class StorageReportHelper
             $subscriptionScanResult.ScanKind = $scanResult.ScanKind
             $subscriptionScanResult.ScannerModuleName = [Constants]::AzSKModuleName
             $subscriptionScanResult.IsLatestPSModule = $scanResult.IsLatestPSModule
-            #$subscriptionScanResult.HasRequiredPermissions = $scanResult.HasRequiredAccess
+            $subscriptionScanResult.HasRequiredPermissions = $serviceControlResult.HasRequiredAccess
             $subscriptionScanResult.HasAttestationWritePermissions = $scanResult.HasAttestationWritePermissions
             $subscriptionScanResult.HasAttestationReadPermissions = $scanResult.HasAttestationReadPermissions
-            #$subscriptionScanResult.UserComments = $scanResult.
+            $subscriptionScanResult.UserComments = $serviceControlResult.UserComments
+            $subscriptionScanResult.IsBaselineControl = $serviceControlResult.IsBaselineControl
 
             if($subscriptionScanResult.ActualVerificationResult -ne [VerificationResult]::Passed)
             {
@@ -342,7 +343,7 @@ class StorageReportHelper
             $subscriptionScanResult.FirstScannedOn = [DateTime]::UtcNow
             $subscriptionScanResult.LastResultTransitionOn = [DateTime]::UtcNow
             $subscriptionScanResult.LastScannedOn = [DateTime]::UtcNow
-            $subscriptionScanResult.Metadata = $scanResult.Metadata
+            #$subscriptionScanResult.Metadata = $scanResult.Metadata
 
             $scanDetails.SubscriptionScanResult += $subscriptionScanResult
             
@@ -361,10 +362,13 @@ class StorageReportHelper
         $resources = [LSRResources]::new()
         $resources.HashId = [Helpers]::ComputeHash($scanResult.ResourceId)
         $resources.ResourceId = $scanResult.ResourceId
-        
+        $resources.FeatureName = $scanResult.Feature
         $resources.ResourceGroupName = $scanResult.ResourceGroup
         $resources.ResourceName = $scanResult.ResourceName
-        $resources.ResourceMetadata = $scanResult.Metadata
+        $resources.FirstScannedOn = [DateTime]::UtcNow
+        $resources.LastEventOn = [DateTime]::UtcNow
+
+        #$resources.ResourceMetadata = $scanResult.Metadata
 
         $scanResult.ControlResults | ForEach-Object {
                 $serviceControlResult = $_
@@ -379,7 +383,7 @@ class StorageReportHelper
                 $resourceScanResult.ControlSeverity = $serviceControlResult.ControlSeverity 
                 $resourceScanResult.ActualVerificationResult = $serviceControlResult.ActualVerificationResult 
                 $resourceScanResult.AttestedBy =  $serviceControlResult.AttestedBy 
-                #$resourceScanResult.AttestedDate = $serviceControlResult.AttestedBy
+                $resourceScanResult.AttestedDate = $serviceControlResult.AttestedDate
                 $resourceScanResult.Justification = $serviceControlResult.Justification
                 $resourceScanResult.AttestationStatus = $serviceControlResult.AttestationStatus
                 $resourceScanResult.AttestationData = $serviceControlResult.AttestedState
@@ -387,10 +391,11 @@ class StorageReportHelper
                 $resourceScanResult.ScanKind = $scanResult.ScanKind
                 $resourceScanResult.ScannerModuleName = [Constants]::AzSKModuleName
                 $resourceScanResult.IsLatestPSModule = $scanResult.IsLatestPSModule
-                #$resourceScanResult.HasRequiredPermissions = $scanResult.HasRequiredAccess
+                $resourceScanResult.HasRequiredPermissions = $serviceControlResult.HasRequiredAccess
                 $resourceScanResult.HasAttestationWritePermissions = $scanResult.HasAttestationWritePermissions
                 $resourceScanResult.HasAttestationReadPermissions = $scanResult.HasAttestationReadPermissions
-                #$resourceScanResult.UserComments = $scanResult.
+                $resourceScanResult.UserComments = $serviceControlResult.UserComments
+                $resourceScanResult.IsBaselineControl = $serviceControlResult.IsBaselineControl
 
                 if($resourceScanResult.ActualVerificationResult -ne [VerificationResult]::Passed)
                 {
@@ -513,6 +518,7 @@ class StorageReportHelper
                         if([Helpers]::CheckMember($_oldScanRerportSubscription.ScanDetails,"Resources") -and (($_oldScanRerportSubscription.ScanDetails.Resources | Where-Object { $resource.HashId -contains $_.HashId }) | Measure-Object).Count -gt0)
                         {
                             $_ORresource = $_oldScanRerportSubscription.ScanDetails.Resources | Where-Object { $resource.HashId -contains $_.HashId }
+                            $_ORresource.LastEventOn = [DateTime]::UtcNow
 
                             $resource.ResourceScanResult | ForEach-Object {
 

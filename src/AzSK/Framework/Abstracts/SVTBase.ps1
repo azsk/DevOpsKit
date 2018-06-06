@@ -1185,27 +1185,27 @@ class SVTBase: AzSKRoot
 
 									$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
 
-									$permittedDays = 90;
-
-									<#if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays.ControlSeverity") -and [Helpers]::CheckMember($this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity,$currentControl.ControlItem.Severity))
-									{
-										$permittedDays = $this.ControlSetting.NewControlGracePeriodInDays.$currentControl.ControlItem.Severity
+								$permittedDays = 90;
+								
+								if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays.ControlSeverity") -and [Helpers]::CheckMember($this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity,$singleControlResult.ControlItem.Severity))
+								{
+									$permittedDays = $this.ControlSetting.NewControlGracePeriodInDays.ExpandString($singleControlResult.ControlItem.Severity)
 									
-									}#>
-									if($scanFromDays -ge $permittedDays)
-									{
-										$currentControl.IsControlInGrace = $false
-									}
-									else
-									{
-										$currentControl.IsControlInGrace = $true
-									}
 								}
-								$controlsResults+=$currentControl
+								if($scanFromDays -ge $permittedDays)
+								{
+									$currentControl.IsControlInGrace = $false
+								}
+								else
+								{
+									$currentControl.IsControlInGrace = $true
+								}
 							}
-							$singleControlResult.ControlResults=$controlsResults 
+							$controlsResults+=$currentControl
 						}
+						$singleControlResult.ControlResults=$controlsResults 
 					}
+				}
 			}
 		}
 		catch
