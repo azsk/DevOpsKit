@@ -16,9 +16,12 @@ class PersistedStateInfo: CommandBase
 		$this.AzSKRG = Get-AzureRmResourceGroup -Name $this.AzSKRGName -ErrorAction SilentlyContinue
 	}
 	
-	[MessageData[]] UpdatePersistedState([string] $filePath)
+	[MessageTableData[]] UpdatePersistedState([string] $filePath)
     {	
-	   [MessageData[]] $messages = @();
+	    [string] $errorMessages="";
+	    $customErrors=@();
+	    [MessageTableData[]] $messages = @();
+	   
 	   try
 	   {
 		#Check for file path exist
@@ -45,6 +48,7 @@ class PersistedStateInfo: CommandBase
 		$ResourceScanResult=$null;
 		$ResourceData=@();
 		$successCount=0;
+		
 		if($null -ne $StorageReportJson -and [Helpers]::CheckMember($StorageReportJson,"Subscriptions"))
 		{
 	    	$SelectedSubscription = $StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
@@ -89,7 +93,11 @@ class PersistedStateInfo: CommandBase
 					      $matchedControlResult.UserComments=$currentItem.UserComments
 					     }else
 						 {
-						  #$this.PublishCustomMessage("Updation of User Comments failed for "+ "ControlID: "+$currentItem.ControlId+" ResourceName: "+$currentItem.ResourceName, [MessageType]::Warning);
+						  $customErr = [PSObject]::new();
+					      Add-Member -InputObject $customErr -Name "ControlId" -MemberType NoteProperty -Value $currentItem.ControlId
+					      Add-Member -InputObject $customErr -Name "ResourceName" -MemberType NoteProperty -Value $currentItem.ResourceName
+						  Add-Member -InputObject $customErr -Name "Reason" -MemberType NoteProperty -Value "Could not find previous persisted state"
+						  $customErrors+=$customErr
 						  $erroredControls+=$currentItem			 
 						 }
 				    }catch{
@@ -104,8 +112,8 @@ class PersistedStateInfo: CommandBase
                 }
 				if($successCount -gt 0)
 				{
-			    	$StorageReportJson =[LocalSubscriptionReport] $StorageReportJson
-				    $storageReportHelper.SetLocalSubscriptionScanReport($StorageReportJson);
+					$finalscanReport=$storageReportHelper.MergeScanReport($SelectedSubscription);
+				    $storageReportHelper.SetLocalSubscriptionScanReport($finalscanReport);
 				}
 				# If updation failed for any control, genearte error file
 				if(($erroredControls | Measure-Object).Count -gt 0)
@@ -130,6 +138,10 @@ class PersistedStateInfo: CommandBase
 		catch
 		{
 		 $this.PublishException($_);
+		}
+		if(($customErrors | Measure-Object).Count -gt 0)
+		{
+        $messages += [MessageTableData]::new("Unable to update user comments for following controls:",$customErrors)
 		}
 		return $messages;
     }

@@ -1159,7 +1159,10 @@ class SVTBase: AzSKRoot
 					if([Helpers]::CheckMember($this.StorageReportData.ScanDetails,"Resources"))
 					{
 						$ResourceData = $this.StorageReportData.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}
-						$ResourceScanResult = $ResourceData.ResourceScanResult 
+						if([Helpers]::CheckMember($ResourceData,"ResourceScanResult"))
+				     	{
+					    	$ResourceScanResult = $ResourceData.ResourceScanResult 
+						}
 					
 					}			
 				}
@@ -1187,11 +1190,11 @@ class SVTBase: AzSKRoot
 
 								$permittedDays = 90;
 								
-								if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays.ControlSeverity") -and [Helpers]::CheckMember($this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity,$singleControlResult.ControlItem.Severity))
+								<#if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays.ControlSeverity") -and [Helpers]::CheckMember($this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity,$singleControlResult.ControlItem.Severity))
 								{
 									$permittedDays = $this.ControlSetting.NewControlGracePeriodInDays.ExpandString($singleControlResult.ControlItem.Severity)
 									
-								}
+								}#>
 								if($scanFromDays -ge $permittedDays)
 								{
 									$currentControl.IsControlInGrace = $false
