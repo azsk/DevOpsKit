@@ -22,6 +22,7 @@ enum AttestationStatus
 	WillNotFix
 	WillFixLater
 	NotApplicable
+	StateConfirmed
 }
 
 enum AttestControls 
@@ -107,6 +108,7 @@ enum InfoType
 	ControlInfo
 	HostInfo
 	AttestationInfo
+	ComplianceInfo
 }
 
 enum AutoUpdate

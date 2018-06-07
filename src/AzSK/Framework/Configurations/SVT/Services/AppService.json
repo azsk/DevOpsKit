@@ -21,6 +21,11 @@
           "AppService",
           "FunctionApp"
         ],
+        
+      "ValidAttestationStates": [
+        "StateConfirmed",
+        "WillFixLater"
+      ],
         "Enabled": true
       },
       {
@@ -61,6 +66,11 @@
           "AppService",
           "FunctionApp"
         ],
+        
+      "ValidAttestationStates": [
+        "NotApplicable",
+        "WillFixLater"
+      ],
         "Enabled": true,
         "GraceExpiryDate": "2018-05-24"
       },
@@ -359,6 +369,8 @@
           "DP",
           "AppService",
           "FunctionApp"
+        ],"ValidAttestationStates": [
+          "None"
         ],
         "Enabled": true,
         "FixControl": {
@@ -553,6 +565,9 @@
           "OwnerAccess",
           "FunctionApp"
         ],
+      "ValidAttestationStates": [
+        "None"
+      ],
         "Enabled": true
       }
      

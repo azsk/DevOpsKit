@@ -7,6 +7,9 @@ class SVTBase: AzSKRoot
     hidden [PSObject] $ControlSettings
 
 	hidden [ControlStateExtension] $ControlStateExt;
+	hidden [StorageReportHelper] $StorageReportHelper;
+	hidden [LSRSubscription] $StorageReportData;
+
 	hidden [ControlState[]] $ResourceState;
 	hidden [ControlState[]] $DirtyResourceStates;
 
@@ -16,18 +19,21 @@ class SVTBase: AzSKRoot
 	[string[]] $ExcludeTags = @();
 	[string[]] $ControlIds = @();
 	[bool] $GenerateFixScript = $false;
+	[bool] $IncludeUserComments = $false;
 	[string] $PartialScanIdentifier = [string]::Empty
 
     SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId)
     {
 		$this.CreateInstance($svtResource);
+		$this.GetLocalSubscriptionData();
     }
 
 	SVTBase([string] $subscriptionId):
         Base($subscriptionId)
     {
 		$this.CreateInstance();
+		$this.GetLocalSubscriptionData();
     }
 
 	SVTBase([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
@@ -37,6 +43,7 @@ class SVTBase: AzSKRoot
 			ResourceGroupName = $resourceGroupName;
             ResourceName = $resourceName;
 		});
+		$this.GetLocalSubscriptionData();
     }
 	hidden [void] CreateInstance()
 	{
@@ -44,6 +51,7 @@ class SVTBase: AzSKRoot
 
         $this.LoadSvtConfig([SVTMapping]::SubscriptionMapping.JsonFileName);
 	}
+
 	hidden [void] CreateInstance([SVTResource] $svtResource)
 	{
 		[Helpers]::AbstractClass($this, [SVTBase]);
@@ -84,7 +92,6 @@ class SVTBase: AzSKRoot
 
         $this.LoadSvtConfig($svtResource.ResourceTypeMapping.JsonFileName);
 
-
         $this.ResourceContext = [ResourceContext]@{
             ResourceGroupName = $svtResource.ResourceGroupName;
             ResourceName = $svtResource.ResourceName;
@@ -92,7 +99,6 @@ class SVTBase: AzSKRoot
             ResourceTypeName = $svtResource.ResourceTypeMapping.ResourceTypeName;
         };
 		$this.ResourceContext.ResourceId = $this.GetResourceId();
-
 	}
 
     hidden [void] LoadSvtConfig([string] $controlsJsonFileName)
@@ -117,6 +123,33 @@ class SVTBase: AzSKRoot
             }
         }
     }
+
+	hidden [void] GetLocalSubscriptionData()
+	{
+		if ( $null  -eq $this.StorageReportHelper) 
+		{
+			$this.StorageReportHelper = [StorageReportHelper]::new();
+			$this.StorageReportHelper.Initialize($false);
+        }
+		if($this.StorageReportHelper.HasStorageReportReadAccessPermissions())
+		{
+			$this.StorageReportData =  $this.StorageReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId)
+		}
+	}
+
+	hidden [void] SetLocalSubscriptionData([LSRSubscription] $scanData)
+	{
+		if ( $null  -eq $this.StorageReportHelper) 
+		{
+			$this.StorageReportHelper = [StorageReportHelper]::new();
+			$this.StorageReportHelper.Initialize($false);
+        }
+		if($this.StorageReportHelper.HasStorageReportWriteAccessPermissions())
+		{
+			$finalScanResult = $this.StorageReportHelper.MergeScanReport($scanData)
+			$this.StorageReportData =  $this.StorageReportHelper.SetLocalSubscriptionScanReport($finalScanResult)	
+		}
+	}
 
 	hidden [bool] CheckBaselineControl($controlId)
 	{
@@ -301,8 +334,8 @@ class SVTBase: AzSKRoot
 			else
 			{
 				$this.EvaluationStarted();
-				$resourceSecurityResult += $this.GetAutomatedSecurityStatus();
-				$resourceSecurityResult += $this.GetManualSecurityStatus();
+				 $resourceSecurityResult += $this.GetAutomatedSecurityStatus();
+				$resourceSecurityResult += $this.GetManualSecurityStatus();			
 				$this.PostEvaluationCompleted($resourceSecurityResult);
 				$this.EvaluationCompleted($resourceSecurityResult);
 			}
@@ -522,6 +555,8 @@ class SVTBase: AzSKRoot
             }
 			$this.PostProcessData($singleControlResult);
 
+			$this.GetDataFromSubscriptionReport($singleControlResult);
+
 			# Check for the control which requires elevated permission to modify 'Recommendation' so that user can know it is actually automated if they have the right permission
 			if($singleControlResult.ControlItem.Automated -eq "Yes")
 			{
@@ -558,7 +593,7 @@ class SVTBase: AzSKRoot
 					if($null -ne $currentControlStateValue)
 					{
 						#assign expiry date
-						$expiryIndays=$this.CalculateExpirationInDays($singleControlResult.ControlItem,$currentControlStateValue);
+						$expiryIndays=$this.CalculateExpirationInDays($singleControlResult,$currentControlStateValue);
 						if($expiryIndays -ne -1)
 						{
 							$currentControlStateValue.State.ExpiryDate = ($currentControlStateValue.State.AttestedDate.AddDays($expiryIndays)).ToString("MM/dd/yyyy");
@@ -662,7 +697,7 @@ class SVTBase: AzSKRoot
 					$currentControlStateValue = $_;
 					if($null -ne $currentControlStateValue)
 					{
-						if($this.IsStateActive($eventContext.ControlItem, $currentControlStateValue))
+						if($this.IsStateActive($eventContext, $currentControlStateValue))
 						{
 							$controlState += $currentControlStateValue;
 						}
@@ -823,11 +858,11 @@ class SVTBase: AzSKRoot
 	}
 
 	#Function to validate attestation data expiry validation
-	hidden [bool] IsStateActive([ControlItem] $controlItem,[ControlState] $controlState)
+	hidden [bool] IsStateActive([SVTEventContext] $eventcontext,[ControlState] $controlState)
 	{
 		try
 		{
-			$expiryIndays = $this.CalculateExpirationInDays([ControlItem] $controlItem,[ControlState] $controlState)
+			$expiryIndays = $this.CalculateExpirationInDays([SVTEventContext] $eventcontext,[ControlState] $controlState);
 			#Validate if expiry period is passed
 			if($expiryIndays -ne -1 -and $controlState.State.AttestedDate.AddDays($expiryIndays) -lt [DateTime]::UtcNow)
 			{
@@ -845,55 +880,74 @@ class SVTBase: AzSKRoot
 		}
 	}
 
-	hidden [int] CalculateExpirationInDays([ControlItem] $controlItem,[ControlState] $controlState)
+	hidden [int] CalculateExpirationInDays([SVTEventContext] $eventcontext,[ControlState] $controlState)
 	{
 		try
 		{
 			#Get controls expiry period. Default value is zero
-			$controlAttestationExpiry = $controlItem.AttestationExpiryPeriodInDays
-			$controlSeverity = $controlItem.ControlSeverity
+			$controlAttestationExpiry = $eventcontext.controlItem.AttestationExpiryPeriodInDays
+			$controlSeverity = $eventcontext.controlItem.ControlSeverity
 			$controlSeverityExpiryPeriod = 0
 			$defaultAttestationExpiryInDays = [Constants]::DefaultControlExpiryInDays;
 			$expiryInDays=-1;
-
+			$gracePeriod=0;
+			$controlResult=$eventcontext.ControlResults;
+			
+			$isControlinGrace=$this.IsControlinGrace($eventcontext);
+			
 			if([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays") `
 					-and [Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays,"Default") `
 					-and $this.ControlSettings.AttestationExpiryPeriodInDays.Default -gt 0)
 			{
 				$defaultAttestationExpiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.Default
 			}
-
-			#Check the default expiry in the case of NotAnIssue state.
-			if($controlState.AttestationStatus -eq [AttestationStatus]::NotAnIssue)
+			
+			#Expiry in the case of WillFixLater or StateConfirmed/Recurring Attestation state will be based on Control Severity.
+			if($controlState.AttestationStatus -eq [AttestationStatus]::StateConfirmed -or $controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater )
 			{
-				$expiryInDays = $defaultAttestationExpiryInDays
-			}
-			else
-			{
-				#Check if control severity expiry is not default value zero
-				if($controlAttestationExpiry -ne 0)
-				{
-					$expiryInDays = $controlAttestationExpiry
-				}
-				elseif([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays"))
-				{
-					#Check if control severity has expiry period
-					if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
-					{
-						$expiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity.$controlSeverity
+				if($controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater -and -not($isControlinGrace))
+					{	
+						$expiryInDays=0;
 					}
-					#If control item and severity does not contain expiry period, assign default value
+				else {
+					#$expiryInDays = -1;
+					if($controlAttestationExpiry -ne 0)
+					{
+						$expiryInDays = $controlAttestationExpiry
+					}
+					elseif([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays"))
+					{
+						#Check if control severity has expiry period
+						if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
+						{
+							$expiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity.$controlSeverity
+						}
+										
+						#Check if control severity has expiry period
+						if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
+						{
+							$expiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity.$controlSeverity
+						}
+						#If control item and severity does not contain expiry period, assign default value
+						else
+						{
+							$expiryInDays = $defaultAttestationExpiryInDays
+						}
+					}
+					#Return -1 when expiry is not defined
 					else
 					{
-						$expiryInDays = $defaultAttestationExpiryInDays
+						$expiryInDays = -1
 					}
+				
 				}
-				#Return -1 when expiry is not defined
-				else
-				{
-					$expiryInDays = -1
-				}
+
 			}
+			else
+			{ 
+						$expiryInDays = -1
+			}
+					
 		}
 		catch{
 			#if any exception occurs while getting/validating expiry period, return -1.
@@ -1104,6 +1158,94 @@ class SVTBase: AzSKRoot
 
 	}
 
+	hidden [void] GetDataFromSubscriptionReport($singleControlResult)
+    {
+		if([Helpers]::CheckMember($this.StorageReportData,"ScanDetails"))
+		{
+			$ResourceData = @();
+			if($singleControlResult.FeatureName -eq "SubscriptionCore")
+			{
+				if([Helpers]::CheckMember($this.StorageReportData.ScanDetails,"SubscriptionScanResult"))
+				{
+					$ResourceData = $this.StorageReportData.ScanDetails.SubscriptionScanResult
+				}
+			}
+			else
+			{
+				if([Helpers]::CheckMember($this.StorageReportData.ScanDetails,"Resources"))
+				{
+					$ResourceData = $this.StorageReportData.ScanDetails.Resources
+				}
 
+				$ResourceData = $this.StorageReportData.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}	  
+				if(($ResourceData | Measure-Object).Count -gt 0 )
+				{
+					$ResourceScanResult=$ResourceData.ResourceScanResult
+					if(($ResourceScanResult | Measure-Object).Count -gt 0)
+					{
+						[ControlResult[]] $controlsResults = @();
+						$singleControlResult.ControlResults | ForEach-Object {
+							$currentControl=$_
+		
+							$matchedControlResult=$ResourceScanResult | Where-Object {
+							($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (  ([Helpers]::CheckMember($currentControl, "ChildResourceName") -and $_.ChildResourceName -eq $currentControl.ChildResourceName) -or (-not([Helpers]::CheckMember($currentControl, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
+							}
+		
+							if($null -ne  $matchedControlResult)
+							{
+								$currentControl.UserComments = $matchedControlResult.UserComments
+								$currentControl.FirstFailedOn = $matchedControlResult.FirstFailedOn
+								$currentControl.FirstScannedOn = $matchedControlResult.FirstScannedOn
+
+								$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
+
+								$permittedDays = 90;
+								
+								if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays.ControlSeverity") -and [Helpers]::CheckMember($this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity,$singleControlResult.ControlItem.Severity))
+								{
+									$permittedDays = $this.ControlSetting.NewControlGracePeriodInDays.ExpandString($singleControlResult.ControlItem.Severity)
+									
+								}
+								if($scanFromDays -ge $permittedDays)
+								{
+									$currentControl.IsControlInGrace = $false
+								}
+								else
+								{
+									$currentControl.IsControlInGrace = $true
+								}
+							}
+							$controlsResults+=$currentControl
+						}
+						$singleControlResult.ControlResults=$controlsResults 
+					}
+				}
+			}
+		}
+		
+    }
+
+
+	[bool] hidden IsControlinGrace([SVTEventContext] $context)
+	{
+		$isControlinGrace=false;
+		$controlResult=$context.ControlResults;
+		$gracePeriod=0;
+		$controlSeverity=$context.controlItem.ControlSeverity;
+		if(($null -eq $ControlSeverity) -or ($ControlSeverity -notin [ControlSeverity].GetEnumNames()))
+	    {
+	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.Default
+	    }
+	    else
+	    {
+	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity
+		}
+		if(($null -ne $controlResult.FirstFailedOn) -and ([DateTime]::UtcNow -gt $controlResult.FirstScannedOn.addDays($gracePeriod)))
+	    {
+			$isControlinGrace=true;
+			return $isControlinGrace;
+		}
+		return $isControlinGrace;
+	}
 	
 }

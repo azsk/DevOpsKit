@@ -19,7 +19,7 @@ class RemoteReportsListener: ListenerBase {
 	{
 		if ( $null  -eq [RemoteReportsListener]::StorageReportHelperInstance  ) {
 				[RemoteReportsListener]::StorageReportHelperInstance = [StorageReportHelper]::new();
-				[RemoteReportsListener]::StorageReportHelperInstance.Initialize($false);
+				[RemoteReportsListener]::StorageReportHelperInstance.Initialize($true);
         }
         return [RemoteReportsListener]::StorageReportHelperInstance
 	}
