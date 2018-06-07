@@ -1182,11 +1182,11 @@ class SVTBase: AzSKRoot
 
 								$permittedDays = 90;
 								
-								if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays.ControlSeverity") -and [Helpers]::CheckMember($this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity,$singleControlResult.ControlItem.Severity))
-								{
-									$permittedDays = $this.ControlSetting.NewControlGracePeriodInDays.ExpandString($singleControlResult.ControlItem.Severity)
+								#if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays.ControlSeverity") -and [Helpers]::CheckMember($this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity,$singleControlResult.ControlItem.Severity))
+								#{
+								#	$permittedDays = $this.ControlSetting.NewControlGracePeriodInDays.ExpandString($singleControlResult.ControlItem.Severity)
 									
-								}
+								#}
 								if($scanFromDays -ge $permittedDays)
 								{
 									$currentControl.IsControlInGrace = $false
@@ -1196,6 +1196,14 @@ class SVTBase: AzSKRoot
 									$currentControl.IsControlInGrace = $true
 								}
 							}
+							else
+							{
+								$currentControl.FirstScannedOn = [DateTime]::UtcNow
+								if($currentControl.ActualVerificationResult -ne [VerificationResult]::Passed)
+								{
+									$currentControl.FirstFailedOn = [DateTime]::UtcNow
+								}
+							}
 							$controlsResults+=$currentControl
 						}
 						$singleControlResult.ControlResults=$controlsResults 
@@ -1203,7 +1211,5 @@ class SVTBase: AzSKRoot
 				}
 			}
 		}
-		
     }
-	
 }

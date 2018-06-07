@@ -169,7 +169,15 @@ function Get-AzSKInfo
 					}
 					ComplianceInfo
 					{
-						$complianceInfo = [ComplianceInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation, $ResourceTypeName, $ResourceType, $ControlIds, $UseBaselineControls, $ControlSeverity, $ControlIdContains);
+						If($PSCmdlet.MyInvocation.BoundParameters["Verbose"] -and $PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
+						{
+							$Full = $true
+						}
+						else
+						{
+							$Full = $false
+						}
+						$complianceInfo = [ComplianceInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation, $ResourceTypeName, $ResourceType, $ControlIds, $UseBaselineControls, $ControlSeverity, $ControlIdContains, $Full);
 						if ($complianceInfo) 
 						{
 							return $complianceInfo.InvokeFunction($complianceInfo.GetComplianceInfo);
