@@ -179,7 +179,7 @@ class ComplianceInfo: CommandBase
 			$this.PublishCustomMessage("`r`nControl in grace period count: "+ $gracePeriodControlCount , [MessageType]::Default);
 
 			$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
-			$this.PublishCustomMessage("`r`n`r`n`r`nDisclaimer: Compliance count can be differ from dashboard. Please refer dashboard for final compliance."+ $gracePeriodControlCount , [MessageType]::Default);
+			$this.PublishCustomMessage("`r`n`r`n`r`nDisclaimer: Compliance count can be differ from dashboard. Please refer dashboard for final compliance.", [MessageType]::Default);
 		}
 	}
 
