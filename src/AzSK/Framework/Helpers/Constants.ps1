@@ -51,6 +51,7 @@ class Constants
 	   static [string] $ScheduleName = "CA_Scan_Schedule"
 	   static [string] $connectionAssetName = "AzureRunAsConnection"
 	   #static [string] $AzSKRGName = "AzSKRG"
+	   static [string] $SupportDL = "azsksupext@microsoft.com"
 
 
 	#Constants for SVTs

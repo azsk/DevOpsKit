@@ -205,4 +205,64 @@ class AzSKRoot: EventBase
 		}
 		return $IsLatestVersionPresent		
 	}
+
+	[void] ValidateOrgPolicyOnSubscription()
+	{
+		$AzSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
+		$tagsOnSub =  [Helpers]::GetResourceGroupTags($AzSKConfigData.AzSKRGName) 
+		if($tagsOnSub)
+		{
+			$SubOrgTag= $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -like "AzSKOrgName*"}
+			
+			if(($SubOrgTag | Measure-Object).Count -gt 0)
+			{
+			  $OrgName =$SubOrgTag.Name.Split("_")[1]   				
+			  if(-not [string]::IsNullOrWhiteSpace($OrgName) -and  $OrgName -ne $AzSKConfigData.PolicyOrgName)
+			  {
+				if($AzSKConfigData.PolicyOrgName -ne "org-neutral")
+				{
+					throw [SuppressedException] ("Currently command is running with policy '$($AzSKConfigData.PolicyOrgName)', instead it is expected to be run with policy '$OrgName'. Please contact Org policy owner ($($SubOrgTag.Value)) for getting policy setup url.")
+				}
+				else
+				{					   
+					$this.PublishCustomMessage("Currently command is running with policy '$($AzSKConfigData.PolicyOrgName)', instead it is expected to be run with policy '$OrgName'. Please contact Org policy owner ($($SubOrgTag.Value)) for getting policy setup url.");
+				}
+				}                
+			  }			 
+		}
+				
+	}
+
+	[void] SetOrgPolicyTag()
+	{
+		try{
+		$AzSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
+		$tagsOnSub =  [Helpers]::GetResourceGroupTags($AzSKConfigData.AzSKRGName) 
+		if($tagsOnSub)
+		{
+			$SubOrgTag= $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -like "AzSKOrgName*"}			
+			if(($SubOrgTag | Measure-Object).Count -gt 0)
+			{
+			  $OrgNameSplitArray =$SubOrgTag.Name.Split("_")
+			  if(($OrgNameSplitArray | Measure-Object).Count -gt 1)
+			  {
+				$OrgName = $OrgNameSplitArray[1]
+				if(-not [string]::IsNullOrWhiteSpace($OrgName) -and $OrgName -ne "org-neutral" -and  $AzSKConfigData.PolicyOrgName -ne "org-neutral")
+				{
+					$TagName = "AzSKOrgName_"+$AzSKConfigData.PolicyOrgName
+					$SupportMail = $AzSKConfigData.SupportDL
+					if(-not [string]::IsNullOrWhiteSpace($SupportMail) -and  [Constants]::SupportDL -eq $SupportMail)
+					{
+						$SupportMail = "Not Available"
+					}   
+					[Helpers]::SetResourceGroupTags($AzSKConfigData.AzSKRGName,@{$TagName=$SupportMail}, $true)                
+				}
+			  }			  	 
+			}			
+		}
+	}
+	catch{
+		# Exception occurred during setting tag. This is kept blank intentionaly to avoid flow break
+	}
+	}
 }

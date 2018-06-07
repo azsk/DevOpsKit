@@ -23,6 +23,10 @@ class CommandBase: AzSKRoot {
 		{
 			$this.Force = $this.InvocationContext.BoundParameters["Force"];
 		}
+
+		#Set Org Tag for subscriptions
+		$this.ValidateOrgPolicyOnSubscription()
+		$this.SetOrgPolicyTag()
     }
 
     [void] CommandStarted() {
