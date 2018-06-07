@@ -219,13 +219,13 @@ class AzSKRoot: EventBase
 			  $OrgName =$SubOrgTag.Name.Split("_")[1]   				
 			  if(-not [string]::IsNullOrWhiteSpace($OrgName) -and  $OrgName -ne $AzSKConfigData.PolicyOrgName)
 			  {
-				if($AzSKConfigData.PolicyOrgName -ne "org-neutral")
+				if($AzSKConfigData.PolicyOrgName -eq "org-neutral")
 				{
-					throw [SuppressedException] ("Currently command is running with policy '$($AzSKConfigData.PolicyOrgName)', instead it is expected to be run with policy '$OrgName'. Please contact Org policy owner ($($SubOrgTag.Value)) for getting policy setup url.")
+					throw [SuppressedException]::new("Currently command is running with policy '$($AzSKConfigData.PolicyOrgName)', instead it is expected to be run with policy '$OrgName'. Please contact Org policy owner ($($SubOrgTag.Value)) for getting policy setup url.",[SuppressedExceptionType]::Generic)
 				}
 				else
 				{					   
-					$this.PublishCustomMessage("Currently command is running with policy '$($AzSKConfigData.PolicyOrgName)', instead it is expected to be run with policy '$OrgName'. Please contact Org policy owner ($($SubOrgTag.Value)) for getting policy setup url.");
+					$this.PublishCustomMessage("Currently command is running with policy '$($AzSKConfigData.PolicyOrgName)', instead it is expected to be run with policy '$OrgName'. Please contact Org policy owner ($($SubOrgTag.Value)) for getting policy setup url.",[MessageType]::Warning);
 				}
 				}                
 			  }			 
@@ -251,7 +251,7 @@ class AzSKRoot: EventBase
 					{
 						$SupportMail = "Not Available"
 					}   
-					[Helpers]::SetResourceGroupTags($AzSKConfigData.AzSKRGName,@{$TagName=$SupportMail}, $true)                
+					[Helpers]::SetResourceGroupTags($AzSKConfigData.AzSKRGName,@{$TagName=$SupportMail}, $false)                
 				}
 		  	 
 			}			
