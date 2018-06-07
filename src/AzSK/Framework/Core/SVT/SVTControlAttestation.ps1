@@ -108,10 +108,13 @@ class SVTControlAttestation
 		$ValidAttestationStates = $this.ComputeEligibleAttestationState($controlItem, $ControlSeverity, $controlResult);
 		[String[]]$ValidAttestationKey = @(0)
 		#Sort attestation status based on key value
-		$ValidAttestationStates = Compare-Object -ReferenceObject ([Constants]::AttestationStatusHashMap.GetEnumerator() | Sort-Object value).Name -DifferenceObject $ValidAttestationStates -IncludeEqual -PassThru | Where-Object SideIndicator -EQ "=="
-		$ValidAttestationStates | ForEach-Object {
-			$message += "`n[{0}]: {1}" -f ([Constants]::AttestationStatusHashMap.$_),$_;
-			$ValidAttestationKey += [Constants]::AttestationStatusHashMap.$_
+		if($null -ne $ValidAttestationStates)
+		{
+			$ValidAttestationStates = Compare-Object -ReferenceObject ([Constants]::AttestationStatusHashMap.GetEnumerator() | Sort-Object value).Name -DifferenceObject $ValidAttestationStates -IncludeEqual -PassThru | Where-Object SideIndicator -EQ "=="
+			$ValidAttestationStates | ForEach-Object {
+				$message += "`n[{0}]: {1}" -f ([Constants]::AttestationStatusHashMap.$_),$_;
+				$ValidAttestationKey += [Constants]::AttestationStatusHashMap.$_
+			}
 		}
 		switch ($userChoice.ToUpper()){
 			"0" #None
