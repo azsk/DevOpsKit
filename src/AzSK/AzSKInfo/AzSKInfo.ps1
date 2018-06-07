@@ -209,17 +209,17 @@ function Update-AzSKPersistedState
 {	
 	<#
 	.SYNOPSIS
-	This command would help in updating all the critical AzSK packages which includes subscription security (RBAC, ARM Policies, Alerts, Security center configuration) and  Continuous Assurance (CA) automation runbook.
+	This command helps in updating security state stored by DevOps Kit.
 
 	.DESCRIPTION
-	This command would help in updating all the critical AzSK packages which includes subscription security (RBAC, ARM Policies, Alerts, Security center configuration) and  Continuous Assurance (CA) automation runbook.
+	This command helps in updating security state stored by DevOps Kit.
 	
 	.PARAMETER SubscriptionId
-		Subscription id for which subscription security configuration has to be updated.
+		Subscription id for which DevOps Kit state has to be updated.
+	.PARAMETER StateType
+		This represents the specific type of DevOps Kit state that has to be updated.
 	.PARAMETER FilePath
-		Migrates CA with the specified AADAppName
-	.PARAMETER UserComments
-		Migrates older AzSDK resources to new AzSK resources
+		Path to file containing list of controls for which state has to be updated.	
 	.PARAMETER DoNotOpenOutputFolder
 		Switch to specify whether to open output folder containing all security evaluation report or not.
 
@@ -229,18 +229,18 @@ function Update-AzSKPersistedState
 	Param(
 
 		[string]
-        [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which subscription security configuration has to be updated.", ParameterSetName = "Default")]
-        [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which subscription security configuration has to be updated.", ParameterSetName = "UserComments")]
+        [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which DevOps Kit state has to be updated.", ParameterSetName = "Default")]
+        [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which DevOps Kit state has to be updated.", ParameterSetName = "UserComments")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("sid")]
 		$SubscriptionId,
 
 		[string]
-		[Parameter(Mandatory = $false, HelpMessage = "Migrates CA with the specified AADAppName", ParameterSetName = "UserComments")]
+		[Parameter(Mandatory = $false, HelpMessage = "Path to file containing list of controls for which state has to be updated.", ParameterSetName = "UserComments")]
 		$FilePath,
 
 		[ValidateSet("UserComments")]
-		[Parameter(Mandatory = $true, HelpMessage = "Migrates older AzSDK resources to new AzSK resources", ParameterSetName = "UserComments")]
+		[Parameter(Mandatory = $true, HelpMessage = "This represents the specific type of DevOps Kit state that has to be updated.", ParameterSetName = "UserComments")]
 		$StateType,
 	
 		[switch]
@@ -259,10 +259,10 @@ function Update-AzSKPersistedState
 	{
 		try 
 		{
-			$basicInfo = [PersistedStateInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation);
-			if ($basicInfo -and $StateType -eq "UserComments") 
+			$persistedStateInfo = [PersistedStateInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+			if ($persistedStateInfo -and $StateType -eq "UserComments") 
 			{
-				return $basicInfo.InvokeFunction($basicInfo.UpdatePersistedState,@($FilePath));
+				return $persistedStateInfo.InvokeFunction($persistedStateInfo.UpdatePersistedState,@($FilePath));
 			}
 		}
 		catch 
