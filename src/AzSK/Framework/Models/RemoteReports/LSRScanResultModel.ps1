@@ -20,7 +20,7 @@ class LSRSubscription
 class LSRScanDetails
 {
 	[LSRSubscriptionControlResult[]] $SubscriptionScanResult = @();
-	[LSRResources[]] $Resources = @();;
+	[LSRResources[]] $Resources = @();
 }
 
 class LSRResources
@@ -33,6 +33,7 @@ class LSRResources
 	[string] $ResourceGroupName = "";
 	[string] $ResourceName = "";
 	[string] $ResourceMetadata = "";
+	[string] $FeatureName = "";
 
 	[LSRResourceScanResult[]] $ResourceScanResult = @();
 }
