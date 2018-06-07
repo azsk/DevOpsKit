@@ -893,7 +893,7 @@ class SVTBase: AzSKRoot
 			$gracePeriod=0;
 			$controlResult=$eventcontext.ControlResults;
 			
-			$isControlinGrace=$this.isControlinGrace($eventcontext);
+			$isControlinGrace=$this.IsControlinGrace($eventcontext);
 			
 			if([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays") `
 					-and [Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays,"Default") `
@@ -1224,5 +1224,28 @@ class SVTBase: AzSKRoot
 		}
 		
     }
+
+
+	[bool] hidden IsControlinGrace([SVTEventContext] $context)
+	{
+		$isControlinGrace=false;
+		$controlResult=$context.ControlResults;
+		$gracePeriod=0;
+		$controlSeverity=$context.controlItem.ControlSeverity;
+		if(($null -eq $ControlSeverity) -or ($ControlSeverity -notin [ControlSeverity].GetEnumNames()))
+	    {
+	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.Default
+	    }
+	    else
+	    {
+	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity
+		}
+		if(($null -ne $controlResult.FirstFailedOn) -and ([DateTime]::UtcNow -gt $controlResult.FirstScannedOn.addDays($gracePeriod)))
+	    {
+			$isControlinGrace=true;
+			return $isControlinGrace;
+		}
+		return $isControlinGrace;
+	}
 	
 }
