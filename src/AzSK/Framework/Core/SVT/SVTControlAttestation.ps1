@@ -512,15 +512,17 @@ class SVTControlAttestation
 	    {
 	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity
 	    }
-
-	    if(($null -ne $controlResult.FirstFailedOn) -and ([DateTime]::UtcNow -gt $controlResult.FirstFailedOn.addDays($gracePeriod)))
-	    {
-	        if($ValidAttestationStates -contains [AttestationStatus]::WillFixLater)
-	        {
-	            $ValidAttestationStates.Remove("WillFixLater")
-	        }
-	    }
-
+		#remove WillFixLater from valid attestation states, if control is not in grace period 
+		if($controlResult.IsControlInGrace -eq $true)
+		{
+			if(($null -ne $controlResult.FirstFailedOn) -and ([DateTime]::UtcNow -gt $controlResult.FirstFailedOn.addDays($gracePeriod)))
+			{
+			    if($ValidAttestationStates -contains [AttestationStatus]::WillFixLater)
+			    {
+			        $ValidAttestationStates.Remove("WillFixLater")
+			    }
+			}
+		}
 	    return [String[]]$ValidAttestationStates;
 	}
 
