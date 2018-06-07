@@ -1228,7 +1228,7 @@ class SVTBase: AzSKRoot
 
 	[bool] hidden IsControlinGrace([SVTEventContext] $context)
 	{
-		$isControlinGrace=false;
+		$isControlinGrace=$false;
 		$controlResult=$context.ControlResults;
 		$gracePeriod=0;
 		$controlSeverity=$context.controlItem.ControlSeverity;
@@ -1242,7 +1242,7 @@ class SVTBase: AzSKRoot
 		}
 		if(($null -ne $controlResult.FirstFailedOn) -and ([DateTime]::UtcNow -gt $controlResult.FirstScannedOn.addDays($gracePeriod)))
 	    {
-			$isControlinGrace=true;
+			$isControlinGrace=$true;
 			return $isControlinGrace;
 		}
 		return $isControlinGrace;
