@@ -241,7 +241,7 @@ class AzSKRoot: EventBase
 		if($tagsOnSub)
 		{
 			$SubOrgTag= $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -like "AzSKOrgName*"}			
-			if(($SubOrgTag | Measure-Object).Count -gt 0)
+			if(($SubOrgTag | Measure-Object).Count -eq 0)
 			{
 			  $OrgNameSplitArray =$SubOrgTag.Name.Split("_")
 			  if(($OrgNameSplitArray | Measure-Object).Count -gt 1)
