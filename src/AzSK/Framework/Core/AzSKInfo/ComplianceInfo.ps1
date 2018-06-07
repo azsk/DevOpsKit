@@ -12,10 +12,11 @@ class ComplianceInfo: CommandBase
 	hidden [ComplianceMessageSummary[]] $ComplianceMessageSummary = @();
 	hidden [ComplianceResult[]] $ComplianceScanResult = @();
 	hidden [string] $SubscriptionId
+	hidden [bool] $Full
 
 
 	ComplianceInfo([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $resourceTypeName, [string] $resourceType, [string] $controlIds, [bool] $baslineControls,
-					[string] $controlSeverity, [string] $controlIdContains): 
+					[string] $controlSeverity, [string] $controlIdContains, [bool] $full): 
         Base($subscriptionId, $invocationContext) 
     { 
 		
@@ -80,96 +81,52 @@ class ComplianceInfo: CommandBase
 	{
 		$complianceResult.PSObject.Properties | ForEach-Object {
 			$property = $_
-			if([Helpers]::CheckMember($scannedControlResult,$property.Name) -or $property.Name -eq "VerificationResult" -or $property.Name -eq "AttestationStatus" -or $property.Name -eq "ControlSeverity" )
+			try
 			{
-				$propValue= $scannedControlResult | Select-Object -ExpandProperty $property.Name
-				if([Constants]::AzSKDefaultDateTime -eq $propValue)
+				if([Helpers]::CheckMember($scannedControlResult,$property.Name) -or $property.Name -eq "VerificationResult" -or $property.Name -eq "AttestationStatus" -or $property.Name -eq "ControlSeverity" -or $property.Name -eq "ScanSource")
 				{
-					$_.Value = ""
-				}
-				else
-				{
-					$_.Value = $propValue
-				}
+					$propValue= $scannedControlResult | Select-Object -ExpandProperty $property.Name
+					if([Constants]::AzSKDefaultDateTime -eq $propValue)
+					{
+						$_.Value = ""
+					}
+					else
+					{
+						$_.Value = $propValue
+					}
 				
-			}	
+				}	
+			}
+			catch
+			{
+				# need to add detail in catch block
+				#$currentInstance.PublishException($_);
+			}
 		}
 	}
 
 	GetComplianceInfo()
 	{
-		$this.PublishCustomMessage("`r`nFetching compliance info for subscription "+ $this.SubscriptionId  +" ...", [MessageType]::Default);
 		$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
+		$this.PublishCustomMessage("`r`nChecking presence of CA in subscription "+ $this.SubscriptionId  +" ...", [MessageType]::Default);
+		$AutomationAccount=[Constants]::AutomationAccount
+		$AzSKRGName=[ConfigurationManager]::GetAzSKConfigData().AzSKRGName
 
-		$this.GetComplianceScanData();	
-
-		$resourcetypes = @() 
-		$SVTConfig = @{} 
-		$allControls = @()
-		$controlSummary = @()
-
-		# Filter Control for Resource Type / Resource Type Name
-		if([string]::IsNullOrWhiteSpace($this.ResourceTypeName))
+		$caAutomationAccount = Get-AzureRmAutomationAccount -Name  $AutomationAccount -ResourceGroupName $AzSKRGName -ErrorAction SilentlyContinue
+		if($caAutomationAccount)
 		{
-			$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
-			$this.PublishCustomMessage([Constants]::DefaultControlInfoCmdMsg, [MessageType]::Default);
-			$this.DoNotOpenOutputFolder = $true;
-			return;
-		}
-
-		$resourcetypes += ([SVTMapping]::SubscriptionMapping | Select-Object JsonFileName)
-		if($this.ResourceTypeName -ne [ResourceTypeName]::All)
-		{
-			$resourcetypes += ([SVTMapping]::Mapping |
-					Where-Object { $_.ResourceTypeName -eq $this.ResourceTypeName } | Select-Object JsonFileName)
+			$this.PublishCustomMessage("`r`nCA automation account is present in subscription "+ $this.SubscriptionId  +".", [MessageType]::Default);
 		}
 		else
 		{
-			$resourcetypes += ([SVTMapping]::Mapping | Sort-Object ResourceTypeName | Select-Object JsonFileName )
-		}
-		
-		# Fetch control Setting data
-		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-
-		# Filter control for baseline controls
-		$baselineControls = @();
-		$baselineControls += $this.ControlSettings.BaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
-		$baselineControls += $this.ControlSettings.BaselineControls.SubscriptionControlIdList | ForEach-Object { $_ }
-		if($this.BaslineControls)
-		{
-			$this.ControlIds = $baselineControls
+			$this.PublishCustomMessage("`r`nCA automation account is not present in subscription "+ $this.SubscriptionId  +". Compliance count may differ from dashboard.", [MessageType]::Default);
 		}
 
-		#$resourcetypes | ForEach-Object{
-		#			$controls = [ConfigurationManager]::GetSVTConfig($_.JsonFileName); 
+		$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
+		$this.PublishCustomMessage("`r`nFetching compliance info for subscription "+ $this.SubscriptionId  +" ...", [MessageType]::Default);
+		$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
 
-		#			# Filter control for enable only			
-		#			$controls.Controls = ($controls.Controls | Where-Object { $_.Enabled -eq $true })
-
-		#			# Filter control for ControlIds
-		#			if ([Helpers]::CheckMember($controls, "Controls") -and $this.ControlIds.Count -gt 0) 
-		#			{
-		#				$controls.Controls = ($controls.Controls | Where-Object { $this.ControlIds -contains $_.ControlId })
-		#			}
-
-		#			# Filter control for ControlId Contains
-		#			if ([Helpers]::CheckMember($controls, "Controls") -and (-not [string]::IsNullOrEmpty($this.ControlIdContains))) 
-		#			{
-		#				$controls.Controls = ($controls.Controls | Where-Object { $_.ControlId -Match $this.ControlIdContains })
-		#			}
-
-		#			# Filter control for ControlSeverity
-		#			if ([Helpers]::CheckMember($controls, "Controls") -and (-not [string]::IsNullOrEmpty($this.ControlSeverity))) 
-		#			{
-		#				$controls.Controls = ($controls.Controls | Where-Object { $this.ControlSeverity -eq $_.ControlSeverity })
-		#			}
-
-		#			if ([Helpers]::CheckMember($controls, "Controls") -and $controls.Controls.Count -gt 0)
-		#			{
-		#				$SVTConfig.Add($controls.FeatureName, @($controls.Controls))
-		#			} 
-  #              }
-	
+		$this.GetComplianceScanData();	
 		$this.GetComplianceSummary()
 		$this.ExportComplianceResultCSV()
 	}
@@ -188,31 +145,42 @@ class ComplianceInfo: CommandBase
 		if(($this.ComplianceScanResult |  Measure-Object).Count -gt 0)
 		{
 			$totalControlCount = ($this.ComplianceScanResult |  Measure-Object).Count
-			$passControlCount = (($this.ComplianceScanResult | Where-Object { $_.VerificationResult -eq [VerificationResult]::Passed -or $_.VerificationResult -eq [VerificationResult]::Disabled -or $_.IsControlInGrace }) | Measure-Object).Count
-			$failedControlCount = $totalControlCount - $passControlCount
-			$totalCompliance = (100 * $passControlCount)/$totalControlCount
+			$passControlCount = (($this.ComplianceScanResult | Where-Object { ($_.VerificationResult -eq [VerificationResult]::Passed -or $_.IsControlInGrace) -and ($_.FeatureName -ne "AzSKCfg") }) | Measure-Object).Count
+			$failedControlCount = (($this.ComplianceScanResult | Where-Object { ($_.VerificationResult -ne [VerificationResult]::Passed) -and (-not $_.IsControlInGrace) -and ($_.FeatureName -ne "AzSKCfg") }) | Measure-Object).Count
+			$totalCompliance = (100 * $passControlCount)/($passControlCount + $failedControlCount)
 
-			 $baselineControlCount = (($this.ComplianceScanResult | Where-Object { $_.IsBaselineControl }) | Measure-Object).Count
-			 $baselinePassedControlCount = (($this.ComplianceScanResult | Where-Object { ($_.VerificationResult -eq [VerificationResult]::Passed -or $_.VerificationResult -eq [VerificationResult]::Disabled -or $_.IsControlInGrace) -and $_.IsBaselineControl }) | Measure-Object).Count
-			 $baselineFailedControlCount = $baselineControlCount - $baselinePassedControlCount
-			 $baselineCompliance = (100 * $baselinePassedControlCount)/$baselineControlCount
+			$baselineControlCount = (($this.ComplianceScanResult | Where-Object { $_.IsBaselineControl }) | Measure-Object).Count
+			$baselinePassedControlCount = (($this.ComplianceScanResult | Where-Object { ($_.VerificationResult -eq [VerificationResult]::Passed -or $_.VerificationResult -eq [VerificationResult]::Disabled -or $_.IsControlInGrace) -and $_.IsBaselineControl -and ($_.FeatureName -ne "AzSKCfg") }) | Measure-Object).Count
+			$baselineFailedControlCount = (($this.ComplianceScanResult | Where-Object { ($_.VerificationResult -ne [VerificationResult]::Passed) -and (-not $_.IsControlInGrace) -and $_.IsBaselineControl -and ($_.FeatureName -ne "AzSKCfg") }) | Measure-Object).Count
+			$baselineCompliance = (100 * $baselinePassedControlCount)/($baselinePassedControlCount + $baselineFailedControlCount)
 			
 			$attestedControlCount = (($this.ComplianceScanResult | Where-Object { $_.AttestationStatus -ne [AttestationStatus]::None}) | Measure-Object).Count
 			$gracePeriodControlCount = (($this.ComplianceScanResult | Where-Object { $_.IsControlInGrace }) | Measure-Object).Count
-		}
-		
-		
-		$comment = ""
-		$this.AddComplianceMessage("Total compliance:", [math]::Round($totalCompliance,2) , $comment)
-		$this.AddComplianceMessage("Pass control count:", $passControlCount, $comment);
-		$this.AddComplianceMessage("Failed control count:", $failedControlCount, $comment);
-		$this.AddComplianceMessage("Baseline compliance:",[math]::Round($baselineCompliance,2), $comment);
-		$this.AddComplianceMessage("Baseline pass control count:", $baselinePassedControlCount, $comment);
-		$this.AddComplianceMessage("Baseline failed control count:", $baselineFailedControlCount, $comment);
-		$this.AddComplianceMessage("Attested control count: ", $attestedControlCount, $comment);
-		$this.AddComplianceMessage("control in grace period count: ", $gracePeriodControlCount, $comment);
 
-		$this.PublishCustomMessage(($this.ComplianceMessageSummary | Format-Table | Out-String), [MessageType]::Default)
+			$ComplianceStats = @();
+			
+			$ComplianceStat = "" | Select-Object "ComplianceType", "Total", "Passed", "Failed"
+			$ComplianceStat.ComplianceType = "Baseline"
+			$ComplianceStat.Total= [math]::Round($baselineCompliance,2)
+			$ComplianceStat.Passed = $baselinePassedControlCount
+			$ComplianceStat.Failed = $baselineFailedControlCount
+			$ComplianceStats += $ComplianceStat
+
+			$ComplianceStat = "" | Select-Object "ComplianceType", "Total", "Passed", "Failed"
+			$ComplianceStat.ComplianceType = "Full"
+			$ComplianceStat.Total= [math]::Round($totalCompliance,2)
+			$ComplianceStat.Passed = $passControlCount
+			$ComplianceStat.Failed = $failedControlCount
+			$ComplianceStats += $ComplianceStat
+
+			$this.PublishCustomMessage(($ComplianceStats | Format-Table | Out-String), [MessageType]::Default)
+			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
+			$this.PublishCustomMessage("`r`nAttested control count:        "+ $attestedControlCount , [MessageType]::Default);
+			$this.PublishCustomMessage("`r`nControl in grace period count: "+ $gracePeriodControlCount , [MessageType]::Default);
+
+			$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
+			$this.PublishCustomMessage("`r`n`r`n`r`nDisclaimer: Compliance count can be differ from dashboard. Please refer dashboard for final compliance.", [MessageType]::Default);
+		}
 	}
 
 	GetControlsInGracePeriod()
@@ -237,11 +205,19 @@ class ComplianceInfo: CommandBase
 				$_.AttestationStatus = ""
 			}
 		}
+
+		$objectToExport = $this.ComplianceScanResult
+		if(-not $this.Full)
+		{
+			$objectToExport = $this.ComplianceScanResult | Select-Object "ControlId", "VerificationResult", "FeatureName", "ResourceGroupName", "ResourceName", "ChildResourceName", "IsBaselineControl", `
+								"ControlSeverity", "AttestationStatus", "AttestedBy", "Justification", "IsControlInGrace", "ScanSource", "ScannedBy", "ScannerModuleName", "ScannerVersion"
+		}
+
 		$controlCSV = New-Object -TypeName WriteCSVData
 		$controlCSV.FileName = 'Compliance Details'
 		$controlCSV.FileExtension = 'csv'
 		$controlCSV.FolderPath = ''
-		$controlCSV.MessageData = $this.ComplianceScanResult
+		$controlCSV.MessageData = $objectToExport
 
 		$this.PublishAzSKRootEvent([AzSKRootEvent]::WriteCSV, $controlCSV);
 	}
@@ -251,7 +227,7 @@ class ComplianceInfo: CommandBase
 		$ComplianceMessage = New-Object -TypeName ComplianceMessageSummary
 		$ComplianceMessage.ComplianceType = $ComplianceType
 		$ComplianceMessage.ComplianceCount = $ComplianceCount
-		$ComplianceMessage.ComplianceComment = $ComplianceComment
+		#$ComplianceMessage.ComplianceComment = $ComplianceComment
 		$this.ComplianceMessageSummary += $ComplianceMessage
 	}
 }
@@ -262,7 +238,7 @@ class ComplianceMessageSummary
 {
 	[string] $ComplianceType = "" 
 	[string] $ComplianceCount = ""
-	[string] $ComplianceComment = ""
+	#[string] $ComplianceComment = ""
 }
 
 class ComplianceResult
@@ -289,6 +265,9 @@ class ComplianceResult
 	[string] $FirstFailedOn = ""
 	[string] $FirstAttestedOn = ""
 	[string] $LastResultTransitionOn = ""
-	
+	[string] $ScanSource = ""
+	[string] $ScannedBy = ""
+	[string] $ScannerModuleName = ""
+	[string] $ScannerVersion = ""
 	[string] $IsControlInGrace = ""
 }

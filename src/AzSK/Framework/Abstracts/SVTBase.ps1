@@ -1159,53 +1159,61 @@ class SVTBase: AzSKRoot
 	}
 
 	hidden [void] GetDataFromSubscriptionReport($singleControlResult)
-    {
-		if([Helpers]::CheckMember($this.StorageReportData,"ScanDetails"))
-		{
-			$ResourceData = @();
-			if($singleControlResult.FeatureName -eq "SubscriptionCore")
+    {   try
+	    {
+	   		if([Helpers]::CheckMember($this.StorageReportData,"ScanDetails"))
 			{
-				if([Helpers]::CheckMember($this.StorageReportData.ScanDetails,"SubscriptionScanResult"))
+				$ResourceData = @();
+				$ResourceScanResult=@();
+				if($singleControlResult.FeatureName -eq "SubscriptionCore")
 				{
-					$ResourceData = $this.StorageReportData.ScanDetails.SubscriptionScanResult
-				}
-			}
-			else
-			{
-				if([Helpers]::CheckMember($this.StorageReportData.ScanDetails,"Resources"))
-				{
-					$ResourceData = $this.StorageReportData.ScanDetails.Resources
-				}
-
-				$ResourceData = $this.StorageReportData.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}	  
-				if(($ResourceData | Measure-Object).Count -gt 0 )
-				{
-					$ResourceScanResult=$ResourceData.ResourceScanResult
-					if(($ResourceScanResult | Measure-Object).Count -gt 0)
+					if([Helpers]::CheckMember($this.StorageReportData.ScanDetails,"SubscriptionScanResult"))
 					{
-						[ControlResult[]] $controlsResults = @();
-						$singleControlResult.ControlResults | ForEach-Object {
-							$currentControl=$_
+						$ResourceData = $this.StorageReportData.ScanDetails.SubscriptionScanResult
+						$ResourceScanResult=$ResourceData
+					}
+				}
+				else
+				{
+					if([Helpers]::CheckMember($this.StorageReportData.ScanDetails,"Resources"))
+					{
+						$ResourceData = $this.StorageReportData.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}
+						if([Helpers]::CheckMember($ResourceData,"ResourceScanResult"))
+				     	{
+					    	$ResourceScanResult = $ResourceData.ResourceScanResult 
+						}
+					
+					}			
+				}
+			
+					if(($ResourceScanResult | Measure-Object).Count -gt 0 )
+					{
+						#$ResourceScanResult=$ResourceData.ResourceScanResult
+						if(($ResourceScanResult | Measure-Object).Count -gt 0)
+						{
+							[ControlResult[]] $controlsResults = @();
+							$singleControlResult.ControlResults | ForEach-Object {
+								$currentControl=$_
 		
-							$matchedControlResult=$ResourceScanResult | Where-Object {
-							($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (  ([Helpers]::CheckMember($currentControl, "ChildResourceName") -and $_.ChildResourceName -eq $currentControl.ChildResourceName) -or (-not([Helpers]::CheckMember($currentControl, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
-							}
+								$matchedControlResult=$ResourceScanResult | Where-Object {
+								($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (  ([Helpers]::CheckMember($currentControl, "ChildResourceName") -and $_.ChildResourceName -eq $currentControl.ChildResourceName) -or (-not([Helpers]::CheckMember($currentControl, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
+								}
 		
-							if($null -ne  $matchedControlResult)
-							{
-								$currentControl.UserComments = $matchedControlResult.UserComments
-								$currentControl.FirstFailedOn = $matchedControlResult.FirstFailedOn
-								$currentControl.FirstScannedOn = $matchedControlResult.FirstScannedOn
+								if($null -ne  $matchedControlResult)
+								{
+									$currentControl.UserComments = $matchedControlResult.UserComments
+									$currentControl.FirstFailedOn = $matchedControlResult.FirstFailedOn
+									$currentControl.FirstScannedOn = $matchedControlResult.FirstScannedOn
 
-								$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
+									$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
 
 								$permittedDays = 90;
 								
-								if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays.ControlSeverity") -and [Helpers]::CheckMember($this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity,$singleControlResult.ControlItem.Severity))
-								{
-									$permittedDays = $this.ControlSetting.NewControlGracePeriodInDays.ExpandString($singleControlResult.ControlItem.Severity)
+								#if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays.ControlSeverity") -and [Helpers]::CheckMember($this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity,$singleControlResult.ControlItem.Severity))
+								#{
+								#	$permittedDays = $this.ControlSetting.NewControlGracePeriodInDays.ExpandString($singleControlResult.ControlItem.Severity)
 									
-								}
+								#}
 								if($scanFromDays -ge $permittedDays)
 								{
 									$currentControl.IsControlInGrace = $false
@@ -1215,6 +1223,14 @@ class SVTBase: AzSKRoot
 									$currentControl.IsControlInGrace = $true
 								}
 							}
+							else
+							{
+								$currentControl.FirstScannedOn = [DateTime]::UtcNow
+								if($currentControl.ActualVerificationResult -ne [VerificationResult]::Passed)
+								{
+									$currentControl.FirstFailedOn = [DateTime]::UtcNow
+								}
+							}
 							$controlsResults+=$currentControl
 						}
 						$singleControlResult.ControlResults=$controlsResults 
@@ -1222,7 +1238,10 @@ class SVTBase: AzSKRoot
 				}
 			}
 		}
-		
+		catch
+		{
+		  $this.PublishException($_);
+		}
     }
 
 

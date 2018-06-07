@@ -169,13 +169,8 @@ class CommandHelper
             ShortName = "CSS";
 			IsLatestRequired = $false;
         },
-		# Update-Storage
-		[CommandDetails]@{
-            Verb = "Update";
-            Noun = "AzSKStorage";
-            ShortName = "US";
-			IsLatestRequired = $false;
-        },
+		# Update-PersistedState
+
 		[CommandDetails]@{
             Verb = "Update";
             Noun = "AzSKPersistedState";

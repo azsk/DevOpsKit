@@ -257,8 +257,9 @@ function Get-AzSKSubscriptionSecurityStatus
 	.PARAMETER GenerateFixScript
 		Switch to specify whether to generate script to fix the control or not.
 	.PARAMETER ControlsToAttest
-		Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
-
+		Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
+    .PARAMETER IncludeUserComments
+		Use this switch to display previously stored user comments for controls.
 	.NOTES
 	This command helps the application team to verify whether their Azure subscription are compliant with the security guidance or not 
 
@@ -291,9 +292,9 @@ function Get-AzSKSubscriptionSecurityStatus
 		$ExcludeTags,
 		
 		[ValidateSet("All","AlreadyAttested","NotAttested","None")]
-        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
 		[Alias("AttestControls","cta")]
 		$ControlsToAttest = [AttestControls]::None,
 
@@ -404,9 +405,9 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 	.PARAMETER ControlIds
 		Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.
 	.PARAMETER ControlsToAttest
-			Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
+			Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
 	.PARAMETER GenerateFixScript
-			�Provide this option to automatically generate scripts that can be run to address the control failures
+			 Provide this option to automatically generate scripts that can be run to address the control failures
 
 	.NOTES
 	This command helps the application team to verify whether their ExpressRoute enabled VNets are compliant with the security guidance or not 
@@ -521,7 +522,7 @@ function Get-AzSKControlsStatus
 	.PARAMETER ControlIds
 		Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.
 	.PARAMETER ControlsToAttest
-			Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
+			Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
 	.PARAMETER BulkClear
 			Use this option if you want to clear the attestation for multiple resources in bulk, for a specified controlId.
 	.PARAMETER JustificationText
@@ -595,10 +596,10 @@ function Get-AzSKControlsStatus
 		$ExcludeTags,
                 
 		[ValidateSet("All","AlreadyAttested","NotAttested","None")] 
-        [Parameter(Mandatory = $false, ParameterSetName = "ResourceFilter", HelpMessage="Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $false, ParameterSetName = "TagHashset", HelpMessage="Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ResourceFilter", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "TagHashset", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
 		[Alias("AttestControls","cta")]
 		$ControlsToAttest = [AttestControls]::None,
 
