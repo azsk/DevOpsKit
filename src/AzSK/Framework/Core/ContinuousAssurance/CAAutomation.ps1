@@ -198,7 +198,12 @@ class CCAutomation: CommandBase
 		try
 		{
 			#region :validation/RG creation
-			
+			$isValid = ($this.AutomationAccount.ResourceGroup -eq [UserSubscriptionDataHelper]::GetUserSubscriptionRGName() -and $this.AutomationAccount.Name -eq [UserSubscriptionDataHelper]::GetCAName()) -or `
+			($this.AutomationAccount.ResourceGroup -ne [UserSubscriptionDataHelper]::GetUserSubscriptionRGName() -and $this.AutomationAccount.Name -ne [UserSubscriptionDataHelper]::GetCAName())
+			if(!$isValid)
+			{
+				throw ([SuppressedException]::new(("The specified 'AutomationAccountName' and/or 'AutomationAccountRGName' parameter values are reserved for toolkit use. `r`nPlease run this command with different parameter values."), [SuppressedExceptionType]::InvalidOperation))
+			}
 			if(!$this.IsCAInstallationValid())
 			{
 				$this.cleanupFlag = $false
@@ -363,7 +368,6 @@ class CCAutomation: CommandBase
 			
 							$this.OutputObject.TargetSubs += $out
 						}
-						#endregion
 						$scanobject = [CAScanModel]::new($caSubId, $this.LoggingOption);
 						$scanobjects += $scanobject;
 						$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`n[$i/$count] Completed configuring subscription for central scan: [$caSubId] `r`n"+[Constants]::DoubleDashLine);
@@ -1074,83 +1078,133 @@ class CCAutomation: CommandBase
 		Get-AzureRmAutomationSchedule -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name | Where-Object { $_.Name -eq "Scan_Schedule" -or $_.Name -eq "Next_Run_Schedule"} | Remove-AzureRmAutomationSchedule -Force
 	}
 
+	[MessageData[]] FormatGetCACheckMessage($checkCount, $description, $resultStatus, $resultMsg, $detailedMsg, $summaryTable)
+	{
+		[MessageData[]] $returnMsg = @();
+		$messageType = $Null
+		$commonFailMsg = [Constants]::SingleDashLine + "`r`nFound that AzSK Continuous Assurance (CA) is not correctly setup or functioning properly.`r`nReview the failed check and follow the remedy suggested. If it does not work, please file a support request after reviewing the FAQ.`r`n"+[Constants]::SingleDashLine;
+
+		$newMsg = [MessageData]::new("Check $($checkCount.ToString("00")): $description", [MessageType]::Info)
+		$this.PublishCustomMessage($newMsg)
+		$returnMsg += $newMsg
+
+		switch($resultStatus)
+		{
+			"OK" {$messageType = [MessageType]::Update}
+			"Failed" {$messageType = [MessageType]::Error}
+			"Skipped" {$messageType = [MessageType]::Warning}
+			"Unhealthy" {$messageType = [MessageType]::Warning}
+			"Warning" {$messageType = [MessageType]::Warning}
+		}
+
+		$newMsg = [MessageData]::new("Status:   $resultStatus. $resultMsg",$messageType)
+		$returnMsg += $newMsg
+		$this.PublishCustomMessage($newMsg);
+
+		$this.PublishCustomMessage([MessageData]::new([Constants]::SingleDashLine));
+		$returnMsg += [MessageData]::new([Constants]::SingleDashLine);
+		if($null -ne $detailedMsg)
+		{
+			$returnMsg += $detailedMsg
+		}
+		if($summaryTable.Count -gt 0)
+		{
+			$summaryTable | ForEach-Object{
+				$this.PublishCustomMessage($_)
+			}
+			$returnMsg += $summaryTable;		
+		}
+		if($resultStatus -eq "Failed")
+		{
+			$this.PublishCustomMessage([MessageData]::new("$commonFailMsg",  [MessageType]::Warning))
+			$returnMsg += $commonFailMsg
+		}
+		return $returnMsg
+	}
+	[MessageData[]] FormatGetCACheckMessage($checkCount, $description, $resultStatus, $resultMsg, $detailedMsg)
+	{
+		return ($this.FormatGetCACheckMessage($checkCount, $description, $resultStatus, $resultMsg, $detailedMsg, @()))
+	}
 	[MessageData[]] GetAzSKContinuousAssurance()
 	{
 		[MessageData[]] $messages = @();
 		$stepCount = 0;
+		$checkDescription = ""
+		$resultMsg = ""
+		$detailedMsg = $null
+		$resultStatus = ""
+		$shouldReturn = $false
+
 		$currentMessage = [MessageData]::new([Constants]::DoubleDashLine + "`r`nStarted validating your AzSK Continuous Assurance (CA) setup...`r`n"+[Constants]::DoubleDashLine);
 		$messages += $currentMessage;
 		$this.PublishCustomMessage($currentMessage);
-		$commonFailMsg = [Constants]::SingleDashLine + "`r`nFound that AzSK Continuous Assurance (CA) is not correctly setup or functioning properly.`r`nReview the failed check and follow the remedy suggested. If it does not work, please file a support request after reviewing the FAQ.`r`n"+[Constants]::SingleDashLine;
+		
 		#region:Step 1: Check if Automation Account with name "AzSKContinuousAssurance" exists in "AzSKRG", if no then display error message and quit, if yes proceed further
 		$stepCount++
-		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Presence of CA Automation Account.",  [MessageType]::Info);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
+		$checkDescription = "Presence of CA Automation Account."
 		$caAutomationAccount = $this.GetCADetailedResourceInstance()
 		if($caAutomationAccount)
 		{
 			$caInstalledTimeInterval = ($(get-date).ToUniversalTime() - $caAutomationAccount.CreationTime.UtcDateTime).TotalMinutes
-			$currentMessage = [MessageData]::new("Interval between CA creation time and current time (in minutes): $caInstalledTimeInterval minutes");
-			$messages += $currentMessage;
+			$detailedMsg = "Interval between CA creation time and current time (in minutes): $caInstalledTimeInterval minutes."
 
 			if($caInstalledTimeInterval -lt 120)
 			{
-				$msg = "Please run this command after 2 hours of CA installation."
-				$currentMessage = [MessageData]::new($msg,  [MessageType]::Update);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-				return $messages
+				$resultMsg = "Please run this command after 2 hours of CA installation."
+				$resultStatus = "Failed"
 			}
 			else
 			{
-				$passMsg = "Found the CA Automation Account: [$($caAutomationAccount.AutomationAccountName)]."
-				$currentMessage = [MessageData]::new("Status:   OK. $passMsg",  [MessageType]::Update);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
+				$resultMsg = "Found the CA Automation Account: [$($caAutomationAccount.AutomationAccountName)]."
+				$resultStatus = "OK"
 			}
 		}
 		else
 		{
-			$failMsg = "CA Automation Account: [$($this.AutomationAccount.Name)] is missing."
-
-			$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`nPlease run command '$($this.installCommandName)'.",  [MessageType]::Error);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new("$commonFailMsg",  [MessageType]::Warning);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);			
-			return $messages;
+			$resultMsg = "CA Automation Account: [$($this.AutomationAccount.Name)] is missing.`r`nPlease run command '$($this.installCommandName)'."
+			$resultStatus = "Failed"			
+			$shouldReturn = $true
 		}
-		#endregion
-
-		#region:Step 1.1: Check if the runbook version is recent
-		$stepCount++
-
-		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Checking CA Runbook version.",  [MessageType]::Info);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
-		
-		$azskMinReqdRunbookVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKCAMinReqdRunbookVersion
-		if([string]::IsNullOrWhiteSpace($azskMinReqdRunbookVersion))
+		$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
+		if($shouldReturn)
 		{
-			#If the value is empty, take the default version from the module code
-			$azskMinReqdRunbookVersion = $this.MinReqdCARunbookVersion
+			return $messages
 		}
-		$azskLatestCARunbookVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion
+		$detailedMsg = $Null
+		#endregion
+		
+		#region: Display summary
+		$noValueMsg = "NULL"
+		$caSummaryTable = @{"AutomationAccountName"=$noValueMsg;
+		"AppResourceGroupNames"=$noValueMsg;
+		"OMSWorkspaceId"=$noValueMsg;
+		"AltOMSWorkspaceId"=$noValueMsg;
+		"WebhookUrl"=$noValueMsg;
+		"AzureADAppID"=$noValueMsg;
+		"AzureADAppName"=$noValueMsg;
+		"CertificateExpiry"=$noValueMsg;
+		"Runbooks"=$noValueMsg;
+		"Schedules"=$noValueMsg;
+		"RunbookVersion"=$noValueMsg;
+		"AzSKReportsStorageAccountName"=$noValueMsg
+		}
+		$centralCASummaryTable = @{
+		"TargetSubscriptionIds"=$noValueMsg;
+		}
+		$caOverallSummary = @()
+		#Fetch automation account components
+		$omsWsId = $this.GetOMSWSID()		
+		$altOMSWsId = $this.GetAltOMSWSID()
+		$webhookUrl = $this.GetWebhookURL()
+		$appRGs = $this.GetAppRGs()
+		$runbook = Get-AzureRmAutomationRunbook -AutomationAccountName $this.AutomationAccount.Name `
+		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.RunbookName -ErrorAction SilentlyContinue
+		$activeSchedules = $this.GetActiveSchedules($this.RunbookName)
+		$runAsConnection = $this.GetRunAsConnection()
+		$runAsCertificate = Get-AzureRmAutomationCertificate -AutomationAccountName $this.AutomationAccount.Name `
+		-Name $this.certificateAssetName `
+		-ResourceGroupName $this.AutomationAccount.ResourceGroup -ErrorAction SilentlyContinue
+		$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 		$azskCurrentCARunbookVersion = ""
 		$azskRG = Get-AzureRmResourceGroup $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue
 		if($null -ne $azskRG)
@@ -1160,91 +1214,130 @@ class CCAutomation: CommandBase
 				$azskCurrentCARunbookVersion = $azskRG.Tags[$this.RunbookVersionTagName]
 			}
 		}
+		$azskLatestCARunbookVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion
+		
+		$caSummaryTable.Item("AutomationAccountName") = $caAutomationAccount.AutomationAccountName
+		if($omsWsId)
+		{
+			$caSummaryTable.Item("OMSWorkspaceId") = $omsWsId.Value
+		}
+
+		if($altOMSWsId)
+		{
+			$caSummaryTable.Item("AltOMSWorkspaceId") = $altOMSWsId.Value
+		}
+
+		if($webhookUrl)
+		{
+			$caSummaryTable.Item("WebhookUrl") = $webhookUrl.Value
+		}
+
+		if($appRGs)
+		{
+			$caSummaryTable.Item("AppResourceGroupNames") = $appRGs.Value	
+		}
+
+		$caSummaryTable.Item("Runbooks") = $runbook.Name -join ","
+		#get schedules
+		$scheduleList = @()
+		$activeSchedules|ForEach-Object{
+			$scheduleList += ($_.Name +" (Frequency: "+$_.Interval+" "+$_.Frequency+")")
+		} 
+		$caSummaryTable.Item("Schedules") = $scheduleList -join ","
+
+		$caSummaryTable.Item("AzureADAppID") = $runAsConnection.FieldDefinitionValues["ApplicationId"]
+		#find AD App name
+		$ADapp = Get-AzureRmADApplication -ApplicationId $runAsConnection.FieldDefinitionValues.ApplicationId -ErrorAction SilentlyContinue		
+		if($ADApp)
+		{
+			$caSummaryTable.Item("AzureADAppName") = $ADapp.DisplayName
+		}
+		$caSummaryTable.Item("CertificateExpiry") = $runAsCertificate.ExpiryTime
+		$caSummaryTable.Item("AzSKReportsStorageAccountName") = $reportsStorageAccount.ResourceName
+		$caSummaryTable.Item("RunbookVersion") = "Current version: [$azskCurrentCARunbookVersion] Latest version: [$azskLatestCARunbookVersion]"
+		
+		$caSummaryTable = $caSummaryTable.GetEnumerator() |Sort-Object -Property Name|Format-Table -AutoSize -Wrap |Out-String		
+		$caOverallSummary += [MessageData]::new("Summary of CA configuration:", $caSummaryTable);
+		$caOverallSummary += ([MessageData]::new([Constants]::SingleDashLine));
+		if(![string]::IsNullOrWhiteSpace($this.TargetSubscriptionIds))
+		{
+			$centralCASummaryTable.Item("TargetSubscriptionIds") = $this.TargetSubscriptionIds	
+			$caOverallSummary += ([MessageData]::new("Summary of central CA configuration:", $centralCASummaryTable));
+			$caOverallSummary += ([MessageData]::new([Constants]::SingleDashLine));		
+		}
+		#endregion
+		
+		#region:Step 1.1: Check if the runbook version is recent
+		$stepCount++
+
+		$checkDescription = "Checking CA Runbook version."		
+		$azskMinReqdRunbookVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKCAMinReqdRunbookVersion
+		if([string]::IsNullOrWhiteSpace($azskMinReqdRunbookVersion))
+		{
+			#If the value is empty, take the default version from the module code
+			$azskMinReqdRunbookVersion = $this.MinReqdCARunbookVersion
+		}
+	
 		if(![string]::IsNullOrWhiteSpace($azskCurrentCARunbookVersion) -and ([System.Version]$azskCurrentCARunbookVersion -ge [System.Version]$azskMinReqdRunbookVersion))
 		{
 			if([System.Version]$azskCurrentCARunbookVersion -ne [System.Version]$azskLatestCARunbookVersion)
 			{
-				$currentMessage = [MessageData]::new("AzSK current runbook version $([System.Version]$azskCurrentCARunbookVersion) and latest runbook version $([System.Version]$azskLatestCARunbookVersion)");
-				$messages += $currentMessage;
-
-				$warningMsg = "CA runbook is not current as per the required latest version. It is always recomended to update your runbook to the latest version possible by running the command: 'Update-AzSKSubscriptionSecurity -SubscriptionId <subId>'"
-				$currentMessage = [MessageData]::new("Status:   Unhealthy. $warningMsg", [MessageType]::Warning);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
+				$detailedMsg  = "AzSK current runbook version $([System.Version]$azskCurrentCARunbookVersion) and latest runbook version $([System.Version]$azskLatestCARunbookVersion)";
+				$resultMsg  = "CA runbook is not current as per the required latest version. It is always recomended to update your runbook to the latest version possible by running the command: 'Update-AzSKSubscriptionSecurity -SubscriptionId <subId>'"
+				$resultStatus = "Unhealthy"
 			}
 			else
 			{
-				$passMsg = "CA runbook is healthy."
-				$currentMessage = [MessageData]::new("Status:   OK. $passMsg",  [MessageType]::Update);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
+				$resultMsg = "CA runbook is healthy."
+				$resultStatus = "OK"
 			}
 		}
 		else
 		{
-			$failMsg = "CA Runbook is too old."
-			$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`nRun command 'Update-AzSKSubscriptionSecurity -SubscriptionId <subId>'.",  [MessageType]::Error);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new("$commonFailMsg",  [MessageType]::Warning);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);			
-			return $messages;
-		}		
+			$resultMsg = "CA Runbook is too old.`r`nRun command 'Update-AzSKSubscriptionSecurity -SubscriptionId <subId>'."
+			$resultStatus = "OK"
+			$shouldReturn = $true
+		}	
+		if($shouldReturn)
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
+			return $messages
+		}
+		else 
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
+		}
+		$detailedMsg = $Null		
 		#endregion
 
 		#region:Step 1.2: Check for the presence of locks on the AzSKRG
 		$stepCount++		
-		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Checking the presence of resource locks.", [MessageType]::Info);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
+		$checkDescription = "Checking the presence of resource locks."
 		$azskRGScope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourceGroups/$($this.AutomationAccount.CoreResourceGroup)"
 		$resourceLocks = @();
 		$resourceLocks += Get-AzureRmResourceLock -Scope $azskRGScope
 		if($resourceLocks.Count -gt 0)
 		{
-			$failMsg = "resource locks found on DevOpsKit RG. You need to remove these locks for CA to work properly."
-
-			$currentMessage = [MessageData]::new("resource locks found on the subscription:", $resourceLocks);
-			$messages += $currentMessage;
-
-			$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`n.", [MessageType]::Error);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new("$commonFailMsg",  [MessageType]::Warning);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);		
-			return $messages;	
+			$resultMsg  = "Resource locks found on DevOpsKit RG. You need to remove these locks for CA to work properly."
+			$detailedMsg = [MessageData]::new("Resource locks found on the subscription:", $resourceLocks);
+			$resultStatus = "Failed"
+			$shouldReturn = $true
 		}
 		else
 		{
-			$passMsg = "No blocking resource locks found on the DevOpsKit RG"
-			$currentMessage = [MessageData]::new("Status:   OK. $passMsg",  [MessageType]::Update);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-		}			
+			$resultMsg = "No blocking resource locks found on the DevOpsKit RG"
+			$resultStatus = "OK"
+		}	
+		if($shouldReturn)
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
+			return $messages
+		}
+		else 
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
+		}
+		$detailedMsg = $Null		
 		#endregion
 
 		#region:Step 2: Check if AzSK module is in available state in Assets, if no then display error message
@@ -1254,9 +1347,7 @@ class CCAutomation: CommandBase
 		{
 			#Check the state of AzSK Module
 			$azskModuleName = $this.GetModuleName().ToUpper()
-			$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Inspecting CA module: [$azskModuleName].", [MessageType]::Info);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
+			$checkDescription = "Inspecting CA module: [$azskModuleName]."
 			$azskAutomationModule = $azskAutomationModuleList | Where-Object { $_.Name -eq $azskModuleName -and ($_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created")} 
 			if(($azskAutomationModule | Measure-Object).Count -gt 0)
 			{
@@ -1266,50 +1357,36 @@ class CCAutomation: CommandBase
 				$serverVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($azskModuleName));
 				if($azskModuleWithVersion.Version -ne $serverVersion)
 				{
-					$currentMessage = [MessageData]::new("Status:   Warning. CA is not running latest $azskModuleName version.",  [MessageType]::Warning);
-					$messages += $currentMessage;
-					$this.PublishCustomMessage($currentMessage);
-
-					$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-					$messages += $currentMessage;
-					$this.PublishCustomMessage($currentMessage);
+					$resultStatus = "Warning"
+					$resultMsg = "CA is not running latest $azskModuleName version."
 				}
 				else
 				{
-					$passMsg = "CA is running latest $azskModuleName version."
-					$currentMessage = [MessageData]::new("Status:   OK. $passMsg",  [MessageType]::Update);
-					$messages += $currentMessage;
-					$this.PublishCustomMessage($currentMessage);
-
-					$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-					$messages += $currentMessage;
-					$this.PublishCustomMessage($currentMessage);
+					$resultMsg = "CA is running latest $azskModuleName version."
+					$resultStatus = "OK"
 				}
 			}
 			else
 			{
 				$failMsg = "$azskModuleName module is not available in automation account."
 				$resolvemsg = "To resolve this please run command '$($this.removeCommandName)' followed by '$($this.installCommandName)'."
-
-				$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`n$resolvemsg",  [MessageType]::Error);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new("$commonFailMsg",  [MessageType]::Warning);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
+				$resultMsg = "$failMsg`r`n$resolvemsg"
+				$resultStatus = "Failed"
+				$shouldReturn = $true
+			}
+			if($shouldReturn)
+			{
+				$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
 				return $messages
 			}
-
+			else 
+			{
+				$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
+			}
+			$detailedMsg = $Null
 			#region: Step 3: Check the state of Azure Modules
 			$stepCount++
-			$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Inspecting CA Azure modules.", [MessageType]::Info);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
+			$checkDescription = "Inspecting CA Azure modules."
 			if($this.ExhaustiveCheck)
 			{				
 				$azureAutomationModuleList = $azskAutomationModuleList | Where-Object { $_.Name -like "Azure*" -and $_.ProvisioningState -ne "Succeeded" -and $_.ProvisioningState -ne "Created"} 
@@ -1318,45 +1395,41 @@ class CCAutomation: CommandBase
 					$missingModulesList = $azureAutomationModuleList.Name -join ","
 					$failMsg = "One or more Azure module(s) are missing given below.`r`n$missingModulesList"
 					$resolvemsg = "To resolve this please run command '$($this.removeCommandName)' command followed by '$($this.installCommandName)'."
-
-					$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`n$resolvemsg", [MessageType]::Error);
-					$messages += $currentMessage;
-					$this.PublishCustomMessage($currentMessage);
-
-					$currentMessage = [MessageData]::new("$commonFailMsg",  [MessageType]::Warning);
-					$messages += $currentMessage;
-					$this.PublishCustomMessage($currentMessage);
-
-					$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-					$messages += $currentMessage;
-					$this.PublishCustomMessage($currentMessage);
-					return $messages				
+					$resultMsg = "$failMsg`r`n$resolvemsg"
+					$resultStatus = "Failed"
+					$shouldReturn = $true				
 				}
 				else
-				{		
-					$currentMessage = [MessageData]::new("Status:   OK.", [MessageType]::Update);
-					$messages += $currentMessage;
-					$this.PublishCustomMessage($currentMessage);
+				{	
+					$resultMsg = ""	
+					$resultStatus = "OK"
 				}
 			}
 			else
 			{
-				$currentMessage = [MessageData]::new("Status:   Skipped. Use -ExhaustiveCheck option to include this.", [MessageType]::Warning);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
+				$resultStatus = "Skipped"
+				$resultMsg = "Use -ExhaustiveCheck option to include this."
 			}
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
+			if($shouldReturn)
+			{
+				$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
+				return $messages
+			}
+			else 
+			{
+				$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
+			}
+			$detailedMsg = $Null				
 			#endregion
 
 			#region: Step 4: Check if all the dependent modules are loaded
 			$stepCount++			
-			$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Inspecting CA module: $($azskModuleName)'s dependent modules. This may take a few min...", [MessageType]::Info);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
+			$checkDescription = "Inspecting CA module: $($azskModuleName)'s dependent modules. This may take a few min..."
 			if($this.ExhaustiveCheck)
 			{
+				$azskModuleWithVersion = Get-AzureRmAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup `
+				-Name $azskModuleName
 				$azskServerModules = $this.GetDependentModules($azskModuleName,$azskModuleWithVersion.Version)
 				$missingModules = @()
 				$azskServerModules | ForEach-Object {
@@ -1370,52 +1443,46 @@ class CCAutomation: CommandBase
 				if($missingModules.Count -gt 0)
 				{
 					$missingModulesString = $missingModules -join ","
+					$detailedMsg = [MessageData]::new("Missing modules in the automation account:", $missingModules);
+					
 					$resolvemsg = "To resolve this please run command '$($this.removeCommandName)' followed by '$($this.installCommandName)'."
 					$failMsg = "One or more dependent module(s) are missing given below.`r`n$missingModulesString"
-
-					$currentMessage = [MessageData]::new("Missing modules in the automation account:", $missingModules);
-					$messages += $currentMessage;
-
-					$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`n$resolvemsg", [MessageType]::Error);
-					$messages += $currentMessage;
-					$this.PublishCustomMessage($currentMessage);
-
-					$currentMessage = [MessageData]::new("$commonFailMsg",  [MessageType]::Warning);
-					$messages += $currentMessage;
-					$this.PublishCustomMessage($currentMessage);
-
-					$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-					$messages += $currentMessage;
-					$this.PublishCustomMessage($currentMessage);
-					return $messages
+			
+					$resultMsg = "$failMsg`r`n$resolvemsg"
+					$resultStatus = "Failed"
+					$shouldReturn = $true	
 				}
-				$currentMessage = [MessageData]::new("Status:   OK. CA modules are correctly set up.", [MessageType]::Update);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
+				else
+				{
+					$resultStatus = "OK"
+					$resultMsg = "CA modules are correctly set up."
+				}
 			}
 			else
 			{
-				$currentMessage = [MessageData]::new("Status:   Skipped. Use -ExhaustiveCheck option to include this.", [MessageType]::Warning);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);				
+				$resultStatus = "Skipped"
+				$resultMsg = "Use -ExhaustiveCheck option to include this."
 			}
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
+			if($shouldReturn)
+			{
+				$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
+				return $messages
+			}
+			else 
+			{
+				$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
+			}
+			$detailedMsg = $Null							
 			#endregion
 		}
 		else
 		{			
-			$currentMessage = [MessageData]::new("$commonFailMsg",  [MessageType]::Warning);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-			return $messages
+			#this will never occur as default modules will be always there in autoamtion account
 		}
 		#endregion
 
 		#region: check if the subscription is running in the central scan mode
 
-		$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 		$caSubs = @();
 		[CAScanModel[]] $scanobjects = @();
 		if(($reportsStorageAccount | Measure-Object).Count -eq 1)
@@ -1464,10 +1531,7 @@ class CCAutomation: CommandBase
 		#region: Step 5: Check if service principal is configured and it has at least reader access to subscription and contributor access to "AzSKRG", if either is missing display error message
 		$stepCount++
 		$isPassed = $false
-		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Inspecting CA RunAs Account.", [MessageType]::Info);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
-		$runAsConnection = $this.GetRunAsConnection()
+		$checkDescription = "Inspecting CA RunAs Account."
 		if($runAsConnection)
 		{			
 			$this.CAAADApplicationID = $runAsConnection.FieldDefinitionValues.ApplicationId
@@ -1518,157 +1582,108 @@ class CCAutomation: CommandBase
 					Select-AzureRmSubscription -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
 				}
 
-				$currentMessage = [MessageData]::new("TargetSubscriptions RBAC permissions data", $subRBACoutputs);
-				$messages += $currentMessage;
+				$detailedMsg = [MessageData]::new("TargetSubscriptions RBAC permissions data", $subRBACoutputs);
 			}
 			else
 			{
 				if($this.IsCentralScanModeOn -and !$this.ExhaustiveCheck)
 				{
-					$currentMessage = [MessageData]::new("Warning: Skipped target subscriptions SPN permissions check. Use -ExhaustiveCheck option to include this.", [MessageType]::Warning);
-					$messages += $currentMessage;
-					$this.PublishCustomMessage($currentMessage);
+					$resultMsg = "Skipped the check for SPN access permissions on individual subscriptions. Use -ExhaustiveCheck option to include this."
+					$resultStatus = "Warning"
 				}
 				$haveSubscriptionRBACAccess = $this.CheckServicePrincipalSubscriptionAccess($this.CAAADApplicationID)
 				$haveRGRBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID)				
 			}
 			if($haveSubscriptionRBACAccess -and $haveRGRBACAccess)
 			{
-				$passMsg = "RunAs Account is correctly set up."
-				$currentMessage = [MessageData]::new("Status:   OK. $passMsg", [MessageType]::Update);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
+				$resultMsg = "RunAs Account is correctly set up."
+				$resultStatus = "OK"
 				$isPassed = $true
 			}
 			if(!$isPassed)
 			{
-				$failmsg = "Service principal account (Name: $($spName)) configured in RunAs Account  doesn't have required access (Reader access on Subscription and/or Contributor access on Resource group $($this.AutomationAccount.CoreResourceGroup))."
-
-				$currentMessage = [MessageData]::new("Status:   Failed. $failmsg`r`nTo resolve this you can provide required access to service principal manually from portal or run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -FixRuntimeAccount.", [MessageType]::Error);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new($commonFailMsg, [MessageType]::Warning);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-				return $messages
+				$failMsg = "Service principal account (Name: $($spName)) configured in RunAs Account  doesn't have required access (Reader access on Subscription and/or Contributor access on Resource group $($this.AutomationAccount.CoreResourceGroup))."
+				$resolveMsg = "To resolve this you can provide required access to service principal manually from portal or run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -FixRuntimeAccount."
+				$resultMsg = "$failmsg`r`n$resolveMsg"
+				$resultStatus = "Failed"
+				$shouldReturn = $true
 			}
 		}
 		else
 		{
 			$failmsg = "RunAs Account does not exist in automation account."
-
-			$currentMessage = [MessageData]::new("Status:   Failed. $failmsg`r`nTo resolve this run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -FixRuntimeAccount'.", [MessageType]::Error);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new($commonFailMsg, [MessageType]::Warning);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
+			$resolveMsg = "To resolve this run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -FixRuntimeAccount'."
+			$resultMsg = "$failmsg`r`n$resolveMsg"			
+			$resultStatus = "Failed"
+			$shouldReturn = $true			
+		}
+		if($shouldReturn)
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
 			return $messages
 		}
+		else 
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
+		}
+		$detailedMsg = $Null				
 		#endregion
 
 		#region: step 6: Check if certificate expiry is in near future(in next 1 month) or it's expired
 		$stepcount++
 		$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -RenewCertificate'."
-		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Inspecting CA RunAs Certificate.", [MessageType]::Info);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
+		$checkDescription = "Inspecting CA RunAs Certificate."
 
-		$runAsCertificate = Get-AzureRmAutomationCertificate -AutomationAccountName $this.AutomationAccount.Name `
-		-Name $this.certificateAssetName `
-		-ResourceGroupName $this.AutomationAccount.ResourceGroup -ErrorAction SilentlyContinue
-		
 		if($runAsCertificate)
 		{
-			$currentMessage = [MessageData]::new("CA certificate expiry date: [$($runAsCertificate.ExpiryTime.ToString("yyyy-MM-dd"))]");
-			$messages += $currentMessage;
-			$runAsConnection = $this.GetRunAsConnection();
+			$detailedMsg = [MessageData]::new("CA certificate expiry date: [$($runAsCertificate.ExpiryTime.ToString("yyyy-MM-dd"))]");
+
 			$ADapp = Get-AzureRmADApplication -ApplicationId $runAsConnection.FieldDefinitionValues.ApplicationId -ErrorAction SilentlyContinue
 			if(($runAsCertificate.ExpiryTime.UtcDateTime - $(get-date).ToUniversalTime()).TotalMinutes -lt 0)
 			{
 				
 				$failMsg = "CA Certificate is expired on $($runAsCertificate.ExpiryTime.ToString("yyyy-MM-dd")). CA SPN: [$($ADapp.DisplayName)]"
-
-				$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`n$resolveMsg", [MessageType]::Error);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new($commonFailMsg, [MessageType]::Warning);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-				return $messages;
+				$resultMsg = "$failmsg`r`n$resolveMsg"			
+				$resultStatus = "Failed"
+				$shouldReturn = $true				
 			}
 			elseif(($runAsCertificate.ExpiryTime - $(get-date)).TotalDays -gt 0 -and ($runAsCertificate.ExpiryTime - $(get-date)).TotalDays -le 30)
 			{
 				$resolvemsg = "To avoid CA disruption due to credential expiry, please run command '$($this.updateCommandName) -RenewCertificate'."
 				$failMsg = "CA Certificate is going to expire within next 30 days. Expiry date: [$($runAsCertificate.ExpiryTime.ToString("yyyy-MM-dd"))]. CA SPN: [$($ADapp.DisplayName)]"
-
-				$currentMessage = [MessageData]::new("Status:   Warning. $failMsg`r`n$resolvemsg", [MessageType]::Warning);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
+				$resultMsg = "$failmsg`r`n$resolveMsg"			
+				$resultStatus = "Warning"
 			}
 			else
 			{
-				$passMsg = "CA Certificate is correctly set up."
-				$currentMessage = [MessageData]::new("Status:   OK. $passMsg", [MessageType]::Update);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
+				$resultMsg = "CA Certificate is correctly set up."
+				$resultStatus = "OK"
 			}
 		}
 		else
 		{
 			$failMsg = "CA Certificate does not exist in automation account."
-
-			$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`n$resolveMsg", [MessageType]::Error);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new($commonFailMsg, [MessageType]::Warning);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-			return $messages
-
+			$resultMsg = "$failmsg`r`n$resolveMsg"			
+			$resultStatus = "Failed"
+			$shouldReturn = $true		
 		}
+		if($shouldReturn)
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
+			return $messages
+		}
+		else 
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
+		}
+		$detailedMsg = $Null
 		#endregion
 				
 		#region: Step 7: Check if reports storage account exists, if no then display error message
 		$stepCount++
-		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Inspecting AzSK reports storage account.", [MessageType]::Info);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);		
-
+		$checkDescription = "Inspecting AzSK reports storage account."
+		
 		$isStoragePresent = $true;
-		$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 		$centralStorageAccountName = $reportsStorageAccount.ResourceName;
 		$tgtSubStorageAccounts = @()
 		if($this.IsCentralScanModeOn)
@@ -1721,8 +1736,7 @@ class CCAutomation: CommandBase
 				#setting the context back to the parent subscription
 				Select-AzureRmSubscription -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
 			}
-			$currentMessage = [MessageData]::new("Target Subscriptions storage account configuration:", $tgtSubStorageAccounts);
-			$messages += $currentMessage;
+			$detailedMsg = [MessageData]::new("Target Subscriptions storage account configuration:", $tgtSubStorageAccounts);
 		}
 		else
 		{
@@ -1740,190 +1754,152 @@ class CCAutomation: CommandBase
 			if($null -eq $storageVariable -or ($null -ne $storageVariable -and $storageVariable.Value.Trim() -eq [string]::Empty))
 			{
 				$failMsg = "One of the variable asset value is not correctly set up in CA Automation Account."
-				$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`n$resolvemsg", [MessageType]::Error);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new($commonFailMsg, [MessageType]::Warning);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-				return $messages
+				$resultMsg  = "$failMsg`r`n$resolvemsg"
+				$resultStatus = "Failed"
+				$shouldReturn = $true
 			}
-			$currentMessage = [MessageData]::new("Status:   OK. AzSK reports storage account is correctly set up.", [MessageType]::Update);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
+			else 
+			{
+				$resultMsg = "AzSK reports storage account is correctly set up."
+				$resultStatus = "OK"				
+			}
+			
 		}
 		else
 		{
 			$failMsg = "AzSK reports storage account does not exist."
-
-			$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`n$resolvemsg", [MessageType]::Error);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new($commonFailMsg, [MessageType]::Warning);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-			return $messages
+			$resultMsg = "$failMsg`r`n$resolvemsg"
+			$resultStatus = "Failed"
+			$shouldReturn = $true
 		}
+		if($shouldReturn)
+			{
+				$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
+				return $messages
+			}
+			else 
+			{
+				$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
+			}
+		$detailedMsg = $Null	
 		#endregion	
 		#region: Step 8: Check App RG value in variables, if it's empty, display error message (this will not validate RGs)
 		$stepCount++
 		$resolveMsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -ResourceGroupNames <AppResourceGroupNames>'."
-		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Inspecting configured App resource groups to be scanned by CA.", [MessageType]::Info);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
-		$appRGs = $this.GetAppRGs()
+		$checkDescription = "Inspecting configured App resource groups to be scanned by CA."
 		if($null -eq $appRGs -or ($null -ne $appRGs -and $appRGs.Value.Trim() -eq [string]::Empty))
 		{
 			$failMsg = "The resource groups to be scanned by CA are not correctly set up."
-			$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`n$resolveMsg", [MessageType]::Error);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-			
-			$currentMessage = [MessageData]::new($commonFailMsg, [MessageType]::Warning);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-			return $messages
+			$resultMsg = "$failMsg`r`n$resolvemsg"
+			$resultStatus = "Failed"
+			$shouldReturn = $true
 		}		
 		else
 		{
-			$passMsg = "The resource groups to be scanned by CA are correctly set up."
-			$currentMessage = [MessageData]::new("Status:   OK. $passMsg", [MessageType]::Update);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
+			$resultMsg = "The resource groups to be scanned by CA are correctly set up."
+			$resultStatus = "OK"
 		}
+		if($shouldReturn)
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
+			return $messages
+		}
+		else 
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
+		}
+		$detailedMsg = $Null
 		#endregion	
 		#region: Step 9: Check OMS configuration values in variables, if it's empty then display error message (this will not validate OMS credentials)
 		$stepCount++
 	
-		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Inspecting OMS configuration.", [MessageType]::Info);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
-		$omsWsId = $this.GetOMSWSID()
+		$checkDescription = "Inspecting OMS configuration."
 		if($null -eq $omsWsId -or ($null -ne $omsWsId -and $omsWsId.Value.Trim() -eq [string]::Empty))
 		{
 			$failMsg = "OMS workspace ID is not set up."			
-
-			$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`nTo resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -OMSWorkspaceId <OMSWorkspaceId> -OMSSharedKey <OMSSharedKey>'.",[MessageType]::Warning)
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new($commonFailMsg, [MessageType]::Warning);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-			return $messages
+			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -OMSWorkspaceId <OMSWorkspaceId> -OMSSharedKey <OMSSharedKey>'."
+			$resultMsg = "$failMsg`r`n$resolvemsg"
+			$resultStatus = "Failed"
+			$shouldReturn = $true
+			
 		}
 		if(!$this.IsOMSKeyVariableAvailable())
 		{
 			$failMsg = "OMS workspace key is not set up."			
-			$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`nTo resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -OMSSharedKey <OMSSharedKey>'.",[MessageType]::Warning);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new($commonFailMsg, [MessageType]::Warning);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-			return $messages
+			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -OMSSharedKey <OMSSharedKey>'."
+			$resultMsg = "$failMsg`r`n$resolvemsg"
+			$resultStatus = "Failed"
+			$shouldReturn = $true
 		}		
-		$currentMessage = [MessageData]::new("Status:   OK.", [MessageType]::Update);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
+		if($resultStatus -ne "Failed")
+		{
+			$resultStatus = "OK"
+			$resultMsg = ""				
+		}
+		if($shouldReturn)
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
+			return $messages
+		}
+		else 
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
+		}
+		$detailedMsg = $Null
 
-		$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
 		#endregion		
 		#region: Step 10: Check if runbook exists
 		$stepCount++
-		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Inspecting automation runbook.", [MessageType]::Info);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
-		$runbook = Get-AzureRmAutomationRunbook -AutomationAccountName $this.AutomationAccount.Name `
-		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.RunbookName -ErrorAction SilentlyContinue
+		$checkDescription = "Inspecting automation runbook."
 		if(!$runbook)
 		{
 			$failMsg = "CA Runbook does not exist."
-			
-			$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`nTo resolve this run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId>'.",[MessageType]::Warning);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new($commonFailMsg, [MessageType]::Warning);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
+			$resolvemsg = "To resolve this run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId>'."
+			$resultMsg = "$failMsg`r`n$resolvemsg"
+			$resultStatus = "Failed"
+			$shouldReturn = $true
+		}	
+		else 
+		{
+			$resultMsg = "Runbook found."
+			$resultStatus = "OK"
+		}	
+		if($shouldReturn)
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
 			return $messages
-		}		
-		$currentMessage = [MessageData]::new("Status:   OK. Runbook found.", [MessageType]::Update);;
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
-
-		$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
+		}
+		else 
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
+		}
+		$detailedMsg = $Null	
 		#endregion
+
 		#region: Step 11: There should be an active schedule
 		$stepCount++		
-		$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Inspecting CA job schedules.", [MessageType]::Info);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
-		$activeSchedules = $this.GetActiveSchedules($this.RunbookName)
+		$checkDescription = "Inspecting CA job schedules."
 		if(($activeSchedules|Measure-Object).Count -eq 0)
 		{
 			$failMsg = "Runbook is not scheduled."			
-			$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`nTo resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId>'.",[MessageType]::Warning)
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new($commonFailMsg, [MessageType]::Warning);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-
-			$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-			$messages += $currentMessage;
-			$this.PublishCustomMessage($currentMessage);
-			return $messages
+			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId>'."
+			$resultMsg = "$failMsg`r`n$resolvemsg"
+			$resultStatus = "Failed"
+			$shouldReturn = $true
 		}		
-		$currentMessage = [MessageData]::new("Status:   OK. Active job schedule(s) found.", [MessageType]::Update);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
+		else 
+		{
+			$resultMsg = "Active job schedule(s) found."
+			$resultStatus = "OK"
+		}
+		$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))				
+		if($shouldReturn)
+		{
+			return $messages
+		}
+		$detailedMsg = $Null	
+		#endregion	
 
-		$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-		$messages += $currentMessage;
-		$this.PublishCustomMessage($currentMessage);
-		#endregion		
 		#region: Step 12: Check if last job is not successful or job hasn't run in last 2 days
 		$stepCount++		
 		$recentJobs = Get-AzureRmAutomationJob -ResourceGroupName $this.AutomationAccount.ResourceGroup `
@@ -1936,27 +1912,20 @@ class CCAutomation: CommandBase
 			$lastJob = $recentJobs[0]
 			if(($(get-date).ToUniversalTime() - $lastJob.LastModifiedTime.UtcDateTime).TotalHours -gt 48)
 			{
-				$currentMessage = [MessageData]::new("Check $($stepCount.ToString("00")): Inspecting CA executed jobs.", [MessageType]::Info);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
+				$checkDescription = "Inspecting CA executed jobs."
 				$failMsg = "The CA scanning automation runbook (job) has not run in the last 48 hours. In normal functioning, CA scans run once every $($this.defaultScanIntervalInHours) hours by default."
-				
-				$currentMessage = [MessageData]::new("Status:   Failed. $failMsg`r`nPlease contact AzSK support team for a resolution.",[MessageType]::Warning);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new($commonFailMsg, [MessageType]::Warning);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-
-				$currentMessage = [MessageData]::new([Constants]::SingleDashLine);
-				$messages += $currentMessage;
-				$this.PublishCustomMessage($currentMessage);
-				return $messages
+				$resolvemsg = "Please contact AzSK support team for a resolution."
+				$resultMsg = "$failMsg`r`n$resolvemsg"
+				$resultStatus = "Failed"
+				$shouldReturn = $true
+				$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))	
 			}
-			#display job summary
-			$jobSummary = $recentJobs | Format-Table Status,@{Label="Duration (in Minutes)"; Expression={[math]::Round(($_.EndTime - $_.StartTime).TotalMinutes)}} | Out-String
-			$messages += [MessageData]::new("Summary of recent jobs ($($this.RunbookName)):", $jobSummary);
+			else 
+			{
+				#display job summary
+				$jobSummary = $recentJobs | Format-Table Status,@{Label="Duration (in Minutes)"; Expression={[math]::Round(($_.EndTime - $_.StartTime).TotalMinutes)}} | Out-String
+				$messages += [MessageData]::new("Summary of recent jobs ($($this.RunbookName)):", $jobSummary);	
+			}
 		}	
 		else
 		{
@@ -1977,77 +1946,6 @@ class CCAutomation: CommandBase
 			$messages += $currentMessage;
 			$this.PublishCustomMessage($currentMessage);			
 		}		
-		
-		#display summary
-		$noValueMsg = "NULL"
-		$outputTable = @{"AutomationAccountName"=$noValueMsg;
-		"AppResourceGroupNames"=$noValueMsg;
-		"OMSWorkspaceId"=$noValueMsg;
-		"AltOMSWorkspaceId"=$noValueMsg;
-		"WebhookUrl"=$noValueMsg;
-		"TargetSubscriptionIds"=$noValueMsg;
-		"AzureADAppID"=$noValueMsg;
-		"AzureADAppName"=$noValueMsg;
-		"CertificateExpiry"=$noValueMsg;
-		"Runbooks"=$noValueMsg;
-		"Schedules"=$noValueMsg;
-		"RunbookVersion"=$noValueMsg;
-		"AzSKReportsStorageAccountName"=$noValueMsg
-		}
-		$this.PublishCustomMessage("Fetching AzSK Continuous Assurance (CA) configuration for your subscription...")
-
-		#Fetch automation account components
-		$altOMSWsId = $this.GetAltOMSWSID()
-		$webhookUrl = $this.GetWebhookURL()
-		$outputTable.Item("AutomationAccountName") = $caAutomationAccount.AutomationAccountName
-		if($omsWsId)
-		{
-			$outputTable.Item("OMSWorkspaceId") = $omsWsId.Value
-		}
-
-		if($altOMSWsId)
-		{
-			$outputTable.Item("AltOMSWorkspaceId") = $altOMSWsId.Value
-		}
-
-		if($webhookUrl)
-		{
-			$outputTable.Item("WebhookUrl") = $webhookUrl.Value
-		}
-		
-		$outputTable.Item("TargetSubscriptionIds") = $this.TargetSubscriptionIds
-		if($appRGs)
-		{
-			$outputTable.Item("AppResourceGroupNames") = $appRGs.Value	
-		}
-		
-		$outputTable.Item("Runbooks") = $runbook.Name -join ","
-		#get schedules
-		$scheduleList = @()
-		$activeSchedules|ForEach-Object{
-			$scheduleList += ($_.Name +" (Frequency: "+$_.Interval+" "+$_.Frequency+")")
-		} 
-		$outputTable.Item("Schedules") = $scheduleList -join ","
-		
-		$outputTable.Item("AzureADAppID") = $runAsConnection.FieldDefinitionValues["ApplicationId"]
-		#find AD App name
-		$ADapp = Get-AzureRmADApplication -ApplicationId $runAsConnection.FieldDefinitionValues.ApplicationId -ErrorAction SilentlyContinue		
-		if($ADApp)
-		{
-			$outputTable.Item("AzureADAppName") = $ADapp.DisplayName
-		}
-		$outputTable.Item("CertificateExpiry") = $runAsCertificate.ExpiryTime
-		$outputTable.Item("AzSKReportsStorageAccountName") = $reportsStorageAccount.ResourceName
-		$outputTable.Item("RunbookVersion") = "Current version: [$azskCurrentCARunbookVersion] Latest version: [$azskLatestCARunbookVersion]"
-		
-		#PS output
-		$this.PublishCustomMessage("Summary of CA configuration:")
-		$displayObj = $outputTable.GetEnumerator() |Sort-Object -Property Name|Format-Table -AutoSize -Wrap |Out-String
-
-		$currentMessage = [MessageData]::new("Summary of CA configuration:", $displayObj);	
-		$messages += $currentMessage;
-
-		$this.PublishCustomMessage($displayObj)	
 		return $messages
 	}
 
@@ -2104,7 +2002,6 @@ class CCAutomation: CommandBase
 		}
 		return $isHealthy;
 	}
-
 
 	[MessageData[]] RemoveAzSKContinuousAssurance($DeleteStorageReports,$Force)
 	{
