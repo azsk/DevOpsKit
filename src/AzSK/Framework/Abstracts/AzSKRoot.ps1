@@ -243,11 +243,7 @@ class AzSKRoot: EventBase
 			$SubOrgTag= $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -like "AzSKOrgName*"}			
 			if(($SubOrgTag | Measure-Object).Count -eq 0)
 			{
-			  $OrgNameSplitArray =$SubOrgTag.Name.Split("_")
-			  if(($OrgNameSplitArray | Measure-Object).Count -gt 1)
-			  {
-				$OrgName = $OrgNameSplitArray[1]
-				if(-not [string]::IsNullOrWhiteSpace($OrgName) -and $OrgName -ne "org-neutral" -and  $AzSKConfigData.PolicyOrgName -ne "org-neutral")
+				if($AzSKConfigData.PolicyOrgName -ne "org-neutral")
 				{
 					$TagName = "AzSKOrgName_"+$AzSKConfigData.PolicyOrgName
 					$SupportMail = $AzSKConfigData.SupportDL
@@ -257,7 +253,7 @@ class AzSKRoot: EventBase
 					}   
 					[Helpers]::SetResourceGroupTags($AzSKConfigData.AzSKRGName,@{$TagName=$SupportMail}, $true)                
 				}
-			  }			  	 
+		  	 
 			}			
 		}
 	}
