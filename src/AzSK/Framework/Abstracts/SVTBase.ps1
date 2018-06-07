@@ -1138,7 +1138,7 @@ class SVTBase: AzSKRoot
 	    {
 	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity
 		}
-		if(($null -ne $controlResult.FirstFailedOn) -and ([DateTime]::UtcNow -gt $controlResult.FirstFailedOn.addDays($gracePeriod)))
+		if(($null -ne $controlResult.FirstFailedOn) -and ([DateTime]::UtcNow -lt $controlResult.FirstFailedOn.addDays($gracePeriod)))
 	    {
 			$isControlinGrace=$true;
 			return $isControlinGrace;

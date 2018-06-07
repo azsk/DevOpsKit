@@ -33,7 +33,7 @@ class SVTControlAttestation
 			"2" { return [AttestationStatus]::WillNotFix;}
 			"3" { return [AttestationStatus]::WillFixLater;}
 			"4" { return [AttestationStatus]::NotApplicable;}
-			"5" { return [AttestationStatus]::NotStateConfirmed;}
+			"5" { return [AttestationStatus]::StateConfirmed;}
 			"9" { 
 					$this.abortProcess = $true;
 					return [AttestationStatus]::None;
