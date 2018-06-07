@@ -856,8 +856,8 @@ class SVTBase: AzSKRoot
 			$defaultAttestationExpiryInDays = [Constants]::DefaultControlExpiryInDays;
 			$expiryInDays=-1;
 			$gracePeriod=0;
-			$singleControlResult=$eventcontext.ControlResults;
-			$controlResult=$singleControlResult.ControlResult;
+			$controlResult=$eventcontext.ControlResults;
+			
 			$isControlinGrace=$this.isControlinGrace($eventcontext);
 			
 			if([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays") `
@@ -1125,8 +1125,9 @@ class SVTBase: AzSKRoot
 
 	[bool] hidden isControlinGrace([SVTEventContext] $context)
 	{
-		$isControlinGrace=false;
-		$controlResult=$context.ControlResults.ControlResult;
+		$isControlinGrace=$false;
+		$controlResult=@();
+		$controlResult=$context.ControlResults;
 		$gracePeriod=0;
 		$controlSeverity=$context.controlItem.ControlSeverity;
 		if(($null -eq $ControlSeverity) -or ($ControlSeverity -notin [ControlSeverity].GetEnumNames()))
@@ -1139,7 +1140,7 @@ class SVTBase: AzSKRoot
 		}
 		if(($null -ne $controlResult.FirstFailedOn) -and ([DateTime]::UtcNow -gt $controlResult.FirstFailedOn.addDays($gracePeriod)))
 	    {
-			$isControlinGrace=true;
+			$isControlinGrace=$true;
 			return $isControlinGrace;
 		}
 		return $isControlinGrace;

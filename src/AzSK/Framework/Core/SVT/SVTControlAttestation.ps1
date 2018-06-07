@@ -267,14 +267,13 @@ class SVTControlAttestation
 			else
 			{
 				$outvalidSet=$ValidAttestationSet -join "," ;
-				Write-Host "This attestation state is not legitimate for this control, the valid attestation states for this control are $outvalidSet";
+				Write-Host "The chosen attestation state is not applicable to this control. Valid attestation choices are:  $outvalidSet";
 				return $controlState ;
 			}
 		}
 		else
 		{
-			$controlId=$controlItem.ControlItem.ControlId
-			Write-Host "Attestation is not allowed for the control: $controlId ";
+			Write-Host "This control cannot be attested by policy. Please follow the steps in 'Recommendation' for the control in order to fix the control and minimize exposure to attacks.";
 		}
 		return $controlState;
 	}
