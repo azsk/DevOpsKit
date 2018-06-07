@@ -55,7 +55,7 @@ class SVTControlAttestation
 		}
 		if(-not $this.isControlAttestable($controlItem, $controlResult))
 		{
-			Write-Host "The attestation for this control has been disabled. Please follow the recommendation given to bring '$($controlState.ControlId)' control in healthy state. It is important that these recommendations are resolved promptly in order to eliminate the exposure to attacks." -ForegroundColor Red
+			Write-Host "This control cannot be attested by policy. Please follow the steps in 'Recommendation' for the control in order to fix the control and minimize exposure to attacks." -ForegroundColor Yellow
 			return $controlState;
 		}
 		$userChoice = ""
@@ -109,10 +109,13 @@ class SVTControlAttestation
 		$ValidAttestationStates = $this.ComputeEligibleAttestationState($controlItem, $ControlSeverity, $controlResult);
 		[String[]]$ValidAttestationKey = @(0)
 		#Sort attestation status based on key value
-		$ValidAttestationStates = Compare-Object -ReferenceObject ([Constants]::AttestationStatusHashMap.GetEnumerator() | Sort-Object value).Name -DifferenceObject $ValidAttestationStates -IncludeEqual -PassThru | Where-Object SideIndicator -EQ "=="
-		$ValidAttestationStates | ForEach-Object {
-			$message += "`n[{0}]: {1}" -f ([Constants]::AttestationStatusHashMap.$_),$_;
-			$ValidAttestationKey += [Constants]::AttestationStatusHashMap.$_
+		if($null -ne $ValidAttestationStates)
+		{
+			$ValidAttestationStates = Compare-Object -ReferenceObject ([Constants]::AttestationStatusHashMap.GetEnumerator() | Sort-Object value).Name -DifferenceObject $ValidAttestationStates -IncludeEqual -PassThru | Where-Object SideIndicator -EQ "=="
+			$ValidAttestationStates | ForEach-Object {
+				$message += "`n[{0}]: {1}" -f ([Constants]::AttestationStatusHashMap.$_),$_;
+				$ValidAttestationKey += [Constants]::AttestationStatusHashMap.$_
+			}
 		}
 		switch ($userChoice.ToUpper()){
 			"0" #None
@@ -476,7 +479,7 @@ class SVTControlAttestation
 	[bool] isControlAttestable([SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
 		#sometime when we have error in some of our control we put that control in grace period to maintain the compliance dashboard
-		if($controlResult.IsControlInGrace -eq $true)
+		if($controlResult.IsControlInGrace)
 		{
 			return $true
 		}
@@ -512,17 +515,15 @@ class SVTControlAttestation
 	    {
 	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity
 	    }
-		#remove WillFixLater from valid attestation states, if control is not in grace period 
-		if($controlResult.IsControlInGrace -eq $true)
+		
+		if(($null -ne $controlResult.FirstFailedOn) -and (-not $controlResult.IsControlInGrace) -and ([DateTime]::UtcNow -gt $controlResult.FirstFailedOn.addDays($gracePeriod)))
 		{
-			if(($null -ne $controlResult.FirstFailedOn) -and ([DateTime]::UtcNow -gt $controlResult.FirstFailedOn.addDays($gracePeriod)))
-			{
-			    if($ValidAttestationStates -contains [AttestationStatus]::WillFixLater)
-			    {
-			        $ValidAttestationStates.Remove("WillFixLater")
-			    }
-			}
+		    if($ValidAttestationStates -contains [AttestationStatus]::WillFixLater)
+		    {
+		        $ValidAttestationStates.Remove("WillFixLater")
+		    }
 		}
+		
 	    return [String[]]$ValidAttestationStates;
 	}
 
