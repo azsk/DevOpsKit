@@ -164,7 +164,7 @@ class StorageReportHelper
 	{
 		try
 		{
-            $storageReportBlobName = [Constants]::StorageReportBlobName + ".json"
+            $storageReportBlobName = [Constants]::StorageReportBlobName + ".zip"
             
             #Look of is there is a AzSK RG and AzSK Storage account
             $StorageAccount = $this.AzSKStorageAccount;						
@@ -211,15 +211,29 @@ class StorageReportHelper
                     #eat this exception and retry
                 }
             }
-            $fileName = $AzSKTemp+"\"+$StorageReportBlobName
-            $StorageReportJson = (Get-ChildItem -Path $fileName -Force | Get-Content | ConvertFrom-Json)
+            $fileName = $AzSKTemp+"\"+[Constants]::StorageReportBlobName +".json"
+			
+			try
+			{
+				# extract file from zip
+				$compressedFileName = $AzSKTemp+"\"+[Constants]::StorageReportBlobName +".zip"
+				Expand-Archive -Path $compressedFileName -DestinationPath $AzSKTemp -Force
+
+				$StorageReportJson = (Get-ChildItem -Path $fileName -Force | Get-Content | ConvertFrom-Json)
+			}
+			catch
+			{
+				#unable to find zip file. return empty object
+				return [LocalSubscriptionReport]::new();
+			}
+			
             
             $storageReport = [LocalSubscriptionReport] $StorageReportJson
 
 			return $storageReport;
 		}
 		finally{
-		
+			$this.CleanTempFolder()
 		}
     }
 
@@ -239,42 +253,53 @@ class StorageReportHelper
 
     hidden [void] SetLocalSubscriptionScanReport([LocalSubscriptionReport] $scanResultForStorage)
 	{		
-		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\StorageReport";				
-		if(-not (Test-Path "$AzSKTemp"))
+		try
 		{
-			mkdir -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
+			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\StorageReport";				
+			if(-not (Test-Path "$AzSKTemp"))
+			{
+				mkdir -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
+			}
+			else
+			{
+				Remove-Item -Path "$AzSKTemp\*" -Force -Recurse 
+			}
+
+			$fileName = "$AzSKTemp\" + [Constants]::StorageReportBlobName +".json"
+			$compressedFileName = "$AzSKTemp\" + [Constants]::StorageReportBlobName +".zip"
+
+			$StorageAccount = $this.AzSKStorageAccount;						
+			$containerObject = $this.AzSKStorageContainer
+			$ContainerName = ""
+			if($null -ne $this.AzSKStorageContainer)
+			{
+				$ContainerName = $this.AzSKStorageContainer.Name
+			}
+
+			[Helpers]::ConvertToJsonCustomCompressed($scanResultForStorage) | Out-File $fileName -Force
+
+			#compress file before store to storage
+			Compress-Archive -Path $fileName -CompressionLevel Optimal -DestinationPath $compressedFileName -Update
+
+			$loopValue = $this.retryCount;
+			while($loopValue -gt 0)
+			{
+				$loopValue = $loopValue - 1;
+				try
+				{
+					Set-AzureStorageBlobContent -File $compressedFileName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
+					$loopValue = 0;
+				}
+				catch
+				{
+					#eat this exception and retry
+				}
+			}
 		}
-		else
+		finally
 		{
-			Remove-Item -Path "$AzSKTemp\*" -Force -Recurse 
+			$this.CleanTempFolder();
 		}
-
-		$fileName = "$AzSKTemp\" + [Constants]::StorageReportBlobName +".json"
-		
-		$StorageAccount = $this.AzSKStorageAccount;						
-		$containerObject = $this.AzSKStorageContainer
-		$ContainerName = ""
-		if($null -ne $this.AzSKStorageContainer)
-		{
-			$ContainerName = $this.AzSKStorageContainer.Name
-		}
-
-        [Helpers]::ConvertToJsonCustomCompressed($scanResultForStorage) | Out-File $fileName -Force
-
-        $loopValue = $this.retryCount;
-        while($loopValue -gt 0)
-        {
-            $loopValue = $loopValue - 1;
-            try
-            {
-                Set-AzureStorageBlobContent -File $fileName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
-                $loopValue = 0;
-            }
-            catch
-            {
-                #eat this exception and retry
-            }
-        }
     }
     
     hidden [void] CleanTempFolder()
@@ -311,47 +336,48 @@ class StorageReportHelper
 
         $scanResult.ControlResults | ForEach-Object {
             $serviceControlResult = $_
-            $subscriptionScanResult = [LSRSubscriptionControlResult]::new()
-            $subscriptionScanResult.ScannedBy = [Helpers]::GetCurrentRMContext().Account
-            $subscriptionScanResult.ScanSource = $scanResult.Source
-            $subscriptionScanResult.ScannerVersion = $scanResult.ScannerVersion 
-            $subscriptionScanResult.ControlVersion = $scanResult.ControlVersion
-            $subscriptionScanResult.ControlId = $serviceControlResult.ControlId 
-            $subscriptionScanResult.ControlIntId = $serviceControlResult.ControlIntId 
-            $subscriptionScanResult.ControlSeverity = $serviceControlResult.ControlSeverity 
-            $subscriptionScanResult.ActualVerificationResult = $serviceControlResult.ActualVerificationResult 
-            $subscriptionScanResult.AttestedBy =  $serviceControlResult.AttestedBy 
-            $subscriptionScanResult.AttestedDate = $serviceControlResult.AttestedDate
-            $subscriptionScanResult.Justification = $serviceControlResult.Justification
-            $subscriptionScanResult.AttestationStatus = $serviceControlResult.AttestationStatus
-            $subscriptionScanResult.AttestationData = $serviceControlResult.AttestedState
-            $subscriptionScanResult.VerificationResult = $serviceControlResult.VerificationResult
-            $subscriptionScanResult.ScanKind = $scanResult.ScanKind
-            $subscriptionScanResult.ScannerModuleName = [Constants]::AzSKModuleName
-            $subscriptionScanResult.IsLatestPSModule = $scanResult.IsLatestPSModule
-            $subscriptionScanResult.HasRequiredPermissions = $serviceControlResult.HasRequiredAccess
-            $subscriptionScanResult.HasAttestationWritePermissions = $scanResult.HasAttestationWritePermissions
-            $subscriptionScanResult.HasAttestationReadPermissions = $scanResult.HasAttestationReadPermissions
-            $subscriptionScanResult.UserComments = $serviceControlResult.UserComments
-            $subscriptionScanResult.IsBaselineControl = $serviceControlResult.IsBaselineControl
-
-            if($subscriptionScanResult.ActualVerificationResult -ne [VerificationResult]::Passed)
-            {
-                $subscriptionScanResult.FirstFailedOn = [DateTime]::UtcNow
-            }
-            if($subscriptionScanResult.AttestationStatus -ne [AttestationStatus]::None)
-            {
-                $subscriptionScanResult.FirstAttestedOn = [DateTime]::UtcNow
-                $subscriptionScanResult.AttestationCounter = 1
-            }
-
-            $subscriptionScanResult.FirstScannedOn = [DateTime]::UtcNow
-            $subscriptionScanResult.LastResultTransitionOn = [DateTime]::UtcNow
-            $subscriptionScanResult.LastScannedOn = [DateTime]::UtcNow
-            #$subscriptionScanResult.Metadata = $scanResult.Metadata
-
-            $scanDetails.SubscriptionScanResult += $subscriptionScanResult
             
+			if($scanResult.IsLatestPSModule -and $serviceControlResult.HasRequiredAccess -and $scanResult.HasAttestationReadPermissions)
+			{
+				$subscriptionScanResult = [LSRSubscriptionControlResult]::new()
+				$subscriptionScanResult.ScannedBy = [Helpers]::GetCurrentRMContext().Account
+				$subscriptionScanResult.ScanSource = $scanResult.Source
+				$subscriptionScanResult.ScannerVersion = $scanResult.ScannerVersion 
+				$subscriptionScanResult.ControlVersion = $scanResult.ControlVersion
+				$subscriptionScanResult.ControlId = $serviceControlResult.ControlId 
+				$subscriptionScanResult.ControlIntId = $serviceControlResult.ControlIntId 
+				$subscriptionScanResult.ControlSeverity = $serviceControlResult.ControlSeverity 
+				$subscriptionScanResult.ActualVerificationResult = $serviceControlResult.ActualVerificationResult 
+				$subscriptionScanResult.AttestedBy =  $serviceControlResult.AttestedBy 
+				$subscriptionScanResult.AttestedDate = $serviceControlResult.AttestedDate
+				$subscriptionScanResult.Justification = $serviceControlResult.Justification
+				$subscriptionScanResult.AttestationStatus = $serviceControlResult.AttestationStatus
+				$subscriptionScanResult.AttestationData = $serviceControlResult.AttestedState
+				$subscriptionScanResult.VerificationResult = $serviceControlResult.VerificationResult
+				$subscriptionScanResult.ScanKind = $scanResult.ScanKind
+				$subscriptionScanResult.ScannerModuleName = [Constants]::AzSKModuleName
+				$subscriptionScanResult.IsLatestPSModule = $scanResult.IsLatestPSModule
+				$subscriptionScanResult.HasRequiredPermissions = $serviceControlResult.HasRequiredAccess
+				$subscriptionScanResult.HasAttestationWritePermissions = $scanResult.HasAttestationWritePermissions
+				$subscriptionScanResult.HasAttestationReadPermissions = $scanResult.HasAttestationReadPermissions
+				$subscriptionScanResult.UserComments = $serviceControlResult.UserComments
+				$subscriptionScanResult.IsBaselineControl = $serviceControlResult.IsBaselineControl
+				$subscriptionScanResult.HasOwnerAccessTag = $serviceControlResult.HasOwnerAccessTag
+
+				if($subscriptionScanResult.ActualVerificationResult -ne [VerificationResult]::Passed)
+				{
+					$subscriptionScanResult.FirstFailedOn = [DateTime]::UtcNow
+				}
+				if($subscriptionScanResult.AttestationStatus -ne [AttestationStatus]::None)
+				{
+					$subscriptionScanResult.FirstAttestedOn = [DateTime]::UtcNow
+					$subscriptionScanResult.AttestationCounter = 1
+				}
+				$subscriptionScanResult.FirstScannedOn = [DateTime]::UtcNow
+				$subscriptionScanResult.LastResultTransitionOn = [DateTime]::UtcNow
+				$subscriptionScanResult.LastScannedOn = [DateTime]::UtcNow
+				$scanDetails.SubscriptionScanResult += $subscriptionScanResult
+			}
         }
         $storageReport.ScanDetails = $scanDetails;
 
@@ -377,47 +403,53 @@ class StorageReportHelper
 
         $scanResult.ControlResults | ForEach-Object {
                 $serviceControlResult = $_
-                $resourceScanResult = [LSRResourceScanResult]::new()
-                $resourceScanResult.ScannedBy = [Helpers]::GetCurrentRMContext().Account
-                $resourceScanResult.ScanSource = $scanResult.Source
-                $resourceScanResult.ScannerVersion = $scanResult.ScannerVersion 
-                $resourceScanResult.ControlVersion = $scanResult.ControlVersion
-                $resourceScanResult.ChildResourceName = $serviceControlResult.NestedResourceName 
-                $resourceScanResult.ControlId = $serviceControlResult.ControlId 
-                $resourceScanResult.ControlIntId = $serviceControlResult.ControlIntId 
-                $resourceScanResult.ControlSeverity = $serviceControlResult.ControlSeverity 
-                $resourceScanResult.ActualVerificationResult = $serviceControlResult.ActualVerificationResult 
-                $resourceScanResult.AttestedBy =  $serviceControlResult.AttestedBy 
-                $resourceScanResult.AttestedDate = $serviceControlResult.AttestedDate
-                $resourceScanResult.Justification = $serviceControlResult.Justification
-                $resourceScanResult.AttestationStatus = $serviceControlResult.AttestationStatus
-                $resourceScanResult.AttestationData = $serviceControlResult.AttestedState
-                $resourceScanResult.VerificationResult = $serviceControlResult.VerificationResult
-                $resourceScanResult.ScanKind = $scanResult.ScanKind
-                $resourceScanResult.ScannerModuleName = [Constants]::AzSKModuleName
-                $resourceScanResult.IsLatestPSModule = $scanResult.IsLatestPSModule
-                $resourceScanResult.HasRequiredPermissions = $serviceControlResult.HasRequiredAccess
-                $resourceScanResult.HasAttestationWritePermissions = $scanResult.HasAttestationWritePermissions
-                $resourceScanResult.HasAttestationReadPermissions = $scanResult.HasAttestationReadPermissions
-                $resourceScanResult.UserComments = $serviceControlResult.UserComments
-                $resourceScanResult.IsBaselineControl = $serviceControlResult.IsBaselineControl
+				if($scanResult.IsLatestPSModule -and $serviceControlResult.HasRequiredAccess -and $scanResult.HasAttestationReadPermissions)
+				{
+					$resourceScanResult = [LSRResourceScanResult]::new()
+					$resourceScanResult.ScannedBy = [Helpers]::GetCurrentRMContext().Account
+					$resourceScanResult.ScanSource = $scanResult.Source
+					$resourceScanResult.ScannerVersion = $scanResult.ScannerVersion 
+					$resourceScanResult.ControlVersion = $scanResult.ControlVersion
+					$resourceScanResult.ChildResourceName = $serviceControlResult.NestedResourceName 
+					$resourceScanResult.ControlId = $serviceControlResult.ControlId 
+					$resourceScanResult.ControlIntId = $serviceControlResult.ControlIntId 
+					$resourceScanResult.ControlSeverity = $serviceControlResult.ControlSeverity 
+					$resourceScanResult.ActualVerificationResult = $serviceControlResult.ActualVerificationResult 
+					$resourceScanResult.AttestedBy =  $serviceControlResult.AttestedBy 
+					$resourceScanResult.AttestedDate = $serviceControlResult.AttestedDate
+					$resourceScanResult.Justification = $serviceControlResult.Justification
+					$resourceScanResult.AttestationStatus = $serviceControlResult.AttestationStatus
+					$resourceScanResult.AttestationData = $serviceControlResult.AttestedState
+					$resourceScanResult.VerificationResult = $serviceControlResult.VerificationResult
+					$resourceScanResult.ScanKind = $scanResult.ScanKind
+					$resourceScanResult.ScannerModuleName = [Constants]::AzSKModuleName
+					$resourceScanResult.IsLatestPSModule = $scanResult.IsLatestPSModule
+					$resourceScanResult.HasRequiredPermissions = $serviceControlResult.HasRequiredAccess
+					$resourceScanResult.HasAttestationWritePermissions = $scanResult.HasAttestationWritePermissions
+					$resourceScanResult.HasAttestationReadPermissions = $scanResult.HasAttestationReadPermissions
+					$resourceScanResult.UserComments = $serviceControlResult.UserComments
+					$resourceScanResult.IsBaselineControl = $serviceControlResult.IsBaselineControl
+					$resourceScanResult.HasOwnerAccessTag = $serviceControlResult.HasOwnerAccessTag
 
-                if($resourceScanResult.ActualVerificationResult -ne [VerificationResult]::Passed)
-                {
-                    $resourceScanResult.FirstFailedOn = [DateTime]::UtcNow
-                }
-                if($resourceScanResult.AttestationStatus -ne [AttestationStatus]::None)
-                {
-                    $resourceScanResult.FirstAttestedOn = [DateTime]::UtcNow
-                    $resourceScanResult.AttestationCounter = 1
-                }
+					if($resourceScanResult.ActualVerificationResult -ne [VerificationResult]::Passed)
+					{
+						$resourceScanResult.FirstFailedOn = [DateTime]::UtcNow
+					}
+					if($resourceScanResult.AttestationStatus -ne [AttestationStatus]::None)
+					{
+						$resourceScanResult.FirstAttestedOn = [DateTime]::UtcNow
+						$resourceScanResult.AttestationCounter = 1
+					}
 
-                $resourceScanResult.FirstScannedOn = [DateTime]::UtcNow
-                $resourceScanResult.LastResultTransitionOn = [DateTime]::UtcNow
-                $resourceScanResult.LastScannedOn = [DateTime]::UtcNow
-                #$resourceScanResult.Metadata = $scanResult.Metadata
+					$resourceScanResult.FirstScannedOn = [DateTime]::UtcNow
+					$resourceScanResult.LastResultTransitionOn = [DateTime]::UtcNow
+					$resourceScanResult.LastScannedOn = [DateTime]::UtcNow
+					#$resourceScanResult.Metadata = $scanResult.Metadata
 
-                $resources.ResourceScanResult += $resourceScanResult
+					$resources.ResourceScanResult += $resourceScanResult
+				}
+
+                
         }
 
         $scanDetails = [LSRScanDetails]::new()
@@ -496,8 +528,10 @@ class StorageReportHelper
                             $_ORsubcriptionScanResult.HasAttestationReadPermissions = $subcriptionScanResult.HasAttestationReadPermissions
                             $_ORsubcriptionScanResult.UserComments = $subcriptionScanResult.UserComments
                             $_ORsubcriptionScanResult.Metadata = $subcriptionScanResult.Metadata
-
-                            $_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult = $_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult | Where-Object { $subcriptionScanResult.ControlIntId -ne $_.ControlIntId }
+							$_ORsubcriptionScanResult.IsBaselineControl = $subcriptionScanResult.IsBaselineControl
+							$_ORsubcriptionScanResult.HasOwnerAccessTag = $subcriptionScanResult.HasOwnerAccessTag
+                            
+							$_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult = $_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult | Where-Object { $subcriptionScanResult.ControlIntId -ne $_.ControlIntId }
                             $_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult += $_ORsubcriptionScanResult
                         }
                     }
@@ -578,7 +612,6 @@ class StorageReportHelper
                                     $_oldControlResult.ScanSource = $newControlResult.ScanSource
                                     $_oldControlResult.ScannerModuleName = $newControlResult.ScannerModuleName
                                     $_oldControlResult.ScannerVersion = $newControlResult.ScannerVersion
-                                    
                                     $_oldControlResult.ControlVersion = $newControlResult.ControlVersion
                                     $_oldControlResult.IsLatestPSModule = $newControlResult.IsLatestPSModule
                                     $_oldControlResult.HasRequiredPermissions = $newControlResult.HasRequiredPermissions
@@ -586,12 +619,12 @@ class StorageReportHelper
                                     $_oldControlResult.HasAttestationReadPermissions = $newControlResult.HasAttestationReadPermissions
                                     $_oldControlResult.UserComments = $newControlResult.UserComments
                                     $_oldControlResult.Metadata = $newControlResult.Metadata
+									$_oldControlResult.HasOwnerAccessTag = $newControlResult.HasOwnerAccessTag
 
                                     $_ORresource.ResourceScanResult = $_ORresource.ResourceScanResult | Where-Object { $_.ControlIntId -ne $_oldControlResult.ControlIntId -or  $_.ChildResourceName -ne  $_oldControlResult.ChildResourceName }
                                     $_ORresource.ResourceScanResult += $_oldControlResult
                                 }
                             }
-                            
                         }
                         else
                         {
@@ -648,4 +681,33 @@ class StorageReportHelper
 			return $true;
 		}
 	}
+
+	hidden [LSRSubscription] SerializeResourceInventory($resourceInventory)
+    {
+        $storageReport = [LSRSubscription]::new()
+        $storageReport.SubscriptionId = $resourceInventory.SubscriptionId
+        # $storageReport.SubscriptionName = $scanResult.SubscriptionName 
+		if([Helpers]::CheckMember($resourceInventory,"ResourceGroups") -and ($resourceInventory.ResourceGroups | Measure-Object ).Count -gt 0)
+		{
+			$scanDetails = [LSRScanDetails]::new()
+			$resourceInventory.ResourceGroups | ForEach-Object 
+			{
+				$resourcegroups = $_
+				if([Helpers]::CheckMember($resourcegroups,"Resources") -and ($resourcegroups.Resources | Measure-Object ).Count -gt 0)
+				{
+					$resource = $_
+					$newResource = [LSRResources]::new()
+					$newResource.HashId = [Helpers]::ComputeHash($resource.ResourceId)
+					$newResource.ResourceId = $resource.ResourceId
+					$newResource.FeatureName = $resource.Feature
+					$newResource.ResourceGroupName = $resourcegroups.Name
+					$newResource.ResourceName = $resource.Name
+
+					$scanDetails.Resources += $newResource
+				}
+			}
+			$storageReport.ScanDetails = $scanDetails;
+		}
+        return $storageReport;
+    }
 }

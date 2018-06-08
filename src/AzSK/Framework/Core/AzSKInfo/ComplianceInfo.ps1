@@ -214,7 +214,7 @@ class ComplianceInfo: CommandBase
 		}
 
 		$controlCSV = New-Object -TypeName WriteCSVData
-		$controlCSV.FileName = 'Compliance Details'
+		$controlCSV.FileName = 'Compliance Details_' + $this.RunIdentifier
 		$controlCSV.FileExtension = 'csv'
 		$controlCSV.FolderPath = ''
 		$controlCSV.MessageData = $objectToExport
@@ -227,7 +227,6 @@ class ComplianceInfo: CommandBase
 		$ComplianceMessage = New-Object -TypeName ComplianceMessageSummary
 		$ComplianceMessage.ComplianceType = $ComplianceType
 		$ComplianceMessage.ComplianceCount = $ComplianceCount
-		#$ComplianceMessage.ComplianceComment = $ComplianceComment
 		$this.ComplianceMessageSummary += $ComplianceMessage
 	}
 }
