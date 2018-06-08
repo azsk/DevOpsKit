@@ -36,6 +36,40 @@
         "Automated",
         "SI"
       ]
+    },
+    {
+      "ControlID": "Azure_ContainerInstances_DP_Review_Registry",
+      "Description": "Make sure container images are hosted on a trustworthy registry having necessary authentication, authorization and encryption mechanisms",
+      "Id": "ContainerInstances130",
+      "ControlSeverity": "High",
+      "Enabled": true,
+      "Automated": "Yes",
+      "MethodName": "CheckRegistry",
+      "Rationale": "If a container image is hosted on an untrusted registry, it can compromise application code and data.",
+      "Recommendation": "Ensure that the registry, which hosts the image, is trustworthy. Review registry configurations carefully for any misconfigurations related to authentication, authorization and encryption.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "DP"
+      ]
+    },
+    {
+      "ControlID": "Azure_ContainerInstances_AuthZ_Containers_Trust",
+      "Description": "A container group must contain only containers which trust each other",
+      "Id": "ContainerInstances140",
+      "ControlSeverity": "High",
+      "Enabled": true,
+      "Automated": "Yes",
+      "MethodName": "CheckContainerTrust",
+      "Rationale": "Container hosted on same container group can monitor traffic of other containers and access the file system of host OS. Hence the same container group must not host containers which do not trust each other.",
+      "Recommendation": "Ensure that the containers in a container group trust each other.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ"
+      ]
     }
   ]
 }
