@@ -291,7 +291,7 @@ function CreateNewSchedule($scheduleName,$startTime)
 					-HourInterval 1 -Description "This schedule ensures that CA activity initiated by the Scan_Schedule actually completes. Do not disable/delete this schedule." `
 					-ErrorAction Stop | Out-Null
 	$isRegistered = (Get-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG `
-					-RunbookName $RunbookName -ScheduleName $scheduleName | Measure-Object).Count -gt 0
+					-RunbookName $RunbookName -ScheduleName $scheduleName -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0
 	if(!$isRegistered)
 	{
 		Register-AzureRmAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $scheduleName `
@@ -301,39 +301,56 @@ function CreateNewSchedule($scheduleName,$startTime)
 }
 function CreateHelperSchedules()
 {
+	RemoveScheduleIfExists -scheduleName $CAHelperScheduleName
 	for($i = 1;$i -le 4; $i++)
 	{
 		$scheduleName = [string]::Concat($CAHelperScheduleName,"_$i")
 		$startTime = $(get-date).AddMinutes(15*$i)
 		CreateNewSchedule -scheduleName $scheduleName -startTime $startTime
 	}
+	Write-Output("CS: Created helper schedule...")
+	DisableHelperSchedules
 }
 
 function DisableHelperSchedules()
 {
 	Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
-	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*"} | `
+	Where-Object {$_.Name -ilike "*$([string]::Concat($CAHelperScheduleName,"_"))*"} | `
 	Set-AzureRmAutomationSchedule -IsEnabled $false | Out-Null
-	
 }
 
+function RemoveScheduleIfExists($scheduleName)
+{
+	Get-AzureRmAutomationSchedule -Name $scheduleName -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
+	Remove-AzureRmAutomationSchedule -Force -ErrorAction SilentlyContinue
+}
+function EnableHelperSchedule($scheduleName)
+{
+	Set-AzureRmAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true -ErrorAction SilentlyContinue| Out-Null
+	Write-Output ("CS: Scheduled CA helper job - $scheduleName")
+}
+function FindNearestSchedule($intervalInMins)
+{
+	$desiredNextRun = $(get-date).ToUniversalTime().AddMinutes($intervalInMins)
+	$finalSchedule = Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
+	Where-Object {$_.Name -ilike "*$([string]::Concat($CAHelperScheduleName,"_"))*" -and ($_.ExpiryTime.UtcDateTime -gt $(get-date).ToUniversalTime()) -and ($_.NextRun.UtcDateTime -ge $desiredNextRun)} | `
+	Sort-Object -Property NextRun | Select-Object -First 1
+	return $finalSchedule
+}
 function ScheduleNewJob($intervalInMins)
 {
-	$scheduleList = Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
-	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*" -and $_.ExpiryTime.UtcDateTime -gt $(get-date).ToUniversalTime()} | Sort-Object -Property NextRun 
-	$desiredNextRun = $(get-date).ToUniversalTime().AddMinutes($intervalInMins)
-	if(($scheduleList|Measure-Object).Count)
+	$finalSchedule = FindNearestSchedule -intervalInMins $intervalInMins
+	if(($finalSchedule|Measure-Object).Count -gt 0)
 	{
-		$scheduleList | ForEach-Object {
-			if($_.NextRun.UtcDateTime -ge $desiredNextRun)
-			{
-				Set-AzureRmAutomationSchedule -Name $_.Name -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true
-				PublishEvent -EventName "CA Job Rescheduled" -Properties @{"IntervalInMinutes" = $intervalInMins}
-				return; 
-			}
-		}
+		EnableHelperSchedule -scheduleName $finalSchedule.Name
 	}
-	CreateHelperSchedules
+	else
+	{
+		CreateHelperSchedules 
+		$finalSchedule = FindNearestSchedule -intervalInMins $intervalInMins
+		EnableHelperSchedule -scheduleName $finalSchedule.Name
+	}
+	PublishEvent -EventName "CA Job Rescheduled" -Properties @{"IntervalInMinutes" = $intervalInMins}
 }
 
 try

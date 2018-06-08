@@ -606,7 +606,6 @@ function DisableHelperSchedules()
 	Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
 	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*"} | `
 	Set-AzureRmAutomationSchedule -IsEnabled $false | Out-Null
-	
 }
 
 #############################################################################################################
@@ -667,7 +666,7 @@ try {
 	#Another job is already running
 	if($Global:FoundExistingJob)
 	{
-		Write-Host("SA: Found another job running. Returning from the current one...")
+		Write-Output("SA: Found another job running. Returning from the current one...")
 		return;
 	}
 
@@ -684,7 +683,7 @@ try {
     if ((Get-Command -Name "Get-AzSKAzureServicesSecurityStatus" -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0) {
         
         PublishEvent -EventName "CA Job Skipped" -Properties @{"SubscriptionId" = $RunAsConnection.SubscriptionID} -Metrics @{"TimeTakenInMs" = $timer.ElapsedMilliseconds; "SuccessCount" = 1}
-		Write-Host("SA: The module: {$AzSKModuleName} is not available/ready. Skipping AzSK scan. Will retry in the next run.")
+		Write-Output("SA: The module: {$AzSKModuleName} is not available/ready. Skipping AzSK scan. Will retry in the next run.")
 		return;
     }
 		
@@ -692,9 +691,9 @@ try {
     RunAzSKScan
 
 	if ($isAzSKAvailable) {
-		#Remove helper schedule as AzSK module is available
-		Write-Output("SA: Removing helper schedule...")
-		DisableHelperSchedules
+		#Disable helper schedule as AzSK module is available
+		DisableHelperSchedules	
+		Write-Output("SA: Disabled helper schedule...")			
     }
    
     PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
