@@ -1,3 +1,4 @@
+
 function RunAzSKScan() {
 
 	################################ Begin: Configure AzSK for the scan ######################################### 
@@ -600,6 +601,13 @@ function UpdateAlertMonitoring
 	 PublishEvent -EventName "Alert Monitoring Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) }
 	}
 }
+function DisableHelperSchedules()
+{
+	Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
+	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*"} | `
+	Set-AzureRmAutomationSchedule -IsEnabled $false | Out-Null
+	
+}
 
 #############################################################################################################
 # Main ScanAgent code
@@ -634,7 +642,7 @@ try {
 	$AlertRunbookName="Alert_Runbook"
 
 	#Defaults.
-    	$AzSKModuleName = "AzSK"
+    $AzSKModuleName = "AzSK"
 	$StorageAccountRG = "AzSKRG"
 	#In case of multiple CAs in single sub we use sub-container to host working files for each individual CA 
 	#Sub-container has the same name as each CA automation account RG (hence guaranteed to be unique)
@@ -686,7 +694,7 @@ try {
 	if ($isAzSKAvailable) {
 		#Remove helper schedule as AzSK module is available
 		Write-Output("SA: Removing helper schedule...")
-		Remove-AzureRmAutomationSchedule -Name $CAHelperScheduleName -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Force
+		DisableHelperSchedules
     }
    
     PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
