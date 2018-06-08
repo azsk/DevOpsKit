@@ -2,126 +2,126 @@
     "FeatureName":  "AnalysisServices",
     "Reference":  "aka.ms/azsktcp/analysisservices",
     "IsMaintenanceMode":  false,
-    "Controls":  [
-                     {
-                         "ControlID":  "Azure_AnalysisServices_AuthZ_Grant_Min_RBAC_Access",
-                         "Description":  "All users/identities must be granted minimum required permissions using Role Based Access Control (RBAC)",
-                         "Id":  "AnalysisServices110",
+  "Controls": [
+    {
+      "ControlID": "Azure_AnalysisServices_AuthZ_Grant_Min_RBAC_Access",
+      "Description": "All users/identities must be granted minimum required permissions using Role Based Access Control (RBAC)",
+      "Id": "AnalysisServices110",
       "ControlSeverity": "Medium",
-                         "Automated":  "Yes",
-                         "MethodName":  "CheckRBACAccess",
-                         "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-                         "Recommendation":  "Remove any excessive privileges granted on the Analysis Service. Run command Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help. Refer: https://docs.microsoft.com/en-us/sql/analysis-services/multidimensional-models/roles-and-permissions-analysis-services, https://docs.microsoft.com/en-us/azure/analysis-services/analysis-services-manage-users, https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-control-manage-access-powershell",
-                         "Tags":  [
-                                      "SDL",
-                                      "TCP",
-                                      "Automated",
-                                      "AuthZ",
-                                      "RBAC"
-                                  ],
-                         "Enabled":  true
-                     },
-                     {
-                         "ControlID":  "Azure_AnalysisServices_AuthZ_Min_Admin",
-                         "Description":  "Minimize the number of Analysis Service admins",
-                         "Id":  "AnalysisServices120",
+      "Automated": "Yes",
+      "MethodName": "CheckRBACAccess",
+      "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+      "Recommendation": "Remove any excessive privileges granted on the Analysis Service. Run command Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help. Refer: https://docs.microsoft.com/en-us/sql/analysis-services/multidimensional-models/roles-and-permissions-analysis-services, https://docs.microsoft.com/en-us/azure/analysis-services/analysis-services-manage-users, https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-control-manage-access-powershell",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_AnalysisServices_AuthZ_Min_Admin",
+      "Description": "Minimize the number of Analysis Service admins",
+      "Id": "AnalysisServices120",
       "ControlSeverity": "Medium",
-                         "Automated":  "Yes",
-                         "MethodName":  "CheckAnalysisServicesAdmin",
-                         "Rationale":  "Analysis Service admins have full access on the server to perform any operation. Each additional person in the admin role increases the attack surface for the server. The number of members in these roles should be kept to as low as possible.",
-                         "Recommendation":  "Minimize the number of Analysis Service admins. Run command Set-AzureRmAnalysisServicesServer -Name '{AnalysisServicesServerName}' -ResourceGroupName '{ResourceGroupName}' -Administrator '{Administrator}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.analysisservices/set-azurermanalysisservicesserver?view=azurermps-3.8.0",
-                         "Tags":  [
-                                      "SDL",
-                                      "Best Practice",
-                                      "Automated",
-                                      "AuthZ"
-                                  ],
-                         "Enabled":  true
-                     },
-                     {
-                         "ControlID":  "Azure_AnalysisServices_AuthZ_Users_Min_DB_Permission",
-                         "Description":  "Database users must be added to database roles with minimum required permission",
-                         "Id":  "AnalysisServices130",
+      "Automated": "Yes",
+      "MethodName": "CheckAnalysisServicesAdmin",
+      "Rationale": "Analysis Service admins have full access on the server to perform any operation. Each additional person in the admin role increases the attack surface for the server. The number of members in these roles should be kept to as low as possible.",
+      "Recommendation": "Minimize the number of Analysis Service admins. Run command Set-AzureRmAnalysisServicesServer -Name '{AnalysisServicesServerName}' -ResourceGroupName '{ResourceGroupName}' -Administrator '{Administrator}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.analysisservices/set-azurermanalysisservicesserver?view=azurermps-3.8.0",
+      "Tags": [
+        "SDL",
+        "Best Practice",
+        "Automated",
+        "AuthZ"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_AnalysisServices_AuthZ_Users_Min_DB_Permission",
+      "Description": "Database users must be added to database roles with minimum required permission",
+      "Id": "AnalysisServices130",
       "ControlSeverity": "Medium",
-                         "Automated":  "No",
-                         "MethodName":  "",
-                         "Recommendation":  "Make sure that users are granted the least required privileges to databases and tabular models. Refer: https://docs.microsoft.com/en-us/azure/analysis-services/analysis-services-manage-users, https://docs.microsoft.com/en-us/sql/analysis-services/tabular-models/create-and-manage-roles-ssas-tabular",
-                         "Rationale": "Granting minimum access ensures that users are granted just enough permissions to perform their tasks. This minimizes permission of operations at the Analysis Server in case of user account compromise.",
-                         "Tags":  [
-                                      "SDL",
-                                      "TCP",
-                                      "Manual",
-                                      "AuthZ"
-                                  ],
-                         "Enabled":  true
-                     },
-                      {
-                        "ControlID": "Azure_AnalysisServices_AuthN_Analysis_Service_Clients",
-                        "Description": "Analysis Service clients should authenticate users using Azure Active Directory backed credentials",
-                        "Id": "AnalysisServices140",
-                        "ControlSeverity": "High",
-                        "Automated": "No",
-                        "MethodName": "",
-                        "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
-                        "Recommendation": "Analysis Services clients such as 'Power BI', 'Excel' or any BI Tools should authenticate users using Azure Active Directory backed credentials. Refer: (Power BI) https://docs.microsoft.com/en-us/azure/power-bi-embedded/power-bi-embedded-app-token-flow and (Excel) https://docs.microsoft.com/en-us/azure/analysis-services/analysis-services-connect-excel",
-                        "Tags": [
-                          "SDL",
-                          "Best Practice",
-                          "Manual",
-                          "AuthN"
-                        ],
-                        "Enabled": true
-                      },
-                     {
-                         "ControlID":  "Azure_AnalysisServices_DP_Encrypt_In_Transit",
-                         "Description":  "Sensitive data must be encrypted in transit",
-                         "Id":  "AnalysisServices150",
-                         "ControlSeverity": "High",
-                         "Automated":  "No",
-                         "MethodName":  "",
-                         "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
-                         "Recommendation":  "Ensure that sensitive data is transmitted only on an encrypted channel through out the Analysis Service. Refer: https://blogs.msdn.microsoft.com/jason_howell/2013/02/26/how-do-i-ensure-analysis-services-client-tcp-connectivity-is-encrypted/",
-                         "Tags":  [
-                                      "SDL",
-                                      "Information",
-                                      "Manual",
-                                      "DP"
-                                  ],
-                         "Enabled":  true
-                     },
-                     {
-                         "ControlID":  "Azure_AnalysisServices_DP_Encrypt_At_Rest",
-                         "Description":  "Sensitive data must be encrypted at rest",
-                         "Id":  "AnalysisServices160",
-                         "ControlSeverity": "High",
-                         "Automated":  "No",
-                         "MethodName":  "",
-                         "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-                         "Recommendation":  "Azure Analysis Service utilizes Blob Storage to persist storage and metadata for Analysis Services databases. Azure Blob Server Side Encryption (SSE) must be turned on for the Blob container. Run command 'Set-AzureRmStorageAccount -Name '<StorageAccountName>' -ResourceGroupName '<RGName>' -EnableEncryptionService 'Blob''. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help.",
-                         "Tags":  [
-                                      "SDL",
-                                      "Information",
-                                      "Manual",
-                                      "DP"
-                                  ],
-                         "Enabled":  true
-                     },
-                     {
-                         "ControlID":  "Azure_AnalysisServices_BCDR_Plan",
-                         "Description":  "Backup and Disaster Recovery must be planned for Analysis Services",
-                         "Id":  "AnalysisServices170",
+      "Automated": "No",
+      "MethodName": "",
+      "Recommendation": "Make sure that users are granted the least required privileges to databases and tabular models. Refer: https://docs.microsoft.com/en-us/azure/analysis-services/analysis-services-manage-users, https://docs.microsoft.com/en-us/sql/analysis-services/tabular-models/create-and-manage-roles-ssas-tabular",
+      "Rationale": "Granting minimum access ensures that users are granted just enough permissions to perform their tasks. This minimizes permission of operations at the Analysis Server in case of user account compromise.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "AuthZ"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_AnalysisServices_AuthN_Analysis_Service_Clients",
+      "Description": "Analysis Service clients should authenticate users using Azure Active Directory backed credentials",
+      "Id": "AnalysisServices140",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+      "Recommendation": "Analysis Services clients such as 'Power BI', 'Excel' or any BI Tools should authenticate users using Azure Active Directory backed credentials. Refer: (Power BI) https://docs.microsoft.com/en-us/azure/power-bi-embedded/power-bi-embedded-app-token-flow and (Excel) https://docs.microsoft.com/en-us/azure/analysis-services/analysis-services-connect-excel",
+      "Tags": [
+        "SDL",
+        "Best Practice",
+        "Manual",
+        "AuthN"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_AnalysisServices_DP_Encrypt_In_Transit",
+      "Description": "Sensitive data must be encrypted in transit",
+      "Id": "AnalysisServices150",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
+      "Recommendation": "Ensure that sensitive data is transmitted only on an encrypted channel through out the Analysis Service. Refer: https://blogs.msdn.microsoft.com/jason_howell/2013/02/26/how-do-i-ensure-analysis-services-client-tcp-connectivity-is-encrypted/",
+      "Tags": [
+        "SDL",
+        "Information",
+        "Manual",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_AnalysisServices_DP_Encrypt_At_Rest",
+      "Description": "Sensitive data must be encrypted at rest",
+      "Id": "AnalysisServices160",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
+      "Recommendation": "Default behavior. No action required.",
+      "Tags": [
+        "SDL",
+        "Information",
+        "Manual",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_AnalysisServices_BCDR_Plan",
+      "Description": "Backup and Disaster Recovery must be planned for Analysis Services",
+      "Id": "AnalysisServices170",
       "ControlSeverity": "Medium",
-                         "Automated":  "Yes",
-                         "MethodName":  "CheckAnalysisServicesBCDRStatus",
-                         "Rationale": "Azure Analysis Service does not offer features to cover backup/disaster recovery out-of-the-box. As a result, when processing critical workloads, a team must have adequate backups of the data.",
-                         "Recommendation":  "Go To Azure Portal => Analysis Services => Select Analysis Service => Go To Settings => Select Backups => Select Storage account details and enable backups, Refer: https://docs.microsoft.com/en-us/azure/analysis-services/analysis-services-backup",
-                         "Tags":  [
-                                      "SDL",
-                                      "Best Practice",
-                                      "Automated",
-                                      "BCDR"
-                                  ],
-                         "Enabled":  true
-                     }
-                 ]
+      "Automated": "Yes",
+      "MethodName": "CheckAnalysisServicesBCDRStatus",
+      "Rationale": "Azure Analysis Service does not offer features to cover backup/disaster recovery out-of-the-box. As a result, when processing critical workloads, a team must have adequate backups of the data.",
+      "Recommendation": "Go To Azure Portal => Analysis Services => Select Analysis Service => Go To Settings => Select Backups => Select Storage account details and enable backups, Refer: https://docs.microsoft.com/en-us/azure/analysis-services/analysis-services-backup",
+      "Tags": [
+        "SDL",
+        "Best Practice",
+        "Automated",
+        "BCDR"
+      ],
+      "Enabled": true
+    }
+  ]
 }
