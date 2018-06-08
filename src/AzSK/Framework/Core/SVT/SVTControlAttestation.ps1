@@ -516,7 +516,7 @@ class SVTControlAttestation
 	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity
 	    }
 		
-		if(($null -ne $controlResult.FirstFailedOn) -and (-not $controlResult.IsControlInGrace) -and ([DateTime]::UtcNow -gt $controlResult.FirstFailedOn.addDays($gracePeriod)))
+		if(($null -ne $controlResult.FirstScannedOn) -and (-not $controlResult.IsControlInGrace) -and ([DateTime]::UtcNow -gt $controlResult.FirstScannedOn.addDays($gracePeriod)))
 		{
 		    if($ValidAttestationStates -contains [AttestationStatus]::WillFixLater)
 		    {
