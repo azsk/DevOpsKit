@@ -104,6 +104,11 @@ class RemoteReportHelper
 		$result.VerificationResult = $controlResult.VerificationResult
 		$result.HasRequiredAccess = $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess
 		$result.IsBaselineControl = $control.IsBaselineControl
+		if($control.Tags.Contains("OwnerAccess"))
+		{
+			$result.HasOwnerAccessTag = $true
+		}
+
 		$result.UserComments = $controlResult.UserComments
 
 		if($null -ne $controlResult.StateManagement -and $null -ne $controlResult.StateManagement.AttestedStateData) {
@@ -140,6 +145,10 @@ class RemoteReportHelper
 		$result.HasRequiredAccess = $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess
 		$result.IsBaselineControl = $control.IsBaselineControl
 		$result.UserComments = $controlResult.UserComments
+		if($control.Tags.Contains("OwnerAccess"))
+		{
+			$result.HasOwnerAccessTag = $true
+		}
 
 		if($null -ne $controlResult.StateManagement -and $null -ne $controlResult.StateManagement.AttestedStateData) {
 			$result.AttestedBy = $controlResult.StateManagement.AttestedStateData.AttestedBy
