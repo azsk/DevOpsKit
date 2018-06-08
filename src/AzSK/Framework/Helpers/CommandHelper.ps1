@@ -168,6 +168,14 @@ class CommandHelper
             Noun = "AzSKSessionState";
             ShortName = "CSS";
 			IsLatestRequired = $false;
+        },
+		# Update-PersistedState
+
+		[CommandDetails]@{
+            Verb = "Update";
+            Noun = "AzSKPersistedState";
+            ShortName = "UPS";
+			IsLatestRequired = $false;
         }
     );
 

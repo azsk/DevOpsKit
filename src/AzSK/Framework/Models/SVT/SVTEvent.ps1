@@ -46,6 +46,10 @@ class ControlResult
 	[StateManagement] $StateManagement = [StateManagement]::new();
 	hidden [PSObject] $FixControlParameters = $null;
 	hidden [bool] $EnableFixControl = $false;
+	[bool] $IsControlInGrace
+	[DateTime] $FirstFailedOn = [Constants]::AzSKDefaultDateTime;
+	[DateTime] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
+	[String] $UserComments
 
     [MessageData[]] $Messages = @();
 

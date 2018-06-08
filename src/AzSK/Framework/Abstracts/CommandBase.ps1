@@ -23,6 +23,10 @@ class CommandBase: AzSKRoot {
 		{
 			$this.Force = $this.InvocationContext.BoundParameters["Force"];
 		}
+
+		#Set Org Tag for subscriptions
+		$this.ValidateOrgPolicyOnSubscription()
+		$this.SetOrgPolicyTag()
     }
 
     [void] CommandStarted() {
@@ -61,7 +65,7 @@ class CommandBase: AzSKRoot {
 		$this.PostCommandStartedAction();
         $methodResult = @();
         try {
-            $methodResult = $methodToCall.Invoke($arguments);
+           $methodResult = $methodToCall.Invoke($arguments);
         }
         catch {
             $isExecutionSuccessful = $true
@@ -121,6 +125,8 @@ class CommandBase: AzSKRoot {
 			}
 		}
         return $folderPath;
+
+		# Call clear temp folder function.
     }
 
 	[void] PostCommandStartedAction()
