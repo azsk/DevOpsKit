@@ -19,7 +19,7 @@
         "AuthZ",
         "RBAC"
       ],
-      "Enabled": true
+         "Enabled": true
     },
     {
       "ControlID": "Azure_CDN_AuthN_Config_Token_AuthN",
@@ -70,6 +70,12 @@
         "Automated",
         "DP"
       ],
+      "ValidAttestationStates": [
+        "NotAnIssue",
+        "WillNotFix",
+        "NotApplicable",
+        "WillFixLater"
+      ],
       "Enabled": true,
       "FixControl": {
         "FixMethodName": "EnableHttpsProtocol",
@@ -91,7 +97,7 @@
         "Manual",
         "DP"
       ],
-       "Enabled": true
+      "Enabled": true
     },
     {
       "ControlID": "Azure_CDN_Audit_Configure_Real_Time_Alerts",
@@ -108,6 +114,7 @@
         "Manual",
         "Audit"
       ],
+      
       "Enabled": true
     }
   ]

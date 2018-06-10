@@ -170,8 +170,7 @@ function Install-AzSKContinuousAssurance
 		$CentralScanMode,
 
 		[switch]
-		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode", HelpMessage = "Switch to specify whether to open output folder.")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		$DoNotOpenOutputFolder
     )
 	Begin
@@ -269,6 +268,8 @@ function Update-AzSKContinuousAssurance
 		This switch is required to update AzSK CA running in central scanning mode.
 	.PARAMETER FixRuntimeAccount
 		Use this switch to fix CA runtime account in case of below issues. 1. Runtime account deleted (Permissions required: Subscription owner) 2. Runtime account permissions missing (Permissions required: Subscription owner and AD App owner) 3. Certificate deleted/expired (Permissions required: Subscription owner and AD App owner)
+    .PARAMETER NewRuntimeAccount
+		Use this switch to create new CA runtime account.
 	.PARAMETER RenewCertificate
 			 Renews certificate credential of CA SPN if the caller is Owner of the AAD Application (SPN). If the caller is not Owner, a new application is created with a corresponding SPN and a certificate owned by the caller. CA uses the updated credential going forward.
 	.PARAMETER FixModules
@@ -374,6 +375,13 @@ function Update-AzSKContinuousAssurance
 		[Alias("fra","ConfigureRuntimeAccount", "cra")]
 		$FixRuntimeAccount,
 
+        [Parameter(Mandatory = $false, ParameterSetName = "Default")]
+		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
+        [switch]
+		[Alias("nra")]
+		$NewRuntimeAccount,
+
+
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
         [switch]
@@ -407,8 +415,7 @@ function Update-AzSKContinuousAssurance
 		$CentralScanMode,
 
 		[switch]
-		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode", HelpMessage = "Switch to specify whether to open output folder.")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		$DoNotOpenOutputFolder
     )
 	Begin
@@ -445,7 +452,7 @@ function Update-AzSKContinuousAssurance
 						$ccAccount.LoggingOption = $LoggingOption;
 					}
 				}
-				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$RenewCertificate,$FixModules));
+				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules));
 			}
 			
 		}
@@ -501,9 +508,9 @@ function Get-AzSKContinuousAssurance
 		[switch]
 		[Alias("ec")]
 		$ExhaustiveCheck,
-		
+
 		[switch]
-		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		$DoNotOpenOutputFolder
     )
 	Begin
@@ -555,6 +562,8 @@ function Remove-AzSKContinuousAssurance
 		Switch to force this cmdlet to remove CA resources
 	.PARAMETER CentralScanMode
 		This switch is required if AzSK CA is running in central scanning mode. 
+	.PARAMETER DoNotOpenOutputFolder
+		Switch to specify whether to open output folder.
 	.LINK
 	https://aka.ms/azskossdocs 
 
@@ -599,10 +608,9 @@ function Remove-AzSKContinuousAssurance
 		[switch]
 		[Alias("f")]
 		$Force,
-		
+
 		[switch]
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
-		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode", HelpMessage = "Switch to specify whether to open output folder.")]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		$DoNotOpenOutputFolder
     )
 	Begin

@@ -72,3 +72,46 @@ class MessageData: MessageDataBase
         $this.DataObject = $dataObject;        
     }
 }
+
+class MessageTableData: MessageData
+{
+	[MessageType] $MessageType = [MessageType]::Info;
+	
+    MessageTableData()
+    { }
+
+    MessageTableData([string] $message, [MessageType] $messageType)
+    {
+        $this.Message = $message;
+        $this.MessageType = $messageType;
+    }
+
+    MessageTableData([string] $message, [PSObject] $dataObject, [MessageType] $messageType)
+    {
+        $this.Message = $message;
+        $this.DataObject = $dataObject;
+        $this.MessageType = $messageType;
+    }
+	
+    MessageTableData([string] $message, [PSObject] $dataObject)
+    {
+        $this.Message = $message;
+        $this.DataObject = $dataObject;
+    }
+
+    MessageTableData([string] $message)
+    {
+        $this.Message = $message;
+    }
+
+    MessageTableData([PSObject] $dataObject)
+    {
+        $this.DataObject = $dataObject;        
+    }
+	
+    MessageTableData([PSObject] $dataObject, [MessageType] $messageType)
+    {
+        $this.MessageType = $messageType;
+        $this.DataObject = $dataObject;        
+    }
+}

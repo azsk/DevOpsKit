@@ -15,6 +15,8 @@ class AutomationAccount
 	hidden [Hashtable] $RGTags
 	hidden [Hashtable] $AccountTags
 	hidden [int] $ScanIntervalInHours
+    hidden [PSObject] $BasicResourceInstance
+    hidden [PSObject] $DetailedResourceInstance
 }
 class UserConfig
 {
