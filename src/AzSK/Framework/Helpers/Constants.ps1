@@ -51,7 +51,7 @@ class Constants
 	   static [string] $ScheduleName = "CA_Scan_Schedule"
 	   static [string] $connectionAssetName = "AzureRunAsConnection"
 	   #static [string] $AzSKRGName = "AzSKRG"
-
+	   static [string] $SupportDL = "azsksupext@microsoft.com"
 
 	#Constants for SVTs
     static [string] $ModuleStartHeading = [Constants]::DoubleDashLine +
@@ -134,7 +134,7 @@ class Constants
 	static [string] $DisableAlertRunbook = "DisableAlertRunbook"
 	static [string] $CATargetSubsBlobName= "TargetSubs.json"
 	static [string] $CoAdminElevatePermissionMsg = "(If you are 'Owner' then please elevate to 'Co-Admin' in the portal and re-run in a *fresh* PS console.)"
-
+	
 
 
 	static [string] $CommandNameChangeWarning = "The command {0} shall be renamed to {1} in a future release ('SDK' shall be replaced with 'SK').";
@@ -142,6 +142,8 @@ class Constants
 			"Stopping cmdlet execution.`r`n"+
 			"Recommendation: Please start a fresh PS session and run 'Import-Module {2}' first to avoid getting into this situation.`r`n"
 
+	#Constants for Org Policy
+	static [string] $OrgPolicyTagPrefix = "AzSKOrgName_"
 	static [void] SetAzSKModuleName($moduleName)
 	{
 		if(-not [string]::IsNullOrWhiteSpace($moduleName))

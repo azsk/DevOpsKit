@@ -21,6 +21,7 @@ class SVTBase: AzSKRoot
     SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId)
     {
+		$this.CheckAndDisableAzureRMTelemetry()
 		$this.CreateInstance($svtResource);
     }
 
@@ -1119,5 +1120,19 @@ class SVTBase: AzSKRoot
 		return $svtResource;
 	}
 
-	
+	hidden [void] CheckAndDisableAzureRMTelemetry()
+	{
+		#Disable AzureRM telemetry setting until scan is completed.
+		#This has been added to improve the performarnce of scan commands
+		#Telemetry will be re-enabled once scan is completed		
+		$dataCollectionPath = "$env:APPDATA\Windows Azure Powershell\AzureDataCollectionProfile.json"
+		if(Test-Path -Path $dataCollectionPath)
+		{
+			$dataCollectionProfile = Get-Content -path $dataCollectionPath | ConvertFrom-Json
+			if($dataCollectionProfile.enableAzureDataCollection)
+			{							
+				Disable-AzureRmDataCollection  | Out-Null
+			}
+		}
+	}	
 }
