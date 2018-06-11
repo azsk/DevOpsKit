@@ -22,11 +22,15 @@ class CommandBase: AzSKRoot {
 		if($null -ne $this.InvocationContext.BoundParameters["Force"])
 		{
 			$this.Force = $this.InvocationContext.BoundParameters["Force"];
-		}
-
-		#Set Org Tag for subscriptions
-		$this.ValidateOrgPolicyOnSubscription()
-		$this.SetOrgPolicyTag()
+		}		
+		#Validate if command is getting run with correct Org Policy
+		$IsTagSettingRequired=$this.ValidateOrgPolicyOnSubscription()
+		 #Validate if command has AzSK component write permission
+		if($this.GetCommandMetadata().HasAzSKComponentWritePermission -and ($IsTagSettingRequired -or $this.Force))
+		{
+			#If command is running with Org-neutral Policy or switch Org policy, Set Org Policy tag on subscription
+			$this.SetOrgPolicyTag()
+		}		
     }
 
     [void] CommandStarted() {
@@ -305,5 +309,67 @@ class CommandBase: AzSKRoot {
 
     # Dummy function declaration to define the function signature
     [void] PostCommandCompletedAction([MessageData[]] $messages)
-    { }
+	{ }
+	
+	[bool] ValidateOrgPolicyOnSubscription()
+	{
+		$AzSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
+		$tagsOnSub =  [Helpers]::GetResourceGroupTags($AzSKConfigData.AzSKRGName)
+		$IsTagSettingRequired = $false 
+		if($tagsOnSub)
+		{
+			$SubOrgTag= $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -like "AzSKOrgName*"}
+			
+			if(($SubOrgTag | Measure-Object).Count -gt 0)
+			{
+			  $OrgName =$SubOrgTag.Name.Split("_")[1]   				
+			  if(-not [string]::IsNullOrWhiteSpace($OrgName) -and  $OrgName -ne $AzSKConfigData.PolicyOrgName)
+			  {
+				if($AzSKConfigData.PolicyOrgName -eq "org-neutral")
+				{
+					throw [SuppressedException]::new("Currently command is running with policy '$($AzSKConfigData.PolicyOrgName)', instead it is expected to be run with policy '$OrgName'. Please contact Org policy owner ($($SubOrgTag.Value)) for getting policy setup url.",[SuppressedExceptionType]::Generic)
+				}
+				else
+				{					   
+					$this.PublishCustomMessage("Currently command is running with policy '$($AzSKConfigData.PolicyOrgName)', instead it is expected to be run with policy '$OrgName'. Please contact Org policy owner '$($SubOrgTag.Value)' for getting policy setup url. If you want to update subscription for policy '$($AzSKConfigData.PolicyOrgName)', run Set-AzSKSubscriptionSecurity or Update-AzSKSubscriptionSecurity with -Force parameter.",[MessageType]::Warning);
+					$IsTagSettingRequired = $false
+				}
+				}                
+			  }			 
+		}
+		else {
+			$IsTagSettingRequired = $true
+		}
+		return $IsTagSettingRequired	
+	}
+
+	[void] SetOrgPolicyTag()
+	{
+		try
+		{
+			$AzSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
+			$tagsOnSub =  [Helpers]::GetResourceGroupTags($AzSKConfigData.AzSKRGName) 
+			if($tagsOnSub)
+			{
+				$SubOrgTag= $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -like "AzSKOrgName*"}			
+				if(($SubOrgTag | Measure-Object).Count -eq 0)
+				{
+					if($AzSKConfigData.PolicyOrgName -ne "org-neutral")
+					{
+						$TagName = [Constants]::OrgPolicyTagPrefix +$AzSKConfigData.PolicyOrgName
+						$SupportMail = $AzSKConfigData.SupportDL
+						if(-not [string]::IsNullOrWhiteSpace($SupportMail) -and  [Constants]::SupportDL -eq $SupportMail)
+						{
+							$SupportMail = "Not Available"
+						}   
+						[Helpers]::SetResourceGroupTags($AzSKConfigData.AzSKRGName,@{$TagName=$SupportMail}, $false)                
+					}
+				
+				}			
+			}
+		}
+		catch{
+			# Exception occurred during setting tag. This is kept blank intentionaly to avoid flow break
+		}
+	}
 }

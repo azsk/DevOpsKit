@@ -283,7 +283,15 @@ class AIOrgTelemetry: ListenerBase {
             try {
                 $module = Get-Module 'AzSK*' | Select-Object -First 1
                 $telemetryEvent.properties.Add("ScannerModuleName", $module.Name);
-                $telemetryEvent.properties.Add("ScannerVersion", $module.Version.ToString());
+				$telemetryEvent.properties.Add("ScannerVersion", $module.Version.ToString());
+				$telemetryEvent.properties.Add("OrgVersion", [ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($module.Name).ToString());	
+				$AzSKVersionList= [ConfigurationManager]::GetAzSKConfigData().GetAzSKVersionList($module.Name)
+				if(($AzSKVersionList | Measure-Object).Count -gt 0)
+				{
+					$LatestVersion = $AzSKVersionList | Select -First 1			
+					$telemetryEvent.properties.Add("LatestVersion", $LatestVersion.ToString());
+				}
+				
             }
             catch {
 				# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
