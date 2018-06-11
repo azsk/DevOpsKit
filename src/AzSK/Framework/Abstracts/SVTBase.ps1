@@ -1281,9 +1281,8 @@ class SVTBase: AzSKRoot
 			return $isControlinGrace;
 		}
 		return $isControlinGrace;
-	}
-	
-}
+	}	
+
 	hidden [void] CheckAndDisableAzureRMTelemetry()
 	{
 		#Disable AzureRM telemetry setting until scan is completed.
@@ -1294,7 +1293,9 @@ class SVTBase: AzSKRoot
 		{
 			$dataCollectionProfile = Get-Content -path $dataCollectionPath | ConvertFrom-Json
 			if($dataCollectionProfile.enableAzureDataCollection)
-			{							
+			{	
+				#Keep settings in 
+				Copy-Item $dataCollectionPath					
 				Disable-AzureRmDataCollection  | Out-Null
 			}
 		}
