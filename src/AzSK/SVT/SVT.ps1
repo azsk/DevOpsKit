@@ -42,13 +42,13 @@ function Get-AzSKAzureServicesSecurityStatus
 	.PARAMETER GenerateFixScript
 		Switch to specify whether to generate script to fix the control or not.
 	.PARAMETER ControlsToAttest
-		Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
+		Using this switch, ï¿½AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
 	.PARAMETER BulkClear
 		Use this option if you want to clear the attestation for multiple resources in bulk, for a specified controlId.
 	.PARAMETER JustificationText
 		Use this option to provide an apt justification with proper business reason.
 	.PARAMETER AttestationStatus
-		Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater)
+		Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater,NotApplicable,StateConfirmed)
 
 	.NOTES
 	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
@@ -125,10 +125,10 @@ function Get-AzSKAzureServicesSecurityStatus
 		$ExcludeTags,
         
 		[ValidateSet("All","AlreadyAttested","NotAttested","None")]
-        [Parameter(Mandatory = $false, ParameterSetName = "ResourceFilter", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $false, ParameterSetName = "TagHashset", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ResourceFilter", HelpMessage="Using this switch, ï¿½AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "TagHashset", HelpMessage="Using this switch, ï¿½AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch, ï¿½AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch, ï¿½AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
 		[Alias("AttestControls","cta")]
 		$ControlsToAttest = [AttestControls]::None,
 
@@ -142,8 +142,8 @@ function Get-AzSKAzureServicesSecurityStatus
 		[Alias("jt")]
 		$JustificationText,
 
-		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater")] 
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater)")]
+		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater","NotApplicable","StateConfirmed")] 
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater, NotApplicable,StateConfirmed(if valid for the control))")]
 		[Alias("as")]
 		$AttestationStatus = [AttestationStatus]::None,
 
@@ -169,7 +169,11 @@ function Get-AzSKAzureServicesSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("gfs")]
-		$GenerateFixScript
+		$GenerateFixScript,
+
+		[switch]
+        [Parameter(Mandatory = $false)]
+		$IncludeUserComments
     )
 
 	Begin
@@ -195,6 +199,8 @@ function Get-AzSKAzureServicesSecurityStatus
 				$secStatus.ExcludeTags = $ExcludeTags;
 				$secStatus.ControlIdString = $ControlIds;
 				$secStatus.GenerateFixScript = $GenerateFixScript;
+
+				$secStatus.IncludeUserComments =$IncludeUserComments;
 
 				[AttestationOptions] $attestationOptions = [AttestationOptions]::new();
 				$attestationOptions.AttestControls = $ControlsToAttest				
@@ -251,8 +257,9 @@ function Get-AzSKSubscriptionSecurityStatus
 	.PARAMETER GenerateFixScript
 		Switch to specify whether to generate script to fix the control or not.
 	.PARAMETER ControlsToAttest
-		Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
-
+		Using this switch, Â AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
+    .PARAMETER IncludeUserComments
+		Use this switch to display previously stored user comments for controls.
 	.NOTES
 	This command helps the application team to verify whether their Azure subscription are compliant with the security guidance or not 
 
@@ -285,9 +292,9 @@ function Get-AzSKSubscriptionSecurityStatus
 		$ExcludeTags,
 		
 		[ValidateSet("All","AlreadyAttested","NotAttested","None")]
-        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Using this switch, Â AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch, Â AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch, Â AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
 		[Alias("AttestControls","cta")]
 		$ControlsToAttest = [AttestControls]::None,
 
@@ -301,8 +308,8 @@ function Get-AzSKSubscriptionSecurityStatus
 		[Alias("jt")]
 		$JustificationText,
 
-		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater")] 
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater)")]
+		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater","NotApplicable","StateConfirmed")] 
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater, NotApplicable, StateConfirmed(if valid for the control))")]
 		[Alias("as")]
 		$AttestationStatus = [AttestationStatus]::None,
 			
@@ -323,7 +330,11 @@ function Get-AzSKSubscriptionSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("gfs")]
-		$GenerateFixScript
+		$GenerateFixScript,
+
+		[switch]
+        [Parameter(Mandatory = $false)]
+		$IncludeUserComments
 	)
 	Begin
 	{
@@ -341,6 +352,8 @@ function Get-AzSKSubscriptionSecurityStatus
 				$sscore.FilterTags = $FilterTags;
 				$sscore.ExcludeTags = $ExcludeTags;
 				$sscore.ControlIdString = $ControlIds;
+
+                $sscore.IncludeUserComments =$IncludeUserComments;
 
 				#build the attestation options object
 				[AttestationOptions] $attestationOptions = [AttestationOptions]::new();
@@ -392,9 +405,9 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 	.PARAMETER ControlIds
 		Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.
 	.PARAMETER ControlsToAttest
-			Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
+			Using this switch, Â AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
 	.PARAMETER GenerateFixScript
-			 Provide this option to automatically generate scripts that can be run to address the control failures
+			Â Provide this option to automatically generate scripts that can be run to address the control failures
 
 	.NOTES
 	This command helps the application team to verify whether their ExpressRoute enabled VNets are compliant with the security guidance or not 
@@ -509,13 +522,13 @@ function Get-AzSKControlsStatus
 	.PARAMETER ControlIds
 		Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.
 	.PARAMETER ControlsToAttest
-			Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
+			Using this switch, Â AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
 	.PARAMETER BulkClear
 			Use this option if you want to clear the attestation for multiple resources in bulk, for a specified controlId.
 	.PARAMETER JustificationText
 			Use this option to provide an apt justification with proper business reason.
 	.PARAMETER AttestationStatus
-			Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater)
+			Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater,NotApplicable,StateConfirmed)
 
 	.NOTES
 	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
@@ -583,10 +596,10 @@ function Get-AzSKControlsStatus
 		$ExcludeTags,
                 
 		[ValidateSet("All","AlreadyAttested","NotAttested","None")] 
-        [Parameter(Mandatory = $false, ParameterSetName = "ResourceFilter", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $false, ParameterSetName = "TagHashset", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ResourceFilter", HelpMessage="Using this switch, Â AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "TagHashset", HelpMessage="Using this switch, Â AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch, Â AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch, Â AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
 		[Alias("AttestControls","cta")]
 		$ControlsToAttest = [AttestControls]::None,
 
@@ -600,8 +613,8 @@ function Get-AzSKControlsStatus
 		[Alias("jt")]
 		$JustificationText,
 
-		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater")] 
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater)")]
+		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater","NotApplicable","StateConfirmed")] 
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater, NotApplicable, StateConfirmed(if valid for the control))")]
 		[Alias("as")]
 		$AttestationStatus = [AttestationStatus]::None,
 
@@ -627,7 +640,11 @@ function Get-AzSKControlsStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("gfs")]
-		$GenerateFixScript
+		$GenerateFixScript,
+
+		[switch]
+        [Parameter(Mandatory = $false)]
+		$IncludeUserComments
     )
 	Begin
 	{
@@ -651,6 +668,7 @@ function Get-AzSKControlsStatus
 				$controlReport.ExcludeTags = $ExcludeTags;
 				$controlReport.ControlIdString = $ControlIds;
 				$controlReport.GenerateFixScript = $GenerateFixScript;
+				$controlReport.IncludeUserComments =$IncludeUserComments;
 
 				#build the attestation options object
 				[AttestationOptions] $attestationOptions = [AttestationOptions]::new();

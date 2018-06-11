@@ -9,8 +9,7 @@ class SVTControlAttestation
 	hidden [AttestControls] $AttestControlsChoice;
 	hidden [bool] $bulkAttestMode = $false;
 	[AttestationOptions] $attestOptions;
-
-	
+	hidden [PSObject] $ControlSettings ; 
 	hidden [SubscriptionContext] $SubscriptionContext;
     hidden [InvocationInfo] $InvocationContext;
 
@@ -18,12 +17,12 @@ class SVTControlAttestation
 	{
 		$this.SubscriptionContext = $subscriptionContext;
 		$this.InvocationContext = $invocationContext;
-
 		$this.ControlResults = $ctrlResults;
 		$this.AttestControlsChoice = $attestationOptions.AttestControls;
 		$this.attestOptions = $attestationOptions;
 		$this.controlStateExtension = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext)
 		$this.controlStateExtension.Initialize($true)
+		$this.ControlSettings=$ControlSettingsJson = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 	}
 
 	[AttestationStatus] GetAttestationValue([string] $AttestationCode)
@@ -33,6 +32,8 @@ class SVTControlAttestation
 			"1" { return [AttestationStatus]::NotAnIssue;}
 			"2" { return [AttestationStatus]::WillNotFix;}
 			"3" { return [AttestationStatus]::WillFixLater;}
+			"4" { return [AttestationStatus]::NotApplicable;}
+			"5" { return [AttestationStatus]::StateConfirmed;}
 			"9" { 
 					$this.abortProcess = $true;
 					return [AttestationStatus]::None;
@@ -50,6 +51,11 @@ class SVTControlAttestation
 		{
 			Write-Host "Skipping attestation process for this control. You do not have required permissions to evaluate this control." -ForegroundColor Yellow
 			Write-Host ([Constants]::CoAdminElevatePermissionMsg) -ForegroundColor Yellow
+			return $controlState;
+		}
+		if(-not $this.isControlAttestable($controlItem, $controlResult))
+		{
+			Write-Host "This control cannot be attested by policy. Please follow the steps in 'Recommendation' for the control in order to fix the control and minimize exposure to attacks." -ForegroundColor Yellow
 			return $controlState;
 		}
 		$userChoice = ""
@@ -79,7 +85,6 @@ class SVTControlAttestation
 			{
 				$tempAttestationStatus = [AttestationStatus]::WillNotFix;
 			}
-			
 			while($userChoice -ne '0' -and $userChoice -ne '1' -and $userChoice -ne '2' -and $userChoice -ne '9' )
 			{
 				Write-Host "Existing attestation details:" -ForegroundColor Cyan
@@ -100,6 +105,18 @@ class SVTControlAttestation
 		}
 		$Justification=""
 		$Attestationstate=""
+		$message = ""
+		$ValidAttestationStates = $this.ComputeEligibleAttestationState($controlItem, $ControlSeverity, $controlResult);
+		[String[]]$ValidAttestationKey = @(0)
+		#Sort attestation status based on key value
+		if($null -ne $ValidAttestationStates)
+		{
+			$ValidAttestationStates = Compare-Object -ReferenceObject ([Constants]::AttestationStatusHashMap.GetEnumerator() | Sort-Object value).Name -DifferenceObject $ValidAttestationStates -IncludeEqual -PassThru | Where-Object SideIndicator -EQ "=="
+			$ValidAttestationStates | ForEach-Object {
+				$message += "`n[{0}]: {1}" -f ([Constants]::AttestationStatusHashMap.$_),$_;
+				$ValidAttestationKey += [Constants]::AttestationStatusHashMap.$_
+			}
+		}
 		switch ($userChoice.ToUpper()){
 			"0" #None
 			{				
@@ -108,9 +125,9 @@ class SVTControlAttestation
 			"1" #Attest
 			{
 				$attestationState = ""
-				while($attestationState -ne '0' -and $attestationState -ne '1' -and $attestationState -ne '2' -and  $attestationState -ne '3' -and $attestationState -ne '9' )
+				while($attestationState -notin [String[]]($ValidAttestationKey) -and $attestationState -ne '9' )
 				{
-					Write-Host "`nPlease select an attestation status from below: `n[0]: Skip`n[1]: NotAnIssue`n[2]: WillNotFix`n[3]: WillFixLater" -ForegroundColor Cyan
+					Write-Host "`nPlease select an attestation status from below: `n[0]: Skip$message" -ForegroundColor Cyan
 					$attestationState = Read-Host "User Choice"
 					$attestationState = $attestationState.Trim();
 				}
@@ -218,36 +235,63 @@ class SVTControlAttestation
 			$controlState.AttestationStatus = [AttestationStatus]::None
 			return $controlState;
 		}
-		
-		$controlState.AttestationStatus = $this.attestOptions.AttestationStatus;
-		$controlState.EffectiveVerificationResult = [Helpers]::EvaluateVerificationResult($controlState.ActualVerificationResult,$controlState.AttestationStatus);
-				
-		if($null -ne $controlResult.StateManagement -and $null -ne $controlResult.StateManagement.CurrentStateData)
+		$defaultValidStates=$this.ControlSettings.DefaultValidAttestationStates;
+		$ValidAttestationStates = $this.ComputeEligibleAttestationState($controlItem, $ControlSeverity, $controlResult);
+		if(-not $this.isControlAttestable($controlItem, $controlResult))
 		{
-			$controlState.State = $controlResult.StateManagement.CurrentStateData;
-		}
+			if($null -ne $ValidAttestationStates )
+			{
+					$validAttestationSet =  Compare-Object $defaultValidStates $controlItem.ControlItem.ValidAttestationStates  -PassThru -IncludeEqual
+			}
+			else
+			{
+				$validAttestationSet=$defaultValidStates
+			}
+			if( $this.attestOptions.AttestationStatus -in $validAttestationSet)
+			{
+			
+						$controlState.AttestationStatus = $this.attestOptions.AttestationStatus;
+						$controlState.EffectiveVerificationResult = [Helpers]::EvaluateVerificationResult($controlState.ActualVerificationResult,$controlState.AttestationStatus);
+				
+						if($null -ne $controlResult.StateManagement -and $null -ne $controlResult.StateManagement.CurrentStateData)
+						{
+							$controlState.State = $controlResult.StateManagement.CurrentStateData;
+						}
 
-		if($null -eq $controlState.State)
-		{
-			$controlState.State = [StateData]::new();
+						if($null -eq $controlState.State)
+						{
+							$controlState.State = [StateData]::new();
+						}
+						$this.dirtyCommitState = $true
+						$controlState.State.AttestedBy = [Helpers]::GetCurrentSessionUser();
+						$controlState.State.AttestedDate = [DateTime]::UtcNow;
+						$controlState.State.Justification = $this.attestOptions.JustificationText				
+			}
+			else
+			{
+				$outvalidSet=$ValidAttestationSet -join "," ;
+				Write-Host "The chosen attestation state is not applicable to this control. Valid attestation choices are:  $outvalidSet";
+				return $controlState ;
+			}
 		}
-		$this.dirtyCommitState = $true
-		$controlState.State.AttestedBy = [Helpers]::GetCurrentSessionUser();
-		$controlState.State.AttestedDate = [DateTime]::UtcNow;
-		$controlState.State.Justification = $this.attestOptions.JustificationText				
-				
+		else
+		{
+			Write-Host "This control cannot be attested by policy. Please follow the steps in 'Recommendation' for the control in order to fix the control and minimize exposure to attacks.";
+		}
 		return $controlState;
 	}
 	
 	[void] StartControlAttestation()
 	{
+	
+		
 		try
 		{
 			#user provided justification text would be available only in bulk attestation mode.
 			if($null -ne $this.attestOptions -and  (-not [string]::IsNullOrWhiteSpace($this.attestOptions.JustificationText) -or $this.attestOptions.IsBulkClearModeOn))
 			{
 				$this.bulkAttestMode = $true;				
-				Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Yellow
+					Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Yellow				
 			}
 			else
 			{
@@ -431,4 +475,56 @@ class SVTControlAttestation
 		}
 
 	}	
+
+	[bool] isControlAttestable([SVTEventContext] $controlItem, [ControlResult] $controlResult)
+	{
+		#sometime when we have error in some of our control we put that control in grace period to maintain the compliance dashboard
+		if($controlResult.IsControlInGrace)
+		{
+			return $true
+		}
+        if($null -ne $controlItem.ControlItem.ValidAttestationStates -and $controlItem.ControlItem.ValidAttestationStates -contains [AttestationStatus]::None)
+	    { 
+            return $false
+        }
+        else
+        {
+            return $true
+        }
+	}
+
+	[String[]] ComputeEligibleAttestationState([SVTEventContext] $controlItem, [ControlSeverity] $ControlSeverity, [ControlResult] $controlResult)
+	{
+	    [System.Collections.ArrayList] $ValidAttestationStates = $null
+	    #Default attestation state
+	    if($null -ne $this.ControlSettings.DefaultValidAttestationStates){
+			$ValidAttestationStates = $this.ControlSettings.DefaultValidAttestationStates | Select-Object -Unique
+		}
+	    #Additional attestation state
+		if($null -ne $controlItem.ControlItem.ValidAttestationStates)
+		{ 
+			$ValidAttestationStates += $controlItem.ControlItem.ValidAttestationStates | Select-Object -Unique
+		}
+		$ValidAttestationStates = $ValidAttestationStates | Select-Object -Unique
+	    #check valid grace period based on control severity
+	    if(($null -eq $ControlSeverity) -or ($ControlSeverity -notin [ControlSeverity].GetEnumNames()))
+	    {
+	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.Default
+	    }
+	    else
+	    {
+	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity
+	    }
+		
+		if(($null -ne $controlResult.FirstScannedOn) -and (-not $controlResult.IsControlInGrace) -and ([DateTime]::UtcNow -gt $controlResult.FirstScannedOn.addDays($gracePeriod)))
+		{
+		    if($ValidAttestationStates -contains [AttestationStatus]::WillFixLater)
+		    {
+		        $ValidAttestationStates.Remove("WillFixLater")
+		    }
+		}
+		
+	    return [String[]]$ValidAttestationStates;
+	}
+
 }

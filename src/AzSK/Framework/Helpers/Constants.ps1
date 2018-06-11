@@ -51,6 +51,7 @@ class Constants
 	   static [string] $ScheduleName = "CA_Scan_Schedule"
 	   static [string] $connectionAssetName = "AzureRunAsConnection"
 	   #static [string] $AzSKRGName = "AzSKRG"
+	   static [string] $SupportDL = "azsksupext@microsoft.com"
 
 
 	#Constants for SVTs
@@ -77,7 +78,14 @@ class Constants
 	static [string] $CAScanProgressSnapshotsContainerName = "ca-scan-checkpoints"
 	static [string] $CAScanOutputLogsContainerName= "ca-scan-logs"
 	static [string] $ResourceScanTrackerBlobName = "ResourceScanTracker.json"
-	static [string] $ResourceScanTrackerCMBlobName = "ResourceScanTracker_CentralMode.json"	
+	static [string] $ResourceScanTrackerCMBlobName = "ResourceScanTracker_CentralMode.json"
+	static [hashtable] $AttestationStatusHashMap = @{
+			"NotAnIssue"   ="1";
+			"WillNotFix"   ="2";
+			"WillFixLater" ="3";
+			"NotApplicable"="4";
+			"StateConfirmed"="5";
+	}
 
 	static [string] $StorageAccountPreName= "azsk"
 	static [string] $AzSKAppFolderPath = $Env:LOCALAPPDATA + "\Microsoft\" + [Constants]::AzSKModuleName
@@ -141,6 +149,11 @@ class Constants
 	static [string] $MultipleModulesWarning =  "Found multiple modules ({0} and {1}) loaded in the PS session.`r`n"+
 			"Stopping cmdlet execution.`r`n"+
 			"Recommendation: Please start a fresh PS session and run 'Import-Module {2}' first to avoid getting into this situation.`r`n"
+
+	# Local Subscription Report Constants
+	static [string] $StorageReportContainerName = "compliance-state"
+	static [string] $StorageReportBlobName = "LatestSnapshot"
+	static [DateTime] $AzSKDefaultDateTime = '1900-01-01T00:00:00'
 
 	static [void] SetAzSKModuleName($moduleName)
 	{
