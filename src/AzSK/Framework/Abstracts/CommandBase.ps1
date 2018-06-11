@@ -69,7 +69,7 @@ class CommandBase: AzSKRoot {
 		$this.PostCommandStartedAction();
         $methodResult = @();
         try {
-            $methodResult = $methodToCall.Invoke($arguments);
+           $methodResult = $methodToCall.Invoke($arguments);
         }
         catch {
             $isExecutionSuccessful = $true
@@ -129,6 +129,8 @@ class CommandBase: AzSKRoot {
 			}
 		}
         return $folderPath;
+
+		# Call clear temp folder function.
     }
 
 	[void] PostCommandStartedAction()

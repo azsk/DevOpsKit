@@ -49,7 +49,7 @@ function Get-AzSKInfo
 	#>
 	Param(
 		[Parameter(Mandatory = $false)]
-		[ValidateSet("SubscriptionInfo", "ControlInfo", "HostInfo" , "AttestationInfo")] 
+		[ValidateSet("SubscriptionInfo", "ControlInfo", "HostInfo" , "AttestationInfo", "ComplianceInfo")] 
 		$InfoType,
 
 		[ResourceTypeName]
@@ -100,7 +100,7 @@ function Get-AzSKInfo
 		{
 			if ([string]::IsNullOrEmpty($SubscriptionId))
 			{
-				if((-not [string]::IsNullOrEmpty($InfoType)) -and $InfoType.ToString() -eq 'AttestationInfo')
+				if((-not [string]::IsNullOrEmpty($InfoType)) -and ($InfoType.ToString() -eq 'AttestationInfo' -or $InfoType.ToString() -eq 'ComplianceInfo'))
 				{
 					$SubscriptionId = Read-Host "SubscriptionId"
 					$SubscriptionId = $SubscriptionId.Trim()
@@ -167,6 +167,22 @@ function Get-AzSKInfo
 							return  ([CommandBase]$attestationReport).InvokeFunction($attestationReport.FetchAttestationInfo);	
 						}     
 					}
+					ComplianceInfo
+					{
+						If($PSCmdlet.MyInvocation.BoundParameters["Verbose"] -and $PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
+						{
+							$Full = $true
+						}
+						else
+						{
+							$Full = $false
+						}
+						$complianceInfo = [ComplianceInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation, $ResourceTypeName, $ResourceType, $ControlIds, $UseBaselineControls, $ControlSeverity, $ControlIdContains, $Full);
+						if ($complianceInfo) 
+						{
+							return $complianceInfo.InvokeFunction($complianceInfo.GetComplianceInfo);
+						}
+					}
 					Default
 					{
 						Write-Host $([Constants]::DefaultInfoCmdMsg)
@@ -182,6 +198,77 @@ function Get-AzSKInfo
 		{
 			[EventBase]::PublishGenericException($_);
 		}  
+	}
+
+	End
+	{
+		[ListenerHelper]::UnregisterListeners();
+	}
+}
+function Update-AzSKPersistedState 
+{	
+	<#
+	.SYNOPSIS
+	This command helps in updating security state stored by DevOps Kit.
+
+	.DESCRIPTION
+	This command helps in updating security state stored by DevOps Kit.
+	
+	.PARAMETER SubscriptionId
+		Subscription id for which DevOps Kit state has to be updated.
+	.PARAMETER StateType
+		This represents the specific type of DevOps Kit state that has to be updated.
+	.PARAMETER FilePath
+		Path to file containing list of controls for which state has to be updated.	
+	.PARAMETER DoNotOpenOutputFolder
+		Switch to specify whether to open output folder containing all security evaluation report or not.
+
+	.LINK
+	https://aka.ms/azskossdocs 
+	#>
+	Param(
+
+		[string]
+        [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which DevOps Kit state has to be updated.", ParameterSetName = "Default")]
+        [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which DevOps Kit state has to be updated.", ParameterSetName = "UserComments")]
+		[ValidateNotNullOrEmpty()]
+		[Alias("sid")]
+		$SubscriptionId,
+
+		[string]
+		[Parameter(Mandatory = $false, HelpMessage = "Path to file containing list of controls for which state has to be updated.", ParameterSetName = "UserComments")]
+		$FilePath,
+
+		[ValidateSet("UserComments")]
+		[Parameter(Mandatory = $true, HelpMessage = "This represents the specific type of DevOps Kit state that has to be updated.", ParameterSetName = "UserComments")]
+		$StateType,
+	
+		[switch]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.", ParameterSetName = "Default")]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.", ParameterSetName = "UserComments")]
+		$DoNotOpenOutputFolder
+    )
+
+	Begin
+	{
+		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
+		[ListenerHelper]::RegisterListeners();
+	}
+
+	Process
+	{
+		try 
+		{
+			$persistedStateInfo = [PersistedStateInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+			if ($persistedStateInfo -and $StateType -eq "UserComments") 
+			{
+				return $persistedStateInfo.InvokeFunction($persistedStateInfo.UpdatePersistedState,@($FilePath));
+			}
+		}
+		catch 
+		{
+			[EventBase]::PublishGenericException($_);
+		}  		
 	}
 
 	End

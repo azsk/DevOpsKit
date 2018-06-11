@@ -21,6 +21,11 @@
           "AppService",
           "FunctionApp"
         ],
+        
+      "ValidAttestationStates": [
+        "StateConfirmed",
+        "WillFixLater"
+      ],
         "Enabled": true
       },
       {
@@ -40,7 +45,8 @@
           "AppService",
           "FunctionApp"
         ],
-        "Enabled": true
+        "Enabled": true,
+        "GraceExpiryDate": "2018-06-15"
       },
       {
         "ControlID": "Azure_AppService_AuthN_Use_AAD_for_Client_AuthN",
@@ -60,7 +66,13 @@
           "AppService",
           "FunctionApp"
         ],
-        "Enabled": true
+        
+      "ValidAttestationStates": [
+        "NotApplicable",
+        "WillFixLater"
+      ],
+        "Enabled": true,
+        "GraceExpiryDate": "2018-05-24"
       },
       {
         "ControlID": "Azure_AppService_Deploy_Dont_Use_Publish_Profiles",
@@ -357,6 +369,8 @@
           "DP",
           "AppService",
           "FunctionApp"
+        ],"ValidAttestationStates": [
+          "None"
         ],
         "Enabled": true,
         "FixControl": {
@@ -551,6 +565,9 @@
           "OwnerAccess",
           "FunctionApp"
         ],
+      "ValidAttestationStates": [
+        "None"
+      ],
         "Enabled": true
       }
      
