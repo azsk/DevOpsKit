@@ -908,6 +908,12 @@ class SVTBase: AzSKRoot
 			}
 			elseif($controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater -or $controlState.AttestationStatus -eq [AttestationStatus]::WillNotFix -or $controlState.AttestationStatus -eq [AttestationStatus]::StateConfirmed)
 			{
+				if($isControlinGrace -and $controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater)
+				{
+					$expiryInDays=0;
+				}
+				else
+				{
 				if($controlAttestationExpiry -ne 0)
 					{
 						$expiryInDays = $controlAttestationExpiry
@@ -936,7 +942,7 @@ class SVTBase: AzSKRoot
 					{
 						$expiryInDays = -1
 					}
-
+				}
 			}
 			else
 			{
