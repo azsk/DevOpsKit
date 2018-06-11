@@ -21,10 +21,11 @@ class SVTBase: AzSKRoot
 	[bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
 	[string] $PartialScanIdentifier = [string]::Empty
-
+	[SVTEventContext[]] $ChildSvtObjects = @();
     SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId)
     {
+		$this.CheckAndDisableAzureRMTelemetry()
 		$this.CreateInstance($svtResource);
 		$this.GetLocalSubscriptionData();
     }
@@ -1158,6 +1159,22 @@ class SVTBase: AzSKRoot
 
 	}
 
+
+	hidden [SVTResource] CreateSVTResource([string] $ConnectionResourceId,[string] $ResourceGroupName, [string] $ConnectionResourceName, [string] $ResourceType, [string] $Location, [string] $MappingName)
+	{
+		$svtResource = [SVTResource]::new();
+		$svtResource.ResourceId = $ConnectionResourceId; 
+		$svtResource.ResourceGroupName = $ResourceGroupName;
+		$svtResource.ResourceName = $ConnectionResourceName
+		$svtResource.ResourceType = $ResourceType; # 
+		$svtResource.Location = $Location;
+		$svtResource.ResourceTypeMapping = ([SVTMapping]::Mapping |
+						Where-Object { $_.ResourceTypeName -eq $MappingName } |
+						Select-Object -First 1);
+
+		return $svtResource;
+	}
+  
 	hidden [void] GetDataFromSubscriptionReport($singleControlResult)
     {   try
 	    {
@@ -1244,7 +1261,6 @@ class SVTBase: AzSKRoot
 		}
     }
 
-
 	[bool] hidden IsControlinGrace([SVTEventContext] $context)
 	{
 		$isControlinGrace=$false;
@@ -1267,4 +1283,20 @@ class SVTBase: AzSKRoot
 		return $isControlinGrace;
 	}
 	
+}
+	hidden [void] CheckAndDisableAzureRMTelemetry()
+	{
+		#Disable AzureRM telemetry setting until scan is completed.
+		#This has been added to improve the performarnce of scan commands
+		#Telemetry will be re-enabled once scan is completed		
+		$dataCollectionPath = "$env:APPDATA\Windows Azure Powershell\AzureDataCollectionProfile.json"
+		if(Test-Path -Path $dataCollectionPath)
+		{
+			$dataCollectionProfile = Get-Content -path $dataCollectionPath | ConvertFrom-Json
+			if($dataCollectionProfile.enableAzureDataCollection)
+			{							
+				Disable-AzureRmDataCollection  | Out-Null
+			}
+		}
+	}	
 }

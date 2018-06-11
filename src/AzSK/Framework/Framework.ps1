@@ -1,7 +1,6 @@
 Set-StrictMode -Version Latest
 
-Write-Host "Importing AzureRM modules. This may take a while..." -ForegroundColor Yellow
-# Hack to load AI dlls
+# load AI dlls using context
 try {Get-AzureRmContext -ErrorAction SilentlyContinue | Out-Null }
 catch 
 { 

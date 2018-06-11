@@ -477,7 +477,6 @@ class WritePsConsole: FileOutputBase
 
 		$this.WriteMessage([ConfigurationManager]::GetAzSKConfigData().PolicyMessage,[MessageType]::Warning)
 		
-
 	}
 
 }

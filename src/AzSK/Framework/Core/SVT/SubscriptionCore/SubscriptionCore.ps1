@@ -32,27 +32,6 @@ class SubscriptionCore: SVTBase
 		$this.DeprecatedAccounts = $null
 		$this.HasGraphAPIAccess = [RoleAssignmentHelper]::HasGraphAccess();
 
-		$owners = @();
-		$classicAdmins = @();
-		$SubAdmins = @();
-		$this.GetRoleAssignments();
-		$scope = $this.SubscriptionContext.Scope;
-		$SubAdmins += $this.RoleAssignments | Where-Object { $_.RoleDefinitionName -eq 'CoAdministrator' `
-																				-or $_.RoleDefinitionName -like '*ServiceAdministrator*' `
-																				-or ($_.RoleDefinitionName -eq 'Owner' -and $_.Scope -eq $scope)}
-		$SubAdmins | ForEach-Object{
-			$tempAdmin = $_
-			if($tempAdmin.RoleDefinitionName -eq 'CoAdministrator' `
-											-or $_.RoleDefinitionName -like '*ServiceAdministrator*'  )
-			{
-				$classicAdmins += $tempAdmin.SignInName
-			}
-			else
-			{
-				$owners += $tempAdmin.ObjectId
-			}			
-		}
-
 		#Compute the policies ahead to get the security Contact Phone number and email id
 		$this.SecurityCenterInstance = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId);
 		$this.MisConfiguredASCPolicies = $this.SecurityCenterInstance.GetMisconfiguredPolicies();
@@ -63,8 +42,6 @@ class SubscriptionCore: SVTBase
 
 		[hashtable] $subscriptionMetada = @{}
 		$subscriptionMetada.Add("HasGraphAccess",$this.HasGraphAPIAccess);
-		$subscriptionMetada.Add("Owners", $owners);
-		$subscriptionMetada.Add("ClassicAdmins", $classicAdmins);
 		$subscriptionMetada.Add("ASCSecurityContactEmailIds", $this.SecurityCenterInstance.ContactEmail);
 		$subscriptionMetada.Add("ASCSecurityContactPhoneNumber", $this.SecurityCenterInstance.ContactPhoneNumber);
 		$subscriptionMetada.Add("FeatureVersions", $azskRGTags);

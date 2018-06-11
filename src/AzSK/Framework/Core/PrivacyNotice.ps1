@@ -2,12 +2,12 @@ Set-StrictMode -Version Latest
 class PrivacyNotice {
     static [void] ValidatePrivacyAcceptance()
 	{
-        $appSettings = [ConfigurationManager]::GetLocalAzSKSettings();
-		$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
+        $appSettings = [ConfigurationManager]::GetLocalAzSKSettings();		
 		$source = "SDL"		
 
 		if(-not $appSettings.PrivacyNoticeAccepted)
 		{
+			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
 			if(-not [string]::IsNullOrWhiteSpace($appSettings.OMSSource))
 			{
 				$source = $appSettings.OMSSource;
