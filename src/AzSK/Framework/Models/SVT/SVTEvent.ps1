@@ -49,6 +49,7 @@ class ControlResult
 	[bool] $IsControlInGrace
 	[DateTime] $FirstFailedOn = [Constants]::AzSKDefaultDateTime;
 	[DateTime] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
+	[int] $MaximumAllowedGraceDays=0;
 	[String] $UserComments
 
     [MessageData[]] $Messages = @();
