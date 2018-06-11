@@ -100,24 +100,24 @@
           "DataSource": {
             "MetricName": "PoolDeleteCompleteEvent"
           },
-          "Operator": "GreaterThan",
+          "OperatorProperty": "GreaterThan",
           "Threshold": 0,
           "TimeAggregation": "Total",
-          "WindowsSize": "01:00:00"
+          "WindowSize": "01:00:00"
         },
-        "Status": "Enabled"
+        "IsEnabled": true
       },
       {
         "Condition": {
           "DataSource": {
             "MetricName": "PoolDeleteStartEvent"
           },
-          "Operator": "GreaterThan",
+          "OperatorProperty": "GreaterThan",
           "Threshold": 0,
           "TimeAggregation": "Total",
-          "WindowsSize": "01:00:00"
+          "WindowSize": "01:00:00"
         },
-        "Status": "Enabled"
+        "IsEnabled": true
       }
     ],
     "Storage": [
@@ -126,12 +126,12 @@
           "DataSource": {
             "MetricName": "AnonymousSuccess"
           },
-          "Operator": "GreaterThan",
+          "OperatorProperty": "GreaterThan",
           "Threshold": 0,
           "TimeAggregation": "Total",
-          "WindowsSize": "01:00:00"
+          "WindowSize": "01:00:00"
         },
-        "Status": "Enabled"
+        "IsEnabled": true
       }
     ],
     "StreamAnalytics": [
@@ -140,24 +140,24 @@
           "DataSource": {
             "MetricName": "AMLCalloutFailedRequests"
           },
-          "Operator": "GreaterThan",
+          "OperatorProperty": "GreaterThan",
           "Threshold": 0,
           "TimeAggregation": "Total",
-          "WindowsSize": "00:05:00"
+          "WindowSize": "00:05:00"
         },
-        "Status": "Enabled"
+        "IsEnabled": true
       },
       {
         "Condition": {
           "DataSource": {
             "MetricName": "Errors"
           },
-          "Operator": "GreaterThan",
+          "OperatorProperty": "GreaterThan",
           "Threshold": 0,
           "TimeAggregation": "Total",
-          "WindowsSize": "00:05:00"
+          "WindowSize": "00:05:00"
         },
-        "Status": "Enabled"
+        "IsEnabled": true
       }
     ]
   },
