@@ -900,18 +900,15 @@ class SVTBase: AzSKRoot
 					-and $this.ControlSettings.AttestationExpiryPeriodInDays.Default -gt 0)
 			{
 				$defaultAttestationExpiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.Default
-			}
-			
+			}			
 			#Expiry in the case of WillFixLater or StateConfirmed/Recurring Attestation state will be based on Control Severity.
-			if($controlState.AttestationStatus -eq [AttestationStatus]::StateConfirmed -or $controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater )
+			if($controlState.AttestationStatus -eq [AttestationStatus]::NotAnIssue )
 			{
-				if($controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater -and -not($isControlinGrace))
-					{	
-						$expiryInDays=0;
-					}
-				else {
-					#$expiryInDays = -1;
-					if($controlAttestationExpiry -ne 0)
+				$expiryInDays=$defaultAttestationExpiryInDays;
+			}
+			elseif($controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater -or $controlState.AttestationStatus -eq [AttestationStatus]::WillNotFix -or $controlState.AttestationStatus -eq [AttestationStatus]::StateConfirmed)
+			{
+				if($controlAttestationExpiry -ne 0)
 					{
 						$expiryInDays = $controlAttestationExpiry
 					}
@@ -939,12 +936,11 @@ class SVTBase: AzSKRoot
 					{
 						$expiryInDays = -1
 					}
-				
-				}
 
 			}
 			else
-			{ 
+			{
+				
 						$expiryInDays = -1
 			}
 					
