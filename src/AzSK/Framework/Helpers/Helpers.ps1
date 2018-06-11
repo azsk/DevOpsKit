@@ -901,6 +901,25 @@ class Helpers {
 		return $existingStorage
 	}
 
+    static [string] FetchTagsString([PSObject]$TagsHashTable)
+    {
+        [string] $tagsString = "";
+        try {
+            if(($TagsHashTable | Measure-Object).Count -gt 0)
+            {
+                $TagsHashTable.Keys | ForEach-Object {
+                    $key = $_;
+                    $value = $TagsHashTable[$key];
+                    $tagsString = $tagsString + "$($key):$($value);";                
+                }
+            }   
+        }
+        catch {
+            #eat exception as if not able to fetch tags, it would return empty instead of breaking the flow
+        }        
+        return $tagsString;
+    }
+
 	static [void] SetResourceGroupTags([string]$RGName, [PSObject]$TagsHashTable, [bool] $Remove) {
 		[Helpers]::SetResourceGroupTags($RGName, $TagsHashTable, $Remove, $true) 
 	}
@@ -1097,6 +1116,10 @@ class Helpers {
                     break;
                 }
 				([AttestationStatus]::NotApplicable) {
+                    $result = [VerificationResult]::Passed;
+                    break;
+                }
+                ([AttestationStatus]::StateConfirmed) {
                     $result = [VerificationResult]::Passed;
                     break;
                 }

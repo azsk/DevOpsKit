@@ -143,9 +143,11 @@ catch
 . $PSScriptRoot\Core\SVT\ServicesSecurityStatus.ps1
 . $PSScriptRoot\Core\SVT\SubscriptionSecurityStatus.ps1
 . $PSScriptRoot\Core\SVT\SVTStatusReport.ps1
-. $PSScriptRoot\Core\MetadataInfo\BasicInfo.ps1
-. $PSScriptRoot\Core\MetadataInfo\ControlsInfo.ps1
-. $PSScriptRoot\Core\MetadataInfo\EnvironmentInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\BasicInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\ControlsInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\EnvironmentInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\ComplianceInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\PersistedStateInfo.ps1
 . $PSScriptRoot\Core\ARMChecker\ARMCheckerStatus.ps1
 
 . $PSScriptRoot\Core\PolicySetup\PolicySetup.ps1

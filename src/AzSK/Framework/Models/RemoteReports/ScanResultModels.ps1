@@ -31,8 +31,8 @@ class ControlResultBase {
     [string] $AttestedState;
     [string] $CurrentState;
 	[bool] $IsBaselineControl;
-
 	[string] $UserComments;
+	[bool] $HasOwnerAccessTag;
 }
 
 class SubscriptionControlResult : ControlResultBase {

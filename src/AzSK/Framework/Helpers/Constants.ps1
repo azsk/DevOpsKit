@@ -51,6 +51,7 @@ class Constants
 	   static [string] $ScheduleName = "CA_Scan_Schedule"
 	   static [string] $connectionAssetName = "AzureRunAsConnection"
 	   #static [string] $AzSKRGName = "AzSKRG"
+	   static [string] $SupportDL = "azsksupext@microsoft.com"
 
 
 	#Constants for SVTs
@@ -83,6 +84,7 @@ class Constants
 			"WillNotFix"   ="2";
 			"WillFixLater" ="3";
 			"NotApplicable"="4";
+			"StateConfirmed"="5";
 	}
 
 	static [string] $StorageAccountPreName= "azsk"
@@ -149,8 +151,8 @@ class Constants
 			"Recommendation: Please start a fresh PS session and run 'Import-Module {2}' first to avoid getting into this situation.`r`n"
 
 	# Local Subscription Report Constants
-	static [string] $StorageReportContainerName = "scan-report"
-	static [string] $StorageReportBlobName = "scanresult"
+	static [string] $StorageReportContainerName = "compliance-state"
+	static [string] $StorageReportBlobName = "LatestSnapshot"
 	static [DateTime] $AzSKDefaultDateTime = '1900-01-01T00:00:00'
 
 	static [void] SetAzSKModuleName($moduleName)

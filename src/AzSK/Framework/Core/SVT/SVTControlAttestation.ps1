@@ -33,6 +33,7 @@ class SVTControlAttestation
 			"2" { return [AttestationStatus]::WillNotFix;}
 			"3" { return [AttestationStatus]::WillFixLater;}
 			"4" { return [AttestationStatus]::NotApplicable;}
+			"5" { return [AttestationStatus]::StateConfirmed;}
 			"9" { 
 					$this.abortProcess = $true;
 					return [AttestationStatus]::None;
@@ -235,9 +236,10 @@ class SVTControlAttestation
 			return $controlState;
 		}
 		$defaultValidStates=$this.ControlSettings.DefaultValidAttestationStates;
-		if($this.isControlAttestable())
+		$ValidAttestationStates = $this.ComputeEligibleAttestationState($controlItem, $ControlSeverity, $controlResult);
+		if(-not $this.isControlAttestable($controlItem, $controlResult))
 		{
-			if($null -ne $controlItem.ControlItem.ValidAttestationStates )
+			if($null -ne $ValidAttestationStates )
 			{
 					$validAttestationSet =  Compare-Object $defaultValidStates $controlItem.ControlItem.ValidAttestationStates  -PassThru -IncludeEqual
 			}
@@ -268,14 +270,13 @@ class SVTControlAttestation
 			else
 			{
 				$outvalidSet=$ValidAttestationSet -join "," ;
-				Write-Host "This attestation state is not legitimate for this control, the valid attestation states for this control are $outvalidSet";
+				Write-Host "The chosen attestation state is not applicable to this control. Valid attestation choices are:  $outvalidSet";
 				return $controlState ;
 			}
 		}
 		else
 		{
-			$controlId=$controlItem.ControlItem.ControlId
-			Write-Host "Attestation is not allowed for the control: $controlId ";
+			Write-Host "This control cannot be attested by policy. Please follow the steps in 'Recommendation' for the control in order to fix the control and minimize exposure to attacks.";
 		}
 		return $controlState;
 	}
@@ -515,7 +516,7 @@ class SVTControlAttestation
 	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity
 	    }
 		
-		if(($null -ne $controlResult.FirstFailedOn) -and (-not $controlResult.IsControlInGrace) -and ([DateTime]::UtcNow -gt $controlResult.FirstFailedOn.addDays($gracePeriod)))
+		if(($null -ne $controlResult.FirstScannedOn) -and (-not $controlResult.IsControlInGrace) -and ([DateTime]::UtcNow -gt $controlResult.FirstScannedOn.addDays($gracePeriod)))
 		{
 		    if($ValidAttestationStates -contains [AttestationStatus]::WillFixLater)
 		    {

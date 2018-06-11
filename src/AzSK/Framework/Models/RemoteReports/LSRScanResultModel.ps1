@@ -1,3 +1,6 @@
+Set-StrictMode -Version Latest
+# LSR = LocalSubscriptionReport
+
 class LocalSubscriptionReport
 {
 	[LSRSubscription[]] $Subscriptions = @();
@@ -20,7 +23,7 @@ class LSRSubscription
 class LSRScanDetails
 {
 	[LSRSubscriptionControlResult[]] $SubscriptionScanResult = @();
-	[LSRResources[]] $Resources = @();;
+	[LSRResources[]] $Resources = @();
 }
 
 class LSRResources
@@ -33,6 +36,7 @@ class LSRResources
 	[string] $ResourceGroupName = "";
 	[string] $ResourceName = "";
 	[string] $ResourceMetadata = "";
+	[string] $FeatureName = "";
 
 	[LSRResourceScanResult[]] $ResourceScanResult = @();
 }
@@ -53,6 +57,7 @@ class LSRControlResultBase
     [string] $PreviousVerificationResult = [VerificationResult]::Manual;
 	[PSObject] $AttestationData;
 	[bool] $IsBaselineControl;
+	[bool] $HasOwnerAccessTag;
 
 	#Tracking information
 	[DateTime] $LastResultTransitionOn = [Constants]::AzSKDefaultDateTime;
