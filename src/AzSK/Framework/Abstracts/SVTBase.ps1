@@ -861,7 +861,6 @@ class SVTBase: AzSKRoot
 			$defaultAttestationExpiryInDays = [Constants]::DefaultControlExpiryInDays;
 			$expiryInDays=-1;
 			$controlResult=$eventcontext.ControlResults;	
-			$graceDays=$this.CalculateGraceInDays($eventcontext);
 			$isControlInGrace=$eventcontext.ControlResults.IsControlInGrace;
 			
 			if([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays") `
@@ -877,7 +876,8 @@ class SVTBase: AzSKRoot
 			}
 			else
 			{
-				if($isControlInGrace -and $controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater)
+				# Expire WillFixLater if GracePeriod has expired
+				if(-not($isControlInGrace) -and $controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater)
 				{
 					$expiryInDays=0;
 				}
@@ -889,12 +889,7 @@ class SVTBase: AzSKRoot
 					}
 					elseif([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays"))
 					{
-						#Check if control severity has expiry period
-						if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
-						{
-							$expiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity.$controlSeverity
-						}
-										
+															
 						#Check if control severity has expiry period
 						if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
 						{
@@ -1175,7 +1170,7 @@ class SVTBase: AzSKRoot
 
 							$currentControl.MaximumAllowedGraceDays = $this.CalculateGraceInDays($singleControlResult);
 
-							# Setting is isControlInGrace Flag		
+							# Setting isControlInGrace Flag		
 							if($scanFromDays -le $currentControl.MaximumAllowedGraceDays)
 							{
 								$currentControl.IsControlInGrace = $true
@@ -1200,38 +1195,38 @@ class SVTBase: AzSKRoot
 
 	[int] hidden CalculateGraceInDays([SVTEventContext] $context)
 	{
-		$isControlInGrace=$false;
+		
 		$controlResult=$context.ControlResults;
 		$graceDays=0;
+		$SeverityBasedGraceExpiryDays=0;
+		$ControlBasedGraceExpiryDays=0;
 		$currentControlItem=$context.controlItem;
 		$controlSeverity=$currentControlItem.ControlSeverity;
+		if([Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays"))
+		{
+			$SeverityBasedGraceExpiryDays=$this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity;
+		}
 		if($null -ne $currentControlItem.GraceExpiryDate)
 		{
-			$diff=0;
 			if($currentControlItem.GraceExpiryDate -gt [DateTime]::UtcNow )
 			{
-				# ToDo: Use [System.DateTime]::UtcNow.Subtract($date).Days way
-				# ToDo: Remove diff
-				$datenow=[DateTime]::UtcNow
-				$temp=New-TimeSpan -Start $currentControlItem.GraceExpiryDate -End $datenow
-				$diff=$temp.Days;
+				$ControlBasedGraceExpiryDays=$currentControlItem.GraceExpiryDate.Subtract([System.DateTime]::UtcNow).Days
 			}
 			#Setting Grace Days as the maximum no of days based on Severity or GraceExpiryDate
-			if([Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays") -and $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity -gt $diff)
+			if($SeverityBasedGraceExpiryDays -gt $ControlBasedGraceExpiryDays)
 			{
-				$graceDays = $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity
+				$graceDays = $SeverityBasedGraceExpiryDays;
 			}
 			else
 			{
-				$graceDays=$diff;
+				$graceDays=$ControlBasedGraceExpiryDays;
 			}
 		}
 		else
 		{
-			$graceDays = $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity;
+			$graceDays = $ControlBasedGraceExpiryDays;
 		}
-		
-		return $graceDays;
+	  return $graceDays;
 	}
 	
 }
