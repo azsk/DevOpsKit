@@ -18,6 +18,7 @@ class SVTCommandBase: CommandBase {
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
+        $this.CheckAndDisableAzureRMTelemetry()
     }
 
     hidden [SVTEventContext] CreateSVTEventContextObject() {
@@ -62,10 +63,12 @@ class SVTCommandBase: CommandBase {
         $arg.ExceptionMessage = $exception;
 
         $this.PublishEvent([SVTEvent]::CommandError, $arg);
+        $this.CheckAndEnableAzureRMTelemetry()
     }
 
     hidden [void] CommandCompleted([SVTEventContext[]] $arguments) {
         $this.PublishEvent([SVTEvent]::CommandCompleted, $arguments);
+        $this.CheckAndEnableAzureRMTelemetry()
     }
 
     [string] EvaluateControlStatus() {
@@ -175,5 +178,44 @@ class SVTCommandBase: CommandBase {
                 $this.CommandError($_);
             }
         }
+    }
+
+    hidden [void] CheckAndDisableAzureRMTelemetry()
+	{
+		#Disable AzureRM telemetry setting until scan is completed.
+		#This has been added to improve the performarnce of scan commands
+		#Telemetry will be re-enabled once scan is completed		
+		$dataCollectionPath = "$env:APPDATA\Windows Azure Powershell\AzurePSDataCollectionProfile.json"
+		if(Test-Path -Path $dataCollectionPath)
+		{
+			$dataCollectionProfile = Get-Content -path $dataCollectionPath | ConvertFrom-Json
+			if($dataCollectionProfile.enableAzureDataCollection)
+			{	
+				#Keep settings in 
+				$AzureRMDataCollectionSettingFolderpath= [Constants]::AzSKAppFolderPath + "\AzureRMDataCollectionSettings"
+				if(-not (Test-Path -Path $AzureRMDataCollectionSettingFolderpath))
+				{
+					mkdir -Path $AzureRMDataCollectionSettingFolderpath -Force
+				}
+				$AzureRMDataCollectionFilePath = $AzureRMDataCollectionSettingFolderpath + "\AzurePSDataCollectionProfile.json"
+				Copy-Item $dataCollectionPath $AzureRMDataCollectionFilePath					
+				Disable-AzureRmDataCollection  | Out-Null
+			}
+		}
+    }
+    
+    hidden [void] CheckAndEnableAzureRMTelemetry()
+    {
+        #Enabled AzureRM telemetry which got disabled at the start of command
+        $AzureRMDataCollectionSettingFilepath= [Constants]::AzSKAppFolderPath + "\AzureRMDataCollectionSettings\AzurePSDataCollectionProfile.json"
+        if(Test-Path -Path $AzureRMDataCollectionSettingFilepath)
+        {
+            $dataCollectionProfile = Get-Content -path $AzureRMDataCollectionSettingFilepath | ConvertFrom-Json
+            if($dataCollectionProfile -and $dataCollectionProfile.enableAzureDataCollection)
+            {
+                Enable-AzureRmDataCollection  | Out-Null
+            }
+        }
+
     }
 }
