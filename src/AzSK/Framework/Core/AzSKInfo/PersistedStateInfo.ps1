@@ -40,13 +40,13 @@ class PersistedStateInfo: CommandBase
 		  return $messages;
 		}
 		# Read file from Storage
-	    $storageReportHelper = [StorageReportHelper]::new(); 
-		$storageReportHelper.Initialize($false);	
+	    $complianceReportHelper = [ComplianceReportHelper]::new(); 
+		$complianceReportHelper.Initialize($false);	
 		$StorageReportJson =$null;
 		# Check for write access
-		if($storageReportHelper.HasStorageReportWriteAccessPermissions())
+		if($complianceReportHelper.HasStorageReportWriteAccessPermissions())
 		{
-	  	  $StorageReportJson = $storageReportHelper.GetLocalSubscriptionScanReport();
+	  	  $StorageReportJson = $complianceReportHelper.GetLocalSubscriptionScanReport();
 		}else
 		{
 		 $this.PublishCustomMessage("You don't have the required permissions to update user comments. If you'd like to update user comments, please request your subscription owner to grant you 'Contributor' access to the 'AzSKRG' resource group.",[MessageType]::Error);
@@ -135,8 +135,8 @@ class PersistedStateInfo: CommandBase
 					}
 				if($successCount -gt 0)
 				{
-					$finalscanReport=$storageReportHelper.MergeScanReport($SelectedSubscription);
-				    $storageReportHelper.SetLocalSubscriptionScanReport($finalscanReport);
+					$finalscanReport=$complianceReportHelper.MergeScanReport($SelectedSubscription);
+				    $complianceReportHelper.SetLocalSubscriptionScanReport($finalscanReport);
 				}
 				# If updation failed for any control, genearte error file
 				if(($erroredControls | Measure-Object).Count -gt 0)
