@@ -1213,7 +1213,7 @@ class SVTBase: AzSKRoot
 		}
     }
 
-
+	# ToDo: Use proper casing
 	[bool] hidden IsControlinGrace([SVTEventContext] $context)
 	{
 		$isControlinGrace=$false;

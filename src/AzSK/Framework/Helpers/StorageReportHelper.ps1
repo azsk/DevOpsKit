@@ -215,6 +215,8 @@ class StorageReportHelper
 			
 			try
 			{
+				# ToDo: check for the file found Test-File zip + json
+				# ToDo: Also add check to to turn off based on flag
 				# extract file from zip
 				$compressedFileName = $AzSKTemp+"\"+[Constants]::StorageReportBlobName +".zip"
 				Expand-Archive -Path $compressedFileName -DestinationPath $AzSKTemp -Force
@@ -224,10 +226,9 @@ class StorageReportHelper
 			catch
 			{
 				#unable to find zip file. return empty object
+				# ToDo: Return null
 				return [LocalSubscriptionReport]::new();
 			}
-			
-            
             $storageReport = [LocalSubscriptionReport] $StorageReportJson
 
 			return $storageReport;
@@ -304,6 +305,8 @@ class StorageReportHelper
     
     hidden [void] CleanTempFolder()
 	{
+		# ToDo: handle error, try catch + Error action continue
+		# ToDo: Temp/Storage constants
 		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\StorageReport";				
 		if(Test-Path "$AzSKTemp")
 		{

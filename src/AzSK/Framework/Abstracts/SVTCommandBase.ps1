@@ -19,6 +19,8 @@ class SVTCommandBase: CommandBase {
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
+
+        # ToDo: Check for the feature flag
 		$this.GetLocalSubscriptionData()
     }
 
@@ -96,6 +98,8 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlIds += $this.ControlIds;
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
+        # ToDo: remove InvocationContext, try to pass as param
+        # ToDo: Assumption: usercomment will only work when storage report feature flag is enable.
 		$svtObject.IncludeUserComments =$this.InvocationContext.BoundParameters['IncludeUserComments'];
 		$svtObject.StorageReportData = $this.StorageReportData
 
@@ -111,7 +115,7 @@ class SVTCommandBase: CommandBase {
 			$svtObject.PartialScanIdentifier =$this.PartialScanIdentifier
 		}
 		
-
+        # ToDo: Utilize exiting functions
         $this.InitializeControlState();
         $svtObject.ControlStateExt = $this.ControlStateExt;
     }
