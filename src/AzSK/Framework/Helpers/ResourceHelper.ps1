@@ -67,6 +67,8 @@ class StorageHelper: ResourceGroupHelper
 	hidden [PSStorageAccount] $StorageAccount = $null;
 	[string] $StorageAccountName;
 	[int] $HaveWritePermissions = 0;
+	[int] $retryCount = 3;
+	[int] $sleepIntervalInSecs = 10;
 
 	hidden [string] $ResourceType = "Microsoft.Storage/storageAccounts";
 
@@ -248,6 +250,31 @@ class StorageHelper: ResourceGroupHelper
 			throw [System.ArgumentException] ("The argument 'filesToUpload' is null or empty");
 		}
 		return $result;
+	}
+
+	[void] DownloadFilesFromBlob([string] $containerName, [string] $blobName, [string] $destinationPath, [bool] $overwrite)
+	{
+		$loopValue = $this.retryCount;
+		$sleepValue = $this.sleepIntervalInSecs;
+		while($loopValue -gt 0)
+		{
+			$loopValue = $loopValue - 1;
+			try {
+				if($overwrite)
+				{
+					Get-AzureStorageBlobContent -Blob $blobName -Context $this.StorageAccount.Context -Destination $destinationPath -Force -ErrorAction Stop
+				}
+				else {
+					Get-AzureStorageBlobContent -Blob $blobName -Context $this.StorageAccount.Context -Destination $destinationPath -ErrorAction Stop
+				}
+				$loopValue = 0;
+			}
+			catch {
+				#sleep for incremental 10 seconds before next retry;
+				Start-Sleep -Seconds $sleepValue;
+				$sleepValue = $sleepValue + 10;
+			}
+		}
 	}
 
 	[string] GenerateSASToken([string] $containerName)

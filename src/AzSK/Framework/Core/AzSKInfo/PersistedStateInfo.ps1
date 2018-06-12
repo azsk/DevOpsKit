@@ -42,16 +42,16 @@ class PersistedStateInfo: CommandBase
 		# Read file from Storage
 	    $storageReportHelper = [ComplianceReportHelper]::new(); 
 		$storageReportHelper.Initialize($false);	
-		$StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
+		$ComplianceReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
 		$SelectedSubscription=$null;
 		$erroredControls=@();
 		$ResourceScanResult=$null;
 		$ResourceData=@();
 		$successCount=0;
 		
-		if($null -ne $StorageReportJson -and [Helpers]::CheckMember($StorageReportJson,"Subscriptions"))
+		if($null -ne $ComplianceReportJson -and [Helpers]::CheckMember($ComplianceReportJson,"Subscriptions"))
 		{
-	    	$SelectedSubscription = $StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
+	    	$SelectedSubscription = $ComplianceReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
 		}
 		if(($SelectedSubscription|Measure-Object).Count -gt 0)
 		{
