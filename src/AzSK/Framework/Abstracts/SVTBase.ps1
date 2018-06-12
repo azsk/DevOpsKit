@@ -657,7 +657,7 @@ class SVTBase: AzSKRoot
 		$controlStateValue = @();
 		try
 		{
-			$this.GetDataFromSubscriptionReport($singleControlResult);
+			$this.GetDataFromSubscriptionReport($eventContext);
 
 			$resourceStates = $this.GetResourceState()			
 			if(($resourceStates | Measure-Object).Count -ne 0)
