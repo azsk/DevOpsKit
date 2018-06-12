@@ -704,7 +704,7 @@ try {
 
 	if ($isAzSKAvailable) {
 		#Remove helper schedule as AzSK module is available
-		Write-Output("SA: Removing helper schedule...")
+		Write-Output("SA: Disabling helper schedule...")
 		DisableHelperSchedules
     }
    

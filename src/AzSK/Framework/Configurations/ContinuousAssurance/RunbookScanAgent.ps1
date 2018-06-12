@@ -704,8 +704,8 @@ try {
 
 	if ($isAzSKAvailable) {
 		#Remove helper schedule as AzSK module is available
-		Write-Output("SA: Removing helper schedule...")
-		DisableHelperSchedules
+		Write-Output("SA: Disabling helper schedule...")
+		DisableHelperSchedules	
     }
    
     PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
