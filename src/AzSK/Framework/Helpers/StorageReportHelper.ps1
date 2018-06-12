@@ -2,168 +2,39 @@ Set-StrictMode -Version Latest
 
 class StorageReportHelper
 {
-    hidden [PSObject] $AzSKResourceGroup = $null;
-	hidden [PSObject] $AzSKStorageAccount = $null;
-	hidden [PSObject] $AzSKStorageContainer = $null;
-	hidden [int] $HasStorageReportReadPermissions = -1;
-	hidden [int] $HasStorageReportWritePermissions = -1;
+	
+	hidden [StorageHelper] $azskStorageInstance;
     hidden [int] $retryCount = 3;
     
     StorageReportHelper()
 	{
-    }
-    
-    hidden [void] Initialize([bool] $CreateResourcesIfNotExists)
+		$this.CreateComplianceReportContainer();
+	} 
+	
+	hidden [void] CreateComplianceReportContainer()
 	{
-		$this.GetAzSKStorageReportContainer($CreateResourcesIfNotExists)
-    }
-    
-    hidden [void] GetAzSKStorageReportContainer([bool] $createIfNotExists)
-	{
-		$ContainerName = [Constants]::StorageReportContainerName;
-		if($null -eq $this.AzSKStorageAccount)
-		{
-			$this.GetAzSKStorageAccount($createIfNotExists)
-		}
-		if($null -eq $this.AzSKStorageAccount)
-		{
-			#No storage account => no permissions at all
-			$this.HasStorageReportReadPermissions = 0
-			$this.HasStorageReportWritePermissions = 0
-			return;
-        }
-        
-		$this.HasStorageReportReadPermissions = 0					
-		$this.HasStorageReportWritePermissions = 0
-		$writeTestContainerName = "writetest";
-
-		#see if user can create the test container in the storage account. If yes then user have both RW permissions. 
-		try
-		{
-			$containerObject = Get-AzureStorageContainer -Context $this.AzSKStorageAccount.Context -Name $writeTestContainerName -ErrorAction SilentlyContinue
-			if($null -ne $containerObject)
+		try {
+			$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+			$azskStorageAccount = Find-AzureRmResource -ResourceNameContains $([Constants]::StorageAccountPreName) -ResourceGroupNameEquals $azskRGName -ResourceType 'Microsoft.Storage/storageAccounts'
+			if($azskStorageAccount)
 			{
-				Remove-AzureStorageContainer -Name $writeTestContainerName -Context  $this.AzSKStorageAccount.Context -ErrorAction Stop -Force
-				$this.HasStorageReportWritePermissions = 1
-				$this.HasStorageReportReadPermissions = 1
-			}
-			else
-			{
-				New-AzureStorageContainer -Context $this.AzSKStorageAccount.Context -Name $writeTestContainerName -ErrorAction Stop
-				$this.HasStorageReportWritePermissions = 1
-				$this.HasStorageReportReadPermissions = 1
-				Remove-AzureStorageContainer -Name $writeTestContainerName -Context  $this.AzSKStorageAccount.Context -ErrorAction SilentlyContinue -Force
-			}				
-		}
-		catch
-		{
-			$this.HasStorageReportWritePermissions = 0
-		}
-		if($this.HasStorageReportWritePermissions -eq 1)
-		{
-			try
-			{
-				if($createIfNotExists)
-				{
-					New-AzureStorageContainer -Context $this.AzSKStorageAccount.Context -Name $ContainerName -ErrorAction SilentlyContinue
-				}
-				$containerObject = Get-AzureStorageContainer -Context $this.AzSKStorageAccount.Context -Name $ContainerName -ErrorAction SilentlyContinue
-				$this.AzSKStorageContainer = $containerObject;					
-			}
-			catch
-			{
-				# Add retry logic, after 3 unsuccessful attempt throw the exception.
-			}
-		}
-		else
-		{
-			# If user doesn't have write permission, check at least user have read permission
-			try
-			{
-				#Able to read the container then read permissions are good
-				$containerObject = Get-AzureStorageContainer -Context $this.AzSKStorageAccount.Context -Name $ContainerName -ErrorAction Stop
-				$this.AzSKStorageContainer = $containerObject;
-				$this.HasStorageReportReadPermissions = 1
-			}
-			catch
-			{
-				#Resetting permissions in the case of exception
-				$this.HasStorageReportReadPermissions = 0			
+				$this.azskStorageInstance = [StorageHelper]::new($subscriptionId,$azskRGName,$azskStorageAccount.Location, $azskStorageAccount.Name);
+				$this.azskStorageInstance.CreateStorageContainerIfNotExists([Constants]::StorageReportContainerName);		
 			}	
+		}
+		catch {
+			#exception will be thrown if it fails to access or create the snapshot container
 		}		
-    }
-    
-    hidden [void] GetAzSKStorageAccount($createIfNotExists)
-	{
-		if($null -eq $this.AzSKResourceGroup)
-		{
-			$this.GetAzSKRG($createIfNotExists);
-		}
-		if($null -ne $this.AzSKResourceGroup)
-		{
-			$StorageAccount  = $null;
-			$loopValue = $this.retryCount;
-			while($loopValue -gt 0)
-			{
-				$loopValue = $loopValue - 1;
-				try
-				{
-					$StorageAccount = Get-AzureRmStorageAccount -ResourceGroupName $this.AzSKResourceGroup.ResourceGroupName -ErrorAction Stop | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction Stop 
-					$loopValue = 0;
-				}
-				catch
-				{
-					#eat this exception and retry
-				}
-			}			
-
-			#if no storage account found then it assumes that there is no control state feature is not used and if there are more than one storage account found it assumes the same
-			if($createIfNotExists -and ($null -eq $StorageAccount -or ($StorageAccount | Measure-Object).Count -eq 0))
-			{
-				$storageAccountName = ("azsk" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"));	
-				$storageObject = [Helpers]::NewAzskCompliantStorage($storageAccountName, $this.AzSKResourceGroup.ResourceGroupName, [Constants]::AzSKRGLocation)
-				if($null -ne $storageObject -and ($storageObject | Measure-Object).Count -gt 0)
-				{
-					$loopValue = $this.retryCount;
-					while($loopValue -gt 0)
-					{
-						$loopValue = $loopValue - 1;
-						try
-						{
-							$StorageAccount = Get-AzureRmStorageAccount -ResourceGroupName $this.AzSKResourceGroup.ResourceGroupName -ErrorAction Stop | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction Stop 					
-							$loopValue = 0;
-						}
-						catch
-						{
-							#eat this exception and retry
-						}
-					}					
-				}					
-			}
-			$this.AzSKStorageAccount = $StorageAccount;
-		}
-    }
-    
-    hidden [PSObject] GetAzSKRG([bool] $createIfNotExists)
-	{
-		$azSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
-
-		$resourceGroup = Get-AzureRmResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
-		if($createIfNotExists -and ($null -eq $resourceGroup -or ($resourceGroup | Measure-Object).Count -eq 0))
-		{
-			if([Helpers]::NewAzSKResourceGroup($azSKConfigData.AzSKRGName, [Constants]::AzSKRGLocation, ""))
-			{
-				$resourceGroup = Get-AzureRmResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
-			}
-		}
-		$this.AzSKResourceGroup = $resourceGroup
-		return $resourceGroup;
-    }
+	}
     
     hidden [LocalSubscriptionReport] GetLocalSubscriptionScanReport()
 	{
 		try
 		{
+			if($this.azskStorageInstance.HaveWritePermissions -eq 0)
+			{
+				return $null;
+			}
             $storageReportBlobName = [Constants]::StorageReportBlobName + ".zip"
             
             #Look of is there is a AzSK RG and AzSK Storage account
@@ -241,6 +112,10 @@ class StorageReportHelper
 	# ToDo: Save the file name as subid.json
     hidden [LSRSubscription] GetLocalSubscriptionScanReport([string] $subscriptionId)
     {
+		if($this.azskStorageInstance.HaveWritePermissions -eq 0)
+		{
+			return $null;
+		}
         $fullScanResult = $this.GetLocalSubscriptionScanReport()
         if([Helpers]::CheckMember($fullScanResult,"Subscriptions") -and ($fullScanResult.Subscriptions | Measure-Object ).Count -gt 0)
         {
@@ -257,6 +132,10 @@ class StorageReportHelper
 	{		
 		try
 		{
+			if($this.azskStorageInstance.HaveWritePermissions -eq 0)
+			{
+				return;
+			}
 			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\StorageReport";				
 			if(-not (Test-Path "$AzSKTemp"))
 			{
