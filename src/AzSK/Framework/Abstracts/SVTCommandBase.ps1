@@ -100,7 +100,6 @@ class SVTCommandBase: CommandBase {
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
         # ToDo: remove InvocationContext, try to pass as param
         # ToDo: Assumption: usercomment will only work when storage report feature flag is enable.
-		$svtObject.IncludeUserComments =$this.InvocationContext.BoundParameters['IncludeUserComments'];
 		$svtObject.StorageReportData = $this.StorageReportData
 
         #Include Server Side Exclude Tags
