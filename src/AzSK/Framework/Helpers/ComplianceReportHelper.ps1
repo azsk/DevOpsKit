@@ -40,8 +40,7 @@ class ComplianceReportHelper
 			}
             $storageReportBlobName = [Constants]::StorageReportBlobName + ".zip"
             
-            $ContainerName = [Constants]::StorageReportContainerName
-            $loopValue = $this.retryCount;
+            $ContainerName = [Constants]::StorageReportContainerName           
             $AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\StorageReport";
 			
 			if(-not (Test-Path -Path $AzSKTemp))
@@ -54,8 +53,6 @@ class ComplianceReportHelper
 			$StorageReportJson = $null;
 			try
 			{
-				# ToDo: check for the file found Test-File zip + json
-				# ToDo: Also add check to to turn off based on flag
 				# extract file from zip
 				$compressedFileName = $AzSKTemp+"\"+[Constants]::StorageReportBlobName +".zip"
 				if((Test-Path -Path $compressedFileName -PathType Leaf))
@@ -119,36 +116,19 @@ class ComplianceReportHelper
 				Remove-Item -Path "$AzSKTemp\*" -Force -Recurse 
 			}
 
-			$fileName = "$AzSKTemp\" + [Constants]::StorageReportBlobName +".json"
+			$fileName = "$AzSKTemp\" + $this.subscriptionId +".json"
 			$compressedFileName = "$AzSKTemp\" + [Constants]::StorageReportBlobName +".zip"
-
-			$StorageAccount = $this.AzSKStorageAccount;						
-			$containerObject = $this.AzSKStorageContainer
-			$ContainerName = ""
-			if($null -ne $this.AzSKStorageContainer)
-			{
-				$ContainerName = $this.AzSKStorageContainer.Name
-			}
+			$ContainerName = [Constants]::StorageReportContainerName;
 
 			[Helpers]::ConvertToJsonCustomCompressed($scanResultForStorage) | Out-File $fileName -Force
 
 			#compress file before store to storage
+
 			Compress-Archive -Path $fileName -CompressionLevel Optimal -DestinationPath $compressedFileName -Update
 
-			$loopValue = $this.retryCount;
-			while($loopValue -gt 0)
-			{
-				$loopValue = $loopValue - 1;
-				try
-				{
-					Set-AzureStorageBlobContent -File $compressedFileName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
-					$loopValue = 0;
-				}
-				catch
-				{
-					#eat this exception and retry
-				}
-			}
+			$fileInfos = @();
+			$fileInfos += [System.IO.FileInfo]::new($compressedFileName);
+			$this.azskStorageInstance.UploadFilesToBlob($ContainerName, "", $fileInfos, $true);
 		}
 		finally
 		{
