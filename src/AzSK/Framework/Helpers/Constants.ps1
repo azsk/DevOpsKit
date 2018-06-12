@@ -154,6 +154,8 @@ class Constants
 	static [string] $StorageReportContainerName = "compliance-state"
 	static [string] $StorageReportBlobName = "LatestSnapshot"
 	static [DateTime] $AzSKDefaultDateTime = '1900-01-01T00:00:00'
+	static [int] $ControlResultComplianceDays = 3
+	static [int] $OwnerControlResultComplianceDays = 90
 
 	static [void] SetAzSKModuleName($moduleName)
 	{

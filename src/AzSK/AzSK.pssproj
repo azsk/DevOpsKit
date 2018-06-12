@@ -104,6 +104,7 @@
     <Compile Include="Framework\Configurations\Migration\PolicyMigration.ps1" />
     <Compile Include="Framework\Core\ARMChecker\ARMCheckerStatus.ps1" />
     <Compile Include="Framework\Core\AzSKInfo\BasicInfo.ps1" />
+    <Compile Include="Framework\Core\AzSKInfo\ComplianceInfo.ps1" />
     <Compile Include="Framework\Core\FixControl\Services\CDNFix.ps1" />
     <Compile Include="Framework\Core\FixControl\Services\TrafficManagerFix.ps1" />
     <Compile Include="Framework\Core\FixControl\Services\RedisCacheFix.ps1" />

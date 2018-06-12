@@ -106,7 +106,7 @@ class SVTControlAttestation
 		$Justification=""
 		$Attestationstate=""
 		$message = ""
-		$ValidAttestationStates = $this.ComputeEligibleAttestationState($controlItem, $ControlSeverity, $controlResult);
+		$ValidAttestationStates = $this.ComputeEligibleAttestationState($controlItem, $controlResult);
 		[String[]]$ValidAttestationKey = @(0)
 		#Sort attestation status based on key value
 		if($null -ne $ValidAttestationStates)
@@ -483,7 +483,7 @@ class SVTControlAttestation
         }
 	}
 
-	[String[]] ComputeEligibleAttestationState([SVTEventContext] $controlItem, [ControlSeverity] $ControlSeverity, [ControlResult] $controlResult)
+	[String[]] ComputeEligibleAttestationState([SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
 	    [System.Collections.ArrayList] $ValidAttestationStates = $null
 	    #Default attestation state
@@ -496,24 +496,14 @@ class SVTControlAttestation
 			$ValidAttestationStates += $controlItem.ControlItem.ValidAttestationStates | Select-Object -Unique
 		}
 		$ValidAttestationStates = $ValidAttestationStates | Select-Object -Unique
-	    #check valid grace period based on control severity
-	    if(($null -eq $ControlSeverity) -or ($ControlSeverity -notin [ControlSeverity].GetEnumNames()))
-	    {
-	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.Default
-	    }
-	    else
-	    {
-	        $gracePeriod = $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity
-	    }
-		
-		if(($null -ne $controlResult.FirstScannedOn) -and (-not $controlResult.IsControlInGrace) -and ([DateTime]::UtcNow -gt $controlResult.FirstScannedOn.addDays($gracePeriod)))
+	    #if control not in grace, disable WillFixLater option		
+		if(-not $controlResult.IsControlInGrace)
 		{
 		    if($ValidAttestationStates -contains [AttestationStatus]::WillFixLater)
 		    {
 		        $ValidAttestationStates.Remove("WillFixLater")
 		    }
 		}
-		
 	    return [String[]]$ValidAttestationStates;
 	}
 

@@ -84,10 +84,10 @@ class LSRControlResultBase
 }
 
 class LSRSubscriptionControlResult : LSRControlResultBase {
-	[SubscriptionScanKind] $ScanKind;
+	[SubscriptionScanKind] $ScanKind = [SubscriptionScanKind]::Partial;
 }
 
 class LSRResourceScanResult : LSRControlResultBase {
-	[ServiceScanKind] $ScanKind;
+	[ServiceScanKind] $ScanKind = [ServiceScanKind]::Partial;
 	[string] $ChildResourceName = "";
 }
