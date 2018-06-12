@@ -60,7 +60,7 @@ class BotService: SVTBase
 		else
 		{
 			$controlResult.AddMessage([VerificationResult]::Passed,
-                                    [MessageData]::new("Application Insights is not Configured for " +  $this.ResourceContext.ResourceName));
+                                    [MessageData]::new("Application Insights is not Configured for " +  $this.ResourceContext.ResourceName + ". Please refer recommendation of the same to implement."));
 		}
 
         return $controlResult;
