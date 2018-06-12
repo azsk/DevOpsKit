@@ -66,6 +66,7 @@ class StorageHelper: ResourceGroupHelper
 {
 	hidden [PSStorageAccount] $StorageAccount = $null;
 	[string] $StorageAccountName;
+	[int] $HaveWritePermissions = 0;
 
 	hidden [string] $ResourceType = "Microsoft.Storage/storageAccounts";
 
@@ -117,6 +118,9 @@ class StorageHelper: ResourceGroupHelper
 				$this.StorageAccount = $null;
 				throw ([SuppressedException]::new("Unable to fetch the storage account [$($this.StorageAccountName)]", [SuppressedExceptionType]::InvalidOperation))				
 			}
+
+			#precompute storage access permissions for the current scan account
+			$this.ComputePermissions();
 		}
 	}
 
@@ -124,7 +128,7 @@ class StorageHelper: ResourceGroupHelper
 	{
 		return $this.CreateStorageContainerIfNotExists($containerName, [BlobContainerPublicAccessType]::Off);
 	}
-
+	
 	[AzureStorageContainer] CreateStorageContainerIfNotExists([string] $containerName, [BlobContainerPublicAccessType] $accessType)
 	{
 		if([string]::IsNullOrWhiteSpace($containerName))
@@ -152,6 +156,42 @@ class StorageHelper: ResourceGroupHelper
 
 		return $container;
 	}
+
+	hidden [void] ComputePermissions()
+	{		
+		if($null -eq $this.StorageAccount)
+		{
+			#No storage account => no permissions at all
+			$this.HaveWritePermissions = 0
+			return;
+        }
+        
+		$this.HaveWritePermissions = 0
+		#this is local constant with dummy container name to check for storage permissions
+		$writeTestContainerName = "writetest";
+
+		#see if user can create the test container in the storage account. If yes then user have both RW permissions. 
+		try
+		{
+			$containerObject = Get-AzureStorageContainer -Context $this.StorageAccount.Context -Name $writeTestContainerName -ErrorAction SilentlyContinue
+			if($null -ne $containerObject)
+			{
+				Remove-AzureStorageContainer -Name $writeTestContainerName -Context  $this.StorageAccount.Context -ErrorAction Stop -Force
+				$this.HaveWritePermissions = 1
+			}
+			else
+			{
+				New-AzureStorageContainer -Context $this.StorageAccount.Context -Name $writeTestContainerName -ErrorAction Stop
+				$this.HaveWritePermissions = 1
+				Remove-AzureStorageContainer -Name $writeTestContainerName -Context  $this.StorageAccount.Context -ErrorAction SilentlyContinue -Force
+			}				
+		}
+		catch
+		{
+			$this.HaveWritePermissions = 0
+		}
+    }
+
 
 	[AzureStorageContainer] UploadFilesToBlob([string] $containerName, [string] $blobPath, [System.IO.FileInfo[]] $filesToUpload, [bool] $overwrite)
 	{
