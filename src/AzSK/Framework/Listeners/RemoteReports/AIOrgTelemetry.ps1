@@ -138,7 +138,8 @@ class AIOrgTelemetry: ListenerBase {
 						   "ResourceType" = $res.ResourceType;
 						   "ResourceGroupName" = $res.ResourceGroupName;
 						   "Location" = $res.Location;
-						   "SubscriptionId" = $res.SubscriptionId
+						   "SubscriptionId" = $res.SubscriptionId;
+						   "Tags" = [Helpers]::FetchTagsString($res.Tags)
 					   }
 					   $telemetryEvent = "" | Select-Object Name, Properties, Metrics
 					   $telemetryEvent.Name = "Resource Inventory"
