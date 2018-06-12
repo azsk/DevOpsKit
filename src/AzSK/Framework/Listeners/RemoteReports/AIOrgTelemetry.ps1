@@ -162,16 +162,18 @@ class AIOrgTelemetry: ListenerBase {
                 $controlsScanned = ($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0
 				$scanSource = [RemoteReportHelper]::GetScanSource();
 				$scannerVersion = $currentInstance.GetCurrentModuleVersion();
+
+				# ToDo: Need to calculate ScanKind
 				#$scanKind = [RemoteReportHelper]::GetServiceScanKind($this.InvocationContext.MyCommand.Name, $this.InvocationContext.BoundParameters);
 				$scanKind = [ServiceScanKind]::Partial;
 
 				if($controlsScanned)
 				{
 					$resourcesFlat
+					# ToDo: Need disable comment, should be run while CA
 					# if($scanSource -eq [ScanSource]::Runbook) 
 					# { 
 						$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
-						#$resources.SubscriptionId = $invocationContext.BoundParameters["SubscriptionId"]
 						$resources.ResourceGroups = [System.Collections.ArrayList]::new()
 						$resourcesFlat = Find-AzureRmResource
 						$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
@@ -198,10 +200,9 @@ class AIOrgTelemetry: ListenerBase {
 							$resources.ResourceGroups.Add($resourceGroup) | Out-Null
 						}
 					# }
-					$storageReportHelperInstance = [StorageReportHelper]::new();
-					$storageReportHelperInstance.Initialize($true);
-					$finalLocalSubReport = $storageReportHelperInstance.MergeSVTScanResult($Event.SourceArgs, $resources, $scanSource, $scannerVersion, $scanKind)
-					$StorageReportHelperInstance.SetLocalSubscriptionScanReport($finalLocalSubReport)
+					$StorageReportHelperInstance = [StorageReportHelper]::new();
+					$StorageReportHelperInstance.Initialize($true);
+					$StorageReportHelperInstance.MergeSVTScanResult($Event.SourceArgs, $resources, $scanSource, $scannerVersion, $scanKind)
 				}
             }
             catch 
