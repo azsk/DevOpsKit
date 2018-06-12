@@ -31,6 +31,7 @@ class ComplianceReportHelper
     
     hidden [LocalSubscriptionReport] GetLocalSubscriptionScanReport()
 	{
+		[LocalSubscriptionReport] $storageReport = $null;
 		try
 		{
 			if($this.azskStorageInstance.HaveWritePermissions -eq 0)
@@ -39,71 +40,42 @@ class ComplianceReportHelper
 			}
             $storageReportBlobName = [Constants]::StorageReportBlobName + ".zip"
             
-            #Look of is there is a AzSK RG and AzSK Storage account
-            $StorageAccount = $this.AzSKStorageAccount;						
-            $containerObject = $this.AzSKStorageContainer
-            $ContainerName = ""
-            if($null -ne $this.AzSKStorageContainer)
-            {
-                $ContainerName = $this.AzSKStorageContainer.Name
-            }
-            else
-            {
-                return [LocalSubscriptionReport]::new();
-            }
-
+            $ContainerName = [Constants]::StorageReportContainerName
             $loopValue = $this.retryCount;
-            $StorageReportBlob = $null;
-            while($loopValue -gt 0 -and $null -eq $StorageReportBlob)
-            {
-                $loopValue = $loopValue - 1;
-                $StorageReportBlob = Get-AzureStorageBlob -Container $ContainerName -Blob $storageReportBlobName -Context $StorageAccount.Context -ErrorAction SilentlyContinue
-            }
-
-            if($null -eq $StorageReportBlob)
-            {
-                return [LocalSubscriptionReport]::new();
-            }
             $AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\StorageReport";
-            if(-not (Test-Path -Path $AzSKTemp))
+			
+			if(-not (Test-Path -Path $AzSKTemp))
             {
                 mkdir -Path $AzSKTemp -Force
             }
 
-            $loopValue = $this.retryCount;
-            while($loopValue -gt 0)
-            {
-                $loopValue = $loopValue - 1;
-                try
-                {
-                    Get-AzureStorageBlobContent -CloudBlob $StorageReportBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
-                    $loopValue = 0;
-                }
-                catch
-                {
-                    #eat this exception and retry
-                }
-            }
-            $fileName = $AzSKTemp+"\"+[Constants]::StorageReportBlobName +".json"
-			
+			$this.azskStorageInstance.DownloadFilesFromBlob($ContainerName, $storageReportBlobName, $AzSKTemp, $true);
+            $fileName = $AzSKTemp+"\"+$this.subscriptionId +".json";
+			$StorageReportJson = $null;
 			try
 			{
 				# ToDo: check for the file found Test-File zip + json
 				# ToDo: Also add check to to turn off based on flag
 				# extract file from zip
 				$compressedFileName = $AzSKTemp+"\"+[Constants]::StorageReportBlobName +".zip"
-				Expand-Archive -Path $compressedFileName -DestinationPath $AzSKTemp -Force
-
-				$StorageReportJson = (Get-ChildItem -Path $fileName -Force | Get-Content | ConvertFrom-Json)
+				if((Test-Path -Path $compressedFileName -PathType Leaf))
+				{
+					Expand-Archive -Path $compressedFileName -DestinationPath $AzSKTemp -Force
+					if((Test-Path -Path $fileName -PathType Leaf))
+					{
+						$StorageReportJson = (Get-ChildItem -Path $fileName -Force | Get-Content | ConvertFrom-Json)
+					}
+				}
 			}
 			catch
 			{
 				#unable to find zip file. return empty object
-				# ToDo: Return null
-				return [LocalSubscriptionReport]::new();
+				return $null;
 			}
-            $storageReport = [LocalSubscriptionReport] $StorageReportJson
-
+			if($null -ne $StorageReportJson)
+			{
+				$storageReport = [LocalSubscriptionReport] $StorageReportJson;
+			}
 			return $storageReport;
 		}
 		finally{
@@ -118,16 +90,15 @@ class ComplianceReportHelper
 		{
 			return $null;
 		}
-        $fullScanResult = $this.GetLocalSubscriptionScanReport()
-        if([Helpers]::CheckMember($fullScanResult,"Subscriptions") -and ($fullScanResult.Subscriptions | Measure-Object ).Count -gt 0)
+        $fullScanResult = $this.GetLocalSubscriptionScanReport();
+        if($null -ne $fullScanResult -and ($fullScanResult.Subscriptions | Measure-Object ).Count -gt 0)
         {
             return $fullScanResult.Subscriptions | Where-Object { $_.SubscriptionId -eq $subId }
         }
         else
         {
-            return [LSRSubscription]::new()
+            return $null;
         }
-        
     }
 
     hidden [void] SetLocalSubscriptionScanReport([LocalSubscriptionReport] $scanResultForStorage)
