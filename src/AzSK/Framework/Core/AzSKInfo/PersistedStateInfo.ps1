@@ -6,6 +6,7 @@ class PersistedStateInfo: CommandBase
 	
 	hidden [PSObject] $AzSKRG = $null
 	hidden [String] $AzSKRGName = ""
+	hidden [string] $subscriptionId;
 
 
 	PersistedStateInfo([string] $subscriptionId, [InvocationInfo] $invocationContext): 
@@ -14,6 +15,7 @@ class PersistedStateInfo: CommandBase
 		#$this.DoNotOpenOutputFolder = $true;
 		$this.AzSKRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
 		$this.AzSKRG = Get-AzureRmResourceGroup -Name $this.AzSKRGName -ErrorAction SilentlyContinue
+		$this.subscriptionId = $subscriptionId;
 	}
 	
 	[MessageTableData[]] UpdatePersistedState([string] $filePath)
@@ -40,7 +42,7 @@ class PersistedStateInfo: CommandBase
 		  return $messages;
 		}
 		# Read file from Storage
-	    $storageReportHelper = [ComplianceReportHelper]::new(); 
+	    $storageReportHelper = [ComplianceReportHelper]::new($this.subscriptionId); 
 		$storageReportHelper.Initialize($false);	
 		$ComplianceReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
 		$SelectedSubscription=$null;
@@ -146,5 +148,3 @@ class PersistedStateInfo: CommandBase
 		return $messages;
     }
 }
-
-
