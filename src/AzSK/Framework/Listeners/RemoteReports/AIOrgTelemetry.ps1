@@ -161,7 +161,7 @@ class AIOrgTelemetry: ListenerBase {
             {
 				$settings = [ConfigurationManager]::GetAzSKConfigData();
 				# ToDo: Rename variable
-				if(!$settings.PersistScanReportInLocalSubscription) {return;}
+				if(!$settings.PersistScanReportInSubscription) {return;}
 
 				#ToDo:  Check for first..
                 $controlsScanned = ($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0
