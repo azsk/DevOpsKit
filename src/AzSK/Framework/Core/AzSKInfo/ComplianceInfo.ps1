@@ -17,7 +17,7 @@ class ComplianceInfo: CommandBase
 
 	hidden [void] GetComplianceScanData()
 	{
-		$ComplianceReportHelper = [ComplianceReportHelper]::new();
+		$ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId);
 		$StorageReportData =  $ComplianceReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId)
 		
 		if($null -ne $StorageReportData -and $null -ne $StorageReportData.ScanDetails)

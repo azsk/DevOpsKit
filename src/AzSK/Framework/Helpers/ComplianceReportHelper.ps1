@@ -4,10 +4,12 @@ class ComplianceReportHelper
 {
 	
 	hidden [StorageHelper] $azskStorageInstance;
-    hidden [int] $retryCount = 3;
+	hidden [int] $retryCount = 3;
+	hidden [string] $subscriptionId;
     
-    ComplianceReportHelper()
+    ComplianceReportHelper([string] $subId)
 	{
+		$this.subscriptionId = $subId;
 		$this.CreateComplianceReportContainer();
 	} 
 	
@@ -18,7 +20,7 @@ class ComplianceReportHelper
 			$azskStorageAccount = Find-AzureRmResource -ResourceNameContains $([Constants]::StorageAccountPreName) -ResourceGroupNameEquals $azskRGName -ResourceType 'Microsoft.Storage/storageAccounts'
 			if($azskStorageAccount)
 			{
-				$this.azskStorageInstance = [StorageHelper]::new($subscriptionId,$azskRGName,$azskStorageAccount.Location, $azskStorageAccount.Name);
+				$this.azskStorageInstance = [StorageHelper]::new($this.subscriptionId, $azskRGName,$azskStorageAccount.Location, $azskStorageAccount.Name);
 				$this.azskStorageInstance.CreateStorageContainerIfNotExists([Constants]::StorageReportContainerName);		
 			}	
 		}
