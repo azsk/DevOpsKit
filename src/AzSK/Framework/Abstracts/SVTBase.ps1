@@ -521,11 +521,11 @@ class SVTBase: AzSKRoot
                 $controlResult.AddError($_);
                 $singleControlResult.ControlResults += $controlResult;
                 $this.ControlError($controlItem, $_);
-            }
+			}
+			
+			# ToDo: call GetDataFromSubscriptionReport fun in post process data
 			$this.GetDataFromSubscriptionReport($singleControlResult);
 			$this.PostProcessData($singleControlResult);
-
-			
 
 			# Check for the control which requires elevated permission to modify 'Recommendation' so that user can know it is actually automated if they have the right permission
 			if($singleControlResult.ControlItem.Automated -eq "Yes")
@@ -871,7 +871,7 @@ class SVTBase: AzSKRoot
 				$defaultAttestationExpiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.Default
 			}			
 			#Expiry in the case of WillFixLater or StateConfirmed/Recurring Attestation state will be based on Control Severity.
-			if($controlState.AttestationStatus -eq [AttestationStatus]::NotAnIssue -or $controlState.AttestationStatus -eq [AttestationStatus]::NotApplicable )
+			if($controlState.AttestationStatus -eq [AttestationStatus]::NotAnIssue -or $controlState.AttestationStatus -eq [AttestationStatus]::NotApplicable)
 			{
 				$expiryInDays=$defaultAttestationExpiryInDays;
 			}
@@ -1123,6 +1123,7 @@ class SVTBase: AzSKRoot
 
 	}
 
+	# ToDo: Check the feature flag
 	hidden [void] GetDataFromSubscriptionReport($singleControlResult)
     {   try
 	    {
@@ -1130,11 +1131,15 @@ class SVTBase: AzSKRoot
 			{
 				$ResourceData = @();
 				$ResourceScanResult=@();
+
+				# ToDo: Merge if
 				if($singleControlResult.FeatureName -eq "SubscriptionCore")
 				{
 					if([Helpers]::CheckMember($this.StorageReportData.ScanDetails,"SubscriptionScanResult"))
 					{
+						
 						$ResourceData = $this.StorageReportData.ScanDetails.SubscriptionScanResult
+						# ToDo: Scan result rename
 						$ResourceScanResult=$ResourceData
 					}
 				}
@@ -1147,34 +1152,43 @@ class SVTBase: AzSKRoot
 				     	{
 					    	$ResourceScanResult = $ResourceData.ResourceScanResult 
 						}
-					
 					}			
 				}
 			
-					if(($ResourceScanResult | Measure-Object).Count -gt 0 )
+				# ToDo: Duplicate if
+				if(($ResourceScanResult | Measure-Object).Count -gt 0 )
+				{
+					#$ResourceScanResult=$ResourceData.ResourceScanResult
+					if(($ResourceScanResult | Measure-Object).Count -gt 0)
 					{
-						#$ResourceScanResult=$ResourceData.ResourceScanResult
-						if(($ResourceScanResult | Measure-Object).Count -gt 0)
-						{
-							[ControlResult[]] $controlsResults = @();
-							$singleControlResult.ControlResults | ForEach-Object {
-								$currentControl=$_
-		
-								$matchedControlResult=$ResourceScanResult | Where-Object {
-								($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (  ([Helpers]::CheckMember($currentControl, "ChildResourceName") -and $_.ChildResourceName -eq $currentControl.ChildResourceName) -or (-not([Helpers]::CheckMember($currentControl, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
-								}
-		
-								if($null -ne  $matchedControlResult)
-								{
-									$currentControl.UserComments = $matchedControlResult.UserComments
-									$currentControl.FirstFailedOn = $matchedControlResult.FirstFailedOn
-									$currentControl.FirstScannedOn = $matchedControlResult.FirstScannedOn
+						[ControlResult[]] $controlsResults = @();
+						$singleControlResult.ControlResults | ForEach-Object {
+							$currentControl=$_
+	
+							$matchedControlResult=$ResourceScanResult | Where-Object {
+								# ToDo: Optimize check member
+								($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (([Helpers]::CheckMember($currentControl, "ChildResourceName") -and $_.ChildResourceName -eq $currentControl.ChildResourceName) -or (-not([Helpers]::CheckMember($currentControl, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
+							}
+	
+							# initialize default values
+							$currentControl.FirstScannedOn = [DateTime]::UtcNow
+							if($currentControl.ActualVerificationResult -ne [VerificationResult]::Passed)
+							{
+								$currentControl.FirstFailedOn = [DateTime]::UtcNow
+							}
+							if($null -ne  $matchedControlResult)
+							{
+								$currentControl.UserComments = $matchedControlResult.UserComments
+								$currentControl.FirstFailedOn = $matchedControlResult.FirstFailedOn
+								$currentControl.FirstScannedOn = $matchedControlResult.FirstScannedOn
 
-									$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
+								$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
 
 								$permittedDays = 90;
 								
 								$currentControl.MaximumAllowedGraceDays=$this.CalculateGraceinDays($singleControlResult);
+
+								# ToDo: Remove logic from fun
 								if($scanFromDays -ge $permittedDays)
 								{
 									$currentControl.IsControlInGrace = $false
@@ -1184,14 +1198,7 @@ class SVTBase: AzSKRoot
 									$currentControl.IsControlInGrace = $true
 								}
 							}
-							else
-							{
-								$currentControl.FirstScannedOn = [DateTime]::UtcNow
-								if($currentControl.ActualVerificationResult -ne [VerificationResult]::Passed)
-								{
-									$currentControl.FirstFailedOn = [DateTime]::UtcNow
-								}
-							}
+							
 							$controlsResults+=$currentControl
 						}
 						$singleControlResult.ControlResults=$controlsResults 
@@ -1206,7 +1213,7 @@ class SVTBase: AzSKRoot
     }
 
 	# ToDo: Use proper casing
-	[bool] hidden IsControlinGrace([SVTEventContext] $context)
+	[int] hidden IsControlinGrace([SVTEventContext] $context)
 	{
 		$isControlinGrace=$false;
 		$controlResult=$context.ControlResults;
@@ -1218,6 +1225,8 @@ class SVTBase: AzSKRoot
 			$diff=0;
 			if($currentControlItem.GraceExpiryDate -gt [DateTime]::UtcNow )
 			{
+				# ToDo: Use [System.DateTime]::UtcNow.Subtract($date).Days way
+				# ToDo: Remove diff
 				$datenow=[DateTime]::UtcNow
 				$temp=New-TimeSpan -Start $currentControlItem.GraceExpiryDate -End $datenow
 				$diff=$temp.Days;

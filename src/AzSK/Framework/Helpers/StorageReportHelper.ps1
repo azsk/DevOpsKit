@@ -238,6 +238,7 @@ class StorageReportHelper
 		}
     }
 
+	# ToDo: Save the file name as subid.json
     hidden [LSRSubscription] GetLocalSubscriptionScanReport([string] $subscriptionId)
     {
         $fullScanResult = $this.GetLocalSubscriptionScanReport()
@@ -719,18 +720,17 @@ class StorageReportHelper
 
 	hidden [LocalSubscriptionReport] MergeSVTScanResult($currentScanResults, $resourceInventory, $scanSource, $scannerVersion, $scanKind)
 	{
+		# ToDo: add check function.
 		$SVTEventContextFirst = $currentScanResults[0]
-
 		$subscriptionId = $SVTEventContextFirst.SubscriptionContext.SubscriptionId
 
 		$_oldScanReport = $this.GetLocalSubscriptionScanReport();
 		$subscription = [LSRSubscription]::new()
 		[LSRResources[]] $resources = @()
 
-		if([Helpers]::CheckMember($_oldScanReport,"Subscriptions") -and (($_oldScanReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $subscriptionId }) | Measure-Object).Count -gt 0)
+		if((($_oldScanReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $subscriptionId }) | Measure-Object).Count -gt 0)
 		{
 			$subscription = $_oldScanReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $subscriptionId }
-			
 		}
 		else
 		{
@@ -738,6 +738,7 @@ class StorageReportHelper
 			$subscription.SubscriptionName = $SVTEventContextFirst.SubscriptionContext.SubscriptionName
 		}
 
+		# ToDo: Check for null
 		if(-not [Helpers]::CheckMember($subscription,"ScanDetails"))
 		{
 			$subscription.ScanDetails = [LSRScanDetails]::new()
@@ -753,13 +754,16 @@ class StorageReportHelper
 			{
 				if($currentScanResult.FeatureName -eq "SubscriptionCore")
 				{
+					# ToDo: change isLagitimate control to update 
 					if(($currentScanResult.ControlResults | Measure-Object).Count -gt 0 -and $currentScanResult.ControlResults[0].CurrentSessionContext.IsLatestPSModule -and $currentScanResult.ControlResults[0].CurrentSessionContext.Permissions.HasRequiredAccess -and $currentScanResult.ControlResults[0].CurrentSessionContext.Permissions.HasAttestationReadPermissions)
 					{
 						if([Helpers]::CheckMember($subscription.ScanDetails,"SubscriptionScanResult") -and ($subscription.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
 						{
 							if((($subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }) | Measure-Object).Count -gt0)
 							{
+								$ ToDo: ConvertTo ScanResultToSnapShotResult
 								$svtResult = $this.SerializeSubscriptionSVTResult($currentScanResult, $scanSource, $scannerVersion, $scanKind)
+								# ToDo: Change _OR to snapshot
 								$_ORsubcriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }
 								$_ORsubcriptionScanResult.ScanKind = $svtResult.ScanKind
 								$_ORsubcriptionScanResult.ControlId = $svtResult.ControlId
@@ -814,6 +818,7 @@ class StorageReportHelper
 								$_ORsubcriptionScanResult.IsBaselineControl = $svtResult.IsBaselineControl
 								$_ORsubcriptionScanResult.HasOwnerAccessTag = $svtResult.HasOwnerAccessTag
 
+								# ToDo: Pass old obj to serilize fun
 								$subscription.ScanDetails.SubscriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object {$_.ControlIntId -ne $currentScanResult.ControlItem.Id }
 								$subscription.ScanDetails.SubscriptionScanResult += $_ORsubcriptionScanResult
 							}
@@ -821,7 +826,6 @@ class StorageReportHelper
 							{
 								$subscription.ScanDetails.SubscriptionScanResult += $this.SerializeSubscriptionSVTResult($currentScanResult, $scanSource, $scannerVersion, $scanKind)
 							}
-						
 						}
 						else
 						{
@@ -934,8 +938,6 @@ class StorageReportHelper
 				[EventBase]::PublishGenericCustomMessage(($currentScanResult | Format-List | Out-String), [MessageType]::Default)
 				[EventBase]::PublishGenericException($_);
 			}
-			
-			
 		}
 
 		#Resource Inventory
@@ -963,6 +965,8 @@ class StorageReportHelper
 			}
 		}
 
+		# ToDo: Check for previously delete resources
+
 		if($subscription.ScanDetails.Resources.Count -gt 0)
 		{
 			$resources | ForEach-Object {
@@ -985,6 +989,7 @@ class StorageReportHelper
 		$subscriptionScanResult = [LSRSubscriptionControlResult]::new()
 		if(($svtResult.ControlResults | Measure-Object).Count -gt 0)
 		{
+			# ToDo: 0th index to var
 			$subscriptionScanResult.ScannedBy = [Helpers]::GetCurrentRMContext().Account
 			$subscriptionScanResult.ScanSource = $scanSource
 			$subscriptionScanResult.ScannerVersion = $scannerVersion

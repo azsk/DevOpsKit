@@ -154,12 +154,16 @@ class AIOrgTelemetry: ListenerBase {
 		   }
 		});
 
+		# ToDo: Move to Summary file listner, move code to fun
 		$this.RegisterEvent([SVTEvent]::CommandCompleted, {
             $currentInstance = [AIOrgTelemetry]::GetInstance();
             try 
             {
 				$settings = [ConfigurationManager]::GetAzSKConfigData();
+				# ToDo: Rename variable
 				if(!$settings.PersistScanReportInLocalSubscription) {return;}
+
+				#ToDo:  Check for first..
                 $controlsScanned = ($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0
 				$scanSource = [RemoteReportHelper]::GetScanSource();
 				$scannerVersion = $currentInstance.GetCurrentModuleVersion();
@@ -170,12 +174,13 @@ class AIOrgTelemetry: ListenerBase {
 
 				if($controlsScanned)
 				{
-					$resourcesFlat
 					# ToDo: Need disable comment, should be run while CA
+					# ToDo: Resource inventory helper
 					# if($scanSource -eq [ScanSource]::Runbook) 
 					# { 
 						$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
 						$resources.ResourceGroups = [System.Collections.ArrayList]::new()
+						# ToDo: cache this properties as AsSKRoot.
 						$resourcesFlat = Find-AzureRmResource
 						$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
 						# Not considering nested resources to reduce complexity
@@ -203,7 +208,10 @@ class AIOrgTelemetry: ListenerBase {
 					# }
 					$StorageReportHelperInstance = [StorageReportHelper]::new();
 					$StorageReportHelperInstance.Initialize($true);
+					# ToDo: check for the write permission
+					# ToDo: Check for notscan 
 					$StorageReportHelperInstance.MergeSVTScanResult($Event.SourceArgs, $resources, $scanSource, $scannerVersion, $scanKind)
+					# ToDo: persit set fun call here
 				}
             }
             catch 
