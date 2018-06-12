@@ -20,12 +20,13 @@ class SVTCommandBase: CommandBase {
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
 
-        # ToDo: Check for the feature flag
-		$this.GetLocalSubscriptionData()
     }
 
 	hidden [void] GetLocalSubscriptionData()
 	{
+        $azskConfig = [ConfigurationManager]::GetAzSKConfigData();
+        if(!$azskConfig.PersistScanReportInSubscription) {return;}
+        #todo generalize this with reosurce helper
 		$storageReportHelper = [StorageReportHelper]::new();
 		$storageReportHelper.Initialize($false);
 		if($storageReportHelper.HasStorageReportReadAccessPermissions())
@@ -100,7 +101,8 @@ class SVTCommandBase: CommandBase {
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
         # ToDo: remove InvocationContext, try to pass as param
         # ToDo: Assumption: usercomment will only work when storage report feature flag is enable.
-		$svtObject.IncludeUserComments =$this.InvocationContext.BoundParameters['IncludeUserComments'];
+        $svtObject.IncludeUserComments =$this.InvocationContext.BoundParameters['IncludeUserComments'];
+        $this.GetLocalSubscriptionData()
 		$svtObject.StorageReportData = $this.StorageReportData
 
         #Include Server Side Exclude Tags
