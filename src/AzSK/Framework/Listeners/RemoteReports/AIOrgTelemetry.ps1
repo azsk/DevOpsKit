@@ -138,7 +138,8 @@ class AIOrgTelemetry: ListenerBase {
 						   "ResourceType" = $res.ResourceType;
 						   "ResourceGroupName" = $res.ResourceGroupName;
 						   "Location" = $res.Location;
-						   "SubscriptionId" = $res.SubscriptionId
+						   "SubscriptionId" = $res.SubscriptionId;
+						   "Tags" = [Helpers]::FetchTagsString($res.Tags)
 					   }
 					   $telemetryEvent = "" | Select-Object Name, Properties, Metrics
 					   $telemetryEvent.Name = "Resource Inventory"
@@ -152,6 +153,72 @@ class AIOrgTelemetry: ListenerBase {
 			$currentInstance.PublishException($_);
 		   }
 		});
+
+		# ToDo: Move to Summary file listner, move code to fun
+		$this.RegisterEvent([SVTEvent]::CommandCompleted, {
+            $currentInstance = [AIOrgTelemetry]::GetInstance();
+            try 
+            {
+				$settings = [ConfigurationManager]::GetAzSKConfigData();
+				# ToDo: Rename variable
+				if(!$settings.PersistScanReportInSubscription) {return;}
+
+				#ToDo:  Check for first..
+                $controlsScanned = ($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0
+				$scanSource = [RemoteReportHelper]::GetScanSource();
+				$scannerVersion = $currentInstance.GetCurrentModuleVersion();
+
+				# ToDo: Need to calculate ScanKind
+				#$scanKind = [RemoteReportHelper]::GetServiceScanKind($this.InvocationContext.MyCommand.Name, $this.InvocationContext.BoundParameters);
+				$scanKind = [ServiceScanKind]::Partial;
+
+				if($controlsScanned)
+				{
+					# ToDo: Need disable comment, should be run while CA
+					# ToDo: Resource inventory helper
+					# if($scanSource -eq [ScanSource]::Runbook) 
+					# { 
+						$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
+						$resources.ResourceGroups = [System.Collections.ArrayList]::new()
+						# ToDo: cache this properties as AsSKRoot.
+						$resourcesFlat = Find-AzureRmResource
+						$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
+						# Not considering nested resources to reduce complexity
+						$filteredResoruces = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }
+						$grouped = $filteredResoruces | Group-Object {$_.ResourceGroupName} | Select-Object Name, Group
+						foreach($group in $grouped){
+							$resourceGroup = "" | Select-Object Name, Resources
+							$resourceGroup.Name = $group.Name
+							$resourceGroup.Resources = [System.Collections.ArrayList]::new()
+							foreach($item in $group.Group){
+								$resource = "" | Select-Object Name, ResourceId, Feature
+								if($item.Name.Contains("/")){
+									$splitName = $item.Name.Split("/")
+									$resource.Name = $splitName[$splitName.Length - 1]
+								}
+								else{
+									$resource.Name = $item.Name;
+								}
+								$resource.ResourceId = $item.ResourceId
+								$resource.Feature = $supportedResourceTypes[$item.ResourceType.ToLower()]
+								$resourceGroup.Resources.Add($resource) | Out-Null
+							}
+							$resources.ResourceGroups.Add($resourceGroup) | Out-Null
+						}
+					# }
+					$StorageReportHelperInstance = [StorageReportHelper]::new();
+					$StorageReportHelperInstance.Initialize($true);
+					# ToDo: check for the write permission
+					# ToDo: Check for notscan 
+					$StorageReportHelperInstance.MergeSVTScanResult($Event.SourceArgs, $resources, $scanSource, $scannerVersion, $scanKind)
+					# ToDo: persit set fun call here
+				}
+            }
+            catch 
+            {
+                $currentInstance.PublishException($_);
+            }
+        });
     }
 
 	hidden [void] PushSubscriptionScanResults([SVTEventContext[]] $SVTEventContexts)

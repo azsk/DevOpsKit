@@ -7,7 +7,6 @@ class SVTBase: AzSKRoot
     hidden [PSObject] $ControlSettings
 
 	hidden [ControlStateExtension] $ControlStateExt;
-	hidden [StorageReportHelper] $StorageReportHelper;
 	hidden [LSRSubscription] $StorageReportData;
 
 	hidden [ControlState[]] $ResourceState;
@@ -26,14 +25,12 @@ class SVTBase: AzSKRoot
         Base($subscriptionId)
     {
 		$this.CreateInstance($svtResource);
-		$this.GetLocalSubscriptionData();
     }
 
 	SVTBase([string] $subscriptionId):
         Base($subscriptionId)
     {
 		$this.CreateInstance();
-		$this.GetLocalSubscriptionData();
     }
 
 	SVTBase([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
@@ -43,7 +40,6 @@ class SVTBase: AzSKRoot
 			ResourceGroupName = $resourceGroupName;
             ResourceName = $resourceName;
 		});
-		$this.GetLocalSubscriptionData();
     }
 	hidden [void] CreateInstance()
 	{
@@ -123,33 +119,6 @@ class SVTBase: AzSKRoot
             }
         }
     }
-
-	hidden [void] GetLocalSubscriptionData()
-	{
-		if ( $null  -eq $this.StorageReportHelper) 
-		{
-			$this.StorageReportHelper = [StorageReportHelper]::new();
-			$this.StorageReportHelper.Initialize($false);
-        }
-		if($this.StorageReportHelper.HasStorageReportReadAccessPermissions())
-		{
-			$this.StorageReportData =  $this.StorageReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId)
-		}
-	}
-
-	hidden [void] SetLocalSubscriptionData([LSRSubscription] $scanData)
-	{
-		if ( $null  -eq $this.StorageReportHelper) 
-		{
-			$this.StorageReportHelper = [StorageReportHelper]::new();
-			$this.StorageReportHelper.Initialize($false);
-        }
-		if($this.StorageReportHelper.HasStorageReportWriteAccessPermissions())
-		{
-			$finalScanResult = $this.StorageReportHelper.MergeScanReport($scanData)
-			$this.StorageReportData =  $this.StorageReportHelper.SetLocalSubscriptionScanReport($finalScanResult)	
-		}
-	}
 
 	hidden [bool] CheckBaselineControl($controlId)
 	{
@@ -552,11 +521,9 @@ class SVTBase: AzSKRoot
                 $controlResult.AddError($_);
                 $singleControlResult.ControlResults += $controlResult;
                 $this.ControlError($controlItem, $_);
-            }
-			$this.GetDataFromSubscriptionReport($singleControlResult);
+			}
+						
 			$this.PostProcessData($singleControlResult);
-
-			
 
 			# Check for the control which requires elevated permission to modify 'Recommendation' so that user can know it is actually automated if they have the right permission
 			if($singleControlResult.ControlItem.Automated -eq "Yes")
@@ -690,6 +657,8 @@ class SVTBase: AzSKRoot
 		$controlStateValue = @();
 		try
 		{
+			$this.GetDataFromSubscriptionReport($singleControlResult);
+
 			$resourceStates = $this.GetResourceState()			
 			if(($resourceStates | Measure-Object).Count -ne 0)
 			{
@@ -901,7 +870,7 @@ class SVTBase: AzSKRoot
 				$defaultAttestationExpiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.Default
 			}			
 			#Expiry in the case of WillFixLater or StateConfirmed/Recurring Attestation state will be based on Control Severity.
-			if($controlState.AttestationStatus -eq [AttestationStatus]::NotAnIssue -or $controlState.AttestationStatus -eq [AttestationStatus]::NotApplicable )
+			if($controlState.AttestationStatus -eq [AttestationStatus]::NotAnIssue -or $controlState.AttestationStatus -eq [AttestationStatus]::NotApplicable)
 			{
 				$expiryInDays=$defaultAttestationExpiryInDays;
 			}
@@ -1152,73 +1121,69 @@ class SVTBase: AzSKRoot
 	hidden [void] GetDataFromSubscriptionReport($singleControlResult)
     {   try
 	    {
-	   		if([Helpers]::CheckMember($this.StorageReportData,"ScanDetails"))
+
+			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();			
+			#return if feature is turned off at server config
+			if(!$azskConfig.PersistScanReportInSubscription) {return;}
+
+	   		if($null -ne $this.StorageReportData -and $null -ne $this.StorageReportData.ScanDetails)
 			{
 				$ResourceData = @();
-				$ResourceScanResult=@();
-				if($singleControlResult.FeatureName -eq "SubscriptionCore")
-				{
-					if([Helpers]::CheckMember($this.StorageReportData.ScanDetails,"SubscriptionScanResult"))
-					{
-						$ResourceData = $this.StorageReportData.ScanDetails.SubscriptionScanResult
-						$ResourceScanResult=$ResourceData
-					}
+				$PersistedControlScanResult=@();
+				
+				if($singleControlResult.FeatureName -eq "SubscriptionCore" -and ($this.StorageReportData.ScanDetails.SubscriptionScanResult| Measure-Object).Count -gt 0)
+				{									
+					$PersistedControlScanResult	= $this.StorageReportData.ScanDetails.SubscriptionScanResult;
 				}
-				else
+				elseif($singleControlResult.FeatureName -ne "SubscriptionCore" -and ($this.StorageReportData.ScanDetails.Resources | Measure-Object).Count -gt 0)
 				{
-					if([Helpers]::CheckMember($this.StorageReportData.ScanDetails,"Resources"))
+					$ResourceData = $this.StorageReportData.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}
+					if(($ResourceData.ResourceScanResult | Measure-Object).Count -gt 0)
 					{
-						$ResourceData = $this.StorageReportData.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}
-						if([Helpers]::CheckMember($ResourceData,"ResourceScanResult"))
-				     	{
-					    	$ResourceScanResult = $ResourceData.ResourceScanResult 
-						}
-					
-					}			
+						$PersistedControlScanResult = $ResourceData.ResourceScanResult 
+					}
 				}
 			
-					if(($ResourceScanResult | Measure-Object).Count -gt 0 )
-					{
-						#$ResourceScanResult=$ResourceData.ResourceScanResult
-						if(($ResourceScanResult | Measure-Object).Count -gt 0)
-						{
-							[ControlResult[]] $controlsResults = @();
-							$singleControlResult.ControlResults | ForEach-Object {
-								$currentControl=$_
-		
-								$matchedControlResult=$ResourceScanResult | Where-Object {
-								($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (  ([Helpers]::CheckMember($currentControl, "ChildResourceName") -and $_.ChildResourceName -eq $currentControl.ChildResourceName) -or (-not([Helpers]::CheckMember($currentControl, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
-								}
-		
-								if($null -ne  $matchedControlResult)
-								{
-									$currentControl.UserComments = $matchedControlResult.UserComments
-									$currentControl.FirstFailedOn = $matchedControlResult.FirstFailedOn
-									$currentControl.FirstScannedOn = $matchedControlResult.FirstScannedOn
-									$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn).Days	
-									#Setting Maximum Allowed Grace Period and based upon that setting IsControlInGrace flag 
-									$currentControl.MaximumAllowedGraceDays=$this.CalculateGraceinDays($singleControlResult);
-									if($scanFromDays -ge $currentControl.MaximumAllowedGraceDays)
-									{
-										$currentControl.IsControlInGrace = $false
-									}
-									else
-									{
-										$currentControl.IsControlInGrace = $true
-									}
-								}
-								else
-								{
-									$currentControl.FirstScannedOn = [DateTime]::UtcNow
-									if($currentControl.ActualVerificationResult -ne [VerificationResult]::Passed)
-									{
-										$currentControl.FirstFailedOn = [DateTime]::UtcNow
-									}
-								}
-							$controlsResults+=$currentControl
+				#$ResourceScanResult=$ResourceData.ResourceScanResult
+				if(($PersistedControlScanResult | Measure-Object).Count -gt 0)
+				{
+					[ControlResult[]] $controlsResults = @();
+					$singleControlResult.ControlResults | ForEach-Object {
+						$currentControl=$_
+						$matchedControlResult=$PersistedControlScanResult | Where-Object {
+							($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (($_.ChildResourceName -eq $currentControl.ChildResourceName) -or [string]::IsNullOrWhiteSpace($currentControl.ChildResourceName)))
 						}
-						$singleControlResult.ControlResults=$controlsResults 
+
+						# initialize default values
+						$currentControl.FirstScannedOn = [DateTime]::UtcNow
+						if($currentControl.ActualVerificationResult -ne [VerificationResult]::Passed)
+						{
+							$currentControl.FirstFailedOn = [DateTime]::UtcNow
+						}
+						if($null -ne  $matchedControlResult)
+						{
+							$currentControl.UserComments = $matchedControlResult.UserComments
+							$currentControl.FirstFailedOn = $matchedControlResult.FirstFailedOn
+							$currentControl.FirstScannedOn = $matchedControlResult.FirstScannedOn
+
+							$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
+
+							$currentControl.MaximumAllowedGraceDays = $this.CalculateGraceInDays($singleControlResult);
+
+							# Setting is isControlInGrace Flag		
+							if($scanFromDays -le $currentControl.MaximumAllowedGraceDays)
+							{
+								$currentControl.IsControlInGrace = $true
+							}
+							else
+							{
+								$currentControl.IsControlInGrace = $false
+							}
+						}
+						
+						$controlsResults+=$currentControl
 					}
+					$singleControlResult.ControlResults=$controlsResults 
 				}
 			}
 		}
@@ -1228,10 +1193,9 @@ class SVTBase: AzSKRoot
 		}
     }
 
-
-	[int] hidden CalculateGraceinDays([SVTEventContext] $context)
+	[int] hidden CalculateGraceInDays([SVTEventContext] $context)
 	{
-		$isControlinGrace=$false;
+		$isControlInGrace=$false;
 		$controlResult=$context.ControlResults;
 		$graceDays=0;
 		$SeverityBasedGraceExpiry=0;
