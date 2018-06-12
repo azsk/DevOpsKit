@@ -98,13 +98,6 @@ function CreateHelperSchedule($nextRetryIntervalInMinutes)
                     -AutomationAccountName $AutomationAccountName -ErrorAction Stop | Out-Null
 	PublishEvent -EventName "CA Job Rescheduled" -Properties @{"IntervalInMinutes" = $nextRetryIntervalInMinutes}
 }
-
-function UpdateHelperSchedule($scheduleName,$isEnabled)
-{
-    Set-AzureRmAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $isEnabled
-	PublishEvent -EventName "CA Job Rescheduled" -Properties @{"ScheduleName" = $scheduleName}
-}
-
 #function to invoke script from server
 function InvokeScript($accessToken, $policyStoreURL,$fileName, $version)
 {
@@ -203,11 +196,11 @@ try
 
 	#This setting allows org policy owners to explore the latest version of AzSK (while users
 	#in the org may be setup to use an older version - see comment in RunbookCoreSetup.PS1)
-    #$UpdateToLatestVersion = Get-AutomationVariable -Name UpdateToLatestVersion -ErrorAction SilentlyContinue
-    #if($null -eq $UpdateToLatestVersion)
-    #{
+    $UpdateToLatestVersion = Get-AutomationVariable -Name UpdateToLatestVersion -ErrorAction SilentlyContinue
+    if($null -eq $UpdateToLatestVersion)
+    {
     	$UpdateToLatestVersion = "[#UpdateToLatestVersion#]"	
-    #}
+    }
 
 	$azureRmResourceURI = "https://management.core.windows.net/"
 	
