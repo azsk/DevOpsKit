@@ -1198,33 +1198,33 @@ class SVTBase: AzSKRoot
 		
 		$controlResult=$context.ControlResults;
 		$graceDays=0;
-		$SeverityBasedGraceExpiry=0;
-		$ControlBasedGraceExpiry=0;
+		$SeverityBasedGraceExpiryDays=0;
+		$ControlBasedGraceExpiryDays=0;
 		$currentControlItem=$context.controlItem;
 		$controlSeverity=$currentControlItem.ControlSeverity;
 		if([Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays"))
 		{
-			$SeverityBasedGraceExpiry=$this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity;
+			$SeverityBasedGraceExpiryDays=$this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity;
 		}
 		if($null -ne $currentControlItem.GraceExpiryDate)
 		{
 			if($currentControlItem.GraceExpiryDate -gt [DateTime]::UtcNow )
 			{
-				$SeverityBasedGraceExpiry=[System.DateTime]::UtcNow.Subtract($currentControlItem.GraceExpiryDate).Days
+				$ControlBasedGraceExpiryDays=$currentControlItem.GraceExpiryDate.Subtract([System.DateTime]::UtcNow).Days
 			}
 			#Setting Grace Days as the maximum no of days based on Severity or GraceExpiryDate
-			if([Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays") -and $SeverityBasedGraceExpiry -gt $ControlBasedGraceExpiry)
+			if($SeverityBasedGraceExpiryDays -gt $ControlBasedGraceExpiryDays)
 			{
-				$graceDays = $SeverityBasedGraceExpiry;
+				$graceDays = $SeverityBasedGraceExpiryDays;
 			}
 			else
 			{
-				$graceDays=$ControlBasedGraceExpiry;
+				$graceDays=$ControlBasedGraceExpiryDays;
 			}
 		}
 		else
 		{
-			$graceDays = $ControlBasedGraceExpiry;
+			$graceDays = $ControlBasedGraceExpiryDays;
 		}
 	  return $graceDays;
 	}
