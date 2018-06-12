@@ -720,7 +720,8 @@ class StorageReportHelper
 
 	hidden [LocalSubscriptionReport] MergeSVTScanResult($currentScanResults, $resourceInventory, $scanSource, $scannerVersion, $scanKind)
 	{
-		# ToDo: add check function.
+		if($currentScanResults.Count -lt 1) { return $null}
+
 		$SVTEventContextFirst = $currentScanResults[0]
 		$subscriptionId = $SVTEventContextFirst.SubscriptionContext.SubscriptionId
 
@@ -739,7 +740,7 @@ class StorageReportHelper
 		}
 
 		# ToDo: Check for null
-		if(-not [Helpers]::CheckMember($subscription,"ScanDetails"))
+		if($null -ne $subscription.ScanDetails)
 		{
 			$subscription.ScanDetails = [LSRScanDetails]::new()
 		}
@@ -754,163 +755,154 @@ class StorageReportHelper
 			{
 				if($currentScanResult.FeatureName -eq "SubscriptionCore")
 				{
-					# ToDo: change isLagitimate control to update 
-					if(($currentScanResult.ControlResults | Measure-Object).Count -gt 0 -and $currentScanResult.ControlResults[0].CurrentSessionContext.IsLatestPSModule -and $currentScanResult.ControlResults[0].CurrentSessionContext.Permissions.HasRequiredAccess -and $currentScanResult.ControlResults[0].CurrentSessionContext.Permissions.HasAttestationReadPermissions)
+					if(($subscription.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
 					{
-						if([Helpers]::CheckMember($subscription.ScanDetails,"SubscriptionScanResult") -and ($subscription.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
+						if((($subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }) | Measure-Object).Count -gt0)
 						{
-							if((($subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }) | Measure-Object).Count -gt0)
-							{
-								$ ToDo: ConvertTo ScanResultToSnapShotResult
-								$svtResult = $this.SerializeSubscriptionSVTResult($currentScanResult, $scanSource, $scannerVersion, $scanKind)
-								# ToDo: Change _OR to snapshot
-								$_ORsubcriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }
-								$_ORsubcriptionScanResult.ScanKind = $svtResult.ScanKind
-								$_ORsubcriptionScanResult.ControlId = $svtResult.ControlId
-								$_ORsubcriptionScanResult.ControlUpdatedOn = $svtResult.ControlUpdatedOn
-								$_ORsubcriptionScanResult.ControlSeverity = $svtResult.ControlSeverity
+								
+							# ToDo: Change _OR to snapshot
+							$_ORsubcriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }
+							$svtResults = $this.ConvertScanResultToSnapShotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_ORsubcriptionScanResult, $true)
+							#$_ORsubcriptionScanResult.ScanKind = $svtResult.ScanKind
+							#$_ORsubcriptionScanResult.ControlId = $svtResult.ControlId
+							#$_ORsubcriptionScanResult.ControlUpdatedOn = $svtResult.ControlUpdatedOn
+							#$_ORsubcriptionScanResult.ControlSeverity = $svtResult.ControlSeverity
 
-								if($svtResult.AttestationStatus -ne [AttestationStatus]::None -and ($svtResult.AttestationStatus -ne $_ORsubcriptionScanResult.AttestationStatus -or $svtResult.Justification -ne $_ORsubcriptionScanResult.Justification))
-								{
-									$_ORsubcriptionScanResult.AttestationCounter = $_ORsubcriptionScanResult.AttestationCounter + 1
-								}
-								if($_ORsubcriptionScanResult.VerificationResult -ne $svtResult.VerificationResult)
-								{
-									$_ORsubcriptionScanResult.LastResultTransitionOn = [System.DateTime]::UtcNow
-								}
+							#if($svtResult.AttestationStatus -ne [AttestationStatus]::None -and ($svtResult.AttestationStatus -ne $_ORsubcriptionScanResult.AttestationStatus -or $svtResult.Justification -ne $_ORsubcriptionScanResult.Justification))
+							#{
+							#	$_ORsubcriptionScanResult.AttestationCounter = $_ORsubcriptionScanResult.AttestationCounter + 1
+							#}
+							#if($_ORsubcriptionScanResult.VerificationResult -ne $svtResult.VerificationResult)
+							#{
+							#	$_ORsubcriptionScanResult.LastResultTransitionOn = [System.DateTime]::UtcNow
+							#}
 
-								$_ORsubcriptionScanResult.PreviousVerificationResult = $_ORsubcriptionScanResult.ActualVerificationResult
-								$_ORsubcriptionScanResult.ActualVerificationResult = $svtResult.ActualVerificationResult
-								$_ORsubcriptionScanResult.AttestationStatus = $svtResult.AttestationStatus
-								$_ORsubcriptionScanResult.VerificationResult = $svtResult.VerificationResult
-								$_ORsubcriptionScanResult.AttestedBy = $svtResult.AttestedBy
-								$_ORsubcriptionScanResult.AttestedDate = $svtResult.AttestedDate
-								$_ORsubcriptionScanResult.Justification = $svtResult.Justification
-								$_ORsubcriptionScanResult.AttestationData = $svtResult.AttestationData
-								$_ORsubcriptionScanResult.LastScannedOn = [System.DateTime]::UtcNow
+							#$_ORsubcriptionScanResult.PreviousVerificationResult = $_ORsubcriptionScanResult.ActualVerificationResult
+							#$_ORsubcriptionScanResult.ActualVerificationResult = $svtResult.ActualVerificationResult
+							#$_ORsubcriptionScanResult.AttestationStatus = $svtResult.AttestationStatus
+							#$_ORsubcriptionScanResult.VerificationResult = $svtResult.VerificationResult
+							#$_ORsubcriptionScanResult.AttestedBy = $svtResult.AttestedBy
+							#$_ORsubcriptionScanResult.AttestedDate = $svtResult.AttestedDate
+							#$_ORsubcriptionScanResult.Justification = $svtResult.Justification
+							#$_ORsubcriptionScanResult.AttestationData = $svtResult.AttestationData
+							#$_ORsubcriptionScanResult.LastScannedOn = [System.DateTime]::UtcNow
 
-								if($_ORsubcriptionScanResult.FirstScannedOn -eq [Constants]::AzSKDefaultDateTime)
-								{
-									$_ORsubcriptionScanResult.FirstScannedOn = [System.DateTime]::UtcNow
-								}
+							#if($_ORsubcriptionScanResult.FirstScannedOn -eq [Constants]::AzSKDefaultDateTime)
+							#{
+							#	$_ORsubcriptionScanResult.FirstScannedOn = [System.DateTime]::UtcNow
+							#}
                             
-								if($_ORsubcriptionScanResult.FirstFailedOn -eq [Constants]::AzSKDefaultDateTime -and $svtResult.ActualVerificationResult -eq [VerificationResult]::Failed)
-								{
-									$_ORsubcriptionScanResult.FirstFailedOn = [System.DateTime]::UtcNow
-								}
+							#if($_ORsubcriptionScanResult.FirstFailedOn -eq [Constants]::AzSKDefaultDateTime -and $svtResult.ActualVerificationResult -eq [VerificationResult]::Failed)
+							#{
+							#	$_ORsubcriptionScanResult.FirstFailedOn = [System.DateTime]::UtcNow
+							#}
 
-								if($_ORsubcriptionScanResult.FirstAttestedOn -eq [Constants]::AzSKDefaultDateTime -and $svtResult.AttestationStatus -ne [AttestationStatus]::None)
-								{
-									$_ORsubcriptionScanResult.FirstAttestedOn = [System.DateTime]::UtcNow
-								}
+							#if($_ORsubcriptionScanResult.FirstAttestedOn -eq [Constants]::AzSKDefaultDateTime -and $svtResult.AttestationStatus -ne [AttestationStatus]::None)
+							#{
+							#	$_ORsubcriptionScanResult.FirstAttestedOn = [System.DateTime]::UtcNow
+							#}
 
-								$_ORsubcriptionScanResult.ScannedBy = $svtResult.ScannedBy
-								$_ORsubcriptionScanResult.ScanSource = $svtResult.ScanSource
-								$_ORsubcriptionScanResult.ScannerModuleName = $svtResult.ScannerModuleName
-								$_ORsubcriptionScanResult.ScannerVersion = $svtResult.ScannerVersion
-								$_ORsubcriptionScanResult.ControlVersion = $svtResult.ControlVersion
-								$_ORsubcriptionScanResult.IsLatestPSModule = $svtResult.IsLatestPSModule
-								$_ORsubcriptionScanResult.HasRequiredPermissions = $svtResult.HasRequiredPermissions
-								$_ORsubcriptionScanResult.HasAttestationWritePermissions = $svtResult.HasAttestationWritePermissions
-								$_ORsubcriptionScanResult.HasAttestationReadPermissions = $svtResult.HasAttestationReadPermissions
-								$_ORsubcriptionScanResult.UserComments = $svtResult.UserComments
-								$_ORsubcriptionScanResult.Metadata = $svtResult.Metadata
-								$_ORsubcriptionScanResult.IsBaselineControl = $svtResult.IsBaselineControl
-								$_ORsubcriptionScanResult.HasOwnerAccessTag = $svtResult.HasOwnerAccessTag
+							#$_ORsubcriptionScanResult.ScannedBy = $svtResult.ScannedBy
+							#$_ORsubcriptionScanResult.ScanSource = $svtResult.ScanSource
+							#$_ORsubcriptionScanResult.ScannerModuleName = $svtResult.ScannerModuleName
+							#$_ORsubcriptionScanResult.ScannerVersion = $svtResult.ScannerVersion
+							#$_ORsubcriptionScanResult.ControlVersion = $svtResult.ControlVersion
+							#$_ORsubcriptionScanResult.IsLatestPSModule = $svtResult.IsLatestPSModule
+							#$_ORsubcriptionScanResult.HasRequiredPermissions = $svtResult.HasRequiredPermissions
+							#$_ORsubcriptionScanResult.HasAttestationWritePermissions = $svtResult.HasAttestationWritePermissions
+							#$_ORsubcriptionScanResult.HasAttestationReadPermissions = $svtResult.HasAttestationReadPermissions
+							#$_ORsubcriptionScanResult.UserComments = $svtResult.UserComments
+							#$_ORsubcriptionScanResult.Metadata = $svtResult.Metadata
+							#$_ORsubcriptionScanResult.IsBaselineControl = $svtResult.IsBaselineControl
+							#$_ORsubcriptionScanResult.HasOwnerAccessTag = $svtResult.HasOwnerAccessTag
 
-								# ToDo: Pass old obj to serilize fun
-								$subscription.ScanDetails.SubscriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object {$_.ControlIntId -ne $currentScanResult.ControlItem.Id }
-								$subscription.ScanDetails.SubscriptionScanResult += $_ORsubcriptionScanResult
-							}
-							else
-							{
-								$subscription.ScanDetails.SubscriptionScanResult += $this.SerializeSubscriptionSVTResult($currentScanResult, $scanSource, $scannerVersion, $scanKind)
-							}
+							# ToDo: Pass old obj to serilize fun
+							$subscription.ScanDetails.SubscriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object {$_.ControlIntId -ne $currentScanResult.ControlItem.Id }
+							$subscription.ScanDetails.SubscriptionScanResult += $svtResults
 						}
 						else
 						{
-							$subscription.ScanDetails.SubscriptionScanResult += $this.SerializeSubscriptionSVTResult($currentScanResult, $scanSource, $scannerVersion, $scanKind)
+							$subscription.ScanDetails.SubscriptionScanResult += $this.ConvertScanResultToSnapShotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $true)
 						}
+					}
+					else
+					{
+						$subscription.ScanDetails.SubscriptionScanResult += $this.ConvertScanResultToSnapShotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $true)
 					}
 				}
 				else
 				{
-					$svtResourceResults = $this.SerializeResourceSVTResult($currentScanResult, $scanSource, $scannerVersion, $scanKind)
 
 					if((($resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId }) | Measure-Object).Count -gt 0)
 					{
-						$resource = ($resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId })
+						$resource = $resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId }
 						$resource.LastEventOn = [DateTime]::UtcNow
 
-						$svtResourceResults | ForEach-Object {  
-							$_resourceSVTResult = $_
-							if([Helpers]::CheckMember($resource,"ResourceScanResult") -and (($resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $_resourceSVTResult.ControlIntId -and $_.ChildResourceName -eq $_resourceSVTResult.ChildResourceName }) | Measure-Object).Count -gt 0)
-							{
-								$_oldControlResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $_resourceSVTResult.ControlIntId -and $_.ChildResourceName -eq $_resourceSVTResult.ChildResourceName }
-								$_oldControlResult.ControlId = $_resourceSVTResult.ControlId
-								$_oldControlResult.ScanKind = $_resourceSVTResult.ScanKind
-								$_oldControlResult.ControlUpdatedOn = $_resourceSVTResult.ControlUpdatedOn
-								$_oldControlResult.ControlSeverity = $_resourceSVTResult.ControlSeverity
+						if((($resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $currentScanResult.ControlItem.Id }) | Measure-Object).Count -gt 0)
+						{
+							$_oldControlResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $currentScanResult.ControlItem.Id }
+							$svtResults = $this.ConvertScanResultToSnapShotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_oldControlResult, $false)
+							#$_oldControlResult.ControlId = $_resourceSVTResult.ControlId
+							#$_oldControlResult.ScanKind = $_resourceSVTResult.ScanKind
+							#$_oldControlResult.ControlUpdatedOn = $_resourceSVTResult.ControlUpdatedOn
+							#$_oldControlResult.ControlSeverity = $_resourceSVTResult.ControlSeverity
 
-								if($_resourceSVTResult.AttestationStatus -ne [AttestationStatus]::None -and($_resourceSVTResult.AttestationStatus -ne $_oldControlResult.AttestationStatus -or $_resourceSVTResult.Justification -ne $_oldControlResult.Justification))
-								{
-									$_oldControlResult.AttestationCounter = $_oldControlResult.AttestationCounter + 1 
-								}
-								if($_oldControlResult.VerificationResult -ne $_resourceSVTResult.VerificationResult)
-								{
-									$_oldControlResult.LastResultTransitionOn = [System.DateTime]::UtcNow
-								}
+							#if($_resourceSVTResult.AttestationStatus -ne [AttestationStatus]::None -and($_resourceSVTResult.AttestationStatus -ne $_oldControlResult.AttestationStatus -or $_resourceSVTResult.Justification -ne $_oldControlResult.Justification))
+							#{
+							#	$_oldControlResult.AttestationCounter = $_oldControlResult.AttestationCounter + 1 
+							#}
+							#if($_oldControlResult.VerificationResult -ne $_resourceSVTResult.VerificationResult)
+							#{
+							#	$_oldControlResult.LastResultTransitionOn = [System.DateTime]::UtcNow
+							#}
 
-								$_oldControlResult.PreviousVerificationResult = $_oldControlResult.VerificationResult
-								$_oldControlResult.ActualVerificationResult = $_resourceSVTResult.ActualVerificationResult
-								$_oldControlResult.AttestationStatus = $_resourceSVTResult.AttestationStatus
-								$_oldControlResult.VerificationResult = $_resourceSVTResult.VerificationResult
-								$_oldControlResult.AttestedBy = $_resourceSVTResult.AttestedBy
-								$_oldControlResult.AttestedDate = $_resourceSVTResult.AttestedDate
-								$_oldControlResult.Justification = $_resourceSVTResult.Justification
-								$_oldControlResult.AttestationData = $_resourceSVTResult.AttestationData
-								$_oldControlResult.IsBaselineControl = $_resourceSVTResult.IsBaselineControl
-								$_oldControlResult.LastScannedOn = [System.DateTime]::UtcNow
+							#$_oldControlResult.PreviousVerificationResult = $_oldControlResult.VerificationResult
+							#$_oldControlResult.ActualVerificationResult = $_resourceSVTResult.ActualVerificationResult
+							#$_oldControlResult.AttestationStatus = $_resourceSVTResult.AttestationStatus
+							#$_oldControlResult.VerificationResult = $_resourceSVTResult.VerificationResult
+							#$_oldControlResult.AttestedBy = $_resourceSVTResult.AttestedBy
+							#$_oldControlResult.AttestedDate = $_resourceSVTResult.AttestedDate
+							#$_oldControlResult.Justification = $_resourceSVTResult.Justification
+							#$_oldControlResult.AttestationData = $_resourceSVTResult.AttestationData
+							#$_oldControlResult.IsBaselineControl = $_resourceSVTResult.IsBaselineControl
+							#$_oldControlResult.LastScannedOn = [System.DateTime]::UtcNow
 
-								if($_oldControlResult.FirstScannedOn -eq [Constants]::AzSKDefaultDateTime)
-								{
-									$_oldControlResult.FirstScannedOn = [System.DateTime]::UtcNow
-								}
+							#if($_oldControlResult.FirstScannedOn -eq [Constants]::AzSKDefaultDateTime)
+							#{
+							#	$_oldControlResult.FirstScannedOn = [System.DateTime]::UtcNow
+							#}
                                     
-								if($_oldControlResult.FirstFailedOn -eq [Constants]::AzSKDefaultDateTime -and $_resourceSVTResult.ActualVerificationResult -eq [VerificationResult]::Failed)
-								{
-									$_oldControlResult.FirstFailedOn = [System.DateTime]::UtcNow
-								}
+							#if($_oldControlResult.FirstFailedOn -eq [Constants]::AzSKDefaultDateTime -and $_resourceSVTResult.ActualVerificationResult -eq [VerificationResult]::Failed)
+							#{
+							#	$_oldControlResult.FirstFailedOn = [System.DateTime]::UtcNow
+							#}
 
-								if($_oldControlResult.FirstAttestedOn -eq [Constants]::AzSKDefaultDateTime -and $_resourceSVTResult.AttestationStatus -ne [AttestationStatus]::None)
-								{
-									$_oldControlResult.FirstAttestedOn = [System.DateTime]::UtcNow
-								}
+							#if($_oldControlResult.FirstAttestedOn -eq [Constants]::AzSKDefaultDateTime -and $_resourceSVTResult.AttestationStatus -ne [AttestationStatus]::None)
+							#{
+							#	$_oldControlResult.FirstAttestedOn = [System.DateTime]::UtcNow
+							#}
                                     
-								$_oldControlResult.ScannedBy = $_resourceSVTResult.ScannedBy
+							#$_oldControlResult.ScannedBy = $_resourceSVTResult.ScannedBy
                                     
-								$_oldControlResult.ScanSource = $_resourceSVTResult.ScanSource
-								$_oldControlResult.ScannerModuleName = $_resourceSVTResult.ScannerModuleName
-								$_oldControlResult.ScannerVersion = $_resourceSVTResult.ScannerVersion
-								$_oldControlResult.ControlVersion = $_resourceSVTResult.ControlVersion
-								$_oldControlResult.IsLatestPSModule = $_resourceSVTResult.IsLatestPSModule
-								$_oldControlResult.HasRequiredPermissions = $_resourceSVTResult.HasRequiredPermissions
-								$_oldControlResult.HasAttestationWritePermissions = $_resourceSVTResult.HasAttestationWritePermissions
-								$_oldControlResult.HasAttestationReadPermissions = $_resourceSVTResult.HasAttestationReadPermissions
-								$_oldControlResult.UserComments = $_resourceSVTResult.UserComments
-								$_oldControlResult.Metadata = $_resourceSVTResult.Metadata
-								$_oldControlResult.HasOwnerAccessTag = $_resourceSVTResult.HasOwnerAccessTag
+							#$_oldControlResult.ScanSource = $_resourceSVTResult.ScanSource
+							#$_oldControlResult.ScannerModuleName = $_resourceSVTResult.ScannerModuleName
+							#$_oldControlResult.ScannerVersion = $_resourceSVTResult.ScannerVersion
+							#$_oldControlResult.ControlVersion = $_resourceSVTResult.ControlVersion
+							#$_oldControlResult.IsLatestPSModule = $_resourceSVTResult.IsLatestPSModule
+							#$_oldControlResult.HasRequiredPermissions = $_resourceSVTResult.HasRequiredPermissions
+							#$_oldControlResult.HasAttestationWritePermissions = $_resourceSVTResult.HasAttestationWritePermissions
+							#$_oldControlResult.HasAttestationReadPermissions = $_resourceSVTResult.HasAttestationReadPermissions
+							#$_oldControlResult.UserComments = $_resourceSVTResult.UserComments
+							#$_oldControlResult.Metadata = $_resourceSVTResult.Metadata
+							#$_oldControlResult.HasOwnerAccessTag = $_resourceSVTResult.HasOwnerAccessTag
 
-								# ToDo: need to review below condition
-								$resource.ResourceScanResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -ne $_oldControlResult.ControlIntId -or $_.ChildResourceName -ne $_oldControlResult.ChildResourceName }
-								$resource.ResourceScanResult += $_oldControlResult
-
-							}
-							else
-							{
-								$resource.ResourceScanResult += $_resourceSVTResult
-							}
-						}	
+							$resource.ResourceScanResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -ne $_oldControlResult.ControlIntId }
+							$resource.ResourceScanResult += $svtResults
+						}
+						else
+						{
+							$resource.ResourceScanResult += $this.ConvertScanResultToSnapShotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $false)
+						}
 
 						$resources = ($resources | Where-Object {$_.ResourceId -ne $resource.ResourceId } | Measure-Object)
 						$resources += $resource
@@ -928,7 +920,7 @@ class StorageReportHelper
 						# ToDo: Need to confirm
 						# $resource.ResourceMetadata = [Helpers]::ConvertToJsonCustomCompressed($currentScanResult.ResourceContext.ResourceMetadata)
 						$resource.FeatureName = $currentScanResult.FeatureName
-						$resource.ResourceScanResult += $svtResourceResults
+						$resource.ResourceScanResult += $this.ConvertScanResultToSnapShotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $false)
 						$resources += $resource
 					}
 				}
@@ -939,6 +931,9 @@ class StorageReportHelper
 				[EventBase]::PublishGenericException($_);
 			}
 		}
+
+		# ToDo: Check for previously delete resources
+
 
 		#Resource Inventory
 		if([Helpers]::CheckMember($resourceInventory,"ResourceGroups") -and ($resourceInventory.ResourceGroups | Measure-Object ).Count -gt 0)
@@ -964,8 +959,6 @@ class StorageReportHelper
 				}
 			}
 		}
-
-		# ToDo: Check for previously delete resources
 
 		if($subscription.ScanDetails.Resources.Count -gt 0)
 		{
@@ -1091,6 +1084,107 @@ class StorageReportHelper
 
 				$resourceScanResult.FirstScannedOn = [DateTime]::UtcNow
 				$resourceScanResult.LastResultTransitionOn = [DateTime]::UtcNow
+				$resourceScanResult.LastScannedOn = [DateTime]::UtcNow
+
+				# ToDo: Need to confirm
+				#$resourceScanResult.Metadata = $scanResult.Metadata
+				$resourceScanResults += $resourceScanResult
+			}
+		}
+		return $resourceScanResults
+	} 
+
+	hidden [LSRControlResultBase[]] ConvertScanResultToSnapShotResult($svtResult, $scanSource, $scannerVersion, $scanKind, $oldResult, $isSubscriptionScan)
+	{
+		if($isSubscriptionScan)
+		{
+			[LSRSubscriptionControlResult[]] $scanResult = @();	
+		}
+		else
+		{
+			[LSRResourceScanResult[]] $scanResult = @();	
+		}
+
+		$svtResult.ControlResults | ForEach-Object {
+			$currentResult = $_
+			$isLegitimateResult = ($currentResult.CurrentSessionContext.IsLatestPSModule -and $currentResult.CurrentSessionContext.Permissions.HasRequiredAccess -and $currentResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions)
+			if($isLegitimateResult)
+			{
+				$resourceScanResult = [LSRResourceScanResult]::new()
+				if($null -ne $oldResult)
+				{
+					if($isSubscriptionScan) 
+					{
+						$resourceScanResult = $oldResult
+					}
+					else
+					{
+						$resourceScanResult = $oldResult | Where-Object { $_.ChildResourceName -eq $currentResult.ChildResourceName -or [string]::IsNullOrEmpty($currentResult.ChildResourceName) }
+					}
+					
+				}
+
+				if($currentResult.AttestationStatus -ne [AttestationStatus]::None -and($currentResult.AttestationStatus -ne $resourceScanResult.AttestationStatus -or $currentResult.Justification -ne $resourceScanResult.Justification))
+				{
+					$resourceScanResult.AttestationCounter = $resourceScanResult.AttestationCounter + 1 
+				}
+
+				if($resourceScanResult.VerificationResult -ne $currentResult.VerificationResult)
+				{
+					$resourceScanResult.LastResultTransitionOn = [System.DateTime]::UtcNow
+				}
+
+				if($resourceScanResult.FirstScannedOn -eq [Constants]::AzSKDefaultDateTime)
+				{
+					$resourceScanResult.FirstScannedOn = [System.DateTime]::UtcNow
+				}
+
+				if($resourceScanResult.FirstFailedOn -eq [Constants]::AzSKDefaultDateTime -and $currentResult.ActualVerificationResult -ne [VerificationResult]::Passed)
+				{
+					$resourceScanResult.FirstFailedOn = [System.DateTime]::UtcNow
+				}
+
+				if($resourceScanResult.FirstAttestedOn -eq [Constants]::AzSKDefaultDateTime -and $currentResult.AttestationStatus -ne [AttestationStatus]::None)
+				{
+					$resourceScanResult.FirstAttestedOn = [System.DateTime]::UtcNow
+				}
+
+
+				$resourceScanResult.ScannedBy = [Helpers]::GetCurrentRMContext().Account
+				$resourceScanResult.ScanSource = $scanSource
+				$resourceScanResult.ScannerVersion = $scannerVersion
+				$resourceScanResult.ControlVersion = $scannerVersion
+				if(-not $isSubscriptionScan)
+				{
+					$resourceScanResult.ChildResourceName = $currentResult.ChildResourceName 
+				}
+				$resourceScanResult.ControlId = $svtResult.ControlItem.ControlId 
+				$resourceScanResult.ControlIntId = $svtResult.ControlItem.Id 
+				$resourceScanResult.ControlSeverity = $svtResult.ControlItem.ControlSeverity 
+				$resourceScanResult.ActualVerificationResult = $currentResult.ActualVerificationResult 
+				$resourceScanResult.AttestationStatus = $currentResult.AttestationStatus
+				if($resourceScanResult.AttestationStatus -ne [AttestationStatus]::None)
+				{
+					$resourceScanResult.AttestedBy =  $currentResult.StateManagement.AttestedStateData.AttestedBy
+					$resourceScanResult.AttestedDate = $currentResult.StateManagement.AttestedStateData.AttestedDate 
+					$resourceScanResult.Justification = $currentResult.StateManagement.AttestedStateData.Justification
+					$resourceScanResult.AttestationData = [Helpers]::ConvertToJsonCustomCompressed($currentResult.StateManagement.AttestedStateData.DataObject)	
+				}
+				
+				$resourceScanResult.VerificationResult = $currentResult.VerificationResult
+				$resourceScanResult.ScanKind = $scanKind
+				$resourceScanResult.ScannerModuleName = [Constants]::AzSKModuleName
+				$resourceScanResult.IsLatestPSModule = $currentResult.CurrentSessionContext.IsLatestPSModule
+				$resourceScanResult.HasRequiredPermissions = $currentResult.CurrentSessionContext.Permissions.HasRequiredAccess
+				$resourceScanResult.HasAttestationWritePermissions = $currentResult.CurrentSessionContext.Permissions.HasAttestationWritePermissions
+				$resourceScanResult.HasAttestationReadPermissions = $currentResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions
+				$resourceScanResult.UserComments = $currentResult.UserComments
+				$resourceScanResult.IsBaselineControl = $svtResult.ControlItem.IsBaselineControl
+				
+				if($svtResult.ControlItem.Tags.Contains("OwnerAccess") -or $svtResult.ControlItem.Tags.Contains("GraphRead"))
+				{
+					$resourceScanResult.HasOwnerAccessTag = $true
+				}
 				$resourceScanResult.LastScannedOn = [DateTime]::UtcNow
 
 				# ToDo: Need to confirm
