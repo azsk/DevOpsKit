@@ -26,13 +26,9 @@ class SVTCommandBase: CommandBase {
 	{
         $azskConfig = [ConfigurationManager]::GetAzSKConfigData();
         if(!$azskConfig.PersistScanReportInSubscription) {return;}
-        #todo generalize this with reosurce helper
+        
 		$storageReportHelper = [StorageReportHelper]::new();
-		$storageReportHelper.Initialize($false);
-		if($storageReportHelper.HasStorageReportReadAccessPermissions())
-		{
-			$this.StorageReportData =  $storageReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId)
-		}
+        $this.StorageReportData =  $storageReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId)
 	}
 
     hidden [SVTEventContext] CreateSVTEventContextObject() {
@@ -102,7 +98,7 @@ class SVTCommandBase: CommandBase {
         # ToDo: remove InvocationContext, try to pass as param
         # ToDo: Assumption: usercomment will only work when storage report feature flag is enable.
         $svtObject.IncludeUserComments =$this.InvocationContext.BoundParameters['IncludeUserComments'];
-        $this.GetLocalSubscriptionData()
+        $this.GetLocalSubscriptionData();
 		$svtObject.StorageReportData = $this.StorageReportData
 
         #Include Server Side Exclude Tags
