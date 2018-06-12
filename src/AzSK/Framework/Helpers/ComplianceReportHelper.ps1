@@ -1,12 +1,12 @@
 Set-StrictMode -Version Latest
 
-class StorageReportHelper
+class ComplianceReportHelper
 {
 	
 	hidden [StorageHelper] $azskStorageInstance;
     hidden [int] $retryCount = 3;
     
-    StorageReportHelper()
+    ComplianceReportHelper()
 	{
 		$this.CreateComplianceReportContainer();
 	} 
@@ -641,7 +641,7 @@ class StorageReportHelper
 								
 							# ToDo: Change _OR to snapshot
 							$_ORsubcriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }
-							$svtResults = $this.ConvertScanResultToSnapShotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_ORsubcriptionScanResult, $true)
+							$svtResults = $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_ORsubcriptionScanResult, $true)
 							#$_ORsubcriptionScanResult.ScanKind = $svtResult.ScanKind
 							#$_ORsubcriptionScanResult.ControlId = $svtResult.ControlId
 							#$_ORsubcriptionScanResult.ControlUpdatedOn = $svtResult.ControlUpdatedOn
@@ -701,12 +701,12 @@ class StorageReportHelper
 						}
 						else
 						{
-							$subscription.ScanDetails.SubscriptionScanResult += $this.ConvertScanResultToSnapShotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $true)
+							$subscription.ScanDetails.SubscriptionScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $true)
 						}
 					}
 					else
 					{
-						$subscription.ScanDetails.SubscriptionScanResult += $this.ConvertScanResultToSnapShotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $true)
+						$subscription.ScanDetails.SubscriptionScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $true)
 					}
 				}
 				else
@@ -720,7 +720,7 @@ class StorageReportHelper
 						if((($resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $currentScanResult.ControlItem.Id }) | Measure-Object).Count -gt 0)
 						{
 							$_oldControlResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $currentScanResult.ControlItem.Id }
-							$svtResults = $this.ConvertScanResultToSnapShotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_oldControlResult, $false)
+							$svtResults = $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_oldControlResult, $false)
 							#$_oldControlResult.ControlId = $_resourceSVTResult.ControlId
 							#$_oldControlResult.ScanKind = $_resourceSVTResult.ScanKind
 							#$_oldControlResult.ControlUpdatedOn = $_resourceSVTResult.ControlUpdatedOn
@@ -780,7 +780,7 @@ class StorageReportHelper
 						}
 						else
 						{
-							$resource.ResourceScanResult += $this.ConvertScanResultToSnapShotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $false)
+							$resource.ResourceScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $false)
 						}
 
 						$resources = ($resources | Where-Object {$_.ResourceId -ne $resource.ResourceId } | Measure-Object)
@@ -799,7 +799,7 @@ class StorageReportHelper
 						# ToDo: Need to confirm
 						# $resource.ResourceMetadata = [Helpers]::ConvertToJsonCustomCompressed($currentScanResult.ResourceContext.ResourceMetadata)
 						$resource.FeatureName = $currentScanResult.FeatureName
-						$resource.ResourceScanResult += $this.ConvertScanResultToSnapShotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $false)
+						$resource.ResourceScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $false)
 						$resources += $resource
 					}
 				}
@@ -973,7 +973,7 @@ class StorageReportHelper
 		return $resourceScanResults
 	} 
 
-	hidden [LSRControlResultBase[]] ConvertScanResultToSnapShotResult($svtResult, $scanSource, $scannerVersion, $scanKind, $oldResult, $isSubscriptionScan)
+	hidden [LSRControlResultBase[]] ConvertScanResultToSnapshotResult($svtResult, $scanSource, $scannerVersion, $scanKind, $oldResult, $isSubscriptionScan)
 	{
 		if($isSubscriptionScan)
 		{

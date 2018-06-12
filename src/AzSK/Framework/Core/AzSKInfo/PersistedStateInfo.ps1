@@ -40,7 +40,7 @@ class PersistedStateInfo: CommandBase
 		  return $messages;
 		}
 		# Read file from Storage
-	    $storageReportHelper = [StorageReportHelper]::new(); 
+	    $storageReportHelper = [ComplianceReportHelper]::new(); 
 		$storageReportHelper.Initialize($false);	
 		$StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
 		$SelectedSubscription=$null;
