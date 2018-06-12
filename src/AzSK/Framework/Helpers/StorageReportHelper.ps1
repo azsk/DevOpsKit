@@ -694,15 +694,17 @@ class StorageReportHelper
 				$resourcegroups = $_
 				if([Helpers]::CheckMember($resourcegroups,"Resources") -and ($resourcegroups.Resources | Measure-Object ).Count -gt 0)
 				{
-					$resource = $_
-					$newResource = [LSRResources]::new()
-					$newResource.HashId = [Helpers]::ComputeHash($resource.ResourceId)
-					$newResource.ResourceId = $resource.ResourceId
-					$newResource.FeatureName = $resource.Feature
-					$newResource.ResourceGroupName = $resourcegroups.Name
-					$newResource.ResourceName = $resource.Name
+					$resourcegroups.Resources | ForEach-Object {
+						$resource = $_
+						$newResource = [LSRResources]::new()
+						$newResource.HashId = [Helpers]::ComputeHash($resource.ResourceId)
+						$newResource.ResourceId = $resource.ResourceId
+						$newResource.FeatureName = $resource.Feature
+						$newResource.ResourceGroupName = $resourcegroups.Name
+						$newResource.ResourceName = $resource.Name
 
-					$scanDetails.Resources += $newResource
+						$scanDetails.Resources += $newResource
+					}
 				}
 			}
 			$storageReport.ScanDetails = $scanDetails;
@@ -710,9 +712,9 @@ class StorageReportHelper
         return $storageReport;
     }
 
-	hidden [LocalSubscriptionReport] MergeSVTScanResult($currentScanResult, $resourceInventory, $scanSource, $scannerVersion, $scanKind)
+	hidden [LocalSubscriptionReport] MergeSVTScanResult($currentScanResults, $resourceInventory, $scanSource, $scannerVersion, $scanKind)
 	{
-		$SVTEventContextFirst = $currentScanResult[0]
+		$SVTEventContextFirst = $currentScanResults[0]
 
 		$subscriptionId = $SVTEventContextFirst.SubscriptionContext.SubscriptionId
 
@@ -740,7 +742,7 @@ class StorageReportHelper
 			$resources = $subscription.ScanDetails.Resources
 		}
 
-		$currentScanResult | ForEach-Object {
+		$currentScanResults | ForEach-Object {
 			$currentScanResult = $_
 			if($currentScanResult.FeatureName -eq "SubscriptionCore")
 			{
@@ -895,11 +897,11 @@ class StorageReportHelper
 						}
 						else
 						{
-							$resource.ResourceScanResult += $this.SerializeResourceSVTResult($currentScanResult, $scanSource, $scannerVersion, $scanKind)
+							$resource.ResourceScanResult += $_resourceSVTResult
 						}
 					}	
 
-					$resources= $resources | Where-Object {$_.ResourceId -ne $currentScanResult.ResourceContext.ResourceId }
+					$resources = $resources | Where-Object {$_.ResourceId -ne $resource.ResourceId }
 					$resources += $resource
 				}
 				else
@@ -913,7 +915,7 @@ class StorageReportHelper
 					$resource.ResourceName = $currentScanResult.ResourceContext.ResourceName
 					# $resource.ResourceMetadata = [Helpers]::ConvertToJsonCustomCompressed($currentScanResult.ResourceContext.ResourceMetadata)
 					$resource.FeatureName = $currentScanResult.FeatureName
-					$resource.ResourceScanResult += $this.SerializeResourceSVTResult($currentScanResult, $scanSource, $scannerVersion, $scanKind)
+					$resource.ResourceScanResult += $svtResourceResults
 					$resources += $resource
 				}
 			}
