@@ -1,49 +1,10 @@
 ﻿Set-StrictMode -Version Latest
-#Import-Module AzureRM.Resources
-#Import-Module AzureRM.KeyVault
-#Import-Module AzureRM.Sql
-#Import-Module AzureRM.Storage
-#Import-Module AzureRM.DataLakeAnalytics
-#Import-Module AzureRM.DataLakeStore
-#Import-Module AzureRM.Network
-#Import-Module AzureRM.Compute
-
+Write-Host "Importing AzureRM modules. This may take a while..." -ForegroundColor Yellow
 Import-Module AzureRM.Profile -RequiredVersion 4.2.0  
-Import-Module Azure.Storage -RequiredVersion 4.1.0
-Import-Module AzureRM.AnalysisServices -RequiredVersion 0.6.2
-Import-Module AzureRM.ApplicationInsights -RequiredVersion 0.1.1
-Import-Module AzureRM.Automation -RequiredVersion 4.2.0
-Import-Module AzureRM.Batch -RequiredVersion 4.0.4
-Import-Module AzureRM.Cdn -RequiredVersion 4.1.0
-Import-Module AzureRM.Compute -RequiredVersion 4.2.0
-Import-Module AzureRM.DataFactories -RequiredVersion 4.1.0
-Import-Module AzureRM.DataFactoryV2 -RequiredVersion 0.5.0
-Import-Module AzureRM.DataLakeAnalytics -RequiredVersion 4.2.0
-Import-Module AzureRM.DataLakeStore -RequiredVersion 5.1.0
-Import-Module AzureRM.EventHub -RequiredVersion 0.5.1
-Import-Module AzureRM.HDInsight -RequiredVersion 4.0.2
-Import-Module AzureRM.Insights -RequiredVersion 4.0.1
-Import-Module AzureRM.KeyVault -RequiredVersion 4.1.0
-Import-Module AzureRM.LogicApp -RequiredVersion 4.0.1
-Import-Module AzureRM.Network -RequiredVersion 5.1.0
-Import-Module AzureRM.NotificationHubs -RequiredVersion 4.1.0
-Import-Module AzureRM.OperationalInsights -RequiredVersion 4.1.0
-Import-Module AzureRM.RedisCache -RequiredVersion 4.1.0
-Import-Module AzureRM.Resources -RequiredVersion 5.2.0
-Import-Module AzureRM.Scheduler -RequiredVersion 0.16.1
-Import-Module AzureRM.ServiceBus -RequiredVersion 0.5.1
-Import-Module AzureRM.ServiceFabric -RequiredVersion 0.3.1
-Import-Module AzureRM.Sql -RequiredVersion 4.2.0
-Import-Module AzureRM.Storage -RequiredVersion 4.2.0
-Import-Module AzureRM.StreamAnalytics -RequiredVersion 4.0.2
-Import-Module AzureRM.Tags -RequiredVersion 4.0.0
-Import-Module AzureRM.TrafficManager -RequiredVersion 4.0.1
-Import-Module AzureRM.Websites -RequiredVersion 4.1.0
-Import-Module AzureRM.ContainerInstance -RequiredVersion 0.2.2
 
 . $PSScriptRoot\Framework\Framework.ps1
 
-@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring", "$PSScriptRoot\SubscriptionSecurity", "$PSScriptRoot\ContinuousAssurance" , "$PSScriptRoot\MetadataInfo", "$PSScriptRoot\PolicySetup", "$PSScriptRoot\ARMChecker") |
+@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring", "$PSScriptRoot\SubscriptionSecurity", "$PSScriptRoot\ContinuousAssurance" , "$PSScriptRoot\AzSKInfo", "$PSScriptRoot\PolicySetup", "$PSScriptRoot\ARMChecker") |
     ForEach-Object {
     (Get-ChildItem -Path $_ -Recurse -File -Include "*.ps1") |
         ForEach-Object {

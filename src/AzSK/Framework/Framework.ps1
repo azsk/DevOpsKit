@@ -1,7 +1,6 @@
 Set-StrictMode -Version Latest
 
-Write-Host "Importing AzureRM modules. This may take a while..." -ForegroundColor Yellow
-# Hack to load AI dlls
+# load AI dlls using context
 try {Get-AzureRmContext -ErrorAction SilentlyContinue | Out-Null }
 catch 
 { 
@@ -37,7 +36,7 @@ catch
 . $PSScriptRoot\Models\SVT\AttestationOptions.ps1
 . $PSScriptRoot\Models\SVT\PSCloudService.ps1
 . $PSScriptRoot\Models\SVT\PartialScanResourceMap.ps1
-
+. $PSScriptRoot\Models\RemoteReports\LSRScanResultModel.ps1
 . $PSScriptRoot\Models\SubscriptionCore\AzureSecurityCenter.ps1
 . $PSScriptRoot\Models\SubscriptionCore\ManagementCertificate.ps1
 . $PSScriptRoot\Models\SubscriptionSecurity\SubscriptionRBAC.ps1
@@ -59,11 +58,13 @@ catch
 . $PSScriptRoot\Helpers\ConfigOverride.ps1
 
 
+
 #Managers
 . $PSScriptRoot\Managers\ConfigurationManager.ps1
 . $PSScriptRoot\Managers\ControlStateExtension.ps1
 . $PSScriptRoot\Managers\AzSKPDFExtension.ps1
 . $PSScriptRoot\Managers\PartialScanManager.ps1
+. $PSScriptRoot\Helpers\StorageReportHelper.ps1
 
 . $PSScriptRoot\Helpers\OMSHelper.ps1
 . $PSScriptRoot\Helpers\RemoteReportHelper.ps1
@@ -141,9 +142,11 @@ catch
 . $PSScriptRoot\Core\SVT\ServicesSecurityStatus.ps1
 . $PSScriptRoot\Core\SVT\SubscriptionSecurityStatus.ps1
 . $PSScriptRoot\Core\SVT\SVTStatusReport.ps1
-. $PSScriptRoot\Core\MetadataInfo\BasicInfo.ps1
-. $PSScriptRoot\Core\MetadataInfo\ControlsInfo.ps1
-. $PSScriptRoot\Core\MetadataInfo\EnvironmentInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\BasicInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\ControlsInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\EnvironmentInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\ComplianceInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\PersistedStateInfo.ps1
 . $PSScriptRoot\Core\ARMChecker\ARMCheckerStatus.ps1
 
 . $PSScriptRoot\Core\PolicySetup\PolicySetup.ps1

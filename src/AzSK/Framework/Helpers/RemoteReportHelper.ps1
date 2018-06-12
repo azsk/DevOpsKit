@@ -103,10 +103,20 @@ class RemoteReportHelper
 		$result.AttestationStatus = $controlResult.AttestationStatus
 		$result.VerificationResult = $controlResult.VerificationResult
 		$result.HasRequiredAccess = $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess
+		$result.IsBaselineControl = $control.IsBaselineControl
+		if($control.Tags.Contains("OwnerAccess"))
+		{
+			$result.HasOwnerAccessTag = $true
+		}
+
+		$result.UserComments = $controlResult.UserComments
+
 		if($null -ne $controlResult.StateManagement -and $null -ne $controlResult.StateManagement.AttestedStateData) {
 			$result.AttestedBy = $controlResult.StateManagement.AttestedStateData.AttestedBy
 			$result.Justification = $controlResult.StateManagement.AttestedStateData.Justification
 			$result.AttestedState = [Helpers]::ConvertToJsonCustomCompressed($controlResult.StateManagement.AttestedStateData.DataObject)
+			$result.AttestedDate = $controlResult.StateManagement.AttestedStateData.AttestedDate
+
 		}
 		if($null -ne $controlResult.StateManagement -and $null -ne $controlResult.StateManagement.CurrentStateData) {
 			$result.CurrentState = [Helpers]::ConvertToJsonCustomCompressed($controlResult.StateManagement.CurrentStateData.DataObject)
@@ -133,10 +143,18 @@ class RemoteReportHelper
 		$result.AttestationStatus = $controlResult.AttestationStatus
 		$result.VerificationResult = $controlResult.VerificationResult
 		$result.HasRequiredAccess = $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess
+		$result.IsBaselineControl = $control.IsBaselineControl
+		$result.UserComments = $controlResult.UserComments
+		if($control.Tags.Contains("OwnerAccess"))
+		{
+			$result.HasOwnerAccessTag = $true
+		}
+
 		if($null -ne $controlResult.StateManagement -and $null -ne $controlResult.StateManagement.AttestedStateData) {
 			$result.AttestedBy = $controlResult.StateManagement.AttestedStateData.AttestedBy
 			$result.Justification = $controlResult.StateManagement.AttestedStateData.Justification
 			$result.AttestedState = [Helpers]::ConvertToJsonCustomCompressed($controlResult.StateManagement.AttestedStateData.DataObject)
+			$result.AttestedDate = $controlResult.StateManagement.AttestedStateData.AttestedDate
 		}
 		if($null -ne $controlResult.StateManagement -and $null -ne $controlResult.StateManagement.CurrentStateData) {
 			$result.CurrentState = [Helpers]::ConvertToJsonCustomCompressed($controlResult.StateManagement.CurrentStateData.DataObject)

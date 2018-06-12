@@ -40,8 +40,9 @@ class AzSKConfig
 	[string] $SupportDL;
 	[string] $RunbookScanAgentBaseVersion;
 	[string] $PolicyOrgName;
+	[bool] $PersistScanReportInLocalSubscription;
 	hidden static [AzSKConfig] $Instance = $null;
-
+	
     static [AzSKConfig] GetInstance([bool] $useOnlinePolicyStore, [string] $onlineStoreUri, [bool] $enableAADAuthForOnlinePolicyStore)
     {
         if ( $null -eq  [AzSKConfig]::Instance)

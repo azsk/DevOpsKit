@@ -28,7 +28,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-      "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/bot-service/dotnet/bot-builder-dotnet-state for implementing state for Bot Service.",
+      "Recommendation": "Default behavior. No action required.",
       "Tags": [
         "SDL",
         "Information",

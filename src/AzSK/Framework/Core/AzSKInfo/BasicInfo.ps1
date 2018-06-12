@@ -211,6 +211,7 @@ class BasicInfo: CommandBase
 		$this.SubConfiguration.Recommendation = $RequireAction
 		$this.Configurations += $this.SubConfiguration
 	}
+
 }
 
 class SubConfiguration

@@ -284,6 +284,7 @@ function AddDependentModules
    return $ResultModuleList
 }
 
+<<<<<<< HEAD
 function CreateNewSchedule($scheduleName,$startTime)
 {
 	New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleName `
@@ -292,12 +293,42 @@ function CreateNewSchedule($scheduleName,$startTime)
 					-ErrorAction Stop | Out-Null
 	$isRegistered = (Get-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG `
 					-RunbookName $RunbookName -ScheduleName $scheduleName | Measure-Object).Count -gt 0
+=======
+function RemoveOnetimeHelperSchedule()
+{
+	$schedule = Get-AzureRmAutomationSchedule -Name $CAHelperScheduleName `
+	-ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName `
+	-ErrorAction SilentlyContinue
+	
+	if(($schedule | Measure-Object).Count -gt 0 -and ($schedule.Frequency -eq [Microsoft.Azure.Commands.Automation.Model.ScheduleFrequency]::Onetime))
+	{
+		Remove-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $CAHelperScheduleName -ResourceGroupName $AutomationAccountRG -Force -ErrorAction SilentlyContinue | Out-Null		
+	}
+}
+function CreateNewScheduleIfNotExists($scheduleName,$startTime)
+{
+	$scheduleExists = (Get-AzureRmAutomationSchedule -Name $scheduleName `
+	-ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName `
+	-ErrorAction SilentlyContinue | Measure-Object).Count -gt 0 
+	
+	if(!$scheduleExists)
+	{
+		New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleName `
+                    -ResourceGroupName $AutomationAccountRG -StartTime $startTime `
+					-HourInterval 1 -Description "This schedule ensures that CA activity initiated by the Scan_Schedule actually completes. Do not disable/delete this schedule." `
+					-ErrorAction Stop | Out-Null
+	}
+
+	$isRegistered = (Get-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG `
+						-RunbookName $RunbookName -ScheduleName $scheduleName -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0
+>>>>>>> 0e795732614b90b6929efd8bc9b9088409f72c88
 	if(!$isRegistered)
 	{
 		Register-AzureRmAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $scheduleName `
 		-ResourceGroupName $AutomationAccountRG `
 		-AutomationAccountName $AutomationAccountName -ErrorAction Stop | Out-Null
 	}
+<<<<<<< HEAD
 }
 function CreateHelperSchedules()
 {
@@ -307,6 +338,29 @@ function CreateHelperSchedules()
 		$startTime = $(get-date).AddMinutes(15*$i)
 		CreateNewSchedule -scheduleName $scheduleName -startTime $startTime
 	}
+=======
+	
+}
+function CreateHelperSchedules()
+{
+	RemoveOnetimeHelperSchedule
+	Write-Output("CS: Creating required helper schedule(s)...")	
+	for($i = 1;$i -le 4; $i++)
+	{
+		$scheduleName = ""
+		if($i -eq 1)
+		{
+			$scheduleName = $CAHelperScheduleName
+		}
+		else
+		{
+			$scheduleName = [string]::Concat($CAHelperScheduleName,"_$i")		
+		}
+		$startTime = $(get-date).AddMinutes(15*$i)
+		CreateNewScheduleIfNotExists -scheduleName $scheduleName -startTime $startTime
+	}
+	DisableHelperSchedules
+>>>>>>> 0e795732614b90b6929efd8bc9b9088409f72c88
 }
 
 function DisableHelperSchedules()
@@ -314,6 +368,7 @@ function DisableHelperSchedules()
 	Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
 	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*"} | `
 	Set-AzureRmAutomationSchedule -IsEnabled $false | Out-Null
+<<<<<<< HEAD
 	
 }
 
@@ -334,6 +389,43 @@ function ScheduleNewJob($intervalInMins)
 		}
 	}
 	CreateHelperSchedules
+=======
+}
+function FindNearestSchedule($intervalInMins)
+{
+	$desiredNextRun = $(get-date).ToUniversalTime().AddMinutes($intervalInMins)
+	$finalSchedule = Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
+	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*" -and ($_.ExpiryTime.UtcDateTime -gt $(get-date).ToUniversalTime()) -and ($_.NextRun.UtcDateTime -ge $desiredNextRun)} | `
+	Sort-Object -Property NextRun | Select-Object -First 1
+	return $finalSchedule
+}
+function EnableHelperSchedule($scheduleName)
+{
+	Set-AzureRmAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true -ErrorAction SilentlyContinue| Out-Null
+	Write-Output ("CS: Scheduled CA helper job :[$scheduleName]")
+}
+function ScheduleNewJob($intervalInMins)
+{
+	$finalSchedule = FindNearestSchedule -intervalInMins $intervalInMins
+	if(($finalSchedule|Measure-Object).Count -gt 0)
+	{
+		EnableHelperSchedule -scheduleName $finalSchedule.Name
+	}
+	else
+	{
+		CreateHelperSchedules 
+		$finalSchedule = FindNearestSchedule -intervalInMins $intervalInMins
+		EnableHelperSchedule -scheduleName $finalSchedule.Name
+	}
+	PublishEvent -EventName "CA Job Rescheduled" -Properties @{"IntervalInMinutes" = $intervalInMins}
+}
+
+function IsScanComplete()
+{
+	$helperScheduleCount = (Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
+	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*"}|Measure-Object).Count
+	return ($helperScheduleCount -gt 1 -and $helperScheduleCount -lt 4)
+>>>>>>> 0e795732614b90b6929efd8bc9b9088409f72c88
 }
 
 try
@@ -368,7 +460,18 @@ try
     if($null -ne $tempUpdateToLatestVersion)
     {
 		$UpdateToLatestVersion = ConvertStringToBoolean($tempUpdateToLatestVersion)
+<<<<<<< HEAD
     }
+=======
+	}
+	
+	if(IsScanComplete)
+	{
+		CreateHelperSchedules
+		return
+	}
+
+>>>>>>> 0e795732614b90b6929efd8bc9b9088409f72c88
 	#Find out how many times has CA runbook run today for this account...
 	$jobs = Get-AzureRmAutomationJob -ResourceGroupName $AutomationAccountRG `
 		-AutomationAccountName $AutomationAccountName -RunbookName $RunbookName | `
