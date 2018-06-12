@@ -235,19 +235,10 @@ class SVTControlAttestation
 			$controlState.AttestationStatus = [AttestationStatus]::None
 			return $controlState;
 		}
-		$defaultValidStates=$this.ControlSettings.DefaultValidAttestationStates;
 		$ValidAttestationStates = $this.ComputeEligibleAttestationState($controlItem, $controlResult);
 		if(-not $this.isControlAttestable($controlItem, $controlResult))
 		{
-			if($null -ne $ValidAttestationStates )
-			{
-					$validAttestationSet =  Compare-Object $defaultValidStates $controlItem.ControlItem.ValidAttestationStates  -PassThru -IncludeEqual
-			}
-			else
-			{
-				$validAttestationSet=$defaultValidStates
-			}
-			if( $this.attestOptions.AttestationStatus -in $validAttestationSet)
+			if( $this.attestOptions.AttestationStatus -in $ValidAttestationStates)
 			{
 			
 						$controlState.AttestationStatus = $this.attestOptions.AttestationStatus;
@@ -269,7 +260,7 @@ class SVTControlAttestation
 			}
 			else
 			{
-				$outvalidSet=$ValidAttestationSet -join "," ;
+				$outvalidSet=$ValidAttestationStates -join "," ;
 				Write-Host "The chosen attestation state is not applicable to this control. Valid attestation choices are:  $outvalidSet";
 				return $controlState ;
 			}
