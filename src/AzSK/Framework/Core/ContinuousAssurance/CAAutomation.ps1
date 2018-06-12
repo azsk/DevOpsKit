@@ -510,11 +510,7 @@ class CCAutomation: CommandBase
 			#region: Check AzureRM.Automation/AzureRm.Profile and its dependent modules health
 			if($FixModules)
 			{
-<<<<<<< HEAD
 				$this.PublishCustomMessage("Inspecting modules present in the CA automation account…")
-=======
-				$this.PublishCustomMessage("Inspecting modules present in the CA automation account")
->>>>>>> 0e795732614b90b6929efd8bc9b9088409f72c88
 				try
 				{
 					$this.FixCAModules()
@@ -1802,21 +1798,12 @@ class CCAutomation: CommandBase
 		{
 			$resultMsg = "The resource groups to be scanned by CA are correctly set up."
 			$resultStatus = "OK"
-<<<<<<< HEAD
 		}
 		if($shouldReturn)
 		{
 			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
 			return $messages
 		}
-=======
-		}
-		if($shouldReturn)
-		{
-			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
-			return $messages
-		}
->>>>>>> 0e795732614b90b6929efd8bc9b9088409f72c88
 		else 
 		{
 			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
