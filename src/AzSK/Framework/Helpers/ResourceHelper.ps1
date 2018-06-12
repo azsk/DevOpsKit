@@ -225,20 +225,33 @@ class StorageHelper: ResourceGroupHelper
 				{
 					$blobName = $blobPath + "/" + $blobName;
 				}
+				[Helpers]::RemoveUtf8BOM($_);
 
-				if($overwrite)
+				$loopValue = $this.retryCount;
+				$sleepValue = $this.sleepIntervalInSecs;
+				while($loopValue -gt 0)
 				{
-					[Helpers]::RemoveUtf8BOM($_);
-					Set-AzureStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context -Force | Out-Null
-				}
-				else
-				{
-					$currentBlob = Get-AzureStorageBlob -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -ErrorAction Ignore
-				
-					if(-not $currentBlob)
-					{
-						[Helpers]::RemoveUtf8BOM($_);
-						Set-AzureStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context | Out-Null
+					$loopValue = $loopValue - 1;
+					try {
+						if($overwrite)
+						{
+							Set-AzureStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context -Force | Out-Null
+						}
+						else
+						{
+							$currentBlob = Get-AzureStorageBlob -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -ErrorAction Ignore
+						
+							if(-not $currentBlob)
+							{
+								Set-AzureStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context | Out-Null
+							}
+						}
+						$loopValue = 0;
+					}
+					catch {
+						#sleep for incremental 10 seconds before next retry;
+						Start-Sleep -Seconds $sleepValue;
+						$sleepValue = $sleepValue + 10;
 					}
 				}
 
@@ -262,10 +275,10 @@ class StorageHelper: ResourceGroupHelper
 			try {
 				if($overwrite)
 				{
-					Get-AzureStorageBlobContent -Blob $blobName -Context $this.StorageAccount.Context -Destination $destinationPath -Force -ErrorAction Stop
+					Get-AzureStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $destinationPath -Force -ErrorAction Stop
 				}
 				else {
-					Get-AzureStorageBlobContent -Blob $blobName -Context $this.StorageAccount.Context -Destination $destinationPath -ErrorAction Stop
+					Get-AzureStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $destinationPath -ErrorAction Stop
 				}
 				$loopValue = 0;
 			}
