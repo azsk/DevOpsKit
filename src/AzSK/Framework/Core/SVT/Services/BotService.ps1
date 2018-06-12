@@ -55,12 +55,12 @@ class BotService: SVTBase
         if($developerAppInsightsApplicationId -ne "")
 		{
 			$controlResult.AddMessage([VerificationResult]::Verify,
-                                    [MessageData]::new("Verify if critical data is not stored."));
+                                    [MessageData]::new("Application Insights is configured for the Bot Service "+ $this.ResourceContext.ResourceName  +". Please verify if critical data is not stored."));
         }
 		else
 		{
 			$controlResult.AddMessage([VerificationResult]::Passed,
-                                    [MessageData]::new("Application Insights not Configured"));
+                                    [MessageData]::new("Application Insights is not Configured for " +  $this.ResourceContext.ResourceName));
 		}
 
         return $controlResult;
