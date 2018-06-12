@@ -40,13 +40,13 @@ class PersistedStateInfo: CommandBase
 		  return $messages;
 		}
 		# Read file from Storage
-	    $complianceReportHelper = [ComplianceReportHelper]::new(); 
-		$complianceReportHelper.Initialize($false);	
+	    $complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId); 
+		#$complianceReportHelper.Initialize($false);	
 		$StorageReportJson =$null;
 		# Check for write access
-		if($complianceReportHelper.HasStorageReportWriteAccessPermissions())
+		if($complianceReportHelper.azskStorageInstance.HaveWritePermissions -eq 1)
 		{
-	  	  $StorageReportJson = $complianceReportHelper.GetLocalSubscriptionScanReport();
+	  	  $StorageReportJson = $complianceReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
 		}else
 		{
 		 $this.PublishCustomMessage("You don't have the required permissions to update user comments. If you'd like to update user comments, please request your subscription owner to grant you 'Contributor' access to the 'AzSKRG' resource group.",[MessageType]::Error);
