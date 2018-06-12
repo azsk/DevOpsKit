@@ -281,7 +281,8 @@ class WriteSummaryFile: FileOutputBase
 				$resources.ResourceGroups.Add($resourceGroup) | Out-Null
 			}
 		# }
-		$StorageReportHelperInstance = [ComplianceReportHelper]::new();
+		$subId = $svtEventContextResults[0].SubscriptionContext.SubscriptionId
+		$StorageReportHelperInstance = [ComplianceReportHelper]::new($subId);
 		$StorageReportHelperInstance.Initialize($true);
 		if($StorageReportHelperInstance.HasStorageReportWriteAccessPermissions())
 		{

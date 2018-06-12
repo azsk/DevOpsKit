@@ -112,7 +112,7 @@ class ComplianceReportHelper
     }
 
 	# ToDo: Save the file name as subid.json
-    hidden [LSRSubscription] GetLocalSubscriptionScanReport([string] $subscriptionId)
+    hidden [LSRSubscription] GetLocalSubscriptionScanReport([string] $subId)
     {
 		if($this.azskStorageInstance.HaveWritePermissions -eq 0)
 		{
@@ -121,7 +121,7 @@ class ComplianceReportHelper
         $fullScanResult = $this.GetLocalSubscriptionScanReport()
         if([Helpers]::CheckMember($fullScanResult,"Subscriptions") -and ($fullScanResult.Subscriptions | Measure-Object ).Count -gt 0)
         {
-            return $fullScanResult.Subscriptions | Where-Object { $_.SubscriptionId -eq $subscriptionId }
+            return $fullScanResult.Subscriptions | Where-Object { $_.SubscriptionId -eq $subId }
         }
         else
         {
@@ -604,19 +604,18 @@ class ComplianceReportHelper
 		if($currentScanResults.Count -lt 1) { return $null}
 
 		$SVTEventContextFirst = $currentScanResults[0]
-		$subscriptionId = $SVTEventContextFirst.SubscriptionContext.SubscriptionId
 
 		$_oldScanReport = $this.GetLocalSubscriptionScanReport();
 		$subscription = [LSRSubscription]::new()
 		[LSRResources[]] $resources = @()
 
-		if((($_oldScanReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $subscriptionId }) | Measure-Object).Count -gt 0)
+		if((($_oldScanReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $this.subscriptionId }) | Measure-Object).Count -gt 0)
 		{
-			$subscription = $_oldScanReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $subscriptionId }
+			$subscription = $_oldScanReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $this.subscriptionId }
 		}
 		else
 		{
-			$subscription.SubscriptionId = $subscriptionId
+			$subscription.SubscriptionId = $this.subscriptionId
 			$subscription.SubscriptionName = $SVTEventContextFirst.SubscriptionContext.SubscriptionName
 		}
 
@@ -979,11 +978,11 @@ class ComplianceReportHelper
 	{
 		if($isSubscriptionScan)
 		{
-			[LSRSubscriptionControlResult[]] $scanResult = @();	
+			[LSRSubscriptionControlResult[]] $resourceScanResults = @();	
 		}
 		else
 		{
-			[LSRResourceScanResult[]] $scanResult = @();	
+			[LSRResourceScanResult[]] $resourceScanResults = @();	
 		}
 
 		$svtResult.ControlResults | ForEach-Object {
