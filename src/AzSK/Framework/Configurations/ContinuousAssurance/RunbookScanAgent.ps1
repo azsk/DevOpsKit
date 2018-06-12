@@ -1,3 +1,14 @@
+function ConvertStringToBoolean($strToConvert)
+{
+   if([bool]::TryParse($strToConvert, [ref] $strToConvert))
+    {
+        return $strToConvert
+    }
+    else
+    {
+        return $false
+    }
+}
 
 function RunAzSKScan() {
 
