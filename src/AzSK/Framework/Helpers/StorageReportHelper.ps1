@@ -690,8 +690,7 @@ class StorageReportHelper
 		if([Helpers]::CheckMember($resourceInventory,"ResourceGroups") -and ($resourceInventory.ResourceGroups | Measure-Object ).Count -gt 0)
 		{
 			$scanDetails = [LSRScanDetails]::new()
-			$resourceInventory.ResourceGroups | ForEach-Object 
-			{
+			$resourceInventory.ResourceGroups | ForEach-Object {
 				$resourcegroups = $_
 				if([Helpers]::CheckMember($resourcegroups,"Resources") -and ($resourcegroups.Resources | Measure-Object ).Count -gt 0)
 				{
@@ -711,45 +710,50 @@ class StorageReportHelper
         return $storageReport;
     }
 
-	hidden [LocalSubscriptionReport] MergeSVTScanResult($currentScanResult, $resourceInventory, $SubscriptionName,  $scanSource, $scannerVersion, $scanKind)
+	hidden [LocalSubscriptionReport] MergeSVTScanResult($currentScanResult, $resourceInventory, $scanSource, $scannerVersion, $scanKind)
 	{
-		$subscriptionId = $this.InvocationContext.BoundParameters.ContainsKey("SubscriptionId")
+		$SVTEventContextFirst = $currentScanResult[0]
+
+		$subscriptionId = $SVTEventContextFirst.SubscriptionContext.SubscriptionId
+
 		$_oldScanReport = $this.GetLocalSubscriptionScanReport();
 		$subscription = [LSRSubscription]::new()
 		[LSRResources[]] $resources = @()
 
-		if([Helpers]::CheckMember($_oldScanReport,"Subscriptions") -and (($_oldScanReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $scanReport.SubscriptionId }) | Measure-Object).Count -gt 0)
+		if([Helpers]::CheckMember($_oldScanReport,"Subscriptions") -and (($_oldScanReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $subscriptionId }) | Measure-Object).Count -gt 0)
 		{
-			$subscription = $_oldScanReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $scanReport.SubscriptionId }
-			if(-not [Helpers]::CheckMember($subscription,"ScanDetails"))
-			{
-				$subscription.ScanDetails = [LSRScanDetails]::new()
-			}
-			else
-			{
-				$resources = $subscription.ScanDetails.Resources
-			}
+			$subscription = $_oldScanReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $subscriptionId }
+			
 		}
 		else
 		{
 			$subscription.SubscriptionId = $subscriptionId
-			# $subscription.SubscriptionName = $SubscriptionName 
+			$subscription.SubscriptionName = $SVTEventContextFirst.SubscriptionContext.SubscriptionName
+		}
+
+		if(-not [Helpers]::CheckMember($subscription,"ScanDetails"))
+		{
+			$subscription.ScanDetails = [LSRScanDetails]::new()
+		}
+		else
+		{
+			$resources = $subscription.ScanDetails.Resources
 		}
 
 		$currentScanResult | ForEach-Object {
 			$currentScanResult = $_
 			if($currentScanResult.FeatureName -eq "SubscriptionCore")
 			{
-				if(($currentScanResult.ControlResult | Measure-Object).Count -gt 0 -and $currentScanResult.ControlResult[0].CurrentSessionContext.IsLatestPSModule -and $currentScanResult.ControlResult[0].CurrentSessionContext.Permissions.HasRequiredAccess -and $currentScanResult.ControlResult[0].CurrentSessionContext.Permissions.HasAttestationReadPermissions)
+				if(($currentScanResult.ControlResults | Measure-Object).Count -gt 0 -and $currentScanResult.ControlResults[0].CurrentSessionContext.IsLatestPSModule -and $currentScanResult.ControlResults[0].CurrentSessionContext.Permissions.HasRequiredAccess -and $currentScanResult.ControlResults[0].CurrentSessionContext.Permissions.HasAttestationReadPermissions)
 				{
 					if([Helpers]::CheckMember($subscription.ScanDetails,"SubscriptionScanResult") -and ($subscription.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
 					{
-						if((($subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.ControlIntId -eq $_.ControlIntId }) | Measure-Object).Count -gt0)
+						if((($subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }) | Measure-Object).Count -gt0)
 						{
 							$svtResult = $this.SerializeSubscriptionSVTResult($currentScanResult, $scanSource, $scannerVersion, $scanKind)
-							$_ORsubcriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.ControlIntId -eq $_.ControlIntId }
+							$_ORsubcriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }
                             $_ORsubcriptionScanResult.ScanKind = $svtResult.ScanKind
-                            $_ORsubcriptionScanResult.ControlIntId = $svtResult.ControlIntId
+                            $_ORsubcriptionScanResult.ControlId = $svtResult.ControlId
                             $_ORsubcriptionScanResult.ControlUpdatedOn = $svtResult.ControlUpdatedOn
                             $_ORsubcriptionScanResult.ControlSeverity = $svtResult.ControlSeverity
 
@@ -801,7 +805,7 @@ class StorageReportHelper
 							$_ORsubcriptionScanResult.IsBaselineControl = $svtResult.IsBaselineControl
 							$_ORsubcriptionScanResult.HasOwnerAccessTag = $svtResult.HasOwnerAccessTag
 
-							$subscription.ScanDetails.SubscriptionScanResult += $subscription.ScanDetails.SubscriptionScanResult | Where-Object {$_.ControlIntId -ne $currentScanResult.ControlItem.ControlIntId }
+							$subscription.ScanDetails.SubscriptionScanResult += $subscription.ScanDetails.SubscriptionScanResult | Where-Object {$_.ControlIntId -ne $currentScanResult.ControlItem.Id }
 							$subscription.ScanDetails.SubscriptionScanResult += $_ORsubcriptionScanResult
 						}
 						else
@@ -822,16 +826,15 @@ class StorageReportHelper
 
 				if((($resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId }) | Measure-Object).Count -gt 0)
 				{
-					$resource = ($resources | Select-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId })
+					$resource = ($resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId })
 					$resource.LastEventOn = [DateTime]::UtcNow
 
-					$svtResourceResults | ForEach-Object 
-					{  
+					$svtResourceResults | ForEach-Object {  
 						$_resourceSVTResult = $_
-						if([Helpers]::CheckMember($resource,"ResourceScanResult") -and (($resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $_resourceSVTResult.ControlIntId -and $_.ChildResourceName -eq $_resourceSVTResult.ChildResourceName }) | Measure-Object).Count -eq 0)
+						if([Helpers]::CheckMember($resource,"ResourceScanResult") -and (($resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $_resourceSVTResult.ControlIntId -and $_.ChildResourceName -eq $_resourceSVTResult.ChildResourceName }) | Measure-Object).Count -gt 0)
 						{
 							$_oldControlResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $_resourceSVTResult.ControlIntId -and $_.ChildResourceName -eq $_resourceSVTResult.ChildResourceName }
-							$_oldControlResult.ControlIntId = $_resourceSVTResult.ControlIntId
+							$_oldControlResult.ControlId = $_resourceSVTResult.ControlId
 							$_oldControlResult.ScanKind = $_resourceSVTResult.ScanKind
 							$_oldControlResult.ControlUpdatedOn = $_resourceSVTResult.ControlUpdatedOn
 							$_oldControlResult.ControlSeverity = $_resourceSVTResult.ControlSeverity
@@ -886,7 +889,7 @@ class StorageReportHelper
 							$_oldControlResult.HasOwnerAccessTag = $_resourceSVTResult.HasOwnerAccessTag
 
 							#need to review below condition
-							$resource.ResourceScanResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -ne $_resourceSVTResult.ControlIntId -or $_.ChildResourceName -ne $_resourceSVTResult.ChildResourceName }
+							$resource.ResourceScanResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -ne $_oldControlResult.ControlIntId -or $_.ChildResourceName -ne $_oldControlResult.ChildResourceName }
 							$resource.ResourceScanResult += $_oldControlResult
 
 						}
@@ -919,13 +922,11 @@ class StorageReportHelper
 		#Resource Inventory
 		if([Helpers]::CheckMember($resourceInventory,"ResourceGroups") -and ($resourceInventory.ResourceGroups | Measure-Object ).Count -gt 0)
 		{
-			$resourceInventory.ResourceGroups | ForEach-Object 
-			{
+			$resourceInventory.ResourceGroups | ForEach-Object {
 				$resourcegroups = $_
 				if([Helpers]::CheckMember($resourcegroups,"Resources") -and ($resourcegroups.Resources | Measure-Object ).Count -gt 0)
 				{
-					$resourcegroups.Resources | ForEach-Object 
-					{
+					$resourcegroups.Resources | ForEach-Object {
 						$resource = $_
 						if((($resources | Where-Object { $_.ResourceId -eq  $resource.ResourceId }) | Measure-Object).Count -eq 0)
 						{
@@ -943,10 +944,14 @@ class StorageReportHelper
 			}
 		}
 
-		$resources | ForEach-Object {
-			$resource = $_
-			$subscription.ScanDetails.Resources = $subscription.ScanDetails.Resources | Where-Object { $resource.ResourceId -ne $_.ResourceId }
+		if($subscription.ScanDetails.Resources.Count -gt 0)
+		{
+			$resources | ForEach-Object {
+				$resource = $_
+				$subscription.ScanDetails.Resources = $subscription.ScanDetails.Resources | Where-Object { $_.ResourceId -ne $resource.ResourceId }
+			}
 		}
+		
 		$subscription.ScanDetails.Resources += $resources
 
 		$_oldScanReport.Subscriptions += $subscription;
@@ -958,31 +963,36 @@ class StorageReportHelper
 	hidden [LSRSubscriptionControlResult] SerializeSubscriptionSVTResult($svtResult, $scanSource, $scannerVersion, $scanKind)
 	{
 		$subscriptionScanResult = [LSRSubscriptionControlResult]::new()
-		if(($svtResult.ControlResult | Measure-Object).Count -gt 0)
+		if(($svtResult.ControlResults | Measure-Object).Count -gt 0)
 		{
 			$subscriptionScanResult.ScannedBy = [Helpers]::GetCurrentRMContext().Account
 			$subscriptionScanResult.ScanSource = $scanSource
 			$subscriptionScanResult.ScannerVersion = $scannerVersion
 			$subscriptionScanResult.ControlVersion = $scannerVersion
 			$subscriptionScanResult.ControlId = $svtResult.ControlItem.ControlId 
-			$subscriptionScanResult.ControlIntId = $svtResult.ControlItem.ControlId 
-			$subscriptionScanResult.ControlSeverity = $svtResult.ControlItem.ControlId 
-			$subscriptionScanResult.ActualVerificationResult = $svtResult.ControlResult[0].ActualVerificationResult 
-			$subscriptionScanResult.AttestedBy =  $svtResult.ControlResult[0].StateManagement.AttestedStateData.AttestedBy
-			$subscriptionScanResult.AttestedDate = $svtResult.ControlResult[0].StateManagement.AttestedStateData.AttestedDate
-			$subscriptionScanResult.Justification = $svtResult.ControlResult[0].StateManagement.AttestedStateData.Justification
-			$subscriptionScanResult.AttestationStatus = $svtResult.ControlResult[0].AttestationStatus
-			$subscriptionScanResult.AttestationData = [Helpers]::ConvertToJsonCustomCompressed($svtResult.ControlResult[0].StateManagement.AttestedStateData.DataObject)
-			$subscriptionScanResult.VerificationResult = $svtResult.ControlResult[0].VerificationResult
-			$subscriptionScanResult.ScanKind = $scanKind
+			$subscriptionScanResult.ControlIntId = $svtResult.ControlItem.Id 
+			$subscriptionScanResult.ControlSeverity = $svtResult.ControlItem.ControlSeverity 
+			$subscriptionScanResult.ActualVerificationResult = $svtResult.ControlResults[0].ActualVerificationResult 
+			$subscriptionScanResult.AttestationStatus = $svtResult.ControlResults[0].AttestationStatus
+			if($subscriptionScanResult.AttestationStatus -ne [AttestationStatus]::None)
+			{
+				$subscriptionScanResult.AttestedBy =  $svtResult.ControlResults[0].StateManagement.AttestedStateData.AttestedBy
+				$subscriptionScanResult.AttestedDate = $svtResult.ControlResults[0].StateManagement.AttestedStateData.AttestedDate
+				$subscriptionScanResult.Justification = $svtResult.ControlResults[0].StateManagement.AttestedStateData.Justification
+				$subscriptionScanResult.AttestationData = [Helpers]::ConvertToJsonCustomCompressed($svtResult.ControlResults[0].StateManagement.AttestedStateData.DataObject)
+			}
+
+			$subscriptionScanResult.VerificationResult = $svtResult.ControlResults[0].VerificationResult
+			# Need to enable
+			# $subscriptionScanResult.ScanKind = $scanKind
 			$subscriptionScanResult.ScannerModuleName = [Constants]::AzSKModuleName
-			$subscriptionScanResult.IsLatestPSModule = $svtResult.ControlResult[0].CurrentSessionContext.IsLatestPSModule
-			$subscriptionScanResult.HasRequiredPermissions = $svtResult.ControlResult[0].CurrentSessionContext.Permissions.HasRequiredAccess
-			$subscriptionScanResult.HasAttestationWritePermissions = $svtResult.ControlResult[0].CurrentSessionContext.Permissions.HasAttestationWritePermissions
-			$subscriptionScanResult.HasAttestationReadPermissions = $svtResult.ControlResult[0].CurrentSessionContext.Permissions.HasAttestationReadPermissions
-			$subscriptionScanResult.UserComments = $svtResult.ControlResult[0].UserComments
+			$subscriptionScanResult.IsLatestPSModule = $svtResult.ControlResults[0].CurrentSessionContext.IsLatestPSModule
+			$subscriptionScanResult.HasRequiredPermissions = $svtResult.ControlResults[0].CurrentSessionContext.Permissions.HasRequiredAccess
+			$subscriptionScanResult.HasAttestationWritePermissions = $svtResult.ControlResults[0].CurrentSessionContext.Permissions.HasAttestationWritePermissions
+			$subscriptionScanResult.HasAttestationReadPermissions = $svtResult.ControlResults[0].CurrentSessionContext.Permissions.HasAttestationReadPermissions
+			$subscriptionScanResult.UserComments = $svtResult.ControlResults[0].UserComments
 			$subscriptionScanResult.IsBaselineControl = $svtResult.ControlItem.IsBaselineControl
-			if($svtResult.ControlItem.Tags.Contains("OwnerAccess"))
+			if($svtResult.ControlItem.Tags.Contains("OwnerAccess")  -or $svtResult.ControlItem.Tags.Contains("GraphRead"))
 			{
 				$subscriptionScanResult.HasOwnerAccessTag = $true
 			}
@@ -1004,11 +1014,10 @@ class StorageReportHelper
 		return $subscriptionScanResult
 	}
 
-	hidden [LSRResourceScanResult[]] SerializeResourceSVTResult($svtResult, $scanSource, $scannerVersion, $scanKind )
+	hidden [LSRResourceScanResult[]] SerializeResourceSVTResult($svtResult, $scanSource, $scannerVersion, $scanKind)
 	{
 		[LSRResourceScanResult[]] $resourceScanResults = @();
-		$svtResult.ControlResult | ForEach-Object 
-		{
+		$svtResult.ControlResults | ForEach-Object {
 			$currentResult = $_
 			if($currentResult.CurrentSessionContext.IsLatestPSModule -and $currentResult.CurrentSessionContext.Permissions.HasRequiredAccess -and $currentResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions)
 			{
@@ -1017,18 +1026,23 @@ class StorageReportHelper
 				$resourceScanResult.ScanSource = $scanSource
 				$resourceScanResult.ScannerVersion = $scannerVersion
 				$resourceScanResult.ControlVersion = $scannerVersion
-				$resourceScanResult.ChildResourceName = $currentResult.NestedResourceName 
+				$resourceScanResult.ChildResourceName = $currentResult.ChildResourceName 
 				$resourceScanResult.ControlId = $svtResult.ControlItem.ControlId 
-				$resourceScanResult.ControlIntId = $svtResult.ControlItem.ControlIntId 
+				$resourceScanResult.ControlIntId = $svtResult.ControlItem.Id 
 				$resourceScanResult.ControlSeverity = $svtResult.ControlItem.ControlSeverity 
 				$resourceScanResult.ActualVerificationResult = $currentResult.ActualVerificationResult 
-				$resourceScanResult.AttestedBy =  $currentResult.StateManagement.AttestedStateData.AttestedBy
-				$resourceScanResult.AttestedDate = $currentResult.StateManagement.AttestedStateData.AttestedDate 
-				$resourceScanResult.Justification = $currentResult.StateManagement.AttestedStateData.Justification
 				$resourceScanResult.AttestationStatus = $currentResult.AttestationStatus
-				$resourceScanResult.AttestationData = [Helpers]::ConvertToJsonCustomCompressed($currentResult.StateManagement.AttestedStateData.DataObject)	
+				if($resourceScanResult.AttestationStatus -ne [AttestationStatus]::None)
+				{
+					$resourceScanResult.AttestedBy =  $currentResult.StateManagement.AttestedStateData.AttestedBy
+					$resourceScanResult.AttestedDate = $currentResult.StateManagement.AttestedStateData.AttestedDate 
+					$resourceScanResult.Justification = $currentResult.StateManagement.AttestedStateData.Justification
+					$resourceScanResult.AttestationData = [Helpers]::ConvertToJsonCustomCompressed($currentResult.StateManagement.AttestedStateData.DataObject)	
+				}
+				
 				$resourceScanResult.VerificationResult = $currentResult.VerificationResult
-				$resourceScanResult.ScanKind = $scanKind
+				# Need to enable
+				# $resourceScanResult.ScanKind = $scanKind
 				$resourceScanResult.ScannerModuleName = [Constants]::AzSKModuleName
 				$resourceScanResult.IsLatestPSModule = $currentResult.CurrentSessionContext.IsLatestPSModule
 				$resourceScanResult.HasRequiredPermissions = $currentResult.CurrentSessionContext.Permissions.HasRequiredAccess
@@ -1036,8 +1050,8 @@ class StorageReportHelper
 				$resourceScanResult.HasAttestationReadPermissions = $currentResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions
 				$resourceScanResult.UserComments = $currentResult.UserComments
 				$resourceScanResult.IsBaselineControl = $svtResult.ControlItem.IsBaselineControl
-				$resourceScanResult.HasOwnerAccessTag = $svtResult.ControlItem.HasOwnerAccessTag
-				if($svtResult.ControlItem.Tags.Contains("OwnerAccess"))
+				
+				if($svtResult.ControlItem.Tags.Contains("OwnerAccess") -or $svtResult.ControlItem.Tags.Contains("GraphRead"))
 				{
 					$resourceScanResult.HasOwnerAccessTag = $true
 				}

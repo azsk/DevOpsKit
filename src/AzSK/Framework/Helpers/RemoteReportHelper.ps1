@@ -104,7 +104,7 @@ class RemoteReportHelper
 		$result.VerificationResult = $controlResult.VerificationResult
 		$result.HasRequiredAccess = $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess
 		$result.IsBaselineControl = $control.IsBaselineControl
-		if($control.Tags.Contains("OwnerAccess"))
+		if($control.Tags.Contains("OwnerAccess")  -or $control.Tags.Contains("GraphRead"))
 		{
 			$result.HasOwnerAccessTag = $true
 		}
@@ -145,7 +145,7 @@ class RemoteReportHelper
 		$result.HasRequiredAccess = $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess
 		$result.IsBaselineControl = $control.IsBaselineControl
 		$result.UserComments = $controlResult.UserComments
-		if($control.Tags.Contains("OwnerAccess"))
+		if($control.Tags.Contains("OwnerAccess")  -or $control.Tags.Contains("GraphRead"))
 		{
 			$result.HasOwnerAccessTag = $true
 		}

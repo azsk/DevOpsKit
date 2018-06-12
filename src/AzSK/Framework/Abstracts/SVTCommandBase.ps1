@@ -14,11 +14,23 @@ class SVTCommandBase: CommandBase {
     [bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
     [AttestationOptions] $AttestationOptions;
+	hidden [LSRSubscription] $StorageReportData;
 
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
+		$this.GetLocalSubscriptionData()
     }
+
+	hidden [void] GetLocalSubscriptionData()
+	{
+		$storageReportHelper = [StorageReportHelper]::new();
+		$storageReportHelper.Initialize($false);
+		if($storageReportHelper.HasStorageReportReadAccessPermissions())
+		{
+			$this.StorageReportData =  $storageReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId)
+		}
+	}
 
     hidden [SVTEventContext] CreateSVTEventContextObject() {
         return [SVTEventContext]@{
@@ -85,6 +97,7 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
 		$svtObject.IncludeUserComments =$this.InvocationContext.BoundParameters['IncludeUserComments'];
+		$svtObject.StorageReportData = $this.StorageReportData
 
         #Include Server Side Exclude Tags
         $svtObject.ExcludeTags += [ConfigurationManager]::GetAzSKConfigData().DefaultControlExculdeTags

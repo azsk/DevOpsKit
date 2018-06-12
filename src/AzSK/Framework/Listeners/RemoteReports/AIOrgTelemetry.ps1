@@ -152,6 +152,63 @@ class AIOrgTelemetry: ListenerBase {
 			$currentInstance.PublishException($_);
 		   }
 		});
+
+		$this.RegisterEvent([SVTEvent]::CommandCompleted, {
+            $currentInstance = [AIOrgTelemetry]::GetInstance();
+            try 
+            {
+				$settings = [ConfigurationManager]::GetAzSKConfigData();
+				if(!$settings.PersistScanReportInLocalSubscription) {return;}
+                $controlsScanned = ($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0
+				$scanSource = [RemoteReportHelper]::GetScanSource();
+				$scannerVersion = $currentInstance.GetCurrentModuleVersion();
+				#$scanKind = [RemoteReportHelper]::GetServiceScanKind($this.InvocationContext.MyCommand.Name, $this.InvocationContext.BoundParameters);
+				$scanKind = [ServiceScanKind]::Partial;
+
+				if($controlsScanned)
+				{
+					$resourcesFlat
+					# if($scanSource -eq [ScanSource]::Runbook) 
+					# { 
+						$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
+						#$resources.SubscriptionId = $invocationContext.BoundParameters["SubscriptionId"]
+						$resources.ResourceGroups = [System.Collections.ArrayList]::new()
+						$resourcesFlat = Find-AzureRmResource
+						$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
+						# Not considering nested resources to reduce complexity
+						$filteredResoruces = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }
+						$grouped = $filteredResoruces | Group-Object {$_.ResourceGroupName} | Select-Object Name, Group
+						foreach($group in $grouped){
+							$resourceGroup = "" | Select-Object Name, Resources
+							$resourceGroup.Name = $group.Name
+							$resourceGroup.Resources = [System.Collections.ArrayList]::new()
+							foreach($item in $group.Group){
+								$resource = "" | Select-Object Name, ResourceId, Feature
+								if($item.Name.Contains("/")){
+									$splitName = $item.Name.Split("/")
+									$resource.Name = $splitName[$splitName.Length - 1]
+								}
+								else{
+									$resource.Name = $item.Name;
+								}
+								$resource.ResourceId = $item.ResourceId
+								$resource.Feature = $supportedResourceTypes[$item.ResourceType.ToLower()]
+								$resourceGroup.Resources.Add($resource) | Out-Null
+							}
+							$resources.ResourceGroups.Add($resourceGroup) | Out-Null
+						}
+					# }
+					$storageReportHelperInstance = [StorageReportHelper]::new();
+					$storageReportHelperInstance.Initialize($true);
+					$finalLocalSubReport = $storageReportHelperInstance.MergeSVTScanResult($Event.SourceArgs, $resources, $scanSource, $scannerVersion, $scanKind)
+					$StorageReportHelperInstance.SetLocalSubscriptionScanReport($finalLocalSubReport)
+				}
+            }
+            catch 
+            {
+                $currentInstance.PublishException($_);
+            }
+        });
     }
 
 	hidden [void] PushSubscriptionScanResults([SVTEventContext[]] $SVTEventContexts)

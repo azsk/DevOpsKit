@@ -7,7 +7,6 @@ class SVTBase: AzSKRoot
     hidden [PSObject] $ControlSettings
 
 	hidden [ControlStateExtension] $ControlStateExt;
-	hidden [StorageReportHelper] $StorageReportHelper;
 	hidden [LSRSubscription] $StorageReportData;
 
 	hidden [ControlState[]] $ResourceState;
@@ -26,14 +25,12 @@ class SVTBase: AzSKRoot
         Base($subscriptionId)
     {
 		$this.CreateInstance($svtResource);
-		$this.GetLocalSubscriptionData();
     }
 
 	SVTBase([string] $subscriptionId):
         Base($subscriptionId)
     {
 		$this.CreateInstance();
-		$this.GetLocalSubscriptionData();
     }
 
 	SVTBase([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
@@ -43,7 +40,6 @@ class SVTBase: AzSKRoot
 			ResourceGroupName = $resourceGroupName;
             ResourceName = $resourceName;
 		});
-		$this.GetLocalSubscriptionData();
     }
 	hidden [void] CreateInstance()
 	{
@@ -123,33 +119,6 @@ class SVTBase: AzSKRoot
             }
         }
     }
-
-	hidden [void] GetLocalSubscriptionData()
-	{
-		if ( $null  -eq $this.StorageReportHelper) 
-		{
-			$this.StorageReportHelper = [StorageReportHelper]::new();
-			$this.StorageReportHelper.Initialize($false);
-        }
-		if($this.StorageReportHelper.HasStorageReportReadAccessPermissions())
-		{
-			$this.StorageReportData =  $this.StorageReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId)
-		}
-	}
-
-	hidden [void] SetLocalSubscriptionData([LSRSubscription] $scanData)
-	{
-		if ( $null  -eq $this.StorageReportHelper) 
-		{
-			$this.StorageReportHelper = [StorageReportHelper]::new();
-			$this.StorageReportHelper.Initialize($false);
-        }
-		if($this.StorageReportHelper.HasStorageReportWriteAccessPermissions())
-		{
-			$finalScanResult = $this.StorageReportHelper.MergeScanReport($scanData)
-			$this.StorageReportData =  $this.StorageReportHelper.SetLocalSubscriptionScanReport($finalScanResult)	
-		}
-	}
 
 	hidden [bool] CheckBaselineControl($controlId)
 	{
