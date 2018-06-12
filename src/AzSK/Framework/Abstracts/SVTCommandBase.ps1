@@ -27,8 +27,8 @@ class SVTCommandBase: CommandBase {
         $azskConfig = [ConfigurationManager]::GetAzSKConfigData();
         if(!$azskConfig.PersistScanReportInSubscription) {return;}
         
-		$storageReportHelper = [StorageReportHelper]::new();
-        $this.StorageReportData =  $storageReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId)
+		$storageReportHelper = [ComplianceReportHelper]::new();
+        $this.StorageReportData =  $storageReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
 	}
 
     hidden [SVTEventContext] CreateSVTEventContextObject() {

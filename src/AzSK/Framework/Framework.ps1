@@ -84,7 +84,7 @@ catch
 . $PSScriptRoot\Abstracts\FileOutputBase.ps1
 
 . $PSScriptRoot\Helpers\ResourceHelper.ps1
-. $PSScriptRoot\Helpers\StorageReportHelper.ps1
+. $PSScriptRoot\Helpers\ComplianceReportHelper.ps1
 . $PSScriptRoot\Helpers\UserSubscriptionDataHelper.ps1
 
 #Listeners

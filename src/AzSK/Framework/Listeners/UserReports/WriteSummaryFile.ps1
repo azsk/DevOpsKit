@@ -255,7 +255,7 @@ class WriteSummaryFile: FileOutputBase
 		# { 
 			$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
 			$resources.ResourceGroups = [System.Collections.ArrayList]::new()
-			# ToDo: cache this properties as AsSKRoot.
+			# ToDo: cache this properties as AzSKRoot.
 			$resourcesFlat = Find-AzureRmResource
 			$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
 			# Not considering nested resources to reduce complexity
@@ -281,7 +281,7 @@ class WriteSummaryFile: FileOutputBase
 				$resources.ResourceGroups.Add($resourceGroup) | Out-Null
 			}
 		# }
-		$StorageReportHelperInstance = [StorageReportHelper]::new();
+		$StorageReportHelperInstance = [ComplianceReportHelper]::new();
 		$StorageReportHelperInstance.Initialize($true);
 		if($StorageReportHelperInstance.HasStorageReportWriteAccessPermissions())
 		{
