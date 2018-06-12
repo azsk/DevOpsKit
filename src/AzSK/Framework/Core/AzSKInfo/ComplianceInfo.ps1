@@ -17,41 +17,37 @@ class ComplianceInfo: CommandBase
 
 	hidden [void] GetComplianceScanData()
 	{
-		$StorageReportHelper = [StorageReportHelper]::new();
-		$StorageReportHelper.Initialize($false);
+		$ComplianceRptHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId);
+		$StorageReportData =  $ComplianceRptHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId)
 		
-		if($StorageReportHelper.HasStorageReportReadAccessPermissions())
+		if($null -ne $StorageReportData -and $null -ne $StorageReportData.ScanDetails)
 		{
-			$StorageReportData =  $StorageReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId)
-			if([Helpers]::CheckMember($StorageReportData,"ScanDetails"))
+			if(($StorageReportData.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
 			{
-				if([Helpers]::CheckMember($StorageReportData.ScanDetails,"SubscriptionScanResult") -and ($StorageReportData.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
-				{
-					$StorageReportData.ScanDetails.SubscriptionScanResult | ForEach-Object {
-						$subScanRes = $_
-						$tmpCompRes = [ComplianceResult]::new()
-						$tmpCompRes.FeatureName = "SubscriptionCore"
-						$this.MapScanResultToComplianceResult($subScanRes, $tmpCompRes)
-						$this.ComplianceScanResult += $tmpCompRes
-					}
+				$StorageReportData.ScanDetails.SubscriptionScanResult | ForEach-Object {
+					$subScanRes = $_
+					$tmpCompRes = [ComplianceResult]::new()
+					$tmpCompRes.FeatureName = "SubscriptionCore"
+					$this.MapScanResultToComplianceResult($subScanRes, $tmpCompRes)
+					$this.ComplianceScanResult += $tmpCompRes
 				}
+			}
 
-				if([Helpers]::CheckMember($StorageReportData.ScanDetails,"Resources") -and ($StorageReportData.ScanDetails.Resources | Measure-Object).Count -gt 0)
-				{
-					$StorageReportData.ScanDetails.Resources | ForEach-Object {
-						$resource = $_
-						if([Helpers]::CheckMember($resource,"ResourceScanResult") -and ($resource.ResourceScanResult | Measure-Object).Count -gt 0)
-						{
-							$resource.ResourceScanResult | ForEach-Object {
-								$resourceScanRes = $_
-								$tmpCompRes = [ComplianceResult]::new()
-								$tmpCompRes.FeatureName = $resource.FeatureName
-								$tmpCompRes.ResourceGroupName = $resource.ResourceGroupName
-								$tmpCompRes.ResourceName = $resource.ResourceName
+			if(($StorageReportData.ScanDetails.Resources | Measure-Object).Count -gt 0)
+			{
+				$StorageReportData.ScanDetails.Resources | ForEach-Object {
+					$resource = $_
+					if($null -ne $resource -and ($resource.ResourceScanResult | Measure-Object).Count -gt 0)
+					{
+						$resource.ResourceScanResult | ForEach-Object {
+							$resourceScanRes = $_
+							$tmpCompRes = [ComplianceResult]::new()
+							$tmpCompRes.FeatureName = $resource.FeatureName
+							$tmpCompRes.ResourceGroupName = $resource.ResourceGroupName
+							$tmpCompRes.ResourceName = $resource.ResourceName
 
-								$this.MapScanResultToComplianceResult($resourceScanRes, $tmpCompRes)
-								$this.ComplianceScanResult += $tmpCompRes
-							}
+							$this.MapScanResultToComplianceResult($resourceScanRes, $tmpCompRes)
+							$this.ComplianceScanResult += $tmpCompRes
 						}
 					}
 				}

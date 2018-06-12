@@ -522,9 +522,7 @@ class SVTBase: AzSKRoot
                 $singleControlResult.ControlResults += $controlResult;
                 $this.ControlError($controlItem, $_);
 			}
-			
-			# ToDo: call GetDataFromSubscriptionReport fun in post process data
-			$this.GetDataFromSubscriptionReport($singleControlResult);
+						
 			$this.PostProcessData($singleControlResult);
 
 			# Check for the control which requires elevated permission to modify 'Recommendation' so that user can know it is actually automated if they have the right permission
@@ -659,6 +657,8 @@ class SVTBase: AzSKRoot
 		$controlStateValue = @();
 		try
 		{
+			$this.GetDataFromSubscriptionReport($eventContext);
+
 			$resourceStates = $this.GetResourceState()			
 			if(($resourceStates | Measure-Object).Count -ne 0)
 			{
@@ -861,8 +861,7 @@ class SVTBase: AzSKRoot
 			$defaultAttestationExpiryInDays = [Constants]::DefaultControlExpiryInDays;
 			$expiryInDays=-1;
 			$controlResult=$eventcontext.ControlResults;	
-			$graceDays=$this.CalculateGraceinDays($eventcontext);
-			$isControlinGrace=$eventcontext.ControlResults.IsControlInGrace;
+			$isControlInGrace=$eventcontext.ControlResults.IsControlInGrace;
 			
 			if([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays") `
 					-and [Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays,"Default") `
@@ -877,7 +876,8 @@ class SVTBase: AzSKRoot
 			}
 			else
 			{
-				if($isControlinGrace -and $controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater)
+				# Expire WillFixLater if GracePeriod has expired
+				if(-not($isControlInGrace) -and $controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater)
 				{
 					$expiryInDays=0;
 				}
@@ -889,12 +889,7 @@ class SVTBase: AzSKRoot
 					}
 					elseif([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays"))
 					{
-						#Check if control severity has expiry period
-						if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
-						{
-							$expiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity.$controlSeverity
-						}
-										
+															
 						#Check if control severity has expiry period
 						if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
 						{
@@ -1123,86 +1118,72 @@ class SVTBase: AzSKRoot
 
 	}
 
-	# ToDo: Check the feature flag
 	hidden [void] GetDataFromSubscriptionReport($singleControlResult)
     {   try
 	    {
-	   		if([Helpers]::CheckMember($this.StorageReportData,"ScanDetails"))
+
+			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();			
+			#return if feature is turned off at server config
+			if(!$azskConfig.PersistScanReportInSubscription) {return;}
+
+	   		if($null -ne $this.StorageReportData -and $null -ne $this.StorageReportData.ScanDetails)
 			{
 				$ResourceData = @();
-				$ResourceScanResult=@();
-
-				# ToDo: Merge if
-				if($singleControlResult.FeatureName -eq "SubscriptionCore")
-				{
-					if([Helpers]::CheckMember($this.StorageReportData.ScanDetails,"SubscriptionScanResult"))
-					{
-						
-						$ResourceData = $this.StorageReportData.ScanDetails.SubscriptionScanResult
-						# ToDo: Scan result rename
-						$ResourceScanResult=$ResourceData
-					}
+				$PersistedControlScanResult=@();
+				
+				if($singleControlResult.FeatureName -eq "SubscriptionCore" -and ($this.StorageReportData.ScanDetails.SubscriptionScanResult| Measure-Object).Count -gt 0)
+				{									
+					$PersistedControlScanResult	= $this.StorageReportData.ScanDetails.SubscriptionScanResult;
 				}
-				else
+				elseif($singleControlResult.FeatureName -ne "SubscriptionCore" -and ($this.StorageReportData.ScanDetails.Resources | Measure-Object).Count -gt 0)
 				{
-					if([Helpers]::CheckMember($this.StorageReportData.ScanDetails,"Resources"))
+					$ResourceData = $this.StorageReportData.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}
+					if(($ResourceData.ResourceScanResult | Measure-Object).Count -gt 0)
 					{
-						$ResourceData = $this.StorageReportData.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}
-						if([Helpers]::CheckMember($ResourceData,"ResourceScanResult"))
-				     	{
-					    	$ResourceScanResult = $ResourceData.ResourceScanResult 
-						}
-					}			
+						$PersistedControlScanResult = $ResourceData.ResourceScanResult 
+					}
 				}
 			
-				# ToDo: Duplicate if
-				if(($ResourceScanResult | Measure-Object).Count -gt 0 )
+				#$ResourceScanResult=$ResourceData.ResourceScanResult
+				if(($PersistedControlScanResult | Measure-Object).Count -gt 0)
 				{
-					#$ResourceScanResult=$ResourceData.ResourceScanResult
-					if(($ResourceScanResult | Measure-Object).Count -gt 0)
-					{
-						[ControlResult[]] $controlsResults = @();
-						$singleControlResult.ControlResults | ForEach-Object {
-							$currentControl=$_
-	
-							$matchedControlResult=$ResourceScanResult | Where-Object {
-								# ToDo: Optimize check member
-								($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (([Helpers]::CheckMember($currentControl, "ChildResourceName") -and $_.ChildResourceName -eq $currentControl.ChildResourceName) -or (-not([Helpers]::CheckMember($currentControl, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
-							}
-	
-							# initialize default values
-							$currentControl.FirstScannedOn = [DateTime]::UtcNow
-							if($currentControl.ActualVerificationResult -ne [VerificationResult]::Passed)
-							{
-								$currentControl.FirstFailedOn = [DateTime]::UtcNow
-							}
-							if($null -ne  $matchedControlResult)
-							{
-								$currentControl.UserComments = $matchedControlResult.UserComments
-								$currentControl.FirstFailedOn = $matchedControlResult.FirstFailedOn
-								$currentControl.FirstScannedOn = $matchedControlResult.FirstScannedOn
-
-								$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
-
-								$permittedDays = 90;
-								
-								$currentControl.MaximumAllowedGraceDays=$this.CalculateGraceinDays($singleControlResult);
-
-								# ToDo: Remove logic from fun
-								if($scanFromDays -ge $permittedDays)
-								{
-									$currentControl.IsControlInGrace = $false
-								}
-								else
-								{
-									$currentControl.IsControlInGrace = $true
-								}
-							}
-							
-							$controlsResults+=$currentControl
+					[ControlResult[]] $controlsResults = @();
+					$singleControlResult.ControlResults | ForEach-Object {
+						$currentControl=$_
+						$matchedControlResult=$PersistedControlScanResult | Where-Object {
+							($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (($_.ChildResourceName -eq $currentControl.ChildResourceName) -or [string]::IsNullOrWhiteSpace($currentControl.ChildResourceName)))
 						}
-						$singleControlResult.ControlResults=$controlsResults 
+
+						# initialize default values
+						$currentControl.FirstScannedOn = [DateTime]::UtcNow
+						if($currentControl.ActualVerificationResult -ne [VerificationResult]::Passed)
+						{
+							$currentControl.FirstFailedOn = [DateTime]::UtcNow
+						}
+						if($null -ne  $matchedControlResult)
+						{
+							$currentControl.UserComments = $matchedControlResult.UserComments
+							$currentControl.FirstFailedOn = $matchedControlResult.FirstFailedOn
+							$currentControl.FirstScannedOn = $matchedControlResult.FirstScannedOn
+
+							$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
+
+							$currentControl.MaximumAllowedGraceDays = $this.CalculateGraceInDays($singleControlResult);
+
+							# Setting isControlInGrace Flag		
+							if($scanFromDays -le $currentControl.MaximumAllowedGraceDays)
+							{
+								$currentControl.IsControlInGrace = $true
+							}
+							else
+							{
+								$currentControl.IsControlInGrace = $false
+							}
+						}
+						
+						$controlsResults+=$currentControl
 					}
+					$singleControlResult.ControlResults=$controlsResults 
 				}
 			}
 		}
@@ -1212,50 +1193,30 @@ class SVTBase: AzSKRoot
 		}
     }
 
-	# ToDo: Use proper casing
-	[int] hidden IsControlinGrace([SVTEventContext] $context)
+	[int] hidden CalculateGraceInDays([SVTEventContext] $context)
 	{
-		$isControlinGrace=$false;
+		
 		$controlResult=$context.ControlResults;
-		$graceDays=0;
+		$computedGraceDays=15;
+		$ControlBasedGraceExpiryInDays=0;
 		$currentControlItem=$context.controlItem;
 		$controlSeverity=$currentControlItem.ControlSeverity;
+		if([Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays"))
+		{
+			$computedGraceDays=$this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity;
+		}
 		if($null -ne $currentControlItem.GraceExpiryDate)
 		{
-			$diff=0;
 			if($currentControlItem.GraceExpiryDate -gt [DateTime]::UtcNow )
 			{
-				# ToDo: Use [System.DateTime]::UtcNow.Subtract($date).Days way
-				# ToDo: Remove diff
-				$datenow=[DateTime]::UtcNow
-				$temp=New-TimeSpan -Start $currentControlItem.GraceExpiryDate -End $datenow
-				$diff=$temp.Days;
-			}
-			#Setting Grace Days as the maximum no of days based on Severity or GraceExpiryDate
-			if([Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays") -and $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity -gt $diff)
-			{
-				$graceDays = $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity
-			}
-			else
-			{
-				$graceDays=$diff;
-			}
+				$ControlBasedGraceExpiryInDays=$currentControlItem.GraceExpiryDate.Subtract([System.DateTime]::UtcNow).Days
+				if($ControlBasedGraceExpiryInDays -gt $computedGraceDays)
+				{
+					$computedGraceDays = $ControlBasedGraceExpiryInDays
+				}
+			}			
 		}
-		else
-		{
-			$graceDays = $this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity;
-		}
-		# Setting is isControlInGrace Flag		
-		if(($null -ne $controlResult.FirstScannedOn) -and ([DateTime]::UtcNow -lt $controlResult.FirstScannedOn.addDays($graceDays)))
-	    {
-			$controlResult.IsControlInGrace=$true;
-		}
-		else
-		{
-			$controlResult.IsControlInGrace=$false;
-		}
-		
-		return $graceDays;
+	  return $computedGraceDays;
 	}
 	
 }

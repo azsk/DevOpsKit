@@ -65,7 +65,7 @@ class LSRControlResultBase
 	[DateTime] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
 	[DateTime] $FirstFailedOn = [Constants]::AzSKDefaultDateTime;
 	[DateTime] $FirstAttestedOn = [Constants]::AzSKDefaultDateTime;
-	[int] $AttestationCounter;
+	[int] $AttestationCounter = 0;
 
 	#Other  information
 	[string] $ScannedBy = "";
