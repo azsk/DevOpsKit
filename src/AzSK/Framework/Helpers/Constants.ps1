@@ -152,8 +152,8 @@ class Constants
 	static [string] $ComplianceReportContainerName = "compliance-state"
 	static [string] $ComplianceReportBlobName = "LatestSnapshot"
 	static [DateTime] $AzSKDefaultDateTime = '1900-01-01T00:00:00'
-	static [int] $ControlResultComplianceDays = 3
-	static [int] $OwnerControlResultComplianceDays = 90
+	static [int] $ControlResultComplianceInDays = 3
+	static [int] $OwnerControlResultComplianceInDays = 90
 	static [string] $ComplianceReportPath = "\Temp\Compliance"
 	
 
