@@ -465,9 +465,8 @@ class SVTControlAttestation
 		}
 		finally
 		{
-			$this.controlStateExtension.CleanTempFolder();
+			[Helpers]::CleanupLocalFolder([Constants]::AzSKAppFolderPath + "\Temp");
 		}
-
 	}	
 
 	[bool] isControlAttestable([SVTEventContext] $controlItem, [ControlResult] $controlResult)

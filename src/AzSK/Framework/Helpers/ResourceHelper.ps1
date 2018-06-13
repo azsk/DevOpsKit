@@ -225,7 +225,10 @@ class StorageHelper: ResourceGroupHelper
 				{
 					$blobName = $blobPath + "/" + $blobName;
 				}
-				[Helpers]::RemoveUtf8BOM($_);
+                if($_.Extension.ToLower() -ne '.zip')
+                {
+				    [Helpers]::RemoveUtf8BOM($_);
+                }
 
 				$loopValue = $this.retryCount;
 				$sleepValue = $this.sleepIntervalInSecs;
