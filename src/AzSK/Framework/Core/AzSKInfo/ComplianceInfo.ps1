@@ -9,6 +9,7 @@ class ComplianceInfo: CommandBase
 	hidden [bool] $Full
 	hidden $SVTConfig = @{}
 	hidden $baselineControls = @();
+	hidden [PSObject] $ControlSettings
 
 	ComplianceInfo([string] $subscriptionId, [InvocationInfo] $invocationContext, [bool] $full): Base($subscriptionId, $invocationContext) 
     { 
@@ -17,7 +18,6 @@ class ComplianceInfo: CommandBase
 
 	hidden [void] GetComplianceScanData()
 	{
-
 		$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
 		if(!$azskConfig.PersistScanReportInSubscription) 
 		{
@@ -53,7 +53,7 @@ class ComplianceInfo: CommandBase
 							$tmpCompRes.FeatureName = $resource.FeatureName
 							$tmpCompRes.ResourceGroupName = $resource.ResourceGroupName
 							$tmpCompRes.ResourceName = $resource.ResourceName
-
+							$tmpCompRes.ResourceId = $resource.ResourceId
 							$this.MapScanResultToComplianceResult($resourceScanRes, $tmpCompRes)
 							$this.ComplianceScanResult += $tmpCompRes
 						}
@@ -96,6 +96,7 @@ class ComplianceInfo: CommandBase
 	hidden [void] GetComplianceInfo()
 	{
 		$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
+		
 		#Below code is commented as CA can be configured in multiple ways apart from AzSKRG
 		# $this.PublishCustomMessage("`r`nChecking if the subscription ["+ $this.SubscriptionId  +"] is setup for Continuous Assurance (CA) scanning...", [MessageType]::Default);
 		# $AutomationAccount=[Constants]::AutomationAccount
@@ -117,6 +118,7 @@ class ComplianceInfo: CommandBase
 		$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
 
 		$this.GetComplianceScanData();	
+		$this.GetControlDetails();
 		$this.ComputeCompliance();
 		$this.GetComplianceSummary()
 		$this.ExportComplianceResultCSV()
@@ -135,9 +137,17 @@ class ComplianceInfo: CommandBase
 
 		# Filter control for baseline controls
 		
-		#ToDo check for baseline member before accessing
-		$this.baselineControls += $this.ControlSettings.BaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
-		$this.baselineControls += $this.ControlSettings.BaselineControls.SubscriptionControlIdList | ForEach-Object { $_ }
+		if($null -ne $this.ControlSettings)
+		{
+			if([Helpers]::CheckMember($this.ControlSettings,"BaselineControls.ResourceTypeControlIdMappingList"))
+			{
+				$this.baselineControls += $this.ControlSettings.BaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
+			}
+		   if([Helpers]::CheckMember($this.ControlSettings,"BaselineControls.SubscriptionControlIdList"))
+			{
+			  $this.baselineControls += $this.ControlSettings.BaselineControls.SubscriptionControlIdList | ForEach-Object { $_ }
+			}
+		}
 
 		$resourcetypes | ForEach-Object{
 			$controls = [ConfigurationManager]::GetSVTConfig($_.JsonFileName); 
@@ -164,13 +174,23 @@ class ComplianceInfo: CommandBase
 			{
 				if($_.VerificationResult -eq [VerificationResult]::Passed)
 				{
-					$days = [System.DateTime]::UtcNow.Subtract($_.LastScannedOn).Days
-					#ToDo take these days from controls settings
-					$allowedDays = [Constants]::ControlResultComplianceInDays
+					$lastScannedDate =[datetime] $_.LastScannedOn
+					$days = [DateTime]::UtcNow.Subtract($lastScannedDate).Days
+
+					[int]$allowedDays = [Constants]::ControlResultComplianceInDays
+					
+					if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"ResultComplianceInDays.DefaultControls"))
+					{
+						[int32]::TryParse($this.ControlSettings.ResultComplianceInDays.DefaultControls, [ref]$allowedDays)
+					}
 					if($_.HasOwnerAccessTag)
 					{
-						$allowedDays = [Constants]::OwnerControlResultComplianceInDays
+						if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"ResultComplianceInDays.OwnerAccessControls"))
+						{
+							[int32]::TryParse($this.ControlSettings.ResultComplianceInDays.OwnerAccessControls, [ref]$allowedDays)
+						}
 					}
+
 					#revert back to actual result if control result is stale 
 					if($days -ge $allowedDays)
 					{
@@ -185,16 +205,30 @@ class ComplianceInfo: CommandBase
 		}
 
 		#Todo Append resource inventory and missing controls
-		$groupedResult = $this.ComplianceScanResult | Group-Object { $_.FeatureName, $_.ResourceName } 
-		foreach($result in $groupedResult){
-			
-
+		$groupedResult = $this.ComplianceScanResult | Group-Object { $_.ResourceId } 
+		foreach($group in $groupedResult){
+			$allControls = $this.SVTConfig[$group.Group[0].FeatureName]
+			if(($group.Group).Count -ne $allControls.Count)
+			{
+				$allControls | ForEach-Object {
+					$singleControl = $_
+					if(($group.Group | Where-Object { $_.ControlID -eq $singleControl.ControlId } | Measure-Object).Count -eq 0)
+					{
+						$isControlInBaseline = $false
+						if($baselineControls -contains $singleControl.ControlID)
+						{
+							$isControlInBaseline = $true
+						}
+						$controlToAdd = [ComplianceResult]::new($singleControl.ControlID, $group.Group[0].FeatureName, [VerificationResult]::Manual, $group.Group[0].ResourceGroupName, $group.Group[0].ResourceName, $isControlInBaseline, $singleControl.ControlSeverity, $group.Group[0].ResourceId, [VerificationResult]::Skipped)
+						$this.ComplianceScanResult += $controlToAdd
+					}
+				}
+			}
 		}
 	}
 
 	hidden [void] GetComplianceSummary()
 	{
-		
 		$totalCompliance = 0.0
 		$baselineCompliance = 0.0
 		$passControlCount = 0
@@ -206,15 +240,29 @@ class ComplianceInfo: CommandBase
 
 		if(($this.ComplianceScanResult |  Measure-Object).Count -gt 0)
 		{
-			$totalControlCount = ($this.ComplianceScanResult |  Measure-Object).Count
-			#ToDo ...so many loops on the compliance results....can do one loop and compute all the required counters
-			$passControlCount = (($this.ComplianceScanResult | Where-Object { ($_.EffectiveResult -eq [VerificationResult]::Passed ) }) | Measure-Object).Count
-			$failedControlCount = (($this.ComplianceScanResult | Where-Object { ($_.EffectiveResult -eq [VerificationResult]::Failed) }) | Measure-Object).Count
+			$this.ComplianceScanResult | ForEach-Object {
+				$totalControlCount++
+				if($_.EffectiveResult -eq [VerificationResult]::Passed)
+				{
+					$passControlCount++		
+					if($_.IsBaselineControl)
+					{
+						$baselineControlCount++
+						$baselinePassedControlCount++
+					}
+				}
+				elseif($_.EffectiveResult -eq [VerificationResult]::Failed)
+				{
+					$failedControlCount++
+					if($_.IsBaselineControl)
+					{
+						$baselineControlCount++
+						$baselineFailedControlCount++
+					}
+				}
+			}
+			
 			$totalCompliance = (100 * $passControlCount)/($passControlCount + $failedControlCount)
-
-			$baselineControlCount = (($this.ComplianceScanResult | Where-Object { $_.IsBaselineControl }) | Measure-Object).Count
-			$baselinePassedControlCount = (($this.ComplianceScanResult | Where-Object { ($_.EffectiveResult -eq [VerificationResult]::Passed) -and $_.IsBaselineControl }) | Measure-Object).Count
-			$baselineFailedControlCount = (($this.ComplianceScanResult | Where-Object { ($_.EffectiveResult -eq [VerificationResult]::Failed) -and $_.IsBaselineControl }) | Measure-Object).Count
 			$baselineCompliance = (100 * $baselinePassedControlCount)/($baselinePassedControlCount + $baselineFailedControlCount)
 			
 			$attestedControlCount = (($this.ComplianceScanResult | Where-Object { $_.AttestationStatus -ne [AttestationStatus]::None}) | Measure-Object).Count
@@ -270,7 +318,6 @@ class ComplianceInfo: CommandBase
 			{
 				$_.HasOwnerAccessTag = "Yes"
 			}
-			
 		}
 
 		$objectToExport = $this.ComplianceScanResult
@@ -297,8 +344,6 @@ class ComplianceInfo: CommandBase
 		$this.ComplianceMessageSummary += $ComplianceMessage
 	}
 }
-
-
 
 class ComplianceMessageSummary
 {
@@ -338,5 +383,20 @@ class ComplianceResult
 	[string] $ScannerVersion = ""
 	[string] $IsControlInGrace = ""
 	[string] $HasOwnerAccessTag = ""
+	[string] $ResourceId = ""
 	[VerificationResult] $EffectiveResult = [VerificationResult]::NotScanned
+
+	ComplianceResult($controlId, $featureName, $verificationResult, $resourceGroupName, $resourceName, $isBaselineControl, $controlSeverity, $resourceId, $effectiveResult)
+	{
+		$this.ControlId = $controlId
+		$this.FeatureName = $featureName
+		$this.VerificationResult = $verificationResult
+		$this.ResourceGroupName = $resourceGroupName
+		$this.ResourceName = $resourceName
+		$this.IsBaselineControl = $isBaselineControl
+		$this.ControlSeverity = $controlSeverity
+		$this.ResourceId = $resourceId
+		$this.EffectiveResult = $effectiveResult
+	}
+
 }
