@@ -114,6 +114,7 @@
     <Compile Include="Framework\Core\PolicySetup\AzSKStaging-EasyInstaller.ps1" />
     <Compile Include="Framework\Core\SVT\AzSKCfg\AzSKCfg.ps1" />
     <Compile Include="Framework\Core\SVT\Services\APIConnection.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\BotService.ps1" />
     <Compile Include="Framework\Core\SVT\Services\ContainerInstances.ps1" />
     <Compile Include="Framework\Helpers\AliasHelper.ps1" />
     <Compile Include="Framework\Helpers\OldConstants.ps1" />
@@ -296,6 +297,7 @@
     <Content Include="Framework\Configurations\SVT\AllResourceTypes.json" />
     <Content Include="Framework\Configurations\SVT\AzSKCfg\AzSKCfg.json" />
     <Content Include="Framework\Configurations\SVT\Services\APIConnection.json" />
+    <Content Include="Framework\Configurations\SVT\Services\BotService.json" />
     <Content Include="Framework\Configurations\SVT\Services\CDN.json" />
     <Content Include="Framework\Configurations\SVT\Services\CloudService.json" />
     <Content Include="Framework\Configurations\SVT\Services\ContainerInstances.json" />
