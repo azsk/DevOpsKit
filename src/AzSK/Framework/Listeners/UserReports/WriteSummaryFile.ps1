@@ -225,7 +225,7 @@ class WriteSummaryFile: FileOutputBase
 					$nonNullProps += $propName;
 				}
 			};
-			if($this.InvocationContext.BoundParameters['IncludeUserComments'] -ne $null -and $this.InvocationContext.BoundParameters['IncludeUserComments'] -eq $true -and -not ([Helpers]::CheckMember($nonNullProps, "UserComments")))
+			if($this.InvocationContext.BoundParameters['IncludeUserComments'] -eq $true -and -not ([Helpers]::CheckMember($nonNullProps, "UserComments")))
 			{
 			  $nonNullProps += "UserComments";
 			}
