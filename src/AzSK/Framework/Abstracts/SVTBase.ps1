@@ -24,8 +24,7 @@ class SVTBase: AzSKRoot
 	[SVTEventContext[]] $ChildSvtObjects = @();
     SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId)
-    {
-		$this.CheckAndDisableAzureRMTelemetry()
+    {		
 		$this.CreateInstance($svtResource);
 		$this.GetLocalSubscriptionData();
     }
@@ -1283,21 +1282,5 @@ class SVTBase: AzSKRoot
 		return $isControlinGrace;
 	}	
 
-	hidden [void] CheckAndDisableAzureRMTelemetry()
-	{
-		#Disable AzureRM telemetry setting until scan is completed.
-		#This has been added to improve the performarnce of scan commands
-		#Telemetry will be re-enabled once scan is completed		
-		$dataCollectionPath = "$env:APPDATA\Windows Azure Powershell\AzureDataCollectionProfile.json"
-		if(Test-Path -Path $dataCollectionPath)
-		{
-			$dataCollectionProfile = Get-Content -path $dataCollectionPath | ConvertFrom-Json
-			if($dataCollectionProfile.enableAzureDataCollection)
-			{	
-				#Keep settings in 
-				Copy-Item $dataCollectionPath					
-				Disable-AzureRmDataCollection  | Out-Null
-			}
-		}
-	}	
+	
 }

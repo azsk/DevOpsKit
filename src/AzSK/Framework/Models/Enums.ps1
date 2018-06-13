@@ -142,7 +142,7 @@ enum OverrideConfigurationType
 {
 	Installer
 	CARunbooks
-	Configurations
+	AzSKRootConfig
 	MonitoringDashboard
 	OrgAzSKVersion
 	All
