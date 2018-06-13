@@ -16,11 +16,19 @@ class PersistedStateInfo: CommandBase
 		$this.AzSKRG = Get-AzureRmResourceGroup -Name $this.AzSKRGName -ErrorAction SilentlyContinue
 	}
 	
+<<<<<<< HEAD
+	[MessageData[]] UpdatePersistedState([string] $filePath)
+    {	
+	    [string] $errorMessages="";
+	    $customErrors=@();
+	    [MessageData[]] $messages = @();
+=======
 	[MessageTableData[]] UpdatePersistedState([string] $filePath)
     {	
 	    [string] $errorMessages="";
 	    $customErrors=@();
 	    [MessageTableData[]] $messages = @();
+>>>>>>> e138bb91afd39338a2ec4ad5b296c016075ac5bc
 	   
 	   try
 	   {
@@ -40,12 +48,31 @@ class PersistedStateInfo: CommandBase
 		  return $messages;
 		}
 		# Read file from Storage
+<<<<<<< HEAD
+	    $complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId); 
+		#$complianceReportHelper.Initialize($false);	
+		$StorageReportJson =$null;
+		# Check for write access
+		if($complianceReportHelper.azskStorageInstance.HaveWritePermissions -eq 1)
+		{
+	  	  $StorageReportJson = $complianceReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
+		}else
+		{
+		 $this.PublishCustomMessage("You don't have the required permissions to update user comments. If you'd like to update user comments, please request your subscription owner to grant you 'Contributor' access to the 'AzSKRG' resource group.",[MessageType]::Error);
+		 return $messages;
+		}
+	
+		$SelectedSubscription=$null;
+		$erroredControls=@();
+		$PersistedControlScanResult=@();
+=======
 	    $storageReportHelper = [StorageReportHelper]::new(); 
 		$storageReportHelper.Initialize($false);	
 		$StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
 		$SelectedSubscription=$null;
 		$erroredControls=@();
 		$ResourceScanResult=$null;
+>>>>>>> e138bb91afd39338a2ec4ad5b296c016075ac5bc
 		$ResourceData=@();
 		$successCount=0;
 		
@@ -55,6 +82,74 @@ class PersistedStateInfo: CommandBase
 		}
 		if(($SelectedSubscription|Measure-Object).Count -gt 0)
 		{
+<<<<<<< HEAD
+		    $this.PublishCustomMessage("Updating user comments in AzSK control data for $totalCount controls... ", [MessageType]::Warning);
+
+			foreach ($resultGroup in $resultsGroups) {
+
+						if($resultGroup.Group[0].FeatureName -eq "SubscriptionCore" -and ($SelectedSubscription.ScanDetails.SubscriptionScanResult| Measure-Object).Count -gt 0)
+						{						
+							  $startIndex=$resultGroup.Name.lastindexof("/")
+							  $lastIndex=$resultGroup.Name.length-$startIndex-1
+							  $localSubID=$resultGroup.Name.substring($startIndex+1,$lastIndex)
+							  if($localSubID -eq $this.SubscriptionContext.SubscriptionId)
+							  {
+							  $PersistedControlScanResult=$SelectedSubscription.ScanDetails.SubscriptionScanResult
+							  }
+							 
+						}elseif($resultGroup.Group[0].FeatureName -ne "SubscriptionCore" -and ($SelectedSubscription.ScanDetails.Resources | Measure-Object).Count -gt 0)
+						{						 
+							  $ResourceData=$SelectedSubscription.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $resultGroup.Name}	 
+							  if(($ResourceData.ResourceScanResult | Measure-Object).Count -gt 0 )
+							  {
+								  $PersistedControlScanResult=$ResourceData.ResourceScanResult
+							  }
+						}
+						if(($PersistedControlScanResult | Measure-Object).Count -gt 0)
+						{
+						 $resultGroup.Group | ForEach-Object{
+							try
+							{
+								 $currentItem=$_
+				    			 $matchedControlResult=$PersistedControlScanResult | Where-Object {		
+	 							   ($_.ControlID -eq $currentItem.ControlID -and (($_.ChildResourceName -eq $currentItem.ChildResourceName) -or [string]::IsNullOrWhiteSpace($currentItem.ChildResourceName)))
+								 }
+								 $encoder = [System.Text.Encoding]::UTF8
+								 $encUserComments= $encoder.GetBytes($currentItem.UserComments)
+								 $decUserComments= $encoder.GetString($encUserComments)
+								 if($decUserComments.length -le 255)
+								 {
+									 if(($matchedControlResult|Measure-Object).Count -eq 1)
+									 {
+									  $successCount+=1;
+									  $matchedControlResult.UserComments= $decUserComments
+									 }else
+									 {
+									  $erroredControls+=$this.CreateCustomErrorObject($currentItem,"Could not find previous persisted state.")		 
+									 }
+								 }else
+								 {    
+									  $erroredControls+=$this.CreateCustomErrorObject($currentItem,"User Comment's length is greater than 255.")
+								 }
+							}catch{
+							$this.PublishException($_);
+							$erroredControls+=$currentItem
+
+							}		
+						}
+						}
+						else{
+					
+						$resultGroup.Group| ForEach-Object{
+						$erroredControls+=$this.CreateCustomErrorObject($_,"Could not find previous persisted state.")
+						}
+						}
+					}
+				if($successCount -gt 0)
+				{
+					$finalscanReport=$complianceReportHelper.MergeScanReport($SelectedSubscription);
+				    $complianceReportHelper.SetLocalSubscriptionScanReport($finalscanReport);
+=======
 		$this.PublishCustomMessage("Updating user comments in AzSK control data for $totalCount controls... ", [MessageType]::Warning);
 
         foreach ($resultGroup in $resultsGroups) {
@@ -114,6 +209,7 @@ class PersistedStateInfo: CommandBase
 				{
 					$finalscanReport=$storageReportHelper.MergeScanReport($SelectedSubscription);
 				    $storageReportHelper.SetLocalSubscriptionScanReport($finalscanReport);
+>>>>>>> e138bb91afd39338a2ec4ad5b296c016075ac5bc
 				}
 				# If updation failed for any control, genearte error file
 				if(($erroredControls | Measure-Object).Count -gt 0)
@@ -139,6 +235,20 @@ class PersistedStateInfo: CommandBase
 		{
 		 $this.PublishException($_);
 		}
+<<<<<<< HEAD
+
+		return $messages;
+    }
+
+	hidden [PSObject] CreateCustomErrorObject($currentItem,$reason)
+	{
+	 $currentItem | Add-Member -NotePropertyName ErrorDetails -NotePropertyValue $reason
+	 return $currentItem;
+	}
+}
+
+
+=======
 		if(($customErrors | Measure-Object).Count -gt 0)
 		{
         $messages += [MessageTableData]::new("Unable to update user comments for following controls:",$customErrors)
@@ -148,3 +258,4 @@ class PersistedStateInfo: CommandBase
 }
 
 
+>>>>>>> e138bb91afd39338a2ec4ad5b296c016075ac5bc

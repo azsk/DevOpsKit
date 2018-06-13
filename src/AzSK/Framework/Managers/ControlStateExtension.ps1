@@ -322,7 +322,7 @@ class ControlStateExtension
 			return $controlStates;
 		}
 		finally{
-			$this.CleanTempFolder();
+			[Helpers]::CleanupLocalFolder([Constants]::AzSKAppFolderPath + "\Temp");
 		}
 	}
 
@@ -626,22 +626,4 @@ class ControlStateExtension
 			return $true;
 		}
 	}
-
-	hidden [void] CleanTempFolder()
-	{
-		try
-		{
-			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp";				
-			if(Test-Path "$AzSKTemp")
-			{
-				Remove-Item -Path $AzSKTemp -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
-			}
-		}
-		catch{
-			#this call happens from finally block. Try to clean the files, if it dont happen it would get cleaned in the next attempt
-		}	
-
-	}
-
-	
 }
