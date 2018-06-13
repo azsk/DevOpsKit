@@ -14,7 +14,8 @@ class SVTCommandBase: CommandBase {
     [bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
     [AttestationOptions] $AttestationOptions;
-	hidden [LSRSubscription] $StorageReportData;
+    hidden [LSRSubscription] $StorageReportData;
+    hidden [ComplianceReportHelper] $complianceReportHelper = $null;
 
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
@@ -27,8 +28,11 @@ class SVTCommandBase: CommandBase {
         $azskConfig = [ConfigurationManager]::GetAzSKConfigData();
         if(!$azskConfig.PersistScanReportInSubscription) {return;}
         
-		$complianceRptHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId);
-        $this.StorageReportData =  $complianceRptHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
+        if($null -eq $this.complianceReportHelper)
+        {
+		    $this.complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId);
+            $this.StorageReportData =  $this.complianceReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
+        }
 	}
 
     hidden [SVTEventContext] CreateSVTEventContextObject() {
@@ -59,7 +63,11 @@ class SVTCommandBase: CommandBase {
 			{
 				throw [SuppressedException] ("Multiple controlIds specified. `nBulk attestation mode supports only one controlId at a time.`n")
 			}			
-        }		
+        }
+        
+        #fetch the compliancedata from subscription
+        $this.GetLocalSubscriptionData();
+
         $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
 
@@ -98,8 +106,7 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
         # ToDo: remove InvocationContext, try to pass as param
-        # ToDo: Assumption: usercomment will only work when storage report feature flag is enable.
-        $this.GetLocalSubscriptionData();
+        # ToDo: Assumption: usercomment will only work when storage report feature flag is enable.        
 		$svtObject.StorageReportData = $this.StorageReportData
 
         #Include Server Side Exclude Tags

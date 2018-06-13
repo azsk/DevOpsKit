@@ -170,23 +170,15 @@ class StorageHelper: ResourceGroupHelper
         
 		$this.HaveWritePermissions = 0
 		#this is local constant with dummy container name to check for storage permissions
-		$writeTestContainerName = "writetest";
+		$writeTestContainerName = "wt" + $(get-date).ToUniversalTime().ToString("yyyyMMddHHmmss");
 
 		#see if user can create the test container in the storage account. If yes then user have both RW permissions. 
 		try
 		{
-			$containerObject = Get-AzureStorageContainer -Context $this.StorageAccount.Context -Name $writeTestContainerName -ErrorAction SilentlyContinue
-			if($null -ne $containerObject)
-			{
-				Remove-AzureStorageContainer -Name $writeTestContainerName -Context  $this.StorageAccount.Context -ErrorAction Stop -Force
-				$this.HaveWritePermissions = 1
-			}
-			else
-			{
-				New-AzureStorageContainer -Context $this.StorageAccount.Context -Name $writeTestContainerName -ErrorAction Stop
-				$this.HaveWritePermissions = 1
-				Remove-AzureStorageContainer -Name $writeTestContainerName -Context  $this.StorageAccount.Context -ErrorAction SilentlyContinue -Force
-			}				
+			
+			New-AzureStorageContainer -Context $this.StorageAccount.Context -Name $writeTestContainerName -ErrorAction Stop
+			$this.HaveWritePermissions = 1
+			Remove-AzureStorageContainer -Name $writeTestContainerName -Context  $this.StorageAccount.Context -ErrorAction SilentlyContinue -Force
 		}
 		catch
 		{
