@@ -1,8 +1,41 @@
 {
-   "FeatureName": "BotService",
-   "Reference": "aka.ms/azsktcp/botservice",
-   "IsMaintenanceMode": false,
-   "Controls": [
+  "FeatureName": "BotService",
+  "Reference": "aka.ms/azsktcp/botservice",
+  "IsMaintenanceMode": false,
+  "Controls": [
+    {
+      "ControlID": "Azure_BotService_AuthN_OAuth_Setting",
+      "Description": "Bot Service must be authenticated using Azure Active Directory (AAD) based credentials.",
+      "Id": "BotService110",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+      "Recommendation": "To add AAD based authentication refer: https://docs.microsoft.com/en-us/azure/bot-service/bot-builder-tutorial-authentication?view=azure-bot-service-3.0#to-register-an-aad-v2-application",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "BotService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_BotService_Configure_Required_Channels",
+      "Description": "Only specific/required channels must be configured to allow traffic to bot service.",
+      "Id": "BotService110",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckBotConfiguredChannels",
+      "Rationale": "Configuring specific/required channels ensures that the bot service data is exposed to only the desired channels.",
+      "Recommendation": "Verify the configured channels and to add more supported channels refer: https://docs.microsoft.com/en-us/azure/bot-service/bot-service-manage-channels?view=azure-bot-service-3.0",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "BotService"
+      ],
+      "Enabled": true
+    },
     {
       "ControlID": "Azure_BotService_DP_Dont_Allow_HTTP_Access",
       "Description": "Bot Service API must only be accessible over HTTPS",
@@ -38,31 +71,14 @@
       "Enabled": true
     },
     {
-        "ControlID": "Azure_BotService_DP_Protect_Secrets",
-        "Description": "Secrets in Bot Service must be handled properly.",
-        "Id": "BotService130",
-        "ControlSeverity": "High",
-        "Automated": "No",
-        "MethodName": "",
-        "Rationale": "Keeping secrets such as passwords, keys, etc. in clear text can lead to easy compromise at various avenues during an application's lifecycle.",
-        "Recommendation": "It is recommended to handle the secrets properly.",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Manual",
-          "BotService"
-        ],
-        "Enabled": "true"
-    },
-    {
-      "ControlID": "Azure_BotService_Audit_Enable_Monitoring",
-      "Description": "Make sure important activities and events during Bot interactions are logged.",
-      "Id": "BotService140",
-      "ControlSeverity": "Medium",
+      "ControlID": "Azure_BotService_DP_Protect_Secrets",
+      "Description": "Secrets in Bot Service must be handled properly.",
+      "Id": "BotService130",
+      "ControlSeverity": "High",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "Analytics can be useful to detect unusual usage behavior patterns.",
-      "Recommendation": "Follow https://docs.microsoft.com/en-us/azure/bot-service/bot-service-manage-analytics?view=azure-bot-service-3.0 for configuring Application Insight with Bot Service.",
+      "Rationale": "Keeping secrets such as passwords, keys, etc. in clear text can lead to easy compromise at various avenues during an application's lifecycle.",
+      "Recommendation": "It is recommended to handle the secrets properly.",
       "Tags": [
         "SDL",
         "TCP",
@@ -70,6 +86,22 @@
         "BotService"
       ],
       "Enabled": "true"
+    },
+    {
+      "ControlID": "Azure_BotService_Audit_Enable_Monitoring",
+      "Description": "Make sure important activities and events during Bot interactions are logged.",
+      "Id": "BotService140",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckAIConfigured",
+      "Rationale": "Analytics can be useful to detect unusual usage behavior patterns.",
+      "Recommendation": "Follow https://docs.microsoft.com/en-us/azure/bot-service/bot-service-manage-analytics?view=azure-bot-service-3.0 for configuring Application Insight with Bot Service.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "BotService"
+      ],
+      "Enabled": "true"
     }
-   ]
+  ]
 }

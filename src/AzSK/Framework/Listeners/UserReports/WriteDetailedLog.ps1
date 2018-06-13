@@ -189,19 +189,15 @@ class WriteDetailedLog: FileOutputBase
 				$this.AddOutputLog($messageData.Message);
 				#$this.AddOutputLog("`r`n" + $messageData.Message);
 			}
-			if($messageData.GetType().FullName -eq "MessageTableData" -and $messageData.DataObject)
-			{
-			$this.AddOutputLog(($messageData.DataObject | Format-Table | Out-String)); 
-			}else
-			{
-				if ($messageData.DataObject) {
+			
+			if ($messageData.DataObject) {
 				if (-not [string]::IsNullOrEmpty($messageData.Message)) 
 				{
 					#$this.AddOutputLog("`r`n");
 				}
 				$this.AddOutputLog([Helpers]::ConvertObjectToString($messageData.DataObject, $false));                    
 			}
-			}
+			
 		}
 	}
 

@@ -16,11 +16,12 @@ class PersistedStateInfo: CommandBase
 		$this.AzSKRG = Get-AzureRmResourceGroup -Name $this.AzSKRGName -ErrorAction SilentlyContinue
 	}
 	
-	[MessageTableData[]] UpdatePersistedState([string] $filePath)
+
+	[MessageData[]] UpdatePersistedState([string] $filePath)
     {	
 	    [string] $errorMessages="";
 	    $customErrors=@();
-	    [MessageTableData[]] $messages = @();
+	    [MessageData[]] $messages = @();
 	   
 	   try
 	   {
@@ -40,12 +41,22 @@ class PersistedStateInfo: CommandBase
 		  return $messages;
 		}
 		# Read file from Storage
-	    $storageReportHelper = [StorageReportHelper]::new(); 
-		$storageReportHelper.Initialize($false);	
-		$StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
+	    $complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId); 
+		#$complianceReportHelper.Initialize($false);	
+		$StorageReportJson =$null;
+		# Check for write access
+		if($complianceReportHelper.azskStorageInstance.HaveWritePermissions -eq 1)
+		{
+	  	  $StorageReportJson = $complianceReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
+		}else
+		{
+		 $this.PublishCustomMessage("You don't have the required permissions to update user comments. If you'd like to update user comments, please request your subscription owner to grant you 'Contributor' access to the 'AzSKRG' resource group.",[MessageType]::Error);
+		 return $messages;
+		}
+	
 		$SelectedSubscription=$null;
 		$erroredControls=@();
-		$ResourceScanResult=$null;
+		$PersistedControlScanResult=@();
 		$ResourceData=@();
 		$successCount=0;
 		
@@ -55,65 +66,72 @@ class PersistedStateInfo: CommandBase
 		}
 		if(($SelectedSubscription|Measure-Object).Count -gt 0)
 		{
-		$this.PublishCustomMessage("Updating user comments in AzSK control data for $totalCount controls... ", [MessageType]::Warning);
+		    $this.PublishCustomMessage("Updating user comments in AzSK control data for $totalCount controls... ", [MessageType]::Warning);
 
-        foreach ($resultGroup in $resultsGroups) {
+			foreach ($resultGroup in $resultsGroups) {
 
-		            if($resultGroup.Group[0].FeatureName -eq "SubscriptionCore")
-					{
-						if([Helpers]::CheckMember($SelectedSubscription.ScanDetails,"SubscriptionScanResult"))
+						if($resultGroup.Group[0].FeatureName -eq "SubscriptionCore" -and ($SelectedSubscription.ScanDetails.SubscriptionScanResult| Measure-Object).Count -gt 0)
+						{						
+							  $startIndex=$resultGroup.Name.lastindexof("/")
+							  $lastIndex=$resultGroup.Name.length-$startIndex-1
+							  $localSubID=$resultGroup.Name.substring($startIndex+1,$lastIndex)
+							  if($localSubID -eq $this.SubscriptionContext.SubscriptionId)
+							  {
+							  $PersistedControlScanResult=$SelectedSubscription.ScanDetails.SubscriptionScanResult
+							  }
+							 
+						}elseif($resultGroup.Group[0].FeatureName -ne "SubscriptionCore" -and ($SelectedSubscription.ScanDetails.Resources | Measure-Object).Count -gt 0)
+						{						 
+							  $ResourceData=$SelectedSubscription.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $resultGroup.Name}	 
+							  if(($ResourceData.ResourceScanResult | Measure-Object).Count -gt 0 )
+							  {
+								  $PersistedControlScanResult=$ResourceData.ResourceScanResult
+							  }
+						}
+						if(($PersistedControlScanResult | Measure-Object).Count -gt 0)
 						{
-						  $ResourceData=$SelectedSubscription.ScanDetails.SubscriptionScanResult
-						  $ResourceScanResult=$ResourceData
-						 }
-					}else
-					{
-						 if([Helpers]::CheckMember($SelectedSubscription.ScanDetails,"Resources"))
-						 {
-						  $ResourceData=$SelectedSubscription.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $resultGroup.Name}	 
-						  } 
-						  if(($ResourceData | Measure-Object).Count -gt 0 )
-						  {
-							  $ResourceScanResult=$ResourceData.ResourceScanResult
-						  }
+						 $resultGroup.Group | ForEach-Object{
+							try
+							{
+								 $currentItem=$_
+				    			 $matchedControlResult=$PersistedControlScanResult | Where-Object {		
+	 							   ($_.ControlID -eq $currentItem.ControlID -and (($_.ChildResourceName -eq $currentItem.ChildResourceName) -or [string]::IsNullOrWhiteSpace($currentItem.ChildResourceName)))
+								 }
+								 $encoder = [System.Text.Encoding]::UTF8
+								 $encUserComments= $encoder.GetBytes($currentItem.UserComments)
+								 $decUserComments= $encoder.GetString($encUserComments)
+								 if($decUserComments.length -le 255)
+								 {
+									 if(($matchedControlResult|Measure-Object).Count -eq 1)
+									 {
+									  $successCount+=1;
+									  $matchedControlResult.UserComments= $decUserComments
+									 }else
+									 {
+									  $erroredControls+=$this.CreateCustomErrorObject($currentItem,"Could not find previous persisted state.")		 
+									 }
+								 }else
+								 {    
+									  $erroredControls+=$this.CreateCustomErrorObject($currentItem,"User Comment's length is greater than 255.")
+								 }
+							}catch{
+							$this.PublishException($_);
+							$erroredControls+=$currentItem
+
+							}		
+						}
+						}
+						else{
+					
+						$resultGroup.Group| ForEach-Object{
+						$erroredControls+=$this.CreateCustomErrorObject($_,"Could not find previous persisted state.")
+						}
+						}
 					}
-					if(($ResourceScanResult | Measure-Object).Count -gt 0)
-					{
-                     $resultGroup.Group | ForEach-Object{
-					try
-					{
-					     $currentItem=$_
-				    	 $matchedControlResult=$ResourceScanResult | Where-Object {		
-	 	                   ($_.ControlID -eq $currentItem.ControlID -and (  ([Helpers]::CheckMember($currentItem, "ChildResourceName") -and $_.ChildResourceName -eq $currentItem.ChildResourceName) -or (-not([Helpers]::CheckMember($currentItem, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
-		                 }
-									
-					     if(($matchedControlResult|Measure-Object).Count -eq 1)
-					     {
-						  $successCount+=1;
-					      $matchedControlResult.UserComments=$currentItem.UserComments
-					     }else
-						 {
-						  $customErr = [PSObject]::new();
-					      Add-Member -InputObject $customErr -Name "ControlId" -MemberType NoteProperty -Value $currentItem.ControlId
-					      Add-Member -InputObject $customErr -Name "ResourceName" -MemberType NoteProperty -Value $currentItem.ResourceName
-						  Add-Member -InputObject $customErr -Name "Reason" -MemberType NoteProperty -Value "Could not find previous persisted state"
-						  $customErrors+=$customErr
-						  $erroredControls+=$currentItem			 
-						 }
-				    }catch{
-					$this.PublishException($_);
-				    $erroredControls+=$currentItem
-					}		
-                    }
-					}
-					else{
-					$erroredControls+=$resultGroup.Group
-					}
-                }
 				if($successCount -gt 0)
 				{
-					$finalscanReport=$storageReportHelper.MergeScanReport($SelectedSubscription);
-				    $storageReportHelper.SetLocalSubscriptionScanReport($finalscanReport);
+					$finalscanReport=$complianceReportHelper.MergeScanReport($SelectedSubscription);
+				    $complianceReportHelper.SetLocalSubscriptionScanReport($finalscanReport);
 				}
 				# If updation failed for any control, genearte error file
 				if(($erroredControls | Measure-Object).Count -gt 0)
@@ -139,12 +157,13 @@ class PersistedStateInfo: CommandBase
 		{
 		 $this.PublishException($_);
 		}
-		if(($customErrors | Measure-Object).Count -gt 0)
-		{
-        $messages += [MessageTableData]::new("Unable to update user comments for following controls:",$customErrors)
-		}
 		return $messages;
     }
-}
 
+	hidden [PSObject] CreateCustomErrorObject($currentItem,$reason)
+	{
+	 $currentItem | Add-Member -NotePropertyName ErrorDetails -NotePropertyValue $reason
+	 return $currentItem;
+	}
+}
 

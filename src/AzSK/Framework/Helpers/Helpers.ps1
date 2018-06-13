@@ -901,6 +901,25 @@ class Helpers {
 		return $existingStorage
 	}
 
+    static [string] FetchTagsString([PSObject]$TagsHashTable)
+    {
+        [string] $tagsString = "";
+        try {
+            if(($TagsHashTable | Measure-Object).Count -gt 0)
+            {
+                $TagsHashTable.Keys | ForEach-Object {
+                    $key = $_;
+                    $value = $TagsHashTable[$key];
+                    $tagsString = $tagsString + "$($key):$($value);";                
+                }
+            }   
+        }
+        catch {
+            #eat exception as if not able to fetch tags, it would return empty instead of breaking the flow
+        }        
+        return $tagsString;
+    }
+
 	static [void] SetResourceGroupTags([string]$RGName, [PSObject]$TagsHashTable, [bool] $Remove) {
 		[Helpers]::SetResourceGroupTags($RGName, $TagsHashTable, $Remove, $true) 
 	}
@@ -1340,6 +1359,20 @@ class Helpers {
 			throw ([SuppressedException]::new(("SPN permission could not be set"), [SuppressedExceptionType]::InvalidOperation))
 		}
 	}
+
+	static [void] CleanupLocalFolder($folderPath)
+	{
+		try
+		{
+			if(Test-Path $folderPath)
+			{
+				Remove-Item -Path $folderPath -Recurse -Force -ErrorAction Stop | Out-Null
+			}
+		}
+		catch{
+			#this call happens from finally block. Try to clean the files, if it don't happen it would get cleaned in the next attempt
+		}	
+    }
 	
 }
 

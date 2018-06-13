@@ -38,6 +38,7 @@ class PolicySetup: CommandBase
 	hidden [string] $IWRCommand;
 	hidden [string] $MigrationScriptPath = [string]::Empty
 	hidden [bool] $IsMigrationOn = $false
+	hidden [bool] $IsUpdateSwitchOn = $false
 
 	hidden [OverrideConfigurationType] $OverrideConfiguration = [OverrideConfigurationType]::None
 
@@ -137,6 +138,9 @@ class PolicySetup: CommandBase
 				$this.ResourceGroupLocation = "EastUS"
 			}
 		}
+		else {
+			$this.ResourceGroupLocation = $resourceGroupLocation
+		}
 		
 		$this.MonitoringDashboardLocation = $MonitoringDashboardLocation
 		if([string]::IsNullOrWhiteSpace($MonitoringDashboardLocation))
@@ -206,7 +210,7 @@ class PolicySetup: CommandBase
 		}
 
 		$askConfigFile = (Get-ChildItem $this.ConfigFolderPath -Recurse -Force | Where-Object { $_.Name -eq "AzSK.json" })
-		if((($askConfigFile | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::Configurations)
+		if((($askConfigFile | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::AzSKRootConfig)
 		{
 			$azskOverride = [ConfigOverride]::new("AzSK.json");
 			$azskOverride.UpdatePropertyValue("PolicyMessage", "Running $moduleName cmdlet using $($this.OrgFullName) policy...");

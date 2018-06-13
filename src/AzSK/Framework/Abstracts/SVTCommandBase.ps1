@@ -14,11 +14,26 @@ class SVTCommandBase: CommandBase {
     [bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
     [AttestationOptions] $AttestationOptions;
+    hidden [LSRSubscription] $StorageReportData;
+    hidden [ComplianceReportHelper] $complianceReportHelper = $null;
 
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
+        $this.CheckAndDisableAzureRMTelemetry()
     }
+
+	hidden [void] GetLocalSubscriptionData()
+	{
+        $azskConfig = [ConfigurationManager]::GetAzSKConfigData();
+        if(!$azskConfig.PersistScanReportInSubscription) {return;}
+        
+        if($null -eq $this.complianceReportHelper)
+        {
+		    $this.complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId);
+            $this.StorageReportData =  $this.complianceReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
+        }
+	}
 
     hidden [SVTEventContext] CreateSVTEventContextObject() {
         return [SVTEventContext]@{
@@ -48,7 +63,11 @@ class SVTCommandBase: CommandBase {
 			{
 				throw [SuppressedException] ("Multiple controlIds specified. `nBulk attestation mode supports only one controlId at a time.`n")
 			}			
-        }		
+        }
+        
+        #fetch the compliancedata from subscription
+        $this.GetLocalSubscriptionData();
+
         $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
 
@@ -62,10 +81,12 @@ class SVTCommandBase: CommandBase {
         $arg.ExceptionMessage = $exception;
 
         $this.PublishEvent([SVTEvent]::CommandError, $arg);
+        $this.CheckAndEnableAzureRMTelemetry()
     }
 
     hidden [void] CommandCompleted([SVTEventContext[]] $arguments) {
         $this.PublishEvent([SVTEvent]::CommandCompleted, $arguments);
+        $this.CheckAndEnableAzureRMTelemetry()
     }
 
     [string] EvaluateControlStatus() {
@@ -84,7 +105,9 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlIds += $this.ControlIds;
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
-		$svtObject.IncludeUserComments =$this.InvocationContext.BoundParameters['IncludeUserComments'];
+        # ToDo: remove InvocationContext, try to pass as param
+        # ToDo: Assumption: usercomment will only work when storage report feature flag is enable.        
+		$svtObject.StorageReportData = $this.StorageReportData
 
         #Include Server Side Exclude Tags
         $svtObject.ExcludeTags += [ConfigurationManager]::GetAzSKConfigData().DefaultControlExculdeTags
@@ -98,7 +121,7 @@ class SVTCommandBase: CommandBase {
 			$svtObject.PartialScanIdentifier =$this.PartialScanIdentifier
 		}
 		
-
+        # ToDo: Utilize exiting functions
         $this.InitializeControlState();
         $svtObject.ControlStateExt = $this.ControlStateExt;
     }
@@ -175,5 +198,44 @@ class SVTCommandBase: CommandBase {
                 $this.CommandError($_);
             }
         }
+    }
+
+    hidden [void] CheckAndDisableAzureRMTelemetry()
+	{
+		#Disable AzureRM telemetry setting until scan is completed.
+		#This has been added to improve the performarnce of scan commands
+		#Telemetry will be re-enabled once scan is completed		
+		$dataCollectionPath = "$env:APPDATA\Windows Azure Powershell\AzurePSDataCollectionProfile.json"
+		if(Test-Path -Path $dataCollectionPath)
+		{
+			$dataCollectionProfile = Get-Content -path $dataCollectionPath | ConvertFrom-Json
+			if($dataCollectionProfile.enableAzureDataCollection)
+			{	
+				#Keep settings in 
+				$AzureRMDataCollectionSettingFolderpath= [Constants]::AzSKAppFolderPath + "\AzureRMDataCollectionSettings"
+				if(-not (Test-Path -Path $AzureRMDataCollectionSettingFolderpath))
+				{
+					mkdir -Path $AzureRMDataCollectionSettingFolderpath -Force
+				}
+				$AzureRMDataCollectionFilePath = $AzureRMDataCollectionSettingFolderpath + "\AzurePSDataCollectionProfile.json"
+				Copy-Item $dataCollectionPath $AzureRMDataCollectionFilePath					
+				Disable-AzureRmDataCollection  | Out-Null
+			}
+		}
+    }
+    
+    hidden [void] CheckAndEnableAzureRMTelemetry()
+    {
+        #Enabled AzureRM telemetry which got disabled at the start of command
+        $AzureRMDataCollectionSettingFilepath= [Constants]::AzSKAppFolderPath + "\AzureRMDataCollectionSettings\AzurePSDataCollectionProfile.json"
+        if(Test-Path -Path $AzureRMDataCollectionSettingFilepath)
+        {
+            $dataCollectionProfile = Get-Content -path $AzureRMDataCollectionSettingFilepath | ConvertFrom-Json
+            if($dataCollectionProfile -and $dataCollectionProfile.enableAzureDataCollection)
+            {
+                Enable-AzureRmDataCollection  | Out-Null
+            }
+        }
+
     }
 }

@@ -66,6 +66,9 @@ class StorageHelper: ResourceGroupHelper
 {
 	hidden [PSStorageAccount] $StorageAccount = $null;
 	[string] $StorageAccountName;
+	[int] $HaveWritePermissions = 0;
+	[int] $retryCount = 3;
+	[int] $sleepIntervalInSecs = 10;
 
 	hidden [string] $ResourceType = "Microsoft.Storage/storageAccounts";
 
@@ -117,6 +120,9 @@ class StorageHelper: ResourceGroupHelper
 				$this.StorageAccount = $null;
 				throw ([SuppressedException]::new("Unable to fetch the storage account [$($this.StorageAccountName)]", [SuppressedExceptionType]::InvalidOperation))				
 			}
+
+			#precompute storage access permissions for the current scan account
+			$this.ComputePermissions();
 		}
 	}
 
@@ -124,7 +130,7 @@ class StorageHelper: ResourceGroupHelper
 	{
 		return $this.CreateStorageContainerIfNotExists($containerName, [BlobContainerPublicAccessType]::Off);
 	}
-
+	
 	[AzureStorageContainer] CreateStorageContainerIfNotExists([string] $containerName, [BlobContainerPublicAccessType] $accessType)
 	{
 		if([string]::IsNullOrWhiteSpace($containerName))
@@ -152,6 +158,34 @@ class StorageHelper: ResourceGroupHelper
 
 		return $container;
 	}
+
+	hidden [void] ComputePermissions()
+	{		
+		if($null -eq $this.StorageAccount)
+		{
+			#No storage account => no permissions at all
+			$this.HaveWritePermissions = 0
+			return;
+        }
+        
+		$this.HaveWritePermissions = 0
+		#this is local constant with dummy container name to check for storage permissions
+		$writeTestContainerName = "wt" + $(get-date).ToUniversalTime().ToString("yyyyMMddHHmmss");
+
+		#see if user can create the test container in the storage account. If yes then user have both RW permissions. 
+		try
+		{
+			
+			New-AzureStorageContainer -Context $this.StorageAccount.Context -Name $writeTestContainerName -ErrorAction Stop
+			$this.HaveWritePermissions = 1
+			Remove-AzureStorageContainer -Name $writeTestContainerName -Context  $this.StorageAccount.Context -ErrorAction SilentlyContinue -Force
+		}
+		catch
+		{
+			$this.HaveWritePermissions = 0
+		}
+    }
+
 
 	[AzureStorageContainer] UploadFilesToBlob([string] $containerName, [string] $blobPath, [System.IO.FileInfo[]] $filesToUpload, [bool] $overwrite)
 	{
@@ -183,20 +217,33 @@ class StorageHelper: ResourceGroupHelper
 				{
 					$blobName = $blobPath + "/" + $blobName;
 				}
+				[Helpers]::RemoveUtf8BOM($_);
 
-				if($overwrite)
+				$loopValue = $this.retryCount;
+				$sleepValue = $this.sleepIntervalInSecs;
+				while($loopValue -gt 0)
 				{
-					[Helpers]::RemoveUtf8BOM($_);
-					Set-AzureStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context -Force | Out-Null
-				}
-				else
-				{
-					$currentBlob = Get-AzureStorageBlob -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -ErrorAction Ignore
-				
-					if(-not $currentBlob)
-					{
-						[Helpers]::RemoveUtf8BOM($_);
-						Set-AzureStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context | Out-Null
+					$loopValue = $loopValue - 1;
+					try {
+						if($overwrite)
+						{
+							Set-AzureStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context -Force | Out-Null
+						}
+						else
+						{
+							$currentBlob = Get-AzureStorageBlob -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -ErrorAction Ignore
+						
+							if(-not $currentBlob)
+							{
+								Set-AzureStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context | Out-Null
+							}
+						}
+						$loopValue = 0;
+					}
+					catch {
+						#sleep for incremental 10 seconds before next retry;
+						Start-Sleep -Seconds $sleepValue;
+						$sleepValue = $sleepValue + 10;
 					}
 				}
 
@@ -208,6 +255,31 @@ class StorageHelper: ResourceGroupHelper
 			throw [System.ArgumentException] ("The argument 'filesToUpload' is null or empty");
 		}
 		return $result;
+	}
+
+	[void] DownloadFilesFromBlob([string] $containerName, [string] $blobName, [string] $destinationPath, [bool] $overwrite)
+	{
+		$loopValue = $this.retryCount;
+		$sleepValue = $this.sleepIntervalInSecs;
+		while($loopValue -gt 0)
+		{
+			$loopValue = $loopValue - 1;
+			try {
+				if($overwrite)
+				{
+					Get-AzureStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $destinationPath -Force -ErrorAction Stop
+				}
+				else {
+					Get-AzureStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $destinationPath -ErrorAction Stop
+				}
+				$loopValue = 0;
+			}
+			catch {
+				#sleep for incremental 10 seconds before next retry;
+				Start-Sleep -Seconds $sleepValue;
+				$sleepValue = $sleepValue + 10;
+			}
+		}
 	}
 
 	[string] GenerateSASToken([string] $containerName)

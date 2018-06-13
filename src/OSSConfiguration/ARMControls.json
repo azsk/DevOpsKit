@@ -5,18 +5,6 @@
       "apiVersions": [ "2017-10-01" ],
       "controls": [
         {
-          "id": "AzureStorage140",
-          "controlId": "Azure_Storage_DP_Encrypt_At_Rest_Blob",
-          "isEnabled": true,
-          "description": "Sensitive data in Storage Blob must be encrypted at rest",
-          "rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-          "recommendation": "Run command 'Set-AzureRmStorageAccount -Name '<StorageAccountName>' -ResourceGroupName '<RGName>' -StorageEncryption -EnableEncryptionService 'Blob''. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help. Note that after enabling Storage Service Encryption, only new data will be encrypted, and any existing files in this storage account will remain unencrypted.",
-          "severity": "High",
-          "jsonPath": "$.properties.encryption.services.blob.enabled",
-          "matchType": "Boolean",
-          "data": { "value": true }
-        },
-        {
           "id": "AzureStorage160",
           "controlId": "Azure_Storage_DP_Encrypt_In_Transit",
           "isEnabled": true,
@@ -25,18 +13,6 @@
           "recommendation": "Run command 'Set-AzureRmStorageAccount -ResourceGroupName <RGName> -name <StorageAccountName> -EnableHttpsTrafficOnly `$true'. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help.",
           "severity": "Medium",
           "jsonPath": "$.properties.supportsHttpsTrafficOnly",
-          "matchType": "Boolean",
-          "data": { "value": true }
-        },
-        {
-          "id": "AzureStorage240",
-          "controlId": "Azure_Storage_DP_Encrypt_At_Rest_File",
-          "isEnabled": true,
-          "description": "Sensitive data in Storage File must be encrypted at rest",
-          "rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-          "recommendation": "Run command 'Set-AzureRmStorageAccount -Name '<StorageAccountName>' -ResourceGroupName '<RGName>' -StorageEncryption -EnableEncryptionService 'File''. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help. Note that after enabling Storage Service Encryption, only new data will be encrypted, and any existing files in this storage account will remain unencrypted.",
-          "severity": "High",
-          "jsonPath": "$.properties.encryption.services.file.enabled",
           "matchType": "Boolean",
           "data": { "value": true }
         }
