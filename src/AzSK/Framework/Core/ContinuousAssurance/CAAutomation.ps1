@@ -510,7 +510,7 @@ class CCAutomation: CommandBase
 			#region: Check AzureRM.Automation/AzureRm.Profile and its dependent modules health
 			if($FixModules)
 			{
-				$this.PublishCustomMessage("Inspecting modules present in the CA automation account")
+				$this.PublishCustomMessage("Inspecting modules present in the CA automation account…")
 				try
 				{
 					$this.FixCAModules()
