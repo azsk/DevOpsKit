@@ -390,7 +390,7 @@ class ComplianceReportHelper
 						$subscription.ScanDetails.SubscriptionScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $true)
 					}
 				}
-				else
+				elseif($currentScanResult.FeatureName -ne "AzSKCfg")
 				{
 
 					if((($resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId }) | Measure-Object).Count -gt 0)
