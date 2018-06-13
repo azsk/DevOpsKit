@@ -19,11 +19,7 @@ class SVTCommandBase: CommandBase {
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
-<<<<<<< HEAD
-
-=======
         $this.CheckAndDisableAzureRMTelemetry()
->>>>>>> e138bb91afd39338a2ec4ad5b296c016075ac5bc
     }
 
 	hidden [void] GetLocalSubscriptionData()
