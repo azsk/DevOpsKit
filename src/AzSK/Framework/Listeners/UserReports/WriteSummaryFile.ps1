@@ -49,7 +49,7 @@ class WriteSummaryFile: FileOutputBase
 				# Export CSV Report
 				try 
 				{
-					$currentInstance.SetFilePath($Event.SourceArgs[0].SubscriptionContext, ("AttestationReport-" + $currentInstance.RunIdentifier + ".csv"));
+					$currentInstance.SetFilePath($Event.SourceArgs[0].SubscriptionContext, ("SecurityReport-" + $currentInstance.RunIdentifier + ".csv"));
 					$currentInstance.WriteToCSV($Event.SourceArgs);
 					$currentInstance.FilePath = "";
 				}
@@ -225,7 +225,7 @@ class WriteSummaryFile: FileOutputBase
 					$nonNullProps += $propName;
 				}
 			};
-			if($this.InvocationContext.BoundParameters['IncludeUserComments'] -ne $null -and $this.InvocationContext.BoundParameters['IncludeUserComments'] -eq $true -and -not ([Helpers]::CheckMember($nonNullProps, "UserComments")))
+			if($this.InvocationContext.BoundParameters['IncludeUserComments'] -eq $true -and -not ([Helpers]::CheckMember($nonNullProps, "UserComments")))
 			{
 			  $nonNullProps += "UserComments";
 			}

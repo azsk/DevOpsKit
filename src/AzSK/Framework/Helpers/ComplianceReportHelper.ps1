@@ -41,7 +41,7 @@ class ComplianceReportHelper
             $complianceReportBlobName = [Constants]::ComplianceReportBlobName + ".zip"
             
             $ContainerName = [Constants]::ComplianceReportContainerName           
-            $AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\StorageReport";
+            $AzSKTemp = [Constants]::AzSKAppFolderPath + [Constants]::ComplianceReportPath;
 			
 			if(-not (Test-Path -Path $AzSKTemp))
             {
@@ -344,7 +344,7 @@ class ComplianceReportHelper
 		$subscription = [LSRSubscription]::new()
 		[LSRResources[]] $resources = @()
 
-		if((($complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $this.subscriptionId }) | Measure-Object).Count -gt 0)
+		if($null -ne $complianceReport -and (($complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $this.subscriptionId }) | Measure-Object).Count -gt 0)
 		{
 			$subscription = $complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $this.subscriptionId }
 		}
@@ -356,11 +356,11 @@ class ComplianceReportHelper
 
 		if($null -ne $subscription.ScanDetails)
 		{
-			$subscription.ScanDetails = [LSRScanDetails]::new()
+			$resources = $subscription.ScanDetails.Resources
 		}
 		else
 		{
-			$resources = $subscription.ScanDetails.Resources
+			$subscription.ScanDetails = [LSRScanDetails]::new()
 		}
 
 		$currentScanResults | ForEach-Object {
@@ -473,40 +473,58 @@ class ComplianceReportHelper
 		}
 		
 		$subscription.ScanDetails.Resources += $resources
-
-		$complianceReport.Subscriptions = $complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -ne $subscription.SubscriptionId }
+		if($null -ne $complianceReport)
+		{
+			$complianceReport.Subscriptions = $complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -ne $subscription.SubscriptionId }
+		}
+		else
+		{
+			$complianceReport = [LocalSubscriptionReport]::new()
+		}
+		
 		$complianceReport.Subscriptions += $subscription;
 
 		return $complianceReport
-
 	}
 	
 	hidden [LSRControlResultBase[]] ConvertScanResultToSnapshotResult($svtResult, $scanSource, $scannerVersion, $scanKind, $oldResult, $isSubscriptionScan)
 	{
-		if($isSubscriptionScan)
-		{
-			[LSRSubscriptionControlResult[]] $resourceScanResults = @();	
-		}
-		else
-		{
-			[LSRResourceScanResult[]] $resourceScanResults = @();	
-		}
+		[LSRControlResultBase[]] $scanResults = @();	
+		#if($isSubscriptionScan)
+		#{
+		#	[LSRSubscriptionControlResult[]] $scanResults = @();	
+		#}
+		#else
+		#{
+		#	[LSRResourceScanResult[]] $scanResults = @();	
+		#}
 
 		$svtResult.ControlResults | ForEach-Object {
 			$currentResult = $_
 			$isLegitimateResult = ($currentResult.CurrentSessionContext.IsLatestPSModule -and $currentResult.CurrentSessionContext.Permissions.HasRequiredAccess -and $currentResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions)
 			if($isLegitimateResult)
 			{
-				$resourceScanResult = [LSRResourceScanResult]::new()
-				if($null -ne $oldResult)
+				$resourceScanResult = [LSRControlResultBase]::new()
+				if($isSubscriptionScan) 
 				{
-					if($isSubscriptionScan) 
+					if($null -ne $oldResult)
 					{
 						$resourceScanResult = $oldResult
 					}
 					else
 					{
+						$resourceScanResult = [LSRSubscriptionControlResult]::new()
+					}
+				}
+				else
+				{
+					if($null -ne $oldResult)
+					{
 						$resourceScanResult = $oldResult | Where-Object { $_.ChildResourceName -eq $currentResult.ChildResourceName -or [string]::IsNullOrEmpty($currentResult.ChildResourceName) }
+					}
+					else
+					{
+						$resourceScanResult = [LSRResourceScanResult]::new()
 					}
 					
 				}
@@ -576,9 +594,9 @@ class ComplianceReportHelper
 
 				# ToDo: Need to confirm
 				#$resourceScanResult.Metadata = $scanResult.Metadata
-				$resourceScanResults += $resourceScanResult
+				$scanResults += $resourceScanResult
 			}
 		}
-		return $resourceScanResults
+		return $scanResults
 	}
 }
