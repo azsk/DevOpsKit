@@ -209,8 +209,7 @@ class RemoteReportsListener: ListenerBase {
 				$result.ControlSeverity = $SVTEventContext.ControlItem.ControlSeverity
 				$result.ActualVerificationResult = [VerificationResult]::Disabled
 				$result.AttestationStatus = [AttestationStatus]::None
-				$result.VerificationResult = [VerificationResult]::Disabled
-				$result.MaximumAllowedGraceDays = $SVTEventContext.MaximumAllowedGraceDays
+				$result.VerificationResult = [VerificationResult]::Disabled				
 				$results.Add($result)
 			}
 			elseif ($SVTEventContext.ControlResults.Count -eq 1 -and `

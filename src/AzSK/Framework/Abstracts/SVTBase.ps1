@@ -1209,11 +1209,8 @@ class SVTBase: AzSKRoot
 		}
     }
 
-<<<<<<< HEAD
+
 	[int] hidden CalculateGraceInDays([SVTEventContext] $context)
-=======
-	[bool] hidden IsControlinGrace([SVTEventContext] $context)
->>>>>>> e138bb91afd39338a2ec4ad5b296c016075ac5bc
 	{
 		
 		$controlResult=$context.ControlResults;
@@ -1236,13 +1233,7 @@ class SVTBase: AzSKRoot
 				}
 			}			
 		}
-<<<<<<< HEAD
-	  return $computedGraceDays;
-	}
-=======
-		return $isControlinGrace;
-	}	
 
->>>>>>> e138bb91afd39338a2ec4ad5b296c016075ac5bc
-	
+	  return $computedGraceDays;
+	}	
 }
