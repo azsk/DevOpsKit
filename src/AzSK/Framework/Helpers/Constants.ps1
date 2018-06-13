@@ -151,11 +151,13 @@ class Constants
 			"Recommendation: Please start a fresh PS session and run 'Import-Module {2}' first to avoid getting into this situation.`r`n"
 
 	# Local Subscription Report Constants
-	static [string] $StorageReportContainerName = "compliance-state"
-	static [string] $StorageReportBlobName = "LatestSnapshot"
+	static [string] $ComplianceReportContainerName = "compliance-state"
+	static [string] $ComplianceReportBlobName = "LatestSnapshot"
 	static [DateTime] $AzSKDefaultDateTime = '1900-01-01T00:00:00'
 	static [int] $ControlResultComplianceDays = 3
 	static [int] $OwnerControlResultComplianceDays = 90
+	static [int] $ComplianceReportPath = "\Temp\Compliance"
+	
 
 	static [void] SetAzSKModuleName($moduleName)
 	{

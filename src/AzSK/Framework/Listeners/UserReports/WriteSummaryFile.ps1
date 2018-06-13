@@ -260,35 +260,14 @@ class WriteSummaryFile: FileOutputBase
 			$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
 			# Not considering nested resources to reduce complexity
 			$filteredResoruces = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }
-			$grouped = $filteredResoruces | Group-Object {$_.ResourceGroupName} | Select-Object Name, Group
-			foreach($group in $grouped){
-				$resourceGroup = "" | Select-Object Name, Resources
-				$resourceGroup.Name = $group.Name
-				$resourceGroup.Resources = [System.Collections.ArrayList]::new()
-				foreach($item in $group.Group){
-					$resource = "" | Select-Object Name, ResourceId, Feature
-					if($item.Name.Contains("/")){
-						$splitName = $item.Name.Split("/")
-						$resource.Name = $splitName[$splitName.Length - 1]
-					}
-					else{
-						$resource.Name = $item.Name;
-					}
-					$resource.ResourceId = $item.ResourceId
-					$resource.Feature = $supportedResourceTypes[$item.ResourceType.ToLower()]
-					$resourceGroup.Resources.Add($resource) | Out-Null
-				}
-				$resources.ResourceGroups.Add($resourceGroup) | Out-Null
-			}
+			
 		# }
+
+		# check for more than one record condition has been already implemented in parent function
 		$subId = $svtEventContextResults[0].SubscriptionContext.SubscriptionId
 		$StorageReportHelperInstance = [ComplianceReportHelper]::new($subId);
-		$StorageReportHelperInstance.Initialize($true);
-		if($StorageReportHelperInstance.HasStorageReportWriteAccessPermissions())
-		{
-			$finalScanReport = $StorageReportHelperInstance.MergeSVTScanResult($svtEventContextResults, $resources, $scanSource, $scannerVersion, $scanKind)
-			$StorageReportHelperInstance.SetLocalSubscriptionScanReport($finalScanReport)
-		}
+		$finalScanReport = $StorageReportHelperInstance.MergeSVTScanResult($svtEventContextResults, $filteredResoruces, $scanSource, $scannerVersion, $scanKind)
+		$StorageReportHelperInstance.SetLocalSubscriptionScanReport($finalScanReport)
 	}
 }
 
