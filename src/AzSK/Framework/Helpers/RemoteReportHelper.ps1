@@ -145,6 +145,7 @@ class RemoteReportHelper
 		$result.HasRequiredAccess = $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess
 		$result.IsBaselineControl = $control.IsBaselineControl
 		$result.UserComments = $controlResult.UserComments
+		$result.MaximumAllowedGraceDays = $controlResult.MaximumAllowedGraceDays
 		if($control.Tags.Contains("OwnerAccess")  -or $control.Tags.Contains("GraphRead"))
 		{
 			$result.HasOwnerAccessTag = $true
