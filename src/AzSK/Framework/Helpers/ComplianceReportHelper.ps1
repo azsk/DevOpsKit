@@ -151,7 +151,6 @@ class ComplianceReportHelper
                     $scanReport.ScanDetails.SubscriptionScanResult | ForEach-Object {
                         $subcriptionScanResult = [LSRSubscriptionControlResult] $_
                         
-						# ToDo: Rename 
                         if((($_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult | Where-Object { $subcriptionScanResult.ControlIntId -eq $_.ControlIntId }) | Measure-Object).Count -gt0)
                         {
                             $_complianceSubResult = $_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult | Where-Object { $subcriptionScanResult.ControlIntId -eq $_.ControlIntId }
@@ -374,7 +373,6 @@ class ComplianceReportHelper
 					{
 						if((($subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }) | Measure-Object).Count -gt0)
 						{
-								# Todo: Compliance result
 							$_complianceSubResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }
 							$svtResults = $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_complianceSubResult, $true)
 
