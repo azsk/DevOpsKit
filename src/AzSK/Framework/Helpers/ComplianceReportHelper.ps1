@@ -505,14 +505,6 @@ class ComplianceReportHelper
 	hidden [LSRControlResultBase[]] ConvertScanResultToSnapshotResult($svtResult, $scanSource, $scannerVersion, $scanKind, $oldResult, $isSubscriptionScan)
 	{
 		[LSRControlResultBase[]] $scanResults = @();	
-		#if($isSubscriptionScan)
-		#{
-		#	[LSRSubscriptionControlResult[]] $scanResults = @();	
-		#}
-		#else
-		#{
-		#	[LSRResourceScanResult[]] $scanResults = @();	
-		#}
 
 		$svtResult.ControlResults | ForEach-Object {
 			$currentResult = $_
