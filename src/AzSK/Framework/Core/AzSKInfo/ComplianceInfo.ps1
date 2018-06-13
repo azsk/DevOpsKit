@@ -165,6 +165,7 @@ class ComplianceInfo: CommandBase
 				if($_.VerificationResult -eq [VerificationResult]::Passed)
 				{
 					$days = [System.DateTime]::UtcNow.Subtract($_.LastScannedOn).Days
+					#ToDo take these days from controls settings
 					$allowedDays = [Constants]::ControlResultComplianceInDays
 					if($_.HasOwnerAccessTag)
 					{
@@ -275,7 +276,7 @@ class ComplianceInfo: CommandBase
 		$objectToExport = $this.ComplianceScanResult
 		if(-not $this.Full)
 		{
-			$objectToExport = $this.ComplianceScanResult | Select-Object "ControlId", "VerificationResult", "FeatureName", "ResourceGroupName", "ResourceName", "ChildResourceName", "IsBaselineControl", `
+			$objectToExport = $this.ComplianceScanResult | Select-Object "ControlId", "VerificationResult", "ActualVerificationResult", "FeatureName", "ResourceGroupName", "ResourceName", "ChildResourceName", "IsBaselineControl", `
 								"ControlSeverity", "AttestationStatus", "AttestedBy", "Justification", "IsControlInGrace", "ScanSource", "ScannedBy", "ScannerModuleName", "ScannerVersion"
 		}
 
