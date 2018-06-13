@@ -376,7 +376,7 @@ class ComplianceReportHelper
 							$_complianceSubResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }
 							$svtResults = $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_complianceSubResult, $true)
 
-							$subscription.ScanDetails.SusbscriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object {$_.ControlIntId -ne $currentScanResult.ControlItem.Id }
+							$subscription.ScanDetails.SubscriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object {$_.ControlIntId -ne $currentScanResult.ControlItem.Id }
 							$subscription.ScanDetails.SubscriptionScanResult += $svtResults
 						}
 						else
@@ -451,17 +451,24 @@ class ComplianceReportHelper
 
 		$resourceInventory | ForEach-Object {
 			$resource = $_
-			if((($resources | Where-Object { $_.ResourceId -eq  $resource.ResourceId }) | Measure-Object).Count -eq 0)
-			{
-				$newResource = [LSRResources]::new()
-				$newResource.HashId = [Helpers]::ComputeHash($resource.ResourceId)
-				$newResource.ResourceId = $resource.ResourceId
-				$newResource.FeatureName = $supportedResourceTypes[$resource.ResourceType.ToLower()]
-				$newResource.ResourceGroupName = $resource.ResourceGroupName
-				$newResource.ResourceName = $resource.Name
+            try {
 
-				$resources += $newResource	
-			} 
+			    if((($resources | Where-Object { $_.ResourceId -eq  $resource.ResourceId }) | Measure-Object).Count -eq 0)
+			    {
+				    $newResource = [LSRResources]::new()
+				    $newResource.HashId = [Helpers]::ComputeHash($resource.ResourceId)
+				    $newResource.ResourceId = $resource.ResourceId
+				    $newResource.FeatureName = $supportedResourceTypes[$resource.ResourceType.ToLower()]
+				    $newResource.ResourceGroupName = $resource.ResourceGroupName
+				    $newResource.ResourceName = $resource.Name
+
+				    $resources += $newResource	
+			    } 
+            }
+            catch
+            {
+                [EventBase]::PublishGenericException($_);
+            }
 		}
 
 		if($subscription.ScanDetails.Resources.Count -gt 0)
@@ -529,7 +536,7 @@ class ComplianceReportHelper
 					
 				}
 
-				if($currentResult.AttestationStatus -ne [AttestationStatus]::None -and($currentResult.AttestationStatus -ne $resourceScanResult.AttestationStatus -or $currentResult.Justification -ne $resourceScanResult.Justification))
+				if($currentResult.AttestationStatus -ne [AttestationStatus]::None -and($currentResult.AttestationStatus -ne $resourceScanResult.AttestationStatus -or $currentResult.StateManagement.AttestedStateData.Justification -ne $resourceScanResult.Justification))
 				{
 					$resourceScanResult.AttestationCounter = $resourceScanResult.AttestationCounter + 1 
 				}
@@ -574,6 +581,13 @@ class ComplianceReportHelper
 					$resourceScanResult.AttestedDate = $currentResult.StateManagement.AttestedStateData.AttestedDate 
 					$resourceScanResult.Justification = $currentResult.StateManagement.AttestedStateData.Justification
 					$resourceScanResult.AttestationData = [Helpers]::ConvertToJsonCustomCompressed($currentResult.StateManagement.AttestedStateData.DataObject)	
+				}
+				else
+				{
+					$resourceScanResult.AttestedBy = ""
+					$resourceScanResult.AttestedDate = [Constants]::AzSKDefaultDateTime 
+					$resourceScanResult.Justification = ""
+					$resourceScanResult.AttestationData = ""
 				}
 				
 				$resourceScanResult.VerificationResult = $currentResult.VerificationResult
