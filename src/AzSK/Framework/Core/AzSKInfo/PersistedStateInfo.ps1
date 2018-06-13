@@ -69,26 +69,20 @@ class PersistedStateInfo: CommandBase
 
 			foreach ($resultGroup in $resultsGroups) {
 
-						if($resultGroup.Group[0].FeatureName -eq "SubscriptionCore")
-						{
-							if([Helpers]::CheckMember($SelectedSubscription.ScanDetails,"SubscriptionScanResult"))
-							{
+						if($resultGroup.Group[0].FeatureName -eq "SubscriptionCore" -and ($SelectedSubscription.ScanDetails.SubscriptionScanResult| Measure-Object).Count -gt 0)
+						{						
 							  $startIndex=$resultGroup.Name.lastindexof("/")
 							  $lastIndex=$resultGroup.Name.length-$startIndex-1
 							  $localSubID=$resultGroup.Name.substring($startIndex+1,$lastIndex)
 							  if($localSubID -eq $this.SubscriptionContext.SubscriptionId)
 							  {
-							  $ResourceData=$SelectedSubscription.ScanDetails.SubscriptionScanResult
-							  $PersistedControlScanResult=$ResourceData
+							  $PersistedControlScanResult=$SelectedSubscription.ScanDetails.SubscriptionScanResult
 							  }
-							 }
-						}else
-						{
-							 if([Helpers]::CheckMember($SelectedSubscription.ScanDetails,"Resources"))
-							 {
+							 
+						}elseif($resultGroup.Group[0].FeatureName -ne "SubscriptionCore" -and ($SelectedSubscription.ScanDetails.Resources | Measure-Object).Count -gt 0)
+						{						 
 							  $ResourceData=$SelectedSubscription.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $resultGroup.Name}	 
-							  } 
-							  if(($ResourceData | Measure-Object).Count -gt 0 )
+							  if(($ResourceData.ResourceScanResult | Measure-Object).Count -gt 0 )
 							  {
 								  $PersistedControlScanResult=$ResourceData.ResourceScanResult
 							  }
@@ -100,7 +94,7 @@ class PersistedStateInfo: CommandBase
 							{
 								 $currentItem=$_
 				    			 $matchedControlResult=$PersistedControlScanResult | Where-Object {		
-	 							   ($_.ControlID -eq $currentItem.ControlID -and (  ([Helpers]::CheckMember($currentItem, "ChildResourceName") -and $_.ChildResourceName -eq $currentItem.ChildResourceName) -or (-not([Helpers]::CheckMember($currentItem, "ChildResourceName")) -and -not([Helpers]::CheckMember($_, "ChildResourceName")))))
+	 							   ($_.ControlID -eq $currentItem.ControlID -and (($_.ChildResourceName -eq $currentItem.ChildResourceName) -or [string]::IsNullOrWhiteSpace($currentItem.ChildResourceName)))
 								 }
 								 $encoder = [System.Text.Encoding]::UTF8
 								 $encUserComments= $encoder.GetBytes($currentItem.UserComments)
