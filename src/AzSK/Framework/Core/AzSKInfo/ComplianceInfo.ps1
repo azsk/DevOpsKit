@@ -21,7 +21,7 @@ class ComplianceInfo: CommandBase
 		$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
 		if(!$azskConfig.PersistScanReportInSubscription) 
 		{
-			$this.PublishCustomMessage("NOTE: This feature is currently disabled. Please reach out to your org policy manager for more details.", [MessageType]::Warning);	
+			$this.PublishCustomMessage("NOTE: This feature is currently disabled in your environment. Please contact the cloud security team for your org's ", [MessageType]::Warning);	
 			return;
 		}
 		
