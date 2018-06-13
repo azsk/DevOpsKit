@@ -41,7 +41,7 @@ class ComplianceReportHelper
             $complianceReportBlobName = [Constants]::ComplianceReportBlobName + ".zip"
             
             $ContainerName = [Constants]::ComplianceReportContainerName           
-            $AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\StorageReport";
+            $AzSKTemp = [Constants]::AzSKAppFolderPath + [Constants]::ComplianceReportPath;
 			
 			if(-not (Test-Path -Path $AzSKTemp))
             {
