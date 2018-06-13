@@ -7,13 +7,14 @@ catch
 	# No need to break execution 
 }
 
+. $PSScriptRoot\Models\Enums.ps1
+
 #Constants
 . $PSScriptRoot\Helpers\Constants.ps1
 . $PSScriptRoot\Helpers\OldConstants.ps1
 
 
 #Models
-. $PSScriptRoot\Models\Enums.ps1
 . $PSScriptRoot\Models\AzSKGenericEvent.ps1
 . $PSScriptRoot\Models\CommandDetails.ps1
 . $PSScriptRoot\Models\Exception\SuppressedException.ps1
