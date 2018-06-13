@@ -1119,7 +1119,7 @@ class SVTBase: AzSKRoot
 	}
 
 	hidden [void] GetDataFromSubscriptionReport($singleControlResult)
-    {   try
+   {   try
 	    {
 
 			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();			
@@ -1209,7 +1209,7 @@ class SVTBase: AzSKRoot
 		{
 			if($currentControlItem.GraceExpiryDate -gt [DateTime]::UtcNow )
 			{
-				$ControlBasedGraceExpiryInDays=$currentControlItem.GraceExpiryDate.Subtract([System.DateTime]::UtcNow).Days
+				$ControlBasedGraceExpiryInDays=$currentControlItem.GraceExpiryDate.Subtract($controlResult.FirstScannedOn).Days
 				if($ControlBasedGraceExpiryInDays -gt $computedGraceDays)
 				{
 					$computedGraceDays = $ControlBasedGraceExpiryInDays
