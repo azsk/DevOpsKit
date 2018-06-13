@@ -249,6 +249,7 @@ class WriteSummaryFile: FileOutputBase
 		#$scanKind = [RemoteReportHelper]::GetServiceScanKind($this.InvocationContext.MyCommand.Name, $this.InvocationContext.BoundParameters);
 		$scanKind = [ServiceScanKind]::Partial;
 
+		$filteredResoruces = $null
 		# ToDo: Need disable comment, should be run while CA
 		# ToDo: Resource inventory helper
 		# if($scanSource -eq [ScanSource]::Runbook) 

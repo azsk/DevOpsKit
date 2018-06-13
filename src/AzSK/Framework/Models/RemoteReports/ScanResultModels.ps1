@@ -33,6 +33,7 @@ class ControlResultBase {
 	[bool] $IsBaselineControl;
 	[string] $UserComments;
 	[bool] $HasOwnerAccessTag;
+	[int] $MaximumAllowedGraceDays=0;
 }
 
 class SubscriptionControlResult : ControlResultBase {
