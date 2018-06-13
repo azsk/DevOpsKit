@@ -235,9 +235,10 @@ class SVTControlAttestation
 			$controlState.AttestationStatus = [AttestationStatus]::None
 			return $controlState;
 		}
-		$ValidAttestationStates = $this.ComputeEligibleAttestationState($controlItem, $controlResult);
-		if(-not $this.isControlAttestable($controlItem, $controlResult))
-		{
+		$ValidAttestationStates = $this.ComputeEligibleAttestationState($controlItem, $ControlSeverity, $controlResult);
+		#Checking if control is attestable 
+		if($this.isControlAttestable($controlItem, $controlResult))
+		{	# Checking if the attestation state provided in command parameter is valid for the control
 			if( $this.attestOptions.AttestationStatus -in $ValidAttestationStates)
 			{
 			
@@ -258,16 +259,18 @@ class SVTControlAttestation
 						$controlState.State.AttestedDate = [DateTime]::UtcNow;
 						$controlState.State.Justification = $this.attestOptions.JustificationText				
 			}
+			#if attestation state provided in command parameter is not valid for the control then print warning
 			else
 			{
 				$outvalidSet=$ValidAttestationStates -join "," ;
-				Write-Host "The chosen attestation state is not applicable to this control. Valid attestation choices are:  $outvalidSet";
+				Write-Host "The chosen attestation state is not applicable to this control. Valid attestation choices are:  $outvalidSet" -ForegroundColor Yellow;
 				return $controlState ;
 			}
 		}
+		#If control is not attestable then print warning
 		else
 		{
-			Write-Host "This control cannot be attested by policy. Please follow the steps in 'Recommendation' for the control in order to fix the control and minimize exposure to attacks.";
+			Write-Host "This control cannot be attested by policy. Please follow the steps in 'Recommendation' for the control in order to fix the control and minimize exposure to attacks." -ForegroundColor Yellow;
 		}
 		return $controlState;
 	}
@@ -469,12 +472,8 @@ class SVTControlAttestation
 
 	[bool] isControlAttestable([SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
-		#sometime when we have error in some of our control we put that control in grace period to maintain the compliance dashboard
-		if($controlResult.IsControlInGrace)
-		{
-			return $true
-		}
-        if($null -ne $controlItem.ControlItem.ValidAttestationStates -and $controlItem.ControlItem.ValidAttestationStates -contains [AttestationStatus]::None)
+		
+		if($null -ne $controlItem.ControlItem.ValidAttestationStates -and $controlItem.ControlItem.ValidAttestationStates -contains [AttestationStatus]::None)
 	    { 
             return $false
         }

@@ -177,7 +177,7 @@ function Get-AzSKInfo
 						{
 							$Full = $false
 						}
-						$complianceInfo = [ComplianceInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation, $ResourceTypeName, $ResourceType, $ControlIds, $UseBaselineControls, $ControlSeverity, $ControlIdContains, $Full);
+						$complianceInfo = [ComplianceInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation, $Full);
 						if ($complianceInfo) 
 						{
 							return $complianceInfo.InvokeFunction($complianceInfo.GetComplianceInfo);

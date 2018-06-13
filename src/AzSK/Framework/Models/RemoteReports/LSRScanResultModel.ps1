@@ -65,7 +65,7 @@ class LSRControlResultBase
 	[DateTime] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
 	[DateTime] $FirstFailedOn = [Constants]::AzSKDefaultDateTime;
 	[DateTime] $FirstAttestedOn = [Constants]::AzSKDefaultDateTime;
-	[int] $AttestationCounter;
+	[int] $AttestationCounter = 0;
 
 	#Other  information
 	[string] $ScannedBy = "";
@@ -84,10 +84,10 @@ class LSRControlResultBase
 }
 
 class LSRSubscriptionControlResult : LSRControlResultBase {
-	[SubscriptionScanKind] $ScanKind;
+	[SubscriptionScanKind] $ScanKind = [SubscriptionScanKind]::Partial;
 }
 
 class LSRResourceScanResult : LSRControlResultBase {
-	[ServiceScanKind] $ScanKind;
+	[ServiceScanKind] $ScanKind = [ServiceScanKind]::Partial;
 	[string] $ChildResourceName = "";
 }

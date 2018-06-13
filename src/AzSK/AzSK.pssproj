@@ -104,6 +104,7 @@
     <Compile Include="Framework\Configurations\Migration\PolicyMigration.ps1" />
     <Compile Include="Framework\Core\ARMChecker\ARMCheckerStatus.ps1" />
     <Compile Include="Framework\Core\AzSKInfo\BasicInfo.ps1" />
+    <Compile Include="Framework\Core\AzSKInfo\ComplianceInfo.ps1" />
     <Compile Include="Framework\Core\FixControl\Services\CDNFix.ps1" />
     <Compile Include="Framework\Core\FixControl\Services\TrafficManagerFix.ps1" />
     <Compile Include="Framework\Core\FixControl\Services\RedisCacheFix.ps1" />
@@ -118,7 +119,7 @@
     <Compile Include="Framework\Helpers\AliasHelper.ps1" />
     <Compile Include="Framework\Helpers\OldConstants.ps1" />
     <Compile Include="Framework\Helpers\OMSHelper.ps1" />
-    <Compile Include="Framework\Helpers\StorageReportHelper.ps1" />
+    <Compile Include="Framework\Helpers\ComplianceReportHelper.ps1" />
     <Compile Include="Framework\Helpers\UserSubscriptionDataHelper.ps1" />
     <Compile Include="Framework\Listeners\LocalSubscriptionReport\StorageReport.ps1" />
     <Compile Include="Framework\Models\RemoteReports\LSRScanResultModel.ps1" />

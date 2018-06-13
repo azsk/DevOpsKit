@@ -43,20 +43,31 @@ class WriteSummaryFile: FileOutputBase
         
         $this.RegisterEvent([SVTEvent]::CommandCompleted, {
             $currentInstance = [WriteSummaryFile]::GetInstance();
-            try 
-            {
-                $controlsScanned = ($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0
-				if(!$controlsScanned)
+			
+			if(($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0)
+			{
+				# Export CSV Report
+				try 
 				{
 					$currentInstance.SetFilePath($Event.SourceArgs[0].SubscriptionContext, ("AttestationReport-" + $currentInstance.RunIdentifier + ".csv"));
+					$currentInstance.WriteToCSV($Event.SourceArgs);
+					$currentInstance.FilePath = "";
 				}
-				$currentInstance.WriteToCSV($Event.SourceArgs);
-                $currentInstance.FilePath = "";
-            }
-            catch 
-            {
-                $currentInstance.PublishException($_);
-            }
+				catch 
+				{
+					$currentInstance.PublishException($_);
+				}
+
+				# Persist scan data to subscription
+				try 
+				{
+					$currentInstance.PersistScanDataToStorage($Event.SourceArgs, $currentInstance.GetCurrentModuleVersion())
+				}
+				catch 
+				{
+					$currentInstance.PublishException($_);
+				}
+			}
         });
 
         $this.RegisterEvent([AzSKRootEvent]::UnsupportedResources, {
@@ -166,15 +177,6 @@ class WriteSummaryFile: FileOutputBase
 						$csvItem.IsBaselineControl = "No";
 					}
 
-					if($_.IsControlInGrace)
-					{
-						$csvItem.IsControlInGrace = "Yes";
-					}
-					else
-					{
-						$csvItem.IsControlInGrace = "No";
-					}
-
 					if($anyAttestedControls)
 					{
 						$csvItem.ActualStatus = $_.ActualVerificationResult.ToString();
@@ -230,6 +232,43 @@ class WriteSummaryFile: FileOutputBase
             $csvItems | Select-Object -Property $nonNullProps | Export-Csv $this.FilePath -NoTypeInformation
         }
     }
+
+	[void] PersistScanDataToStorage($svtEventContextResults, $scannerVersion)
+	{
+		$settings = [ConfigurationManager]::GetAzSKConfigData();
+		if(-not $settings.PersistScanReportInSubscription) 
+		{
+			return;
+		}
+
+		# ToDo: Can we use here [RemoteReportHelper]??
+		$scanSource = [RemoteReportHelper]::GetScanSource();
+		$scannerVersion = $scannerVersion
+
+		# ToDo: Need to calculate ScanKind
+		#$scanKind = [RemoteReportHelper]::GetServiceScanKind($this.InvocationContext.MyCommand.Name, $this.InvocationContext.BoundParameters);
+		$scanKind = [ServiceScanKind]::Partial;
+
+		# ToDo: Need disable comment, should be run while CA
+		# ToDo: Resource inventory helper
+		# if($scanSource -eq [ScanSource]::Runbook) 
+		# { 
+			$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
+			$resources.ResourceGroups = [System.Collections.ArrayList]::new()
+			# ToDo: cache this properties as AzSKRoot.
+			$resourcesFlat = Find-AzureRmResource
+			$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
+			# Not considering nested resources to reduce complexity
+			$filteredResoruces = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }
+			
+		# }
+
+		# check for more than one record condition has been already implemented in parent function
+		$subId = $svtEventContextResults[0].SubscriptionContext.SubscriptionId
+		$StorageReportHelperInstance = [ComplianceReportHelper]::new($subId);
+		$finalScanReport = $StorageReportHelperInstance.MergeSVTScanResult($svtEventContextResults, $filteredResoruces, $scanSource, $scannerVersion, $scanKind)
+		$StorageReportHelperInstance.SetLocalSubscriptionScanReport($finalScanReport)
+	}
 }
 
 class CsvOutputItem
@@ -253,6 +292,5 @@ class CsvOutputItem
     [string] $Recommendation = ""
 	[string] $ResourceId = ""
     [string] $DetailedLogFile = ""
-	[string] $IsControlInGrace
 	[string] $UserComments = ""
 }

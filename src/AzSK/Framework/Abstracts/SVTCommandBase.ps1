@@ -14,11 +14,22 @@ class SVTCommandBase: CommandBase {
     [bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
     [AttestationOptions] $AttestationOptions;
+	hidden [LSRSubscription] $StorageReportData;
 
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
+
     }
+
+	hidden [void] GetLocalSubscriptionData()
+	{
+        $azskConfig = [ConfigurationManager]::GetAzSKConfigData();
+        if(!$azskConfig.PersistScanReportInSubscription) {return;}
+        
+		$storageReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId);
+        $this.StorageReportData =  $storageReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
+	}
 
     hidden [SVTEventContext] CreateSVTEventContextObject() {
         return [SVTEventContext]@{
@@ -84,7 +95,11 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlIds += $this.ControlIds;
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
-		$svtObject.IncludeUserComments =$this.InvocationContext.BoundParameters['IncludeUserComments'];
+        # ToDo: remove InvocationContext, try to pass as param
+        # ToDo: Assumption: usercomment will only work when storage report feature flag is enable.
+        $svtObject.IncludeUserComments =$this.InvocationContext.BoundParameters['IncludeUserComments'];
+        $this.GetLocalSubscriptionData();
+		$svtObject.StorageReportData = $this.StorageReportData
 
         #Include Server Side Exclude Tags
         $svtObject.ExcludeTags += [ConfigurationManager]::GetAzSKConfigData().DefaultControlExculdeTags
@@ -98,7 +113,7 @@ class SVTCommandBase: CommandBase {
 			$svtObject.PartialScanIdentifier =$this.PartialScanIdentifier
 		}
 		
-
+        # ToDo: Utilize exiting functions
         $this.InitializeControlState();
         $svtObject.ControlStateExt = $this.ControlStateExt;
     }

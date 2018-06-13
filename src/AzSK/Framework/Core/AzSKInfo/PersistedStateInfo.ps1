@@ -6,6 +6,7 @@ class PersistedStateInfo: CommandBase
 	
 	hidden [PSObject] $AzSKRG = $null
 	hidden [String] $AzSKRGName = ""
+	hidden [string] $subscriptionId;
 
 
 	PersistedStateInfo([string] $subscriptionId, [InvocationInfo] $invocationContext): 
@@ -14,6 +15,7 @@ class PersistedStateInfo: CommandBase
 		#$this.DoNotOpenOutputFolder = $true;
 		$this.AzSKRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
 		$this.AzSKRG = Get-AzureRmResourceGroup -Name $this.AzSKRGName -ErrorAction SilentlyContinue
+		$this.subscriptionId = $subscriptionId;
 	}
 	
 	[MessageTableData[]] UpdatePersistedState([string] $filePath)
@@ -40,18 +42,18 @@ class PersistedStateInfo: CommandBase
 		  return $messages;
 		}
 		# Read file from Storage
-	    $storageReportHelper = [StorageReportHelper]::new(); 
+	    $storageReportHelper = [ComplianceReportHelper]::new($this.subscriptionId); 
 		$storageReportHelper.Initialize($false);	
-		$StorageReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
+		$ComplianceReportJson =$storageReportHelper.GetLocalSubscriptionScanReport();
 		$SelectedSubscription=$null;
 		$erroredControls=@();
 		$ResourceScanResult=$null;
 		$ResourceData=@();
 		$successCount=0;
 		
-		if($null -ne $StorageReportJson -and [Helpers]::CheckMember($StorageReportJson,"Subscriptions"))
+		if($null -ne $ComplianceReportJson -and [Helpers]::CheckMember($ComplianceReportJson,"Subscriptions"))
 		{
-	    	$SelectedSubscription = $StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
+	    	$SelectedSubscription = $ComplianceReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
 		}
 		if(($SelectedSubscription|Measure-Object).Count -gt 0)
 		{
@@ -146,5 +148,3 @@ class PersistedStateInfo: CommandBase
 		return $messages;
     }
 }
-
-

@@ -65,7 +65,6 @@ catch
 . $PSScriptRoot\Managers\ControlStateExtension.ps1
 . $PSScriptRoot\Managers\AzSKPDFExtension.ps1
 . $PSScriptRoot\Managers\PartialScanManager.ps1
-. $PSScriptRoot\Helpers\StorageReportHelper.ps1
 
 . $PSScriptRoot\Helpers\OMSHelper.ps1
 . $PSScriptRoot\Helpers\RemoteReportHelper.ps1
@@ -85,6 +84,7 @@ catch
 . $PSScriptRoot\Abstracts\FileOutputBase.ps1
 
 . $PSScriptRoot\Helpers\ResourceHelper.ps1
+. $PSScriptRoot\Helpers\ComplianceReportHelper.ps1
 . $PSScriptRoot\Helpers\UserSubscriptionDataHelper.ps1
 
 #Listeners
