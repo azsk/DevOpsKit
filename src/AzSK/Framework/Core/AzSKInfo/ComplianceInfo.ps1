@@ -34,7 +34,7 @@ class ComplianceInfo: CommandBase
 			{
 				$ComplianceReportData.ScanDetails.SubscriptionScanResult | ForEach-Object {
 					$subScanRes = $_
-					$tmpCompRes = [ComplianceResult]::new()
+					$tmpCompRes = [ComplianceResult]::new("SubscriptionCore", "/subscriptions/"+$this.SubscriptionId, "", "", "", [VerificationResult]::Manual, $false, [ControlSeverity]::High, [VerificationResult]::NotScanned)
 					$tmpCompRes.FeatureName = "SubscriptionCore"
 					$this.MapScanResultToComplianceResult($subScanRes, $tmpCompRes)
 					$this.ComplianceScanResult += $tmpCompRes
@@ -49,11 +49,7 @@ class ComplianceInfo: CommandBase
 					{
 						$resource.ResourceScanResult | ForEach-Object {
 							$resourceScanRes = $_
-							$tmpCompRes = [ComplianceResult]::new()
-							$tmpCompRes.FeatureName = $resource.FeatureName
-							$tmpCompRes.ResourceGroupName = $resource.ResourceGroupName
-							$tmpCompRes.ResourceName = $resource.ResourceName
-							$tmpCompRes.ResourceId = $resource.ResourceId
+							$tmpCompRes = [ComplianceResult]::new($resource.FeatureName, $resource.ResourceId, $resource.ResourceGroupName, $resource.ResourceName, "", [VerificationResult]::Manual, $false, [ControlSeverity]::High, [VerificationResult]::NotScanned)
 							$this.MapScanResultToComplianceResult($resourceScanRes, $tmpCompRes)
 							$this.ComplianceScanResult += $tmpCompRes
 						}
@@ -63,7 +59,7 @@ class ComplianceInfo: CommandBase
 		}
 	}
 	
-	#This function is reponsible to convert the persisted compliance data to the requied report format
+	#This function is responsible to convert the persisted compliance data to the required report format
 	hidden [void] MapScanResultToComplianceResult([LSRControlResultBase] $scannedControlResult, [ComplianceResult] $complianceResult)
 	{
 		$complianceResult.PSObject.Properties | ForEach-Object {
@@ -215,11 +211,11 @@ class ComplianceInfo: CommandBase
 					if(($group.Group | Where-Object { $_.ControlID -eq $singleControl.ControlId } | Measure-Object).Count -eq 0)
 					{
 						$isControlInBaseline = $false
-						if($baselineControls -contains $singleControl.ControlID)
+						if($this.baselineControls -contains $singleControl.ControlID)
 						{
 							$isControlInBaseline = $true
 						}
-						$controlToAdd = [ComplianceResult]::new($singleControl.ControlID, $group.Group[0].FeatureName, [VerificationResult]::Manual, $group.Group[0].ResourceGroupName, $group.Group[0].ResourceName, $isControlInBaseline, $singleControl.ControlSeverity, $group.Group[0].ResourceId, [VerificationResult]::Skipped)
+						$controlToAdd = [ComplianceResult]::new($group.Group[0].FeatureName, $group.Group[0].ResourceId, $group.Group[0].ResourceGroupName, $group.Group[0].ResourceName, $singleControl.ControlID, [VerificationResult]::Manual, $isControlInBaseline, $singleControl.ControlSeverity, [VerificationResult]::Skipped)
 						$this.ComplianceScanResult += $controlToAdd
 					}
 				}
@@ -237,27 +233,29 @@ class ComplianceInfo: CommandBase
 		$baselineFailedControlCount = 0
 		$attestedControlCount = 0
 		$gracePeriodControlCount = 0
-
+		$totalControlCount = 0
+		$baselineControlCount = 0
 		if(($this.ComplianceScanResult |  Measure-Object).Count -gt 0)
 		{
 			$this.ComplianceScanResult | ForEach-Object {
-				$totalControlCount++
 				if($_.EffectiveResult -eq [VerificationResult]::Passed)
 				{
-					$passControlCount++		
+					$totalControlCount = $totalControlCount + 1
+					$passControlCount = $passControlCount + 1
 					if($_.IsBaselineControl)
 					{
-						$baselineControlCount++
-						$baselinePassedControlCount++
+						$baselineControlCount = $baselineControlCount + 1
+						$baselinePassedControlCount = $baselinePassedControlCount + 1
 					}
 				}
 				elseif($_.EffectiveResult -eq [VerificationResult]::Failed)
 				{
-					$failedControlCount++
+					$totalControlCount = $totalControlCount + 1
+					$failedControlCount = $failedControlCount + 1
 					if($_.IsBaselineControl)
 					{
-						$baselineControlCount++
-						$baselineFailedControlCount++
+						$baselineControlCount = $baselineControlCount + 1
+						$baselineFailedControlCount = $baselineFailedControlCount + 1
 					}
 				}
 			}
@@ -386,7 +384,7 @@ class ComplianceResult
 	[string] $ResourceId = ""
 	[VerificationResult] $EffectiveResult = [VerificationResult]::NotScanned
 
-	ComplianceResult($controlId, $featureName, $verificationResult, $resourceGroupName, $resourceName, $isBaselineControl, $controlSeverity, $resourceId, $effectiveResult)
+	ComplianceResult($featureName, $resourceId, $resourceGroupName, $resourceName, $controlId, $verificationResult, $isBaselineControl, $controlSeverity, $effectiveResult)
 	{
 		$this.ControlId = $controlId
 		$this.FeatureName = $featureName
@@ -398,5 +396,4 @@ class ComplianceResult
 		$this.ResourceId = $resourceId
 		$this.EffectiveResult = $effectiveResult
 	}
-
 }
