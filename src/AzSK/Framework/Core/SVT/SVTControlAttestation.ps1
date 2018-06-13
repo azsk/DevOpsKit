@@ -81,6 +81,7 @@ class SVTControlAttestation
 		{
 			#Compute the effective attestation status for support backward compatibility
 			$tempAttestationStatus = $controlState.AttestationStatus
+			#ToDo: Check in DB if 'NotFixed' exists; Capture Timestamp; Remove following if condition code
 			if($controlState.AttestationStatus -eq [AttestationStatus]::NotFixed)
 			{
 				$tempAttestationStatus = [AttestationStatus]::WillNotFix;
@@ -106,15 +107,14 @@ class SVTControlAttestation
 		$Justification=""
 		$Attestationstate=""
 		$message = ""
-		$ValidAttestationStates = $this.ComputeEligibleAttestationState($controlItem, $controlResult);
+		$ValidAttestationStatesHashTable = $this.ComputeEligibleAttestationStates($controlItem, $controlResult);
 		[String[]]$ValidAttestationKey = @(0)
 		#Sort attestation status based on key value
-		if($null -ne $ValidAttestationStates)
+		if($null -ne $ValidAttestationStatesHashTable)
 		{
-			$ValidAttestationStates = Compare-Object -ReferenceObject ([Constants]::AttestationStatusHashMap.GetEnumerator() | Sort-Object value).Name -DifferenceObject $ValidAttestationStates -IncludeEqual -PassThru | Where-Object SideIndicator -EQ "=="
-			$ValidAttestationStates | ForEach-Object {
-				$message += "`n[{0}]: {1}" -f ([Constants]::AttestationStatusHashMap.$_),$_;
-				$ValidAttestationKey += [Constants]::AttestationStatusHashMap.$_
+			$ValidAttestationStatesHashTable | ForEach-Object {
+				$message += "`n[{0}]: {1}" -f $_.Value,$_.Name;
+				$ValidAttestationKey += $_.Value
 			}
 		}
 		switch ($userChoice.ToUpper()){
@@ -235,11 +235,11 @@ class SVTControlAttestation
 			$controlState.AttestationStatus = [AttestationStatus]::None
 			return $controlState;
 		}
-		$ValidAttestationStates = $this.ComputeEligibleAttestationState($controlItem, $ControlSeverity, $controlResult);
+		$ValidAttestationStatesHashTable = $this.ComputeEligibleAttestationStates($controlItem, $controlResult);
 		#Checking if control is attestable 
 		if($this.isControlAttestable($controlItem, $controlResult))
 		{	# Checking if the attestation state provided in command parameter is valid for the control
-			if( $this.attestOptions.AttestationStatus -in $ValidAttestationStates)
+			if( $this.attestOptions.AttestationStatus -in $ValidAttestationStatesHashTable.Name)
 			{
 			
 						$controlState.AttestationStatus = $this.attestOptions.AttestationStatus;
@@ -262,7 +262,7 @@ class SVTControlAttestation
 			#if attestation state provided in command parameter is not valid for the control then print warning
 			else
 			{
-				$outvalidSet=$ValidAttestationStates -join "," ;
+				$outvalidSet=$ValidAttestationStatesHashTable.Name -join "," ;
 				Write-Host "The chosen attestation state is not applicable to this control. Valid attestation choices are:  $outvalidSet" -ForegroundColor Yellow;
 				return $controlState ;
 			}
@@ -472,8 +472,8 @@ class SVTControlAttestation
 
 	[bool] isControlAttestable([SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
-		
-		if($null -ne $controlItem.ControlItem.ValidAttestationStates -and $controlItem.ControlItem.ValidAttestationStates -contains [AttestationStatus]::None)
+		# If None is found in array along with other attestation status, 'None' will get precedence.
+		if(($controlItem.ControlItem.ValidAttestationStates | Where-Object { $_.Trim() -eq [AttestationStatus]::None } | Measure-Object).Count -gt 0)
 	    { 
             return $false
         }
@@ -483,7 +483,7 @@ class SVTControlAttestation
         }
 	}
 
-	[String[]] ComputeEligibleAttestationState([SVTEventContext] $controlItem, [ControlResult] $controlResult)
+	[System.Collections.DictionaryEntry] ComputeEligibleAttestationStates([SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
 	    [System.Collections.ArrayList] $ValidAttestationStates = $null
 	    #Default attestation state
@@ -495,16 +495,17 @@ class SVTControlAttestation
 		{ 
 			$ValidAttestationStates += $controlItem.ControlItem.ValidAttestationStates | Select-Object -Unique
 		}
-		$ValidAttestationStates = $ValidAttestationStates | Select-Object -Unique
+		$ValidAttestationStates = $ValidAttestationStates.Trim() | Select-Object -Unique
 	    #if control not in grace, disable WillFixLater option		
 		if(-not $controlResult.IsControlInGrace)
 		{
-		    if($ValidAttestationStates -contains [AttestationStatus]::WillFixLater)
+		    if(($ValidAttestationStates | Where-Object { $_ -eq [AttestationStatus]::WillFixLater} | Measure-Object).Count -gt 0)
 		    {
 		        $ValidAttestationStates.Remove("WillFixLater")
 		    }
 		}
-	    return [String[]]$ValidAttestationStates;
+		$ValidAttestationStatesHashTable = [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -in $ValidAttestationStates } | Sort-Object value
+	    return $ValidAttestationStatesHashTable;
 	}
 
 }

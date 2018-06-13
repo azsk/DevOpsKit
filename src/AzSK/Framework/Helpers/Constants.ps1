@@ -79,11 +79,11 @@ class Constants
 	static [string] $ResourceScanTrackerBlobName = "ResourceScanTracker.json"
 	static [string] $ResourceScanTrackerCMBlobName = "ResourceScanTracker_CentralMode.json"
 	static [hashtable] $AttestationStatusHashMap = @{
-			"NotAnIssue"   ="1";
-			"WillNotFix"   ="2";
-			"WillFixLater" ="3";
-			"NotApplicable"="4";
-			"StateConfirmed"="5";
+			[AttestationStatus]::NotAnIssue		="1";
+			[AttestationStatus]::WillNotFix		="2";
+			[AttestationStatus]::WillFixLater	="3";
+			[AttestationStatus]::NotApplicable	="4";
+			[AttestationStatus]::StateConfirmed ="5";
 	}
 
 	static [string] $StorageAccountPreName= "azsk"
