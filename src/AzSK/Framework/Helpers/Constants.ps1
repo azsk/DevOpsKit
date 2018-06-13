@@ -53,7 +53,6 @@ class Constants
 	   #static [string] $AzSKRGName = "AzSKRG"
 	   static [string] $SupportDL = "azsksupext@microsoft.com"
 
-
 	#Constants for SVTs
     static [string] $ModuleStartHeading = [Constants]::DoubleDashLine +
     "`r`nStarting analysis: [FeatureName: {0}] [ResourceGroupName: {1}] [ResourceName: {2}] `r`n" + [Constants]::SingleDashLine
@@ -142,12 +141,19 @@ class Constants
 	static [string] $DisableAlertRunbook = "DisableAlertRunbook"
 	static [string] $CATargetSubsBlobName= "TargetSubs.json"
 	static [string] $CoAdminElevatePermissionMsg = "(If you are 'Owner' then please elevate to 'Co-Admin' in the portal and re-run in a *fresh* PS console.)"
+<<<<<<< HEAD
+=======
+	
+
+>>>>>>> e138bb91afd39338a2ec4ad5b296c016075ac5bc
 
 	static [string] $CommandNameChangeWarning = "The command {0} shall be renamed to {1} in a future release ('SDK' shall be replaced with 'SK').";
 	static [string] $MultipleModulesWarning =  "Found multiple modules ({0} and {1}) loaded in the PS session.`r`n"+
 			"Stopping cmdlet execution.`r`n"+
 			"Recommendation: Please start a fresh PS session and run 'Import-Module {2}' first to avoid getting into this situation.`r`n"
 
+	#Constants for Org Policy
+	static [string] $OrgPolicyTagPrefix = "AzSKOrgName_"
 	# Local Subscription Report Constants
 	static [string] $ComplianceReportContainerName = "compliance-state"
 	static [string] $ComplianceReportBlobName = "LatestSnapshot"

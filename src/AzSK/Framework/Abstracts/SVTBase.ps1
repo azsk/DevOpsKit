@@ -20,10 +20,10 @@ class SVTBase: AzSKRoot
 	[bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
 	[string] $PartialScanIdentifier = [string]::Empty
-
+	[SVTEventContext[]] $ChildSvtObjects = @();
     SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId)
-    {
+    {		
 		$this.CreateInstance($svtResource);
     }
 
@@ -1118,6 +1118,22 @@ class SVTBase: AzSKRoot
 
 	}
 
+
+	hidden [SVTResource] CreateSVTResource([string] $ConnectionResourceId,[string] $ResourceGroupName, [string] $ConnectionResourceName, [string] $ResourceType, [string] $Location, [string] $MappingName)
+	{
+		$svtResource = [SVTResource]::new();
+		$svtResource.ResourceId = $ConnectionResourceId; 
+		$svtResource.ResourceGroupName = $ResourceGroupName;
+		$svtResource.ResourceName = $ConnectionResourceName
+		$svtResource.ResourceType = $ResourceType; # 
+		$svtResource.Location = $Location;
+		$svtResource.ResourceTypeMapping = ([SVTMapping]::Mapping |
+						Where-Object { $_.ResourceTypeName -eq $MappingName } |
+						Select-Object -First 1);
+
+		return $svtResource;
+	}
+  
 	hidden [void] GetDataFromSubscriptionReport($singleControlResult)
     {   try
 	    {
@@ -1193,7 +1209,11 @@ class SVTBase: AzSKRoot
 		}
     }
 
+<<<<<<< HEAD
 	[int] hidden CalculateGraceInDays([SVTEventContext] $context)
+=======
+	[bool] hidden IsControlinGrace([SVTEventContext] $context)
+>>>>>>> e138bb91afd39338a2ec4ad5b296c016075ac5bc
 	{
 		
 		$controlResult=$context.ControlResults;
@@ -1216,7 +1236,13 @@ class SVTBase: AzSKRoot
 				}
 			}			
 		}
+<<<<<<< HEAD
 	  return $computedGraceDays;
 	}
+=======
+		return $isControlinGrace;
+	}	
+
+>>>>>>> e138bb91afd39338a2ec4ad5b296c016075ac5bc
 	
 }

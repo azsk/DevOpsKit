@@ -5,32 +5,40 @@
     "SubscriptionId": {
       "type": "string",
       "metadata": {
-        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+        "description": "Subscrption Id where Org Policy is setup and monitoring dashboard needs to be setup."
       }
     },
     "ResourceGroups": {
       "type": "string",
       "metadata": {
-        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+        "description": "ResourceGroup name where Org Policy is present and monitoring dashboard resource need to be setup."
       }
     },
     "AIName": {
       "type": "string",
       "metadata": {
-        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+        "description": "Org Policy application insight Resource name."
       }
     },
     "DashboardName":{
       "type": "string",
       "metadata": {
-        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+        "description": "Monitoring dashboard resource name"
       },
       "defaultValue" : "DevOpsKitMonitoring"
     },
     "DashboardTitle":{
       "type": "string",
       "metadata": {
-        "description": "Subscrption Id where Org Policy is setup and monitoring needs to be setup."
+        "description": "Monitoring dashboard Title"
+      },
+      "defaultValue" : "DevOps Kit Monitoring Dashboard"
+
+    },
+    "Location":{
+      "type": "string",
+      "metadata": {
+        "description": "Monitoring dashboard resource location"
       },
       "defaultValue" : "DevOps Kit Monitoring Dashboard"
 
@@ -258,6 +266,53 @@
               },
               "4": {
                 "position": {
+                  "x": 23,
+                  "y": 0,
+                  "colSpan": 6,
+                  "rowSpan": 4
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                        "SubscriptionId": "[parameters('SubscriptionId')]",
+                        "ResourceGroup": "[parameters('ResourceGroups')]",
+                         "Name": "[parameters('AIName')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "customEvents\r\n| where timestamp > ago(2d) and name == \"Control Scanned\" \r\n| summarize  arg_max(timestamp, *) \r\n| project OrgAzSKVersion=tostring(customDimensions.OrgVersion),LatestAzSKVersion=tostring(tostring(customDimensions.LatestVersion))\r\n"
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "[resourceId(parameters('ResourceGroups'),'Microsoft.Portal/dashboards', parameters('DashboardName'))]"
+                    },
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "components"
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsGridPart",
+                  "settings": {
+                    "content": {
+                      "PartTitle": "Current Org AzSK Version Vs Latest AzSK Version",
+                      "PartSubTitle": "To update org version refer: http://aka.ms/deveopskit/updateOrgAzSKVersion"
+                    }
+                  },
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              },
+              "5": {
+                "position": {
                   "x": 0,
                   "y": 4,
                   "colSpan": 5,
@@ -278,7 +333,7 @@
                   "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
                 }
               },
-              "5": {
+              "6": {
                 "position": {
                   "x": 5,
                   "y": 4,
@@ -325,7 +380,7 @@
                   }
                 }
               },
-              "6": {
+              "7": {
                 "position": {
                   "x": 11,
                   "y": 4,
@@ -372,7 +427,7 @@
                   }
                 }
               },
-              "7": {
+              "8": {
                 "position": {
                   "x": 17,
                   "y": 4,
@@ -447,7 +502,7 @@
       },
       "name": "[parameters('DashboardName')]",
       "type": "Microsoft.Portal/dashboards",
-      "location": "eastus",
+      "location": "[parameters('Location')]",
       "tags": {
         "hidden-title": "[parameters('DashboardTitle')]"
       },

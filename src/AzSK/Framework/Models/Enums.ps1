@@ -137,3 +137,14 @@ enum ComparisionType
 {
 	NumLesserOrEqual
 }
+
+enum OverrideConfigurationType
+{
+	Installer
+	CARunbooks
+	AzSKRootConfig
+	MonitoringDashboard
+	OrgAzSKVersion
+	All
+	None
+}

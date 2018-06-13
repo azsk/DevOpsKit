@@ -16,6 +16,7 @@ class PolicySetup: CommandBase
 	[string] $AppInsightName;
 	[string] $AppInsightLocation;
 	[string] $ResourceGroupLocation;
+	[string] $MonitoringDashboardLocation;
 	hidden [string] $PolicyUrl;
 	hidden [string] $InstallerUrl;
 	hidden [string] $InstallerFileName;
@@ -37,11 +38,14 @@ class PolicySetup: CommandBase
 	hidden [string] $IWRCommand;
 	hidden [string] $MigrationScriptPath = [string]::Empty
 	hidden [bool] $IsMigrationOn = $false
+	hidden [bool] $IsUpdateSwitchOn = $false
 
-	PolicySetup([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $orgName, [string] $departmentName, [string] $resourceGroupName, [string] $storageAccountName, [string] $appInsightName, [string] $appInsightLocation, [string] $resourceGroupLocation, [string] $localPolicyFolderPath, [string] $moduleName):
+	hidden [OverrideConfigurationType] $OverrideConfiguration = [OverrideConfigurationType]::None
+
+	PolicySetup([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $orgName, [string] $departmentName, [string] $resourceGroupName, [string] $storageAccountName, [string] $appInsightName, [string] $appInsightLocation, [string] $resourceGroupLocation,[string] $MonitoringDashboardLocation, [string] $localPolicyFolderPath, [string] $moduleName):
         Base($subscriptionId, $invocationContext)
     {
-		$this.CreateInstance($subscriptionId, $orgName, $departmentName, $resourceGroupName, $storageAccountName, $appInsightName, $appInsightLocation, $resourceGroupLocation, $localPolicyFolderPath, $moduleName);
+		$this.CreateInstance($subscriptionId, $orgName, $departmentName, $resourceGroupName, $storageAccountName, $appInsightName, $appInsightLocation, $resourceGroupLocation,$MonitoringDashboardLocation, $localPolicyFolderPath, $moduleName);
 		if($null -ne $this.InvocationContext.BoundParameters["MigrationScriptPath"])
 		{
 			$this.MigrationScriptPath = $this.InvocationContext.BoundParameters["MigrationScriptPath"];
@@ -53,7 +57,7 @@ class PolicySetup: CommandBase
 		
 	}
 
-	[void] CreateInstance([string] $subscriptionId, [string] $orgName, [string] $departmentName, [string] $resourceGroupName, [string] $storageAccountName, [string] $appInsightName, [string] $appInsightLocation, [string] $resourceGroupLocation, [string] $localPolicyFolderPath, [string] $moduleName)
+	[void] CreateInstance([string] $subscriptionId, [string] $orgName, [string] $departmentName, [string] $resourceGroupName, [string] $storageAccountName, [string] $appInsightName, [string] $appInsightLocation, [string] $resourceGroupLocation,[string] $MonitoringDashboardLocation, [string] $localPolicyFolderPath, [string] $moduleName)
 	{		
 		if([string]::IsNullOrWhiteSpace($orgName))
 		{
@@ -134,7 +138,16 @@ class PolicySetup: CommandBase
 				$this.ResourceGroupLocation = "EastUS"
 			}
 		}
-
+		else {
+			$this.ResourceGroupLocation = $resourceGroupLocation
+		}
+		
+		$this.MonitoringDashboardLocation = $MonitoringDashboardLocation
+		if([string]::IsNullOrWhiteSpace($MonitoringDashboardLocation))
+		{
+			$this.MonitoringDashboardLocation = $this.ResourceGroupLocation
+		}
+		
 		$this.FolderPath = [System.Environment]::GetFolderPath("Desktop") + "\" + $prefix + "-Policy\";
 		if(-not [string]::IsNullOrWhiteSpace($localPolicyFolderPath))
 		{
@@ -196,7 +209,8 @@ class PolicySetup: CommandBase
 			$this.IWRCommand = "iwr '$($this.InstallerUrl)' -UseBasicParsing | iex";
 		}
 
-		if((Get-ChildItem $this.ConfigFolderPath -Recurse -Force | Where-Object { $_.Name -eq "AzSK.json" } | Measure-Object).Count -eq 0)
+		$askConfigFile = (Get-ChildItem $this.ConfigFolderPath -Recurse -Force | Where-Object { $_.Name -eq "AzSK.json" })
+		if((($askConfigFile | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::AzSKRootConfig)
 		{
 			$azskOverride = [ConfigOverride]::new("AzSK.json");
 			$azskOverride.UpdatePropertyValue("PolicyMessage", "Running $moduleName cmdlet using $($this.OrgFullName) policy...");
@@ -314,16 +328,16 @@ class PolicySetup: CommandBase
 				mkdir -Path $this.RunbookFolderPath -ErrorAction Stop | Out-Null
 			}
 			
-			if((Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookScanAgent.ps1" } | Measure-Object).Count -eq 0)
+			if(((Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookScanAgent.ps1" } | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::CARunbooks)
 			{
 				$caFilePath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookScanAgent.ps1"
-				Copy-Item ($caFilePath) ($this.RunbookFolderPath + "RunbookScanAgent.ps1")
+				Copy-Item ($caFilePath) ($this.RunbookFolderPath + "RunbookScanAgent.ps1") -Force
 			}
 
-			if((Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetup.ps1" } | Measure-Object).Count -eq 0)
+			if(((Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetup.ps1" } | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::CARunbooks)
 			{
 				$coreSetupFilePath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookCoreSetup.ps1"
-				Copy-Item ($coreSetupFilePath) ($this.RunbookFolderPath + "RunbookCoreSetup.ps1")
+				Copy-Item ($coreSetupFilePath) ($this.RunbookFolderPath + "RunbookCoreSetup.ps1") -Force
 
 				#Check for environment specific installer file
 				$fileName = $this.RunbookFolderPath + "RunbookCoreSetup.ps1";
@@ -336,7 +350,7 @@ class PolicySetup: CommandBase
 			}
 
 			#Upload AzSKConfig with version details 
-			if((Get-ChildItem $this.RunbookFolderPath -Recurse -Force | Where-Object { $_.Name -eq "AzSK.Pre.json" } | Measure-Object).Count -eq 0)
+			if(((Get-ChildItem $this.RunbookFolderPath -Recurse -Force | Where-Object { $_.Name -eq "AzSK.Pre.json" } | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::OrgAzSKVersion)
 			{			
 				#Get AzSK Module Version				
 				$moduleVersion = "0.0.0"
@@ -442,7 +456,7 @@ class PolicySetup: CommandBase
 	{
 		#Validate if monitoring dashboard is already created
 		$dashboardResource = Get-AzureRmResource -ResourceType "Microsoft.Portal/dashboards" -ResourceGroupName $($this.ResourceGroupName) -ErrorAction SilentlyContinue
-		if(($dashboardResource | Measure-Object).Count -eq 0 )
+		if((($dashboardResource | Measure-Object).Count -eq 0 ) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::MonitoringDashboard) 
 		{
 			$this.PublishCustomMessage("Creating DevOps Kit ops monitoring dashboard in the policy host subscription...");
 			
@@ -460,8 +474,14 @@ class PolicySetup: CommandBase
 			$parameters = New-Object -TypeName Hashtable
 			$parameters.Add("SubscriptionId", $this.SubscriptionContext.SubscriptionId)
 			$parameters.Add("ResourceGroups",$this.ResourceGroupName)
-			$parameters.Add("AIName",$this.AppInsightName)		
+			$parameters.Add("AIName",$this.AppInsightName)
+			if(($dashboardResource | Measure-Object).Count -eq 1 )
+			{
+			 $this.MonitoringDashboardLocation =$dashboardResource.Location
+			}
+			$parameters.Add("Location",$this.MonitoringDashboardLocation)
 			$parameters.Add("DashboardTitle","DevOps Kit Monitoring Dashboard [$($this.OrgFullName)]")
+
 			New-AzureRmResourceGroupDeployment -Name "MonitoringDashboard" -TemplateFile $MonitoringDashboardTemplatePath   -ResourceGroupName $($this.ResourceGroupName) -TemplateParameterObject $parameters   
 			$this.PublishCustomMessage("Successfully created dashboard. You can access it through this link: ", [MessageType]::Update);
 			$rmContext = [Helpers]::GetCurrentRMContext();
