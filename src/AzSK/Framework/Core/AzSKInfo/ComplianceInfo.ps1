@@ -18,13 +18,13 @@ class ComplianceInfo: CommandBase
 	hidden [void] GetComplianceScanData()
 	{
 		$ComplianceRptHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId);
-		$StorageReportData =  $ComplianceRptHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId)
+		$ComplianceReportData =  $ComplianceRptHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId)
 		
-		if($null -ne $StorageReportData -and $null -ne $StorageReportData.ScanDetails)
+		if($null -ne $ComplianceReportData -and $null -ne $ComplianceReportData.ScanDetails)
 		{
-			if(($StorageReportData.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
+			if(($ComplianceReportData.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
 			{
-				$StorageReportData.ScanDetails.SubscriptionScanResult | ForEach-Object {
+				$ComplianceReportData.ScanDetails.SubscriptionScanResult | ForEach-Object {
 					$subScanRes = $_
 					$tmpCompRes = [ComplianceResult]::new()
 					$tmpCompRes.FeatureName = "SubscriptionCore"
@@ -33,9 +33,9 @@ class ComplianceInfo: CommandBase
 				}
 			}
 
-			if(($StorageReportData.ScanDetails.Resources | Measure-Object).Count -gt 0)
+			if(($ComplianceReportData.ScanDetails.Resources | Measure-Object).Count -gt 0)
 			{
-				$StorageReportData.ScanDetails.Resources | ForEach-Object {
+				$ComplianceReportData.ScanDetails.Resources | ForEach-Object {
 					$resource = $_
 					if($null -ne $resource -and ($resource.ResourceScanResult | Measure-Object).Count -gt 0)
 					{

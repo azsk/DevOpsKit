@@ -143,19 +143,19 @@ class Constants
 	static [string] $CATargetSubsBlobName= "TargetSubs.json"
 	static [string] $CoAdminElevatePermissionMsg = "(If you are 'Owner' then please elevate to 'Co-Admin' in the portal and re-run in a *fresh* PS console.)"
 
-
-
 	static [string] $CommandNameChangeWarning = "The command {0} shall be renamed to {1} in a future release ('SDK' shall be replaced with 'SK').";
 	static [string] $MultipleModulesWarning =  "Found multiple modules ({0} and {1}) loaded in the PS session.`r`n"+
 			"Stopping cmdlet execution.`r`n"+
 			"Recommendation: Please start a fresh PS session and run 'Import-Module {2}' first to avoid getting into this situation.`r`n"
 
 	# Local Subscription Report Constants
-	static [string] $StorageReportContainerName = "compliance-state"
-	static [string] $StorageReportBlobName = "LatestSnapshot"
+	static [string] $ComplianceReportContainerName = "compliance-state"
+	static [string] $ComplianceReportBlobName = "LatestSnapshot"
 	static [DateTime] $AzSKDefaultDateTime = '1900-01-01T00:00:00'
 	static [int] $ControlResultComplianceDays = 3
 	static [int] $OwnerControlResultComplianceDays = 90
+	static [string] $ComplianceReportPath = "\Temp\Compliance"
+	
 
 	static [void] SetAzSKModuleName($moduleName)
 	{
@@ -171,6 +171,6 @@ class Constants
 		if(-not [string]::IsNullOrWhiteSpace($moduleVersion))
 		{
 			[Constants]::AzSKCurrentModuleVersion = $moduleVersion;
-			}
+		}
 	}
 }

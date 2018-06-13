@@ -164,6 +164,7 @@ class RemoteReportsListener: ListenerBase {
 				$result.ActualVerificationResult = [VerificationResult]::Disabled
 				$result.AttestationStatus = [AttestationStatus]::None
 				$result.VerificationResult = [VerificationResult]::Disabled
+				$result.MaximumAllowedGraceDays = $context.MaximumAllowedGraceDays
 				$results.Add($result)
 			}
 		}
@@ -190,6 +191,7 @@ class RemoteReportsListener: ListenerBase {
 		$scanResult.ResourceName = $SVTEventContextFirst.ResourceContext.ResourceName
 		$scanResult.ResourceId = $SVTEventContextFirst.ResourceContext.ResourceId
 		$scanResult.Metadata = [Helpers]::ConvertToJsonCustomCompressed($SVTEventContextFirst.ResourceContext.ResourceMetadata)
+		
 		if(($SVTEventContexts | Measure-Object).Count -gt 0 -and ($SVTEventContexts[0].ControlResults | Measure-Object).Count -gt 0)
 		{
 			$TempCtrlResult = $SVTEventContexts[0].ControlResults[0];
@@ -208,6 +210,7 @@ class RemoteReportsListener: ListenerBase {
 				$result.ActualVerificationResult = [VerificationResult]::Disabled
 				$result.AttestationStatus = [AttestationStatus]::None
 				$result.VerificationResult = [VerificationResult]::Disabled
+				$result.MaximumAllowedGraceDays = $SVTEventContext.MaximumAllowedGraceDays
 				$results.Add($result)
 			}
 			elseif ($SVTEventContext.ControlResults.Count -eq 1 -and `

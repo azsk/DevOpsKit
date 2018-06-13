@@ -223,7 +223,7 @@ class CommandHelper
 		{
 			Write-Debug "Not able to validate version dependency $_"
 		}
-		#check if old and new both modules are loaded in same session
+		#check if old and new both modules are loaded in same session		
 		$newModule = Get-Module|Where-Object {$_.Name -like "$([Constants]::NewModuleName)*"} | Select-Object -First 1
 		$oldModule = Get-Module|Where-Object {$_.Name -like "$([Constants]::OldModuleName)*"} | Select-Object -First 1
 		if($newModule -and $oldModule)
