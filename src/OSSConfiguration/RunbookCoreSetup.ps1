@@ -385,20 +385,25 @@ function RemoveOldRG()
 {
 	$rgName = "AzSDKRG"
 	$azsdkRGScope = "/subscriptions/$SubscriptionID/resourceGroups/$rgName"
-	$resourceLocks = @();
-	$resourceLocks += Get-AzureRmResourceLock -Scope $azsdkRGScope -ErrorAction Stop
-	if($resourceLocks.Count -gt 0)
-	{
-			$resourceLocks | ForEach-Object {
-					Remove-AzureRmResourceLock -LockId $_.LockId -Force
-			}
-			Write-Output ("Successfully removed the locks on old resource group: [$rgName].") 
-	}
 	if((Get-AzureRmResourceGroup -Name $rgName -ErrorAction SilentlyContinue|Measure-Object).Count -gt 0)
 	{
+		$resourceLocks = @();
+		$resourceLocks += Get-AzureRmResourceLock -Scope $azsdkRGScope -ErrorAction Stop
+		if($resourceLocks.Count -gt 0)
+		{
+				$resourceLocks | ForEach-Object {
+						Remove-AzureRmResourceLock -LockId $_.LockId -Force
+				}
+				Write-Output ("Successfully removed the locks on old resource group: [$rgName].") 
+		}
 		Remove-AzureRmResourceGroup -Name $rgName -Force 
 		Write-Output ("Successfully removed the old resource group: [$rgName].")
 		PublishEvent -EventName "CA Old RG Removed"
+	}
+	else
+	{
+		PublishEvent -EventName "CA Old RG Not Found"
+		
 	}
 }
 try
