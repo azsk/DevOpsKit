@@ -107,7 +107,7 @@ class SVTControlAttestation
 		$Justification=""
 		$Attestationstate=""
 		$message = ""
-		$ValidAttestationStatesHashTable = $this.ComputeEligibleAttestationStates($controlItem, $controlResult);
+		[PSObject] $ValidAttestationStatesHashTable = $this.ComputeEligibleAttestationStates($controlItem, $controlResult);
 		[String[]]$ValidAttestationKey = @(0)
 		#Sort attestation status based on key value
 		if($null -ne $ValidAttestationStatesHashTable)
@@ -472,7 +472,7 @@ class SVTControlAttestation
 	[bool] isControlAttestable([SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
 		# If None is found in array along with other attestation status, 'None' will get precedence.
-		if(($controlItem.ControlItem.ValidAttestationStates | Where-Object { $_.Trim() -eq [AttestationStatus]::None } | Measure-Object).Count -gt 0)
+		if(($controlItem.ControlItem.ValidAttestationStates | Measure-Object).Count -gt 0 -and ($controlItem.ControlItem.ValidAttestationStates | Where-Object { $_.Trim() -eq [AttestationStatus]::None } | Measure-Object).Count -gt 0)
 	    { 
             return $false
         }
@@ -482,7 +482,7 @@ class SVTControlAttestation
         }
 	}
 
-	[System.Collections.DictionaryEntry] ComputeEligibleAttestationStates([SVTEventContext] $controlItem, [ControlResult] $controlResult)
+	[PSObject] ComputeEligibleAttestationStates([SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
 	    [System.Collections.ArrayList] $ValidAttestationStates = $null
 	    #Default attestation state

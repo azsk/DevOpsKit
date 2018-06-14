@@ -81,7 +81,7 @@ class PersistedStateInfo: CommandBase
 							$PersistedControlScanResult=$StorageReportJson.ScanDetails.SubscriptionScanResult
 						}						
 					}
-					elseif($resultGroup.Group[0].FeatureName -ne "SubscriptionCore" -and $resultGroup.Group[0].FeatureName -ne "AzSKCfg" -and ($SelectedSubscription.ScanDetails.Resources | Measure-Object).Count -gt 0)
+					elseif($resultGroup.Group[0].FeatureName -ne "SubscriptionCore" -and $resultGroup.Group[0].FeatureName -ne "AzSKCfg" -and ($StorageReportJson.ScanDetails.Resources | Measure-Object).Count -gt 0)
 					{						 
 						$ResourceData = $StorageReportJson.ScanDetails.Resources | Where-Object { $_.ResourceId -eq $resultGroup.Name }	 
 						if(($ResourceData.ResourceScanResult | Measure-Object).Count -gt 0 )
