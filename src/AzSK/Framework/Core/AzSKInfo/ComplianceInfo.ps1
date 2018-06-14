@@ -235,12 +235,13 @@ class ComplianceInfo: CommandBase
 			$resource = $_
 			$featureControls = $this.SVTConfig[$resource.FeatureName]
 			$featureControls | ForEach-Object {
+				$singleControl = $_
 				$isControlInBaseline = $false
 				if($this.baselineControls -contains $singleControl.ControlID)
 				{
 					$isControlInBaseline = $true
 				}
-				$controlToAdd = [ComplianceResult]::new($resource.FeatureName, $resource.ResourceId, $resource.ResourceGroupName, $resource.ResourceName, $_.ControlID, [VerificationResult]::Manual, $isControlInBaseline, $_.ControlSeverity, [VerificationResult]::Failed)
+				$controlToAdd = [ComplianceResult]::new($resource.FeatureName, $resource.ResourceId, $resource.ResourceGroupName, $resource.ResourceName, $singleControl.ControlID, [VerificationResult]::Manual, $isControlInBaseline, $singleControl.ControlSeverity, [VerificationResult]::Failed)
 				$this.ComplianceScanResult += $controlToAdd
 			}
 		}
@@ -251,12 +252,13 @@ class ComplianceInfo: CommandBase
 			$subControls = $this.SVTConfig[[SVTMapping]::SubscriptionMapping.ClassName]
 			# When no subscription control available in json then flow comes here. Adding all subscription controls
 			$subControls | ForEach-Object {
+				$singleControl = $_
 				$isControlInBaseline = $false
 				if($this.baselineControls -contains $singleControl.ControlID)
 				{
 					$isControlInBaseline = $true
 				}
-				$controlToAdd = [ComplianceResult]::new([SVTMapping]::SubscriptionMapping.ClassName, "/subscriptions/"+$this.SubscriptionId, "", "", $_.ControlID, [VerificationResult]::Manual, $isControlInBaseline, $_.ControlSeverity, [VerificationResult]::Failed)
+				$controlToAdd = [ComplianceResult]::new([SVTMapping]::SubscriptionMapping.ClassName, "/subscriptions/"+$this.SubscriptionId, "", "", $singleControl.ControlID, [VerificationResult]::Manual, $isControlInBaseline, $singleControl.ControlSeverity, [VerificationResult]::Failed)
 				$this.ComplianceScanResult += $controlToAdd
 			}
 		}
@@ -281,34 +283,40 @@ class ComplianceInfo: CommandBase
 		{
 			$this.ComplianceScanResult | ForEach-Object {
 				$result = $_
-				if($result.EffectiveResult -eq [VerificationResult]::Passed)
+				#ideally every proper control should fall under effective result in passed/failed/skipped
+				if($result.EffectiveResult -eq [VerificationResult]::Passed -or $result.EffectiveResult -eq [VerificationResult]::Failed)
 				{
+					# total count has been kept inside to exclude not-scanned and skipped controls
 					$totalControlCount++
-					$passControlCount++
-					if($_.IsBaselineControl)
+										
+					if($result.EffectiveResult -eq [VerificationResult]::Passed)
 					{
-						$baselineControlCount++
-						$baselinePassedControlCount++
+						$passControlCount++
+						#baseline controls condition shouldnot increment if it wont fall in passed/ failed state
+						if($_.IsBaselineControl)
+						{
+							$baselineControlCount++
+							$baselinePassedControlCount++
+						}
 					}
-				}
-				elseif($result.EffectiveResult -eq [VerificationResult]::Failed)
-				{
-					$totalControlCount++
-					$failedControlCount++
-					if($_.IsBaselineControl)
+					elseif($result.EffectiveResult -eq [VerificationResult]::Failed)
 					{
-						$baselineControlCount++
-						$baselineFailedControlCount++
+						$failedControlCount++
+						if($_.IsBaselineControl)
+						{
+							$baselineControlCount++
+							$baselineFailedControlCount++
+						}
 					}
-				}
 
-				if(-not [string]::IsNullOrEmpty($result.AttestationStatus) -and ($result.AttestationStatus -ne [AttestationStatus]::None))
-				{
-					$attestedControlCount++
-				}
-				if($result.IsControlInGrace)
-				{
-					$gracePeriodControlCount++
+					if(-not [string]::IsNullOrEmpty($result.AttestationStatus) -and ($result.AttestationStatus -ne [AttestationStatus]::None))
+					{
+						$attestedControlCount++
+					}
+					if($result.IsControlInGrace)
+					{
+						$gracePeriodControlCount++
+					}
 				}
 			}
 			
@@ -319,14 +327,14 @@ class ComplianceInfo: CommandBase
 			
 			$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%", "No. of Passed Controls", "No. of Failed Controls"
 			$ComplianceStat.ComplianceType = "Baseline"
-			$ComplianceStat."Pass-%"= [math]::Round($baselineCompliance,2)
+			$ComplianceStat."Pass-%"= [math]::Round($baselineCompliance,2) + " %"
 			$ComplianceStat."No. of Passed Controls" = $baselinePassedControlCount
 			$ComplianceStat."No. of Failed Controls" = $baselineFailedControlCount
 			$ComplianceStats += $ComplianceStat
 
 			$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%", "No. of Passed Controls", "No. of Failed Controls"
 			$ComplianceStat.ComplianceType = "Full"
-			$ComplianceStat."Pass-%"= [math]::Round($totalCompliance,2)
+			$ComplianceStat."Pass-%"= [math]::Round($totalCompliance,2) + " %"
 			$ComplianceStat."No. of Passed Controls" = $passControlCount
 			$ComplianceStat."No. of Failed Controls" = $failedControlCount
 			$ComplianceStats += $ComplianceStat
@@ -353,9 +361,16 @@ class ComplianceInfo: CommandBase
 			{
 				$_.IsBaselineControl = "Yes"
 			}
+			else {
+				$_.IsBaselineControl = "No"
+			}
+
 			if($_.IsControlInGrace.ToLower() -eq "true")
 			{
 				$_.IsControlInGrace = "Yes"
+			}
+			else {
+				$_.IsControlInGrace = "No"
 			}
 			if($_.AttestationStatus.ToLower() -eq "none")
 			{
@@ -365,13 +380,16 @@ class ComplianceInfo: CommandBase
 			{
 				$_.HasOwnerAccessTag = "Yes"
 			}
+			else {
+				$_.HasOwnerAccessTag = "No"
+			}			
 		}
 
 		$objectToExport = $this.ComplianceScanResult
 		if(-not $this.Full)
 		{
 			$objectToExport = $this.ComplianceScanResult | Select-Object "ControlId", "VerificationResult", "ActualVerificationResult", "FeatureName", "ResourceGroupName", "ResourceName", "ChildResourceName", "IsBaselineControl", `
-								"ControlSeverity", "AttestationStatus", "AttestedBy", "Justification", "IsControlInGrace", "ScanSource", "ScannedBy", "ScannerModuleName", "ScannerVersion"
+								"ControlSeverity", "AttestationStatus", "AttestedBy", "Justification", "LastScannedOn", "ScanSource", "ScannedBy", "ScannerModuleName", "ScannerVersion"
 		}
 
 		$controlCSV = New-Object -TypeName WriteCSVData
