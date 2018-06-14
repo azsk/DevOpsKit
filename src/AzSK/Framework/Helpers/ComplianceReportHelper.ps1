@@ -371,12 +371,13 @@ class ComplianceReportHelper
 				{
 					if(($subscription.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
 					{
-						if((($subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }) | Measure-Object).Count -gt0)
+						$matchedControlResults = $subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }
+						if((($matchedControlResults) | Measure-Object).Count -gt0)
 						{
-							$_complianceSubResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }
+							$_complianceSubResult = $matchedControlResults
 							$svtResults = $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_complianceSubResult, $true)
 
-							$subscription.ScanDetails.SusbscriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object {$_.ControlIntId -ne $currentScanResult.ControlItem.Id }
+							$subscription.ScanDetails.SubscriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object {$_.ControlIntId -ne $currentScanResult.ControlItem.Id }
 							$subscription.ScanDetails.SubscriptionScanResult += $svtResults
 						}
 						else
@@ -389,17 +390,19 @@ class ComplianceReportHelper
 						$subscription.ScanDetails.SubscriptionScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $true)
 					}
 				}
-				else
+				elseif($currentScanResult.FeatureName -ne "AzSKCfg")
 				{
+					$filteredResource = $resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId }
 
-					if((($resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId }) | Measure-Object).Count -gt 0)
+					if(($filteredResource | Measure-Object).Count -gt 0)
 					{
-						$resource = $resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId }
+						$resource = $filteredResource
 						$resource.LastEventOn = [DateTime]::UtcNow
 
-						if((($resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $currentScanResult.ControlItem.Id }) | Measure-Object).Count -gt 0)
+						$matchedControlResults = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $currentScanResult.ControlItem.Id }
+						if((($matchedControlResults) | Measure-Object).Count -gt 0)
 						{
-							$_complianceResResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $currentScanResult.ControlItem.Id }
+							$_complianceResResult = $matchedControlResults
 							$svtResults = $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_complianceResResult, $false)
 							$resource.ResourceScanResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -ne $_complianceResResult.ControlIntId }
 							$resource.ResourceScanResult += $svtResults
@@ -409,7 +412,9 @@ class ComplianceReportHelper
 							$resource.ResourceScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $false)
 						}
 
-						$resources = ($resources | Where-Object {$_.ResourceId -ne $resource.ResourceId })
+						$tmpResources = $resources | Where-Object {$_.ResourceId -ne $resource.ResourceId } 
+						$resources = @()
+						$resources += $tmpResources
 						$resources += $resource
 					}
 					else
@@ -438,30 +443,41 @@ class ComplianceReportHelper
 		}
 
 		# Resources obj consist of compliance snapshot data.
-		$deletedResoures = @()
-		$resources | ForEach-Object {
-			$resource = $_
-			if(($resourceInventory | Where-Object { $_.ResourceId -eq $resource.ResourceId } | Measure-Object).Count -eq 0)
-			{
-				$deletedResoures += $resource.ResourceId
+		if($resources.Count -gt 0)
+		{
+			$deletedResoures = @()
+			$resources | ForEach-Object {
+				$resource = $_
+				if(($resourceInventory | Where-Object { $_.ResourceId -eq $resource.ResourceId } | Measure-Object).Count -eq 0)
+				{
+					$deletedResoures += $resource.ResourceId
+				}
 			}
+			$resources = $resources | Where-Object { $deletedResoures -notcontains $_.ResourceId }
 		}
-
-		$resources = $resources | Where-Object {  $deletedResoures -notcontains $_.ResourceId }
 
 		$resourceInventory | ForEach-Object {
 			$resource = $_
-			if((($resources | Where-Object { $_.ResourceId -eq  $resource.ResourceId }) | Measure-Object).Count -eq 0)
-			{
-				$newResource = [LSRResources]::new()
-				$newResource.HashId = [Helpers]::ComputeHash($resource.ResourceId)
-				$newResource.ResourceId = $resource.ResourceId
-				$newResource.FeatureName = $supportedResourceTypes[$resource.ResourceType.ToLower()]
-				$newResource.ResourceGroupName = $resource.ResourceGroupName
-				$newResource.ResourceName = $resource.Name
+            try {
+				if([Helpers]::CheckMember($resource, "ResourceId"))
+				{
+					if((($resources | Where-Object { $_.ResourceId -eq  $resource.ResourceId }) | Measure-Object).Count -eq 0)
+					{
+						$newResource = [LSRResources]::new()
+						$newResource.HashId = [Helpers]::ComputeHash($resource.ResourceId)
+						$newResource.ResourceId = $resource.ResourceId
+						$newResource.FeatureName = $supportedResourceTypes[$resource.ResourceType.ToLower()]
+						$newResource.ResourceGroupName = $resource.ResourceGroupName
+						$newResource.ResourceName = $resource.Name
 
-				$resources += $newResource	
-			} 
+						$resources += $newResource	
+					}
+				}
+            }
+            catch
+            {
+                [EventBase]::PublishGenericException($_);
+            }
 		}
 
 		if($subscription.ScanDetails.Resources.Count -gt 0)
@@ -490,14 +506,6 @@ class ComplianceReportHelper
 	hidden [LSRControlResultBase[]] ConvertScanResultToSnapshotResult($svtResult, $scanSource, $scannerVersion, $scanKind, $oldResult, $isSubscriptionScan)
 	{
 		[LSRControlResultBase[]] $scanResults = @();	
-		#if($isSubscriptionScan)
-		#{
-		#	[LSRSubscriptionControlResult[]] $scanResults = @();	
-		#}
-		#else
-		#{
-		#	[LSRResourceScanResult[]] $scanResults = @();	
-		#}
 
 		$svtResult.ControlResults | ForEach-Object {
 			$currentResult = $_
@@ -526,12 +534,6 @@ class ComplianceReportHelper
 					{
 						$resourceScanResult = [LSRResourceScanResult]::new()
 					}
-					
-				}
-
-				if($currentResult.AttestationStatus -ne [AttestationStatus]::None -and($currentResult.AttestationStatus -ne $resourceScanResult.AttestationStatus -or $currentResult.Justification -ne $resourceScanResult.Justification))
-				{
-					$resourceScanResult.AttestationCounter = $resourceScanResult.AttestationCounter + 1 
 				}
 
 				if($resourceScanResult.VerificationResult -ne $currentResult.VerificationResult)
@@ -549,12 +551,6 @@ class ComplianceReportHelper
 					$resourceScanResult.FirstFailedOn = [System.DateTime]::UtcNow
 				}
 
-				if($resourceScanResult.FirstAttestedOn -eq [Constants]::AzSKDefaultDateTime -and $currentResult.AttestationStatus -ne [AttestationStatus]::None)
-				{
-					$resourceScanResult.FirstAttestedOn = [System.DateTime]::UtcNow
-				}
-
-
 				$resourceScanResult.ScannedBy = [Helpers]::GetCurrentRMContext().Account
 				$resourceScanResult.ScanSource = $scanSource
 				$resourceScanResult.ScannerVersion = $scannerVersion
@@ -568,12 +564,28 @@ class ComplianceReportHelper
 				$resourceScanResult.ControlSeverity = $svtResult.ControlItem.ControlSeverity 
 				$resourceScanResult.ActualVerificationResult = $currentResult.ActualVerificationResult 
 				$resourceScanResult.AttestationStatus = $currentResult.AttestationStatus
-				if($resourceScanResult.AttestationStatus -ne [AttestationStatus]::None)
+				if($resourceScanResult.AttestationStatus -ne [AttestationStatus]::None -and $null -ne $currentResult.StateManagement -and $null -ne $currentResult.StateManagement.AttestedStateData)
 				{
+					if($resourceScanResult.FirstAttestedOn -eq [Constants]::AzSKDefaultDateTime)
+					{
+						$resourceScanResult.FirstAttestedOn = $currentResult.StateManagement.AttestedStateData.AttestedDate
+					}
+
+					if($currentResult.StateManagement.AttestedStateData.AttestedDate -gt $resourceScanResult.AttestedDate)
+					{
+						$resourceScanResult.AttestationCounter = $resourceScanResult.AttestationCounter + 1 
+					}
 					$resourceScanResult.AttestedBy =  $currentResult.StateManagement.AttestedStateData.AttestedBy
 					$resourceScanResult.AttestedDate = $currentResult.StateManagement.AttestedStateData.AttestedDate 
 					$resourceScanResult.Justification = $currentResult.StateManagement.AttestedStateData.Justification
-					$resourceScanResult.AttestationData = [Helpers]::ConvertToJsonCustomCompressed($currentResult.StateManagement.AttestedStateData.DataObject)	
+					# $resourceScanResult.AttestationData = [Helpers]::ConvertToJsonCustomCompressed($currentResult.StateManagement.AttestedStateData.DataObject)	
+				}
+				else
+				{
+					$resourceScanResult.AttestedBy = ""
+					$resourceScanResult.AttestedDate = [Constants]::AzSKDefaultDateTime 
+					$resourceScanResult.Justification = ""
+					$resourceScanResult.AttestationData = ""
 				}
 				
 				$resourceScanResult.VerificationResult = $currentResult.VerificationResult
