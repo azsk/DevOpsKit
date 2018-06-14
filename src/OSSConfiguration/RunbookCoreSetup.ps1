@@ -381,31 +381,7 @@ function IsScanComplete()
 	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*"}|Measure-Object).Count
 	return ($helperScheduleCount -gt 1 -and $helperScheduleCount -lt 4)
 }
-function RemoveOldRG()
-{
-	$rgName = "AzSDKRG"
-	$azsdkRGScope = "/subscriptions/$SubscriptionID/resourceGroups/$rgName"
-	if((Get-AzureRmResourceGroup -Name $rgName -ErrorAction SilentlyContinue|Measure-Object).Count -gt 0)
-	{
-		$resourceLocks = @();
-		$resourceLocks += Get-AzureRmResourceLock -Scope $azsdkRGScope -ErrorAction Stop
-		if($resourceLocks.Count -gt 0)
-		{
-				$resourceLocks | ForEach-Object {
-						Remove-AzureRmResourceLock -LockId $_.LockId -Force
-				}
-				Write-Output ("Successfully removed the locks on old resource group: [$rgName].") 
-		}
-		Remove-AzureRmResourceGroup -Name $rgName -Force 
-		Write-Output ("Successfully removed the old resource group: [$rgName].")
-		PublishEvent -EventName "CA Old RG Removed"
-	}
-	else
-	{
-		PublishEvent -EventName "CA Old RG Not Found"
-		
-	}
-}
+
 try
 {
 	$setupTimer = [System.Diagnostics.Stopwatch]::StartNew();
@@ -442,9 +418,6 @@ try
 	}
 	#We get sub id from RunAsConnection
 	$SubscriptionID = $RunAsConnection.SubscriptionID
-	
-	#remove old RG 
-	RemoveOldRG
 	
 	if(IsScanComplete)
 	{
@@ -595,6 +568,7 @@ try
 		Write-Output ("CS: CA core setup completed.")
 		PublishEvent -EventName "CA Setup Succeeded" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 	}	
+	
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }
 catch
