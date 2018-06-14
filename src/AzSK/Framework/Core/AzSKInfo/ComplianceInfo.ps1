@@ -10,10 +10,12 @@ class ComplianceInfo: CommandBase
 	hidden $SVTConfig = @{}
 	hidden $baselineControls = @();
 	hidden [PSObject] $ControlSettings
-
+	hidden [PSObject] $EmptyResource = @();
+	 
 	ComplianceInfo([string] $subscriptionId, [InvocationInfo] $invocationContext, [bool] $full): Base($subscriptionId, $invocationContext) 
     { 
 		$this.SubscriptionId = $subscriptionId
+		$this.Full = $full
 	}
 
 	hidden [void] GetComplianceScanData()
@@ -34,8 +36,7 @@ class ComplianceInfo: CommandBase
 			{
 				$ComplianceReportData.ScanDetails.SubscriptionScanResult | ForEach-Object {
 					$subScanRes = $_
-					$tmpCompRes = [ComplianceResult]::new("SubscriptionCore", "/subscriptions/"+$this.SubscriptionId, "", "", "", [VerificationResult]::Manual, $false, [ControlSeverity]::High, [VerificationResult]::NotScanned)
-					$tmpCompRes.FeatureName = "SubscriptionCore"
+					$tmpCompRes = [ComplianceResult]::new([SVTMapping]::SubscriptionMapping.ClassName, "/subscriptions/"+$this.SubscriptionId, "", "", "", [VerificationResult]::Manual, $false, [ControlSeverity]::High, [VerificationResult]::NotScanned)
 					$this.MapScanResultToComplianceResult($subScanRes, $tmpCompRes)
 					$this.ComplianceScanResult += $tmpCompRes
 				}
@@ -49,11 +50,16 @@ class ComplianceInfo: CommandBase
 					{
 						$resource.ResourceScanResult | ForEach-Object {
 							$resourceScanRes = $_
-							$tmpCompRes = [ComplianceResult]::new($resource.FeatureName, $resource.ResourceId, $resource.ResourceGroupName, $resource.ResourceName, "", [VerificationResult]::Manual, $false, [ControlSeverity]::High, [VerificationResult]::NotScanned)
+							$tmpCompRes = [ComplianceResult]::new($resource.FeatureName, $resource.ResourceId, $resource.ResourceGroupName, $resource.ResourceName, "", [VerificationResult]::Manual, $false, [ControlSeverity]::High, [VerificationResult]::NotScanned)				
 							$this.MapScanResultToComplianceResult($resourceScanRes, $tmpCompRes)
 							$this.ComplianceScanResult += $tmpCompRes
 						}
 					}
+					else
+					{
+						$this.EmptyResource += $resource | Select-Object FeatureName, ResourceId, ResourceGroupName, ResourceName
+					}
+
 				}
 			}
 		}
@@ -170,7 +176,9 @@ class ComplianceInfo: CommandBase
 			{
 				if($_.VerificationResult -eq [VerificationResult]::Passed)
 				{
-					$lastScannedDate =[datetime] $_.LastScannedOn
+					$_.EffectiveResult = [VerificationResult]::Passed
+					
+					$lastScannedDate = [datetime] $_.LastScannedOn
 					$days = [DateTime]::UtcNow.Subtract($lastScannedDate).Days
 
 					[int]$allowedDays = [Constants]::ControlResultComplianceInDays
@@ -200,13 +208,13 @@ class ComplianceInfo: CommandBase
 			}			
 		}
 
-		#Todo Append resource inventory and missing controls
+		# Append missing controls for scanned resources
 		$groupedResult = $this.ComplianceScanResult | Group-Object { $_.ResourceId } 
 		foreach($group in $groupedResult){
-			$allControls = $this.SVTConfig[$group.Group[0].FeatureName]
-			if(($group.Group).Count -ne $allControls.Count)
+			$featureControls = $this.SVTConfig[$group.Group[0].FeatureName]
+			if(($group.Group).Count -ne $featureControls.Count)
 			{
-				$allControls | ForEach-Object {
+				$featureControls | ForEach-Object {
 					$singleControl = $_
 					if(($group.Group | Where-Object { $_.ControlID -eq $singleControl.ControlId } | Measure-Object).Count -eq 0)
 					{
@@ -215,10 +223,41 @@ class ComplianceInfo: CommandBase
 						{
 							$isControlInBaseline = $true
 						}
-						$controlToAdd = [ComplianceResult]::new($group.Group[0].FeatureName, $group.Group[0].ResourceId, $group.Group[0].ResourceGroupName, $group.Group[0].ResourceName, $singleControl.ControlID, [VerificationResult]::Manual, $isControlInBaseline, $singleControl.ControlSeverity, [VerificationResult]::Skipped)
+						$controlToAdd = [ComplianceResult]::new($group.Group[0].FeatureName, $group.Group[0].ResourceId, $group.Group[0].ResourceGroupName, $group.Group[0].ResourceName, $singleControl.ControlID, [VerificationResult]::Manual, $isControlInBaseline, $singleControl.ControlSeverity, [VerificationResult]::Failed)
 						$this.ComplianceScanResult += $controlToAdd
 					}
 				}
+			}
+		}
+
+		# Add controls for resource inventory
+		$this.EmptyResource | ForEach-Object {
+			$resource = $_
+			$featureControls = $this.SVTConfig[$resource.FeatureName]
+			$featureControls | ForEach-Object {
+				$isControlInBaseline = $false
+				if($this.baselineControls -contains $singleControl.ControlID)
+				{
+					$isControlInBaseline = $true
+				}
+				$controlToAdd = [ComplianceResult]::new($resource.FeatureName, $resource.ResourceId, $resource.ResourceGroupName, $resource.ResourceName, $_.ControlID, [VerificationResult]::Manual, $isControlInBaseline, $_.ControlSeverity, [VerificationResult]::Failed)
+				$this.ComplianceScanResult += $controlToAdd
+			}
+		}
+
+		# Extra Check for subscription security
+		if((($this.ComplianceScanResult | Where-Object { $_.FeatureName -eq [SVTMapping]::SubscriptionMapping.ClassName }) | Measure-Object).Count -eq 0)
+		{
+			$subControls = $this.SVTConfig[[SVTMapping]::SubscriptionMapping.ClassName]
+			# When no subscription control available in json then flow comes here. Adding all subscription controls
+			$subControls | ForEach-Object {
+				$isControlInBaseline = $false
+				if($this.baselineControls -contains $singleControl.ControlID)
+				{
+					$isControlInBaseline = $true
+				}
+				$controlToAdd = [ComplianceResult]::new([SVTMapping]::SubscriptionMapping.ClassName, "/subscriptions/"+$this.SubscriptionId, "", "", $_.ControlID, [VerificationResult]::Manual, $isControlInBaseline, $_.ControlSeverity, [VerificationResult]::Failed)
+				$this.ComplianceScanResult += $controlToAdd
 			}
 		}
 	}
@@ -235,37 +274,47 @@ class ComplianceInfo: CommandBase
 		$gracePeriodControlCount = 0
 		$totalControlCount = 0
 		$baselineControlCount = 0
+		$attestedControlCount = 0
+		$gracePeriodControlCount = 0
+
 		if(($this.ComplianceScanResult |  Measure-Object).Count -gt 0)
 		{
 			$this.ComplianceScanResult | ForEach-Object {
-				if($_.EffectiveResult -eq [VerificationResult]::Passed)
+				$result = $_
+				if($result.EffectiveResult -eq [VerificationResult]::Passed)
 				{
-					$totalControlCount = $totalControlCount + 1
-					$passControlCount = $passControlCount + 1
+					$totalControlCount++
+					$passControlCount++
 					if($_.IsBaselineControl)
 					{
-						$baselineControlCount = $baselineControlCount + 1
-						$baselinePassedControlCount = $baselinePassedControlCount + 1
+						$baselineControlCount++
+						$baselinePassedControlCount++
 					}
 				}
-				elseif($_.EffectiveResult -eq [VerificationResult]::Failed)
+				elseif($result.EffectiveResult -eq [VerificationResult]::Failed)
 				{
-					$totalControlCount = $totalControlCount + 1
-					$failedControlCount = $failedControlCount + 1
+					$totalControlCount++
+					$failedControlCount++
 					if($_.IsBaselineControl)
 					{
-						$baselineControlCount = $baselineControlCount + 1
-						$baselineFailedControlCount = $baselineFailedControlCount + 1
+						$baselineControlCount++
+						$baselineFailedControlCount++
 					}
+				}
+
+				if(-not [string]::IsNullOrEmpty($result.AttestationStatus) -and ($result.AttestationStatus -ne [AttestationStatus]::None))
+				{
+					$attestedControlCount++
+				}
+				if($result.IsControlInGrace)
+				{
+					$gracePeriodControlCount++
 				}
 			}
 			
 			$totalCompliance = (100 * $passControlCount)/($passControlCount + $failedControlCount)
 			$baselineCompliance = (100 * $baselinePassedControlCount)/($baselinePassedControlCount + $baselineFailedControlCount)
 			
-			$attestedControlCount = (($this.ComplianceScanResult | Where-Object { $_.AttestationStatus -ne [AttestationStatus]::None}) | Measure-Object).Count
-			$gracePeriodControlCount = (($this.ComplianceScanResult | Where-Object { $_.IsControlInGrace }) | Measure-Object).Count
-
 			$ComplianceStats = @();
 			
 			$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%", "No. of Passed Controls", "No. of Failed Controls"
