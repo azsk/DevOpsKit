@@ -1155,7 +1155,7 @@ class SVTBase: AzSKRoot
 				elseif($singleControlResult.FeatureName -ne "SubscriptionCore" -and $singleControlResult.FeatureName -ne "AzSKCfg" -and ($this.StorageReportData.ScanDetails.Resources | Measure-Object).Count -gt 0)
 				{
 					$ResourceData = $this.StorageReportData.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}
-					if(($ResourceData.ResourceScanResult | Measure-Object).Count -gt 0)
+					if($null -ne $ResourceData -and [Helpers]::CheckMember($ResourceData,"ResourceScanResult") -and ($ResourceData.ResourceScanResult | Measure-Object).Count -gt 0)
 					{
 						$PersistedControlScanResult = $ResourceData.ResourceScanResult 
 					}
