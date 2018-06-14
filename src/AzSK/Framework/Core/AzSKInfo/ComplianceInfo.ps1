@@ -293,7 +293,7 @@ class ComplianceInfo: CommandBase
 					{
 						$passControlCount++
 						#baseline controls condition shouldnot increment if it wont fall in passed/ failed state
-						if($_.IsBaselineControl)
+						if($_.IsBaselineControl.ToLower() -eq "true")
 						{
 							$baselineControlCount++
 							$baselinePassedControlCount++
@@ -302,7 +302,7 @@ class ComplianceInfo: CommandBase
 					elseif($result.EffectiveResult -eq [VerificationResult]::Failed)
 					{
 						$failedControlCount++
-						if($_.IsBaselineControl)
+						if($_.IsBaselineControl.ToLower() -eq "true")
 						{
 							$baselineControlCount++
 							$baselineFailedControlCount++
@@ -327,14 +327,14 @@ class ComplianceInfo: CommandBase
 			
 			$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%", "No. of Passed Controls", "No. of Failed Controls"
 			$ComplianceStat.ComplianceType = "Baseline"
-			$ComplianceStat."Pass-%"= [math]::Round($baselineCompliance,2) + " %"
+			$ComplianceStat."Pass-%"= [math]::Round($baselineCompliance,2)
 			$ComplianceStat."No. of Passed Controls" = $baselinePassedControlCount
 			$ComplianceStat."No. of Failed Controls" = $baselineFailedControlCount
 			$ComplianceStats += $ComplianceStat
 
 			$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%", "No. of Passed Controls", "No. of Failed Controls"
 			$ComplianceStat.ComplianceType = "Full"
-			$ComplianceStat."Pass-%"= [math]::Round($totalCompliance,2) + " %"
+			$ComplianceStat."Pass-%"= [math]::Round($totalCompliance,2)
 			$ComplianceStat."No. of Passed Controls" = $passControlCount
 			$ComplianceStat."No. of Failed Controls" = $failedControlCount
 			$ComplianceStats += $ComplianceStat
