@@ -42,7 +42,6 @@ class PersistedStateInfo: CommandBase
 		}
 		# Read file from Storage
 	    $complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId); 
-		#$complianceReportHelper.Initialize($false);	
 		$StorageReportJson =$null;
 		# Check for write access
 		if($complianceReportHelper.azskStorageInstance.HaveWritePermissions -eq 1)
@@ -60,29 +59,25 @@ class PersistedStateInfo: CommandBase
 		$ResourceData=@();
 		$successCount=0;
 		
-		if($null -ne $StorageReportJson -and [Helpers]::CheckMember($StorageReportJson,"Subscriptions"))
-		{
-	    	$SelectedSubscription = $StorageReportJson.Subscriptions | where-object {$_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId}
-		}
-		if(($SelectedSubscription|Measure-Object).Count -gt 0)
+		if($null -ne $StorageReportJson -and $null -ne $StorageReportJson.ScanDetails)
 		{
 		    $this.PublishCustomMessage("Updating user comments in AzSK control data for $totalCount controls... ", [MessageType]::Warning);
 
 			foreach ($resultGroup in $resultsGroups) {
 
-						if($resultGroup.Group[0].FeatureName -eq "SubscriptionCore" -and ($SelectedSubscription.ScanDetails.SubscriptionScanResult| Measure-Object).Count -gt 0)
+						if($resultGroup.Group[0].FeatureName -eq "SubscriptionCore" -and ($StorageReportJson.ScanDetails.SubscriptionScanResult| Measure-Object).Count -gt 0)
 						{						
 							  $startIndex=$resultGroup.Name.lastindexof("/")
 							  $lastIndex=$resultGroup.Name.length-$startIndex-1
 							  $localSubID=$resultGroup.Name.substring($startIndex+1,$lastIndex)
 							  if($localSubID -eq $this.SubscriptionContext.SubscriptionId)
 							  {
-							  $PersistedControlScanResult=$SelectedSubscription.ScanDetails.SubscriptionScanResult
+							  $PersistedControlScanResult=$StorageReportJson.ScanDetails.SubscriptionScanResult
 							  }
 							 
 						}elseif($resultGroup.Group[0].FeatureName -ne "SubscriptionCore" -and ($SelectedSubscription.ScanDetails.Resources | Measure-Object).Count -gt 0)
 						{						 
-							  $ResourceData=$SelectedSubscription.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $resultGroup.Name}	 
+							  $ResourceData=$StorageReportJson.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $resultGroup.Name}	 
 							  if(($ResourceData.ResourceScanResult | Measure-Object).Count -gt 0 )
 							  {
 								  $PersistedControlScanResult=$ResourceData.ResourceScanResult
@@ -95,7 +90,8 @@ class PersistedStateInfo: CommandBase
 							{
 								 $currentItem=$_
 				    			 $matchedControlResult=$PersistedControlScanResult | Where-Object {		
-	 							   ($_.ControlID -eq $currentItem.ControlID -and (($_.ChildResourceName -eq $currentItem.ChildResourceName) -or [string]::IsNullOrWhiteSpace($currentItem.ChildResourceName)))
+	 							   ($_.ControlID -eq $currentItem.ControlID -and 
+									(($currentItem.FeatureName -ne "SubscriptionCore" -and $_.ChildResourceName -eq $currentItem.ChildResourceName) -or $currentItem.FeatureName -eq "SubscriptionCore"))
 								 }
 								 $encoder = [System.Text.Encoding]::UTF8
 								 $encUserComments= $encoder.GetBytes($currentItem.UserComments)
@@ -116,7 +112,7 @@ class PersistedStateInfo: CommandBase
 								 }
 							}catch{
 							$this.PublishException($_);
-							$erroredControls+=$currentItem
+							$erroredControls+=$this.CreateCustomErrorObject($currentItem,"Could not find previous persisted state.")
 
 							}		
 						}
@@ -130,7 +126,7 @@ class PersistedStateInfo: CommandBase
 					}
 				if($successCount -gt 0)
 				{
-					$finalscanReport=$complianceReportHelper.MergeScanReport($SelectedSubscription);
+					$finalscanReport=$complianceReportHelper.MergeScanReport($StorageReportJson);
 				    $complianceReportHelper.SetLocalSubscriptionScanReport($finalscanReport);
 				}
 				# If updation failed for any control, genearte error file
