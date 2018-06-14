@@ -1135,7 +1135,8 @@ class SVTBase: AzSKRoot
 	}
   
 	hidden [void] GetDataFromSubscriptionReport($singleControlResult)
-   {   try
+   	{   
+	   try
 	    {
 
 			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();			
@@ -1161,46 +1162,44 @@ class SVTBase: AzSKRoot
 				}
 			
 				#$ResourceScanResult=$ResourceData.ResourceScanResult
-				if(($PersistedControlScanResult | Measure-Object).Count -gt 0)
-				{
-					[ControlResult[]] $controlsResults = @();
-					$singleControlResult.ControlResults | ForEach-Object {
-						$currentControl=$_
-						$matchedControlResult=$PersistedControlScanResult | Where-Object {
-							($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (($_.ChildResourceName -eq $currentControl.ChildResourceName) -or [string]::IsNullOrWhiteSpace($currentControl.ChildResourceName)))
-						}
-
-						# initialize default values
-						$currentControl.FirstScannedOn = [DateTime]::UtcNow
-						if($currentControl.ActualVerificationResult -ne [VerificationResult]::Passed)
-						{
-							$currentControl.FirstFailedOn = [DateTime]::UtcNow
-						}
-						if($null -ne  $matchedControlResult)
-						{
-							$currentControl.UserComments = $matchedControlResult.UserComments
-							$currentControl.FirstFailedOn = $matchedControlResult.FirstFailedOn
-							$currentControl.FirstScannedOn = $matchedControlResult.FirstScannedOn
-
-							$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
-
-							$currentControl.MaximumAllowedGraceDays = $this.CalculateGraceInDays($singleControlResult);
-
-							# Setting isControlInGrace Flag		
-							if($scanFromDays -le $currentControl.MaximumAllowedGraceDays)
-							{
-								$currentControl.IsControlInGrace = $true
-							}
-							else
-							{
-								$currentControl.IsControlInGrace = $false
-							}
-						}
-						
-						$controlsResults+=$currentControl
+				[ControlResult[]] $controlsResults = @();
+				$singleControlResult.ControlResults | ForEach-Object {
+					$currentControl=$_
+					if(($PersistedControlScanResult | Measure-Object).Count -gt 0)
+					{				
+						$matchedControlResult=$PersistedControlScanResult | Where-Object {($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (($singleControlResult.FeatureName -ne "SubscriptionCore" -and $_.ChildResourceName -eq $currentControl.ChildResourceName)))}
 					}
-					$singleControlResult.ControlResults=$controlsResults 
+
+					# initialize default values
+					$currentControl.FirstScannedOn = [DateTime]::UtcNow
+					if($currentControl.ActualVerificationResult -ne [VerificationResult]::Passed)
+					{
+						$currentControl.FirstFailedOn = [DateTime]::UtcNow
+					}
+					if(($matchedControlResult | Measure-Object).Count -gt 0)
+					{
+						$currentControl.UserComments = $matchedControlResult.UserComments
+						$currentControl.FirstFailedOn = $matchedControlResult.FirstFailedOn
+						$currentControl.FirstScannedOn = $matchedControlResult.FirstScannedOn						
+					}
+
+					$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
+
+					$currentControl.MaximumAllowedGraceDays = $this.CalculateGraceInDays($singleControlResult);
+
+					# Setting isControlInGrace Flag		
+					if($scanFromDays -le $currentControl.MaximumAllowedGraceDays)
+					{
+						$currentControl.IsControlInGrace = $true
+					}
+					else
+					{
+						$currentControl.IsControlInGrace = $false
+					}
+					
+					$controlsResults+=$currentControl
 				}
+				$singleControlResult.ControlResults=$controlsResults 
 			}
 		}
 		catch
