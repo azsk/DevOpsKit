@@ -1152,6 +1152,7 @@ class CCAutomation: CommandBase
 			{
 				$resultMsg = "Please run this command after 2 hours of CA installation."
 				$resultStatus = "Failed"
+				$shouldReturn = $true			
 			}
 			else
 			{
