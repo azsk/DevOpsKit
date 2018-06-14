@@ -565,6 +565,7 @@ class ControlStateExtension
 			$this.ControlStateIndexer += $filteredIndexerObject2
 			if(-not $ToBeDeleted)
 			{	
+				$currentIndexObject = $null;
 				#check if there is an existing index and the controlstates are present for that index resource
 				if(($filteredIndexerObject | Measure-Object).Count -gt 0 -and ($controlStates | Measure-Object).Count -gt 0)
 				{
@@ -578,7 +579,7 @@ class ControlStateExtension
 					$currentIndexObject.AttestedDate = [DateTime]::UtcNow;
 					$currentIndexObject.Version = "1.0";
 				}
-				else
+				elseif(($controlStates | Measure-Object).Count -gt 0)
 				{
 					$currentIndexObject = [ControlStateIndexer]::new();
 					$currentIndexObject.ResourceId = $id
@@ -588,7 +589,10 @@ class ControlStateExtension
 					$currentIndexObject.AttestedDate = [DateTime]::UtcNow;
 					$currentIndexObject.Version = "1.0";
 				}
-				$this.ControlStateIndexer += $currentIndexObject;			
+				if($null -ne $currentIndexObject)
+				{
+					$this.ControlStateIndexer += $currentIndexObject;			
+				}
 			}
 		}
 	}

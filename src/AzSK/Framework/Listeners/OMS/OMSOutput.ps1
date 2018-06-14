@@ -214,6 +214,8 @@ class OMSOutput: ListenerBase
 			{
 				$AzSKContext.Source = [OMSOutput]::DefaultOMSSource
 			}
+			$AzSKContext.PolicyOrgName =  [ConfigurationManager]::GetAzSKConfigData().PolicyOrgName
+
 				return $AzSKContext
 		}
 

@@ -219,9 +219,13 @@ class SVTCommandBase: CommandBase {
 				if(-not (Test-Path -Path $AzureRMDataCollectionSettingFolderpath))
 				{
 					mkdir -Path $AzureRMDataCollectionSettingFolderpath -Force
-				}
+                }
+                
 				$AzureRMDataCollectionFilePath = $AzureRMDataCollectionSettingFolderpath + "\AzurePSDataCollectionProfile.json"
-				Copy-Item $dataCollectionPath $AzureRMDataCollectionFilePath					
+                if(-not (Test-Path -Path $AzureRMDataCollectionFilePath))
+				{
+                    Copy-Item $dataCollectionPath $AzureRMDataCollectionFilePath					
+                }
 				Disable-AzureRmDataCollection  | Out-Null
 			}
 		}
