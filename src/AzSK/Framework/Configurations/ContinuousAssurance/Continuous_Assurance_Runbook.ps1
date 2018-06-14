@@ -196,12 +196,7 @@ try
 
 	#This setting allows org policy owners to explore the latest version of AzSK (while users
 	#in the org may be setup to use an older version - see comment in RunbookCoreSetup.PS1)
-    $UpdateToLatestVersion = Get-AutomationVariable -Name UpdateToLatestVersion -ErrorAction SilentlyContinue
-    if($null -eq $UpdateToLatestVersion)
-    {
     	$UpdateToLatestVersion = "[#UpdateToLatestVersion#]"	
-    }
-
 	$azureRmResourceURI = "https://management.core.windows.net/"
 	
 	#This is the Run-As (SPN) account for the runbook. It is read from the CA Automation account.
