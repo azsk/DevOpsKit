@@ -1541,6 +1541,7 @@ class CCAutomation: CommandBase
 			if($spObject){$spName = $spObject.DisplayName}
 			$haveSubscriptionRBACAccess = $true;
 			$haveRGRBACAccess = $true;
+			$haveAARGAccess = $true;
 			$subRBACoutputs = @();			
 			if($this.IsCentralScanModeOn -and $this.ExhaustiveCheck)
 			{			
@@ -1592,10 +1593,15 @@ class CCAutomation: CommandBase
 					$resultMsg = "Skipped the check for SPN access permissions on individual subscriptions. Use -ExhaustiveCheck option to include this."
 					$resultStatus = "Warning"
 				}
+				#check permissions on core resource group
 				$haveSubscriptionRBACAccess = $this.CheckServicePrincipalSubscriptionAccess($this.CAAADApplicationID)
-				$haveRGRBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID)				
+				$haveRGRBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID)	
+				if($this.IsMultiCAModeOn)	
+				{
+					$haveAARGAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID, $this.AutomationAccount.ResourceGroup, "Contributor")
+				}		
 			}
-			if($haveSubscriptionRBACAccess -and $haveRGRBACAccess)
+			if($haveSubscriptionRBACAccess -and $haveRGRBACAccess -and $haveAARGAccess)
 			{
 				$resultMsg = "RunAs Account is correctly set up."
 				$resultStatus = "OK"
@@ -1603,7 +1609,7 @@ class CCAutomation: CommandBase
 			}
 			if(!$isPassed)
 			{
-				$failMsg = "Service principal account (Name: $($spName)) configured in RunAs Account  doesn't have required access (Reader access on Subscription and/or Contributor access on Resource group $($this.AutomationAccount.CoreResourceGroup))."
+				$failMsg = "Service principal account (Name: $($spName)) configured in RunAs Account  doesn't have required access (Reader access on Subscription and/or Contributor access on resource group containing CA automation account)."
 				$resolveMsg = "To resolve this you can provide required access to service principal manually from portal or run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -FixRuntimeAccount."
 				$resultMsg = "$failmsg`r`n$resolveMsg"
 				$resultStatus = "Failed"
