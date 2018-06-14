@@ -133,206 +133,7 @@ class ComplianceReportHelper
 		{
 			[Helpers]::CleanupLocalFolder([Constants]::AzSKAppFolderPath + [Constants]::ComplianceReportPath);
 		}
-    }
-    
-    hidden [LocalSubscriptionReport] MergeScanReport([LSRSubscription] $scanReport)
-    {
-        $complianceReport = $this.GetLocalSubscriptionScanReport();
-
-        if([Helpers]::CheckMember($complianceReport,"Subscriptions") -and (($complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $scanReport.SubscriptionId }) | Measure-Object).Count -gt 0)
-        {
-            $_oldScanRerportSubscription = $complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $scanReport.SubscriptionId }
-            if([Helpers]::CheckMember($scanReport,"ScanDetails") -and [Helpers]::CheckMember($scanReport.ScanDetails,"SubscriptionScanResult") `
-                    -and ($scanReport.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
-            {
-                if([Helpers]::CheckMember($_oldScanRerportSubscription,"ScanDetails") -and [Helpers]::CheckMember($_oldScanRerportSubscription.ScanDetails,"SubscriptionScanResult") `
-                        -and ($_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
-                {
-                    $scanReport.ScanDetails.SubscriptionScanResult | ForEach-Object {
-                        $subcriptionScanResult = [LSRSubscriptionControlResult] $_
-                        
-                        if((($_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult | Where-Object { $subcriptionScanResult.ControlIntId -eq $_.ControlIntId }) | Measure-Object).Count -gt0)
-                        {
-                            $_complianceSubResult = $_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult | Where-Object { $subcriptionScanResult.ControlIntId -eq $_.ControlIntId }
-                            $_complianceSubResult.ScanKind = $subcriptionScanResult.ScanKind
-                            $_complianceSubResult.ControlIntId = $subcriptionScanResult.ControlIntId
-                            $_complianceSubResult.ControlUpdatedOn = $subcriptionScanResult.ControlUpdatedOn
-                            $_complianceSubResult.ControlSeverity = $subcriptionScanResult.ControlSeverity
-
-                            if($subcriptionScanResult.AttestationStatus -ne [AttestationStatus]::None -and ($subcriptionScanResult.AttestationStatus -ne $_complianceSubResult.AttestationStatus -or $subcriptionScanResult.Justification -ne $_complianceSubResult.Justification))
-                            {
-                                $_complianceSubResult.AttestationCounter = $_complianceSubResult.AttestationCounter + 1
-                            }
-                            if($_complianceSubResult.VerificationResult -ne $subcriptionScanResult.VerificationResult)
-                            {
-                                $_complianceSubResult.LastResultTransitionOn = [System.DateTime]::UtcNow
-                            }
-
-                            $_complianceSubResult.PreviousVerificationResult = $_complianceSubResult.ActualVerificationResult
-                            $_complianceSubResult.ActualVerificationResult = $subcriptionScanResult.ActualVerificationResult
-                            $_complianceSubResult.AttestationStatus = $subcriptionScanResult.AttestationStatus
-                            $_complianceSubResult.VerificationResult = $subcriptionScanResult.VerificationResult
-                            $_complianceSubResult.AttestedBy = $subcriptionScanResult.AttestedBy
-                            $_complianceSubResult.AttestedDate = $subcriptionScanResult.AttestedDate
-                            $_complianceSubResult.Justification = $subcriptionScanResult.Justification
-                            $_complianceSubResult.AttestationData = $subcriptionScanResult.AttestationData
-                            $_complianceSubResult.LastScannedOn = [System.DateTime]::UtcNow
-
-                            if($_complianceSubResult.FirstScannedOn -eq [Constants]::AzSKDefaultDateTime)
-                            {
-                                $_complianceSubResult.FirstScannedOn = [System.DateTime]::UtcNow
-                            }
-                            
-                            if($_complianceSubResult.FirstFailedOn -eq [Constants]::AzSKDefaultDateTime -and $subcriptionScanResult.ActualVerificationResult -eq [VerificationResult]::Failed)
-                            {
-                                $_complianceSubResult.FirstFailedOn = [System.DateTime]::UtcNow
-                            }
-
-                            if($_complianceSubResult.FirstAttestedOn -eq [Constants]::AzSKDefaultDateTime -and $subcriptionScanResult.AttestationStatus -ne [AttestationStatus]::None)
-                            {
-                                $_complianceSubResult.FirstAttestedOn = [System.DateTime]::UtcNow
-                            }
-
-                            $_complianceSubResult.ScannedBy = $subcriptionScanResult.ScannedBy
-                            $_complianceSubResult.ScanSource = $subcriptionScanResult.ScanSource
-                            $_complianceSubResult.ScannerModuleName = $subcriptionScanResult.ScannerModuleName
-                            $_complianceSubResult.ScannerVersion = $subcriptionScanResult.ScannerVersion
-                            $_complianceSubResult.ControlVersion = $subcriptionScanResult.ControlVersion
-                            $_complianceSubResult.IsLatestPSModule = $subcriptionScanResult.IsLatestPSModule
-                            $_complianceSubResult.HasRequiredPermissions = $subcriptionScanResult.HasRequiredPermissions
-                            $_complianceSubResult.HasAttestationWritePermissions = $subcriptionScanResult.HasAttestationWritePermissions
-                            $_complianceSubResult.HasAttestationReadPermissions = $subcriptionScanResult.HasAttestationReadPermissions
-                            $_complianceSubResult.UserComments = $subcriptionScanResult.UserComments
-                            $_complianceSubResult.Metadata = $subcriptionScanResult.Metadata
-							$_complianceSubResult.IsBaselineControl = $subcriptionScanResult.IsBaselineControl
-							$_complianceSubResult.HasOwnerAccessTag = $subcriptionScanResult.HasOwnerAccessTag
-                            
-							$_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult = $_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult | Where-Object { $subcriptionScanResult.ControlIntId -ne $_.ControlIntId }
-                            $_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult += $_complianceSubResult
-                        }
-                    }
-                }
-                else
-                {
-                    $_oldScanRerportSubscription.ScanDetails.SubscriptionScanResult += $scanReport.ScanDetails.SubscriptionScanResult;
-                }
-            }
-
-            if([Helpers]::CheckMember($scanReport,"ScanDetails")  -and [Helpers]::CheckMember($scanReport.ScanDetails,"Resources") `
-                -and ($scanReport.ScanDetails.Resources | Measure-Object).Count -gt 0)
-            {
-                if([Helpers]::CheckMember($_oldScanRerportSubscription,"ScanDetails") -and [Helpers]::CheckMember($_oldScanRerportSubscription.ScanDetails,"Resources") `
-                         -and ($_oldScanRerportSubscription.ScanDetails.Resources | Measure-Object).Count -gt 0)
-                {
-                    $scanReport.ScanDetails.Resources | Foreach-Object {
-                        $resource = [LSRResources] $_
-
-                        if([Helpers]::CheckMember($_oldScanRerportSubscription.ScanDetails,"Resources") -and (($_oldScanRerportSubscription.ScanDetails.Resources | Where-Object { $resource.HashId -contains $_.HashId }) | Measure-Object).Count -gt0)
-                        {
-                            $_ORresource = $_oldScanRerportSubscription.ScanDetails.Resources | Where-Object { $resource.HashId -contains $_.HashId }
-                            $_ORresource.LastEventOn = [DateTime]::UtcNow
-
-                            $resource.ResourceScanResult | ForEach-Object {
-
-                                $newControlResult = [LSRResourceScanResult] $_
-                                if([Helpers]::CheckMember($_ORresource,"ResourceScanResult") -and (($_ORresource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $newControlResult.ControlIntId -and $_.ChildResourceName -eq $newControlResult.ChildResourceName }) | Measure-Object).Count -eq 0)
-                                {
-                                    $_ORresource.ResourceScanResult += $newControlResult
-                                }
-                                else
-                                {
-                                    $_complianceResResult = $_ORresource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $newControlResult.ControlIntId -and $_.ChildResourceName -eq $newControlResult.ChildResourceName }
-
-                                    $_complianceResResult.ScanKind = $newControlResult.ScanKind
-                                    $_complianceResResult.ControlIntId = $newControlResult.ControlIntId
-                                    $_complianceResResult.ControlUpdatedOn = $newControlResult.ControlUpdatedOn
-                                    $_complianceResResult.ControlSeverity = $newControlResult.ControlSeverity
-
-                                    if($newControlResult.AttestationStatus -ne [AttestationStatus]::None -and($newControlResult.AttestationStatus -ne $_complianceResResult.AttestationStatus -or $newControlResult.Justification -ne $_complianceResResult.Justification))
-                                    {
-                                        $_complianceResResult.AttestationCounter = $_complianceResResult.AttestationCounter + 1 
-                                    }
-                                    if($_complianceResResult.VerificationResult -ne $newControlResult.VerificationResult)
-                                    {
-                                        $_complianceResResult.LastResultTransitionOn = [System.DateTime]::UtcNow
-                                    }
-
-                                    $_complianceResResult.PreviousVerificationResult = $_complianceResResult.VerificationResult
-                                    $_complianceResResult.ActualVerificationResult = $newControlResult.ActualVerificationResult
-                                    $_complianceResResult.AttestationStatus = $newControlResult.AttestationStatus
-                                    $_complianceResResult.VerificationResult = $newControlResult.VerificationResult
-                                    $_complianceResResult.AttestedBy = $newControlResult.AttestedBy
-                                    $_complianceResResult.AttestedDate = $newControlResult.AttestedDate
-                                    $_complianceResResult.Justification = $newControlResult.Justification
-                                    $_complianceResResult.AttestationData = $newControlResult.AttestationData
-                                    $_complianceResResult.IsBaselineControl = $newControlResult.IsBaselineControl
-                                    $_complianceResResult.LastScannedOn = [System.DateTime]::UtcNow
-
-                                    if($_complianceResResult.FirstScannedOn -eq [Constants]::AzSKDefaultDateTime)
-                                    {
-                                        $_complianceResResult.FirstScannedOn = [System.DateTime]::UtcNow
-                                    }
-                                    
-                                    if($_complianceResResult.FirstFailedOn -eq [Constants]::AzSKDefaultDateTime -and $newControlResult.ActualVerificationResult -eq [VerificationResult]::Failed)
-                                    {
-                                        $_complianceResResult.FirstFailedOn = [System.DateTime]::UtcNow
-                                    }
-
-                                    if($_complianceResResult.FirstAttestedOn -eq [Constants]::AzSKDefaultDateTime -and $newControlResult.AttestationStatus -ne [AttestationStatus]::None)
-                                    {
-                                        $_complianceResResult.FirstAttestedOn = [System.DateTime]::UtcNow
-                                    }
-                                    
-                                    $_complianceResResult.ScannedBy = $newControlResult.ScannedBy
-                                    
-                                    $_complianceResResult.ScanSource = $newControlResult.ScanSource
-                                    $_complianceResResult.ScannerModuleName = $newControlResult.ScannerModuleName
-                                    $_complianceResResult.ScannerVersion = $newControlResult.ScannerVersion
-                                    $_complianceResResult.ControlVersion = $newControlResult.ControlVersion
-                                    $_complianceResResult.IsLatestPSModule = $newControlResult.IsLatestPSModule
-                                    $_complianceResResult.HasRequiredPermissions = $newControlResult.HasRequiredPermissions
-                                    $_complianceResResult.HasAttestationWritePermissions = $newControlResult.HasAttestationWritePermissions
-                                    $_complianceResResult.HasAttestationReadPermissions = $newControlResult.HasAttestationReadPermissions
-                                    $_complianceResResult.UserComments = $newControlResult.UserComments
-                                    $_complianceResResult.Metadata = $newControlResult.Metadata
-									$_complianceResResult.HasOwnerAccessTag = $newControlResult.HasOwnerAccessTag
-
-                                    $_ORresource.ResourceScanResult = $_ORresource.ResourceScanResult | Where-Object { $_.ControlIntId -ne $_complianceResResult.ControlIntId -or  $_.ChildResourceName -ne  $_complianceResResult.ChildResourceName }
-                                    $_ORresource.ResourceScanResult += $_complianceResResult
-                                }
-                            }
-                        }
-                        else
-                        {
-                            $_oldScanRerportSubscription.ScanDetails.Resources += $resource
-                        }
-                    }
-                }
-                else
-                {
-                    $_oldScanRerportSubscription.ScanDetails.Resources += $scanReport.ScanDetails.Resources;
-                }
-            }
-
-            $complianceReport.Subscriptions = $complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -ne $scanReport.SubscriptionId }
-            $complianceReport.Subscriptions += $_oldScanRerportSubscription
-        }
-        else
-        {
-            if([Helpers]::CheckMember($complianceReport,"Subscriptions"))
-            {
-                $complianceReport.Subscriptions += $scanReport;
-            }
-            else
-            {
-                $complianceReport = [LocalSubscriptionReport]::new()
-                $complianceReport.Subscriptions += $scanReport;
-            }
-            
-        }
-
-        return $complianceReport
-    }
+    }		
 
 	hidden [LocalSubscriptionReport] MergeSVTScanResult($currentScanResults, $resourceInventory, $scanSource, $scannerVersion, $scanKind)
 	{
@@ -371,12 +172,13 @@ class ComplianceReportHelper
 				{
 					if(($subscription.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
 					{
-						if((($subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }) | Measure-Object).Count -gt0)
+						$matchedControlResults = $subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }
+						if((($matchedControlResults) | Measure-Object).Count -gt0)
 						{
-							$_complianceSubResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object { $currentScanResult.ControlItem.Id -eq $_.ControlIntId }
+							$_complianceSubResult = $matchedControlResults
 							$svtResults = $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_complianceSubResult, $true)
 
-							$subscription.ScanDetails.SusbscriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object {$_.ControlIntId -ne $currentScanResult.ControlItem.Id }
+							$subscription.ScanDetails.SubscriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object {$_.ControlIntId -ne $currentScanResult.ControlItem.Id }
 							$subscription.ScanDetails.SubscriptionScanResult += $svtResults
 						}
 						else
@@ -389,17 +191,19 @@ class ComplianceReportHelper
 						$subscription.ScanDetails.SubscriptionScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $true)
 					}
 				}
-				else
+				elseif($currentScanResult.FeatureName -ne "AzSKCfg")
 				{
+					$filteredResource = $resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId }
 
-					if((($resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId }) | Measure-Object).Count -gt 0)
+					if(($filteredResource | Measure-Object).Count -gt 0)
 					{
-						$resource = $resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId }
+						$resource = $filteredResource
 						$resource.LastEventOn = [DateTime]::UtcNow
 
-						if((($resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $currentScanResult.ControlItem.Id }) | Measure-Object).Count -gt 0)
+						$matchedControlResults = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $currentScanResult.ControlItem.Id }
+						if((($matchedControlResults) | Measure-Object).Count -gt 0)
 						{
-							$_complianceResResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $currentScanResult.ControlItem.Id }
+							$_complianceResResult = $matchedControlResults
 							$svtResults = $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_complianceResResult, $false)
 							$resource.ResourceScanResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -ne $_complianceResResult.ControlIntId }
 							$resource.ResourceScanResult += $svtResults
@@ -409,7 +213,9 @@ class ComplianceReportHelper
 							$resource.ResourceScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $false)
 						}
 
-						$resources = ($resources | Where-Object {$_.ResourceId -ne $resource.ResourceId })
+						$tmpResources = $resources | Where-Object {$_.ResourceId -ne $resource.ResourceId } 
+						$resources = @()
+						$resources += $tmpResources
 						$resources += $resource
 					}
 					else
@@ -438,30 +244,41 @@ class ComplianceReportHelper
 		}
 
 		# Resources obj consist of compliance snapshot data.
-		$deletedResoures = @()
-		$resources | ForEach-Object {
-			$resource = $_
-			if(($resourceInventory | Where-Object { $_.ResourceId -eq $resource.ResourceId } | Measure-Object).Count -eq 0)
-			{
-				$deletedResoures += $resource.ResourceId
+		if($resources.Count -gt 0)
+		{
+			$deletedResoures = @()
+			$resources | ForEach-Object {
+				$resource = $_
+				if(($resourceInventory | Where-Object { $_.ResourceId -eq $resource.ResourceId } | Measure-Object).Count -eq 0)
+				{
+					$deletedResoures += $resource.ResourceId
+				}
 			}
+			$resources = $resources | Where-Object { $deletedResoures -notcontains $_.ResourceId }
 		}
-
-		$resources = $resources | Where-Object {  $deletedResoures -notcontains $_.ResourceId }
 
 		$resourceInventory | ForEach-Object {
 			$resource = $_
-			if((($resources | Where-Object { $_.ResourceId -eq  $resource.ResourceId }) | Measure-Object).Count -eq 0)
-			{
-				$newResource = [LSRResources]::new()
-				$newResource.HashId = [Helpers]::ComputeHash($resource.ResourceId)
-				$newResource.ResourceId = $resource.ResourceId
-				$newResource.FeatureName = $supportedResourceTypes[$resource.ResourceType.ToLower()]
-				$newResource.ResourceGroupName = $resource.ResourceGroupName
-				$newResource.ResourceName = $resource.Name
+            try {
+				if([Helpers]::CheckMember($resource, "ResourceId"))
+				{
+					if((($resources | Where-Object { $_.ResourceId -eq  $resource.ResourceId }) | Measure-Object).Count -eq 0)
+					{
+						$newResource = [LSRResources]::new()
+						$newResource.HashId = [Helpers]::ComputeHash($resource.ResourceId)
+						$newResource.ResourceId = $resource.ResourceId
+						$newResource.FeatureName = $supportedResourceTypes[$resource.ResourceType.ToLower()]
+						$newResource.ResourceGroupName = $resource.ResourceGroupName
+						$newResource.ResourceName = $resource.Name
 
-				$resources += $newResource	
-			} 
+						$resources += $newResource	
+					}
+				}
+            }
+            catch
+            {
+                [EventBase]::PublishGenericException($_);
+            }
 		}
 
 		if($subscription.ScanDetails.Resources.Count -gt 0)
@@ -490,14 +307,6 @@ class ComplianceReportHelper
 	hidden [LSRControlResultBase[]] ConvertScanResultToSnapshotResult($svtResult, $scanSource, $scannerVersion, $scanKind, $oldResult, $isSubscriptionScan)
 	{
 		[LSRControlResultBase[]] $scanResults = @();	
-		#if($isSubscriptionScan)
-		#{
-		#	[LSRSubscriptionControlResult[]] $scanResults = @();	
-		#}
-		#else
-		#{
-		#	[LSRResourceScanResult[]] $scanResults = @();	
-		#}
 
 		$svtResult.ControlResults | ForEach-Object {
 			$currentResult = $_
@@ -526,12 +335,6 @@ class ComplianceReportHelper
 					{
 						$resourceScanResult = [LSRResourceScanResult]::new()
 					}
-					
-				}
-
-				if($currentResult.AttestationStatus -ne [AttestationStatus]::None -and($currentResult.AttestationStatus -ne $resourceScanResult.AttestationStatus -or $currentResult.Justification -ne $resourceScanResult.Justification))
-				{
-					$resourceScanResult.AttestationCounter = $resourceScanResult.AttestationCounter + 1 
 				}
 
 				if($resourceScanResult.VerificationResult -ne $currentResult.VerificationResult)
@@ -549,12 +352,6 @@ class ComplianceReportHelper
 					$resourceScanResult.FirstFailedOn = [System.DateTime]::UtcNow
 				}
 
-				if($resourceScanResult.FirstAttestedOn -eq [Constants]::AzSKDefaultDateTime -and $currentResult.AttestationStatus -ne [AttestationStatus]::None)
-				{
-					$resourceScanResult.FirstAttestedOn = [System.DateTime]::UtcNow
-				}
-
-
 				$resourceScanResult.ScannedBy = [Helpers]::GetCurrentRMContext().Account
 				$resourceScanResult.ScanSource = $scanSource
 				$resourceScanResult.ScannerVersion = $scannerVersion
@@ -568,12 +365,28 @@ class ComplianceReportHelper
 				$resourceScanResult.ControlSeverity = $svtResult.ControlItem.ControlSeverity 
 				$resourceScanResult.ActualVerificationResult = $currentResult.ActualVerificationResult 
 				$resourceScanResult.AttestationStatus = $currentResult.AttestationStatus
-				if($resourceScanResult.AttestationStatus -ne [AttestationStatus]::None)
+				if($resourceScanResult.AttestationStatus -ne [AttestationStatus]::None -and $null -ne $currentResult.StateManagement -and $null -ne $currentResult.StateManagement.AttestedStateData)
 				{
+					if($resourceScanResult.FirstAttestedOn -eq [Constants]::AzSKDefaultDateTime)
+					{
+						$resourceScanResult.FirstAttestedOn = $currentResult.StateManagement.AttestedStateData.AttestedDate
+					}
+
+					if($currentResult.StateManagement.AttestedStateData.AttestedDate -gt $resourceScanResult.AttestedDate)
+					{
+						$resourceScanResult.AttestationCounter = $resourceScanResult.AttestationCounter + 1 
+					}
 					$resourceScanResult.AttestedBy =  $currentResult.StateManagement.AttestedStateData.AttestedBy
 					$resourceScanResult.AttestedDate = $currentResult.StateManagement.AttestedStateData.AttestedDate 
 					$resourceScanResult.Justification = $currentResult.StateManagement.AttestedStateData.Justification
-					$resourceScanResult.AttestationData = [Helpers]::ConvertToJsonCustomCompressed($currentResult.StateManagement.AttestedStateData.DataObject)	
+					# $resourceScanResult.AttestationData = [Helpers]::ConvertToJsonCustomCompressed($currentResult.StateManagement.AttestedStateData.DataObject)	
+				}
+				else
+				{
+					$resourceScanResult.AttestedBy = ""
+					$resourceScanResult.AttestedDate = [Constants]::AzSKDefaultDateTime 
+					$resourceScanResult.Justification = ""
+					$resourceScanResult.AttestationData = ""
 				}
 				
 				$resourceScanResult.VerificationResult = $currentResult.VerificationResult

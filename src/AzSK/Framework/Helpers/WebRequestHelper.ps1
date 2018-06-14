@@ -101,7 +101,15 @@ class WebRequestHelper {
 					#eat the exception until it is in retry mode and throw once the retry is done
 					if($retryCount -eq 0)
 					{
-						throw;
+						if([Helpers]::CheckMember($_,"Exception.Response.StatusCode") -and  $_.Exception.Response.StatusCode -eq "Forbidden"){
+							throw ([SuppressedException]::new(("You do not have permission to view the requested resource."), [SuppressedExceptionType]::InvalidOperation))
+						}
+						elseif ([Helpers]::CheckMember($_,"Exception.Message")){
+							throw ([SuppressedException]::new(($_.Exception.Message.ToString()), [SuppressedExceptionType]::InvalidOperation))
+						}
+						else {
+							throw;
+						}
 					}					
 				}
 			}

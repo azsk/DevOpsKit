@@ -213,6 +213,7 @@ class AIOrgTelemetry: ListenerBase {
 		$properties.Add("ControlIntId", $context.ControlItem.Id);
 		$properties.Add("ControlId", $context.ControlItem.ControlID);
 		$properties.Add("ControlSeverity", $context.ControlItem.ControlSeverity);
+		$properties.Add("IsBaselineControl", $context.ControlItem.IsBaselineControl)
 		if (!$context.ControlItem.Enabled) {
 			$properties.Add("VerificationResult", [VerificationResult]::Disabled)
 			$properties.Add("AttestationStatus", [AttestationStatus]::None)
@@ -286,6 +287,7 @@ class AIOrgTelemetry: ListenerBase {
                 $telemetryEvent.properties.Add("ScannerModuleName", $module.Name);
 				$telemetryEvent.properties.Add("ScannerVersion", $module.Version.ToString());
 				$telemetryEvent.properties.Add("OrgVersion", [ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($module.Name).ToString());	
+				$telemetryEvent.properties.Add("PolicyOrgName", [ConfigurationManager]::GetAzSKConfigData().PolicyOrgName)
 				$AzSKVersionList= [ConfigurationManager]::GetAzSKConfigData().GetAzSKVersionList($module.Name)
 				if(($AzSKVersionList | Measure-Object).Count -gt 0)
 				{

@@ -44,7 +44,7 @@ Class OMSHelper{
 
 	static [PSObject[]] GetOMSBodyObjects([SVTEventContext] $eventContext,[AzSKContextDetails] $AzSKContext)
 	{
-		[PSObject[]] $output = @();
+		[PSObject[]] $output = @();		
 		[array] $eventContext.ControlResults | ForEach-Object{
 			Set-Variable -Name ControlResult -Value $_ -Scope Local
 			$out = [OMSModel]::new() 
@@ -76,6 +76,7 @@ Class OMSHelper{
 			$out.HasAttestationWritePermissions = $ControlResult.CurrentSessionContext.Permissions.HasAttestationWritePermissions
 			$out.HasAttestationReadPermissions = $ControlResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions				
 			$out.IsLatestPSModule = $ControlResult.CurrentSessionContext.IsLatestPSModule
+			$out.PolicyOrgName =$AzSKContext.PolicyOrgName
 			#mapping the attestation properties
 			if($null -ne $ControlResult -and $null -ne $ControlResult.StateManagement -and $null -ne $ControlResult.StateManagement.AttestedStateData)
 			{
@@ -326,6 +327,7 @@ Class OMSModel {
 	[bool] $IsBaselineControl
 	[string] $ExpiryDate
 	[string] $PartialScanIdentifier
+	[string] $PolicyOrgName
 }
 
 Class OMSResourceInvModel{
@@ -360,6 +362,7 @@ Class AzSKContextDetails {
 	[string] $RunIdentifier
 	[string] $Version
 	[string] $Source
+	[string] $PolicyOrgName
 	}
 
 Class CommandModel{
