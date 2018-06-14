@@ -954,7 +954,14 @@ class Helpers {
 					}
 				}
 			}
-			Set-AzureRmResourceGroup -Name $RGName -Tag $tags
+			try
+			{
+				Set-AzureRmResourceGroup -Name $RGName -Tag $tags -Force -ErrorAction Stop
+			}
+			catch
+			{
+				[EventBase]::PublishGenericCustomMessage(" `r`nError occured while adding tag(s) on resource group [$RGName]. $($_.Exception)", [MessageType]::Warning);
+			}
 		}
     }
 
@@ -987,8 +994,15 @@ class Helpers {
 						$tags.Add($key, $TagsHashTable[$key])
 					}
 				}
+			}			
+			try
+			{
+				Set-AzureRmResource -ResourceId $ResourceId -Tag $tags -Force -ErrorAction Stop
 			}
-			Set-AzureRmResource -ResourceId $ResourceId -Tag $tags -Force
+			catch
+			{
+				[EventBase]::PublishGenericCustomMessage(" `r`nError occured while adding tag(s) on resource [$ResourceId]. $($_.Exception)", [MessageType]::Warning);
+			}
 		}
     }
 
