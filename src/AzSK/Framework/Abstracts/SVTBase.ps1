@@ -20,7 +20,7 @@ class SVTBase: AzSKRoot
 	[bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
 	[string] $PartialScanIdentifier = [string]::Empty
-	[SVTEventContext[]] $ChildSvtObjects = @();
+	[PSObject[]] $ChildSvtObjects = @();
     SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId)
     {		
