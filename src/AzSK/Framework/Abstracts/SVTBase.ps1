@@ -1167,7 +1167,7 @@ class SVTBase: AzSKRoot
 					$currentControl=$_
 					if(($PersistedControlScanResult | Measure-Object).Count -gt 0)
 					{				
-						$matchedControlResult=$PersistedControlScanResult | Where-Object {($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (($singleControlResult.FeatureName -ne "SubscriptionCore" -and $_.ChildResourceName -eq $currentControl.ChildResourceName)))}
+						$matchedControlResult=$PersistedControlScanResult | Where-Object {($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (($singleControlResult.FeatureName -ne "SubscriptionCore" -and $_.ChildResourceName -eq $currentControl.ChildResourceName) -or $singleControlResult.FeatureName -eq "SubscriptionCore"))}
 					}
 
 					# initialize default values
