@@ -90,7 +90,8 @@ class PersistedStateInfo: CommandBase
 							{
 								 $currentItem=$_
 				    			 $matchedControlResult=$PersistedControlScanResult | Where-Object {		
-	 							   ($_.ControlID -eq $currentItem.ControlID -and (($_.ChildResourceName -eq $currentItem.ChildResourceName) -or [string]::IsNullOrWhiteSpace($currentItem.ChildResourceName)))
+	 							   ($_.ControlID -eq $currentItem.ControlID -and 
+									(($currentItem.FeatureName -ne "SubscriptionCore" -and $_.ChildResourceName -eq $currentItem.ChildResourceName) -or $currentItem.FeatureName -eq "SubscriptionCore"))
 								 }
 								 $encoder = [System.Text.Encoding]::UTF8
 								 $encUserComments= $encoder.GetBytes($currentItem.UserComments)
@@ -111,7 +112,7 @@ class PersistedStateInfo: CommandBase
 								 }
 							}catch{
 							$this.PublishException($_);
-							$erroredControls+=$currentItem
+							$erroredControls+=$this.CreateCustomErrorObject($currentItem,"Could not find previous persisted state.")
 
 							}		
 						}
