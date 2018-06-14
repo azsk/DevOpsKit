@@ -329,7 +329,7 @@ class ComplianceReportHelper
 				{
 					if($null -ne $oldResult)
 					{
-						$resourceScanResult = $oldResult | Where-Object { $_.ChildResourceName -eq $currentResult.ChildResourceName -or [string]::IsNullOrEmpty($currentResult.ChildResourceName) }
+						$resourceScanResult = $oldResult | Where-Object { $_.ChildResourceName -eq $currentResult.ChildResourceName }
 					}
 					else
 					{
