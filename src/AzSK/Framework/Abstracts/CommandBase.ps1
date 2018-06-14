@@ -327,13 +327,18 @@ class CommandBase: AzSKRoot {
 			  {
 				if($AzSKConfigData.PolicyOrgName -eq "org-neutral")
 				{
-					throw [SuppressedException]::new("Currently command is running with policy '$($AzSKConfigData.PolicyOrgName)', instead it is expected to be run with policy '$OrgName'. Please contact Org policy owner ($($SubOrgTag.Value)) for getting policy setup url.",[SuppressedExceptionType]::Generic)
+					throw [SuppressedException]::new("DevOps Kit was configured to run with '$OrgName' policy for this subscription. However, the current command is using '$($AzSKConfigData.PolicyOrgName)' (generic) policy.
+					Please contact your organization policy owner ($($SubOrgTag.Value)) for correcting the policy setup. Refer: https://aka.ms/devopskit/orgpolicy/faq",[SuppressedExceptionType]::Generic)
+					
 				}
 				else
 				{	
 					if(-not $Force)
 					{
-						$this.PublishCustomMessage("Currently command is running with policy '$($AzSKConfigData.PolicyOrgName)', instead it is expected to be run with policy '$OrgName'. Please contact Org policy owner '$($SubOrgTag.Value)' for getting policy setup url. If you want to update subscription for policy '$($AzSKConfigData.PolicyOrgName)', run Set-AzSKSubscriptionSecurity or Update-AzSKSubscriptionSecurity with -Force parameter.",[MessageType]::Warning);
+						$this.PublishCustomMessage("Warning: DevOps Kit was configured to run with '$($AzSKConfigData.PolicyOrgName)' policy for this subscription. However, the current command is using '$OrgName' policy. 
+						`nPlease contact your organization policy owner ('$($SubOrgTag.Value)') for correcting the policy setup. `nIf you want to switch the subscription to '$($AzSKConfigData.PolicyOrgName)', run Set-AzSKSubscriptionSecurity or Update-AzSKSubscriptionSecurity with -Force parameter. For more details refer: https://aka.ms/devopskit/orgpolicy/faq",[MessageType]::Warning);
+						
+
 						$IsTagSettingRequired = $false
 					}					
 				}
