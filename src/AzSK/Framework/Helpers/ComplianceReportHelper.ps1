@@ -392,10 +392,11 @@ class ComplianceReportHelper
 				}
 				elseif($currentScanResult.FeatureName -ne "AzSKCfg")
 				{
+					$filteredResource = $resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId }
 
-					if((($resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId }) | Measure-Object).Count -gt 0)
+					if(($filteredResource | Measure-Object).Count -gt 0)
 					{
-						$resource = $resources | Where-Object {$_.ResourceId -eq $currentScanResult.ResourceContext.ResourceId }
+						$resource = $filteredResource
 						$resource.LastEventOn = [DateTime]::UtcNow
 
 						$matchedControlResults = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -eq $currentScanResult.ControlItem.Id }
@@ -505,14 +506,6 @@ class ComplianceReportHelper
 	hidden [LSRControlResultBase[]] ConvertScanResultToSnapshotResult($svtResult, $scanSource, $scannerVersion, $scanKind, $oldResult, $isSubscriptionScan)
 	{
 		[LSRControlResultBase[]] $scanResults = @();	
-		#if($isSubscriptionScan)
-		#{
-		#	[LSRSubscriptionControlResult[]] $scanResults = @();	
-		#}
-		#else
-		#{
-		#	[LSRResourceScanResult[]] $scanResults = @();	
-		#}
 
 		$svtResult.ControlResults | ForEach-Object {
 			$currentResult = $_

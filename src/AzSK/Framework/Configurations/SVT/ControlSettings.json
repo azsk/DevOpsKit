@@ -253,15 +253,15 @@
     "TimeOut": 60,
     "APIVersion": "2014-01"
   },
-  "DefaultValidAttestationStates": ["NotAnIssue","WillFixLater","WillNotFix"],
+  "DefaultValidAttestationStates": [ "NotAnIssue", "WillFixLater", "WillNotFix" ],
   "NewControlGracePeriodInDays": {
-      "Default": 60,
-      "ControlSeverity": {
-        "Critical": 7,
-        "High": 30,
-        "Medium": 60,
-        "Low": 90
-      }
+    "Default": 60,
+    "ControlSeverity": {
+      "Critical": 7,
+      "High": 30,
+      "Medium": 60,
+      "Low": 90
+    }
   },
   "AttestationPeriodInDays": {
     "Default": 90,
@@ -271,5 +271,9 @@
       "Medium": 60,
       "Low": 90
     }
+  },
+  "ResultComplianceInDays": {
+    "DefaultControls": 3,
+    "OwnerAccessControls": 90
   }
 }
