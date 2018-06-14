@@ -202,7 +202,7 @@ class CCAutomation: CommandBase
 			($this.AutomationAccount.ResourceGroup -ne [UserSubscriptionDataHelper]::GetUserSubscriptionRGName() -and $this.AutomationAccount.Name -ne [UserSubscriptionDataHelper]::GetCAName())
 			if(!$isValid)
 			{
-				throw ([SuppressedException]::new(("The specified 'AutomationAccountName' and/or 'AutomationAccountRGName' parameter values are reserved for toolkit use. `r`nPlease run this command with different parameter values."), [SuppressedExceptionType]::InvalidOperation))
+				throw ([SuppressedException]::new(("The specified 'AutomationAccountName' and/or 'AutomationAccountRGName' parameter values are reserved for toolkit use. `r`nPlease use different (unique) names for CA account and/or resource group."), [SuppressedExceptionType]::InvalidOperation))
 			}
 			if(!$this.IsCAInstallationValid())
 			{
