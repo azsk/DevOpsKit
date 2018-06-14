@@ -956,7 +956,7 @@ class Helpers {
 			}
 			try
 			{
-				Set-AzureRmResourceGroup -Name $RGName -Tag $tags -Force -ErrorAction Stop
+				Set-AzureRmResourceGroup -Name $RGName -Tag $tags -ErrorAction Stop
 			}
 			catch
 			{
