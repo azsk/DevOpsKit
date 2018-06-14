@@ -1595,11 +1595,11 @@ class CCAutomation: CommandBase
 				}
 				#check permissions on core resource group
 				$haveSubscriptionRBACAccess = $this.CheckServicePrincipalSubscriptionAccess($this.CAAADApplicationID)
-				$haveRGRBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID)	
-				if($this.IsMultiCAModeOn)	
-				{
-					$haveAARGAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID, $this.AutomationAccount.ResourceGroup, "Contributor")
-				}		
+				$haveRGRBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID)			
+			}
+			if($this.IsMultiCAModeOn)	
+			{
+				$haveAARGAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID, $this.AutomationAccount.ResourceGroup, "Contributor")
 			}
 			if($haveSubscriptionRBACAccess -and $haveRGRBACAccess -and $haveAARGAccess)
 			{
