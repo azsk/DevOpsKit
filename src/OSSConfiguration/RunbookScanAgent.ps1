@@ -520,7 +520,7 @@ function PersistSubscriptionSnapshot
 					#We archive *only* if sub(s) went into 'ERR' status 
 					Write-Output("SA: Archiving ActiveScanTracker.json as there were some errors...")
 					ArchiveBlob -StorageContext $StorageContext
-					Write-Output ("SA: Scan could not be completed for a total of [$errSubsCount] subscription(s).`nSee subscriptions with 'ERR' state in:`n`t $AutomationAccountRG -> $($StorageContext.StorageAccountName) -> $CAMultiSubScanConfigContainerName -> Archive -> ActiveScanTracker_<timestamp>.ERR.json.")
+					Write-Output ("SA: Scan could not be completed for a total of [$errSubsCount] subscription(s).`nSee subscriptions with 'ERR' state in:`n`t $StorageAccountRG -> $($StorageContext.StorageAccountName) -> $CAMultiSubScanConfigContainerName -> Archive -> ActiveScanTracker_<timestamp>.ERR.json.")
 				}
 				Write-Output("SA: Multi-sub scan: Removing ActiveScanTracker.json")
 				Remove-AzureStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $StorageContext -Force
