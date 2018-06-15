@@ -39,14 +39,14 @@
     },
     {
       "ControlID": "Azure_ContainerInstances_DP_Review_Registry",
-      "Description": "Make sure container images are hosted on a trustworthy registry having necessary authentication, authorization and encryption mechanisms",
+      "Description": "Make sure container images are hosted on a trustworthy registry that has strong authentication, authorization and data protection mechanisms",
       "Id": "ContainerInstances130",
       "ControlSeverity": "High",
       "Enabled": true,
       "Automated": "Yes",
       "MethodName": "CheckRegistry",
-      "Rationale": "If a container image is hosted on an untrusted registry, it can compromise application code and data.",
-      "Recommendation": "Ensure that the registry, which hosts the image, is trustworthy. Review registry configurations carefully for any misconfigurations related to authentication, authorization and encryption.",
+      "Rationale": "If a container image is served from an untrusted registry, the image itself may not be trustworthy. Running such a compromised image can lead to loss of sensitive enterprise data.",
+      "Recommendation": "Ensure that the registry, which hosts the image, is trustworthy. Review registry configurations carefully for any misconfigurations related to authentication, authorization, etc. ",
       "Tags": [
         "SDL",
         "TCP",
@@ -55,15 +55,15 @@
       ]
     },
     {
-      "ControlID": "Azure_ContainerInstances_AuthZ_Containers_Trust",
+      "ControlID": "Azure_ContainerInstances_AuthZ_Container_Segregation",
       "Description": "A container group must contain only containers which trust each other",
       "Id": "ContainerInstances140",
       "ControlSeverity": "High",
       "Enabled": true,
       "Automated": "Yes",
       "MethodName": "CheckContainerTrust",
-      "Rationale": "Container hosted on same container group can monitor traffic of other containers and access the file system of host OS. Hence the same container group must not host containers which do not trust each other.",
-      "Recommendation": "Ensure that the containers in a container group trust each other.",
+      "Rationale": "Containers hosted in the same container group can monitor traffic of other containers within the group and can also access the file system of the host OS. Hence a container group must not host containers which do not trust each other. In other words, do not mix containers across trust boundaries in the same group.",
+      "Recommendation": "Carefully review the role and privileges required by each container in a container group. If the privilege levels and access requirements are different, then consider segregating the containers into separate groups.",
       "Tags": [
         "SDL",
         "TCP",
