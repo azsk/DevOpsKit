@@ -315,11 +315,11 @@ function Set-AzSKUserPreference {
         $DoNotOpenOutputFolder,
 
         [switch]
-        [Parameter(Mandatory = $false, HelpMessage = "Switch to enable storage of compliance report data at subscription.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Enable ComplianceStore", HelpMessage = "Switch to enable storage of compliance report data at subscription.")]
         $PersistScanReportInSubscription,
 
         [switch]
-        [Parameter(Mandatory = $false, HelpMessage = "Switch to disable storage of compliance report data at subscription.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Disable ComplianceStore", HelpMessage = "Switch to disable storage of compliance report data at subscription.")]
         $DisablePersistScanReportInSubscription
     )
     Begin {
