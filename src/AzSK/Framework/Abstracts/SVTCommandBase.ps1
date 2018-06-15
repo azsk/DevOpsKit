@@ -252,7 +252,7 @@ class SVTCommandBase: CommandBase {
     hidden [void] RemoveOldAzSDKRG()
     {
         $scanSource = [AzSKSettings]::GetInstance().GetScanSource();
-        if([string]::IsNullOrWhiteSpace($scanSource) -or $scanSource -eq "SDL")
+        if($scanSource -eq "SDL" -or [string]::IsNullOrWhiteSpace($scanSource))
         {
             $olderRG = Get-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -ErrorAction SilentlyContinue
             if($null -ne $olderRG)
@@ -274,7 +274,7 @@ class SVTCommandBase: CommandBase {
                         $otherResources = $resources | Where-Object { -not ($_.ResourceName -like "$([OldConstants]::StorageAccountPreName)*")} 
                         if(($otherResources | Measure-Object).Count -gt 0)
                         {
-                            Write-Host "WARNING: Found non DevOps Kit resources under order RG [$([OldConstants]::AzSDKRGName)] as shown below:" -ForegroundColor Yellow
+                            Write-Host "WARNING: Found non DevOps Kit resources under older RG [$([OldConstants]::AzSDKRGName)] as shown below:" -ForegroundColor Yellow
                             $otherResources
                             Write-Host "We are about to delete the older resource group including all the resources inside." -ForegroundColor Yellow
                             $option = Read-Host "Do you want to continue (Y/N) ?";
@@ -290,8 +290,13 @@ class SVTCommandBase: CommandBase {
                                 Remove-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob
                             }
                         }
+                        else
+                        {
+                            Remove-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob                            
+                        }
                     }
-                    else {
+                    else 
+                    {
                         Remove-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob
                     }
                 }
