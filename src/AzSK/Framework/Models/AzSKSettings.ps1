@@ -36,7 +36,8 @@ class AzSKSettings {
 	[bool] $IsCentralScanModeOn = $false;
 
     hidden static [AzSKSettings] $Instance = $null;
-    hidden static [string] $FileName = "AzSKSettings.json";
+	hidden static [string] $FileName = "AzSKSettings.json";
+	[bool] $PersistScanReportInSubscription;
 
 
     static [AzSKSettings] GetInstance() {
