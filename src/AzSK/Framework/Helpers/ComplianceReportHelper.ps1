@@ -205,7 +205,7 @@ class ComplianceReportHelper
 						{
 							$_complianceResResult = $matchedControlResults
 							$svtResults = $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_complianceResResult, $false)
-							$resource.ResourceScanResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -ne $_complianceResResult.ControlIntId }
+							$resource.ResourceScanResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -ne $_complianceResResult[0].ControlIntId }
 							$resource.ResourceScanResult += $svtResults
 						}
 						else
@@ -238,48 +238,51 @@ class ComplianceReportHelper
 			}
 			catch
 			{
-				[EventBase]::PublishGenericCustomMessage(($currentScanResult | Format-List | Out-String), [MessageType]::Default)
 				[EventBase]::PublishGenericException($_);
 			}
 		}
 
-		# Resources obj consist of compliance snapshot data.
-		if($resources.Count -gt 0)
+		if($null -ne $resourceInventory)
 		{
-			$deletedResoures = @()
-			$resources | ForEach-Object {
-				$resource = $_
-				if(($resourceInventory | Where-Object { $_.ResourceId -eq $resource.ResourceId } | Measure-Object).Count -eq 0)
-				{
-					$deletedResoures += $resource.ResourceId
-				}
-			}
-			$resources = $resources | Where-Object { $deletedResoures -notcontains $_.ResourceId }
-		}
-
-		$resourceInventory | ForEach-Object {
-			$resource = $_
-            try {
-				if([Helpers]::CheckMember($resource, "ResourceId"))
-				{
-					if((($resources | Where-Object { $_.ResourceId -eq  $resource.ResourceId }) | Measure-Object).Count -eq 0)
+			if($resources.Count -gt 0)
+			{
+				$deletedResoures = @()
+				$resources | ForEach-Object {
+					$resource = $_
+					if(($resourceInventory | Where-Object { $_.ResourceId -eq $resource.ResourceId } | Measure-Object).Count -eq 0)
 					{
-						$newResource = [LSRResources]::new()
-						$newResource.HashId = [Helpers]::ComputeHash($resource.ResourceId)
-						$newResource.ResourceId = $resource.ResourceId
-						$newResource.FeatureName = $supportedResourceTypes[$resource.ResourceType.ToLower()]
-						$newResource.ResourceGroupName = $resource.ResourceGroupName
-						$newResource.ResourceName = $resource.Name
-
-						$resources += $newResource	
+						$deletedResoures += $resource.ResourceId
 					}
 				}
-            }
-            catch
-            {
-                [EventBase]::PublishGenericException($_);
-            }
+				$resources = $resources | Where-Object { $deletedResoures -notcontains $_.ResourceId }
+			}
+
+			$resourceInventory | ForEach-Object {
+				$resource = $_
+				try {
+					if([Helpers]::CheckMember($resource, "ResourceId"))
+					{
+						if((($resources | Where-Object { $_.ResourceId -eq  $resource.ResourceId }) | Measure-Object).Count -eq 0)
+						{
+							$newResource = [LSRResources]::new()
+							$newResource.HashId = [Helpers]::ComputeHash($resource.ResourceId)
+							$newResource.ResourceId = $resource.ResourceId
+							$newResource.FeatureName = $supportedResourceTypes[$resource.ResourceType.ToLower()]
+							$newResource.ResourceGroupName = $resource.ResourceGroupName
+							$newResource.ResourceName = $resource.Name
+
+							$resources += $newResource	
+						}
+					}
+				}
+				catch
+				{
+					[EventBase]::PublishGenericException($_);
+				}
+			}
 		}
+		# Resources obj consist of compliance snapshot data.
+		
 
 		if($subscription.ScanDetails.Resources.Count -gt 0)
 		{

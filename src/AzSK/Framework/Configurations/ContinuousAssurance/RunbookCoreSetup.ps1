@@ -356,6 +356,7 @@ function FindNearestSchedule($intervalInMins)
 }
 function EnableHelperSchedule($scheduleName)
 {
+	DisableHelperSchedules 
 	Set-AzureRmAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true -ErrorAction SilentlyContinue| Out-Null
 	Write-Output ("CS: Scheduled CA helper job :[$scheduleName]")
 }
