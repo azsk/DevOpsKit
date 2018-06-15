@@ -186,7 +186,7 @@ function Update-AzSKOrganizationPolicy
 		[string]
 		$MigrationScriptPath,
 
-		[ValidateSet("Installer", "CARunbooks", "AzSKRootConfig","MonitoringDashboard","OrgAzSKVersion", "All")]
+		[ValidateSet("CARunbooks", "AzSKRootConfig","MonitoringDashboard","OrgAzSKVersion", "All")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Override base configurations setup by AzSK.")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Override base configurations setup by AzSK.")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Migrate", HelpMessage = "Override base configurations setup by AzSK.")] 

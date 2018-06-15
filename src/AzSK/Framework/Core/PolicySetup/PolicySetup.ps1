@@ -497,7 +497,7 @@ class PolicySetup: CommandBase
 
 		if(-not $OrgPolicyRG)
 		{
-			throw ([SuppressedException]::new(("Org policy not found under resource group '$OrgPolicyRG'. Please pass 'ResourceGroupName' parameter to command if custom RG name used to setup policy."), [SuppressedExceptionType]::InvalidArgument))
+			throw ([SuppressedException]::new(("Org policy not found under resource group '$($this.ResourceGroupName)'. Please pass 'ResourceGroupName' parameter to command if custom RG name used to setup policy."), [SuppressedExceptionType]::InvalidArgument))
 
 		}
 	}

@@ -288,12 +288,8 @@ class AIOrgTelemetry: ListenerBase {
 				$telemetryEvent.properties.Add("ScannerVersion", $module.Version.ToString());
 				$telemetryEvent.properties.Add("OrgVersion", [ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($module.Name).ToString());	
 				$telemetryEvent.properties.Add("PolicyOrgName", [ConfigurationManager]::GetAzSKConfigData().PolicyOrgName)
-				$AzSKVersionList= [ConfigurationManager]::GetAzSKConfigData().GetAzSKVersionList($module.Name)
-				if(($AzSKVersionList | Measure-Object).Count -gt 0)
-				{
-					$LatestVersion = $AzSKVersionList | Select -First 1			
-					$telemetryEvent.properties.Add("LatestVersion", $LatestVersion.ToString());
-				}
+				$AzSKLatestVersion= [ConfigurationManager]::GetAzSKConfigData().GetAzSKLatestPSGalleryVersion($module.Name)		
+				$telemetryEvent.properties.Add("LatestVersion", $AzSKLatestVersion);				
 				
             }
             catch {
