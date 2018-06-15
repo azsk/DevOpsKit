@@ -176,16 +176,7 @@ class WriteSummaryFile: FileOutputBase
 					{
 						$csvItem.IsBaselineControl = "No";
 					}
-
-					if($_.IsControlInGrace)
-					{
-						$csvItem.IsControlInGrace = "Yes";
-					}
-					else
-					{
-						$csvItem.IsControlInGrace = "No";
-					}
-
+			
 					if($anyAttestedControls)
 					{
 						$csvItem.ActualStatus = $_.ActualVerificationResult.ToString();

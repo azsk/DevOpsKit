@@ -21,6 +21,5 @@ class CsvOutputItem
     [string] $Recommendation = ""
 	[string] $ResourceId = ""
     [string] $DetailedLogFile = ""
-	[string] $IsControlInGrace
 	[string] $UserComments = ""
 }
