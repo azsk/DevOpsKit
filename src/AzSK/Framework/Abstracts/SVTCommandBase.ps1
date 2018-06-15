@@ -251,7 +251,7 @@ class SVTCommandBase: CommandBase {
     hidden [void] RemoveOldAzSDKRG()
     {
         $scanSource = [AzSKSettings]::GetInstance().GetScanSource();
-        if($scanSource -eq "SDL")
+        if([string]::IsNullOrWhiteSpace($scanSource) -or $scanSource -eq "SDL")
         {
             $olderRG = Get-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -ErrorAction SilentlyContinue
             if($null -ne $olderRG)
