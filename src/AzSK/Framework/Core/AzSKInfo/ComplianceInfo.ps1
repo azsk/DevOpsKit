@@ -20,15 +20,6 @@ class ComplianceInfo: CommandBase
 
 	hidden [void] GetComplianceScanData()
 	{
-		$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
-		$settingPersistScanReportInSubscription = [ConfigurationManager]::GetAzSKSettings().PersistScanReportInSubscription;
-			#return if feature is turned off at server config
-		if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription)		
-		{
-			$this.PublishCustomMessage("NOTE: This feature is currently disabled in your environment. Please contact the cloud security team for your org's ", [MessageType]::Warning);	
-			return;
-		}
-		
 		$ComplianceRptHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId);
 		$ComplianceReportData =  $ComplianceRptHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId)
 		
@@ -101,6 +92,14 @@ class ComplianceInfo: CommandBase
 	{
 		$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 		
+		$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
+		$settingPersistScanReportInSubscription = [ConfigurationManager]::GetAzSKSettings().PersistScanReportInSubscription;
+			#return if feature is turned off at server config
+		if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription)		
+		{
+			$this.PublishCustomMessage("NOTE: This feature is currently disabled in your environment. Please contact the cloud security team for your org. ", [MessageType]::Warning);	
+			return;
+		}
 		#Below code is commented as CA can be configured in multiple ways apart from AzSKRG
 		# $this.PublishCustomMessage("`r`nChecking if the subscription ["+ $this.SubscriptionId  +"] is setup for Continuous Assurance (CA) scanning...", [MessageType]::Default);
 		# $AutomationAccount=[Constants]::AutomationAccount

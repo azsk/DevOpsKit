@@ -28,11 +28,11 @@ class PersistedStateInfo: CommandBase
 			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
 			$settingPersistScanReportInSubscription = [ConfigurationManager]::GetAzSKSettings().PersistScanReportInSubscription;
 			#return if feature is turned off at server config
-			if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription) 			
+			if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription) 	
 			{
-				$this.PublishCustomMessage("NOTE: This feature is currently disabled in your environment. Please contact the cloud security team for your org's ", [MessageType]::Warning);	
+				$this.PublishCustomMessage("NOTE: This feature is currently disabled in your environment. Please contact the cloud security team for your org.", [MessageType]::Warning);	
 				return $messages;
-			}
+			} 
 			#Check for file path exist
 			if(-not (Test-Path -path $filePath))
 			{  
@@ -40,21 +40,23 @@ class PersistedStateInfo: CommandBase
 				return $messages;
 			}
 			# Read Local CSV file
+            [CsvOutputItem[]] $controlResultSet  =@();
 			$controlResultSet = Get-ChildItem -Path $filePath -Filter '*.csv' -Force | Get-Content | Convertfrom-csv
-			$resultsGroups = $controlResultSet | Group-Object -Property ResourceId 
+            $controlResultSet = $controlResultSet | Where-Object {$_.FeatureName -ne "AzSKCfg"}
 			$totalCount = ($controlResultSet | Measure-Object).Count
 			if($totalCount -eq 0)
 			{
 				$this.PublishCustomMessage("Could not find any control in file: [$filePath].",[MessageType]::Error);
 				return $messages;
 			}
+			$resultsGroups = $controlResultSet | Group-Object -Property ResourceId 
 			# Read file from Storage
 			$complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId); 
 			$StorageReportJson =$null;
 			# Check for write access
 			if($complianceReportHelper.azskStorageInstance.HaveWritePermissions -eq 1)
 			{
-				$StorageReportJson = $complianceReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
+				[LSRSubscription] $StorageReportJson = $complianceReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
 			}
 			else
 			{
@@ -86,7 +88,7 @@ class PersistedStateInfo: CommandBase
 					elseif($resultGroup.Group[0].FeatureName -ne "SubscriptionCore" -and $resultGroup.Group[0].FeatureName -ne "AzSKCfg" -and ($StorageReportJson.ScanDetails.Resources | Measure-Object).Count -gt 0)
 					{						 
 						$ResourceData = $StorageReportJson.ScanDetails.Resources | Where-Object { $_.ResourceId -eq $resultGroup.Name }	 
-						if(($ResourceData.ResourceScanResult | Measure-Object).Count -gt 0 )
+						if($null -ne $ResourceData -and ($ResourceData.ResourceScanResult | Measure-Object).Count -gt 0 )
 						{
 							$PersistedControlScanResult=$ResourceData.ResourceScanResult
 						}
@@ -143,11 +145,21 @@ class PersistedStateInfo: CommandBase
 				# If updation failed for any control, genearte error file
 				if(($erroredControls | Measure-Object).Count -gt 0)
 				{
+                    $nonNullProps=@();
+                    [CsvOutputItem].GetMembers() | Where-Object { $_.MemberType -eq [System.Reflection.MemberTypes]::Property } | ForEach-Object {
+				      $propName = $_.Name;
+				      if(($erroredControls | Where-object { -not [string]::IsNullOrWhiteSpace($_.$propName) } | Measure-object).Count -ne 0)
+				        {
+					        $nonNullProps += $propName;
+				        }
+		 	        };
+                    $nonNullProps += "ErrorDetails"
+                    $csvItems = $erroredControls | Select-Object -Property $nonNullProps
 					$controlCSV = New-Object -TypeName WriteCSVData
 					$controlCSV.FileName = "Controls_NotUpdated_" + $this.RunIdentifier
 					$controlCSV.FileExtension = 'csv'
 					$controlCSV.FolderPath = ''
-					$controlCSV.MessageData = $erroredControls
+					$controlCSV.MessageData = $csvItems
 					$this.PublishAzSKRootEvent([AzSKRootEvent]::WriteCSV, $controlCSV);
 					$this.PublishCustomMessage("[$successCount/$totalCount] user comments have been updated successfully.", [MessageType]::Update);
 					$this.PublishCustomMessage("[$(($erroredControls | Measure-Object).Count)/$totalCount] user comments could not be updated due to an error. See the log file for details.", [MessageType]::Warning);
