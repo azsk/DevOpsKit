@@ -860,9 +860,14 @@ class SVTBase: AzSKRoot
 			$controlSeverityExpiryPeriod = 0
 			$defaultAttestationExpiryInDays = [Constants]::DefaultControlExpiryInDays;
 			$expiryInDays=-1;
-			$controlResult=$eventcontext.ControlResults;	
-			$isControlInGrace=$eventcontext.ControlResults.IsControlInGrace;
-			
+			if(($eventcontext.ControlResults |Measure-Object).Count -gt 0)	
+			{
+				$isControlInGrace=$eventcontext.ControlResults.IsControlInGrace;
+			}
+			else
+			{
+				$isControlInGrace=$true;
+			}
 			if([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays") `
 					-and [Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays,"Default") `
 					-and $this.ControlSettings.AttestationExpiryPeriodInDays.Default -gt 0)
