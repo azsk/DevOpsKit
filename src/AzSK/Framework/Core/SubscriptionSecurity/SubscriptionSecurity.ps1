@@ -276,7 +276,7 @@ class SubscriptionSecurity: CommandBase
 		if ($caAccount) 
 		{
 			#Passing parameter FixRuntimeAccount, RenewCertificate and FixModules as false by default
-			$messages += $caAccount.UpdateAzSKContinuousAssurance($false, $false, $false);
+			$messages += $caAccount.UpdateAzSKContinuousAssurance($false, $false, $false, $false);
 		}
 		return $messages;
     }
