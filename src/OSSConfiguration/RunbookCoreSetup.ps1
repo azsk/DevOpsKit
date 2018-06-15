@@ -346,6 +346,12 @@ function DisableHelperSchedules()
 	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*"} | `
 	Set-AzureRmAutomationSchedule -IsEnabled $false | Out-Null
 }
+function DisableHelperSchedules($excludeSchedule)
+{
+	Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
+	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*" -and $_.Name -ne $excludeSchedule} | `
+	Set-AzureRmAutomationSchedule -IsEnabled $false | Out-Null
+}
 function FindNearestSchedule($intervalInMins)
 {
 	$desiredNextRun = $(get-date).ToUniversalTime().AddMinutes($intervalInMins)
@@ -356,9 +362,12 @@ function FindNearestSchedule($intervalInMins)
 }
 function EnableHelperSchedule($scheduleName)
 {
-	#Disable all schedules and then enable only required schedule
-	DisableHelperSchedules
-	Set-AzureRmAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true -ErrorAction SilentlyContinue| Out-Null
+	#Enable only required schedule and disable others
+	$enabledSchedule = Set-AzureRmAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true -ErrorAction SilentlyContinue
+	if(($enabledSchedule|Measure-Object).Count -gt 0 -and $enabledSchedule.IsEnabled)
+	{
+		DisableHelperSchedules -excludeSchedule $scheduleName
+	}
 	Write-Output ("CS: Scheduled CA helper job :[$scheduleName]")
 }
 function ScheduleNewJob($intervalInMins)
