@@ -157,23 +157,25 @@ class OMSOutput: ListenerBase
 							Set-Variable -Name tempBody -Value $_ -Scope Local
 							$tempBodyObjectsAll.Add($tempBody)
 						}
-					}            
+					}
+					
+					$body = $tempBodyObjectsAll | ConvertTo-Json
+					$omsBodyByteArray = ([System.Text.Encoding]::UTF8.GetBytes($body))
+
+					#publish to primary workspace
+					if(-not [string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId))
+					{
+						[OMSHelper]::PostOMSData($settings.OMSWorkspaceId, $settings.OMSSharedKey, $omsBodyByteArray, $settings.OMSType)
+					}
+
+					#publish to secondary workspace
+					if(-not [string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId))
+					{
+						[OMSHelper]::PostOMSData($settings.AltOMSWorkspaceId, $settings.AltOMSSharedKey, $omsBodyByteArray, $settings.OMSType)
+					}
 				}
 
-                $body = $tempBodyObjectsAll | ConvertTo-Json
-                $omsBodyByteArray = ([System.Text.Encoding]::UTF8.GetBytes($body))
-
-				#publish to primary workspace
-				if(-not [string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId))
-				{
-					[OMSHelper]::PostOMSData($settings.OMSWorkspaceId, $settings.OMSSharedKey, $omsBodyByteArray, $settings.OMSType)
-				}
-
-				#publish to secondary workspace
-				if(-not [string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId))
-				{
-					[OMSHelper]::PostOMSData($settings.AltOMSWorkspaceId, $settings.AltOMSSharedKey, $omsBodyByteArray, $settings.OMSType)
-				}
+                
 			}
 			catch
 			{

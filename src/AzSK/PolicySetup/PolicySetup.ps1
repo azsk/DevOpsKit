@@ -228,7 +228,7 @@ function Update-AzSKOrganizationPolicy
 			{				
 				$moduleName = [Constants]::NewModuleName
 				$policy.OverrideConfiguration = $Override
-				
+				$policy.IsUpdateSwitchOn = $true
 				return $policy.InvokeFunction($policy.InstallPolicy, @($moduleName));
 			}
 		}
