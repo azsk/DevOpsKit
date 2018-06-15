@@ -18,6 +18,7 @@ catch
 . $PSScriptRoot\Models\AzSKGenericEvent.ps1
 . $PSScriptRoot\Models\CommandDetails.ps1
 . $PSScriptRoot\Models\Exception\SuppressedException.ps1
+. $PSScriptRoot\Models\RemoteReports\CsvOutputModel.ps1
 . $PSScriptRoot\Helpers\CommandHelper.ps1
 . $PSScriptRoot\Abstracts\EventBase.ps1
 
