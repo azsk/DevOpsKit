@@ -500,6 +500,11 @@ class PolicySetup: CommandBase
 			throw ([SuppressedException]::new(("Org policy not found under resource group '$($this.ResourceGroupName)'. Please pass 'ResourceGroupName' parameter to command if custom RG name used to setup policy."), [SuppressedExceptionType]::InvalidArgument))
 
 		}
+		if (-not (Test-Path $this.FolderPath))
+		{
+			throw ([SuppressedException]::new(("Policy folder '$($this.FolderPath)'. Please pass 'PolicyFolderPath' parameter to command if custom policy path used to setup policy."), [SuppressedExceptionType]::InvalidArgument))
+		}
+		
 	}
 }
 
