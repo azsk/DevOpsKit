@@ -26,7 +26,9 @@ class SVTCommandBase: CommandBase {
 	hidden [void] GetLocalSubscriptionData()
 	{
         $azskConfig = [ConfigurationManager]::GetAzSKConfigData();
-        if(!$azskConfig.PersistScanReportInSubscription) {return;}
+        $settingPersistScanReportInSubscription = [ConfigurationManager]::GetAzSKSettings().PersistScanReportInSubscription;
+			#return if feature is turned off at server config
+		if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription) {return;}        
         
         if($null -eq $this.complianceReportHelper)
         {

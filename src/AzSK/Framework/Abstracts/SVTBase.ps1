@@ -860,9 +860,14 @@ class SVTBase: AzSKRoot
 			$controlSeverityExpiryPeriod = 0
 			$defaultAttestationExpiryInDays = [Constants]::DefaultControlExpiryInDays;
 			$expiryInDays=-1;
-			$controlResult=$eventcontext.ControlResults;	
-			$isControlInGrace=$eventcontext.ControlResults.IsControlInGrace;
-			
+			if(($eventcontext.ControlResults |Measure-Object).Count -gt 0)	
+			{
+				$isControlInGrace=$eventcontext.ControlResults.IsControlInGrace;
+			}
+			else
+			{
+				$isControlInGrace=$true;
+			}
 			if([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays") `
 					-and [Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays,"Default") `
 					-and $this.ControlSettings.AttestationExpiryPeriodInDays.Default -gt 0)
@@ -1139,9 +1144,10 @@ class SVTBase: AzSKRoot
 	   try
 	    {
 
-			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();			
+			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();	
+			$settingPersistScanReportInSubscription = [ConfigurationManager]::GetAzSKSettings().PersistScanReportInSubscription;
 			#return if feature is turned off at server config
-			if(!$azskConfig.PersistScanReportInSubscription) {return;}
+			if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription) {return;}
 
 	   		if($null -ne $this.StorageReportData -and $null -ne $this.StorageReportData.ScanDetails)
 			{
