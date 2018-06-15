@@ -121,10 +121,6 @@ class PolicySetup: CommandBase
 				}
 			}
 		}
-		if([string]::IsNullOrWhiteSpace($this.AppInsightName))
-		{
-			throw ([SuppressedException]::new(("You need to pass valid value for AppInsightsName param. They are either null or empty."), [SuppressedExceptionType]::NullArgument))
-		}
 		if( [string]::IsNullOrWhiteSpace($resourceGroupLocation))
 		{
 			$azskRG = @();
@@ -385,6 +381,10 @@ class PolicySetup: CommandBase
 
 	[MessageData[]] InstallPolicy($moduleName)
     {
+		if($this.IsUpdateSwitchOn)
+		{
+			$this.ValidatePolicyExists()
+		}
 		$this.AppInsightInstance.CreateAppInsightIfNotExists();
 		$container = $this.StorageAccountInstance.CreateStorageContainerIfNotExists($this.InstallerContainerName, [BlobContainerPublicAccessType]::Blob);
 		if($container -and $container.CloudBlobContainer)
@@ -489,6 +489,17 @@ class PolicySetup: CommandBase
 			$this.PublishCustomMessage("https://ms.portal.azure.com/#$($tenantId)/dashboard/arm/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($this.ResourceGroupName)/providers/microsoft.portal/dashboards/devopskitmonitoring",[MessageType]::Update)
 		}
 		
+	}
+
+	[void] ValidatePolicyExists()
+	{
+		$OrgPolicyRG = Get-AzureRmResourceGroup -Name $this.ResourceGroupName -ErrorAction SilentlyContinue
+
+		if(-not $OrgPolicyRG)
+		{
+			throw ([SuppressedException]::new(("Org policy not found under resource group '$OrgPolicyRG'. Please pass 'ResourceGroupName' parameter to command if custom RG name used to setup policy."), [SuppressedExceptionType]::InvalidArgument))
+
+		}
 	}
 }
 

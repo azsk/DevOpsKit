@@ -327,18 +327,14 @@ class CommandBase: AzSKRoot {
 			  {
 				if($AzSKConfigData.PolicyOrgName -eq "org-neutral")
 				{
-					throw [SuppressedException]::new("DevOps Kit was configured to run with '$OrgName' policy for this subscription. However, the current command is using '$($AzSKConfigData.PolicyOrgName)' (generic) policy.
-					Please contact your organization policy owner ($($SubOrgTag.Value)) for correcting the policy setup. Refer: https://aka.ms/devopskit/orgpolicy/faq",[SuppressedExceptionType]::Generic)
+					throw [SuppressedException]::new("DevOps Kit was configured to run with '$OrgName' policy for this subscription. However, the current command is using '$($AzSKConfigData.PolicyOrgName)' (generic) policy.`nPlease contact your organization policy owner ($($SubOrgTag.Value)) for correcting the policy setup. Refer: https://aka.ms/devopskit/orgpolicy/faq",[SuppressedExceptionType]::Generic)
 					
 				}
 				else
 				{	
 					if(-not $Force)
 					{
-						$this.PublishCustomMessage("Warning: DevOps Kit was configured to run with '$($AzSKConfigData.PolicyOrgName)' policy for this subscription. However, the current command is using '$OrgName' policy. 
-						`nPlease contact your organization policy owner ('$($SubOrgTag.Value)') for correcting the policy setup. `nIf you want to switch the subscription to '$($AzSKConfigData.PolicyOrgName)', run Set-AzSKSubscriptionSecurity or Update-AzSKSubscriptionSecurity with -Force parameter. For more details refer: https://aka.ms/devopskit/orgpolicy/faq",[MessageType]::Warning);
-						
-
+						$this.PublishCustomMessage("Warning: DevOps Kit was configured to run with '$OrgName' policy for this subscription. However, the current command is using '$($AzSKConfigData.PolicyOrgName)' policy.`nPlease contact your organization policy owner ('$($SubOrgTag.Value)') for correcting the policy setup. `nIf you want to switch the subscription to '$($AzSKConfigData.PolicyOrgName)', run Set-AzSKSubscriptionSecurity or Update-AzSKSubscriptionSecurity with -Force parameter. For more details refer: https://aka.ms/devopskit/orgpolicy/faq",[MessageType]::Warning);
 						$IsTagSettingRequired = $false
 					}					
 				}
