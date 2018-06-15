@@ -259,10 +259,9 @@ class WriteSummaryFile: FileOutputBase
 		$scanKind = [ServiceScanKind]::Partial;
 
 		$filteredResoruces = $null
-		# ToDo: Need disable comment, should be run while CA
 		# ToDo: Resource inventory helper
-		# if($scanSource -eq [ScanSource]::Runbook) 
-		# { 
+		 if($scanSource -eq [ScanSource]::Runbook) 
+		 { 
 			$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
 			$resources.ResourceGroups = [System.Collections.ArrayList]::new()
 			# ToDo: cache this properties as AzSKRoot.
@@ -271,7 +270,7 @@ class WriteSummaryFile: FileOutputBase
 			# Not considering nested resources to reduce complexity
 			$filteredResoruces = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }
 			
-		# }
+		 }
 
 		# check for more than one record condition has been already implemented in parent function
 		$subId = $svtEventContextResults[0].SubscriptionContext.SubscriptionId

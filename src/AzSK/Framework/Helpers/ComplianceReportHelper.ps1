@@ -238,7 +238,6 @@ class ComplianceReportHelper
 			}
 			catch
 			{
-				[EventBase]::PublishGenericCustomMessage(($currentScanResult | Format-List | Out-String), [MessageType]::Default)
 				[EventBase]::PublishGenericException($_);
 			}
 		}
