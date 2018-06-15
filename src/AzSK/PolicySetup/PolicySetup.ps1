@@ -186,7 +186,7 @@ function Update-AzSKOrganizationPolicy
 		[string]
 		$MigrationScriptPath,
 
-		[ValidateSet("Installer", "CARunbooks", "AzSKRootConfig","MonitoringDashboard","OrgAzSKVersion", "All")]
+		[ValidateSet("CARunbooks", "AzSKRootConfig","MonitoringDashboard","OrgAzSKVersion", "All")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Override base configurations setup by AzSK.")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Override base configurations setup by AzSK.")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Migrate", HelpMessage = "Override base configurations setup by AzSK.")] 
@@ -223,10 +223,10 @@ function Update-AzSKOrganizationPolicy
 				$newPolicy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName, $ResourceGroupName, $StorageAccountName, $AppInsightName, $computedAppInsightLocation, $computedRGLocation,$MonitoringDashboardLocation, $PolicyFolderPath, [Constants]::NewModuleName);	
 				return $newPolicy.InvokeFunction($newPolicy.MigratePolicy, @($oldPolicy));
 			}			
-			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $AppInsightLocation, $ResourceGroupLocation,$MonitoringDashboardLocation, $PolicyFolderPath, [Constants]::NewModuleName);
+			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $AppInsightLocation, $ResourceGroupLocation,$MonitoringDashboardLocation, $PolicyFolderPath, [Constants]::AzSKModuleName);
 			if ($policy) 
 			{				
-				$moduleName = [Constants]::NewModuleName
+				$moduleName = [Constants]::AzSKModuleName
 				$policy.OverrideConfiguration = $Override
 				$policy.IsUpdateSwitchOn = $true
 				return $policy.InvokeFunction($policy.InstallPolicy, @($moduleName));
