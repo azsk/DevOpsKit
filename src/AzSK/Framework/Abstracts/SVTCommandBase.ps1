@@ -21,6 +21,8 @@ class SVTCommandBase: CommandBase {
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
         $this.CheckAndDisableAzureRMTelemetry()
+		#fetch the compliancedata from subscription
+        $this.GetLocalSubscriptionData(); 
     }
 
 	hidden [void] GetLocalSubscriptionData()
@@ -70,8 +72,6 @@ class SVTCommandBase: CommandBase {
         #check and delete if older RG found. Remove this code post 8/15/2018 release
         $this.RemoveOldAzSDKRG();
 
-        #fetch the compliancedata from subscription
-        $this.GetLocalSubscriptionData();
 
         $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
@@ -111,7 +111,8 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
         # ToDo: remove InvocationContext, try to pass as param
-        # ToDo: Assumption: usercomment will only work when storage report feature flag is enable.        
+        # ToDo: Assumption: usercomment will only work when storage report feature flag is enable.  
+		     
 		$svtObject.StorageReportData = $this.StorageReportData
 
         #Include Server Side Exclude Tags
