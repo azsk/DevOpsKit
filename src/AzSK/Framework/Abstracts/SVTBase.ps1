@@ -1139,9 +1139,10 @@ class SVTBase: AzSKRoot
 	   try
 	    {
 
-			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();			
+			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();	
+			$settingPersistScanReportInSubscription = [ConfigurationManager]::GetAzSKSettings().PersistScanReportInSubscription;
 			#return if feature is turned off at server config
-			if(!$azskConfig.PersistScanReportInSubscription) {return;}
+			if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription) {return;}
 
 	   		if($null -ne $this.StorageReportData -and $null -ne $this.StorageReportData.ScanDetails)
 			{

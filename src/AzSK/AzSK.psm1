@@ -312,7 +312,15 @@ function Set-AzSKUserPreference {
 
         [switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
-		$DoNotOpenOutputFolder
+        $DoNotOpenOutputFolder,
+
+        [switch]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to enable storage of compliance report data at subscription.")]
+        $PersistScanReportInSubscription,
+
+        [switch]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to disable storage of compliance report data at subscription.")]
+        $DisablePersistScanReportInSubscription
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
@@ -320,26 +328,33 @@ function Set-AzSKUserPreference {
     }
     Process {
         try {
+            $azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
             if ($ResetOutputFolderPath) {
-                $azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
+                
                 $azskSettings.OutputFolderPath = "";
-                [ConfigurationManager]::UpdateAzSKSettings($azskSettings);
                 [EventBase]::PublishGenericCustomMessage("Output folder path has been reset successfully");
             }
             elseif (-not [string]::IsNullOrWhiteSpace($OutputFolderPath)) {
-                if (Test-Path -Path $OutputFolderPath) {
-                    $azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
+                if (Test-Path -Path $OutputFolderPath) {                    
                     $azskSettings.OutputFolderPath = $OutputFolderPath;
-                    [ConfigurationManager]::UpdateAzSKSettings($azskSettings);
                     [EventBase]::PublishGenericCustomMessage("Output folder path has been changed successfully");
                 }
                 else {
                     [EventBase]::PublishGenericCustomMessage("The specified path does not exist", [MessageType]::Error);
                 }
             }
-            else {
-                [EventBase]::PublishGenericCustomMessage("The specified path is null or empty", [MessageType]::Error);
+            
+            if($PersistScanReportInSubscription)
+            {
+                $azskSettings.PersistScanReportInSubscription = $true;
             }
+            if($DisablePersistScanReportInSubscription)
+            {
+                $azskSettings.PersistScanReportInSubscription = $false;
+            }
+            
+            [ConfigurationManager]::UpdateAzSKSettings($azskSettings);
+            [EventBase]::PublishGenericCustomMessage("Successfully set user preference");
         }
         catch {
             [EventBase]::PublishGenericException($_);

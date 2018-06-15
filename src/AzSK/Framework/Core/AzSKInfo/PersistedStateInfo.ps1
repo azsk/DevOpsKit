@@ -26,7 +26,9 @@ class PersistedStateInfo: CommandBase
 		try
 		{
 			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
-			if(!$azskConfig.PersistScanReportInSubscription) 
+			$settingPersistScanReportInSubscription = [ConfigurationManager]::GetAzSKSettings().PersistScanReportInSubscription;
+			#return if feature is turned off at server config
+			if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription) 			
 			{
 				$this.PublishCustomMessage("NOTE: This feature is currently disabled in your environment. Please contact the cloud security team for your org's ", [MessageType]::Warning);	
 				return $messages;
