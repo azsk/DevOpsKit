@@ -224,7 +224,7 @@ function RunAzSKScanForASub
 	Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
     $serviceScanTimer = [System.Diagnostics.Stopwatch]::StartNew();
     PublishEvent -EventName "CA Scan Services Started"
-    $svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $ResourceGroupNames -ExcludeTags "OwnerAccess" -UsePartialCommits
+    $svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $ResourceGroupNames -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
    
     #---------------------------Check resources scan status--------------------------------------------------------------
     if ([string]::IsNullOrWhiteSpace($svtResultPath)) 

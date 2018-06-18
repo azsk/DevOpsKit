@@ -281,18 +281,19 @@ class ComplianceReportHelper
 				}
 			}
 		}
-		# Resources obj consist of compliance snapshot data.
 		
-
-		if($subscription.ScanDetails.Resources.Count -gt 0)
-		{
-			$resources | ForEach-Object {
-				$resource = $_
+		# Remove updated objects from existing compliance data
+		$resources | ForEach-Object {
+			$resource = $_
+			if($null -ne $subscription.ScanDetails.Resources -and $subscription.ScanDetails.Resources.Count -gt 0)
+			{
 				$subscription.ScanDetails.Resources = $subscription.ScanDetails.Resources | Where-Object { $_.ResourceId -ne $resource.ResourceId }
 			}
 		}
 		
+		# append new updated objects
 		$subscription.ScanDetails.Resources += $resources
+		
 		if($null -ne $complianceReport)
 		{
 			$complianceReport.Subscriptions = $complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -ne $subscription.SubscriptionId }
