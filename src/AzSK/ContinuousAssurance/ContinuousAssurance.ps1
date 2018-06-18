@@ -182,6 +182,22 @@ function Install-AzSKContinuousAssurance
 	{
 		try 
 		{
+			$isDefaultRGNameUsed = ![string]::IsNullOrWhiteSpace($AutomationAccountRGName) -and $AutomationAccountRGName -eq [UserSubscriptionDataHelper]::GetUserSubscriptionRGName()
+			$isDefaultCANameUsed = ![string]::IsNullOrWhiteSpace($AutomationAccountName) -and $AutomationAccountName -eq [UserSubscriptionDataHelper]::GetCAName()
+			$errMsg = ""
+			if($isDefaultRGNameUsed)
+			{
+				$errMsg = "The specified 'AutomationAccountRGName' parameter value is reserved for toolkit use."
+			}
+			if($isDefaultCANameUsed)
+			{
+				$errMsg += "`r`nThe specified 'AutomationAccountName' parameter value is reserved for toolkit use."
+			}
+			if(![string]::IsNullOrWhiteSpace($errMsg))
+			{
+				$errMsg += "`r`nPlease use different (unique) names for CA account and/or resource group."
+				throw ([SuppressedException]::new(($errMsg), [SuppressedExceptionType]::InvalidOperation))
+			}
 			$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation,`
 				$AutomationAccountLocation, $AutomationAccountRGName, $AutomationAccountName, $ResourceGroupNames,`
 				$AzureADAppName, $ScanIntervalInHours);
