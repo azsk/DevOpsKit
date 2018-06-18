@@ -198,12 +198,6 @@ class CCAutomation: CommandBase
 		try
 		{
 			#region :validation/RG creation
-			$isValid = ($this.AutomationAccount.ResourceGroup -eq [UserSubscriptionDataHelper]::GetUserSubscriptionRGName() -and $this.AutomationAccount.Name -eq [UserSubscriptionDataHelper]::GetCAName()) -or `
-			($this.AutomationAccount.ResourceGroup -ne [UserSubscriptionDataHelper]::GetUserSubscriptionRGName() -and $this.AutomationAccount.Name -ne [UserSubscriptionDataHelper]::GetCAName())
-			if(!$isValid)
-			{
-				throw ([SuppressedException]::new(("The specified 'AutomationAccountName' and/or 'AutomationAccountRGName' parameter values are reserved for toolkit use. `r`nPlease use different (unique) names for CA account and/or resource group."), [SuppressedExceptionType]::InvalidOperation))
-			}
 			if(!$this.IsCAInstallationValid())
 			{
 				$this.cleanupFlag = $false
