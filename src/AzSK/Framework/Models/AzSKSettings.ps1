@@ -59,7 +59,7 @@ class AzSKSettings {
 		#-------- AzSK rename code change--------#
 		$localAppDataSettings = $null
 
-		# AzSDK cleanup on local machine for Local settings folder
+		# TBR : AzSDK cleanup on local machine for Local settings folder
 		$AzSDKAppFolderPath = $Env:LOCALAPPDATA + "\Microsoft\" + "AzSDK*"
 		if(Test-Path -Path $AzSDKAppFolderPath)
 		{
