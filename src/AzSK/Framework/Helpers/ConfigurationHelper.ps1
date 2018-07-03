@@ -271,21 +271,4 @@ class ConfigurationHelper {
 			return $false
 		}
 	}
-
-	hidden static [PSObject] LoadOldOfflineConfigFile([string] $fileName)
-	{
-		$oldRootConfigPath = [OldConstants]::AppFolderPath + "\" ;
-		$oldFilePath = $null
-		$fileContent = $null
-		if(Test-Path -Path $oldRootConfigPath)
-		{
-			$oldFilePath = (Get-ChildItem $oldRootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
-		}
-		if ($oldFilePath) 
-		{
-			#load old config
-			$fileContent = (Get-Content -Raw -Path ($oldRootConfigPath + $oldFilePath)) | ConvertFrom-Json
-		}
-		return $fileContent;
-	}
 }

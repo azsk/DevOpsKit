@@ -421,11 +421,6 @@ class CCAutomation: CommandBase
 			"You may subsequently update any of the parameters specified during installation using the '$($this.updateCommandName)' command. If you specified '*' for resource groups, new resource groups will be automatically picked up for scanning.`r`n"+
 			"You should use the AzSK OMS solution to monitor your subscription and resource health status.`r`n",[MessageType]::Update)
 			$messages += [MessageData]::new("The following resources were created in resource group: ["+$this.AutomationAccount.ResourceGroup+"] as part of Continuous Assurance",$this.OutputObject)
-
-			#-------- #AzSK TBR--------#
-			#[MigrationHelper]::TryMigration($this.SubscriptionContext,$this.invocationContext,$false)
-			#------------------------------#
-
 		}
 		catch
 		{

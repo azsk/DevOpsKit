@@ -36,8 +36,6 @@ class PolicySetup: CommandBase
 	hidden [string] $InstallerFile;
 
 	hidden [string] $IWRCommand;
-	hidden [string] $MigrationScriptPath = [string]::Empty
-	hidden [bool] $IsMigrationOn = $false
 	hidden [bool] $IsUpdateSwitchOn = $false
 
 	hidden [OverrideConfigurationType] $OverrideConfiguration = [OverrideConfigurationType]::None
@@ -46,15 +44,6 @@ class PolicySetup: CommandBase
         Base($subscriptionId, $invocationContext)
     {
 		$this.CreateInstance($subscriptionId, $orgName, $departmentName, $resourceGroupName, $storageAccountName, $appInsightName, $appInsightLocation, $resourceGroupLocation,$MonitoringDashboardLocation, $localPolicyFolderPath, $moduleName);
-		if($null -ne $this.InvocationContext.BoundParameters["MigrationScriptPath"])
-		{
-			$this.MigrationScriptPath = $this.InvocationContext.BoundParameters["MigrationScriptPath"];
-		}
-		if($null -ne $this.InvocationContext.BoundParameters["Migrate"])
-		{
-			$this.IsMigrationOn = $true;
-		}
-		
 	}
 
 	[void] CreateInstance([string] $subscriptionId, [string] $orgName, [string] $departmentName, [string] $resourceGroupName, [string] $storageAccountName, [string] $appInsightName, [string] $appInsightLocation, [string] $resourceGroupLocation,[string] $MonitoringDashboardLocation, [string] $localPolicyFolderPath, [string] $moduleName)
@@ -228,36 +217,6 @@ class PolicySetup: CommandBase
 			$azskOverride.UpdatePropertyValue("AzSKConfigURL",$this.AzSKConfigURL)
 			$azskOverride.WriteToFolder($this.ConfigFolderPath);
 		}
-		elseif($this.IsMigrationOn)
-		{
-			$azskOverride = [ConfigOverride]::new($this.ConfigFolderPath,"AzSK.json");
-			if([Helpers]::CheckMember($azskOverride.ParsedFile, "PolicyMessage"))
-			{
-				$PolicyMessage = $azskOverride.ParsedFile.PolicyMessage
-				$PolicyMessage = $PolicyMessage.Replace($([Constants]::OldModuleName),$moduleName)
-				$azskOverride.UpdatePropertyValue("PolicyMessage", $PolicyMessage);
-			}
-			
-			if(-not [string]::IsNullOrWhiteSpace($this.IWRCommand))
-			{
-				$azskOverride.UpdatePropertyValue("InstallationCommand", $this.IWRCommand);
-			}
-
-			if($this.AppInsightInstance -and $this.AppInsightInstance.AppInsightInstance -and $this.AppInsightInstance.AppInsightInstance.Properties)
-			{
-				$azskOverride.UpdatePropertyValue("ControlTelemetryKey", $this.AppInsightInstance.AppInsightInstance.Properties.InstrumentationKey);
-				$azskOverride.UpdatePropertyValue("EnableControlTelemetry", "true");
-			}
-			if(-not [string]::IsNullOrEmpty($this.CASetupRunbookURL))
-			{
-				$azskOverride.UpdatePropertyValue("CASetupRunbookURL",$this.CASetupRunbookURL)
-			}
-			$azskOverride.UpdatePropertyValue("PolicyOrgName",$this.OrgFullName)
-			$azskOverride.UpdatePropertyValue("AzSKConfigURL",$this.AzSKConfigURL)
-			$azskOverride.WriteToFolder($this.ConfigFolderPath);
-		}
-
-
 
 		#Dynamically get list of files available in folder
 		$metadataFileNames += Get-ChildItem $this.ConfigFolderPath -Recurse -Force |
@@ -439,16 +398,8 @@ class PolicySetup: CommandBase
 		$OPolicyInstance = $OldPolicyInstance
 		$PolicyInstance = $this	
 		$this.PublishAzSKRootEvent([AzSKRootEvent]::PolicyMigrationCommandStarted, $this.OrgFullName);
-		
-		if(-not [string]::IsNullOrEmpty($this.MigrationScriptPath))
-		{
-			& $this.MigrationScriptPath
-		}
-		else
-		{
-			$mgrationScript = $this.LoadServerConfigFile("PolicyMigration.ps1")			
-			Invoke-Expression $mgrationScript
-		}
+		$mgrationScript = $this.LoadServerConfigFile("PolicyMigration.ps1")			
+		Invoke-Expression $mgrationScript
 		$this.PublishAzSKRootEvent([AzSKRootEvent]::PolicyMigrationCommandCompleted, $this.OrgFullName);
 	}
 
