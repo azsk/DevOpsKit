@@ -66,7 +66,7 @@ class ComplianceInfo: CommandBase
 			try
 			{
 				#need to handle the enums case specifically, as checkmember fails to recognize enums
-				if([Helpers]::CheckMember($scannedControlResult,$property.Name) -or $property.Name -eq "VerificationResult" -or $property.Name -eq "AttestationStatus" -or $property.Name -eq "ControlSeverity" -or $property.Name -eq "ScanSource")
+				if([Helpers]::CheckMember($scannedControlResult,$property.Name) -or $property.Name -in ("VerificationResult","ActualVerificationResult","AttestationStatus","ControlSeverity","ScanSource"))
 				{
 					$propValue= $scannedControlResult | Select-Object -ExpandProperty $property.Name
 					if([Constants]::AzSKDefaultDateTime -eq $propValue)
