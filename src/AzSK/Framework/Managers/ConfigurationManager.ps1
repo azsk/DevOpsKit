@@ -57,17 +57,7 @@ class ConfigurationManager
 		{
 			$extensionSVTClassFileName = $svtClassName + ".ext.ps1";
 			try {
-                $localExtensionsFolderPath = [Constants]::AzSKExtensionsFolderPath;
-                if(-not (Test-Path -Path $localExtensionsFolderPath))
-                {
-                    mkdir -Path $localExtensionsFolderPath -Force
-                }
-                $extensionScriptCode = [ConfigurationManager]::LoadServerFileRaw($extensionSVTClassFileName);
-                if(-not [string]::IsNullOrWhiteSpace($extensionScriptCode))
-                {
-                    $extensionFilePath = "$([Constants]::AzSKExtensionsFolderPath)\$extensionSVTClassFileName";
-                    Out-File -InputObject $extensionScriptCode -Force -FilePath $extensionFilePath -Encoding utf8;                                                                            
-                }
+				$extensionFilePath = [ConfigurationManager]::DownloadExtFile($extensionSVTClassFileName)
 			}
 			catch {
 				Write-host $_;
@@ -89,19 +79,14 @@ class ConfigurationManager
 					{
 						$listenerFileName = $_.Name
 						try {
-							$localExtensionsFolderPath = [Constants]::AzSKExtensionsFolderPath;
-							if(-not (Test-Path -Path $localExtensionsFolderPath))
-							{
-								mkdir -Path $localExtensionsFolderPath -Force
-							}
-							$extensionScriptCode = [ConfigurationManager]::LoadServerFileRaw($listenerFileName);
-							$extensionFilePath = "$([Constants]::AzSKExtensionsFolderPath)\$listenerFileName";
-							Out-File -InputObject $extensionScriptCode -Force -FilePath $extensionFilePath -Encoding utf8;
-
-							. $extensionFilePath 
 							
-							$listenerFileName = $listenerFileName.trimend(".ext.ps1") + "Ext"
-							Invoke-Expression "[$listenerFileName]::GetInstance().RegisterEvents();"
+							$extensionFilePath = [ConfigurationManager]::DownloadExtFile($listenerFileName)
+							
+							# file has to be loaded here due to scope constraint
+							. $extensionFilePath
+							
+							$listenerClassName = $listenerFileName.trimend(".ext.ps1") + "Ext"
+							Invoke-Expression "[$listenerClassName]::GetInstance().RegisterEvents();"
 						}
 						catch {
 							Write-host $_;
@@ -123,19 +108,14 @@ class ConfigurationManager
 					{
 						$listenerFileName = $_.Name
 						try {
-							$localExtensionsFolderPath = [Constants]::AzSKExtensionsFolderPath;
-							if(-not (Test-Path -Path $localExtensionsFolderPath))
-							{
-								mkdir -Path $localExtensionsFolderPath -Force
-							}
-							$extensionScriptCode = [ConfigurationManager]::LoadServerFileRaw($listenerFileName);
-							$extensionFilePath = "$([Constants]::AzSKExtensionsFolderPath)\$listenerFileName";
-							Out-File -InputObject $extensionScriptCode -Force -FilePath $extensionFilePath -Encoding utf8;
-
-							. $extensionFilePath 
 							
-							$listenerFileName = $listenerFileName.trimend(".ext.ps1") + "Ext"
-							Invoke-Expression "[$listenerFileName]::GetInstance().UnregisterEvents();"
+							$extensionFilePath = [ConfigurationManager]::DownloadExtFile($listenerFileName)
+							
+							# file has to be loaded here due to scope constraint
+							. $extensionFilePath
+
+							$listenerClassName = $listenerFileName.trimend(".ext.ps1") + "Ext"
+							Invoke-Expression "[$listenerClassName]::GetInstance().UnregisterEvents();"
 						}
 						catch {
 							Write-host $_;
@@ -145,4 +125,25 @@ class ConfigurationManager
 			}
 		}
     }
+
+	hidden static [string] DownloadExtFile([string] $fileName)
+	{
+		$localExtensionsFolderPath = [Constants]::AzSKExtensionsFolderPath;
+		$extensionFilePath = ""
+
+		if(-not (Test-Path -Path $localExtensionsFolderPath))
+		{
+			mkdir -Path $localExtensionsFolderPath -Force
+		}
+		
+		$extensionScriptCode = [ConfigurationManager]::LoadServerFileRaw($fileName);
+		
+		if(-not [string]::IsNullOrWhiteSpace($extensionScriptCode))
+        {
+			$extensionFilePath = "$([Constants]::AzSKExtensionsFolderPath)\$fileName";
+            Out-File -InputObject $extensionScriptCode -Force -FilePath $extensionFilePath -Encoding utf8;       
+		}
+
+		return $extensionFilePath
+	}
 }
