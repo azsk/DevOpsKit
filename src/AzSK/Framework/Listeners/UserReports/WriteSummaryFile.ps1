@@ -235,13 +235,7 @@ class WriteSummaryFile: FileOutputBase
 
 	[void] PersistScanDataToStorage($svtEventContextResults, $scannerVersion)
 	{
-		$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
-		$settingPersistScanReportInSubscription = [ConfigurationManager]::GetAzSKSettings().PersistScanReportInSubscription;
-			#return if feature is turned off at server config
-		if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription) {return;}
 		
-
-		# ToDo: Can we use here [RemoteReportHelper]??
 		$scanSource = [RemoteReportHelper]::GetScanSource();
 		$scannerVersion = $scannerVersion
 

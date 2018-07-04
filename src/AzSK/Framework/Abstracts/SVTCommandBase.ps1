@@ -16,7 +16,8 @@ class SVTCommandBase: CommandBase {
     [AttestationOptions] $AttestationOptions;
     hidden [LSRSubscription] $StorageReportData;
     hidden [ComplianceReportHelper] $complianceReportHelper = $null;
-
+    hidden [ComplianceBase] $ComplianceBase = $null;
+    
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
@@ -27,11 +28,11 @@ class SVTCommandBase: CommandBase {
 
 	hidden [void] GetLocalSubscriptionData()
 	{
-        $azskConfig = [ConfigurationManager]::GetAzSKConfigData();
-        $settingPersistScanReportInSubscription = [ConfigurationManager]::GetAzSKSettings().PersistScanReportInSubscription;
-			#return if feature is turned off at server config
-		if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription) {return;}        
-        
+        $azskConfig = [ConfigurationManager]::GetAzSKConfigData();	
+        $settingStoreComplianceSummaryInUserSubscriptions = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
+        #return if feature is turned off at server config
+        if(-not $azskConfig.StoreComplianceSummaryInUserSubscriptions -and -not $settingStoreComplianceSummaryInUserSubscriptions) {return;}        
+    
         if($null -eq $this.complianceReportHelper)
         {
 		    $this.complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId);
@@ -71,8 +72,13 @@ class SVTCommandBase: CommandBase {
         
         #check and delete if older RG found. Remove this code post 8/15/2018 release
         $this.RemoveOldAzSDKRG();
-
-
+        #Create necessary resources to save compliance data in user's subscription
+        if($this.IsLocalComplianceStoreEnabled)
+        {
+            $this.ComplianceBase = [ComplianceBase]::new($this.SubscriptionContext);
+            #below function will upgrade blob storage to general purpose V2 if required
+            $this.ComplianceBase.CreateComplianceStateTableIfNotExists()
+        }
         $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
 

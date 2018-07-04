@@ -1,33 +1,18 @@
 Set-StrictMode -Version Latest
 
-class ComplianceReportHelper
+class ComplianceReportHelper: ComplianceBase
 {
-	
-	hidden [StorageHelper] $azskStorageInstance;
-	hidden [int] $retryCount = 3;
-	hidden [string] $subscriptionId;
-    
-    ComplianceReportHelper([string] $subId)
+    hidden [string] $ScanSource
+	hidden [System.Version] $ScannerVersion
+	hidden [string] $ScanKind 
+
+    ComplianceReportHelper([SubscriptionContext] $subscriptionContext,[System.Version] $ScannerVersion):
+    Base([SubscriptionContext] $subscriptionContext) 
 	{
-		$this.subscriptionId = $subId;
-		$this.CreateComplianceReportContainer();
+		$this.ScanSource = [RemoteReportHelper]::GetScanSource();
+		$this.ScannerVersion = $ScannerVersion
+		$this.ScanKind = [ServiceScanKind]::Partial;
 	} 
-	
-	hidden [void] CreateComplianceReportContainer()
-	{
-		try {
-			$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-			$azskStorageAccount = Find-AzureRmResource -ResourceNameContains $([Constants]::StorageAccountPreName) -ResourceGroupNameEquals $azskRGName -ResourceType 'Microsoft.Storage/storageAccounts'
-			if($azskStorageAccount)
-			{
-				$this.azskStorageInstance = [StorageHelper]::new($this.subscriptionId, $azskRGName,$azskStorageAccount.Location, $azskStorageAccount.Name);
-				$this.azskStorageInstance.CreateStorageContainerIfNotExists([Constants]::ComplianceReportContainerName);		
-			}	
-		}
-		catch {
-			#exception will be thrown if it fails to access or create the snapshot container
-		}		
-	}
     
     hidden [LocalSubscriptionReport] GetLocalSubscriptionScanReport()
 	{
@@ -49,7 +34,7 @@ class ComplianceReportHelper
             }
 
 			$this.azskStorageInstance.DownloadFilesFromBlob($ContainerName, $complianceReportBlobName, $AzSKTemp, $true);
-            $fileName = $AzSKTemp+"\"+$this.subscriptionId +".json";
+            $fileName = $AzSKTemp+"\"+$this.SubscriptionContext.SubscriptionId +".json";
 			$StorageReportJson = $null;
 			try
 			{
@@ -115,7 +100,7 @@ class ComplianceReportHelper
 				Remove-Item -Path "$AzSKTemp\*" -Force -Recurse 
 			}
 
-			$fileName = "$AzSKTemp\" + $this.subscriptionId +".json"
+			$fileName = "$AzSKTemp\" + $this.SubscriptionContext.SubscriptionId +".json"
 			$compressedFileName = "$AzSKTemp\" + [Constants]::ComplianceReportBlobName +".zip"
 			$ContainerName = [Constants]::ComplianceReportContainerName;
 
@@ -134,8 +119,7 @@ class ComplianceReportHelper
 			[Helpers]::CleanupLocalFolder([Constants]::AzSKAppFolderPath + [Constants]::ComplianceReportPath);
 		}
     }		
-
-	hidden [LocalSubscriptionReport] MergeSVTScanResult($currentScanResults, $resourceInventory, $scanSource, $scannerVersion, $scanKind)
+	hidden [LocalSubscriptionReport] MergeSVTScanResult($currentScanResults, $resourceInventory)
 	{
 		if($currentScanResults.Count -lt 1) { return $null}
 
@@ -145,13 +129,13 @@ class ComplianceReportHelper
 		$subscription = [LSRSubscription]::new()
 		[LSRResources[]] $resources = @()
 
-		if($null -ne $complianceReport -and (($complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $this.subscriptionId }) | Measure-Object).Count -gt 0)
+		if($null -ne $complianceReport -and (($complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId }) | Measure-Object).Count -gt 0)
 		{
-			$subscription = $complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $this.subscriptionId }
+			$subscription = $complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -eq $this.SubscriptionContext.SubscriptionId }
 		}
 		else
 		{
-			$subscription.SubscriptionId = $this.subscriptionId
+			$subscription.SubscriptionId = $this.SubscriptionContext.SubscriptionId
 			$subscription.SubscriptionName = $SVTEventContextFirst.SubscriptionContext.SubscriptionName
 		}
 
@@ -176,19 +160,19 @@ class ComplianceReportHelper
 						if((($matchedControlResults) | Measure-Object).Count -gt0)
 						{
 							$_complianceSubResult = $matchedControlResults
-							$svtResults = $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_complianceSubResult, $true)
+							$svtResults = $this.ConvertScanResultToSnapshotResult($currentScanResult, $_complianceSubResult, $true)
 
 							$subscription.ScanDetails.SubscriptionScanResult = $subscription.ScanDetails.SubscriptionScanResult | Where-Object {$_.ControlIntId -ne $currentScanResult.ControlItem.Id }
 							$subscription.ScanDetails.SubscriptionScanResult += $svtResults
 						}
 						else
 						{
-							$subscription.ScanDetails.SubscriptionScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $true)
+							$subscription.ScanDetails.SubscriptionScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $null, $true)
 						}
 					}
 					else
 					{
-						$subscription.ScanDetails.SubscriptionScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $true)
+						$subscription.ScanDetails.SubscriptionScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $null, $true)
 					}
 				}
 				elseif($currentScanResult.FeatureName -ne "AzSKCfg")
@@ -204,13 +188,13 @@ class ComplianceReportHelper
 						if((($matchedControlResults) | Measure-Object).Count -gt 0)
 						{
 							$_complianceResResult = $matchedControlResults
-							$svtResults = $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $_complianceResResult, $false)
+							$svtResults = $this.ConvertScanResultToSnapshotResult($currentScanResult, $_complianceResResult, $false)
 							$resource.ResourceScanResult = $resource.ResourceScanResult | Where-Object { $_.ControlIntId -ne $_complianceResResult[0].ControlIntId }
 							$resource.ResourceScanResult += $svtResults
 						}
 						else
 						{
-							$resource.ResourceScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $false)
+							$resource.ResourceScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $null, $false)
 						}
 
 						$tmpResources = $resources | Where-Object {$_.ResourceId -ne $resource.ResourceId } 
@@ -231,7 +215,7 @@ class ComplianceReportHelper
 						# ToDo: Need to confirm
 						# $resource.ResourceMetadata = [Helpers]::ConvertToJsonCustomCompressed($currentScanResult.ResourceContext.ResourceMetadata)
 						$resource.FeatureName = $currentScanResult.FeatureName
-						$resource.ResourceScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $scanSource, $scannerVersion, $scanKind, $null, $false)
+						$resource.ResourceScanResult += $this.ConvertScanResultToSnapshotResult($currentScanResult, $null, $false)
 						$resources += $resource
 					}
 				}
@@ -308,7 +292,7 @@ class ComplianceReportHelper
 		return $complianceReport
 	}
 	
-	hidden [LSRControlResultBase[]] ConvertScanResultToSnapshotResult($svtResult, $scanSource, $scannerVersion, $scanKind, $oldResult, $isSubscriptionScan)
+	hidden [LSRControlResultBase[]] ConvertScanResultToSnapshotResult($svtResult, $oldResult, $isSubscriptionScan)
 	{
 		[LSRControlResultBase[]] $scanResults = @();	
 
@@ -357,9 +341,9 @@ class ComplianceReportHelper
 				}
 
 				$resourceScanResult.ScannedBy = [Helpers]::GetCurrentRMContext().Account
-				$resourceScanResult.ScanSource = $scanSource
-				$resourceScanResult.ScannerVersion = $scannerVersion
-				$resourceScanResult.ControlVersion = $scannerVersion
+				$resourceScanResult.ScanSource = $this.ScanSource
+				$resourceScanResult.ScannerVersion = $this.ScannerVersion
+				$resourceScanResult.ControlVersion = $this.ScannerVersion
 				if(-not $isSubscriptionScan)
 				{
 					$resourceScanResult.ChildResourceName = $currentResult.ChildResourceName 
@@ -394,7 +378,7 @@ class ComplianceReportHelper
 				}
 				
 				$resourceScanResult.VerificationResult = $currentResult.VerificationResult
-				$resourceScanResult.ScanKind = $scanKind
+				$resourceScanResult.ScanKind = $this.ScanKind
 				$resourceScanResult.ScannerModuleName = [Constants]::AzSKModuleName
 				$resourceScanResult.IsLatestPSModule = $currentResult.CurrentSessionContext.IsLatestPSModule
 				$resourceScanResult.HasRequiredPermissions = $currentResult.CurrentSessionContext.Permissions.HasRequiredAccess
@@ -415,5 +399,25 @@ class ComplianceReportHelper
 			}
 		}
 		return $scanResults
+	}
+	#new function
+	hidden [void] StoreComplianceDataInUserSubscription([SVTEventContext[]] $currentScanResults)
+	{
+		$filteredResources = $null
+		# ToDo: Resource inventory helper
+		 if($this.ScanSource -eq [ScanSource]::Runbook) 
+		 { 
+			$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
+			$resources.ResourceGroups = [System.Collections.ArrayList]::new()
+			# ToDo: cache this properties as AzSKRoot.
+			$resourcesFlat = Find-AzureRmResource
+			$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
+			# Not considering nested resources to reduce complexity
+			$filteredResources = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }			
+		 }
+		 #save sample data
+		
+		 #$finalScanReport = $this.MergeSVTScanResult($svtEventContextResults, $filteredResources)
+		 #$this.SetLocalSubscriptionScanReport($finalScanReport)
 	}
 }

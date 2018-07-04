@@ -1,6 +1,7 @@
 using namespace Newtonsoft.Json
 using namespace Microsoft.Azure.Commands.Common.Authentication.Abstractions
 using namespace Microsoft.Azure.Commands.Common.Authentication
+using namespace Microsoft.Azure.Commands.Management.Storage.Models
 
 Set-StrictMode -Version Latest
 class Helpers {
@@ -830,7 +831,7 @@ class Helpers {
         return $result;
     }
 
-    static [PSObject] NewAzskCompliantStorage([string]$StorageName, [string]$ResourceGroup, [string]$Location) {
+    static [PSObject] NewAzskCompliantStorage([string]$StorageName, [Kind]$StorageKind,[string]$ResourceGroup,[string]$Location) {
         $storageSku = [Constants]::NewStorageSku
         $storageObject = $null
         try {
@@ -843,7 +844,7 @@ class Helpers {
                 -Name $StorageName `
                 -Type $storageSku `
                 -Location $Location `
-                -Kind BlobStorage `
+                -Kind $StorageKind `
                 -AccessTier Cool `
                 -EnableEncryptionService "Blob,File" `
                 -EnableHttpsTrafficOnly $true `
@@ -889,18 +890,49 @@ class Helpers {
         }
         return $storageObject
     }
+    static [PSObject] NewAzskCompliantStorage([string]$StorageName, [string]$ResourceGroup, [string]$Location) {
+      return [Helpers]::NewAzskCompliantStorage($StorageName,[Constants]::NewStorageKind,[string]$ResourceGroup,[string]$Location)
+    }
 
-	static [PSObject] GetAzSKStorage([string] $ResourceGroup)
-	{	
-		#Check from name
-		$existingStorage = Find-AzureRmResource -ResourceGroupNameEquals $ResourceGroup -ResourceNameContains "azsk" -ResourceType "Microsoft.Storage/storageAccounts"
-		if(($existingStorage|Measure-Object).Count -gt 1)
-		{
-			throw [SuppressedException]::new("Multiple storage accounts found in resource group: [$ResourceGroup]. This is not expected. Please contact support team.");
-		}
-		return $existingStorage
-	}
-
+    static [PSObject] UpgradeBlobToV2Storage([string]$StorageName, [string]$ResourceGroupName) 
+    {
+        #TODO: Check contributor permisison on azskrg
+        try 
+        {
+            Set-AzureRmStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageName -UpgradeToStorageV2 -ErrorAction Stop 
+        }
+        catch
+        {
+			[EventBase]::PublishCustomMessage("Failed to upgrade storage [$StorageName].");
+			[EventBase]::PublishException($_)
+        }
+        #Storage compliance
+        $retryAccount = 0
+        do 
+        {
+            $storageAccount = Get-AzureRmStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageName -ErrorAction SilentlyContinue
+            Start-Sleep -seconds 2
+            $retryAccount++
+        } while (!$storageAccount -and $retryAccount -ne 6)
+        if($storageAccount)
+        {
+            $storageContext = $storageAccount.Context 
+            Set-AzureStorageServiceLoggingProperty -ServiceType Blob -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
+            Set-AzureStorageServiceLoggingProperty -ServiceType Queue -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
+            Set-AzureStorageServiceLoggingProperty -ServiceType Table -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
+            Set-AzureStorageServiceLoggingProperty -ServiceType File -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
+        }
+    }
+    static [bool] IsUserSubStorageUpgraded() 
+    {
+        $storage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+        if($null -ne $storage)
+        {
+    		return ([UserSubscriptionDataHelper]::GetUserSubscriptionStorage().Kind -eq [Microsoft.Azure.Management.Storage.Models.Kind]::StorageV2)        
+        }
+        else
+            return $Null
+    }
     static [string] FetchTagsString([PSObject]$TagsHashTable)
     {
         [string] $tagsString = "";

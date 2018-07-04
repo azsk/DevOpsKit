@@ -32,7 +32,21 @@ class SubscriptionSecurityStatus: SVTCommandBase
 			$this.SetSVTBaseProperties($svtObject);
 			$result += $svtObject.$methodNameToCall();			
 		}
-		
+
+		#save result into local compliance report
+		if($this.IsLocalComplianceStoreEnabled)
+		{
+			# Persist scan data to subscription
+			try 
+			{
+				$ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
+				$ComplianceReportHelper.StoreComplianceDataInUserSubscription($result)
+			}
+			catch 
+			{
+				$this.PublishException($_);
+			}
+		}		
 		[ListenerHelper]::RegisterListeners();
 		
 		return $result;

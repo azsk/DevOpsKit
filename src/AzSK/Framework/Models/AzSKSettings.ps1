@@ -37,7 +37,7 @@ class AzSKSettings {
 
     hidden static [AzSKSettings] $Instance = $null;
 	hidden static [string] $FileName = "AzSKSettings.json";
-	[bool] $PersistScanReportInSubscription;
+	[bool] $StoreComplianceSummaryInUserSubscriptions;
 
 
     static [AzSKSettings] GetInstance() {
