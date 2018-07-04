@@ -228,10 +228,6 @@ class ConfigurationHelper {
             [EventBase]::PublishGenericCustomMessage(([Constants]::OfflineModeWarning + " Policy: $fileName"), [MessageType]::Warning);            
         }        
 
-        if (-not $fileContent) {
-            throw "The specified file '$fileName' is empty"                                  
-        }
-
         return $fileContent;
 	}
 

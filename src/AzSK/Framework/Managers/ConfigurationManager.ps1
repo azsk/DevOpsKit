@@ -29,8 +29,12 @@ class ConfigurationManager
         $defaultConfigFile = [ConfigurationHelper]::LoadServerConfigFile($fileName, [ConfigurationManager]::GetAzSKSettings().UseOnlinePolicyStore, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore);
         $extendedFileName = $fileName.Replace(".json",".ext.json");
         $extendedConfigFile = [ConfigurationHelper]::LoadServerFileRaw($extendedFileName, [ConfigurationManager]::GetAzSKSettings().UseOnlinePolicyStore, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore);
-        $IdPropName = "Id"
-        $finalObject = [Helpers]::MergeObjects($defaultConfigFile,$extendedConfigFile, $IdPropName);
+        $finalObject = [SVTConfig] $defaultConfigFile;
+        if(-not [string]::IsNullOrWhiteSpace($extendedConfigFile))
+        {
+            $IdPropName = "Id"
+            $finalObject = [SVTConfig]([Helpers]::MergeObjects($defaultConfigFile,$extendedConfigFile, $IdPropName));
+        }        
         return $finalObject;
     }
 
@@ -59,15 +63,11 @@ class ConfigurationManager
                     mkdir -Path $localExtensionsFolderPath -Force
                 }
                 $extensionScriptCode = [ConfigurationManager]::LoadServerFileRaw($extensionSVTClassFileName);
-                $extensionFilePath = "$([Constants]::AzSKExtensionsFolderPath)\$extensionSVTClassFileName";
-                Out-File -InputObject $extensionScriptCode -Force -FilePath $extensionFilePath -Encoding utf8;
-                #$extensionScriptCode | Out-File $extensionFilePath -Force                
-                				
-				if(-not ($extensionSVTClassName -as [type]))
-				{
-					#set extension class name to empty if it is not found
-					$extensionSVTClassName = ""
-				}
+                if(-not [string]::IsNullOrWhiteSpace($extensionScriptCode))
+                {
+                    $extensionFilePath = "$([Constants]::AzSKExtensionsFolderPath)\$extensionSVTClassFileName";
+                    Out-File -InputObject $extensionScriptCode -Force -FilePath $extensionFilePath -Encoding utf8;                                                                            
+                }
 			}
 			catch {
 				Write-host $_;
