@@ -75,4 +75,74 @@ class ConfigurationManager
         }
         return $extensionFilePath
     }	
+
+	hidden static [void] RegisterExtListenerFiles()
+    {
+		$ServerConfigMetadata = [ConfigurationManager]::LoadServerConfigFile([Constants]::ServerConfigMetadataFileName)
+		
+		if($null -ne [ConfigurationHelper]::ServerConfigMetadata)
+		{
+			[ConfigurationHelper]::ServerConfigMetadata.OnlinePolicyList | ForEach-Object {
+				if([Helpers]::CheckMember($_,"Name"))
+				{
+					if($_.Name -match "Listener.ext.ps1")
+					{
+						$listenerFileName = $_.Name
+						try {
+							$localExtensionsFolderPath = [Constants]::AzSKExtensionsFolderPath;
+							if(-not (Test-Path -Path $localExtensionsFolderPath))
+							{
+								mkdir -Path $localExtensionsFolderPath -Force
+							}
+							$extensionScriptCode = [ConfigurationManager]::LoadServerFileRaw($listenerFileName);
+							$extensionFilePath = "$([Constants]::AzSKExtensionsFolderPath)\$listenerFileName";
+							Out-File -InputObject $extensionScriptCode -Force -FilePath $extensionFilePath -Encoding utf8;
+
+							. $extensionFilePath 
+							
+							$listenerFileName = $listenerFileName.trimend(".ext.ps1") + "Ext"
+							Invoke-Expression "[$listenerFileName]::GetInstance().RegisterEvents();"
+						}
+						catch {
+							Write-host $_;
+						}
+					}
+				}
+			}
+		}
+    }
+
+	hidden static [void] UnRegisterExtListenerFiles()
+    {
+		if($null -ne [ConfigurationHelper]::ServerConfigMetadata)
+		{
+			[ConfigurationHelper]::ServerConfigMetadata.OnlinePolicyList | ForEach-Object {
+				if([Helpers]::CheckMember($_,"Name"))
+				{
+					if($_.Name -match "Listener.ext.ps1")
+					{
+						$listenerFileName = $_.Name
+						try {
+							$localExtensionsFolderPath = [Constants]::AzSKExtensionsFolderPath;
+							if(-not (Test-Path -Path $localExtensionsFolderPath))
+							{
+								mkdir -Path $localExtensionsFolderPath -Force
+							}
+							$extensionScriptCode = [ConfigurationManager]::LoadServerFileRaw($listenerFileName);
+							$extensionFilePath = "$([Constants]::AzSKExtensionsFolderPath)\$listenerFileName";
+							Out-File -InputObject $extensionScriptCode -Force -FilePath $extensionFilePath -Encoding utf8;
+
+							. $extensionFilePath 
+							
+							$listenerFileName = $listenerFileName.trimend(".ext.ps1") + "Ext"
+							Invoke-Expression "[$listenerFileName]::GetInstance().UnregisterEvents();"
+						}
+						catch {
+							Write-host $_;
+						}
+					}
+				}
+			}
+		}
+    }
 }

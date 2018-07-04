@@ -130,10 +130,7 @@ class ConfigurationHelper {
 						}
 					}            
 				}
-				
-				
 			}
-			
 
             if (-not $fileContent) {
                 #Fire special event to notify user about switching to offline policy  
