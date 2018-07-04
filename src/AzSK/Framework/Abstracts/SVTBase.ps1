@@ -840,6 +840,7 @@ class SVTBase: AzSKRoot
 			}
 			else
 			{
+			    $controlState.State.ExpiryDate = ($controlState.State.AttestedDate.AddDays($expiryIndays)).ToString("dd/MM/yyyy");
 				return $true
 			}
 		}
