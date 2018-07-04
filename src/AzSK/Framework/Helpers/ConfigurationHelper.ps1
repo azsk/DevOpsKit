@@ -153,6 +153,88 @@ class ConfigurationHelper {
         return $fileContent;
     }
 
+	hidden static [PSObject] LoadServerFileRaw([string] $fileName, [bool] $useOnlinePolicyStore, [string] $onlineStoreUri, [bool] $enableAADAuthForOnlinePolicyStore)
+	{
+		[PSObject] $fileContent = "";
+        if ([string]::IsNullOrWhiteSpace($fileName)) {
+            throw [System.ArgumentException] ("The argument 'fileName' is null");
+        } 
+
+        if ($useOnlinePolicyStore) {
+			
+            if ([string]::IsNullOrWhiteSpace($onlineStoreUri)) 
+			{
+                throw [System.ArgumentException] ("The argument 'onlineStoreUri' is null");
+            } 
+
+			#Check if policy present in server using metadata file
+			if(-not [ConfigurationHelper]::OfflineMode -and [ConfigurationHelper]::IsPolicyPresentOnServer($fileName,$useOnlinePolicyStore,$onlineStoreUri,$enableAADAuthForOnlinePolicyStore))
+			{
+				try 
+				{
+					if([String]::IsNullOrWhiteSpace([ConfigurationHelper]::ConfigVersion))
+					{							
+						try
+						{
+							$Version = [System.Version] ($global:ExecutionContext.SessionState.Module.Version);
+							$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $fileName, $enableAADAuthForOnlinePolicyStore);
+							[ConfigurationHelper]::ConfigVersion = $Version;
+						}
+						catch
+						{
+							$Version = ([ConfigurationHelper]::LoadOfflineConfigFile("AzSK.json")).ConfigSchemaBaseVersion;
+							$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $fileName, $enableAADAuthForOnlinePolicyStore);
+							[ConfigurationHelper]::ConfigVersion = $Version;
+						}
+					}
+					else
+					{
+						$Version = [ConfigurationHelper]::ConfigVersion ;
+						$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $fileName, $enableAADAuthForOnlinePolicyStore);
+					}
+						
+					$fileContent = $serverFileContent
+				}
+				catch 
+				{
+					[ConfigurationHelper]::OfflineMode = $true;
+
+					if(-not [ConfigurationHelper]::IsIssueLogged)
+					{
+						if([Helpers]::CheckMember($_,"Exception.Response.StatusCode") -and  $_.Exception.Response.StatusCode.ToString().ToLower() -eq "unauthorized")
+						{
+							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. The current Azure subscription is not linked to your org tenant."), [MessageType]::Warning);
+							[ConfigurationHelper]::IsIssueLogged = $true
+						}
+						elseif($fileName -eq "ServerConfigMetadata.json")
+						{
+							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy url is correct or policy is migrated with latest AzSK"), [MessageType]::Warning);
+							[ConfigurationHelper]::IsIssueLogged = $true
+						}
+						else
+						{
+							[EventBase]::PublishGenericCustomMessage(("Error while fetching the policy [$fileName] from online store. " + [Constants]::OfflineModeWarning), [MessageType]::Warning);
+							[EventBase]::PublishGenericException($_);
+							[ConfigurationHelper]::IsIssueLogged = $true
+						}
+					}            
+				}
+				
+				
+			}
+
+        }
+        else {
+            [EventBase]::PublishGenericCustomMessage(([Constants]::OfflineModeWarning + " Policy: $fileName"), [MessageType]::Warning);            
+        }        
+
+        if (-not $fileContent) {
+            throw "The specified file '$fileName' is empty"                                  
+        }
+
+        return $fileContent;
+	}
+
 	hidden static [PSObject] InvokeControlsAPI([string] $onlineStoreUri,[string] $configVersion, [string] $policyFileName, [bool] $enableAADAuthForOnlinePolicyStore)
 	{
 		#Evaluate all code block in onlineStoreUri. 

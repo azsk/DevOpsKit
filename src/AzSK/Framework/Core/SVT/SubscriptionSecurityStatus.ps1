@@ -12,13 +12,20 @@ class SubscriptionSecurityStatus: SVTCommandBase
 	hidden [SVTEventContext[]] RunForSubscription([string] $methodNameToCall)
 	{
 		[SVTEventContext[]] $result = @();		
-		$svtClassName = [SVTMapping]::SubscriptionMapping.ClassName
+		$svtClassName = [SVTMapping]::SubscriptionMapping.ClassName;
 
 		$svtObject = $null;
 
 		try
 		{
-			$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId
+			$extensionSVTClassName = [ConfigurationManager]::LoadExtensionFile($svtClassName);				
+			if([string]::IsNullOrWhiteSpace($extensionSVTClassName))
+			{
+				$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId
+			}
+			else {
+				$svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId
+			}
 		}
 		catch
 		{
@@ -37,6 +44,7 @@ class SubscriptionSecurityStatus: SVTCommandBase
 		
 		return $result;
 	}
+
 	hidden [SVTEventContext[]] RunAllControls()
 	{
 		return $this.RunForSubscription("EvaluateAllControls")
