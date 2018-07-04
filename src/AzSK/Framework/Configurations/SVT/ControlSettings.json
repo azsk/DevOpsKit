@@ -61,6 +61,7 @@
   },
   "NoOfApprovedAdmins": 5,
   "NoOfClassicAdminsLimit": 2,
+  "CriticalPIMRoles": [ "Owner", "Contributor" ],
   "WhitelistedMgmtCerts": {
     "Thumbprints": [],
     "ApprovedValidityRangeInDays": 732
