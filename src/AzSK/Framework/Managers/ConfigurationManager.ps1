@@ -47,7 +47,7 @@ class ConfigurationManager
     hidden static [string] LoadExtensionFile([string] $svtClassName)
     {
         $extensionSVTClassName = $svtClassName + "Ext";
-
+        $extensionFilePath = ""
 		#check for extension type only if we dont find the type already loaded in to the current session
 		if(-not ($extensionSVTClassName -as [type]))
 		{
@@ -61,8 +61,7 @@ class ConfigurationManager
                 $extensionScriptCode = [ConfigurationManager]::LoadServerFileRaw($extensionSVTClassFileName);
                 $extensionFilePath = "$([Constants]::AzSKExtensionsFolderPath)\$extensionSVTClassFileName";
                 Out-File -InputObject $extensionScriptCode -Force -FilePath $extensionFilePath -Encoding utf8;
-                #$extensionScriptCode | Out-File $extensionFilePath -Force
-                & $extensionFilePath 
+                #$extensionScriptCode | Out-File $extensionFilePath -Force                
                 				
 				if(-not ($extensionSVTClassName -as [type]))
 				{
@@ -74,6 +73,6 @@ class ConfigurationManager
 				Write-host $_;
 			}
         }
-        return $extensionSVTClassName
+        return $extensionFilePath
     }	
 }
