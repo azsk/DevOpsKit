@@ -22,6 +22,7 @@ class ListenerHelper
         [WriteEnvironmentFile]::GetInstance().RegisterEvents();
 		[WriteCAStatus]::GetInstance().RegisterEvents();
         [WriteFixControlFiles]::GetInstance().RegisterEvents();
+		[ListenerHelper]::RegisterExtListener()
     }
 
 
@@ -41,6 +42,17 @@ class ListenerHelper
         [WriteEnvironmentFile]::GetInstance().UnregisterEvents();
 		[WriteCAStatus]::GetInstance().UnregisterEvents();
         [WriteFixControlFiles]::GetInstance().UnregisterEvents();
+		[ListenerHelper]::UnregisterExtListeners()
     }
+
+	static [void] RegisterExtListener()
+	{
+		[ConfigurationManager]::RegisterExtListenerFiles()
+	}
+
+	static [void] UnregisterExtListeners()
+	{
+		[ConfigurationManager]::UnRegisterExtListenerFiles()
+	}
 }
 #[ListenerHelper]::RegisterListeners();

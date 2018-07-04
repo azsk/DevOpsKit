@@ -117,7 +117,7 @@ class ConfigurationHelper {
 							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. The current Azure subscription is not linked to your org tenant."), [MessageType]::Warning);
 							[ConfigurationHelper]::IsIssueLogged = $true
 						}
-						elseif($policyFileName -eq "ServerConfigMetadata.json")
+						elseif($policyFileName -eq [Constants]::ServerConfigMetadataFileName)
 						{
 							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy url is correct or policy is migrated with latest AzSK"), [MessageType]::Warning);
 							[ConfigurationHelper]::IsIssueLogged = $true
@@ -206,7 +206,7 @@ class ConfigurationHelper {
 							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. The current Azure subscription is not linked to your org tenant."), [MessageType]::Warning);
 							[ConfigurationHelper]::IsIssueLogged = $true
 						}
-						elseif($fileName -eq "ServerConfigMetadata.json")
+						elseif($fileName -eq [Constants]::ServerConfigMetadataFileName)
 						{
 							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy url is correct or policy is migrated with latest AzSK"), [MessageType]::Warning);
 							[ConfigurationHelper]::IsIssueLogged = $true
@@ -306,13 +306,13 @@ class ConfigurationHelper {
 		If($null -eq [ConfigurationHelper]::ServerConfigMetadata)
 		{
 			#if File is meta data file then return true
-			if($fileName -eq "ServerConfigMetadata.json" )
+			if($fileName -eq [Constants]::ServerConfigMetadataFileName)
 			{
 				return $true
 			}
 			else
 			{				
-				[ConfigurationHelper]::ServerConfigMetadata = [ConfigurationHelper]::LoadServerConfigFile("ServerConfigMetadata.json", $useOnlinePolicyStore, $onlineStoreUri, $enableAADAuthForOnlinePolicyStore);							
+				[ConfigurationHelper]::ServerConfigMetadata = [ConfigurationHelper]::LoadServerConfigFile([Constants]::ServerConfigMetadataFileName, $useOnlinePolicyStore, $onlineStoreUri, $enableAADAuthForOnlinePolicyStore);							
 			}
 		}
 		
@@ -330,7 +330,7 @@ class ConfigurationHelper {
 		else
 		{
 			#If Metadata file is not present on server then set offline default meta data.. 
-			[ConfigurationHelper]::ServerConfigMetadata = [ConfigurationHelper]::LoadOfflineConfigFile("ServerConfigMetadata.json");
+			[ConfigurationHelper]::ServerConfigMetadata = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::ServerConfigMetadataFileName);
 			return $false			
 		}
 	}
@@ -338,7 +338,7 @@ class ConfigurationHelper {
 	#Function to check if Override Offline flag is enabled 
 	hidden static [bool] IsOverrideOfflineEnabled([string] $fileName)
 	{
-		if($fileName -eq "ServerConfigMetadata.json" )
+		if($fileName -eq [Constants]::ServerConfigMetadataFileName)
 		{
 			return $true
 		}
