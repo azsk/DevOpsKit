@@ -60,7 +60,7 @@ class ConfigurationManager
 				$extensionFilePath = [ConfigurationManager]::DownloadExtFile($extensionSVTClassFileName)
 			}
 			catch {
-				Write-host $_;
+				[EventBase]::PublishGenericException($_);
 			}
         }
         return $extensionFilePath
@@ -89,7 +89,7 @@ class ConfigurationManager
 							Invoke-Expression "[$listenerClassName]::GetInstance().RegisterEvents();"
 						}
 						catch {
-							Write-host $_;
+							[EventBase]::PublishGenericException($_);
 						}
 					}
 				}
@@ -118,7 +118,7 @@ class ConfigurationManager
 							Invoke-Expression "[$listenerClassName]::GetInstance().UnregisterEvents();"
 						}
 						catch {
-							Write-host $_;
+							[EventBase]::PublishGenericException($_);
 						}
 					}
 				}
