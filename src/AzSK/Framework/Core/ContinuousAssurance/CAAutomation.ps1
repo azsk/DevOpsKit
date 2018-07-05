@@ -34,7 +34,7 @@ class CCAutomation: CommandBase
 	[bool] $IsMultiCAModeOn = $false;
 	[bool] $IsCustomAADAppName = $false;
 	[bool] $ExhaustiveCheck = $false;
-	[bool] $ScanonResourceCreation = $false;
+	[bool] $ScanOnResourceCreation = $false;
 	[CAReportsLocation] $LoggingOption = [CAReportsLocation]::CentralSub;
 
 	[string] $MinReqdCARunbookVersion = "2.1709.0"
@@ -1001,7 +1001,7 @@ class CCAutomation: CommandBase
 			$this.NewCCRunbook()
 			if($this.ScanonResourceCreation)
 			{
-				$this.SetResourceCreationScan($false)
+				$this.SetResourceCreationScan()
 			}
 			$this.SetAzSKAlertMonitoringRunbook($false)
 		  
@@ -2158,7 +2158,7 @@ class CCAutomation: CommandBase
 		return $messages
 	}	
 
-	[void] SetResourceCreationScan($Force)
+	[void] SetResourceCreationScan()
 	{
 		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.invocationContext,"Mandatory");
 		$actionGroupResourceId = $alert.SetupAlertActionGroup();
@@ -2437,7 +2437,7 @@ class CCAutomation: CommandBase
 
 		if($this.ScanonResourceCreation)
 		{
-			$this.SetResourceCreationScan($true)
+			$this.SetResourceCreationScan()
 		}
 
 		#$this.PublishCustomMessage("Linking schedule - ["+$this.ScheduleName+"] to the runbook")

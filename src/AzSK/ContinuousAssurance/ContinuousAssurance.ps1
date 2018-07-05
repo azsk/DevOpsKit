@@ -175,7 +175,7 @@ function Install-AzSKContinuousAssurance
 
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
-		$ScanonResourceCreation
+		$ScanOnResourceCreation
     )
 	Begin
 	{
@@ -214,7 +214,7 @@ function Install-AzSKContinuousAssurance
 
 			if ($ccAccount) 
 			{
-				$ccAccount.ScanonResourceCreation = $ScanonResourceCreation;
+				$ccAccount.ScanonResourceCreation = $ScanOnResourceCreation;
 
 				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
 				{
