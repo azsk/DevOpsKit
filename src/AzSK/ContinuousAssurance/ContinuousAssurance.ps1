@@ -214,7 +214,7 @@ function Install-AzSKContinuousAssurance
 
 			if ($ccAccount) 
 			{
-				$ccAccount.ScanonResourceCreation = $ScanOnResourceCreation;
+				$ccAccount.ScanOnResourceCreation = $ScanOnResourceCreation;
 
 				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
 				{

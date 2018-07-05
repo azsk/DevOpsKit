@@ -999,7 +999,7 @@ class CCAutomation: CommandBase
 			}
 			$this.PublishCustomMessage("Updating runbook: [$($this.RunbookName)]")
 			$this.NewCCRunbook()
-			if($this.ScanonResourceCreation)
+			if($this.ScanOnResourceCreation)
 			{
 				$this.SetResourceCreationScan()
 			}
@@ -2435,7 +2435,7 @@ class CCAutomation: CommandBase
 		#Create CA alerts runbook
 		$this.SetAzSKAlertMonitoringRunbook($false)
 
-		if($this.ScanonResourceCreation)
+		if($this.ScanOnResourceCreation)
 		{
 			$this.SetResourceCreationScan()
 		}
@@ -2476,7 +2476,7 @@ class CCAutomation: CommandBase
 			Key="Continuous_Assurance_Runbook"
         }	
 		
-		if($this.ScanonResourceCreation)
+		if($this.ScanOnResourceCreation)
 		{
 		  $ResourceAddition_Runbooks = [Runbook]@{
             Name = "Continuous_Assurance_Resource_Creation_Runbook";

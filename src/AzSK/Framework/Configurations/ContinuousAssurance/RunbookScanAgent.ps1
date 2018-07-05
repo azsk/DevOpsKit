@@ -11,85 +11,6 @@ function ConvertStringToBoolean($strToConvert)
 }
 
 
-function GetCertificateExpiryDetails
-{
-    try
-    {
-        $certificateDetails = Get-AzureRmAutomationCertificate -Name "AzureRunAsCertificate" -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName		
-        if($certificateDetails)
-        {        
-            PublishEvent -EventName "CA Certificate Details" -Properties @{"SPNAppId"=$RunAsConnection.ApplicationId; "CreationTime" = $certificateDetails.CreationTime; "ExpiryTime" = $certificateDetails.ExpiryTime;"LastModifiedTime"= $certificateDetails.LastModifiedTime } -Metrics @{"SuccessCount" = 1}
-        }
-    }
-    catch
-    {
-        #Execution should continue 
-        PublishEvent -EventName "CA Certificate Details Error" -Properties @{"ErrorRecord" = ($_ | Out-String);} -Metrics @{"SuccessCount" = 0}
-    }    
-}
-
-
-
-function SanitizeOMSVariable(){
-#Temporary code to update OMS variable encryption status 
-$omsSettingTimer = [System.Diagnostics.Stopwatch]::StartNew();
-try
-{
-    $omsSharedKeyName = "OMSSharedKey"
-	$backupShareKeyName = "OMSSharedKeyBackup"
-    #Step 1: Get OMSShared Key and check its encrypted status
-    $omsSharedKey = Get-AzureRmAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $omsSharedKeyName -ErrorAction SilentlyContinue
-    if($omsSharedKey -and $omsSharedKey.Encrypted)
-    {
-        #Step 2:Get value SharedKey and create backup variable
-        $sharedKeyValue = Get-AutomationVariable -Name $omsSharedKeyName
-        #Create backup variable         
-        New-AzureRmAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $backupShareKeyName -Value $sharedKeyValue -Encrypted $false
-    
-        #Step 3: Check if backup variable is created with same value
-        $backupSharedKeyValue = Get-AutomationVariable -Name $backupShareKeyName
-        #If backup Key is created then delete original and recreate with new name
-        if($backupSharedKeyValue -eq $sharedKeyValue)
-        {
-            #Step 4: Remove Orignal Shared key and recreate with encrypted false status
-            Remove-AzureRmAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $omsSharedKeyName
-            New-AzureRmAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $omsSharedKeyName -Value $backupSharedKeyValue -Encrypted $false
-        
-            #Step 5: Check if New Shared Key generated with same value 
-            $newOMSSharedKey = Get-AzureRmAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $omsSharedKeyName -ErrorAction SilentlyContinue
-            $newOMSSharedKeyValue = Get-AutomationVariable -Name $omsSharedKeyName
-            if($newOMSSharedKey -and -not $newOMSSharedKey.Encrypted -and ($newOMSSharedKeyValue -eq $backupSharedKeyValue))
-            {   
-                #Step 6: Remove backup shared key variable and Publish CA OMSSharedKey Update event          
-                Remove-AzureRmAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $backupShareKeyName
-                PublishEvent -EventName "CA OMSSharedKey Variable Updated" -Metrics @{"TimeTakenInMs" = $omsSettingTimer.ElapsedMilliseconds; "SuccessCount" = 0}
-            }
-        }
-    }
-	else{
-	  #Backup Code if something goes wrong while adding and deleting workspace key.
-	  #if OMSShared Key not found on automation account 
-	 if($omsSharedKey -eq $null)
-		{
-			# Check if backup variable is present
-			$backupOMSSharedKey = Get-AzureRmAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $backupShareKeyName -ErrorAction SilentlyContinue
-			if($backupOMSSharedKey)
-			{
-				$backupSharedKeyValue = Get-AutomationVariable -Name $backupShareKeyName
-				$OMSWorkspaceSharedKey = $backupSharedKeyValue
-				New-AzureRmAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $omsSharedKeyName -Value $backupSharedKeyValue -Encrypted $false -ErrorAction SilentlyContinue				
-				PublishEvent -EventName "CA BackupOMSSharedKey Used" -Metrics @{"TimeTakenInMs" = $omsSettingTimer.ElapsedMilliseconds; "SuccessCount" = 0}
-			}
-		}
-	}
-}
-catch
-{
-    PublishEvent -EventName "CA OMSSharedKey Update Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) } -Metrics @{"TimeTakenInMs" = $omsSettingTimer.ElapsedMilliseconds; "SuccessCount" = 0}
-    throw $_
-}
-    
-}
 function RunAzSKScan() {
 
 	################################ Begin: Configure AzSK for the scan ######################################### 
@@ -304,52 +225,10 @@ function RunAzSKScanForASub
 	Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
     $serviceScanTimer = [System.Diagnostics.Stopwatch]::StartNew();
     PublishEvent -EventName "CA Scan Services Started"
-    if(($WebHookDataforResourceCreation) -and ($null -ne $WebHookDataforResourceCreation))
-	{ 
-		
-		   #Getting required properties of WebhookData.
-			$WebhookName    =   $WebHookDataforResourceCreation.WebhookName
-			$WebhookBody    =   $WebHookDataforResourceCreation.RequestBody
-			$WebhookHeaders =   $WebHookDataforResourceCreation.RequestHeader
-
-		   # Obtain the WebhookBody containing the AlertContext
-			$WebhookBody = (ConvertFrom-Json -InputObject $WebhookBody)
-			Write-Output "`nWEBHOOK BODY"
-			Write-Output "============="
-			Write-Output $WebhookBody
-
-			 # Obtain the AlertContext
-			$AlertContext = [object]$WebhookBody.data.context
-			$AlertContext 
-
-			 # Some selected AlertContext information
-			Write-Output "`nALERT CONTEXT DATA"
-			Write-Output "==================="
-			Write-Output $alertcontext.activityLog.eventSource
-			Write-Output $alertcontext.activityLog.subscriptionId
-			Write-Output $alertcontext.activityLog.resourceGroupName
-			Write-Output $alertcontext.activityLog.operationName
-			Write-Output $alertcontext.activityLog.resourceType
-			Write-Output $alertcontext.activityLog.resourceId
-			Write-Output $alertcontext.activityLog.eventTimestamp
-
-			$resourceidsplit = $alertcontext.activityLog.resourceId -split '/'
-
-			Write-Output $resourceidsplit[6]
-
-			$datafromdeployment = Get-AzureRmResourceGroupDeployment -ResourceGroupName $alertcontext.activityLog.resourceGroupName -Name $resourceidsplit[6] | ConvertTo-Json -Depth 10
-			$datafromdeploymentbody = (ConvertFrom-Json -InputObject $datafromdeployment)
-			$resourcename = $datafromdeploymentbody.Parameters.name.Value
-
-			Write-Output $resourcename
-
-			$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $ResourceGroupNames -ResourceName $resourcename -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
-			
-		}
-		else
-		{
-		  Write-Error "Runbook called without webhook data." 
-		} 		
+    
+	if([string]::IsNullOrWhiteSpace($ResourceGroupNamefromWebhook) -and [string]::IsNullOrWhiteSpace($ResourceNamefromWebhook))
+	{
+		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $ResourceGroupNamefromWebhook -ResourceName $ResourceNamefromWebhook -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
 	}
 	else
 	{

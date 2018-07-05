@@ -86,22 +86,7 @@ function PublishEvent([string] $EventName, [hashtable] $Properties, [hashtable] 
 }
 #Telemetry functions -- end here
 
-#function to create one time temporary helper schedule
-function CreateHelperSchedule($nextRetryIntervalInMinutes)
-{
-    #create next run schedule
-    Get-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName `
-    -ResourceGroupName $AutomationAccountRG -Name $CAHelperScheduleName -ErrorAction SilentlyContinue | Remove-AzureRmAutomationSchedule -Force
 
-    New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $CAHelperScheduleName `
-                    -ResourceGroupName $AutomationAccountRG -StartTime $(get-date).AddMinutes($nextRetryIntervalInMinutes) `
-                    -OneTime -ErrorAction Stop | Out-Null
-
-    Register-AzureRmAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $CAHelperScheduleName `
-                    -ResourceGroupName $AutomationAccountRG `
-                    -AutomationAccountName $AutomationAccountName -ErrorAction Stop | Out-Null
-	PublishEvent -EventName "CA Job Rescheduled" -Properties @{"IntervalInMinutes" = $nextRetryIntervalInMinutes}
-}
 #function to invoke script from server
 function InvokeScript($accessToken, $policyStoreURL,$fileName, $version)
 {
@@ -139,17 +124,7 @@ function InvokeScript($accessToken, $policyStoreURL,$fileName, $version)
     }
 }
 
-function ConvertStringToBoolean($strToConvert)
-{
-    if ($str -eq 'true')
-    {
-        return $true
-    }
-    else
-    {
-        return $false
-    }
-}
+
 
 ######################################################################################################################
 #Core runbook code. 
@@ -177,35 +152,63 @@ try
 	#We will refer to this as org-policy store or org-policy url in comments below (with the above understanding)
 	$onlinePolicyStoreUrl = "[#onlinePolicyStoreUrl#]"
 
-    #This is the org-neutral CDN endpoint. This gets overridden in org-policy setup.
-	$CoreSetupSrcUrl = "[#CoreSetupSrcUrl#]"
 
 	#This setting determines if the policy store enforces authentication. Generally 'false' for org-policy or OSS (org-neutral) context.
 	$enableAADAuthForOnlinePolicyStore = "[#enableAADAuthForOnlinePolicyStore#]"
-
-	#This is the script that is primarily responsible for setting up AzSK module in the automation account.
-	$runbookCoreSetupScript = "RunbookCoreSetup.ps1"
 
 	#This is the script that is run to peform the actual scanning. This is fetched from the org-policy store if org-policy 
 	#is in use. If not, it is fetched from the default AzSK CDN. 
 	#This script basically allows orgs to customize/tweak the scripts that are run to perform the daily CA scans.
 	$runbookScanAgentScript = "RunbookScanAgent.ps1"
 
-	$RunbookName = "Continuous_Assurance_Runbook"
-
 	$WebHookDataforResourceCreation = $WebHookData
-	#This schedule ensures that CA activity initiated by the Scan_Schedule actually completes. 
-	#It is handy in situations where the job got terminated due to a long running scan, etc. and 
-	#a bunch of other situations (import of all modules into the CA account, etc.)
-	$CAHelperScheduleName = "CA_Helper_Schedule"
+	$ResourceGroupNamefromWebhook = ""
+	$ResourceNamefromWebhook = ""
 
-	#This setting allows org policy owners to explore the latest version of AzSK (while users
-	#in the org may be setup to use an older version - see comment in RunbookCoreSetup.PS1)
-    $UpdateToLatestVersion = Get-AutomationVariable -Name UpdateToLatestVersion -ErrorAction SilentlyContinue
-    if($null -eq $UpdateToLatestVersion)
-    {
-    	$UpdateToLatestVersion = "[#UpdateToLatestVersion#]"	
-    }
+	#Fetching the webhook parameter and get resourcegroup name and resource name
+	if($null -ne $WebHookDataforResourceCreation)
+	{
+		
+		   #Getting required properties of WebhookData.
+			$WebhookName    =   $WebHookDataforResourceCreation.WebhookName
+			$WebhookBody    =   $WebHookDataforResourceCreation.RequestBody
+			$WebhookHeaders =   $WebHookDataforResourceCreation.RequestHeader
+
+		   # Obtain the WebhookBody containing the AlertContext
+			$WebhookBody = (ConvertFrom-Json -InputObject $WebhookBody)
+			Write-Output "`nWEBHOOK BODY"
+			Write-Output "============="
+			Write-Output $WebhookBody
+
+			 # Obtain the AlertContext
+			$AlertContext = [object]$WebhookBody.data.context
+			$AlertContext 
+
+			 # Some selected AlertContext information
+			Write-Output "`nALERT CONTEXT DATA"
+			Write-Output "==================="
+			Write-Output $alertcontext.activityLog.eventSource
+			Write-Output $alertcontext.activityLog.subscriptionId
+			Write-Output $alertcontext.activityLog.resourceGroupName
+			Write-Output $alertcontext.activityLog.operationName
+			Write-Output $alertcontext.activityLog.resourceType
+			Write-Output $alertcontext.activityLog.resourceId
+			Write-Output $alertcontext.activityLog.eventTimestamp
+
+			$resourceidsplit = $alertcontext.activityLog.resourceId -split '/'
+
+			Write-Output $resourceidsplit[6]
+
+			$datafromdeployment = Get-AzureRmResourceGroupDeployment -ResourceGroupName $alertcontext.activityLog.resourceGroupName -Name $resourceidsplit[6] | ConvertTo-Json -Depth 10
+			$datafromdeploymentbody = (ConvertFrom-Json -InputObject $datafromdeployment)
+			$resourcename = $datafromdeploymentbody.Parameters.name.Value
+
+			Write-Output $resourcename
+			
+			$ResourceGroupNamefromWebhook = $alertcontext.activityLog.resourceGroupName
+			$ResourceNamefromWebhook = $resourcename
+
+	}
 
 	$azureRmResourceURI = "https://management.core.windows.net/"
 	
@@ -251,15 +254,7 @@ try
 	#This is a 'pseudo-version' and corresponds to the folder on the online policy store
 	#from where the current CA core setup and scan agent scripts will be fetched.
 	$caScriptsFolder = "1.0.0"
-	#This is used *inside* the CoreSetup invocation below to control the version update for AzSK
-	$UpdateToLatestVersion = ConvertStringToBoolean($UpdateToLatestVersion)
 
-	#------------------------------------Invoke CoreSetup script to ensure AzSK is up to date and ready for the scan -------------------
-	PublishEvent -EventName "CA Job Invoke Setup Started"
-	Write-Output ("RB: Invoking core setup using policyStoreURL: [" + $CoreSetupSrcUrl.Substring(0,15) + "*****]")
-	InvokeScript -policyStoreURL $CoreSetupSrcUrl -fileName $runbookCoreSetupScript -version $caScriptsFolder
-	Write-Output ("RB: Completed core setup script.")
-	PublishEvent -EventName "CA Job Invoke Setup Completed"
 
 	#------------------------------------Execute RunbookScanAgent.ps1 to scan subscription and resources-------------------
 	#We start with a check for 'Get-AzSKAccessToken' to ensure that AzSK module is ready (and loaded)
