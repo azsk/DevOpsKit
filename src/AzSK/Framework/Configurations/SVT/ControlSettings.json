@@ -184,6 +184,20 @@
         "queue",
         "table"
       ]
+    },
+    {
+      "Kind": "StorageV2",
+      "Services": [
+        "blob",
+        "file",
+        "queue",
+        "table"
+      ],
+      "DiagnosticsLogServices": [
+        "blob",
+        "queue",
+        "table"
+      ]
     }
   ],
   "AppService": {
@@ -197,7 +211,8 @@
   "StorageDiagnosticsSkuMapping": [
     "StandardGRS",
     "StandardLRS",
-    "StandardRAGRS"
+    "StandardRAGRS",
+    "StandardZRS"
   ],
   "StorageAlertSkuMapping": [
     "StandardGRS",
