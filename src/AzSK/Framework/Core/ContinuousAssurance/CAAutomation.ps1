@@ -34,6 +34,7 @@ class CCAutomation: CommandBase
 	[bool] $IsMultiCAModeOn = $false;
 	[bool] $IsCustomAADAppName = $false;
 	[bool] $ExhaustiveCheck = $false;
+	[bool] $ScanonResourceCreation = $false;
 	[CAReportsLocation] $LoggingOption = [CAReportsLocation]::CentralSub;
 
 	[string] $MinReqdCARunbookVersion = "2.1709.0"
