@@ -128,10 +128,11 @@ function InvokeScript($accessToken, $policyStoreURL,$fileName, $version)
 
 ######################################################################################################################
 #Core runbook code. 
-#This is built using the runbook code template inside \Modules\AzSK\<version>\Framework\Configurations\ContinuousAssurance
+#This is built using the runbook code template inside \Modules\AzSK\<version>\Framework\Configurations\Continuous_Assurance_Resource_Creation_Runbook
 #The placeholder values for various important variables are determined 'on the fly' based on the defaults that ship in AzSK.JSON
 #file in the \Modules\AzSK\<version>\Framework\Configurations folder and the local AzSKSettings.JSON file in the %localappdata%\Microsoft\AzSK
 #folder for the user setting up CA. 
+#This Runbook gets triggered when resource is created in the subscription.
 
 #In an org-specific installation, various values from AzSK.JSON can be overridden in org policy and
 #are picked up from the org-specific AzSK.JSON obtained from the serverUrl location (in AzSKSettings.JSON). 
