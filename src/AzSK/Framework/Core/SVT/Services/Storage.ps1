@@ -134,6 +134,7 @@ class Storage: SVTBase
 					#Check Metrics diagnostics log property
 					$serviceMapping.DiagnosticsLogServices | 
 					ForEach-Object {
+							#Diagnostic logging is not available for File service.
 							$result = $this.GetServiceLoggingProperty($_, $controlResult) -and $result ;
 					}
 
