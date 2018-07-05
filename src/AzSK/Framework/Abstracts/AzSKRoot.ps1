@@ -84,7 +84,7 @@ class AzSKRoot: EventBase
         if ($null -ne $currentContext -and [Helpers]::CheckMember($currentContext, "Subscription"))
         {
             $this.SubscriptionContext.SubscriptionName = $currentContext.Subscription.Name;
-        }
+		}
     }
 
     [PSObject] LoadServerConfigFile([string] $fileName)
@@ -205,4 +205,6 @@ class AzSKRoot: EventBase
 		}
 		return $IsLatestVersionPresent		
 	}
+
+
 }

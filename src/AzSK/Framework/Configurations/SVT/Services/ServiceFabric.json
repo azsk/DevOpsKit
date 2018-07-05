@@ -229,14 +229,15 @@
       "Description": "Encryption must be enabled on all storage accounts which store VHDs of Service Fabric cluster VMs",
       "Id": "ServiceFabric250",
       "ControlSeverity": "High",
-      "Automated": "Yes",
-      "MethodName": "CheckStorageEncryption",
+      "Automated": "No",
+      "MethodName": "",
       "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-      "Recommendation": "Enabling encryption on storage accounts which contain VHDs ensures that underlying OS and data disks for IaaS VMs of Service Fabric nodes are encrypted. Follow these steps: Azure Portal --> Storage Accounts --> <Storage Account Name> --> Encryption --> Set 'Server-side encryption' to 'Enabled'.",
+      "Recommendation": "Default behavior. No action required.",
       "Tags": [
         "SDL",
         "TCP",
-        "Automated",
+        "Manual",
+        "Information",
         "DP"
       ],
       "Enabled": true

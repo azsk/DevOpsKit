@@ -36,7 +36,8 @@ class AzSKSettings {
 	[bool] $IsCentralScanModeOn = $false;
 
     hidden static [AzSKSettings] $Instance = $null;
-    hidden static [string] $FileName = "AzSKSettings.json";
+	hidden static [string] $FileName = "AzSKSettings.json";
+	[bool] $PersistScanReportInSubscription;
 
 
     static [AzSKSettings] GetInstance() {
@@ -57,6 +58,13 @@ class AzSKSettings {
         #For AzSK Settings, never use online policy store. It's assumed that file will be available offline
 		#-------- AzSK rename code change--------#
 		$localAppDataSettings = $null
+
+		# TBR : AzSDK cleanup on local machine for Local settings folder
+		$AzSDKAppFolderPath = $Env:LOCALAPPDATA + "\Microsoft\" + "AzSDK*"
+		if(Test-Path -Path $AzSDKAppFolderPath)
+		{
+		    Get-ChildItem -Path $AzSDKAppFolderPath -Directory | Remove-Item -Recurse -Force
+		}
 		if([AzSKSettings]::IsMigrationRequired())
 		{
 			$localAppDataSettings = [ConfigurationHelper]::LoadOldOfflineConfigFile([OldConstants]::SettingsFileName)

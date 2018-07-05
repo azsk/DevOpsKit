@@ -51,7 +51,7 @@ class Constants
 	   static [string] $ScheduleName = "CA_Scan_Schedule"
 	   static [string] $connectionAssetName = "AzureRunAsConnection"
 	   #static [string] $AzSKRGName = "AzSKRG"
-
+	   static [string] $SupportDL = "azsksupext@microsoft.com"
 
 	#Constants for SVTs
     static [string] $ModuleStartHeading = [Constants]::DoubleDashLine +
@@ -77,12 +77,20 @@ class Constants
 	static [string] $CAScanProgressSnapshotsContainerName = "ca-scan-checkpoints"
 	static [string] $CAScanOutputLogsContainerName= "ca-scan-logs"
 	static [string] $ResourceScanTrackerBlobName = "ResourceScanTracker.json"
-	static [string] $ResourceScanTrackerCMBlobName = "ResourceScanTracker_CentralMode.json"	
+	static [string] $ResourceScanTrackerCMBlobName = "ResourceScanTracker_CentralMode.json"
+	static [hashtable] $AttestationStatusHashMap = @{
+			[AttestationStatus]::NotAnIssue		="1";
+			[AttestationStatus]::WillNotFix		="2";
+			[AttestationStatus]::WillFixLater	="3";
+			[AttestationStatus]::NotApplicable	="4";
+			[AttestationStatus]::StateConfirmed ="5";
+	}
 
 	static [string] $StorageAccountPreName= "azsk"
 	static [string] $AzSKAppFolderPath = $Env:LOCALAPPDATA + "\Microsoft\" + [Constants]::AzSKModuleName
 	static [string] $AzSKLogFolderPath = $Env:LOCALAPPDATA + "\Microsoft\"
 	static [string] $AzSKTempFolderPath = $env:TEMP + "\" + [Constants]::AzSKModuleName + "\"
+	static [string] $AzSKExtensionsFolderPath = $Env:LOCALAPPDATA + "\Microsoft\" + [Constants]::AzSKModuleName + "\Extensions"
 	static [string] $ARMManagementUri = "https://management.azure.com/";	
 	static [string] $VersionCheckMessage = "A newer version of AzSK is available: Version {0} `r`nTo update, run the command below in a fresh PS window:`r`n" ;
 	static [string] $VersionWarningMessage = ("Using the latest version ensures that AzSK security commands you run use the latest, most up-to-date controls. `r`nResults from the current version should not be considered towards compliance requirements.`r`n" + [Constants]::DoubleDashLine);
@@ -137,12 +145,20 @@ class Constants
 	static [string] $CATargetSubsBlobName= "TargetSubs.json"
 	static [string] $CoAdminElevatePermissionMsg = "(If you are 'Owner' then please elevate to 'Co-Admin' in the portal and re-run in a *fresh* PS console.)"
 
-
-
 	static [string] $CommandNameChangeWarning = "The command {0} shall be renamed to {1} in a future release ('SDK' shall be replaced with 'SK').";
 	static [string] $MultipleModulesWarning =  "Found multiple modules ({0} and {1}) loaded in the PS session.`r`n"+
 			"Stopping cmdlet execution.`r`n"+
 			"Recommendation: Please start a fresh PS session and run 'Import-Module {2}' first to avoid getting into this situation.`r`n"
+
+	#Constants for Org Policy
+	static [string] $OrgPolicyTagPrefix = "AzSKOrgName_"
+	# Local Subscription Report Constants
+	static [string] $ComplianceReportContainerName = "compliance-state"
+	static [string] $ComplianceReportBlobName = "LatestSnapshot"
+	static [DateTime] $AzSKDefaultDateTime = '1900-01-01T00:00:00'
+	static [int] $ControlResultComplianceInDays = 3
+	static [string] $ComplianceReportPath = "\Temp\Compliance"
+	
 
 	static [void] SetAzSKModuleName($moduleName)
 	{
@@ -158,6 +174,6 @@ class Constants
 		if(-not [string]::IsNullOrWhiteSpace($moduleVersion))
 		{
 			[Constants]::AzSKCurrentModuleVersion = $moduleVersion;
-			}
+		}
 	}
 }

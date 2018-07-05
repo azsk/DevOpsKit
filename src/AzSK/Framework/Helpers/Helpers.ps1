@@ -901,6 +901,25 @@ class Helpers {
 		return $existingStorage
 	}
 
+    static [string] FetchTagsString([PSObject]$TagsHashTable)
+    {
+        [string] $tagsString = "";
+        try {
+            if(($TagsHashTable | Measure-Object).Count -gt 0)
+            {
+                $TagsHashTable.Keys | ForEach-Object {
+                    $key = $_;
+                    $value = $TagsHashTable[$key];
+                    $tagsString = $tagsString + "$($key):$($value);";                
+                }
+            }   
+        }
+        catch {
+            #eat exception as if not able to fetch tags, it would return empty instead of breaking the flow
+        }        
+        return $tagsString;
+    }
+
 	static [void] SetResourceGroupTags([string]$RGName, [PSObject]$TagsHashTable, [bool] $Remove) {
 		[Helpers]::SetResourceGroupTags($RGName, $TagsHashTable, $Remove, $true) 
 	}
@@ -935,7 +954,14 @@ class Helpers {
 					}
 				}
 			}
-			Set-AzureRmResourceGroup -Name $RGName -Tag $tags
+			try
+			{
+				Set-AzureRmResourceGroup -Name $RGName -Tag $tags -ErrorAction Stop
+			}
+			catch
+			{
+				[EventBase]::PublishGenericCustomMessage(" `r`nError occured while adding tag(s) on resource group [$RGName]. $($_.Exception)", [MessageType]::Warning);
+			}
 		}
     }
 
@@ -968,8 +994,15 @@ class Helpers {
 						$tags.Add($key, $TagsHashTable[$key])
 					}
 				}
+			}			
+			try
+			{
+				Set-AzureRmResource -ResourceId $ResourceId -Tag $tags -Force -ErrorAction Stop
 			}
-			Set-AzureRmResource -ResourceId $ResourceId -Tag $tags -Force
+			catch
+			{
+				[EventBase]::PublishGenericCustomMessage(" `r`nError occured while adding tag(s) on resource [$ResourceId]. $($_.Exception)", [MessageType]::Warning);
+			}
 		}
     }
 
@@ -1096,6 +1129,14 @@ class Helpers {
                     $result = [VerificationResult]::Remediate;
                     break;
                 }
+				([AttestationStatus]::NotApplicable) {
+                    $result = [VerificationResult]::Passed;
+                    break;
+                }
+                ([AttestationStatus]::StateConfirmed) {
+                    $result = [VerificationResult]::Passed;
+                    break;
+                }
             }
             #}
             #elseif($verificationResult -eq [VerificationResult]::Failed -or $verificationResult -eq [VerificationResult]::Error)
@@ -1217,27 +1258,39 @@ class Helpers {
 			}
 		}
 		return $invalidEmails
-	}
-
-	static [Object] MergeObjects([Object] $source,[Object] $extend)
+    }
+    
+    static [Object] MergeObjects([Object] $source,[Object] $extend, [string] $idName)
 	{
+        $idPropName = "Id";
+        if(-not [string]::IsNullOrWhiteSpace($idName))
+        {
+            $idPropName = $idName;
+        }
 		if($source.GetType().Name -eq "PSCustomObject" -and $extend.GetType().Name -eq "PSCustomObject"){
 			foreach($Property in $extend | Get-Member -type NoteProperty, Property){
 				if(-not [Helpers]::CheckMember($source,$Property.Name,$false)){
 				  $source | Add-Member -MemberType NoteProperty -Value $extend.$($Property.Name) -Name $Property.Name `
 				}
-				$source.$($Property.Name) = [Helpers]::MergeObjects($source.$($Property.Name),$extend.$($Property.Name))
+				$source.$($Property.Name) = [Helpers]::MergeObjects($source.$($Property.Name), $extend.$($Property.Name), $idName)
 			}
 		}
 		elseif($source.GetType().Name -eq "Object[]" -and $extend.GetType().Name -eq "Object[]"){
 			if([Helpers]::IsPSObjectArray($source) -or [Helpers]::IsPSObjectArray($extend))
 			{
 			   foreach($extendArrElement in $extend)  {
-					 $PropertyId = $extendArrElement | Get-Member -type NoteProperty, Property  | Select-Object -First 1
+                     $PropertyId = $extendArrElement | Get-Member -type NoteProperty, Property | Where-Object { $_.Name -eq $idPropName}  | Select-Object -First 1
+                     if(($PropertyId | Measure-Object).Count -gt 0)
+                     {
+                         $PropertyId = $PropertyId | Select-Object -First 1
+                     }
+                     else {
+                        $PropertyId = $extendArrElement | Get-Member -type NoteProperty, Property | Select-Object -First 1
+                     }                     
 					 $sourceElement = $source | Where-Object { $_.$($PropertyId.Name) -eq $extendArrElement.$($PropertyId.Name) }   
 					 if($sourceElement)
 					 {                    
-					   $sourceElement =  [Helpers]::MergeObjects($sourceElement,$extendArrElement)
+                        $sourceElement =  [Helpers]::MergeObjects($sourceElement, $extendArrElement, $idName)
 					 }
 					 else
 					 {
@@ -1254,6 +1307,12 @@ class Helpers {
 		   $source = $extend;
 		}
 		return $source
+	}
+
+
+	static [Object] MergeObjects([Object] $source,[Object] $extend)
+	{
+		return [Helpers]::MergeObjects($source,$extend,"");
 	}
 
 	static [Bool] IsPSObjectArray($arrayObj)
@@ -1332,6 +1391,20 @@ class Helpers {
 			throw ([SuppressedException]::new(("SPN permission could not be set"), [SuppressedExceptionType]::InvalidOperation))
 		}
 	}
+
+	static [void] CleanupLocalFolder($folderPath)
+	{
+		try
+		{
+			if(Test-Path $folderPath)
+			{
+				Remove-Item -Path $folderPath -Recurse -Force -ErrorAction Stop | Out-Null
+			}
+		}
+		catch{
+			#this call happens from finally block. Try to clean the files, if it don't happen it would get cleaned in the next attempt
+		}	
+    }
 	
 }
 

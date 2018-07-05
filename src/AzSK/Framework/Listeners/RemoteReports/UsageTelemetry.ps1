@@ -33,7 +33,7 @@ class UsageTelemetry: ListenerBase {
         });
 
 		$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
-			if(-not $this.IsAnonymousTelemetryActive) { return; }
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
 			$currentInstance = [UsageTelemetry]::GetInstance();
 			try
 			{
@@ -56,7 +56,7 @@ class UsageTelemetry: ListenerBase {
 		});
 
 		$this.RegisterEvent([AzSKGenericEvent]::Exception, {
-			if(-not $this.IsAnonymousTelemetryActive) { return; }
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
@@ -72,7 +72,7 @@ class UsageTelemetry: ListenerBase {
         });
 
 		$this.RegisterEvent([AzSKRootEvent]::CommandError, {
-			if(-not $this.IsAnonymousTelemetryActive) { return; }
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
@@ -87,7 +87,7 @@ class UsageTelemetry: ListenerBase {
         });
 
 		$this.RegisterEvent([SVTEvent]::CommandError, {
-			if(-not $this.IsAnonymousTelemetryActive) { return; }
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
@@ -102,7 +102,7 @@ class UsageTelemetry: ListenerBase {
         });
 
 		$this.RegisterEvent([SVTEvent]::EvaluationError, {
-			if(-not $this.IsAnonymousTelemetryActive) { return; }
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
@@ -117,7 +117,7 @@ class UsageTelemetry: ListenerBase {
         });
 
 		$this.RegisterEvent([SVTEvent]::ControlError, {
-			if(-not $this.IsAnonymousTelemetryActive) { return; }
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
             $currentInstance = [UsageTelemetry]::GetInstance();
             try
             {
@@ -132,7 +132,7 @@ class UsageTelemetry: ListenerBase {
         });
 
 		$this.RegisterEvent([AzSKRootEvent]::PolicyMigrationCommandStarted, {
-			if(-not $this.IsAnonymousTelemetryActive) { return; }
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
             $currentInstance = [UsageTelemetry]::GetInstance();
            	try{
 			$Properties = @{			
@@ -157,7 +157,7 @@ class UsageTelemetry: ListenerBase {
         });
 
 		$this.RegisterEvent([AzSKRootEvent]::PolicyMigrationCommandCompleted, {
-			if(-not $this.IsAnonymousTelemetryActive) { return; }
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
             $currentInstance = [UsageTelemetry]::GetInstance();
            	try{
 			$Properties = @{			
@@ -180,13 +180,13 @@ class UsageTelemetry: ListenerBase {
         });
     }
 
-	[bool] IsAnonymousTelemetryActive()
+	static [bool] IsAnonymousTelemetryActive()
 	{
 		$azskSettings = [ConfigurationManager]::GetAzSKSettings();
-		if($azskSettings.UsageTelemetryLevel -eq "anonymous") { return true; }
+		if($azskSettings.UsageTelemetryLevel -eq "anonymous") { return $true; }
 		else
 		{
-			return false;
+			return $false;
 		}
 	}
 

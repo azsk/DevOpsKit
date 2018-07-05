@@ -33,13 +33,15 @@ class CommandHelper
 		[CommandDetails]@{
             Verb = "Set";
             Noun = "AzSKSubscriptionSecurity";
-            ShortName = "SSS";
+			ShortName = "SSS";
+			HasAzSKComponentWritePermission = $true;
         },
 		[CommandDetails]@{
             Verb = "Update";
             Noun = "AzSKSubscriptionSecurity";
             ShortName = "USS";
 			IsLatestRequired = $false;
+			HasAzSKComponentWritePermission = $true;
         },
 		[CommandDetails]@{
             Verb = "Remove";
@@ -57,7 +59,8 @@ class CommandHelper
 		[CommandDetails]@{
             Verb = "Install";
             Noun = "AzSKContinuousAssurance";
-            ShortName = "ICA";
+			ShortName = "ICA";
+			HasAzSKComponentWritePermission = $true;
         },
 		[CommandDetails]@{
             Verb = "Remove";
@@ -67,14 +70,16 @@ class CommandHelper
 		[CommandDetails]@{
             Verb = "Update";
             Noun = "AzSKContinuousAssurance";
-            ShortName = "UCA";
+			ShortName = "UCA";
+			HasAzSKComponentWritePermission = $true;
         },
 
 		#Alerts
 		[CommandDetails]@{
             Verb = "Set";
             Noun = "AzSKAlerts";
-            ShortName = "SAL";
+			ShortName = "SAL";
+			HasAzSKComponentWritePermission = $true;
         },
 		[CommandDetails]@{
             Verb = "Remove";
@@ -98,7 +103,8 @@ class CommandHelper
 		[CommandDetails]@{
             Verb = "Set";
             Noun = "AzSKARMPolicies";
-            ShortName = "SAP";
+			ShortName = "SAP";
+			HasAzSKComponentWritePermission = $true;
         },
 		[CommandDetails]@{
             Verb = "Remove";
@@ -110,7 +116,8 @@ class CommandHelper
 		[CommandDetails]@{
             Verb = "Set";
             Noun = "AzSKSubscriptionRBAC";
-            ShortName = "SRB";
+			ShortName = "SRB";
+			HasAzSKComponentWritePermission = $true;
         },
 		[CommandDetails]@{
             Verb = "Remove";
@@ -122,7 +129,8 @@ class CommandHelper
 		[CommandDetails]@{
             Verb = "Set";
             Noun = "AzSKAzureSecurityCenterPolicies";
-            ShortName = "SSC";
+			ShortName = "SSC";
+			HasAzSKComponentWritePermission = $true;
         },
 
 		# OMS
@@ -167,6 +175,14 @@ class CommandHelper
             Verb = "Clear";
             Noun = "AzSKSessionState";
             ShortName = "CSS";
+			IsLatestRequired = $false;
+        },
+		# Update-PersistedState
+
+		[CommandDetails]@{
+            Verb = "Update";
+            Noun = "AzSKPersistedState";
+            ShortName = "UPS";
 			IsLatestRequired = $false;
         }
     );
@@ -215,7 +231,7 @@ class CommandHelper
 		{
 			Write-Debug "Not able to validate version dependency $_"
 		}
-		#check if old and new both modules are loaded in same session
+		#check if old and new both modules are loaded in same session		
 		$newModule = Get-Module|Where-Object {$_.Name -like "$([Constants]::NewModuleName)*"} | Select-Object -First 1
 		$oldModule = Get-Module|Where-Object {$_.Name -like "$([Constants]::OldModuleName)*"} | Select-Object -First 1
 		if($newModule -and $oldModule)

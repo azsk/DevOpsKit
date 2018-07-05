@@ -36,5 +36,7 @@
    "IsAlertMonitoringEnabled": false,
    "MigrationWarning": "The DevOps Kit PS module is transitioning from \"AzSDK\" to \"AzSK\".\nTo understand migration steps and expectations, see here: \r\n https://aka.ms/devopskit/extmigration",
    "SupportDL": "azsksupext@microsoft.com",
-   "PolicyOrgName": "org-neutral"
+  "PolicyOrgName": "org-neutral",
+  "PersistScanReportInSubscription": false
+
 }

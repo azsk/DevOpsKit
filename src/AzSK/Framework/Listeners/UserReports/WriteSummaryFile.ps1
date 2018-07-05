@@ -43,20 +43,31 @@ class WriteSummaryFile: FileOutputBase
         
         $this.RegisterEvent([SVTEvent]::CommandCompleted, {
             $currentInstance = [WriteSummaryFile]::GetInstance();
-            try 
-            {
-                $controlsScanned = ($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0
-				if(!$controlsScanned)
+			
+			if(($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0)
+			{
+				# Export CSV Report
+				try 
 				{
-					$currentInstance.SetFilePath($Event.SourceArgs[0].SubscriptionContext, ("AttestationReport-" + $currentInstance.RunIdentifier + ".csv"));
+					$currentInstance.SetFilePath($Event.SourceArgs[0].SubscriptionContext, ("SecurityReport-" + $currentInstance.RunIdentifier + ".csv"));
+					$currentInstance.WriteToCSV($Event.SourceArgs);
+					$currentInstance.FilePath = "";
 				}
-				$currentInstance.WriteToCSV($Event.SourceArgs);
-                $currentInstance.FilePath = "";
-            }
-            catch 
-            {
-                $currentInstance.PublishException($_);
-            }
+				catch 
+				{
+					$currentInstance.PublishException($_);
+				}
+
+				# Persist scan data to subscription
+				try 
+				{
+					$currentInstance.PersistScanDataToStorage($Event.SourceArgs, $currentInstance.GetCurrentModuleVersion())
+				}
+				catch 
+				{
+					$currentInstance.PublishException($_);
+				}
+			}
         });
 
         $this.RegisterEvent([AzSKRootEvent]::UnsupportedResources, {
@@ -134,13 +145,17 @@ class WriteSummaryFile: FileOutputBase
                         Description = $item.ControlItem.Description;
                         FeatureName = $item.FeatureName;
                         ChildResourceName = $_.ChildResourceName;
-						Recommendation = $item.ControlItem.Recommendation;						
+						Recommendation = $item.ControlItem.Recommendation;	
+				
                     };
 					if($_.VerificationResult -ne [VerificationResult]::NotScanned)
 					{
 						$csvItem.Status = $_.VerificationResult.ToString();
 					}
-
+					if($this.InvocationContext.BoundParameters['IncludeUserComments'] -eq $True)
+					{
+                      $csvItem.UserComments=$_.UserComments;	
+					}
 					#if($anyFixableControls)
 					#{
 					if($item.ControlItem.FixControl)
@@ -152,6 +167,7 @@ class WriteSummaryFile: FileOutputBase
 						$csvItem.SupportsAutoFix = "No";
 					}
 					#}
+					
 					if($item.ControlItem.IsBaselineControl)
 					{
 						$csvItem.IsBaselineControl = "Yes";
@@ -160,7 +176,7 @@ class WriteSummaryFile: FileOutputBase
 					{
 						$csvItem.IsBaselineControl = "No";
 					}
-
+			
 					if($anyAttestedControls)
 					{
 						$csvItem.ActualStatus = $_.ActualVerificationResult.ToString();
@@ -175,6 +191,7 @@ class WriteSummaryFile: FileOutputBase
 					}
 					else
 					{
+					    $csvItem.ResourceId = $item.SubscriptionContext.scope;
 						$csvItem.DetailedLogFile = "/$([Helpers]::SanitizeFolderName($item.SubscriptionContext.SubscriptionName))/$($item.FeatureName).LOG"
 					}
 
@@ -208,31 +225,49 @@ class WriteSummaryFile: FileOutputBase
 					$nonNullProps += $propName;
 				}
 			};
-
+			if($this.InvocationContext.BoundParameters['IncludeUserComments'] -eq $true -and -not ([Helpers]::CheckMember($nonNullProps, "UserComments")))
+			{
+			  $nonNullProps += "UserComments";
+			}
             $csvItems | Select-Object -Property $nonNullProps | Export-Csv $this.FilePath -NoTypeInformation
         }
     }
+
+	[void] PersistScanDataToStorage($svtEventContextResults, $scannerVersion)
+	{
+		$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
+		$settingPersistScanReportInSubscription = [ConfigurationManager]::GetAzSKSettings().PersistScanReportInSubscription;
+			#return if feature is turned off at server config
+		if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription) {return;}
+		
+
+		# ToDo: Can we use here [RemoteReportHelper]??
+		$scanSource = [RemoteReportHelper]::GetScanSource();
+		$scannerVersion = $scannerVersion
+
+		# ToDo: Need to calculate ScanKind
+		#$scanKind = [RemoteReportHelper]::GetServiceScanKind($this.InvocationContext.MyCommand.Name, $this.InvocationContext.BoundParameters);
+		$scanKind = [ServiceScanKind]::Partial;
+
+		$filteredResoruces = $null
+		# ToDo: Resource inventory helper
+		 if($scanSource -eq [ScanSource]::Runbook) 
+		 { 
+			$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
+			$resources.ResourceGroups = [System.Collections.ArrayList]::new()
+			# ToDo: cache this properties as AzSKRoot.
+			$resourcesFlat = Find-AzureRmResource
+			$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
+			# Not considering nested resources to reduce complexity
+			$filteredResoruces = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }
+			
+		 }
+
+		# check for more than one record condition has been already implemented in parent function
+		$subId = $svtEventContextResults[0].SubscriptionContext.SubscriptionId
+		$StorageReportHelperInstance = [ComplianceReportHelper]::new($subId);
+		$finalScanReport = $StorageReportHelperInstance.MergeSVTScanResult($svtEventContextResults, $filteredResoruces, $scanSource, $scannerVersion, $scanKind)
+		$StorageReportHelperInstance.SetLocalSubscriptionScanReport($finalScanReport)
+	}
 }
 
-class CsvOutputItem
-{
-    #Fields from JSON
-    [string] $ControlID = ""
-    [string] $Status = ""
-    [string] $FeatureName = ""
-    [string] $ResourceGroupName = ""
-    [string] $ResourceName = ""
-    [string] $ChildResourceName = ""
-    [string] $ControlSeverity = ""
-	[string] $IsBaselineControl = ""
-    [string] $SupportsAutoFix = ""    
-    [string] $Description = ""
-	[string] $ActualStatus = ""
-	[string] $AttestedSubStatus = ""
-	[string] $AttestationExpiryDate = "" 
-	[string] $AttestedBy = ""
-	[string] $AttesterJustification = ""
-    [string] $Recommendation = ""
-	[string] $ResourceId = ""
-    [string] $DetailedLogFile = ""
-}

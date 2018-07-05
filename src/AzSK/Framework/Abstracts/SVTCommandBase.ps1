@@ -12,12 +12,32 @@ class SVTCommandBase: CommandBase {
     hidden [ControlStateExtension] $ControlStateExt;
     hidden [bool] $UserHasStateAccess = $false;
     [bool] $GenerateFixScript = $false;
+	[bool] $IncludeUserComments = $false;
     [AttestationOptions] $AttestationOptions;
+    hidden [LSRSubscription] $StorageReportData;
+    hidden [ComplianceReportHelper] $complianceReportHelper = $null;
 
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
+        $this.CheckAndDisableAzureRMTelemetry()
+		#fetch the compliancedata from subscription
+        $this.GetLocalSubscriptionData(); 
     }
+
+	hidden [void] GetLocalSubscriptionData()
+	{
+        $azskConfig = [ConfigurationManager]::GetAzSKConfigData();
+        $settingPersistScanReportInSubscription = [ConfigurationManager]::GetAzSKSettings().PersistScanReportInSubscription;
+			#return if feature is turned off at server config
+		if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription) {return;}        
+        
+        if($null -eq $this.complianceReportHelper)
+        {
+		    $this.complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId);
+            $this.StorageReportData =  $this.complianceReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
+        }
+	}
 
     hidden [SVTEventContext] CreateSVTEventContextObject() {
         return [SVTEventContext]@{
@@ -47,7 +67,12 @@ class SVTCommandBase: CommandBase {
 			{
 				throw [SuppressedException] ("Multiple controlIds specified. `nBulk attestation mode supports only one controlId at a time.`n")
 			}			
-        }		
+        }
+        
+        #check and delete if older RG found. Remove this code post 8/15/2018 release
+        $this.RemoveOldAzSDKRG();
+
+
         $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
 
@@ -61,10 +86,12 @@ class SVTCommandBase: CommandBase {
         $arg.ExceptionMessage = $exception;
 
         $this.PublishEvent([SVTEvent]::CommandError, $arg);
+        $this.CheckAndEnableAzureRMTelemetry()
     }
 
     hidden [void] CommandCompleted([SVTEventContext[]] $arguments) {
         $this.PublishEvent([SVTEvent]::CommandCompleted, $arguments);
+        $this.CheckAndEnableAzureRMTelemetry()
     }
 
     [string] EvaluateControlStatus() {
@@ -83,6 +110,10 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlIds += $this.ControlIds;
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
+        # ToDo: remove InvocationContext, try to pass as param
+        # ToDo: Assumption: usercomment will only work when storage report feature flag is enable.  
+		     
+		$svtObject.StorageReportData = $this.StorageReportData
 
         #Include Server Side Exclude Tags
         $svtObject.ExcludeTags += [ConfigurationManager]::GetAzSKConfigData().DefaultControlExculdeTags
@@ -96,7 +127,7 @@ class SVTCommandBase: CommandBase {
 			$svtObject.PartialScanIdentifier =$this.PartialScanIdentifier
 		}
 		
-
+        # ToDo: Utilize exiting functions
         $this.InitializeControlState();
         $svtObject.ControlStateExt = $this.ControlStateExt;
     }
@@ -172,6 +203,107 @@ class SVTCommandBase: CommandBase {
             catch {
                 $this.CommandError($_);
             }
+        }
+    }
+
+    hidden [void] CheckAndDisableAzureRMTelemetry()
+	{
+		#Disable AzureRM telemetry setting until scan is completed.
+		#This has been added to improve the performarnce of scan commands
+		#Telemetry will be re-enabled once scan is completed		
+		$dataCollectionPath = "$env:APPDATA\Windows Azure Powershell\AzurePSDataCollectionProfile.json"
+		if(Test-Path -Path $dataCollectionPath)
+		{
+			$dataCollectionProfile = Get-Content -path $dataCollectionPath | ConvertFrom-Json
+			if($dataCollectionProfile.enableAzureDataCollection)
+			{	
+				#Keep settings in 
+				$AzureRMDataCollectionSettingFolderpath= [Constants]::AzSKAppFolderPath + "\AzureRMDataCollectionSettings"
+				if(-not (Test-Path -Path $AzureRMDataCollectionSettingFolderpath))
+				{
+					mkdir -Path $AzureRMDataCollectionSettingFolderpath -Force
+                }
+                
+				$AzureRMDataCollectionFilePath = $AzureRMDataCollectionSettingFolderpath + "\AzurePSDataCollectionProfile.json"
+                if(-not (Test-Path -Path $AzureRMDataCollectionFilePath))
+				{
+                    Copy-Item $dataCollectionPath $AzureRMDataCollectionFilePath					
+                }
+				Disable-AzureRmDataCollection  | Out-Null
+			}
+		}
+    }
+    
+    hidden [void] CheckAndEnableAzureRMTelemetry()
+    {
+        #Enabled AzureRM telemetry which got disabled at the start of command
+        $AzureRMDataCollectionSettingFilepath= [Constants]::AzSKAppFolderPath + "\AzureRMDataCollectionSettings\AzurePSDataCollectionProfile.json"
+        if(Test-Path -Path $AzureRMDataCollectionSettingFilepath)
+        {
+            $dataCollectionProfile = Get-Content -path $AzureRMDataCollectionSettingFilepath | ConvertFrom-Json
+            if($dataCollectionProfile -and $dataCollectionProfile.enableAzureDataCollection)
+            {
+                Enable-AzureRmDataCollection  | Out-Null
+            }
+        }
+
+    }
+
+    hidden [void] RemoveOldAzSDKRG()
+    {
+        $scanSource = [AzSKSettings]::GetInstance().GetScanSource();
+        if($scanSource -eq "SDL" -or [string]::IsNullOrWhiteSpace($scanSource))
+        {
+            $olderRG = Get-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -ErrorAction SilentlyContinue
+            if($null -ne $olderRG)
+            {
+                $resources = Find-AzureRmResource -ResourceGroupNameEquals $([OldConstants]::AzSDKRGName)
+                try {
+                    $azsdkRGScope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourceGroups/$([OldConstants]::AzSDKRGName)"
+                    $resourceLocks = @();
+                    $resourceLocks += Get-AzureRmResourceLock -Scope $azsdkRGScope -ErrorAction Stop
+                    if($resourceLocks.Count -gt 0)
+                    {
+                        $resourceLocks | ForEach-Object {
+                            Remove-AzureRmResourceLock -LockId $_.LockId -Force -ErrorAction Stop
+                        }                 
+                    }
+
+                    if(($resources | Measure-Object).Count -gt 0)
+                    {
+                        $otherResources = $resources | Where-Object { -not ($_.ResourceName -like "$([OldConstants]::StorageAccountPreName)*")} 
+                        if(($otherResources | Measure-Object).Count -gt 0)
+                        {
+                            Write-Host "WARNING: Found non DevOps Kit resources under older RG [$([OldConstants]::AzSDKRGName)] as shown below:" -ForegroundColor Yellow
+                            $otherResources
+                            Write-Host "We are about to delete the older resource group including all the resources inside." -ForegroundColor Yellow
+                            $option = Read-Host "Do you want to continue (Y/N) ?";
+                            $option = $option.Trim();
+                            While($option -ne "y" -and $option -ne "n")
+                            {
+                                Write-Host "Provide correct option (Y/N)."
+                                $option = Read-Host "Do you want to continue (Y/N) ?";
+                                $option = $option.Trim();
+                            }
+                            if($option -eq "y")
+                            {
+                                Remove-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob
+                            }
+                        }
+                        else
+                        {
+                            Remove-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob                            
+                        }
+                    }
+                    else 
+                    {
+                        Remove-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob
+                    }
+                }
+                catch {
+                    #eat exception
+                }  
+            }          
         }
     }
 }

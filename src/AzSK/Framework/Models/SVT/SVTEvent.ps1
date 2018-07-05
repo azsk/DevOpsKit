@@ -1,4 +1,4 @@
-﻿Set-StrictMode -Version Latest
+Set-StrictMode -Version Latest
 
 class SVTEvent
 {
@@ -46,6 +46,11 @@ class ControlResult
 	[StateManagement] $StateManagement = [StateManagement]::new();
 	hidden [PSObject] $FixControlParameters = $null;
 	hidden [bool] $EnableFixControl = $false;
+	[bool] $IsControlInGrace=$true;
+	[DateTime] $FirstFailedOn = [Constants]::AzSKDefaultDateTime;
+	[DateTime] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
+	[int] $MaximumAllowedGraceDays=0;
+	[String] $UserComments
 
     [MessageData[]] $Messages = @();
 

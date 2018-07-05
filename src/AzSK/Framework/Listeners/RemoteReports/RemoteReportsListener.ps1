@@ -122,7 +122,7 @@ class RemoteReportsListener: ListenerBase {
 	{
 		$currentInstance = [RemoteReportsListener]::GetInstance();
 		$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-		$resourcesFlat = Find-AzureRmResource
+		$resourcesFlat = Find-AzureRmResource | Select-Object Name,ResourceId,ResourceName,ResourceType,ResourceGroupName,Location,SubscriptionId,Sku,@{ Name = 'Tags'; Expression = {$([Helpers]::FetchTagsString($_.Tags))}}
 		[RemoteApiHelper]::PostResourceFlatInventory($resourcesFlat)
 
 	}
@@ -164,6 +164,7 @@ class RemoteReportsListener: ListenerBase {
 				$result.ActualVerificationResult = [VerificationResult]::Disabled
 				$result.AttestationStatus = [AttestationStatus]::None
 				$result.VerificationResult = [VerificationResult]::Disabled
+				$result.MaximumAllowedGraceDays = $context.MaximumAllowedGraceDays
 				$results.Add($result)
 			}
 		}
@@ -190,6 +191,7 @@ class RemoteReportsListener: ListenerBase {
 		$scanResult.ResourceName = $SVTEventContextFirst.ResourceContext.ResourceName
 		$scanResult.ResourceId = $SVTEventContextFirst.ResourceContext.ResourceId
 		$scanResult.Metadata = [Helpers]::ConvertToJsonCustomCompressed($SVTEventContextFirst.ResourceContext.ResourceMetadata)
+		
 		if(($SVTEventContexts | Measure-Object).Count -gt 0 -and ($SVTEventContexts[0].ControlResults | Measure-Object).Count -gt 0)
 		{
 			$TempCtrlResult = $SVTEventContexts[0].ControlResults[0];
@@ -207,7 +209,7 @@ class RemoteReportsListener: ListenerBase {
 				$result.ControlSeverity = $SVTEventContext.ControlItem.ControlSeverity
 				$result.ActualVerificationResult = [VerificationResult]::Disabled
 				$result.AttestationStatus = [AttestationStatus]::None
-				$result.VerificationResult = [VerificationResult]::Disabled
+				$result.VerificationResult = [VerificationResult]::Disabled				
 				$results.Add($result)
 			}
 			elseif ($SVTEventContext.ControlResults.Count -eq 1 -and `
@@ -234,6 +236,7 @@ class RemoteReportsListener: ListenerBase {
 				}
 			}
 		}
+
 		$scanResult.ControlResults = [ServiceControlResult[]] $results
 		[RemoteApiHelper]::PostServiceScanResult($scanResult)
 	}

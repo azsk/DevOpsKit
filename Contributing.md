@@ -1,5 +1,7 @@
 # Contributing to DevOps Kit 
 
+> **Note:** We are still working on the contribution model. Currently we are not directly accepting any contributions to source code. You can still create a fork of source code, and perform required changes. In the mean time, if you notice any issues, please log under issues section.
+
 Welcome, and thank you for showing interest in contributing to the Secure DevOps Kit for Azure! To get an overview of the Secure DevOps Kit for Azure (a.k.a., DevOps Kit or 'AzSK'), refer to our [doc repository]( https://github.com/azsk/DevOpsKit-docs.). The goal of this document is to provide a high level overview of how you can contribute to the DevOps Kit.
 
 ## Table of Contents

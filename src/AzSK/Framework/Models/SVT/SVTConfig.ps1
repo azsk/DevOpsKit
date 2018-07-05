@@ -10,6 +10,11 @@ class SVTConfig
     {
 		return [SVTConfig]([ConfigurationHelper]::LoadServerConfigFile($fileName, $useOnlinePolicyStore, $onlineStoreUri, $enableAADAuthForOnlinePolicyStore));
     }
+
+    static [SVTConfig] LoadServerFileRaw([string] $fileName, [bool] $useOnlinePolicyStore, [string] $onlineStoreUri, [bool] $enableAADAuthForOnlinePolicyStore)
+    {
+		return [SVTConfig]([ConfigurationHelper]::LoadServerFileRaw($fileName, $useOnlinePolicyStore, $onlineStoreUri, $enableAADAuthForOnlinePolicyStore));
+    }
 }
 
 class ControlItem
@@ -30,6 +35,10 @@ class ControlItem
     hidden [FixControl] $FixControl = $null;
 	[int] $AttestationExpiryPeriodInDays
 	[bool] $IsBaselineControl
+	[DateTime] $GraceExpiryDate
+	[int] $NewControlGracePeriodInDays
+	[int] $AttestationPeriodInDays
+	[string[]] $ValidAttestationStates 
 }
 
 class FixControl

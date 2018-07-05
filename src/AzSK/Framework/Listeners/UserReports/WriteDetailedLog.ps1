@@ -189,7 +189,7 @@ class WriteDetailedLog: FileOutputBase
 				$this.AddOutputLog($messageData.Message);
 				#$this.AddOutputLog("`r`n" + $messageData.Message);
 			}
-
+			
 			if ($messageData.DataObject) {
 				if (-not [string]::IsNullOrEmpty($messageData.Message)) 
 				{
@@ -197,6 +197,7 @@ class WriteDetailedLog: FileOutputBase
 				}
 				$this.AddOutputLog([Helpers]::ConvertObjectToString($messageData.DataObject, $false));                    
 			}
+			
 		}
 	}
 
