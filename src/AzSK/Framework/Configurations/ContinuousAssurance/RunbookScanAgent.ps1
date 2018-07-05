@@ -213,7 +213,60 @@ function RunAzSKScanForASub
 	Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
     $serviceScanTimer = [System.Diagnostics.Stopwatch]::StartNew();
     PublishEvent -EventName "CA Scan Services Started"
-    $svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $ResourceGroupNames -ExcludeTags "OwnerAccess" -UsePartialCommits
+	if($WebHookDataforResourceCreation)
+	{
+		if($null -ne $WebHookDataforResourceCreation)
+		{
+		   #Getting required properties of WebhookData.
+			$WebhookName    =   $WebHookDataforResourceCreation.WebhookName
+			$WebhookBody    =   $WebHookDataforResourceCreation.RequestBody
+			$WebhookHeaders =   $WebHookDataforResourceCreation.RequestHeader
+
+		   # Obtain the WebhookBody containing the AlertContext
+			$WebhookBody = (ConvertFrom-Json -InputObject $WebhookBody)
+			Write-Output "`nWEBHOOK BODY"
+			Write-Output "============="
+			Write-Output $WebhookBody
+
+			 # Obtain the AlertContext
+			$AlertContext = [object]$WebhookBody.data.context
+			$AlertContext 
+
+			 # Some selected AlertContext information
+			Write-Output "`nALERT CONTEXT DATA"
+			Write-Output "==================="
+			Write-Output $alertcontext.activityLog.eventSource
+			Write-Output $alertcontext.activityLog.subscriptionId
+			Write-Output $alertcontext.activityLog.resourceGroupName
+			Write-Output $alertcontext.activityLog.operationName
+			Write-Output $alertcontext.activityLog.resourceType
+			Write-Output $alertcontext.activityLog.resourceId
+			Write-Output $alertcontext.activityLog.eventTimestamp
+
+			$resourceidsplit = $alertcontext.activityLog.resourceId -split '/'
+
+			Write-Output $resourceidsplit[6]
+
+			$datafromdeployment = Get-AzureRmResourceGroupDeployment -ResourceGroupName $alertcontext.activityLog.resourceGroupName -Name $resourceidsplit[6] | ConvertTo-Json -Depth 10
+			$datafromdeploymentbody = (ConvertFrom-Json -InputObject $datafromdeployment)
+			$resourcename = $datafromdeploymentbody.Parameters.name.Value
+
+			Write-Output $resourcename
+
+			$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $ResourceGroupNames -ResourceName $resourcename -ExcludeTags "OwnerAccess" -UsePartialCommits
+			
+			}
+		}
+		else
+		{
+		  Write-Error "Runbook called without webhook data." 
+		} 		
+	}
+	else
+	{
+		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $ResourceGroupNames -ExcludeTags "OwnerAccess" -UsePartialCommits
+	}
+    
    
     #---------------------------Check resources scan status--------------------------------------------------------------
     if ([string]::IsNullOrWhiteSpace($svtResultPath)) 

@@ -989,6 +989,10 @@ class CCAutomation: CommandBase
 			}
 			$this.PublishCustomMessage("Updating runbook: [$($this.RunbookName)]")
 			$this.NewCCRunbook()
+			if($this.ScanonResourceCreation)
+			{
+				$this.SetResourceCreationScan($false)
+			}
 			$this.SetAzSKAlertMonitoringRunbook($false)
 		  
 			#relink existing schedules with runbook
@@ -2233,6 +2237,15 @@ class CCAutomation: CommandBase
 		
 		return $messages
 	}	
+
+	[void] SetResourceCreationScan($Force)
+	{
+		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.invocationContext,"Mandatory");
+		$actionGroupResourceId = $alert.SetupAlertActionGroup();
+		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "Resource_Creation");
+		$alert.SetAlerts($actionGroupResourceId);
+	}
+
 	[void] SetAzSKAlertMonitoringRunbook($Force)
 	{
 		[MessageData[]] $messages = @();
@@ -2247,7 +2260,7 @@ class CCAutomation: CommandBase
 		     $this.NewAlertRunbook();
 		    }	
 		    $alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.invocationContext,"Mandatory");
-		    $alert.UpdateActionGroupWebhookUri([string]::Empty);
+		    $alert.UpdateActionGroupWebhookUri([string]::Empty,"Alert");
 		   }
 		   #Left Else Block 
 		}
@@ -2492,6 +2505,11 @@ class CCAutomation: CommandBase
 		#Create CA alerts runbook
 		$this.SetAzSKAlertMonitoringRunbook($false)
 
+		if($this.ScanonResourceCreation)
+		{
+			$this.SetResourceCreationScan($true)
+		}
+
 		#$this.PublishCustomMessage("Linking schedule - ["+$this.ScheduleName+"] to the runbook")
 		$this.NewCCSchedules()
 
@@ -2528,6 +2546,23 @@ class CCAutomation: CommandBase
 			Key="Continuous_Assurance_Runbook"
         }	
 		
+		if($this.ScanonResourceCreation)
+		{
+		  $ResourceAddition_Runbooks = [Runbook]@{
+            Name = "Continuous_Assurance_Resource_Creation_Runbook";
+            Type = "PowerShell";
+			Description = "This runbook will be triggered on Resource Addition.";
+			LogProgress = $false;
+			LogVerbose = $false;
+			Key="Continuous_Assurance_Resource_Creation_Runbook"
+          }
+		 $this.Runbooks += @($CCRunbook,$ResourceAddition_Runbooks)
+		}
+		else
+		{
+		 $this.Runbooks += @($CCRunbook)
+		}
+
 		$isAlertMonitoringEnabled=[ConfigurationManager]::GetAzSKConfigData().IsAlertMonitoringEnabled
 		if($isAlertMonitoringEnabled)
 		{
@@ -2539,12 +2574,12 @@ class CCAutomation: CommandBase
 			LogVerbose = $false;
 			Key="Insight_Alerts_Runbook"
           }
-		 $this.Runbooks += @($CCRunbook,$InsightAlertRunbook)
+          
+           $this.Runbooks += @($InsightAlertRunbook)
+          
+		 
 		}
-		else
-		{
-		 $this.Runbooks += @($CCRunbook)
-		}
+
 		$this.Runbooks | ForEach-Object{		
 			$filePath = $this.AddConfigValues($_.Name+".ps1");
 			

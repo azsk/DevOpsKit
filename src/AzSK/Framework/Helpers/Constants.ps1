@@ -94,6 +94,7 @@ class Constants
 	#V1 alert RG name constant is temporary and added for backward compatibility	
 	static [string] $AlertActionGroupName = "AzSKAlertActionGroup"
 	static [string] $CriticalAlertActionGroupName = "AzSKCriticalAlertActionGroup"
+	static [string] $ResourceCreationActionGroupName = "ResourceCreationAlertActionGroup"
 
 	# Append recommendation when control require elevated permission
 	static [string] $RequireOwnerPermMessage = "(The status for this control has been marked as 'Manual' because elevated (Co-Admin/Owner/Contributor) permission is required to check security configuration for this resource. You can re-run the control with the appropriate privilege.) "
@@ -112,6 +113,7 @@ class Constants
 	static [string] $MigrationTagName = "MigratedOn"
 	static [string] $PolicyMigrationTagName = "PolicyMigratedOn"
 	static [string] $AlertRunbookName= "Alert_Runbook"
+	static [string] $Alert_ResourceCreation_Runbook= "Continuous_Assurance_Resource_Creation_Runbook"
 	static [string] $AutomationWebhookName="WebhookForAlertRunbook"
 	static [string] $AutomationAccountName="AzSKContinuousAssurance"
 	static [int] $AlertWebhookUriExpiryInDays = 60	
