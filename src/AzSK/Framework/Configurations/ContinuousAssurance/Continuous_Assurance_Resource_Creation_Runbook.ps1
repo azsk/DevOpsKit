@@ -124,7 +124,48 @@ function InvokeScript($accessToken, $policyStoreURL,$fileName, $version)
     }
 }
 
+function GetResourceDetailsfromWebhook($WebHookDataforResourceCreation)
+{
+	#Getting required properties of WebhookData.
+			$WebhookName    =   $WebHookDataforResourceCreation.WebhookName
+			$WebhookBody    =   $WebHookDataforResourceCreation.RequestBody
+			$WebhookHeaders =   $WebHookDataforResourceCreation.RequestHeader
 
+		   # Obtain the WebhookBody containing the AlertContext
+			$WebhookBody = (ConvertFrom-Json -InputObject $WebhookBody)
+			Write-Output "`nWEBHOOK BODY"
+			Write-Output "============="
+			Write-Output $WebhookBody
+
+			 # Obtain the AlertContext
+			$AlertContext = [object]$WebhookBody.data.context
+			$AlertContext 
+
+			 # Some selected AlertContext information
+			Write-Output "`nALERT CONTEXT DATA"
+			Write-Output "==================="
+			Write-Output $alertcontext.activityLog.eventSource
+			Write-Output $alertcontext.activityLog.subscriptionId
+			Write-Output $alertcontext.activityLog.resourceGroupName
+			Write-Output $alertcontext.activityLog.operationName
+			Write-Output $alertcontext.activityLog.resourceType
+			Write-Output $alertcontext.activityLog.resourceId
+			Write-Output $alertcontext.activityLog.eventTimestamp
+
+			$resourceidsplit = $alertcontext.activityLog.resourceId -split '/'
+
+			Write-Output $resourceidsplit[6]
+
+			$datafromdeployment = Get-AzureRmResourceGroupDeployment -ResourceGroupName $alertcontext.activityLog.resourceGroupName -Name $resourceidsplit[6] | ConvertTo-Json -Depth 10
+			$datafromdeploymentbody = (ConvertFrom-Json -InputObject $datafromdeployment)
+			$resourcename = $datafromdeploymentbody.Parameters.name.Value
+
+			Write-Output $resourcename
+
+			$resourcedetails = @{ResourceGroupNamefromWebhook = $alertcontext.activityLog.resourceGroupName ; ResourceNamefromWebhook = $resourcename}
+
+			return $resourcedetails;
+}
 
 ######################################################################################################################
 #Core runbook code. 
@@ -170,44 +211,10 @@ try
 	if($null -ne $WebHookDataforResourceCreation)
 	{
 		
-		   #Getting required properties of WebhookData.
-			$WebhookName    =   $WebHookDataforResourceCreation.WebhookName
-			$WebhookBody    =   $WebHookDataforResourceCreation.RequestBody
-			$WebhookHeaders =   $WebHookDataforResourceCreation.RequestHeader
-
-		   # Obtain the WebhookBody containing the AlertContext
-			$WebhookBody = (ConvertFrom-Json -InputObject $WebhookBody)
-			Write-Output "`nWEBHOOK BODY"
-			Write-Output "============="
-			Write-Output $WebhookBody
-
-			 # Obtain the AlertContext
-			$AlertContext = [object]$WebhookBody.data.context
-			$AlertContext 
-
-			 # Some selected AlertContext information
-			Write-Output "`nALERT CONTEXT DATA"
-			Write-Output "==================="
-			Write-Output $alertcontext.activityLog.eventSource
-			Write-Output $alertcontext.activityLog.subscriptionId
-			Write-Output $alertcontext.activityLog.resourceGroupName
-			Write-Output $alertcontext.activityLog.operationName
-			Write-Output $alertcontext.activityLog.resourceType
-			Write-Output $alertcontext.activityLog.resourceId
-			Write-Output $alertcontext.activityLog.eventTimestamp
-
-			$resourceidsplit = $alertcontext.activityLog.resourceId -split '/'
-
-			Write-Output $resourceidsplit[6]
-
-			$datafromdeployment = Get-AzureRmResourceGroupDeployment -ResourceGroupName $alertcontext.activityLog.resourceGroupName -Name $resourceidsplit[6] | ConvertTo-Json -Depth 10
-			$datafromdeploymentbody = (ConvertFrom-Json -InputObject $datafromdeployment)
-			$resourcename = $datafromdeploymentbody.Parameters.name.Value
-
-			Write-Output $resourcename
+		    $resourcedetails = GetResourceDetailsfromWebhook -WebHookDataforResourceCreation $WebHookDataforResourceCreation
 			
-			$ResourceGroupNamefromWebhook = $alertcontext.activityLog.resourceGroupName
-			$ResourceNamefromWebhook = $resourcename
+			$ResourceGroupNamefromWebhook = $resourcedetails.ResourceGroupNamefromWebhook
+			$ResourceNamefromWebhook = $resourcedetails.ResourceNamefromWebhook
 
 	}
 
