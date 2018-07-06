@@ -39,6 +39,7 @@ catch
 . $PSScriptRoot\Models\SVT\PSCloudService.ps1
 . $PSScriptRoot\Models\SVT\PartialScanResourceMap.ps1
 . $PSScriptRoot\Models\RemoteReports\LSRScanResultModel.ps1
+. $PSScriptRoot\Models\RemoteReports\ComplianceStateModel.ps1
 . $PSScriptRoot\Models\SubscriptionCore\AzureSecurityCenter.ps1
 . $PSScriptRoot\Models\SubscriptionCore\ManagementCertificate.ps1
 . $PSScriptRoot\Models\SubscriptionSecurity\SubscriptionRBAC.ps1

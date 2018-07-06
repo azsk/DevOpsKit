@@ -90,19 +90,12 @@ Content-Type: multipart/mixed; boundary={1}
         $requestBody = $template -f $Boundary, $changeset, $contentBody
 
         $headers = @{"x-ms-date"=$xmsdate;"Authorization"="SharedKey $sharedKey";"x-ms-version"="2018-03-28"}
-
-        try
-        {
-            return Invoke-WebRequest -Uri $Uri `
+        return Invoke-WebRequest -Uri $Uri `
                                     -Method Post `
                                     -ContentType "multipart/mixed; boundary=$boundary" `
                                     -Body $requestBody `
                                     -Headers $headers
-        }
-        catch [Exception]
-        {
-            $PSCmdlet.ThrowTerminatingError($_)
-        }
+        
     }
 
 }

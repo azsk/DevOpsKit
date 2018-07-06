@@ -412,7 +412,8 @@ class ComplianceReportHelper: ComplianceBase
 				$currentResult = $_
 				$newEntity = [ComplianceStateTableEntity]::new()
 				$isLegitimateResult = ($currentResult.CurrentSessionContext.IsLatestPSModule -and $currentResult.CurrentSessionContext.Permissions.HasRequiredAccess -and $currentResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions)
-				if($isLegitimateResult)
+                #TODO: change below to $isLegitimateResult after dev done
+				if($true)
 				{
 	
 					#if($resourceScanResult.VerificationResult -ne $currentResult.VerificationResult)
@@ -434,10 +435,17 @@ class ComplianceReportHelper: ComplianceBase
 					$newEntity.ScanSource = $this.ScanSource
 					$newEntity.ScannerVersion = $this.ScannerVersion
 					$newEntity.ControlVersion = $this.ScannerVersion
-					if($currentResult.FeatureName -ne "SubscriptionCore")
+					if($oldEntity.FeatureName -ne "SubscriptionCore")
 					{
 						$newEntity.ChildResourceName = $currentResult.ChildResourceName 
+                        #compute hash
+						$newEntity.PartitionKey = $currentResult.ResourceContext.ResourceId                         
 					}
+                    else
+                    {
+						$newEntity.PartitionKey = $this.SubscriptionCOntext.SubscriptionId                         
+                    }
+                    $newEntity.RowKey = $oldEntity.ControlItem.Id 
 					$newEntity.ControlId = $oldEntity.ControlItem.ControlId 
 					$newEntity.ControlIntId = $oldEntity.ControlItem.Id 
 					$newEntity.ControlSeverity = $oldEntity.ControlItem.ControlSeverity 
@@ -476,12 +484,12 @@ class ComplianceReportHelper: ComplianceBase
 					$newEntity.UserComments = $currentResult.UserComments
 					$newEntity.IsBaselineControl = $oldEntity.ControlItem.IsBaselineControl
 					
-					if($svtResult.ControlItem.Tags.Contains("OwnerAccess") -or $oldEntity.ControlItem.Tags.Contains("GraphRead"))
+					if($oldEntity.ControlItem.Tags.Contains("OwnerAccess") -or $oldEntity.ControlItem.Tags.Contains("GraphRead"))
 					{
 						$newEntity.HasOwnerAccessTag = $true
 					}
 					$newEntity.LastScannedOn = [DateTime]::UtcNow
-	
+
 					# ToDo: Need to confirm
 					#$newEntity.Metadata = $scanResult.Metadata
 					$convertedEntities += $newEntity
@@ -490,9 +498,9 @@ class ComplianceReportHelper: ComplianceBase
 		}
 		return $convertedEntities
 	}
-	hidden [LocalSubscriptionReport] MergeSVTScanResultV2($currentScanData, $resourceInventory)
+	hidden [ComplianceStateTableEntity[]] MergeSVTScanResultV2($currentScanData, $resourceInventory)
 	{
-		if($currentScanResult.Count -lt 1) { return $null}
+		if($currentScanData.Count -lt 1) { return $null}
 
 		$existingScanData = $this.GetLocalSubscriptionScanReport();
 		[ComplianceStateTableEntity[]] $finalScanData = @()
@@ -562,69 +570,129 @@ class ComplianceReportHelper: ComplianceBase
 		# 	}
 		# }
 
-		if($null -ne $resourceInventory)
-		{
-			$deletedResoures = @()
-			$resources | ForEach-Object {
-				$resource = $_
-				if(($resourceInventory | Where-Object { $_.ResourceId -eq $resource.ResourceId } | Measure-Object).Count -eq 0)
-				{
-					$deletedResoures += $resource.ResourceId
-				}
-			}
-				$resources = $resources | Where-Object { $deletedResoures -notcontains $_.ResourceId }
-			}
+		
+		# if($null -ne $resourceInventory)
+		# {
+		# 	$deletedResoures = @()
+		# 	$resources | ForEach-Object {
+		# 		$resource = $_
+		# 		if(($resourceInventory | Where-Object { $_.ResourceId -eq $resource.ResourceId } | Measure-Object).Count -eq 0)
+		# 		{
+		# 			$deletedResoures += $resource.ResourceId
+		# 		}
+		# 	}
+		# 		$resources = $resources | Where-Object { $deletedResoures -notcontains $_.ResourceId }
+		# 	}
 
-			$resourceInventory | ForEach-Object {
-				$resource = $_
-				try {
-					if([Helpers]::CheckMember($resource, "ResourceId"))
-					{
-						if((($resources | Where-Object { $_.ResourceId -eq  $resource.ResourceId }) | Measure-Object).Count -eq 0)
-						{
-							$newResource = [LSRResources]::new()
-							$newResource.HashId = [Helpers]::ComputeHash($resource.ResourceId)
-							$newResource.ResourceId = $resource.ResourceId
-							$newResource.FeatureName = $supportedResourceTypes[$resource.ResourceType.ToLower()]
-							$newResource.ResourceGroupName = $resource.ResourceGroupName
-							$newResource.ResourceName = $resource.Name
+		# 	$resourceInventory | ForEach-Object {
+		# 		$resource = $_
+		# 		try {
+		# 			if([Helpers]::CheckMember($resource, "ResourceId"))
+		# 			{
+		# 				if((($resources | Where-Object { $_.ResourceId -eq  $resource.ResourceId }) | Measure-Object).Count -eq 0)
+		# 				{
+		# 					$newResource = [LSRResources]::new()
+		# 					$newResource.HashId = [Helpers]::ComputeHash($resource.ResourceId)
+		# 					$newResource.ResourceId = $resource.ResourceId
+		# 					$newResource.FeatureName = $supportedResourceTypes[$resource.ResourceType.ToLower()]
+		# 					$newResource.ResourceGroupName = $resource.ResourceGroupName
+		# 					$newResource.ResourceName = $resource.Name
 
-							$resources += $newResource	
-						}
-					}
-				}
-				catch
-				{
-					[EventBase]::PublishGenericException($_);
-				}
-			}
-		}
+		# 					$resources += $newResource	
+		# 				}
+		# 			}
+		# 		}
+		# 		catch
+			# 	{
+			# 		[EventBase]::PublishGenericException($_);
+			# 	}
+			# }
+		#}
 		
-		# Remove updated objects from existing compliance data
-		$resources | ForEach-Object {
-			$resource = $_
-			if($null -ne $subscription.ScanDetails.Resources -and $subscription.ScanDetails.Resources.Count -gt 0)
-			{
-				$subscription.ScanDetails.Resources = $subscription.ScanDetails.Resources | Where-Object { $_.ResourceId -ne $resource.ResourceId }
-			}
-		}
+		# # Remove updated objects from existing compliance data
+		# $resources | ForEach-Object {
+		# 	$resource = $_
+		# 	if($null -ne $subscription.ScanDetails.Resources -and $subscription.ScanDetails.Resources.Count -gt 0)
+		# 	{
+		# 		$subscription.ScanDetails.Resources = $subscription.ScanDetails.Resources | Where-Object { $_.ResourceId -ne $resource.ResourceId }
+		# 	}
+		# }
 		
-		# append new updated objects
-		$subscription.ScanDetails.Resources += $resources
+		# # append new updated objects
+		# $subscription.ScanDetails.Resources += $resources
 		
-		if($null -ne $complianceReport)
-		{
-			$complianceReport.Subscriptions = $complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -ne $subscription.SubscriptionId }
-		}
-		else
-		{
-			$complianceReport = [LocalSubscriptionReport]::new()
-		}
+		# if($null -ne $complianceReport)
+		# {
+		# 	$complianceReport.Subscriptions = $complianceReport.Subscriptions | Where-Object { $_.SubscriptionId -ne $subscription.SubscriptionId }
+		# }
+		# else
+		# {
+		# 	$complianceReport = [LocalSubscriptionReport]::new()
+		# }
 		
-		$complianceReport.Subscriptions += $subscription;
+		# $complianceReport.Subscriptions += $subscription;
 
-		return $complianceReport
+		return $finalScanData
 	}
+	hidden [void] SetLocalSubscriptionScanReportV2([ComplianceStateTableEntity[]] $scanResultForStorage)
+	{		
+		try
+		{
+			# if($this.GetStorageHelperInstance().HaveWritePermissions -eq 0)
+			# {
+			# 	return;
+			# }
+			# $AzSKTemp = [Constants]::AzSKAppFolderPath + [Constants]::ComplianceReportPath;				
+			# if(-not (Test-Path "$AzSKTemp"))
+			# {
+			# 	mkdir -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
+			# }
+			# else
+			# {
+			# 	Remove-Item -Path "$AzSKTemp\*" -Force -Recurse 
+			# }
+
+		#	$fileName = "$AzSKTemp\" + $this.SubscriptionContext.SubscriptionId +".json"
+			#$compressedFileName = "$AzSKTemp\" + [Constants]::ComplianceReportBlobName +".zip"
+		#	$ContainerName = [Constants]::ComplianceReportContainerName;
+
+		#	[Helpers]::ConvertToJsonCustomCompressed($scanResultForStorage) | Out-File $fileName -Force
+
+			#compress file before store to storage
+
+			#Compress-Archive -Path $fileName -CompressionLevel Optimal -DestinationPath $compressedFileName -Update
+
+			#$fileInfos = @();
+			#$fileInfos += [System.IO.FileInfo]::new($compressedFileName);
+			$storageInstance = $this.GetStorageHelperInstance()
+			$TableName = $this.ComplianceTableName
+			$AccountName = $storageInstance.StorageAccountName
+			$AccessKey = [Helpers]::GetStorageAccountAccessKey($storageInstance.ResourceGroupName,$AccountName) 
+			$Uri="https://$AccountName.table.core.windows.net/`$batch"
+			$boundary = "batch_$([guid]::NewGuid())"
+			$Verb = "POST"
+			$ContentMD5 = ""
+			$ContentType = "multipart/mixed; boundary=$boundary"
+			$Date = 
+			$CanonicalizedResource = "/$AccountName/`$batch"
+			$SigningParts=@($Verb,$ContentMD5,$ContentType,$CanonicalizedResource)
+			$StringToSign = [String]::Join("`n",$SigningParts)
+
+			$KeyBytes = [System.Convert]::FromBase64String($AccessKey)
+			$HMAC = New-Object System.Security.Cryptography.HMACSHA256
+			$HMAC.Key = $KeyBytes
+			$UnsignedBytes = [System.Text.Encoding]::UTF8.GetBytes($StringToSign)
+			$KeyHash = $HMAC.ComputeHash($UnsignedBytes)
+			$SignedString = [System.Convert]::ToBase64String($KeyHash)
+			$sharedKey = $AccountName+":"+$SignedString
+			$xmsdate = get-date -format r
+			$this.InsertEntitiesToTable($scanResultForStorage,$storageInstance.StorageAccountName,$this.ComplianceTableName,$Uri,$SharedKey,$xmsdate,$Boundary)
+		}
+		finally
+		{
+			#[Helpers]::CleanupLocalFolder([Constants]::AzSKAppFolderPath + [Constants]::ComplianceReportPath);
+		}
+    }
 	hidden [void] StoreComplianceDataInUserSubscription([SVTEventContext[]] $currentScanResult)
 	{
 		$filteredResources = $null
@@ -641,18 +709,7 @@ class ComplianceReportHelper: ComplianceBase
 		 }
 		 $convertedCurrentScanResult = $this.ConvertScanResultToSnapshotResultV2($currentScanResult)
 		 $finalScanReport = $this.MergeSVTScanResultV2($convertedCurrentScanResult, $filteredResources)
-		 $this.SetLocalSubscriptionScanReport($finalScanReport)
-
-		 #save sample data
-		$bodyData = get-content -Path "C:\Users\v-shbham\Downloads\LatestSnapshot\254ad434-e2e6-45c0-a32b-34bf24cb7479.json"
-		$storageName = ([UserSubscriptionDataHelper]::GetUserSubscriptionStorage()).Name
-		$sign = $this.GetStorageHelperInstance().GenerateTableSASToken([Constants]::ComplianceReportTableName)
-		$url = "https://$storageName.table.core.windows.net/$($this.ComplianceTableName)$sign"
-		$headers = @{
-						"Accept"= "application/json, text/javascript, */*; q=0.01";
-						"Content-Type"="application/json"
-					};
-		[WebRequestHelper]::InvokePostWebRequest($url,$headers,$bodyData)
+		 $this.SetLocalSubscriptionScanReportV2($finalScanReport)
 		 #$finalScanReport = $this.MergeSVTScanResult($svtEventContextResults, $filteredResources)
 		 #$this.SetLocalSubscriptionScanReport($finalScanReport)
 	}

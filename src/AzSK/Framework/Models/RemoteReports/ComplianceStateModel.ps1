@@ -9,7 +9,6 @@ class ComplianceStateTableEntity
     [string] $HashId = "";
 	[string] $ResourceId = "";
 	[DateTime] $LastEventOn = [Constants]::AzSKDefaultDateTime;
-	[DateTime] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
 	[string] $ResourceGroupName = "";
 	[string] $ResourceName = "";
 	[string] $ResourceMetadata = "";
