@@ -1,5 +1,6 @@
 ﻿using namespace Microsoft.WindowsAzure.Storage.Blob
 using namespace Microsoft.Azure.Commands.Management.Storage.Models
+using namespace Microsoft.Azure.Management.Storage.Models
 using namespace Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel
 Set-StrictMode -Version Latest
 class ResourceGroupHelper: AzSKRoot
@@ -171,7 +172,7 @@ class StorageHelper: ResourceGroupHelper
 		return $container;
 	}
 
-	[AzureStorageContainer] CreateTableIfNotExists([string] $tableName)
+	[AzureStorageTable] CreateTableIfNotExists([string] $tableName)
 	{
 		if([string]::IsNullOrWhiteSpace($tableName))
 		{
@@ -196,7 +197,7 @@ class StorageHelper: ResourceGroupHelper
 			throw ([SuppressedException]::new("Unable to fetch/create the table [$tableName] under storage account [$($this.StorageAccountName)]", [SuppressedExceptionType]::InvalidOperation))				
 		}
 
-		return $container;
+		return $table;
 	}
 
 	hidden [void] ComputePermissions()

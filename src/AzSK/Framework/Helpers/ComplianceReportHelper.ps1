@@ -19,7 +19,7 @@ class ComplianceReportHelper: ComplianceBase
 		[LocalSubscriptionReport] $storageReport = $null;
 		try
 		{
-			if($this.azskStorageInstance.HaveWritePermissions -eq 0)
+			if($this.GetStorageHelperInstance().HaveWritePermissions -eq 0)
 			{
 				return $null;
 			}
@@ -33,7 +33,7 @@ class ComplianceReportHelper: ComplianceBase
                 mkdir -Path $AzSKTemp -Force
             }
 
-			$this.azskStorageInstance.DownloadFilesFromBlob($ContainerName, $complianceReportBlobName, $AzSKTemp, $true);
+			$this.GetStorageHelperInstance().DownloadFilesFromBlob($ContainerName, $complianceReportBlobName, $AzSKTemp, $true);
             $fileName = $AzSKTemp+"\"+$this.SubscriptionContext.SubscriptionId +".json";
 			$StorageReportJson = $null;
 			try
@@ -67,7 +67,7 @@ class ComplianceReportHelper: ComplianceBase
 
     hidden [LSRSubscription] GetLocalSubscriptionScanReport([string] $subId)
     {
-		if($this.azskStorageInstance.HaveWritePermissions -eq 0)
+		if($this.GetStorageHelperInstance().HaveWritePermissions -eq 0)
 		{
 			return $null;
 		}
@@ -86,7 +86,7 @@ class ComplianceReportHelper: ComplianceBase
 	{		
 		try
 		{
-			if($this.azskStorageInstance.HaveWritePermissions -eq 0)
+			if($this.GetStorageHelperInstance().HaveWritePermissions -eq 0)
 			{
 				return;
 			}
@@ -112,7 +112,7 @@ class ComplianceReportHelper: ComplianceBase
 
 			$fileInfos = @();
 			$fileInfos += [System.IO.FileInfo]::new($compressedFileName);
-			$this.azskStorageInstance.UploadFilesToBlob($ContainerName, "", $fileInfos, $true);
+			$this.GetStorageHelperInstance().UploadFilesToBlob($ContainerName, "", $fileInfos, $true);
 		}
 		finally
 		{
@@ -416,7 +416,15 @@ class ComplianceReportHelper: ComplianceBase
 			$filteredResources = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }			
 		 }
 		 #save sample data
-		
+		$bodyData = get-content -Path "C:\Users\v-shbham\Downloads\LatestSnapshot\254ad434-e2e6-45c0-a32b-34bf24cb7479.json"
+		$storageName = ([UserSubscriptionDataHelper]::GetUserSubscriptionStorage()).Name
+		$sign = $this.GetStorageHelperInstance().GenerateTableSASToken([Constants]::ComplianceReportTableName)
+		$url = "https://$storageName.table.core.windows.net/$($this.ComplianceTableName)$sign"
+		$headers = @{
+						"Accept"= "application/json, text/javascript, */*; q=0.01";
+						"Content-Type"="application/json"
+					};
+		[WebRequestHelper]::InvokePostWebRequest($url,$headers,$bodyData)
 		 #$finalScanReport = $this.MergeSVTScanResult($svtEventContextResults, $filteredResources)
 		 #$this.SetLocalSubscriptionScanReport($finalScanReport)
 	}

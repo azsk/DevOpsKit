@@ -1,4 +1,4 @@
-using namespace Microsoft.Azure.Commands.Management.Storage.Models
+using namespace Microsoft.Azure.Management.Storage.Models
 Set-StrictMode -Version Latest
 class ComplianceBase
 { 
@@ -23,7 +23,7 @@ class ComplianceBase
         }
         if($null -eq $this.azskStorageInstance)
         {
-            [EventBase]::PublishCustomMessage("Failed to upgrade storage [$StorageName].");
+            return $Null
         }
         else
         {
@@ -31,19 +31,18 @@ class ComplianceBase
         }
     }
 
-    hidden CreateComplianceStateTableIfNotExists
+    hidden CreateComplianceStateTableIfNotExists()
     {
-        if([Helpers]::IsUserSubStorageUpgraded() -eq $False)
+        if([UserSubscriptionDataHelper]::IsUserSubStorageUpgraded() -eq $False)
         {
-            $storage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()    
-            [Helpers]::UpgradeBlobToV2Storage($storage.Name,$storage.ResourceGroupName)
+            [UserSubscriptionDataHelper]::UpgradeBlobToV2Storage()
         }
-        $azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+        $azskRGName = [UserSubscriptionDataHelper]::GetUserSubscriptionRGName()
         $azskStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
         if($azskStorageAccount)
         {
             $this.azskStorageInstance = [StorageHelper]::new($this.SubscriptionContext.subscriptionId, $azskRGName,$azskStorageAccount.Location, $azskStorageAccount.Name, [Kind]::StorageV2);
-            $this.azskStorageInstance.CreateTableIfNotExists([Constants]::ComplianceReportContainerName);		
+            $this.azskStorageInstance.CreateTableIfNotExists([Constants]::ComplianceReportTableName);		
         }	
     } 
 

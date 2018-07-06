@@ -23,7 +23,7 @@ class SVTCommandBase: CommandBase {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
         $this.CheckAndDisableAzureRMTelemetry()
 		#fetch the compliancedata from subscription
-        $this.GetLocalSubscriptionData(); 
+        #$this.GetLocalSubscriptionData(); 
     }
 
 	hidden [void] GetLocalSubscriptionData()
@@ -35,7 +35,7 @@ class SVTCommandBase: CommandBase {
     
         if($null -eq $this.complianceReportHelper)
         {
-		    $this.complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId);
+		    $this.complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext,$this.GetCurrentModuleVersion());
             $this.StorageReportData =  $this.complianceReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
         }
 	}

@@ -1,7 +1,7 @@
 using namespace Newtonsoft.Json
 using namespace Microsoft.Azure.Commands.Common.Authentication.Abstractions
 using namespace Microsoft.Azure.Commands.Common.Authentication
-using namespace Microsoft.Azure.Commands.Management.Storage.Models
+using namespace Microsoft.Azure.Management.Storage.Models
 
 Set-StrictMode -Version Latest
 class Helpers {
@@ -894,45 +894,7 @@ class Helpers {
       return [Helpers]::NewAzskCompliantStorage($StorageName,[Constants]::NewStorageKind,[string]$ResourceGroup,[string]$Location)
     }
 
-    static [PSObject] UpgradeBlobToV2Storage([string]$StorageName, [string]$ResourceGroupName) 
-    {
-        #TODO: Check contributor permisison on azskrg
-        try 
-        {
-            Set-AzureRmStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageName -UpgradeToStorageV2 -ErrorAction Stop 
-        }
-        catch
-        {
-			[EventBase]::PublishCustomMessage("Failed to upgrade storage [$StorageName].");
-			[EventBase]::PublishException($_)
-        }
-        #Storage compliance
-        $retryAccount = 0
-        do 
-        {
-            $storageAccount = Get-AzureRmStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageName -ErrorAction SilentlyContinue
-            Start-Sleep -seconds 2
-            $retryAccount++
-        } while (!$storageAccount -and $retryAccount -ne 6)
-        if($storageAccount)
-        {
-            $storageContext = $storageAccount.Context 
-            Set-AzureStorageServiceLoggingProperty -ServiceType Blob -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
-            Set-AzureStorageServiceLoggingProperty -ServiceType Queue -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
-            Set-AzureStorageServiceLoggingProperty -ServiceType Table -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
-            Set-AzureStorageServiceLoggingProperty -ServiceType File -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
-        }
-    }
-    static [bool] IsUserSubStorageUpgraded() 
-    {
-        $storage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-        if($null -ne $storage)
-        {
-    		return ([UserSubscriptionDataHelper]::GetUserSubscriptionStorage().Kind -eq [Microsoft.Azure.Management.Storage.Models.Kind]::StorageV2)        
-        }
-        else
-            return $Null
-    }
+    
     static [string] FetchTagsString([PSObject]$TagsHashTable)
     {
         [string] $tagsString = "";
@@ -1418,7 +1380,6 @@ class Helpers {
 		catch{
 			#this call happens from finally block. Try to clean the files, if it don't happen it would get cleaned in the next attempt
 		}	
-    }
-	
+    }	
 }
 

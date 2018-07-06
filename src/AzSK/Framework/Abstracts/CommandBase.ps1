@@ -36,7 +36,7 @@ class CommandBase: AzSKRoot {
 		$azskConfigComplianceFlag = [ConfigurationManager]::GetAzSKConfigData().StoreComplianceSummaryInUserSubscriptions;	
         $localSettingComplianceFlag = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
         #return if feature is turned off at server config
-        if($azskConfigFlag -or $localSettingComplianceFlag) 
+        if($azskConfigComplianceFlag -or $localSettingComplianceFlag) 
 		{
 			$this.IsLocalComplianceStoreEnabled = $true
 		}        
