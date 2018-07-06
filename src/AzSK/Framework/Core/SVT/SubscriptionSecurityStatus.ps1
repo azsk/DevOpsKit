@@ -30,7 +30,9 @@ class SubscriptionSecurityStatus: SVTCommandBase
 		{
 			$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule
 			$this.SetSVTBaseProperties($svtObject);
-			$result += $svtObject.$methodNameToCall();			
+			$result += $svtObject.$methodNameToCall();	
+			$this.FetchRBACTelemetry($svtObject);
+			$this.PublishCustomData($svtObject.CustomObject);		
 		}
 		
 		[ListenerHelper]::RegisterListeners();
@@ -66,5 +68,13 @@ class SubscriptionSecurityStatus: SVTCommandBase
 				$this.ControlIds = $controlIds;			
 			}
 		}
+	}
+
+	hidden [void] FetchRBACTelemetry($svtObject)
+	{
+		$svtObject.GetRoleAssignments();
+		$svtObject.PublishRBACTelemetryData();
+		$svtObject.GetPIMRoles();
+
 	}
 }
