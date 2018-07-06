@@ -2,7 +2,7 @@ Param(
     [object] $WebHookData
 )
 
-$AzSKRunbookVersion = "[#runbookVersion#]"
+$AzSKRunbookVersion = "3.1803.0"
 
 #Telemetry functions -- start here
 function SetCommonProperties([psobject] $EventObj) {
@@ -130,7 +130,7 @@ function GetResourceDetailsfromWebhook($WebHookDataforResourceCreation)
 			$WebhookName    =   $WebHookDataforResourceCreation.WebhookName
 			$WebhookBody    =   $WebHookDataforResourceCreation.RequestBody
 			$WebhookHeaders =   $WebHookDataforResourceCreation.RequestHeader
-
+            
 		   # Obtain the WebhookBody containing the AlertContext
 			$WebhookBody = (ConvertFrom-Json -InputObject $WebhookBody)
 			Write-Output "`nWEBHOOK BODY"
@@ -180,45 +180,29 @@ function GetResourceDetailsfromWebhook($WebHookDataforResourceCreation)
 #In generic (org-neutral) setups these values are obtained from AzSK.JSON on a public CDN endpoint.
 ######################################################################################################################
 try
-{
+{    "start"
 	#start job timer
 	$jobTimer = [System.Diagnostics.Stopwatch]::StartNew();
 
 	#----------------------------------Config start------------------------------------------------------------------
-	$automationAccountRG =  "[#automationAccountRG#]"
-	$automationAccountName="[#automationAccountName#]"
-	$telemetryKey ="[#telemetryKey#]"
+	$automationAccountRG =  "AzSKRG"
+	$automationAccountName="AzSKContinuousAssurance"
+	$telemetryKey ="0d30c940-43d9-493b-89d3-f176ac665b33"
 	
 	#This is the location from where policy is fetched at runtime. 
 	#This can be an org-specific URL (when org policy is set up) or, if generic org-neutral mode is used, it will just match the CoreSetupSrcUrl (below) 
 	#We will refer to this as org-policy store or org-policy url in comments below (with the above understanding)
-	$onlinePolicyStoreUrl = "[#onlinePolicyStoreUrl#]"
+	$onlinePolicyStoreUrl = "https://getazsdkcontrolsmsstaging.azurewebsites.net/api/files?version=`$Version&fileName=`$FileName"
 
 
 	#This setting determines if the policy store enforces authentication. Generally 'false' for org-policy or OSS (org-neutral) context.
-	$enableAADAuthForOnlinePolicyStore = "[#enableAADAuthForOnlinePolicyStore#]"
+	$enableAADAuthForOnlinePolicyStore = "true"
 
 	#This is the script that is run to peform the actual scanning. This is fetched from the org-policy store if org-policy 
 	#is in use. If not, it is fetched from the default AzSK CDN. 
 	#This script basically allows orgs to customize/tweak the scripts that are run to perform the daily CA scans.
 	$runbookScanAgentScript = "RunbookScanAgent.ps1"
-
-	$WebHookDataforResourceCreation = $WebHookData
-	$ResourceGroupNamefromWebhook = ""
-	$ResourceNamefromWebhook = ""
-
-	#Fetching the webhook parameter and get resourcegroup name and resource name
-	if($null -ne $WebHookDataforResourceCreation)
-	{
-		
-		    $resourcedetails = GetResourceDetailsfromWebhook -WebHookDataforResourceCreation $WebHookDataforResourceCreation
-			
-			$ResourceGroupNamefromWebhook = $resourcedetails.ResourceGroupNamefromWebhook
-			$ResourceNamefromWebhook = $resourcedetails.ResourceNamefromWebhook
-
-	}
-
-	$azureRmResourceURI = "https://management.core.windows.net/"
+    $azureRmResourceURI = "https://management.core.windows.net/"
 	
 	#This is the Run-As (SPN) account for the runbook. It is read from the CA Automation account.
 	$RunAsConnection = Get-AutomationConnection -Name "AzureRunAsConnection"
@@ -258,6 +242,23 @@ try
 		throw $_.Exception
 	}
 
+	$WebHookDataforResourceCreation = $WebHookData
+	$ResourceGroupNamefromWebhook = ""
+	$ResourceNamefromWebhook = ""
+
+	#Fetching the webhook parameter and get resourcegroup name and resource name
+	if($null -ne $WebHookDataforResourceCreation)
+	{
+			"call to get res detail"
+		    $resourcedetails = GetResourceDetailsfromWebhook -WebHookDataforResourceCreation $WebHookDataforResourceCreation
+			
+			$ResourceGroupNamefromWebhook = [string] $resourcedetails.ResourceGroupNamefromWebhook
+			$ResourceNamefromWebhook = [string] $resourcedetails.ResourceNamefromWebhook
+
+            Write-Output("ResourceGroupName : [$ResourceGroupNamefromWebhook]")
+            Write-Output("ResourceName : [$ResourceNamefromWebhook]")
+
+	}
 
 	#This is a 'pseudo-version' and corresponds to the folder on the online policy store
 	#from where the current CA core setup and scan agent scripts will be fetched.
@@ -298,3 +299,4 @@ catch
 	throw;
 }
 #----------------------------------Runbook end-------------------------------------------------------------------------
+
