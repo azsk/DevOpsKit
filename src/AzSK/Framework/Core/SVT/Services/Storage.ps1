@@ -124,7 +124,7 @@ class Storage: SVTBase
 			$daignosticsSkuMapping = $this.ControlSettings.StorageDiagnosticsSkuMapping | Where-Object { $_ -eq $this.ResourceObject.Sku.Name } | Select-Object -First 1;
 			if(-not $daignosticsSkuMapping)
 			{
-				#Diagnostics settings are not available for premium storage and zone redundant storage.
+				#Diagnostics settings are not available for premium storage.
 				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Diagnostics settings are not supported for Sku Tier - [$($this.ResourceObject.Sku.Name)]")); 
 			    return $controlResult; 
 			}
@@ -134,6 +134,7 @@ class Storage: SVTBase
 					#Check Metrics diagnostics log property
 					$serviceMapping.DiagnosticsLogServices | 
 					ForEach-Object {
+							#Diagnostic logging is not available for File service.
 							$result = $this.GetServiceLoggingProperty($_, $controlResult) -and $result ;
 					}
 
