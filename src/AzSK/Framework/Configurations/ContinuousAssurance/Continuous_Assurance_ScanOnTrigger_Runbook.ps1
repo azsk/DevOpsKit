@@ -276,7 +276,8 @@ try
 		}
 		catch
 		{
-
+			Write-Output ("Failed to get the Job Details for Automation account.")
+			throw $_.Exception
 		}
 		
 
