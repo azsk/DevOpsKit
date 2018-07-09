@@ -267,7 +267,7 @@ try
 				$jobdetailsBody    =   $jobdetails.RequestBody
 				$jobdetailsBody = (ConvertFrom-Json -InputObject $jobdetailsBody)
 				$jobdetailsContext = [object]$jobdetailsBody.data.context
-				$rgname = $alertcontext.activityLog.resourceGroupName
+				$rgname = $jobdetailsContext.activityLog.resourceGroupName
 				if($rgname -eq $resourcedetails.ResourceGroupNamefromWebhook)
 				{
 					$resourcedetails.ResourceGroupNamefromWebhook = ""
