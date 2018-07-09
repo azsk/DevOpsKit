@@ -1392,5 +1392,16 @@ class Helpers {
         else
         {return ""}
     }	
+    static [string] CreateStorageAccountSharedKey([string] $StringToSign,[string] $AccountName,[string] $AccessKey)
+	{
+        $KeyBytes = [System.Convert]::FromBase64String($AccessKey)
+        $HMAC = New-Object System.Security.Cryptography.HMACSHA256
+        $HMAC.Key = $KeyBytes
+        $UnsignedBytes = [System.Text.Encoding]::UTF8.GetBytes($StringToSign)
+        $KeyHash = $HMAC.ComputeHash($UnsignedBytes)
+        $SignedString = [System.Convert]::ToBase64String($KeyHash)
+        $sharedKey = $AccountName+":"+$SignedString
+        return $sharedKey
+    }	
 }
 

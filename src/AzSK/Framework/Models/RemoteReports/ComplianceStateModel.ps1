@@ -8,7 +8,7 @@ class ComplianceStateTableEntity
     [string] $RowKey;
     [string] $HashId = "";
 	[string] $ResourceId = "";
-	[DateTime] $LastEventOn = [Constants]::AzSKDefaultDateTime;
+	[string] $LastEventOn = [Constants]::AzSKDefaultDateTime;
 	[string] $ResourceGroupName = "";
 	[string] $ResourceName = "";
 	[string] $ResourceMetadata = "";
@@ -17,13 +17,13 @@ class ComplianceStateTableEntity
     #Default control values
 	[string] $ControlId = "";
     [string] $ControlIntId = "";
-	[DateTime] $ControlUpdatedOn = [Constants]::AzSKDefaultDateTime;
+	[string] $ControlUpdatedOn = [Constants]::AzSKDefaultDateTime;
     [ControlSeverity] $ControlSeverity = [ControlSeverity]::High
     [VerificationResult] $ActualVerificationResult= [VerificationResult]::Manual;
     [AttestationStatus] $AttestationStatus = [AttestationStatus]::None;
     [VerificationResult] $VerificationResult = [VerificationResult]::Manual;
     [string] $AttestedBy = "";
-	[DateTime] $AttestedDate = [Constants]::AzSKDefaultDateTime;
+	[string] $AttestedDate = [Constants]::AzSKDefaultDateTime;
     [string] $Justification = "";
     [string] $PreviousVerificationResult = [VerificationResult]::Manual;
 	[PSObject] $AttestationData;
@@ -31,11 +31,11 @@ class ComplianceStateTableEntity
 	[bool] $HasOwnerAccessTag;
 
 	#Tracking information
-	[DateTime] $LastResultTransitionOn = [Constants]::AzSKDefaultDateTime;
-	[DateTime] $LastScannedOn = [Constants]::AzSKDefaultDateTime;
-	[DateTime] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
-	[DateTime] $FirstFailedOn = [Constants]::AzSKDefaultDateTime;
-	[DateTime] $FirstAttestedOn = [Constants]::AzSKDefaultDateTime;
+	[string] $LastResultTransitionOn = [Constants]::AzSKDefaultDateTime;
+	[string] $LastScannedOn = [Constants]::AzSKDefaultDateTime;
+	[string] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
+	[string] $FirstFailedOn = [Constants]::AzSKDefaultDateTime;
+	[string] $FirstAttestedOn = [Constants]::AzSKDefaultDateTime;
 	[int] $AttestationCounter = 0;
 
 	#Other  information
