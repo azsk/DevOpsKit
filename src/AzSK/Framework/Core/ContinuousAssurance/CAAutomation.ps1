@@ -34,7 +34,7 @@ class CCAutomation: CommandBase
 	[bool] $IsMultiCAModeOn = $false;
 	[bool] $IsCustomAADAppName = $false;
 	[bool] $ExhaustiveCheck = $false;
-	[bool] $ScanOnResourceCreation = $false;
+	[bool] $ScanOnDeployment = $false;
 	[CAReportsLocation] $LoggingOption = [CAReportsLocation]::CentralSub;
 
 	[string] $MinReqdCARunbookVersion = "2.1709.0"
@@ -999,7 +999,7 @@ class CCAutomation: CommandBase
 			}
 			$this.PublishCustomMessage("Updating runbook: [$($this.RunbookName)]")
 			$this.NewCCRunbook()
-			if($this.ScanOnResourceCreation)
+			if($this.ScanOnDeployment)
 			{
 				$this.SetResourceCreationScan()
 			}
@@ -2435,7 +2435,7 @@ class CCAutomation: CommandBase
 		#Create CA alerts runbook
 		$this.SetAzSKAlertMonitoringRunbook($false)
 
-		if($this.ScanOnResourceCreation)
+		if($this.ScanOnDeployment)
 		{
 			$this.SetResourceCreationScan()
 		}
@@ -2476,15 +2476,15 @@ class CCAutomation: CommandBase
 			Key="Continuous_Assurance_Runbook"
         }	
 		
-		if($this.ScanOnResourceCreation)
+		if($this.ScanOnDeployment)
 		{
 		  $ResourceAddition_Runbooks = [Runbook]@{
-            Name = "Continuous_Assurance_Resource_Creation_Runbook";
+            Name = "Continuous_Assurance_ScanOnTrigger_Runbook";
             Type = "PowerShell";
 			Description = "This runbook will be triggered on Resource Addition.";
 			LogProgress = $false;
 			LogVerbose = $false;
-			Key="Continuous_Assurance_Resource_Creation_Runbook"
+			Key="Continuous_Assurance_ScanOnTrigger_Runbook"
           }
 		 $this.Runbooks += @($CCRunbook,$ResourceAddition_Runbooks)
 		}

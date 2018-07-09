@@ -169,7 +169,7 @@ function GetResourceDetailsfromWebhook($WebHookDataforResourceCreation)
 
 ######################################################################################################################
 #Core runbook code. 
-#This is built using the runbook code template inside \Modules\AzSK\<version>\Framework\Configurations\Continuous_Assurance_Resource_Creation_Runbook
+#This is built using the runbook code template inside \Modules\AzSK\<version>\Framework\Configurations\Continuous_Assurance_ScanOnTrigger_Runbook
 #The placeholder values for various important variables are determined 'on the fly' based on the defaults that ship in AzSK.JSON
 #file in the \Modules\AzSK\<version>\Framework\Configurations folder and the local AzSKSettings.JSON file in the %localappdata%\Microsoft\AzSK
 #folder for the user setting up CA. 
