@@ -673,7 +673,7 @@ class ComplianceReportHelper: ComplianceBase
 			$Verb = "POST"
 			$ContentMD5 = ""
 			$ContentType = "multipart/mixed; boundary=$boundary"
-			$Date = get-date -format r
+			$Date = [DateTime]::UtcNow.ToString('r')
 			$CanonicalizedResource = "/$AccountName/`$batch"
 			$SigningParts=@($Verb,$ContentMD5,$ContentType,$Date,$CanonicalizedResource)
 			$StringToSign = [String]::Join("`n",$SigningParts)

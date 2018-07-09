@@ -93,7 +93,8 @@ Content-Type: multipart/mixed; boundary={1}
                                     -Method Post `
                                     -ContentType "multipart/mixed; boundary=$boundary" `
                                     -Body $requestBody `
-                                    -Headers $headers
+                                    -Headers $headers `
+                                    -UseBasicParsing
         
         
     }
