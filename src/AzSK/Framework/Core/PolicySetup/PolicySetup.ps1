@@ -218,13 +218,13 @@ class PolicySetup: CommandBase
 			$azskOverride.WriteToFolder($this.ConfigFolderPath);
 		}
 
-		#Dynamically get list of files available in folder
+		# Dynamically get list of files available in folder
 		$metadataFileNames += Get-ChildItem $this.ConfigFolderPath -Recurse -Force |
-								Where-Object { $_.mode -match "-a---" -and $_.Name -ne "ServerConfigMetadata.json" } |
+								Where-Object { $_.mode -match "-a---" -and $_.Name -ne [Constants]::ServerConfigMetadataFileName } |
 								Select-Object -Property Name | Select-Object -ExpandProperty Name |
 								Select-Object @{ Label="Name"; Expression={ $_ } };
 
-		$metadataOverride = [ConfigOverride]::new("ServerConfigMetadata.json");
+		$metadataOverride = [ConfigOverride]::new([Constants]::ServerConfigMetadataFileName);
 		$metadataOverride.UpdatePropertyValue("OnlinePolicyList", $metadataFileNames);
 		$metadataOverride.WriteToFolder($this.ConfigFolderPath);
 	}
