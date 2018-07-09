@@ -152,17 +152,27 @@ function GetResourceDetailsfromWebhook($WebHookDataforResourceCreation)
 			Write-Output $alertcontext.activityLog.resourceId
 			Write-Output $alertcontext.activityLog.eventTimestamp
 
-			$resourceidsplit = $alertcontext.activityLog.resourceId -split '/'
+			#$resourceidsplit = $alertcontext.activityLog.resourceId -split '/'
+			
+			$resourcedetails = @{ResourceGroupNamefromWebhook = $alertcontext.activityLog.resourceGroupName ; ResourceNamefromWebhook = ""}
 
-			Write-Output $resourceidsplit[6]
+			#Write-Output $resourceidsplit[6]
 
-			$datafromdeployment = Get-AzureRmResourceGroupDeployment -ResourceGroupName $alertcontext.activityLog.resourceGroupName -Name $resourceidsplit[6] | ConvertTo-Json -Depth 10
-			$datafromdeploymentbody = (ConvertFrom-Json -InputObject $datafromdeployment)
-			$resourcename = $datafromdeploymentbody.Parameters.name.Value
+			#$datafromdeployment = Get-AzureRmResourceGroupDeployment -ResourceGroupName $alertcontext.activityLog.resourceGroupName -Name $resourceidsplit[6] | ConvertTo-Json -Depth 10
+			
+			#if(-not [string]::IsNullOrWhiteSpace($datafromdeployment))
+			#{
+			#	$datafromdeploymentbody = (ConvertFrom-Json -InputObject $datafromdeployment)
+			#	$resourcename = $datafromdeploymentbody.Parameters.name.Value
 
-			Write-Output $resourcename
+			#	Write-Output $resourcename
 
-			$resourcedetails = @{ResourceGroupNamefromWebhook = $alertcontext.activityLog.resourceGroupName ; ResourceNamefromWebhook = $resourcename}
+			#	$resourcedetails = @{ResourceGroupNamefromWebhook = $alertcontext.activityLog.resourceGroupName ; ResourceNamefromWebhook = $resourcename}
+			#}
+			#else
+			#{
+			#	$resourcedetails = @{ResourceGroupNamefromWebhook = "" ; ResourceNamefromWebhook = ""}
+			#}
 
 			return $resourcedetails;
 }
@@ -248,7 +258,28 @@ try
 	if($null -ne $WebHookDataforResourceCreation)
 	{
 		$resourcedetails = GetResourceDetailsfromWebhook -WebHookDataforResourceCreation $WebHookDataforResourceCreation
-			
+		
+		try
+		{
+			$automationjoblist =  Get-AzureRmAutomationJob -RunbookName Continuous_Assurance_ScanOnTrigger_Runbook -ResourceGroupName $resourcedetails.ResourceGroupNamefromWebhook -Status Running -AutomationAccountName AzSKContinuousAssurance
+			$automationjoblist | ForEach-Object {
+				$jobdetails = Get-AzureRmAutomationJob -AutomationAccountName $_.AutomationAccountName -ResourceGroupName $_.ResourceGroupName -Id $_.JobId
+				$jobdetailsBody    =   $jobdetails.RequestBody
+				$jobdetailsBody = (ConvertFrom-Json -InputObject $jobdetailsBody)
+				$jobdetailsContext = [object]$jobdetailsBody.data.context
+				$rgname = $alertcontext.activityLog.resourceGroupName
+				if($rgname -eq $resourcedetails.ResourceGroupNamefromWebhook)
+				{
+					$resourcedetails.ResourceGroupNamefromWebhook = ""
+				}
+			}
+		}
+		catch
+		{
+
+		}
+		
+
 		$ResourceGroupNamefromWebhook = $resourcedetails.ResourceGroupNamefromWebhook
 		$ResourceNamefromWebhook = $resourcedetails.ResourceNamefromWebhook
 
