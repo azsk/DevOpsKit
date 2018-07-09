@@ -512,8 +512,8 @@ class ComplianceReportHelper: ComplianceBase
 		$tempSubscriptionScanData += $currentScanData | Where-Object{$_.PartitionKey -eq $this.SubscriptionContext.SubscriptionId}
 		
 		#add missing data from existing compliance
-		$tempSubscriptionScanData += $existingScanData | `
-		Where-Object{$_.PartitionKey -eq $this.SubscriptionContext.SubscriptionId -and $tempSubscriptionScanData.RowKey -inotcontains $_.RowKey}
+		#$tempSubscriptionScanData += $existingScanData | `
+		#Where-Object{$_.PartitionKey -eq $this.SubscriptionContext.SubscriptionId -and $tempSubscriptionScanData.RowKey -inotcontains $_.RowKey}
 		$finalScanData += $tempSubscriptionScanData
 		# $currentScanData | ForEach-Object {
 		# 	$currentScanResult = $_
@@ -673,9 +673,9 @@ class ComplianceReportHelper: ComplianceBase
 			$Verb = "POST"
 			$ContentMD5 = ""
 			$ContentType = "multipart/mixed; boundary=$boundary"
-			$Date = 
+			$Date = get-date -format r
 			$CanonicalizedResource = "/$AccountName/`$batch"
-			$SigningParts=@($Verb,$ContentMD5,$ContentType,$CanonicalizedResource)
+			$SigningParts=@($Verb,$ContentMD5,$ContentType,$Date,$CanonicalizedResource)
 			$StringToSign = [String]::Join("`n",$SigningParts)
 
 			$KeyBytes = [System.Convert]::FromBase64String($AccessKey)
@@ -685,7 +685,7 @@ class ComplianceReportHelper: ComplianceBase
 			$KeyHash = $HMAC.ComputeHash($UnsignedBytes)
 			$SignedString = [System.Convert]::ToBase64String($KeyHash)
 			$sharedKey = $AccountName+":"+$SignedString
-			$xmsdate = get-date -format r
+			$xmsdate = $Date
 			$this.InsertEntitiesToTable($scanResultForStorage,$storageInstance.StorageAccountName,$this.ComplianceTableName,$Uri,$SharedKey,$xmsdate,$Boundary)
 		}
 		finally

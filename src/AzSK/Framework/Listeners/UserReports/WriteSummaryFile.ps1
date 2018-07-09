@@ -59,14 +59,14 @@ class WriteSummaryFile: FileOutputBase
 				}
 
 				# Persist scan data to subscription
-				try 
-				{
-					$currentInstance.PersistScanDataToStorage($Event.SourceArgs, $currentInstance.GetCurrentModuleVersion())
-				}
-				catch 
-				{
-					$currentInstance.PublishException($_);
-				}
+				# try 
+				# {
+				# 	$currentInstance.PersistScanDataToStorage($Event.SourceArgs, $currentInstance.GetCurrentModuleVersion())
+				# }
+				# catch 
+				# {
+				# 	$currentInstance.PublishException($_);
+				# }
 			}
         });
 
