@@ -233,7 +233,6 @@ function RunAzSKScanForASub
 	}
 	else
 	{
-		Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
 		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $ResourceGroupNames -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
 	}
    
