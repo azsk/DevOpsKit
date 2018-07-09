@@ -1196,7 +1196,7 @@
         {
           "Name": "AzSK_Create_new_or_update_existing_resource",
           "Description": "Creates or updates an deployment.",
-          "OperationName": "Microsoft.Resources/deployments/write",
+          "OperationName": "Microsoft.Resources/subscriptions/resourcegroups/deployments/write",
           "Tags": [
             "Deployment",
             "CICD"
