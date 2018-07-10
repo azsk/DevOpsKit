@@ -1252,27 +1252,39 @@ class Helpers {
 			}
 		}
 		return $invalidEmails
-	}
-
-	static [Object] MergeObjects([Object] $source,[Object] $extend)
+    }
+    
+    static [Object] MergeObjects([Object] $source,[Object] $extend, [string] $idName)
 	{
+        $idPropName = "Id";
+        if(-not [string]::IsNullOrWhiteSpace($idName))
+        {
+            $idPropName = $idName;
+        }
 		if($source.GetType().Name -eq "PSCustomObject" -and $extend.GetType().Name -eq "PSCustomObject"){
 			foreach($Property in $extend | Get-Member -type NoteProperty, Property){
 				if(-not [Helpers]::CheckMember($source,$Property.Name,$false)){
 				  $source | Add-Member -MemberType NoteProperty -Value $extend.$($Property.Name) -Name $Property.Name `
 				}
-				$source.$($Property.Name) = [Helpers]::MergeObjects($source.$($Property.Name),$extend.$($Property.Name))
+				$source.$($Property.Name) = [Helpers]::MergeObjects($source.$($Property.Name), $extend.$($Property.Name), $idName)
 			}
 		}
 		elseif($source.GetType().Name -eq "Object[]" -and $extend.GetType().Name -eq "Object[]"){
 			if([Helpers]::IsPSObjectArray($source) -or [Helpers]::IsPSObjectArray($extend))
 			{
 			   foreach($extendArrElement in $extend)  {
-					 $PropertyId = $extendArrElement | Get-Member -type NoteProperty, Property  | Select-Object -First 1
+                     $PropertyId = $extendArrElement | Get-Member -type NoteProperty, Property | Where-Object { $_.Name -eq $idPropName}  | Select-Object -First 1
+                     if(($PropertyId | Measure-Object).Count -gt 0)
+                     {
+                         $PropertyId = $PropertyId | Select-Object -First 1
+                     }
+                     else {
+                        $PropertyId = $extendArrElement | Get-Member -type NoteProperty, Property | Select-Object -First 1
+                     }                     
 					 $sourceElement = $source | Where-Object { $_.$($PropertyId.Name) -eq $extendArrElement.$($PropertyId.Name) }   
 					 if($sourceElement)
 					 {                    
-					   $sourceElement =  [Helpers]::MergeObjects($sourceElement,$extendArrElement)
+                        $sourceElement =  [Helpers]::MergeObjects($sourceElement, $extendArrElement, $idName)
 					 }
 					 else
 					 {
@@ -1289,6 +1301,12 @@ class Helpers {
 		   $source = $extend;
 		}
 		return $source
+	}
+
+
+	static [Object] MergeObjects([Object] $source,[Object] $extend)
+	{
+		return [Helpers]::MergeObjects($source,$extend,"");
 	}
 
 	static [Bool] IsPSObjectArray($arrayObj)

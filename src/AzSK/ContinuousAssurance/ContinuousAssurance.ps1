@@ -170,8 +170,12 @@ function Install-AzSKContinuousAssurance
 		$CentralScanMode,
 
 		[switch]
-        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
-		$DoNotOpenOutputFolder
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
+		$DoNotOpenOutputFolder,
+
+		[switch]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
+		$ScanOnResourceCreation
     )
 	Begin
 	{
@@ -206,9 +210,12 @@ function Install-AzSKContinuousAssurance
 
 			#set the Webhook settings
 			$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
+			
 
 			if ($ccAccount) 
 			{
+				$ccAccount.ScanOnResourceCreation = $ScanOnResourceCreation;
+
 				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
 				{
 					$ccAccount.IsCentralScanModeOn = $true;
@@ -223,6 +230,8 @@ function Install-AzSKContinuousAssurance
 						$ccAccount.LoggingOption = $LoggingOption;
 					}
 				}
+
+				
 				return $ccAccount.InvokeFunction($ccAccount.InstallAzSKContinuousAssurance);
 			}			
 		}

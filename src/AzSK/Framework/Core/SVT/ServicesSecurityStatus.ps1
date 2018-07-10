@@ -140,7 +140,17 @@ class ServicesSecurityStatus: SVTCommandBase
 
 				try
 				{
-					$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+					$extensionSVTClassName = $svtClassName + "Ext";
+					$extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName);				
+					if([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath))
+					{
+						$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+					}
+					else {
+						# file has to be loaded here due to scope contraint
+						. $extensionSVTClassFilePath
+						$svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+					}
 				}
 				catch
 				{
