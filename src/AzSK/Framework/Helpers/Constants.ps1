@@ -118,7 +118,6 @@ class Constants
 	static [string] $AzSKAlertsVersionTagName = "AzSKAlertsVersion"
 	static [string] $SecurityCenterConfigVersionTagName = "SecurityCenterConfigVersion"
 	static [string] $NoActionRequiredMessage ="No Action Required"
-	static [string] $MigrationTagName = "MigratedOn"
 	static [string] $PolicyMigrationTagName = "PolicyMigratedOn"
 	static [string] $AlertRunbookName= "Alert_Runbook"
 	static [string] $Alert_ResourceCreation_Runbook= "Continuous_Assurance_ScanOnTrigger_Runbook"

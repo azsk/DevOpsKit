@@ -65,11 +65,7 @@ class AzSKSettings {
 		{
 		    Get-ChildItem -Path $AzSDKAppFolderPath -Directory | Remove-Item -Recurse -Force
 		}
-		if([AzSKSettings]::IsMigrationRequired())
-		{
-			$localAppDataSettings = [ConfigurationHelper]::LoadOldOfflineConfigFile([OldConstants]::SettingsFileName)
-			[AzSKSettings]::Update($localAppDataSettings)
-		}
+		
 		if(-not $localAppDataSettings)
 		{
 			$localAppDataSettings = [ConfigurationHelper]::LoadOfflineConfigFile([AzSKSettings]::FileName)
@@ -158,32 +154,6 @@ class AzSKSettings {
 
 		#persisting back to file
 		$localSettings | ConvertTo-Json | Out-File -Force -FilePath ([Constants]::AzSKAppFolderPath + "\" + [AzSKSettings]::FileName)
-	}
-	static [bool] IsMigrationRequired()
-	{
-		$oldRootConfigPath = [OldConstants]::AppFolderPath + "\" ;
-		$oldFilePath = $null
-		$isMigrationRequired = $false
-		if(Test-Path -Path $oldRootConfigPath)
-		{
-			$oldFilePath = (Get-ChildItem $oldRootConfigPath -Name -Recurse -Include ([OldConstants]::SettingsFileName)) | Select-Object -First 1 
-		}
-		if($oldFilePath)
-		{
-			#check if new setting file is already created
-			$newRootConfigPath = [Constants]::AzSKAppFolderPath + "\" ;
-			$newFilePath = $null
-			if(Test-Path -Path $newRootConfigPath)
-			{
-				$newFilePath = (Get-ChildItem $newRootConfigPath -Name -Recurse -Include ([AzSKSettings]::FileName)) | Select-Object -First 1 
-			}
-			if(!$newFilePath)
-			{
-				#create new settings file for AzSK from old module
-				$isMigrationRequired = $true
-			}
-		}
-		return $isMigrationRequired
 	}
 	
 	hidden [string] GetScanSource()
