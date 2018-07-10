@@ -18,15 +18,14 @@ class ComplianceStateTableEntity
 	[string] $ControlId = "";
     [string] $ControlIntId = "";
 	[string] $ControlUpdatedOn = [Constants]::AzSKDefaultDateTime;
-    [ControlSeverity] $ControlSeverity = [ControlSeverity]::High
-    [VerificationResult] $ActualVerificationResult= [VerificationResult]::Manual;
-    [AttestationStatus] $AttestationStatus = [AttestationStatus]::None;
-    [VerificationResult] $VerificationResult = [VerificationResult]::Manual;
+    [string] $ControlSeverity = ([ControlSeverity]::High).ToString();
+    [string] $ActualVerificationResult= ([VerificationResult]::Manual).ToString();
+    [string] $AttestationStatus = ([AttestationStatus]::None).ToString();
+    [string] $VerificationResult = ([VerificationResult]::Manual).ToString();
     [string] $AttestedBy = "";
 	[string] $AttestedDate = [Constants]::AzSKDefaultDateTime;
     [string] $Justification = "";
-    [string] $PreviousVerificationResult = [VerificationResult]::Manual;
-	[PSObject] $AttestationData;
+    [string] $PreviousVerificationResult = ([VerificationResult]::Manual).ToString();
 	[bool] $IsBaselineControl;
 	[bool] $HasOwnerAccessTag;
 
@@ -40,21 +39,16 @@ class ComplianceStateTableEntity
 
 	#Other  information
 	[string] $ScannedBy = "";
-	[ScanSource] $ScanSource;
+	[string] $ScanSource;
 	[string] $ScannerModuleName = "";
 	[string] $ScannerVersion = "";
-	[string] $ControlVersion = "";
 	[bool] $IsLatestPSModule;
 	[bool] $HasRequiredPermissions;
 	[bool] $HasAttestationWritePermissions;
 	[bool] $HasAttestationReadPermissions;
-
-
-	[string] $UserComments = "";
-    [string] $Metadata = "";
-    
-    [ServiceScanKind] $ScanKind = [ServiceScanKind]::Partial;
+	[string] $UserComments = "";    
 	[string] $ChildResourceName = "";
+	[bool] $IsActive = $true;
 
 	[string] GetPartitionKey()
 	{
