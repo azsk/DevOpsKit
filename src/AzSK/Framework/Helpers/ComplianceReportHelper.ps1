@@ -564,10 +564,16 @@ class ComplianceReportHelper: ComplianceBase
 	hidden [void] SetLocalSubscriptionScanReportV2([ComplianceStateTableEntity[]] $scanResultForStorage)
 	{		
 		$storageInstance = $this.GetStorageHelperInstance()
-		#MERGE batch req sample
-		[WebRequestHelper]::InvokeTableStorageBatchWebRequest($storageInstance.ResourceGroupName,$storageInstance.StorageAccountName,$this.ComplianceTableName,$scanResultForStorage,$true)
-		#POST batch req sample
-		[WebRequestHelper]::InvokeTableStorageBatchWebRequest($storageInstance.ResourceGroupName,$storageInstance.StorageAccountName,$this.ComplianceTableName,$scanResultForStorage,$false)
+
+		$groupedScanResultForStorage = $scanResultForStorage | Group-Object { $_.PartitionKey}
+		$groupedScanResultForStorage | ForEach-Object {
+			$group = $_;
+			$results = $_.Group;
+			#MERGE batch req sample
+			[WebRequestHelper]::InvokeTableStorageBatchWebRequest($storageInstance.ResourceGroupName,$storageInstance.StorageAccountName,$this.ComplianceTableName,$results,$true)
+			#POST batch req sample
+			#[WebRequestHelper]::InvokeTableStorageBatchWebRequest($storageInstance.ResourceGroupName,$storageInstance.StorageAccountName,$this.ComplianceTableName,$results,$false)
+		}		
     }
 	hidden [void] StoreComplianceDataInUserSubscription([SVTEventContext[]] $currentScanResult)
 	{

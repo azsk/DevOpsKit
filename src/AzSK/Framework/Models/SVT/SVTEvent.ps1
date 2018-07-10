@@ -145,7 +145,6 @@ class SVTEventContext: AzSKRootEventArgument
 	[string] $PartialScanIdentifier;
     [ResourceContext] $ResourceContext;
 	[ControlItem] $ControlItem;
-	[bool] $IsStoredInLocalSub = $false
     [ControlResult[]] $ControlResults = @();
 
 	[bool] IsResource()
