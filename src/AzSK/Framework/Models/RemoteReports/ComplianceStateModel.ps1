@@ -55,4 +55,18 @@ class ComplianceStateTableEntity
     
     [ServiceScanKind] $ScanKind = [ServiceScanKind]::Partial;
 	[string] $ChildResourceName = "";
+
+	[string] GetPartitionKey()
+	{
+		if([string]::IsNullOrWhiteSpace($this.HashId))
+		{
+			$partsToHash = $this.ResourceId;
+			if(-not [string]::IsNullOrWhiteSpace($this.ChildResourceName))
+			{
+				$partsToHash = $partsToHash + ":" + $this.ChildResourceName;
+			}
+			$this.HashId = [Helpers]::ComputeHash($partsToHash.ToLower());
+		}
+		return $this.HashId;
+	}
 }

@@ -44,13 +44,13 @@ class SubscriptionSecurityStatus: SVTCommandBase
 		}
 
 		#save result into local compliance report
-		if($this.IsLocalComplianceStoreEnabled)
+		if($this.IsLocalComplianceStoreEnabled -and ($result | Measure-Object).Count -gt 0)
 		{
 			# Persist scan data to subscription
 			try 
 			{
-				$ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
-				$ComplianceReportHelper.StoreComplianceDataInUserSubscription($result)
+				$ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());
+				$ComplianceReportHelper.StoreComplianceDataInUserSubscription($result, $false);				
 			}
 			catch 
 			{
