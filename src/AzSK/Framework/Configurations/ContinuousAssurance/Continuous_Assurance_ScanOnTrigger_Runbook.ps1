@@ -263,7 +263,16 @@ try
 		{
 			$automationjoblist =  Get-AzureRmAutomationJob -RunbookName Continuous_Assurance_ScanOnTrigger_Runbook -ResourceGroupName $resourcedetails.ResourceGroupNamefromWebhook -Status Running -AutomationAccountName AzSKContinuousAssurance
 			$automationjoblist | ForEach-Object {
-				$jobdetails = Get-AzureRmAutomationJob -AutomationAccountName $_.AutomationAccountName -ResourceGroupName $_.ResourceGroupName -Id $_.JobId
+				try
+				{
+					$jobdetails = Get-AzureRmAutomationJob -AutomationAccountName $_.AutomationAccountName -ResourceGroupName $_.ResourceGroupName -Id $_.JobId
+				}
+				catch
+				{
+					Write-Output ("Failed to get the Job Details for Automation account.")
+					throw $_.Exception
+				}
+				
 				$jobdetailsBody    =   $jobdetails.RequestBody
 				$jobdetailsBody = (ConvertFrom-Json -InputObject $jobdetailsBody)
 				$jobdetailsContext = [object]$jobdetailsBody.data.context
@@ -276,7 +285,7 @@ try
 		}
 		catch
 		{
-			Write-Output ("Failed to get the Job Details for Automation account.")
+			Write-Output ("Failed to get the Job List for Automation account.")
 			throw $_.Exception
 		}
 		
