@@ -138,38 +138,56 @@ function GetResourceDetailsfromWebhook($WebHookDataforResourceCreation)
 			Write-Output $WebhookBody
 
 			 # Obtain the AlertContext
-			$AlertContext = [object]$WebhookBody.data.context
+			$AlertContext = [object]$WebhookBody.data.context 
 			$AlertContext 
-
+			
+			if($alertcontext -ne $null -and ![string]::IsNullOrWhiteSpace($alertcontext.activityLog) -and ![string]::IsNullOrWhiteSpace($alertcontext.activityLog.resourceGroupName))
+			{
+				$resourcedetails = @{ResourceGroupNamefromWebhook = $alertcontext.activityLog.resourceGroupName ; ResourceNamefromWebhook = ""}
+			}
+			else
+			{
+				$resourcedetails = @{ResourceGroupNamefromWebhook = "" ; ResourceNamefromWebhook = ""}
+			}
 			 # Some selected AlertContext information
-			Write-Output "`nALERT CONTEXT DATA"
-			Write-Output "==================="
-			Write-Output $alertcontext.activityLog.eventSource
-			Write-Output $alertcontext.activityLog.subscriptionId
-			Write-Output $alertcontext.activityLog.resourceGroupName
-			Write-Output $alertcontext.activityLog.operationName
-			Write-Output $alertcontext.activityLog.resourceType
-			Write-Output $alertcontext.activityLog.resourceId
-			Write-Output $alertcontext.activityLog.eventTimestamp
+			#Write-Output "`nALERT CONTEXT DATA"
+			#Write-Output "==================="
+			#Write-Output $alertcontext.activityLog.eventSource
+			#Write-Output $alertcontext.activityLog.subscriptionId
+			#Write-Output $alertcontext.activityLog.resourceGroupName
+			#Write-Output $alertcontext.activityLog.operationName
+			#Write-Output $alertcontext.activityLog.resourceType
+			#Write-Output $alertcontext.activityLog.resourceId
+			#Write-Output $alertcontext.activityLog.eventTimestamp
 
-			$resourceidsplit = $alertcontext.activityLog.resourceId -split '/'
+			#$resourceidsplit = $alertcontext.activityLog.resourceId -split '/'
+			
+			
 
-			Write-Output $resourceidsplit[6]
+			#Write-Output $resourceidsplit[6]
 
-			$datafromdeployment = Get-AzureRmResourceGroupDeployment -ResourceGroupName $alertcontext.activityLog.resourceGroupName -Name $resourceidsplit[6] | ConvertTo-Json -Depth 10
-			$datafromdeploymentbody = (ConvertFrom-Json -InputObject $datafromdeployment)
-			$resourcename = $datafromdeploymentbody.Parameters.name.Value
+			#$datafromdeployment = Get-AzureRmResourceGroupDeployment -ResourceGroupName $alertcontext.activityLog.resourceGroupName -Name $resourceidsplit[6] | ConvertTo-Json -Depth 10
+			
+			#if(-not [string]::IsNullOrWhiteSpace($datafromdeployment))
+			#{
+			#	$datafromdeploymentbody = (ConvertFrom-Json -InputObject $datafromdeployment)
+			#	$resourcename = $datafromdeploymentbody.Parameters.name.Value
 
-			Write-Output $resourcename
+			#	Write-Output $resourcename
 
-			$resourcedetails = @{ResourceGroupNamefromWebhook = $alertcontext.activityLog.resourceGroupName ; ResourceNamefromWebhook = $resourcename}
+			#	$resourcedetails = @{ResourceGroupNamefromWebhook = $alertcontext.activityLog.resourceGroupName ; ResourceNamefromWebhook = $resourcename}
+			#}
+			#else
+			#{
+			#	$resourcedetails = @{ResourceGroupNamefromWebhook = "" ; ResourceNamefromWebhook = ""}
+			#}
 
 			return $resourcedetails;
 }
 
 ######################################################################################################################
 #Core runbook code. 
-#This is built using the runbook code template inside \Modules\AzSK\<version>\Framework\Configurations\Continuous_Assurance_Resource_Creation_Runbook
+#This is built using the runbook code template inside \Modules\AzSK\<version>\Framework\Configurations\Continuous_Assurance_ScanOnTrigger_Runbook
 #The placeholder values for various important variables are determined 'on the fly' based on the defaults that ship in AzSK.JSON
 #file in the \Modules\AzSK\<version>\Framework\Configurations folder and the local AzSKSettings.JSON file in the %localappdata%\Microsoft\AzSK
 #folder for the user setting up CA. 
@@ -203,33 +221,10 @@ try
 	#This script basically allows orgs to customize/tweak the scripts that are run to perform the daily CA scans.
 	$runbookScanAgentScript = "RunbookScanAgent.ps1"
 
-	$WebHookDataforResourceCreation = $WebHookData
-	$ResourceGroupNamefromWebhook = ""
-	$ResourceNamefromWebhook = ""
-
-	#Fetching the webhook parameter and get resourcegroup name and resource name
-	if($null -ne $WebHookDataforResourceCreation)
-	{
-		
-		    $resourcedetails = GetResourceDetailsfromWebhook -WebHookDataforResourceCreation $WebHookDataforResourceCreation
-			
-			$ResourceGroupNamefromWebhook = $resourcedetails.ResourceGroupNamefromWebhook
-			$ResourceNamefromWebhook = $resourcedetails.ResourceNamefromWebhook
-
-	}
-
 	$azureRmResourceURI = "https://management.core.windows.net/"
 	
 	#This is the Run-As (SPN) account for the runbook. It is read from the CA Automation account.
 	$RunAsConnection = Get-AutomationConnection -Name "AzureRunAsConnection"
-
-	#-----------------------------------Config end-------------------------------------------------------------------------
-
-	#-----------------------------------Telemetry script-------------------------------------------------------------------
-	PublishEvent -EventName "CA Job Started" -Properties @{
-		"OnlinePolicyStoreUrl"=$OnlinePolicyStoreUrl; `
- 	   "AzureADAppId"=$RunAsConnection.ApplicationId
-	}
 
 	#------------------------------------Execute RunbookCoreSetup.ps1 to download required modules-------------------------
 	
@@ -263,6 +258,63 @@ try
 	#from where the current CA core setup and scan agent scripts will be fetched.
 	$caScriptsFolder = "1.0.0"
 
+	$WebHookDataforResourceCreation = $WebHookData
+	$ResourceGroupNamefromWebhook = ""
+	$ResourceNamefromWebhook = ""
+
+	#Fetching the webhook parameter and get resourcegroup name and resource name
+	if($null -ne $WebHookDataforResourceCreation)
+	{
+		try
+		{
+			$resourcedetails = GetResourceDetailsfromWebhook -WebHookDataforResourceCreation $WebHookDataforResourceCreation
+		}
+		catch
+		{
+			Write-Output ("Failed to get the resource details from webhook.")
+			throw $_.Exception
+		}
+
+		try
+		{
+			if(![string]::IsNullOrWhiteSpace($resourcedetails.ResourceGroupNamefromWebhook))
+			{
+				$automationjoblist =  Get-AzureRmAutomationJob -RunbookName Continuous_Assurance_ScanOnTrigger_Runbook -ResourceGroupName $resourcedetails.ResourceGroupNamefromWebhook -Status Running -AutomationAccountName AzSKContinuousAssurance
+				$automationjoblist | ForEach-Object {
+				
+						$jobdetails = Get-AzureRmAutomationJob -AutomationAccountName $_.AutomationAccountName -ResourceGroupName $_.ResourceGroupName -Id $_.JobId
+				
+				
+					$jobdetailsBody    =   $jobdetails.RequestBody
+					$jobdetailsBody = (ConvertFrom-Json -InputObject $jobdetailsBody)
+					$jobdetailsContext = [object]$jobdetailsBody.data.context
+					$rgname = $jobdetailsContext.activityLog.resourceGroupName
+					if($rgname -eq $resourcedetails.ResourceGroupNamefromWebhook)
+					{
+						$resourcedetails.ResourceGroupNamefromWebhook = ""
+					}
+				}
+			}
+		}
+		catch
+		{
+			Write-Output ("Failed to get the Job List for Automation account.")
+			throw $_.Exception
+		}
+		
+
+		$ResourceGroupNamefromWebhook = $resourcedetails.ResourceGroupNamefromWebhook
+		$ResourceNamefromWebhook = $resourcedetails.ResourceNamefromWebhook
+
+	}
+
+	#-----------------------------------Config end-------------------------------------------------------------------------
+	
+	#-----------------------------------Telemetry script-------------------------------------------------------------------
+	PublishEvent -EventName "CA Job Started" -Properties @{
+		"OnlinePolicyStoreUrl"=$OnlinePolicyStoreUrl; `
+ 	   "AzureADAppId"=$RunAsConnection.ApplicationId
+	}
 
 	#------------------------------------Execute RunbookScanAgent.ps1 to scan subscription and resources-------------------
 	#We start with a check for 'Get-AzSKAccessToken' to ensure that AzSK module is ready (and loaded)

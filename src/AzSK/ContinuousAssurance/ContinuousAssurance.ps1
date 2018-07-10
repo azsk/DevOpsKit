@@ -175,7 +175,7 @@ function Install-AzSKContinuousAssurance
 
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
-		$ScanOnResourceCreation
+		$ScanOnDeployment
     )
 	Begin
 	{
@@ -214,7 +214,7 @@ function Install-AzSKContinuousAssurance
 
 			if ($ccAccount) 
 			{
-				$ccAccount.ScanOnResourceCreation = $ScanOnResourceCreation;
+				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
 
 				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
 				{
@@ -441,7 +441,11 @@ function Update-AzSKContinuousAssurance
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
-		$DoNotOpenOutputFolder
+		$DoNotOpenOutputFolder,
+
+		[switch]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
+		$ScanOnDeployment
     )
 	Begin
 	{
@@ -463,6 +467,8 @@ function Update-AzSKContinuousAssurance
 
 			if ($ccAccount) 
 			{
+				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
+
 				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
 				{
 					$ccAccount.IsCentralScanModeOn = $true;
