@@ -360,7 +360,7 @@ class ComplianceReportHelper: ComplianceBase
 				$scanResult.AttestationData = ""
 			}
 			
-			$scanResult.VerificationResult = $currentResult.VerificationResult
+			$scanResult.VerificationResult = $currentSVTResult.VerificationResult
 			$scanResult.ScanKind = $this.ScanKind
 			$scanResult.ScannerModuleName = [Constants]::AzSKModuleName
 			$scanResult.IsLatestPSModule = $currentSVTResult.CurrentSessionContext.IsLatestPSModule
@@ -483,7 +483,7 @@ class ComplianceReportHelper: ComplianceBase
 	hidden [ComplianceStateTableEntity[]] MergeSVTScanResultV2($currentScanResults, $resourceInventory)
 	{
 		if($currentScanResults.Count -lt 1) { return $null}
-
+		[ComplianceStateTableEntity[]] $finalScanData = @()
 		#TODO
 		$SVTEventContextFirst = $currentScanResults[0]
 

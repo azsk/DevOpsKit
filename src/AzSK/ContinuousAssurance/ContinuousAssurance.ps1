@@ -341,7 +341,6 @@ function Update-AzSKContinuousAssurance
 		
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
-		[ValidateNotNullOrEmpty()]
         [string]
 		[Alias("owid")]
 		$OMSWorkspaceId,
