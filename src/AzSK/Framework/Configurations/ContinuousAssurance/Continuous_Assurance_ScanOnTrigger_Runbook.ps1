@@ -141,7 +141,7 @@ function GetResourceDetailsfromWebhook($WebHookDataforResourceCreation)
 			$AlertContext = [object]$WebhookBody.data.context 
 			$AlertContext 
 			
-			if($alertcontext -ne $null -and ![string]::IsNullOrWhiteSpace($resourcedetails.ResourceGroupNamefromWebhook))
+			if($alertcontext -ne $null -and ![string]::IsNullOrWhiteSpace($alertcontext.activityLog.resourceGroupName))
 			{
 				$resourcedetails = @{ResourceGroupNamefromWebhook = $alertcontext.activityLog.resourceGroupName ; ResourceNamefromWebhook = ""}
 			}
