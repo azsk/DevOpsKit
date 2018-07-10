@@ -138,23 +138,31 @@ function GetResourceDetailsfromWebhook($WebHookDataforResourceCreation)
 			Write-Output $WebhookBody
 
 			 # Obtain the AlertContext
-			$AlertContext = [object]$WebhookBody.data.context
+			$AlertContext = [object]$WebhookBody.data.context 
 			$AlertContext 
-
+			
+			if($alertcontext -ne $null -and ![string]::IsNullOrWhiteSpace($resourcedetails.ResourceGroupNamefromWebhook))
+			{
+				$resourcedetails = @{ResourceGroupNamefromWebhook = $alertcontext.activityLog.resourceGroupName ; ResourceNamefromWebhook = ""}
+			}
+			else
+			{
+				$resourcedetails = @{ResourceGroupNamefromWebhook = "" ; ResourceNamefromWebhook = ""}
+			}
 			 # Some selected AlertContext information
-			Write-Output "`nALERT CONTEXT DATA"
-			Write-Output "==================="
-			Write-Output $alertcontext.activityLog.eventSource
-			Write-Output $alertcontext.activityLog.subscriptionId
-			Write-Output $alertcontext.activityLog.resourceGroupName
-			Write-Output $alertcontext.activityLog.operationName
-			Write-Output $alertcontext.activityLog.resourceType
-			Write-Output $alertcontext.activityLog.resourceId
-			Write-Output $alertcontext.activityLog.eventTimestamp
+			#Write-Output "`nALERT CONTEXT DATA"
+			#Write-Output "==================="
+			#Write-Output $alertcontext.activityLog.eventSource
+			#Write-Output $alertcontext.activityLog.subscriptionId
+			#Write-Output $alertcontext.activityLog.resourceGroupName
+			#Write-Output $alertcontext.activityLog.operationName
+			#Write-Output $alertcontext.activityLog.resourceType
+			#Write-Output $alertcontext.activityLog.resourceId
+			#Write-Output $alertcontext.activityLog.eventTimestamp
 
 			#$resourceidsplit = $alertcontext.activityLog.resourceId -split '/'
 			
-			$resourcedetails = @{ResourceGroupNamefromWebhook = $alertcontext.activityLog.resourceGroupName ; ResourceNamefromWebhook = ""}
+			
 
 			#Write-Output $resourceidsplit[6]
 
@@ -257,29 +265,34 @@ try
 	#Fetching the webhook parameter and get resourcegroup name and resource name
 	if($null -ne $WebHookDataforResourceCreation)
 	{
-		$resourcedetails = GetResourceDetailsfromWebhook -WebHookDataforResourceCreation $WebHookDataforResourceCreation
-		
 		try
 		{
-			$automationjoblist =  Get-AzureRmAutomationJob -RunbookName Continuous_Assurance_ScanOnTrigger_Runbook -ResourceGroupName $resourcedetails.ResourceGroupNamefromWebhook -Status Running -AutomationAccountName AzSKContinuousAssurance
-			$automationjoblist | ForEach-Object {
-				try
-				{
-					$jobdetails = Get-AzureRmAutomationJob -AutomationAccountName $_.AutomationAccountName -ResourceGroupName $_.ResourceGroupName -Id $_.JobId
-				}
-				catch
-				{
-					Write-Output ("Failed to get the Job Details for Automation account.")
-					throw $_.Exception
-				}
+			$resourcedetails = GetResourceDetailsfromWebhook -WebHookDataforResourceCreation $WebHookDataforResourceCreation
+		}
+		catch
+		{
+			Write-Output ("Failed to get the resource details from webhook.")
+			throw $_.Exception
+		}
+
+		try
+		{
+			if(![string]::IsNullOrWhiteSpace($resourcedetails.ResourceGroupNamefromWebhook))
+			{
+				$automationjoblist =  Get-AzureRmAutomationJob -RunbookName Continuous_Assurance_ScanOnTrigger_Runbook -ResourceGroupName $resourcedetails.ResourceGroupNamefromWebhook -Status Running -AutomationAccountName AzSKContinuousAssurance
+				$automationjoblist | ForEach-Object {
 				
-				$jobdetailsBody    =   $jobdetails.RequestBody
-				$jobdetailsBody = (ConvertFrom-Json -InputObject $jobdetailsBody)
-				$jobdetailsContext = [object]$jobdetailsBody.data.context
-				$rgname = $jobdetailsContext.activityLog.resourceGroupName
-				if($rgname -eq $resourcedetails.ResourceGroupNamefromWebhook)
-				{
-					$resourcedetails.ResourceGroupNamefromWebhook = ""
+						$jobdetails = Get-AzureRmAutomationJob -AutomationAccountName $_.AutomationAccountName -ResourceGroupName $_.ResourceGroupName -Id $_.JobId
+				
+				
+					$jobdetailsBody    =   $jobdetails.RequestBody
+					$jobdetailsBody = (ConvertFrom-Json -InputObject $jobdetailsBody)
+					$jobdetailsContext = [object]$jobdetailsBody.data.context
+					$rgname = $jobdetailsContext.activityLog.resourceGroupName
+					if($rgname -eq $resourcedetails.ResourceGroupNamefromWebhook)
+					{
+						$resourcedetails.ResourceGroupNamefromWebhook = ""
+					}
 				}
 			}
 		}
