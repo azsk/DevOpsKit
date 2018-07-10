@@ -21,14 +21,41 @@ class ComplianceReportHelper: ComplianceBase
 		try
 		{
 			$queryStringParams = "";
+
+			$partitionKeys = @();
 			if(($currentScanResults | Measure-Object).Count -gt 0)
 			{
-				$template = "PartitionKey%20eq%20'{0}'%20";
+				$currentScanResults | ForEach-Object {
+					$currentScanResult = $_;
+					$resourceId = $currentScanResult.SubscriptionContext.Scope;
+					if($currentScanResult.IsResource())
+					{
+						$resourceId = $currentScanResult.ResourceContext.ResourceId;
+					}
+					$controlsToProcess = @();
+					if(($currentScanResult.ControlResults | Measure-Object).Count -gt 0)
+					{	
+						$controlsToProcess += $currentScanResult.ControlResults;
+					}
+					$controlsToProcess | ForEach-Object {
+						$cScanResult = $_;
+						$partsToHash = $resourceId;
+						if(-not [string]::IsNullOrWhiteSpace($cScanResult.ChildResourceName))
+						{
+							$partsToHash = $partsToHash + ":" + $cScanResult.ChildResourceName;
+						}
+						$currentResultHashId = [Helpers]::ComputeHash($partsToHash.ToLower());
+						$partitionKeys += $currentResultHashId;
+					}
+				}
+				$partitionKeys = $partitionKeys | Select -Unique
+
+				$template = "PartitionKey%20eq%20'{0}'";
 				$tempQS = "?`$filter="
 				$haveParitionKeys = $false;
-				$currentScanResults | Select -Unique PartitionKey | ForEach-Object {
-					$scanResult = $_
-					$tempQS = $tempQS + ($template -f $scanResult.PartitionKey) + "%20or%20";
+				$partitionKeys | ForEach-Object {
+					$pKey = $_
+					$tempQS = $tempQS + ($template -f $pKey) + "%20or%20";
 					$haveParitionKeys = $true;
 				 }
 				 if($haveParitionKeys)
@@ -299,10 +326,12 @@ class ComplianceReportHelper: ComplianceBase
 		return $complianceReport
 	}
 	
-	hidden [ComplianceStateTableEntity] ConvertScanResultToSnapshotResult($currentSVTResult, $persistedSVTResult, $controlItem)
+	hidden [ComplianceStateTableEntity] ConvertScanResultToSnapshotResult($currentSVTResult, $persistedSVTResult, $controlItem, $partitionKey)
 	{
 		[ComplianceStateTableEntity] $scanResult = [ComplianceStateTableEntity]::new();
-		
+		$scanResult.PartitionKey = $partitionKey;
+		$scanResult.RowKey = $controlItem.Id
+		$scanResult.HashId = $partitionKey;
 		if($null -ne $persistedSVTResult)
 		{
 			$scanResult = $persistedSVTResult;
@@ -331,7 +360,7 @@ class ComplianceReportHelper: ComplianceBase
 			$scanResult.ControlVersion = $this.ScannerVersion	
 			#TODO check in the case sub control					
 			$scanResult.ChildResourceName = $currentSVTResult.ChildResourceName 			
-			$scanResult.ControlId = $controlItem.ControlId 
+			$scanResult.ControlId = $controlItem.ControlId 			
 			$scanResult.ControlIntId = $controlItem.Id 
 			$scanResult.ControlSeverity = $controlItem.ControlSeverity 
 			$scanResult.ActualVerificationResult = $currentSVTResult.ActualVerificationResult 
@@ -493,35 +522,38 @@ class ComplianceReportHelper: ComplianceBase
 		$foundPersistedData = ($complianceReport | Measure-Object).Count -gt 0
 		$currentScanResults | ForEach-Object {
 			$currentScanResult = $_
+			$resourceId = $currentScanResult.SubscriptionContext.Scope;
+			if($currentScanResult.IsResource())
+			{
+				$resourceId = $currentScanResult.ResourceContext.ResourceId;
+			}
 			if($currentScanResult.FeatureName -ne "AzSKCfg")
 			{
 				$controlsToProcess = @();
 
-				if(-not [string]::IsNullOrWhiteSpace($currentScanResult.ChildResourceName) -and ($currentScanResult.ControlResults | Measure-Object).Count -gt 0)
+				if(($currentScanResult.ControlResults | Measure-Object).Count -gt 0)
 				{	
 					$controlsToProcess += $currentScanResult.ControlResults;
 				}
-				else {
-					$controlsToProcess += $currentScanResult;
-				}
+				
 				$controlsToProcess | ForEach-Object {
 					$cScanResult = $_;
-					$partsToHash = $SVTEventContextFirst.ResourceId;
-					if(-not [string]::IsNullOrWhiteSpace($currentScanResult.ChildResourceName))
+					$partsToHash = $resourceId;
+					if(-not [string]::IsNullOrWhiteSpace($cScanResult.ChildResourceName))
 					{
-						$partsToHash = $partsToHash + ":" + $currentScanResult.ChildResourceName;
+						$partsToHash = $partsToHash + ":" + $cScanResult.ChildResourceName;
 					}
 					$currentResultHashId = [Helpers]::ComputeHash($partsToHash.ToLower());
 					$persistedScanResult = $null;
 					if($foundPersistedData)
 					{
-						$persistedScanResult = $complianceReport | Where-Object { $_.HashId -eq $currentResultHashId -and $_.RowKey -eq $currentScanResult.ControlIntId }
+						$persistedScanResult = $complianceReport | Where-Object { $_.PartitionKey -eq $currentResultHashId -and $_.RowKey -eq $currentScanResult.ControlItem.Id }
 						# if(($persistedScanResult | Measure-Object).Count -le 0)
 						# {
 						# 	$foundPersistedData = $false;
 						# }				
 					}
-					$mergedScanResult = $this.ConvertScanResultToSnapshotResult($cScanResult, $persistedScanResult, $currentScanResult.ControlItem)
+					$mergedScanResult = $this.ConvertScanResultToSnapshotResult($cScanResult, $persistedScanResult, $currentScanResult.ControlItem, $currentResultHashId)
 					$finalScanData += $mergedScanResult;
 				}
 			}
@@ -537,25 +569,25 @@ class ComplianceReportHelper: ComplianceBase
 		#POST batch req sample
 		[WebRequestHelper]::InvokeTableStorageBatchWebRequest($storageInstance.ResourceGroupName,$storageInstance.StorageAccountName,$this.ComplianceTableName,$scanResultForStorage,$false)
     }
-	hidden [void] StoreComplianceDataInUserSubscription([SVTEventContext[]] $currentScanResult, [bool] $updateResourceInventory)
+	hidden [void] StoreComplianceDataInUserSubscription([SVTEventContext[]] $currentScanResult)
 	{
 		$filteredResources = $null
 		# ToDo: Resource inventory helper
 		#if($this.ScanSource -eq [ScanSource]::Runbook) 
 		#{
-		if($updateResourceInventory) 
-		{
-			$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
-			$resources.ResourceGroups = [System.Collections.ArrayList]::new()
-			# ToDo: cache this properties as AzSKRoot.
-			$resourcesFlat = Find-AzureRmResource
-			$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
-			# Not considering nested resources to reduce complexity
-			$filteredResources = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }			
-		}
+		# if($updateResourceInventory) 
+		# {
+		# 	$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
+		# 	$resources.ResourceGroups = [System.Collections.ArrayList]::new()
+		# 	# ToDo: cache this properties as AzSKRoot.
+		# 	$resourcesFlat = Find-AzureRmResource
+		# 	$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
+		# 	# Not considering nested resources to reduce complexity
+		# 	$filteredResources = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }			
+		# }
 		#}
-		$convertedCurrentScanResult = $this.ConvertScanResultToSnapshotResultV2($currentScanResult)
-		$finalScanReport = $this.MergeSVTScanResultV2($convertedCurrentScanResult, $filteredResources)
+		#$convertedCurrentScanResult = $this.ConvertScanResultToSnapshotResultV2($currentScanResult)
+		$finalScanReport = $this.MergeSVTScanResultV2($currentScanResult, $filteredResources)
 		$this.SetLocalSubscriptionScanReportV2($finalScanReport)
 	}
 }

@@ -50,8 +50,7 @@ class ControlResult
 	[DateTime] $FirstFailedOn = [Constants]::AzSKDefaultDateTime;
 	[DateTime] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
 	[int] $MaximumAllowedGraceDays=0;
-	[String] $UserComments
-	[bool] $IsStoredInLocalSub = $false
+	[String] $UserComments	
     [MessageData[]] $Messages = @();
 
     [void] AddMessage([MessageData] $messageData)
@@ -145,7 +144,8 @@ class SVTEventContext: AzSKRootEventArgument
     [Metadata] $Metadata
 	[string] $PartialScanIdentifier;
     [ResourceContext] $ResourceContext;
-    [ControlItem] $ControlItem;
+	[ControlItem] $ControlItem;
+	[bool] $IsStoredInLocalSub = $false
     [ControlResult[]] $ControlResults = @();
 
 	[bool] IsResource()

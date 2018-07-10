@@ -50,7 +50,7 @@ class SubscriptionSecurityStatus: SVTCommandBase
 			try 
 			{
 				$ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());
-				$ComplianceReportHelper.StoreComplianceDataInUserSubscription($result, $false);				
+				$ComplianceReportHelper.StoreComplianceDataInUserSubscription($result);				
 			}
 			catch 
 			{

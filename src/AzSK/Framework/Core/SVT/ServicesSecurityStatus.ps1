@@ -178,17 +178,17 @@ class ServicesSecurityStatus: SVTCommandBase
 					{
 						$this.UpdatePartialCommitBlob()
 					}
-					if($currentCount % 10 -eq 0 -or $currentCount -eq $totalResources)
+					if($currentCount % 5 -eq 0 -or $currentCount -eq $totalResources)
 					{
 						if($this.IsLocalComplianceStoreEnabled)
 						{	
 							# Persist scan data to subscription
 							try 
 							{
-								$filteredResult = $result | Where-Object{-not $_.IsStoredInLocal}
+								$filteredResult = $result | Where-Object{-not $_.IsStoredInLocalSub}
 								$ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
 								$ComplianceReportHelper.StoreComplianceDataInUserSubscription($filteredResult)
-								$filteredResult | Foreach-Object{$_.IsStoredInLocal = $true}
+								$filteredResult | Foreach-Object{$_.IsStoredInLocalSub = $true}
 							}
 							catch 
 							{
