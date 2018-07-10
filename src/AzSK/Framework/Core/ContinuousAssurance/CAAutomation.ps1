@@ -2162,7 +2162,7 @@ class CCAutomation: CommandBase
 	{
 		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.invocationContext,"Mandatory");
 		$actionGroupResourceId = $alert.SetupAlertActionGroup();
-		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "Resource_Creation");
+		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "Deployment");
 		$alert.SetAlerts($actionGroupResourceId);
 	}
 
