@@ -51,7 +51,7 @@ class ControlResult
 	[DateTime] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
 	[int] $MaximumAllowedGraceDays=0;
 	[String] $UserComments
-
+	[bool] $IsStoredInLocalSub = $false
     [MessageData[]] $Messages = @();
 
     [void] AddMessage([MessageData] $messageData)

@@ -172,10 +172,32 @@ class ServicesSecurityStatus: SVTCommandBase
 					}
 
 				}
-				if($currentCount % 5 -eq 0 -or $currentCount -eq $totalResources)
+				if(($result | Measure-Object).Count -gt 0)
 				{
-					$this.UpdatePartialCommitBlob()
+					if($currentCount % 5 -eq 0 -or $currentCount -eq $totalResources)
+					{
+						$this.UpdatePartialCommitBlob()
+					}
+					if($currentCount % 10 -eq 0 -or $currentCount -eq $totalResources)
+					{
+						if($this.IsLocalComplianceStoreEnabled)
+						{	
+							# Persist scan data to subscription
+							try 
+							{
+								$filteredResult = $result | Where-Object{-not $_.IsStoredInLocal}
+								$ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
+								$ComplianceReportHelper.StoreComplianceDataInUserSubscription($filteredResult)
+								$filteredResult | Foreach-Object{$_.IsStoredInLocal = $true}
+							}
+							catch 
+							{
+								$this.PublishException($_);
+							}
+						}
+					}
 				}
+					
 				# Register/Deregister all listeners to cleanup the memory
 				[ListenerHelper]::RegisterListeners();
 			}
