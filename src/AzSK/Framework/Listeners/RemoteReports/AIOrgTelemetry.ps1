@@ -260,8 +260,8 @@ class AIOrgTelemetry: ListenerBase {
 						$propertiesIn.Add("AttestedBy", $result.StateManagement.AttestedStateData.AttestedBy)
 						$propertiesIn.Add("Justification", $result.StateManagement.AttestedStateData.Justification)
 						$propertiesIn.Add("AttestedState", [Helpers]::ConvertToJsonCustomCompressed($result.StateManagement.AttestedStateData.DataObject))
-						$properties.Add("AttestedDate", $result.StateManagement.AttestedStateData.AttestedDate)
-					    $properties.Add("ExpiryDate", $result.StateManagement.AttestedStateData.ExpiryDate)
+						$propertiesIn.Add("AttestedDate", $result.StateManagement.AttestedStateData.AttestedDate)
+					    $propertiesIn.Add("ExpiryDate", $result.StateManagement.AttestedStateData.ExpiryDate)
 					}
 					if(($null -ne $result.StateManagement) -and ($null -ne $result.StateManagement.CurrentStateData)) {
 						$propertiesIn.Add("CurrentState", [Helpers]::ConvertToJsonCustomCompressed($result.StateManagement.CurrentStateData.DataObject))
