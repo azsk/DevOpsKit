@@ -191,7 +191,7 @@ class ComplianceReportHelper: ComplianceBase
 					$scanResult.FirstAttestedOn = $currentSVTResult.StateManagement.AttestedStateData.AttestedDate.ToString("s");
 				}
 
-				if($scanResult.StateManagement.AttestedStateData.AttestedDate -gt $scanResult.AttestedDate)
+				if($currentSVTResult.StateManagement.AttestedStateData.AttestedDate -gt $scanResult.AttestedDate)
 				{
 					$scanResult.AttestationCounter = $scanResult.AttestationCounter + 1 
 				}
