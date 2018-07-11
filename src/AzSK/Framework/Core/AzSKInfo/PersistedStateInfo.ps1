@@ -59,10 +59,10 @@ class PersistedStateInfo: CommandBase
 				else {
 					$scannedResources = $controlResultSet | Group-Object -Property ResourceId 
 					# Read file from Storage
-					$complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId, $this.GetCurrentModuleVersion()); 
+					$complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion()); 
 					$PersistedScanControls =$null;
 					# Check for write access
-					if($complianceReportHelper.azskStorageInstance.HaveWritePermissions -eq 1)
+					if($complianceReportHelper.HaveRequiredPermissions() -eq 1)
 					{
 						[ComplianceStateTableEntity[]] $PersistedScanControls = $complianceReportHelper.GetSubscriptionComplianceReport();
 					}

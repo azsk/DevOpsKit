@@ -183,8 +183,19 @@ class ServicesSecurityStatus: SVTCommandBase
 						# Persist scan data to subscription
 						try 
 						{
-							$ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
-							$ComplianceReportHelper.StoreComplianceDataInUserSubscription($result)
+							if($null -eq $this.ComplianceReportHelper)
+							{
+								$this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
+							}
+							if($this.ComplianceReportHelper.HaveRequiredPermissions())
+							{
+								$this.ComplianceReportHelper.StoreComplianceDataInUserSubscription($result)
+							}
+							else
+							{
+								$this.IsLocalComplianceStoreEnabled = $false;
+							}
+							
 						}
 						catch 
 						{

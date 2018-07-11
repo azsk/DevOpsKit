@@ -20,14 +20,17 @@ class ComplianceInfo: CommandBase
 	hidden [void] GetComplianceScanData()
 	{
 		$ComplianceRptHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());
-		$ComplianceReportData =  $ComplianceRptHelper.GetSubscriptionComplianceReport();
-		$this.ComplianceScanResult = @();
-		if(($ComplianceReportData | Measure-Object).Count -gt 0)
+		if($ComplianceRptHelper.HaveRequiredPermissions())
 		{
-			$ComplianceReportData | ForEach-Object{				
-				$this.ComplianceScanResult += [ComplianceResult]::new($_);
+			$ComplianceReportData =  $ComplianceRptHelper.GetSubscriptionComplianceReport();
+			$this.ComplianceScanResult = @();
+			if(($ComplianceReportData | Measure-Object).Count -gt 0)
+			{
+				$ComplianceReportData | ForEach-Object{				
+					$this.ComplianceScanResult += [ComplianceResult]::new($_);
+				}
 			}
-		}
+		}			
 	}
 	
 	hidden [void] GetComplianceInfo()

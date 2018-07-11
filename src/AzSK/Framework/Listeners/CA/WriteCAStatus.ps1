@@ -68,8 +68,12 @@ class WriteCAStatus: ListenerBase
                     if($scanSource -ne [ScanSource]::Runbook) { return; }                                             			               
                     [ComplianceStateTableEntity[]] $ResourceFlatEntries = @();
                     $complianceReportHelper = [ComplianceReportHelper]::new($props.SubscriptionContext, $version); 
-                    $selectColumns = @("PartitionKey","RowKey");
-                    $complianceData = $complianceReportHelper.GetSubscriptionComplianceReport($null, $selectColumns);               
+                    $complianceData = $null;
+                    if($complianceReportHelper.HaveRequiredPermissions())
+                    {
+                        $selectColumns = @("PartitionKey","RowKey");
+                        $complianceData = $complianceReportHelper.GetSubscriptionComplianceReport($null, $selectColumns);
+                    }
                     if(($complianceData | Measure-Object).Count -gt 0)
                     {
                         $resourceHashMap = @{};

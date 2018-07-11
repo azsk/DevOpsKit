@@ -77,7 +77,7 @@ class ComplianceReportHelper: ComplianceBase
 		[ComplianceStateTableEntity[]] $complianceData = @()
 		try
 		{			
-			$storageInstance = $this.GetStorageHelperInstance()
+			$storageInstance = $this.azskStorageInstance;
 			$TableName = $this.ComplianceTableName
 			$AccountName = $storageInstance.StorageAccountName
 			$AccessKey = $storageInstance.AccessKey 
@@ -299,7 +299,7 @@ class ComplianceReportHelper: ComplianceBase
 	}
 	hidden [void] SetLocalSubscriptionScanReport([ComplianceStateTableEntity[]] $scanResultForStorage)
 	{		
-		$storageInstance = $this.GetStorageHelperInstance()
+		$storageInstance = $this.azskStorageInstance;
 
 		$groupedScanResultForStorage = $scanResultForStorage | Group-Object { $_.PartitionKey}
 		$groupedScanResultForStorage | ForEach-Object {

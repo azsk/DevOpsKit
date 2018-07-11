@@ -61,9 +61,11 @@ class SVTCommandBase: CommandBase {
         #Create necessary resources to save compliance data in user's subscription
         if($this.IsLocalComplianceStoreEnabled)
         {
-            $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());             
-            #below function will upgrade blob storage to general purpose V2 if required
-            $this.ComplianceReportHelper.CreateComplianceStateTableIfNotExists();            
+            $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());  
+            if(-not $this.ComplianceReportHelper.HaveRequiredPermissions())
+            {
+                $this.IsLocalComplianceStoreEnabled = $false;
+            }
         }
         $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
