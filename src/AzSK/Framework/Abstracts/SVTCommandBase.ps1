@@ -17,13 +17,16 @@ class SVTCommandBase: CommandBase {
     hidden [LSRSubscription] $StorageReportData;
     hidden [ComplianceReportHelper] $complianceReportHelper = $null;
     hidden [ComplianceBase] $ComplianceBase = $null;
-    
+
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
         $this.CheckAndDisableAzureRMTelemetry()
 		#fetch the compliancedata from subscription
         #$this.GetLocalSubscriptionData(); 
+
+        #Fetching the resourceInventory once for each SVT command execution
+        [ResourceInventory]::Clear();
     }
 
 	hidden [void] GetLocalSubscriptionData()

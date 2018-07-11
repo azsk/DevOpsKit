@@ -60,6 +60,7 @@ catch
 . $PSScriptRoot\Helpers\IdentityHelpers.ps1
 . $PSScriptRoot\Helpers\ConfigOverride.ps1
 
+. $PSScriptRoot\Models\Common\ResourceInventory.ps1
 
 
 #Managers

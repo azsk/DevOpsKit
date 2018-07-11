@@ -16,10 +16,10 @@ class ComplianceReportHelper: ComplianceBase
 	
 	hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport()
 	{
-		return $this.GetSubscriptionComplianceReport($null);
+		return $this.GetSubscriptionComplianceReport($null,$null);
 	}
 
-    hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport($currentScanResults)
+    hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport($currentScanResults,$selectColumns)
 	{
 		[ComplianceStateTableEntity[]] $complianceData = @()
 		try
@@ -66,6 +66,18 @@ class ComplianceReportHelper: ComplianceBase
 					 $tempQS = $tempQS.Substring(0,$tempQS.Length - 8);
 					 $queryStringParams = $tempQS
 				 }
+			}
+			if(($selectColumns | Measure-Object).Count -gt 0)
+			{
+				$selectColumnsString = [String]::Join(",",$selectColumns)
+				if([string]::IsNullOrWhiteSpace($queryStringParams))
+				{
+					$queryStringParams = $selectColumnsString;
+				}
+				else
+				{
+					$queryStringParams = $queryStringParams + "&" + $selectColumnsString;
+				}
 			}
 
 			$storageInstance = $this.GetStorageHelperInstance()

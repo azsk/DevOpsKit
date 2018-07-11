@@ -63,4 +63,13 @@ class ComplianceStateTableEntity
 		}
 		return $this.HashId;
 	}
+
+	static [ComplianceStateTableEntity] CreateEmptyResource([string] $resourceId, [string] $hashId)
+	{
+		[ComplianceStateTableEntity] $emptyResourceEntity = [ComplianceStateTableEntity]::new();
+		$emptyResourceEntity.PartitionKey = $hashId;
+		$emptyResourceEntity.RowKey = "EmptyResource";
+		$emptyResourceEntity.ResourceId = $resourceId;
+		return $emptyResourceEntity;
+	}
 }
