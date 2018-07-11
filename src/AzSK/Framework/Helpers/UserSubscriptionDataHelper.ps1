@@ -155,16 +155,7 @@ class UserSubscriptionDataHelper: AzSKRoot
 		$ResourceGroup = Get-AzureRmResourceGroup -Name $RGName -ErrorAction SilentlyContinue
 		return $ResourceGroup
 	}
-	static [bool] IsUserSubStorageUpgraded() 
-    {
-        $storage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-        if($null -ne $storage)
-        {
-    		return ([UserSubscriptionDataHelper]::GetUserSubscriptionStorage().Kind -eq [Kind]::StorageV2)        
-        }
-        else
-        {return $Null}
-    }
+	
 	static [PSObject] UpgradeBlobToV2Storage() 
     {
         #TODO: Check contributor permisison on azskrg
