@@ -184,7 +184,7 @@ class ServicesSecurityStatus: SVTCommandBase
 						try 
 						{
 							$ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
-							$ComplianceReportHelper.StoreComplianceDataInUserSubscription($filteredResult)
+							$ComplianceReportHelper.StoreComplianceDataInUserSubscription($result)
 						}
 						catch 
 						{

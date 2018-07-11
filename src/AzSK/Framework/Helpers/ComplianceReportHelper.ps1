@@ -41,14 +41,9 @@ class ComplianceReportHelper: ComplianceBase
 						$controlsToProcess += $currentScanResult.ControlResults;
 					}
 					$controlsToProcess | ForEach-Object {
-						$cScanResult = $_;
-						$partsToHash = $resourceId;
-						if(-not [string]::IsNullOrWhiteSpace($cScanResult.ChildResourceName))
-						{
-							$partsToHash = $partsToHash + ":" + $cScanResult.ChildResourceName;
-						}
-						$currentResultHashId = [Helpers]::ComputeHash($partsToHash.ToLower());
-						$partitionKeys += $currentResultHashId;
+						$cScanResult = $_;												
+						$currentResultHashId_p = [Helpers]::ComputeHash($resourceId.ToLower());
+						$partitionKeys += $currentResultHashId_p;
 					}
 				}
 				$partitionKeys = $partitionKeys | Select -Unique
@@ -113,13 +108,19 @@ class ComplianceReportHelper: ComplianceBase
 						$props += $Property.Name
 					}
 				}
-				foreach($item in $tempComplianceData)
+				if(($props | Measure-Object).Count -gt 0)
 				{
-					$newEntity = [ComplianceStateTableEntity]::new()
-					foreach($Property in $props){
-						$newEntity.$($Property) = $item.$($Property)
+					foreach($item in $tempComplianceData)
+					{
+						$newEntity = [ComplianceStateTableEntity]::new()
+						foreach($Property in $props){
+							$newEntity.$($Property) = $item.$($Property)
+						}
+						if(-not [string]::IsNullOrWhiteSpace($newEntity.PartitionKey) -and -not [string]::IsNullOrWhiteSpace($newEntity.RowKey))
+						{
+							$complianceData+=$newEntity
+						}						
 					}
-					$complianceData+=$newEntity
 				}	
 			}			
 		}
@@ -186,12 +187,9 @@ class ComplianceReportHelper: ComplianceBase
 		}
     }		
 		
-	hidden [ComplianceStateTableEntity] ConvertScanResultToSnapshotResult($currentSVTResult, $persistedSVTResult, $controlItem, $partitionKey)
+	hidden [ComplianceStateTableEntity] ConvertScanResultToSnapshotResult($currentSVTResult, $persistedSVTResult, $svtEventContext, $partitionKey, $rowKey, $resourceId)
 	{
-		[ComplianceStateTableEntity] $scanResult = [ComplianceStateTableEntity]::new();
-		$scanResult.PartitionKey = $partitionKey;
-		$scanResult.RowKey = $controlItem.Id
-		$scanResult.HashId = $partitionKey;
+		[ComplianceStateTableEntity] $scanResult = $null;
 		if($null -ne $persistedSVTResult)
 		{
 			$scanResult = $persistedSVTResult;
@@ -199,6 +197,20 @@ class ComplianceReportHelper: ComplianceBase
 		$isLegitimateResult = ($currentSVTResult.CurrentSessionContext.IsLatestPSModule -and $currentSVTResult.CurrentSessionContext.Permissions.HasRequiredAccess -and $currentSVTResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions)
 		if($isLegitimateResult)
 		{
+			$controlItem = $svtEventContext.ControlItem;
+			if($null -eq $scanResult)
+			{
+				$scanResult = [ComplianceStateTableEntity]::new();
+				$scanResult.PartitionKey = $partitionKey;
+				$scanResult.RowKey = $rowKey;		
+			}						
+			$scanResult.ResourceId = $resourceId;
+			$scanResult.FeatureName = $svtEventContext.FeatureName; 
+			if($svtEventContext.IsResource())
+			{
+				$scanResult.ResourceName = $svtEventContext.ResourceContext.ResourceName;
+				$scanResult.ResourceGroupName = $svtEventContext.ResourceContext.ResourceGroupName;
+			}
 			if($scanResult.VerificationResult -ne $currentSVTResult.VerificationResult.ToString())
 			{
 				$scanResult.LastResultTransitionOn = [System.DateTime]::UtcNow.ToString("s");
@@ -244,8 +256,7 @@ class ComplianceReportHelper: ComplianceBase
 			{
 				$scanResult.AttestedBy = ""
 				$scanResult.AttestedDate = [Constants]::AzSKDefaultDateTime.ToString("s") ;
-				$scanResult.Justification = ""
-				$scanResult.AttestationData = ""
+				$scanResult.Justification = ""				
 			}
 			if($currentSVTResult.VerificationResult -ne [VerificationResult]::Manual)
 			{
@@ -282,16 +293,16 @@ class ComplianceReportHelper: ComplianceBase
 		$SVTEventContextFirst = $currentScanResults[0]
 
 		#TODO get specific data
-		$complianceReport = $this.GetSubscriptionComplianceReport($currentScanResults);
-		$inActiveRecords = @();
-		$complianceReport | ForEach-Object { 
-			$record = $_;
-			if($_.RowKey -eq "EmptyResource")
-			{
-				$record.IsActive = $false;
-				$inActiveRecords += $record;
-			}
-		}
+		$complianceReport = $this.GetSubscriptionComplianceReport($currentScanResults, $null);
+		# $inActiveRecords = @();
+		# $complianceReport | ForEach-Object { 
+		# 	$record = $_;
+		# 	if($_.RowKey -eq "EmptyResource")
+		# 	{
+		# 		$record.IsActive = $false;
+		# 		$inActiveRecords += $record;
+		# 	}
+		# }
 		$foundPersistedData = ($complianceReport | Measure-Object).Count -gt 0
 		$currentScanResults | ForEach-Object {
 			$currentScanResult = $_
@@ -311,27 +322,31 @@ class ComplianceReportHelper: ComplianceBase
 				
 				$controlsToProcess | ForEach-Object {
 					$cScanResult = $_;
-					$partsToHash = $resourceId;
+					$partsToHash = $currentScanResult.ControlItem.Id;
 					if(-not [string]::IsNullOrWhiteSpace($cScanResult.ChildResourceName))
 					{
 						$partsToHash = $partsToHash + ":" + $cScanResult.ChildResourceName;
 					}
-					$currentResultHashId = [Helpers]::ComputeHash($partsToHash.ToLower());
+					$currentResultHashId_r = [Helpers]::ComputeHash($partsToHash.ToLower());
+					$currentResultHashId_p = [Helpers]::ComputeHash($resourceId.ToLower());
 					$persistedScanResult = $null;
 					if($foundPersistedData)
 					{
-						$persistedScanResult = $complianceReport | Where-Object { $_.PartitionKey -eq $currentResultHashId -and $_.RowKey -eq $currentScanResult.ControlItem.Id }
+						$persistedScanResult = $complianceReport | Where-Object { $_.PartitionKey -eq $currentResultHashId_p -and $_.RowKey -eq $currentResultHashId_r }
 						# if(($persistedScanResult | Measure-Object).Count -le 0)
 						# {
 						# 	$foundPersistedData = $false;
 						# }				
 					}
-					$mergedScanResult = $this.ConvertScanResultToSnapshotResult($cScanResult, $persistedScanResult, $currentScanResult.ControlItem, $currentResultHashId)
-					$finalScanData += $mergedScanResult;
+					$mergedScanResult = $this.ConvertScanResultToSnapshotResult($cScanResult, $persistedScanResult, $currentScanResult, $currentResultHashId_p, $currentResultHashId_r, $resourceId)
+					if($null -ne $mergedScanResult)
+					{
+						$finalScanData += $mergedScanResult;
+					}
 				}
 			}
 		}
-		$finalScanData += $inActiveRecords;
+		# $finalScanData += $inActiveRecords;
 
 		return $finalScanData
 	}

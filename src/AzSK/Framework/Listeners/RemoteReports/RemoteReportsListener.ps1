@@ -39,16 +39,16 @@ class RemoteReportsListener: ListenerBase {
 				if($scanSource -ne [ScanSource]::Runbook) { return; }
 				[ResourceInventory]::FetchResources();
 				[RemoteReportsListener]::ReportAllResources();				
-				# $invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-				# if(!$invocationContext.BoundParameters.ContainsKey("SubscriptionId")) {return;}
-				# $resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
-				# $resources.SubscriptionId = $invocationContext.BoundParameters["SubscriptionId"]
-				# $resources.ResourceGroups = [System.Collections.ArrayList]::new()
+				$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
+				if(!$invocationContext.BoundParameters.ContainsKey("SubscriptionId")) {return;}
+				$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
+				$resources.SubscriptionId = $invocationContext.BoundParameters["SubscriptionId"]
+				$resources.ResourceGroups = [System.Collections.ArrayList]::new()
 				# $resourcesFlat = Find-AzureRmResource
-				# $supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
+				$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
 				# # Not considering nested resources to reduce complexity
-				# $filteredResoruces = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }				
-				$grouped = [ResourceInventory]::FilteredResources | Group-Object {$_.ResourceGroupName} | Select-Object Name, Group
+				$filteredResources = [ResourceInventory]::FilteredResources | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }
+				$grouped = $filteredResources | Group-Object {$_.ResourceGroupName} | Select-Object Name, Group				
 				foreach($group in $grouped){
 					$resourceGroup = "" | Select-Object Name, Resources
 					$resourceGroup.Name = $group.Name

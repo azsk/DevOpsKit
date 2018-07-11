@@ -4,7 +4,7 @@ class ResourceInventory
     static [PSObject[]] $RawResources;
     static [PSObject[]] $FilteredResources;    
 
-    static [void] FetchResources([string] $CurrentSubscriptionId)
+    static [void] FetchResources()
     {
         if($null -eq [ResourceInventory]::RawResources -or $null -eq [ResourceInventory]::FilteredResources)       
         {

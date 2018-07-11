@@ -65,24 +65,38 @@ class WriteCAStatus: ListenerBase
                 if($null -ne $props)
                 {
                     $scanSource = [RemoteReportHelper]::GetScanSource();
-                    if($scanSource -ne [ScanSource]::Runbook) { return; }               
-                    [ResourceInventory]::FetchResources($props.SubscriptionContext.SubscriptionId);              			               
+                    if($scanSource -ne [ScanSource]::Runbook) { return; }                                             			               
                     [ComplianceStateTableEntity[]] $ResourceFlatEntries = @();
                     $complianceReportHelper = [ComplianceReportHelper]::new($props.SubscriptionContext, $version); 
                     $selectColumns = @("PartitionKey","RowKey");
                     $complianceData = $complianceReportHelper.GetSubscriptionComplianceReport($null, $selectColumns);               
-                    foreach($resource in [ResourceInventory]::FilteredResources){
-                            $resourceIdHash = [Helpers]::ComputeHash($resource.ResourceId.ToLower());
-                            if(($complianceData | Where-Object {$_.PartitionKey -eq $resourceIdHash} | Measure-Object).Count -le 0)
-                            {
-                                [ComplianceStateTableEntity] $newComplianceEntity = [ComplianceStateTableEntity]::CreateEmptyResource($resource.ResourceId, $resourceIdHash);
-                                $ResourceFlatEntries += $newComplianceEntity;
-                            }                
-                    }
-                    if(($ResourceFlatEntries | Measure-Object).Count -gt 0)
+                    if(($complianceData | Measure-Object).Count -gt 0)
                     {
-                            $complianceReportHelper.SetLocalSubscriptionScanReport($ResourceFlatEntries);
-                    }
+                        $resourceHashMap = @{};
+                        [ResourceInventory]::FetchResources();   
+                        [ResourceInventory]::FilteredResources | ForEach-Object{
+                            $resource = $_;
+                            $resourceIdHash = [Helpers]::ComputeHash($resource.ResourceId.ToLower());
+                            if($null -eq $resourceHashMap[$resourceIdHash])
+                            {
+                                $resourceHashMap.Add($resourceIdHash, $resource)
+                            }                        
+                        }
+                        $deletedResources = @();
+                    
+                        foreach($resourceRecord in $complianceData)
+                        {
+                            if($null -eq $resourceHashMap[$resourceRecord.PartitionKey])
+                            {
+                                $resourceRecord.IsActive = $false;
+                                $deletedResources += $resourceRecord;
+                            }
+                        }
+                        if(($deletedResources | Measure-Object).Count -gt 0)
+                        {
+                            $complianceReportHelper.SetLocalSubscriptionScanReport($deletedResources);
+                        }
+                    }                    
                 }               
            }
            catch

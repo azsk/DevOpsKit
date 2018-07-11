@@ -5,13 +5,11 @@ class ComplianceStateTableEntity
 	#partition key = resourceid/subscriptionid
 	[string] $PartitionKey; 
 	#row key = controlid
-    [string] $RowKey;
-    [string] $HashId = "";
+    [string] $RowKey;	
 	[string] $ResourceId = "";
 	[string] $LastEventOn = [Constants]::AzSKDefaultDateTime;
 	[string] $ResourceGroupName = "";
-	[string] $ResourceName = "";
-	[string] $ResourceMetadata = "";
+	[string] $ResourceName = "";	
     [string] $FeatureName = "";
     
     #Default control values
@@ -51,25 +49,29 @@ class ComplianceStateTableEntity
 	[bool] $IsActive = $true;
 
 	[string] GetPartitionKey()
-	{
-		if([string]::IsNullOrWhiteSpace($this.HashId))
-		{
-			$partsToHash = $this.ResourceId;
-			if(-not [string]::IsNullOrWhiteSpace($this.ChildResourceName))
-			{
-				$partsToHash = $partsToHash + ":" + $this.ChildResourceName;
-			}
-			$this.HashId = [Helpers]::ComputeHash($partsToHash.ToLower());
-		}
-		return $this.HashId;
+	{						
+		$HashId = [Helpers]::ComputeHash($this.ResourceId.ToLower());
+		
+		return $HashId;
 	}
 
-	static [ComplianceStateTableEntity] CreateEmptyResource([string] $resourceId, [string] $hashId)
-	{
-		[ComplianceStateTableEntity] $emptyResourceEntity = [ComplianceStateTableEntity]::new();
-		$emptyResourceEntity.PartitionKey = $hashId;
-		$emptyResourceEntity.RowKey = "EmptyResource";
-		$emptyResourceEntity.ResourceId = $resourceId;
-		return $emptyResourceEntity;
+	[string] GetRowKey()
+	{	
+		$partsToHash = $this.ControlIntId;
+		if(-not [string]::IsNullOrWhiteSpace($this.ChildResourceName))
+		{
+			$partsToHash = $partsToHash + ":" + $this.ChildResourceName;
+		}
+		$HashId = [Helpers]::ComputeHash($partsToHash.ToLower());	
+		return $HashId;
 	}
+
+	# static [ComplianceStateTableEntity] CreateEmptyResource([string] $resourceId, [string] $hashId)
+	# {
+	# 	[ComplianceStateTableEntity] $emptyResourceEntity = [ComplianceStateTableEntity]::new();
+	# 	$emptyResourceEntity.PartitionKey = $hashId;
+	# 	$emptyResourceEntity.RowKey = "EmptyResource";
+	# 	$emptyResourceEntity.ResourceId = $resourceId;
+	# 	return $emptyResourceEntity;
+	# }
 }

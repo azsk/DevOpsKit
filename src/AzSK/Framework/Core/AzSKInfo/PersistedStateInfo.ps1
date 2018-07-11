@@ -78,10 +78,6 @@ class PersistedStateInfo: CommandBase
 							try {
 								$control = $_;
 								$partsToHash = $scannedResource.Name;
-								if(-not [string]::IsNullOrWhiteSpace($control.ChildResourceName))
-								{
-									$partsToHash = $partsToHash + ":" + $control.ChildResourceName;
-								}
 								$partitionKey = [Helpers]::ComputeHash($partsToHash.ToLower());
 								$filteredPersistedControl = $PersistedScanControls | Where-Object { $_.PartitionKey -eq $partitionKey -and $_.ControlID -eq $control.ControlID}
 								if(($filteredPersistedControl | Measure-Object).Count -gt 0)
