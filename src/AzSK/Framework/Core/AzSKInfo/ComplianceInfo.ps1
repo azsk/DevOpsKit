@@ -50,7 +50,7 @@ class ComplianceInfo: CommandBase
 		$this.GetComplianceScanData();
 		if(($this.ComplianceScanResult | Measure-Object).Count -le 0)
 		{
-			$this.PublishCustomMessage("No persisted compliance data found for this subscription ["+ $this.SubscriptionId +"]", [MessageType]::Default);
+			$this.PublishCustomMessage("No previously persisted compliance data found in the subscription ["+ $this.SubscriptionId +"]`nCompliance data will get persisted as you perform scans (or when scans happen from CA/CICD).", [MessageType]::Default);
 			return;
 		}			
 		#$this.GetControlDetails();

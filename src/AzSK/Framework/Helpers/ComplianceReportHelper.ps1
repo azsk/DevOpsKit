@@ -16,69 +16,71 @@ class ComplianceReportHelper: ComplianceBase
 	
 	hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport()
 	{
-		return $this.GetSubscriptionComplianceReport($null,$null);
+		return $this.GetSubscriptionComplianceReport("");
 	}
+	hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport($currentScanResults,$selectColumns)
+	{
+		$queryStringParams = "";
+		$partitionKeys = @();
+		if(($currentScanResults | Measure-Object).Count -gt 0)
+		{
+			$currentScanResults | ForEach-Object {
+				$currentScanResult = $_;
+				$resourceId = $currentScanResult.SubscriptionContext.Scope;
+				if($currentScanResult.IsResource())
+				{
+					$resourceId = $currentScanResult.ResourceContext.ResourceId;
+				}
+				$controlsToProcess = @();
+				if(($currentScanResult.ControlResults | Measure-Object).Count -gt 0)
+				{	
+					$controlsToProcess += $currentScanResult.ControlResults;
+				}
+				$controlsToProcess | ForEach-Object {
+					$cScanResult = $_;												
+					$currentResultHashId_p = [Helpers]::ComputeHash($resourceId.ToLower());
+					$partitionKeys += $currentResultHashId_p;
+				}
+			}
+			$partitionKeys = $partitionKeys | Select -Unique
 
-    hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport($currentScanResults,$selectColumns)
+			$template = "PartitionKey%20eq%20'{0}'";
+			$tempQS = "?`$filter="
+			$havePartitionKeys = $false;
+			$partitionKeys | ForEach-Object {
+				$pKey = $_
+				$tempQS = $tempQS + ($template -f $pKey) + "%20or%20";
+				$havePartitionKeys = $true;
+				}
+				if($havePartitionKeys)
+				{
+					$tempQS = $tempQS.Substring(0,$tempQS.Length - 8);
+					$queryStringParams = $tempQS
+				}
+		}
+		if(($selectColumns | Measure-Object).Count -gt 0)
+		{
+			$selectColumnsString = "?`$select=" + [String]::Join(",",$selectColumns)
+			if([string]::IsNullOrWhiteSpace($queryStringParams))
+			{
+				$queryStringParams = $selectColumnsString;
+			}
+			else
+			{
+				$queryStringParams = $queryStringParams + "&" + $selectColumnsString;
+			}
+		}
+		return $this.GetSubscriptionComplianceReport($queryStringParams);
+	}
+    hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport([string] $queryStringParams)
 	{
 		[ComplianceStateTableEntity[]] $complianceData = @()
 		try
-		{
-			$queryStringParams = "";
-			$partitionKeys = @();
-			if(($currentScanResults | Measure-Object).Count -gt 0)
-			{
-				$currentScanResults | ForEach-Object {
-					$currentScanResult = $_;
-					$resourceId = $currentScanResult.SubscriptionContext.Scope;
-					if($currentScanResult.IsResource())
-					{
-						$resourceId = $currentScanResult.ResourceContext.ResourceId;
-					}
-					$controlsToProcess = @();
-					if(($currentScanResult.ControlResults | Measure-Object).Count -gt 0)
-					{	
-						$controlsToProcess += $currentScanResult.ControlResults;
-					}
-					$controlsToProcess | ForEach-Object {
-						$cScanResult = $_;												
-						$currentResultHashId_p = [Helpers]::ComputeHash($resourceId.ToLower());
-						$partitionKeys += $currentResultHashId_p;
-					}
-				}
-				$partitionKeys = $partitionKeys | Select -Unique
-
-				$template = "PartitionKey%20eq%20'{0}'";
-				$tempQS = "?`$filter="
-				$havePartitionKeys = $false;
-				$partitionKeys | ForEach-Object {
-					$pKey = $_
-					$tempQS = $tempQS + ($template -f $pKey) + "%20or%20";
-					$havePartitionKeys = $true;
-				 }
-				 if($havePartitionKeys)
-				 {
-					 $tempQS = $tempQS.Substring(0,$tempQS.Length - 8);
-					 $queryStringParams = $tempQS
-				 }
-			}
-			if(($selectColumns | Measure-Object).Count -gt 0)
-			{
-				$selectColumnsString = "?`$select=" + [String]::Join(",",$selectColumns)
-				if([string]::IsNullOrWhiteSpace($queryStringParams))
-				{
-					$queryStringParams = $selectColumnsString;
-				}
-				else
-				{
-					$queryStringParams = $queryStringParams + "&" + $selectColumnsString;
-				}
-			}
-
+		{			
 			$storageInstance = $this.GetStorageHelperInstance()
 			$TableName = $this.ComplianceTableName
 			$AccountName = $storageInstance.StorageAccountName
-			$AccessKey = [Helpers]::GetStorageAccountAccessKey($storageInstance.ResourceGroupName,$AccountName) 
+			$AccessKey = $storageInstance.AccessKey 
 			$Uri="https://$AccountName.table.core.windows.net/$TableName()$queryStringParams"
 			$Verb = "GET"
 			$ContentMD5 = ""
@@ -126,7 +128,7 @@ class ComplianceReportHelper: ComplianceBase
 		}
 		catch
 		{
-			Write-Host $_;
+			#Write-Host $_;
 			return $null;
 		}
 		return $complianceData;		
@@ -304,7 +306,7 @@ class ComplianceReportHelper: ComplianceBase
 			$group = $_;
 			$results = $_.Group;
 			#MERGE batch req sample
-			[WebRequestHelper]::InvokeTableStorageBatchWebRequest($storageInstance.ResourceGroupName,$storageInstance.StorageAccountName,$this.ComplianceTableName,$results,$true)
+			[WebRequestHelper]::InvokeTableStorageBatchWebRequest($storageInstance.ResourceGroupName,$storageInstance.StorageAccountName,$this.ComplianceTableName,$results,$true, $storageInstance.AccessKey)
 			#POST batch req sample
 			#[WebRequestHelper]::InvokeTableStorageBatchWebRequest($storageInstance.ResourceGroupName,$storageInstance.StorageAccountName,$this.ComplianceTableName,$results,$false)
 		}		

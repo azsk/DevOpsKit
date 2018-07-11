@@ -68,6 +68,7 @@ class StorageHelper: ResourceGroupHelper
 	hidden [PSStorageAccount] $StorageAccount = $null;
 	[string] $StorageAccountName;
 	[Kind] $StorageKind; 
+	[string] $AccessKey;
 	[int] $HaveWritePermissions = 0;
 	[int] $retryCount = 3;
 	[int] $sleepIntervalInSecs = 10;
@@ -136,6 +137,13 @@ class StorageHelper: ResourceGroupHelper
 
 			#precompute storage access permissions for the current scan account
 			$this.ComputePermissions();
+
+			#fetch access key
+			$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $this.ResourceGroupName -Name $this.StorageAccountName -ErrorAction SilentlyContinue 
+			if($keys)
+			{
+				$this.AccessKey = $keys[0].Value;
+			}			
 		}
 	}
 

@@ -7,8 +7,7 @@ class SVTBase: AzSKRoot
     hidden [PSObject] $ControlSettings
 
 	hidden [ControlStateExtension] $ControlStateExt;
-	hidden [LSRSubscription] $StorageReportData;
-
+	
 	hidden [ControlState[]] $ResourceState;
 	hidden [ControlState[]] $DirtyResourceStates;
 
@@ -20,6 +19,7 @@ class SVTBase: AzSKRoot
 	[bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
 	[string] $PartialScanIdentifier = [string]::Empty
+	[ComplianceStateTableEntity[]] $ComplianceStateData = @();
 	[PSObject[]] $ChildSvtObjects = @();
     SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId)
@@ -302,8 +302,8 @@ class SVTBase: AzSKRoot
 			}
 			else
 			{
-				$this.EvaluationStarted();
-				 $resourceSecurityResult += $this.GetAutomatedSecurityStatus();
+				$this.EvaluationStarted();				
+				$resourceSecurityResult += $this.GetAutomatedSecurityStatus();
 				$resourceSecurityResult += $this.GetManualSecurityStatus();			
 				$this.PostEvaluationCompleted($resourceSecurityResult);
 				$this.EvaluationCompleted($resourceSecurityResult);
@@ -311,6 +311,8 @@ class SVTBase: AzSKRoot
         }
         return $resourceSecurityResult;
 	}
+
+	
 
 	[SVTEventContext[]] ComputeApplicableControlsWithContext()
     {
@@ -1144,40 +1146,28 @@ class SVTBase: AzSKRoot
    	{   
 	   try
 	    {
-
 			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();	
 			$settingStoreComplianceSummaryInUserSubscriptions = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
 			#return if feature is turned off at server config
 			if(-not $azskConfig.StoreComplianceSummaryInUserSubscriptions -and -not $settingStoreComplianceSummaryInUserSubscriptions) {return;}
 
-	   		if($null -ne $this.StorageReportData -and $null -ne $this.StorageReportData.ScanDetails)
+	   		if(($this.ComplianceStateData | Measure-Object).Count -gt 0)
 			{
 				$ResourceData = @();
-				$PersistedControlScanResult=@();
-				
-				if($singleControlResult.FeatureName -eq "SubscriptionCore" -and ($this.StorageReportData.ScanDetails.SubscriptionScanResult| Measure-Object).Count -gt 0)
-				{									
-					$PersistedControlScanResult	= $this.StorageReportData.ScanDetails.SubscriptionScanResult;
-				}
-				elseif($singleControlResult.FeatureName -ne "SubscriptionCore" -and $singleControlResult.FeatureName -ne "AzSKCfg" -and ($this.StorageReportData.ScanDetails.Resources | Measure-Object).Count -gt 0)
-				{
-					$ResourceData = $this.StorageReportData.ScanDetails.Resources | Where-Object {$_.ResourceId -eq $this.ResourceId}
-					if($null -ne $ResourceData -and [Helpers]::CheckMember($ResourceData,"ResourceScanResult") -and ($ResourceData.ResourceScanResult | Measure-Object).Count -gt 0)
-					{
-						$PersistedControlScanResult = $ResourceData.ResourceScanResult 
-					}
-				}
+				$PersistedControlScanResult=@();								
 			
 				#$ResourceScanResult=$ResourceData.ResourceScanResult
 				[ControlResult[]] $controlsResults = @();
 				$singleControlResult.ControlResults | ForEach-Object {
 					$currentControl=$_
-
-					$matchedControlResult = $null
-					if(($PersistedControlScanResult | Measure-Object).Count -gt 0)
-					{				
-						$matchedControlResult=$PersistedControlScanResult | Where-Object {($_.ControlIntId -eq $singleControlResult.ControlItem.Id -and (($singleControlResult.FeatureName -ne "SubscriptionCore" -and $_.ChildResourceName -eq $currentControl.ChildResourceName) -or $singleControlResult.FeatureName -eq "SubscriptionCore"))}
+					$partsToHash = $singleControlResult.ControlItem.Id;
+					if(-not [string]::IsNullOrWhiteSpace($currentControl.ChildResourceName))
+					{
+						$partsToHash = $partsToHash + ":" + $currentControl.ChildResourceName;
 					}
+					$rowKey = [Helpers]::ComputeHash($partsToHash.ToLower());
+
+					$matchedControlResult = $this.ComplianceStateData | Where-Object { $_.RowKey -eq $rowKey}
 
 					# initialize default values
 					$currentControl.FirstScannedOn = [DateTime]::UtcNow
@@ -1188,8 +1178,8 @@ class SVTBase: AzSKRoot
 					if($null -ne $matchedControlResult -and ($matchedControlResult | Measure-Object).Count -gt 0)
 					{
 						$currentControl.UserComments = $matchedControlResult.UserComments
-						$currentControl.FirstFailedOn = $matchedControlResult.FirstFailedOn
-						$currentControl.FirstScannedOn = $matchedControlResult.FirstScannedOn						
+						$currentControl.FirstFailedOn = [datetime] $matchedControlResult.FirstFailedOn
+						$currentControl.FirstScannedOn = [datetime] $matchedControlResult.FirstScannedOn						
 					}
 
 					$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)

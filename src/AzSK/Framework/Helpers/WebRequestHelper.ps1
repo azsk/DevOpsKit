@@ -129,9 +129,8 @@ class WebRequestHelper {
 
         return $outputValues;
 	}
-	static [System.Object[]] InvokeTableStorageBatchWebRequest([string] $RGName, [string] $StorageAccountName, [string] $TableName,[PSObject[]]$Data,[bool]$IsMergeOperation) 
-	{
-		$AccessKey = [Helpers]::GetStorageAccountAccessKey($RGName,$StorageAccountName) 
+	static [System.Object[]] InvokeTableStorageBatchWebRequest([string] $RGName, [string] $StorageAccountName, [string] $TableName,[PSObject[]]$Data,[bool]$IsMergeOperation, [string] $AccessKey) 
+	{		
 		$uri="https://$StorageAccountName.table.core.windows.net/`$batch"
 		$boundary = "batch_$([guid]::NewGuid())"
 		$Verb = "POST"

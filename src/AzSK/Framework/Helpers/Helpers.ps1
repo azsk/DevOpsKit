@@ -1399,17 +1399,7 @@ class Helpers {
 			#this call happens from finally block. Try to clean the files, if it don't happen it would get cleaned in the next attempt
 		}	
     }	
-
-    static [string] GetStorageAccountAccessKey($ResourceGroupName,$StorageName)
-	{
-        $keys = Get-AzureRmStorageAccountKey -ResourceGroupName $ResourceGroupName -Name $StorageName -ErrorAction SilentlyContinue 
-        if($keys)
-        {
-            return $keys[0].Value
-        }
-        else
-        {return ""}
-    }	
+   
     static [string] CreateStorageAccountSharedKey([string] $StringToSign,[string] $AccountName,[string] $AccessKey)
 	{
         $KeyBytes = [System.Convert]::FromBase64String($AccessKey)
