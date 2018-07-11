@@ -86,6 +86,11 @@ class WriteCAStatus: ListenerBase
                                 $resourceHashMap.Add($resourceIdHash, $resource)
                             }                        
                         }
+                        $subHash = [Helpers]::ComputeHash($props.SubscriptionContext.Scope.ToLower());
+                        if($null -eq $resourceHashMap[$subHash])
+                        {
+                            $resourceHashMap.Add($subHash,$props.SubscriptionContext.Scope);
+                        }
                         $deletedResources = @();
                     
                         foreach($resourceRecord in $complianceData)
