@@ -1405,6 +1405,35 @@ class Helpers {
 			#this call happens from finally block. Try to clean the files, if it don't happen it would get cleaned in the next attempt
 		}	
     }
+
+    static [void] CreateFolder($FolderPath)
+    {
+        if(-not (Test-Path $FolderPath))
+		{
+			mkdir -Path $FolderPath -ErrorAction Stop | Out-Null
+		}
+		else
+		{
+			Remove-Item -Path "$FolderPath\*" -Force -Recurse 
+		}
+    }
+
+    Static [string] GetSubString($CotentString, $Pattern)
+    {
+        return  [regex]::match($CotentString, $pattern).Groups[1].Value
+    }
+
+    Static [string] IsStringEmpty($String)
+    {
+        if([string]::IsNullOrEmpty($String))
+        {
+            return "Not Available"
+        }
+        else 
+        {
+            return $String
+        }
+    }
 	
 }
 

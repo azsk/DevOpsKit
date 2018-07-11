@@ -26,7 +26,8 @@ class CommandBase: AzSKRoot {
 		#Validate if command is getting run with correct Org Policy
 		$IsTagSettingRequired=$this.ValidateOrgPolicyOnSubscription($this.Force)
 		 #Validate if command has AzSK component write permission
-		if($this.GetCommandMetadata().HasAzSKComponentWritePermission -and ($IsTagSettingRequired -or $this.Force))
+		$commandMetadata= $this.GetCommandMetadata()
+		if(([Helpers]::CheckMember($commandMetadata,"HasAzSKComponentWritePermission")) -and  $commandMetadata.HasAzSKComponentWritePermission -and ($IsTagSettingRequired -or $this.Force))
 		{
 			#If command is running with Org-neutral Policy or switch Org policy, Set Org Policy tag on subscription
 			$this.SetOrgPolicyTag($this.Force)
