@@ -36,6 +36,5 @@
    "IsAlertMonitoringEnabled": false,
    "SupportDL": "azsksupext@microsoft.com",
   "PolicyOrgName": "org-neutral",
-  "PersistScanReportInSubscription": false
-
+  "StoreComplianceSummaryInUserSubscriptions": false
 }

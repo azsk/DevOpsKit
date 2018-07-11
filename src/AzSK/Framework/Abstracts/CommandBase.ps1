@@ -6,6 +6,7 @@ class CommandBase: AzSKRoot {
     [string[]] $FilterTags = @();
 	[bool] $DoNotOpenOutputFolder = $false;
 	[bool] $Force = $false
+	[bool] $IsLocalComplianceStoreEnabled = $false
     CommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId) {
         [Helpers]::AbstractClass($this, [CommandBase]);
@@ -30,7 +31,15 @@ class CommandBase: AzSKRoot {
 		{
 			#If command is running with Org-neutral Policy or switch Org policy, Set Org Policy tag on subscription
 			$this.SetOrgPolicyTag($this.Force)
-		}		
+		}	
+
+		$azskConfigComplianceFlag = [ConfigurationManager]::GetAzSKConfigData().StoreComplianceSummaryInUserSubscriptions;	
+        $localSettingComplianceFlag = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
+        #return if feature is turned off at server config
+        if($azskConfigComplianceFlag -or $localSettingComplianceFlag) 
+		{
+			$this.IsLocalComplianceStoreEnabled = $true
+		}        
     }
 
     [void] CommandStarted() {

@@ -14,30 +14,17 @@ class SVTCommandBase: CommandBase {
     [bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
     [AttestationOptions] $AttestationOptions;
-    hidden [LSRSubscription] $StorageReportData;
-    hidden [ComplianceReportHelper] $complianceReportHelper = $null;
+    hidden [ComplianceReportHelper] $ComplianceReportHelper = $null;
+    hidden [ComplianceBase] $ComplianceBase = $null;
 
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
         $this.CheckAndDisableAzureRMTelemetry()
-		#fetch the compliancedata from subscription
-        $this.GetLocalSubscriptionData(); 
-    }
 
-	hidden [void] GetLocalSubscriptionData()
-	{
-        $azskConfig = [ConfigurationManager]::GetAzSKConfigData();
-        $settingPersistScanReportInSubscription = [ConfigurationManager]::GetAzSKSettings().PersistScanReportInSubscription;
-			#return if feature is turned off at server config
-		if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription) {return;}        
-        
-        if($null -eq $this.complianceReportHelper)
-        {
-		    $this.complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId);
-            $this.StorageReportData =  $this.complianceReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
-        }
-	}
+        #Fetching the resourceInventory once for each SVT command execution
+        [ResourceInventory]::Clear();
+    }
 
     hidden [SVTEventContext] CreateSVTEventContextObject() {
         return [SVTEventContext]@{
@@ -71,8 +58,13 @@ class SVTCommandBase: CommandBase {
         
         #check and delete if older RG found. Remove this code post 8/15/2018 release
         $this.RemoveOldAzSDKRG();
-
-
+        #Create necessary resources to save compliance data in user's subscription
+        if($this.IsLocalComplianceStoreEnabled)
+        {
+            $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());             
+            #below function will upgrade blob storage to general purpose V2 if required
+            $this.ComplianceReportHelper.CreateComplianceStateTableIfNotExists();            
+        }
         $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
 
@@ -111,9 +103,9 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
         # ToDo: remove InvocationContext, try to pass as param
-        # ToDo: Assumption: usercomment will only work when storage report feature flag is enable.  
-		     
-		$svtObject.StorageReportData = $this.StorageReportData
+        # ToDo: Assumption: usercomment will only work when storage report feature flag is enable
+        $resourceId = $svtObject.GetResourceId(); 
+		$svtObject.ComplianceStateData = $this.FetchComplianceStateData($resourceId);
 
         #Include Server Side Exclude Tags
         $svtObject.ExcludeTags += [ConfigurationManager]::GetAzSKConfigData().DefaultControlExculdeTags
@@ -131,6 +123,18 @@ class SVTCommandBase: CommandBase {
         $this.InitializeControlState();
         $svtObject.ControlStateExt = $this.ControlStateExt;
     }
+
+    hidden [ComplianceStateTableEntity[]] FetchComplianceStateData([string] $resourceId)
+	{
+        [ComplianceStateTableEntity[]] $ComplianceStateData = @();
+		if($null -ne $this.ComplianceReportHelper)
+		{
+			$partitionKey = [Helpers]::ComputeHash($resourceId.ToLower());
+			$queryStringParam = "?`$filter=PartitionKey%20eq'$partitionKey'";
+            $ComplianceStateData = $this.ComplianceReportHelper.GetSubscriptionComplianceReport($queryStringParam);            
+        }
+        return $ComplianceStateData;
+	}
 
     hidden [void] InitializeControlState() {
         if (-not $this.ControlStateExt) {

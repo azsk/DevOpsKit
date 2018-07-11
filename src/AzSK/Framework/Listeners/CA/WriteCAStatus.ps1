@@ -47,11 +47,7 @@ class WriteCAStatus: ListenerBase
 						{
 							$partialScanMngr.UpdateResourceStatus( $props.ResourceContext.ResourceId,"COMP");
 						}
-					}
-					else
-					{
-						
-					}
+					}					
 				}            
             }
             catch 
@@ -59,6 +55,55 @@ class WriteCAStatus: ListenerBase
                 $currentInstance.PublishException($_);
             }
         });
+
+        $this.RegisterEvent([SVTEvent]::CommandStarted, {
+           $currentInstance = [WriteCAStatus]::GetInstance();
+           try
+           {
+                $props = $Event.SourceArgs[0];
+                $version = $currentInstance.InvocationContext.MyCommand.Version
+                if($null -ne $props)
+                {
+                    $scanSource = [RemoteReportHelper]::GetScanSource();
+                    if($scanSource -ne [ScanSource]::Runbook) { return; }                                             			               
+                    [ComplianceStateTableEntity[]] $ResourceFlatEntries = @();
+                    $complianceReportHelper = [ComplianceReportHelper]::new($props.SubscriptionContext, $version); 
+                    $selectColumns = @("PartitionKey","RowKey");
+                    $complianceData = $complianceReportHelper.GetSubscriptionComplianceReport($null, $selectColumns);               
+                    if(($complianceData | Measure-Object).Count -gt 0)
+                    {
+                        $resourceHashMap = @{};
+                        [ResourceInventory]::FetchResources();   
+                        [ResourceInventory]::FilteredResources | ForEach-Object{
+                            $resource = $_;
+                            $resourceIdHash = [Helpers]::ComputeHash($resource.ResourceId.ToLower());
+                            if($null -eq $resourceHashMap[$resourceIdHash])
+                            {
+                                $resourceHashMap.Add($resourceIdHash, $resource)
+                            }                        
+                        }
+                        $deletedResources = @();
+                    
+                        foreach($resourceRecord in $complianceData)
+                        {
+                            if($null -eq $resourceHashMap[$resourceRecord.PartitionKey])
+                            {
+                                $resourceRecord.IsActive = $false;
+                                $deletedResources += $resourceRecord;
+                            }
+                        }
+                        if(($deletedResources | Measure-Object).Count -gt 0)
+                        {
+                            $complianceReportHelper.SetLocalSubscriptionScanReport($deletedResources);
+                        }
+                    }                    
+                }               
+           }
+           catch
+           {
+               $currentInstance.PublishException($_);
+           }
+       });
 
 		 $this.RegisterEvent([SVTEvent]::CommandCompleted, {
             $currentInstance = [PartialScanManager]::GetInstance();

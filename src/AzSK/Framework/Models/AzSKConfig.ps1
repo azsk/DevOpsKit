@@ -39,7 +39,7 @@ class AzSKConfig
 	[string] $SupportDL;
 	[string] $RunbookScanAgentBaseVersion;
 	[string] $PolicyOrgName;
-	[bool] $PersistScanReportInSubscription;
+	[bool] $StoreComplianceSummaryInUserSubscriptions;
 	[string] $LatestPSGalleryVersion;
 	hidden static [AzSKConfig] $Instance = $null;
 	
