@@ -103,7 +103,7 @@ class ComplianceReportHelper: ComplianceBase
 			{
 				foreach($Property in $newEntity | Get-Member -type NoteProperty, Property)
 				{
-					if([Helpers]::CheckMember($item,$Property.Name))
+					if([Helpers]::CheckMember($item, $Property.Name, $false))
 					{
 						$props += $Property.Name
 					}
@@ -130,62 +130,7 @@ class ComplianceReportHelper: ComplianceBase
 			return $null;
 		}
 		return $complianceData;		
-    }
-
-    hidden [LSRSubscription] GetLocalSubscriptionScanReport([string] $subId)
-    {
-		if($this.GetStorageHelperInstance().HaveWritePermissions -eq 0)
-		{
-			return $null;
-		}
-        $fullScanResult = $this.GetLocalSubscriptionScanReport();
-        if($null -ne $fullScanResult -and ($fullScanResult.Subscriptions | Measure-Object ).Count -gt 0)
-        {
-            return $fullScanResult.Subscriptions | Where-Object { $_.SubscriptionId -eq $subId }
-        }
-        else
-        {
-            return $null;
-        }
-    }
-
-    hidden [void] SetLocalSubscriptionScanReport([LocalSubscriptionReport] $scanResultForStorage)
-	{		
-		try
-		{
-			if($this.GetStorageHelperInstance().HaveWritePermissions -eq 0)
-			{
-				return;
-			}
-			$AzSKTemp = [Constants]::AzSKAppFolderPath + [Constants]::ComplianceReportPath;				
-			if(-not (Test-Path "$AzSKTemp"))
-			{
-				mkdir -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
-			}
-			else
-			{
-				Remove-Item -Path "$AzSKTemp\*" -Force -Recurse 
-			}
-
-			$fileName = "$AzSKTemp\" + $this.SubscriptionContext.SubscriptionId +".json"
-			$compressedFileName = "$AzSKTemp\" + [Constants]::ComplianceReportBlobName +".zip"
-			$ContainerName = [Constants]::ComplianceReportContainerName;
-
-			[Helpers]::ConvertToJsonCustomCompressed($scanResultForStorage) | Out-File $fileName -Force
-
-			#compress file before store to storage
-
-			Compress-Archive -Path $fileName -CompressionLevel Optimal -DestinationPath $compressedFileName -Update
-
-			$fileInfos = @();
-			$fileInfos += [System.IO.FileInfo]::new($compressedFileName);
-			$this.GetStorageHelperInstance().UploadFilesToBlob($ContainerName, "", $fileInfos, $true);
-		}
-		finally
-		{
-			[Helpers]::CleanupLocalFolder([Constants]::AzSKAppFolderPath + [Constants]::ComplianceReportPath);
-		}
-    }		
+    }     		
 		
 	hidden [ComplianceStateTableEntity] ConvertScanResultToSnapshotResult($currentSVTResult, $persistedSVTResult, $svtEventContext, $partitionKey, $rowKey, $resourceId)
 	{
@@ -366,8 +311,7 @@ class ComplianceReportHelper: ComplianceBase
     }
 	hidden [void] StoreComplianceDataInUserSubscription([SVTEventContext[]] $currentScanResult)
 	{
-		$filteredResources = $null
-		#TODO need to figure out on how to delete the old records for deleted resources
+		$filteredResources = $null		
 		$finalScanReport = $this.MergeSVTScanResult($currentScanResult)
 		$this.SetLocalSubscriptionScanReport($finalScanReport)
 	}
