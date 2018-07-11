@@ -283,7 +283,15 @@ class ComplianceReportHelper: ComplianceBase
 
 		#TODO get specific data
 		$complianceReport = $this.GetSubscriptionComplianceReport($currentScanResults);
-		
+		$inActiveRecords = @();
+		$complianceReport | ForEach-Object { 
+			$record = $_;
+			if($_.RowKey -eq "EmptyResource")
+			{
+				$record.IsActive = $false;
+				$inActiveRecords += $record;
+			}
+		}
 		$foundPersistedData = ($complianceReport | Measure-Object).Count -gt 0
 		$currentScanResults | ForEach-Object {
 			$currentScanResult = $_
@@ -323,6 +331,7 @@ class ComplianceReportHelper: ComplianceBase
 				}
 			}
 		}
+		$finalScanData += $inActiveRecords;
 
 		return $finalScanData
 	}
