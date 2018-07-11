@@ -57,28 +57,33 @@ class WriteCAStatus: ListenerBase
         });
 
         $this.RegisterEvent([SVTEvent]::CommandStarted, {
-            $currentInstance = [WriteCAStatus]::GetInstance();
+           $currentInstance = [WriteCAStatus]::GetInstance();
            try
            {
-               $scanSource = [RemoteReportHelper]::GetScanSource();
-               if($scanSource -ne [ScanSource]::Runbook) { return; }               
-               [ResourceInventory]::FetchResources();              			               
-               [ComplianceStateTableEntity[]] $ResourceFlatEntries = @();
-               $complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId, $this.GetCurrentModuleVersion()); 
-               $selectColumns = @("ParitionKey","RowKey");
-               $complianceData = $complianceReportHelper.GetSubscriptionComplianceReport($null, $selectColumns);               
-               foreach($resource in [ResourceInventory]::FilteredResources){
-                    $resourceIdHash = [Helpers]::ComputeHash($resource.ResourceId.ToLower());
-                    if(($complianceData | Where-Object {$_.ParitionKey -eq $resourceIdHash} | Measure-Object).Count -le 0)
+                $props = $Event.SourceArgs[0];
+                $version = $currentInstance.InvocationContext.MyCommand.Version
+                if($null -ne $props)
+                {
+                    $scanSource = [RemoteReportHelper]::GetScanSource();
+                    if($scanSource -ne [ScanSource]::Runbook) { return; }               
+                    [ResourceInventory]::FetchResources($props.SubscriptionContext.SubscriptionId);              			               
+                    [ComplianceStateTableEntity[]] $ResourceFlatEntries = @();
+                    $complianceReportHelper = [ComplianceReportHelper]::new($props.SubscriptionContext, $version); 
+                    $selectColumns = @("PartitionKey","RowKey");
+                    $complianceData = $complianceReportHelper.GetSubscriptionComplianceReport($null, $selectColumns);               
+                    foreach($resource in [ResourceInventory]::FilteredResources){
+                            $resourceIdHash = [Helpers]::ComputeHash($resource.ResourceId.ToLower());
+                            if(($complianceData | Where-Object {$_.PartitionKey -eq $resourceIdHash} | Measure-Object).Count -le 0)
+                            {
+                                [ComplianceStateTableEntity] $newComplianceEntity = [ComplianceStateTableEntity]::CreateEmptyResource($resource.ResourceId, $resourceIdHash);
+                                $ResourceFlatEntries += $newComplianceEntity;
+                            }                
+                    }
+                    if(($ResourceFlatEntries | Measure-Object).Count -gt 0)
                     {
-                        [ComplianceStateTableEntity] $newComplianceEntity = [ComplianceStateTableEntity]::CreateEmptyResource($resource.ResourceId, $resourceIdHash);
-                        $ResourceFlatEntries += $newComplianceEntity;
-                    }                
-               }
-               if(($ResourceFlatEntries | Measure-Object).Count -gt 0)
-               {
-                    $complianceReportHelper.SetLocalSubscriptionScanReport($ResourceFlatEntries);
-               }               
+                            $complianceReportHelper.SetLocalSubscriptionScanReport($ResourceFlatEntries);
+                    }
+                }               
            }
            catch
            {

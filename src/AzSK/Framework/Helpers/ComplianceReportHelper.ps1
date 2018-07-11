@@ -55,13 +55,13 @@ class ComplianceReportHelper: ComplianceBase
 
 				$template = "PartitionKey%20eq%20'{0}'";
 				$tempQS = "?`$filter="
-				$haveParitionKeys = $false;
+				$havePartitionKeys = $false;
 				$partitionKeys | ForEach-Object {
 					$pKey = $_
 					$tempQS = $tempQS + ($template -f $pKey) + "%20or%20";
-					$haveParitionKeys = $true;
+					$havePartitionKeys = $true;
 				 }
-				 if($haveParitionKeys)
+				 if($havePartitionKeys)
 				 {
 					 $tempQS = $tempQS.Substring(0,$tempQS.Length - 8);
 					 $queryStringParams = $tempQS
@@ -69,7 +69,7 @@ class ComplianceReportHelper: ComplianceBase
 			}
 			if(($selectColumns | Measure-Object).Count -gt 0)
 			{
-				$selectColumnsString = [String]::Join(",",$selectColumns)
+				$selectColumnsString = "?`$select=" + [String]::Join(",",$selectColumns)
 				if([string]::IsNullOrWhiteSpace($queryStringParams))
 				{
 					$queryStringParams = $selectColumnsString;
@@ -97,17 +97,35 @@ class ComplianceReportHelper: ComplianceBase
 			$xmsdate = $Date
 			$headers = @{"Accept"="application/json";"x-ms-date"=$xmsdate;"Authorization"="SharedKey $sharedKey";"x-ms-version"="2018-03-28"}
 			$tempComplianceData  = ([WebRequestHelper]::InvokeGetWebRequest($Uri,$headers)) 
-			foreach($item in $tempComplianceData)
+			$newEntity = [ComplianceStateTableEntity]::new();
+			$props = @();
+			$item = $null;
+			if(($tempComplianceData | Measure-Object).Count -gt 0)
 			{
-				$newEntity = [ComplianceStateTableEntity]::new()
-				foreach($Property in $newEntity | Get-Member -type NoteProperty, Property){
-					$newEntity.$($Property.Name) = $item.$($Property.Name)
+				$item = $tempComplianceData[0];
+			}
+			if($null -ne $item)
+			{
+				foreach($Property in $newEntity | Get-Member -type NoteProperty, Property)
+				{
+					if([Helpers]::CheckMember($item,$Property.Name))
+					{
+						$props += $Property.Name
+					}
 				}
-				$complianceData+=$newEntity
-			}	
+				foreach($item in $tempComplianceData)
+				{
+					$newEntity = [ComplianceStateTableEntity]::new()
+					foreach($Property in $props){
+						$newEntity.$($Property) = $item.$($Property)
+					}
+					$complianceData+=$newEntity
+				}	
+			}			
 		}
 		catch
 		{
+			Write-Host $_;
 			return $null;
 		}
 		return $complianceData;		

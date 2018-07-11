@@ -26,6 +26,8 @@ class PersistedStateInfo: CommandBase
 		try
 		{
 			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();	
+			$successCount = 0;
+			$totalCount = 0;
 			$settingStoreComplianceSummaryInUserSubscriptions = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
 			#return if feature is turned off at server config
 			if(-not $azskConfig.StoreComplianceSummaryInUserSubscriptions -and -not $settingStoreComplianceSummaryInUserSubscriptions) 	
@@ -45,10 +47,11 @@ class PersistedStateInfo: CommandBase
 			#pick only those controls whose usercomments has been updated
 			$controlResultSet = $controlResultSet | Where-Object {$_.FeatureName -ne "AzSKCfg" -and -not [string]::IsNullOrWhiteSpace($_.UserComments)}
 			$erroredControls = @();
+			$totalCount = ($controlResultSet | Measure-Object).Count;
 			$invalidUserComments = $controlResultSet | Where-Object { $_.UserComments.length -gt 255} 
 			if(($invalidUserComments | Measure-Object).Count -eq 0)
 			{
-				if(($invalidUserComments | Measure-Object).Count -eq ($controlResultSet | Measure-Object).Count )
+				if(($invalidUserComments | Measure-Object).Count -eq $totalCount )
 				{
 					$this.PublishCustomMessage("Could not find any control in file with usercomments: [$filePath].",[MessageType]::Error);
 					return $messages;
@@ -88,6 +91,7 @@ class PersistedStateInfo: CommandBase
 									$encUserCommentsString= $encoder.GetString($encUserComments)
 									$filteredPersistedControl.UserComments = $encUserCommentsString
 									$UpdatedPersistedControls += $filteredPersistedControl;
+									$successCount += 1
 								}
 								else {
 									$erroredControls += $this.CreateCustomErrorObject($control,"Could not find previous persisted state.");

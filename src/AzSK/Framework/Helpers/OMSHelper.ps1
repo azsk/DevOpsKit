@@ -216,6 +216,7 @@ Class OMSHelper{
 	{
 		if($AzSKContext.Source.Equals("CC", [System.StringComparison]::OrdinalIgnoreCase) -or
 		$AzSKContext.Source.Equals("CA", [System.StringComparison]::OrdinalIgnoreCase)){
+			$resourceSet = [System.Collections.ArrayList]::new()
 			[ResourceInventory]::FetchResources();
 			foreach($resource in [ResourceInventory]::FilteredResources){
 				$set = [OMSResourceModel]::new()
