@@ -129,11 +129,14 @@ class SVTCommandBase: CommandBase {
     hidden [ComplianceStateTableEntity[]] FetchComplianceStateData([string] $resourceId)
 	{
         [ComplianceStateTableEntity[]] $ComplianceStateData = @();
-		if($null -ne $this.ComplianceReportHelper)
-		{
-			$partitionKey = [Helpers]::ComputeHash($resourceId.ToLower());
-			$queryStringParam = "?`$filter=PartitionKey%20eq'$partitionKey'";
-            $ComplianceStateData = $this.ComplianceReportHelper.GetSubscriptionComplianceReport($queryStringParam);            
+        if($this.IsLocalComplianceStoreEnabled)
+        {
+            if($null -ne $this.ComplianceReportHelper)
+            {
+                $partitionKey = [Helpers]::ComputeHash($resourceId.ToLower());
+                $queryStringParam = "?`$filter=PartitionKey%20eq'$partitionKey'";
+                $ComplianceStateData = $this.ComplianceReportHelper.GetSubscriptionComplianceReport($queryStringParam);            
+            }
         }
         return $ComplianceStateData;
 	}
