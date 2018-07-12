@@ -1,4 +1,4 @@
-using namespace System.Management.Automation
+﻿using namespace System.Management.Automation
 Set-StrictMode -Version Latest 
 class CCAutomation: CommandBase
 { 
@@ -981,9 +981,11 @@ class CCAutomation: CommandBase
 			$existingRunbook = Get-AzureRmAutomationRunbook -AutomationAccountName $this.AutomationAccount.Name `
 			-ResourceGroupName $this.AutomationAccount.ResourceGroup 
 
-			$existingRunbook = $existingRunbook | Where-Object { $_.Name –ne [Constants]::Alert_ResourceCreation_Runbook }  
-
-
+			if(-not $this.ScanOnDeployment)
+			{
+				$existingRunbook = $existingRunbook | Where-Object { $_.Name –ne [Constants]::Alert_ResourceCreation_Runbook }  
+			}
+			
 			if((($scheduledRunbooks|Measure-Object).Count -gt 0) -and (($existingRunbook|Measure-Object).Count -gt 0))
 			{
 				#check if runbook exists to unlink schedules
