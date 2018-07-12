@@ -10,6 +10,11 @@ class SVTConfig
     {
 		return [SVTConfig]([ConfigurationHelper]::LoadServerConfigFile($fileName, $useOnlinePolicyStore, $onlineStoreUri, $enableAADAuthForOnlinePolicyStore));
     }
+
+    static [SVTConfig] LoadServerFileRaw([string] $fileName, [bool] $useOnlinePolicyStore, [string] $onlineStoreUri, [bool] $enableAADAuthForOnlinePolicyStore)
+    {
+		return [SVTConfig]([ConfigurationHelper]::LoadServerFileRaw($fileName, $useOnlinePolicyStore, $onlineStoreUri, $enableAADAuthForOnlinePolicyStore));
+    }
 }
 
 class ControlItem

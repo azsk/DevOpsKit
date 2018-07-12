@@ -90,6 +90,7 @@ class Constants
 	static [string] $AzSKAppFolderPath = $Env:LOCALAPPDATA + "\Microsoft\" + [Constants]::AzSKModuleName
 	static [string] $AzSKLogFolderPath = $Env:LOCALAPPDATA + "\Microsoft\"
 	static [string] $AzSKTempFolderPath = $env:TEMP + "\" + [Constants]::AzSKModuleName + "\"
+	static [string] $AzSKExtensionsFolderPath = $Env:LOCALAPPDATA + "\Microsoft\" + [Constants]::AzSKModuleName + "\Extensions"
 	static [string] $ARMManagementUri = "https://management.azure.com/";	
 	static [string] $VersionCheckMessage = "A newer version of AzSK is available: Version {0} `r`nTo update, run the command below in a fresh PS window:`r`n" ;
 	static [string] $VersionWarningMessage = ("Using the latest version ensures that AzSK security commands you run use the latest, most up-to-date controls. `r`nResults from the current version should not be considered towards compliance requirements.`r`n" + [Constants]::DoubleDashLine);
@@ -97,10 +98,12 @@ class Constants
 	static [string] $AzSKRGLocation = "eastus2";
 	static [string] $OMSRequestURI = "https://management.azure.com/{0}?api-version=2015-03-20";
 	static [string] $NewStorageSku = "Standard_LRS";
+	static [string] $NewStorageKind = "BlobStorage";
 	static [string] $ARMControlsFileURI = "https://azsdkossep.azureedge.net/1.0.0/ARMControls.json";
 	#V1 alert RG name constant is temporary and added for backward compatibility	
 	static [string] $AlertActionGroupName = "AzSKAlertActionGroup"
 	static [string] $CriticalAlertActionGroupName = "AzSKCriticalAlertActionGroup"
+	static [string] $ResourceDeploymentActionGroupName = "ResourceDeploymentActionGroup"
 
 	# Append recommendation when control require elevated permission
 	static [string] $RequireOwnerPermMessage = "(The status for this control has been marked as 'Manual' because elevated (Co-Admin/Owner/Contributor) permission is required to check security configuration for this resource. You can re-run the control with the appropriate privilege.) "
@@ -116,9 +119,9 @@ class Constants
 	static [string] $AzSKAlertsVersionTagName = "AzSKAlertsVersion"
 	static [string] $SecurityCenterConfigVersionTagName = "SecurityCenterConfigVersion"
 	static [string] $NoActionRequiredMessage ="No Action Required"
-	static [string] $MigrationTagName = "MigratedOn"
 	static [string] $PolicyMigrationTagName = "PolicyMigratedOn"
 	static [string] $AlertRunbookName= "Alert_Runbook"
+	static [string] $Alert_ResourceCreation_Runbook= "Continuous_Assurance_ScanOnTrigger_Runbook"
 	static [string] $AutomationWebhookName="WebhookForAlertRunbook"
 	static [string] $AutomationAccountName="AzSKContinuousAssurance"
 	static [int] $AlertWebhookUriExpiryInDays = 60	
@@ -150,12 +153,13 @@ class Constants
 	#Constants for Org Policy
 	static [string] $OrgPolicyTagPrefix = "AzSKOrgName_"
 	# Local Subscription Report Constants
-	static [string] $ComplianceReportContainerName = "compliance-state"
-	static [string] $ComplianceReportBlobName = "LatestSnapshot"
+	#static [string] $ComplianceReportContainerName = "compliance-state"
+	static [string] $ComplianceReportTableName = "ComplianceState"
 	static [DateTime] $AzSKDefaultDateTime = '1900-01-01T00:00:00'
 	static [int] $ControlResultComplianceInDays = 3
-	static [string] $ComplianceReportPath = "\Temp\Compliance"
-	
+	static [string] $ComplianceReportPath = [Constants]::AzSKAppFolderPath + "\TempState\ComplianceData"
+
+	static [string] $ServerConfigMetadataFileName = "ServerConfigMetadata.json"
 
 	static [void] SetAzSKModuleName($moduleName)
 	{

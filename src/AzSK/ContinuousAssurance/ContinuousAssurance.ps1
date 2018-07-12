@@ -170,8 +170,12 @@ function Install-AzSKContinuousAssurance
 		$CentralScanMode,
 
 		[switch]
-        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
-		$DoNotOpenOutputFolder
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
+		$DoNotOpenOutputFolder,
+
+		[switch]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
+		$ScanOnDeployment
     )
 	Begin
 	{
@@ -206,9 +210,12 @@ function Install-AzSKContinuousAssurance
 
 			#set the Webhook settings
 			$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
+			
 
 			if ($ccAccount) 
 			{
+				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
+
 				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
 				{
 					$ccAccount.IsCentralScanModeOn = $true;
@@ -223,6 +230,8 @@ function Install-AzSKContinuousAssurance
 						$ccAccount.LoggingOption = $LoggingOption;
 					}
 				}
+
+				
 				return $ccAccount.InvokeFunction($ccAccount.InstallAzSKContinuousAssurance);
 			}			
 		}
@@ -332,7 +341,7 @@ function Update-AzSKContinuousAssurance
 		
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
-		[ValidateNotNullOrEmpty()]
+		[ValidateNotNullOrEmpty()]	
         [string]
 		[Alias("owid")]
 		$OMSWorkspaceId,
@@ -437,6 +446,11 @@ function Update-AzSKContinuousAssurance
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="This switch is used to clear setting for OMS,AltOMS or Webhook.")]
 		[ValidateSet("OMSSettings","AltOMSSettings","WebhookSettings")]
 		$Remove
+		$DoNotOpenOutputFolder,
+
+		[switch]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
+		$ScanOnDeployment
     )
 	Begin
 	{
@@ -460,6 +474,8 @@ function Update-AzSKContinuousAssurance
 			}
 			if ($ccAccount) 
 			{
+				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
+
 				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
 				{
 					$ccAccount.IsCentralScanModeOn = $true;

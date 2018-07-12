@@ -37,18 +37,18 @@ class RemoteReportsListener: ListenerBase {
 
 				$scanSource = [RemoteReportHelper]::GetScanSource();
 				if($scanSource -ne [ScanSource]::Runbook) { return; }
-				[RemoteReportsListener]::ReportAllResources();
-
+				[ResourceInventory]::FetchResources();
+				[RemoteReportsListener]::ReportAllResources();				
 				$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
 				if(!$invocationContext.BoundParameters.ContainsKey("SubscriptionId")) {return;}
 				$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
 				$resources.SubscriptionId = $invocationContext.BoundParameters["SubscriptionId"]
 				$resources.ResourceGroups = [System.Collections.ArrayList]::new()
-				$resourcesFlat = Find-AzureRmResource
+				# $resourcesFlat = Find-AzureRmResource
 				$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
-				# Not considering nested resources to reduce complexity
-				$filteredResoruces = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }
-				$grouped = $filteredResoruces | Group-Object {$_.ResourceGroupName} | Select-Object Name, Group
+				# # Not considering nested resources to reduce complexity
+				$filteredResources = [ResourceInventory]::FilteredResources | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }
+				$grouped = $filteredResources | Group-Object {$_.ResourceGroupName} | Select-Object Name, Group				
 				foreach($group in $grouped){
 					$resourceGroup = "" | Select-Object Name, Resources
 					$resourceGroup.Name = $group.Name
@@ -122,7 +122,7 @@ class RemoteReportsListener: ListenerBase {
 	{
 		$currentInstance = [RemoteReportsListener]::GetInstance();
 		$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-		$resourcesFlat = Find-AzureRmResource | Select-Object Name,ResourceId,ResourceName,ResourceType,ResourceGroupName,Location,SubscriptionId,Sku,@{ Name = 'Tags'; Expression = {$([Helpers]::FetchTagsString($_.Tags))}}
+		$resourcesFlat = [ResourceInventory]::RawResources | Select-Object Name,ResourceId,ResourceName,ResourceType,ResourceGroupName,Location,SubscriptionId,Sku,@{ Name = 'Tags'; Expression = {$([Helpers]::FetchTagsString($_.Tags))}}
 		[RemoteApiHelper]::PostResourceFlatInventory($resourcesFlat)
 
 	}

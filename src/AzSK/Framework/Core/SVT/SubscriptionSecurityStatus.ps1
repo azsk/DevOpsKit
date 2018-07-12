@@ -12,13 +12,23 @@ class SubscriptionSecurityStatus: SVTCommandBase
 	hidden [SVTEventContext[]] RunForSubscription([string] $methodNameToCall)
 	{
 		[SVTEventContext[]] $result = @();		
-		$svtClassName = [SVTMapping]::SubscriptionMapping.ClassName
+		$svtClassName = [SVTMapping]::SubscriptionMapping.ClassName;
 
 		$svtObject = $null;
 
 		try
 		{
-			$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId
+			$extensionSVTClassName = $svtClassName + "Ext";
+			$extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName);				
+			if([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath))
+			{
+				$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId
+			}
+			else {
+				# file has to be loaded here due to scope contraint
+				. $extensionSVTClassFilePath
+				$svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId
+			}
 		}
 		catch
 		{
@@ -34,11 +44,36 @@ class SubscriptionSecurityStatus: SVTCommandBase
 			$this.FetchRBACTelemetry($svtObject);
 			$this.PublishCustomData($svtObject.CustomObject);		
 		}
-		
+
+		#save result into local compliance report
+		if($this.IsLocalComplianceStoreEnabled -and ($result | Measure-Object).Count -gt 0)
+		{
+			# Persist scan data to subscription
+			try 
+			{
+				if($null -eq $this.ComplianceReportHelper)
+				{
+					$this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
+				}
+				if($this.ComplianceReportHelper.HaveRequiredPermissions())
+				{
+					$this.ComplianceReportHelper.StoreComplianceDataInUserSubscription($result)
+				}
+				else
+				{
+					$this.IsLocalComplianceStoreEnabled = $false;
+				}
+			}
+			catch 
+			{
+				$this.PublishException($_);
+			}
+		}		
 		[ListenerHelper]::RegisterListeners();
 		
 		return $result;
 	}
+
 	hidden [SVTEventContext[]] RunAllControls()
 	{
 		return $this.RunForSubscription("EvaluateAllControls")

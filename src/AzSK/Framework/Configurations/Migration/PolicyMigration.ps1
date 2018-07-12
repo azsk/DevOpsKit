@@ -28,9 +28,9 @@ class PolicyMigrationHelper
 		{
 			Write-Host ("Checking if there are any resource locks on old Org policy resource group...") -ForegroundColor Yellow;
 
-			$azsdkRGScope = "/subscriptions/$($subscriptionContext.SubscriptionId)/resourceGroups/$([PolicyMigrationHelper]::PolicyRGName)"
+			$azskRGScope = "/subscriptions/$($subscriptionContext.SubscriptionId)/resourceGroups/$([PolicyMigrationHelper]::PolicyRGName)"
 			$resourceLocks = @();
-			$resourceLocks += Get-AzureRmResourceLock -Scope $azsdkRGScope -ErrorAction Stop
+			$resourceLocks += Get-AzureRmResourceLock -Scope $azskRGScope -ErrorAction Stop
 			if($resourceLocks.Count -gt 0)
 			{
 				$resourceLocks | ForEach-Object {

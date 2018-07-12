@@ -140,7 +140,17 @@ class ServicesSecurityStatus: SVTCommandBase
 
 				try
 				{
-					$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+					$extensionSVTClassName = $svtClassName + "Ext";
+					$extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName);				
+					if([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath))
+					{
+						$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+					}
+					else {
+						# file has to be loaded here due to scope contraint
+						. $extensionSVTClassFilePath
+						$svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+					}
 				}
 				catch
 				{
@@ -162,10 +172,38 @@ class ServicesSecurityStatus: SVTCommandBase
 					}
 
 				}
-				if($currentCount % 5 -eq 0 -or $currentCount -eq $totalResources)
+				if(($result | Measure-Object).Count -gt 0)
 				{
-					$this.UpdatePartialCommitBlob()
+					if($currentCount % 5 -eq 0 -or $currentCount -eq $totalResources)
+					{
+						$this.UpdatePartialCommitBlob()
+					}
+					if($this.IsLocalComplianceStoreEnabled)
+					{	
+						# Persist scan data to subscription
+						try 
+						{
+							if($null -eq $this.ComplianceReportHelper)
+							{
+								$this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
+							}
+							if($this.ComplianceReportHelper.HaveRequiredPermissions())
+							{
+								$this.ComplianceReportHelper.StoreComplianceDataInUserSubscription($result)
+							}
+							else
+							{
+								$this.IsLocalComplianceStoreEnabled = $false;
+							}
+							
+						}
+						catch 
+						{
+							$this.PublishException($_);
+						}
+					}
 				}
+					
 				# Register/Deregister all listeners to cleanup the memory
 				[ListenerHelper]::RegisterListeners();
 			}

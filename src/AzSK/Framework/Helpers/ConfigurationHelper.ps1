@@ -117,7 +117,7 @@ class ConfigurationHelper {
 							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. The current Azure subscription is not linked to your org tenant."), [MessageType]::Warning);
 							[ConfigurationHelper]::IsIssueLogged = $true
 						}
-						elseif($policyFileName -eq "ServerConfigMetadata.json")
+						elseif($policyFileName -eq [Constants]::ServerConfigMetadataFileName)
 						{
 							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy url is correct or policy is migrated with latest AzSK"), [MessageType]::Warning);
 							[ConfigurationHelper]::IsIssueLogged = $true
@@ -130,10 +130,7 @@ class ConfigurationHelper {
 						}
 					}            
 				}
-				
-				
 			}
-			
 
             if (-not $fileContent) {
                 #Fire special event to notify user about switching to offline policy  
@@ -152,6 +149,84 @@ class ConfigurationHelper {
 
         return $fileContent;
     }
+
+	hidden static [PSObject] LoadServerFileRaw([string] $fileName, [bool] $useOnlinePolicyStore, [string] $onlineStoreUri, [bool] $enableAADAuthForOnlinePolicyStore)
+	{
+		[PSObject] $fileContent = "";
+        if ([string]::IsNullOrWhiteSpace($fileName)) {
+            throw [System.ArgumentException] ("The argument 'fileName' is null");
+        } 
+
+        if ($useOnlinePolicyStore) {
+			
+            if ([string]::IsNullOrWhiteSpace($onlineStoreUri)) 
+			{
+                throw [System.ArgumentException] ("The argument 'onlineStoreUri' is null");
+            } 
+
+			#Check if policy present in server using metadata file
+			if(-not [ConfigurationHelper]::OfflineMode -and [ConfigurationHelper]::IsPolicyPresentOnServer($fileName,$useOnlinePolicyStore,$onlineStoreUri,$enableAADAuthForOnlinePolicyStore))
+			{
+				try 
+				{
+					if([String]::IsNullOrWhiteSpace([ConfigurationHelper]::ConfigVersion))
+					{							
+						try
+						{
+							$Version = [System.Version] ($global:ExecutionContext.SessionState.Module.Version);
+							$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $fileName, $enableAADAuthForOnlinePolicyStore);
+							[ConfigurationHelper]::ConfigVersion = $Version;
+						}
+						catch
+						{
+							$Version = ([ConfigurationHelper]::LoadOfflineConfigFile("AzSK.json")).ConfigSchemaBaseVersion;
+							$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $fileName, $enableAADAuthForOnlinePolicyStore);
+							[ConfigurationHelper]::ConfigVersion = $Version;
+						}
+					}
+					else
+					{
+						$Version = [ConfigurationHelper]::ConfigVersion ;
+						$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $fileName, $enableAADAuthForOnlinePolicyStore);
+					}
+						
+					$fileContent = $serverFileContent
+				}
+				catch 
+				{
+					[ConfigurationHelper]::OfflineMode = $true;
+
+					if(-not [ConfigurationHelper]::IsIssueLogged)
+					{
+						if([Helpers]::CheckMember($_,"Exception.Response.StatusCode") -and  $_.Exception.Response.StatusCode.ToString().ToLower() -eq "unauthorized")
+						{
+							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. The current Azure subscription is not linked to your org tenant."), [MessageType]::Warning);
+							[ConfigurationHelper]::IsIssueLogged = $true
+						}
+						elseif($fileName -eq [Constants]::ServerConfigMetadataFileName)
+						{
+							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy url is correct or policy is migrated with latest AzSK"), [MessageType]::Warning);
+							[ConfigurationHelper]::IsIssueLogged = $true
+						}
+						else
+						{
+							[EventBase]::PublishGenericCustomMessage(("Error while fetching the policy [$fileName] from online store. " + [Constants]::OfflineModeWarning), [MessageType]::Warning);
+							[EventBase]::PublishGenericException($_);
+							[ConfigurationHelper]::IsIssueLogged = $true
+						}
+					}            
+				}
+				
+				
+			}
+
+        }
+        else {
+            [EventBase]::PublishGenericCustomMessage(([Constants]::OfflineModeWarning + " Policy: $fileName"), [MessageType]::Warning);            
+        }        
+
+        return $fileContent;
+	}
 
 	hidden static [PSObject] InvokeControlsAPI([string] $onlineStoreUri,[string] $configVersion, [string] $policyFileName, [bool] $enableAADAuthForOnlinePolicyStore)
 	{
@@ -224,13 +299,13 @@ class ConfigurationHelper {
 		If($null -eq [ConfigurationHelper]::ServerConfigMetadata)
 		{
 			#if File is meta data file then return true
-			if($fileName -eq "ServerConfigMetadata.json" )
+			if($fileName -eq [Constants]::ServerConfigMetadataFileName)
 			{
 				return $true
 			}
 			else
 			{				
-				[ConfigurationHelper]::ServerConfigMetadata = [ConfigurationHelper]::LoadServerConfigFile("ServerConfigMetadata.json", $useOnlinePolicyStore, $onlineStoreUri, $enableAADAuthForOnlinePolicyStore);							
+				[ConfigurationHelper]::ServerConfigMetadata = [ConfigurationHelper]::LoadServerConfigFile([Constants]::ServerConfigMetadataFileName, $useOnlinePolicyStore, $onlineStoreUri, $enableAADAuthForOnlinePolicyStore);							
 			}
 		}
 		
@@ -248,7 +323,7 @@ class ConfigurationHelper {
 		else
 		{
 			#If Metadata file is not present on server then set offline default meta data.. 
-			[ConfigurationHelper]::ServerConfigMetadata = [ConfigurationHelper]::LoadOfflineConfigFile("ServerConfigMetadata.json");
+			[ConfigurationHelper]::ServerConfigMetadata = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::ServerConfigMetadataFileName);
 			return $false			
 		}
 	}
@@ -256,7 +331,7 @@ class ConfigurationHelper {
 	#Function to check if Override Offline flag is enabled 
 	hidden static [bool] IsOverrideOfflineEnabled([string] $fileName)
 	{
-		if($fileName -eq "ServerConfigMetadata.json" )
+		if($fileName -eq [Constants]::ServerConfigMetadataFileName)
 		{
 			return $true
 		}
@@ -270,22 +345,5 @@ class ConfigurationHelper {
 		{
 			return $false
 		}
-	}
-
-	hidden static [PSObject] LoadOldOfflineConfigFile([string] $fileName)
-	{
-		$oldRootConfigPath = [OldConstants]::AppFolderPath + "\" ;
-		$oldFilePath = $null
-		$fileContent = $null
-		if(Test-Path -Path $oldRootConfigPath)
-		{
-			$oldFilePath = (Get-ChildItem $oldRootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
-		}
-		if ($oldFilePath) 
-		{
-			#load old config
-			$fileContent = (Get-Content -Raw -Path ($oldRootConfigPath + $oldFilePath)) | ConvertFrom-Json
-		}
-		return $fileContent;
 	}
 }

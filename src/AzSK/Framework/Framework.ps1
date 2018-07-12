@@ -39,6 +39,7 @@ catch
 . $PSScriptRoot\Models\SVT\PSCloudService.ps1
 . $PSScriptRoot\Models\SVT\PartialScanResourceMap.ps1
 . $PSScriptRoot\Models\RemoteReports\LSRScanResultModel.ps1
+. $PSScriptRoot\Models\RemoteReports\ComplianceStateModel.ps1
 . $PSScriptRoot\Models\SubscriptionCore\AzureSecurityCenter.ps1
 . $PSScriptRoot\Models\SubscriptionCore\ManagementCertificate.ps1
 . $PSScriptRoot\Models\SubscriptionSecurity\SubscriptionRBAC.ps1
@@ -59,6 +60,7 @@ catch
 . $PSScriptRoot\Helpers\IdentityHelpers.ps1
 . $PSScriptRoot\Helpers\ConfigOverride.ps1
 
+. $PSScriptRoot\Models\Common\ResourceInventory.ps1
 
 
 #Managers
@@ -85,8 +87,9 @@ catch
 . $PSScriptRoot\Abstracts\FileOutputBase.ps1
 
 . $PSScriptRoot\Helpers\ResourceHelper.ps1
-. $PSScriptRoot\Helpers\ComplianceReportHelper.ps1
 . $PSScriptRoot\Helpers\UserSubscriptionDataHelper.ps1
+. $PSScriptRoot\Abstracts\ComplianceBase.ps1
+. $PSScriptRoot\Helpers\ComplianceReportHelper.ps1
 
 #Listeners
 . $PSScriptRoot\Listeners\UserReports\WriteFolderPath.ps1
