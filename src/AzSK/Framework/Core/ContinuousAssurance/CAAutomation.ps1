@@ -1853,7 +1853,7 @@ class CCAutomation: CommandBase
 			$resultStatus = "Warning"
 			$shouldReturn = $false
 		}		
-		if($resultStatus -ne "Failed" -and $resultStatus -ne "Warning" )
+		if($resultStatus -ne "Warning" )
 		{
 			$resultStatus = "OK"
 			$resultMsg = ""				
