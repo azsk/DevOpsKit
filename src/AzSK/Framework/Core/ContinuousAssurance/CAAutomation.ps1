@@ -981,7 +981,7 @@ class CCAutomation: CommandBase
 			$existingRunbook = Get-AzureRmAutomationRunbook -AutomationAccountName $this.AutomationAccount.Name `
 			-ResourceGroupName $this.AutomationAccount.ResourceGroup 
 
-			$existingRunbook = $existingRunbook | Where-Object { $_.Name –ne [Constants]::Alert_ResourceCreation_Runbook } 
+			$existingRunbook = $existingRunbook | Where-Object { $_.Name –ne [Constants]::Alert_ResourceCreation_Runbook }  
 
 
 			if((($scheduledRunbooks|Measure-Object).Count -gt 0) -and (($existingRunbook|Measure-Object).Count -gt 0))
