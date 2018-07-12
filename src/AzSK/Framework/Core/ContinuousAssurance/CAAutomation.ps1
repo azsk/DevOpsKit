@@ -459,7 +459,7 @@ class CCAutomation: CommandBase
 		return $messages;
 	}	
 
-	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules)
+	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules,$Remove)
 	{
 		[MessageData[]] $messages = @();
 		try
@@ -1048,6 +1048,27 @@ class CCAutomation: CommandBase
 			    [Helpers]::SetResourceTags($resourceInstance.ResourceId, $automationTags, $false, $true);
             }
 		
+			#endregion
+
+			#region : remove user configurable settings(OMS Settings, AltOMS Settings or WebhookSettings)
+			if($null -ne $Remove)
+			{
+				switch($Remove)
+				{
+					"OMSSettings" {
+						 $this.PublishCustomMessage("Removing OMS Settings")
+						 $this.RemoveOMSSettings()
+						}
+					"AltOMSSettings" {
+						$this.PublishCustomMessage("Removing AltOMS Settings")
+						$this.RemoveAltOMSSettings()
+					}
+					"WebhookSettings" {
+						$this.PublishCustomMessage("Removing Webhook Settings")
+						$this.RemoveWebhookSettings()
+					}
+				}
+			}
 			#endregion
 
 			#Added Security centre provider registration to avoid error while running SSCore command in CA
@@ -1819,20 +1840,20 @@ class CCAutomation: CommandBase
 		{
 			$failMsg = "OMS workspace ID is not set up."			
 			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -OMSWorkspaceId <OMSWorkspaceId> -OMSSharedKey <OMSSharedKey>'."
-			$resultMsg = "$failMsg`r`n$resolvemsg"
-			$resultStatus = "Failed"
-			$shouldReturn = $true
+			$resultMsg +="$failMsg`r`n"
+			$resultStatus = "Warning"
+			$shouldReturn = $false
 			
 		}
 		if(!$this.IsOMSKeyVariableAvailable())
 		{
 			$failMsg = "OMS workspace key is not set up."			
 			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -OMSSharedKey <OMSSharedKey>'."
-			$resultMsg = "$failMsg`r`n$resolvemsg"
-			$resultStatus = "Failed"
-			$shouldReturn = $true
+			$resultMsg +="$failMsg`r`n$resolvemsg"
+			$resultStatus = "Warning"
+			$shouldReturn = $false
 		}		
-		if($resultStatus -ne "Failed")
+		if($resultStatus -ne "Failed" -and $resultStatus -ne "Warning" )
 		{
 			$resultStatus = "OK"
 			$resultMsg = ""				
@@ -1840,7 +1861,7 @@ class CCAutomation: CommandBase
 		if($shouldReturn)
 		{
 			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
-			return $messages
+			return $messages 
 		}
 		else 
 		{
@@ -3591,6 +3612,70 @@ class CCAutomation: CommandBase
 		$azskRGName = $this.AutomationAccount.CoreResourceGroup;
 		$version = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion;
 		[Helpers]::SetResourceGroupTags($azskRGName,@{$($this.RunbookVersionTagName)=$version}, $true)
+	}
+	#endregion
+
+	#region: Remove configured setting from CA
+	hidden [void] RemoveOMSSettings()
+	{
+		$OMSVariable = $this.GetOMSWSID()
+		try
+		{
+			if($null -ne $OMSVariable)
+			{
+
+				
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue			
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSSharedKey" -ErrorAction SilentlyContinue		
+				
+			}
+		}catch
+		{
+			$this.PublishCustomMessage("Unable to remove OMS Settings.")
+		}
+	}
+	hidden [void] RemoveAltOMSSettings()
+	{
+		$altOMSWSID=$this.GetAltOMSWSID();
+		try
+		{
+			if($null -ne $altOMSWSID)
+			{
+
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue			
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue		
+			
+			}
+		}catch
+		{
+			$this.PublishCustomMessage("Unable to remove AltOMS Settings.")
+		}
+	}
+	hidden [void] RemoveWebhookSettings()
+	{
+		$WebhookUrl=$this.GetWebhookURL()
+		try
+		{
+			if($null -ne $WebhookUrl)
+			{
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue			
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookAuthZHeaderName" -ErrorAction SilentlyContinue		
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookAuthZHeaderValue" -ErrorAction SilentlyContinue		
+			
+			}
+		}catch
+		{
+			$this.PublishCustomMessage("Unable to remove Webhook Settings.")
+		}
+
+
 	}
 	#endregion
 }

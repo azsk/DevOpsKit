@@ -459,7 +459,11 @@ function Set-AzSKPrivacyNoticeResponse {
 }
 
 function Clear-AzSKSessionState {
+
+    Write-Host "Clearing AzSK session state started" -ForegroundColor Yellow
     [ConfigOverride]::ClearConfigInstance()
+    Write-Host "Clearing AzSK session state completed" -ForegroundColor Yellow
+
 }
 
 . $PSScriptRoot\Framework\Helpers\AliasHelper.ps1
