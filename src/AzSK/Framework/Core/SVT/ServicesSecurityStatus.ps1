@@ -225,6 +225,7 @@ class ServicesSecurityStatus: SVTCommandBase
 	hidden [SVTEventContext[]] FetchAttestationInfo()
 	{
 		[ControlStateExtension] $ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
+		$ControlStateExt.UniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
 		$ControlStateExt.Initialize($false);
 		$attestationFound = $ControlStateExt.ComputeControlStateIndexer();
 		$attestedResources = @()

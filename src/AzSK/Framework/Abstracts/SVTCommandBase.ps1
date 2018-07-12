@@ -16,12 +16,14 @@ class SVTCommandBase: CommandBase {
     [AttestationOptions] $AttestationOptions;
     hidden [ComplianceReportHelper] $ComplianceReportHelper = $null;
     hidden [ComplianceBase] $ComplianceBase = $null;
+    hidden [string] $AttestationUniqueRunId;
+    
 
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
         $this.CheckAndDisableAzureRMTelemetry()
-
+        $this.AttestationUniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
         #Fetching the resourceInventory once for each SVT command execution
         [ResourceInventory]::Clear();
     }
@@ -144,6 +146,7 @@ class SVTCommandBase: CommandBase {
     hidden [void] InitializeControlState() {
         if (-not $this.ControlStateExt) {
             $this.ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
+            $this.ControlStateExt.UniqueRunId = $this.AttestationUniqueRunId
             $this.ControlStateExt.Initialize($false);
             $this.UserHasStateAccess = $this.ControlStateExt.HasControlStateReadAccessPermissions();
         }
