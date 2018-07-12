@@ -50,17 +50,19 @@ class OMSOutput: ListenerBase
 				$currentInstance.PublishException($_);
 			}
 			
-			try
+			if(-not ([OMSHelper]::isOMSSettingValid -eq -1 -and [OMSHelper]::isAltOMSSettingValid -eq -1))
 			{
-				$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-				if(!$invocationContext.BoundParameters.ContainsKey("SubscriptionId")) {return;}
-				[OMSHelper]::PostResourceInventory($currentInstance.GetAzSKContextDetails())
+				try
+				{
+					$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
+					if(!$invocationContext.BoundParameters.ContainsKey("SubscriptionId")) {return;}
+					[OMSHelper]::PostResourceInventory($currentInstance.GetAzSKContextDetails())
+				}
+				catch
+				{
+					$currentInstance.PublishException($_);
+				}
 			}
-			catch
-			{
-				$currentInstance.PublishException($_);
-			}
-			
 		});
 
 
@@ -126,10 +128,13 @@ class OMSOutput: ListenerBase
 			try
 			{
 				[OMSHelper]::SetOMSDetails();
-				$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-				$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
-				
-				[OMSHelper]::PostApplicableControlSet($SVTEventContexts,$currentInstance.GetAzSKContextDetails());
+				if(-not ([OMSHelper]::isOMSSettingValid -eq -1 -and [OMSHelper]::isAltOMSSettingValid -eq -1))
+				{
+					$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
+					$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
+					
+					[OMSHelper]::PostApplicableControlSet($SVTEventContexts,$currentInstance.GetAzSKContextDetails());
+				}
 			}
 			catch
 			{
@@ -163,15 +168,15 @@ class OMSOutput: ListenerBase
 					$omsBodyByteArray = ([System.Text.Encoding]::UTF8.GetBytes($body))
 
 					#publish to primary workspace
-					if(-not [string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId))
+					if(-not [string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId) -and [OMSHelper]::isOMSSettingValid -ne -1)
 					{
-						[OMSHelper]::PostOMSData($settings.OMSWorkspaceId, $settings.OMSSharedKey, $omsBodyByteArray, $settings.OMSType)
+						[OMSHelper]::PostOMSData($settings.OMSWorkspaceId, $settings.OMSSharedKey, $omsBodyByteArray, $settings.OMSType, 'OMS')
 					}
 
 					#publish to secondary workspace
-					if(-not [string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId))
+					if(-not [string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId) -and [OMSHelper]::isAltOMSSettingValid -ne -1)
 					{
-						[OMSHelper]::PostOMSData($settings.AltOMSWorkspaceId, $settings.AltOMSSharedKey, $omsBodyByteArray, $settings.OMSType)
+						[OMSHelper]::PostOMSData($settings.AltOMSWorkspaceId, $settings.AltOMSSharedKey, $omsBodyByteArray, $settings.OMSType, 'AltOMS')
 					}
 				}
 
@@ -189,7 +194,7 @@ class OMSOutput: ListenerBase
 		}
 		catch
 		{
-			[Exception] $ex = [Exception]::new(("Invalid OMS Settings: " + $_.Exception.ToString()), $_.Exception)
+			[Exception] $ex = [Exception]::new("Error sending events to OMS. The following exception occurred: `r`n$($_.Exception.Message) `r`nFor more on AzSK OMS setup, refer: https://aka.ms/devopskit/ca", $_.Exception)
 			throw [SuppressedException] $ex
 		}
 
