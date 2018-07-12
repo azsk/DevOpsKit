@@ -443,6 +443,11 @@ function Update-AzSKContinuousAssurance
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		$DoNotOpenOutputFolder,
 
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="This switch is used to clear setting for OMS,AltOMS or Webhook.")]
+		[ValidateSet("OMSSettings","AltOMSSettings","WebhookSettings")]
+		$Remove
+		$DoNotOpenOutputFolder,
+
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
 		$ScanOnDeployment
@@ -456,15 +461,17 @@ function Update-AzSKContinuousAssurance
 	{
 	try 
 		{
-			$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation, $null, $AutomationAccountRGName, $AutomationAccountName, `
+				$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation, $null, $AutomationAccountRGName, $AutomationAccountName, `
 				$ResourceGroupNames, $AzureADAppName, $ScanIntervalInHours);
 
-			#set the OMS settings
-			$ccAccount.SetOMSSettings($OMSWorkspaceId, $OMSSharedKey, $AltOMSWorkspaceId, $AltOMSSharedKey);
+			if($null -eq $Remove)
+			{
+				#set the OMS settings
+				$ccAccount.SetOMSSettings($OMSWorkspaceId, $OMSSharedKey, $AltOMSWorkspaceId, $AltOMSSharedKey);
 
-			#set the Webhook settings
-			$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
-
+				#set the Webhook settings
+				$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
+			}
 			if ($ccAccount) 
 			{
 				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
@@ -483,7 +490,7 @@ function Update-AzSKContinuousAssurance
 						$ccAccount.LoggingOption = $LoggingOption;
 					}
 				}
-				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules));
+				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules,$Remove));
 			}
 			
 		}
