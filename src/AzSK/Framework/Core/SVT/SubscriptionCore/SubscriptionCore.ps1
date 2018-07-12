@@ -942,6 +942,7 @@ class SubscriptionCore: SVTBase
 			$criticalPermanentRoles=$permanentRoles|Where-Object{$_.RoleDefinitionName -in $criticalRoles}
 			if($criticalPermanentRoles.Count-gt 0)
 			{
+				$controlResult.SetStateData("Permanent role assignments present on subscription",$criticalPermanentRoles)
 				$controlResult.AddMessage([VerificationResult]::Failed, "Subscription contains permanent role assignment for critical roles : $criticalRoles")
 				$permanentRolesbyRoleDefinition=$criticalPermanentRoles|Sort-Object -Property RoleDefinitionName
 				$controlResult.AddMessage($permanentRolesbyRoleDefinition);
