@@ -3685,7 +3685,7 @@ class CCAutomation: CommandBase
 		{
 			if($null -ne $WebhookUrl)
 			{
-				$this.PublishCustomMessage("Removing WebhookUrl settings... ")
+				$this.PublishCustomMessage("Removing Webhook settings... ")
 				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookUrl" -ErrorAction SilentlyContinue			
 				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
