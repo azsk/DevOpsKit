@@ -279,13 +279,13 @@ try
 		{
 			if(![string]::IsNullOrWhiteSpace($resourcedetails.ResourceGroupNamefromWebhook))
 			{
-				$automationjoblist =  Get-AzureRmAutomationJob -RunbookName Continuous_Assurance_ScanOnTrigger_Runbook -ResourceGroupName $resourcedetails.ResourceGroupNamefromWebhook -Status Running -AutomationAccountName AzSKContinuousAssurance
+				$automationjoblist =  Get-AzureRmAutomationJob -RunbookName Continuous_Assurance_ScanOnTrigger_Runbook -ResourceGroupName "AzSKRG" -Status Running -AutomationAccountName AzSKContinuousAssurance
 				$automationjoblist | ForEach-Object {
 				
-						$jobdetails = Get-AzureRmAutomationJob -AutomationAccountName $_.AutomationAccountName -ResourceGroupName $_.ResourceGroupName -Id $_.JobId
+					$jobdetails = Get-AzureRmAutomationJob -AutomationAccountName $_.AutomationAccountName -ResourceGroupName $_.ResourceGroupName -Id $_.JobId
 				
-				
-					$jobdetailsBody    =   $jobdetails.RequestBody
+					$jobdetails = $jobdetails.JobParameters  	
+					$jobdetailsBody    =   $jobdetails.webhookData.RequestBody
 					$jobdetailsBody = (ConvertFrom-Json -InputObject $jobdetailsBody)
 					$jobdetailsContext = [object]$jobdetailsBody.data.context
 					$rgname = $jobdetailsContext.activityLog.resourceGroupName
