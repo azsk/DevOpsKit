@@ -146,19 +146,6 @@ class SVTCommandBase: CommandBase {
             $this.ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
             $this.ControlStateExt.Initialize($false);
             $this.UserHasStateAccess = $this.ControlStateExt.HasControlStateReadAccessPermissions();
-
-			#Attestation migration warning
-			if($this.UserHasStateAccess)
-			{
-				$isMigrationCompleted = [UserSubscriptionDataHelper]::IsMigrationCompleted($this.SubscriptionContext.SubscriptionId);
-				if($isMigrationCompleted -ne "COMP")
-				{
-					$this.PublishCustomMessage("WARNING: Your subscription has not yet been migrated from `"AzSDK`" to `"AzSK`". Scan commands will not reflect past control attestations until that happens.", [MessageType]::Warning);
-					$this.ControlStateExt.SetControlStateReadAccessPermissions(0);
-					$this.ControlStateExt.SetControlStateWriteAccessPermissions(0);
-					$this.UserHasStateAccess = $false;
-				}
-			}
         }
     }
 
@@ -168,14 +155,6 @@ class SVTCommandBase: CommandBase {
                 [SVTControlAttestation] $svtControlAttestation = [SVTControlAttestation]::new($arguments, $this.AttestationOptions, $this.SubscriptionContext, $this.InvocationContext);
                 #The current context user would be able to read the storage blob only if he has minimum of contributor access.
                 if ($svtControlAttestation.controlStateExtension.HasControlStateReadAccessPermissions()) {
-					#Add migration warning
-					$isMigrationCompleted = [UserSubscriptionDataHelper]::IsMigrationCompleted($this.SubscriptionContext.SubscriptionId);
-					if($isMigrationCompleted -ne "COMP")
-					{
-						$MigrationWarning = [ConfigurationManager]::GetAzSKConfigData().MigrationWarning;
-						throw ([SuppressedException]::new($MigrationWarning,[SuppressedExceptionType]::Generic))
-					}
-
                     if (-not [string]::IsNullOrWhiteSpace($this.AttestationOptions.JustificationText) -or $this.AttestationOptions.IsBulkClearModeOn) {
                         $this.PublishCustomMessage([Constants]::HashLine + "`n`nStarting Control Attestation workflow in bulk mode...`n`n");
                     }

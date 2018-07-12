@@ -32,12 +32,6 @@ class SubscriptionSecurity: CommandBase
 		{
 			$this.CommandError($_);
 		}
-
-		#region Migration
-		#AzSK TBR
-		#[MigrationHelper]::TryMigration($this.SubscriptionContext, $this.InvocationContext);		
-		#endregion
-		
 		# Set up Security Center
 		try 
         {
@@ -148,23 +142,6 @@ class SubscriptionSecurity: CommandBase
     {	
 		[MessageData[]] $messages = @();
 
-		#check migrate flag
-		$MigrateOption = $this.InvocationContext.BoundParameters["Migrate"];
-		if($MigrateOption)
-		{
-			$this.Migrate();
-			return $messages;
-		}
-		else
-		{
-			$isMigrationCompleted = [UserSubscriptionDataHelper]::IsMigrationCompleted($this.SubscriptionContext.SubscriptionId);
-			if($isMigrationCompleted -ne "COMP")
-			{
-				$MigrationWarning = [ConfigurationManager]::GetAzSKConfigData().MigrationWarning;
-				throw ([SuppressedException]::new($MigrationWarning,[SuppressedExceptionType]::Generic))
-			}
-		}
-
 		#Adding all mandatory tags 
 		$mandatoryTags = [string]::Join(",", [ConfigurationManager]::GetAzSKConfigData().SubscriptionMandatoryTags);
 
@@ -177,15 +154,6 @@ class SubscriptionSecurity: CommandBase
 		{
 			$this.CommandError($_);
 		}
-
-
-		#region Migration
-		#AzSK TBR
-
-		#[MigrationHelper]::TryMigration($this.SubscriptionContext, $this.InvocationContext);		
-
-		#endregion
-
 		# Set up Alerts
 		try 
         {
@@ -304,14 +272,5 @@ class SubscriptionSecurity: CommandBase
 		$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nCompleted validating all the required resources for AzSK.`r`n" + [Constants]::DoubleDashLine, [MessageType]::Update);
 
 		return $messages;
-	}
-
-	[Void] Migrate()
-	{		
-		$mgrationScript = $this.LoadServerConfigFile("Migration.ps1")
-		$SubscriptionContext = $this.SubscriptionContext
-		$InvocationContext = $this.InvocationContext
-		$AzureADAppName = $this.InvocationContext.BoundParameters["AADAppName"];
-		Invoke-Expression $mgrationScript		
 	}
 }

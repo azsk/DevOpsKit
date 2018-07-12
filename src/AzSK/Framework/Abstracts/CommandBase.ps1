@@ -175,30 +175,7 @@ class CommandBase: AzSKRoot {
 			{
 				throw ([SuppressedException]::new(("Your version of AzSK is too old. Please update now!"),[SuppressedExceptionType]::Generic))
 			}			
-        }
-		#block if the migration is not completed
-		$IsMigrateSwitchPassed = $this.InvocationContext.BoundParameters["Migrate"];
-		$isMigrationCompleted = [UserSubscriptionDataHelper]::IsMigrationCompleted($this.SubscriptionContext.SubscriptionId);
-		if($isMigrationCompleted -ne "COMP")
-		{
-			$MigrationWarning = [ConfigurationManager]::GetAzSKConfigData().MigrationWarning;			
-			$isLatestRequired = $this.IsLatestVersionRequired();
-			if($isLatestRequired)
-			{
-				throw ([SuppressedException]::new($MigrationWarning,[SuppressedExceptionType]::Generic))
-			}
-			elseif(-not $IsMigrateSwitchPassed)
-			{
-				if($this.InvocationContext.BoundParameters["AttestControls"] -or $this.InvocationContext.BoundParameters["ControlsToAttest"])
-				{
-					throw ([SuppressedException]::new($MigrationWarning,[SuppressedExceptionType]::Generic))
-				}
-				else
-				{
-					Write-Host "WARNING: $MigrationWarning" -ForegroundColor Yellow
-				}
-			}
-		}		
+        }		
     }
 
 	[void] InvokeAutoUpdate()

@@ -1185,19 +1185,21 @@
       ]
     },
     {
-      "Name": "AzSK_Resource_Creation_Alert",
+      "Name": "AzSK_Resource_Deployment_Alert",
       "Description": "Alerts for Resource Creation Operation",
       "Enabled": true,
       "Tags": [
-        "Resource_Creation"
+        "Deployment",
+        "CICD"
       ],
       "AlertOperationList": [
         {
           "Name": "AzSK_Create_new_or_update_existing_resource",
           "Description": "Creates or updates an deployment.",
-          "OperationName": "Microsoft.Resources/deployments/write",
+          "OperationName": "Microsoft.Resources/subscriptions/resourcegroups/deployments/write",
           "Tags": [
-            "Resource_Creation"
+            "Deployment",
+            "CICD"
           ],
           "Severity": "Critical",
           "Enabled": true

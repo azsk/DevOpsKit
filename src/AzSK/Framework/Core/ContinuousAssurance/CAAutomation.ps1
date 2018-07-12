@@ -34,7 +34,7 @@ class CCAutomation: CommandBase
 	[bool] $IsMultiCAModeOn = $false;
 	[bool] $IsCustomAADAppName = $false;
 	[bool] $ExhaustiveCheck = $false;
-	[bool] $ScanOnResourceCreation = $false;
+	[bool] $ScanOnDeployment = $false;
 	[CAReportsLocation] $LoggingOption = [CAReportsLocation]::CentralSub;
 
 	[string] $MinReqdCARunbookVersion = "2.1709.0"
@@ -422,11 +422,6 @@ class CCAutomation: CommandBase
 			"You may subsequently update any of the parameters specified during installation using the '$($this.updateCommandName)' command. If you specified '*' for resource groups, new resource groups will be automatically picked up for scanning.`r`n"+
 			"You should use the AzSK OMS solution to monitor your subscription and resource health status.`r`n",[MessageType]::Update)
 			$messages += [MessageData]::new("The following resources were created in resource group: ["+$this.AutomationAccount.ResourceGroup+"] as part of Continuous Assurance",$this.OutputObject)
-
-			#-------- #AzSK TBR--------#
-			#[MigrationHelper]::TryMigration($this.SubscriptionContext,$this.invocationContext,$false)
-			#------------------------------#
-
 		}
 		catch
 		{
@@ -999,7 +994,7 @@ class CCAutomation: CommandBase
 			}
 			$this.PublishCustomMessage("Updating runbook: [$($this.RunbookName)]")
 			$this.NewCCRunbook()
-			if($this.ScanOnResourceCreation)
+			if($this.ScanOnDeployment)
 			{
 				$this.SetResourceCreationScan()
 			}
@@ -2435,7 +2430,7 @@ class CCAutomation: CommandBase
 		#Create CA alerts runbook
 		$this.SetAzSKAlertMonitoringRunbook($false)
 
-		if($this.ScanOnResourceCreation)
+		if($this.ScanOnDeployment)
 		{
 			$this.SetResourceCreationScan()
 		}
@@ -2476,15 +2471,15 @@ class CCAutomation: CommandBase
 			Key="Continuous_Assurance_Runbook"
         }	
 		
-		if($this.ScanOnResourceCreation)
+		if($this.ScanOnDeployment)
 		{
 		  $ResourceAddition_Runbooks = [Runbook]@{
-            Name = "Continuous_Assurance_Resource_Creation_Runbook";
+            Name = "Continuous_Assurance_ScanOnTrigger_Runbook";
             Type = "PowerShell";
 			Description = "This runbook will be triggered on Resource Addition.";
 			LogProgress = $false;
 			LogVerbose = $false;
-			Key="Continuous_Assurance_Resource_Creation_Runbook"
+			Key="Continuous_Assurance_ScanOnTrigger_Runbook"
           }
 		 $this.Runbooks += @($CCRunbook,$ResourceAddition_Runbooks)
 		}

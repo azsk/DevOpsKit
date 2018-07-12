@@ -36,7 +36,6 @@ class AzSKConfig
 	[string] $CASetupRunbookURL;
 	[string] $AzSKConfigURL;
     [bool] $IsAlertMonitoringEnabled;
-    [string] $MigrationWarning;
 	[string] $SupportDL;
 	[string] $RunbookScanAgentBaseVersion;
 	[string] $PolicyOrgName;
