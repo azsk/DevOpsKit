@@ -455,7 +455,7 @@ class CCAutomation: CommandBase
 		return $messages;
 	}	
 
-	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules,$Remove)
+	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules)
 	{
 		[MessageData[]] $messages = @();
 		try
@@ -1048,27 +1048,6 @@ class CCAutomation: CommandBase
 			    [Helpers]::SetResourceTags($resourceInstance.ResourceId, $automationTags, $false, $true);
             }
 		
-			#endregion
-
-			#region : remove user configurable settings(OMS Settings, AltOMS Settings or WebhookSettings)
-			if($null -ne $Remove)
-			{
-				switch($Remove)
-				{
-					"OMSSettings" {
-						 $this.PublishCustomMessage("Removing OMS Settings")
-						 $this.RemoveOMSSettings()
-						}
-					"AltOMSSettings" {
-						$this.PublishCustomMessage("Removing AltOMS Settings")
-						$this.RemoveAltOMSSettings()
-					}
-					"WebhookSettings" {
-						$this.PublishCustomMessage("Removing Webhook Settings")
-						$this.RemoveWebhookSettings()
-					}
-				}
-			}
 			#endregion
 
 			#Added Security centre provider registration to avoid error while running SSCore command in CA
@@ -3653,12 +3632,13 @@ class CCAutomation: CommandBase
 		try
 		{
 			if($null -ne $OMSVariable)
-			{				
+			{			
+				$this.PublishCustomMessage("Removing OMS settings... ");
 				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue			
 				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSSharedKey" -ErrorAction SilentlyContinue		
-				
+				$this.PublishCustomMessage("Completed")
 			}
 			else
 			{
@@ -3676,12 +3656,12 @@ class CCAutomation: CommandBase
 		{
 			if($null -ne $altOMSWSID)
 			{
-
+				$this.PublishCustomMessage("Removing AltOMS settings... ");
 				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue			
 				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue		
-			
+				$this.PublishCustomMessage("Completed")
 			}
 			else
 			{
@@ -3700,13 +3680,14 @@ class CCAutomation: CommandBase
 		{
 			if($null -ne $WebhookUrl)
 			{
+				$this.PublishCustomMessage("Removing WebhookUrl settings... ")
 				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
-				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue			
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookUrl" -ErrorAction SilentlyContinue			
 				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookAuthZHeaderName" -ErrorAction SilentlyContinue		
 				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookAuthZHeaderValue" -ErrorAction SilentlyContinue		
-			
+				$this.PublishCustomMessage("Completed")
 			}
 			else
 			{
