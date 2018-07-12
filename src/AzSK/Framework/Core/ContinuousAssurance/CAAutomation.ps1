@@ -983,6 +983,7 @@ class CCAutomation: CommandBase
 
 			$existingRunbook = $existingRunbook | Where-Object { $_.Name –ne [Constants]::Alert_ResourceCreation_Runbook } 
 
+
 			if((($scheduledRunbooks|Measure-Object).Count -gt 0) -and (($existingRunbook|Measure-Object).Count -gt 0))
 			{
 				#check if runbook exists to unlink schedules
