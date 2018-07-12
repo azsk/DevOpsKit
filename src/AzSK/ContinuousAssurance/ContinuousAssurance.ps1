@@ -445,8 +445,7 @@ function Update-AzSKContinuousAssurance
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="This switch is used to clear setting for OMS,AltOMS or Webhook.")]
 		[ValidateSet("OMSSettings","AltOMSSettings","WebhookSettings")]
-		$Remove
-		$DoNotOpenOutputFolder,
+		$Remove,
 
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]

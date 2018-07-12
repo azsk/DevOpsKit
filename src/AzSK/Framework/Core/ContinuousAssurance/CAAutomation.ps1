@@ -3653,18 +3653,20 @@ class CCAutomation: CommandBase
 		try
 		{
 			if($null -ne $OMSVariable)
-			{
-
-				
+			{				
 				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue			
 				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSSharedKey" -ErrorAction SilentlyContinue		
 				
 			}
+			else
+			{
+				$this.PublishCustomMessage("Unable to find OMS workspace Id for current Automation Account ")
+			}
 		}catch
 		{
-			$this.PublishCustomMessage("Unable to remove OMS Settings.")
+			$this.PublishCustomMessage("Unable to remove OMS settings.")
 		}
 	}
 	hidden [void] RemoveAltOMSSettings()
@@ -3681,9 +3683,14 @@ class CCAutomation: CommandBase
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue		
 			
 			}
+			else
+			{
+				$this.PublishCustomMessage("Unable to find AltOMS workspace Id for current Automation Account ")
+
+			}
 		}catch
 		{
-			$this.PublishCustomMessage("Unable to remove AltOMS Settings.")
+			$this.PublishCustomMessage("Unable to remove AltOMS settings.")
 		}
 	}
 	hidden [void] RemoveWebhookSettings()
@@ -3701,9 +3708,13 @@ class CCAutomation: CommandBase
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookAuthZHeaderValue" -ErrorAction SilentlyContinue		
 			
 			}
+			else
+			{
+				$this.PublishCustomMessage("Unable to find webhook url for current Automation Account ")
+			}
 		}catch
 		{
-			$this.PublishCustomMessage("Unable to remove Webhook Settings.")
+			$this.PublishCustomMessage("Unable to remove Webhook settings.")
 		}
 
 
