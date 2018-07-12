@@ -459,9 +459,9 @@ function Set-AzSKPrivacyNoticeResponse {
 
 function Clear-AzSKSessionState {
 
-    Write-Host "Clearing AzSK session state started" -ForegroundColor Yellow
+    Write-Host "Clearing AzSK session state..." -ForegroundColor Yellow
     [ConfigOverride]::ClearConfigInstance()
-    Write-Host "Clearing AzSK session state completed" -ForegroundColor Yellow
+    Write-Host "Completed." -ForegroundColor Yellow
 
 }
 
