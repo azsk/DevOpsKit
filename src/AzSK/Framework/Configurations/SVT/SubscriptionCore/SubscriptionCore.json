@@ -10,7 +10,7 @@
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckSubscriptionAdminCount",
-      "Recommendation": "There are 2 steps involved. You need to clean up (1) unexpected 'Classic Administrators'and (2) unexpected 'Owners' on the subscription. (1) Steps to clean up classic administrators (a) Go to https://manage.windowsazure.com/ --> settings tab -> administrators --> select and remove unwanted administrators using remove icon on the bottom ribbon (2) To remove unwanted members from the Owners group simply run the command 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName Owner'.",
+      "Recommendation": "There are 2 steps involved. (1) You need to remove any 'Classic Administrators/Co-Administrators' who should not be in the role. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Subscriptions (c) Select the subscription (d) Go to ‘Access Control (IAM)’ (e) Right click the co-administrator account that has to be removed and click on the ‘Remove co-administrator’. (f) Perform this operation for all the co-administrators that need to be removed from the subscription. (2) You need to remove any unwanted members from the Owners group. To do this simply run the command 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName Owner'.",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -27,7 +27,7 @@
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "ValidateCentralAccountsRBAC",
-      "Recommendation": "There are 2 steps involved. You need to clean up (1) unexpected 'Classic Administrators'and (2) unexpected 'Owners' on the subscription. (1) Steps to clean up classic administrators (a) Go to https://manage.windowsazure.com/ --> settings tab -> administrators --> select and remove unwanted administrators using remove icon on the bottom ribbon (2) To remove unwanted members from the Owners group simply run the command 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName Owner'.",
+      "Recommendation": "There are 2 steps involved. (1) You need to remove any 'Classic Administrators/Co-Administrators' who should not be in the role. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Subscriptions (c) Select the subscription (d) Go to ‘Access Control (IAM)’ (e) Right click the co-administrator account that has to be removed and click on the ‘Remove co-administrator’. (f) Perform this operation for all the co-administrators that need to be removed from the subscription. (2) You need to remove any unwanted members from the Owners group. To do this simply run the command 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName Owner'.",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -154,7 +154,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckCoAdminCount",
-      "Recommendation": "You need to clean up any unexpected 'Classic Administrators'. Please follow these steps: (a) Logon to https://manage.windowsazure.com/ (b)Navigate to the Settings tab and click the administrators tab to list all administrators (c) Select the account that has to be removed and click on the Remove icon on the bottom ribbon (d) Perform this operation for all the co-administrators that need to be removed from the subscription.",
+      "Recommendation": "You need to remove any 'Classic Administrators/Co-Administrators' who should not be in the role. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Subscriptions (c) Select the subscription (d) Go to ‘Access Control (IAM)’ (e) Right click the co-administrator account that has to be removed and click on the ‘Remove co-administrator’. (f) Perform this operation for all the co-administrators that need to be removed from the subscription.",
       "Tags": [
         "SDL",
         "TCP",
@@ -176,7 +176,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckManagementCertsPresence",
-      "Recommendation": "Logon to https://manage.windowsazure.com/ --> Settings tab  --> Management Certificates tab --> Delete unwanted management certs using delete icon on the bottom ribbon.",
+      "Recommendation": "You need to remove any management certificates that are not required. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Subscriptions (c) Select the subscription (d) Go to Settings tab  --> Management Certificates tab --> Delete unwanted management certificates.",
       "Tags": [
         "SDL",
         "TCP",

@@ -1189,17 +1189,15 @@
       "Description": "Alerts for Resource Creation Operation",
       "Enabled": true,
       "Tags": [
-        "Deployment",
-        "CICD"
+        "Deployment"
       ],
       "AlertOperationList": [
         {
           "Name": "AzSK_Create_new_or_update_existing_resource",
           "Description": "Creates or updates an deployment.",
-          "OperationName": "Microsoft.Resources/subscriptions/resourcegroups/deployments/write",
+          "OperationName": "Microsoft.Resources/deployments/write",
           "Tags": [
-            "Deployment",
-            "CICD"
+            "Deployment"
           ],
           "Severity": "Critical",
           "Enabled": true
