@@ -279,7 +279,7 @@ try
 		{
 			if(![string]::IsNullOrWhiteSpace($resourcedetails.ResourceGroupNamefromWebhook))
 			{
-				$automationjoblist =  Get-AzureRmAutomationJob -RunbookName Continuous_Assurance_ScanOnTrigger_Runbook -ResourceGroupName "AzSKRG" -Status Running -AutomationAccountName AzSKContinuousAssurance
+				$automationjoblist =  Get-AzureRmAutomationJob -RunbookName Continuous_Assurance_ScanOnTrigger_Runbook -ResourceGroupName $automationAccountRG -Status Running -AutomationAccountName $automationAccountName
 				$automationjoblist | ForEach-Object {
 				
 					$jobdetails = Get-AzureRmAutomationJob -AutomationAccountName $_.AutomationAccountName -ResourceGroupName $_.ResourceGroupName -Id $_.JobId
