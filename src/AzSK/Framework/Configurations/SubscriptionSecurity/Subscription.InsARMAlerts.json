@@ -1189,8 +1189,7 @@
       "Description": "Alerts for Resource Creation Operation",
       "Enabled": true,
       "Tags": [
-        "Deployment",
-        "CICD"
+        "Deployment"
       ],
       "AlertOperationList": [
         {
@@ -1198,8 +1197,7 @@
           "Description": "Creates or updates an deployment.",
           "OperationName": "Microsoft.Resources/deployments/write",
           "Tags": [
-            "Deployment",
-            "CICD"
+            "Deployment"
           ],
           "Severity": "Critical",
           "Enabled": true
