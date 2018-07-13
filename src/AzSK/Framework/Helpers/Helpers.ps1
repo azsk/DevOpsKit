@@ -1409,8 +1409,7 @@ class Helpers {
         $KeyHash = $HMAC.ComputeHash($UnsignedBytes)
         $SignedString = [System.Convert]::ToBase64String($KeyHash)
         $sharedKey = $AccountName+":"+$SignedString
-        return $sharedKey
-    }	
+        return $sharedKey    	
     }
 
     static [void] CreateFolder($FolderPath)
