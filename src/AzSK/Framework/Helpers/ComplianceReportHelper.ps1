@@ -16,7 +16,7 @@ class ComplianceReportHelper: ComplianceBase
 	
 	hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport()
 	{
-		return $this.GetSubscriptionComplianceReport("");
+		return $this.GetSubscriptionComplianceReport($null,$null);
 	}
 
 	hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport([string[]] $PartitionKeys)
@@ -335,7 +335,6 @@ class ComplianceReportHelper: ComplianceBase
     }
 	hidden [void] StoreComplianceDataInUserSubscription([SVTEventContext[]] $currentScanResult)
 	{
-		$filteredResources = $null		
 		$finalScanReport = $this.MergeSVTScanResult($currentScanResult)
 		$this.SetLocalSubscriptionScanReport($finalScanReport)
 	}
