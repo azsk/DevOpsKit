@@ -50,8 +50,8 @@ class WriteSummaryFile: FileOutputBase
 			}
 			else
 			{
-				# while running GAI -InfoType AttestationInfo, no controls is evaluated so value of VarificationResult in all the controls are NotScanned.
-				# In that case csv file should be renamed to AttestationReport.
+				# While running GAI -InfoType AttestationInfo, no controls are evaluated. So the value of VerificationResult is by default NotScanned for all controls.
+				# In that case the csv file should be renamed to AttestationReport.
 				$currentInstance.SetFilePath($Event.SourceArgs[0].SubscriptionContext, ("AttestationReport-" + $currentInstance.RunIdentifier + ".csv"));
 			}
 
