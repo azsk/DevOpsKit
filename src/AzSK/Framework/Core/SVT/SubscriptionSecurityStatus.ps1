@@ -40,9 +40,35 @@ class SubscriptionSecurityStatus: SVTCommandBase
 		{
 			$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule
 			$this.SetSVTBaseProperties($svtObject);
-			$result += $svtObject.$methodNameToCall();			
+			$result += $svtObject.$methodNameToCall();	
+			$this.FetchRBACTelemetry($svtObject);
+			$this.PublishCustomData($svtObject.CustomObject);		
 		}
-		
+
+		#save result into local compliance report
+		if($this.IsLocalComplianceStoreEnabled -and ($result | Measure-Object).Count -gt 0)
+		{
+			# Persist scan data to subscription
+			try 
+			{
+				if($null -eq $this.ComplianceReportHelper)
+				{
+					$this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
+				}
+				if($this.ComplianceReportHelper.HaveRequiredPermissions())
+				{
+					$this.ComplianceReportHelper.StoreComplianceDataInUserSubscription($result)
+				}
+				else
+				{
+					$this.IsLocalComplianceStoreEnabled = $false;
+				}
+			}
+			catch 
+			{
+				$this.PublishException($_);
+			}
+		}		
 		[ListenerHelper]::RegisterListeners();
 		
 		return $result;
@@ -77,5 +103,13 @@ class SubscriptionSecurityStatus: SVTCommandBase
 				$this.ControlIds = $controlIds;			
 			}
 		}
+	}
+
+	hidden [void] FetchRBACTelemetry($svtObject)
+	{
+		$svtObject.GetRoleAssignments();
+		$svtObject.PublishRBACTelemetryData();
+		$svtObject.GetPIMRoles();
+
 	}
 }

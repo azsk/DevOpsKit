@@ -36,6 +36,7 @@ class TelemetryRBAC
 	[string] $RoleAssignmentId="";
 	[string] $RoleDefinitionId="";
 	[string] $RoleDefinitionName="";
+	[bool] $IsPIMEnabled;
 }
 enum RBACAccountType
 {

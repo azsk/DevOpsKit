@@ -61,6 +61,7 @@
   },
   "NoOfApprovedAdmins": 5,
   "NoOfClassicAdminsLimit": 2,
+  "CriticalPIMRoles": [ "Owner", "Contributor" ],
   "WhitelistedMgmtCerts": {
     "Thumbprints": [],
     "ApprovedValidityRangeInDays": 732
@@ -184,6 +185,20 @@
         "queue",
         "table"
       ]
+    },
+    {
+      "Kind": "StorageV2",
+      "Services": [
+        "blob",
+        "file",
+        "queue",
+        "table"
+      ],
+      "DiagnosticsLogServices": [
+        "blob",
+        "queue",
+        "table"
+      ]
     }
   ],
   "AppService": {
@@ -197,7 +212,8 @@
   "StorageDiagnosticsSkuMapping": [
     "StandardGRS",
     "StandardLRS",
-    "StandardRAGRS"
+    "StandardRAGRS",
+    "StandardZRS"
   ],
   "StorageAlertSkuMapping": [
     "StandardGRS",

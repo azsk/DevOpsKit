@@ -186,7 +186,6 @@ function Set-AzSKPolicySettings {
 			{
 				 $azskSettings.IsCentralScanModeOn = $EnableCentralScanMode
 			}
-
             [ConfigurationManager]::UpdateAzSKSettings($azskSettings);            
             [EventBase]::PublishGenericCustomMessage("Successfully configured policy settings. `nStart a fresh PS console/session to ensure any policy updates are (re-)loaded.", [MessageType]::Warning);
         }
@@ -315,12 +314,12 @@ function Set-AzSKUserPreference {
         $DoNotOpenOutputFolder,
 
         [switch]
-        [Parameter(Mandatory = $true, ParameterSetName = "Enable ComplianceStore", HelpMessage = "Switch to enable storage of compliance report data at subscription.")]
-        $PersistScanReportInSubscription,
+        [Parameter(Mandatory = $true, ParameterSetName = "EnableComplianceStorage", HelpMessage = "Switch to enable storage of compliance report data at subscription.")]
+        $StoreComplianceSummaryInUserSubscriptions,
 
         [switch]
-        [Parameter(Mandatory = $false, ParameterSetName = "Disable ComplianceStore", HelpMessage = "Switch to disable storage of compliance report data at subscription.")]
-        $DisablePersistScanReportInSubscription
+        [Parameter(Mandatory = $false, ParameterSetName = "DisableComplianceStorage", HelpMessage = "Switch to disable storage of compliance report data at subscription.")]
+        $DisableComplianceSummaryStorageInUserSubscriptions
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
@@ -344,13 +343,13 @@ function Set-AzSKUserPreference {
                 }
             }
             
-            if($PersistScanReportInSubscription)
+            if($StoreComplianceSummaryInUserSubscriptions)
             {
-                $azskSettings.PersistScanReportInSubscription = $true;
+                $azskSettings.StoreComplianceSummaryInUserSubscriptions = $true;
             }
-            if($DisablePersistScanReportInSubscription)
+            if($DisableComplianceSummaryStorageInUserSubscriptions)
             {
-                $azskSettings.PersistScanReportInSubscription = $false;
+                $azskSettings.StoreComplianceSummaryInUserSubscriptions = $false;
             }
             
             [ConfigurationManager]::UpdateAzSKSettings($azskSettings);
@@ -459,7 +458,11 @@ function Set-AzSKPrivacyNoticeResponse {
 }
 
 function Clear-AzSKSessionState {
+
+    Write-Host "Clearing AzSK session state started" -ForegroundColor Yellow
     [ConfigOverride]::ClearConfigInstance()
+    Write-Host "Clearing AzSK session state completed" -ForegroundColor Yellow
+
 }
 
 . $PSScriptRoot\Framework\Helpers\AliasHelper.ps1

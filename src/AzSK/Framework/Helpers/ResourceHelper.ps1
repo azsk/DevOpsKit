@@ -1,5 +1,6 @@
 ﻿using namespace Microsoft.WindowsAzure.Storage.Blob
 using namespace Microsoft.Azure.Commands.Management.Storage.Models
+using namespace Microsoft.Azure.Management.Storage.Models
 using namespace Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel
 Set-StrictMode -Version Latest
 class ResourceGroupHelper: AzSKRoot
@@ -66,6 +67,8 @@ class StorageHelper: ResourceGroupHelper
 {
 	hidden [PSStorageAccount] $StorageAccount = $null;
 	[string] $StorageAccountName;
+	[Kind] $StorageKind; 
+	[string] $AccessKey;
 	[int] $HaveWritePermissions = 0;
 	[int] $retryCount = 3;
 	[int] $sleepIntervalInSecs = 10;
@@ -80,6 +83,17 @@ class StorageHelper: ResourceGroupHelper
 			throw [System.ArgumentException] ("The argument 'storageAccountName' is null or empty");
 		}
 		$this.StorageAccountName = $storageAccountName;
+		$this.StorageKind = [Constants]::NewStorageKind;
+	}
+	StorageHelper([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceGroupLocation, [string] $storageAccountName, [Kind] $storageKind):
+		Base($subscriptionId, $resourceGroupName, $resourceGroupLocation)
+	{
+		if([string]::IsNullOrWhiteSpace($storageAccountName))
+		{
+			throw [System.ArgumentException] ("The argument 'storageAccountName' is null or empty");
+		}
+		$this.StorageAccountName = $storageAccountName;
+		$this.StorageKind = $storageKind
 	}
 
 	[void] CreateStorageIfNotExists()
@@ -98,7 +112,7 @@ class StorageHelper: ResourceGroupHelper
 			elseif(($existingResources | Measure-Object).Count -eq 0)
 			{
 				$this.PublishCustomMessage("Creating a storage account: ["+ $this.StorageAccountName +"]...");
-				$newStorage = [Helpers]::NewAzskCompliantStorage($this.StorageAccountName, $this.ResourceGroupName, $this.ResourceGroupLocation);
+				$newStorage = [Helpers]::NewAzskCompliantStorage($this.StorageAccountName, $this.StorageKind, $this.ResourceGroupName, $this.ResourceGroupLocation);
 				if($newStorage)
 				{
 					$this.PublishCustomMessage("Successfully created storage account [$($this.StorageAccountName)]", [MessageType]::Update);
@@ -123,6 +137,13 @@ class StorageHelper: ResourceGroupHelper
 
 			#precompute storage access permissions for the current scan account
 			$this.ComputePermissions();
+
+			#fetch access key
+			$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $this.ResourceGroupName -Name $this.StorageAccountName -ErrorAction SilentlyContinue 
+			if($keys)
+			{
+				$this.AccessKey = $keys[0].Value;
+			}			
 		}
 	}
 
@@ -157,6 +178,34 @@ class StorageHelper: ResourceGroupHelper
 		}
 
 		return $container;
+	}
+
+	[AzureStorageTable] CreateTableIfNotExists([string] $tableName)
+	{
+		if([string]::IsNullOrWhiteSpace($tableName))
+		{
+			throw [System.ArgumentException] ("The argument 'tableName' is null or empty");
+		}
+
+		$this.CreateStorageIfNotExists();
+
+		$table = Get-AzureStorageTable -Context $this.StorageAccount.Context -Name $tableName -ErrorAction Ignore
+		if(($table| Measure-Object).Count -eq 0)
+		{
+			$this.PublishCustomMessage("Creating table [$tableName]...");
+			$table = New-AzureStorageTable -Name $tableName -Context $this.StorageAccount.Context 
+			if($table)
+			{
+				$this.PublishCustomMessage("Successfully created table: [$tableName] in storage: [$this.StorageAccountName]", [MessageType]::Update);
+			}
+		}
+
+		if(($table| Measure-Object).Count -eq 0)
+		{
+			throw ([SuppressedException]::new("Unable to fetch/create the table [$tableName] under storage account [$($this.StorageAccountName)]", [SuppressedExceptionType]::InvalidOperation))				
+		}
+
+		return $table;
 	}
 
 	hidden [void] ComputePermissions()
@@ -292,6 +341,16 @@ class StorageHelper: ResourceGroupHelper
 		if([string]::IsNullOrWhiteSpace($sasToken))
 		{
 			throw ([SuppressedException]::new("Unable to create SAS token for storage account [$($this.StorageAccountName)]", [SuppressedExceptionType]::InvalidOperation))
+		}
+		return $sasToken;
+	}
+	[string] GenerateTableSASToken([string] $tableName)
+	{
+		$this.CreateTableIfNotExists($tableName);
+		$sasToken = New-AzureStorageTableSASToken -Context $this.StorageAccount.Context -Name $tableName -Permission rau -Protocol HttpsOnly -StartTime (Get-Date).AddDays(-1) -ExpiryTime (Get-Date).AddHours(6) 
+		if([string]::IsNullOrWhiteSpace($sasToken))
+		{
+			throw ([SuppressedException]::new("Unable to create SAS token for table [$tableName] in storage account [$($this.StorageAccountName)]", [SuppressedExceptionType]::InvalidOperation))
 		}
 		return $sasToken;
 	}

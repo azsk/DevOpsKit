@@ -170,8 +170,12 @@ function Install-AzSKContinuousAssurance
 		$CentralScanMode,
 
 		[switch]
-        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
-		$DoNotOpenOutputFolder
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
+		$DoNotOpenOutputFolder,
+
+		[switch]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
+		$ScanOnDeployment
     )
 	Begin
 	{
@@ -206,9 +210,12 @@ function Install-AzSKContinuousAssurance
 
 			#set the Webhook settings
 			$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
+			
 
 			if ($ccAccount) 
 			{
+				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
+
 				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
 				{
 					$ccAccount.IsCentralScanModeOn = $true;
@@ -223,6 +230,8 @@ function Install-AzSKContinuousAssurance
 						$ccAccount.LoggingOption = $LoggingOption;
 					}
 				}
+
+				
 				return $ccAccount.InvokeFunction($ccAccount.InstallAzSKContinuousAssurance);
 			}			
 		}
@@ -332,7 +341,7 @@ function Update-AzSKContinuousAssurance
 		
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
-		[ValidateNotNullOrEmpty()]
+		[ValidateNotNullOrEmpty()]	
         [string]
 		[Alias("owid")]
 		$OMSWorkspaceId,
@@ -432,7 +441,16 @@ function Update-AzSKContinuousAssurance
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
-		$DoNotOpenOutputFolder
+		$DoNotOpenOutputFolder,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="This switch is used to clear setting for OMS,AltOMS or Webhook.")]
+		[ValidateSet("OMSSettings","AltOMSSettings","WebhookSettings")]
+		$Remove
+		$DoNotOpenOutputFolder,
+
+		[switch]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
+		$ScanOnDeployment
     )
 	Begin
 	{
@@ -443,17 +461,21 @@ function Update-AzSKContinuousAssurance
 	{
 	try 
 		{
-			$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation, $null, $AutomationAccountRGName, $AutomationAccountName, `
+				$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation, $null, $AutomationAccountRGName, $AutomationAccountName, `
 				$ResourceGroupNames, $AzureADAppName, $ScanIntervalInHours);
 
-			#set the OMS settings
-			$ccAccount.SetOMSSettings($OMSWorkspaceId, $OMSSharedKey, $AltOMSWorkspaceId, $AltOMSSharedKey);
+			if($null -eq $Remove)
+			{
+				#set the OMS settings
+				$ccAccount.SetOMSSettings($OMSWorkspaceId, $OMSSharedKey, $AltOMSWorkspaceId, $AltOMSSharedKey);
 
-			#set the Webhook settings
-			$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
-
+				#set the Webhook settings
+				$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
+			}
 			if ($ccAccount) 
 			{
+				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
+
 				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
 				{
 					$ccAccount.IsCentralScanModeOn = $true;
@@ -468,7 +490,7 @@ function Update-AzSKContinuousAssurance
 						$ccAccount.LoggingOption = $LoggingOption;
 					}
 				}
-				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules));
+				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules,$Remove));
 			}
 			
 		}

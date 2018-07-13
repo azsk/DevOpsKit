@@ -217,11 +217,8 @@ Class OMSHelper{
 		if($AzSKContext.Source.Equals("CC", [System.StringComparison]::OrdinalIgnoreCase) -or
 		$AzSKContext.Source.Equals("CA", [System.StringComparison]::OrdinalIgnoreCase)){
 			$resourceSet = [System.Collections.ArrayList]::new()
-			$resourcesFlat = Find-AzureRmResource
-			$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
-			# Not considering nested resources to reduce complexity
-			$filteredResoruces = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }
-			foreach($resource in $filteredResoruces){
+			[ResourceInventory]::FetchResources();
+			foreach($resource in [ResourceInventory]::FilteredResources){
 				$set = [OMSResourceModel]::new()
 				$set.RunIdentifier = $AzSKContext.RunIdentifier
 				$set.SubscriptionId = $resource.SubscriptionId

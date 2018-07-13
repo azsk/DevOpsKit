@@ -120,6 +120,16 @@ function Update-AzSKOrganizationPolicy
 	.DESCRIPTION
 	This command is intended to be used by central Organization team to setup Organization specific policies
 
+	.PARAMETER SubscriptionId
+		Subscription ID of the Azure subscription in which organization policy is stored.
+	.PARAMETER OrgName
+			The name of your organization. The value will be used to generate names of Azure resources being created as part of policy setup. This should be alphanumeric.
+	.PARAMETER ResourceGroupName
+			Resource group name for resource name.
+	.PARAMETER StorageAccountName
+			Specify the name for policy storage account
+	.PARAMETER MonitoringDashboardLocation
+			Location of Azure shared dashboard to monitor your organization adoption to AzSK
 	#>
 	
 	[OutputType([String])]
@@ -128,47 +138,40 @@ function Update-AzSKOrganizationPolicy
 		[string]
         [Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Default")]
         [Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Custom")]
-        [Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Migrate")]
 		[ValidateNotNullOrEmpty()]
 		$SubscriptionId,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
-        [Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
         [string]
 		$ResourceGroupLocation,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
-        [Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
         [string]
 		$ResourceGroupName,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
-        [Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
         [string]
 		$StorageAccountName,
 
-        [Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
+		[Parameter(Mandatory = $false)]
         [string]
 		$AppInsightName,
 
-		[Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
+		[Parameter(Mandatory = $false)]
         [string]
 		$AppInsightLocation,
 
-		[Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
 		[string]
 		$MonitoringDashboardLocation,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
-        [Parameter(Mandatory = $true, ParameterSetName = "Migrate")]
         [string]
 		$OrgName,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
-        [Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
         [string]
 		$DepartmentName,
 
@@ -177,25 +180,15 @@ function Update-AzSKOrganizationPolicy
 		[Alias("PolicyFolderName")]
 		[string]
 		$PolicyFolderPath,
-		
-		[Parameter(Mandatory = $true, ParameterSetName = "Migrate")]
-		[switch]
-		$Migrate,
-
-		[Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
-		[string]
-		$MigrationScriptPath,
 
 		[ValidateSet("CARunbooks", "AzSKRootConfig","MonitoringDashboard","OrgAzSKVersion", "All")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Override base configurations setup by AzSK.")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Override base configurations setup by AzSK.")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Migrate", HelpMessage = "Override base configurations setup by AzSK.")] 
 		$Override = [OverrideConfigurationType]::None,
 
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Switch to specify whether to open output folder.")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Migrate", HelpMessage = "Switch to specify whether to open output folder.")]
 		$DoNotOpenOutputFolder
     )
 	Begin
@@ -206,23 +199,7 @@ function Update-AzSKOrganizationPolicy
 	Process
 	{
 		try 
-		{		
-			if($Migrate)
-			{				
-				$oldPolicy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName, $null , $null, $null, $null, $ResourceGroupLocation,$MonitoringDashboardLocation, $PolicyFolderPath, [Constants]::OldModuleName);
-				$computedAppInsightLocation = $AppInsightLocation;
-				if([string]::IsNullOrWhiteSpace($computedAppInsightLocation))
-				{
-					$computedAppInsightLocation = $oldPolicy.AppInsightLocation;
-				}
-				$computedRGLocation = $ResourceGroupLocation;
-				if([string]::IsNullOrWhiteSpace($computedRGLocation))
-				{
-					$computedRGLocation = $oldPolicy.ResourceGroupLocation;
-				}
-				$newPolicy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName, $ResourceGroupName, $StorageAccountName, $AppInsightName, $computedAppInsightLocation, $computedRGLocation,$MonitoringDashboardLocation, $PolicyFolderPath, [Constants]::NewModuleName);	
-				return $newPolicy.InvokeFunction($newPolicy.MigratePolicy, @($oldPolicy));
-			}			
+		{					
 			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $AppInsightLocation, $ResourceGroupLocation,$MonitoringDashboardLocation, $PolicyFolderPath, [Constants]::AzSKModuleName);
 			if ($policy) 
 			{				

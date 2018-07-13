@@ -34,6 +34,7 @@ class CCAutomation: CommandBase
 	[bool] $IsMultiCAModeOn = $false;
 	[bool] $IsCustomAADAppName = $false;
 	[bool] $ExhaustiveCheck = $false;
+	[bool] $ScanOnDeployment = $false;
 	[CAReportsLocation] $LoggingOption = [CAReportsLocation]::CentralSub;
 
 	[string] $MinReqdCARunbookVersion = "2.1709.0"
@@ -421,11 +422,6 @@ class CCAutomation: CommandBase
 			"You may subsequently update any of the parameters specified during installation using the '$($this.updateCommandName)' command. If you specified '*' for resource groups, new resource groups will be automatically picked up for scanning.`r`n"+
 			"You should use the AzSK OMS solution to monitor your subscription and resource health status.`r`n",[MessageType]::Update)
 			$messages += [MessageData]::new("The following resources were created in resource group: ["+$this.AutomationAccount.ResourceGroup+"] as part of Continuous Assurance",$this.OutputObject)
-
-			#-------- #AzSK TBR--------#
-			#[MigrationHelper]::TryMigration($this.SubscriptionContext,$this.invocationContext,$false)
-			#------------------------------#
-
 		}
 		catch
 		{
@@ -459,7 +455,7 @@ class CCAutomation: CommandBase
 		return $messages;
 	}	
 
-	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules)
+	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules,$Remove)
 	{
 		[MessageData[]] $messages = @();
 		try
@@ -980,6 +976,8 @@ class CCAutomation: CommandBase
 			$existingRunbook = Get-AzureRmAutomationRunbook -AutomationAccountName $this.AutomationAccount.Name `
 			-ResourceGroupName $this.AutomationAccount.ResourceGroup 
 
+			$existingRunbook = $existingRunbook | Where-Object { $_.Name –ne [Constants]::Alert_ResourceCreation_Runbook }
+
 			if((($scheduledRunbooks|Measure-Object).Count -gt 0) -and (($existingRunbook|Measure-Object).Count -gt 0))
 			{
 				#check if runbook exists to unlink schedules
@@ -998,6 +996,10 @@ class CCAutomation: CommandBase
 			}
 			$this.PublishCustomMessage("Updating runbook: [$($this.RunbookName)]")
 			$this.NewCCRunbook()
+			if($this.ScanOnDeployment)
+			{
+				$this.SetResourceCreationScan()
+			}
 			$this.SetAzSKAlertMonitoringRunbook($false)
 		  
 			#relink existing schedules with runbook
@@ -1048,6 +1050,27 @@ class CCAutomation: CommandBase
 			    [Helpers]::SetResourceTags($resourceInstance.ResourceId, $automationTags, $false, $true);
             }
 		
+			#endregion
+
+			#region : remove user configurable settings(OMS Settings, AltOMS Settings or WebhookSettings)
+			if($null -ne $Remove)
+			{
+				switch($Remove)
+				{
+					"OMSSettings" {
+						 $this.PublishCustomMessage("Removing OMS Settings")
+						 $this.RemoveOMSSettings()
+						}
+					"AltOMSSettings" {
+						$this.PublishCustomMessage("Removing AltOMS Settings")
+						$this.RemoveAltOMSSettings()
+					}
+					"WebhookSettings" {
+						$this.PublishCustomMessage("Removing Webhook Settings")
+						$this.RemoveWebhookSettings()
+					}
+				}
+			}
 			#endregion
 
 			#Added Security centre provider registration to avoid error while running SSCore command in CA
@@ -1819,20 +1842,20 @@ class CCAutomation: CommandBase
 		{
 			$failMsg = "OMS workspace ID is not set up."			
 			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -OMSWorkspaceId <OMSWorkspaceId> -OMSSharedKey <OMSSharedKey>'."
-			$resultMsg = "$failMsg`r`n$resolvemsg"
-			$resultStatus = "Failed"
-			$shouldReturn = $true
+			$resultMsg +="$failMsg`r`n"
+			$resultStatus = "Warning"
+			$shouldReturn = $false
 			
 		}
 		if(!$this.IsOMSKeyVariableAvailable())
 		{
 			$failMsg = "OMS workspace key is not set up."			
 			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -OMSSharedKey <OMSSharedKey>'."
-			$resultMsg = "$failMsg`r`n$resolvemsg"
-			$resultStatus = "Failed"
-			$shouldReturn = $true
+			$resultMsg +="$failMsg`r`n$resolvemsg"
+			$resultStatus = "Warning"
+			$shouldReturn = $false
 		}		
-		if($resultStatus -ne "Failed")
+		if($resultStatus -ne "Warning" )
 		{
 			$resultStatus = "OK"
 			$resultMsg = ""				
@@ -1840,7 +1863,7 @@ class CCAutomation: CommandBase
 		if($shouldReturn)
 		{
 			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
-			return $messages
+			return $messages 
 		}
 		else 
 		{
@@ -2152,6 +2175,15 @@ class CCAutomation: CommandBase
 		
 		return $messages
 	}	
+
+	[void] SetResourceCreationScan()
+	{
+		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.invocationContext,"Mandatory");
+		$actionGroupResourceId = $alert.SetupAlertActionGroup();
+		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "Deployment,CICD");
+		$alert.SetAlerts($actionGroupResourceId);
+	}
+
 	[void] SetAzSKAlertMonitoringRunbook($Force)
 	{
 		[MessageData[]] $messages = @();
@@ -2166,7 +2198,7 @@ class CCAutomation: CommandBase
 		     $this.NewAlertRunbook();
 		    }	
 		    $alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.invocationContext,"Mandatory");
-		    $alert.UpdateActionGroupWebhookUri([string]::Empty);
+		    $alert.UpdateActionGroupWebhookUri([string]::Empty,"Alert");
 		   }
 		   #Left Else Block 
 		}
@@ -2421,6 +2453,11 @@ class CCAutomation: CommandBase
 		#Create CA alerts runbook
 		$this.SetAzSKAlertMonitoringRunbook($false)
 
+		if($this.ScanOnDeployment)
+		{
+			$this.SetResourceCreationScan()
+		}
+
 		#$this.PublishCustomMessage("Linking schedule - ["+$this.ScheduleName+"] to the runbook")
 		$this.NewCCSchedules()
 
@@ -2457,6 +2494,23 @@ class CCAutomation: CommandBase
 			Key="Continuous_Assurance_Runbook"
         }	
 		
+		if($this.ScanOnDeployment)
+		{
+		  $ResourceAddition_Runbooks = [Runbook]@{
+            Name = "Continuous_Assurance_ScanOnTrigger_Runbook";
+            Type = "PowerShell";
+			Description = "This runbook will be triggered on Resource Addition.";
+			LogProgress = $false;
+			LogVerbose = $false;
+			Key="Continuous_Assurance_ScanOnTrigger_Runbook"
+          }
+		 $this.Runbooks += @($CCRunbook,$ResourceAddition_Runbooks)
+		}
+		else
+		{
+		 $this.Runbooks += @($CCRunbook)
+		}
+
 		$isAlertMonitoringEnabled=[ConfigurationManager]::GetAzSKConfigData().IsAlertMonitoringEnabled
 		if($isAlertMonitoringEnabled)
 		{
@@ -2468,12 +2522,12 @@ class CCAutomation: CommandBase
 			LogVerbose = $false;
 			Key="Insight_Alerts_Runbook"
           }
-		 $this.Runbooks += @($CCRunbook,$InsightAlertRunbook)
+          
+           $this.Runbooks += @($InsightAlertRunbook)
+          
+		 
 		}
-		else
-		{
-		 $this.Runbooks += @($CCRunbook)
-		}
+
 		$this.Runbooks | ForEach-Object{		
 			$filePath = $this.AddConfigValues($_.Name+".ps1");
 			
@@ -3591,6 +3645,70 @@ class CCAutomation: CommandBase
 		$azskRGName = $this.AutomationAccount.CoreResourceGroup;
 		$version = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion;
 		[Helpers]::SetResourceGroupTags($azskRGName,@{$($this.RunbookVersionTagName)=$version}, $true)
+	}
+	#endregion
+
+	#region: Remove configured setting from CA
+	hidden [void] RemoveOMSSettings()
+	{
+		$OMSVariable = $this.GetOMSWSID()
+		try
+		{
+			if($null -ne $OMSVariable)
+			{
+
+				
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue			
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSSharedKey" -ErrorAction SilentlyContinue		
+				
+			}
+		}catch
+		{
+			$this.PublishCustomMessage("Unable to remove OMS Settings.")
+		}
+	}
+	hidden [void] RemoveAltOMSSettings()
+	{
+		$altOMSWSID=$this.GetAltOMSWSID();
+		try
+		{
+			if($null -ne $altOMSWSID)
+			{
+
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue			
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue		
+			
+			}
+		}catch
+		{
+			$this.PublishCustomMessage("Unable to remove AltOMS Settings.")
+		}
+	}
+	hidden [void] RemoveWebhookSettings()
+	{
+		$WebhookUrl=$this.GetWebhookURL()
+		try
+		{
+			if($null -ne $WebhookUrl)
+			{
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue			
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookAuthZHeaderName" -ErrorAction SilentlyContinue		
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookAuthZHeaderValue" -ErrorAction SilentlyContinue		
+			
+			}
+		}catch
+		{
+			$this.PublishCustomMessage("Unable to remove Webhook Settings.")
+		}
+
+
 	}
 	#endregion
 }

@@ -197,10 +197,6 @@ function Update-AzSKSubscriptionSecurity
 	
 	.PARAMETER SubscriptionId
 		Subscription id for which subscription security configuration has to be updated.
-	.PARAMETER AADAppName
-		Migrates CA with the specified AADAppName
-	.PARAMETER Migrate
-		Migrates older AzSDK resources to new AzSK resources
 	.PARAMETER Force
 		Switch to apply subscription security configuration updates forcefully regardless of latest updates already present on subscription.
 	.PARAMETER DoNotOpenOutputFolder
@@ -213,27 +209,16 @@ function Update-AzSKSubscriptionSecurity
 
 		[string]
         [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which subscription security configuration has to be updated.", ParameterSetName = "Default")]
-        [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which subscription security configuration has to be updated.", ParameterSetName = "Migration")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("sid")]
 		$SubscriptionId,
 
-		[string]
-		[Parameter(Mandatory = $false, HelpMessage = "Migrates CA with the specified AADAppName", ParameterSetName = "Migration")]
-		$AADAppName,
-
-		[switch]
-		[Parameter(Mandatory = $true, HelpMessage = "Migrates older AzSDK resources to new AzSK resources", ParameterSetName = "Migration")]
-		$Migrate,
-
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to apply subscription security configuration updates forcefully regardless of latest updates already present on subscription.", ParameterSetName = "Default")]
-		[Parameter(Mandatory = $false, HelpMessage = "Switch to apply subscription security configuration updates forcefully regardless of latest updates already present on subscription.", ParameterSetName = "Migration")]
 		$Force,
 		
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.", ParameterSetName = "Default")]
-        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.", ParameterSetName = "Migration")]
 		$DoNotOpenOutputFolder
     )
 
