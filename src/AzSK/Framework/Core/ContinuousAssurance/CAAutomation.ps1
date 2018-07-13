@@ -970,22 +970,11 @@ class CCAutomation: CommandBase
 
 			#region: update runbook & schedule
 		
-			#unlink runbook from existing schedules
+			#unlink CA main runbook from existing schedules
 			$scheduledRunbooks = Get-AzureRmAutomationScheduledRunbook -AutomationAccountName $this.AutomationAccount.Name `
 			-ResourceGroupName $this.AutomationAccount.ResourceGroup | Where-Object {$_.RunbookName -eq $this.RunbookName}
 
-			$existingRunbook = Get-AzureRmAutomationRunbook -AutomationAccountName $this.AutomationAccount.Name `
-			-ResourceGroupName $this.AutomationAccount.ResourceGroup 
-
-			if(-not $this.ScanOnDeployment)
-			{
-				if(!$this.RemoveScanOnDeployment)
-                {
-                    $existingRunbook = $existingRunbook | Where-Object { $_.Name –ne [Constants]::Alert_ResourceCreation_Runbook }  
-                } 
-			}
-			
-			if((($scheduledRunbooks|Measure-Object).Count -gt 0) -and (($existingRunbook|Measure-Object).Count -gt 0))
+			if(($scheduledRunbooks|Measure-Object).Count -gt 0)
 			{
 				#check if runbook exists to unlink schedules
 			
@@ -996,21 +985,35 @@ class CCAutomation: CommandBase
 				};
 			}
 
-			#remove existing and create new runbook
-			if(($existingRunbook|Measure-Object).Count -gt 0)
-			{
-				$existingRunbook | Remove-AzureRmAutomationRunbook -Force -ErrorAction SilentlyContinue
-			}
-			$this.PublishCustomMessage("Updating runbook: [$($this.RunbookName)]")
-			$this.NewCCRunbook()
+			#Update required runbooks (remove + recreate runbook)
+			$existingRunbooks = Get-AzureRmAutomationRunbook -AutomationAccountName $this.AutomationAccount.Name `
+			-ResourceGroupName $this.AutomationAccount.ResourceGroup 
+			
+			#Update main runbook and alert runbook by default
+			$runbooksToUpdate = @($this.RunbookName,[Constants]::AlertRunbookName)
+
+			#update resource creation runbook only if switch is passed
 			if($this.ScanOnDeployment)
+			{
+				$runbooksToUpdate += [Constants]::Alert_ResourceCreation_Runbook
+			}
+
+			$filteredRunbooksToUpdate = $existingRunbooks | Where-Object { $runbooksToUpdate -icontains $_.Name } 
+			
+			#remove existing and create new runbook
+			if(($filteredRunbooksToUpdate|Measure-Object).Count -gt 0)
+			{
+				$filteredRunbooksToUpdate | Remove-AzureRmAutomationRunbook -Force -ErrorAction SilentlyContinue
+			}
+			
+			$this.NewCCRunbook()
+
+			#Install resource creation runbook only for default stand-alone CA
+			if($this.ScanOnDeployment -and -not $this.IsMultiCAModeOn -and -not $this.IsCentralScanModeOn)
 			{
 				$this.SetResourceCreationScan()
 			}
-			if($this.RemoveScanOnDeployment)
-			{
-				$this.ClearResourceofDeploymentScan()
-			}
+			
 			$this.SetAzSKAlertMonitoringRunbook($false)
 		  
 			#relink existing schedules with runbook
@@ -2033,6 +2036,7 @@ class CCAutomation: CommandBase
 		$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage();
 		[CAScanModel[]] $scanobjects = @()
 		$caSubs = @();
+		
 		if(($reportsStorageAccount | Measure-Object).Count -eq 1)
 		{
 			$filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
@@ -2176,6 +2180,7 @@ class CCAutomation: CommandBase
 
 	[void] ClearResourceofDeploymentScan()
 	{
+		Remove-AzureRmAutomationRunbook -AutomationAccountName ($this.AutomationAccount.Name) -Name ([Constants]::Alert_ResourceCreation_Runbook) -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Force -ErrorAction SilentlyContinue
 		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "Deployment,CICD");
 		$alert.RemoveAlerts("WebHookForResourceCreationAlerts",$false);
 		Remove-AzureRmResource -ResourceType "Microsoft.Insights/actiongroups" -ResourceGroupName "AzSKRG" -Name ([Constants]::ResourceDeploymentActionGroupName) -Force
@@ -2450,7 +2455,7 @@ class CCAutomation: CommandBase
 		#Create CA alerts runbook
 		$this.SetAzSKAlertMonitoringRunbook($false)
 
-		if($this.ScanOnDeployment)
+		if($this.ScanOnDeployment -and -not $this.IsMultiCAModeOn -and -not $this.IsCentralScanModeOn)
 		{
 			$this.SetResourceCreationScan()
 		}
@@ -2526,6 +2531,7 @@ class CCAutomation: CommandBase
 		}
 
 		$this.Runbooks | ForEach-Object{		
+			$this.PublishCustomMessage("Updating runbook: [$($_.Name)]")
 			$filePath = $this.AddConfigValues($_.Name+".ps1");
 			
 			Import-AzureRmAutomationRunbook -Name $_.Name -Description $_.Description -Type $_.Type `

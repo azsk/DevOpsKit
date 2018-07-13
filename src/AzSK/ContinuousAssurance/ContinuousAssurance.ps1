@@ -445,16 +445,12 @@ function Update-AzSKContinuousAssurance
 		$DoNotOpenOutputFolder,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "RemoveSettings", HelpMessage="This switch is used to clear setting for OMS,AltOMS or Webhook.")]
-		[ValidateSet("OMSSettings","AltOMSSettings","WebhookSettings")]
+		[ValidateSet("OMSSettings","AltOMSSettings","WebhookSettings","ScanOnDeployment")]
 		$Remove,
 
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
-		$ScanOnDeployment,
-
-		[switch]
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
-		$RemoveScanOnDeployment
+		$ScanOnDeployment
     )
 	Begin
 	{
@@ -479,6 +475,9 @@ function Update-AzSKContinuousAssurance
 						}
 					"WebhookSettings" {
 						return $ccAccount.InvokeFunction($ccAccount.RemoveWebhookSettings);
+						}
+					"ScanOnDeployment" {
+						return $ccAccount.InvokeFunction($ccAccount.ClearResourceofDeploymentScan);
 						}
 				}
 					
