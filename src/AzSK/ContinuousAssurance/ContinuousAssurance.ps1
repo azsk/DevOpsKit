@@ -445,7 +445,11 @@ function Update-AzSKContinuousAssurance
 
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
-		$ScanOnDeployment
+		$ScanOnDeployment,
+
+		[switch]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
+		$RemoveScanOnDeployment
     )
 	Begin
 	{
@@ -468,6 +472,7 @@ function Update-AzSKContinuousAssurance
 			if ($ccAccount) 
 			{
 				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
+				$ccAccount.RemoveScanOnDeployment = $RemoveScanOnDeployment;
 
 				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
 				{

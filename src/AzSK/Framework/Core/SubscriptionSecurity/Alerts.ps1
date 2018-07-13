@@ -671,7 +671,7 @@ class Alerts: CommandBase
 			$actionGroupArm = $this.LoadServerConfigFile("Subscription.AlertActionGroup.json");
 			$actionGroupArmResource = $actionGroupArm.resources | Where-Object { $_.Name -eq $([Constants]::AlertActionGroupName) } 
 			$actionGroupArmResourceOutput = $actionGroupArm.outputs.actionGroupId
-			$actionGroupArmResource.name="ResourceDeploymentActionGroup"
+			$actionGroupArmResource.name=[Constants]::ResourceDeploymentActionGroupName
 			$actionGroupArmResourceOutput.value = $actionGroupArmResourceOutput.value.Replace($([Constants]::AlertActionGroupName),$([Constants]::ResourceDeploymentActionGroupName));
 			$actionGroupArmResource.properties.PSObject.Properties.Remove('emailReceivers')
             $actionGroupArmResource.properties.PSObject.Properties.Remove('smsReceivers')

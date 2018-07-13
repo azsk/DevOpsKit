@@ -35,6 +35,7 @@ class CCAutomation: CommandBase
 	[bool] $IsCustomAADAppName = $false;
 	[bool] $ExhaustiveCheck = $false;
 	[bool] $ScanOnDeployment = $false;
+	[bool] $RemoveScanOnDeployment = $false;
 	[CAReportsLocation] $LoggingOption = [CAReportsLocation]::CentralSub;
 
 	[string] $MinReqdCARunbookVersion = "2.1709.0"
@@ -983,7 +984,10 @@ class CCAutomation: CommandBase
 
 			if(-not $this.ScanOnDeployment)
 			{
-				$existingRunbook = $existingRunbook | Where-Object { $_.Name –ne [Constants]::Alert_ResourceCreation_Runbook }  
+				if(!$this.RemoveScanOnDeployment)
+                {
+                    $existingRunbook = $existingRunbook | Where-Object { $_.Name –ne [Constants]::Alert_ResourceCreation_Runbook }  
+                } 
 			}
 			
 			if((($scheduledRunbooks|Measure-Object).Count -gt 0) -and (($existingRunbook|Measure-Object).Count -gt 0))
@@ -1007,6 +1011,10 @@ class CCAutomation: CommandBase
 			if($this.ScanOnDeployment)
 			{
 				$this.SetResourceCreationScan()
+			}
+			if($this.RemoveScanOnDeployment)
+			{
+				$this.ClearResourceofDeploymentScan()
 			}
 			$this.SetAzSKAlertMonitoringRunbook($false)
 		  
@@ -2169,6 +2177,13 @@ class CCAutomation: CommandBase
 		$actionGroupResourceId = $alert.SetupAlertActionGroup();
 		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "Deployment,CICD");
 		$alert.SetAlerts($actionGroupResourceId);
+	}
+
+	[void] ClearResourceofDeploymentScan()
+	{
+		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "Deployment,CICD");
+		$alert.RemoveAlerts("WebHookForResourceCreationAlerts",$false);
+		Remove-AzureRmResource -ResourceType "Microsoft.Insights/actiongroups" -ResourceGroupName "AzSKRG" -Name ([Constants]::ResourceDeploymentActionGroupName) -Force
 	}
 
 	[void] SetAzSKAlertMonitoringRunbook($Force)
