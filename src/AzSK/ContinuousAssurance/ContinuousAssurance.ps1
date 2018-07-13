@@ -311,7 +311,8 @@ function Update-AzSKContinuousAssurance
 	Param(
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Default", HelpMessage="Subscription id in which Automation Account exists")]
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Subscription id in which Automation Account exists")]
-        [string]
+		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "RemoveSettings", HelpMessage="Subscription id in which Automation Account exists")]
+		[string]
 		[Alias("sid", "HostSubscriptionId", "hsid")]
 		$SubscriptionId,
 
@@ -443,7 +444,7 @@ function Update-AzSKContinuousAssurance
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		$DoNotOpenOutputFolder,
 
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="This switch is used to clear setting for OMS,AltOMS or Webhook.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "RemoveSettings", HelpMessage="This switch is used to clear setting for OMS,AltOMS or Webhook.")]
 		[ValidateSet("OMSSettings","AltOMSSettings","WebhookSettings")]
 		$Remove,
 
@@ -462,34 +463,51 @@ function Update-AzSKContinuousAssurance
 		{
 				$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation, $null, $AutomationAccountRGName, $AutomationAccountName, `
 				$ResourceGroupNames, $AzureADAppName, $ScanIntervalInHours);
-
-			if($null -eq $Remove)
+			if($PSCmdlet.ParameterSetName -eq "RemoveSettings")
 			{
-				#set the OMS settings
-				$ccAccount.SetOMSSettings($OMSWorkspaceId, $OMSSharedKey, $AltOMSWorkspaceId, $AltOMSSharedKey);
-
-				#set the Webhook settings
-				$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
-			}
-			if ($ccAccount) 
-			{
-				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
-
-				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
+				switch($Remove)
 				{
-					$ccAccount.IsCentralScanModeOn = $true;
-					$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
-					$ccAccount.SkipTargetSubscriptionConfig = $SkipTargetSubscriptionConfig;
-					if($null -eq $LoggingOption)
-					{
-						$ccAccount.LoggingOption = [CAReportsLocation]::CentralSub;
-					}
-					else
-					{
-						$ccAccount.LoggingOption = $LoggingOption;
-					}
+					"OMSSettings" {
+						return $ccAccount.InvokeFunction($ccAccount.RemoveOMSSettings);								 
+						}
+					"AltOMSSettings" {
+						return $ccAccount.InvokeFunction($ccAccount.RemoveAltOMSSettings);
+						}
+					"WebhookSettings" {
+						return $ccAccount.InvokeFunction($ccAccount.RemoveWebhookSettings);
+						}
 				}
-				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules,$Remove));
+					
+
+			}
+			else
+			{
+					#set the OMS settings
+					$ccAccount.SetOMSSettings($OMSWorkspaceId, $OMSSharedKey, $AltOMSWorkspaceId, $AltOMSSharedKey);
+
+					#set the Webhook settings
+					$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
+			
+				if ($ccAccount) 
+				{
+					$ccAccount.ScanOnDeployment = $ScanOnDeployment;
+
+					if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
+					{
+						$ccAccount.IsCentralScanModeOn = $true;
+						$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
+						$ccAccount.SkipTargetSubscriptionConfig = $SkipTargetSubscriptionConfig;
+						if($null -eq $LoggingOption)
+						{
+							$ccAccount.LoggingOption = [CAReportsLocation]::CentralSub;
+						}
+						else
+						{
+							$ccAccount.LoggingOption = $LoggingOption;
+						}
+					}
+					return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules));
+				}
 			}
 			
 		}
