@@ -993,7 +993,7 @@ class CCAutomation: CommandBase
 			$runbooksToUpdate = @($this.RunbookName,[Constants]::AlertRunbookName)
 
 			#update resource creation runbook only if switch is passed
-			if($this.ScanOnDeployment)
+			if($this.ScanOnDeployment -and -not $this.IsMultiCAModeOn -and -not $this.IsCentralScanModeOn)
 			{
 				$runbooksToUpdate += [Constants]::Alert_ResourceCreation_Runbook
 			}
@@ -2496,7 +2496,7 @@ class CCAutomation: CommandBase
 			Key="Continuous_Assurance_Runbook"
         }	
 		
-		if($this.ScanOnDeployment)
+		if($this.ScanOnDeployment -and -not $this.IsMultiCAModeOn -and -not $this.IsCentralScanModeOn)
 		{
 		  $ResourceAddition_Runbooks = [Runbook]@{
             Name = "Continuous_Assurance_ScanOnTrigger_Runbook";
