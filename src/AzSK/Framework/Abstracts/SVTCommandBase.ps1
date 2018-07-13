@@ -135,9 +135,10 @@ class SVTCommandBase: CommandBase {
         {
             if($null -ne $this.ComplianceReportHelper)
             {
-                $partitionKey = [Helpers]::ComputeHash($resourceId.ToLower());
-                $queryStringParam = "?`$filter=PartitionKey%20eq'$partitionKey'";
-                $ComplianceStateData = $this.ComplianceReportHelper.GetSubscriptionComplianceReport($queryStringParam);            
+                [string[]] $partitionKeys = @();                
+                $partitionKey = [Helpers]::ComputeHash($resourceId.ToLower());                
+                $partitionKeys += $partitionKey
+                $ComplianceStateData = $this.ComplianceReportHelper.GetSubscriptionComplianceReport($partitionKeys);            
             }
         }
         return $ComplianceStateData;

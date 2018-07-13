@@ -53,8 +53,13 @@ class WebRequestHelper {
        
         $outputValues = @();
 		[System.Uri] $validatedUri = $null;
+		$orginalUri = "";
         while ([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri)) 
 		{
+			if([string]::IsNullOrWhiteSpace($orginalUri))
+			{
+				$orginalUri = $validatedUri.AbsoluteUri;
+			}
 			[int] $retryCount = 3
 			$success = $false;
 			while($retryCount -gt 0 -and -not $success)
@@ -99,6 +104,11 @@ class WebRequestHelper {
 						
 								if (($json | Get-Member -Name "nextLink") -and $json.nextLink) {
 									$uri = $json.nextLink
+								}
+								elseif($requestResult.Headers.ContainsKey('x-ms-continuation-NextPartitionKey'))
+								{
+									$nPKey = $requestResult.Headers["x-ms-continuation-NextPartitionKey"]
+									$uri= $orginalUri + "&NextPartitionKey=$nPKey"
 								}
 								else {
 									$uri = [string]::Empty;
