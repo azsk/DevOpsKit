@@ -311,7 +311,8 @@ function Update-AzSKContinuousAssurance
 	Param(
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Default", HelpMessage="Subscription id in which Automation Account exists")]
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Subscription id in which Automation Account exists")]
-        [string]
+		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "RemoveSettings", HelpMessage="Subscription id in which Automation Account exists")]
+		[string]
 		[Alias("sid", "HostSubscriptionId", "hsid")]
 		$SubscriptionId,
 
@@ -341,7 +342,7 @@ function Update-AzSKContinuousAssurance
 		
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
-		[ValidateNotNullOrEmpty()]
+		[ValidateNotNullOrEmpty()]	
         [string]
 		[Alias("owid")]
 		$OMSWorkspaceId,
@@ -443,6 +444,10 @@ function Update-AzSKContinuousAssurance
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		$DoNotOpenOutputFolder,
 
+		[Parameter(Mandatory = $true, ParameterSetName = "RemoveSettings", HelpMessage="This switch is used to clear setting for OMS,AltOMS or Webhook.")]
+		[ValidateSet("OMSSettings","AltOMSSettings","WebhookSettings")]
+		$Remove,
+
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
 		$ScanOnDeployment,
@@ -460,11 +465,29 @@ function Update-AzSKContinuousAssurance
 	{
 	try 
 		{
-			$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation, $null, $AutomationAccountRGName, $AutomationAccountName, `
+				$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation, $null, $AutomationAccountRGName, $AutomationAccountName, `
 				$ResourceGroupNames, $AzureADAppName, $ScanIntervalInHours);
+			if($PSCmdlet.ParameterSetName -eq "RemoveSettings")
+			{
+				switch($Remove)
+				{
+					"OMSSettings" {
+						return $ccAccount.InvokeFunction($ccAccount.RemoveOMSSettings);								 
+						}
+					"AltOMSSettings" {
+						return $ccAccount.InvokeFunction($ccAccount.RemoveAltOMSSettings);
+						}
+					"WebhookSettings" {
+						return $ccAccount.InvokeFunction($ccAccount.RemoveWebhookSettings);
+						}
+				}
+					
 
-			#set the OMS settings
-			$ccAccount.SetOMSSettings($OMSWorkspaceId, $OMSSharedKey, $AltOMSWorkspaceId, $AltOMSSharedKey);
+			}
+			else
+			{
+					#set the OMS settings
+					$ccAccount.SetOMSSettings($OMSWorkspaceId, $OMSSharedKey, $AltOMSWorkspaceId, $AltOMSSharedKey);
 
 			#set the Webhook settings
 			$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
@@ -472,23 +495,23 @@ function Update-AzSKContinuousAssurance
 			if ($ccAccount) 
 			{
 				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
-				$ccAccount.RemoveScanOnDeployment = $RemoveScanOnDeployment;
 
-				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
-				{
-					$ccAccount.IsCentralScanModeOn = $true;
-					$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
-					$ccAccount.SkipTargetSubscriptionConfig = $SkipTargetSubscriptionConfig;
-					if($null -eq $LoggingOption)
+					if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
 					{
-						$ccAccount.LoggingOption = [CAReportsLocation]::CentralSub;
+						$ccAccount.IsCentralScanModeOn = $true;
+						$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
+						$ccAccount.SkipTargetSubscriptionConfig = $SkipTargetSubscriptionConfig;
+						if($null -eq $LoggingOption)
+						{
+							$ccAccount.LoggingOption = [CAReportsLocation]::CentralSub;
+						}
+						else
+						{
+							$ccAccount.LoggingOption = $LoggingOption;
+						}
 					}
-					else
-					{
-						$ccAccount.LoggingOption = $LoggingOption;
-					}
+					return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules));
 				}
-				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules));
 			}
 			
 		}

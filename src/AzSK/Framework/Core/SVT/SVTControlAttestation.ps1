@@ -21,6 +21,7 @@ class SVTControlAttestation
 		$this.AttestControlsChoice = $attestationOptions.AttestControls;
 		$this.attestOptions = $attestationOptions;
 		$this.controlStateExtension = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext)
+		$this.controlStateExtension.UniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
 		$this.controlStateExtension.Initialize($true)
 		$this.ControlSettings=$ControlSettingsJson = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 	}
@@ -92,7 +93,10 @@ class SVTControlAttestation
 				Write-Host "Attestation Status: $tempAttestationStatus`nVerificationResult: $($controlState.EffectiveVerificationResult)`nAttested By       : $($controlState.State.AttestedBy)`nJustification     : $($controlState.State.Justification)`n"
 				Write-Host "Please select an action from below: `n[0]: Skip`n[1]: Attest`n[2]: Clear Attestation" -ForegroundColor Cyan
 				$userChoice = Read-Host "User Choice"
-				$userChoice = $userChoice.Trim();
+				if(-not [string]::IsNullOrWhiteSpace($userChoice))
+				{
+					$userChoice = $userChoice.Trim();
+				}
 			}
 		}
 		else
@@ -101,7 +105,10 @@ class SVTControlAttestation
 			{
 				Write-Host "Please select an action from below: `n[0]: Skip`n[1]: Attest" -ForegroundColor Cyan
 				$userChoice = Read-Host "User Choice"
-				$userChoice = $userChoice.Trim();
+				if(-not [string]::IsNullOrWhiteSpace($userChoice))
+				{
+					$userChoice = $userChoice.Trim();
+				}
 			}
 		}
 		$Justification=""
@@ -465,7 +472,7 @@ class SVTControlAttestation
 		}
 		finally
 		{
-			[Helpers]::CleanupLocalFolder([Constants]::AzSKAppFolderPath + "\Temp");
+			[Helpers]::CleanupLocalFolder([Constants]::AzSKAppFolderPath + "\Temp\$($this.controlStateExtension.UniqueRunId)");
 		}
 	}	
 

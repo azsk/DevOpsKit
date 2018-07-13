@@ -1,6 +1,7 @@
 using namespace Newtonsoft.Json
 using namespace Microsoft.Azure.Commands.Common.Authentication.Abstractions
 using namespace Microsoft.Azure.Commands.Common.Authentication
+using namespace Microsoft.Azure.Management.Storage.Models
 
 Set-StrictMode -Version Latest
 class Helpers {
@@ -830,7 +831,7 @@ class Helpers {
         return $result;
     }
 
-    static [PSObject] NewAzskCompliantStorage([string]$StorageName, [string]$ResourceGroup, [string]$Location) {
+    static [PSObject] NewAzskCompliantStorage([string]$StorageName, [Kind]$StorageKind,[string]$ResourceGroup,[string]$Location) {
         $storageSku = [Constants]::NewStorageSku
         $storageObject = $null
         try {
@@ -843,7 +844,7 @@ class Helpers {
                 -Name $StorageName `
                 -Type $storageSku `
                 -Location $Location `
-                -Kind BlobStorage `
+                -Kind $StorageKind `
                 -AccessTier Cool `
                 -EnableEncryptionService "Blob,File" `
                 -EnableHttpsTrafficOnly $true `
@@ -889,18 +890,11 @@ class Helpers {
         }
         return $storageObject
     }
+    static [PSObject] NewAzskCompliantStorage([string]$StorageName, [string]$ResourceGroup, [string]$Location) {
+      return [Helpers]::NewAzskCompliantStorage($StorageName,[Constants]::NewStorageKind,[string]$ResourceGroup,[string]$Location)
+    }
 
-	static [PSObject] GetAzSKStorage([string] $ResourceGroup)
-	{	
-		#Check from name
-		$existingStorage = Find-AzureRmResource -ResourceGroupNameEquals $ResourceGroup -ResourceNameContains "azsk" -ResourceType "Microsoft.Storage/storageAccounts"
-		if(($existingStorage|Measure-Object).Count -gt 1)
-		{
-			throw [SuppressedException]::new("Multiple storage accounts found in resource group: [$ResourceGroup]. This is not expected. Please contact support team.");
-		}
-		return $existingStorage
-	}
-
+    
     static [string] FetchTagsString([PSObject]$TagsHashTable)
     {
         [string] $tagsString = "";
@@ -1404,7 +1398,18 @@ class Helpers {
 		catch{
 			#this call happens from finally block. Try to clean the files, if it don't happen it would get cleaned in the next attempt
 		}	
-    }
-	
+    }	
+   
+    static [string] CreateStorageAccountSharedKey([string] $StringToSign,[string] $AccountName,[string] $AccessKey)
+	{
+        $KeyBytes = [System.Convert]::FromBase64String($AccessKey)
+        $HMAC = New-Object System.Security.Cryptography.HMACSHA256
+        $HMAC.Key = $KeyBytes
+        $UnsignedBytes = [System.Text.Encoding]::UTF8.GetBytes($StringToSign)
+        $KeyHash = $HMAC.ComputeHash($UnsignedBytes)
+        $SignedString = [System.Convert]::ToBase64String($KeyHash)
+        $sharedKey = $AccountName+":"+$SignedString
+        return $sharedKey
+    }	
 }
 
