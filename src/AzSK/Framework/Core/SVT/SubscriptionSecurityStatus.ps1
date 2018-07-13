@@ -41,8 +41,11 @@ class SubscriptionSecurityStatus: SVTCommandBase
 			$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule
 			$this.SetSVTBaseProperties($svtObject);
 			$result += $svtObject.$methodNameToCall();	
-			$this.FetchRBACTelemetry($svtObject);
-			$this.PublishCustomData($svtObject.CustomObject);		
+			#$this.FetchRBACTelemetry($svtObject);
+			[CustomData] $customData = [CustomData]::new();
+			$customData.Name = "SubSVTObject";
+			$customData.Value = $svtObject;
+			$this.PublishCustomData($customData);		
 		}
 
 		#save result into local compliance report
@@ -103,13 +106,5 @@ class SubscriptionSecurityStatus: SVTCommandBase
 				$this.ControlIds = $controlIds;			
 			}
 		}
-	}
-
-	hidden [void] FetchRBACTelemetry($svtObject)
-	{
-		$svtObject.GetRoleAssignments();
-		$svtObject.PublishRBACTelemetryData();
-		$svtObject.GetPIMRoles();
-
-	}
+	}	
 }
