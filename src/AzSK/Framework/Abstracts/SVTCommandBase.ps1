@@ -14,30 +14,19 @@ class SVTCommandBase: CommandBase {
     [bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
     [AttestationOptions] $AttestationOptions;
-    hidden [LSRSubscription] $StorageReportData;
-    hidden [ComplianceReportHelper] $complianceReportHelper = $null;
+    hidden [ComplianceReportHelper] $ComplianceReportHelper = $null;
+    hidden [ComplianceBase] $ComplianceBase = $null;
+    hidden [string] $AttestationUniqueRunId;
+    
 
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
         $this.CheckAndDisableAzureRMTelemetry()
-		#fetch the compliancedata from subscription
-        $this.GetLocalSubscriptionData(); 
+        $this.AttestationUniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
+        #Fetching the resourceInventory once for each SVT command execution
+        [ResourceInventory]::Clear();
     }
-
-	hidden [void] GetLocalSubscriptionData()
-	{
-        $azskConfig = [ConfigurationManager]::GetAzSKConfigData();
-        $settingPersistScanReportInSubscription = [ConfigurationManager]::GetAzSKSettings().PersistScanReportInSubscription;
-			#return if feature is turned off at server config
-		if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription) {return;}        
-        
-        if($null -eq $this.complianceReportHelper)
-        {
-		    $this.complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId);
-            $this.StorageReportData =  $this.complianceReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
-        }
-	}
 
     hidden [SVTEventContext] CreateSVTEventContextObject() {
         return [SVTEventContext]@{
@@ -71,8 +60,15 @@ class SVTCommandBase: CommandBase {
         
         #check and delete if older RG found. Remove this code post 8/15/2018 release
         $this.RemoveOldAzSDKRG();
-
-
+        #Create necessary resources to save compliance data in user's subscription
+        if($this.IsLocalComplianceStoreEnabled)
+        {
+            $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());  
+            if(-not $this.ComplianceReportHelper.HaveRequiredPermissions())
+            {
+                $this.IsLocalComplianceStoreEnabled = $false;
+            }
+        }
         $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
 
@@ -111,9 +107,9 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
         # ToDo: remove InvocationContext, try to pass as param
-        # ToDo: Assumption: usercomment will only work when storage report feature flag is enable.  
-		     
-		$svtObject.StorageReportData = $this.StorageReportData
+        # ToDo: Assumption: usercomment will only work when storage report feature flag is enable
+        $resourceId = $svtObject.GetResourceId(); 
+		$svtObject.ComplianceStateData = $this.FetchComplianceStateData($resourceId);
 
         #Include Server Side Exclude Tags
         $svtObject.ExcludeTags += [ConfigurationManager]::GetAzSKConfigData().DefaultControlExculdeTags
@@ -132,24 +128,27 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlStateExt = $this.ControlStateExt;
     }
 
+    hidden [ComplianceStateTableEntity[]] FetchComplianceStateData([string] $resourceId)
+	{
+        [ComplianceStateTableEntity[]] $ComplianceStateData = @();
+        if($this.IsLocalComplianceStoreEnabled)
+        {
+            if($null -ne $this.ComplianceReportHelper)
+            {
+                $partitionKey = [Helpers]::ComputeHash($resourceId.ToLower());
+                $queryStringParam = "?`$filter=PartitionKey%20eq'$partitionKey'";
+                $ComplianceStateData = $this.ComplianceReportHelper.GetSubscriptionComplianceReport($queryStringParam);            
+            }
+        }
+        return $ComplianceStateData;
+	}
+
     hidden [void] InitializeControlState() {
         if (-not $this.ControlStateExt) {
             $this.ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
+            $this.ControlStateExt.UniqueRunId = $this.AttestationUniqueRunId
             $this.ControlStateExt.Initialize($false);
             $this.UserHasStateAccess = $this.ControlStateExt.HasControlStateReadAccessPermissions();
-
-			#Attestation migration warning
-			if($this.UserHasStateAccess)
-			{
-				$isMigrationCompleted = [UserSubscriptionDataHelper]::IsMigrationCompleted($this.SubscriptionContext.SubscriptionId);
-				if($isMigrationCompleted -ne "COMP")
-				{
-					$this.PublishCustomMessage("WARNING: Your subscription has not yet been migrated from `"AzSDK`" to `"AzSK`". Scan commands will not reflect past control attestations until that happens.", [MessageType]::Warning);
-					$this.ControlStateExt.SetControlStateReadAccessPermissions(0);
-					$this.ControlStateExt.SetControlStateWriteAccessPermissions(0);
-					$this.UserHasStateAccess = $false;
-				}
-			}
         }
     }
 
@@ -159,14 +158,6 @@ class SVTCommandBase: CommandBase {
                 [SVTControlAttestation] $svtControlAttestation = [SVTControlAttestation]::new($arguments, $this.AttestationOptions, $this.SubscriptionContext, $this.InvocationContext);
                 #The current context user would be able to read the storage blob only if he has minimum of contributor access.
                 if ($svtControlAttestation.controlStateExtension.HasControlStateReadAccessPermissions()) {
-					#Add migration warning
-					$isMigrationCompleted = [UserSubscriptionDataHelper]::IsMigrationCompleted($this.SubscriptionContext.SubscriptionId);
-					if($isMigrationCompleted -ne "COMP")
-					{
-						$MigrationWarning = [ConfigurationManager]::GetAzSKConfigData().MigrationWarning;
-						throw ([SuppressedException]::new($MigrationWarning,[SuppressedExceptionType]::Generic))
-					}
-
                     if (-not [string]::IsNullOrWhiteSpace($this.AttestationOptions.JustificationText) -or $this.AttestationOptions.IsBulkClearModeOn) {
                         $this.PublishCustomMessage([Constants]::HashLine + "`n`nStarting Control Attestation workflow in bulk mode...`n`n");
                     }

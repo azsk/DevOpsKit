@@ -266,10 +266,6 @@ class PartialScanManager
 	{
 		if($null -eq $this.ResourceScanTrackerObj)
 		{
-			# region Migration
-			# AzSK TBR
-			#[MigrationHelper]::TryMigration($this.SubscriptionContext, $this.InvocationContext);		
-			#endregion
 			if($null -eq $this.AzSKStorageAccount -or $null -eq $this.ScanProgressSnapshotsContainer)
 			{
 				 $this.GetAzSKScanProgressSnapshotsContainer();

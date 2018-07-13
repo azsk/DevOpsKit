@@ -36,8 +36,6 @@ class PolicySetup: CommandBase
 	hidden [string] $InstallerFile;
 
 	hidden [string] $IWRCommand;
-	hidden [string] $MigrationScriptPath = [string]::Empty
-	hidden [bool] $IsMigrationOn = $false
 	hidden [bool] $IsUpdateSwitchOn = $false
 	hidden [string] $updateCommandName = "Update-AzSKOrganizationPolicy"
 	hidden [string] $removeCommandName = "Remove-AzSKOrganizationPolicy"
@@ -414,16 +412,8 @@ class PolicySetup: CommandBase
 		$OPolicyInstance = $OldPolicyInstance
 		$PolicyInstance = $this	
 		$this.PublishAzSKRootEvent([AzSKRootEvent]::PolicyMigrationCommandStarted, $this.OrgFullName);
-		
-		if(-not [string]::IsNullOrEmpty($this.MigrationScriptPath))
-		{
-			& $this.MigrationScriptPath
-		}
-		else
-		{
-			$mgrationScript = $this.LoadServerConfigFile("PolicyMigration.ps1")			
-			Invoke-Expression $mgrationScript
-		}
+		$mgrationScript = $this.LoadServerConfigFile("PolicyMigration.ps1")			
+		Invoke-Expression $mgrationScript
 		$this.PublishAzSKRootEvent([AzSKRootEvent]::PolicyMigrationCommandCompleted, $this.OrgFullName);
 	}
 

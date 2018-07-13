@@ -6,6 +6,7 @@ class CommandBase: AzSKRoot {
     [string[]] $FilterTags = @();
 	[bool] $DoNotOpenOutputFolder = $false;
 	[bool] $Force = $false
+	[bool] $IsLocalComplianceStoreEnabled = $false
     CommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId) {
         [Helpers]::AbstractClass($this, [CommandBase]);
@@ -31,7 +32,15 @@ class CommandBase: AzSKRoot {
 		{
 			#If command is running with Org-neutral Policy or switch Org policy, Set Org Policy tag on subscription
 			$this.SetOrgPolicyTag($this.Force)
-		}		
+		}	
+
+		$azskConfigComplianceFlag = [ConfigurationManager]::GetAzSKConfigData().StoreComplianceSummaryInUserSubscriptions;	
+        $localSettingComplianceFlag = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
+        #return if feature is turned off at server config
+        if($azskConfigComplianceFlag -or $localSettingComplianceFlag) 
+		{
+			$this.IsLocalComplianceStoreEnabled = $true
+		}        
     }
 
     [void] CommandStarted() {
@@ -167,30 +176,7 @@ class CommandBase: AzSKRoot {
 			{
 				throw ([SuppressedException]::new(("Your version of AzSK is too old. Please update now!"),[SuppressedExceptionType]::Generic))
 			}			
-        }
-		#block if the migration is not completed
-		$IsMigrateSwitchPassed = $this.InvocationContext.BoundParameters["Migrate"];
-		$isMigrationCompleted = [UserSubscriptionDataHelper]::IsMigrationCompleted($this.SubscriptionContext.SubscriptionId);
-		if($isMigrationCompleted -ne "COMP")
-		{
-			$MigrationWarning = [ConfigurationManager]::GetAzSKConfigData().MigrationWarning;			
-			$isLatestRequired = $this.IsLatestVersionRequired();
-			if($isLatestRequired)
-			{
-				throw ([SuppressedException]::new($MigrationWarning,[SuppressedExceptionType]::Generic))
-			}
-			elseif(-not $IsMigrateSwitchPassed)
-			{
-				if($this.InvocationContext.BoundParameters["AttestControls"] -or $this.InvocationContext.BoundParameters["ControlsToAttest"])
-				{
-					throw ([SuppressedException]::new($MigrationWarning,[SuppressedExceptionType]::Generic))
-				}
-				else
-				{
-					Write-Host "WARNING: $MigrationWarning" -ForegroundColor Yellow
-				}
-			}
-		}		
+        }		
     }
 
 	[void] InvokeAutoUpdate()

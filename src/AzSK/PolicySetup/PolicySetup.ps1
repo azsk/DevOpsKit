@@ -119,6 +119,16 @@ function Update-AzSKOrganizationPolicy
 	.DESCRIPTION
 	This command is intended to be used by central Organization team to setup Organization specific policies
 
+	.PARAMETER SubscriptionId
+		Subscription ID of the Azure subscription in which organization policy is stored.
+	.PARAMETER OrgName
+			The name of your organization. The value will be used to generate names of Azure resources being created as part of policy setup. This should be alphanumeric.
+	.PARAMETER ResourceGroupName
+			Resource group name for resource name.
+	.PARAMETER StorageAccountName
+			Specify the name for policy storage account
+	.PARAMETER MonitoringDashboardLocation
+			Location of Azure shared dashboard to monitor your organization adoption to AzSK
 	#>
 	
 	[OutputType([String])]

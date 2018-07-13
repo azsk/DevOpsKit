@@ -42,7 +42,7 @@ function Get-AzSKAzureServicesSecurityStatus
 	.PARAMETER GenerateFixScript
 		Switch to specify whether to generate script to fix the control or not.
 	.PARAMETER ControlsToAttest
-		Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
+		Using this switch, AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
 	.PARAMETER BulkClear
 		Use this option if you want to clear the attestation for multiple resources in bulk, for a specified controlId.
 	.PARAMETER JustificationText

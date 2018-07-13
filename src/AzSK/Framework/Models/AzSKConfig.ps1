@@ -36,11 +36,10 @@ class AzSKConfig
 	[string] $CASetupRunbookURL;
 	[string] $AzSKConfigURL;
     [bool] $IsAlertMonitoringEnabled;
-    [string] $MigrationWarning;
 	[string] $SupportDL;
 	[string] $RunbookScanAgentBaseVersion;
 	[string] $PolicyOrgName;
-	[bool] $PersistScanReportInSubscription;
+	[bool] $StoreComplianceSummaryInUserSubscriptions;
 	[string] $LatestPSGalleryVersion;
 	hidden static [AzSKConfig] $Instance = $null;
 	

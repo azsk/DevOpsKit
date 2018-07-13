@@ -148,3 +148,10 @@ enum OverrideConfigurationType
 	All
 	None
 }
+
+enum RemoveConfiguredCASetting
+{
+	OMSSettings
+	AltOMSSettings
+	WebhookSettings
+}

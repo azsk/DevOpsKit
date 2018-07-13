@@ -1,4 +1,4 @@
-using namespace System.Management.Automation
+﻿using namespace System.Management.Automation
 Set-StrictMode -Version Latest 
 class CCAutomation: CommandBase
 { 
@@ -34,7 +34,7 @@ class CCAutomation: CommandBase
 	[bool] $IsMultiCAModeOn = $false;
 	[bool] $IsCustomAADAppName = $false;
 	[bool] $ExhaustiveCheck = $false;
-	[bool] $ScanOnResourceCreation = $false;
+	[bool] $ScanOnDeployment = $false;
 	[CAReportsLocation] $LoggingOption = [CAReportsLocation]::CentralSub;
 
 	[string] $MinReqdCARunbookVersion = "2.1709.0"
@@ -422,11 +422,6 @@ class CCAutomation: CommandBase
 			"You may subsequently update any of the parameters specified during installation using the '$($this.updateCommandName)' command. If you specified '*' for resource groups, new resource groups will be automatically picked up for scanning.`r`n"+
 			"You should use the AzSK OMS solution to monitor your subscription and resource health status.`r`n",[MessageType]::Update)
 			$messages += [MessageData]::new("The following resources were created in resource group: ["+$this.AutomationAccount.ResourceGroup+"] as part of Continuous Assurance",$this.OutputObject)
-
-			#-------- #AzSK TBR--------#
-			#[MigrationHelper]::TryMigration($this.SubscriptionContext,$this.invocationContext,$false)
-			#------------------------------#
-
 		}
 		catch
 		{
@@ -981,6 +976,11 @@ class CCAutomation: CommandBase
 			$existingRunbook = Get-AzureRmAutomationRunbook -AutomationAccountName $this.AutomationAccount.Name `
 			-ResourceGroupName $this.AutomationAccount.ResourceGroup 
 
+			if(-not $this.ScanOnDeployment)
+			{
+				$existingRunbook = $existingRunbook | Where-Object { $_.Name –ne [Constants]::Alert_ResourceCreation_Runbook }  
+			}
+			
 			if((($scheduledRunbooks|Measure-Object).Count -gt 0) -and (($existingRunbook|Measure-Object).Count -gt 0))
 			{
 				#check if runbook exists to unlink schedules
@@ -999,7 +999,7 @@ class CCAutomation: CommandBase
 			}
 			$this.PublishCustomMessage("Updating runbook: [$($this.RunbookName)]")
 			$this.NewCCRunbook()
-			if($this.ScanOnResourceCreation)
+			if($this.ScanOnDeployment)
 			{
 				$this.SetResourceCreationScan()
 			}
@@ -1824,20 +1824,20 @@ class CCAutomation: CommandBase
 		{
 			$failMsg = "OMS workspace ID is not set up."			
 			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -OMSWorkspaceId <OMSWorkspaceId> -OMSSharedKey <OMSSharedKey>'."
-			$resultMsg = "$failMsg`r`n$resolvemsg"
-			$resultStatus = "Failed"
-			$shouldReturn = $true
+			$resultMsg +="$failMsg`r`n"
+			$resultStatus = "Warning"
+			$shouldReturn = $false
 			
 		}
 		if(!$this.IsOMSKeyVariableAvailable())
 		{
 			$failMsg = "OMS workspace key is not set up."			
 			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -OMSSharedKey <OMSSharedKey>'."
-			$resultMsg = "$failMsg`r`n$resolvemsg"
-			$resultStatus = "Failed"
-			$shouldReturn = $true
+			$resultMsg +="$failMsg`r`n$resolvemsg"
+			$resultStatus = "Warning"
+			$shouldReturn = $false
 		}		
-		if($resultStatus -ne "Failed")
+		if($resultStatus -ne "Warning" )
 		{
 			$resultStatus = "OK"
 			$resultMsg = ""				
@@ -1845,7 +1845,7 @@ class CCAutomation: CommandBase
 		if($shouldReturn)
 		{
 			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
-			return $messages
+			return $messages 
 		}
 		else 
 		{
@@ -2162,7 +2162,7 @@ class CCAutomation: CommandBase
 	{
 		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.invocationContext,"Mandatory");
 		$actionGroupResourceId = $alert.SetupAlertActionGroup();
-		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "Resource_Creation");
+		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "Deployment,CICD");
 		$alert.SetAlerts($actionGroupResourceId);
 	}
 
@@ -2435,7 +2435,7 @@ class CCAutomation: CommandBase
 		#Create CA alerts runbook
 		$this.SetAzSKAlertMonitoringRunbook($false)
 
-		if($this.ScanOnResourceCreation)
+		if($this.ScanOnDeployment)
 		{
 			$this.SetResourceCreationScan()
 		}
@@ -2476,15 +2476,15 @@ class CCAutomation: CommandBase
 			Key="Continuous_Assurance_Runbook"
         }	
 		
-		if($this.ScanOnResourceCreation)
+		if($this.ScanOnDeployment)
 		{
 		  $ResourceAddition_Runbooks = [Runbook]@{
-            Name = "Continuous_Assurance_Resource_Creation_Runbook";
+            Name = "Continuous_Assurance_ScanOnTrigger_Runbook";
             Type = "PowerShell";
 			Description = "This runbook will be triggered on Resource Addition.";
 			LogProgress = $false;
 			LogVerbose = $false;
-			Key="Continuous_Assurance_Resource_Creation_Runbook"
+			Key="Continuous_Assurance_ScanOnTrigger_Runbook"
           }
 		 $this.Runbooks += @($CCRunbook,$ResourceAddition_Runbooks)
 		}
@@ -3627,6 +3627,83 @@ class CCAutomation: CommandBase
 		$azskRGName = $this.AutomationAccount.CoreResourceGroup;
 		$version = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion;
 		[Helpers]::SetResourceGroupTags($azskRGName,@{$($this.RunbookVersionTagName)=$version}, $true)
+	}
+	#endregion
+
+	#region: Remove configured setting from CA
+	hidden [void] RemoveOMSSettings()
+	{
+		$OMSVariable = $this.GetOMSWSID()
+		try
+		{
+			if($null -ne $OMSVariable)
+			{			
+				$this.PublishCustomMessage("Removing OMS settings... ");
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue			
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSSharedKey" -ErrorAction SilentlyContinue		
+				$this.PublishCustomMessage("Completed")
+			}
+			else
+			{
+				$this.PublishCustomMessage("Unable to find OMS workspace Id for current Automation Account ")
+			}
+		}catch
+		{
+			$this.PublishCustomMessage("Unable to remove OMS settings.")
+		}
+	}
+	hidden [void] RemoveAltOMSSettings()
+	{
+		$altOMSWSID=$this.GetAltOMSWSID();
+		try
+		{
+			if($null -ne $altOMSWSID)
+			{
+				$this.PublishCustomMessage("Removing AltOMS settings... ");
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue			
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue		
+				$this.PublishCustomMessage("Completed")
+			}
+			else
+			{
+				$this.PublishCustomMessage("Unable to find AltOMS workspace Id for current Automation Account ")
+
+			}
+		}catch
+		{
+			$this.PublishCustomMessage("Unable to remove AltOMS settings.")
+		}
+	}
+	hidden [void] RemoveWebhookSettings()
+	{
+		$WebhookUrl=$this.GetWebhookURL()
+		try
+		{
+			if($null -ne $WebhookUrl)
+			{
+				$this.PublishCustomMessage("Removing Webhook settings... ")
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookUrl" -ErrorAction SilentlyContinue			
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookAuthZHeaderName" -ErrorAction SilentlyContinue		
+				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookAuthZHeaderValue" -ErrorAction SilentlyContinue		
+				$this.PublishCustomMessage("Completed")
+			}
+			else
+			{
+				$this.PublishCustomMessage("Unable to find webhook url for current Automation Account ")
+			}
+		}catch
+		{
+			$this.PublishCustomMessage("Unable to remove Webhook settings.")
+		}
+
+
 	}
 	#endregion
 }
