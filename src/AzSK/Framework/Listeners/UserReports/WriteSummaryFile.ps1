@@ -46,19 +46,24 @@ class WriteSummaryFile: FileOutputBase
 			
 			if(($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0)
 			{
-				# Export CSV Report
-				try 
-				{
-					$currentInstance.SetFilePath($Event.SourceArgs[0].SubscriptionContext, ("SecurityReport-" + $currentInstance.RunIdentifier + ".csv"));
-					$currentInstance.WriteToCSV($Event.SourceArgs);
-					$currentInstance.FilePath = "";
-				}
-				catch 
-				{
-					$currentInstance.PublishException($_);
-				}
-
+				$currentInstance.SetFilePath($Event.SourceArgs[0].SubscriptionContext, ("SecurityReport-" + $currentInstance.RunIdentifier + ".csv"));
 			}
+			else
+			{
+				$currentInstance.SetFilePath($Event.SourceArgs[0].SubscriptionContext, ("AttestationReport-" + $currentInstance.RunIdentifier + ".csv"));
+			}
+
+			# Export CSV Report
+			try 
+			{
+				$currentInstance.WriteToCSV($Event.SourceArgs);
+				$currentInstance.FilePath = "";
+			}
+			catch 
+			{
+				$currentInstance.PublishException($_);
+			}
+
         });
 
         $this.RegisterEvent([AzSKRootEvent]::UnsupportedResources, {
