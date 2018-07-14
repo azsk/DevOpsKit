@@ -91,19 +91,23 @@ class WriteCAStatus: ListenerBase
                         {
                             $resourceHashMap.Add($subHash,$props.SubscriptionContext.Scope);
                         }
-                        $deletedResources = @();
+                        [string[]] $deletedResources = @();
                     
                         foreach($resourceRecord in $complianceData)
                         {
-                            if($null -eq $resourceHashMap[$resourceRecord.PartitionKey])
-                            {
-                                $resourceRecord.IsActive = $false;
-                                $deletedResources += $resourceRecord;
+                            if($null -eq $resourceHashMap[$resourceRecord.PartitionKey] -and -not $deletedResources.Contains($resourceRecord.PartitionKey))
+                            {                                
+                                $deletedResources += $resourceRecord.PartitionKey;
                             }
                         }
                         if(($deletedResources | Measure-Object).Count -gt 0)
                         {
-                            $complianceReportHelper.SetLocalSubscriptionScanReport($deletedResources);
+                            $recordsToBeDeleted = $complianceReportHelper.GetSubscriptionComplianceReport($deletedResources);
+                            if(($recordsToBeDeleted | Measure-Object).Count -gt 0)
+                            {
+                                $recordsToBeDeleted | ForEach-Object { $_.IsActive = $false;}
+                            }
+                            $complianceReportHelper.SetLocalSubscriptionScanReport($recordsToBeDeleted);
                         }
                     }                    
                 }               
