@@ -1187,7 +1187,7 @@ class SVTBase: AzSKRoot
 					$currentControl.MaximumAllowedGraceDays = $this.CalculateGraceInDays($singleControlResult);
 
 					# Setting isControlInGrace Flag		
-					if($scanFromDays -le $currentControl.MaximumAllowedGraceDays)
+					if($scanFromDays.Days -le $currentControl.MaximumAllowedGraceDays)
 					{
 						$currentControl.IsControlInGrace = $true
 					}
