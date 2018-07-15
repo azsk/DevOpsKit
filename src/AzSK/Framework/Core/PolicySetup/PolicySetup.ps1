@@ -156,9 +156,7 @@ class PolicySetup: CommandBase
 				if (-not (Test-Path $localPolicyFolderPath))
 				{
 					mkdir -Path $localPolicyFolderPath -ErrorAction Stop | Out-Null
-				}
-
-				Copy-Item ($PSScriptRoot + "\README.txt") ($localPolicyFolderPath + "README.txt") -Force
+				}				
 				$this.FolderPath = $localPolicyFolderPath;
 			}
 			catch
@@ -374,6 +372,8 @@ class PolicySetup: CommandBase
 		{
 			$this.ValidatePolicyExists()
 		}
+
+		Copy-Item ($PSScriptRoot + "\README.txt") ($($This.FolderPath) + "README.txt") -Force
 		$this.AppInsightInstance.CreateAppInsightIfNotExists();
 		$container = $this.StorageAccountInstance.CreateStorageContainerIfNotExists($this.InstallerContainerName, [BlobContainerPublicAccessType]::Blob);
 		if($container -and $container.CloudBlobContainer)
@@ -1053,8 +1053,7 @@ class PolicySetup: CommandBase
 			if($CARunbookOutput.CoreSetupURL -and $CARunbookOutput.PolicyURL)
 			{
 				$resultMsg = "Installed CA runbook is configured with Org policy url."
-				$resultStatus = "OK"
-				$PolicyScanOutput.SyntaxException.Status =$true
+				$resultStatus = "OK"				
 				$CARunbookOutput.Status = $true
 			}
 			else

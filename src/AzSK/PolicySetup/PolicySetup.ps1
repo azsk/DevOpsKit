@@ -136,24 +136,22 @@ function Update-AzSKOrganizationPolicy
 	(
 		[string]
         [Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Default")]
-        [Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Custom")]        
+		[Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Custom")] 
+		[Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Extensions")]       
 		[ValidateNotNullOrEmpty()]
 		$SubscriptionId,
 
-		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]        
-        [string]
-		$ResourceGroupLocation,
-
-		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]        
+		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Extensions")]     
         [string]
 		$ResourceGroupName,
 
-		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]        
+		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Extensions")]       
         [string]
 		$StorageAccountName,
 
-		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]        
+		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
         [string]
 		$AppInsightName,
 		
@@ -162,20 +160,24 @@ function Update-AzSKOrganizationPolicy
 		$MonitoringDashboardLocation,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Default")]
-		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]        
+		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $true,  ParameterSetName = "Extensions")]        
         [string]
 		$OrgName,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]        
+		[Parameter(Mandatory = $false, ParameterSetName = "Extensions")]
         [string]
 		$DepartmentName,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $true,  ParameterSetName = "Extensions")]
 		[Alias("PolicyFolderName")]
 		[string]
 		$PolicyFolderPath,
 		
+		[Parameter(Mandatory = $true,  ParameterSetName = "Extensions")]
 		[switch]
 		$Extensions,
 
@@ -187,6 +189,7 @@ function Update-AzSKOrganizationPolicy
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Switch to specify whether to open output folder.")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
+		[Parameter(Mandatory = $false, Position = 0, ParameterSetName = "Extensions")]
 		$DoNotOpenOutputFolder
     )
 	Begin
@@ -198,7 +201,7 @@ function Update-AzSKOrganizationPolicy
 	{
 		try 
 		{
-			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $null, $ResourceGroupLocation,$MonitoringDashboardLocation, $PolicyFolderPath);
+			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $null, $null,$MonitoringDashboardLocation, $PolicyFolderPath);
 			if($policy)
 			{
 				$policy.IsUpdateSwitchOn = $true
