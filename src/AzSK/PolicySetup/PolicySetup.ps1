@@ -152,8 +152,12 @@ function Update-AzSKOrganizationPolicy
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]        
         [string]
 		$StorageAccountName,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]        
+        [string]
+		$AppInsightName,
 		
-		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
 		[string]
 		$MonitoringDashboardLocation,
 
@@ -172,11 +176,12 @@ function Update-AzSKOrganizationPolicy
 		[string]
 		$PolicyFolderPath,
 		
+		[switch]
+		$Extensions,
 
 		[ValidateSet("CARunbooks", "AzSKRootConfig","MonitoringDashboard","OrgAzSKVersion", "All")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Override base configurations setup by AzSK.")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Override base configurations setup by AzSK.")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Migrate", HelpMessage = "Override base configurations setup by AzSK.")] 
 		$OverrideBaseConfig = [OverrideConfigurationType]::None,
 
 		[switch]
@@ -192,19 +197,26 @@ function Update-AzSKOrganizationPolicy
 	Process
 	{
 		try 
-		{					
-			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $AppInsightLocation, $ResourceGroupLocation,$MonitoringDashboardLocation, $PolicyFolderPath);
-			if ($policy) 
-			{				
-				$policy.OverrideConfiguration = $OverrideBaseConfig
+		{
+			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $null, $ResourceGroupLocation,$MonitoringDashboardLocation, $PolicyFolderPath);
+			if($policy)
+			{
 				$policy.IsUpdateSwitchOn = $true
+				if($Extensions)
+				{
+					return $policy.InvokeFunction($policy.UpdateExtensions)
+				}
+				else {
+				$policy.OverrideConfiguration = $OverrideBaseConfig				
 				return $policy.InvokeFunction($policy.InstallPolicy);
+				}
+				
 			}
 		}
-		catch 
+		catch
 		{
 			[EventBase]::PublishGenericException($_);
-		}  
+		}
 	}
 	End
 	{
@@ -221,7 +233,6 @@ function Get-AzSKOrganizationPolicyStatus
 	.DESCRIPTION
 	This command is intended to be used by central Organization team to check health of custom Org policy
 	#>
-	
 	[OutputType([String])]
 	Param
 	(
@@ -242,7 +253,21 @@ function Get-AzSKOrganizationPolicyStatus
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
         [string]
-		$ResourceGroupName
+		$ResourceGroupName,
+
+		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
+        [string]
+		$StorageAccountName,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
+        [string]
+		$AppInsightName,
+
+        [switch]
+		$DownloadPolicy,
+
+		[string]
+		$PolicyFolderPath
 	)
 
 	Begin
@@ -252,19 +277,25 @@ function Get-AzSKOrganizationPolicyStatus
 	}
 	Process
 	{
-		try 
-		{						
-			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$null,$null, $null, $null,$null, $null);
-			if ($policy) 
-			{							
-				$policy.IsUpdateSwitchOn = $true
-				return $policy.InvokeFunction($policy.CheckPolicyHealth);
+		try
+		{
+			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $null, $null,$null, $PolicyFolderPath);
+			if ($policy)
+			{
+				$policy.IsUpdateSwitchOn = $false
+				if($DownloadPolicy)
+				{
+					$policyList = $policy.InvokeFunction($policy.DownloadPolicy);
+				}
+				else {
+					return $policy.InvokeFunction($policy.CheckPolicyHealth);
+				}
 			}
 		}
-		catch 
+		catch
 		{
 			[EventBase]::PublishGenericException($_);
-		}  
+		}
 	}
 	End
 	{

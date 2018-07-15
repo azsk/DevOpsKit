@@ -1412,16 +1412,16 @@ class Helpers {
         return $sharedKey    	
     }
 
-    static [void] CreateFolder($FolderPath)
+    static [void] CreateFolderIfNotExist($FolderPath,$MakeFolderEmpty)
     {
         if(-not (Test-Path $FolderPath))
 		{
 			mkdir -Path $FolderPath -ErrorAction Stop | Out-Null
-		}
-		else
-		{
-			Remove-Item -Path "$FolderPath\*" -Force -Recurse 
-		}
+        }
+        elseif($MakeFolderEmpty)
+        {
+            Remove-Item -Path "$FolderPath*" -Force -Recurse
+        }
     }
 
     Static [string] GetSubString($CotentString, $Pattern)
