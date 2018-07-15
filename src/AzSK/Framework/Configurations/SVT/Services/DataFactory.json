@@ -16,6 +16,7 @@
         "SDL",
         "TCP",
         "Automated",
+        "DataFactoryV1",
         "DP"
       ],
       "Enabled": true
@@ -33,6 +34,8 @@
         "SDL",
         "TCP",
         "Manual",
+        "DataFactoryV1",
+        "DataFactoryV2",
         "AuthZ"
       ],
       "Enabled": true
@@ -50,6 +53,7 @@
         "SDL",
         "TCP",
         "Manual",
+        "DataFactoryV1",
         "Config"
       ],
       "Enabled": true
@@ -67,6 +71,7 @@
         "SDL",
         "TCP",
         "Manual",
+        "DataFactoryV1",
         "Deploy"
       ],
       "Enabled": true
@@ -84,6 +89,7 @@
         "SDL",
         "TCP",
         "Manual",
+        "DataFactoryV1",
         "DP"
       ],
       "Enabled": true
@@ -101,6 +107,7 @@
         "SDL",
         "TCP",
         "Manual",
+        "DataFactoryV1",
         "AuthZ"
       ],
       "Enabled": true
@@ -118,6 +125,7 @@
         "SDL",
         "TCP",
         "Manual",
+        "DataFactoryV1",
         "Audit"
       ],
       "Enabled": true
@@ -135,6 +143,7 @@
         "SDL",
         "TCP",
         "Manual",
+        "DataFactoryV1",
         "AuthN"
       ],
       "Enabled": true
@@ -152,6 +161,7 @@
         "SDL",
         "TCP",
         "Manual",
+        "DataFactoryV1",
         "BCDR"
       ],
       "Enabled": true
@@ -169,6 +179,7 @@
         "SDL",
         "TCP",
         "Manual",
+        "DataFactoryV1",
         "DP"
       ],
       "Enabled": true
@@ -186,6 +197,7 @@
         "SDL",
         "Best Practice",
         "Manual",
+        "DataFactoryV1",
         "BCDR"
       ],
       "Enabled": true
@@ -203,6 +215,7 @@
         "SDL",
         "TCP",
         "Manual",
+        "DataFactoryV1",
         "DP"
       ],
       "Enabled": true
@@ -220,6 +233,7 @@
         "SDL",
         "Best Practice",
         "Manual",
+        "DataFactoryV1",
         "BCDR"
       ],
       "Enabled": true
@@ -237,7 +251,7 @@
         "SDL",
         "TCP",
         "DP",
-        "V2",
+        "DataFactoryV2",
         "Manual"
       ],
       "Enabled": true
@@ -255,7 +269,7 @@
         "SDL",
         "Best Practice",
         "DP",
-        "V2",
+        "DataFactoryV2",
         "Manual"
       ],
       "Enabled": true
@@ -268,16 +282,17 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Configuring activity output as 'Secure Output' prevents it from getting logged to monitoring.",
-      "Recommendation": "To enable secure output, please follow these steps - (a) Log on to Logon to https://portal.azure.com/ (b) Navigate to 'Data factories' (c) Navigate to the data factory you want to modify (d) Click on the 'Author and Monitor'. This will launch the data factory portal (e) Select the appropriate activity under the pipeline you want to modify (f) Go to 'General' tab and select the checkbox 'Secure Output' (g) Publish the pipeline.",
+      "Recommendation": "To enable secure output, please follow these steps - (a) Logon to https://portal.azure.com/ (b) Navigate to 'Data factories' (c) Navigate to the data factory you want to modify (d) Click on the 'Author and Monitor'. This will launch the data factory portal (e) Select the appropriate activity under the pipeline you want to modify (f) Go to 'General' tab and select the checkbox 'Secure Output' (g) Publish the pipeline.",
       "Tags": [
         "SDL",
         "Best Practice",
         "DP",
-        "V2",
+        "DataFactoryV2",
         "Manual"
       ],
       "Enabled": true
     }
-    
+
+
   ]
 }
