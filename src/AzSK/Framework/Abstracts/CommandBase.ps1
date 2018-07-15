@@ -176,14 +176,24 @@ class CommandBase: AzSKRoot {
 			{
 				throw ([SuppressedException]::new(("Your version of AzSK is too old. Please update now!"),[SuppressedExceptionType]::Generic))
 			}
-			$psGalleryVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetAzSKLatestPSGalleryVersion($this.GetModuleName()));			
+		}
+		
+		$psGalleryVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetAzSKLatestPSGalleryVersion($this.GetModuleName()));			
+		if($psGalleryVersion -ne $serverVersion)
+		{
+			$serverVersions = @()
+			[ConfigurationManager]::GetAzSKConfigData().GetAzSKVersionList($this.GetModuleName()) | ForEach-Object { 
+				#Take major and minor version and ignore build version for comparision
+			   $serverVersions+= [System.Version] ("$($_.Major)" +"." + "$($_.Minor)")
+			 }			
+			$serverVersions =  $serverVersions | Select-Object -Unique
 			$latestVersionAvailableFromGallery = $serverVersions | Where-Object {$_ -gt $serverVersion}
 			if(($latestVersionAvailableFromGallery | Measure-Object).Count -gt [ConfigurationManager]::GetAzSKConfigData().BackwardCompatibleVersionCount)
 			{
-				$this.PublishCustomMessage("Your Org AzSK version[$serverVersion] is too old. Consider updating it to latest available version[$psGalleryVersion].");
+				$this.PublishCustomMessage("Your Org AzSK version[$serverVersion] is too old. Consider updating it to latest available version[$psGalleryVersion].",[MessageType]::Error);
 			}
-
-        }		
+		}
+		
     }
 
 	[void] InvokeAutoUpdate()
