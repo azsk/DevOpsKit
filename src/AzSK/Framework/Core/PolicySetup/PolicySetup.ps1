@@ -226,9 +226,11 @@ class PolicySetup: CommandBase
 		$ServerConfigMetadataFile = (Get-ChildItem $this.ConfigFolderPath -Recurse -Force -Include $([Constants]::ServerConfigMetadataFileName) -ErrorAction SilentlyContinue)
 		# Dynamically get list of files available in folder
 		# TODO: Need to optimize the logic to calculate ServerConfigMetadataFileContent
-		$filelist += Get-ChildItem $this.ConfigFolderPath -Recurse -Force
+		
 		if($ServerConfigMetadataFile)
 		{
+			$filelist =@()
+			$filelist += Get-ChildItem $this.ConfigFolderPath -Recurse -Force
 			$ServerConfigMetadataFileContent =Get-Content $ServerConfigMetadataFile | ConvertFrom-Json
 			$ConfigList = Get-ChildItem -Path $this.ConfigFolderPath -Recurse -File -Exclude "ServerConfigMetadata.json" | Select Name | ForEach-Object { $_.Name}
 			if(($ConfigList | Measure-Object).Count -gt 0 )
@@ -236,7 +238,7 @@ class PolicySetup: CommandBase
 				$filelist | ForEach-Object {
 					$fileName = $_.Name
 					$ExistingFileConfig= $ServerConfigMetadataFileContent.OnlinePolicyList | Where-Object { $_.Name -eq  $fileName}
-					if(($ExistingFileConfig | Measure-Object).Count -gt 0 -and  [Helpers]::CheckMember($ExistingFileConfig,"OverrideOffline") -and $ExistingFileConfig.OverrideOffline )
+					if((($ExistingFileConfig | Measure-Object).Count -gt 0 -and  [Helpers]::CheckMember($ExistingFileConfig,"OverrideOffline") -and $ExistingFileConfig.OverrideOffline) -or  $fileName -like "*.ext.json" -or $fileName -like "*.ext.ps1" )
 					{
 						$metadataFileNames +=@{"Name"= $fileName; "OverrideOffline"=$True }
 					}
@@ -373,7 +375,7 @@ class PolicySetup: CommandBase
 			$this.ValidatePolicyExists()
 		}
 
-		Copy-Item ($PSScriptRoot + "\README.txt") ($($This.FolderPath) + "README.txt") -Force
+		
 		$this.AppInsightInstance.CreateAppInsightIfNotExists();
 		$container = $this.StorageAccountInstance.CreateStorageContainerIfNotExists($this.InstallerContainerName, [BlobContainerPublicAccessType]::Blob);
 		if($container -and $container.CloudBlobContainer)
@@ -389,8 +391,55 @@ class PolicySetup: CommandBase
 			$this.AzSKConfigURL = $container.CloudBlobContainer.Uri.AbsoluteUri + "/$($this.RunbookBaseVersion)/AzSK.Pre.json" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
 		}
 
-		$this.ModifyInstaller();
+		if(Test-Path -Path $this.ConfigFolderPath)
+		{
+			$include=@("*.ext.ps1","*.json",[Constants]::ServerConfigMetadataFileName)
+			$policyFiles = Get-ChildItem -Path $this.ConfigFolderPath -Include $include -Recurse
+			if(($policyFiles | Measure-Object).Count -gt 0)
+			{
+				#Validate if all Json file has any syntax issue			
+				$InvalidSchemaJsonFiles = @()
 
+				$policyFiles | Where-Object {$_.Name -like "*.json" } | ForEach-Object {
+					$fileName = $_.Name
+					try{
+						$policyContent = Get-Content  $_.FullName | ConvertFrom-Json 
+					}
+					catch
+					{
+						$InvalidSchemaJsonFiles += $fileName
+					}
+				}
+
+				#Validate if all PS1 file has any syntax issue
+				$InvalidSchemaPSFiles = @()
+				$policyFiles | Where-Object {$_.Name -like "*.ext.ps1" } | ForEach-Object {
+					$fileName = $_.Name
+					try{
+						. $_.FullName  
+					}
+					catch
+					{
+						$InvalidSchemaPSFiles += $fileName
+					}
+				}
+
+				if(($InvalidSchemaJsonFiles | Measure-Object).Count -gt 0 -or  ($InvalidSchemaPSFiles | Measure-Object).Count -gt 0)
+				{
+					if(($InvalidSchemaJsonFiles | Measure-Object).Count -gt 0 )
+					{
+						$this.PublishCustomMessage("Invalid schema for Json files: $($InvalidSchemaJsonFiles -Join ',')", [MessageType]::Error);
+					}
+
+					if(($InvalidSchemaPSFiles | Measure-Object).Count -gt 0 )
+					{
+						$this.PublishCustomMessage("Invalid schema for PS1 files: $($InvalidSchemaPSFiles -Join ','). Make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply)", [MessageType]::Error);
+					}
+					throw ([SuppressedException]::new("Invalid schema found. Please correct shema and reupload policies.", [SuppressedExceptionType]::Generic))
+				}
+			}
+		}
+		$this.ModifyInstaller();
 		$this.StorageAccountInstance.UploadFilesToBlob($this.InstallerContainerName, "", (Get-ChildItem -Path $this.InstallerFile));
 
 		$this.CopyRunbook();
@@ -400,7 +449,10 @@ class PolicySetup: CommandBase
 		}
 		$this.ModifyConfigs();
 		$allFiles = @();
-		$allFiles += Get-ChildItem $this.ConfigFolderPath -Recurse -Force | Where-Object { $_.mode -match "-a---" } 
+		$allFiles += Get-ChildItem $this.ConfigFolderPath -Recurse -Force | Where-Object { $_.mode -match "-a---" }
+
+		
+
 		if($allFiles.Count -ne 0)
 		{
 			$this.StorageAccountInstance.UploadFilesToBlob($this.ConfigContainerName, $this.Version, $allFiles);
@@ -409,7 +461,7 @@ class PolicySetup: CommandBase
 		{
 			$this.PublishCustomMessage(" `r`n.No configuration files found under folder [$($this.ConfigFolderPath)]", [MessageType]::Warning);
 		}
-
+		Copy-Item ($PSScriptRoot + "\README.txt") ($($This.FolderPath) + "README.txt") -Force
 		$this.CreateMonitoringDashboard()
 		$this.PublishCustomMessage(" `r`nThe setup has been completed and policies have been copied to [$($this.FolderPath)].`r`nRun the command below to install Organization specific version.`r`n$($this.IWRCommand)", [MessageType]::Update);
 		$this.PublishCustomMessage(" `r`nNote: This is a basic setup and uses a public access blob for storing your org's installer. Once you have richer org policies, consider using a location/end-point protected by your tenant authentication.", [MessageType]::Warning);
@@ -466,7 +518,7 @@ class PolicySetup: CommandBase
 
 		if(-not $OrgPolicyRG)
 		{
-			throw ([SuppressedException]::new(("Org policy not found under resource group '$($this.ResourceGroupName)'. Please pass 'ResourceGroupName' parameter to command if custom RG name used to setup policy."), [SuppressedExceptionType]::InvalidArgument))
+			throw ([SuppressedException]::new(("Org policy not found under resource group '$($this.ResourceGroupName)'. Please pass 'ResourceGroupName' and 'StorageAccountName' parameter to command if custom RG and StorageAccount name used to setup policy."), [SuppressedExceptionType]::InvalidArgument))
 
 		}
 		if (-not (Test-Path $this.FolderPath))
@@ -1120,11 +1172,7 @@ class PolicySetup: CommandBase
 			if(($InvalidSchemaJsonFiles | Measure-Object).Count -gt 0 -or  ($InvalidSchemaPSFiles | Measure-Object).Count -gt 0)
 			{
 				$PolicyScanOutput.SyntaxException.Status = $false
-				$failMsg = "Invalid schema present in policy files."			
-				$resolvemsg = "To resolve this, make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply)"
-				$resultMsg = "$failMsg`r`n$resolvemsg"
-				$resultStatus = "Failed"
-				$shouldReturn = $false
+				$failMsg = "Invalid schema present in policy files."
 				if(($InvalidSchemaJsonFiles | Measure-Object).Count -gt 0 )
 				{
 					$failMsg +="Json files: $($InvalidSchemaJsonFiles -Join ',')";
@@ -1133,7 +1181,12 @@ class PolicySetup: CommandBase
 				if(($InvalidSchemaPSFiles | Measure-Object).Count -gt 0 )
 				{
 					$failMsg +="PS1 files: $($InvalidSchemaPSFiles -Join ',')."
-				}				
+				}						
+				$resolvemsg = "To resolve this, make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply)"
+				$resultMsg = "$failMsg`r`n$resolvemsg"
+				$resultStatus = "Failed"
+				$shouldReturn = $false
+					
 			}
 			else
 			{
