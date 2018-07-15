@@ -27,7 +27,8 @@ class CommandBase: AzSKRoot {
 		#Validate if command is getting run with correct Org Policy
 		$IsTagSettingRequired=$this.ValidateOrgPolicyOnSubscription($this.Force)
 		 #Validate if command has AzSK component write permission
-		if($this.GetCommandMetadata().HasAzSKComponentWritePermission -and ($IsTagSettingRequired -or $this.Force))
+		$commandMetadata= $this.GetCommandMetadata()
+		if(([Helpers]::CheckMember($commandMetadata,"HasAzSKComponentWritePermission")) -and  $commandMetadata.HasAzSKComponentWritePermission -and ($IsTagSettingRequired -or $this.Force))
 		{
 			#If command is running with Org-neutral Policy or switch Org policy, Set Org Policy tag on subscription
 			$this.SetOrgPolicyTag($this.Force)
@@ -174,8 +175,25 @@ class CommandBase: AzSKRoot {
 			if(($latestVersionList | Measure-Object).Count -gt [ConfigurationManager]::GetAzSKConfigData().BackwardCompatibleVersionCount)
 			{
 				throw ([SuppressedException]::new(("Your version of AzSK is too old. Please update now!"),[SuppressedExceptionType]::Generic))
-			}			
-        }		
+			}
+		}
+		
+		$psGalleryVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetAzSKLatestPSGalleryVersion($this.GetModuleName()));			
+		if($psGalleryVersion -ne $serverVersion)
+		{
+			$serverVersions = @()
+			[ConfigurationManager]::GetAzSKConfigData().GetAzSKVersionList($this.GetModuleName()) | ForEach-Object { 
+				#Take major and minor version and ignore build version for comparision
+			   $serverVersions+= [System.Version] ("$($_.Major)" +"." + "$($_.Minor)")
+			 }			
+			$serverVersions =  $serverVersions | Select-Object -Unique
+			$latestVersionAvailableFromGallery = $serverVersions | Where-Object {$_ -gt $serverVersion}
+			if(($latestVersionAvailableFromGallery | Measure-Object).Count -gt [ConfigurationManager]::GetAzSKConfigData().BackwardCompatibleVersionCount)
+			{
+				$this.PublishCustomMessage("Your Org AzSK version[$serverVersion] is too old. Consider updating it to latest available version[$psGalleryVersion].",[MessageType]::Error);
+			}
+		}
+		
     }
 
 	[void] InvokeAutoUpdate()

@@ -132,7 +132,8 @@
 		'Set-AzSKPrivacyNoticeResponse',
 		'Get-AzSKInfo',
 		'Install-AzSKOrganizationPolicy',
-		'Update-AzSKOrganizationPolicy',
+        'Update-AzSKOrganizationPolicy',
+        'Get-AzSKOrganizationPolicyStatus',
 		'Send-AzSKInternalData',
         'Set-AzSKAlertMonitoring',
 		'Remove-AzSKAlertMonitoring'
