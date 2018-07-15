@@ -85,6 +85,12 @@ class SVTMapping
             ClassName = "DataFactory";
 			ResourceTypeName = "DataFactory";
         },
+		[ResourceTypeMapping]@{
+            ResourceType = "Microsoft.DataFactory/factories";
+            JsonFileName = "DataFactory.json";
+            ClassName = "DataFactory";
+            ResourceTypeName = "DataFactoryV2";
+        }, 
         [ResourceTypeMapping]@{
             ResourceType = "Microsoft.Storage/storageAccounts";
             JsonFileName = "Storage.json";
