@@ -1052,7 +1052,7 @@ class PolicySetup: CommandBase
 			}
 			if($CARunbookOutput.CoreSetupURL -and $CARunbookOutput.PolicyURL)
 			{
-				$resultMsg = "Installed CA runbook is configured with Org policy url."
+				$resultMsg = ""
 				$resultStatus = "OK"				
 				$CARunbookOutput.Status = $true
 			}
@@ -1152,7 +1152,7 @@ class PolicySetup: CommandBase
 		}
 
 
-		if(-not $PolicyScanOutput.Resources.Status -or -not $PolicyScanOutput.Policies.Status -or -not $InstallOutput.Status -or -not $PolicyScanOutput.Configurations.AzSKPre.Status -or  -not $PolicyScanOutput.Configurations.RunbookCoreSetup.Status -or  -not $AzSKConfiguOutput.Status -or $PolicyScanOutput.SyntaxException.Status -or $CARunbookOutput.Status)
+		if(-not $PolicyScanOutput.Resources.Status -or -not $PolicyScanOutput.Policies.Status -or -not $InstallOutput.Status -or -not $PolicyScanOutput.Configurations.AzSKPre.Status -or  -not $PolicyScanOutput.Configurations.RunbookCoreSetup.Status -or  -not $AzSKConfiguOutput.Status -or -not $PolicyScanOutput.SyntaxException.Status -or -not $CARunbookOutput.Status)
 		{
 			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Warning)
 			$this.PublishCustomMessage("Your Org policy configuration is not correctly setup..`nReview the failed check and follow the remedy suggested", [MessageType]::Warning) 
