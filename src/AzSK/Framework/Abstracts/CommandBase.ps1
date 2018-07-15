@@ -175,7 +175,14 @@ class CommandBase: AzSKRoot {
 			if(($latestVersionList | Measure-Object).Count -gt [ConfigurationManager]::GetAzSKConfigData().BackwardCompatibleVersionCount)
 			{
 				throw ([SuppressedException]::new(("Your version of AzSK is too old. Please update now!"),[SuppressedExceptionType]::Generic))
-			}			
+			}
+			$psGalleryVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetAzSKLatestPSGalleryVersion($this.GetModuleName()));			
+			$latestVersionAvailableFromGallery = $serverVersions | Where-Object {$_ -gt $serverVersion}
+			if(($latestVersionAvailableFromGallery | Measure-Object).Count -gt [ConfigurationManager]::GetAzSKConfigData().BackwardCompatibleVersionCount)
+			{
+				$this.PublishCustomMessage("Your Org AzSK version[$serverVersion] is too old. Consider updating it to latest available version[$psGalleryVersion].");
+			}
+
         }		
     }
 

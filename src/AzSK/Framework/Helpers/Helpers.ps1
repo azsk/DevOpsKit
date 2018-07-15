@@ -1429,6 +1429,7 @@ class Helpers {
         return  [regex]::match($CotentString, $pattern).Groups[1].Value
     }
 
+    #TODO: Currently this function is specific to Org PolicyHealth Check. Need to make generic
     Static [string] IsStringEmpty($String)
     {
         if([string]::IsNullOrEmpty($String))
@@ -1437,6 +1438,7 @@ class Helpers {
         }
         else 
         {
+            $String= $String.Split("?")[0]
             return $String
         }
     }

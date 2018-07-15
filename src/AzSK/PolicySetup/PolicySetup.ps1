@@ -238,24 +238,29 @@ function Get-AzSKOrganizationPolicyStatus
 	(
 		[string]
         [Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Default")]
-        [Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $true, Position = 0, ParameterSetName = "DownloadPolicy")]
 		[ValidateNotNullOrEmpty()]
 		$SubscriptionId,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $true, ParameterSetName = "DownloadPolicy")]
         [string]
 		$OrgName,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
+		[Parameter(Mandatory = $false, ParameterSetName = "DownloadPolicy")]
         [string]
 		$DepartmentName,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $false, ParameterSetName = "DownloadPolicy")]
         [string]
 		$ResourceGroupName,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $false, ParameterSetName = "DownloadPolicy")]
         [string]
 		$StorageAccountName,
 
@@ -263,9 +268,11 @@ function Get-AzSKOrganizationPolicyStatus
         [string]
 		$AppInsightName,
 
+		[Parameter(Mandatory = $true, ParameterSetName = "DownloadPolicy")]
         [switch]
 		$DownloadPolicy,
 
+		[Parameter(Mandatory = $true, ParameterSetName = "DownloadPolicy")]
 		[string]
 		$PolicyFolderPath
 	)
@@ -285,7 +292,7 @@ function Get-AzSKOrganizationPolicyStatus
 				$policy.IsUpdateSwitchOn = $false
 				if($DownloadPolicy)
 				{
-					$policyList = $policy.InvokeFunction($policy.DownloadPolicy);
+					$policyList = $policy.InvokeFunction($policy.DownloadPolicies);
 				}
 				else {
 					return $policy.InvokeFunction($policy.CheckPolicyHealth);
