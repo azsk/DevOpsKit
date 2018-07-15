@@ -1018,7 +1018,7 @@ class PolicySetup: CommandBase
 			#Check if OSS CoreSetup is refered in runbooks
 			 $RunbookCoreSetupUrl =  $RunbookCoreSetup.ICloudBlob.Uri.AbsoluteUri
 			 $policyContainerUrl= $AzSKConfig.ICloudBlob.Container.Uri.AbsoluteUri
-			$policyReferenceUrl = "$policyContainerUrl/```$Version/```$FileName"
+			$policyReferenceUrl = "$policyContainerUrl/```$(```$Version)/```$(```$FileName)"
 			if(-not $serverFileContent.Contains($RunbookCoreSetupUrl))
 			{
 				$pattern = 'CoreSetupSrcUrl = "(.*?)"'
