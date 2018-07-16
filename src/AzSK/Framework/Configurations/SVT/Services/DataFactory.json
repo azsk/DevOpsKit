@@ -16,7 +16,7 @@
         "SDL",
         "TCP",
         "Automated",
-        "DataFactoryV1",
+        "DataFactory",
         "DP"
       ],
       "Enabled": true
@@ -34,8 +34,7 @@
         "SDL",
         "TCP",
         "Manual",
-        "DataFactoryV1",
-        "DataFactoryV2",
+        "DataFactory",
         "AuthZ"
       ],
       "Enabled": true
@@ -53,7 +52,7 @@
         "SDL",
         "TCP",
         "Manual",
-        "DataFactoryV1",
+        "DataFactory",
         "Config"
       ],
       "Enabled": true
@@ -71,7 +70,7 @@
         "SDL",
         "TCP",
         "Manual",
-        "DataFactoryV1",
+        "DataFactory",
         "Deploy"
       ],
       "Enabled": true
@@ -89,7 +88,7 @@
         "SDL",
         "TCP",
         "Manual",
-        "DataFactoryV1",
+        "DataFactory",
         "DP"
       ],
       "Enabled": true
@@ -107,7 +106,7 @@
         "SDL",
         "TCP",
         "Manual",
-        "DataFactoryV1",
+        "DataFactory",
         "AuthZ"
       ],
       "Enabled": true
@@ -125,7 +124,7 @@
         "SDL",
         "TCP",
         "Manual",
-        "DataFactoryV1",
+        "DataFactory",
         "Audit"
       ],
       "Enabled": true
@@ -143,7 +142,7 @@
         "SDL",
         "TCP",
         "Manual",
-        "DataFactoryV1",
+        "DataFactory",
         "AuthN"
       ],
       "Enabled": true
@@ -161,7 +160,7 @@
         "SDL",
         "TCP",
         "Manual",
-        "DataFactoryV1",
+        "DataFactory",
         "BCDR"
       ],
       "Enabled": true
@@ -179,7 +178,7 @@
         "SDL",
         "TCP",
         "Manual",
-        "DataFactoryV1",
+        "DataFactory",
         "DP"
       ],
       "Enabled": true
@@ -197,7 +196,7 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "DataFactoryV1",
+        "DataFactory",
         "BCDR"
       ],
       "Enabled": true
@@ -215,7 +214,7 @@
         "SDL",
         "TCP",
         "Manual",
-        "DataFactoryV1",
+        "DataFactory",
         "DP"
       ],
       "Enabled": true
@@ -233,66 +232,10 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "DataFactoryV1",
+        "DataFactory",
         "BCDR"
       ],
       "Enabled": true
-    },
-    {
-      "ControlID": "Azure_DataFactory_DP_KeyVault_for_LinkedSvc_Credentials",
-      "Description": "All linked service credentials should be stored in Key Vault.",
-      "Id": "DataFactory250",
-      "ControlSeverity": "Medium",
-      "Automated": "No",
-      "MethodName": "",
-      "Rationale": "Keeping secrets such as DB connection strings, passwords, keys, etc., in clear text can lead to easy compromise at various avenues during an application's lifecycle. Storing them in a key vault ensures that they are protected at rest.",
-      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/data-factory/store-credentials-in-key-vault",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "DP",
-        "DataFactoryV2",
-        "Manual"
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "Azure_DataFactory_AuthN_Use_Service_Identity",
-      "Description": "Data factory must use a service identity for authenticating to supported linked services.",
-      "Id": "DataFactory260",
-      "ControlSeverity": "Medium",
-      "Automated": "No",
-      "MethodName": "",
-      "Rationale": "Using a service identity for authentication ensures that there is a built-in high level of assurance for subsequent access control.",
-      "Recommendation": "If the data factory was created through Azure SDK or REST API and does not have a service identity then run command: Set-AzureRmDataFactoryV2 -ResourceGroupName <resourceGroupName> -Name <dataFactoryName> -Location <region>",
-      "Tags": [
-        "SDL",
-        "Best Practice",
-        "DP",
-        "DataFactoryV2",
-        "Manual"
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "Azure_DataFactory_DP_Configure_Secure_Output",
-      "Description": "Configure activity output as 'Secure Output' if the activity emits sensitive data.",
-      "Id": "DataFactory270",
-      "ControlSeverity": "Medium",
-      "Automated": "No",
-      "MethodName": "",
-      "Rationale": "Configuring activity output as 'Secure Output' prevents it from getting logged to monitoring.",
-      "Recommendation": "To enable secure output, please follow these steps - (a) Logon to https://portal.azure.com/ (b) Navigate to 'Data factories' (c) Navigate to the data factory you want to modify (d) Click on the 'Author and Monitor'. This will launch the data factory portal (e) Select the appropriate activity under the pipeline you want to modify (f) Go to 'General' tab and select the checkbox 'Secure Output' (g) Publish the pipeline.",
-      "Tags": [
-        "SDL",
-        "Best Practice",
-        "DP",
-        "DataFactoryV2",
-        "Manual"
-      ],
-      "Enabled": true
     }
-
-
   ]
 }

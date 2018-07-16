@@ -33,26 +33,7 @@ class DataFactory: SVTBase
         }
         return $this.ResourceObject;
     }
-
-		[ControlItem[]] ApplyServiceFilters([ControlItem[]] $controls)
-	{
-		if($controls.Count -eq 0)
-		{
-			return $controls;
-		}
-
-		$result = @();
-
-		if([Helpers]::CheckMember($this.ResourceContext, "ResourceType") -and $this.ResourceContext.ResourceType -eq "Microsoft.DataFactory/factories")
-		{
-            $result += $controls | Where-Object {$_.Tags -contains "DataFactoryV2" }
-		}
-		else{
-			$result += $controls | Where-Object {$_.Tags -contains "DataFactoryV1" }
-		}
-				
-		return $result;
-	}
+		
 	
     hidden [ControlResult] CheckDataFactoryLinkedService([ControlResult] $controlResult)
     {
