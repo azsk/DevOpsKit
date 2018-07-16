@@ -50,19 +50,20 @@ class OMSOutput: ListenerBase
 				$currentInstance.PublishException($_);
 			}
 			
-			if(-not ([OMSHelper]::isOMSSettingValid -eq -1 -and [OMSHelper]::isAltOMSSettingValid -eq -1))
-			{
-				try
-				{
-					$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-					if(!$invocationContext.BoundParameters.ContainsKey("SubscriptionId")) {return;}
-					[OMSHelper]::PostResourceInventory($currentInstance.GetAzSKContextDetails())
-				}
-				catch
-				{
-					$currentInstance.PublishException($_);
-				}
-			}
+			#TODO: Disabling OMS inventory call. Need to rework on performance part.
+			# if(-not ([OMSHelper]::isOMSSettingValid -eq -1 -and [OMSHelper]::isAltOMSSettingValid -eq -1))
+			# {
+			# 	try
+			# 	{
+			# 		$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
+			# 		if(!$invocationContext.BoundParameters.ContainsKey("SubscriptionId")) {return;}
+			# 		[OMSHelper]::PostResourceInventory($currentInstance.GetAzSKContextDetails())
+			# 	}
+			# 	catch
+			# 	{
+			# 		$currentInstance.PublishException($_);
+			# 	}
+			# }
 		});
 
 
