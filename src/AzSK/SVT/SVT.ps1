@@ -64,7 +64,7 @@ function Get-AzSKAzureServicesSecurityStatus
 		[string]
         [Parameter(Position = 0, Mandatory = $true, HelpMessage="Subscription id for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("sid")]
+		[Alias("sid", "s")]
 		$SubscriptionId,
 
         [string]
@@ -118,17 +118,19 @@ function Get-AzSKAzureServicesSecurityStatus
 
 		[string] 
 		[Parameter(Mandatory = $false)]
+		[Alias("ft")]
 		$FilterTags,
 
 		[string] 
 		[Parameter(Mandatory = $false)]
+		[Alias("xt")]
 		$ExcludeTags,
         
 		[ValidateSet("All","AlreadyAttested","NotAttested","None")]
-        [Parameter(Mandatory = $false, ParameterSetName = "ResourceFilter", HelpMessage="Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $false, ParameterSetName = "TagHashset", HelpMessage="Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch, �AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ResourceFilter", HelpMessage="Using this switch, AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "TagHashset", HelpMessage="Using this switch, AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch, AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch, AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
 		[Alias("AttestControls","cta")]
 		$ControlsToAttest = [AttestControls]::None,
 
@@ -153,7 +155,7 @@ function Get-AzSKAzureServicesSecurityStatus
 
 		[GeneratePDF]
         [Parameter(Mandatory = $false)]
-		[Alias("gpdf")]
+		[Alias("gpdf", "pdf")]
 		$GeneratePDF = [GeneratePDF]::None,
 
 		[switch]
@@ -173,6 +175,7 @@ function Get-AzSKAzureServicesSecurityStatus
 
 		[switch]
         [Parameter(Mandatory = $false)]
+		[Alias("iuc")]
 		$IncludeUserComments
     )
 
