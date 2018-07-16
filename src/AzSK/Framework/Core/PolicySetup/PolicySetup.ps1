@@ -953,7 +953,12 @@ class PolicySetup: CommandBase
 				$AzSKConfiguOutput.CASetupRunbookUrl = $false
 				$missingAzSKConfigurations += "CASetupRunbookUrl"
 				$detailedMsg+="`nMissing Configuration: CASetupRunbookUrl"
-				$detailedMsg+="`nActual: $([Helpers]::IsStringEmpty($($AzSKConfigContent.CASetupRunbookURL)))  `n`t Expected base Url: $([Helpers]::IsStringEmpty($($RunbookCoreSetupUrl)))";
+				$ActualValue = ""
+				if([Helpers]::CheckMember($AzSKConfigContent,"CASetupRunbookURL"))
+				{
+					$ActualValue = $($AzSKConfigContent.CASetupRunbookURL)
+				}
+				$detailedMsg+="`nActual: $([Helpers]::IsStringEmpty($($ActualValue)))  `n`t Expected base Url: $([Helpers]::IsStringEmpty($($RunbookCoreSetupUrl)))";
 			} 
 			
 			#Validate ControlTelemetryKey 
@@ -969,12 +974,17 @@ class PolicySetup: CommandBase
 				$AzSKConfiguOutput.ControlTelemetryKey = $false
 				$missingAzSKConfigurations += "ControlTelemetryKey"
 				$detailedMsg+="`nMissing Configuration: ControlTelemetryKey"
-				$detailedMsg+="`nActual: $([Helpers]::IsStringEmpty($($AzSKConfigContent.ControlTelemetryKey)))  `n`t Expected base Url: $([Helpers]::IsStringEmpty($($InstrumentationKey)))";
+				$ActualValue = ""
+				if([Helpers]::CheckMember($AzSKConfigContent,"ControlTelemetryKey"))
+				{
+					$ActualValue = $($AzSKConfigContent.ControlTelemetryKey)
+				}
+				$detailedMsg+="`nActual: $([Helpers]::IsStringEmpty($($ActualValue)))  `n`t Expected base Url: $([Helpers]::IsStringEmpty($($InstrumentationKey)))";
 			} 
 			
 			# Validate InstallationCommand     
 			$installerAbsoluteUrl = $Installer.ICloudBlob.Uri.AbsoluteUri 
-			if($AzSKConfigContent.InstallationCommand -and $AzSKConfigContent.InstallationCommand -like "*$installerAbsoluteUrl*") 
+			if([Helpers]::CheckMember($AzSKConfigContent,"InstallationCommand") -and $AzSKConfigContent.InstallationCommand -and $AzSKConfigContent.InstallationCommand -like "*$installerAbsoluteUrl*") 
 			{
 				$AzSKConfiguOutput.InstallationCommand = $true
 			}
@@ -983,7 +993,12 @@ class PolicySetup: CommandBase
 				$AzSKConfiguOutput.InstallationCommand = $false
 				$missingAzSKConfigurations += "InstallationCommand"
 				$detailedMsg+="`nMissing Configuration: InstallationCommand"
-				$detailedMsg+="`nActual: $([Helpers]::IsStringEmpty($($AzSKConfigContent.InstallationCommand)))  `n`t Expected base Url: $([Helpers]::IsStringEmpty($($installerAbsoluteUrl)))";
+				$ActualValue = ""
+				if([Helpers]::CheckMember($AzSKConfigContent,"InstallationCommand"))
+				{
+					$ActualValue = $($AzSKConfigContent.InstallationCommand)
+				}
+				$detailedMsg+="`nActual: $([Helpers]::IsStringEmpty($($ActualValue)))  `n`t Expected base Url: $([Helpers]::IsStringEmpty($($installerAbsoluteUrl)))";
 			}
 
 
@@ -1010,7 +1025,12 @@ class PolicySetup: CommandBase
 				$AzSKConfiguOutput.AzSKPreConfigURL = $false
 				$missingAzSKConfigurations += "AzSKPreConfigURL"
 				$detailedMsg+="`nMissing Configuration: AzSKPreConfigURL";
-				$detailedMsg+="`nActual: $([Helpers]::IsStringEmpty($($AzSKConfigContent.AzSKConfigURL)))  `n`t Expected base Url: $([Helpers]::IsStringEmpty($($azSKPreUrl)))"
+				$ActualValue = ""
+				if([Helpers]::CheckMember($AzSKConfigContent,"AzSKConfigURL"))
+				{
+					$ActualValue = $($AzSKConfigContent.AzSKConfigURL)
+				}
+				$detailedMsg+="`nActual: $([Helpers]::IsStringEmpty($($ActualValue)))  `n`t Expected base Url: $([Helpers]::IsStringEmpty($($azSKPreUrl)))"
 			}
 			
 			if([Helpers]::CheckMember($AzSKConfigContent,"CASetupRunbookUrl")  -and $AzSKConfiguOutput.CASetupRunbookUrl -and $AzSKConfiguOutput.ControlTelemetryKey -and $AzSKConfiguOutput.InstallationCommand -and $AzSKConfiguOutput.PolicyOrgName -and $AzSKConfiguOutput.AzSKPreConfigURL ) 
