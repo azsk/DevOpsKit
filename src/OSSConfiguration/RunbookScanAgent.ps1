@@ -226,13 +226,13 @@ function RunAzSKScanForASub
     PublishEvent -EventName "CA Scan Services Started"
     if(-not [string]::IsNullOrWhiteSpace($ResourceGroupNamefromWebhook))
     {
-	Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) on added resource for sub: [$SubscriptionID], RGs: [$ResourceGroupNamefromWebhook]")
-	$rgname = $ResourceGroupNamefromWebhook | Out-string
-	$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $rgname -ExcludeTags "OwnerAccess,RBAC"
+		Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) on added resource for sub: [$SubscriptionID], RGs: [$ResourceGroupNamefromWebhook]")
+		$rgname = $ResourceGroupNamefromWebhook | Out-string
+		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $rgname -ExcludeTags "OwnerAccess,RBAC"
     }
     elseif($null -eq $WebHookDataforResourceCreation)
     {
-	$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
+		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
     }
    
     #---------------------------Check resources scan status--------------------------------------------------------------
