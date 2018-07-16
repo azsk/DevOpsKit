@@ -196,7 +196,7 @@ class StorageHelper: ResourceGroupHelper
 			$table = New-AzureStorageTable -Name $tableName -Context $this.StorageAccount.Context 
 			if($table)
 			{
-				$this.PublishCustomMessage("Successfully created table: [$tableName] in storage: [$this.StorageAccountName]", [MessageType]::Update);
+				$this.PublishCustomMessage("Successfully created table: [$tableName] in storage: [$($this.StorageAccountName)]", [MessageType]::Update);
 			}
 		}
 

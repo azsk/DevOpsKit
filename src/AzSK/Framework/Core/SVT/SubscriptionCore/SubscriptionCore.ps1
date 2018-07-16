@@ -36,7 +36,7 @@ class SubscriptionCore: SVTBase
 		$this.HasGraphAPIAccess = [RoleAssignmentHelper]::HasGraphAccess();
 		
 		#Compute the policies ahead to get the security Contact Phone number and email id
-		$this.SecurityCenterInstance = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId);
+		$this.SecurityCenterInstance = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId,$false);
 		$this.MisConfiguredASCPolicies = $this.SecurityCenterInstance.GetMisconfiguredPolicies();
 
 		#Fetch AzSKRGTags
@@ -931,9 +931,10 @@ class SubscriptionCore: SVTBase
 
 	hidden [ControlResult] CheckPermanentRoleAssignments([ControlResult] $controlResult)
 	{
+		$message='';
 		if($null -eq $this.PIMAssignments -and $null -eq $this.permanentAssignments)
 		{
-			$this.GetPIMRoles();
+			$message=$this.GetPIMRoles();
 		}
 		
 		$criticalRoles=$this.ControlSettings.CriticalPIMRoles;
@@ -956,6 +957,7 @@ class SubscriptionCore: SVTBase
 		else
 		{
 			$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+			$controlResult.AddMessage($message);
 		}
 
 		return $controlResult
@@ -1035,7 +1037,8 @@ class SubscriptionCore: SVTBase
 			$header = "Bearer " + $AccessToken
 			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
 
-			[SecurityCenterHelper]::RegisterResourceProvider();
+			# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
+			#[SecurityCenterHelper]::RegisterResourceProvider();
 
 			$uri=[system.string]::Format("https://management.azure.com/subscriptions/{0}/providers/microsoft.Security/alerts?api-version=2015-06-01-preview",$this.SubscriptionContext.SubscriptionId)
 			$result = ""
@@ -1079,8 +1082,9 @@ class SubscriptionCore: SVTBase
 		}
 	}	
    
-	hidden [void] GetPIMRoles()
+	hidden [string] GetPIMRoles()
 	{
+		$message='';
 		if($null -eq $this.PIMAssignments)
 		{
 			$resourceAppIdURI =[WebRequestHelper]::ClassicManagementUri;
@@ -1129,17 +1133,21 @@ class SubscriptionCore: SVTBase
 								#If roleAssignment is permanent
 								$item.IsPIMEnabled=$false;
 								$this.permanentAssignments.Add($item);
+
 							}
 						}
 				
 					}
+					$message='OK';
 				}
 				catch
 				{
-					$this.PublishException($_)
+					$message=$_;
 				}
 			}
 		}
+
+		return($message);
 	}
 
 	hidden [void] PublishRBACTelemetryData()
