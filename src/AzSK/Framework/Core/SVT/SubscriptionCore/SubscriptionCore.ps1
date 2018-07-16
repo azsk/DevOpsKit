@@ -930,9 +930,10 @@ class SubscriptionCore: SVTBase
 
 	hidden [ControlResult] CheckPermanentRoleAssignments([ControlResult] $controlResult)
 	{
+		$message='';
 		if($null -eq $this.PIMAssignments -and $null -eq $this.permanentAssignments)
 		{
-			$this.GetPIMRoles();
+			$message=$this.GetPIMRoles();
 		}
 		
 		$criticalRoles=$this.ControlSettings.CriticalPIMRoles;
@@ -955,6 +956,7 @@ class SubscriptionCore: SVTBase
 		else
 		{
 			$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+			$controlResult.AddMessage($message);
 		}
 
 		return $controlResult
@@ -1078,8 +1080,9 @@ class SubscriptionCore: SVTBase
 		}
 	}	
    
-	hidden [void] GetPIMRoles()
+	hidden [string] GetPIMRoles()
 	{
+		$message='';
 		if($null -eq $this.PIMAssignments)
 		{
 			$resourceAppIdURI =[WebRequestHelper]::ClassicManagementUri;
@@ -1128,17 +1131,21 @@ class SubscriptionCore: SVTBase
 								#If roleAssignment is permanent
 								$item.IsPIMEnabled=$false;
 								$this.permanentAssignments.Add($item);
+
 							}
 						}
 				
 					}
+					$message='OK';
 				}
 				catch
 				{
-					$this.PublishException($_)
+					$message=$_;
 				}
 			}
 		}
+
+		return($message);
 	}
 
 	hidden [void] PublishRBACTelemetryData()
