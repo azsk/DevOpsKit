@@ -16,11 +16,44 @@ class ComplianceReportHelper: ComplianceBase
 	
 	hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport()
 	{
-		return $this.GetSubscriptionComplianceReport("");
+		return $this.GetSubscriptionComplianceReport($null,$null);
 	}
+
+	hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport([string[]] $PartitionKeys)
+	{		
+		[ComplianceStateTableEntity[]] $finalResults = @();
+		if($PartitionKeys.Length -gt 0)
+		{
+			$limit = 15;
+			if($PartitionKeys.Length -le $limit)
+			{
+				$queryStringParam = $this.ConstructPartitionKeysFilterQueryString($PartitionKeys);
+				return $this.GetSubscriptionComplianceReport($queryStringParam, $null);
+			}
+			else {
+				$counter = 1;
+				$subPartitionKeys = @();
+				$totalCount = $PartitionKeys.Length;
+				foreach($partitionKey in $PartitionKeys)
+				{
+					$subPartitionKeys += $partitionKey;
+					if($counter % $limit -eq 0 -or $totalCount -eq $counter)
+					{
+						$queryStringParam = $this.ConstructPartitionKeysFilterQueryString($subPartitionKeys);
+						$finalResults += $this.GetSubscriptionComplianceReport($queryStringParam, $null);
+						$subPartitionKeys = @();						
+					}
+					$counter += 1;
+				}						
+			}
+		}		
+		return $finalResults;				
+	}
+
 	hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport($currentScanResults,$selectColumns)
 	{
-		$queryStringParams = "";
+		$filterStringParams = "";
+		$selectStringParams = "";
 		$partitionKeys = @();
 		if(($currentScanResults | Measure-Object).Count -gt 0)
 		{
@@ -43,36 +76,15 @@ class ComplianceReportHelper: ComplianceBase
 				}
 			}
 			$partitionKeys = $partitionKeys | Select -Unique
-
-			$template = "PartitionKey%20eq%20'{0}'";
-			$tempQS = "?`$filter="
-			$havePartitionKeys = $false;
-			$partitionKeys | ForEach-Object {
-				$pKey = $_
-				$tempQS = $tempQS + ($template -f $pKey) + "%20or%20";
-				$havePartitionKeys = $true;
-				}
-				if($havePartitionKeys)
-				{
-					$tempQS = $tempQS.Substring(0,$tempQS.Length - 8);
-					$queryStringParams = $tempQS
-				}
+			$filterStringParams = $this.ConstructPartitionKeysFilterQueryString($partitionKeys);			
 		}
 		if(($selectColumns | Measure-Object).Count -gt 0)
 		{
-			$selectColumnsString = "?`$select=" + [String]::Join(",",$selectColumns)
-			if([string]::IsNullOrWhiteSpace($queryStringParams))
-			{
-				$queryStringParams = $selectColumnsString;
-			}
-			else
-			{
-				$queryStringParams = $queryStringParams + "&" + $selectColumnsString;
-			}
+			$selectStringParams =[String]::Join(",",$selectColumns)
 		}
-		return $this.GetSubscriptionComplianceReport($queryStringParams);
+		return $this.GetSubscriptionComplianceReport($filterStringParams,$selectStringParams);
 	}
-    hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport([string] $queryStringParams)
+    hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport([string] $filterStringParams, [string] $selectStringParams)
 	{
 		[ComplianceStateTableEntity[]] $complianceData = @()
 		try
@@ -81,6 +93,16 @@ class ComplianceReportHelper: ComplianceBase
 			$TableName = $this.ComplianceTableName
 			$AccountName = $storageInstance.StorageAccountName
 			$AccessKey = $storageInstance.AccessKey 
+			$queryStringParams = "?`$filter=IsActive%20eq%20true"
+			if(-not [string]::IsNullOrWhiteSpace($filterStringParams))
+			{
+				$queryStringParams += "%20and%20(" + $filterStringParams + ")"
+			}
+			if(-not [string]::IsNullOrWhiteSpace($selectStringParams))
+			{
+				$queryStringParams += "&`$select=" + $selectStringParams;
+			}
+
 			$Uri="https://$AccountName.table.core.windows.net/$TableName()$queryStringParams"
 			$Verb = "GET"
 			$ContentMD5 = ""
@@ -141,7 +163,7 @@ class ComplianceReportHelper: ComplianceBase
 		{
 			$scanResult = $persistedSVTResult;
 		}
-		$isLegitimateResult = ($currentSVTResult.CurrentSessionContext.IsLatestPSModule -and $currentSVTResult.CurrentSessionContext.Permissions.HasRequiredAccess -and $currentSVTResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions)
+		$isLegitimateResult = ($currentSVTResult.CurrentSessionContext.IsLatestPSModule -and $currentSVTResult.CurrentSessionContext.Permissions.HasRequiredAccess -and $currentSVTResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions -and $currentSVTResult.ActualVerificationResult -ne [VerificationResult]::Error -and $currentSVTResult.ActualVerificationResult -ne [VerificationResult]::Disabled)
 		if($isLegitimateResult)
 		{
 			$controlItem = $svtEventContext.ControlItem;
@@ -313,8 +335,30 @@ class ComplianceReportHelper: ComplianceBase
     }
 	hidden [void] StoreComplianceDataInUserSubscription([SVTEventContext[]] $currentScanResult)
 	{
-		$filteredResources = $null		
 		$finalScanReport = $this.MergeSVTScanResult($currentScanResult)
 		$this.SetLocalSubscriptionScanReport($finalScanReport)
+	}
+
+	hidden [string] ConstructPartitionKeysFilterQueryString([string[]] $PartitionKeys)
+	{
+		if($PartitionKeys.Length -gt 0)
+		{
+			$template = "PartitionKey%20eq%20'{0}'";
+			$tempQS = ""
+			$havePartitionKeys = $false;
+			$PartitionKeys | ForEach-Object {
+				$pKey = $_
+				$tempQS = $tempQS + ($template -f $pKey) + "%20or%20";
+				$havePartitionKeys = $true;
+			}
+			if($havePartitionKeys)
+			{
+				$tempQS = $tempQS.Substring(0,$tempQS.Length - 8);
+			}
+			return $tempQS;
+		}	
+		else {
+			return "";
+		}	
 	}
 }

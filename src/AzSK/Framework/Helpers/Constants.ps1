@@ -165,7 +165,7 @@ class Constants
 	{
 		if(-not [string]::IsNullOrWhiteSpace($moduleName))
 		{
-			[Constants]::AzSKModuleName = $moduleName;
+			[Constants]::AzSKModuleName = $moduleName.Replace("azsk","AzSK");
 			[Constants]::AzSKAppFolderPath = $Env:LOCALAPPDATA + "\Microsoft\" + [Constants]::AzSKModuleName
 			[Constants]::AzSKTempFolderPath = $env:TEMP + "\" + [Constants]::AzSKModuleName + "\"
 		}

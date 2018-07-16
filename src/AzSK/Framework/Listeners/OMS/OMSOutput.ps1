@@ -50,19 +50,20 @@ class OMSOutput: ListenerBase
 				$currentInstance.PublishException($_);
 			}
 			
-			if(-not ([OMSHelper]::isOMSSettingValid -eq -1 -and [OMSHelper]::isAltOMSSettingValid -eq -1))
-			{
-				try
-				{
-					$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-					if(!$invocationContext.BoundParameters.ContainsKey("SubscriptionId")) {return;}
-					[OMSHelper]::PostResourceInventory($currentInstance.GetAzSKContextDetails())
-				}
-				catch
-				{
-					$currentInstance.PublishException($_);
-				}
-			}
+			#TODO: Disabling OMS inventory call. Need to rework on performance part.
+			# if(-not ([OMSHelper]::isOMSSettingValid -eq -1 -and [OMSHelper]::isAltOMSSettingValid -eq -1))
+			# {
+			# 	try
+			# 	{
+			# 		$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
+			# 		if(!$invocationContext.BoundParameters.ContainsKey("SubscriptionId")) {return;}
+			# 		[OMSHelper]::PostResourceInventory($currentInstance.GetAzSKContextDetails())
+			# 	}
+			# 	catch
+			# 	{
+			# 		$currentInstance.PublishException($_);
+			# 	}
+			# }
 		});
 
 
@@ -123,24 +124,24 @@ class OMSOutput: ListenerBase
 		});
 
 
-		$this.RegisterEvent([SVTEvent]::WriteInventory, {
-			$currentInstance = [OMSOutput]::GetInstance();
-			try
-			{
-				[OMSHelper]::SetOMSDetails();
-				if(-not ([OMSHelper]::isOMSSettingValid -eq -1 -and [OMSHelper]::isAltOMSSettingValid -eq -1))
-				{
-					$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-					$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
+		# $this.RegisterEvent([SVTEvent]::WriteInventory, {
+		# 	$currentInstance = [OMSOutput]::GetInstance();
+		# 	try
+		# 	{
+		# 		[OMSHelper]::SetOMSDetails();
+		# 		if(-not ([OMSHelper]::isOMSSettingValid -eq -1 -and [OMSHelper]::isAltOMSSettingValid -eq -1))
+		# 		{
+		# 			$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
+		# 			$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
 					
-					[OMSHelper]::PostApplicableControlSet($SVTEventContexts,$currentInstance.GetAzSKContextDetails());
-				}
-			}
-			catch
-			{
-				$currentInstance.PublishException($_);
-			}
-		});
+		# 			[OMSHelper]::PostApplicableControlSet($SVTEventContexts,$currentInstance.GetAzSKContextDetails());
+		# 		}
+		# 	}
+		# 	catch
+		# 	{
+		# 		$currentInstance.PublishException($_);
+		# 	}
+		# });
 	}
 
 	hidden [void] WriteControlResult([SVTEventContext[]] $eventContextAll)

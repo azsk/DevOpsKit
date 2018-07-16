@@ -21,8 +21,9 @@ class SecurityCenterHelper
 			throw [System.ArgumentException] ("The argument 'apiType' is null");
 		}
 		
-		[SecurityCenterHelper]::RegisterResourceProvider();
-		
+		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
+		#[SecurityCenterHelper]::RegisterResourceProvider();
+	
 		$uri = [WebRequestHelper]::AzureManagementUri + "subscriptions/$subscriptionId/providers/$([SecurityCenterHelper]::ProviderNamespace)/$($apiType)$([SecurityCenterHelper]::ApiVersion)";
         return [WebRequestHelper]::InvokeGetWebRequest($uri);
 	}
@@ -34,7 +35,8 @@ class SecurityCenterHelper
 			throw [System.ArgumentException] ("The argument 'resourceId' is null");
 		}
 
-		[SecurityCenterHelper]::RegisterResourceProvider();
+		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
+		#[SecurityCenterHelper]::RegisterResourceProvider();
 
 		$uri = [WebRequestHelper]::AzureManagementUri.TrimEnd("/") + $resourceId + [SecurityCenterHelper]::ApiVersion;
 		return [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
@@ -43,7 +45,8 @@ class SecurityCenterHelper
 
 	hidden static [PSObject] InvokeGetASCTasks([string] $subscriptionId)
 	{
-		[SecurityCenterHelper]::RegisterResourceProvider();
+		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
+		#[SecurityCenterHelper]::RegisterResourceProvider();
 		$ascTasks = [SecurityCenterHelper]::InvokeGetSecurityCenterRequest($subscriptionId, [SecurityCenterHelper]::TasksApi)
 		$tasks = [AzureSecurityCenter]::GetASCTasks($ascTasks);		
 		return $tasks;

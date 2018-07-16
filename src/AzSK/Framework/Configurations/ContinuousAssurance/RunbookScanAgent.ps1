@@ -229,7 +229,8 @@ function RunAzSKScanForASub
 	if(-not [string]::IsNullOrWhiteSpace($ResourceGroupNamefromWebhook))
 	{
 		Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) on added resource for sub: [$SubscriptionID], RGs: [$ResourceGroupNamefromWebhook]")
-		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $ResourceGroupNamefromWebhook -ExcludeTags "OwnerAccess,RBAC"
+		$rgname = $ResourceGroupNamefromWebhook | Out-string
+		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $rgname -ExcludeTags "OwnerAccess,RBAC"
 	}
 	elseif($null -eq $WebHookDataforResourceCreation)
 	{

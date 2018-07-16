@@ -1409,7 +1409,39 @@ class Helpers {
         $KeyHash = $HMAC.ComputeHash($UnsignedBytes)
         $SignedString = [System.Convert]::ToBase64String($KeyHash)
         $sharedKey = $AccountName+":"+$SignedString
-        return $sharedKey
-    }	
+        return $sharedKey    	
+    }
+
+    static [void] CreateFolderIfNotExist($FolderPath,$MakeFolderEmpty)
+    {
+        if(-not (Test-Path $FolderPath))
+		{
+			mkdir -Path $FolderPath -ErrorAction Stop | Out-Null
+        }
+        elseif($MakeFolderEmpty)
+        {
+            Remove-Item -Path "$FolderPath*" -Force -Recurse
+        }
+    }
+
+    Static [string] GetSubString($CotentString, $Pattern)
+    {
+        return  [regex]::match($CotentString, $pattern).Groups[1].Value
+    }
+
+    #TODO: Currently this function is specific to Org PolicyHealth Check. Need to make generic
+    Static [string] IsStringEmpty($String)
+    {
+        if([string]::IsNullOrEmpty($String))
+        {
+            return "Not Available"
+        }
+        else 
+        {
+            $String= $String.Split("?")[0]
+            return $String
+        }
+    }
+	
 }
 

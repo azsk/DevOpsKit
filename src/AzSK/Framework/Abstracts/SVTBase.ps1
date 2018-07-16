@@ -397,8 +397,8 @@ class SVTBase: AzSKRoot
 						}
 					}
 
-					if(($filterMatch  -and $excludeMatch -le 0) `
-							-or ($filterMatch -lt 0 -and $excludeMatch -le 0))
+					if(($filterMatch  -and -not $excludeMatch) `
+							-or (-not $filterMatch -and -not $excludeMatch))
 					{
 						$filteredControls += $control
 					}
@@ -457,7 +457,7 @@ class SVTBase: AzSKRoot
             $this.GetApplicableControls() | Where-Object { $_.Automated -ne "No" -and (-not [string]::IsNullOrEmpty($_.MethodName)) } |
             ForEach-Object {
                 $eventContext = $this.RunControl($_);
-				if($eventContext)
+				if($null -ne $eventContext -and $eventcontext.ControlResults.Length -gt 0)
 				{
 					$automatedControlsResult += $eventContext;
 				}

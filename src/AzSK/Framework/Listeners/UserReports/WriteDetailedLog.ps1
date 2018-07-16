@@ -223,8 +223,7 @@ class WriteDetailedLog: FileOutputBase
 				# Add attestation data to log
 				if($_.StateManagement -and $_.StateManagement.AttestedStateData)
 				{
-					$this.AddOutputLog([Constants]::SingleDashLine);
-					$this.AddOutputLog("Attestation Data");
+					$this.AddOutputLog([Constants]::SingleDashLine);					
 
 					$stateObject = $_.StateManagement.AttestedStateData;
 					$this.AddOutputLog("Justification: $($stateObject.Justification)");
@@ -238,11 +237,8 @@ class WriteDetailedLog: FileOutputBase
 						}
 
 						if ($stateObject.DataObject) 
-						{
-							if (-not [string]::IsNullOrEmpty($stateObject.Message)) 
-							{
-								#$this.AddOutputLog("`r`n");
-							}
+						{							
+							$this.AddOutputLog("Attestation Data");
 							$this.AddOutputLog([Helpers]::ConvertObjectToString($stateObject.DataObject, $false));                    
 						}
 					}
@@ -254,6 +250,7 @@ class WriteDetailedLog: FileOutputBase
 					{
 						if($stateObject.DataObject)
 						{
+							$this.AddOutputLog("Attestation Data");
 							$this.AddOutputLog("Attested Data:"+[Helpers]::ConvertObjectToString($stateObject.DataObject, $false));              
 						}
 						else

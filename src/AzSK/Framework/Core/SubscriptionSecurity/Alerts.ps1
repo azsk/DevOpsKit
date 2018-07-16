@@ -671,7 +671,7 @@ class Alerts: CommandBase
 			$actionGroupArm = $this.LoadServerConfigFile("Subscription.AlertActionGroup.json");
 			$actionGroupArmResource = $actionGroupArm.resources | Where-Object { $_.Name -eq $([Constants]::AlertActionGroupName) } 
 			$actionGroupArmResourceOutput = $actionGroupArm.outputs.actionGroupId
-			$actionGroupArmResource.name="ResourceDeploymentActionGroup"
+			$actionGroupArmResource.name=[Constants]::ResourceDeploymentActionGroupName
 			$actionGroupArmResourceOutput.value = $actionGroupArmResourceOutput.value.Replace($([Constants]::AlertActionGroupName),$([Constants]::ResourceDeploymentActionGroupName));
 			$actionGroupArmResource.properties.PSObject.Properties.Remove('emailReceivers')
             $actionGroupArmResource.properties.PSObject.Properties.Remove('smsReceivers')
@@ -906,18 +906,21 @@ class Alerts: CommandBase
 	    try
 		{
 		$RunbookNamebyType = ""
+        $Alertname = ""
 		if($type -eq "Alert")
 		{
 			$RunbookNamebyType = $this.RunbookName
+            $Alertname = "WebHookForMonitoringAlerts"
 		}
 		elseif($type -eq "ResourceCreation")
 		{
 			$RunbookNamebyType = $this.Alert_ResourceCreation_Runbook
+            $Alertname = "WebHookForResourceCreationAlerts"
 		}
 
 	    $webhookExpiryDate=(Get-Date).AddDays($this.WebhookExpiryInDays)
-		Remove-AzureRmAutomationWebhook -Name $this.AutomationWebhookName -ResourceGroup $this.ResourceGroup -AutomationAccountName $this.AutomationAccountName -ErrorAction SilentlyContinue
-		$Webhook = New-AzureRmAutomationWebhook -Name $this.AutomationWebhookName -IsEnabled $True -ExpiryTime $webhookExpiryDate -RunbookName $RunbookNamebyType -ResourceGroup $this.ResourceGroup -AutomationAccountName $this.AutomationAccountName -Force
+		Remove-AzureRmAutomationWebhook -Name $Alertname -ResourceGroup $this.ResourceGroup -AutomationAccountName $this.AutomationAccountName -ErrorAction SilentlyContinue
+		$Webhook = New-AzureRmAutomationWebhook -Name $Alertname -IsEnabled $True -ExpiryTime $webhookExpiryDate -RunbookName $RunbookNamebyType -ResourceGroup $this.ResourceGroup -AutomationAccountName $this.AutomationAccountName -Force
         $NewWebHookUri=$Webhook.WebhookURI
 	    return $NewWebHookUri;		
 		}
