@@ -445,7 +445,7 @@ function Update-AzSKContinuousAssurance
 		$DoNotOpenOutputFolder,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "RemoveSettings", HelpMessage="This switch is used to clear setting for OMS,AltOMS or Webhook.")]
-		[ValidateSet("OMSSettings","AltOMSSettings","WebhookSettings")]
+		[ValidateSet("OMSSettings","AltOMSSettings","WebhookSettings","ScanOnDeployment")]
 		$Remove,
 
 		[switch]
@@ -476,6 +476,9 @@ function Update-AzSKContinuousAssurance
 					"WebhookSettings" {
 						return $ccAccount.InvokeFunction($ccAccount.RemoveWebhookSettings);
 						}
+					"ScanOnDeployment" {
+						return $ccAccount.InvokeFunction($ccAccount.ClearResourceofDeploymentScan);
+						}
 				}
 					
 
@@ -485,12 +488,12 @@ function Update-AzSKContinuousAssurance
 					#set the OMS settings
 					$ccAccount.SetOMSSettings($OMSWorkspaceId, $OMSSharedKey, $AltOMSWorkspaceId, $AltOMSSharedKey);
 
-					#set the Webhook settings
-					$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
-			
-				if ($ccAccount) 
-				{
-					$ccAccount.ScanOnDeployment = $ScanOnDeployment;
+			#set the Webhook settings
+			$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
+
+			if ($ccAccount) 
+			{
+				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
 
 					if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
 					{
