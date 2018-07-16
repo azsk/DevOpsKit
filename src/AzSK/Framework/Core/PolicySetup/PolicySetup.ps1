@@ -954,7 +954,7 @@ class PolicySetup: CommandBase
 				$missingAzSKConfigurations += "CASetupRunbookUrl"
 				$detailedMsg+="`nMissing Configuration: CASetupRunbookUrl"
 				$ActualValue = ""
-				if([Helpers]::CheckMember($AzSKConfigContent,"CASetupRunbookURL")
+				if([Helpers]::CheckMember($AzSKConfigContent,"CASetupRunbookURL"))
 				{
 					$ActualValue = $($AzSKConfigContent.CASetupRunbookURL)
 				}
@@ -975,7 +975,7 @@ class PolicySetup: CommandBase
 				$missingAzSKConfigurations += "ControlTelemetryKey"
 				$detailedMsg+="`nMissing Configuration: ControlTelemetryKey"
 				$ActualValue = ""
-				if([Helpers]::CheckMember($AzSKConfigContent,"ControlTelemetryKey")
+				if([Helpers]::CheckMember($AzSKConfigContent,"ControlTelemetryKey"))
 				{
 					$ActualValue = $($AzSKConfigContent.ControlTelemetryKey)
 				}
@@ -994,7 +994,7 @@ class PolicySetup: CommandBase
 				$missingAzSKConfigurations += "InstallationCommand"
 				$detailedMsg+="`nMissing Configuration: InstallationCommand"
 				$ActualValue = ""
-				if([Helpers]::CheckMember($AzSKConfigContent,"InstallationCommand")
+				if([Helpers]::CheckMember($AzSKConfigContent,"InstallationCommand"))
 				{
 					$ActualValue = $($AzSKConfigContent.InstallationCommand)
 				}
@@ -1026,7 +1026,7 @@ class PolicySetup: CommandBase
 				$missingAzSKConfigurations += "AzSKPreConfigURL"
 				$detailedMsg+="`nMissing Configuration: AzSKPreConfigURL";
 				$ActualValue = ""
-				if([Helpers]::CheckMember($AzSKConfigContent,"AzSKConfigURL")
+				if([Helpers]::CheckMember($AzSKConfigContent,"AzSKConfigURL"))
 				{
 					$ActualValue = $($AzSKConfigContent.AzSKConfigURL)
 				}
