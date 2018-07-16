@@ -6,6 +6,7 @@ class CommandBase: AzSKRoot {
     [string[]] $FilterTags = @();
 	[bool] $DoNotOpenOutputFolder = $false;
 	[bool] $Force = $false
+	[bool] $IsLocalComplianceStoreEnabled = $false
     CommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId) {
         [Helpers]::AbstractClass($this, [CommandBase]);
@@ -26,11 +27,20 @@ class CommandBase: AzSKRoot {
 		#Validate if command is getting run with correct Org Policy
 		$IsTagSettingRequired=$this.ValidateOrgPolicyOnSubscription($this.Force)
 		 #Validate if command has AzSK component write permission
-		if($this.GetCommandMetadata().HasAzSKComponentWritePermission -and ($IsTagSettingRequired -or $this.Force))
+		$commandMetadata= $this.GetCommandMetadata()
+		if(([Helpers]::CheckMember($commandMetadata,"HasAzSKComponentWritePermission")) -and  $commandMetadata.HasAzSKComponentWritePermission -and ($IsTagSettingRequired -or $this.Force))
 		{
 			#If command is running with Org-neutral Policy or switch Org policy, Set Org Policy tag on subscription
 			$this.SetOrgPolicyTag($this.Force)
-		}		
+		}	
+
+		$azskConfigComplianceFlag = [ConfigurationManager]::GetAzSKConfigData().StoreComplianceSummaryInUserSubscriptions;	
+        $localSettingComplianceFlag = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
+        #return if feature is turned off at server config
+        if($azskConfigComplianceFlag -or $localSettingComplianceFlag) 
+		{
+			$this.IsLocalComplianceStoreEnabled = $true
+		}        
     }
 
     [void] CommandStarted() {
@@ -165,31 +175,25 @@ class CommandBase: AzSKRoot {
 			if(($latestVersionList | Measure-Object).Count -gt [ConfigurationManager]::GetAzSKConfigData().BackwardCompatibleVersionCount)
 			{
 				throw ([SuppressedException]::new(("Your version of AzSK is too old. Please update now!"),[SuppressedExceptionType]::Generic))
-			}			
-        }
-		#block if the migration is not completed
-		$IsMigrateSwitchPassed = $this.InvocationContext.BoundParameters["Migrate"];
-		$isMigrationCompleted = [UserSubscriptionDataHelper]::IsMigrationCompleted($this.SubscriptionContext.SubscriptionId);
-		if($isMigrationCompleted -ne "COMP")
+			}
+		}
+		
+		$psGalleryVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetAzSKLatestPSGalleryVersion($this.GetModuleName()));			
+		if($psGalleryVersion -ne $serverVersion)
 		{
-			$MigrationWarning = [ConfigurationManager]::GetAzSKConfigData().MigrationWarning;			
-			$isLatestRequired = $this.IsLatestVersionRequired();
-			if($isLatestRequired)
+			$serverVersions = @()
+			[ConfigurationManager]::GetAzSKConfigData().GetAzSKVersionList($this.GetModuleName()) | ForEach-Object { 
+				#Take major and minor version and ignore build version for comparision
+			   $serverVersions+= [System.Version] ("$($_.Major)" +"." + "$($_.Minor)")
+			 }			
+			$serverVersions =  $serverVersions | Select-Object -Unique
+			$latestVersionAvailableFromGallery = $serverVersions | Where-Object {$_ -gt $serverVersion}
+			if(($latestVersionAvailableFromGallery | Measure-Object).Count -gt [ConfigurationManager]::GetAzSKConfigData().BackwardCompatibleVersionCount)
 			{
-				throw ([SuppressedException]::new($MigrationWarning,[SuppressedExceptionType]::Generic))
+				$this.PublishCustomMessage("Your Org AzSK version[$serverVersion] is too old. Consider updating it to latest available version[$psGalleryVersion].",[MessageType]::Error);
 			}
-			elseif(-not $IsMigrateSwitchPassed)
-			{
-				if($this.InvocationContext.BoundParameters["AttestControls"] -or $this.InvocationContext.BoundParameters["ControlsToAttest"])
-				{
-					throw ([SuppressedException]::new($MigrationWarning,[SuppressedExceptionType]::Generic))
-				}
-				else
-				{
-					Write-Host "WARNING: $MigrationWarning" -ForegroundColor Yellow
-				}
-			}
-		}		
+		}
+		
     }
 
 	[void] InvokeAutoUpdate()

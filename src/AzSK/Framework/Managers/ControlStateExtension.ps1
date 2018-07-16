@@ -11,6 +11,7 @@ class ControlStateExtension
 	hidden [int] $HasControlStateWritePermissions = -1;
 	hidden [string]	$IndexerBlobName ="Resource.index.json"
 	hidden [int] $retryCount = 3;
+	hidden [string] $UniqueRunId;
 
 	hidden [SubscriptionContext] $SubscriptionContext;
     hidden [InvocationInfo] $InvocationContext;
@@ -18,11 +19,15 @@ class ControlStateExtension
 	ControlStateExtension([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
 		$this.SubscriptionContext = $subscriptionContext;
-		$this.InvocationContext = $invocationContext;
+		$this.InvocationContext = $invocationContext;		
 	}
 
 	hidden [void] Initialize([bool] $CreateResourcesIfNotExists)
 	{
+		if([string]::IsNullOrWhiteSpace($this.UniqueRunId))
+		{
+			$this.UniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
+		}
 		$this.GetAzSKControlStateContainer($CreateResourcesIfNotExists)
 	}
 
@@ -111,7 +116,7 @@ class ControlStateExtension
 		
 		$this.HasControlStateReadPermissions = 0					
 		$this.HasControlStateWritePermissions = 0
-		$writeTestContainerName = "writetest";
+		$writeTestContainerName = "wt" + $(get-date).ToUniversalTime().ToString("yyyyMMddHHmmss");
 
 		#see if user can create the test container in the storage account. If yes then user have both RW permissions. 
 		try
@@ -209,7 +214,7 @@ class ControlStateExtension
 		{			
 			return $true;
 		}
-		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\ServerControlState";
+		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)\ServerControlState";
 		if(-not (Test-Path -Path $AzSKTemp))
 		{
 			mkdir -Path $AzSKTemp -Force
@@ -275,7 +280,7 @@ class ControlStateExtension
 					{
 						return $null;
 					}
-					$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\ServerControlState";
+					$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)\ServerControlState";
 					if(-not (Test-Path -Path $AzSKTemp))
 					{
 						mkdir -Path $AzSKTemp -Force
@@ -322,13 +327,13 @@ class ControlStateExtension
 			return $controlStates;
 		}
 		finally{
-			[Helpers]::CleanupLocalFolder([Constants]::AzSKAppFolderPath + "\Temp");
+			[Helpers]::CleanupLocalFolder([Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)");
 		}
 	}
 
 	hidden [void] SetControlState([string] $id, [ControlState[]] $controlStates, [bool] $Override)
 	{		
-		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\ServerControlState";				
+		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)\ServerControlState";				
 		if(-not (Test-Path "$AzSKTemp\ControlState"))
 		{
 			mkdir -Path "$AzSKTemp\ControlState" -ErrorAction Stop | Out-Null
@@ -410,7 +415,7 @@ class ControlStateExtension
 
 	hidden [void] PurgeControlState([string] $id)
 	{		
-		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\ServerControlState";				
+		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)\ServerControlState";				
 		if(-not (Test-Path "$AzSKTemp\ControlState"))
 		{
 			mkdir -Path "$AzSKTemp\ControlState" -ErrorAction Stop | Out-Null
@@ -473,7 +478,7 @@ class ControlStateExtension
 
 	hidden [ControlState[]] GetPersistedControlStates([string] $controlStateBlobName)
 	{
-		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\ServerControlState";
+		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)\ServerControlState";
 		if(-not (Test-Path "$AzSKTemp\ExistingControlStates"))
 		{
 			mkdir -Path "$AzSKTemp\ExistingControlStates" -ErrorAction Stop | Out-Null

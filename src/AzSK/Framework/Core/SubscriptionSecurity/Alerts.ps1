@@ -671,8 +671,8 @@ class Alerts: CommandBase
 			$actionGroupArm = $this.LoadServerConfigFile("Subscription.AlertActionGroup.json");
 			$actionGroupArmResource = $actionGroupArm.resources | Where-Object { $_.Name -eq $([Constants]::AlertActionGroupName) } 
 			$actionGroupArmResourceOutput = $actionGroupArm.outputs.actionGroupId
-			$actionGroupArmResource.name="ResourceCreationAlertActionGroup"
-			$actionGroupArmResourceOutput.value = $actionGroupArmResourceOutput.value.Replace($([Constants]::AlertActionGroupName),$([Constants]::ResourceCreationActionGroupName));
+			$actionGroupArmResource.name="ResourceDeploymentActionGroup"
+			$actionGroupArmResourceOutput.value = $actionGroupArmResourceOutput.value.Replace($([Constants]::AlertActionGroupName),$([Constants]::ResourceDeploymentActionGroupName));
 			$actionGroupArmResource.properties.PSObject.Properties.Remove('emailReceivers')
             $actionGroupArmResource.properties.PSObject.Properties.Remove('smsReceivers')
 			
@@ -776,7 +776,7 @@ class Alerts: CommandBase
 		}
 		elseif($type -eq "ResourceCreation")
 		{
-			$ActionGroup = [Constants]::ResourceCreationActionGroupName
+			$ActionGroup = [Constants]::ResourceDeploymentActionGroupName
 		}
 
 		$actionGroupResource = $this.GetAlertActionGroup($this.ResourceGroup, $ActionGroup);
@@ -813,7 +813,7 @@ class Alerts: CommandBase
 		}
 		elseif($type -eq "ResourceCreation")
 		{
-			$ActionGroup = [Constants]::ResourceCreationActionGroupName
+			$ActionGroup = [Constants]::ResourceDeploymentActionGroupName
 			$Alertname = "WebHookForResourceCreationAlerts"
 		}
 		else

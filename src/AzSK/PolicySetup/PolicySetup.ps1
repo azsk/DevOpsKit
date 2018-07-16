@@ -93,11 +93,10 @@ function Install-AzSKOrganizationPolicy
 	{
 		try 
 		{
-			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName, $StorageAccountName, $AppInsightName, $AppInsightLocation, $ResourceGroupLocation,$MonitoringDashboardLocation, $PolicyFolderPath, [Constants]::NewModuleName);
+			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName, $StorageAccountName, $AppInsightName, $AppInsightLocation, $ResourceGroupLocation,$MonitoringDashboardLocation, $PolicyFolderPath);
 			if ($policy) 
 			{
-				$moduleName = [Constants]::NewModuleName;
-				return $policy.InvokeFunction($policy.InstallPolicy, @($moduleName));
+				return $policy.InvokeFunction($policy.InstallPolicy);
 			}
 		}
 		catch 
@@ -120,6 +119,16 @@ function Update-AzSKOrganizationPolicy
 	.DESCRIPTION
 	This command is intended to be used by central Organization team to setup Organization specific policies
 
+	.PARAMETER SubscriptionId
+		Subscription ID of the Azure subscription in which organization policy is stored.
+	.PARAMETER OrgName
+			The name of your organization. The value will be used to generate names of Azure resources being created as part of policy setup. This should be alphanumeric.
+	.PARAMETER ResourceGroupName
+			Resource group name for resource name.
+	.PARAMETER StorageAccountName
+			Specify the name for policy storage account
+	.PARAMETER MonitoringDashboardLocation
+			Location of Azure shared dashboard to monitor your organization adoption to AzSK
 	#>
 	
 	[OutputType([String])]
@@ -127,75 +136,60 @@ function Update-AzSKOrganizationPolicy
 	(
 		[string]
         [Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Default")]
-        [Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Custom")]
-        [Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Migrate")]
+		[Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Custom")] 
+		[Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Extensions")]       
 		[ValidateNotNullOrEmpty()]
 		$SubscriptionId,
 
-		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
-        [Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
-        [string]
-		$ResourceGroupLocation,
-
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
-        [Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Extensions")]     
         [string]
 		$ResourceGroupName,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
-        [Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Extensions")]       
         [string]
 		$StorageAccountName,
 
-        [Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
         [string]
 		$AppInsightName,
-
-		[Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
-        [string]
-		$AppInsightLocation,
-
-		[Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
-		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
+		
+		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
 		[string]
 		$MonitoringDashboardLocation,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
-        [Parameter(Mandatory = $true, ParameterSetName = "Migrate")]
+		[Parameter(Mandatory = $true,  ParameterSetName = "Extensions")]        
         [string]
 		$OrgName,
 
-		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
-        [Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default")]        
+		[Parameter(Mandatory = $false, ParameterSetName = "Extensions")]
         [string]
 		$DepartmentName,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $true,  ParameterSetName = "Extensions")]
 		[Alias("PolicyFolderName")]
 		[string]
 		$PolicyFolderPath,
 		
-		[Parameter(Mandatory = $true, ParameterSetName = "Migrate")]
+		[Parameter(Mandatory = $true,  ParameterSetName = "Extensions")]
 		[switch]
-		$Migrate,
-
-		[Parameter(Mandatory = $false, ParameterSetName = "Migrate")]
-		[string]
-		$MigrationScriptPath,
+		$Extensions,
 
 		[ValidateSet("CARunbooks", "AzSKRootConfig","MonitoringDashboard","OrgAzSKVersion", "All")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Override base configurations setup by AzSK.")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Override base configurations setup by AzSK.")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Migrate", HelpMessage = "Override base configurations setup by AzSK.")] 
-		$Override = [OverrideConfigurationType]::None,
+		$OverrideBaseConfig = [OverrideConfigurationType]::None,
 
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Switch to specify whether to open output folder.")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Migrate", HelpMessage = "Switch to specify whether to open output folder.")]
+		[Parameter(Mandatory = $false, Position = 0, ParameterSetName = "Extensions")]
 		$DoNotOpenOutputFolder
     )
 	Begin
@@ -206,36 +200,112 @@ function Update-AzSKOrganizationPolicy
 	Process
 	{
 		try 
-		{		
-			if($Migrate)
-			{				
-				$oldPolicy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName, $null , $null, $null, $null, $ResourceGroupLocation,$MonitoringDashboardLocation, $PolicyFolderPath, [Constants]::OldModuleName);
-				$computedAppInsightLocation = $AppInsightLocation;
-				if([string]::IsNullOrWhiteSpace($computedAppInsightLocation))
-				{
-					$computedAppInsightLocation = $oldPolicy.AppInsightLocation;
-				}
-				$computedRGLocation = $ResourceGroupLocation;
-				if([string]::IsNullOrWhiteSpace($computedRGLocation))
-				{
-					$computedRGLocation = $oldPolicy.ResourceGroupLocation;
-				}
-				$newPolicy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName, $ResourceGroupName, $StorageAccountName, $AppInsightName, $computedAppInsightLocation, $computedRGLocation,$MonitoringDashboardLocation, $PolicyFolderPath, [Constants]::NewModuleName);	
-				return $newPolicy.InvokeFunction($newPolicy.MigratePolicy, @($oldPolicy));
-			}			
-			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $AppInsightLocation, $ResourceGroupLocation,$MonitoringDashboardLocation, $PolicyFolderPath, [Constants]::AzSKModuleName);
-			if ($policy) 
-			{				
-				$moduleName = [Constants]::AzSKModuleName
-				$policy.OverrideConfiguration = $Override
+		{
+			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $null, $null,$MonitoringDashboardLocation, $PolicyFolderPath);
+			if($policy)
+			{
 				$policy.IsUpdateSwitchOn = $true
-				return $policy.InvokeFunction($policy.InstallPolicy, @($moduleName));
+				if($Extensions)
+				{
+					return $policy.InvokeFunction($policy.UpdateExtensions)
+				}
+				else {
+				$policy.OverrideConfiguration = $OverrideBaseConfig				
+				return $policy.InvokeFunction($policy.InstallPolicy);
+				}
+				
 			}
 		}
-		catch 
+		catch
 		{
 			[EventBase]::PublishGenericException($_);
-		}  
+		}
+	}
+	End
+	{
+		[ListenerHelper]::UnregisterListeners();
+	}
+}
+
+
+function Get-AzSKOrganizationPolicyStatus
+{
+	<#
+	.SYNOPSIS
+	This command is intended to be used by central Organization team to check health of custom Org policy
+	.DESCRIPTION
+	This command is intended to be used by central Organization team to check health of custom Org policy
+	#>
+	[OutputType([String])]
+	Param
+	(
+		[string]
+        [Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Default")]
+		[Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $true, Position = 0, ParameterSetName = "DownloadPolicy")]
+		[ValidateNotNullOrEmpty()]
+		$SubscriptionId,
+
+		[Parameter(Mandatory = $true, ParameterSetName = "Default")]
+		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $true, ParameterSetName = "DownloadPolicy")]
+        [string]
+		$OrgName,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
+		[Parameter(Mandatory = $false, ParameterSetName = "DownloadPolicy")]
+        [string]
+		$DepartmentName,
+
+		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $false, ParameterSetName = "DownloadPolicy")]
+        [string]
+		$ResourceGroupName,
+
+		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
+		[Parameter(Mandatory = $false, ParameterSetName = "DownloadPolicy")]
+        [string]
+		$StorageAccountName,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
+        [string]
+		$AppInsightName,
+
+		[Parameter(Mandatory = $true, ParameterSetName = "DownloadPolicy")]
+        [switch]
+		$DownloadPolicy,
+
+		[Parameter(Mandatory = $true, ParameterSetName = "DownloadPolicy")]
+		[string]
+		$PolicyFolderPath
+	)
+
+	Begin
+	{
+		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
+		[ListenerHelper]::RegisterListeners();
+	}
+	Process
+	{
+		try
+		{
+			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $null, $null,$null, $PolicyFolderPath);
+			if ($policy)
+			{
+				$policy.IsUpdateSwitchOn = $false
+				if($DownloadPolicy)
+				{
+					$policyList = $policy.InvokeFunction($policy.DownloadPolicies);
+				}
+				else {
+					return $policy.InvokeFunction($policy.CheckPolicyHealth);
+				}
+			}
+		}
+		catch
+		{
+			[EventBase]::PublishGenericException($_);
+		}
 	}
 	End
 	{

@@ -25,10 +25,12 @@ class PersistedStateInfo: CommandBase
 	   
 		try
 		{
-			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
-			$settingPersistScanReportInSubscription = [ConfigurationManager]::GetAzSKSettings().PersistScanReportInSubscription;
+			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();	
+			$successCount = 0;
+			$totalCount = 0;
+			$settingStoreComplianceSummaryInUserSubscriptions = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
 			#return if feature is turned off at server config
-			if(-not $azskConfig.PersistScanReportInSubscription -and -not $settingPersistScanReportInSubscription) 	
+			if(-not $azskConfig.StoreComplianceSummaryInUserSubscriptions -and -not $settingStoreComplianceSummaryInUserSubscriptions) 	
 			{
 				$this.PublishCustomMessage("NOTE: This feature is currently disabled in your environment. Please contact the cloud security team for your org.", [MessageType]::Warning);	
 				return $messages;
@@ -42,140 +44,104 @@ class PersistedStateInfo: CommandBase
 			# Read Local CSV file
             [CsvOutputItem[]] $controlResultSet  =@();
 			$controlResultSet = Get-ChildItem -Path $filePath -Filter '*.csv' -Force | Get-Content | Convertfrom-csv
-            $controlResultSet = $controlResultSet | Where-Object {$_.FeatureName -ne "AzSKCfg"}
-			$totalCount = ($controlResultSet | Measure-Object).Count
-			if($totalCount -eq 0)
+			#pick only those controls whose usercomments has been updated
+			$controlResultSet = $controlResultSet | Where-Object {$_.FeatureName -ne "AzSKCfg" -and -not [string]::IsNullOrWhiteSpace($_.UserComments)}
+			$erroredControls = @();
+			$totalCount = ($controlResultSet | Measure-Object).Count;
+			$invalidUserComments = $controlResultSet | Where-Object { $_.UserComments.length -gt 255} 
+			if(($invalidUserComments | Measure-Object).Count -eq 0)
 			{
-				$this.PublishCustomMessage("Could not find any control in file: [$filePath].",[MessageType]::Error);
-				return $messages;
-			}
-			$resultsGroups = $controlResultSet | Group-Object -Property ResourceId 
-			# Read file from Storage
-			$complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext.SubscriptionId); 
-			$StorageReportJson =$null;
-			# Check for write access
-			if($complianceReportHelper.azskStorageInstance.HaveWritePermissions -eq 1)
-			{
-				[LSRSubscription] $StorageReportJson = $complianceReportHelper.GetLocalSubscriptionScanReport($this.SubscriptionContext.SubscriptionId);
-			}
-			else
-			{
-				$this.PublishCustomMessage("You don't have the required permissions to update user comments. If you'd like to update user comments, please request your subscription owner to grant you 'Contributor' access to the DevOps Kit resource group.", [MessageType]::Warning);
-				return $messages;
-			}
-	
-			$erroredControls=@();
-			$PersistedControlScanResult=@();
-			$ResourceData=@();
-			$successCount=0;
-		
-			if($null -ne $StorageReportJson -and $null -ne $StorageReportJson.ScanDetails)
-			{
-				$this.PublishCustomMessage("Updating user comments in AzSK control data for $totalCount controls... ", [MessageType]::Warning);
-
-				foreach ($resultGroup in $resultsGroups) {
-					#count check has been done before itself. Here it is safe to assume atleast one group. resultGroup data is populated from CSV
-					if($resultGroup.Group[0].FeatureName -eq "SubscriptionCore" -and ($StorageReportJson.ScanDetails.SubscriptionScanResult | Measure-Object).Count -gt 0)
-					{						
-						$startIndex = $resultGroup.Name.lastindexof("/")
-						$lastIndex = $resultGroup.Name.length - $startIndex-1
-						$localSubID = $resultGroup.Name.substring($startIndex+1,$lastIndex)
-						if($localSubID -eq $this.SubscriptionContext.SubscriptionId)
-						{
-							$PersistedControlScanResult=$StorageReportJson.ScanDetails.SubscriptionScanResult
-						}						
-					}
-					elseif($resultGroup.Group[0].FeatureName -ne "SubscriptionCore" -and $resultGroup.Group[0].FeatureName -ne "AzSKCfg" -and ($StorageReportJson.ScanDetails.Resources | Measure-Object).Count -gt 0)
-					{						 
-						$ResourceData = $StorageReportJson.ScanDetails.Resources | Where-Object { $_.ResourceId -eq $resultGroup.Name }	 
-						if($null -ne $ResourceData -and ($ResourceData.ResourceScanResult | Measure-Object).Count -gt 0 )
-						{
-							$PersistedControlScanResult=$ResourceData.ResourceScanResult
-						}
-					}
-					if(($PersistedControlScanResult | Measure-Object).Count -gt 0)
+				if(($invalidUserComments | Measure-Object).Count -eq $totalCount )
+				{
+					$this.PublishCustomMessage("Could not find any control in file with usercomments: [$filePath].",[MessageType]::Error);
+					return $messages;
+				}
+				else {
+					$scannedResources = $controlResultSet | Group-Object -Property ResourceId 
+					# Read file from Storage
+					$complianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion()); 
+					$PersistedScanControls =$null;
+					# Check for write access
+					if($complianceReportHelper.HaveRequiredPermissions() -eq 1)
 					{
-						$resultGroup.Group | ForEach-Object{
-							try
-							{
-								$currentItem=$_
-								$matchedControlResult = $PersistedControlScanResult | Where-Object {		
-									($_.ControlID -eq $currentItem.ControlID -and (($currentItem.FeatureName -ne "SubscriptionCore" -and $_.ChildResourceName -eq $currentItem.ChildResourceName) -or $currentItem.FeatureName -eq "SubscriptionCore"))
-								}
-								$encoder = [System.Text.Encoding]::UTF8
-								$encUserComments= $encoder.GetBytes($currentItem.UserComments)
-								$decUserComments= $encoder.GetString($encUserComments)
-								if($decUserComments.length -le 255)
-								{
-									if(($matchedControlResult|Measure-Object).Count -eq 1)
-									{
-										$successCount+=1;
-										$matchedControlResult.UserComments= $decUserComments
-									}
-									else
-									{
-										$erroredControls+=$this.CreateCustomErrorObject($currentItem,"Could not find previous persisted state.")		 
-									}
-								}
-								else
-								{    
-									$erroredControls+=$this.CreateCustomErrorObject($currentItem,"User Comment's length should not exceed 255 characters.")
-								}
-							}
-							catch
-							{
-								$this.PublishException($_);
-								$erroredControls+=$this.CreateCustomErrorObject($currentItem,"Could not find previous persisted state.")
-							}		
-						}		
+						[ComplianceStateTableEntity[]] $PersistedScanControls = $complianceReportHelper.GetSubscriptionComplianceReport();
 					}
 					else
 					{
-						$resultGroup.Group| ForEach-Object{
-							$erroredControls+=$this.CreateCustomErrorObject($_,"Could not find previous persisted state.")
-						}
+						$this.PublishCustomMessage("You don't have the required permissions to update user comments. If you'd like to update user comments, please request your subscription owner to grant you 'Contributor' access to the DevOps Kit resource group.", [MessageType]::Warning);
+						return $messages;
+					}
+					[ComplianceStateTableEntity[]] $UpdatedPersistedControls = @();
+					$scannedResources | ForEach-Object {
+						$scannedResource = $_
+						$scannedResource.Group | ForEach-Object {
+							try {
+								$control = $_;
+								$partsToHash = $scannedResource.Name;
+								$partitionKey = [Helpers]::ComputeHash($partsToHash.ToLower());
+								$filteredPersistedControl = $PersistedScanControls | Where-Object { $_.PartitionKey -eq $partitionKey -and $_.ControlID -eq $control.ControlID}
+								if(($filteredPersistedControl | Measure-Object).Count -gt 0)
+								{
+									$encoder = [System.Text.Encoding]::UTF8
+									$encUserComments= $encoder.GetBytes($control.UserComments)
+									$encUserCommentsString= $encoder.GetString($encUserComments)
+									$filteredPersistedControl.UserComments = $encUserCommentsString
+									$UpdatedPersistedControls += $filteredPersistedControl;
+									$successCount += 1
+								}
+								else {
+									$erroredControls += $this.CreateCustomErrorObject($control,"Could not find previous persisted state.");
+								}				
+							}
+							catch {
+								$this.PublishException($_);
+								$erroredControls+=$this.CreateCustomErrorObject($currentItem,"Could not find previous persisted state.")
+							}									
+						}				
+					}
+
+					if(($UpdatedPersistedControls | Measure-Object).Count -gt 0)
+					{
+						$complianceReportHelper.SetLocalSubscriptionScanReport($UpdatedPersistedControls);
 					}
 				}
-				if($successCount -gt 0)
-				{
-					[LocalSubscriptionReport] $complianceReport = [LocalSubscriptionReport]::new();
-					$complianceReport.Subscriptions += $StorageReportJson;
-					$complianceReportHelper.SetLocalSubscriptionScanReport($complianceReport);
+			}
+			else {
+				$invalidUserComments | ForEach-Object {
+					$erroredControls+=$this.CreateCustomErrorObject($_,"User Comment's length should not exceed 255 characters.")
 				}
-				# If updation failed for any control, genearte error file
-				if(($erroredControls | Measure-Object).Count -gt 0)
-				{
-                    $nonNullProps=@();
-                    [CsvOutputItem].GetMembers() | Where-Object { $_.MemberType -eq [System.Reflection.MemberTypes]::Property } | ForEach-Object {
-				      $propName = $_.Name;
-				      if(($erroredControls | Where-object { -not [string]::IsNullOrWhiteSpace($_.$propName) } | Measure-object).Count -ne 0)
-				        {
-					        $nonNullProps += $propName;
-				        }
-		 	        };
-                    $nonNullProps += "ErrorDetails"
-                    $csvItems = $erroredControls | Select-Object -Property $nonNullProps
-					$controlCSV = New-Object -TypeName WriteCSVData
-					$controlCSV.FileName = "Controls_NotUpdated_" + $this.RunIdentifier
-					$controlCSV.FileExtension = 'csv'
-					$controlCSV.FolderPath = ''
-					$controlCSV.MessageData = $csvItems
-					$this.PublishAzSKRootEvent([AzSKRootEvent]::WriteCSV, $controlCSV);
-					$this.PublishCustomMessage("[$successCount/$totalCount] user comments have been updated successfully.", [MessageType]::Update);
-					$this.PublishCustomMessage("[$(($erroredControls | Measure-Object).Count)/$totalCount] user comments could not be updated due to an error. See the log file for details.", [MessageType]::Warning);
-				}
-				else
-				{
-					$this.PublishCustomMessage("All User Comments have been updated successfully.", [MessageType]::Update);
-				}
+			}
+			
+			# If updation failed for any control, genearte error file
+			if(($erroredControls | Measure-Object).Count -gt 0)
+			{
+				$nonNullProps=@();
+				[CsvOutputItem].GetMembers() | Where-Object { $_.MemberType -eq [System.Reflection.MemberTypes]::Property } | ForEach-Object {
+					$propName = $_.Name;
+					if(($erroredControls | Where-object { -not [string]::IsNullOrWhiteSpace($_.$propName) } | Measure-object).Count -ne 0)
+					{
+						$nonNullProps += $propName;
+					}
+				};
+				$nonNullProps += "ErrorDetails"
+				$csvItems = $erroredControls | Select-Object -Property $nonNullProps
+				$controlCSV = New-Object -TypeName WriteCSVData
+				$controlCSV.FileName = "Controls_NotUpdated_" + $this.RunIdentifier
+				$controlCSV.FileExtension = 'csv'
+				$controlCSV.FolderPath = ''
+				$controlCSV.MessageData = $csvItems
+				$this.PublishAzSKRootEvent([AzSKRootEvent]::WriteCSV, $controlCSV);
+				$this.PublishCustomMessage("[$successCount/$totalCount] user comments have been updated successfully.", [MessageType]::Update);
+				$this.PublishCustomMessage("[$(($erroredControls | Measure-Object).Count)/$totalCount] user comments could not be updated due to an error. See the log file for details.", [MessageType]::Warning);
 			}
 			else
 			{
-				$this.PublishEvent([AzSKGenericEvent]::Exception, "Unable to update user comments. Could not find previous persisted state in DevOps Kit storage.");
+				$this.PublishCustomMessage("All User Comments have been updated successfully.", [MessageType]::Update);
 			}
 		}
 		catch
 		{
+			$this.PublishEvent([AzSKGenericEvent]::Exception, "Unable to update user comments. Could not find previous persisted state in DevOps Kit storage.");
 			$this.PublishException($_);
 		}
 		return $messages;

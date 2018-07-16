@@ -159,23 +159,52 @@ class ServicesSecurityStatus: SVTCommandBase
 					$this.CommandError($_.Exception.InnerException.ErrorRecord);
 				}
 
+				[SVTEventContext[]] $currentResourceResults = @();
 				if($svtObject)
 				{
 					$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule
 					$this.SetSVTBaseProperties($svtObject);
-
-					$result += $svtObject.$methodNameToCall();
+					$currentResourceResults += $svtObject.$methodNameToCall();
 					$svtObject.ChildSvtObjects | ForEach-Object {
 						$_.RunningLatestPSModule = $this.RunningLatestPSModule
 						$this.SetSVTBaseProperties($_)
-						$result += $_.$methodNameToCall();
+						$currentResourceResults += $_.$methodNameToCall();
 					}
+					$result += $currentResourceResults;
 
 				}
-				if($currentCount % 5 -eq 0 -or $currentCount -eq $totalResources)
+				if(($result | Measure-Object).Count -gt 0)
 				{
-					$this.UpdatePartialCommitBlob()
+					if($currentCount % 5 -eq 0 -or $currentCount -eq $totalResources)
+					{
+						$this.UpdatePartialCommitBlob()
+					}					
 				}
+
+				if($this.IsLocalComplianceStoreEnabled -and ($currentResourceResults | Measure-Object).Count -gt 0)
+				{	
+					# Persist scan data to subscription
+					try 
+					{
+						if($null -eq $this.ComplianceReportHelper)
+						{
+							$this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
+						}
+						if($this.ComplianceReportHelper.HaveRequiredPermissions())
+						{
+							$this.ComplianceReportHelper.StoreComplianceDataInUserSubscription($currentResourceResults)
+						}
+						else
+						{
+							$this.IsLocalComplianceStoreEnabled = $false;
+						}
+					}
+					catch 
+					{
+						$this.PublishException($_);
+					}
+				}
+					
 				# Register/Deregister all listeners to cleanup the memory
 				[ListenerHelper]::RegisterListeners();
 			}
@@ -197,6 +226,7 @@ class ServicesSecurityStatus: SVTCommandBase
 	hidden [SVTEventContext[]] FetchAttestationInfo()
 	{
 		[ControlStateExtension] $ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
+		$ControlStateExt.UniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
 		$ControlStateExt.Initialize($false);
 		$attestationFound = $ControlStateExt.ComputeControlStateIndexer();
 		$attestedResources = @()
