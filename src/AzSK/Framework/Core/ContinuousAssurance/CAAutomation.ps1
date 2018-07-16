@@ -226,6 +226,13 @@ class CCAutomation: CommandBase
                 }
 			}
 			
+			#Return in case of Central and Multi CA Mode
+			if($this.ScanOnDeployment -and ($this.IsMultiCAModeOn -or -$this.IsCentralScanModeOn))
+			{
+				$this.PublishCustomMessage("Error: Scan on Deployment feature is currently not supported for Central CA Mode.",[MessageType]::Warning)
+				throw ([SuppressedException]::new(("Scan on Deployment not supported."), [SuppressedExceptionType]::InvalidOperation))
+			}
+
 			$this.UserConfig.StorageAccountRG = $this.AutomationAccount.CoreResourceGroup
 			
 			#endregion
@@ -487,6 +494,13 @@ class CCAutomation: CommandBase
 			else
 			{
 				$automationTags = $existingAccount.Tags
+			}
+
+			#Return in case of Central and Multi CA Mode
+			if($this.ScanOnDeployment -and ($this.IsMultiCAModeOn -or -$this.IsCentralScanModeOn))
+			{
+				$this.PublishCustomMessage("Error: Scan on Deployment feature is currently not supported for Central CA Mode.",[MessageType]::Warning)
+				throw ([SuppressedException]::new(("Scan on Deployment not supported."), [SuppressedExceptionType]::InvalidOperation))
 			}
 
 			$this.AutomationAccount.Location = $existingAccount.Location
