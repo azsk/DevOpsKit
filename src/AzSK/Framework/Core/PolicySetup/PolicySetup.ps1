@@ -659,7 +659,7 @@ class PolicySetup: CommandBase
 		$AzSKPre = $policyBloblist | Where-Object { $_.Name -eq "$($this.RunbookBaseVersion)/AzSK.Pre.json"} 
 		if(($AzSKPre | Measure-Object).Count -eq 0)
 		{
-			$missingPolicies += "AzSKPre Config"				
+			$missingPolicies += "AzSKPre Config"
 			$policies.AzSKPre = $false
 		}
 		else
@@ -783,7 +783,12 @@ class PolicySetup: CommandBase
 			#Validate AzSKConfigURL
 			$pattern = 'AzSKConfigURL = "(.*?)"'
 			$InstallerAzSKPreUrl = [Helpers]::GetSubString($InstallerContent,$pattern)  
-			$AzSKPreUrl = $AzSKPre.ICloudBlob.Uri.AbsoluteUri  
+
+			$AzSKPreUrl = "Not Available"
+			if($policies.AzSKPre)
+			{
+				$AzSKPreUrl= $AzSKPre.ICloudBlob.Uri.AbsoluteUri  
+			}			 
 
 			if($InstallerAzSKPreUrl -like "*$AzSKPreUrl*" )
 			{
@@ -887,7 +892,12 @@ class PolicySetup: CommandBase
 			#Validate AzSkVersionForOrgUrl command 
 			$pattern = 'azskVersionForOrg = "(.*?)"'
 			$coreSetupAzSkVersionForOrgUrl = [Helpers]::GetSubString($RunbookCoreSetupContent,$pattern)  
-			$AzSkVersionForOrgUrl = $AzSKPre.ICloudBlob.Uri.AbsoluteUri  
+			
+			$AzSkVersionForOrgUrl = "Not Available"
+			if($policies.AzSKPre)
+			{
+				$AzSkVersionForOrgUrl = $AzSKPre.ICloudBlob.Uri.AbsoluteUri  
+			}			
 
 			if($coreSetupAzSkVersionForOrgUrl -like "*$AzSkVersionForOrgUrl*" )
 			{
@@ -942,8 +952,13 @@ class PolicySetup: CommandBase
 		$AzSKConfigPath =Get-ChildItem -Path $policyTempFolder -File "AzSK.json" -Recurse
 		$AzSKConfigContent =  Get-Content -Path $($AzSKConfigPath.FullName) | ConvertFrom-Json
 		$missingAzSKConfigurations = @()
-		#Validate CurrentVersionForOrg     
-		$RunbookCoreSetupUrl =  $RunbookCoreSetup.ICloudBlob.Uri.AbsoluteUri
+		#Validate CurrentVersionForOrg 
+		$RunbookCoreSetupUrl = "Not Available"
+		if($policies.RunbookCoreSetup)
+		{
+			$RunbookCoreSetupUrl = $RunbookCoreSetup.ICloudBlob.Uri.AbsoluteUri 
+		}    
+		
 			if([Helpers]::CheckMember($AzSKConfigContent,"CASetupRunbookURL") -and $AzSKConfigContent.CASetupRunbookURL -and $AzSKConfigContent.CASetupRunbookURL -like "*$RunbookCoreSetupUrl*")
 			{
 				$AzSKConfiguOutput.CASetupRunbookUrl = $true
@@ -983,7 +998,12 @@ class PolicySetup: CommandBase
 			} 
 			
 			# Validate InstallationCommand     
-			$installerAbsoluteUrl = $Installer.ICloudBlob.Uri.AbsoluteUri 
+			$installerAbsoluteUrl = "Not Available"
+			if($policies.Installer)
+			{
+				$installerAbsoluteUrl = $Installer.ICloudBlob.Uri.AbsoluteUri
+			}		 
+			
 			if([Helpers]::CheckMember($AzSKConfigContent,"InstallationCommand") -and $AzSKConfigContent.InstallationCommand -and $AzSKConfigContent.InstallationCommand -like "*$installerAbsoluteUrl*") 
 			{
 				$AzSKConfiguOutput.InstallationCommand = $true
@@ -1014,8 +1034,13 @@ class PolicySetup: CommandBase
 				$detailedMsg+="`nMissing Configuration: PolicyOrgName";
 			}
 
-			# Validate AzSKPre Url     
-			$azSKPreUrl = $AzSKPre.ICloudBlob.Uri.AbsoluteUri 
+			# Validate AzSKPre Url
+			$azSKPreUrl = "Not Available"
+			if($policies.AzSKPre)
+			{
+				$azSKPreUrl = $AzSKPre.ICloudBlob.Uri.AbsoluteUri 
+			}
+
 			if([Helpers]::CheckMember($AzSKConfigContent,"AzSKConfigURL") -and  $AzSKConfigContent.AzSKConfigURL  -and $AzSKConfigContent.AzSKConfigURL -like "*$azSKPreUrl*")
 			{
 				$AzSKConfiguOutput.AzSKPreConfigURL = $true
@@ -1088,8 +1113,13 @@ class PolicySetup: CommandBase
 												-UseBasicParsing
 			
 			#Check if OSS CoreSetup is refered in runbooks
-			 $RunbookCoreSetupUrl =  $RunbookCoreSetup.ICloudBlob.Uri.AbsoluteUri
-			 $policyContainerUrl= $AzSKConfig.ICloudBlob.Container.Uri.AbsoluteUri
+			$RunbookCoreSetupUrl = "Not Available"
+			if($policies.RunbookCoreSetup)
+			{
+				$RunbookCoreSetupUrl = $RunbookCoreSetup.ICloudBlob.Uri.AbsoluteUri 
+			}
+			
+			$policyContainerUrl= $AzSKConfig.ICloudBlob.Container.Uri.AbsoluteUri
 			$policyReferenceUrl = "$policyContainerUrl/```$(```$Version)/```$(```$FileName)"
 			if(-not $serverFileContent.Contains($RunbookCoreSetupUrl))
 			{
