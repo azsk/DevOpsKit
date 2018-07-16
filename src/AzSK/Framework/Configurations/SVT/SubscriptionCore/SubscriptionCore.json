@@ -10,7 +10,7 @@
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckSubscriptionAdminCount",
-      "Recommendation": "There are 2 steps involved. You need to clean up (1) unexpected 'Classic Administrators'and (2) unexpected 'Owners' on the subscription. (1) Steps to clean up classic administrators (a) Go to https://manage.windowsazure.com/ --> settings tab -> administrators --> select and remove unwanted administrators using remove icon on the bottom ribbon (2) To remove unwanted members from the Owners group simply run the command 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName Owner'.",
+      "Recommendation": "There are 2 steps involved. (1) You need to remove any 'Classic Administrators/Co-Administrators' who should not be in the role. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Subscriptions (c) Select the subscription (d) Go to ‘Access Control (IAM)’ (e) Right click the co-administrator account that has to be removed and click on the ‘Remove co-administrator’. (f) Perform this operation for all the co-administrators that need to be removed from the subscription. (2) You need to remove any unwanted members from the Owners group. To do this simply run the command 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName Owner'.",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -27,7 +27,7 @@
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "ValidateCentralAccountsRBAC",
-      "Recommendation": "There are 2 steps involved. You need to clean up (1) unexpected 'Classic Administrators'and (2) unexpected 'Owners' on the subscription. (1) Steps to clean up classic administrators (a) Go to https://manage.windowsazure.com/ --> settings tab -> administrators --> select and remove unwanted administrators using remove icon on the bottom ribbon (2) To remove unwanted members from the Owners group simply run the command 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName Owner'.",
+      "Recommendation": "There are 2 steps involved. (1) You need to remove any 'Classic Administrators/Co-Administrators' who should not be in the role. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Subscriptions (c) Select the subscription (d) Go to ‘Access Control (IAM)’ (e) Right click the co-administrator account that has to be removed and click on the ‘Remove co-administrator’. (f) Perform this operation for all the co-administrators that need to be removed from the subscription. (2) You need to remove any unwanted members from the Owners group. To do this simply run the command 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName Owner'.",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -154,7 +154,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckCoAdminCount",
-      "Recommendation": "You need to clean up any unexpected 'Classic Administrators'. Please follow these steps: (a) Logon to https://manage.windowsazure.com/ (b)Navigate to the Settings tab and click the administrators tab to list all administrators (c) Select the account that has to be removed and click on the Remove icon on the bottom ribbon (d) Perform this operation for all the co-administrators that need to be removed from the subscription.",
+      "Recommendation": "You need to remove any 'Classic Administrators/Co-Administrators' who should not be in the role. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Subscriptions (c) Select the subscription (d) Go to ‘Access Control (IAM)’ (e) Right click the co-administrator account that has to be removed and click on the ‘Remove co-administrator’. (f) Perform this operation for all the co-administrators that need to be removed from the subscription.",
       "Tags": [
         "SDL",
         "TCP",
@@ -176,7 +176,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckManagementCertsPresence",
-      "Recommendation": "Logon to https://manage.windowsazure.com/ --> Settings tab  --> Management Certificates tab --> Delete unwanted management certs using delete icon on the bottom ribbon.",
+      "Recommendation": "You need to remove any management certificates that are not required. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Subscriptions (c) Select the subscription (d) Go to Settings tab  --> Management Certificates tab --> Delete unwanted management certificates.",
       "Tags": [
         "SDL",
         "TCP",
@@ -419,13 +419,13 @@
       "Rationale": "Public IPs provide direct access over the internet exposing a cloud resource to all type of attacks over the public network. Hence use of public IPs should be carefully scrutinized/reviewed."
     },
     {
-      "ControlID": "Azure_Subscription_AuthZ_Dont_Assign_Permanent_Critical_Roles ",
-      "Description": "Permanent access for critical roles should not be granted at subscription scope",
+      "ControlID": "Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access",
+      "Description": "Permanent access should not be granted for privileged subscription level roles",
       "Id": "SubscriptionCore281",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckPermanentRoleAssignments",
-      "Recommendation": "Assign critical roles at subscription level through PIM (Privileged Identity Management). Refer https://docs.microsoft.com/en-us/azure/active-  directory/privileged-identity-management/azure-pim-resource-rbac#assign-roles. To remove existing permanent assignments simply run the command 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName {RoleDefinitionName}'",
+      "Recommendation": "Use Privileged Identity Management (PIM) to grant access to privileged roles at subscription scope. To remove existing assignments run: 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName {RoleDefinitionName}'. Refer https://docs.microsoft.com/en-us/azure/active-  directory/privileged-identity-management/azure-pim-resource-rbac#assign-roles.",
       "Tags": [
         "SDL",
         "Automated",
@@ -433,7 +433,7 @@
         "AuthZ"
             ],
       "Enabled": true,
-      "Rationale": "Permanent access to critical roles should be minimized so as to ensure that critical resources present in subscription are accessed only by the legitimate users when required. PIM does this by limiting users to only taking on their privileges just in time (JIT), or by assigning privileges for a shortened duration after which privileges are revoked automatically."
+      "Rationale": "Permanent access increase the risk of a malicious user getting that access and inadvertently impacting a sensitive resource. To minimize this risk ensure that critical resources present in subscription are accessed only by the legitimate users when required. PIM facilitates this by limiting users to only assume higher privileges in a just in time (JIT) manner (or by assigning privileges for a shortened duration after which privileges are revoked automatically)."
      }
 
   ]

@@ -587,6 +587,7 @@ class SubscriptionCore: SVTBase
 
         if($null -ne $subARMPolConfig)
         {            
+			$currentPolicyAssignments = Get-AzureRMPolicyAssignment;
             $subARMPolConfig.Policies | ForEach-Object{
                 Set-Variable -Name pol -Scope Local -Value $_
                 Set-Variable -Name polEnabled -Scope Local -Value $_.enabled
@@ -595,7 +596,7 @@ class SubscriptionCore: SVTBase
                 $haveMatchedTags = ((($tags | Where-Object { $this.SubscriptionMandatoryTags -contains $_ }) | Measure-Object).Count -gt 0)
                 if($polEnabled -and $haveMatchedTags)
                 {
-                    $mandatoryPolicies = [array](Get-AzureRMPolicyAssignment | Where-Object {$_.Name -eq $policyDefinitionName})
+                    $mandatoryPolicies = [array]($currentPolicyAssignments | Where-Object {$_.Name -eq $policyDefinitionName})
                     if($null -eq $mandatoryPolicies -or ($mandatoryPolicies | Measure-Object).Count -le 0)
                     {
                         $foundMandatoryPolicies = $false
@@ -942,6 +943,7 @@ class SubscriptionCore: SVTBase
 			$criticalPermanentRoles=$permanentRoles|Where-Object{$_.RoleDefinitionName -in $criticalRoles}
 			if($criticalPermanentRoles.Count-gt 0)
 			{
+				$controlResult.SetStateData("Permanent role assignments present on subscription",$criticalPermanentRoles)
 				$controlResult.AddMessage([VerificationResult]::Failed, "Subscription contains permanent role assignment for critical roles : $criticalRoles")
 				$permanentRolesbyRoleDefinition=$criticalPermanentRoles|Sort-Object -Property RoleDefinitionName
 				$controlResult.AddMessage($permanentRolesbyRoleDefinition);

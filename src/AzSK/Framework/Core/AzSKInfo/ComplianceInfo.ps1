@@ -67,7 +67,7 @@ class ComplianceInfo: CommandBase
 	{
 		$this.ComplianceScanResult | ForEach-Object {
 			# ToDo: Add condition to check whether control in grace
-			if($_.FeatureName -eq "AzSKCfg" -or $_.VerificationResult -eq [VerificationResult]::Disabled)
+			if($_.FeatureName -eq "AzSKCfg" -or $_.VerificationResult -eq [VerificationResult]::Disabled -or $_.VerificationResult -eq [VerificationResult]::Error)
 			{
 				$_.EffectiveResult = [VerificationResult]::Skipped
 			}

@@ -102,11 +102,17 @@ class RemoteReportsListener: ListenerBase {
 		$this.RegisterEvent([AzSKRootEvent]::PublishCustomData, {
             $currentInstance = [RemoteReportsListener]::GetInstance();
             try
-            {
-				
+            {				
 				$CustomDataObj =  $Event.SourceArgs
-				$CustomObjectValue=$CustomDataObj| Select-Object -exp Messages|select -exp DataObject| select -exp Value;
-				[RemoteApiHelper]::PostRBACTelemetry($CustomObjectValue);
+				$CustomObjectData=$CustomDataObj| Select-Object -exp Messages|select -exp DataObject
+				if($CustomObjectData.Name -eq "SubSVTObject")
+				{
+					$subSVTObject = $CustomObjectData.Value;
+					$currentInstance.FetchRBACTelemetry($subSVTObject);					
+					[RemoteApiHelper]::PostRBACTelemetry($subSVTObject.CustomData);
+				}
+				#| select -exp Value;
+				
             }
             catch
             {
@@ -239,5 +245,13 @@ class RemoteReportsListener: ListenerBase {
 
 		$scanResult.ControlResults = [ServiceControlResult[]] $results
 		[RemoteApiHelper]::PostServiceScanResult($scanResult)
+	}
+
+	hidden [void] FetchRBACTelemetry($svtObject)
+	{
+		$svtObject.GetRoleAssignments();
+		$svtObject.PublishRBACTelemetryData();
+		$svtObject.GetPIMRoles();
+
 	}
 }
