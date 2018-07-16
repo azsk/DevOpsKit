@@ -180,7 +180,8 @@ class VirtualMachine: SVTBase
 		try
 		{
 			$result = $null;
-			[SecurityCenterHelper]::RegisterResourceProvider();
+			# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
+			#[SecurityCenterHelper]::RegisterResourceProvider();
 			$uri = [System.String]::Format("{0}subscriptions/{1}/providers/microsoft.Security/securityStatuses?api-version=2015-06-01-preview", [WebRequestHelper]::AzureManagementUri, $this.SubscriptionContext.SubscriptionId)
 		        
 			try 
