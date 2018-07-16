@@ -60,8 +60,7 @@
           "AppService",
           "FunctionApp"
         ],
-        "Enabled": true,
-        "GraceExpiryDate": "2018-05-24"
+        "Enabled": true
       },
       {
         "ControlID": "Azure_AppService_Deploy_Dont_Use_Publish_Profiles",
