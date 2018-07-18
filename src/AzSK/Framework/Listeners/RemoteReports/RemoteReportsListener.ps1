@@ -109,7 +109,7 @@ class RemoteReportsListener: ListenerBase {
 				{
 					$subSVTObject = $CustomObjectData.Value;
 					$currentInstance.FetchRBACTelemetry($subSVTObject);					
-					[RemoteApiHelper]::PostRBACTelemetry($subSVTObject.CustomData);
+					[RemoteApiHelper]::PostRBACTelemetry(($subSVTObject.CustomObject.Value));
 				}
 				#| select -exp Value;
 				
