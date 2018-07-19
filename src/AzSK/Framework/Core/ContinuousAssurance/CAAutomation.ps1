@@ -1335,36 +1335,6 @@ class CCAutomation: CommandBase
 		$detailedMsg = $Null		
 		#endregion
 
-		#region:Step 1.2: Check for the presence of locks on the AzSKRG
-		$stepCount++		
-		$checkDescription = "Checking the presence of resource locks."
-		$azskRGScope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourceGroups/$($this.AutomationAccount.CoreResourceGroup)"
-		$resourceLocks = @();
-		$resourceLocks += Get-AzureRmResourceLock -Scope $azskRGScope
-		if($resourceLocks.Count -gt 0)
-		{
-			$resultMsg  = "Resource locks found on DevOpsKit RG. You need to remove these locks for CA to work properly."
-			$detailedMsg = [MessageData]::new("Resource locks found on the subscription:", $resourceLocks);
-			$resultStatus = "Failed"
-			$shouldReturn = $true
-		}
-		else
-		{
-			$resultMsg = "No blocking resource locks found on the DevOpsKit RG"
-			$resultStatus = "OK"
-		}	
-		if($shouldReturn)
-		{
-			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
-			return $messages
-		}
-		else 
-		{
-			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
-		}
-		$detailedMsg = $Null		
-		#endregion
-
 		#region:Step 2: Check if AzSK module is in available state in Assets, if no then display error message
 		$stepCount++
 		$azskAutomationModuleList = Get-AzureRmAutomationModule -AutomationAccountName $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup 
