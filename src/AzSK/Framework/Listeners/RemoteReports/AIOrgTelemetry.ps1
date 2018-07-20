@@ -128,7 +128,8 @@ class AIOrgTelemetry: ListenerBase {
 		   {
 			   $scanSource = [RemoteReportHelper]::GetScanSource();
 			   if($scanSource -ne [ScanSource]::Runbook) { return; }
-			   $resources= Find-AzureRMResource
+			   # TODO: To access SubscriptionId, this command needs to be used -> Get-AzureRmResource -ExpandProperties
+			   $resources= Get-AzureRmResource
 			   $telemetryEvents = [System.Collections.ArrayList]::new()
 					   foreach($res in $resources){
 						   $resourceProperties = @{

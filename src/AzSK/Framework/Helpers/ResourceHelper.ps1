@@ -102,7 +102,7 @@ class StorageHelper: ResourceGroupHelper
 		{
 			$this.CreateResourceGroupIfNotExists();
 
-			$existingResources = Find-AzureRmResource -ResourceGroupNameEquals $this.ResourceGroupName -ResourceType $this.ResourceType
+			$existingResources = Get-AzureRmResource -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType
 
 			# Assuming 1 storage account is needed on Resource group
 			if(($existingResources | Measure-Object).Count -gt 1)
@@ -483,7 +483,7 @@ class AppInsightHelper: ResourceGroupHelper
 		{
 			$this.CreateResourceGroupIfNotExists();
 			[Helpers]::RegisterResourceProviderIfNotRegistered("microsoft.insights");
-			$existingResources = Find-AzureRmResource -ResourceGroupNameEquals $this.ResourceGroupName -ResourceType $this.ResourceType
+			$existingResources = Get-AzureRmResource -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType
 
 			# Assuming 1 storage account is needed on Resource group
 			if(($existingResources | Measure-Object).Count -gt 1)
@@ -510,7 +510,7 @@ class AppInsightHelper: ResourceGroupHelper
 			}
 
 			# Fetch the application insight
-			$this.AppInsightInstance = Find-AzureRmResource -ResourceNameEquals $this.AppInsightName -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType -ExpandProperties 
+			$this.AppInsightInstance = Get-AzureRmResource -Name $this.AppInsightName -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType -ExpandProperties 
 			if(-not ($this.AppInsightInstance -and $this.AppInsightInstance.Properties))
 			{
 				$this.AppInsightInstance = $null;

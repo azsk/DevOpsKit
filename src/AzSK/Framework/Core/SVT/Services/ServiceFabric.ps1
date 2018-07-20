@@ -301,7 +301,7 @@ class ServiceFabric : SVTBase
 		$loadBalancerResources = $this.GetLinkedResources("Microsoft.Network/loadBalancers")
 		#Collect all open ports on load balancer  
 		$loadBalancerResources | ForEach-Object{
-			$loadBalancerResource = Get-AzureRmLoadBalancer -Name $_.ResourceName -ResourceGroupName $_.ResourceGroupName
+			$loadBalancerResource = Get-AzureRmLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
 			$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
         
 			$loadBalancingRules | ForEach-Object {
@@ -427,6 +427,6 @@ class ServiceFabric : SVTBase
 
 	[PSObject] GetLinkedResources([string] $resourceType)
 	{
-	    return  Find-AzureRmResource -TagName $this.DefaultTagName -TagValue $this.ClusterTagValue | Where-Object { ($_.ResourceType -EQ $resourceType) -and ($_.ResourceGroupName -eq $this.ResourceContext.ResourceGroupName) }
+	    return  Get-AzureRmResource -TagName $this.DefaultTagName -TagValue $this.ClusterTagValue | Where-Object { ($_.ResourceType -EQ $resourceType) -and ($_.ResourceGroupName -eq $this.ResourceContext.ResourceGroupName) }
 	}	
 }

@@ -24,11 +24,11 @@ class UserSubscriptionDataHelper: AzSKRoot
 	static [PSObject] GetUserSubscriptionStorage()
 	{
 		$StorageAccountPreName = [Constants]::StorageAccountPreName
-		$storageAccount = Find-AzureRmResource -ResourceGroupNameEquals $([UserSubscriptionDataHelper]::ResourceGroupName) `
+		$storageAccount = Get-AzureRmResource -ResourceGroupName $([UserSubscriptionDataHelper]::ResourceGroupName) `
 		-ResourceNameContains $StorageAccountPreName `
 		-ResourceType $([UserSubscriptionDataHelper]::StorageResourceType) `
 		-ErrorAction Stop
-		$storageAccount = $storageAccount | Where-Object{$_.ResourceName -match '^azsk\d{14}$'}
+		$storageAccount = $storageAccount | Where-Object{$_.Name -match '^azsk\d{14}$'}
 
 		if(($storageAccount|Measure-Object).Count -gt 1)
 		{
@@ -69,8 +69,8 @@ class UserSubscriptionDataHelper: AzSKRoot
 	{
 		$RGName = [OldConstants]::AzSDKRGName
 		$StorageAccountPreName = [OldConstants]::StorageAccountPreName
-		$existingStorage = Find-AzureRmResource -ResourceGroupNameEquals $RGName `
-		-ResourceNameContains $StorageAccountPreName `
+		$existingStorage = Get-AzureRmResource -ResourceGroupName $RGName `
+		-Name "*$($StorageAccountPreName)*" `
 		-ResourceType $([UserSubscriptionDataHelper]::StorageResourceType) `
 		-ErrorAction Stop
 		if(($existingStorage|Measure-Object).Count -gt 1)

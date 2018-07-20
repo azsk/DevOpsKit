@@ -884,7 +884,7 @@ class Helpers {
             [EventBase]::PublishGenericException($_);
             $storageObject = $null
             #clean-up storage if error occurs
-            if ((Find-AzureRmResource -ResourceGroupNameEquals $ResourceGroup -ResourceNameEquals $StorageName|Measure-Object).Count -gt 0) {
+            if ((Get-AzureRmResource -ResourceGroupName $ResourceGroup -Name $StorageName|Measure-Object).Count -gt 0) {
                 Remove-AzureRmStorageAccount -ResourceGroupName $ResourceGroup -Name $StorageName -Force -ErrorAction SilentlyContinue
             }
         }

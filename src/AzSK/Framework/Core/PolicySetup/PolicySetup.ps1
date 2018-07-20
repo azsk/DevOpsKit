@@ -108,7 +108,7 @@ class PolicySetup: CommandBase
 		if([string]::IsNullOrWhiteSpace($this.AppInsightName) -or [string]::IsNullOrWhiteSpace($appInsightLocation))
 		{
 			$azskInsights = @();
-			$azskInsights += Find-AzureRmResource -ResourceType 'Microsoft.Insights/components' -ResourceGroupName $this.ResourceGroupName -ErrorAction SilentlyContinue
+			$azskInsights += Get-AzureRmResource -ResourceType 'Microsoft.Insights/components' -ResourceGroupName $this.ResourceGroupName -ErrorAction SilentlyContinue
 			if(($azskInsights | Measure-Object).Count -eq 1)
 			{
 				$this.AppInsightName = $azskInsights[0].Name;
@@ -562,7 +562,7 @@ class PolicySetup: CommandBase
 			$PolicyScanOutput.Resources.ResourceGroup = $true
 
 			#b. Validate presense of policy resources storage, app insight and monitoring dashboard
-		$policyResources= Find-AzureRmResource -ResourceGroupName $($this.ResourceGroupName)
+		$policyResources= Get-AzureRmResource -ResourceGroupName $($this.ResourceGroupName)
 		#Check if poliy store  is present 
 		$missingResources =@()
 		$policyStore = $policyResources  | Where-Object {$_.ResourceType -eq "Microsoft.Storage/storageAccounts" }
