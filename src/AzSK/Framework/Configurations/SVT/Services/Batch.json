@@ -133,7 +133,7 @@
       "Automated": "Yes",
       "MethodName": "CheckBatchMetricAlert",
       "Rationale": "Metric alerts should be enabled to get alerts for issues that impacts the performance of batch resource when a metric crosses a certain threshold.",
-      "Recommendation": "Add or update a metric-based alert rule by using command Add-AzureRmMetricAlertRule -Location '{Location}'-MetricName 'PoolDeleteCompleteEvent' -Name '{alertName}' -Operator 'GreaterThan' -ResourceGroup '{ResourceGroupName}' -TargetResourceId '{TargetResourceId}' -Threshold 0 -TimeAggregationOperator 'Total' -WindowSize '01:00:00'  -Actions '{Actions}'",
+      "Recommendation": "Add or update a metric-based alert rule by using command Add-AzureRmMetricAlertRule -Location '{Location}'-MetricName 'PoolDeleteCompleteEvent' -Name '{alertName}' -Operator 'GreaterThan' -ResourceGroup '{ResourceGroupName}' -TargetResourceId '{TargetResourceId}' -Threshold 0 -TimeAggregationOperator 'Total' -WindowSize '01:00:00'  -Action '{Comma-separated list of actions}'",
       "Tags": [
         "SDL",
         "Best Practice",

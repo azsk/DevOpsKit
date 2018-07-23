@@ -37,11 +37,11 @@ class AzSKRoot: EventBase
 
 			if($this.SubscriptionContext.SubscriptionId -ne [Constants]::BlankSubscriptionId)
 			{
-				$rmLogin = Add-AzureRmAccount -SubscriptionId $this.SubscriptionContext.SubscriptionId
+				$rmLogin = Connect-AzureRmAccount -SubscriptionId $this.SubscriptionContext.SubscriptionId
 			}
 			else
 			{
-				$rmLogin = Add-AzureRmAccount
+				$rmLogin = Connect-AzureRmAccount
 			}
             
 			if($rmLogin)

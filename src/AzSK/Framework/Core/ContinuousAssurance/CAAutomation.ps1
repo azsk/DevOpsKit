@@ -3313,12 +3313,7 @@ class CCAutomation: CommandBase
 		$storageSku = [Constants]::NewStorageSku
 	    Set-AzureRmStorageAccount -Name $storageName  -ResourceGroupName $resourceGroup -SkuName $storageSku
 	    
-		#Azure_Storage_DP_Encrypt_At_Rest_Blob
-	    Set-AzureRmStorageAccount -Name $storageName  -ResourceGroupName $resourceGroup -EnableEncryptionService 'Blob'
-	    #Azure_Storage_DP_Encrypt_At_Rest_File
-		Set-AzureRmStorageAccount -Name $storageName  -ResourceGroupName $resourceGroup -EnableEncryptionService 'File'
-
-	    #Azure_Storage_Audit_AuthN_Requests
+		#Azure_Storage_Audit_AuthN_Requests
 	    $currentContext = $storageObject.Context
 	    Set-AzureStorageServiceLoggingProperty -ServiceType Blob -LoggingOperations All -Context $currentContext -RetentionDays 365 -PassThru
 	    Set-AzureStorageServiceMetricsProperty -MetricsType Hour -ServiceType Blob -Context $currentContext -MetricsLevel ServiceAndApi -RetentionDays 365 -PassThru

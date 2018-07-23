@@ -17,7 +17,7 @@ class Helpers {
 			if ((-not $rmContext) -or ($rmContext -and (-not $rmContext.Subscription -or -not $rmContext.Account))) {
 				[EventBase]::PublishGenericCustomMessage("No active Azure login session found. Initiating login flow...", [MessageType]::Warning);
 
-				$rmLogin = Add-AzureRmAccount
+				$rmLogin = Connect-AzureRmAccount
 				if ($rmLogin) {
 					$rmContext = $rmLogin.Context;
 				}
@@ -846,7 +846,6 @@ class Helpers {
                 -Location $Location `
                 -Kind $StorageKind `
                 -AccessTier Cool `
-                -EnableEncryptionService "Blob,File" `
                 -EnableHttpsTrafficOnly $true `
                 -ErrorAction Stop
 
@@ -859,7 +858,7 @@ class Helpers {
 
             if ($storageObject) {
                 #create alert rule				
-                #$emailAction = New-AzureRmAlertRuleEmail -SendToServiceOwners -ErrorAction Stop -WarningAction SilentlyContinue
+                #$emailAction = New-AzureRmAlertRuleEmail -SendToServiceOwner -ErrorAction Stop -WarningAction SilentlyContinue
                 #$targetId = $storageObject.Id + "/services/" + "blob"
 
                 #$alertName = $StorageName + "alert"
@@ -870,7 +869,7 @@ class Helpers {
                 #    -ResourceGroup $storageObject.ResourceGroupName `
                 #    -TargetResourceId $targetId `
                 #    -Threshold 0 -TimeAggregationOperator Total -WindowSize 01:00:00  `
-                #    -Actions $emailAction `
+                #    -Action $emailAction `
                 #    -WarningAction SilentlyContinue `
                 #    -ErrorAction Stop
 
