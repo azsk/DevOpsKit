@@ -25,7 +25,7 @@ class UserSubscriptionDataHelper: AzSKRoot
 	{
 		$StorageAccountPreName = [Constants]::StorageAccountPreName
 		$storageAccount = Get-AzureRmResource -ResourceGroupName $([UserSubscriptionDataHelper]::ResourceGroupName) `
-		-ResourceNameContains $StorageAccountPreName `
+		-Name "*$StorageAccountPreName*" `
 		-ResourceType $([UserSubscriptionDataHelper]::StorageResourceType) `
 		-ErrorAction Stop
 		$storageAccount = $storageAccount | Where-Object{$_.Name -match '^azsk\d{14}$'}
