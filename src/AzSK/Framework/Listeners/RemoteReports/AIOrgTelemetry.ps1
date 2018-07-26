@@ -128,18 +128,17 @@ class AIOrgTelemetry: ListenerBase {
 		   {
 			   $scanSource = [RemoteReportHelper]::GetScanSource();
 			   if($scanSource -ne [ScanSource]::Runbook) { return; }
-			   # TODO: To access SubscriptionId, this command needs to be used -> Get-AzureRmResource -ExpandProperties
 			   $resources= Get-AzureRmResource
 			   $telemetryEvents = [System.Collections.ArrayList]::new()
 					   foreach($res in $resources){
 						   $resourceProperties = @{
 						   "Name" = $res.Name;
 						   "ResourceId" = $res.ResourceId;
-						   "ResourceName" = $res.ResourceName;
+						   "ResourceName" = $res.Name;
 						   "ResourceType" = $res.ResourceType;
 						   "ResourceGroupName" = $res.ResourceGroupName;
 						   "Location" = $res.Location;
-						   "SubscriptionId" = $res.SubscriptionId;
+						   "SubscriptionId" = $currentInstance.InvocationContext.BoundParameters.SubscriptionId;
 						   "Tags" = [Helpers]::FetchTagsString($res.Tags)
 					   }
 					   $telemetryEvent = "" | Select-Object Name, Properties, Metrics
