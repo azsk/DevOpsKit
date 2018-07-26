@@ -93,7 +93,7 @@ class Automation: SVTBase
     }
 	hidden [ControlResult] CheckOMSSetup([ControlResult] $controlResult)
     {   
-		$resource = Get-AzureRmResource -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
+		$resource = Get-AzureRmResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
 		$resourceId = $resource.ResourceId
 		$diaSettings = Get-AzureRmDiagnosticSetting -ResourceId $resourceId -ErrorAction Stop
 		if((Get-Member -InputObject $diaSettings -Name WorkspaceId -MemberType Properties) -and $null -ne $diaSettings.WorkspaceId)

@@ -233,7 +233,7 @@ class VirtualMachine: SVTBase
 						$currentNic = Get-AzureRmResource -ResourceId $_.Id -ErrorAction SilentlyContinue
 						if($currentNic)
 						{
-							$nicResource = Get-AzureRmNetworkInterface -Name $currentNic.ResourceName `
+							$nicResource = Get-AzureRmNetworkInterface -Name $currentNic.Name `
 												-ResourceGroupName $currentNic.ResourceGroupName `
 												-ExpandResource NetworkSecurityGroup `
 												-ErrorAction SilentlyContinue
