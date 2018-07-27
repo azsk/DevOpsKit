@@ -463,7 +463,9 @@ class WritePsConsole: FileOutputBase
 		$currentVersion = $this.GetCurrentModuleVersion();
 		$moduleName = $this.GetModuleName();
 		$methodName = $this.InvocationContext.InvocationName;
-	
+        $verbndnoun = $methodName.Split('-')
+	    $aliasName = [CommandHelper]::Mapping | Where {$_.Verb -eq $verbndnoun[0] -and $_.Noun -eq $verbndnoun[1] }
+
 		$this.WriteMessage([Constants]::DoubleDashLine + "`r`n$moduleName Version: $currentVersion `r`n" + [Constants]::DoubleDashLine , [MessageType]::Info);      
 		# Version check message
 		if($arg.Messages)
@@ -472,8 +474,61 @@ class WritePsConsole: FileOutputBase
 				$this.WriteMessageData($_);
 			}
 		}
+        
+        if($aliasName)
+        {
+            $aliasName = $aliasName.ShortName 
+            $aliasName = $aliasName
+            $paramlist = @()
+            $this.InvocationContext.BoundParameters.Keys | % {
+                $key = $this.InvocationContext.MyCommand.Parameters.$_.Aliases | Where {$_.Length -lt 5}
+                $key = $key | sort length -Descending | select -Last 1
+                #$key = ($key) -join ","
+                $val = $this.InvocationContext.BoundParameters[$_]
 
-		$this.WriteMessage("Method Name: $methodName `r`nInput Parameters: $(($this.InvocationContext.BoundParameters | Out-String).TrimEnd()) `r`n" + [Constants]::DoubleDashLine , [MessageType]::Info);                           
+                $myObject = New-Object System.Object
+
+                $myObject | Add-Member -type NoteProperty -name Name -Value $_
+                $myObject | Add-Member -type NoteProperty -name Alias -Value $key
+                $myObject | Add-Member -type NoteProperty -name Value -Value $val
+
+                $paramlist += $myObject
+            }
+
+            $aliasshort = $aliasName.ToLower()
+            $cmID = "$aliasshort "
+            foreach($item in $paramlist)
+            {
+                $ky = $item.Alias
+                $vl = $item.Value
+                if($ky)
+                {
+                    if($vl -eq $true)
+                    {
+                        $vl = ""
+                    }
+                
+                    $cmID += "-$ky $vl "
+                }
+                else
+                {
+                    if($vl -eq $true)
+                    {
+                        $vl = ""
+                    }
+                    $ky = $item.Name
+                    $cmID += "-$ky $vl "
+                }
+                
+            }
+
+            $this.WriteMessage("Method Name: $methodName ($aliasName)`r`nInput Parameters: $(($paramlist | Out-String).TrimEnd()) `r`n`nYou can also use: $cmID `r`n" + [Constants]::DoubleDashLine , [MessageType]::Info);
+        }
+        else
+        {
+            $this.WriteMessage("Method Name: $methodName `r`nInput Parameters: $(($this.InvocationContext.BoundParameters | Out-String).TrimEnd()) `r`n" + [Constants]::DoubleDashLine , [MessageType]::Info);                           
+        }
+		
 
 		$this.WriteMessage([ConfigurationManager]::GetAzSKConfigData().PolicyMessage,[MessageType]::Warning)
 		
