@@ -483,7 +483,6 @@ class WritePsConsole: FileOutputBase
             $this.InvocationContext.BoundParameters.Keys | % {
                 $key = $this.InvocationContext.MyCommand.Parameters.$_.Aliases | Where {$_.Length -lt 5}
                 $key = $key | sort length -Descending | select -Last 1
-                #$key = ($key) -join ","
                 $val = $this.InvocationContext.BoundParameters[$_]
 
                 $myObject = New-Object System.Object
