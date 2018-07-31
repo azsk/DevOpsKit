@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlServerADAdmin",
       "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control. All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
-      "Recommendation": "Run command Set-AzureRmSqlServerActiveDirectoryAdministrator -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -DisplayName '{AzureAdAdmin Display Name}' Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/set-azurermsqlserveractivedirectoryadministrator?view=azurermps-6.5.0",
+      "Recommendation": "Run command Set-AzureRmSqlServerActiveDirectoryAdministrator -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -DisplayName '{AzureAdAdmin Display Name}' Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/set-azurermsqlserveractivedirectoryadministrator",
       "Tags": [
         "SDL",
         "TCP",
@@ -181,7 +181,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlDatabaseFirewallIPAddressRange",
       "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets.",
-      "Recommendation": "Do not configure Any to Any firewall IP address. Run command Remove-AzureRmSqlServerFirewallRule -FirewallRuleName '{AnyToAny FirewallRule Name}' -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/remove-azurermsqlserverfirewallrule?view=azurermps-6.5.0",
+      "Recommendation": "Do not configure Any to Any firewall IP address. Run command Remove-AzureRmSqlServerFirewallRule -FirewallRuleName '{AnyToAny FirewallRule Name}' -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/remove-azurermsqlserverfirewallrule",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -284,7 +284,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlServerFirewallAccessAzureService",
       "Rationale": "The 'Allow access to Azure services' setting configures a very broad range of IP addresses from Azure as permitted to access the SQL Server. Please make sure your scenario really requires this setting before enabling it. Turning it ON exposes your SQL Server to risk of attacks from resources (IPs) owned by others in the Azure region.",
-      "Recommendation": "Turn off the allow access to Azure services flag. Run command Remove-AzureRmSqlServerFirewallRule -FirewallRuleName 'AllowAllWindowsAzureIps' -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/remove-azurermsqlserverfirewallrule?view=azurermps-6.5.0",
+      "Recommendation": "Turn off the allow access to Azure services flag. Run command Remove-AzureRmSqlServerFirewallRule -FirewallRuleName 'AllowAllWindowsAzureIps' -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/remove-azurermsqlserverfirewallrule",
       "Tags": [
         "SDL",
         "Best Practice",
