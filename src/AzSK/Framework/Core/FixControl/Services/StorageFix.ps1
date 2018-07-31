@@ -33,24 +33,6 @@ class StorageFix: FixServicesBase
 		return $detailedLogs;
     }
 
-	# [MessageData[]] EnableBlobEncryption([PSObject] $parameters)
-    # {
-	# 	[MessageData[]] $detailedLogs = @();
-	# 	$detailedLogs += [MessageData]::new("Enabling encryption on blob service of storage [$($this.ResourceName)]...");
-	# 	Set-AzureRmStorageAccount -Name $this.ResourceName -ResourceGroupName $this.ResourceGroupName -StorageEncryption -EnableEncryptionService Blob
-	# 	$detailedLogs += [MessageData]::new("Encryption on blob service is enabled on storage [$($this.ResourceName)]");
-	# 	return $detailedLogs;
-    # }
-
-	# [MessageData[]] EnableFileEncryption([PSObject] $parameters)
-    # {
-	# 	[MessageData[]] $detailedLogs = @();
-	# 	$detailedLogs += [MessageData]::new("Enabling encryption on file service of storage [$($this.ResourceName)]...");
-	# 	Set-AzureRmStorageAccount -Name $this.ResourceName -ResourceGroupName $this.ResourceGroupName -StorageEncryption -EnableEncryptionService File
-	# 	$detailedLogs += [MessageData]::new("Encryption on file service is enabled on storage [$($this.ResourceName)]");
-	# 	return $detailedLogs;
-    # }
-
 	[MessageData[]] EnableHttpsTrafficOnly([PSObject] $parameters)
     {
 		[MessageData[]] $detailedLogs = @();
