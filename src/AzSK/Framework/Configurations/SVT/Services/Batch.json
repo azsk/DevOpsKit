@@ -64,7 +64,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
-      "Recommendation": "Rotate Batch account access keys at regular intervals as per business requirement. Run command New-AzureRmBatchAccountKey -AccountName '{AccountName}'  -KeyType '{KeyType}' -ResourceGroupName '{ResourceGroupName}' Refer:  https://docs.microsoft.com/en-us/powershell/module/azurerm.batch/new-azurermbatchaccountkey?view=azurermps-3.7.0",
+      "Recommendation": "Rotate Batch account access keys at regular intervals as per business requirement. Run command New-AzureRmBatchAccountKey -AccountName '{AccountName}'  -KeyType '{KeyType}' -ResourceGroupName '{ResourceGroupName}' Refer:  https://docs.microsoft.com/en-us/powershell/module/azurerm.batch/new-azurermbatchaccountkey?view=azurermps-6.5.0",
       "Tags": [
         "SDL",
         "TCP",
