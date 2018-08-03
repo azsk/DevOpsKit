@@ -695,63 +695,59 @@ class CCAutomation: CommandBase
 			#endregion
 
 			#region :update user configurable variables (OMS details and App RGs) which are present in params
-			if($null -ne $this.UserConfig -and $null -ne $this.UserConfig.OMSCredential -and  ![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSWorkspaceId))
-			{
-				$varOmsWSID = [Variable]@{
-					Name = "OMSWorkspaceId";
-					Value = $this.UserConfig.OMSCredential.OMSWorkspaceId;
-					IsEncrypted = $false;
-					Description ="OMS Workspace Id"
-				   }
-				$this.UpdateVariable($varOmsWSID)
-				$this.PublishCustomMessage("Updating variable: ["+$varOmsWSID.Name+"]")
-			}
-			else
-			{
-				$omsWsId = $this.GetOMSWSID()
-				if($null -eq $omsWsId -or ($null -ne $omsWsId -and $omsWsId.Value.Trim() -eq [string]::Empty))
-				{
-					$this.PublishCustomMessage("WARNING: OMS workspace info is incomplete or has not been provided.",[MessageType]::Warning)
-				}
-			}
-			if($null -ne $this.UserConfig -and $null -ne $this.UserConfig.OMSCredential -and  ![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSSharedKey))
-			{
-				$varOMSSharedKey = [Variable]@{
-				Name = "OMSSharedKey";
-				Value = $this.UserConfig.OMSCredential.OMSSharedKey;
-				IsEncrypted = $false;
-				Description ="OMS Workspace Shared Key"
-				}
-				$this.UpdateVariable($varOMSSharedKey)
-				$this.PublishCustomMessage("Updating variable: ["+$varOMSSharedKey.Name+"]")
-			}
-			elseif(!$this.IsOMSKeyVariableAvailable())
-			{
-				$this.PublishCustomMessage("WARNING: OMS workspace key is not set up. You have not provided 'OMSSharedKey' parameter in this command.",[MessageType]::Warning)
-			}
+            $OMSSettingsExists = $null -ne $this.UserConfig -and $null -ne $this.UserConfig.OMSCredential -and ![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSWorkspaceId) -and  ![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSSharedKey)
+            $AltOMSSettingsExists = $null -ne $this.UserConfig -and $null -ne $this.UserConfig.OMSCredential -and ![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSWorkspaceId) -and ![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSSharedKey)
+            
+            if($OMSSettingsExists -or $AltOMSSettingsExists)
+            {
+			    if($OMSSettingsExists)
+			    {
+			    	$varOmsWSID = [Variable]@{
+			    		Name = "OMSWorkspaceId";
+			    		Value = $this.UserConfig.OMSCredential.OMSWorkspaceId;
+			    		IsEncrypted = $false;
+			    		Description ="OMS Workspace Id"
+			    	   }
+			    	$this.UpdateVariable($varOmsWSID)
+			    	$this.PublishCustomMessage("Updating variable: ["+$varOmsWSID.Name+"]")
 
-			#AltOMSSettings
-			if($null -ne $this.UserConfig -and $null -ne $this.UserConfig.AltOMSCredential -and -not [string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSSharedKey))
-			{
-				$varAltOMSWSID = [Variable]@{
-					Name = "AltOMSWorkspaceId";
-					Value = $this.UserConfig.AltOMSCredential.OMSWorkspaceId;
-					IsEncrypted = $false;
-					Description ="Alternate OMS Workspace Id"
-				}
-				$this.UpdateVariable($varAltOMSWSID)
-				$this.PublishCustomMessage("Updating variable: ["+$varAltOMSWSID.Name+"]")
+                       $varOMSSharedKey = [Variable]@{
+			    	Name = "OMSSharedKey";
+			    	Value = $this.UserConfig.OMSCredential.OMSSharedKey;
+			    	IsEncrypted = $false;
+			    	Description ="OMS Workspace Shared Key"
+			    	}
+			    	$this.UpdateVariable($varOMSSharedKey)
+			    	$this.PublishCustomMessage("Updating variable: ["+$varOMSSharedKey.Name+"]")
+			    }
+			
+		        #AltOMSSettings
+		        if($AltOMSSettingsExists)
+		        {
+		        	$varAltOMSWSID = [Variable]@{
+		        		Name = "AltOMSWorkspaceId";
+		        		Value = $this.UserConfig.AltOMSCredential.OMSWorkspaceId;
+		        		IsEncrypted = $false;
+		        		Description ="Alternate OMS Workspace Id"
+		        	}
+		        	$this.UpdateVariable($varAltOMSWSID)
+		        	$this.PublishCustomMessage("Updating variable: ["+$varAltOMSWSID.Name+"]")
 
-				$varAltOMSWSKey = [Variable]@{
-					Name = "AltOMSSharedKey";
-					Value = $this.UserConfig.AltOMSCredential.OMSSharedKey;
-					IsEncrypted = $false;
-					Description ="Alternate OMS Workspace Shared Key"
-				}
-				$this.UpdateVariable($varAltOMSWSKey)
-				$this.PublishCustomMessage("Updating variable: ["+$varAltOMSWSKey.Name+"]")			
-			}
-
+		        	$varAltOMSWSKey = [Variable]@{
+		        		Name = "AltOMSSharedKey";
+		        		Value = $this.UserConfig.AltOMSCredential.OMSSharedKey;
+		        		IsEncrypted = $false;
+		        		Description ="Alternate OMS Workspace Shared Key"
+		        	}
+		        	$this.UpdateVariable($varAltOMSWSKey)
+		        	$this.PublishCustomMessage("Updating variable: ["+$varAltOMSWSKey.Name+"]")			
+		        }
+            }
+            else
+            {
+                $this.PublishCustomMessage("Warning: OMS settings are either incomplete or invalid. To configure OMS in CA, please rerun this command with an OMSWorkspaceId and OMSSharedKey.",[MessageType]::Warning)
+            }
+            
 			#Webhook settings
 			if($null -ne $this.UserConfig -and $null -ne $this.UserConfig.WebhookDetails -and -not [string]::IsNullOrWhiteSpace($this.UserConfig.WebhookDetails.Url))
 			{
