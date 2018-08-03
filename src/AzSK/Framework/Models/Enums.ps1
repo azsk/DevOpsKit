@@ -21,6 +21,8 @@ enum AttestationStatus
 	NotFixed
 	WillNotFix
 	WillFixLater
+	NotApplicable
+	StateConfirmed
 }
 
 enum AttestControls 
@@ -106,6 +108,7 @@ enum InfoType
 	ControlInfo
 	HostInfo
 	AttestationInfo
+	ComplianceInfo
 }
 
 enum AutoUpdate
@@ -133,4 +136,22 @@ enum TertiaryBool
 enum ComparisionType
 {
 	NumLesserOrEqual
+}
+
+enum OverrideConfigurationType
+{
+	Installer
+	CARunbooks
+	AzSKRootConfig
+	MonitoringDashboard
+	OrgAzSKVersion
+	All
+	None
+}
+
+enum RemoveConfiguredCASetting
+{
+	OMSSettings
+	AltOMSSettings
+	WebhookSettings
 }

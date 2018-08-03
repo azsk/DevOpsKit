@@ -1,11 +1,14 @@
-function ConvertStringToBoolean($strToConvert) {
-    switch ($strToConvert) {
-        "true" {return $true}
-        "false" {return $false}
+function ConvertStringToBoolean($strToConvert)
+{
+   if([bool]::TryParse($strToConvert, [ref] $strToConvert))
+    {
+        return $strToConvert
     }
-    return $false #adding this to prevent error all path doesn't return value"
+    else
+    {
+        return $false
+    }
 }
-
 
 function RunAzSKScan() {
 
@@ -55,7 +58,7 @@ function RunAzSKScan() {
     }
 
 	#Check if the central scan mode is enabled. Read/prepare artefacts if so.
-	#The $Global:IsCentralMode flag is enabled in this...also the target subs list is generated (called activeScanObjects)
+	#The $Global:IsCentralMode flag is enabled in this...also the target subs list is generated (called subsToScan)
     CheckForSubscriptionsSnapshotData
 	
     #Get the current storagecontext
@@ -79,13 +82,13 @@ function RunAzSKScan() {
 			Set-AzSKPolicySettings -EnableCentralScanMode
 			
 			#Revisit HLD subs only after fresh/in-progress subs are done
-			$enableHldRetry = ($Global:activeScanObjects |Where-Object { $_.Status -in 'NA','INP'} | Measure-Object).Count -le 0
+			$enableHldRetry = ($Global:subsToScan |Where-Object { $_.Status -in 'NA','INP'} | Measure-Object).Count -le 0
 			
 			#Scan subs. Pick up only those which are not completed ('COM') or have not gone into error state ('ERR')
-			$Global:activeScanObjects |Where-Object { $_.Status -notin 'ERR','COM'} |ForEach-Object {
+			$Global:subsToScan |Where-Object { $_.Status -notin 'ERR','COM'} |ForEach-Object {
 
 				#Candidate sub to eval for scanning.
-				$activeScanObject = $_;
+				$candidateSubToScan = $_;
 
 				#How long have we already spent on this sub?
 				$timeNow = [DateTime]::UtcNow
@@ -93,69 +96,77 @@ function RunAzSKScan() {
 
 				#Initialize the flags...we determine their actual state further below.
 				$isScanAllowed=$false
-				$preStatus=""
+				$preScanStatus=""
 				$postStatus="COM"
 
 				#Possible status flows are [NA --> INP --> COM], [NA --> INP --> HLD --> HLDRETRY --> ERR or COM]
-				#$preStatus = potential next status for the current sub
+                <#status description:
+                    NA = Sub scan not started
+                    INP = Sub scan is in progress
+                    COM = Sub scan completed
+                    HLD = Scan attempted but it's kept on hold because scan taking more time than expected
+                    HLDRETRY = Scan will be retried once 
+                    ERR = Erroring out scan, retry itself also did not work 
+                #>
+				#$preScanStatus = potential next status for the current sub
 				if($_.Status -eq "NA")
 				{
 					#Start of scan for this sub
-					$preStatus="INP"
+					$preScanStatus="INP"
 				}
 				elseif($_.Status -eq "INP" -and $scanDuration -ge $MaxScanHours)
 				{
 					#If scan has been in-progress and maxHours have been consumed, put this sub on a hold ('HLD') list
-					$preStatus="HLD"
+					$preScanStatus="HLD"
 				}
 				elseif($_.Status -eq "HLD" -and $enableHldRetry)
 				{	
 					#If sub was on hold list and a retry is allowed, put this on hold-retry ('HLDRETRY') list
-					$preStatus="HLDRETRY"
+					$preScanStatus="HLDRETRY"
 				}
 				elseif($_.Status -eq "HLDRETRY")
 				{
 					#If the retry itself also did not work, we are doomed. We will put this in errored-out ('ERR') list.
-					$preStatus="ERR"
+					$preScanStatus="ERR"
 				}
 				else
 				{
-					$preStatus = "RES"
+					$preScanStatus = "RES"
 				}
 
 				#We will actually attempt a scan for:
 				#	1. HLDRETRY or fresh sub first scan
 				#	2. Scan is in progress and max-duration has not been consumed
-				if($preStatus -in ("HLDRETRY","INP") -or (($_.Status -eq "INP") -and ($scanDuration -le $MaxScanHours)))
+				if($preScanStatus -in ("HLDRETRY","INP") -or (($_.Status -eq "INP") -and ($scanDuration -le $MaxScanHours)))
 				{
 					$isScanAllowed = $true
 				}
 
 				#Let us switch context to the target subscription.
-				$subId = $activeScanObject.SubscriptionId;
+				$subId = $candidateSubToScan.SubscriptionId;
 				Select-AzureRmSubscription -SubscriptionId $subId | Out-Null
 					
 				Write-Output ("SA: Scan status details:")
 				Write-Output ("SA: Subscription id: [" + $subId + "]")
 				
-				if($preStatus -ne 'RES'){
-					Write-Output ("SA: Existing status: ["+ $_.Status + "], New status: [" + $preStatus+ "], Scan allowed?: ["+ $isScanAllowed + "], Post scan status: [" + $postStatus + "]")
+				if($preScanStatus -ne 'RES'){
+					Write-Output ("SA: Existing status: ["+ $_.Status + "], New status: [" + $preScanStatus+ "], Scan allowed?: ["+ $isScanAllowed + "], Post scan status: [" + $postStatus + "]")
 				}
 				else{
 					Write-Output ("SA: Existing status: ["+ $_.Status + "], Scan allowed?: ["+ $isScanAllowed + "], Post scan status: [" + $postStatus + "]")
 				}
 
-				# $PreStatus will be 'RES' in case when scan is in progress and max-duration has not been consumed
+				# $preScanStatus will be 'RES' in case when scan is in progress and max-duration has not been consumed
 				# We skip updating scan tracker in this scenario.
-				if($preStatus -ne 'RES'){
-					PersistSubscriptionSnapshot -SubscriptionID $subId -Status $preStatus -StorageContext $centralStorageContext 
+				if($preScanStatus -ne 'RES'){
+					PersistSubscriptionSnapshot -SubscriptionID $subId -Status $preScanStatus -StorageContext $centralStorageContext 
 				}
 
 				if($isScanAllowed){
 					Write-Output ("SA: Multi-sub Scan. Started scan for subscription: [$subId]")
 
 					#In case of multi-sub scan logging option applies to all subs
-					RunAzSKScanForASub -SubscriptionID $subId -LoggingOption $activeScanObject.LoggingOption -StorageContext $centralStorageContext 
+					RunAzSKScanForASub -SubscriptionID $subId -LoggingOption $candidateSubToScan.LoggingOption -StorageContext $centralStorageContext 
 					PersistSubscriptionSnapshot -SubscriptionID $subId -Status $postStatus -StorageContext $centralStorageContext 
 					Write-Output ("SA: Multi-sub Scan. Completed scan for subscription: [$subId]")
 				}		
@@ -213,7 +224,16 @@ function RunAzSKScanForASub
 	Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
     $serviceScanTimer = [System.Diagnostics.Stopwatch]::StartNew();
     PublishEvent -EventName "CA Scan Services Started"
-    $svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $ResourceGroupNames -ExcludeTags "OwnerAccess" -UsePartialCommits
+    if(-not [string]::IsNullOrWhiteSpace($ResourceGroupNamefromWebhook))
+    {
+		Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) on added resource for sub: [$SubscriptionID], RGs: [$ResourceGroupNamefromWebhook]")
+		$rgname = $ResourceGroupNamefromWebhook | Out-string
+		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $rgname -ExcludeTags "OwnerAccess,RBAC"
+    }
+    elseif($null -eq $WebHookDataforResourceCreation)
+    {
+		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
+    }
    
     #---------------------------Check resources scan status--------------------------------------------------------------
     if ([string]::IsNullOrWhiteSpace($svtResultPath)) 
@@ -396,7 +416,7 @@ function CheckForSubscriptionsSnapshotData()
 			Get-AzureStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $currentContext -Destination $destinationFolderPath -Force | Out-Null
 			
 			#Read the state of various subscriptions in the target list from the progress-tracker file.
-			$Global:activeScanObjects = [array](Get-ChildItem -Path $CAActiveScanSnapshotBlobPath -Force | Get-Content | ConvertFrom-Json)			
+			$Global:subsToScan = [array](Get-ChildItem -Path $CAActiveScanSnapshotBlobPath -Force | Get-Content | ConvertFrom-Json)			
 		}
 		else
 		{
@@ -410,7 +430,7 @@ function CheckForSubscriptionsSnapshotData()
 			$CAScanDataBlobContent = Get-ChildItem -Path "$CATargetSubsBlobPath" -Force | Get-Content | ConvertFrom-Json
 
 			#Create the active snapshot from the ca scan objects
-			$Global:activeScanObjects = @();
+			$Global:subsToScan = @();
 			if(($CAScanDataBlobContent | Measure-Object).Count -gt 0)
 			{
 				$CAScanDataBlobContent | ForEach-Object {
@@ -422,15 +442,15 @@ function CheckForSubscriptionsSnapshotData()
                         $out.CreatedTime = [DateTime]::UtcNow.ToString('s');
                         $out.StartedTime = [DateTime]::MinValue.ToString('s');
                         $out.CompletedTime = [DateTime]::MinValue.ToString('s');
-                        $Global:activeScanObjects += $out;
+                        $Global:subsToScan += $out;
 				}				
-				$Global:activeScanObjects | ConvertTo-Json -Depth 10 | Out-File $CAActiveScanSnapshotBlobPath
+				$Global:subsToScan | ConvertTo-Json -Depth 10 | Out-File $CAActiveScanSnapshotBlobPath
 				Set-AzureStorageBlobContent -File $CAActiveScanSnapshotBlobPath -Blob $CAActiveScanSnapshotBlobName -Container $CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force | Out-Null
 			}
 			Write-Output("SA: Multi-sub scan. New progress tracking file uploaded to container...")
 
 		}
-		if(($Global:activeScanObjects | Measure-Object).Count -gt 0)
+		if(($Global:subsToScan | Measure-Object).Count -gt 0)
 		{
 			$Global:IsCentralMode = $true;
 		}
@@ -470,9 +490,9 @@ function PersistSubscriptionSnapshot
 		{
 			#We found a blob for active scan... locate the provided subscription in it to update its status.
 			Get-AzureStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $StorageContext -Destination $destinationFolderPath -Force | Out-Null
-			$activeScanObjects = [array](Get-ChildItem -Path $CAActiveScanSnapshotBlobPath -Force | Get-Content | ConvertFrom-Json)
+			$subsToScan = [array](Get-ChildItem -Path $CAActiveScanSnapshotBlobPath -Force | Get-Content | ConvertFrom-Json)
 
-			$matchedSubId = $activeScanObjects | Where-Object {$_.SubscriptionId -eq $SubscriptionID}
+			$matchedSubId = $subsToScan | Where-Object {$_.SubscriptionId -eq $SubscriptionID}
 
 			if(($matchedSubId | Measure-Object).Count -gt 0)
 			{
@@ -496,20 +516,20 @@ function PersistSubscriptionSnapshot
 
 			
 			#Write the updated status back to the storage blob  
-			$activeScanObjects | ConvertTo-Json -Depth 10 | Out-File $CAActiveScanSnapshotBlobPath
+			$subsToScan | ConvertTo-Json -Depth 10 | Out-File $CAActiveScanSnapshotBlobPath
 			Set-AzureStorageBlobContent -File $CAActiveScanSnapshotBlobPath -Blob $CAActiveScanSnapshotBlobName -Container $CAMultiSubScanConfigContainerName -BlobType Block -Context $StorageContext -Force | Out-Null
 
 			#This is the last persist status. Archiving it for diagnosys purpose.
-			if(($activeScanObjects | Where-Object { $_.Status -notin ("COM","ERR")} | Measure-Object).Count -eq 0)
+			if(($subsToScan | Where-Object { $_.Status -notin ("COM","ERR")} | Measure-Object).Count -eq 0)
 			{
-				$errSubsCount = ($activeScanObjects | Where-Object { $_.Status -eq "ERR"} | Measure-Object).Count
+				$errSubsCount = ($subsToScan | Where-Object { $_.Status -eq "ERR"} | Measure-Object).Count
 
 				if($errSubsCount -gt 0)
 				{
 					#We archive *only* if sub(s) went into 'ERR' status 
 					Write-Output("SA: Archiving ActiveScanTracker.json as there were some errors...")
 					ArchiveBlob -StorageContext $StorageContext
-					Write-Output ("SA: Scan could not be completed for a total of [$errSubsCount] subscription(s).`nSee subscriptions with 'ERR' state in:`n`t $AutomationAccountRG -> $($StorageContext.StorageAccountName) -> $CAMultiSubScanConfigContainerName -> Archive -> ActiveScanTracker_<timestamp>.ERR.json.")
+					Write-Output ("SA: Scan could not be completed for a total of [$errSubsCount] subscription(s).`nSee subscriptions with 'ERR' state in:`n`t $StorageAccountRG -> $($StorageContext.StorageAccountName) -> $CAMultiSubScanConfigContainerName -> Archive -> ActiveScanTracker_<timestamp>.ERR.json.")
 				}
 				Write-Output("SA: Multi-sub scan: Removing ActiveScanTracker.json")
 				Remove-AzureStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $StorageContext -Force
@@ -601,6 +621,13 @@ function UpdateAlertMonitoring
 	 PublishEvent -EventName "Alert Monitoring Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) }
 	}
 }
+function DisableHelperSchedules()
+{
+	Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
+	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*"} | `
+	Set-AzureRmAutomationSchedule -IsEnabled $false | Out-Null
+	
+}
 
 #############################################################################################################
 # Main ScanAgent code
@@ -654,13 +681,13 @@ try {
 	$SubscriptionID = $RunAsConnection.SubscriptionID
 	$Global:IsCentralMode = $false;
 
-	$Global:activeScanObjects = @();
+	$Global:subsToScan = @();
     Select-AzureRmSubscription -SubscriptionId $SubscriptionID;
 	
 	#Another job is already running
 	if($Global:FoundExistingJob)
 	{
-		Write-Host("SA: Found another job running. Returning from the current one...")
+		Write-Output("SA: Found another job running. Returning from the current one...")
 		return;
 	}
 
@@ -677,7 +704,7 @@ try {
     if ((Get-Command -Name "Get-AzSKAzureServicesSecurityStatus" -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0) {
         
         PublishEvent -EventName "CA Job Skipped" -Properties @{"SubscriptionId" = $RunAsConnection.SubscriptionID} -Metrics @{"TimeTakenInMs" = $timer.ElapsedMilliseconds; "SuccessCount" = 1}
-		Write-Host("SA: The module: {$AzSKModuleName} is not available/ready. Skipping AzSK scan. Will retry in the next run.")
+		Write-Output("SA: The module: {$AzSKModuleName} is not available/ready. Skipping AzSK scan. Will retry in the next run.")
 		return;
     }
 		
@@ -686,8 +713,8 @@ try {
 
 	if ($isAzSKAvailable) {
 		#Remove helper schedule as AzSK module is available
-		Write-Output("SA: Removing helper schedule...")
-		Remove-AzureRmAutomationSchedule -Name $CAHelperScheduleName -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Force
+		Write-Output("SA: Disabling helper schedule...")
+		DisableHelperSchedules
     }
    
     PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}

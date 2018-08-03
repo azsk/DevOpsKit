@@ -1,12 +1,13 @@
 Set-StrictMode -Version Latest
 
-Write-Host "Importing AzureRM modules. This may take a while..." -ForegroundColor Yellow
-# Hack to load AI dlls
+# load AI dlls using context
 try {Get-AzureRmContext -ErrorAction SilentlyContinue | Out-Null }
 catch 
 { 
 	# No need to break execution 
 }
+
+. $PSScriptRoot\Models\Enums.ps1
 
 #Constants
 . $PSScriptRoot\Helpers\Constants.ps1
@@ -14,10 +15,10 @@ catch
 
 
 #Models
-. $PSScriptRoot\Models\Enums.ps1
 . $PSScriptRoot\Models\AzSKGenericEvent.ps1
 . $PSScriptRoot\Models\CommandDetails.ps1
 . $PSScriptRoot\Models\Exception\SuppressedException.ps1
+. $PSScriptRoot\Models\RemoteReports\CsvOutputModel.ps1
 . $PSScriptRoot\Helpers\CommandHelper.ps1
 . $PSScriptRoot\Abstracts\EventBase.ps1
 
@@ -37,7 +38,8 @@ catch
 . $PSScriptRoot\Models\SVT\AttestationOptions.ps1
 . $PSScriptRoot\Models\SVT\PSCloudService.ps1
 . $PSScriptRoot\Models\SVT\PartialScanResourceMap.ps1
-
+. $PSScriptRoot\Models\RemoteReports\LSRScanResultModel.ps1
+. $PSScriptRoot\Models\RemoteReports\ComplianceStateModel.ps1
 . $PSScriptRoot\Models\SubscriptionCore\AzureSecurityCenter.ps1
 . $PSScriptRoot\Models\SubscriptionCore\ManagementCertificate.ps1
 . $PSScriptRoot\Models\SubscriptionSecurity\SubscriptionRBAC.ps1
@@ -57,6 +59,8 @@ catch
 . $PSScriptRoot\Helpers\SVTMapping.ps1
 . $PSScriptRoot\Helpers\IdentityHelpers.ps1
 . $PSScriptRoot\Helpers\ConfigOverride.ps1
+
+. $PSScriptRoot\Models\Common\ResourceInventory.ps1
 
 
 #Managers
@@ -84,6 +88,8 @@ catch
 
 . $PSScriptRoot\Helpers\ResourceHelper.ps1
 . $PSScriptRoot\Helpers\UserSubscriptionDataHelper.ps1
+. $PSScriptRoot\Abstracts\ComplianceBase.ps1
+. $PSScriptRoot\Helpers\ComplianceReportHelper.ps1
 
 #Listeners
 . $PSScriptRoot\Listeners\UserReports\WriteFolderPath.ps1
@@ -141,9 +147,11 @@ catch
 . $PSScriptRoot\Core\SVT\ServicesSecurityStatus.ps1
 . $PSScriptRoot\Core\SVT\SubscriptionSecurityStatus.ps1
 . $PSScriptRoot\Core\SVT\SVTStatusReport.ps1
-. $PSScriptRoot\Core\MetadataInfo\BasicInfo.ps1
-. $PSScriptRoot\Core\MetadataInfo\ControlsInfo.ps1
-. $PSScriptRoot\Core\MetadataInfo\EnvironmentInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\BasicInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\ControlsInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\EnvironmentInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\ComplianceInfo.ps1
+. $PSScriptRoot\Core\AzSKInfo\PersistedStateInfo.ps1
 . $PSScriptRoot\Core\ARMChecker\ARMCheckerStatus.ps1
 
 . $PSScriptRoot\Core\PolicySetup\PolicySetup.ps1

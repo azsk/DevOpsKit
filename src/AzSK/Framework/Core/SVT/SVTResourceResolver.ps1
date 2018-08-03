@@ -170,59 +170,6 @@ class SVTResourceResolver: AzSKRoot
 				if(-not $ignoredType)
 				{
 					$this.SVTResources += $svtResource;
-
-					# Add all the LogicApps connectors if Resource Type is LogicApps
-					if($svtResource.ResourceTypeMapping -and $svtResource.ResourceTypeMapping.ResourceTypeName -eq [SVTMapping]::LogicAppsTypeName)
-					{
-						$resourceObject = Get-AzureRmResource -Name $resource.ResourceName `
-												-ResourceGroupName $resource.ResourceGroupName -ResourceType $resource.ResourceType
-
-						if($null -ne $resourceObject)
-						{
-							if(Get-Member -InputObject $resourceObject.Properties.parameters -Name '$connections' -MemberType Properties)
-							{
-								$apiConnections = $resourceObject.Properties.parameters.'$connections'.value
-								if($null -ne $apiConnections)
-								{
-									$apiConnections | Get-Member -MemberType *Property | ForEach-Object{  
-										try
-										{
-											$apiConId = ($apiConnections.($_.name) | Select-Object connectionId).connectionId     
-
-											$this.SVTResources += $this.CreateSVTResource($apiConId, $resource.ResourceGroupName, $resource.ResourceName + "/" + $_.name, "Microsoft.Web/connections", $resource.Location, "APIConnection")
-										}
-										catch
-										{
-											#Consuming the exception intentionally to prevent adding deleted connections
-										}
-									}
-								}
-							}
-							$Definition=$resourceObject.Properties.definition
-							if($null -ne $Definition.Actions -and -not[string]::IsNullOrEmpty($resourceObject.Properties.definition.actions))
-							{
-								$Definition.Actions | Get-Member -MemberType *Property | ForEach-Object{ 
-									$Name=$_.name
-									if($Definition.Actions.$Name.type -ne 'ApiConnection')	
-									{				
-										$newResourceId = $resource.ResourceId.replace($resource.ResourceName,$_.name).replace("Microsoft.Logic/workflows/","Microsoft.Web/connections/custom/")
-										$this.SVTResources += $this.CreateSVTResource($newResourceId, $resource.ResourceGroupName, $resource.ResourceName + "/" + $_.name, "Microsoft.Web/connections", $resource.Location, "APIConnection")
-									}
-								}
-							}
-							if($null -ne $Definition.triggers -and -not[string]::IsNullOrEmpty($resourceObject.Properties.definition.triggers))
-							{
-								$Definition.Triggers | Get-Member -MemberType *Property | ForEach-Object{ 
-									$Name=$_.name
-									if($Definition.Triggers.$Name.type -ne 'ApiConnection')	
-									{						
-										$newResourceId = $resource.ResourceId.replace($resource.ResourceName,$_.name).replace("Microsoft.Logic/workflows/","Microsoft.Web/connections/custom/")
-										$this.SVTResources += $this.CreateSVTResource($newResourceId, $resource.ResourceGroupName, $resource.ResourceName + "/" + $_.name, "Microsoft.Web/connections", $resource.Location, "APIConnection")
-									}
-								}
-							}
-						}
-					}
 				}
 			}
 		}

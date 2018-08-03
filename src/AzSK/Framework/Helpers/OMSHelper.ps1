@@ -1,28 +1,52 @@
 ﻿Set-StrictMode -Version Latest 
 Class OMSHelper{
 	static [string] $DefaultOMSType = "AzSK"
+	static [int] $isOMSSettingValid = 0  #-1:Fail (OMS Empty, OMS Return Error) | 1:CA | 0:Local
+	static [int] $isAltOMSSettingValid = 0
 	# Create the function to create and post the request
-	static PostOMSData([string] $OMSWorkspaceID, [string] $SharedKey, $Body, $LogType)
+	static PostOMSData([string] $OMSWorkspaceID, [string] $SharedKey, $Body, $LogType, $OMSType)
 	{
-		if([string]::IsNullOrWhiteSpace($LogType))
+		try
 		{
-			$LogType = [OMSHelper]::DefaultOMSType
+			if(($OMSType | Measure-Object).Count -gt 0 -and [OMSHelper]::$("is"+$OMSType+"SettingValid") -ne -1)
+			{
+				if([string]::IsNullOrWhiteSpace($LogType))
+				{
+					$LogType = [OMSHelper]::DefaultOMSType
+				}
+				[string] $method = "POST"
+				[string] $contentType = "application/json"
+				[string] $resource = "/api/logs"
+				$rfc1123date = [System.DateTime]::UtcNow.ToString("r")
+				[int] $contentLength = $Body.Length
+				[string] $signature = [OMSHelper]::GetOMSSignature($OMSWorkspaceID , $SharedKey , $rfc1123date ,$contentLength ,$method ,$contentType ,$resource)
+				[string] $uri = "https://" + $OMSWorkspaceID + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
+				[DateTime] $TimeStampField = [System.DateTime]::UtcNow
+				$headers = @{
+					"Authorization" = $signature;
+					"Log-Type" = $LogType;
+					"x-ms-date" = $rfc1123date;
+					"time-generated-field" = $TimeStampField;
+				}
+				$response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $contentType -Headers $headers -Body $Body -UseBasicParsing
+			}
 		}
-		[string] $method = "POST"
-		[string] $contentType = "application/json"
-		[string] $resource = "/api/logs"
-		$rfc1123date = [System.DateTime]::UtcNow.ToString("r")
-		[int] $contentLength = $Body.Length
-		[string] $signature = [OMSHelper]::GetOMSSignature($OMSWorkspaceID , $SharedKey , $rfc1123date ,$contentLength ,$method ,$contentType ,$resource)
-		[string] $uri = "https://" + $OMSWorkspaceID + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
-		[DateTime] $TimeStampField = [System.DateTime]::UtcNow
-		$headers = @{
-			"Authorization" = $signature;
-			"Log-Type" = $LogType;
-			"x-ms-date" = $rfc1123date;
-			"time-generated-field" = $TimeStampField;
+		catch
+		{
+			$warningMsg=""
+			if($OMSType -eq 'OMS' -or $OMSType -eq 'AltOMS')
+			{	
+				switch([OMSHelper]::$("is"+$OMSType+"SettingValid"))
+				{
+					0 { $warningMsg += "The $($OMSType) workspace id or key is invalid in the local settings file. You can use Set-AzSKOMSSettings with correct values to update it.";}
+					1 { $warningMsg += "The $($OMSType) workspace id or key is invalid in the ContinuousAssurance configuration. You can use Update-AzSKContinuousAssurance with the correct OMS values to correct it."; }
+				}
+				[EventBase]::PublishGenericCustomMessage(" `r`nWARNING: $($warningMsg)", [MessageType]::Warning);
+				
+				#Flag to disable OMS scan 
+				[OMSHelper]::$("is"+$OMSType+"SettingValid") = -1
+			}
 		}
-		$response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $contentType -Headers $headers -Body $Body -UseBasicParsing
 	}
 
 	static [string] GetOMSSignature ($OMSWorkspaceID, $SharedKey, $Date, $ContentLength, $Method, $ContentType, $Resource)
@@ -44,7 +68,7 @@ Class OMSHelper{
 
 	static [PSObject[]] GetOMSBodyObjects([SVTEventContext] $eventContext,[AzSKContextDetails] $AzSKContext)
 	{
-		[PSObject[]] $output = @();
+		[PSObject[]] $output = @();		
 		[array] $eventContext.ControlResults | ForEach-Object{
 			Set-Variable -Name ControlResult -Value $_ -Scope Local
 			$out = [OMSModel]::new() 
@@ -76,6 +100,7 @@ Class OMSHelper{
 			$out.HasAttestationWritePermissions = $ControlResult.CurrentSessionContext.Permissions.HasAttestationWritePermissions
 			$out.HasAttestationReadPermissions = $ControlResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions				
 			$out.IsLatestPSModule = $ControlResult.CurrentSessionContext.IsLatestPSModule
+			$out.PolicyOrgName =$AzSKContext.PolicyOrgName
 			#mapping the attestation properties
 			if($null -ne $ControlResult -and $null -ne $ControlResult.StateManagement -and $null -ne $ControlResult.StateManagement.AttestedStateData)
 			{
@@ -116,21 +141,21 @@ Class OMSHelper{
 					$body = $tempBody | ConvertTo-Json
 					$omsBodyByteArray = ([System.Text.Encoding]::UTF8.GetBytes($body))
 					#publish to primary workspace
-					if(-not [string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId))
+					if(-not [string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId) -and [OMSHelper]::isOMSSettingValid -ne -1)
 					{
-						[OMSHelper]::PostOMSData($settings.OMSWorkspaceId, $settings.OMSSharedKey, $omsBodyByteArray, $OMSEventType)
+						[OMSHelper]::PostOMSData($settings.OMSWorkspaceId, $settings.OMSSharedKey, $omsBodyByteArray, $OMSEventType, 'OMS')
 					}
 					#publish to secondary workspace
-					if(-not [string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId))
+					if(-not [string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId) -and [OMSHelper]::isAltOMSSettingValid -ne -1)
 					{
-						[OMSHelper]::PostOMSData($settings.AltOMSWorkspaceId, $settings.AltOMSSharedKey, $omsBodyByteArray, $OMSEventType)
+						[OMSHelper]::PostOMSData($settings.AltOMSWorkspaceId, $settings.AltOMSSharedKey, $omsBodyByteArray, $OMSEventType, 'AltOMS')
 					}				
 				}            
 			}
 		}
 		catch
 		{			
-			throw ([SuppressedException]::new("Invalid OMS Settings"));
+			throw ([SuppressedException]::new("Error sending events to OMS. The following exception occurred: `r`n$($_.Exception.Message) `r`nFor more on AzSK OMS setup, refer: https://aka.ms/devopskit/ca"));
 		}
 	}
 
@@ -186,10 +211,17 @@ Class OMSHelper{
 							#Step 6: Assign it to AzSKSettings Object
 							$settings.OMSWorkspaceId = $omsWorkSpaceId.Value
 							$settings.OMSSharedKey = $omsSharedKey.Value
+							[OMSHelper]::isOMSSettingValid = 1
 						}					
 
 					}
 				}
+
+				if([string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId) -or [string]::IsNullOrWhiteSpace($settings.OMSSharedKey))
+				{
+					[OMSHelper]::isOMSSettingValid = -1
+				}
+
 
 				if([string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId))
 				{
@@ -204,8 +236,14 @@ Class OMSHelper{
 							#Step 6: Assign it to AzSKSettings Object
 							$settings.AltOMSWorkspaceId = $omsWorkSpaceId.Value
 							$settings.AltOMSSharedKey = $omsSharedKey.Value
+							[OMSHelper]::isAltOMSSettingValid = 1
 						}
 					}
+				}
+				
+				if([string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId) -or [string]::IsNullOrWhiteSpace($settings.AltOMSSharedKey))
+				{
+					[OMSHelper]::isAltOMSSettingValid = -1
 				}				
 			}
 		}		
@@ -216,11 +254,8 @@ Class OMSHelper{
 		if($AzSKContext.Source.Equals("CC", [System.StringComparison]::OrdinalIgnoreCase) -or
 		$AzSKContext.Source.Equals("CA", [System.StringComparison]::OrdinalIgnoreCase)){
 			$resourceSet = [System.Collections.ArrayList]::new()
-			$resourcesFlat = Find-AzureRmResource
-			$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
-			# Not considering nested resources to reduce complexity
-			$filteredResoruces = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }
-			foreach($resource in $filteredResoruces){
+			[ResourceInventory]::FetchResources();
+			foreach($resource in [ResourceInventory]::FilteredResources){
 				$set = [OMSResourceModel]::new()
 				$set.RunIdentifier = $AzSKContext.RunIdentifier
 				$set.SubscriptionId = $resource.SubscriptionId
@@ -326,6 +361,7 @@ Class OMSModel {
 	[bool] $IsBaselineControl
 	[string] $ExpiryDate
 	[string] $PartialScanIdentifier
+	[string] $PolicyOrgName
 }
 
 Class OMSResourceInvModel{
@@ -360,6 +396,7 @@ Class AzSKContextDetails {
 	[string] $RunIdentifier
 	[string] $Version
 	[string] $Source
+	[string] $PolicyOrgName
 	}
 
 Class CommandModel{

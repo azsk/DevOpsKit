@@ -551,7 +551,7 @@
           "OwnerAccess",
           "FunctionApp"
         ],
-        "Enabled": true
+       "Enabled": true
       }
      
     ]

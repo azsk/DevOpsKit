@@ -1,49 +1,10 @@
 ﻿Set-StrictMode -Version Latest
-#Import-Module AzureRM.Resources
-#Import-Module AzureRM.KeyVault
-#Import-Module AzureRM.Sql
-#Import-Module AzureRM.Storage
-#Import-Module AzureRM.DataLakeAnalytics
-#Import-Module AzureRM.DataLakeStore
-#Import-Module AzureRM.Network
-#Import-Module AzureRM.Compute
-
+Write-Host "Importing AzureRM modules. This may take a while..." -ForegroundColor Yellow
 Import-Module AzureRM.Profile -RequiredVersion 4.2.0  
-Import-Module Azure.Storage -RequiredVersion 4.1.0
-Import-Module AzureRM.AnalysisServices -RequiredVersion 0.6.2
-Import-Module AzureRM.ApplicationInsights -RequiredVersion 0.1.1
-Import-Module AzureRM.Automation -RequiredVersion 4.2.0
-Import-Module AzureRM.Batch -RequiredVersion 4.0.4
-Import-Module AzureRM.Cdn -RequiredVersion 4.1.0
-Import-Module AzureRM.Compute -RequiredVersion 4.2.0
-Import-Module AzureRM.DataFactories -RequiredVersion 4.1.0
-Import-Module AzureRM.DataFactoryV2 -RequiredVersion 0.5.0
-Import-Module AzureRM.DataLakeAnalytics -RequiredVersion 4.2.0
-Import-Module AzureRM.DataLakeStore -RequiredVersion 5.1.0
-Import-Module AzureRM.EventHub -RequiredVersion 0.5.1
-Import-Module AzureRM.HDInsight -RequiredVersion 4.0.2
-Import-Module AzureRM.Insights -RequiredVersion 4.0.1
-Import-Module AzureRM.KeyVault -RequiredVersion 4.1.0
-Import-Module AzureRM.LogicApp -RequiredVersion 4.0.1
-Import-Module AzureRM.Network -RequiredVersion 5.1.0
-Import-Module AzureRM.NotificationHubs -RequiredVersion 4.1.0
-Import-Module AzureRM.OperationalInsights -RequiredVersion 4.1.0
-Import-Module AzureRM.RedisCache -RequiredVersion 4.1.0
-Import-Module AzureRM.Resources -RequiredVersion 5.2.0
-Import-Module AzureRM.Scheduler -RequiredVersion 0.16.1
-Import-Module AzureRM.ServiceBus -RequiredVersion 0.5.1
-Import-Module AzureRM.ServiceFabric -RequiredVersion 0.3.1
-Import-Module AzureRM.Sql -RequiredVersion 4.2.0
-Import-Module AzureRM.Storage -RequiredVersion 4.2.0
-Import-Module AzureRM.StreamAnalytics -RequiredVersion 4.0.2
-Import-Module AzureRM.Tags -RequiredVersion 4.0.0
-Import-Module AzureRM.TrafficManager -RequiredVersion 4.0.1
-Import-Module AzureRM.Websites -RequiredVersion 4.1.0
-Import-Module AzureRM.ContainerInstance -RequiredVersion 0.2.2
 
 . $PSScriptRoot\Framework\Framework.ps1
 
-@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring", "$PSScriptRoot\SubscriptionSecurity", "$PSScriptRoot\ContinuousAssurance" , "$PSScriptRoot\MetadataInfo", "$PSScriptRoot\PolicySetup", "$PSScriptRoot\ARMChecker") |
+@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring", "$PSScriptRoot\SubscriptionSecurity", "$PSScriptRoot\ContinuousAssurance" , "$PSScriptRoot\AzSKInfo", "$PSScriptRoot\PolicySetup", "$PSScriptRoot\ARMChecker") |
     ForEach-Object {
     (Get-ChildItem -Path $_ -Recurse -File -Include "*.ps1") |
         ForEach-Object {
@@ -225,7 +186,6 @@ function Set-AzSKPolicySettings {
 			{
 				 $azskSettings.IsCentralScanModeOn = $EnableCentralScanMode
 			}
-
             [ConfigurationManager]::UpdateAzSKSettings($azskSettings);            
             [EventBase]::PublishGenericCustomMessage("Successfully configured policy settings. `nStart a fresh PS console/session to ensure any policy updates are (re-)loaded.", [MessageType]::Warning);
         }
@@ -351,7 +311,15 @@ function Set-AzSKUserPreference {
 
         [switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
-		$DoNotOpenOutputFolder
+        $DoNotOpenOutputFolder,
+
+        [switch]
+        [Parameter(Mandatory = $true, ParameterSetName = "EnableComplianceStorage", HelpMessage = "Switch to enable storage of compliance report data at subscription.")]
+        $StoreComplianceSummaryInUserSubscriptions,
+
+        [switch]
+        [Parameter(Mandatory = $false, ParameterSetName = "DisableComplianceStorage", HelpMessage = "Switch to disable storage of compliance report data at subscription.")]
+        $DisableComplianceSummaryStorageInUserSubscriptions
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
@@ -359,26 +327,33 @@ function Set-AzSKUserPreference {
     }
     Process {
         try {
+            $azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
             if ($ResetOutputFolderPath) {
-                $azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
+                
                 $azskSettings.OutputFolderPath = "";
-                [ConfigurationManager]::UpdateAzSKSettings($azskSettings);
                 [EventBase]::PublishGenericCustomMessage("Output folder path has been reset successfully");
             }
             elseif (-not [string]::IsNullOrWhiteSpace($OutputFolderPath)) {
-                if (Test-Path -Path $OutputFolderPath) {
-                    $azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
+                if (Test-Path -Path $OutputFolderPath) {                    
                     $azskSettings.OutputFolderPath = $OutputFolderPath;
-                    [ConfigurationManager]::UpdateAzSKSettings($azskSettings);
                     [EventBase]::PublishGenericCustomMessage("Output folder path has been changed successfully");
                 }
                 else {
                     [EventBase]::PublishGenericCustomMessage("The specified path does not exist", [MessageType]::Error);
                 }
             }
-            else {
-                [EventBase]::PublishGenericCustomMessage("The specified path is null or empty", [MessageType]::Error);
+            
+            if($StoreComplianceSummaryInUserSubscriptions)
+            {
+                $azskSettings.StoreComplianceSummaryInUserSubscriptions = $true;
             }
+            if($DisableComplianceSummaryStorageInUserSubscriptions)
+            {
+                $azskSettings.StoreComplianceSummaryInUserSubscriptions = $false;
+            }
+            
+            [ConfigurationManager]::UpdateAzSKSettings($azskSettings);
+            [EventBase]::PublishGenericCustomMessage("Successfully set user preference");
         }
         catch {
             [EventBase]::PublishGenericException($_);
@@ -483,7 +458,11 @@ function Set-AzSKPrivacyNoticeResponse {
 }
 
 function Clear-AzSKSessionState {
+
+    Write-Host "Clearing AzSK session state..." -ForegroundColor Yellow
     [ConfigOverride]::ClearConfigInstance()
+    Write-Host "Completed." -ForegroundColor Yellow
+
 }
 
 . $PSScriptRoot\Framework\Helpers\AliasHelper.ps1

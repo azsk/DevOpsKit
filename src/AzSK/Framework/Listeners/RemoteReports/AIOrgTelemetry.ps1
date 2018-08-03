@@ -138,7 +138,8 @@ class AIOrgTelemetry: ListenerBase {
 						   "ResourceType" = $res.ResourceType;
 						   "ResourceGroupName" = $res.ResourceGroupName;
 						   "Location" = $res.Location;
-						   "SubscriptionId" = $res.SubscriptionId
+						   "SubscriptionId" = $res.SubscriptionId;
+						   "Tags" = [Helpers]::FetchTagsString($res.Tags)
 					   }
 					   $telemetryEvent = "" | Select-Object Name, Properties, Metrics
 					   $telemetryEvent.Name = "Resource Inventory"
@@ -212,6 +213,7 @@ class AIOrgTelemetry: ListenerBase {
 		$properties.Add("ControlIntId", $context.ControlItem.Id);
 		$properties.Add("ControlId", $context.ControlItem.ControlID);
 		$properties.Add("ControlSeverity", $context.ControlItem.ControlSeverity);
+		$properties.Add("IsBaselineControl", $context.ControlItem.IsBaselineControl)
 		if (!$context.ControlItem.Enabled) {
 			$properties.Add("VerificationResult", [VerificationResult]::Disabled)
 			$properties.Add("AttestationStatus", [AttestationStatus]::None)
@@ -238,6 +240,8 @@ class AIOrgTelemetry: ListenerBase {
 					$properties.Add("AttestedBy", $results[0].StateManagement.AttestedStateData.AttestedBy)
 					$properties.Add("Justification", $results[0].StateManagement.AttestedStateData.Justification)
 					$properties.Add("AttestedState", [Helpers]::ConvertToJsonCustomCompressed($results[0].StateManagement.AttestedStateData.DataObject))
+					$properties.Add("AttestedDate", ($results[0].StateManagement.AttestedStateData.AttestedDate).Tostring("yyyy_MM_dd_hh_mm"))
+					$properties.Add("ExpiryDate",  ([DateTime]$results[0].StateManagement.AttestedStateData.ExpiryDate).Tostring("yyyy_MM_dd_hh_mm"))
 				}
 				if(($null -ne $results[0].StateManagement) -and ($null -ne $results[0].StateManagement.CurrentStateData)) {
 					$properties.Add("CurrentState", [Helpers]::ConvertToJsonCustomCompressed($results[0].StateManagement.CurrentStateData.DataObject))
@@ -256,6 +260,8 @@ class AIOrgTelemetry: ListenerBase {
 						$propertiesIn.Add("AttestedBy", $result.StateManagement.AttestedStateData.AttestedBy)
 						$propertiesIn.Add("Justification", $result.StateManagement.AttestedStateData.Justification)
 						$propertiesIn.Add("AttestedState", [Helpers]::ConvertToJsonCustomCompressed($result.StateManagement.AttestedStateData.DataObject))
+						$propertiesIn.Add("AttestedDate", ($result.StateManagement.AttestedStateData.AttestedDate).Tostring("yyyy_MM_dd_hh_mm"))
+					    $propertiesIn.Add("ExpiryDate", ([DateTime]$result.StateManagement.AttestedStateData.ExpiryDate).Tostring("yyyy_MM_dd_hh_mm"))
 					}
 					if(($null -ne $result.StateManagement) -and ($null -ne $result.StateManagement.CurrentStateData)) {
 						$propertiesIn.Add("CurrentState", [Helpers]::ConvertToJsonCustomCompressed($result.StateManagement.CurrentStateData.DataObject))
@@ -283,7 +289,12 @@ class AIOrgTelemetry: ListenerBase {
             try {
                 $module = Get-Module 'AzSK*' | Select-Object -First 1
                 $telemetryEvent.properties.Add("ScannerModuleName", $module.Name);
-                $telemetryEvent.properties.Add("ScannerVersion", $module.Version.ToString());
+				$telemetryEvent.properties.Add("ScannerVersion", $module.Version.ToString());
+				$telemetryEvent.properties.Add("OrgVersion", [ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($module.Name).ToString());	
+				$telemetryEvent.properties.Add("PolicyOrgName", [ConfigurationManager]::GetAzSKConfigData().PolicyOrgName)
+				$AzSKLatestVersion= [ConfigurationManager]::GetAzSKConfigData().GetAzSKLatestPSGalleryVersion($module.Name)		
+				$telemetryEvent.properties.Add("LatestVersion", $AzSKLatestVersion);				
+				
             }
             catch {
 				# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again

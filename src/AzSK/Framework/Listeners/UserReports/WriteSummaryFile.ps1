@@ -43,20 +43,29 @@ class WriteSummaryFile: FileOutputBase
         
         $this.RegisterEvent([SVTEvent]::CommandCompleted, {
             $currentInstance = [WriteSummaryFile]::GetInstance();
-            try 
-            {
-                $controlsScanned = ($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0
-				if(!$controlsScanned)
-				{
-					$currentInstance.SetFilePath($Event.SourceArgs[0].SubscriptionContext, ("AttestationReport-" + $currentInstance.RunIdentifier + ".csv"));
-				}
+			
+			if(($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0)
+			{
+				$currentInstance.SetFilePath($Event.SourceArgs[0].SubscriptionContext, ("SecurityReport-" + $currentInstance.RunIdentifier + ".csv"));
+			}
+			else
+			{
+				# While running GAI -InfoType AttestationInfo, no controls are evaluated. So the value of VerificationResult is by default NotScanned for all controls.
+				# In that case the csv file should be renamed to AttestationReport.
+				$currentInstance.SetFilePath($Event.SourceArgs[0].SubscriptionContext, ("AttestationReport-" + $currentInstance.RunIdentifier + ".csv"));
+			}
+
+			# Export CSV Report
+			try 
+			{
 				$currentInstance.WriteToCSV($Event.SourceArgs);
-                $currentInstance.FilePath = "";
-            }
-            catch 
-            {
-                $currentInstance.PublishException($_);
-            }
+				$currentInstance.FilePath = "";
+			}
+			catch 
+			{
+				$currentInstance.PublishException($_);
+			}
+
         });
 
         $this.RegisterEvent([AzSKRootEvent]::UnsupportedResources, {
@@ -134,13 +143,17 @@ class WriteSummaryFile: FileOutputBase
                         Description = $item.ControlItem.Description;
                         FeatureName = $item.FeatureName;
                         ChildResourceName = $_.ChildResourceName;
-						Recommendation = $item.ControlItem.Recommendation;						
+						Recommendation = $item.ControlItem.Recommendation;	
+				
                     };
 					if($_.VerificationResult -ne [VerificationResult]::NotScanned)
 					{
 						$csvItem.Status = $_.VerificationResult.ToString();
 					}
-
+					if($this.InvocationContext.BoundParameters['IncludeUserComments'] -eq $True)
+					{
+                      $csvItem.UserComments=$_.UserComments;	
+					}
 					#if($anyFixableControls)
 					#{
 					if($item.ControlItem.FixControl)
@@ -152,6 +165,7 @@ class WriteSummaryFile: FileOutputBase
 						$csvItem.SupportsAutoFix = "No";
 					}
 					#}
+					
 					if($item.ControlItem.IsBaselineControl)
 					{
 						$csvItem.IsBaselineControl = "Yes";
@@ -160,7 +174,7 @@ class WriteSummaryFile: FileOutputBase
 					{
 						$csvItem.IsBaselineControl = "No";
 					}
-
+			
 					if($anyAttestedControls)
 					{
 						$csvItem.ActualStatus = $_.ActualVerificationResult.ToString();
@@ -175,6 +189,7 @@ class WriteSummaryFile: FileOutputBase
 					}
 					else
 					{
+					    $csvItem.ResourceId = $item.SubscriptionContext.scope;
 						$csvItem.DetailedLogFile = "/$([Helpers]::SanitizeFolderName($item.SubscriptionContext.SubscriptionName))/$($item.FeatureName).LOG"
 					}
 
@@ -208,31 +223,12 @@ class WriteSummaryFile: FileOutputBase
 					$nonNullProps += $propName;
 				}
 			};
-
+			if($this.InvocationContext.BoundParameters['IncludeUserComments'] -eq $true -and -not ([Helpers]::CheckMember($nonNullProps, "UserComments")))
+			{
+			  $nonNullProps += "UserComments";
+			}
             $csvItems | Select-Object -Property $nonNullProps | Export-Csv $this.FilePath -NoTypeInformation
         }
-    }
+    }	
 }
 
-class CsvOutputItem
-{
-    #Fields from JSON
-    [string] $ControlID = ""
-    [string] $Status = ""
-    [string] $FeatureName = ""
-    [string] $ResourceGroupName = ""
-    [string] $ResourceName = ""
-    [string] $ChildResourceName = ""
-    [string] $ControlSeverity = ""
-	[string] $IsBaselineControl = ""
-    [string] $SupportsAutoFix = ""    
-    [string] $Description = ""
-	[string] $ActualStatus = ""
-	[string] $AttestedSubStatus = ""
-	[string] $AttestationExpiryDate = "" 
-	[string] $AttestedBy = ""
-	[string] $AttesterJustification = ""
-    [string] $Recommendation = ""
-	[string] $ResourceId = ""
-    [string] $DetailedLogFile = ""
-}

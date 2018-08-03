@@ -72,3 +72,4 @@ class MessageData: MessageDataBase
         $this.DataObject = $dataObject;        
     }
 }
+

@@ -14,6 +14,8 @@ class Alerts: CommandBase
 	hidden [PSObject] $AlertPolicyObj = $null
 	hidden [string] $V1AlertRGName;
 	hidden [string] $RunbookName=[Constants]::AlertRunbookName
+	hidden [string] $Alert_ResourceCreation_Runbook=[Constants]::Alert_ResourceCreation_Runbook
+	
 	hidden [string] $AutomationWebhookName=[Constants]::AutomationWebhookName
 	hidden [string] $AutomationAccountName=[Constants]::AutomationAccountName
 	hidden [int] $WebhookExpiryInDays = [Constants]::AlertWebhookUriExpiryInDays
@@ -210,7 +212,7 @@ class Alerts: CommandBase
 		#There is a possibility that if the Alerts are reconfigured, the existing webhook uri will get overwritten with the new setup. Need to take the current backup
 		if([string]::IsNullOrWhiteSpace($webhookUri))
 		{
-			$webhookUri = $this.ComputeAlertRunbookWebhookUri();
+			$webhookUri = $this.ComputeAlertRunbookWebhookUri("Alert");
 		}		
 
 		if(-not [string]::IsNullOrWhiteSpace($SecurityPhoneNumbers) -or $null -ne $smsReceivers)
@@ -404,7 +406,122 @@ class Alerts: CommandBase
 				$this.PublishCustomMessage("No alerts found in the alert policy file", [MessageType]::Warning);
 			}
 		}
-        $this.UpdateActionGroupWebhookUri($webhookUri);
+        $this.UpdateActionGroupWebhookUri($webhookUri,"Alert");
+		return $messages;
+    }
+
+    [MessageData[]] SetAlerts([string] $actionGroupResourceId)
+    {
+		$existingWebhookUri=$null
+		[MessageData[]] $messages = @();
+
+		$webhookUri = $this.ComputeAlertRunbookWebhookUri("ResourceCreation");
+		
+
+		if(($this.Policy | Measure-Object).Count -ne 0)
+		{
+				$alertList = $this.GetApplicableAlerts();
+				if($alertList -ne 0)
+				{
+					$criticalAlerts = $alertList 
+					$startMessage = [MessageData]::new("Processing AzSK alerts. Total alert groups: $($criticalAlerts.Count)");
+					$messages += $startMessage;
+					$this.PublishCustomMessage($startMessage);
+					$this.PublishCustomMessage("Note: Configuring alerts can take about 4-5 min...", [MessageType]::Warning);				
+
+					$disabledAlerts = $criticalAlerts | Where-Object { -not $_.Enabled };
+					if(($disabledAlerts | Measure-Object).Count -ne 0)
+					{
+						$disabledMessage = "Found alerts which are disabled. This is intentional. Total disabled alerts: $($disabledAlerts.Count)";
+						$messages += [MessageData]::new($disabledMessage, $disabledAlerts);					
+					}
+
+					$enabledAlerts = @();
+					$enabledAlerts += $criticalAlerts | Where-Object { $_.Enabled };
+					if($enabledAlerts.Count -ne 0)
+					{
+						$messages += [MessageData]::new([Constants]::SingleDashLine + "`r`nAdding following alerts to the subscription. Total alerts: $($enabledAlerts.Count)", $enabledAlerts);                                            
+
+						# Check if Resource Group exists
+						$existingRG = Get-AzureRmResourceGroup -Name $this.ResourceGroup -ErrorAction SilentlyContinue
+						if(-not $existingRG)
+						{
+							[Helpers]::NewAzSKResourceGroup($this.ResourceGroup,$this.ResourceGroupLocation,$this.GetCurrentModuleVersion())						
+						}
+						$messages += [MessageData]::new("All the alerts registered by this script will be placed in a resource group named: $($this.ResourceGroup)");
+
+
+						try
+						{
+							$criticalAlertList = @()
+							$alertArm =  $this.LoadServerConfigFile("Subscription.AlertARM.json");
+							$alert = ($alertArm.resources | Select-Object -First 1).PSObject.Copy()
+							$enabledAlerts | ForEach-Object {
+								$alertObj =  [Helpers]::DeepCopy($alert)
+								$alertObj.name = $_.Name
+								$alertObj.properties.description = $_.Description								
+								$alertObj.properties.condition.allOf[2].anyOf =@()
+								$_.OperationNameList | ForEach-Object {
+									$alertObj.properties.condition.allOf[2].anyOf += @{ field = "operationName"; equals =$_ }
+								}
+								
+								$alertObj.properties.actions.actionGroups[0].actionGroupId = $actionGroupResourceId
+								$criticalAlertList += $alertObj
+								
+								
+								#$criticalAlertList += $alertObj
+							}
+							$alertArm.resources = $criticalAlertList 
+							$armTemplatePath = [Constants]::AzSKTempFolderPath + "Subscription.AlertARM.json";
+							$alertArm | ConvertTo-Json -Depth 100  | New-Item $armTemplatePath -Force | Out-Null
+							$alertDeployment = New-AzureRmResourceGroupDeployment -Name "AzSKAlertsDeployment" -ResourceGroupName $this.ResourceGroup -TemplateFile $armTemplatePath  -ErrorAction Stop							
+							Remove-Item $armTemplatePath  -ErrorAction SilentlyContinue
+						}
+						catch
+						{
+							$messages += [MessageData]::new("Error while deploying alerts to the subscription", $_, [MessageType]::Error);							
+						}			
+
+						[MessageData[]] $resultMessages = @();
+						#Logic to validate if Alerts are configured.
+						$configuredAlerts = @();		
+						$configuredAlerts = Get-AzureRmResource -ResourceType "Microsoft.Insights/activityLogAlerts" -ResourceGroupName  $this.ResourceGroup 
+						$actualConfiguredAlertsCount = ($configuredAlerts | Measure-Object).Count
+						$notConfiguredAlertsCount = $enabledAlerts.Count - $actualConfiguredAlertsCount
+						if( $actualConfiguredAlertsCount -ge  $enabledAlerts.Count)
+						{
+							#setting the tag at AzSKRG
+							$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
+							[Helpers]::SetResourceGroupTags($azskRGName,@{[Constants]::AzSKAlertsVersionTagName=$this.AlertPolicyObj.Version}, $false)
+
+							#After successfully setting V2 alerts, clean V1 alert rules
+											
+							$resultMessages += [MessageData]::new("All AzSK alerts have been configured successfully.`r`n", [MessageType]::Update);
+							#$this.UpdateActionGroupWebhookUri($existingWebhookUri);
+						
+						}					
+						else
+						{
+							$resultMessages += [MessageData]::new("$notConfiguredAlertsCount/$($enabledAlerts.Count) alert group(s) have not been added to the subscription. Please rerun the command after resolving any errors from the log.", [MessageType]::Error);
+							$resultMessages += [MessageData]::new("$actualConfiguredAlertsCount/$($enabledAlerts.Count) alert group(s) have been added to the subscription successfully`r`n" + [Constants]::SingleDashLine, [MessageType]::Update);
+						}
+					
+						$messages += $resultMessages;
+						$this.PublishCustomMessage($resultMessages);
+					}
+				}
+				else
+				{
+					$this.PublishCustomMessage("No alerts have been found that matches the specified tags. Tags:[$([string]::Join(",", $this.FilterTags))].", [MessageType]::Warning);
+				}
+			}
+		else
+		{
+			$this.PublishCustomMessage("No alerts found in the alert policy file", [MessageType]::Warning);
+		}
+		
+        $this.UpdateActionGroupWebhookUri($webhookUri,"ResourceCreation");	
+
 		return $messages;
     }
 
@@ -546,6 +663,35 @@ class Alerts: CommandBase
 		return 	$actionGroupResourceId
 	}
 
+	hidden [string] SetupAlertActionGroup()
+	{
+		$actionGroupResourceId = $null
+		try{
+			#Get ARM template for action group
+			$actionGroupArm = $this.LoadServerConfigFile("Subscription.AlertActionGroup.json");
+			$actionGroupArmResource = $actionGroupArm.resources | Where-Object { $_.Name -eq $([Constants]::AlertActionGroupName) } 
+			$actionGroupArmResourceOutput = $actionGroupArm.outputs.actionGroupId
+			$actionGroupArmResource.name=[Constants]::ResourceDeploymentActionGroupName
+			$actionGroupArmResourceOutput.value = $actionGroupArmResourceOutput.value.Replace($([Constants]::AlertActionGroupName),$([Constants]::ResourceDeploymentActionGroupName));
+			$actionGroupArmResource.properties.PSObject.Properties.Remove('emailReceivers')
+            $actionGroupArmResource.properties.PSObject.Properties.Remove('smsReceivers')
+			
+			$armTemplatePath =[Constants]::AzSKTempFolderPath + "Subscription.AlertActionGroup.json"
+			$actionGroupArm | ConvertTo-Json -Depth 100  | New-Item $armTemplatePath -Force
+			$actionGroupResource = New-AzureRmResourceGroupDeployment -Name "AzSKAlertActionGroupDeployment" -ResourceGroupName $this.ResourceGroup -TemplateFile $armTemplatePath  -ErrorAction Stop
+			$actionGroupId = $actionGroupResource.Outputs | Where-Object actionGroupId 
+			$actionGroupResourceId = $actionGroupId.Values | Select-Object -ExpandProperty Value                      
+			Remove-Item $armTemplatePath  -ErrorAction SilentlyContinue
+		}
+		catch
+		{	
+			#Eating up this error while action group is not setup we are showing user friendly message
+			#$this.PublishException($_);
+		}
+		
+		return 	$actionGroupResourceId
+	}
+
 	hidden [MessageData[]] CleanV1Alerts()
 	{
 		#Validate if V1(Old) Alert RG present 
@@ -621,9 +767,19 @@ class Alerts: CommandBase
 			return $null
 		}	
 	}
-	hidden [string] ComputeAlertRunbookWebhookUri()
+	hidden [string] ComputeAlertRunbookWebhookUri([string] $type)
 	{
-		$actionGroupResource = $this.GetAlertActionGroup($this.ResourceGroup, [Constants]::AlertActionGroupName);
+        $ActionGroup = ""
+		if($type -eq "Alert")
+		{
+			$ActionGroup = [Constants]::AlertActionGroupName
+		}
+		elseif($type -eq "ResourceCreation")
+		{
+			$ActionGroup = [Constants]::ResourceDeploymentActionGroupName
+		}
+
+		$actionGroupResource = $this.GetAlertActionGroup($this.ResourceGroup, $ActionGroup);
 		$existingWebhookUri = $null;
         if($null -eq $actionGroupResource)
         {			          
@@ -646,35 +802,50 @@ class Alerts: CommandBase
 	}
 
 
-	hidden [string] UpdateActionGroupWebhookUri([string] $existingWebhookUri)
+	hidden [string] UpdateActionGroupWebhookUri([string] $existingWebhookUri,[string] $type)
 	{
 	 #pass webhook uri if exist n actiongrp(update SS cmd) or create a new webhook uri(install CA ,update CA)
-	  $actionGroupResourceId = $this.GetAlertActionGroup($this.ResourceGroup, [Constants]::AlertActionGroupName)
-	  $runBookResourceID= $this.GetAlertRunBookResourceId()
-	  #check for empty string
-	  if($null -ne $actionGroupResourceId -and (-not [string]::IsNullOrWhiteSpace($runBookResourceID)))
-	  {
-	     $existingActionGrp= Get-AzureRmResource -ResourceId $actionGroupResourceId.ResourceId
-         $webhookReceiversList = @();
-		 if(-not [string]::IsNullOrWhiteSpace($existingWebhookUri))
-		 {
-		  $webhookUri=$existingWebhookUri;
-		 }
-		 else
-		 {
-		  $webhookUri=$this.GetAlertRunBookWebHookUri();
-		 }	
-         $props = @{
-	                name = "WebHookForMonitoringAlerts"
-                    serviceUri=$webhookUri
-                   }
-         $object = new-object psobject -Property $props
-         $webhookReceiversList += $object 
-         $existingActionGrp.Properties.webhookReceivers=$webhookReceiversList
-         $existingActionGrp | Set-AzureRmResource -Force
+		$ActionGroup = ""
+		if($type -eq "Alert")
+		{
+			$ActionGroup = [Constants]::AlertActionGroupName
+			$Alertname = "WebHookForMonitoringAlerts"
+		}
+		elseif($type -eq "ResourceCreation")
+		{
+			$ActionGroup = [Constants]::ResourceDeploymentActionGroupName
+			$Alertname = "WebHookForResourceCreationAlerts"
+		}
+		else
+		{
+			$Alertname = ""
+		}
+		$actionGroupResourceId = $this.GetAlertActionGroup($this.ResourceGroup, $ActionGroup)
+		$runBookResourceID= $this.GetAlertRunBookResourceId($type)
+		#check for empty string
+		if($null -ne $actionGroupResourceId -and (-not [string]::IsNullOrWhiteSpace($runBookResourceID)))
+		{
+			$existingActionGrp= Get-AzureRmResource -ResourceId $actionGroupResourceId.ResourceId
+			$webhookReceiversList = @();
+			if(-not [string]::IsNullOrWhiteSpace($existingWebhookUri))
+			{
+			$webhookUri=$existingWebhookUri;
+			}
+			else
+			{
+			$webhookUri=$this.GetAlertRunBookWebHookUri($type);
+			}	
+			$props = @{
+					name = $Alertname
+					serviceUri=$webhookUri
+					}
+			$object = new-object psobject -Property $props
+			$webhookReceiversList += $object 
+			$existingActionGrp.Properties.webhookReceivers=$webhookReceiversList
+			$existingActionGrp | Set-AzureRmResource -Force
 
-	  }
-	  return [string]::Empty
+		}
+		return [string]::Empty
 	}
 	hidden [string] RemoveActionGroupWebhookUri()
 	{
@@ -699,13 +870,22 @@ class Alerts: CommandBase
 	  }
 	  return [string]::Empty
 	}
-	hidden [string] GetAlertRunbookResourceId()
+	hidden [string] GetAlertRunbookResourceId([string] $type)
 	{
 		#Validate if Alert RG present $this.ResourceGroup
 		$existingRG = Get-AzureRmResourceGroup -Name $this.ResourceGroup -ErrorAction SilentlyContinue
 		if($existingRG)
 		{
-		     $resourceName=$this.AutomationAccountName+"/"+$this.RunbookName
+			$RunbookNamebyType = ""
+			if($type -eq "Alert")
+			{
+				$RunbookNamebyType = $this.RunbookName
+			}
+			elseif($type -eq "ResourceCreation")
+			{
+				$RunbookNamebyType = $this.Alert_ResourceCreation_Runbook
+			}
+		     $resourceName=$this.AutomationAccountName+"/"+$RunbookNamebyType
 			 $AlertRunBook = Find-AzureRmResource -ResourceType  "Microsoft.Automation/automationAccounts/runbooks" -ResourceGroupName $this.ResourceGroup -ResourceNameEquals $resourceName
 			if($AlertRunBook )
 			{
@@ -721,13 +901,26 @@ class Alerts: CommandBase
 			return [string]::Empty
 		}	
 	}
-	hidden [string] GetAlertRunBookWebHookUri()
+	hidden [string] GetAlertRunBookWebHookUri([string] $type)
 	{    
 	    try
 		{
+		$RunbookNamebyType = ""
+        $Alertname = ""
+		if($type -eq "Alert")
+		{
+			$RunbookNamebyType = $this.RunbookName
+            $Alertname = "WebHookForMonitoringAlerts"
+		}
+		elseif($type -eq "ResourceCreation")
+		{
+			$RunbookNamebyType = $this.Alert_ResourceCreation_Runbook
+            $Alertname = "WebHookForResourceCreationAlerts"
+		}
+
 	    $webhookExpiryDate=(Get-Date).AddDays($this.WebhookExpiryInDays)
-		Remove-AzureRmAutomationWebhook -Name $this.AutomationWebhookName -ResourceGroup $this.ResourceGroup -AutomationAccountName $this.AutomationAccountName -ErrorAction SilentlyContinue
-		$Webhook = New-AzureRmAutomationWebhook -Name $this.AutomationWebhookName -IsEnabled $True -ExpiryTime $webhookExpiryDate -RunbookName $this.RunbookName -ResourceGroup $this.ResourceGroup -AutomationAccountName $this.AutomationAccountName -Force
+		Remove-AzureRmAutomationWebhook -Name $Alertname -ResourceGroup $this.ResourceGroup -AutomationAccountName $this.AutomationAccountName -ErrorAction SilentlyContinue
+		$Webhook = New-AzureRmAutomationWebhook -Name $Alertname -IsEnabled $True -ExpiryTime $webhookExpiryDate -RunbookName $RunbookNamebyType -ResourceGroup $this.ResourceGroup -AutomationAccountName $this.AutomationAccountName -Force
         $NewWebHookUri=$Webhook.WebhookURI
 	    return $NewWebHookUri;		
 		}

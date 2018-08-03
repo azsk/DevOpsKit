@@ -37,18 +37,18 @@ class RemoteReportsListener: ListenerBase {
 
 				$scanSource = [RemoteReportHelper]::GetScanSource();
 				if($scanSource -ne [ScanSource]::Runbook) { return; }
-				[RemoteReportsListener]::ReportAllResources();
-
+				[ResourceInventory]::FetchResources();
+				[RemoteReportsListener]::ReportAllResources();				
 				$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
 				if(!$invocationContext.BoundParameters.ContainsKey("SubscriptionId")) {return;}
 				$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
 				$resources.SubscriptionId = $invocationContext.BoundParameters["SubscriptionId"]
 				$resources.ResourceGroups = [System.Collections.ArrayList]::new()
-				$resourcesFlat = Find-AzureRmResource
+				# $resourcesFlat = Find-AzureRmResource
 				$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
-				# Not considering nested resources to reduce complexity
-				$filteredResoruces = $resourcesFlat | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }
-				$grouped = $filteredResoruces | Group-Object {$_.ResourceGroupName} | Select-Object Name, Group
+				# # Not considering nested resources to reduce complexity
+				$filteredResources = [ResourceInventory]::FilteredResources | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }
+				$grouped = $filteredResources | Group-Object {$_.ResourceGroupName} | Select-Object Name, Group				
 				foreach($group in $grouped){
 					$resourceGroup = "" | Select-Object Name, Resources
 					$resourceGroup.Name = $group.Name
@@ -102,11 +102,17 @@ class RemoteReportsListener: ListenerBase {
 		$this.RegisterEvent([AzSKRootEvent]::PublishCustomData, {
             $currentInstance = [RemoteReportsListener]::GetInstance();
             try
-            {
-				
+            {				
 				$CustomDataObj =  $Event.SourceArgs
-				$CustomObjectValue=$CustomDataObj| Select-Object -exp Messages|select -exp DataObject| select -exp Value;
-				[RemoteApiHelper]::PostRBACTelemetry($CustomObjectValue);
+				$CustomObjectData=$CustomDataObj| Select-Object -exp Messages|select -exp DataObject
+				if($CustomObjectData.Name -eq "SubSVTObject")
+				{
+					$subSVTObject = $CustomObjectData.Value;
+					$currentInstance.FetchRBACTelemetry($subSVTObject);					
+					[RemoteApiHelper]::PostRBACTelemetry($subSVTObject.CustomData);
+				}
+				#| select -exp Value;
+				
             }
             catch
             {
@@ -122,7 +128,7 @@ class RemoteReportsListener: ListenerBase {
 	{
 		$currentInstance = [RemoteReportsListener]::GetInstance();
 		$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-		$resourcesFlat = Find-AzureRmResource
+		$resourcesFlat = [ResourceInventory]::RawResources | Select-Object Name,ResourceId,ResourceName,ResourceType,ResourceGroupName,Location,SubscriptionId,Sku,@{ Name = 'Tags'; Expression = {$([Helpers]::FetchTagsString($_.Tags))}}
 		[RemoteApiHelper]::PostResourceFlatInventory($resourcesFlat)
 
 	}
@@ -164,6 +170,7 @@ class RemoteReportsListener: ListenerBase {
 				$result.ActualVerificationResult = [VerificationResult]::Disabled
 				$result.AttestationStatus = [AttestationStatus]::None
 				$result.VerificationResult = [VerificationResult]::Disabled
+				$result.MaximumAllowedGraceDays = $context.MaximumAllowedGraceDays
 				$results.Add($result)
 			}
 		}
@@ -190,6 +197,7 @@ class RemoteReportsListener: ListenerBase {
 		$scanResult.ResourceName = $SVTEventContextFirst.ResourceContext.ResourceName
 		$scanResult.ResourceId = $SVTEventContextFirst.ResourceContext.ResourceId
 		$scanResult.Metadata = [Helpers]::ConvertToJsonCustomCompressed($SVTEventContextFirst.ResourceContext.ResourceMetadata)
+		
 		if(($SVTEventContexts | Measure-Object).Count -gt 0 -and ($SVTEventContexts[0].ControlResults | Measure-Object).Count -gt 0)
 		{
 			$TempCtrlResult = $SVTEventContexts[0].ControlResults[0];
@@ -207,7 +215,7 @@ class RemoteReportsListener: ListenerBase {
 				$result.ControlSeverity = $SVTEventContext.ControlItem.ControlSeverity
 				$result.ActualVerificationResult = [VerificationResult]::Disabled
 				$result.AttestationStatus = [AttestationStatus]::None
-				$result.VerificationResult = [VerificationResult]::Disabled
+				$result.VerificationResult = [VerificationResult]::Disabled				
 				$results.Add($result)
 			}
 			elseif ($SVTEventContext.ControlResults.Count -eq 1 -and `
@@ -234,7 +242,16 @@ class RemoteReportsListener: ListenerBase {
 				}
 			}
 		}
+
 		$scanResult.ControlResults = [ServiceControlResult[]] $results
 		[RemoteApiHelper]::PostServiceScanResult($scanResult)
+	}
+
+	hidden [void] FetchRBACTelemetry($svtObject)
+	{
+		$svtObject.GetRoleAssignments();
+		$svtObject.PublishRBACTelemetryData();
+		$svtObject.GetPIMRoles();
+
 	}
 }

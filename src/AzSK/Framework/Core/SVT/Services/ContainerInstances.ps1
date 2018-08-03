@@ -76,4 +76,61 @@ class ContainerInstances: SVTBase
   
         return $controlResult;
     }	
+
+	hidden [ControlResult] CheckRegistry([ControlResult] $controlResult)
+    {
+		$controlResult.VerificationResult = [VerificationResult]::Verify; 
+		if([Helpers]::CheckMember($this.ResourceObject, "Properties.imageRegistryCredentials"))
+		{
+			$registry = @();
+			$registry += $this.ResourceObject.Properties.imageRegistryCredentials | Select-Object server | Select-Object -ExpandProperty server -Unique;
+			if($registry.Count -ne 0)
+			{
+				$controlResult.SetStateData("Container registry", $registry);
+				$controlResult.AddMessage([MessageData]::new("Make sure the following registry is trustworthy.",
+									$registry));
+			}
+			else
+			{
+				$controlResult.AddMessage([MessageData]::new("Containers are utilizing default public registry for container group - ["+ $this.ResourceContext.ResourceName +"]"));
+			}	
+		}
+		else
+		{
+			$controlResult.AddMessage([MessageData]::new("Containers are utilizing default public registry for container group - ["+ $this.ResourceContext.ResourceName +"]"));
+		}
+  
+        return $controlResult;
+    }
+	
+	hidden [ControlResult] CheckContainerTrust([ControlResult] $controlResult)
+    {
+		if([Helpers]::CheckMember($this.ResourceObject, "properties.containers"))
+		{
+			$containers = @();
+			$containers += $this.ResourceObject.properties.containers | Select-Object name | Select-Object -ExpandProperty name;
+
+			if($containers.Count -gt 1)
+			{
+				$controlResult.SetStateData("Containers", $containers);
+				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Make sure that following containers trust each other.",
+									$containers));
+			}
+			elseif($containers.Count -eq 1)
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, 
+											[MessageData]::new("Only 1 container is found under container group - ["+ $this.ResourceContext.ResourceName +"]", $containers));
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No containers are found under container group - ["+ $this.ResourceContext.ResourceName +"]"));
+			}
+		}
+		else
+		{
+			$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No containers are found under container group - ["+ $this.ResourceContext.ResourceName +"]"));
+		}
+  
+        return $controlResult;
+    }
 }

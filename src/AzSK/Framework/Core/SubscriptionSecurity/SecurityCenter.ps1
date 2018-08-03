@@ -12,10 +12,21 @@ class SecurityCenter: AzSKRoot
 	[bool] $IsLatestVersion;
 	[string] $CurrentVersion;
 	[string] $LatestVersion;
+	SecurityCenter([string] $subscriptionId,[bool]$registerASCProvider): 
+        Base($subscriptionId)
+    { 
+		$this.LoadPolicies(); 
+		if($registerASCProvider)
+		{
+			[SecurityCenterHelper]::RegisterResourceProvider();
+		}
+
+	}
 	SecurityCenter([string] $subscriptionId): 
         Base($subscriptionId)
     { 
 		$this.LoadPolicies(); 
+		[SecurityCenterHelper]::RegisterResourceProvider();
 	}
 	
 	hidden [void] LoadPolicies()

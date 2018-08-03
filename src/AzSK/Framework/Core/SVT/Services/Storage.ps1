@@ -3,7 +3,8 @@ using namespace Microsoft.WindowsAzure.Storage.Shared.Protocol
 Set-StrictMode -Version Latest 
 class Storage: SVTBase
 {       
-    hidden [PSObject] $ResourceObject;
+	hidden [PSObject] $ResourceObject;
+	hidden [bool] $LockExists = $false;
 
     Storage([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
                  Base($subscriptionId, $resourceGroupName, $resourceName) 
@@ -55,15 +56,15 @@ class Storage: SVTBase
 		else{
 			$result = $result | Where-Object {$_.Tags -contains "GeneralPurposeStorage" }
 		}
-
 		
-		if($this.ResourceContext.ResourceGroupName -eq [OldConstants]::AzSDKRGName)
+		$recourcelocktype = Get-AzureRmResourceLock -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType
+		if($recourcelocktype)
 		{
-			$recourcelocktype = Get-AzureRmResourceLock -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType
-			if($recourcelocktype)
+			if($this.ResourceContext.ResourceGroupName -eq [OldConstants]::AzSDKRGName)
 			{
 				$result = $result | Where-Object {$_.Tags -notcontains "ResourceLocked" }
 			}
+			$this.LockExists = $true;
 		}
 				
 		return $result;
@@ -78,7 +79,7 @@ class Storage: SVTBase
 		}
 		catch
 		{
-			if([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden)
+			if(([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden) -or $this.LockExists)
             {
 				#Setting this property ensures that this control result will not be considered for the central telemetry, as control does not have the required permissions.
 				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
@@ -124,7 +125,7 @@ class Storage: SVTBase
 			$daignosticsSkuMapping = $this.ControlSettings.StorageDiagnosticsSkuMapping | Where-Object { $_ -eq $this.ResourceObject.Sku.Name } | Select-Object -First 1;
 			if(-not $daignosticsSkuMapping)
 			{
-				#Diagnostics settings are not available for premium storage and zone redundant storage.
+				#Diagnostics settings are not available for premium storage.
 				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Diagnostics settings are not supported for Sku Tier - [$($this.ResourceObject.Sku.Name)]")); 
 			    return $controlResult; 
 			}
@@ -134,6 +135,7 @@ class Storage: SVTBase
 					#Check Metrics diagnostics log property
 					$serviceMapping.DiagnosticsLogServices | 
 					ForEach-Object {
+							#Diagnostic logging is not available for File service.
 							$result = $this.GetServiceLoggingProperty($_, $controlResult) -and $result ;
 					}
 
@@ -153,7 +155,7 @@ class Storage: SVTBase
 			}
 			catch{
 				     #With Reader Role exception will be thrown.
-				    if([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden)
+				    if(([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden) -or $this.LockExists)
                     {
 						#Setting this property ensures that this control result will not be considered for the central telemetry, as control does not have the required permissions.
 						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
@@ -311,11 +313,26 @@ class Storage: SVTBase
 		}
 
         $result = $true;
-        
-        $serviceMapping.Services | 
-		ForEach-Object {
-            $result = $this.CheckMetricAlertConfiguration($this.ControlSettings.MetricAlert.Storage, $controlResult, ("/services/" + $_)) -and $result ;
-        }
+		
+		try {
+			$serviceMapping.Services | 
+			ForEach-Object {
+            	$result = $this.CheckMetricAlertConfiguration($this.ControlSettings.MetricAlert.Storage, $controlResult, ("/services/" + $_)) -and $result ;
+        	}	
+		}
+		catch {
+			if(([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden) -or $this.LockExists)
+			{
+				#Setting this property ensures that this control result will not be considered for the central telemetry, as control does not have the required permissions.
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+				$controlResult.AddMessage(($_.Exception).Message);
+				return $controlResult
+			}
+			else
+			{
+				throw $_
+			}
+		}        
 
         if($result)
 		{
@@ -427,7 +444,7 @@ class Storage: SVTBase
 		  catch
 		  {
 			 #With Reader Role exception will be thrown.
-				    if([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden)
+				    if(([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden) -or $this.LockExists)
                     {
 						#As control does not have the required permissions
 						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;

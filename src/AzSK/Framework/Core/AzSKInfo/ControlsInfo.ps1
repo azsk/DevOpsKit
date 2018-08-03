@@ -80,11 +80,12 @@ class ControlsInfo: CommandBase
 		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 
 		# Filter control for baseline controls
+		$baselineControls = @();
+		$baselineControls += $this.ControlSettings.BaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
+		$baselineControls += $this.ControlSettings.BaselineControls.SubscriptionControlIdList | ForEach-Object { $_ }
 		if($this.BaslineControls)
 		{
-			$baselineControls = $this.ControlSettings.BaselineControls
-			$this.ControlIds += $baselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
-			$this.ControlIds += $baselineControls.SubscriptionControlIdList | ForEach-Object { $_ }
+			$this.ControlIds = $baselineControls
 		}
 
 		$resourcetypes | ForEach-Object{
@@ -143,11 +144,21 @@ class ControlsInfo: CommandBase
 						$fixControl = "No"
 					}
 					
+					if($baselineControls -contains $_.ControlID)
+					{
+						$isBaselineControls = "Yes"
+					}
+					else
+					{
+						$isBaselineControls = "No"
+					}
+										
 					$ctrlObj = New-Object -TypeName PSObject
 					$ctrlObj | Add-Member -NotePropertyName FeatureName -NotePropertyValue $featureName 
 					$ctrlObj | Add-Member -NotePropertyName ControlID -NotePropertyValue $_.ControlID
 					$ctrlObj | Add-Member -NotePropertyName Description -NotePropertyValue $_.Description
 					$ctrlObj | Add-Member -NotePropertyName ControlSeverity -NotePropertyValue $_.ControlSeverity
+					$ctrlObj | Add-Member -NotePropertyName IsBaselineControl -NotePropertyValue $isBaselineControls
 					$ctrlObj | Add-Member -NotePropertyName Rationale -NotePropertyValue $_.Rationale
 					$ctrlObj | Add-Member -NotePropertyName Recommendation -NotePropertyValue $_.Recommendation
 					$ctrlObj | Add-Member -NotePropertyName Automated -NotePropertyValue $_.Automated

@@ -12,11 +12,20 @@ class SVTCommandBase: CommandBase {
     hidden [ControlStateExtension] $ControlStateExt;
     hidden [bool] $UserHasStateAccess = $false;
     [bool] $GenerateFixScript = $false;
+	[bool] $IncludeUserComments = $false;
     [AttestationOptions] $AttestationOptions;
+    hidden [ComplianceReportHelper] $ComplianceReportHelper = $null;
+    hidden [ComplianceBase] $ComplianceBase = $null;
+    hidden [string] $AttestationUniqueRunId;
+    
 
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
+        $this.CheckAndDisableAzureRMTelemetry()
+        $this.AttestationUniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
+        #Fetching the resourceInventory once for each SVT command execution
+        [ResourceInventory]::Clear();
     }
 
     hidden [SVTEventContext] CreateSVTEventContextObject() {
@@ -47,7 +56,19 @@ class SVTCommandBase: CommandBase {
 			{
 				throw [SuppressedException] ("Multiple controlIds specified. `nBulk attestation mode supports only one controlId at a time.`n")
 			}			
-        }		
+        }
+        
+        #check and delete if older RG found. Remove this code post 8/15/2018 release
+        $this.RemoveOldAzSDKRG();
+        #Create necessary resources to save compliance data in user's subscription
+        if($this.IsLocalComplianceStoreEnabled)
+        {
+            $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());  
+            if(-not $this.ComplianceReportHelper.HaveRequiredPermissions())
+            {
+                $this.IsLocalComplianceStoreEnabled = $false;
+            }
+        }
         $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
 
@@ -61,10 +82,12 @@ class SVTCommandBase: CommandBase {
         $arg.ExceptionMessage = $exception;
 
         $this.PublishEvent([SVTEvent]::CommandError, $arg);
+        $this.CheckAndEnableAzureRMTelemetry()
     }
 
     hidden [void] CommandCompleted([SVTEventContext[]] $arguments) {
         $this.PublishEvent([SVTEvent]::CommandCompleted, $arguments);
+        $this.CheckAndEnableAzureRMTelemetry()
     }
 
     [string] EvaluateControlStatus() {
@@ -83,6 +106,10 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlIds += $this.ControlIds;
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
+        # ToDo: remove InvocationContext, try to pass as param
+        # ToDo: Assumption: usercomment will only work when storage report feature flag is enable
+        $resourceId = $svtObject.GetResourceId(); 
+		$svtObject.ComplianceStateData = $this.FetchComplianceStateData($resourceId);
 
         #Include Server Side Exclude Tags
         $svtObject.ExcludeTags += [ConfigurationManager]::GetAzSKConfigData().DefaultControlExculdeTags
@@ -96,29 +123,33 @@ class SVTCommandBase: CommandBase {
 			$svtObject.PartialScanIdentifier =$this.PartialScanIdentifier
 		}
 		
-
+        # ToDo: Utilize exiting functions
         $this.InitializeControlState();
         $svtObject.ControlStateExt = $this.ControlStateExt;
     }
 
+    hidden [ComplianceStateTableEntity[]] FetchComplianceStateData([string] $resourceId)
+	{
+        [ComplianceStateTableEntity[]] $ComplianceStateData = @();
+        if($this.IsLocalComplianceStoreEnabled)
+        {
+            if($null -ne $this.ComplianceReportHelper)
+            {
+                [string[]] $partitionKeys = @();                
+                $partitionKey = [Helpers]::ComputeHash($resourceId.ToLower());                
+                $partitionKeys += $partitionKey
+                $ComplianceStateData = $this.ComplianceReportHelper.GetSubscriptionComplianceReport($partitionKeys);            
+            }
+        }
+        return $ComplianceStateData;
+	}
+
     hidden [void] InitializeControlState() {
         if (-not $this.ControlStateExt) {
             $this.ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
+            $this.ControlStateExt.UniqueRunId = $this.AttestationUniqueRunId
             $this.ControlStateExt.Initialize($false);
             $this.UserHasStateAccess = $this.ControlStateExt.HasControlStateReadAccessPermissions();
-
-			#Attestation migration warning
-			if($this.UserHasStateAccess)
-			{
-				$isMigrationCompleted = [UserSubscriptionDataHelper]::IsMigrationCompleted($this.SubscriptionContext.SubscriptionId);
-				if($isMigrationCompleted -ne "COMP")
-				{
-					$this.PublishCustomMessage("WARNING: Your subscription has not yet been migrated from `"AzSDK`" to `"AzSK`". Scan commands will not reflect past control attestations until that happens.", [MessageType]::Warning);
-					$this.ControlStateExt.SetControlStateReadAccessPermissions(0);
-					$this.ControlStateExt.SetControlStateWriteAccessPermissions(0);
-					$this.UserHasStateAccess = $false;
-				}
-			}
         }
     }
 
@@ -128,14 +159,6 @@ class SVTCommandBase: CommandBase {
                 [SVTControlAttestation] $svtControlAttestation = [SVTControlAttestation]::new($arguments, $this.AttestationOptions, $this.SubscriptionContext, $this.InvocationContext);
                 #The current context user would be able to read the storage blob only if he has minimum of contributor access.
                 if ($svtControlAttestation.controlStateExtension.HasControlStateReadAccessPermissions()) {
-					#Add migration warning
-					$isMigrationCompleted = [UserSubscriptionDataHelper]::IsMigrationCompleted($this.SubscriptionContext.SubscriptionId);
-					if($isMigrationCompleted -ne "COMP")
-					{
-						$MigrationWarning = [ConfigurationManager]::GetAzSKConfigData().MigrationWarning;
-						throw ([SuppressedException]::new($MigrationWarning,[SuppressedExceptionType]::Generic))
-					}
-
                     if (-not [string]::IsNullOrWhiteSpace($this.AttestationOptions.JustificationText) -or $this.AttestationOptions.IsBulkClearModeOn) {
                         $this.PublishCustomMessage([Constants]::HashLine + "`n`nStarting Control Attestation workflow in bulk mode...`n`n");
                     }
@@ -172,6 +195,107 @@ class SVTCommandBase: CommandBase {
             catch {
                 $this.CommandError($_);
             }
+        }
+    }
+
+    hidden [void] CheckAndDisableAzureRMTelemetry()
+	{
+		#Disable AzureRM telemetry setting until scan is completed.
+		#This has been added to improve the performarnce of scan commands
+		#Telemetry will be re-enabled once scan is completed		
+		$dataCollectionPath = "$env:APPDATA\Windows Azure Powershell\AzurePSDataCollectionProfile.json"
+		if(Test-Path -Path $dataCollectionPath)
+		{
+			$dataCollectionProfile = Get-Content -path $dataCollectionPath | ConvertFrom-Json
+			if($dataCollectionProfile.enableAzureDataCollection)
+			{	
+				#Keep settings in 
+				$AzureRMDataCollectionSettingFolderpath= [Constants]::AzSKAppFolderPath + "\AzureRMDataCollectionSettings"
+				if(-not (Test-Path -Path $AzureRMDataCollectionSettingFolderpath))
+				{
+					mkdir -Path $AzureRMDataCollectionSettingFolderpath -Force
+                }
+                
+				$AzureRMDataCollectionFilePath = $AzureRMDataCollectionSettingFolderpath + "\AzurePSDataCollectionProfile.json"
+                if(-not (Test-Path -Path $AzureRMDataCollectionFilePath))
+				{
+                    Copy-Item $dataCollectionPath $AzureRMDataCollectionFilePath					
+                }
+				Disable-AzureRmDataCollection  | Out-Null
+			}
+		}
+    }
+    
+    hidden [void] CheckAndEnableAzureRMTelemetry()
+    {
+        #Enabled AzureRM telemetry which got disabled at the start of command
+        $AzureRMDataCollectionSettingFilepath= [Constants]::AzSKAppFolderPath + "\AzureRMDataCollectionSettings\AzurePSDataCollectionProfile.json"
+        if(Test-Path -Path $AzureRMDataCollectionSettingFilepath)
+        {
+            $dataCollectionProfile = Get-Content -path $AzureRMDataCollectionSettingFilepath | ConvertFrom-Json
+            if($dataCollectionProfile -and $dataCollectionProfile.enableAzureDataCollection)
+            {
+                Enable-AzureRmDataCollection  | Out-Null
+            }
+        }
+
+    }
+
+    hidden [void] RemoveOldAzSDKRG()
+    {
+        $scanSource = [AzSKSettings]::GetInstance().GetScanSource();
+        if($scanSource -eq "SDL" -or [string]::IsNullOrWhiteSpace($scanSource))
+        {
+            $olderRG = Get-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -ErrorAction SilentlyContinue
+            if($null -ne $olderRG)
+            {
+                $resources = Find-AzureRmResource -ResourceGroupNameEquals $([OldConstants]::AzSDKRGName)
+                try {
+                    $azsdkRGScope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourceGroups/$([OldConstants]::AzSDKRGName)"
+                    $resourceLocks = @();
+                    $resourceLocks += Get-AzureRmResourceLock -Scope $azsdkRGScope -ErrorAction Stop
+                    if($resourceLocks.Count -gt 0)
+                    {
+                        $resourceLocks | ForEach-Object {
+                            Remove-AzureRmResourceLock -LockId $_.LockId -Force -ErrorAction Stop
+                        }                 
+                    }
+
+                    if(($resources | Measure-Object).Count -gt 0)
+                    {
+                        $otherResources = $resources | Where-Object { -not ($_.ResourceName -like "$([OldConstants]::StorageAccountPreName)*")} 
+                        if(($otherResources | Measure-Object).Count -gt 0)
+                        {
+                            Write-Host "WARNING: Found non DevOps Kit resources under older RG [$([OldConstants]::AzSDKRGName)] as shown below:" -ForegroundColor Yellow
+                            $otherResources
+                            Write-Host "We are about to delete the older resource group including all the resources inside." -ForegroundColor Yellow
+                            $option = Read-Host "Do you want to continue (Y/N) ?";
+                            $option = $option.Trim();
+                            While($option -ne "y" -and $option -ne "n")
+                            {
+                                Write-Host "Provide correct option (Y/N)."
+                                $option = Read-Host "Do you want to continue (Y/N) ?";
+                                $option = $option.Trim();
+                            }
+                            if($option -eq "y")
+                            {
+                                Remove-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob
+                            }
+                        }
+                        else
+                        {
+                            Remove-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob                            
+                        }
+                    }
+                    else 
+                    {
+                        Remove-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob
+                    }
+                }
+                catch {
+                    #eat exception
+                }  
+            }          
         }
     }
 }

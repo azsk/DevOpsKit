@@ -36,12 +36,13 @@ class AzSKConfig
 	[string] $CASetupRunbookURL;
 	[string] $AzSKConfigURL;
     [bool] $IsAlertMonitoringEnabled;
-    [string] $MigrationWarning;
 	[string] $SupportDL;
 	[string] $RunbookScanAgentBaseVersion;
 	[string] $PolicyOrgName;
+	[bool] $StoreComplianceSummaryInUserSubscriptions;
+	[string] $LatestPSGalleryVersion;
 	hidden static [AzSKConfig] $Instance = $null;
-
+	
     static [AzSKConfig] GetInstance([bool] $useOnlinePolicyStore, [string] $onlineStoreUri, [bool] $enableAADAuthForOnlinePolicyStore)
     {
         if ( $null -eq  [AzSKConfig]::Instance)
@@ -145,5 +146,44 @@ class AzSKConfig
 			}
 		}
 		return $this.AzSKVersionList;
-    }
+	}
+	
+	hidden [string] GetAzSKLatestPSGalleryVersion([string] $moduleName)
+	{
+		if([string]::IsNullOrWhiteSpace($this.LatestPSGalleryVersion))
+		{
+			$this.LatestPSGalleryVersion = "0.0.0.0";
+			try
+			{
+				if($this.LatestPSGalleryVersion -eq '0.0.0.0')
+				{
+					$repoUrl = $this.AzSKRepoURL;
+					#Searching for the module in the repo
+					$Url = "$repoUrl/api/v2/Search()?`$filter=IsLatestVersion&searchTerm=%27$moduleName%27&includePrerelease=false" 
+					[System.Uri] $validatedUri = $null;
+					if([System.Uri]::TryCreate($Url, [System.UriKind]::Absolute, [ref] $validatedUri))
+					{
+						$SearchResult = @()
+						$SearchResult += Invoke-RestMethod -Method Get -Uri $validatedUri -UseBasicParsing
+						if($SearchResult.Length -and $SearchResult.Length -gt 0) 
+						{
+								#filter latest module
+								$SearchResult = $SearchResult | Where-Object -FilterScript {
+									return $_.title.'#text' -eq $moduleName
+								} 
+								$moduleName = $SearchResult.title.'#text' # get correct casing for the module name
+								$PackageDetails = Invoke-RestMethod -Method Get -UseBasicParsing -Uri $SearchResult.id 
+								$this.LatestPSGalleryVersion = $PackageDetails.entry.properties.version
+						}
+					}
+				}
+			}
+			catch
+			{
+				$this.LatestPSGalleryVersion = "0.0.0.0";
+			}
+		}
+		return $this.LatestPSGalleryVersion;
+
+	}
 }

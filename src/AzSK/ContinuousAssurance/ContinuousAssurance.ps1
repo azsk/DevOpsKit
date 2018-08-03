@@ -170,9 +170,12 @@ function Install-AzSKContinuousAssurance
 		$CentralScanMode,
 
 		[switch]
-		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode", HelpMessage = "Switch to specify whether to open output folder.")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
-		$DoNotOpenOutputFolder
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
+		$DoNotOpenOutputFolder,
+
+		[switch]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
+		$ScanOnDeployment
     )
 	Begin
 	{
@@ -183,6 +186,22 @@ function Install-AzSKContinuousAssurance
 	{
 		try 
 		{
+			$isDefaultRGNameUsed = ![string]::IsNullOrWhiteSpace($AutomationAccountRGName) -and $AutomationAccountRGName -eq [UserSubscriptionDataHelper]::GetUserSubscriptionRGName()
+			$isDefaultCANameUsed = ![string]::IsNullOrWhiteSpace($AutomationAccountName) -and $AutomationAccountName -eq [UserSubscriptionDataHelper]::GetCAName()
+			$errMsg = ""
+			if($isDefaultRGNameUsed)
+			{
+				$errMsg = "The specified 'AutomationAccountRGName' parameter value is reserved for toolkit use."
+			}
+			if($isDefaultCANameUsed)
+			{
+				$errMsg += "`r`nThe specified 'AutomationAccountName' parameter value is reserved for toolkit use."
+			}
+			if(![string]::IsNullOrWhiteSpace($errMsg))
+			{
+				$errMsg += "`r`nPlease use different (unique) names for CA account and/or resource group."
+				throw ([SuppressedException]::new(($errMsg), [SuppressedExceptionType]::InvalidOperation))
+			}
 			$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation,`
 				$AutomationAccountLocation, $AutomationAccountRGName, $AutomationAccountName, $ResourceGroupNames,`
 				$AzureADAppName, $ScanIntervalInHours);
@@ -191,9 +210,12 @@ function Install-AzSKContinuousAssurance
 
 			#set the Webhook settings
 			$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
+			
 
 			if ($ccAccount) 
 			{
+				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
+
 				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
 				{
 					$ccAccount.IsCentralScanModeOn = $true;
@@ -208,6 +230,8 @@ function Install-AzSKContinuousAssurance
 						$ccAccount.LoggingOption = $LoggingOption;
 					}
 				}
+
+				
 				return $ccAccount.InvokeFunction($ccAccount.InstallAzSKContinuousAssurance);
 			}			
 		}
@@ -269,6 +293,8 @@ function Update-AzSKContinuousAssurance
 		This switch is required to update AzSK CA running in central scanning mode.
 	.PARAMETER FixRuntimeAccount
 		Use this switch to fix CA runtime account in case of below issues. 1. Runtime account deleted (Permissions required: Subscription owner) 2. Runtime account permissions missing (Permissions required: Subscription owner and AD App owner) 3. Certificate deleted/expired (Permissions required: Subscription owner and AD App owner)
+    .PARAMETER NewRuntimeAccount
+		Use this switch to create new CA runtime account.
 	.PARAMETER RenewCertificate
 			 Renews certificate credential of CA SPN if the caller is Owner of the AAD Application (SPN). If the caller is not Owner, a new application is created with a corresponding SPN and a certificate owned by the caller. CA uses the updated credential going forward.
 	.PARAMETER FixModules
@@ -285,7 +311,8 @@ function Update-AzSKContinuousAssurance
 	Param(
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Default", HelpMessage="Subscription id in which Automation Account exists")]
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Subscription id in which Automation Account exists")]
-        [string]
+		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "RemoveSettings", HelpMessage="Subscription id in which Automation Account exists")]
+		[string]
 		[Alias("sid", "HostSubscriptionId", "hsid")]
 		$SubscriptionId,
 
@@ -315,7 +342,7 @@ function Update-AzSKContinuousAssurance
 		
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
-		[ValidateNotNullOrEmpty()]
+		[ValidateNotNullOrEmpty()]	
         [string]
 		[Alias("owid")]
 		$OMSWorkspaceId,
@@ -374,6 +401,13 @@ function Update-AzSKContinuousAssurance
 		[Alias("fra","ConfigureRuntimeAccount", "cra")]
 		$FixRuntimeAccount,
 
+        [Parameter(Mandatory = $false, ParameterSetName = "Default")]
+		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
+        [switch]
+		[Alias("nra")]
+		$NewRuntimeAccount,
+
+
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
         [switch]
@@ -407,9 +441,16 @@ function Update-AzSKContinuousAssurance
 		$CentralScanMode,
 
 		[switch]
-		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode", HelpMessage = "Switch to specify whether to open output folder.")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
-		$DoNotOpenOutputFolder
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
+		$DoNotOpenOutputFolder,
+
+		[Parameter(Mandatory = $true, ParameterSetName = "RemoveSettings", HelpMessage="This switch is used to clear setting for OMS,AltOMS or Webhook.")]
+		[ValidateSet("OMSSettings","AltOMSSettings","WebhookSettings","ScanOnDeployment")]
+		$Remove,
+
+		[switch]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
+		$ScanOnDeployment
     )
 	Begin
 	{
@@ -420,32 +461,56 @@ function Update-AzSKContinuousAssurance
 	{
 	try 
 		{
-			$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation, $null, $AutomationAccountRGName, $AutomationAccountName, `
+				$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation, $null, $AutomationAccountRGName, $AutomationAccountName, `
 				$ResourceGroupNames, $AzureADAppName, $ScanIntervalInHours);
+			if($PSCmdlet.ParameterSetName -eq "RemoveSettings")
+			{
+				switch($Remove)
+				{
+					"OMSSettings" {
+						return $ccAccount.InvokeFunction($ccAccount.RemoveOMSSettings);								 
+						}
+					"AltOMSSettings" {
+						return $ccAccount.InvokeFunction($ccAccount.RemoveAltOMSSettings);
+						}
+					"WebhookSettings" {
+						return $ccAccount.InvokeFunction($ccAccount.RemoveWebhookSettings);
+						}
+					"ScanOnDeployment" {
+						return $ccAccount.InvokeFunction($ccAccount.ClearResourceofDeploymentScan);
+						}
+				}
+					
 
-			#set the OMS settings
-			$ccAccount.SetOMSSettings($OMSWorkspaceId, $OMSSharedKey, $AltOMSWorkspaceId, $AltOMSSharedKey);
+			}
+			else
+			{
+					#set the OMS settings
+					$ccAccount.SetOMSSettings($OMSWorkspaceId, $OMSSharedKey, $AltOMSWorkspaceId, $AltOMSSharedKey);
 
 			#set the Webhook settings
 			$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
 
 			if ($ccAccount) 
 			{
-				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
-				{
-					$ccAccount.IsCentralScanModeOn = $true;
-					$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
-					$ccAccount.SkipTargetSubscriptionConfig = $SkipTargetSubscriptionConfig;
-					if($null -eq $LoggingOption)
+				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
+
+					if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
 					{
-						$ccAccount.LoggingOption = [CAReportsLocation]::CentralSub;
+						$ccAccount.IsCentralScanModeOn = $true;
+						$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
+						$ccAccount.SkipTargetSubscriptionConfig = $SkipTargetSubscriptionConfig;
+						if($null -eq $LoggingOption)
+						{
+							$ccAccount.LoggingOption = [CAReportsLocation]::CentralSub;
+						}
+						else
+						{
+							$ccAccount.LoggingOption = $LoggingOption;
+						}
 					}
-					else
-					{
-						$ccAccount.LoggingOption = $LoggingOption;
-					}
+					return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules));
 				}
-				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$RenewCertificate,$FixModules));
 			}
 			
 		}
@@ -501,9 +566,9 @@ function Get-AzSKContinuousAssurance
 		[switch]
 		[Alias("ec")]
 		$ExhaustiveCheck,
-		
+
 		[switch]
-		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		$DoNotOpenOutputFolder
     )
 	Begin
@@ -555,6 +620,8 @@ function Remove-AzSKContinuousAssurance
 		Switch to force this cmdlet to remove CA resources
 	.PARAMETER CentralScanMode
 		This switch is required if AzSK CA is running in central scanning mode. 
+	.PARAMETER DoNotOpenOutputFolder
+		Switch to specify whether to open output folder.
 	.LINK
 	https://aka.ms/azskossdocs 
 
@@ -599,10 +666,9 @@ function Remove-AzSKContinuousAssurance
 		[switch]
 		[Alias("f")]
 		$Force,
-		
+
 		[switch]
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
-		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode", HelpMessage = "Switch to specify whether to open output folder.")]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		$DoNotOpenOutputFolder
     )
 	Begin

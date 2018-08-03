@@ -1,12 +1,78 @@
 {
-   "FeatureName": "BotService",
-   "Reference": "aka.ms/azsktcp/botservice",
-   "IsMaintenanceMode": false,
-   "Controls": [
+  "FeatureName": "BotService",
+  "Reference": "aka.ms/azsktcp/botservice",
+  "IsMaintenanceMode": false,
+  "Controls": [
+     {
+      "ControlID": "Azure_BotService_Enable_Required_Channels_Only",
+      "Description": "Only specific/required channels must be configured to allow traffic to bot service.",
+      "Id": "BotService110",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckBotConfiguredChannels",
+      "Rationale": "Each channel a bot is configured for exposes the bot to activity on that channel. If a channel that is not actually required is enabled for the bot, it introduces unnecessary avenues for attack.",
+      "Recommendation": "Verify the configured channels and to add more supported channels refer: https://docs.microsoft.com/en-us/azure/bot-service/bot-service-manage-channels?view=azure-bot-service-3.0",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "BotService"
+      ],
+      "Enabled": true
+    },    
+    {
+      "ControlID": "Azure_BotService_DP_Encrypt_At_Rest",
+      "Description": "Ensure to use own storage adapter instead of Bot Framework State Service API.",
+      "Id": "BotService120",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
+      "Recommendation": "Default behavior. No action required.",
+      "Tags": [
+        "SDL",
+        "Information",
+        "Manual",
+        "BotService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_BotService_DP_Protect_Secrets",
+      "Description": "Secrets in Bot Service must be handled properly.",
+      "Id": "BotService130",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Keeping secrets such as passwords, keys, etc. in clear text can lead to easy compromise at various avenues during an application's lifecycle.",
+      "Recommendation": "It is recommended to handle the secrets properly.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "BotService"
+      ],
+      "Enabled": "true"
+    },
+    {
+      "ControlID": "Azure_BotService_Audit_Enable_Monitoring",
+      "Description": "Make sure important activities and events during Bot interactions are logged.",
+      "Id": "BotService140",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckAIConfigured",
+      "Rationale": "Analytics can be useful to detect unusual usage behavior patterns.",
+      "Recommendation": "Follow https://docs.microsoft.com/en-us/azure/bot-service/bot-service-manage-analytics?view=azure-bot-service-3.0 for configuring Application Insight with Bot Service.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "BotService"
+      ],
+      "Enabled": "true"
+    },
     {
       "ControlID": "Azure_BotService_DP_Dont_Allow_HTTP_Access",
       "Description": "Bot Service API must only be accessible over HTTPS",
-      "Id": "BotService110",
+      "Id": "BotService150",
       "ControlSeverity": "High",
       "Automated": "No",
       "MethodName": "",
@@ -19,57 +85,6 @@
         "BotService"
       ],
       "Enabled": true
-    },
-    {
-      "ControlID": "Azure_BotService_DP_Encrypt_At_Rest",
-      "Description": "Ensure to use own storage adapter instead of Bot Framework State Service API.",
-      "Id": "BotService120",
-      "ControlSeverity": "High",
-      "Automated": "No",
-      "MethodName": "",
-      "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-      "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/bot-service/dotnet/bot-builder-dotnet-state for implementing state for Bot Service.",
-      "Tags": [
-        "SDL",
-        "Information",
-        "Manual",
-        "BotService"
-      ],
-      "Enabled": true
-    },
-    {
-        "ControlID": "Azure_BotService_DP_Protect_Secrets",
-        "Description": "Secrets in Bot Service must be handled properly.",
-        "Id": "BotService130",
-        "ControlSeverity": "High",
-        "Automated": "No",
-        "MethodName": "",
-        "Rationale": "Keeping secrets such as passwords, keys, etc. in clear text can lead to easy compromise at various avenues during an application's lifecycle.",
-        "Recommendation": "It is recommended to handle the secrets properly.",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Manual",
-          "BotService"
-        ],
-        "Enabled": "true"
-    },
-    {
-      "ControlID": "Azure_BotService_Audit_Enable_Monitoring",
-      "Description": "Make sure important activities and events during Bot interactions are logged.",
-      "Id": "BotService140",
-      "ControlSeverity": "Medium",
-      "Automated": "No",
-      "MethodName": "",
-      "Rationale": "Analytics can be useful to detect unusual usage behavior patterns.",
-      "Recommendation": "Follow https://docs.microsoft.com/en-us/azure/bot-service/bot-service-manage-analytics?view=azure-bot-service-3.0 for configuring Application Insight with Bot Service.",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Manual",
-        "BotService"
-      ],
-      "Enabled": "true"
     }
-   ]
+  ]
 }
