@@ -927,15 +927,31 @@ class SVTBase: AzSKRoot
 
 	hidden [ControlResult] CheckDiagnosticsSettings([ControlResult] $controlResult)
 	{
-		$diagnostics = Get-AzureRmDiagnosticSetting -ResourceId $this.GetResourceId()
-		if($diagnostics -and ($diagnostics.Logs | Measure-Object).Count -ne 0)
+		$diagnostics = $Null
+		try
+		{
+			$diagnostics = Get-AzureRmDiagnosticSetting -ResourceId $this.GetResourceId() -ErrorAction Stop -WarningAction SilentlyContinue
+		}
+		catch
+		{
+			if((Get-Member -InputObject ($_.Exception) -MemberType Properties -Name Response) -and ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed, "Diagnostics setting is disabled for resource - [$($this.ResourceContext.ResourceName)].");
+				return $controlResult
+			}
+			else
+			{
+				$this.PublishException($_);
+			}
+		}
+		if($Null -ne $diagnostics -and ($diagnostics.Logs | Measure-Object).Count -ne 0)
 		{
 			$nonCompliantLogs = $diagnostics.Logs |
 								Where-Object { -not ($_.Enabled -and
 											($_.RetentionPolicy.Days -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever -or
 											$_.RetentionPolicy.Days -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Min))};
 
-			$selectedDiagnosticsProps = $diagnostics | Select-Object -Property Logs, Metrics, StorageAccountId, ServiceBusRuleId, Name;
+			$selectedDiagnosticsProps = $diagnostics | Select-Object -Property Logs, Metrics, StorageAccountId, EventHubName, Name;
 
 			if(($nonCompliantLogs | Measure-Object).Count -eq 0)
 			{

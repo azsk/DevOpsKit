@@ -321,7 +321,7 @@ class CCAutomation: CommandBase
 
 						if(-not $this.SkipTargetSubscriptionConfig)
 						{
-							Select-AzureRmSubscription -SubscriptionId $caSubId | Out-Null
+							Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
 
 							#region :create new resource group/check if RG exists. This is required for the CA SPN to read the attestation data. 
 							if((Get-AzureRmResourceGroup -Name $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
@@ -385,7 +385,7 @@ class CCAutomation: CommandBase
 					}
 				}
 				#set context back to central sub
-				Select-AzureRmSubscription -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null			
+				Set-AzureRmContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null			
 				#region: Create Scan objects			
                 $filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
 
@@ -869,7 +869,7 @@ class CCAutomation: CommandBase
 							$out.StorageAccountName = $this.UserConfig.StorageAccountName;		
 							if(-not $this.SkipTargetSubscriptionConfig)
 							{
-								Select-AzureRmSubscription -SubscriptionId $caSubId | Out-Null
+								Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
 								#create new resource group/check if RG exists# 
 			
 								[Helpers]::CreateNewResourceGroupIfNotExists($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())			
@@ -944,7 +944,7 @@ class CCAutomation: CommandBase
 				}
 				finally{
 					#setting the context back to the parent subscription
-					Select-AzureRmSubscription -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
+					Set-AzureRmContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
 				}
 
 				#add if the host subscription is not there in the current scanobjects 
@@ -1576,7 +1576,7 @@ class CCAutomation: CommandBase
 						{
 							$subRBACoutput = "" | Select-Object TargetSubscriptionId, HasSubscriptionCARBACAccess, HasRGCARBACAccess , HasRequiredAccessPermissions 
 							$subRBACoutput.TargetSubscriptionId = $_;
-							Select-AzureRmSubscription -SubscriptionId $subRBACoutput.TargetSubscriptionId | Out-Null
+							_iptionId $subRBACoutput.TargetSubscriptionId | Out-Null
 							$subRBACoutput.HasSubscriptionCARBACAccess = $this.CheckServicePrincipalSubscriptionAccess($this.CAAADApplicationID);
 							$subRBACoutput.HasRGCARBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID);
 							$subRBACoutput.HasRequiredAccessPermissions = $true;
@@ -1605,7 +1605,7 @@ class CCAutomation: CommandBase
 				finally
 				{
 					#setting the context back to the parent subscription
-					Select-AzureRmSubscription -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
+					Set-AzureRmContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
 				}
 
 				$detailedMsg = [MessageData]::new("TargetSubscriptions RBAC permissions data", $subRBACoutputs);
@@ -1732,7 +1732,7 @@ class CCAutomation: CommandBase
 							$tgtSubStorageAccount.CentralStorageAccountName = $centralStorageAccountName
 							if($_.LoggingOption -ne  [CAReportsLocation]::CentralSub)
 							{
-								Select-AzureRmSubscription -SubscriptionId $tgtSubStorageAccount.TargetSubscriptionId  | Out-Null
+								Set-AzureRmContext -SubscriptionId $tgtSubStorageAccount.TargetSubscriptionId  | Out-Null
 								$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 
 								if(($reportsStorageAccount | Measure-Object).Count -le 0)
@@ -1765,7 +1765,7 @@ class CCAutomation: CommandBase
 			finally
 			{
 				#setting the context back to the parent subscription
-				Select-AzureRmSubscription -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
+				Set-AzureRmContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
 			}
 			$detailedMsg = [MessageData]::new("Target Subscriptions storage account configuration:", $tgtSubStorageAccounts);
 		}
@@ -2252,7 +2252,7 @@ class CCAutomation: CommandBase
 
 			try
 			{
-				Select-AzureRmSubscription -SubscriptionId $targetSub.SubscriptionId | Out-Null
+				Set-AzureRmContext -SubscriptionId $targetSub.SubscriptionId | Out-Null
 				#step 1: Remove any permissions related to SPN in the target sub
 				if(-not [string]::IsNullOrWhiteSpace($CAAADCentralSPN))
 				{
@@ -2319,7 +2319,7 @@ class CCAutomation: CommandBase
 			finally
 			{
 				#setting the context back to the parent subscription
-				Select-AzureRmSubscription -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
+				Set-AzureRmContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
 			}
 			if($centralLogsDelete)
 			{

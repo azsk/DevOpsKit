@@ -145,7 +145,7 @@ function RunAzSKScan() {
 
 				#Let us switch context to the target subscription.
 				$subId = $candidateSubToScan.SubscriptionId;
-				Select-AzureRmSubscription -SubscriptionId $subId | Out-Null
+				Set-AzureRmContext -SubscriptionId $subId | Out-Null
 					
 				Write-Output ("SA: Scan status details:")
 				Write-Output ("SA: Subscription id: [" + $subId + "]")
@@ -176,7 +176,7 @@ function RunAzSKScan() {
 		}			
 		finally{
 			#Always return back to central subscription context.
-			Select-AzureRmSubscription -SubscriptionId $RunAsConnection.SubscriptionID | Out-Null
+			Set-AzureRmContext -SubscriptionId $RunAsConnection.SubscriptionID | Out-Null
 		}
 	}#IsCentralMode
 	else
@@ -684,7 +684,7 @@ try {
 	$Global:IsCentralMode = $false;
 
 	$Global:subsToScan = @();
-    Select-AzureRmSubscription -SubscriptionId $SubscriptionID;
+    Set-AzureRmContext -SubscriptionId $SubscriptionID;
 	
 	#Another job is already running
 	if($Global:FoundExistingJob)
