@@ -42,7 +42,7 @@ class Helpers {
     }
 
     static [string] SanitizeFolderName($folderPath) {
-        return ($folderPath -replace '[<>:"/\\|?*]', '');
+        return ($folderPath -replace '[<>:"/\\\[\]|?*]', '');
     }
 
     static [string] ConvertObjectToString([PSObject] $dataObject, [bool] $defaultPsOutput) {
