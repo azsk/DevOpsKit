@@ -252,7 +252,7 @@ class CCAutomation: CommandBase
 			$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 			if(($existingStorage|Measure-Object).Count -gt 0)
 			{
-				$this.UserConfig.StorageAccountName = $existingStorage.ResourceName
+				$this.UserConfig.StorageAccountName = $existingStorage.Name
 				$this.PublishCustomMessage("Preparing a storage account for storing reports from CA scans...`r`nFound existing AzSK storage account: ["+ $this.UserConfig.StorageAccountName +"]. This will be used to store reports from CA scans.")
 			}
 			else
@@ -340,7 +340,7 @@ class CCAutomation: CommandBase
 							$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 							if(($existingStorage | Measure-Object).Count -gt 0)
 							{
-								$caStorageAccountName = $existingStorage.ResourceName
+								$caStorageAccountName = $existingStorage.Name
 								$this.PublishCustomMessage("Preparing a storage account for storing reports from CA scans...`r`nFound existing AzSK storage account: [$caStorageAccountName]. This will be used to store reports from CA scans.")
 								$out.StorageAccountName = $caStorageAccountName;
 							}
@@ -641,18 +641,18 @@ class CCAutomation: CommandBase
 			$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 			if(($existingStorage|Measure-Object).Count -gt 0)
 			{
-				$this.PublishCustomMessage("Found existing AzSK storage account: ["+ $existingStorage.ResourceName +"]")
-				$this.UserConfig.StorageAccountName = $existingStorage.ResourceName
+				$this.PublishCustomMessage("Found existing AzSK storage account: ["+ $existingStorage.Name +"]")
+				$this.UserConfig.StorageAccountName = $existingStorage.Name
 				#make storage compliant to azsk
-				$this.ResolveStorageCompliance($existingStorage.ResourceName,$existingStorage.ResourceId,$this.AutomationAccount.CoreResourceGroup,$this.CAScanOutputLogsContainerName)
+				$this.ResolveStorageCompliance($existingStorage.Name,$existingStorage.ResourceId,$this.AutomationAccount.CoreResourceGroup,$this.CAScanOutputLogsContainerName)
 			
 				#update storage account variable
 				$storageVariable = $this.GetReportsStorageAccountNameVariable()
-				if($null -eq $storageVariable -or ($null -ne $storageVariable -and $storageVariable.Value.Trim() -ne $existingStorage.ResourceName))
+				if($null -eq $storageVariable -or ($null -ne $storageVariable -and $storageVariable.Value.Trim() -ne $existingStorage.Name))
 				{
 					$varStorageName = [Variable]@{
 						Name = "ReportsStorageAccountName";
-						Value = $existingStorage.ResourceName;
+						Value = $existingStorage.Name;
 						IsEncrypted = $false;					
 						Description ="Name of Storage Account where CA scan reports will be stored"
 					}
@@ -884,10 +884,10 @@ class CCAutomation: CommandBase
 								$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 								if(($existingStorage|Measure-Object).Count -gt 0)
 								{
-									$this.PublishCustomMessage("Found existing AzSK storage account: ["+ $existingStorage.ResourceName +"]")
+									$this.PublishCustomMessage("Found existing AzSK storage account: ["+ $existingStorage.Name +"]")
 									#make storage compliant to azsk
-									$this.ResolveStorageCompliance($existingStorage.ResourceName,$existingStorage.ResourceId,$this.AutomationAccount.CoreResourceGroup,$this.CAScanOutputLogsContainerName)
-									$out.StorageAccountName = $existingStorage.ResourceName;
+									$this.ResolveStorageCompliance($existingStorage.Name,$existingStorage.ResourceId,$this.AutomationAccount.CoreResourceGroup,$this.CAScanOutputLogsContainerName)
+									$out.StorageAccountName = $existingStorage.Name;
 								}
 								else
 								{
@@ -2368,8 +2368,8 @@ class CCAutomation: CommandBase
 
 		if(($existingStorage | Measure-Object).Count -gt 0)
 		{
-			$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $existingStorage.ResourceGroupName -Name $existingStorage.ResourceName 
-			$storageContext = New-AzureStorageContext -StorageAccountName $existingStorage.ResourceName -StorageAccountKey $keys[0].Value -Protocol Https
+			$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $existingStorage.ResourceGroupName -Name $existingStorage.Name 
+			$storageContext = New-AzureStorageContext -StorageAccountName $existingStorage.Name -StorageAccountKey $keys[0].Value -Protocol Https
 			$existingContainer = Get-AzureStorageContainer -Name $this.CAScanOutputLogsContainerName -Context $storageContext -ErrorAction SilentlyContinue
 						
 			if($existingContainer)
@@ -2386,7 +2386,7 @@ class CCAutomation: CommandBase
 				if(!$Force)
 				{
 					#user confirmation before deleting container
-					$storageConfirmMsg = "Are you sure you want to delete '$($this.CAScanOutputLogsContainerName)' container in storage account '$($existingStorage.ResourceName)' which contains security scan logs/reports ?"
+					$storageConfirmMsg = "Are you sure you want to delete '$($this.CAScanOutputLogsContainerName)' container in storage account '$($existingStorage.Name)' which contains security scan logs/reports ?"
 					$result = $host.ui.PromptForChoice($title, $storageConfirmMsg, $options, 1)
 				}
 				if($result -eq 0)
@@ -2396,21 +2396,21 @@ class CCAutomation: CommandBase
 					if((Get-AzureStorageContainer -Name $this.CAScanOutputLogsContainerName -Context $storageContext -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
 					{
 						#deleted successfully in confirmation box
-						$messages += [MessageData]::new("Removed container: [$($this.CAScanOutputLogsContainerName)] from storage account: [$($existingStorage.ResourceName)]")
-						$this.PublishCustomMessage("Removed container: [$($this.CAScanOutputLogsContainerName)] from storage account: [$($existingStorage.ResourceName)]")
+						$messages += [MessageData]::new("Removed container: [$($this.CAScanOutputLogsContainerName)] from storage account: [$($existingStorage.Name)]")
+						$this.PublishCustomMessage("Removed container: [$($this.CAScanOutputLogsContainerName)] from storage account: [$($existingStorage.Name)]")
 					}
 					else
 					{
 						#error occurred
-						$messages += [MessageData]::new("Error occurred while removing container: [$($this.CAScanOutputLogsContainerName)] from storage account: [$($existingStorage.ResourceName)]. Please check your access permissions and try again.")
-						$this.PublishCustomMessage("Error occurred while removing container: [$($this.CAScanOutputLogsContainerName)] from storage account: [$($existingStorage.ResourceName)]. Please check your access permissions and try again.")
+						$messages += [MessageData]::new("Error occurred while removing container: [$($this.CAScanOutputLogsContainerName)] from storage account: [$($existingStorage.Name)]. Please check your access permissions and try again.")
+						$this.PublishCustomMessage("Error occurred while removing container: [$($this.CAScanOutputLogsContainerName)] from storage account: [$($existingStorage.Name)]. Please check your access permissions and try again.")
 					}
 				}
 				#user selected no in confirmation box
 				else
 				{
-					$messages += [MessageData]::new("You have chosen not to delete container: [$($this.CAScanOutputLogsContainerName)] from storage account: [$($existingStorage.ResourceName)]")
-					$this.PublishCustomMessage("You have chosen not to delete container: [$($this.CAScanOutputLogsContainerName)] from storage account: [$($existingStorage.ResourceName)]")
+					$messages += [MessageData]::new("You have chosen not to delete container: [$($this.CAScanOutputLogsContainerName)] from storage account: [$($existingStorage.Name)]")
+					$this.PublishCustomMessage("You have chosen not to delete container: [$($this.CAScanOutputLogsContainerName)] from storage account: [$($existingStorage.Name)]")
 				}
 			}
 		}
@@ -2439,7 +2439,7 @@ class CCAutomation: CommandBase
 	{
         if(($null -ne $this.AutomationAccount) -and ($null -eq $this.AutomationAccount.BasicResourceInstance))
         {
-            $this.AutomationAccount.BasicResourceInstance = Find-AzureRmResource -ResourceGroupNameEquals $this.AutomationAccount.ResourceGroup -ResourceNameEquals $this.AutomationAccount.Name -ErrorAction silentlycontinue
+            $this.AutomationAccount.BasicResourceInstance = Get-AzureRmResource -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -ErrorAction silentlycontinue
         }
 		return $this.AutomationAccount.BasicResourceInstance
 	}
@@ -2454,7 +2454,7 @@ class CCAutomation: CommandBase
 	hidden [bool] IsCAInstallationValid()
 	{
 		$isValid = $true
-		$automationResources = Find-AzureRmresource -ResourceGroupNameEquals $this.AutomationAccount.ResourceGroup -ResourceType "Microsoft.Automation/automationAccounts"
+		$automationResources = Get-AzureRmResource -ResourceGroupName $this.AutomationAccount.ResourceGroup -ResourceType "Microsoft.Automation/automationAccounts"
 		if(($automationResources|Measure-Object).Count)
 		{
 			$isValid = $false
@@ -3313,12 +3313,7 @@ class CCAutomation: CommandBase
 		$storageSku = [Constants]::NewStorageSku
 	    Set-AzureRmStorageAccount -Name $storageName  -ResourceGroupName $resourceGroup -SkuName $storageSku
 	    
-		#Azure_Storage_DP_Encrypt_At_Rest_Blob
-	    Set-AzureRmStorageAccount -Name $storageName  -ResourceGroupName $resourceGroup -EnableEncryptionService 'Blob'
-	    #Azure_Storage_DP_Encrypt_At_Rest_File
-		Set-AzureRmStorageAccount -Name $storageName  -ResourceGroupName $resourceGroup -EnableEncryptionService 'File'
-
-	    #Azure_Storage_Audit_AuthN_Requests
+		#Azure_Storage_Audit_AuthN_Requests
 	    $currentContext = $storageObject.Context
 	    Set-AzureStorageServiceLoggingProperty -ServiceType Blob -LoggingOperations All -Context $currentContext -RetentionDays 365 -PassThru
 	    Set-AzureStorageServiceMetricsProperty -MetricsType Hour -ServiceType Blob -Context $currentContext -MetricsLevel ServiceAndApi -RetentionDays 365 -PassThru
@@ -3523,7 +3518,7 @@ class CCAutomation: CommandBase
 	hidden [PSObject] CheckContinuousAssuranceStorage()
 	{	
 		#Check from name
-		$existingStorage = Find-AzureRmResource -ResourceGroupNameEquals $this.AutomationAccount.CoreResourceGroup -ResourceNameContains "azsk" -ResourceType "Microsoft.Storage/storageAccounts"
+		$existingStorage = Get-AzureRmResource -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name "*azsk*" -ResourceType "Microsoft.Storage/storageAccounts"
 		if(($existingStorage|Measure-Object).Count -gt 1)
 		{
 			throw ([SuppressedException]::new(("Multiple storage accounts found in resource group: [$($this.AutomationAccount.CoreResourceGroup)]. This is not expected. Please contact support team."), [SuppressedExceptionType]::InvalidOperation))

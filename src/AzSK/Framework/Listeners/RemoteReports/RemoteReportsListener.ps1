@@ -44,7 +44,6 @@ class RemoteReportsListener: ListenerBase {
 				$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
 				$resources.SubscriptionId = $invocationContext.BoundParameters["SubscriptionId"]
 				$resources.ResourceGroups = [System.Collections.ArrayList]::new()
-				# $resourcesFlat = Find-AzureRmResource
 				$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
 				# # Not considering nested resources to reduce complexity
 				$filteredResources = [ResourceInventory]::FilteredResources | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }

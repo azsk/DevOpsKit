@@ -148,7 +148,7 @@ class SVTBase: AzSKRoot
 		{
 			if($this.ResourceContext)
 			{
-           		$resource = Get-AzureRmResource -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+           		$resource = Get-AzureRmResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
 
 				if($resource)
 				{

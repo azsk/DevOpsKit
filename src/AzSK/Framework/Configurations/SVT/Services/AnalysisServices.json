@@ -29,7 +29,7 @@
       "Automated": "Yes",
       "MethodName": "CheckAnalysisServicesAdmin",
       "Rationale": "Analysis Service admins have full access on the server to perform any operation. Each additional person in the admin role increases the attack surface for the server. The number of members in these roles should be kept to as low as possible.",
-      "Recommendation": "Minimize the number of Analysis Service admins. Run command Set-AzureRmAnalysisServicesServer -Name '{AnalysisServicesServerName}' -ResourceGroupName '{ResourceGroupName}' -Administrator '{Administrator}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.analysisservices/set-azurermanalysisservicesserver?view=azurermps-3.8.0",
+      "Recommendation": "Minimize the number of Analysis Service admins. Run command Set-AzureRmAnalysisServicesServer -Name '{AnalysisServicesServerName}' -ResourceGroupName '{ResourceGroupName}' -Administrator '{Administrator}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.analysisservices/set-azurermanalysisservicesserver",
       "Tags": [
         "SDL",
         "Best Practice",
