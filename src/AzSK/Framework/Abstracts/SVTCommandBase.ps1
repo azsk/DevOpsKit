@@ -249,7 +249,7 @@ class SVTCommandBase: CommandBase {
             $olderRG = Get-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -ErrorAction SilentlyContinue
             if($null -ne $olderRG)
             {
-                $resources = Find-AzureRmResource -ResourceGroupNameEquals $([OldConstants]::AzSDKRGName)
+                $resources = Get-AzureRmResource -ResourceGroupName $([OldConstants]::AzSDKRGName)
                 try {
                     $azsdkRGScope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourceGroups/$([OldConstants]::AzSDKRGName)"
                     $resourceLocks = @();
@@ -263,7 +263,7 @@ class SVTCommandBase: CommandBase {
 
                     if(($resources | Measure-Object).Count -gt 0)
                     {
-                        $otherResources = $resources | Where-Object { -not ($_.ResourceName -like "$([OldConstants]::StorageAccountPreName)*")} 
+                        $otherResources = $resources | Where-Object { -not ($_.Name -like "$([OldConstants]::StorageAccountPreName)*")} 
                         if(($otherResources | Measure-Object).Count -gt 0)
                         {
                             Write-Host "WARNING: Found non DevOps Kit resources under older RG [$([OldConstants]::AzSDKRGName)] as shown below:" -ForegroundColor Yellow
