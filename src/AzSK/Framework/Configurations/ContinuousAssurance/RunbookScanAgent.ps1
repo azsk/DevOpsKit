@@ -145,7 +145,7 @@ function RunAzSKScan() {
 
 				#Let us switch context to the target subscription.
 				$subId = $candidateSubToScan.SubscriptionId;
-				Select-AzureRmSubscription -SubscriptionId $subId | Out-Null
+				Set-AzureRmContext -SubscriptionId $subId | Out-Null
 					
 				Write-Output ("SA: Scan status details:")
 				Write-Output ("SA: Subscription id: [" + $subId + "]")
@@ -176,7 +176,7 @@ function RunAzSKScan() {
 		}			
 		finally{
 			#Always return back to central subscription context.
-			Select-AzureRmSubscription -SubscriptionId $RunAsConnection.SubscriptionID | Out-Null
+			Set-AzureRmContext -SubscriptionId $RunAsConnection.SubscriptionID | Out-Null
 		}
 	}#IsCentralMode
 	else
@@ -222,7 +222,7 @@ function RunAzSKScanForASub
 
     #-------------------------------------Resources Scan------------------------------------------------------------------
 
-	Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
+	
     $serviceScanTimer = [System.Diagnostics.Stopwatch]::StartNew();
     PublishEvent -EventName "CA Scan Services Started"
 
@@ -234,6 +234,7 @@ function RunAzSKScanForASub
 	}
 	elseif($null -eq $WebHookDataforResourceCreation)
 	{
+		Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
 		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
 	}
    
@@ -684,7 +685,7 @@ try {
 	$Global:IsCentralMode = $false;
 
 	$Global:subsToScan = @();
-    Select-AzureRmSubscription -SubscriptionId $SubscriptionID;
+    Set-AzureRmContext -SubscriptionId $SubscriptionID;
 	
 	#Another job is already running
 	if($Global:FoundExistingJob)
@@ -712,26 +713,27 @@ try {
 		
 	#Scan and save results to storage
     RunAzSKScan
-
-	if ($isAzSKAvailable) {
+	if($null -eq $WebHookDataforResourceCreation)
+	{
+		if ($isAzSKAvailable) {
 		#Remove helper schedule as AzSK module is available
 		Write-Output("SA: Disabling helper schedule...")
 		DisableHelperSchedules	
-    }
-   
-    PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
+		}
 
-    #Call UpdateAlertMonitoring to setup or Remove Alert Monitoring Runbook
-	try
-	{	
-	 	UpdateAlertMonitoring -DisableAlertRunbook $DisableAlertRunbook -AlertRunBookFullName $AlertRunbookName -SubscriptionID $SubscriptionID -ResourceGroup $StorageAccountRG 
+		#Call UpdateAlertMonitoring to setup or Remove Alert Monitoring Runbook
+		try
+		{	
+	 		UpdateAlertMonitoring -DisableAlertRunbook $DisableAlertRunbook -AlertRunBookFullName $AlertRunbookName -SubscriptionID $SubscriptionID -ResourceGroup $StorageAccountRG 
+		}
+		catch
+		{
+			  PublishEvent -EventName "Alert Monitoring Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) }
+			  Write-Output("SA: (Non-fatal) Error while updating Alert Monitoring setup...")
+		}
 	}
-	catch
-	{
-		  PublishEvent -EventName "Alert Monitoring Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) }
-		  Write-Output("SA: (Non-fatal) Error while updating Alert Monitoring setup...")
-	}
-
+	
+	PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
 	Write-Output("SA: Scan agent completed...")
 
 }

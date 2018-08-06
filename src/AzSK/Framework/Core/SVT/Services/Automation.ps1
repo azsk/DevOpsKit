@@ -95,14 +95,30 @@ class Automation: SVTBase
     {   
 		$resource = Get-AzureRmResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
 		$resourceId = $resource.ResourceId
-		$diaSettings = Get-AzureRmDiagnosticSetting -ResourceId $resourceId -ErrorAction Stop
-		if((Get-Member -InputObject $diaSettings -Name WorkspaceId -MemberType Properties) -and $null -ne $diaSettings.WorkspaceId)
+		$diaSettings = $null
+		try 
+		{
+			$diaSettings = Get-AzureRmDiagnosticSetting -ResourceId $resourceId -ErrorAction Stop -WarningAction SilentlyContinue
+		}
+		catch
+		{
+			if((Get-Member -InputObject ($_.Exception) -MemberType Properties -Name Response) -and ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed, "Log Analytics(OMS) is not configured with this Automation account.")
+				return $controlResult
+			}
+			else
+			{
+				$this.PublishException($_);
+			}
+		}
+		if($null -ne $diaSettings -and (Get-Member -InputObject $diaSettings -Name WorkspaceId -MemberType Properties) -and $null -ne $diaSettings.WorkspaceId)
 		{
 			$controlResult.AddMessage([VerificationResult]::Passed, "Log Analytics(OMS) is configured with this Automation account. OMS Workspace Id is given below.", $diaSettings.WorkspaceId)
 		}
 		else
 		{
-			$controlResult.AddMessage([VerificationResult]::Failed, "Log Analytics(OMS) is not configured with this Automation account")
+			$controlResult.AddMessage([VerificationResult]::Failed, "Log Analytics(OMS) is not configured with this Automation account.")
 		}
 		return $controlResult;
     }

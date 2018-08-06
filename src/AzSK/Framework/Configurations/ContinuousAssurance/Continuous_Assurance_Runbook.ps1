@@ -223,21 +223,31 @@ try
 		
 		$appId = $RunAsConnection.ApplicationId 
 		Write-Output ("RB: Logging in to Azure for appId: [$appId]")
-		if($Null -ne (Get-Command -Name Connect-AzureRmAccount -ErrorAction SilentlyContinue))
+		$loginCmdlets = Get-Command -Noun "AzureRmAccount" -ErrorAction SilentlyContinue
+		if($Null -ne $loginCmdlets)
 		{
-			Connect-AzureRmAccount `
-			-ServicePrincipal `
-			-TenantId $RunAsConnection.TenantId `
-			-ApplicationId $RunAsConnection.ApplicationId `
-			-CertificateThumbprint $RunAsConnection.CertificateThumbprint | Out-Null
-		}
-		elseif ($Null -ne (Get-Command -Name Add-AzureRmAccount -ErrorAction SilentlyContinue)) 
-		{
-			Add-AzureRmAccount `
-			-ServicePrincipal `
-			-TenantId $RunAsConnection.TenantId `
-			-ApplicationId $RunAsConnection.ApplicationId `
-			-CertificateThumbprint $RunAsConnection.CertificateThumbprint | Out-Null
+			#AzureRm.profile version = 5.x.x
+			if($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Connect-AzureRmAccount"}))
+			{
+				Connect-AzureRmAccount `
+				-ServicePrincipal `
+				-TenantId $RunAsConnection.TenantId `
+				-ApplicationId $RunAsConnection.ApplicationId `
+				-CertificateThumbprint $RunAsConnection.CertificateThumbprint | Out-Null
+			}
+			#AzureRm.profile version = 4.x.x
+			elseif ($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Add-AzureRmAccount"})) 
+			{
+				Add-AzureRmAccount `
+				-ServicePrincipal `
+				-TenantId $RunAsConnection.TenantId `
+				-ApplicationId $RunAsConnection.ApplicationId `
+				-CertificateThumbprint $RunAsConnection.CertificateThumbprint | Out-Null
+			}
+			else
+			{
+				throw "RB: Failed to login to Azure. Check if AzureRm.profile module is present."
+			}
 		}
 		else
 		{
