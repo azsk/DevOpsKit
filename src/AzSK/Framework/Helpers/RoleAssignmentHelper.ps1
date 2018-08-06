@@ -143,25 +143,34 @@ class RoleAssignmentHelper
 		$webResponse = [WebRequestHelper]::InvokeGetWebRequest($roleAssignmentUri);
 
 		[PSRoleAssignment[]] $roleAssignments = @();
-		$webResponse | 
-		ForEach-Object {
-			$roleDefinitionId = $_.properties.roleDefinitionId.Substring($_.properties.roleDefinitionId.LastIndexOf("/") + 1);
-			$roleDefinitionName = "";
+        $roleDefnMapping = @{}
+        if(($webResponse | Measure-Object).Count -gt 0)
+        {
+			#get role definition details only for unique roles
+            $webResponse.properties | Select-Object roleDefinitionId -Unique | ForEach-Object{
+			    $roleDefinitionId = $_.roleDefinitionId.Substring($_.roleDefinitionId.LastIndexOf("/") + 1);
+			    $roleDefinitionName = "";
 			
-			$roleDefinition = (Get-AzureRmRoleDefinition -Id $roleDefinitionId -ErrorAction SilentlyContinue) | Select-Object -First 1
-			if($roleDefinition) 
-			{ 
-				$roleDefinitionName = $roleDefinition.Name;
-			};
-			
-			$roleAssignments += [PSRoleAssignment]@{
-				RoleAssignmentId = $_.id;
-				Scope = $_.properties.scope;
-				RoleDefinitionName = $roleDefinitionName;
-				RoleDefinitionId = $roleDefinitionId;	
-				ObjectId = $_.properties.principalId;
-			};
-		}
+			    $roleDefinition = (Get-AzureRmRoleDefinition -Id $roleDefinitionId -ErrorAction SilentlyContinue) | Select-Object -First 1
+			    if($roleDefinition) 
+			    { 
+				    $roleDefinitionName = $roleDefinition.Name;
+			    };
+			    $roleDefnMapping.Add($roleDefinitionId,$roleDefinitionName) 
+			}
+			#assign role name(roleDefinitionName) to each role assignment 
+		    $webResponse | ForEach-Object{
+			    $roleDefinitionId = $_.properties.roleDefinitionId.Substring($_.properties.roleDefinitionId.LastIndexOf("/") + 1);
+			    $roleAssignments += [PSRoleAssignment]@{
+				    RoleAssignmentId = $_.id;
+				    Scope = $_.properties.scope;
+				    RoleDefinitionName = $roleDefnMapping[$roleDefinitionId];
+				    RoleDefinitionId = $roleDefinitionId;	
+				    ObjectId = $_.properties.principalId;
+			    };
+		    }
+        }
+        
 		
 		if($roleAssignments.Count -gt 0)
 		{
