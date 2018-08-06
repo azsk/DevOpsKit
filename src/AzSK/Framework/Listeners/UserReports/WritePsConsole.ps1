@@ -479,23 +479,31 @@ class WritePsConsole: FileOutputBase
         {
             $aliasName = $aliasName.ShortName 
             $aliasName = $aliasName
-            $paramlist = @()
-            $this.InvocationContext.BoundParameters.Keys | % {
-                $key = $this.InvocationContext.MyCommand.Parameters.$_.Aliases | Where {$_.Length -lt 5}
-                $key = $key | sort length -Descending | select -Last 1
-                $val = $this.InvocationContext.BoundParameters[$_]
+            
+            #Get List of parameters used with short alias
+			$paramlist = @()
+			$paramlist = $this.GetParamList()
+            
+            #Get command with short alias
+            $cmID = $this.GetShortCommand($aliasName,$paramlist);
 
-                $myObject = New-Object System.Object
+            $this.WriteMessage("Method Name: $methodName ($aliasName)`r`nInput Parameters: $(($paramlist | Out-String).TrimEnd()) `r`n`nYou can also use: $cmID `r`n" + [Constants]::DoubleDashLine , [MessageType]::Info);
+        }
+        else
+        {
+            $this.WriteMessage("Method Name: $methodName `r`nInput Parameters: $(($this.InvocationContext.BoundParameters | Out-String).TrimEnd()) `r`n" + [Constants]::DoubleDashLine , [MessageType]::Info);                           
+        }
+		
 
-                $myObject | Add-Member -type NoteProperty -name Name -Value $_
-                $myObject | Add-Member -type NoteProperty -name Alias -Value $key
-                $myObject | Add-Member -type NoteProperty -name Value -Value $val
+		$this.WriteMessage([ConfigurationManager]::GetAzSKConfigData().PolicyMessage,[MessageType]::Warning)
+		
+	}
 
-                $paramlist += $myObject
-            }
-
-            $aliasshort = $aliasName.ToLower()
+	hidden [string] GetShortCommand($aliasName,$paramlist)
+	{
+		$aliasshort = $aliasName.ToLower()
             $cmID = "$aliasshort "
+            #Looping on parameters and adding them to the short alias with key and value and if no alias found adding it as it is
             foreach($item in $paramlist)
             {
                 $ky = $item.Alias
@@ -520,17 +528,27 @@ class WritePsConsole: FileOutputBase
                 }
                 
             }
+		return $cmID;
+	}
 
-            $this.WriteMessage("Method Name: $methodName ($aliasName)`r`nInput Parameters: $(($paramlist | Out-String).TrimEnd()) `r`n`nYou can also use: $cmID `r`n" + [Constants]::DoubleDashLine , [MessageType]::Info);
-        }
-        else
-        {
-            $this.WriteMessage("Method Name: $methodName `r`nInput Parameters: $(($this.InvocationContext.BoundParameters | Out-String).TrimEnd()) `r`n" + [Constants]::DoubleDashLine , [MessageType]::Info);                           
-        }
-		
+	hidden [psobject] GetParamList()
+	{
+		$paramlist = @()
+            #Looping on parameters and creating list of smallest alias and creating parameter detail object
+            $this.InvocationContext.BoundParameters.Keys | % {
+                $key = $this.InvocationContext.MyCommand.Parameters.$_.Aliases | Where {$_.Length -lt 5}
+                $key = $key | sort length -Descending | select -Last 1
+                $val = $this.InvocationContext.BoundParameters[$_]
 
-		$this.WriteMessage([ConfigurationManager]::GetAzSKConfigData().PolicyMessage,[MessageType]::Warning)
-		
+                $myObject = New-Object System.Object
+
+                $myObject | Add-Member -type NoteProperty -name Name -Value $_
+                $myObject | Add-Member -type NoteProperty -name Alias -Value $key
+                $myObject | Add-Member -type NoteProperty -name Value -Value $val
+
+                $paramlist += $myObject
+            }
+		return $paramlist;
 	}
 
 }
