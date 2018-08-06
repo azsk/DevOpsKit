@@ -1576,7 +1576,7 @@ class CCAutomation: CommandBase
 						{
 							$subRBACoutput = "" | Select-Object TargetSubscriptionId, HasSubscriptionCARBACAccess, HasRGCARBACAccess , HasRequiredAccessPermissions 
 							$subRBACoutput.TargetSubscriptionId = $_;
-							_iptionId $subRBACoutput.TargetSubscriptionId | Out-Null
+							Set-AzureRmContext -SubscriptionId $subRBACoutput.TargetSubscriptionId | Out-Null
 							$subRBACoutput.HasSubscriptionCARBACAccess = $this.CheckServicePrincipalSubscriptionAccess($this.CAAADApplicationID);
 							$subRBACoutput.HasRGCARBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID);
 							$subRBACoutput.HasRequiredAccessPermissions = $true;
