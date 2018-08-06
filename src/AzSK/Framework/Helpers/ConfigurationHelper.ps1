@@ -7,13 +7,20 @@ class ConfigurationHelper {
 	hidden static [PSObject] $ServerConfigMetadata = $null
 	hidden static [bool] $OfflineMode = $false;
 	hidden static [string] $ConfigVersion =""
+	hidden static [bool] $LocalPolicyEnabled= $false
+	hidden static [string] $ConfigPath = [string]::Empty
 	hidden static [PSObject] LoadOfflineConfigFile([string] $fileName)
 	{
 		return [ConfigurationHelper]::LoadOfflineConfigFile($fileName, $true);
 	}
-    hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson) {
-        #Load file from AzSK App folder
-        $rootConfigPath = [Constants]::AzSKAppFolderPath + "\" ;
+	hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson) {
+		$rootConfigPath = [Constants]::AzSKAppFolderPath + "\" ;
+		return [ConfigurationHelper]::LoadOfflineConfigFile($fileName, $true,$rootConfigPath);
+	}
+    hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson, $path) {
+		#Load file from AzSK App folder
+		$rootConfigPath = $path ;	
+        
 		$extension = [System.IO.Path]::GetExtension($fileName);
 
 		$filePath = $null
@@ -75,8 +82,8 @@ class ConfigurationHelper {
 			{
 				try 
 				{
-					if([String]::IsNullOrWhiteSpace([ConfigurationHelper]::ConfigVersion))
-					{							
+					if([String]::IsNullOrWhiteSpace([ConfigurationHelper]::ConfigVersion) -and -not [ConfigurationHelper]::LocalPolicyEnabled)
+					{
 						try
 						{
 							$Version = [System.Version] ($global:ExecutionContext.SessionState.Module.Version);
@@ -85,17 +92,34 @@ class ConfigurationHelper {
 						}
 						catch
 						{
-							$Version = ([ConfigurationHelper]::LoadOfflineConfigFile("AzSK.json")).ConfigSchemaBaseVersion;
-							$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $policyFileName, $enableAADAuthForOnlinePolicyStore);
-							[ConfigurationHelper]::ConfigVersion = $Version;
+							try{
+								$Version = ([ConfigurationHelper]::LoadOfflineConfigFile("AzSK.json")).ConfigSchemaBaseVersion;
+								$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $policyFileName, $enableAADAuthForOnlinePolicyStore);
+								[ConfigurationHelper]::ConfigVersion = $Version;
+							}
+							catch{
+								if(Test-Path $onlineStoreUri)
+								{
+									[EventBase]::PublishGenericCustomMessage("Running Org-Policy from local policy store location: [$onlineStoreUri]", [MessageType]::Warning);
+									$serverFileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName, $true, $onlineStoreUri)
+									[ConfigurationHelper]::LocalPolicyEnabled = $true
+								}
+								else {
+									throw $_
+								}
+							}
 						}
+					}
+					elseif([ConfigurationHelper]::LocalPolicyEnabled)
+					{
+						$serverFileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName, $true, $onlineStoreUri)
 					}
 					else
 					{
 						$Version = [ConfigurationHelper]::ConfigVersion ;
 						$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $policyFileName, $enableAADAuthForOnlinePolicyStore);
 					}
-						
+
 					#Completely override offline config if Server Override flag is enabled
 					if([ConfigurationHelper]::IsOverrideOfflineEnabled($policyFileName))
 					{
@@ -104,7 +128,7 @@ class ConfigurationHelper {
 					else
 					{
 						$fileContent = [Helpers]::MergeObjects($fileContent,$serverFileContent)	
-					}						
+					}
 				}
 				catch 
 				{
