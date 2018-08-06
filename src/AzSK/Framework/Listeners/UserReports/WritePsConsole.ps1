@@ -478,7 +478,6 @@ class WritePsConsole: FileOutputBase
         if($aliasName)
         {
             $aliasName = $aliasName.ShortName 
-            $aliasName = $aliasName
             
             #Get List of parameters used with short alias
 			$paramlist = @()
