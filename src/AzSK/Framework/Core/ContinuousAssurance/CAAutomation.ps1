@@ -528,7 +528,7 @@ class CCAutomation: CommandBase
 			#endregion
 		
 			#region :Remove existing and create new AzureRunAsConnection if AzureADAppName param is passed else fix RunAsAccount if issue is found
-			
+			$caaccounterror = 0;
 			if(![string]::IsNullOrWhiteSpace($this.AutomationAccount.AzureADAppName))
 			{
 				$this.NewCCAzureRunAsAccount()
@@ -556,6 +556,7 @@ class CCAutomation: CommandBase
 						{
 							$this.PublishCustomMessage("WARNING:  Could not renew certificate for the currently configured SPN (App Id: $($runAsConnection.FieldDefinitionValues.ApplicationId)). You may not have 'Owner' permission on it. `r`n" `
                             + "You can either get the owner of the above SPN to run this command or run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -NewRuntimeAccount'.",[MessageType]::Warning)
+							$caaccounterror = 1;
 						}
 					}
 					else
@@ -580,6 +581,7 @@ class CCAutomation: CommandBase
 						{
 							$this.PublishCustomMessage("CA Certificate expiry date: [$($runAsCertificate.ExpiryTime.ToString("yyyy-MM-dd"))]")
 							$this.PublishCustomMessage("WARNING: CA Certificate has expired. To renew please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -RenewCertificate' after completion of the current command.",[MessageType]::Warning)
+							$caaccounterror = 1
 						}
 						elseif($expiryDuration.TotalDays -ge 0 -and $expiryDuration.TotalDays -le 30)
 						{
@@ -590,6 +592,7 @@ class CCAutomation: CommandBase
 					else
 					{
 						$this.PublishCustomMessage("WARNING: CA certificate not found. To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -RenewCertificate' after completion of current command execution.",[MessageType]::Warning)
+						$caaccounterror = 1
 					}
 				}
 				if($FixRuntimeAccount)
@@ -628,6 +631,10 @@ class CCAutomation: CommandBase
 						$this.NewCCAzureRunAsAccount()
 					}
 				}
+			}
+			if($caaccounterror -eq 1)
+			{
+				throw ([SuppressedException]::new(("Failed to update CA account. Please rerun the '$($this.updateCommandName)' command with above mentioned parameters."), [SuppressedExceptionType]::Generic))
 			}
 			#endregion  
 		
@@ -695,35 +702,41 @@ class CCAutomation: CommandBase
 			#endregion
 
 			#region :update user configurable variables (OMS details and App RGs) which are present in params
-            $OMSSettingsExists = $null -ne $this.UserConfig -and $null -ne $this.UserConfig.OMSCredential -and ![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSWorkspaceId) -and  ![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSSharedKey)
-            $AltOMSSettingsExists = $null -ne $this.UserConfig -and $null -ne $this.UserConfig.OMSCredential -and ![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSWorkspaceId) -and ![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSSharedKey)
-            
-            if($OMSSettingsExists -or $AltOMSSettingsExists)
-            {
-			    if($OMSSettingsExists)
-			    {
-			    	$varOmsWSID = [Variable]@{
-			    		Name = "OMSWorkspaceId";
-			    		Value = $this.UserConfig.OMSCredential.OMSWorkspaceId;
-			    		IsEncrypted = $false;
-			    		Description ="OMS Workspace Id"
-			    	   }
-			    	$this.UpdateVariable($varOmsWSID)
-			    	$this.PublishCustomMessage("Updating variable: ["+$varOmsWSID.Name+"]")
+            if($null -ne $this.UserConfig -and $null -ne $this.UserConfig.OMSCredential)
+			{
+                #OMSSettings
+                if(![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSWorkspaceId) -xor ![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSSharedKey))
+				{
+				    $this.PublishCustomMessage("Warning: OMS settings are either incomplete or invalid. To configure OMS in CA, please rerun this command with 'OMSWorkspaceId' and 'OMSSharedKey' parameters.",[MessageType]::Warning)
+				}
+				elseif(![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSWorkspaceId) -and ![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSSharedKey))
+				{
+				    $varOmsWSID = [Variable]@{
+			    	    Name = "OMSWorkspaceId";
+			    	    Value = $this.UserConfig.OMSCredential.OMSWorkspaceId;
+			    	    IsEncrypted = $false;
+			    	    Description ="OMS Workspace Id"
+			        }
+			        $this.UpdateVariable($varOmsWSID)
+			        $this.PublishCustomMessage("Updating variable: ["+$varOmsWSID.Name+"]")
 
-                       $varOMSSharedKey = [Variable]@{
-			    	Name = "OMSSharedKey";
-			    	Value = $this.UserConfig.OMSCredential.OMSSharedKey;
-			    	IsEncrypted = $false;
-			    	Description ="OMS Workspace Shared Key"
-			    	}
-			    	$this.UpdateVariable($varOMSSharedKey)
-			    	$this.PublishCustomMessage("Updating variable: ["+$varOMSSharedKey.Name+"]")
-			    }
-			
-		        #AltOMSSettings
-		        if($AltOMSSettingsExists)
-		        {
+                    $varOMSSharedKey = [Variable]@{
+			             Name = "OMSSharedKey";
+			             Value = $this.UserConfig.OMSCredential.OMSSharedKey;
+			             IsEncrypted = $false;
+			             Description ="OMS Workspace Shared Key"
+			        }
+			        $this.UpdateVariable($varOMSSharedKey)
+			        $this.PublishCustomMessage("Updating variable: ["+$varOMSSharedKey.Name+"]")
+				}
+				
+				#AltOMSSettings
+				if(![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSWorkspaceId) -xor ![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSSharedKey))
+                {
+                    $this.PublishCustomMessage("Warning: Alt OMS settings are either incomplete or invalid. To configure Alt OMS in CA, please rerun this command with 'AltOMSWorkspaceId' and 'AltOMSSharedKey' parameters.",[MessageType]::Warning)
+                }
+                elseif(![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSWorkspaceId) -and ![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSSharedKey))
+                {
 		        	$varAltOMSWSID = [Variable]@{
 		        		Name = "AltOMSWorkspaceId";
 		        		Value = $this.UserConfig.AltOMSCredential.OMSWorkspaceId;
@@ -740,12 +753,8 @@ class CCAutomation: CommandBase
 		        		Description ="Alternate OMS Workspace Shared Key"
 		        	}
 		        	$this.UpdateVariable($varAltOMSWSKey)
-		        	$this.PublishCustomMessage("Updating variable: ["+$varAltOMSWSKey.Name+"]")			
-		        }
-            }
-            else
-            {
-                $this.PublishCustomMessage("Warning: OMS settings are either incomplete or invalid. To configure OMS in CA, please rerun this command with an OMSWorkspaceId and OMSSharedKey.",[MessageType]::Warning)
+		        	$this.PublishCustomMessage("Updating variable: ["+$varAltOMSWSKey.Name+"]")
+                }
             }
             
 			#Webhook settings
