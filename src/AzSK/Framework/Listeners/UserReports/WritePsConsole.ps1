@@ -507,25 +507,20 @@ class WritePsConsole: FileOutputBase
             {
                 $ky = $item.Alias
                 $vl = $item.Value
+
+				if($vl -eq $true)
+                {
+                    $vl = ""
+                }
                 if($ky)
                 {
-                    if($vl -eq $true)
-                    {
-                        $vl = ""
-                    }
-                
                     $cmID += "-$ky $vl "
                 }
                 else
                 {
-                    if($vl -eq $true)
-                    {
-                        $vl = ""
-                    }
                     $ky = $item.Name
                     $cmID += "-$ky $vl "
                 }
-                
             }
 		return $cmID;
 	}
