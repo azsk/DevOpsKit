@@ -12,6 +12,8 @@ class SVTBase: AzSKRoot
 	hidden [ControlState[]] $DirtyResourceStates;
 
     hidden [ControlItem[]] $ApplicableControls = $null;
+	hidden [ControlItem[]] $FeatureApplicableControls = $null;
+	[string[]] $ChildResourceNames = $null;
 
 	[string[]] $FilterTags = @();
 	[string[]] $ExcludeTags = @();
@@ -277,8 +279,8 @@ class SVTBase: AzSKRoot
     hidden [void] EvaluationStarted()
     {
         $this.PublishEvent([SVTEvent]::EvaluationStarted, $this.CreateSVTEventContextObject());
-    }
-
+	}
+	
     hidden [void] EvaluationError([System.Management.Automation.ErrorRecord] $exception)
     {
         $this.PublishEvent([SVTEvent]::EvaluationError, $this.CreateErrorEventContext($exception));
@@ -302,7 +304,8 @@ class SVTBase: AzSKRoot
 			}
 			else
 			{
-				$this.EvaluationStarted();				
+				$this.PostFeatureControlTelemetry();			
+				$this.EvaluationStarted();	
 				$resourceSecurityResult += $this.GetAutomatedSecurityStatus();
 				$resourceSecurityResult += $this.GetManualSecurityStatus();			
 				$this.PostEvaluationCompleted($resourceSecurityResult);
@@ -329,6 +332,22 @@ class SVTBase: AzSKRoot
 			}
         }
         return $contexts;
+	}
+
+	[void] PostFeatureControlTelemetry()
+	{
+		#todo add check for latest module version
+		if(($this.FeatureApplicableControls | Measure-Object).Count -gt 0)
+		{
+			[CustomData] $customData = [CustomData]::new();
+			$customData.Name = "FeatureControlTelemetry";
+			$ResourceObject = "" | Select ResourceContext, Controls, ChildResourceNames;
+			$ResourceObject.ResourceContext = $this.ResourceContext;
+			$ResourceObject.Controls = $this.FeatureApplicableControls;
+			$ResourceObject.ChildResourceNames = $this.ChildResourceNames;
+			$customData.Value = $ResourceObject;
+			$this.PublishCustomData($customData);		
+		}
 	}
 
 	[SVTEventContext[]] FetchStateOfAllControls()
@@ -360,16 +379,20 @@ class SVTBase: AzSKRoot
 		if($null -eq $this.ApplicableControls)
 		{
 			$this.ApplicableControls = @();
+			$this.FeatureApplicableControls = @();
 			$filterControlsById = @();
 			$filteredControls = @();
 
+			#Apply service filters based on default set of controls
+			$this.FeatureApplicableControls += $this.ApplyServiceFilters($this.SVTConfig.Controls);
+
 			if($this.ControlIds.Count -ne 0)
 			{
-				$filterControlsById += $this.SVTConfig.Controls | Where-Object { $this.ControlIds -Contains $_.ControlId };
+				$filterControlsById += $this.FeatureApplicableControls | Where-Object { $this.ControlIds -Contains $_.ControlId };
 			}
 			else
 			{
-				$filterControlsById += $this.SVTConfig.Controls
+				$filterControlsById += $this.FeatureApplicableControls
 			}
 
 			if(($this.FilterTags | Measure-Object).Count -ne 0 -or ($this.ExcludeTags | Measure-Object).Count -ne 0)
@@ -408,8 +431,10 @@ class SVTBase: AzSKRoot
 			{
 				$filteredControls += $filterControlsById;
 			}
-
-			$this.ApplicableControls += $this.ApplyServiceFilters($filteredControls);
+			$this.ApplicableControls = $filteredControls;
+			#this filtering has been done as the first step it self;
+			#$this.ApplicableControls += $this.ApplyServiceFilters($filteredControls);
+			
 		}
 		return $this.ApplicableControls;
 	}
