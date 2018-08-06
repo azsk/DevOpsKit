@@ -73,7 +73,7 @@ class SVTCommandBase: CommandBase {
 		#Check if user has permission to read attestation
 		if($null -ne $this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadPermissions -eq 0)
 		{
-			$this.PublishCustomMessage("`nWarning: The current user/login context does not have permission to access DevOps Kit control attestations. Due to this, control scan results may not reflect attestation.`nTo resolve this, request your subscription owner to grant 'Contributor' access on the 'AzSKRG' resource group in the target subscription. ",[MessageType]::Warning);
+            $this.PublishCustomMessage("`nWarning: The current user/login context does not have permission to access DevOps Kit control attestations. Due to this, control scan results may not reflect attestation.`nTo resolve this, request your subscription owner to grant 'Contributor' access on the '$([ConfigurationManager]::GetAzSKConfigData().AzSKRGName)'  resource group in the target subscription. ",[MessageType]::Warning);
 		}
         $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
@@ -192,7 +192,7 @@ class SVTCommandBase: CommandBase {
                 }
                 else {
                     [MessageData] $data = [MessageData]@{
-                        Message     = "You don't have the required permissions to perform control attestation. If you'd like to perform control attestation, please request your subscription owner to grant you 'Contributor' access to the 'AzSKRG' resource group.";
+                        Message     = "You don't have the required permissions to perform control attestation. If you'd like to perform control attestation, please request your subscription owner to grant you 'Contributor' access to the '$([ConfigurationManager]::GetAzSKConfigData().AzSKRGName)' resource group.";
                         MessageType = [MessageType]::Error;
                     };
                     $this.PublishCustomMessage($data)
