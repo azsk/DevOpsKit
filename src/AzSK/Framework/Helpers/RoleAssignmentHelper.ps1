@@ -149,13 +149,13 @@ class RoleAssignmentHelper
 			#get role definition details only for unique roles
             $webResponse.properties | Select-Object roleDefinitionId -Unique | ForEach-Object{
 			    $roleDefinitionId = $_.roleDefinitionId.Substring($_.roleDefinitionId.LastIndexOf("/") + 1);
-			    $roleDefinitionName = "";
+			    $roleDefinitionName = [string]::Empty()
 			
 			    $roleDefinition = (Get-AzureRmRoleDefinition -Id $roleDefinitionId -ErrorAction SilentlyContinue) | Select-Object -First 1
-			    if($roleDefinition) 
+			    if($roleDefinition -and [Helpers]::CheckMember($roleDefinition,"Name")) 
 			    { 
 				    $roleDefinitionName = $roleDefinition.Name;
-			    };
+			    }
 			    $roleDefnMapping.Add($roleDefinitionId,$roleDefinitionName) 
 			}
 			#assign role name(roleDefinitionName) to each role assignment 
