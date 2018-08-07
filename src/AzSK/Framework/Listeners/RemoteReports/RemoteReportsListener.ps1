@@ -110,6 +110,10 @@ class RemoteReportsListener: ListenerBase {
 					$currentInstance.FetchRBACTelemetry($subSVTObject);					
 					[RemoteApiHelper]::PostRBACTelemetry(($subSVTObject.CustomObject.Value));
 				}
+				elseif($CustomObjectData.Name -eq "FeatureControlTelemetry")
+				{					 
+					 [RemoteApiHelper]::PushFeatureControlsTelemetry($CustomObjectData.Value);
+				}
 				#| select -exp Value;
 				
             }
