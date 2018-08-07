@@ -66,7 +66,12 @@ class ConfigurationHelper {
             if ([string]::IsNullOrWhiteSpace($onlineStoreUri)) 
 			{
                 throw [System.ArgumentException] ("The argument 'onlineStoreUri' is null");
-            } 
+			} 
+			
+			if($policyFileName -eq [Constants]::ServerConfigMetadataFileName -and $null -ne [ConfigurationHelper]::ServerConfigMetadata)
+			{
+				return [ConfigurationHelper]::ServerConfigMetadata;
+			}
 			#First load offline OSS Content
 			$fileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName)
 
@@ -296,7 +301,7 @@ class ConfigurationHelper {
 	hidden static [bool] IsPolicyPresentOnServer([string] $fileName, [bool] $useOnlinePolicyStore, [string] $onlineStoreUri, [bool] $enableAADAuthForOnlinePolicyStore)
 	{
 		#Check if Config meta data is null and load the meta data from server
-		If($null -eq [ConfigurationHelper]::ServerConfigMetadata)
+		if($null -eq [ConfigurationHelper]::ServerConfigMetadata)
 		{
 			#if File is meta data file then return true
 			if($fileName -eq [Constants]::ServerConfigMetadataFileName)
@@ -305,7 +310,8 @@ class ConfigurationHelper {
 			}
 			else
 			{				
-				[ConfigurationHelper]::ServerConfigMetadata = [ConfigurationHelper]::LoadServerConfigFile([Constants]::ServerConfigMetadataFileName, $useOnlinePolicyStore, $onlineStoreUri, $enableAADAuthForOnlinePolicyStore);							
+				$filecontent = [ConfigurationHelper]::LoadServerConfigFile([Constants]::ServerConfigMetadataFileName, $useOnlinePolicyStore, $onlineStoreUri, $enableAADAuthForOnlinePolicyStore);							
+				[ConfigurationHelper]::ServerConfigMetadata = $filecontent;
 			}
 		}
 		
