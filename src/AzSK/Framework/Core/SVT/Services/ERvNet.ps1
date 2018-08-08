@@ -326,7 +326,7 @@ class ERvNet : SVTIaasBase
 
 	hidden [ControlResult] CheckOnlyNetworkResourceExist([ControlResult] $controlResult)
     {
-        $resources = [array](Find-AzureRmResource -ResourceGroupName $this.ResourceContext.ResourceGroupName)
+        $resources = [array](Get-AzureRmResource -ResourceGroupName $this.ResourceContext.ResourceGroupName)
 
         if($null -ne $resources)
         {

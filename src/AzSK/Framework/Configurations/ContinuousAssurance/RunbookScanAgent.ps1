@@ -63,17 +63,17 @@ function RunAzSKScan() {
     CheckForSubscriptionsSnapshotData
 	
     #Get the current storagecontext
-    $existingStorage = Find-AzureRmResource -ResourceGroupNameEquals $StorageAccountRG -ResourceNameContains "azsk" -ResourceType "Microsoft.Storage/storageAccounts"
+    $existingStorage = Get-AzureRmResource -ResourceGroupName $StorageAccountRG -Name "*azsk*" -ResourceType "Microsoft.Storage/storageAccounts"
 	if(($existingStorage|Measure-Object).Count -gt 1)
 	{
 		$existingStorage = $existingStorage[0]
-		Write-Output ("SA: Multiple storage accounts found in resource group. Using Storage Account: [$($existingStorage.ResourceName)] for storing logs")
+		Write-Output ("SA: Multiple storage accounts found in resource group. Using Storage Account: [$($existingStorage.Name)] for storing logs")
 	}
-	$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $StorageAccountRG -Name $existingStorage.ResourceName
+	$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $StorageAccountRG -Name $existingStorage.Name
 
 	#The 'centralStorageContext' always represents the parent subscription storage. 
 	#In multi-sub scan this is the central sub. In single sub scan, this is just the storage in that sub.
-	$centralStorageContext = New-AzureStorageContext -StorageAccountName $existingStorage.ResourceName -StorageAccountKey $keys[0].Value -Protocol Https
+	$centralStorageContext = New-AzureStorageContext -StorageAccountName $existingStorage.Name -StorageAccountKey $keys[0].Value -Protocol Https
 	
     if($Global:IsCentralMode)
 	{
@@ -145,7 +145,7 @@ function RunAzSKScan() {
 
 				#Let us switch context to the target subscription.
 				$subId = $candidateSubToScan.SubscriptionId;
-				Select-AzureRmSubscription -SubscriptionId $subId | Out-Null
+				Set-AzureRmContext -SubscriptionId $subId | Out-Null
 					
 				Write-Output ("SA: Scan status details:")
 				Write-Output ("SA: Subscription id: [" + $subId + "]")
@@ -176,7 +176,7 @@ function RunAzSKScan() {
 		}			
 		finally{
 			#Always return back to central subscription context.
-			Select-AzureRmSubscription -SubscriptionId $RunAsConnection.SubscriptionID | Out-Null
+			Set-AzureRmContext -SubscriptionId $RunAsConnection.SubscriptionID | Out-Null
 		}
 	}#IsCentralMode
 	else
@@ -222,7 +222,7 @@ function RunAzSKScanForASub
 
     #-------------------------------------Resources Scan------------------------------------------------------------------
 
-	Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
+	
     $serviceScanTimer = [System.Diagnostics.Stopwatch]::StartNew();
     PublishEvent -EventName "CA Scan Services Started"
 
@@ -234,6 +234,7 @@ function RunAzSKScanForASub
 	}
 	elseif($null -eq $WebHookDataforResourceCreation)
 	{
+		Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
 		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
 	}
    
@@ -261,16 +262,16 @@ function RunAzSKScanForASub
 				Write-Output ("SA: Multi-sub Scan. Storing scan results to child (target) subscription...")
 
 				#save scan results in individual subs 
-                $existingStorage = Find-AzureRmResource -ResourceGroupNameEquals $StorageAccountRG -ResourceNameContains "azsk" -ResourceType "Microsoft.Storage/storageAccounts"
+                $existingStorage = Get-AzureRmResource -ResourceGroupName $StorageAccountRG -Name "*azsk*" -ResourceType "Microsoft.Storage/storageAccounts"
 				if(($existingStorage|Measure-Object).Count -gt 1)
 				{
 					$existingStorage = $existingStorage[0]
-					Write-Output ("SA: Multiple storage accounts found in resource group. Using Storage Account: [$($existingStorage.ResourceName)] for storing logs")
+					Write-Output ("SA: Multiple storage accounts found in resource group. Using Storage Account: [$($existingStorage.Name)] for storing logs")
 				}
 
 				$archiveFilePath = "$parentFolderPath\AutomationLogs_" + $(Get-Date -format "yyyyMMdd_HHmmss") + ".zip"
-				$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $StorageAccountRG -Name $existingStorage.ResourceName
-				$localStorageContext = New-AzureStorageContext -StorageAccountName $existingStorage.ResourceName -StorageAccountKey $keys[0].Value -Protocol Https
+				$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $StorageAccountRG -Name $existingStorage.Name
+				$localStorageContext = New-AzureStorageContext -StorageAccountName $existingStorage.Name -StorageAccountKey $keys[0].Value -Protocol Https
 				try {
 					Get-AzureStorageContainer -Name $CAScanLogsContainerName -Context $localStorageContext -ErrorAction Stop | Out-Null
 				}
@@ -684,7 +685,7 @@ try {
 	$Global:IsCentralMode = $false;
 
 	$Global:subsToScan = @();
-    Select-AzureRmSubscription -SubscriptionId $SubscriptionID;
+    Set-AzureRmContext -SubscriptionId $SubscriptionID;
 	
 	#Another job is already running
 	if($Global:FoundExistingJob)
@@ -712,26 +713,27 @@ try {
 		
 	#Scan and save results to storage
     RunAzSKScan
-
-	if ($isAzSKAvailable) {
+	if($null -eq $WebHookDataforResourceCreation)
+	{
+		if ($isAzSKAvailable) {
 		#Remove helper schedule as AzSK module is available
 		Write-Output("SA: Disabling helper schedule...")
 		DisableHelperSchedules	
-    }
-   
-    PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
+		}
 
-    #Call UpdateAlertMonitoring to setup or Remove Alert Monitoring Runbook
-	try
-	{	
-	 	UpdateAlertMonitoring -DisableAlertRunbook $DisableAlertRunbook -AlertRunBookFullName $AlertRunbookName -SubscriptionID $SubscriptionID -ResourceGroup $StorageAccountRG 
+		#Call UpdateAlertMonitoring to setup or Remove Alert Monitoring Runbook
+		try
+		{	
+	 		UpdateAlertMonitoring -DisableAlertRunbook $DisableAlertRunbook -AlertRunBookFullName $AlertRunbookName -SubscriptionID $SubscriptionID -ResourceGroup $StorageAccountRG 
+		}
+		catch
+		{
+			  PublishEvent -EventName "Alert Monitoring Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) }
+			  Write-Output("SA: (Non-fatal) Error while updating Alert Monitoring setup...")
+		}
 	}
-	catch
-	{
-		  PublishEvent -EventName "Alert Monitoring Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) }
-		  Write-Output("SA: (Non-fatal) Error while updating Alert Monitoring setup...")
-	}
-
+	
+	PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
 	Write-Output("SA: Scan agent completed...")
 
 }

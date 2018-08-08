@@ -24,7 +24,7 @@ class AppService: SVTBase
         if (-not $this.ResourceObject)
 		{
 			# Get App Service details
-            $this.ResourceObject = Get-AzureRmResource -ResourceName $this.ResourceContext.ResourceName  `
+            $this.ResourceObject = Get-AzureRmResource -Name $this.ResourceContext.ResourceName  `
                                         -ResourceType $this.ResourceContext.ResourceType `
                                         -ResourceGroupName $this.ResourceContext.ResourceGroupName
 

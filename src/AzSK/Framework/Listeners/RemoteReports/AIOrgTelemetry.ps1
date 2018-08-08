@@ -128,17 +128,18 @@ class AIOrgTelemetry: ListenerBase {
 		   {
 			   $scanSource = [RemoteReportHelper]::GetScanSource();
 			   if($scanSource -ne [ScanSource]::Runbook) { return; }
-			   $resources= Find-AzureRMResource
+               $SubscriptionId = ([Helpers]::GetCurrentRMContext()).Subscription.Id;
+			   $resources= Get-AzureRmResource
 			   $telemetryEvents = [System.Collections.ArrayList]::new()
 					   foreach($res in $resources){
 						   $resourceProperties = @{
 						   "Name" = $res.Name;
 						   "ResourceId" = $res.ResourceId;
-						   "ResourceName" = $res.ResourceName;
+						   "ResourceName" = $res.Name;
 						   "ResourceType" = $res.ResourceType;
 						   "ResourceGroupName" = $res.ResourceGroupName;
 						   "Location" = $res.Location;
-						   "SubscriptionId" = $res.SubscriptionId;
+						   "SubscriptionId" = $SubscriptionId;
 						   "Tags" = [Helpers]::FetchTagsString($res.Tags)
 					   }
 					   $telemetryEvent = "" | Select-Object Name, Properties, Metrics

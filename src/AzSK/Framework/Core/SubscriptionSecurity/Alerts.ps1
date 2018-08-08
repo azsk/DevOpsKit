@@ -759,7 +759,7 @@ class Alerts: CommandBase
 		$existingRG = Get-AzureRmResourceGroup -Name $rgName -ErrorAction SilentlyContinue
 		if($existingRG)
 		{
-			$AGRSource = Find-AzureRmResource -ResourceType  microsoft.insights/actiongroups -ResourceGroupName $rgName -ResourceNameEquals $actionGroupName
+			$AGRSource = Get-AzureRmResource -ResourceType  microsoft.insights/actiongroups -ResourceGroupName $rgName -Name $actionGroupName
 			return $AGRSource;
 		}
 		else
@@ -886,7 +886,7 @@ class Alerts: CommandBase
 				$RunbookNamebyType = $this.Alert_ResourceCreation_Runbook
 			}
 		     $resourceName=$this.AutomationAccountName+"/"+$RunbookNamebyType
-			 $AlertRunBook = Find-AzureRmResource -ResourceType  "Microsoft.Automation/automationAccounts/runbooks" -ResourceGroupName $this.ResourceGroup -ResourceNameEquals $resourceName
+			 $AlertRunBook = Get-AzureRmResource -ResourceType  "Microsoft.Automation/automationAccounts/runbooks" -ResourceGroupName $this.ResourceGroup -Name $resourceName
 			if($AlertRunBook )
 			{
 				return $AlertRunBook.ResourceId

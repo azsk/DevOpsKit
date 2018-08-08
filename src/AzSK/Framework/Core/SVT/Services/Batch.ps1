@@ -23,13 +23,13 @@ class Batch: SVTBase
 					if([Helpers]::CheckMember($storageAccount,"Properties.encryption.services.blob.enabled") -and $storageAccount.Properties.encryption.services.blob.enabled -eq $true)
                     {
                         $controlResult.AddMessage([VerificationResult]::Passed,
-                                "Storage Service Encryption is enabled on blob service of Storage Account [$($storageAccount.ResourceName)] associated with Batch account",
+                                "Storage Service Encryption is enabled on blob service of Storage Account [$($storageAccount.Name)] associated with Batch account",
                                 $storageAccount.Properties.encryption.services); 
                     }
                     else
                     {
                         $controlResult.AddMessage([VerificationResult]::Failed,
-								"Storage Service Encryption is not enabled on blob service of Storage Account [$($storageAccount.ResourceName)] associated with Batch account"); 
+								"Storage Service Encryption is not enabled on blob service of Storage Account [$($storageAccount.Name)] associated with Batch account"); 
                     }
                 }
                 else

@@ -165,7 +165,7 @@ class VirtualNetwork: SVTIaasBase
 							$gateway = Get-AzureRmResource -ResourceId $gatewayresourceid
 
 							$vNetGateway = New-Object System.Object
-							$vNetGateway | Add-Member -type NoteProperty -name ResourceName -Value $gateway.ResourceName
+							$vNetGateway | Add-Member -type NoteProperty -name ResourceName -Value $gateway.Name
 							$vNetGateway | Add-Member -type NoteProperty -name ResourceGroupName -Value $gateway.ResourceGroupName
 							$vNetGateway | Add-Member -type NoteProperty -name GatewayType -Value $gateway.Properties.gatewayType
 							$vNetGateway | Add-Member -type NoteProperty -name VPNType -Value $gateway.Properties.vpnType

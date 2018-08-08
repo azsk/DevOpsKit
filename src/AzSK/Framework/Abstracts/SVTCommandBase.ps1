@@ -69,6 +69,12 @@ class SVTCommandBase: CommandBase {
                 $this.IsLocalComplianceStoreEnabled = $false;
             }
         }
+		$this.InitializeControlState();
+		#Check if user has permission to read attestation
+		if($null -ne $this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadPermissions -eq 0)
+		{
+			$this.PublishCustomMessage("`nWarning: The current user/login context does not have permission to access DevOps Kit control attestations. Due to this, control scan results may not reflect attestation.`nTo resolve this, request your subscription owner to grant 'Contributor' access on the 'AzSKRG' resource group in the target subscription. ",[MessageType]::Warning);
+		}
         $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
 
@@ -249,7 +255,7 @@ class SVTCommandBase: CommandBase {
             $olderRG = Get-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -ErrorAction SilentlyContinue
             if($null -ne $olderRG)
             {
-                $resources = Find-AzureRmResource -ResourceGroupNameEquals $([OldConstants]::AzSDKRGName)
+                $resources = Get-AzureRmResource -ResourceGroupName $([OldConstants]::AzSDKRGName)
                 try {
                     $azsdkRGScope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourceGroups/$([OldConstants]::AzSDKRGName)"
                     $resourceLocks = @();
@@ -263,7 +269,7 @@ class SVTCommandBase: CommandBase {
 
                     if(($resources | Measure-Object).Count -gt 0)
                     {
-                        $otherResources = $resources | Where-Object { -not ($_.ResourceName -like "$([OldConstants]::StorageAccountPreName)*")} 
+                        $otherResources = $resources | Where-Object { -not ($_.Name -like "$([OldConstants]::StorageAccountPreName)*")} 
                         if(($otherResources | Measure-Object).Count -gt 0)
                         {
                             Write-Host "WARNING: Found non DevOps Kit resources under older RG [$([OldConstants]::AzSDKRGName)] as shown below:" -ForegroundColor Yellow
