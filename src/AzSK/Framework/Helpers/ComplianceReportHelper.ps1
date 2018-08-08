@@ -5,6 +5,16 @@ class ComplianceReportHelper: ComplianceBase
     hidden [string] $ScanSource
 	hidden [System.Version] $ScannerVersion
 	hidden [string] $ScanKind 
+	static [ComplianceReportHelper] $Instance = $null;
+	
+    static [ComplianceReportHelper] GetInstance([SubscriptionContext] $subscriptionContext,[System.Version] $ScannerVersion)
+    {
+        if ($null -eq  [ComplianceReportHelper]::Instance)
+        {
+			[ComplianceReportHelper]::Instance = [ComplianceReportHelper]::new($subscriptionContext, $ScannerVersion)
+        }
+        return [ComplianceReportHelper]::Instance
+    } 
 
     ComplianceReportHelper([SubscriptionContext] $subscriptionContext,[System.Version] $ScannerVersion):
     Base([SubscriptionContext] $subscriptionContext) 

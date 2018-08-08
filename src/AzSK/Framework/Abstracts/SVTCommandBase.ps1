@@ -63,7 +63,7 @@ class SVTCommandBase: CommandBase {
         #Create necessary resources to save compliance data in user's subscription
         if($this.IsLocalComplianceStoreEnabled)
         {
-            $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());  
+            $this.ComplianceReportHelper = [ComplianceReportHelper]::GetInstance($this.SubscriptionContext, $this.GetCurrentModuleVersion());  
             if(-not $this.ComplianceReportHelper.HaveRequiredPermissions())
             {
                 $this.IsLocalComplianceStoreEnabled = $false;

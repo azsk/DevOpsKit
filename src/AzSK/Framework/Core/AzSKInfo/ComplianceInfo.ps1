@@ -19,7 +19,7 @@ class ComplianceInfo: CommandBase
 
 	hidden [void] GetComplianceScanData()
 	{
-		$ComplianceRptHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());
+		$ComplianceRptHelper = [ComplianceReportHelper]::GetInstance($this.SubscriptionContext, $this.GetCurrentModuleVersion());
 		if($ComplianceRptHelper.HaveRequiredPermissions())
 		{
 			$ComplianceReportData =  $ComplianceRptHelper.GetSubscriptionComplianceReport();

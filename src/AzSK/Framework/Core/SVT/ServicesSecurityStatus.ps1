@@ -188,7 +188,7 @@ class ServicesSecurityStatus: SVTCommandBase
 					{
 						if($null -eq $this.ComplianceReportHelper)
 						{
-							$this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
+							$this.ComplianceReportHelper = [ComplianceReportHelper]::GetInstance($this.SubscriptionContext, $this.GetCurrentModuleVersion())
 						}
 						if($this.ComplianceReportHelper.HaveRequiredPermissions())
 						{

@@ -67,7 +67,7 @@ class WriteCAStatus: ListenerBase
                     $scanSource = [RemoteReportHelper]::GetScanSource();
                     if($scanSource -ne [ScanSource]::Runbook) { return; }                                             			               
                     [ComplianceStateTableEntity[]] $ResourceFlatEntries = @();
-                    $complianceReportHelper = [ComplianceReportHelper]::new($props.SubscriptionContext, $version); 
+                    $complianceReportHelper = [ComplianceReportHelper]::GetInstance($props.SubscriptionContext, $version); 
                     $complianceData = $null;
                     if($complianceReportHelper.HaveRequiredPermissions())
                     {
