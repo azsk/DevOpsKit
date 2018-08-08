@@ -481,24 +481,51 @@ class VirtualMachine: SVTBase
 			#TCP is not applicable for Linux.
 			if($this.ResourceObject.OSProfile -and $this.ResourceObject.OSProfile.WindowsConfiguration)
 			{
-				$diskEncryptionStatus = Get-AzureRmVMDiskEncryptionStatus -ResourceGroupName $this.ResourceContext.ResourceGroupName -VMName $this.ResourceContext.ResourceName
 				$message = "";
-				$diskEncryptionStatusData = @{
-					VMDiskEncryptionStatus = $diskEncryptionStatus
-					ASCDiskEncryptionStatus = $ascDiskEncryptionStatus
-				}
-				#Need to convert the string values to Enum [Microsoft.Azure.Commands.Compute.Models.EncryptionStatus]
-				#Enum type is not resolving here
-				if(($diskEncryptionStatus.OsVolumeEncrypted -eq "NotEncrypted") -or ($diskEncryptionStatus.DataVolumesEncrypted -eq "NotEncrypted") -or -not $ascDiskEncryptionStatus)
+				$diskEncryptionStatus = $null	
+				$diskEncryptionStatusData = $Null
+				$encryptionExtensionFound = $true			
+				try
 				{
-					$message = "All Virtual Machine disks (OS and Data disks) are not encrypted";
+					$diskEncryptionStatus = Get-AzureRmVMDiskEncryptionStatus -ResourceGroupName $this.ResourceContext.ResourceGroupName -VMName $this.ResourceContext.ResourceName -ErrorAction Stop
+				}
+				catch
+				{
+					if((Get-Member -InputObject ($_.Exception) -MemberType Properties -Name InnerException) -and `
+					(Get-Member -InputObject ($_.Exception).InnerException -MemberType Properties -Name Response) -and `
+					(Get-Member -InputObject ($_.Exception).InnerException.Response -MemberType Properties -Name StatusCode) -and `
+					($_.Exception).InnerException.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
+					{
+						$encryptionExtensionFound = $false
+					}
+					else
+					{
+						$this.PublishException($_)
+					}
+				}
+				if($encryptionExtensionFound)
+				{
+					$diskEncryptionStatusData = @{
+						VMDiskEncryptionStatus = $diskEncryptionStatus
+						ASCDiskEncryptionStatus = $ascDiskEncryptionStatus
+					}
+					#Need to convert the string values to Enum [Microsoft.Azure.Commands.Compute.Models.EncryptionStatus]
+					#Enum type is not resolving here
+					if(($diskEncryptionStatus.OsVolumeEncrypted -eq "NotEncrypted") -or ($diskEncryptionStatus.DataVolumesEncrypted -eq "NotEncrypted") -or -not $ascDiskEncryptionStatus)
+					{
+						$message = "All/some Virtual Machine disks (OS and Data disks) are not encrypted";
+					}
+					else
+					{
+						$verificationResult  = [VerificationResult]::Passed;
+						$message = "All Virtual Machine disks (OS and Data disks) are encrypted";
+					}
 				}
 				else
 				{
-					$verificationResult  = [VerificationResult]::Passed;
-					$message = "All Virtual Machine disks (OS and Data disks) are encrypted";
+					$message = "No Virtual Machine disks (OS and Data disks) are encrypted";
 				}
-
+				
 				$controlResult.AddMessage($verificationResult, $message, $diskEncryptionStatusData);
 				$controlResult.SetStateData("Virtual Machine disks encryption status", $diskEncryptionStatusData);
 			}
