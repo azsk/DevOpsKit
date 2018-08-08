@@ -87,5 +87,23 @@ namespace AzSK.ARMChecker.Lib.Extensions
 				sb.Append(hashBytes[i].ToString("x2"));
 			return sb.ToString();
 		}
-	}
+
+        public static string ToSingleString(this string[] stringArray)
+        {
+            string result = string.Join(" Or ", stringArray);
+            return result; ;
+        }
+
+        public static bool CheckIsFunction(this string input)
+        {
+            if (input.StartsWith("[") && input.EndsWith("]"))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
 }

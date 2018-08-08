@@ -37,8 +37,24 @@ namespace AzSK.ARMChecker.Lib
 			};
 			return result;
 		}
-
-		public static ControlResult Build(ResourceControl control, JObject resourceObject, JToken resultData,
+        public static ControlResult ResourceNotFound(ResourceControl resourceControl)
+        {
+            const string notSupported = "NotSupported";
+            var result = new ControlResult
+            {
+                Id = resourceControl.Id,
+                ControlId = resourceControl.ControlId,
+                Description = resourceControl.Description,
+                Rationale = resourceControl.Rationale,
+                Recommendation = resourceControl.Recommendation,
+                Severity = resourceControl.Severity,
+                VerificationResult = VerificationResult.Failed,
+                ResourceType = resourceControl.ResourceType,
+                ResourceDataMarker = BuildDataMarker(resourceControl.JsonPath[0], 250)
+            };
+            return result;
+        }
+        public static ControlResult Build(ResourceControl control, JObject resourceObject, JToken resultData,
 			bool isTokenNotFound, VerificationResult verificationResult)
 		{
 			return Build(control, resourceObject, new List<JToken> {resultData}, isTokenNotFound, verificationResult);
@@ -75,5 +91,11 @@ namespace AzSK.ARMChecker.Lib
 			dataMarker.LineNumber = lineInfo.LineNumber;
 			return dataMarker;
 		}
-	}
+
+        private static ControlResultDataMarker BuildDataMarker(string JsonPath, int dataMarkerLength = int.MaxValue)
+        {
+            var dataMarker = new ControlResultDataMarker(-1, JsonPath, "");
+            return dataMarker;
+        }
+    }
 }
