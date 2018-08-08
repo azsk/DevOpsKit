@@ -788,7 +788,7 @@ class PolicySetup: CommandBase
 			if($policies.AzSKPre)
 			{
 				$AzSKPreUrl= $AzSKPre.ICloudBlob.Uri.AbsoluteUri  
-			}			 
+			}		 
 
 			if($InstallerAzSKPreUrl -like "*$AzSKPreUrl*" )
 			{
@@ -1183,7 +1183,7 @@ class PolicySetup: CommandBase
 		$detailedMsg = ""
 		#endregion
 
-		#Check 08: Validate Syntax exceptions for policy files
+		#region Check 08: Validate Syntax exceptions for policy files
 		$PolicyScanOutput.SyntaxException= @{}
 		$stepCount++		
 		$checkDescription = "Check syntax exceptions for policies."
@@ -1194,18 +1194,65 @@ class PolicySetup: CommandBase
 		{
 			#Validate if all Json file has any syntax issue			
 			$InvalidSchemaJsonFiles = @()
+			# Load your target version of the assembly
+			$newtonsoft = [System.Reflection.Assembly]::LoadFrom("location")
+			$onAssemblyResolveEventHandler = [System.ResolveEventHandler] {
+			param($sender, $e)
+			# You can make this condition more or less version specific as suits your requirements
+			if ($e.Name.StartsWith("Newtonsoft.Json")) {
+				return $newtonsoft
+			}
+			foreach($assembly in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
+				if ($assembly.FullName -eq $e.Name) {
+				return $assembly
+				}
+			}
+			return $null
+			}
+			[System.AppDomain]::CurrentDomain.add_AssemblyResolve($onAssemblyResolveEventHandler)
+
+# Rest of your script....
 
 			$policyFiles | Where-Object {$_.Name -like "*.json" } | ForEach-Object {
 				$fileName = $_.Name
 				try{
 					$policyContent = Get-Content  $_.FullName | ConvertFrom-Json 
+
+					#Validate policy against the schema template
+					if([Helpers]::CheckMember($policyContent,"`$schema"))
+					{
+						$schemaDefination = Invoke-RestMethod `
+						-Method GET `
+						-Uri $policyContent.'$schema'  #`
+						#-UseBasicParsing
+						if($schemaDefination)
+						{
+							$schemaDefinationContent = $schemaDefination | ConvertTo-Json -Depth 10
+							$jsonContent = Get-Content  $_.FullName 
+							$Token = [Newtonsoft.Json.Linq.JToken]::Parse($jsonContent)
+							$Schema = [Newtonsoft.Json.Schema.JSchema]::Parse($schemaDefinationContent)
+							$ErrorMessages = New-Object "System.Collections.Generic.List[string]"
+							[Newtonsoft.Json.Schema.SchemaExtensions]::IsValid($Token, $Schema,[ref] $ErrorMessages)
+													
+							if(($ErrorMessages | Measure-Object).Count -gt 0)
+							{
+								$InvalidSchemaJsonFiles += $fileName
+								foreach ($ErrorMessage in $ErrorMessages) {
+									$messages += $ErrorMessage								
+								}
+							}
+						}											
+					}
+
 				}
 				catch
 				{
 					$InvalidSchemaJsonFiles += $fileName
 				}
 			}
-
+			
+			# Detach the event handler (not detaching can lead to stack overflow issues when closing PS)
+			[System.AppDomain]::CurrentDomain.remove_AssemblyResolve($onAssemblyResolveEventHandler)
 			#Validate if all PS1 file has any syntax issue
 			$InvalidSchemaPSFiles = @()
 			$policyFiles | Where-Object {$_.Name -like "*.ext.ps1" } | ForEach-Object {
@@ -1253,7 +1300,9 @@ class PolicySetup: CommandBase
 			$detailedMsg = $Null	
 			#endregion
 		}
+		#endregion
 
+		
 
 		if(-not $PolicyScanOutput.Resources.Status -or -not $PolicyScanOutput.Policies.Status -or -not $InstallOutput.Status -or -not $PolicyScanOutput.Configurations.AzSKPre.Status -or  -not $PolicyScanOutput.Configurations.RunbookCoreSetup.Status -or  -not $AzSKConfiguOutput.Status -or -not $PolicyScanOutput.SyntaxException.Status -or -not $CARunbookOutput.Status)
 		{
