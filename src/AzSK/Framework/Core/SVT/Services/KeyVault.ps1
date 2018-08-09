@@ -5,17 +5,20 @@ class KeyVault: SVTBase
     hidden [PSVault] $ResourceObject;
     hidden [PSObject[]] $AllEnabledKeys = $null;
     hidden [PSObject[]] $AllEnabledSecrets = $null;
-
+	hidden [boolean] $HasFetchKeysPermissions=$false;
+	hidden [boolean] $HasFetchSecretsPermissions=$true;
     KeyVault([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
         Base($subscriptionId, $resourceGroupName, $resourceName) 
     { 
         $this.GetResourceObject();
+		$this.CheckCurrentContextPermissionsOnVaultObjects();
     }
 
     KeyVault([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 
-        $this.GetResourceObject();
+		$this.GetResourceObject();
+		$this.CheckCurrentContextPermissionsOnVaultObjects();
     }
 
     hidden [PSVault] GetResourceObject()
@@ -31,6 +34,33 @@ class KeyVault: SVTBase
         }
         return $this.ResourceObject;
     }
+	hidden [void] CheckCurrentContextPermissionsOnVaultObjects()
+	{
+		$currentContext=[Helpers]::GetCurrentRMContext();
+		$CurrentContextId=$currentContext.Account.Id;
+		$CurrentContextObjectId=$null
+		if($currentContext.Account.Type -eq 'User')
+		{
+			$CurrentContextObjectId=Get-AzureRmADUser -UserPrincipalName $CurrentContextId|Select-Object -Property Id
+		}
+		elseif($currentContext.Account.Type -eq 'ServicePrincipal')
+		{
+			$CurrentContextObjectId=Get-AzureRmADServicePrincipal -ServicePrincipalName $CurrentContextId|Select-Object -Property Id
+		}
+		$accessPolicies = $this.ResourceObject.AccessPolicies
+		$currentContextAccess=$accessPolicies|Where-Object{$_.ObjectId -eq $CurrentContextObjectId.Id }
+		if($null -ne $currentContextAccess)
+		{
+			 if(('List' -in $currentContextAccess.PermissionsToKeys) -and ('Get' -in $currentContextAccess.PermissionsToKeys))
+			{
+				$this.HasFetchKeysPermissions=$true
+			}
+			if(('List' -in $currentContextAccess.PermissionsToSecrets) -and ('Get' -in $currentContextAccess.PermissionsToSecrets))
+			{
+				$this.HasFetchSecretsPermissions=$true
+			}
+		}
+	}
 
     hidden [ControlResult] CheckAdvancedAccessPolicies([ControlResult] $controlResult)
     {
@@ -74,78 +104,86 @@ class KeyVault: SVTBase
 
 	hidden [PSObject[]] FetchAllEnabledKeysWithVersions([ControlResult] $controlResult)
 	{
-		if($null -eq $this.AllEnabledKeys)
-		{
-			try
+			if($this.HasFetchKeysPermissions -eq $true)
 			{
-				$keysResult = @();
-				$keysResult += Get-AzureKeyVaultKey -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
-								Where-Object { $_.Enabled -eq $true };
-
-				$this.AllEnabledKeys = @();
-				if($keysResult.Count -gt 0) 
+				if( $null -eq $this.AllEnabledKeys)
 				{
-					$keysResult | ForEach-Object {
-						Get-AzureKeyVaultKey -VaultName $this.ResourceContext.ResourceName -Name $_.Name -IncludeVersions |
-						Where-Object { $_.Enabled -eq $true } | 
-						ForEach-Object {
-							$this.AllEnabledKeys += Get-AzureKeyVaultKey -VaultName $this.ResourceContext.ResourceName -Name $_.Name -Version $_.Version ;
+					try
+					{
+						$keysResult = @();
+						$keysResult += Get-AzureKeyVaultKey -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
+										Where-Object { $_.Enabled -eq $true };
+
+						$this.AllEnabledKeys = @();
+						if($keysResult.Count -gt 0) 
+						{
+							$keysResult | ForEach-Object {
+								Get-AzureKeyVaultKey -VaultName $this.ResourceContext.ResourceName -Name $_.Name -IncludeVersions |
+								Where-Object { $_.Enabled -eq $true } | 
+								ForEach-Object {
+									$this.AllEnabledKeys += Get-AzureKeyVaultKey -VaultName $this.ResourceContext.ResourceName -Name $_.Name -Version $_.Version ;
+								}
+							}
+						}
+					}
+					catch
+					{
+						# null indicates exception
+						$this.AllEnabledKeys = $null;
+
+						if ($_.Exception.GetType().FullName -eq "Microsoft.Azure.KeyVault.Models.KeyVaultErrorException")
+						{
+							$controlResult.AddMessage([MessageData]::new("Access denied: Read access is required on Key Vault Keys."));
+						}
+						else
+						{
+							throw $_
 						}
 					}
 				}
 			}
-			catch
-			{
-				# null indicates exception
-				$this.AllEnabledKeys = $null;
-
-				if ($_.Exception.GetType().FullName -eq "Microsoft.Azure.KeyVault.Models.KeyVaultErrorException")
-				{
-					$controlResult.AddMessage([MessageData]::new("Access denied: Read access is required on Key Vault Keys."));
-				}
-				else
-				{
-					throw $_
-				}
-			}
-		}
+			
 		return $this.AllEnabledKeys;
 	}
 
 	hidden [PSObject[]] FetchAllEnabledSecretsWithVersions([ControlResult] $controlResult)
 	{
-		if($null -eq $this.AllEnabledSecrets)
-		{
-			try
-			{
-				$secretsResult = @();
-				$secretsResult += Get-AzureKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
-								Where-Object { $_.Enabled -eq $true };
 
-				$this.AllEnabledSecrets = @();
-				if($secretsResult.Count -gt 0) 
+		if($this.HasFetchKeysPermissions -eq $true)
+		{
+			if($null -eq $this.AllEnabledSecrets)
+			{
+				try
 				{
-					$secretsResult | ForEach-Object {
-						Get-AzureKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -Name $_.Name -IncludeVersions |
-						Where-Object { $_.Enabled -eq $true } | 
-						ForEach-Object {
-							$this.AllEnabledSecrets += Get-AzureKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -Name $_.Name -Version $_.Version ;
+					$secretsResult = @();
+					$secretsResult += Get-AzureKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
+									Where-Object { $_.Enabled -eq $true };
+
+					$this.AllEnabledSecrets = @();
+					if($secretsResult.Count -gt 0) 
+					{
+						$secretsResult | ForEach-Object {
+							Get-AzureKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -Name $_.Name -IncludeVersions |
+							Where-Object { $_.Enabled -eq $true } | 
+							ForEach-Object {
+								$this.AllEnabledSecrets += Get-AzureKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -Name $_.Name -Version $_.Version ;
+							}
 						}
 					}
 				}
-			}
-			catch
-			{
-				# null indicates exception
-				$this.AllEnabledSecrets = $null;
+				catch
+				{
+					# null indicates exception
+					$this.AllEnabledSecrets = $null;
 
-				if ($_.Exception.GetType().FullName -eq "Microsoft.Azure.KeyVault.Models.KeyVaultErrorException")
-				{
-					$controlResult.AddMessage([MessageData]::new("Access denied: Read access is required on Key Vault Secrets."));
-				}
-				else
-				{
-					throw $_
+					if ($_.Exception.GetType().FullName -eq "Microsoft.Azure.KeyVault.Models.KeyVaultErrorException")
+					{
+						$controlResult.AddMessage([MessageData]::new("Access denied: Read access is required on Key Vault Secrets."));
+					}
+					else
+					{
+						throw $_
+					}
 				}
 			}
 		}
@@ -154,6 +192,7 @@ class KeyVault: SVTBase
 
     hidden [ControlResult] CheckKeyHSMProtected([ControlResult] $controlResult)
     {
+
 		$enabledKeys = $this.FetchAllEnabledKeysWithVersions($controlResult);
 		if($null -ne $enabledKeys)
 		{
@@ -424,7 +463,7 @@ class KeyVault: SVTBase
 		return $controlResult;
    }
 
-    hidden [PSObject] GetAzureRmKeyVaultApplications ()  
+    hidden [PSObject] GetAzureRmKeyVaultApplications()  
      {
         $applicationList = @();
         $this.ResourceObject.AccessPolicies  | 
@@ -456,3 +495,5 @@ class KeyVault: SVTBase
 		
 	}
 }
+
+
