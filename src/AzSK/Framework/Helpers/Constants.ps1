@@ -152,6 +152,7 @@ class Constants
 
 	#Constants for Org Policy
 	static [string] $OrgPolicyTagPrefix = "AzSKOrgName_"
+	static [int] $SASTokenExpiryReminderInDays = 30
 	# Local Subscription Report Constants
 	#static [string] $ComplianceReportContainerName = "compliance-state"
 	static [string] $ComplianceReportTableName = "ComplianceState"

@@ -1441,6 +1441,38 @@ class Helpers {
             return $String
         }
     }
-	
+
+    Static [bool] IsSASTokenUpdateRequired($policyUrl)
+	{
+        [System.Uri] $validatedUri = $null;
+        $IsSASTokenUpdateRequired = $false
+        if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se="))
+        {
+            $decodedUrl = [System.Web.HttpUtility]::UrlDecode($validatedUri.Query)
+            $pattern = '&se=(.*?)&'
+            [DateTime] $expiryDate = Get-Date 
+            if([DateTime]::TryParse([Helpers]::GetSubString($decodedUrl,$pattern),[ref] $expiryDate))
+            {
+               if($expiryDate.AddDays(-[Constants]::SASTokenExpiryReminderInDays) -lt [DateTime]::UtcNow)
+               {
+                   $IsSASTokenUpdateRequired = $true
+               }
+            }
+        }
+        return $IsSASTokenUpdateRequired
+    }
+
+    Static [string] GetUriWithUpdatedSASToken($policyUrl, $sasToken)
+	{
+        [System.Uri] $validatedUri = $null;
+        $UpdatedUri = $policyUrl
+
+        if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se="))
+        {
+            $UpdatedUri = $policyUrl.Split("?")[0] + "$sasToken"
+
+        }
+        return $UpdatedUri
+    }
 }
 
