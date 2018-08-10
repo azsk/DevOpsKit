@@ -64,7 +64,7 @@ function Get-AzSKAzureServicesSecurityStatus
 		[string]
         [Parameter(Position = 0, Mandatory = $true, HelpMessage="Subscription id for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("sid")]
+		[Alias("sid","s")]
 		$SubscriptionId,
 
         [string]
@@ -101,10 +101,12 @@ function Get-AzSKAzureServicesSecurityStatus
 
         [string]
 		[Parameter(Mandatory = $true, ParameterSetName = "TagName", HelpMessage="The name of the tag to query for Azure resource.")]
+		[Alias("tgn")]
 		$TagName,
 
         [string]
 		[Parameter(Mandatory = $true, ParameterSetName = "TagName", HelpMessage="The value of the tag to query for Azure resource.")]
+		[Alias("tgv")]
 		$TagValue,
 
 		[string] 
@@ -118,10 +120,12 @@ function Get-AzSKAzureServicesSecurityStatus
 
 		[string] 
 		[Parameter(Mandatory = $false)]
+		[Alias("ft")]
 		$FilterTags,
 
 		[string] 
 		[Parameter(Mandatory = $false)]
+		[Alias("xt")]
 		$ExcludeTags,
         
 		[ValidateSet("All","AlreadyAttested","NotAttested","None")]
@@ -149,11 +153,12 @@ function Get-AzSKAzureServicesSecurityStatus
 
 		[switch]
         [Parameter(Mandatory = $false)]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder,
 
 		[GeneratePDF]
         [Parameter(Mandatory = $false)]
-		[Alias("gpdf")]
+		[Alias("gpdf","pdf")]
 		$GeneratePDF = [GeneratePDF]::None,
 
 		[switch]
@@ -173,6 +178,7 @@ function Get-AzSKAzureServicesSecurityStatus
 
 		[switch]
         [Parameter(Mandatory = $false)]
+		[Alias("iuc")]
 		$IncludeUserComments
     )
 
@@ -273,7 +279,7 @@ function Get-AzSKSubscriptionSecurityStatus
 		[Parameter(Position = 0, Mandatory = $True, HelpMessage = "Subscription id for which the security evaluation has to be performed.")]
 		[string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("sid")]
+		[Alias("sid","s")]
 		$SubscriptionId,
 		
 		[string] 
@@ -285,10 +291,12 @@ function Get-AzSKSubscriptionSecurityStatus
 		
 		[string] 
 		[Parameter(Mandatory = $false, HelpMessage = "Comma separated tags to filter the security controls. e.g.: RBAC, SOX, AuthN etc.")]
+		[Alias("ft")]
 		$FilterTags,
 
 		[string] 
 		[Parameter(Mandatory = $false, HelpMessage = "Comma separated tags to exclude the security controls. e.g.: RBAC, SOX, AuthN etc.")]
+		[Alias("xt")]
 		$ExcludeTags,
 		
 		[ValidateSet("All","AlreadyAttested","NotAttested","None")]
@@ -315,11 +323,12 @@ function Get-AzSKSubscriptionSecurityStatus
 			
 		[switch]
 		[Parameter(Mandatory = $false)]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder,
 		
 		[GeneratePDF]
         [Parameter(Mandatory = $false)]
-		[Alias("gpdf")]
+		[Alias("gpdf","pdf")]
 		$GeneratePDF = [GeneratePDF]::None,
 
 		[switch]
@@ -334,6 +343,7 @@ function Get-AzSKSubscriptionSecurityStatus
 
 		[switch]
         [Parameter(Mandatory = $false)]
+		[Alias("iuc")]
 		$IncludeUserComments
 	)
 	Begin
@@ -421,7 +431,7 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 		[string]
         [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Provide the subscription id for which the security report has to be generated")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("sid")]
+		[Alias("sid","s")]
 		$SubscriptionId,
 
         [string]
@@ -441,10 +451,12 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 		
 		[string] 
 		[Parameter(Mandatory = $false, HelpMessage = "Comma separated tags to filter the security controls. e.g.: RBAC, SOX, AuthN etc.")]
+		[Alias("ft")]
 		$FilterTags,
 
 		[string] 
 		[Parameter(Mandatory = $false, HelpMessage = "Comma separated tags to exclude the security controls. e.g.: RBAC, SOX, AuthN etc.")]
+		[Alias("xt")]
 		$ExcludeTags,		
                 
 		[ValidateSet("All","AlreadyAttested","NotAttested","None")]
@@ -455,11 +467,12 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder,
 
 		[GeneratePDF]
         [Parameter(Mandatory = $false, HelpMessage = "Enables users to generate PDF file for reports.")]
-		[Alias("gpdf")]
+		[Alias("gpdf","pdf")]
 		$GeneratePDF  = [GeneratePDF]::None,
 		
 		[switch]

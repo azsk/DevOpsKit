@@ -33,7 +33,7 @@ function Set-AzSKSubscriptionSecurity
 		[string]
         [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which subscription security configuration has to be set.")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("sid")]
+		[Alias("sid", "HostSubscriptionId", "hsid","s")]
 		$SubscriptionId,
 		
 		[string] 
@@ -52,18 +52,22 @@ function Set-AzSKSubscriptionSecurity
 
 		[string] 
 		[Parameter(Mandatory = $false, HelpMessage = "Provide the ResourceGroup on which the AlertPackage has to be configured")]
+		[Alias("trg")]
 		$TargetResourceGroup,
 
 		[string] 
 		[Parameter(Mandatory = $false, HelpMessage = "Provide the location for alert ResourceGroup")]
+		[Alias("argl")]
 		$AlertResourceGroupLocation = "East US",
 		
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to apply subscription security configurations forcefully regardless of latest updates already present on subscription.")]
+		[Alias("f")]
 		$Force,
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 
@@ -132,7 +136,7 @@ function Remove-AzSKSubscriptionSecurity
 		[string]
         [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which the subscription security configuration has to be removed.")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("sid")]
+		[Alias("sid", "HostSubscriptionId", "hsid","s")]
 		$SubscriptionId,
 
 		[string] 
@@ -141,18 +145,22 @@ function Remove-AzSKSubscriptionSecurity
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to delete resource group containing all alerts or not")]
+		[Alias("drg")]
         $DeleteResourceGroup,
 
 		[Parameter(Mandatory = $false, HelpMessage = "Provide the comma separated values of alert names")]
         [string]
+		[Alias("aname")]
 		$AlertNames,
 
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to apply subscription security configurations forcefully regardless of latest updates already present on subscription.")]
+		[Alias("f")]
 		$Force,
 		
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 
@@ -210,15 +218,17 @@ function Update-AzSKSubscriptionSecurity
 		[string]
         [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which subscription security configuration has to be updated.", ParameterSetName = "Default")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("sid")]
+		[Alias("sid","HostSubscriptionId","hsid","s")]
 		$SubscriptionId,
 
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to apply subscription security configuration updates forcefully regardless of latest updates already present on subscription.", ParameterSetName = "Default")]
+		[Alias("f")]
 		$Force,
 		
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.", ParameterSetName = "Default")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 
