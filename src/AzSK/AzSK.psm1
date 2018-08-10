@@ -109,6 +109,7 @@ function Set-AzSKPolicySettings {
 	#>
     Param(
         [Parameter(Mandatory = $false, HelpMessage = "Provide the Online Policy Store URI")]
+        [Alias("LocalOrgPolicyFolderPath")]
         [string]
         $OnlinePolicyStoreUrl,
 
