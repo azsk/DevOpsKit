@@ -564,6 +564,7 @@ class CCAutomation: CommandBase
 						if(!$FixRuntimeAccount)
 						{
 							$this.PublishCustomMessage("WARNING: Runtime Account not found. To resolve this run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -FixRuntimeAccount' after completion of current command execution.",[MessageType]::Warning)
+							$caaccounterror = 1;
 						}
 					}
 				}
@@ -593,6 +594,12 @@ class CCAutomation: CommandBase
 					{
 						$this.PublishCustomMessage("WARNING: CA certificate not found. To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -RenewCertificate' after completion of current command execution.",[MessageType]::Warning)
 						$caaccounterror = 1
+					}
+					$runAsConnection = $this.GetRunAsConnection();
+					if(!$runAsConnection -and !$FixRuntimeAccount)
+					{
+						$this.PublishCustomMessage("WARNING: Runtime Account not found. To resolve this run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -FixRuntimeAccount' after completion of current command execution.",[MessageType]::Warning)
+						$caaccounterror = 1;
 					}
 				}
 				if($FixRuntimeAccount)
@@ -634,7 +641,7 @@ class CCAutomation: CommandBase
 			}
 			if($caaccounterror -eq 1)
 			{
-				throw ([SuppressedException]::new(("Failed to update CA account. Please rerun the '$($this.updateCommandName)' command with above mentioned parameters."), [SuppressedExceptionType]::Generic))
+				throw ([SuppressedException]::new(("`n`rFailed to update CA. Please rerun the '$($this.updateCommandName)' command with above mentioned parameters."), [SuppressedExceptionType]::Generic))
 			}
 			#endregion  
 		
@@ -1820,23 +1827,19 @@ class CCAutomation: CommandBase
 		$stepCount++
 	
 		$checkDescription = "Inspecting OMS configuration."
-		if($null -eq $omsWsId -or ($null -ne $omsWsId -and $omsWsId.Value.Trim() -eq [string]::Empty))
+        
+		$IsOMSSettingSetup = !([string]::IsNullOrEmpty($omsWsId)) -and $this.IsOMSKeyVariableAvailable()
+		$IsAltOMSSettingSetup = !([string]::IsNullOrEmpty($altOMSWsId)) -and $this.IsAltOMSKeyVariableAvailable()
+		
+        if(!$IsOMSSettingSetup -and !$IsAltOMSSettingSetup)
 		{
-			$failMsg = "OMS workspace ID is not set up."			
+			$failMsg = "OMS settings is not set up."			
 			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -OMSWorkspaceId <OMSWorkspaceId> -OMSSharedKey <OMSSharedKey>'."
-			$resultMsg +="$failMsg`r`n"
-			$resultStatus = "Warning"
-			$shouldReturn = $false
-			
-		}
-		if(!$this.IsOMSKeyVariableAvailable())
-		{
-			$failMsg = "OMS workspace key is not set up."			
-			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -OMSSharedKey <OMSSharedKey>'."
 			$resultMsg +="$failMsg`r`n$resolvemsg"
 			$resultStatus = "Warning"
 			$shouldReturn = $false
-		}		
+		}
+		
 		if($resultStatus -ne "Warning" )
 		{
 			$resultStatus = "OK"
@@ -3434,6 +3437,20 @@ class CCAutomation: CommandBase
 	{
 		$omsKey = Get-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSSharedKey" -ErrorAction SilentlyContinue
+		if($omsKey)
+		{
+			return $true
+		}
+		else
+		{
+			return $false
+		}
+	}
+	#Check OMS Key is present
+	hidden [boolean] IsAltOMSKeyVariableAvailable()
+	{
+		$omsKey = Get-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
 		if($omsKey)
 		{
 			return $true
