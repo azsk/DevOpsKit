@@ -528,7 +528,7 @@ class CCAutomation: CommandBase
 			#endregion
 		
 			#region :Remove existing and create new AzureRunAsConnection if AzureADAppName param is passed else fix RunAsAccount if issue is found
-			$caaccounterror = 0;
+			$caaccounterror = $false;
 			if(![string]::IsNullOrWhiteSpace($this.AutomationAccount.AzureADAppName))
 			{
 				$this.NewCCAzureRunAsAccount()
@@ -556,7 +556,6 @@ class CCAutomation: CommandBase
 						{
 							$this.PublishCustomMessage("WARNING:  Could not renew certificate for the currently configured SPN (App Id: $($runAsConnection.FieldDefinitionValues.ApplicationId)). You may not have 'Owner' permission on it. `r`n" `
                             + "You can either get the owner of the above SPN to run this command or run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -NewRuntimeAccount'.",[MessageType]::Warning)
-							$caaccounterror = 1;
 						}
 					}
 					else
@@ -564,7 +563,7 @@ class CCAutomation: CommandBase
 						if(!$FixRuntimeAccount)
 						{
 							$this.PublishCustomMessage("WARNING: Runtime Account not found. To resolve this run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -FixRuntimeAccount' after completion of current command execution.",[MessageType]::Warning)
-							$caaccounterror = 1;
+							$caaccounterror = $true;
 						}
 					}
 				}
@@ -582,7 +581,7 @@ class CCAutomation: CommandBase
 						{
 							$this.PublishCustomMessage("CA Certificate expiry date: [$($runAsCertificate.ExpiryTime.ToString("yyyy-MM-dd"))]")
 							$this.PublishCustomMessage("WARNING: CA Certificate has expired. To renew please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -RenewCertificate' after completion of the current command.",[MessageType]::Warning)
-							$caaccounterror = 1
+							$caaccounterror = $true
 						}
 						elseif($expiryDuration.TotalDays -ge 0 -and $expiryDuration.TotalDays -le 30)
 						{
@@ -593,13 +592,13 @@ class CCAutomation: CommandBase
 					else
 					{
 						$this.PublishCustomMessage("WARNING: CA certificate not found. To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -RenewCertificate' after completion of current command execution.",[MessageType]::Warning)
-						$caaccounterror = 1
+						$caaccounterror = $true
 					}
 					$runAsConnection = $this.GetRunAsConnection();
 					if(!$runAsConnection -and !$FixRuntimeAccount)
 					{
 						$this.PublishCustomMessage("WARNING: Runtime Account not found. To resolve this run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -FixRuntimeAccount' after completion of current command execution.",[MessageType]::Warning)
-						$caaccounterror = 1;
+						$caaccounterror = $true;
 					}
 				}
 				if($FixRuntimeAccount)
@@ -639,7 +638,7 @@ class CCAutomation: CommandBase
 					}
 				}
 			}
-			if($caaccounterror -eq 1)
+			if($caaccounterror -eq $true)
 			{
 				throw ([SuppressedException]::new(("`n`rFailed to update CA. Please rerun the '$($this.updateCommandName)' command with above mentioned parameters."), [SuppressedExceptionType]::Generic))
 			}
