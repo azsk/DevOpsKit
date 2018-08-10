@@ -12,29 +12,9 @@
          "scope": "/subscriptions/$subscriptionId"
       },
       {
-         "policyDefinitionName": "AzSK_ARMPol_Audit_NonGRS_Storage_SKU",
-         "policyDefinition": "{\"if\":{\"allOf\":[{\"field\":\"type\",\"equals\":\"Microsoft.Storage/storageAccounts\"},{\"field\":\"Microsoft.Storage/storageAccounts/sku.name\",\"equals\":\"Standard_LRS\"}]},\"then\":{\"effect\":\"audit\"}}",
-         "description": "Policy to generate an audit event upon creation of a storage account with Standard LRS (no Geo-Replication)",
-         "tags": [
-            "Mandatory"
-         ],
-         "enabled": true,
-         "scope": "/subscriptions/$subscriptionId"
-      }, 
-      {
          "policyDefinitionName": "AzSK_ARMPol_Audit_Job_Scheduler_Free_Tier",
          "policyDefinition": "{\"if\":{\"allOf\":[{\"field\":\"type\",\"equals\":\"Microsoft.Scheduler/jobcollections\"},{\"field\":\"Microsoft.Scheduler/jobcollections/sku.name\",\"equals\":\"Free\"}]},\"then\":{\"effect\":\"audit\"}}",
          "description": "Policy to generate an audit event upon creation of a job scheduler with free tier",
-         "tags": [
-            "Mandatory"
-         ],
-         "enabled": true,
-         "scope": "/subscriptions/$subscriptionId"
-      },
-      {
-         "policyDefinitionName": "AzSK_ARMPol_Audit_Old_SQL_Version",
-         "policyDefinition": "{\"if\":{\"allOf\":[{\"field\":\"type\",\"equals\":\"Microsoft.SQL/servers\"},{\"field\":\"Microsoft.SQL/servers/version\",\"in\":[\"2.0\",\"3.0\",\"4.0\",\"5.0\",\"6.0\",\"7.0\",\"8.0\",\"9.0\",\"10.0\",\"11.0\"]}]},\"then\":{\"effect\":\"audit\"}}",
-         "description": "Policy to generate an audit event upon creation of a sql server with version less than 12.0",
          "tags": [
             "Mandatory"
          ],

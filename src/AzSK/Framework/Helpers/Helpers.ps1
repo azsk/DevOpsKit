@@ -17,7 +17,7 @@ class Helpers {
 			if ((-not $rmContext) -or ($rmContext -and (-not $rmContext.Subscription -or -not $rmContext.Account))) {
 				[EventBase]::PublishGenericCustomMessage("No active Azure login session found. Initiating login flow...", [MessageType]::Warning);
 
-				$rmLogin = Add-AzureRmAccount
+				$rmLogin = Connect-AzureRmAccount
 				if ($rmLogin) {
 					$rmContext = $rmLogin.Context;
 				}
@@ -42,7 +42,7 @@ class Helpers {
     }
 
     static [string] SanitizeFolderName($folderPath) {
-        return ($folderPath -replace '[<>:"/\\|?*]', '');
+        return ($folderPath -replace '[<>:"/\\\[\]|?*]', '');
     }
 
     static [string] ConvertObjectToString([PSObject] $dataObject, [bool] $defaultPsOutput) {
@@ -846,7 +846,6 @@ class Helpers {
                 -Location $Location `
                 -Kind $StorageKind `
                 -AccessTier Cool `
-                -EnableEncryptionService "Blob,File" `
                 -EnableHttpsTrafficOnly $true `
                 -ErrorAction Stop
 
@@ -859,7 +858,7 @@ class Helpers {
 
             if ($storageObject) {
                 #create alert rule				
-                #$emailAction = New-AzureRmAlertRuleEmail -SendToServiceOwners -ErrorAction Stop -WarningAction SilentlyContinue
+                #$emailAction = New-AzureRmAlertRuleEmail -SendToServiceOwner -ErrorAction Stop -WarningAction SilentlyContinue
                 #$targetId = $storageObject.Id + "/services/" + "blob"
 
                 #$alertName = $StorageName + "alert"
@@ -870,7 +869,7 @@ class Helpers {
                 #    -ResourceGroup $storageObject.ResourceGroupName `
                 #    -TargetResourceId $targetId `
                 #    -Threshold 0 -TimeAggregationOperator Total -WindowSize 01:00:00  `
-                #    -Actions $emailAction `
+                #    -Action $emailAction `
                 #    -WarningAction SilentlyContinue `
                 #    -ErrorAction Stop
 
@@ -884,7 +883,7 @@ class Helpers {
             [EventBase]::PublishGenericException($_);
             $storageObject = $null
             #clean-up storage if error occurs
-            if ((Find-AzureRmResource -ResourceGroupNameEquals $ResourceGroup -ResourceNameEquals $StorageName|Measure-Object).Count -gt 0) {
+            if ((Get-AzureRmResource -ResourceGroupName $ResourceGroup -Name $StorageName|Measure-Object).Count -gt 0) {
                 Remove-AzureRmStorageAccount -ResourceGroupName $ResourceGroup -Name $StorageName -Force -ErrorAction SilentlyContinue
             }
         }
@@ -1409,7 +1408,72 @@ class Helpers {
         $KeyHash = $HMAC.ComputeHash($UnsignedBytes)
         $SignedString = [System.Convert]::ToBase64String($KeyHash)
         $sharedKey = $AccountName+":"+$SignedString
-        return $sharedKey
-    }	
+        return $sharedKey    	
+    }
+
+    static [void] CreateFolderIfNotExist($FolderPath,$MakeFolderEmpty)
+    {
+        if(-not (Test-Path $FolderPath))
+		{
+			mkdir -Path $FolderPath -ErrorAction Stop | Out-Null
+        }
+        elseif($MakeFolderEmpty)
+        {
+            Remove-Item -Path "$FolderPath*" -Force -Recurse
+        }
+    }
+
+    Static [string] GetSubString($CotentString, $Pattern)
+    {
+        return  [regex]::match($CotentString, $pattern).Groups[1].Value
+    }
+
+    #TODO: Currently this function is specific to Org PolicyHealth Check. Need to make generic
+    Static [string] IsStringEmpty($String)
+    {
+        if([string]::IsNullOrEmpty($String))
+        {
+            return "Not Available"
+        }
+        else 
+        {
+            $String= $String.Split("?")[0]
+            return $String
+        }
+    }
+
+    Static [bool] IsSASTokenUpdateRequired($policyUrl)
+	{
+        [System.Uri] $validatedUri = $null;
+        $IsSASTokenUpdateRequired = $false
+        if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se="))
+        {
+            $decodedUrl = [System.Web.HttpUtility]::UrlDecode($validatedUri.Query)
+            $pattern = '&se=(.*?)&'
+            [DateTime] $expiryDate = Get-Date 
+            if([DateTime]::TryParse([Helpers]::GetSubString($decodedUrl,$pattern),[ref] $expiryDate))
+            {
+               if($expiryDate.AddDays(-[Constants]::SASTokenExpiryReminderInDays) -lt [DateTime]::UtcNow)
+               {
+                   $IsSASTokenUpdateRequired = $true
+               }
+            }
+        }
+        return $IsSASTokenUpdateRequired
+    }
+
+    Static [string] GetUriWithUpdatedSASToken($policyUrl, $updateUrl)
+	{
+        [System.Uri] $validatedUri = $null;
+        $UpdatedUrl = $policyUrl
+
+        if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se=") -and [System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri))
+        {
+
+            $UpdatedUrl = $policyUrl.Split("?")[0] + $updateUrl.Split("?")[0]
+
+        }
+        return $UpdatedUrl
+    }
 }
 

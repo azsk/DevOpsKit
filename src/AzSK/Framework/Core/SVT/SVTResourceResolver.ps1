@@ -125,7 +125,7 @@ class SVTResourceResolver: AzSKRoot
 				$svtResource = [SVTResource]::new();
 				$svtResource.ResourceId = $resource.ResourceId;
 				$svtResource.ResourceGroupName = $resource.ResourceGroupName;
-				$svtResource.ResourceName = $resource.ResourceName;
+				$svtResource.ResourceName = $resource.Name;
 				$svtResource.ResourceType = $resource.ResourceType;
 				$svtResource.Location = $resource.Location;
 
@@ -192,11 +192,11 @@ class SVTResourceResolver: AzSKRoot
 
 	hidden [System.Object[]] FindAzureRmResource([string] $resourceGroupName)
 	{
-		$expression = "Find-AzureRmResource";
+		$expression = "Get-AzureRmResource";
 
 		if(-not [string]::IsNullOrEmpty($resourceGroupName))
 		{
-			$expression += " -ResourceGroupNameEquals '$resourceGroupName' " ;
+			$expression += " -ResourceGroupName '$resourceGroupName' " ;
 		}
 
 		if([string]::IsNullOrEmpty($this.ResourceType) -and ($this.ResourceTypeName -ne [ResourceTypeName]::All))
@@ -217,7 +217,7 @@ class SVTResourceResolver: AzSKRoot
 
 		if($this.ResourceNames.Count -eq 1)
 		{
-			$expression += " -ResourceNameEquals '$($this.ResourceNames[0])' " ;
+			$expression += " -Name '$($this.ResourceNames[0])' " ;
 		}
 		
 		if($this.Tag -and $this.Tag.Count -ne 0)

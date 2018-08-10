@@ -116,7 +116,7 @@ class ControlStateExtension
 		
 		$this.HasControlStateReadPermissions = 0					
 		$this.HasControlStateWritePermissions = 0
-		$writeTestContainerName = "writetest";
+		$writeTestContainerName = "wt" + $(get-date).ToUniversalTime().ToString("yyyyMMddHHmmss");
 
 		#see if user can create the test container in the storage account. If yes then user have both RW permissions. 
 		try

@@ -102,7 +102,7 @@ class StorageHelper: ResourceGroupHelper
 		{
 			$this.CreateResourceGroupIfNotExists();
 
-			$existingResources = Find-AzureRmResource -ResourceGroupNameEquals $this.ResourceGroupName -ResourceType $this.ResourceType
+			$existingResources = Get-AzureRmResource -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType
 
 			# Assuming 1 storage account is needed on Resource group
 			if(($existingResources | Measure-Object).Count -gt 1)
@@ -196,7 +196,7 @@ class StorageHelper: ResourceGroupHelper
 			$table = New-AzureStorageTable -Name $tableName -Context $this.StorageAccount.Context 
 			if($table)
 			{
-				$this.PublishCustomMessage("Successfully created table: [$tableName] in storage: [$this.StorageAccountName]", [MessageType]::Update);
+				$this.PublishCustomMessage("Successfully created table: [$tableName] in storage: [$($this.StorageAccountName)]", [MessageType]::Update);
 			}
 		}
 
@@ -334,6 +334,47 @@ class StorageHelper: ResourceGroupHelper
 		}
 	}
 
+	[psobject] DownloadFilesFromBlob([string] $containerName, [string] $blobName, [string] $destinationPath, [bool] $overwrite,[bool] $WithoutVirtualDirectory)
+	{
+		$loopValue = $this.retryCount;
+		$sleepValue = $this.sleepIntervalInSecs;
+		$blobDetails =$null
+		if($WithoutVirtualDirectory)
+		{
+			$copyDestinationPath = [Constants]::AzSKTempFolderPath + "ContainerContent\"
+			[Helpers]::CreateFolderIfNotExist($copyDestinationPath,$true)
+		}
+		else
+		{
+			$copyDestinationPath= $destinationPath
+		}
+
+		while($loopValue -gt 0)
+		{
+			$loopValue = $loopValue - 1;
+			try {
+				if($overwrite)
+				{
+					$blobDetails= Get-AzureStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -Force -ErrorAction Stop
+				}
+				else {
+					$blobDetails= Get-AzureStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -ErrorAction Stop
+				}
+				$loopValue = 0;
+			}
+			catch {
+				#sleep for incremental 10 seconds before next retry;
+				Start-Sleep -Seconds $sleepValue;
+				$sleepValue = $sleepValue + 10;
+			}
+		}
+		if($WithoutVirtualDirectory)
+		{
+			Get-ChildItem -Path $copyDestinationPath -Recurse -File | Copy-Item -Destination $destinationPath -Force
+		}
+		return $blobDetails
+	}
+
 	[string] GenerateSASToken([string] $containerName)
 	{
 		$this.CreateStorageContainerIfNotExists($containerName);
@@ -354,6 +395,67 @@ class StorageHelper: ResourceGroupHelper
 		}
 		return $sasToken;
 	}
+
+	[void] GetStorageAccountInstance()
+	{
+		# Fetch the Storage account context
+		$this.StorageAccount = Get-AzureRmStorageAccount -ResourceGroupName $this.ResourceGroupName -Name $this.StorageAccountName -ErrorAction Ignore
+		if(-not ($this.StorageAccount -and $this.StorageAccount.Context))
+		{
+			$this.StorageAccount = $null;
+			throw ([SuppressedException]::new("Unable to fetch the storage account [$($this.StorageAccountName)] under resource group [$($this.ResourceGroupName)]", [SuppressedExceptionType]::InvalidOperation))				
+		}
+	}
+
+	#Function to download files from container with or without virtual directory
+    [PSObject] DownloadFilesFromContainer([string] $containerName, [string] $folderName, [string] $destinationPath, [bool] $overwrite, [bool] $WithoutVirtualDirectory)
+	{
+		$loopValue = $this.retryCount;
+		$sleepValue = $this.sleepIntervalInSecs;
+		$blobList = @()
+		[Helpers]::CreateFolderIfNotExist($destinationPath,$false)
+		if($WithoutVirtualDirectory)
+		{
+			$copyDestinationPath = [Constants]::AzSKTempFolderPath + "ContainerContent\"
+			[Helpers]::CreateFolderIfNotExist($copyDestinationPath,$true)
+		}
+		else
+		{
+			$copyDestinationPath= $destinationPath
+
+		}
+		while($loopValue -gt 0)
+		{
+			$loopValue = $loopValue - 1;
+			try {
+				$blobs = Get-AzureStorageBlob -Container $containerName -Context $($this.StorageAccount.Context) | Where-Object {$_.Name -like "*$folderName*"}				 
+				foreach ($blob in $blobs)
+				{
+					$blobName = $blob.Name
+					if($overwrite)
+					{
+						$blobList+=	Get-AzureStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -Force -ErrorAction Stop
+					}
+					else{
+						$blobList+= Get-AzureStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -ErrorAction Stop
+					}
+				}
+				$loopValue = 0;
+			}
+			catch {
+				#sleep for incremental 10 seconds before next retry;
+				Start-Sleep -Seconds $sleepValue;
+				$sleepValue = $sleepValue + 10;
+			}
+		}
+		if($WithoutVirtualDirectory)
+		{
+			Get-ChildItem -Path $copyDestinationPath -Recurse -File | Copy-Item -Destination $destinationPath -Force
+		}
+		return $blobList
+	}
+	
+
 }
 
 class AppInsightHelper: ResourceGroupHelper
@@ -381,7 +483,7 @@ class AppInsightHelper: ResourceGroupHelper
 		{
 			$this.CreateResourceGroupIfNotExists();
 			[Helpers]::RegisterResourceProviderIfNotRegistered("microsoft.insights");
-			$existingResources = Find-AzureRmResource -ResourceGroupNameEquals $this.ResourceGroupName -ResourceType $this.ResourceType
+			$existingResources = Get-AzureRmResource -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType
 
 			# Assuming 1 storage account is needed on Resource group
 			if(($existingResources | Measure-Object).Count -gt 1)
@@ -408,7 +510,7 @@ class AppInsightHelper: ResourceGroupHelper
 			}
 
 			# Fetch the application insight
-			$this.AppInsightInstance = Find-AzureRmResource -ResourceNameEquals $this.AppInsightName -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType -ExpandProperties 
+			$this.AppInsightInstance = Get-AzureRmResource -Name $this.AppInsightName -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType -ExpandProperties 
 			if(-not ($this.AppInsightInstance -and $this.AppInsightInstance.Properties))
 			{
 				$this.AppInsightInstance = $null;

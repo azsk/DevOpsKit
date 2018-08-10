@@ -40,8 +40,7 @@
           "AppService",
           "FunctionApp"
         ],
-        "Enabled": true,
-        "GraceExpiryDate": "2018-06-15"
+        "Enabled": true
       },
       {
         "ControlID": "Azure_AppService_AuthN_Use_AAD_for_Client_AuthN",
@@ -61,8 +60,7 @@
           "AppService",
           "FunctionApp"
         ],
-        "Enabled": true,
-        "GraceExpiryDate": "2018-05-24"
+        "Enabled": true
       },
       {
         "ControlID": "Azure_AppService_Deploy_Dont_Use_Publish_Profiles",
@@ -351,7 +349,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceHttpCertificateSSL",
         "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer eavesdropping attacks.",
-        "Recommendation": "Run command 'Set-AzureRmResource -ResourceName '<WebAppName>' -ResourceGroupName '<RGName>' -ResourceType 'Microsoft.Web/sites' -Properties @{httpsOnly='true'} -Force '. Run 'Get-Help Set-AzureRmResource -full' for more help.",
+        "Recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -HttpsOnly $true. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
         "Tags": [
           "SDL",
           "TCP",

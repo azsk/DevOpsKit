@@ -114,6 +114,8 @@ class ConfigOverride
 		[AzSKConfig]::Instance = $null
 		[ConfigurationHelper]::ServerConfigMetadata = $null
 		[ConfigurationHelper]::OfflineMode = $false
-
+		[ConfigurationHelper]::ConfigVersion = $null
+		[ConfigurationHelper]::IsIssueLogged = $false
+		[ConfigurationHelper]::LocalPolicyEnabled = $false
 	}
 }

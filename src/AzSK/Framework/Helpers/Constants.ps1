@@ -152,6 +152,7 @@ class Constants
 
 	#Constants for Org Policy
 	static [string] $OrgPolicyTagPrefix = "AzSKOrgName_"
+	static [int] $SASTokenExpiryReminderInDays = 30
 	# Local Subscription Report Constants
 	#static [string] $ComplianceReportContainerName = "compliance-state"
 	static [string] $ComplianceReportTableName = "ComplianceState"
@@ -165,7 +166,7 @@ class Constants
 	{
 		if(-not [string]::IsNullOrWhiteSpace($moduleName))
 		{
-			[Constants]::AzSKModuleName = $moduleName;
+			[Constants]::AzSKModuleName = $moduleName.Replace("azsk","AzSK");
 			[Constants]::AzSKAppFolderPath = $Env:LOCALAPPDATA + "\Microsoft\" + [Constants]::AzSKModuleName
 			[Constants]::AzSKTempFolderPath = $env:TEMP + "\" + [Constants]::AzSKModuleName + "\"
 		}

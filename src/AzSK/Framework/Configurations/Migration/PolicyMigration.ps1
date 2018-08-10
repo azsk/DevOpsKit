@@ -216,7 +216,7 @@ class PolicyMigrationHelper
 
 			try{
 				$newStorageRGName = $OrgRGName
-				$newStorageAccount = Find-AzureRmResource -ResourceGroupNameEquals $newStorageRGName -ResourceType 'Microsoft.Storage/storageAccounts'
+				$newStorageAccount = Get-AzureRmResource -ResourceGroupName $newStorageRGName -ResourceType 'Microsoft.Storage/storageAccounts'
 				if($newStorageAccount)
 				{
 					$storageHelper = [StorageHelper]::new($subscriptionId,$newStorageRGName,$newStorageAccount.Location, $newStorageAccount.Name);
