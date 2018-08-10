@@ -41,7 +41,7 @@ class SVTCommandBase: CommandBase {
         #Check if user has permission to read attestation
 		if($null -ne $this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadPermissions -eq 0)
 		{
-          [EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine+"`nWarning: The current user/login context does not have permission to access DevOps Kit control attestations. Due to this, control scan results may not reflect attestation.`nTo resolve this, request your subscription owner to grant 'Contributor' access on the '$([ConfigurationManager]::GetAzSKConfigData().AzSKRGName)' resource group in the target subscription.",[MessageType]::Warning);
+          [EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine+"`nWarning: The current user/login context does not have permission to access DevOps Kit control attestations.",[MessageType]::Warning);
         }
         $versionMessage = $this.CheckModuleVersion();
         if ($versionMessage) {
