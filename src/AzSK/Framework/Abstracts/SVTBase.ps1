@@ -1034,6 +1034,38 @@ class SVTBase: AzSKRoot
 		return $controlResult;
 	}
 
+	hidden [ControlResult] CheckRBACAccess([ControlResult] $controlResult, [PSObject] $accessList)
+	{
+		$resourceAccessList = $accessList | Where-Object { $_.Scope -eq $this.GetResourceId() };
+
+        $controlResult.VerificationResult = [VerificationResult]::Verify;
+
+		if(($resourceAccessList | Measure-Object).Count -ne 0)
+        {
+			$controlResult.SetStateData("Identities having RBAC access at resource level", ($resourceAccessList | Select-Object -Property ObjectId,RoleDefinitionId,RoleDefinitionName,Scope));
+
+            $controlResult.AddMessage("Validate that the following identities have explicitly provided with RBAC access to resource - [$($this.ResourceContext.ResourceName)]");
+            $controlResult.AddMessage([MessageData]::new($this.CreateRBACCountMessage($resourceAccessList), $resourceAccessList));
+        }
+        else
+        {
+            $controlResult.AddMessage("No identities have been explicitly provided with RBAC access to resource - [$($this.ResourceContext.ResourceName)]");
+        }
+
+        $inheritedAccessList = $accessList | Where-Object { $_.Scope -ne $this.GetResourceId() };
+
+		if(($inheritedAccessList | Measure-Object).Count -ne 0)
+        {
+            $controlResult.AddMessage("Note: " + $this.CreateRBACCountMessage($inheritedAccessList) + " have inherited RBAC access to resource. It's good practice to keep the RBAC access to minimum.");
+        }
+        else
+        {
+            $controlResult.AddMessage("No identities have inherited RBAC access to resource");
+        }
+
+		return $controlResult;
+	}
+
 	hidden [string] CreateRBACCountMessage([array] $resourceAccessList)
 	{
 		$nonNullObjectTypes = $resourceAccessList | Where-Object { -not [string]::IsNullOrEmpty($_.ObjectType) };
