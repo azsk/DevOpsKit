@@ -904,7 +904,7 @@ class VirtualMachine: SVTBase
 		$inbloundRules = $effectiveNSG.EffectiveSecurityRules | Where-Object { ($_.direction -eq "Inbound" -and $_.Name -notlike "defaultsecurityrules*") }
 		foreach($securityRule in $inbloundRules){
 			$range =$securityRule.destinationPortRange.Split("-")
-			if($range.Count -le 0) {
+			if($range.Count -eq 0) {
 				throw "Error while reading port range $($securityRule.destinationPortRange)."
 			}
 			else 
