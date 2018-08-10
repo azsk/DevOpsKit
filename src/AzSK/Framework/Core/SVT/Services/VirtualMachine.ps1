@@ -904,26 +904,29 @@ class VirtualMachine: SVTBase
 		$inbloundRules = $effectiveNSG.EffectiveSecurityRules | Where-Object { ($_.direction -eq "Inbound" -and $_.Name -notlike "defaultsecurityrules*") }
 		foreach($securityRule in $inbloundRules){
 			$range =$securityRule.destinationPortRange.Split("-")
-			if(($range | Measure-Object).Count -eq 2 )
+			if($range.Count -le 0) {
+				throw "Error while reading port range $($securityRule.destinationPortRange)."
+			}
+			else 
 			{
-				$startPort = $range[0]
-				$endPort = $range[1]
-				if(($port -ge $startPort -and $port -le $endPort) -and $securityRule.access.ToLower() -eq "deny")
-				{
-					break;
-				}
-				elseif(($port -ge $startPort -and $port -le $endPort) -and $securityRule.access.ToLower() -eq "allow")
-				{
-					$vulnerableRules += $securityRule
-				}
-				else
-				{
-					continue;
+				for ($i = 0; $i -lt ($range.Count - 1); $i++) {
+					$startPort = $range[$i]
+					$endPort = $range[$i+1]
+					$i = $i + 1
+					if(($port -ge $startPort -and $port -le $endPort) -and $securityRule.access.ToLower() -eq "deny")
+					{
+						break;
+					}
+					elseif(($port -ge $startPort -and $port -le $endPort) -and $securityRule.access.ToLower() -eq "allow")
+					{
+						$vulnerableRules += $securityRule
+					}
+					else
+					{
+						continue;
+					}
 				}
 			}
-			else{
-			    throw "Error while reading port range $($securityRule.destinationPortRange)."			
-			}				
 		}
 		return $vulnerableRules;
 	}
