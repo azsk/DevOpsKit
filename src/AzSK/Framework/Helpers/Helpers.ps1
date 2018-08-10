@@ -1462,17 +1462,18 @@ class Helpers {
         return $IsSASTokenUpdateRequired
     }
 
-    Static [string] GetUriWithUpdatedSASToken($policyUrl, $sasToken)
+    Static [string] GetUriWithUpdatedSASToken($policyUrl, $updateUrl)
 	{
         [System.Uri] $validatedUri = $null;
-        $UpdatedUri = $policyUrl
+        $UpdatedUrl = $policyUrl
 
-        if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se="))
+        if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se=") -and [System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri))
         {
-            $UpdatedUri = $policyUrl.Split("?")[0] + "$sasToken"
+
+            $UpdatedUrl = $policyUrl.Split("?")[0] + $updateUrl.Split("?")[0]
 
         }
-        return $UpdatedUri
+        return $UpdatedUrl
     }
 }
 
