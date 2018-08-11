@@ -4,6 +4,7 @@ class DataFactory: SVTBase
 {       
 
     hidden [PSObject] $ResourceObject;
+    hidden [ADFDetails] $adfDetails = [ADFDetails]::new()
 
     DataFactory([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
         Base($subscriptionId, $resourceGroupName, $resourceName) 
@@ -15,6 +16,8 @@ class DataFactory: SVTBase
         Base($subscriptionId, $svtResource) 
     { 
 		 $this.GetResourceObject();
+		 $this.GetADFDetails();
+		 $this.AddResourceMetadata($this.adfDetails);
     }
 
 	hidden [PSObject] GetResourceObject()
@@ -37,28 +40,49 @@ class DataFactory: SVTBase
 	
     hidden [ControlResult] CheckDataFactoryLinkedService([ControlResult] $controlResult)
     {
-		# Get all the Linked Service
-		$linkedServices = @();
-		$linkedServices += Get-AzureRmDataFactoryLinkedService -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName
 
-		if($linkedServices.Count -gt 0)
+		if(($this.adfDetails.LinkedserviceDetails | Measure-Object).Count -gt 0)
 		{           
-			$linkedServicesProps = $linkedServices | Select-Object -Property LinkedServiceName, Properties
-																	#@{ Label="Type"; Expression= { $_.Properties.Type } }, 
-																	#@{ Label="ProvisioningState"; Expression= { $_.Properties.ProvisioningState } }, 
-																	#@{ Label="TypeProperties"; Expression= { $_.Properties.TypeProperties } }, 
+			$linkedServicesProps = $this.adfDetails.LinkedserviceDetails | Select-Object -Property LinkedServiceName, Properties
 
 			$controlResult.SetStateData("Linked Service Details:", $linkedServicesProps);
+			 
+
 
 			$controlResult.AddMessage([VerificationResult]::Verify, 
-							"Validate that the following Linked Services are using encryption in transit. Total Linked Services found - $($linkedServices.Count)",
+							"Validate that the following Linked Services are using encryption in transit. Total Linked Services found - $($this.adfDetails.linkedservicedetails.Count)",
 							$linkedServicesProps);
 		}
 		else
 		{
 			$controlResult.AddMessage([VerificationResult]::Passed, 
 										[MessageData]::new("The are no Linked Services configured in Data Factory - ["+ $this.ResourceContext.ResourceName +"]"));
-		}                            
+		}       
+		                  
         return $controlResult;
     }
+
+    hidden GetADFDetails(){
+    
+        # Get linked services details
+		
+        $this.adfDetails.LinkedserviceDetails += Get-AzureRmDataFactoryLinkedService -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName
+		
+        # Get pipelines details
+
+		$this.adfDetails.Pipelinedetails += Get-AzureRmDataFactoryPipeline -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName
+
+        #Get Dataset details
+
+        $this.adfDetails.DatasetDetails +=  Get-AzureRmDataFactoryDataset -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName
+    
+    }
+}
+
+Class ADFDetails{
+
+[PSObject]$Pipelinedetails;
+[PSObject]$LinkedserviceDetails;
+[PSObject]$DatasetDetails;
+
 }
