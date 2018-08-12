@@ -12,7 +12,7 @@
           "rationale": "",
           "recommendation": "",
           "severity": "High",
-          "jsonPath": "$.properties.monitorConfig.protocol",
+          "jsonPath": [ "$.properties.monitorConfig.protocol" ],
           "matchType": "StringSingleToken",
           "data": {
             "type": "Allow",
@@ -397,7 +397,7 @@
           "rationale": "App Service deployed on multiple instances ensures that the App Service remains available even if an instance is down.",
           "recommendation": "Run command 'Set-AzureRmAppServicePlan -Name '<AppServicePlanName>' -ResourceGroupName '<RGName>' -NumberofWorkers '<NumberofInstances>''. Run 'Get-Help Set-AzureRmAppServicePlan -full' for more help.",
           "severity": "Medium",
-          "jsonPath": [ "$.sku.copies", "$.sku.capacity" ],
+          "jsonPath": [ "$.sku.capacity" ],
           "matchType": "IntegerValue",
           "data": {
             "type": "GreaterThan",
@@ -413,7 +413,7 @@
           "rationale": "Remote debugging requires inbound ports to be opened on App Service. These ports become easy targets for compromise from various internet based attacks.",
           "recommendation": "Go to Azure Portal --> your App Service --> Settings --> Application Settings --> Remote Debugging --> Click on 'OFF'.",
           "severity": "High",
-          "jsonPath": [ "$.properties.siteConfig.remoteDebuggingEnabled" ],
+          "jsonPath": [ "$.properties.siteConfig.remoteDebuggingEnabled", "$.properties.remoteDebuggingEnabled" ],
           "matchType": "Boolean",
           "data": { "value": false }
         },
@@ -426,7 +426,7 @@
           "rationale": "",
           "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -WebSocketsEnabled `$false'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
           "severity": "Medium",
-          "jsonPath": [ "$.properties.siteConfig.webSocketsEnabled" ],
+          "jsonPath": [ "$.properties.siteConfig.webSocketsEnabled", "$.properties.webSocketsEnabled" ],
           "matchType": "Boolean",
           "data": { "value": false }
         },
@@ -439,7 +439,7 @@
           "rationale": "By default, websites are unloaded if they have been idle for some period of time. However, this may not be ideal for 'high availability' requirements. Configuring 'Always On' can help prevent app services from getting timed out.",
           "recommendation": "Go to Azure Portal --> your App Service --> Settings --> Application Settings --> Always On --> Click on 'ON'.",
           "severity": "Medium",
-          "jsonPath": [ "$.properties.siteConfig.alwaysOn" ],
+          "jsonPath": [ "$.properties.siteConfig.alwaysOn", "$.properties.alwaysOn" ],
           "matchType": "Boolean",
           "data": { "value": true }
         },
@@ -452,7 +452,7 @@
           "rationale": "",
           "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.0''. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
           "severity": "Low",
-          "jsonPath": [ "$.properties.siteConfig.netFrameworkVersion" ],
+          "jsonPath": [ "$.properties.siteConfig.netFrameworkVersion", "$.properties.netFrameworkVersion" ],
           "matchType": "StringSingleToken",
           "data": {
             "type": "Allow",
@@ -469,7 +469,7 @@
           "rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
           "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
           "severity": "Medium",
-          "jsonPath": [ "$.properties.siteConfig.requestTracingEnabled" ],
+          "jsonPath": [ "$.properties.siteConfig.requestTracingEnabled", "$.properties.requestTracingEnabled" ],
           "matchType": "Boolean",
           "data": { "value": true }
         },
@@ -482,7 +482,7 @@
           "rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
           "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
           "severity": "Medium",
-          "jsonPath": [ "$.properties.siteConfig.httpLoggingEnabled" ],
+          "jsonPath": [ "$.properties.siteConfig.httpLoggingEnabled", "$.properties.httpLoggingEnabled" ],
           "matchType": "Boolean",
           "data": { "value": true }
         },
@@ -495,7 +495,7 @@
           "rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
           "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
           "severity": "Medium",
-          "jsonPath": [ "$.properties.siteConfig.detailedErrorLoggingEnabled" ],
+          "jsonPath": [ "$.properties.siteConfig.detailedErrorLoggingEnabled", "$.properties.detailedErrorLoggingEnabled" ],
           "matchType": "Boolean",
           "data": { "value": true }
         },
@@ -523,7 +523,7 @@
           "rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
           "recommendation": "",
           "severity": "High",
-          "jsonPath": [ "$.properties.siteConfig.siteAuthEnabled" ],
+          "jsonPath": [ "$.properties.siteConfig.siteAuthEnabled", "$.properties.siteAuthEnabled" ],
           "matchType": "Boolean",
           "data": {
             "value": true
@@ -538,7 +538,7 @@
           "rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
           "recommendation": "",
           "severity": "High",
-          "jsonPath": [ "$.properties.siteConfig.siteAuthSettings.clientId" ],
+          "jsonPath": [ "$.properties.siteConfig.siteAuthSettings.clientId", "$.properties.siteAuthSettings.clientId" ],
           "matchType": "StringWhitespace",
           "data": {
             "value": false
