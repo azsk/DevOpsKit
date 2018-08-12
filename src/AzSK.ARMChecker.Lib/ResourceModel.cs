@@ -11,9 +11,29 @@ namespace AzSK.ARMChecker.Lib
         public string ResourceName { get; set; }
         public string ResourceType { get; set; }
         public JObject Resource { get; set; }
-
         public string Token { get; set; }
-        // delete this
-        public List<ResourceModel> LinkedResources = new List<ResourceModel>();
     }
+
+    public class ResourceNode : ICloneable
+    {
+        public string Token { get; set; }
+
+        public ResourceModel Resource { get; set; }
+
+        public ResourceNode ChildResource { get; set; }
+
+        public ResourceNode LastChildResource { get; set; }
+
+        public object Clone()
+        {
+            ResourceNode nd = new ResourceNode();
+            nd.Resource = this.Resource;
+            nd.Token = this.Token;
+            nd.ChildResource = this.ChildResource;
+            nd.LastChildResource = this.LastChildResource;
+            return nd;
+        }
+    }
+
+
 }

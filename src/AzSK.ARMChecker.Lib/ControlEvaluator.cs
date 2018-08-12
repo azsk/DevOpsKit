@@ -56,7 +56,7 @@ namespace AzSK.ARMChecker.Lib
         {
             var result = ExtractSingleToken(control, resource, out bool actual, out BooleanControlData match);
             result.ExpectedValue = "'" + match.Value.ToString() + "'";
-            result.ExpectedProperty = control.JsonPath.ToSingleString();
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
             if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
             if (actual == match.Value)
             {
@@ -69,7 +69,7 @@ namespace AzSK.ARMChecker.Lib
         {
             var result = ExtractSingleToken(control, resource, out int actual, out IntegerValueControlData match);
             result.ExpectedValue = match.Type.ToString() + " " + match.Value.ToString();
-            result.ExpectedProperty = control.JsonPath.ToSingleString();
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
             if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
             switch (match.Type)
             {
@@ -90,9 +90,9 @@ namespace AzSK.ARMChecker.Lib
 
         private static ControlResult EvaluateItemCount(ResourceControl control, JObject resource)
         {
-            var result = ExtractMultiToken(control, resource, out IEnumerable < object > actual, out IntegerValueControlData match);
+            var result = ExtractMultiToken(control, resource, out IEnumerable<object> actual, out IntegerValueControlData match);
             result.ExpectedValue = "Count " + match.Type.ToString() + " " + match.Value.ToString();
-            result.ExpectedProperty = control.JsonPath.ToSingleString();
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
             if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
             var count = actual.Count();
             switch (match.Type)
@@ -116,7 +116,7 @@ namespace AzSK.ARMChecker.Lib
         {
             var result = ExtractSingleToken(control, resource, out string actual, out BooleanControlData match);
             result.ExpectedValue = (match.Value) ? "Null string" : "Non-null string";
-            result.ExpectedProperty = control.JsonPath.ToSingleString();
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
             if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
             if (string.IsNullOrWhiteSpace(actual) == match.Value)
             {
@@ -129,7 +129,7 @@ namespace AzSK.ARMChecker.Lib
         {
             var result = ExtractSingleToken(control, resource, out string actual, out StringSingleTokenControlData match);
             result.ExpectedValue = match.Type + " '" + match.Value + "'";
-            result.ExpectedProperty = control.JsonPath.ToSingleString();
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
             if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
             if (match.Value.Equals(actual,
                 match.IsCaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
@@ -153,7 +153,7 @@ namespace AzSK.ARMChecker.Lib
         {
             var result = ExtractSingleToken(control, resource, out object actual, out BooleanControlData match);
             result.ExpectedValue = "Verify current value";
-            result.ExpectedProperty = control.JsonPath.ToSingleString();
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
             if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
             result.VerificationResult = VerificationResult.Passed;
             return result;
