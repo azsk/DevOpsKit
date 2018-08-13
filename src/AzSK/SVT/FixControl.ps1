@@ -42,7 +42,7 @@ function Repair-AzSKAzureServicesSecurity
 
 		[string]
         [Parameter(Mandatory = $true, HelpMessage = "ResourceGroups for which the security evaluation has to be performed. Comma seperated values are supported. Wildcards are not permitted. By default, the command gets all resources in the subscription.")]
-		[Alias("pfp")]
+		[Alias("pafp")]
 		$ParameterFilePath,
 
 		#[string]
@@ -149,7 +149,7 @@ function Repair-AzSKSubscriptionSecurity
 
 		[string]
         [Parameter(Mandatory = $true, HelpMessage = "ResourceGroups for which the security evaluation has to be performed. Comma separated values are supported. Wildcards are not permitted. By default, the command gets all resources in the subscription.")]
-		[Alias("pfp")]
+		[Alias("pafp")]
 		$ParameterFilePath,
 
 		#[string]

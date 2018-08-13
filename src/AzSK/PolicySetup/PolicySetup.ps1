@@ -276,40 +276,48 @@ function Get-AzSKOrganizationPolicyStatus
 		[Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Custom")]
 		[Parameter(Mandatory = $true, Position = 0, ParameterSetName = "DownloadPolicy")]
 		[ValidateNotNullOrEmpty()]
+		[Alias("sid","HostSubscriptionId","hsid","s")]
 		$SubscriptionId,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
 		[Parameter(Mandatory = $true, ParameterSetName = "DownloadPolicy")]
         [string]
+		[Alias("oname")]
 		$OrgName,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "DownloadPolicy")]
         [string]
+		[Alias("dname")]
 		$DepartmentName,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
 		[Parameter(Mandatory = $false, ParameterSetName = "DownloadPolicy")]
         [string]
+		[Alias("rgn")]
 		$ResourceGroupName,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
 		[Parameter(Mandatory = $false, ParameterSetName = "DownloadPolicy")]
         [string]
+		[Alias("san")]
 		$StorageAccountName,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
         [string]
+		[Alias("ainame")]
 		$AppInsightName,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "DownloadPolicy")]
         [switch]
+		[Alias("dpol")]
 		$DownloadPolicy,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "DownloadPolicy")]
 		[Parameter(Mandatory = $true, ParameterSetName = "LocalPolicyCheck")]
 		[string]
+		[Alias("PolicyFolderName","pfp")]
 		$PolicyFolderPath
 	)
 
