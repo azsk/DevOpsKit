@@ -14,15 +14,8 @@ class DataFactoryV2: SVTBase
         Base($subscriptionId, $svtResource) 
     { 
          $this.GetResourceObject();
-		 $this.GetADFV2Details();
-		 
-         try{
-            
-            $this.AddResourceMetadata($this.adfDetails);
-         }
-		 catch{
-            throw ([SuppressedException]::new(("Error while adding resource metadata!", [SuppressedExceptionType]::Generic)));
-         }
+         $this.AddResourceMetadata($this.adfDetails);
+
 
     }
 
@@ -40,6 +33,7 @@ class DataFactoryV2: SVTBase
 				}
             }
         }
+        $this.GetADFV2Details();
         return $this.ResourceObject;
     }
 
@@ -49,30 +43,37 @@ class DataFactoryV2: SVTBase
 		
         $this.adfDetails.LinkedserviceDetails += Get-AzureRmDataFactoryV2LinkedService -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName
 	    
-        # Get pipelines count
-
-        $pipelines = @();
-        $pipelines += Get-AzureRmDataFactoryV2Pipeline -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
-		$this.adfDetails.PipelinesCount = ($pipelines | Measure-Object).Count
+        try{
         
-        #Get Dataset count
-        $datasets = @();
-        $datasets += Get-AzureRmDataFactoryV2Dataset -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
-        $this.adfDetails.DatasetsCount +=  ($datasets | Measure-Object).Count
+            # Get pipelines count
 
-        #Get Triggers count
-        $triggers = @();
-        $triggers += Get-AzureRmDataFactoryV2Trigger -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
-        $this.adfDetails.TriggersCount +=  ($triggers | Measure-Object).Count;
+            $pipelines = @();
+            $pipelines += Get-AzureRmDataFactoryV2Pipeline -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
+		    $this.adfDetails.PipelinesCount = ($pipelines | Measure-Object).Count
+        
+            #Get Dataset count
+            $datasets = @();
+            $datasets += Get-AzureRmDataFactoryV2Dataset -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
+            $this.adfDetails.DatasetsCount +=  ($datasets | Measure-Object).Count
+
+            #Get Triggers count
+            $triggers = @();
+            $triggers += Get-AzureRmDataFactoryV2Trigger -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
+            $this.adfDetails.TriggersCount +=  ($triggers | Measure-Object).Count;
+        }
+        catch{
+
+            throw ([SuppressedException]::new(("Error while getting pipelines, datasets or trigger details!", [SuppressedExceptionType]::Generic)));
+        }
     }
 
 }
 
 Class ADFV2Details{
 
-[int]$PipelinesCount;
+[int]$PipelinesCount; #default 0
 [PSObject]$LinkedserviceDetails;
-[int]$DatasetsCount;
-[PSObject]$TriggersCount;
+[int]$DatasetsCount; #default 0
+[PSObject]$TriggersCount; #default 0
 
 }
