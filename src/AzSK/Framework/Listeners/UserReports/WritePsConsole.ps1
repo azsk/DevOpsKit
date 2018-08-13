@@ -530,7 +530,7 @@ class WritePsConsole: FileOutputBase
 		$paramlist = @()
             #Looping on parameters and creating list of smallest alias and creating parameter detail object
             $this.InvocationContext.BoundParameters.Keys | % {
-                $key = $this.InvocationContext.MyCommand.Parameters.$_.Aliases | Where {$_.Length -lt 5}
+                $key = $this.InvocationContext.MyCommand.Parameters.$_.Aliases #| Where {$_.Length -lt 5}
                 $key = $key | sort length -Descending | select -Last 1
                 $val = $this.InvocationContext.BoundParameters[$_]
 
