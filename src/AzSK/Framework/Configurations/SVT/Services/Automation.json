@@ -63,7 +63,7 @@
       "Automated": "Yes",
       "MethodName": "CheckVariables",
       "Rationale": "Encrypted variables are stored securely by the Azure platform. Moreover, their values cannot be retrieved from the Get-AzureRmAutomationVariable cmdlet that ships as part of the Azure PowerShell module.",
-      "Recommendation": "Encrypt variable if it stores sensitive data. Run command Set-AzureRmAutomationVariable -AutomationAccountName '{AutomationAccountName}' -Encrypted `$true -Name '{VariableName}' -ResourceGroupName '{ResourceGroupName}' -Value '{Value}",
+      "Recommendation": "Encrypt variable if it stores sensitive data. Run command Set-AzureRmAutomationVariable -AutomationAccountName '{AutomationAccountName}' -Encrypted `$true -Name '{VariableName}' -ResourceGroupName '{ResourceGroupName}' -Value '{Value}'",
       "Tags": [
         "SDL",
         "TCP",
