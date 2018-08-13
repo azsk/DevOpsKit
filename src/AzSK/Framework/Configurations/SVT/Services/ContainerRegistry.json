@@ -34,7 +34,8 @@
             "SDL",
             "TCP",
             "Manual",
-            "AuthZ"
+            "AuthZ",
+            "GraphRead"
         ]
       },
       {
@@ -107,15 +108,15 @@
         "Enabled": true
       },
       {
-        "ControlID": "Azure_ContainerRegistry_DP_Push_Only_Trusted_Images",
-        "Description": "Only trusted images must be pushed in Container Registry",
+        "ControlID": "Azure_ContainerRegistry_DP_Enable_Content_Trust",
+        "Description": "Content trust in Container Registry must be enabled",
         "Id": "ContainerRegistry170",
         "ControlSeverity": "Medium",
         "Enabled": true,
         "Automated": "Yes",
         "MethodName": "CheckContentTrust",
         "Rationale": "Content trust gives the ability to verify both the integrity and the publisher of all the data received from a Registry over any channel. If a container image is served from an untrusted registry, the image itself may not be trustworthy/stable. Running such a compromised image can lead to loss of sensitive enterprise data.",
-        "Recommendation": "Go to Azure Portal --> your Container Registry --> Content Trust --> Enabled. This feature is currently available only in Premium SKU. After enabling Content Trust, push only trusted images in the repositories. Refer: https://aka.ms/acr/content-trust",
+        "Recommendation": "Go to Azure Portal --> your Container Registry --> Content Trust --> Enabled. This feature is currently available only in Premium SKU. After enabling Content Trust, push only trusted images in the repositories. Refer: https://aka.ms/acr/content-trust.",
         "Tags": [
           "SDL",
           "Best Practice",
@@ -139,6 +140,23 @@
           "Audit"
         ],
         "Enabled": true
+      },
+      {
+        "ControlID": "Azure_ContainerRegistry_DP_Push_Only_Signed_Images",
+        "Description": "Only signed images must be pushed in Container Registry",
+        "Id": "ContainerRegistry190",
+        "ControlSeverity": "Medium",
+        "Enabled": true,
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Content trust gives the ability to verify both the integrity and the publisher of all the data received from a Registry over any channel. If a container image is served from an untrusted registry, the image itself may not be trustworthy/stable. Running such a compromised image can lead to loss of sensitive enterprise data.",
+        "Recommendation": "Run command 'az acr repository show -n <RegistryName> --image <IamgeName>:<Tag>' from Azure cli to get signature details of the images. Refer: https://docs.docker.com/engine/security/trust/content_trust/#push-trusted-content",
+        "Tags": [
+          "SDL",
+          "Best Practice",
+          "Manual",
+          "DP"
+        ]
       }
     ]
  }

@@ -80,7 +80,7 @@ class ContainerRegistry: SVTBase
     hidden [ControlResult] CheckContainerWebhooks([ControlResult] $controlResult)
     {
 
-        $webhooks = Get-AzureRmContainerRegistryWebhook -RegistryName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+        $webhooks = Get-AzureRmContainerRegistryWebhook -RegistryName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction SilentlyContinue
 
         if(($webhooks | Measure-Object).Count -gt 0)
         {
