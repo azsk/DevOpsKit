@@ -102,6 +102,7 @@
     <Compile Include="Framework\Configurations\ContinuousAssurance\Alert_Runbook.ps1" />
     <Compile Include="Framework\Configurations\Migration\Migration.ps1" />
     <Compile Include="Framework\Configurations\Migration\PolicyMigration.ps1" />
+    <Compile Include="Framework\Configurations\SVT\Services\ContainerRegistry.json" />
     <Compile Include="Framework\Core\ARMChecker\ARMCheckerStatus.ps1" />
     <Compile Include="Framework\Core\AzSKInfo\BasicInfo.ps1" />
     <Compile Include="Framework\Core\AzSKInfo\ComplianceInfo.ps1" />
@@ -117,6 +118,8 @@
     <Compile Include="Framework\Core\SVT\Services\APIConnection.ps1" />
     <Compile Include="Framework\Core\SVT\Services\BotService.ps1" />
     <Compile Include="Framework\Core\SVT\Services\ContainerInstances.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\ContainerRegistry.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\DataFactoryV2.ps1" />
     <Compile Include="Framework\Helpers\AliasHelper.ps1" />
     <Compile Include="Framework\Helpers\OldConstants.ps1" />
     <Compile Include="Framework\Helpers\OMSHelper.ps1" />
@@ -303,6 +306,7 @@
     <Content Include="Framework\Configurations\SVT\Services\CDN.json" />
     <Content Include="Framework\Configurations\SVT\Services\CloudService.json" />
     <Content Include="Framework\Configurations\SVT\Services\ContainerInstances.json" />
+    <Content Include="Framework\Configurations\SVT\Services\DataFactoryV2.json" />
     <Content Include="Framework\Configurations\SVT\Services\EventHub.json" />
     <Content Include="Framework\Configurations\SVT\Services\ERvNet.json" />
     <Content Include="Framework\Configurations\SVT\Services\LoadBalancer.json" />

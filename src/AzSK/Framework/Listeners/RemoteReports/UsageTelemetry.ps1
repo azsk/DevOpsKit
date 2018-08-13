@@ -542,6 +542,13 @@ class UsageTelemetry: ListenerBase {
 				# No need to break execution
 			}
 			try{
+				$eventObj.properties.Add("ScannerModuleName", $Publisher.GetModuleName());
+			}
+			catch{
+				# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
+				# No need to break execution
+			}
+			try{
 				$eventObj.properties.Add("ScannerVersion", $Publisher.GetCurrentModuleVersion());
 			}
 			catch{
