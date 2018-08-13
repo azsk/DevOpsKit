@@ -34,7 +34,6 @@ class AzSKSettings {
 	[bool] $LocalEnableControlTelemetry;
 	[bool] $PrivacyNoticeAccepted = $false;
 	[bool] $IsCentralScanModeOn = $false;
-	[string] $'$schema'
     hidden static [AzSKSettings] $Instance = $null;
 	hidden static [string] $FileName = "AzSKSettings.json";
 	[bool] $StoreComplianceSummaryInUserSubscriptions;
