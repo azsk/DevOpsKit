@@ -4,6 +4,7 @@ class SVTConfig
     [string] $FeatureName = ""
     [string] $Reference = ""
     [bool] $IsMaintenanceMode 
+    [string] $'$schema'
     [ControlItem[]] $Controls = @();
 
 	static [SVTConfig] LoadServerConfigFile([string] $fileName, [bool] $useOnlinePolicyStore, [string] $onlineStoreUri, [bool] $enableAADAuthForOnlinePolicyStore)

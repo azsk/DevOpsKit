@@ -840,15 +840,12 @@ class PolicySetup: CommandBase
 					$resultStatus = "Failed"
 					$shouldReturn = $false
 					$InstallOutput.Status = $false  
-
 				}	
 				else {
 					$resultMsg = ""
 					$resultStatus = "OK"
 					$InstallOutput.Status = $true
-				}
-
-				
+				}				
 			}
 			else
 			{
@@ -1288,13 +1285,33 @@ class PolicySetup: CommandBase
 				try{
 					$policyContent = Get-Content  $_.FullName | ConvertFrom-Json 
 
+					$schemaUrl = [string]::Empty
+					[Helpers]::CheckMember($policyContent,"`$schema")
 					#Validate policy against the schema template
-					if([Helpers]::CheckMember($policyContent,"`$schema"))
+					if(-not [string]::IsNullOrEmpty($schemaUrl))
 					{
 						$schemaDefination = Invoke-RestMethod `
 						-Method GET `
-						-Uri $policyContent.'$schema'  #`
+						-Uri $policyContent.'$schema'  #
 						#-UseBasicParsing
+					}
+					else
+					{
+						$azskConfig = [ConfigurationManager]::GetAzSKConfigData()
+						
+						if([Helpers]::CheckMember($policyContent,"FeatureName"))
+						{
+							$policyName = "ServiceControl"
+						}
+						else
+						{
+							$policyName = $_.Name.Replace(".json","")
+						}
+						$schemaUrl = $azskConfig.SchemaTemplateURL + $policyName
+						$schemaDefination = Invoke-RestMethod `
+						-Method GET `
+						-Uri $schemaUrl
+					}
 						if($schemaDefination)
 						{
 							$schemaDefinationContent = $schemaDefination | ConvertTo-Json -Depth 10
@@ -1317,7 +1334,7 @@ class PolicySetup: CommandBase
 								$messages += $ErrorMessages								
 							}
 						}											
-					}
+					
 
 				}
 				catch
