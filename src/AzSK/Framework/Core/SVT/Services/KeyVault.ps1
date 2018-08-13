@@ -142,6 +142,12 @@ class KeyVault: SVTBase
 					}
 				}
 			}
+			else
+			{
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+				$controlResult.AddMessage([MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+
+			}
 			
 		return $this.AllEnabledKeys;
 	}
@@ -187,9 +193,15 @@ class KeyVault: SVTBase
 				}
 			}
 		}
+		else
+		{
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			$controlResult.AddMessage([MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+
+		}
 		return $this.AllEnabledSecrets;
 	}
-
+	
     hidden [ControlResult] CheckKeyHSMProtected([ControlResult] $controlResult)
     {
 
