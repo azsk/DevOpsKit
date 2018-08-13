@@ -1470,7 +1470,7 @@ class Helpers {
         if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se=") -and [System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri))
         {
 
-            $UpdatedUrl = $policyUrl.Split("?")[0] + $updateUrl.Split("?")[0]
+            $UpdatedUrl = $policyUrl.Split("?")[0] + "?" + $updateUrl.Split("?")[1]
 
         }
         return $UpdatedUrl

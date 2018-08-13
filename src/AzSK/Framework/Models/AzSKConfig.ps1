@@ -41,6 +41,8 @@ class AzSKConfig
 	[string] $PolicyOrgName;
 	[bool] $StoreComplianceSummaryInUserSubscriptions;
 	[string] $LatestPSGalleryVersion;
+	[string] $SchemaTemplateURL;
+	[string] $'$schema';
 	hidden static [AzSKConfig] $Instance = $null;
 	
     static [AzSKConfig] GetInstance([bool] $useOnlinePolicyStore, [string] $onlineStoreUri, [bool] $enableAADAuthForOnlinePolicyStore)

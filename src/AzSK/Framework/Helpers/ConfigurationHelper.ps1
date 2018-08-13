@@ -19,7 +19,7 @@ class ConfigurationHelper {
 	}
     hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson, $path) {
 		#Load file from AzSK App folder
-		$rootConfigPath = $path ;	
+		$rootConfigPath = $path + "\" ;	
         
 		$extension = [System.IO.Path]::GetExtension($fileName);
 
@@ -104,7 +104,7 @@ class ConfigurationHelper {
 							}
 							catch{
 								if(Test-Path $onlineStoreUri)
-								{
+								{	
 									[EventBase]::PublishGenericCustomMessage("Running Org-Policy from local policy store location: [$onlineStoreUri]", [MessageType]::Warning);
 									$serverFileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName, $true, $onlineStoreUri)
 									[ConfigurationHelper]::LocalPolicyEnabled = $true
