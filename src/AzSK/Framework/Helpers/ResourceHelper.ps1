@@ -72,7 +72,7 @@ class StorageHelper: ResourceGroupHelper
 	[int] $HaveWritePermissions = 0;
 	[int] $retryCount = 3;
 	[int] $sleepIntervalInSecs = 10;
-	[StorageHelper] $AzSKStorageAccount = $null
+	static [StorageHelper] $AzSKStorageAccount = $null
 	hidden [string] $ResourceType = "Microsoft.Storage/storageAccounts";
 
 	StorageHelper([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceGroupLocation, [string] $storageAccountName):
@@ -153,12 +153,13 @@ class StorageHelper: ResourceGroupHelper
                     $isAzSKStorage = $true
                 }               
 			}   
-			if($isAzSKStorage)
+			
+			#precompute storage access permissions for the current scan account
+			$this.ComputePermissions();
+            if($isAzSKStorage)
 			{
 				[StorageHelper]::AzSKStorageAccount = $this.StorageAccount
 			}
-			#precompute storage access permissions for the current scan account
-			$this.ComputePermissions();
 		}
 	}
 
