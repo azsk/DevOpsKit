@@ -109,7 +109,7 @@ class ContainerRegistry: SVTBase
         } 
         catch
         { 
-            return $null;
+            return $controlResult;
         }
   
         $isPolicyEnabled = $false
@@ -134,6 +134,7 @@ class ContainerRegistry: SVTBase
             $controlResult.AddMessage([VerificationResult]::Failed, 
                             [MessageData]::new("Content Trust is not enabled for the Container Registry - ["+ $this.ResourceContext.ResourceName +"]"));
         }
+        
         return $controlResult;
     }
 }
