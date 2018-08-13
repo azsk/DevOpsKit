@@ -37,5 +37,5 @@
    "SupportDL": "azsksupext@microsoft.com",
   "PolicyOrgName": "org-neutral",
   "StoreComplianceSummaryInUserSubscriptions": false,
-  "SchemaTemplateURL": "https://azsk-schema.azureedge.net/schemas/3.1803.0/"
+  "SchemaTemplateURL": "https://azsdkossep.azureedge.net/schemas/3.1803.0/"
 }
