@@ -2,7 +2,6 @@ using namespace Newtonsoft.Json
 using namespace Microsoft.Azure.Commands.Common.Authentication.Abstractions
 using namespace Microsoft.Azure.Commands.Common.Authentication
 using namespace Microsoft.Azure.Management.Storage.Models
-
 Set-StrictMode -Version Latest
 class Helpers {
 
@@ -1446,9 +1445,11 @@ class Helpers {
 	{
         [System.Uri] $validatedUri = $null;
         $IsSASTokenUpdateRequired = $false
+        
         if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se="))
         {
-            $decodedUrl = [System.Web.HttpUtility]::UrlDecode($validatedUri.Query)
+            [Reflection.Assembly]::LoadWithPartialName("System.Web")| out-null
+            $decodedUrl = [System.Net.WebUtility]::UrlDecode($validatedUri.Query)
             $pattern = '&se=(.*?)&'
             [DateTime] $expiryDate = Get-Date 
             if([DateTime]::TryParse([Helpers]::GetSubString($decodedUrl,$pattern),[ref] $expiryDate))
