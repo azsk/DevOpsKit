@@ -400,7 +400,8 @@ function IsPolicyUrlUpdateRequired($policyUrl)
     $IsSASTokenUpdateRequired = $false
     if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se="))
     {
-        $decodedUrl = [System.Web.HttpUtility]::UrlDecode($validatedUri.Query)
+		[Reflection.Assembly]::LoadWithPartialName("System.Web")| out-null
+        $decodedUrl = [System.Web.WebUtility]::UrlDecode($validatedUri.Query)
         $pattern = '&se=(.*?)&'
         [DateTime] $expiryDate = Get-Date 
         if([DateTime]::TryParse((GetSubString $decodedUrl $pattern),[ref] $expiryDate)
