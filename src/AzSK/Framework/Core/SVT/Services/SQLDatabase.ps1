@@ -44,10 +44,6 @@ class SQLDatabase: SVTBase
 				$this.SqlDatabases = @();
 				$this.SqlDatabases += Get-AzureRmSqlDatabase -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop |
 								Where-Object { $_.DatabaseName -ne "master" }
-				$this.ChildResourceNames = @();
-				$this.SqlDatabases | ForEach-Object {
-					$this.ChildResourceNames += $_.DatabaseName;
-				}
 			}
 			catch
 			{

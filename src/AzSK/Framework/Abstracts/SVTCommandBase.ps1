@@ -26,19 +26,6 @@ class SVTCommandBase: CommandBase {
         $this.AttestationUniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
         #Fetching the resourceInventory once for each SVT command execution
         [ResourceInventory]::Clear();
-
-         #Create necessary resources to save compliance data in user's subscription
-         if($this.IsLocalComplianceStoreEnabled)
-         {
-            if($null -eq $this.ComplianceReportHelper)
-            {
-                $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());                  
-            }
-            if(-not $this.ComplianceReportHelper.HaveRequiredPermissions())
-            {
-                $this.IsLocalComplianceStoreEnabled = $false;
-            }
-         }
     }
 
     hidden [SVTEventContext] CreateSVTEventContextObject() {
@@ -73,13 +60,15 @@ class SVTCommandBase: CommandBase {
         
         #check and delete if older RG found. Remove this code post 8/15/2018 release
         $this.RemoveOldAzSDKRG();
-       
-		$this.InitializeControlState();
-		#Check if user has permission to read attestation
-		if($null -ne $this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadPermissions -eq 0)
-		{
-			$this.PublishCustomMessage("`nWarning: The current user/login context does not have permission to access DevOps Kit control attestations. Due to this, control scan results may not reflect attestation.`nTo resolve this, request your subscription owner to grant 'Contributor' access on the 'AzSKRG' resource group in the target subscription. ",[MessageType]::Warning);
-		}
+        #Create necessary resources to save compliance data in user's subscription
+        if($this.IsLocalComplianceStoreEnabled)
+        {
+            $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());  
+            if(-not $this.ComplianceReportHelper.HaveRequiredPermissions())
+            {
+                $this.IsLocalComplianceStoreEnabled = $false;
+            }
+        }
         $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
 

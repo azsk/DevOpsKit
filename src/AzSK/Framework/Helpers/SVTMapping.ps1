@@ -237,12 +237,6 @@ class SVTMapping
 			ClassName = "ContainerInstances";
 			JsonFileName = "ContainerInstances.json";
 			ResourceTypeName = "ContainerInstances";
-        },
-		[ResourceTypeMapping]@{
-            ResourceType = "Microsoft.ContainerRegistry/registries";
-			ClassName = "ContainerRegistry";
-			JsonFileName = "ContainerRegistry.json";
-			ResourceTypeName = "ContainerRegistry";
         }
     );
 

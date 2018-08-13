@@ -29,36 +29,30 @@ function Set-AzSKOMSSettings
 		[Parameter(Mandatory = $false, HelpMessage="Workspace ID of your OMS instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("owid")]
         $OMSWorkspaceID,
 
         [Parameter(Mandatory = $false, HelpMessage="Shared key of your OMS instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("okey")]
         $OMSSharedKey,
 
 		[Parameter(Mandatory = $false, HelpMessage="Alternate Workspace ID of your OMS instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("aowid")]
         $AltOMSWorkspaceID,
 
         [Parameter(Mandatory = $false, HelpMessage="Shared key of your alternate OMS instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("aokey")]
         $AltOMSSharedKey,
 
 		[Parameter(Mandatory = $false, HelpMessage="Provide the source of OMS Events.(e.g. CC,CICD,SDL)", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("so")]
         $Source,
 
         [Parameter(Mandatory = $true, HelpMessage="Use -Disable option to clean the OMS setting under the current instance.", ParameterSetName = "Disable")]
         [switch]
-		[Alias("dsbl")]
         $Disable
 
     )
@@ -162,33 +156,27 @@ function Install-AzSKOMSSolution
         [Parameter(ParameterSetName="NewModel", HelpMessage="Id of subscription hosting OMS workspace", Mandatory = $true)]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("omssubid","omssid")]
 		$OMSSubscriptionId,  
 				
 		[Parameter(ParameterSetName="NewModel", HelpMessage="Resource group hosting OMS workspace", Mandatory = $true)]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("omsrg")]
 		$OMSResourceGroup, 
 
 		[Parameter(ParameterSetName="NewModel", HelpMessage="Workspace ID of the OMS workspace name which will be used for monitoring.", Mandatory = $true)]
         [string]
-		[Alias("owid")]
 		[ValidateNotNullOrEmpty()]
 		$OMSWorkspaceId, 
 		
 		[Parameter(ParameterSetName="NewModel", HelpMessage="Provide the custom name for your devopskit security view", Mandatory = $false)]
         [string]
-		[Alias("vname")]
 		$ViewName = "SecurityCompliance", 
                 		
 		[switch]
-		[Alias("vonly")]
 		[Parameter(Mandatory = $False, HelpMessage="Provide this debug switch to validate the deployment. It is a predeployment check which validates all the provided params.")]
 		$ValidateOnly,
 		
 		[switch]
-		[Alias("dnof")]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
 		$DoNotOpenOutputFolder
     )

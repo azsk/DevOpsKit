@@ -222,7 +222,7 @@ function RunAzSKScanForASub
 
     #-------------------------------------Resources Scan------------------------------------------------------------------
 
-	
+	Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
     $serviceScanTimer = [System.Diagnostics.Stopwatch]::StartNew();
     PublishEvent -EventName "CA Scan Services Started"
 
@@ -234,7 +234,6 @@ function RunAzSKScanForASub
 	}
 	elseif($null -eq $WebHookDataforResourceCreation)
 	{
-		Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
 		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
 	}
    
@@ -713,27 +712,26 @@ try {
 		
 	#Scan and save results to storage
     RunAzSKScan
-	if($null -eq $WebHookDataforResourceCreation)
-	{
-		if ($isAzSKAvailable) {
+
+	if ($isAzSKAvailable) {
 		#Remove helper schedule as AzSK module is available
 		Write-Output("SA: Disabling helper schedule...")
 		DisableHelperSchedules	
-		}
+    }
+   
+    PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
 
-		#Call UpdateAlertMonitoring to setup or Remove Alert Monitoring Runbook
-		try
-		{	
-	 		UpdateAlertMonitoring -DisableAlertRunbook $DisableAlertRunbook -AlertRunBookFullName $AlertRunbookName -SubscriptionID $SubscriptionID -ResourceGroup $StorageAccountRG 
-		}
-		catch
-		{
-			  PublishEvent -EventName "Alert Monitoring Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) }
-			  Write-Output("SA: (Non-fatal) Error while updating Alert Monitoring setup...")
-		}
+    #Call UpdateAlertMonitoring to setup or Remove Alert Monitoring Runbook
+	try
+	{	
+	 	UpdateAlertMonitoring -DisableAlertRunbook $DisableAlertRunbook -AlertRunBookFullName $AlertRunbookName -SubscriptionID $SubscriptionID -ResourceGroup $StorageAccountRG 
 	}
-	
-	PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
+	catch
+	{
+		  PublishEvent -EventName "Alert Monitoring Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) }
+		  Write-Output("SA: (Non-fatal) Error while updating Alert Monitoring setup...")
+	}
+
 	Write-Output("SA: Scan agent completed...")
 
 }

@@ -31,12 +31,10 @@ function Get-AzSKAccessToken {
     Param(
         [Parameter(Mandatory = $true, HelpMessage = "Provide the Resource App ID URI")]
         [string]
-		[Alias("rau")]
         $ResourceAppIdURI,
 
         [Parameter(Mandatory = $false, HelpMessage = "Current logged in user tenant id.")]
         [string]
-		[Alias("ti")]
         $TenantId
     )
 	Begin 
@@ -111,34 +109,27 @@ function Set-AzSKPolicySettings {
 	#>
     Param(
         [Parameter(Mandatory = $false, HelpMessage = "Provide the Online Policy Store URI")]
-        [Alias("LocalOrgPolicyFolderPath")]
         [string]
-		[Alias("opu")]
         $OnlinePolicyStoreUrl,
 
         [Parameter(Mandatory = $false, HelpMessage = "Provide the flag to enable online policy")]
         [switch]
-		[Alias("eop")]
         $EnableOnlinePolicy,
 
         [Parameter(Mandatory = $false, HelpMessage = "Provide the flag to disable online policy")]
         [switch]
-		[Alias("dop")]
         $DisableOnlinePolicy,
 
         [Parameter(Mandatory = $false, HelpMessage = "Provide the flag to enable auth for online policy")]
         [switch]
-		[Alias("eaop")]
         $EnableAADAuthForOnlinePolicyStore,
 
         [Parameter(Mandatory = $false, HelpMessage = "Provide org install URL")]
         [string]
-		[Alias("auc")]
         $AutoUpdateCommand,
 
         [Parameter(Mandatory = $false, ParameterSetName = "AutoUpdatePolicy", HelpMessage = "Toggle the auto-update feature")]
         [ValidateSet("On", "Off", "NotSet")]
-		[Alias("au")]
         $AutoUpdate,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "CACentralMode")]
@@ -225,12 +216,10 @@ function Set-AzSKLocalAIOrgTelemetrySettings {
     Param(
         [Parameter(Mandatory = $true, HelpMessage = "Provide the local control telemetry key")]
         [string]
-		[Alias("lotk")]
         $LocalAIOrgTelemetryKey,
 
         [Parameter(Mandatory = $true, HelpMessage = "Provide the flag to enable local control telemetry")]
         [bool]
-		[Alias("elot")]
         $EnableLocalAIOrgTelemetry
     )
     Begin {
@@ -271,7 +260,6 @@ function Set-AzSKUsageTelemetryLevel {
         [Parameter(Mandatory = $true, HelpMessage = "Provide the telemetry level")]
         [ValidateSet("None", "Anonymous")]
         [string]
-		[Alias("lvl")]
         $Level
     )
     Begin {
@@ -315,28 +303,23 @@ function Set-AzSKUserPreference {
     (
         [Parameter(Mandatory = $true, ParameterSetName = "Set OutputFolderPath", HelpMessage = "Provide the custom folder path for output files generated from AzSK")]
         [string]
-		[Alias("ofp")]
         $OutputFolderPath,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Reset OutputFolderPath", HelpMessage = "Reset the output folder path to default value")]
         [switch]
-		[Alias("rofp")]
         $ResetOutputFolderPath,
 
         [switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
-		[Alias("dnof")]
         $DoNotOpenOutputFolder,
 
         [switch]
         [Parameter(Mandatory = $true, ParameterSetName = "EnableComplianceStorage", HelpMessage = "Switch to enable storage of compliance report data at subscription.")]
-        [Alias("scus")]
-		$StoreComplianceSummaryInUserSubscriptions,
+        $StoreComplianceSummaryInUserSubscriptions,
 
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "DisableComplianceStorage", HelpMessage = "Switch to disable storage of compliance report data at subscription.")]
-        [Alias("dcsus")]
-		$DisableComplianceSummaryStorageInUserSubscriptions
+        $DisableComplianceSummaryStorageInUserSubscriptions
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
@@ -400,7 +383,6 @@ function Send-AzSKInternalData {
         [string]
         [Parameter(Mandatory = $true, HelpMessage="Subscription id for which the data to be sent.")]
         [ValidateNotNullOrEmpty()]
-		[Alias("sid","s")]
         $SubscriptionId
     )
     Begin {
@@ -443,7 +425,6 @@ function Set-AzSKPrivacyNoticeResponse {
         [Parameter(Mandatory = $true, HelpMessage = "Provide the flag to suppress the Privacy notice prompt and submit the acceptance. (Yes/No)")]
         [string]
         [ValidateSet("Yes", "No")]
-		[Alias("apn")]
         $AcceptPrivacyNotice
     )
     Begin {

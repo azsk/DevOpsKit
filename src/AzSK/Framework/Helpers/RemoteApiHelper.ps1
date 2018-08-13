@@ -40,10 +40,6 @@ class RemoteApiHelper {
         [RemoteApiHelper]::PostJsonContent("/inventory/resources", $resources) | Out-Null
     }
 
-    static [void] PostResourceControlsInventory($resourceControlData) {
-        [RemoteApiHelper]::PostJsonContent("/inventory/resourceControls", $resourceControlData) | Out-Null
-    }
-
 	static [void] PostResourceFlatInventory($resourcesFlat) {
 		[RemoteApiHelper]::PostJsonContent("/inventory/resourcesflat", $resourcesFlat) | Out-Null
 	}
@@ -85,27 +81,5 @@ class RemoteApiHelper {
             $set.ControlSet.Add($controlItem) | Out-Null
         }
         return $set;
-    }
-
-    static [void] PushFeatureControlsTelemetry($ResourceControlsData)
-    {        
-        if($null -ne $ResourceControlsData.ResourceContext -and ($ResourceControlsData.Controls | Measure-Object).Count -gt 0)
-        {
-            $ResourceControlsDataMini = "" | Select-Object ResourceName, ResourceGroupName, ResourceId, Controls, ChildResourceNames
-            $ResourceControlsDataMini.ResourceName = $ResourceControlsData.ResourceContext.ResourceName;
-            $ResourceControlsDataMini.ResourceGroupName = $ResourceControlsData.ResourceContext.ResourceGroupName;
-            $ResourceControlsDataMini.ResourceId = $ResourceControlsData.ResourceContext.ResourceId;
-            $controls = @();
-            $ResourceControlsData.Controls | ForEach-Object {
-                $control = "" | Select-Object ControlStringId, ControlId;
-                $control.ControlStringId = $_.ControlId;
-                $control.ControlId = $_.Id;
-                $controls += $control;
-            }
-            $ResourceControlsDataMini.Controls = $controls;        
-            $ResourceControlsDataMini.ChildResourceNames = $ResourceControlsData.ChildResourceNames;   
-
-            [RemoteApiHelper]::PostResourceControlsInventory($ResourceControlsDataMini);
-        }
     }
 }

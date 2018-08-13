@@ -3,14 +3,14 @@
   "Reference": "aka.ms/azsktcp/botservice",
   "IsMaintenanceMode": false,
   "Controls": [
-    {
+     {
       "ControlID": "Azure_BotService_Enable_Required_Channels_Only",
       "Description": "Only specific/required channels must be configured to allow traffic to bot service.",
       "Id": "BotService110",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckBotConfiguredChannels",
-      "Rationale": "Each channel enabled for the Bot exposes the bot to activity on that channel. If a channel that is not actually required is enabled for the bot, it introduces unnecessary avenues for attack.",
+      "Rationale": "Each channel a bot is configured for exposes the bot to activity on that channel. If a channel that is not actually required is enabled for the bot, it introduces unnecessary avenues for attack.",
       "Recommendation": "Verify the configured channels and to add more supported channels refer: https://docs.microsoft.com/en-us/azure/bot-service/bot-service-manage-channels?view=azure-bot-service-3.0",
       "Tags": [
         "SDL",

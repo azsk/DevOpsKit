@@ -35,61 +35,51 @@ function Install-AzSKOrganizationPolicy
         [Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Default", HelpMessage="Subscription ID of the Azure subscription in which organization policy store will be created.")]
         [Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Custom", HelpMessage="Subscription ID of the Azure subscription in which organization policy store will be created.")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("sid","HostSubscriptionId","hsid","s")]
 		$SubscriptionId,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
         [string]
-		[Alias("rgl")]
 		$ResourceGroupLocation = "EastUS",
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom", HelpMessage="Resource group name for resource name")]
         [string]
-		[Alias("rgn")]
 		$ResourceGroupName,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom", HelpMessage="Specify the name for policy storage account")]
         [string]
-		[Alias("san")]
 		$StorageAccountName,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom", HelpMessage="Specify the name for application insight where telemetry data will be pushed")]
         [string]
-		[Alias("ainame")]
 		$AppInsightName,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
         [string]
-		[Alias("ail")]
 		$AppInsightLocation = "EastUS",
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
         [string]
-		[Alias("mdl")]
 		$MonitoringDashboardLocation,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage="The name of your organization. The value will be used to generate names of Azure resources being created as part of policy setup. This should be alphanumeric.")]
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom", HelpMessage="The name of your organization. The value will be used to generate names of Azure resources being created as part of policy setup. This should be alphanumeric.")]
         [string]
-		[Alias("oname")]
 		$OrgName,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
         [string]
-		[Alias("dname")]
 		$DepartmentName,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
-		[Alias("PolicyFolderName","pfp")]
+		[Alias("PolicyFolderName")]
 		[string]
 		$PolicyFolderPath,
 
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Switch to specify whether to open output folder.")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
-		[Alias("dnof")]
 		$DoNotOpenOutputFolder
 
     )
@@ -149,54 +139,35 @@ function Update-AzSKOrganizationPolicy
 		[Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Custom")] 
 		[Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Extensions")]       
 		[ValidateNotNullOrEmpty()]
-		[Alias("sid","HostSubscriptionId","hsid","s")]
 		$SubscriptionId,
-
-		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
-        [string]
-		[Alias("rgl")]
-		$ResourceGroupLocation,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Extensions")]     
         [string]
-		[Alias("rgn")]
 		$ResourceGroupName,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Extensions")]       
         [string]
-		[Alias("san")]
 		$StorageAccountName,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
         [string]
-		[Alias("ainame")]
 		$AppInsightName,
-
-		[Parameter(Mandatory = $false)]
-        [string]
-		[Alias("ail")]
-		$AppInsightLocation,
-
-		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
-
+		
+		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
 		[string]
-		[Alias("mdl")]
 		$MonitoringDashboardLocation,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $true, ParameterSetName = "Custom")]
 		[Parameter(Mandatory = $true,  ParameterSetName = "Extensions")]        
         [string]
-		[Alias("oname")]
 		$OrgName,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]        
 		[Parameter(Mandatory = $false, ParameterSetName = "Extensions")]
         [string]
-		[Alias("dname")]
 		$DepartmentName,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
@@ -204,7 +175,6 @@ function Update-AzSKOrganizationPolicy
 		[Parameter(Mandatory = $true,  ParameterSetName = "Extensions")]
 		[Alias("PolicyFolderName")]
 		[string]
-		[Alias("PolicyFolderName","pfp")]
 		$PolicyFolderPath,
 		
 		[Parameter(Mandatory = $true,  ParameterSetName = "Extensions")]
@@ -214,13 +184,11 @@ function Update-AzSKOrganizationPolicy
 		[ValidateSet("CARunbooks", "AzSKRootConfig","MonitoringDashboard","OrgAzSKVersion", "All")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Override base configurations setup by AzSK.")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Override base configurations setup by AzSK.")]
-		[Alias("oride")]
 		$OverrideBaseConfig = [OverrideConfigurationType]::None,
 
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Switch to specify whether to open output folder.")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Switch to specify whether to open output folder.")]
-		[Alias("dnof")]
 		[Parameter(Mandatory = $false, Position = 0, ParameterSetName = "Extensions")]
 		$DoNotOpenOutputFolder
     )
@@ -308,7 +276,6 @@ function Get-AzSKOrganizationPolicyStatus
 		$DownloadPolicy,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "DownloadPolicy")]
-		[Parameter(Mandatory = $true, ParameterSetName = "LocalPolicyCheck")]
 		[string]
 		$PolicyFolderPath
 	)

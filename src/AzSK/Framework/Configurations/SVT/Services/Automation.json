@@ -140,7 +140,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Hybrid worker machines running the MMA (Microsoft Monitoring Agent) have unrestricted access to all assets in the Automation. Limiting these assets to only those required for the hybrid worker functioning eliminates the likelihood of compromise of a broader set of assets.",
-      "Recommendation": "Create dedicated Automation account for Hybrid Worker Groups",
+      "Recommendation": "Create dedicated Auotmation account for Hybrid Worker Groups",
       "Tags": [
         "SDL",
         "TCP",

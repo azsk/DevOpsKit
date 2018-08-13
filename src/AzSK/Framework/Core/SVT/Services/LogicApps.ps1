@@ -66,14 +66,12 @@ class LogicApps: SVTBase
 		$Definition=$this.ResourceObject.Properties.definition
 		if($null -ne $Definition.Actions -and -not[string]::IsNullOrEmpty($this.ResourceObject.Properties.definition.actions))
 		{
-			$this.ChildResourceNames = @();
 			$Definition.Actions | Get-Member -MemberType *Property | ForEach-Object{ 
 				$Name=$_.name
 				if($Definition.Actions.$Name.type -ne 'ApiConnection')	
 				{				
 					$newResourceId = $svtResource.ResourceId.replace($svtResource.ResourceName,$_.name).replace("Microsoft.Logic/workflows/","Microsoft.Web/connections/custom/")
 					$childSvtObject = $this.CreateSVTResource($newResourceId, $svtResource.ResourceGroupName, $svtResource.ResourceName + "/" + $_.name, "Microsoft.Web/connections", $svtResource.Location, "APIConnection")
-					$this.ChildResourceNames += $svtResource.ResourceName + "/" + $_.name;
 					$this.ChildSvtObjects += New-Object -TypeName $($childSvtObject.ResourceTypeMapping.ClassName) -ArgumentList $this.SubscriptionContext.SubscriptionId, $childSvtObject
 				}
 			}

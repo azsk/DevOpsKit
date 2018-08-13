@@ -97,7 +97,7 @@ catch
     ForEach-Object {
     . $_.FullName
 }
-. $PSScriptRoot\Listeners\GenericListener\GenericListenerBase.ps1
+
 . $PSScriptRoot\Listeners\RemoteReports\TelemetryStrings.ps1
 . $PSScriptRoot\Helpers\RemoteReportHelper.ps1
 . $PSScriptRoot\Helpers\AIOrgTelemetryHelper.ps1
@@ -109,7 +109,6 @@ catch
 . $PSScriptRoot\Listeners\EventHub\EventHubOutput.ps1
 . $PSScriptRoot\Listeners\Webhook\WebhookOutput.ps1
 . $PSScriptRoot\Listeners\CA\WriteCAStatus.ps1
-. $PSScriptRoot\Listeners\GenericListener\GenericListener.ps1
 . $PSScriptRoot\Listeners\ListenerHelper.ps1
 
 #Remaining Abstracts

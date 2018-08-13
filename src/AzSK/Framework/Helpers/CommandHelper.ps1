@@ -13,7 +13,7 @@ class CommandHelper
 		[CommandDetails]@{
             Verb = "Get";
             Noun = "AzSKControlsStatus";
-            ShortName = "GACS";
+            ShortName = "GCS";
 			IsLatestRequired = $false;
         },
 		[CommandDetails]@{
@@ -78,7 +78,7 @@ class CommandHelper
 		[CommandDetails]@{
             Verb = "Set";
             Noun = "AzSKAlerts";
-			ShortName = "SAA";
+			ShortName = "SAL";
 			HasAzSKComponentWritePermission = $true;
         },
 		[CommandDetails]@{
@@ -149,7 +149,7 @@ class CommandHelper
 		[CommandDetails]@{
             Verb = "Repair";
             Noun = "AzSKSubscriptionSecurity";
-            ShortName = "RASS";
+            ShortName = "RSS";
         },
 
 		# Policy Store
@@ -190,66 +190,6 @@ class CommandHelper
             Noun = "AzSKPersistedState";
             ShortName = "UPS";
 			IsLatestRequired = $false;
-        },
-		[CommandDetails]@{
-            Verb = "Get";
-            Noun = "AzSKAccessToken";
-            ShortName = "GAT";
-        },
-		[CommandDetails]@{
-            Verb = "Get";
-            Noun = "AzSKSupportedResourceTypes";
-            ShortName = "GSRT";
-        },
-		[CommandDetails]@{
-            Verb = "Set";
-            Noun = "AzSKPolicySettings";
-            ShortName = "SPS";
-        },
-		[CommandDetails]@{
-            Verb = "Set";
-            Noun = "AzSKOMSSettings";
-            ShortName = "SOS";
-        },
-		[CommandDetails]@{
-            Verb = "Set";
-            Noun = "AzSKEventHubSettings";
-            ShortName = "SEHS";
-        },
-		[CommandDetails]@{
-            Verb = "Set";
-            Noun = "AzSKWebhookSettings";
-            ShortName = "SWHS";
-        },
-		[CommandDetails]@{
-            Verb = "Set";
-            Noun = "AzSKUsageTelemetryLevel";
-            ShortName = "SUTL";
-        },
-		[CommandDetails]@{
-            Verb = "Set";
-            Noun = "AzSKLocalAIOrgTelemetrySettings";
-            ShortName = "SLOTS";
-        },
-		[CommandDetails]@{
-            Verb = "Set";
-            Noun = "AzSKUserPreference";
-            ShortName = "SUP";
-        },
-		[CommandDetails]@{
-            Verb = "Set";
-            Noun = "AzSKPrivacyNoticeResponse";
-            ShortName = "SPNR";
-        },
-		[CommandDetails]@{
-            Verb = "Send";
-            Noun = "AzSKInternalData";
-            ShortName = "SID";
-        },
-		[CommandDetails]@{
-            Verb = "Get";
-            Noun = "AzSKARMTemplateSecurityStatus";
-            ShortName = "GATS";
         }
     );
 

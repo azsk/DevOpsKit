@@ -38,7 +38,5 @@
   "Microsoft.DataLakeAnalytics/accounts",
   "Microsoft.ClassicCompute/domainNames",
   "Microsoft.Web/connectionGateways",
-  "Microsoft.BotService/botServices",
-  "Microsoft.ContainerInstance/containerGroups",
-  "Microsoft.ContainerRegistry/registries"
+  "Microsoft.BotService/botServices"
 ]
