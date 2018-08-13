@@ -492,8 +492,8 @@ class VirtualMachine: SVTBase
 				catch
 				{
 					if([Helpers]::CheckMember($_.Exception, "InnerException") -and `
-					[Helpers]::CheckMember(($_.Exception).InnerException,"Response") -and `
-					[Helpers]::CheckMember(($_.Exception).InnerException.Response,"StatusCode") -and `
+					([Helpers]::CheckMember(($_.Exception).InnerException,"Response") -and `
+					([Helpers]::CheckMember(($_.Exception).InnerException.Response,"StatusCode") -and `
 					($_.Exception).InnerException.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
 					{
 						$encryptionExtensionFound = $false
