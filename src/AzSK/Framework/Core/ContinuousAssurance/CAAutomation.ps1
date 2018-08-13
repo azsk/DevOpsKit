@@ -199,6 +199,8 @@ class CCAutomation: CommandBase
 		[MessageData[]] $messages = @();
 		try
 		{
+			#Validate if command is running from local policy folder
+			$this.ValidateIfLocalPolicyIsEnabled()
 			#region :validation/RG creation
 			if(!$this.IsCAInstallationValid())
 			{
@@ -468,6 +470,8 @@ class CCAutomation: CommandBase
 		[MessageData[]] $messages = @();
 		try
 		{
+			#Validate if command is running with local policy
+			$this.ValidateIfLocalPolicyIsEnabled()
             #Always assign permissions if CA is in central scan mode
             if($this.IsCentralScanModeOn)
             {
@@ -3714,6 +3718,14 @@ class CCAutomation: CommandBase
 		}
 
 
+	}
+	#Validate if Org policy local debuging is on
+	[void] ValidateIfLocalPolicyIsEnabled()
+	{
+		if(Test-Path $([ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl))
+		{
+			throw ([SuppressedException]::new(("Currently command is running with local policy folder ($([ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl)). Please run command with online policy store url."), [SuppressedExceptionType]::Generic))
+		}	  
 	}
 	#endregion
 }
