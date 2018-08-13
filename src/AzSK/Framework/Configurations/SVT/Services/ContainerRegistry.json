@@ -35,6 +35,7 @@
             "TCP",
             "Manual",
             "AuthZ",
+            "OwnerAccess",
             "GraphRead"
         ]
       },
