@@ -26,6 +26,7 @@ function Set-AzSKSubscriptionRBAC
 		[string]
         [Parameter(Mandatory = $true, HelpMessage = "Subscription id for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
+		[Alias("sid", "HostSubscriptionId", "hsid","s")]
 		$SubscriptionId,
 
 		[string] 
@@ -34,10 +35,12 @@ function Set-AzSKSubscriptionRBAC
 		
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to apply RBAC forcefully regardless of latest RBAC already present on subscription.")]
+		[Alias("f")]
 		$Force,
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 
@@ -104,6 +107,7 @@ function Remove-AzSKSubscriptionRBAC
 		[string]
         [Parameter(Mandatory = $true, HelpMessage = "Subscription id for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
+		[Alias("sid", "HostSubscriptionId", "hsid","s")]
 		$SubscriptionId,
 
 		[string] 
@@ -112,10 +116,12 @@ function Remove-AzSKSubscriptionRBAC
 
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to apply subscription security configurations forcefully regardless of latest updates already present on subscription.")]
+		[Alias("f")]
 		$Force,
 		
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 
