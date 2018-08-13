@@ -72,7 +72,7 @@ class StorageHelper: ResourceGroupHelper
 	[int] $HaveWritePermissions = 0;
 	[int] $retryCount = 3;
 	[int] $sleepIntervalInSecs = 10;
-	static [StorageHelper] $AzSKStorageAccount = $null
+	static [StorageHelper] $AzSKStorageHelperInstance = $null
 	hidden [string] $ResourceType = "Microsoft.Storage/storageAccounts";
 
 	StorageHelper([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceGroupLocation, [string] $storageAccountName):
@@ -95,13 +95,28 @@ class StorageHelper: ResourceGroupHelper
 		$this.StorageAccountName = $storageAccountName;
 		$this.StorageKind = $storageKind
 	}
-
+	[void] UpdateCurrentInstance([StorageHelper] $AzSKStorageHelperInstance)
+	{
+		$this.AccessKey = $AzSKStorageHelperInstance.AccessKey
+		$this.HaveWritePermissions = $AzSKStorageHelperInstance.HaveWritePermissions
+	}
 	[void] CreateStorageIfNotExists()
 	{
 		if(-not $this.StorageAccount)
 		{
 			$isAzSKStorage = $false;
-            $this.CreateResourceGroupIfNotExists();
+			$this.CreateResourceGroupIfNotExists();
+			if($this.ResourceGroupName -eq [ConfigurationManager]::GetAzSKConfigData().AzSKRGName -and $this.StorageAccountName -like "$([Constants]::StorageAccountPreName)*")           
+            {
+                if($null -ne [StorageHelper]::AzSKStorageHelperInstance)
+                {
+                    $this.UpdateCurrentInstance([StorageHelper]::AzSKStorageHelperInstance);
+                    return;
+                }
+                else {
+                    $isAzSKStorage = $true
+                }               
+			}   
             $existingResources = Get-AzureRmResource -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType
             
             # Assuming 1 storage account is needed on Resource group
@@ -142,23 +157,11 @@ class StorageHelper: ResourceGroupHelper
 				$this.AccessKey = $keys[0].Value;
 			}	
 			
-			if($this.ResourceGroupName -eq [ConfigurationManager]::GetAzSKConfigData().AzSKRGName -and $this.StorageAccountName -like "$([Constants]::StorageAccountPreName)*")           
-            {
-                if($null -ne [StorageHelper]::AzSKStorageAccount)
-                {
-                    $this.StorageAccount =  [StorageHelper]::AzSKStorageAccount;
-                    return;
-                }
-                else {
-                    $isAzSKStorage = $true
-                }               
-			}   
-			
 			#precompute storage access permissions for the current scan account
 			$this.ComputePermissions();
             if($isAzSKStorage)
 			{
-				[StorageHelper]::AzSKStorageAccount = $this.StorageAccount
+				[StorageHelper]::AzSKStorageHelperInstance = $this
 			}
 		}
 	}
