@@ -337,7 +337,7 @@ class SVTBase: AzSKRoot
 	[void] PostFeatureControlTelemetry()
 	{
 		#todo add check for latest module version
-		if(($this.FeatureApplicableControls | Measure-Object).Count -gt 0)
+		if($this.RunningLatestPSModule -and ($this.FeatureApplicableControls | Measure-Object).Count -gt 0)
 		{
 			[CustomData] $customData = [CustomData]::new();
 			$customData.Name = "FeatureControlTelemetry";
