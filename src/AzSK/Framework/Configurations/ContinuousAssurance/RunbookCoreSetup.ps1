@@ -386,6 +386,112 @@ function ScheduleNewJob($intervalInMins)
 	PublishEvent -EventName "CA Job Rescheduled" -Properties @{"IntervalInMinutes" = $intervalInMins}
 }
 
+#region: Set of functions to validate and update expiring policy url token 
+#Function to get string with RegEx pattern match
+function GetSubString($cotentString, $pattern)
+{
+    return  [regex]::match($cotentString, $pattern).Groups[1].Value
+}
+
+#Validate if policy url update required for SAS token
+function IsPolicyUrlUpdateRequired($policyUrl)
+{
+    [System.Uri] $validatedUri = $null;
+    $IsSASTokenUpdateRequired = $false
+    if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se="))
+    {
+        $decodedUrl = [System.Web.HttpUtility]::UrlDecode($validatedUri.Query)
+        $pattern = '&se=(.*?)&'
+        [DateTime] $expiryDate = Get-Date 
+        if([DateTime]::TryParse((GetSubString $decodedUrl $pattern),[ref] $expiryDate)
+        {
+            if($expiryDate.AddDays(-30) -lt [DateTime]::UtcNow)
+            {
+                $IsSASTokenUpdateRequired = $true
+            }
+        }
+    }
+    return $IsSASTokenUpdateRequired
+}
+
+#Get updated policy url 
+function GetUpdatedPolicyUrl($policyUrl, $updateUrl)
+{
+    [System.Uri] $validatedUri = $null;
+    $UpdatedUrl = $policyUrl
+    if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se=") -and [System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri))
+    {
+        $UpdatedUrl = $policyUrl.Split("?")[0] + "?" + $updateUrl.Split("?")[1]
+    }
+    return $UpdatedUrl
+}
+
+#Function to validate and update Org policy url SAS token 
+function CheckAndUpdateExpiringPolicyUrl{
+	try{
+		#Create local temp directory to copy runbook
+		$outputFolderPath = "$Env:LOCALAPPDATA"+"\" + $AzSKModuleName ;
+		if(-not Test-Path -Path $outputFolderPath)
+		{
+			mkdir -Path $outputFolderPath -Force -ErrorAction Stop | Out-Null
+		}
+		
+		#Export runbook to local directory
+		Export-AzureRmAutomationRunbook -Name $RunbookName -OutputFolder $outputFolderPath `
+		-ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName `
+		-Force -Slot Published | Out-Null
+
+		$runbookFilePath = "$outputFolderPath\$RunbookName.ps1"
+		$runbookContent = get-content $runbookFilePath
+		
+		$pattern = '$onlinePolicyStoreUrl = "(.*?)"'
+		$policyStoreUrl = GetSubString $runbookContent $pattern
+		$pattern = '$CoreSetupSrcUrl = "(.*?)"'
+		$coreSetupUrl = GetSubString $runbookContent $pattern
+		$isPolicyUrlUpdatedForSASToken= $false
+    
+		#Validate if SAS token update required for Org policy url
+		if(IsPolicyUrlUpdateRequired $policyStoreUrl)
+		{
+		   $updatedPolicyUrl= GetUpdatedPolicyUrl $policyStoreUrl $azskVersionForOrg  
+		   $runbookContent =  $runbookContent.Replace($policyStoreUrl,$updatedPolicyUrl)
+		   $isPolicyUrlUpdatedForSASToken = $true
+		}
+	
+		#Validate if SAS token update required for CoreSetup url
+		if(IsPolicyUrlUpdateRequired $coreSetupUrl)
+		{
+			$updatedCoreSetupUrl= GetUpdatedPolicyUrl $coreSetupUrl $azskVersionForOrg  
+			$runbookContent =  $runbookContent.Replace($coreSetupUrl,$updatedCoreSetupUrl)
+			$isPolicyUrlUpdatedForSASToken = $true
+		}
+	
+		#If SAS token is updated for policy urls then import latest runbook
+		if($isPolicyUrlUpdatedForSASToken)
+		{
+			$runbookContent | Out-File $runbookFilePath -Encoding utf8 -Force
+			#Remove existing runbook
+			$existingRunbook = Get-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName `
+			-ResourceGroupName $AutomationAccountRG -RunbookName $RunbookName
+			$existingRunbook | remove-azurermautomationrunbook -Force
+		   
+			#Import latest runbook
+			$Description = "This runbook is responsible for running subscription health scan and resource scans (SVTs). It also keeps all modules up to date."
+			
+			Import-AzureRmAutomationRunbook -Name $RunbookName -Description $Description -Type 'PowerShell' `
+			-Path $runbookFilePath `
+			-LogProgress $false -LogVerbose $false `
+			-AutomationAccountName $AutomationAccountName `
+			-ResourceGroupName $AutomationAccountRG -Published -ErrorAction Stop | Out-Null
+		}
+	}
+	catch
+	{
+		PublishEvent -EventName "CA Error For Policy Url Expiry Check" -Properties @{ "ErrorRecord" = ($_ | Out-String) } -Metrics @{"TimeTakenInMs" =$setupTimer.ElapsedMilliseconds; "SuccessCount" = 0}
+	}
+}
+#endregion
+
 function IsScanComplete()
 {
 	$helperScheduleCount = (Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `

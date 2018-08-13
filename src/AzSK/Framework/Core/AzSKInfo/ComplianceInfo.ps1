@@ -164,17 +164,27 @@ class ComplianceInfo: CommandBase
 				}
 			}
 			
-			$totalCompliance = (100 * $passControlCount)/($passControlCount + $failedControlCount)
-			$baselineCompliance = (100 * $baselinePassedControlCount)/($baselinePassedControlCount + $baselineFailedControlCount)
+			if(($passControlCount + $failedControlCount) -ne 0)
+			{
+				$totalCompliance = (100 * $passControlCount)/($passControlCount + $failedControlCount)
+			}
+			else {
+				$totalCompliance = 0;
+			}
+			
 			
 			$ComplianceStats = @();
 			
-			$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%", "No. of Passed Controls", "No. of Failed Controls"
-			$ComplianceStat.ComplianceType = "Baseline"
-			$ComplianceStat."Pass-%"= [math]::Round($baselineCompliance,2)
-			$ComplianceStat."No. of Passed Controls" = $baselinePassedControlCount
-			$ComplianceStat."No. of Failed Controls" = $baselineFailedControlCount
-			$ComplianceStats += $ComplianceStat
+			if(($baselinePassedControlCount + $baselineFailedControlCount) -ne 0)
+			{
+				$baselineCompliance = (100 * $baselinePassedControlCount)/($baselinePassedControlCount + $baselineFailedControlCount)
+				$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%", "No. of Passed Controls", "No. of Failed Controls"
+				$ComplianceStat.ComplianceType = "Baseline"
+				$ComplianceStat."Pass-%"= [math]::Round($baselineCompliance,2)
+				$ComplianceStat."No. of Passed Controls" = $baselinePassedControlCount
+				$ComplianceStat."No. of Failed Controls" = $baselineFailedControlCount
+				$ComplianceStats += $ComplianceStat
+			}					
 
 			$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%", "No. of Passed Controls", "No. of Failed Controls"
 			$ComplianceStat.ComplianceType = "Full"

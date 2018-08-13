@@ -2,7 +2,7 @@ using namespace Microsoft.Azure.Commands.KeyVault.Models
 Set-StrictMode -Version Latest 
 class KeyVault: SVTBase
 {       
-    hidden [PSVault] $ResourceObject;
+    hidden [PSKeyVaultIdentityItem] $ResourceObject;
     hidden [PSObject[]] $AllEnabledKeys = $null;
     hidden [PSObject[]] $AllEnabledSecrets = $null;
 	hidden [boolean] $HasFetchKeysPermissions=$false;
@@ -21,7 +21,7 @@ class KeyVault: SVTBase
 		$this.CheckCurrentContextPermissionsOnVaultObjects();
     }
 
-    hidden [PSVault] GetResourceObject()
+    hidden [PSKeyVaultIdentityItem] GetResourceObject()
     {
         if (-not $this.ResourceObject) 
 		{

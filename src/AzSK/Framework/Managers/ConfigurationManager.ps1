@@ -66,10 +66,10 @@ class ConfigurationManager
         return $extensionFilePath
     }	
 
-	hidden static [void] RegisterExtListenerFiles()
+	hidden static [string[]] RegisterExtListenerFiles()
     {
 		$ServerConfigMetadata = [ConfigurationManager]::LoadServerConfigFile([Constants]::ServerConfigMetadataFileName)
-		
+		$ListenerFilePaths = @();
 		if($null -ne [ConfigurationHelper]::ServerConfigMetadata)
 		{
 			[ConfigurationHelper]::ServerConfigMetadata.OnlinePolicyList | ForEach-Object {
@@ -79,14 +79,9 @@ class ConfigurationManager
 					{
 						$listenerFileName = $_.Name
 						try {
-							
 							$extensionFilePath = [ConfigurationManager]::DownloadExtFile($listenerFileName)
-							
 							# file has to be loaded here due to scope constraint
-							. $extensionFilePath
-							
-							$listenerClassName = $listenerFileName.trimend(".ext.ps1") + "Ext"
-							Invoke-Expression "[$listenerClassName]::GetInstance().RegisterEvents();"
+							$ListenerFilePaths += $extensionFilePath
 						}
 						catch {
 							[EventBase]::PublishGenericException($_);
@@ -95,35 +90,7 @@ class ConfigurationManager
 				}
 			}
 		}
-    }
-
-	hidden static [void] UnRegisterExtListenerFiles()
-    {
-		if($null -ne [ConfigurationHelper]::ServerConfigMetadata)
-		{
-			[ConfigurationHelper]::ServerConfigMetadata.OnlinePolicyList | ForEach-Object {
-				if([Helpers]::CheckMember($_,"Name"))
-				{
-					if($_.Name -match "Listener.ext.ps1")
-					{
-						$listenerFileName = $_.Name
-						try {
-							
-							$extensionFilePath = [ConfigurationManager]::DownloadExtFile($listenerFileName)
-							
-							# file has to be loaded here due to scope constraint
-							. $extensionFilePath
-
-							$listenerClassName = $listenerFileName.trimend(".ext.ps1") + "Ext"
-							Invoke-Expression "[$listenerClassName]::GetInstance().UnregisterEvents();"
-						}
-						catch {
-							[EventBase]::PublishGenericException($_);
-						}
-					}
-				}
-			}
-		}
+		return $ListenerFilePaths;
     }
 
 	hidden static [string] DownloadExtFile([string] $fileName)

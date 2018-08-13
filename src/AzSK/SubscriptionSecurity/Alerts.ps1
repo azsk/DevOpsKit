@@ -32,14 +32,17 @@ function Set-AzSKAlerts
 		[string]
         [Parameter(Mandatory = $true, HelpMessage = "Subscription id for which security alerts to be configured.")]
 		[ValidateNotNullOrEmpty()]
+		[Alias("sid", "HostSubscriptionId", "hsid","s")]
 		$SubscriptionId,
 		
 		[string]
         [Parameter(Mandatory = $false, HelpMessage = "Provide a security contact email address. Recommended a mail enabled Security Group with receiving of external emails option turned ON.")]
+		[Alias("scemail")]
 		$SecurityContactEmails,
 
 		[string]
         [Parameter(Mandatory = $false, HelpMessage = "Provide a security contact international information phone number (for example, 425-1234567). Note that only the country code '1' is currently supported for SMS.")]
+		[Alias("scphone")]
 		$SecurityPhoneNumbers,
 
 		[string] 
@@ -48,14 +51,17 @@ function Set-AzSKAlerts
 
 		[string] 
 		[Parameter(Mandatory = $false, HelpMessage = "Provide the location for alert ResourceGroup")]
+		[Alias("argl")]
 		$AlertResourceGroupLocation = "East US",
 		
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to apply alerts configurations forcefully regardless of latest alerts already present on subscription.")]
+		[Alias("f")]
 		$Force,
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing log report or not.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 
@@ -126,6 +132,7 @@ function Remove-AzSKAlerts
 		[string]
         [Parameter(Mandatory = $true, HelpMessage = "Subscription id from which security alert rules to be removed.")]
 		[ValidateNotNullOrEmpty()]
+		[Alias("sid", "HostSubscriptionId", "hsid","s")]
 		$SubscriptionId,
 
 		[string] 
@@ -134,14 +141,17 @@ function Remove-AzSKAlerts
 
         [Parameter(ParameterSetName= "Alert Names", Mandatory = $true, HelpMessage = "Provide the comma separated values of alert names")]
         [string]
+		[Alias("aname")]
 		$AlertNames,
 
 		[switch]
 		[Parameter(ParameterSetName= "Tags", Mandatory = $false, HelpMessage = "Switch to specify whether to delete action group containing alert security contacts")]
-        $DeleteActionGroup,
+        [Alias("dag")]
+		$DeleteActionGroup,
 		
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 

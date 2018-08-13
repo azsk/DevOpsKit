@@ -173,9 +173,9 @@ hidden [ControlResult] <ControlMethodName>([ControlResult] $controlResult)
    {
 		  # SVT implementation goes here 
 		  # Update the result of TCP control in object $controlResult
-		  $controlResult.VerificationResult = [VerificationResult]::Verify;  # Valid values are - Verify,Failed, NotSupported,
-        Error 
 
+		  $controlResult.VerificationResult = [VerificationResult]::Verify;  # Valid values are - Passed, Verify, Failed, NotSupported, Error 
+ 
 		  # Add any number of messages and data objects using function $controlResult.AddMessage(). 
 		  #	Refer file 'AzSDK\Framework\Models\AzSdkEvent.ps1' for definition of 'MessageData' class and its possible contractors. 
 		  #	Refer file 'AzSDK\Framework\Models\SVTEvent.ps1' for definition of 'ControlResult' class and its possible overloads for 'AddMessage' function.
