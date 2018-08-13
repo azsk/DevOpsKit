@@ -1003,7 +1003,11 @@ class SVTBase: AzSKRoot
 	{
 		$accessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.GetResourceId(), $false, $true);
 
+		return $this.CheckRBACAccess($controlResult, $accessList)
+	}
 
+	hidden [ControlResult] CheckRBACAccess([ControlResult] $controlResult, [PSObject] $accessList)
+	{
 		$resourceAccessList = $accessList | Where-Object { $_.Scope -eq $this.GetResourceId() };
 
         $controlResult.VerificationResult = [VerificationResult]::Verify;
