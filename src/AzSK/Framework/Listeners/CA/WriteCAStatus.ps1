@@ -137,6 +137,75 @@ class WriteCAStatus: ListenerBase
                 $currentInstance.PublishException($_);
             }
         });
+
+        $this.RegisterEvent([AzSKRootEvent]::PublishCustomData, {
+            $currentInstance = [WriteCAStatus]::GetInstance();
+            try
+            {	
+                $CustomDataObj =  $Event.SourceArgs
+				$CustomObjectData=$CustomDataObj| Select-Object -exp Messages| Select-Object -exp DataObject
+                $ResourceControlsData = $CustomObjectData.Value;
+				if($null -ne $ResourceControlsData.ResourceContext -and ($ResourceControlsData.Controls | Measure-Object).Count -gt 0)
+                {
+                    $ResourceControlsDataMini = "" | Select-Object ResourceName, ResourceGroupName, ResourceId, Controls, ChildResourceNames
+                    $ResourceControlsDataMini.ResourceName = $ResourceControlsData.ResourceContext.ResourceName;
+                    $ResourceControlsDataMini.ResourceGroupName = $ResourceControlsData.ResourceContext.ResourceGroupName;
+                    $ResourceControlsDataMini.ResourceId = $ResourceControlsData.ResourceContext.ResourceId;
+                    $ResourceControlsDataMini.ChildResourceNames = $ResourceControlsData.ChildResourceNames;
+                    $controls = @();
+                    $ResourceControlsData.Controls | ForEach-Object {
+                        $control = "" | Select-Object ControlStringId, ControlId;
+                        $control.ControlStringId = $_.ControlId;
+                        $control.ControlId = $_.Id;
+                        $controls += $control;
+                    }
+                    $ResourceControlsDataMini.Controls = $controls;            
+
+                    #compute hash for the given resource
+                    $props = $Event.SourceArgs[0];
+                    $version = $currentInstance.InvocationContext.MyCommand.Version
+
+                    if($null -ne $props)
+                    {
+                        [string[]] $partitionKeys = @();       
+                        [ComplianceStateTableEntity[]] $RecordsToBeDeleted = @();         
+                        $partitionKey = [Helpers]::ComputeHash($ResourceControlsDataMini.ResourceId.ToLower());                
+                        $partitionKeys += $partitionKey
+                        $complianceReportHelper = [ComplianceReportHelper]::new($props.SubscriptionContext, $version); 
+
+                        $ComplianceStateData = $complianceReportHelper.GetSubscriptionComplianceReport($partitionKeys);    
+
+                        $ComplianceStateData | ForEach-Object {
+                            $row = $_;
+                            if(($ResourceControlsDataMini.Controls | Where-Object { $_.ControlId -eq $row.ControlIntId} | Measure-Object).Count -gt 0)
+                            {
+                                if(-not [string]::IsNullOrWhiteSpace($row.ChildResourceName))
+                                {
+                                    if(($ResourceControlsDataMini.ChildResourceNames | Where-Object {$_ -eq $row.ChildResourceName} | Measure-Object).Count -le 0)
+                                    {
+                                        $row.IsActive = $false;
+                                        $RecordsToBeDeleted += $row;
+                                    }
+                                }                            
+                            }
+                            else {
+                                $row.IsActive = $false;
+                                $RecordsToBeDeleted += $row;
+                            }
+                        }
+                        if(($RecordsToBeDeleted | Measure-Object).Count -gt 0)
+                        {
+                            $complianceReportHelper.SetLocalSubscriptionScanReport($RecordsToBeDeleted);
+                        }                        
+                    }
+                }
+				
+            }
+            catch
+            {
+                $currentInstance.PublishException($_);
+            }
+        });
 	}
 
 

@@ -1,6 +1,6 @@
 ﻿Set-StrictMode -Version Latest
 Write-Host "Importing AzureRM modules. This may take a while..." -ForegroundColor Yellow
-Import-Module AzureRM.Profile -RequiredVersion 4.2.0  
+Import-Module AzureRM.Profile -RequiredVersion 5.3.4
 
 . $PSScriptRoot\Framework\Framework.ps1
 
@@ -109,6 +109,7 @@ function Set-AzSKPolicySettings {
 	#>
     Param(
         [Parameter(Mandatory = $false, HelpMessage = "Provide the Online Policy Store URI")]
+        [Alias("LocalOrgPolicyFolderPath")]
         [string]
         $OnlinePolicyStoreUrl,
 

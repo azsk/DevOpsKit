@@ -26,6 +26,19 @@ class CommandBase: AzSKRoot {
 		}		
 		#Validate if command is getting run with correct Org Policy
 		$IsTagSettingRequired=$this.ValidateOrgPolicyOnSubscription($this.Force)
+		#Validate if policy url token is getting expired 
+		$onlinePolicyStoreUrl = [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl
+		if([Helpers]::IsSASTokenUpdateRequired($onlinePolicyStoreUrl))
+		{
+			#Check if CA Setup Runbook URL token is valid and update it with local policy token
+			$CASetupRunbookUrl = [ConfigurationManager]::GetAzSKConfigData().CASetupRunbookURL
+			if(-not [Helpers]::IsSASTokenUpdateRequired($CASetupRunbookUrl))
+			{
+				[Helpers]::GetUriWithUpdatedSASToken($onlinePolicyStoreUrl,$CASetupRunbookUrl)				
+				[AzSKSettings]::Update([ConfigurationManager]::GetAzSKSettings())
+			}
+		}
+
 		 #Validate if command has AzSK component write permission
 		$commandMetadata= $this.GetCommandMetadata()
 		if(([Helpers]::CheckMember($commandMetadata,"HasAzSKComponentWritePermission")) -and  $commandMetadata.HasAzSKComponentWritePermission -and ($IsTagSettingRequired -or $this.Force))
@@ -40,7 +53,7 @@ class CommandBase: AzSKRoot {
         if($azskConfigComplianceFlag -or $localSettingComplianceFlag) 
 		{
 			$this.IsLocalComplianceStoreEnabled = $true
-		}        
+		}     
     }
 
     [void] CommandStarted() {

@@ -276,6 +276,7 @@ function Get-AzSKOrganizationPolicyStatus
 		$DownloadPolicy,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "DownloadPolicy")]
+		[Parameter(Mandatory = $true, ParameterSetName = "LocalPolicyCheck")]
 		[string]
 		$PolicyFolderPath
 	)
