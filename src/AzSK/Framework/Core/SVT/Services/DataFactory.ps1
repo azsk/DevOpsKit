@@ -16,7 +16,7 @@ class DataFactory: SVTBase
         Base($subscriptionId, $svtResource) 
     { 
 		 $this.GetResourceObject();
-         $this.AddResourceMetadata($this.adfDetails);
+
 
     }
 
@@ -24,17 +24,14 @@ class DataFactory: SVTBase
     {
         if (-not $this.ResourceObject) {
             $this.ResourceObject = Get-AzureRmDataFactory -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
-                                                         
-            if(-not $this.ResourceObject)
-            {
-				$this.ResourceObject = Get-AzureRmDataFactoryV2 -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
 				if(-not $this.ResourceObject)
 				{
 					throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))
 				}
-            }
+            $this.GetADFDetails();
+            $this.AddResourceMetadata($this.adfDetails);
         }
-        $this.GetADFDetails();
+
         return $this.ResourceObject;
     }
 		
@@ -77,7 +74,6 @@ class DataFactory: SVTBase
              $pipelines += Get-AzureRmDataFactoryPipeline -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
 		     $this.adfDetails.PipelinesCount = ($pipelines | Measure-Object).Count;
 
-
        
              #Get Dataset count
              $datasets = @();
@@ -85,7 +81,7 @@ class DataFactory: SVTBase
              $this.adfDetails.DatasetsCount +=  ($datasets | Measure-Object).Count;
         }
         catch{
-            throw ([SuppressedException]::new(("Error while getting pipelines and datasets details!", [SuppressedExceptionType]::Generic)));
+            
 
         }
     
