@@ -905,6 +905,7 @@ class VirtualMachine: SVTBase
 		foreach($securityRule in $inbloundRules){
 			foreach($destPort in $securityRule.destinationPortRange) {
 				$range =$destPort.Split("-")
+				#For ex. if we provide the input 22 in the destination port range field, it will be interpreted as 22-22
 				if($range.Count -eq 2) {
 					$startPort = $range[0]
 					$endPort = $range[1]
