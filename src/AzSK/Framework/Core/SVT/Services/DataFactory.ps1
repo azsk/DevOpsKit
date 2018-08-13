@@ -17,7 +17,14 @@ class DataFactory: SVTBase
     { 
 		 $this.GetResourceObject();
 		 $this.GetADFDetails();
-		 $this.AddResourceMetadata($this.adfDetails);
+
+         try{
+            
+            $this.AddResourceMetadata($this.adfDetails);
+         }
+		 catch{
+            throw ([SuppressedException]::new(("Error while adding resource metadata!", [SuppressedExceptionType]::Generic)));
+         }
     }
 
 	hidden [PSObject] GetResourceObject()
@@ -66,23 +73,28 @@ class DataFactory: SVTBase
     
         # Get linked services details
 		
-        $this.adfDetails.LinkedserviceDetails += Get-AzureRmDataFactoryLinkedService -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName
+        $this.adfDetails.LinkedserviceDetails += Get-AzureRmDataFactoryLinkedService -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
 		
-        # Get pipelines details
+        # Get pipelines count
 
-		$this.adfDetails.Pipelinedetails += Get-AzureRmDataFactoryPipeline -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName
+        $pipelines = @();
+        $pipelines += Get-AzureRmDataFactoryPipeline -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
+		$this.adfDetails.PipelinesCount = ($pipelines | Measure-Object).Count
 
-        #Get Dataset details
 
-        $this.adfDetails.DatasetDetails +=  Get-AzureRmDataFactoryDataset -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName
+       
+        #Get Dataset count
+        $datasets = @();
+        $datasets += Get-AzureRmDataFactoryDataset -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
+        $this.adfDetails.DatasetsCount +=  ($datasets | Measure-Object).Count
     
     }
 }
 
 Class ADFDetails{
 
-[PSObject]$Pipelinedetails;
+[int]$PipelinesCount;
 [PSObject]$LinkedserviceDetails;
-[PSObject]$DatasetDetails;
+[int]$DatasetsCount;
 
 }
