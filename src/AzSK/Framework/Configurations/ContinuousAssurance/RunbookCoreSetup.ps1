@@ -432,7 +432,7 @@ function CheckAndUpdateExpiringPolicyUrl{
 	try{
 		#Create local temp directory to copy runbook
 		$outputFolderPath = "$Env:LOCALAPPDATA"+"\" + $AzSKModuleName ;
-		if(-not Test-Path -Path $outputFolderPath)
+		if(-not (Test-Path -Path $outputFolderPath))
 		{
 			mkdir -Path $outputFolderPath -Force -ErrorAction Stop | Out-Null
 		}

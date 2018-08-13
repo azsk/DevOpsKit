@@ -1286,9 +1286,9 @@ class PolicySetup: CommandBase
 					$policyContent = Get-Content  $_.FullName | ConvertFrom-Json 
 
 					$schemaUrl = [string]::Empty
-					[Helpers]::CheckMember($policyContent,"`$schema")
+					$schemaDefination = $null
 					#Validate policy against the schema template
-					if(-not [string]::IsNullOrEmpty($schemaUrl))
+					if([Helpers]::CheckMember($policyContent,"`$schema") -and -not [string]::IsNullOrEmpty($policyContent.'$schema'))
 					{
 						$schemaDefination = Invoke-RestMethod `
 						-Method GET `
@@ -1297,8 +1297,7 @@ class PolicySetup: CommandBase
 					}
 					else
 					{
-						$azskConfig = [ConfigurationManager]::GetAzSKConfigData()
-						
+						$azskConfig = [ConfigurationManager]::GetAzSKConfigData()						
 						if([Helpers]::CheckMember($policyContent,"FeatureName"))
 						{
 							$policyName = "ServiceControl"
@@ -1308,9 +1307,18 @@ class PolicySetup: CommandBase
 							$policyName = $_.Name.Replace(".json","")
 						}
 						$schemaUrl = $azskConfig.SchemaTemplateURL + $policyName
-						$schemaDefination = Invoke-RestMethod `
-						-Method GET `
-						-Uri $schemaUrl
+						try
+						{
+							$schemaDefination = Invoke-RestMethod `
+							-Method GET `
+							-Uri $schemaUrl
+						}
+						catch
+						{
+							#Skip exception of schema is not present on server side
+							$messages += "Schema validation skipped for policy: $schemaUrl"	
+						}
+						
 					}
 						if($schemaDefination)
 						{

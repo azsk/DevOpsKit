@@ -34,8 +34,12 @@ class CommandBase: AzSKRoot {
 			$CASetupRunbookUrl = [ConfigurationManager]::GetAzSKConfigData().CASetupRunbookURL
 			if(-not [Helpers]::IsSASTokenUpdateRequired($CASetupRunbookUrl))
 			{
-				[Helpers]::GetUriWithUpdatedSASToken($onlinePolicyStoreUrl,$CASetupRunbookUrl)				
+				[ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl = [Helpers]::GetUriWithUpdatedSASToken($onlinePolicyStoreUrl,$CASetupRunbookUrl)				
 				[AzSKSettings]::Update([ConfigurationManager]::GetAzSKSettings())
+			}
+			else
+			{
+				[EventBase]::PublishGenericCustomMessage("Org policy settings is getting expired. Please run installer(IWR) command to update with latest policy. ", [MessageType]::Warning);
 			}
 		}
 
