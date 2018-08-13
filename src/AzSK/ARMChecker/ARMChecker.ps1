@@ -33,26 +33,32 @@ function Get-AzSKARMTemplateSecurityStatus
 	Param(
         [Parameter(Mandatory = $true, HelpMessage = "Path to ARM Template file or folder")]
         [string]        
+		[Alias("atp")]
         $ARMTemplatePath,
 
 		[Parameter(Mandatory = $false, HelpMessage = "Gets the ARM Temaplates in the specified locations and in all child folders of the locations")]
-        [switch]        
+        [switch]  
+		[Alias("rcs")]
         $Recurse,
 
 		[Parameter(Mandatory = $true, HelpMessage = "To use Preview feature")]
-        [switch]        
+        [switch]       
+		[Alias("prv")]
         $Preview,
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder,
 
 		[Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of JSON files to be excluded from scan")]
-        [string]        
+        [string]  
+		[Alias("ef")]
         $ExcludeFiles,
 
 		[Parameter(Mandatory = $false, HelpMessage = "Path to file containing list of controls to skip")]
-        [string]        
+        [string]  
+		[Alias("scf")]
         $SkipControlsFromFile
     )
 
