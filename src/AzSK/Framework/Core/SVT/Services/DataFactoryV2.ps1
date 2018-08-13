@@ -14,26 +14,21 @@ class DataFactoryV2: SVTBase
         Base($subscriptionId, $svtResource) 
     { 
          $this.GetResourceObject();
-         $this.AddResourceMetadata($this.adfDetails);
-
 
     }
 
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzureRmDataFactoryV2 -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
-                                                         
-            if(-not $this.ResourceObject)
-            {
-				$this.ResourceObject = Get-AzureRmDataFactory -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+            $this.ResourceObject = Get-AzureRmDataFactoryV2 -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName                                         
+          
 				if(-not $this.ResourceObject)
 				{
 					throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))
 				}
-            }
-        }
         $this.GetADFV2Details();
+        $this.AddResourceMetadata($this.adfDetails);
+        }
         return $this.ResourceObject;
     }
 
@@ -63,7 +58,7 @@ class DataFactoryV2: SVTBase
         }
         catch{
 
-            throw ([SuppressedException]::new(("Error while getting pipelines, datasets or trigger details!", [SuppressedExceptionType]::Generic)));
+
         }
     }
 
