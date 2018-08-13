@@ -36,30 +36,37 @@ class KeyVault: SVTBase
     }
 	hidden [void] CheckCurrentContextPermissionsOnVaultObjects()
 	{
+
 		$currentContext=[Helpers]::GetCurrentRMContext();
 		$CurrentContextId=$currentContext.Account.Id;
 		$CurrentContextObjectId=$null
-		if($currentContext.Account.Type -eq 'User')
-		{
-			$CurrentContextObjectId=Get-AzureRmADUser -UserPrincipalName $CurrentContextId|Select-Object -Property Id
-		}
-		elseif($currentContext.Account.Type -eq 'ServicePrincipal')
-		{
-			$CurrentContextObjectId=Get-AzureRmADServicePrincipal -ServicePrincipalName $CurrentContextId|Select-Object -Property Id
-		}
-		$accessPolicies = $this.ResourceObject.AccessPolicies
-		$currentContextAccess=$accessPolicies|Where-Object{$_.ObjectId -eq $CurrentContextObjectId.Id }
-		if($null -ne $currentContextAccess)
-		{
-			 if(('List' -in $currentContextAccess.PermissionsToKeys) -and ('Get' -in $currentContextAccess.PermissionsToKeys))
+		try{
+				if($currentContext.Account.Type -eq 'User')
+				{
+					$CurrentContextObjectId=Get-AzureRmADUser -UserPrincipalName $CurrentContextId|Select-Object -Property Id
+				}
+				elseif($currentContext.Account.Type -eq 'ServicePrincipal')
+				{
+					$CurrentContextObjectId=Get-AzureRmADServicePrincipal -ServicePrincipalName $CurrentContextId|Select-Object -Property Id
+				}
+				$accessPolicies = $this.ResourceObject.AccessPolicies
+				$currentContextAccess=$accessPolicies|Where-Object{$_.ObjectId -eq $CurrentContextObjectId.Id }
+				if($null -ne $currentContextAccess)
+				{
+					if(('List' -in $currentContextAccess.PermissionsToKeys) -and ('Get' -in $currentContextAccess.PermissionsToKeys))
+					{
+						$this.HasFetchKeysPermissions=$true
+					}
+					if(('List' -in $currentContextAccess.PermissionsToSecrets) -and ('Get' -in $currentContextAccess.PermissionsToSecrets))
+					{
+						$this.HasFetchSecretsPermissions=$true
+					}
+				}
+			}catch
 			{
-				$this.HasFetchKeysPermissions=$true
+				$this.HasFetchSecretsPermissions=$false;
+				$this.HasFetchSecretsPermissions=$false;
 			}
-			if(('List' -in $currentContextAccess.PermissionsToSecrets) -and ('Get' -in $currentContextAccess.PermissionsToSecrets))
-			{
-				$this.HasFetchSecretsPermissions=$true
-			}
-		}
 	}
 
     hidden [ControlResult] CheckAdvancedAccessPolicies([ControlResult] $controlResult)
@@ -201,7 +208,7 @@ class KeyVault: SVTBase
 		}
 		return $this.AllEnabledSecrets;
 	}
-	
+
     hidden [ControlResult] CheckKeyHSMProtected([ControlResult] $controlResult)
     {
 
