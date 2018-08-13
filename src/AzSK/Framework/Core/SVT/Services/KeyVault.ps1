@@ -64,7 +64,7 @@ class KeyVault: SVTBase
 				}
 			}catch
 			{
-				$this.HasFetchSecretsPermissions=$false;
+				$this.HasFetchKeysPermissions=$false;
 				$this.HasFetchSecretsPermissions=$false;
 			}
 	}
