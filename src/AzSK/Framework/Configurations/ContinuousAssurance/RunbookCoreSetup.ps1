@@ -404,7 +404,7 @@ function IsPolicyUrlUpdateRequired($policyUrl)
         $decodedUrl = [System.Web.WebUtility]::UrlDecode($validatedUri.Query)
         $pattern = '&se=(.*?)&'
         [DateTime] $expiryDate = Get-Date 
-        if([DateTime]::TryParse((GetSubString $decodedUrl $pattern),[ref] $expiryDate)
+        if([DateTime]::TryParse((GetSubString $decodedUrl $pattern),[ref] $expiryDate))
         {
             if($expiryDate.AddDays(-30) -lt [DateTime]::UtcNow)
             {
