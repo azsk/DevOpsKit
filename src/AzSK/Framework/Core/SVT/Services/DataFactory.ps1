@@ -16,15 +16,8 @@ class DataFactory: SVTBase
         Base($subscriptionId, $svtResource) 
     { 
 		 $this.GetResourceObject();
-		 $this.GetADFDetails();
+         $this.AddResourceMetadata($this.adfDetails);
 
-         try{
-            
-            $this.AddResourceMetadata($this.adfDetails);
-         }
-		 catch{
-            throw ([SuppressedException]::new(("Error while adding resource metadata!", [SuppressedExceptionType]::Generic)));
-         }
     }
 
 	hidden [PSObject] GetResourceObject()
@@ -41,6 +34,7 @@ class DataFactory: SVTBase
 				}
             }
         }
+        $this.GetADFDetails();
         return $this.ResourceObject;
     }
 		
@@ -75,26 +69,33 @@ class DataFactory: SVTBase
 		
         $this.adfDetails.LinkedserviceDetails += Get-AzureRmDataFactoryLinkedService -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
 		
+
+        try{
         # Get pipelines count
 
-        $pipelines = @();
-        $pipelines += Get-AzureRmDataFactoryPipeline -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
-		$this.adfDetails.PipelinesCount = ($pipelines | Measure-Object).Count
+             $pipelines = @();
+             $pipelines += Get-AzureRmDataFactoryPipeline -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
+		     $this.adfDetails.PipelinesCount = ($pipelines | Measure-Object).Count;
 
 
        
-        #Get Dataset count
-        $datasets = @();
-        $datasets += Get-AzureRmDataFactoryDataset -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
-        $this.adfDetails.DatasetsCount +=  ($datasets | Measure-Object).Count
+             #Get Dataset count
+             $datasets = @();
+             $datasets += Get-AzureRmDataFactoryDataset -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
+             $this.adfDetails.DatasetsCount +=  ($datasets | Measure-Object).Count;
+        }
+        catch{
+            throw ([SuppressedException]::new(("Error while getting pipelines and datasets details!", [SuppressedExceptionType]::Generic)));
+
+        }
     
     }
 }
 
 Class ADFDetails{
 
-[int]$PipelinesCount;
+[int]$PipelinesCount;  #default 0
 [PSObject]$LinkedserviceDetails;
-[int]$DatasetsCount;
+[int]$DatasetsCount;   # default 0
 
 }
