@@ -491,9 +491,9 @@ class VirtualMachine: SVTBase
 				}
 				catch
 				{
-					if((Get-Member -InputObject ($_.Exception) -MemberType Properties -Name InnerException) -and `
-					(Get-Member -InputObject ($_.Exception).InnerException -MemberType Properties -Name Response) -and `
-					(Get-Member -InputObject ($_.Exception).InnerException.Response -MemberType Properties -Name StatusCode) -and `
+					if([Helpers]::CheckMember($_.Exception, "InnerException") -and `
+					([Helpers]::CheckMember(($_.Exception).InnerException,"Response") -and `
+					([Helpers]::CheckMember(($_.Exception).InnerException.Response,"StatusCode") -and `
 					($_.Exception).InnerException.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
 					{
 						$encryptionExtensionFound = $false

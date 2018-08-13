@@ -934,7 +934,7 @@ class SVTBase: AzSKRoot
 		}
 		catch
 		{
-			if((Get-Member -InputObject ($_.Exception) -MemberType Properties -Name Response) -and ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
+			if([Helpers]::CheckMember($_.Exception, "Response") -and ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
 			{
 				$controlResult.AddMessage([VerificationResult]::Failed, "Diagnostics setting is disabled for resource - [$($this.ResourceContext.ResourceName)].");
 				return $controlResult
