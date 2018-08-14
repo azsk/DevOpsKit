@@ -400,11 +400,9 @@ function IsPolicyUrlUpdateRequired($policyUrl)
     $IsSASTokenUpdateRequired = $false
     if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se="))
     {
-		[Reflection.Assembly]::LoadWithPartialName("System.Web")| out-null
-        $decodedUrl = [System.Web.WebUtility]::UrlDecode($validatedUri.Query)
-        $pattern = '&se=(.*?)&'
+        $pattern = '&se=(.*?)T'
         [DateTime] $expiryDate = Get-Date 
-        if([DateTime]::TryParse((GetSubString $decodedUrl $pattern),[ref] $expiryDate)
+        if([DateTime]::TryParse((GetSubString $($validatedUri.Query) $pattern),[ref] $expiryDate))
         {
             if($expiryDate.AddDays(-30) -lt [DateTime]::UtcNow)
             {
@@ -445,9 +443,9 @@ function CheckAndUpdateExpiringPolicyUrl{
 		$runbookFilePath = "$outputFolderPath\$RunbookName.ps1"
 		$runbookContent = get-content $runbookFilePath
 		
-		$pattern = '$onlinePolicyStoreUrl = "(.*?)"'
+		$pattern = 'onlinePolicyStoreUrl = "(.*?)"'
 		$policyStoreUrl = GetSubString $runbookContent $pattern
-		$pattern = '$CoreSetupSrcUrl = "(.*?)"'
+		$pattern = 'CoreSetupSrcUrl = "(.*?)"'
 		$coreSetupUrl = GetSubString $runbookContent $pattern
 		$isPolicyUrlUpdatedForSASToken= $false
     
@@ -470,6 +468,7 @@ function CheckAndUpdateExpiringPolicyUrl{
 		#If SAS token is updated for policy urls then import latest runbook
 		if($isPolicyUrlUpdatedForSASToken)
 		{
+			Write-Output ("CS: Found that runbook policy setup url SAS token is getting expired. Updating policy url with latest SAS token.")
 			$runbookContent | Out-File $runbookFilePath -Encoding utf8 -Force
 			#Remove existing runbook
 			$existingRunbook = Get-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName `
@@ -484,6 +483,7 @@ function CheckAndUpdateExpiringPolicyUrl{
 			-LogProgress $false -LogVerbose $false `
 			-AutomationAccountName $AutomationAccountName `
 			-ResourceGroupName $AutomationAccountRG -Published -ErrorAction Stop | Out-Null
+			Write-Output ("CS: Updated runbook policy url with latest SAS token.")
 		}
 	}
 	catch
@@ -685,7 +685,8 @@ try
 		Write-Output ("CS: CA core setup completed.")
 		PublishEvent -EventName "CA Setup Succeeded" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 	}	
-	
+	#Validate and update expiring runbook polcy url with latest SAS token 
+	CheckAndUpdateExpiringPolicyUrl
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }
 catch
