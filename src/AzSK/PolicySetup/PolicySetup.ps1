@@ -202,7 +202,6 @@ function Update-AzSKOrganizationPolicy
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
 		[Parameter(Mandatory = $true,  ParameterSetName = "Extensions")]
-		[Alias("PolicyFolderName")]
 		[string]
 		[Alias("PolicyFolderName","pfp")]
 		$PolicyFolderPath,
