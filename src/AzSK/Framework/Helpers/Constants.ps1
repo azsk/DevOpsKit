@@ -52,7 +52,7 @@ class Constants
 	   static [string] $connectionAssetName = "AzureRunAsConnection"
 	   #static [string] $AzSKRGName = "AzSKRG"
 	   static [string] $SupportDL = "azsksupext@microsoft.com"
-	   static [string] $AzSKCICDShortLink = "https://aka.ms/devopskit/cicd" 
+	   static [string] $CICDShortLink = "https://aka.ms/devopskit/cicd" 
 
 	#Constants for SVTs
     static [string] $ModuleStartHeading = [Constants]::DoubleDashLine +
