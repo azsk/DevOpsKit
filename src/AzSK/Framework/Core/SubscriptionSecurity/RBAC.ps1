@@ -29,7 +29,10 @@ class RBAC: CommandBase
 			$this.RoleAssignments = [RoleAssignmentHelper]::GetAzSKRoleAssignment($true, $true);
 			#filter deleted user/group/spn assignments
 			$deletedUserAssignments = $this.RoleAssignments | Where-Object{ [string]::IsNullOrWhiteSpace($_.DisplayName) -and [string]::IsNullOrWhiteSpace($_.SignInName) -and $_.ObjectType -eq 'Unknown'}
-			$this.RoleAssignments = $this.RoleAssignments | Where-Object{ $deletedUserAssignments.RoleAssignmentId -inotcontains $_.RoleAssignmentId }
+			if(($deletedUserAssignments | Measure-Object).Count -gt 0)
+			{
+				$this.RoleAssignments = $this.RoleAssignments | Where-Object{ $deletedUserAssignments.RoleAssignmentId -inotcontains $_.RoleAssignmentId }
+			}
 		}
 		return $this.RoleAssignments;
 	}
