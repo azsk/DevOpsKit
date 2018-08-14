@@ -1448,11 +1448,9 @@ class Helpers {
         
         if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se="))
         {
-            [Reflection.Assembly]::LoadWithPartialName("System.Web")| out-null
-            $decodedUrl = [System.Net.WebUtility]::UrlDecode($validatedUri.Query)
-            $pattern = '&se=(.*?)&'
+            $pattern = '&se=(.*?)T'
             [DateTime] $expiryDate = Get-Date 
-            if([DateTime]::TryParse([Helpers]::GetSubString($decodedUrl,$pattern),[ref] $expiryDate))
+            if([DateTime]::TryParse([Helpers]::GetSubString($($validatedUri.Query),$pattern),[ref] $expiryDate))
             {
                if($expiryDate.AddDays(-[Constants]::SASTokenExpiryReminderInDays) -lt [DateTime]::UtcNow)
                {
