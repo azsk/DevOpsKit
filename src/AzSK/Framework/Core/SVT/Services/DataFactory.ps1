@@ -48,7 +48,7 @@ class DataFactory: SVTBase
 
 
 			$controlResult.AddMessage([VerificationResult]::Verify, 
-							"Validate that the following Linked Services are using encryption in transit. Total Linked Services found - $($this.adfDetails.linkedservicedetails.Count)",
+							"Validate that the following Linked Services are using encryption in transit. Total Linked Services found - $(($this.adfDetails.linkedservicedetails | Measure-Object).Count)",
 							$linkedServicesProps);
 		}
 		else
