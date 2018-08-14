@@ -224,7 +224,7 @@ class PolicySetup: CommandBase
 		}
 		#If config already exists check and update for SAS token expiry for policy url
 		else {
-				$azskConfigContent = Get-Content -Path $askConfigFile | ConvertFrom-Json
+				$azskConfigContent = Get-Content -Path $askConfigFile.FullName | ConvertFrom-Json
 				if([Helpers]::CheckMember($azskConfigContent,"CASetupRunbookURL") -and [Helpers]::IsSASTokenUpdateRequired($azskConfigContent.CASetupRunbookURL))
 				{
 					$azskConfigContent.CASetupRunbookURL = $this.CASetupRunbookURL
@@ -1377,7 +1377,7 @@ class PolicySetup: CommandBase
 				{
 					$failMsg +="PS1 files: $($InvalidSchemaPSFiles -Join ',')."
 				}						
-				$resolvemsg = "To resolve this, make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply)"
+				$resolvemsg = "To resolve this, make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply. For more details about syntax issue, refer detail logs.)"
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $false
