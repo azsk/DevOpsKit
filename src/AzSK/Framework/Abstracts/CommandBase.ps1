@@ -58,6 +58,9 @@ class CommandBase: AzSKRoot {
 		{
 			$this.IsLocalComplianceStoreEnabled = $true
 		}     
+		#clear azsk storage instance
+		[StorageHelper]::AzSKStorageHelperInstance = $null;
+
     }
 
     [void] CommandStarted() {
