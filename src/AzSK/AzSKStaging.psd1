@@ -81,7 +81,7 @@
 		@{ModuleName = 'AzureRM.TrafficManager'; RequiredVersion = '4.0.8'}		
 		@{ModuleName = 'AzureRM.Websites'; RequiredVersion = '5.0.6'}	
 		@{ModuleName = 'AzureRM.ContainerInstance'; RequiredVersion = '0.2.7'}	
-		@{ModuleName = 'AzureRM.ContainerRegistry'; RequiredVersion = '1.0.2'}	
+		@{ModuleName = 'AzureRM.ContainerRegistry'; RequiredVersion = '1.0.7'}	
     )
 
     # Assemblies that must be loaded prior to importing this module
