@@ -34,7 +34,6 @@ class AzSKSettings {
 	[bool] $LocalEnableControlTelemetry;
 	[bool] $PrivacyNoticeAccepted = $false;
 	[bool] $IsCentralScanModeOn = $false;
-
     hidden static [AzSKSettings] $Instance = $null;
 	hidden static [string] $FileName = "AzSKSettings.json";
 	[bool] $StoreComplianceSummaryInUserSubscriptions;
@@ -123,13 +122,7 @@ class AzSKSettings {
 							$mergedServerPropNames += $propertyName;
 						}
 					};				
-				[AzSKSettings]::Instance = $parsedSettings;
-				
-				#If Policy URL is Org specific, validate Policy Url for SAS token
-				if([Helpers]::IsSASTokenUpdateRequired([AzSKSettings]::Instance.OnlinePolicyStoreUrl))
-				{
-					[EventBase]::PublishGenericCustomMessage("Org policy settings is getting expired. Please run installer(IWR) command to update with latest policy. ", [MessageType]::Warning);
-				}
+				[AzSKSettings]::Instance = $parsedSettings;				
 			}
             #Sever merged settings should not be persisted, as it should always take latest from the server
 			return $parsedSettings;

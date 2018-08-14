@@ -337,7 +337,7 @@ class SVTBase: AzSKRoot
 	[void] PostFeatureControlTelemetry()
 	{
 		#todo add check for latest module version
-		if(($this.FeatureApplicableControls | Measure-Object).Count -gt 0)
+		if($this.RunningLatestPSModule -and ($this.FeatureApplicableControls | Measure-Object).Count -gt 0)
 		{
 			[CustomData] $customData = [CustomData]::new();
 			$customData.Name = "FeatureControlTelemetry";
@@ -959,7 +959,7 @@ class SVTBase: AzSKRoot
 		}
 		catch
 		{
-			if((Get-Member -InputObject ($_.Exception) -MemberType Properties -Name Response) -and ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
+			if([Helpers]::CheckMember($_.Exception, "Response") -and ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
 			{
 				$controlResult.AddMessage([VerificationResult]::Failed, "Diagnostics setting is disabled for resource - [$($this.ResourceContext.ResourceName)].");
 				return $controlResult
@@ -1003,7 +1003,11 @@ class SVTBase: AzSKRoot
 	{
 		$accessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.GetResourceId(), $false, $true);
 
+		return $this.CheckRBACAccess($controlResult, $accessList)
+	}
 
+	hidden [ControlResult] CheckRBACAccess([ControlResult] $controlResult, [PSObject] $accessList)
+	{
 		$resourceAccessList = $accessList | Where-Object { $_.Scope -eq $this.GetResourceId() };
 
         $controlResult.VerificationResult = [VerificationResult]::Verify;

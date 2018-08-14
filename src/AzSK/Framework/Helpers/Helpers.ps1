@@ -2,7 +2,6 @@ using namespace Newtonsoft.Json
 using namespace Microsoft.Azure.Commands.Common.Authentication.Abstractions
 using namespace Microsoft.Azure.Commands.Common.Authentication
 using namespace Microsoft.Azure.Management.Storage.Models
-
 Set-StrictMode -Version Latest
 class Helpers {
 
@@ -1446,12 +1445,12 @@ class Helpers {
 	{
         [System.Uri] $validatedUri = $null;
         $IsSASTokenUpdateRequired = $false
+        
         if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se="))
         {
-            $decodedUrl = [System.Web.HttpUtility]::UrlDecode($validatedUri.Query)
-            $pattern = '&se=(.*?)&'
+            $pattern = '&se=(.*?)T'
             [DateTime] $expiryDate = Get-Date 
-            if([DateTime]::TryParse([Helpers]::GetSubString($decodedUrl,$pattern),[ref] $expiryDate))
+            if([DateTime]::TryParse([Helpers]::GetSubString($($validatedUri.Query),$pattern),[ref] $expiryDate))
             {
                if($expiryDate.AddDays(-[Constants]::SASTokenExpiryReminderInDays) -lt [DateTime]::UtcNow)
                {
@@ -1470,7 +1469,7 @@ class Helpers {
         if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se=") -and [System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri))
         {
 
-            $UpdatedUrl = $policyUrl.Split("?")[0] + $updateUrl.Split("?")[0]
+            $UpdatedUrl = $policyUrl.Split("?")[0] + "?" + $updateUrl.Split("?")[1]
 
         }
         return $UpdatedUrl

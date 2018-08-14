@@ -34,8 +34,12 @@ class CommandBase: AzSKRoot {
 			$CASetupRunbookUrl = [ConfigurationManager]::GetAzSKConfigData().CASetupRunbookURL
 			if(-not [Helpers]::IsSASTokenUpdateRequired($CASetupRunbookUrl))
 			{
-				[Helpers]::GetUriWithUpdatedSASToken($onlinePolicyStoreUrl,$CASetupRunbookUrl)				
+				[ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl = [Helpers]::GetUriWithUpdatedSASToken($onlinePolicyStoreUrl,$CASetupRunbookUrl)				
 				[AzSKSettings]::Update([ConfigurationManager]::GetAzSKSettings())
+			}
+			else
+			{
+				[EventBase]::PublishGenericCustomMessage("Org policy settings is getting expired. Please run installer(IWR) command to update with latest policy. ", [MessageType]::Warning);
 			}
 		}
 
@@ -344,14 +348,14 @@ class CommandBase: AzSKRoot {
 			  {
 				if($AzSKConfigData.PolicyOrgName -eq "org-neutral")
 				{
-					throw [SuppressedException]::new("DevOps Kit was configured to run with '$OrgName' policy for this subscription. However, the current command is using '$($AzSKConfigData.PolicyOrgName)' (generic) policy.`nPlease contact your organization policy owner ($($SubOrgTag.Value)) for correcting the policy setup. Refer: https://aka.ms/devopskit/orgpolicy/faq",[SuppressedExceptionType]::Generic)
+					throw [SuppressedException]::new("The current subscription has been configured with DevOps kit policy for the '$OrgName' Org, However, the  DevOps kit command is running with a different ('$($AzSKConfigData.PolicyOrgName)') Org policy. `nPlease review FAQ at: https://aka.ms/devopskit/orgpolicy/faq and correct this condition depending upon which context(manual,CICD,CA scan) you are seeing this error. If FAQ does not help to resolve the issue, please contact your Org policy Owner ($($SubOrgTag.Value)).",[SuppressedExceptionType]::Generic)
 					
 				}
 				else
 				{	
 					if(-not $Force)
 					{
-						$this.PublishCustomMessage("Warning: DevOps Kit was configured to run with '$OrgName' policy for this subscription. However, the current command is using '$($AzSKConfigData.PolicyOrgName)' policy.`nPlease contact your organization policy owner ('$($SubOrgTag.Value)') for correcting the policy setup. `nIf you want to switch the subscription to '$($AzSKConfigData.PolicyOrgName)', run Set-AzSKSubscriptionSecurity or Update-AzSKSubscriptionSecurity with -Force parameter. For more details refer: https://aka.ms/devopskit/orgpolicy/faq",[MessageType]::Warning);
+						$this.PublishCustomMessage("Warning: The current subscription has been configured with DevOps kit policy for the '$OrgName' Org, However, the  DevOps kit command is running with a different ('$($AzSKConfigData.PolicyOrgName)') Org policy. `nPlease review FAQ at: https://aka.ms/devopskit/orgpolicy/faq and correct this condition depending upon which context(manual,CICD,CA scan) you are seeing this error. If FAQ does not help to resolve the issue, please contact your Org policy Owner ($($SubOrgTag.Value)).",[MessageType]::Warning);
 						$IsTagSettingRequired = $false
 					}					
 				}

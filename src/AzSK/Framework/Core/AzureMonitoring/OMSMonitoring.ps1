@@ -63,7 +63,7 @@ class OMSMonitoring: CommandBase
 			$genericViewTemplateFilepath | ConvertTo-Json -Depth 100 | Out-File $this.OMSGenericTemplateFilepath
 			$this.PublishCustomMessage("`r`nSetting up OMS AzSK generic view.");
 			$this.ConfigureGenericView($_viewName, $_validateOnly);			
-			$this.PublishCustomMessage([Constants]::SingleDashLine + "`r`nThe OMS view installed contains a basic set of queries over DevOps Kit scan events. Please feel free to customize them once you get familiar with the queries.`r`nWe also periodically publish updated/richer queries at: https://aka.ms/azsk/omsqueries. `r`n",[MessageType]::Warning);
+			$this.PublishCustomMessage([Constants]::SingleDashLine + "`r`nThe OMS view installed contains a basic set of queries over DevOps Kit scan events. Please feel free to customize them once you get familiar with the queries.`r`nWe also periodically publish updated/richer queries at: https://aka.ms/devopskit/omsqueries. `r`n",[MessageType]::Warning);
 			$this.PublishCustomMessage([Constants]::SingleDashLine + "`r`nCompleted setting up AzSK OMS solution pack.`r`n"+[Constants]::DoubleDashLine);
 		}
 		if ($input -eq "n")
