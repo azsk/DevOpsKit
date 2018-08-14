@@ -149,7 +149,7 @@
          "ControlSeverity": "High",
          "Automated": "Yes",
          "MethodName": "CheckASCVMMissingPatchingStatus",
-         "Rationale": "Unpatched VMs are easy targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in operating systems and related software.",
+         "Rationale": "Un-patched VMs are easy targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in operating systems and related software.",
          "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-apply-system-updates",
          "Tags": [
             "SDL",

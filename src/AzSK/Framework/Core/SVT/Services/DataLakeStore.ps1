@@ -77,7 +77,7 @@ class DataLakeStore: SVTBase
 			}
 			catch
 			{
-				if((Get-Member -InputObject ($_.Exception) -MemberType Properties -Name HttpStatus) -and ($_.Exception).HttpStatus -eq [System.Net.HttpStatusCode]::Forbidden)
+				if([Helpers]::CheckMember($_.Exception, "HttpStatus") -and ($_.Exception).HttpStatus -eq [System.Net.HttpStatusCode]::Forbidden)
 				{
 					$controlResult.AddMessage("Access denied: The user does not have the permission to perform this operation. Please check firewall and ACL settings.");
 					return $controlResult

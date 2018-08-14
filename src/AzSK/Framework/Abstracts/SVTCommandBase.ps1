@@ -44,12 +44,18 @@ class SVTCommandBase: CommandBase {
     hidden [SVTEventContext] CreateSVTEventContextObject() {
         return [SVTEventContext]@{
             SubscriptionContext = $this.SubscriptionContext;
-			PartialScanIdentifier = $this.PartialScanIdentifier
-        };
+            PartialScanIdentifier = $this.PartialScanIdentifier
+            };
     }
 
     hidden [void] CommandStarted() {
         [SVTEventContext] $arg = $this.CreateSVTEventContextObject();
+        $this.InitializeControlState();
+        #Check if user has permission to read attestation
+		if($null -ne $this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadPermissions -eq 0)
+		{
+          [EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine+"`nWarning: The current user/login context does not have permission to access DevOps Kit control attestations. Due to this, control scan results may not reflect attestation.",[MessageType]::Warning);
+        }
         $versionMessage = $this.CheckModuleVersion();
         if ($versionMessage) {
             $arg.Messages += $versionMessage;
@@ -73,19 +79,21 @@ class SVTCommandBase: CommandBase {
         
         #check and delete if older RG found. Remove this code post 8/15/2018 release
         $this.RemoveOldAzSDKRG();
-       
-		$this.InitializeControlState();
-		#Check if user has permission to read attestation
-		if($null -ne $this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadPermissions -eq 0)
-		{
-			$this.PublishCustomMessage("`nWarning: The current user/login context does not have permission to access DevOps Kit control attestations. Due to this, control scan results may not reflect attestation.`nTo resolve this, request your subscription owner to grant 'Contributor' access on the 'AzSKRG' resource group in the target subscription. ",[MessageType]::Warning);
-		}
-        $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
+        #Create necessary resources to save compliance data in user's subscription
+        if($this.IsLocalComplianceStoreEnabled)
+        {
+            $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());  
+            if(-not $this.ComplianceReportHelper.HaveRequiredPermissions())
+            {
+                $this.IsLocalComplianceStoreEnabled = $false;
+            }
+        }
+	    $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
 
 	[void] PostCommandStartedAction()
 	{
-		
+        
 	}
 
     hidden [void] CommandError([System.Management.Automation.ErrorRecord] $exception) {
@@ -197,7 +205,7 @@ class SVTCommandBase: CommandBase {
                 }
                 else {
                     [MessageData] $data = [MessageData]@{
-                        Message     = "You don't have the required permissions to perform control attestation. If you'd like to perform control attestation, please request your subscription owner to grant you 'Contributor' access to the 'AzSKRG' resource group.";
+                        Message     = "You don't have the required permissions to perform control attestation. If you'd like to perform control attestation, please request your subscription owner to grant you 'Contributor' access to the '$([ConfigurationManager]::GetAzSKConfigData().AzSKRGName)' resource group.";
                         MessageType = [MessageType]::Error;
                     };
                     $this.PublishCustomMessage($data)

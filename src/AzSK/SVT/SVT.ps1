@@ -557,7 +557,7 @@ function Get-AzSKControlsStatus
 		[string]
         [Parameter(Position = 0, Mandatory = $true, HelpMessage="Subscription id for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("sid")]
+		[Alias("sid","s")]
 		$SubscriptionId,
 
         [string]
@@ -586,10 +586,12 @@ function Get-AzSKControlsStatus
 
         [string]
 		[Parameter(Mandatory = $true, ParameterSetName = "TagName", HelpMessage="The name of the tag to query for Azure resource.")]
+		[Alias("tgn")]
 		$TagName,
 
         [string]
 		[Parameter(Mandatory = $true, ParameterSetName = "TagName", HelpMessage="The value of the tag to query for Azure resource.")]
+		[Alias("tgv")]
 		$TagValue,
 
 		[string] 
@@ -602,10 +604,12 @@ function Get-AzSKControlsStatus
 
 		[string] 
 		[Parameter(Mandatory = $false)]
+		[Alias("ft")]
 		$FilterTags,
 
 		[string] 
 		[Parameter(Mandatory = $false)]
+		[Alias("xt")]
 		$ExcludeTags,
                 
 		[ValidateSet("All","AlreadyAttested","NotAttested","None")] 
@@ -633,11 +637,12 @@ function Get-AzSKControlsStatus
 
 		[switch]
         [Parameter(Mandatory = $false)]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder,
 
 		[GeneratePDF]
         [Parameter(Mandatory = $false)]
-		[Alias("gpdf")]
+		[Alias("gpdf","pdf")]
 		$GeneratePDF  = [GeneratePDF]::None,
 
 		[switch]
@@ -657,6 +662,7 @@ function Get-AzSKControlsStatus
 
 		[switch]
         [Parameter(Mandatory = $false)]
+		[Alias("iuc")]
 		$IncludeUserComments
     )
 	Begin
