@@ -2,7 +2,6 @@ using namespace Newtonsoft.Json
 using namespace Microsoft.Azure.Commands.Common.Authentication.Abstractions
 using namespace Microsoft.Azure.Commands.Common.Authentication
 using namespace Microsoft.Azure.Management.Storage.Models
-
 Set-StrictMode -Version Latest
 class Helpers {
 
@@ -17,7 +16,7 @@ class Helpers {
 			if ((-not $rmContext) -or ($rmContext -and (-not $rmContext.Subscription -or -not $rmContext.Account))) {
 				[EventBase]::PublishGenericCustomMessage("No active Azure login session found. Initiating login flow...", [MessageType]::Warning);
 
-				$rmLogin = Add-AzureRmAccount
+				$rmLogin = Connect-AzureRmAccount
 				if ($rmLogin) {
 					$rmContext = $rmLogin.Context;
 				}
@@ -42,7 +41,7 @@ class Helpers {
     }
 
     static [string] SanitizeFolderName($folderPath) {
-        return ($folderPath -replace '[<>:"/\\|?*]', '');
+        return ($folderPath -replace '[<>:"/\\\[\]|?*]', '');
     }
 
     static [string] ConvertObjectToString([PSObject] $dataObject, [bool] $defaultPsOutput) {
@@ -846,7 +845,6 @@ class Helpers {
                 -Location $Location `
                 -Kind $StorageKind `
                 -AccessTier Cool `
-                -EnableEncryptionService "Blob,File" `
                 -EnableHttpsTrafficOnly $true `
                 -ErrorAction Stop
 
@@ -859,7 +857,7 @@ class Helpers {
 
             if ($storageObject) {
                 #create alert rule				
-                #$emailAction = New-AzureRmAlertRuleEmail -SendToServiceOwners -ErrorAction Stop -WarningAction SilentlyContinue
+                #$emailAction = New-AzureRmAlertRuleEmail -SendToServiceOwner -ErrorAction Stop -WarningAction SilentlyContinue
                 #$targetId = $storageObject.Id + "/services/" + "blob"
 
                 #$alertName = $StorageName + "alert"
@@ -870,7 +868,7 @@ class Helpers {
                 #    -ResourceGroup $storageObject.ResourceGroupName `
                 #    -TargetResourceId $targetId `
                 #    -Threshold 0 -TimeAggregationOperator Total -WindowSize 01:00:00  `
-                #    -Actions $emailAction `
+                #    -Action $emailAction `
                 #    -WarningAction SilentlyContinue `
                 #    -ErrorAction Stop
 
@@ -884,7 +882,7 @@ class Helpers {
             [EventBase]::PublishGenericException($_);
             $storageObject = $null
             #clean-up storage if error occurs
-            if ((Find-AzureRmResource -ResourceGroupNameEquals $ResourceGroup -ResourceNameEquals $StorageName|Measure-Object).Count -gt 0) {
+            if ((Get-AzureRmResource -ResourceGroupName $ResourceGroup -Name $StorageName|Measure-Object).Count -gt 0) {
                 Remove-AzureRmStorageAccount -ResourceGroupName $ResourceGroup -Name $StorageName -Force -ErrorAction SilentlyContinue
             }
         }
@@ -1442,6 +1440,39 @@ class Helpers {
             return $String
         }
     }
-	
+
+    Static [bool] IsSASTokenUpdateRequired($policyUrl)
+	{
+        [System.Uri] $validatedUri = $null;
+        $IsSASTokenUpdateRequired = $false
+        
+        if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se="))
+        {
+            $pattern = '&se=(.*?)T'
+            [DateTime] $expiryDate = Get-Date 
+            if([DateTime]::TryParse([Helpers]::GetSubString($($validatedUri.Query),$pattern),[ref] $expiryDate))
+            {
+               if($expiryDate.AddDays(-[Constants]::SASTokenExpiryReminderInDays) -lt [DateTime]::UtcNow)
+               {
+                   $IsSASTokenUpdateRequired = $true
+               }
+            }
+        }
+        return $IsSASTokenUpdateRequired
+    }
+
+    Static [string] GetUriWithUpdatedSASToken($policyUrl, $updateUrl)
+	{
+        [System.Uri] $validatedUri = $null;
+        $UpdatedUrl = $policyUrl
+
+        if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se=") -and [System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri))
+        {
+
+            $UpdatedUrl = $policyUrl.Split("?")[0] + "?" + $updateUrl.Split("?")[1]
+
+        }
+        return $UpdatedUrl
+    }
 }
 

@@ -64,7 +64,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
-      "Recommendation": "Rotate Batch account access keys at regular intervals as per business requirement. Run command New-AzureRmBatchAccountKey -AccountName '{AccountName}'  -KeyType '{KeyType}' -ResourceGroupName '{ResourceGroupName}' Refer:  https://docs.microsoft.com/en-us/powershell/module/azurerm.batch/new-azurermbatchaccountkey?view=azurermps-3.7.0",
+      "Recommendation": "Rotate Batch account access keys at regular intervals as per business requirement. Run command New-AzureRmBatchAccountKey -AccountName '{AccountName}'  -KeyType '{KeyType}' -ResourceGroupName '{ResourceGroupName}' Refer:  https://docs.microsoft.com/en-us/powershell/module/azurerm.batch/new-azurermbatchaccountkey",
       "Tags": [
         "SDL",
         "TCP",
@@ -133,7 +133,7 @@
       "Automated": "Yes",
       "MethodName": "CheckBatchMetricAlert",
       "Rationale": "Metric alerts should be enabled to get alerts for issues that impacts the performance of batch resource when a metric crosses a certain threshold.",
-      "Recommendation": "Add or update a metric-based alert rule by using command Add-AzureRmMetricAlertRule -Location '{Location}'-MetricName 'PoolDeleteCompleteEvent' -Name '{alertName}' -Operator 'GreaterThan' -ResourceGroup '{ResourceGroupName}' -TargetResourceId '{TargetResourceId}' -Threshold 0 -TimeAggregationOperator 'Total' -WindowSize '01:00:00'  -Actions '{Actions}'",
+      "Recommendation": "Add or update a metric-based alert rule by using command Add-AzureRmMetricAlertRule -Location '{Location}'-MetricName 'PoolDeleteCompleteEvent' -Name '{alertName}' -Operator 'GreaterThan' -ResourceGroup '{ResourceGroupName}' -TargetResourceId '{TargetResourceId}' -Threshold 0 -TimeAggregationOperator 'Total' -WindowSize '01:00:00'  -Action '{Comma-separated list of actions}'",
       "Tags": [
         "SDL",
         "Best Practice",

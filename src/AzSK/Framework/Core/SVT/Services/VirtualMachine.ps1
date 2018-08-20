@@ -233,7 +233,7 @@ class VirtualMachine: SVTBase
 						$currentNic = Get-AzureRmResource -ResourceId $_.Id -ErrorAction SilentlyContinue
 						if($currentNic)
 						{
-							$nicResource = Get-AzureRmNetworkInterface -Name $currentNic.ResourceName `
+							$nicResource = Get-AzureRmNetworkInterface -Name $currentNic.Name `
 												-ResourceGroupName $currentNic.ResourceGroupName `
 												-ExpandResource NetworkSecurityGroup `
 												-ErrorAction SilentlyContinue
@@ -481,24 +481,51 @@ class VirtualMachine: SVTBase
 			#TCP is not applicable for Linux.
 			if($this.ResourceObject.OSProfile -and $this.ResourceObject.OSProfile.WindowsConfiguration)
 			{
-				$diskEncryptionStatus = Get-AzureRmVMDiskEncryptionStatus -ResourceGroupName $this.ResourceContext.ResourceGroupName -VMName $this.ResourceContext.ResourceName
 				$message = "";
-				$diskEncryptionStatusData = @{
-					VMDiskEncryptionStatus = $diskEncryptionStatus
-					ASCDiskEncryptionStatus = $ascDiskEncryptionStatus
-				}
-				#Need to convert the string values to Enum [Microsoft.Azure.Commands.Compute.Models.EncryptionStatus]
-				#Enum type is not resolving here
-				if(($diskEncryptionStatus.OsVolumeEncrypted -eq "NotEncrypted") -or ($diskEncryptionStatus.DataVolumesEncrypted -eq "NotEncrypted") -or -not $ascDiskEncryptionStatus)
+				$diskEncryptionStatus = $null	
+				$diskEncryptionStatusData = $Null
+				$encryptionExtensionFound = $true			
+				try
 				{
-					$message = "All Virtual Machine disks (OS and Data disks) are not encrypted";
+					$diskEncryptionStatus = Get-AzureRmVMDiskEncryptionStatus -ResourceGroupName $this.ResourceContext.ResourceGroupName -VMName $this.ResourceContext.ResourceName -ErrorAction Stop
+				}
+				catch
+				{
+					if([Helpers]::CheckMember($_.Exception, "InnerException") -and `
+					[Helpers]::CheckMember(($_.Exception).InnerException,"Response") -and `
+					[Helpers]::CheckMember(($_.Exception).InnerException.Response,"StatusCode") -and `
+					($_.Exception).InnerException.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
+					{
+						$encryptionExtensionFound = $false
+					}
+					else
+					{
+						$this.PublishException($_)
+					}
+				}
+				if($encryptionExtensionFound)
+				{
+					$diskEncryptionStatusData = @{
+						VMDiskEncryptionStatus = $diskEncryptionStatus
+						ASCDiskEncryptionStatus = $ascDiskEncryptionStatus
+					}
+					#Need to convert the string values to Enum [Microsoft.Azure.Commands.Compute.Models.EncryptionStatus]
+					#Enum type is not resolving here
+					if(($diskEncryptionStatus.OsVolumeEncrypted -eq "NotEncrypted") -or ($diskEncryptionStatus.DataVolumesEncrypted -eq "NotEncrypted") -or -not $ascDiskEncryptionStatus)
+					{
+						$message = "All/some Virtual Machine disks (OS and Data disks) are not encrypted";
+					}
+					else
+					{
+						$verificationResult  = [VerificationResult]::Passed;
+						$message = "All Virtual Machine disks (OS and Data disks) are encrypted";
+					}
 				}
 				else
 				{
-					$verificationResult  = [VerificationResult]::Passed;
-					$message = "All Virtual Machine disks (OS and Data disks) are encrypted";
+					$message = "No Virtual Machine disks (OS and Data disks) are encrypted";
 				}
-
+				
 				$controlResult.AddMessage($verificationResult, $message, $diskEncryptionStatusData);
 				$controlResult.SetStateData("Virtual Machine disks encryption status", $diskEncryptionStatusData);
 			}
@@ -903,27 +930,31 @@ class VirtualMachine: SVTBase
 		$vulnerableRules = @();
 		$inbloundRules = $effectiveNSG.EffectiveSecurityRules | Where-Object { ($_.direction -eq "Inbound" -and $_.Name -notlike "defaultsecurityrules*") }
 		foreach($securityRule in $inbloundRules){
-			$range =$securityRule.destinationPortRange.Split("-")
-			if(($range | Measure-Object).Count -eq 2 )
-			{
-				$startPort = $range[0]
-				$endPort = $range[1]
-				if(($port -ge $startPort -and $port -le $endPort) -and $securityRule.access.ToLower() -eq "deny")
-				{
-					break;
+			foreach($destPort in $securityRule.destinationPortRange) {
+				$range =$destPort.Split("-")
+				#For ex. if we provide the input 22 in the destination port range field, it will be interpreted as 22-22
+				if($range.Count -eq 2) {
+					$startPort = $range[0]
+					$endPort = $range[1]
+					if(($port -ge $startPort -and $port -le $endPort) -and $securityRule.access.ToLower() -eq "deny")
+					{
+						break;
+					}
+					elseif(($port -ge $startPort -and $port -le $endPort) -and $securityRule.access.ToLower() -eq "allow")
+					{
+						$vulnerableRules += $securityRule
+					}
+					else
+					{
+						continue;
+					}
 				}
-				elseif(($port -ge $startPort -and $port -le $endPort) -and $securityRule.access.ToLower() -eq "allow")
+				else 
 				{
-					$vulnerableRules += $securityRule
+					throw "Error while reading port range $($destPort)."
 				}
-				else
-				{
-					continue;
-				}
+	
 			}
-			else{
-			    throw "Error while reading port range $($securityRule.destinationPortRange)."			
-			}				
 		}
 		return $vulnerableRules;
 	}

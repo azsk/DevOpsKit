@@ -63,7 +63,7 @@ class SubscriptionCore: SVTBase
 		$SubAdmins += $this.RoleAssignments | Where-Object { $_.RoleDefinitionName -eq 'CoAdministrator' `
 																				-or $_.RoleDefinitionName -like '*ServiceAdministrator*' `
 																				-or ($_.RoleDefinitionName -eq 'Owner' -and $_.Scope -eq $scope)}
-
+		
 		if($this.HasGraphAPIAccess -eq $false)
 		{
 			$this.PublishCustomMessage("Current Azure login context doesn't have graph api access");
@@ -181,7 +181,6 @@ class SubscriptionCore: SVTBase
 		$SubAdmins += $this.RoleAssignments | Where-Object { $_.RoleDefinitionName -eq 'CoAdministrator' `
 																				-or $_.RoleDefinitionName -like '*ServiceAdministrator*' `
 																				-or ($_.RoleDefinitionName -eq 'Owner' -and $_.Scope -eq $scope)}
-
 		if($this.HasGraphAPIAccess -eq $false)
 		{
 			$this.PublishCustomMessage("Current Azure login context doesn't have graph api access");
@@ -844,10 +843,10 @@ class SubscriptionCore: SVTBase
 			$ClassicVMCount = 0;
 			$ClassicVNetCount = 0;
 
-			$ClassicVMCount = (Find-AzureRmResource -ResourceType Microsoft.ClassicCompute/virtualMachines | Measure-Object).Count;
-			$ClassicStorageCount = (Find-AzureRmResource -ResourceType Microsoft.ClassicStorage/storageAccounts | Measure-Object).Count;
-			$CloudServiceCount = (Find-AzureRmResource -ResourceType Microsoft.ClassicCompute/domainNames | Measure-Object).Count;
-			$ClassicVNetCount = (Find-AzureRmResource -ResourceType Microsoft.ClassicNetwork/virtualNetworks | Measure-Object).Count;
+			$ClassicVMCount = (Get-AzureRmResource -ResourceType Microsoft.ClassicCompute/virtualMachines | Measure-Object).Count;
+			$ClassicStorageCount = (Get-AzureRmResource -ResourceType Microsoft.ClassicStorage/storageAccounts | Measure-Object).Count;
+			$CloudServiceCount = (Get-AzureRmResource -ResourceType Microsoft.ClassicCompute/domainNames | Measure-Object).Count;
+			$ClassicVNetCount = (Get-AzureRmResource -ResourceType Microsoft.ClassicNetwork/virtualNetworks | Measure-Object).Count;
 
             #$controlResult.AddMessage([VerificationResult]::Failed, "Found classic resources on the subscription.", $classicResources, $true, "ClassicResources")
 
@@ -873,7 +872,7 @@ class SubscriptionCore: SVTBase
 
 	hidden [ControlResult] CheckPresenceOfClassicVMs([ControlResult] $controlResult)
 	{
-        $classicVMResources = [array] (Find-AzureRmResource -ResourceType Microsoft.ClassicCompute/virtualMachines)
+        $classicVMResources = [array] (Get-AzureRmResource -ResourceType Microsoft.ClassicCompute/virtualMachines)
         if(($classicVMResources | Measure-Object).Count -gt 0)
         {
 			$controlResult.SetStateData("Classic virtual machines on subscription", $classicVMResources);
@@ -1000,6 +999,12 @@ class SubscriptionCore: SVTBase
 		if($null -eq $this.RoleAssignments)
 		{
 			$this.RoleAssignments =  [RoleAssignmentHelper]::GetAzSKRoleAssignment($true,$true)
+			#filter deleted user/group/spn assignments
+			$deletedUserAssignments = $this.RoleAssignments | Where-Object{ [string]::IsNullOrWhiteSpace($_.DisplayName) -and [string]::IsNullOrWhiteSpace($_.SignInName) -and $_.ObjectType -eq 'Unknown'}
+			if(($deletedUserAssignments | Measure-Object).Count -gt 0)
+			{
+				$this.RoleAssignments = $this.RoleAssignments | Where-Object{ $deletedUserAssignments.RoleAssignmentId -inotcontains $_.RoleAssignmentId }			
+			}
 		}
 	}
 

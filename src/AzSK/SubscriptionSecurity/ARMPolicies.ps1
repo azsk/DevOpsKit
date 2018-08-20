@@ -35,6 +35,7 @@ function Set-AzSKARMPolicies
 		[string]
         [Parameter(Mandatory = $true, HelpMessage = "Subscription id for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
+		[Alias("sid", "HostSubscriptionId", "hsid","s")]
 		$SubscriptionId,
 
 		[string] 
@@ -43,10 +44,12 @@ function Set-AzSKARMPolicies
 		
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to apply ARM policies forcefully regardless of latest policies already present on subscription.")]
+		[Alias("f")]
 		$Force,
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 
@@ -117,6 +120,7 @@ function Remove-AzSKARMPolicies
 		[string]
         [Parameter(Mandatory = $true, HelpMessage = "Subscription id for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
+		[Alias("sid", "HostSubscriptionId", "hsid","s")]
 		$SubscriptionId,
 
 		[string] 
@@ -125,6 +129,7 @@ function Remove-AzSKARMPolicies
 		
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 

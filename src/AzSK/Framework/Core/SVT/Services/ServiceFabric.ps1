@@ -18,9 +18,9 @@ class ServiceFabric : SVTBase
     {
         if (-not $this.ResourceObject) 
 		{
-            $this.ResourceObject =  Get-AzureRmResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType -ResourceName $this.ResourceContext.ResourceName -ApiVersion 2016-03-01        
+            $this.ResourceObject =  Get-AzureRmResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType -Name $this.ResourceContext.ResourceName -ApiVersion 2016-03-01        
 
-			$this.ResourceObject.Tags.GetEnumerator() | Where-Object { $_.Name -eq $this.DefaultTagName } | ForEach-Object {$this.ClusterTagValue = $_.Value }
+			$this.ResourceObject.Tags.GetEnumerator() | Where-Object { $_.Key -eq $this.DefaultTagName } | ForEach-Object {$this.ClusterTagValue = $_.Value }
 			
 			## Commented below two lines of code. This will be covered once Service Fabric module gets available as part of AzureRM modules set.
 			#$this.CheckClusterAccess();
@@ -301,7 +301,7 @@ class ServiceFabric : SVTBase
 		$loadBalancerResources = $this.GetLinkedResources("Microsoft.Network/loadBalancers")
 		#Collect all open ports on load balancer  
 		$loadBalancerResources | ForEach-Object{
-			$loadBalancerResource = Get-AzureRmLoadBalancer -Name $_.ResourceName -ResourceGroupName $_.ResourceGroupName
+			$loadBalancerResource = Get-AzureRmLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
 			$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
         
 			$loadBalancingRules | ForEach-Object {
@@ -427,6 +427,6 @@ class ServiceFabric : SVTBase
 
 	[PSObject] GetLinkedResources([string] $resourceType)
 	{
-	    return  Find-AzureRmResource -TagName $this.DefaultTagName -TagValue $this.ClusterTagValue | Where-Object { ($_.ResourceType -EQ $resourceType) -and ($_.ResourceGroupName -eq $this.ResourceContext.ResourceGroupName) }
+	    return  Get-AzureRmResource -TagName $this.DefaultTagName -TagValue $this.ClusterTagValue | Where-Object { ($_.ResourceType -EQ $resourceType) -and ($_.ResourceGroupName -eq $this.ResourceContext.ResourceGroupName) }
 	}	
 }
