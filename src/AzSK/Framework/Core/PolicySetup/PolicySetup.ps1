@@ -222,7 +222,7 @@ class PolicySetup: CommandBase
 			$azskOverride.UpdatePropertyValue("AzSKConfigURL",$this.AzSKConfigURL)
 			$azskOverride.WriteToFolder($this.ConfigFolderPath);
 		}
-		#If config already exists check and update for SAS token expiry for policy url
+		#If config already exists check and update for SAS token expiry for policy url and change in storage account RG Name
 		else {
 				$azskConfigContent = Get-Content -Path $askConfigFile.FullName | ConvertFrom-Json
 				if([Helpers]::CheckMember($azskConfigContent,"CASetupRunbookURL") -and [Helpers]::IsSASTokenUpdateRequired($azskConfigContent.CASetupRunbookURL))
@@ -234,6 +234,20 @@ class PolicySetup: CommandBase
 				{
 					$azskConfigContent.AzSKConfigURL = $this.AzSKConfigURL
 				}
+				if([Helpers]::CheckMember($azskConfigContent,"AzSKRGName"))
+                {
+                    $RunbookScanAgentFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookScanAgent.ps1" } | Select -First 1
+                    $RunbookScanAgentFileContent =  Get-Content -Path $RunbookScanAgentFile.FullName
+				    #Check Storage Account RG in scan agent
+				    $pattern = 'StorageAccountRG = "(.*?)"'
+				    $storageAccountRG = [Helpers]::GetSubString($RunbookScanAgentFileContent,$pattern)
+				    if(-not [string]::IsNullOrEmpty($storageAccountRG) -and $storageAccountRG -ne $azskConfigContent.AzSKRGName)
+				    {
+					    $RunbookScanAgentFileContent = $RunbookScanAgentFileContent.Replace($storageAccountRG,$azskConfigContent.AzSKRGName)
+					    Out-File -InputObject $RunbookScanAgentFileContent -Force -FilePath $($RunbookScanAgentFile.FullName) -Encoding utf8
+				    }
+
+                }
 				$azskConfigContent | ConvertTo-Json -Depth 10 | Out-File -Force -FilePath $askConfigFile.FullName -Encoding utf8
 		}
 
@@ -382,12 +396,7 @@ class PolicySetup: CommandBase
 				$azskConfig | ConvertTo-Json | Out-File "$($this.RunbookFolderPath)\AzSK.Pre.json" -Force
 			}
 
-			$allCAFiles = @();
-			$allCAFiles += Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.mode -match "-a---" }
-			if($allCAFiles.Count -ne 0)
-			{
-				$this.StorageAccountInstance.UploadFilesToBlob($this.ConfigContainerName, $this.RunbookBaseVersion, $allCAFiles);
-			}
+			
 		}
 		catch
 		{
@@ -475,6 +484,13 @@ class PolicySetup: CommandBase
 			$this.CASetupRunbookURL = $container.CloudBlobContainer.Uri.AbsoluteUri + "/$($this.RunbookBaseVersion)/RunbookCoreSetup.ps1" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
 		}
 		$this.ModifyConfigs();
+		# Uploading Runbook files to container
+		$allCAFiles = @();
+		$allCAFiles += Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.mode -match "-a---" }
+		if($allCAFiles.Count -ne 0)
+		{
+	    	$this.StorageAccountInstance.UploadFilesToBlob($this.ConfigContainerName, $this.RunbookBaseVersion, $allCAFiles);
+		}
 		$allFiles = @();
 		$allFiles += Get-ChildItem $this.ConfigFolderPath -Recurse -Force | Where-Object { $_.mode -match "-a---" }
 
