@@ -35,13 +35,16 @@ class DataFactoryV2: SVTBase
     hidden GetADFV2Details(){
     
         # Get all the Linked Service
-		
-        $this.adfDetails.LinkedserviceDetails += Get-AzureRmDataFactoryV2LinkedService -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName
-	    
         try{
-        
-            # Get pipelines count
 
+            $resourceAppIdURI =[WebRequestHelper]::AzureManagementUri;
+            $accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+            $authorisationToken = "Bearer " + $accessToken
+            $headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
+            $apiFunctionsUrl = [string]::Format("https://management.azure.com/{0}/linkedservices?api-version=2018-06-01",$this.ResourceContext.ResourceId)
+            $linkedServiceDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
+            # Get pipelines count
+            $this.adfDetails.LinkedserviceDetails += $linkedServiceDetail
             $pipelines = @();
             $pipelines += Get-AzureRmDataFactoryV2Pipeline -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
 		    $this.adfDetails.PipelinesCount = ($pipelines | Measure-Object).Count

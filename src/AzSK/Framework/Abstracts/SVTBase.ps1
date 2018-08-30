@@ -1160,15 +1160,16 @@ class SVTBase: AzSKRoot
 
 	hidden AddResourceMetadata([PSObject] $metadataObj)
 	{
+		if([ConfigurationManager]::GetAzSKConfigData().EnableResourceMetadataTelemetry)
+		{
+			[hashtable] $resourceMetadata = New-Object -TypeName Hashtable;
+			$metadataObj.psobject.properties |
+				ForEach-Object {
+					$resourceMetadata.Add($_.name, $_.value)
+				}
 
-		[hashtable] $resourceMetadata = New-Object -TypeName Hashtable;
-		$metadataObj.psobject.properties |
-			ForEach-Object {
-				$resourceMetadata.Add($_.name, $_.value)
-			}
-
-		$this.ResourceContext.ResourceMetadata = $resourceMetadata
-
+			$this.ResourceContext.ResourceMetadata = $resourceMetadata
+		}
 	}
 
 
