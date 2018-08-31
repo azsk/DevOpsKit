@@ -993,7 +993,7 @@ class SVTBase: AzSKRoot
 		}
 		else
 		{
-			$controlResult.AddMessage("Not able to fetch diagnostics settings. Please validate diagnostics settings manually for resource - [$($this.ResourceContext.ResourceName)].");
+			$controlResult.AddMessage([VerificationResult]::Failed, "Diagnostics setting is disabled for resource - [$($this.ResourceContext.ResourceName)].");
 		}
 
 		return $controlResult;
