@@ -444,7 +444,7 @@ class SVTBase: AzSKRoot
         [SVTEventContext[]] $manualControlsResult = @();
         try
         {
-            $this.GetApplicableControls() | Where-Object { $_.Automated -eq "No" } |
+            $this.GetApplicableControls() | Where-Object { $_.Automated -eq "No" -and $_.Enabled -eq $true } |
             ForEach-Object {
                 $controlItem = $_;
 				[SVTEventContext] $arg = $this.CreateSVTEventContextObject();
