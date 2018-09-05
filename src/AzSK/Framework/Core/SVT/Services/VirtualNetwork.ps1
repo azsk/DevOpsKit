@@ -46,7 +46,7 @@ class VirtualNetwork: SVTIaasBase
 
 	hidden [ControlResult] CheckIPForwardingforNICs([ControlResult] $controlResult)
     {
-        if(-not $this.vNetNicsOutput -and ($this.vNetNicsOutput | Measure-Object).count -gt 0)
+        if($null -ne $this.vNetNicsOutput -and ($this.vNetNicsOutput | Measure-Object).count -gt 0)
 		{
 			[array] $vNetNicsIPFwed = $this.vNetNicsOutput | Where-Object { $_.EnableIPForwarding }
 
@@ -193,7 +193,7 @@ class VirtualNetwork: SVTIaasBase
 	hidden [ControlResult] CheckVnetPeering([ControlResult] $controlResult)
     {
         $vnetPeerings = Get-AzureRmVirtualNetworkPeering -VirtualNetworkName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
-        if($null -ne $vnetPeerings  -and ($vnetPeerings|Measure-Object).count -gt 0)
+        if($null -ne $vnetPeerings -and ($vnetPeerings|Measure-Object).count -gt 0)
         {
 			$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Verify below peering found on VNet", $vnetPeerings));
 			$controlResult.SetStateData("Peering found on VNet", $vnetPeerings);
