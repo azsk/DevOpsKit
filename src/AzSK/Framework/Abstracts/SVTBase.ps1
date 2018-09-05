@@ -481,7 +481,7 @@ class SVTBase: AzSKRoot
         {
             $this.GetApplicableControls() | Where-Object { $_.Automated -ne "No" -and (-not [string]::IsNullOrEmpty($_.MethodName)) } |
             ForEach-Object {
-                $eventContext = $this.RunControl($_);
+				$eventContext = $this.RunControl($_);
 				if($null -ne $eventContext -and $eventcontext.ControlResults.Length -gt 0)
 				{
 					$automatedControlsResult += $eventContext;
@@ -534,22 +534,20 @@ class SVTBase: AzSKRoot
         }
         else
         {
-			$controlResult = $this.CreateControlResult($controlItem.FixControl);
-
+			$azskScanResult = $this.CreateControlResult($controlItem.FixControl);
             try
             {
                 $methodName = $controlItem.MethodName;
 				#$this.CurrentControlItem = $controlItem;
-                $singleControlResult.ControlResults += $this.$methodName($controlResult);
+				$singleControlResult.ControlResults += $this.$methodName($azskScanResult);
             }
             catch
             {
-				$controlResult.VerificationResult = [VerificationResult]::Error				
-                $controlResult.AddError($_);
-                $singleControlResult.ControlResults += $controlResult;
+				$azskScanResult.VerificationResult = [VerificationResult]::Error				
+				$azskScanResult.AddError($_);
+				$singleControlResult.ControlResults += $azskScanResult
                 $this.ControlError($controlItem, $_);
 			}
-						
 			$this.PostProcessData($singleControlResult);
 
 			# Check for the control which requires elevated permission to modify 'Recommendation' so that user can know it is actually automated if they have the right permission
@@ -570,6 +568,44 @@ class SVTBase: AzSKRoot
 
         return $singleControlResult;
     }
+	
+	# Policy compliance methods begin
+	hidden [ControlResult] ComputeFinalScanResult([ControlResult] $azskScanResult, [ControlResult] $policyScanResult)
+	{
+		if($policyScanResult.VerificationResult -ne [VerificationResult]::Failed -and $azskScanResult.VerificationResult -ne [VerificationResult]::Passed)
+		{
+			return $azskScanResult
+		}
+		else
+		{
+			 return $policyScanResult;
+		}
+	}
+	hidden [ControlResult] CheckPolicyCompliance([ControlItem] $controlItem, [ControlResult] $controlResult)
+	{
+		$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName
+		$defnResourceId = $this.GetResourceId() + "/" + $controlItem.PolicyDefnResourceIdSuffix
+		$policyState = Get-AzureRmPolicyState -ResourceId $defnResourceId -Filter "PolicyDefinitionId eq '/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)' and PolicySetDefinitionName eq '$initiativeName'"
+		if($policyState)
+        {
+            $policyStateObject = $policyState | Select-Object ResourceId, PolicyAssignmentId, PolicyDefinitionId, PolicyAssignmentScope, PolicyDefinitionAction, PolicySetDefinitionName, IsCompliant
+		    if($policyState.IsCompliant)
+            {
+			    $controlResult.AddMessage([VerificationResult]::Passed,
+										    [MessageData]::new("Policy compliance data:", $policyStateObject));
+            }
+		    else
+            { 
+			    #$controlResult.EnableFixControl = $true;
+			    $controlResult.AddMessage([VerificationResult]::Failed,
+										    [MessageData]::new("Policy compliance data:", $policyStateObject));
+            }
+            return $controlResult;
+        }
+        return $null;
+    }
+	# Policy compliance methods end
+	
 	hidden [SVTEventContext] FetchControlState([ControlItem] $controlItem)
     {
 		[SVTEventContext] $singleControlResult = $this.CreateSVTEventContextObject();
@@ -684,6 +720,23 @@ class SVTBase: AzSKRoot
 		$controlStateValue = @();
 		try
 		{
+			# Get policy compliance if org-level flag is enabled and policy is found 
+			#TODO: set flag in a variable once and reuse it
+			
+			$policyScanResult = $this.CreateControlResult($eventContext.ControlItem.FixControl);
+			if([ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyScan -eq $true)
+			{
+				if(-not [string]::IsNullOrWhiteSpace($eventContext.ControlItem.PolicyDefinitionGuid))
+				{
+					$policyScanResult = $this.CheckPolicyCompliance($eventContext.ControlItem, $policyScanResult);
+				}
+			}
+			if($eventContext.ControlResults.Count -eq 1 -and $null -ne $policyScanResult)
+			{
+				$finalScanResult = $this.ComputeFinalScanResult($eventContext.ControlResults[0],$policyScanResult)
+				$eventContext.ControlResults[0] = $finalScanResult
+			}
+			
 			$this.GetDataFromSubscriptionReport($eventContext);
 
 			$resourceStates = $this.GetResourceState()			

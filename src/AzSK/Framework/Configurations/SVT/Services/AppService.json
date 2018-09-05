@@ -321,7 +321,9 @@
         "FixControl": {
           "FixMethodName": "EnableLogging",
           "FixControlImpact": "Low"
-        }
+        },
+        "PolicyDefinitionGuid":"752c6934-9bcc-4749-b004-655e676ae2ac",
+        "PolicyDefnResourceIdSuffix": "config/web"
       },
       {
         "ControlID": "Azure_AppService_BCDR_Configure_Auto_Healing",
