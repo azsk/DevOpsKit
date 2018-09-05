@@ -83,6 +83,10 @@ class CCAutomation: CommandBase
 		{
 			$this.AutomationAccount.ResourceGroup = [UserSubscriptionDataHelper]::GetUserSubscriptionRGName();
 		}
+		if([string]::IsNullOrWhiteSpace($AutomationAccountLocation))
+		{
+			$this.AutomationAccount.Location = [UserSubscriptionDataHelper]::GetUserSubscriptionRGLocation();
+		}
 		if($this.AutomationAccount.ResourceGroup -ne $this.AutomationAccount.CoreResourceGroup)
 		{
 			$this.IsMultiCAModeOn = $true
@@ -102,7 +106,7 @@ class CCAutomation: CommandBase
 		$this.AutomationAccount = [AutomationAccount]@{
             Name = ([UserSubscriptionDataHelper]::GetCAName());
 			CoreResourceGroup = ([UserSubscriptionDataHelper]::GetUserSubscriptionRGName());
-			ResourceGroup = [UserSubscriptionDataHelper]::GetUserSubscriptionRGName();
+			ResourceGroup = [UserSubscriptionDataHelper]::GetUserSubscriptionRGName();		
         }
 		$this.UserConfig = [UserConfig]::new();
 		$this.DoNotOpenOutputFolder = $true;

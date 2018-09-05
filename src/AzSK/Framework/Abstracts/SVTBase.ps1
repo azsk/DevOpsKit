@@ -444,7 +444,7 @@ class SVTBase: AzSKRoot
         [SVTEventContext[]] $manualControlsResult = @();
         try
         {
-            $this.GetApplicableControls() | Where-Object { $_.Automated -eq "No" } |
+            $this.GetApplicableControls() | Where-Object { $_.Automated -eq "No" -and $_.Enabled -eq $true } |
             ForEach-Object {
                 $controlItem = $_;
 				[SVTEventContext] $arg = $this.CreateSVTEventContextObject();
@@ -1046,7 +1046,7 @@ class SVTBase: AzSKRoot
 		}
 		else
 		{
-			$controlResult.AddMessage("Not able to fetch diagnostics settings. Please validate diagnostics settings manually for resource - [$($this.ResourceContext.ResourceName)].");
+			$controlResult.AddMessage([VerificationResult]::Failed, "Diagnostics setting is disabled for resource - [$($this.ResourceContext.ResourceName)].");
 		}
 
 		return $controlResult;
