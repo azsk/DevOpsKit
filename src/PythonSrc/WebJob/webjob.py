@@ -1,3 +1,8 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# -------------------------------------------------------------------------
 import pyodbc
 
 from azure.keyvault import KeyVaultClient
@@ -6,12 +11,6 @@ from msrestazure.azure_active_directory import MSIAuthentication
 
 from .recommendation_engine import *
 
-
-# -------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for
-# license information.
-# --------------------------------------------------------------------------
 
 def validate(caller):
 	"""Decorator to validate the calling function"""

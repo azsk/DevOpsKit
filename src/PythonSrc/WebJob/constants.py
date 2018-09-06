@@ -2,7 +2,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
-# --------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 # list of features, every feature is assigned a
 # prime number to calculate hash
 # see <> for hash logic
