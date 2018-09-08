@@ -68,7 +68,7 @@ class SubscriptionSecurity: CommandBase
 		try 
         {
 			$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nSetting up ARM policies`r`n" + [Constants]::DoubleDashLine);
-			$armPolicy = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, $this.Tags);
+			$armPolicy = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, $this.Tags, $false);
 			if ($armPolicy) 
 			{
 				$messages += $armPolicy.SetARMPolicies();
@@ -107,7 +107,7 @@ class SubscriptionSecurity: CommandBase
 		try 
         {
 			$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nRemoving ARM policies`r`n" + [Constants]::DoubleDashLine);
-			$armPolicy = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, $this.Tags);
+			$armPolicy = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, $this.Tags, $false);
 			if ($armPolicy) 
 			{
 				$messages += $armPolicy.RemoveARMPolicies();
@@ -226,7 +226,7 @@ class SubscriptionSecurity: CommandBase
 		try 
         {
 			$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nUpdating ARM policies...`r`n" + [Constants]::DoubleDashLine);
-			$armPolicy = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, $mandatoryTags);
+			$armPolicy = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, $mandatoryTags, $false);
 			if ($armPolicy) 
 			{
 				$messages += $armPolicy.SetARMPolicies();
