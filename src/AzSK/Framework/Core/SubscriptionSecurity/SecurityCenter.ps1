@@ -26,7 +26,7 @@ class SecurityCenter: AzSKRoot
 		$this.LoadCurrentPolicy();
 	}
 
-	SecurityCenter([string] $subscriptionId, [string] $securityContactPhoneNumber, [string] $securityContactEmail): 
+	SecurityCenter([string] $subscriptionId, [string] $securityContactEmail, [string] $securityContactPhoneNumber): 
         Base($subscriptionId)
     { 
 		[SecurityCenterHelper]::RegisterResourceProvider();
@@ -92,7 +92,7 @@ class SecurityCenter: AzSKRoot
 		[MessageData[]] $messages = @();
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.securityContacts)
 		{		
-			$securityContactsUri = [WebRequestHelper]::AzureManagementUri + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments/SecurityCenterBuiltIn$([SecurityCenterHelper]::ApiVersionLatest)";
+			$securityContactsUri = [WebRequestHelper]::AzureManagementUri + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::SecurityContactsApi)/default1$([SecurityCenterHelper]::ApiVersionNew)";
 			$body = $this.PolicyObject.securityContacts | ConvertTo-Json -Depth 10
 			$body = $body.Replace("{0}",$this.SubscriptionContext.SubscriptionId).Replace("{1}",$this.ContactEmail).Replace("{2}",$this.ContactPhoneNumber) | ConvertFrom-Json;
 		  	[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $securityContactsUri, $body);
@@ -106,7 +106,7 @@ class SecurityCenter: AzSKRoot
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.policySettings)
 		{						
 			$this.UpdatePolicyObject();
-			$policySettingsUri = [WebRequestHelper]::AzureManagementUri + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::SecurityContactsApi)/default1$([SecurityCenterHelper]::ApiVersionNew)";
+			$policySettingsUri = [WebRequestHelper]::AzureManagementUri + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments/SecurityCenterBuiltIn$([SecurityCenterHelper]::ApiVersionLatest)";
 			$body = $this.PolicyObject.policySettings | ConvertTo-Json -Depth 10
 			$body = $body.Replace("{0}",$this.SubscriptionContext.SubscriptionId) | ConvertFrom-Json;
 		  	[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
