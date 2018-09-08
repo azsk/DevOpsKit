@@ -440,6 +440,78 @@ class ARMPolicy: CommandBase
 		}
 		return $messages;
 	}
+
+	[string[]] ValidatePolicyConfiguration()
+	{		
+		$NonCompliantObjects = @();
+		$enabledPolicies = $this.GetApplicableARMPolices() | Where-Object { -not $_.Enabled };
+		if($null -ne $this.ARMPolicyObj -and ($enabledPolicies | Measure-Object).Count -gt 0)
+		{
+			$RequiredPolicyDefns = @();			
+			$enabledPolicies | ForEach-Object {
+				$Policy = $_;
+				try
+				{
+					$PolicyDefn = Get-AzureRmPolicyDefinition -Name $Policy.policyDefinitionName -ErrorAction SilentlyContinue
+					if($null -ne $PolicyDefn)
+					{
+						$RequiredPolicyDefns += $PolicyDefn;
+					}
+				}
+				catch
+				{
+					$NonCompliantObjects += ("Policy :[" + $Policy.policyDefinitionName + "]");
+					#eat this exception as silently continue is not working for this scenario
+				}				
+			}
+			if(($RequiredPolicyDefns | Measure-Object).Count -gt 0)
+			{
+				$RequiredPolicyDefns | ForEach-Object {
+					$defn = $_;
+					$tassignment = Get-AzureRmPolicyAssignment -PolicyDefinitionId $defn.policyDefinitionId  -ErrorAction SilentlyContinue
+					if($null -eq $tassignment)
+					{
+						$NonCompliantObjects += ("Policy :[" + $defn.Name + "]");
+					}
+				}																		
+			}	
+		}
+
+		#todo read the flag from config
+		$isPolicyInitiativeEnabled = $true;
+		if($isPolicyInitiativeEnabled)
+		{
+			$azskIntiative = "AzSK Initiative-Preview"; #TODO read the name from the config file
+			if($null -ne $this.SubPolicyInitiative)
+			{				
+				if($this.SubPolicyInitiative.Name -eq $azskIntiative -and ($this.SubPolicyInitiative.Policies | Measure-Object).Count -gt 0)
+				{		
+					$initiative = $null;
+					try
+					{			
+						$initiative = Get-AzureRmPolicySetDefinition -Name $azskIntiative -ErrorAction SilentlyContinue;
+					}
+					catch
+					{
+						$NonCompliantObjects += ("Policy Initiative :[" + $azskIntiative + "]");
+						#eat this exception as erroraction is not working
+					}
+					if($null -ne $initiative)
+					{
+						$policyDefinitions = $initiative.Properties.policyDefinitions;
+						$this.SubPolicyInitiative.Policies | ForEach-Object {
+							$configuredPolicyDefn = $_;
+							if(($policyDefinitions | Where-Object { $_.policyDefinitionId -eq $configuredPolicyDefn.policyDefinitionId} | Measure-Object).Count -le 0)
+							{
+								$NonCompliantObjects += ("Policy Initiative :[" + $azskIntiative + "]");
+							}
+						}
+					}				
+				}
+			}
+		}
+		return ($NonCompliantObjects | Select-Object -Unique);
+	}
 }
 
 class ARMPolicyModel

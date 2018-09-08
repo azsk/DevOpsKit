@@ -125,7 +125,7 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlIds += $this.ControlIds;
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
-        # ToDo: remove InvocationContext, try to pass as param
+        $svtObject.InvocationContext = $this.InvocationContext;
         # ToDo: Assumption: usercomment will only work when storage report feature flag is enable
         $resourceId = $svtObject.GetResourceId(); 
 		$svtObject.ComplianceStateData = $this.FetchComplianceStateData($resourceId);

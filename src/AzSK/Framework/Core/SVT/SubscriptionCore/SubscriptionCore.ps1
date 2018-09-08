@@ -565,7 +565,7 @@ class SubscriptionCore: SVTBase
 	hidden [ControlResult] CheckARMPoliciesCompliance([ControlResult] $controlResult)
 	{
 
-		$subARMPolConfig = [ARMPolicyModel] $this.LoadServerConfigFile("Subscription.ARMPolicies.json"); 
+		$subARMPol = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "", $false);
         $output = @()
         $foundMandatoryPolicies = $true
 
@@ -574,55 +574,36 @@ class SubscriptionCore: SVTBase
 		[string] $CurrentVersion = "0.0.0";
 		[string] $LatestVersion = "0.0.0";
 		$AzSKRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-		$CurrentVersion = [Helpers]::GetResourceGroupTag($AzSKRG, [Constants]::ARMPolicyConfigVersionTagName)
-		if([string]::IsNullOrWhiteSpace($CurrentVersion))
-		{
-			$CurrentVersion = "0.0.0"
-		}
-		$minSupportedVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKARMPolMinReqdVersion 
-		$IsLatestVersion = $this.IsLatestVersionConfiguredOnSub($subARMPolConfig.Version,[Constants]::ARMPolicyConfigVersionTagName);
-		$IsValidVersion = $this.IsLatestVersionConfiguredOnSub($subARMPolConfig.Version,[Constants]::ARMPolicyConfigVersionTagName) -or [System.Version]$minSupportedVersion -le [System.Version]$CurrentVersion ;
-		$LatestVersion = $subARMPolConfig.Version;
+		# $CurrentVersion = [Helpers]::GetResourceGroupTag($AzSKRG, [Constants]::ARMPolicyConfigVersionTagName)
+		# if([string]::IsNullOrWhiteSpace($CurrentVersion))
+		# {
+		# 	$CurrentVersion = "0.0.0"
+		# }
+		# $minSupportedVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKARMPolMinReqdVersion 
+		# $IsLatestVersion = $this.IsLatestVersionConfiguredOnSub($subARMPolConfig.Version,[Constants]::ARMPolicyConfigVersionTagName);
+		# $IsValidVersion = $this.IsLatestVersionConfiguredOnSub($subARMPolConfig.Version,[Constants]::ARMPolicyConfigVersionTagName) -or [System.Version]$minSupportedVersion -le [System.Version]$CurrentVersion ;
+		# $LatestVersion = $subARMPolConfig.Version;
 
-        if($null -ne $subARMPolConfig)
-        {            
-			$currentPolicyAssignments = Get-AzureRMPolicyAssignment;
-            $subARMPolConfig.Policies | ForEach-Object{
-                Set-Variable -Name pol -Scope Local -Value $_
-                Set-Variable -Name polEnabled -Scope Local -Value $_.enabled
-                Set-Variable -Name policyDefinitionName -Scope Local -Value $_.policyDefinitionName
-                Set-Variable -Name tags -Scope Local -Value $_.tags
-                $haveMatchedTags = ((($tags | Where-Object { $this.SubscriptionMandatoryTags -contains $_ }) | Measure-Object).Count -gt 0)
-                if($polEnabled -and $haveMatchedTags)
-                {
-                    $mandatoryPolicies = [array]($currentPolicyAssignments | Where-Object {$_.Name -eq $policyDefinitionName})
-                    if($null -eq $mandatoryPolicies -or ($mandatoryPolicies | Measure-Object).Count -le 0)
-                    {
-                        $foundMandatoryPolicies = $false
-                        $output += $pol
-                    }
-                }
-            }
-        }
+        $nonCompliantPolicies = $subARMPol.ValidatePolicyConfiguration();
 
-        if($foundMandatoryPolicies)
+        if(($nonCompliantPolicies | Measure-Object).Count -le 0)
         {
             $controlResult.AddMessage([VerificationResult]::Passed, "Found all the mandatory policies on the Subscription.");
         }
-		elseif(-not $IsLatestVersion -and $IsValidVersion)
-		{
-			$this.PublishCustomMessage("WARNING: The Azure Resource Manager policies in your subscription are out of date.`nPlease update to the latest version by running command Update-AzSKSubscriptionSecurity.", [MessageType]::Warning);			
-			$controlResult.AddMessage([VerificationResult]::Passed, "ARM policies has been configured with older policy on the subscription. To update as per latest configuration, run command Update-AzSKSubscriptionSecurity.");
-		}
+		# elseif(-not $IsLatestVersion -and $IsValidVersion)
+		# {
+		# 	$this.PublishCustomMessage("WARNING: The Azure Resource Manager policies in your subscription are out of date.`nPlease update to the latest version by running command Update-AzSKSubscriptionSecurity.", [MessageType]::Warning);			
+		# 	$controlResult.AddMessage([VerificationResult]::Passed, "ARM policies has been configured with older policy on the subscription. To update as per latest configuration, run command Update-AzSKSubscriptionSecurity.");
+		# }
         else
         {
-			$controlResult.EnableFixControl = $true;
-			if($controlResult.FixControlParameters)
-			{
-				$controlResult.FixControlParameters.Tags = $this.SubscriptionMandatoryTags;
-			}
-			$controlResult.SetStateData("Missing ARM policies", $output);
-			$controlResult.AddMessage([VerificationResult]::Failed, "Some of the mandatory policies are missing which are demanded by the control tags [$([string]::Join(", ", $this.SubscriptionMandatoryTags))]", $output);
+			# $controlResult.EnableFixControl = $true;
+			# if($controlResult.FixControlParameters)
+			# {
+			# 	$controlResult.FixControlParameters.Tags = $this.SubscriptionMandatoryTags;
+			# }
+			$controlResult.SetStateData("Missing ARM policies", $nonCompliantPolicies);
+			$controlResult.AddMessage([VerificationResult]::Failed, "Some of the mandatory policies are missing]", $nonCompliantPolicies);
         }
 		return $controlResult
 	}
