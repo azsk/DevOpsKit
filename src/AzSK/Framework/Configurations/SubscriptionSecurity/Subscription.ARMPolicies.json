@@ -1,46 +1,6 @@
 ﻿{
-   "Version": "3.1803.0",
-   "Policies": [
-      {
-         "policyDefinitionName": "AzSK_ARMPol_Audit_SQL_Basic_Create",
-         "policyDefinition": "{\"if\":{\"field\":\"Microsoft.SQL/servers/databases/edition\",\"equals\":\"Basic\"},\"then\":{\"effect\":\"audit\"}}",
-         "description": "Policy to generate an audit event upon creation of a SQL database with 'Basic' edition type",
-         "tags": [
-            "Mandatory"
-         ],
-         "enabled": true,
-         "scope": "/subscriptions/$subscriptionId"
-      },
-      {
-         "policyDefinitionName": "AzSK_ARMPol_Audit_Job_Scheduler_Free_Tier",
-         "policyDefinition": "{\"if\":{\"allOf\":[{\"field\":\"type\",\"equals\":\"Microsoft.Scheduler/jobcollections\"},{\"field\":\"Microsoft.Scheduler/jobcollections/sku.name\",\"equals\":\"Free\"}]},\"then\":{\"effect\":\"audit\"}}",
-         "description": "Policy to generate an audit event upon creation of a job scheduler with free tier",
-         "tags": [
-            "Mandatory"
-         ],
-         "enabled": true,
-         "scope": "/subscriptions/$subscriptionId"
-      },
-      {
-         "policyDefinitionName": "AzSK_ARMPol_Audit_NonHBI_Resource_Create",
-         "policyDefinition": "{\"if\":{\"not\":{\"anyOf\":[{\"field\":\"type\",\"like\":\"Microsoft.DataFactory/*\"},{\"field\":\"type\",\"like\":\"Microsoft.DataLakeAnalytics/*\"},{\"field\":\"type\",\"like\":\"Microsoft.DataLakeStore/*\"},{\"field\":\"type\",\"like\":\"Microsoft.Web/*\"},{\"field\":\"type\",\"like\":\"Microsoft.Search/*\"},{\"field\":\"type\",\"like\":\"Microsoft.ServiceBus/*\"},{\"field\":\"type\",\"like\":\"Microsoft.Relay/*\"},{\"field\":\"type\",\"like\":\"Microsoft.EventHub/*\"},{\"field\":\"type\",\"like\":\"Microsoft.Logic/*\"},{\"field\":\"type\",\"like\":\"Microsoft.NotificationHubs/*\"},{\"field\":\"type\",\"like\":\"Microsoft.ServiceFabric/*\"},{\"field\":\"type\",\"like\":\"Microsoft.Sql/*\"},{\"field\":\"type\",\"like\":\"Microsoft.Compute/*\"},{\"field\":\"type\",\"like\":\"Microsoft.Storage/*\"},{\"field\":\"type\",\"like\":\"Microsoft.AnalysisServices/*\"},{\"field\":\"type\",\"like\":\"Microsoft.Automation/*\"},{\"field\":\"type\",\"like\":\"Microsoft.Cdn/*\"},{\"field\":\"type\",\"like\":\"Microsoft.DocumentDb/*\"},{\"field\":\"type\",\"like\":\"Microsoft.Network/*\"},{\"field\":\"type\",\"like\":\"Microsoft.KeyVault/*\"},{\"field\":\"type\",\"like\":\"Microsoft.Cache/*\"},{\"field\":\"type\",\"like\":\"Microsoft.StreamAnalytics/*\"},{\"field\":\"type\",\"like\":\"Microsoft.Compute/*\"}]}},\"then\":{\"effect\":\"audit\"}}",
-         "description": "Policy to generate an audit event upon creation of resource types which have not been ratified for critical enterprise data",
-         "tags": [
-            "Mandatory"
-         ],
-         "enabled": true,
-         "scope": "/subscriptions/$subscriptionId"
-      },
-      {
-         "policyDefinitionName": "AzSK_ARMPol_Audit_Classic_Resource_Create",
-         "policyDefinition": "{\"if\":{\"anyOf\":[{\"field\":\"type\",\"like\":\"Microsoft.ClassicCompute/*\"},{\"field\":\"type\",\"like\":\"microsoft.classicStorage/*\"},{\"field\":\"type\",\"like\":\"Microsoft.ClassicNetwork/*\"},{\"field\": \"type\",\"like\": \"Microsoft.Backup/*\"}]},\"then\":{\"effect\":\"audit\"}}",
-         "description": "Policy to generate an audit event upon creation of classic/v1 (i.e., ASM-based) resources",
-         "tags": [
-            "Mandatory"
-         ],
-         "enabled": true,
-         "scope": "/subscriptions/$subscriptionId"
-      },
+   "Version": "3.1809.0",
+   "Policies": [      
       {
          "policyDefinitionName": "AzSK_ARMPol_Deny_Classic_Resource_Create",
          "policyDefinition": "{\"if\":{\"anyOf\":[{\"field\":\"type\",\"like\":\"Microsoft.ClassicCompute/*\"},{\"field\":\"type\",\"like\":\"microsoft.classicStorage/*\"},{\"field\":\"type\",\"like\":\"Microsoft.ClassicNetwork/*\"}]},\"then\":{\"effect\":\"deny\"}}",
@@ -51,6 +11,6 @@
          "enabled": true,
          "scope": "/subscriptions/$subscriptionId"
       }
-   ]
-
+   ],
+   "DeprecatedPolicies" : ["AzSK_ARMPol_Audit_Classic_Resource_Create","AzSK_ARMPol_Audit_NonHBI_Resource_Create","AzSK_ARMPol_Audit_Job_Scheduler_Free_Tier","AzSK_ARMPol_Audit_SQL_Basic_Create"]
 }

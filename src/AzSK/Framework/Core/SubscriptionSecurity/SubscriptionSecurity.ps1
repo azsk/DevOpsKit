@@ -36,10 +36,13 @@ class SubscriptionSecurity: CommandBase
 		try 
         {
 			$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nConfiguring Security Center`r`n" + [Constants]::DoubleDashLine);
-			$secCenter = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId);
+			$secCenter = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId, $securityContactEmails, $securityPhoneNumber);
 			if ($secCenter) 
 			{
-				$messages += $secCenter.SetPolicies($securityContactEmails, $securityPhoneNumber);
+				$updatePolicies = $true;
+				$updateSecurityContacts = $true;
+				$updateProvisioningSettings = $true;
+				$messages += $secCenter.SetPolicies($updateProvisioningSettings,$updatePolicies,$updateSecurityContacts);
 				$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nCompleted Security Center configuration`r`n" + [Constants]::DoubleDashLine, [MessageType]::Update);
 			} 
 		}
@@ -68,7 +71,7 @@ class SubscriptionSecurity: CommandBase
 		try 
         {
 			$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nSetting up ARM policies`r`n" + [Constants]::DoubleDashLine);
-			$armPolicy = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, $this.Tags);
+			$armPolicy = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, $this.Tags, $false);
 			if ($armPolicy) 
 			{
 				$messages += $armPolicy.SetARMPolicies();
@@ -107,7 +110,7 @@ class SubscriptionSecurity: CommandBase
 		try 
         {
 			$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nRemoving ARM policies`r`n" + [Constants]::DoubleDashLine);
-			$armPolicy = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, $this.Tags);
+			$armPolicy = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, $this.Tags, $false);
 			if ($armPolicy) 
 			{
 				$messages += $armPolicy.RemoveARMPolicies();
@@ -178,8 +181,11 @@ class SubscriptionSecurity: CommandBase
 			$secCenter = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId);
 			if ($secCenter) 
 			{
+				$updatePolicies = $true;
+				$updateSecurityContacts = $false;
+				$updateProvisioningSettings = $true;
 				#calling the ASC policy method with default params i.e. without ASC security poc email and phone number
-				$messages += $secCenter.SetPolicies();
+				$messages += $secCenter.SetPolicies($updateProvisioningSettings,$updatePolicies,$updateSecurityContacts);
 				$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nCompleted updates for Security Center configuration`r`n" + [Constants]::DoubleDashLine, [MessageType]::Update);
 			} 
 		}
@@ -226,7 +232,7 @@ class SubscriptionSecurity: CommandBase
 		try 
         {
 			$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nUpdating ARM policies...`r`n" + [Constants]::DoubleDashLine);
-			$armPolicy = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, $mandatoryTags);
+			$armPolicy = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, $mandatoryTags, $false);
 			if ($armPolicy) 
 			{
 				$messages += $armPolicy.SetARMPolicies();
