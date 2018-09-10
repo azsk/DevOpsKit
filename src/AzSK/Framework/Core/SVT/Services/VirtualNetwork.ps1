@@ -119,7 +119,7 @@ class VirtualNetwork: SVTIaasBase
 									$ruleproperties = $_.Properties
 									if((($ruleproperties.Direction -eq "outbound") -or ($ruleproperties.Direction -eq "inbound")) -and (([Helpers]::CheckMember($ruleproperties,"SourceAddressPrefix")) -and $ruleproperties.SourceAddressPrefix -eq '*') -and $ruleproperties.DestinationAddressPrefix -eq '*' -and $ruleproperties.Access -eq "allow")
 									{
-										$InvalidRulesList += $_
+										$InvalidRulesList += $_ | Select-Object Id, Properties
 									}
 								}
 							}
@@ -128,7 +128,7 @@ class VirtualNetwork: SVTIaasBase
                     {
 						$controlResult.SetStateData("Potentially dangerous any to any outbound security rule(s) found in subnet - ["+ $_.Name +"]", $InvalidRulesList);
 						$hasTCPPassed = $false
-						$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Potentially dangerous any to any outbound security rule(s) found in subnet - ["+ $_.Name +"]", ($InvalidRulesList | Format-list name, properties)));
+						$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Potentially dangerous any to any outbound security rule(s) found in subnet - ["+ $_.Name +"]", $InvalidRulesList));
                     }
                 }
             }
