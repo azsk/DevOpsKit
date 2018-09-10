@@ -71,7 +71,7 @@ function Install-AzSKContinuousAssurance
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
         [string]
 		[Alias("loc")]
-		$AutomationAccountLocation="EastUS2",
+		$AutomationAccountLocation,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
@@ -162,6 +162,7 @@ function Install-AzSKContinuousAssurance
 
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
 		[switch]
+		[Alias("stsc")]
 		$SkipTargetSubscriptionConfig,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="This enables AzSK CA in central scanning mode. Use this switch along with TargetSubscriptionIds param to register target subscriptions in the central CA.")]
@@ -171,10 +172,12 @@ function Install-AzSKContinuousAssurance
 
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder,
 
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
+		[Alias("sod")]
 		$ScanOnDeployment
     )
 	Begin
@@ -433,6 +436,7 @@ function Update-AzSKContinuousAssurance
 
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
 		[switch]
+		[Alias("stsc")]
 		$SkipTargetSubscriptionConfig,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="This switch is required to update AzSK CA running in central scanning mode.")]
@@ -442,14 +446,17 @@ function Update-AzSKContinuousAssurance
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "RemoveSettings", HelpMessage="This switch is used to clear setting for OMS,AltOMS or Webhook.")]
 		[ValidateSet("OMSSettings","AltOMSSettings","WebhookSettings","ScanOnDeployment")]
+		[Alias("rmv")]
 		$Remove,
 
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
+		[Alias("sod")]
 		$ScanOnDeployment
     )
 	Begin
@@ -549,7 +556,7 @@ function Get-AzSKContinuousAssurance
 	Param(
 		[Parameter(Position = 0, Mandatory = $true, HelpMessage="Subscription id for which the security evaluation has to be performed.")]
         [string]
-		[Alias("sid")]
+		[Alias("sid","s","HostSubscriptionId", "hsid")]
 		$SubscriptionId,
 
 		[Parameter(Mandatory = $false)]
@@ -569,6 +576,7 @@ function Get-AzSKContinuousAssurance
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 	Begin
@@ -669,6 +677,7 @@ function Remove-AzSKContinuousAssurance
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 	Begin
@@ -727,6 +736,7 @@ function Set-AzSKAlertMonitoring
 	Param(
         [string]
 		[Parameter(HelpMessage="Subscription id in which Automation Account exists")]
+		[Alias("sid","HostSubscriptionId","hsid","s")]
 		$SubscriptionId,
 
 		[Parameter(Mandatory = $false)]
@@ -740,6 +750,7 @@ function Set-AzSKAlertMonitoring
 		$AutomationAccountName,
 		
 		[switch]
+		[Alias("f")]
 		$Force	
     )
 	Begin
@@ -791,6 +802,7 @@ function Remove-AzSKAlertMonitoring
 	Param(
         [string]
 		[Parameter(HelpMessage="Subscription id in which Automation Account exists")]
+		[Alias("sid","HostSubscriptionId","hsid","s")]
 		$SubscriptionId,
 
 		[Parameter(Mandatory = $false)]
@@ -804,6 +816,7 @@ function Remove-AzSKAlertMonitoring
 		$AutomationAccountName,
 		
 		[switch]
+		[Alias("f")]
 		$Force	
     )
 	Begin

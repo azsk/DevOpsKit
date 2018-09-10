@@ -72,7 +72,7 @@ class StorageHelper: ResourceGroupHelper
 	[int] $HaveWritePermissions = 0;
 	[int] $retryCount = 3;
 	[int] $sleepIntervalInSecs = 10;
-
+	static [StorageHelper] $AzSKStorageHelperInstance = $null
 	hidden [string] $ResourceType = "Microsoft.Storage/storageAccounts";
 
 	StorageHelper([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceGroupLocation, [string] $storageAccountName):
@@ -95,16 +95,31 @@ class StorageHelper: ResourceGroupHelper
 		$this.StorageAccountName = $storageAccountName;
 		$this.StorageKind = $storageKind
 	}
-
+	[void] UpdateCurrentInstance([StorageHelper] $AzSKStorageHelperInstance)
+	{
+		$this.AccessKey = $AzSKStorageHelperInstance.AccessKey
+		$this.HaveWritePermissions = $AzSKStorageHelperInstance.HaveWritePermissions
+	}
 	[void] CreateStorageIfNotExists()
 	{
 		if(-not $this.StorageAccount)
 		{
+			$isAzSKStorage = $false;
 			$this.CreateResourceGroupIfNotExists();
-
-			$existingResources = Get-AzureRmResource -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType
-
-			# Assuming 1 storage account is needed on Resource group
+			if($this.ResourceGroupName -eq [ConfigurationManager]::GetAzSKConfigData().AzSKRGName -and $this.StorageAccountName -like "$([Constants]::StorageAccountPreName)*")           
+            {
+                if($null -ne [StorageHelper]::AzSKStorageHelperInstance)
+                {
+                    $this.UpdateCurrentInstance([StorageHelper]::AzSKStorageHelperInstance);
+                    return;
+                }
+                else {
+                    $isAzSKStorage = $true
+                }               
+			}   
+            $existingResources = Get-AzureRmResource -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType
+            
+            # Assuming 1 storage account is needed on Resource group
 			if(($existingResources | Measure-Object).Count -gt 1)
 			{
 				throw ([SuppressedException]::new(("Multiple storage accounts found in resource group: [$($this.ResourceGroupName)]. This is not expected. Please contact support team."), [SuppressedExceptionType]::InvalidOperation))
@@ -135,15 +150,19 @@ class StorageHelper: ResourceGroupHelper
 				throw ([SuppressedException]::new("Unable to fetch the storage account [$($this.StorageAccountName)]", [SuppressedExceptionType]::InvalidOperation))				
 			}
 
-			#precompute storage access permissions for the current scan account
-			$this.ComputePermissions();
-
 			#fetch access key
 			$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $this.ResourceGroupName -Name $this.StorageAccountName -ErrorAction SilentlyContinue 
 			if($keys)
 			{
 				$this.AccessKey = $keys[0].Value;
-			}			
+			}	
+			
+			#precompute storage access permissions for the current scan account
+			$this.ComputePermissions();
+            if($isAzSKStorage)
+			{
+				[StorageHelper]::AzSKStorageHelperInstance = $this
+			}
 		}
 	}
 

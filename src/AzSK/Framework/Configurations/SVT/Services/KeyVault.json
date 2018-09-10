@@ -16,7 +16,8 @@
                                       "SDL",
                                       "TCP",
                                       "Automated",
-                                      "AuthN"
+                                      "AuthN",
+                                      "OwnerAccess"
                                   ],
                          "Enabled":  true
                      },
