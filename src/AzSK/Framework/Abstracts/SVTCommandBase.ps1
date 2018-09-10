@@ -93,9 +93,17 @@ class SVTCommandBase: CommandBase {
 
 	[void] PostCommandStartedAction()
 	{
-        
+		$this.PostPolicyComplianceTelemetry()        
 	}
-
+    [void] PostPolicyComplianceTelemetry()
+	{
+		[CustomData] $customData = [CustomData]::new();
+		$customData.Name = "PolicyComplianceTelemetry";
+		$policyCompliance = Get-AzureRmPolicyState -SubscriptionId $this.SubscriptionContext.SubscriptionId | `
+		Select-Object ResourceId,PolicyDefinitionId,PolicyAssignmentName,IsCompliant,PolicyAssignmentScope
+		$customData.Value = $policyCompliance;
+		$this.PublishCustomData($customData);			
+	}
     hidden [void] CommandError([System.Management.Automation.ErrorRecord] $exception) {
         [SVTEventContext] $arg = $this.CreateSVTEventContextObject();
         $arg.ExceptionMessage = $exception;

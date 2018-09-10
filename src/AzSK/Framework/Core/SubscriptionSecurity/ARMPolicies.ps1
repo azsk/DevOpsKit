@@ -15,8 +15,11 @@ class ARMPolicy: CommandBase
         Base($subscriptionId, $invocationContext)
     { 
 		$this.ARMPolicyObj = [ARMPolicyModel] $this.LoadServerConfigFile("Subscription.ARMPolicies.json"); 
-		#todo: load only if flag is on
-		$this.SubPolicyInitiative = [PolicyInitiative] $this.LoadServerConfigFile("Subscription.Initiative.json"); 
+		$isPolicyInitiativeEnabled = [ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan;
+		if($isPolicyInitiativeEnabled)
+		{
+			$this.SubPolicyInitiative = [PolicyInitiative] $this.LoadServerConfigFile("Subscription.Initiative.json"); 
+		}
 		$this.FilterTags = $this.ConvertToStringArray($tags);
 		$this.UpdateInitiative = $updateInitiative;
 	}
@@ -402,20 +405,19 @@ class ARMPolicy: CommandBase
 	[MessageData[]] SetPolicyInitiative()
 	{
 		[MessageData[]] $messages = @();
-		#todo: replace the flag
-		$isPolicyInitiativeEnabled = $true;
+		$isPolicyInitiativeEnabled = [ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan;
 		if($isPolicyInitiativeEnabled)
 		{
-			$azskIntiative = "AzSK Initiative-Preview"; #TODO read the name from the config file
+			$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName
 			if($null -ne $this.SubPolicyInitiative)
 			{
 				$this.RemoveDeprecatedInitiatives();
-				if($this.SubPolicyInitiative.Name -eq $azskIntiative -and ($this.SubPolicyInitiative.Policies | Measure-Object).Count -gt 0)
+				if($this.SubPolicyInitiative.Name -eq $initiativeName -and ($this.SubPolicyInitiative.Policies | Measure-Object).Count -gt 0)
 				{		
 					$initiative = $null;
 					try
 					{			
-						$initiative = Get-AzureRmPolicySetDefinition -Name $azskIntiative -ErrorAction SilentlyContinue;
+						$initiative = Get-AzureRmPolicySetDefinition -Name $initiativeName -ErrorAction SilentlyContinue;
 					}
 					catch
 					{
@@ -425,7 +427,8 @@ class ARMPolicy: CommandBase
 					{
 						$this.PublishCustomMessage("Creating new AzSK Initiative...", [MessageType]::Update);		
 						$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
-						New-AzureRmPolicySetDefinition -Name $this.SubPolicyInitiative.Name -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions
+						$setDefnObj = New-AzureRmPolicySetDefinition -Name $this.SubPolicyInitiative.Name -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions
+						New-AzureRmPolicyAssignment -Name '$($initiativeName)_assignment' -Scope '/subscriptions/abb5301a-22a4-41f9-9e5f-99badff261f8' -PolicySetDefinition $setDefnObj 
 					}
 					elseif($this.UpdateInitiative) {
 						$this.PublishCustomMessage("Updating AzSK Initiative...", [MessageType]::Update);
@@ -436,7 +439,6 @@ class ARMPolicy: CommandBase
 					{
 						$this.PublishCustomMessage("Found existing AzSK Initiative.", [MessageType]::Update);	
 					}	
-					#todo: Assign initiative
 					#todo: CA permission update	if default CA			
 				}				
 			}
@@ -480,23 +482,22 @@ class ARMPolicy: CommandBase
 			}	
 		}
 
-		#todo read the flag from config
-		$isPolicyInitiativeEnabled = $true;
+		$isPolicyInitiativeEnabled = [ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan;
 		if($isPolicyInitiativeEnabled)
 		{
-			$azskIntiative = "AzSK Initiative-Preview"; #TODO read the name from the config file
+			$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName		
 			if($null -ne $this.SubPolicyInitiative)
 			{				
-				if($this.SubPolicyInitiative.Name -eq $azskIntiative -and ($this.SubPolicyInitiative.Policies | Measure-Object).Count -gt 0)
+				if($this.SubPolicyInitiative.Name -eq $initiativeName -and ($this.SubPolicyInitiative.Policies | Measure-Object).Count -gt 0)
 				{		
 					$initiative = $null;
 					try
 					{			
-						$initiative = Get-AzureRmPolicySetDefinition -Name $azskIntiative -ErrorAction SilentlyContinue;
+						$initiative = Get-AzureRmPolicySetDefinition -Name $initiativeName -ErrorAction SilentlyContinue;
 					}
 					catch
 					{
-						$NonCompliantObjects += ("Policy Initiative :[" + $azskIntiative + "]");
+						$NonCompliantObjects += ("Policy Initiative :[" + $initiativeName + "]");
 						#eat this exception as erroraction is not working
 					}
 					if($null -ne $initiative)
@@ -506,7 +507,7 @@ class ARMPolicy: CommandBase
 							$configuredPolicyDefn = $_;
 							if(($policyDefinitions | Where-Object { $_.policyDefinitionId -eq $configuredPolicyDefn.policyDefinitionId} | Measure-Object).Count -le 0)
 							{
-								$NonCompliantObjects += ("Policy Initiative :[" + $azskIntiative + "]");
+								$NonCompliantObjects += ("Policy Initiative :[" + $initiativeName + "]");
 							}
 						}
 					}				

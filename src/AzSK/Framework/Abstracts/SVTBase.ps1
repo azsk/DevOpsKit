@@ -304,13 +304,12 @@ class SVTBase: AzSKRoot
 			}
 			else
 			{
-				$this.PostFeatureControlTelemetry();
+				$this.PostTelemetry();
 				$this.EvaluationStarted();	
 				$resourceSecurityResult += $this.GetAutomatedSecurityStatus();
 				$resourceSecurityResult += $this.GetManualSecurityStatus();			
 				$this.PostEvaluationCompleted($resourceSecurityResult);
 				$this.EvaluationCompleted($resourceSecurityResult);
-				$this.PostPolicyComplianceTelemetry();			
 			}
         }
         return $resourceSecurityResult;
@@ -334,7 +333,10 @@ class SVTBase: AzSKRoot
         }
         return $contexts;
 	}
-
+	[void] PostTelemetry()
+	{
+		$this.PostFeatureControlTelemetry()
+	}
 	[void] PostFeatureControlTelemetry()
 	{
 		#todo add check for latest module version
@@ -349,16 +351,6 @@ class SVTBase: AzSKRoot
 			$customData.Value = $ResourceObject;
 			$this.PublishCustomData($customData);		
 		}
-	}
-
-	[void] PostPolicyComplianceTelemetry()
-	{
-		[CustomData] $customData = [CustomData]::new();
-		$customData.Name = "PolicyComplianceTelemetry";
-		$policyCompliance = Get-AzureRmPolicyState -SubscriptionId $this.SubscriptionContext.SubscriptionId | `
-		Select-Object ResourceId,PolicyDefinitionId,PolicyAssignmentName,IsCompliant
-		$customData.Value = $policyCompliance;
-		$this.PublishCustomData($customData);			
 	}
 
 	[SVTEventContext[]] FetchStateOfAllControls()
@@ -589,7 +581,7 @@ class SVTBase: AzSKRoot
 		}
 		else
 		{
-			 return $policyScanResult;
+			return $policyScanResult;
 		}
 	}
 	hidden [ControlResult] CheckPolicyCompliance([ControlItem] $controlItem, [ControlResult] $controlResult)
@@ -736,11 +728,14 @@ class SVTBase: AzSKRoot
 			
 			if([ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan -eq $true)
 			{
-				$policyScanResult = $this.CreateControlResult($eventContext.ControlItem.FixControl);
 				if(-not [string]::IsNullOrWhiteSpace($eventContext.ControlItem.PolicyDefinitionGuid))
 				{
+					#create default controlresult
+					$policyScanResult = $this.CreateControlResult($eventContext.ControlItem.FixControl);
+					#update default controlresult with policy compliance state
 					$policyScanResult = $this.CheckPolicyCompliance($eventContext.ControlItem, $policyScanResult);
-					if($eventContext.ControlResults.Count -eq 1)
+					#todo: currently excluding child controls
+					if($eventContext.ControlResults.Count -eq 1 -and $Null -ne $policyScanResult)
 					{
 						$finalScanResult = $this.ComputeFinalScanResult($eventContext.ControlResults[0],$policyScanResult)
 						$eventContext.ControlResults[0] = $finalScanResult
