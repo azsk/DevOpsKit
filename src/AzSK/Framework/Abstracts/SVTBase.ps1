@@ -734,7 +734,7 @@ class SVTBase: AzSKRoot
 			# Get policy compliance if org-level flag is enabled and policy is found 
 			#TODO: set flag in a variable once and reuse it
 			
-			if([ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyScan -eq $true)
+			if([ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan -eq $true)
 			{
 				$policyScanResult = $this.CreateControlResult($eventContext.ControlItem.FixControl);
 				if(-not [string]::IsNullOrWhiteSpace($eventContext.ControlItem.PolicyDefinitionGuid))

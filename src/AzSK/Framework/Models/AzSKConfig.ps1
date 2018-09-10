@@ -42,7 +42,7 @@ class AzSKConfig
 	[bool] $StoreComplianceSummaryInUserSubscriptions;
 	[string] $LatestPSGalleryVersion;
 	[string] $SchemaTemplateURL;
-	[bool] $EnableAzurePolicyScan;
+	[bool] $EnableAzurePolicyBasedScan;
 	[string] $AzSKInitiativeName;
 	hidden static [AzSKConfig] $Instance = $null;
 	

@@ -2735,7 +2735,12 @@ class CCAutomation: CommandBase
                 $subscriptionScope = "/subscriptions/{0}" -f $this.SubscriptionContext.SubscriptionId
                 
                 $azskRoleAssignments = Get-AzureRmRoleAssignment -Scope $subscriptionScope -RoleDefinitionName Reader | Where-Object { $_.DisplayName -like "$($azskspnformatstring)*" }
-			    $cnt = ($azskRoleAssignments | Measure-Object).Count
+				$cnt = ($azskRoleAssignments | Measure-Object).Count
+				if($cnt -eq 0)
+				{
+					$azskRoleAssignments = Get-AzureRmRoleAssignment -Scope $subscriptionScope -RoleDefinitionName 'Security Reader' | Where-Object { $_.DisplayName -like "$($azskspnformatstring)*" }
+					$cnt = ($azskRoleAssignments | Measure-Object).Count
+				}
 			    if($cnt -gt 0)
 			    {				
 				    $this.PublishCustomMessage("Configuring the runtime account for CA...")
@@ -3522,15 +3527,15 @@ class CCAutomation: CommandBase
 		#Check subscription access
 		if(($spPermissions|measure-object).count -gt 0)
 		{
-			$haveSubscriptionAccess = ($spPermissions | Where-Object {$_.scope -eq "/subscriptions/$($currentContext.Subscription.Id)" -and $_.RoleDefinitionName -eq "Reader"}|Measure-Object).count -gt 0
+			$haveSubscriptionAccess = ($spPermissions | Where-Object {$_.scope -eq "/subscriptions/$($currentContext.Subscription.Id)" -and $_.RoleDefinitionName -eq "Security Reader"}|Measure-Object).count -gt 0
 			if(($spPermissions | Where-Object {$_.scope -eq "/subscriptions/$($currentContext.Subscription.Id)" -and $_.RoleDefinitionName -eq "Contributor"}|Measure-Object).count -gt 0)
 			{
-				$this.PublishCustomMessage("WARNING: Service principal (Name: $($spPermissions[0].DisplayName)) configured as the CA RunAs Account has 'Contributor' access. This is not recommended.`r`nCA only requires 'Reader' permission at subscription scope for the RunAs account/SPN.",[MessageType]::Warning);
+				$this.PublishCustomMessage("WARNING: Service principal (Name: $($spPermissions[0].DisplayName)) configured as the CA RunAs Account has 'Contributor' access. This is not recommended.`r`nCA only requires 'Security Reader' permission at subscription scope for the RunAs account/SPN.",[MessageType]::Warning);
 				$haveSubscriptionAccess = $true;
 			}
 			if(($spPermissions | Where-Object {$_.scope -eq "/subscriptions/$($currentContext.Subscription.Id)" -and $_.RoleDefinitionName -eq "Owner"}|Measure-Object).count -gt 0)
 			{
-				$this.PublishCustomMessage("WARNING: Service principal (Name: $($spPermissions[0].DisplayName)) configured as the CA RunAs Account has 'Owner' access. This is not recommended.`r`nCA only requires 'Reader' permission at subscription scope for the RunAs account/SPN.",[MessageType]::Warning);
+				$this.PublishCustomMessage("WARNING: Service principal (Name: $($spPermissions[0].DisplayName)) configured as the CA RunAs Account has 'Owner' access. This is not recommended.`r`nCA only requires 'Security Reader' permission at subscription scope for the RunAs account/SPN.",[MessageType]::Warning);
 				$haveSubscriptionAccess = $true;
 			}
 			return $haveSubscriptionAccess	
@@ -3592,17 +3597,17 @@ class CCAutomation: CommandBase
 	hidden [void] SetServicePrincipalSubscriptionAccess($applicationId)
 	{
 		$SPNReaderRole = $null
-		$this.PublishCustomMessage("Adding SPN to [Reader] role at [Subscription] scope...")
+		$this.PublishCustomMessage("Adding SPN to [Security Reader] role at [Subscription] scope...")
 		$context = Get-AzureRmContext
 		$retryCount = 0;
 		While($null -eq $SPNReaderRole -and $retryCount -le 6)
 		{
-			#Assign RBAC to SPN - reader at subscription level 
-			New-AzureRMRoleAssignment -RoleDefinitionName Reader -ServicePrincipalName $applicationId -ErrorAction SilentlyContinue | Out-Null
+			#Assign RBAC to SPN - Security Reader at subscription level 
+			New-AzureRMRoleAssignment -RoleDefinitionName 'Security Reader' -ServicePrincipalName $applicationId -ErrorAction SilentlyContinue | Out-Null
 			Start-Sleep -Seconds 10
 			$SPNReaderRole = Get-AzureRmRoleAssignment -ServicePrincipalName $applicationId `
 			-Scope "/subscriptions/$($context.Subscription.Id)" `
-			-RoleDefinitionName Reader -ErrorAction SilentlyContinue
+			-RoleDefinitionName 'Security Reader' -ErrorAction SilentlyContinue
 			$retryCount++;
 		}
 		if($null -eq $SPNReaderRole -and $retryCount -gt 6)
