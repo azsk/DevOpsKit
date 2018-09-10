@@ -304,12 +304,13 @@ class SVTBase: AzSKRoot
 			}
 			else
 			{
-				$this.PostFeatureControlTelemetry();			
+				$this.PostFeatureControlTelemetry();
 				$this.EvaluationStarted();	
 				$resourceSecurityResult += $this.GetAutomatedSecurityStatus();
 				$resourceSecurityResult += $this.GetManualSecurityStatus();			
 				$this.PostEvaluationCompleted($resourceSecurityResult);
 				$this.EvaluationCompleted($resourceSecurityResult);
+				$this.PostPolicyComplianceTelemetry();			
 			}
         }
         return $resourceSecurityResult;
@@ -348,6 +349,16 @@ class SVTBase: AzSKRoot
 			$customData.Value = $ResourceObject;
 			$this.PublishCustomData($customData);		
 		}
+	}
+
+	[void] PostPolicyComplianceTelemetry()
+	{
+		[CustomData] $customData = [CustomData]::new();
+		$customData.Name = "PolicyComplianceTelemetry";
+		$policyCompliance = Get-AzureRmPolicyState -SubscriptionId $this.SubscriptionContext.SubscriptionId | `
+		Select-Object ResourceId,PolicyDefinitionId,PolicyAssignmentName,IsCompliant
+		$customData.Value = $policyCompliance;
+		$this.PublishCustomData($customData);			
 	}
 
 	[SVTEventContext[]] FetchStateOfAllControls()
@@ -723,7 +734,7 @@ class SVTBase: AzSKRoot
 			# Get policy compliance if org-level flag is enabled and policy is found 
 			#TODO: set flag in a variable once and reuse it
 			
-			if([ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyScan -eq $true)
+			if([ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan -eq $true)
 			{
 				$policyScanResult = $this.CreateControlResult($eventContext.ControlItem.FixControl);
 				if(-not [string]::IsNullOrWhiteSpace($eventContext.ControlItem.PolicyDefinitionGuid))

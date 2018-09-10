@@ -15,6 +15,7 @@ class ARMPolicy: CommandBase
         Base($subscriptionId, $invocationContext)
     { 
 		$this.ARMPolicyObj = [ARMPolicyModel] $this.LoadServerConfigFile("Subscription.ARMPolicies.json"); 
+		#todo: load only if flag is on
 		$this.SubPolicyInitiative = [PolicyInitiative] $this.LoadServerConfigFile("Subscription.Initiative.json"); 
 		$this.FilterTags = $this.ConvertToStringArray($tags);
 		$this.UpdateInitiative = $updateInitiative;
@@ -434,7 +435,9 @@ class ARMPolicy: CommandBase
 					elseif($null -ne $initiative)
 					{
 						$this.PublishCustomMessage("Found existing AzSK Initiative.", [MessageType]::Update);	
-					}					
+					}	
+					#todo: Assign initiative
+					#todo: CA permission update	if default CA			
 				}				
 			}
 		}
