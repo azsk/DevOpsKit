@@ -197,7 +197,7 @@
       "Automated": "Yes",
       "MethodName": "CheckStorageCORSAllowed",
       "Rationale": "CORS enables applications running under one domain to access a resource under another domain. Using '*' (allow all) for CORS setting means that an application running under any domain can have access to your application's resources and data. Restricting allowed origins to the specific set that needs access aligns with the principle of least privilege.",
-      "Recommendation": "Go to Azure Portal --> your Storage service --> Settings --> CORS --> for each Storage services  i.e. Blob/File/Table/Queue --> Add --> Provide the specific domain names and other CORS details that should be allowed to make cross-origin calls. Note: No action is needed if you are not using CORS for your service.",
+      "Recommendation": "Go to Azure Portal --> your Storage service --> Settings --> CORS --> for each of the Storage services  i.e. Blob/File/Table/Queue --> Add --> Provide the specific domain names and other CORS details that should be allowed to make cross-origin calls. Note: No action is needed if you are not using CORS for your service.",
       "Tags": [
          "SDL",
          "TCP",
