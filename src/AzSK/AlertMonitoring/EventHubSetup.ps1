@@ -31,34 +31,41 @@ function Set-AzSKEventHubSettings
 		[Parameter(Mandatory = $true, HelpMessage="Namespace name of the EventHub.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
+		[Alias("ehns")]
         $EventHubNamespace,
 
         [Parameter(Mandatory = $true, HelpMessage="Name of the EventHub within the namespace that will receive the events..", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
+		[Alias("ehn")]
         $EventHubName,
 
 		[Parameter(Mandatory = $true, HelpMessage="Name of the send key (as configured for the EventHub instance)..", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
+		[Alias("ehsn")]
         $EventHubSendKeyName,
 
         [Parameter(Mandatory = $true, HelpMessage="Value of the key is used to generate the SAS token to access the Event Hub for sending messages.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
+		[Alias("ehsk")]
         $EventHubSendKey,
 
 		[Parameter(Mandatory = $false, HelpMessage="Provide the source of EventHub Events.(e.g. CC,CICD,SDL)", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
+		[Alias("so")]
         $Source,
 
         [Parameter(Mandatory = $true, HelpMessage="Use -Disable option to clean the EventHub setting under the current instance.", ParameterSetName = "Disable")]
         [switch]
+		[Alias("dsbl")]
 		$Disable,
 		
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 	Begin

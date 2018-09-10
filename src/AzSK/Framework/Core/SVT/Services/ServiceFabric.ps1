@@ -20,7 +20,7 @@ class ServiceFabric : SVTBase
 		{
             $this.ResourceObject =  Get-AzureRmResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType -Name $this.ResourceContext.ResourceName -ApiVersion 2016-03-01        
 
-			$this.ResourceObject.Tags.GetEnumerator() | Where-Object { $_.Name -eq $this.DefaultTagName } | ForEach-Object {$this.ClusterTagValue = $_.Value }
+			$this.ResourceObject.Tags.GetEnumerator() | Where-Object { $_.Key -eq $this.DefaultTagName } | ForEach-Object {$this.ClusterTagValue = $_.Value }
 			
 			## Commented below two lines of code. This will be covered once Service Fabric module gets available as part of AzureRM modules set.
 			#$this.CheckClusterAccess();
