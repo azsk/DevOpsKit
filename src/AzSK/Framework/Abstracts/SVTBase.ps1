@@ -986,6 +986,8 @@ class SVTBase: AzSKRoot
 			}
 			else
 			{
+				$failStateDiagnostics = $nonCompliantLogs | Select-Object -Property Logs, Metrics, StorageAccountId, EventHubName, Name;
+				$controlResult.SetStateData("Non compliant resources are:", $failStateDiagnostics);
 				$controlResult.AddMessage([VerificationResult]::Failed,
 					"Diagnostics settings are either disabled OR not retaining logs for at least $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) days for resource - [$($this.ResourceContext.ResourceName)]",
 					$selectedDiagnosticsProps);
