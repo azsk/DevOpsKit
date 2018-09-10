@@ -37,7 +37,7 @@ class SubscriptionCore: SVTBase
 		
 		#Compute the policies ahead to get the security Contact Phone number and email id
 		$this.SecurityCenterInstance = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId,$false);
-		$this.MisConfiguredASCPolicies = $this.SecurityCenterInstance.GetMisconfiguredPolicies();
+		$this.MisConfiguredASCPolicies = $this.SecurityCenterInstance.CheckASCCompliance();
 
 		#Fetch AzSKRGTags
 		$azskRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
@@ -452,27 +452,27 @@ class SubscriptionCore: SVTBase
 	{
 		if ($this.SecurityCenterInstance)
 		{
-			$controlResult.AddMessage([MessageData]::new("Security center policies must be configured with settings mentioned below:", $this.SecurityCenterInstance.Policy.properties));			
+			#$controlResult.AddMessage([MessageData]::new("Security center policies must be configured with settings mentioned below:", $this.SecurityCenterInstance.Policy.properties));			
 
-			if(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0 -and $this.SecurityCenterInstance.IsLatestVersion)
+			if(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0)
 			{
 				$controlResult.EnableFixControl = $true;
 
 				$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredASCPolicies);
 				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredASCPolicies));
 			}
-			elseif(-not $this.SecurityCenterInstance.IsLatestVersion -and $this.SecurityCenterInstance.IsValidVersion)
-			{
-				$this.PublishCustomMessage("WARNING: The Azure Security Center policies in your subscription are out of date.`nPlease update to the latest version by running command Update-AzSKSubscriptionSecurity.", [MessageType]::Warning);
-				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Current security center policies are configured as per older policy. To update as per latest configuration, run command Update-AzSKSubscriptionSecurity."));
-			}
-			elseif(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0)
-			{
-				$controlResult.EnableFixControl = $true;
+			# elseif(-not $this.SecurityCenterInstance.IsLatestVersion -and $this.SecurityCenterInstance.IsValidVersion)
+			# {
+			# 	$this.PublishCustomMessage("WARNING: The Azure Security Center policies in your subscription are out of date.`nPlease update to the latest version by running command Update-AzSKSubscriptionSecurity.", [MessageType]::Warning);
+			# 	$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Current security center policies are configured as per older policy. To update as per latest configuration, run command Update-AzSKSubscriptionSecurity."));
+			# }
+			# elseif(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0)
+			# {
+			# 	$controlResult.EnableFixControl = $true;
 
-				$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredASCPolicies);
-				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredASCPolicies));
-			}
+			# 	$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredASCPolicies);
+			# 	$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredASCPolicies));
+			# }
 			else
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("All security center policies are correctly configured."));
