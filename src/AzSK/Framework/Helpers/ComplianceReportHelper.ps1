@@ -5,7 +5,7 @@ class ComplianceReportHelper: ComplianceBase
     hidden [string] $ScanSource
 	hidden [System.Version] $ScannerVersion
 	hidden [string] $ScanKind 
-	
+
     ComplianceReportHelper([SubscriptionContext] $subscriptionContext,[System.Version] $ScannerVersion):
     Base([SubscriptionContext] $subscriptionContext) 
 	{

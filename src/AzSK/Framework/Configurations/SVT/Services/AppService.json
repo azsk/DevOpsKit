@@ -349,7 +349,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceHttpCertificateSSL",
         "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer eavesdropping attacks.",
-        "Recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -HttpsOnly `$true. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+        "Recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -HttpsOnly $true. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
         "Tags": [
           "SDL",
           "TCP",
@@ -380,8 +380,7 @@
           "Automated",
           "DP",
           "AppService",
-          "FunctionApp",
-          "OwnerAccess"
+          "FunctionApp"
         ],
         "Enabled": true
       },
@@ -493,8 +492,7 @@
           "Automated",
           "DP",
           "AppService",
-          "FunctionApp",
-          "OwnerAccess"
+          "FunctionApp"
         ],
         "Enabled": true,
         "Rationale": "CORS enables applications running under one domain to access a resource under another domain. Using '*' (allow all) for CORS setting means that an application running under any domain can have access to your application's resources and data. Restricting allowed origins to the specific set that needs access aligns with the principle of least privilege."
@@ -531,8 +529,7 @@
           "Automated",
           "Config",
           "AppService",
-          "FunctionApp",
-          "OwnerAccess"
+          "FunctionApp"
         ],
         "Enabled": true,
         "Rationale": "Managed Service Identity (MSI) allows your app to easily access other AAD-protected resources such as Azure Key Vault. The identity is managed by the Azure platform and eliminates the need to provision/manage/rotate any secrets thus reducing the overall risk. "

@@ -173,38 +173,30 @@ class WriteCAStatus: ListenerBase
                         $partitionKeys += $partitionKey
                         $complianceReportHelper = [ComplianceReportHelper]::new($props.SubscriptionContext, $version); 
 
-                        $ComplianceStateData = $null;
+                        $ComplianceStateData = $complianceReportHelper.GetSubscriptionComplianceReport($partitionKeys);    
 
-                        if($complianceReportHelper.HaveRequiredPermissions())
-                        {
-                            $ComplianceStateData = $complianceReportHelper.GetSubscriptionComplianceReport($partitionKeys); 
-                        }
-                        
-                        if(($ComplianceStateData | Measure-Object).Count -gt 0)
-                        {
-                            $ComplianceStateData | ForEach-Object {
-                                $row = $_;
-                                if(($ResourceControlsDataMini.Controls | Where-Object { $_.ControlId -eq $row.ControlIntId} | Measure-Object).Count -gt 0)
-                                {
-                                    if(-not [string]::IsNullOrWhiteSpace($row.ChildResourceName))
-                                    {
-                                        if(($ResourceControlsDataMini.ChildResourceNames | Where-Object {$_ -eq $row.ChildResourceName} | Measure-Object).Count -le 0)
-                                        {
-                                            $row.IsActive = $false;
-                                            $RecordsToBeDeleted += $row;
-                                        }
-                                    }                            
-                                }
-                                else {
-                                    $row.IsActive = $false;
-                                    $RecordsToBeDeleted += $row;
-                                }
-                            }
-                            if(($RecordsToBeDeleted | Measure-Object).Count -gt 0)
+                        $ComplianceStateData | ForEach-Object {
+                            $row = $_;
+                            if(($ResourceControlsDataMini.Controls | Where-Object { $_.ControlId -eq $row.ControlIntId} | Measure-Object).Count -gt 0)
                             {
-                                $complianceReportHelper.SetLocalSubscriptionScanReport($RecordsToBeDeleted);
+                                if(-not [string]::IsNullOrWhiteSpace($row.ChildResourceName))
+                                {
+                                    if(($ResourceControlsDataMini.ChildResourceNames | Where-Object {$_ -eq $row.ChildResourceName} | Measure-Object).Count -le 0)
+                                    {
+                                        $row.IsActive = $false;
+                                        $RecordsToBeDeleted += $row;
+                                    }
+                                }                            
+                            }
+                            else {
+                                $row.IsActive = $false;
+                                $RecordsToBeDeleted += $row;
                             }
                         }
+                        if(($RecordsToBeDeleted | Measure-Object).Count -gt 0)
+                        {
+                            $complianceReportHelper.SetLocalSubscriptionScanReport($RecordsToBeDeleted);
+                        }                        
                     }
                 }
 				

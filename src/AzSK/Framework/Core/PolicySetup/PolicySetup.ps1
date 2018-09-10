@@ -2,7 +2,6 @@
 using namespace Microsoft.Azure.Commands.Management.Storage.Models
 using namespace Microsoft.WindowsAzure.Storage.Blob
 using namespace Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel
-using namespace Newtonsoft.Json.Schema
 Set-StrictMode -Version Latest
 
 class PolicySetup: CommandBase
@@ -222,34 +221,6 @@ class PolicySetup: CommandBase
 			$azskOverride.UpdatePropertyValue("AzSKConfigURL",$this.AzSKConfigURL)
 			$azskOverride.WriteToFolder($this.ConfigFolderPath);
 		}
-		#If config already exists check and update for SAS token expiry for policy url and change in storage account RG Name
-		else {
-				$azskConfigContent = Get-Content -Path $askConfigFile.FullName | ConvertFrom-Json
-				if([Helpers]::CheckMember($azskConfigContent,"CASetupRunbookURL") -and [Helpers]::IsSASTokenUpdateRequired($azskConfigContent.CASetupRunbookURL))
-				{
-					$azskConfigContent.CASetupRunbookURL = $this.CASetupRunbookURL
-				}
-
-				if([Helpers]::CheckMember($azskConfigContent,"AzSKConfigURL") -and [Helpers]::IsSASTokenUpdateRequired($azskConfigContent.AzSKConfigURL))
-				{
-					$azskConfigContent.AzSKConfigURL = $this.AzSKConfigURL
-				}
-				if([Helpers]::CheckMember($azskConfigContent,"AzSKRGName"))
-                {
-                    $RunbookScanAgentFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookScanAgent.ps1" } | Select -First 1
-                    $RunbookScanAgentFileContent =  Get-Content -Path $RunbookScanAgentFile.FullName
-				    #Check Storage Account RG in scan agent
-				    $pattern = 'StorageAccountRG = "(.*?)"'
-				    $storageAccountRG = [Helpers]::GetSubString($RunbookScanAgentFileContent,$pattern)
-				    if(-not [string]::IsNullOrEmpty($storageAccountRG) -and $storageAccountRG -ne $azskConfigContent.AzSKRGName)
-				    {
-					    $RunbookScanAgentFileContent = $RunbookScanAgentFileContent.Replace($storageAccountRG,$azskConfigContent.AzSKRGName)
-					    Out-File -InputObject $RunbookScanAgentFileContent -Force -FilePath $($RunbookScanAgentFile.FullName) -Encoding utf8
-				    }
-
-                }
-				$azskConfigContent | ConvertTo-Json -Depth 10 | Out-File -Force -FilePath $askConfigFile.FullName -Encoding utf8
-		}
 
 
 		$ServerConfigMetadataFile = (Get-ChildItem $this.ConfigFolderPath -Recurse -Force -Include $([Constants]::ServerConfigMetadataFileName) -ErrorAction SilentlyContinue)
@@ -350,11 +321,11 @@ class PolicySetup: CommandBase
 				Copy-Item ($caFilePath) ($this.RunbookFolderPath + "RunbookScanAgent.ps1") -Force
 			}
 
-			$RunbookCoreSetupFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetup.ps1" } | Select -First 1
-			if((($RunbookCoreSetupFile | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::CARunbooks)
+			if(((Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetup.ps1" } | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::CARunbooks)
 			{
 				$coreSetupFilePath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookCoreSetup.ps1"
 				Copy-Item ($coreSetupFilePath) ($this.RunbookFolderPath + "RunbookCoreSetup.ps1") -Force
+
 				#Check for environment specific installer file
 				$fileName = $this.RunbookFolderPath + "RunbookCoreSetup.ps1";
 				if(Test-Path -Path $fileName)
@@ -362,22 +333,10 @@ class PolicySetup: CommandBase
 					$fileContent = Get-Content -Path $fileName;
 					$fileContent = $fileContent.Replace("#AzSKConfigURL#", $this.AzSKConfigURL);
 					Out-File -InputObject $fileContent -Force -FilePath $($this.RunbookFolderPath + "RunbookCoreSetup.ps1") -Encoding utf8
-				}
-			}
-			#If RunbookCoreSetup already exists, check for SAS token expiry and update with latest token 
-			else {
-				$RunbookCoreSetupContent =  Get-Content -Path $RunbookCoreSetupFile.FullName
-				#Validate AzSkVersionForOrgUrl command
-				$pattern = 'azskVersionForOrg = "(.*?)"'
-				$coreSetupAzSkVersionForOrgUrl = [Helpers]::GetSubString($RunbookCoreSetupContent,$pattern)
-				if(-not [string]::IsNullOrEmpty($coreSetupAzSkVersionForOrgUrl) -and [Helpers]::IsSASTokenUpdateRequired($coreSetupAzSkVersionForOrgUrl))
-				{
-					$RunbookCoreSetupContent = $RunbookCoreSetupContent.Replace($coreSetupAzSkVersionForOrgUrl,$this.AzSKConfigURL)
-					Out-File -InputObject $RunbookCoreSetupContent -Force -FilePath $($RunbookCoreSetupFile.FullName) -Encoding utf8
-				}
+				}			
 			}
 
-			#Upload AzSKPreConfig with version details 
+			#Upload AzSKConfig with version details 
 			if(((Get-ChildItem $this.RunbookFolderPath -Recurse -Force | Where-Object { $_.Name -eq "AzSK.Pre.json" } | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::OrgAzSKVersion)
 			{			
 				#Get AzSK Module Version				
@@ -396,7 +355,12 @@ class PolicySetup: CommandBase
 				$azskConfig | ConvertTo-Json | Out-File "$($this.RunbookFolderPath)\AzSK.Pre.json" -Force
 			}
 
-			
+			$allCAFiles = @();
+			$allCAFiles += Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.mode -match "-a---" }
+			if($allCAFiles.Count -ne 0)
+			{
+				$this.StorageAccountInstance.UploadFilesToBlob($this.ConfigContainerName, $this.RunbookBaseVersion, $allCAFiles);
+			}
 		}
 		catch
 		{
@@ -484,13 +448,6 @@ class PolicySetup: CommandBase
 			$this.CASetupRunbookURL = $container.CloudBlobContainer.Uri.AbsoluteUri + "/$($this.RunbookBaseVersion)/RunbookCoreSetup.ps1" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
 		}
 		$this.ModifyConfigs();
-		# Uploading Runbook files to container
-		$allCAFiles = @();
-		$allCAFiles += Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.mode -match "-a---" }
-		if($allCAFiles.Count -ne 0)
-		{
-	    	$this.StorageAccountInstance.UploadFilesToBlob($this.ConfigContainerName, $this.RunbookBaseVersion, $allCAFiles);
-		}
 		$allFiles = @();
 		$allFiles += Get-ChildItem $this.ConfigFolderPath -Recurse -Force | Where-Object { $_.mode -match "-a---" }
 
@@ -831,7 +788,7 @@ class PolicySetup: CommandBase
 			if($policies.AzSKPre)
 			{
 				$AzSKPreUrl= $AzSKPre.ICloudBlob.Uri.AbsoluteUri  
-			}		 
+			}			 
 
 			if($InstallerAzSKPreUrl -like "*$AzSKPreUrl*" )
 			{
@@ -847,21 +804,10 @@ class PolicySetup: CommandBase
 
 			if($InstallOutput.PolicyUrl -and $InstallOutput.AutoUpdateCommandUrl -and $InstallOutput.AzSKPreUrl)
 			{
-				#Validate SAS token expiry for Policy Url and AzSKPreUrl
-				if([Helpers]::IsSASTokenUpdateRequired($InstallerPolicyUrl) -or [Helpers]::IsSASTokenUpdateRequired($InstallerAzSKPreUrl))
-				{
-					$failMsg = "SAS token for policy urls is getting expired in installer"			
-					$resolvemsg = "To resolve this please run command '$($this.updateCommandName)'."
-					$resultMsg = "$failMsg`r`n$resolvemsg"
-					$resultStatus = "Failed"
-					$shouldReturn = $false
-					$InstallOutput.Status = $false  
-				}	
-				else {
-					$resultMsg = ""
-					$resultStatus = "OK"
-					$InstallOutput.Status = $true
-				}				
+				$resultMsg = ""
+				$resultStatus = "OK"
+				$InstallOutput.Status = $true
+
 			}
 			else
 			{
@@ -887,6 +833,9 @@ class PolicySetup: CommandBase
 		}
 		$detailedMsg = $Null
 		#endregion
+
+
+		
 
 		#region Check 04: Validate AzSKPre
 		$PolicyScanOutput.Configurations.AzSKPre = @{}
@@ -964,23 +913,9 @@ class PolicySetup: CommandBase
 			
 			if($PolicyScanOutput.Configurations.RunbookCoreSetup.AzSkVersionForOrgUrl)
 			{
-				#Validate SAS token expiry for Policy Url and AzSKPreUrl
-				if([Helpers]::IsSASTokenUpdateRequired($coreSetupAzSkVersionForOrgUrl) )
-				{
-					$failMsg = "SAS token for policy urls is getting expired in runbookCoreSetup"			
-					$resolvemsg = "To resolve this please run command '$($this.updateCommandName)'."
-					$resultMsg = "$failMsg`r`n$resolvemsg"
-					$resultStatus = "Failed"
-					$shouldReturn = $false
-					$InstallOutput.Status = $false  
-
-				}
-				else {
-					$resultMsg = ""
-					$resultStatus = "OK"
-					$PolicyScanOutput.Configurations.RunbookCoreSetup.Status = $true
-				}
-				
+				$resultMsg = ""
+				$resultStatus = "OK"
+				$PolicyScanOutput.Configurations.RunbookCoreSetup.Status = $true
 			}
 			else
 			{
@@ -1017,9 +952,6 @@ class PolicySetup: CommandBase
 		$AzSKConfigPath =Get-ChildItem -Path $policyTempFolder -File "AzSK.json" -Recurse
 		$AzSKConfigContent =  Get-Content -Path $($AzSKConfigPath.FullName) | ConvertFrom-Json
 		$missingAzSKConfigurations = @()
-		$expiringSASTokenConfigurations = @()
-		$AzSKConfigCASetupRunbookUrl = [string]::Empty
-		$AzSKPreConfigURL = [string]::Empty
 		#Validate CurrentVersionForOrg 
 		$RunbookCoreSetupUrl = "Not Available"
 		if($policies.RunbookCoreSetup)
@@ -1039,20 +971,10 @@ class PolicySetup: CommandBase
 				$ActualValue = ""
 				if([Helpers]::CheckMember($AzSKConfigContent,"CASetupRunbookURL"))
 				{
-					
 					$ActualValue = $($AzSKConfigContent.CASetupRunbookURL)
-					#Validate SAS token expiry for CASetupRunbook Url
-					$AzSKConfigCASetupRunbookUrl = $ActualValue
-					if([Helpers]::IsSASTokenUpdateRequired($AzSKConfigCASetupRunbookUrl))
-					{
-						$expiringSASTokenConfigurations += "CASetupRunbookUrl"
-						$AzSKConfiguOutput.CASetupRunbookUrl = $false
-						$detailedMsg+= "SAS token getting expired for CASetupRunbookURL."
-					}
-
 				}
 				$detailedMsg+="`nActual: $([Helpers]::IsStringEmpty($($ActualValue)))  `n`t Expected base Url: $([Helpers]::IsStringEmpty($($RunbookCoreSetupUrl)))";
-			}
+			} 
 			
 			#Validate ControlTelemetryKey 
 			$appInsightResource= Get-AzureRMApplicationInsights -ResourceGroupName $appInsight.ResourceGroupName -Name $appInsight.Name
@@ -1121,8 +1043,7 @@ class PolicySetup: CommandBase
 
 			if([Helpers]::CheckMember($AzSKConfigContent,"AzSKConfigURL") -and  $AzSKConfigContent.AzSKConfigURL  -and $AzSKConfigContent.AzSKConfigURL -like "*$azSKPreUrl*")
 			{
-				$AzSKConfiguOutput.AzSKPreConfigURL = $true				
-				
+				$AzSKConfiguOutput.AzSKPreConfigURL = $true
 			}
 			else
 			{
@@ -1137,44 +1058,22 @@ class PolicySetup: CommandBase
 				$detailedMsg+="`nActual: $([Helpers]::IsStringEmpty($($ActualValue)))  `n`t Expected base Url: $([Helpers]::IsStringEmpty($($azSKPreUrl)))"
 			}
 			
-			#Validate SAS token expiry for CASetupRunbook Url
-			if([Helpers]::CheckMember($AzSKConfigContent,"AzSKConfigURL") -and [Helpers]::IsSASTokenUpdateRequired($AzSKConfigContent.AzSKConfigURL))
-			{
-				$expiringSASTokenConfigurations += "AzSKPreConfigURL"
-				$AzSKConfiguOutput.AzSKPreConfigURL = $false
-				$detailedMsg+= "SAS token getting expired for AzSKPreConfigURL."
-			}
-
 			if([Helpers]::CheckMember($AzSKConfigContent,"CASetupRunbookUrl")  -and $AzSKConfiguOutput.CASetupRunbookUrl -and $AzSKConfiguOutput.ControlTelemetryKey -and $AzSKConfiguOutput.InstallationCommand -and $AzSKConfiguOutput.PolicyOrgName -and $AzSKConfiguOutput.AzSKPreConfigURL ) 
 			{
 				$resultMsg = ""
 				$resultStatus = "OK"
 				
 				$AzSKConfiguOutput.Status = $true
-
 			}
 			else
 			{
-				$failMsg = [string]::Empty
-				$resolvemsg = [string]::Empty
-				if(($missingAzSKConfigurations | Measure-Object).Count -gt 0)
-				{
-					$failMsg = "Missing configurations in AzSKConfig: $($missingAzSKConfigurations -join ",")."			
-					$resolvemsg = "To resolve this please run command '$($this.updateCommandName)' with parameter '-OverrideBaseConfig AzSKRootConfig'"
-				}
-				#Check after missing configuration if SAS update required
-				elseIf(($expiringSASTokenConfigurations | Measure-Object).Count -gt 0)
-				{
-					$failMsg = "SAS token for policy urls is getting expired in AzSKConfig: $($expiringSASTokenConfigurations -join ",")."			
-					$resolvemsg = "To resolve this please run command '$($this.updateCommandName)'"
-				}
-				
+				$failMsg = "Missing configurations in AzSKConfig: $($missingAzSKConfigurations -join ",")."			
+				$resolvemsg = "To resolve this please run command '$($this.updateCommandName)' with parameter '-OverrideBaseConfig AzSKRootConfig'"
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $false				
 				$AzSKConfiguOutput.Status = $false
-			}
-
+			}           
 		}
 		else
 		{
@@ -1284,7 +1183,7 @@ class PolicySetup: CommandBase
 		$detailedMsg = ""
 		#endregion
 
-		#region Check 08: Validate Syntax exceptions for policy files
+		#Check 08: Validate Syntax exceptions for policy files
 		$PolicyScanOutput.SyntaxException= @{}
 		$stepCount++		
 		$checkDescription = "Check syntax exceptions for policies."
@@ -1300,73 +1199,13 @@ class PolicySetup: CommandBase
 				$fileName = $_.Name
 				try{
 					$policyContent = Get-Content  $_.FullName | ConvertFrom-Json 
-
-					$schemaUrl = [string]::Empty
-					$schemaDefination = $null
-					#Validate policy against the schema template
-					if([Helpers]::CheckMember($policyContent,"`$schema") -and -not [string]::IsNullOrEmpty($policyContent.'$schema'))
-					{
-						$schemaDefination = Invoke-RestMethod `
-						-Method GET `
-						-Uri $policyContent.'$schema'  #
-						#-UseBasicParsing
-					}
-					else
-					{
-						$azskConfig = [ConfigurationManager]::GetAzSKConfigData()						
-						if([Helpers]::CheckMember($policyContent,"FeatureName"))
-						{
-							$policyName = "ServiceControl"
-						}
-						else
-						{
-							$policyName = $_.Name.Replace(".json","")
-						}
-						$schemaUrl = $azskConfig.SchemaTemplateURL + $policyName
-						try
-						{
-							$schemaDefination = Invoke-RestMethod `
-							-Method GET `
-							-Uri $schemaUrl
-						}
-						catch
-						{
-							#Skip exception of schema is not present on server side
-							$messages += "Schema validation skipped for policy: $schemaUrl"	
-						}
-						
-					}
-						if($schemaDefination)
-						{
-							$schemaDefinationContent = $schemaDefination | ConvertTo-Json -Depth 10
-							$jsonContent = Get-Content  $_.FullName
-							$libraryPath = (Get-Item $PSScriptRoot).Parent.Parent.Parent.FullName+ "\ARMCheckerLib";
-							$ErrorMessages= Start-Job  -ScriptBlock {
-								param($jsonContent,$schemaDefinationContent,$libraryPath )
-								Add-Type -Path "$libraryPath\Newtonsoft.Json.dll"
-								Add-Type -Path "$libraryPath\Newtonsoft.Json.Schema.dll"
-								$Token = [Newtonsoft.Json.Linq.JToken]::Parse($jsonContent)
-								$Schema = [Newtonsoft.Json.Schema.JSchema]::Parse($schemaDefinationContent)
-								$ErrorMessages = New-Object "System.Collections.Generic.List[string]"						
-								$output= [Newtonsoft.Json.Schema.SchemaExtensions]::IsValid($Token, $Schema,[ref] $ErrorMessages)
-								$ErrorMessages
-							} -ArgumentList $jsonContent,$schemaDefinationContent,$libraryPath | Receive-Job -Wait -AutoRemoveJob 
-
-							if(-not [string]::IsNullOrEmpty($ErrorMessages) )
-							{
-								$InvalidSchemaJsonFiles += $fileName
-								$messages += $ErrorMessages								
-							}
-						}											
-					
-
 				}
 				catch
 				{
 					$InvalidSchemaJsonFiles += $fileName
 				}
 			}
-			
+
 			#Validate if all PS1 file has any syntax issue
 			$InvalidSchemaPSFiles = @()
 			$policyFiles | Where-Object {$_.Name -like "*.ext.ps1" } | ForEach-Object {
@@ -1393,7 +1232,7 @@ class PolicySetup: CommandBase
 				{
 					$failMsg +="PS1 files: $($InvalidSchemaPSFiles -Join ',')."
 				}						
-				$resolvemsg = "To resolve this, make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply. For more details about syntax issue, refer detail logs.)"
+				$resolvemsg = "To resolve this, make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply)"
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $false
@@ -1414,9 +1253,7 @@ class PolicySetup: CommandBase
 			$detailedMsg = $Null	
 			#endregion
 		}
-		#endregion
 
-		
 
 		if(-not $PolicyScanOutput.Resources.Status -or -not $PolicyScanOutput.Policies.Status -or -not $InstallOutput.Status -or -not $PolicyScanOutput.Configurations.AzSKPre.Status -or  -not $PolicyScanOutput.Configurations.RunbookCoreSetup.Status -or  -not $AzSKConfiguOutput.Status -or -not $PolicyScanOutput.SyntaxException.Status -or -not $CARunbookOutput.Status)
 		{

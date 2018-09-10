@@ -63,7 +63,7 @@
       "Automated": "Yes",
       "MethodName": "CheckVariables",
       "Rationale": "Encrypted variables are stored securely by the Azure platform. Moreover, their values cannot be retrieved from the Get-AzureRmAutomationVariable cmdlet that ships as part of the Azure PowerShell module.",
-      "Recommendation": "Encrypt variable if it stores sensitive data. Run command Set-AzureRmAutomationVariable -AutomationAccountName '{AutomationAccountName}' -Encrypted `$true -Name '{VariableName}' -ResourceGroupName '{ResourceGroupName}' -Value '{Value}'",
+      "Recommendation": "Encrypt variable if it stores sensitive data. Run command Set-AzureRmAutomationVariable -AutomationAccountName '{AutomationAccountName}' -Encrypted `$true -Name '{VariableName}' -ResourceGroupName '{ResourceGroupName}' -Value '{Value}",
       "Tags": [
         "SDL",
         "TCP",
@@ -140,7 +140,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Hybrid worker machines running the MMA (Microsoft Monitoring Agent) have unrestricted access to all assets in the Automation. Limiting these assets to only those required for the hybrid worker functioning eliminates the likelihood of compromise of a broader set of assets.",
-      "Recommendation": "Create dedicated Automation account for Hybrid Worker Groups",
+      "Recommendation": "Create dedicated Auotmation account for Hybrid Worker Groups",
       "Tags": [
         "SDL",
         "TCP",

@@ -44,7 +44,6 @@ class ARMCheckerStatus: EventBase
 	{
 	    $this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info);
 		$this.WriteMessage([Constants]::RemediationMsgForARMChekcer, [MessageType]::Info);
-		$this.WriteMessage("For more details, Please refer: "+[Constants]::CICDShortLink,[MessageType]::Info) 
 		$this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info);
 		$this.WriteMessage("Status and detailed logs have been exported to path - $($resultsFolder)", [MessageType]::Info);
 		$this.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info);
@@ -117,13 +116,12 @@ class ARMCheckerStatus: EventBase
 				{   $scannedFileCount += 1;
 					foreach($result in $results)
 					{				       
-						$csvResultItem = "" | Select-Object "ControlId", "FeatureName","Status", "SupportedResources",  "Severity", `
+						$csvResultItem = "" | Select-Object "ControlId", "Status", "ResourceType",  "Severity", `
 															"PropertyPath", "LineNumber", "CurrentValue", "ExpectedProperty", "ExpectedValue", `
 															"ResourcePath", "ResourceLineNumber", "Description","FilePath"
 
-						$csvResultItem.SupportedResources = $result.SupportedResources
+						$csvResultItem.ResourceType = $result.ResourceType
 						$csvResultItem.ControlId = $result.ControlId
-                        $csvResultItem.FeatureName = $result.FeatureName
 						$csvResultItem.Description = $result.Description
 						$csvResultItem.ExpectedProperty = $result.ExpectedProperty
 						$csvResultItem.ExpectedValue = $result.ExpectedValue
@@ -162,7 +160,7 @@ class ARMCheckerStatus: EventBase
 			                           }
 		                  }
 			             $csvResultItem =$csvResultItem | where {$_.SideIndicator -eq "==" -or $_.SideIndicator -eq "<="}
-						 $csvResultItem =$csvResultItem | Select-Object "ControlId", "FeatureName","Status", "SupportedResources",  "Severity", `
+						 $csvResultItem =$csvResultItem | Select-Object "ControlId", "Status", "ResourceType",  "Severity", `
 															"PropertyPath", "LineNumber", "CurrentValue", "ExpectedProperty", "ExpectedValue", `
 															"ResourcePath", "ResourceLineNumber", "Description","FilePath"
 					    }
@@ -171,7 +169,7 @@ class ARMCheckerStatus: EventBase
 						$csvResultsForCurFile+=$csvResultItem;
 
 						$properties = @{};
-						$properties.Add("ResourceType", $csvResultItem.FeatureName)
+						$properties.Add("ResourceType", $csvResultItem.ResourceType)
 						$properties.Add("ControlId", $csvResultItem.ControlId)
 						$properties.Add("VerificationResult", $csvResultItem.Status);
 
@@ -419,7 +417,6 @@ class ARMCheckerStatus: EventBase
              
         Add-Content -Value $message -Path $this.SFLogPath        
     } 
-	
 	hidden [string] LoadARMControlsFile()
 	{ 	
 	   $serverFileContent=$null;

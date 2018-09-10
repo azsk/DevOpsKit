@@ -42,7 +42,6 @@ function Repair-AzSKAzureServicesSecurity
 
 		[string]
         [Parameter(Mandatory = $true, HelpMessage = "ResourceGroups for which the security evaluation has to be performed. Comma seperated values are supported. Wildcards are not permitted. By default, the command gets all resources in the subscription.")]
-		[Alias("pafp")]
 		$ParameterFilePath,
 
 		#[string]
@@ -51,37 +50,30 @@ function Repair-AzSKAzureServicesSecurity
 
 		[string]
         [Parameter(Mandatory = $false, HelpMessage = "ResourceGroups for which the security evaluation has to be performed. Comma separated values are supported. Wildcards are not permitted. By default, the command gets all resources in the subscription.")]
-		[Alias("rgns")]
 		$ResourceGroupNames,
         
         [string]
         [Parameter(Mandatory = $false, HelpMessage = "Gets only resources of the specified resource type. Wildcards are not permitted. e.g.: Microsoft.KeyVault/vaults. Run command 'Get-AzSKSupportedResourceTypes' to get the list of supported types.")]
-		[Alias("rt")]
 		$ResourceTypes,
 
 		[Parameter(Mandatory = $false, HelpMessage = "Friendly name of resource type. e.g.: KeyVault. Run command 'Get-AzSKSupportedResourceTypes' to get the list of supported values.")]
 		[string]
-		[Alias("rtns")]
 		$ResourceTypeNames,
         
         [string]
 		[Parameter(Mandatory = $false, HelpMessage = "Gets a resource with the specified name. Wildcards are not permitted. By default, the command gets all resources in the subscription.")]
-		[Alias("rns","ResourceName")]
 		$ResourceNames,
 
 		[string] 
 		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.")]
-		[Alias("cids")]
 		$ControlIds,
 
 		[switch] 
 		[Parameter(Mandatory = $false, HelpMessage = "Bypass consent to modify Azure resources.")]
-		[Alias("f")]
 		$Force,
 
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
-		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 
@@ -149,7 +141,6 @@ function Repair-AzSKSubscriptionSecurity
 
 		[string]
         [Parameter(Mandatory = $true, HelpMessage = "ResourceGroups for which the security evaluation has to be performed. Comma separated values are supported. Wildcards are not permitted. By default, the command gets all resources in the subscription.")]
-		[Alias("pafp")]
 		$ParameterFilePath,
 
 		#[string]
@@ -158,17 +149,14 @@ function Repair-AzSKSubscriptionSecurity
 
 		[string] 
 		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.")]
-		[Alias("cids")]
 		$ControlIds,
 
 		[switch] 
 		[Parameter(Mandatory = $false, HelpMessage = "Bypass consent to modify Azure resources.")]
-		[Alias("f")]
 		$Force,
 
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
-		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 

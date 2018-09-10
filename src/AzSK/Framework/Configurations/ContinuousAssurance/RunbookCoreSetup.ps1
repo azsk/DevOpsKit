@@ -358,21 +358,11 @@ function FindNearestSchedule($intervalInMins)
 	$finalSchedule = Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
 	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*" -and ($_.ExpiryTime.UtcDateTime -gt $(get-date).ToUniversalTime()) -and ($_.NextRun.UtcDateTime -ge $desiredNextRun)} | `
 	Sort-Object -Property NextRun | Select-Object -First 1
-    if(($finalSchedule|Measure-Object).Count -eq 0)
-    {
-        $finalSchedule = Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
-        Where-Object {$_.Name -ilike "*$CAHelperScheduleName*" -and ($_.ExpiryTime.UtcDateTime -gt $(get-date).ToUniversalTime()) -and ($_.NextRun.UtcDateTime -le $desiredNextRun)} | `
-        Sort-Object -Property NextRun -Descending | Select-Object -First 1
-    }
-    return $finalSchedule
+	return $finalSchedule
 }
 function EnableHelperSchedule($scheduleName)
 {
-    if(($scheduleName|Measure-Object).Count -gt 1)
-    {
-        $scheduleName = $scheduleName[0]
-    }
-    #Enable only required schedule and disable others
+	#Enable only required schedule and disable others
 	$enabledSchedule = Set-AzureRmAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true -ErrorAction SilentlyContinue
 	if(($enabledSchedule|Measure-Object).Count -gt 0 -and $enabledSchedule.IsEnabled)
 	{
@@ -395,113 +385,6 @@ function ScheduleNewJob($intervalInMins)
 	}
 	PublishEvent -EventName "CA Job Rescheduled" -Properties @{"IntervalInMinutes" = $intervalInMins}
 }
-
-#region: Set of functions to validate and update expiring policy url token 
-#Function to get string with RegEx pattern match
-function GetSubString($cotentString, $pattern)
-{
-    return  [regex]::match($cotentString, $pattern).Groups[1].Value
-}
-
-#Validate if policy url update required for SAS token
-function IsPolicyUrlUpdateRequired($policyUrl)
-{
-    [System.Uri] $validatedUri = $null;
-    $IsSASTokenUpdateRequired = $false
-    if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se="))
-    {
-        $pattern = '&se=(.*?)T'
-        [DateTime] $expiryDate = Get-Date 
-        if([DateTime]::TryParse((GetSubString $($validatedUri.Query) $pattern),[ref] $expiryDate))
-        {
-            if($expiryDate.AddDays(-30) -lt [DateTime]::UtcNow)
-            {
-                $IsSASTokenUpdateRequired = $true
-            }
-        }
-    }
-    return $IsSASTokenUpdateRequired
-}
-
-#Get updated policy url 
-function GetUpdatedPolicyUrl($policyUrl, $updateUrl)
-{
-    [System.Uri] $validatedUri = $null;
-    $UpdatedUrl = $policyUrl
-    if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se=") -and [System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri))
-    {
-        $UpdatedUrl = $policyUrl.Split("?")[0] + "?" + $updateUrl.Split("?")[1]
-    }
-    return $UpdatedUrl
-}
-
-#Function to validate and update Org policy url SAS token 
-function CheckAndUpdateExpiringPolicyUrl{
-	try{
-		#Create local temp directory to copy runbook
-		$outputFolderPath = "$Env:LOCALAPPDATA"+"\" + $AzSKModuleName ;
-		if(-not (Test-Path -Path $outputFolderPath))
-		{
-			mkdir -Path $outputFolderPath -Force -ErrorAction Stop | Out-Null
-		}
-		
-		#Export runbook to local directory
-		Export-AzureRmAutomationRunbook -Name $RunbookName -OutputFolder $outputFolderPath `
-		-ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName `
-		-Force -Slot Published | Out-Null
-
-		$runbookFilePath = "$outputFolderPath\$RunbookName.ps1"
-		$runbookContent = get-content $runbookFilePath
-		
-		$pattern = 'onlinePolicyStoreUrl = "(.*?)"'
-		$policyStoreUrl = GetSubString $runbookContent $pattern
-		$pattern = 'CoreSetupSrcUrl = "(.*?)"'
-		$coreSetupUrl = GetSubString $runbookContent $pattern
-		$isPolicyUrlUpdatedForSASToken= $false
-    
-		#Validate if SAS token update required for Org policy url
-		if(IsPolicyUrlUpdateRequired $policyStoreUrl)
-		{
-		   $updatedPolicyUrl= GetUpdatedPolicyUrl $policyStoreUrl $azskVersionForOrg  
-		   $runbookContent =  $runbookContent.Replace($policyStoreUrl,$updatedPolicyUrl)
-		   $isPolicyUrlUpdatedForSASToken = $true
-		}
-	
-		#Validate if SAS token update required for CoreSetup url
-		if(IsPolicyUrlUpdateRequired $coreSetupUrl)
-		{
-			$updatedCoreSetupUrl= GetUpdatedPolicyUrl $coreSetupUrl $azskVersionForOrg  
-			$runbookContent =  $runbookContent.Replace($coreSetupUrl,$updatedCoreSetupUrl)
-			$isPolicyUrlUpdatedForSASToken = $true
-		}
-	
-		#If SAS token is updated for policy urls then import latest runbook
-		if($isPolicyUrlUpdatedForSASToken)
-		{
-			Write-Output ("CS: Found that runbook policy setup url SAS token is getting expired. Updating policy url with latest SAS token.")
-			$runbookContent | Out-File $runbookFilePath -Encoding utf8 -Force
-			#Remove existing runbook
-			$existingRunbook = Get-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName `
-			-ResourceGroupName $AutomationAccountRG -RunbookName $RunbookName
-			$existingRunbook | remove-azurermautomationrunbook -Force
-		   
-			#Import latest runbook
-			$Description = "This runbook is responsible for running subscription health scan and resource scans (SVTs). It also keeps all modules up to date."
-			
-			Import-AzureRmAutomationRunbook -Name $RunbookName -Description $Description -Type 'PowerShell' `
-			-Path $runbookFilePath `
-			-LogProgress $false -LogVerbose $false `
-			-AutomationAccountName $AutomationAccountName `
-			-ResourceGroupName $AutomationAccountRG -Published -ErrorAction Stop | Out-Null
-			Write-Output ("CS: Updated runbook policy url with latest SAS token.")
-		}
-	}
-	catch
-	{
-		PublishEvent -EventName "CA Error For Policy Url Expiry Check" -Properties @{ "ErrorRecord" = ($_ | Out-String) } -Metrics @{"TimeTakenInMs" =$setupTimer.ElapsedMilliseconds; "SuccessCount" = 0}
-	}
-}
-#endregion
 
 function IsScanComplete()
 {
@@ -695,8 +578,7 @@ try
 		Write-Output ("CS: CA core setup completed.")
 		PublishEvent -EventName "CA Setup Succeeded" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 	}	
-	#Validate and update expiring runbook polcy url with latest SAS token 
-	CheckAndUpdateExpiringPolicyUrl
+	
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }
 catch

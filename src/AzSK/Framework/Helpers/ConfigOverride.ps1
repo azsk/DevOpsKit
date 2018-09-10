@@ -116,6 +116,5 @@ class ConfigOverride
 		[ConfigurationHelper]::OfflineMode = $false
 		[ConfigurationHelper]::ConfigVersion = $null
 		[ConfigurationHelper]::IsIssueLogged = $false
-		[ConfigurationHelper]::LocalPolicyEnabled = $false
 	}
 }

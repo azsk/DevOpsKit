@@ -52,7 +52,6 @@ class Constants
 	   static [string] $connectionAssetName = "AzureRunAsConnection"
 	   #static [string] $AzSKRGName = "AzSKRG"
 	   static [string] $SupportDL = "azsksupext@microsoft.com"
-	   static [string] $CICDShortLink = "https://aka.ms/devopskit/cicd" 
 
 	#Constants for SVTs
     static [string] $ModuleStartHeading = [Constants]::DoubleDashLine +
@@ -153,7 +152,6 @@ class Constants
 
 	#Constants for Org Policy
 	static [string] $OrgPolicyTagPrefix = "AzSKOrgName_"
-	static [int] $SASTokenExpiryReminderInDays = 30
 	# Local Subscription Report Constants
 	#static [string] $ComplianceReportContainerName = "compliance-state"
 	static [string] $ComplianceReportTableName = "ComplianceState"

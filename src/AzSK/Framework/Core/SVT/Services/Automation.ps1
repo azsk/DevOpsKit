@@ -102,7 +102,7 @@ class Automation: SVTBase
 		}
 		catch
 		{
-			if([Helpers]::CheckMember($_.Exception, "Response") -and ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
+			if((Get-Member -InputObject ($_.Exception) -MemberType Properties -Name Response) -and ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
 			{
 				$controlResult.AddMessage([VerificationResult]::Failed, "Log Analytics(OMS) is not configured with this Automation account.")
 				return $controlResult

@@ -2,6 +2,7 @@ using namespace Newtonsoft.Json
 using namespace Microsoft.Azure.Commands.Common.Authentication.Abstractions
 using namespace Microsoft.Azure.Commands.Common.Authentication
 using namespace Microsoft.Azure.Management.Storage.Models
+
 Set-StrictMode -Version Latest
 class Helpers {
 
@@ -1440,39 +1441,6 @@ class Helpers {
             return $String
         }
     }
-
-    Static [bool] IsSASTokenUpdateRequired($policyUrl)
-	{
-        [System.Uri] $validatedUri = $null;
-        $IsSASTokenUpdateRequired = $false
-        
-        if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se="))
-        {
-            $pattern = '&se=(.*?)T'
-            [DateTime] $expiryDate = Get-Date 
-            if([DateTime]::TryParse([Helpers]::GetSubString($($validatedUri.Query),$pattern),[ref] $expiryDate))
-            {
-               if($expiryDate.AddDays(-[Constants]::SASTokenExpiryReminderInDays) -lt [DateTime]::UtcNow)
-               {
-                   $IsSASTokenUpdateRequired = $true
-               }
-            }
-        }
-        return $IsSASTokenUpdateRequired
-    }
-
-    Static [string] GetUriWithUpdatedSASToken($policyUrl, $updateUrl)
-	{
-        [System.Uri] $validatedUri = $null;
-        $UpdatedUrl = $policyUrl
-
-        if([System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri) -and $validatedUri.Query.Contains("&se=") -and [System.Uri]::TryCreate($policyUrl, [System.UriKind]::Absolute, [ref] $validatedUri))
-        {
-
-            $UpdatedUrl = $policyUrl.Split("?")[0] + "?" + $updateUrl.Split("?")[1]
-
-        }
-        return $UpdatedUrl
-    }
+	
 }
 
