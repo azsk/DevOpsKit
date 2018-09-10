@@ -243,6 +243,8 @@ class SVTMapping
 			ClassName = "ContainerRegistry";
 			JsonFileName = "ContainerRegistry.json";
 			ResourceTypeName = "ContainerRegistry";
+			FixClassName = "ContainerRegistryFix";
+			FixFileName = "ContainerRegistryFix.ps1";
         }
     );
 
