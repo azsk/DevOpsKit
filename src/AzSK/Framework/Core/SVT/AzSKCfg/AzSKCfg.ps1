@@ -128,7 +128,7 @@ class AzSKCfg: SVTBase
 					if(!$isPassed)
 					{
 						$controlResult.AddMessage([VerificationResult]::Failed,
-													[MessageData]::new("$($stepCount.ToString("00")): Service principal account (Name: $($spName)) configured in RunAs Account  doesn't have required access (Security Reader access on Subscription and/or Contributor access on Resource group AzSKRG).."));
+													[MessageData]::new("$($stepCount.ToString("00")): Service principal account (Name: $($spName)) configured in RunAs Account  doesn't have required access ('Security Reader' and 'Reader' access on Subscription and/or Contributor access on Resource group AzSKRG).."));
 						return	$controlResult			
 					
 					}
