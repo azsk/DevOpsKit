@@ -243,6 +243,12 @@ class SVTMapping
 			ClassName = "ContainerRegistry";
 			JsonFileName = "ContainerRegistry.json";
 			ResourceTypeName = "ContainerRegistry";
+        },
+		[ResourceTypeMapping]@{
+            ResourceType = "Microsoft.Databricks/workspaces";
+			ClassName = "Databricks";
+			JsonFileName = "Databricks.json";
+			ResourceTypeName = "Databricks";
         }
     );
 

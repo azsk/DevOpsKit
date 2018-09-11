@@ -1,0 +1,240 @@
+  {
+  "FeatureName": "Databricks",
+  "Reference": "aka.ms/azsktcp/databricks",
+  "IsMaintenanceMode": false,
+    "Controls": [
+      {
+        "ControlID": "Azure_Databricks_DP_Dont_Allow_PlainText_Secrets_In_Notebook",
+        "Description": "Secrets and Keys must not be in plain text in notebook",
+        "Id": "Databricks110",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "CheckSecretScope",
+        "Rationale": "Keeping secrets such as connection strings, passwords, keys, etc. in clear text can lead to easy compromise. Storing them in a secert scope ensures that they are protected at rest.",
+        "Recommendation": "Use Azure Databricks secret scope to store your secrets, keys and reference them in notebooks and jobs. Refer: https://docs.azuredatabricks.net/user-guide/secrets/index.html",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "PAT",
+          "DP",
+          "Automated"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_Databricks_DP_Use_KeyVault_Backed_Secret_Scope",
+        "Description": "Use Azure Key Vault backed secret scope to hold secrets",
+        "Id": "Databricks120",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckSecretScopeBackend",
+        "Rationale": "Using Key Vault backed secret scope allows you to leverage all of the secrets in the corresponding Key Vault.",
+        "Recommendation": "To use Azure Key Vault backed secret scope refer: https://docs.azuredatabricks.net/user-guide/secrets/secret-scopes.html#create-an-azure-key-vault-backed-secret-scope",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "DP",
+          "Automated",
+          "PAT"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_Databricks_DP_Use_Independent_KeyVault_For_Each_Secret_Scope",
+        "Description": "To hold different set of secrets, Key Vault referenced by each secret scope should be independent",
+        "Id": "Databricks130",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckKeyVaultReference",
+        "Rationale": "Use of independent Key Vault for each secret scope ensures restricting access to a set of secrets to each group as ACLs are at scope level.",
+        "Recommendation": "Ensure that same set of secrets are need to be referenced by different secret scope. Else use independent Key Vaults for each secret scope.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "DP",
+          "Best Practice",
+          "Automated",
+          "PAT"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_Databricks_DP_Minimal_Token_Validity",
+        "Description": "Personal access token(PAT) must have a shorter validity period to prevent malicious access",
+        "Id": "Databricks140",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckAccessTokenExpiry",
+        "Rationale": "If personal access token(PAT) gets compromised, whole workspace can be accessed/manipulated by unauthorized users. Minimizing the validity period of the PAT ensures that the window of time available to an attacker in the event of compromise is minimized.",
+        "Recommendation": "While creating PAT, provide expiration period as minimum as possible. You can see all tokens genearted by you and their expiration period by navigating to Databricks Workspace --> Profile --> User Settings --> Access Tokens",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "PAT",
+          "Automated",
+          "DP"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_Databricks_AuthZ_Grant_Min_RBAC_Access",
+        "Description": "All users must be granted minimum required permissions on workspace, clusters, jobs etc. using Role Based Access Control (RBAC)",
+        "Id": "Databricks150",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckRBACAccess",
+        "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user account compromise.",
+        "Recommendation": "Manage fine-grained user permissions, by enabling access control to notebooks, clusters, jobs and data. Refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/index.html#manage-access-control",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "AuthZ",
+          "RBAC",
+          "Automated"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_Databricks_AuthZ_Verify_Admin_Access",
+        "Description": "All users must be granted minimum required permissions on workspace, clusters, jobs etc. using Role Based Access Control (RBAC)",
+        "Id": "Databricks160",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckAdminAccess",
+        "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user account compromise.",
+        "Recommendation": "Manage fine-grained user permissions, by enabling access control to notebooks, clusters, jobs and data. Refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/index.html#manage-access-control",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "AuthZ",
+          "RBAC",
+          "Automated"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_Databricks_AuthZ_Cluster_Grant_Min_RBAC_Access",
+        "Description": "All users must be granted minimum required permissions on clusters",
+        "Id": "Databricks170",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user account compromise.",
+        "Recommendation": "Remove any excessive privileges granted on clusters. Refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/cluster-acl.html",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "AuthZ",
+          "RBAC",
+          "Manual"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_Databricks_AuthZ_Enable_Workspace_Access_Control",
+        "Description": "Workspace access control should be enabled",
+        "Id": "Databricks180",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user account compromise.",
+        "Recommendation": "Manage fine-grained user permissions, by enabling access control to notebooks, clusters, jobs and data. Refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/index.html#manage-access-control",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "AuthZ",
+          "RBAC",
+          "Automated"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_Databricks_AuthZ_Enable_Cluster_Access_Control",
+        "Description": "Cluster access control should be enabled",
+        "Id": "Databricks190",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user account compromise.",
+        "Recommendation": "Manage fine-grained user permissions, by enabling access control to notebooks, clusters, jobs and data. Refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/index.html#manage-access-control",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "AuthZ",
+          "RBAC",
+          "Automated"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_Databricks_AuthZ_Enable_Job_Access_Control",
+        "Description": "Job access control should be enabled",
+        "Id": "Databricks200",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user account compromise.",
+        "Recommendation": "Manage fine-grained user permissions, by enabling access control to notebooks, clusters, jobs and data. Refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/index.html#manage-access-control",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "AuthZ",
+          "RBAC",
+          "Automated"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_Databricks_DP_Mount_DataSource_With_Required_Data_Only",
+        "Description": "Mount data source or specific folder inside it, which does not contains any critical data that should not be accessed by all users in workspace",
+        "Id": "Databricks210",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Mounting unnecessary critical data on DBFS can lead unauthorize access to data, as mouting data source gives all users in the same workspace the ability to access data source or the folder inside it through the mount point.",
+        "Recommendation": "Create a mount point only if all users in workspace need to have access to the mounted data source.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "DP",
+          "Manual"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_Databricks_AuthZ_Verify_Permitted_Guest_Account",
+        "Description": "Verify the guest accounts which are added as a user in the workspace",
+        "Id": "Databricks220",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Periodic review of guest users and privileges granted to them is a good security practice as, over time, it might be possible that some users/groups don't require access on workspace.",
+        "Recommendation": "Periodically review of access granted to guest accounts and revoke access of stale accounts. You can list all users/groups that have access to workspace by navigating to Databris Workspace --> User Account --> Admin Console --> Users. Refer: https://docs.databricks.com/administration-guide/admin-settings/users.html",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "AuthZ",
+          "Admin",
+          "PAT"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_Databricks_NetSec_Justify_VNet_Peering",
+        "Description": "Use of any virtual network peerings should be justified",
+        "Id": "Databricks230",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckVnetPeering",
+        "Rationale": "Resources in the peered virtual networks can communicate with each other directly. If the two peered networks are on different sides of a security boundary (e.g., corpnet v. private vNet), this can lead to exposure of corporate data. Hence any vNet peerings should be closely scrutinized and approved by the network security team",
+        "Recommendation": "You can remove any virtual network peering by navigating to Azure portal --> Databricks --> Virtual Network Peerings --> select vNET peering --> Delete (unless their presence has been approved by network security team).",
+        "Tags": [
+          "SDL",
+          "Best Practice",
+          "Automated",
+          "NetSec"
+        ],
+        "Enabled": true
+      }
+    ]
+}
