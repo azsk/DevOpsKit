@@ -24,16 +24,26 @@ class SecurityCenter: AzSKRoot
 		[SecurityCenterHelper]::RegisterResourceProvider();
 		$this.LoadPolicies(); 
 		$this.LoadCurrentPolicy();
+		#calling this function as it would fetch the current contact phone number settings 
+		$this.CheckSecurityContactSettings();
 	}
 
 	SecurityCenter([string] $subscriptionId, [string] $securityContactEmail, [string] $securityContactPhoneNumber): 
         Base($subscriptionId)
     { 
 		[SecurityCenterHelper]::RegisterResourceProvider();
-		$this.ContactPhoneNumber = $securityContactPhoneNumber;
-		$this.ContactEmail = $securityContactEmail;
-		$this.LoadPolicies(); 
+		$this.LoadPolicies();
 		$this.LoadCurrentPolicy();
+		#calling this function as it would fetch the current contact phone number settings 
+		$this.CheckSecurityContactSettings();
+		if(-not [string]::IsNullOrWhiteSpace($securityContactPhoneNumber))
+		{
+			$this.ContactPhoneNumber = $securityContactPhoneNumber;
+		}
+		if(-not [string]::IsNullOrWhiteSpace($securityContactEmail))
+		{
+			$this.ContactEmail = $securityContactEmail;
+		}		
 	}
 
 
@@ -82,18 +92,26 @@ class SecurityCenter: AzSKRoot
 	[MessageData[]] SetPolicies([bool] $updateProvisioningSettings, [bool] $updatePolicies, [bool] $updateSecurityContacts)
     {				
 		[MessageData[]] $messages = @();
+		$this.PublishCustomMessage("Updating SecurityCenter policies...`n" + [Constants]::SingleDashLine, [MessageType]::Warning);
 		if($updateProvisioningSettings)
 		{
+			$this.PublishCustomMessage("Updating AutoProvision settings...", [MessageType]::Warning);
 			$this.SetAutoProvisioningSettings();						
+			$this.PublishCustomMessage("Completed updating AutoProvision settings.", [MessageType]::Update);
 		}
 		if($updatePolicies)
 		{
+			$this.PublishCustomMessage("Updating SecurityPolicy settings...", [MessageType]::Warning);
 			$this.SetSecurityPolicySettings();						
+			$this.PublishCustomMessage("Completed updating SecurityPolicy settings.", [MessageType]::Update);
 		}
 		if($updateSecurityContacts)
 		{
-			$this.SetSecurityContactSettings();						
+			$this.PublishCustomMessage("Updating SecurityContact settings...", [MessageType]::Warning);
+			$this.SetSecurityContactSettings();	
+			$this.PublishCustomMessage("Completed updating SecurityContact settings.", [MessageType]::Update);					
 		}
+		$this.PublishCustomMessage([Constants]::SingleDashLine + "`nCompleted configuring SecurityCenter.", [MessageType]::Update);
 		return $messages;
     }
 

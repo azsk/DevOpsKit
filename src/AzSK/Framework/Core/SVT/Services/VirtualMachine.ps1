@@ -647,7 +647,7 @@ class VirtualMachine: SVTBase
 		$activeRecommendations = @()
 		$ASCWhitelistedRecommendations = @();
 		$ASCWhitelistedRecommendations += $this.VMControlSettings.ASCRecommendations;
-		[Helpers]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
+		#[Helpers]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
 		$tasks = [SecurityCenterHelper]::InvokeGetASCTasks($this.SubscriptionContext.SubscriptionId);
         $found = $false;
 		if($null -ne $ASCWhitelistedRecommendations -and $null -ne $tasks)
