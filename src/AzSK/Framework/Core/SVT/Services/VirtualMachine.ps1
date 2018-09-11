@@ -45,6 +45,10 @@ class VirtualMachine: SVTBase
 		{
 			$result += $controls | Where-Object { $_.Tags -contains "Windows" };;
 		}
+		if($this.VMDetails.IsVMConnectedToERvNet)
+		{
+			$result=$result | Where-Object { $_.Tags -contains "ERvNet" };
+		}
 		return $result;
 	}
 
@@ -383,7 +387,7 @@ class VirtualMachine: SVTBase
 											{
 												if($nsgObject.SecurityRules.Count -gt 0)
 												{
-													$controlResult.AddMessage("Validate default NSG security rules applied to Subnet - [$subnetName] in Virtual Network - [$($vnetResource.Name)]. Total - $($nsgObject.SecurityRules.Count)", $nsgObject.SecurityRules);			                           
+													$controlResult.AddMessage("Validate  NSG security rules applied to Subnet - [$subnetName] in Virtual Network - [$($vnetResource.Name)]. Total - $($nsgObject.SecurityRules.Count)", $nsgObject.SecurityRules);			                           
 												}
 												
 												if($nsgObject.DefaultSecurityRules.Count -gt 0)
@@ -528,6 +532,7 @@ class VirtualMachine: SVTBase
 		 return $controlResult;
 	}
 
+	#No contol found with this method name
 	hidden [ControlResult] CheckASCVulnerabilities([ControlResult] $controlResult)
 	{
 		$ascVMVulnerabilitiesStatusHealthy = $false;

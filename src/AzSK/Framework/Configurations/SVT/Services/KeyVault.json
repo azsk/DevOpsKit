@@ -3,24 +3,24 @@
     "Reference":  "aka.ms/azsktcp/keyvault",
     "IsMaintenanceMode":  false,
     "Controls":  [
-                     {
-                         "ControlID":  "Azure_KeyVault_AuthN_Use_Cert_Auth_for_Apps",
-                         "Description":  "Azure Active Directory applications, which have access to Key Vault, must use certificate to authenticate to Key Vault",
-                         "Id":  "KeyVault110",
-                         "ControlSeverity": "High",
-                         "Automated":  "Yes",
-                         "MethodName":  "CheckAppAuthenticationCertificate",
-                         "Rationale":  "Password/shared secret credentials can be easily shared and hence can be easily compromised. Certificate credentials offer better security.",
-                         "Recommendation":  "Remove any password credentials from Azure AD Applications and use certificate credentials instead. Run command Remove-AzureADApplicationPasswordCredential -InformationAction '{ActionPreference}' -InformationVariable '{InformationVariable}' -KeyId '{KeyId}' -ObjectId '{ObjectId}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azuread/remove-azureadapplicationpasswordcredential?view=azureadps-2.0",
-                         "Tags":  [
-                                      "SDL",
-                                      "TCP",
-                                      "Automated",
-                                      "AuthN",
-                                      "OwnerAccess"
-                                  ],
-                         "Enabled":  true
-                     },
+      {
+        "ControlID": "Azure_KeyVault_AuthN_Use_Cert_Auth_for_Apps",
+        "Description": "Azure Active Directory applications, which have access to Key Vault, must use certificate to authenticate to Key Vault",
+        "Id": "KeyVault110",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckAppAuthenticationCertificate",
+        "Rationale": "Password/shared secret credentials can be easily shared and hence can be easily compromised. Certificate credentials offer better security.",
+        "Recommendation": "Remove any password credentials from Azure AD Applications and use certificate credentials instead. Run command Remove-AzureADApplicationPasswordCredential -InformationAction '{ActionPreference}' -InformationVariable '{InformationVariable}' -KeyId '{KeyId}' -ObjectId '{ObjectId}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azuread/remove-azureadapplicationpasswordcredential?view=azureadps-2.0, https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-certificate-credentials#register-your-certificate-with-azure-ad",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthN",
+          "OwnerAccess"
+        ],
+        "Enabled": true
+      },
                      {
                          "ControlID":  "Azure_KeyVault_AuthN_Dont_Share_KeyVault_Unless_Trust",
                          "Description":  "Applications must not share a Key Vault unless they trust each other and they need access to the same secrets at runtime",
