@@ -825,9 +825,10 @@ class SubscriptionCore: SVTBase
 		}
         else
         {			
-			$controlResult.SetStateData("Custom RBAC definitions", $customRoles)
-			$out=$customRolesWithAssignment| Select-Object Name,Description,Id,RoleAssignmentCount;
-            $controlResult.AddMessage([VerificationResult]::Verify, "Found $($customRolesWithAssignment.Count) custom RBAC definitions`r`nCustom RBAC roles with role assignment count: `n", $out);
+			$customRoleAssignments = $customRolesWithAssignment | Where-object { $_.RoleAssignmentCount -gt 0} 
+			$controlResult.SetStateData("Custom RBAC definitions with active assignments", $customRoleAssignments)
+			$out= $customRoleAssignments | Select-Object Name,Description,Id,RoleAssignmentCount;
+            $controlResult.AddMessage([VerificationResult]::Verify, "Found $($customRolesWithAssignment.Count) custom RBAC definitions`r`nCustom RBAC roles with active role assignment : `n", $out);
         }
 
 		return $controlResult
