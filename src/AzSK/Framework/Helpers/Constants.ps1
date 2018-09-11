@@ -52,7 +52,7 @@ class Constants
 	   static [string] $connectionAssetName = "AzureRunAsConnection"
 	   #static [string] $AzSKRGName = "AzSKRG"
 	   static [string] $SupportDL = "azsksupext@microsoft.com"
-	   static [string] $CICDShortLink = "https://aka.ms/devopskit/cicd" 
+	   static [string] $CICDShortLink = "https://aka.ms/devopskit/cicd"
 
 	#Constants for SVTs
     static [string] $ModuleStartHeading = [Constants]::DoubleDashLine +
@@ -101,6 +101,7 @@ class Constants
 	static [string] $NewStorageSku = "Standard_LRS";
 	static [string] $NewStorageKind = "BlobStorage";
 	static [string] $ARMControlsFileURI = "https://azsdkossep.azureedge.net/1.0.0/ARMControls.json";
+	static [string] $RecommendationURI = "https://azsdkossep.azureedge.net/recmnds/r.json ";
 	#V1 alert RG name constant is temporary and added for backward compatibility	
 	static [string] $AlertActionGroupName = "AzSKAlertActionGroup"
 	static [string] $CriticalAlertActionGroupName = "AzSKCriticalAlertActionGroup"
