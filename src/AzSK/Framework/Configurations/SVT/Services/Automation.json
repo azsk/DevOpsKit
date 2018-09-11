@@ -63,7 +63,7 @@
       "Automated": "Yes",
       "MethodName": "CheckVariables",
       "Rationale": "Encrypted variables are stored securely by the Azure platform. Moreover, their values cannot be retrieved from the Get-AzureRmAutomationVariable cmdlet that ships as part of the Azure PowerShell module.",
-      "Recommendation": "Encrypt variable if it stores sensitive data. Run command Set-AzureRmAutomationVariable -AutomationAccountName '{AutomationAccountName}' -Encrypted `$true -Name '{VariableName}' -ResourceGroupName '{ResourceGroupName}' -Value '{Value}'",
+      "Recommendation": "Encrypt variable if it stores sensitive data. Create a new encrypted copy of each unencrypted variable in the automation account and delete the unencrypted variables later. Run command 'New-AzureRmAutomationVariable -AutomationAccountName '{AutomationAccountName}' -Name '{VariableName}' -Encrypted `$true -Value '{Value} -ResourceGroupName '{ResourceGroupName}' and 'Remove-AzureRmAutomationVariable -AutomationAccountName '{AutomationAccountName}' -Name '{VariableName}' -Force -ResourceGroupName '{ResourceGroupName}'",
       "Tags": [
         "SDL",
         "TCP",
@@ -71,15 +71,15 @@
         "DP"
       ],
       "Enabled": true,
-       "DataObjectProperties": [
-            "AutomationAccountName" ,  
-            "Description", 
-            "Encrypted" , 
-            "Name", 
-            "ResourceGroupName", 
-            "Value" 
-        ]
-        
+      "DataObjectProperties": [
+        "AutomationAccountName",
+        "Description",
+        "Encrypted",
+        "Name",
+        "ResourceGroupName",
+        "Value"
+      ]
+
     },
     {
       "ControlID": "Azure_Automation_DP_Use_Secure_Assets",
