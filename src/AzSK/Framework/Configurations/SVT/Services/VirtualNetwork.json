@@ -64,7 +64,7 @@
         "Automated",
         "NetSec"
       ],
-      "Enabled": true,
+      "Enabled": false,
       "DataObjectProperties": [
         "Name",
         "NetworkSecurityGroup"
