@@ -214,9 +214,17 @@ def save_recommendation_json():
 	"""Save the recommendation JSON i.e. parent_feature_table offline.
 	:return:
 	"""
-	category_groups, parent_feature_combo_table, master_category_table = \
+	category_groups, parent_feature_table, master_category_table = \
 		create_master_category_and_combo()
-	json_str = json.dumps(parent_feature_combo_table)
+
+	def sort_parent_feature_table(pf_table):
+		for x in pf_table:
+			recommendations = pf_table[x]
+			recommendations.sort(key=score)
+		return pf_table
+
+	parent_feature_table = sort_parent_feature_table(parent_feature_table)
+	json_str = json.dumps(parent_feature_table)
 	with open("recommendation.json", "w") as f:
 		f.write(json_str)
 	print("Completed writing JSON")
