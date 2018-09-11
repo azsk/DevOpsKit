@@ -12,6 +12,8 @@ class SecurityCenterHelper
 	static [string] $ApiVersion = "?api-version=2015-06-01-preview";
 	static [string] $ApiVersionNew = "?api-version=2017-08-01-preview";
 	static [string] $ApiVersionLatest = "?api-version=2018-03-01";
+	static [PSObject] $ASCSecurityStatus = $null;
+	
 
 	static [Hashtable] AuthHeaderFromUri([string] $uri)
 		{
@@ -59,6 +61,36 @@ class SecurityCenterHelper
 
 		$uri = [WebRequestHelper]::AzureManagementUri.TrimEnd("/") + $resourceId + $apiVersion;
 		return [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
+	}
+
+	static [PSObject] InvokeSecurityCenterSecurityStatus([string] $subscriptionId)
+	{
+		try 
+		{ 	
+			if([SecurityCenterHelper]::ASCSecurityStatus -eq $null)
+			{
+				$uri = [System.String]::Format("{0}subscriptions/{1}/providers/microsoft.Security/securityStatuses?api-version=2015-06-01-preview", [WebRequestHelper]::AzureManagementUri, $subscriptionId)
+				$result = [WebRequestHelper]::InvokeGetWebRequest($uri);					
+				if(($result | Measure-Object).Count -gt 0)
+				{
+					$statusDict = @{};
+					$result | ForEach-Object {
+						$resource = $_;
+						$key = ("$($resource.name):$($resource.properties.type)").ToLower();
+						if(-not $statusDict.ContainsKey($key))
+						{
+							$statusDict.Add($key,$resource);
+						}							
+					}
+					[SecurityCenterHelper]::ASCSecurityStatus = $statusDict;						
+				}										
+			}				
+			return [SecurityCenterHelper]::ASCSecurityStatus;				
+		} 
+		catch
+		{ 
+			return $null;
+		}       
 	}
 
 
