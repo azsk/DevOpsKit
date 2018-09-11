@@ -179,7 +179,7 @@ class VirtualMachine: SVTBase
 
 		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings,"properties.resourceDetails"))
 		{
-			$omsSetting = $this.ASCSettings.properties.resourceDetails | Where-Object {$_.name -eq 'Reporting workspace customer id'};
+			$omsSetting = $this.ASCSettings.properties.resourceDetails | Where-Object {$_.name -eq $this.ControlSettings.VirtualMachine.ASCPolicies.ResourceDetailsKeys.WorkspaceId };
 			if($null -ne $omsSetting)
 			{
 				$this.Workspace = $omsSetting.value;
@@ -313,7 +313,7 @@ class VirtualMachine: SVTBase
 		#Do not check for deallocated status for the VM and directly show the status from ASC
 		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
-			$antimalwareSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq 'Install endpoint protection solution on your machines'};
+			$antimalwareSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.EndpointProtection};
 			if($null -ne $antimalwareSetting)
 			{
 				$controlResult.AddMessage("VM endpoint protection details:", $antimalwareSetting);
@@ -469,7 +469,7 @@ class VirtualMachine: SVTBase
 
 			if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 			{
-				$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq 'Apply Disk Encryption on your virtual machines'};
+				$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryption};
 				if($null -ne $adeSetting)
 				{
 					if($adeSetting.assessmentResult -eq 'Healthy')
@@ -539,7 +539,7 @@ class VirtualMachine: SVTBase
 
 		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
-			$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq 'Remediate vulnerabilities in security configuration on your machines'};
+			$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScan};
 			if($null -ne $vulnSetting)
 			{
 				if($vulnSetting.assessmentResult -eq 'Healthy')
@@ -582,7 +582,7 @@ class VirtualMachine: SVTBase
 
 				if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 				{
-					$patchSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq 'Install system updates on your machines'};
+					$patchSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.OSUpdates};
 					if($null -ne $patchSetting)
 					{
 						$ascPatchStatus = $patchSetting.assessmentResult;
@@ -702,7 +702,7 @@ class VirtualMachine: SVTBase
 
 			if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 			{
-				$monitoringSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq 'Install monitoring agent on your machines'};
+				$monitoringSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.MonitoringAgent};
 				if($null -ne $monitoringSetting)
 				{
 					$monitoringStatus = $monitoringSetting.assessmentResult;
