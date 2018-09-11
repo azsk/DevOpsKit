@@ -48,7 +48,16 @@ class SVTCommandBase: CommandBase {
             };
     }
 
+    hidden [void] ClearSingletons()
+    {
+        #clear ASC security status
+        [SecurityCenterHelper]::ASCSecurityStatus = $null;
+    }
+
     hidden [void] CommandStarted() {
+
+        $this.ClearSingletons();
+
         [SVTEventContext] $arg = $this.CreateSVTEventContextObject();
         $this.InitializeControlState();
         #Check if user has permission to read attestation

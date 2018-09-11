@@ -785,12 +785,13 @@ class SubscriptionCore: SVTBase
 
 		$whitelistedCustomRoleIds = @();
 		$whitelistedCustomRoleIds += $this.ControlSettings.WhitelistedCustomRBACRoles | Select-Object -Property Id | Select-Object -ExpandProperty Id
-
+		$CustomRBACAssignedRolesCount=0;
 		$customRoles += Get-AzureRmRoleDefinition -Custom | Where-Object { $whitelistedCustomRoleIds -notcontains $_.Id };
 		$customRoles | ForEach-Object {
 			$role = $_;
 			$roleWithAssignment = $role | Select-Object *, RoleAssignmentCount;
 			$roleWithAssignment.RoleAssignmentCount = ($this.RoleAssignments | Where-Object { $_.RoleDefinitionId -eq $role.Id } | Measure-Object).Count;
+			$CustomRBACAssignedRolesCount+=$roleWithAssignment.RoleAssignmentCount;
 			$customRolesWithAssignment += $roleWithAssignment;
 		}
 
@@ -799,14 +800,15 @@ class SubscriptionCore: SVTBase
             $controlResult.AddMessage("No. of whitelisted custom RBAC roles: $($whitelistedCustomRoleIds.Count)", $this.ControlSettings.WhitelistedCustomRBACRoles);
 		}
 
-        if($customRoles.Count -gt 0)
+        if($CustomRBACAssignedRolesCount -eq 0)
         {
-			$controlResult.SetStateData("Custom RBAC definitions", $customRoles);
-            $controlResult.AddMessage([VerificationResult]::Verify, "Found custom RBAC definitions`r`nNo. of custom RBAC roles with role assignment count: $($customRolesWithAssignment.Count)", $customRolesWithAssignment)
-        }
+			$controlResult.AddMessage([VerificationResult]::Passed, "No custom RBAC definitions with active role assignments found. ")
+		}
         else
-        {
-			$controlResult.AddMessage([VerificationResult]::Passed, "No custom RBAC definitions found. ")
+        {			
+			$controlResult.SetStateData("Custom RBAC definitions", $customRoles)
+			$out=$customRolesWithAssignment| Select-Object Name,Description,Id,RoleAssignmentCount;
+            $controlResult.AddMessage([VerificationResult]::Verify, "Found $($customRolesWithAssignment.Count) custom RBAC definitions`r`nCustom RBAC roles with role assignment count: `n", $out);
         }
 
 		return $controlResult
