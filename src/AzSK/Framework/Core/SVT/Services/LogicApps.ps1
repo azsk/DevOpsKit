@@ -260,6 +260,7 @@ class LogicApps: SVTBase
 		$userMsg = [string]::Empty
 		$IsFailed = $false
 		$Definition=$this.ResourceObject.Properties.definition
+		$NonCompliantConnectors = @()
 		if($null -ne $Definition.Actions -and -not[string]::IsNullOrEmpty($this.ResourceObject.Properties.definition.actions))
 		{
 			$Definition.Actions | Get-Member -MemberType *Property |         
@@ -268,10 +269,15 @@ class LogicApps: SVTBase
 					$Connector = $Definition.Actions.$connectorName
 					if($Connector.type -eq 'http')
 					{
-						 $complianceStatus = $this.CheckSecretsHandlingForHttp($Connector)
-						 if($complianceStatus -eq [VerificationResult]::Failed)
+						 $ConnectorResultObject = $this.CheckSecretsHandlingForHttp($Connector)
+						 if($ConnectorResultObject.ComplianceStatus -eq [VerificationResult]::Failed)
 						 {
 							$IsFailed = $true
+							$currentStateObject = "" | Select-Object "ConnectorName","ConnectorType","AuthenticationType"
+							$currentStateObject.ConnectorName = $connectorName
+							$currentStateObject.ConnectorType = $Connector.type
+							$currentStateObject.AuthenticationType = $ConnectorResultObject.AuthenticationType
+							$NonCompliantConnectors += $currentStateObject
 							$userMsg += "Connector - " + $connectorName + "`r`nType - " + $Connector.type `
 										+"`r`nSecret(s) are given as plain text in Code View, must use 'SecureString' parameter"
 						 }	
@@ -287,10 +293,15 @@ class LogicApps: SVTBase
 					$Connector = $Definition.Triggers.$connectorName
 					if($Connector.type -eq 'http')
 					{						
-						 $complianceStatus = $this.CheckSecretsHandlingForHttp($Connector)
-						 if($complianceStatus -eq [VerificationResult]::Failed)
+						 $ConnectorResultObject = $this.CheckSecretsHandlingForHttp($Connector)
+						 if($ConnectorResultObject.ComplianceStatus -eq [VerificationResult]::Failed)
 						 {
 							$IsFailed = $true
+							$currentStateObject = "" | Select-Object "ConnectorName","ConnectorType","AuthenticationType"
+							$currentStateObject.ConnectorName = $connectorName
+							$currentStateObject.ConnectorType = $Connector.type
+							$currentStateObject.AuthenticationType = $ConnectorResultObject.AuthenticationType
+							$NonCompliantConnectors += $currentStateObject
 							$userMsg += "Connector - " + $connectorName + "`r`nType - " + $Connector.type `
 										+"`r`nSecret(s) are given as plain text in Code View, must use 'SecureString' parameter"
 						 }							
@@ -304,6 +315,7 @@ class LogicApps: SVTBase
 		}
 		if($IsFailed)
 		{
+		    $controlResult.SetStateData("Connectors which contains secret(s) as plain text in code view:", $NonCompliantConnectors);
 			$complianceStatus = [VerificationResult]::Failed
 		}
 	
@@ -449,15 +461,19 @@ class LogicApps: SVTBase
 			{return $true}
 		}
 	}
-	hidden [VerificationResult] CheckSecretsHandlingForHttp([PSObject] $Connector)
+	hidden [PSObject] CheckSecretsHandlingForHttp([PSObject] $Connector)
 	{	 
-		$complianceStatus = [VerificationResult]::Manual
-		
+
+	   $ConnectorObject = [PSObject]::new();
+	   Add-Member -InputObject $ConnectorObject -Name "ComplianceStatus" -MemberType NoteProperty -Value [VerificationResult]::Manual
+	   Add-Member -InputObject $ConnectorObject -Name "AuthenticationType" -MemberType NoteProperty -Value $null
+	
 		if(Get-Member -inputobject $Connector.inputs -name "authentication" -Membertype Properties)
 		{
 			$authentication = $Connector.inputs.authentication	
 			if([Helpers]::CheckMember($authentication, "Type"))
 			{
+			    $ConnectorObject.AuthenticationType = $authentication.type
 				switch($authentication.type)
 				{
 					"ActiveDirectoryOAuth" 
@@ -465,25 +481,33 @@ class LogicApps: SVTBase
 						$IsValidSecret=$this.CheckSecretParameter($authentication.secret,$this.ResourceObject.Properties.definition.parameters)
 						if($IsValidSecret -ne $true)
 						{
-							$complianceStatus = [VerificationResult]::Failed
+						    $ConnectorObject.ComplianceStatus = [VerificationResult]::Failed
 						} 					      
 					}
 					"ClientCertificate"
 					{
 						$IsValidPw=$this.CheckSecretParameter($authentication.Password,$this.ResourceObject.Properties.definition.parameters)
 						if($IsValidPw -ne $true)
+						{ 
+						    $ConnectorObject.ComplianceStatus = [VerificationResult]::Failed
+						}					
+					}
+					"Basic"
+					{
+						$IsValidPw=$this.CheckSecretParameter($authentication.Password,$this.ResourceObject.Properties.definition.parameters)
+						if($IsValidPw -ne $true)
 						{
-							$complianceStatus = [VerificationResult]::Failed
+						    $ConnectorObject.ComplianceStatus = [VerificationResult]::Failed
 						}					
 					}
 					"default"
 					{
-						$complianceStatus = [VerificationResult]::Manual
+					    $ConnectorObject.ComplianceStatus = [VerificationResult]::Manual
 					}
 				 }
 			}		
 		 }
-		return $complianceStatus
+		return $ConnectorObject
 	}
 	hidden [ControlResult] CheckAadAuthForHttp([string] $remarks , [ControlResult] $childControlResult , [PSObject]$Connector)
 	{   
