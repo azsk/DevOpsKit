@@ -46,7 +46,7 @@ class VirtualNetwork: SVTIaasBase
 
 	hidden [ControlResult] CheckIPForwardingforNICs([ControlResult] $controlResult)
     {
-        if(-not $this.vNetNicsOutput -and ($this.vNetNicsOutput | Measure-Object).count -gt 0)
+        if($null -ne $this.vNetNicsOutput -and ($this.vNetNicsOutput | Measure-Object).count -gt 0)
 		{
 			[array] $vNetNicsIPFwed = $this.vNetNicsOutput | Where-Object { $_.EnableIPForwarding }
 
@@ -117,9 +117,9 @@ class VirtualNetwork: SVTIaasBase
 								$rules = $_.Properties.SecurityRules
 								$rules | ForEach-Object{
 									$ruleproperties = $_.Properties
-									if((($ruleproperties.Direction -eq "outbound") -or ($ruleproperties.Direction -eq "inbound")) -and $ruleproperties.SourceAddressPrefix -eq '*' -and $ruleproperties.DestinationAddressPrefix -eq '*' -and $ruleproperties.Access -eq "allow")
+									if((($ruleproperties.Direction -eq "outbound") -or ($ruleproperties.Direction -eq "inbound")) -and (([Helpers]::CheckMember($ruleproperties,"SourceAddressPrefix")) -and $ruleproperties.SourceAddressPrefix -eq '*') -and $ruleproperties.DestinationAddressPrefix -eq '*' -and $ruleproperties.Access -eq "allow")
 									{
-										$InvalidRulesList += $_
+										$InvalidRulesList += $_ | Select-Object Id, Properties
 									}
 								}
 							}
@@ -128,7 +128,7 @@ class VirtualNetwork: SVTIaasBase
                     {
 						$controlResult.SetStateData("Potentially dangerous any to any outbound security rule(s) found in subnet - ["+ $_.Name +"]", $InvalidRulesList);
 						$hasTCPPassed = $false
-						$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Potentially dangerous any to any outbound security rule(s) found in subnet - ["+ $_.Name +"]", ($InvalidRulesList | Format-list name, properties)));
+						$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Potentially dangerous any to any outbound security rule(s) found in subnet - ["+ $_.Name +"]", $InvalidRulesList));
                     }
                 }
             }
@@ -193,7 +193,7 @@ class VirtualNetwork: SVTIaasBase
 	hidden [ControlResult] CheckVnetPeering([ControlResult] $controlResult)
     {
         $vnetPeerings = Get-AzureRmVirtualNetworkPeering -VirtualNetworkName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
-        if($null -ne $vnetPeerings  -and ($vnetPeerings|Measure-Object).count -gt 0)
+        if($null -ne $vnetPeerings -and ($vnetPeerings|Measure-Object).count -gt 0)
         {
 			$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Verify below peering found on VNet", $vnetPeerings));
 			$controlResult.SetStateData("Peering found on VNet", $vnetPeerings);
