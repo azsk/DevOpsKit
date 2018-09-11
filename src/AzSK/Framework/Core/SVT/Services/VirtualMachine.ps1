@@ -44,6 +44,10 @@ class VirtualMachine: SVTBase
 		{
 			$result += $controls | Where-Object { $_.Tags -contains "Windows" };;
 		}
+		if($this.VMDetails.IsVMConnectedToERvNet)
+		{
+			$result=$result | Where-Object { $_.Tags -contains "ERvNet" };
+		}
 		return $result;
 	}
 
@@ -325,7 +329,7 @@ class VirtualMachine: SVTBase
 			$controlResult.AddMessage([VerificationResult]::Manual, "The control is not applicable in case of a Linux Virtual Machine."); 
 			return $controlResult
 		}
-
+		
 		if($null -ne $this.ASCSettings )
 		{
 			if( $this.ASCSettings.DetailedStatus.EndpointProtection -eq 'Healthy')
@@ -393,7 +397,7 @@ class VirtualMachine: SVTBase
 											{
 												if($nsgObject.SecurityRules.Count -gt 0)
 												{
-													$controlResult.AddMessage("Validate default NSG security rules applied to Subnet - [$subnetName] in Virtual Network - [$($vnetResource.Name)]. Total - $($nsgObject.SecurityRules.Count)", $nsgObject.SecurityRules);			                           
+													$controlResult.AddMessage("Validate  NSG security rules applied to Subnet - [$subnetName] in Virtual Network - [$($vnetResource.Name)]. Total - $($nsgObject.SecurityRules.Count)", $nsgObject.SecurityRules);			                           
 												}
 												
 												if($nsgObject.DefaultSecurityRules.Count -gt 0)
@@ -478,8 +482,7 @@ class VirtualMachine: SVTBase
 				$ascDiskEncryptionStatus = $true;
 			}
 
-			#TCP is not applicable for Linux.
-			if($this.ResourceObject.OSProfile -and $this.ResourceObject.OSProfile.WindowsConfiguration)
+			if($this.ResourceObject.OSProfile -and ($this.ResourceObject.OSProfile.WindowsConfiguration -or $this.ResourceObject.OSProfile.LinuxConfiguration))
 			{
 				$message = "";
 				$diskEncryptionStatus = $null	
@@ -528,10 +531,6 @@ class VirtualMachine: SVTBase
 				
 				$controlResult.AddMessage($verificationResult, $message, $diskEncryptionStatusData);
 				$controlResult.SetStateData("Virtual Machine disks encryption status", $diskEncryptionStatusData);
-			}
-			elseif($this.VMDetails.OSType -eq [OperatingSystemTypes]::Linux)
-			{
-				$controlResult.AddMessage([VerificationResult]::Manual, "The control is not applicable for Linux Virtual Machine."); 
 			}
 			elseif($ascDiskEncryptionStatus)
 			{
@@ -584,6 +583,7 @@ class VirtualMachine: SVTBase
 		return $controlResult;
 	}
 
+	#No contol found with this method name
 	hidden [ControlResult] CheckASCVulnerabilities([ControlResult] $controlResult)
 	{
 		$ascVMVulnerabilitiesStatusHealthy = $false;
