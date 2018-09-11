@@ -57,7 +57,19 @@
       "QueryforBaselineRule": [ "SecurityBaseline | where TimeGenerated >ago(1d) | where ResourceId ==\"{0}\" | summarize arg_max(TimeGenerated,*)by Description| where AnalyzeResult == \"Failed\" " ],
       "QueryforMissingPatches": [ "Update | where TimeGenerated >ago(1d) |where OSType == \"Linux\" and UpdateState =~ \"Needed\" and iff(isnotnull(toint(Optional)), Optional == false, Optional == \"false\") == true and iff(isnotnull(toint(Approved)), Approved != false, Approved != \"false\") == true and (Classification == \"Security Updates\" or Classification == \"Critical Updates\") and ResourceId ==\"{0}\"| summarize AggregatedValue =dcount(UpdateID) by UpdateID,Title |limit  1000000000 " ]
     },
-    "Windows_OS_Baseline_Ids": []
+    "Windows_OS_Baseline_Ids": [],
+    "ASCPolicies": {
+      "PolicyAssignment":{
+        "EndpointProtection" : "Install endpoint protection solution on your machines",
+        "DiskEncryption" : "Apply Disk Encryption on your virtual machines",
+        "VulnerabilityScan" : "Remediate vulnerabilities in security configuration on your machines",
+        "OSUpdates" : "Install system updates on your machines",
+        "MonitoringAgent" : "Install monitoring agent on your machines"
+        },      
+        "ResourceDetailsKeys" :{
+          "WorkspaceId" : "Reporting workspace customer id"        
+        }
+      }
   },
   "NoOfApprovedAdmins": 5,
   "NoOfClassicAdminsLimit": 2,
