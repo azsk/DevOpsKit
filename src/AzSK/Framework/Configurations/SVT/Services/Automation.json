@@ -111,6 +111,7 @@
          "SDL",
          "TCP",
          "DP",
+         "Best Practice",
          "Manual"
       ],
       "Enabled": true

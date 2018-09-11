@@ -58,6 +58,10 @@ class RemoteApiHelper {
 		[RemoteApiHelper]::PostJsonContent("/inventory/RBACTelemetry", $RBACAccess) | Out-Null	
 	}
 
+    static [void] PostPolicyComplianceTelemetry($PolicyComplianceData){
+		[RemoteApiHelper]::PostJsonContent("/policycompliancedata", $PolicyComplianceData) | Out-Null	
+    }
+    
     hidden static [psobject] ConvertToSimpleSet([SVTEventContext[]] $contexts) {
         $firstContext = $contexts[0]
         $set = "" | Select-Object "SubscriptionId", "SubscriptionName", "Source", "ScannerVersion", "ControlVersion", "ControlSet"
