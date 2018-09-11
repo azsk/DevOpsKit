@@ -23,24 +23,6 @@
          "Enabled": true
       },
       {
-         "ControlID": "Azure_VirtualMachine_Config_OS_Auto_Update",
-         "Description": "OS automatic updates must be enabled on Windows Virtual Machine",
-         "Id": "VirtualMachine120",
-         "ControlSeverity": "High",
-         "Automated": "Yes",
-         "MethodName": "CheckOSAutoUpdateStatus",
-         "Rationale": "VMs where automatic updates are disabled are likely to miss important security patches due to human error. This may lead to compromise from various malware/trojan attacks that exploit known vulnerabilities in operating systems and related software.",
-         "Recommendation": "Run command 'Set-AzureRmVMOperatingSystem' with the EnableAutoUpdate flag. Run 'Get-Help Set-AzureRmVMOperatingSystem -full' for more help or Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.compute/set-azurermvmoperatingsystem",
-         "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "Config",
-            "Windows"
-         ],
-         "Enabled": true
-      },
-      {
          "ControlID": "Azure_VirtualMachine_SI_Enable_Antimalware",
          "Description": "Antimalware must be enabled with real time protection on Windows Virtual Machine",
          "Id": "VirtualMachine130",
