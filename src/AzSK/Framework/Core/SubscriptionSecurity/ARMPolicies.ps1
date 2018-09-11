@@ -428,9 +428,10 @@ class ARMPolicy: CommandBase
 						$this.PublishCustomMessage("Creating new AzSK Initiative...", [MessageType]::Update);		
 						$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
 						$setDefnObj = New-AzureRmPolicySetDefinition -Name $this.SubPolicyInitiative.Name -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions
-						$assignmentName = $initiativeName + "_assignment"
+						$assignmentName = $initiativeName + "-assignment"
+						$assignmentDisplayName = $this.SubPolicyInitiative.DisplayName + " assignment"
 						$scope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"
-						New-AzureRmPolicyAssignment -Name $assignmentName -Scope $scope -PolicySetDefinition $setDefnObj 
+						New-AzureRmPolicyAssignment -Name $assignmentName -DisplayName $assignmentDisplayName -Scope $scope -PolicySetDefinition $setDefnObj 
 					}
 					elseif($this.UpdateInitiative) {
 						$this.PublishCustomMessage("Updating AzSK Initiative...", [MessageType]::Update);
