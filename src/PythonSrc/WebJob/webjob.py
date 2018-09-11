@@ -4,12 +4,12 @@
 # license information.
 # -------------------------------------------------------------------------
 import pyodbc
+import pandas as pd
 
 from azure.keyvault import KeyVaultClient
 from azure.storage.file import FileService
 from msrestazure.azure_active_directory import MSIAuthentication
-
-from .recommendation_engine import *
+from recommendation_engine import save_recommendation_json
 
 
 def validate(caller):
@@ -50,21 +50,25 @@ def get_csv_from_mysql():
 	query = "SELECT TOP(1000) * FROM DBO.LASTKNOWNSERVICESCANRESULTJOINED"
 	df = pd.read_sql_query(query, cnxn)
 	df.set_index("Id", inplace=True)
-	df.to_csv("data_from_server.csv")
-	print("Saved to disk")
+	df.to_csv("data.csv")
+	print("Saved data.csv to disk")
 
 
 @validate
-def save_to_storage():
-	# todo: save account key in vault
+def save_file_to_storage(file):
 	fs = FileService(account_name="recoenginestorage",
 					 account_key=get_from_keyvault("storage-account-key"))
-	res = fs.create_file_from_path("myshare", None, "data_from_server.csv",
-								   "data_from_server.csv")
+	res = fs.create_file_from_path("myshare", None, "data.csv",
+								   file)
 	print(res)
 
 
+@validate
+def upload_recommendations():
+	save_recommendation_json()
+	save_file_to_storage("recommendation.json")
+
+
 if __name__ == '__main__':
-	# get_csv_from_mysql()
-	# save_to_storage()
-	pass
+	get_csv_from_mysql()
+	upload_recommendations()

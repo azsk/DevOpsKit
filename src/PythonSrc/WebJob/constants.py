@@ -3,10 +3,14 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # -------------------------------------------------------------------------
+
 # list of features, every feature is assigned a
 # prime number to calculate hash
-# see <> for hash logic
+# see recommendation_engine.get_hash for hash logic
 feature_hash = {
+	"ContainerRegistry": 101807,
+	"ServiceBus": 99839,
+	"CDN": 99611,
 	"SQLDatabase": 3940427,
 	"AppService": 3940763,
 	"StreamAnalytics": 1414297,
@@ -38,6 +42,7 @@ feature_hash = {
 	"DataFactoryV2": 192259,
 }
 
+
 category_hash = {
 	"Storage": 1000003,
 	"DataProcessing": 1000033,
@@ -46,14 +51,18 @@ category_hash = {
 	"APIs": 1000081,
 	"Security Infra": 1000099,
 	"SubscriptionCore": 1000117,
-	"Commuincation Hub": 1000121,
+	"Communication Hub": 1000121,
 	"Hybrid": 1000133,
 	"Network Isolation": 1000151,
 	"Cache": 1000159,
 	"Backend Processing": 123123593,
 }
 
+# maps features to its parents categories
+# one feature may fall under multiple categories
 get_categories = {
+	"CDN": ["Storage"],
+	"ServiceBus": ["Communication Hub", "Hybrid"],
 	"AppService": ["Web Front End", "APIs"],
 	"SQLDatabase": ["Storage", "DataProcessing", "Reporting"],
 	"Storage": ["Storage", "Reporting", "DataProcessing"],
@@ -61,16 +70,18 @@ get_categories = {
 	"DataFactory": ["DataProcessing"],
 	"DataLakeAnalytics": ["DataProcessing", "Reporting"],
 	"DataLakeStore": ["Storage", "Reporting", "DataProcessing"],
-	"NotificationHub": ["Commuincation Hub"],
+	"NotificationHub": ["Communication Hub"],
 	"ServiceFabric": ["Web Front End", "APIs", "Backend Processing"],
 	"Search": ["APIs", "Backend Processing"],
 	"VirtualMachine": ["Web Front End", "APIs", "Backend Processing",
+					   "DataProcessing"],
+	"ContainerRegistry": ["Web Front End", "APIs", "Backend Processing",
 					   "DataProcessing"],
 	"VirtualNetwork": ["Network Isolation", "Hybrid"],
 	"AnalysisServices": ["DataProcessing", "Reporting"],
 	"Batch": ["Backend Processing"],
 	"RedisCache": ["Cache"],
-	"EventHub": ["Commuincation Hub", "Hybrid"],
+	"EventHub": ["Communication Hub", "Hybrid"],
 	"ODG": ["Hybrid"],
 	"TrafficManager": ["Network Isolation"],
 	"ERvNet": ["Hybrid", "Network Isolation"],
@@ -80,11 +91,16 @@ get_categories = {
 	"CloudService": ["Web Front End", "APIs", "Backend Processing"],
 	"LoadBalancer": ["Network Isolation"],
 	"APIConnection": ["DataProcessing"],
-	"BotService": ["APIs", "Commuincation Hub", "Web Front End"],
+	"BotService": ["APIs", "Communication Hub", "Web Front End"],
 	"ContainerInstances": ["Web Front End", "APIs", "DataProcessing",
 						   "Backend Processing"],
 	"DataFactoryV2": ["DataProcessing", "Backend Processing"],
 	"KeyVault": ["Security Infra"]
 }
 
+# big prime number to limit the value
+# used in hashing functions
 BIG_PRIME = 824633720831
+
+DATA_FILE_PATH = "data_from_server.csv"
+IGNORE_LIST = ["CoreControls", "AzSKCfg"]
