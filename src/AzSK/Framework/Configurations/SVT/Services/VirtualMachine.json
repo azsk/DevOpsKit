@@ -150,7 +150,7 @@
          "Automated": "Yes",
          "MethodName": "CheckASCVMMissingPatchingStatus",
          "Rationale": "Un-patched VMs are easy targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in operating systems and related software.",
-         "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-apply-system-updates",
+         "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-apply-system-updates . It takes 24 hours to reflect the latest status at ASC.",
          "Tags": [
             "SDL",
             "TCP",
