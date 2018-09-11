@@ -802,14 +802,14 @@ class SubscriptionCore: SVTBase
 
         if($CustomRBACAssignedRolesCount -eq 0)
         {
-			$controlResult.AddMessage([VerificationResult]::Passed, "No custom RBAC definitions with active role assignments found. ")
+			$controlResult.AddMessage([VerificationResult]::Passed, "No custom RBAC role definitions with active role assignments found. ")
 		}
         else
         {			
 			$customRoleAssignments = $customRolesWithAssignment | Where-object { $_.RoleAssignmentCount -gt 0} 
 			$controlResult.SetStateData("Custom RBAC definitions with active assignments", $customRoleAssignments)
 			$out= $customRoleAssignments | Select-Object Name,Description,Id,RoleAssignmentCount;
-            $controlResult.AddMessage([VerificationResult]::Verify, "Found $($customRolesWithAssignment.Count) custom RBAC definitions`r`nCustom RBAC roles with active role assignment : `n", $out);
+            $controlResult.AddMessage([VerificationResult]::Verify, "Found $($customRolesWithAssignment.Count) custom RBAC role definitions`r`nCustom RBAC roles definitions with active role assignments : `n", $out);
         }
 
 		return $controlResult
