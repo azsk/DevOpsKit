@@ -17,7 +17,8 @@
           "TCP",
           "PAT",
           "DP",
-          "Automated"
+          "Automated",
+          "Admin"
         ],
         "Enabled": true
       },
@@ -35,7 +36,8 @@
           "TCP",
           "DP",
           "Automated",
-          "PAT"
+          "PAT",
+          "Admin"
         ],
         "Enabled": true
       },
@@ -54,7 +56,8 @@
           "DP",
           "Best Practice",
           "Automated",
-          "PAT"
+          "PAT",
+          "Admin"
         ],
         "Enabled": true
       },
@@ -78,13 +81,13 @@
       },
       {
         "ControlID": "Azure_Databricks_AuthZ_Grant_Min_RBAC_Access",
-        "Description": "All users must be granted minimum required permissions on workspace, clusters, jobs etc. using Role Based Access Control (RBAC)",
+        "Description": "All users/identities must be granted minimum required permissions using Role Based Access Control (RBAC)",
         "Id": "Databricks150",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckRBACAccess",
         "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user account compromise.",
-        "Recommendation": "Manage fine-grained user permissions, by enabling access control to notebooks, clusters, jobs and data. Refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/index.html#manage-access-control",
+        "Recommendation": "Remove any excessive privileges granted on the Databricks. Run command: Remove-AzureRmRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help.",
         "Tags": [
           "SDL",
           "TCP",
@@ -95,20 +98,21 @@
         "Enabled": true
       },
       {
-        "ControlID": "Azure_Databricks_AuthZ_Verify_Admin_Access",
-        "Description": "All users must be granted minimum required permissions on workspace, clusters, jobs etc. using Role Based Access Control (RBAC)",
+        "ControlID": "Azure_Databricks_AuthZ_Min_Admin",
+        "Description": "Minimize the number of workspace admins",
         "Id": "Databricks160",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckAdminAccess",
-        "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user account compromise.",
-        "Recommendation": "Manage fine-grained user permissions, by enabling access control to notebooks, clusters, jobs and data. Refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/index.html#manage-access-control",
+        "Rationale": "Databricks workspace admins have full access on the workspace to perform any operation. Each additional person in the admin role increases the attack surface for the server. The number of members in these roles should be kept to as low as possible.",
+        "Recommendation": "Minimize the number of workspace admins. Navigate to Databricks workspace --> Account --> Admin Console --> Users --> Revoke admin access accounts(which no longer reuires admin access)",
         "Tags": [
           "SDL",
           "TCP",
           "AuthZ",
-          "RBAC",
-          "Automated"
+          "Automated",
+          "Admin",
+          "PAT"
         ],
         "Enabled": true
       },
@@ -120,7 +124,7 @@
         "Automated": "No",
         "MethodName": "",
         "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user account compromise.",
-        "Recommendation": "Remove any excessive privileges granted on clusters. Refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/cluster-acl.html",
+        "Recommendation": "Remove any excessive privileges granted to any user on clusters. Navigate to workspace --> clusters --> select cluster --> Edit --> Permissions, for details refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/cluster-acl.html",
         "Tags": [
           "SDL",
           "TCP",
@@ -137,14 +141,14 @@
         "ControlSeverity": "Medium",
         "Automated": "No",
         "MethodName": "",
-        "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user account compromise.",
-        "Recommendation": "Manage fine-grained user permissions, by enabling access control to notebooks, clusters, jobs and data. Refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/index.html#manage-access-control",
+        "Rationale": "Enabling workspace access controls allows admin to manage fine-grained user permissions and ensures that users can perform only intended operations. This minimizes exposure of the Keys in case of user account compromise.",
+        "Recommendation": "To enable and configure workspace access control, refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/workspace-acl.html",
         "Tags": [
           "SDL",
           "TCP",
           "AuthZ",
           "RBAC",
-          "Automated"
+          "Manual"
         ],
         "Enabled": true
       },
@@ -155,14 +159,14 @@
         "ControlSeverity": "Medium",
         "Automated": "No",
         "MethodName": "",
-        "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user account compromise.",
-        "Recommendation": "Manage fine-grained user permissions, by enabling access control to notebooks, clusters, jobs and data. Refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/index.html#manage-access-control",
+        "Rationale": "Enabling cluster access control, allows admin to provide restricted access to user over cluster so that users can perform only intended operations. This minimizes exposure of the Keys in case of user/service account compromise.",
+        "Recommendation": "To enable and configure cluster access control, refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/cluster-acl.html",
         "Tags": [
           "SDL",
           "TCP",
           "AuthZ",
           "RBAC",
-          "Automated"
+          "Manual"
         ],
         "Enabled": true
       },
@@ -173,14 +177,14 @@
         "ControlSeverity": "Medium",
         "Automated": "No",
         "MethodName": "",
-        "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user account compromise.",
-        "Recommendation": "Manage fine-grained user permissions, by enabling access control to notebooks, clusters, jobs and data. Refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/index.html#manage-access-control",
+        "Rationale": "Enabling job access control feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the Keys in case of user/service account compromise.",
+        "Recommendation": "To enable and configure job access control, refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/jobs-acl.html",
         "Tags": [
           "SDL",
           "TCP",
           "AuthZ",
           "RBAC",
-          "Automated"
+          "Manual"
         ],
         "Enabled": true
       },

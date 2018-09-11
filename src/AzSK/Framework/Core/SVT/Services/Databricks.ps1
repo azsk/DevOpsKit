@@ -6,6 +6,7 @@ class Databricks: SVTBase
 	hidden [string] $WorkSpaceLoction;
 	hidden [string] $WorkSpaceBaseUrl = "https://{0}.azuredatabricks.net/api/2.0/";
 	hidden [string] $PersonalAccessToken =""; 
+	hidden [bool] $HasAdminAccess = $false;
 
     Databricks([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
                  Base($subscriptionId, $resourceGroupName, $resourceName) 
@@ -37,7 +38,6 @@ class Databricks: SVTBase
 			else
 			{
 			   $this.InitializeRequiredVariables();
-			   $this.CheckIfUserAdmin();
 			}
 			
         }
@@ -66,7 +66,7 @@ class Databricks: SVTBase
 
 	 hidden [ControlResult] CheckSecretScope([ControlResult] $controlResult)
     {
-	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken))
+	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.HasAdminAccess)
 		{
 			 $SecretScopes	= $this.InvokeRestAPICall("GET","secrets/scopes/list","")
 			 if($null -ne  $SecretScopes  -and ( $SecretScopes|Measure-Object).count -gt 0)
@@ -79,7 +79,8 @@ class Databricks: SVTBase
              }
 		}else
 		{
-		   $controlResult.AddMessage([VerificationResult]::Manual);
+		   $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+		   $controlResult.AddMessage([VerificationResult]::Manual, "Not able to fetch secret scope details. This has to be manually verified.");
 		}
 	   
 
@@ -88,7 +89,7 @@ class Databricks: SVTBase
 
 	 hidden [ControlResult] CheckSecretScopeBackend([ControlResult] $controlResult)
     {
-	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken))
+	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.HasAdminAccess)
 		{
 			 $SecretScopes	= $this.InvokeRestAPICall("GET","secrets/scopes/list","")
 			 if($null -ne  $SecretScopes  -and ( $SecretScopes|Measure-Object).count -gt 0)
@@ -106,11 +107,12 @@ class Databricks: SVTBase
              }
 			 else
 			 {
-			   $controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No secret scope found in your workspace."));
+			   $controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("No secret scope found in your workspace."));
              }
 		}else
 		{
-		   $controlResult.AddMessage([VerificationResult]::Manual);
+		   $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+		   $controlResult.AddMessage([VerificationResult]::Manual, "Not able to fetch secret scope details. This has to be manually verified.");
 		}
 	   
 
@@ -119,7 +121,7 @@ class Databricks: SVTBase
 
 	hidden [ControlResult] CheckKeyVaultReference([ControlResult] $controlResult)
     {
-	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken))
+	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.HasAdminAccess)
 		{
 			$KeyVaultScopeMapping = @()
 			$KeyVaultWithMultipleReference = @() 
@@ -150,17 +152,18 @@ class Databricks: SVTBase
 			  }
 			  else
 			  {
-				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No KeyVault backed secret scope found in your workspace."));
+				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("No KeyVault backed secret scope found in your workspace."));
 			  }
 			}
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No secret scope is found in your workspace."));
+				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("No secret scope is found in your workspace."));
 			}
 
 		}else
 		{
-			$controlResult.AddMessage([VerificationResult]::Manual);
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+		    $controlResult.AddMessage([VerificationResult]::Manual, "Not able to fetch secret scope details. This has to be manually verified.");
 		}
 	   
 
@@ -198,71 +201,69 @@ class Databricks: SVTBase
 
 		}else
 		{
-			$controlResult.AddMessage([VerificationResult]::Manual);
+		   $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+		   $controlResult.AddMessage([VerificationResult]::Manual, "Not able to fetch PAT(personal access token) details. This has to be manually verified.");
 		} 
 	   
         return $controlResult;
 	}
 
 	hidden [ControlResult] CheckAdminAccess([ControlResult] $controlResult)
-	{
-		$accessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.GetResourceId(), $false, $true);
-		$adminAccessList = $accessList | Where-Object { $_.RoleDefinitionName -eq 'Owner' -or $_.RoleDefinitionName -eq 'Contributor'}
-		# Add check for User Type
-		$potentialAdminUsers = @()
-		$activeAdminUsers =@()
-		$adminAccessList | ForEach-Object {
-			if([Helpers]::CheckMember($_, "SignInName"))
+	{   
+	   if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.HasAdminAccess)
+	   {    
+	        $controlResult.VerificationResult = [VerificationResult]::Verify;
+		    $accessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.GetResourceId(), $false, $true);
+			$adminAccessList = $accessList | Where-Object { $_.RoleDefinitionName -eq 'Owner' -or $_.RoleDefinitionName -eq 'Contributor'}
+			# Add check for User Type
+			$potentialAdminUsers = @()
+			$activeAdminUsers =@()
+			$adminAccessList | ForEach-Object {
+				if([Helpers]::CheckMember($_, "SignInName"))
+				{
+				   $potentialAdminUsers += $_.SignInName
+				}
+			}	
+			# Get All Active Users
+			$requestBody = "group_name=admins"
+			$activeAdmins = $this.InvokeRestAPICall("GET","groups/list-members",$requestBody);
+			if($null -ne $activeAdmins -and ($activeAdmins | Measure-Object).Count -gt 0)
 			{
-			   $potentialAdminUsers += $_.SignInName
+				$activeAdminUsers += $activeAdmins.members
 			}
-		}	
-		# Get All Active Users
-		$requestBody = "group_name=admins"
-		$activeAdmins = $this.InvokeRestAPICall("GET","groups/list-members",$requestBody);
-		if($null -ne $activeAdmins -and ($activeAdmins | Measure-Object).Count -gt 0)
-		{
-			$activeAdminUsers += $activeAdmins.members
-		}
-		if(($potentialAdminUsers|Measure-Object).Count -gt 0)
-		{
-			$controlResult.AddMessage("Validate that the following identities have potential admin access to resource - [$($this.ResourceContext.ResourceName)]");
-			$controlResult.AddMessage([MessageData]::new("", $potentialAdminUsers));
-		}
-		if(($activeAdminUsers|Measure-Object).Count -gt 0)
-		{
-			$controlResult.AddMessage("Validate that the following identities have active admin access to resource - [$($this.ResourceContext.ResourceName)]");
-			$controlResult.AddMessage([MessageData]::new("", $activeAdminUsers));
-		}
-
+			if(($potentialAdminUsers|Measure-Object).Count -gt 0)
+			{
+				$controlResult.AddMessage("Validate that the following identities have potential admin access to resource - [$($this.ResourceContext.ResourceName)]");
+				$controlResult.AddMessage([MessageData]::new("", $potentialAdminUsers));
+			}
+			if(($activeAdminUsers|Measure-Object).Count -gt 0)
+			{
+				$controlResult.AddMessage("Validate that the following identities have active admin access to resource - [$($this.ResourceContext.ResourceName)]");
+				$controlResult.AddMessage([MessageData]::new("", $activeAdminUsers));
+			}
+	   }
+	   else
+	   {
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			$controlResult.AddMessage([VerificationResult]::Manual, "Not able to fetch admin details. This has to be manually verified.");
+	   }
+		
 		return $controlResult;
 	}
 
-	hidden [PSObject] InvokeRestAPICall([string] $method, [string] $operation , [string] $body)
+	hidden [PSObject] InvokeRestAPICall([string] $method, [string] $operation , [string] $queryString)
 	{   
 	     $ResponseObject = $null;
 		 try
 		 {
 			 $uri = $this.WorkSpaceBaseUrl + $operation 
-			 if([string]::IsNullOrWhiteSpace($body))
+			 if(-not [string]::IsNullOrWhiteSpace($queryString))
 			 {
-			   $ResponseObject = Invoke-RestMethod `
-							 -Method $method `
-							 -Uri $uri `
-							 -Headers @{"Authorization" = "Bearer "+$this.PersonalAccessToken} `
-							 -ContentType 'application/json'`
-							 -UseBasicParsing
-			 }else
-			 {
-			   $uri =  $uri +'?'+ $body
-			   $ResponseObject = Invoke-RestMethod `
-							 -Method $method `
-							 -Uri $uri `
-							 -Headers @{"Authorization" = "Bearer "+$this.PersonalAccessToken} `
-							 -ContentType 'application/json'`
-							 -UseBasicParsing
-							
+			  $uri =  $uri +'?'+ $queryString
 			 }
+			 $ResponseObject = Invoke-RestMethod -Method $method -Uri $uri `
+							   -Headers @{"Authorization" = "Bearer "+$this.PersonalAccessToken} `
+							   -ContentType 'application/json' -UseBasicParsing
 		 }
 		 catch
 		 {
@@ -272,9 +273,19 @@ class Databricks: SVTBase
 	}
 
 	hidden [string] ReadAccessToken()
-	{
-	    # Write token fetch logic here
-		return 'dapi919dd0b1ea90d86e39cd0ac56b153915';
+	{ 
+	     $scanSource = [RemoteReportHelper]::GetScanSource();
+         if($scanSource -eq [ScanSource]::SpotCheck)
+		 { 
+		   $input = Read-Host "Enter PAT(personal access token) for '$($this.ResourceContext.ResourceName)' workspace"
+           $input = $input.Trim()
+		   return $input;
+		 }
+		 else
+		 {
+			return $null;
+		 }
+	   
 	}
 
 	hidden InitializeRequiredVariables()
@@ -284,9 +295,10 @@ class Databricks: SVTBase
 		$this.ManagedResourceGroupName = $this.ResourceObject.Properties.managedResourceGroupId.Split("/")[$count-1]
 		$this.WorkSpaceBaseUrl=[system.string]::Format($this.WorkSpaceBaseUrl,$this.WorkSpaceLoction)
 		$this.PersonalAccessToken = $this.ReadAccessToken()
+		$this.HasAdminAccess = $this.IsUserAdmin()
 	}
 
-	hidden [bool] CheckIfUserAdmin()
+	hidden [bool] IsUserAdmin()
 	{
 	  try
 	  {
