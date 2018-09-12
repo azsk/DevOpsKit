@@ -152,7 +152,7 @@ class KeyVault: SVTBase
 			else
 			{
 				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-				$controlResult.AddMessage([MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+				$controlResult.AddMessage([MessageData]::new("Control can not be validated due to insufficient access permission on keys"));
 
 			}
 			
@@ -203,7 +203,7 @@ class KeyVault: SVTBase
 		else
 		{
 			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-			$controlResult.AddMessage([MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+			$controlResult.AddMessage([MessageData]::new("Control can not be validated due to insufficient access permission on secrets"));
 
 		}
 		return $this.AllEnabledSecrets;
@@ -449,6 +449,7 @@ class KeyVault: SVTBase
 		if($isAccessDenied)
 		{
 			$controlResult.VerificationResult = [VerificationResult]::Manual;
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 			return;
 		}
 
@@ -480,6 +481,7 @@ class KeyVault: SVTBase
 		else
 		{
 			$isAccessDenied = $True
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 			$this.SetVerificationResultForExpiryDate($controlResult, [VerificationResult]::Manual, $isAccessDenied);
 		}
 
@@ -491,6 +493,7 @@ class KeyVault: SVTBase
 		else
 		{
 			$isAccessDenied = $True
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 			$this.SetVerificationResultForExpiryDate($controlResult, [VerificationResult]::Manual, $isAccessDenied);
 		}
 

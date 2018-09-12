@@ -361,6 +361,8 @@ namespace AzSK.ARMChecker.Lib
                     var resourceset = (ResourceNode)MergedResources[i].Clone();
                     while (resourceset != null)
                     {
+                    Console.WriteLine(i);
+                    Console.WriteLine(resourceset.Resource.Resource);
                         currentResourceSet.Add(resourceset.Resource);
                         isolatedResources.RemoveAll(x => x.Token.Equals(resourceset.Token));
                         resourceset = resourceset.ChildResource;

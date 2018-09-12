@@ -281,7 +281,7 @@ Class OMSHelper{
 		try
 		{
 			$body = @{query=$query};
-			$url=[WebRequestHelper]::AzureManagementUri.TrimEnd("/") +$workspaceId+"/api/query?api-version=2017-01-01-preview"
+			$url="https://api.loganalytics.io/beta/workspaces/" +$workspaceId+"/api/query?api-version=2017-01-01-preview"
 			$response=[WebRequestHelper]::InvokePostWebRequest($url ,  $body);
 
 			# Formating the response obtained from querying workspace.
