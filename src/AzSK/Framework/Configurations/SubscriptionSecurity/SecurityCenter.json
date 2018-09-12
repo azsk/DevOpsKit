@@ -1,13 +1,61 @@
-﻿{
-   "Version": "2.1709.0",
-   "properties": {
-      "logCollection": "On",
-      "recommendations": {
-      },
-      "securityContactConfiguration": {
-         "securityContactEmails": [],
-         "areNotificationsOn": true,
-         "sendToAdminOn": true
-      }
-   }
-}
+﻿{    
+    "Version": "3.1809.0",    
+    "autoProvisioning" : {
+        "id": "/subscriptions/{0}/providers/Microsoft.Security/autoProvisioningSettings/default",
+        "name": "default",
+        "type": "Microsoft.Security/autoProvisioningSettings",
+        "properties": {
+        "autoProvision": "On"
+        }
+    },
+    "securityContacts" : {
+        "id": "/subscriptions/{0}/providers/Microsoft.Security/securityContacts/default1",
+        "name": "default1",
+        "type": "Microsoft.Security/securityContacts",
+        "properties": {
+        "email": "{1}",
+        "phone": "{2}",
+        "alertNotifications": "On",
+        "alertsToAdmins": "On"
+        }
+    },
+    "policySettings" : {
+        "sku": {
+        "name": "A0",
+        "tier": "Free"
+        },
+        "properties": {
+            "displayName": "ASC Default (subscription: {0})",
+            "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/1f3afdf9-d0c9-4c3d-847f-89da613e70a8",
+            "scope": "/subscriptions/{0}",
+            "notScopes": [],
+            "parameters": {                                                              
+                "systemUpdatesMonitoringEffect": {
+                "value": "AuditIfNotExists"
+                },
+                "systemConfigurationsMonitoringEffect": {
+                "value": "AuditIfNotExists"
+                },
+                "endpointProtectionMonitoringEffect": {
+                "value": "AuditIfNotExists"
+                },           
+                "sqlAuditingMonitoringEffect": {
+                "value": "AuditIfNotExists"
+                },
+                "sqlEncryptionMonitoringEffect": {
+                "value": "AuditIfNotExists"
+                },            
+                "storageEncryptionMonitoringEffect": {
+                "value": "Audit"
+                }                     
+            },
+            "description": "This policy assignment was automatically created by Azure Security Center",
+            "metadata": {
+                "assignedBy": "Security Center"
+            }
+        },
+        "id": "/subscriptions/{0}/providers/Microsoft.Authorization/policyAsssignments/SecurityCenterBuiltIn",
+        "type": "Microsoft.Authorization/policyAssignments",
+        "name": "SecurityCenterBuiltIn"
+    }
+}    
