@@ -698,19 +698,23 @@ class VirtualMachine: SVTBase
 		{
 			# workspace associated by ASC to send logs for this VM
 			$workspaceId=$this.Workspace;
-			$monitoringStatus = "";
+			$vulnStatus = "";
 
 			if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 			{
-				$monitoringSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.MonitoringAgent};
-				if($null -ne $monitoringSetting)
+				$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScan};
+				if($null -ne $vulnSetting)
 				{
-					$monitoringStatus = $monitoringSetting.assessmentResult;
+					$vulnStatus = $vulnSetting.assessmentResult;
 				}
-				$controlResult.AddMessage("VM patch status details:", $monitoringSetting);
+				$controlResult.AddMessage("VM patch status details:", $vulnSetting);
 			}		
 
-			if($monitoringStatus -in  $ASCApprovedStatuses)
+			if($vulnStatus -in  $ASCApprovedStatuses)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Passed
+			}
+			else
 			{
 				$isVerfiy= $true;
 				if(-not([string]::IsNullOrEmpty($workspaceId)))

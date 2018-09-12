@@ -63,8 +63,9 @@
         "EndpointProtection" : "Install endpoint protection solution on your machines",
         "DiskEncryption" : "Apply Disk Encryption on your virtual machines",
         "VulnerabilityScan" : "Remediate vulnerabilities in security configuration on your machines",
+        "VulnerabilityInstall" : "Install a vulnerability assessment solution on your virtual machines",
         "OSUpdates" : "Install system updates on your machines",
-        "MonitoringAgent" : "Install monitoring agent on your machines"
+        "MonitoringAgent" : "Install monitoring agent on your machines"        
         },      
         "ResourceDetailsKeys" :{
           "WorkspaceId" : "Reporting workspace customer id"        
