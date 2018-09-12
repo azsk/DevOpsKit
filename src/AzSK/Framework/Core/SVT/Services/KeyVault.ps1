@@ -151,7 +151,7 @@ class KeyVault: SVTBase
 			}
 			else
 			{
-				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+				 = $false;
 				$controlResult.AddMessage([MessageData]::new("Control can not be validated due to insufficient access permission on keys"));
 
 			}
@@ -189,7 +189,7 @@ class KeyVault: SVTBase
 					# null indicates exception
 					$this.AllEnabledSecrets = $null;
 
-					if (($_.Exception.GetType().FullName -eq "Microsoft.Azure.KeyVault.Models.KeyVaultErrorException") -and ($controlResult.CurrentSessionContext.Permissions.HasRequiredAccess))
+					if ($_.Exception.GetType().FullName -eq "Microsoft.Azure.KeyVault.Models.KeyVaultErrorException")
 					{
 						$controlResult.AddMessage([MessageData]::new("Access denied: Read access is required on Key Vault Secrets."));
 					}
