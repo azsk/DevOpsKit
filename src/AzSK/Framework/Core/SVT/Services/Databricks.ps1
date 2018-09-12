@@ -97,12 +97,12 @@ class Databricks: SVTBase
 				  $DatabricksBackedSecret = $SecretScopes.scopes | where {$_.backend_type -ne "AZURE_KEYVAULT"}
 				  if($null -ne $DatabricksBackedSecret -and ( $SecretScopes|Measure-Object).count -gt 0)
 				  {
-					$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Following Databricks backed secret scope found:", $DatabricksBackedSecret));
+					$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Following Databrick backed secret scopes found:", $DatabricksBackedSecret));
 					$controlResult.SetStateData("Following Databricks backed secret scope found:", $DatabricksBackedSecret);
 				  }
 				  else
 				  {
-					$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("All secret scope in your workspace are KeyVault backed."));
+					$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("All secret scopes in the workspace are Key Vault backed."));
 				  }
              }
 			 else
@@ -178,19 +178,38 @@ class Databricks: SVTBase
 			if($null -ne $AccessTokens -and ($AccessTokens.token_infos| Measure-Object).Count -gt 0)
 			{   
 			    $PATwithInfiniteValidity =@()
-				$PATwithInfiniteValidity += $AccessTokens.token_infos | Where-Object {$_.expiry_time -eq "-1" }
-				$PATwithInfiniteValidity += $AccessTokens.token_infos | Where-Object {$_.expiry_time -ne "-1"} | Where-Object { (New-TimeSpan -Seconds (($_.expiry_time - $_.creation_time)/1000)).Days -gt 180 } 
+				$AccessTokensList =@()
+				$AccessTokens.token_infos | ForEach-Object {
+					$currentObject = "" | Select-Object "comment","token_id","expiry_in_days"
+					if($_.expiry_time -eq "-1")
+					{
+						$currentObject.comment = $_.comment
+						$currentObject.token_id = $_.token_id
+						$currentObject.expiry_in_days = "-1"
+					}
+					else{
+					 
+					    $currentObject.comment = $_.comment
+						$currentObject.token_id = $_.token_id
+						$currentObject.expiry_in_days = (New-TimeSpan -Seconds (($_.expiry_time - $_.creation_time)/1000)).Days
+					}
+					$AccessTokensList += $currentObject
+
+				}
+				$PATwithInfiniteValidity += $AccessTokensList | Where-Object {$_.expiry_in_days -eq "-1" }
+				$PATwithInfiniteValidity += $AccessTokensList | Where-Object {$_.expiry_in_days -ne "-1"} | Where-Object {$_.expiry_in_days -gt 180} 
 			
-				$PATwithFiniteValidity = $AccessTokens.token_infos | Where-Object {$_.expiry_time -ne "-1"}
+				$PATwithFiniteValidity = $AccessTokensList | Where-Object {$_.expiry_in_days -ne "-1" -and $_.expiry_in_days -le 180}
+
 				if($null -ne $PATwithInfiniteValidity -and ($PATwithInfiniteValidity| Measure-Object).Count -gt 0)
 				{
 					$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following personal access token has validity more than 180 days:", $PATwithInfiniteValidity));
-					$controlResult.SetStateData("Following personal access token has validity more than 180 days:", $PATwithInfiniteValidity);
+					$controlResult.SetStateData("Following personal access tokens have validity more than 180 days:", $PATwithInfiniteValidity);
 
 				}
 				else
 				{
-					$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Following personal access token with finite validity found in your workspace:", $PATwithFiniteValidity));
+					$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Following personal access tokens have validity less than 180 days:", $PATwithFiniteValidity));
 				}
 
 			}
@@ -202,7 +221,7 @@ class Databricks: SVTBase
 		}else
 		{
 		   $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-		   $controlResult.AddMessage([VerificationResult]::Manual, "Not able to fetch PAT(personal access token) details. This has to be manually verified.");
+		   $controlResult.AddMessage([VerificationResult]::Manual, "Not able to fetch PAT (personal access token) details. This has to be manually verified.");
 		} 
 	   
         return $controlResult;
@@ -233,14 +252,52 @@ class Databricks: SVTBase
 			}
 			if(($potentialAdminUsers|Measure-Object).Count -gt 0)
 			{
-				$controlResult.AddMessage("Validate that the following identities have potential admin access to resource - [$($this.ResourceContext.ResourceName)]");
+				$controlResult.AddMessage("`r`nValidate that the following identities have potential admin access to resource - [$($this.ResourceContext.ResourceName)]");
+				$controlResult.AddMessage("Note: Users that have been explicitly added in the 'admins' group in the workspace are considered 'active' admins");
 				$controlResult.AddMessage([MessageData]::new("", $potentialAdminUsers));
 			}
 			if(($activeAdminUsers|Measure-Object).Count -gt 0)
 			{
-				$controlResult.AddMessage("Validate that the following identities have active admin access to resource - [$($this.ResourceContext.ResourceName)]");
+				$controlResult.AddMessage("`r`nValidate that the following identities have active admin access to resource - [$($this.ResourceContext.ResourceName)]");
+				$controlResult.AddMessage("Note: Users that have been explicitly added in the 'admins' group in the workspace are considered 'active' admins");
 				$controlResult.AddMessage([MessageData]::new("", $activeAdminUsers));
 			}
+	   }
+	   else
+	   {
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			$controlResult.AddMessage([VerificationResult]::Manual, "Not able to fetch admin details. This has to be manually verified.");
+	   }
+		
+		return $controlResult;
+	}
+
+	hidden [ControlResult] CheckGuestAdminAccess([ControlResult] $controlResult)
+	{   
+	   if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.HasAdminAccess)
+	   {    
+	        $controlResult.VerificationResult = [VerificationResult]::Verify;
+			# Get All Active Users
+			$guestAdminUsers =@()
+			$requestBody = "group_name=admins"
+			$activeAdmins = $this.InvokeRestAPICall("GET","groups/list-members",$requestBody);
+			if($null -ne $activeAdmins -and ($activeAdmins.members | Measure-Object).Count -gt 0)
+			{
+				$activeAdmins.members | ForEach-Object{
+				 if($_.user_name.Split('@')[1] -ne 'microsoft.com')
+				 {
+					$guestAdminUsers +=$_
+				 }
+				}
+			}
+			if($null -ne $guestAdminUsers -and ($guestAdminUsers | Measure-Object).Count -gt 0)
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following guest accounts have admin access on workspace:", $guestAdminUsers));
+			}
+			else{
+				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Verify guest accounts should not have admin access on workspace."));
+			}
+			
 	   }
 	   else
 	   {

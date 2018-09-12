@@ -8,7 +8,7 @@
         "Description": "Secrets and Keys must not be in plain text in notebook",
         "Id": "Databricks110",
         "ControlSeverity": "Medium",
-        "Automated": "No",
+        "Automated": "Yes",
         "MethodName": "CheckSecretScope",
         "Rationale": "Keeping secrets such as connection strings, passwords, keys, etc. in clear text can lead to easy compromise. Storing them in a secert scope ensures that they are protected at rest.",
         "Recommendation": "Use Azure Databricks secret scope to store your secrets, keys and reference them in notebooks and jobs. Refer: https://docs.azuredatabricks.net/user-guide/secrets/index.html",
@@ -42,8 +42,8 @@
         "Enabled": true
       },
       {
-        "ControlID": "Azure_Databricks_DP_Use_Independent_KeyVault_For_Each_Secret_Scope",
-        "Description": "To hold different set of secrets, Key Vault referenced by each secret scope should be independent",
+        "ControlID": "Azure_Databricks_DP_Independent_KeyVault_Per_Scope",
+        "Description": "Each secret scope should use an independent key vault",
         "Id": "Databricks130",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
@@ -63,7 +63,7 @@
       },
       {
         "ControlID": "Azure_Databricks_DP_Minimal_Token_Validity",
-        "Description": "Personal access token(PAT) must have a shorter validity period to prevent malicious access",
+        "Description": "Personal access tokens (PAT) must have a shortest possible validity period",
         "Id": "Databricks140",
         "ControlSeverity": "High",
         "Automated": "Yes",
@@ -98,7 +98,7 @@
         "Enabled": true
       },
       {
-        "ControlID": "Azure_Databricks_AuthZ_Min_Admin",
+        "ControlID": "Azure_Databricks_AuthZ_Limit_Admin_Count",
         "Description": "Minimize the number of workspace admins",
         "Id": "Databricks160",
         "ControlSeverity": "Medium",
@@ -206,12 +206,12 @@
         "Enabled": true
       },
       {
-        "ControlID": "Azure_Databricks_AuthZ_Verify_Permitted_Guest_Account",
-        "Description": "Verify the guest accounts which are added as a user in the workspace",
+        "ControlID": "Azure_Databricks_AuthZ_Prohibit_Guest_Account_Admin_Access",
+        "Description": "Guest accounts should not be granted admin access",
         "Id": "Databricks220",
         "ControlSeverity": "Medium",
-        "Automated": "No",
-        "MethodName": "",
+        "Automated": "Yes",
+        "MethodName": "CheckGuestAdminAccess",
         "Rationale": "Periodic review of guest users and privileges granted to them is a good security practice as, over time, it might be possible that some users/groups don't require access on workspace.",
         "Recommendation": "Periodically review of access granted to guest accounts and revoke access of stale accounts. You can list all users/groups that have access to workspace by navigating to Databris Workspace --> User Account --> Admin Console --> Users. Refer: https://docs.databricks.com/administration-guide/admin-settings/users.html",
         "Tags": [
