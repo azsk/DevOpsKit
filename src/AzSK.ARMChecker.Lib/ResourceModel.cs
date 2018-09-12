@@ -16,6 +16,17 @@ namespace AzSK.ARMChecker.Lib
 
     public class ResourceNode : ICloneable
     {
+        private ResourceNode resourceNode;
+
+        public ResourceNode()
+        {
+        }
+
+        public ResourceNode(ResourceNode resourceNode)
+        {
+            this.resourceNode = resourceNode;
+        }
+
         public string Token { get; set; }
 
         public ResourceModel Resource { get; set; }
@@ -23,6 +34,7 @@ namespace AzSK.ARMChecker.Lib
         public ResourceNode ChildResource { get; set; }
 
         public ResourceNode LastChildResource { get; set; }
+        public int count { get; set; }
 
         public object Clone()
         {
@@ -31,6 +43,7 @@ namespace AzSK.ARMChecker.Lib
             nd.Token = this.Token;
             nd.ChildResource = this.ChildResource;
             nd.LastChildResource = this.LastChildResource;
+            nd.count = nd.count;
             return nd;
         }
     }
