@@ -484,13 +484,13 @@ class VirtualMachine: SVTBase
 			{
 				$verificationResult  = [VerificationResult]::Passed;
 				$message = "All Virtual Machine disks (OS and Data disks) are encrypted. Validated the status through ASC.";
-				$controlResult.AddMessage($message);
+				$controlResult.AddMessage($verificationResult, $message);
 			}
 			else
 			{            
 				$verificationResult  = [VerificationResult]::Failed;
 				$message = "All Virtual Machine disks (OS and Data disks) are not encrypted. Validated the status through ASC.";
-				$controlResult.AddMessage($message);
+				$controlResult.AddMessage($verificationResult, $message);
 			}
 		}
 		else
@@ -712,56 +712,52 @@ class VirtualMachine: SVTBase
 
 			if($monitoringStatus -in  $ASCApprovedStatuses)
 			{
-				$controlResult.VerificationResult = [VerificationResult]::Passed
-			}
-			else 
-			  {
-					$isVerfiy= $true;
-					if(-not([string]::IsNullOrEmpty($workspaceId)))
+				$isVerfiy= $true;
+				if(-not([string]::IsNullOrEmpty($workspaceId)))
+				{
+					try
 					{
-						try
+						$result = [OMSHelper]::QueryStatusfromWorkspace($workspaceId,$queryforFailingBaseline);
+						if($null -ne $result -and ($result.Values | Measure-Object).Count -gt 0)
 						{
-							$result = [OMSHelper]::QueryStatusfromWorkspace($workspaceId,$queryforFailingBaseline);
-							if($null -ne $result -and ($result.Values | Measure-Object).Count -gt 0)
+							$vmobject = $result.Values;
+							$failedRules=$vmobject|Select-Object -Property CceId,Description	
+									
+							if($baselineIds.Count -gt 0)
 							{
-								$vmobject = $result.Values;
-								$failedRules=$vmobject|Select-Object -Property CceId,Description	
-										
-								if($baselineIds.Count -gt 0)
-								{
-									$missingBaselines = @();
-									$foundMissingBaseline = $false;
-									$failedBaseline = $vmobject|Where-Object { -not [string]::IsNullOrWhiteSpace($_.CceId) }
-									$failedBaseline|ForEach-Object{
-										$baselineId=$_;
-										if($baselineId.CceId -in $baselineIds)
-										{										
-											$foundMissingBaseline = $true;
-											$missingBaselines += $baselineId;
-										}
-									}
-																		
-									if($foundMissingBaseline)
-									{
-										$isVerfiy= $false;
-										$controlResult.VerificationResult = [VerificationResult]::Failed
-										$failedRules=$missingBaselines|Select-Object -Property Cceid,Description
-										$controlResult.AddMessage("Details of failing Security Center baseline rules for Virtual Machine [$($this.ResourceContext.ResourceName)]:",$failedRules );
-									}
-									else
-									{
-										$isVerfiy= $false;
-										$controlResult.VerificationResult = [VerificationResult]::Passed
+								$missingBaselines = @();
+								$foundMissingBaseline = $false;
+								$failedBaseline = $vmobject|Where-Object { -not [string]::IsNullOrWhiteSpace($_.CceId) }
+								$failedBaseline|ForEach-Object{
+									$baselineId=$_;
+									if($baselineId.CceId -in $baselineIds)
+									{										
+										$foundMissingBaseline = $true;
+										$missingBaselines += $baselineId;
 									}
 								}
+																	
+								if($foundMissingBaseline)
+								{
+									$isVerfiy= $false;
+									$controlResult.VerificationResult = [VerificationResult]::Failed
+									$failedRules=$missingBaselines|Select-Object -Property Cceid,Description
+									$controlResult.AddMessage("Details of failing Security Center baseline rules for Virtual Machine [$($this.ResourceContext.ResourceName)]:",$failedRules );
+								}
+								else
+								{
+									$isVerfiy= $false;
+									$controlResult.VerificationResult = [VerificationResult]::Passed
+								}
 							}
-						}						
-						catch
-						{
-							$this.PublishException($_)
 						}
+					}						
+					catch
+					{
+						$this.PublishException($_)
 					}
 				}
+			}
 		 if($isVerfiy)
 			{
 					$controlResult.VerificationResult = [VerificationResult]::Verify
