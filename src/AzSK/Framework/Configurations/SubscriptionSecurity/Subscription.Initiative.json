@@ -1,0 +1,31 @@
+﻿{
+  "Version": "3.1809.0",         
+  "Name" : "AzSKInitiative-Preview",
+  "DisplayName" : "AzSK Initiative-Preview",
+  "Description" : "Test Description",
+  "Policies" : [
+    {        
+        "policyDefinitionId":  "/providers/Microsoft.Authorization/policyDefinitions/752c6934-9bcc-4749-b004-655e676ae2ac",
+        "parameters":  {
+                           "effect":  {
+                                          "value":  "Audit"
+                                      }
+                       }
+    },
+    {     
+        "policyDefinitionId":  "/providers/Microsoft.Authorization/policyDefinitions/17k78e20-9358-41c9-923c-fb736d382a12",
+        "parameters":  {
+
+                       }
+    },
+    {     
+        "policyDefinitionId":  "/providers/Microsoft.Authorization/policyDefinitions/1f314764-cb73-4fc9-b863-8eca98ac36e9",
+        "parameters":  {
+                           "effect":  {
+                                          "value":  "AuditIfNotExists"
+                                      }
+                       }
+    }
+  ],
+  "DeprecatedInitiatives" : []   
+}

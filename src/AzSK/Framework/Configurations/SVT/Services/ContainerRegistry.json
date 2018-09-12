@@ -18,7 +18,11 @@
           "TCP",
           "Automated",
           "AuthZ"
-        ]
+        ],
+        "FixControl": {
+          "FixMethodName": "DisableAdminAccount",
+          "FixControlImpact": "High"
+        }
       },
       {
         "ControlID": "Azure_ContainerRegistry_AuthZ_Use_SPN_For_Registry_Access",

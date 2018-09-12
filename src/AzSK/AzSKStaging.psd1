@@ -68,7 +68,8 @@
 		@{ModuleName = 'AzureRM.LogicApp'; RequiredVersion = '4.1.4'}
 		@{ModuleName = 'AzureRM.Network'; RequiredVersion = '6.6.1'}
 		@{ModuleName = 'AzureRM.NotificationHubs'; RequiredVersion = '5.0.3'}
-		@{ModuleName = 'AzureRM.OperationalInsights'; RequiredVersion = '5.0.6'}
+        @{ModuleName = 'AzureRM.OperationalInsights'; RequiredVersion = '5.0.6'}
+		@{ModuleName = 'AzureRM.PolicyInsights'; RequiredVersion = '1.0.4'}        
 		@{ModuleName = 'AzureRM.RedisCache'; RequiredVersion = '5.0.5'}		
 		@{ModuleName = 'AzureRM.Resources'; RequiredVersion = '6.4.2'}
 		@{ModuleName = 'AzureRM.Scheduler'; RequiredVersion = '0.16.10'}
@@ -212,4 +213,3 @@
     DefaultCommandPrefix   = ''
 	
 }
-
