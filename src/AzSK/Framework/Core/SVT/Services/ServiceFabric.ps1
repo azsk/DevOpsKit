@@ -73,10 +73,6 @@ class ServiceFabric : SVTBase
 					$controlResult.AddMessage([VerificationResult]::Verify,"Validate if self-signed certificate is not used for cluster management endpoint protection",$this.ResourceObject.Properties.managementEndpoint);
 					$controlResult.SetStateData("Management endpoint", $this.ResourceObject.Properties.managementEndpoint);
 				}
-				elseif($_.Exception.Message.Contains('403'))
-				{
-					$controlResult.AddMessage([VerificationResult]::Passed,"Service Fabric cluster is protected with CA signed certificate");
-				}
 				else
 				{
 					throw $_

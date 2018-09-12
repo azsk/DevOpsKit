@@ -1,8 +1,8 @@
 ﻿Set-StrictMode -Version Latest 
 Class OMSHelper{
 	static [string] $DefaultOMSType = "AzSK"
-	hidden static [int] $isOMSSettingValid = 0  #-1:Fail (OMS Empty, OMS Return Error) | 1:CA | 0:Local
-	hidden static [int] $isAltOMSSettingValid = 0
+	static [int] $isOMSSettingValid = 0  #-1:Fail (OMS Empty, OMS Return Error) | 1:CA | 0:Local
+	static [int] $isAltOMSSettingValid = 0
 	# Create the function to create and post the request
 	static PostOMSData([string] $OMSWorkspaceID, [string] $SharedKey, $Body, $LogType, $OMSType)
 	{

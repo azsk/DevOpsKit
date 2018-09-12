@@ -129,56 +129,43 @@ class AppService: SVTBase
 				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 				$authorisationToken = "Bearer " + $accessToken
 				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
-
-				if([Helpers]::CheckMember($this.WebAppDetails,"EnabledHostNames"))
-				{
-					if((($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('scm') }) | Measure-Object).Count -eq 1)
-					{
-						$scmURL = $this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('scm') }
-						$apiFunctionsUrl = [string]::Format("https://{0}/api/functions",$scmURL)
-					}
-					else
-					{
-						$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
-					}
-				}
-				else
-				{
-					$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
-				}
-				
+				$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
 				$functionDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
 		
-				#check if functions are present in FunctionApp	
-				if([Helpers]::CheckMember($functionDetail,"config"))
-				{
-					$bindingsDetail =$functionDetail.config.bindings
-	   				$ishttpTriggerFunction=$false
-					if(($bindingsDetail| Measure-Object).Count -gt 0)
-					{
-						$bindingsDetail |	 ForEach-Object{
-						if($_.type -eq "httpTrigger" )
-								{
-								$ishttpTriggerFunction=$true
-							}
-						}
-						#if HTTP trigger function is not present, then AAD authentication is not required
-						if(!$ishttpTriggerFunction)
-						{
-							$controlResult.AddMessage([VerificationResult]::Passed,
-									[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is not required."));
-							return $controlResult;
-						}
+			#check if functions are present in FunctionApp	
+			if([Helpers]::CheckMember($functionDetail,"config"))
+			{
+			$bindingsDetail =$functionDetail.config.bindings
+	   		$ishttpTriggerFunction=$false
+			if(($bindingsDetail| Measure-Object).Count -gt 0)
+			{
+			 $bindingsDetail |	 ForEach-Object{
+				if($_.type -eq "httpTrigger" )
+					 {
+						$ishttpTriggerFunction=$true
 					}
 				}
-				#if no function is present in Functions App, then AAD authentication is not required
-				else
+				#if HTTP trigger function is not present, then AAD authentication is not required
+				if(!$ishttpTriggerFunction)
 				{
+
 				$controlResult.AddMessage([VerificationResult]::Passed,
-							[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is not required."));
-				 return $controlResult;
-			
+						[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is not required."));
+				return $controlResult;
+				
 				}
+			
+			}
+	
+			}
+			#if no function is present in Functions App, then AAD authentication is not required
+			else
+			{
+			$controlResult.AddMessage([VerificationResult]::Passed,
+						[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is not required."));
+			 return $controlResult;
+			
+			}
 				
 			}
 

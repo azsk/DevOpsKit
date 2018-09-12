@@ -48,16 +48,7 @@ class SVTCommandBase: CommandBase {
             };
     }
 
-    hidden [void] ClearSingletons()
-    {
-        #clear ASC security status
-        [SecurityCenterHelper]::ASCSecurityStatus = $null;
-    }
-
     hidden [void] CommandStarted() {
-
-        $this.ClearSingletons();
-
         [SVTEventContext] $arg = $this.CreateSVTEventContextObject();
         $this.InitializeControlState();
         #Check if user has permission to read attestation
@@ -102,17 +93,9 @@ class SVTCommandBase: CommandBase {
 
 	[void] PostCommandStartedAction()
 	{
-		$this.PostPolicyComplianceTelemetry()        
+        
 	}
-    [void] PostPolicyComplianceTelemetry()
-	{
-		[CustomData] $customData = [CustomData]::new();
-		$customData.Name = "PolicyComplianceTelemetry";
-		$policyCompliance = Get-AzureRmPolicyState -SubscriptionId $this.SubscriptionContext.SubscriptionId | `
-		Select-Object ResourceId,PolicyDefinitionId,PolicyAssignmentName,IsCompliant,PolicyAssignmentScope
-		$customData.Value = $policyCompliance;
-		$this.PublishCustomData($customData);			
-	}
+
     hidden [void] CommandError([System.Management.Automation.ErrorRecord] $exception) {
         [SVTEventContext] $arg = $this.CreateSVTEventContextObject();
         $arg.ExceptionMessage = $exception;
@@ -142,7 +125,7 @@ class SVTCommandBase: CommandBase {
         $svtObject.ControlIds += $this.ControlIds;
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
-        $svtObject.InvocationContext = $this.InvocationContext;
+        # ToDo: remove InvocationContext, try to pass as param
         # ToDo: Assumption: usercomment will only work when storage report feature flag is enable
         $resourceId = $svtObject.GetResourceId(); 
 		$svtObject.ComplianceStateData = $this.FetchComplianceStateData($resourceId);

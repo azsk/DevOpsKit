@@ -37,7 +37,7 @@ class SubscriptionCore: SVTBase
 		
 		#Compute the policies ahead to get the security Contact Phone number and email id
 		$this.SecurityCenterInstance = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId,$false);
-		$this.MisConfiguredASCPolicies = $this.SecurityCenterInstance.CheckASCCompliance();
+		$this.MisConfiguredASCPolicies = $this.SecurityCenterInstance.GetMisconfiguredPolicies();
 
 		#Fetch AzSKRGTags
 		$azskRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
@@ -452,27 +452,27 @@ class SubscriptionCore: SVTBase
 	{
 		if ($this.SecurityCenterInstance)
 		{
-			#$controlResult.AddMessage([MessageData]::new("Security center policies must be configured with settings mentioned below:", $this.SecurityCenterInstance.Policy.properties));			
+			$controlResult.AddMessage([MessageData]::new("Security center policies must be configured with settings mentioned below:", $this.SecurityCenterInstance.Policy.properties));			
 
-			if(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0)
+			if(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0 -and $this.SecurityCenterInstance.IsLatestVersion)
 			{
 				$controlResult.EnableFixControl = $true;
 
 				$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredASCPolicies);
 				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredASCPolicies));
 			}
-			# elseif(-not $this.SecurityCenterInstance.IsLatestVersion -and $this.SecurityCenterInstance.IsValidVersion)
-			# {
-			# 	$this.PublishCustomMessage("WARNING: The Azure Security Center policies in your subscription are out of date.`nPlease update to the latest version by running command Update-AzSKSubscriptionSecurity.", [MessageType]::Warning);
-			# 	$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Current security center policies are configured as per older policy. To update as per latest configuration, run command Update-AzSKSubscriptionSecurity."));
-			# }
-			# elseif(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0)
-			# {
-			# 	$controlResult.EnableFixControl = $true;
+			elseif(-not $this.SecurityCenterInstance.IsLatestVersion -and $this.SecurityCenterInstance.IsValidVersion)
+			{
+				$this.PublishCustomMessage("WARNING: The Azure Security Center policies in your subscription are out of date.`nPlease update to the latest version by running command Update-AzSKSubscriptionSecurity.", [MessageType]::Warning);
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Current security center policies are configured as per older policy. To update as per latest configuration, run command Update-AzSKSubscriptionSecurity."));
+			}
+			elseif(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0)
+			{
+				$controlResult.EnableFixControl = $true;
 
-			# 	$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredASCPolicies);
-			# 	$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredASCPolicies));
-			# }
+				$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredASCPolicies);
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredASCPolicies));
+			}
 			else
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("All security center policies are correctly configured."));
@@ -565,7 +565,7 @@ class SubscriptionCore: SVTBase
 	hidden [ControlResult] CheckARMPoliciesCompliance([ControlResult] $controlResult)
 	{
 
-		$subARMPol = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "", $false);
+		$subARMPolConfig = [ARMPolicyModel] $this.LoadServerConfigFile("Subscription.ARMPolicies.json"); 
         $output = @()
         $foundMandatoryPolicies = $true
 
@@ -574,36 +574,55 @@ class SubscriptionCore: SVTBase
 		[string] $CurrentVersion = "0.0.0";
 		[string] $LatestVersion = "0.0.0";
 		$AzSKRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-		# $CurrentVersion = [Helpers]::GetResourceGroupTag($AzSKRG, [Constants]::ARMPolicyConfigVersionTagName)
-		# if([string]::IsNullOrWhiteSpace($CurrentVersion))
-		# {
-		# 	$CurrentVersion = "0.0.0"
-		# }
-		# $minSupportedVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKARMPolMinReqdVersion 
-		# $IsLatestVersion = $this.IsLatestVersionConfiguredOnSub($subARMPolConfig.Version,[Constants]::ARMPolicyConfigVersionTagName);
-		# $IsValidVersion = $this.IsLatestVersionConfiguredOnSub($subARMPolConfig.Version,[Constants]::ARMPolicyConfigVersionTagName) -or [System.Version]$minSupportedVersion -le [System.Version]$CurrentVersion ;
-		# $LatestVersion = $subARMPolConfig.Version;
+		$CurrentVersion = [Helpers]::GetResourceGroupTag($AzSKRG, [Constants]::ARMPolicyConfigVersionTagName)
+		if([string]::IsNullOrWhiteSpace($CurrentVersion))
+		{
+			$CurrentVersion = "0.0.0"
+		}
+		$minSupportedVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKARMPolMinReqdVersion 
+		$IsLatestVersion = $this.IsLatestVersionConfiguredOnSub($subARMPolConfig.Version,[Constants]::ARMPolicyConfigVersionTagName);
+		$IsValidVersion = $this.IsLatestVersionConfiguredOnSub($subARMPolConfig.Version,[Constants]::ARMPolicyConfigVersionTagName) -or [System.Version]$minSupportedVersion -le [System.Version]$CurrentVersion ;
+		$LatestVersion = $subARMPolConfig.Version;
 
-        $nonCompliantPolicies = $subARMPol.ValidatePolicyConfiguration();
+        if($null -ne $subARMPolConfig)
+        {            
+			$currentPolicyAssignments = Get-AzureRMPolicyAssignment;
+            $subARMPolConfig.Policies | ForEach-Object{
+                Set-Variable -Name pol -Scope Local -Value $_
+                Set-Variable -Name polEnabled -Scope Local -Value $_.enabled
+                Set-Variable -Name policyDefinitionName -Scope Local -Value $_.policyDefinitionName
+                Set-Variable -Name tags -Scope Local -Value $_.tags
+                $haveMatchedTags = ((($tags | Where-Object { $this.SubscriptionMandatoryTags -contains $_ }) | Measure-Object).Count -gt 0)
+                if($polEnabled -and $haveMatchedTags)
+                {
+                    $mandatoryPolicies = [array]($currentPolicyAssignments | Where-Object {$_.Name -eq $policyDefinitionName})
+                    if($null -eq $mandatoryPolicies -or ($mandatoryPolicies | Measure-Object).Count -le 0)
+                    {
+                        $foundMandatoryPolicies = $false
+                        $output += $pol
+                    }
+                }
+            }
+        }
 
-        if(($nonCompliantPolicies | Measure-Object).Count -le 0)
+        if($foundMandatoryPolicies)
         {
             $controlResult.AddMessage([VerificationResult]::Passed, "Found all the mandatory policies on the Subscription.");
         }
-		# elseif(-not $IsLatestVersion -and $IsValidVersion)
-		# {
-		# 	$this.PublishCustomMessage("WARNING: The Azure Resource Manager policies in your subscription are out of date.`nPlease update to the latest version by running command Update-AzSKSubscriptionSecurity.", [MessageType]::Warning);			
-		# 	$controlResult.AddMessage([VerificationResult]::Passed, "ARM policies has been configured with older policy on the subscription. To update as per latest configuration, run command Update-AzSKSubscriptionSecurity.");
-		# }
+		elseif(-not $IsLatestVersion -and $IsValidVersion)
+		{
+			$this.PublishCustomMessage("WARNING: The Azure Resource Manager policies in your subscription are out of date.`nPlease update to the latest version by running command Update-AzSKSubscriptionSecurity.", [MessageType]::Warning);			
+			$controlResult.AddMessage([VerificationResult]::Passed, "ARM policies has been configured with older policy on the subscription. To update as per latest configuration, run command Update-AzSKSubscriptionSecurity.");
+		}
         else
         {
-			# $controlResult.EnableFixControl = $true;
-			# if($controlResult.FixControlParameters)
-			# {
-			# 	$controlResult.FixControlParameters.Tags = $this.SubscriptionMandatoryTags;
-			# }
-			$controlResult.SetStateData("Missing ARM policies", $nonCompliantPolicies);
-			$controlResult.AddMessage([VerificationResult]::Failed, "Some of the mandatory policies are missing]", $nonCompliantPolicies);
+			$controlResult.EnableFixControl = $true;
+			if($controlResult.FixControlParameters)
+			{
+				$controlResult.FixControlParameters.Tags = $this.SubscriptionMandatoryTags;
+			}
+			$controlResult.SetStateData("Missing ARM policies", $output);
+			$controlResult.AddMessage([VerificationResult]::Failed, "Some of the mandatory policies are missing which are demanded by the control tags [$([string]::Join(", ", $this.SubscriptionMandatoryTags))]", $output);
         }
 		return $controlResult
 	}
@@ -785,13 +804,12 @@ class SubscriptionCore: SVTBase
 
 		$whitelistedCustomRoleIds = @();
 		$whitelistedCustomRoleIds += $this.ControlSettings.WhitelistedCustomRBACRoles | Select-Object -Property Id | Select-Object -ExpandProperty Id
-		$CustomRBACAssignedRolesCount=0;
+
 		$customRoles += Get-AzureRmRoleDefinition -Custom | Where-Object { $whitelistedCustomRoleIds -notcontains $_.Id };
 		$customRoles | ForEach-Object {
 			$role = $_;
 			$roleWithAssignment = $role | Select-Object *, RoleAssignmentCount;
 			$roleWithAssignment.RoleAssignmentCount = ($this.RoleAssignments | Where-Object { $_.RoleDefinitionId -eq $role.Id } | Measure-Object).Count;
-			$CustomRBACAssignedRolesCount+=$roleWithAssignment.RoleAssignmentCount;
 			$customRolesWithAssignment += $roleWithAssignment;
 		}
 
@@ -800,15 +818,14 @@ class SubscriptionCore: SVTBase
             $controlResult.AddMessage("No. of whitelisted custom RBAC roles: $($whitelistedCustomRoleIds.Count)", $this.ControlSettings.WhitelistedCustomRBACRoles);
 		}
 
-        if($CustomRBACAssignedRolesCount -eq 0)
+        if($customRoles.Count -gt 0)
         {
-			$controlResult.AddMessage([VerificationResult]::Passed, "No custom RBAC definitions with active role assignments found. ")
-		}
+			$controlResult.SetStateData("Custom RBAC definitions", $customRoles);
+            $controlResult.AddMessage([VerificationResult]::Verify, "Found custom RBAC definitions`r`nNo. of custom RBAC roles with role assignment count: $($customRolesWithAssignment.Count)", $customRolesWithAssignment)
+        }
         else
-        {			
-			$controlResult.SetStateData("Custom RBAC definitions", $customRoles)
-			$out=$customRolesWithAssignment| Select-Object Name,Description,Id,RoleAssignmentCount;
-            $controlResult.AddMessage([VerificationResult]::Verify, "Found $($customRolesWithAssignment.Count) custom RBAC definitions`r`nCustom RBAC roles with role assignment count: `n", $out);
+        {
+			$controlResult.AddMessage([VerificationResult]::Passed, "No custom RBAC definitions found. ")
         }
 
 		return $controlResult

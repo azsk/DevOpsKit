@@ -143,79 +143,71 @@ class WriteCAStatus: ListenerBase
             try
             {	
                 $CustomDataObj =  $Event.SourceArgs
-                $CustomObjectData=$CustomDataObj| Select-Object -exp Messages| Select-Object -exp DataObject
+				$CustomObjectData=$CustomDataObj| Select-Object -exp Messages| Select-Object -exp DataObject
+                $ResourceControlsData = $CustomObjectData.Value;
+				if($null -ne $ResourceControlsData.ResourceContext -and ($ResourceControlsData.Controls | Measure-Object).Count -gt 0)
+                {
+                    $ResourceControlsDataMini = "" | Select-Object ResourceName, ResourceGroupName, ResourceId, Controls, ChildResourceNames
+                    $ResourceControlsDataMini.ResourceName = $ResourceControlsData.ResourceContext.ResourceName;
+                    $ResourceControlsDataMini.ResourceGroupName = $ResourceControlsData.ResourceContext.ResourceGroupName;
+                    $ResourceControlsDataMini.ResourceId = $ResourceControlsData.ResourceContext.ResourceId;
+                    $ResourceControlsDataMini.ChildResourceNames = $ResourceControlsData.ChildResourceNames;
+                    $controls = @();
+                    $ResourceControlsData.Controls | ForEach-Object {
+                        $control = "" | Select-Object ControlStringId, ControlId;
+                        $control.ControlStringId = $_.ControlId;
+                        $control.ControlId = $_.Id;
+                        $controls += $control;
+                    }
+                    $ResourceControlsDataMini.Controls = $controls;            
 
-                if($CustomObjectData.Name -eq "PolicyComplianceTelemetry")
-                {
-                    [RemoteApiHelper]::PostPolicyComplianceTelemetry($CustomObjectData.Value);
-                }   
-                else
-                {
-                    $ResourceControlsData = $CustomObjectData.Value;
-                    if($null -ne $ResourceControlsData.ResourceContext -and ($ResourceControlsData.Controls | Measure-Object).Count -gt 0)
+                    #compute hash for the given resource
+                    $props = $Event.SourceArgs[0];
+                    $version = $currentInstance.InvocationContext.MyCommand.Version
+
+                    if($null -ne $props)
                     {
-                        $ResourceControlsDataMini = "" | Select-Object ResourceName, ResourceGroupName, ResourceId, Controls, ChildResourceNames
-                        $ResourceControlsDataMini.ResourceName = $ResourceControlsData.ResourceContext.ResourceName;
-                        $ResourceControlsDataMini.ResourceGroupName = $ResourceControlsData.ResourceContext.ResourceGroupName;
-                        $ResourceControlsDataMini.ResourceId = $ResourceControlsData.ResourceContext.ResourceId;
-                        $ResourceControlsDataMini.ChildResourceNames = $ResourceControlsData.ChildResourceNames;
-                        $controls = @();
-                        $ResourceControlsData.Controls | ForEach-Object {
-                            $control = "" | Select-Object ControlStringId, ControlId;
-                            $control.ControlStringId = $_.ControlId;
-                            $control.ControlId = $_.Id;
-                            $controls += $control;
-                        }
-                        $ResourceControlsDataMini.Controls = $controls;            
+                        [string[]] $partitionKeys = @();       
+                        [ComplianceStateTableEntity[]] $RecordsToBeDeleted = @();         
+                        $partitionKey = [Helpers]::ComputeHash($ResourceControlsDataMini.ResourceId.ToLower());                
+                        $partitionKeys += $partitionKey
+                        $complianceReportHelper = [ComplianceReportHelper]::new($props.SubscriptionContext, $version); 
 
-                        #compute hash for the given resource
-                        $props = $Event.SourceArgs[0];
-                        $version = $currentInstance.InvocationContext.MyCommand.Version
+                        $ComplianceStateData = $null;
 
-                        if($null -ne $props)
+                        if($complianceReportHelper.HaveRequiredPermissions())
                         {
-                            [string[]] $partitionKeys = @();       
-                            [ComplianceStateTableEntity[]] $RecordsToBeDeleted = @();         
-                            $partitionKey = [Helpers]::ComputeHash($ResourceControlsDataMini.ResourceId.ToLower());                
-                            $partitionKeys += $partitionKey
-                            $complianceReportHelper = [ComplianceReportHelper]::new($props.SubscriptionContext, $version); 
-
-                            $ComplianceStateData = $null;
-
-                            if($complianceReportHelper.HaveRequiredPermissions())
-                            {
-                                $ComplianceStateData = $complianceReportHelper.GetSubscriptionComplianceReport($partitionKeys); 
-                            }
-                            
-                            if(($ComplianceStateData | Measure-Object).Count -gt 0)
-                            {
-                                $ComplianceStateData | ForEach-Object {
-                                    $row = $_;
-                                    if(($ResourceControlsDataMini.Controls | Where-Object { $_.ControlId -eq $row.ControlIntId} | Measure-Object).Count -gt 0)
-                                    {
-                                        if(-not [string]::IsNullOrWhiteSpace($row.ChildResourceName))
-                                        {
-                                            if(($ResourceControlsDataMini.ChildResourceNames | Where-Object {$_ -eq $row.ChildResourceName} | Measure-Object).Count -le 0)
-                                            {
-                                                $row.IsActive = $false;
-                                                $RecordsToBeDeleted += $row;
-                                            }
-                                        }                            
-                                    }
-                                    else {
-                                        $row.IsActive = $false;
-                                        $RecordsToBeDeleted += $row;
-                                    }
-                                }
-                                if(($RecordsToBeDeleted | Measure-Object).Count -gt 0)
+                            $ComplianceStateData = $complianceReportHelper.GetSubscriptionComplianceReport($partitionKeys); 
+                        }
+                        
+                        if(($ComplianceStateData | Measure-Object).Count -gt 0)
+                        {
+                            $ComplianceStateData | ForEach-Object {
+                                $row = $_;
+                                if(($ResourceControlsDataMini.Controls | Where-Object { $_.ControlId -eq $row.ControlIntId} | Measure-Object).Count -gt 0)
                                 {
-                                    $complianceReportHelper.SetLocalSubscriptionScanReport($RecordsToBeDeleted);
+                                    if(-not [string]::IsNullOrWhiteSpace($row.ChildResourceName))
+                                    {
+                                        if(($ResourceControlsDataMini.ChildResourceNames | Where-Object {$_ -eq $row.ChildResourceName} | Measure-Object).Count -le 0)
+                                        {
+                                            $row.IsActive = $false;
+                                            $RecordsToBeDeleted += $row;
+                                        }
+                                    }                            
                                 }
+                                else {
+                                    $row.IsActive = $false;
+                                    $RecordsToBeDeleted += $row;
+                                }
+                            }
+                            if(($RecordsToBeDeleted | Measure-Object).Count -gt 0)
+                            {
+                                $complianceReportHelper.SetLocalSubscriptionScanReport($RecordsToBeDeleted);
                             }
                         }
                     }
-                    
                 }
+				
             }
             catch
             {

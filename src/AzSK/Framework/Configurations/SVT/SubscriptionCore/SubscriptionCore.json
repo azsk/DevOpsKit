@@ -27,7 +27,7 @@
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "ValidateCentralAccountsRBAC",
-      "Recommendation": "There are 2 steps involved. (1) You need to remove any 'Classic Administrators/Co-Administrators/Owners' who should not be in the role. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Subscriptions (c) Select the subscription (d) Go to ‘Access Control (IAM)’ (e) Right click the co-administrator account that has to be removed and click on the ‘Remove co-administrator’. (f) Perform this operation for all the co-administrators that need to be removed from the subscription. (2) You need to remove any unwanted members from the Owners group. To do this simply run the command 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName Owner'.",
+      "Recommendation": "There are 2 steps involved. (1) You need to remove any 'Classic Administrators/Co-Administrators' who should not be in the role. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Subscriptions (c) Select the subscription (d) Go to ‘Access Control (IAM)’ (e) Right click the co-administrator account that has to be removed and click on the ‘Remove co-administrator’. (f) Perform this operation for all the co-administrators that need to be removed from the subscription. (2) You need to remove any unwanted members from the Owners group. To do this simply run the command 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName Owner'.",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -230,7 +230,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckAzureSecurityCenterAlerts",
-      "Recommendation": "You need to address all active alerts on Azure Security Center. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Security Center. (c) Click on Security Alerts under 'Threat Protection' category. (d) Take appropriate actions on all active alerts.",
+      "Recommendation": "You need to address all active alerts on Azure Security Center. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Security Center. (c) Click on Security Alerts under Detection category. (d) Take appropriate actions on all pending alerts.",
       "Tags": [
         "SDL",
         "TCP",
@@ -425,7 +425,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckPermanentRoleAssignments",
-      "Recommendation": "Use Privileged Identity Management (PIM) to grant access to privileged roles at subscription scope. To remove existing assignments run: 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName {RoleDefinitionName}'. Refer https://docs.microsoft.com/en-us/azure/active-directory/privileged-identity-management/azure-pim-resource-rbac#assign-roles.",
+      "Recommendation": "Use Privileged Identity Management (PIM) to grant access to privileged roles at subscription scope. To remove existing assignments run: 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName {RoleDefinitionName}'. Refer https://docs.microsoft.com/en-us/azure/active-  directory/privileged-identity-management/azure-pim-resource-rbac#assign-roles.",
       "Tags": [
         "SDL",
         "Automated",

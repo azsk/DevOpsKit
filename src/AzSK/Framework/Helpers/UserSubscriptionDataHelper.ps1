@@ -3,7 +3,6 @@ Set-StrictMode -Version Latest
 class UserSubscriptionDataHelper: AzSKRoot
 {
 	hidden static [string] $ResourceGroupName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-	hidden static [string] $ResourceGroupLocation = [ConfigurationManager]::GetAzSKConfigData().AzSKLocation
 	hidden static [string] $AutomationAccountName = [Constants]::AutomationAccountName
 	hidden static [string] $StorageResourceType = "Microsoft.Storage/storageAccounts";
 
@@ -17,11 +16,6 @@ class UserSubscriptionDataHelper: AzSKRoot
 	{
 		return [UserSubscriptionDataHelper]::ResourceGroupName
 	}
-	static [PSObject] GetUserSubscriptionRGLocation()
-	{
-		return [UserSubscriptionDataHelper]::ResourceGroupLocation
-	}
-
 	static [PSObject] GetUserSubscriptionRG()
 	{
 		$ResourceGroup = Get-AzureRmResourceGroup -Name $([UserSubscriptionDataHelper]::ResourceGroupName) -ErrorAction Stop

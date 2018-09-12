@@ -94,7 +94,7 @@
         "SOX",
         "SqlDatabase"
       ],
-      "Enabled": false,
+      "Enabled": true,
       "FixControl": {
         "FixMethodName": "EnableDatabaseThreatDetection",
         "FixControlImpact": "Low",
@@ -233,7 +233,7 @@
         "SOX",
         "SqlDatabase"
       ],
-      "Enabled": false,
+      "Enabled": true,
       "FixControl": {
         "FixMethodName": "EnableDatabaseAuditingPolicy",
         "FixControlImpact": "Low",

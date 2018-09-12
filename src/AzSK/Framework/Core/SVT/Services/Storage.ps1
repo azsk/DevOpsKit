@@ -428,10 +428,8 @@ class Storage: SVTBase
 				$controlResult.AddMessage([VerificationResult]::Passed,[MessageData]::new("The CORS feature has not been enabled on this storage account."));
 				}
 		   else{
-		       
 				$allowAllOrigins = @($corsRules | ForEach-Object{$_.AllowedOrigins.Contains("*")}).Contains($true)
-				$allowAllMethods = @($corsRules | ForEach-Object{$_.AllowedMethods.Count}).Contains(7)	
-				$controlResult.SetStateData("Following CORS rule(s) are defined in storage:",$corsRules);
+				$allowAllMethods = @($corsRules | ForEach-Object{$_.AllowedMethods.Count}).Contains(7)
 				if($allowAllOrigins){
 					$controlResult.AddMessage([VerificationResult]::Failed,[MessageData]::new("CORS rule is defined in storage with access from all origins ('*')"));
 					}
@@ -439,7 +437,7 @@ class Storage: SVTBase
 					$controlResult.AddMessage([VerificationResult]::Verify,[MessageData]::new("CORS rule is defined in storage with all type of request methods(verbs) and access from specific origins"));
 					}
 				elseif(-not $allowAllOrigins -and -not $allowAllMethods){
-					$controlResult.AddMessage([VerificationResult]::Verify,[MessageData]::new("CORS rule is defined in storage with specific request methods(verbs) and access from specific origins"));
+					$controlResult.AddMessage([VerificationResult]::Passed,[MessageData]::new("CORS rule is defined in storage with specific request methods(verbs) and access from specific origins"));
 					}
 				}		   		   			 
 		  }

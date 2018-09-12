@@ -358,21 +358,11 @@ function FindNearestSchedule($intervalInMins)
 	$finalSchedule = Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
 	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*" -and ($_.ExpiryTime.UtcDateTime -gt $(get-date).ToUniversalTime()) -and ($_.NextRun.UtcDateTime -ge $desiredNextRun)} | `
 	Sort-Object -Property NextRun | Select-Object -First 1
-    if(($finalSchedule|Measure-Object).Count -eq 0)
-    {
-        $finalSchedule = Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
-        Where-Object {$_.Name -ilike "*$CAHelperScheduleName*" -and ($_.ExpiryTime.UtcDateTime -gt $(get-date).ToUniversalTime()) -and ($_.NextRun.UtcDateTime -le $desiredNextRun)} | `
-        Sort-Object -Property NextRun -Descending | Select-Object -First 1
-    }
-    return $finalSchedule
+	return $finalSchedule
 }
 function EnableHelperSchedule($scheduleName)
 {
-    if(($scheduleName|Measure-Object).Count -gt 1)
-    {
-        $scheduleName = $scheduleName[0]
-    }
-    #Enable only required schedule and disable others
+	#Enable only required schedule and disable others
 	$enabledSchedule = Set-AzureRmAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true -ErrorAction SilentlyContinue
 	if(($enabledSchedule|Measure-Object).Count -gt 0 -and $enabledSchedule.IsEnabled)
 	{

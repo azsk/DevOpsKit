@@ -71,7 +71,7 @@ function Install-AzSKContinuousAssurance
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
         [string]
 		[Alias("loc")]
-		$AutomationAccountLocation,
+		$AutomationAccountLocation="EastUS2",
 
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]

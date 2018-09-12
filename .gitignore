@@ -188,7 +188,7 @@ GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
 
-*.dll
+#*.dll
 *.exe
 *.pubxml
 **/packages/*

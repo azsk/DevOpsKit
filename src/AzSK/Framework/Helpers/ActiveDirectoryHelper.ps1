@@ -142,7 +142,6 @@ class ActiveDirectoryHelper {
 			}
 			
 		}
-		
 		static [void] UpdateADAppCredential(
 			$ApplicationID,
 			[System.Security.Cryptography.X509Certificates.X509Certificate2]
@@ -159,6 +158,7 @@ class ActiveDirectoryHelper {
 			$TenantId = ([Helpers]::GetCurrentRMContext()).Tenant.Id
 			$ApiVersion = "1.6"
 			$GraphApiUrl = [WebRequestHelper]::GraphApiUri + $TenantId + "/applications/{0}?api-version=$ApiVersion"
+			$addMode = $False;
 			$startDateString = $NotBefore.ToString("O");
 			$endDateString = $NotAfter.ToString("O");
 
@@ -171,8 +171,16 @@ class ActiveDirectoryHelper {
 			}
 
 			$ADApplication =  [ActiveDirectoryHelper]::GetADAppByAppId($ApplicationID)
+
 			if($Delete -eq "False")
 			{
+				if($null -eq $ADApplication)
+				{
+					$addMode = $True;
+					$ADApplication = New-Object -TypeName PSObject;
+					$ADApplication | Add-Member -MemberType NoteProperty -Name appId -Value $ApplicationID -PassThru
+				}
+
 				$publicCertString = [System.Convert]::ToBase64String($PublicCert.GetRawCertData());
 
 				$credentialObject = New-Object -TypeName PSObject
@@ -181,11 +189,12 @@ class ActiveDirectoryHelper {
 
 				$credentialObject | Add-Member -MemberType NoteProperty -Name type -Value "AsymmetricX509Cert" -PassThru `
 										| Add-Member -MemberType NoteProperty -Name usage -Value "Verify" -PassThru `
-                                        | Add-Member -MemberType NoteProperty -Name value -Value $publicCertString
-                if ([bool](Get-Member -InputObject $ADApplication -Name "keyCredentials"))
+										| Add-Member -MemberType NoteProperty -Name value -Value $publicCertString
+
+				if ([bool](Get-Member -InputObject $ADApplication -Name "keyCredentials"))
 				{
 					[System.Collections.ArrayList]$keys = $ADApplication.keyCredentials
-					$keys.Add($credentialObject)
+					$credentialList = $keys.Add($credentialObject)
 					$ADApplication.keyCredentials = $keys
 				}
 				else
@@ -204,13 +213,23 @@ class ActiveDirectoryHelper {
 			{
 				$ADApplication.keyCredentials = @()
 			}
-		    $finalCredsObject = $ADApplication | Select-Object -Property keyCredentials
-			$body = ConvertTo-Json -InputObject $finalCredsObject 
+			$ADApplication = $ADApplication | Select-Object * -ExcludeProperty "requiredResourceAccess" 
+
+			$body = ConvertTo-Json -InputObject $ADApplication
 			$operation = [string]::Empty;
 			$requestUri = [string]::Empty;
 			$GraphAPIAccessToken = Get-AzSKAccessToken -ResourceAppIdURI "https://graph.windows.net/";
-			$operation = "PATCH";
-			$requestUri = [string]::Format($GraphApiUrl, $ADApplication.objectId);
+			if($addMode)
+			{
+				$operation = "POST";
+				$requestUri = [string]::Format($GraphApiUrl, [string]::Empty);
+			}
+			else
+			{
+				$operation = "PATCH";
+				$requestUri = [string]::Format($GraphApiUrl, $ADApplication.objectId);
+			}
+
 			$updateResult = Invoke-RestMethod `
 							-Method $operation `
 							-Uri $requestUri `
@@ -224,7 +243,6 @@ class ActiveDirectoryHelper {
 				 Throw "There was a problem while updating the service principal with new certificate"    
 			}
 	}
-
 		static [PSObject] NewSelfSignedCertificate($AppName,$CertStartDate,$CertEndDate,$Provider)
 		{
 				$newCertificate = New-SelfSignedCertificate -DnsName $AppName `

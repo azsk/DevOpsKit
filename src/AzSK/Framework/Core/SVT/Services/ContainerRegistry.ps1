@@ -20,7 +20,8 @@ class ContainerRegistry: SVTBase
     {
         if (-not $this.ResourceObject) 
 		{
-            $this.ResourceObject = Get-AzureRmContainerRegistry -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+            $this.ResourceObject = Get-AzureRmResource -ResourceName $this.ResourceContext.ResourceName `
+											-ResourceGroupName $this.ResourceContext.ResourceGroupName -ExpandProperties
 
             if(-not $this.ResourceObject)
             {
@@ -35,12 +36,11 @@ class ContainerRegistry: SVTBase
 
 	hidden [ControlResult] CheckAdminUserStatus([ControlResult] $controlResult)
     {
-		$isAdminUserEnabled = $this.ResourceObject.AdminUserEnabled
+		$isAdminUserEnabled = $this.ResourceObject.Properties.adminUserEnabled
 		
 		if($isAdminUserEnabled)
 		{
-			$controlResult.EnableFixControl = $true;
-            $controlResult.VerificationResult = [VerificationResult]::Failed
+			$controlResult.VerificationResult = [VerificationResult]::Failed
 		}
 		else
 		{

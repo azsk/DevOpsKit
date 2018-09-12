@@ -226,11 +226,9 @@ class KeyVault: SVTBase
 				}
 				else 
 				{
-					$nonHsmKeysDetails = $nonHsmKeys | Select-Object Name, Version -ExpandProperty Attributes;
-					$controlResult.SetStateData("Keys not protected by HSM", $nonHsmKeysDetails);
 					$controlResult.AddMessage([VerificationResult]::Failed,
 						[MessageData]::new("Following Keys, including previous versions, are not protected by HSM."  , 
-								($nonHsmKeysDetails )));
+								($nonHsmKeys | Select-Object Name, Version -ExpandProperty Attributes )));
 				}
 			}
 			else
@@ -291,7 +289,6 @@ class KeyVault: SVTBase
           
                     if (($outputList | Where-Object { ($_.Compliance -eq "No") } | Measure-Object ).Count -gt 0)
                     {
-						$controlResult.SetStateData("Compliance details of Azure Active Directory applications:", $outputList);
                         $controlResult.AddMessage([VerificationResult]::Failed ,
                                                   [MessageData]::new("Remove the password credentials from Azure AD Applications which are non-compliant.") );
                     }
@@ -359,12 +356,9 @@ class KeyVault: SVTBase
 			if($withoutExpiry.Count -gt 0)
 			{
 				# result = Failed
-				$withoutExpiryDetails = $withoutExpiry | Select-Object -Property Name, Version -ExpandProperty Attributes;
-				$controlResult.SetStateData("Following $resourceType, including previous versions, does not have expiry date.", 
-				($withoutExpiryDetails));
 				$this.SetVerificationResultForExpiryDate($controlResult, [VerificationResult]::Failed, $isAccessDenied)
 				$controlResult.AddMessage([MessageData]::new("Following $resourceType, including previous versions, does not have expiry date.", 
-														($withoutExpiryDetails) ));
+														($withoutExpiry | Select-Object -Property Name, Version -ExpandProperty Attributes) ));
 			}
 
 			$longActiveResources = @(); # VerificationResult = Failed
@@ -412,29 +406,20 @@ class KeyVault: SVTBase
 			# Display summary messages
 			if ($longActiveResources.Count -gt 0)
 			{
-				$longActiveResourcesDetails = $longActiveResources | Select-Object -Property Name, Version -ExpandProperty Attributes;
-				$controlResult.SetStateData("Following $resourceType, including previous versions, are more than $rotationDurationDays days old.", 
-				($longActiveResourcesDetails ) );
 				$controlResult.AddMessage([MessageData]::new("Following $resourceType, including previous versions, are more than $rotationDurationDays days old.", 
-											($longActiveResourcesDetails ) ));
+											($longActiveResources | Select-Object -Property Name, Version -ExpandProperty Attributes ) ));
 			}
 
 			if ($needToDisableResources.Count -gt 0)
 			{
-				$needToDisableResourcesDetails = $needToDisableResources | Select-Object -Property Name, Version -ExpandProperty Attributes;
-				$controlResult.SetStateData("Following $resourceType, including previous versions, are expired but 'Enabled'.", 
-				($needToDisableResourcesDetails ) );
 				$controlResult.AddMessage([MessageData]::new("Following $resourceType, including previous versions, are expired but 'Enabled'.", 
-											($needToDisableResourcesDetails ) ));
+											($needToDisableResources | Select-Object -Property Name, Version -ExpandProperty Attributes ) ));
 			}
 
 			if ($needToRotateResources.Count -gt 0)
 			{
-				$needToRotateResourcesDetails = $needToRotateResources | Select-Object -Property Name, Version -ExpandProperty Attributes;
-				$controlResult.SetStateData("Following $resourceType, including previous versions, are about to expire within next 30 days. Please rotate the $resourceType.", 
-				($needToRotateResourcesDetails ) );
 				$controlResult.AddMessage([MessageData]::new("Following $resourceType, including previous versions, are about to expire within next 30 days. Please rotate the $resourceType.", 
-											($needToRotateResourcesDetails ) ));
+											($needToRotateResources | Select-Object -Property Name, Version -ExpandProperty Attributes ) ));
 			}
 		}
 		else

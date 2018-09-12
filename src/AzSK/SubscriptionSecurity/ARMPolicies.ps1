@@ -22,8 +22,6 @@ function Set-AzSKARMPolicies
 		Subscription id for which the security evaluation has to be performed.
 	.PARAMETER Tag
 		Provide tag names for processing specific policies. Comma separated values are supported.
-	.PARAMETER UpdateInitiative
-		Provide -UpdateInitiative switch to update initiative with latest policies.
 	.PARAMETER Force
 		Switch to apply subscription security configuration forcefully regardless of latest updates already present on subscription.
 	.PARAMETER DoNotOpenOutputFolder
@@ -43,11 +41,6 @@ function Set-AzSKARMPolicies
 		[string] 
 		[Parameter(Mandatory = $false, HelpMessage = "Provide tag names for processing specific policies. Comma separated values are supported.")]
 		$Tags,
-
-		[switch] 
-		[Parameter(Mandatory = $false, HelpMessage = "Provide -UpdateInitiative switch to update initiative with latest policies")]
-		[Alias("ui")]
-		$UpdateInitiative,
 		
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to apply ARM policies forcefully regardless of latest policies already present on subscription.")]
@@ -76,14 +69,8 @@ function Set-AzSKARMPolicies
 			{
 				$modifiedTags = $modifiedTags + "," +$Tags;
 			}
-			$_updateInitiative = $false
-			if($UpdateInitiative)
-			{
-				$_updateInitiative = $true
-			}
-			
 
-			$armPolicy = [ARMPolicy]::new($SubscriptionId, $PSCmdlet.MyInvocation, $modifiedTags, $_updateInitiative);
+			$armPolicy = [ARMPolicy]::new($SubscriptionId, $PSCmdlet.MyInvocation, $modifiedTags);
 			if ($armPolicy) 
 			{
 				return $armPolicy.InvokeFunction($armPolicy.SetARMPolicies);
@@ -157,7 +144,7 @@ function Remove-AzSKARMPolicies
 	    try 
 		{
 
-			$armPolicy = [ARMPolicy]::new($SubscriptionId, $PSCmdlet.MyInvocation, $Tags, $false);
+			$armPolicy = [ARMPolicy]::new($SubscriptionId, $PSCmdlet.MyInvocation, $Tags);
 			if ($armPolicy) 
 			{
 				return $armPolicy.InvokeFunction($armPolicy.RemoveARMPolicies);
