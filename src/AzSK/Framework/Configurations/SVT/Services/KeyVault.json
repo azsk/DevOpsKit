@@ -122,7 +122,9 @@
             "TCP",
             "Automated",
             "DP",
-            "KeyRotation"
+            "KeyRotation",
+            "OwnerAccess",
+            "KeyVaultAccess"
          ],
          "Enabled": true
       },
