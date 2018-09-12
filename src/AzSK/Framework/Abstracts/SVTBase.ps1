@@ -14,7 +14,7 @@ class SVTBase: AzSKRoot
     hidden [ControlItem[]] $ApplicableControls = $null;
 	hidden [ControlItem[]] $FeatureApplicableControls = $null;
 	[string[]] $ChildResourceNames = $null;
-
+	[System.Net.SecurityProtocolType] $currentSecurityProtocol;
 	[string[]] $FilterTags = @();
 	[string[]] $ExcludeTags = @();
 	[string[]] $ControlIds = @();
@@ -335,6 +335,12 @@ class SVTBase: AzSKRoot
 	}
 	[void] PostTelemetry()
 	{
+	    # Setting the protocol for databricks
+		if($this.ResourceObject.ResourceType -eq "Microsoft.Databricks/workspaces")
+		{
+			$this.currentSecurityProtocol = [Net.ServicePointManager]::SecurityProtocol
+			[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+		}
 		$this.PostFeatureControlTelemetry()
 	}
 	[void] PostFeatureControlTelemetry()
@@ -685,6 +691,11 @@ class SVTBase: AzSKRoot
     }
 	hidden [void] PostEvaluationCompleted([SVTEventContext[]] $ControlResults)
 	{
+	    # If ResourceType is Databricks, reverting security protocol 
+		if($this.ResourceObject.ResourceType -eq "Microsoft.Databricks/workspaces")
+		{
+		  [Net.ServicePointManager]::SecurityProtocol = $this.currentSecurityProtocol 
+		}
 		$this.UpdateControlStates($ControlResults);
 	}
 
