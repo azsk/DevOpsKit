@@ -332,7 +332,7 @@ class Databricks: SVTBase
 	hidden [string] ReadAccessToken()
 	{ 
 	     $scanSource = [RemoteReportHelper]::GetScanSource();
-         if($scanSource -ne [ScanSource]::SpotCheck)
+         if($scanSource -eq [ScanSource]::SpotCheck)
 		 { 
 		   $input = Read-Host "Enter PAT(personal access token) for '$($this.ResourceContext.ResourceName)' workspace"
            $input = $input.Trim()
