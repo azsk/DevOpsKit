@@ -52,6 +52,7 @@ class SVTCommandBase: CommandBase {
     {
         #clear ASC security status
         [SecurityCenterHelper]::ASCSecurityStatus = $null;
+        [SecurityCenterHelper]::Recommendations = $null;
     }
 
     hidden [void] CommandStarted() {
