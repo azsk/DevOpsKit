@@ -423,17 +423,21 @@ class ARMPolicy: CommandBase
 					{
 						#eat this exception as erroraction is not working
 					}
+					$assignmentName = $initiativeName + "-assignment"
+					$assignmentDisplayName = $this.SubPolicyInitiative.DisplayName + " assignment"
+					$scope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"
 					if($null -eq $initiative)
 					{
 						$this.PublishCustomMessage("Creating new AzSK Initiative...", [MessageType]::Update);		
 						$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
 						$setDefnObj = New-AzureRmPolicySetDefinition -Name $this.SubPolicyInitiative.Name -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions
-						New-AzureRmPolicyAssignment -Name '$($initiativeName)_assignment' -Scope '/subscriptions/abb5301a-22a4-41f9-9e5f-99badff261f8' -PolicySetDefinition $setDefnObj 
+						New-AzureRmPolicyAssignment -Name $assignmentName -DisplayName $assignmentDisplayName -Scope $scope -PolicySetDefinition $setDefnObj 
 					}
 					elseif($this.UpdateInitiative) {
 						$this.PublishCustomMessage("Updating AzSK Initiative...", [MessageType]::Update);
 						$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
-						Set-AzureRmPolicySetDefinition -Name $this.SubPolicyInitiative.Name -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions							
+						$setDefnObj = Set-AzureRmPolicySetDefinition -Name $this.SubPolicyInitiative.Name -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions
+						New-AzureRmPolicyAssignment -Name $assignmentName -DisplayName $assignmentDisplayName -Scope $scope -PolicySetDefinition $setDefnObj 							
 					}
 					elseif($null -ne $initiative)
 					{

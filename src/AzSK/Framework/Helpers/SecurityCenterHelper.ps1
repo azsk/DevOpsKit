@@ -13,6 +13,7 @@ class SecurityCenterHelper
 	static [string] $ApiVersionNew = "?api-version=2017-08-01-preview";
 	static [string] $ApiVersionLatest = "?api-version=2018-03-01";
 	static [PSObject] $ASCSecurityStatus = $null;
+	static [PSObject] $Recommendations = $null;
 	
 
 	static [Hashtable] AuthHeaderFromUri([string] $uri)
@@ -98,9 +99,13 @@ class SecurityCenterHelper
 	{
 		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
 		#[SecurityCenterHelper]::RegisterResourceProvider();
-		$ascTasks = [SecurityCenterHelper]::InvokeGetSecurityCenterRequest($subscriptionId, [SecurityCenterHelper]::TasksApi, [SecurityCenterHelper]::ApiVersion)
-		$tasks = [AzureSecurityCenter]::GetASCTasks($ascTasks);		
-		return $tasks;
+		if(([SecurityCenterHelper]::Recommendations | Measure-Object).Count -eq 0)
+		{
+			$ascTasks = [SecurityCenterHelper]::InvokeGetSecurityCenterRequest($subscriptionId, [SecurityCenterHelper]::TasksApi, [SecurityCenterHelper]::ApiVersion)
+			$tasks = [AzureSecurityCenter]::GetASCTasks($ascTasks);		
+			[SecurityCenterHelper]::Recommendations = $tasks;
+		}
+		return [SecurityCenterHelper]::Recommendations;
 	}
 
 	static [void] RegisterResourceProvider()

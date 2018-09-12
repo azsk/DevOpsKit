@@ -712,7 +712,7 @@ class SVTBase: AzSKRoot
 			#get the uniqueid from the first control result. Here we can take first as it would come here for each resource.
 			$id = $ControlResults[0].GetUniqueId();
 
-			$this.ControlStateExt.SetControlState($id, $effectiveResourceStates, $false)
+			$this.ControlStateExt.SetControlState($id, $effectiveResourceStates, $true)
 		}
 	}
 
