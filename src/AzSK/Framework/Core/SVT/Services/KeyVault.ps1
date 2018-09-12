@@ -151,7 +151,7 @@ class KeyVault: SVTBase
 			}
 			else
 			{
-				 = $false;
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 				$controlResult.AddMessage([MessageData]::new("Control can not be validated due to insufficient access permission on keys"));
 
 			}
