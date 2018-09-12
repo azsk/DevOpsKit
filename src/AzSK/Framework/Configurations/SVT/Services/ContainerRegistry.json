@@ -4,32 +4,36 @@
     "IsMaintenanceMode": false,
     "Controls": [
       {
-        "ControlID": "Azure_ContainerRegistry_AuthZ_Disable_Admin_User",
-        "Description": "Admin user in Container Registry must be disabled",
+        "ControlID": "Azure_ContainerRegistry_AuthZ_Disable_Admin_Account",
+        "Description": "The Admin account in Container Registry should be disabled",
         "Id": "ContainerRegistry110",
         "ControlSeverity": "High",
         "Enabled": true,
         "Automated": "Yes",
         "MethodName": "CheckAdminUserStatus",
-        "Rationale": "The admin user is designed for a single user to access the registry. All users authenticating with the admin account appear as a single user to the registry. Admin users are having high privileged role increases the attack surface for the server without being tracked. Using AAD based identity ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.",
-        "Recommendation": "Run command 'Update-AzureRmContainerRegistry -DisableAdminUser -Name '<ContainerRegistryName>' -ResourceGroupName '<RGName>'. Run 'Get-Help Update-AzureRmContainerRegistry -full' for more help.",
+        "Rationale": "The Admin user account is designed for a single user to access the registry. Multiple users authenticating with the admin account appear as just one user to the registry. This leads to loss of auditability. Using AAD-based identity ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.",
+        "Recommendation": "Run command 'Update-AzureRmContainerRegistry -DisableAdminUser -Name '<ContainerRegistryName>' -ResourceGroupName '<RGName>'. Run 'Get-Help Update-AzureRmContainerRegistry -full' for more help. You can add AAD-based SPNs or user accounts to the appropriate RBAC role instead.",
         "Tags": [
           "SDL",
           "TCP",
           "Automated",
           "AuthZ"
-        ]
+        ],
+        "FixControl": {
+          "FixMethodName": "DisableAdminAccount",
+          "FixControlImpact": "High"
+        }
       },
       {
         "ControlID": "Azure_ContainerRegistry_AuthZ_Use_SPN_For_Registry_Access",
-        "Description": "Service principal identity should be used to access container images in Container Registry",
+        "Description": "A service principal should be used to access container images in Container Registry",
         "Id": "ContainerRegistry120",
         "ControlSeverity": "Medium",
         "Enabled": true,
         "Automated": "Yes",
         "MethodName": "CheckResourceAccess",
         "Rationale": "Using a 'user' account should be avoided because, in general, a user account will likely have broader set of privileges to enterprise assets. Using a dedicated SPN ensures that the SPN does not have permissions beyond the ones specifically granted for the given scenario.",
-        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-service-principal",
+        "Recommendation": "Grant access to an SPN using the guidance here: https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-service-principal",
         "Tags": [
             "SDL",
             "TCP",
@@ -48,7 +52,7 @@
         "Automated": "No",
         "MethodName": "",
         "Rationale": "Keeping/sharing password in clear text can lead to easy compromise at various avenues during an application's life cycle. Storing them in a key vault ensures that they are protected at rest.",
-        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/container-registry/container-registry-tutorial-quick-build#create-service-principal-and-store-credentials for create service principal and store the credentials in Key Vault.",
+        "Recommendation": "To create an SPN and add the credential to a key vault refer: https://docs.microsoft.com/en-us/azure/container-registry/container-registry-tutorial-quick-build#create-service-principal-and-store-credentials.",
         "Tags": [
           "SDL",
           "TCP",
@@ -81,8 +85,8 @@
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckContainerWebhooks",
-        "Rationale": "Container image(s) having vulnerability (e.g. missing OS patches in base image, open ports in image) can lead to loss of sensitive enterprise data.",
-        "Recommendation": "Refer: https://github.com/Azure/acr/blob/master/docs/acr-roadmap.md#vulnerability-scanning-integration, https://docs.microsoft.com/en-in/azure/container-registry/container-registry-webhook",
+        "Rationale": "Container image(s) having vulnerabilities (e.g., missing OS patches in base image, open ports, etc.) can lead to attacks and subsequent loss of sensitive enterprise data.",
+        "Recommendation": "Configure a vulnerability scanner using guidance here: https://github.com/Azure/acr/blob/master/docs/acr-roadmap.md#vulnerability-scanning-integration, https://docs.microsoft.com/en-in/azure/container-registry/container-registry-webhook",
         "Tags": [
           "SDL",
           "Best Practice",
@@ -98,8 +102,8 @@
         "ControlSeverity": "Medium",
         "Automated": "No",
         "MethodName": "",
-        "Rationale": "Un-patched images are easy targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in operating systems and related software.",
-        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/container-registry/container-registry-tutorial-base-image-update",
+        "Rationale": "Unpatched images are easy targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in operating systems and related software. Automated-patching ensures that the window for attacks on container images in minimized.",
+        "Recommendation": "Setup automate build using the guidance here: https://docs.microsoft.com/en-us/azure/container-registry/container-registry-tutorial-base-image-update",
         "Tags": [
           "SDL",
           "Best Practice",
@@ -110,13 +114,13 @@
       },
       {
         "ControlID": "Azure_ContainerRegistry_DP_Enable_Content_Trust",
-        "Description": "Content trust in Container Registry must be enabled",
+        "Description": "Content trust must be enabled for the Container Registry",
         "Id": "ContainerRegistry170",
         "ControlSeverity": "Medium",
         "Enabled": true,
         "Automated": "Yes",
         "MethodName": "CheckContentTrust",
-        "Rationale": "Content trust gives the ability to verify both the integrity and the publisher of all the data received from a Registry over any channel. If a container image is served from an untrusted registry, the image itself may not be trustworthy/stable. Running such a compromised image can lead to loss of sensitive enterprise data.",
+        "Rationale": "Content trust gives the ability to verify both the integrity and the publisher of all the image content received from a registry over any channel. If a container image is served from an untrusted registry, the image itself may not be trustworthy/stable. Running such a compromised image can lead to loss of sensitive enterprise data.",
         "Recommendation": "Go to Azure Portal --> your Container Registry --> Content Trust --> Enabled. This feature is currently available only in Premium SKU. After enabling Content Trust, push only trusted images in the repositories. Refer: https://aka.ms/acr/content-trust.",
         "Tags": [
           "SDL",
@@ -144,13 +148,13 @@
       },
       {
         "ControlID": "Azure_ContainerRegistry_DP_Push_Only_Signed_Images",
-        "Description": "Only signed images must be pushed in Container Registry",
+        "Description": "Only signed images must be pushed to Container Registry",
         "Id": "ContainerRegistry190",
         "ControlSeverity": "Medium",
         "Enabled": true,
         "Automated": "No",
         "MethodName": "",
-        "Rationale": "Content trust gives the ability to verify both the integrity and the publisher of all the data received from a Registry over any channel. If a container image is served from an untrusted registry, the image itself may not be trustworthy/stable. Running such a compromised image can lead to loss of sensitive enterprise data.",
+        "Rationale": "A container image that is not signed can be exposed malicious changes. Signing and signature verification ensures that only trusted images are able to run.",
         "Recommendation": "Run command 'az acr repository show -n <RegistryName> --image <IamgeName>:<Tag>' from Azure cli to get signature details of the images. Refer: https://docs.docker.com/engine/security/trust/content_trust/#push-trusted-content",
         "Tags": [
           "SDL",
