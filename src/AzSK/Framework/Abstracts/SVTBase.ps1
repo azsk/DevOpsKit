@@ -336,7 +336,7 @@ class SVTBase: AzSKRoot
 	[void] PostTelemetry()
 	{
 	    # Setting the protocol for databricks
-		if($this.ResourceObject.ResourceType -eq "Microsoft.Databricks/workspaces")
+		if([Helpers]::CheckMember($this.ResourceContext, "ResourceType") -and $this.ResourceContext.ResourceType -eq "Microsoft.Databricks/workspaces")
 		{
 			$this.currentSecurityProtocol = [Net.ServicePointManager]::SecurityProtocol
 			[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -692,7 +692,7 @@ class SVTBase: AzSKRoot
 	hidden [void] PostEvaluationCompleted([SVTEventContext[]] $ControlResults)
 	{
 	    # If ResourceType is Databricks, reverting security protocol 
-		if($this.ResourceObject.ResourceType -eq "Microsoft.Databricks/workspaces")
+		if([Helpers]::CheckMember($this.ResourceContext, "ResourceType") -and $this.ResourceContext.ResourceType -eq "Microsoft.Databricks/workspaces")
 		{
 		  [Net.ServicePointManager]::SecurityProtocol = $this.currentSecurityProtocol 
 		}
