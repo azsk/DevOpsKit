@@ -60,7 +60,7 @@
               "isEnabled": true,
               "description": "CDN endpoints must use HTTPS protocol while providing data to the client browser/machine or while fetching data from the origin server",
               "rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
-              "recommendation": "To enable HTTPS protocol: Go to Azure Portal --> your CDN Profile --> your CDN Endpoint --> Origin --> Select HTTPS --> Save. Else implement through PowerShell as follows: `$ce= Get-AzureRmCdnEndpoint -EndpointName $_.Name ProfileName < CDNprofile > -ResourceGroupName <RGName>; `$ce.IsHttpAllowed =$false; `$ce.IsHttpsAllowed =$true; Set-AzureRmCdnEndpoint -CdnEndpoint `$ce",
+              "recommendation": "To enable HTTPS protocol: Go to Azure Portal --> your CDN Profile --> your CDN Endpoint --> Origin --> Select HTTPS --> Save. Else implement through PowerShell as follows: `$ce= Get-AzureRmCdnEndpoint -EndpointName <EndpointName> ProfileName '<CDNprofile>' -ResourceGroupName '<RGName>'; `$ce.IsHttpAllowed =`$false; `$ce.IsHttpsAllowed =`$true; Set-AzureRmCdnEndpoint -CdnEndpoint `$ce",
               "severity": "High",
               "jsonPath": [ "$.properties.isHttpsAllowed" ],
               "matchType": "Boolean",
@@ -83,7 +83,7 @@
           "isEnabled": true,
           "description": "Non-SSL port must not be enabled",
           "rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
-          "recommendation": "To disable Non-SSL port for Redis Cache, run command : Set-AzureRmRedisCache -ResourceGroupName <String> -Name <String> -EnableNonSslPort $false",
+          "recommendation": "To disable Non-SSL port for Redis Cache, run command : Set-AzureRmRedisCache -ResourceGroupName <String> -Name <String> -EnableNonSslPort `$false",
           "severity": "High",
           "jsonPath": [ "$.properties.enableNonSslPort" ],
           "matchType": "Boolean",
@@ -168,200 +168,169 @@
     },
     {
       "featureName": "SqlServer",
-      "supportedResourceTypes": [ "Microsoft.Sql/servers" ],
+      "supportedResourceTypes": [ "Microsoft.Sql/servers", "transparentDataEncryption", "administrators", "securityAlertPolicies", "databases", "auditingPolicies", "firewallrules" ],
       "controls": [
-
-      ],
-      "NestedResourcesControlSet": [
         {
-          "featureName": "SqlServer",
-          "supportedResourceTypes": [ "administrators" ],
+          "id": "SQLDatabase120",
           "apiVersions": [ "2014-04-01-preview" ],
-          "controls": [
-            {
-              "id": "SQLDatabase120",
-              "controlId": "Azure_SQLDatabase_AuthZ_Use_AAD_Admin",
-              "isEnabled": true,
-              "description": "Enable Azure AD admin for the SQL Database",
-              "rationale": "",
-              "recommendation": "",
-              "severity": "High",
-              "jsonPath": [ "$.properties.administratorType" ],
-              "matchType": "StringSingleToken",
-              "data": {
-                "type": "Allow",
-                "value": "ActiveDirectory",
-                "isCaseSensitive": false
-              }
-            }
-          ]
+          "controlId": "Azure_SQLDatabase_AuthZ_Use_AAD_Admin",
+          "isEnabled": true,
+          "description": "Enable Azure AD admin for the SQL Database",
+          "rationale": "",
+          "recommendation": "",
+          "severity": "High",
+          "jsonPath": [ "$.properties.administratorType" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "ActiveDirectory",
+            "isCaseSensitive": false
+          }
         },
         {
-          "featureName": "SqlServer",
-          "supportedResourceTypes": [ "securityAlertPolicies" ],
+          "id": "SQLDatabase160",
           "apiVersions": [ "2015-05-01-preview" ],
-          "controls": [
-            {
-              "id": "SQLDatabase160",
-              "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
-              "isEnabled": true,
-              "description": "Enable SQL Server threat detection with email admins option. Do not exclude any detection types",
-              "rationale": "",
-              "recommendation": "",
-              "severity": "High",
-              "jsonPath": [ "$.properties.state" ],
-              "matchType": "StringSingleToken",
-              "data": {
-                "type": "Allow",
-                "value": "Enabled",
-                "isCaseSensitive": false
-              }
-            },
-            {
-              "id": "SQLDatabase160",
-              "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
-              "isEnabled": true,
-              "description": "Enable SQL Server threat detection with email admins option. Do not exclude any detection types",
-              "rationale": "",
-              "recommendation": "",
-              "severity": "High",
-              "jsonPath": [ "$.properties.emailAccountAdmins" ],
-              "matchType": "StringSingleToken",
-              "data": {
-                "type": "Allow",
-                "value": "Enabled",
-                "isCaseSensitive": false
-              }
-            },
-            {
-              "id": "SQLDatabase160",
-              "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
-              "isEnabled": true,
-              "description": "Enable SQL Server threat detection with email admins option. Do not exclude any detection types",
-              "rationale": "",
-              "recommendation": "",
-              "severity": "High",
-              "jsonPath": [ "$.properties.emailAddresses" ],
-              "matchType": "StringWhitespace",
-              "data": {
-                "value": false
-              }
-            },
-            {
-              "id": "SQLDatabase160",
-              "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
-              "isEnabled": true,
-              "description": "Enable SQL Server threat detection with email admins option. Do not exclude any detection types",
-              "rationale": "",
-              "recommendation": "",
-              "severity": "High",
-              "jsonPath": [ "$.properties.disabledAlerts" ],
-              "matchType": "StringWhitespace",
-              "data": {
-                "value": true
-              }
-            }
-          ]
+          "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
+          "isEnabled": true,
+          "description": "Enable SQL Server threat detection with email admins option. Do not exclude any detection types",
+          "rationale": "",
+          "recommendation": "",
+          "severity": "High",
+          "jsonPath": [ "$.properties.state" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "Enabled",
+            "isCaseSensitive": false
+          }
         },
         {
-          "featureName": "SqlServer",
-          "supportedResourceTypes": [ "databases" ],
+          "id": "SQLDatabase160",
+          "apiVersions": [ "2015-05-01-preview" ],
+          "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
+          "isEnabled": true,
+          "description": "Enable SQL Server threat detection with email admins option. Do not exclude any detection types",
+          "rationale": "",
+          "recommendation": "",
+          "severity": "High",
+          "jsonPath": [ "$.properties.emailAccountAdmins" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "Enabled",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "SQLDatabase160",
+          "apiVersions": [ "2015-05-01-preview" ],
+          "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
+          "isEnabled": true,
+          "description": "Enable SQL Server threat detection with email admins option. Do not exclude any detection types",
+          "rationale": "",
+          "recommendation": "",
+          "severity": "High",
+          "jsonPath": [ "$.properties.emailAddresses" ],
+          "matchType": "StringWhitespace",
+          "data": {
+            "value": false
+          }
+        },
+        {
+          "id": "SQLDatabase160",
+          "apiVersions": [ "2015-05-01-preview" ],
+          "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
+          "isEnabled": true,
+          "description": "Enable SQL Server threat detection with email admins option. Do not exclude any detection types",
+          "rationale": "",
+          "recommendation": "",
+          "severity": "High",
+          "jsonPath": [ "$.properties.disabledAlerts" ],
+          "matchType": "StringWhitespace",
+          "data": {
+            "value": true
+          }
+        },
+        {
+          "id": "SQLDatabase150",
           "apiVersions": [ "2014-04-01-preview" ],
-          "controls": [
-
-          ],
-          "NestedResourcesControlSet": [
-            {
-              "featureName": "SqlServer",
-              "supportedResourceTypes": [ "transparentDataEncryption" ],
-              "apiVersions": [ "2014-04-01-preview" ],
-              "controls": [
-                {
-                  "id": "SQLDatabase150",
-                  "controlId": "Azure_SQLDatabase_DP_Enable_TDE",
-                  "isEnabled": true,
-                  "description": "Transparent data encryption (TDE) must be enabled",
-                  "rationale": "",
-                  "recommendation": "",
-                  "severity": "High",
-                  "jsonPath": [ "$.properties.status" ],
-                  "matchType": "StringSingleToken",
-                  "data": {
-                    "type": "Allow",
-                    "value": "Enabled",
-                    "isCaseSensitive": false
-                  }
-                }
-              ]
-            },
-            {
-              "supportedResourceTypes": [ "securityAlertPolicies" ],
-              "featureName": "SqlServer",
-              "apiVersions": [ "2014-04-01-preview" ],
-              "controls": [
-                {
-                  "id": "SQLDatabase170",
-                  "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_DB",
-                  "isEnabled": true,
-                  "description": "Enable SQL Database threat detection with email admins option. Do not exclude any detection types",
-                  "rationale": "",
-                  "recommendation": "",
-                  "severity": "High",
-                  "jsonPath": [ "$.properties.state" ],
-                  "matchType": "StringSingleToken",
-                  "data": {
-                    "type": "Allow",
-                    "value": "Enabled",
-                    "isCaseSensitive": false
-                  }
-                },
-                {
-                  "id": "SQLDatabase170",
-                  "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_DB",
-                  "isEnabled": true,
-                  "description": "Enable SQL Database threat detection with email admins option. Do not exclude any detection types",
-                  "rationale": "",
-                  "recommendation": "",
-                  "severity": "High",
-                  "jsonPath": [ "$.properties.emailAccountAdmins" ],
-                  "matchType": "StringSingleToken",
-                  "data": {
-                    "type": "Allow",
-                    "value": "Enabled",
-                    "isCaseSensitive": false
-                  }
-                },
-                {
-                  "id": "SQLDatabase170",
-                  "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_DB",
-                  "isEnabled": true,
-                  "description": "Enable SQL Database threat detection with email admins option. Do not exclude any detection types",
-                  "rationale": "",
-                  "recommendation": "",
-                  "severity": "High",
-                  "jsonPath": [ "$.properties.emailAddresses" ],
-                  "matchType": "StringWhitespace",
-                  "data": {
-                    "value": false
-                  }
-                },
-                {
-                  "id": "SQLDatabase170",
-                  "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_DB",
-                  "isEnabled": true,
-                  "description": "Enable SQL Database threat detection with email admins option. Do not exclude any detection types",
-                  "rationale": "",
-                  "recommendation": "",
-                  "severity": "High",
-                  "jsonPath": [ "$.properties.disabledAlerts" ],
-                  "matchType": "StringWhitespace",
-                  "data": {
-                    "value": true
-                  }
-                }
-              ]
-            }
-          ]
+          "controlId": "Azure_SQLDatabase_DP_Enable_TDE",
+          "isEnabled": true,
+          "description": "Transparent data encryption (TDE) must be enabled",
+          "rationale": "",
+          "recommendation": "",
+          "severity": "High",
+          "jsonPath": [ "$.properties.status" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "Enabled",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "SQLDatabase170",
+          "apiVersions": [ "2014-04-01-preview" ],
+          "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_DB",
+          "isEnabled": true,
+          "description": "Enable SQL Database threat detection with email admins option. Do not exclude any detection types",
+          "rationale": "",
+          "recommendation": "",
+          "severity": "High",
+          "jsonPath": [ "$.properties.state" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "Enabled",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "SQLDatabase170",
+          "apiVersions": [ "2014-04-01-preview" ],
+          "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_DB",
+          "isEnabled": true,
+          "description": "Enable SQL Database threat detection with email admins option. Do not exclude any detection types",
+          "rationale": "",
+          "recommendation": "",
+          "severity": "High",
+          "jsonPath": [ "$.properties.emailAccountAdmins" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "Enabled",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "SQLDatabase170",
+          "apiVersions": [ "2014-04-01-preview" ],
+          "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_DB",
+          "isEnabled": true,
+          "description": "Enable SQL Database threat detection with email admins option. Do not exclude any detection types",
+          "rationale": "",
+          "recommendation": "",
+          "severity": "High",
+          "jsonPath": [ "$.properties.emailAddresses" ],
+          "matchType": "StringWhitespace",
+          "data": {
+            "value": false
+          }
+        },
+        {
+          "id": "SQLDatabase170",
+          "apiVersions": [ "2014-04-01-preview" ],
+          "controlId": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_DB",
+          "isEnabled": true,
+          "description": "Enable SQL Database threat detection with email admins option. Do not exclude any detection types",
+          "rationale": "",
+          "recommendation": "",
+          "severity": "High",
+          "jsonPath": [ "$.properties.disabledAlerts" ],
+          "matchType": "StringWhitespace",
+          "data": {
+            "value": true
+          }
         }
       ]
     },
