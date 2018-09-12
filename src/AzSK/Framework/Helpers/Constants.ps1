@@ -18,7 +18,7 @@ class Constants
     static [string] $RemediationMsgForARMChekcer = "** Next steps **`r`n" + 
 "Look at the individual control evaluation status in the CSV file.`r`n" +
 "        a) If the control has passed, no action is necessary.`r`n" +
-"        b) b) If the control has failed, look at the control evaluation detail in the CSV file (LineNumber, ExpectedValue, CurrentValue, etc.) and fix the issue.`r`n" +
+"        b) If the control has failed, look at the control evaluation detail in the CSV file (LineNumber, ExpectedValue, CurrentValue, etc.) and fix the issue.`r`n" +
 "        c) If the control status says 'Skipped', it means that you have chosen to skip certain controls using the '-SkipControlsFromFile' parameter.`r`n" 
 
 

@@ -44,9 +44,9 @@ class ARMCheckerStatus: EventBase
 	{
 	    $this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info);
 		$this.WriteMessage([Constants]::RemediationMsgForARMChekcer, [MessageType]::Info);
-		$this.WriteMessage("For more details, Please refer: "+[Constants]::CICDShortLink,[MessageType]::Info) 
+		$this.WriteMessage("For further details, Please refer: "+[Constants]::CICDShortLink,[MessageType]::Info) 
 		$this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info);
-		$this.WriteMessage("Status and detailed logs have been exported to path - $($resultsFolder)", [MessageType]::Info);
+		$this.WriteMessage("Status and detailed logs have been exported to: $($resultsFolder)", [MessageType]::Info);
 		$this.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info);
 	}
 
@@ -101,7 +101,7 @@ class ARMCheckerStatus: EventBase
 		}
 		foreach($armTemplate in $ARMTemplates)
 		{
-		    $armFileName = $armTemplate.FullName.Replace($baseDirectory, "");
+		    $armFileName = $armTemplate.FullName.Replace($baseDirectory, ".");
 		    if(($filesToExcludeCount -eq 0) -or (-not $filesToExclude.Contains($armTemplate.Name)))
 			{		
 			try
