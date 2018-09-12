@@ -11,14 +11,14 @@ class Databricks: SVTBase
     Databricks([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
                  Base($subscriptionId, $resourceGroupName, $resourceName) 
     { 
-	    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+	 
 		$this.GetResourceObject();
     }
 
     Databricks([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 
-	    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+	   
 		$this.GetResourceObject();
     }
 
@@ -66,7 +66,7 @@ class Databricks: SVTBase
 
 	 hidden [ControlResult] CheckSecretScope([ControlResult] $controlResult)
     {
-	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.HasAdminAccess)
+	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.IsUserAdmin())
 		{
 			 $SecretScopes	= $this.InvokeRestAPICall("GET","secrets/scopes/list","")
 			 if($null -ne  $SecretScopes  -and ( $SecretScopes|Measure-Object).count -gt 0)
@@ -89,7 +89,7 @@ class Databricks: SVTBase
 
 	 hidden [ControlResult] CheckSecretScopeBackend([ControlResult] $controlResult)
     {
-	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.HasAdminAccess)
+	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.IsUserAdmin())
 		{
 			 $SecretScopes	= $this.InvokeRestAPICall("GET","secrets/scopes/list","")
 			 if($null -ne  $SecretScopes  -and ( $SecretScopes|Measure-Object).count -gt 0)
@@ -121,7 +121,7 @@ class Databricks: SVTBase
 
 	hidden [ControlResult] CheckKeyVaultReference([ControlResult] $controlResult)
     {
-	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.HasAdminAccess)
+	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.IsUserAdmin())
 		{
 			$KeyVaultScopeMapping = @()
 			$KeyVaultWithMultipleReference = @() 
@@ -229,7 +229,7 @@ class Databricks: SVTBase
 
 	hidden [ControlResult] CheckAdminAccess([ControlResult] $controlResult)
 	{   
-	   if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.HasAdminAccess)
+	   if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.IsUserAdmin())
 	   {    
 	        $controlResult.VerificationResult = [VerificationResult]::Verify;
 		    $accessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.GetResourceId(), $false, $true);
@@ -274,7 +274,7 @@ class Databricks: SVTBase
 
 	hidden [ControlResult] CheckGuestAdminAccess([ControlResult] $controlResult)
 	{   
-	   if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.HasAdminAccess)
+	   if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.IsUserAdmin())
 	   {    
 	        $controlResult.VerificationResult = [VerificationResult]::Verify;
 			# Get All Active Users
@@ -332,7 +332,7 @@ class Databricks: SVTBase
 	hidden [string] ReadAccessToken()
 	{ 
 	     $scanSource = [RemoteReportHelper]::GetScanSource();
-         if($scanSource -eq [ScanSource]::SpotCheck)
+         if($scanSource -ne [ScanSource]::SpotCheck)
 		 { 
 		   $input = Read-Host "Enter PAT(personal access token) for '$($this.ResourceContext.ResourceName)' workspace"
            $input = $input.Trim()
@@ -352,7 +352,7 @@ class Databricks: SVTBase
 		$this.ManagedResourceGroupName = $this.ResourceObject.Properties.managedResourceGroupId.Split("/")[$count-1]
 		$this.WorkSpaceBaseUrl=[system.string]::Format($this.WorkSpaceBaseUrl,$this.WorkSpaceLoction)
 		$this.PersonalAccessToken = $this.ReadAccessToken()
-		$this.HasAdminAccess = $this.IsUserAdmin()
+		#$this.HasAdminAccess = $this.IsUserAdmin()
 	}
 
 	hidden [bool] IsUserAdmin()
