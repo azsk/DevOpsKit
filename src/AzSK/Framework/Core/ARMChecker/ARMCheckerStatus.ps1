@@ -426,7 +426,7 @@ class ARMCheckerStatus: EventBase
 	   $ARMControlsFileURI = [Constants]::ARMControlsFileURI
 	   try
 	   {
-	    $serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($ARMControlsFileURI, '', '', '');
+	    #$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($ARMControlsFileURI, '', '', '');
 	   }
 	   catch
 	   {
@@ -439,7 +439,8 @@ class ARMCheckerStatus: EventBase
 	   }else
 	   {
 	     $serverFileContent = [ConfigurationHelper]::LoadOfflineConfigFile("ARMControls.json", $false);
-	   }
+		 $serverFileContent=$serverFileContent | ConvertTo-Json -Depth 10
+		}
 
 	   return $serverFileContent;
 	}
