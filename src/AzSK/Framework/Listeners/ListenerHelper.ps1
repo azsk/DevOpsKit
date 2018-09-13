@@ -22,6 +22,7 @@ class ListenerHelper
         [WriteEnvironmentFile]::GetInstance().RegisterEvents();
 		[WriteCAStatus]::GetInstance().RegisterEvents();
         [WriteFixControlFiles]::GetInstance().RegisterEvents();
+        [SecurityRecommendationReport]::GetInstance().RegisterEvents();
         [GenericListener]::GetInstance().RegisterEvents();		
     }
 
@@ -42,6 +43,7 @@ class ListenerHelper
         [WriteEnvironmentFile]::GetInstance().UnregisterEvents();
 		[WriteCAStatus]::GetInstance().UnregisterEvents();
         [WriteFixControlFiles]::GetInstance().UnregisterEvents();
+        [SecurityRecommendationReport]::GetInstance().UnregisterEvents();
         [GenericListener]::GetInstance().UnregisterEvents();		
     }	
 }

@@ -10,106 +10,9 @@ class SecurityRecommendationsReport: CommandBase
 
 	hidden [String] $AzSKRGName = ""
 
-	hidden [hashtable]$category_hash = @{
-
-		"Storage" = 1000003;
+	$category_hash = $null;
 	
-		"DataProcessing" = 1000033;
-	
-		"Reporting" = 1000037;
-	
-		"Web Front End" = 1000039;
-	
-		"APIs" = 1000081;
-	
-		"Security Infra" = 1000099;
-	
-		"SubscriptionCore" = 1000117;
-	
-		"Communication Hub" = 1000121;
-	
-		"Hybrid" = 1000133;
-	
-		"Network Isolation" = 1000151;
-	
-		"Cache" = 1000159;
-	
-		"Backend Processing" = 123123593;
-	
-	}
-	
-	hidden [hashtable] $get_categories =@{
-
-		"CDN" = @("Storage") ;
-
-		"ServiceBus" = @("Communication Hub", "Hybrid");
-
-		"AppService" = @("Web Front End", "APIs");
-	
-		"SQLDatabase"= @("Storage", "DataProcessing", "Reporting");
-	
-		"Storage"= @("Storage", "Reporting", "DataProcessing");
-	
-		"LogicApps"= @("DataProcessing");
-	
-		"DataFactory"= @("DataProcessing");
-	
-		"DataLakeAnalytics"= @("DataProcessing", "Reporting");
-	
-		"DataLakeStore"= @("Storage", "Reporting", "DataProcessing");
-	
-		"NotificationHub"= @("Communication Hub");
-	
-		"ServiceFabric"=  @("Web Front End", "APIs", "Backend Processing");
-	
-		"Search" = @("APIs", "Backend Processing");
-	
-		"VirtualMachine"= @("Web Front End", "APIs", "Backend Processing",
-	
-						   "DataProcessing");
-	
-		"ContainerRegistry" = @("Web Front End", "APIs", "Backend Processing",
-	
-						   "DataProcessing");
-	
-		"VirtualNetwork" = @("Network Isolation", "Hybrid");
-	
-		"AnalysisServices"= @("DataProcessing", "Reporting");
-	
-		"Batch" = @("Backend Processing");
-	
-		"RedisCache" = @("Cache");
-	
-		"EventHub"= @("Communication Hub", "Hybrid");
-	
-		"ODG"= @("Hybrid");
-	
-		"TrafficManager"= @("Network Isolation");
-	
-		"ERvNet" = @("Hybrid", "Network Isolation");
-	
-		"Automation" = @("Backend Processing");
-	
-		"CosmosDB"= @("Storage", "DataProcessing", "Reporting");
-	
-		"StreamAnalytics"= @("DataProcessing", "Reporting");
-	
-		"CloudService"= @("Web Front End", "APIs", "Backend Processing");
-	
-		"LoadBalancer"= @("Network Isolation");
-	
-		"APIConnection"= @("DataProcessing");
-	
-		"BotService"= @("APIs", "Communication Hub", "Web Front End");
-	
-		"ContainerInstances"= @("Web Front End", "APIs", "DataProcessing",
-	
-							   "Backend Processing");
-	
-		"DataFactoryV2"= @("DataProcessing", "Backend Processing");
-	
-		"KeyVault"= @("Security Infra");
-	}
+	$get_categories = $null;
 
 	SecurityRecommendationsReport([string] $subscriptionId, [InvocationInfo] $invocationContext): 
 
@@ -129,13 +32,14 @@ class SecurityRecommendationsReport: CommandBase
 
 		$hash_val = 1;
 
-      if(-not [string]::IsNullOrWhiteSpace($Input.Categories))
-	   {
+        if(-not [string]::IsNullOrWhiteSpace($Input.Categories))
+	    {
 
 		foreach ($category in $Input.Categories)
 		{
-		
-			$hash_val = $hash_val * $this.category_hash[$category];
+			[PSObject] $f=$category; 
+			
+			$hash_val = $hash_val * $this.category_hash.$f;
 
 			$hash_val = $hash_val % 824633720831 ;
 			
@@ -148,9 +52,13 @@ class SecurityRecommendationsReport: CommandBase
 
 		foreach ($feature in $Input.Features)
 		{
-			[string[]] $categories = $this.get_categories[$feature];
-			
-			$hash_val = $hash_val * $this.category_hash[$categories[0]];
+			[PSObject] $p=$feature;
+
+			$categories = $this.get_categories.$p
+
+			[PSObject] $f=$categories[0];
+
+			$hash_val = $hash_val * $this.category_hash.$f;
 
 			$hash_val = $hash_val % 824633720831 ;
 			
@@ -189,8 +97,15 @@ class SecurityRecommendationsReport: CommandBase
 
     {		    	    
 
-	    [MessageData[]] $messages = @();	   
+		[MessageData[]] $messages = @();	
+		
+		$this.get_categories = [ConfigurationHelper]::LoadOfflineConfigFile("get_categories.json", $false);
 
+		#$this.get_categories = $this.get_categories | ConvertFrom-Json;
+
+		$this.category_hash = [ConfigurationHelper]::LoadOfflineConfigFile("category_hash.json", $false);
+
+		#$this.category_hash = $this.category_hash | ConvertFrom-Json;
 		try
 
 		{
@@ -203,7 +118,7 @@ class SecurityRecommendationsReport: CommandBase
 
 			{
 
-				$resources = Find-AzureRmResource -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+				$resources = Get-AzureRmResource -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
 
 				if(($resources | Measure-Object).Count -gt 0)
 
@@ -261,9 +176,9 @@ class SecurityRecommendationsReport: CommandBase
 
 			[RecommendedSecureCombination] $Combination = [RecommendedSecureCombination]::new();
 
-			$hash_val=$this.get_hash($userInput);
+			$hash_val = $this.get_hash($userInput);
 			
-			$result=$this.FindReport($result,$hash_val);
+			$result = $this.FindReport($result,$hash_val);
 
 			if(($result | Measure-Object).Count -gt 0)
 
@@ -285,7 +200,9 @@ class SecurityRecommendationsReport: CommandBase
 
 					foreach ($feature in $recommendedGroup.features)
 					{
-						[string[]] $categories = $this.get_categories[$feature];
+						[PSObject] $f=$feature;
+
+						[string[]] $categories = $this.get_categories.$f;
 
 						$recommededFeatureGroup.Categories += $categories[0];	
 
@@ -324,10 +241,7 @@ class SecurityRecommendationsReport: CommandBase
 
 				}
 
-
-
 			}
-
 
 
 			[MessageData] $message = [MessageData]::new();
@@ -341,6 +255,7 @@ class SecurityRecommendationsReport: CommandBase
 			$message.DataObject = $report;
 
 			$messages += $message;
+			
 
 		}
 
