@@ -18,7 +18,8 @@
           "PAT",
           "DP",
           "Automated",
-          "Admin"
+          "Admin",
+          "Preview"
         ],
         "Enabled": true
       },
@@ -37,7 +38,8 @@
           "DP",
           "Automated",
           "PAT",
-          "Admin"
+          "Admin",
+          "Preview"
         ],
         "Enabled": true
       },
@@ -57,7 +59,8 @@
           "Best Practice",
           "Automated",
           "PAT",
-          "Admin"
+          "Admin",
+          "Preview"
         ],
         "Enabled": true
       },
@@ -75,7 +78,8 @@
           "TCP",
           "PAT",
           "Automated",
-          "DP"
+          "DP",
+          "Preview"
         ],
         "Enabled": true
       },
@@ -93,7 +97,8 @@
           "TCP",
           "AuthZ",
           "RBAC",
-          "Automated"
+          "Automated",
+          "Preview"
         ],
         "Enabled": true
       },
@@ -104,15 +109,16 @@
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckAdminAccess",
-        "Rationale": "Databricks workspace admins have full access on the workspace to perform any operation. Each additional person in the admin role increases the attack surface for the server. The number of members in these roles should be kept to as low as possible.",
-        "Recommendation": "Minimize the number of workspace admins. Navigate to Databricks workspace --> Account --> Admin Console --> Users --> Revoke admin access accounts(which no longer reuires admin access)",
+        "Rationale": "Databricks workspace admins have full access on the workspace to perform any operation. Each additional person in the admin role increases the attack surface for the workspace. The number of members in these roles should be kept to as low as possible.",
+        "Recommendation": "Minimize the number of workspace admins. Navigate to Databricks workspace --> Account --> Admin Console --> Users --> Revoke admin access for users(who no longer requires admin access)",
         "Tags": [
           "SDL",
           "TCP",
           "AuthZ",
           "Automated",
           "Admin",
-          "PAT"
+          "PAT",
+          "Preview"
         ],
         "Enabled": true
       },
@@ -130,7 +136,8 @@
           "TCP",
           "AuthZ",
           "RBAC",
-          "Manual"
+          "Manual",
+          "Preview"
         ],
         "Enabled": true
       },
@@ -148,7 +155,8 @@
           "TCP",
           "AuthZ",
           "RBAC",
-          "Manual"
+          "Manual",
+          "Preview"
         ],
         "Enabled": true
       },
@@ -166,7 +174,8 @@
           "TCP",
           "AuthZ",
           "RBAC",
-          "Manual"
+          "Manual",
+          "Preview"
         ],
         "Enabled": true
       },
@@ -184,7 +193,8 @@
           "TCP",
           "AuthZ",
           "RBAC",
-          "Manual"
+          "Manual",
+          "Preview"
         ],
         "Enabled": true
       },
@@ -201,7 +211,8 @@
           "SDL",
           "TCP",
           "DP",
-          "Manual"
+          "Manual",
+          "Preview"
         ],
         "Enabled": true
       },
@@ -212,14 +223,15 @@
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckGuestAdminAccess",
-        "Rationale": "Periodic review of guest users and privileges granted to them is a good security practice as, over time, it might be possible that some users/groups don't require access on workspace.",
-        "Recommendation": "Periodically review of access granted to guest accounts and revoke access of stale accounts. You can list all users/groups that have access to workspace by navigating to Databris Workspace --> User Account --> Admin Console --> Users. Refer: https://docs.databricks.com/administration-guide/admin-settings/users.html",
+        "Rationale": "Databricks workspace admins have full access on the workspace to perform any operation. Each guest account in admin role increases the attack surface for the workspace. Adding guest accounts as admin on workspace should be avoided.",
+        "Recommendation": "Revoke admin access of guest users. Navigate to Databricks workspace --> Account --> Admin Console --> Users --> Revoke admin access of guest users(who no longer requires admin access)",
         "Tags": [
           "SDL",
           "TCP",
           "AuthZ",
           "Admin",
-          "PAT"
+          "PAT",
+          "Preview"
         ],
         "Enabled": true
       },
@@ -236,7 +248,8 @@
           "SDL",
           "Best Practice",
           "Automated",
-          "NetSec"
+          "NetSec",
+          "Preview"
         ],
         "Enabled": true
       }
