@@ -257,7 +257,7 @@ function AddDependentModules
 				{
                     $dependencyModuleDetail = $dependencies[$index].Split(":")
 					$dependencyModuleName = $dependencyModuleDetail[0]
-					$dependencyModuleVersion = $dependencyModuleDetail[1].Replace('[','').Replace(']','')
+					$dependencyModuleVersion = $dependencyModuleDetail[1].Replace('[','').Replace(']','').Split(',')[0]
 					
 					#Add dependent module to the result list 
                     if(!$ResultModuleList.Contains($dependencyModuleName))
