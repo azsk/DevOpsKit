@@ -839,43 +839,36 @@ class Helpers {
             [Helpers]::RegisterResourceProviderIfNotRegistered("microsoft.insights");
 
             #create storage
-            $newStorage = New-AzureRmStorageAccount -ResourceGroupName $ResourceGroup `
-                -Name $StorageName `
-                -Type $storageSku `
-                -Location $Location `
-                -Kind $StorageKind `
-                -AccessTier Cool `
-                -EnableHttpsTrafficOnly $true `
-                -ErrorAction Stop
+            $status = Get-AzureRmStorageAccountNameAvailability -Name $StorageName
+            if($null -ne $status -and  $status.NameAvailable -eq $true)
+            {
+                $newStorage = New-AzureRmStorageAccount -ResourceGroupName $ResourceGroup `
+                    -Name $StorageName `
+                    -Type $storageSku `
+                    -Location $Location `
+                    -Kind $StorageKind `
+                    -AccessTier Cool `
+                    -EnableHttpsTrafficOnly $true `
+                    -ErrorAction Stop
 
-            $retryAccount = 0
-            do {
-                $storageObject = Get-AzureRmStorageAccount -ResourceGroupName $ResourceGroup -Name $StorageName -ErrorAction SilentlyContinue
-                Start-Sleep -seconds 2
-                $retryAccount++
-            }while (!$storageObject -and $retryAccount -ne 6)
+                $retryAccount = 0
+                do {
+                    $storageObject = Get-AzureRmStorageAccount -ResourceGroupName $ResourceGroup -Name $StorageName -ErrorAction SilentlyContinue
+                    Start-Sleep -seconds 2
+                    $retryAccount++
+                }while (!$storageObject -and $retryAccount -ne 6)
 
-            if ($storageObject) {
-                #create alert rule				
-                #$emailAction = New-AzureRmAlertRuleEmail -SendToServiceOwner -ErrorAction Stop -WarningAction SilentlyContinue
-                #$targetId = $storageObject.Id + "/services/" + "blob"
+                if ($storageObject) {                                       
 
-                #$alertName = $StorageName + "alert"
-                #Add-AzureRmMetricAlertRule -Location $storageObject.Location `
-                #    -MetricName AnonymousSuccess `
-                #    -Name $alertName `
-                #    -Operator GreaterThan `
-                #    -ResourceGroup $storageObject.ResourceGroupName `
-                #    -TargetResourceId $targetId `
-                #    -Threshold 0 -TimeAggregationOperator Total -WindowSize 01:00:00  `
-                #    -Action $emailAction `
-                #    -WarningAction SilentlyContinue `
-                #    -ErrorAction Stop
-
-                #set diagnostics on
-                $currentContext = $storageObject.Context
-                Set-AzureStorageServiceLoggingProperty -ServiceType Blob -LoggingOperations All -Context $currentContext -RetentionDays 365 -PassThru -ErrorAction Stop
-                Set-AzureStorageServiceMetricsProperty -MetricsType Hour -ServiceType Blob -Context $currentContext -MetricsLevel ServiceAndApi -RetentionDays 365 -PassThru -ErrorAction Stop
+                    #set diagnostics on
+                    $currentContext = $storageObject.Context
+                    Set-AzureStorageServiceLoggingProperty -ServiceType Blob -LoggingOperations All -Context $currentContext -RetentionDays 365 -PassThru -ErrorAction Stop
+                    Set-AzureStorageServiceMetricsProperty -MetricsType Hour -ServiceType Blob -Context $currentContext -MetricsLevel ServiceAndApi -RetentionDays 365 -PassThru -ErrorAction Stop
+                }
+            }
+            else
+            {
+                throw ([SuppressedException]::new(("The specified name for the storage account is not available. Please rerun this command to try a different name."), [SuppressedExceptionType]::Generic));          
             }
         }
         catch {

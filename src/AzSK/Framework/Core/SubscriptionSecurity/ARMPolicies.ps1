@@ -406,7 +406,8 @@ class ARMPolicy: CommandBase
 	{
 		[MessageData[]] $messages = @();
 		$isPolicyInitiativeEnabled = [ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan;
-		if($isPolicyInitiativeEnabled)
+		try{
+			if($isPolicyInitiativeEnabled)
 		{
 			$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName
 			if($null -ne $this.SubPolicyInitiative)
@@ -415,9 +416,15 @@ class ARMPolicy: CommandBase
 				if($this.SubPolicyInitiative.Name -eq $initiativeName -and ($this.SubPolicyInitiative.Policies | Measure-Object).Count -gt 0)
 				{		
 					$initiative = $null;
+					$initiativeAssignment = $null
 					try
 					{			
+						#check if initiative already exists
 						$initiative = Get-AzureRmPolicySetDefinition -Name $initiativeName -ErrorAction SilentlyContinue;
+						if(($initiative|Measure-Object).Count -gt 0)
+						{
+							$initiativeAssignment = Get-AzureRmPolicyAssignment -PolicyDefinitionId $initiative.PolicySetDefinitionId
+						}
 					}
 					catch
 					{
@@ -430,24 +437,36 @@ class ARMPolicy: CommandBase
 					{
 						$this.PublishCustomMessage("Creating new AzSK Initiative...", [MessageType]::Update);		
 						$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
-						$setDefnObj = New-AzureRmPolicySetDefinition -Name $this.SubPolicyInitiative.Name -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions
-						New-AzureRmPolicyAssignment -Name $assignmentName -DisplayName $assignmentDisplayName -Scope $scope -PolicySetDefinition $setDefnObj 
+						New-AzureRmPolicySetDefinition -Name $initiativeName -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions | Out-Null
+						Start-Sleep -Seconds 15
+						
 					}
 					elseif($this.UpdateInitiative) {
 						$this.PublishCustomMessage("Updating AzSK Initiative...", [MessageType]::Update);
 						$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
-						$setDefnObj = Set-AzureRmPolicySetDefinition -Name $this.SubPolicyInitiative.Name -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions
-						New-AzureRmPolicyAssignment -Name $assignmentName -DisplayName $assignmentDisplayName -Scope $scope -PolicySetDefinition $setDefnObj 							
+						Set-AzureRmPolicySetDefinition -Name $this.SubPolicyInitiative.Name -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions | Out-Null
+						Start-Sleep -Seconds 15						
 					}
 					elseif($null -ne $initiative)
 					{
 						$this.PublishCustomMessage("Found existing AzSK Initiative.", [MessageType]::Update);	
 					}	
+					if($null -eq $initiativeAssignment)
+					{
+						$setDefnObj = Get-AzureRmPolicySetDefinition -Name $initiativeName -ErrorAction SilentlyContinue;
+						New-AzureRmPolicyAssignment -Name $assignmentName -DisplayName $assignmentDisplayName -Scope $scope -PolicySetDefinition $setDefnObj 
+					}
 					#todo: CA permission update	if default CA			
 				}				
 			}
 		}
+		}
+		catch
+		{
+			#eat up exception to allow this functionality to run in preview mode and not to hamper exsiting functionality
+		}
 		return $messages;
+		
 	}
 
 	[string[]] ValidatePolicyConfiguration()
