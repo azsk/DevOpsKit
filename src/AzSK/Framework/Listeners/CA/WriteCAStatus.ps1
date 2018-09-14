@@ -146,8 +146,15 @@ class WriteCAStatus: ListenerBase
                 $CustomObjectData=$CustomDataObj| Select-Object -exp Messages| Select-Object -exp DataObject
 
                 if($CustomObjectData.Name -eq "PolicyComplianceTelemetry")
-                {
-                    [RemoteApiHelper]::PostPolicyComplianceTelemetry($CustomObjectData.Value);
+                {        
+                    try {
+                        $subId = $CustomObjectData.Value;
+                        $policyCompliance = Get-AzureRmPolicyState -SubscriptionId $subId | Select-Object ResourceId,PolicyDefinitionId,PolicyAssignmentName,IsCompliant,PolicyAssignmentScope
+                        [RemoteApiHelper]::PostPolicyComplianceTelemetry($policyCompliance);    
+                    }
+                    catch {
+                        $currentInstance.PublishException($_);
+                    }                                
                 }   
                 else
                 {
