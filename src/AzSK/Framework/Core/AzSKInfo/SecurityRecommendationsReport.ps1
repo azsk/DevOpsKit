@@ -135,7 +135,7 @@ class SecurityRecommendationsReport: CommandBase
 						$currentFeatureGroup.TotalSuccessCount = $recommendedGroup.info.Success;
 						$currentFeatureGroup.TotalFailCount = $recommendedGroup.info.Fails;
 						$currentFeatureGroup.SecurityRating = ($recommendedGroup.info.Fails/$recommendedGroup.info.Totals);
-						$currentFeatureGroup.TotalOccurances = $recommendedGroup.info.Totals;
+						$currentFeatureGroup.TotalOccurances = $recommendedGroup.occurrences;
 						$currentFeatureGroup.Categories = $recommededFeatureGroup.Categories;
 						$Combination.CurrentFeatureGroup += $currentFeatureGroup
 					}	
@@ -144,7 +144,7 @@ class SecurityRecommendationsReport: CommandBase
 					$recommededFeatureGroup.TotalSuccessCount = $recommendedGroup.info.Success;
 					$recommededFeatureGroup.TotalFailCount = $recommendedGroup.info.Fails;
 					$recommededFeatureGroup.SecurityRating = ($recommendedGroup.info.Fails/$recommendedGroup.info.Totals);
-					$recommededFeatureGroup.TotalOccurances = $recommendedGroup.info.Totals;
+					$recommededFeatureGroup.TotalOccurances = $recommendedGroup.occurrences;
 					$Combination.RecommendedFeatureGroups += $recommededFeatureGroup;
 				}
 			}
