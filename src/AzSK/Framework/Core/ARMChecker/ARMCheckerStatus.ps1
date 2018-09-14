@@ -439,7 +439,7 @@ class ARMCheckerStatus: EventBase
 	   $ARMControlsFileURI = [Constants]::ARMControlsFileURI
 	   try
 	   {
-	    #$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($ARMControlsFileURI, '', '', '');
+	    $serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($ARMControlsFileURI, '', '', '');
 	   }
 	   catch
 	   {
