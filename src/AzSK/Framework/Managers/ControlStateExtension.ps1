@@ -38,7 +38,7 @@ class ControlStateExtension
 		$resourceGroup = Get-AzureRmResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
 		if($createIfNotExists -and ($null -eq $resourceGroup -or ($resourceGroup | Measure-Object).Count -eq 0))
 		{
-			if([Helpers]::NewAzSKResourceGroup($azSKConfigData.AzSKRGName, [Constants]::AzSKRGLocation, ""))
+			if([Helpers]::NewAzSKResourceGroup($azSKConfigData.AzSKRGName, $azSKConfigData.AzSKLocation, ""))
 			{
 				$resourceGroup = Get-AzureRmResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
 			}
@@ -49,6 +49,7 @@ class ControlStateExtension
 
 	hidden [void] GetAzSKStorageAccount($createIfNotExists)
 	{
+	    $azSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
 		if($null -eq $this.AzSKResourceGroup)
 		{
 			$this.GetAzSKRG($createIfNotExists);
@@ -75,7 +76,7 @@ class ControlStateExtension
 			if($createIfNotExists -and ($null -eq $StorageAccount -or ($StorageAccount | Measure-Object).Count -eq 0))
 			{
 				$storageAccountName = ("azsk" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"));	
-				$storageObject = [Helpers]::NewAzskCompliantStorage($storageAccountName, $this.AzSKResourceGroup.ResourceGroupName, [Constants]::AzSKRGLocation)
+				$storageObject = [Helpers]::NewAzskCompliantStorage($storageAccountName, $this.AzSKResourceGroup.ResourceGroupName, $azSKConfigData.AzSKLocation)
 				if($null -ne $storageObject -and ($storageObject | Measure-Object).Count -gt 0)
 				{
 					$loopValue = $this.retryCount;

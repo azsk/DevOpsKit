@@ -1,0 +1,73 @@
+{
+
+	"CDN": ["Storage"],
+
+	"ServiceBus": ["Communication Hub", "Hybrid"],
+
+	"AppService": ["Web Front End", "APIs"],
+
+	"SQLDatabase": ["Storage", "DataProcessing", "Reporting"],
+
+	"Storage": ["Storage", "Reporting", "DataProcessing"],
+
+	"LogicApps": ["DataProcessing"],
+
+	"DataFactory": ["DataProcessing"],
+
+	"DataLakeAnalytics": ["DataProcessing", "Reporting"],
+
+	"DataLakeStore": ["Storage", "Reporting", "DataProcessing"],
+
+	"NotificationHub": ["Communication Hub"],
+
+	"ServiceFabric": ["Web Front End", "APIs", "Backend Processing"],
+
+	"Search": ["APIs", "Backend Processing"],
+
+	"VirtualMachine": ["Web Front End", "APIs", "Backend Processing",
+
+					   "DataProcessing"],
+
+	"ContainerRegistry": ["Web Front End", "APIs", "Backend Processing",
+
+					   "DataProcessing"],
+
+	"VirtualNetwork": ["Network Isolation", "Hybrid"],
+
+	"AnalysisServices": ["DataProcessing", "Reporting"],
+
+	"Batch": ["Backend Processing"],
+
+	"RedisCache": ["Cache"],
+
+	"EventHub": ["Communication Hub", "Hybrid"],
+
+	"ODG": ["Hybrid"],
+
+	"TrafficManager": ["Network Isolation"],
+
+	"ERvNet": ["Hybrid", "Network Isolation"],
+
+	"Automation": ["Backend Processing"],
+
+	"CosmosDB": ["Storage", "DataProcessing", "Reporting"],
+
+	"StreamAnalytics": ["DataProcessing", "Reporting"],
+
+	"CloudService": ["Web Front End", "APIs", "Backend Processing"],
+
+	"LoadBalancer": ["Network Isolation"],
+
+	"APIConnection": ["DataProcessing"],
+
+	"BotService": ["APIs", "Communication Hub", "Web Front End"],
+
+	"ContainerInstances": ["Web Front End", "APIs", "DataProcessing",
+
+						   "Backend Processing"],
+
+	"DataFactoryV2": ["DataProcessing", "Backend Processing"],
+
+	"KeyVault": ["Security Infra"]
+
+}

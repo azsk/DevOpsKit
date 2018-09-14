@@ -129,6 +129,92 @@ class WritePsConsole: FileOutputBase
                 $currentInstance.PublishException($_);
             }
         });
+        
+        $this.RegisterEvent([AzSKRootEvent]::CommandCompleted, {
+            $currentInstance = [WritePsConsole]::GetInstance();
+            try 
+            {
+				$messages = $Event.SourceArgs.Messages;
+				if(($messages | Measure-Object).Count -gt 0 -and $Event.SourceArgs.Messages[0].Message -eq "RecommendationData")
+				{
+					$reportObject = [RecommendedSecurityReport] $Event.SourceArgs.Messages[0].DataObject;
+					$currentInstance.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info)
+					$currentInstance.WriteMessage("Current Combination", [MessageType]::Info)
+					$currentInstance.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info)
+					if([string]::IsNullOrWhiteSpace($reportObject.ResourceGroupName))
+					{
+						$currentInstance.WriteMessage("ResourceGroup Name: Not Specified", [MessageType]::Default);	
+					}
+					else {
+						$currentInstance.WriteMessage("ResourceGroup Name: [$($reportObject.ResourceGroupName)]", [MessageType]::Default);
+					}
+
+					if(($reportObject.Input.Features | Measure-Object).Count -le 0)
+					{
+						$currentInstance.WriteMessage("Features: Not Specified", [MessageType]::Default);
+					}
+					else {
+						$featuresString = [String]::Join(",", $reportObject.Input.Features);
+						$currentInstance.WriteMessage("Features: [$featuresString]", [MessageType]::Default);
+					}
+
+					if(($reportObject.Input.Categories | Measure-Object).Count -le 0)
+					{
+						$currentInstance.WriteMessage("Categories: Not Specified", [MessageType]::Default);
+					}
+					else {
+						$categoriesString = [String]::Join(",", $reportObject.Input.Categories);
+						$currentInstance.WriteMessage("Categories: [$categoriesString]", [MessageType]::Default);
+					}
+					$currentInstance.WriteMessage([Constants]::UnderScoreLineLine, [MessageType]::Info)					
+					$currentInstance.WriteMessage("Analysis & Recommendations:", [MessageType]::Info);
+					$currentInstance.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info);
+					$currentInstance.WriteMessage("Analysis of current feature group:", [MessageType]::Info);
+					if($null -ne $reportObject.Recommendations.CurrentFeatureGroup)
+					{
+						$currentInstance.WriteMessage("Current Group Ranking: $($reportObject.Recommendations.CurrentFeatureGroup.Ranking)", [MessageType]::Default);
+						$currentInstance.WriteMessage("No. of instances with same combination: $($reportObject.Recommendations.CurrentFeatureGroup.TotalOccurances)", [MessageType]::Default);
+						$featuresString = [String]::Join(",", $reportObject.Recommendations.CurrentFeatureGroup.Features);
+						$currentInstance.WriteMessage("Current Combination Features: $featuresString", [MessageType]::Default);
+						$categoriesString = [String]::Join(",", $reportObject.Recommendations.CurrentFeatureGroup.Categories);
+						$currentInstance.WriteMessage("Current Combination Categories: $categoriesString", [MessageType]::Default);
+						$currentInstance.WriteMessage("Measures: [Total Pass#: $($reportObject.Recommendations.CurrentFeatureGroup.TotalSuccessCount)] [Total Fail#: $($reportObject.Recommendations.CurrentFeatureGroup.TotalFailCount)] ", [MessageType]::Default);																		
+					}
+					else {
+						$currentInstance.WriteMessage("Cannot find exact matching combination for the current user input.", [MessageType]::Default);
+					}
+					$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info);
+					$currentInstance.WriteMessage("Recommendations based on categories:", [MessageType]::Info);
+					if(($reportObject.Recommendations.RecommendedFeatureGroups | Measure-Object).Count -gt 0)
+					{
+						$orderedRecommendations = $reportObject.Recommendations.RecommendedFeatureGroups | Sort-Object -Property Ranking
+						$orderedRecommendations | ForEach-Object {
+							$recommendation = $_;
+							$currentInstance.WriteMessage("Category Group Ranking: $($recommendation.Ranking)", [MessageType]::Default);
+							$currentInstance.WriteMessage("No. of instances with same combination: $($recommendation.TotalOccurances)", [MessageType]::Default);
+							$featuresString = [String]::Join(",", $recommendation.Features);
+							$currentInstance.WriteMessage("Feature 	combination: $featuresString", [MessageType]::Default);
+							$categoriesString = [String]::Join(",", $recommendation.Categories);
+							$currentInstance.WriteMessage("Category Combination: $categoriesString", [MessageType]::Default);
+							$currentInstance.WriteMessage("Measures: [Total Pass#: $($recommendation.TotalSuccessCount)] [Total Fail#: $($recommendation.TotalFailCount)] ", [MessageType]::Default);																		
+							$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info);
+						}
+					}
+
+					$currentInstance.WriteMessage(($dataObject | ConvertTo-Json -Depth 10), [MessageType]::Info)
+				}
+				else {
+					$currentInstance.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info)
+					$currentInstance.WriteMessage("Logs have been exported to: '$([WriteFolderPath]::GetInstance().FolderPath)'", [MessageType]::Info)
+					$currentInstance.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info)	
+				}								
+				$currentInstance.FilePath = "";
+			}
+            catch 
+            {
+                $currentInstance.PublishException($_);
+            }
+        });
 
 		# SVT events
 		$this.RegisterEvent([SVTEvent]::CommandStarted, {

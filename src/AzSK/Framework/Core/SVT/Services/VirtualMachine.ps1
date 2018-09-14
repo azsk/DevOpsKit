@@ -11,6 +11,7 @@ class VirtualMachine: SVTBase
 	hidden [bool] $IsVMDeallocated = $false
 	hidden [VMDetails] $VMDetails = [VMDetails]::new()
 	hidden [PSObject] $VMControlSettings = $null;
+	hidden [string] $Workspace = "";
 
     VirtualMachine([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
         Base($subscriptionId, $resourceGroupName, $resourceName) 
@@ -43,6 +44,10 @@ class VirtualMachine: SVTBase
 		elseif($VMType -eq [Microsoft.Azure.Management.Compute.Models.OperatingSystemTypes]::Windows)
 		{
 			$result += $controls | Where-Object { $_.Tags -contains "Windows" };;
+		}
+		if($this.VMDetails.IsVMConnectedToERvNet)
+		{
+			$result=$result | Where-Object { $_.Tags -contains "ERvNet" };
 		}
 		return $result;
 	}
@@ -172,51 +177,39 @@ class VirtualMachine: SVTBase
 		#compute ASC object for VM
 		$this.ASCSettings = $this.GetASCSettings();
 
+		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings,"properties.resourceDetails"))
+		{
+			$omsSetting = $this.ASCSettings.properties.resourceDetails | Where-Object {$_.name -eq $this.ControlSettings.VirtualMachine.ASCPolicies.ResourceDetailsKeys.WorkspaceId };
+			if($null -ne $omsSetting)
+			{
+				$this.Workspace = $omsSetting.value;
+			}
+		}
+
         return $this.ResourceObject;
     }
 
 	hidden [PSObject] GetASCSettings()
 	{
-		try
-		{
-			$result = $null;
-			# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
-			#[SecurityCenterHelper]::RegisterResourceProvider();
-			$uri = [System.String]::Format("{0}subscriptions/{1}/providers/microsoft.Security/securityStatuses?api-version=2015-06-01-preview", [WebRequestHelper]::AzureManagementUri, $this.SubscriptionContext.SubscriptionId)
-		        
-			try 
-			{ 	
-				$result = [WebRequestHelper]::InvokeGetWebRequest($uri) 
-			} 
-			catch
-			{ 
-				return $null;
-			}       
-        
+		$result = $null;
+		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
+		try 
+		{ 	
+			$result = [SecurityCenterHelper]::InvokeSecurityCenterSecurityStatus($this.SubscriptionContext.SubscriptionId);
 			if(($result | Measure-Object).Count -gt 0)
 			{
-				$vmSecurityState = $result | Where-Object { $_.name -eq $this.ResourceContext.ResourceName -and $_.properties.type -eq 'VirtualMachine' } | 
-												Select-Object -First 1;
-				if($vmSecurityState) 
-				{        
-					$vmSecurityStateProperties = @{
-						SecurityState = $vmSecurityState.properties.securityState;
-						DetailedStatus = @{
-							Monitored = $vmSecurityState.properties.baselineScannerData.securityState;
-							SystemUpdates = $vmSecurityState.properties.patchScannerData.securityState;
-							EndpointProtection = $vmSecurityState.properties.antimalwareScannerData.securityState;
-							Vulnerabilities = $vmSecurityState.properties.vulnerabilityAssessmentScannerStatus.securityState;
-							DiskEncryption = $vmSecurityState.properties.encryptionDataState.securityState;
-							Workspace=$vmSecurityState.properties.workspaces.id;
-						};
-					};
-					return 	$vmSecurityStateProperties;					
-				}				
+				$key = ("$($this.ResourceContext.ResourceName):VirtualMachine").ToLower();
+				$vmSecurityState = $null;
+				if($result.ContainsKey($key))
+				{
+					$vmSecurityState = $result[$key];
+				}			
+				return $vmSecurityState;			
 			}			
 		}
 		catch
 		{
-			return $null;
+			#eat exception if no ASC settings can be found
 		}
 		return $null;
 	}
@@ -279,7 +272,7 @@ class VirtualMachine: SVTBase
 
 	hidden [ControlResult] CheckOSAutoUpdateStatus([ControlResult] $controlResult)
 	{		
-		#TCP is not applicable for Linux.
+		#TCP is not applicable for Linux. #This method is deprecated
 		if($this.ResourceObject.OSProfile -and $this.ResourceObject.OSProfile.WindowsConfiguration)
 		{
 			$message = "";
@@ -318,28 +311,29 @@ class VirtualMachine: SVTBase
 	hidden [ControlResult] CheckAntimalwareStatus([ControlResult] $controlResult)
 	{
 		#Do not check for deallocated status for the VM and directly show the status from ASC
-		$verificationResult = [VerificationResult]::Failed;
-		$ascAntimalwareStatus = $false;
-		if($this.VMDetails.OSType -eq [OperatingSystemTypes]::Linux)
+		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
-			$controlResult.AddMessage([VerificationResult]::Manual, "The control is not applicable in case of a Linux Virtual Machine."); 
-			return $controlResult
-		}
-
-		if($null -ne $this.ASCSettings )
-		{
-			if( $this.ASCSettings.DetailedStatus.EndpointProtection -eq 'Healthy')
-			{				
-				$controlResult.AddMessage([VerificationResult]::Passed,"Antimalware is configured correctly on the VM. Validated the status through ASC."); 
-			}
-			elseif( $this.ASCSettings.DetailedStatus.EndpointProtection -eq 'Low')
-			{				
-				$controlResult.AddMessage([VerificationResult]::Verify,"Validate configurations of antimalware using ASC."); 
-			}
-			else
-			{					
-				$controlResult.AddMessage([VerificationResult]::Failed,"Antimalware is not configured correctly on the VM. Validated the status through ASC."); 
-			}
+			$antimalwareSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.EndpointProtection};
+			if($null -ne $antimalwareSetting)
+			{
+				$controlResult.AddMessage("VM endpoint protection details:", $antimalwareSetting);
+				if($antimalwareSetting.assessmentResult -eq 'Healthy' )
+				{				
+					$controlResult.AddMessage([VerificationResult]::Passed,"Antimalware is configured correctly on the VM. Validated the status through ASC."); 
+				}
+				elseif($antimalwareSetting.assessmentResult -eq 'Low')
+				{				
+					$controlResult.AddMessage([VerificationResult]::Verify,"Validate configurations of antimalware using ASC."); 
+				}
+				elseif($antimalwareSetting.assessmentResult -eq 'None')
+				{					
+					$controlResult.AddMessage([VerificationResult]::Manual, "The control is not applicable due to the ASC current policy."); 
+				}
+				else
+				{					
+					$controlResult.AddMessage([VerificationResult]::Failed,"Antimalware is not configured correctly on the VM. Validated the status through ASC."); 
+				}
+			}						
 		}
 		else
 		{
@@ -393,7 +387,7 @@ class VirtualMachine: SVTBase
 											{
 												if($nsgObject.SecurityRules.Count -gt 0)
 												{
-													$controlResult.AddMessage("Validate default NSG security rules applied to Subnet - [$subnetName] in Virtual Network - [$($vnetResource.Name)]. Total - $($nsgObject.SecurityRules.Count)", $nsgObject.SecurityRules);			                           
+													$controlResult.AddMessage("Validate  NSG security rules applied to Subnet - [$subnetName] in Virtual Network - [$($vnetResource.Name)]. Total - $($nsgObject.SecurityRules.Count)", $nsgObject.SecurityRules);			                           
 												}
 												
 												if($nsgObject.DefaultSecurityRules.Count -gt 0)
@@ -471,79 +465,32 @@ class VirtualMachine: SVTBase
 	{	
 		if(-not $this.VMDetails.IsVMDeallocated)
 		{
-			$verificationResult = [VerificationResult]::Failed;
 			$ascDiskEncryptionStatus = $false;
-			if($null -ne $this.ASCSettings -and $this.ASCSettings.DetailedStatus.DiskEncryption -eq 'Healthy')
-			{
-				$ascDiskEncryptionStatus = $true;
-			}
 
-			#TCP is not applicable for Linux.
-			if($this.ResourceObject.OSProfile -and $this.ResourceObject.OSProfile.WindowsConfiguration)
+			if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 			{
-				$message = "";
-				$diskEncryptionStatus = $null	
-				$diskEncryptionStatusData = $Null
-				$encryptionExtensionFound = $true			
-				try
+				$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryption};
+				if($null -ne $adeSetting)
 				{
-					$diskEncryptionStatus = Get-AzureRmVMDiskEncryptionStatus -ResourceGroupName $this.ResourceContext.ResourceGroupName -VMName $this.ResourceContext.ResourceName -ErrorAction Stop
-				}
-				catch
-				{
-					if([Helpers]::CheckMember($_.Exception, "InnerException") -and `
-					[Helpers]::CheckMember(($_.Exception).InnerException,"Response") -and `
-					[Helpers]::CheckMember(($_.Exception).InnerException.Response,"StatusCode") -and `
-					($_.Exception).InnerException.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
+					if($adeSetting.assessmentResult -eq 'Healthy')
 					{
-						$encryptionExtensionFound = $false
-					}
-					else
-					{
-						$this.PublishException($_)
+						$ascDiskEncryptionStatus = $true;
 					}
 				}
-				if($encryptionExtensionFound)
-				{
-					$diskEncryptionStatusData = @{
-						VMDiskEncryptionStatus = $diskEncryptionStatus
-						ASCDiskEncryptionStatus = $ascDiskEncryptionStatus
-					}
-					#Need to convert the string values to Enum [Microsoft.Azure.Commands.Compute.Models.EncryptionStatus]
-					#Enum type is not resolving here
-					if(($diskEncryptionStatus.OsVolumeEncrypted -eq "NotEncrypted") -or ($diskEncryptionStatus.DataVolumesEncrypted -eq "NotEncrypted") -or -not $ascDiskEncryptionStatus)
-					{
-						$message = "All/some Virtual Machine disks (OS and Data disks) are not encrypted";
-					}
-					else
-					{
-						$verificationResult  = [VerificationResult]::Passed;
-						$message = "All Virtual Machine disks (OS and Data disks) are encrypted";
-					}
-				}
-				else
-				{
-					$message = "No Virtual Machine disks (OS and Data disks) are encrypted";
-				}
+				$controlResult.AddMessage("VM disk encryption details:", $adeSetting);
+			}				
 				
-				$controlResult.AddMessage($verificationResult, $message, $diskEncryptionStatusData);
-				$controlResult.SetStateData("Virtual Machine disks encryption status", $diskEncryptionStatusData);
-			}
-			elseif($this.VMDetails.OSType -eq [OperatingSystemTypes]::Linux)
-			{
-				$controlResult.AddMessage([VerificationResult]::Manual, "The control is not applicable for Linux Virtual Machine."); 
-			}
-			elseif($ascDiskEncryptionStatus)
+			if($ascDiskEncryptionStatus)
 			{
 				$verificationResult  = [VerificationResult]::Passed;
 				$message = "All Virtual Machine disks (OS and Data disks) are encrypted. Validated the status through ASC.";
-				$controlResult.AddMessage($message);
+				$controlResult.AddMessage($verificationResult, $message);
 			}
 			else
 			{            
 				$verificationResult  = [VerificationResult]::Failed;
 				$message = "All Virtual Machine disks (OS and Data disks) are not encrypted. Validated the status through ASC.";
-				$controlResult.AddMessage($message);
+				$controlResult.AddMessage($verificationResult, $message);
 			}
 		}
 		else
@@ -555,42 +502,54 @@ class VirtualMachine: SVTBase
 
 	hidden [ControlResult] CheckASCStatus([ControlResult] $controlResult)
 	{
-		$isManual = $false;
-        if($this.ASCSettings) 
-        {        
-			if($this.ASCSettings.SecurityState -ne 'Healthy')
-			{
-				$controlResult.VerificationResult = [VerificationResult]::Failed
+		#This is deprecated method. Commented the code below
+		#$isManual = $false;
+        # if($this.ASCSettings) 
+        # {        
+		# 	if($this.ASCSettings.SecurityState -ne 'Healthy')
+		# 	{
+		# 		$controlResult.VerificationResult = [VerificationResult]::Failed
 
-			}
-			else
-			{
-				$controlResult.VerificationResult = [VerificationResult]::Passed
-			}
+		# 	}
+		# 	else
+		# 	{
+		# 		$controlResult.VerificationResult = [VerificationResult]::Passed
+		# 	}
 
-			$controlResult.AddMessage("Security Center status for Virtual Machine [$($this.ResourceContext.ResourceName)] is: [$($this.ASCSettings.SecurityState)]", $this.ASCSettings);
-			$controlResult.SetStateData("Security Center status for Virtual Machine", $this.ASCSettings);
-        }
-        else
-        {            
-            $isManual = $true;
-        }
+		# 	$controlResult.AddMessage("Security Center status for Virtual Machine [$($this.ResourceContext.ResourceName)] is: [$($this.ASCSettings.SecurityState)]", $this.ASCSettings);
+		# 	$controlResult.SetStateData("Security Center status for Virtual Machine", $this.ASCSettings);
+        # }
+        # else
+        # {            
+        #     $isManual = $true;
+        # }
 
-        if($isManual)
-       	{
-			$controlResult.AddMessage([VerificationResult]::Manual, "We are not able to check Security Center status right now. Please validate manually.");
-		}
+        # if($isManual)
+       	# {
+		# 	$controlResult.AddMessage([VerificationResult]::Manual, "We are not able to check Security Center status right now. Please validate manually.");
+		# }
 
-		return $controlResult;
+		 return $controlResult;
 	}
 
+	#No contol found with this method name
 	hidden [ControlResult] CheckASCVulnerabilities([ControlResult] $controlResult)
 	{
 		$ascVMVulnerabilitiesStatusHealthy = $false;
-		if($null -ne $this.ASCSettings -and $this.ASCSettings.DetailedStatus.Vulnerabilities -eq 'Healthy')
+
+		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
-			$ascVMVulnerabilitiesStatusHealthy = $true;
-		}
+			$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScan};
+			if($null -ne $vulnSetting)
+			{
+				if($vulnSetting.assessmentResult -eq 'Healthy')
+				{
+					$ascVMVulnerabilitiesStatusHealthy = $true;
+				}
+			}
+			$controlResult.AddMessage("VM vuln scan details:", $vulnSetting);
+		}			
+		
 		if($ascVMVulnerabilitiesStatusHealthy)
 		{
 			$controlResult.VerificationResult = [VerificationResult]::Passed
@@ -615,51 +574,34 @@ class VirtualMachine: SVTBase
 		$ASCSettingsforVM=$this.ASCSettings;
 		if($null -ne $ASCSettingsforVM)
 		{
-				$VMSecurityStatus=$ASCSettingsforVM.DetailedStatus;
 				# workspace associated by ASC to send logs for this VM
-				$workspaceId=$VMSecurityStatus.Workspace;
+				$workspaceId=$this.Workspace;
 				$queryforPatchDetails=[string]::Format($this.VMControlSettings.QueryforMissingPatches,($this.ResourceContext.ResourceId).ToLower());       		
 
-				if($null -ne $VMSecurityStatus.SystemUpdates -and $VMSecurityStatus.SystemUpdates -in $ASCApprovedPatchStatus)
+				$ascPatchStatus = "";
+
+				if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
+				{
+					$patchSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.OSUpdates};
+					if($null -ne $patchSetting)
+					{
+						$ascPatchStatus = $patchSetting.assessmentResult;
+					}
+					$controlResult.AddMessage("VM patch status details:", $patchSetting);
+				}		
+				
+				if($ascPatchStatus -in $ASCApprovedPatchStatus)
 				{
 					$controlResult.VerificationResult = [VerificationResult]::Passed	
 				}
 				else
-				{
-					$isVerify=$true;
-					if(-not [string]::IsNullOrEmpty($workspaceId))
-					{
-						try
-						{
-							$result = [OMSHelper]::QueryStatusfromWorkspace($workspaceId,$queryforPatchDetails);
-							if($null -ne $result -and ($result.Values| Measure-Object).Count -gt 0)
-							{
-								$vmobject =$result.Values;
-								$missingUpdates=@{};
-								$isVerify=$false;
-								$missingUpdates=$vmobject|Select-Object -Property Title,UpdateId
-								$controlResult.VerificationResult=[VerificationResult]::Failed;
-								$controlResult.AddMessage("Details of missing OS patches for Virtual Machine [$($this.ResourceContext.ResourceName)]:", $missingUpdates);
-							}
-							else
-							{
-								$controlResult.AddMessage("Unable to validate missing patch status.Please Verify");
-							}						
-						}
-						catch
-						{
-							$this.PublishException($_)
-						}
-					}
-				}
-				if($isVerify)
 				{
 					$controlResult.VerificationResult=[VerificationResult]::Verify;
 					$controlResult.AddMessage("Details of missing patches can be obtained from the following workspace");
 					$controlResult.AddMessage("Workspace : ",$workspaceId);
 					$controlResult.AddMessage("The following query can be used to obtain patch details:");
 					$controlResult.AddMessage("Query : ",$queryforPatchDetails);
-				}
+				}				
 		}
 		else
 		{
@@ -677,7 +619,7 @@ class VirtualMachine: SVTBase
 		$activeRecommendations = @()
 		$ASCWhitelistedRecommendations = @();
 		$ASCWhitelistedRecommendations += $this.VMControlSettings.ASCRecommendations;
-		[Helpers]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
+		#[Helpers]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
 		$tasks = [SecurityCenterHelper]::InvokeGetASCTasks($this.SubscriptionContext.SubscriptionId);
         $found = $false;
 		if($null -ne $ASCWhitelistedRecommendations -and $null -ne $tasks)
@@ -726,69 +668,31 @@ class VirtualMachine: SVTBase
 
 		if($null -ne $ASCSettingsforVM)
 		{
-			$VMSecurityStatus=$ASCSettingsforVM.DetailedStatus;
 			# workspace associated by ASC to send logs for this VM
-			$workspaceId=$VMSecurityStatus.Workspace;
+			$workspaceId=$this.Workspace;
+			$vulnStatus = "";
 
-			if($null-ne $VMSecurityStatus.Monitored -and $VMSecurityStatus.Monitored -in  $ASCApprovedStatuses)
-			  {
-					$controlResult.VerificationResult = [VerificationResult]::Passed
-				}
-			else 
-			  {
-					$isVerfiy= $true;
-					if(-not([string]::IsNullOrEmpty($workspaceId)))
-					{
-						try
-						{
-							$result = [OMSHelper]::QueryStatusfromWorkspace($workspaceId,$queryforFailingBaseline);
-							if($null -ne $result -and ($result.Values | Measure-Object).Count -gt 0)
-							{
-								$vmobject = $result.Values;
-								$failedRules=$vmobject|Select-Object -Property CceId,Description	
-										
-								if($baselineIds.Count -gt 0)
-								{
-									$missingBaselines = @();
-									$foundMissingBaseline = $false;
-									$failedBaseline = $vmobject|Where-Object { -not [string]::IsNullOrWhiteSpace($_.CceId) }
-									$failedBaseline|ForEach-Object{
-										$baselineId=$_;
-										if($baselineId.CceId -in $baselineIds)
-										{										
-											$foundMissingBaseline = $true;
-											$missingBaselines += $baselineId;
-										}
-									}
-																		
-									if($foundMissingBaseline)
-									{
-										$isVerfiy= $false;
-										$controlResult.VerificationResult = [VerificationResult]::Failed
-										$failedRules=$missingBaselines|Select-Object -Property Cceid,Description
-										$controlResult.AddMessage("Details of failing Security Center baseline rules for Virtual Machine [$($this.ResourceContext.ResourceName)]:",$failedRules );
-									}
-									else
-									{
-										$isVerfiy= $false;
-										$controlResult.VerificationResult = [VerificationResult]::Passed
-									}
-								}
-							}
-						}						
-						catch
-						{
-							$this.PublishException($_)
-						}
-					}
-				}
-		 if($isVerfiy)
+			if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 			{
-					$controlResult.VerificationResult = [VerificationResult]::Verify
-					$controlResult.AddMessage("Unable to validate baseline status from workspace.Please verify.");
-					$controlResult.AddMessage("Details of failing baseline rules can be obtained from OMS workspace :" ,$workspaceId);
-					$controlResult.AddMessage("The following query can be used to obtain failing baseline rules :  ",$queryforFailingBaseline);
+				$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScan};
+				if($null -ne $vulnSetting)
+				{
+					$vulnStatus = $vulnSetting.assessmentResult;
 				}
+				$controlResult.AddMessage("VM patch status details:", $vulnSetting);
+			}		
+
+			if($vulnStatus -in  $ASCApprovedStatuses)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Passed
+			}
+			else
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Verify
+				$controlResult.AddMessage("Unable to validate baseline status from workspace.Please verify.");
+				$controlResult.AddMessage("Details of failing baseline rules can be obtained from OMS workspace :" ,$workspaceId);
+				$controlResult.AddMessage("The following query can be used to obtain failing baseline rules :  ",$queryforFailingBaseline);
+			}
 		}
 		else
 		{

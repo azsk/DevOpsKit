@@ -1,8 +1,8 @@
 ﻿Set-StrictMode -Version Latest 
 Class OMSHelper{
 	static [string] $DefaultOMSType = "AzSK"
-	static [int] $isOMSSettingValid = 0  #-1:Fail (OMS Empty, OMS Return Error) | 1:CA | 0:Local
-	static [int] $isAltOMSSettingValid = 0
+	hidden static [int] $isOMSSettingValid = 0  #-1:Fail (OMS Empty, OMS Return Error) | 1:CA | 0:Local
+	hidden static [int] $isAltOMSSettingValid = 0
 	# Create the function to create and post the request
 	static PostOMSData([string] $OMSWorkspaceID, [string] $SharedKey, $Body, $LogType, $OMSType)
 	{
@@ -281,7 +281,7 @@ Class OMSHelper{
 		try
 		{
 			$body = @{query=$query};
-			$url=[WebRequestHelper]::AzureManagementUri.TrimEnd("/") +$workspaceId+"/api/query?api-version=2017-01-01-preview"
+			$url="https://api.loganalytics.io/beta/workspaces/" +$workspaceId+"/api/query?api-version=2017-01-01-preview"
 			$response=[WebRequestHelper]::InvokePostWebRequest($url ,  $body);
 
 			# Formating the response obtained from querying workspace.

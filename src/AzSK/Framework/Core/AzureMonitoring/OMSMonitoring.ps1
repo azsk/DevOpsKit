@@ -34,8 +34,8 @@ class OMSMonitoring: CommandBase
 
 	[void] ConfigureOMS([string] $_viewName, [bool] $_validateOnly)	
     {		
-        $this.PublishCustomMessage("WARNING: This command will overwrite the existing AzSK Security View that you may have installed using previous versions of AzSK, Please take a backup using 'Export' option available on the OMS portal.`n", [MessageType]::Warning);
-		$input = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
+	   Write-Host "WARNING: This command will overwrite the existing AzSK Security View that you may have installed using previous versions of AzSK, Please take a backup using 'Export' option available on the OMS portal.`n" -ForegroundColor Yellow
+	   $input = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
 		while ($input -ne "y" -and $input -ne "n")
 		{
         if (-not [string]::IsNullOrEmpty($input)) {
@@ -62,9 +62,11 @@ class OMSMonitoring: CommandBase
 			$this.OMSGenericTemplateFilepath = $OMSLogPath+"\AZSK.AM.OMS.GenericView.V2.omsview";
 			$genericViewTemplateFilepath | ConvertTo-Json -Depth 100 | Out-File $this.OMSGenericTemplateFilepath
 			$this.PublishCustomMessage("`r`nSetting up OMS AzSK generic view.");
-			$this.ConfigureGenericView($_viewName, $_validateOnly);			
-			$this.PublishCustomMessage([Constants]::SingleDashLine + "`r`nThe OMS view installed contains a basic set of queries over DevOps Kit scan events. Please feel free to customize them once you get familiar with the queries.`r`nWe also periodically publish updated/richer queries at: https://aka.ms/devopskit/omsqueries. `r`n",[MessageType]::Warning);
-			$this.PublishCustomMessage([Constants]::SingleDashLine + "`r`nCompleted setting up AzSK OMS solution pack.`r`n"+[Constants]::DoubleDashLine);
+			$this.ConfigureGenericView($_viewName, $_validateOnly);	
+			$this.PublishCustomMessage([Constants]::SingleDashLine + "`r`nCompleted setting up AzSK OMS solution pack.`r`n"+[Constants]::SingleDashLine );
+			$this.PublishCustomMessage("`r`nNote: `r`n1) The blades of the OMS view created by this command will start populating only after AzSK scan events become available in the corresponding OMS workspace.`nTo understand how to send AzSK events to an OMS workspace see https://aka.ms/devopskit/oms.`r`n", [MessageType]::Warning);		
+			$this.PublishCustomMessage("`r`n2) The OMS view installed contains a basic set of queries over DevOps Kit scan events. Please feel free to customize them once you get familiar with the queries.`r`nWe also periodically publish updated/richer queries at: https://aka.ms/devopskit/omsqueries. `r`n",[MessageType]::Warning);
+		
 		}
 		if ($input -eq "n")
 		{

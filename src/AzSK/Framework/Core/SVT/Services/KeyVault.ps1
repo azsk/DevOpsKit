@@ -152,7 +152,7 @@ class KeyVault: SVTBase
 			else
 			{
 				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-				$controlResult.AddMessage([MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+				$controlResult.AddMessage([MessageData]::new("Control can not be validated due to insufficient access permission on keys"));
 
 			}
 			
@@ -203,7 +203,7 @@ class KeyVault: SVTBase
 		else
 		{
 			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-			$controlResult.AddMessage([MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+			$controlResult.AddMessage([MessageData]::new("Control can not be validated due to insufficient access permission on secrets"));
 
 		}
 		return $this.AllEnabledSecrets;
@@ -226,9 +226,11 @@ class KeyVault: SVTBase
 				}
 				else 
 				{
+					$nonHsmKeysDetails = $nonHsmKeys | Select-Object Name, Version -ExpandProperty Attributes;
+					$controlResult.SetStateData("Keys not protected by HSM", $nonHsmKeysDetails);
 					$controlResult.AddMessage([VerificationResult]::Failed,
 						[MessageData]::new("Following Keys, including previous versions, are not protected by HSM."  , 
-								($nonHsmKeys | Select-Object Name, Version -ExpandProperty Attributes )));
+								($nonHsmKeysDetails )));
 				}
 			}
 			else
@@ -289,6 +291,7 @@ class KeyVault: SVTBase
           
                     if (($outputList | Where-Object { ($_.Compliance -eq "No") } | Measure-Object ).Count -gt 0)
                     {
+						$controlResult.SetStateData("Compliance details of Azure Active Directory applications:", $outputList);
                         $controlResult.AddMessage([VerificationResult]::Failed ,
                                                   [MessageData]::new("Remove the password credentials from Azure AD Applications which are non-compliant.") );
                     }
@@ -356,9 +359,12 @@ class KeyVault: SVTBase
 			if($withoutExpiry.Count -gt 0)
 			{
 				# result = Failed
+				$withoutExpiryDetails = $withoutExpiry | Select-Object -Property Name, Version -ExpandProperty Attributes;
+				$controlResult.SetStateData("Following $resourceType, including previous versions, does not have expiry date.", 
+				($withoutExpiryDetails));
 				$this.SetVerificationResultForExpiryDate($controlResult, [VerificationResult]::Failed, $isAccessDenied)
 				$controlResult.AddMessage([MessageData]::new("Following $resourceType, including previous versions, does not have expiry date.", 
-														($withoutExpiry | Select-Object -Property Name, Version -ExpandProperty Attributes) ));
+														($withoutExpiryDetails) ));
 			}
 
 			$longActiveResources = @(); # VerificationResult = Failed
@@ -406,20 +412,29 @@ class KeyVault: SVTBase
 			# Display summary messages
 			if ($longActiveResources.Count -gt 0)
 			{
+				$longActiveResourcesDetails = $longActiveResources | Select-Object -Property Name, Version -ExpandProperty Attributes;
+				$controlResult.SetStateData("Following $resourceType, including previous versions, are more than $rotationDurationDays days old.", 
+				($longActiveResourcesDetails ) );
 				$controlResult.AddMessage([MessageData]::new("Following $resourceType, including previous versions, are more than $rotationDurationDays days old.", 
-											($longActiveResources | Select-Object -Property Name, Version -ExpandProperty Attributes ) ));
+											($longActiveResourcesDetails ) ));
 			}
 
 			if ($needToDisableResources.Count -gt 0)
 			{
+				$needToDisableResourcesDetails = $needToDisableResources | Select-Object -Property Name, Version -ExpandProperty Attributes;
+				$controlResult.SetStateData("Following $resourceType, including previous versions, are expired but 'Enabled'.", 
+				($needToDisableResourcesDetails ) );
 				$controlResult.AddMessage([MessageData]::new("Following $resourceType, including previous versions, are expired but 'Enabled'.", 
-											($needToDisableResources | Select-Object -Property Name, Version -ExpandProperty Attributes ) ));
+											($needToDisableResourcesDetails ) ));
 			}
 
 			if ($needToRotateResources.Count -gt 0)
 			{
+				$needToRotateResourcesDetails = $needToRotateResources | Select-Object -Property Name, Version -ExpandProperty Attributes;
+				$controlResult.SetStateData("Following $resourceType, including previous versions, are about to expire within next 30 days. Please rotate the $resourceType.", 
+				($needToRotateResourcesDetails ) );
 				$controlResult.AddMessage([MessageData]::new("Following $resourceType, including previous versions, are about to expire within next 30 days. Please rotate the $resourceType.", 
-											($needToRotateResources | Select-Object -Property Name, Version -ExpandProperty Attributes ) ));
+											($needToRotateResourcesDetails ) ));
 			}
 		}
 		else
@@ -434,6 +449,7 @@ class KeyVault: SVTBase
 		if($isAccessDenied)
 		{
 			$controlResult.VerificationResult = [VerificationResult]::Manual;
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 			return;
 		}
 
@@ -465,6 +481,7 @@ class KeyVault: SVTBase
 		else
 		{
 			$isAccessDenied = $True
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 			$this.SetVerificationResultForExpiryDate($controlResult, [VerificationResult]::Manual, $isAccessDenied);
 		}
 
@@ -476,6 +493,7 @@ class KeyVault: SVTBase
 		else
 		{
 			$isAccessDenied = $True
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 			$this.SetVerificationResultForExpiryDate($controlResult, [VerificationResult]::Manual, $isAccessDenied);
 		}
 

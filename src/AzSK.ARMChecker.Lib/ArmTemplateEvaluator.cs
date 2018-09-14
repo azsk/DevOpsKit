@@ -12,11 +12,12 @@ namespace AzSK.ARMChecker.Lib
 
     public class ArmTemplateEvaluator
     {
+        private static int index = 0;
         private readonly IList<ResourceControlSet> _resourceControlSets;
-
+        private List<ResourceNode> ResourceList = new List<ResourceNode>();
+        private List<Features> listOfAllPrimaryResource=new List<Features>();
         public ArmTemplateEvaluator(IEnumerable<string> resourceControlSetJsonStrings)
         {
-
             if (resourceControlSetJsonStrings == null)
                 throw new ArgumentNullException(nameof(resourceControlSetJsonStrings));
 
@@ -64,7 +65,20 @@ namespace AzSK.ARMChecker.Lib
             var resourceEvaluator = new ResourceEvaluator(armTemplate, armTemplateExternalParameters);
             var results = new List<ControlResult>();
             // Get list of all primary resources
-            var listOfAllPrimaryResource = _resourceControlSets.Select(x => new { SupportedResourceTypes = x.supportedResourceTypes, FeatureName = x.FeatureName }).ToList();//.ToDictionary(x=>x.ResourceType,x=>x.FeatureName);
+            foreach (ResourceControlSet i in _resourceControlSets)
+            {
+                Features c = new Features();
+                c.FeatureName = i.FeatureName;
+                c.supportedResourceTypes = i.supportedResourceTypes;
+                for(int j=0;j<c.supportedResourceTypes.Count();j++)
+                {
+                    var temp = c.supportedResourceTypes[j].Split('/');
+                    c.supportedResourceTypes[j] = temp.Last();
+                }
+                c.count = i.supportedResourceTypes.Count();
+                listOfAllPrimaryResource.Add(c);
+            }
+            //listOfAllPrimaryResource = _resourceControlSets.Select(x => new { supportedResourceTypes = x.supportedResourceTypes, FeatureName = x.FeatureName }).ToList();//.ToDictionary(x=>x.ResourceType,x=>x.FeatureName);
             // Fetch all resources , variables , parameters
             var resources = armTemplate.GetValueCaseInsensitive("resources");
             var parameters = armTemplate.GetValueCaseInsensitive("parameters");
@@ -89,38 +103,17 @@ namespace AzSK.ARMChecker.Lib
                     ParamAndVarKeys.Add(variableKey, variableValue);
                 }
             }
-            List<ResourceNode> ResourceList = new List<ResourceNode>();
-            int index = 0;
-            // Create initial list of all resource without linking
-            foreach (JObject resource in resources)
-            {
-                var type = resource.GetValueCaseInsensitive<string>("type");
-                var name = resource.GetValueCaseInsensitive<string>("name");
-                var featureSet = listOfAllPrimaryResource?.FirstOrDefault(x => x.SupportedResourceTypes.Any(y => y.Equals(type, StringComparison.OrdinalIgnoreCase)));
-                if (featureSet != null)
-                {
-                    ResourceNode resourceNode = new ResourceNode();
-                    resourceNode.Token = "Token" + index++;
-                    ResourceModel resourceModel = new ResourceModel();
-                    resourceModel.FeatureName = featureSet.FeatureName;
-                    resourceModel.ResourceType = type;
-                    resourceModel.ResourceName = name;
-                    resourceModel.Resource = resource;
-                    resourceNode.Resource = resourceModel;
-                    ResourceList.Add(resourceNode);
-                }
-            }
+            convert_to_flat(resources);
             var groupedResources = ResourceList?.GroupBy(x => x.Resource.FeatureName);
-
-
+            // Use for intial relation tuples
+            List<ResourceNode> relatedResources = new List<ResourceNode>();
+            // use for merging relation
+            List<ResourceNode> MergedResources = new List<ResourceNode>();
+            // list of resources w/o dependency
+            List<ResourceNode> isolatedResources = new List<ResourceNode>();
             foreach (var featureGroup in groupedResources)
             {
-                // Use for intial relation tuples
-                List<ResourceNode> relatedResources = new List<ResourceNode>();
-                // use for merging relation
-                List<ResourceNode> MergedResources = new List<ResourceNode>();
-                // list of resources w/o dependency
-                List<ResourceNode> isolatedResources = new List<ResourceNode>();
+                
                 foreach (var resourceNode in featureGroup.ToList())
                 {
                     var resource = resourceNode.Resource;
@@ -139,7 +132,7 @@ namespace AzSK.ARMChecker.Lib
                                 var dependencyComponentArray = dependencyAsString.Split('/');
                                 var resourceType = dependencyComponentArray[0];
                                 var matchedResourceList = featureGroup.ToList().Where(x => x.Resource.ResourceType.StartsWith(resourceType, StringComparison.OrdinalIgnoreCase)).ToList();
-                                foreach (var matchedResource in matchedResourceList)
+                                foreach (var matchedResource in featureGroup.ToList())
                                 {
                                     var resourceNameString = ParseArmFunctionAndParam(matchedResource.Resource.ResourceName, ParamAndVarKeys);
                                     var resourceNameComponent = resourceNameString.Split('/');
@@ -148,6 +141,7 @@ namespace AzSK.ARMChecker.Lib
                                         ResourceNode resourceTuple = (ResourceNode)resourceNode.Clone();
                                         resourceTuple.LastChildResource = matchedResource;
                                         resourceTuple.ChildResource = matchedResource;
+                                        resourceTuple.count = resourceNode.count + 1;
                                         relatedResources.Add(resourceTuple);
                                         MergedResources.Add(resourceTuple);
                                         isAnyMatchedResourceFound = true;
@@ -167,10 +161,12 @@ namespace AzSK.ARMChecker.Lib
                         ResourceNode resourceTuple = (ResourceNode)resourceNode.Clone();
                         resourceTuple.LastChildResource = null;
                         resourceTuple.ChildResource = null;
+                        resourceTuple.count = 1;
                         MergedResources.Add(resourceTuple);
                         relatedResources.Add(resourceTuple);
                     }
                 }
+            }
                 List<ResourceNode> ToBeRemoved = new List<ResourceNode>();
                 bool isChangeHappened = false;
                 do
@@ -182,9 +178,9 @@ namespace AzSK.ARMChecker.Lib
                         {
                             if (MergedResources[i].LastChildResource != null && MergedResources[i].LastChildResource.Token.Equals(relatedResources[j].Token))
                             {
-                              
                                 MergedResources[i].LastChildResource.ChildResource = relatedResources[j].ChildResource;
                                 MergedResources[i].LastChildResource = relatedResources[j].LastChildResource;
+                                MergedResources[i].count = MergedResources[i].count + relatedResources[j].count - 1;
                                 ToBeRemoved.Add(relatedResources[j]);
                                 isChangeHappened = true;
                             }
@@ -197,6 +193,168 @@ namespace AzSK.ARMChecker.Lib
                     }
 
                 } while (isChangeHappened);
+                for (int i = 0; i < MergedResources.Count; i++)
+                {
+                    for (int j = i+1; j < MergedResources.Count; j++)
+                    {
+                    if (MergedResources[i].Resource.Resource == MergedResources[j].Resource.Resource)
+                    {
+                        var merged_i = MergedResources[i];
+                        var merged_j = MergedResources[j];
+                        while (merged_i.ChildResource != null)
+                            merged_i = merged_i.ChildResource;
+                        while (merged_j.ChildResource != null)
+                            merged_j = merged_j.ChildResource;
+                        if(merged_i.Resource.Resource==merged_j.Resource.Resource)
+                        {
+                            if (MergedResources[i].count < MergedResources[j].count)
+                            {
+                                MergedResources.Remove(MergedResources[i]);
+                            }
+                            else
+                            {
+                                MergedResources.Remove(MergedResources[j]);
+                            }
+                        }
+                        
+                    }
+                    }
+                }
+                for (int i = 0; i < MergedResources.Count; i++)
+                {
+                    var fname = MergedResources[i].Resource.FeatureName;
+                    var temp = (ResourceNode)MergedResources[i].Clone();
+                    int count=0;
+                    IList<string> supported=new List<string>();
+                    IList<string> missed = new List<string>();
+                    foreach (Features x in listOfAllPrimaryResource)
+                    {
+                    if (x.FeatureName == fname)
+                    {
+                        count = x.count;
+                        supported = x.supportedResourceTypes;
+                    }
+
+                    }
+                    for(int k=0;k<supported.Count;k++)
+                    {
+                        var resourceset = (ResourceNode)MergedResources[i].Clone();
+                        int flag = 0;
+                        while (resourceset!=null)
+                        {
+                            if (resourceset.Resource.ResourceType==supported[k])
+                            {
+                                flag = 1;
+                            }
+                            resourceset = resourceset.ChildResource;
+                        }
+                        if(flag==0)
+                        {
+                            missed.Add(supported[k]);
+                        }
+                    }
+                    for (int j = i+1; j < MergedResources.Count; j++)
+                    {
+                        if(MergedResources[j].Resource.FeatureName==fname)
+                        {
+                            var resourceset = (ResourceNode)MergedResources[j].Clone();
+                            var resourceset1 = resourceset;
+                            while (resourceset != null)
+                            {
+                                if (missed.Contains(resourceset.Resource.ResourceType))
+                                {
+                                    var dependsOnList = resourceset.Resource.Resource.GetValueCaseInsensitive("dependsOn");
+                                    if (dependsOnList != null && dependsOnList.Any())
+                                    {
+                                        foreach (var dependency in dependsOnList)
+                                        {
+                                            string dependencyAsString = dependency.ToString().ToLower();
+                                            dependencyAsString = ParseArmFunctionAndParam(dependencyAsString, ParamAndVarKeys);
+                                            var dependencyComponentArray = dependencyAsString.Split('/');
+                                            var t_resourceset = (ResourceNode)MergedResources[i].Clone();
+                                            while (t_resourceset!=null)
+                                            {
+                                                var resourceNameString = ParseArmFunctionAndParam(t_resourceset.Resource.ResourceName, ParamAndVarKeys);
+                                                var resourceNameComponent = resourceNameString.Split('/');
+                                                if (resourceNameComponent.Last().Equals(dependencyComponentArray.Last(), StringComparison.OrdinalIgnoreCase))
+                                                {
+                                                        var temp1 = temp;
+                                                        resourceset.ChildResource = temp1;
+                                                        temp = resourceset1;
+                                                        MergedResources.Remove(MergedResources[j]);
+                                                        j--;
+                                                        MergedResources[i]=temp;
+                                                        goto Gt;
+                                                }
+                                                t_resourceset = t_resourceset.ChildResource;
+                                            }
+                                        }
+                                    }
+                                    var remove = MergedResources[i];
+                                    while(remove!=null)
+                                    {
+                                        missed.Remove(remove.Resource.ResourceType);
+                                        remove = remove.ChildResource;
+                                    }
+                                }
+                                resourceset = resourceset.ChildResource;
+                            }
+                        }
+                    Gt:;
+                    }
+                }
+                 for (int i = 0; i < MergedResources.Count; i++)
+                 {
+                   var resourceset = (ResourceNode)MergedResources[i].Clone();
+                  IList<string> i_supported = new List<string>();
+                    while (resourceset != null)
+                    {
+                    i_supported.Add(resourceset.Resource.ResourceType);
+                    resourceset = resourceset.ChildResource;
+                    }
+                    resourceset = (ResourceNode)MergedResources[i].Clone();
+                    for (int j=0;j<MergedResources.Count;j++)
+                    {
+                        if (i != j)
+                        {
+                            var resourceset1 = (ResourceNode)MergedResources[j].Clone();
+                            while (resourceset1 != null)
+                            {
+                                if (i_supported.Contains(resourceset1.Resource.ResourceType) == false)
+                                {
+                                var dependsOnList = resourceset1.Resource.Resource.GetValueCaseInsensitive("dependsOn");
+                                if (dependsOnList != null && dependsOnList.Any())
+                                {
+                                    foreach (var dependency in dependsOnList)
+                                    {
+                                        string dependencyAsString = dependency.ToString().ToLower();
+                                        dependencyAsString = ParseArmFunctionAndParam(dependencyAsString, ParamAndVarKeys);
+                                        var dependencyComponentArray = dependencyAsString.Split('/');
+                                        var t_resourceset = (ResourceNode)MergedResources[i].Clone();
+                                        while (t_resourceset != null)
+                                        {
+                                            var resourceNameString = ParseArmFunctionAndParam(t_resourceset.Resource.ResourceName, ParamAndVarKeys);
+                                            var resourceNameComponent = resourceNameString.Split('/');
+                                            if (resourceNameComponent.Last().Equals(dependencyComponentArray.Last(), StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                ResourceNode rn = new ResourceNode();
+                                                rn.Resource = resourceset1.Resource;
+                                                rn.ChildResource = resourceset;
+                                                resourceset=rn;
+                                            }
+                                            t_resourceset = t_resourceset.ChildResource;
+                                        }
+                                    }
+                                }
+                            }
+                            resourceset1 = resourceset1.ChildResource;
+                            }
+                        }
+                      
+                    }
+                MergedResources[i] = resourceset;
+                 }
+                
                 for (int i = 0; i < MergedResources.Count; i++)
                 {
                     List<ResourceModel> currentResourceSet = new List<ResourceModel>();
@@ -215,7 +373,7 @@ namespace AzSK.ARMChecker.Lib
                     }
                 }
                 
-            }
+            
   
             return results;
         }
@@ -304,6 +462,52 @@ namespace AzSK.ARMChecker.Lib
             }
         }
 
+        public void convert_to_flat(JToken resources)
+        {
+           
+            foreach (JObject resource in resources)
+            {
+                if (resource.GetValueCaseInsensitive("resources") != null)
+                {
+                    var t = resource.GetValueCaseInsensitive("resources");
+                    resource.Remove("resources");
+                    create_intialList(resource);
+                    convert_to_flat(t);
+                    
+                }
+                else
+                {
+                    create_intialList(resource);
+                }
+            }
+        }
+        public void create_intialList(JObject resource)
+        {
 
+            // Create initial list of all resource without linking
+                var type = resource.GetValueCaseInsensitive<string>("type");
+                var temp = type.Split('/');
+                type = temp.Last();
+            if (type == "auditingSettings")
+                type = "auditingPolicies";
+                var name = resource.GetValueCaseInsensitive<string>("name");
+                var featureSet = listOfAllPrimaryResource?.FirstOrDefault(x => x.supportedResourceTypes.Any(y => y.Equals(type, StringComparison.OrdinalIgnoreCase)));
+                // Console.WriteLine(featureSet);
+                if (featureSet != null)
+                {
+                    ResourceNode resourceNode = new ResourceNode();
+                    resourceNode.Token = "Token" + index++;
+                    ResourceModel resourceModel = new ResourceModel();
+                    resourceModel.FeatureName = featureSet.FeatureName;
+                    resourceModel.ResourceType = type;
+                    resourceModel.ResourceName = name;
+                    resourceModel.Resource = resource;
+                    resourceNode.Resource = resourceModel;
+                    resourceNode.count = 1;
+                    ResourceList.Add(resourceNode);
+                }
+            
+
+        }
     }
 }
