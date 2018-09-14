@@ -93,8 +93,7 @@ class SecurityRecommendationsReport: CommandBase
 			elseif(($Categories | Measure-Object).Count -gt 0)
 			{
 				$userInput.Categories = $Categories
-			}			
-
+			}
 			$content = [Helpers]::ConvertToJsonCustomCompressed($userInput);
 			#write-host $content;
 			$headers = @{};
@@ -117,6 +116,7 @@ class SecurityRecommendationsReport: CommandBase
                     $currentFeatureGroup.Categories = "No features provided. This section is not application for Categories as input.";
                     $Combination.CurrentFeatureGroup += $currentFeatureGroup
                 }
+
 
 				[int]$i =1;
 				$result | ForEach-Object{
