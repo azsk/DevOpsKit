@@ -103,7 +103,11 @@ class SVTCommandBase: CommandBase {
 
 	[void] PostCommandStartedAction()
 	{
-		$this.PostPolicyComplianceTelemetry()        
+		$isPolicyInitiativeEnabled = [ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan;
+        if($isPolicyInitiativeEnabled)
+        {
+            $this.PostPolicyComplianceTelemetry()        
+        }
 	}
     [void] PostPolicyComplianceTelemetry()
 	{
