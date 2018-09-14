@@ -63,9 +63,9 @@ class SecurityRecommendationsReport: CommandBase
 	[MessageData[]] GenerateReport([string] $ResourceGroupName, [ResourceTypeName[]] $ResourceTypeNames,[string[]] $Categories)
     {		    	    
 		[MessageData[]] $messages = @();	
-		$this.get_categories = [ConfigurationHelper]::LoadOfflineConfigFile("get_categories.json", $false);
+		$this.get_categories = [ConfigurationManager]::LoadServerConfigFile("CategoryMapping.json");
 		#$this.get_categories = $this.get_categories | ConvertFrom-Json;
-		$this.category_hash = [ConfigurationHelper]::LoadOfflineConfigFile("category_hash.json", $false);
+		$this.category_hash = [ConfigurationManager]::LoadServerConfigFile("CategoryHash.json");
 		#$this.category_hash = $this.category_hash | ConvertFrom-Json;
 		try
 		{
@@ -93,9 +93,7 @@ class SecurityRecommendationsReport: CommandBase
 			elseif(($Categories | Measure-Object).Count -gt 0)
 			{
 				$userInput.Categories = $Categories
-
 			}			
-
 
 			$content = [Helpers]::ConvertToJsonCustomCompressed($userInput);
 			#write-host $content;
@@ -109,6 +107,17 @@ class SecurityRecommendationsReport: CommandBase
 			{
 				$currentFeatureGroup = [RecommendedFeatureGroup]::new();
 				$currentFeatureGroup.Features = $userInput.Features;
+				if(($userInput.Categories | Measure-Object).Count -gt 0)
+                {
+                    $currentFeatureGroup.Ranking = "";
+                    $currentFeatureGroup.TotalSuccessCount = "";
+                    $currentFeatureGroup.TotalFailCount = "";
+                    $currentFeatureGroup.SecurityRating = "";
+                    $currentFeatureGroup.TotalOccurances = "";
+                    $currentFeatureGroup.Categories = "No features provided. This section is not application for Categories as input.";
+                    $Combination.CurrentFeatureGroup += $currentFeatureGroup
+                }
+
 				[int]$i =1;
 				$result | ForEach-Object{
 					$recommendedGroup = $_;
