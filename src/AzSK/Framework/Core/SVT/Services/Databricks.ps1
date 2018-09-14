@@ -204,7 +204,7 @@ class Databricks: SVTBase
 				if($null -ne $PATwithInfiniteValidity -and ($PATwithInfiniteValidity| Measure-Object).Count -gt 0)
 				{
 					$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following personal access tokens have validity more than 180 days:", $PATwithInfiniteValidity));
-					$controlResult.SetStateData("Following personal access tokens have validity more than 180 days:", $PATwithInfiniteValidity);
+					#$controlResult.SetStateData("Following personal access tokens have validity more than 180 days:", $PATwithInfiniteValidity);
 
 				}
 				else
@@ -328,8 +328,7 @@ class Databricks: SVTBase
 		 }
 		 catch
 		 {
-		   # No need to break execution
-		   # Can Add message here 
+		    $this.PublishCustomMessage("Could not evaluate control due to Databricks API call failure. Token may be invalid.", [MessageType]::Error);
 		 } 
 		return  $ResponseObject 
 	}
