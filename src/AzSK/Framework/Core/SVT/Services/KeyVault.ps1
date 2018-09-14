@@ -162,7 +162,7 @@ class KeyVault: SVTBase
 	hidden [PSObject[]] FetchAllEnabledSecretsWithVersions([ControlResult] $controlResult)
 	{
 
-		if($this.HasFetchKeysPermissions -eq $true)
+		if($this.HasFetchSecretPermissions -eq $true)
 		{
 			if($null -eq $this.AllEnabledSecrets)
 			{
@@ -473,27 +473,32 @@ class KeyVault: SVTBase
 		$isKeysCompliant = $True
 		$isAccessDenied = $False
 
-		$enabledKeys = $this.FetchAllEnabledKeysWithVersions($controlResult);
-		if($null -ne $enabledKeys)
+		if($this.HasFetchKeysPermissions -eq $true -and $this.HasFetchSecretsPermissions -eq $true)
 		{
-			$this.ProcessKeySecretExpiryDate($enabledKeys, $controlResult, "Keys", $isAccessDenied, $this.ControlSettings.KeyVault.KeyRotationDuration_Days);
-		}
-		else
-		{
-			$isAccessDenied = $True
-			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-			$this.SetVerificationResultForExpiryDate($controlResult, [VerificationResult]::Manual, $isAccessDenied);
-		}
+			$enabledKeys = $this.FetchAllEnabledKeysWithVersions($controlResult);
+			if($null -ne $enabledKeys)
+			{
+				$this.ProcessKeySecretExpiryDate($enabledKeys, $controlResult, "Keys", $isAccessDenied, $this.ControlSettings.KeyVault.KeyRotationDuration_Days);
+			}
+			else
+			{
+				$isAccessDenied = $True
+			}
 
-		$enabledSecrets = $this.FetchAllEnabledSecretsWithVersions($controlResult);
-		if($null -ne $enabledSecrets)
-		{
-			$this.ProcessKeySecretExpiryDate($enabledSecrets, $controlResult, "Secrets", $isAccessDenied, $this.ControlSettings.KeyVault.SecretRotationDuration_Days);
+			$enabledSecrets = $this.FetchAllEnabledSecretsWithVersions($controlResult);
+			if($null -ne $enabledSecrets)
+			{
+				$this.ProcessKeySecretExpiryDate($enabledSecrets, $controlResult, "Secrets", $isAccessDenied, $this.ControlSettings.KeyVault.SecretRotationDuration_Days);
+			}
+			else
+			{
+				$isAccessDenied = $True
+			}
 		}
 		else
 		{
-			$isAccessDenied = $True
 			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			$controlResult.AddMessage("Control can not be validated due to insufficient access permission on KeyVault keys or secrets")
 			$this.SetVerificationResultForExpiryDate($controlResult, [VerificationResult]::Manual, $isAccessDenied);
 		}
 

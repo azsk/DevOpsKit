@@ -44,7 +44,7 @@ class ARMCheckerStatus: EventBase
 	{
 	    $this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info);
 		$this.WriteMessage([Constants]::RemediationMsgForARMChekcer, [MessageType]::Info);
-		$this.WriteMessage("For further details, Please refer: "+[Constants]::CICDShortLink,[MessageType]::Info) 
+		$this.WriteMessage("For further details, refer: "+[Constants]::CICDShortLink,[MessageType]::Info) 
 		$this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info);
 		$this.WriteMessage("Status and detailed logs have been exported to: $($resultsFolder)", [MessageType]::Info);
 		$this.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info);
