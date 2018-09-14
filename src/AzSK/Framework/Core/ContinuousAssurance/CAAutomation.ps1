@@ -496,7 +496,7 @@ class CCAutomation: CommandBase
 
 			#SetAzSKInitiative
 			$this.SetAzSKInitiative();
-			
+
             #Always assign permissions if CA is in central scan mode
             if($this.IsCentralScanModeOn)
             {
@@ -3219,7 +3219,7 @@ class CCAutomation: CommandBase
 			{
                 $dependencyModuleDetail = $dependencies[$index].Split(":")
 				$dependencyModuleName = $dependencyModuleDetail[0]
-				$dependencyModuleVersion = $dependencyModuleDetail[1].Replace('[','').Replace(']','')
+				$dependencyModuleVersion = $dependencyModuleDetail[1].Replace('[','').Replace(']','').Split(',')[0]
 				#Add dependent module to the result list
                 if(!$tempHashTable.Contains($dependencyModuleName))
                 {
