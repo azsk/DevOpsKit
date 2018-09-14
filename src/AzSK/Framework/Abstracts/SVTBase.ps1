@@ -593,7 +593,7 @@ class SVTBase: AzSKRoot
 	hidden [ControlResult] CheckPolicyCompliance([ControlItem] $controlItem, [ControlResult] $controlResult)
 	{
 		$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName
-		$defnResourceId = $this.GetResourceId() + "/" + $controlItem.PolicyDefnResourceIdSuffix
+		$defnResourceId = $this.GetResourceId() + $controlItem.PolicyDefnResourceIdSuffix
 		$policyState = Get-AzureRmPolicyState -ResourceId $defnResourceId -Filter "PolicyDefinitionId eq '/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)' and PolicySetDefinitionName eq '$initiativeName'"
 		if($policyState)
         {
