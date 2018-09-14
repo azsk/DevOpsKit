@@ -103,15 +103,17 @@ class SVTCommandBase: CommandBase {
 
 	[void] PostCommandStartedAction()
 	{
-		$this.PostPolicyComplianceTelemetry()        
+		$isPolicyInitiativeEnabled = [ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan;
+        if($isPolicyInitiativeEnabled)
+        {
+            $this.PostPolicyComplianceTelemetry()        
+        }
 	}
     [void] PostPolicyComplianceTelemetry()
 	{
 		[CustomData] $customData = [CustomData]::new();
-		$customData.Name = "PolicyComplianceTelemetry";
-		$policyCompliance = Get-AzureRmPolicyState -SubscriptionId $this.SubscriptionContext.SubscriptionId | `
-		Select-Object ResourceId,PolicyDefinitionId,PolicyAssignmentName,IsCompliant,PolicyAssignmentScope
-		$customData.Value = $policyCompliance;
+		$customData.Name = "PolicyComplianceTelemetry";		
+		$customData.Value = $this.SubscriptionContext.SubscriptionId;
 		$this.PublishCustomData($customData);			
 	}
     hidden [void] CommandError([System.Management.Automation.ErrorRecord] $exception) {

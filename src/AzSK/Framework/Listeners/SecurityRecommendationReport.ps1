@@ -50,7 +50,7 @@ class SecurityRecommendationReport: ListenerBase
 
                     if(($reportObject.Input.Features | Measure-Object).Count -le 0)
                     {
-                        $currentInstance.WriteMessage("Features: Not Specified", [MessageType]::Default);
+                        #$currentInstance.WriteMessage("Features: Not Specified", [MessageType]::Default);
                         $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#features#]", "Not Specified");
                     }
                     else {
@@ -75,8 +75,8 @@ class SecurityRecommendationReport: ListenerBase
                         $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#cgF#]", "$featuresString");
                         $categoriesString = [String]::Join(",", $reportObject.Recommendations.CurrentFeatureGroup.Categories);
                         $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#cgC#]", "$categoriesString");
-                        $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#cgPass#]", "$($reportObject.Recommendations.CurrentFeatureGroup.TotalSuccessCount)]");
-                        $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#cgFail#]", "$($reportObject.Recommendations.CurrentFeatureGroup.TotalFailCount)]");
+                        $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#cgPass#]", "$($reportObject.Recommendations.CurrentFeatureGroup.TotalSuccessCount)");
+                        $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#cgFail#]", "$($reportObject.Recommendations.CurrentFeatureGroup.TotalFailCount)");
                     }
                     else {
                         #TODO: need to hide the div
@@ -107,7 +107,7 @@ class SecurityRecommendationReport: ListenerBase
                             $recommendationPart = $recommendationPart.Replace("[#fc#]","$featuresString");
                             $categoriesString = [String]::Join(",", $recommendation.Categories);
                             $recommendationPart = $recommendationPart.Replace("[#cc#]","$categoriesString");
-                            $recommendationPart = $recommendationPart.Replace("[#pass#]","$($recommendation.TotalSuccessCount)");
+                            $recommendationPart = $recommendationPart.Replace("[#pass#]","$($recommendation.TotalSuccessCount) ]");
                             $recommendationPart = $recommendationPart.Replace("[#fail#]","$($recommendation.TotalFailCount)");
                             $recommendationHtml += $recommendationPart
                         }

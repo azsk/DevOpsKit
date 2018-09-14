@@ -198,6 +198,19 @@ class CCAutomation: CommandBase
 		}
 	}
 
+	[void] SetAzSKInitiative()
+	{
+		try
+		{
+			$subARMPol = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "", $false);
+			$subARMPol.SetPolicyInitiative();
+		}
+		catch
+		{
+			#eat the exception if you are not able to set the initiative
+		}
+	}
+
 	[MessageData[]] InstallAzSKContinuousAssurance()
     {
 		[MessageData[]] $messages = @();
@@ -205,6 +218,10 @@ class CCAutomation: CommandBase
 		{
 			#Validate if command is running from local policy folder
 			$this.ValidateIfLocalPolicyIsEnabled()
+
+			#SetAzSKInitiative
+			$this.SetAzSKInitiative();
+
 			#region :validation/RG creation
 			if(!$this.IsCAInstallationValid())
 			{
@@ -476,6 +493,10 @@ class CCAutomation: CommandBase
 		{
 			#Validate if command is running with local policy
 			$this.ValidateIfLocalPolicyIsEnabled()
+
+			#SetAzSKInitiative
+			$this.SetAzSKInitiative();
+			
             #Always assign permissions if CA is in central scan mode
             if($this.IsCentralScanModeOn)
             {

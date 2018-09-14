@@ -50,52 +50,41 @@ function Get-AzSKInfo
 	Param(
 		[Parameter(Mandatory = $false)]
 		[ValidateSet("SubscriptionInfo", "ControlInfo", "HostInfo" , "AttestationInfo", "ComplianceInfo")] 
-		[Alias("itype")]
 		$InfoType,
 
 		[ResourceTypeName]
-		[Alias("rtn")]
 		$ResourceTypeName = [ResourceTypeName]::All,
 
 		[string]
-		[Alias("rt")]
         $ResourceType,
 
 		[string]
-		[Alias("cids")]
         $ControlIds,
 
 		[switch]
-		[Alias("ubc")]
         $UseBaselineControls,
 
 		[string]
-		[Alias("ft")]
         $FilterTags,
 
 		[string]
-		[Alias("sid","s")]
         $SubscriptionId,
 
 		[string]
-		[Alias("rgns")]
         $ResourceGroupNames,
 
 		[string]
-		[Alias("ResourceName","rns")]
+		[Alias("ResourceName")]
 		$ResourceNames,
 
 		[ValidateSet("Critical", "High", "Medium" , "Low")] 
-		[Alias("cs")]
 		$ControlSeverity,
 
 		[string]
-		[Alias("cidc")]
 		$ControlIdContains,
 
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
-		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 
@@ -243,23 +232,20 @@ function Update-AzSKPersistedState
         [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which DevOps Kit state has to be updated.", ParameterSetName = "Default")]
         [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Subscription id for which DevOps Kit state has to be updated.", ParameterSetName = "UserComments")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("sid","s")]
+		[Alias("sid")]
 		$SubscriptionId,
 
 		[string]
 		[Parameter(Mandatory = $false, HelpMessage = "Path to file containing list of controls for which state has to be updated.", ParameterSetName = "UserComments")]
-		[Alias("fp")]
 		$FilePath,
 
 		[ValidateSet("UserComments")]
 		[Parameter(Mandatory = $true, HelpMessage = "This represents the specific type of DevOps Kit state that has to be updated.", ParameterSetName = "UserComments")]
-		[Alias("st")]
 		$StateType,
 	
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.", ParameterSetName = "Default")]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.", ParameterSetName = "UserComments")]
-		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 
@@ -290,3 +276,61 @@ function Update-AzSKPersistedState
 		[ListenerHelper]::UnregisterListeners();
 	}
 }
+
+
+
+function Get-AzSKSecurityRecommendationReport 
+{	
+	[OutputType([String])]
+	Param
+	(
+
+		[string]
+        [Parameter(Position = 0, Mandatory = $true, HelpMessage="Subscription id for which the security evaluation has to be performed.")]
+		[ValidateNotNullOrEmpty()]
+		[Alias("sid", "s")]
+		$SubscriptionId,
+
+        [string]
+        [Parameter(Mandatory = $true, ParameterSetName = "ResourceGroupName")]
+		[Alias("rgn")]
+		$ResourceGroupName,
+
+		[string[]]		
+        [Parameter(Mandatory = $true, ParameterSetName = "Categories")]
+		$Categories,
+        
+        [Parameter(Mandatory = $true, ParameterSetName = "ResourceTypeNames")]
+		[ResourceTypeName[]]
+		[Alias("rtns")]
+		$ResourceTypeNames
+    )
+
+	Begin
+	{
+		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
+		[ListenerHelper]::RegisterListeners();
+	}
+
+	Process
+	{
+	try 
+		{
+			$SecurityRecommendationsReport = [SecurityRecommendationsReport]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+			if ($SecurityRecommendationsReport) 
+			{
+				return $SecurityRecommendationsReport.InvokeFunction($SecurityRecommendationsReport.GenerateReport,@($ResourceGroupName, $ResourceTypeNames,$Categories));
+			}
+		}
+		catch 
+		{
+			[EventBase]::PublishGenericException($_);
+		}  
+	}
+
+	End
+	{
+		[ListenerHelper]::UnregisterListeners();
+	}
+}
+
