@@ -18,6 +18,9 @@
   "ERvNet": {
     "ResourceLockLevel": "ReadOnly"
   },
+  "Databricks": {
+    "Tenant_Domain" : "microsoft.com"
+  },
   "VirtualMachine": {
     "Windows": {
       "SupportedSkuList": [],
