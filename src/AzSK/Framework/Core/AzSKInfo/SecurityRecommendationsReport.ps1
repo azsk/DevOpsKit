@@ -93,7 +93,9 @@ class SecurityRecommendationsReport: CommandBase
 			elseif(($Categories | Measure-Object).Count -gt 0)
 			{
 				$userInput.Categories = $Categories
+
 			}			
+
 
 			$content = [Helpers]::ConvertToJsonCustomCompressed($userInput);
 			#write-host $content;
