@@ -185,7 +185,7 @@ class Databricks: SVTBase
 					{
 						$currentObject.comment = $_.comment
 						$currentObject.token_id = $_.token_id
-						$currentObject.expiry_in_days = "-1"
+						$currentObject.expiry_in_days = "Never"
 					}
 					else{
 					 
@@ -196,15 +196,15 @@ class Databricks: SVTBase
 					$AccessTokensList += $currentObject
 
 				}
-				$PATwithInfiniteValidity += $AccessTokensList | Where-Object {$_.expiry_in_days -eq "-1" }
-				$PATwithInfiniteValidity += $AccessTokensList | Where-Object {$_.expiry_in_days -ne "-1"} | Where-Object {$_.expiry_in_days -gt 180} 
+				$PATwithInfiniteValidity += $AccessTokensList | Where-Object {$_.expiry_in_days -eq "Never" }
+				$PATwithInfiniteValidity += $AccessTokensList | Where-Object {$_.expiry_in_days -ne "Never"} | Where-Object {$_.expiry_in_days -gt 180} 
 			
-				$PATwithFiniteValidity = $AccessTokensList | Where-Object {$_.expiry_in_days -ne "-1" -and $_.expiry_in_days -le 180}
+				$PATwithFiniteValidity = $AccessTokensList | Where-Object {$_.expiry_in_days -ne "Never" -and $_.expiry_in_days -le 180}
 
 				if($null -ne $PATwithInfiniteValidity -and ($PATwithInfiniteValidity| Measure-Object).Count -gt 0)
 				{
-					$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following personal access token has validity more than 180 days:", $PATwithInfiniteValidity));
-					$controlResult.SetStateData("Following personal access tokens have validity more than 180 days:", $PATwithInfiniteValidity);
+					$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following personal access tokens have validity more than 180 days:", $PATwithInfiniteValidity));
+					#$controlResult.SetStateData("Following personal access tokens have validity more than 180 days:", $PATwithInfiniteValidity);
 
 				}
 				else
@@ -276,26 +276,30 @@ class Databricks: SVTBase
 	{   
 	   if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.IsUserAdmin())
 	   {    
-	        $controlResult.VerificationResult = [VerificationResult]::Verify;
 			# Get All Active Users
 			$guestAdminUsers =@()
 			$requestBody = "group_name=admins"
 			$activeAdmins = $this.InvokeRestAPICall("GET","groups/list-members",$requestBody);
 			if($null -ne $activeAdmins -and ($activeAdmins.members | Measure-Object).Count -gt 0)
-			{
-				$activeAdmins.members | ForEach-Object{
-				 if($_.user_name.Split('@')[1] -ne 'microsoft.com')
-				 {
-					$guestAdminUsers +=$_
-				 }
+			{ 
+			    if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"Databricks.Tenant_Domain"))
+				{    
+				     $tenantDomain = $this.ControlSettings.Databricks.Tenant_Domain
+					 $activeAdmins.members | ForEach-Object{
+					 if($_.user_name.Split('@')[1] -ne $tenantDomain)
+					 {
+						$guestAdminUsers +=$_
+					 }
+					}
 				}
+				
 			}
 			if($null -ne $guestAdminUsers -and ($guestAdminUsers | Measure-Object).Count -gt 0)
 			{
 				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following guest accounts have admin access on workspace:", $guestAdminUsers));
 			}
 			else{
-				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Verify guest accounts should not have admin access on workspace."));
+				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Manually verify that guest accounts should not have admin access on workspace."));
 			}
 			
 	   }
@@ -324,7 +328,7 @@ class Databricks: SVTBase
 		 }
 		 catch
 		 {
-		   # No need to break execution
+		    $this.PublishCustomMessage("Could not evaluate control due to Databricks API call failure. Token may be invalid.", [MessageType]::Error);
 		 } 
 		return  $ResponseObject 
 	}
@@ -334,7 +338,7 @@ class Databricks: SVTBase
 	     $scanSource = [RemoteReportHelper]::GetScanSource();
          if($scanSource -eq [ScanSource]::SpotCheck)
 		 { 
-		   $input = Read-Host "Enter PAT(personal access token) for '$($this.ResourceContext.ResourceName)' workspace"
+		   $input = Read-Host "Enter PAT (personal access token) for '$($this.ResourceContext.ResourceName)' Databricks workspace"
            $input = $input.Trim()
 		   return $input;
 		 }
