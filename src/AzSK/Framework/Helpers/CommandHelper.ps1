@@ -178,6 +178,12 @@ class CommandHelper
 			IsLatestRequired = $false;
 		},
 		[CommandDetails]@{
+            Verb = "Get";
+            Noun = "AzSKSecurityRecommendationReport";
+            ShortName = "GAR";
+			IsLatestRequired = $false;
+		},
+		[CommandDetails]@{
             Verb = "Clear";
             Noun = "AzSKSessionState";
             ShortName = "CSS";

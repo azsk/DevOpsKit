@@ -50,7 +50,7 @@ class SecurityRecommendationReport: ListenerBase
 
                     if(($reportObject.Input.Features | Measure-Object).Count -le 0)
                     {
-                        $currentInstance.WriteMessage("Features: Not Specified", [MessageType]::Default);
+                        #$currentInstance.WriteMessage("Features: Not Specified", [MessageType]::Default);
                         $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#features#]", "Not Specified");
                     }
                     else {

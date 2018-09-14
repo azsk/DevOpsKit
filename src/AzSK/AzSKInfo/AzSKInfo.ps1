@@ -296,8 +296,7 @@ function Get-AzSKSecurityRecommendationReport
 		[Alias("rgn")]
 		$ResourceGroupName,
 
-		[string[]]
-		[ValidateSet("Storage","WebFrontEnd","APIs","Cache","NetworkIsolation","CommuincationHub","Logs","Reporting","DataProcessing","SubscriptionCore","BackendProcessing","Hybrid","SecurityInfra")]
+		[string[]]		
         [Parameter(Mandatory = $true, ParameterSetName = "Categories")]
 		$Categories,
         
