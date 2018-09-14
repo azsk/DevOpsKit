@@ -97,7 +97,7 @@ class Databricks: SVTBase
 				  $DatabricksBackedSecret = $SecretScopes.scopes | where {$_.backend_type -ne "AZURE_KEYVAULT"}
 				  if($null -ne $DatabricksBackedSecret -and ( $SecretScopes|Measure-Object).count -gt 0)
 				  {
-					$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Following Databrick backed secret scopes found:", $DatabricksBackedSecret));
+					$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Following Databricks backed secret scopes found:", $DatabricksBackedSecret));
 					$controlResult.SetStateData("Following Databricks backed secret scope found:", $DatabricksBackedSecret);
 				  }
 				  else
