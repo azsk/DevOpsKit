@@ -162,7 +162,7 @@ class KeyVault: SVTBase
 	hidden [PSObject[]] FetchAllEnabledSecretsWithVersions([ControlResult] $controlResult)
 	{
 
-		if($this.HasFetchSecretPermissions -eq $true)
+		if($this.HasFetchSecretsPermissions -eq $true)
 		{
 			if($null -eq $this.AllEnabledSecrets)
 			{
