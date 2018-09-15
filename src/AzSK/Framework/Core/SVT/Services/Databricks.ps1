@@ -92,7 +92,7 @@ class Databricks: SVTBase
 	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.IsUserAdmin())
 		{
 			 $SecretScopes	= $this.InvokeRestAPICall("GET","secrets/scopes/list","")
-			 if($null -ne  $SecretScopes  -and ( $SecretScopes|Measure-Object).count -gt 0)
+			 if($null -ne  $SecretScopes  -and (( $SecretScopes|Measure-Object).count -gt 0) -and [Helpers]::CheckMember($SecretScopes,"scopes"))
 			 {
 				  $DatabricksBackedSecret = $SecretScopes.scopes | where {$_.backend_type -ne "AZURE_KEYVAULT"}
 				  if($null -ne $DatabricksBackedSecret -and ( $SecretScopes|Measure-Object).count -gt 0)
@@ -126,7 +126,7 @@ class Databricks: SVTBase
 			$KeyVaultScopeMapping = @()
 			$KeyVaultWithMultipleReference = @() 
 			$SecretScopes	= $this.InvokeRestAPICall("GET","secrets/scopes/list","")
-			if($null -ne  $SecretScopes  -and ( $SecretScopes|Measure-Object).count -gt 0)
+			if($null -ne  $SecretScopes  -and (( $SecretScopes|Measure-Object).count -gt 0) -and [Helpers]::CheckMember($SecretScopes,"scopes"))
 			{
 			  $KeyVaultBackedSecretScope = $SecretScopes.scopes | where {$_.backend_type -eq "AZURE_KEYVAULT"}
 			  if($null -ne $KeyVaultBackedSecretScope -and ( $KeyVaultBackedSecretScope | Measure-Object).count -gt 0)
