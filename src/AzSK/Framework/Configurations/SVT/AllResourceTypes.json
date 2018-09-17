@@ -40,5 +40,6 @@
   "Microsoft.Web/connectionGateways",
   "Microsoft.BotService/botServices",
   "Microsoft.ContainerInstance/containerGroups",
-  "Microsoft.ContainerRegistry/registries"
+  "Microsoft.ContainerRegistry/registries",
+  "Microsoft.Databricks/workspaces"
 ]

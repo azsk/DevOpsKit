@@ -44,9 +44,9 @@ class ARMCheckerStatus: EventBase
 	{
 	    $this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info);
 		$this.WriteMessage([Constants]::RemediationMsgForARMChekcer, [MessageType]::Info);
-		$this.WriteMessage("For more details, Please refer: "+[Constants]::CICDShortLink,[MessageType]::Info) 
+		$this.WriteMessage("For further details, refer: "+[Constants]::CICDShortLink,[MessageType]::Info) 
 		$this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info);
-		$this.WriteMessage("Status and detailed logs have been exported to path - $($resultsFolder)", [MessageType]::Info);
+		$this.WriteMessage("Status and detailed logs have been exported to: $($resultsFolder)", [MessageType]::Info);
 		$this.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info);
 	}
 
@@ -101,7 +101,7 @@ class ARMCheckerStatus: EventBase
 		}
 		foreach($armTemplate in $ARMTemplates)
 		{
-		    $armFileName = $armTemplate.FullName.Replace($baseDirectory, "");
+		    $armFileName = $armTemplate.FullName.Replace($baseDirectory, ".");
 		    if(($filesToExcludeCount -eq 0) -or (-not $filesToExclude.Contains($armTemplate.Name)))
 			{		
 			try
@@ -116,20 +116,21 @@ class ARMCheckerStatus: EventBase
 				if($results.Count -gt 0)
 				{   $scannedFileCount += 1;
 					foreach($result in $results)
-					{				       
+					{	       
 						$csvResultItem = "" | Select-Object "ControlId", "FeatureName","Status", "SupportedResources",  "Severity", `
 															"PropertyPath", "LineNumber", "CurrentValue", "ExpectedProperty", "ExpectedValue", `
 															"ResourcePath", "ResourceLineNumber", "Description","FilePath"
+									
 
 						$csvResultItem.SupportedResources = $result.SupportedResources
 						$csvResultItem.ControlId = $result.ControlId
-                        $csvResultItem.FeatureName = $result.FeatureName
+						$csvResultItem.FeatureName = $result.FeatureName
 						$csvResultItem.Description = $result.Description
 						$csvResultItem.ExpectedProperty = $result.ExpectedProperty
 						$csvResultItem.ExpectedValue = $result.ExpectedValue
 						$csvResultItem.Severity = $result.Severity.ToString()
 						$csvResultItem.Status = $result.VerificationResult
-						$csvResultItem.FilePath = $armFileName					
+						$csvResultItem.FilePath = $armFileName				
 
 						if($result.ResultDataMarkers.Count -gt 0)
 						{
@@ -165,11 +166,8 @@ class ARMCheckerStatus: EventBase
 						 $csvResultItem =$csvResultItem | Select-Object "ControlId", "FeatureName","Status", "SupportedResources",  "Severity", `
 															"PropertyPath", "LineNumber", "CurrentValue", "ExpectedProperty", "ExpectedValue", `
 															"ResourcePath", "ResourceLineNumber", "Description","FilePath"
-					    }
-						$csvResults += $csvResultItem;
-						$this.WriteResult($csvResultItem);
-						$csvResultsForCurFile+=$csvResultItem;
-
+						 								    									
+						}
 						$properties = @{};
 						$properties.Add("ResourceType", $csvResultItem.FeatureName)
 						$properties.Add("ControlId", $csvResultItem.ControlId)
@@ -178,7 +176,22 @@ class ARMCheckerStatus: EventBase
 						$telemetryEvent = "" | Select-Object Name, Properties, Metrics
 						$telemetryEvent.Name = "ARMChecker Control Scanned"
 						$telemetryEvent.Properties = $properties
-						$armcheckerscantelemetryEvents.Add($telemetryEvent)
+						[bool] $flag = $true;
+						foreach($cr in $csvResults)
+						{
+							if($cr.ExpectedProperty -eq $csvResultItem.ExpectedProperty -and $cr.ControlId -eq $csvResultItem.ControlId -and $cr.LineNumber -eq $csvResultItem.LineNumber -and $cr.ResourceLineNumber -eq $csvResultItem.ResourceLineNumber -and $cr.FilePath -eq $csvResultItem.FilePath)
+							{
+								$flag = $false;
+								break;
+							}
+						}
+						if($flag)
+						{
+							$csvResults += $csvResultItem;
+							$this.WriteResult($csvResultItem);
+							$csvResultsForCurFile+=$csvResultItem;
+							$armcheckerscantelemetryEvents.Add($telemetryEvent)
+				    	}
 					}
 					$this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info);
 					$this.WriteSummary($csvResultsForCurFile, "Severity", "Status");
@@ -439,7 +452,8 @@ class ARMCheckerStatus: EventBase
 	   }else
 	   {
 	     $serverFileContent = [ConfigurationHelper]::LoadOfflineConfigFile("ARMControls.json", $false);
-	   }
+		 $serverFileContent=$serverFileContent | ConvertTo-Json -Depth 10
+		}
 
 	   return $serverFileContent;
 	}

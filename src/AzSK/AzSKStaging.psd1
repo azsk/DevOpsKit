@@ -12,7 +12,7 @@
     RootModule             = '.\AzSK.psm1'
 
     # Version number of this module.
-    ModuleVersion          = '2.0.0.0'
+    ModuleVersion          = '4.0.0.0'
 
     # ID used to uniquely identify this module
     GUID                   = 'a34e9875-e00a-477f-a41d-0410da399e54'
@@ -49,39 +49,40 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules        = @(
-        @{ModuleName = 'AzureRM.Profile'; RequiredVersion = '5.3.4'}
-		@{ModuleName = 'Azure.Storage'; RequiredVersion = '4.4.0'}
-		@{ModuleName = 'AzureRM.AnalysisServices'; RequiredVersion = '0.6.11'}
-		@{ModuleName = 'AzureRM.ApplicationInsights'; RequiredVersion = '0.1.5'}
-		@{ModuleName = 'AzureRM.Automation'; RequiredVersion = '5.0.3'}
-		@{ModuleName = 'AzureRM.Batch'; RequiredVersion = '4.1.2'}
-		@{ModuleName = 'AzureRM.Cdn'; RequiredVersion = '5.0.2'}
-		@{ModuleName = 'AzureRM.Compute'; RequiredVersion = '5.4.0'}
-		@{ModuleName = 'AzureRM.DataFactories'; RequiredVersion = '5.0.2'}
-		@{ModuleName = 'AzureRM.DataFactoryV2'; RequiredVersion = '0.5.7'}
-		@{ModuleName = 'AzureRM.DataLakeAnalytics'; RequiredVersion = '5.1.1'}
-		@{ModuleName = 'AzureRM.DataLakeStore'; RequiredVersion = '6.1.1'}
-		@{ModuleName = 'AzureRM.EventHub'; RequiredVersion = '0.6.7'}
-		@{ModuleName = 'AzureRM.HDInsight'; RequiredVersion = '4.1.5'}
-		@{ModuleName = 'AzureRM.Insights'; RequiredVersion = '5.1.0'}
-		@{ModuleName = 'AzureRM.KeyVault'; RequiredVersion = '5.1.0'}
-		@{ModuleName = 'AzureRM.LogicApp'; RequiredVersion = '4.1.1'}
-		@{ModuleName = 'AzureRM.Network'; RequiredVersion = '6.4.1'}
-		@{ModuleName = 'AzureRM.NotificationHubs'; RequiredVersion = '5.0.2'}
-		@{ModuleName = 'AzureRM.OperationalInsights'; RequiredVersion = '5.0.3'}
-		@{ModuleName = 'AzureRM.RedisCache'; RequiredVersion = '5.0.2'}		
-		@{ModuleName = 'AzureRM.Resources'; RequiredVersion = '6.3.0'}
-		@{ModuleName = 'AzureRM.Scheduler'; RequiredVersion = '0.16.7'}
-		@{ModuleName = 'AzureRM.ServiceBus'; RequiredVersion = '0.6.8'}
-		@{ModuleName = 'AzureRM.ServiceFabric'; RequiredVersion = '0.3.9'}
-		@{ModuleName = 'AzureRM.Sql'; RequiredVersion = '4.11.0'}
-		@{ModuleName = 'AzureRM.Storage'; RequiredVersion = '5.0.1'}
-		@{ModuleName = 'AzureRM.StreamAnalytics'; RequiredVersion = '4.0.7'}
-		@{ModuleName = 'AzureRM.Tags'; RequiredVersion = '4.0.4'}
-		@{ModuleName = 'AzureRM.TrafficManager'; RequiredVersion = '4.0.8'}		
-		@{ModuleName = 'AzureRM.Websites'; RequiredVersion = '5.0.6'}	
-		@{ModuleName = 'AzureRM.ContainerInstance'; RequiredVersion = '0.2.7'}	
-		@{ModuleName = 'AzureRM.ContainerRegistry'; RequiredVersion = '1.0.7'}	
+        @{ModuleName = 'AzureRM.Profile'; RequiredVersion = '5.5.1'}
+		@{ModuleName = 'Azure.Storage'; RequiredVersion = '4.5.0'}
+		@{ModuleName = 'AzureRM.AnalysisServices'; RequiredVersion = '0.6.14'}
+		@{ModuleName = 'AzureRM.ApplicationInsights'; RequiredVersion = '0.1.8'}
+		@{ModuleName = 'AzureRM.Automation'; RequiredVersion = '5.1.1'}
+		@{ModuleName = 'AzureRM.Batch'; RequiredVersion = '4.1.5'}
+		@{ModuleName = 'AzureRM.Cdn'; RequiredVersion = '5.0.5'}
+		@{ModuleName = 'AzureRM.Compute'; RequiredVersion = '5.5.2'}
+		@{ModuleName = 'AzureRM.DataFactories'; RequiredVersion = '5.0.3'}
+		@{ModuleName = 'AzureRM.DataFactoryV2'; RequiredVersion = '0.5.10'}
+		@{ModuleName = 'AzureRM.DataLakeAnalytics'; RequiredVersion = '5.1.4'}
+		@{ModuleName = 'AzureRM.DataLakeStore'; RequiredVersion = '6.1.2'}
+		@{ModuleName = 'AzureRM.EventHub'; RequiredVersion = '0.6.10'}
+		@{ModuleName = 'AzureRM.HDInsight'; RequiredVersion = '4.1.8'}
+		@{ModuleName = 'AzureRM.Insights'; RequiredVersion = '5.1.3'}
+		@{ModuleName = 'AzureRM.KeyVault'; RequiredVersion = '5.2.1'}
+		@{ModuleName = 'AzureRM.LogicApp'; RequiredVersion = '4.1.4'}
+		@{ModuleName = 'AzureRM.Network'; RequiredVersion = '6.6.1'}
+		@{ModuleName = 'AzureRM.NotificationHubs'; RequiredVersion = '5.0.3'}
+        @{ModuleName = 'AzureRM.OperationalInsights'; RequiredVersion = '5.0.6'}
+		@{ModuleName = 'AzureRM.PolicyInsights'; RequiredVersion = '1.0.4'}        
+		@{ModuleName = 'AzureRM.RedisCache'; RequiredVersion = '5.0.5'}		
+		@{ModuleName = 'AzureRM.Resources'; RequiredVersion = '6.4.2'}
+		@{ModuleName = 'AzureRM.Scheduler'; RequiredVersion = '0.16.10'}
+		@{ModuleName = 'AzureRM.ServiceBus'; RequiredVersion = '0.6.11'}
+		@{ModuleName = 'AzureRM.ServiceFabric'; RequiredVersion = '0.3.12'}
+		@{ModuleName = 'AzureRM.Sql'; RequiredVersion = '4.11.3'}
+		@{ModuleName = 'AzureRM.Storage'; RequiredVersion = '5.0.4'}
+		@{ModuleName = 'AzureRM.StreamAnalytics'; RequiredVersion = '4.0.10'}
+		@{ModuleName = 'AzureRM.Tags'; RequiredVersion = '4.0.5'}
+		@{ModuleName = 'AzureRM.TrafficManager'; RequiredVersion = '4.1.1'}		
+		@{ModuleName = 'AzureRM.Websites'; RequiredVersion = '5.0.9'}	
+		@{ModuleName = 'AzureRM.ContainerInstance'; RequiredVersion = '0.2.10'}	
+		@{ModuleName = 'AzureRM.ContainerRegistry'; RequiredVersion = '1.0.10'}	
     )
 
     # Assemblies that must be loaded prior to importing this module
@@ -141,6 +142,7 @@
         'Get-AzSKARMTemplateSecurityStatus',
         'Clear-AzSKSessionState',
 		'Update-AzSKPersistedState'
+        'Get-AzSKSecurityRecommendationReport'
     )
 
     # Cmdlets to export from this module
@@ -212,4 +214,3 @@
     DefaultCommandPrefix   = ''
 	
 }
-

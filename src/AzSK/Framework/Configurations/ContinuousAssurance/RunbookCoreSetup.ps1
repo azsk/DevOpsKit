@@ -257,7 +257,7 @@ function AddDependentModules
 				{
                     $dependencyModuleDetail = $dependencies[$index].Split(":")
 					$dependencyModuleName = $dependencyModuleDetail[0]
-					$dependencyModuleVersion = $dependencyModuleDetail[1].Replace('[','').Replace(']','')
+					$dependencyModuleVersion = $dependencyModuleDetail[1].Replace('[','').Replace(']','').Split(',')[0]
 					
 					#Add dependent module to the result list 
                     if(!$ResultModuleList.Contains($dependencyModuleName))
@@ -358,11 +358,21 @@ function FindNearestSchedule($intervalInMins)
 	$finalSchedule = Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
 	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*" -and ($_.ExpiryTime.UtcDateTime -gt $(get-date).ToUniversalTime()) -and ($_.NextRun.UtcDateTime -ge $desiredNextRun)} | `
 	Sort-Object -Property NextRun | Select-Object -First 1
-	return $finalSchedule
+    if(($finalSchedule|Measure-Object).Count -eq 0)
+    {
+        $finalSchedule = Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
+        Where-Object {$_.Name -ilike "*$CAHelperScheduleName*" -and ($_.ExpiryTime.UtcDateTime -gt $(get-date).ToUniversalTime()) -and ($_.NextRun.UtcDateTime -le $desiredNextRun)} | `
+        Sort-Object -Property NextRun -Descending | Select-Object -First 1
+    }
+    return $finalSchedule
 }
 function EnableHelperSchedule($scheduleName)
 {
-	#Enable only required schedule and disable others
+    if(($scheduleName|Measure-Object).Count -gt 1)
+    {
+        $scheduleName = $scheduleName[0]
+    }
+    #Enable only required schedule and disable others
 	$enabledSchedule = Set-AzureRmAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true -ErrorAction SilentlyContinue
 	if(($enabledSchedule|Measure-Object).Count -gt 0 -and $enabledSchedule.IsEnabled)
 	{

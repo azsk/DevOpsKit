@@ -14,7 +14,7 @@ class SVTBase: AzSKRoot
     hidden [ControlItem[]] $ApplicableControls = $null;
 	hidden [ControlItem[]] $FeatureApplicableControls = $null;
 	[string[]] $ChildResourceNames = $null;
-
+	[System.Net.SecurityProtocolType] $currentSecurityProtocol;
 	[string[]] $FilterTags = @();
 	[string[]] $ExcludeTags = @();
 	[string[]] $ControlIds = @();
@@ -304,7 +304,7 @@ class SVTBase: AzSKRoot
 			}
 			else
 			{
-				$this.PostFeatureControlTelemetry();			
+				$this.PostTelemetry();
 				$this.EvaluationStarted();	
 				$resourceSecurityResult += $this.GetAutomatedSecurityStatus();
 				$resourceSecurityResult += $this.GetManualSecurityStatus();			
@@ -333,7 +333,16 @@ class SVTBase: AzSKRoot
         }
         return $contexts;
 	}
-
+	[void] PostTelemetry()
+	{
+	    # Setting the protocol for databricks
+		if([Helpers]::CheckMember($this.ResourceContext, "ResourceType") -and $this.ResourceContext.ResourceType -eq "Microsoft.Databricks/workspaces")
+		{
+			$this.currentSecurityProtocol = [Net.ServicePointManager]::SecurityProtocol
+			[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+		}
+		$this.PostFeatureControlTelemetry()
+	}
 	[void] PostFeatureControlTelemetry()
 	{
 		#todo add check for latest module version
@@ -444,7 +453,7 @@ class SVTBase: AzSKRoot
         [SVTEventContext[]] $manualControlsResult = @();
         try
         {
-            $this.GetApplicableControls() | Where-Object { $_.Automated -eq "No" } |
+            $this.GetApplicableControls() | Where-Object { $_.Automated -eq "No" -and $_.Enabled -eq $true } |
             ForEach-Object {
                 $controlItem = $_;
 				[SVTEventContext] $arg = $this.CreateSVTEventContextObject();
@@ -481,7 +490,7 @@ class SVTBase: AzSKRoot
         {
             $this.GetApplicableControls() | Where-Object { $_.Automated -ne "No" -and (-not [string]::IsNullOrEmpty($_.MethodName)) } |
             ForEach-Object {
-                $eventContext = $this.RunControl($_);
+				$eventContext = $this.RunControl($_);
 				if($null -ne $eventContext -and $eventcontext.ControlResults.Length -gt 0)
 				{
 					$automatedControlsResult += $eventContext;
@@ -534,22 +543,20 @@ class SVTBase: AzSKRoot
         }
         else
         {
-			$controlResult = $this.CreateControlResult($controlItem.FixControl);
-
+			$azskScanResult = $this.CreateControlResult($controlItem.FixControl);
             try
             {
                 $methodName = $controlItem.MethodName;
 				#$this.CurrentControlItem = $controlItem;
-                $singleControlResult.ControlResults += $this.$methodName($controlResult);
+				$singleControlResult.ControlResults += $this.$methodName($azskScanResult);
             }
             catch
             {
-				$controlResult.VerificationResult = [VerificationResult]::Error				
-                $controlResult.AddError($_);
-                $singleControlResult.ControlResults += $controlResult;
+				$azskScanResult.VerificationResult = [VerificationResult]::Error				
+				$azskScanResult.AddError($_);
+				$singleControlResult.ControlResults += $azskScanResult
                 $this.ControlError($controlItem, $_);
 			}
-						
 			$this.PostProcessData($singleControlResult);
 
 			# Check for the control which requires elevated permission to modify 'Recommendation' so that user can know it is actually automated if they have the right permission
@@ -570,6 +577,44 @@ class SVTBase: AzSKRoot
 
         return $singleControlResult;
     }
+	
+	# Policy compliance methods begin
+	hidden [ControlResult] ComputeFinalScanResult([ControlResult] $azskScanResult, [ControlResult] $policyScanResult)
+	{
+		if($policyScanResult.VerificationResult -ne [VerificationResult]::Failed -and $azskScanResult.VerificationResult -ne [VerificationResult]::Passed)
+		{
+			return $azskScanResult
+		}
+		else
+		{
+			return $policyScanResult;
+		}
+	}
+	hidden [ControlResult] CheckPolicyCompliance([ControlItem] $controlItem, [ControlResult] $controlResult)
+	{
+		$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName
+		$defnResourceId = $this.GetResourceId() + $controlItem.PolicyDefnResourceIdSuffix
+		$policyState = Get-AzureRmPolicyState -ResourceId $defnResourceId -Filter "PolicyDefinitionId eq '/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)' and PolicySetDefinitionName eq '$initiativeName'"
+		if($policyState)
+        {
+            $policyStateObject = $policyState | Select-Object ResourceId, PolicyAssignmentId, PolicyDefinitionId, PolicyAssignmentScope, PolicyDefinitionAction, PolicySetDefinitionName, IsCompliant
+		    if($policyState.IsCompliant)
+            {
+			    $controlResult.AddMessage([VerificationResult]::Passed,
+										    [MessageData]::new("Policy compliance data:", $policyStateObject));
+            }
+		    else
+            { 
+			    #$controlResult.EnableFixControl = $true;
+			    $controlResult.AddMessage([VerificationResult]::Failed,
+										    [MessageData]::new("Policy compliance data:", $policyStateObject));
+            }
+            return $controlResult;
+        }
+        return $null;
+    }
+	# Policy compliance methods end
+	
 	hidden [SVTEventContext] FetchControlState([ControlItem] $controlItem)
     {
 		[SVTEventContext] $singleControlResult = $this.CreateSVTEventContextObject();
@@ -646,6 +691,11 @@ class SVTBase: AzSKRoot
     }
 	hidden [void] PostEvaluationCompleted([SVTEventContext[]] $ControlResults)
 	{
+	    # If ResourceType is Databricks, reverting security protocol 
+		if([Helpers]::CheckMember($this.ResourceContext, "ResourceType") -and $this.ResourceContext.ResourceType -eq "Microsoft.Databricks/workspaces")
+		{
+		  [Net.ServicePointManager]::SecurityProtocol = $this.currentSecurityProtocol 
+		}
 		$this.UpdateControlStates($ControlResults);
 	}
 
@@ -673,7 +723,7 @@ class SVTBase: AzSKRoot
 			#get the uniqueid from the first control result. Here we can take first as it would come here for each resource.
 			$id = $ControlResults[0].GetUniqueId();
 
-			$this.ControlStateExt.SetControlState($id, $effectiveResourceStates, $false)
+			$this.ControlStateExt.SetControlState($id, $effectiveResourceStates, $true)
 		}
 	}
 
@@ -684,6 +734,26 @@ class SVTBase: AzSKRoot
 		$controlStateValue = @();
 		try
 		{
+			# Get policy compliance if org-level flag is enabled and policy is found 
+			#TODO: set flag in a variable once and reuse it
+			
+			if([ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan -eq $true)
+			{
+				if(-not [string]::IsNullOrWhiteSpace($eventContext.ControlItem.PolicyDefinitionGuid))
+				{
+					#create default controlresult
+					$policyScanResult = $this.CreateControlResult($eventContext.ControlItem.FixControl);
+					#update default controlresult with policy compliance state
+					$policyScanResult = $this.CheckPolicyCompliance($eventContext.ControlItem, $policyScanResult);
+					#todo: currently excluding child controls
+					if($eventContext.ControlResults.Count -eq 1 -and $Null -ne $policyScanResult)
+					{
+						$finalScanResult = $this.ComputeFinalScanResult($eventContext.ControlResults[0],$policyScanResult)
+						$eventContext.ControlResults[0] = $finalScanResult
+					}
+				}
+			}
+			
 			$this.GetDataFromSubscriptionReport($eventContext);
 
 			$resourceStates = $this.GetResourceState()			
@@ -986,6 +1056,8 @@ class SVTBase: AzSKRoot
 			}
 			else
 			{
+				$failStateDiagnostics = $nonCompliantLogs | Select-Object -Property Logs, Metrics, StorageAccountId, EventHubName, Name;
+				$controlResult.SetStateData("Non compliant resources are:", $failStateDiagnostics);
 				$controlResult.AddMessage([VerificationResult]::Failed,
 					"Diagnostics settings are either disabled OR not retaining logs for at least $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) days for resource - [$($this.ResourceContext.ResourceName)]",
 					$selectedDiagnosticsProps);
@@ -993,7 +1065,7 @@ class SVTBase: AzSKRoot
 		}
 		else
 		{
-			$controlResult.AddMessage("Not able to fetch diagnostics settings. Please validate diagnostics settings manually for resource - [$($this.ResourceContext.ResourceName)].");
+			$controlResult.AddMessage([VerificationResult]::Failed, "Diagnostics setting is disabled for resource - [$($this.ResourceContext.ResourceName)].");
 		}
 
 		return $controlResult;

@@ -38,7 +38,9 @@ class ControlItem
 	[DateTime] $GraceExpiryDate
 	[int] $NewControlGracePeriodInDays
 	[int] $AttestationPeriodInDays
-	[string[]] $ValidAttestationStates 
+    [string[]] $ValidAttestationStates
+    [string] $PolicyDefinitionGuid 
+    [string] $PolicyDefnResourceIdSuffix
 }
 
 class FixControl

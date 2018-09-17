@@ -1,0 +1,27 @@
+{
+
+	"Storage" : 1000003,
+
+	"DataProcessing": 1000033,
+
+	"Reporting": 1000037,
+
+	"Web Front End": 1000039,
+
+	"APIs": 1000081,
+
+	"Security Infra": 1000099,
+
+	"SubscriptionCore": 1000117,
+
+	"Communication Hub": 1000121,
+
+	"Hybrid": 1000133,
+
+	"Network Isolation": 1000151,
+
+	"Cache": 1000159,
+
+	"Backend Processing": 123123593
+
+}

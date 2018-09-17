@@ -1,0 +1,96 @@
+<html>
+<head>
+    <title>
+        output
+    </title>
+    
+</head>
+<body>
+    <div class="headerBackGround">
+            <img id="logo" src="https://azsk.azurewebsites.net/Images/Icons/AzSK_Logo.png" alt><span class="header">Cloud App Resource Recommendation Report </span>
+    </div>
+        
+    <div class="header2">
+         <u>Current Combination :</u>
+    </div>
+
+    <div>
+       <br />
+       <table>
+           <tr>
+            <div class="dataPoint" id="rgn"> <td>Resource group name:</td><td> [#rgName#]</td></div>
+          </tr> 
+          <tr>
+            <div class="dataPoint" id="Features"> <td> Features:</td><td> [#features#]</td></div>
+          </tr>
+          <tr>
+           <div class="dataPoint" id="categories"> <td>Categories:</td> <td>[#categories#]</td></div>
+          </tr>
+       </table>
+    </div>
+    
+    <div class="header2">
+        <u>Analysis & Recommendations:</u>
+    </div>
+    <div>
+    
+      <div class="header3"><u>Analysis of current feature group:</u></div>
+      <table>
+        <tr><div class="dataPoint" id="cgranking"> <td> Current Group Ranking:</td> <td>[#cgranking#]</td></div></tr>
+        <tr><div class="dataPoint" id="instcount"><td> No. of instances with same combination:</td><td> [#cgInstCount#]</td></div></tr>
+        <tr><div class="dataPoint" id="ccf"><td> Current Combination Features:</td> <td>[#cgF#]</td></div></tr>
+        <tr><div class="dataPoint" id="ccc"> <td>Current Combination Categories: </td><td>[#cgC#]</td></div></tr>
+        <tr><div class="dataPoint" id="measures"> <td>Measures:</td><td> [Total Pass: [#cgPass#]] [Total Fail: [#cgFail#]] </td></div></tr>
+     </table>
+        
+    <div>
+
+    <div>
+            <div class="header3"><u>Recommendations based on categories:</u></div>
+     
+              [#recommendations#]    
+    <div>   
+    <style>
+        .headerBackGround {
+            background-color: #0b2534;
+            opacity: 0.9;                        
+            left: 55px;
+            top: 55px;                        
+        }
+        .header {
+            font-size: 35pt;
+            color:#ffffff;
+            font-family: Arial, Helvetica, sans-serif;            
+            padding-left: 10pt;            
+        }
+        #logo{
+            padding-top: 10pt;
+            padding-left: 5pt;
+            height: 52px;
+            width: 45px;
+        }
+        .header2{
+            font-size: 15pt;
+            color:green;
+            font-family: Arial, Helvetica, sans-serif;            
+            padding-left: 1pt;  
+            padding-top: 10pt;  
+        }
+        .header3{
+            font-size: 12pt;
+            color:olive;
+            font-family: Arial, Helvetica, sans-serif;            
+            padding-left: 1pt;  
+            padding-top: 10pt;  
+        }
+        .dataPoint{
+            font-size: 10pt;
+            color:midnightblue;
+            font-family: Arial, Helvetica, sans-serif;            
+            padding-left: 1pt;  
+            padding-top: 1pt; 
+        }
+
+    </style>
+</body>
+</html>

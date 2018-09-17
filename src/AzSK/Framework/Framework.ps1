@@ -46,7 +46,7 @@ catch
 . $PSScriptRoot\Models\ContinuousAssurance\AutomationAccount.ps1
 . $PSScriptRoot\Models\ControlState.ps1
 . $PSScriptRoot\Models\FixControl\FixControlModel.ps1
-
+. $PSScriptRoot\Models\RemoteReports\RecommendationReportModel.ps1
 . $PSScriptRoot\Models\RemoteReports\ScanResultModels.ps1
 
 #Helpers
@@ -110,6 +110,7 @@ catch
 . $PSScriptRoot\Listeners\Webhook\WebhookOutput.ps1
 . $PSScriptRoot\Listeners\CA\WriteCAStatus.ps1
 . $PSScriptRoot\Listeners\GenericListener\GenericListener.ps1
+. $PSScriptRoot\Listeners\SecurityRecommendationReport.ps1
 . $PSScriptRoot\Listeners\ListenerHelper.ps1
 
 #Remaining Abstracts
@@ -148,6 +149,7 @@ catch
 . $PSScriptRoot\Core\SVT\ServicesSecurityStatus.ps1
 . $PSScriptRoot\Core\SVT\SubscriptionSecurityStatus.ps1
 . $PSScriptRoot\Core\SVT\SVTStatusReport.ps1
+. $PSScriptRoot\Core\AzSKInfo\SecurityRecommendationsReport.ps1
 . $PSScriptRoot\Core\AzSKInfo\BasicInfo.ps1
 . $PSScriptRoot\Core\AzSKInfo\ControlsInfo.ps1
 . $PSScriptRoot\Core\AzSKInfo\EnvironmentInfo.ps1

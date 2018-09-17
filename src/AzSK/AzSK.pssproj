@@ -107,6 +107,7 @@
     <Compile Include="Framework\Core\AzSKInfo\BasicInfo.ps1" />
     <Compile Include="Framework\Core\AzSKInfo\ComplianceInfo.ps1" />
     <Compile Include="Framework\Core\FixControl\Services\CDNFix.ps1" />
+    <Compile Include="Framework\Core\FixControl\Services\ContainerRegistryFix.ps1" />
     <Compile Include="Framework\Core\FixControl\Services\TrafficManagerFix.ps1" />
     <Compile Include="Framework\Core\FixControl\Services\RedisCacheFix.ps1" />
     <Compile Include="Framework\Configurations\Migration\Migration.ps1" />
@@ -119,6 +120,7 @@
     <Compile Include="Framework\Core\SVT\Services\BotService.ps1" />
     <Compile Include="Framework\Core\SVT\Services\ContainerInstances.ps1" />
     <Compile Include="Framework\Core\SVT\Services\ContainerRegistry.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\Databricks.ps1" />
     <Compile Include="Framework\Core\SVT\Services\DataFactoryV2.ps1" />
     <Compile Include="Framework\Helpers\AliasHelper.ps1" />
     <Compile Include="Framework\Helpers\OldConstants.ps1" />
@@ -306,6 +308,7 @@
     <Content Include="Framework\Configurations\SVT\Services\CDN.json" />
     <Content Include="Framework\Configurations\SVT\Services\CloudService.json" />
     <Content Include="Framework\Configurations\SVT\Services\ContainerInstances.json" />
+    <Content Include="Framework\Configurations\SVT\Services\Databricks.json" />
     <Content Include="Framework\Configurations\SVT\Services\DataFactoryV2.json" />
     <Content Include="Framework\Configurations\SVT\Services\EventHub.json" />
     <Content Include="Framework\Configurations\SVT\Services\ERvNet.json" />

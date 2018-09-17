@@ -78,33 +78,6 @@
       }
     },
     {
-      "ControlID": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_DB",
-      "Description": "Enable SQL Database threat detection with email admins option. Do not exclude any detection types",
-      "Id": "SQLDatabase170",
-      "ControlSeverity": "High",
-      "Automated": "Yes",
-      "MethodName": "CheckSqlDatabaseThreatDetection",
-      "Rationale": "Enabling threat detection helps generate alerts about suspicious activity that might indicate attacks such as SQL Injection, login from a new location, unusual usage patterns and related attacks in a timely manner.",
-      "Recommendation": "First run command 'Set-AzureRmSqlDatabaseAuditing -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -DatabaseName '{DatabaseName}' -StorageAccountName '{StorageAccountName}' -State 'Enabled' -RetentionInDays $($this.ControlSettings.SqlServer.AuditRetentionPeriod_Min)'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/set-AzureRmSqlDatabaseAuditing. Then run command: Set-AzureRmSqlDatabaseThreatDetectionPolicy -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -DatabaseName '{DatabaseName}' -StorageAccountName '{StorageAccountName}' -EmailAdmins `$true -ExcludedDetectionType 'None'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/set-azurermsqldatabasethreatdetectionpolicy.",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "Audit",
-        "SOX",
-        "SqlDatabase"
-      ],
-      "Enabled": true,
-      "FixControl": {
-        "FixMethodName": "EnableDatabaseThreatDetection",
-        "FixControlImpact": "Low",
-        "Parameters": {
-          "StorageAccountName": "",
-          "SecurityContactEmails": ""
-        }
-      }
-    },
-    {
       "ControlID": "Azure_SQLDatabase_AuthZ_Use_IP_Firewall_Rules_DB",
       "Description": "In a SQL Server with multiple databases, setup firewall rules also at the database level",
       "Id": "SQLDatabase190",
@@ -210,32 +183,6 @@
       "Enabled": true,
       "FixControl": {
         "FixMethodName": "EnableServerAuditingPolicy",
-        "FixControlImpact": "Low",
-        "Parameters": {
-          "StorageAccountName": ""
-        }
-      }
-    },
-    {
-      "ControlID": "Azure_SQLDatabase_Audit_Enable_Logging_and_Monitoring_DB",
-      "Description": "Enable SQL Database audit with selected event types and retention period of minimum $($this.ControlSettings.SqlServer.AuditRetentionPeriod_Min) days",
-      "Id": "SQLDatabase140",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckSqlDatabaseAuditing",
-      "Rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
-      "Recommendation": "Run command  Set-AzureRmSqlDatabaseAuditing -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -DatabaseName '{DatabaseName}' -StorageAccountName '{StorageAccountName}' -State 'Enabled' -RetentionInDays $($this.ControlSettings.SqlServer.AuditRetentionPeriod_Min). Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/set-AzureRmSqlDatabaseAuditing",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "Audit",
-        "SOX",
-        "SqlDatabase"
-      ],
-      "Enabled": true,
-      "FixControl": {
-        "FixMethodName": "EnableDatabaseAuditingPolicy",
         "FixControlImpact": "Low",
         "Parameters": {
           "StorageAccountName": ""

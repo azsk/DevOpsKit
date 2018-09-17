@@ -201,6 +201,9 @@ function RunAzSKScanForASub
     $gssResultPath = [string]::Empty
     $parentFolderPath = [string]::Empty
 
+	#------------------------------------Clear session state to ensure updated policy settings are used-------------------
+	Clear-AzSKSessionState
+
     #------------------------------------Subscription scan----------------------------------------------------------------
     Write-Output ("SA: Running command 'Get-AzSKSubscriptionSecurityStatus' (GSS) for sub: [$SubscriptionID]")
     $subScanTimer = [System.Diagnostics.Stopwatch]::StartNew();
