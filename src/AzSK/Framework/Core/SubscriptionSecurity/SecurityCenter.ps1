@@ -133,7 +133,15 @@ class SecurityCenter: AzSKRoot
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.autoProvisioning)
 		{			
 			$autoProvisioningUri = [WebRequestHelper]::AzureManagementUri + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::AutoProvisioningSettingsApi)/default$([SecurityCenterHelper]::ApiVersionNew)";
-			$response = [WebRequestHelper]::InvokeGetWebRequest($autoProvisioningUri);
+			try
+            {
+                $response = [WebRequestHelper]::InvokeGetWebRequest($autoProvisioningUri);
+			}
+            catch
+            {
+				#return failure status if api throws exception.
+				return "AutoProvisioning: [ASC is either not configured or not able to fetch ASC provisioning status due to access issue]"
+            }
 			if(-not ([Helpers]::CheckMember($response,"properties.autoProvision") -and $response.properties.autoProvision -eq "On" ))
 			{
 				return "AutoProvisioning: [Failed]"
@@ -160,7 +168,17 @@ class SecurityCenter: AzSKRoot
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.securityContacts)
 		{
 			$securityContactsUri = [WebRequestHelper]::AzureManagementUri + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::SecurityContactsApi)/default1$([SecurityCenterHelper]::ApiVersionNew)";
-			$response = [WebRequestHelper]::InvokeGetWebRequest($securityContactsUri);
+			
+			try
+            {
+                $response = [WebRequestHelper]::InvokeGetWebRequest($securityContactsUri);
+            }
+            catch
+            {
+				#return failure status if api throws exception.
+                return "SecurityContactsConfig: [Security contact details is either not configured or not able to fetch configuration due to access issue]"
+			}
+			
 			if([Helpers]::CheckMember($response,"properties.email") -and -not [string]::IsNullOrWhiteSpace($response.properties.email) `
 				-and [Helpers]::CheckMember($response,"properties.phone") -and -not [string]::IsNullOrWhiteSpace($response.properties.phone))				
 			{
