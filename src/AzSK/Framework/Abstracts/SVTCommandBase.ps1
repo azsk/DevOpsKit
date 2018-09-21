@@ -64,7 +64,7 @@ class SVTCommandBase: CommandBase {
         #Check if user has permission to read attestation
 		if($null -ne $this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadPermissions -eq 0)
 		{
-          [EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine+"`nNote: We are not able to find "+ [ConfigurationManager]::GetAzSKConfigData().AzSKRGName +" resource group with your current access. Either " + [ConfigurationManager]::GetAzSKConfigData().AzSKRGName + " is not found or you do not have required permissions.Due to this, control scan results may not reflect attestation.",[MessageType]::Info);
+          [EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine+"`nNote: We are not able to find "+ [ConfigurationManager]::GetAzSKConfigData().AzSKRGName +" resource group with your current permissions. Either " + [ConfigurationManager]::GetAzSKConfigData().AzSKRGName + " is not found in your subscription or you do not have required permissions.Due to this, control scan results may not reflect attestation.",[MessageType]::Info);
         }
         $versionMessage = $this.CheckModuleVersion();
         if ($versionMessage) {
