@@ -406,6 +406,7 @@ class SVTBase: AzSKRoot
 
 			if(($this.FilterTags | Measure-Object).Count -ne 0 -or ($this.ExcludeTags | Measure-Object).Count -ne 0)
 			{
+				if(($filterControlsById | Measure-Object).Count -gt 0){
 				$filterControlsById | ForEach-Object {
 					Set-Variable -Name control -Value $_ -Scope Local
 					Set-Variable -Name filterMatch -Value $false -Scope Local
@@ -434,6 +435,7 @@ class SVTBase: AzSKRoot
 					{
 						$filteredControls += $control
 					}
+				}
 				}
 			}
 			else
