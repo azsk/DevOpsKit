@@ -49,7 +49,7 @@ class VirtualMachine: SVTBase
 		{
 			$result += $controls | Where-Object { $_.Tags -contains "Windows" };;
 		}
-		if($this.VMDetails.IsVMConnectedToERvNet)
+		if($this.VMDetails.IsVMConnectedToERvNet -and ($result | Where-Object { $_.Tags -contains "ERvNet" } | Measure-Object).Count -gt 0)
 		{
 			$result=$result | Where-Object { $_.Tags -contains "ERvNet" };
 		}
