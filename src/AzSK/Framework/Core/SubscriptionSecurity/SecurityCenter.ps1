@@ -189,7 +189,7 @@ class SecurityCenter: AzSKRoot
 				-and [Helpers]::CheckMember($response,"properties.alertsToAdmins") -and $response.properties.alertsToAdmins -eq "On"))			
 				{
                      
-					return "SecurityContactsConfig: [Failed] \n $response"
+					return "SecurityContactsConfig: [Failed. One of the configuration(Email,Phone,SendEmailAlertNotification,SendEmailAlertsToAdmin) is missing]"
 				}				
 			}
             else
