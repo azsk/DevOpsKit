@@ -49,6 +49,10 @@ class ARMPolicy: CommandBase
 						}
 					}
 			}
+			else
+			{
+				$this.ApplicableARMPolicies += $this.ARMPolicyObj.Policies
+			}
 		}
 			
 		return $this.ApplicableARMPolicies;
@@ -428,7 +432,7 @@ class ARMPolicy: CommandBase
 					}
 					catch
 					{
-						#eat this exception as erroraction is not working
+						#eat this exception as error action is not working
 					}
 					$assignmentName = $initiativeName + "-assignment"
 					$assignmentDisplayName = $this.SubPolicyInitiative.DisplayName + " assignment"
@@ -463,7 +467,7 @@ class ARMPolicy: CommandBase
 		}
 		catch
 		{
-			#eat up exception to allow this functionality to run in preview mode and not to hamper exsiting functionality
+			#eat up exception to allow this functionality to run in preview mode and not to hamper existing functionality
 		}
 		return $messages;
 		
@@ -472,7 +476,7 @@ class ARMPolicy: CommandBase
 	[string[]] ValidatePolicyConfiguration()
 	{		
 		$NonCompliantObjects = @();
-		$enabledPolicies = $this.GetApplicableARMPolices() | Where-Object { -not $_.Enabled };
+		$enabledPolicies = $this.GetApplicableARMPolices() | Where-Object { $_.Enabled };
 		if($null -ne $this.ARMPolicyObj -and ($enabledPolicies | Measure-Object).Count -gt 0)
 		{
 			$RequiredPolicyDefns = @();			
@@ -521,7 +525,7 @@ class ARMPolicy: CommandBase
 					catch
 					{
 						$NonCompliantObjects += ("Policy Initiative :[" + $initiativeName + "]");
-						#eat this exception as erroraction is not working
+						#eat this exception as error action is not working
 					}
 					if($null -ne $initiative)
 					{
@@ -530,7 +534,7 @@ class ARMPolicy: CommandBase
 							$configuredPolicyDefn = $_;
 							if(($policyDefinitions | Where-Object { $_.policyDefinitionId -eq $configuredPolicyDefn.policyDefinitionId} | Measure-Object).Count -le 0)
 							{
-								$NonCompliantObjects += ("Policy Initiative :[" + $initiativeName + "]");
+								$NonCompliantObjects += ("Policy Initiative :[" + $initiativeName + "] -> Definition :[" + $_.policyDefinitionId + "]");
 							}
 						}
 					}				
