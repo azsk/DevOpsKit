@@ -179,8 +179,7 @@ class SecurityCenter: AzSKRoot
                 return "SecurityContactsConfig: [Security contact details is either not configured or not able to fetch configuration due to access issue]"
 			}
 			
-			if([Helpers]::CheckMember($response,"properties.email") -and -not [string]::IsNullOrWhiteSpace($response.properties.email) `
-				-and [Helpers]::CheckMember($response,"properties.phone") -and -not [string]::IsNullOrWhiteSpace($response.properties.phone))				
+			if([Helpers]::CheckMember($response,"properties.email") -and [Helpers]::CheckMember($response,"properties.phone") )				
 			{
 				$this.ContactEmail = $response.properties.email;
 				$this.ContactPhoneNumber = $response.properties.phone;
@@ -189,9 +188,14 @@ class SecurityCenter: AzSKRoot
 				-and [Helpers]::CheckMember($response,"properties.alertNotifications") -and $response.properties.alertNotifications -eq "On" `
 				-and [Helpers]::CheckMember($response,"properties.alertsToAdmins") -and $response.properties.alertsToAdmins -eq "On"))			
 				{
-					return "SecurityContactsConfig: [Failed]"
+                     
+					return "SecurityContactsConfig: [Failed] \n $response"
 				}				
 			}
+            else
+            {
+                return "SecurityContactsConfig: [Not able to find either email or phone number contact details]"
+            }
 		}
 		return $null;
 	}
