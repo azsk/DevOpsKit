@@ -62,10 +62,10 @@ class SVTCommandBase: CommandBase {
         [SVTEventContext] $arg = $this.CreateSVTEventContextObject();
         $this.InitializeControlState();
         #Check if user has permission to read attestation
-		if($null -ne $this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadPermissions -eq 0)
-		{
-          [EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine+"`nNote: The current user/login context is unable to read attestation data from "+ [ConfigurationManager]::GetAzSKConfigData().AzSKRGName +" resource group. This may occur either " + [ConfigurationManager]::GetAzSKConfigData().AzSKRGName + "  is not present in your subscription or you do not have required permissions to access the data. Due to this, control scan results may not reflect attestation.",[MessageType]::Info);
-        }
+		#if($null -ne $this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadPermissions -eq 0)
+		#{
+        #  [EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine+"`nNote: The current user/login context is unable to read attestation data from "+ [ConfigurationManager]::GetAzSKConfigData().AzSKRGName +" resource group. This may occur either " + [ConfigurationManager]::GetAzSKConfigData().AzSKRGName + "  is not present in your subscription or you do not have required permissions to access the data. Due to this, control scan results may not reflect attestation.",[MessageType]::Info);
+        #}
         $versionMessage = $this.CheckModuleVersion();
         if ($versionMessage) {
             $arg.Messages += $versionMessage;
