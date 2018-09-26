@@ -7,6 +7,7 @@ class ARMPolicy: CommandBase
 	hidden [ARMPolicyModel] $ARMPolicyObj = $null;
 	hidden [PolicyInitiative] $SubPolicyInitiative = $null;
 	hidden [bool] $UpdateInitiative = $false;
+	static [string] $PolicyProviderNamespace = "Microsoft.PolicyInsights";
 	
 	hidden [PSObject[]] $ApplicableARMPolicies = $null;
 	#hidden [PSObject[]] $PolicyAssignments = $null;
@@ -60,7 +61,7 @@ class ARMPolicy: CommandBase
 
 	[MessageData[]] SetARMPolicies()
     {
-		
+		[Helpers]::RegisterResourceProviderIfNotRegistered([ARMPolicy]::PolicyProviderNamespace);
 		[MessageData[]] $messages = @();
 		$this.RemoveDeprecatedPolicies();
 		if(($this.ARMPolicyObj.Policies | Measure-Object).Count -ne 0)
