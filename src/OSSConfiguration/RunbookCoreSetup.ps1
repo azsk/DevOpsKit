@@ -468,8 +468,7 @@ try
 	#Check if a scan job is already running. If so, we don't need to duplicate effort!
 	$TotalJobsRunning = $jobs | Where-Object { $_.Status -in ("Queued", "Starting", "Resuming", "Running",  "Activating")}
 
-	ScheduleNewJob -intervalInMins $monitorjobIntervalMins
-	$NoOfRecentActiveRunningJobs = 0    
+	ScheduleNewJob -intervalInMins $monitorjobIntervalMins 
 	$NoOfRecentActiveRunningJobs = 0    
     if(($TotalJobsRunning|Measure-Object).Count -gt 1)
     {
