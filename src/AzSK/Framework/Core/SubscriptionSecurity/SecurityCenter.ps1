@@ -141,8 +141,9 @@ class SecurityCenter: AzSKRoot
             {
 				#return failure status if api throws exception.
 				return "AutoProvisioning: [ASC is either not configured or not able to fetch ASC provisioning status due to access issue]"
-            }
-			if(-not ([Helpers]::CheckMember($response,"properties.autoProvision") -and $response.properties.autoProvision -eq "On" ))
+			}
+			$autoProvisionObject = $this.PolicyObject.autoProvisioning
+			if(-not (-not ([Helpers]::CheckMember($autoProvisionObject,"properties.autoProvision",$false)) -or ([Helpers]::CheckMember($response,"properties.autoProvision") -and ($response.properties.autoProvision -eq $autoProvisionObject.properties.autoProvision))))
 			{
 				return "AutoProvisioning: [Failed]"
 			}
@@ -178,20 +179,24 @@ class SecurityCenter: AzSKRoot
 				#return failure status if api throws exception.
                 return "SecurityContactsConfig: [Security contact details is either not configured or not able to fetch configuration due to access issue]"
 			}
-			
+			$secContactObject = $this.PolicyObject.securityContacts
 			if([Helpers]::CheckMember($response,"properties.email") -and -not [string]::IsNullOrWhiteSpace($response.properties.email) `
 				-and [Helpers]::CheckMember($response,"properties.phone") -and -not [string]::IsNullOrWhiteSpace($response.properties.phone))				
 			{
 				$this.ContactEmail = $response.properties.email;
 				$this.ContactPhoneNumber = $response.properties.phone;
-				if(-not ([Helpers]::CheckMember($response,"properties.email") -and -not [string]::IsNullOrWhiteSpace($response.properties.email) `
-				-and [Helpers]::CheckMember($response,"properties.phone") -and -not [string]::IsNullOrWhiteSpace($response.properties.phone) `
-				-and [Helpers]::CheckMember($response,"properties.alertNotifications") -and $response.properties.alertNotifications -eq "On" `
-				-and [Helpers]::CheckMember($response,"properties.alertsToAdmins") -and $response.properties.alertsToAdmins -eq "On"))			
-				{
-					return "SecurityContactsConfig: [Failed]"
+				if(-not ((-not ([Helpers]::CheckMember($secContactObject,"properties.email",$false)) -or ([Helpers]::CheckMember($response,"properties.email") -and -not [string]::IsNullOrWhiteSpace($response.properties.email)))`
+					 -and (-not ([Helpers]::CheckMember($secContactObject,"properties.phone",$false)) -or ([Helpers]::CheckMember($response,"properties.phone") -and -not [string]::IsNullOrWhiteSpace($response.properties.phone)))`
+					 -and (-not ([Helpers]::CheckMember($secContactObject,"properties.alertNotifications",$false)) -or ([Helpers]::CheckMember($response,"properties.alertNotifications") -and ($response.properties.alertNotifications -eq $secContactObject.properties.alertNotifications)))`
+					 -and (-not ([Helpers]::CheckMember($secContactObject,"properties.alertsToAdmins",$false)) -or ([Helpers]::CheckMember($response,"properties.alertsToAdmins") -and ($response.properties.alertsToAdmins -eq $secContactObject.properties.alertsToAdmins)))))
+				{                   
+					return "SecurityContactsConfig: [Failed. One of the configuration(Email,Phone,SendEmailAlertNotification,SendEmailAlertsToAdmin) is missing]"
 				}				
 			}
+            else
+            {
+                return "SecurityContactsConfig: [Not able to find either email or phone number contact details]"
+            }
 		}
 		return $null;
 	}
