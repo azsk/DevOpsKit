@@ -3,6 +3,7 @@ Set-StrictMode -Version Latest
 class SecurityCenterHelper
 {
 	static [string] $ProviderNamespace = "Microsoft.Security";
+	static [string] $PolicyProviderNamespace = "Microsoft.PolicyInsights";
 	static [string] $PoliciesApi = "policies/default";
 	static [string] $AlertsApi = "alerts";
 	static [string] $AutoProvisioningSettingsApi = "autoProvisioningSettings";
@@ -110,6 +111,7 @@ class SecurityCenterHelper
 
 	static [void] RegisterResourceProvider()
 	{
+		[Helpers]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::PolicyProviderNamespace);
 		[Helpers]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
 	}
 
