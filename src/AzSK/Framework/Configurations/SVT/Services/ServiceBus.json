@@ -87,7 +87,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
-      "Recommendation": "Audit log can be reviewed at Portal -> Service Bus -> <Your Service Bus Name> -> Diagnostics logs.",
+      "Recommendation": "Audit log can be reviewed at Portal -> Service Bus -> <Your Service Bus Name> -> Diagnostics logs. Reference: https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-diagnostic-logs",
       "Tags": [
         "SDL",
         "Best Practice",
