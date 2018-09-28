@@ -524,7 +524,7 @@ class SQLDatabase: SVTBase
 					}
 				}
 		return $isCompliant
-}
+	}
 
 	hidden 	[PSObject[]] GetSqlServerFirewallRules()
 	{
