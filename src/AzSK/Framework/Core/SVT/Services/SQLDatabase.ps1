@@ -116,60 +116,11 @@ class SQLDatabase: SVTBase
         return $controlResult;
     }
 
-	hidden [ControlResult[]] CheckSqlDatabaseAuditing([ControlResult] $controlResult)
-	{
-		[ControlResult[]] $resultControlResultList = @()
-
-		if(($this.SqlDatabases | Measure-Object ).Count -eq 0)
-		{
-			$controlResult.AddMessage([MessageData]::new("No database found on SQL Server  ["+ $this.ResourceContext.ResourceName +"]"));
-			#Passing the status as there is no database found on the SQL Server
-			$controlResult.VerificationResult = [VerificationResult]::Passed;
-			$resultControlResultList += $controlResult
-		}
-		else
-		{
-			$this.SqlDatabases |
-			ForEach-Object {
-				$dbName = $_.DatabaseName;
-				#[ControlResult] $childControlResult = $this.CreateControlResult($dbName);
-				[ControlResult] $childControlResult = $this.CreateChildControlResult($dbName, $controlResult);
-
-				$dbAuditPolicy = Get-AzureRmSqlDatabaseAuditing `
-									-ResourceGroupName $this.ResourceContext.ResourceGroupName `
-									-ServerName $this.ResourceContext.ResourceName `
-									-DatabaseName $dbName `
-									-ErrorAction Stop
-
-				if($null -ne $dbAuditPolicy){
-
-						$childControlResult.AddMessage([MessageData]::new("Current audit details for database [$($dbName)]:", $dbAuditPolicy));
-
-						$isCompliant = (($dbAuditPolicy.AuditState -eq [AuditStateType]::Enabled) `
-																			-and ($dbAuditPolicy.RetentionInDays -eq $this.ControlSettings.SqlServer.AuditRetentionPeriod_Min -or $dbAuditPolicy.RetentionInDays -eq $this.ControlSettings.SqlServer.AuditRetentionPeriod_Forever))
-
-							if($isCompliant){
-								$childControlResult.VerificationResult = [VerificationResult]::Passed
-							}
-							else{
-								$childControlResult.EnableFixControl = $true;
-								$childControlResult.AddMessage([VerificationResult]::Failed,
-								"Audit settings are either disabled OR not retaining logs for at least $($this.ControlSettings.SqlServer.AuditRetentionPeriod_Min) days for SQL database - [$($dbName)]");
-							}
-					}
-				else{
-							$childControlResult.AddMessage("Unable to get database audit details for SQL database [$($dbName)]");
-					}
-				$resultControlResultList += $childControlResult
-			}
-		}
-
-		return $resultControlResultList;
-	}
-
 	hidden [ControlResult[]] CheckSqlDatabaseTDE([ControlResult] $controlResult)
     {
-        [ControlResult[]] $resultControlResultList = @()
+		[ControlResult[]] $resultControlResultList = @()
+		[string[]] $enabledDB = @()
+		[string[]] $disabledDB = @()
 
         if(($this.SqlDatabases | Measure-Object ).Count -eq 0)
         {
@@ -191,25 +142,33 @@ class SQLDatabase: SVTBase
 					-DatabaseName $dbName `
 					-ErrorAction Stop
 
-					$childControlResult.AddMessage([MessageData]::new("Current TDE Status for  - ["+ $dbName +"]",
-													($tdeStatus )));
-
 					if($tdeStatus.State -eq [TransparentDataEncryptionStateType]::Enabled){
-							$childControlResult.VerificationResult = [VerificationResult]::Passed;
+						$enabledDB += $_.DatabaseName
 					}
 					else
 					{
+						$disabledDB += $_.DatabaseName
 						$atleastOneFailed = $true
-						$childControlResult.VerificationResult = [VerificationResult]::Failed;
-						$childControlResult.EnableFixControl = $true;
 					}
 				}
 				catch {
 					$atleastOneFailed = $true
 					$childControlResult.VerificationResult = [VerificationResult]::Error;
 				}
-				$resultControlResultList += $childControlResult
+				
 			} #End of ForEach-Object
+
+			if(($enabledDB | Measure-Object).Count -gt 0)
+			{
+				$controlResult.AddMessage([MessageData]::new("TDE enabled for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($enabledDB)));
+			}
+			if(($disabledDB | Measure-Object).Count -gt 0)
+			{
+				$controlResult.AddMessage([MessageData]::new("TDE disabled for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($disabledDB)));
+				$controlResult.EnableFixControl = $true
+				$controlResult.SetStateData("TDE disabled for following databases", ($disabledDB));
+			}
+
 			if($atleastOneFailed) {
 				$controlResult.VerificationResult = [VerificationResult]::Failed;
 			}else{
@@ -287,85 +246,6 @@ class SQLDatabase: SVTBase
 		}
 
 	}
-
-    hidden [ControlResult[]] CheckSqlDatabaseThreatDetection([ControlResult] $controlResult)
-    {
-        [ControlResult[]] $resultControlResultList = @()
-
-        if(($this.SqlDatabases | Measure-Object ).Count -eq 0)
-        {
-            $controlResult.AddMessage([MessageData]::new("No database found on SQL Server - ["+ $this.ResourceContext.ResourceName +"]"));
-            #Since there is no database found we are passing this control
-            $controlResult.VerificationResult = [VerificationResult]::Passed;
-            $resultControlResultList += $controlResult
-        }
-        else
-        {
-			#Checking TD and auditing at server level. If it is enabled on server level then it by default applies on DB level
-			$serverTDEnabled = $false
-			$serverTDEnabled = $this.IsServerThreatDetectionEnabled()
-
-            $this.SqlDatabases | ForEach-Object {
-                $dbName = $_.DatabaseName;
-				[ControlResult] $childControlResult = $this.CreateChildControlResult($dbName, $controlResult);
-
-				if($serverTDEnabled){
-					$childControlResult.AddMessage([VerificationResult]::Passed, "Threat detection is enabled at the server level.")
-				}
-				else{
-					$isAuditCompliant = $false
-					#First checking if the database auditing is enabled. TD requires auditing enabled.
-					$dbAuditPolicy = Get-AzureRmSqlDatabaseAuditing `
-                                -ResourceGroupName $this.ResourceContext.ResourceGroupName `
-                                -ServerName $this.ResourceContext.ResourceName `
-                                -DatabaseName $dbName `
-                                -ErrorAction Stop
-
-					if($null -ne $dbAuditPolicy){
-							$isAuditCompliant = ($dbAuditPolicy.AuditState -eq 'Enabled')
-						}
-
-					if($isAuditCompliant){
-						$dbThreat = Get-AzureRmSqlDatabaseThreatDetectionPolicy `
-                                -ResourceGroupName $this.ResourceContext.ResourceGroupName `
-                                -ServerName $this.ResourceContext.ResourceName `
-                                -DatabaseName $dbName `
-                                -ErrorAction Stop
-
-						$childControlResult.AddMessage([MessageData]::new("Current threat detection state for SQL database  - ["+ $dbName +"].",
-                                                                    ($dbThreat)));
-
-						if(($dbThreat.ThreatDetectionState -eq [ThreatDetectionStateType]::Enabled) `
-							-and ($dbThreat.ExcludedDetectionTypes.Count -eq 0) `
-							-and (($dbThreat.EmailAdmins -eq $True) -or ($dbThreat.NotificationRecipientsEmails.Length -gt 0)))
-						{
-							$isCompliant = $True
-						}
-						else{
-							$isCompliant = $false
-						}
-
-						if($isCompliant) {
-							$childControlResult.VerificationResult = [VerificationResult]::Passed;
-						}
-						else {
-							$childControlResult.EnableFixControl = $true;
-							$childControlResult.AddMessage([VerificationResult]::Failed, "Threat detection is not correctly enabled on SQL database ["+ $dbName +"].")
-						}
-				}
-				else{
-					$childControlResult.EnableFixControl = $true;
-					$childControlResult.AddMessage([VerificationResult]::Failed, "Auditing is not enabled on SQL database ["+ $dbName +"]. Threat detection requires auditing enabled.")
-				}
-				}
-
-				$resultControlResultList += $childControlResult
-
-            }
-        }
-
-        return  $resultControlResultList;
-    }
 
     hidden [ControlResult] CheckSqlDatabaseFirewallEnabled([ControlResult] $controlResult)
     {
@@ -524,7 +404,7 @@ class SQLDatabase: SVTBase
 					}
 				}
 		return $isCompliant
-	}
+}
 
 	hidden 	[PSObject[]] GetSqlServerFirewallRules()
 	{

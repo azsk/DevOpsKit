@@ -2,9 +2,12 @@
 Set-StrictMode -Version Latest 
 class ServiceBus: SVTBase
 {       
-	hidden [PSObject[]] $NameSpacePolicies;
-	hidden [PSObject[]] $Queues;
-	hidden [PSObject[]] $Topics;
+	hidden [PSObject[]] $NameSpacePolicies = @() ;
+	hidden [PSObject[]] $Queues = @() ;
+	hidden [PSObject[]] $Topics = @() ;
+	hidden [HashTable] $QueueAccessPolicies = @{};
+	hidden [Hashtable] $TopicAccessPolicies = @{};
+	hidden [PSObject] $SBAccessPolicies;
 
     ServiceBus([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
         Base($subscriptionId, $resourceGroupName, $resourceName) 
@@ -15,13 +18,14 @@ class ServiceBus: SVTBase
         Base($subscriptionId, $svtResource) 
     { 
 		$this.GetServiceBusDetails();
+		$this.GetServiceBusAccessPolicies();
     }
 
 	hidden [void] GetServiceBusDetails()
     {
         if (-not $this.NameSpacePolicies) {
-            $this.NameSpacePolicies = Get-AzureRmServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
-						-NamespaceName $this.ResourceContext.ResourceName
+            $this.NameSpacePolicies = (Get-AzureRmServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
+						-NamespaceName $this.ResourceContext.ResourceName | Select-Object Id, Name, Rights)
         }
 		
 		# Get All Queues
@@ -34,22 +38,53 @@ class ServiceBus: SVTBase
         }
     }
 
+	hidden [void] GetServiceBusAccessPolicies()
+	{
+		#region "Queue"
+		if(($this.Queues|Measure-Object).count -gt 0)
+		{
+			foreach ($queue in $this.Queues)
+			{
+				$queuePolicies = Get-AzureRmServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
+										-NamespaceName $this.ResourceContext.ResourceName -Queue $queue.Name
+
+				$this.QueueAccessPolicies.Add($queue, ($queuePolicies | Select-Object Id, Name, Rights))	
+			}
+		}
+        
+		#endregion
+           
+		#region "Topic"
+		
+		if(($this.Topics|Measure-Object).count -gt 0)
+		{
+			foreach ($topic in $this.Topics)
+			{
+				$topicPolicies = Get-AzureRmServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
+										-NamespaceName $this.ResourceContext.ResourceName -Topic $topic.Name
+
+				$this.TopicAccessPolicies.Add($topic, $topicPolicies)	
+			}
+		}
+
+		#endregion
+
+		$this.SBAccessPolicies = New-Object -TypeName PSObject 
+		$this.SBAccessPolicies | Add-Member -NotePropertyName NameSpacePolicies -NotePropertyValue $this.NameSpacePolicies 
+		$this.SBAccessPolicies | Add-Member -NotePropertyName Queues -NotePropertyValue ($this.QueueAccessPolicies | Select-Object Id, Rights)
+		$this.SBAccessPolicies | Add-Member -NotePropertyName Topics -NotePropertyValue ($this.TopicAccessPolicies | Select-Object Id, Rights)
+	}
+
 	hidden [ControlResult[]] CheckServiceBusRootPolicy([ControlResult] $controlResult)
 	{
-		[ControlResult[]] $resultControlResultList = @()
-
+		$isControlFailed = $false
 		#region "NameSpace"
-		[ControlResult] $childControlResult = [ControlResult]@{
-                            #ChildResourceName = $this.ResourceContext.ResourceName;
-                        };
+		
+		$controlResult.SetStateData("Authorization rules for Service Bus namespace and child entities", $this.SBAccessPolicies);
 
-		$childControlResult.SetStateData("Authorization rules for Namespace", $this.NameSpacePolicies);
-
-		$childControlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Authorization rules for Namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules must not be used at Queue/Topic level to send and receive messages.", 
+		$controlResult.AddMessage([MessageData]::new("Authorization rules for Namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules must not be used at Queue/Topic level to send and receive messages.", 
 				$this.NameSpacePolicies));   
 		
-		$resultControlResultList += $childControlResult
-
 		#endregion        
 
 		#region "Queue"
@@ -58,22 +93,15 @@ class ServiceBus: SVTBase
 		{
 			foreach ($queue in $this.Queues)
 			{
-				[ControlResult] $childControlResult = [ControlResult]@{
-						ChildResourceName = $queue.Name;
-					};
-
-				$queuePolicies = Get-AzureRmServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
-										-NamespaceName $this.ResourceContext.ResourceName -Queue $queue.Name
-
-				if(($queuePolicies|Measure-Object).count -gt 0)
+				if(($this.QueueAccessPolicies[$queue] |Measure-Object).count -gt 0)
 				{
-					$childControlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Validate that Queue - ["+ $queue.Name +"] must not use access policies defined at Service Bus namespace level."));
+					$controlResult.AddMessage([MessageData]::new("Validate that Queue - ["+ $queue.Name +"] must not use access policies defined at Service Bus Namespace level."));
 				}
 				else
 				{
-					$childControlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("No Authorization rules defined for Queue - ["+ $queue.Name +"]. Applications (senders/receivers) must not use access policies defined at Service Bus namespace level."));
+					$isControlFailed = $true
+					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for Queue - ["+ $queue.Name +"]. Applications (senders/receivers) must not use access policies defined at Service Bus namespace level."));
 				}
-				$resultControlResultList += $childControlResult
 			}
 		}
 		else
@@ -89,22 +117,15 @@ class ServiceBus: SVTBase
 		{
 			foreach ($topic in $this.Topics)
 			{
-				[ControlResult] $childControlResult = [ControlResult]@{
-						ChildResourceName = $topic.Name;
-					};
-
-				$topicPolicies = Get-AzureRmServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
-										-NamespaceName $this.ResourceContext.ResourceName -Topic $topic.Name
-
-				if(($topicPolicies|Measure-Object).count -gt 0)
+				if(($this.TopicAccessPolicies[$topic] |Measure-Object).count -gt 0)
 				{
-					$childControlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Validate that Topic - ["+ $topic.Name +"] must not use access policies defined at Service Bus namespace level."));
+					$controlResult.AddMessage([MessageData]::new("Validate that Topic - ["+ $topic.Name +"] must not use access policies defined at Service Bus namespace level."));
 				}
 				else
 				{
-					$childControlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("No Authorization rules defined for Topic - ["+ $topic.Name +"]. Applications (senders/receivers) must not use access policies defined at Service Bus namespace level."));
+					$isControlFailed = $true
+					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for Topic - ["+ $topic.Name +"]. Applications (senders/receivers) must not use access policies defined at Service Bus namespace level."));
 				}
-				$resultControlResultList += $childControlResult
 			}
 		}
 		else
@@ -114,23 +135,25 @@ class ServiceBus: SVTBase
 
 		#endregion
 
-		return $resultControlResultList;
+		if($isControlFailed)
+		{
+			$controlResult.VerificationResult = [VerificationResult]::Failed;
+		}
+		else
+		{
+			$controlResult.VerificationResult = [VerificationResult]::Verify;
+		}
+
+		return $controlResult;
 	}
 
 	hidden [ControlResult[]] CheckServiceBusAuthorizationRule([ControlResult] $controlResult)
 	{
-		[ControlResult[]] $resultControlResultList = @()
+		$controlResult.SetStateData("Authorization rules for Namespace and child entities", $this.SBAccessPolicies);
 
 		#region "NameSpace"
-		[ControlResult] $childControlResult = [ControlResult]@{
-                            #ChildResourceName = $this.ResourceContext.ResourceName;
-                        };
-
-		$childControlResult.SetStateData("Authorization rules for Namespace", $this.NameSpacePolicies);
-		$childControlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Authorization rules for Namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", 
+		$controlResult.AddMessage([MessageData]::new("Authorization rules for Namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", 
 				$this.NameSpacePolicies));   
-
-		$resultControlResultList += $childControlResult
 		#endregion        
 
 		#region "Queue"
@@ -139,23 +162,10 @@ class ServiceBus: SVTBase
 		{
 			foreach ($queue in $this.Queues)
 			{
-				[ControlResult] $childControlResult = [ControlResult]@{
-						ChildResourceName = $queue.Name;
-					};
-
-				$queuePolicies = Get-AzureRmServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
-										-NamespaceName $this.ResourceContext.ResourceName -Queue $queue.Name
-
-				if(($queuePolicies|Measure-Object).count -gt 0)
+				if(($this.QueueAccessPolicies[$queue] |Measure-Object).count -gt 0)
 				{
-					$childControlResult.SetStateData("Authorization rules for Queue:" + $queue.Name , $queuePolicies);
-					$childControlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Authorization rules for Queue - ["+ $queue.Name +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", $queuePolicies));
+					$controlResult.AddMessage([MessageData]::new("Authorization rules for Queue - ["+ $queue.Name +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", $this.QueueAccessPolicies[$queue]));
 				}
-				else
-				{
-					$childControlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No Authorization rules defined for Queue - ["+ $queue.Name +"]."));
-				}
-				$resultControlResultList += $childControlResult
 			}
 		}
 		else
@@ -171,23 +181,14 @@ class ServiceBus: SVTBase
 		{
 			foreach ($topic in $this.Topics)
 			{
-				[ControlResult] $childControlResult = [ControlResult]@{
-						ChildResourceName = $topic.Name;
-					};
-
-				$topicPolicies = Get-AzureRmServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
-										-NamespaceName $this.ResourceContext.ResourceName -Topic $topic.Name
-
-				if(($topicPolicies|Measure-Object).count -gt 0)
+				if(($this.TopicAccessPolicies[$topic] |Measure-Object).count -gt 0)
 				{
-					$childControlResult.SetStateData("Authorization rules for Topic:" + $topic.Name , $topicPolicies);
-					$childControlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Authorization rules for Topic - ["+ $topic.Name +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", $topicPolicies));
+					$controlResult.AddMessage([MessageData]::new("Authorization rules for Topic - ["+ $topic.Name +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", $this.TopicAccessPolicies[$topic]));
 				}
 				else
 				{
-					$childControlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No Authorization rules defined for Topic - ["+ $topic.Name +"]."));
+					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for Topic - ["+ $topic.Name +"]."));
 				}
-				$resultControlResultList += $childControlResult
 			}
 		}
 		else
@@ -197,6 +198,8 @@ class ServiceBus: SVTBase
 
 		#endregion
 
-		return $resultControlResultList;
+		$controlResult.VerificationResult = [VerificationResult]::Verify;
+		
+		return $controlResult;
 	}
 }

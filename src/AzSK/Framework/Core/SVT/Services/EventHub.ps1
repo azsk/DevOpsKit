@@ -4,24 +4,28 @@ class EventHub: SVTBase
 {       
 	hidden [PSObject[]] $NameSpacePolicies;
 	hidden [PSObject[]] $EventHubs;
+	hidden [HashTable] $EHChildAccessPolicies = @{};
+	hidden [PSObject] $EHAccessPolicies;
 
     EventHub([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
         Base($subscriptionId, $resourceGroupName, $resourceName) 
     { 
 		$this.GetEventHubDetails();
+		$this.GetEHAccessPolicies();
     }
 
 	EventHub([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 
 		$this.GetEventHubDetails();
+		$this.GetEHAccessPolicies();
     }
 
 	hidden [void] GetEventHubDetails()
     {
         if (-not $this.NameSpacePolicies) {
-            $this.NameSpacePolicies = Get-AzureRmEventHubAuthorizationRule -ResourceGroupName $this.ResourceContext.ResourceGroupName `
-						-NamespaceName $this.ResourceContext.ResourceName
+            $this.NameSpacePolicies = (Get-AzureRmEventHubAuthorizationRule -ResourceGroupName $this.ResourceContext.ResourceGroupName `
+						-NamespaceName $this.ResourceContext.ResourceName | Select-Object Id, Name, Rights)
         }
 
 		if (-not $this.EventHubs) {
@@ -29,21 +33,39 @@ class EventHub: SVTBase
         }
     }
 
+	hidden [void] GetEHAccessPolicies()
+	{
+
+		#region "Event Hub"
+		
+		if(($this.EventHubs|Measure-Object).count -gt 0)
+		{
+			foreach ($eventHub in $this.EventHubs)
+			{
+				$eventHubPolicies = Get-AzureRmEventHubAuthorizationRule -ResourceGroupName $this.ResourceContext.ResourceGroupName `
+										-NamespaceName $this.ResourceContext.ResourceName -EventHubName $eventHub.Name
+
+				$this.EHChildAccessPolicies.Add($eventHub, ($eventHubPolicies | Select-Object Id, Name, Rights))	
+			}
+		}
+        
+		#endregion
+
+		$this.EHAccessPolicies = New-Object -TypeName PSObject 
+		$this.EHAccessPolicies | Add-Member -NotePropertyName NameSpacePolicies -NotePropertyValue $this.NameSpacePolicies 
+		$this.EHAccessPolicies | Add-Member -NotePropertyName EHChildAccessPolicies -NotePropertyValue ($this.EHChildAccessPolicies | Select-Object Id, Rights)
+	}
+
 	hidden [ControlResult[]] CheckEventHubRootPolicy([ControlResult] $controlResult)
 	{
-		[ControlResult[]] $resultControlResultList = @()
-
+		$isControlFailed = $false
+		
 		#region "NameSpace"
-		[ControlResult] $childControlResult = [ControlResult]@{
-                            #ChildResourceName = $this.ResourceContext.ResourceName;
-                        };
 
-		$childControlResult.SetStateData("Authorization rules for Event Hub Namespace", $this.NameSpacePolicies);
+		$controlResult.SetStateData("Authorization rules for Eventhub namespace and child entities", $this.EHAccessPolicies);
+		$controlResult.AddMessage([MessageData]::new("Following are the authorization rules for Namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules must not be used at Event Hub level to send and receive messages.", 
+				$this.NameSpacePolicies))
 
-		$childControlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Following are the authorization rules for Namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules must not be used at Event Hub level to send and receive messages.", 
-				$this.NameSpacePolicies));   
-
-		$resultControlResultList += $childControlResult
 		#endregion        
 
 		#region "Event Hub"
@@ -52,22 +74,15 @@ class EventHub: SVTBase
 		{
 			foreach ($eventHub in $this.EventHubs)
 			{
-				[ControlResult] $childControlResult = [ControlResult]@{
-						ChildResourceName = $eventHub.Name;
-					};
-
-				$eventHubPolicies = Get-AzureRmEventHubAuthorizationRule -ResourceGroupName $this.ResourceContext.ResourceGroupName `
-										-NamespaceName $this.ResourceContext.ResourceName -EventHubName $eventHub.Name
-
-				if(($eventHubPolicies|Measure-Object).count -gt 0)
+				if(($this.EHChildAccessPolicies[$eventHub] |Measure-Object).count -gt 0)
 				{
-					$childControlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Validate that Event Hub - ["+ $eventHub.Name +"] must not use access policies defined at Namespace level."));
+					$controlResult.AddMessage([MessageData]::new("Validate that Event Hub - ["+ $eventHub.Name +"] must not use access policies defined at Event Hub Namespace level."));
 				}
 				else
 				{
-					$childControlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("No Authorization rules defined for Event Hub - ["+ $eventHub.Name +"]. Applications (senders/receivers) must not use access policies defined at Event Hub namespace level."));
+					$isControlFailed = $true
+					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for Event Hub - ["+ $eventHub.Name +"]. Applications (senders/receivers) must not use access policies defined at Event Hub namespace level."));
 				}
-				$resultControlResultList += $childControlResult
 			}
 		}
 		else
@@ -76,24 +91,27 @@ class EventHub: SVTBase
 		}
         
 		#endregion
-           
-		return $resultControlResultList;
+        
+		if($isControlFailed)
+		{
+			$controlResult.VerificationResult = [VerificationResult]::Failed;
+		}
+		else
+		{
+			$controlResult.VerificationResult = [VerificationResult]::Verify;
+		}
+		
+		return $controlResult;
 	}
 
 	hidden [ControlResult[]] CheckEventHubAuthorizationRule([ControlResult] $controlResult)
 	{
-		[ControlResult[]] $resultControlResultList = @()
-
 		#region "NameSpace"
-		[ControlResult] $childControlResult = [ControlResult]@{
-                            #ChildResourceName = $this.ResourceContext.ResourceName;
-                        };
-
-		$childControlResult.SetStateData("Authorization rules for Event Hub Namespace", $this.NameSpacePolicies);
-		$childControlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Authorization rules for Namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", 
+		
+		$controlResult.SetStateData("Authorization rules for Eventhub namespace and child entities", $this.EHAccessPolicies);
+		$controlResult.AddMessage([MessageData]::new("Authorization rules for Eventhub Namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", 
 				$this.NameSpacePolicies));   
 
-		$resultControlResultList += $childControlResult
 		#endregion        
 
 		#region "Event Hub"
@@ -102,23 +120,11 @@ class EventHub: SVTBase
 		{
 			foreach ($eventHub in $this.EventHubs)
 			{
-				[ControlResult] $childControlResult = [ControlResult]@{
-						ChildResourceName = $eventHub.Name;
-					};
 
-				$eventHubPolicies = Get-AzureRmEventHubAuthorizationRule -ResourceGroupName $this.ResourceContext.ResourceGroupName `
-										-NamespaceName $this.ResourceContext.ResourceName -EventHubName $eventHub.Name
-
-				if(($eventHubPolicies|Measure-Object).count -gt 0)
+				if(($this.EHChildAccessPolicies[$eventHub] |Measure-Object).count -gt 0)
 				{
-					$childControlResult.SetStateData("Authorization rules for Event Hub:" + $eventHub.Name , $eventHubPolicies);
-					$childControlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Authorization rules for Event Hub - ["+ $eventHub.Name +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", $eventHubPolicies));
+					$controlResult.AddMessage([MessageData]::new("Authorization rules for Event Hub - ["+ $eventHub.Name +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", $this.EHChildAccessPolicies[$eventHub]));
 				}
-				else
-				{
-					$childControlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No Authorization rules defined for Event Hub - ["+ $eventHub.Name +"]."));
-				}
-				$resultControlResultList += $childControlResult
 			}
 		}
 		else
@@ -128,6 +134,8 @@ class EventHub: SVTBase
         
 		#endregion
            
-		return $resultControlResultList;
+		$controlResult.VerificationResult = [VerificationResult]::Verify;
+
+		return $controlResult;
 	}
 }
