@@ -118,23 +118,21 @@ class SQLDatabase: SVTBase
 
 	hidden [ControlResult[]] CheckSqlDatabaseTDE([ControlResult] $controlResult)
     {
-		[ControlResult[]] $resultControlResultList = @()
 		[string[]] $enabledDB = @()
 		[string[]] $disabledDB = @()
+		[string[]] $erroreddDB = @()
 
         if(($this.SqlDatabases | Measure-Object ).Count -eq 0)
         {
             $controlResult.AddMessage([MessageData]::new("No database found on SQL Server - ["+ $this.ResourceContext.ResourceName +"]"));
             #Since there is no database found we are passing this control
             $controlResult.VerificationResult = [VerificationResult]::Passed;
-            $resultControlResultList += $controlResult
         }
         else
         {
 			$atleastOneFailed = $false
             $this.SqlDatabases | ForEach-Object {
 				$dbName = $_.DatabaseName;
-				[ControlResult] $childControlResult = $this.CreateChildControlResult($dbName, $controlResult);
 				try {
 					$tdeStatus = Get-AzureRmSqlDatabaseTransparentDataEncryption `
 					-ResourceGroupName $this.ResourceContext.ResourceGroupName `
@@ -153,7 +151,7 @@ class SQLDatabase: SVTBase
 				}
 				catch {
 					$atleastOneFailed = $true
-					$childControlResult.VerificationResult = [VerificationResult]::Error;
+					$erroreddDB += $_.DatabaseName
 				}
 				
 			} #End of ForEach-Object
@@ -166,17 +164,26 @@ class SQLDatabase: SVTBase
 			{
 				$controlResult.AddMessage([MessageData]::new("TDE disabled for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($disabledDB)));
 				$controlResult.EnableFixControl = $true
-				$controlResult.SetStateData("TDE disabled for following databases", ($disabledDB));
+				
+			}
+			if(($erroreddDB | Measure-Object).Count -gt 0)
+			{
+				$controlResult.AddMessage([MessageData]::new("TDE is in error state for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($erroreddDB)));
 			}
 
 			if($atleastOneFailed) {
 				$controlResult.VerificationResult = [VerificationResult]::Failed;
+				
+				$DatabaseTDEFailed = New-Object -TypeName PSObject 
+				$DatabaseTDEFailed | Add-Member -NotePropertyName DisabledDB -NotePropertyValue $disabledDB
+				$DatabaseTDEFailed | Add-Member -NotePropertyName ErroredDB -NotePropertyValue $erroreddDB
+				
+				$controlResult.SetStateData("TDE Failed for following databases", ($DatabaseTDEFailed));
 			}else{
 				$controlResult.VerificationResult = [VerificationResult]::Passed;
 			}
-            $resultControlResultList += $controlResult
         }
-        return  $resultControlResultList;
+        return  $controlResult;
     }
 
     hidden [ControlResult] CheckSqlServerADAdmin([ControlResult] $controlResult)
@@ -322,15 +329,17 @@ class SQLDatabase: SVTBase
 
 	hidden [ControlResult[]]  CheckSqlServerDataMaskingPolicy([ControlResult] $controlResult)
 	{
-
-		[ControlResult[]] $resultControlResultList = @()
+		
+		[string[]] $enabledDB = @()
+		[string[]] $disabledDB = @()
+		[string[]] $erroreddDB = @()
+		[string[]] $unknowndDB = @()
 
         if(($this.SqlDatabases | Measure-Object ).Count -eq 0)
         {
             $controlResult.AddMessage([MessageData]::new("No database found on SQL Server  ["+ $this.ResourceContext.ResourceName +"]"));
             #Passing the status as there is no database found on the SQL Server
             $controlResult.VerificationResult = [VerificationResult]::Passed;
-            $resultControlResultList += $controlResult
         }
         else
         {
@@ -339,8 +348,6 @@ class SQLDatabase: SVTBase
             $this.SqlDatabases |
 			ForEach-Object {
 				$dbName = $_.DatabaseName;
-				[ControlResult] $childControlResult = $this.CreateChildControlResult($dbName, $controlResult);
-
 				try
 				{
 					$dbMaskingPolicy = Get-AzureRmSqlDatabaseDataMaskingPolicy `
@@ -350,31 +357,40 @@ class SQLDatabase: SVTBase
 
 					if($null -ne $dbMaskingPolicy){
 
-						 $childControlResult.AddMessage([MessageData]::new("Current masking details for database [$($dbName)]:", $dbMaskingPolicy));
-
 						 if($dbMaskingPolicy.DataMaskingState -eq 'Enabled'){
 								$atleastOneFailed = $true
-				   				$childControlResult.VerificationResult = [VerificationResult]::Verify
-								$childControlResult.AddMessage([VerificationResult]::Verify,"SQL database data masking is enabled.");
+								$enabledDB += $dbName
 							}
 							else
 							{
-								$atleastOneFailed = $false
-								$childControlResult.VerificationResult = [VerificationResult]::Manual
-								$childControlResult.AddMessage([VerificationResult]::Manual, "SQL Database data masking is not enabled");
+								$disabledDB += $_.DatabaseName
 							}
 						}
 						else{
-							 $childControlResult.AddMessage("Unable to get Database masking details for [$($dbName)]");
+							$unknowndDB += $_.DatabaseName
 						}
-					$childControlResult.SetStateData("Database masking details for [$($dbName)]", $dbMaskingPolicy);
-					$resultControlResultList += $childControlResult
 				}
 				catch {
-					$atleastOneFailed = $true
-					$childControlResult.VerificationResult = [VerificationResult]::Error;
+					$erroreddDB += $_.DatabaseName
 				}
             }
+
+			if(($enabledDB | Measure-Object).Count -gt 0)
+			{
+				$controlResult.AddMessage([MessageData]::new("Database masking is enabled for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($enabledDB)));
+			}
+			if(($disabledDB | Measure-Object).Count -gt 0)
+			{
+				$controlResult.AddMessage([MessageData]::new("Database masking is disabled for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($disabledDB)));
+			}
+			if(($erroreddDB | Measure-Object).Count -gt 0)
+			{
+				$controlResult.AddMessage([MessageData]::new("Database masking is in error state for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($erroreddDB)));
+			}
+			if(($unknowndDB | Measure-Object).Count -gt 0)
+			{
+				$controlResult.AddMessage([MessageData]::new("Database masking is in unknown state for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($unknowndDB)));
+			}
 
 			if($atleastOneFailed) {
 				$controlResult.VerificationResult = [VerificationResult]::Verify;
@@ -382,10 +398,17 @@ class SQLDatabase: SVTBase
 			else{
 				$controlResult.VerificationResult = [VerificationResult]::Manual;
 			}
-            $resultControlResultList += $controlResult
+
+			$DatamaskingState = New-Object -TypeName PSObject 
+			$DatamaskingState | Add-Member -NotePropertyName EnabledDB -NotePropertyValue $enabledDB
+			$DatamaskingState | Add-Member -NotePropertyName DisabledDB -NotePropertyValue $disabledDB
+			$DatamaskingState | Add-Member -NotePropertyName ErroredDB -NotePropertyValue $erroreddDB
+			$DatamaskingState | Add-Member -NotePropertyName UnknonwnDB -NotePropertyValue $unknowndDB
+
+			$controlResult.SetStateData("Data masking state for database is", ($DatamaskingState));
         }
 
-		return $resultControlResultList;
+		return $controlResult;
 	}
 
 	hidden [bool] IsServerThreatDetectionEnabled(){

@@ -168,70 +168,60 @@ class ServiceFabric : SVTBase
 		return $controlResultList
 	}
 
-	hidden [ControlResult[]] CheckStorageEncryption([ControlResult] $controlResult)
-	{
-		[ControlResult[]] $controlResultList = @()
-	    $vmssResources = $this.GetLinkedResources("Microsoft.Compute/virtualMachineScaleSets")
-		#Iterate through cluster linked vmss resources  
-		$vmssResources | ForEach-Object{
-			$vmssResourceId = Get-AzureRmResource -ResourceId $_.ResourceId 
-			#Get all storage account details where vmss disk is stored
-			if([Helpers]::CheckMember($vmssResourceId.Properties.virtualMachineProfile.storageProfile.osDisk,"vhdContainers"))
-			{
-				$vmssResourceId.Properties.virtualMachineProfile.storageProfile.osDisk.vhdContainers | ForEach-Object{
-					$storageName = Convert-String -InputObject $_ -Example "https://accountname.blob.core.windows.net/vhds=accountname"
-					$storageAccount = Get-AzureRmStorageAccount -Name $storageName -ResourceGroupName $this.ResourceContext.ResourceGroupName              
-					[ControlResult] $childControlResult = $this.CreateControlResult($storageName);
-					#Validate if storage account storing vmss os disk/Cluster data is encrypted or not  
-					if($null -ne $storageAccount.Encryption)
-					{                     
-						$childControlResult.AddMessage([VerificationResult]::Passed, "Storage encryption is enabled for '$storageName'");
-					}
-					else
-					{                        
-						$childControlResult.AddMessage([VerificationResult]::Failed, "Storage encryption is not enabled for '$storageName'");
-					}				
-					$controlResultList += $childControlResult
-				}
-			}
-			else
-			{
-				$controlResult.AddMessage([MessageData]::new("Unable to fetch storage account of VHDs. Manually verify that encryption must be enabled on all storage accounts which store VHDs of Service Fabric cluster VMs."));
-				$controlResult.VerificationResult = [VerificationResult]::Manual;
-                $controlResultList += $controlResult
-			}
-		}
-		return $controlResultList; 
-	}
-
 	hidden [ControlResult[]] CheckVmssDiagnostics([ControlResult] $controlResult)
 	{
-		[ControlResult[]] $controlResultList = @()
+		$isPassed = $true;
+		$diagnosticsEnabledScaleSet = @{};
+		$diagnosticsDisabledScaleSet = @{};
 		$vmssResources = $this.GetLinkedResources("Microsoft.Compute/virtualMachineScaleSets")
 		#Iterate through cluster linked vmss resources             
 		$vmssResources | ForEach-Object{
 			$VMScaleSetName = $_.Name	
-			[ControlResult] $childControlResult = $this.CreateControlResult($VMScaleSetName);  		
 			$nodeTypeResource = Get-AzureRmVmss -ResourceGroupName  $_.ResourceGroupName -VMScaleSetName  $VMScaleSetName
 			$diagnosticsSettings = $nodeTypeResource.VirtualMachineProfile.ExtensionProfile.Extensions  | ? { $_.Type -eq "IaaSDiagnostics" -and $_.Publisher -eq "Microsoft.Azure.Diagnostics" }
 			#Validate if diagnostics is enabled on vmss 
 			if($null -ne $diagnosticsSettings )
-			{                
-				$childControlResult.AddMessage([VerificationResult]::Passed, "Diagnostics is enabled on Vmss '$VMScaleSetName'",$diagnosticsSettings);
+			{
+				$diagnosticsEnabledScaleSet.Add($VMScaleSetName, $diagnosticsSettings)		
 			}
 			else
 			{
-				$childControlResult.AddMessage([VerificationResult]::Failed, "Diagnostics is disabled on Vmss '$VMScaleSetName'");
+				$isPassed = $false;
+				$diagnosticsDisabledScaleSet.Add($VMScaleSetName, $diagnosticsSettings)		
 			} 
-        
-			$controlResultList += $childControlResult 
 		}
-		return $controlResultList        
+
+		if($diagnosticsEnabledScaleSet.Keys.Count -gt 0)
+		{
+			$diagnosticsEnabledScaleSet.Keys  | Foreach-Object {
+				$controlResult.AddMessage("Diagnostics is enabled on Vmss '$_'",$diagnosticsEnabledScaleSet[$_]);
+			}
+		}
+
+		if($diagnosticsDisabledScaleSet.Keys.Count -gt 0)
+		{
+			$diagnosticsDisabledScaleSet.Keys  | Foreach-Object {
+				$controlResult.AddMessage("Diagnostics is disabled on Vmss '$_'",$diagnosticsDisabledScaleSet[$_]);
+			}
+		}
+
+		if($isPassed)
+		{
+			$controlResult.VerificationResult = [VerificationResult]::Passed;
+		}
+		else
+		{
+			$controlResult.VerificationResult = [VerificationResult]::Failed;
+			$controlResult.SetStateData("Diagnostics is disabled on Vmss", $diagnosticsDisabledScaleSet);
+		}
+		return $controlResult        
 	}
 
 	hidden [ControlResult[]] CheckStatefulServiceReplicaSetSize([ControlResult] $controlResult)
 	{
-		[ControlResult[]] $controlResultList = @() 
+		$isPassed = $true;
+		$complianteServices = @{};
+		$nonComplianteServices = @{};
 		#Iterate through the applications present in cluster     
 		if($this.ApplicationList)
 		{
@@ -240,138 +230,57 @@ class ServiceFabric : SVTBase
 
 				Get-ServiceFabricService -ApplicationName $serviceFabricApplication.ApplicationName  | ForEach-Object{                
 					$serviceName = $_.ServiceName 
-					[ControlResult] $childControlResult = $this.CreateControlResult($serviceName);  	
 					$serviceDescription = Get-ServiceFabricServiceDescription -ServiceName $_.ServiceName 
 					#Filter application with Stateful service type
 					if($serviceDescription.ServiceKind -eq "Stateful")
 					{
-						[ControlResult] $childControlResult = $this.CreateControlResult($serviceName)     
 						#Validate minimum replica and target replica size for each service 					
 						$isCompliant = !($serviceDescription.MinReplicaSetSize -lt 3 -or $serviceDescription.TargetReplicaSetSize -lt 3)
 
-						if($isCompliant){ $controlStatus = [VerificationResult]::Passed } else{ $controlStatus = [VerificationResult]::Failed }
-						$childControlResult.AddMessage([VerificationResult]::Failed, "Replica set size details for service '$serviceName'",$serviceDescription)
-						$controlResultList += $childControlResult 
+						if($isCompliant)
+						{
+							$complianteServices.Add($serviceName, $serviceDescription)
+						} 
+						else
+						{ 
+							$isPassed = $False
+							$nonComplianteServices.Add($serviceName, $serviceDescription)
+						}
 					}                
 				}
+			}
+
+			if($complianteServices.Keys.Count -gt 0)
+			{
+				$controlResult.AddMessage("Replica set size for below services are complaint");
+				$complianteServices.Keys  | Foreach-Object {
+					$controlResult.AddMessage("Replica set size details for service '$_'");
+				}
+			}
+
+			if($nonComplianteServices.Keys.Count -gt 0)
+			{
+				$controlResult.AddMessage("Replica set size for below services are non-complaint");
+				$nonComplianteServices.Keys  | Foreach-Object {
+					$controlResult.AddMessage("Replica set size details for service '$_'",$nonComplianteServices[$_]);
+				}
+			}
+
+			if($isPassed)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Passed;
+			}
+			else
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Failed;
+				$controlResult.SetStateData("Replica set size are non-complaint for", $nonComplianteServices);
 			}
 		}
 		else
 		{
 			$controlResult.AddMessage([VerificationResult]::Passed,"No stateful service found.")
-			$controlResultList += $controlResult
 		}
-		return $controlResultList
-	}
-
-	hidden [ControlResult[]] CheckStatelessServiceInstanceCount([ControlResult] $controlResult)
-	{
-	    [ControlResult[]] $controlResultList = @()  
-		#Iterate through the applications present in cluster         
-		if($this.ApplicationList)
-		{
-			$this.ApplicationList | ForEach-Object{
-				$serviceFabricApplication = $_
-				Get-ServiceFabricService -ApplicationName $serviceFabricApplication.ApplicationName | 
-				ForEach-Object{
-					$serviceName = $_.ServiceName         
-					[ControlResult] $childControlResult = $this.CreateControlResult($serviceName);         
-					$serviceDescription = Get-ServiceFabricServiceDescription -ServiceName $serviceName 
-					#Filter application with Stateless service type
-					if($serviceDescription.ServiceKind -eq "Stateless")
-					{					
-						$instantCount = $serviceDescription.InstanceCount
-						Add-OutputLogEvent -OutputLogFilePath $outputLogFilePath -EventData "Service Fabric service [$serviceName] has instance count : [$instantCount]"  
-						#Validate instancecount it -1 (auto) or greater than equal to 3              
-						if($serviceDescription.InstanceCount -eq -1 -and $serviceDescription.InstanceCount -ge 3){$controlStatus = [VerificationResult]::Passed } else{ $controlStatus = [VerificationResult]::Failed }
-						$childControlResult.AddMessage([VerificationResult]::Failed, "Instance count for service '$serviceName'",$serviceDescription)
-						$controlResultList += $childControlResult 
-					} 
-				} 
-			}
-		}
-		else
-		{
-			$controlResult.AddMessage([VerificationResult]::Passed,"No stateless service found.")
-			$controlResultList += $controlResult
-		} 
-		return $controlResultList        
-	}
-
-	hidden [ControlResult[]] CheckPublicEndpointSSL([ControlResult] $controlResult)
-	{
-		[ControlResult[]] $controlResultList = @() 
-		$loadBalancerBackendPorts = @()
-		$loadBalancerResources = $this.GetLinkedResources("Microsoft.Network/loadBalancers")
-		#Collect all open ports on load balancer  
-		$loadBalancerResources | ForEach-Object{
-			$loadBalancerResource = Get-AzureRmLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
-			$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
-        
-			$loadBalancingRules | ForEach-Object {
-				$loadBalancingRuleId = $_.Id;
-				$loadBalancingRule = $loadBalancerResource.LoadBalancingRules | ? { $_.Id -eq  $loadBalancingRuleId } | Select-Object -First 1
-				$loadBalancerBackendPorts += $loadBalancingRule.BackendPort;
-			};   
-		}
-		
-		#If no ports open, Pass the TCP
-		if($loadBalancerBackendPorts.Count -eq 0)
-		{
-			$controlResult.AddMessage([VerificationResult]::Passed,"No ports enabled.")  
-			$controlResultList += $controlResult      
-		}
-		#If Ports are open for public in load balancer, map load balancer ports with application endpoint ports and validate if SSL is enabled.
-		else
-		{
-			$controlResult.AddMessage("List of publicly exposed port",$loadBalancerBackendPorts)        
-         
-			if($this.ApplicationList)
-			{
-				$this.ApplicationList | 
-				ForEach-Object{
-					$serviceFabricApplication = $_
-					Get-ServiceFabricServiceType -ApplicationTypeName $serviceFabricApplication.ApplicationTypeName -ApplicationTypeVersion $serviceFabricApplication.ApplicationTypeVersion | 
-					ForEach-Object{
-						$currentService = $_
-						$serviceManifest = [xml](Get-ServiceFabricServiceManifest -ApplicationTypeName $serviceFabricApplication.ApplicationTypeName -ApplicationTypeVersion $serviceFabricApplication.ApplicationTypeVersion -ServiceManifestName $_.ServiceManifestName)
-
-						$serviceManifest.ServiceManifest.Resources.Endpoints.ChildNodes | 
-						ForEach-Object{
-							$endpoint = $_
-							$serviceTypeName = $currentService.ServiceTypeName
-							[ControlResult] $childControlResult = $this.CreateControlResult($serviceTypeName +"_" + $endpoint.Name);  
-                    
-							if($null -eq $endpoint.Port)
-							{
-								#Add message
-								$childControlResult.AddMessage([VerificationResult]::Passed) 
-							}
-							else
-							{
-								if($loadBalancerBackendPorts.Contains($endpoint.Port) )
-								{                      
-									if($endpoint.Protocol -eq "https"){  $controlResult.AddMessage([VerificationResult]::Passed,"Endpoint is protected with SSL") }
-									elseif($endpoint.Protocol -eq "http"){  $controlResult.AddMessage([VerificationResult]::Failed,"Endpoint is not protected with SSL") }
-									else {  $controlResult.AddMessage([VerificationResult]::Verify,"Verify if endpoint is protected with SSL",$endpoint) }                            
-								}
-								else
-								{                        
-									$controlResult.AddMessage([VerificationResult]::Passed,"Endpoint is not publicly opened")
-								}
-							}  
-							$controlResultList += $childControlResult 
-						}                   
-					}
-				}             
-			}
-			else
-			{
-				$controlResult.AddMessage([VerificationResult]::Passed,"No service found.")
-				$controlResultList += $controlResult
-			}    
-		} 
-		return $controlResultList        
+		return $controlResult;
 	}
 
 	[void] CheckClusterAccess()
