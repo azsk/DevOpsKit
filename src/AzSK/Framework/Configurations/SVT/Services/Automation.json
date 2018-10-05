@@ -17,7 +17,8 @@
         "TCP",
         "Automated",
         "AuthZ",
-        "RBAC"
+        "RBAC",
+        "Automation"
       ],
       "Enabled": true
     },
@@ -34,7 +35,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "DP"
+        "DP",
+        "Automation"
       ],
       "Enabled": true
     },
@@ -51,7 +53,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "DP"
+        "DP",
+        "Automation"
       ],
       "Enabled": true
     },
@@ -68,7 +71,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "DP"
+        "DP",
+        "Automation"
       ],
       "Enabled": true,
       "DataObjectProperties": [
@@ -77,7 +81,8 @@
         "Encrypted",
         "Name",
         "ResourceGroupName",
-        "Value"
+        "Value",
+        "Automation"
       ]
 
     },
@@ -94,7 +99,8 @@
         "SDL",
         "TCP",
          "DP",
-         "Manual"
+         "Manual",
+         "Automation"
       ],
       "Enabled": true
     },
@@ -112,7 +118,8 @@
          "TCP",
          "DP",
          "Best Practice",
-         "Manual"
+         "Manual",
+         "Automation"
       ],
       "Enabled": true
     },
@@ -129,7 +136,8 @@
          "SDL",
          "Best Practice",
          "Manual",
-         "DP"
+         "DP",
+         "Automation"
       ],
       "Enabled": true
     },
@@ -146,7 +154,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "DP"
+        "DP",
+        "Automation"
       ],
       "Enabled": true
     },
@@ -163,7 +172,8 @@
          "SDL",
          "Manual",
          "TCP",
-         "AuthN"
+         "AuthN",
+         "Automation"
       ],
       "Enabled": true
     },
@@ -180,7 +190,8 @@
          "SDL",
          "Best Practice",
          "Audit",
-         "Manual"
+         "Manual",
+         "Automation"
       ],
       "Enabled": true
     }

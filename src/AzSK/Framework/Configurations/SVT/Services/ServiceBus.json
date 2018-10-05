@@ -16,7 +16,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthZ"
+        "AuthZ",
+        "ServiceBus"
       ],
       "Enabled": true,
       "DataObjectProperties": [
@@ -37,7 +38,8 @@
          "SDL",
          "TCP",
          "AuthZ",
-         "Automated"
+         "Automated",
+         "ServiceBus"
       ],
       "Enabled": true,
       "DataObjectProperties": [
@@ -58,7 +60,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "DP"
+        "DP",
+        "ServiceBus"
       ],
       "Enabled": true
     },
@@ -75,7 +78,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "DP"
+        "DP",
+        "ServiceBus"
       ],
       "Enabled": true
     },
@@ -92,7 +96,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "Audit"
+        "Audit",
+        "ServiceBus"
       ],
       "Enabled": true
     },
@@ -109,7 +114,8 @@
         "SDL",
         "Information",
         "Manual",
-        "DP"
+        "DP",
+        "ServiceBus"
       ],
       "Enabled": true
     },
@@ -126,7 +132,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "AuthZ"
+        "AuthZ",
+        "ServiceBus"
       ],
       "Enabled": true
     },
@@ -143,7 +150,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "BCDR"
+        "BCDR",
+        "ServiceBus"
       ],
       "Enabled": true
     },
@@ -161,7 +169,8 @@
         "TCP",
         "Automated",
         "AuthZ",
-        "RBAC"
+        "RBAC",
+        "ServiceBus"
       ],
       "Enabled": true
     },
@@ -179,7 +188,8 @@
         "TCP",
         "Automated",
         "Audit",
-        "Diagnostics"
+        "Diagnostics",
+        "ServiceBus"
       ],
       "Enabled": true
     }
