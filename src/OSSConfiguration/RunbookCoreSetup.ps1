@@ -445,21 +445,20 @@ try
 		CreateHelperSchedules
 		return
 	}
+	$jobs = Get-AzureRmAutomationJob -Name $RunbookName -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName
 
 	#Find out how many times has CA runbook run today for this account...
-	$jobs = Get-AzureRmAutomationJob -ResourceGroupName $AutomationAccountRG `
-		-AutomationAccountName $AutomationAccountName -RunbookName $RunbookName | `
-		Where-Object {$_.CreationTime.UtcDateTime.Date -eq $(get-date).ToUniversalTime().Date}
+	$TodaysJobs = $jobs | Where-Object {$_.CreationTime.UtcDateTime.Date -eq $(get-date).ToUniversalTime().Date}
 	
 	
 	#Under normal circumstances, we should not see too many runs on a single day within a CA setup
 	#If that is what is happening, let us stop and also disable further retries on the same day.
-	if($jobs.Count -gt 25)
+	if($TodaysJobs.Count -gt 25)
 	{
 		Write-Error("CS: Daily job retry limit exceeded. Will disable retries for today. If this recurs each day, please contact your support team.")
 		#The Scan_Schedule will attempt a retry again next day. 
 		#We don't disable Scan_Schedule because then we won't have a way to 'auto-recover' CA setups.
-		PublishEvent -EventName "CA Setup Fatal Error" -Properties @{"JobsCount"=$jobs.Count} -Metrics @{"TimeTakenInMs" =$setupTimer.ElapsedMilliseconds; "SuccessCount" = 0}
+		PublishEvent -EventName "CA Setup Fatal Error" -Properties @{"JobsCount"=$TodaysJobs.Count} -Metrics @{"TimeTakenInMs" =$setupTimer.ElapsedMilliseconds; "SuccessCount" = 0}
 		
 		#Disable the helper schedule
 		DisableHelperSchedules
@@ -467,31 +466,40 @@ try
 	}
 	
 	#Check if a scan job is already running. If so, we don't need to duplicate effort!
-	$jobs = Get-AzureRmAutomationJob -Name $RunbookName -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | Where-Object { $_.Status -in ("Queued", "Starting", "Resuming", "Running",  "Activating")}
+	$TotalJobsRunning = $jobs | Where-Object { $_.Status -in ("Queued", "Starting", "Resuming", "Running",  "Activating")}
 
-	ScheduleNewJob -intervalInMins $monitorjobIntervalMins
-	if(($jobs|Measure-Object).Count -gt 1)
-	{
-		$jobs|ForEach-Object{
-			#Automation account should have terminated the job after 3hrs (current default behavior). If not, let us stop it.
-			if(((GET-DATE).ToUniversalTime() - $_.StartTime.UtcDateTime).TotalMinutes -gt 210)
-			{
-				Stop-AzureRmAutomationJob -Id $_.JobId `
-					-ResourceGroupName $AutomationAccountRG `
-					-AutomationAccountName $AutomationAccountName
-			}
-			else
-			{
-				$Global:FoundExistingJob = $true;
-			}
-		}
-
-		#A job is already running. Let it take care of things....
-		if($Global:FoundExistingJob)
-		{
-			return;
-		}
-	}
+	ScheduleNewJob -intervalInMins $monitorjobIntervalMins 
+	$NoOfRecentActiveRunningJobs = 0    
+    if(($TotalJobsRunning|Measure-Object).Count -gt 1)
+    {
+        $TotalJobsRunning|ForEach-Object{
+            #Automation account should have terminated the job after 3hrs (current default behavior). If not, let us stop it.
+            if(((GET-DATE).ToUniversalTime() - $_.StartTime.UtcDateTime).TotalMinutes -gt 210)
+            {
+                $jobId = $_.JobId
+                try
+                {           
+                    Stop-AzureRmAutomationJob -Id $jobId -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName                  
+                }
+                catch
+                {
+                    #Eat exception as not able to stop the existing running job
+                    Write-Output ("CS: Error while stopping job [" + $jobId + "]")
+                }
+            }
+            else
+            {               
+                $NoOfRecentActiveRunningJobs = $NoOfRecentActiveRunningJobs + 1             
+            }
+        }       
+        
+        #A job is already running. Let it take care of things....       
+        if($NoOfRecentActiveRunningJobs -gt 1)
+        {
+            $Global:FoundExistingJob = $true;   
+            return;
+        }
+    }
 
 	#region: check modules health 
 	#Examine the AzSK module(s) currently present in the automation account
