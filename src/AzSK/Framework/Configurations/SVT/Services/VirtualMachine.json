@@ -18,7 +18,9 @@
             "Automated",
             "Deploy",
             "Windows",
-            "Linux"
+            "Linux",
+            "ERvNet",
+            "VirtualMachine"
          ],
          "Enabled": true
       },
@@ -38,7 +40,9 @@
             "Config",
             "Windows",            
             "SOX",
-            "SI"
+            "SI",
+            "ERvNet",
+            "VirtualMachine"
          ],
          "Enabled": true
       },
@@ -57,7 +61,8 @@
         "Automated",
         "Config",
         "Windows",
-        "Linux"
+        "Linux",
+        "VirtualMachine"
       ],
       "Enabled": true
     },
@@ -76,7 +81,9 @@
             "Automated",
             "NetSec",
             "Windows",
-            "Linux"
+            "Linux",
+            "ERvNet",
+            "VirtualMachine"
          ],
          "Enabled": true,
          "DataObjectProperties": [
@@ -101,7 +108,9 @@
             "Automated",
             "DP",
             "Windows",
-            "Linux"
+            "Linux",
+            "ERvNet",
+            "VirtualMachine"
          ],
          "Enabled": true
       },
@@ -120,7 +129,8 @@
             "Automated",
             "Audit",
             "Windows",
-            "Linux"
+            "Linux",
+            "VirtualMachine"
          ],
          "Enabled": true
       },
@@ -141,7 +151,9 @@
             "Windows",
             "SOX",
             "SI",
-            "Linux"
+            "Linux",
+            "ERvNet",
+            "VirtualMachine"
          ],
          "Enabled": true
       },
@@ -160,7 +172,9 @@
             "Automated",
             "Audit",
             "Windows",
-            "Linux"
+            "Linux",
+            "ERvNet",
+            "VirtualMachine"
          ],
          "Enabled": true
       },
@@ -179,7 +193,9 @@
             "Automated",
             "Audit",
             "Windows",
-            "Linux"
+            "Linux",
+            "ERvNet",
+            "VirtualMachine"
          ],
          "Enabled": true
       },
@@ -199,7 +215,8 @@
             "NetSec",
             "Windows",
             "Linux",
-          "OwnerAccess"
+          "OwnerAccess",
+          "VirtualMachine"
          ],
          "Enabled": true
       }

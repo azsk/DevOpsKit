@@ -60,12 +60,7 @@ class SVTCommandBase: CommandBase {
         $this.ClearSingletons();
 
         [SVTEventContext] $arg = $this.CreateSVTEventContextObject();
-        $this.InitializeControlState();
-        #Check if user has permission to read attestation
-		if($null -ne $this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadPermissions -eq 0)
-		{
-          [EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine+"`nWarning: The current user/login context does not have permission to access DevOps Kit control attestations. Due to this, control scan results may not reflect attestation.",[MessageType]::Warning);
-        }
+        $this.InitializeControlState();        
         $versionMessage = $this.CheckModuleVersion();
         if ($versionMessage) {
             $arg.Messages += $versionMessage;

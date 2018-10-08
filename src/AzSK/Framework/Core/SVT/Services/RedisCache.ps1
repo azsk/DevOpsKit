@@ -31,20 +31,13 @@ class RedisCache: SVTBase
 	 hidden [ControlResult] CheckRedisCacheFirewallIPAddressRange([ControlResult] $controlResult)
      {
 		 #check for applicable sku
-		 $RDBBackupSkuMappingCheck = $this.ControlSettings.RedisCache.FirewallApplicableSku | Where-Object { $_ -eq $this.ResourceObject.Sku } | Select-Object -First 1;
-		 if(-not $RDBBackupSkuMappingCheck)
-			{
-				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Firewall settings are not supported for Sku Tier - [$($this.ResourceObject.Sku)]")); 
-			    return $controlResult; 
-		  }
-
 		 #PowerShell Get command is provided for Firewall setting. Using Rest API to get firewall details
-		 $uri    = [string]::Format("{0}{1}/firewallRules?api-version=2016-04-01",[WebRequestHelper]::AzureManagementUri,$this.ResourceObject.Id)
-         $result = [WebRequestHelper]::InvokeGetWebRequest($uri)
+		#  $uri    = [string]::Format("{0}{1}/firewallRules?api-version=2016-04-01",[WebRequestHelper]::AzureManagementUri,$this.ResourceObject.Id)
+         $result = Get-AzureRmRedisCacheFirewallRule -ResourceGroupName  $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
 		 
 		 if($null -ne $result){
 			 #Filtering web request response and getting only required details
-			 $firewallDtls = $result | Select-Object name , @{Label="StartIp"; Expression={$_.properties.startIp}} , @{Label="EndIp"; Expression={$_.properties.endIp} } | Where-Object { $null -ne $_.StartIp -and  $null -ne $_.endIp }
+			 $firewallDtls = $result | Select-Object name , StartIP ,EndIP  | Where-Object { $null -ne $_.StartIP -and  $null -ne $_.EndIP }
 		     
 			 $controlResult.SetStateData("Redis cache firewall rules", $result);
 			 
@@ -69,7 +62,7 @@ class RedisCache: SVTBase
 		 }
 		 else
 		 {
-			   $controlResult.AddMessage("Unable to get Firewall settings for - ["+ $this.ResourceContext.ResourceName +"]");
+				$controlResult.AddMessage([VerificationResult]::Failed,"No Firewall settings found for - ["+ $this.ResourceContext.ResourceName +"]");
 		 }
 		 
 		 
