@@ -18,7 +18,7 @@ class ServiceFabric : SVTBase
     {
         if (-not $this.ResourceObject) 
 		{
-            $this.ResourceObject =  Get-AzureRmResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType -Name $this.ResourceContext.ResourceName -ApiVersion 2016-03-01        
+            $this.ResourceObject =  Get-AzureRmResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType -Name $this.ResourceContext.ResourceName    
 
 			$this.ResourceObject.Tags.GetEnumerator() | Where-Object { $_.Key -eq $this.DefaultTagName } | ForEach-Object {$this.ClusterTagValue = $_.Value }
 			
@@ -316,11 +316,13 @@ class ServiceFabric : SVTBase
 			else
 			{
 				$reverseProxyEnabledNode.Keys  | Foreach-Object {
-					if($loadBalancerBackendPorts.Contains($reverseProxyEnabledNode[$_]))
+					if($loadBalancerBackendPorts.Contains( [Int32] $reverseProxyEnabledNode[$_]))
 					{
 						$isPassed = $false;
-						$controlResult.AddMessage("Reverse proxy port is publicly exposed for node '$_':",$reverseProxyEnabledNode[$_]);
+						$controlResult.AddMessage("Reverse proxy port is publicly exposed for node '$_'");
 						$reverseProxyExposedNode.Add($_, $reverseProxyEnabledNode[$_])
+					}else{
+						$controlResult.AddMessage("Reverse proxy port is not publicly exposed for node '$_'.") 
 					}
 					
 				}
@@ -330,12 +332,13 @@ class ServiceFabric : SVTBase
 		}
 		if($isPassed)
 		{
+			
 			$controlResult.VerificationResult = [VerificationResult]::Passed;
 		}
 		else
 		{
 			$controlResult.VerificationResult = [VerificationResult]::Failed;
-			$controlResult.SetStateData("Diagnostics is disabled on Vmss", $reverseProxyExposedNode);
+			$controlResult.SetStateData("Reverse proxy port is publicly exposed", $reverseProxyExposedNode);
 		}
 		return $controlResult
 	}
