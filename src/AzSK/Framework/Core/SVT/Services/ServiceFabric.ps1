@@ -34,6 +34,22 @@ class ServiceFabric : SVTBase
         return $this.ResourceObject;
     }
 
+	[ControlItem[]] ApplyServiceFilters([ControlItem[]] $controls)
+	{
+		$result = @();
+		#Check VM type
+		$VMType = $this.ResourceObject.Properties.vmImage
+        if($VMType -eq "Linux")
+        {
+			$result += $controls | Where-Object { $_.Tags -contains "Linux" };
+		}
+		else
+		{
+			$result += $controls | Where-Object { $_.Tags -contains "Windows" };;
+		}
+		return $result;
+	}
+
 	hidden [ControlResult] CheckSecurityMode([ControlResult] $controlResult)
 	{
 		$isCertificateEnabled = [Helpers]::CheckMember($this.ResourceObject.Properties,"certificate" ) 
@@ -78,8 +94,10 @@ class ServiceFabric : SVTBase
 					$controlResult.AddMessage([VerificationResult]::Passed,"Service Fabric cluster is protected with CA signed certificate");
 				}
 				else
-				{
-					throw $_
+				{					
+				    $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch certificate details of the cluster. Please verify manually that Service Fabric cluster is protected with CA signed certificate.");
+					$controlResult.AddMessage($_.Exception.Message);
+					#throw $_
 				}
 			}
 		}
@@ -207,7 +225,16 @@ class ServiceFabric : SVTBase
 		$vmssResources | ForEach-Object{
 			$VMScaleSetName = $_.Name	
 			$nodeTypeResource = Get-AzureRmVmss -ResourceGroupName  $_.ResourceGroupName -VMScaleSetName  $VMScaleSetName
-			$diagnosticsSettings = $nodeTypeResource.VirtualMachineProfile.ExtensionProfile.Extensions  | ? { $_.Type -eq "IaaSDiagnostics" -and $_.Publisher -eq "Microsoft.Azure.Diagnostics" }
+
+			# Fetch diagnostics settings based on OS 
+			if($this.ResourceObject.Properties.vmImage -eq "Linux")
+			{
+				$diagnosticsSettings = $nodeTypeResource.VirtualMachineProfile.ExtensionProfile.Extensions  | ? { $_.Type -eq "LinuxDiagnostic" -and $_.Publisher -eq "Microsoft.OSTCExtensions" }				
+			}
+			else
+			{
+       			$diagnosticsSettings = $nodeTypeResource.VirtualMachineProfile.ExtensionProfile.Extensions  | ? { $_.Type -eq "IaaSDiagnostics" -and $_.Publisher -eq "Microsoft.Azure.Diagnostics" }
+			}
 			#Validate if diagnostics is enabled on vmss 
 			if($null -ne $diagnosticsSettings )
 			{
@@ -244,6 +271,87 @@ class ServiceFabric : SVTBase
 			$controlResult.SetStateData("Diagnostics is disabled on Vmss", $diagnosticsDisabledScaleSet);
 		}
 		return $controlResult        
+	}
+	hidden [ControlResult[]] CheckReverseProxyPort([ControlResult] $controlResult)
+	{
+		# add attestation details
+		$isPassed = $true;
+		$reverseProxyEnabledNode = @{};
+		$reverseProxyDisabledNode = @();
+		$reverseProxyExposedNode = @{};
+		$nodeTypes= $this.ResourceObject.Properties.nodeTypes
+		#Iterate through each node           
+		$nodeTypes | ForEach-Object{
+
+			if([Helpers]::CheckMember($_,"reverseProxyEndpointPort"))
+			{
+				$reverseProxyEnabledNode.Add($_.name, $_.reverseProxyEndpointPort)
+			}else{
+				$reverseProxyDisabledNode += $_.name
+			}
+		}
+		# if reverse proxy is not enabled in any node, pass TCP
+		if(($reverseProxyEnabledNode | Measure-Object).Count -gt 0)
+		{
+			$loadBalancerBackendPorts = @()
+			$loadBalancerResources = $this.GetLinkedResources("Microsoft.Network/loadBalancers")
+			#Collect all open ports on load balancer  
+			$loadBalancerResources | ForEach-Object{
+				$loadBalancerResource = Get-AzureRmLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
+				$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
+			
+				$loadBalancingRules | ForEach-Object {
+					$loadBalancingRuleId = $_.Id;
+					$loadBalancingRule = $loadBalancerResource.LoadBalancingRules | ? { $_.Id -eq  $loadBalancingRuleId } | Select-Object -First 1
+					$loadBalancerBackendPorts += $loadBalancingRule.BackendPort;
+				};   
+			}
+			#If no ports open, Pass the TCP
+			if($loadBalancerBackendPorts.Count -eq 0)
+			{
+				$controlResult.AddMessage("No ports enabled in load balancer.")  
+				$controlResultList += $controlResult      
+			}
+			#If Ports are open for public in load balancer, check if any reverse proxy port is exposed
+			else
+			{
+				$reverseProxyEnabledNode.Keys  | Foreach-Object {
+					if($loadBalancerBackendPorts.Contains($reverseProxyEnabledNode[$_]))
+					{
+						$isPassed = $false;
+						$controlResult.AddMessage("Reverse proxy port is publicly exposed for node '$_':",$reverseProxyEnabledNode[$_]);
+						$reverseProxyExposedNode.Add($_, $reverseProxyEnabledNode[$_])
+					}
+					
+				}
+			}
+		}else{
+			$controlResult.AddMessage("Reverse proxy service is not enabled in cluster.") 
+		}
+		if($isPassed)
+		{
+			$controlResult.VerificationResult = [VerificationResult]::Passed;
+		}
+		else
+		{
+			$controlResult.VerificationResult = [VerificationResult]::Failed;
+			$controlResult.SetStateData("Diagnostics is disabled on Vmss", $reverseProxyExposedNode);
+		}
+		return $controlResult
+	}
+
+	hidden [ControlResult] CheckClusterUpgradeMode([ControlResult] $controlResult)
+	{
+		if([Helpers]::CheckMember($this.ResourceObject.Properties,"upgradeMode") -and $this.ResourceObject.Properties.upgradeMode -eq "Automatic")
+        {			
+			$controlResult.AddMessage([VerificationResult]::Passed,"Upgrade mode for cluster is set to automatic." )
+        }
+        else
+        {			
+			$controlResult.AddMessage([VerificationResult]::Failed,"Upgrade mode for cluster is set to manual.")
+        }
+
+		return $controlResult
 	}
 
 	hidden [ControlResult[]] CheckStatefulServiceReplicaSetSize([ControlResult] $controlResult)
