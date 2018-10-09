@@ -95,9 +95,8 @@ class ServiceFabric : SVTBase
 				}
 				else
 				{					
-				    $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch certificate details of the cluster. Please verify manually that Service Fabric cluster is protected with CA signed certificate.");
+				    $controlResult.AddMessage([VerificationResult]::Manual,"Unable to Validate certificate details. Please verify manually that self-signed certificate is not used for cluster management endpoint protection",$this.ResourceObject.Properties.managementEndpoint);
 					$controlResult.AddMessage($_.Exception.Message);
-					#throw $_
 				}
 			}
 		}
@@ -158,59 +157,67 @@ class ServiceFabric : SVTBase
 		$nsgDisabledVNet = @{};
 
 		$virtualNetworkResources = $this.GetLinkedResources("Microsoft.Network/virtualNetworks") 
-        #Iterate through all cluster linked VNet resources      
-		$virtualNetworkResources |ForEach-Object{            
-			$virtualNetwork=Get-AzureRmVirtualNetwork -ResourceGroupName $_.ResourceGroupName -Name $_.Name 
-			$subnetConfig = Get-AzureRmVirtualNetworkSubnetConfig -VirtualNetwork $virtualNetwork
-			#Iterate through Subnet and validate if NSG is configured or not
-			$subnetConfig | ForEach-Object{
-				$subnetName =$_.Name
-				$isCompliant =  ($null -ne $_.NetworkSecurityGroup)		
-				#If NSG is enabled on Subnet display all security rules applied 
-				if($isCompliant)
-				{
-					$nsgResource = Get-AzureRmResource -ResourceId $_.NetworkSecurityGroup.Id
-					$nsgResourceDetails = Get-AzureRmNetworkSecurityGroup -ResourceGroupName $nsgResource.ResourceGroupName -Name $nsgResource.Name                
-					
-					$nsgEnabledVNet.Add($subnetName, $nsgResourceDetails)
+		if($virtualNetworkResources -ne $null)
+		{
+			#Iterate through all cluster linked VNet resources      
+			$virtualNetworkResources |ForEach-Object{            
+				$virtualNetwork=Get-AzureRmVirtualNetwork -ResourceGroupName $_.ResourceGroupName -Name $_.Name 
+				$subnetConfig = Get-AzureRmVirtualNetworkSubnetConfig -VirtualNetwork $virtualNetwork
+				#Iterate through Subnet and validate if NSG is configured or not
+				$subnetConfig | ForEach-Object{
+					$subnetName =$_.Name
+					$isCompliant =  ($null -ne $_.NetworkSecurityGroup)		
+					#If NSG is enabled on Subnet display all security rules applied 
+					if($isCompliant)
+					{
+						$nsgResource = Get-AzureRmResource -ResourceId $_.NetworkSecurityGroup.Id
+						$nsgResourceDetails = Get-AzureRmNetworkSecurityGroup -ResourceGroupName $nsgResource.ResourceGroupName -Name $nsgResource.Name                
+						
+						$nsgEnabledVNet.Add($subnetName, $nsgResourceDetails)
+					}
+					#If NSG is not enabled on Subnet, fail the TCP with Subnet details
+					else
+					{
+						$nsgDisabledVNet.Add($subnetName, $_)
+						$isVerify = $false
+					} 
+				}                
+			}
+
+			if($nsgEnabledVNet.Keys.Count -gt 0)
+			{
+				$nsgEnabledVNet.Keys  | Foreach-Object {
+					$controlResult.AddMessage("Validate NSG security rules applied on subnet '$_'",$nsgEnabledVNet[$_]);
 				}
-				#If NSG is not enabled on Subnet, fail the TCP with Subnet details
-				else
-				{
-					$nsgDisabledVNet.Add($subnetName, $_)
-					$isVerify = $false
-				} 
-			}                
-		}
-
-		if($nsgEnabledVNet.Keys.Count -gt 0)
-		{
-			$nsgEnabledVNet.Keys  | Foreach-Object {
-				$controlResult.AddMessage("Validate NSG security rules applied on subnet '$_'",$nsgEnabledVNet[$_]);
 			}
-		}
 
-		if($nsgDisabledVNet.Keys.Count -gt 0)
-		{
-			$nsgDisabledVNet.Keys  | Foreach-Object {
-				$controlResult.AddMessage("NSG is not configured on subnet '$_'",$nsgDisabledVNet[$_]);
+			if($nsgDisabledVNet.Keys.Count -gt 0)
+			{
+				$nsgDisabledVNet.Keys  | Foreach-Object {
+					$controlResult.AddMessage("NSG is not configured on subnet '$_'",$nsgDisabledVNet[$_]);
+				}
 			}
-		}
 
-		if($isVerify)
-		{
-			$controlResult.VerificationResult = [VerificationResult]::Verify;
-		}
-		else
-		{
-			$controlResult.VerificationResult = [VerificationResult]::Failed;
-		}
+			if($isVerify)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Verify;
+			}
+			else
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Failed;
+			}
 
-		$NSGState = New-Object -TypeName PSObject 
-		$NSGState | Add-Member -NotePropertyName NSGConfiguredSubnet -NotePropertyValue $nsgEnabledVNet
-		$NSGState | Add-Member -NotePropertyName NSGNotConfiguredSubnet -NotePropertyValue $nsgDisabledVNet
+			$NSGState = New-Object -TypeName PSObject 
+			$NSGState | Add-Member -NotePropertyName NSGConfiguredSubnet -NotePropertyValue $nsgEnabledVNet
+			$NSGState | Add-Member -NotePropertyName NSGNotConfiguredSubnet -NotePropertyValue $nsgDisabledVNet
 
-		$controlResult.SetStateData("NSG security rules applied on subnet", $NSGState);
+			$controlResult.SetStateData("NSG security rules applied on subnet", $NSGState);
+		}else{
+			$controlResult.AddMessage("Not able to fetch details of VNet resources linked with cluster.");
+			$controlResult.AddMessage("Manually verify that NSG is enabled on Subnet.");
+			$controlResult.VerificationResult = [VerificationResult]::Manual;
+		}
+        
 
 		return $controlResult        
 	}
