@@ -32,8 +32,8 @@ class Automation: SVTBase
 		$longExpiryWebhooks = @()
 		if(($webhooks|Measure-Object).Count -gt 0)
 		{
-			$webhooks | Where-Object{$_.IsEnabled -eq $true} | ForEach-Object{
-				if(($_.ExpiryTime - $_.CreationTime).Days -gt $this.ControlSettings.Automation.WebhookValidityInDays)
+			$webhooks | ForEach-Object{
+				if(($_.IsEnabled -eq $true) -and (($_.ExpiryTime - $_.CreationTime).Days -gt $this.ControlSettings.Automation.WebhookValidityInDays))
 				{
 					$expiryTime = ($_.ExpiryTime - $_.CreationTime).days;
 					$webhookdata = $_ | Select-Object ResourceGroupName, AutomationAccountName, Name, Description, IsEnabled, Parameters, RunbookName, WebhookURI, HybridWorker
