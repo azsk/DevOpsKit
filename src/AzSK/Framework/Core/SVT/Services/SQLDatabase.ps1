@@ -120,7 +120,7 @@ class SQLDatabase: SVTBase
     {
 		[string[]] $enabledDB = @()
 		[string[]] $disabledDB = @()
-		[string[]] $erroreddDB = @()
+		[string[]] $errorDB = @()
 
         if(($this.SqlDatabases | Measure-Object ).Count -eq 0)
         {
@@ -151,7 +151,7 @@ class SQLDatabase: SVTBase
 				}
 				catch {
 					$atleastOneFailed = $true
-					$erroreddDB += $_.DatabaseName
+					$errorDB += $_.DatabaseName
 				}
 				
 			} #End of ForEach-Object
@@ -166,9 +166,9 @@ class SQLDatabase: SVTBase
 				$controlResult.EnableFixControl = $true
 				
 			}
-			if(($erroreddDB | Measure-Object).Count -gt 0)
+			if(($errorDB | Measure-Object).Count -gt 0)
 			{
-				$controlResult.AddMessage([MessageData]::new("TDE is in error state for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($erroreddDB)));
+				$controlResult.AddMessage([MessageData]::new("TDE is in error state for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($errorDB)));
 			}
 
 			if($atleastOneFailed) {
@@ -176,7 +176,7 @@ class SQLDatabase: SVTBase
 				
 				$DatabaseTDEFailed = New-Object -TypeName PSObject 
 				$DatabaseTDEFailed | Add-Member -NotePropertyName DisabledDB -NotePropertyValue $disabledDB
-				$DatabaseTDEFailed | Add-Member -NotePropertyName ErroredDB -NotePropertyValue $erroreddDB
+				$DatabaseTDEFailed | Add-Member -NotePropertyName ErrorDB -NotePropertyValue $errorDB
 				
 				$controlResult.SetStateData("TDE Failed for following databases", ($DatabaseTDEFailed));
 			}else{
@@ -332,10 +332,9 @@ class SQLDatabase: SVTBase
 		
 		[string[]] $enabledDB = @()
 		[string[]] $disabledDB = @()
-		[string[]] $erroreddDB = @()
-		[string[]] $unknowndDB = @()
-
-        if(($this.SqlDatabases | Measure-Object ).Count -eq 0)
+		[string[]] $errorDB = @()
+        
+		if(($this.SqlDatabases | Measure-Object ).Count -eq 0)
         {
             $controlResult.AddMessage([MessageData]::new("No database found on SQL Server  ["+ $this.ResourceContext.ResourceName +"]"));
             #Passing the status as there is no database found on the SQL Server
@@ -367,13 +366,13 @@ class SQLDatabase: SVTBase
 							}
 						}
 						else{
-							$unknowndDB += $_.DatabaseName
+							$disabledDB += $_.DatabaseName
 						}
+					}
+					catch {
+						$errorDB += $_.DatabaseName
+					}
 				}
-				catch {
-					$erroreddDB += $_.DatabaseName
-				}
-            }
 
 			if(($enabledDB | Measure-Object).Count -gt 0)
 			{
@@ -383,13 +382,9 @@ class SQLDatabase: SVTBase
 			{
 				$controlResult.AddMessage([MessageData]::new("Database masking is disabled for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($disabledDB)));
 			}
-			if(($erroreddDB | Measure-Object).Count -gt 0)
+			if(($errorDB | Measure-Object).Count -gt 0)
 			{
-				$controlResult.AddMessage([MessageData]::new("Database masking is in error state for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($erroreddDB)));
-			}
-			if(($unknowndDB | Measure-Object).Count -gt 0)
-			{
-				$controlResult.AddMessage([MessageData]::new("Database masking is in unknown state for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($unknowndDB)));
+				$controlResult.AddMessage([MessageData]::new("Database masking is in error state for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($errorDB)));
 			}
 
 			if($atleastOneFailed) {
@@ -402,8 +397,7 @@ class SQLDatabase: SVTBase
 			$DatamaskingState = New-Object -TypeName PSObject 
 			$DatamaskingState | Add-Member -NotePropertyName EnabledDB -NotePropertyValue $enabledDB
 			$DatamaskingState | Add-Member -NotePropertyName DisabledDB -NotePropertyValue $disabledDB
-			$DatamaskingState | Add-Member -NotePropertyName ErroredDB -NotePropertyValue $erroreddDB
-			$DatamaskingState | Add-Member -NotePropertyName UnknonwnDB -NotePropertyValue $unknowndDB
+			$DatamaskingState | Add-Member -NotePropertyName ErrorDB -NotePropertyValue $errorDB
 
 			$controlResult.SetStateData("Data masking state for database is", ($DatamaskingState));
         }
