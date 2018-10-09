@@ -138,7 +138,7 @@ class EventHub: SVTBase
 		#region "NameSpace"
 		
 		$controlResult.SetStateData("Authorization rules for Eventhub namespace and child entities", $this.EHAccessPolicies);
-		$controlResult.AddMessage([MessageData]::new("Authorization rules for Eventhub namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", 
+		$controlResult.AddMessage([MessageData]::new("Authorization rules for Eventhub namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules are defined at correct entity level and with limited permissions.", 
 				$this.NamespacePolicies));   
 
 		#endregion        
@@ -152,7 +152,7 @@ class EventHub: SVTBase
 
 				if($this.EHChildAccessPolicies.ContainsKey($eventHub) -and ($this.EHChildAccessPolicies[$eventHub] |Measure-Object).count -gt 0)
 				{
-					$controlResult.AddMessage([MessageData]::new("Authorization rules for Event Hub - ["+ $eventHub.Name +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", $this.EHChildAccessPolicies[$eventHub]));
+					$controlResult.AddMessage([MessageData]::new("Authorization rules for Event Hub - ["+ $eventHub.Name +"]. Validate that these rules are defined at correct entity level and with limited permissions.", $this.EHChildAccessPolicies[$eventHub]));
 				}
 			}
 		}

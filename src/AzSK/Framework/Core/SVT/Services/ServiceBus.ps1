@@ -196,7 +196,7 @@ class ServiceBus: SVTBase
 		$controlResult.SetStateData("Authorization rules for namespace and child entities", $this.SBAccessPolicies);
 
 		#region "NameSpace"
-		$controlResult.AddMessage([MessageData]::new("Authorization rules for namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", 
+		$controlResult.AddMessage([MessageData]::new("Authorization rules for namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules are defined at correct entity level and with limited permissions.", 
 				$this.NamespacePolicies));   
 		#endregion        
 
@@ -208,7 +208,7 @@ class ServiceBus: SVTBase
 			{
 				if($this.QueueAccessPolicies.ContainsKey($queue) -and ($this.QueueAccessPolicies[$queue] |Measure-Object).count -gt 0)
 				{
-					$controlResult.AddMessage([MessageData]::new("Authorization rules for Queue - ["+ $queue.Name +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", $this.QueueAccessPolicies[$queue]));
+					$controlResult.AddMessage([MessageData]::new("Authorization rules for Queue - ["+ $queue.Name +"]. Validate that these rules are defined at correct entity level and with limited permissions.", $this.QueueAccessPolicies[$queue]));
 				}
 			}
 		}
@@ -227,7 +227,7 @@ class ServiceBus: SVTBase
 			{
 				if($this.TopicAccessPolicies.ContainsKey($topic) -and ($this.TopicAccessPolicies[$topic] |Measure-Object).count -gt 0)
 				{
-					$controlResult.AddMessage([MessageData]::new("Authorization rules for Topic - ["+ $topic.Name +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", $this.TopicAccessPolicies[$topic]));
+					$controlResult.AddMessage([MessageData]::new("Authorization rules for Topic - ["+ $topic.Name +"]. Validate that these rules are defined at correct entity level and with limited permissions.", $this.TopicAccessPolicies[$topic]));
 				}
 				else
 				{
