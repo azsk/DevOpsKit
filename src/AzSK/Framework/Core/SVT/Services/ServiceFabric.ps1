@@ -249,8 +249,8 @@ class ServiceFabric : SVTBase
 	hidden [ControlResult[]] CheckStatefulServiceReplicaSetSize([ControlResult] $controlResult)
 	{
 		$isPassed = $true;
-		$complianteServices = @{};
-		$nonComplianteServices = @{};
+		$compliantServices = @{};
+		$nonCompliantServices = @{};
 		#Iterate through the applications present in cluster     
 		if($this.ApplicationList)
 		{
@@ -268,30 +268,30 @@ class ServiceFabric : SVTBase
 
 						if($isCompliant)
 						{
-							$complianteServices.Add($serviceName, $serviceDescription)
+							$compliantServices.Add($serviceName, $serviceDescription)
 						} 
 						else
 						{ 
 							$isPassed = $False
-							$nonComplianteServices.Add($serviceName, $serviceDescription)
+							$nonCompliantServices.Add($serviceName, $serviceDescription)
 						}
 					}                
 				}
 			}
 
-			if($complianteServices.Keys.Count -gt 0)
+			if($compliantServices.Keys.Count -gt 0)
 			{
 				$controlResult.AddMessage("Replica set size for below services are complaint");
-				$complianteServices.Keys  | Foreach-Object {
+				$compliantServices.Keys  | Foreach-Object {
 					$controlResult.AddMessage("Replica set size details for service '$_'");
 				}
 			}
 
-			if($nonComplianteServices.Keys.Count -gt 0)
+			if($nonCompliantServices.Keys.Count -gt 0)
 			{
 				$controlResult.AddMessage("Replica set size for below services are non-complaint");
-				$nonComplianteServices.Keys  | Foreach-Object {
-					$controlResult.AddMessage("Replica set size details for service '$_'",$nonComplianteServices[$_]);
+				$nonCompliantServices.Keys  | Foreach-Object {
+					$controlResult.AddMessage("Replica set size details for service '$_'",$nonCompliantServices[$_]);
 				}
 			}
 
@@ -302,7 +302,7 @@ class ServiceFabric : SVTBase
 			else
 			{
 				$controlResult.VerificationResult = [VerificationResult]::Failed;
-				$controlResult.SetStateData("Replica set size are non-complaint for", $nonComplianteServices);
+				$controlResult.SetStateData("Replica set size are non-complaint for", $nonCompliantServices);
 			}
 		}
 		else

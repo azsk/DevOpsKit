@@ -2,7 +2,7 @@
 Set-StrictMode -Version Latest 
 class ServiceBus: SVTBase
 {       
-	hidden [PSObject[]] $NameSpacePolicies = @() ;
+	hidden [PSObject[]] $NamespacePolicies = @() ;
 	hidden [PSObject[]] $Queues = @() ;
 	hidden [PSObject[]] $Topics = @() ;
 	hidden [HashTable] $QueueAccessPolicies = @{};
@@ -23,10 +23,10 @@ class ServiceBus: SVTBase
 
 	hidden [void] GetServiceBusDetails()
     {
-        if (-not $this.NameSpacePolicies) {
+        if (-not $this.NamespacePolicies) {
 			try
 			{
-				$this.NameSpacePolicies = (Get-AzureRmServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
+				$this.NamespacePolicies = (Get-AzureRmServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
 							-NamespaceName $this.ResourceContext.ResourceName | Select-Object Id, Name, Rights)
 			}
 			catch
@@ -60,6 +60,11 @@ class ServiceBus: SVTBase
 				# This block is intentionally left blank to handle exception while fetching topic in service bus
 			}
         }
+
+		$this.SBAccessPolicies = New-Object -TypeName PSObject 
+		$this.SBAccessPolicies | Add-Member -NotePropertyName NamespacePolicies -NotePropertyValue $this.NamespacePolicies 
+		$this.SBAccessPolicies | Add-Member -NotePropertyName Queues -NotePropertyValue $this.QueueAccessPolicies
+		$this.SBAccessPolicies | Add-Member -NotePropertyName Topics -NotePropertyValue $this.TopicAccessPolicies
     }
 
 	hidden [void] GetServiceBusAccessPolicies()
@@ -84,8 +89,9 @@ class ServiceBus: SVTBase
 			}
 		}
         
+		$this.SBAccessPolicies.Queues = $this.QueueAccessPolicies
 		#endregion
-           
+        
 		#region "Topic"
 		
 		if(($this.Topics|Measure-Object).count -gt 0)
@@ -107,12 +113,8 @@ class ServiceBus: SVTBase
 			}
 		}
 
+		$this.SBAccessPolicies.Topics = $this.TopicAccessPolicies
 		#endregion
-
-		$this.SBAccessPolicies = New-Object -TypeName PSObject 
-		$this.SBAccessPolicies | Add-Member -NotePropertyName NameSpacePolicies -NotePropertyValue $this.NameSpacePolicies 
-		$this.SBAccessPolicies | Add-Member -NotePropertyName Queues -NotePropertyValue ($this.QueueAccessPolicies)
-		$this.SBAccessPolicies | Add-Member -NotePropertyName Topics -NotePropertyValue ($this.TopicAccessPolicies)
 	}
 
 	hidden [ControlResult[]] CheckServiceBusRootPolicy([ControlResult] $controlResult)
@@ -123,7 +125,7 @@ class ServiceBus: SVTBase
 		$controlResult.SetStateData("Authorization rules for Service Bus namespace and child entities", $this.SBAccessPolicies);
 
 		$controlResult.AddMessage([MessageData]::new("Authorization rules for namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules must not be used at Queue/Topic level to send and receive messages.", 
-				$this.NameSpacePolicies));   
+				$this.NamespacePolicies));   
 		
 		#endregion        
 
@@ -133,7 +135,7 @@ class ServiceBus: SVTBase
 		{
 			foreach ($queue in $this.Queues)
 			{
-				if(($this.QueueAccessPolicies[$queue] |Measure-Object).count -gt 0)
+				if($this.QueueAccessPolicies.ContainsKey($queue) -and ($this.QueueAccessPolicies[$queue] |Measure-Object).count -gt 0)
 				{
 					$controlResult.AddMessage([MessageData]::new("Validate that Queue - ["+ $queue.Name +"] must not use access policies defined at Service Bus namespace level."));
 				}
@@ -141,7 +143,7 @@ class ServiceBus: SVTBase
 				{
 					$isControlFailed = $true
 					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for Queue - ["+ $queue.Name +"]. Applications (senders/receivers) must not use access policies defined at Service Bus namespace level."));
-					$controlResult.AddMessage([MessageData]::new("Either Queue is not in used or namespace level access policy is used by the Queue"));
+					$controlResult.AddMessage([MessageData]::new("Either Queue is not in use or namespace level access policy is used by the Queue"));
 				}
 			}
 		}
@@ -158,7 +160,7 @@ class ServiceBus: SVTBase
 		{
 			foreach ($topic in $this.Topics)
 			{
-				if(($this.TopicAccessPolicies[$topic] |Measure-Object).count -gt 0)
+				if($this.TopicAccessPolicies.ContainsKey($topic) -and ($this.TopicAccessPolicies[$topic] |Measure-Object).count -gt 0)
 				{
 					$controlResult.AddMessage([MessageData]::new("Validate that Topic - ["+ $topic.Name +"] must not use access policies defined at Service Bus namespace level."));
 				}
@@ -166,7 +168,7 @@ class ServiceBus: SVTBase
 				{
 					$isControlFailed = $true
 					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for Topic - ["+ $topic.Name +"]. Applications (senders/receivers) must not use access policies defined at Service Bus namespace level."));
-					$controlResult.AddMessage([MessageData]::new("Either Queue is not in used or namespace level access policy is used by the Queue"));
+					$controlResult.AddMessage([MessageData]::new("Either Topic is not in use or namespace level access policy is used by the Topic"));
 				}
 			}
 		}
@@ -195,7 +197,7 @@ class ServiceBus: SVTBase
 
 		#region "NameSpace"
 		$controlResult.AddMessage([MessageData]::new("Authorization rules for namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", 
-				$this.NameSpacePolicies));   
+				$this.NamespacePolicies));   
 		#endregion        
 
 		#region "Queue"
@@ -204,7 +206,7 @@ class ServiceBus: SVTBase
 		{
 			foreach ($queue in $this.Queues)
 			{
-				if(($this.QueueAccessPolicies[$queue] |Measure-Object).count -gt 0)
+				if($this.QueueAccessPolicies.ContainsKey($queue) -and ($this.QueueAccessPolicies[$queue] |Measure-Object).count -gt 0)
 				{
 					$controlResult.AddMessage([MessageData]::new("Authorization rules for Queue - ["+ $queue.Name +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", $this.QueueAccessPolicies[$queue]));
 				}
@@ -223,7 +225,7 @@ class ServiceBus: SVTBase
 		{
 			foreach ($topic in $this.Topics)
 			{
-				if(($this.TopicAccessPolicies[$topic] |Measure-Object).count -gt 0)
+				if($this.TopicAccessPolicies.ContainsKey($topic) -and ($this.TopicAccessPolicies[$topic] |Measure-Object).count -gt 0)
 				{
 					$controlResult.AddMessage([MessageData]::new("Authorization rules for Topic - ["+ $topic.Name +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", $this.TopicAccessPolicies[$topic]));
 				}

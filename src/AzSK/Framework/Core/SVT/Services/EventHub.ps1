@@ -2,8 +2,8 @@
 Set-StrictMode -Version Latest 
 class EventHub: SVTBase
 {       
-	hidden [PSObject[]] $NameSpacePolicies;
-	hidden [PSObject[]] $EventHubs;
+	hidden [PSObject[]] $NamespacePolicies = @();
+	hidden [PSObject[]] $EventHubs = @();
 	hidden [HashTable] $EHChildAccessPolicies = @{};
 	hidden [PSObject] $EHAccessPolicies;
 
@@ -24,10 +24,10 @@ class EventHub: SVTBase
 	hidden [void] GetEventHubDetails()
     {
 		
-        if (-not $this.NameSpacePolicies) {
+        if (-not $this.NamespacePolicies) {
 			try
 			{
-				$this.NameSpacePolicies = (Get-AzureRmEventHubAuthorizationRule -ResourceGroupName $this.ResourceContext.ResourceGroupName `
+				$this.NamespacePolicies = (Get-AzureRmEventHubAuthorizationRule -ResourceGroupName $this.ResourceContext.ResourceGroupName `
 						-NamespaceName $this.ResourceContext.ResourceName | Select-Object Id, Name, Rights)
 			}
 			catch
@@ -48,6 +48,10 @@ class EventHub: SVTBase
 			}
             
         }
+		
+		$this.EHAccessPolicies = New-Object -TypeName PSObject 
+		$this.EHAccessPolicies | Add-Member -NotePropertyName NameSpacePolicies -NotePropertyValue $this.NamespacePolicies 
+		$this.EHAccessPolicies | Add-Member -NotePropertyName EHChildAccessPolicies -NotePropertyValue $this.EHChildAccessPolicies
     }
 
 	hidden [void] GetEHAccessPolicies()
@@ -75,9 +79,8 @@ class EventHub: SVTBase
         
 		#endregion
 
-		$this.EHAccessPolicies = New-Object -TypeName PSObject 
-		$this.EHAccessPolicies | Add-Member -NotePropertyName NameSpacePolicies -NotePropertyValue $this.NameSpacePolicies 
-		$this.EHAccessPolicies | Add-Member -NotePropertyName EHChildAccessPolicies -NotePropertyValue ($this.EHChildAccessPolicies)
+		$this.EHAccessPolicies.EHChildAccessPolicies = $this.EHChildAccessPolicies
+		
 	}
 
 	hidden [ControlResult[]] CheckEventHubRootPolicy([ControlResult] $controlResult)
@@ -88,7 +91,7 @@ class EventHub: SVTBase
 
 		$controlResult.SetStateData("Authorization rules for Eventhub namespace and child entities", $this.EHAccessPolicies);
 		$controlResult.AddMessage([MessageData]::new("Following are the authorization rules for namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules must not be used at Event Hub level to send and receive messages.", 
-				$this.NameSpacePolicies))
+				$this.NamespacePolicies))
 
 		#endregion        
 
@@ -98,7 +101,8 @@ class EventHub: SVTBase
 		{
 			foreach ($eventHub in $this.EventHubs)
 			{
-				if(($this.EHChildAccessPolicies[$eventHub] |Measure-Object).count -gt 0)
+				
+				if($this.EHChildAccessPolicies.ContainsKey($eventHub) -and ($this.EHChildAccessPolicies[$eventHub] |Measure-Object).count -gt 0)
 				{
 					$controlResult.AddMessage([MessageData]::new("Validate that Event Hub - ["+ $eventHub.Name +"] must not use access policies defined at Event Hub namespace level."));
 				}
@@ -106,7 +110,7 @@ class EventHub: SVTBase
 				{
 					$isControlFailed = $true
 					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for Event Hub - ["+ $eventHub.Name +"]. Applications (senders/receivers) must not use access policies defined at Event Hub namespace level."));
-					$controlResult.AddMessage([MessageData]::new("Either Event Hus is not in used or namespace level access policy is used by the Event Hub"));
+					$controlResult.AddMessage([MessageData]::new("Either Event Hub is not in use or namespace level access policy is used by the Event Hub"));
 				}
 			}
 		}
@@ -135,7 +139,7 @@ class EventHub: SVTBase
 		
 		$controlResult.SetStateData("Authorization rules for Eventhub namespace and child entities", $this.EHAccessPolicies);
 		$controlResult.AddMessage([MessageData]::new("Authorization rules for Eventhub namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", 
-				$this.NameSpacePolicies));   
+				$this.NamespacePolicies));   
 
 		#endregion        
 
@@ -146,7 +150,7 @@ class EventHub: SVTBase
 			foreach ($eventHub in $this.EventHubs)
 			{
 
-				if(($this.EHChildAccessPolicies[$eventHub] |Measure-Object).count -gt 0)
+				if($this.EHChildAccessPolicies.ContainsKey($eventHub) -and ($this.EHChildAccessPolicies[$eventHub] |Measure-Object).count -gt 0)
 				{
 					$controlResult.AddMessage([MessageData]::new("Authorization rules for Event Hub - ["+ $eventHub.Name +"]. Validate that these rules are defined at correct entity level and with more limited permissions.", $this.EHChildAccessPolicies[$eventHub]));
 				}
