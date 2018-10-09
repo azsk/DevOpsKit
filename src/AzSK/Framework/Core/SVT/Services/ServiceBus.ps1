@@ -142,8 +142,7 @@ class ServiceBus: SVTBase
 				else
 				{
 					$isControlFailed = $true
-					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for Queue - ["+ $queue.Name +"]. Applications (senders/receivers) must not use access policies defined at Service Bus namespace level."));
-					$controlResult.AddMessage([MessageData]::new("Either Queue is not in use or namespace level access policy is used by the Queue"));
+					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for Queue - ["+ $queue.Name +"]. Applications (senders/receivers) must not use access policies defined at Service Bus namespace level. Either Queue is not in use or namespace level access policy is used by the Queue."));
 				}
 			}
 		}
@@ -167,8 +166,7 @@ class ServiceBus: SVTBase
 				else
 				{
 					$isControlFailed = $true
-					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for Topic - ["+ $topic.Name +"]. Applications (senders/receivers) must not use access policies defined at Service Bus namespace level."));
-					$controlResult.AddMessage([MessageData]::new("Either Topic is not in use or namespace level access policy is used by the Topic"));
+					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for Topic - ["+ $topic.Name +"]. Applications (senders/receivers) must not use access policies defined at Service Bus namespace level. Either Topic is not in use or namespace level access policy is used by the Topic"));
 				}
 			}
 		}

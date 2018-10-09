@@ -333,9 +333,8 @@ class SQLDatabase: SVTBase
 		[string[]] $enabledDB = @()
 		[string[]] $disabledDB = @()
 		[string[]] $errorDB = @()
-		[string[]] $unknownDB = @()
-
-        if(($this.SqlDatabases | Measure-Object ).Count -eq 0)
+        
+		if(($this.SqlDatabases | Measure-Object ).Count -eq 0)
         {
             $controlResult.AddMessage([MessageData]::new("No database found on SQL Server  ["+ $this.ResourceContext.ResourceName +"]"));
             #Passing the status as there is no database found on the SQL Server
@@ -367,13 +366,13 @@ class SQLDatabase: SVTBase
 							}
 						}
 						else{
-							$unknownDB += $_.DatabaseName
+							$disabledDB += $_.DatabaseName
 						}
+					}
+					catch {
+						$errorDB += $_.DatabaseName
+					}
 				}
-				catch {
-					$errorDB += $_.DatabaseName
-				}
-            }
 
 			if(($enabledDB | Measure-Object).Count -gt 0)
 			{
@@ -387,10 +386,6 @@ class SQLDatabase: SVTBase
 			{
 				$controlResult.AddMessage([MessageData]::new("Database masking is in error state for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($errorDB)));
 			}
-			if(($unknownDB | Measure-Object).Count -gt 0)
-			{
-				$controlResult.AddMessage([MessageData]::new("Database masking is in unknown state for following databases on SQL Server - ["+ $this.ResourceContext.ResourceName +"]",($unknownDB)));
-			}
 
 			if($atleastOneFailed) {
 				$controlResult.VerificationResult = [VerificationResult]::Verify;
@@ -403,7 +398,6 @@ class SQLDatabase: SVTBase
 			$DatamaskingState | Add-Member -NotePropertyName EnabledDB -NotePropertyValue $enabledDB
 			$DatamaskingState | Add-Member -NotePropertyName DisabledDB -NotePropertyValue $disabledDB
 			$DatamaskingState | Add-Member -NotePropertyName ErrorDB -NotePropertyValue $errorDB
-			$DatamaskingState | Add-Member -NotePropertyName UnknonwnDB -NotePropertyValue $unknownDB
 
 			$controlResult.SetStateData("Data masking state for database is", ($DatamaskingState));
         }

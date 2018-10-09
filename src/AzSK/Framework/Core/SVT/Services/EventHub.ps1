@@ -109,8 +109,7 @@ class EventHub: SVTBase
 				else
 				{
 					$isControlFailed = $true
-					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for Event Hub - ["+ $eventHub.Name +"]. Applications (senders/receivers) must not use access policies defined at Event Hub namespace level."));
-					$controlResult.AddMessage([MessageData]::new("Either Event Hub is not in use or namespace level access policy is used by the Event Hub"));
+					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for Event Hub - ["+ $eventHub.Name +"]. Applications (senders/receivers) must not use access policies defined at Event Hub namespace level. Either Event Hub is not in use or namespace level access policy is used by the Event Hub."));
 				}
 			}
 		}
