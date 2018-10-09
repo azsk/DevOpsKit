@@ -351,7 +351,7 @@
       "Automated": "Yes",
       "MethodName": "CheckReverseProxyPort",
       "Rationale": "Configuring the reverse proxy's port in Load Balancer with public IP will expose all microservices with HTTP endpoint. Microservices meant to be internal may be discoverable by a determined malicious user.",
-      "Recommendation": "Check that reverse proxy port should not be exposed through Azure load balancer rules as follows: Azure Portal --> Load Balancers --> <Load Balancer Name> --> Load Balancing Rules --> Validate reverse proxy port should not be exposed.",
+      "Recommendation": "Check that reverse proxy port must not be exposed through Azure load balancer rules as follows: Azure Portal --> Load Balancers --> <Load Balancer Name> --> Load Balancing Rules --> Validate reverse proxy port should not be exposed.",
       "Tags": [
         "SDL",
         "TCP",
