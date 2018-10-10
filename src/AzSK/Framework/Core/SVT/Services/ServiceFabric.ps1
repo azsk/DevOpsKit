@@ -18,7 +18,7 @@ class ServiceFabric : SVTBase
     {
         if (-not $this.ResourceObject) 
 		{
-            $this.ResourceObject =  Get-AzureRmResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType -Name $this.ResourceContext.ResourceName -ApiVersion 2016-03-01        
+            $this.ResourceObject =  Get-AzureRmResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType -Name $this.ResourceContext.ResourceName    
 
 			$this.ResourceObject.Tags.GetEnumerator() | Where-Object { $_.Key -eq $this.DefaultTagName } | ForEach-Object {$this.ClusterTagValue = $_.Value }
 			
@@ -33,6 +33,22 @@ class ServiceFabric : SVTBase
         }
         return $this.ResourceObject;
     }
+
+	[ControlItem[]] ApplyServiceFilters([ControlItem[]] $controls)
+	{
+		$result = @();
+		#Check VM type
+		$VMType = $this.ResourceObject.Properties.vmImage
+        if($VMType -eq "Linux")
+        {
+			$result += $controls | Where-Object { $_.Tags -contains "Linux" };
+		}
+		else
+		{
+			$result += $controls | Where-Object { $_.Tags -contains "Windows" };;
+		}
+		return $result;
+	}
 
 	hidden [ControlResult] CheckSecurityMode([ControlResult] $controlResult)
 	{
@@ -78,8 +94,9 @@ class ServiceFabric : SVTBase
 					$controlResult.AddMessage([VerificationResult]::Passed,"Service Fabric cluster is protected with CA signed certificate");
 				}
 				else
-				{
-					throw $_
+				{					
+				    $controlResult.AddMessage([VerificationResult]::Manual,"Unable to Validate certificate details. Please verify manually that self-signed certificate is not used for cluster management endpoint protection",$this.ResourceObject.Properties.managementEndpoint);
+					$controlResult.AddMessage($_.Exception.Message);
 				}
 			}
 		}
@@ -140,59 +157,67 @@ class ServiceFabric : SVTBase
 		$nsgDisabledVNet = @{};
 
 		$virtualNetworkResources = $this.GetLinkedResources("Microsoft.Network/virtualNetworks") 
-        #Iterate through all cluster linked VNet resources      
-		$virtualNetworkResources |ForEach-Object{            
-			$virtualNetwork=Get-AzureRmVirtualNetwork -ResourceGroupName $_.ResourceGroupName -Name $_.Name 
-			$subnetConfig = Get-AzureRmVirtualNetworkSubnetConfig -VirtualNetwork $virtualNetwork
-			#Iterate through Subnet and validate if NSG is configured or not
-			$subnetConfig | ForEach-Object{
-				$subnetName =$_.Name
-				$isCompliant =  ($null -ne $_.NetworkSecurityGroup)		
-				#If NSG is enabled on Subnet display all security rules applied 
-				if($isCompliant)
-				{
-					$nsgResource = Get-AzureRmResource -ResourceId $_.NetworkSecurityGroup.Id
-					$nsgResourceDetails = Get-AzureRmNetworkSecurityGroup -ResourceGroupName $nsgResource.ResourceGroupName -Name $nsgResource.Name                
-					
-					$nsgEnabledVNet.Add($subnetName, $nsgResourceDetails)
+		if($virtualNetworkResources -ne $null)
+		{
+			#Iterate through all cluster linked VNet resources      
+			$virtualNetworkResources |ForEach-Object{            
+				$virtualNetwork=Get-AzureRmVirtualNetwork -ResourceGroupName $_.ResourceGroupName -Name $_.Name 
+				$subnetConfig = Get-AzureRmVirtualNetworkSubnetConfig -VirtualNetwork $virtualNetwork
+				#Iterate through Subnet and validate if NSG is configured or not
+				$subnetConfig | ForEach-Object{
+					$subnetName =$_.Name
+					$isCompliant =  ($null -ne $_.NetworkSecurityGroup)		
+					#If NSG is enabled on Subnet display all security rules applied 
+					if($isCompliant)
+					{
+						$nsgResource = Get-AzureRmResource -ResourceId $_.NetworkSecurityGroup.Id
+						$nsgResourceDetails = Get-AzureRmNetworkSecurityGroup -ResourceGroupName $nsgResource.ResourceGroupName -Name $nsgResource.Name                
+						
+						$nsgEnabledVNet.Add($subnetName, $nsgResourceDetails)
+					}
+					#If NSG is not enabled on Subnet, fail the TCP with Subnet details
+					else
+					{
+						$nsgDisabledVNet.Add($subnetName, $_)
+						$isVerify = $false
+					} 
+				}                
+			}
+
+			if($nsgEnabledVNet.Keys.Count -gt 0)
+			{
+				$nsgEnabledVNet.Keys  | Foreach-Object {
+					$controlResult.AddMessage("Validate NSG security rules applied on subnet '$_'",$nsgEnabledVNet[$_]);
 				}
-				#If NSG is not enabled on Subnet, fail the TCP with Subnet details
-				else
-				{
-					$nsgDisabledVNet.Add($subnetName, $_)
-					$isVerify = $false
-				} 
-			}                
-		}
-
-		if($nsgEnabledVNet.Keys.Count -gt 0)
-		{
-			$nsgEnabledVNet.Keys  | Foreach-Object {
-				$controlResult.AddMessage("Validate NSG security rules applied on subnet '$_'",$nsgEnabledVNet[$_]);
 			}
-		}
 
-		if($nsgDisabledVNet.Keys.Count -gt 0)
-		{
-			$nsgDisabledVNet.Keys  | Foreach-Object {
-				$controlResult.AddMessage("NSG is not configured on subnet '$_'",$nsgDisabledVNet[$_]);
+			if($nsgDisabledVNet.Keys.Count -gt 0)
+			{
+				$nsgDisabledVNet.Keys  | Foreach-Object {
+					$controlResult.AddMessage("NSG is not configured on subnet '$_'",$nsgDisabledVNet[$_]);
+				}
 			}
-		}
 
-		if($isVerify)
-		{
-			$controlResult.VerificationResult = [VerificationResult]::Verify;
-		}
-		else
-		{
-			$controlResult.VerificationResult = [VerificationResult]::Failed;
-		}
+			if($isVerify)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Verify;
+			}
+			else
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Failed;
+			}
 
-		$NSGState = New-Object -TypeName PSObject 
-		$NSGState | Add-Member -NotePropertyName NSGConfiguredSubnet -NotePropertyValue $nsgEnabledVNet
-		$NSGState | Add-Member -NotePropertyName NSGNotConfiguredSubnet -NotePropertyValue $nsgDisabledVNet
+			$NSGState = New-Object -TypeName PSObject 
+			$NSGState | Add-Member -NotePropertyName NSGConfiguredSubnet -NotePropertyValue $nsgEnabledVNet
+			$NSGState | Add-Member -NotePropertyName NSGNotConfiguredSubnet -NotePropertyValue $nsgDisabledVNet
 
-		$controlResult.SetStateData("NSG security rules applied on subnet", $NSGState);
+			$controlResult.SetStateData("NSG security rules applied on subnet", $NSGState);
+		}else{
+			$controlResult.AddMessage("Not able to fetch details of VNet resources linked with cluster.");
+			$controlResult.AddMessage("Manually verify that NSG is enabled on Subnet.");
+			$controlResult.VerificationResult = [VerificationResult]::Manual;
+		}
+        
 
 		return $controlResult        
 	}
@@ -207,7 +232,16 @@ class ServiceFabric : SVTBase
 		$vmssResources | ForEach-Object{
 			$VMScaleSetName = $_.Name	
 			$nodeTypeResource = Get-AzureRmVmss -ResourceGroupName  $_.ResourceGroupName -VMScaleSetName  $VMScaleSetName
-			$diagnosticsSettings = $nodeTypeResource.VirtualMachineProfile.ExtensionProfile.Extensions  | ? { $_.Type -eq "IaaSDiagnostics" -and $_.Publisher -eq "Microsoft.Azure.Diagnostics" }
+
+			# Fetch diagnostics settings based on OS 
+			if($this.ResourceObject.Properties.vmImage -eq "Linux")
+			{
+				$diagnosticsSettings = $nodeTypeResource.VirtualMachineProfile.ExtensionProfile.Extensions  | ? { $_.Type -eq "LinuxDiagnostic" -and $_.Publisher -eq "Microsoft.OSTCExtensions" }				
+			}
+			else
+			{
+       			$diagnosticsSettings = $nodeTypeResource.VirtualMachineProfile.ExtensionProfile.Extensions  | ? { $_.Type -eq "IaaSDiagnostics" -and $_.Publisher -eq "Microsoft.Azure.Diagnostics" }
+			}
 			#Validate if diagnostics is enabled on vmss 
 			if($null -ne $diagnosticsSettings )
 			{
@@ -245,12 +279,96 @@ class ServiceFabric : SVTBase
 		}
 		return $controlResult        
 	}
+	hidden [ControlResult[]] CheckReverseProxyPort([ControlResult] $controlResult)
+	{
+		# add attestation details
+		$isPassed = $true;
+		$reverseProxyEnabledNode = @{};
+		$reverseProxyDisabledNode = @();
+		$reverseProxyExposedNode = @{};
+		$nodeTypes= $this.ResourceObject.Properties.nodeTypes
+		#Iterate through each node           
+		$nodeTypes | ForEach-Object{
+
+			if([Helpers]::CheckMember($_,"reverseProxyEndpointPort"))
+			{
+				$reverseProxyEnabledNode.Add($_.name, $_.reverseProxyEndpointPort)
+			}else{
+				$reverseProxyDisabledNode += $_.name
+			}
+		}
+		# if reverse proxy is not enabled in any node, pass TCP
+		if(($reverseProxyEnabledNode | Measure-Object).Count -gt 0)
+		{
+			$loadBalancerBackendPorts = @()
+			$loadBalancerResources = $this.GetLinkedResources("Microsoft.Network/loadBalancers")
+			#Collect all open ports on load balancer  
+			$loadBalancerResources | ForEach-Object{
+				$loadBalancerResource = Get-AzureRmLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
+				$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
+			
+				$loadBalancingRules | ForEach-Object {
+					$loadBalancingRuleId = $_.Id;
+					$loadBalancingRule = $loadBalancerResource.LoadBalancingRules | ? { $_.Id -eq  $loadBalancingRuleId } | Select-Object -First 1
+					$loadBalancerBackendPorts += $loadBalancingRule.BackendPort;
+				};   
+			}
+			#If no ports open, Pass the TCP
+			if($loadBalancerBackendPorts.Count -eq 0)
+			{
+				$controlResult.AddMessage("No ports enabled in load balancer.")  
+				$controlResultList += $controlResult      
+			}
+			#If Ports are open for public in load balancer, check if any reverse proxy port is exposed
+			else
+			{
+				$reverseProxyEnabledNode.Keys  | Foreach-Object {
+					if($loadBalancerBackendPorts.Contains( [Int32] $reverseProxyEnabledNode[$_]))
+					{
+						$isPassed = $false;
+						$controlResult.AddMessage("Reverse proxy port is publicly exposed for node '$_'");
+						$reverseProxyExposedNode.Add($_, $reverseProxyEnabledNode[$_])
+					}else{
+						$controlResult.AddMessage("Reverse proxy port is not publicly exposed for node '$_'.") 
+					}
+					
+				}
+			}
+		}else{
+			$controlResult.AddMessage("Reverse proxy service is not enabled in cluster.") 
+		}
+		if($isPassed)
+		{
+			
+			$controlResult.VerificationResult = [VerificationResult]::Passed;
+		}
+		else
+		{
+			$controlResult.VerificationResult = [VerificationResult]::Failed;
+			$controlResult.SetStateData("Reverse proxy port is publicly exposed", $reverseProxyExposedNode);
+		}
+		return $controlResult
+	}
+
+	hidden [ControlResult] CheckClusterUpgradeMode([ControlResult] $controlResult)
+	{
+		if([Helpers]::CheckMember($this.ResourceObject.Properties,"upgradeMode") -and $this.ResourceObject.Properties.upgradeMode -eq "Automatic")
+        {			
+			$controlResult.AddMessage([VerificationResult]::Passed,"Upgrade mode for cluster is set to automatic." )
+        }
+        else
+        {			
+			$controlResult.AddMessage([VerificationResult]::Failed,"Upgrade mode for cluster is set to manual.")
+        }
+
+		return $controlResult
+	}
 
 	hidden [ControlResult[]] CheckStatefulServiceReplicaSetSize([ControlResult] $controlResult)
 	{
 		$isPassed = $true;
-		$compliantServices = @{};
-		$nonCompliantServices = @{};
+		$complianteServices = @{};
+		$nonComplianteServices = @{};
 		#Iterate through the applications present in cluster     
 		if($this.ApplicationList)
 		{
@@ -268,30 +386,30 @@ class ServiceFabric : SVTBase
 
 						if($isCompliant)
 						{
-							$compliantServices.Add($serviceName, $serviceDescription)
+							$complianteServices.Add($serviceName, $serviceDescription)
 						} 
 						else
 						{ 
 							$isPassed = $False
-							$nonCompliantServices.Add($serviceName, $serviceDescription)
+							$nonComplianteServices.Add($serviceName, $serviceDescription)
 						}
 					}                
 				}
 			}
 
-			if($compliantServices.Keys.Count -gt 0)
+			if($complianteServices.Keys.Count -gt 0)
 			{
 				$controlResult.AddMessage("Replica set size for below services are complaint");
-				$compliantServices.Keys  | Foreach-Object {
+				$complianteServices.Keys  | Foreach-Object {
 					$controlResult.AddMessage("Replica set size details for service '$_'");
 				}
 			}
 
-			if($nonCompliantServices.Keys.Count -gt 0)
+			if($nonComplianteServices.Keys.Count -gt 0)
 			{
 				$controlResult.AddMessage("Replica set size for below services are non-complaint");
-				$nonCompliantServices.Keys  | Foreach-Object {
-					$controlResult.AddMessage("Replica set size details for service '$_'",$nonCompliantServices[$_]);
+				$nonComplianteServices.Keys  | Foreach-Object {
+					$controlResult.AddMessage("Replica set size details for service '$_'",$nonComplianteServices[$_]);
 				}
 			}
 
@@ -302,7 +420,7 @@ class ServiceFabric : SVTBase
 			else
 			{
 				$controlResult.VerificationResult = [VerificationResult]::Failed;
-				$controlResult.SetStateData("Replica set size are non-complaint for", $nonCompliantServices);
+				$controlResult.SetStateData("Replica set size are non-complaint for", $nonComplianteServices);
 			}
 		}
 		else
