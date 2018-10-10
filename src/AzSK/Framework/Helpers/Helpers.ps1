@@ -876,7 +876,9 @@ class Helpers {
             $storageObject = $null
             #clean-up storage if error occurs
             if ((Get-AzureRmResource -ResourceGroupName $ResourceGroup -Name $StorageName|Measure-Object).Count -gt 0) {
-                Remove-AzureRmStorageAccount -ResourceGroupName $ResourceGroup -Name $StorageName -Force -ErrorAction SilentlyContinue
+            # caused deletion of storage on any exception.
+                # Remove-AzureRmStorageAccount -ResourceGroupName $ResourceGroup -Name $StorageName -Force -ErrorAction SilentlyContinue
+                
             }
         }
         return $storageObject

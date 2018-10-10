@@ -704,7 +704,12 @@ try {
             Measure-Object).Count -gt 0
     if ($isAzSKAvailable) {
         Import-Module $AzSKModuleName
-    }
+	}
+	else {
+		PublishEvent -EventName "CA Job Skipped" -Properties @{"SubscriptionId" = $RunAsConnection.SubscriptionID} -Metrics @{"TimeTakenInMs" = $timer.ElapsedMilliseconds; "SuccessCount" = 1}
+		Write-Output("SA: The module: {$AzSKModuleName} is not available/ready. Skipping AzSK scan. Will retry in the next run.")
+		return;
+	}
 
     #Return if modules are not ready
     if ((Get-Command -Name "Get-AzSKAzureServicesSecurityStatus" -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0) {
