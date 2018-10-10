@@ -16,7 +16,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "AuthN"
+        "AuthN",
+        "ServiceFabric"
       ],
       "Enabled": true
     },
@@ -33,7 +34,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "DP"
+        "DP",
+        "ServiceFabric"
       ],
       "Enabled": true
     },
@@ -50,7 +52,8 @@
          "SDL",
          "TCP",
          "Manual",
-         "DP"
+         "DP",
+         "ServiceFabric"
       ],
       "Enabled": true
     },
@@ -67,7 +70,8 @@
          "SDL",
          "TCP",
          "Manual",
-         "DP"
+         "DP",
+         "ServiceFabric"
       ],
       "Enabled": true
     },
@@ -84,7 +88,8 @@
          "SDL",
          "TCP",
          "Manual",
-         "DP"
+         "DP",
+         "ServiceFabric"
       ],
       "Enabled": true
     },
@@ -101,7 +106,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "Availability"
+        "Availability",
+        "ServiceFabric"
       ],
       "Enabled": true
     },
@@ -118,7 +124,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "Availability"
+        "Availability",
+        "ServiceFabric"
       ],
       "Enabled": true
     },
@@ -135,7 +142,9 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthZ"
+        "AuthZ",
+        "ServiceFabric",
+        "Information"
       ],
       "Enabled": true
     },
@@ -152,7 +161,8 @@
          "SDL",
          "TCP",
          "Manual",
-         "AuthZ"
+         "AuthZ",
+         "ServiceFabric"
       ],
       "Enabled": true
     },
@@ -169,7 +179,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthN"
+        "AuthN",
+        "ServiceFabric"
       ],
       "Enabled": true
     },
@@ -186,7 +197,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthN"
+        "AuthN",
+        "ServiceFabric"
       ],
       "Enabled": true
     },
@@ -203,7 +215,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "DP"
+        "DP",
+        "ServiceFabric"
       ],
       "Enabled": true
     },
@@ -220,7 +233,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthN"
+        "AuthN",
+        "ServiceFabric"
       ],
       "Enabled": true
     },
@@ -238,7 +252,8 @@
         "TCP",
         "Manual",
         "Information",
-        "DP"
+        "DP",
+        "ServiceFabric"
       ],
       "Enabled": true
     },
@@ -255,7 +270,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "Audit"
+        "Audit",
+        "ServiceFabric"
       ],
       "Enabled": true
     },
@@ -272,7 +288,8 @@
          "SDL",
          "TCP",
          "Manual",
-         "Audit"
+         "Audit",
+         "ServiceFabric"
       ],
       "Enabled": true
     }
