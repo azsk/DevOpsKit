@@ -17,7 +17,8 @@
         "TCP",
         "Automated",
         "AuthZ",
-        "RBAC"
+        "RBAC",
+        "StreamAnalytics"
       ],
       "Enabled": true
     },
@@ -35,7 +36,8 @@
          "TCP",
          "Automated",
          "Audit",
-         "Diagnostics"
+         "Diagnostics",
+         "StreamAnalytics"
       ],
       "Enabled": true
     },
@@ -52,8 +54,9 @@
          "SDL",
          "TCP",
          "Manual",
-         "BCDR"
-      ],
+         "BCDR",
+        "StreamAnalytics" 
+        ],
       "Enabled": true
    },
    {
@@ -69,7 +72,8 @@
          "SDL",
          "TCP",
          "Automated",
-         "Audit"
+         "Audit",
+         "StreamAnalytics"
       ],
       "Enabled": true
    },
@@ -86,7 +90,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "BCDR"
+        "BCDR",
+        "StreamAnalytics"
       ],
       "Enabled": true
     }

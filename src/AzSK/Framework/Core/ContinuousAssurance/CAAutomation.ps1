@@ -3105,7 +3105,19 @@ class CCAutomation: CommandBase
 					-Name $moduleName `
 					-ContentLink $actualUrl
 			$this.OutputObject.Modules += ($automationModule|Select-Object Name)
-			Start-Sleep -Seconds 120
+
+			$automationModule = Get-AzureRmAutomationModule -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name -Name $moduleName
+
+			while(
+				$automationModule.ProvisioningState -ne "Created" -and
+				$automationModule.ProvisioningState -ne "Succeeded" -and
+				$automationModule.ProvisioningState -ne "Failed"
+			)
+			{
+				#Module is in extracting state
+				Start-Sleep -Seconds 120
+				$automationModule = $automationModule | Get-AzureRmAutomationModule
+			}                
 		}
 	}
 	hidden [PSObject] SearchModule($moduleName,$moduleVersion)
@@ -3145,7 +3157,7 @@ class CCAutomation: CommandBase
 			return $searchResult
 		}
 	}
-	hidden [PSObject] CheckCAModuleHealth($moduleName)
+	hidden [PSObject] CheckCAModuleHealth($moduleName, $azskVersion)
 	{
 		$moduleVersion=[string]::Empty
 		$azskdependentModules = @()
@@ -3160,12 +3172,20 @@ class CCAutomation: CommandBase
 		 | Where-Object {($_.IsGlobal -ne $true) -and ($_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created")}
 		
 		#Get required module version
-		$azskModuleWithVersion = Get-AzureRmAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
-				-ResourceGroupName $this.AutomationAccount.ResourceGroup `
-				-Name $azskModule
-		if(($azskModuleWithVersion|Measure-Object).Count -ne 0)
+		if([string]::IsNullOrWhiteSpace($azskVersion))
 		{
-			$azskdependentModules += $this.GetDependentModules($azskModule,$azskModuleWithVersion.Version)
+			$azskModuleWithVersion = Get-AzureRmAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
+					-ResourceGroupName $this.AutomationAccount.ResourceGroup `
+					-Name $azskModule
+			if(($azskModuleWithVersion|Measure-Object).Count -ne 0)
+			{
+				$azskVersion = $azskModuleWithVersion.Version;
+			}
+		}
+		
+		if(-not [string]::IsNullOrWhiteSpace($azskVersion))
+		{
+			$azskdependentModules += $this.GetDependentModules($azskModule,$azskVersion)
 		}
 		else
 		{
@@ -3243,15 +3263,20 @@ class CCAutomation: CommandBase
 		$dependentModules = @()
 		$this.OutputObject.Modules = @() 
 		
+		#get the dependent modules as per server config
+		$azskModuleName = $this.GetModuleName();
+		$serverVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($azskModuleName));
+
 		#Check if module is in intended state
-		$automationModuleResult = $this.CheckCAModuleHealth($automationModuleName)
+		#check whether automation module is in healthy and required version state. Since profile is dependent of Automation module, it will also get checked as  part of automation module
+		$automationModuleResult = $this.CheckCAModuleHealth($automationModuleName, $serverVersion)
 		$dependentModules = $this.GetDependentModules($automationModuleName,$automationModuleResult.moduleVersion)
 		
 		#check health of dependent modules and fix if unhealthy
 		$dependentModules|ForEach-Object{
 			$currentModuleName = $_.Name
             $this.PublishCustomMessage("Inspecting CA module: [$currentModuleName]")
-			$dependentModuleResult = $this.CheckCAModuleHealth($currentModuleName)
+			$dependentModuleResult = $this.CheckCAModuleHealth($currentModuleName, $serverVersion)
 			#dependent module is not in expected state
 			if($dependentModuleResult.isModuleValid -ne $true)
 			{
@@ -3264,7 +3289,7 @@ class CCAutomation: CommandBase
 				$this.PublishCustomMessage("Found module: [$currentModuleName]")
 			}
 		}
-		$storageModuleResult = $this.CheckCAModuleHealth($storageModuleName)
+		$storageModuleResult = $this.CheckCAModuleHealth($storageModuleName, $serverVersion)
 		if($storageModuleResult.isModuleValid -ne $true)
 		{
 			$this.UploadModule($storageModuleName,$storageModuleResult.moduleVersion)
@@ -3278,14 +3303,17 @@ class CCAutomation: CommandBase
 		$deleteModuleList = Get-AzureRmAutomationModule -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name  -ErrorAction SilentlyContinue | `
         Where-Object {$_.Name -eq "AzureRm" -or $_.Name -ilike 'azsk*'} 
         
-        if(($deleteModuleList|Measure-Object).Count)
+        if(($deleteModuleList|Measure-Object).Count -gt 0)
         {
             $deleteModuleList | ForEach-Object{
                 $this.PublishCustomMessage("Deleting module: [$($_.Name)] from the account...")   
                 Remove-AzureRmAutomationModule -Name $deleteModuleList.Name -AutomationAccountName $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup -Force -ErrorAction SilentlyContinue
 			}
 			$this.PublishCustomMessage("Required modules will be imported automatically when the next CA scan commences.")
-        }
+		}
+		
+		#start the runbook once the modules are fixed and runbook will try to complete the scan
+		Start-AzureRmAutomationRunbook -Name $this.RunbookName -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name -ErrorAction SilentlyContinue | Out-Null		 
 	}
 	
 	hidden [void] ResolveStorageCompliance($storageName,$ResourceId,$resourceGroup,$containerName)
