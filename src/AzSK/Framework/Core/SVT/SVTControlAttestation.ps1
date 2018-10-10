@@ -51,9 +51,9 @@ class SVTControlAttestation
 		if(-not $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess)
 		{
 			Write-Host "Skipping attestation process for this control. You do not have required permissions to evaluate this control." -ForegroundColor Yellow
-			if(($controlState.InternalId -eq "KeyVault170") -or ($controlState.InternalId -eq "KeyVault160") -or ($controlState.InternalId -eq "KeyVault190"))
+			if($controlItem.ControlItem.Tags.Contains("KeySecretPermissions"))
 			{
-				Write-Host "Please note that you must have access permissions to the keys & secrets in the key vault for successful attestation of this control." -ForegroundColor Yellow
+				Write-Host "(Please note that you must have access permissions to the keys & secrets in the key vault for successful attestation of this control)" -ForegroundColor Yellow
 			}
 			Write-Host ([Constants]::CoAdminElevatePermissionMsg) -ForegroundColor Yellow
 			return $controlState;

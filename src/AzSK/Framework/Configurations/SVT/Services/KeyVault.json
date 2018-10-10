@@ -110,7 +110,8 @@
                                       "TCP",
                                       "Automated",
                                       "DP",
-                                      "KeyVault"
+                                      "KeyVault",
+                                      "KeySecretPermissions"
                                   ],
                          "Enabled":  true
                      },
@@ -131,7 +132,8 @@
             "KeyRotation",
             "OwnerAccess",
             "KeyVaultAccess",
-            "KeyVault"
+            "KeyVault",
+            "KeySecretPermissions"
          ],
          "Enabled": true
       },
@@ -168,7 +170,8 @@
                                       "TCP",
                                       "Automated",
                                       "AuthN",
-                                      "KeyVault"
+                                      "KeyVault",
+                                      "KeySecretPermissions"
                                   ],
                          "Enabled":  true
                      },
