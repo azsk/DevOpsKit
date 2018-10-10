@@ -16,8 +16,9 @@ class Automation: SVTBase
 		$webhooks = Get-AzureRmAutomationWebhook -AutomationAccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
 		if(($webhooks|Measure-Object).Count -gt 0)
 		{
-			$controlResult.AddMessage([VerificationResult]::Verify, "Please verify below webhook(s) created for the runbooks. Remove webhook(s) which are not in use.", $webhooks)
-			$controlResult.SetStateData("Webhooks", $webhooks);                      
+			$webhookdata = $webhooks | Select-Object ResourceGroupName, AutomationAccountName, Name, Description, IsEnabled, Parameters, RunbookName, WebhookURI, HybridWorker
+			$controlResult.AddMessage([VerificationResult]::Verify, "Please verify below webhook(s) created for the runbooks. Remove webhook(s) which are not in use.", $webhookdata)
+			$controlResult.SetStateData("Webhooks", $webhookdata);                      
 		}
 		else
 		{
@@ -31,10 +32,13 @@ class Automation: SVTBase
 		$longExpiryWebhooks = @()
 		if(($webhooks|Measure-Object).Count -gt 0)
 		{
-			$webhooks | Where-Object{$_.IsEnabled -eq $true} | ForEach-Object{
-				if(($_.ExpiryTime - $_.CreationTime).Days -gt $this.ControlSettings.Automation.WebhookValidityInDays)
+			$webhooks | ForEach-Object{
+				if(($_.IsEnabled -eq $true) -and (($_.ExpiryTime - $_.CreationTime).Days -gt $this.ControlSettings.Automation.WebhookValidityInDays))
 				{
-					$longExpiryWebhooks += $_
+					$expiryTime = ($_.ExpiryTime - $_.CreationTime).days;
+					$webhookdata = $_ | Select-Object ResourceGroupName, AutomationAccountName, Name, Description, IsEnabled, Parameters, RunbookName, WebhookURI, HybridWorker
+					$webhookdata | Add-Member ExpiryTime -NotePropertyValue $expiryTime
+					$longExpiryWebhooks += $webhookdata
 				}
 			}
 			if($longExpiryWebhooks)
