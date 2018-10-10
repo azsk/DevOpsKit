@@ -5,7 +5,6 @@ class EventHub: SVTBase
 	hidden [PSObject[]] $NamespacePolicies = @();
 	hidden [PSObject[]] $EventHubs = @();
 	hidden [HashTable] $EHChildAccessPolicies = @{};
-	hidden [PSObject] $EHAccessPolicies;
 
     EventHub([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
         Base($subscriptionId, $resourceGroupName, $resourceName) 
@@ -23,7 +22,6 @@ class EventHub: SVTBase
 
 	hidden [void] GetEventHubDetails()
     {
-		
         if (-not $this.NamespacePolicies) {
 			try
 			{
@@ -46,17 +44,11 @@ class EventHub: SVTBase
 			{
 				# This block is intentionally left blank to handle exception while fetching eventhub of namespace
 			}
-            
         }
-		
-		$this.EHAccessPolicies = New-Object -TypeName PSObject 
-		$this.EHAccessPolicies | Add-Member -NotePropertyName NameSpacePolicies -NotePropertyValue $this.NamespacePolicies 
-		$this.EHAccessPolicies | Add-Member -NotePropertyName EHChildAccessPolicies -NotePropertyValue $this.EHChildAccessPolicies
     }
 
 	hidden [void] GetEHAccessPolicies()
 	{
-
 		#region "Event Hub"
 		
 		if(($this.EventHubs|Measure-Object).count -gt 0)
@@ -78,9 +70,6 @@ class EventHub: SVTBase
 		}
         
 		#endregion
-
-		$this.EHAccessPolicies.EHChildAccessPolicies = $this.EHChildAccessPolicies
-		
 	}
 
 	hidden [ControlResult[]] CheckEventHubRootPolicy([ControlResult] $controlResult)
@@ -89,58 +78,29 @@ class EventHub: SVTBase
 		
 		#region "NameSpace"
 
-		$controlResult.SetStateData("Authorization rules for Eventhub namespace and child entities", $this.EHAccessPolicies);
-		$controlResult.AddMessage([MessageData]::new("Following are the authorization rules for namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules must not be used at Event Hub level to send and receive messages.", 
-				$this.NamespacePolicies))
+		if(($this.NamespacePolicies | Measure-Object).count -gt 1)
+		{
+			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Authorization rules for Event Hub namespace - ["+ $this.ResourceContext.ResourceName +"]. All the authorization rules except 'RootManageSharedAccessKey' must be removed from namespace level. Also validate that 'RootManageSharedAccessKey' authorization rule must not be used at Event Hub level to send and receive messages.", 
+				$this.NamespacePolicies));   	
+		}
+		else
+		{
+			$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Authorization rules for namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules must not be used at Event Hub level to send and receive messages.", 
+				$this.NamespacePolicies));   	
+		}
+
+		$controlResult.SetStateData("Authorization rules for namespace entities", $this.NamespacePolicies);
 
 		#endregion        
 
-		#region "Event Hub"
-		
-		if(($this.EventHubs|Measure-Object).count -gt 0)
-		{
-			foreach ($eventHub in $this.EventHubs)
-			{
-				
-				if($this.EHChildAccessPolicies.ContainsKey($eventHub) -and ($this.EHChildAccessPolicies[$eventHub] |Measure-Object).count -gt 0)
-				{
-					$controlResult.AddMessage([MessageData]::new("Validate that Event Hub - ["+ $eventHub.Name +"] must not use access policies defined at Event Hub namespace level."));
-				}
-				else
-				{
-					$isControlFailed = $true
-					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for Event Hub - ["+ $eventHub.Name +"]. Applications (senders/receivers) must not use access policies defined at Event Hub namespace level. Either Event Hub is not in use or namespace level access policy is used by the Event Hub."));
-				}
-			}
-		}
-		else
-		{
-			$controlResult.AddMessage([MessageData]::new("Event Hub not available in namespace - ["+ $this.ResourceContext.ResourceName +"]"));
-		}
-        
-		#endregion
-        
-		if($isControlFailed)
-		{
-			$controlResult.VerificationResult = [VerificationResult]::Failed;
-		}
-		else
-		{
-			$controlResult.VerificationResult = [VerificationResult]::Verify;
-		}
-		
 		return $controlResult;
 	}
 
 	hidden [ControlResult[]] CheckEventHubAuthorizationRule([ControlResult] $controlResult)
 	{
-		#region "NameSpace"
-		
-		$controlResult.SetStateData("Authorization rules for Eventhub namespace and child entities", $this.EHAccessPolicies);
-		$controlResult.AddMessage([MessageData]::new("Authorization rules for Eventhub namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules are defined at correct entity level and with limited permissions.", 
-				$this.NamespacePolicies));   
-
-		#endregion        
+		$isControlFailed = $false
+		$fullPermissionEventHubs = @();
+		$noPolicyEventHubs = @();
 
 		#region "Event Hub"
 		
@@ -148,16 +108,50 @@ class EventHub: SVTBase
 		{
 			foreach ($eventHub in $this.EventHubs)
 			{
-
 				if($this.EHChildAccessPolicies.ContainsKey($eventHub) -and ($this.EHChildAccessPolicies[$eventHub] |Measure-Object).count -gt 0)
 				{
-					$controlResult.AddMessage([MessageData]::new("Authorization rules for Event Hub - ["+ $eventHub.Name +"]. Validate that these rules are defined at correct entity level and with limited permissions.", $this.EHChildAccessPolicies[$eventHub]));
+					foreach ($policy in $this.EHChildAccessPolicies[$eventHub])
+					{
+						if(($policy.Rights | Measure-Object).count -gt 1)
+						{
+							$fullPermissionEventHubs += $policy
+							$isControlFailed = $true
+						}
+					}
 				}
+				else
+				{
+					$noPolicyEventHubs += $eventHub.Name
+					$isControlFailed = $true
+				}
+			}
+
+			if($isControlFailed)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Failed;
+
+				$faliedClients = New-Object -TypeName PSObject 
+				if(($fullPermissionEventHubs | Measure-Object).count -gt 0)
+				{
+					$faliedClients | Add-Member -NotePropertyName FailedQueues -NotePropertyValue $fullPermissionEventHubs
+					$controlResult.AddMessage([MessageData]::new("Validate the authorization rules for the Event Hub are defined with limited permissions.", $fullPermissionEventHubs));
+				}
+				if(($noPolicyEventHubs | Measure-Object).count -gt 0)
+				{
+					$faliedClients | Add-Member -NotePropertyName FailedQueues -NotePropertyValue $noPolicyEventHubs
+					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for following Event Hub. Either Event Hub is not in use or namespace level access policy is used. Applications (senders/receivers) must not use access policies defined at Service Bus namespace level.", $noPolicyEventHubs));
+				}
+
+				$controlResult.SetStateData("Access policy with minimum required permission must be defined for the Event Hub", $faliedClients);
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Authorization rules for the Event Hub are defined at correct entity level and with limited permissions."));
 			}
 		}
 		else
 		{
-			$controlResult.AddMessage([MessageData]::new("Event Hub not available in namespace - ["+ $this.ResourceContext.ResourceName +"]"));
+			$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Event Hub not available in namespace - ["+ $this.ResourceContext.ResourceName +"]"));
 		}
         
 		#endregion
