@@ -6,7 +6,9 @@ class ServiceFabric : SVTBase
 	hidden [PSObject] $ApplicationList;
 	hidden [string] $DefaultTagName = "clusterName"
     hidden [string] $CertStoreLocation = "CurrentUser"
-    hidden [string] $CertStoreName = "My"
+	hidden [string] $CertStoreName = "My"
+	hidden [boolean] $IsSDKAvailable = $false
+
     ServiceFabric([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 
@@ -22,10 +24,19 @@ class ServiceFabric : SVTBase
 
 			$this.ResourceObject.Tags.GetEnumerator() | Where-Object { $_.Key -eq $this.DefaultTagName } | ForEach-Object {$this.ClusterTagValue = $_.Value }
 			
-			## Commented below two lines of code. This will be covered once Service Fabric module gets available as part of AzureRM modules set.
-			#$this.CheckClusterAccess();
-			#$this.ApplicationList = Get-ServiceFabricApplication 
-            
+			# Check if Service Fabric SDK is installed
+			try {
+				if(Get-Command Connect-ServiceFabricCluster -ErrorAction SilentlyContinue){	
+					$this.IsSDKAvailable = $true		
+				}
+			}
+			catch {
+				# No need to break execution
+				# All controls which requires SDK to be present in user machine will be treated as manual controls
+				$this.IsSDKAvailable = $false
+			}
+			
+			
 			if(-not $this.ResourceObject)
             {
                 throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))
@@ -366,50 +377,413 @@ class ServiceFabric : SVTBase
 
 	hidden [ControlResult[]] CheckStatefulServiceReplicaSetSize([ControlResult] $controlResult)
 	{
-		$isPassed = $true;
-		$complianteServices = @{};
-		$nonComplianteServices = @{};
-		#Iterate through the applications present in cluster     
-		if($this.ApplicationList)
+		if($this.IsSDKAvailable -eq $true)
 		{
-			$this.ApplicationList | ForEach-Object{
-				$serviceFabricApplication = $_
-
-				Get-ServiceFabricService -ApplicationName $serviceFabricApplication.ApplicationName  | ForEach-Object{                
-					$serviceName = $_.ServiceName 
-					$serviceDescription = Get-ServiceFabricServiceDescription -ServiceName $_.ServiceName 
-					#Filter application with Stateful service type
-					if($serviceDescription.ServiceKind -eq "Stateful")
+            #Function to validate authentication and connect with Service Fabric cluster     
+			$sfCluster = $null       
+			$uri = ([System.Uri]$this.ResourceObject.Properties.managementEndpoint).Host                
+			$primaryNodeType = $this.ResourceObject.Properties.nodeTypes | Where-Object { $_.isPrimary -eq $true }
+					
+			$ClusterConnectionUri = $uri +":"+ $primaryNodeType.clientConnectionEndpointPort
+			$isClusterSecure =  [Helpers]::CheckMember($this.ResourceObject.Properties,"certificate" )               
+					
+			if($isClusterSecure)
+			{
+					$serviceFabricCertificate = $this.ResourceObject.Properties.certificate              
+					$CertThumbprint= $this.ResourceObject.Properties.certificate.thumbprint
+					$serviceFabricAAD = $null
+					if([Helpers]::CheckMember($this.ResourceObject.Properties,"azureActiveDirectory" ))
 					{
-						#Validate minimum replica and target replica size for each service 					
-						$isCompliant = !($serviceDescription.MinReplicaSetSize -lt 3 -or $serviceDescription.TargetReplicaSetSize -lt 3)
-
-						if($isCompliant)
+						$serviceFabricAAD =$this.ResourceObject.Properties.azureActiveDirectory
+					}  
+					if($null -ne $serviceFabricAAD)
+					{
+						try
 						{
-							$complianteServices.Add($serviceName, $serviceDescription)
-						} 
-						else
-						{ 
-							$isPassed = $False
-							$nonComplianteServices.Add($serviceName, $serviceDescription)
+							$this.PublishCustomMessage("Connecting Service Fabric using AAD...")
+							$sfCluster = Connect-ServiceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -AzureActiveDirectory -ServerCertThumbprint $CertThumbprint #-SecurityToken "
+							$this.PublishCustomMessage("Connection using AAD is successful.")
 						}
-					}                
+						catch
+						{
+							throw ([SuppressedException]::new(("You may not have permission to connect with cluster"), [SuppressedExceptionType]::InvalidOperation))
+						}
+					}              
+					else
+					{
+						$this.PublishCustomMessage("Validating if cluster certificate present on machine...")
+						$IsCertPresent = (Get-ChildItem -Path "Cert:\$($this.CertStoreLocation)\$($this.CertStoreName)" | Where-Object {$_.Thumbprint -eq $CertThumbprint }| Measure-Object).Count                   
+						if($IsCertPresent)
+						{
+							$this.PublishCustomMessage("Connecting Service Fabric using certificate")
+							$sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -KeepAliveIntervalInSec 300 -X509Credential -ServerCertThumbprint $CertThumbprint -FindType FindByThumbprint -FindValue $CertThumbprint -StoreLocation $this.CertStoreLocation -StoreName $this.CertStoreName 
+							
+						}
+						else
+						{
+							throw ([SuppressedException]::new(("Cannot connect with Service Fabric due to unavailability of cluster certificate in local machine. Validate cluster certificate is present in 'CurrentUser' location."), [SuppressedExceptionType]::InvalidOperation))
+						}
+					}                    
+			}
+			else
+			{
+				$sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri
+				$this.PublishCustomMessage("Service Fabric connection is successful");
+			}
+			$this.ApplicationList = Get-ServiceFabricApplication -ErrorAction SilentlyContinue
+			$isPassed = $true;
+			$complianteServices = @{};
+			$nonComplianteServices = @{};
+			#Iterate through the applications present in cluster     
+			if($this.ApplicationList)
+			{
+				$this.ApplicationList | ForEach-Object{
+					$serviceFabricApplication = $_
+
+					Get-ServiceFabricService -ApplicationName $serviceFabricApplication.ApplicationName | ForEach-Object{                
+						$serviceName = $_.ServiceName 
+						$serviceDescription = Get-ServiceFabricServiceDescription -ServiceName $_.ServiceName 
+						#Filter application with Stateful service type
+						if($serviceDescription.ServiceKind -eq "Stateful")
+						{
+							#Validate minimum replica and target replica size for each service 					
+							$isCompliant = !($serviceDescription.MinReplicaSetSize -lt 3 -or $serviceDescription.TargetReplicaSetSize -lt 3)
+
+							if($isCompliant)
+							{
+								$complianteServices.Add($serviceName, $serviceDescription)
+							} 
+							else
+							{ 
+								$isPassed = $False
+								$nonComplianteServices.Add($serviceName, $serviceDescription)
+							}
+						}                
+					}
+				}
+
+				if($complianteServices.Keys.Count -gt 0)
+				{
+					$controlResult.AddMessage("Replica set size for below services are complaint");
+					$complianteServices.Keys  | Foreach-Object {
+						$controlResult.AddMessage("Replica set size details for service '$_'");
+					}
+				}
+
+				if($nonComplianteServices.Keys.Count -gt 0)
+				{
+					$controlResult.AddMessage("Replica set size for below services are non-complaint");
+					$nonComplianteServices.Keys  | Foreach-Object {
+						$controlResult.AddMessage("Replica set size details for service '$_'",$nonComplianteServices[$_]);
+					}
+				}
+
+				if($isPassed)
+				{
+					$controlResult.VerificationResult = [VerificationResult]::Passed;
+				}
+				else
+				{
+					$controlResult.VerificationResult = [VerificationResult]::Failed;
+					$controlResult.SetStateData("Replica set size are non-complaint for", $nonComplianteServices);
+				}
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed,"No stateful service found.")
+			}
+		}else{
+			$controlResult.VerificationResult = [VerificationResult]::Manual;
+		}
+		
+		return $controlResult;
+	}
+
+	hidden [ControlResult[]] CheckStatelessServiceInstanceCount([ControlResult] $controlResult)
+	{
+		if($this.IsSDKAvailable -eq $true)
+		{
+           
+            #Function to validate authentication and connect with Service Fabric cluster     
+			$sfCluster = $null       
+			$uri = ([System.Uri]$this.ResourceObject.Properties.managementEndpoint).Host                
+			$primaryNodeType = $this.ResourceObject.Properties.nodeTypes | Where-Object { $_.isPrimary -eq $true }
+					
+			$ClusterConnectionUri = $uri +":"+ $primaryNodeType.clientConnectionEndpointPort
+			$isClusterSecure =  [Helpers]::CheckMember($this.ResourceObject.Properties,"certificate" )               
+					
+			if($isClusterSecure)
+			{
+					$serviceFabricCertificate = $this.ResourceObject.Properties.certificate              
+					$CertThumbprint= $this.ResourceObject.Properties.certificate.thumbprint
+					$serviceFabricAAD = $null
+					if([Helpers]::CheckMember($this.ResourceObject.Properties,"azureActiveDirectory" ))
+					{
+						$serviceFabricAAD =$this.ResourceObject.Properties.azureActiveDirectory
+					}  
+					if($null -ne $serviceFabricAAD)
+					{
+						try
+						{
+							$this.PublishCustomMessage("Connecting Service Fabric using AAD...")
+							$sfCluster = Connect-ServiceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -AzureActiveDirectory -ServerCertThumbprint $CertThumbprint #-SecurityToken "
+							$this.PublishCustomMessage("Connection using AAD is successful.")
+						}
+						catch
+						{
+							throw ([SuppressedException]::new(("You may not have permission to connect with cluster"), [SuppressedExceptionType]::InvalidOperation))
+						}
+					}              
+					else
+					{
+						$this.PublishCustomMessage("Validating if cluster certificate present on machine...")
+						$IsCertPresent = (Get-ChildItem -Path "Cert:\$($this.CertStoreLocation)\$($this.CertStoreName)" | Where-Object {$_.Thumbprint -eq $CertThumbprint }| Measure-Object).Count                   
+						if($IsCertPresent)
+						{
+							$this.PublishCustomMessage("Connecting Service Fabric using certificate")
+							$sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -KeepAliveIntervalInSec 300 -X509Credential -ServerCertThumbprint $CertThumbprint -FindType FindByThumbprint -FindValue $CertThumbprint -StoreLocation $this.CertStoreLocation -StoreName $this.CertStoreName 
+							
+						}
+						else
+						{
+							throw ([SuppressedException]::new(("Cannot connect with Service Fabric due to unavailability of cluster certificate in local machine. Validate cluster certificate is present in 'CurrentUser' location."), [SuppressedExceptionType]::InvalidOperation))
+						}
+					}                    
+			}
+			else
+			{
+				$sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri
+				$this.PublishCustomMessage("Service Fabric connection is successful");
+			}
+
+			$this.ApplicationList = Get-ServiceFabricApplication -ErrorAction SilentlyContinue
+
+			$isPassed = $true;
+			$complianteServices = @{};
+			$nonComplianteServices = @{};
+			#Iterate through the applications present in cluster         
+			if($this.ApplicationList)
+			{
+				$this.ApplicationList | ForEach-Object{
+					$serviceFabricApplication = $_
+					Get-ServiceFabricService -ApplicationName $serviceFabricApplication.ApplicationName | 
+					ForEach-Object{
+						$serviceName = $_.ServiceName                 
+						$serviceDescription = Get-ServiceFabricServiceDescription -ServiceName $serviceName 
+						#Filter application with Stateless service type
+						if($serviceDescription.ServiceKind -eq "Stateless")
+						{	 
+							#Validate instancecount it -1 (auto) or greater than equal to 3              
+							$isCompliant = ($serviceDescription.InstanceCount -eq -1 -or $serviceDescription.InstanceCount -ge 3)
+							if($isCompliant)
+							{
+								$complianteServices.Add($serviceName, $serviceDescription)
+							} 
+							else
+							{ 
+								$isPassed = $False
+								$nonComplianteServices.Add($serviceName, $serviceDescription)
+							}
+							
+						} 
+					} 
+				}
+				if($complianteServices.Keys.Count -gt 0)
+				{
+					$controlResult.AddMessage("Instance count for below services are complaint");
+					$complianteServices.Keys  | Foreach-Object {
+						$controlResult.AddMessage("Instance count details for service '$_'");
+					}
+				}
+	
+				if($nonComplianteServices.Keys.Count -gt 0)
+				{
+					$controlResult.AddMessage("Instance count for below services are non-complaint");
+					$nonComplianteServices.Keys  | Foreach-Object {
+						$controlResult.AddMessage("Instance count details for service '$_'",$nonComplianteServices[$_]);
+					}
+				}
+	
+				if($isPassed)
+				{
+					$controlResult.VerificationResult = [VerificationResult]::Passed;
+				}
+				else
+				{
+					$controlResult.VerificationResult = [VerificationResult]::Failed;
+					$controlResult.SetStateData("Instance count are non-complaint for", $nonComplianteServices);
+				}
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed,"No stateless service found.")
+			} 
+		}else{
+			$controlResult.VerificationResult = [VerificationResult]::Manual;
+		}
+		
+		
+		return $controlResult;        
+	}
+
+	hidden [ControlResult[]] CheckPublicEndpointSSL([ControlResult] $controlResult)
+	{	
+		if($this.IsSDKAvailable -eq $true)
+		{          
+            #Function to validate authentication and connect with Service Fabric cluster     
+			$sfCluster = $null       
+			$uri = ([System.Uri]$this.ResourceObject.Properties.managementEndpoint).Host                
+			$primaryNodeType = $this.ResourceObject.Properties.nodeTypes | Where-Object { $_.isPrimary -eq $true }
+					
+			$ClusterConnectionUri = $uri +":"+ $primaryNodeType.clientConnectionEndpointPort
+			$isClusterSecure =  [Helpers]::CheckMember($this.ResourceObject.Properties,"certificate" )               
+					
+			if($isClusterSecure)
+			{
+					$serviceFabricCertificate = $this.ResourceObject.Properties.certificate              
+					$CertThumbprint= $this.ResourceObject.Properties.certificate.thumbprint
+					$serviceFabricAAD = $null
+					if([Helpers]::CheckMember($this.ResourceObject.Properties,"azureActiveDirectory" ))
+					{
+						$serviceFabricAAD =$this.ResourceObject.Properties.azureActiveDirectory
+					}  
+					if($null -ne $serviceFabricAAD)
+					{
+						try
+						{
+							$this.PublishCustomMessage("Connecting Service Fabric using AAD...")
+							$sfCluster = Connect-ServiceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -AzureActiveDirectory -ServerCertThumbprint $CertThumbprint #-SecurityToken "
+							$this.PublishCustomMessage("Connection using AAD is successful.")
+						}
+						catch
+						{
+							throw ([SuppressedException]::new(("You may not have permission to connect with cluster"), [SuppressedExceptionType]::InvalidOperation))
+						}
+					}              
+					else
+					{
+						$this.PublishCustomMessage("Validating if cluster certificate present on machine...")
+						$IsCertPresent = (Get-ChildItem -Path "Cert:\$($this.CertStoreLocation)\$($this.CertStoreName)" | Where-Object {$_.Thumbprint -eq $CertThumbprint }| Measure-Object).Count                   
+						if($IsCertPresent)
+						{
+							$this.PublishCustomMessage("Connecting Service Fabric using certificate")
+							$sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -KeepAliveIntervalInSec 300 -X509Credential -ServerCertThumbprint $CertThumbprint -FindType FindByThumbprint -FindValue $CertThumbprint -StoreLocation $this.CertStoreLocation -StoreName $this.CertStoreName 
+							
+						}
+						else
+						{
+							throw ([SuppressedException]::new(("Cannot connect with Service Fabric due to unavailability of cluster certificate in local machine. Validate cluster certificate is present in 'CurrentUser' location."), [SuppressedExceptionType]::InvalidOperation))
+						}
+					}                    
+			}
+			else
+			{
+				$sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri
+				$this.PublishCustomMessage("Service Fabric connection is successful");
+			}
+
+			$this.ApplicationList = Get-ServiceFabricApplication -ErrorAction SilentlyContinue
+
+			$isPassed = $true;
+			$compliantPort = @{};
+			$nonCompliantPort = @{};
+
+			$loadBalancerBackendPorts = @()
+			$loadBalancerResources = $this.GetLinkedResources("Microsoft.Network/loadBalancers")
+			#Collect all open ports on load balancer  
+			$loadBalancerResources | ForEach-Object{
+				$loadBalancerResource = Get-AzureRmLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
+				$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
+			
+				$loadBalancingRules | ForEach-Object {
+					$loadBalancingRuleId = $_.Id;
+					$loadBalancingRule = $loadBalancerResource.LoadBalancingRules | ? { $_.Id -eq  $loadBalancingRuleId } | Select-Object -First 1
+					$loadBalancerBackendPorts += $loadBalancingRule.BackendPort;
+				};   
+			}
+			
+			#If no ports open, Pass the TCP
+			if($loadBalancerBackendPorts.Count -eq 0)
+			{
+				$controlResult.AddMessage("No ports enabled.")  
+				#$controlResultList += $controlResult      
+			}
+			#If Ports are open for public in load balancer, map load balancer ports with application endpoint ports and validate if SSL is enabled.
+			else
+			{
+				$controlResult.AddMessage("List of publicly exposed port",$loadBalancerBackendPorts)   
+			
+				if($this.ApplicationList)
+				{
+					$this.ApplicationList | 
+					ForEach-Object{
+						$serviceFabricApplication = $_
+						Get-ServiceFabricServiceType -ApplicationTypeName $serviceFabricApplication.ApplicationTypeName -ApplicationTypeVersion $serviceFabricApplication.ApplicationTypeVersion | 
+						ForEach-Object{
+							$currentService = $_
+							$serviceManifest = [xml](Get-ServiceFabricServiceManifest -ApplicationTypeName $serviceFabricApplication.ApplicationTypeName -ApplicationTypeVersion $serviceFabricApplication.ApplicationTypeVersion -ServiceManifestName $_.ServiceManifestName)
+							if([Helpers]::CheckMember($serviceManifest.ServiceManifest.Resources,"Endpoints"))
+							{
+								$serviceManifest.ServiceManifest.Resources.Endpoints.ChildNodes | 
+								ForEach-Object{
+									$endpoint = $_
+									$serviceTypeName = $currentService.ServiceTypeName
+							
+									if(-not [Helpers]::CheckMember($endpoint,"Port"))
+									{
+										#Add message
+										#$childControlResult.AddMessage([VerificationResult]::Passed) 
+									}
+									else
+									{
+										if($loadBalancerBackendPorts.Contains($endpoint.Port) )
+										{                      
+											if($endpoint.Protocol -eq "https"){  
+												$compliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port) 
+												#$controlResult.AddMessage([VerificationResult]::Passed,"Endpoint is protected with SSL")
+											 }
+											elseif($endpoint.Protocol -eq "http"){  
+												$isPassed = $false;
+												#$controlResult.AddMessage([VerificationResult]::Failed,"Endpoint is not protected with SSL")
+												$nonCompliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port) 
+											}
+											else {  
+												$isPassed = $false;
+												$nonCompliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port) 
+												#$childControlResult.AddMessage([VerificationResult]::Verify,"Verify if endpoint is protected with SSL",$endpoint)
+											 }                            
+										}
+										else
+										{   
+											$compliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port)                     
+											#$childControlResult.AddMessage([VerificationResult]::Passed,"Endpoint is not publicly opened")
+										}
+									} 							
+								} 
+							}
+							              
+						}
+					}             
+				}
+				else
+				{
+					$controlResult.AddMessage("No service found.")
+				}    
+			} 	
+
+            if($compliantPort.Keys.Count -gt 0)
+			{
+				$controlResult.AddMessage("Following endpoint(s) are compliant");
+				$compliantPort.Keys  | Foreach-Object {
+					$controlResult.AddMessage("Endpoint: '$_' Port: $($compliantPort[$_])");
 				}
 			}
 
-			if($complianteServices.Keys.Count -gt 0)
+			if($nonCompliantPort.Keys.Count -gt 0)
 			{
-				$controlResult.AddMessage("Replica set size for below services are complaint");
-				$complianteServices.Keys  | Foreach-Object {
-					$controlResult.AddMessage("Replica set size details for service '$_'");
-				}
-			}
-
-			if($nonComplianteServices.Keys.Count -gt 0)
-			{
-				$controlResult.AddMessage("Replica set size for below services are non-complaint");
-				$nonComplianteServices.Keys  | Foreach-Object {
-					$controlResult.AddMessage("Replica set size details for service '$_'",$nonComplianteServices[$_]);
+				$controlResult.AddMessage("Following publicly exposed endpoint(s) are not secured using SSL");
+				$nonCompliantPort.Keys  | Foreach-Object {
+					$controlResult.AddMessage("EndPoint: '$_' Port: $($nonCompliantPort[$_])");
 				}
 			}
 
@@ -420,16 +794,15 @@ class ServiceFabric : SVTBase
 			else
 			{
 				$controlResult.VerificationResult = [VerificationResult]::Failed;
-				$controlResult.SetStateData("Replica set size are non-complaint for", $nonComplianteServices);
+				$controlResult.SetStateData("Following ports are non-complaint", $nonCompliantPort);
 			}
+		}else{
+			$controlResult.VerificationResult = [VerificationResult]::Manual;
 		}
-		else
-		{
-			$controlResult.AddMessage([VerificationResult]::Passed,"No stateful service found.")
-		}
-		return $controlResult;
+	
+			
+		return $controlResult       
 	}
-
 	[void] CheckClusterAccess()
 	{	
 		#Function to validate authentication and connect with Service Fabric cluster     
@@ -448,7 +821,11 @@ class ServiceFabric : SVTBase
 			$serviceFabricCertificate = $this.ResourceObject.Properties.certificate              
             $this.PublishCustomMessage("Service Fabric is secure")
             $CertThumbprint= $this.ResourceObject.Properties.certificate.thumbprint
-            $serviceFabricAAD =$this.ResourceObject.Properties.azureActiveDirectory
+			$serviceFabricAAD = $null
+			if([Helpers]::CheckMember($this.ResourceObject.Properties,"azureActiveDirectory" ))
+			{
+			 $serviceFabricAAD =$this.ResourceObject.Properties.azureActiveDirectory
+			}  
             if($null -ne $serviceFabricAAD)
             {
                 try
@@ -465,11 +842,11 @@ class ServiceFabric : SVTBase
             else
             {
                 $this.PublishCustomMessage("Validating if cluster certificate present on machine...")
-                $IsCertPresent = (Get-ChildItem -Path Cert:\$this.CertStoreLocation\$this.CertStoreName | Where-Object {$_.Thumbprint -eq $CertThumbprint }).Count                    
+                $IsCertPresent = (Get-ChildItem -Path "Cert:\$($this.CertStoreLocation)\$($this.CertStoreName)" | Where-Object {$_.Thumbprint -eq $CertThumbprint }| Measure-Object).Count                   
                 if($IsCertPresent)
                 {
-                    $this.PublishCustomMessage("Connecting Service Fabric using certificate")
-                    $sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -KeepAliveIntervalInSec 10 -X509Credential -ServerCertThumbprint $CertThumbprint -FindType FindByThumbprint -FindValue $CertThumbprint -StoreLocation $this.CertStoreLocation -StoreName $this.CertStoreName 
+					$this.PublishCustomMessage("Connecting Service Fabric using certificate")
+					$sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -KeepAliveIntervalInSec 300 -X509Credential -ServerCertThumbprint $CertThumbprint -FindType FindByThumbprint -FindValue $CertThumbprint -StoreLocation $this.CertStoreLocation -StoreName $this.CertStoreName 
                 }
                 else
                 {
@@ -489,4 +866,5 @@ class ServiceFabric : SVTBase
 	{
 	    return  Get-AzureRmResource -TagName $this.DefaultTagName -TagValue $this.ClusterTagValue | Where-Object { ($_.ResourceType -EQ $resourceType) -and ($_.ResourceGroupName -eq $this.ResourceContext.ResourceGroupName) }
 	}	
+
 }
