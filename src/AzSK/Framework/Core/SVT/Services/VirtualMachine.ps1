@@ -24,11 +24,10 @@ class VirtualMachine: SVTBase
     { 
         $this.GetResourceObject();
 		$this.GetVMDetails();
-		$metadata = @{
-			VMDetails = $this.VMDetails;
-			ASCDetails = $this. ASCSettings;
-		};		
-		$this.AddResourceMetadata($metadata);
+		$metadata= [PSObject]::new();
+		$metadata| Add-Member -Name VMDetails -Value $this.VMDetails -MemberType NoteProperty;
+		$metadata| Add-Member -Name VMASCDetails -Value $this.ASCSettings -MemberType NoteProperty;				
+		$this.AddResourceMetadata($metadata);		
 		
 		#OS type must always be present in configuration setting file
 		if([Helpers]::CheckMember($this.ControlSettings.VirtualMachine, $this.VMDetails.OSType)){

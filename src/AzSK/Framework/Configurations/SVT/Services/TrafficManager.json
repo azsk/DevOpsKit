@@ -17,7 +17,8 @@
         "TCP",
         "Automated",
         "AuthZ",
-        "RBAC"
+        "RBAC",
+        "TrafficManager"
       ],
       "Enabled": true
     },
@@ -34,7 +35,8 @@
         "SDL",
         "Best Practice",
         "Automated",
-        "DP"
+        "DP",
+        "TrafficManager"
       ],
       "Enabled": true      
     }

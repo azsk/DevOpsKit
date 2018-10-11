@@ -19,7 +19,8 @@
             "Deploy",
             "Windows",
             "Linux",
-            "ERvNet"
+            "ERvNet",
+            "VirtualMachine"
          ],
          "Enabled": true
       },
@@ -40,7 +41,8 @@
             "Windows",            
             "SOX",
             "SI",
-            "ERvNet"
+            "ERvNet",
+            "VirtualMachine"
          ],
          "Enabled": true
       },
@@ -59,7 +61,8 @@
         "Automated",
         "Config",
         "Windows",
-        "Linux"
+        "Linux",
+        "VirtualMachine"
       ],
       "Enabled": true
     },
@@ -79,7 +82,8 @@
             "NetSec",
             "Windows",
             "Linux",
-            "ERvNet"
+            "ERvNet",
+            "VirtualMachine"
          ],
          "Enabled": true,
          "DataObjectProperties": [
@@ -105,7 +109,8 @@
             "DP",
             "Windows",
             "Linux",
-            "ERvNet"
+            "ERvNet",
+            "VirtualMachine"
          ],
          "Enabled": true
       },
@@ -124,7 +129,8 @@
             "Automated",
             "Audit",
             "Windows",
-            "Linux"
+            "Linux",
+            "VirtualMachine"
          ],
          "Enabled": true
       },
@@ -146,7 +152,8 @@
             "SOX",
             "SI",
             "Linux",
-            "ERvNet"
+            "ERvNet",
+            "VirtualMachine"
          ],
          "Enabled": true
       },
@@ -166,7 +173,8 @@
             "Audit",
             "Windows",
             "Linux",
-            "ERvNet"
+            "ERvNet",
+            "VirtualMachine"
          ],
          "Enabled": true
       },
@@ -186,7 +194,8 @@
             "Audit",
             "Windows",
             "Linux",
-            "ERvNet"
+            "ERvNet",
+            "VirtualMachine"
          ],
          "Enabled": true
       },
@@ -206,7 +215,8 @@
             "NetSec",
             "Windows",
             "Linux",
-          "OwnerAccess"
+          "OwnerAccess",
+          "VirtualMachine"
          ],
          "Enabled": true
       }
