@@ -17,7 +17,8 @@
         "TCP",
         "Automated",
         "AuthZ",
-        "RBAC"
+        "RBAC",
+        "AnalysisServices"
       ],
       "Enabled": true
     },
@@ -34,7 +35,8 @@
         "SDL",
         "Best Practice",
         "Automated",
-        "AuthZ"
+        "AuthZ",
+        "AnalysisServices"
       ],
       "Enabled": true
     },
@@ -51,7 +53,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "AuthZ"
+        "AuthZ",
+        "AnalysisServices"
       ],
       "Enabled": true
     },
@@ -68,7 +71,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "AuthN"
+        "AuthN",
+        "AnalysisServices"
       ],
       "Enabled": true
     },
@@ -85,7 +89,8 @@
         "SDL",
         "Information",
         "Manual",
-        "DP"
+        "DP",
+        "AnalysisServices"
       ],
       "Enabled": true
     },
@@ -102,7 +107,8 @@
         "SDL",
         "Information",
         "Manual",
-        "DP"
+        "DP",
+        "AnalysisServices"
       ],
       "Enabled": true
     },
@@ -119,7 +125,8 @@
         "SDL",
         "Best Practice",
         "Automated",
-        "BCDR"
+        "BCDR",
+        "AnalysisServices"
       ],
       "Enabled": true
     }
