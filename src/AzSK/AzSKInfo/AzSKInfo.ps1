@@ -85,7 +85,12 @@ function Get-AzSKInfo
 
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
-		$DoNotOpenOutputFolder
+		$DoNotOpenOutputFolder,
+
+		[Parameter(Mandatory = $false)]
+		[Alias("xrtn")]
+		[ResourceTypeName]
+		$ExcludeResourceTypeName = [ResourceTypeName]::All
     )
 
 	Begin
@@ -154,7 +159,7 @@ function Get-AzSKInfo
 						{
 							$ResourceTypeName = [ResourceTypeName]::All
 						}
-						$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName);			
+						$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName);			
 
 						$attestationReport = [SVTStatusReport]::new($SubscriptionId, $PSCmdlet.MyInvocation, $resolver);
 						if ($attestationReport) 
