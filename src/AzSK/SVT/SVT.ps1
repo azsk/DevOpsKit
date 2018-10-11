@@ -179,7 +179,18 @@ function Get-AzSKAzureServicesSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("iuc")]
-		$IncludeUserComments
+		$IncludeUserComments,
+
+		[Parameter(Mandatory = $false)]
+		[Alias("xrtn")]
+		[ResourceTypeName]
+		$ExcludeResourceTypeName = [ResourceTypeName]::All,
+
+		[string] 
+		[Parameter(Mandatory = $false)]
+		[Alias("xcids")]
+		[AllowEmptyString()]
+		$ExcludeControlIds
     )
 
 	Begin
@@ -192,7 +203,7 @@ function Get-AzSKAzureServicesSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName);			
+			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName);			
 			$resolver.Tag = $Tag;
 			$resolver.TagName = $TagName;
 			$resolver.TagValue = $TagValue;			
@@ -204,6 +215,7 @@ function Get-AzSKAzureServicesSecurityStatus
 				$secStatus.FilterTags = $FilterTags;
 				$secStatus.ExcludeTags = $ExcludeTags;
 				$secStatus.ControlIdString = $ControlIds;
+				$secStatus.ExcludeControlIdString = $ExcludeControlIds;
 				$secStatus.GenerateFixScript = $GenerateFixScript;
 
 				$secStatus.IncludeUserComments =$IncludeUserComments;
@@ -663,7 +675,18 @@ function Get-AzSKControlsStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("iuc")]
-		$IncludeUserComments
+		$IncludeUserComments,
+
+		[Parameter(Mandatory = $false)]
+		[Alias("xrtn")]
+		[ResourceTypeName]
+		$ExcludeResourceTypeName = [ResourceTypeName]::All,
+
+		[string] 
+		[Parameter(Mandatory = $false)]
+		[Alias("xcids")]
+		[AllowEmptyString()]
+		$ExcludeControlIds
     )
 	Begin
 	{
@@ -674,7 +697,7 @@ function Get-AzSKControlsStatus
 	{
 		try
 		{
-			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName);						
+			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName);						
 			$resolver.Tag = $Tag;
 			$resolver.TagName = $TagName;
 			$resolver.TagValue = $TagValue;

@@ -5,7 +5,9 @@ Set-StrictMode -Version Latest
 class SVTCommandBase: CommandBase {
     [string[]] $ExcludeTags = @();
     [string[]] $ControlIds = @();
+	[string[]] $ExcludeControlIds = @();
     [string] $ControlIdString = "";
+	[string] $ExcludeControlIdString = "";
     [bool] $UsePartialCommits;
     [bool] $UseBaselineControls;
 	[string] $PartialScanIdentifier = [string]::Empty;
@@ -139,6 +141,8 @@ class SVTCommandBase: CommandBase {
         $svtObject.ExcludeTags = $this.ConvertToStringArray($this.ExcludeTags);
         $svtObject.ControlIds += $this.ControlIds;
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
+		$svtObject.ExcludeControlIds += $this.ExcludeControlIds;
+        $svtObject.ExcludeControlIds += $this.ConvertToStringArray($this.ExcludeControlIdString);
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
         $svtObject.InvocationContext = $this.InvocationContext;
         # ToDo: Assumption: usercomment will only work when storage report feature flag is enable
