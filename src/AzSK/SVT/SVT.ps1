@@ -709,6 +709,7 @@ function Get-AzSKControlsStatus
 				$controlReport.FilterTags = $FilterTags;
 				$controlReport.ExcludeTags = $ExcludeTags;
 				$controlReport.ControlIdString = $ControlIds;
+				$secStatus.ExcludeControlIdString = $ExcludeControlIds;
 				$controlReport.GenerateFixScript = $GenerateFixScript;
 				$controlReport.IncludeUserComments =$IncludeUserComments;
 
