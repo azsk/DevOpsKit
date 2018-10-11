@@ -26,11 +26,16 @@ class ServiceFabric : SVTBase
 			
 			# Check if Service Fabric SDK is installed
 			try {
-				if(Get-Command Connect-ServiceFabricCluster -ErrorAction SilentlyContinue){	
+
+			    $scanSource = [RemoteReportHelper]::GetScanSource();         
+				if($scanSource -eq [ScanSource]::SpotCheck -and (Get-Command Connect-ServiceFabricCluster -ErrorAction SilentlyContinue)){	
 					$this.IsSDKAvailable = $true		
+				}else
+				{
+				  $this.IsSDKAvailable = $false	
 				}
-			}
-			catch {
+
+			}catch {
 				# No need to break execution
 				# All controls which requires SDK to be present in user machine will be treated as manual controls
 				$this.IsSDKAvailable = $false
@@ -376,7 +381,8 @@ class ServiceFabric : SVTBase
 	}
 
 	hidden [ControlResult[]] CheckStatefulServiceReplicaSetSize([ControlResult] $controlResult)
-	{
+	{   
+		$isConnectionSuccessful = $false
 		if($this.IsSDKAvailable -eq $true)
 		{
             #Function to validate authentication and connect with Service Fabric cluster     
@@ -402,11 +408,12 @@ class ServiceFabric : SVTBase
 						{
 							$this.PublishCustomMessage("Connecting Service Fabric using AAD...")
 							$sfCluster = Connect-ServiceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -AzureActiveDirectory -ServerCertThumbprint $CertThumbprint #-SecurityToken "
+							$isConnectionSuccessful = $true
 							$this.PublishCustomMessage("Connection using AAD is successful.")
 						}
 						catch
 						{
-							throw ([SuppressedException]::new(("You may not have permission to connect with cluster"), [SuppressedExceptionType]::InvalidOperation))
+						    $this.PublishCustomMessage("You may not have permission to connect with cluster", [MessageType]::Warning);
 						}
 					}              
 					else
@@ -415,27 +422,48 @@ class ServiceFabric : SVTBase
 						$IsCertPresent = (Get-ChildItem -Path "Cert:\$($this.CertStoreLocation)\$($this.CertStoreName)" | Where-Object {$_.Thumbprint -eq $CertThumbprint }| Measure-Object).Count                   
 						if($IsCertPresent)
 						{
-							$this.PublishCustomMessage("Connecting Service Fabric using certificate")
-							$sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -KeepAliveIntervalInSec 10 -X509Credential -ServerCertThumbprint $CertThumbprint -FindType FindByThumbprint -FindValue $CertThumbprint -StoreLocation $this.CertStoreLocation -StoreName $this.CertStoreName 
-							
+						   try
+						   {
+							  $this.PublishCustomMessage("Connecting Service Fabric using certificate")
+							  $sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -KeepAliveIntervalInSec 10 -X509Credential -ServerCertThumbprint $CertThumbprint -FindType FindByThumbprint -FindValue $CertThumbprint -StoreLocation $this.CertStoreLocation -StoreName $this.CertStoreName 
+							  $isConnectionSuccessful = $true
+						   }catch
+						   {
+						       $this.PublishCustomMessage("Cannot connect with Service Fabric cluster using cluster certificate. Verify that valid cluster certificate is present in 'CurrentUser' location.", [MessageType]::Warning);	
+						   }
+												
 						}
 						else
 						{
-							throw ([SuppressedException]::new(("Cannot connect with Service Fabric due to unavailability of cluster certificate in local machine. Validate cluster certificate is present in 'CurrentUser' location."), [SuppressedExceptionType]::InvalidOperation))
+						    $this.PublishCustomMessage("Cannot connect with Service Fabric cluster due to unavailability of cluster certificate in local machine. Validate cluster certificate is present in 'CurrentUser' location.", [MessageType]::Warning);					
 						}
 					}                    
 			}
 			else
 			{
 				$sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri
+				$isConnectionSuccessful = $true
 				$this.PublishCustomMessage("Service Fabric connection is successful");
 			}
-			$this.ApplicationList = Get-ServiceFabricApplication -ErrorAction SilentlyContinue
+			
+			try
+			{
+			  $this.ApplicationList = Get-ServiceFabricApplication -ErrorAction SilentlyContinue
+			}catch
+			{
+			   # No need to break execution, handled in next condition
+			}
+
 			$isPassed = $true;
 			$complianteServices = @{};
 			$nonComplianteServices = @{};
 			#Iterate through the applications present in cluster     
-			if($this.ApplicationList)
+			if($isConnectionSuccessful -eq $false)
+			{
+			  $controlResult.AddMessage([VerificationResult]::Manual,"Cannot connect with Service Fabric cluster.")
+			  $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+
+			}elseif($this.ApplicationList)
 			{
 				$this.ApplicationList | ForEach-Object{
 					$serviceFabricApplication = $_
@@ -448,15 +476,18 @@ class ServiceFabric : SVTBase
 						{
 							#Validate minimum replica and target replica size for each service 					
 							$isCompliant = !($serviceDescription.MinReplicaSetSize -lt 3 -or $serviceDescription.TargetReplicaSetSize -lt 3)
-
+							
+							$stateObject = "" | Select-Object "MinReplicaSetSize" ,"TargetReplicaSetSize"
+							$stateObject.MinReplicaSetSize = $serviceDescription.MinReplicaSetSize
+							$stateObject.TargetReplicaSetSize = $serviceDescription.TargetReplicaSetSize
 							if($isCompliant)
 							{
-								$complianteServices.Add($serviceName, $serviceDescription)
+								$complianteServices.Add($serviceName, $stateObject)
 							} 
 							else
 							{ 
 								$isPassed = $False
-								$nonComplianteServices.Add($serviceName, $serviceDescription)
+								$nonComplianteServices.Add($serviceName, $stateObject)
 							}
 						}                
 					}
@@ -466,7 +497,7 @@ class ServiceFabric : SVTBase
 				{
 					$controlResult.AddMessage("Replica set size for below services are complaint");
 					$complianteServices.Keys  | Foreach-Object {
-						$controlResult.AddMessage("Replica set size details for service '$_'");
+						$controlResult.AddMessage("Replica set size details for service '$_'",$complianteServices[$_]);
 					}
 				}
 
@@ -493,6 +524,13 @@ class ServiceFabric : SVTBase
 				$controlResult.AddMessage([VerificationResult]::Passed,"No stateful service found.")
 			}
 		}else{
+			
+			$scanSource = [RemoteReportHelper]::GetScanSource();
+			if($scanSource -eq [ScanSource]::SpotCheck)
+			{ 
+			   $controlResult.AddMessage("Service Fabric SDK is not present in user machine. To evaluate this control SDK should be available on user machine.")
+			}
+		    $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 			$controlResult.VerificationResult = [VerificationResult]::Manual;
 		}
 		
@@ -501,6 +539,7 @@ class ServiceFabric : SVTBase
 
 	hidden [ControlResult[]] CheckStatelessServiceInstanceCount([ControlResult] $controlResult)
 	{
+	    $isConnectionSuccessful = $false
 		if($this.IsSDKAvailable -eq $true)
 		{
            
@@ -527,11 +566,12 @@ class ServiceFabric : SVTBase
 						{
 							$this.PublishCustomMessage("Connecting Service Fabric using AAD...")
 							$sfCluster = Connect-ServiceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -AzureActiveDirectory -ServerCertThumbprint $CertThumbprint #-SecurityToken "
+							$isConnectionSuccessful = $true
 							$this.PublishCustomMessage("Connection using AAD is successful.")
 						}
 						catch
 						{
-							throw ([SuppressedException]::new(("You may not have permission to connect with cluster"), [SuppressedExceptionType]::InvalidOperation))
+						    $this.PublishCustomMessage("You may not have permission to connect with cluster", [MessageType]::Warning);
 						}
 					}              
 					else
@@ -540,30 +580,49 @@ class ServiceFabric : SVTBase
 						$IsCertPresent = (Get-ChildItem -Path "Cert:\$($this.CertStoreLocation)\$($this.CertStoreName)" | Where-Object {$_.Thumbprint -eq $CertThumbprint }| Measure-Object).Count                   
 						if($IsCertPresent)
 						{
-							$this.PublishCustomMessage("Connecting Service Fabric using certificate")
-							$sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -KeepAliveIntervalInSec 10 -X509Credential -ServerCertThumbprint $CertThumbprint -FindType FindByThumbprint -FindValue $CertThumbprint -StoreLocation $this.CertStoreLocation -StoreName $this.CertStoreName 
-							
+						   try
+						   {
+							  $this.PublishCustomMessage("Connecting Service Fabric using certificate")
+							  $sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -KeepAliveIntervalInSec 10 -X509Credential -ServerCertThumbprint $CertThumbprint -FindType FindByThumbprint -FindValue $CertThumbprint -StoreLocation $this.CertStoreLocation -StoreName $this.CertStoreName 
+							  $isConnectionSuccessful = $true
+						   }catch
+						   {
+						       $this.PublishCustomMessage("Cannot connect with Service Fabric cluster using cluster certificate. Verify that valid cluster certificate is present in 'CurrentUser' location.", [MessageType]::Warning);	
+						   }
+												
 						}
 						else
 						{
-							throw ([SuppressedException]::new(("Cannot connect with Service Fabric due to unavailability of cluster certificate in local machine. Validate cluster certificate is present in 'CurrentUser' location."), [SuppressedExceptionType]::InvalidOperation))
+						    $this.PublishCustomMessage("Cannot connect with Service Fabric cluster due to unavailability of cluster certificate in local machine. Validate cluster certificate is present in 'CurrentUser' location.", [MessageType]::Warning);					
 						}
 					}                    
 			}
 			else
 			{
 				$sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri
+				$isConnectionSuccessful = $true
 				$this.PublishCustomMessage("Service Fabric connection is successful");
 			}
 
-			$this.ApplicationList = Get-ServiceFabricApplication -ErrorAction SilentlyContinue
-
+			try
+			{
+				$this.ApplicationList = Get-ServiceFabricApplication -ErrorAction SilentlyContinue
+			}catch
+			{
+			   # No need to break execution, handled in next condition
+			}
+			
 			$isPassed = $true;
 			$complianteServices = @{};
 			$nonComplianteServices = @{};
-			#Iterate through the applications present in cluster         
-			if($this.ApplicationList)
+			   
+			if($isConnectionSuccessful -eq $false)
 			{
+			  $controlResult.AddMessage([VerificationResult]::Manual,"Cannot connect with Service Fabric cluster.")
+			  $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			}elseif($this.ApplicationList)
+			{
+			    #Iterate through the applications present in cluster
 				$this.ApplicationList | ForEach-Object{
 					$serviceFabricApplication = $_
 					Get-ServiceFabricService -ApplicationName $serviceFabricApplication.ApplicationName | 
@@ -577,12 +636,12 @@ class ServiceFabric : SVTBase
 							$isCompliant = ($serviceDescription.InstanceCount -eq -1 -or $serviceDescription.InstanceCount -ge 3)
 							if($isCompliant)
 							{
-								$complianteServices.Add($serviceName, $serviceDescription)
+								$complianteServices.Add($serviceName, $serviceDescription.InstanceCount)
 							} 
 							else
 							{ 
 								$isPassed = $False
-								$nonComplianteServices.Add($serviceName, $serviceDescription)
+								$nonComplianteServices.Add($serviceName, $serviceDescription.InstanceCount)
 							}
 							
 						} 
@@ -592,7 +651,7 @@ class ServiceFabric : SVTBase
 				{
 					$controlResult.AddMessage("Instance count for below services are complaint");
 					$complianteServices.Keys  | Foreach-Object {
-						$controlResult.AddMessage("Instance count details for service '$_'");
+						$controlResult.AddMessage("Instance count details for service '$_'",$complianteServices[$_]);
 					}
 				}
 	
@@ -619,7 +678,14 @@ class ServiceFabric : SVTBase
 				$controlResult.AddMessage([VerificationResult]::Passed,"No stateless service found.")
 			} 
 		}else{
-			$controlResult.VerificationResult = [VerificationResult]::Manual;
+
+		     $scanSource = [RemoteReportHelper]::GetScanSource();
+             if($scanSource -eq [ScanSource]::SpotCheck)
+		     { 
+				$controlResult.AddMessage("Service Fabric SDK is not present in user machine. To evaluate this control SDK should be available on user machine.")
+		     }
+		     $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			 $controlResult.VerificationResult = [VerificationResult]::Manual;
 		}
 		
 		
@@ -628,6 +694,7 @@ class ServiceFabric : SVTBase
 
 	hidden [ControlResult[]] CheckPublicEndpointSSL([ControlResult] $controlResult)
 	{	
+		$isConnectionSuccessful = $false
 		if($this.IsSDKAvailable -eq $true)
 		{          
             #Function to validate authentication and connect with Service Fabric cluster     
@@ -653,11 +720,12 @@ class ServiceFabric : SVTBase
 						{
 							$this.PublishCustomMessage("Connecting Service Fabric using AAD...")
 							$sfCluster = Connect-ServiceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -AzureActiveDirectory -ServerCertThumbprint $CertThumbprint #-SecurityToken "
+							$isConnectionSuccessful = $true
 							$this.PublishCustomMessage("Connection using AAD is successful.")
 						}
 						catch
 						{
-							throw ([SuppressedException]::new(("You may not have permission to connect with cluster"), [SuppressedExceptionType]::InvalidOperation))
+						    $this.PublishCustomMessage("You may not have permission to connect with cluster", [MessageType]::Warning);
 						}
 					}              
 					else
@@ -666,24 +734,39 @@ class ServiceFabric : SVTBase
 						$IsCertPresent = (Get-ChildItem -Path "Cert:\$($this.CertStoreLocation)\$($this.CertStoreName)" | Where-Object {$_.Thumbprint -eq $CertThumbprint }| Measure-Object).Count                   
 						if($IsCertPresent)
 						{
-							$this.PublishCustomMessage("Connecting Service Fabric using certificate")
-							$sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -KeepAliveIntervalInSec 10 -X509Credential -ServerCertThumbprint $CertThumbprint -FindType FindByThumbprint -FindValue $CertThumbprint -StoreLocation $this.CertStoreLocation -StoreName $this.CertStoreName 
-							
+						   try
+						   {
+							  $this.PublishCustomMessage("Connecting Service Fabric using certificate")
+							  $sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri -KeepAliveIntervalInSec 10 -X509Credential -ServerCertThumbprint $CertThumbprint -FindType FindByThumbprint -FindValue $CertThumbprint -StoreLocation $this.CertStoreLocation -StoreName $this.CertStoreName 
+							  $isConnectionSuccessful = $true
+						   }catch
+						   {
+						       $this.PublishCustomMessage("Cannot connect with Service Fabric cluster using cluster certificate. Verify that valid cluster certificate is present in 'CurrentUser' location.", [MessageType]::Warning);	
+						   }
+												
 						}
 						else
 						{
-							throw ([SuppressedException]::new(("Cannot connect with Service Fabric due to unavailability of cluster certificate in local machine. Validate cluster certificate is present in 'CurrentUser' location."), [SuppressedExceptionType]::InvalidOperation))
+						    $this.PublishCustomMessage("Cannot connect with Service Fabric cluster due to unavailability of cluster certificate in local machine. Validate cluster certificate is present in 'CurrentUser' location.", [MessageType]::Warning);					
 						}
 					}                    
 			}
 			else
 			{
 				$sfCluster = Connect-serviceFabricCluster -ConnectionEndpoint $ClusterConnectionUri
+				$isConnectionSuccessful = $true
 				$this.PublishCustomMessage("Service Fabric connection is successful");
 			}
 
-			$this.ApplicationList = Get-ServiceFabricApplication -ErrorAction SilentlyContinue
-
+			try
+			{
+				$this.ApplicationList = Get-ServiceFabricApplication -ErrorAction SilentlyContinue
+			}catch
+			{
+			   #No need to break execution, handled in next condition
+			}
+			
+			$isManual = $false;
 			$isPassed = $true;
 			$compliantPort = @{};
 			$nonCompliantPort = @{};
@@ -705,16 +788,22 @@ class ServiceFabric : SVTBase
 			#If no ports open, Pass the TCP
 			if($loadBalancerBackendPorts.Count -eq 0)
 			{
-				$controlResult.AddMessage("No ports enabled.")  
-				#$controlResultList += $controlResult      
+				$controlResult.AddMessage("No ports enabled.")       
 			}
 			#If Ports are open for public in load balancer, map load balancer ports with application endpoint ports and validate if SSL is enabled.
 			else
 			{
-				$controlResult.AddMessage("List of publicly exposed port",$loadBalancerBackendPorts)   
-			
-				if($this.ApplicationList)
+		
+			   if($isConnectionSuccessful -eq $false)
+			   {
+					$isManual = $true;
+					$controlResult.AddMessage("Cannot connect with Service Fabric cluster.")
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			   }
+			   elseif($this.ApplicationList)
 				{
+					$controlResult.AddMessage("List of publicly exposed port",$loadBalancerBackendPorts) 
+
 					$this.ApplicationList | 
 					ForEach-Object{
 						$serviceFabricApplication = $_
@@ -722,7 +811,7 @@ class ServiceFabric : SVTBase
 						ForEach-Object{
 							$currentService = $_
 							$serviceManifest = [xml](Get-ServiceFabricServiceManifest -ApplicationTypeName $serviceFabricApplication.ApplicationTypeName -ApplicationTypeVersion $serviceFabricApplication.ApplicationTypeVersion -ServiceManifestName $_.ServiceManifestName)
-							if([Helpers]::CheckMember($serviceManifest.ServiceManifest.Resources,"Endpoints"))
+							if([Helpers]::CheckMember($serviceManifest.ServiceManifest,"Resources.Endpoints"))
 							{
 								$serviceManifest.ServiceManifest.Resources.Endpoints.ChildNodes | 
 								ForEach-Object{
@@ -736,27 +825,27 @@ class ServiceFabric : SVTBase
 									}
 									else
 									{
-										if($loadBalancerBackendPorts.Contains($endpoint.Port) )
+										if($loadBalancerBackendPorts.Contains([Int32] $endpoint.Port) )
 										{                      
 											if($endpoint.Protocol -eq "https"){  
 												$compliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port) 
-												#$controlResult.AddMessage([VerificationResult]::Passed,"Endpoint is protected with SSL")
+												
 											 }
 											elseif($endpoint.Protocol -eq "http"){  
 												$isPassed = $false;
-												#$controlResult.AddMessage([VerificationResult]::Failed,"Endpoint is not protected with SSL")
+										
 												$nonCompliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port) 
 											}
 											else {  
 												$isPassed = $false;
 												$nonCompliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port) 
-												#$childControlResult.AddMessage([VerificationResult]::Verify,"Verify if endpoint is protected with SSL",$endpoint)
+											
 											 }                            
 										}
 										else
 										{   
 											$compliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port)                     
-											#$childControlResult.AddMessage([VerificationResult]::Passed,"Endpoint is not publicly opened")
+											
 										}
 									} 							
 								} 
@@ -787,7 +876,11 @@ class ServiceFabric : SVTBase
 				}
 			}
 
-			if($isPassed)
+			if($isManual)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Manual;
+			}
+			elseif($isPassed)
 			{
 				$controlResult.VerificationResult = [VerificationResult]::Passed;
 			}
@@ -797,6 +890,13 @@ class ServiceFabric : SVTBase
 				$controlResult.SetStateData("Following ports are non-complaint", $nonCompliantPort);
 			}
 		}else{
+			
+			$scanSource = [RemoteReportHelper]::GetScanSource();
+			if($scanSource -eq [ScanSource]::SpotCheck)
+			{ 
+			   $controlResult.AddMessage("Service Fabric SDK is not present in user machine. To evaluate this control SDK should be available on user machine.")
+			}
+		    $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 			$controlResult.VerificationResult = [VerificationResult]::Manual;
 		}
 	
