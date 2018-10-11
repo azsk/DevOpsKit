@@ -185,7 +185,7 @@
       "Automated": "Yes",
       "MethodName": "CheckOMSSetup",
       "Rationale": "Using Log Analytics, one can ensure high availability of important/critical services by monitoring jobs and getting alerts for job failures.",
-      "Recommendation": "Run command Set-AzureRmDiagnosticSetting -ResourceId '{AutomationAccountId}' -WorkspaceId '{OMSWorkspaceId}' -Enabled `$true. Refer : https://docs.microsoft.com/en-us/azure/automation/automation-manage-send-joblogs-log-analytics",
+      "Recommendation": "Run command Set-AzureRmDiagnosticSetting -ResourceId '{AutomationAccountId}' -WorkspaceId '{OMSWorkspaceId}' -Enabled `$true. Refer : https://docs.microsoft.com/en-us/azure/automation/automation-manage-send-joblogs-log-analytics. Alternatively, you can also change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal",
       "Tags": [
          "SDL",
          "Best Practice",
