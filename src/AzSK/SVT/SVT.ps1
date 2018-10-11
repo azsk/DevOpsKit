@@ -356,7 +356,13 @@ function Get-AzSKSubscriptionSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("iuc")]
-		$IncludeUserComments
+		$IncludeUserComments,
+
+		[string] 
+		[Parameter(Mandatory = $false)]
+		[Alias("xcids")]
+		[AllowEmptyString()]
+		$ExcludeControlIds
 	)
 	Begin
 	{
@@ -374,7 +380,7 @@ function Get-AzSKSubscriptionSecurityStatus
 				$sscore.FilterTags = $FilterTags;
 				$sscore.ExcludeTags = $ExcludeTags;
 				$sscore.ControlIdString = $ControlIds;
-
+				$sscore.ExcludeControlIdString = $ExcludeControlIds;
                 $sscore.IncludeUserComments =$IncludeUserComments;
 
 				#build the attestation options object
@@ -490,7 +496,13 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to generate script to fix the control or not.")]
 		[Alias("gfs")]
-		$GenerateFixScript
+		$GenerateFixScript,
+
+		[string] 
+		[Parameter(Mandatory = $false)]
+		[Alias("xcids")]
+		[AllowEmptyString()]
+		$ExcludeControlIds
     )
 
 	$erResourceGroups = $ResourceGroupNames;
@@ -501,7 +513,7 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 	}
 
 	Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionId -ResourceGroupNames $erResourceGroups -ResourceName $ResourceName `
-			-ResourceTypeName ([SVTMapping]::ERvNetTypeName) -ControlIds $ControlIds -FilterTags $FilterTags -ExcludeTags $ExcludeTags -DoNotOpenOutputFolder:$DoNotOpenOutputFolder -AttestControls $ControlsToAttest -GeneratePDF $GeneratePDF -GenerateFixScript:$GenerateFixScript
+			-ResourceTypeName ([SVTMapping]::ERvNetTypeName) -ControlIds $ControlIds -FilterTags $FilterTags -ExcludeTags $ExcludeTags -DoNotOpenOutputFolder:$DoNotOpenOutputFolder -AttestControls $ControlsToAttest -GeneratePDF $GeneratePDF -GenerateFixScript:$GenerateFixScript -ExcludeControlIds $ExcludeControlIds
 }
 
 function Get-AzSKControlsStatus
@@ -709,7 +721,7 @@ function Get-AzSKControlsStatus
 				$controlReport.FilterTags = $FilterTags;
 				$controlReport.ExcludeTags = $ExcludeTags;
 				$controlReport.ControlIdString = $ControlIds;
-				$secStatus.ExcludeControlIdString = $ExcludeControlIds;
+				$controlReport.ExcludeControlIdString = $ExcludeControlIds;
 				$controlReport.GenerateFixScript = $GenerateFixScript;
 				$controlReport.IncludeUserComments =$IncludeUserComments;
 

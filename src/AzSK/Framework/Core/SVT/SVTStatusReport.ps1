@@ -30,6 +30,7 @@ class SVTStatusReport : SVTCommandBase
 				$sscore.FilterTags = $this.FilterTags;
 				$sscore.ExcludeTags = $this.ExcludeTags;
 				$sscore.ControlIdString = $this.ControlIdString;
+				$sscore.ExcludeControlIdString = $this.ExcludeControlIdString;
 				$sscore.GenerateFixScript = $this.GenerateFixScript;
 				$sscore.AttestationOptions = $this.AttestationOptions;
 
@@ -111,7 +112,6 @@ class SVTStatusReport : SVTCommandBase
 				# Just copy all the tags without validation. Validation will be done internally
 			
 				$secStatus.ControlIdString = $this.ControlIdString;
-				$secStatus.ExcludeControlIdString = $this.ExcludeControlIdString;
 				#$secStatus.GenerateFixScript = $this.GenerateFixScript;
 				$secStatus.AttestationOptions = $this.AttestationOptions;		
 				$secStatusResult = $secStatus.FetchAttestationInfo()
