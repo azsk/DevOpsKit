@@ -156,7 +156,11 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthZ"
+        "AuthZ",
+        "Information",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -170,10 +174,13 @@
       "Rationale": "Microservice hosted on same Service Fabric cluster can monitor traffic of other microservices and access the files hosted on cluster. Hence the same Service Fabric cluster must not host microservices which do not trust each other.",
       "Recommendation": "Microservices hosted on same Service Fabric cluster can monitor traffic of other microservices and access the files hosted on cluster. Hence a Service Fabric cluster must contain only those microservices which trust each other.",
       "Tags": [
-         "SDL",
-         "TCP",
-         "Manual",
-         "AuthZ"
+        "SDL",
+        "TCP",
+        "Manual",
+        "AuthZ",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -190,7 +197,10 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthN"
+        "AuthN",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -207,7 +217,9 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthN"
+        "AuthN",
+        "ServiceFabric",
+        "Windows"
       ],
       "Enabled": true
     },
@@ -224,7 +236,10 @@
         "SDL",
         "TCP",
         "Automated",
-        "DP"
+        "DP",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -241,7 +256,10 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthN"
+        "AuthN",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -259,7 +277,10 @@
         "TCP",
         "Manual",
         "Information",
-        "DP"
+        "DP",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -276,7 +297,10 @@
         "SDL",
         "TCP",
         "Automated",
-        "Audit"
+        "Audit",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -290,10 +314,71 @@
       "Rationale": "Publically exposed ports must be monitored to detect suspicious and malicious activities early and respond in a timely manner.",
       "Recommendation": "Azure load balancer maps the public IP address and port number of incoming traffic to the private IP address and port number of the Service Fabric nodes (ports number opened by microservices). Intranet microservice ports must not be exposed to the internet. Moreover, publicly exposed IP address/port numbers must be monitored using Azure load balancer rules as follows: Azure Portal --> Load Balancers --> <Load Balancer Name> --> Load Balancing Rules --> Validate mapping of public end port with backend port.",
       "Tags": [
-         "SDL",
-         "TCP",
-         "Manual",
-         "Audit"
+        "SDL",
+        "TCP",
+        "Manual",
+        "Audit",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_DP_Reverse_Proxy_SSL_Secured",
+      "Description": "Reverse proxy service should be secured using SSL",
+      "Id": "ServiceFabric280",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Use of SSL ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
+      "Recommendation": "To configure the reverse proxy with a SSL certificate, please refer: https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-reverseproxy-setup",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "DP",
+        "ServiceFabric",
+        "Windows"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_DP_Dont_Expose_Reverse_Proxy_Port",
+      "Description": "Reverse proxy port must not be exposed publicly",
+      "Id": "ServiceFabric290",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckReverseProxyPort",
+      "Rationale": "Configuring the reverse proxy's port in Load Balancer with public IP will expose all microservices with HTTP endpoint. Microservices meant to be internal may be discoverable by a determined malicious user.",
+      "Recommendation": "Check that reverse proxy port must not be exposed through Azure load balancer rules as follows: Azure Portal --> Load Balancers --> <Load Balancer Name> --> Load Balancing Rules --> Validate reverse proxy port should not be exposed.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "DP",
+        "ServiceFabric",
+        "Windows"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_SI_Set_Auto_Update_Cluster",
+      "Description": "Upgrade mode should be set to automatic for cluster",
+      "Id": "ServiceFabric300",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckClusterUpgradeMode",
+      "Rationale": "Clusters with unsupported fabric version are easy targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in software.",
+      "Recommendation": "You can set your cluster to receive automatic fabric upgrades as they are released by Microsoft, for details please refer: https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-upgrade",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "SI",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     }
