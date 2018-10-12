@@ -65,7 +65,7 @@
         "Automated": "No",
         "MethodName": "",
         "Rationale": "Using an HTTP-Only cookie protects against cross site scripting (XSS) attacks by disallowing cookie access to client side scripts.",
-        "Recommendation": "AAD Application Administrator (or higher privilege) can check app cookie setting from portal or by running command 'Get-AzureADApplicationProxyApplication -ObjectId <AADAppID>'. To enable HTTP-Only cookie, run command 'Set-AzureADApplicationProxyApplication -ObjectId <AADAppID> -IsHttpOnlyCookieEnabled $true'. Refer: https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-publish-azure-portal#publish-an-on-premises-app-for-remote-access.",
+        "Recommendation": "AAD Application Administrator (or higher privilege role) can check app cookie setting from portal or by running command 'Get-AzureADApplicationProxyApplication -ObjectId <AADAppID>'. To enable HTTP-Only cookie, run command 'Set-AzureADApplicationProxyApplication -ObjectId <AADAppID> -IsHttpOnlyCookieEnabled $true'. Refer: https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-publish-azure-portal#publish-an-on-premises-app-for-remote-access.",
         "Tags": [
           "SDL",
           "TCP",
