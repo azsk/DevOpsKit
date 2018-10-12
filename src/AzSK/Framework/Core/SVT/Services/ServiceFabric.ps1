@@ -827,11 +827,11 @@ class ServiceFabric : SVTBase
 									{
 										if($loadBalancerBackendPorts.Contains([Int32] $endpoint.Port) )
 										{                      
-											if($endpoint.Protocol -eq "https"){  
+											if([Helpers]::CheckMember($endpoint,"Protocol") -and $endpoint.Protocol -eq "https"){  
 												$compliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port) 
 												
 											 }
-											elseif($endpoint.Protocol -eq "http"){  
+											elseif([Helpers]::CheckMember($endpoint,"Protocol") -and $endpoint.Protocol -eq "http"){  
 												$isPassed = $false;
 										
 												$nonCompliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port) 
