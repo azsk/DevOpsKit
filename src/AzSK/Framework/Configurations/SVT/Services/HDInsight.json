@@ -168,7 +168,7 @@
         "Enabled": true
       },
       {
-        "ControlID": "Azure_AppService_DP_Rotate_Admin_Password",
+        "ControlID": "Azure_HDInsight_DP_Rotate_Admin_Password",
         "Description": "Ambari admin password must be renewed after a regular interval",
         "Id": "HDInsight111",
         "ControlSeverity": "Medium",
