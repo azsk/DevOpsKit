@@ -17,7 +17,9 @@
         "TCP",
         "Manual",
         "AuthN",
-        "ServiceFabric"
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -26,16 +28,18 @@
       "Description": "Publicly exposed endpoints must be secured using SSL",
       "Id": "ServiceFabric120",
       "ControlSeverity": "High",
-      "Automated": "No",
-      "MethodName": "",
-      "Rationale":  "Use of SSL ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
+      "Automated": "Yes",
+      "MethodName": "CheckPublicEndpointSSL",
+      "Rationale": "Use of SSL ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
       "Recommendation": "Azure Service Fabric supports configuration of endpoints for microservices. To provide end to end encryption and data integrity, all publicly exposed endpoints must be secured using SSL. Steps to configure SSL: (1) Specify HTTPS endpoint in ServiceManifest.xml at ServiceManifest --> Resources --> Endpoints, (2) Specify certificate details in ApplicationManifest.xml <i> Add an EndpointBindingPolicy at ApplicationManifest --> ServiceManifestImport --> Policies <ii> Add an EndpointCertificate at ApplicationManifest --> Certificates (3) Upload certificate to cluster (Refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-service-manifest-resources/#example-specifying-an-https-endpoint-for-your-service)",
       "Tags": [
         "SDL",
         "TCP",
         "Manual",
         "DP",
-        "ServiceFabric"
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -49,11 +53,13 @@
       "Rationale": "Protecting the connection string, storage account keys, password, etc., (stored in Settings.xml file in ConfigPackage of microservice, ServiceManifest.xml and ApplicationManifest.xml) ensures that these secrets do not get compromised through copies of the settings/manifest files that might be left unprotected on various systems.",
       "Recommendation": "An application typically contains secrets, such as connection string, storage account keys, password etc., which are required at runtime. Application secrets can be stored in Settings.xml file in ConfigPackage of microservice, ServiceManifest.xml and ApplicationManifest.xml. These secrets must be encrypted with a certificate. Steps to encrypt a secret: (1) Obtain a data encipherment certificate. (2) Install the certificate on cluster. (3) Encrypt secret values when deploying an application with the certificate and inject them into Settings.xml/ServiceManifest.xml/ApplicationManifest.xml file. (4) Read encrypted values out of Settings.xml and decrypt them with the same encipherment certificate. Refer:  https://azure.microsoft.com/en-us/documentation/articles/service-fabric-application-secret-management/",
       "Tags": [
-         "SDL",
-         "TCP",
-         "Manual",
-         "DP",
-         "ServiceFabric"
+        "SDL",
+        "TCP",
+        "Manual",
+        "DP",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -67,11 +73,13 @@
       "Rationale": "The replication traffic of microservices must be protected using a certificate so that microservices are not be able to see each others' replication traffic.",
       "Recommendation": "Service Fabric Replicator Service is responsible for making the state of Stateful service highly reliable. Replicator security configurations must be used to secure the communication channel that is used during replication. Doing this ensures that services within the same cluster will not be able to see each other's replication traffic, ensuring that the data that is made highly available is also secure. Note that by default an empty security configuration section implies no replication security. Refer 'Sample configuration file' at:  https://azure.microsoft.com/en-in/documentation/articles/service-fabric-reliable-services-configuration/#_replicator-security-configuration",
       "Tags": [
-         "SDL",
-         "TCP",
-         "Manual",
-         "DP",
-         "ServiceFabric"
+        "SDL",
+        "TCP",
+        "Manual",
+        "DP",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -85,11 +93,13 @@
       "Rationale": "DataPackage files can be accessed from other microservices running on same node (VM). DataPackage files get distributed along with the application package while publishing/deployment. This can lead to compromise of any sensitive data as copies of these deployment packages are often left unprotected.",
       "Recommendation": "DataPackage is intended to store static files which are required by microservices at runtime. Files inside DataPackage are NOT intended to be modified at runtime. DataPackage must not contain any file containing sensitive data, because: (1) DataPackage files can be accessed from other microservices running on same node (VM) and (2) DataPackage files gets distributed along with the application package when the application is published.",
       "Tags": [
-         "SDL",
-         "TCP",
-         "Manual",
-         "DP",
-         "ServiceFabric"
+        "SDL",
+        "TCP",
+        "Manual",
+        "DP",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -98,7 +108,7 @@
       "Description": "Replica set size for stateful services must be set to a minimum of 3",
       "Id": "ServiceFabric160",
       "ControlSeverity": "Medium",
-      "Automated": "No",
+      "Automated": "Yes",
       "MethodName": "CheckStatefulServiceReplicaSetSize",
       "Rationale": "A replica set size of 3 or more in the case of stateful services ensures that data is not lost in the event of a single node failure.",
       "Recommendation": "The replica set size of a Stateful service indicates the number of copies of reliable service data maintained by Service Fabric. The data in reliable service must not be lost even if a node (VM) goes down. However, if the replica set size is 1, data loss is possible. To achieve high availability, each stateful service must have a target and minimum replica set size of at least 3. Set the values for all Stateful services in ApplicationManifest.xml file as below: (1) ApplicationManifest --> DefaultServices --> Service --> StatefulService --> MinReplicaSetSize, (2) ApplicationManifest --> DefaultServices --> Service --> StatefulService --> TargetReplicaSetSize. Refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-concepts-partitioning/",
@@ -107,7 +117,9 @@
         "TCP",
         "Manual",
         "Availability",
-        "ServiceFabric"
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -116,8 +128,8 @@
       "Description": "Instance count for stateless service must be set to a minimum of 3",
       "Id": "ServiceFabric170",
       "ControlSeverity": "Medium",
-      "Automated": "No",
-      "MethodName": "",
+      "Automated": "Yes",
+      "MethodName": "CheckStatelessServiceInstanceCount",
       "Rationale": "An instance count of 3 or more guarantees high availability for stateless services in the event of a single node failure.",
       "Recommendation": "The instance count reflects the number of instances of a stateless service that should be running in the cluster. To achieve high availability, each stateless service must have an instance count of at least 3. Set this value to 3 for all stateless services in ApplicationManifest.xml file at ApplicationManifest --> DefaultServices --> Service --> StatelessService --> InstanceCount",
       "Tags": [
@@ -125,7 +137,9 @@
         "TCP",
         "Manual",
         "Availability",
-        "ServiceFabric"
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -136,15 +150,17 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSecurityMode",
-      "Rationale":  "A secure cluster prevents unauthorized access to management operations, which includes deployment, upgrade, and deletion of microservices. Also provides encryption for node-to-node communication, client-to-node communication etc. In oppose to unsecure cluster which can be connected by any anonymous user.",
+      "Rationale": "A secure cluster prevents unauthorized access to management operations, which includes deployment, upgrade, and deletion of microservices. Also provides encryption for node-to-node communication, client-to-node communication etc. In oppose to unsecure cluster which can be connected by any anonymous user.",
       "Recommendation": "A secure cluster must be created to prevent unauthorized access to management operations (e.g., deployment, upgrade or deletion of microservices). A secure cluster also provides encryption for node-to-node communication, client-to-node communication, etc. An insecure cluster is open to be connected by any anonymous user. An insecure cluster cannot be secured at a later time. For creating a secure cluster using (1) Azure Portal, refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-cluster-creation-via-portal/#_3-security or using (2) ARM template refer:https://azure.microsoft.com/en-in/documentation/articles/service-fabric-cluster-creation-via-arm/",
       "Tags": [
         "SDL",
         "TCP",
         "Automated",
         "AuthZ",
+        "Information",
         "ServiceFabric",
-        "Information"
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -158,11 +174,13 @@
       "Rationale": "Microservice hosted on same Service Fabric cluster can monitor traffic of other microservices and access the files hosted on cluster. Hence the same Service Fabric cluster must not host microservices which do not trust each other.",
       "Recommendation": "Microservices hosted on same Service Fabric cluster can monitor traffic of other microservices and access the files hosted on cluster. Hence a Service Fabric cluster must contain only those microservices which trust each other.",
       "Tags": [
-         "SDL",
-         "TCP",
-         "Manual",
-         "AuthZ",
-         "ServiceFabric"
+        "SDL",
+        "TCP",
+        "Manual",
+        "AuthZ",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -180,7 +198,9 @@
         "TCP",
         "Automated",
         "AuthN",
-        "ServiceFabric"
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -198,7 +218,8 @@
         "TCP",
         "Automated",
         "AuthN",
-        "ServiceFabric"
+        "ServiceFabric",
+        "Windows"
       ],
       "Enabled": true
     },
@@ -216,7 +237,9 @@
         "TCP",
         "Automated",
         "DP",
-        "ServiceFabric"
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -234,7 +257,9 @@
         "TCP",
         "Automated",
         "AuthN",
-        "ServiceFabric"
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -253,7 +278,9 @@
         "Manual",
         "Information",
         "DP",
-        "ServiceFabric"
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -271,7 +298,9 @@
         "TCP",
         "Automated",
         "Audit",
-        "ServiceFabric"
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     },
@@ -282,14 +311,74 @@
       "ControlSeverity": "Medium",
       "Automated": "No",
       "MethodName": "",
-      "Rationale":  "Publically exposed ports must be monitored to detect suspicious and malicious activities early and respond in a timely manner.",
+      "Rationale": "Publically exposed ports must be monitored to detect suspicious and malicious activities early and respond in a timely manner.",
       "Recommendation": "Azure load balancer maps the public IP address and port number of incoming traffic to the private IP address and port number of the Service Fabric nodes (ports number opened by microservices). Intranet microservice ports must not be exposed to the internet. Moreover, publicly exposed IP address/port numbers must be monitored using Azure load balancer rules as follows: Azure Portal --> Load Balancers --> <Load Balancer Name> --> Load Balancing Rules --> Validate mapping of public end port with backend port.",
       "Tags": [
-         "SDL",
-         "TCP",
-         "Manual",
-         "Audit",
-         "ServiceFabric"
+        "SDL",
+        "TCP",
+        "Manual",
+        "Audit",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_DP_Reverse_Proxy_Use_SSL",
+      "Description": "Reverse proxy service should be secured using SSL",
+      "Id": "ServiceFabric280",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Use of SSL ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
+      "Recommendation": "To configure the reverse proxy with a SSL certificate, please refer: https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-reverseproxy-setup",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "DP",
+        "ServiceFabric",
+        "Windows"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_DP_Dont_Expose_Reverse_Proxy_Port",
+      "Description": "Reverse proxy port must not be exposed publicly",
+      "Id": "ServiceFabric290",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckReverseProxyPort",
+      "Rationale": "Configuring the reverse proxy's port in Load Balancer with public IP will expose all microservices with HTTP endpoint. Microservices meant to be internal may be discoverable by a determined malicious user.",
+      "Recommendation": "Check that reverse proxy port is not be exposed through Azure Load Balancer rules as follows: Azure Portal --> Load Balancers --> <Load Balancer Name> --> Load Balancing Rules --> Validate reverse proxy port is not exposed.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "DP",
+        "ServiceFabric",
+        "Windows"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_ServiceFabric_SI_Set_Auto_Update_Cluster",
+      "Description": "Upgrade mode should be set to automatic for cluster",
+      "Id": "ServiceFabric300",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckClusterUpgradeMode",
+      "Rationale": "Clusters with unsupported fabric version can become targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in software.",
+      "Recommendation": "You can set your cluster to receive automatic fabric upgrades as they are released by Microsoft, for details please refer: https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-upgrade",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "SI",
+        "ServiceFabric",
+        "Windows",
+        "Linux"
       ],
       "Enabled": true
     }

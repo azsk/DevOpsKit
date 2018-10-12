@@ -179,7 +179,18 @@ function Get-AzSKAzureServicesSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("iuc")]
-		$IncludeUserComments
+		$IncludeUserComments,
+
+		[Parameter(Mandatory = $false)]
+		[Alias("xrtn")]
+		[ResourceTypeName]
+		$ExcludeResourceTypeName = [ResourceTypeName]::All,
+
+		[string] 
+		[Parameter(Mandatory = $false)]
+		[Alias("xcids")]
+		[AllowEmptyString()]
+		$ExcludeControlIds
     )
 
 	Begin
@@ -192,7 +203,7 @@ function Get-AzSKAzureServicesSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName);			
+			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName);			
 			$resolver.Tag = $Tag;
 			$resolver.TagName = $TagName;
 			$resolver.TagValue = $TagValue;			
@@ -204,6 +215,7 @@ function Get-AzSKAzureServicesSecurityStatus
 				$secStatus.FilterTags = $FilterTags;
 				$secStatus.ExcludeTags = $ExcludeTags;
 				$secStatus.ControlIdString = $ControlIds;
+				$secStatus.ExcludeControlIdString = $ExcludeControlIds;
 				$secStatus.GenerateFixScript = $GenerateFixScript;
 
 				$secStatus.IncludeUserComments =$IncludeUserComments;
@@ -344,7 +356,13 @@ function Get-AzSKSubscriptionSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("iuc")]
-		$IncludeUserComments
+		$IncludeUserComments,
+
+		[string] 
+		[Parameter(Mandatory = $false)]
+		[Alias("xcids")]
+		[AllowEmptyString()]
+		$ExcludeControlIds
 	)
 	Begin
 	{
@@ -362,7 +380,7 @@ function Get-AzSKSubscriptionSecurityStatus
 				$sscore.FilterTags = $FilterTags;
 				$sscore.ExcludeTags = $ExcludeTags;
 				$sscore.ControlIdString = $ControlIds;
-
+				$sscore.ExcludeControlIdString = $ExcludeControlIds;
                 $sscore.IncludeUserComments =$IncludeUserComments;
 
 				#build the attestation options object
@@ -478,7 +496,13 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to generate script to fix the control or not.")]
 		[Alias("gfs")]
-		$GenerateFixScript
+		$GenerateFixScript,
+
+		[string] 
+		[Parameter(Mandatory = $false)]
+		[Alias("xcids")]
+		[AllowEmptyString()]
+		$ExcludeControlIds
     )
 
 	$erResourceGroups = $ResourceGroupNames;
@@ -489,7 +513,7 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 	}
 
 	Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionId -ResourceGroupNames $erResourceGroups -ResourceName $ResourceName `
-			-ResourceTypeName ([SVTMapping]::ERvNetTypeName) -ControlIds $ControlIds -FilterTags $FilterTags -ExcludeTags $ExcludeTags -DoNotOpenOutputFolder:$DoNotOpenOutputFolder -AttestControls $ControlsToAttest -GeneratePDF $GeneratePDF -GenerateFixScript:$GenerateFixScript
+			-ResourceTypeName ([SVTMapping]::ERvNetTypeName) -ControlIds $ControlIds -FilterTags $FilterTags -ExcludeTags $ExcludeTags -DoNotOpenOutputFolder:$DoNotOpenOutputFolder -AttestControls $ControlsToAttest -GeneratePDF $GeneratePDF -GenerateFixScript:$GenerateFixScript -ExcludeControlIds $ExcludeControlIds
 }
 
 function Get-AzSKControlsStatus
@@ -663,7 +687,18 @@ function Get-AzSKControlsStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("iuc")]
-		$IncludeUserComments
+		$IncludeUserComments,
+
+		[Parameter(Mandatory = $false)]
+		[Alias("xrtn")]
+		[ResourceTypeName]
+		$ExcludeResourceTypeName = [ResourceTypeName]::All,
+
+		[string] 
+		[Parameter(Mandatory = $false)]
+		[Alias("xcids")]
+		[AllowEmptyString()]
+		$ExcludeControlIds
     )
 	Begin
 	{
@@ -674,7 +709,7 @@ function Get-AzSKControlsStatus
 	{
 		try
 		{
-			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName);						
+			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName);						
 			$resolver.Tag = $Tag;
 			$resolver.TagName = $TagName;
 			$resolver.TagValue = $TagValue;
@@ -686,6 +721,7 @@ function Get-AzSKControlsStatus
 				$controlReport.FilterTags = $FilterTags;
 				$controlReport.ExcludeTags = $ExcludeTags;
 				$controlReport.ControlIdString = $ControlIds;
+				$controlReport.ExcludeControlIdString = $ExcludeControlIds;
 				$controlReport.GenerateFixScript = $GenerateFixScript;
 				$controlReport.IncludeUserComments =$IncludeUserComments;
 

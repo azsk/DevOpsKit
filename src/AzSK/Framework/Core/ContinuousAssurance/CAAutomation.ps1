@@ -1552,7 +1552,7 @@ class CCAutomation: CommandBase
 
 		#endregion
 
-		#region: Step 5: Check if service principal is configured and it has  'Reader' & 'Security Reader' access to subscription and 'Contributor' access to "AzSKRG", if either is missing display error message
+		#region: Step 5: Check if service principal is configured and it has 'Reader' access to subscription and 'Contributor' access to "AzSKRG", if either is missing display error message
 		$stepCount++
 		$isPassed = $false
 		$checkDescription = "Inspecting CA RunAs Account."
@@ -1632,7 +1632,7 @@ class CCAutomation: CommandBase
 			}
 			if(!$isPassed)
 			{
-				$failMsg = "Service principal account (Name: $($spName)) configured in RunAs Account  doesn't have required access ('Reader' & 'Security Reader' access on Subscription and/or 'Contributor' access on resource group containing CA automation account)."
+				$failMsg = "Service principal account (Name: $($spName)) configured in RunAs Account  doesn't have required access ('Reader' access on Subscription and/or 'Contributor' access on resource group containing CA automation account)."
 				$resolveMsg = "To resolve this you can provide required access to service principal manually from portal or run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -FixRuntimeAccount."
 				$resultMsg = "$failmsg`r`n$resolveMsg"
 				$resultStatus = "Failed"
@@ -3105,7 +3105,19 @@ class CCAutomation: CommandBase
 					-Name $moduleName `
 					-ContentLink $actualUrl
 			$this.OutputObject.Modules += ($automationModule|Select-Object Name)
-			Start-Sleep -Seconds 120
+
+			$automationModule = Get-AzureRmAutomationModule -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name -Name $moduleName
+
+			while(
+				$automationModule.ProvisioningState -ne "Created" -and
+				$automationModule.ProvisioningState -ne "Succeeded" -and
+				$automationModule.ProvisioningState -ne "Failed"
+			)
+			{
+				#Module is in extracting state
+				Start-Sleep -Seconds 120
+				$automationModule = $automationModule | Get-AzureRmAutomationModule
+			}                
 		}
 	}
 	hidden [PSObject] SearchModule($moduleName,$moduleVersion)
@@ -3145,7 +3157,7 @@ class CCAutomation: CommandBase
 			return $searchResult
 		}
 	}
-	hidden [PSObject] CheckCAModuleHealth($moduleName)
+	hidden [PSObject] CheckCAModuleHealth($moduleName, $azskVersion)
 	{
 		$moduleVersion=[string]::Empty
 		$azskdependentModules = @()
@@ -3160,12 +3172,20 @@ class CCAutomation: CommandBase
 		 | Where-Object {($_.IsGlobal -ne $true) -and ($_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created")}
 		
 		#Get required module version
-		$azskModuleWithVersion = Get-AzureRmAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
-				-ResourceGroupName $this.AutomationAccount.ResourceGroup `
-				-Name $azskModule
-		if(($azskModuleWithVersion|Measure-Object).Count -ne 0)
+		if([string]::IsNullOrWhiteSpace($azskVersion))
 		{
-			$azskdependentModules += $this.GetDependentModules($azskModule,$azskModuleWithVersion.Version)
+			$azskModuleWithVersion = Get-AzureRmAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
+					-ResourceGroupName $this.AutomationAccount.ResourceGroup `
+					-Name $azskModule
+			if(($azskModuleWithVersion|Measure-Object).Count -ne 0)
+			{
+				$azskVersion = $azskModuleWithVersion.Version;
+			}
+		}
+		
+		if(-not [string]::IsNullOrWhiteSpace($azskVersion))
+		{
+			$azskdependentModules += $this.GetDependentModules($azskModule,$azskVersion)
 		}
 		else
 		{
@@ -3243,15 +3263,20 @@ class CCAutomation: CommandBase
 		$dependentModules = @()
 		$this.OutputObject.Modules = @() 
 		
+		#get the dependent modules as per server config
+		$azskModuleName = $this.GetModuleName();
+		$serverVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($azskModuleName));
+
 		#Check if module is in intended state
-		$automationModuleResult = $this.CheckCAModuleHealth($automationModuleName)
+		#check whether automation module is in healthy and required version state. Since profile is dependent of Automation module, it will also get checked as  part of automation module
+		$automationModuleResult = $this.CheckCAModuleHealth($automationModuleName, $serverVersion)
 		$dependentModules = $this.GetDependentModules($automationModuleName,$automationModuleResult.moduleVersion)
 		
 		#check health of dependent modules and fix if unhealthy
 		$dependentModules|ForEach-Object{
 			$currentModuleName = $_.Name
             $this.PublishCustomMessage("Inspecting CA module: [$currentModuleName]")
-			$dependentModuleResult = $this.CheckCAModuleHealth($currentModuleName)
+			$dependentModuleResult = $this.CheckCAModuleHealth($currentModuleName, $serverVersion)
 			#dependent module is not in expected state
 			if($dependentModuleResult.isModuleValid -ne $true)
 			{
@@ -3264,7 +3289,7 @@ class CCAutomation: CommandBase
 				$this.PublishCustomMessage("Found module: [$currentModuleName]")
 			}
 		}
-		$storageModuleResult = $this.CheckCAModuleHealth($storageModuleName)
+		$storageModuleResult = $this.CheckCAModuleHealth($storageModuleName, $serverVersion)
 		if($storageModuleResult.isModuleValid -ne $true)
 		{
 			$this.UploadModule($storageModuleName,$storageModuleResult.moduleVersion)
@@ -3278,14 +3303,17 @@ class CCAutomation: CommandBase
 		$deleteModuleList = Get-AzureRmAutomationModule -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name  -ErrorAction SilentlyContinue | `
         Where-Object {$_.Name -eq "AzureRm" -or $_.Name -ilike 'azsk*'} 
         
-        if(($deleteModuleList|Measure-Object).Count)
+        if(($deleteModuleList|Measure-Object).Count -gt 0)
         {
             $deleteModuleList | ForEach-Object{
                 $this.PublishCustomMessage("Deleting module: [$($_.Name)] from the account...")   
                 Remove-AzureRmAutomationModule -Name $deleteModuleList.Name -AutomationAccountName $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup -Force -ErrorAction SilentlyContinue
 			}
 			$this.PublishCustomMessage("Required modules will be imported automatically when the next CA scan commences.")
-        }
+		}
+		
+		#start the runbook once the modules are fixed and runbook will try to complete the scan
+		Start-AzureRmAutomationRunbook -Name $this.RunbookName -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name -ErrorAction SilentlyContinue | Out-Null		 
 	}
 	
 	hidden [void] ResolveStorageCompliance($storageName,$ResourceId,$resourceGroup,$containerName)
@@ -3544,20 +3572,15 @@ class CCAutomation: CommandBase
 		#Check subscription access
 		if(($spPermissions|measure-object).count -gt 0)
 		{
-			$haveSubReaderAccess = ($spPermissions | Where-Object {$_.scope -eq "/subscriptions/$($currentContext.Subscription.Id)" -and $_.RoleDefinitionName -eq "Reader"}|Measure-Object).count -gt 0
-			$haveSubSecurityReaderAccess = ($spPermissions | Where-Object {$_.scope -eq "/subscriptions/$($currentContext.Subscription.Id)" -and $_.RoleDefinitionName -eq "Security Reader"}|Measure-Object).count -gt 0
-			if($haveSubReaderAccess -and $haveSubSecurityReaderAccess)
-			{
-				$haveSubscriptionAccess = $true
-			}
+			$haveSubscriptionAccess = ($spPermissions | Where-Object {$_.scope -eq "/subscriptions/$($currentContext.Subscription.Id)" -and $_.RoleDefinitionName -eq "Reader"}|Measure-Object).count -gt 0
 			if(($spPermissions | Where-Object {$_.scope -eq "/subscriptions/$($currentContext.Subscription.Id)" -and $_.RoleDefinitionName -eq "Contributor"}|Measure-Object).count -gt 0)
 			{
-				$this.PublishCustomMessage("WARNING: Service principal (Name: $($spPermissions[0].DisplayName)) configured as the CA RunAs Account has 'Contributor' access. This is not recommended.`r`nCA only requires 'Reader' and 'Security Reader' permissions at subscription scope for the RunAs account/SPN.",[MessageType]::Warning);
+				$this.PublishCustomMessage("WARNING: Service principal (Name: $($spPermissions[0].DisplayName)) configured as the CA RunAs Account has 'Contributor' access. This is not recommended.`r`nCA only requires 'Reader' permission at subscription scope for the RunAs account/SPN.",[MessageType]::Warning);
 				$haveSubscriptionAccess = $true;
 			}
 			if(($spPermissions | Where-Object {$_.scope -eq "/subscriptions/$($currentContext.Subscription.Id)" -and $_.RoleDefinitionName -eq "Owner"}|Measure-Object).count -gt 0)
 			{
-				$this.PublishCustomMessage("WARNING: Service principal (Name: $($spPermissions[0].DisplayName)) configured as the CA RunAs Account has 'Owner' access. This is not recommended.`r`nCA only requires 'Reader' and 'Security Reader' permissions at subscription scope for the RunAs account/SPN.",[MessageType]::Warning);
+				$this.PublishCustomMessage("WARNING: Service principal (Name: $($spPermissions[0].DisplayName)) configured as the CA RunAs Account has 'Owner' access. This is not recommended.`r`nCA only requires 'Reader' permission at subscription scope for the RunAs account/SPN.",[MessageType]::Warning);
 				$haveSubscriptionAccess = $true;
 			}
 			return $haveSubscriptionAccess	
@@ -3637,27 +3660,6 @@ class CCAutomation: CommandBase
 			throw ([SuppressedException]::new(("SPN permission could not be set"), [SuppressedExceptionType]::InvalidOperation))
 		}
 	}
-	hidden [void] SetSPSubscriptionSecurityReaderAccess($applicationId)
-	{
-		$SPNReaderRole = $null
-		$this.PublishCustomMessage("Adding SPN to [Security Reader] role at [Subscription] scope...")
-		$context = Get-AzureRmContext
-		$retryCount = 0;
-		While($null -eq $SPNReaderRole -and $retryCount -le 6)
-		{
-			#Assign RBAC to SPN - Security Reader at subscription level 
-			New-AzureRMRoleAssignment -RoleDefinitionName 'Security Reader' -ServicePrincipalName $applicationId -ErrorAction SilentlyContinue | Out-Null
-			Start-Sleep -Seconds 10
-			$SPNReaderRole = Get-AzureRmRoleAssignment -ServicePrincipalName $applicationId `
-			-Scope "/subscriptions/$($context.Subscription.Id)" `
-			-RoleDefinitionName 'Security Reader' -ErrorAction SilentlyContinue
-			$retryCount++;
-		}
-		if($null -eq $SPNReaderRole -and $retryCount -gt 6)
-		{
-			throw ([SuppressedException]::new(("SPN permission could not be set"), [SuppressedExceptionType]::InvalidOperation))
-		}
-	}
     hidden [void] SetSPNSubscriptionAccessIfNotAssigned($applicationId)
 	{
         #check SP permissions
@@ -3666,7 +3668,6 @@ class CCAutomation: CommandBase
 		if(!$haveSubscriptionAccess)
 		{
 			$this.SetSPSubscriptionReaderAccess($applicationId)
-			$this.SetSPSubscriptionSecurityReaderAccess($applicationId)
 		} 
     }
     hidden [void] SetSPNRGAccessIfNotAssigned($applicationId)

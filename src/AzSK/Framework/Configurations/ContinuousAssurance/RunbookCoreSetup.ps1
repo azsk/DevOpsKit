@@ -576,28 +576,37 @@ try
 	$jobs = Get-AzureRmAutomationJob -Name $RunbookName -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | Where-Object { $_.Status -in ("Queued", "Starting", "Resuming", "Running",  "Activating")}
 
 	ScheduleNewJob -intervalInMins $monitorjobIntervalMins
-	if(($jobs|Measure-Object).Count -gt 1)
-	{
-		$jobs|ForEach-Object{
-			#Automation account should have terminated the job after 3hrs (current default behavior). If not, let us stop it.
-			if(((GET-DATE).ToUniversalTime() - $_.StartTime.UtcDateTime).TotalMinutes -gt 210)
-			{
-				Stop-AzureRmAutomationJob -Id $_.JobId `
-					-ResourceGroupName $AutomationAccountRG `
-					-AutomationAccountName $AutomationAccountName
-			}
-			else
-			{
-				$Global:FoundExistingJob = $true;
-			}
-		}
-
-		#A job is already running. Let it take care of things....
-		if($Global:FoundExistingJob)
-		{
-			return;
-		}
-	}
+    $NoOfRecentActiveRunningJobs = 0    
+    if(($jobs|Measure-Object).Count -gt 1)
+    {
+        $jobs|ForEach-Object{
+            #Automation account should have terminated the job after 3hrs (current default behavior). If not, let us stop it.
+            if(((GET-DATE).ToUniversalTime() - $_.StartTime.UtcDateTime).TotalMinutes -gt 210)
+            {
+                $jobId = $_.JobId
+                try
+                {           
+                    Stop-AzureRmAutomationJob -Id $jobId -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName                  
+                }
+                catch
+                {
+                    #Eat exception as not able to stop the existing running job
+                    Write-Output ("CS: Error while stopping job [" + $jobId + "]")
+                }
+            }
+            else
+            {               
+                $NoOfRecentActiveRunningJobs = $NoOfRecentActiveRunningJobs + 1             
+            }
+        }       
+        
+        #A job is already running. Let it take care of things....       
+        if($NoOfRecentActiveRunningJobs -gt 1)
+        {
+            $Global:FoundExistingJob = $true;   
+            return;
+        }
+    }
 
 	#region: check modules health 
 	#Examine the AzSK module(s) currently present in the automation account

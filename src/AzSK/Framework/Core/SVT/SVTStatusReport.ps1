@@ -30,6 +30,7 @@ class SVTStatusReport : SVTCommandBase
 				$sscore.FilterTags = $this.FilterTags;
 				$sscore.ExcludeTags = $this.ExcludeTags;
 				$sscore.ControlIdString = $this.ControlIdString;
+				$sscore.ExcludeControlIdString = $this.ExcludeControlIdString;
 				$sscore.GenerateFixScript = $this.GenerateFixScript;
 				$sscore.AttestationOptions = $this.AttestationOptions;
 
@@ -54,6 +55,7 @@ class SVTStatusReport : SVTCommandBase
 				$secStatus.FilterTags = $this.FilterTags;
 				$secStatus.ExcludeTags = $this.ExcludeTags;
 				$secStatus.ControlIdString = $this.ControlIdString;
+				$secStatus.ExcludeControlIdString = $this.ExcludeControlIdString;
 				$secStatus.GenerateFixScript = $this.GenerateFixScript;
 				$secStatus.AttestationOptions = $this.AttestationOptions;
 

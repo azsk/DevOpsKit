@@ -312,6 +312,7 @@
     <Content Include="Framework\Configurations\SVT\Services\DataFactoryV2.json" />
     <Content Include="Framework\Configurations\SVT\Services\EventHub.json" />
     <Content Include="Framework\Configurations\SVT\Services\ERvNet.json" />
+    <Content Include="Framework\Configurations\SVT\Services\HDInsight.json" />
     <Content Include="Framework\Configurations\SVT\Services\LoadBalancer.json" />
     <Content Include="Framework\Configurations\SVT\Services\LogicApps.json" />
     <Content Include="Framework\Configurations\SVT\Services\RedisCache.json" />

@@ -35,26 +35,52 @@ class SQLDatabaseFix: FixServicesBase
 		return $detailedLogs;
     }
 
-	[MessageData[]] FixSqlDatabaseTDE([PSObject] $parameters, [string] $databaseName)
+	[MessageData[]] FixSqlDatabaseTDE([PSObject] $parameters)
     {
 		[MessageData[]] $detailedLogs = @();		
-        $dbstatus = Get-AzureRmSqlDatabase -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName -DatabaseName $databaseName
-        if($dbstatus.Status -eq 'Online')
-        {
-			$detailedLogs += [MessageData]::new("Enabling SQL TDE on database [$databaseName]...");
-            $tdeStatus = Set-AzureRmSqlDatabaseTransparentDataEncryption `
-                            -ResourceGroupName $this.ResourceGroupName `
-                            -ServerName $this.ResourceName `
-                            -DatabaseName $databaseName `
-                            -State Enabled `
-                            -ErrorAction Stop
+		try
+		{
+			$sqlDatabases = @();
+			$sqlDatabases += Get-AzureRmSqlDatabase -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName -ErrorAction Stop |
+									Where-Object { $_.DatabaseName -ne "master" }
+			$sqlDatabases | ForEach-Object {
+				$database = $_
+				if($database.Status -eq 'Online')
+				{
+					try {
+						$tdeStatus = Get-AzureRmSqlDatabaseTransparentDataEncryption `
+										-ResourceGroupName $this.ResourceGroupName `
+										-ServerName $this.ResourceName `
+										-DatabaseName $database.DatabaseName `
+										-ErrorAction Stop
+
+						if($tdeStatus.State -ne [TransparentDataEncryptionStateType]::Enabled) {
+							$detailedLogs += [MessageData]::new("Enabling SQL TDE on database [$($database.DatabaseName)]...");
+							$tdeStatus = Set-AzureRmSqlDatabaseTransparentDataEncryption `
+											-ResourceGroupName $this.ResourceGroupName `
+											-ServerName $this.ResourceName `
+											-DatabaseName $database.DatabaseName `
+											-State Enabled `
+											-ErrorAction Stop
 	   		
-			$detailedLogs += [MessageData]::new("SQL TDE has been enabled on database [$databaseName]", $tdeStatus);
-        }
-        else
-        {
-	   		$detailedLogs += $this.PublishCustomMessage("The database [$databaseName] is offline, run the script again when resource is online", [MessageType]::Warning);
-        }
+							$detailedLogs += [MessageData]::new("SQL TDE has been enabled on database [$($database.DatabaseName)]", $tdeStatus);
+						}
+					}
+					catch {
+						$detailedLogs += [MessageData]::new("Error while fetching TDE status of database [$($database.DatabaseName)]");
+					}
+				}
+				else
+				{
+	   				$detailedLogs += $this.PublishCustomMessage("The database [$($database.DatabaseName)] is offline, run the script again when resource is online", [MessageType]::Warning);
+				}
+			}
+		}
+		catch
+		{
+			$detailedLogs += [MessageData]::new("Error while fetching databases of SQL Server [$this.ResourceName]");
+		}
+        
 		return $detailedLogs;
     }
 

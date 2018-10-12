@@ -17,7 +17,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "NetSec"
+        "NetSec",
+        "ContainerInstances"
       ]
     },
     {
@@ -34,7 +35,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "SI"
+        "SI",
+        "ContainerInstances"
       ]
     },
     {
@@ -51,7 +53,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "DP"
+        "DP",
+        "ContainerInstances"
       ]
     },
     {
@@ -68,7 +71,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthZ"
+        "AuthZ",
+        "ContainerInstances"
       ]
     }
   ]
