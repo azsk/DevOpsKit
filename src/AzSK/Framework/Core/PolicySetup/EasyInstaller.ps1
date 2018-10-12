@@ -133,7 +133,8 @@ function BootstrapSetup ($moduleName, $versionConfigUrl)
 	{	 
          #$CurrentModulePath= (Get-Item -Path ($setupModule | Select-Object -First 1).ModuleBase).Parent.Parent.FullName
          #$setupModule = $setupModule |  Where-Object { $_.ModuleBase.Contains($CurrentModulePath)}
-	 $setupModule = $setupModule | Where-Object { $_.ModuleBase -like '$($env:USERPROFILE)*'} | Sort-Object -Property Version -Descending | Select-Object -First 1
+		 #$setupModule = $setupModule | Where-Object { $_.ModuleBase -like '$($env:USERPROFILE)*'} | Sort-Object -Property Version -Descending | Select-Object -First 1
+		$setupModule = $setupModule | Where-Object { $_.ModuleBase.Contains($($env:USERPROFILE))} | Sort-Object -Property Version -Descending | Select-Object -First 1
 	}
 
 	if($null -ne $setupModule -and $null -ne $setupLatestModule -and $setupModule.Version -eq $setupLatestModule.Version)

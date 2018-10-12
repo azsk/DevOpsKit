@@ -17,7 +17,8 @@
         "TCP",
         "Automated",
         "AuthZ",
-        "RBAC"
+        "RBAC",
+        "Batch"
       ],
       "Enabled": true
     },
@@ -35,7 +36,8 @@
         "TCP",
         "Manual",
         "Information",
-        "DP"
+        "DP",
+        "Batch"
       ],
       "Enabled": true
     },
@@ -52,7 +54,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "DP"
+        "DP",
+        "Batch"
       ],
       "Enabled": true
     },
@@ -69,7 +72,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "DP"
+        "DP",
+        "Batch"
       ],
       "Enabled": true
     },
@@ -86,7 +90,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "NetSec"
+        "NetSec",
+        "Batch"
       ],
       "Enabled": true
     },
@@ -103,7 +108,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "BCDR"
+        "BCDR",
+        "Batch"
       ],
       "Enabled": true
     },
@@ -121,7 +127,8 @@
         "TCP",
         "Automated",
         "Audit",
-        "Diagnostics"
+        "Diagnostics",
+        "Batch"
       ],
       "Enabled": true
     },
@@ -138,7 +145,8 @@
         "SDL",
         "Best Practice",
         "Automated",
-        "Audit"
+        "Audit",
+        "Batch"
       ],
       "Enabled": true
     }

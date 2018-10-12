@@ -325,7 +325,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "Azure_ServiceFabric_DP_Reverse_Proxy_SSL_Secured",
+      "ControlID": "Azure_ServiceFabric_DP_Reverse_Proxy_Use_SSL",
       "Description": "Reverse proxy service should be secured using SSL",
       "Id": "ServiceFabric280",
       "ControlSeverity": "Medium",
@@ -351,7 +351,7 @@
       "Automated": "Yes",
       "MethodName": "CheckReverseProxyPort",
       "Rationale": "Configuring the reverse proxy's port in Load Balancer with public IP will expose all microservices with HTTP endpoint. Microservices meant to be internal may be discoverable by a determined malicious user.",
-      "Recommendation": "Check that reverse proxy port must not be exposed through Azure load balancer rules as follows: Azure Portal --> Load Balancers --> <Load Balancer Name> --> Load Balancing Rules --> Validate reverse proxy port should not be exposed.",
+      "Recommendation": "Check that reverse proxy port is not be exposed through Azure Load Balancer rules as follows: Azure Portal --> Load Balancers --> <Load Balancer Name> --> Load Balancing Rules --> Validate reverse proxy port is not exposed.",
       "Tags": [
         "SDL",
         "TCP",
@@ -369,7 +369,7 @@
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckClusterUpgradeMode",
-      "Rationale": "Clusters with unsupported fabric version are easy targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in software.",
+      "Rationale": "Clusters with unsupported fabric version can become targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in software.",
       "Recommendation": "You can set your cluster to receive automatic fabric upgrades as they are released by Microsoft, for details please refer: https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-upgrade",
       "Tags": [
         "SDL",
