@@ -17,7 +17,8 @@
           "TCP",
           "Automated",
           "AuthZ",
-          "RBAC"
+          "RBAC",
+          "Search"
         ],
         "Enabled": true
       },
@@ -34,7 +35,8 @@
           "SDL",
           "Best Practice",
           "Manual",
-          "AuthZ"
+          "AuthZ",
+          "Search"
         ],
         "Enabled": true
       },
@@ -51,7 +53,8 @@
           "SDL",
           "TCP",
           "Manual",
-          "DP"
+          "DP",
+          "Search"
         ],
         "Enabled": true
       },
@@ -68,7 +71,8 @@
           "SDL",
           "TCP",
           "Manual",
-          "DP"
+          "DP",
+          "Search"
         ],
         "Enabled": true
       },
@@ -85,7 +89,8 @@
           "SDL",
           "TCP",
           "Manual",
-          "AuthZ"
+          "AuthZ",
+          "Search"
         ],
         "Enabled": true
       },
@@ -102,7 +107,8 @@
           "SDL",
           "TCP",
           "Manual",
-          "AuthZ"
+          "AuthZ",
+          "Search"
         ],
         "Enabled": true
       },
@@ -119,7 +125,8 @@
           "SDL",
           "TCP",
           "Automated",
-          "Availability"
+          "Availability",
+          "Search"
         ],
         "Enabled": true
       },
@@ -137,7 +144,8 @@
           "TCP",
           "Automated",
           "Audit",
-          "Diagnostics"
+          "Diagnostics",
+          "Search"
         ],
         "Enabled": true
       }
