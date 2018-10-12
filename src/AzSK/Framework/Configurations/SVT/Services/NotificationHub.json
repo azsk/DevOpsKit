@@ -48,7 +48,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "A 'namespace' level access policy provides access to all Notification Hubs in a namespace. However, using an access policy at Notification Hub level provides access only to the specific Notification Hub. Thus using the latter is inline with the principle of least privilege.",
-      "Recommendation": "Create access policies for the respective Notification Hub representing the least access required and use them. Refer: https://docs.microsoft.com/en-us/azure/notification-hubs/notification-hubs-push-notification-overview",
+      "Recommendation": "Create access policies for the respective Notification Hub representing the least access required and use them. Refer: https://docs.microsoft.com/en-us/azure/notification-hubs/notification-hubs-push-notification-security",
       "Tags": [
         "SDL",
         "TCP",
