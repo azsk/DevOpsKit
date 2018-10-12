@@ -16,7 +16,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "Deploy"
+        "Deploy",
+        "NotificationHub"
       ],
       "Enabled": true
     },
@@ -34,7 +35,8 @@
         "TCP",
         "Automated",
         "AuthZ",
-        "RBAC"
+        "RBAC",
+        "NotificationHub"
       ],
       "Enabled": true
     },
@@ -46,12 +48,13 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "A 'namespace' level access policy provides access to all Notification Hubs in a namespace. However, using an access policy at Notification Hub level provides access only to the specific Notification Hub. Thus using the latter is inline with the principle of least privilege.",
-      "Recommendation": "Create access policies for the respective Notification Hub representing the least access required and use them. Refer: https://docs.microsoft.com/en-us/azure/notification-hubs/notification-hubs-push-notification-overview",
+      "Recommendation": "Create access policies for the respective Notification Hub representing the least access required and use them. Refer: https://docs.microsoft.com/en-us/azure/notification-hubs/notification-hubs-push-notification-security",
       "Tags": [
         "SDL",
         "TCP",
         "Manual",
-        "AuthZ"
+        "AuthZ",
+        "NotificationHub"
       ],
       "Enabled": true
     },
@@ -68,7 +71,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "AuthZ"
+        "AuthZ",
+        "NotificationHub"
       ],
       "Enabled": true
     },
@@ -85,7 +89,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthZ"
+        "AuthZ",
+        "NotificationHub"
       ],
       "Enabled": true
     },
@@ -102,7 +107,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "Deploy"
+        "Deploy",
+        "NotificationHub"
       ],
       "Enabled": true
     },
@@ -120,7 +126,8 @@
         "TCP",
         "Manual",
         "DP",
-        "SecIntell"
+        "SecIntell",
+        "NotificationHub"
       ],
       "Enabled": true
     },
@@ -137,7 +144,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "AuthZ"
+        "AuthZ",
+        "NotificationHub"
       ],
       "Enabled": true
     },
@@ -154,7 +162,8 @@
         "SDL",
         "Information",
         "Manual",
-        "Audit"
+        "Audit",
+        "NotificationHub"
       ],
       "Enabled": true
     },
@@ -170,7 +179,8 @@
       "Tags": [
         "SDL",
         "Manual",
-        "BCDR"
+        "BCDR",
+        "NotificationHub"
       ],
       "Enabled": true
     }
