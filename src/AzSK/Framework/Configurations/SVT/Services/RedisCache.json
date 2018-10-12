@@ -17,7 +17,8 @@
         "TCP",
         "Automated",
         "AuthZ",
-        "RBAC"
+        "RBAC",
+        "RedisCache"
       ],
       "Enabled": true
     },
@@ -35,7 +36,8 @@
         "TCP",
         "Manual",
         "Audit",
-        "Diagnostics"
+        "Diagnostics",
+        "RedisCache"
       ],
       "Enabled": true
     },
@@ -52,7 +54,8 @@
         "SDL",
         "Best Practice",
         "Automated",
-        "AuthZ"
+        "AuthZ",
+        "RedisCache"
       ],
       "Enabled": true
     },
@@ -69,7 +72,8 @@
         "SDL",
         "Best Practice",
         "Automated",
-        "BCDR"        
+        "BCDR" ,
+        "RedisCache"       
       ],
       "Enabled": true
     },
@@ -86,7 +90,8 @@
          "SDL",
          "TCP",
          "Automated",
-         "DP"
+         "DP",
+         "RedisCache"
       ],
       "Enabled": true,
       "FixControl": {
@@ -107,7 +112,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "DP"
+        "DP",
+        "RedisCache"
       ],
       "Enabled": true
     },
@@ -124,7 +130,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "AuthN"
+        "AuthN",
+        "RedisCache"
       ],
       "Enabled": true
     },
@@ -141,7 +148,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "NetSec"
+        "NetSec",
+        "RedisCache"
       ],
       "Enabled": true
     }

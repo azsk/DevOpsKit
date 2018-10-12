@@ -17,7 +17,8 @@
           "SDL",
           "TCP",
           "Automated",
-          "AuthZ"
+          "AuthZ",
+          "ContainerRegistry"
         ],
         "FixControl": {
           "FixMethodName": "DisableAdminAccount",
@@ -37,10 +38,11 @@
         "Tags": [
             "SDL",
             "TCP",
-            "Manual",
+            "Automated",
             "AuthZ",
             "OwnerAccess",
-            "GraphRead"
+            "GraphRead",
+            "ContainerRegistry"
         ]
       },
       {
@@ -57,7 +59,8 @@
           "SDL",
           "TCP",
           "Manual",
-          "SI"
+          "SI",
+          "ContainerRegistry"
         ]
       },
       {
@@ -74,7 +77,8 @@
           "TCP",
           "Automated",
           "AuthZ",
-          "RBAC"
+          "RBAC",
+          "ContainerRegistry"
         ],
         "Enabled": true
       },
@@ -90,8 +94,9 @@
         "Tags": [
           "SDL",
           "Best Practice",
-          "Manual",
-          "Config"          
+          "Automated",
+          "Config",
+          "ContainerRegistry"         
         ],
         "Enabled": true
       },
@@ -108,7 +113,8 @@
           "SDL",
           "Best Practice",
           "Manual",
-          "Config"          
+          "Config" ,
+          "ContainerRegistry"         
         ],
         "Enabled": true
       },
@@ -125,8 +131,9 @@
         "Tags": [
           "SDL",
           "Best Practice",
-          "Manual",
-          "DP"
+          "Automated",
+          "DP",
+          "ContainerRegistry"
         ]
       },
       {
@@ -142,7 +149,8 @@
           "SDL",
           "Best Practice",
           "Manual",
-          "Audit"
+          "Audit",
+          "ContainerRegistry"
         ],
         "Enabled": true
       },
