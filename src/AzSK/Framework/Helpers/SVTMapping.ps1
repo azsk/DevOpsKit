@@ -257,6 +257,12 @@ class SVTMapping
 			ClassName = "HDInsight";
 			JsonFileName = "HDInsight.json";
 			ResourceTypeName = "HDInsight";
+        },
+		[ResourceTypeMapping]@{
+            ResourceType = "";
+			ClassName = "";
+			JsonFileName = "ApplicationProxy.json";
+			ResourceTypeName = "";
         }
     );
 
