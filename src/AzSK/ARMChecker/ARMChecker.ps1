@@ -41,7 +41,7 @@ function Get-AzSKARMTemplateSecurityStatus
 		[Alias("rcs")]
         $Recurse,
 
-		[Parameter(Mandatory = $true, HelpMessage = "To use Preview feature")]
+		[Parameter(Mandatory = $false, HelpMessage = "To use Preview feature")]
         [switch]       
 		[Alias("prv")]
         $Preview,
