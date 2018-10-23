@@ -11,9 +11,6 @@ function Get-AzSKARMTemplateSecurityStatus
 	.PARAMETER ARMTemplatePath
 		Path to ARM Template file or folder
 
-    .PARAMETER Preview
-		To use Preview feature
-
     .PARAMETER Recurse
 		Gets the ARM Temaplates in the specified locations and in all child folders of the locations	
 
@@ -40,11 +37,6 @@ function Get-AzSKARMTemplateSecurityStatus
         [switch]  
 		[Alias("rcs")]
         $Recurse,
-
-		[Parameter(Mandatory = $false, HelpMessage = "To use Preview feature")]
-        [switch]       
-		[Alias("prv")]
-        $Preview,
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not")]
