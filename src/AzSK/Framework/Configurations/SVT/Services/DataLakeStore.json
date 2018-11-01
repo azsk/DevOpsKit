@@ -165,6 +165,7 @@
         "Diagnostics",
         "DataLakeStore"
       ],
+      "PolicyDefinitionGuid":"057ef27e-665e-4328-8ea3-04b3122bd9fb",
       "Enabled": true
     },
     {
