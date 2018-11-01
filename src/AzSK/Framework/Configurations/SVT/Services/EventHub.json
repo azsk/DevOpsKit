@@ -191,6 +191,7 @@
         "Diagnostics",
         "EventHub"
       ],
+      "PolicyDefinitionGuid":"83a214f7-d01a-484b-91a9-ed54470c9a6a",
       "Enabled": true
     }
   ]

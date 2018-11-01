@@ -154,6 +154,7 @@
                                       "Diagnostics",
                                       "KeyVault"
                                   ],
+                         "PolicyDefinitionGuid":"cf820ca0-f99e-4f3e-84fb-66e913812d21",        
                          "Enabled":  true
                      },
                      {
