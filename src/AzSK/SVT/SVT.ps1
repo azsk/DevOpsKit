@@ -70,20 +70,20 @@ function Get-AzSKAzureServicesSecurityStatus
         [string]
         [Parameter(Position = 1,Mandatory = $false, ParameterSetName = "ResourceFilter")]
         [Parameter(Mandatory = $false, ParameterSetName = "BulkAttestation")]
-        [Parameter(Mandatory = $false, ParameterSetName = "BulkAttestationClear")]
+		[Parameter(Mandatory = $false, ParameterSetName = "BulkAttestationClear")]
 		[Alias("rgns")]
 		$ResourceGroupNames,
         
         [string]
         [Parameter(Mandatory = $false, ParameterSetName = "ResourceFilter")]
 		[Parameter(Mandatory = $false, ParameterSetName = "BulkAttestation")]
-        [Parameter(Mandatory = $false, ParameterSetName = "BulkAttestationClear")]
+		[Parameter(Mandatory = $false, ParameterSetName = "BulkAttestationClear")]
 		[Alias("rt")]
 		$ResourceType,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "ResourceFilter")]
 		[Parameter(Mandatory = $false, ParameterSetName = "BulkAttestation")]
-        [Parameter(Mandatory = $false, ParameterSetName = "BulkAttestationClear")]
+		[Parameter(Mandatory = $false, ParameterSetName = "BulkAttestationClear")]
 		[ResourceTypeName]
 		[Alias("rtn")]
 		$ResourceTypeName = [ResourceTypeName]::All,
@@ -183,14 +183,24 @@ function Get-AzSKAzureServicesSecurityStatus
 
 		[Parameter(Mandatory = $false)]
 		[Alias("xrtn")]
+		
 		[ResourceTypeName]
 		$ExcludeResourceTypeName = [ResourceTypeName]::All,
 
 		[string] 
 		[Parameter(Mandatory = $false)]
+		
 		[Alias("xcids")]
 		[AllowEmptyString()]
-		$ExcludeControlIds
+		$ExcludeControlIds,
+
+		[string]
+		[Alias("xrgns")]
+		$ExcludeResourceGroupNames,
+
+		[string]
+		[Alias("xrns")]
+		$ExcludeResourceNames
     )
 
 	Begin
@@ -203,10 +213,11 @@ function Get-AzSKAzureServicesSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName);			
+			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName, $ExcludeResourceNames,$ExcludeResourceGroupNames);			
 			$resolver.Tag = $Tag;
 			$resolver.TagName = $TagName;
-			$resolver.TagValue = $TagValue;			
+			$resolver.TagValue = $TagValue;	
+
 
 			$secStatus = [ServicesSecurityStatus]::new($SubscriptionId, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 

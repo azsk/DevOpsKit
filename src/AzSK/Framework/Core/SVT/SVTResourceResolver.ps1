@@ -2,7 +2,7 @@ Set-StrictMode -Version Latest
 
 class SVTResourceResolver: AzSKRoot
 {
-    [string[]] $ResourceNames = @();
+	[string[]] $ResourceNames = @();
     [string] $ResourceType = "";
     [ResourceTypeName] $ResourceTypeName = [ResourceTypeName]::All;
 	[Hashtable] $Tag = $null;
@@ -10,7 +10,12 @@ class SVTResourceResolver: AzSKRoot
     [string] $TagValue = "";
 	hidden [string[]] $ResourceGroups = @();
 	[ResourceTypeName] $ExcludeResourceTypeName = [ResourceTypeName]::All;
-
+	[string[]] $ExcludeResourceNames=@();
+	[string[]] $ExcludedResourceNames=@();
+	[string] $ExcludeResourceWarningMessage=[string]::Empty
+	[string[]] $ExcludeResourceGroupNames=@();
+	[string[]] $ExcludedResourceGroupNames=@();
+	[string] $ExcludeResourceGroupWarningMessage=[string]::Empty
 	[SVTResource[]] $SVTResources = @();
 	
 	# Indicates to fetch all resource groups
@@ -18,12 +23,13 @@ class SVTResourceResolver: AzSKRoot
 		Base($subscriptionId)
 	{ }
 
-	SVTResourceResolver([string] $subscriptionId, [string] $resourceGroupNames, [string] $resourceNames, [string] $resourceType, [ResourceTypeName] $resourceTypeName, [ResourceTypeName] $excludeResourceTypeName = [ResourceTypeName]::All):
+	SVTResourceResolver([string] $subscriptionId, [string] $resourceGroupNames, [string] $resourceNames, [string] $resourceType, [ResourceTypeName] $resourceTypeName, [ResourceTypeName] $excludeResourceTypeName = [ResourceTypeName]::All, [string] $excludeResourceName , [string] $excludeResourceGroupName):
 		Base($subscriptionId)
 	{
 		$this.ResourceType = $resourceType;
 		$this.ResourceTypeName = $resourceTypeName;
 		$this.ExcludeResourceTypeName = $excludeResourceTypeName;
+		
 
 		#throw if user has set params for ResourceTypeName and ResourceType
 		#Default value of ResourceTypeName is All.
@@ -52,6 +58,38 @@ class SVTResourceResolver: AzSKRoot
 				throw [SuppressedException] "The parameter 'ResourceNames' does not contain any string."
 			}
 		}
+		if(-not [string]::IsNullOrEmpty($excludeResourceName))
+		{
+			if([string]::IsNullOrEmpty($resourceNames))
+			{
+				$this.ExcludeResourceNames += $this.ConvertToStringArray($excludeResourceName)
+				if ($this.ExcludeResourceNames.Count -eq 0)
+				{
+					throw [SuppressedException] "The parameter 'ExcludeResourceNames' does not contain any string."
+				}
+			}
+			else 
+			{
+				 throw [SuppressedException] "Both the parameters 'ResourceNames' and 'ExcludeResourceNames' contains values. You should use only one of these parameters."
+			}	
+		}
+		if(-not [string]::IsNullOrEmpty($excludeResourceGroupName))
+		{
+			if([string]::IsNullOrEmpty($resourceGroupNames))
+			{
+				$this.ExcludeResourceGroupNames += $this.ConvertToStringArray($excludeResourceGroupName)
+				if ($this.ExcludeResourceGroupNames.Count -eq 0)
+				{
+					throw [SuppressedException] "The parameter 'ExcludeResourceGroupNames' does not contain any string."
+				}
+			}
+			else 
+			{
+				throw [SuppressedException] "Both the parameters 'ResourceGroupNames' and 'ExcludeResourceGroupNames' contains values. You should use only one of these parameters."
+			}	
+		}
+
+
 	}
 
 	[void] LoadAzureResources()
@@ -94,6 +132,7 @@ class SVTResourceResolver: AzSKRoot
 			{
 				#Target resource group param is not passed. Pass appropriate input params
 				$resources += $this.FindAzureRmResource("");
+				
 			}
 			else
 			{
@@ -112,7 +151,8 @@ class SVTResourceResolver: AzSKRoot
 					}
 				}
 			}
-
+			
+			$resources=$this.ApplyResourceFilter($resources);
 			if($resources.Count -eq 0)
 			{
 				throw ([SuppressedException]::new(("Could not find any resources that match the specified criteria."), [SuppressedExceptionType]::InvalidOperation))
@@ -126,7 +166,8 @@ class SVTResourceResolver: AzSKRoot
 				$this.SVTResources+=$AzSKCfgResource
 			}		
 
-			$resources | Where-Object { $this.ResourceNames.Count -le 1 -or $this.ResourceNames -contains $_.Name} | ForEach-Object {
+			
+			$resources | Where-Object { $this.ResourceNames.Count -le 1 -or $this.ResourceNames -contains $_.Name  } | ForEach-Object {
 				$resource = $_
 				$svtResource = [SVTResource]::new();
 				$svtResource.ResourceId = $resource.ResourceId;
@@ -157,7 +198,10 @@ class SVTResourceResolver: AzSKRoot
 											Select-Object -First 1);
 				}
 
-				# Checking if Vnet is ErVNet or not
+
+				# Exclude Resource Name
+
+            	# Checking if Vnet is ErVNet or not
 				if($svtResource.ResourceTypeMapping -and $svtResource.ResourceTypeMapping.ResourceTypeName -eq [SVTMapping]::VirtualNetworkTypeName)
 				{
 					if(-not $erVnetResourceGroups)
@@ -260,5 +304,82 @@ class SVTResourceResolver: AzSKRoot
 		return $result;
 	}
 	
+	hidden [System.Object[]] ApplyResourceFilter($resources)
+	{
+		$ResourceFilterMessage=[string]::Empty
+		$ResourceGroupFilterMessage=[string]::Empty
+				# $startMs=(Get-Date).Millisecond;	
+		#First remove resource from the RGs specified in -ExcludeResourceGroupNames
+		if(-not [string]::IsNullOrEmpty($this.ExcludeResourceGroupNames) )
+		{
+			$matchingRGs= $this.ExcludeResourceGroupNames | Where-Object{$_ -in $resources.ResourceGroupName}
+			$nonExistingRGS = $this.ExcludeResourceGroupNames | Where-Object{$_ -notin $matchingRGs}
+			if(($nonExistingRGS| Measure-Object).Count -gt 0)
+			{
+				$ResourceGroupFilterMessage+="ResourceGroup(s) specified in -ExcludeResourceGroupNames [$($nonExistingRGS -join ",")] are not found in the subscription."
+				#print the message saying these RGS provided in #xcludeRGS are not found
+			}
+			if(($matchingRGs| Measure-Object).Count -gt 0 )
+			{
+				if(-not [string]::IsNullOrEmpty($this.ExcludeResourceNames))
+				{
+					$coincidingResources = $resources | Where-Object {$_.Name -in $this.ExcludeResourceNames -and $_.ResourceGroupName -in $matchingRGs}
+					if(($coincidingResources| Measure-Object).Count -gt 0)
+					{
+						$this.ExcludeResourceNames = $this.ExcludeResourceNames | Where-Object {$_ -notin $coincidingResources.Name}
+					}
+				}
+				$excludedRes= $resources| Where-Object{$_.ResourceGroupName -in $matchingRGs}
+				$this.ExcludedResourceNames+=$excludedRes.Name
+				$resources = $resources | Where-Object {$_.ResourceGroupName -notin $matchingRGs}
+				$this.ExcludedResourceGroupNames+=$matchingRGs
+			}
+			else 
+			{
+				$this.ExcludedResourceGroupNames=$null
+				#no matching resource group found to be exclude
+			}
+			
+		}
+		#Remove resources specified in -ExcludeResourceNames
+		if(-not [string]::IsNullOrEmpty($this.ExcludeResourceNames))
+		{
+			# check if resources specified in -xrns exist. If not then show a warning for those resources.
+			$ResourcesToExclude =$this.ExcludeResourceNames
+			$NonExistingResource = $this.ExcludeResourceNames | Where-Object { $_ -notin $resources.Name}
+			if(($NonExistingResource | Measure-Object).Count -gt 0 )
+			{
+				$ResourcesToExclude = $this.ExcludeResourceNames | Where-Object{ $_ -notin $NonExistingResource }
+				$ResourceFilterMessage+="Resource(s) specified in '-ExcludeResourceNames' [ $($NonExistingResource -join ",")] are not found in the sepecified criteria.";
+			}	
+			#check if duplicate resources names if exist in -xrns
+			$matchingResources = $resources | Where-Object { $_.Name -in $this.ExcludeResourceNames}
+			if(($matchingResources | Measure-Object).Count -gt 0)
+			{
+				$duplicateResourceNames= $matchingResources | Group-Object -Property Name 
+				$duplicateResourceNamesPrint = $duplicateResourceNames | Where-Object { $_.Count -gt 1} 
+				$matchingDuplicateRes= $duplicateResourceNamesPrint | Select-Object -Property Name
+				if(($matchingDuplicateRes| Measure-Object).Count -gt 0 )
+				{
+					$ResourceFilterMessage+="`nFound multiple matches with same resource name for '[$($duplicateResourceNamesPrint.Name -join ", ")]' specified in -ExcludeResourceNames.`nAll matching resources will be excluded from scan."
+						
+				}
+				#Excluding the matching resources provided in -ExcludeResourceName from resourcelist for security scan 
+				if(($ResourcesToExclude| Measure-Object).Count -gt 0)
+				{
+					$resources = $resources | Where-Object { $_.Name -notin $ResourcesToExclude}
+					$this.ExcludedResourceNames+=$ResourcesToExclude
+				}
+				
+			}
+					
+		}
+		$this.ExcludeResourceWarningMessage=$ResourceFilterMessage;
+		$this.ExcludeResourceGroupWarningMessage=$ResourceGroupFilterMessage
+		# $end=(Get-Date).Millisecond
+		# Write-Host "time taken =$($Startms-$end)"
+		 return $resources
+	
+	}
 }
 
