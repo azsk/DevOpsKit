@@ -17,7 +17,8 @@
         "TCP",
         "Automated",
         "AuthZ",
-        "RBAC"
+        "RBAC",
+        "Batch"
       ],
       "Enabled": true
     },
@@ -35,7 +36,8 @@
         "TCP",
         "Manual",
         "Information",
-        "DP"
+        "DP",
+        "Batch"
       ],
       "Enabled": true
     },
@@ -52,7 +54,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "DP"
+        "DP",
+        "Batch"
       ],
       "Enabled": true
     },
@@ -69,7 +72,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "DP"
+        "DP",
+        "Batch"
       ],
       "Enabled": true
     },
@@ -86,7 +90,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "NetSec"
+        "NetSec",
+        "Batch"
       ],
       "Enabled": true
     },
@@ -103,7 +108,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "BCDR"
+        "BCDR",
+        "Batch"
       ],
       "Enabled": true
     },
@@ -115,14 +121,17 @@
       "Automated": "Yes",
       "MethodName": "CheckDiagnosticsSettings",
       "Rationale": "Logs should be retained for a long enough period so that activity trail can be recreated when investigations are required in the event of an incident or a compromise. A period of 1 year is typical for several compliance requirements as well.",
-      "Recommendation": "Run command: Set-AzureRmDiagnosticSetting -ResourceId {'ResourceId'} -Enable `$true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled `$true",
+      "Recommendation": "Run command: Set-AzureRmDiagnosticSetting -ResourceId {'ResourceId'} -Enable `$true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled `$true. Alternatively, you can also change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal",
       "Tags": [
         "SDL",
         "TCP",
         "Automated",
         "Audit",
-        "Diagnostics"
+        "Diagnostics",
+        "Batch"
       ],
+      "PolicyDefinitionGuid":"428256e6-1fac-4f48-a757-df34c2b3336d",
+      "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/428256e6-1fac-4f48-a757-df34c2b3336d",
       "Enabled": true
     },
     {
@@ -138,7 +147,8 @@
         "SDL",
         "Best Practice",
         "Automated",
-        "Audit"
+        "Audit",
+        "Batch"
       ],
       "Enabled": true
     }

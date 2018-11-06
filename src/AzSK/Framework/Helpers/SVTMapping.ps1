@@ -251,6 +251,18 @@ class SVTMapping
 			ClassName = "Databricks";
 			JsonFileName = "Databricks.json";
 			ResourceTypeName = "Databricks";
+        },
+        [ResourceTypeMapping]@{
+            ResourceType = "Microsoft.HDInsight/clusters";
+			ClassName = "HDInsight";
+			JsonFileName = "HDInsight.json";
+			ResourceTypeName = "HDInsight";
+        },
+		[ResourceTypeMapping]@{
+            ResourceType = "";
+			ClassName = "";
+			JsonFileName = "ApplicationProxy.json";
+			ResourceTypeName = "";
         }
     );
 

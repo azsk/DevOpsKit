@@ -19,9 +19,9 @@ catch
 . $PSScriptRoot\Models\CommandDetails.ps1
 . $PSScriptRoot\Models\Exception\SuppressedException.ps1
 . $PSScriptRoot\Models\RemoteReports\CsvOutputModel.ps1
+. $PSScriptRoot\Models\FeatureFlight.ps1
 . $PSScriptRoot\Helpers\CommandHelper.ps1
 . $PSScriptRoot\Abstracts\EventBase.ps1
-
 . $PSScriptRoot\Helpers\Helpers.ps1
 
 #Helpers (independent of models)
@@ -65,6 +65,7 @@ catch
 
 #Managers
 . $PSScriptRoot\Managers\ConfigurationManager.ps1
+. $PSScriptRoot\Managers\FeatureFlightingManager.ps1
 . $PSScriptRoot\Managers\ControlStateExtension.ps1
 . $PSScriptRoot\Managers\AzSKPDFExtension.ps1
 . $PSScriptRoot\Managers\PartialScanManager.ps1

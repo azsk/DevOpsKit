@@ -16,7 +16,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "Config"
+        "Config",
+        "ODG"
       ],
       "Enabled": true
     },
@@ -33,7 +34,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "DP"
+        "DP",
+        "ODG"
       ],
       "Enabled": true
     },
@@ -50,7 +52,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "ACL"
+        "ACL",
+        "ODG"
       ],
       "Enabled": true
     },
@@ -67,7 +70,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "ACL"
+        "ACL",
+        "ODG"
       ],
       "Enabled": true
     },
@@ -84,7 +88,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "BCDR"
+        "BCDR",
+        "ODG"
       ],
       "Enabled": true
     },
@@ -101,7 +106,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "AuthZ"
+        "AuthZ",
+        "ODG"
       ],
       "Enabled": true
     }

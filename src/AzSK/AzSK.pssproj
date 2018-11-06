@@ -304,6 +304,7 @@
     <Content Include="Framework\Configurations\SVT\AllResourceTypes.json" />
     <Content Include="Framework\Configurations\SVT\AzSKCfg\AzSKCfg.json" />
     <Content Include="Framework\Configurations\SVT\Services\APIConnection.json" />
+    <Content Include="Framework\Configurations\SVT\Services\ApplicationProxy.json" />
     <Content Include="Framework\Configurations\SVT\Services\BotService.json" />
     <Content Include="Framework\Configurations\SVT\Services\CDN.json" />
     <Content Include="Framework\Configurations\SVT\Services\CloudService.json" />
@@ -312,6 +313,7 @@
     <Content Include="Framework\Configurations\SVT\Services\DataFactoryV2.json" />
     <Content Include="Framework\Configurations\SVT\Services\EventHub.json" />
     <Content Include="Framework\Configurations\SVT\Services\ERvNet.json" />
+    <Content Include="Framework\Configurations\SVT\Services\HDInsight.json" />
     <Content Include="Framework\Configurations\SVT\Services\LoadBalancer.json" />
     <Content Include="Framework\Configurations\SVT\Services\LogicApps.json" />
     <Content Include="Framework\Configurations\SVT\Services\RedisCache.json" />

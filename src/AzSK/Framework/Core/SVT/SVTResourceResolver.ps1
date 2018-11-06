@@ -9,6 +9,7 @@ class SVTResourceResolver: AzSKRoot
     [string] $TagName = "";
     [string] $TagValue = "";
 	hidden [string[]] $ResourceGroups = @();
+	[ResourceTypeName] $ExcludeResourceTypeName = [ResourceTypeName]::All;
 
 	[SVTResource[]] $SVTResources = @();
 	
@@ -17,16 +18,21 @@ class SVTResourceResolver: AzSKRoot
 		Base($subscriptionId)
 	{ }
 
-	SVTResourceResolver([string] $subscriptionId, [string] $resourceGroupNames, [string] $resourceNames, [string] $resourceType, [ResourceTypeName] $resourceTypeName):
+	SVTResourceResolver([string] $subscriptionId, [string] $resourceGroupNames, [string] $resourceNames, [string] $resourceType, [ResourceTypeName] $resourceTypeName, [ResourceTypeName] $excludeResourceTypeName = [ResourceTypeName]::All):
 		Base($subscriptionId)
 	{
 		$this.ResourceType = $resourceType;
 		$this.ResourceTypeName = $resourceTypeName;
+		$this.ExcludeResourceTypeName = $excludeResourceTypeName;
 
 		#throw if user has set params for ResourceTypeName and ResourceType
 		#Default value of ResourceTypeName is All.
 		if($this.ResourceTypeName -ne [ResourceTypeName]::All -and -not [string]::IsNullOrWhiteSpace($this.ResourceType)){
 			throw [SuppressedException] "Both the parameters 'ResourceTypeName' and 'ResourceType' contains values. You should use only one of these parameters."
+		}
+
+		if($this.ResourceTypeName -ne [ResourceTypeName]::All -and $this.ExcludeResourceTypeName -ne [ResourceTypeName]::All){
+			throw [SuppressedException] "Both the parameters 'ResourceTypeName' and 'ExcludeResourceTypeName' contains values. You should use only one of these parameters."
 		}
 
 		if(-not [string]::IsNullOrEmpty($resourceGroupNames))
@@ -139,6 +145,15 @@ class SVTResourceResolver: AzSKRoot
 				{
 					$svtResource.ResourceTypeMapping = ([SVTMapping]::Mapping |
 											Where-Object { $_.ResourceType -eq $resource.ResourceType } |
+											Select-Object -First 1);
+				}
+
+				# Exclude resource type 
+
+				if($this.ExcludeResourceTypeName -ne [ResourceTypeName]::All)
+				{
+					$svtResource.ResourceTypeMapping = ([SVTMapping]::Mapping |
+											Where-Object { $_.ResourceType -eq $resource.ResourceType -and $_.ResourceTypeName -ne $this.ExcludeResourceTypeName } |
 											Select-Object -First 1);
 				}
 

@@ -16,7 +16,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthZ"
+        "AuthZ",
+        "ServiceBus"
       ],
       "Enabled": true,
       "DataObjectProperties": [
@@ -37,7 +38,8 @@
          "SDL",
          "TCP",
          "AuthZ",
-         "Automated"
+         "Automated",
+         "ServiceBus"
       ],
       "Enabled": true,
       "DataObjectProperties": [
@@ -58,7 +60,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "DP"
+        "DP",
+        "ServiceBus"
       ],
       "Enabled": true
     },
@@ -75,7 +78,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "DP"
+        "DP",
+        "ServiceBus"
       ],
       "Enabled": true
     },
@@ -87,12 +91,13 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
-      "Recommendation": "Audit log can be reviewed at Portal -> Service Bus -> <Your Service Bus Name> -> Diagnostics logs.",
+      "Recommendation": "Audit log can be reviewed at Portal -> Service Bus -> <Your Service Bus Name> -> Diagnostics logs. Reference: https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-diagnostic-logs",
       "Tags": [
         "SDL",
         "Best Practice",
         "Manual",
-        "Audit"
+        "Audit",
+        "ServiceBus"
       ],
       "Enabled": true
     },
@@ -109,7 +114,8 @@
         "SDL",
         "Information",
         "Manual",
-        "DP"
+        "DP",
+        "ServiceBus"
       ],
       "Enabled": true
     },
@@ -126,7 +132,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "AuthZ"
+        "AuthZ",
+        "ServiceBus"
       ],
       "Enabled": true
     },
@@ -143,7 +150,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "BCDR"
+        "BCDR",
+        "ServiceBus"
       ],
       "Enabled": true
     },
@@ -161,7 +169,8 @@
         "TCP",
         "Automated",
         "AuthZ",
-        "RBAC"
+        "RBAC",
+        "ServiceBus"
       ],
       "Enabled": true
     },
@@ -173,14 +182,17 @@
       "Automated": "Yes",
       "MethodName": "CheckDiagnosticsSettings",
       "Rationale": "Logs should be retained for a long enough period so that activity trail can be recreated when investigations are required in the event of an incident or a compromise. A period of 1 year is typical for several compliance requirements as well.",
-      "Recommendation": "Run command: Set-AzureRmDiagnosticSetting -ResourceId {'ResourceId'} -Enable `$true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled `$true",
+      "Recommendation": "Run command: Set-AzureRmDiagnosticSetting -ResourceId {'ResourceId'} -Enable `$true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled `$true. Alternatively, you can also change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal",
       "Tags": [
         "SDL",
         "TCP",
         "Automated",
         "Audit",
-        "Diagnostics"
+        "Diagnostics",
+        "ServiceBus"
       ],
+      "PolicyDefinitionGuid":"f8d36e2f-389b-4ee4-898d-21aeb69a0f45",
+      "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/f8d36e2f-389b-4ee4-898d-21aeb69a0f45",
       "Enabled": true
     }
   ]

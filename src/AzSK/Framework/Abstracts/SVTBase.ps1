@@ -18,6 +18,7 @@ class SVTBase: AzSKRoot
 	[string[]] $FilterTags = @();
 	[string[]] $ExcludeTags = @();
 	[string[]] $ControlIds = @();
+	[string[]] $ExcludeControlIds = @();
 	[bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
 	[string] $PartialScanIdentifier = [string]::Empty
@@ -402,6 +403,11 @@ class SVTBase: AzSKRoot
 			else
 			{
 				$filterControlsById += $this.FeatureApplicableControls
+			}
+
+			if($this.ExcludeControlIds.Count -ne 0)
+			{
+				$filterControlsById = $filterControlsById | Where-Object { $this.ExcludeControlIds -notcontains $_.ControlId };
 			}
 
 			if(($this.FilterTags | Measure-Object).Count -ne 0 -or ($this.ExcludeTags | Measure-Object).Count -ne 0)

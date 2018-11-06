@@ -20,6 +20,7 @@ class RecommendedFeatureGroup{
     [int] $TotalFailCount;
     [float] $SecurityRating;
     [int] $TotalOccurances;
+    [float] $FailureRate;
 }
 
 class RecommendedSecurityReport

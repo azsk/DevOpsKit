@@ -17,7 +17,8 @@
           "TCP",
           "Automated",
           "AuthZ",
-          "RBAC"
+          "RBAC",
+          "Search"
         ],
         "Enabled": true
       },
@@ -34,7 +35,8 @@
           "SDL",
           "Best Practice",
           "Manual",
-          "AuthZ"
+          "AuthZ",
+          "Search"
         ],
         "Enabled": true
       },
@@ -46,12 +48,13 @@
         "Automated": "No",
         "MethodName": "",
         "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-        "Recommendation": "To enabled encryption for a SQL DB, run command 'Set-AzureRmSqlDatabaseTransparentDataEncryption -DatabaseName '<DBName>' -ResourceGroupName '<RGName>' -ServerName '<SQLServerName>' -State 'Enabled''. Run 'Get-Help Set-AzureRmSqlDatabaseTransparentDataEncryption -full' for more help. To enable encryption for Azure Storage, run command 'Set-AzureRmStorageAccount -Name '<StorageAccountName>' -ResourceGroupName '<RGName>' -EnableEncryptionService 'Blob/File''. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help.",
+        "Recommendation": "To enable encryption for a SQL DB, run command 'Set-AzureRmSqlDatabaseTransparentDataEncryption -DatabaseName '<DBName>' -ResourceGroupName '<RGName>' -ServerName '<SQLServerName>' -State 'Enabled''. Run 'Get-Help Set-AzureRmSqlDatabaseTransparentDataEncryption -full' for more help.",
         "Tags": [
           "SDL",
           "TCP",
           "Manual",
-          "DP"
+          "DP",
+          "Search"
         ],
         "Enabled": true
       },
@@ -68,7 +71,9 @@
           "SDL",
           "TCP",
           "Manual",
-          "DP"
+          "DP",
+          "Search",
+          "Information"
         ],
         "Enabled": true
       },
@@ -85,7 +90,8 @@
           "SDL",
           "TCP",
           "Manual",
-          "AuthZ"
+          "AuthZ",
+          "Search"
         ],
         "Enabled": true
       },
@@ -102,7 +108,8 @@
           "SDL",
           "TCP",
           "Manual",
-          "AuthZ"
+          "AuthZ",
+          "Search"
         ],
         "Enabled": true
       },
@@ -119,7 +126,8 @@
           "SDL",
           "TCP",
           "Automated",
-          "Availability"
+          "Availability",
+          "Search"
         ],
         "Enabled": true
       },
@@ -131,14 +139,17 @@
         "Automated": "Yes",
         "MethodName": "CheckDiagnosticsSettings",
         "Rationale": "Logs should be retained for a long enough period so that activity trail can be recreated when investigations are required in the event of an incident or a compromise. A period of 1 year is typical for several compliance requirements as well.",
-        "Recommendation": "Run command: Set-AzureRmDiagnosticSetting -ResourceId {'ResourceId'} -Enable `$true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled `$true",
+        "Recommendation": "Run command: Set-AzureRmDiagnosticSetting -ResourceId {'ResourceId'} -Enable `$true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled `$true. Alternatively, you can also change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal",
         "Tags": [
           "SDL",
           "TCP",
           "Automated",
           "Audit",
-          "Diagnostics"
+          "Diagnostics",
+          "Search"
         ],
+        "PolicyDefinitionGuid":"b4330a05-a843-4bc8-bf9a-cacce50c67f4",
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/b4330a05-a843-4bc8-bf9a-cacce50c67f4",
         "Enabled": true
       }
                  ]

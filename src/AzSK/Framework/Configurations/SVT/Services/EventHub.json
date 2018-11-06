@@ -2,21 +2,22 @@
   "FeatureName": "EventHub",
   "Reference": "aka.ms/azsktcp/eventhub",
   "IsMaintenanceMode": false,
-  "Controls": [       
+  "Controls": [
     {
-      "ControlID": "Azure_EventHub_AuthZ_Dont_Use_Policies_At_SB_Namespace",
+      "ControlID": "Azure_EventHub_AuthZ_Dont_Use_Policies_At_Event_Hub_Namespace",
       "Description": "Event Hub clients (event senders or receivers) must not use 'namespace' level access policies",
       "Id": "EventHub130",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckEventHubRootPolicy",
-      "Rationale": "A 'namespace' level access policy provides access to all Queues/Topics in a namespace. However, using an access policy at entity (Queue/Topic) level provides access only to the specific entity. Thus using the latter is inline with the principle of least privilege.",
-      "Recommendation": "Remove all the authorization rules from Service Bus namespace except RootManageSharedAccessKey using Remove-AzureRmEventHubAuthorizationRule command. Run 'Get-Help Remove-AzureRmEventHubAuthorizationRule -full' for more help. Use the Azure portal to configure shared access policies with appropriate claims at the specific Event Hub scope.",
+      "Rationale": "A 'namespace' level access policy provides access to all Event Hub in a namespace. However, using an access policy at entity (Event Hub) level provides access only to the specific entity. Thus using the latter is inline with the principle of least privilege.",
+      "Recommendation": "Remove all the authorization rules from Event Hub namespace except RootManageSharedAccessKey using Remove-AzureRmEventHubAuthorizationRule command. Run 'Get-Help Remove-AzureRmEventHubAuthorizationRule -full' for more help. Use the Azure portal to configure shared access policies with appropriate claims at the specific Event Hub scope.",
       "Tags": [
         "SDL",
         "TCP",
         "Automated",
-        "AuthZ"
+        "AuthZ",
+        "EventHub"
       ],
       "Enabled": true,
       "DataObjectProperties": [
@@ -37,7 +38,8 @@
          "SDL",
          "TCP",
          "Automated",
-         "AuthZ"
+         "AuthZ",
+         "EventHub"
       ],
       "Enabled": true,
       "DataObjectProperties": [
@@ -58,7 +60,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "DP"
+        "DP",
+        "EventHub"
       ],
       "Enabled": true
     },
@@ -75,7 +78,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "DP"
+        "DP",
+        "EventHub"
       ],
       "Enabled": true
     },
@@ -92,7 +96,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "Audit"
+        "Audit",
+        "EventHub"
       ],
       "Enabled": true
     },
@@ -109,7 +114,8 @@
         "SDL",
         "Information",
         "Manual",
-        "DP"
+        "DP",
+        "EventHub"
       ],
       "Enabled": true
     },
@@ -126,11 +132,12 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "AuthZ"
+        "AuthZ",
+        "EventHub"
       ],
       "Enabled": true
     },
-   {
+    {
       "ControlID": "Azure_EventHub_AuthN_Use_Publisher_Token",
       "Description": "Use 'Publisher' tokens to authenticate senders instead of 'Access Policy' tokens",
       "Id": "EventHub210",
@@ -143,10 +150,11 @@
          "SDL",
          "Best Practice",
          "Manual",
-         "AuthN"
+         "AuthN",
+         "EventHub"
       ],
       "Enabled": true
-   },
+    },
     {
       "ControlID": "Azure_EventHub_AuthZ_Grant_Min_RBAC_Access",
       "Description": "All users/identities must be granted minimum required permissions using Role Based Access Control (RBAC)",
@@ -161,7 +169,8 @@
         "TCP",
         "Automated",
         "AuthZ",
-        "RBAC"
+        "RBAC",
+        "EventHub"
       ],
       "Enabled": true
     },
@@ -173,14 +182,17 @@
       "Automated": "Yes",
       "MethodName": "CheckDiagnosticsSettings",
       "Rationale": "Logs should be retained for a long enough period so that activity trail can be recreated when investigations are required in the event of an incident or a compromise. A period of 1 year is typical for several compliance requirements as well.",
-      "Recommendation": "Run command: Set-AzureRmDiagnosticSetting -ResourceId {'ResourceId'} -Enable `$true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled `$true",
+      "Recommendation": "Run command: Set-AzureRmDiagnosticSetting -ResourceId {'ResourceId'} -Enable `$true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled `$true. Alternatively, you can also change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal",
       "Tags": [
         "SDL",
         "TCP",
         "Automated",
         "Audit",
-        "Diagnostics"
+        "Diagnostics",
+        "EventHub"
       ],
+      "PolicyDefinitionGuid":"83a214f7-d01a-484b-91a9-ed54470c9a6a",
+      "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/83a214f7-d01a-484b-91a9-ed54470c9a6a",
       "Enabled": true
     }
   ]

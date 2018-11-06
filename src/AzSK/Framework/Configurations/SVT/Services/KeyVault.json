@@ -17,7 +17,8 @@
           "TCP",
           "Automated",
           "AuthN",
-          "OwnerAccess"
+          "OwnerAccess",
+          "KeyVault"
         ],
         "Enabled": true
       },
@@ -34,7 +35,8 @@
                                       "SDL",
                                       "TCP",
                                       "Automated",
-                                      "AuthN"
+                                      "AuthN",
+                                      "KeyVault"
                                   ],
                          "Enabled":  true
                      },
@@ -52,7 +54,8 @@
                                       "TCP",
                                       "Automated",
                                       "AuthZ",
-                                      "RBAC"
+                                      "RBAC",
+                                      "KeyVault"
                                   ],
                          "Enabled":  true
                      },
@@ -70,7 +73,8 @@
                                       "TCP",
                                       "Automated",
                                       "AuthZ",
-                                      "RBAC"
+                                      "RBAC",
+                                      "KeyVault"
                                   ],
                          "Enabled":  true
                      },
@@ -87,7 +91,8 @@
                                       "SDL",
                                       "TCP",
                                       "Automated",
-                                      "AuthZ"
+                                      "AuthZ",
+                                      "KeyVault"
                                   ],
                          "Enabled":  true
                      },
@@ -104,7 +109,9 @@
                                       "SDL",
                                       "TCP",
                                       "Automated",
-                                      "DP"
+                                      "DP",
+                                      "KeyVault",
+                                      "KeySecretPermissions"
                                   ],
                          "Enabled":  true
                      },
@@ -124,7 +131,9 @@
             "DP",
             "KeyRotation",
             "OwnerAccess",
-            "KeyVaultAccess"
+            "KeyVaultAccess",
+            "KeyVault",
+            "KeySecretPermissions"
          ],
          "Enabled": true
       },
@@ -136,14 +145,17 @@
                          "Automated":  "Yes",
                          "MethodName":  "CheckDiagnosticsSettings",
                          "Rationale":  "Logs should be retained for a long enough period so that activity trail can be recreated when investigations are required in the event of an incident or a compromise. A period of 1 year is typical for several compliance requirements as well.",
-                         "Recommendation":  "Run command: Set-AzureRmDiagnosticSetting -ResourceId {'ResourceId'} -Enable `$true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled `$true",
+                         "Recommendation":  "Run command: Set-AzureRmDiagnosticSetting -ResourceId {'ResourceId'} -Enable `$true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled `$true. Alternatively, you can also change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal",
                          "Tags":  [
                                       "SDL",
                                       "TCP",
                                       "Automated",
                                       "Audit",
-                                      "Diagnostics"
+                                      "Diagnostics",
+                                      "KeyVault"
                                   ],
+                         "PolicyDefinitionGuid":"cf820ca0-f99e-4f3e-84fb-66e913812d21",   
+                         "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/cf820ca0-f99e-4f3e-84fb-66e913812d21",     
                          "Enabled":  true
                      },
                      {
@@ -159,7 +171,9 @@
                                       "SDL",
                                       "TCP",
                                       "Automated",
-                                      "AuthN"
+                                      "AuthN",
+                                      "KeyVault",
+                                      "KeySecretPermissions"
                                   ],
                          "Enabled":  true
                      },
@@ -176,7 +190,8 @@
                                       "SDL",
                                       "TCP",
                                       "Manual",
-                                      "DP"
+                                      "DP",
+                                      "KeyVault"
                                   ],
                          "Enabled":  true
                      },
@@ -193,7 +208,8 @@
                                       "SDL",
                                       "TCP",
                                       "Manual",
-                                      "DP"
+                                      "DP",
+                                      "KeyVault"
                                   ],
                          "Enabled":  true
                      },
@@ -210,7 +226,8 @@
           "SDL",
           "TCP",
           "Manual",
-          "Audit"
+          "Audit",
+          "KeyVault"
         ],
         "Enabled": true
       },
@@ -226,8 +243,8 @@
       "Tags": [
          "SDL",
          "TCP",
-         "Automated"
-
+         "Automated",
+         "KeyVault"
       ],
       "Enabled": true
    }

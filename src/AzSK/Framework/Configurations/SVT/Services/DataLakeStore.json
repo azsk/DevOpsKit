@@ -16,7 +16,8 @@
         "SDL",
         "Information",
         "Manual",
-        "AuthN"
+        "AuthN",
+        "DataLakeStore"
       ],
       "Enabled": true
     },
@@ -34,7 +35,8 @@
         "TCP",
         "Automated",
         "AuthZ",
-        "RBAC"
+        "RBAC",
+        "DataLakeStore"
       ],
       "Enabled": true
     },
@@ -51,7 +53,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthZ"
+        "AuthZ",
+        "DataLakeStore"
       ],
       "Enabled": true
     },
@@ -68,7 +71,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthZ"
+        "AuthZ",
+        "DataLakeStore"
       ],
       "Enabled": true
     },
@@ -85,7 +89,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "DP"
+        "DP",
+        "DataLakeStore"
       ],
       "Enabled": true
     },
@@ -102,7 +107,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "AuthZ"
+        "AuthZ",
+        "DataLakeStore"
       ],
       "Enabled": true
     },
@@ -119,7 +125,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "DP"
+        "DP",
+        "DataLakeStore"
       ],
       "Enabled": true
     },
@@ -131,12 +138,13 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
-      "Recommendation": "No action required. ADLS provides encryption in transit using HTTPS transport layer security.",
+      "Recommendation": "No action required. ADLS provides encryption in transit using HTTPS transport layer security. Reference: https://docs.microsoft.com/en-us/azure/data-lake-store/data-lake-store-encryption",
       "Tags": [
         "SDL",
         "Information",
         "Manual",
-        "DP"
+        "DP",
+        "DataLakeStore"
       ],
       "Enabled": true
     },
@@ -148,14 +156,17 @@
       "Automated": "Yes",
       "MethodName": "CheckDiagnosticsSettings",
       "Rationale": "Logs should be retained for a long enough period so that activity trail can be recreated when investigations are required in the event of an incident or a compromise. A period of 1 year is typical for several compliance requirements as well.",
-      "Recommendation": "Run command: Set-AzureRmDiagnosticSetting -ResourceId {'ResourceId'} -Enable `$true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled `$true",
+      "Recommendation": "Run command: Set-AzureRmDiagnosticSetting -ResourceId {'ResourceId'} -Enable `$true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled `$true. Alternatively, you can also change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal",
       "Tags": [
         "SDL",
         "TCP",
         "Automated",
         "Audit",
-        "Diagnostics"
+        "Diagnostics",
+        "DataLakeStore"
       ],
+      "PolicyDefinitionGuid":"057ef27e-665e-4328-8ea3-04b3122bd9fb",
+      "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/057ef27e-665e-4328-8ea3-04b3122bd9fb",
       "Enabled": true
     },
     {
@@ -171,7 +182,8 @@
         "SDL",
         "Best Practice",
         "Manual",
-        "Audit"
+        "Audit",
+        "DataLakeStore"
       ],
       "Enabled": true
     },
@@ -188,7 +200,8 @@
         "SDL",
         "TCP",
         "Manual",
-        "BCDR"
+        "BCDR",
+        "DataLakeStore"
       ],
       "Enabled": true
     },
@@ -205,7 +218,8 @@
       	"SDL",
         "Best Practice",
         "Manual",
-        "Config"
+        "Config",
+        "DataLakeStore"
       ],
       "Enabled": true
     }

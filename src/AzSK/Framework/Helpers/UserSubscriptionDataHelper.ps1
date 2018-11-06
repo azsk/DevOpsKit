@@ -122,7 +122,6 @@ class UserSubscriptionDataHelper: AzSKRoot
             Set-AzureStorageServiceLoggingProperty -ServiceType Blob -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
             Set-AzureStorageServiceLoggingProperty -ServiceType Queue -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
             Set-AzureStorageServiceLoggingProperty -ServiceType Table -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
-            Set-AzureStorageServiceLoggingProperty -ServiceType File -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
 			return $storageAccount
         }
 		else
