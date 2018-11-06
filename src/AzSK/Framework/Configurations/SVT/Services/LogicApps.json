@@ -139,6 +139,8 @@
         "Audit",
         "Diagnostics"
       ],
+      "PolicyDefinitionGuid":"34f95f76-5386-4de7-b824-0d8478470c9d",
+      "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/34f95f76-5386-4de7-b824-0d8478470c9d",
       "Enabled": true
     },
     {

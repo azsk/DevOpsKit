@@ -191,6 +191,8 @@
         "Diagnostics",
         "ServiceBus"
       ],
+      "PolicyDefinitionGuid":"f8d36e2f-389b-4ee4-898d-21aeb69a0f45",
+      "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/f8d36e2f-389b-4ee4-898d-21aeb69a0f45",
       "Enabled": true
     }
   ]
