@@ -17,6 +17,7 @@ class SVTResourceResolver: AzSKRoot
 	[string[]] $ExcludedResourceGroupNames=@();
 	[string] $ExcludeResourceGroupWarningMessage=[string]::Empty
 	[SVTResource[]] $SVTResources = @();
+	[int] $SVTResourcesFoundCount=0;
 	
 	# Indicates to fetch all resource groups
 	SVTResourceResolver([string] $subscriptionId):
@@ -152,7 +153,7 @@ class SVTResourceResolver: AzSKRoot
 				}
 			}
 			
-			$resources=$this.ApplyResourceFilter($resources);
+			
 			if($resources.Count -eq 0)
 			{
 				throw ([SuppressedException]::new(("Could not find any resources that match the specified criteria."), [SuppressedExceptionType]::InvalidOperation))
@@ -188,7 +189,6 @@ class SVTResourceResolver: AzSKRoot
 											Where-Object { $_.ResourceType -eq $resource.ResourceType } |
 											Select-Object -First 1);
 				}
-
 				# Exclude resource type 
 
 				if($this.ExcludeResourceTypeName -ne [ResourceTypeName]::All)
@@ -197,11 +197,7 @@ class SVTResourceResolver: AzSKRoot
 											Where-Object { $_.ResourceType -eq $resource.ResourceType -and $_.ResourceTypeName -ne $this.ExcludeResourceTypeName } |
 											Select-Object -First 1);
 				}
-
-
-				# Exclude Resource Name
-
-            	# Checking if Vnet is ErVNet or not
+									# Checking if Vnet is ErVNet or not
 				if($svtResource.ResourceTypeMapping -and $svtResource.ResourceTypeMapping.ResourceTypeName -eq [SVTMapping]::VirtualNetworkTypeName)
 				{
 					if(-not $erVnetResourceGroups)
@@ -231,6 +227,12 @@ class SVTResourceResolver: AzSKRoot
 					$this.SVTResources += $svtResource;
 				}
 			}
+			$this.SVTResourcesFoundCount = ($this.SVTResources | Measure-Object).Count
+			if(-not [string]::IsNullOrEmpty($this.ExcludeResourceGroupNames) -or -not [string]::IsNullOrEmpty($this.ExcludeResourceNames))
+			{
+				$this.SVTResources = $this.ApplyResourceFilter($this.SVTResources)
+			}
+			
 		}
 	}
 
@@ -316,21 +318,21 @@ class SVTResourceResolver: AzSKRoot
 			$nonExistingRGS = $this.ExcludeResourceGroupNames | Where-Object{$_ -notin $matchingRGs}
 			if(($nonExistingRGS| Measure-Object).Count -gt 0)
 			{
-				$ResourceGroupFilterMessage+="ResourceGroup(s) specified in -ExcludeResourceGroupNames [$($nonExistingRGS -join ",")] are not found in the subscription."
+				$ResourceGroupFilterMessage+="ResourceGroup(s) specified in -ExcludeResourceGroupNames [$($nonExistingRGS -join ",")] are not found in the subscription. "
 				#print the message saying these RGS provided in #xcludeRGS are not found
 			}
 			if(($matchingRGs| Measure-Object).Count -gt 0 )
 			{
 				if(-not [string]::IsNullOrEmpty($this.ExcludeResourceNames))
 				{
-					$coincidingResources = $resources | Where-Object {$_.Name -in $this.ExcludeResourceNames -and $_.ResourceGroupName -in $matchingRGs}
+					$coincidingResources = $resources | Where-Object {$_.ResourceName -in $this.ExcludeResourceNames -and $_.ResourceGroupName -in $matchingRGs}
 					if(($coincidingResources| Measure-Object).Count -gt 0)
 					{
-						$this.ExcludeResourceNames = $this.ExcludeResourceNames | Where-Object {$_ -notin $coincidingResources.Name}
+						$this.ExcludeResourceNames = $this.ExcludeResourceNames | Where-Object {$_ -notin $coincidingResources.ResourceName}
 					}
 				}
 				$excludedRes= $resources| Where-Object{$_.ResourceGroupName -in $matchingRGs}
-				$this.ExcludedResourceNames+=$excludedRes.Name
+				$this.ExcludedResourceNames+=$excludedRes.ResourceName
 				$resources = $resources | Where-Object {$_.ResourceGroupName -notin $matchingRGs}
 				$this.ExcludedResourceGroupNames+=$matchingRGs
 			}
@@ -346,34 +348,35 @@ class SVTResourceResolver: AzSKRoot
 		{
 			# check if resources specified in -xrns exist. If not then show a warning for those resources.
 			$ResourcesToExclude =$this.ExcludeResourceNames
-			$NonExistingResource = $this.ExcludeResourceNames | Where-Object { $_ -notin $resources.Name}
+			$NonExistingResource = $this.ExcludeResourceNames | Where-Object { $_ -notin $resources.ResourceName}
 			if(($NonExistingResource | Measure-Object).Count -gt 0 )
 			{
 				$ResourcesToExclude = $this.ExcludeResourceNames | Where-Object{ $_ -notin $NonExistingResource }
-				$ResourceFilterMessage+="Resource(s) specified in '-ExcludeResourceNames' [ $($NonExistingResource -join ",")] are not found in the sepecified criteria.";
+				$ResourceFilterMessage+="Resource(s) specified in '-ExcludeResourceNames' [ $($NonExistingResource -join ",")] are not found in the specified scan critierion.`n";
 			}	
 			#check if duplicate resources names if exist in -xrns
-			$matchingResources = $resources | Where-Object { $_.Name -in $this.ExcludeResourceNames}
+			$matchingResources = $resources | Where-Object { $_.ResourceName -in $this.ExcludeResourceNames}
 			if(($matchingResources | Measure-Object).Count -gt 0)
 			{
-				$duplicateResourceNames= $matchingResources | Group-Object -Property Name 
+				$duplicateResourceNames= $matchingResources | Group-Object -Property ResourceName 
 				$duplicateResourceNamesPrint = $duplicateResourceNames | Where-Object { $_.Count -gt 1} 
 				$matchingDuplicateRes= $duplicateResourceNamesPrint | Select-Object -Property Name
 				if(($matchingDuplicateRes| Measure-Object).Count -gt 0 )
 				{
-					$ResourceFilterMessage+="`nFound multiple matches with same resource name for '[$($duplicateResourceNamesPrint.Name -join ", ")]' specified in -ExcludeResourceNames.`nAll matching resources will be excluded from scan."
-						
+					$ResourceFilterMessage+="Found multiple matches with same resource name for '[$($duplicateResourceNamesPrint.Name -join ", ")]' specified in -ExcludeResourceNames. All matching resources will be excluded from scan."
+										
 				}
 				#Excluding the matching resources provided in -ExcludeResourceName from resourcelist for security scan 
 				if(($ResourcesToExclude| Measure-Object).Count -gt 0)
 				{
-					$resources = $resources | Where-Object { $_.Name -notin $ResourcesToExclude}
-					$this.ExcludedResourceNames+=$ResourcesToExclude
+					$resources = $resources | Where-Object { $_.ResourceName -notin $matchingResources.ResourceName}
+					$this.ExcludedResourceNames+=$matchingResources.ResourceName
 				}
 				
 			}
 					
 		}
+			
 		$this.ExcludeResourceWarningMessage=$ResourceFilterMessage;
 		$this.ExcludeResourceGroupWarningMessage=$ResourceGroupFilterMessage
 		# $end=(Get-Date).Millisecond
