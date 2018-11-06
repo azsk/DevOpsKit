@@ -310,7 +310,6 @@ class SVTResourceResolver: AzSKRoot
 	{
 		$ResourceFilterMessage=[string]::Empty
 		$ResourceGroupFilterMessage=[string]::Empty
-				# $startMs=(Get-Date).Millisecond;	
 		#First remove resource from the RGs specified in -ExcludeResourceGroupNames
 		if(-not [string]::IsNullOrEmpty($this.ExcludeResourceGroupNames) )
 		{
@@ -319,7 +318,7 @@ class SVTResourceResolver: AzSKRoot
 			if(($nonExistingRGS| Measure-Object).Count -gt 0)
 			{
 				$ResourceGroupFilterMessage+="ResourceGroup(s) specified in -ExcludeResourceGroupNames [$($nonExistingRGS -join ",")] are not found in the subscription. "
-				#print the message saying these RGS provided in #xcludeRGS are not found
+				#print the message saying these RGS provided in excludeRGS are not found
 			}
 			if(($matchingRGs| Measure-Object).Count -gt 0 )
 			{
@@ -379,9 +378,7 @@ class SVTResourceResolver: AzSKRoot
 			
 		$this.ExcludeResourceWarningMessage=$ResourceFilterMessage;
 		$this.ExcludeResourceGroupWarningMessage=$ResourceGroupFilterMessage
-		# $end=(Get-Date).Millisecond
-		# Write-Host "time taken =$($Startms-$end)"
-		 return $resources
+		return $resources
 	
 	}
 }
