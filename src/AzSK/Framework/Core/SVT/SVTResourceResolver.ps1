@@ -35,11 +35,11 @@ class SVTResourceResolver: AzSKRoot
 		#throw if user has set params for ResourceTypeName and ResourceType
 		#Default value of ResourceTypeName is All.
 		if($this.ResourceTypeName -ne [ResourceTypeName]::All -and -not [string]::IsNullOrWhiteSpace($this.ResourceType)){
-			throw [SuppressedException] "Both the parameters 'ResourceTypeName' and 'ResourceType' contains values. You should use only one of these parameters."
+			throw [SuppressedException] "Both the parameters 'ResourceTypeName' and 'ResourceType' contain values. You should use only one of these parameters."
 		}
 
 		if($this.ResourceTypeName -ne [ResourceTypeName]::All -and $this.ExcludeResourceTypeName -ne [ResourceTypeName]::All){
-			throw [SuppressedException] "Both the parameters 'ResourceTypeName' and 'ExcludeResourceTypeName' contains values. You should use only one of these parameters."
+			throw [SuppressedException] "Both the parameters 'ResourceTypeName' and 'ExcludeResourceTypeName' contain values. You should use only one of these parameters."
 		}
 
 		if(-not [string]::IsNullOrEmpty($resourceGroupNames))
@@ -71,7 +71,7 @@ class SVTResourceResolver: AzSKRoot
 			}
 			else 
 			{
-				 throw [SuppressedException] "Both the parameters 'ResourceNames' and 'ExcludeResourceNames' contains values. You should use only one of these parameters."
+				 throw [SuppressedException] "Both the parameters 'ResourceNames' and 'ExcludeResourceNames' contain values. You should use only one of these parameters."
 			}	
 		}
 		if(-not [string]::IsNullOrEmpty($excludeResourceGroupName))
