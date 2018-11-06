@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckStorageContainerPublicAccessTurnOff",
       "Rationale":  "Data in containers that have anonymous access can be downloaded by anyone on the internet without authentication. This can lead to a compromise of corporate data. ",
-      "Recommendation": "Run command 'Set-AzureStorageContainerAcl -Name '<ContainerName>' -Permission 'Off' -Context (New-AzureStorageContext -StorageAccountName '<StorageAccountName>' -StorageAccountKey '<StorageAccountKey>')'. Run 'Get-Help Set-AzureStorageContainerAcl -full' for more help. You can refer to https://docs.microsoft.com/en-us/powershell/module/azure.storage/new-azurestoragecontext?view=azurermps-6.11.0 for more information on Storage context.",
+      "Recommendation": "Run command 'Set-AzureStorageContainerAcl -Name '<ContainerName>' -Permission 'Off' -Context (New-AzureStorageContext -StorageAccountName '<StorageAccountName>' -StorageAccountKey '<StorageAccountKey>')'. Run 'Get-Help Set-AzureStorageContainerAcl -full' for more help.",
       "Tags": [
          "SDL",
          "TCP",
