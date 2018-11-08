@@ -18,9 +18,10 @@ class RecommendedFeatureGroup{
     [int] $Ranking;
     [int] $TotalSuccessCount;
     [int] $TotalFailCount;
-    [float] $SecurityRating;
+    [float] $UsagePercentage;
     [int] $TotalOccurances;
     [float] $FailureRate;
+    [string] $OtherMostUsed;
 }
 
 class RecommendedSecurityReport
