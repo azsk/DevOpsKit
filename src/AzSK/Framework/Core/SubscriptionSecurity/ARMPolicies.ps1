@@ -92,6 +92,13 @@ class ARMPolicy: CommandBase
 						$armPolicy = $null;
 						try {
 							$armPolicy = Get-AzureRmPolicyDefinition -Name $policyName -ErrorAction Stop
+							try{
+						    $temp = $_;		
+							$armpolicyassignment = Get-AzureRmPolicyAssignment -Name $policyName
+							}
+							catch{
+							$armPoliciesDefns.Add($temp,$armPolicy);
+							}
 						}
 						catch {
 							#eat the exception if the policy is not found
