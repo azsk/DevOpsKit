@@ -16,7 +16,7 @@ class ARMPolicy: CommandBase
         Base($subscriptionId, $invocationContext)
     { 
 		$this.ARMPolicyObj = [ARMPolicyModel] $this.LoadServerConfigFile("Subscription.ARMPolicies.json"); 
-		$isPolicyInitiativeEnabled = [ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan;
+		$isPolicyInitiativeEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId))
 		if($isPolicyInitiativeEnabled)
 		{
 			$this.SubPolicyInitiative = [PolicyInitiative] $this.LoadServerConfigFile("Subscription.Initiative.json"); 
@@ -408,9 +408,10 @@ class ARMPolicy: CommandBase
 	}	    
 
 	[MessageData[]] SetPolicyInitiative()
-	{
+	{	
 		[MessageData[]] $messages = @();
-		$isPolicyInitiativeEnabled = [ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan;
+		#$isPolicyInitiativeEnabled = [ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan;
+		$isPolicyInitiativeEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId))
 		try{
 			if($isPolicyInitiativeEnabled)
 		{
@@ -465,6 +466,7 @@ class ARMPolicy: CommandBase
 				}				
 			}
 		}
+	
 		}
 		catch
 		{
@@ -510,7 +512,7 @@ class ARMPolicy: CommandBase
 			}	
 		}
 
-		$isPolicyInitiativeEnabled = [ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan;
+		$isPolicyInitiativeEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId))
 		if($isPolicyInitiativeEnabled)
 		{
 			$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName		
