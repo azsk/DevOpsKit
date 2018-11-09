@@ -182,24 +182,24 @@ function Get-AzSKAzureServicesSecurityStatus
 		$IncludeUserComments,
 
 		[Parameter(Mandatory = $false)]
-		[Alias("xrtn")]
-		
+		[Alias("xrtn")]		
 		[ResourceTypeName]
 		$ExcludeResourceTypeName = [ResourceTypeName]::All,
 
 		[string] 
-		[Parameter(Mandatory = $false)]
-		
+		[Parameter(Mandatory = $false)]		
 		[Alias("xcids")]
 		[AllowEmptyString()]
 		$ExcludeControlIds,
 
 		[string]
 		[Alias("xrgns")]
+		[Parameter(Mandatory = $false)]
 		$ExcludeResourceGroupNames,
 
 		[string]
 		[Alias("xrns")]
+		[Parameter(Mandatory = $false)]
 		$ExcludeResourceNames
     )
 
