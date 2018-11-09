@@ -262,6 +262,7 @@ class Databricks: SVTBase
 				$controlResult.AddMessage("`r`nValidate that the following identities have active admin access to resource - [$($this.ResourceContext.ResourceName)]");
 				$controlResult.AddMessage("Note: Users that have been explicitly added in the 'admins' group in the workspace are considered 'active' admins");
 				$controlResult.AddMessage([MessageData]::new("", $activeAdminUsers));
+				$controlResult.SetStateData("Following identities have active admin access to resource:", $activeAdminUsers);
 			}
 	   }
 	   else
@@ -298,6 +299,7 @@ class Databricks: SVTBase
 			if($null -ne $guestAdminUsers -and ($guestAdminUsers | Measure-Object).Count -gt 0)
 			{
 				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following guest accounts have admin access on workspace:", $guestAdminUsers));
+				$controlResult.SetStateData("Following guest accounts have admin access on workspace:", $guestAdminUsers);
 			}
 			else{
 				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Manually verify that guest accounts should not have admin access on workspace."));
