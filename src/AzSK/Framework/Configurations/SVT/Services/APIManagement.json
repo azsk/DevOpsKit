@@ -2,7 +2,25 @@
     "FeatureName": "APIManagement",
     "Reference": "aka.ms/azsktcp/apim",
     "IsMaintenanceMode": false,
-      "Controls": [
+    "Controls": [
+        {
+            "ControlID": "Azure_APIManagement_AuthZ_Grant_Min_RBAC_Access",
+            "Description": "All users/identities must be granted minimum required permissions using Role Based Access Control (RBAC)",
+            "Id": "APIManagement140",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckRBACAccess",
+            "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+            "Recommendation": "Remove any excessive privileges granted on the App Service. Run command: Remove-AzureRmRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help.",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "AuthZ",
+                "RBAC"
+            ],
+            "Enabled": true
+        },
         {
             "ControlID": "Azure_APIManagement_Audit_Enable_Alerts",
             "Description": "Metric/Activity log alert rules must be configured for critical actions on API Management service",
@@ -13,11 +31,11 @@
             "Rationale": "",
             "Recommendation": "",
             "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "Audit",
-            "APIManagement"
+                "SDL",
+                "TCP",
+                "Automated",
+                "Audit",
+                "APIManagement"
             ],
             "Enabled": true
         },
@@ -31,11 +49,11 @@
             "Rationale": "",
             "Recommendation": "",
             "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "Audit",
-            "APIManagement"
+                "SDL",
+                "TCP",
+                "Automated",
+                "Audit",
+                "APIManagement"
             ],
             "Enabled": true
         },
@@ -49,11 +67,11 @@
             "Rationale": "",
             "Recommendation": "",
             "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "DP",
-            "APIManagement"
+                "SDL",
+                "TCP",
+                "Automated",
+                "DP",
+                "APIManagement"
             ],
             "Enabled": true
         },
@@ -67,11 +85,11 @@
             "Rationale": "",
             "Recommendation": "",
             "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "BCDR",
-            "APIManagement"
+                "SDL",
+                "TCP",
+                "Automated",
+                "BCDR",
+                "APIManagement"
             ],
             "Enabled": true
         },
@@ -85,11 +103,11 @@
             "Rationale": "",
             "Recommendation": "",
             "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "DP",
-            "APIManagement"
+                "SDL",
+                "TCP",
+                "Automated",
+                "DP",
+                "APIManagement"
             ],
             "Enabled": true
         },
@@ -103,13 +121,13 @@
             "Rationale": "",
             "Recommendation": "",
             "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "AuthN",
-            "APIManagement"
+                "SDL",
+                "TCP",
+                "Automated",
+                "AuthN",
+                "APIManagement"
             ],
             "Enabled": true
-        }        
+        }
     ]
 }
