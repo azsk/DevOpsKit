@@ -313,8 +313,8 @@ class SVTResourceResolver: AzSKRoot
 			$nonExistingRGS = $this.ExcludeResourceGroupNames | Where-Object{$_ -notin $matchingRGs}
 			if(($nonExistingRGS| Measure-Object).Count -gt 0)
 			{
-				$ResourceGroupFilterMessage+="Warning: Did not find following resource groups requested for exclusion:`n	 $($nonExistingRGS -join "	 `n ")"
 				#print the message saying these RGS provided in excludeRGS are not found
+				$ResourceGroupFilterMessage+="Warning: Did not find following resource groups requested for exclusion:`n	 $($nonExistingRGS -join "	 `n ")"
 			}
 			if(($matchingRGs| Measure-Object).Count -gt 0 )
 			{
@@ -328,7 +328,6 @@ class SVTResourceResolver: AzSKRoot
 				}
 				$excludedRes= $resources| Where-Object{$_.ResourceGroupName -in $matchingRGs}
 				$this.ExcludedResources+=$excludedRes
-				# $resources = $resources | Where-Object {$_.ResourceGroupName -notin $matchingRGs}
 				$this.ExcludedResourceGroupNames+=$matchingRGs
 			}
 			else 
@@ -338,7 +337,7 @@ class SVTResourceResolver: AzSKRoot
 			}
 			
 		}
-		#Remove resources specified in -ExcludeResourceNames
+	
 		if(($this.ExcludeResourceNames | Measure-Object).Count)
 		{
 			# check if resources specified in -xrns exist. If not then show a warning for those resources.
@@ -367,9 +366,7 @@ class SVTResourceResolver: AzSKRoot
 						}
 						$ResourceFilterMessage+=$duplicateResources
 					}
-					#Excluding the matching resources provided in -ExcludeResourceName from resourcelist for security scan 
-					
-						# $resources = $resources | Where-Object { $_.ResourceName -notin $matchingResources.ResourceName}
+
 						$this.ExcludedResources += $matchingResources
 				}
 				
@@ -379,8 +376,7 @@ class SVTResourceResolver: AzSKRoot
 		# Exclude resources for the type specified in ExcludeResourceType
 		if($this.ExcludeResourceTypeName -ne [ResourceTypeName]::All)
 		{
-			# $this.ExcludedResources+=$resources| Where-Object{$null -ne $_.ResourceTypeMapping -and $_.ResourceTypeMapping.ResourceTypeName -eq $this.ExcludeResourceTypeName}
-									
+										
 			$resources| ForEach-Object{
 				if($null -ne $_.ResourceTypeMapping )
 				{
