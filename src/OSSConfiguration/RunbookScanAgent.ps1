@@ -62,7 +62,9 @@ function RunAzSKScan() {
     CheckForSubscriptionsSnapshotData
 	
     #Get the current storagecontext
-    $existingStorage = Get-AzureRmResource -ResourceGroupName $StorageAccountRG -Name "*azsk*" -ResourceType "Microsoft.Storage/storageAccounts"
+	$existingStorage = Get-AzureRmResource -ResourceGroupName $StorageAccountRG -Name "*azsk*" -ResourceType "Microsoft.Storage/storageAccounts"
+	$centralStorage = Get-AzureRmStorageAccount -ResourceGroupName $StorageAccountRG -Name "*azsk*" -ResourceType "Microsoft.Storage/storageAccounts"
+
 	if(($existingStorage|Measure-Object).Count -gt 1)
 	{
 		$existingStorage = $existingStorage[0]
@@ -166,7 +168,7 @@ function RunAzSKScan() {
 					Write-Output ("SA: Multi-sub Scan. Started scan for subscription: [$subId]")
 
 					#In case of multi-sub scan logging option applies to all subs
-					RunAzSKScanForASub -SubscriptionID $subId -LoggingOption $candidateSubToScan.LoggingOption -StorageContext $centralStorageContext 
+					RunAzSKScanForASub -SubscriptionID $subId -LoggingOption $candidateSubToScan.LoggingOption -StorageContext $centralStorageContext -CentralStorageAccount $centralStorage
 					PersistSubscriptionSnapshot -SubscriptionID $subId -Status $postStatus -StorageContext $centralStorageContext 
 					Write-Output ("SA: Multi-sub Scan. Completed scan for subscription: [$subId]")
 				}		
@@ -194,7 +196,8 @@ function RunAzSKScanForASub
 	(
 		$SubscriptionID,	#This is the subscription to scan.
 		$LoggingOption,		#Whether the scan logs to be stored within the target sub or central sub?
-        $StorageContext		#This is the central sub storage context (which is same as target sub in case of individual mode CA)
+		$StorageContext,		#This is the central sub storage context (which is same as target sub in case of individual mode CA)
+		$CentralStorageAccount = $null 	#This is the central sub storage account.
 	)
 	$svtResultPath = [string]::Empty
     $gssResultPath = [string]::Empty
@@ -235,7 +238,7 @@ function RunAzSKScanForASub
     }
     elseif($null -eq $WebHookDataforResourceCreation)
     {
-		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
+		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC" -CentralStorageAccount $CentralStorageAccount -UsePartialCommits
     }
    
     #---------------------------Check resources scan status--------------------------------------------------------------

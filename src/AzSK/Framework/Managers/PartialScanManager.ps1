@@ -2,6 +2,7 @@ Set-StrictMode -Version Latest
 
 class PartialScanManager
 {
+	hidden [string] $subId = $null;
 	hidden [PSObject] $AzSKResourceGroup = $null;
 	hidden [PSObject] $AzSKStorageAccount = $null;
 	hidden [PSObject] $ScanProgressSnapshotsContainer = $null;
@@ -13,7 +14,19 @@ class PartialScanManager
 	hidden [ActiveStatus] $ActiveStatus = [ActiveStatus]::NotStarted;
 
 	hidden static [PartialScanManager] $Instance = $null;
-    static [PartialScanManager] GetInstance()
+	
+	static [PartialScanManager] GetInstance([PSObject] $StorageAccount, [string] $SubscriptionId)
+    {
+        if ( $null -eq  [PartialScanManager]::Instance)
+        {
+			[PartialScanManager]::Instance = [PartialScanManager]::new($SubscriptionId);
+		}
+		[PartialScanManager]::Instance.AzSKStorageAccount = $StorageAccount;
+		[PartialScanManager]::Instance.subId = $SubscriptionId;
+        return [PartialScanManager]::Instance
+    }
+
+	static [PartialScanManager] GetInstance()
     {
         if ( $null -eq  [PartialScanManager]::Instance)
         {
@@ -25,6 +38,25 @@ class PartialScanManager
     {
        [PartialScanManager]::Instance = $null
     }
+	PartialScanManager([string] $SubscriptionId)
+	{
+		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+		$this.subId = $SubscriptionId;
+		if ([string]::isnullorwhitespace([PartialScanManager]::ResourceScanTrackerBlobName))
+        {
+           if([ConfigurationManager]::GetAzSKSettings().IsCentralScanModeOn)
+		   {
+				[PartialScanManager]::ResourceScanTrackerBlobName = $SubscriptionId + "/" + [Constants]::ResourceScanTrackerCMBlobName
+		   }
+		   else
+		   {
+				[PartialScanManager]::ResourceScanTrackerBlobName =  $SubscriptionId + "/" + [Constants]::ResourceScanTrackerBlobName
+		   }
+        }
+		#$this.GetResourceScanTrackerObject($SubscriptionId);
+		$this.GetResourceScanTrackerObject();
+	}
+
 	PartialScanManager()
 	{
 		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
@@ -32,11 +64,11 @@ class PartialScanManager
         {
            if([ConfigurationManager]::GetAzSKSettings().IsCentralScanModeOn)
 		   {
-				[PartialScanManager]::ResourceScanTrackerBlobName = [Constants]::ResourceScanTrackerCMBlobName
+				[PartialScanManager]::ResourceScanTrackerBlobName =  [Constants]::ResourceScanTrackerCMBlobName
 		   }
 		   else
 		   {
-				[PartialScanManager]::ResourceScanTrackerBlobName = [Constants]::ResourceScanTrackerBlobName
+				[PartialScanManager]::ResourceScanTrackerBlobName =  [Constants]::ResourceScanTrackerBlobName
 		   }
         }
 		$this.GetResourceScanTrackerObject();
@@ -152,24 +184,34 @@ class PartialScanManager
 	{
 		if($null -ne $this.ResourceScanTrackerObj)
 		{
-            $AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState";
-			if(-not (Test-Path "$AzSKTemp\PartialScanData"))
-			{
-				mkdir -Path "$AzSKTemp\PartialScanData" -ErrorAction Stop | Out-Null
+			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState";
+			
+			if(![string]::isnullorwhitespace($this.subId)){
+				if(-not (Test-Path "$AzSKTemp\PartialScanData\$($this.subId)"))
+				{
+					mkdir -Path "$AzSKTemp\PartialScanData\$($this.subId)" -ErrorAction Stop | Out-Null
+				}
+				$masterFilePath = "$AzSKTemp\PartialScanData\$($([PartialScanManager]::ResourceScanTrackerBlobName).Replace('/','\'))"
 			}
-			$masterFilePath = "$AzSKTemp\PartialScanData\$([PartialScanManager]::ResourceScanTrackerBlobName)"
+			else{
+				if(-not (Test-Path "$AzSKTemp\PartialScanData"))
+				{
+					mkdir -Path "$AzSKTemp\PartialScanData" -ErrorAction Stop | Out-Null
+				}
+				$masterFilePath = "$AzSKTemp\PartialScanData\$([PartialScanManager]::ResourceScanTrackerBlobName)"
+			}
+
 			$controlStateBlob = Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$([PartialScanManager]::ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
 
 			if($null -ne $controlStateBlob)
 			{
 				Get-AzureStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force                
 				$partialScanResources  = Get-ChildItem -Path $masterFilePath -Force | Get-Content | ConvertFrom-Json
-                if($partialScanResources -ne $null -and ($partialScanResources.ResourceMapTable | Measure-Object).Count -gt 0 -and ($partialScanResources.ResourceMapTable | Where-Object {$_.State -notin ([ScanState]::COMP,[ScanState]::ERR)} | Measure-Object).Count -eq 0)
-                {
+				if($partialScanResources -ne $null -and ($partialScanResources.ResourceMapTable | Measure-Object).Count -gt 0 -and ($partialScanResources.ResourceMapTable | Where-Object {$_.State -notin ([ScanState]::COMP,[ScanState]::ERR)} | Measure-Object).Count -eq 0)
+				{
 					$this.ArchiveBlob("_End_");
-                    Remove-AzureStorageBlob -CloudBlob $controlStateBlob.ICloudBlob -Force -Context $this.AzSKStorageAccount.Context 
-                }
-                
+					Remove-AzureStorageBlob -CloudBlob $controlStateBlob.ICloudBlob -Force -Context $this.AzSKStorageAccount.Context 
+				}	
 			}			
 			$this.ResourceScanTrackerObj = $null
 		}
@@ -210,14 +252,24 @@ class PartialScanManager
 		if($null -ne $this.ResourceScanTrackerObj)
 		{
 			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState";
-			if(-not (Test-Path "$AzSKTemp\PartialScanData"))
-			{
-				mkdir -Path "$AzSKTemp\PartialScanData" -ErrorAction Stop | Out-Null
+			
+			if(![string]::isnullorwhitespace($this.subId)){
+				if(-not (Test-Path "$AzSKTemp\PartialScanData\$($this.subId)"))
+				{
+					mkdir -Path "$AzSKTemp\PartialScanData\$($this.subId)" -ErrorAction Stop | Out-Null
+				}
+				$masterFilePath = "$AzSKTemp\PartialScanData\$($([PartialScanManager]::ResourceScanTrackerBlobName).Replace('/','\'))"
 			}
-			$masterFilePath = "$AzSKTemp\PartialScanData\$([PartialScanManager]::ResourceScanTrackerBlobName)"
-
+			else{
+				if(-not (Test-Path "$AzSKTemp\PartialScanData"))
+				{
+					mkdir -Path "$AzSKTemp\PartialScanData" -ErrorAction Stop | Out-Null
+				}
+				$masterFilePath = "$AzSKTemp\PartialScanData\$([PartialScanManager]::ResourceScanTrackerBlobName)"
+			}
+	
 			[Helpers]::ConvertToJsonCustom($this.ResourceScanTrackerObj) | Out-File $masterFilePath -Force
-			Set-AzureStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
+			Set-AzureStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "$([PartialScanManager]::ResourceScanTrackerBlobName)" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
 		}
 	}
 
@@ -231,30 +283,48 @@ class PartialScanManager
 		try
 		{
 			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState";
-			
-			if(-not (Test-Path "$AzSKTemp\PartialScanData"))
-			{
-				mkdir -Path "$AzSKTemp\PartialScanData" -ErrorAction Stop | Out-Null
+
+			if(![string]::isnullorwhitespace($this.subId)){
+				if(-not (Test-Path "$AzSKTemp\PartialScanData\$($this.subId)"))
+				{
+					mkdir -Path "$AzSKTemp\PartialScanData\$($this.subId)" -ErrorAction Stop | Out-Null
+				}
+				$archiveName =  $this.CAScanProgressSnapshotsContainerName + $token +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + ".json";
+				
+				if([ConfigurationManager]::GetAzSKSettings().IsCentralScanModeOn)
+				{
+					$archiveName =  $this.CAScanProgressSnapshotsContainerName + $token +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + "_CentralMode" + ".json";
+				}
+				
+				$masterFilePath = "$AzSKTemp\PartialScanData\$($this.subId)\$archiveName"
+				$archiveName = [PartialScanManager]::Instance.subId + "/" + $archiveName;
 			}
-			$archiveName =  $this.CAScanProgressSnapshotsContainerName + $token +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + ".json";
-			if([ConfigurationManager]::GetAzSKSettings().IsCentralScanModeOn)
-			{
-				$archiveName =  $this.CAScanProgressSnapshotsContainerName + $token +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + "_CentralMode" + ".json";
+			else{
+				if(-not (Test-Path "$AzSKTemp\PartialScanData"))
+				{
+					mkdir -Path "$AzSKTemp\PartialScanData" -ErrorAction Stop | Out-Null
+				}
+				$archiveName =  $this.CAScanProgressSnapshotsContainerName + $token +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + ".json";
+				
+				if([ConfigurationManager]::GetAzSKSettings().IsCentralScanModeOn)
+				{
+					$archiveName =  $this.CAScanProgressSnapshotsContainerName + $token +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + "_CentralMode" + ".json";
+				}
+					
+				$masterFilePath = "$AzSKTemp\PartialScanData\$archiveName"
 			}
-			
-			$masterFilePath = "$AzSKTemp\PartialScanData\$archiveName"
 			$controlStateBlob = Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$([PartialScanManager]::ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
 			if($null -ne $controlStateBlob)
 			{
 				Get-AzureStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force			
 				Set-AzureStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "Archive/$archiveName" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
 			}
-
+	
 			#purge old archives
 			$NotBefore = [DateTime]::Now.AddDays(-30);
-			$OldLogCount = (Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context | Where-Object { $_.LastModified -lt $NotBefore} | Measure-Object).Count
-
-			Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context | Where-Object { $_.LastModified -lt $NotBefore} | Remove-AzureStorageBlob -Force -ErrorAction SilentlyContinue
+			$OldLogCount = (Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$([PartialScanManager]::ResourceScanTrackerBlobName)" | Where-Object { $_.LastModified -lt $NotBefore} | Measure-Object).Count
+	
+			Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$([PartialScanManager]::ResourceScanTrackerBlobName)" | Where-Object { $_.LastModified -lt $NotBefore} | Remove-AzureStorageBlob -Force -ErrorAction SilentlyContinue			
 		}
 		catch
 		{
@@ -275,13 +345,24 @@ class PartialScanManager
 				return;
 			}
 			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState";
-			if(-not (Test-Path "$AzSKTemp\PartialScanData"))
-			{
-				mkdir -Path "$AzSKTemp\PartialScanData" -ErrorAction Stop | Out-Null
-			}
-			$masterFilePath = "$AzSKTemp\PartialScanData\$([PartialScanManager]::ResourceScanTrackerBlobName)"
-			$controlStateBlob = Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$([PartialScanManager]::ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
 
+			if(![string]::isnullorwhitespace($this.subId)){
+				if(-not (Test-Path "$AzSKTemp\PartialScanData\$($this.subId)"))
+				{
+					mkdir -Path "$AzSKTemp\PartialScanData\$($this.subId)" -ErrorAction Stop | Out-Null
+				}
+				$masterFilePath = "$AzSKTemp\PartialScanData\$($([PartialScanManager]::ResourceScanTrackerBlobName).Replace('/','\'))"
+			}
+			else{
+				if(-not (Test-Path "$AzSKTemp\PartialScanData"))
+				{
+					mkdir -Path "$AzSKTemp\PartialScanData" -ErrorAction Stop | Out-Null
+				}
+				$masterFilePath = "$AzSKTemp\PartialScanData\$([PartialScanManager]::ResourceScanTrackerBlobName)"
+			}
+			
+			$controlStateBlob = Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$([PartialScanManager]::ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
+							
 			if($null -ne $controlStateBlob)
 			{
 				Get-AzureStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force
@@ -289,7 +370,7 @@ class PartialScanManager
 				$resources = Get-AzureRmResource
 				#filter resources which are removed from subscription
 				$this.ResourceScanTrackerObj.ResourceMapTable = $this.ResourceScanTrackerObj.ResourceMapTable | Where-Object{$resources.ResourceId -contains $_.Id -or $_.Id -eq "AzSKCfg"}
-			}
+			}			
 		}
 	}
 

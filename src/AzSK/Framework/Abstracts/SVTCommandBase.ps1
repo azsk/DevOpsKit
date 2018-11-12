@@ -8,6 +8,7 @@ class SVTCommandBase: CommandBase {
     [string] $ControlIdString = "";
     [bool] $UsePartialCommits;
     [bool] $UseBaselineControls;
+    [PSObject] $CentralStorageAccount;
 	[string] $PartialScanIdentifier = [string]::Empty;
     hidden [ControlStateExtension] $ControlStateExt;
     hidden [bool] $UserHasStateAccess = $false;
