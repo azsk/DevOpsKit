@@ -314,7 +314,8 @@ class SVTResourceResolver: AzSKRoot
 			if(($nonExistingRGS| Measure-Object).Count -gt 0)
 			{
 				#print the message saying these RGS provided in excludeRGS are not found
-				$ResourceGroupFilterMessage+="Warning: Did not find following resource groups requested for exclusion:`n	 $($nonExistingRGS -join "	 `n ")"
+				$NonExistingRGMessage=$nonExistingRGS -join "`n`t "
+				$ResourceGroupFilterMessage+=[string]::Format("Warning: Did not find following resource groups requested for exclusion:	`n`t {0}",$NonExistingRGMessage);
 			}
 			if(($matchingRGs| Measure-Object).Count -gt 0 )
 			{
@@ -347,7 +348,8 @@ class SVTResourceResolver: AzSKRoot
 			if(($NonExistingResource | Measure-Object).Count -gt 0 )
 			{
 				$ResourcesToExclude = $this.ExcludeResourceNames | Where-Object{ $_ -notin $NonExistingResource }
-				$ResourceFilterMessage+="Warning: Did not find the following resources requested for exclusion:`n	 $($NonExistingResource -join "	 `n ")`n";
+				$NonExistingResourceMessage=$NonExistingResource -join "	`n`t "
+				$ResourceFilterMessage+=[string]::Format("Warning: Did not find the following resources requested for exclusion: `n`t {0}",$NonExistingResourceMessage );
 			}	
 			#check if duplicate resources names if exist in -xrns
 			$matchingResources = $resources | Where-Object { $_.ResourceName -in $this.ExcludeResourceNames}
@@ -361,7 +363,7 @@ class SVTResourceResolver: AzSKRoot
 					{
 						$duplicateResources=""
 						$duplicates=$resources|Where-Object{$_.ResourceName -in $duplicateResourceNames.Name}|Select-Object -Property ResourceName,ResourceGroupName,ResourceTypeMapping
-						$ResourceFilterMessage+="Warning: Multiple matches for the following resources found. All matching resources will be excluded.`n"
+						$ResourceFilterMessage+="`nWarning: Multiple matches for the following resources found. All matching resources will be excluded.`n"
 						$duplicates|ForEach-Object{
 							$duplicateResources+=[string]::Format("	 {0}(RG: {1}, TypeName: {2})`n",($_.ResourceName),($_.ResourceGroupName),($_.ResourceTypeMapping.ResourceTypeName))
 						}
