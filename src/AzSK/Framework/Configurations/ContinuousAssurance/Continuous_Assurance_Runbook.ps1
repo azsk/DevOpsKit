@@ -198,7 +198,6 @@ try
 	#in the org may be setup to use an older version - see comment in RunbookCoreSetup.PS1)
 	$UpdateToLatestVersion = "[#UpdateToLatestVersion#]"	
 	
-	#$azureRmResourceURI = "https://management.core.windows.net/"
 	$azureRmResourceURI = "[#ManagementUri#]"
 	
 	#This is the Run-As (SPN) account for the runbook. It is read from the CA Automation account.

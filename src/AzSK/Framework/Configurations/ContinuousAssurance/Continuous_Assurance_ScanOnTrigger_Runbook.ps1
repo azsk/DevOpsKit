@@ -221,7 +221,6 @@ try
 	#This script basically allows orgs to customize/tweak the scripts that are run to perform the daily CA scans.
 	$runbookScanAgentScript = "RunbookScanAgent.ps1"
 
-	#$azureRmResourceURI = "https://management.core.windows.net/"
 	$azureRmResourceURI = "[#ManagementUri#]"
 	
 	#This is the Run-As (SPN) account for the runbook. It is read from the CA Automation account.

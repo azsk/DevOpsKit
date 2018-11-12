@@ -994,7 +994,6 @@ class SubscriptionCore: SVTBase
 
 	hidden [void] GetManagementCertificates()
 	{
-		#$ResourceAppIdURI = [WebRequestHelper]::ClassicManagementUri;
 		$rmContext = [Helpers]::GetCurrentRMContext();
 		$ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl
 		$ClassicAccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
@@ -1002,7 +1001,6 @@ class SubscriptionCore: SVTBase
 		{
 			$header = "Bearer " + $ClassicAccessToken
 			$headers = @{"Authorization"=$header;"Content-Type"="application/json"; "x-ms-version" ="2013-08-01"}
-			#$uri = [string]::Format("{0}/{1}/certificates","https://management.core.windows.net",$this.SubscriptionContext.SubscriptionId)
 			$uri = [string]::Format("{0}/{1}/certificates",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId)
 			$mgmtCertsResponse = Invoke-WebRequest -Method GET -Uri $uri -Headers $headers -UseBasicParsing
 			if($mgmtCertsResponse.StatusCode -ge 200 -and $mgmtCertsResponse.StatusCode -le 399)
@@ -1024,7 +1022,6 @@ class SubscriptionCore: SVTBase
 	{
 		$rmContext = [Helpers]::GetCurrentRMContext();
 		$ResourceAppIdURI = $rmContext.Environment.ResourceManagerUrl
-		#$ResourceAppIdURI = [WebRequestHelper]::AzureManagementUri;
 		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 		if($null -ne $AccessToken)
 		{
@@ -1081,7 +1078,6 @@ class SubscriptionCore: SVTBase
 		$message='';
 		if($null -eq $this.PIMAssignments)
 		{
-			#$resourceAppIdURI =[WebRequestHelper]::ClassicManagementUri;
 			$rmContext = [Helpers]::GetCurrentRMContext();
 		    $ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl
 			$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)

@@ -62,7 +62,7 @@ class SecurityRecommendationsReport: CommandBase
 	[psobject]FormatCombinations([psobject] $mostused)
 	{
 		$ht = @{}
-		$mostused.psobject.properties | Foreach { $ht[$_.Name] = $_.Value * 100}
+		$mostused.psobject.properties | Foreach { $ht[$_.Name] =  [math]::Round($_.Value * 100,3)}
 		$mostused = New-Object PSObject -Property $ht
         return $mostused
 	}
