@@ -267,16 +267,16 @@ function RunAzSKScanForASub
 				Write-Output ("SA: Multi-sub Scan. Storing scan results to child (target) subscription...")
 
 				#save scan results in individual subs 
-                $existingStorage = Get-AzureRmResource -ResourceGroupName $StorageAccountRG -Name "*azsk*" -ResourceType "Microsoft.Storage/storageAccounts"
+                $existingStorage = Get-AzureRmStorageAccount -ResourceGroupName $StorageAccountRG | Where-Object {$_.StorageAccountName  -like 'azsk*'}
 				if(($existingStorage|Measure-Object).Count -gt 1)
 				{
 					$existingStorage = $existingStorage[0]
-					Write-Output ("SA: Multiple storage accounts found in resource group. Using Storage Account: [$($existingStorage.Name)] for storing logs")
+					Write-Output ("SA: Multiple storage accounts found in resource group. Using Storage Account: [$($existingStorage.StorageAccountName)] for storing logs")
 				}
 
 				$archiveFilePath = "$parentFolderPath\AutomationLogs_" + $(Get-Date -format "yyyyMMdd_HHmmss") + ".zip"
-				$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $StorageAccountRG -Name $existingStorage.Name
-				$localStorageContext = New-AzureStorageContext -StorageAccountName $existingStorage.Name -StorageAccountKey $keys[0].Value -Protocol Https
+				$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $StorageAccountRG -Name $existingStorage.StorageAccountName
+				$localStorageContext = New-AzureStorageContext -StorageAccountName $existingStorage.StorageAccountName -StorageAccountKey $keys[0].Value -Protocol Https
 				try {
 					Get-AzureStorageContainer -Name $CAScanLogsContainerName -Context $localStorageContext -ErrorAction Stop | Out-Null
 				}
