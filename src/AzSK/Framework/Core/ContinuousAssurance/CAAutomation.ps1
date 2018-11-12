@@ -342,10 +342,10 @@ class CCAutomation: CommandBase
 						$out.StorageAccountName = $this.UserConfig.StorageAccountName;
 						$out.LoggingOption = $this.LoggingOption.ToString();
 
+						Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
+
 						if($this.LoggingOption -eq [CAReportsLocation]::IndividualSubs)
 						{
-							Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
-
 							#region :create new resource group/check if RG exists. This is required for the CA SPN to read the attestation data. 
 							if((Get-AzureRmResourceGroup -Name $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
 							{
@@ -393,7 +393,6 @@ class CCAutomation: CommandBase
 							}
 						}
 						else{
-							Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
 							$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
 							$this.SetSPNSubscriptionAccessIfNotAssigned($this.CAAADApplicationID)
 						}
@@ -952,11 +951,12 @@ class CCAutomation: CommandBase
 							$out.CentralSubscriptionId = $this.SubscriptionContext.SubscriptionId;
 							$out.TargetSubscriptionId = $caSubId;
 							$out.LoggingOption = $this.LoggingOption.ToString();
-							$out.StorageAccountName = $this.UserConfig.StorageAccountName;		
+							$out.StorageAccountName = $this.UserConfig.StorageAccountName;	
+							
+							Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
 
 							if($this.LoggingOption -eq [CAReportsLocation]::IndividualSubs)
 							{
-								Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
 								#create new resource group/check if RG exists# 
 			
 								[Helpers]::CreateNewResourceGroupIfNotExists($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())			
@@ -1002,7 +1002,6 @@ class CCAutomation: CommandBase
 								#endregion
 							}
 							else{
-								Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
 								#recheck permissions
 								$this.PublishCustomMessage("Checking SPN (AAD app id: $($this.CAAADApplicationID)) permissions on target subscriptions...")
 								$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
