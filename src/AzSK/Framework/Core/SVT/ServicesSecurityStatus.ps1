@@ -110,17 +110,41 @@ class ServicesSecurityStatus: SVTCommandBase
 			$this.PublishCustomMessage("No security controls/resources match the input criteria specified. `nPlease rerun the command using a different set of criteria.");
 			return $result;
 		}
-		$this.PublishCustomMessage("Number of resources: $(($resourcesList | Measure-Object).Count)");
+		$this.PublishCustomMessage("Number of resources: $($this.resolver.SVTResourcesFoundCount)");
 		$automatedResources = @();
 		
 		$automatedResources += ($resourcesList | Where-Object { $_.ResourceTypeMapping });
 		
-		$this.PublishCustomMessage("Number of resources for which security controls will be evaluated: $($automatedResources.Count)");
+		# Resources skipped from scan using excludeResourceName or -ExcludeResourceGroupNames parameters
+		$ExcludedResourceGroups=$this.resolver.ExcludedResourceGroupNames 
+		$ExcludedResources=$this.resolver.ExcludedResources ;
+		if(($this.resolver.ExcludeResourceGroupNames| Measure-Object).Count -gt 0 -or ($this.resolver.ExcludeResourceNames| Measure-Object).Count -gt 0)
+		{
+			$this.PublishCustomMessage("One or more resources/resource groups will be excluded from the scan based on exclude flags.")	
+			if(-not [string]::IsNullOrEmpty($this.resolver.ExcludeResourceGroupWarningMessage))
+			{
+				$this.PublishCustomMessage("$($this.resolver.ExcludeResourceGroupWarningMessage)",[MessageType]::Warning)
+				
+			}
+			if(-not [string]::IsNullOrEmpty($this.resolver.ExcludeResourceWarningMessage))
+			{
+				$this.PublishCustomMessage("$($this.resolver.ExcludeResourceWarningMessage)",[MessageType]::Warning)
+			}
+			$this.PublishCustomMessage("Summary of exclusions: ");
+			if(($this.resolver.ExcludeResourceGroupNames| Measure-Object).Count -gt 0)
+			{
+				$this.PublishCustomMessage("	Resource groups excluded: $(($ExcludedResourceGroups | Measure-Object).Count)", [MessageType]::Info);	
+			}
+			$this.PublishCustomMessage("	Resources excluded: $(($ExcludedResources | Measure-Object).Count)(includes RGs,resourcetypenames and explicit exclusions).", [MessageType]::Info);	
+			$this.PublishCustomMessage("For a detailed list of excluded resources, see 'ExcludedResources-$($this.RunIdentifier).txt' in the output log folder.")
+			$this.ReportExcludedResources($this.resolver);
+		}
 		if($runNonAutomated)
 		{
 			$this.ReportNonAutomatedResources();
 		}
-
+					
+		$this.PublishCustomMessage("`nNumber of resources for which security controls will be evaluated: $($automatedResources.Count)",[MessageType]::Info);
 		$totalResources = $automatedResources.Count;
 		[int] $currentCount = 0;
 		$automatedResources | ForEach-Object {
@@ -215,7 +239,7 @@ class ServicesSecurityStatus: SVTCommandBase
             }
         }
 		
-
+		
 		return $result;
 	}
 
@@ -342,5 +366,14 @@ class ServicesSecurityStatus: SVTCommandBase
 		{
 			$partialScanMngr.PersistStorageBlob();
 		}
-	}		
+	}	
+	[void] ReportExcludedResources($SVTResolver)
+	{
+		$excludedObj=New-Object -TypeName PSObject;
+		$excludedObj | Add-Member -NotePropertyName ExcludedResourceGroupNames -NotePropertyValue $SVTResolver.ExcludedResourceGroupNames 
+		$excludedObj | Add-Member -NotePropertyName ExcludedResources -NotePropertyValue $SVTResolver.ExcludedResources
+		$excludedObj | Add-Member -NotePropertyName ExcludedResourceType -NotePropertyValue $SVTResolver.ExcludeResourceTypeName 
+		$excludedObj | Add-Member -NotePropertyName ExcludeResourceNames -NotePropertyValue $SVTResolver.ExcludeResourceNames 
+		$this.PublishAzSKRootEvent([AzSKRootEvent]::WriteExcludedResources,$excludedObj);
+	}	
 }
