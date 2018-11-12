@@ -1,6 +1,6 @@
 {
    "UseOnlinePolicyStore": true,
-   "OnlinePolicyStoreUrl": "https://localhost:44348/api",   
+   "OnlinePolicyStoreUrl": "#OnlinePolicyStoreUrl#",   
    "EnableAADAuthForOnlinePolicyStore": false,
    "UsageTelemetryLevel": "Anonymous",
    "LocalControlTelemetryKey": "00000000-0000-0000-0000-000000000000",
