@@ -363,7 +363,7 @@ class SVTResourceResolver: AzSKRoot
 						$duplicates=$resources|Where-Object{$_.ResourceName -in $duplicateResourceNames.Name}|Select-Object -Property ResourceName,ResourceGroupName,ResourceTypeMapping
 						$ResourceFilterMessage+="Warning: Multiple matches for the following resources. All matching resources will be excluded.`n"
 						$duplicates|ForEach-Object{
-							$duplicateResources+=[string]::Format("	 {0}(RG: {1},TypeName: {2})`n",($_.ResourceName),($_.ResourceGroupName),($_.ResourceTypeMapping.ResourceTypeName))
+							$duplicateResources+=[string]::Format("	 {0}(RG: {1}, TypeName: {2})`n",($_.ResourceName),($_.ResourceGroupName),($_.ResourceTypeMapping.ResourceTypeName))
 						}
 						$ResourceFilterMessage+=$duplicateResources
 					}
