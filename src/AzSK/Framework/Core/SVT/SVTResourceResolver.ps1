@@ -313,7 +313,7 @@ class SVTResourceResolver: AzSKRoot
 			$nonExistingRGS = $this.ExcludeResourceGroupNames | Where-Object{$_ -notin $matchingRGs}
 			if(($nonExistingRGS| Measure-Object).Count -gt 0)
 			{
-				$ResourceGroupFilterMessage+="Warning: The following resources requested for exclusion from the scan were not found:`n $($nonExistingRGS -join "`r`n ")"
+				$ResourceGroupFilterMessage+="Warning: Did not find following resource groups requested for exclusion:`n	 $($nonExistingRGS -join "	 `n ")"
 				#print the message saying these RGS provided in excludeRGS are not found
 			}
 			if(($matchingRGs| Measure-Object).Count -gt 0 )
@@ -347,8 +347,7 @@ class SVTResourceResolver: AzSKRoot
 			if(($NonExistingResource | Measure-Object).Count -gt 0 )
 			{
 				$ResourcesToExclude = $this.ExcludeResourceNames | Where-Object{ $_ -notin $NonExistingResource }
-				$NonExistingResourceMessage=$NonExistingResource -join "`r`n " ;
-				$ResourceFilterMessage+="Warning: The following resources requested for exclusion from the scan were not found:`n $NonExistingResourceMessage `n";
+				$ResourceFilterMessage+="Warning: Did not find the following resources requested for exclusion:`n	 $($NonExistingResource -join "	 `n ")`n";
 			}	
 			#check if duplicate resources names if exist in -xrns
 			$matchingResources = $resources | Where-Object { $_.ResourceName -in $this.ExcludeResourceNames}
@@ -362,9 +361,9 @@ class SVTResourceResolver: AzSKRoot
 					{
 						$duplicateResources=""
 						$duplicates=$resources|Where-Object{$_.ResourceName -in $duplicateResourceNames.Name}|Select-Object -Property ResourceName,ResourceGroupName,ResourceTypeMapping
-						$ResourceFilterMessage+="Warning: Found multiple matches for the following resources. All matching resources will be excluded from scan.`n"
+						$ResourceFilterMessage+="Warning: Multiple matches for the following resources. All matching resources will be excluded.`n"
 						$duplicates|ForEach-Object{
-							$duplicateResources+=[string]::Format(" {0}(RG: {1},TypeName: {2})`n",($_.ResourceName),($_.ResourceGroupName),($_.ResourceTypeMapping.ResourceTypeName))
+							$duplicateResources+=[string]::Format("	 {0}(RG: {1},TypeName: {2})`n",($_.ResourceName),($_.ResourceGroupName),($_.ResourceTypeMapping.ResourceTypeName))
 						}
 						$ResourceFilterMessage+=$duplicateResources
 					}

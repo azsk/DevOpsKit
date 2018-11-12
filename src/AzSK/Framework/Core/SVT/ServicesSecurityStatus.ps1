@@ -120,20 +120,23 @@ class ServicesSecurityStatus: SVTCommandBase
 		$ExcludedResources=$this.resolver.ExcludedResources ;
 		if(($this.resolver.ExcludeResourceGroupNames| Measure-Object).Count -gt 0 -or ($this.resolver.ExcludeResourceNames| Measure-Object).Count -gt 0)
 		{
-			if(($this.resolver.ExcludeResourceGroupNames| Measure-Object).Count -gt 0)
+			$this.PublishCustomMessage("One or more resources/resource groups will be excluded from the scan based on exclude flags.")	
+			if(-not [string]::IsNullOrEmpty($this.resolver.ExcludeResourceGroupWarningMessage))
 			{
-				$this.PublishCustomMessage("Number of resource groups to be excluded from scan: $(($ExcludedResourceGroups | Measure-Object).Count)", [MessageType]::Info);	
-				if(-not [string]::IsNullOrEmpty($this.resolver.ExcludeResourceGroupWarningMessage))
-				{
-					$this.PublishCustomMessage("$($this.resolver.ExcludeResourceGroupWarningMessage)",[MessageType]::Warning)
-					
-				}	
-			}						
+				$this.PublishCustomMessage("$($this.resolver.ExcludeResourceGroupWarningMessage)",[MessageType]::Warning)
+				
+			}
 			if(-not [string]::IsNullOrEmpty($this.resolver.ExcludeResourceWarningMessage))
 			{
 				$this.PublishCustomMessage("$($this.resolver.ExcludeResourceWarningMessage)",[MessageType]::Warning)
 			}
-			$this.PublishCustomMessage("Number of resources to be excluded from scan: $(($ExcludedResources | Measure-Object).Count)", [MessageType]::Info);	
+			$this.PublishCustomMessage("Summary of exclusions: ");
+			if(($this.resolver.ExcludeResourceGroupNames| Measure-Object).Count -gt 0)
+			{
+				$this.PublishCustomMessage("	Resource groups excluded: $(($ExcludedResourceGroups | Measure-Object).Count)", [MessageType]::Info);	
+			}
+			$this.PublishCustomMessage("	Resources excluded: $(($ExcludedResources | Measure-Object).Count)(includes RGs,resourcetypenames and explicit exclusions)", [MessageType]::Info);	
+			$this.PublishCustomMessage("For a detailed list of excluded resources, see 'ExcludedResources-$($this.RunIdentifier)' in the output log folder")
 			$this.ReportExcludedResources($this.resolver);
 		}
 		if($runNonAutomated)

@@ -130,14 +130,19 @@ class WriteSummaryFile: FileOutputBase
 					$filePath = $currentInstance.CalculateFilePath($Event.SourceArgs.SubscriptionContext, [FileOutputBase]::ETCFolderPath, ("ExcludedResources-" + $currentInstance.RunIdentifier + ".txt.LOG"));
 					
 					$ExcludedType = $message.DataObject.ExcludedResourceType
+					if($ExcludedType -eq 'All')
+					{
+						$ExcludedType = 'None'
+					}
 					$ExcludedRGs = $message.DataObject.ExcludedResourceGroupNames
+					
 					$ExcludeResourceName = $message.DataObject.ExcludeResourceNames
-					$ExcludedResources = $message.DataObject.ExcludedResources |Select-Object -Property ResourceName,ResourceGroupName -ExpandProperty ResourceTypeMapping
+					$ExcludedResources = $message.DataObject.ExcludedResources  
 					$ExcludedRGsResources = $ExcludedResources | Where-Object {$_.ResourceGroupName -in $ExcludedRGs}
-					$ExcludedTypeResources = $ExcludedResources | Where-Object {$_.ResourceTypeName -in $ExcludedType}
+					$ExcludedTypeResources = $ExcludedResources | Select-Object -ExpandProperty ResourceTypeMapping |Where-Object {$_.ResourceTypeName -in $ExcludedType}
 					$ExplicitlyExcludedResource =$ExcludedResources| Where-Object {$_.ResourceName -in $ExcludeResourceName}
-					$printMessage += [Constants]::DoubleDashLine +"`r`nTotal Number of resource groups excluded:$(($ExcludedRGs | Measure-Object).Count | Out-String)"
-					$printMessage += "`r`nTotal Number of resources excluded: $(($ExcludedResources | Measure-Object).Count | Out-String)"
+					$printMessage += [Constants]::DoubleDashLine +"`r`nNumber of resource groups excluded: $(($ExcludedRGs | Measure-Object).Count | Out-String)"
+					$printMessage += "`r`nNumber of resources excluded: $(($ExcludedResources | Measure-Object).Count | Out-String)"
 					$printMessage += "`r`n`nDistribution of resources being excluded is as follows:"+"`r`n"+[Constants]::SingleDashLine
 					$printMessage += "`r`nNumber of resources excluded due to excluding resource groups: $(($ExcludedRGsResources | Measure-Object).Count | Out-String)"
 					$printMessage += "`r`nNumber of resources excluded due to excluding resource type '$ExcludedType': $(($ExcludedTypeResources | Measure-Object).Count | Out-String)"
@@ -145,10 +150,24 @@ class WriteSummaryFile: FileOutputBase
 					$printMessage += "`r`n"+[Constants]::SingleDashLine +"`r`n"+[Constants]::DoubleDashLine+"`r`nFollowing are the list of resource groups and resources being excluded" 
 					$printMessage += "`r`n"+[Constants]::SingleDashLine+"`r`nResource groups excluded:"
 					$detailedList += "`r`n-------------------------"
-					$detailedList +="`r`n$($ExcludedRGS |Sort-Object|Format-Table |Out-String)"
+					if(($ExcludedRGs | Measure-Object).Count -gt 0)
+					{
+						$detailedList +="`r`n$($ExcludedRGS |Sort-Object|Format-Table |Out-String)"
+					}
+					else 
+					{
+						$detailedList += "`r`n N/A"
+					}
 					$detailedList += "`r`nResources excluded:"
 					$detailedList += "`r`n-------------------------"
-					$detailedList += "`r`n$($ExcludedResources| Sort-Object -Property "ResourceGroupName"|Select-Object -Property ResourceName,ResourceGroupName,ResourceType,ResourceTypeName|Format-Table | Out-String)"
+					if(($ExcludedResources | Measure-Object).Count -gt 0)
+					{
+						$detailedList += "`r`n$($ExcludedResources| Sort-Object -Property "ResourceGroupName"|Select-Object -Property ResourceName,ResourceGroupName -ExpandProperty ResourceTypeMapping| Select-Object  -Property ResourceName,ResourceGroupName,ResourceTypeName,ResourceType|Format-Table | Out-String)"
+					}
+					else 
+					{
+						$detailedList += "`r`n N/A"						
+					}
 					$printMessage += $detailedList
 					
 					Add-Content -Value $printMessage -Path $filePath 
