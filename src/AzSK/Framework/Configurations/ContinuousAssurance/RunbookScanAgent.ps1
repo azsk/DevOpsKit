@@ -63,19 +63,18 @@ function RunAzSKScan() {
     CheckForSubscriptionsSnapshotData
 	
     #Get the current storagecontext
-	$existingStorage = Get-AzureRmResource -ResourceGroupName $StorageAccountRG -Name "*azsk*" -ResourceType "Microsoft.Storage/storageAccounts"
-	$centralStorage = Get-AzureRmStorageAccount -ResourceGroupName $StorageAccountRG -Name "*azsk*" -ResourceType "Microsoft.Storage/storageAccounts"
+	$existingStorage = Get-AzureRmStorageAccount -ResourceGroupName $StorageAccountRG | Where-Object {$_.StorageAccountName  -like 'azsk*'}
 	
 	if(($existingStorage|Measure-Object).Count -gt 1)
 	{
 		$existingStorage = $existingStorage[0]
-		Write-Output ("SA: Multiple storage accounts found in resource group. Using Storage Account: [$($existingStorage.Name)] for storing logs")
+		Write-Output ("SA: Multiple storage accounts found in resource group. Using Storage Account: [$($existingStorage.StorageAccountName)] for storing logs")
 	}
-	$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $StorageAccountRG -Name $existingStorage.Name
+	$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $StorageAccountRG -Name $existingStorage.StorageAccountName
 
 	#The 'centralStorageContext' always represents the parent subscription storage. 
 	#In multi-sub scan this is the central sub. In single sub scan, this is just the storage in that sub.
-	$centralStorageContext = New-AzureStorageContext -StorageAccountName $existingStorage.Name -StorageAccountKey $keys[0].Value -Protocol Https
+	$centralStorageContext = New-AzureStorageContext -StorageAccountName $existingStorage.StorageAccountName -StorageAccountKey $keys[0].Value -Protocol Https
 	
     if($Global:IsCentralMode)
 	{
@@ -169,7 +168,7 @@ function RunAzSKScan() {
 					Write-Output ("SA: Multi-sub Scan. Started scan for subscription: [$subId]")
 
 					#In case of multi-sub scan logging option applies to all subs
-					RunAzSKScanForASub -SubscriptionID $subId -LoggingOption $candidateSubToScan.LoggingOption -StorageContext $centralStorageContext -CentralStorageAccount $centralStorage
+					RunAzSKScanForASub -SubscriptionID $subId -LoggingOption $candidateSubToScan.LoggingOption -StorageContext $centralStorageContext -CentralStorageAccount $existingStorage
 					PersistSubscriptionSnapshot -SubscriptionID $subId -Status $postStatus -StorageContext $centralStorageContext 
 					Write-Output ("SA: Multi-sub Scan. Completed scan for subscription: [$subId]")
 				}		
