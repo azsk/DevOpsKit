@@ -215,13 +215,14 @@ try
 
 	#This setting determines if the policy store enforces authentication. Generally 'false' for org-policy or OSS (org-neutral) context.
 	$enableAADAuthForOnlinePolicyStore = "[#enableAADAuthForOnlinePolicyStore#]"
-
+    $AzureEnv = "[#AzureEnvironment#]"
 	#This is the script that is run to peform the actual scanning. This is fetched from the org-policy store if org-policy 
 	#is in use. If not, it is fetched from the default AzSK CDN. 
 	#This script basically allows orgs to customize/tweak the scripts that are run to perform the daily CA scans.
 	$runbookScanAgentScript = "RunbookScanAgent.ps1"
 
-	$azureRmResourceURI = "https://management.core.windows.net/"
+	#$azureRmResourceURI = "https://management.core.windows.net/"
+	$azureRmResourceURI = "[#ManagementUri#]"
 	
 	#This is the Run-As (SPN) account for the runbook. It is read from the CA Automation account.
 	$RunAsConnection = Get-AutomationConnection -Name "AzureRunAsConnection"
@@ -246,6 +247,7 @@ try
 			if($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Connect-AzureRmAccount"}))
 			{
 				Connect-AzureRmAccount `
+				-Environment $AzureEnv `
 				-ServicePrincipal `
 				-TenantId $RunAsConnection.TenantId `
 				-ApplicationId $RunAsConnection.ApplicationId `
@@ -255,6 +257,7 @@ try
 			elseif ($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Add-AzureRmAccount"})) 
 			{
 				Add-AzureRmAccount `
+				-Environment $AzureEnv `
 				-ServicePrincipal `
 				-TenantId $RunAsConnection.TenantId `
 				-ApplicationId $RunAsConnection.ApplicationId `

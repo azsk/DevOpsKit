@@ -268,9 +268,11 @@ class ConfigurationHelper {
 		[System.Uri] $validatedUri = $null;
 		if([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri))
 		{
+			$rmContext = [Helpers]::GetCurrentRMContext();
+		    $ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl
 			if($enableAADAuthForOnlinePolicyStore)
 			{
-				$accessToken = [Helpers]::GetAccessToken("https://management.core.windows.net/")
+				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 				$serverFileContent = Invoke-RestMethod `
 									-Method GET `
 									-Uri $validatedUri `

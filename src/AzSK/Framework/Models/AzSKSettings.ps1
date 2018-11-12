@@ -28,7 +28,8 @@ class AzSKSettings {
 	[TertiaryBool] $AllowSelfSignedWebhookCertificate;
 	[bool] $EnableAADAuthForOnlinePolicyStore;
     [bool] $UseOnlinePolicyStore;
-    [string] $OnlinePolicyStoreUrl;
+	[string] $OnlinePolicyStoreUrl;
+	[string] $AzureEnvironment;
 	[string] $UsageTelemetryLevel;
 	[string] $LocalControlTelemetryKey;
 	[bool] $LocalEnableControlTelemetry;

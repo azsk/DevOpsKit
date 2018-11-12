@@ -46,8 +46,9 @@ class SecurityCenterHelper
 		
 		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
 		#[SecurityCenterHelper]::RegisterResourceProvider();
-	
-		$uri = [WebRequestHelper]::AzureManagementUri + "subscriptions/$subscriptionId/providers/$([SecurityCenterHelper]::ProviderNamespace)/$($apiType)$($apiVersion)";
+	    $rmContext = [Helpers]::GetCurrentRMContext();
+		$ResourceAppIdURI = $rmContext.Environment.ResourceManagerUrl 
+		$uri = $ResourceAppIdURI + "subscriptions/$subscriptionId/providers/$([SecurityCenterHelper]::ProviderNamespace)/$($apiType)$($apiVersion)";
         return [WebRequestHelper]::InvokeGetWebRequest($uri);
 	}
 
@@ -60,8 +61,9 @@ class SecurityCenterHelper
 
 		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
 		#[SecurityCenterHelper]::RegisterResourceProvider();
-
-		$uri = [WebRequestHelper]::AzureManagementUri.TrimEnd("/") + $resourceId + $apiVersion;
+        $rmContext = [Helpers]::GetCurrentRMContext();
+		$ResourceAppIdURI = $rmContext.Environment.ResourceManagerUrl
+		$uri = $ResourceAppIdURI.TrimEnd("/") + $resourceId + $apiVersion;
 		return [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
 	}
 
@@ -71,7 +73,9 @@ class SecurityCenterHelper
 		{ 	
 			if([SecurityCenterHelper]::ASCSecurityStatus -eq $null)
 			{
-				$uri = [System.String]::Format("{0}subscriptions/{1}/providers/microsoft.Security/securityStatuses?api-version=2015-06-01-preview", [WebRequestHelper]::AzureManagementUri, $subscriptionId)
+				$rmContext = [Helpers]::GetCurrentRMContext();
+		        $ResourceAppIdURI = $rmContext.Environment.ResourceManagerUrl
+				$uri = [System.String]::Format("{0}subscriptions/{1}/providers/microsoft.Security/securityStatuses?api-version=2015-06-01-preview", $ResourceAppIdURI, $subscriptionId)
 				$result = [WebRequestHelper]::InvokeGetWebRequest($uri);					
 				if(($result | Measure-Object).Count -gt 0)
 				{

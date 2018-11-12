@@ -5,8 +5,13 @@ using namespace Microsoft.Azure.Management.Storage.Models
 Set-StrictMode -Version Latest
 class Helpers {
 
-	static hidden [PSObject] $currentRMContext;
-
+    static hidden [PSObject] $currentRMContext;
+    static hidden [PSObject] $AzureEnv;
+    hidden static [PSObject] GetCurrentRMContext([PSObject] $AzureEnv)
+    {
+        [Helpers]::AzureEnv = $AzureEnv
+        return [Helpers]::GetCurrentRMContext()
+    }
 	hidden static [PSObject] GetCurrentRMContext()
 	{
 		if (-not [Helpers]::currentRMContext)
@@ -15,12 +20,20 @@ class Helpers {
 
 			if ((-not $rmContext) -or ($rmContext -and (-not $rmContext.Subscription -or -not $rmContext.Account))) {
 				[EventBase]::PublishGenericCustomMessage("No active Azure login session found. Initiating login flow...", [MessageType]::Warning);
-
-				$rmLogin = Connect-AzureRmAccount
+                [PSObject]$rmLogin = $null
+                $AzureEnvironment= [Helpers]::AzureEnv.AzureEnvironment
+                if($AzureEnvironment = "AzureUSGovernment")
+                {
+                    $rmLogin = Connect-AzureRmAccount -EnvironmentName AzureUSGovernment
+                }
+                else
+                {
+                $rmLogin = Connect-AzureRmAccount
+                }
 				if ($rmLogin) {
 					$rmContext = $rmLogin.Context;
 				}
-			}
+            }
 
 			[Helpers]::currentRMContext = $rmContext
 		}
