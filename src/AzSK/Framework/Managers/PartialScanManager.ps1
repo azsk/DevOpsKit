@@ -184,23 +184,22 @@ class PartialScanManager
 	{
 		if($null -ne $this.ResourceScanTrackerObj)
 		{
-			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState";
+			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState\PartialScanData";
 			
 			if(![string]::isnullorwhitespace($this.subId)){
-				if(-not (Test-Path "$AzSKTemp\PartialScanData\$($this.subId)"))
+				if(-not (Test-Path "$AzSKTemp\$($this.subId)"))
 				{
-					mkdir -Path "$AzSKTemp\PartialScanData\$($this.subId)" -ErrorAction Stop | Out-Null
+					mkdir -Path "$AzSKTemp\$($this.subId)" -ErrorAction Stop | Out-Null
 				}
-				$masterFilePath = "$AzSKTemp\PartialScanData\$($([PartialScanManager]::ResourceScanTrackerBlobName).Replace('/','\'))"
 			}
 			else{
-				if(-not (Test-Path "$AzSKTemp\PartialScanData"))
+				if(-not (Test-Path "$AzSKTemp"))
 				{
-					mkdir -Path "$AzSKTemp\PartialScanData" -ErrorAction Stop | Out-Null
+					mkdir -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
 				}
-				$masterFilePath = "$AzSKTemp\PartialScanData\$([PartialScanManager]::ResourceScanTrackerBlobName)"
 			}
 
+			$masterFilePath = "$AzSKTemp\$($([PartialScanManager]::ResourceScanTrackerBlobName).Replace('/','\'))"
 			$controlStateBlob = Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$([PartialScanManager]::ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
 
 			if($null -ne $controlStateBlob)
@@ -251,23 +250,22 @@ class PartialScanManager
 		$this.GetResourceScanTrackerObject();
 		if($null -ne $this.ResourceScanTrackerObj)
 		{
-			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState";
+			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState\PartialScanData";
 			
 			if(![string]::isnullorwhitespace($this.subId)){
-				if(-not (Test-Path "$AzSKTemp\PartialScanData\$($this.subId)"))
+				if(-not (Test-Path "$AzSKTemp\$($this.subId)"))
 				{
-					mkdir -Path "$AzSKTemp\PartialScanData\$($this.subId)" -ErrorAction Stop | Out-Null
-				}
-				$masterFilePath = "$AzSKTemp\PartialScanData\$($([PartialScanManager]::ResourceScanTrackerBlobName).Replace('/','\'))"
+					mkdir -Path "$AzSKTemp\$($this.subId)" -ErrorAction Stop | Out-Null
+				}	
 			}
 			else{
-				if(-not (Test-Path "$AzSKTemp\PartialScanData"))
+				if(-not (Test-Path "$AzSKTemp"))
 				{
-					mkdir -Path "$AzSKTemp\PartialScanData" -ErrorAction Stop | Out-Null
+					mkdir -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
 				}
-				$masterFilePath = "$AzSKTemp\PartialScanData\$([PartialScanManager]::ResourceScanTrackerBlobName)"
 			}
-	
+
+			$masterFilePath = "$AzSKTemp\$($([PartialScanManager]::ResourceScanTrackerBlobName).Replace('/','\'))"
 			[Helpers]::ConvertToJsonCustom($this.ResourceScanTrackerObj) | Out-File $masterFilePath -Force
 			Set-AzureStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "$([PartialScanManager]::ResourceScanTrackerBlobName)" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
 		}
@@ -282,12 +280,12 @@ class PartialScanManager
 	{
 		try
 		{
-			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState";
+			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState\PartialScanData";
 
 			if(![string]::isnullorwhitespace($this.subId)){
-				if(-not (Test-Path "$AzSKTemp\PartialScanData\$($this.subId)"))
+				if(-not (Test-Path "$AzSKTemp\$($this.subId)"))
 				{
-					mkdir -Path "$AzSKTemp\PartialScanData\$($this.subId)" -ErrorAction Stop | Out-Null
+					mkdir -Path "$AzSKTemp\$($this.subId)" -ErrorAction Stop | Out-Null
 				}
 				$archiveName =  $this.CAScanProgressSnapshotsContainerName + $token +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + ".json";
 				
@@ -296,13 +294,13 @@ class PartialScanManager
 					$archiveName =  $this.CAScanProgressSnapshotsContainerName + $token +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + "_CentralMode" + ".json";
 				}
 				
-				$masterFilePath = "$AzSKTemp\PartialScanData\$($this.subId)\$archiveName"
+				$masterFilePath = "$AzSKTemp\$($this.subId)\$archiveName"
 				$archiveName = [PartialScanManager]::Instance.subId + "/" + $archiveName;
 			}
 			else{
-				if(-not (Test-Path "$AzSKTemp\PartialScanData"))
+				if(-not (Test-Path "$AzSKTemp"))
 				{
-					mkdir -Path "$AzSKTemp\PartialScanData" -ErrorAction Stop | Out-Null
+					mkdir -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
 				}
 				$archiveName =  $this.CAScanProgressSnapshotsContainerName + $token +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + ".json";
 				
@@ -311,7 +309,7 @@ class PartialScanManager
 					$archiveName =  $this.CAScanProgressSnapshotsContainerName + $token +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + "_CentralMode" + ".json";
 				}
 					
-				$masterFilePath = "$AzSKTemp\PartialScanData\$archiveName"
+				$masterFilePath = "$AzSKTemp\$archiveName"
 			}
 			$controlStateBlob = Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$([PartialScanManager]::ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
 			if($null -ne $controlStateBlob)
@@ -344,23 +342,22 @@ class PartialScanManager
 			{
 				return;
 			}
-			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState";
+			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState\PartialScanData";
 
 			if(![string]::isnullorwhitespace($this.subId)){
-				if(-not (Test-Path "$AzSKTemp\PartialScanData\$($this.subId)"))
+				if(-not (Test-Path "$AzSKTemp\$($this.subId)"))
 				{
-					mkdir -Path "$AzSKTemp\PartialScanData\$($this.subId)" -ErrorAction Stop | Out-Null
+					mkdir -Path "$AzSKTemp\$($this.subId)" -ErrorAction Stop | Out-Null
 				}
-				$masterFilePath = "$AzSKTemp\PartialScanData\$($([PartialScanManager]::ResourceScanTrackerBlobName).Replace('/','\'))"
 			}
 			else{
-				if(-not (Test-Path "$AzSKTemp\PartialScanData"))
+				if(-not (Test-Path "$AzSKTemp"))
 				{
-					mkdir -Path "$AzSKTemp\PartialScanData" -ErrorAction Stop | Out-Null
+					mkdir -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
 				}
-				$masterFilePath = "$AzSKTemp\PartialScanData\$([PartialScanManager]::ResourceScanTrackerBlobName)"
 			}
-			
+
+			$masterFilePath = "$AzSKTemp\$($([PartialScanManager]::ResourceScanTrackerBlobName).Replace('/','\'))"
 			$controlStateBlob = Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$([PartialScanManager]::ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
 							
 			if($null -ne $controlStateBlob)
