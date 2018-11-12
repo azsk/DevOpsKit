@@ -305,7 +305,6 @@ class ServicesSecurityStatus: SVTCommandBase
 			if ($this.UsePartialCommits -or ($baselineControlsDetails.SupportedSources -contains $scanSource))
 			{
 				#$this.PublishCustomMessage("Running cmdlet under transactional mode. This will scan resources and store intermittent scan progress to Storage. It resume scan in next run if something breaks inbetween.", [MessageType]::Warning);
-				[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
 				#Validate if active resources list already available in store
 				#If list not available in store. Get resources filtered by baseline resource types and store it storage
 				if(($partialScanMngr.IsMasterListActive() -eq [ActiveStatus]::Yes)  )
