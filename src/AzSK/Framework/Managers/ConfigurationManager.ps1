@@ -17,7 +17,25 @@ class ConfigurationManager
 	hidden static [AzSKSettings] GetLocalAzSKSettings()
     {        
         return [AzSKSettings]::GetLocalInstance()
-    }
+	}
+	
+	hidden static [string] GetResourceManagerUrl()
+	{
+		if(-not([AzSKSettings]::GetInstance().AzureEnvironment = "AzureCloud"))
+		{
+			return [Helpers]::GetCurrentRMContext().Environment.ResourceManagerUrl 
+		}
+		return "https://management.azure.com/"
+	}
+
+	hidden static [string] GetServiceManagementUrl()
+	{
+		if(-not([AzSKSettings]::GetInstance().AzureEnvironment = "AzureCloud"))
+		{
+			return [Helpers]::GetCurrentRMContext().Environment.ServiceManagementUrl 
+		}
+		return "https://management.core.windows.net/"
+	}
 
 	hidden static [AzSKSettings] UpdateAzSKSettings([AzSKSettings] $localSettings)
     {        

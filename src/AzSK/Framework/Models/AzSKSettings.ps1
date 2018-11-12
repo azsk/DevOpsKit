@@ -40,17 +40,29 @@ class AzSKSettings {
 	[bool] $StoreComplianceSummaryInUserSubscriptions;
 
 
+	
+	hidden static SetDefaultEnvironment() {
+		if([string]::IsNullOrWhiteSpace([AzSKSettings]::Instance.AzureEnvironment))
+		{
+            [AzSKSettings]::Instance.AzureEnvironment = "AzureCloud"
+		}
+	}
+
     static [AzSKSettings] GetInstance() {
         if (-not [AzSKSettings]::Instance)
 		{
 			[AzSKSettings]::LoadAzSKSettings($false);
+			[AzSKSettings]::SetDefaultEnvironment();
+			#todo: change to default env by using a fn
         }
 
         return [AzSKSettings]::Instance
-    }
+	}
 
 	static [AzSKSettings] GetLocalInstance() {
-        return [AzSKSettings]::LoadAzSKSettings($true);
+	    [AzSKSettings]::LoadAzSKSettings($true);
+		[AzSKSettings]::SetDefaultEnvironment();
+		return [AzSKSettings]::Instance
     }
 
     hidden static [AzSKSettings] LoadAzSKSettings([bool] $loadUserCopy) {
@@ -122,7 +134,8 @@ class AzSKSettings {
 							$parsedSettings.$propertyName = $serverSettings.$propertyName;
 							$mergedServerPropNames += $propertyName;
 						}
-					};				
+					};		
+					
 				[AzSKSettings]::Instance = $parsedSettings;				
 			}
             #Sever merged settings should not be persisted, as it should always take latest from the server

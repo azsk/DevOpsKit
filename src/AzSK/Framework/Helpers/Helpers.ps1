@@ -6,10 +6,10 @@ Set-StrictMode -Version Latest
 class Helpers {
 
     static hidden [PSObject] $currentRMContext;
-    static hidden [PSObject] $AzureSettings;
-    hidden static [PSObject] GetCurrentRMContext([PSObject] $AzureSettings)
+    static hidden [string] $AzureEnv;
+    hidden static [PSObject] GetCurrentRMContext([String] $AzureEnv)
     {
-        [Helpers]::AzureSettings = $AzureSettings
+        [Helpers]::AzureEnv = $AzureEnv
         return [Helpers]::GetCurrentRMContext()
     }
 	hidden static [PSObject] GetCurrentRMContext()
@@ -21,11 +21,11 @@ class Helpers {
 			if ((-not $rmContext) -or ($rmContext -and (-not $rmContext.Subscription -or -not $rmContext.Account))) {
 				[EventBase]::PublishGenericCustomMessage("No active Azure login session found. Initiating login flow...", [MessageType]::Warning);
                 [PSObject]$rmLogin = $null
-                $AzureEnvironment= [Helpers]::AzureSettings.AzureEnvironment
+                $AzureEnvironment =  [Helpers]::AzureEnv
                 if(-not [string]::IsNullOrWhiteSpace($AzureEnvironment))
                 {
                     try{
-                        $rmLogin = Connect-AzureRmAccount -EnvironmentName AzureUSGovernment
+                        $rmLogin = Connect-AzureRmAccount -EnvironmentName $AzureEnvironment
                     }
                     catch{
                         

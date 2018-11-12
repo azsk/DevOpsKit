@@ -2988,15 +2988,11 @@ class CCAutomation: CommandBase
 		$AzSKCARunbookVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion
 		$telemetryKey = ""
 		$AzureEnv = [ConfigurationManager]::GetAzSKSettings().AzureEnvironment
-		if([string]::IsNullOrWhiteSpace($AzureEnv))
-		{
-			$AzureEnv = "AzureCloud"
-		}
-		try
+		if(-not ($AzureEnv = "AzureCloud"))
 		{
 		$ManagementUri = [Helpers]::GetCurrentRMContext().Environment.ServiceManagementUrl 
 		}
-		catch
+		else
 		{
 			$ManagementUri = "https://management.core.windows.net/"
 		}

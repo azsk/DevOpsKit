@@ -51,9 +51,7 @@ class CloudService: SVTBase
 		#step 2: load from classic config model
 		try
 		{		
-			#$ResourceAppIdURI = [WebRequestHelper]::ClassicManagementUri;
-			$rmContext = [Helpers]::GetCurrentRMContext();
-		    $ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl
+			$ResourceAppIdURI = [ConfigurationManager]::GetServiceManagementUrl()
 			$ClassicAccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 			if($null -ne $ClassicAccessToken) 
 			{

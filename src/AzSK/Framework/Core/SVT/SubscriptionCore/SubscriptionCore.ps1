@@ -994,8 +994,7 @@ class SubscriptionCore: SVTBase
 
 	hidden [void] GetManagementCertificates()
 	{
-		$rmContext = [Helpers]::GetCurrentRMContext();
-		$ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl
+		$ResourceAppIdURI = [ConfigurationManager]::GetServiceManagementUrl()
 		$ClassicAccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 		if($null -ne $ClassicAccessToken)
 		{
@@ -1020,8 +1019,7 @@ class SubscriptionCore: SVTBase
 
 	hidden [void] GetASCAlerts()
 	{
-		$rmContext = [Helpers]::GetCurrentRMContext();
-		$ResourceAppIdURI = $rmContext.Environment.ResourceManagerUrl
+		$ResourceAppIdURI = [ConfigurationManager]::GetResourceManagerUrl()
 		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 		if($null -ne $AccessToken)
 		{
@@ -1078,8 +1076,7 @@ class SubscriptionCore: SVTBase
 		$message='';
 		if($null -eq $this.PIMAssignments)
 		{
-			$rmContext = [Helpers]::GetCurrentRMContext();
-		    $ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl
+			$ResourceAppIdURI = [ConfigurationManager]::GetServiceManagementUrl()
 			$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 			if($null -ne $AccessToken)
 			{

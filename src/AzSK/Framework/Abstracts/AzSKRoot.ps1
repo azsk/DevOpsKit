@@ -28,8 +28,8 @@ class AzSKRoot: EventBase
     
     hidden [void] SetAzureContext()
     {
-		$AzureSettings = [ConfigurationManager]::GetAzSKSettings()
-		$currentContext = [Helpers]::GetCurrentRMContext($AzureSettings)
+		$AzureEnv = [ConfigurationManager]::GetLocalAzSKSettings().AzureEnvironment
+		$currentContext = [Helpers]::GetCurrentRMContext($AzureEnv)
 
         if((-not $currentContext) -or ($currentContext -and ((-not $currentContext.Subscription -and ($this.SubscriptionContext.SubscriptionId -ne [Constants]::BlankSubscriptionId)) `
 				-or -not $currentContext.Account)))
