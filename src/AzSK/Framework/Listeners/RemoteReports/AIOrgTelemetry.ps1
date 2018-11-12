@@ -30,33 +30,7 @@ class AIOrgTelemetry: ListenerBase {
             {
                 $currentInstance.PublishException($_);
             }
-		});
-		
-		$this.RegisterEvent([SVTEvent]::CommandCompleted, {
-			$currentInstance = [AIOrgTelemetry]::GetInstance();
-			try
-			{
-				$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-				$subId = $invocationContext.BoundParameters["SubscriptionId"]
-				$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
-				$featureGroup = [RemoteReportHelper]::GetFeatureGroup($SVTEventContexts)
-				if($featureGroup -eq [FeatureGroup]::Service){
-					$policyCompliance = Get-AzureRmPolicyState -SubscriptionId $subId | Select-Object ResourceId,PolicyDefinitionId,PolicyAssignmentName,IsCompliant,PolicyAssignmentScope
-                    $baseProperties = @{
-						"RunIdentifier" = $this.RunIdentifier;
-						[TelemetryKeys]::FeatureGroup = [FeatureGroup]::Service;
-						"ScanKind" = [RemoteReportHelper]::GetServiceScanKind(
-							$invocationContext.MyCommand.Name,
-							$invocationContext.BoundParameters);
-					}
-				}
-				$currentInstance.pushPolicyResults($policyCompliance, $baseProperties)
-			}
-			catch
-			{
-				$currentInstance.PublishException($_);
-			}
-		});
+        });
 
 		$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
 			$currentInstance = [AIOrgTelemetry]::GetInstance();
@@ -213,25 +187,6 @@ class AIOrgTelemetry: ListenerBase {
 		}
 		$this.PushControlResults($SVTEventContexts, $baseProperties)
 	}
-
-	hidden [void] pushPolicyResults([psobject] $Policystates,[hashtable] $BaseProperties)
-	{
-		$telemetryEvents = [System.Collections.ArrayList]::new()
-        foreach($policystate in $Policystates){
-			$properties = $BaseProperties.Clone();
-			$properties.Add("ResourceId",$policystate.ResourceId);
-			$properties.Add("PolicyDefinitionId",$policystate.PolicyDefinitionId);
-			$properties.Add("PolicyAssignmentName",$policystate.PolicyAssignmentName);
-			$properties.Add("IsCompliant",$policystate.IsCompliant);
-			$properties.Add("PolicyAssignmentScope",$policystate.PolicyAssignmentScope);
-			$telemetryEvent = "" | Select-Object Name, Properties, Metrics
-			$telemetryEvent.Name = "Policy Scanned"
-			$telemetryEvent.Properties = $properties
-			$telemetryEvent = [AIOrgTelemetry]::SetCommonProperties($telemetryEvent);
-			$telemetryEvents.Add($telemetryEvent) | Out-Null
-		}
-		[AIOrgTelemetryHelper]::TrackEvents($telemetryEvents);
-    }
 
 	hidden [void] PushControlResults([SVTEventContext[]] $SVTEventContexts, [hashtable] $BaseProperties){
 		$telemetryEvents = [System.Collections.ArrayList]::new()

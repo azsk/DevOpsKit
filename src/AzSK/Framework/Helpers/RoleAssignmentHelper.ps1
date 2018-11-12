@@ -23,7 +23,7 @@ class RoleAssignmentHelper
 			# Eat the current exception which typically happens when the caller doesn't have access to GraphAPI. It will fall back to the below custom API based approach.
 		}
         $rmContext = [Helpers]::GetCurrentRMContext();
-		$ResourceAppIdURI = $rmContext.Environment.ResourceManagerUrl
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 		$requestUri = $ResourceAppIdURI + $scope;
 		$roleAssignments = [RoleAssignmentHelper]::GetRMRoleAssignment($requestUri, $recurse);
 		if($includeClassicAdministrators)
@@ -106,7 +106,7 @@ class RoleAssignmentHelper
 
 		$currentContext = [Helpers]::GetCurrentRMContext();
         $subscriptionId = $currentContext.Subscription.Id;
-        $ResourceAppIdURI = $currentContext.Environment.ResourceManagerUrl
+        $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 		$subscriptionPath = "subscriptions/$subscriptionId";
 		$resourceGroupPath = "/resourceGroups/$resourceGroupName";
 		$resourceNamePath = "/providers/$resourceType/$resourceName";
@@ -224,7 +224,7 @@ class RoleAssignmentHelper
 	{
 		$currentContext = [Helpers]::GetCurrentRMContext();
         $subscriptionId = $currentContext.Subscription.Id;
-        $ResourceAppIdURI = $currentContext.Environment.ResourceManagerUrl
+        $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 		$subscriptionPath = "subscriptions/$subscriptionId";
 		$requestUri = $ResourceAppIdURI + $subscriptionPath;
 		$requestUri += "/providers/Microsoft.Authorization/classicAdministrators?api-version=2015-06-01";

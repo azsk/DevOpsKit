@@ -28,7 +28,7 @@ class Helpers {
                         $rmLogin = Connect-AzureRmAccount -EnvironmentName $AzureEnvironment
                     }
                     catch{
-                        
+                        [EventBase]::PublishGenericException($_);
                     }         
                 }
                 else

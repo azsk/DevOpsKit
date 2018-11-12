@@ -13,7 +13,33 @@ class WebRequestHelper {
 	static [System.Object[]] InvokeGetWebRequest([string] $uri) 
 	{	
         return [WebRequestHelper]::InvokeGetWebRequest($uri, [WebRequestHelper]::GetAuthHeaderFromUri($uri));
-    }
+	}
+	
+	hidden static [string] GetResourceManagerUrl()
+	{
+		if( [string]::IsNullOrWhiteSpace([AzSKSettings]::GetInstance().AzureEnvironment))
+		{
+			return "https://management.azure.com/"
+		}
+		if(-not([AzSKSettings]::GetInstance().AzureEnvironment -eq "AzureCloud"))
+		{
+			return [Helpers]::GetCurrentRMContext().Environment.ResourceManagerUrl 
+		}
+		return "https://management.azure.com/"
+	}
+
+	hidden static [string] GetServiceManagementUrl()
+	{
+		if( [string]::IsNullOrWhiteSpace([AzSKSettings]::GetInstance().AzureEnvironment))
+		{
+			return "https://management.core.windows.net/"
+		}
+		if(-not([AzSKSettings]::GetInstance().AzureEnvironment -eq "AzureCloud"))
+		{
+			return [Helpers]::GetCurrentRMContext().Environment.ServiceManagementUrl 
+		}
+		return "https://management.core.windows.net/"
+	}
 
 	hidden static [Hashtable] GetAuthHeaderFromUri([string] $uri)
 	{

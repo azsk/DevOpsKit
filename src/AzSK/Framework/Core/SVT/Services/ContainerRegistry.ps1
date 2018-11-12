@@ -101,7 +101,7 @@ class ContainerRegistry: SVTBase
     hidden [ControlResult] CheckContentTrust([ControlResult] $controlResult)
     {
         $result = $null;
-        $ResourceAppIdURI = [ConfigurationManager]::GetResourceManagerUrl()
+        $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
         $uri = [System.String]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.ContainerRegistry/registries/{3}/listPolicies?api-version=2017-10-01", $ResourceAppIdURI, $this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
             
         try 

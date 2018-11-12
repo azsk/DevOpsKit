@@ -269,7 +269,13 @@ class ConfigurationHelper {
 		if([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri))
 		{
 			$rmContext = [Helpers]::GetCurrentRMContext();
-		    $ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl
+			if(-not [string]::IsNullOrWhiteSpace($rmContext.Environment.Name))
+		     {
+				   $ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl
+			 }
+			 else {
+				$ResourceAppIdURI = "https://management.core.windows.net/"
+			 }
 			if($enableAADAuthForOnlinePolicyStore)
 			{
 				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)

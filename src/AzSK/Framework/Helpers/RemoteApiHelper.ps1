@@ -5,7 +5,7 @@ class RemoteApiHelper {
 
     hidden static [string] GetAccessToken() {
         $rmContext = [Helpers]::GetCurrentRMContext();
-		$ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl
+		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
         return [Helpers]::GetAccessToken($ResourceAppIdURI);
     }
 

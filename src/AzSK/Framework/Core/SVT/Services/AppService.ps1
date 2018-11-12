@@ -19,6 +19,12 @@ class AppService: SVTBase
         $this.GetResourceObject();
     }
 
+	hidden [string] FormatURL([string] $AppURL)
+	{
+		$ind = $AppURL.IndexOf('.')
+		$AppURL = $AppURL.Substring($ind+1)
+		return $AppURL
+	}
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject)
@@ -125,7 +131,7 @@ class AppService: SVTBase
 			#Checks if functions app present
 			if([Helpers]::CheckMember($this.ResourceObject, "Kind") -and ($this.ResourceObject.Kind -eq "functionapp"))
 			{
-				$ResourceAppIdURI = [ConfigurationManager]::GetServiceManagementUrl()
+				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
 				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 				$authorisationToken = "Bearer " + $accessToken
 				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
@@ -140,18 +146,14 @@ class AppService: SVTBase
 					else
 					{
 						$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('azurewebsites') })
-						$AppURL = $temp[0]
-						$ind = $AppURL.IndexOf('.')
-                        $AppURL = $AppURL.Substring($ind+1)
+						$AppURL = $this.FormatURL($temp[0])
 						$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 					}
 				}
 				else
 				{
 					$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('azurewebsites') })
-					$AppURL = $temp[0]
-					$ind = $AppURL.IndexOf('.')
-					$AppURL = $AppURL.Substring($ind+1)
+					$AppURL = $this.FormatURL($temp[0])
 					$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 				}
 				
@@ -473,7 +475,7 @@ class AppService: SVTBase
 				}
 			else
 				{
-				$ResourceAppIdURI = [ConfigurationManager]::GetServiceManagementUrl()
+				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
 				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 				$authorisationToken = "Bearer " + $accessToken
 				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
@@ -487,18 +489,14 @@ class AppService: SVTBase
 					else
 					{
 						$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('azurewebsites') })
-						$AppURL = $temp[0]
-						$ind = $AppURL.IndexOf('.')
-                        $AppURL = $AppURL.Substring($ind+1)
+						$AppURL = $this.FormatURL($temp[0])
 						$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 					}
 			    }
 				else
 				{
 					$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('azurewebsites') })
-					$AppURL = $temp[0]
-					$ind = $AppURL.IndexOf('.')
-					$AppURL = $AppURL.Substring($ind+1)
+					$AppURL = $this.FormatURL($temp[0])
 					$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 				}
 				#$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
@@ -619,7 +617,7 @@ class AppService: SVTBase
 		}
 		else
 		{
-		$ResourceAppIdURI = [ConfigurationManager]::GetServiceManagementUrl()
+		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
 		$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 		$authorisationToken = "Bearer " + $accessToken
 		$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
@@ -633,18 +631,14 @@ class AppService: SVTBase
 			else
 			{
 				$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('azurewebsites') })
-				$AppURL = $temp[0]
-				$ind = $AppURL.IndexOf('.')
-                $AppURL = $AppURL.Substring($ind+1)
+				$AppURL = $this.FormatURL($temp[0])
 				$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 			}
 		}
 		else
 		{
 			$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('azurewebsites') })
-			$AppURL = $temp[0]
-			$ind = $AppURL.IndexOf('.')
-			$AppURL = $AppURL.Substring($ind+1)
+			$AppURL = $this.FormatURL($temp[0])
 			$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 		}
 		#$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
@@ -746,7 +740,7 @@ class AppService: SVTBase
 
 			if($msiObject -eq $null)
 			{	
-			$ResourceAppIdURI = [ConfigurationManager]::GetResourceManagerUrl()			
+			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()			
 			  $uri=[system.string]::Format($ResourceAppIdURI+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Web/sites/{2}?api-version=2016-08-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
 			  $json=$null;
               try 
