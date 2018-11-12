@@ -1,0 +1,115 @@
+{
+    "FeatureName": "APIManagement",
+    "Reference": "aka.ms/azsktcp/apim",
+    "IsMaintenanceMode": false,
+      "Controls": [
+        {
+            "ControlID": "Azure_APIManagement_Audit_Enable_Alerts",
+            "Description": "Metric/Activity log alert rules must be configured for critical actions on API Management service",
+            "Id": "APIManagement110",
+            "ControlSeverity": "",
+            "Automated": "No",
+            "MethodName": "",
+            "Rationale": "",
+            "Recommendation": "",
+            "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "Audit",
+            "APIManagement"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_APIManagement_Audit_Enable_Diagnostics_Log",
+            "Description": "Diagnostics logs must be enabled with a retention period of at least $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) days",
+            "Id": "APIManagement120",
+            "ControlSeverity": "Medium",
+            "Automated": "No",
+            "MethodName": "",
+            "Rationale": "",
+            "Recommendation": "",
+            "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "Audit",
+            "APIManagement"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_APIManagement_DP_Use_HTTPS_APIM_Access",
+            "Description": "Backend API must only be accessible over HTTPS via API Management service",
+            "Id": "APIManagement130",
+            "ControlSeverity": "High",
+            "Automated": "No",
+            "MethodName": "",
+            "Rationale": "",
+            "Recommendation": "",
+            "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "DP",
+            "APIManagement"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_APIManagement_BCDR_Backup_Periodically",
+            "Description": "API Management service instance should be backed up periodically",
+            "Id": "APIManagement140",
+            "ControlSeverity": "Medium",
+            "Automated": "No",
+            "MethodName": "",
+            "Rationale": "",
+            "Recommendation": "",
+            "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "BCDR",
+            "APIManagement"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_APIManagement_DP_Use_Secret_Named_Values",
+            "Description": "Encryption of Named Values must be enabled when storing sensitive data",
+            "Id": "APIManagement150",
+            "ControlSeverity": "High",
+            "Automated": "No",
+            "MethodName": "",
+            "Rationale": "",
+            "Recommendation": "",
+            "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "DP",
+            "APIManagement"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_APIManagement_AuthN_Use_ARMBased_RESTAPI",
+            "Description": "API Management REST API must be disabled and it is recommended to use ARM based REST API",
+            "Id": "APIManagement160",
+            "ControlSeverity": "High",
+            "Automated": "No",
+            "MethodName": "",
+            "Rationale": "",
+            "Recommendation": "",
+            "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN",
+            "APIManagement"
+            ],
+            "Enabled": true
+        }        
+    ]
+}
