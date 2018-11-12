@@ -5,7 +5,7 @@
       "Name": "EnableAzurePolicyBasedScan",
       "Description" : "",
       "Sources" : ["*"],
-      "EnabledForSubs": ["0e265216-bc29-40b0-8759-07d7cb75497f","882D216D-DAC3-4424-8F19-03E4D579B435"],
+      "EnabledForSubs": [],
       "DisabledForSubs": [],      
       "UnderPreview" : false,
       "IsEnabled": true      

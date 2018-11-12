@@ -2992,7 +2992,14 @@ class CCAutomation: CommandBase
 		{
 			$AzureEnv = "AzureCloud"
 		}
+		try
+		{
 		$ManagementUri = [Helpers]::GetCurrentRMContext().Environment.ServiceManagementUrl 
+		}
+		catch
+		{
+			$ManagementUri = "https://management.core.windows.net/"
+		}
 		if([RemoteReportHelper]::IsAIOrgTelemetryEnabled())
 		{
 			$telemetryKey = [RemoteReportHelper]::GetAIOrgTelemetryKey()
