@@ -1608,7 +1608,8 @@ class CCAutomation: CommandBase
 			$haveSubscriptionRBACAccess = $true;
 			$haveRGRBACAccess = $true;
 			$haveAARGAccess = $true;
-			$subRBACoutputs = @();			
+			$subRBACoutputs = @();	
+			$subStorageAccount = $null;		
 			if($this.IsCentralScanModeOn -and $this.ExhaustiveCheck)
 			{			
 				try
