@@ -22,7 +22,7 @@ class Helpers {
 				[EventBase]::PublishGenericCustomMessage("No active Azure login session found. Initiating login flow...", [MessageType]::Warning);
                 [PSObject]$rmLogin = $null
                 $AzureEnvironment =  [Helpers]::AzureEnv
-                if(-not [string]::IsNullOrWhiteSpace($AzureEnvironment))
+                if(-not [string]::IsNullOrWhiteSpace($AzureEnvironment) -and $AzureEnvironment -ne "AzureCloud") 
                 {
                     try{
                         $rmLogin = Connect-AzureRmAccount -EnvironmentName $AzureEnvironment

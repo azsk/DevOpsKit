@@ -17,26 +17,20 @@ class WebRequestHelper {
 	
 	hidden static [string] GetResourceManagerUrl()
 	{
-		if( [string]::IsNullOrWhiteSpace([AzSKSettings]::GetInstance().AzureEnvironment))
+		$azureEnv= [AzSKSettings]::GetInstance().AzureEnvironment
+		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne "AzureCloud"))
 		{
-			return "https://management.azure.com/"
-		}
-		if(-not([AzSKSettings]::GetInstance().AzureEnvironment -eq "AzureCloud"))
-		{
-			return [Helpers]::GetCurrentRMContext().Environment.ResourceManagerUrl 
+		return [Helpers]::GetCurrentRMContext().Environment.ResourceManagerUrl
 		}
 		return "https://management.azure.com/"
 	}
 
 	hidden static [string] GetServiceManagementUrl()
 	{
-		if( [string]::IsNullOrWhiteSpace([AzSKSettings]::GetInstance().AzureEnvironment))
+		$azureEnv= [AzSKSettings]::GetInstance().AzureEnvironment
+		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne "AzureCloud"))
 		{
-			return "https://management.core.windows.net/"
-		}
-		if(-not([AzSKSettings]::GetInstance().AzureEnvironment -eq "AzureCloud"))
-		{
-			return [Helpers]::GetCurrentRMContext().Environment.ServiceManagementUrl 
+		return [Helpers]::GetCurrentRMContext().Environment.ServiceManagementUrl
 		}
 		return "https://management.core.windows.net/"
 	}

@@ -269,7 +269,7 @@ class ConfigurationHelper {
 		if([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri))
 		{
 			$rmContext = [Helpers]::GetCurrentRMContext();
-			if(-not [string]::IsNullOrWhiteSpace($rmContext.Environment.Name))
+			if(-(not [string]::IsNullOrWhiteSpace($rmContext.Environment.Name)) -and $rmContext.Environment.Name -ne "AzureCloud")
 		     {
 				   $ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl
 			 }

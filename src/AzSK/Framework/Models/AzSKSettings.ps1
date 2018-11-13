@@ -41,10 +41,10 @@ class AzSKSettings {
 
 
 	
-	hidden static SetDefaultEnvironment() {
-		if([string]::IsNullOrWhiteSpace([AzSKSettings]::Instance.AzureEnvironment))
+	hidden static SetDefaultSettings([AzSKSettings] $settings) {
+		if($null -ne  $settings -and [string]::IsNullOrWhiteSpace( $settings.AzureEnvironment))
 		{
-            [AzSKSettings]::Instance.AzureEnvironment = "AzureCloud"
+            $settings.AzureEnvironment = "AzureCloud"
 		}
 	}
 
@@ -52,7 +52,7 @@ class AzSKSettings {
         if (-not [AzSKSettings]::Instance)
 		{
 			[AzSKSettings]::LoadAzSKSettings($false);
-			[AzSKSettings]::SetDefaultEnvironment();
+			[AzSKSettings]::SetDefaultSettings([AzSKSettings]::Instance);
 			#todo: change to default env by using a fn
         }
 
@@ -60,9 +60,9 @@ class AzSKSettings {
 	}
 
 	static [AzSKSettings] GetLocalInstance() {
-	    [AzSKSettings]::LoadAzSKSettings($true);
-		[AzSKSettings]::SetDefaultEnvironment();
-		return [AzSKSettings]::Instance
+	    $settings = [AzSKSettings]::LoadAzSKSettings($true);
+		[AzSKSettings]::SetDefaultSettings($settings);
+		return $settings
     }
 
     hidden static [AzSKSettings] LoadAzSKSettings([bool] $loadUserCopy) {

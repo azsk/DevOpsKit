@@ -87,7 +87,7 @@ class AppService: SVTBase
 		# Get custom domain URLs
         $customHostNames = $this.ResourceObject.Properties.HostNames |
 								Where-Object {
-									 -not $_.Contains(".azurewebsites.net")
+									 -not $_.Contains(".azurewebsites.")
 								};
 
         # Combine custom domain name and SSL configuration TCP
@@ -145,14 +145,14 @@ class AppService: SVTBase
 					}
 					else
 					{
-						$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('azurewebsites') })
+						$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('.azurewebsites.') })
 						$AppURL = $this.FormatURL($temp[0])
 						$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 					}
 				}
 				else
 				{
-					$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('azurewebsites') })
+					$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('.azurewebsites.') })
 					$AppURL = $this.FormatURL($temp[0])
 					$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 				}
@@ -488,14 +488,14 @@ class AppService: SVTBase
 					}
 					else
 					{
-						$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('azurewebsites') })
+						$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('.azurewebsites.') })
 						$AppURL = $this.FormatURL($temp[0])
 						$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 					}
 			    }
 				else
 				{
-					$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('azurewebsites') })
+					$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('.azurewebsites.') })
 					$AppURL = $this.FormatURL($temp[0])
 					$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 				}
@@ -630,14 +630,14 @@ class AppService: SVTBase
 			}
 			else
 			{
-				$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('azurewebsites') })
+				$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('.azurewebsites.') })
 				$AppURL = $this.FormatURL($temp[0])
 				$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 			}
 		}
 		else
 		{
-			$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('azurewebsites') })
+			$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('.azurewebsites.') })
 			$AppURL = $this.FormatURL($temp[0])
 			$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 		}
