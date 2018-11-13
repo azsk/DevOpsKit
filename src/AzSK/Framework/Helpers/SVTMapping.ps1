@@ -263,6 +263,12 @@ class SVTMapping
 			ClassName = "";
 			JsonFileName = "ApplicationProxy.json";
 			ResourceTypeName = "";
+        },
+		[ResourceTypeMapping]@{
+            ResourceType = "Microsoft.ContainerService/ManagedClusters";
+			ClassName = "KubernetesService";
+			JsonFileName = "KubernetesService.json";
+			ResourceTypeName = "KubernetesService";
         }
     );
 
