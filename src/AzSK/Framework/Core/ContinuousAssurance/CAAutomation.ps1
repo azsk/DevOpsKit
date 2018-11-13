@@ -1619,6 +1619,7 @@ class CCAutomation: CommandBase
 							$subRBACoutput = "" | Select-Object TargetSubscriptionId, HasSubscriptionCARBACAccess, HasRGCARBACAccess , HasRequiredAccessPermissions 
 							$subRBACoutput.TargetSubscriptionId = $_;
 							Set-AzureRmContext -SubscriptionId $subRBACoutput.TargetSubscriptionId | Out-Null
+							$subStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 							$subRBACoutput.HasSubscriptionCARBACAccess = $this.CheckSPSubscriptionAccess($this.CAAADApplicationID);
 							$subRBACoutput.HasRGCARBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID);
 							$subRBACoutput.HasRequiredAccessPermissions = $true;
@@ -1667,12 +1668,38 @@ class CCAutomation: CommandBase
 			{
 				$haveAARGAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID, $this.AutomationAccount.ResourceGroup, "Contributor")
 			}
-			if($haveSubscriptionRBACAccess -and $haveRGRBACAccess -and $haveAARGAccess)
+
+			if($this.LoggingOption -eq [CAReportsLocation]::IndividualSubs)
 			{
-				$resultMsg = "RunAs Account is correctly set up."
-				$resultStatus = "OK"
-				$isPassed = $true
+				if($haveSubscriptionRBACAccess -and $haveRGRBACAccess -and $haveAARGAccess)
+				{
+					$resultMsg = "RunAs Account is correctly set up."
+					$resultStatus = "OK"
+					$isPassed = $true
+				}
 			}
+			else
+			{		
+				if(($subStorageAccount | Measure-Object).Count -le 0)
+				{
+					if($haveSubscriptionRBACAccess -and $haveAARGAccess)
+					{
+						$resultMsg = "RunAs Account is correctly set up."
+						$resultStatus = "OK"
+						$isPassed = $true					
+					}
+				}
+				else
+				{
+					if($haveSubscriptionRBACAccess -and $haveRGRBACAccess -and $haveAARGAccess)
+					{
+						$resultMsg = "RunAs Account is correctly set up."
+						$resultStatus = "OK"
+						$isPassed = $true
+					}	
+				}		
+			}
+
 			if(!$isPassed)
 			{
 				$failMsg = "Service principal account (Name: $($spName)) configured in RunAs Account  doesn't have required access ('Reader' & 'Security Reader' access on Subscription and/or 'Contributor' access on resource group containing CA automation account)."
@@ -1772,20 +1799,17 @@ class CCAutomation: CommandBase
 							$tgtSubStorageAccount.TargetSubscriptionId = $_.SubscriptionId;
 							$tgtSubStorageAccount.LoggingOption = $_.LoggingOption;
 							$tgtSubStorageAccount.CentralStorageAccountName = $centralStorageAccountName
-							if($_.LoggingOption -ne  [CAReportsLocation]::CentralSub)
-							{
-								Set-AzureRmContext -SubscriptionId $tgtSubStorageAccount.TargetSubscriptionId  | Out-Null
-								$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+							Set-AzureRmContext -SubscriptionId $tgtSubStorageAccount.TargetSubscriptionId  | Out-Null
+							$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 
-								if(($reportsStorageAccount | Measure-Object).Count -le 0)
-								{
-									$isStoragePresent = $false
-									$tgtSubStorageAccount.StorageAccountName = "NotPresent";
-								}
-								else
-								{								
-									$tgtSubStorageAccount.StorageAccountName = $reportsStorageAccount.Name;
-								}
+							if(($reportsStorageAccount | Measure-Object).Count -le 0)
+							{
+								$isStoragePresent = $false
+								$tgtSubStorageAccount.StorageAccountName = "NotPresent";
+							}
+							else
+							{								
+								$tgtSubStorageAccount.StorageAccountName = $reportsStorageAccount.Name;
 							}
 							$tgtSubStorageAccounts += $tgtSubStorageAccount;
 						}
