@@ -122,7 +122,7 @@ class SecurityRecommendationsReport: CommandBase
                     $currentFeatureGroup.Ranking = "";
                     $currentFeatureGroup.TotalSuccessCount = "";
                     $currentFeatureGroup.TotalFailCount = "";
-                    $currentFeatureGroup.SecurityRating = "";
+                    $currentFeatureGroup.UsagePercentage = "";
                     $currentFeatureGroup.TotalOccurances = "";
                     $currentFeatureGroup.Categories = "No features provided. This section is not application for Categories as input.";
                     $Combination.CurrentFeatureGroup += $currentFeatureGroup

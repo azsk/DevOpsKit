@@ -2990,7 +2990,7 @@ class CCAutomation: CommandBase
 		$AzureEnv = [ConfigurationManager]::GetAzSKSettings().AzureEnvironment
 		if(-not ($AzureEnv -eq "AzureCloud"))
 		{
-		$ManagementUri = [Helpers]::GetCurrentRMContext().Environment.ServiceManagementUrl 
+		$ManagementUri =[WebRequestHelper]::GetServiceManagementUrl() 
 		}
 		else
 		{
