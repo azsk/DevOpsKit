@@ -148,7 +148,7 @@ class ConfigurationHelper {
 						}
 						elseif($policyFileName -eq [Constants]::ServerConfigMetadataFileName)
 						{
-							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy url is correct or policy is migrated with latest AzSK"), [MessageType]::Warning);
+							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy URL is correct."), [MessageType]::Warning);
 							[ConfigurationHelper]::IsIssueLogged = $true
 						}
 						else
@@ -234,7 +234,7 @@ class ConfigurationHelper {
 						}
 						elseif($fileName -eq [Constants]::ServerConfigMetadataFileName)
 						{
-							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy url is correct or policy is migrated with latest AzSK"), [MessageType]::Warning);
+							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy URL is correct."), [MessageType]::Warning);
 							[ConfigurationHelper]::IsIssueLogged = $true
 						}
 						else
