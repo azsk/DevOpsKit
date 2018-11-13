@@ -92,7 +92,7 @@ class KubernetesService: SVTBase
 		if(([Helpers]::CheckMember($this.ResourceObject,"Properties")) -and [Helpers]::CheckMember($this.ResourceObject.Properties,"kubernetesVersion"))
 		{
 			$resourceKubernetVersion = [System.Version] $this.ResourceObject.Properties.kubernetesVersion
-			$requiredKubernetsVersion = [System.Version] "1.11.3"
+			$requiredKubernetsVersion = [System.Version] $this.ControlSettings.KubernetesService.kubernetesVersion
 
 			if($resourceKubernetVersion -lt $requiredKubernetsVersion)
 			{
