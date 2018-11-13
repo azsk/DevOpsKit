@@ -1804,8 +1804,11 @@ class CCAutomation: CommandBase
 
 							if(($reportsStorageAccount | Measure-Object).Count -le 0)
 							{
-								$isStoragePresent = $false
-								$tgtSubStorageAccount.StorageAccountName = "NotPresent";
+								if($_.LoggingOption -eq [CAReportsLocation]::IndividualSubs)
+								{
+									$isStoragePresent = $false
+									$tgtSubStorageAccount.StorageAccountName = "NotPresent";	
+								}
 							}
 							else
 							{								
