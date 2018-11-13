@@ -343,7 +343,15 @@ class CCAutomation: CommandBase
 						$out.LoggingOption = $this.LoggingOption.ToString();
 
 						Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
-						$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+						$existingStorage = $null;
+						try
+						{
+							$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+						}
+						catch
+						{
+							#eat exception if storage is not preset
+						}
 
 						if(-not $this.SkipTargetSubscriptionConfig)
 						{
@@ -916,7 +924,15 @@ class CCAutomation: CommandBase
 							$out.StorageAccountName = $this.UserConfig.StorageAccountName;	
 							
 							Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
-							$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+							$existingStorage = $null;
+							try
+							{
+								$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+							}
+							catch
+							{
+								#eat exception if storage is not preset
+							}
 
 							if(-not $this.SkipTargetSubscriptionConfig)
 							{
@@ -962,8 +978,14 @@ class CCAutomation: CommandBase
 											Set-AzureRmStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
 										}
 										$out.StorageAccountName = $newStorageName;
-									}							
-									$this.OutputObject.StorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage() | Select-Object Name,ResourceGroupName,Sku,Tags
+									}	
+									try {
+										$targetStorageAccount =[UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+										$this.OutputObject.StorageAccount = $targetStorageAccount | Select-Object Name,ResourceGroupName,Sku,Tags
+									}
+									catch {
+										#eat exception if storage account is not found										
+									}
 									#endregion
 								}
 								else
@@ -1248,7 +1270,7 @@ class CCAutomation: CommandBase
 			{
 				$resultMsg = "Please run this command after 2 hours of CA installation."
 				$resultStatus = "Failed"
-				$shouldReturn = $true			
+				$shouldReturn = $true		
 			}
 			else
 			{
@@ -1617,17 +1639,25 @@ class CCAutomation: CommandBase
 					$caSubs | ForEach-Object {
 						try
 						{
-							$subRBACoutput = "" | Select-Object TargetSubscriptionId, HasSubscriptionCARBACAccess, HasRGCARBACAccess , HasRequiredAccessPermissions 
+							$subRBACoutput = "" | Select-Object TargetSubscriptionId, HasSubscriptionCARBACAccess, HasRGCARBACAccess , HasRequiredAccessPermissions, IsStoragePresent 
 							$subRBACoutput.TargetSubscriptionId = $_;
 							Set-AzureRmContext -SubscriptionId $subRBACoutput.TargetSubscriptionId | Out-Null
-							$subStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-							if($subStorageAccount -ne $null)
+							try {
+								$subStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+							}
+							catch {
+								#eat exception when storage is not present								
+							}
+							
+							if($null -ne $subStorageAccount)
 							{
 								$subRBACoutput.HasRGCARBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID);
+								$subRBACoutput.IsStoragePresent = $true;
 							}
 							else
 							{
 								$subRBACoutput.HasRGCARBACAccess = $true;
+								$subRBACoutput.IsStoragePresent = $false;
 							}
 							$subRBACoutput.HasSubscriptionCARBACAccess = $this.CheckSPSubscriptionAccess($this.CAAADApplicationID);
 							$subRBACoutput.HasRequiredAccessPermissions = $true;
@@ -1676,7 +1706,7 @@ class CCAutomation: CommandBase
 			{
 				$haveAARGAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID, $this.AutomationAccount.ResourceGroup, "Contributor")
 			}
-			
+
 			if($haveSubscriptionRBACAccess -and $haveRGRBACAccess -and $haveAARGAccess)
 			{
 				$resultMsg = "RunAs Account is correctly set up."
@@ -1784,8 +1814,15 @@ class CCAutomation: CommandBase
 							$tgtSubStorageAccount.LoggingOption = $_.LoggingOption;
 							$tgtSubStorageAccount.CentralStorageAccountName = $centralStorageAccountName
 							Set-AzureRmContext -SubscriptionId $tgtSubStorageAccount.TargetSubscriptionId  | Out-Null
-							$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-
+							$reportsStorageAccount = $null;
+							try
+							{
+								$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+							}
+							catch
+							{
+								#eat exception in the case of no storage account found
+							}
 							if(($reportsStorageAccount | Measure-Object).Count -le 0)
 							{
 								if($_.LoggingOption -eq [CAReportsLocation]::IndividualSubs)
@@ -2413,7 +2450,15 @@ class CCAutomation: CommandBase
 
 	hidden [void] RemoveStorageReports($Force)
 	{
-		$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+		$existingStorage = $null;
+		try
+		{
+			$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+		}
+		catch
+		{
+			#eat exception in the case of no storage account found
+		}
 
 		if(($existingStorage | Measure-Object).Count -gt 0)
 		{
