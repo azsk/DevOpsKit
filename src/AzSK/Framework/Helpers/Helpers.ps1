@@ -6,11 +6,53 @@ Set-StrictMode -Version Latest
 class Helpers {
 
     static hidden [PSObject] $currentRMContext;
-    static hidden [string] $AzureEnv;
-    hidden static [PSObject] GetCurrentRMContext([String] $AzureEnv)
-    {
-        [Helpers]::AzureEnv = $AzureEnv
-        return [Helpers]::GetCurrentRMContext()
+    hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson) {
+		$rootConfigPath = [Constants]::AzSKAppFolderPath + "\" ;
+		return [Helpers]::LoadOfflineConfigFile($fileName, $true,$rootConfigPath);
+	}
+    hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson, $path) {
+		#Load file from AzSK App folder
+		$rootConfigPath = $path + "\" ;	
+        
+		$extension = [System.IO.Path]::GetExtension($fileName);
+
+		$filePath = $null
+		if(Test-Path -Path $rootConfigPath)
+		{
+			$filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
+		}
+        #If file not present in App folder load settings from Configurations in Module folder 
+        if (!$filePath) {
+            $rootConfigPath = (Get-Item $PSScriptRoot).Parent.FullName + "\Configurations\";
+            $filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
+        }
+
+        if ($filePath)
+		{
+			if($parseJson)
+			{
+				if($extension -eq ".json" -or $extension -eq ".omsview")
+				{
+					$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) | ConvertFrom-Json
+				}
+				else
+				{
+					$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) 
+				}
+			}
+			else
+			{
+				$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) 
+			}
+        }
+        else {
+            throw "Unable to find the specified file '$fileName'"          
+        }
+        if (-not $fileContent) {
+            throw "The specified file '$fileName' is empty"                                  
+        }
+
+        return $fileContent;
     }
 	hidden static [PSObject] GetCurrentRMContext()
 	{
@@ -21,8 +63,13 @@ class Helpers {
 			if ((-not $rmContext) -or ($rmContext -and (-not $rmContext.Subscription -or -not $rmContext.Account))) {
 				[EventBase]::PublishGenericCustomMessage("No active Azure login session found. Initiating login flow...", [MessageType]::Warning);
                 [PSObject]$rmLogin = $null
-                $AzureEnvironment =  [Helpers]::AzureEnv
-                if(-not [string]::IsNullOrWhiteSpace($AzureEnvironment) -and $AzureEnvironment -ne "AzureCloud") 
+                $AzureEnvironment = [Constants]::DefaultAzureEnvironment
+                $AzskSettings = [Helpers]::LoadOfflineConfigFile("AzSKSettings.json", $true)          
+                if([Helpers]::CheckMember($AzskSettings,"AzureEnvironment"))
+                {
+                   $AzureEnvironment = $AzskSettings.AzureEnvironment
+                }
+                if(-not [string]::IsNullOrWhiteSpace($AzureEnvironment) -and $AzureEnvironment -ne [Constants]::DefaultAzureEnvironment) 
                 {
                     try{
                         $rmLogin = Connect-AzureRmAccount -EnvironmentName $AzureEnvironment
@@ -36,11 +83,10 @@ class Helpers {
                 $rmLogin = Connect-AzureRmAccount
                 }
 				if ($rmLogin) {
-					$rmContext = $rmLogin.Context;
+                    $rmContext = $rmLogin.Context;	
 				}
             }
-
-			[Helpers]::currentRMContext = $rmContext
+            [Helpers]::currentRMContext = $rmContext
 		}
 
 		return [Helpers]::currentRMContext

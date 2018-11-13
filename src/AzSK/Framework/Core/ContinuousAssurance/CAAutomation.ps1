@@ -2988,14 +2988,7 @@ class CCAutomation: CommandBase
 		$AzSKCARunbookVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion
 		$telemetryKey = ""
 		$AzureEnv = [ConfigurationManager]::GetAzSKSettings().AzureEnvironment
-		if($AzureEnv -ne "AzureCloud")
-		{
 		$ManagementUri =[WebRequestHelper]::GetServiceManagementUrl() 
-		}
-		else
-		{
-			$ManagementUri = "https://management.core.windows.net/"
-		}
 		if([RemoteReportHelper]::IsAIOrgTelemetryEnabled())
 		{
 			$telemetryKey = [RemoteReportHelper]::GetAIOrgTelemetryKey()

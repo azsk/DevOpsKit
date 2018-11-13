@@ -18,7 +18,7 @@ class WebRequestHelper {
 	hidden static [string] GetResourceManagerUrl()
 	{
 		$azureEnv= [AzSKSettings]::GetInstance().AzureEnvironment
-		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne "AzureCloud"))
+		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne [Constants]::DefaultAzureEnvironment))
 		{
 		return [Helpers]::GetCurrentRMContext().Environment.ResourceManagerUrl
 		}
@@ -28,7 +28,7 @@ class WebRequestHelper {
 	hidden static [string] GetServiceManagementUrl()
 	{
 		$azureEnv= [AzSKSettings]::GetInstance().AzureEnvironment
-		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne "AzureCloud"))
+		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne [Constants]::DefaultAzureEnvironment))
 		{
 		return [Helpers]::GetCurrentRMContext().Environment.ServiceManagementUrl
 		}

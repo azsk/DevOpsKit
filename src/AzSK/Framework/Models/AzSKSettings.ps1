@@ -44,7 +44,7 @@ class AzSKSettings {
 	hidden static SetDefaultSettings([AzSKSettings] $settings) {
 		if($null -ne  $settings -and [string]::IsNullOrWhiteSpace( $settings.AzureEnvironment))
 		{
-            $settings.AzureEnvironment = "AzureCloud"
+            $settings.AzureEnvironment = [Constants]::DefaultAzureEnvironment
 		}
 	}
 
