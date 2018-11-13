@@ -2988,7 +2988,7 @@ class CCAutomation: CommandBase
 		$AzSKCARunbookVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion
 		$telemetryKey = ""
 		$AzureEnv = [ConfigurationManager]::GetAzSKSettings().AzureEnvironment
-		if(-not ($AzureEnv -eq "AzureCloud"))
+		if($AzureEnv -ne "AzureCloud")
 		{
 		$ManagementUri =[WebRequestHelper]::GetServiceManagementUrl() 
 		}
