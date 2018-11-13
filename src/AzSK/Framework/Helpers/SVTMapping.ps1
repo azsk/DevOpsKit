@@ -263,6 +263,12 @@ class SVTMapping
 			ClassName = "";
 			JsonFileName = "ApplicationProxy.json";
 			ResourceTypeName = "";
+        },
+        [ResourceTypeMapping]@{
+            ResourceType = "Microsoft.ApiManagement/service";
+			ClassName = "APIManagement";
+			JsonFileName = "APIManagement.json";
+			ResourceTypeName = "APIManagement";
         }
     );
 
