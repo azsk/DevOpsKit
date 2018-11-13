@@ -254,7 +254,7 @@ class Databricks: SVTBase
 			if(($potentialAdminUsers|Measure-Object).Count -gt 0)
 			{
 				$controlResult.AddMessage("`r`nValidate that the following identities have potential admin access to resource - [$($this.ResourceContext.ResourceName)]");
-				$controlResult.AddMessage("Note: Users that have been explicitly added in the 'admins' group in the workspace are considered 'potential' admins");
+				$controlResult.AddMessage("Note: Users that have 'Owner' or 'Contributor' role on the Databricks workspace resource are considered 'potential' admins");
 				$controlResult.AddMessage([MessageData]::new("", $potentialAdminUsers));
 			}
 			if(($activeAdminUsers|Measure-Object).Count -gt 0)

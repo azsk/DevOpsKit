@@ -130,8 +130,10 @@ class AIOrgTelemetry: ListenerBase {
 			   if($scanSource -ne [ScanSource]::Runbook) { return; }
                $SubscriptionId = ([Helpers]::GetCurrentRMContext()).Subscription.Id;
 			   $resources= Get-AzureRmResource
+			   $resourceGroups = Get-AzureRmResourceGroup
 			   $telemetryEvents = [System.Collections.ArrayList]::new()
 					   foreach($res in $resources){
+                           $rgTags = ($resourceGroups | where-object {$_.Name -eq $res.ResourceGroupName}).Tags;
 						   $resourceProperties = @{
 						   "Name" = $res.Name;
 						   "ResourceId" = $res.ResourceId;
@@ -140,7 +142,11 @@ class AIOrgTelemetry: ListenerBase {
 						   "ResourceGroupName" = $res.ResourceGroupName;
 						   "Location" = $res.Location;
 						   "SubscriptionId" = $SubscriptionId;
-						   "Tags" = [Helpers]::FetchTagsString($res.Tags)
+						   "Tags" = [Helpers]::FetchTagsString($res.Tags);
+						   "Env" = $res.Tags.Env;
+							"ComponentID" = $res.Tags.ComponentID;
+							"RGComponentID" = $rgTags.ComponentID;
+							"RGEnv" = $rgTags.Env;
 					   }
 					   $telemetryEvent = "" | Select-Object Name, Properties, Metrics
 					   $telemetryEvent.Name = "Resource Inventory"

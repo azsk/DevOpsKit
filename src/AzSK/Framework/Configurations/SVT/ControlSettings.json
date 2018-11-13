@@ -279,6 +279,9 @@
   "SubscriptionCore": {
     "EnableV1AlertFailure": false
   },
+  "HDInsight":{
+    "MinSupportedClusterVersion": "3.6.0"
+  },
   "EventHubOutput": {
     "TokenTimeOut": 1800,
     "TimeOut": 60,
