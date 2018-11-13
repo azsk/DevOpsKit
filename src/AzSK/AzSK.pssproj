@@ -123,6 +123,7 @@
     <Compile Include="Framework\Core\SVT\Services\ContainerRegistry.ps1" />
     <Compile Include="Framework\Core\SVT\Services\Databricks.ps1" />
     <Compile Include="Framework\Core\SVT\Services\DataFactoryV2.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\HDInsight.ps1" />
     <Compile Include="Framework\Core\SVT\Services\KubernetesService.ps1" />
     <Compile Include="Framework\Helpers\AliasHelper.ps1" />
     <Compile Include="Framework\Helpers\OldConstants.ps1" />
