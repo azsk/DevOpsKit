@@ -1621,8 +1621,15 @@ class CCAutomation: CommandBase
 							$subRBACoutput.TargetSubscriptionId = $_;
 							Set-AzureRmContext -SubscriptionId $subRBACoutput.TargetSubscriptionId | Out-Null
 							$subStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+							if($subStorageAccount -ne $null)
+							{
+								$subRBACoutput.HasRGCARBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID);
+							}
+							else
+							{
+								$subRBACoutput.HasRGCARBACAccess = $true;
+							}
 							$subRBACoutput.HasSubscriptionCARBACAccess = $this.CheckSPSubscriptionAccess($this.CAAADApplicationID);
-							$subRBACoutput.HasRGCARBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID);
 							$subRBACoutput.HasRequiredAccessPermissions = $true;
 							$haveSubscriptionRBACAccess = $haveSubscriptionRBACAccess -and $subRBACoutput.HasSubscriptionCARBACAccess
 							$haveRGRBACAccess = $haveRGRBACAccess -and $subRBACoutput.HasRGCARBACAccess
@@ -1669,36 +1676,12 @@ class CCAutomation: CommandBase
 			{
 				$haveAARGAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID, $this.AutomationAccount.ResourceGroup, "Contributor")
 			}
-
-			if($this.LoggingOption -eq [CAReportsLocation]::IndividualSubs)
+			
+			if($haveSubscriptionRBACAccess -and $haveRGRBACAccess -and $haveAARGAccess)
 			{
-				if($haveSubscriptionRBACAccess -and $haveRGRBACAccess -and $haveAARGAccess)
-				{
-					$resultMsg = "RunAs Account is correctly set up."
-					$resultStatus = "OK"
-					$isPassed = $true
-				}
-			}
-			else
-			{		
-				if(($subStorageAccount | Measure-Object).Count -le 0)
-				{
-					if($haveSubscriptionRBACAccess -and $haveAARGAccess)
-					{
-						$resultMsg = "RunAs Account is correctly set up."
-						$resultStatus = "OK"
-						$isPassed = $true					
-					}
-				}
-				else
-				{
-					if($haveSubscriptionRBACAccess -and $haveRGRBACAccess -and $haveAARGAccess)
-					{
-						$resultMsg = "RunAs Account is correctly set up."
-						$resultStatus = "OK"
-						$isPassed = $true
-					}	
-				}		
+				$resultMsg = "RunAs Account is correctly set up."
+				$resultStatus = "OK"
+				$isPassed = $true
 			}
 
 			if(!$isPassed)
