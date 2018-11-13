@@ -87,7 +87,7 @@ class SVTResourceResolver: AzSKRoot
 			}
 			else 
 			{
-				throw [SuppressedException] "Both the parameters 'ResourceGroupNames' and 'ExcludeResourceGroupNames' contains values. You should use only one of these parameters."
+				throw [SuppressedException] "Both the parameters 'ResourceGroupNames' and 'ExcludeResourceGroupNames' contain values. You should use only one of these parameters."
 			}	
 		}
 
