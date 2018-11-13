@@ -2987,6 +2987,15 @@ class CCAutomation: CommandBase
 		$CoreSetupSrcUrl = [ConfigurationManager]::GetAzSKConfigData().CASetupRunbookURL.Replace('$',"``$")
 		$AzSKCARunbookVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion
 		$telemetryKey = ""
+		$AzureEnv = [ConfigurationManager]::GetAzSKSettings().AzureEnvironment
+		if($AzureEnv -ne "AzureCloud")
+		{
+		$ManagementUri =[WebRequestHelper]::GetServiceManagementUrl() 
+		}
+		else
+		{
+			$ManagementUri = "https://management.core.windows.net/"
+		}
 		if([RemoteReportHelper]::IsAIOrgTelemetryEnabled())
 		{
 			$telemetryKey = [RemoteReportHelper]::GetAIOrgTelemetryKey()
@@ -2999,7 +3008,9 @@ class CCAutomation: CommandBase
 			$temp5 = $temp4 -replace "\[#EnableAADAuthForOnlinePolicyStore#\]",$this.ConvertBooleanToString([ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore);
 			$temp6 = $temp5 -replace "\[#UpdateToLatestVersion#]",$this.ConvertBooleanToString([ConfigurationManager]::GetAzSKConfigData().UpdateToLatestVersion);
 			$temp7 = $temp6 -replace "\[#telemetryKey#\]",$telemetryKey;
-			$temp7 -replace "\[#runbookVersion#\]",$AzSKCARunbookVersion;
+			$temp8 = $temp7 -replace "\[#AzureEnvironment#\]",$AzureEnv;
+			$temp9 = $temp8 -replace "\[#ManagementUri#\]",$ManagementUri;
+			$temp9 -replace "\[#runbookVersion#\]",$AzSKCARunbookVersion;
 		}  | Out-File $outputFilePath
 		
 		return $outputFilePath
