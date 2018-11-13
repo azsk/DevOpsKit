@@ -37,6 +37,8 @@ function Get-AzSKAzureServicesSecurityStatus
 		Enables users to generate PDF file for reports.
 	.PARAMETER UsePartialCommits
 		This switch would partially save the scan status to the AzSK storage account. On the event of a failure, it tries to recover from the last snapshot. To use this feature, you need to have contributor role on the AzSK storage account.
+	.PARAMETER CentralStorageAccount
+		Storage account on the master subscription for storing the scanned logs of the target subscriptions.
 	.PARAMETER UseBaselineControls
 		This switch would scan only for baseline controls defined at org level
 	.PARAMETER GenerateFixScript
@@ -169,7 +171,12 @@ function Get-AzSKAzureServicesSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("upc")]
-		$UsePartialCommits,		
+		$UsePartialCommits,	
+		
+		[PSObject]
+        [Parameter(Mandatory = $false)]
+		[Alias("csa")]
+		$CentralStorageAccount,	
 
 		[switch]
         [Parameter(Mandatory = $false)]
@@ -563,6 +570,8 @@ function Get-AzSKControlsStatus
 		Enables users to generate PDF file for reports.
 	.PARAMETER UsePartialCommits
 		This switch would partially save the scan status to the AzSK storage account. On the event of a failure, it tries to recover from the last snapshot. To use this feature, you need to have contributor role on the AzSK storage account.
+	.PARAMETER CentralStorageAccount
+		Storage account on the master subscription for storing the scanned logs of the target subscriptions.
 	.PARAMETER UseBaselineControls
 		This switch would scan only for baseline controls defined at org level
 	.PARAMETER GenerateFixScript
@@ -690,6 +699,11 @@ function Get-AzSKControlsStatus
 		[Alias("upc")]
 		$UsePartialCommits,		
 		
+		[PSObject]
+        [Parameter(Mandatory = $false)]
+		[Alias("csa")]
+		$CentralStorageAccount,	
+
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("gfs")]

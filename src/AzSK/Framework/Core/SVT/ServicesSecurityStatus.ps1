@@ -17,10 +17,10 @@ class ServicesSecurityStatus: SVTCommandBase
 		#BaseLineControlFilter with control ids
 		$this.UsePartialCommits =$invocationContext.BoundParameters["UsePartialCommits"];
 		$this.UseBaselineControls = $invocationContext.BoundParameters["UseBaselineControls"];
+		$this.CentralStorageAccount = $invocationContext.BoundParameters["CentralStorageAccount"];
 		[PartialScanManager]::ClearInstance();
 		$this.BaselineFilterCheck();
 		$this.UsePartialCommitsCheck();
-
 	}
 
 	[SVTEventContext[]] ComputeApplicableControls()
@@ -284,8 +284,13 @@ class ServicesSecurityStatus: SVTCommandBase
 		#Load ControlSetting Resource Types and Filter resources
 		$scanSource = [AzSKSettings]::GetInstance().GetScanSource();
 		#Load ControlSetting Resource Types and Filter resources
-		[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
-		$baselineControlsDetails = $partialScanMngr.GetBaselineControlDetails()
+		if($this.CentralStorageAccount){
+			[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance($this.CentralStorageAccount, $this.SubscriptionContext.SubscriptionId);	
+		}
+		else{
+			[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
+		}
+	    $baselineControlsDetails = $partialScanMngr.GetBaselineControlDetails()
 		#If Scan source is in supported sources or baselineControls switch is available
 		if ($null -ne $baselineControlsDetails -and ($baselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -gt 0 -and ($baselineControlsDetails.SupportedSources -contains $scanSource -or $this.UseBaselineControls))
 		{
@@ -313,35 +318,39 @@ class ServicesSecurityStatus: SVTCommandBase
 		#Load ControlSetting Resource Types and Filter resources
 		$scanSource = [AzSKSettings]::GetInstance().GetScanSource();
 		#Load ControlSetting Resource Types and Filter resources
-		[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
-		$baselineControlsDetails = $partialScanMngr.GetBaselineControlDetails()
-		#If Scan source is in supported sources or UsePartialCommits switch is available
-		if ($this.UsePartialCommits -or ($baselineControlsDetails.SupportedSources -contains $scanSource))
-		{
-			#$this.PublishCustomMessage("Running cmdlet under transactional mode. This will scan resources and store intermittent scan progress to Storage. It resume scan in next run if something breaks inbetween.", [MessageType]::Warning);
-			[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
-			#Validate if active resources list already available in store
-			#If list not available in store. Get resources filtered by baseline resource types and store it storage
-			if(($partialScanMngr.IsMasterListActive() -eq [ActiveStatus]::Yes)  )
-			{
-				$this.IsPartialCommitScanActive = $true;
-				$allResourcesList = $partialScanMngr.GetAllListedResources()
-				# Get list of non-scanned active resources
-				$nonScannedResourcesList = $partialScanMngr.GetNonScannedResources();
-				$this.PublishCustomMessage("Resuming scan from last commit. $(($nonScannedResourcesList | Measure-Object).Count) out of $(($allResourcesList | Measure-Object).Count) resources will be scanned.", [MessageType]::Warning);
-				$nonScannedResourceIdList = $nonScannedResourcesList | Select-Object Id | ForEach-Object { $_.Id}
-				#Filter SVT resources based on master resources list available and scan completed
-				$this.Resolver.SVTResources = $this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList }				
-			}
-			else{
-				$this.IsPartialCommitScanActive = $false;
-				$resourceIdList =  $this.Resolver.SVTResources| Where-Object {$null -ne $_.ResourceTypeMapping} | Select ResourceId | ForEach-Object {  $_.ResourceId }
-				$partialScanMngr.CreateResourceMasterList($resourceIdList);
-			}
-			#Set unique partial scan indentifier 
-			$this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
-
+		if($this.CentralStorageAccount){
+			[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance($this.CentralStorageAccount, $this.SubscriptionContext.SubscriptionId);	
 		}
+		else{
+			[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
+		}
+			$baselineControlsDetails = $partialScanMngr.GetBaselineControlDetails()
+			#If Scan source is in supported sources or UsePartialCommits switch is available
+			if ($this.UsePartialCommits -or ($baselineControlsDetails.SupportedSources -contains $scanSource))
+			{
+				#$this.PublishCustomMessage("Running cmdlet under transactional mode. This will scan resources and store intermittent scan progress to Storage. It resume scan in next run if something breaks inbetween.", [MessageType]::Warning);
+				#Validate if active resources list already available in store
+				#If list not available in store. Get resources filtered by baseline resource types and store it storage
+				if(($partialScanMngr.IsMasterListActive() -eq [ActiveStatus]::Yes)  )
+				{
+					$this.IsPartialCommitScanActive = $true;
+					$allResourcesList = $partialScanMngr.GetAllListedResources()
+					# Get list of non-scanned active resources
+					$nonScannedResourcesList = $partialScanMngr.GetNonScannedResources();
+					$this.PublishCustomMessage("Resuming scan from last commit. $(($nonScannedResourcesList | Measure-Object).Count) out of $(($allResourcesList | Measure-Object).Count) resources will be scanned.", [MessageType]::Warning);
+					$nonScannedResourceIdList = $nonScannedResourcesList | Select-Object Id | ForEach-Object { $_.Id}
+					#Filter SVT resources based on master resources list available and scan completed
+					$this.Resolver.SVTResources = $this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList }				
+				}
+				else{
+					$this.IsPartialCommitScanActive = $false;
+					$resourceIdList =  $this.Resolver.SVTResources| Where-Object {$null -ne $_.ResourceTypeMapping} | Select ResourceId | ForEach-Object {  $_.ResourceId }
+					$partialScanMngr.CreateResourceMasterList($resourceIdList);
+				}
+				#Set unique partial scan indentifier 
+				$this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
+
+			}
 	}
 
 	[void] UpdateRetryCountForPartialScan()
