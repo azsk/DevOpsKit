@@ -41,6 +41,7 @@ class ControlItem
     [string[]] $ValidAttestationStates
     [string] $PolicyDefinitionGuid 
     [string] $PolicyDefnResourceIdSuffix
+    [string] $policyDefinitionId
 }
 
 class FixControl

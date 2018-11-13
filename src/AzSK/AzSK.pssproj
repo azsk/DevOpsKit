@@ -304,6 +304,7 @@
     <Content Include="Framework\Configurations\SVT\AllResourceTypes.json" />
     <Content Include="Framework\Configurations\SVT\AzSKCfg\AzSKCfg.json" />
     <Content Include="Framework\Configurations\SVT\Services\APIConnection.json" />
+    <Content Include="Framework\Configurations\SVT\Services\ApplicationProxy.json" />
     <Content Include="Framework\Configurations\SVT\Services\BotService.json" />
     <Content Include="Framework\Configurations\SVT\Services\CDN.json" />
     <Content Include="Framework\Configurations\SVT\Services\CloudService.json" />

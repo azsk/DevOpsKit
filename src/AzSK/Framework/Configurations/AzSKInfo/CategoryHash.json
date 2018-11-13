@@ -1,27 +1,14 @@
 {
-
-	"Storage" : 1000003,
-
-	"DataProcessing": 1000033,
-
-	"Reporting": 1000037,
-
-	"Web Front End": 1000039,
-
-	"APIs": 1000081,
-
-	"Security Infra": 1000099,
-
-	"SubscriptionCore": 1000117,
-
-	"Communication Hub": 1000121,
-
-	"Hybrid": 1000133,
-
-	"Network Isolation": 1000151,
-
-	"Cache": 1000159,
-
-	"Backend Processing": 123123593
-
+	"Storage" : 13,
+	"DataProcessing": 17,
+	"Reporting": 19,
+	"Web Front End": 23,
+	"APIs": 29,
+	"Security Infra": 31,
+	"SubscriptionCore": 37,
+	"Communication Hub": 41,
+	"Hybrid": 43,
+	"Network Isolation": 47,
+	"Cache": 53,
+	"Backend Processing": 59
 }

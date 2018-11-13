@@ -16,6 +16,7 @@ namespace AzSK.ARMChecker.Lib
         private readonly IList<ResourceControlSet> _resourceControlSets;
         private List<ResourceNode> ResourceList = new List<ResourceNode>();
         private List<Features> listOfAllPrimaryResource=new List<Features>();
+        
         public ArmTemplateEvaluator(IEnumerable<string> resourceControlSetJsonStrings)
         {
             if (resourceControlSetJsonStrings == null)
@@ -64,6 +65,7 @@ namespace AzSK.ARMChecker.Lib
         {
             var resourceEvaluator = new ResourceEvaluator(armTemplate, armTemplateExternalParameters);
             var results = new List<ControlResult>();
+            ResourceList.Clear();
             // Get list of all primary resources
             foreach (ResourceControlSet i in _resourceControlSets)
             {

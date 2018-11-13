@@ -19,6 +19,7 @@
         "DP",
         "Automated",
         "Admin",
+        "Databricks",
         "Preview"
       ],
       "Enabled": true
@@ -39,6 +40,7 @@
         "Automated",
         "PAT",
         "Admin",
+        "Databricks",
         "Preview"
       ],
       "Enabled": true
@@ -60,6 +62,7 @@
         "Automated",
         "PAT",
         "Admin",
+        "Databricks",
         "Preview"
       ],
       "Enabled": true
@@ -79,6 +82,7 @@
         "PAT",
         "Automated",
         "DP",
+        "Databricks",
         "Preview"
       ],
       "Enabled": true
@@ -98,6 +102,7 @@
         "AuthZ",
         "RBAC",
         "Automated",
+        "Databricks",
         "Preview"
       ],
       "Enabled": true
@@ -118,6 +123,7 @@
         "Automated",
         "Admin",
         "PAT",
+        "Databricks",
         "Preview"
       ],
       "Enabled": true
@@ -137,6 +143,7 @@
         "AuthZ",
         "RBAC",
         "Manual",
+        "Databricks",
         "Preview"
       ],
       "Enabled": true
@@ -156,6 +163,7 @@
         "AuthZ",
         "RBAC",
         "Manual",
+        "Databricks",
         "Preview"
       ],
       "Enabled": true
@@ -175,6 +183,7 @@
         "AuthZ",
         "RBAC",
         "Manual",
+        "Databricks",
         "Preview"
       ],
       "Enabled": true
@@ -194,6 +203,7 @@
         "AuthZ",
         "RBAC",
         "Manual",
+        "Databricks",
         "Preview"
       ],
       "Enabled": true
@@ -212,6 +222,7 @@
         "TCP",
         "DP",
         "Manual",
+        "Databricks",
         "Preview"
       ],
       "Enabled": true
@@ -230,6 +241,7 @@
         "TCP",
         "AuthZ",
         "Admin",
+        "Databricks",
         "PAT",
         "Preview"
       ],
@@ -249,6 +261,7 @@
         "Best Practice",
         "Automated",
         "NetSec",
+        "Databricks",
         "Preview"
       ],
       "Enabled": true

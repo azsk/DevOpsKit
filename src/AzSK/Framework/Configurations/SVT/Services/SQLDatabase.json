@@ -49,7 +49,9 @@
         "FixMethodName": "FixSqlDatabaseTDE",
         "FixControlImpact": "Low",
         "Parameters": {}
-      }
+      },
+      "PolicyDefinitionGuid":"17k78e20-9358-41c9-923c-fb736d382a12",
+      "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/17k78e20-9358-41c9-923c-fb736d382a12"
     },
     {
       "ControlID": "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
@@ -68,6 +70,8 @@
         "SOX"
       ],
       "Enabled": true,
+      "PolicyDefinitionGuid":"36d49e87-48c4-4f2e-beed-ba4ed02b71f5",
+      "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/36d49e87-48c4-4f2e-beed-ba4ed02b71f5",
       "FixControl": {
         "FixMethodName": "EnableServerThreatDetection",
         "FixControlImpact": "Low",
@@ -180,6 +184,8 @@
         "Audit",
         "SOX"
       ],
+      "PolicyDefinitionGuid":"a6fb4358-5bf4-4ad7-ba82-2cd2f41ce5e9",
+      "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/a6fb4358-5bf4-4ad7-ba82-2cd2f41ce5e9",
       "Enabled": true,
       "FixControl": {
         "FixMethodName": "EnableServerAuditingPolicy",

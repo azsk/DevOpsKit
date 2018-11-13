@@ -77,6 +77,9 @@ class SecurityRecommendationReport: ListenerBase
                         $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#cgC#]", "$categoriesString");
                         $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#cgPass#]", "$($reportObject.Recommendations.CurrentFeatureGroup.TotalSuccessCount)");
                         $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#cgFail#]", "$($reportObject.Recommendations.CurrentFeatureGroup.TotalFailCount)");
+                        $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#up#]", "$($reportObject.Recommendations.CurrentFeatureGroup.UsagePercentage)");
+                        $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#frate#]", "$($reportObject.Recommendations.CurrentFeatureGroup.FailureRate)");
+                        $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#omu#]", "$($reportObject.Recommendations.CurrentFeatureGroup.OtherMostUsed)");
                     }
                     else {
                         #TODO: need to hide the div
@@ -91,6 +94,9 @@ class SecurityRecommendationReport: ListenerBase
               <tr><div class="dataPoint" id="fc[#i#]"><td> Feature combination:</td><td>[#fc#]</td></div></tr>
               <tr><div class="dataPoint" id="cc[#i#]"> <td>Category Combination:</td><td> [#cc#]</td></div></tr>
               <tr><div class="dataPoint" id="measures[#i#]"><td> Measures:</td><td> [Total Pass: [#pass#] [Total Fail: [#fail#]]</td></div></tr>
+              <tr><div class="dataPoint" id="up[#i#]"> <td>Usage Percentage:</td><td> [#up#]</td></div></tr>
+              <tr><div class="dataPoint" id="fr[#i#]"> <td>Failure Rate:</td><td> [#frate#]</td></div></tr>
+              <tr><div class="dataPoint" id="omu[#i#]"> <td>SimilarCombinations:</td><td> [#omu#]</td></div></tr>
               </table>
               <br />
 "@;
@@ -109,6 +115,9 @@ class SecurityRecommendationReport: ListenerBase
                             $recommendationPart = $recommendationPart.Replace("[#cc#]","$categoriesString");
                             $recommendationPart = $recommendationPart.Replace("[#pass#]","$($recommendation.TotalSuccessCount) ]");
                             $recommendationPart = $recommendationPart.Replace("[#fail#]","$($recommendation.TotalFailCount)");
+                            $recommendationPart = $recommendationPart.Replace("[#up#]","$($recommendation.UsagePercentage)");
+                            $recommendationPart = $recommendationPart.Replace("[#frate#]","$($recommendation.FailureRate)");
+                            $recommendationPart = $recommendationPart.Replace("[#omu#]","$($recommendation.OtherMostUsed)");
                             $recommendationHtml += $recommendationPart
                         }
                         $reportTemplateFileContent = $reportTemplateFileContent.Replace("[#recommendations#]", "$recommendationHtml");

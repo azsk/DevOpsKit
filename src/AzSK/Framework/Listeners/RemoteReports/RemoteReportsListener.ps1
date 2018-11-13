@@ -131,7 +131,7 @@ class RemoteReportsListener: ListenerBase {
 	{
 		$currentInstance = [RemoteReportsListener]::GetInstance();
 		$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-		$resourcesFlat = [ResourceInventory]::RawResources | Select-Object Name,ResourceId,ResourceName,ResourceType,ResourceGroupName,Location,SubscriptionId,Sku,@{ Name = 'Tags'; Expression = {$([Helpers]::FetchTagsString($_.Tags))}}
+		$resourcesFlat = [ResourceInventory]::RawResources | Select-Object Name,ResourceId,ResourceType,ResourceGroupName,Location,Sku,@{ Name = 'Tags'; Expression = {$([Helpers]::FetchTagsString($_.Tags))}},@{ Name = 'SubscriptionId'; Expression ={$invocationContext.BoundParameters["SubscriptionId"]}}
 		[RemoteApiHelper]::PostResourceFlatInventory($resourcesFlat)
 
 	}

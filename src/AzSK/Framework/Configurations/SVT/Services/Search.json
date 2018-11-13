@@ -148,6 +148,8 @@
           "Diagnostics",
           "Search"
         ],
+        "PolicyDefinitionGuid":"b4330a05-a843-4bc8-bf9a-cacce50c67f4",
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/b4330a05-a843-4bc8-bf9a-cacce50c67f4",
         "Enabled": true
       }
                  ]

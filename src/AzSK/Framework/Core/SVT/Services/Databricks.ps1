@@ -7,6 +7,7 @@ class Databricks: SVTBase
 	hidden [string] $WorkSpaceBaseUrl = "https://{0}.azuredatabricks.net/api/2.0/";
 	hidden [string] $PersonalAccessToken =""; 
 	hidden [bool] $HasAdminAccess = $false;
+	hidden [bool] $IsTokenRead = $false;
 
     Databricks([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
                  Base($subscriptionId, $resourceGroupName, $resourceName) 
@@ -66,7 +67,7 @@ class Databricks: SVTBase
 
 	 hidden [ControlResult] CheckSecretScope([ControlResult] $controlResult)
     {
-	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.IsUserAdmin())
+	    if($this.IsTokenAvailable() -and $this.IsUserAdmin())
 		{
 			 $SecretScopes	= $this.InvokeRestAPICall("GET","secrets/scopes/list","")
 			 if($null -ne  $SecretScopes  -and ( $SecretScopes|Measure-Object).count -gt 0)
@@ -89,7 +90,7 @@ class Databricks: SVTBase
 
 	 hidden [ControlResult] CheckSecretScopeBackend([ControlResult] $controlResult)
     {
-	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.IsUserAdmin())
+	    if($this.IsTokenAvailable() -and $this.IsUserAdmin())
 		{
 			 $SecretScopes	= $this.InvokeRestAPICall("GET","secrets/scopes/list","")
 			 if($null -ne  $SecretScopes  -and (( $SecretScopes|Measure-Object).count -gt 0) -and [Helpers]::CheckMember($SecretScopes,"scopes"))
@@ -121,7 +122,7 @@ class Databricks: SVTBase
 
 	hidden [ControlResult] CheckKeyVaultReference([ControlResult] $controlResult)
     {
-	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.IsUserAdmin())
+	    if($this.IsTokenAvailable() -and $this.IsUserAdmin())
 		{
 			$KeyVaultScopeMapping = @()
 			$KeyVaultWithMultipleReference = @() 
@@ -172,7 +173,7 @@ class Databricks: SVTBase
 
 	hidden [ControlResult] CheckAccessTokenExpiry([ControlResult] $controlResult)
     {   
-	    if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken))
+	    if($this.IsTokenAvailable())
 		{
 			 $AccessTokens = $this.InvokeRestAPICall("GET","token/list","")
 			if($null -ne $AccessTokens -and ($AccessTokens.token_infos| Measure-Object).Count -gt 0)
@@ -229,7 +230,7 @@ class Databricks: SVTBase
 
 	hidden [ControlResult] CheckAdminAccess([ControlResult] $controlResult)
 	{   
-	   if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.IsUserAdmin())
+	   if($this.IsTokenAvailable() -and $this.IsUserAdmin())
 	   {    
 	        $controlResult.VerificationResult = [VerificationResult]::Verify;
 		    $accessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.GetResourceId(), $false, $true);
@@ -253,7 +254,7 @@ class Databricks: SVTBase
 			if(($potentialAdminUsers|Measure-Object).Count -gt 0)
 			{
 				$controlResult.AddMessage("`r`nValidate that the following identities have potential admin access to resource - [$($this.ResourceContext.ResourceName)]");
-				$controlResult.AddMessage("Note: Users that have been explicitly added in the 'admins' group in the workspace are considered 'active' admins");
+				$controlResult.AddMessage("Note: Users that have 'Owner' or 'Contributor' role on the Databricks workspace resource are considered 'potential' admins");
 				$controlResult.AddMessage([MessageData]::new("", $potentialAdminUsers));
 			}
 			if(($activeAdminUsers|Measure-Object).Count -gt 0)
@@ -261,6 +262,7 @@ class Databricks: SVTBase
 				$controlResult.AddMessage("`r`nValidate that the following identities have active admin access to resource - [$($this.ResourceContext.ResourceName)]");
 				$controlResult.AddMessage("Note: Users that have been explicitly added in the 'admins' group in the workspace are considered 'active' admins");
 				$controlResult.AddMessage([MessageData]::new("", $activeAdminUsers));
+				$controlResult.SetStateData("Following identities have active admin access to resource:", $activeAdminUsers);
 			}
 	   }
 	   else
@@ -274,7 +276,7 @@ class Databricks: SVTBase
 
 	hidden [ControlResult] CheckGuestAdminAccess([ControlResult] $controlResult)
 	{   
-	   if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken) -and $this.IsUserAdmin())
+	   if($this.IsTokenAvailable() -and $this.IsUserAdmin())
 	   {    
 			# Get All Active Users
 			$guestAdminUsers =@()
@@ -297,6 +299,7 @@ class Databricks: SVTBase
 			if($null -ne $guestAdminUsers -and ($guestAdminUsers | Measure-Object).Count -gt 0)
 			{
 				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following guest accounts have admin access on workspace:", $guestAdminUsers));
+				$controlResult.SetStateData("Following guest accounts have admin access on workspace:", $guestAdminUsers);
 			}
 			else{
 				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Manually verify that guest accounts should not have admin access on workspace."));
@@ -328,7 +331,10 @@ class Databricks: SVTBase
 		 }
 		 catch
 		 {
-		    $this.PublishCustomMessage("Could not evaluate control due to Databricks API call failure. Token may be invalid.", [MessageType]::Error);
+			# Todo : Check for suppressed exception
+			$this.PublishCustomMessage("Could not evaluate control due to Databricks API call failure. Token may be invalid.", [MessageType]::Error);
+			$ExceptionMsg = $_.Exception.Tostring()
+			throw ([SuppressedException]::new(("Could not evaluate control due to Databricks API call failure. Token may be invalid." + $ExceptionMsg) , [SuppressedExceptionType]::Generic))	    
 		 } 
 		return  $ResponseObject 
 	}
@@ -338,12 +344,16 @@ class Databricks: SVTBase
 	     $scanSource = [RemoteReportHelper]::GetScanSource();
          if($scanSource -eq [ScanSource]::SpotCheck)
 		 { 
+		   $input = ""
 		   $input = Read-Host "Enter PAT (personal access token) for '$($this.ResourceContext.ResourceName)' Databricks workspace"
-           $input = $input.Trim()
+		   if($null -ne $input)
+		   {
+			 $input = $input.Trim()
+		   }  
 		   return $input;
 		 }
 		 else
-		 {
+		 { 
 			return $null;
 		 }
 	   
@@ -355,7 +365,6 @@ class Databricks: SVTBase
 		$count = $this.ResourceObject.Properties.managedResourceGroupId.Split("/").Count
 		$this.ManagedResourceGroupName = $this.ResourceObject.Properties.managedResourceGroupId.Split("/")[$count-1]
 		$this.WorkSpaceBaseUrl=[system.string]::Format($this.WorkSpaceBaseUrl,$this.WorkSpaceLoction)
-		$this.PersonalAccessToken = $this.ReadAccessToken()
 		#$this.HasAdminAccess = $this.IsUserAdmin()
 	}
 
@@ -363,22 +372,42 @@ class Databricks: SVTBase
 	{
 	  try
 	  {
-		  $currentContext = [Helpers]::GetCurrentRMContext()
-		  $userId = $currentContext.Account.Id;
-		  $requestBody = "user_name="+$userId
-		  $parentGroups = $this.InvokeRestAPICall("GET","groups/list-parents",$requestBody)
-		  if($parentGroups.group_names.Contains("admins"))
+	      #Users must be admin to inoke this API call
+		   $uri = $this.WorkSpaceBaseUrl + "groups/list" 		
+		   $ResponseObject = Invoke-RestMethod -Method "GET" -Uri $uri `
+							   -Headers @{"Authorization" = "Bearer "+$this.PersonalAccessToken} `
+							   -ContentType 'application/json' -UseBasicParsing
+		  if($null -ne $ResponseObject -and ([Helpers]::CheckMember($ResponseObject,"group_names")))
 		  {
-			  return $true;
+		    return $true;
 		  }else
 		  {
-			 return $false;
+		    return  $false;
 		  }
 	  }
 	  catch{
+		 # If exception occurs user is not admin
+		 $this.PublishCustomMessage("Could not evaluate control due to Databricks API call failure. Token may be invalid.", [MessageType]::Error); 
 		return $false;
 	  }
 	  
+	}
+
+	hidden [bool] IsTokenAvailable()
+	{
+	   $status = $false;
+	   if(!$this.IsTokenRead)
+	   {
+	     $this.IsTokenRead = $true;
+	     $this.PersonalAccessToken = $this.ReadAccessToken()
+	   }
+
+	   if(-not [string]::IsNullOrEmpty($this.PersonalAccessToken))
+	   {
+	      $status = $true;
+	   }
+
+	   return $status; 
 	}
 
 }
