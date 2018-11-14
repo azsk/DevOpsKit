@@ -723,7 +723,17 @@ function Get-AzSKControlsStatus
 		[Parameter(Mandatory = $false)]
 		[Alias("xcids")]
 		[AllowEmptyString()]
-		$ExcludeControlIds
+		$ExcludeControlIds,
+
+		[string]
+		[Alias("xrgns")]
+		[Parameter(Mandatory = $false)]
+		$ExcludeResourceGroupNames,
+
+		[string]
+		[Alias("xrns")]
+		[Parameter(Mandatory = $false)]
+		$ExcludeResourceNames
     )
 	Begin
 	{
@@ -734,7 +744,7 @@ function Get-AzSKControlsStatus
 	{
 		try
 		{
-			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName);						
+			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName, $ExcludeResourceNames,$ExcludeResourceGroupNames);						
 			$resolver.Tag = $Tag;
 			$resolver.TagName = $TagName;
 			$resolver.TagValue = $TagValue;
