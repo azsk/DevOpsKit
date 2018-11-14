@@ -67,7 +67,7 @@
             "Automated": "Yes",
             "MethodName": "CheckAPIMURLScheme",
             "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer eavesdropping attacks.",
-            "Recommendation": "Run command: Set-AzureRmApiManagementApi -Context {APIContextObject} -Protocols 'Https' -Name '{APIName}' -ApiId '{APIId}' -ServiceUrl '{ServiceURL}'",
+            "Recommendation": "Run command: Set-AzureRmApiManagementApi -Context {APIContextObject} -Protocols 'Https' -Name '{APIName}' -ApiId '{APIId}' -ServiceUrl '{ServiceURL}'. Run command : Get-AzureRmApiManagementApi -Context '{APIContextObject}' to get the details of existing APIs.",
             "Tags": [
                 "SDL",
                 "TCP",
@@ -102,7 +102,7 @@
             "Automated": "Yes",
             "MethodName": "CheckSecretNamedValues",
             "Rationale": "Encrypted Named Values are stored securely by the Azure platform.",
-            "Recommendation": "Run command: Set-AzureRmApiManagementProperty -Secret $true -Context {APIContextObject} -Name '{PropertyDisplayName}' -PropertyId '{PropertyId}'. Refer https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-properties.",
+            "Recommendation": "Run command: Set-AzureRmApiManagementProperty -Secret `$true -Context {APIContextObject} -Name '{PropertyDisplayName}' -PropertyId '{PropertyId}'. Refer https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-properties.",
             "Tags": [
                 "SDL",
                 "TCP",
@@ -120,7 +120,7 @@
             "Automated": "Yes",
             "MethodName": "CheckNonARMAPIUsage",
             "Rationale": "The credentials used to access API Management REST API provide admin-level access without support for role-based access control and without recording audit logs. For better security it is recommended to make calls through the ARM-based REST API",
-            "Recommendation": "Run command: Set-AzureRmApiManagementTenantAccess -Context {APIContextObject} -Enabled $false. Use ARM based REST API mentioned in https://docs.microsoft.com/en-us/rest/api/apimanagement.",
+            "Recommendation": "Run command: Set-AzureRmApiManagementTenantAccess -Context {APIContextObject} -Enabled `$false. Use ARM based REST API mentioned in https://docs.microsoft.com/en-us/rest/api/apimanagement.",
             "Tags": [
                 "SDL",
                 "TCP",
