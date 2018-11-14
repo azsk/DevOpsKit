@@ -100,10 +100,6 @@
     {
       "Id": "a48d7796-14b4-4889-afef-fbb65a93e5a2",
       "Name": "masterreader"
-    },
-    {
-      "Id": "a042fe8d-14b3-4850-9120-e2f357577b2d",
-      "Name": "Monitor permissions"
     }
   ],
   "UniversalIPRange": "0.0.0.0-255.255.255.255",
