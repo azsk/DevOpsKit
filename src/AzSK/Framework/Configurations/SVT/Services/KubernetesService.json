@@ -10,7 +10,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckClusterRBAC",
-      "Rationale": "Role-based access control (RBAC) is a method of regulating access to computer or network resources based on the roles of individual users within an enterprise.",
+      "Rationale": "Enabling RBAC in a cluster lets you finely control access to various operations at the cluster/node/pod/namespace scopes for different stakeholders. Without RBAC enabled, every user has full access to the cluster which is a violation of the principle of least privilege. Note that Azure Kubernetes Service does not currently support other mechanisms to define authorization in Kubernetes (such as Attribute-based Access Control authorization or Node authorization).",
       "Recommendation": "RBAC flag must be enabled while creating the Kubernetes Service. Existing non-RBAC enabled Kubernetes Service clusters cannot currently be updated for RBAC use. Refer: https://docs.microsoft.com/en-us/azure/aks/aad-integration.",
       "Tags": [
         "SDL",
@@ -61,13 +61,13 @@
     },
     {
       "ControlID": "Azure_KubernetesService_AuthN_Dont_Grant_ClusterAdmin_Permission_Developer",
-      "Description": "Developer should not be granted 'List clusterAdmin credential' operation permission",
+      "Description": "Do not directly or indirectly grant cluster admin level access to developers",
       "Id": "KubernetesService140",
       "ControlSeverity": "High",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "With 'List clusterAdmin credential' operation permission the developer can update the cluster level RBAC (cluster level access management).",
-      "Recommendation": "Developer should be assigned 'Azure Kubernetes Service Cluster User Role' to Kubernetes Service.",
+      "Rationale": "Cluster admin have full privileges to perform critical operations on Kubernetes cluster. Granting minimum required access ensures that developer are granted just enough permissions to perform their tasks.",
+      "Recommendation": "Developer should be assigned 'Azure Kubernetes Service Cluster User Role' to Kubernetes Service. If you modify an existing role or create a custom role, be careful about operations that are granted to a developer. For example, if a developer can run the 'List clusterAdmin credential' operation, they can elevate access to cluster admin level.",
       "Tags": [
         "SDL",
         "TCP",
@@ -96,7 +96,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "Azure_KubernetesService_DP_Review_Image",
+      "ControlID": "Azure_KubernetesService_DP_Review_Image_Sources",
       "Description": "Make sure container images (including nested images) deployed in Kubernetes are from a trustworthy source",
       "Id": "KubernetesService160",
       "ControlSeverity": "High",
@@ -104,7 +104,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "If a Kubernetes Service runs an untrusted container image (or an untrusted nested image), it can violate integrity of the infrastructure and lead to all types of security attacks.",
-      "Recommendation": "Ensure that the source(s) for the container images comprising the Kubernetes Service are trustworthy.",
+      "Recommendation": "Ensure that the source(s) for the container images comprising the Kubernetes Service are trustworthy. Review the repository locations specified in the YAML files for your environment and confirm that those locations will not have tampered/insecure images.",
       "Tags": [
         "SDL",
         "TCP",
@@ -115,13 +115,13 @@
     },
     {
       "ControlID": "Azure_KubernetesService_SI_Dont_Use_Default_Namespace",
-      "Description": "Application in Kubernetes should not be deployed in default namespace",
+      "Description": "Do not use the default cluster namespace to deploy applications",
       "Id": "KubernetesService170",
       "ControlSeverity": "Medium",
       "Enabled": true,
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "Resources/Applications in same namespace will have same access control policies. Users are granted permission on default namespace if no other namespace is provided in rolebindings.",
+      "Rationale": "Resources/Applications in same namespace will have same access control (RBAC) policies. Users are granted permission on default namespace if no other namespace is provided in rolebindings. As a result, the permissions in the default namespace might not be appropriate if your application/workload is sensitive. It is hence better to create a separate namespace.",
       "Recommendation": "Ensure that the applications in Kubernetes are not deployed in default namespace.",
       "Tags": [
         "SDL",
@@ -157,7 +157,7 @@
       "ControlSeverity": "Medium",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "Un-patched cluster nodes (VMs) are easy targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in operating systems and related software.",
+      "Rationale": "Unpatched cluster nodes (VMs) are easy targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in operating systems and related software.",
       "Recommendation": "Refer: https://github.com/weaveworks/kured for install patch and reboot management without impacting Kubernetes workloads.",
       "Tags": [
         "SDL",

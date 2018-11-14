@@ -32,7 +32,9 @@ class KubernetesService: SVTBase
 				$result = ""
 				$err = $null
 				try {
-					$result = [WebRequestHelper]::InvokeGetWebRequest($uri, $headers); 
+					$propertiesToReplace = @{}
+					$propertiesToReplace.Add("httpapplicationroutingzonename", "_httpapplicationroutingzonename")
+					$result = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
 					if(($null -ne $result) -and (($result | Measure-Object).Count -gt 0))
 					{
 						$this.ResourceObject = $result[0]
