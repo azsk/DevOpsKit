@@ -4,7 +4,9 @@ class RemoteApiHelper {
     hidden static [string] $ApiBaseEndpoint = [ConfigurationManager]::GetAzSKConfigData().AzSKApiBaseURL; #"https://localhost:44348/api"
 
     hidden static [string] GetAccessToken() {
-        return [Helpers]::GetAccessToken("https://management.core.windows.net/");
+        $rmContext = [Helpers]::GetCurrentRMContext();
+		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
+        return [Helpers]::GetAccessToken($ResourceAppIdURI);
     }
 
     hidden static [psobject] PostContent($uri, $content, $type) {

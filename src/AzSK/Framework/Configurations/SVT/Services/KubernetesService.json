@@ -1,0 +1,172 @@
+{
+  "FeatureName": "KubernetesService",
+  "Reference": "aka.ms/azsktcp/KubernetesService",
+  "IsMaintenanceMode": false,
+  "Controls": [
+    {
+      "ControlID": "Azure_KubernetesService_Deploy_Enable_Cluster_RBAC",
+      "Description": "Cluster RBAC must be enabled in Kubernetes Service",
+      "Id": "KubernetesService110",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckClusterRBAC",
+      "Rationale": "Role-based access control (RBAC) is a method of regulating access to computer or network resources based on the roles of individual users within an enterprise.",
+      "Recommendation": "RBAC flag must be enabled while creating the Kubernetes Service. Existing non-RBAC enabled Kubernetes Service clusters cannot currently be updated for RBAC use. Refer: https://docs.microsoft.com/en-us/azure/aks/aad-integration.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "Deploy",
+        "RBAC",
+        "KubernetesService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_KubernetesService_AuthN_Enabled_AAD",
+      "Description": "AAD should be enabled in Kubernetes Service",
+      "Id": "KubernetesService120",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckAADEnabled",
+      "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/aks/aad-integration to configure AAD in Kubernetes Service.",
+      "Tags": [
+        "SDL",
+        "Best Practice",
+        "Manual",
+        "AuthN",
+        "KubernetesService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_KubernetesService_AuthZ_Grant_Min_RBAC_Access",
+      "Description": "All users/identities must be granted minimum required permissions using Role Based Access Control (RBAC)",
+      "Id": "KubernetesService130",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckRBACAccess",
+      "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+      "Recommendation": "Remove any excessive privileges granted on the Kubernetes Service. Run command: Remove-AzureRmRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC",
+        "KubernetesService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_KubernetesService_AuthN_Dont_Grant_ClusterAdmin_Permission_Developer",
+      "Description": "Developer should not be granted 'List clusterAdmin credential' operation permission",
+      "Id": "KubernetesService140",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "With 'List clusterAdmin credential' operation permission the developer can update the cluster level RBAC (cluster level access management).",
+      "Recommendation": "Developer should be assigned 'Azure Kubernetes Service Cluster User Role' to Kubernetes Service.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "AuthN",
+        "KubernetesService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_KubernetesService_Deploy_Use_Latest_Version",
+      "Description": "The latest version of Kubernetes should be used",
+      "Id": "KubernetesService150",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckKubernetesVersion",
+      "Rationale": "Running on older versions could mean you are not using latest security classes. Usage of such old classes and types can make your application vulnerable.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/aks/upgrade-cluster.",
+      "Tags": [
+        "SDL",
+        "Best Practice",
+        "Automated",
+        "Deploy",
+        "KubernetesService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_KubernetesService_DP_Review_Image",
+      "Description": "Make sure container images (including nested images) deployed in Kubernetes are from a trustworthy source",
+      "Id": "KubernetesService160",
+      "ControlSeverity": "High",
+      "Enabled": true,
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "If a Kubernetes Service runs an untrusted container image (or an untrusted nested image), it can violate integrity of the infrastructure and lead to all types of security attacks.",
+      "Recommendation": "Ensure that the source(s) for the container images comprising the Kubernetes Service are trustworthy.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "DP",
+        "KubernetesService"
+      ]
+    },
+    {
+      "ControlID": "Azure_KubernetesService_SI_Dont_Use_Default_Namespace",
+      "Description": "Application in Kubernetes should not be deployed in default namespace",
+      "Id": "KubernetesService170",
+      "ControlSeverity": "Medium",
+      "Enabled": true,
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Resources/Applications in same namespace will have same access control policies. Users are granted permission on default namespace if no other namespace is provided in rolebindings.",
+      "Recommendation": "Ensure that the applications in Kubernetes are not deployed in default namespace.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "SI",
+        "KubernetesService"
+      ]
+    },
+    {
+      "ControlID": "Azure_KubernetesService_DP_Store_Secrets_in_Key_Vault",
+      "Description": "All Kubernetes Service secrets should be stored in Key Vault",
+      "Id": "KubernetesService180",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Keeping secrets such as DB connection strings, passwords, keys, etc. in clear text can lead to easy compromise at various avenues during an application's lifecycle. Storing them in a key vault ensures that they are protected at rest.",
+      "Recommendation": "Refer: https://github.com/Azure/kubernetes-keyvault-flexvol for configuring Key Vault and storing secrets.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "AuthZ",
+        "DP",
+        "KubernetesService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_KubernetesService_SI_Cluster_Node_Missing_OS_Patches",
+      "Description": "All the Kubernetes cluster nodes must have all the required OS patches installed",
+      "Id": "KubernetesService190",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Un-patched cluster nodes (VMs) are easy targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in operating systems and related software.",
+      "Recommendation": "Refer: https://github.com/weaveworks/kured for install patch and reboot management without impacting Kubernetes workloads.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "SI",
+        "KubernetesService"
+      ],
+      "Enabled": true
+    }
+  ]
+}

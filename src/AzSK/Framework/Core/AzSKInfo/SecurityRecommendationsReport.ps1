@@ -59,7 +59,18 @@ class SecurityRecommendationsReport: CommandBase
 		}
 		return $true;
 	}
-
+	[psobject]FormatCombinations([psobject] $mostused)
+	{
+		$ht = @{}
+		$mostused.psobject.properties | Foreach { $ht[$_.Name] =  [math]::Round($_.Value * 100,3)}
+		$mostused = New-Object PSObject -Property $ht
+        return $mostused
+	}
+	[String]FormatString([String] $mostused)
+	{
+		$mostused=$mostused.Substring(2,$mostused.Length-3)
+		return $mostused -replace ';',"<br>"
+	}
 	[MessageData[]] GenerateReport([string] $ResourceGroupName, [ResourceTypeName[]] $ResourceTypeNames,[string[]] $Categories)
     {		    	    
 		[MessageData[]] $messages = @();	
@@ -111,7 +122,7 @@ class SecurityRecommendationsReport: CommandBase
                     $currentFeatureGroup.Ranking = "";
                     $currentFeatureGroup.TotalSuccessCount = "";
                     $currentFeatureGroup.TotalFailCount = "";
-                    $currentFeatureGroup.SecurityRating = "";
+                    $currentFeatureGroup.UsagePercentage = "";
                     $currentFeatureGroup.TotalOccurances = "";
                     $currentFeatureGroup.Categories = "No features provided. This section is not application for Categories as input.";
                     $Combination.CurrentFeatureGroup += $currentFeatureGroup
@@ -136,7 +147,8 @@ class SecurityRecommendationsReport: CommandBase
 						$currentFeatureGroup.TotalOccurances = $recommendedGroup.occurrences;
 						$currentFeatureGroup.Categories = $recommededFeatureGroup.Categories;
 						$currentFeatureGroup.UsagePercentage = $recommendedGroup.UsagePercentage;
-						$currentFeatureGroup.OtherMostUsed = $recommendedGroup.OtherMostUsed;
+						$currentFeatureGroup.OtherMostUsed = $this.FormatCombinations($recommendedGroup.OtherMostUsed);
+						$currentFeatureGroup.OtherMostUsed = $this.FormatString($currentFeatureGroup.OtherMostUsed);
 						$Combination.CurrentFeatureGroup += $currentFeatureGroup
 					}	
 					$recommededFeatureGroup.Ranking = $i;
@@ -146,7 +158,8 @@ class SecurityRecommendationsReport: CommandBase
 					$recommededFeatureGroup.FailureRate = ($recommendedGroup.info.Fails/$recommendedGroup.info.Totals)*100;
 					$recommededFeatureGroup.TotalOccurances = $recommendedGroup.occurrences;
 					$recommededFeatureGroup.UsagePercentage = $recommendedGroup.UsagePercentage;
-					$recommededFeatureGroup.OtherMostUsed = $recommendedGroup.OtherMostUsed;
+					$recommededFeatureGroup.OtherMostUsed = $this.FormatCombinations($recommendedGroup.OtherMostUsed);
+					$recommededFeatureGroup.OtherMostUsed = $this.FormatString($recommededFeatureGroup.OtherMostUsed);
 					$Combination.RecommendedFeatureGroups += $recommededFeatureGroup;
 				}
 			}
