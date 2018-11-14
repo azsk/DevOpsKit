@@ -723,7 +723,7 @@ function Get-AzSKControlsStatus
 		[Parameter(Mandatory = $false)]
 		[Alias("xcids")]
 		[AllowEmptyString()]
-		$ExcludeControlIds
+		$ExcludeControlIds,
 
 		[string]
 		[Alias("xrgns")]
