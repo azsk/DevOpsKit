@@ -240,7 +240,14 @@ function RunAzSKScanForASub
 	elseif($null -eq $WebHookDataforResourceCreation)
 	{
 		Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
-		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC"  -CentralStorageAccount $CentralStorageAccount -UsePartialCommits
+		if($null -ne $CentralStorageAccount)
+		{
+			$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC"  -CentralStorageAccount $CentralStorageAccount -UsePartialCommits
+		}
+		else 
+		{
+			$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
+		}
 	}
    
     #---------------------------Check resources scan status--------------------------------------------------------------
