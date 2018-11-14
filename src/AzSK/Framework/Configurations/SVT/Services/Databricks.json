@@ -153,8 +153,8 @@
       "Description": "Workspace access control should be enabled",
       "Id": "Databricks180",
       "ControlSeverity": "Medium",
-      "Automated": "No",
-      "MethodName": "",
+      "Automated": "Yes",
+      "MethodName": "CheckWorkspaceAccessEnabled",
       "Rationale": "Enabling workspace access control allows an admin to manage fine-grained user permissions and ensures that users can perform only intended operations. This minimizes exposure of data in case of user account compromise.",
       "Recommendation": "To enable and configure workspace access control, refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/workspace-acl.html",
       "Tags": [
@@ -162,7 +162,7 @@
         "TCP",
         "AuthZ",
         "RBAC",
-        "Manual",
+        "Automated",
         "Databricks",
         "Preview"
       ],
@@ -173,8 +173,8 @@
       "Description": "Cluster access control should be enabled",
       "Id": "Databricks190",
       "ControlSeverity": "Medium",
-      "Automated": "No",
-      "MethodName": "",
+      "Automated": "Yes",
+      "MethodName": "CheckClusterAccessEnabled",
       "Rationale": "Enabling cluster access control allows admin to provide restricted access to user over cluster so that users can perform only intended operations. This minimizes exposure of data in case of user/service account compromise.",
       "Recommendation": "To enable and configure cluster access control, refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/cluster-acl.html",
       "Tags": [
@@ -182,7 +182,7 @@
         "TCP",
         "AuthZ",
         "RBAC",
-        "Manual",
+        "Automated",
         "Databricks",
         "Preview"
       ],
@@ -193,8 +193,8 @@
       "Description": "Job access control should be enabled",
       "Id": "Databricks200",
       "ControlSeverity": "Medium",
-      "Automated": "No",
-      "MethodName": "",
+      "Automated": "Yes",
+      "MethodName": "CheckJobAccessEnabled",
       "Rationale": "Enabling job access control ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of data in case of user/service account compromise.",
       "Recommendation": "To enable and configure job access control, refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/jobs-acl.html",
       "Tags": [
@@ -202,7 +202,7 @@
         "TCP",
         "AuthZ",
         "RBAC",
-        "Manual",
+        "Automated",
         "Databricks",
         "Preview"
       ],
