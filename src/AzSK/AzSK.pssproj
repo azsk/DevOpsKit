@@ -99,6 +99,7 @@
     <Compile Include="ARMChecker\ARMChecker.ps1" />
     <Compile Include="AzSKStaging.psd1" />
     <Compile Include="AzSK.psm1" />
+    <Compile Include="Framework\Abstracts\ComplianceBase.ps1" />
     <Compile Include="Framework\Configurations\ContinuousAssurance\Alert_Runbook.ps1" />
     <Compile Include="Framework\Configurations\Migration\Migration.ps1" />
     <Compile Include="Framework\Configurations\Migration\PolicyMigration.ps1" />
@@ -122,6 +123,8 @@
     <Compile Include="Framework\Core\SVT\Services\ContainerRegistry.ps1" />
     <Compile Include="Framework\Core\SVT\Services\Databricks.ps1" />
     <Compile Include="Framework\Core\SVT\Services\DataFactoryV2.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\HDInsight.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\KubernetesService.ps1" />
     <Compile Include="Framework\Helpers\AliasHelper.ps1" />
     <Compile Include="Framework\Helpers\OldConstants.ps1" />
     <Compile Include="Framework\Helpers\OMSHelper.ps1" />
@@ -314,6 +317,7 @@
     <Content Include="Framework\Configurations\SVT\Services\EventHub.json" />
     <Content Include="Framework\Configurations\SVT\Services\ERvNet.json" />
     <Content Include="Framework\Configurations\SVT\Services\HDInsight.json" />
+    <Content Include="Framework\Configurations\SVT\Services\KubernetesService.json" />
     <Content Include="Framework\Configurations\SVT\Services\LoadBalancer.json" />
     <Content Include="Framework\Configurations\SVT\Services\LogicApps.json" />
     <Content Include="Framework\Configurations\SVT\Services\RedisCache.json" />

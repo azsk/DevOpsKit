@@ -19,7 +19,10 @@
     "ResourceLockLevel": "ReadOnly"
   },
   "Databricks": {
-    "Tenant_Domain" : "microsoft.com"
+    "Tenant_Domain": "microsoft.com"
+  },
+  "KubernetesService": {
+    "kubernetesVersion": "1.11.3"
   },
   "VirtualMachine": {
     "Windows": {
@@ -62,17 +65,17 @@
     },
     "Windows_OS_Baseline_Ids": [],
     "ASCPolicies": {
-      "PolicyAssignment":{
-        "EndpointProtection" : "Install endpoint protection solution on your machines",
-        "DiskEncryption" : "Apply Disk Encryption on your virtual machines",
-        "VulnerabilityScan" : "Remediate vulnerabilities in security configuration on your machines",        
-        "OSUpdates" : "Install system updates on your machines",
-        "MonitoringAgent" : "Install monitoring agent on your machines"        
-        },      
-        "ResourceDetailsKeys" :{
-          "WorkspaceId" : "Reporting workspace customer id"        
-        }
+      "PolicyAssignment": {
+        "EndpointProtection": "Install endpoint protection solution on your machines",
+        "DiskEncryption": "Apply Disk Encryption on your virtual machines",
+        "VulnerabilityScan": "Remediate vulnerabilities in security configuration on your machines",
+        "OSUpdates": "Install system updates on your machines",
+        "MonitoringAgent": "Install monitoring agent on your machines"
+      },
+      "ResourceDetailsKeys": {
+        "WorkspaceId": "Reporting workspace customer id"
       }
+    }
   },
   "NoOfApprovedAdmins": 5,
   "NoOfClassicAdminsLimit": 2,
