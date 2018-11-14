@@ -66,7 +66,7 @@
       "ControlSeverity": "High",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "Cluster admins have full access on the cluster to perform any operation. Granting minimum required access ensures that developer are granted just enough permissions to perform their tasks.",
+      "Rationale": "Cluster admin have full privileges to perform critical operations on Kubernetes cluster. Granting minimum required access ensures that developer are granted just enough permissions to perform their tasks.",
       "Recommendation": "Developer should be assigned 'Azure Kubernetes Service Cluster User Role' to Kubernetes Service. If you modify an existing role or create a custom role, be careful about operations that are granted to a developer. For example, if a developer can run the 'List clusterAdmin credential' operation, they can elevate access to cluster admin level.",
       "Tags": [
         "SDL",
