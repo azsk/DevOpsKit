@@ -20,7 +20,7 @@ class KubernetesService: SVTBase
     {
         if (-not $this.ResourceObject) 
 		{
-			$ResourceAppIdURI = [WebRequestHelper]::AzureManagementUri;
+			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
             $AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 			if($null -ne $AccessToken)
 			{
@@ -28,7 +28,7 @@ class KubernetesService: SVTBase
 				$header = "Bearer " + $AccessToken
 				$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
 
-				$uri=[system.string]::Format("https://management.azure.com/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.ContainerService/managedClusters/{2}?api-version=2018-03-31",$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
+				$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.ContainerService/managedClusters/{3}?api-version=2018-03-31",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
 				$result = ""
 				$err = $null
 				try {
@@ -71,9 +71,10 @@ class KubernetesService: SVTBase
 
 	hidden [controlresult[]] CheckAADEnabled([controlresult] $controlresult)
 	{
-		if(([Helpers]::CheckMember($this.ResourceObject,"Properties")) -and [Helpers]::CheckMember($this.ResourceObject.Properties,"aadProfile"))
+		if([Helpers]::CheckMember($this.ResourceObject,"Properties"))
 		{
-			if([Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile,"clientAppID") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile,"serverAppID") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile,"tenantID"))
+			
+			if([Helpers]::CheckMember($this.ResourceObject.Properties,"aadProfile") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile,"clientAppID") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile,"serverAppID") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile,"tenantID"))
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed,
 										[MessageData]::new("AAD profile configuration details", $this.ResourceObject.Properties.aadProfile));
