@@ -342,58 +342,84 @@ class CCAutomation: CommandBase
 						$out.StorageAccountName = $this.UserConfig.StorageAccountName;
 						$out.LoggingOption = $this.LoggingOption.ToString();
 
+						Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
+						$existingStorage = $null;
+						try
+						{
+							$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+						}
+						catch
+						{
+							#eat exception if storage is not preset
+						}
+
 						if(-not $this.SkipTargetSubscriptionConfig)
 						{
-							Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
-
-							#region :create new resource group/check if RG exists. This is required for the CA SPN to read the attestation data. 
-							if((Get-AzureRmResourceGroup -Name $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
+							if($this.LoggingOption -eq [CAReportsLocation]::IndividualSubs)
 							{
-								$this.PublishCustomMessage("Creating AzSK RG...");
-								[Helpers]::NewAzSKResourceGroup($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
-							}								
-							#endregion
+								#region :create new resource group/check if RG exists. This is required for the CA SPN to read the attestation data. 
+								if((Get-AzureRmResourceGroup -Name $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
+								{
+									$this.PublishCustomMessage("Creating AzSK RG...");
+									[Helpers]::NewAzSKResourceGroup($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
+								}								
+								#endregion
 
 
-							#$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
-							#CAAADApplicaitonID is being set in the above call while setting the RunAsConnection
-                            
-							$this.SetCASPNPermissions($this.CAAADApplicationID)					
-						
-							$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-							if(($existingStorage | Measure-Object).Count -gt 0)
-							{
-								$caStorageAccountName = $existingStorage.Name
-								$this.PublishCustomMessage("Preparing a storage account for storing reports from CA scans...`r`nFound existing AzSK storage account: [$caStorageAccountName]. This will be used to store reports from CA scans.")
-								$out.StorageAccountName = $caStorageAccountName;
+								#$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
+								#CAAADApplicaitonID is being set in the above call while setting the RunAsConnection
+								
+								$this.SetCASPNPermissions($this.CAAADApplicationID)					
+							
+								if(($existingStorage | Measure-Object).Count -gt 0)
+								{
+									$caStorageAccountName = $existingStorage.Name
+									$this.PublishCustomMessage("Preparing a storage account for storing reports from CA scans...`r`nFound existing AzSK storage account: [$caStorageAccountName]. This will be used to store reports from CA scans.")
+									$out.StorageAccountName = $caStorageAccountName;
+								}
+								else
+								{
+									#create new storage
+									$caStorageAccountName = ("azsk" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"))
+									$this.PublishCustomMessage("Creating a storage account: [$caStorageAccountName] for storing reports from CA scans.")
+									$newStorage = [Helpers]::NewAzskCompliantStorage($caStorageAccountName,$this.UserConfig.StorageAccountRG, $this.AutomationAccount.Location) 
+									if(!$newStorage)
+									{
+										$this.cleanupFlag = $true
+										throw ([SuppressedException]::new(($this.exceptionMsg + "Failed to create storage account."), [SuppressedExceptionType]::Generic))
+									}  
+									else
+									{
+										#apply tags
+										$timestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
+										$this.reportStorageTags += @{
+										"AzSKFeature" = "ContinuousAssuranceStorage";
+										"CreationTime"=$timestamp;
+										"LastModified"=$timestamp
+										}
+										[Helpers]::SetResourceTags($newStorage.Id, $this.reportStorageTags, $false, $true);
+									} 
+									$out.StorageAccountName = $caStorageAccountName;
+								}
 							}
 							else
 							{
-								#create new storage
-								$caStorageAccountName = ("azsk" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"))
-								$this.PublishCustomMessage("Creating a storage account: [$caStorageAccountName] for storing reports from CA scans.")
-								$newStorage = [Helpers]::NewAzskCompliantStorage($caStorageAccountName,$this.UserConfig.StorageAccountRG, $this.AutomationAccount.Location) 
-								if(!$newStorage)
+								if(($existingStorage | Measure-Object).Count -gt 0)
 								{
-									$this.cleanupFlag = $true
-									throw ([SuppressedException]::new(($this.exceptionMsg + "Failed to create storage account."), [SuppressedExceptionType]::Generic))
-								}  
+									$caStorageAccountName = $existingStorage.Name
+									$this.PublishCustomMessage("Preparing a storage account for storing reports from CA scans...`r`nFound existing AzSK storage account: [$caStorageAccountName]. This will be used to store reports from CA scans.")
+									$out.StorageAccountName = $caStorageAccountName;
+									$this.SetCASPNPermissions($this.CAAADApplicationID)
+								}
 								else
 								{
-									#apply tags
-									$timestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
-									$this.reportStorageTags += @{
-									"AzSKFeature" = "ContinuousAssuranceStorage";
-									"CreationTime"=$timestamp;
-									"LastModified"=$timestamp
-									}
-									[Helpers]::SetResourceTags($newStorage.Id, $this.reportStorageTags, $false, $true);
-								} 
-								$out.StorageAccountName = $caStorageAccountName;
+									$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
+									$this.SetSPNSubscriptionAccessIfNotAssigned($this.CAAADApplicationID)
+
+								}
 							}
-			
-							$this.OutputObject.TargetSubs += $out
-						}
+						}	
+						$this.OutputObject.TargetSubs += $out
 						$scanobject = [CAScanModel]::new($caSubId, $this.LoggingOption);
 						$scanobjects += $scanobject;
 						$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`n[$i/$count] Completed configuring subscription for central scan: [$caSubId] `r`n"+[Constants]::DoubleDashLine);
@@ -895,54 +921,93 @@ class CCAutomation: CommandBase
 							$out.CentralSubscriptionId = $this.SubscriptionContext.SubscriptionId;
 							$out.TargetSubscriptionId = $caSubId;
 							$out.LoggingOption = $this.LoggingOption.ToString();
-							$out.StorageAccountName = $this.UserConfig.StorageAccountName;		
+							$out.StorageAccountName = $this.UserConfig.StorageAccountName;	
+							
+							Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
+							$existingStorage = $null;
+							try
+							{
+								$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+							}
+							catch
+							{
+								#eat exception if storage is not preset
+							}
+
 							if(-not $this.SkipTargetSubscriptionConfig)
 							{
-								Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
-								#create new resource group/check if RG exists# 
-			
-								[Helpers]::CreateNewResourceGroupIfNotExists($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())			
-								
-								#recheck permissions
-								$this.PublishCustomMessage("Checking SPN (AAD app id: $($this.CAAADApplicationID)) permissions on target subscriptions...")
-								$this.SetCASPNPermissions($this.CAAADApplicationID)	
-																					
-								#region: Create/reuse existing storage account (Added this before creating variables since it's value is used in it)				
-								$newStorageName = [string]::Empty
-								#Check if storage exists
-								$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-								if(($existingStorage|Measure-Object).Count -gt 0)
+								if($this.LoggingOption -eq [CAReportsLocation]::IndividualSubs)
 								{
-									$this.PublishCustomMessage("Found existing AzSK storage account: ["+ $existingStorage.Name +"]")
-									#make storage compliant to azsk
-									$this.ResolveStorageCompliance($existingStorage.Name,$existingStorage.ResourceId,$this.AutomationAccount.CoreResourceGroup,$this.CAScanOutputLogsContainerName)
-									$out.StorageAccountName = $existingStorage.Name;
+									#create new resource group/check if RG exists# 
+				
+									[Helpers]::CreateNewResourceGroupIfNotExists($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())			
+									
+									#recheck permissions
+									$this.PublishCustomMessage("Checking SPN (AAD app id: $($this.CAAADApplicationID)) permissions on target subscriptions...")
+									$this.SetCASPNPermissions($this.CAAADApplicationID)	
+																						
+									#region: Create/reuse existing storage account (Added this before creating variables since it's value is used in it)				
+									$newStorageName = [string]::Empty
+									#Check if storage exists
+									
+									if(($existingStorage|Measure-Object).Count -gt 0)
+									{
+										$this.PublishCustomMessage("Found existing AzSK storage account: ["+ $existingStorage.Name +"]")
+										#make storage compliant to azsk
+										$this.ResolveStorageCompliance($existingStorage.Name,$existingStorage.ResourceId,$this.AutomationAccount.CoreResourceGroup,$this.CAScanOutputLogsContainerName)
+										$out.StorageAccountName = $existingStorage.Name;
+									}
+									else
+									{
+										#create default storage
+										$newStorageName = ("azsk" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"))
+										$this.PublishCustomMessage("Creating Storage Account: [$newStorageName] for storing reports from CA scans.")
+										$newStorage = [Helpers]::NewAzskCompliantStorage($newStorageName, $this.AutomationAccount.CoreResourceGroup, $existingAccount.Location) 
+										if(!$newStorage)
+										{
+											throw ([SuppressedException]::new(($this.exceptionMsg + "Failed to create storage account."), [SuppressedExceptionType]::Generic))
+										}   
+										else
+										{
+											#apply tags
+											$timestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
+											$this.reportStorageTags += @{
+											"CreationTime"=$timestamp;
+											"LastModified"=$timestamp
+											}
+											Set-AzureRmStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
+										}
+										$out.StorageAccountName = $newStorageName;
+									}	
+									try {
+										$targetStorageAccount =[UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+										$this.OutputObject.StorageAccount = $targetStorageAccount | Select-Object Name,ResourceGroupName,Sku,Tags
+									}
+									catch {
+										#eat exception if storage account is not found										
+									}
+									#endregion
 								}
 								else
 								{
-									#create default storage
-									$newStorageName = ("azsk" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"))
-									$this.PublishCustomMessage("Creating Storage Account: [$newStorageName] for storing reports from CA scans.")
-									$newStorage = [Helpers]::NewAzskCompliantStorage($newStorageName, $this.AutomationAccount.CoreResourceGroup, $existingAccount.Location) 
-									if(!$newStorage)
+									#recheck permissions
+									if(($existingStorage|Measure-Object).Count -gt 0)
 									{
-										throw ([SuppressedException]::new(($this.exceptionMsg + "Failed to create storage account."), [SuppressedExceptionType]::Generic))
-									}   
+										$this.PublishCustomMessage("Found existing AzSK storage account: ["+ $existingStorage.Name +"]")
+										#make storage compliant to azsk
+										$this.ResolveStorageCompliance($existingStorage.Name,$existingStorage.ResourceId,$this.AutomationAccount.CoreResourceGroup,$this.CAScanOutputLogsContainerName)
+										$out.StorageAccountName = $existingStorage.Name;
+										$this.SetCASPNPermissions($this.CAAADApplicationID)
+									}
 									else
 									{
-										#apply tags
-										$timestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
-										$this.reportStorageTags += @{
-										"CreationTime"=$timestamp;
-										"LastModified"=$timestamp
-										}
-										Set-AzureRmStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
+										$this.PublishCustomMessage("Checking SPN (AAD app id: $($this.CAAADApplicationID)) permissions on target subscriptions...")
+										$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
+										$this.SetSPNSubscriptionAccessIfNotAssigned($this.CAAADApplicationID)
 									}
-									$out.StorageAccountName = $newStorageName;
-								}							
-								$this.OutputObject.StorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage() | Select-Object Name,ResourceGroupName,Sku,Tags
-								#endregion
+								}
 							}
+
 							$this.OutputObject.TargetSubs += $out
 							$matchingScanObjects = $existingScanObjects | Where-Object {$_.SubscriptionId -eq $caSubId};
 							if(($matchingScanObjects | Measure-Object).Count -gt 0)
@@ -1205,7 +1270,7 @@ class CCAutomation: CommandBase
 			{
 				$resultMsg = "Please run this command after 2 hours of CA installation."
 				$resultStatus = "Failed"
-				$shouldReturn = $true			
+				$shouldReturn = $true		
 			}
 			else
 			{
@@ -1565,7 +1630,8 @@ class CCAutomation: CommandBase
 			$haveSubscriptionRBACAccess = $true;
 			$haveRGRBACAccess = $true;
 			$haveAARGAccess = $true;
-			$subRBACoutputs = @();			
+			$subRBACoutputs = @();	
+			$subStorageAccount = $null;		
 			if($this.IsCentralScanModeOn -and $this.ExhaustiveCheck)
 			{			
 				try
@@ -1573,11 +1639,27 @@ class CCAutomation: CommandBase
 					$caSubs | ForEach-Object {
 						try
 						{
-							$subRBACoutput = "" | Select-Object TargetSubscriptionId, HasSubscriptionCARBACAccess, HasRGCARBACAccess , HasRequiredAccessPermissions 
+							$subRBACoutput = "" | Select-Object TargetSubscriptionId, HasSubscriptionCARBACAccess, HasRGCARBACAccess , HasRequiredAccessPermissions, IsStoragePresent 
 							$subRBACoutput.TargetSubscriptionId = $_;
 							Set-AzureRmContext -SubscriptionId $subRBACoutput.TargetSubscriptionId | Out-Null
+							try {
+								$subStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+							}
+							catch {
+								#eat exception when storage is not present								
+							}
+							
+							if($null -ne $subStorageAccount)
+							{
+								$subRBACoutput.HasRGCARBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID);
+								$subRBACoutput.IsStoragePresent = $true;
+							}
+							else
+							{
+								$subRBACoutput.HasRGCARBACAccess = $true;
+								$subRBACoutput.IsStoragePresent = $false;
+							}
 							$subRBACoutput.HasSubscriptionCARBACAccess = $this.CheckSPSubscriptionAccess($this.CAAADApplicationID);
-							$subRBACoutput.HasRGCARBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID);
 							$subRBACoutput.HasRequiredAccessPermissions = $true;
 							$haveSubscriptionRBACAccess = $haveSubscriptionRBACAccess -and $subRBACoutput.HasSubscriptionCARBACAccess
 							$haveRGRBACAccess = $haveRGRBACAccess -and $subRBACoutput.HasRGCARBACAccess
@@ -1624,12 +1706,14 @@ class CCAutomation: CommandBase
 			{
 				$haveAARGAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID, $this.AutomationAccount.ResourceGroup, "Contributor")
 			}
+
 			if($haveSubscriptionRBACAccess -and $haveRGRBACAccess -and $haveAARGAccess)
 			{
 				$resultMsg = "RunAs Account is correctly set up."
 				$resultStatus = "OK"
 				$isPassed = $true
 			}
+
 			if(!$isPassed)
 			{
 				$failMsg = "Service principal account (Name: $($spName)) configured in RunAs Account  doesn't have required access ('Reader' access on Subscription and/or 'Contributor' access on resource group containing CA automation account)."
@@ -1729,20 +1813,27 @@ class CCAutomation: CommandBase
 							$tgtSubStorageAccount.TargetSubscriptionId = $_.SubscriptionId;
 							$tgtSubStorageAccount.LoggingOption = $_.LoggingOption;
 							$tgtSubStorageAccount.CentralStorageAccountName = $centralStorageAccountName
-							if($_.LoggingOption -ne  [CAReportsLocation]::CentralSub)
+							Set-AzureRmContext -SubscriptionId $tgtSubStorageAccount.TargetSubscriptionId  | Out-Null
+							$reportsStorageAccount = $null;
+							try
 							{
-								Set-AzureRmContext -SubscriptionId $tgtSubStorageAccount.TargetSubscriptionId  | Out-Null
 								$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-
-								if(($reportsStorageAccount | Measure-Object).Count -le 0)
+							}
+							catch
+							{
+								#eat exception in the case of no storage account found
+							}
+							if(($reportsStorageAccount | Measure-Object).Count -le 0)
+							{
+								if($_.LoggingOption -eq [CAReportsLocation]::IndividualSubs)
 								{
 									$isStoragePresent = $false
-									$tgtSubStorageAccount.StorageAccountName = "NotPresent";
+									$tgtSubStorageAccount.StorageAccountName = "NotPresent";	
 								}
-								else
-								{								
-									$tgtSubStorageAccount.StorageAccountName = $reportsStorageAccount.Name;
-								}
+							}
+							else
+							{								
+								$tgtSubStorageAccount.StorageAccountName = $reportsStorageAccount.Name;
 							}
 							$tgtSubStorageAccounts += $tgtSubStorageAccount;
 						}
@@ -2359,7 +2450,15 @@ class CCAutomation: CommandBase
 
 	hidden [void] RemoveStorageReports($Force)
 	{
-		$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+		$existingStorage = $null;
+		try
+		{
+			$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+		}
+		catch
+		{
+			#eat exception in the case of no storage account found
+		}
 
 		if(($existingStorage | Measure-Object).Count -gt 0)
 		{
@@ -2987,6 +3086,8 @@ class CCAutomation: CommandBase
 		$CoreSetupSrcUrl = [ConfigurationManager]::GetAzSKConfigData().CASetupRunbookURL.Replace('$',"``$")
 		$AzSKCARunbookVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion
 		$telemetryKey = ""
+		$AzureEnv = [ConfigurationManager]::GetAzSKSettings().AzureEnvironment
+		$ManagementUri =[WebRequestHelper]::GetServiceManagementUrl() 
 		if([RemoteReportHelper]::IsAIOrgTelemetryEnabled())
 		{
 			$telemetryKey = [RemoteReportHelper]::GetAIOrgTelemetryKey()
@@ -2999,7 +3100,9 @@ class CCAutomation: CommandBase
 			$temp5 = $temp4 -replace "\[#EnableAADAuthForOnlinePolicyStore#\]",$this.ConvertBooleanToString([ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore);
 			$temp6 = $temp5 -replace "\[#UpdateToLatestVersion#]",$this.ConvertBooleanToString([ConfigurationManager]::GetAzSKConfigData().UpdateToLatestVersion);
 			$temp7 = $temp6 -replace "\[#telemetryKey#\]",$telemetryKey;
-			$temp7 -replace "\[#runbookVersion#\]",$AzSKCARunbookVersion;
+			$temp8 = $temp7 -replace "\[#AzureEnvironment#\]",$AzureEnv;
+			$temp9 = $temp8 -replace "\[#ManagementUri#\]",$ManagementUri;
+			$temp9 -replace "\[#runbookVersion#\]",$AzSKCARunbookVersion;
 		}  | Out-File $outputFilePath
 		
 		return $outputFilePath

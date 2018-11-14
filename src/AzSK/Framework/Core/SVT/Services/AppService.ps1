@@ -19,6 +19,12 @@ class AppService: SVTBase
         $this.GetResourceObject();
     }
 
+	hidden [string] FormatURL([string] $AppURL)
+	{
+		$ind = $AppURL.IndexOf('.')
+		$AppURL = $AppURL.Substring($ind+1)
+		return $AppURL
+	}
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject)
@@ -81,7 +87,7 @@ class AppService: SVTBase
 		# Get custom domain URLs
         $customHostNames = $this.ResourceObject.Properties.HostNames |
 								Where-Object {
-									 -not $_.EndsWith(".azurewebsites.net")
+									 -not $_.Contains(".azurewebsites.")
 								};
 
         # Combine custom domain name and SSL configuration TCP
@@ -125,7 +131,7 @@ class AppService: SVTBase
 			#Checks if functions app present
 			if([Helpers]::CheckMember($this.ResourceObject, "Kind") -and ($this.ResourceObject.Kind -eq "functionapp"))
 			{
-				$resourceAppIdURI =[WebRequestHelper]::ClassicManagementUri;
+				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
 				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 				$authorisationToken = "Bearer " + $accessToken
 				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
@@ -139,12 +145,16 @@ class AppService: SVTBase
 					}
 					else
 					{
-						$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
+						$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('.azurewebsites.') })
+						$AppURL = $this.FormatURL($temp[0])
+						$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 					}
 				}
 				else
 				{
-					$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
+					$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('.azurewebsites.') })
+					$AppURL = $this.FormatURL($temp[0])
+					$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 				}
 				
 				$functionDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
@@ -465,11 +475,31 @@ class AppService: SVTBase
 				}
 			else
 				{
-				$resourceAppIdURI =[WebRequestHelper]::ClassicManagementUri;
+				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
 				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 				$authorisationToken = "Bearer " + $accessToken
 				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
-				$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
+				if([Helpers]::CheckMember($this.WebAppDetails,"EnabledHostNames"))
+				{
+					if((($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('scm') }) | Measure-Object).Count -eq 1)
+					{
+						$scmURL = $this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('scm') }
+						$apiFunctionsUrl = [string]::Format("https://{0}/api/functions",$scmURL)
+					}
+					else
+					{
+						$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('.azurewebsites.') })
+						$AppURL = $this.FormatURL($temp[0])
+						$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
+					}
+			    }
+				else
+				{
+					$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('.azurewebsites.') })
+					$AppURL = $this.FormatURL($temp[0])
+					$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
+				}
+				#$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
 				$functionDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
 		
 			#check if functions are present in FunctionApp	
@@ -586,12 +616,32 @@ class AppService: SVTBase
                                     [MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
 		}
 		else
-		{		
-		$resourceAppIdURI =[WebRequestHelper]::ClassicManagementUri;
+		{
+		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
 		$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 		$authorisationToken = "Bearer " + $accessToken
 		$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
-		$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
+		if([Helpers]::CheckMember($this.WebAppDetails,"EnabledHostNames"))
+		{
+			if((($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('scm') }) | Measure-Object).Count -eq 1)
+			{
+				$scmURL = $this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('scm') }
+				$apiFunctionsUrl = [string]::Format("https://{0}/api/functions",$scmURL)
+			}
+			else
+			{
+				$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('.azurewebsites.') })
+				$AppURL = $this.FormatURL($temp[0])
+				$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
+			}
+		}
+		else
+		{
+			$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('.azurewebsites.') })
+			$AppURL = $this.FormatURL($temp[0])
+			$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
+		}
+		#$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
 		$functionDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
 		
 			#check if functions are present in FunctionApp	
@@ -689,9 +739,10 @@ class AppService: SVTBase
 			}
 
 			if($msiObject -eq $null)
-			{				
-			  $uri=[system.string]::Format("https://management.azure.com/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Web/sites/{2}?api-version=2016-08-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)	
-              $json=$null;
+			{	
+			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()			
+			  $uri=[system.string]::Format($ResourceAppIdURI+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Web/sites/{2}?api-version=2016-08-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
+			  $json=$null;
               try 
 			  { 	
 				$json=[WebRequestHelper]::InvokeGetWebRequest($uri);
