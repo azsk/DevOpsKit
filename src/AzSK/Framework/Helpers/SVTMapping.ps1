@@ -268,7 +268,13 @@ class SVTMapping
             ResourceType = "Microsoft.ApiManagement/service";
 			ClassName = "APIManagement";
 			JsonFileName = "APIManagement.json";
-			ResourceTypeName = "APIManagement";
+            ResourceTypeName = "APIManagement";
+        },
+		[ResourceTypeMapping]@{
+            ResourceType = "Microsoft.ContainerService/ManagedClusters";
+			ClassName = "KubernetesService";
+			JsonFileName = "KubernetesService.json";
+			ResourceTypeName = "KubernetesService";
         }
     );
 

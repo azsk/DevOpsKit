@@ -254,7 +254,7 @@ class Databricks: SVTBase
 			if(($potentialAdminUsers|Measure-Object).Count -gt 0)
 			{
 				$controlResult.AddMessage("`r`nValidate that the following identities have potential admin access to resource - [$($this.ResourceContext.ResourceName)]");
-				$controlResult.AddMessage("Note: Users that have been explicitly added in the 'admins' group in the workspace are considered 'potential' admins");
+				$controlResult.AddMessage("Note: Users that have 'Owner' or 'Contributor' role on the Databricks workspace resource are considered 'potential' admins");
 				$controlResult.AddMessage([MessageData]::new("", $potentialAdminUsers));
 			}
 			if(($activeAdminUsers|Measure-Object).Count -gt 0)
@@ -310,6 +310,51 @@ class Databricks: SVTBase
 	   {
 			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 			$controlResult.AddMessage([VerificationResult]::Manual, "Not able to fetch admin details. This has to be manually verified.");
+	   }
+		
+		return $controlResult;
+	}
+
+	hidden [ControlResult] CheckWorkspaceAccessEnabled([ControlResult] $controlResult)
+	{   
+	   $premiumSku = $this.CheckPremiumSku()
+	   if($premiumSku)
+	   {    
+		$controlResult.AddMessage([VerificationResult]::Verify, "Please verify that Workspace Access Control is enabled for resource '$($this.ResourceContext.ResourceName)'");
+	   }
+	   else
+	   {
+		$controlResult.AddMessage([VerificationResult]::Failed, "Workspace Access Control is Disabled for resource '$($this.ResourceContext.ResourceName)'");	
+	   }
+		
+		return $controlResult;
+	}
+
+	hidden [ControlResult] CheckJobAccessEnabled([ControlResult] $controlResult)
+	{   
+	   $premiumSku = $this.CheckPremiumSku()
+	   if($premiumSku)
+	   {    
+		$controlResult.AddMessage([VerificationResult]::Verify, "Please verify that Job Access Control is enabled for resource '$($this.ResourceContext.ResourceName)'");
+	   }
+	   else
+	   {
+		$controlResult.AddMessage([VerificationResult]::Failed, "Job Access Control is Disabled for resource '$($this.ResourceContext.ResourceName)'");	
+	   }
+		
+		return $controlResult;
+	}
+
+	hidden [ControlResult] CheckClusterAccessEnabled([ControlResult] $controlResult)
+	{   
+	   $premiumSku = $this.CheckPremiumSku()
+	   if($premiumSku)
+	   {    
+		$controlResult.AddMessage([VerificationResult]::Verify, "Please verify that Cluster Access Control is enabled for resource '$($this.ResourceContext.ResourceName)'");
+	   }
+	   else
+	   {
+		$controlResult.AddMessage([VerificationResult]::Failed, "Cluster Access Control is Disabled for resource '$($this.ResourceContext.ResourceName)'");	
 	   }
 		
 		return $controlResult;
@@ -408,6 +453,17 @@ class Databricks: SVTBase
 	   }
 
 	   return $status; 
+	}
+
+	hidden [bool] CheckPremiumSku()
+	{
+	   $IsPremium = $false;
+	   $skuName = $this.ResourceObject.Sku.Name
+	   if($skuName -ne "standard")
+	   {
+		   $IsPremium = $true
+	   }
+	   return $IsPremium; 
 	}
 
 }

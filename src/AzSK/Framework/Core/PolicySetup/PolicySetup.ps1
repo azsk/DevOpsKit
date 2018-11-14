@@ -1205,8 +1205,10 @@ class PolicySetup: CommandBase
 
 		if($azskRG -and $automationAccount)
 		{
-			$validatedUri = "https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$caResourceGroupName/providers/Microsoft.Automation/automationAccounts/$automationAccountName/runbooks/$runbookName/content?api-version=2015-10-31"
-			$accessToken=[Helpers]::GetAccessToken("https://management.core.windows.net/")
+			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
+			$validatedUri = $ResourceAppIdURI+"subscriptions/$subscriptionId/resourceGroups/$caResourceGroupName/providers/Microsoft.Automation/automationAccounts/$automationAccountName/runbooks/$runbookName/content?api-version=2015-10-31"
+			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
+			$accessToken=[Helpers]::GetAccessToken($ResourceAppIdURI)
 			$serverFileContent = Invoke-RestMethod `
 												-Method GET `
 												-Uri $validatedUri `

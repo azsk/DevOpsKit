@@ -83,7 +83,8 @@
 		@{ModuleName = 'AzureRM.TrafficManager'; RequiredVersion = '4.1.1'}		
 		@{ModuleName = 'AzureRM.Websites'; RequiredVersion = '5.0.9'}	
 		@{ModuleName = 'AzureRM.ContainerInstance'; RequiredVersion = '0.2.10'}	
-		@{ModuleName = 'AzureRM.ContainerRegistry'; RequiredVersion = '1.0.10'}	
+        @{ModuleName = 'AzureRM.ContainerRegistry'; RequiredVersion = '1.0.10'}
+        @{ModuleName = 'AzureRM.HDInsight'; RequiredVersion = '4.1.8'}	
     )
 
     # Assemblies that must be loaded prior to importing this module

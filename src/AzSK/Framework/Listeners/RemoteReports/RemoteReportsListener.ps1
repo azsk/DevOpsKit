@@ -131,9 +131,57 @@ class RemoteReportsListener: ListenerBase {
 	{
 		$currentInstance = [RemoteReportsListener]::GetInstance();
 		$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-		$resourcesFlat = [ResourceInventory]::RawResources | Select-Object Name,ResourceId,ResourceName,ResourceType,ResourceGroupName,Location,SubscriptionId,Sku,@{ Name = 'Tags'; Expression = {$([Helpers]::FetchTagsString($_.Tags))}}
-		[RemoteApiHelper]::PostResourceFlatInventory($resourcesFlat)
-
+		$SubscriptionId = ([Helpers]::GetCurrentRMContext()).Subscription.Id;
+		$resourceGroups = Get-AzureRmResourceGroup
+        $resourcesDetails = @();
+		$resourcesFlat = [ResourceInventory]::RawResources
+        foreach($res in $resourcesFlat){
+            $resourceGroup = ($resourceGroups | where-object {$_.ResourceGroupName -eq $res.ResourceGroupName});
+            $resEnv = "";
+            $resComponentId = "";
+            $rgEnv = "";
+            $rgComponentId = "";
+            if([Helpers]::CheckMember($resourceGroup, "Tags")) {
+                $rgTags = $resourceGroup.Tags;
+                if($rgTags.ContainsKey("Env")) 
+                {
+                   $rgEnv = $rgTags.Env;
+                }
+                if($rgTags.ContainsKey("ComponentID")) 
+                {
+                    $rgComponentId = $rgTags.ComponentID;
+                }
+            }
+            if([Helpers]::CheckMember($res, "Tags"))
+            {
+                $resTags = $res.Tags;
+                if($resTags.ContainsKey("Env"))
+                {
+                    $resEnv = $resTags.Env;
+                }
+                if($resTags.ContainsKey("ComponentID"))
+                {
+                    $resComponentId = $resTags.ComponentID;
+                }
+            }
+			$resourceProperties = @{
+			    "Name" = $res.Name;
+			    "ResourceId" = $res.ResourceId;
+			    "ResourceName" = $res.Name;
+			    "ResourceType" = $res.ResourceType;
+			    "ResourceGroupName" = $res.ResourceGroupName;
+			    "Location" = $res.Location;
+			    "SubscriptionId" = $SubscriptionId;
+                "Sku" = $res.Sku;
+			    "Tags" = [Helpers]::FetchTagsString($res.Tags);
+				"Env" = $resEnv;
+				"ComponentID" = $resComponentId;
+				"RGComponentID" = $rgComponentId;
+				"RGEnv" = $rgEnv;
+                }
+                $resourcesDetails += $resourceProperties;
+            }
+		[RemoteApiHelper]::PostResourceFlatInventory($resourcesDetails)
 	}
 
 
