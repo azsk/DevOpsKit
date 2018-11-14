@@ -10,6 +10,7 @@ function ConvertStringToBoolean($strToConvert)
     }
 }
 
+
 function RunAzSKScan() {
 
 	################################ Begin: Configure AzSK for the scan ######################################### 
@@ -61,8 +62,9 @@ function RunAzSKScan() {
 	#The $Global:IsCentralMode flag is enabled in this...also the target subs list is generated (called subsToScan)
     CheckForSubscriptionsSnapshotData
 	
-	#Get the current storagecontext
+    #Get the current storagecontext
 	$existingStorage = Get-AzureRmStorageAccount -ResourceGroupName $StorageAccountRG | Where-Object {$_.StorageAccountName  -like 'azsk*'}
+	
 	if(($existingStorage|Measure-Object).Count -gt 1)
 	{
 		$existingStorage = $existingStorage[0]
@@ -195,7 +197,7 @@ function RunAzSKScanForASub
 		$SubscriptionID,	#This is the subscription to scan.
 		$LoggingOption,		#Whether the scan logs to be stored within the target sub or central sub?
 		$StorageContext,		#This is the central sub storage context (which is same as target sub in case of individual mode CA)
-		$CentralStorageAccount = $null 	#This is the central sub storage account.
+		$CentralStorageAccount = $null  #This is the central sub storage account
 	)
 	$svtResultPath = [string]::Empty
     $gssResultPath = [string]::Empty
@@ -225,17 +227,19 @@ function RunAzSKScanForASub
 
     #-------------------------------------Resources Scan------------------------------------------------------------------
 
-	Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
+	
     $serviceScanTimer = [System.Diagnostics.Stopwatch]::StartNew();
     PublishEvent -EventName "CA Scan Services Started"
-    if(-not [string]::IsNullOrWhiteSpace($ResourceGroupNamefromWebhook))
-    {
+
+	if(-not [string]::IsNullOrWhiteSpace($ResourceGroupNamefromWebhook))
+	{
 		Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) on added resource for sub: [$SubscriptionID], RGs: [$ResourceGroupNamefromWebhook]")
 		$rgname = $ResourceGroupNamefromWebhook | Out-string
 		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $rgname -ExcludeTags "OwnerAccess,RBAC"
-    }
-    elseif($null -eq $WebHookDataforResourceCreation)
-    {
+	}
+	elseif($null -eq $WebHookDataforResourceCreation)
+	{
+		Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
 		if($null -ne $CentralStorageAccount)
 		{
 			$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC"  -CentralStorageAccount $CentralStorageAccount -UsePartialCommits
@@ -244,7 +248,7 @@ function RunAzSKScanForASub
 		{
 			$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
 		}
-    }
+	}
    
     #---------------------------Check resources scan status--------------------------------------------------------------
     if ([string]::IsNullOrWhiteSpace($svtResultPath)) 
@@ -710,6 +714,11 @@ try {
     if ($isAzSKAvailable) {
         Import-Module $AzSKModuleName
     }
+	else {
+		PublishEvent -EventName "CA Job Skipped" -Properties @{"SubscriptionId" = $RunAsConnection.SubscriptionID} -Metrics @{"TimeTakenInMs" = $timer.ElapsedMilliseconds; "SuccessCount" = 1}
+		Write-Output("SA: The module: {$AzSKModuleName} is not available/ready. Skipping AzSK scan. Will retry in the next run.")
+		return;
+	}
 
     #Return if modules are not ready
     if ((Get-Command -Name "Get-AzSKAzureServicesSecurityStatus" -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0) {
@@ -721,26 +730,27 @@ try {
 		
 	#Scan and save results to storage
     RunAzSKScan
-
-	if ($isAzSKAvailable) {
+	if($null -eq $WebHookDataforResourceCreation)
+	{
+		if ($isAzSKAvailable) {
 		#Remove helper schedule as AzSK module is available
 		Write-Output("SA: Disabling helper schedule...")
-		DisableHelperSchedules
-    }
-   
-    PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
+		DisableHelperSchedules	
+		}
 
-    #Call UpdateAlertMonitoring to setup or Remove Alert Monitoring Runbook
-	try
-	{	
-	 	UpdateAlertMonitoring -DisableAlertRunbook $DisableAlertRunbook -AlertRunBookFullName $AlertRunbookName -SubscriptionID $SubscriptionID -ResourceGroup $StorageAccountRG 
+		#Call UpdateAlertMonitoring to setup or Remove Alert Monitoring Runbook
+		try
+		{	
+	 		UpdateAlertMonitoring -DisableAlertRunbook $DisableAlertRunbook -AlertRunBookFullName $AlertRunbookName -SubscriptionID $SubscriptionID -ResourceGroup $StorageAccountRG 
+		}
+		catch
+		{
+			  PublishEvent -EventName "Alert Monitoring Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) }
+			  Write-Output("SA: (Non-fatal) Error while updating Alert Monitoring setup...")
+		}
 	}
-	catch
-	{
-		  PublishEvent -EventName "Alert Monitoring Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) }
-		  Write-Output("SA: (Non-fatal) Error while updating Alert Monitoring setup...")
-	}
-
+	
+	PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
 	Write-Output("SA: Scan agent completed...")
 
 }
