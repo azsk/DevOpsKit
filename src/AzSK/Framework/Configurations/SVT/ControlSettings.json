@@ -178,6 +178,20 @@
         },
         "IsEnabled": true
       }
+    ],
+    "APIManagement": [
+      {
+        "Condition": {
+          "DataSource": {
+            "MetricName": "UnauthorizedRequests"
+          },
+          "OperatorProperty": "GreaterThan",
+          "Threshold": 0,
+          "TimeAggregation": "Total",
+          "WindowSize": "01:00:00"
+        },
+        "IsEnabled": true
+      }
     ]
   },
   "StorageKindMapping": [
