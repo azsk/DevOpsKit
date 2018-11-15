@@ -54,11 +54,9 @@ class KubernetesService: SVTBase
 
 	hidden [controlresult[]] CheckClusterRBAC([controlresult] $controlresult)
 	{
-        if(([Helpers]::CheckMember($this.ResourceObject,"Properties")) -and [Helpers]::CheckMember($this.ResourceObject.Properties,"enableRBAC"))
+        if([Helpers]::CheckMember($this.ResourceObject,"Properties"))
 		{
-			$isClusterRBACEnabled = $this.ResourceObject.Properties.enableRBAC
-
-			if($isClusterRBACEnabled)
+			if([Helpers]::CheckMember($this.ResourceObject.Properties,"enableRBAC") -and $this.ResourceObject.Properties.enableRBAC)
 			{
 				$controlResult.VerificationResult = [VerificationResult]::Passed
 			}
