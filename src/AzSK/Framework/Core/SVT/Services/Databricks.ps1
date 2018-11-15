@@ -315,6 +315,51 @@ class Databricks: SVTBase
 		return $controlResult;
 	}
 
+	hidden [ControlResult] CheckWorkspaceAccessEnabled([ControlResult] $controlResult)
+	{   
+	   $premiumSku = $this.CheckPremiumSku()
+	   if($premiumSku)
+	   {    
+		$controlResult.AddMessage([VerificationResult]::Verify, "Please verify that Workspace Access Control is enabled for resource '$($this.ResourceContext.ResourceName)'");
+	   }
+	   else
+	   {
+		$controlResult.AddMessage([VerificationResult]::Failed, "Workspace Access Control is Disabled for resource '$($this.ResourceContext.ResourceName)'");	
+	   }
+		
+		return $controlResult;
+	}
+
+	hidden [ControlResult] CheckJobAccessEnabled([ControlResult] $controlResult)
+	{   
+	   $premiumSku = $this.CheckPremiumSku()
+	   if($premiumSku)
+	   {    
+		$controlResult.AddMessage([VerificationResult]::Verify, "Please verify that Job Access Control is enabled for resource '$($this.ResourceContext.ResourceName)'");
+	   }
+	   else
+	   {
+		$controlResult.AddMessage([VerificationResult]::Failed, "Job Access Control is Disabled for resource '$($this.ResourceContext.ResourceName)'");	
+	   }
+		
+		return $controlResult;
+	}
+
+	hidden [ControlResult] CheckClusterAccessEnabled([ControlResult] $controlResult)
+	{   
+	   $premiumSku = $this.CheckPremiumSku()
+	   if($premiumSku)
+	   {    
+		$controlResult.AddMessage([VerificationResult]::Verify, "Please verify that Cluster Access Control is enabled for resource '$($this.ResourceContext.ResourceName)'");
+	   }
+	   else
+	   {
+		$controlResult.AddMessage([VerificationResult]::Failed, "Cluster Access Control is Disabled for resource '$($this.ResourceContext.ResourceName)'");	
+	   }
+		
+		return $controlResult;
+	}
+
 	hidden [PSObject] InvokeRestAPICall([string] $method, [string] $operation , [string] $queryString)
 	{   
 	     $ResponseObject = $null;
@@ -408,6 +453,17 @@ class Databricks: SVTBase
 	   }
 
 	   return $status; 
+	}
+
+	hidden [bool] CheckPremiumSku()
+	{
+	   $IsPremium = $false;
+	   $skuName = $this.ResourceObject.Sku.Name
+	   if($skuName -ne "standard")
+	   {
+		   $IsPremium = $true
+	   }
+	   return $IsPremium; 
 	}
 
 }

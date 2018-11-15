@@ -269,6 +269,8 @@ class ConfigurationHelper {
 		$ResourceAppIdURI = "https://management.core.windows.net/"
 		if([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri))
 		{
+			if($enableAADAuthForOnlinePolicyStore)
+			{		
 			$rmContext = [Helpers]::GetCurrentRMContext();
 			if(-not [string]::IsNullOrWhiteSpace($rmContext.Environment.Name) -and $rmContext.Environment.Name -ne [Constants]::DefaultAzureEnvironment)
 		     {
@@ -277,8 +279,6 @@ class ConfigurationHelper {
 			 else {
 				$ResourceAppIdURI = "https://management.core.windows.net/"
 			 }
-			if($enableAADAuthForOnlinePolicyStore)
-			{
 				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 				$serverFileContent = Invoke-RestMethod `
 									-Method GET `

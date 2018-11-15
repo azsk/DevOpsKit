@@ -256,7 +256,7 @@ try
 			elseif ($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Add-AzureRmAccount"})) 
 			{
 				Add-AzureRmAccount `
-				-Environment $AzureEnv `
+				-EnvironmentName $AzureEnv `
 				-ServicePrincipal `
 				-TenantId $RunAsConnection.TenantId `
 				-ApplicationId $RunAsConnection.ApplicationId `
