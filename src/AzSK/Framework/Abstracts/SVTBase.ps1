@@ -60,10 +60,10 @@ class SVTBase: AzSKRoot
 			throw [System.ArgumentException] ("The argument 'svtResource' is null");
 		}
 
-		if([string]::IsNullOrEmpty($svtResource.ResourceGroupName))
-		{
-			throw [System.ArgumentException] ("The argument 'ResourceGroupName' is null or empty");
-		}
+		# if([string]::IsNullOrEmpty($svtResource.ResourceGroupName))
+		# {
+		# 	throw [System.ArgumentException] ("The argument 'ResourceGroupName' is null or empty");
+		# }
 
 		if([string]::IsNullOrEmpty($svtResource.ResourceName))
 		{
@@ -151,16 +151,20 @@ class SVTBase: AzSKRoot
 		{
 			if($this.ResourceContext)
 			{
-           		$resource = Get-AzureRmResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+				if(-not [string]::ISNullOrEmpty($this.ResourceContext.ResourceGroupName))
+				{
+					$resource = Get-AzureRmResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
 
-				if($resource)
-				{
-					$this.ResourceId = $resource.ResourceId;
+					if($resource)
+					{
+						$this.ResourceId = $resource.ResourceId;
+					}
+					else
+					{
+						throw [SuppressedException] "Unable to find the Azure resource - [ResourceType: $($this.ResourceContext.ResourceType)] [ResourceGroupName: $($this.ResourceContext.ResourceGroupName)] [ResourceName: $($this.ResourceContext.ResourceName)]"
+					}
 				}
-				else
-				{
-					throw [SuppressedException] "Unable to find the Azure resource - [ResourceType: $($this.ResourceContext.ResourceType)] [ResourceGroupName: $($this.ResourceContext.ResourceGroupName)] [ResourceName: $($this.ResourceContext.ResourceName)]"
-				}
+           		
 			}
 			else
 			{

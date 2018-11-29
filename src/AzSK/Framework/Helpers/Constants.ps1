@@ -113,7 +113,7 @@ class Constants
 	static [string] $OwnerAccessTagName = "OwnerAccess"
 
 	static [string] $BlankSubscriptionId = "00000000-0000-0000-0000-000000000000"
-	static [string] $BlankSubscriptionName = "AzSK Empty Subscription"
+	static [string] $BlankSubscriptionName = "DevOpsKitForX"
 	static [string] $BlankScope = "/subscriptions/00000000-0000-0000-0000-000000000000";
 
 	static [string] $CentralRBACVersionTagName = "CentralRBACVersion"

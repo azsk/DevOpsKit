@@ -139,6 +139,14 @@ catch
     ForEach-Object {
     . $_.FullName
 }
+(Get-ChildItem -Path "$PSScriptRoot\Core\SVT\Configurations\" -Recurse -File) |
+    ForEach-Object {
+    . $_.FullName
+}
+(Get-ChildItem -Path "$PSScriptRoot\Core\SVT\AzureDevOps\" -Recurse -File) |
+    ForEach-Object {
+    . $_.FullName
+}
 . $PSScriptRoot\Core\SubscriptionSecurity\SubscriptionSecurity.ps1
 
 . $PSScriptRoot\Core\FixControl\FixControlConfigResolver.ps1
@@ -146,6 +154,8 @@ catch
 . $PSScriptRoot\Core\AzureMonitoring\OMSMonitoring.ps1
 . $PSScriptRoot\Core\SVT\SubscriptionCore\SubscriptionCore.ps1
 . $PSScriptRoot\Core\SVT\AzSKCfg\AzSKCfg.ps1
+. $PSScriptRoot\Core\SVT\Resolver.ps1
+. $PSScriptRoot\Core\SVT\AzureDevOpsResourceResolver.ps1
 . $PSScriptRoot\Core\SVT\SVTResourceResolver.ps1
 . $PSScriptRoot\Core\SVT\ServicesSecurityStatus.ps1
 . $PSScriptRoot\Core\SVT\SubscriptionSecurityStatus.ps1

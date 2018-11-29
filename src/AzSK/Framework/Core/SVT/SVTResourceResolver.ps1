@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest
 
-class SVTResourceResolver: AzSKRoot
+class SVTResourceResolver: Resolver
 {
     [string[]] $ResourceNames = @();
     [string] $ResourceType = "";

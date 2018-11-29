@@ -1,0 +1,60 @@
+{
+    "FeatureName":  "Pipeline",
+    "Reference":  "aka.ms/azsktcp/pipeline",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+      "ControlID": "AzureDevOps_Pipeline_AuthN_Use_Cert_Auth_for_SPN",
+      "Description": "Azure Active Directory applications, which used in pipeline, must use certificate based authentication",
+      "Id": "Pipeline110",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckSPNAuthenticationCertificate",
+      "Rationale": "Password/shared secret credentials can be easily shared and hence can be easily compromised. Certificate credentials offer better security.",
+      "Recommendation": "Remove any password credentials from Azure AD Applications and use certificate credentials instead. Run command Remove-AzureADApplicationPasswordCredential -InformationAction '{ActionPreference}' -InformationVariable '{InformationVariable}' -KeyId '{KeyId}' -ObjectId '{ObjectId}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azuread/remove-azureadapplicationpasswordcredential?view=azureadps-2.0, https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-certificate-credentials#register-your-certificate-with-azure-ad",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Pipeline_Config_Remove_Unused_ServiceEndpoints",
+      "Description": "Inactive Service Endpoints must be removed",
+      "Id": "Pipeline120",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckInactiveEndpoints",
+      "Rationale": "Inactive Service Endpoints leads to unused identities been present in pipeline and misused by users",
+      "Recommendation": "remove any unused service endpoints present in list",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "Config"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Pipeline_DP_Dont_Store_Crendentials",
+      "Description": "Credentials must not be stored in configuration files",
+      "Id": "Pipeline130",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "CheckCookiesSSL",
+      "Rationale": "The element of the element allows optional definitions of name and password for IIS Manager User accounts within the configuration file. Forms based authentication also uses these elements to define the users. IIS Manager Users can use the administration interface to connect to sites and applications in which they've been granted authorization. Note that the element only applies when the default provider, ConfigurationAuthenticationProvider, is configured as the authentication provider. It is recommended that passwordFormat be set to a value other than Clear, such as SHA1 or MD5. Authentication credentials should always be protected to reduce the risk of stolen authentication credentials. For security reasons, it is recommended that user credentials not be stored an any IIS configuration files.",
+      "Recommendation": "Authentication mode is configurable at the machine.config, root-level web.config, or application-level web.config: * Locate and open the configuration file where the credentials are stored * Find the element * If present, remove the section This will remove all references to stored users in the configuration files.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    }
+  ]
+}

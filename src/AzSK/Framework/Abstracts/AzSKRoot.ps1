@@ -22,13 +22,22 @@ class AzSKRoot: EventBase
 		}
 		else
 		{
-			throw [SuppressedException] ("Subscription Id [$subscriptionId] is malformed. Subscription Id should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).")
+			#throw [SuppressedException] ("Subscription Id [$subscriptionId] is malformed. Subscription Id should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).")
 		}
     }    
     
     hidden [void] SetAzureContext()
     {
 		$currentContext = [Helpers]::GetCurrentRMContext()
+
+		if($this.SubscriptionContext.SubscriptionId -eq [Constants]::BlankSubscriptionId)
+		{
+			#[Helpers]::currentRMContext.Subscription.SubscriptionId = [Constants]::BlankSubscriptionId
+			$this.SubscriptionContext.SubscriptionName = [Constants]::BlankSubscriptionName
+			#[Helpers]::currentRMContext.Subscription.SubscriptionName = $this.SubscriptionContext.SubscriptionName 
+			$this.SubscriptionContext.Scope = [Constants]::BlankScope
+			return
+		}
 
         if((-not $currentContext) -or ($currentContext -and ((-not $currentContext.Subscription -and ($this.SubscriptionContext.SubscriptionId -ne [Constants]::BlankSubscriptionId)) `
 				-or -not $currentContext.Account)))

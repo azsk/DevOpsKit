@@ -1,9 +1,9 @@
 ﻿Set-StrictMode -Version Latest
 class ServicesSecurityStatus: SVTCommandBase
 {
-	[SVTResourceResolver] $Resolver = $null;
+	[Resolver] $Resolver = $null;
 	[bool] $IsPartialCommitScanActive = $false;
-	ServicesSecurityStatus([string] $subscriptionId, [InvocationInfo] $invocationContext, [SVTResourceResolver] $resolver):
+	ServicesSecurityStatus([string] $subscriptionId, [InvocationInfo] $invocationContext, [Resolver] $resolver):
         Base($subscriptionId, $invocationContext)
     {
 		if(-not $resolver)
