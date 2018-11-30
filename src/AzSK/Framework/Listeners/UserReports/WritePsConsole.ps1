@@ -488,7 +488,7 @@ class WritePsConsole: FileOutputBase
 				$totalText = "Total";
 				$MarkerText = "MarkerText";
 				$rows = @();
-				$rows += $severities;#[Enum]::GetNames([ControlSeverity]) | Where-Object { $severities -contains $_ };
+				$rows += $severities;
 				$rows += $MarkerText;
 				$rows += $totalText;
 				$rows += $MarkerText;
