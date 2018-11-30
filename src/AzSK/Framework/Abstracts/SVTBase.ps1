@@ -111,6 +111,11 @@ class SVTBase: AzSKRoot
 
                 $_.Description = $global:ExecutionContext.InvokeCommand.ExpandString($_.Description)
                 $_.Recommendation = $global:ExecutionContext.InvokeCommand.ExpandString($_.Recommendation)
+				$ControlSeverity = $_.ControlSeverity
+                if($this.ControlSettings.PSobject.Properties.name -match "ControlSeverity")
+                {
+                    $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
+                }
 				if(-not [string]::IsNullOrEmpty($_.MethodName))
 				{
 					$_.MethodName = $_.MethodName.Trim();

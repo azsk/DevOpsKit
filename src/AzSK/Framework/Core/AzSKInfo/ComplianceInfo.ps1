@@ -15,6 +15,7 @@ class ComplianceInfo: CommandBase
     { 
 		$this.SubscriptionId = $subscriptionId
 		$this.Full = $full
+		$this.ControlSettings = $this.LoadServerConfigFile("ControlSettings.json");
 	}
 
 	hidden [void] GetComplianceScanData()
@@ -236,7 +237,16 @@ class ComplianceInfo: CommandBase
 			}
 			else {
 				$_.HasOwnerAccessTag = "No"
-			}			
+			}
+			
+			if($this.ControlSettings.PSobject.Properties.name -match "ControlSeverity")
+            {
+                $ControlSeverity = $_.ControlSeverity
+                if($this.ControlSettings.ControlSeverity.PSobject.Properties.name -match $ControlSeverity)
+                {
+                    $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
+                }
+            }	
 		}
 
 		$objectToExport = $this.ComplianceScanResult

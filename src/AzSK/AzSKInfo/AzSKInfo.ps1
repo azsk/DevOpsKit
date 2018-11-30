@@ -77,7 +77,7 @@ function Get-AzSKInfo
 		[Alias("ResourceName")]
 		$ResourceNames,
 
-		[ValidateSet("Critical", "High", "Medium" , "Low")] 
+		#[ValidateSet("Critical", "High", "Medium" , "Low")] 
 		$ControlSeverity,
 
 		[string]
