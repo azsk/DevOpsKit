@@ -1,10 +1,10 @@
 {
-    "FeatureName":  "Pipeline",
-    "Reference":  "aka.ms/azsktcp/pipeline",
+    "FeatureName":  "Build",
+    "Reference":  "aka.ms/azsktcp/Build",
     "IsMaintenanceMode":  false,
   "Controls": [
     {
-      "ControlID": "AzureDevOps_Pipeline_AuthN_Use_Cert_Auth_for_SPN",
+      "ControlID": "AzureDevOps_Build_AuthN_Use_Cert_Auth_for_SPN",
       "Description": "Azure Active Directory applications, which used in pipeline, must use certificate based authentication",
       "Id": "Pipeline110",
       "ControlSeverity": "High",
@@ -22,7 +22,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Pipeline_Config_Remove_Unused_ServiceEndpoints",
+      "ControlID": "AzureDevOps_Build_Config_Remove_Unused_ServiceEndpoints",
       "Description": "Inactive Service Endpoints must be removed",
       "Id": "Pipeline120",
       "ControlSeverity": "High",
@@ -39,7 +39,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Pipeline_DP_Dont_Store_Crendentials",
+      "ControlID": "AzureDevOps_Build_DP_Dont_Store_Crendentials",
       "Description": "Credentials must not be stored in configuration files",
       "Id": "Pipeline130",
       "ControlSeverity": "High",

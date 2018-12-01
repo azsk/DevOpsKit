@@ -257,15 +257,47 @@ class SVTMapping
 			ClassName = "HDInsight";
 			JsonFileName = "HDInsight.json";
 			ResourceTypeName = "HDInsight";
-        },
-        [ResourceTypeMapping]@{
-            ResourceType = "ServiceEndpoint";
-			ClassName = "Pipelines";
-			JsonFileName = "Pipelines.json";
-			ResourceTypeName = "ServiceEndpoint";
         }
     );
 
+    static [ResourceTypeMapping[]] $AzSKDevOpsResourceMapping = (
+		[ResourceTypeMapping]@{
+            ResourceType = "AzureDeOps.Organization";
+            JsonFileName = "AzureDeOps.Organization.json";
+            ClassName = "Organization";
+            ResourceTypeName = "Organization";            
+        },
+        [ResourceTypeMapping]@{
+            ResourceType = "AzureDeOps.Project";
+			ClassName = "Project";
+			JsonFileName = "AzureDeOps.Project.json";
+			ResourceTypeName = "Project";
+        },
+        [ResourceTypeMapping]@{
+            ResourceType = "AzureDeOps.User";
+			ClassName = "User";
+			JsonFileName = "AzureDeOps.User.json";
+			ResourceTypeName = "User";
+        },
+        [ResourceTypeMapping]@{
+            ResourceType = "AzureDeOps.Build";
+			ClassName = "Build";
+			JsonFileName = "AzureDeOps.Build.json";
+			ResourceTypeName = "Build";
+        },
+        [ResourceTypeMapping]@{
+            ResourceType = "AzureDeOps.Release";
+			ClassName = "Release";
+			JsonFileName = "AzureDeOps.Release.json";
+			ResourceTypeName = "Release";
+        },
+        [ResourceTypeMapping]@{
+            ResourceType = "AzureDeOps.ServiceConnection";
+			ClassName = "ServiceConnection";
+			JsonFileName = "AzureDeOps.ServiceConnection.json";
+			ResourceTypeName = "ServiceConnection";
+        }
+    )
 	static [SubscriptionMapping] $SubscriptionMapping =	@{
 		ClassName = "SubscriptionCore";
         JsonFileName = "SubscriptionCore.json";

@@ -773,10 +773,9 @@ function Get-AzSKAzureDevOpsSecurityStatus
 
 		[string]
         [Parameter(Position = 0, HelpMessage="Subscription id for which the security evaluation has to be performed.")]
-		[Alias("sid","s")]
-		$SubscriptionId = "a"
+		[Alias("oz")]
+		$Organization = "a"
 	)
-	
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);

@@ -86,7 +86,7 @@
     )
 
     # Assemblies that must be loaded prior to importing this module
-    RequiredAssemblies = @('.\ARMCheckerLib\Newtonsoft.Json.Schema.dll','.\ARMCheckerLib\AzSK.ARMChecker.Lib.dll')
+    RequiredAssemblies = @('.\ARMCheckerLib\Newtonsoft.Json.Schema.dll','.\ARMCheckerLib\AzSK.ARMChecker.Lib.dll','.\ARMCheckerLib\Microsoft.IdentityModel.Clients.ActiveDirectory.dll')
 
     # Script files (.ps1) that are run in the caller's environment prior to importing this module.
     ScriptsToProcess       = @()

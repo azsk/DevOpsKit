@@ -2,11 +2,13 @@ using namespace Newtonsoft.Json
 using namespace Microsoft.Azure.Commands.Common.Authentication.Abstractions
 using namespace Microsoft.Azure.Commands.Common.Authentication
 using namespace Microsoft.Azure.Management.Storage.Models
+using namespace Microsoft.IdentityModel.Clients.ActiveDirectory
+
 Set-StrictMode -Version Latest
 class Helpers {
 
 	static hidden [PSObject] $currentRMContext;
-
+    static hidden [PSObject] $currentAzureDevOpsContext;
 	hidden static [PSObject] GetCurrentRMContext()
 	{
 		if (-not [Helpers]::currentRMContext)
@@ -28,6 +30,33 @@ class Helpers {
 		return [Helpers]::currentRMContext
 	}
 
+    hidden static [PSObject] GetCurrentAzureDevOpsContext()
+    {
+        $azureDevOpsOrganizationUrl = "http://dev.azure.com/organization"; 
+        $clientId = "872cd9fa-d31f-45e0-9eab-6e460a02d1f1";          
+        $replyUri = "urn:ietf:wg:oauth:2.0:oob"; 
+        $azureDevOpsResourceId = "499b84ac-1321-427f-aa17-267ca6975798";
+        [AuthenticationContext] $ctx = $null;
+        if (-not [string]::IsNullOrEmpty($tenant) )
+        {
+            $ctx = [AuthenticationContext]::new("https://login.microsoftonline.com/" + $tenant);
+        }
+        else
+        {
+            $ctx = [AuthenticationContext]::new("https://login.windows.net/common");
+            if ($ctx.TokenCache.Count > 0)
+            {
+                [String] $homeTenant = $ctx.TokenCache.ReadItems().First().TenantId;
+                $ctx = [AuthenticationContext]::new("https://login.microsoftonline.com/" + $homeTenant);
+            }
+        }
+        [AuthenticationResult] $result = $null;
+        [IPlatformParameters] $promptBehavior = [PlatformParameters]::new([PromptBehavior]::Always);
+        $result = $ctx.AcquireTokenAsync($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri), $promptBehavior).Result;
+        [Helpers]::currentAzureDevOpsContext =$result
+
+    }
+    
 	hidden static [void] ResetCurrentRMContext()
 	{
 		[Helpers]::currentRMContext = $null

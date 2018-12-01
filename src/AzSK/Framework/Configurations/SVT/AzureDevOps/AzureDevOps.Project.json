@@ -1,0 +1,58 @@
+{
+    "FeatureName":  "Project",
+    "Reference":  "aka.ms/azsktcp/project",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+      "ControlID": "AzureDevOps_Project_AuthN_Set_Visibility_Private",
+      "Description": "Projects visibility must be set to private",
+      "Id": "Project110",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Data/content in projects that have public visibility can be downloaded by anyone on the internet without authentication. This can lead to a compromise of corporate data.",
+      "Recommendation": "https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/access-with-azure-ad?view=vsts",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthN"
+      ],
+      "Enabled": true
+    },
+    {
+        "ControlID": "AzureDevOps_Project_AuthZ_Min_RBAC_Access",
+        "Description": "All teams/groups must be granted minimum required permissions on project",
+        "Id": "Organization180",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Non-AD accounts (such as xyz@hotmail.com, pqr@outlook.com, etc.) present at any scope within a Organization subject your cloud assets to undue risk. These accounts are not managed to the same standards as enterprise tenant identities. They don't have multi-factor authentication enabled. Etc.",
+        "Recommendation": "",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Group_Members",
+        "Description": "Justify all identities that are granted with member access on group and teams.",
+        "Id": "Organization190",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Accounts that are a member of these groups without a legitimate business reason increase the risk for your Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
+        "Recommendation": "",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthZ"
+        ],
+        "Enabled": true
+      }
+]
+}

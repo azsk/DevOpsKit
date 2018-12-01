@@ -1,0 +1,43 @@
+{
+    "FeatureName":  "ServiceConnection",
+    "Reference":  "aka.ms/azsktcp/ServiceConnection",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+      "ControlID": "AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN",
+      "Description": "Azure Active Directory applications, which used in pipeline, must use certificate based authentication",
+      "Id": "ServiceConnection110",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Password/shared secret credentials can be easily shared and hence can be easily compromised. Certificate credentials offer better security.",
+      "Recommendation": "Remove any password credentials from Azure AD Applications and use certificate credentials instead. Run command Remove-AzureADApplicationPasswordCredential -InformationAction '{ActionPreference}' -InformationVariable '{InformationVariable}' -KeyId '{KeyId}' -ObjectId '{ObjectId}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azuread/remove-azureadapplicationpasswordcredential?view=azureadps-2.0, https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-certificate-credentials#register-your-certificate-with-azure-ad",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN",
+      "Description": "Azure Active Directory applications, which used in pipeline, must use certificate based authentication",
+      "Id": "ServiceConnection110",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Password/shared secret credentials can be easily shared and hence can be easily compromised. Certificate credentials offer better security.",
+      "Recommendation": "Remove any password credentials from Azure AD Applications and use certificate credentials instead. Run command Remove-AzureADApplicationPasswordCredential -InformationAction '{ActionPreference}' -InformationVariable '{InformationVariable}' -KeyId '{KeyId}' -ObjectId '{ObjectId}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azuread/remove-azureadapplicationpasswordcredential?view=azureadps-2.0, https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-certificate-credentials#register-your-certificate-with-azure-ad",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    }
+]
+}
