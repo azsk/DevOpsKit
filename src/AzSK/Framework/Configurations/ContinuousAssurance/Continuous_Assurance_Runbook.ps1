@@ -178,7 +178,7 @@ try
 
 	#This setting determines if the policy store enforces authentication. Generally 'false' for org-policy or OSS (org-neutral) context.
 	$enableAADAuthForOnlinePolicyStore = "[#enableAADAuthForOnlinePolicyStore#]"
-
+    $AzureEnv = "[#AzureEnvironment#]"
 	#This is the script that is primarily responsible for setting up AzSK module in the automation account.
 	$runbookCoreSetupScript = "RunbookCoreSetup.ps1"
 
@@ -196,8 +196,9 @@ try
 
 	#This setting allows org policy owners to explore the latest version of AzSK (while users
 	#in the org may be setup to use an older version - see comment in RunbookCoreSetup.PS1)
-    	$UpdateToLatestVersion = "[#UpdateToLatestVersion#]"	
-	$azureRmResourceURI = "https://management.core.windows.net/"
+	$UpdateToLatestVersion = "[#UpdateToLatestVersion#]"	
+	
+	$azureRmResourceURI = "[#ManagementUri#]"
 	
 	#This is the Run-As (SPN) account for the runbook. It is read from the CA Automation account.
 	$RunAsConnection = Get-AutomationConnection -Name "AzureRunAsConnection"
@@ -230,6 +231,7 @@ try
 			if($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Connect-AzureRmAccount"}))
 			{
 				Connect-AzureRmAccount `
+				-Environment $AzureEnv `
 				-ServicePrincipal `
 				-TenantId $RunAsConnection.TenantId `
 				-ApplicationId $RunAsConnection.ApplicationId `
@@ -239,6 +241,7 @@ try
 			elseif ($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Add-AzureRmAccount"})) 
 			{
 				Add-AzureRmAccount `
+				-EnvironmentName $AzureEnv `
 				-ServicePrincipal `
 				-TenantId $RunAsConnection.TenantId `
 				-ApplicationId $RunAsConnection.ApplicationId `

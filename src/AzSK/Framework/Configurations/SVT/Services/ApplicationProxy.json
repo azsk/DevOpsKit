@@ -1,0 +1,97 @@
+{
+  "FeatureName": "ApplicationProxy",
+  "Reference": "aka.ms/azsktcp/appproxy",
+  "IsMaintenanceMode": false,
+    "Controls": [
+      {
+        "ControlID": "Azure_ApplicationProxy_Deploy_Only_Secure_Apps",
+        "Description": "Only security compliant apps should be onboarded to AAD App Proxy.", 
+        "Id": "ApplicationProxy110",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "AAD App proxy facilitates remote access to your on-prem apps. If these apps have not been designed and implemented securely, then security issues of your apps get exposed to the internet.",
+        "Recommendation": "Ensure that apps you expose via App Proxy have been built using secure development standards/process such as SDL (Refer: https://www.microsoft.com/en-us/sdl)",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "Deploy",
+          "ApplicationProxy"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_ApplicationProxy_AuthN_Use_AAD_PreAuth",
+        "Description": "AAD Authentication must be enabled as a pre-authentication method on your app.",
+        "Id": "ApplicationProxy120",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Pre-authentication by its very nature, blocks a significant number of anonymous attacks, because only authenticated identities can access the back-end application.",
+        "Recommendation": "AAD Application Administrator (or higher privilege role) can check app pre-authentication configuration from portal or by running command 'Get-AzureADApplicationProxyApplication -ObjectId <AADAppID>'. To enable AAD Auth run command 'Set-AzureADApplicationProxyApplication -ObjectId <AppObjectID> -ExternalAuthenticationType AadPreAuthentication'. Refer: https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-publish-azure-portal#publish-an-on-premises-app-for-remote-access.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "AuthN",
+          "ApplicationProxy"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_ApplicationProxy_DP_Remove_Connector_Machine_Logs",
+        "Description": "Delete personal data captured in logs on connector machine periodically or turn off connector machine logging if not required.",
+        "Id": "ApplicationProxy130",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Connector machine logs may contain personal data. This needs to be handled with care and purged when not needed in keeping with good privacy principles.",
+        "Recommendation": "Turn off logging/delete personal data regularly on all connector machines. Refer: https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-remove-personal-data",
+        "Tags": [
+            "SDL",
+            "TCP",
+            "Manual",
+            "DP",
+            "ApplicationProxy"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_ApplicationProxy_Config_Enable_HTTPOnly_Cookie",
+        "Description": "HTTP-Only cookie must be enabled while configuring App Proxy wherever possible.",
+        "Id": "ApplicationProxy140",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Using an HTTP-Only cookie protects against cross site scripting (XSS) attacks by disallowing cookie access to client side scripts.",
+        "Recommendation": "AAD Application Administrator (or higher privilege role) can check app cookie setting from portal or by running command 'Get-AzureADApplicationProxyApplication -ObjectId <AADAppID>'. To enable HTTP-Only cookie, run command 'Set-AzureADApplicationProxyApplication -ObjectId <AADAppID> -IsHttpOnlyCookieEnabled $true'. Refer: https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-publish-azure-portal#publish-an-on-premises-app-for-remote-access.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "Config",
+          "ApplicationProxy"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_ApplicationProxy_SI_Lockdown_ConnectorMachine",
+        "Description": "Use a security hardened, locked down OS image for the connector machine.",
+        "Id": "ApplicationProxy150",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "The connector machine is serving as a 'gateway' into the corporate environment allowing internet based client endpoints access to enterprise data. Using a locked-down, secure baseline configuration ensures that this machine does not get leveraged as an entry point to attack the applications/corporate network.",
+        "Recommendation": "Use a locked down OS configuration. Ensure that the system is always fully patched, has real-time malware protection enabled, OS firewall and disk encryption turned on, etc. Also, monitor this VM just like you'd monitor a high-value asset.",
+           "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "Config",
+          "ApplicationProxy"
+        ],
+        "Enabled": true
+      }
+    ]
+}

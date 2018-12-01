@@ -17,7 +17,7 @@ class ConfigurationManager
 	hidden static [AzSKSettings] GetLocalAzSKSettings()
     {        
         return [AzSKSettings]::GetLocalInstance()
-    }
+	}
 
 	hidden static [AzSKSettings] UpdateAzSKSettings([AzSKSettings] $localSettings)
     {        

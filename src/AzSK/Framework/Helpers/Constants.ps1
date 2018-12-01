@@ -115,6 +115,7 @@ class Constants
 	static [string] $BlankSubscriptionId = "00000000-0000-0000-0000-000000000000"
 	static [string] $BlankSubscriptionName = "DevOpsKitForX"
 	static [string] $BlankScope = "/subscriptions/00000000-0000-0000-0000-000000000000";
+	static [string] $DefaultAzureEnvironment = "AzureCloud";
 
 	static [string] $CentralRBACVersionTagName = "CentralRBACVersion"
 	static [string] $DeprecatedRBACVersionTagName = "DeprecatedRBACVersion"

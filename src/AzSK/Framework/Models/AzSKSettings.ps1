@@ -28,7 +28,8 @@ class AzSKSettings {
 	[TertiaryBool] $AllowSelfSignedWebhookCertificate;
 	[bool] $EnableAADAuthForOnlinePolicyStore;
     [bool] $UseOnlinePolicyStore;
-    [string] $OnlinePolicyStoreUrl;
+	[string] $OnlinePolicyStoreUrl;
+	[string] $AzureEnvironment;
 	[string] $UsageTelemetryLevel;
 	[string] $LocalControlTelemetryKey;
 	[bool] $LocalEnableControlTelemetry;
@@ -39,17 +40,29 @@ class AzSKSettings {
 	[bool] $StoreComplianceSummaryInUserSubscriptions;
 
 
+	
+	hidden static SetDefaultSettings([AzSKSettings] $settings) {
+		if($null -ne  $settings -and [string]::IsNullOrWhiteSpace( $settings.AzureEnvironment))
+		{
+            $settings.AzureEnvironment = [Constants]::DefaultAzureEnvironment
+		}
+	}
+
     static [AzSKSettings] GetInstance() {
         if (-not [AzSKSettings]::Instance)
 		{
 			[AzSKSettings]::LoadAzSKSettings($false);
+			[AzSKSettings]::SetDefaultSettings([AzSKSettings]::Instance);
+			#todo: change to default env by using a fn
         }
 
         return [AzSKSettings]::Instance
-    }
+	}
 
 	static [AzSKSettings] GetLocalInstance() {
-        return [AzSKSettings]::LoadAzSKSettings($true);
+	    $settings = [AzSKSettings]::LoadAzSKSettings($true);
+		[AzSKSettings]::SetDefaultSettings($settings);
+		return $settings
     }
 
     hidden static [AzSKSettings] LoadAzSKSettings([bool] $loadUserCopy) {
@@ -121,7 +134,8 @@ class AzSKSettings {
 							$parsedSettings.$propertyName = $serverSettings.$propertyName;
 							$mergedServerPropNames += $propertyName;
 						}
-					};				
+					};		
+					
 				[AzSKSettings]::Instance = $parsedSettings;				
 			}
             #Sever merged settings should not be persisted, as it should always take latest from the server

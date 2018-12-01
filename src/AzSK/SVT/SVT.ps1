@@ -37,6 +37,8 @@ function Get-AzSKAzureServicesSecurityStatus
 		Enables users to generate PDF file for reports.
 	.PARAMETER UsePartialCommits
 		This switch would partially save the scan status to the AzSK storage account. On the event of a failure, it tries to recover from the last snapshot. To use this feature, you need to have contributor role on the AzSK storage account.
+	.PARAMETER CentralStorageAccount
+		Storage account on the master subscription for storing the scanned logs of the target subscriptions.
 	.PARAMETER UseBaselineControls
 		This switch would scan only for baseline controls defined at org level
 	.PARAMETER GenerateFixScript
@@ -70,20 +72,20 @@ function Get-AzSKAzureServicesSecurityStatus
         [string]
         [Parameter(Position = 1,Mandatory = $false, ParameterSetName = "ResourceFilter")]
         [Parameter(Mandatory = $false, ParameterSetName = "BulkAttestation")]
-        [Parameter(Mandatory = $false, ParameterSetName = "BulkAttestationClear")]
+		[Parameter(Mandatory = $false, ParameterSetName = "BulkAttestationClear")]
 		[Alias("rgns")]
 		$ResourceGroupNames,
         
         [string]
         [Parameter(Mandatory = $false, ParameterSetName = "ResourceFilter")]
 		[Parameter(Mandatory = $false, ParameterSetName = "BulkAttestation")]
-        [Parameter(Mandatory = $false, ParameterSetName = "BulkAttestationClear")]
+		[Parameter(Mandatory = $false, ParameterSetName = "BulkAttestationClear")]
 		[Alias("rt")]
 		$ResourceType,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "ResourceFilter")]
 		[Parameter(Mandatory = $false, ParameterSetName = "BulkAttestation")]
-        [Parameter(Mandatory = $false, ParameterSetName = "BulkAttestationClear")]
+		[Parameter(Mandatory = $false, ParameterSetName = "BulkAttestationClear")]
 		[ResourceTypeName]
 		[Alias("rtn")]
 		$ResourceTypeName = [ResourceTypeName]::All,
@@ -169,7 +171,12 @@ function Get-AzSKAzureServicesSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("upc")]
-		$UsePartialCommits,		
+		$UsePartialCommits,	
+		
+		[PSObject]
+        [Parameter(Mandatory = $false)]
+		[Alias("csa")]
+		$CentralStorageAccount,	
 
 		[switch]
         [Parameter(Mandatory = $false)]
@@ -182,15 +189,25 @@ function Get-AzSKAzureServicesSecurityStatus
 		$IncludeUserComments,
 
 		[Parameter(Mandatory = $false)]
-		[Alias("xrtn")]
+		[Alias("xrtn")]		
 		[ResourceTypeName]
 		$ExcludeResourceTypeName = [ResourceTypeName]::All,
 
 		[string] 
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $false)]		
 		[Alias("xcids")]
 		[AllowEmptyString()]
-		$ExcludeControlIds
+		$ExcludeControlIds,
+
+		[string]
+		[Alias("xrgns")]
+		[Parameter(Mandatory = $false)]
+		$ExcludeResourceGroupNames,
+
+		[string]
+		[Alias("xrns")]
+		[Parameter(Mandatory = $false)]
+		$ExcludeResourceNames
     )
 
 	Begin
@@ -203,10 +220,11 @@ function Get-AzSKAzureServicesSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName);			
+			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName, $ExcludeResourceNames,$ExcludeResourceGroupNames);			
 			$resolver.Tag = $Tag;
 			$resolver.TagName = $TagName;
-			$resolver.TagValue = $TagValue;			
+			$resolver.TagValue = $TagValue;	
+
 
 			$secStatus = [ServicesSecurityStatus]::new($SubscriptionId, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
@@ -552,6 +570,8 @@ function Get-AzSKControlsStatus
 		Enables users to generate PDF file for reports.
 	.PARAMETER UsePartialCommits
 		This switch would partially save the scan status to the AzSK storage account. On the event of a failure, it tries to recover from the last snapshot. To use this feature, you need to have contributor role on the AzSK storage account.
+	.PARAMETER CentralStorageAccount
+		Storage account on the master subscription for storing the scanned logs of the target subscriptions.
 	.PARAMETER UseBaselineControls
 		This switch would scan only for baseline controls defined at org level
 	.PARAMETER GenerateFixScript
@@ -679,6 +699,11 @@ function Get-AzSKControlsStatus
 		[Alias("upc")]
 		$UsePartialCommits,		
 		
+		[PSObject]
+        [Parameter(Mandatory = $false)]
+		[Alias("csa")]
+		$CentralStorageAccount,	
+
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("gfs")]
@@ -698,7 +723,17 @@ function Get-AzSKControlsStatus
 		[Parameter(Mandatory = $false)]
 		[Alias("xcids")]
 		[AllowEmptyString()]
-		$ExcludeControlIds
+		$ExcludeControlIds,
+
+		[string]
+		[Alias("xrgns")]
+		[Parameter(Mandatory = $false)]
+		$ExcludeResourceGroupNames,
+
+		[string]
+		[Alias("xrns")]
+		[Parameter(Mandatory = $false)]
+		$ExcludeResourceNames
     )
 	Begin
 	{
@@ -709,7 +744,7 @@ function Get-AzSKControlsStatus
 	{
 		try
 		{
-			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName);						
+			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName, $ExcludeResourceNames,$ExcludeResourceGroupNames);						
 			$resolver.Tag = $Tag;
 			$resolver.TagName = $TagName;
 			$resolver.TagValue = $TagValue;

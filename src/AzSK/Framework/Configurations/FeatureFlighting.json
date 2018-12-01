@@ -5,7 +5,7 @@
       "Name": "EnableAzurePolicyBasedScan",
       "Description" : "",
       "Sources" : ["*"],
-      "EnabledForSubs": ["*"],
+      "EnabledForSubs": [],
       "DisabledForSubs": [],      
       "UnderPreview" : false,
       "IsEnabled": false      

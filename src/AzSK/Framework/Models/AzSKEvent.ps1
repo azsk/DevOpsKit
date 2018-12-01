@@ -5,7 +5,8 @@ class AzSKRootEvent {
     static [string] $GenerateRunIdentifier = "AzSK.GenerateRunIdentifier"; 
     static [string] $UnsupportedResources = "AzSK.UnsupportedResources";
 	static [string] $WriteCSV = "AzSK.WriteCSV";
-	static [string] $PublishCustomData = "AzSK.PublishCustomData"
+    static [string] $PublishCustomData = "AzSK.PublishCustomData"
+    static [string] $WriteExcludedResources= "AzSK.WriteExcludedResources"
 
 
     #Command level event

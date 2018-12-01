@@ -221,6 +221,8 @@
         "ServiceFabric",
         "Windows"
       ],
+      "PolicyDefinitionGuid":"b54ed75b-3e1a-44ac-a333-05ba39b99ff0",
+      "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/b54ed75b-3e1a-44ac-a333-05ba39b99ff0",
       "Enabled": true
     },
     {
@@ -241,6 +243,8 @@
         "Windows",
         "Linux"
       ],
+      "PolicyDefinitionGuid":"617c02be-7f02-4efd-8836-3180d47b6c68",
+      "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/617c02be-7f02-4efd-8836-3180d47b6c68",
       "Enabled": true
     },
     {

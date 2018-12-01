@@ -10,8 +10,8 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckStorageContainerPublicAccessTurnOff",
-      "Rationale":  "Data in containers that have anonymous access can be downloaded by anyone on the internet without authentication. This can lead to a compromise of corporate data. ",
-      "Recommendation": "Run command 'Set-AzureStorageContainerAcl -Name '<ContainerName>' -Permission 'Off' -Context '<StorageContext>''. Run 'Get-Help Set-AzureStorageContainerAcl -full' for more help.",
+      "Rationale":  "Data in containers that have anonymous access can be downloaded by anyone on the internet without authentication. This can lead to a compromise of corporate data.",
+      "Recommendation": "Run command 'Set-AzureStorageContainerAcl -Name '<ContainerName>' -Permission 'Off' -Context (New-AzureStorageContext -StorageAccountName '<StorageAccountName>' -StorageAccountKey '<StorageAccountKey>')'. Run 'Get-Help Set-AzureStorageContainerAcl -full' for more help.",
       "Tags": [
          "SDL",
          "TCP",
@@ -99,6 +99,8 @@
         "GeneralPurposeStorage",
         "BlobStorage"
       ],
+      "PolicyDefinitionGuid":"404c3081-a854-4457-ae30-26a93ef643f9",
+      "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/404c3081-a854-4457-ae30-26a93ef643f9",
       "Enabled": true,
       "FixControl": {
          "FixMethodName": "EnableHttpsTrafficOnly",
