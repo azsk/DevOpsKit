@@ -16,7 +16,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "NetSec"
+        "NetSec",
+        "ERvNet"
       ],
       "Enabled": true,
       "DataObjectProperties": [
@@ -41,7 +42,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "NetSec"
+        "NetSec",
+        "ERvNet"
       ],
       "Enabled": true
     },
@@ -58,7 +60,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "NetSec"
+        "NetSec",
+        "ERvNet"
       ],
       "Enabled": true,
       "DataObjectProperties": [
@@ -74,12 +77,13 @@
       "Automated": "Yes",
       "MethodName": "CheckNSGUseonGatewaySubnet",
       "Rationale": "Using NSGs on the Gateway subnet of an ER-connected virtual network can cause the connection to stop functioning and may impact availability.",
-      "Recommendation": "If you added any NSGs to the Gateway Subnet of the ER-connected virtual network, remove them. Refer: https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-manage-nsg-arm-ps#delete-an-nsg",
+      "Recommendation": "If you added any NSGs to the Gateway Subnet of the ER-connected virtual network, remove them. Refer: https://docs.microsoft.com/en-us/azure/virtual-network/manage-network-security-group#delete-a-network-security-group",
       "Tags": [
         "SDL",
         "TCP",
         "Automated",
-        "NetSec"
+        "NetSec",
+        "ERvNet"
       ],
       "Enabled": true,
       "DataObjectProperties": [
@@ -100,7 +104,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "NetSec"
+        "NetSec",
+        "ERvNet"
       ],
       "Enabled": true,
       "DataObjectProperties": [
@@ -121,7 +126,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "NetSec"
+        "NetSec",
+        "ERvNet"
       ],
       "Enabled": true
     },
@@ -138,7 +144,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "NetSec"
+        "NetSec",
+        "ERvNet"
       ],
       "Enabled": true
     },
@@ -155,7 +162,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "NetSec"
+        "NetSec",
+        "ERvNet"
       ],
       "Enabled": true
     },
@@ -172,7 +180,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "SI"
+        "SI",
+        "ERvNet"
       ],
       "Enabled": false,
       "DataObjectProperties": [
@@ -193,7 +202,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "SI"
+        "SI",
+        "ERvNet"
       ],
       "Enabled": false
     },
@@ -208,8 +218,9 @@
       "Tags": [
         "SDL",
         "TCP",
-        "Manual",
-        "SI"
+        "Automated",
+        "SI",
+        "ERvNet"
       ],
       "Enabled": false
     }
