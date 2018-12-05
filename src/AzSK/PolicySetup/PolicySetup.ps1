@@ -59,6 +59,11 @@ function Install-AzSKOrganizationPolicy
 		[Alias("ainame")]
 		$AppInsightName,
 
+		[Parameter(Mandatory = $false, HelpMessage = "Provide your Azure Environment")]
+        [string]
+		[Alias("ae")]
+        $AzureEnvironment = "AzureCloud",
+
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
         [string]
 		[Alias("ail")]
@@ -103,7 +108,7 @@ function Install-AzSKOrganizationPolicy
 	{
 		try 
 		{
-			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName, $StorageAccountName, $AppInsightName, $AppInsightLocation, $ResourceGroupLocation,$MonitoringDashboardLocation, $PolicyFolderPath);
+			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName, $StorageAccountName, $AppInsightName, $AppInsightLocation, $ResourceGroupLocation, $AzureEnvironment, $MonitoringDashboardLocation, $PolicyFolderPath);
 			if ($policy) 
 			{
 				return $policy.InvokeFunction($policy.InstallPolicy);
