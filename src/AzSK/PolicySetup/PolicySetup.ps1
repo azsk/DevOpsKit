@@ -180,6 +180,11 @@ function Update-AzSKOrganizationPolicy
 		[Alias("ainame")]
 		$AppInsightName,
 
+		[Parameter(Mandatory = $false, HelpMessage = "Provide your Azure Environment")]
+        [string]
+		[Alias("ae")]
+        $AzureEnvironment = "AzureCloud",
+
 		[Parameter(Mandatory = $false)]
         [string]
 		[Alias("ail")]
