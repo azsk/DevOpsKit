@@ -242,7 +242,7 @@ function Update-AzSKOrganizationPolicy
 	{
 		try 
 		{
-			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $null, $null,$MonitoringDashboardLocation, $PolicyFolderPath);
+			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $null, $null,$AzureEnvironment,$MonitoringDashboardLocation, $PolicyFolderPath);
 			if($policy)
 			{
 				$policy.IsUpdateSwitchOn = $true
