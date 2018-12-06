@@ -4,14 +4,14 @@
     "IsMaintenanceMode":  false,
   "Controls": [
     {
-      "ControlID": "AzureDevOps_Build_AuthN_Use_Cert_Auth_for_SPN",
-      "Description": "Azure Active Directory applications, which used in pipeline, must use certificate based authentication",
-      "Id": "Pipeline110",
+      "ControlID": "AzureDevOps_Build_AuthZ_Min_RBAC_Access",
+      "Description": "All teams/groups must be granted minimum required permissions on build defination",
+      "Id": "Build110",
       "ControlSeverity": "High",
-      "Automated": "Yes",
-      "MethodName": "CheckSPNAuthenticationCertificate",
-      "Rationale": "Password/shared secret credentials can be easily shared and hence can be easily compromised. Certificate credentials offer better security.",
-      "Recommendation": "Remove any password credentials from Azure AD Applications and use certificate credentials instead. Run command Remove-AzureADApplicationPasswordCredential -InformationAction '{ActionPreference}' -InformationVariable '{InformationVariable}' -KeyId '{KeyId}' -ObjectId '{ObjectId}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azuread/remove-azureadapplicationpasswordcredential?view=azureadps-2.0, https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-certificate-credentials#register-your-certificate-with-azure-ad",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+      "Recommendation": "",
       "Tags": [
         "SDL",
         "TCP",
@@ -22,14 +22,31 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Build_Config_Remove_Unused_ServiceEndpoints",
-      "Description": "Inactive Service Endpoints must be removed",
-      "Id": "Pipeline120",
+      "ControlID": "AzureDevOps_Build_DP_No_PlainText_Secrets_In_Defination",
+      "Description": "Secrets and keys must not be stored as plain text in build variables/task parameters",
+      "Id": "Build120",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckInactiveEndpoints",
-      "Rationale": "Inactive Service Endpoints leads to unused identities been present in pipeline and misused by users",
-      "Recommendation": "remove any unused service endpoints present in list",
+      "MethodName": "CheckCredInVariables",
+      "Rationale": "Keeping secrets such as connection strings, passwords, keys, etc. in clear text can lead to easy compromise. Making them secret type variables ensures that they are protected at rest.",
+      "Recommendation": "",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "Audit"       
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Build_Config_Add_StaticCodeAnalyzer",
+      "Description": "Static code analyzer must be enabled on build",
+      "Id": "Build140",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Static code analyzer ensure that the code is following all rules for security",
+      "Recommendation": "https://docs.microsoft.com/en-us/azure/devops/articles/security-validation-cicd-pipeline?view=vsts#ci-continuous-integration",
       "Tags": [
         "SDL",
         "TCP",
@@ -39,22 +56,39 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Build_DP_Dont_Store_Crendentials",
-      "Description": "Credentials must not be stored in configuration files",
-      "Id": "Pipeline130",
-      "ControlSeverity": "High",
-      "Automated": "No",
-      "MethodName": "CheckCookiesSSL",
-      "Rationale": "The element of the element allows optional definitions of name and password for IIS Manager User accounts within the configuration file. Forms based authentication also uses these elements to define the users. IIS Manager Users can use the administration interface to connect to sites and applications in which they've been granted authorization. Note that the element only applies when the default provider, ConfigurationAuthenticationProvider, is configured as the authentication provider. It is recommended that passwordFormat be set to a value other than Clear, such as SHA1 or MD5. Authentication credentials should always be protected to reduce the risk of stolen authentication credentials. For security reasons, it is recommended that user credentials not be stored an any IIS configuration files.",
-      "Recommendation": "Authentication mode is configurable at the machine.config, root-level web.config, or application-level web.config: * Locate and open the configuration file where the credentials are stored * Find the element * If present, remove the section This will remove all references to stored users in the configuration files.",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "AuthZ",
-        "RBAC"
-      ],
-      "Enabled": true
-    }
+        "ControlID": "AzureDevOps_Build_DP_Store_SecretFiles_in_Secure_Library",
+        "Description": " Secure Files library must be used to store secret files such as signing certificates, Apple Provisioning Profiles, Android KeyStore files, and SSH keys",
+        "Id": "Build150",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Keeping secret files such as signing certificates, Apple Provisioning Profiles, Android KeyStore files, SSH keys etc. in repository can lead to easy compromise at various avenues during an application's lifecycle. Storing them in a secure library ensures that they are protected at rest.",
+        "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/devops/pipelines/library/secure-files?view=vsts",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "DP"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Build_SI_Review_InActive_Build",
+        "Description": " Unintended/inactive user access must be removed",
+        "Id": "Build160",
+        "ControlSeverity": "Low",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Each additional build having access at repositories increases the attack surface. To minimize this risk ensure that only activite and legitimate build resources present in Organization",
+        "Recommendation": "",
+        "Tags": [
+          "SDL",
+          "Best Practice",
+          "Manual",
+          "DP"
+        ],
+        "Enabled": true
+      }
+    
   ]
 }

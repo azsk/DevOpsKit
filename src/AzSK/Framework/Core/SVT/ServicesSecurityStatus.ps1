@@ -116,6 +116,8 @@ class ServicesSecurityStatus: SVTCommandBase
 		$automatedResources += ($resourcesList | Where-Object { $_.ResourceTypeMapping });
 		
 		# Resources skipped from scan using excludeResourceName or -ExcludeResourceGroupNames parameters
+		if([Helpers]::CheckMember($this.resolver,"ExcludedResourceGroupNames") -or [Helpers]::CheckMember($this.resolver,"ExcludedResources"))
+		{
 		$ExcludedResourceGroups=$this.resolver.ExcludedResourceGroupNames 
 		$ExcludedResources=$this.resolver.ExcludedResources ;
 		if(($this.resolver.ExcludeResourceGroupNames| Measure-Object).Count -gt 0 -or ($this.resolver.ExcludeResourceNames| Measure-Object).Count -gt 0)
@@ -139,6 +141,7 @@ class ServicesSecurityStatus: SVTCommandBase
 			$this.PublishCustomMessage("For a detailed list of excluded resources, see 'ExcludedResources-$($this.RunIdentifier).txt' in the output log folder.")
 			$this.ReportExcludedResources($this.resolver);
 		}
+	}
 		if($runNonAutomated)
 		{
 			$this.ReportNonAutomatedResources();

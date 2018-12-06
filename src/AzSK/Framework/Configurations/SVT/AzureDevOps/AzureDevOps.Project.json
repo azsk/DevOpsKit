@@ -8,8 +8,8 @@
       "Description": "Projects visibility must be set to private",
       "Id": "Project110",
       "ControlSeverity": "High",
-      "Automated": "No",
-      "MethodName": "",
+      "Automated": "Yes",
+      "MethodName": "CheckPublicProjects",
       "Rationale": "Data/content in projects that have public visibility can be downloaded by anyone on the internet without authentication. This can lead to a compromise of corporate data.",
       "Recommendation": "https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/access-with-azure-ad?view=vsts",
       "Tags": [
@@ -23,7 +23,7 @@
     {
         "ControlID": "AzureDevOps_Project_AuthZ_Min_RBAC_Access",
         "Description": "All teams/groups must be granted minimum required permissions on project",
-        "Id": "Organization180",
+        "Id": "Project120",
         "ControlSeverity": "High",
         "Automated": "No",
         "MethodName": "",
@@ -38,9 +38,9 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Group_Members",
+        "ControlID": "AzureDevOps_Project_AuthZ_Justify_Group_Members",
         "Description": "Justify all identities that are granted with member access on group and teams.",
-        "Id": "Organization190",
+        "Id": "Project130",
         "ControlSeverity": "High",
         "Automated": "No",
         "MethodName": "",

@@ -38,6 +38,7 @@ class AzSKSettings {
     hidden static [AzSKSettings] $Instance = $null;
 	hidden static [string] $FileName = "AzSKSettings.json";
 	[bool] $StoreComplianceSummaryInUserSubscriptions;
+	[string] $CredScanToolPath = "C:\Users\v-vihaib\Desktop\CredScanTool\.gdn\i\nuget\Microsoft.Azure.CredentialScanner.1.0.25.2\tools" #[string]::Empty
 
 
 	

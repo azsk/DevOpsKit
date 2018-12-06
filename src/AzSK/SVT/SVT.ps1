@@ -807,9 +807,29 @@ function Get-AzSKAzureDevOpsSecurityStatus
 	(
 
 		[string]
-        [Parameter(Position = 0, HelpMessage="Subscription id for which the security evaluation has to be performed.")]
+        [Parameter(Position = 0, HelpMessage="OrganizationName for which the security evaluation has to be performed.")]
 		[Alias("oz")]
-		$Organization = "a"
+		$OrganizationName,
+
+		[string]
+        [Parameter( HelpMessage="Subscription id for which the security evaluation has to be performed.")]
+		[Alias("pn")]
+		$ProjectNames,
+
+		[string]
+        [Parameter(HelpMessage="Subscription id for which the security evaluation has to be performed.")]
+		[Alias("bn")]
+		$BuildNames,
+
+		[string]
+        [Parameter(HelpMessage="Subscription id for which the security evaluation has to be performed.")]
+		[Alias("rn")]
+		$ReleaseNames,
+
+		[string]
+        [Parameter(Position = 0, HelpMessage="Subscription id for which the security evaluation has to be performed.")]
+		[Alias("rtn")]
+		$ResourceTypeName
 	)
 	Begin
 	{
@@ -821,9 +841,8 @@ function Get-AzSKAzureDevOpsSecurityStatus
 	{
 	try 
 		{
-			$SubscriptionId=[Constants]::BlankSubscriptionId 
-			$resolver = [AzureDevOpsResourceResolver]::new($SubscriptionId);
-			$secStatus = [ServicesSecurityStatus]::new($SubscriptionId, $PSCmdlet.MyInvocation, $resolver);
+			$resolver = [AzureDevOpsResourceResolver]::new($OrganizationName);
+			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
 				return $secStatus.EvaluateControlStatus();
@@ -834,6 +853,7 @@ function Get-AzSKAzureDevOpsSecurityStatus
 			[EventBase]::PublishGenericException($_);
 		}  
 	}
+	
 	End
 	{
 		[ListenerHelper]::UnregisterListeners();

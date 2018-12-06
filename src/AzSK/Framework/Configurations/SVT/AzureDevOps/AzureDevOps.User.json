@@ -8,8 +8,8 @@
         "Description": "Personal access tokens (PAT) must be defined with minimum required permissions to resources",
         "Id": "User110",
         "ControlSeverity": "High",
-        "Automated": "No",
-        "MethodName": "",
+        "Automated": "Yes",
+        "MethodName": "CheckPATAccessLevel",
         "Rationale": "Granting minimum access ensures that PAT is granted with just enough permissions to perform required tasks. This minimizes exposure of the resources in case of PAT compromise.",
         "Recommendation": "https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/access-with-azure-ad?view=vsts",
         "Tags": [

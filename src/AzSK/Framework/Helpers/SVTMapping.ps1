@@ -280,39 +280,39 @@ class SVTMapping
 
     static [ResourceTypeMapping[]] $AzSKDevOpsResourceMapping = (
 		[ResourceTypeMapping]@{
-            ResourceType = "AzureDeOps.Organization";
-            JsonFileName = "AzureDeOps.Organization.json";
+            ResourceType = "AzureDevOps.Organization";
+            JsonFileName = "AzureDevOps.Organization.json";
             ClassName = "Organization";
             ResourceTypeName = "Organization";            
         },
         [ResourceTypeMapping]@{
-            ResourceType = "AzureDeOps.Project";
+            ResourceType = "AzureDevOps.Project";
 			ClassName = "Project";
-			JsonFileName = "AzureDeOps.Project.json";
+			JsonFileName = "AzureDevOps.Project.json";
 			ResourceTypeName = "Project";
         },
         [ResourceTypeMapping]@{
-            ResourceType = "AzureDeOps.User";
+            ResourceType = "AzureDevOps.User";
 			ClassName = "User";
-			JsonFileName = "AzureDeOps.User.json";
+			JsonFileName = "AzureDevOps.User.json";
 			ResourceTypeName = "User";
         },
         [ResourceTypeMapping]@{
-            ResourceType = "AzureDeOps.Build";
+            ResourceType = "AzureDevOps.Build";
 			ClassName = "Build";
-			JsonFileName = "AzureDeOps.Build.json";
+			JsonFileName = "AzureDevOps.Build.json";
 			ResourceTypeName = "Build";
         },
         [ResourceTypeMapping]@{
-            ResourceType = "AzureDeOps.Release";
+            ResourceType = "AzureDevOps.Release";
 			ClassName = "Release";
-			JsonFileName = "AzureDeOps.Release.json";
+			JsonFileName = "AzureDevOps.Release.json";
 			ResourceTypeName = "Release";
         },
         [ResourceTypeMapping]@{
-            ResourceType = "AzureDeOps.ServiceConnection";
+            ResourceType = "AzureDevOps.ServiceConnection";
 			ClassName = "ServiceConnection";
-			JsonFileName = "AzureDeOps.ServiceConnection.json";
+			JsonFileName = "AzureDevOps.ServiceConnection.json";
 			ResourceTypeName = "ServiceConnection";
         }
     )

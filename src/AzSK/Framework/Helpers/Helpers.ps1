@@ -5,10 +5,12 @@ using namespace Microsoft.Azure.Management.Storage.Models
 using namespace Microsoft.IdentityModel.Clients.ActiveDirectory
 
 Set-StrictMode -Version Latest
+
 class Helpers {
 
     static hidden [PSObject] $currentAzureDevOpsContext;
-    
+    static hidden [PSObject] $currentRMContext;
+    static hidden [ScanType] $ScanType
     hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson) {
 		$rootConfigPath = [Constants]::AzSKAppFolderPath + "\" ;
 		return [Helpers]::LoadOfflineConfigFile($fileName, $true,$rootConfigPath);
@@ -97,31 +99,37 @@ class Helpers {
 		return [Helpers]::currentRMContext
 	}
 
-    hidden static [PSObject] GetCurrentAzureDevOpsContext()
+    hidden static GetCurrentAzureDevOpsContext()
     {
-        $azureDevOpsOrganizationUrl = "http://dev.azure.com/organization"; 
-        $clientId = "872cd9fa-d31f-45e0-9eab-6e460a02d1f1";          
-        $replyUri = "urn:ietf:wg:oauth:2.0:oob"; 
-        $azureDevOpsResourceId = "499b84ac-1321-427f-aa17-267ca6975798";
-        [AuthenticationContext] $ctx = $null;
-        if (-not [string]::IsNullOrEmpty($tenant) )
+        if(-not [Helpers]::currentAzureDevOpsContext)
         {
-            $ctx = [AuthenticationContext]::new("https://login.microsoftonline.com/" + $tenant);
-        }
-        else
-        {
-            $ctx = [AuthenticationContext]::new("https://login.windows.net/common");
-            if ($ctx.TokenCache.Count > 0)
+            $libraryPath = (Get-Item $PSScriptRoot).Parent.Parent.FullName+ "\ARMCheckerLib";
+            Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
+            #$azureDevOpsOrganizationUrl = "http://dev.azure.com/organization"; 
+            $clientId = "872cd9fa-d31f-45e0-9eab-6e460a02d1f1";          
+            $replyUri = "urn:ietf:wg:oauth:2.0:oob"; 
+            $azureDevOpsResourceId = "499b84ac-1321-427f-aa17-267ca6975798";
+            $tenant = ""
+            [AuthenticationContext] $ctx = $null;
+            if (-not [string]::IsNullOrEmpty($tenant) )
             {
-                [String] $homeTenant = $ctx.TokenCache.ReadItems().First().TenantId;
-                $ctx = [AuthenticationContext]::new("https://login.microsoftonline.com/" + $homeTenant);
+                $ctx = [AuthenticationContext]::new("https://login.microsoftonline.com/" + $tenant);
             }
+            else
+            {
+                $ctx = [AuthenticationContext]::new("https://login.windows.net/common");
+                if ($ctx.TokenCache.Count > 0)
+                {
+                    [String] $homeTenant = $ctx.TokenCache.ReadItems().First().TenantId;
+                    $ctx = [AuthenticationContext]::new("https://login.microsoftonline.com/" + $homeTenant);
+                }
+            }
+            [AuthenticationResult] $result = $null;
+            #[IPlatformParameters] $promptBehavior = [PlatformParameters]::new([PromptBehavior]::Always);
+            $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Always);
+            [Helpers]::currentAzureDevOpsContext =$result
         }
-        [AuthenticationResult] $result = $null;
-        [IPlatformParameters] $promptBehavior = [PlatformParameters]::new([PromptBehavior]::Always);
-        $result = $ctx.AcquireTokenAsync($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri), $promptBehavior).Result;
-        [Helpers]::currentAzureDevOpsContext =$result
-
+        [Helpers]::ScanType = [ScanType]::AzureDevOps
     }
     
 	hidden static [void] ResetCurrentRMContext()
@@ -501,8 +509,40 @@ class Helpers {
         return $authResult.AccessToken;
     }
 
+    static [string] GetAzureDevOpsAccessToken()
+    {
+        # TODO: Handlle login
+        if([Helpers]::currentAzureDevOpsContext)
+        {
+            return [Helpers]::currentAzureDevOpsContext.AccessToken
+        }
+        else
+        {
+            return $null
+        }
+    }
+
     static [string] GetAccessToken([string] $resourceAppIdUri) {
-        return [Helpers]::GetAccessToken($resourceAppIdUri, "");
+        if([Helpers]::ScanType -eq [ScanType]::AzureDevOps)
+        {
+            return [Helpers]::GetAzureDevOpsAccessToken()
+        }
+        else {
+            return [Helpers]::GetAccessToken($resourceAppIdUri, "");    
+        }
+        
+    }
+
+    static [string] GetAccessToken()
+    {
+        if([Helpers]::ScanType -eq [ScanType]::AzureDevOps)
+        {
+            return [Helpers]::GetAzureDevOpsAccessToken()
+        }
+        else {
+            #TODO : Fix ResourceID
+            return [Helpers]::GetAccessToken("", "");    
+        }
     }
 
     static [bool] CompareObject($referenceObject, $differenceObject) {

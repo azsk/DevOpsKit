@@ -155,3 +155,9 @@ enum RemoveConfiguredCASetting
 	AltOMSSettings
 	WebhookSettings
 }
+
+enum ScanType
+{
+	Azure
+	AzureDevOps
+}

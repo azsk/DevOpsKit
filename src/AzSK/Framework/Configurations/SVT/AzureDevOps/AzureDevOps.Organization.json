@@ -8,8 +8,8 @@
       "Description": "Organization must be configured to authenticate users using Azure Active Directory backed credentials.",
       "Id": "Organization110",
       "ControlSeverity": "High",
-      "Automated": "No",
-      "MethodName": "",
+      "Automated": "Yes",
+      "MethodName": "CheckAADConfiguration",
       "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
       "Recommendation": "https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/access-with-azure-ad?view=vsts",
       "Tags": [
@@ -25,8 +25,8 @@
         "Description": "Permissions to external accounts (i.e., accounts outside the native directory for the Organization) must be disabled",
         "Id": "Organization120",
         "ControlSeverity": "High",
-        "Automated": "No",
-        "MethodName": "",
+        "Automated": "Yes",
+        "MethodName": "CheckExternalUserPolicy",
         "Rationale": "Non-AD accounts (such as xyz@hotmail.com, pqr@outlook.com, etc.) present at any scope within a Organization subject your assets to undue risk. These accounts are not managed to the same standards as enterprise tenant identities. They don't have multi-factor authentication enabled. Etc.",
         "Recommendation": "https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/access-with-azure-ad?view=vsts",
         "Tags": [
@@ -42,8 +42,8 @@
         "Description": "Alternate credential must be disabled for users",
         "Id": "Organization130",
         "ControlSeverity": "High",
-        "Automated": "No",
-        "MethodName": "",
+        "Automated": "Yes",
+        "MethodName": "CheckAltAuthSettings",
         "Rationale": "Alternate credential allows user to create username and password to access Git repositories.Login with these credentials doesn't expire and can't be scoped to limit access to your Azure DevOps Services data.",
         "Recommendation": "https://docs.microsoft.com/en-us/azure/devops/repos/git/auth-overview?view=vsts#alternate-credentials",
         "Tags": [
@@ -59,8 +59,8 @@
         "Description": "Public projects must be turned off for Organization",
         "Id": "Organization140",
         "ControlSeverity": "High",
-        "Automated": "No",
-        "MethodName": "",
+        "Automated": "Yes",
+        "MethodName": "CheckPublicProjectPolicy",
         "Rationale": "Data/content in projects that have anonymous access can be downloaded by anyone on the internet without authentication. This can lead to a compromise of corporate data. ",
         "Recommendation": "https://docs.microsoft.com/en-us/azure/devops/organizations/public/create-public-project?view=vsts&tabs=new-nav#enable-anonymous-access-to-projects-for-your-organization",
         "Tags": [
@@ -72,12 +72,29 @@
         "Enabled": true
       },
       {
+        "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Guest_Identities",
+        "Description": "Justify all guest identities that are granted access on Organization. ",
+        "Id": "Organization170",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckGuestIdentities",
+        "Rationale": "Non-AD accounts (such as xyz@hotmail.com, pqr@outlook.com, etc.) present at any scope within a Organization subject your cloud assets to undue risk. These accounts are not managed to the same standards as enterprise tenant identities. They don't have multi-factor authentication enabled. Etc.",
+        "Recommendation": "",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "AuthZ"
+        ],
+        "Enabled": true
+      },
+      {
         "ControlID": "AzureDevOps_Organization_SI_Review_Extensions",
         "Description": "Extensions must be installed from a trustworthy source",
         "Id": "Organization150",
         "ControlSeverity": "High",
-        "Automated": "No",
-        "MethodName": "",
+        "Automated": "Yes",
+        "MethodName": "ValidateInstalledExtensions",
         "Rationale": "Running extensions from untrusted source can lead to all type of attacks and loss of sensitive enterprise data.",
         "Recommendation": "https://docs.microsoft.com/en-us/azure/devops/organizations/public/create-public-project?view=vsts&tabs=new-nav#enable-anonymous-access-to-projects-for-your-organization",
         "Tags": [
@@ -85,6 +102,23 @@
           "TCP",
           "Manual",
           "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Extension_Managers",
+        "Description": "Justify all identities that are granted with manager access for extensions.",
+        "Id": "Organization190",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckExtensionManagers",
+        "Rationale": "Accounts with extension manager access can install/manage extensions for Organization. Members with this access without a legitimate business reason increase the risk for Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
+        "Recommendation": "",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "AuthZ"
         ],
         "Enabled": true
       },
@@ -105,23 +139,7 @@
         ],
         "Enabled": true
       },
-      {
-        "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Guest_Users",
-        "Description": "Justify all guest users that are granted access on Organization. ",
-        "Id": "Organization170",
-        "ControlSeverity": "High",
-        "Automated": "No",
-        "MethodName": "",
-        "Rationale": "Non-AD accounts (such as xyz@hotmail.com, pqr@outlook.com, etc.) present at any scope within a Organization subject your cloud assets to undue risk. These accounts are not managed to the same standards as enterprise tenant identities. They don't have multi-factor authentication enabled. Etc.",
-        "Recommendation": "",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Manual",
-          "AuthZ"
-        ],
-        "Enabled": true
-      },
+      
       {
         "ControlID": "AzureDevOps_Organization_AuthZ_Min_RBAC_Access",
         "Description": "All teams/groups must be granted minimum required permissions on Organization",
@@ -156,23 +174,7 @@
         ],
         "Enabled": true
       },
-      {
-        "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Extension_Managers",
-        "Description": "Justify all identities that are granted with manager access for extensions.",
-        "Id": "Organization190",
-        "ControlSeverity": "High",
-        "Automated": "No",
-        "MethodName": "",
-        "Rationale": "Accounts with extension manager access can install/manage extensions for Organization. Members with this access without a legitimate business reason increase the risk for Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
-        "Recommendation": "",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Manual",
-          "AuthZ"
-        ],
-        "Enabled": true
-      },
+      
       {
         "ControlID": "AzureDevOps_Organization_Audit_Configure_Critical_Alerts",
         "Description": "Alerts must be configured for critical actions on Organization",
