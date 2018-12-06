@@ -23,7 +23,7 @@ class AzureDevOpsResourceResolver: Resolver
         $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                         Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                         Select-Object -First 1)
-        #$this.SVTResources +=$svtResource
+        $this.SVTResources +=$svtResource
 
         $svtResource = [SVTResource]::new();
         $svtResource.ResourceName = $this.organizationName;
@@ -49,7 +49,7 @@ class AzureDevOpsResourceResolver: Resolver
                                             Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                             Select-Object -First 1)
             
-            #$this.SVTResources +=$svtResource
+            $this.SVTResources +=$svtResource
 
             $serviceEndpointURL = "https://dev.azure.com/{0}/{1}/_apis/serviceendpoint/endpoints?api-version=4.1-preview.1" -f $($this.organizationName),$($projectName);
             $serviceEndpointObj = [WebRequestHelper]::InvokeGetWebRequest($serviceEndpointURL)
@@ -64,7 +64,7 @@ class AzureDevOpsResourceResolver: Resolver
                 $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                                 Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                                 Select-Object -First 1)
-                #$this.SVTResources +=$svtResource
+                $this.SVTResources +=$svtResource
             }
 
             $buildDefnURL = "https://dev.azure.com/{0}/{1}/_apis/build/definitions?api-version=4.1" -f $($this.SubscriptionContext.SubscriptionName), $_.name;
@@ -80,7 +80,7 @@ class AzureDevOpsResourceResolver: Resolver
                     $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                                     Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                                     Select-Object -First 1)
-                    #$this.SVTResources +=$svtResource
+                    $this.SVTResources +=$svtResource
                 }
             }       
 
