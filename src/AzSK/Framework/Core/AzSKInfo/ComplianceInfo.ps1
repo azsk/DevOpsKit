@@ -290,7 +290,7 @@ class ComplianceInfo: CommandBase
 		if(-not $this.Full)
 		{
 			$objectToExport = $this.ComplianceScanResult | Select-Object "ControlId", "VerificationResult", "ActualVerificationResult", "FeatureName", "ResourceGroupName", "ResourceName", "ChildResourceName", "IsBaselineControl", `
-								"ControlSeverity", "AttestationStatus", "AttestedBy", "Justification", "LastScannedOn", "ScanSource", "ScannedBy", "ScannerModuleName", "ScannerVersion","IsControlInGrace","EffectiveResult"
+								"ControlSeverity", "AttestationStatus", "AttestedBy", "Justification", "LastScannedOn", "ScanSource", "ScannedBy", "ScannerModuleName", "ScannerVersion","IsControlInGrace"
 		}
 
 		$controlCSV = New-Object -TypeName WriteCSVData
