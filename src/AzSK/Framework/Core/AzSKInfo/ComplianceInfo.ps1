@@ -113,15 +113,20 @@ class ComplianceInfo: CommandBase
 		$totalCompliance = 0.0
 		$baselineCompliance = 0.0
 		$passControlCount = 0
+		$passControlCountwithGrace=0
 		$failedControlCount = 0
+		$failedControlCountwithGrace=0
 		$baselinePassedControlCount = 0
+		$baselinePassedControlCountWithGrace=0
 		$baselineFailedControlCount = 0
+		$baselineFailedControlCountWithGrace=0
 		$attestedControlCount = 0
-		$gracePeriodControlCount = 0
 		$totalControlCount = 0
 		$baselineControlCount = 0
+		$baselineControlCountWithGrace = 0
 		$attestedControlCount = 0
 		$gracePeriodControlCount = 0
+		$totalComplianceWithGrace=0.0
 
 		if(($this.ComplianceScanResult |  Measure-Object).Count -gt 0)
 		{
@@ -132,72 +137,114 @@ class ComplianceInfo: CommandBase
 				{
 					# total count has been kept inside to exclude not-scanned and skipped controls
 					$totalControlCount++
-										
-					if($result.EffectiveResult -eq [VerificationResult]::Passed)
-					{
-						$passControlCount++
-						#baseline controls condition shouldnot increment if it wont fall in passed/ failed state
-						if($result.IsBaselineControl -eq "True")
+					if($result.IsControlInGrace -eq $false)
+					{					
+						if($result.EffectiveResult -eq [VerificationResult]::Passed)
 						{
-							$baselineControlCount++
-							$baselinePassedControlCount++
+							$passControlCountWithGrace++
+							#baseline controls condition shouldnot increment if it wont fall in passed/ failed state
+							if($result.IsBaselineControl -eq "True")
+							{
+								$baselineControlCountWithGrace++
+								$baselinePassedControlCountWithGrace++
+							}
 						}
-					}
-					elseif($result.EffectiveResult -eq [VerificationResult]::Failed)
-					{
-						$failedControlCount++
-						if($result.IsBaselineControl -eq "True")
+						elseif($result.EffectiveResult -eq [VerificationResult]::Failed)
 						{
-							$baselineControlCount++
-							$baselineFailedControlCount++
-						}
-					}
+							$failedControlCountwithGrace++
+							if($result.IsBaselineControl -eq "True")
+							{
+								$baselineControlCountWithGrace++
+								$baselineFailedControlCountWithGrace++
+							}
 
-					if(-not [string]::IsNullOrEmpty($result.AttestationStatus) -and ($result.AttestationStatus -ne [AttestationStatus]::None))
+						}
+					}else
 					{
-						$attestedControlCount++
-					}
-					if($result.IsControlInGrace -eq "True")
-					{
-						$gracePeriodControlCount++
+						
+						if($result.EffectiveResult -eq [VerificationResult]::Passed)
+						{
+							$passControlCount++
+							#baseline controls condition shouldnot increment if it wont fall in passed/ failed state
+							if($result.IsBaselineControl -eq "True")
+							{
+								$baselineControlCount++
+								$baselinePassedControlCount++
+							}
+						}elseif($result.EffectiveResult -eq [VerificationResult]::Failed)
+						{
+							$failedControlCount++
+							if($result.IsBaselineControl -eq "True")
+							{
+								$baselineControlCount++
+								$baselineFailedControlCount++
+							}
+
+						}
 					}
 				}
+				if(-not [string]::IsNullOrEmpty($result.AttestationStatus) -and ($result.AttestationStatus -ne [AttestationStatus]::None))
+				{
+					$attestedControlCount++
+				}
+				if($result.IsControlInGrace -eq $true)
+				{
+					$gracePeriodControlCount++
+				}
+				
 			}
 			
-			if(($passControlCount + $failedControlCount) -ne 0)
+			if(($passControlCountwithGrace + $failedControlCountwithGrace) -ne 0)
 			{
-				$totalCompliance = (100 * $passControlCount)/($passControlCount + $failedControlCount)
+				$totalComplianceWithGrace = (100 * $passControlCountwithGrace)/($passControlCountwithGrace + $failedControlCountwithGrace)
 			}
-			else {
-				$totalCompliance = 0;
+			else 
+			{
+				$totalComplianceWithGrace = 0;
 			}
 			
-			
+			if(($totalControlCount) -ne 0)
+			{
+				$totalCompliance = (100 * ($passControlCountwithGrace+$passControlCount)/$totalControlCount)
+			}
 			$ComplianceStats = @();
 			
-			if(($baselinePassedControlCount + $baselineFailedControlCount) -ne 0)
+			if(($baselinePassedControlCountWithGrace + $baselineFailedControlCountWithGrace) -ne 0)
 			{
-				$baselineCompliance = (100 * $baselinePassedControlCount)/($baselinePassedControlCount + $baselineFailedControlCount)
-				$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%", "No. of Passed Controls", "No. of Failed Controls"
+				$baselineCompliancewithGrace = (100 * $baselinePassedControlCountWithGrace)/($baselineControlCountWithGrace)
+				$baselineCompliancewithoutGrace=0.0
+				if( ($baselinePassedControlCountWithGrace + $baselineControlCount) -ne 0)
+				{
+					$baselineCompliancewithoutGrace=(100 * ($baselinePassedControlCountWithGrace+ $baselinePassedControlCount))/($baselineControlCount+$baselineControlCountWithGrace)
+				}
+				$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%(With Grace)","Pass-%(Without Grace)","Passed Controls(With Grace)", "Failed Controls(With Grace)" , "Passed Controls(Without Grace)",  "Failed Controls(Without Grace)"
 				$ComplianceStat.ComplianceType = "Baseline"
-				$ComplianceStat."Pass-%"= [math]::Round($baselineCompliance,2)
-				$ComplianceStat."No. of Passed Controls" = $baselinePassedControlCount
-				$ComplianceStat."No. of Failed Controls" = $baselineFailedControlCount
+				$ComplianceStat."Pass-%(With Grace)"= [math]::Round($baselineCompliancewithGrace,2)
+				$ComplianceStat."Pass-%(Without Grace)"= [math]::Round($baselineCompliancewithoutGrace,2)
+				$ComplianceStat."Passed Controls(With Grace)" = $baselinePassedControlCountWithGrace
+				$ComplianceStat."Failed Controls(With Grace)" = $baselineFailedControlCountWithGrace
+				$ComplianceStat."Passed Controls(Without Grace)"=($baselinePassedControlCountWithGrace+$baselinePassedControlCount)
+				$ComplianceStat."Failed Controls(Without Grace)"=($baselineFailedControlCount+$baselineFailedControlCountWithGrace)
 				$ComplianceStats += $ComplianceStat
 			}					
 
-			$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%", "No. of Passed Controls", "No. of Failed Controls"
+			$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%(With Grace)","Pass-%(Without Grace)","Passed Controls(With Grace)", "Failed Controls(With Grace)" , "Passed Controls(Without Grace)",  "Failed Controls(Without Grace)"
 			$ComplianceStat.ComplianceType = "Full"
-			$ComplianceStat."Pass-%"= [math]::Round($totalCompliance,2)
-			$ComplianceStat."No. of Passed Controls" = $passControlCount
-			$ComplianceStat."No. of Failed Controls" = $failedControlCount
+			$ComplianceStat."Pass-%(With Grace)"= [math]::Round($totalComplianceWithGrace,2)
+			$ComplianceStat."Pass-%(Without Grace)"= [math]::Round($totalCompliance,2)
+			$ComplianceStat."Passed Controls(With Grace)" = ($passControlCountwithGrace)			
+			$ComplianceStat."Failed Controls(With Grace)" = ($failedControlCountwithGrace)
+			$ComplianceStat."Passed Controls(Without Grace)" = ($passControlCountwithGrace+$passControlCount)
+			$ComplianceStat."Failed Controls(Without Grace)" = ($failedControlCountwithGrace+$failedControlCount)
+			
 			$ComplianceStats += $ComplianceStat
 
-			$this.PublishCustomMessage(($ComplianceStats | Format-Table | Out-String), [MessageType]::Default)
+			$this.PublishCustomMessage(($ComplianceStats | Format-Table  | Out-String  -Width 2048), [MessageType]::Default)
 			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
+			$this.PublishCustomMessage("`r`nTotal control count:          "+ $totalControlCount, [MessageType]::Default);
+			$this.PublishCustomMessage("`r`nTotal baseline control count: "+ ($baselineControlCount+$baselineControlCountWithGrace), [MessageType]::Default)
 			$this.PublishCustomMessage("`r`nAttested control count:        "+ $attestedControlCount , [MessageType]::Default);
 			$this.PublishCustomMessage("`r`nControl in grace period count: "+ $gracePeriodControlCount , [MessageType]::Default);
-
 			$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 			$this.PublishCustomMessage("`r`n`r`n`r`nDisclaimer: Compliance summary/control counts may differ slightly from the central telemetry/dashboard due to various timing/sync lags.", [MessageType]::Default);
 		}
@@ -219,7 +266,7 @@ class ComplianceInfo: CommandBase
 				$_.IsBaselineControl = "No"
 			}
 
-			if($_.IsControlInGrace -eq "True")
+			if($_.IsControlInGrace -eq $true)
 			{
 				$_.IsControlInGrace = "Yes"
 			}
@@ -243,7 +290,7 @@ class ComplianceInfo: CommandBase
 		if(-not $this.Full)
 		{
 			$objectToExport = $this.ComplianceScanResult | Select-Object "ControlId", "VerificationResult", "ActualVerificationResult", "FeatureName", "ResourceGroupName", "ResourceName", "ChildResourceName", "IsBaselineControl", `
-								"ControlSeverity", "AttestationStatus", "AttestedBy", "Justification", "LastScannedOn", "ScanSource", "ScannedBy", "ScannerModuleName", "ScannerVersion"
+								"ControlSeverity", "AttestationStatus", "AttestedBy", "Justification", "LastScannedOn", "ScanSource", "ScannedBy", "ScannerModuleName", "ScannerVersion","IsControlInGrace","EffectiveResult"
 		}
 
 		$controlCSV = New-Object -TypeName WriteCSVData
@@ -300,7 +347,7 @@ class ComplianceResult
 	[string] $ScannedBy = ""
 	[string] $ScannerModuleName = ""
 	[string] $ScannerVersion = ""
-	[string] $IsControlInGrace = ""
+	[string] $IsControlInGrace ;
 	[string] $HasOwnerAccessTag = ""
 	[string] $ResourceId = ""
 	[string] $EffectiveResult = ([VerificationResult]::NotScanned).ToString();
@@ -331,7 +378,7 @@ class ComplianceResult
 		$this.ScannedBy = $persistedEntity.ScannedBy;
 		$this.ScannerModuleName = $persistedEntity.ScannerModuleName;
 		$this.ScannerVersion = $persistedEntity.ScannerVersion;
-		#this.$IsControlInGrace = $persistedEntity.
+		$this.IsControlInGrace = $persistedEntity.IsControlInGrace
 		$this.HasOwnerAccessTag = $persistedEntity.HasOwnerAccessTag;
 		$this.ResourceId = $persistedEntity.ResourceId;
 		#this.$EffectiveResult = if($persistedEntity.VerificationResult;
