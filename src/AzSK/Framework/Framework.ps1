@@ -139,10 +139,7 @@ catch
     ForEach-Object {
     . $_.FullName
 }
-(Get-ChildItem -Path "$PSScriptRoot\Core\SVT\Configurations\" -Recurse -File) |
-    ForEach-Object {
-    . $_.FullName
-}
+
 (Get-ChildItem -Path "$PSScriptRoot\Core\SVT\AzureDevOps\" -Recurse -File) |
     ForEach-Object {
     . $_.FullName

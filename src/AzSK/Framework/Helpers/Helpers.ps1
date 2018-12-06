@@ -103,9 +103,7 @@ class Helpers {
     {
         if(-not [Helpers]::currentAzureDevOpsContext)
         {
-            $libraryPath = (Get-Item $PSScriptRoot).Parent.Parent.FullName+ "\ARMCheckerLib";
-            Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
-            #$azureDevOpsOrganizationUrl = "http://dev.azure.com/organization"; 
+            #TODO: Descuss on default clientid
             $clientId = "872cd9fa-d31f-45e0-9eab-6e460a02d1f1";          
             $replyUri = "urn:ietf:wg:oauth:2.0:oob"; 
             $azureDevOpsResourceId = "499b84ac-1321-427f-aa17-267ca6975798";
