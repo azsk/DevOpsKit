@@ -11,7 +11,7 @@ class Release: SVTBase
 	{
         
         $ToolFolderPath =  [ConfigurationManager]::GetAzSKSettings().CredScanToolPath
-        if(Test-Path $ToolFolderPath)
+        if((-not [string]::IsNullOrEmpty($ToolFolderPath)) -and (Test-Path $ToolFolderPath))
         {
             $ToolPath = Get-ChildItem -Path $ToolFolderPath -File -Include "CredentialScanner.exe" -Recurse 
             if($ToolPath)

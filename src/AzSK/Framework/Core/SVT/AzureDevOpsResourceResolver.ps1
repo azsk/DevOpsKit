@@ -5,10 +5,41 @@ class AzureDevOpsResourceResolver: Resolver
     [SVTResource[]] $SVTResources = @();
     [string] $ResourcePath;
     [string] $organizationName
+    hidden [string[]] $ProjectNames = @();
+    hidden [string[]] $BuildNames = @();
+    hidden [string[]] $ReleaseNames = @();
     [int] $SVTResourcesFoundCount=0;
-    AzureDevOpsResourceResolver([string]$organizationName): Base($organizationName)
+    AzureDevOpsResourceResolver([string]$organizationName,$ProjectNames,$BuildNames,$ReleaseNames): Base($organizationName)
 	{
         $this.organizationName = $organizationName
+
+        if(-not [string]::IsNullOrEmpty($ProjectNames))
+        {
+			$this.ProjectNames += $this.ConvertToStringArray($ProjectNames);
+
+			if ($this.ProjectNames.Count -eq 0)
+			{
+				throw [SuppressedException] "The parameter 'ProjectNames' does not contain any string."
+			}
+        }	
+
+        if(-not [string]::IsNullOrEmpty($BuildNames))
+        {
+			$this.BuildNames += $this.ConvertToStringArray($BuildNames);
+			if ($this.BuildNames.Count -eq 0)
+			{
+				throw [SuppressedException] "The parameter 'BuildNames' does not contain any string."
+			}
+        }
+
+        if(-not [string]::IsNullOrEmpty($ReleaseNames))
+        {
+			$this.ReleaseNames += $this.ConvertToStringArray($ReleaseNames);
+			if ($this.ReleaseNames.Count -eq 0)
+			{
+				throw [SuppressedException] "The parameter 'ReleaseNames' does not contain any string."
+			}
+        }
     }
 
     [void] LoadAzureResources()
@@ -38,7 +69,7 @@ class AzureDevOpsResourceResolver: Resolver
         $apiURL = "https://dev.azure.com/{0}/_apis/projects?api-version=4.1" -f $($this.SubscriptionContext.SubscriptionName);
         $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL) ;
 
-        $responseObj | ForEach-Object {
+        $responseObj  | Where-Object { $this.ProjectNames.Count -eq 0 -or $this.ProjectNames -contains $_.name  } | ForEach-Object {
             $projectName = $_.name
             $svtResource = [SVTResource]::new();
             $svtResource.ResourceName = $_.name;
@@ -71,7 +102,7 @@ class AzureDevOpsResourceResolver: Resolver
             $buildDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($buildDefnURL) 
             if(([Helpers]::CheckMember($buildDefnsObj,"count") -and $buildDefnsObj[0].count -gt 0) -or  (($buildDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($buildDefnsObj[0],"name")))
             {
-                $buildDefnsObj | ForEach-Object {
+                $buildDefnsObj | Where-Object { $this.BuildNames.Count -eq 0 -or $this.BuildNames -contains $_.name  } | ForEach-Object {
                     $svtResource = [SVTResource]::new();
                     $svtResource.ResourceName = $_.name;
                     $svtResource.ResourceGroupName =$_.project.name;
@@ -88,7 +119,7 @@ class AzureDevOpsResourceResolver: Resolver
             $releaseDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($releaseDefnURL);
             if(([Helpers]::CheckMember($releaseDefnsObj,"count") -and $releaseDefnsObj[0].count -gt 0) -or  (($releaseDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($releaseDefnsObj[0],"name")))
             {
-                $releaseDefnsObj | ForEach-Object {
+                $releaseDefnsObj | Where-Object { $this.ReleaseNames.Count -eq 0 -or $this.ReleaseNames -contains $_.name  } | ForEach-Object {
                     $svtResource = [SVTResource]::new();
                     $svtResource.ResourceName = $_.name;
                     $svtResource.ResourceGroupName =$projectName;

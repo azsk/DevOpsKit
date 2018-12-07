@@ -24,43 +24,49 @@ class CommandBase: AzSKRoot {
 		{
 			$this.Force = $this.InvocationContext.BoundParameters["Force"];
 		}		
-		#Validate if command is getting run with correct Org Policy
-		$IsTagSettingRequired=$this.ValidateOrgPolicyOnSubscription($this.Force)
-		#Validate if policy url token is getting expired 
-		$onlinePolicyStoreUrl = [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl
-		if([Helpers]::IsSASTokenUpdateRequired($onlinePolicyStoreUrl))
+
+		#TODO: Make ScanType behaviours dynamic
+		If([Helpers]::ScanType -ne [ScanType]::AzureDevOps)
 		{
-			#Check if CA Setup Runbook URL token is valid and update it with local policy token
-			$CASetupRunbookUrl = [ConfigurationManager]::GetAzSKConfigData().CASetupRunbookURL
-			if(-not [Helpers]::IsSASTokenUpdateRequired($CASetupRunbookUrl))
+			#Validate if command is getting run with correct Org Policy
+			$IsTagSettingRequired=$this.ValidateOrgPolicyOnSubscription($this.Force)
+			#Validate if policy url token is getting expired 
+			$onlinePolicyStoreUrl = [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl
+			if([Helpers]::IsSASTokenUpdateRequired($onlinePolicyStoreUrl))
 			{
-				[ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl = [Helpers]::GetUriWithUpdatedSASToken($onlinePolicyStoreUrl,$CASetupRunbookUrl)				
-				[AzSKSettings]::Update([ConfigurationManager]::GetAzSKSettings())
+				#Check if CA Setup Runbook URL token is valid and update it with local policy token
+				$CASetupRunbookUrl = [ConfigurationManager]::GetAzSKConfigData().CASetupRunbookURL
+				if(-not [Helpers]::IsSASTokenUpdateRequired($CASetupRunbookUrl))
+				{
+					[ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl = [Helpers]::GetUriWithUpdatedSASToken($onlinePolicyStoreUrl,$CASetupRunbookUrl)				
+					[AzSKSettings]::Update([ConfigurationManager]::GetAzSKSettings())
+				}
+				else
+				{
+					[EventBase]::PublishGenericCustomMessage("Org policy settings is getting expired. Please run installer(IWR) command to update with latest policy. ", [MessageType]::Warning);
+				}
 			}
-			else
+
+			#Validate if command has AzSK component write permission
+			$commandMetadata= $this.GetCommandMetadata()
+			if(([Helpers]::CheckMember($commandMetadata,"HasAzSKComponentWritePermission")) -and  $commandMetadata.HasAzSKComponentWritePermission -and ($IsTagSettingRequired -or $this.Force))
 			{
-				[EventBase]::PublishGenericCustomMessage("Org policy settings is getting expired. Please run installer(IWR) command to update with latest policy. ", [MessageType]::Warning);
-			}
+				#If command is running with Org-neutral Policy or switch Org policy, Set Org Policy tag on subscription
+				$this.SetOrgPolicyTag($this.Force)
+			}	
+
+			$azskConfigComplianceFlag = [ConfigurationManager]::GetAzSKConfigData().StoreComplianceSummaryInUserSubscriptions;	
+			$localSettingComplianceFlag = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
+			#return if feature is turned off at server config
+			if($azskConfigComplianceFlag -or $localSettingComplianceFlag) 
+			{
+				$this.IsLocalComplianceStoreEnabled = $true
+			}     
+			#clear azsk storage instance
+			[StorageHelper]::AzSKStorageHelperInstance = $null;
+
 		}
-
-		 #Validate if command has AzSK component write permission
-		$commandMetadata= $this.GetCommandMetadata()
-		if(([Helpers]::CheckMember($commandMetadata,"HasAzSKComponentWritePermission")) -and  $commandMetadata.HasAzSKComponentWritePermission -and ($IsTagSettingRequired -or $this.Force))
-		{
-			#If command is running with Org-neutral Policy or switch Org policy, Set Org Policy tag on subscription
-			$this.SetOrgPolicyTag($this.Force)
-		}	
-
-		$azskConfigComplianceFlag = [ConfigurationManager]::GetAzSKConfigData().StoreComplianceSummaryInUserSubscriptions;	
-        $localSettingComplianceFlag = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
-        #return if feature is turned off at server config
-        if($azskConfigComplianceFlag -or $localSettingComplianceFlag) 
-		{
-			$this.IsLocalComplianceStoreEnabled = $true
-		}     
-		#clear azsk storage instance
-		[StorageHelper]::AzSKStorageHelperInstance = $null;
-
+		
     }
 
     [void] CommandStarted() {

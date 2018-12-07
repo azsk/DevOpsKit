@@ -791,7 +791,7 @@ function Get-AzSKAzureDevOpsSecurityStatus
 	.DESCRIPTION
 	This command will execute the security controls and will validate their status as 'Success' or 'Failure' based on the security guidance. Refer https://aka.ms/azskossdocs for more information 
 	
-	.PARAMETER SubscriptionId
+	.PARAMETER OrganizationName
 		Subscription id for which the security evaluation has to be performed.
 
 	.NOTES
@@ -812,24 +812,19 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		$OrganizationName,
 
 		[string]
-        [Parameter( HelpMessage="Subscription id for which the security evaluation has to be performed.")]
+        [Parameter( HelpMessage="Project names for which the security evaluation has to be performed.")]
 		[Alias("pn")]
 		$ProjectNames,
 
 		[string]
-        [Parameter(HelpMessage="Subscription id for which the security evaluation has to be performed.")]
+        [Parameter(HelpMessage="Build names for which the security evaluation has to be performed.")]
 		[Alias("bn")]
 		$BuildNames,
 
 		[string]
-        [Parameter(HelpMessage="Subscription id for which the security evaluation has to be performed.")]
+        [Parameter(HelpMessage="Release names for which the security evaluation has to be performed.")]
 		[Alias("rn")]
-		$ReleaseNames,
-
-		[string]
-        [Parameter(Position = 0, HelpMessage="Subscription id for which the security evaluation has to be performed.")]
-		[Alias("rtn")]
-		$ResourceTypeName
+		$ReleaseNames
 	)
 	Begin
 	{
@@ -841,7 +836,7 @@ function Get-AzSKAzureDevOpsSecurityStatus
 	{
 	try 
 		{
-			$resolver = [AzureDevOpsResourceResolver]::new($OrganizationName);
+			$resolver = [AzureDevOpsResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
