@@ -244,7 +244,14 @@ class ComplianceInfo: CommandBase
                 $ControlSeverity = $_.ControlSeverity
                 if($this.ControlSettings.ControlSeverity.PSobject.Properties.name -match $ControlSeverity)
                 {
-                    $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
+                    if($this.ControlSettings.ControlSeverity.PSobject.Properties.name -match $ControlSeverity)
+                    {
+                        $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
+                    }
+                    else
+                    {
+                        $_.ControlSeverity = $ControlSeverity
+                    }
                 }
             }	
 		}

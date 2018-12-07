@@ -114,7 +114,14 @@ class SVTBase: AzSKRoot
 				$ControlSeverity = $_.ControlSeverity
                 if($this.ControlSettings.PSobject.Properties.name -match "ControlSeverity")
                 {
-                    $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
+                    if($this.ControlSettings.ControlSeverity.PSobject.Properties.name -match $ControlSeverity)
+                    {
+                        $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
+                    }
+                    else
+                    {
+                        $_.ControlSeverity = $ControlSeverity
+                    }
                 }
 				if(-not [string]::IsNullOrEmpty($_.MethodName))
 				{
@@ -1348,7 +1355,19 @@ class SVTBase: AzSKRoot
 		$controlSeverity=$currentControlItem.ControlSeverity;
 		if([Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays"))
 		{
-			$computedGraceDays=$this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity;
+			 if($this.ControlSettings.PSobject.Properties.name -match "ControlSeverity")
+            {
+                $controlsev = $this.ControlSettings.ControlSeverity.PSobject.Properties | Where-Object Value -eq $controlSeverity | Select-Object -First 1
+                if($controlsev)
+                {
+                    $controlSeverity = $controlsev.name
+                    $computedGraceDays=$this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity;
+                }
+            }
+            else
+            {
+                $computedGraceDays=$this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity;
+            }
 		}
 		if($null -ne $currentControlItem.GraceExpiryDate)
 		{
