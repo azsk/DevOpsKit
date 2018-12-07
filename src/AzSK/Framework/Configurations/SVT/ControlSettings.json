@@ -325,8 +325,8 @@
   },
   "ControlSeverity": {
     "Critical": "Critical",
-    "High": "High",
-    "Medium": "Medium",
+    "High": "Important",
+    "Medium": "Moderate",
     "Low": "Low"
   }
 }
