@@ -73,7 +73,6 @@ class KubernetesService: SVTBase
 	{
 		if([Helpers]::CheckMember($this.ResourceObject,"Properties"))
 		{
-			
 			if([Helpers]::CheckMember($this.ResourceObject.Properties,"aadProfile") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile,"clientAppID") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile,"serverAppID") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile,"tenantID"))
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed,
@@ -102,6 +101,33 @@ class KubernetesService: SVTBase
 			else
 			{
 				$controlResult.VerificationResult = [VerificationResult]::Passed
+			}
+		}
+
+		return $controlResult;
+	}
+
+	hidden [controlresult[]] CheckMonitoringConfiguration([controlresult] $controlresult)
+	{
+		if([Helpers]::CheckMember($this.ResourceObject,"Properties"))
+		{
+			if([Helpers]::CheckMember($this.ResourceObject.Properties,"omsagent") -and [Helpers]::CheckMember($this.ResourceObject.Properties.omsagent,"config"))
+			{
+				if($this.ResourceObject.Properties.omsagent)
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed,
+										[MessageData]::new("Configuration of monitoring agent for resource " + $this.ResourceObject.name + "is ", $this.ResourceObject.Properties.omsagent));
+				}
+				else
+				{
+					$controlResult.AddMessage([VerificationResult]::Failed,
+										[MessageData]::new("Monitoring agent is not enabled for resource " + $this.ResourceObject.name));
+				}
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed,
+										[MessageData]::new("Monitoring agent is not configured for resource " + $this.ResourceObject.name));
 			}
 		}
 

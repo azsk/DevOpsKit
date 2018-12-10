@@ -272,7 +272,6 @@
       ]
     },
     {
-
       "featureName": "Storage",
       "supportedResourceTypes": [ "Microsoft.Storage/storageAccounts" ],
       "controls": [
@@ -448,6 +447,71 @@
           "matchType": "StringWhitespace",
           "data": {
             "value": false
+          }
+        }
+      ]
+    },
+    {
+      "featureName": "KubernetesService",
+      "supportedResourceTypes": [ "Microsoft.ContainerService/ManagedClusters" ],
+      "controls": [
+        {
+          "id": "KubernetesService150",
+          "controlId": "Azure_KubernetesService_Deploy_Use_Latest_Version",
+          "isEnabled": true,
+          "description": "The latest version of Kubernetes should be used",
+          "rationale": "Running on older versions could mean you are not using latest security classes. Usage of such old classes and types can make your application vulnerable.",
+          "recommendation": "Refer: https://docs.microsoft.com/en-us/azure/aks/upgrade-cluster.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.kubernetesVersion" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "1.11.15",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "KubernetesService120",
+          "controlId": "Azure_KubernetesService_AuthN_Enabled_AAD",
+          "isEnabled": true,
+          "description": "AAD should be enabled in Kubernetes Service",
+          "rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+          "recommendation": "Refer: https://docs.microsoft.com/en-us/azure/aks/aad-integration to configure AAD in Kubernetes Service.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.aadProfile" ],
+          "matchType": "ItemCount",
+          "data": {
+            "type": "GreaterThan",
+            "value": 1
+          }
+        },
+        {
+          "id": "KubernetesService110",
+          "controlId": "Azure_KubernetesService_Deploy_Enable_Cluster_RBAC",
+          "isEnabled": true,
+          "description": "Cluster RBAC must be enabled in Kubernetes Service",
+          "rationale": "Enabling RBAC in a cluster lets you finely control access to various operations at the cluster/node/pod/namespace scopes for different stakeholders. Without RBAC enabled, every user has full access to the cluster which is a violation of the principle of least privilege. Note that Azure Kubernetes Service does not currently support other mechanisms to define authorization in Kubernetes (such as Attribute-based Access Control authorization or Node authorization).",
+          "recommendation": "RBAC flag must be enabled while creating the Kubernetes Service. Existing non-RBAC enabled Kubernetes Service clusters cannot currently be updated for RBAC use. Refer: https://docs.microsoft.com/en-us/azure/aks/aad-integration.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.enableRBAC" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": true
+          }
+        },
+        {
+          "id": "KubernetesService220",
+          "controlId": "Azure_KubernetesService_Audit_Enable_Logging_and_Monitoring",
+          "isEnabled": true,
+          "description": "Monitoring must be enabled for Azure Kubernetes Service",
+          "rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
+          "recommendation": "Refer: https://docs.microsoft.com/en-us/azure/azure-monitor/insights/container-insights-overview.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.addonProfiles.omsagent.enabled" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": true
           }
         }
       ]
