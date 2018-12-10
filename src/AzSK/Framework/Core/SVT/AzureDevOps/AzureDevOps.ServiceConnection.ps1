@@ -23,8 +23,13 @@ class ServiceConnection: SVTBase
                 {
                     if($Endpoint.data.scopeLevel -eq "Subscription")
                     {
-                        $subLevelSPNList  += @{EndPointName= $Endpoint.Name; Creator = $Endpoint.createdBy.displayName; AuthType=$Endpoint.authorization.parameters.authenticationType }
-                    }                    
+                        $AuthType = ""
+                        if([Helpers]::CheckMember($Endpoint,"authorization.parameters.authenticationType"))
+                        {
+                            $AuthType = $Endpoint.authorization.parameters.authenticationType
+                        }
+                        $subLevelSPNList  += @{EndPointName= $Endpoint.Name; Creator = $Endpoint.createdBy.displayName; AuthType=$AuthType }
+                    }                 
                 }
                 else
                 {
