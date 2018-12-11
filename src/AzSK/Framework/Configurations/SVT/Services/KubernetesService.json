@@ -170,7 +170,7 @@
     },
     {
       "ControlID": "Azure_KubernetesService_AuthN_Use_POD_Identity",
-      "Description": "Use Pod Identity for accessing other AAD-protected resources from the Kubernetes Service.",
+      "Description": "Pod Identity must be used for accessing other AAD-protected resources from the Kubernetes Service.",
       "Id": "KubernetesService200",
       "ControlSeverity": "Medium",
       "Automated": "No",
