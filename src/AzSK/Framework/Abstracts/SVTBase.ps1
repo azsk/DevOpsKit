@@ -111,10 +111,10 @@ class SVTBase: AzSKRoot
 
                 $_.Description = $global:ExecutionContext.InvokeCommand.ExpandString($_.Description)
                 $_.Recommendation = $global:ExecutionContext.InvokeCommand.ExpandString($_.Recommendation)
-				$ControlSeverity = $_.ControlSeverity
-                if($this.ControlSettings.PSobject.Properties.name -match "ControlSeverity")
+                $ControlSeverity = $_.ControlSeverity
+                if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity"))
                 {
-                    if($this.ControlSettings.ControlSeverity.PSobject.Properties.name -match $ControlSeverity)
+                    if([Helpers]::CheckMember($this.ControlSettings.ControlSeverity,$ControlSeverity))
                     {
                         $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
                     }
@@ -122,6 +122,7 @@ class SVTBase: AzSKRoot
                     {
                         $_.ControlSeverity = $ControlSeverity
                     }
+                    
                 }
 				if(-not [string]::IsNullOrEmpty($_.MethodName))
 				{
@@ -1355,7 +1356,7 @@ class SVTBase: AzSKRoot
 		$controlSeverity=$currentControlItem.ControlSeverity;
 		if([Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays"))
 		{
-			 if($this.ControlSettings.PSobject.Properties.name -match "ControlSeverity")
+            if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity"))
             {
                 $controlsev = $this.ControlSettings.ControlSeverity.PSobject.Properties | Where-Object Value -eq $controlSeverity | Select-Object -First 1
                 if($controlsev)
