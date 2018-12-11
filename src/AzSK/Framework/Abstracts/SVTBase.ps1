@@ -1355,11 +1355,8 @@ class SVTBase: AzSKRoot
             if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity"))
             {
                 $controlsev = $this.ControlSettings.ControlSeverity.PSobject.Properties | Where-Object Value -eq $controlSeverity | Select-Object -First 1
-                if($controlsev)
-                {
-                    $controlSeverity = $controlsev.name
-                    $computedGraceDays=$this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity;
-                }
+                $controlSeverity = $controlsev.name
+                $computedGraceDays=$this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity;
             }
             else
             {
