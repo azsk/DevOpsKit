@@ -239,18 +239,15 @@ class ComplianceInfo: CommandBase
 				$_.HasOwnerAccessTag = "No"
 			}
             
-            if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity"))
+			$ControlSeverity = $_.ControlSeverity
+			if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverity"))
             {
-                $ControlSeverity = $_.ControlSeverity
-                if([Helpers]::CheckMember($this.ControlSettings.ControlSeverity,$ControlSeverity))
-                {
-                    $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
-                }
-                else
-                {
-                    $_.ControlSeverity = $ControlSeverity
-                }
-            }			
+                $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
+            }
+			else
+			{
+				$_.ControlSeverity = $ControlSeverity
+			}			
 		}
         
         
