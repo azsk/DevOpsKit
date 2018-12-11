@@ -295,28 +295,12 @@ class SVTResourceResolver: AzSKRoot
 		{
 			$result += $expressionResult
 		}
-		$filteredResource = @();
-		[bool] $isMatchingTagValue=$false;
-			 
+					 
 		if((-not [string]::IsNullOrEmpty($this.TagName)) -and (-not [string]::IsNullOrEmpty($this.TagValue) -and ($this.TagValue | Measure-Object).Count -gt 0))
 		{
 				$this.TagValue= $this.ConvertToStringArray($this.TagValue)
 				$result = $result | Where-Object {$null -ne $_.Tags -and ($null -ne $_.Tags.Keys )}
-				$result = $result | Where-Object {$_.Tags.Keys -contains $this.TagName}
-				$result | ForEach-Object{
-					$isMatchingTagValue=$false
-					$_.Tags.GetEnumerator() | ForEach-Object{
-						if($_.Key -eq $this.TagName -and $_.Value -in $this.TagValue)
-						{
-							$isMatchingTagValue = $true
-						}
-					}
-					if($isMatchingTagValue)
-					{
-						$filteredResource+=$_
-					}
-			}
-			$result=$filteredResource
+				$result = $result | Where-Object{($_.Tags.GetEnumerator() | Where-Object {$_.Key -eq $this.TagName -and $_.Value -in $this.TagValue })}
 		}		
 		 
 		return $result;
