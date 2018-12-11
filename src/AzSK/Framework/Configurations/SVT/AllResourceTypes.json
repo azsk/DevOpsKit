@@ -41,5 +41,6 @@
   "Microsoft.BotService/botServices",
   "Microsoft.ContainerInstance/containerGroups",
   "Microsoft.ContainerRegistry/registries",
-  "Microsoft.Databricks/workspaces"
+  "Microsoft.Databricks/workspaces",
+  "Microsoft.ContainerService/ManagedClusters"
 ]

@@ -51,13 +51,13 @@ class CloudService: SVTBase
 		#step 2: load from classic config model
 		try
 		{		
-			$ResourceAppIdURI = [WebRequestHelper]::ClassicManagementUri;
+			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
 			$ClassicAccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 			if($null -ne $ClassicAccessToken) 
 			{
 				$header = "Bearer " + $ClassicAccessToken
 				$headers = @{"Authorization"=$header;"Content-Type"="application/json"; "x-ms-version" ="2013-08-01"}
-				$uri = [string]::Format("{0}/{1}/services/hostedservices/{2}?embed-detail=true","https://management.core.windows.net", $this.SubscriptionContext.SubscriptionId ,$this.ResourceContext.ResourceName)        
+				$uri = [string]::Format("{0}/{1}/services/hostedservices/{2}?embed-detail=true",$ResourceAppIdURI, $this.SubscriptionContext.SubscriptionId ,$this.ResourceContext.ResourceName)        
 				$cloudServiceResponse = Invoke-WebRequest -Method GET -Uri $uri -Headers $headers
 				if($cloudServiceResponse.StatusCode -ge 200 -and $cloudServiceResponse.StatusCode -le 399)
 				{			 

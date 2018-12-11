@@ -148,7 +148,7 @@ class ConfigurationHelper {
 						}
 						elseif($policyFileName -eq [Constants]::ServerConfigMetadataFileName)
 						{
-							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy url is correct or policy is migrated with latest AzSK"), [MessageType]::Warning);
+							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy URL is correct."), [MessageType]::Warning);
 							[ConfigurationHelper]::IsIssueLogged = $true
 						}
 						else
@@ -234,7 +234,7 @@ class ConfigurationHelper {
 						}
 						elseif($fileName -eq [Constants]::ServerConfigMetadataFileName)
 						{
-							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy url is correct or policy is migrated with latest AzSK"), [MessageType]::Warning);
+							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy URL is correct."), [MessageType]::Warning);
 							[ConfigurationHelper]::IsIssueLogged = $true
 						}
 						else
@@ -266,11 +266,20 @@ class ConfigurationHelper {
 		$Version = $configVersion;
 		$uri = $global:ExecutionContext.InvokeCommand.ExpandString($onlineStoreUri)
 		[System.Uri] $validatedUri = $null;
+		$ResourceAppIdURI = "https://management.core.windows.net/"
 		if([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri))
 		{
 			if($enableAADAuthForOnlinePolicyStore)
-			{
-				$accessToken = [Helpers]::GetAccessToken("https://management.core.windows.net/")
+			{		
+			$rmContext = [Helpers]::GetCurrentRMContext();
+			if(-not [string]::IsNullOrWhiteSpace($rmContext.Environment.Name) -and $rmContext.Environment.Name -ne [Constants]::DefaultAzureEnvironment)
+		     {
+				   $ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl
+			 }
+			 else {
+				$ResourceAppIdURI = "https://management.core.windows.net/"
+			 }
+				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 				$serverFileContent = Invoke-RestMethod `
 									-Method GET `
 									-Uri $validatedUri `

@@ -121,6 +121,11 @@ function Set-AzSKPolicySettings {
 		[Alias("eop")]
         $EnableOnlinePolicy,
 
+        [Parameter(Mandatory = $false, HelpMessage = "Provide your Azure Environment")]
+        [string]
+		[Alias("ae")]
+        $AzureEnvironment,
+
         [Parameter(Mandatory = $false, HelpMessage = "Provide the flag to disable online policy")]
         [switch]
 		[Alias("dop")]
@@ -194,7 +199,13 @@ function Set-AzSKPolicySettings {
 			if($EnableCentralScanMode)
 			{
 				 $azskSettings.IsCentralScanModeOn = $EnableCentralScanMode
-			}
+            }
+            if ($AzureEnvironment) {
+                $azskSettings.AzureEnvironment = $AzureEnvironment
+            }
+            else {
+                $azskSettings.AzureEnvironment = [Constants]::DefaultAzureEnvironment
+            }
             [ConfigurationManager]::UpdateAzSKSettings($azskSettings);            
             [EventBase]::PublishGenericCustomMessage("Successfully configured policy settings. `nStart a fresh PS console/session to ensure any policy updates are (re-)loaded.", [MessageType]::Warning);
         }

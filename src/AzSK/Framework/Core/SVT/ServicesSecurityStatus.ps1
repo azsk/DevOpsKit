@@ -17,10 +17,10 @@ class ServicesSecurityStatus: SVTCommandBase
 		#BaseLineControlFilter with control ids
 		$this.UsePartialCommits =$invocationContext.BoundParameters["UsePartialCommits"];
 		$this.UseBaselineControls = $invocationContext.BoundParameters["UseBaselineControls"];
+		$this.CentralStorageAccount = $invocationContext.BoundParameters["CentralStorageAccount"];
 		[PartialScanManager]::ClearInstance();
 		$this.BaselineFilterCheck();
 		$this.UsePartialCommitsCheck();
-
 	}
 
 	[SVTEventContext[]] ComputeApplicableControls()
@@ -110,17 +110,41 @@ class ServicesSecurityStatus: SVTCommandBase
 			$this.PublishCustomMessage("No security controls/resources match the input criteria specified. `nPlease rerun the command using a different set of criteria.");
 			return $result;
 		}
-		$this.PublishCustomMessage("Number of resources: $(($resourcesList | Measure-Object).Count)");
+		$this.PublishCustomMessage("Number of resources: $($this.resolver.SVTResourcesFoundCount)");
 		$automatedResources = @();
 		
 		$automatedResources += ($resourcesList | Where-Object { $_.ResourceTypeMapping });
 		
-		$this.PublishCustomMessage("Number of resources for which security controls will be evaluated: $($automatedResources.Count)");
+		# Resources skipped from scan using excludeResourceName or -ExcludeResourceGroupNames parameters
+		$ExcludedResourceGroups=$this.resolver.ExcludedResourceGroupNames 
+		$ExcludedResources=$this.resolver.ExcludedResources ;
+		if(($this.resolver.ExcludeResourceGroupNames| Measure-Object).Count -gt 0 -or ($this.resolver.ExcludeResourceNames| Measure-Object).Count -gt 0)
+		{
+			$this.PublishCustomMessage("One or more resources/resource groups will be excluded from the scan based on exclude flags.")	
+			if(-not [string]::IsNullOrEmpty($this.resolver.ExcludeResourceGroupWarningMessage))
+			{
+				$this.PublishCustomMessage("$($this.resolver.ExcludeResourceGroupWarningMessage)",[MessageType]::Warning)
+				
+			}
+			if(-not [string]::IsNullOrEmpty($this.resolver.ExcludeResourceWarningMessage))
+			{
+				$this.PublishCustomMessage("$($this.resolver.ExcludeResourceWarningMessage)",[MessageType]::Warning)
+			}
+			$this.PublishCustomMessage("Summary of exclusions: ");
+			if(($this.resolver.ExcludeResourceGroupNames| Measure-Object).Count -gt 0)
+			{
+				$this.PublishCustomMessage("	Resource groups excluded: $(($ExcludedResourceGroups | Measure-Object).Count)", [MessageType]::Info);	
+			}
+			$this.PublishCustomMessage("	Resources excluded: $(($ExcludedResources | Measure-Object).Count)(includes RGs,resourcetypenames and explicit exclusions).", [MessageType]::Info);	
+			$this.PublishCustomMessage("For a detailed list of excluded resources, see 'ExcludedResources-$($this.RunIdentifier).txt' in the output log folder.")
+			$this.ReportExcludedResources($this.resolver);
+		}
 		if($runNonAutomated)
 		{
 			$this.ReportNonAutomatedResources();
 		}
-
+					
+		$this.PublishCustomMessage("`nNumber of resources for which security controls will be evaluated: $($automatedResources.Count)",[MessageType]::Info);
 		$totalResources = $automatedResources.Count;
 		[int] $currentCount = 0;
 		$automatedResources | ForEach-Object {
@@ -215,7 +239,7 @@ class ServicesSecurityStatus: SVTCommandBase
             }
         }
 		
-
+		
 		return $result;
 	}
 
@@ -260,8 +284,13 @@ class ServicesSecurityStatus: SVTCommandBase
 		#Load ControlSetting Resource Types and Filter resources
 		$scanSource = [AzSKSettings]::GetInstance().GetScanSource();
 		#Load ControlSetting Resource Types and Filter resources
-		[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
-		$baselineControlsDetails = $partialScanMngr.GetBaselineControlDetails()
+		if($this.CentralStorageAccount){
+			[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance($this.CentralStorageAccount, $this.SubscriptionContext.SubscriptionId);	
+		}
+		else{
+			[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
+		}
+	    $baselineControlsDetails = $partialScanMngr.GetBaselineControlDetails()
 		#If Scan source is in supported sources or baselineControls switch is available
 		if ($null -ne $baselineControlsDetails -and ($baselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -gt 0 -and ($baselineControlsDetails.SupportedSources -contains $scanSource -or $this.UseBaselineControls))
 		{
@@ -289,35 +318,39 @@ class ServicesSecurityStatus: SVTCommandBase
 		#Load ControlSetting Resource Types and Filter resources
 		$scanSource = [AzSKSettings]::GetInstance().GetScanSource();
 		#Load ControlSetting Resource Types and Filter resources
-		[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
-		$baselineControlsDetails = $partialScanMngr.GetBaselineControlDetails()
-		#If Scan source is in supported sources or UsePartialCommits switch is available
-		if ($this.UsePartialCommits -or ($baselineControlsDetails.SupportedSources -contains $scanSource))
-		{
-			#$this.PublishCustomMessage("Running cmdlet under transactional mode. This will scan resources and store intermittent scan progress to Storage. It resume scan in next run if something breaks inbetween.", [MessageType]::Warning);
-			[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
-			#Validate if active resources list already available in store
-			#If list not available in store. Get resources filtered by baseline resource types and store it storage
-			if(($partialScanMngr.IsMasterListActive() -eq [ActiveStatus]::Yes)  )
-			{
-				$this.IsPartialCommitScanActive = $true;
-				$allResourcesList = $partialScanMngr.GetAllListedResources()
-				# Get list of non-scanned active resources
-				$nonScannedResourcesList = $partialScanMngr.GetNonScannedResources();
-				$this.PublishCustomMessage("Resuming scan from last commit. $(($nonScannedResourcesList | Measure-Object).Count) out of $(($allResourcesList | Measure-Object).Count) resources will be scanned.", [MessageType]::Warning);
-				$nonScannedResourceIdList = $nonScannedResourcesList | Select-Object Id | ForEach-Object { $_.Id}
-				#Filter SVT resources based on master resources list available and scan completed
-				$this.Resolver.SVTResources = $this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList }				
-			}
-			else{
-				$this.IsPartialCommitScanActive = $false;
-				$resourceIdList =  $this.Resolver.SVTResources| Where-Object {$null -ne $_.ResourceTypeMapping} | Select ResourceId | ForEach-Object {  $_.ResourceId }
-				$partialScanMngr.CreateResourceMasterList($resourceIdList);
-			}
-			#Set unique partial scan indentifier 
-			$this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
-
+		if($this.CentralStorageAccount){
+			[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance($this.CentralStorageAccount, $this.SubscriptionContext.SubscriptionId);	
 		}
+		else{
+			[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
+		}
+			$baselineControlsDetails = $partialScanMngr.GetBaselineControlDetails()
+			#If Scan source is in supported sources or UsePartialCommits switch is available
+			if ($this.UsePartialCommits -or ($baselineControlsDetails.SupportedSources -contains $scanSource))
+			{
+				#$this.PublishCustomMessage("Running cmdlet under transactional mode. This will scan resources and store intermittent scan progress to Storage. It resume scan in next run if something breaks inbetween.", [MessageType]::Warning);
+				#Validate if active resources list already available in store
+				#If list not available in store. Get resources filtered by baseline resource types and store it storage
+				if(($partialScanMngr.IsMasterListActive() -eq [ActiveStatus]::Yes)  )
+				{
+					$this.IsPartialCommitScanActive = $true;
+					$allResourcesList = $partialScanMngr.GetAllListedResources()
+					# Get list of non-scanned active resources
+					$nonScannedResourcesList = $partialScanMngr.GetNonScannedResources();
+					$this.PublishCustomMessage("Resuming scan from last commit. $(($nonScannedResourcesList | Measure-Object).Count) out of $(($allResourcesList | Measure-Object).Count) resources will be scanned.", [MessageType]::Warning);
+					$nonScannedResourceIdList = $nonScannedResourcesList | Select-Object Id | ForEach-Object { $_.Id}
+					#Filter SVT resources based on master resources list available and scan completed
+					$this.Resolver.SVTResources = $this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList }				
+				}
+				else{
+					$this.IsPartialCommitScanActive = $false;
+					$resourceIdList =  $this.Resolver.SVTResources| Where-Object {$null -ne $_.ResourceTypeMapping} | Select ResourceId | ForEach-Object {  $_.ResourceId }
+					$partialScanMngr.CreateResourceMasterList($resourceIdList);
+				}
+				#Set unique partial scan indentifier 
+				$this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
+
+			}
 	}
 
 	[void] UpdateRetryCountForPartialScan()
@@ -342,5 +375,14 @@ class ServicesSecurityStatus: SVTCommandBase
 		{
 			$partialScanMngr.PersistStorageBlob();
 		}
-	}		
+	}	
+	[void] ReportExcludedResources($SVTResolver)
+	{
+		$excludedObj=New-Object -TypeName PSObject;
+		$excludedObj | Add-Member -NotePropertyName ExcludedResourceGroupNames -NotePropertyValue $SVTResolver.ExcludedResourceGroupNames 
+		$excludedObj | Add-Member -NotePropertyName ExcludedResources -NotePropertyValue $SVTResolver.ExcludedResources
+		$excludedObj | Add-Member -NotePropertyName ExcludedResourceType -NotePropertyValue $SVTResolver.ExcludeResourceTypeName 
+		$excludedObj | Add-Member -NotePropertyName ExcludeResourceNames -NotePropertyValue $SVTResolver.ExcludeResourceNames 
+		$this.PublishAzSKRootEvent([AzSKRootEvent]::WriteExcludedResources,$excludedObj);
+	}	
 }

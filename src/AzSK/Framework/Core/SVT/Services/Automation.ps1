@@ -97,7 +97,7 @@ class Automation: SVTBase
     }
 	hidden [ControlResult] CheckOMSSetup([ControlResult] $controlResult)
     {   
-		$resource = Get-AzureRmResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
+		$resource = Get-AzureRmResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType "Microsoft.Automation/automationAccounts" -ErrorAction Stop
 		$resourceId = $resource.ResourceId
 		$diaSettings = $null
 		try 

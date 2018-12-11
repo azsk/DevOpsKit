@@ -10,6 +10,7 @@ class SVTCommandBase: CommandBase {
 	[string] $ExcludeControlIdString = "";
     [bool] $UsePartialCommits;
     [bool] $UseBaselineControls;
+    [PSObject] $CentralStorageAccount;
 	[string] $PartialScanIdentifier = [string]::Empty;
     hidden [ControlStateExtension] $ControlStateExt;
     hidden [bool] $UserHasStateAccess = $false;
@@ -100,7 +101,7 @@ class SVTCommandBase: CommandBase {
 
 	[void] PostCommandStartedAction()
 	{
-		$isPolicyInitiativeEnabled = [ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan;
+		$isPolicyInitiativeEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId))
         if($isPolicyInitiativeEnabled)
         {
             $this.PostPolicyComplianceTelemetry()        

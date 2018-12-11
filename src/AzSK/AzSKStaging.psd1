@@ -51,7 +51,8 @@
     RequiredModules        = @(
         @{ModuleName = 'AzureRM.Profile'; RequiredVersion = '5.5.1'}
 		@{ModuleName = 'Azure.Storage'; RequiredVersion = '4.5.0'}
-		@{ModuleName = 'AzureRM.AnalysisServices'; RequiredVersion = '0.6.14'}
+        @{ModuleName = 'AzureRM.AnalysisServices'; RequiredVersion = '0.6.14'}
+        @{ModuleName = 'AzureRM.ApiManagement'; RequiredVersion = '6.1.5'}
 		@{ModuleName = 'AzureRM.ApplicationInsights'; RequiredVersion = '0.1.8'}
 		@{ModuleName = 'AzureRM.Automation'; RequiredVersion = '5.1.1'}
 		@{ModuleName = 'AzureRM.Batch'; RequiredVersion = '4.1.5'}
@@ -82,7 +83,8 @@
 		@{ModuleName = 'AzureRM.TrafficManager'; RequiredVersion = '4.1.1'}		
 		@{ModuleName = 'AzureRM.Websites'; RequiredVersion = '5.0.9'}	
 		@{ModuleName = 'AzureRM.ContainerInstance'; RequiredVersion = '0.2.10'}	
-		@{ModuleName = 'AzureRM.ContainerRegistry'; RequiredVersion = '1.0.10'}	
+        @{ModuleName = 'AzureRM.ContainerRegistry'; RequiredVersion = '1.0.10'}
+        @{ModuleName = 'AzureRM.HDInsight'; RequiredVersion = '4.1.8'}	
     )
 
     # Assemblies that must be loaded prior to importing this module
