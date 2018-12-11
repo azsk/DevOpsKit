@@ -112,16 +112,14 @@ class SVTBase: AzSKRoot
                 $_.Description = $global:ExecutionContext.InvokeCommand.ExpandString($_.Description)
                 $_.Recommendation = $global:ExecutionContext.InvokeCommand.ExpandString($_.Recommendation)
                 $ControlSeverity = $_.ControlSeverity
-                if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity"))
+                if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverity"))
                 {
-                    if([Helpers]::CheckMember($this.ControlSettings.ControlSeverity,$ControlSeverity))
-                    {
-                        $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
-                    }
-                    else
-                    {
-                        $_.ControlSeverity = $ControlSeverity
-                    }
+                    $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
+                }
+				else
+				{
+					$_.ControlSeverity = $ControlSeverity
+				}
                     
                 }
 				if(-not [string]::IsNullOrEmpty($_.MethodName))
