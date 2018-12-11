@@ -14,11 +14,6 @@ class ResourceTypeMapping: SubscriptionMapping
     [string] $ResourceType
 }
 
-class AzureDevOpsResourceMapping: ResourceTypeMapping
-{
-    
-}
-
 class SVTResource
 {
 	[string] $ResourceId = "";

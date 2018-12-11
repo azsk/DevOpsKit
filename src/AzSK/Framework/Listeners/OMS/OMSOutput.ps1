@@ -9,7 +9,6 @@ class OMSOutput: ListenerBase
 	hidden static [bool] $IsIssueLogged = $false
 	OMSOutput()
 	{
-		#[OMSHelper]::SetOMSDetails()
 	}
 
 	static [OMSOutput] GetInstance()
@@ -23,8 +22,6 @@ class OMSOutput: ListenerBase
 
 	[void] RegisterEvents()
 	{
-		# if(!([OMSHelper]::isOMSSettingValid -eq -1 -and [OMSHelper]::isAltOMSSettingValid -eq -1))
-		# {
 			$this.UnregisterEvents();
 
 			# Mandatory: Generate Run Identifier Event
@@ -144,7 +141,6 @@ class OMSOutput: ListenerBase
 			# 		$currentInstance.PublishException($_);
 			# 	}
 			# });
-		# }
 	}
 
 	hidden [void] WriteControlResult([SVTEventContext[]] $eventContextAll)
