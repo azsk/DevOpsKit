@@ -22,7 +22,7 @@
     "Tenant_Domain": "microsoft.com"
   },
   "KubernetesService": {
-    "kubernetesVersion": "1.11.3"
+    "kubernetesVersion": "1.11.5"
   },
   "VirtualMachine": {
     "Windows": {
