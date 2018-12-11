@@ -188,7 +188,7 @@
     },
     {
       "ControlID": "Azure_KubernetesService_SI_Review_Kube_Advisor_Issues",
-      "Description": "Issues/recommendations provided by kube advisor must be reviewed periodically",
+      "Description": "Issues/recommendations provided by kube advisor should be reviewed periodically",
       "Id": "KubernetesService210",
       "ControlSeverity": "Medium",
       "Automated": "No",
