@@ -120,8 +120,6 @@ class SVTBase: AzSKRoot
 				{
 					$_.ControlSeverity = $ControlSeverity
 				}
-                    
-                }
 				if(-not [string]::IsNullOrEmpty($_.MethodName))
 				{
 					$_.MethodName = $_.MethodName.Trim();
