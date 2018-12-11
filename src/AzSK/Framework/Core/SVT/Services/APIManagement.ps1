@@ -57,8 +57,8 @@ class APIManagement: SVTBase
     hidden [ControlResult] CheckNonARMAPIUsage([ControlResult] $controlResult)
     {
         $apimContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName         
-        $tanantAccess = Get-AzureRmApiManagementTenantAccess -Context $apimContext
-        if($null -ne $tanantAccess -and $tanantAccess.Enabled -eq $true)
+        $tenantAccess = Get-AzureRmApiManagementTenantAccess -Context $apimContext
+        if($null -ne $tenantAccess -and $tenantAccess.Enabled -eq $true)
         {
             $controlResult.AddMessage([VerificationResult]::Failed, "Access to non-ARM based REST API is enabled for this API Management service.") 
         }
@@ -68,4 +68,467 @@ class APIManagement: SVTBase
         } 
 		return $controlResult;
     }
+
+	hidden [ControlResult] CheckRequiresSubscription([ControlResult] $controlResult)
+    {
+        $apimContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName         
+        $apimProduct = Get-AzureRmApiManagementProduct -Context $apimContext | Where-Object { $_.State -eq 'Published' }
+		
+		if(($null -ne $apimProduct) -and ($apimProduct.SubscriptionRequired -contains $false))
+		{
+			$apimProduct =  $apimProduct | Where-Object { $_.SubscriptionRequired -eq $false}
+			$controlResult.AddMessage([VerificationResult]::Failed, "'Requires Subscription' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $apimProduct ) 
+		}
+		else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"")
+        }	
+		return $controlResult;
+    }
+
+	hidden [ControlResult] CheckRequiresApproval([ControlResult] $controlResult)
+    {
+        $apimContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName         
+        $apimProduct = Get-AzureRmApiManagementProduct -Context $apimContext | Where-Object { $_.State -eq 'Published' }
+		
+		if(($null -ne $apimProduct) -and ($apimProduct.ApprovalRequired -contains $false))
+		{
+			$apimProduct = $apimProduct | Where-Object { $_.ApprovalRequired -eq $false}
+			$controlResult.AddMessage([VerificationResult]::Verify, "'Requires Approval' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $apimProduct) 
+		}
+		else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"")
+        }	
+		return $controlResult;
+    }
+
+	hidden [ControlResult] CheckManagementAPIDisabled([ControlResult] $controlResult)
+    {
+        $apimContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName         
+        $tenantAccess = Get-AzureRmApiManagementTenantAccess -Context $apimContext
+		
+		if(($null -ne $tenantAccess) -and ($tenantAccess.Enabled -eq $true))
+		{
+			$controlResult.AddMessage([VerificationResult]::Failed, "'Enable API Management REST API' option is turned ON.") 
+		}
+		else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"")
+        }	
+		return $controlResult;
+    }
+
+	hidden [ControlResult] CheckGitHubIsUsedInAPIM([ControlResult] $controlResult)
+    {
+        $apimContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+        $tenantSyncState = Get-AzureRmApiManagementTenantSyncState -Context $apimContext
+		
+		if(($tenantSyncState.IsGitEnabled -eq $true) -and ($tenantSyncState.CommitId -ne $null))
+		{
+			$controlResult.AddMessage([VerificationResult]::Verify, "Verify that constant string values, including secrets, across all API configuration and policies are not checked in Git repository.") 
+		}
+		else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"")
+        }	
+		return $controlResult;
+    }
+
+	hidden [ControlResult] CheckAADIdentityProviderEnabled([ControlResult] $controlResult)
+    {
+        $apimContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+        $identityProvider = Get-AzureRmApiManagementIdentityProvider -Context $apimContext
+
+		if($null -ne $identityProvider)
+		{
+			if($null -ne ($identityProvider | Where-Object {$_.Type -ne "Aad"}))
+			{				
+				$controlResult.AddMessage([VerificationResult]::Verify, "Below listed Identity provider(s) are enabled in '$($this.ResourceContext.ResourceName)' API management instance. It is recommended to use only Azure Active Directory backed credentials to authenticate users for enterprise application.", $identityProvider)
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed,"")
+			}
+		}
+		else
+		{
+			$controlResult.AddMessage([VerificationResult]::Passed,"")
+		}
+		return $controlResult;
+    }
+
+	hidden [ControlResult] CheckAPIMDeployedInVNet([ControlResult] $controlResult)
+    {
+        $apimInstance = Get-AzureRmApiManagement -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
+		if($apimInstance.VpnType -eq 'None')
+		{
+			$controlResult.AddMessage([VerificationResult]::Verify, "'$($this.ResourceContext.ResourceName)' API management instance is not deployed inside a virtual network. If your backend service consists corporate resources, APIM should be deployed inside the virtual network (VNET), so it can access backend services within the network.") 
+		}
+		else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"")
+        }	
+		return $controlResult;
+    }
+
+	hidden [ControlResult] CheckDefaultProductsExist([ControlResult] $controlResult)
+    {
+        $apimContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+		$apimProduct = Get-AzureRmApiManagementProduct -Context $apimContext
+		if(($null -ne $apimProduct) -and ($apimProduct.ProductId -contains 'starter' -or $apimProduct.ProductId -contains 'unlimited'))
+		{
+			$controlResult.AddMessage([VerificationResult]::Failed, "APIM contains sample products. Delete the two sample products: Starter and Unlimited.") 
+		}
+		else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"")
+        }	
+		return $controlResult;
+    }
+
+	hidden [ControlResult] CheckClientCertAuthDisabled([ControlResult] $controlResult)
+    {
+        $apimContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+		$ClientCertAuthDisabledInAPIs = (Get-AzureRmApiManagementApi -Context $apimContext).ApiId | ForEach-Object {
+			$apiPolicy = Get-AzureRmApiManagementPolicy -Context $apimContext -ApiId $_
+			$certThumbprint = $apiPolicy | Select-Xml -XPath "//inbound//authentication-certificate" | foreach { $_.Node.thumbprint }
+		    if($certThumbprint -eq $null)
+		    {
+		        $_
+		    }
+		}
+
+		if($null -ne $ClientCertAuthDisabledInAPIs)
+		{
+			$controlResult.AddMessage([VerificationResult]::Failed, "Client Certificate is not enabled in below APIs.", $ClientCertAuthDisabledInAPIs) 
+		}
+		else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"")
+        }	
+		return $controlResult;
+    }
+
+	hidden [ControlResult] CheckAPIManagementCORSAllowed([ControlResult] $controlResult)
+    {
+		$apimContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+			
+		$Result = @()
+		Get-AzureRmApiManagementApi -Context $apimContext | Select-Object ApiId, Name | ForEach-Object {
+		    #Policy Scope: API
+			$APIPolicy = Get-AzureRmApiManagementPolicy -Context $apimContext -ApiId $_.ApiId
+			$AllowedOrigins = ""
+		    $AllowedOrigins = $APIPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
+		    if($null -ne $AllowedOrigins)
+			{
+				$Policy = "" | Select Scope, Name, Id, AllowedOrigins
+				$Policy.Scope = "API"
+				$Policy.Name = $_.Name
+				$Policy.Id = $_.ApiId
+				$Policy.AllowedOrigins = $($AllowedOrigins -join ",")
+
+				$Result += $Policy
+			}
+		    
+            #Policy Scope: Operation
+            Get-AzureRmApiManagementOperation -Context $apimContext -ApiId $_.ApiId | ForEach-Object {
+                $OperationPolicy = Get-AzureRmApiManagementPolicy -Context $apimContext -ApiId $_.ApiId -OperationId $_.OperationId
+				$AllowedOrigins = ""
+		        $AllowedOrigins = $OperationPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
+		        if($null -ne $AllowedOrigins)
+		        {
+                    $Policy = "" | Select Scope, ScopeName, ScopeId, AllowedOrigins
+		            $Policy.Scope = "Operation"
+			    	$Policy.ScopeName = $_.Name
+			    	$Policy.ScopeId = $_.OperationId
+					$Policy.AllowedOrigins = $($AllowedOrigins -join ",")
+
+                    $Result += $Policy
+		        }
+            }
+		}
+
+		$FailedResult = $Result | Where-Object { $_.AllowedOrigins.Split(",") -contains "*" }
+
+		if(($FailedResult | Measure-Object).Count -gt 0)
+		{
+			$controlResult.AddMessage([VerificationResult]::Failed  , 
+			                      [MessageData]::new("CORS is enabled in APIM with access from all domains ('*') " + $this.ResourceContext.ResourceName, $FailedResult));
+		}
+		elseif(($Result | Measure-Object).Count -gt 0)
+		{
+			$controlResult.AddMessage([VerificationResult]::Verify,
+				[MessageData]::new("CORS is enabled in APIM with access from below custom domains."),$Result);
+		}
+		else
+		{
+			$controlResult.AddMessage([VerificationResult]::Manual,
+                                  [MessageData]::new("No CORS settings found for "+$this.ResourceContext.ResourceName));
+		}
+		return $controlResult;
+    }
+
+	hidden [ControlResult] CheckRestrictedCallerIPs([ControlResult] $controlResult)
+    {
+        $apimContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+
+		$Result = @()
+		#Policy Scope: Gobal
+		$GlobalPolicy = Get-AzureRmApiManagementPolicy -Context $apimContext
+		$RestrictedIPs = ""
+		$RestrictedIPs = $GlobalPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
+		$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
+		$Policy.Scope = "Global"
+		$Policy.ScopeName = "NA"
+		$Policy.ScopeId = "NA"
+		if($null -ne $RestrictedIPs)
+		{
+		    $Policy.Action = $RestrictedIPs.Action
+		    $Policy.AllowedIPs = $RestrictedIPs.InnerXML
+		    $Policy.Status = 'Enabled'
+		}
+		else
+		{
+		    $Policy.Status = 'Not Enabled'
+		}
+		$Result += $Policy
+		#Policy Scope: Product
+		Get-AzureRmApiManagementProduct -Context $apimContext | ForEach-Object {
+		    $ProductPolicy = Get-AzureRmApiManagementPolicy -Context $apimContext -ProductId $_.ProductId
+		    $RestrictedIPs = ""
+		    $RestrictedIPs = $ProductPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
+		    
+			$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
+		    $Policy.Scope = "Product"
+		    $Policy.ScopeName = $_.Title
+		    $Policy.ScopeId = $_.ProductId
+
+		    if($null -ne $RestrictedIPs)
+		    {
+		        $Policy.Action = $RestrictedIPs.Action
+		        $Policy.AllowedIPs = $RestrictedIPs.InnerXML
+				$Policy.Status = 'Enabled'
+		    }
+			else
+			{
+				$Policy.Status = 'Not Enabled'
+			}
+			$Result += $Policy
+		}
+		
+		
+		#Policy Scope: API
+		#Policy Scope: Operation
+		Get-AzureRmApiManagementApi -Context $apimContext | Select-Object ApiId, Name | ForEach-Object {
+		    #Policy Scope: API
+		    $APIPolicy = Get-AzureRmApiManagementPolicy -Context $apimContext -ApiId $_.ApiId
+		    $RestrictedIPs = ""
+		    $RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
+			$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
+		    $Policy.Scope = "API"
+		    $Policy.ScopeName = $_.Name
+		    $Policy.ScopeId = $_.ApiId
+		    if($null -ne $RestrictedIPs)
+		    {
+		        $Policy.Action = $RestrictedIPs.Action
+		        $Policy.AllowedIPs = $RestrictedIPs.InnerXML
+				$Policy.Status = 'Enabled'
+		    }
+			else
+			{
+				$Policy.Status = 'Not Enabled'
+			}
+			$Result += $Policy
+		    
+		    #Policy Scope: Operation
+		    Get-AzureRmApiManagementOperation -Context $apimContext -ApiId $_.ApiId | ForEach-Object {
+		        $OperationPolicy = Get-AzureRmApiManagementPolicy -Context $apimContext -ApiId $_.ApiId -OperationId $_.OperationId
+		        $RestrictedIPs = ""
+		        $RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
+		        $Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
+		        $Policy.Scope = "Operation"
+		        $Policy.ScopeName = $_.Name
+		        $Policy.ScopeId = $_.OperationId
+				if($null -ne $RestrictedIPs)
+		        {
+		            $Policy.Action = $RestrictedIPs.Action
+		            $Policy.AllowedIPs = $RestrictedIPs.InnerXML
+					$Policy.Status = 'Enabled'
+		        }
+				else
+				{
+					$Policy.Status = 'Not Enabled'
+				}
+				$Result += $Policy
+		    }
+		}
+
+		if($null -ne $Result)
+		{
+			$controlResult.AddMessage([VerificationResult]::Verify, "Below IP restriction(s) are configured in $($this.ResourceContext.ResourceName) API management instance.", $Result) 
+		}
+		else
+        {
+            $controlResult.AddMessage([VerificationResult]::Verify,"Unable to validate control.Please verify from portal, IP restirction is enabled for APIs.")
+        }	
+		return $controlResult;
+    }
+
+	hidden [ControlResult] CheckApplicationInsightEnabled([ControlResult] $controlResult)
+    {
+        $apimContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+		$apimLogger = Get-AzureRmApiManagementLogger -Context $apimContext | Where-Object { $_.Type -eq 'ApplicationInsights' }
+		
+		if($null -ne $apimLogger)
+		{
+			$controlResult.AddMessage([VerificationResult]::Verify, "Application Insight logger is enabled for" + $this.ResourceContext.ResourceName, $apimLogger) 
+		}
+		else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"")
+        }	
+		return $controlResult;
+    }
+
+	hidden [ControlResult] CheckGuestGroupUsedInProduct([ControlResult] $controlResult)
+    {
+        $apimContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+		$GuestGroupUsedInProductList = Get-AzureRmApiManagementProduct -Context $apimContext | ForEach-Object {
+		    if((Get-AzureRmApiManagementGroup -Context $apimContext -ProductId $_.ProductId).GroupId -contains 'guests')
+		    {
+		        $_
+		    }
+		}
+
+		if($null -ne $GuestGroupUsedInProductList)
+		{
+			$controlResult.AddMessage([VerificationResult]::Verify, "Guest groups is added to below products access control.", $GuestGroupUsedInProductList) 
+		}
+		else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"")
+        }	
+		return $controlResult;
+    }
+
+	hidden [ControlResult] CheckDelegatedAuthNEnabled([ControlResult] $controlResult)
+    {
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()			
+		$uri=[system.string]::Format($ResourceAppIdURI+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.ApiManagement/service/{2}/portalsettings/delegation?api-version=2018-06-01-preview",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
+		$json=$null;
+        try 
+		{ 	
+			$json=[WebRequestHelper]::InvokeGetWebRequest($uri);
+		} 
+		catch
+		{ 
+			$json=$null;
+		}
+		if(($null -ne $json) -and (($json | Measure-Object).Count -gt 0))
+		{
+			if(([Helpers]::CheckMember($json[0],"properties")) -and (($json[0].properties.subscriptions.enabled -eq $true) -or ($json[0].properties.userRegistration.enabled -eq $true)))
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed,
+										 [MessageData]::new("Delegated authentication is enabled for $($this.ResourceContext.ResourceName)."));
+			}
+			else
+			{
+			  $controlResult.AddMessage([VerificationResult]::Passed,
+									 [MessageData]::new(""));
+			}
+		}
+		else
+		{
+		   $controlResult.AddMessage([VerificationResult]::Verify,
+								 [MessageData]::new("Unable to validate control.Please verify from portal, Delegated authentication is On or Off."));
+		}
+		return $controlResult;
+    }
+
+	hidden [ControlResult] CheckAPIManagementMsiEnabled([ControlResult] $controlResult)
+    {
+        $apimInstance = Get-AzureRmApiManagement -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
+		if(([Helpers]::CheckMember($apimInstance,"Identity.Type")) -and ($apimInstance.Identity.type -eq "SystemAssigned"))
+		{
+			$controlResult.AddMessage([VerificationResult]::Passed,
+										 [MessageData]::new("Your APIM instance is using Managed Service Identity(MSI). It is specifically turned On."));
+		}
+		else
+        {
+            $controlResult.AddMessage([VerificationResult]::Failed,
+										 [MessageData]::new("Your APIM instance is not using Managed Service Identity(MSI). It is specifically turned Off."));
+        }	
+		return $controlResult;
+    }
+	
+	hidden [ControlResult] CheckUserAuthorizationSettingInAPI([ControlResult] $controlResult)
+    {       
+		$UserAuthDisabledApi = $this.CheckUserAuthorizationSettingEnabledinAPI();
+		 if($null -ne $UserAuthDisabledApi)
+		{
+			$controlResult.AddMessage([VerificationResult]::Failed, "User Authorization : OAuth 2.0 or OpenID connect is not enabled in below APIs.", $UserAuthDisabledApi) 
+		}
+		else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"")
+        }	
+		return $controlResult;
+    }
+
+	hidden [ControlResult] CheckJWTValidatePolicyInAPI([ControlResult] $controlResult)
+    {       
+		$UserAuthDisabledApi = $this.CheckUserAuthorizationSettingEnabledinAPI();
+		$apimContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+		$JWTValidatePolicyNotFound =  Get-AzureRmApiManagementApi -Context $apimContext | ForEach-Object {		
+			$apiPolicy = Get-AzureRmApiManagementPolicy -Context $apimContext -ApiId $_.ApiId
+			$IsPolicyEnabled = $apiPolicy | Select-Xml -XPath "//inbound//validate-jwt"
+			if($null -eq $IsPolicyEnabled)
+			{
+				$_
+			}
+		}
+		$Temp = Compare-Object -ReferenceObject $UserAuthDisabledApi.ApiID -DifferenceObject $JWTValidatePolicyNotFound.ApiId -IncludeEqual | Where-Object { $_.SideIndicator -eq "==" }
+		if(($null -ne $JWTValidatePolicyNotFound) -and ($null -ne $UserAuthDisabledApi) -and ($null -ne $Temp))
+		{
+			$controlResult.AddMessage([VerificationResult]::Failed, "The ‘validate-jwt’ policy is not configured in below APIs.", $JWTValidatePolicyNotFound) 
+		}
+		elseif($null -ne $JWTValidatePolicyNotFound)
+        {
+            $controlResult.AddMessage([VerificationResult]::Verify,"The ‘validate-jwt’ policy is not configured in below APIs.", $JWTValidatePolicyNotFound)
+        }
+		else
+		{
+			$controlResult.AddMessage([VerificationResult]::Passed,"")
+		}
+		return $controlResult;
+    }
+
+	hidden [PSObject] CheckUserAuthorizationSettingEnabledinAPI()
+    {
+		$apimContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
+		$UserAuthDisabledApi = @()
+		Get-AzureRmApiManagementApi -Context $apimContext | ForEach-Object {
+			$uri=[system.string]::Format($ResourceAppIdURI+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.ApiManagement/service/{2}/apis/{3}?api-version=2018-06-01-preview",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName,$_.ApiId)
+			$json=$null;
+			try 
+			{ 	
+				$json=[WebRequestHelper]::InvokeGetWebRequest($uri);
+			} 
+			catch
+			{ 
+				$json=$null;
+			}
+			if(($null -ne $json) -and (($json | Measure-Object).Count -gt 0))
+			{
+				if(([Helpers]::CheckMember($json[0],"properties.authenticationSettings")) -and (-not ([Helpers]::CheckMember($json, "properties.authenticationSettings.oAuth2") -or [Helpers]::CheckMember($json, "properties.authenticationSettings.openid"))))
+				{
+					$UserAuthDisabledApi += $_
+				}
+			}
+		}		
+		return $UserAuthDisabledApi;
+    }
+
 }
