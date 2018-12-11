@@ -181,7 +181,7 @@
         "SDL",
         "TCP",
         "Manual",
-        "SI",
+        "AuthN",
         "KubernetesService"
       ],
       "Enabled": true
@@ -193,11 +193,11 @@
       "ControlSeverity": "Medium",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "The kube-advisor tool scans Kubernets cluster and reports on issues related to CPU and memory resource consumption limits. ",
+      "Rationale": "The kube-advisor tool scans Kubernets cluster and reports on issues related to CPU and memory resource consumption limits. If resource quotas are not applied then by default pod consumes all the CPU and memory available, which impacts availability of another POD/application.",
       "Recommendation": "Refer: https://github.com/Azure/kube-advisor to scan Kubernetes cluster using Kube Advisor.",
       "Tags": [
         "SDL",
-        "TCP",
+        "Best Practice",
         "Manual",
         "SI",
         "KubernetesService"
@@ -227,8 +227,8 @@
       "Description": "Do not leave management ports open on Kubernetes nodes unless required",
       "Id": "KubernetesService230",
       "ControlSeverity": "Medium",
-      "Automated": "No",
-      "MethodName": "",
+      "Automated": "Yes",
+      "MethodName": "CheckNodeOpenPorts",
       "Rationale": "Open remote management ports expose a VM/compute node to a high level of risk from internet-based attacks that attempt to brute force credentials to gain admin access to the machine.",
       "Recommendation": "Go to Azure Portal --> VM Settings --> Networking --> Inbound security rules --> Select security rule which allows management ports (e.g. RDP-3389, WINRM-5985, SSH-22) --> Click 'Deny' under Action --> Click Save.",
       "Tags": [
