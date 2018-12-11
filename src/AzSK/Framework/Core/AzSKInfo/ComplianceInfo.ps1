@@ -15,6 +15,7 @@ class ComplianceInfo: CommandBase
     { 
 		$this.SubscriptionId = $subscriptionId
 		$this.Full = $full
+        $this.ControlSettings = $this.LoadServerConfigFile("ControlSettings.json");
 	}
 
 	hidden [void] GetComplianceScanData()
@@ -103,7 +104,7 @@ class ComplianceInfo: CommandBase
 				else
 				{
 					$_.EffectiveResult = ([VerificationResult]::Failed).ToString();
-				}
+				}         
 			}			
 		}	
 	}
@@ -283,8 +284,20 @@ class ComplianceInfo: CommandBase
 			}
 			else {
 				$_.HasOwnerAccessTag = "No"
+			}
+            
+			$ControlSeverity = $_.ControlSeverity
+			if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverity"))
+            {
+                $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
+            }
+			else
+			{
+				$_.ControlSeverity = $ControlSeverity
 			}			
 		}
+        
+        
 
 		$objectToExport = $this.ComplianceScanResult
 		if(-not $this.Full)
