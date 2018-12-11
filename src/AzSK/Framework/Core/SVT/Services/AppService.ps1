@@ -11,12 +11,16 @@ class AppService: SVTBase
         Base($subscriptionId, $resourceGroupName, $resourceName)
     {
         $this.GetResourceObject();
+		$this.AddResourceMetadata($this.ResourceObject.Properties)
+
     }
 
     AppService([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId, $svtResource)
     {
         $this.GetResourceObject();
+		$this.AddResourceMetadata($this.ResourceObject.Properties)
+
     }
 
 	hidden [string] FormatURL([string] $AppURL)
