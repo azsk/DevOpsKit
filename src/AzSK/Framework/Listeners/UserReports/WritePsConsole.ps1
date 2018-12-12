@@ -638,5 +638,5 @@ class WritePsConsole: FileOutputBase
 class SVTSummary
 {
     [VerificationResult] $VerificationResult = [VerificationResult]::Manual;
-    [ControlSeverity] $ControlSeverity = [ControlSeverity]::High;
+    [string] $ControlSeverity = [ControlSeverity]::High;
 }
