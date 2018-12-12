@@ -108,7 +108,7 @@ function Get-AzSKAzureServicesSecurityStatus
 
         [string]
 		[Parameter(Mandatory = $true, ParameterSetName = "TagName", HelpMessage="The value of the tag to query for Azure resource.")]
-		[Alias("tgvs")]
+		[Alias("tgvs,tgv,TagValue")]
 		$TagValues,
 
 		[string] 
@@ -635,7 +635,7 @@ function Get-AzSKControlsStatus
 
         [string]
 		[Parameter(Mandatory = $true, ParameterSetName = "TagName", HelpMessage="The value of the tag to query for Azure resource.")]
-		[Alias("tgvs")]
+		[Alias("tgvs,tgv,TagValue")]
 		$TagValues,
 
 		[string] 
