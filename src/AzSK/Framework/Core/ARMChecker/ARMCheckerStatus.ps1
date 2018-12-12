@@ -321,7 +321,7 @@ class ARMCheckerStatus: EventBase
 				$totalText = "Total";
 				$MarkerText = "MarkerText";
 				$rows = @();
-				$rows += [Enum]::GetNames([ControlSeverity]) | Where-Object { $severities -contains $_ };
+				$rows += $severities;
 				$rows += $MarkerText;
 				$rows += $totalText;
 				$rows += $MarkerText;
