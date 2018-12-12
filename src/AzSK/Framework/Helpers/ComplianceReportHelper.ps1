@@ -130,15 +130,25 @@ class ComplianceReportHelper: ComplianceBase
 					if([Helpers]::CheckMember($item, $Property.Name, $false))
 					{
 						$props += $Property.Name
+						
 					}
+					
 				}
+				if("IsControlInGrace" -notin $props)
+				{
+					$props += "IsControlInGrace"
+				}
+			
 				if(($props | Measure-Object).Count -gt 0)
 				{
 					foreach($item in $tempComplianceData)
 					{
 						$newEntity = [ComplianceStateTableEntity]::new()
 						foreach($Property in $props){
-							$newEntity.$($Property) = $item.$($Property)
+							if([Helpers]::CheckMember($item, $Property, $false))
+							{
+								$newEntity.$($Property) = $item.$($Property)
+							}
 						}
 						if(-not [string]::IsNullOrWhiteSpace($newEntity.PartitionKey) -and -not [string]::IsNullOrWhiteSpace($newEntity.RowKey))
 						{
@@ -150,7 +160,7 @@ class ComplianceReportHelper: ComplianceBase
 		}
 		catch
 		{
-			#Write-Host $_;
+			Write-Host $_;
 			return $null;
 		}
 		return $complianceData;		
@@ -195,7 +205,7 @@ class ComplianceReportHelper: ComplianceBase
 			{
 				$scanResult.FirstFailedOn = [System.DateTime]::UtcNow.ToString("s");
 			}
-
+			$scanResult.IsControlInGrace=$currentSVTResult.IsControlInGrace
 			$scanResult.ScannedBy = [Helpers]::GetCurrentRMContext().Account
 			$scanResult.ScanSource = $this.ScanSource
 			$scanResult.ScannerVersion = $this.ScannerVersion

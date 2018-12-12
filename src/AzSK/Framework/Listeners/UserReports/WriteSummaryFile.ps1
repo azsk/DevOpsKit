@@ -270,7 +270,14 @@ class WriteSummaryFile: FileOutputBase
 							}
 						}
 					}
-					
+					if($_.IsControlInGrace -eq $true)
+					{
+						$csvItem.IsControlInGrace = "Yes"
+					}
+					else 
+					{
+						$csvItem.IsControlInGrace = "No"
+					}					
                     $csvItems += $csvItem;
                 }                                
             }

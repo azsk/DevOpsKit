@@ -33,6 +33,7 @@ class ComplianceStateTableEntity
 	[string] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
 	[string] $FirstFailedOn = [Constants]::AzSKDefaultDateTime;
 	[string] $FirstAttestedOn = [Constants]::AzSKDefaultDateTime;
+	[bool] $IsControlInGrace;
 	[int] $AttestationCounter = 0;
 
 	#Other  information

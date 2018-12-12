@@ -192,6 +192,15 @@ class SVTResourceResolver: AzSKRoot
 				}
 				# Exclude resource type 
 
+				# Exclude resource type 
+
+				if($this.ExcludeResourceTypeName -ne [ResourceTypeName]::All)
+				{
+					$svtResource.ResourceTypeMapping = ([SVTMapping]::Mapping |
+											Where-Object { $_.ResourceType -eq $resource.ResourceType -and $_.ResourceTypeName -ne $this.ExcludeResourceTypeName } |
+											Select-Object -First 1);
+				}
+
 				# Checking if Vnet is ErVNet or not
 				if($svtResource.ResourceTypeMapping -and $svtResource.ResourceTypeMapping.ResourceTypeName -eq [SVTMapping]::VirtualNetworkTypeName)
 				{

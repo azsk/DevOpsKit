@@ -22,7 +22,7 @@
     "Tenant_Domain": "microsoft.com"
   },
   "KubernetesService": {
-    "kubernetesVersion": "1.11.3"
+    "kubernetesVersion": "1.11.5"
   },
   "VirtualMachine": {
     "Windows": {
@@ -292,7 +292,7 @@
   "SubscriptionCore": {
     "EnableV1AlertFailure": false
   },
-  "HDInsight":{
+  "HDInsight": {
     "MinSupportedClusterVersion": "3.6.0"
   },
   "EventHubOutput": {
@@ -322,5 +322,11 @@
   "ResultComplianceInDays": {
     "DefaultControls": 3,
     "OwnerAccessControls": 90
+  },
+  "ControlSeverity": {
+    "Critical": "Critical",
+    "High": "High",
+    "Medium": "Medium",
+    "Low": "Low"
   }
 }
