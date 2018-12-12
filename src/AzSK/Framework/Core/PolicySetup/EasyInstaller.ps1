@@ -8,7 +8,8 @@ Param(
     [string] $ControlDetailsUrl = "http://aka.ms/AzSKOSSTCP",
     [string] $FAQUrl = "",
     [string] $SupportUrl = "",
-	[string] $AutoUpdateCommand = "#AutoUpdateCommand#",
+    [string] $AutoUpdateCommand = "#AutoUpdateCommand#",
+    [string] $AzureEnvironment = "#AzureEnv#",
 	[string] $AzSKConfigURL = "#AzSKConfigURL#",
     [Parameter(Mandatory = $False)]
 	[switch] $UpdateToLatestVersion
@@ -215,7 +216,7 @@ function BootstrapOrgPolicy{
         }
         
 		Import-Module $ModuleName -RequiredVersion $Version -Force     
-	    Set-AzSKPolicySettings -OnlinePolicyStoreUrl $OnlinePolicyStoreUrl -ErrorAction Stop
+	    Set-AzSKPolicySettings -OnlinePolicyStoreUrl $OnlinePolicyStoreUrl -AzureEnvironment $AzureEnvironment -ErrorAction Stop
 	    Write-Host "Completed $OrgName policy configuration." -ForegroundColor Green
 	}
     catch

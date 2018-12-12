@@ -133,12 +133,20 @@ class EventHub: SVTBase
 				$faliedClients = New-Object -TypeName PSObject 
 				if(($fullPermissionEventHubs | Measure-Object).count -gt 0)
 				{
-					$faliedClients | Add-Member -NotePropertyName FailedQueues -NotePropertyValue $fullPermissionEventHubs
+					$faliedClients | Add-Member -NotePropertyName FailedEventHub -NotePropertyValue $fullPermissionEventHubs
 					$controlResult.AddMessage([MessageData]::new("Validate the authorization rules for the Event Hub are defined with limited permissions.", $fullPermissionEventHubs));
 				}
 				if(($noPolicyEventHubs | Measure-Object).count -gt 0)
 				{
-					$faliedClients | Add-Member -NotePropertyName FailedQueues -NotePropertyValue $noPolicyEventHubs
+					if([Helpers]::CheckMember($faliedClients,"FailedEventHub"))
+					{
+						$faliedClients.FailedEventHub += $noPolicyEventHubs
+					}
+					else
+					{
+						$faliedClients | Add-Member -NotePropertyName FailedEventHub -NotePropertyValue $noPolicyEventHubs
+					}
+					
 					$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for following Event Hub. Either Event Hub is not in use or namespace level access policy is used. Applications (senders/receivers) must not use access policies defined at Service Bus namespace level.", $noPolicyEventHubs));
 				}
 

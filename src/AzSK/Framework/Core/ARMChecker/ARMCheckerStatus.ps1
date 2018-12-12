@@ -96,7 +96,23 @@ class ARMCheckerStatus: EventBase
 		}
 		if(-not([string]::IsNullOrEmpty($ExcludeFiles)))
 		{
-	  	$filesToExclude = $this.ConvertToStringArray($ExcludeFiles);
+		  $ExcludeFileFilters = @();
+          $filteredFiles = @();
+		  $ExcludeFileFilters = $this.ConvertToStringArray($ExcludeFiles);
+		  $ExcludeFileFilters | ForEach-Object {
+			if($isRecurse -eq $true)
+			{
+			  $filesToExclude = Get-ChildItem -Path $armTemplatePath -Recurse -Filter $_
+			}
+			else{
+				$filesToExclude = Get-ChildItem -Path $armTemplatePath -Filter $_
+			}
+			if($null -ne $filesToExclude -and ($filesToExclude | Measure-Object).Count -gt 0)
+			{
+			   $filesToExclude | Select-Object Name | ForEach-Object { $filteredFiles += $_.Name}
+			}
+		  }
+		  $filesToExclude = $filteredFiles -join ","
 		$filesToExcludeCount = ($filesToExclude| Measure-Object).Count 
 		}
 		foreach($armTemplate in $ARMTemplates)
@@ -321,7 +337,7 @@ class ARMCheckerStatus: EventBase
 				$totalText = "Total";
 				$MarkerText = "MarkerText";
 				$rows = @();
-				$rows += [Enum]::GetNames([ControlSeverity]) | Where-Object { $severities -contains $_ };
+				$rows += $severities;
 				$rows += $MarkerText;
 				$rows += $totalText;
 				$rows += $MarkerText;
@@ -431,7 +447,7 @@ class ARMCheckerStatus: EventBase
         }
              
         Add-Content -Value $message -Path $this.SFLogPath        
-    } 
+	} 
 	
 	hidden [string] LoadARMControlsFile()
 	{ 	
@@ -439,8 +455,16 @@ class ARMCheckerStatus: EventBase
 	   $ARMControlsFileURI = [Constants]::ARMControlsFileURI
 	   try
 	   {
-	    $serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($ARMControlsFileURI, '', '', '');
+         $AzureContext = Get-AzureRmContext
+	  if([ConfigurationManager]::GetLocalAzSKSettings().EnableAADAuthForOnlinePolicyStore -and -not [string]::IsNullOrWhiteSpace($AzureContext)) 
+	   {
+		   $serverFileContent = [ConfigurationManager]::LoadServerConfigFile("ARMControls.json");
 	   }
+	   else
+	   {
+		   $serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($ARMControlsFileURI, '', '', '');
+	   }
+	}
 	   catch
 	   {
 	    # No Need to break Execution

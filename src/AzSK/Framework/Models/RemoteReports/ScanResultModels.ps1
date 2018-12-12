@@ -20,7 +20,7 @@ class ScanInfoBase {
 class ControlResultBase {
     [string] $ControlId;
     [string] $ControlIntId;
-    [ControlSeverity] $ControlSeverity;
+    [string] $ControlSeverity;
     [VerificationResult] $ActualVerificationResult;
     [AttestationStatus] $AttestationStatus;
 	[DateTime] $AttestedDate = [Constants]::AzSKDefaultDateTime;

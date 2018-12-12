@@ -47,7 +47,7 @@ class LSRControlResultBase
 	[string] $ControlId = "";
     [string] $ControlIntId = "";
 	[DateTime] $ControlUpdatedOn = [Constants]::AzSKDefaultDateTime;
-    [ControlSeverity] $ControlSeverity = [ControlSeverity]::High
+    [string] $ControlSeverity = [ControlSeverity]::High
     [VerificationResult] $ActualVerificationResult= [VerificationResult]::Manual;
     [AttestationStatus] $AttestationStatus = [AttestationStatus]::None;
     [VerificationResult] $VerificationResult = [VerificationResult]::Manual;

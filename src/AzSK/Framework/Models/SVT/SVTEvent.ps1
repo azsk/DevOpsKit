@@ -46,7 +46,7 @@ class ControlResult
 	[StateManagement] $StateManagement = [StateManagement]::new();
 	hidden [PSObject] $FixControlParameters = $null;
 	hidden [bool] $EnableFixControl = $false;
-	[bool] $IsControlInGrace=$true;
+	[bool] $IsControlInGrace;
 	[DateTime] $FirstFailedOn = [Constants]::AzSKDefaultDateTime;
 	[DateTime] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
 	[int] $MaximumAllowedGraceDays=0;

@@ -26,7 +26,7 @@ class ControlParam
 {
 	[string] $ControlID = ""
 	[string] $Id = ""
-	[ControlSeverity] $ControlSeverity = [ControlSeverity]::High
+	[string] $ControlSeverity = [ControlSeverity]::High
     [FixControlImpact] $FixControlImpact = [FixControlImpact]::High;
 	[string] $Description = "";
 	[bool] $Enabled = $true;

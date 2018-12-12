@@ -22,7 +22,7 @@ class ControlItem
     #Fields from JSON
     [string] $ControlID = ""
     [string] $Id = ""
-    [ControlSeverity] $ControlSeverity = [ControlSeverity]::High
+    [string] $ControlSeverity = [ControlSeverity]::High
     [string] $Description = ""
     [string] $Automated = ""
     [string[]] $Tags = @()
