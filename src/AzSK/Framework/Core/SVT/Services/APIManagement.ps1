@@ -27,6 +27,9 @@ class APIManagement: SVTBase
 		if($this.GetResourceObject())
 		{
 			$this.APIMContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+			$this.APIMInstance = Get-AzureRmApiManagement -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
+			$this.APIMAPIs = Get-AzureRmApiManagementApi -Context $this.APIMContext
+			$this.APIMProduct = Get-AzureRmApiManagementProduct -Context $this.APIMContext
 		}
 	}
 
