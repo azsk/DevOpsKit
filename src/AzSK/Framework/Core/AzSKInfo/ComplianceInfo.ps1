@@ -218,10 +218,10 @@ class ComplianceInfo: CommandBase
 				{
 					$baselineCompliancewithoutGrace=(100 * ($baselinePassedControlCountWithGrace+ $baselinePassedControlCount))/($baselineControlCount+$baselineControlCountWithGrace)
 				}
-				$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%( with grace)","Pass-%( without grace)","# of Passed Controls( grace)", "# of Failed Controls( grace)" , "# of Passed Controls( no grace)",  "# of Failed Controls( no grace)"
+				$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%( grace)","Pass-%( no grace)","# of Passed Controls( grace)", "# of Failed Controls( grace)" , "# of Passed Controls( no grace)",  "# of Failed Controls( no grace)"
 				$ComplianceStat.ComplianceType = "Baseline"
-				$ComplianceStat."Pass-%( with grace)"= [math]::Round($baselineCompliancewithGrace,2)
-				$ComplianceStat."Pass-%( without grace)"= [math]::Round($baselineCompliancewithoutGrace,2)
+				$ComplianceStat."Pass-%( grace)"= [math]::Round($baselineCompliancewithGrace,2)
+				$ComplianceStat."Pass-%( no grace)"= [math]::Round($baselineCompliancewithoutGrace,2)
 				$ComplianceStat."# of Passed Controls( grace)" = $baselinePassedControlCountWithGrace
 				$ComplianceStat."# of Failed Controls( grace)" = $baselineFailedControlCountWithGrace
 				$ComplianceStat."# of Passed Controls( no grace)"=($baselinePassedControlCountWithGrace+$baselinePassedControlCount)
@@ -229,10 +229,10 @@ class ComplianceInfo: CommandBase
 				$ComplianceStats += $ComplianceStat
 			}					
 
-			$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%( with grace)","Pass-%( without grace)","# of Passed Controls( grace)", "# of Failed Controls( grace)" , "# of Passed Controls( no grace)",  "# of Failed Controls( no grace)"
+			$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%( grace)","Pass-%( no grace)","# of Passed Controls( grace)", "# of Failed Controls( grace)" , "# of Passed Controls( no grace)",  "# of Failed Controls( no grace)"
 			$ComplianceStat.ComplianceType = "Full"
-			$ComplianceStat."Pass-%( with grace)"= [math]::Round($totalComplianceWithGrace,2)
-			$ComplianceStat."Pass-%( without grace)"= [math]::Round($totalCompliance,2)
+			$ComplianceStat."Pass-%( grace)"= [math]::Round($totalComplianceWithGrace,2)
+			$ComplianceStat."Pass-%( no grace)"= [math]::Round($totalCompliance,2)
 			$ComplianceStat."# of Passed Controls( grace)" = ($passControlCountwithGrace)			
 			$ComplianceStat."# of Failed Controls( grace)" = ($failedControlCountwithGrace)
 			$ComplianceStat."# of Passed Controls( no grace)" = ($passControlCountwithGrace+$passControlCount)
