@@ -115,7 +115,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$Product = $this.APIMProduct | Where-Object { $_.State -eq 'Published' }
+			$Product = $this.APIMProducts | Where-Object { $_.State -eq 'Published' }
 			
 			if(($null -ne $Product) -and ($Product.SubscriptionRequired -contains $false))
 			{
@@ -134,7 +134,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$Product = $this.APIMProduct | Where-Object { $_.State -eq 'Published' }
+			$Product = $this.APIMProducts | Where-Object { $_.State -eq 'Published' }
 			
 			if(($null -ne $Product) -and ($Product.ApprovalRequired -contains $false))
 			{
@@ -230,7 +230,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$Product = $this.APIMProduct
+			$Product = $this.APIMProducts
 			if(($null -ne $Product) -and ($Product.ProductId -contains 'starter' -or $Product.ProductId -contains 'unlimited'))
 			{
 				$controlResult.AddMessage([VerificationResult]::Failed, "APIM contains sample products. Delete the two sample products: Starter and Unlimited.") 
@@ -353,7 +353,7 @@ class APIManagement: SVTBase
 			}
 			$Result += $Policy
 			#Policy Scope: Product
-			$this.APIMProduct | ForEach-Object {
+			$this.APIMProducts | ForEach-Object {
 			    $ProductPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ProductId $_.ProductId
 			    $RestrictedIPs = ""
 			    $RestrictedIPs = $ProductPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
@@ -457,7 +457,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$GuestGroupUsedInProductList = $this.APIMProduct | ForEach-Object {
+			$GuestGroupUsedInProductList = $this.APIMProducts | ForEach-Object {
 			    if((Get-AzureRmApiManagementGroup -Context $this.APIMContext -ProductId $_.ProductId).GroupId -contains 'guests')
 			    {
 			        $_
