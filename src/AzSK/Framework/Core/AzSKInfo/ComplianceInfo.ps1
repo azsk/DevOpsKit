@@ -218,34 +218,34 @@ class ComplianceInfo: CommandBase
 				{
 					$baselineCompliancewithoutGrace=(100 * ($baselinePassedControlCountWithGrace+ $baselinePassedControlCount))/($baselineControlCount+$baselineControlCountWithGrace)
 				}
-				$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%(With Grace)","Pass-%(Without Grace)","Passed Controls(With Grace)", "Failed Controls(With Grace)" , "Passed Controls(Without Grace)",  "Failed Controls(Without Grace)"
+				$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%( grace)","Pass-%( no grace)","# of Passed Controls( grace)", "# of Failed Controls( grace)" , "# of Passed Controls( no grace)",  "# of Failed Controls( no grace)"
 				$ComplianceStat.ComplianceType = "Baseline"
-				$ComplianceStat."Pass-%(With Grace)"= [math]::Round($baselineCompliancewithGrace,2)
-				$ComplianceStat."Pass-%(Without Grace)"= [math]::Round($baselineCompliancewithoutGrace,2)
-				$ComplianceStat."Passed Controls(With Grace)" = $baselinePassedControlCountWithGrace
-				$ComplianceStat."Failed Controls(With Grace)" = $baselineFailedControlCountWithGrace
-				$ComplianceStat."Passed Controls(Without Grace)"=($baselinePassedControlCountWithGrace+$baselinePassedControlCount)
-				$ComplianceStat."Failed Controls(Without Grace)"=($baselineFailedControlCount+$baselineFailedControlCountWithGrace)
+				$ComplianceStat."Pass-%( grace)"= [math]::Round($baselineCompliancewithGrace,2)
+				$ComplianceStat."Pass-%( no grace)"= [math]::Round($baselineCompliancewithoutGrace,2)
+				$ComplianceStat."# of Passed Controls( grace)" = $baselinePassedControlCountWithGrace
+				$ComplianceStat."# of Failed Controls( grace)" = $baselineFailedControlCountWithGrace
+				$ComplianceStat."# of Passed Controls( no grace)"=($baselinePassedControlCountWithGrace+$baselinePassedControlCount)
+				$ComplianceStat."# of Failed Controls( no grace)"=($baselineFailedControlCount+$baselineFailedControlCountWithGrace)
 				$ComplianceStats += $ComplianceStat
 			}					
 
-			$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%(With Grace)","Pass-%(Without Grace)","Passed Controls(With Grace)", "Failed Controls(With Grace)" , "Passed Controls(Without Grace)",  "Failed Controls(Without Grace)"
+			$ComplianceStat = "" | Select-Object "ComplianceType", "Pass-%( grace)","Pass-%( no grace)","# of Passed Controls( grace)", "# of Failed Controls( grace)" , "# of Passed Controls( no grace)",  "# of Failed Controls( no grace)"
 			$ComplianceStat.ComplianceType = "Full"
-			$ComplianceStat."Pass-%(With Grace)"= [math]::Round($totalComplianceWithGrace,2)
-			$ComplianceStat."Pass-%(Without Grace)"= [math]::Round($totalCompliance,2)
-			$ComplianceStat."Passed Controls(With Grace)" = ($passControlCountwithGrace)			
-			$ComplianceStat."Failed Controls(With Grace)" = ($failedControlCountwithGrace)
-			$ComplianceStat."Passed Controls(Without Grace)" = ($passControlCountwithGrace+$passControlCount)
-			$ComplianceStat."Failed Controls(Without Grace)" = ($failedControlCountwithGrace+$failedControlCount)
+			$ComplianceStat."Pass-%( grace)"= [math]::Round($totalComplianceWithGrace,2)
+			$ComplianceStat."Pass-%( no grace)"= [math]::Round($totalCompliance,2)
+			$ComplianceStat."# of Passed Controls( grace)" = ($passControlCountwithGrace)			
+			$ComplianceStat."# of Failed Controls( grace)" = ($failedControlCountwithGrace)
+			$ComplianceStat."# of Passed Controls( no grace)" = ($passControlCountwithGrace+$passControlCount)
+			$ComplianceStat."# of Failed Controls( no grace)" = ($failedControlCountwithGrace+$failedControlCount)
 			
 			$ComplianceStats += $ComplianceStat
 
 			$this.PublishCustomMessage(($ComplianceStats | Format-Table  | Out-String  -Width 2048), [MessageType]::Default)
 			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
-			$this.PublishCustomMessage("`r`nTotal control count:          "+ $totalControlCount, [MessageType]::Default);
-			$this.PublishCustomMessage("`r`nTotal baseline control count: "+ ($baselineControlCount+$baselineControlCountWithGrace), [MessageType]::Default)
-			$this.PublishCustomMessage("`r`nAttested control count:        "+ $attestedControlCount , [MessageType]::Default);
-			$this.PublishCustomMessage("`r`nControl in grace period count: "+ $gracePeriodControlCount , [MessageType]::Default);
+			$this.PublishCustomMessage("`r`nTotal controls:          "+ $totalControlCount, [MessageType]::Default);
+			$this.PublishCustomMessage("`r`nTotal baseline controls: "+ ($baselineControlCount+$baselineControlCountWithGrace), [MessageType]::Default)
+			$this.PublishCustomMessage("`r`nAttested controls:       "+ $attestedControlCount , [MessageType]::Default);
+			$this.PublishCustomMessage("`r`nControls in grace:       "+ $gracePeriodControlCount , [MessageType]::Default);
 			$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 			$this.PublishCustomMessage("`r`n`r`n`r`nDisclaimer: Compliance summary/control counts may differ slightly from the central telemetry/dashboard due to various timing/sync lags.", [MessageType]::Default);
 		}
