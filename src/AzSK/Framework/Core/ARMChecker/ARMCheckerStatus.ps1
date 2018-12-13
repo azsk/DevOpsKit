@@ -337,7 +337,7 @@ class ARMCheckerStatus: EventBase
 				$totalText = "Total";
 				$MarkerText = "MarkerText";
 				$rows = @();
-				$rows += [Enum]::GetNames([ControlSeverity]) | Where-Object { $severities -contains $_ };
+				$rows += $severities;
 				$rows += $MarkerText;
 				$rows += $totalText;
 				$rows += $MarkerText;
@@ -455,7 +455,7 @@ class ARMCheckerStatus: EventBase
 	   $ARMControlsFileURI = [Constants]::ARMControlsFileURI
 	   try
 	   {
-		if(-not [ConfigurationManager]::GetLocalAzSKSettings().EnableAADAuthForOnlinePolicyStore)
+		if(-not [ConfigurationManager]::GetAzSKLocalSettings().EnableAADAuthForOnlinePolicyStore)
 		{
 			$serverFileContent = [ConfigurationManager]::LoadServerConfigFile("ARMControls.json");
 		}
@@ -473,8 +473,15 @@ class ARMCheckerStatus: EventBase
 	}
 	   catch
 	   {
-	    # No Need to break Execution
-		# Load Offline File
+         try
+         {
+            $serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($ARMControlsFileURI, '', '', '');
+         }
+         catch
+         {
+         # No Need to break Execution
+		 # Load Offline File
+         }
 	   }
 	   if($null -ne $serverFileContent)
 	   {
