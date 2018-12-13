@@ -1009,7 +1009,8 @@ class SVTBase: AzSKRoot
 					}
 					elseif([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays"))
 					{
-															
+						$controlsev = $this.ControlSettings.ControlSeverity.PSobject.Properties | Where-Object Value -eq $controlSeverity | Select-Object -First 1
+                        $controlSeverity = $controlsev.name									
 						#Check if control severity has expiry period
 						if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
 						{
