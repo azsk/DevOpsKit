@@ -3,6 +3,7 @@ class APIManagement: SVTBase
 {   
 
 	hidden [PSObject] $APIMContext = $null;
+	hidden [PSObject] $ResourceObject;
 
     APIManagement([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
         Base($subscriptionId, $resourceGroupName, $resourceName) 
@@ -21,6 +22,18 @@ class APIManagement: SVTBase
 			$this.APIMContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
 		}
 	}
+
+	 hidden [PSObject] GetResourceObject()
+    {
+        if (-not $this.ResourceObject) {
+            $this.ResourceObject = Get-AzureRmResource -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+            if(-not $this.ResourceObject)
+            {
+                throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))
+            }
+        }
+        return $this.ResourceObject;
+    }
 
 	hidden [ControlResult] CheckAPIMMetricAlert([ControlResult] $controlResult)
     {
