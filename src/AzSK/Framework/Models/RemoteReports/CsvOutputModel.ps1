@@ -11,6 +11,7 @@ class CsvOutputItem
     [string] $ChildResourceName = ""
     [string] $ControlSeverity = ""
 	[string] $IsBaselineControl = ""
+	[string] $IsControlInGrace=""
     [string] $SupportsAutoFix = ""    
     [string] $Description = ""
 	[string] $ActualStatus = ""

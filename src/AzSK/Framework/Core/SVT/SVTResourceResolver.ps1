@@ -7,7 +7,7 @@ class SVTResourceResolver: AzSKRoot
     [ResourceTypeName] $ResourceTypeName = [ResourceTypeName]::All;
 	[Hashtable] $Tag = $null;
     [string] $TagName = "";
-    [string] $TagValue = "";
+    [string[]] $TagValue = "";
 	hidden [string[]] $ResourceGroups = @();
 	[ResourceTypeName] $ExcludeResourceTypeName = [ResourceTypeName]::All;
 	[string[]] $ExcludeResourceNames=@();
@@ -91,7 +91,7 @@ class SVTResourceResolver: AzSKRoot
 			}	
 		}
 
-
+		
 	}
 
 	[void] LoadAzureResources()
@@ -155,7 +155,7 @@ class SVTResourceResolver: AzSKRoot
 			}
 			
 			
-			if($resources.Count -eq 0)
+			if(($resources | Measure-Object).Count -eq 0)
 			{
 				throw ([SuppressedException]::new(("Could not find any resources that match the specified criteria."), [SuppressedExceptionType]::InvalidOperation))
 			}
@@ -192,6 +192,15 @@ class SVTResourceResolver: AzSKRoot
 				}
 				# Exclude resource type 
 
+				# Exclude resource type 
+
+				if($this.ExcludeResourceTypeName -ne [ResourceTypeName]::All)
+				{
+					$svtResource.ResourceTypeMapping = ([SVTMapping]::Mapping |
+											Where-Object { $_.ResourceType -eq $resource.ResourceType -and $_.ResourceTypeName -ne $this.ExcludeResourceTypeName } |
+											Select-Object -First 1);
+				}
+
 				# Checking if Vnet is ErVNet or not
 				if($svtResource.ResourceTypeMapping -and $svtResource.ResourceTypeMapping.ResourceTypeName -eq [SVTMapping]::VirtualNetworkTypeName)
 				{
@@ -224,10 +233,12 @@ class SVTResourceResolver: AzSKRoot
 			}
 			$this.SVTResourcesFoundCount = ($this.SVTResources | Measure-Object).Count
 					
-			if((($this.ExcludedResourceGroupNames | Measure-Object).Count -gt 0) -or (($this.ExcludeResourceNames)| Measure-Object).Count -gt 0 -or (($this.ExcludeResourceTypeName | Measure-Object).Count)-gt 0)
+			if((($this.ExcludeResourceGroupNames | Measure-Object).Count -gt 0) -or (($this.ExcludeResourceNames)| Measure-Object).Count -gt 0 -or (($this.ExcludeResourceTypeName) -ne 'All'))
 			{
 				$this.SVTResources = $this.ApplyResourceFilter($this.SVTResources)
 			}
+			
+				
 		}
 	}
 
@@ -287,23 +298,26 @@ class SVTResourceResolver: AzSKRoot
 			$expression += " -Tag @{ $tagValues }" ;
 
 		}
-		elseif((-not [string]::IsNullOrEmpty($this.TagName)) -and (-not [string]::IsNullOrEmpty($this.TagValue)))
-		{
-			$expression += " -TagName '$($this.TagName)' -TagValue '$($this.TagValue)'" ;
-		}
-
 		$result = @();
 		$expressionResult = Invoke-Expression $expression
 		if($expressionResult)
 		{
 			$result += $expressionResult
 		}
+					 
+		if((-not [string]::IsNullOrEmpty($this.TagName)) -and (-not [string]::IsNullOrEmpty($this.TagValue) -and ($this.TagValue | Measure-Object).Count -gt 0))
+		{
+				$this.TagValue= $this.ConvertToStringArray($this.TagValue)
+				$result = $result | Where-Object {$null -ne $_.Tags -and ($null -ne $_.Tags.Keys )}
+				$result = $result | Where-Object{($_.Tags.GetEnumerator() | Where-Object {$_.Key -eq $this.TagName -and $_.Value -in $this.TagValue })}
+		}		
+		 
 		return $result;
 	}
 	#method to filter SVT resources based on exclude flags
 	hidden [SVTResource[]] ApplyResourceFilter($resources)
 	{
-		[SVTResource[]] $filteredResource = @();
+			
 		$ResourceFilterMessage=[string]::Empty
 		$ResourceGroupFilterMessage=[string]::Empty
 		#First remove resource from the RGs specified in -ExcludeResourceGroupNames
@@ -362,7 +376,7 @@ class SVTResourceResolver: AzSKRoot
 					if(($duplicateResourceNames| Measure-Object).Count -gt 0 )
 					{
 						$duplicateResources=""
-						$duplicates=$resources|Where-Object{$_.ResourceName -in $duplicateResourceNames.Name}|Select-Object -Property ResourceName,ResourceGroupName,ResourceTypeMapping
+						$duplicates=$resources | Where-Object{$_.ResourceName -in $duplicateResourceNames.Name}|Select-Object -Property ResourceName,ResourceGroupName,ResourceTypeMapping
 						$ResourceFilterMessage+="`nWarning: Multiple matches for the following resources found. All matching resources will be excluded.`n"
 						$duplicates|ForEach-Object{
 							$duplicateResources+=[string]::Format("	 {0}(RG: {1}, TypeName: {2})`n",($_.ResourceName),($_.ResourceGroupName),($_.ResourceTypeMapping.ResourceTypeName))
