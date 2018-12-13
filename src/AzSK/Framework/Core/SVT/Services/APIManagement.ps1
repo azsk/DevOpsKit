@@ -223,10 +223,10 @@ class APIManagement: SVTBase
 
 	hidden [ControlResult] CheckClientCertAuthDisabled([ControlResult] $controlResult)
     {
-		if( $null -ne $this.APIMContext)
+		if($null -ne $this.APIMContext)
 		{
 			$ClientCertAuthDisabledInAPIs = (Get-AzureRmApiManagementApi -Context $this.APIMContext).ApiId | ForEach-Object {
-				$apiPolicy = Get-AzureRmApiManagementPolicy -Context $apimContext -ApiId $_
+				$apiPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_
 				$certThumbprint = $apiPolicy | Select-Xml -XPath "//inbound//authentication-certificate" | foreach { $_.Node.thumbprint }
 			    if($certThumbprint -eq $null)
 			    {
