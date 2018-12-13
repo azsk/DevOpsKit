@@ -1011,7 +1011,8 @@ class Helpers {
 			}
 			catch
 			{
-				[EventBase]::PublishGenericCustomMessage(" `r`nError occured while adding tag(s) on resource group [$RGName]. $($_.Exception)", [MessageType]::Warning);
+                #Skipping tag exception. Exception can be raised due to privilege issues.
+				#[EventBase]::PublishGenericCustomMessage(" `r`nError occured while adding tag(s) on resource group [$RGName]. $($_.Exception)", [MessageType]::Warning);
 			}
 		}
     }
