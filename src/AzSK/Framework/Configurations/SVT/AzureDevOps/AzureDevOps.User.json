@@ -11,7 +11,7 @@
         "Automated": "Yes",
         "MethodName": "CheckPATAccessLevel",
         "Rationale": "Granting minimum access ensures that PAT is granted with just enough permissions to perform required tasks. This minimizes exposure of the resources in case of PAT compromise.",
-        "Recommendation": "https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/access-with-azure-ad?view=vsts",
+        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=vsts#revoke-personal-access-tokens-to-remove-access",
         "Tags": [
           "SDL",
           "TCP",
@@ -28,7 +28,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "If a personal access token (PAT) gets compromised, the Azure DevOps assets accessible to the user can be accessed/manipulated by unauthorized users. Minimizing the validity period of the PAT ensures that the window of time available to an attacker in the event of compromise is small.",
-      "Recommendation": "https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/access-with-azure-ad?view=vsts",
+      "Recommendation": "Go to User Profile --> Security --> Personel Access Token --> Validate expiry periods of PAT tokens",
       "Tags": [
         "SDL",
         "TCP",
@@ -45,7 +45,7 @@
         "Automated": "No",
         "MethodName": "",
         "Rationale": "Alternate credential allows user to create username and password to access your Git repository.Login with these credentials doesn't expire and can't be scoped to limit access to your Azure DevOps Services data.",
-        "Recommendation": "https://docs.microsoft.com/en-us/azure/devops/repos/git/auth-overview?view=vsts#alternate-credentials",
+        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/repos/git/auth-overview?view=vsts#alternate-credentials",
         "Tags": [
           "SDL",
           "TCP",

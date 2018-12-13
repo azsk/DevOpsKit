@@ -148,7 +148,18 @@ function Set-AzSKPolicySettings {
 
 		[Parameter(Mandatory = $true, ParameterSetName = "CACentralMode")]
 		[switch]
-        $EnableCentralScanMode
+        $EnableCentralScanMode,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "ScanToolDetails", HelpMessage = "Provide scanner tool path")]
+        [string]
+		[Alias("stp")]
+        $ScanToolPath,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "ScanToolDetails", HelpMessage = "Provide scanner tool name")]
+        [string]
+		[Alias("stn")]
+        $ScanToolName
+
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
@@ -206,6 +217,13 @@ function Set-AzSKPolicySettings {
             else {
                 $azskSettings.AzureEnvironment = [Constants]::DefaultAzureEnvironment
             }
+
+            if($ScanToolPath -and $ScanToolName)
+            {
+                $azskSettings.ScanToolPath = $ScanToolPath
+                $azskSettings.ScanToolName = $ScanToolName
+            }
+            
             [ConfigurationManager]::UpdateAzSKSettings($azskSettings);            
             [EventBase]::PublishGenericCustomMessage("Successfully configured policy settings. `nStart a fresh PS console/session to ensure any policy updates are (re-)loaded.", [MessageType]::Warning);
         }

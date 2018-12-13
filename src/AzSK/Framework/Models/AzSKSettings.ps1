@@ -38,7 +38,8 @@ class AzSKSettings {
     hidden static [AzSKSettings] $Instance = $null;
 	hidden static [string] $FileName = "AzSKSettings.json";
 	[bool] $StoreComplianceSummaryInUserSubscriptions;
-	[string] $CredScanToolPath = [string]::Empty
+	[string] $ScanToolPath = [string]::Empty
+	[string] $ScanToolName = [string]::Empty
 
 
 	

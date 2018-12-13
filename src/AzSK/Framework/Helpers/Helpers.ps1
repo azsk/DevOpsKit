@@ -10,7 +10,7 @@ class Helpers {
 
     static hidden [PSObject] $currentAzureDevOpsContext;
     static hidden [PSObject] $currentRMContext;
-    static hidden [ScanType] $ScanType
+    static hidden [CommandType] $ScanType
     hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson) {
 		$rootConfigPath = [Constants]::AzSKAppFolderPath + "\" ;
 		return [Helpers]::LoadOfflineConfigFile($fileName, $true,$rootConfigPath);
@@ -103,31 +103,22 @@ class Helpers {
     {
         if(-not [Helpers]::currentAzureDevOpsContext)
         {
-            #TODO: Descuss on default clientid
-            $clientId = "872cd9fa-d31f-45e0-9eab-6e460a02d1f1";          
-            $replyUri = "urn:ietf:wg:oauth:2.0:oob"; 
-            $azureDevOpsResourceId = "499b84ac-1321-427f-aa17-267ca6975798";
-            $tenant = ""
+            $clientId = [Constants]::DefaultClientId ;          
+            $replyUri = [Constants]::DefaultReplyUri; 
+            $azureDevOpsResourceId = [Constants]::DefaultAzureDevOpsResourceId;
             [AuthenticationContext] $ctx = $null;
-            if (-not [string]::IsNullOrEmpty($tenant) )
+
+            $ctx = [AuthenticationContext]::new("https://login.windows.net/common");
+            if ($ctx.TokenCache.Count -gt 0)
             {
-                $ctx = [AuthenticationContext]::new("https://login.microsoftonline.com/" + $tenant);
-            }
-            else
-            {
-                $ctx = [AuthenticationContext]::new("https://login.windows.net/common");
-                if ($ctx.TokenCache.Count > 0)
-                {
-                    [String] $homeTenant = $ctx.TokenCache.ReadItems().First().TenantId;
-                    $ctx = [AuthenticationContext]::new("https://login.microsoftonline.com/" + $homeTenant);
-                }
+                [String] $homeTenant = $ctx.TokenCache.ReadItems().First().TenantId;
+                $ctx = [AuthenticationContext]::new("https://login.microsoftonline.com/" + $homeTenant);
             }
             [AuthenticationResult] $result = $null;
-            #[IPlatformParameters] $promptBehavior = [PlatformParameters]::new([PromptBehavior]::Always);
             $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Always);
             [Helpers]::currentAzureDevOpsContext =$result
         }
-        [Helpers]::ScanType = [ScanType]::AzureDevOps
+        [Helpers]::ScanType = [CommandType]::AzureDevOps
     }
     
 	hidden static [void] ResetCurrentRMContext()
@@ -521,7 +512,7 @@ class Helpers {
     }
 
     static [string] GetAccessToken([string] $resourceAppIdUri) {
-        if([Helpers]::ScanType -eq [ScanType]::AzureDevOps)
+        if([Helpers]::ScanType -eq [CommandType]::AzureDevOps)
         {
             return [Helpers]::GetAzureDevOpsAccessToken()
         }
@@ -533,7 +524,7 @@ class Helpers {
 
     static [string] GetAccessToken()
     {
-        if([Helpers]::ScanType -eq [ScanType]::AzureDevOps)
+        if([Helpers]::ScanType -eq [CommandType]::AzureDevOps)
         {
             return [Helpers]::GetAzureDevOpsAccessToken()
         }

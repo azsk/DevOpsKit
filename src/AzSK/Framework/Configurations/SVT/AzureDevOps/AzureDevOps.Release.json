@@ -11,11 +11,11 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-      "Recommendation": "",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/policies/permissions?view=vsts",
       "Tags": [
         "SDL",
         "TCP",
-        "Automated",
+        "Manual",
         "AuthZ",
         "RBAC"
       ],
@@ -23,18 +23,18 @@
     },
     {
       "ControlID": "AzureDevOps_Release_DP_No_PlainText_Secrets_In_Defination",
-      "Description": "Secrets and keys must not be stored as plain text in release variables",
+      "Description": "Secrets and keys must not be stored as plain text in release variables/task parameters",
       "Id": "Release120",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckCredInVariables",
       "Rationale": "Keeping secrets such as connection strings, passwords, keys, etc. in clear text can lead to easy compromise. Making them secret type variables ensures that they are protected at rest.",
-      "Recommendation": "",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=vsts&tabs=yaml%2Cbatch#secret-variables",
       "Tags": [
         "SDL",
         "TCP",
-        "Manual",
-        "Audit"       
+        "Automated",
+        "DP"       
       ],
       "Enabled": true
     }

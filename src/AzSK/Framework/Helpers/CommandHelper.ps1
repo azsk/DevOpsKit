@@ -256,6 +256,12 @@ class CommandHelper
             Verb = "Get";
             Noun = "AzSKARMTemplateSecurityStatus";
             ShortName = "GATS";
+        },
+		[CommandDetails]@{
+            Verb = "Get";
+            Noun = "AzSKAzureDevOpsSecurityStatus";
+			ShortName = "GADS";
+			CommandType = [CommandType]::AzureDevOps;
         }
     );
 

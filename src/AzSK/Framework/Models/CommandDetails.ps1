@@ -6,4 +6,6 @@ class CommandDetails
 	[string] $ShortName = "";
 	[bool] $IsLatestRequired = $true;
 	[bool] $HasAzSKComponentWritePermission = $true
+	[CommandType] $CommandType = [CommandType]::Azure
+	
 }

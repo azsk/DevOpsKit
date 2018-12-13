@@ -10,10 +10,11 @@ class Build: SVTBase
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
 	{
         
-        $ToolFolderPath =  [ConfigurationManager]::GetAzSKSettings().CredScanToolPath
-        if((-not [string]::IsNullOrEmpty($ToolFolderPath)) -and (Test-Path $ToolFolderPath))
+        $ToolFolderPath =  [ConfigurationManager]::GetAzSKSettings().ScanToolPath
+        $ScanToolName = [ConfigurationManager]::GetAzSKSettings().ScanToolName
+        if((-not [string]::IsNullOrEmpty($ToolFolderPath)) -and (Test-Path $ToolFolderPath) -and (-not [string]::IsNullOrEmpty($ScanToolName)))
         {
-            $ToolPath = Get-ChildItem -Path $ToolFolderPath -File -Include "CredentialScanner.exe" -Recurse 
+            $ToolPath = Get-ChildItem -Path $ToolFolderPath -File -Include $ScanToolName -Recurse 
             if($ToolPath)
             {
                 $apiURL = $this.ResourceContext.ResourceId
@@ -30,11 +31,13 @@ class Build: SVTBase
                         }
 
                         $responseObj | ConvertTo-Json -Depth 5 | Out-File "$buildDefPath\$buildDefFileName.json"
-                        $scanResultPath = "$buildDefPath\CredScan-matches.csv"
-                        ."$($Toolpath.FullName)" -I $buildDefPath -S "$($ToolPath.Directory.FullName)\Searchers\buildsearchers.xml" -f csv -Ve 1 -O "$buildDefPath\CredScan"    
-                        if(Test-Path $scanResultPath)
+                        $searcherPath = Get-ChildItem -Path $($ToolPath.Directory.FullName) -Include "buildsearchers.xml" -Recurse
+                        ."$($Toolpath.FullName)" -I $buildDefPath -S $searcherPath -f csv -Ve 1 -O "$buildDefPath\Scan"    
+                        
+                        $scanResultPath = Get-ChildItem -Path $buildDefPath -File -Include "*.csv"
+                        if($scanResultPath -and (Test-Path $scanResultPath.FullName))
                         {
-                            $credList = Get-Content -Path $scanResultPath | ConvertFrom-Csv 
+                            $credList = Get-Content -Path $scanResultPath.FullName | ConvertFrom-Csv 
                             if(($credList | Measure-Object).Count -gt 0)
                             {
                                 $controlResult.AddMessage("No. of credentials found:" + ($credList | Measure-Object).Count )

@@ -156,7 +156,7 @@ enum RemoveConfiguredCASetting
 	WebhookSettings
 }
 
-enum ScanType
+enum CommandType
 {
 	Azure
 	AzureDevOps

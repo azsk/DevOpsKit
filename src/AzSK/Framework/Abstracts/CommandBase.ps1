@@ -26,7 +26,7 @@ class CommandBase: AzSKRoot {
 		}		
 
 		#TODO: Make ScanType behaviours dynamic
-		If([Helpers]::ScanType -ne [ScanType]::AzureDevOps)
+		If([Helpers]::ScanType -ne [CommandType]::AzureDevOps)
 		{
 			#Validate if command is getting run with correct Org Policy
 			$IsTagSettingRequired=$this.ValidateOrgPolicyOnSubscription($this.Force)

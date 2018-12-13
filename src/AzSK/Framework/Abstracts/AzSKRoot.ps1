@@ -20,19 +20,21 @@ class AzSKRoot: EventBase
 
 			$this.SetAzureContext();
 		}
-		#TODO: Check Scan Type
-		elseif(-not [string]::IsNullOrEmpty($subscriptionId))
+		elseif((-not [string]::IsNullOrEmpty($subscriptionId)))
 		{
 			$this.SubscriptionContext = [SubscriptionContext]@{
 				SubscriptionId = $subscriptionId;
 				Scope = "/Organization/$subscriptionId";
 				SubscriptionName = $subscriptionId;
 			};
-			[Helpers]::GetCurrentAzureDevOpsContext()
-			#throw [SuppressedException] ("Subscription Id [$subscriptionId] is malformed. Subscription Id should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).")
+			[Helpers]::GetCurrentAzureDevOpsContext()			
 		}
-    }    
-    
+		else
+		{
+			throw [SuppressedException] ("Subscription Id [$subscriptionId] is malformed. Subscription Id should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).")
+		}
+	}
+	
     hidden [void] SetAzureContext()
     {
 		$currentContext = [Helpers]::GetCurrentRMContext()
