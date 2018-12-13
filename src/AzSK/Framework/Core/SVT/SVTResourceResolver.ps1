@@ -155,7 +155,7 @@ class SVTResourceResolver: AzSKRoot
 			}
 			
 			
-			if($resources.Count -eq 0)
+			if(($resources | Measure-Object).Count -eq 0)
 			{
 				throw ([SuppressedException]::new(("Could not find any resources that match the specified criteria."), [SuppressedExceptionType]::InvalidOperation))
 			}
