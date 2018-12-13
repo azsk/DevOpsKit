@@ -94,23 +94,7 @@ class APIManagement: SVTBase
 		}
 		return $controlResult;
     }
-    hidden [ControlResult] CheckNonARMAPIUsage([ControlResult] $controlResult)
-    {
-		if( $null -ne $this.APIMContext)
-		{
-			$tenantAccess = Get-AzureRmApiManagementTenantAccess -Context $this.APIMContext
-			if($null -ne $tenantAccess -and $tenantAccess.Enabled -eq $true)
-			{
-			    $controlResult.AddMessage([VerificationResult]::Failed, "Access to non-ARM based REST API is enabled for this API Management service.") 
-			}
-			else
-			{
-			    $controlResult.AddMessage([VerificationResult]::Passed,"")
-			}
-		}
-		return $controlResult;
-    }
-
+    
 	hidden [ControlResult] CheckRequiresSubscription([ControlResult] $controlResult)
     {
 		if( $null -ne $this.APIMContext)
@@ -220,7 +204,7 @@ class APIManagement: SVTBase
 			}
 			else
 			{
-			    $controlResult.AddMessage([VerificationResult]::Passed,"")
+			    $controlResult.AddMessage([VerificationResult]::Manual,"'$($this.ResourceContext.ResourceName)' API management instance is deployed in $($this.APIMInstance.VpnType) mode inside a virtual network.")
 			}
 		}
 		return $controlResult;
@@ -435,7 +419,7 @@ class APIManagement: SVTBase
 		return $controlResult;
     }
 
-	hidden [ControlResult] CheckApplicationInsightEnabled([ControlResult] $controlResult)
+	hidden [ControlResult] CheckApplicationInsightsEnabled([ControlResult] $controlResult)
     {
 		if( $null -ne $this.APIMContext)
 		{
@@ -443,7 +427,7 @@ class APIManagement: SVTBase
 			
 			if($null -ne $apimLogger)
 			{
-				$controlResult.AddMessage([VerificationResult]::Verify, "Application Insight logger is enabled for" + $this.ResourceContext.ResourceName, $apimLogger) 
+				$controlResult.AddMessage([VerificationResult]::Verify, "Application Insights logger is enabled for" + $this.ResourceContext.ResourceName, $apimLogger) 
 			}
 			else
 			{
@@ -493,8 +477,8 @@ class APIManagement: SVTBase
 		{
 			if(([Helpers]::CheckMember($json[0],"properties")) -and (($json[0].properties.subscriptions.enabled -eq $true) -or ($json[0].properties.userRegistration.enabled -eq $true)))
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed,
-										 [MessageData]::new("Delegated authentication is enabled for $($this.ResourceContext.ResourceName)."));
+				$controlResult.AddMessage([VerificationResult]::Verify,
+										 [MessageData]::new("Delegated authentication is enabled for $($this.ResourceContext.ResourceName). Please ensure that it is implemented securely."));
 			}
 			else
 			{
