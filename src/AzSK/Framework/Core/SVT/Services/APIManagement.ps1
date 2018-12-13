@@ -17,7 +17,7 @@ class APIManagement: SVTBase
 			$this.APIMContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
 			$this.APIMInstance = Get-AzureRmApiManagement -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
 			$this.APIMAPIs = Get-AzureRmApiManagementApi -Context $this.APIMContext
-			$this.APIMProduct = Get-AzureRmApiManagementProduct -Context $this.APIMContext
+			$this.APIMProducts = Get-AzureRmApiManagementProduct -Context $this.APIMContext
 		}
 	}
 
@@ -29,7 +29,7 @@ class APIManagement: SVTBase
 			$this.APIMContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
 			$this.APIMInstance = Get-AzureRmApiManagement -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
 			$this.APIMAPIs = Get-AzureRmApiManagementApi -Context $this.APIMContext
-			$this.APIMProduct = Get-AzureRmApiManagementProduct -Context $this.APIMContext
+			$this.APIMProducts = Get-AzureRmApiManagementProduct -Context $this.APIMContext
 		}
 	}
 
@@ -115,12 +115,12 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$apimProduct = $this.APIMProduct | Where-Object { $_.State -eq 'Published' }
+			$Product = $this.APIMProduct | Where-Object { $_.State -eq 'Published' }
 			
-			if(($null -ne $apimProduct) -and ($apimProduct.SubscriptionRequired -contains $false))
+			if(($null -ne $Product) -and ($Product.SubscriptionRequired -contains $false))
 			{
-				$apimProduct =  $apimProduct | Where-Object { $_.SubscriptionRequired -eq $false}
-				$controlResult.AddMessage([VerificationResult]::Failed, "'Requires Subscription' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $apimProduct ) 
+				$Product =  $Product | Where-Object { $_.SubscriptionRequired -eq $false}
+				$controlResult.AddMessage([VerificationResult]::Failed, "'Requires Subscription' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $Product ) 
 			}
 			else
 			{
@@ -134,12 +134,12 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$apimProduct = $this.APIMProduct | Where-Object { $_.State -eq 'Published' }
+			$Product = $this.APIMProduct | Where-Object { $_.State -eq 'Published' }
 			
-			if(($null -ne $apimProduct) -and ($apimProduct.ApprovalRequired -contains $false))
+			if(($null -ne $Product) -and ($Product.ApprovalRequired -contains $false))
 			{
-				$apimProduct = $apimProduct | Where-Object { $_.ApprovalRequired -eq $false}
-				$controlResult.AddMessage([VerificationResult]::Verify, "'Requires Approval' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $apimProduct) 
+				$Product = $Product | Where-Object { $_.ApprovalRequired -eq $false}
+				$controlResult.AddMessage([VerificationResult]::Verify, "'Requires Approval' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $Product) 
 			}
 			else
 			{
@@ -230,8 +230,8 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$apimProduct = $this.APIMProduct
-			if(($null -ne $apimProduct) -and ($apimProduct.ProductId -contains 'starter' -or $apimProduct.ProductId -contains 'unlimited'))
+			$Product = $this.APIMProduct
+			if(($null -ne $Product) -and ($Product.ProductId -contains 'starter' -or $Product.ProductId -contains 'unlimited'))
 			{
 				$controlResult.AddMessage([VerificationResult]::Failed, "APIM contains sample products. Delete the two sample products: Starter and Unlimited.") 
 			}

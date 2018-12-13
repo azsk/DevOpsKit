@@ -61,7 +61,7 @@
         },
         {
             "ControlID": "Azure_APIManagement_DP_Use_HTTPS_URL_Scheme",
-            "Description": "Backend API must only be accessible over HTTPS via API Management service",
+            "Description": "Backend API(s) must only be accessible over HTTPS via API Management service",
             "Id": "APIManagement140",
             "ControlSeverity": "High",
             "Automated": "Yes",
@@ -96,12 +96,12 @@
         },
         {
             "ControlID": "Azure_APIManagement_DP_Use_Secret_Named_Values",
-            "Description": "Encryption of Named Values must be enabled when storing sensitive data",
+            "Description": "Encryption of 'Named Values' must be enabled when storing sensitive data",
             "Id": "APIManagement160",
             "ControlSeverity": "High",
             "Automated": "Yes",
             "MethodName": "CheckSecretNamedValues",
-            "Rationale": "Encrypted Named Values are stored securely by the Azure platform.",
+            "Rationale": "Encrypted 'Named Values' are stored securely by the Azure platform.",
             "Recommendation": "Run command: Set-AzureRmApiManagementProperty -Secret `$true -Context {APIContextObject} -Name '{PropertyDisplayName}' -PropertyId '{PropertyId}'. Refer https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-properties. Example: https://docs.microsoft.com/en-us/azure/api-management/api-management-advanced-policies#example-11",
             "Tags": [
                 "SDL",
@@ -114,7 +114,7 @@
         },
         {
             "ControlID": "Azure_APIManagement_AuthN_Use_ARMBased_RESTAPI",
-            "Description": "API Management REST API must be disabled and it is recommended to use ARM based REST API",
+            "Description": "API Management REST API must be disabled. Instead, ARM based REST API must be used.",
             "Id": "APIManagement170",
             "ControlSeverity": "High",
             "Automated": "Yes",
