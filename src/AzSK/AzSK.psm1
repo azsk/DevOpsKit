@@ -150,12 +150,12 @@ function Set-AzSKPolicySettings {
 		[switch]
         $EnableCentralScanMode,
 
-        [Parameter(Mandatory = $false, ParameterSetName = "ScanToolDetails", HelpMessage = "Provide scanner tool path")]
+        [Parameter(Mandatory = $false, HelpMessage = "Provide scanner tool path")]
         [string]
 		[Alias("stp")]
         $ScanToolPath,
 
-        [Parameter(Mandatory = $false, ParameterSetName = "ScanToolDetails", HelpMessage = "Provide scanner tool name")]
+        [Parameter(Mandatory = $false, HelpMessage = "Provide scanner tool name")]
         [string]
 		[Alias("stn")]
         $ScanToolName
