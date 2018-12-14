@@ -61,7 +61,7 @@
         },
         {
             "ControlID": "Azure_APIManagement_DP_Use_HTTPS_URL_Scheme",
-            "Description": "Backend API must only be accessible over HTTPS via API Management service",
+            "Description": "Backend API(s) must be accessible only over HTTPS via API Management service",
             "Id": "APIManagement140",
             "ControlSeverity": "High",
             "Automated": "Yes",
@@ -95,13 +95,13 @@
             "Enabled": true
         },
         {
-            "ControlID": "Azure_APIManagement_DP_Use_Secret_Named_Values",
-            "Description": "Encryption of Named Values must be enabled when storing sensitive data",
+            "ControlID": "Azure_APIManagement_DP_Encrypt_Named_Values",
+            "Description": "'Named Values' that contain sensitive data must be encrypted by marking as 'secret'",
             "Id": "APIManagement160",
             "ControlSeverity": "High",
             "Automated": "Yes",
             "MethodName": "CheckSecretNamedValues",
-            "Rationale": "Encrypted Named Values are stored securely by the Azure platform.",
+            "Rationale": "Encrypted 'Named Values' are stored securely by the Azure platform.",
             "Recommendation": "Run command: Set-AzureRmApiManagementProperty -Secret `$true -Context {APIContextObject} -Name '{PropertyDisplayName}' -PropertyId '{PropertyId}'. Refer https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-properties. Example: https://docs.microsoft.com/en-us/azure/api-management/api-management-advanced-policies#example-11",
             "Tags": [
                 "SDL",
@@ -113,32 +113,14 @@
             "Enabled": true
         },
         {
-            "ControlID": "Azure_APIManagement_AuthN_Use_ARMBased_RESTAPI",
-            "Description": "API Management REST API must be disabled and it is recommended to use ARM based REST API",
+            "ControlID": "Azure_APIManagement_DP_Use_Secure_TLS_Version",
+            "Description": "Ensure that only the most secure and up to date version of TLS is enabled on the API gateway",
             "Id": "APIManagement170",
             "ControlSeverity": "High",
-            "Automated": "Yes",
-            "MethodName": "CheckNonARMAPIUsage",
-            "Rationale": "The credentials used to access API Management REST API provide admin-level access without support for role-based access control and without recording audit logs. For better security it is recommended to make calls through the ARM-based REST API",
-            "Recommendation": "Run command: Set-AzureRmApiManagementTenantAccess -Context {APIContextObject} -Enabled `$false. Use ARM based REST API mentioned in https://docs.microsoft.com/en-us/rest/api/apimanagement.",
-            "Tags": [
-                "SDL",
-                "TCP",
-                "Automated",
-                "AuthN",
-                "APIManagement"
-            ],
-            "Enabled": true
-        },
-        {
-            "ControlID": "Azure_APIManagement_DP_Dont_Enable_Ciphers_And_Protocols",
-            "Description": "3DES Ciphers, TLS protocols (1.1 and 1.0) and SSL 3.0 should be turned OFF.",
-            "Id": "APIManagement180",
-            "ControlSeverity": "Medium",
             "Automated": "No",
             "MethodName": "",
             "Rationale": "TLS 1.2 is the latest and most secure protocol. Using 3DES Ciphers, TLS protocols (1.1 and 1.0) and SSL 3.0 exposes the API to meet-in-the-middle attack, chosen-plaintext or known-plaintext attacks.",
-            "Recommendation": "Go to Azure Portal --> your API management instance --> Settings --> SSL --> Turn OFF 3DES Ciphers, TLS protocols (1.1 and 1.0) and SSL 3.0 Protocols.",
+            "Recommendation": "Ensure that secure protocol versions are used between the client and the gateway *and* between the gateway and the backend APIs. Go to Azure Portal --> your API management instance --> Settings --> SSL --> Turn OFF 3DES Ciphers, TLS protocols (1.1 and 1.0) and SSL 3.0 Protocols.",
             "Tags": [
                 "SDL",
                 "TCP",
@@ -150,7 +132,7 @@
         },
         {
             "ControlID": "Azure_APIManagement_DP_Remove_Default_Products",
-            "Description": "Delete the two sample products 'Starter' and 'Unlimited' to avoid accidental exposure of APIs.",
+            "Description": "Delete the two sample products 'Starter' and 'Unlimited' to avoid accidental exposure of APIs",
             "Id": "APIManagement180",
             "ControlSeverity": "Medium",
             "Automated": "Yes",
@@ -168,12 +150,12 @@
         },
         {
             "ControlID": "Azure_APIManagement_DP_Dont_Log_Sensitive_Header_Data",
-            "Description": "Any header containing sensitive data such as authorization token should not be logged in Application Insight.",
+            "Description": "Any header containing sensitive data such as authorization token should not be logged in Application Insights",
             "Id": "APIManagement190",
             "ControlSeverity": "Medium",
             "Automated": "Yes",
-            "MethodName": "CheckApplicationInsightEnabled",
-            "Rationale": "APIM provides an option to log request and response headers in Application Insight. Any header containing sensitive data such as authorization token should not be logged. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
+            "MethodName": "CheckApplicationInsightsEnabled",
+            "Rationale": "APIM provides an option to log request and response headers in Application Insights. Any header containing sensitive data such as authorization token should not be logged. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
             "Recommendation": "Do not explicitly add header containing sensitive data while integrating Azure API Management with Azure Application Insights. Note: By default headers data is not logged. Please refer https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-app-insights.",
             "Tags": [
                 "SDL",
@@ -186,7 +168,7 @@
         },
         {
             "ControlID": "Azure_APIManagement_DP_Restrict_CORS_Access",
-            "Description": "Ensure that CORS access is granted to a minimal set of trusted origins and only required verbs are supported.",
+            "Description": "Ensure that CORS access is granted to a minimal set of trusted origins and only required verbs are supported",
             "Id": "APIManagement200",
             "ControlSeverity": "Medium",
             "Automated": "Yes",
@@ -204,12 +186,12 @@
         },
         {
             "ControlID": "Azure_APIManagement_AuthN_Verify_Delegated_Authentication",
-            "Description": "APIM owner has to ratify based on manual examination that the delegated authentication is secure.",
+            "Description": "If delegated authentication is enabled, ensure that it is implemented securely",
             "Id": "APIManagement210",
             "ControlSeverity": "High",
             "Automated": "Yes",
             "MethodName": "CheckDelegatedAuthNEnabled",
-            "Rationale": "Delegation allows you to use your existing website for handling developer sign-in/sign-up and subscription to products as opposed to using the built-in functionality in the developer portal. It is API publishers responsibility to ensure protection of user data.",
+            "Rationale": "Delegation allows you to use your existing website for handling developer sign-in/sign-up and subscription to products as opposed to using the built-in functionality in the developer portal. It is the API publisher's responsibility to ensure protection of user data.",
             "Recommendation": "If Delegation is enabled, APIM Publisher must take the responsibility of secure sign-in/sign-up, subscription to products and management of user data.",
             "Tags": [
                 "SDL",
@@ -222,13 +204,13 @@
         },
         {
             "ControlID": "Azure_APIManagement_NetSec_Configure_Virtual_Network_For_APIM",
-            "Description": "To access corporate resources, API Management instance should be configured inside virtual network with public access as needed.",
+            "Description": "Consider hosting APIM within a virtual network for improved isolation",
             "Id": "APIManagement220",
             "ControlSeverity": "Medium",
             "Automated": "Yes",
             "MethodName": "CheckAPIMDeployedInVNet",
             "Rationale": "Azure Virtual Network (VNet) deployment provides enhanced security and isolation for API management instance, as well as backend service, access control policies, and other features to further restrict access.",
-            "Recommendation": "For steps to deploy Azure API Management inside a Virtual Network, refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-using-with-vnet.",
+            "Recommendation": "Where feasible/practical, host the APIM and APIs within an isolated network. For steps to deploy Azure API Management inside a Virtual Network, refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-using-with-vnet.",
             "Tags": [
                 "SDL",
                 "TCP",
@@ -240,7 +222,7 @@
         },
         {
             "ControlID": "Azure_APIManagement_DP_Use_Custom_Domain_With_SSL",
-            "Description": "Custom domain with SSL binding must be configured for Proxy and Portal endpoints of Azure API Management instance.",
+            "Description": "Custom domain with SSL binding must be configured for Proxy and Portal endpoints of Azure API Management instance",
             "Id": "APIManagement230",
             "ControlSeverity": "Medium",
             "Automated": "No",
@@ -257,8 +239,8 @@
             "Enabled": true
         },
         {
-            "ControlID": "Azure_APIManagement_AuthZ_Use_JWT_Validate_Token",
-            "Description": "The 'validate-jwt' policy should be added to API inbound policies along with enabling OAuth 2.0 or OpenID connect on Azure portal.",
+            "ControlID": "Azure_APIManagement_AuthZ_Validate_JWT",
+            "Description": "Ensure that JWT validation is enabled if using OAuth 2.0 or OpenID connect",
             "Id": "APIManagement240",
             "ControlSeverity": "High",
             "Automated": "Yes",
@@ -276,7 +258,7 @@
         },
         {
             "ControlID": "Azure_APIManagement_AuthZ_Restrict_Caller_IPs",
-            "Description": "Use Restrict caller IPs policies for additional protection.",
+            "Description": "Use Restrict caller IPs policies for additional protection",
             "Id": "APIManagement250",
             "ControlSeverity": "Medium",
             "Automated": "Yes",
@@ -293,31 +275,31 @@
             "Enabled": true
         },
         {
-            "ControlID": "Azure_APIManagement_AuthZ_Disable_Management_API",
-            "Description": "'Enable API Management REST API' option should be not be permitted for an API management instance.",
+            "ControlID": "Azure_APIManagement_AuthN_Disable_Management_API",
+            "Description": "Do not use API Management REST API",
             "Id": "APIManagement260",
             "ControlSeverity": "High",
             "Automated": "Yes",
             "MethodName": "CheckManagementAPIDisabled",
-            "Rationale": "The ‘API Management Rest API’ uses credentials which provide only admin-level access without support for role-based access control and without recording audit logs.",
-            "Recommendation": "To disable 'Enable API Management REST API' go to Azure Portal --> your API management instance --> Management API --> Uncheck 'Enable API Management REST API'. ",
+            "Rationale": "The credentials used to access API Management REST API provide admin-level access without support for role-based access control and without recording audit logs. For better security it is recommended to make calls through the ARM-based REST API",
+            "Recommendation": "Disable API Management REST API and use the ARM-based REST API instead. Run command: Set-AzureRmApiManagementTenantAccess -Context {APIContextObject} -Enabled `$false. To disable 'Enable API Management REST API' manually go to Azure Portal --> your API management instance --> Management API --> Uncheck 'Enable API Management REST API'. Use ARM based REST API mentioned in https://docs.microsoft.com/en-us/rest/api/apimanagement.",
             "Tags": [
                 "SDL",
                 "TCP",
                 "Automated",
-                "AuthZ",
+                "AuthN",
                 "APIManagement"
             ],
             "Enabled": true
         },
         {
             "ControlID": "Azure_APIManagement_AuthZ_Enable_User_Authorization_For_API",
-            "Description": "All APIs should use at least one of the OAuth 2.0 or OpenID connect to authorize developer accounts in Azure API Management.",
+            "Description": "Ensure that either OAuth 2.0 or OpenID Connect are used to authorize developer accounts in API Management",
             "Id": "APIManagement270",
             "ControlSeverity": "High",
             "Automated": "Yes",
             "MethodName": "CheckUserAuthorizationSettingInAPI",
-            "Rationale": "Enabling OAuth/OpenID connect user authorization ensure that only valid users have access, and they can only access resources to which they're entitled.",
+            "Rationale": "Enabling OAuth/OpenID connect user authorization ensure that only valid users have access, and they can only access resources to which they are entitled.",
             "Recommendation": "To enable user authorization for an API go to Azure Portal --> your API management instance --> APIs --> Select API --> Settings -> User Authorization. Please refer https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-oauth2.",
             "Tags": [
                 "SDL",
@@ -330,7 +312,7 @@
         },
         {
             "ControlID": "Azure_APIManagement_AuthN_Use_AAD_for_Client_AuthN",
-            "Description": "Enterprise application's APIM must authenticate developers/applications using Azure Active Directory backed credentials.",
+            "Description": "Enterprise applications using APIM must authenticate developers/applications using Azure Active Directory backed credentials",
             "Id": "APIManagement280",
             "ControlSeverity": "High",
             "Automated": "Yes",
@@ -347,8 +329,8 @@
             "Enabled": true
         },
         {
-            "ControlID": "Azure_APIManagement_DP_Dont_Reveal_Private_Backend_Info",
-            "Description": "Do not reveal a private backend info in request response. Use transform policies to hide private data from your API response.",
+            "ControlID": "Azure_APIManagement_DP_Dont_Reveal_Backend_Info",
+            "Description": "Use transform policies to hide backend/implentation details in API responses",
             "Id": "APIManagement290",
             "ControlSeverity": "Medium",
             "Automated": "No",
@@ -365,8 +347,8 @@
             "Enabled": true
         },        
         {
-            "ControlID": "Azure_APIManagement_DP_Dont_Checkin_Secrets_In_GitHub",
-            "Description": "Use 'Named Values' to manage constant string values, including secrets, across all API configuration and policies.",
+            "ControlID": "Azure_APIManagement_DP_Dont_Checkin_Secrets_In_Source",
+            "Description": "Do not include secrets directly in API configuration and policies",
             "Id": "APIManagement300",
             "ControlSeverity": "High",
             "Automated": "Yes",
@@ -384,7 +366,7 @@
         },
         {
             "ControlID": "Azure_APIManagement_AuthN_Secure_API_Using_Client_Certificates",
-            "Description": "Client certificates must be used to authenticate with a backend service.",
+            "Description": "Use client certificates for authentication between gateway and backend APIs",
             "Id": "APIManagement310",
             "ControlSeverity": "High",
             "Automated": "Yes",
@@ -401,27 +383,9 @@
             "Enabled": true
         },
         {
-            "ControlID": "Azure_APIManagement_DP_Store_Subscription_Key_Securely",
-            "Description": "Subsciption key should be stored securely.",
-            "Id": "APIManagement320",
-            "ControlSeverity": "High",
-            "Automated": "No",
-            "MethodName": "",
-            "Rationale": "A valid Subscription Key, if stored in an unsecured way, risks the exposure of API result to unauthorized user.",
-            "Recommendation": "Use key vault or other secured storage method with restricted access to store and manage Subscription Key.",
-            "Tags": [
-                "SDL",
-                "TCP",
-                "Manual",
-                "DP",
-                "APIManagement"
-            ],
-            "Enabled": true
-        },
-        {
             "ControlID": "Azure_APIManagement_AuthZ_Enable_Requires_Subscription",
-            "Description": "'Requires Subscription' option must be turned on for all products in an API Management instance.",
-            "Id": "APIManagement330",
+            "Description": "'Requires Subscription' option must be turned on for all products in an API Management instance",
+            "Id": "APIManagement320",
             "ControlSeverity": "High",
             "Automated": "Yes",
             "MethodName": "CheckRequiresSubscription",
@@ -438,8 +402,8 @@
         },
         {
             "ControlID": "Azure_APIManagement_DP_Restrict_Critical_APIs_Access",
-            "Description": "Critical APIs must not be exposed to Guest users.",
-            "Id": "APIManagement340",
+            "Description": "Critical APIs must not be exposed to Guest users",
+            "Id": "APIManagement330",
             "ControlSeverity": "Medium",
             "Automated": "Yes",
             "MethodName": "CheckGuestGroupUsedInProduct",
@@ -457,8 +421,8 @@
         },
         {
             "ControlID": "Azure_APIManagement_AuthN_Use_Managed_Service_Identity",
-            "Description": "Use Managed Service Identity (MSI) for accessing other AAD-protected resources from the API management instance.",
-            "Id": "APIManagement350",
+            "Description": "Use Managed Service Identity (MSI) for accessing other AAD-protected resources from the API management instance",
+            "Id": "APIManagement340",
             "ControlSeverity": "Medium",
             "Automated": "Yes",
             "MethodName": "CheckAPIManagementMsiEnabled",
@@ -476,17 +440,17 @@
         },
         {
             "ControlID": "Azure_APIManagement_AuthZ_Enable_Requires_Approval",
-            "Description": "'Requires Approval' should be enabled for published APIs, in cases where user's background check is essential before giving access to APIs.",
-            "Id": "APIManagement360",
+            "Description": "Use the 'Requires Approval' option for APIs where additional checks/manual review is necessary",
+            "Id": "APIManagement350",
             "ControlSeverity": "High",
-            "Automated": "Yes",
-            "MethodName": "CheckRequiresApproval",
-            "Rationale": "Enabling 'Requires Approval' ensures that only users approved by API publisher can subscribe to a product. Note: This control is applicable when APIs publisher needs to conduct user's background check before allowing access to APIs.",
+            "Automated": "No",
+            "MethodName": "",
+            "Rationale": "Enabling 'Requires Approval' ensures that only users approved by API publisher can subscribe to a product.",
             "Recommendation": "To enable 'Requires Approval' go to Azure Portal --> your API management instance --> Products --> Settings. Refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-subscriptions.",
             "Tags": [
             "SDL",
             "TCP",
-            "Automated",
+            "Manual",
             "AuthZ",
             "APIManagement"
             ],
