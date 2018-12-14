@@ -179,7 +179,7 @@ class APIManagement: SVTBase
 			{
 				if($null -ne ($identityProvider | Where-Object {$_.Type -ne "Aad"}))
 				{				
-					$controlResult.AddMessage([VerificationResult]::Verify, "Below listed Identity provider(s) are enabled in '$($this.ResourceContext.ResourceName)' API management instance. It is recommended to use only Azure Active Directory backed credentials to authenticate users for enterprise application.", $identityProvider)
+					$controlResult.AddMessage([VerificationResult]::Verify, "Below listed Identity provider(s) are enabled in '$($this.ResourceContext.ResourceName)' API management instance. Enterprise applications using APIM must authenticate developers/applications using Azure Active Directory backed credentials.", $identityProvider)
 				}
 				else
 				{
@@ -200,7 +200,7 @@ class APIManagement: SVTBase
 		{
 			if($this.APIMInstance.VpnType -eq 'None')
 			{
-				$controlResult.AddMessage([VerificationResult]::Verify, "'$($this.ResourceContext.ResourceName)' API management instance is not deployed inside a virtual network. If your backend service consists corporate resources, APIM should be deployed inside the virtual network (VNET), so it can access backend services within the network.") 
+				$controlResult.AddMessage([VerificationResult]::Verify, "'$($this.ResourceContext.ResourceName)' API management instance is not deployed inside a virtual network. Consider hosting APIM within a virtual network for improved isolation.") 
 			}
 			else
 			{
@@ -325,6 +325,8 @@ class APIManagement: SVTBase
 			$Policy.Scope = "Global"
 			$Policy.ScopeName = "NA"
 			$Policy.ScopeId = "NA"
+			$Policy.Action = ""
+			$Policy.AllowedIPs = ""
 			if($null -ne $RestrictedIPs)
 			{
 			    $Policy.Action = $RestrictedIPs.Action
@@ -346,7 +348,8 @@ class APIManagement: SVTBase
 			    $Policy.Scope = "Product"
 			    $Policy.ScopeName = $_.Title
 			    $Policy.ScopeId = $_.ProductId
-
+				$Policy.Action = ""
+				$Policy.AllowedIPs = ""
 			    if($null -ne $RestrictedIPs)
 			    {
 			        $Policy.Action = $RestrictedIPs.Action
@@ -372,6 +375,8 @@ class APIManagement: SVTBase
 			    $Policy.Scope = "API"
 			    $Policy.ScopeName = $_.Name
 			    $Policy.ScopeId = $_.ApiId
+				$Policy.Action = ""
+				$Policy.AllowedIPs = ""
 			    if($null -ne $RestrictedIPs)
 			    {
 			        $Policy.Action = $RestrictedIPs.Action
@@ -393,6 +398,8 @@ class APIManagement: SVTBase
 			        $Policy.Scope = "Operation"
 			        $Policy.ScopeName = $_.Name
 			        $Policy.ScopeId = $_.OperationId
+					$Policy.Action = ""
+					$Policy.AllowedIPs = ""
 					if($null -ne $RestrictedIPs)
 			        {
 			            $Policy.Action = $RestrictedIPs.Action
