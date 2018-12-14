@@ -11,7 +11,7 @@
          "Automated": "Yes",
          "MethodName": "CheckCosmosDbFirewallState",
          "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets.",
-         "Recommendation": "Azure Portal --> Resource --> Firewall and Virtual networks. Turn 'ON' - 'Enable IP Access Control' and provide required IP addresses and/or ranges and save. Refer: https://docs.microsoft.com/en-in/azure/cosmos-db/firewall-support",
+         "Recommendation": "Azure Portal --> Resource --> Firewall. Turn 'ON' - 'Selected Networks' and provide required IP addresses and/or ranges in the IP tab and save.",
          "Tags": [
             "SDL",
             "TCP",
