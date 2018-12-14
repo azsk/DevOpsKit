@@ -154,22 +154,25 @@ class APIConnection: SVTBase
 	hidden [ControlResult] CheckEncryptionTransitForHttp([string] $remarks, [ControlResult] $childControlResult)
 	{
 			$isPassed = $true
-			$uriString = $this.ResourceObject.ConnectorObj.inputs.uri			
-			
-			if(([system.Uri]$uriString).Scheme -ne 'https')
+			if(([Helpers]::CheckMember($this.ResourceObject.connectorObj.inputs,"uri")))
 			{
-				$isPassed = $false 
-			}
-			if($isPassed)	
-			{
-				$childControlResult.AddMessage([VerificationResult]::Passed,"Connector name : " + $this.ResourceObject.ConnectorName + "`r`nConnector URI : "+ $uriString)
-			}
-			else
-			{
-				$childControlResult.AddMessage([VerificationResult]::Failed, `
-												"Must use HTTPS URI for below connector`r`n" `
-												+ "Connector name : " + $this.ResourceObject.ConnectorName + "`r`nConnector URI : "+$uriString)
-												
+				$uriString = $this.ResourceObject.ConnectorObj.inputs.uri			
+				
+				if(([system.Uri]$uriString).Scheme -ne 'https')
+				{
+					$isPassed = $false 
+				}
+				if($isPassed)	
+				{
+					$childControlResult.AddMessage([VerificationResult]::Passed,"Connector name : " + $this.ResourceObject.ConnectorName + "`r`nConnector URI : "+ $uriString)
+				}
+				else
+				{
+					$childControlResult.AddMessage([VerificationResult]::Failed, `
+													"Must use HTTPS URI for below connector`r`n" `
+													+ "Connector name : " + $this.ResourceObject.ConnectorName + "`r`nConnector URI : "+$uriString)
+													
+				}
 			}
 			return $childControlResult
 	}
