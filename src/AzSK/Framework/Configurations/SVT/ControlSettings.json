@@ -267,7 +267,8 @@
     }
   },
   "Automation": {
-    "WebhookValidityInDays": 60
+    "WebhookValidityInDays": 60,
+    "variablesToSkip": ["AppResourceGroupNames","OMSSharedKey","OMSWorkspaceId","ReportsStorageAccountName","UpdateToLatestAzSKVersion"]
   },
   "BaselineControls": {
     "ResourceTypeControlIdMappingList": [

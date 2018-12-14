@@ -60,8 +60,15 @@ class Automation: SVTBase
 	hidden [ControlResult] CheckVariables([ControlResult] $controlResult)
     {   
 		$variables = Get-AzureRmAutomationVariable -AutomationAccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
-		if(($variables|Measure-Object).Count -gt 0)
+		if(($variables|Measure-Object).Count -gt 0 )
 		{
+			if($this.ResourceContext.ResourceGroupName -eq "AzSKRG")
+			{
+				$Controlsettings = $this.LoadServerConfigFile("ControlSettings.json");
+				$variablestoskip = $Controlsettings.Automation.variablesToSkip
+				$temp = $variables | Where {$variablestoskip -notcontains $_.Name}
+				$variables = $temp
+			}
 			$encryptedVars = @()
 			$unencryptedVars = @()
 
