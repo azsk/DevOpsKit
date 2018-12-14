@@ -52,7 +52,7 @@ class APIManagement: SVTBase
     }
     hidden [ControlResult] CheckAPIMURLScheme([ControlResult] $controlResult)
     {
-		if( $null -ne $this.APIMContext)
+		if( $null -ne $this.APIMAPIs)
 		{
 			$noncompliantAPIs = $this.APIMAPIs | where-object{$_.Protocols.count -gt 1 -or $_.Protocols[0] -ne 'https' }
 			if(($noncompliantAPIs|Measure-Object).Count -gt 0)
@@ -97,7 +97,7 @@ class APIManagement: SVTBase
     
 	hidden [ControlResult] CheckRequiresSubscription([ControlResult] $controlResult)
     {
-		if( $null -ne $this.APIMContext)
+		if($null -ne $this.APIMProducts)
 		{
 			$Product = $this.APIMProducts | Where-Object { $_.State -eq 'Published' }
 			
@@ -116,7 +116,7 @@ class APIManagement: SVTBase
 
 	hidden [ControlResult] CheckRequiresApproval([ControlResult] $controlResult)
     {
-		if( $null -ne $this.APIMContext)
+		if( $null -ne $this.APIMProducts)
 		{
 			$Product = $this.APIMProducts | Where-Object { $_.State -eq 'Published' }
 			
@@ -229,7 +229,7 @@ class APIManagement: SVTBase
 
 	hidden [ControlResult] CheckClientCertAuthDisabled([ControlResult] $controlResult)
     {
-		if($null -ne $this.APIMContext)
+		if(($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
 			$ClientCertAuthDisabledInAPIs = ($this.APIMAPIs).ApiId | ForEach-Object {
 				$apiPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_
@@ -254,7 +254,7 @@ class APIManagement: SVTBase
 
 	hidden [ControlResult] CheckAPIManagementCORSAllowed([ControlResult] $controlResult)
     {
-		if( $null -ne $this.APIMContext)
+		if(($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
 			$Result = @()
 			$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
@@ -339,7 +339,9 @@ class APIManagement: SVTBase
 			}
 			$Result += $Policy
 			#Policy Scope: Product
-			$this.APIMProducts | ForEach-Object {
+			if($null -ne $this.APIMProducts)
+			{
+				$this.APIMProducts | ForEach-Object {
 			    $ProductPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ProductId $_.ProductId
 			    $RestrictedIPs = ""
 			    $RestrictedIPs = $ProductPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
@@ -362,58 +364,60 @@ class APIManagement: SVTBase
 				}
 				$Result += $Policy
 			}
-			
+			}
 			
 			#Policy Scope: API
 			#Policy Scope: Operation
-			$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
-			    #Policy Scope: API
-			    $APIPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
-			    $RestrictedIPs = ""
-			    $RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
-				$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
-			    $Policy.Scope = "API"
-			    $Policy.ScopeName = $_.Name
-			    $Policy.ScopeId = $_.ApiId
-				$Policy.Action = ""
-				$Policy.AllowedIPs = ""
-			    if($null -ne $RestrictedIPs)
-			    {
-			        $Policy.Action = $RestrictedIPs.Action
-			        $Policy.AllowedIPs = $RestrictedIPs.InnerXML
-					$Policy.Status = 'Enabled'
-			    }
-				else
-				{
-					$Policy.Status = 'Not Enabled'
-				}
-				$Result += $Policy
-			    
-			    #Policy Scope: Operation
-			    Get-AzureRmApiManagementOperation -Context $this.APIMContext -ApiId $_.ApiId | ForEach-Object {
-			        $OperationPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -OperationId $_.OperationId
-			        $RestrictedIPs = ""
-			        $RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
-			        $Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
-			        $Policy.Scope = "Operation"
-			        $Policy.ScopeName = $_.Name
-			        $Policy.ScopeId = $_.OperationId
+			if($null -ne $this.APIMAPIs)
+			{
+				$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
+					#Policy Scope: API
+					$APIPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
+					$RestrictedIPs = ""
+					$RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
+					$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
+					$Policy.Scope = "API"
+					$Policy.ScopeName = $_.Name
+					$Policy.ScopeId = $_.ApiId
 					$Policy.Action = ""
 					$Policy.AllowedIPs = ""
 					if($null -ne $RestrictedIPs)
-			        {
-			            $Policy.Action = $RestrictedIPs.Action
-			            $Policy.AllowedIPs = $RestrictedIPs.InnerXML
+					{
+					    $Policy.Action = $RestrictedIPs.Action
+					    $Policy.AllowedIPs = $RestrictedIPs.InnerXML
 						$Policy.Status = 'Enabled'
-			        }
+					}
 					else
 					{
 						$Policy.Status = 'Not Enabled'
 					}
 					$Result += $Policy
-			    }
+					
+					#Policy Scope: Operation
+					Get-AzureRmApiManagementOperation -Context $this.APIMContext -ApiId $_.ApiId | ForEach-Object {
+						$OperationPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -OperationId $_.OperationId
+						$RestrictedIPs = ""
+						$RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
+						$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
+						$Policy.Scope = "Operation"
+						$Policy.ScopeName = $_.Name
+						$Policy.ScopeId = $_.OperationId
+						$Policy.Action = ""
+						$Policy.AllowedIPs = ""
+						if($null -ne $RestrictedIPs)
+						{
+						    $Policy.Action = $RestrictedIPs.Action
+						    $Policy.AllowedIPs = $RestrictedIPs.InnerXML
+							$Policy.Status = 'Enabled'
+						}
+						else
+						{
+							$Policy.Status = 'Not Enabled'
+						}
+						$Result += $Policy
+					}
+				}
 			}
-
 			if($null -ne $Result)
 			{
 				$controlResult.AddMessage([VerificationResult]::Verify, "Below IP restriction(s) are configured in $($this.ResourceContext.ResourceName) API management instance.", $Result) 
@@ -446,7 +450,7 @@ class APIManagement: SVTBase
 
 	hidden [ControlResult] CheckGuestGroupUsedInProduct([ControlResult] $controlResult)
     {
-		if( $null -ne $this.APIMContext)
+		if(($null -ne $this.APIMContext) -and ($null -ne $this.APIMProducts))
 		{
 			$GuestGroupUsedInProductList = $this.APIMProducts | ForEach-Object {
 			    if((Get-AzureRmApiManagementGroup -Context $this.APIMContext -ProductId $_.ProductId).GroupId -contains 'guests')
@@ -539,7 +543,7 @@ class APIManagement: SVTBase
 	hidden [ControlResult] CheckJWTValidatePolicyInAPI([ControlResult] $controlResult)
     {       
 		$UserAuthDisabledApi = $this.CheckUserAuthorizationSettingEnabledinAPI();
-		if(($UserAuthDisabledApi -ne 'ResourceNotFound') -and ($null -ne $this.APIMContext))
+		if(($UserAuthDisabledApi -ne 'ResourceNotFound') -and ($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
 			$JWTValidatePolicyNotFound =  $this.APIMAPIs | ForEach-Object {		
 				$apiPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
@@ -568,7 +572,7 @@ class APIManagement: SVTBase
 
 	hidden [PSObject] CheckUserAuthorizationSettingEnabledinAPI()
     {
-		if( $null -ne $this.APIMContext)
+		if( $null -ne $this.APIMContext -and ($null -ne $this.APIMAPIs))
 		{
 			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 			$UserAuthDisabledApi = @()
