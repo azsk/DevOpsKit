@@ -325,6 +325,8 @@ class APIManagement: SVTBase
 			$Policy.Scope = "Global"
 			$Policy.ScopeName = "NA"
 			$Policy.ScopeId = "NA"
+			$Policy.Action = ""
+			$Policy.AllowedIPs = ""
 			if($null -ne $RestrictedIPs)
 			{
 			    $Policy.Action = $RestrictedIPs.Action
@@ -346,7 +348,8 @@ class APIManagement: SVTBase
 			    $Policy.Scope = "Product"
 			    $Policy.ScopeName = $_.Title
 			    $Policy.ScopeId = $_.ProductId
-
+				$Policy.Action = ""
+				$Policy.AllowedIPs = ""
 			    if($null -ne $RestrictedIPs)
 			    {
 			        $Policy.Action = $RestrictedIPs.Action
@@ -372,6 +375,8 @@ class APIManagement: SVTBase
 			    $Policy.Scope = "API"
 			    $Policy.ScopeName = $_.Name
 			    $Policy.ScopeId = $_.ApiId
+				$Policy.Action = ""
+				$Policy.AllowedIPs = ""
 			    if($null -ne $RestrictedIPs)
 			    {
 			        $Policy.Action = $RestrictedIPs.Action
@@ -393,6 +398,8 @@ class APIManagement: SVTBase
 			        $Policy.Scope = "Operation"
 			        $Policy.ScopeName = $_.Name
 			        $Policy.ScopeId = $_.OperationId
+					$Policy.Action = ""
+					$Policy.AllowedIPs = ""
 					if($null -ne $RestrictedIPs)
 			        {
 			            $Policy.Action = $RestrictedIPs.Action
