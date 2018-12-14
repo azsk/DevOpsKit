@@ -72,6 +72,10 @@ class ComplianceInfo: CommandBase
 			{
 				$_.EffectiveResult = [VerificationResult]::Skipped
 			}
+			elseif(-not [string]::IsNullOrEmpty($_.ChildResourceName))
+			{
+				$_.EffectiveResult = [VerificationResult]::Skipped
+			}
 			else
 			{
 				if($_.VerificationResult -eq [VerificationResult]::Passed)
