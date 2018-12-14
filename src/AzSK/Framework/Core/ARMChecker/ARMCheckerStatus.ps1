@@ -455,7 +455,7 @@ class ARMCheckerStatus: EventBase
 	   $ARMControlsFileURI = [Constants]::ARMControlsFileURI
 	   try
 	   {
-		if(-not [ConfigurationManager]::GetAzSKLocalSettings().EnableAADAuthForOnlinePolicyStore)
+		if(-not [ConfigurationManager]::GetLocalAzSKSettings().EnableAADAuthForOnlinePolicyStore)
 		{
 			$serverFileContent = [ConfigurationManager]::LoadServerConfigFile("ARMControls.json");
 		}
