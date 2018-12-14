@@ -318,6 +318,11 @@ function Get-AzSKOrganizationPolicyStatus
 		[Alias("ainame")]
 		$AppInsightName,
 
+		[Parameter(Mandatory = $false, HelpMessage = "Provide your Azure Environment")]
+        [string]
+		[Alias("ae")]
+        $AzureEnvironment = "AzureCloud",
+
 		[Parameter(Mandatory = $true, ParameterSetName = "DownloadPolicy")]
         [switch]
 		[Alias("dpol")]
@@ -339,7 +344,7 @@ function Get-AzSKOrganizationPolicyStatus
 	{
 		try
 		{
-			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $null, $null,$null, $PolicyFolderPath);
+			$policy = [PolicySetup]::new($SubscriptionId, $PSCmdlet.MyInvocation, $OrgName, $DepartmentName,$ResourceGroupName,$StorageAccountName,$AppInsightName, $null, $null,$AzureEnvironment, $null, $PolicyFolderPath);
 			if ($policy)
 			{
 				$policy.IsUpdateSwitchOn = $false
