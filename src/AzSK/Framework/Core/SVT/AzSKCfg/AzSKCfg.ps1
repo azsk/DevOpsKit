@@ -103,7 +103,7 @@ class AzSKCfg: SVTBase
 
 			if($HasGraphAPIAccess)
 			{	
-				#region: Check if service principal is configured and it has at least Security Reader access to subscription and contributor access to "AzSKRG", if either is missing display error message				
+				#region: Check if service principal is configured and it has at least Reader access to subscription and contributor access to "AzSKRG", if either is missing display error message				
 				$stepCount++
 				$isPassed = $false
 				$runAsConnection = $this.GetRunAsConnection()
@@ -285,7 +285,7 @@ class AzSKCfg: SVTBase
 		#Check subscription access
 		if(($spPermissions|measure-object).count -gt 0)
 		{
-			$haveSubscriptionAccess = ($spPermissions | Where-Object {$_.scope -eq "/subscriptions/$($currentContext.Subscription.Id)" -and $_.RoleDefinitionName -eq "Security Reader"}|Measure-Object).count -gt 0
+			$haveSubscriptionAccess = ($spPermissions | Where-Object {$_.scope -eq "/subscriptions/$($currentContext.Subscription.Id)" -and $_.RoleDefinitionName -eq "Reader"}|Measure-Object).count -gt 0
 			return $haveSubscriptionAccess	
 		}
 		else

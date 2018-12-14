@@ -491,7 +491,7 @@ function Clear-AzSKSessionState {
 
     Write-Host "Clearing AzSK session state..." -ForegroundColor Yellow
     [ConfigOverride]::ClearConfigInstance()
-    Write-Host "Completed." -ForegroundColor Yellow
+    Write-Host "Session state cleared." -ForegroundColor Yellow
 
 }
 

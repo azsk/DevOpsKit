@@ -111,6 +111,15 @@ class SVTBase: AzSKRoot
 
                 $_.Description = $global:ExecutionContext.InvokeCommand.ExpandString($_.Description)
                 $_.Recommendation = $global:ExecutionContext.InvokeCommand.ExpandString($_.Recommendation)
+                $ControlSeverity = $_.ControlSeverity
+                if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverity"))
+                {
+                    $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
+                }
+				else
+				{
+					$_.ControlSeverity = $ControlSeverity
+				}
 				if(-not [string]::IsNullOrEmpty($_.MethodName))
 				{
 					$_.MethodName = $_.MethodName.Trim();
@@ -1000,7 +1009,8 @@ class SVTBase: AzSKRoot
 					}
 					elseif([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays"))
 					{
-															
+						$controlsev = $this.ControlSettings.ControlSeverity.PSobject.Properties | Where-Object Value -eq $controlSeverity | Select-Object -First 1
+                        $controlSeverity = $controlsev.name									
 						#Check if control severity has expiry period
 						if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
 						{
@@ -1343,7 +1353,16 @@ class SVTBase: AzSKRoot
 		$controlSeverity=$currentControlItem.ControlSeverity;
 		if([Helpers]::CheckMember($this.ControlSettings,"NewControlGracePeriodInDays"))
 		{
-			$computedGraceDays=$this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity;
+            if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity"))
+            {
+                $controlsev = $this.ControlSettings.ControlSeverity.PSobject.Properties | Where-Object Value -eq $controlSeverity | Select-Object -First 1
+                $controlSeverity = $controlsev.name
+                $computedGraceDays=$this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity;
+            }
+            else
+            {
+                $computedGraceDays=$this.ControlSettings.NewControlGracePeriodInDays.ControlSeverity.$ControlSeverity;
+            }
 		}
 		if($null -ne $currentControlItem.GraceExpiryDate)
 		{

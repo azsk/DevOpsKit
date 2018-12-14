@@ -44,7 +44,7 @@ class SVTControlAttestation
 		return [AttestationStatus]::None
 	}
 
-	[ControlState] ComputeEffectiveControlState([ControlState] $controlState, [ControlSeverity] $ControlSeverity, [bool] $isSubscriptionControl, [SVTEventContext] $controlItem, [ControlResult] $controlResult)
+	[ControlState] ComputeEffectiveControlState([ControlState] $controlState, [string] $ControlSeverity, [bool] $isSubscriptionControl, [SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
 		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan
 		Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"		
@@ -215,7 +215,7 @@ class SVTControlAttestation
 		return $controlState;
 	}
 
-	[ControlState] ComputeEffectiveControlStateInBulkMode([ControlState] $controlState, [ControlSeverity] $ControlSeverity, [bool] $isSubscriptionControl, [SVTEventContext] $controlItem, [ControlResult] $controlResult)
+	[ControlState] ComputeEffectiveControlStateInBulkMode([ControlState] $controlState, [string] $ControlSeverity, [bool] $isSubscriptionControl, [SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
 		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan		
 		Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"

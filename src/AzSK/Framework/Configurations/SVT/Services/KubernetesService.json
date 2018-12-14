@@ -34,7 +34,7 @@
       "Tags": [
         "SDL",
         "Best Practice",
-        "Manual",
+        "Automated",
         "AuthN",
         "KubernetesService"
       ],
@@ -164,6 +164,115 @@
         "TCP",
         "Manual",
         "SI",
+        "KubernetesService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_KubernetesService_AuthN_Use_POD_Identity",
+      "Description": "Pod Identity must be used for accessing other AAD-protected resources from the Kubernetes Service.",
+      "Id": "KubernetesService200",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Pod Identity allows your Kubernetes Service to easily access other AAD-protected resources such as Azure Key Vault. The identity is managed by the Azure platform and eliminates the need to provision/manage/rotate any secrets thus reducing the overall risk.",
+      "Recommendation": "Refer: https://github.com/Azure/aad-pod-identity to configure Pod Identity in your Kubernetes Cluster.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "AuthN",
+        "KubernetesService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_KubernetesService_SI_Review_Kube_Advisor_Issues",
+      "Description": "Issues/recommendations provided by kube advisor should be reviewed periodically",
+      "Id": "KubernetesService210",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "The kube-advisor tool scans Kubernets cluster and reports on issues related to CPU and memory resource consumption limits. If resource quotas are not applied then by default pod consumes all the CPU and memory available, which impacts availability of another POD/application.",
+      "Recommendation": "Refer: https://github.com/Azure/kube-advisor to scan Kubernetes cluster using Kube Advisor.",
+      "Tags": [
+        "SDL",
+        "Best Practice",
+        "Manual",
+        "SI",
+        "KubernetesService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_KubernetesService_Audit_Enable_Monitoring",
+      "Description": "Monitoring must be enabled for Azure Kubernetes Service",
+      "Id": "KubernetesService220",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckMonitoringConfiguration",
+      "Rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/azure-monitor/insights/container-insights-overview.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "Audit",
+        "KubernetesService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_KubernetesService_NetSec_Dont_Open_Management_Ports",
+      "Description": "Do not leave management ports open on Kubernetes nodes unless required",
+      "Id": "KubernetesService230",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckNodeOpenPorts",
+      "Rationale": "Open remote management ports expose a VM/compute node to a high level of risk from internet-based attacks that attempt to brute force credentials to gain admin access to the machine.",
+      "Recommendation": "Go to Azure Portal --> VM Settings --> Networking --> Inbound security rules --> Select security rule which allows management ports (e.g. RDP-3389, WINRM-5985, SSH-22) --> Click 'Deny' under Action --> Click Save.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "NetSec",
+        "KubernetesService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_KubernetesService_DP_Encrypt_Data_In_Transit",
+      "Description": "Data transit inside/across Kubernetes must use encrypted channel",
+      "Id": "KubernetesService240",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/aks/ingress-tls.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "DP",
+        "KubernetesService"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_KubernetesService_Audit_Enable_Diagnostics_Log",
+      "Description": "Diagnostics logs must be enabled with a retention period of at least $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) days.",
+      "Id": "KubernetesService250",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckDiagnosticsSettings",
+      "Rationale": "Logs should be retained for a long enough period so that activity trail can be recreated when investigations are required in the event of an incident or a compromise. A period of 1 year is typical for several compliance requirements as well.",
+      "Recommendation": "You can change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "Audit",
+        "Diagnostics",
         "KubernetesService"
       ],
       "Enabled": true
