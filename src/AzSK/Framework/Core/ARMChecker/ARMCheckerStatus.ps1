@@ -455,8 +455,13 @@ class ARMCheckerStatus: EventBase
 	   $ARMControlsFileURI = [Constants]::ARMControlsFileURI
 	   try
 	   {
+		if(-not [ConfigurationManager]::GetLocalAzSKSettings().EnableAADAuthForOnlinePolicyStore)
+		{
+			$serverFileContent = [ConfigurationManager]::LoadServerConfigFile("ARMControls.json");
+		}
+		else {
          $AzureContext = Get-AzureRmContext
-	  if([ConfigurationManager]::GetLocalAzSKSettings().EnableAADAuthForOnlinePolicyStore -and -not [string]::IsNullOrWhiteSpace($AzureContext)) 
+	  if(-not [string]::IsNullOrWhiteSpace($AzureContext)) 
 	   {
 		   $serverFileContent = [ConfigurationManager]::LoadServerConfigFile("ARMControls.json");
 	   }
@@ -465,10 +470,18 @@ class ARMCheckerStatus: EventBase
 		   $serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($ARMControlsFileURI, '', '', '');
 	   }
 	}
+	}
 	   catch
 	   {
-	    # No Need to break Execution
-		# Load Offline File
+         try
+         {
+            $serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($ARMControlsFileURI, '', '', '');
+         }
+         catch
+         {
+         # No Need to break Execution
+		 # Load Offline File
+         }
 	   }
 	   if($null -ne $serverFileContent)
 	   {
