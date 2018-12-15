@@ -64,7 +64,7 @@ class Automation: SVTBase
 		{
 			if($this.ResourceContext.ResourceGroupName -eq [ConfigurationManager]::GetAzSKConfigData().AzSKRGName -and [Helpers]::CheckMember($this.ControlSettings,"Automation.variablesToSkip"))
 			{
-				$variablestoskip = $Controlsettings.Automation.variablesToSkip
+				$variablestoskip = $this.ControlSettings.Automation.variablesToSkip
 				$temp = $variables | Where {$variablestoskip -notcontains $_.Name}
 				$variables = $temp
 			}
