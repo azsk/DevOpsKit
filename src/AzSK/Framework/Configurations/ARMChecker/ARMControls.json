@@ -466,6 +466,7 @@
           "jsonPath": [ "$.properties.kubernetesVersion" ],
           "matchType": "StringSingleToken",
           "data": {
+            "type": "Allow",
             "value": "1.11.5",
             "isCaseSensitive": false
           }
