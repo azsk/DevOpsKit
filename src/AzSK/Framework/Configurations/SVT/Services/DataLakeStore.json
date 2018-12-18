@@ -48,7 +48,7 @@
       "Automated": "Yes",
       "MethodName": "CheckACLAccess",
       "Rationale": "Using appropriate ACLs ensures that data in ADLS is protected and accessible only to the entities with a legitimate need to access it.",
-      "Recommendation": "Use PS command 'Set-AzureRmDataLakeStoreItemAcl [-Account] <String> [-Path] <DataLakeStorePathInstance> [-Acl] <DataLakeStoreItemAcl>'. Refer: https://docs.microsoft.com/en-us/azure/data-lake-store/data-lake-store-secure-data#a-namefilepermissionsaassign-users-or-security-group-as-acls-to-the-azure-data-lake-store-file-system",
+      "Recommendation": "Use PS command 'Set-AzureRmDataLakeStoreItemAcl [-Account] <String> [-Path] <DataLakeStorePathInstance> [-Acl] <DataLakeStoreItemAcl>'. Refer: https://docs.microsoft.com/en-us/azure/data-lake-store/data-lake-store-secure-data#a-namefilepermissionsaassign-users-or-security-group-as-acls-to-the-azure-data-lake-store-file-system. To remove any user or group from ACLs refer: https://docs.microsoft.com/en-us/azure/data-lake-store/data-lake-store-secure-data#remove-security-group-acls-from-a-data-lake-storage-gen1-file-system",
       "Tags": [
         "SDL",
         "TCP",

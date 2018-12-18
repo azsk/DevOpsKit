@@ -19,6 +19,7 @@ class PolicySetup: CommandBase
 	[string] $ResourceGroupLocation;
 	[string] $MonitoringDashboardLocation;
 	hidden [string] $PolicyUrl;
+	hidden [string] $AzureEnvironment;
 	hidden [string] $installerUrl;
 	hidden [string] $InstallerFileName;
 	hidden [string] $Version = "3.1803.0";
@@ -44,13 +45,13 @@ class PolicySetup: CommandBase
 	hidden [string] $getCommandName = "Get-AzSKOrganizationPolicyStatus"
 	hidden [OverrideConfigurationType] $OverrideConfiguration = [OverrideConfigurationType]::None
 
-	PolicySetup([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $orgName, [string] $departmentName, [string] $resourceGroupName, [string] $storageAccountName, [string] $appInsightName, [string] $appInsightLocation, [string] $resourceGroupLocation,[string] $MonitoringDashboardLocation, [string] $localPolicyFolderPath):
+	PolicySetup([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $orgName, [string] $departmentName, [string] $resourceGroupName, [string] $storageAccountName, [string] $appInsightName, [string] $appInsightLocation, [string] $resourceGroupLocation,[string] $AzureEnvironment, [string] $MonitoringDashboardLocation, [string] $localPolicyFolderPath):
         Base($subscriptionId, $invocationContext)
     {
-		$this.CreateInstance($subscriptionId, $orgName, $departmentName, $resourceGroupName, $storageAccountName, $appInsightName, $appInsightLocation, $resourceGroupLocation,$MonitoringDashboardLocation, $localPolicyFolderPath);				
+		$this.CreateInstance($subscriptionId, $orgName, $departmentName, $AzureEnvironment, $resourceGroupName, $storageAccountName, $appInsightName, $appInsightLocation, $resourceGroupLocation,$MonitoringDashboardLocation, $localPolicyFolderPath);				
 	}
 
-	[void] CreateInstance([string] $subscriptionId, [string] $orgName, [string] $departmentName, [string] $resourceGroupName, [string] $storageAccountName, [string] $appInsightName, [string] $appInsightLocation, [string] $resourceGroupLocation,[string] $MonitoringDashboardLocation, [string] $localPolicyFolderPath)
+	[void] CreateInstance([string] $subscriptionId, [string] $orgName, [string] $departmentName,[string] $AzureEnvironment, [string] $resourceGroupName, [string] $storageAccountName, [string] $appInsightName, [string] $appInsightLocation, [string] $resourceGroupLocation,[string] $MonitoringDashboardLocation, [string] $localPolicyFolderPath)
 	{
 		if([string]::IsNullOrWhiteSpace($orgName))
 		{
@@ -106,6 +107,7 @@ class PolicySetup: CommandBase
 		}
 
 		$this.AppInsightLocation = $appInsightLocation;
+		$this.AzureEnvironment = $AzureEnvironment;
 		if([string]::IsNullOrWhiteSpace($this.AppInsightName) -or [string]::IsNullOrWhiteSpace($appInsightLocation))
 		{
 			$azskInsights = @();
@@ -309,6 +311,7 @@ class PolicySetup: CommandBase
 			$fileContent = $fileContent.Replace("#ModuleName#", $([Constants]::AzSKModuleName));
 			$fileContent = $fileContent.Replace("#OldModuleName#", [Constants]::OldModuleName);
 			$fileContent = $fileContent.Replace("#OrgName#", $this.OrgFullName);
+			$fileContent = $fileContent.Replace("#AzureEnv#", $this.AzureEnvironment);
 			$fileContent = $fileContent.Replace("#AzSKConfigURL#", $this.AzSKConfigURL);
 			
 			if(-not [string]::IsNullOrWhiteSpace($this.InstallerUrl))
@@ -411,8 +414,9 @@ class PolicySetup: CommandBase
 			$this.ValidatePolicyExists()
 		}
 
-		
+		if($this.AzureEnvironment -eq "AzureCloud"){
 		$this.AppInsightInstance.CreateAppInsightIfNotExists();
+	    }
 		$container = $this.StorageAccountInstance.CreateStorageContainerIfNotExists($this.InstallerContainerName, [BlobContainerPublicAccessType]::Blob);
 		if($container -and $container.CloudBlobContainer)
 		{

@@ -488,7 +488,7 @@ class WritePsConsole: FileOutputBase
 				$totalText = "Total";
 				$MarkerText = "MarkerText";
 				$rows = @();
-				$rows += [Enum]::GetNames([ControlSeverity]) | Where-Object { $severities -contains $_ };
+				$rows += $severities;
 				$rows += $MarkerText;
 				$rows += $totalText;
 				$rows += $MarkerText;
@@ -638,5 +638,5 @@ class WritePsConsole: FileOutputBase
 class SVTSummary
 {
     [VerificationResult] $VerificationResult = [VerificationResult]::Manual;
-    [ControlSeverity] $ControlSeverity = [ControlSeverity]::High;
+    [string] $ControlSeverity = [ControlSeverity]::High;
 }

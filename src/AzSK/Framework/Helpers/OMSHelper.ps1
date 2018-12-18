@@ -100,7 +100,8 @@ Class OMSHelper{
 			$out.HasAttestationWritePermissions = $ControlResult.CurrentSessionContext.Permissions.HasAttestationWritePermissions
 			$out.HasAttestationReadPermissions = $ControlResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions				
 			$out.IsLatestPSModule = $ControlResult.CurrentSessionContext.IsLatestPSModule
-			$out.PolicyOrgName =$AzSKContext.PolicyOrgName
+			$out.PolicyOrgName = $AzSKContext.PolicyOrgName
+			$out.IsControlInGrace = $ControlResult.IsControlInGrace
 			#mapping the attestation properties
 			if($null -ne $ControlResult -and $null -ne $ControlResult.StateManagement -and $null -ne $ControlResult.StateManagement.AttestedStateData)
 			{
@@ -181,7 +182,7 @@ Class OMSHelper{
             $set.ControlSeverity = $item.ControlItem.ControlSeverity
 			$set.Tags = $item.ControlItem.Tags
 			$set.IsBaselineControl = $item.ControlItem.IsBaselineControl
-            $ControlSet.Add($set) 
+			 $ControlSet.Add($set) 
         }
         return $ControlSet;
 	}
@@ -356,6 +357,7 @@ Class OMSModel {
 	[bool] $HasAttestationWritePermissions
 	[bool] $HasAttestationReadPermissions
 	[bool] $IsLatestPSModule
+	[bool] $IsControlInGrace
 	[string[]] $Tags
 	[string] $ScannerVersion
 	[bool] $IsBaselineControl

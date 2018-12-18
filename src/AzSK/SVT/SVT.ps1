@@ -108,8 +108,8 @@ function Get-AzSKAzureServicesSecurityStatus
 
         [string]
 		[Parameter(Mandatory = $true, ParameterSetName = "TagName", HelpMessage="The value of the tag to query for Azure resource.")]
-		[Alias("tgv")]
-		$TagValue,
+		[Alias("tgvs", "tgv", "TagValue")]
+		$TagValues,
 
 		[string] 
         [Parameter(Mandatory = $false, ParameterSetName = "ResourceFilter", HelpMessage="Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.")]
@@ -223,7 +223,7 @@ function Get-AzSKAzureServicesSecurityStatus
 			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName, $ExcludeResourceNames,$ExcludeResourceGroupNames);			
 			$resolver.Tag = $Tag;
 			$resolver.TagName = $TagName;
-			$resolver.TagValue = $TagValue;	
+			$resolver.TagValue = $TagValues;	
 
 
 			$secStatus = [ServicesSecurityStatus]::new($SubscriptionId, $PSCmdlet.MyInvocation, $resolver);
@@ -635,8 +635,8 @@ function Get-AzSKControlsStatus
 
         [string]
 		[Parameter(Mandatory = $true, ParameterSetName = "TagName", HelpMessage="The value of the tag to query for Azure resource.")]
-		[Alias("tgv")]
-		$TagValue,
+		[Alias("tgvs", "tgv", "TagValue")]
+		$TagValues,
 
 		[string] 
         [Parameter(Mandatory = $false, ParameterSetName = "ResourceFilter", HelpMessage="Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.")]
@@ -747,7 +747,7 @@ function Get-AzSKControlsStatus
 			$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName, $ExcludeResourceNames,$ExcludeResourceGroupNames);						
 			$resolver.Tag = $Tag;
 			$resolver.TagName = $TagName;
-			$resolver.TagValue = $TagValue;
+			$resolver.TagValue = $TagValues;
 		
 			$controlReport = [SVTStatusReport]::new($SubscriptionId, $PSCmdlet.MyInvocation, $resolver);
 			if ($controlReport) 

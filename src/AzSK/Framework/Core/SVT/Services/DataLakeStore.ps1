@@ -50,7 +50,7 @@ class DataLakeStore: SVTBase
 		{
 			$controlResult.AddMessage("Firewall rules - [$this.ResourceContext.ResourceName]", $firewallSetting.FirewallRules)
 			$controlResult.AddMessage([VerificationResult]::Failed,"Any to Any firewall rule `
-			(Start IP address: $this.ControlSettings.IPRangeStartIP To End IP Address :$this.ControlSettings.IPRangeEndIP) `
+			(Start IP address: $($this.ControlSettings.IPRangeStartIP) To End IP Address :$($this.ControlSettings.IPRangeEndIP)) `
 			is defined which must be removed.")
 			$controlResult.SetStateData("Firewall rules", $firewallSetting.FirewallRules);                      
 		}
