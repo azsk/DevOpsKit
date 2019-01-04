@@ -1,5 +1,5 @@
 ﻿Set-StrictMode -Version Latest
-Write-Host "Importing AzureRM modules. This may take a while..." -ForegroundColor Yellow
+Write-Host "Importing AzSK module. This may take a while..." -ForegroundColor Yellow
 Import-Module AzureRM.Profile -RequiredVersion 5.5.1
 
 . $PSScriptRoot\Framework\Framework.ps1
