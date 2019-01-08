@@ -445,14 +445,14 @@ class ComplianceReportHelper: ComplianceBase
 			$SVTEvent.ControlItem=$controlDetails;
 			$resourceDetails.ResourceName=$item.resourceName;
 			$SVTEvent.FeatureName=$item.FeatureName;
-			$resourceDetails.ResourceGroupName=$item.ResourceGroupName;
-			$SVTEvent.ResourceContext=$resourceDetails
+			$resourceDetails.ResourceGroupName=$item.ResourceGroupName;			
 			$SVTEvent.SubscriptionContext = $subContext
-			$CResult.ResourceId = $SVTEvent.SubscriptionContext.Scope;
-			if($CResult.IsResource())
+			$resourceDetails.ResourceId= $SVTEvent.SubscriptionContext.Scope;
+			if($SVTEvent.IsResource())
 			{
-				$CResult.ResourceId = $item.ResourceId;
+				$resourceDetails.ResourceId = $item.ResourceId;
 			}
+			$SVTEvent.ResourceContext=$resourceDetails
 			$ComplianceState.Add($SVTEvent);
 
 
