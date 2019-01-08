@@ -326,6 +326,22 @@ class ComplianceInfo: CommandBase
 		$ComplianceMessage.ComplianceCount = $ComplianceCount
 		$this.ComplianceMessageSummary += $ComplianceMessage
 	}
+	hidden [void] UpdateStorageComplianceData([string] $subId, [InvocationInfo] $invocationContext)
+	{
+		try
+		{
+			$ComplianceRptHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());
+			$this.PublishCustomMessage("Fetching data from backend. This may take a few minutes..");
+			$ComplianceRptHelper.FetchComplianceStateFromDb($subId, $invocationContext)
+			$this.PublishCustomMessage("Completed. Please run GRS and GSS with co-admin access once to make sure the latest data is in place.");
+
+		}
+		catch
+		{
+			[EventBase]::PublishGenericException($_);
+		}
+
+	}
 }
 
 class ComplianceMessageSummary

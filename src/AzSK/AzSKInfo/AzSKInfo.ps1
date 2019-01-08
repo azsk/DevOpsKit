@@ -83,6 +83,9 @@ function Get-AzSKInfo
 		$ControlIdContains,
 
 		[switch]
+		$Sync,
+		
+		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
 		$DoNotOpenOutputFolder,
 
@@ -182,9 +185,22 @@ function Get-AzSKInfo
 							$Full = $false
 						}
 						$complianceInfo = [ComplianceInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation, $Full);
-						if ($complianceInfo) 
+						if($PSCmdlet.MyInvocation.BoundParameters["Sync"] -and $PSCmdlet.MyInvocation.BoundParameters["Sync"].IsPresent)
 						{
-							return $complianceInfo.InvokeFunction($complianceInfo.GetComplianceInfo);
+							
+							if ($complianceInfo) 
+							{
+								return $complianceInfo.InvokeFunction($complianceInfo.UpdateStorageComplianceData,@($SubscriptionId, $PSCmdlet.MyInvocation));
+							}
+				
+						}
+						else
+						{
+							
+							if ($complianceInfo) 
+							{
+								return $complianceInfo.InvokeFunction($complianceInfo.GetComplianceInfo);
+							}
 						}
 					}
 					Default
