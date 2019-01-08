@@ -439,17 +439,20 @@ class ComplianceReportHelper: ComplianceBase
 			$CResult.CurrentSessionContext.Permissions.HasRequiredAccess = $true
 			$CResult.CurrentSessionContext.Permissions.HasAttestationWritePermissions =$sc.HasControlStateWritePermissions
 			$CResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions = $sc.HasControlStateReadPermissions 
-			
 			$controlDetails.Id=$item.ControlIntId
 			$controlDetails.ControlSeverity=$item.ControlSeverity
 			$SVTEvent.ControlResults = $CResult;
 			$SVTEvent.ControlItem=$controlDetails;
-			$resourceDetails.ResourceId=$item.resourceId;
 			$resourceDetails.ResourceName=$item.resourceName;
 			$SVTEvent.FeatureName=$item.FeatureName;
 			$resourceDetails.ResourceGroupName=$item.ResourceGroupName;
 			$SVTEvent.ResourceContext=$resourceDetails
 			$SVTEvent.SubscriptionContext = $subContext
+			$CResult.ResourceId = $SVTEvent.SubscriptionContext.Scope;
+			if($CResult.IsResource())
+			{
+				$CResult.ResourceId = $item.ResourceId;
+			}
 			$ComplianceState.Add($SVTEvent);
 
 
