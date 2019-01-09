@@ -70,42 +70,50 @@ class Storage: SVTBase
 		return $result;
 	}
 
-    hidden [ControlResult] CheckStorageContainerPublicAccessTurnOff([ControlResult] $controlResult)
+	hidden [ControlResult] CheckStorageContainerPublicAccessTurnOff([ControlResult] $controlResult)
     {
-		$allContainers = @();
-		try
-		{
-			$allContainers += Get-AzureStorageContainer -Context $this.ResourceObject.Context -ErrorAction Stop
-		}
-		catch
-		{
-			if(([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden) -or $this.LockExists)
-            {
-				#Setting this property ensures that this control result will not be considered for the central telemetry, as control does not have the required permissions.
-				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-                $controlResult.AddMessage([VerificationResult]::Manual, ($_.Exception).Message);	
-				return $controlResult
-            }
-            else
-            {
-                throw $_
-            }
-		}
 
-		#Containers other than private
-        $publicContainers = $allContainers | Where-Object { $_.PublicAccess -ne  [Microsoft.WindowsAzure.Storage.Blob.BlobContainerPublicAccessType]::Off }
-			
-		if(($publicContainers | Measure-Object ).Count -eq 0)
-        {
-			$controlResult.AddMessage([VerificationResult]::Passed, "No containers were found that have public (anonymous) access in this storage account.");
-        }                 
-        else
-        {
-			$controlResult.EnableFixControl = $true;
-            $controlResult.AddMessage([VerificationResult]::Failed  , 
-				                      [MessageData]::new("Remove public access from following containers. Total - $(($publicContainers | Measure-Object ).Count)", ($publicContainers | Select-Object -Property Name, PublicAccess)));  
-        }
-
+		$resource = Get-AzureRmResource -ResourceId $this.ResourceContext.ResourceId;
+		#Disabling control for Data Lake Storage Gen2 resources with hierarchical namespace accounts enabled as blob storage is not currently supported.
+		if([Helpers]::CheckMember($resource.Properties, "isHnsEnabled") -and ($resource.Properties.isHnsEnabled -eq $true)){
+			$controlResult.AddMessage([VerificationResult]::Disabled, "Blob API is not yet supported for hierarchical namespace accounts in Data Lake Storage Gen2 resources.");
+		}
+		else{
+			$allContainers = @();
+			try
+			{
+				$allContainers += Get-AzureStorageContainer -Context $this.ResourceObject.Context -ErrorAction Stop
+			}
+			catch
+			{
+				if(([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden) -or $this.LockExists)
+				{
+					#Setting this property ensures that this control result will not be considered for the central telemetry, as control does not have the required permissions.
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+					$controlResult.AddMessage([VerificationResult]::Manual, ($_.Exception).Message);	
+					return $controlResult
+				}
+				else
+				{
+					throw $_
+				}
+			}
+	
+			#Containers other than private
+			$publicContainers = $allContainers | Where-Object { $_.PublicAccess -ne  [Microsoft.WindowsAzure.Storage.Blob.BlobContainerPublicAccessType]::Off }
+				
+			if(($publicContainers | Measure-Object ).Count -eq 0)
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "No containers were found that have public (anonymous) access in this storage account.");
+			}                 
+			else
+			{
+				$controlResult.EnableFixControl = $true;
+				$controlResult.AddMessage([VerificationResult]::Failed  , 
+										  [MessageData]::new("Remove public access from following containers. Total - $(($publicContainers | Measure-Object ).Count)", ($publicContainers | Select-Object -Property Name, PublicAccess)));  
+			}
+	
+		}		
         return $controlResult;
     }
 
