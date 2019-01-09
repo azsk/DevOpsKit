@@ -442,13 +442,21 @@ class ComplianceReportHelper: ComplianceBase
 			$controlDetails.Id=$item.ControlIntId
 			$controlDetails.ControlSeverity=$item.ControlSeverity
 			$SVTEvent.ControlResults = $CResult;
+			if($item.IsBaselineControl -eq 1)
+			{
+				$controlDetails.IsBaselineControl=$true
+			}
+			else 
+			{
+				$controlDetails.IsBaselineControl=$false				
+			}
 			$SVTEvent.ControlItem=$controlDetails;
 			$resourceDetails.ResourceName=$item.resourceName;
 			$SVTEvent.FeatureName=$item.FeatureName;
 			$resourceDetails.ResourceGroupName=$item.ResourceGroupName;			
 			$SVTEvent.SubscriptionContext = $subContext
 			$resourceDetails.ResourceId= $SVTEvent.SubscriptionContext.Scope;
-			if($SVTEvent.IsResource())
+			if(-not [string]::IsNullOrEmpty($item.ResourceId))
 			{
 				$resourceDetails.ResourceId = $item.ResourceId;
 			}
