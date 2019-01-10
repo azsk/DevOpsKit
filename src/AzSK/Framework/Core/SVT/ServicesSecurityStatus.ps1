@@ -237,20 +237,23 @@ class ServicesSecurityStatus: SVTCommandBase
 				$this.CommandError($_);
             }
 		}
-		try
+		if(($childResources | Measure-Object).Count -gt 0)
 		{
-			[SVTEventContext[]] $childResourceResults = @();
-			$childResources | Group-Object -Property "ResourceId" | ForEach-Object {
-				$_.Group[0].RunningLatestPSModule = $this.RunningLatestPSModule
-				$this.SetSVTBaseProperties($_.Group[0])
-				$childResourceResults += $_.Group[0].$methodNameToCall();
-				$result += $childResourceResults;
+			try
+			{
+				[SVTEventContext[]] $childResourceResults = @();
+				$childResources | Group-Object -Property "ResourceId" | ForEach-Object {
+					$_.Group[0].RunningLatestPSModule = $this.RunningLatestPSModule
+					$this.SetSVTBaseProperties($_.Group[0])
+					$childResourceResults += $_.Group[0].$methodNameToCall();
+					$result += $childResourceResults;
+				}
 			}
-		}
-		catch
-		{
-			$this.PublishCustomMessage($_);
-			
+			catch
+			{
+				$this.PublishCustomMessage($_);
+				
+			}
 		}
 		
 		
