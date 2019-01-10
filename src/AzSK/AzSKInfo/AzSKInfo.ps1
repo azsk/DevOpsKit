@@ -185,21 +185,18 @@ function Get-AzSKInfo
 							$Full = $false
 						}
 						$complianceInfo = [ComplianceInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation, $Full);
-						if($PSCmdlet.MyInvocation.BoundParameters["Sync"] -and $PSCmdlet.MyInvocation.BoundParameters["Sync"].IsPresent)
-						{
+						
 							
 							if ($complianceInfo) 
 							{
+								if($Sync)
+								{
 								return $complianceInfo.InvokeFunction($complianceInfo.UpdateStorageComplianceData,@($SubscriptionId, $PSCmdlet.MyInvocation));
-							}
-				
-						}
-						else
-						{
-							
-							if ($complianceInfo) 
-							{
+								}
+								else
+								{	
 								return $complianceInfo.InvokeFunction($complianceInfo.GetComplianceInfo);
+								}	
 							}
 						}
 					}

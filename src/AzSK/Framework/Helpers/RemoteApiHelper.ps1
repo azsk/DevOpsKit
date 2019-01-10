@@ -27,7 +27,8 @@ class RemoteApiHelper {
     }
     hidden static [psobject] GetContent($uri, $content, $type) 
     {
-       
+       try
+       {
         $url = [RemoteApiHelper]::ApiBaseEndpoint + $uri;
         $accessToken = [RemoteApiHelper]::GetAccessToken()
             $result = Invoke-WebRequest -Uri $url `
@@ -38,6 +39,11 @@ class RemoteApiHelper {
                 -UseBasicParsing
                 
             return $result.Content
+       }
+       catch 
+       {
+           return $_
+       }
         
     }
 
