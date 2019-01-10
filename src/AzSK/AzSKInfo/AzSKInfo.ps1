@@ -53,12 +53,15 @@ function Get-AzSKInfo
 		$InfoType,
 
 		[ResourceTypeName]
+		[Alias("rtn")]
 		$ResourceTypeName = [ResourceTypeName]::All,
 
 		[string]
+		[Alias("rt")]
         $ResourceType,
 
 		[string]
+		[Alias("cids")]
         $ControlIds,
 
 		[switch]
@@ -68,13 +71,15 @@ function Get-AzSKInfo
         $FilterTags,
 
 		[string]
+		[Alias("sid","s")]
         $SubscriptionId,
 
 		[string]
+		[Alias("rgns")]
         $ResourceGroupNames,
 
 		[string]
-		[Alias("ResourceName")]
+		[Alias("ResourceName","rns")]
 		$ResourceNames,
 
 		$ControlSeverity,
@@ -92,7 +97,17 @@ function Get-AzSKInfo
 		[Parameter(Mandatory = $false)]
 		[Alias("xrtn")]
 		[ResourceTypeName]
-		$ExcludeResourceTypeName = [ResourceTypeName]::All
+		$ExcludeResourceTypeName = [ResourceTypeName]::All,
+
+		[string]
+		[Alias("xrgns")]
+		[Parameter(Mandatory = $false)]
+		$ExcludeResourceGroupNames,
+
+		[string]
+		[Alias("xrns")]
+		[Parameter(Mandatory = $false)]
+		$ExcludeResourceNames
     )
 
 	Begin
@@ -161,7 +176,7 @@ function Get-AzSKInfo
 						{
 							$ResourceTypeName = [ResourceTypeName]::All
 						}
-						$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName);			
+						$resolver = [SVTResourceResolver]::new($SubscriptionId, $ResourceGroupNames, $ResourceNames, $ResourceType, $ResourceTypeName, $ExcludeResourceTypeName, $ExcludeResourceNames, $ExcludeResourceGroupNames);			
 
 						$attestationReport = [SVTStatusReport]::new($SubscriptionId, $PSCmdlet.MyInvocation, $resolver);
 						if ($attestationReport) 
@@ -187,18 +202,18 @@ function Get-AzSKInfo
 						$complianceInfo = [ComplianceInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation, $Full);
 						
 							
-							if ($complianceInfo) 
-							{
+						if ($complianceInfo) 
+						{
 								if($Sync)
 								{
-								return $complianceInfo.InvokeFunction($complianceInfo.UpdateStorageComplianceData,@($SubscriptionId, $PSCmdlet.MyInvocation));
+								return $complianceInfo.InvokeFunction($complianceInfo.UpdateStorageComplianceData);
 								}
 								else
 								{	
 								return $complianceInfo.InvokeFunction($complianceInfo.GetComplianceInfo);
 								}	
-							}
 						}
+						
 					}
 					Default
 					{

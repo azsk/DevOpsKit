@@ -9,26 +9,25 @@ class RemoteApiHelper {
         return [Helpers]::GetAccessToken($ResourceAppIdURI);
     }
 
-    hidden static [psobject] PostContent($uri, $content, $type) {
-        try {
-            $accessToken = [RemoteApiHelper]::GetAccessToken()
-            $result = Invoke-WebRequest -Uri $([RemoteApiHelper]::ApiBaseEndpoint + $uri) `
-                -Method Post `
-                -Body $content `
-                -Headers @{"Authorization" = "Bearer $accessToken";} `
-                -ContentType $type
-                -UseBasicParsing
-            return $result
-        }
-        catch 
-        {
-            return $_
-        }
-    }
+    hidden static [psobject] PostContent($uri, $content, $type) 
+    {
+            try {
+                $accessToken = [RemoteApiHelper]::GetAccessToken()
+                $result = Invoke-WebRequest -Uri $([RemoteApiHelper]::ApiBaseEndpoint + $uri) `
+                    -Method Post `
+                    -Body $content `
+                    -ContentType $type `
+                    -Headers @{"Authorization" = "Bearer $accessToken"} `
+                    -UseBasicParsing
+                return $result
+            }
+            catch {
+                return "ERROR"
+            }
+    }  
+    
     hidden static [psobject] GetContent($uri, $content, $type) 
     {
-       try
-       {
         $url = [RemoteApiHelper]::ApiBaseEndpoint + $uri;
         $accessToken = [RemoteApiHelper]::GetAccessToken()
             $result = Invoke-WebRequest -Uri $url `
@@ -39,12 +38,7 @@ class RemoteApiHelper {
                 -UseBasicParsing
                 
             return $result.Content
-       }
-       catch 
-       {
-           return $_
-       }
-        
+              
     }
 
 
@@ -91,7 +85,7 @@ class RemoteApiHelper {
 		[RemoteApiHelper]::PostJsonContent("/policycompliancedata", $PolicyComplianceData) | Out-Null	
     }
     static [string] GetComplianceSnapshot([string] $parameters){
-		return([RemoteApiHelper]::GetJsonContent("/scanresults/fetchcompliancedata", $parameters) | Out-String)	
+		return([RemoteApiHelper]::GetJsonContent("/scanresults/fetchcompliancedata", $parameters) )	
     }
     
     hidden static [psobject] ConvertToSimpleSet([SVTEventContext[]] $contexts) {

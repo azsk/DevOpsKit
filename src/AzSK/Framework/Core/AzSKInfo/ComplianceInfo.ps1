@@ -10,12 +10,15 @@ class ComplianceInfo: CommandBase
 	hidden $baselineControls = @();
 	hidden [PSObject] $ControlSettings
 	hidden [PSObject] $EmptyResource = @();
+	hidden [InvocationInfo] $InvocationContext
+	
 	 
 	ComplianceInfo([string] $subscriptionId, [InvocationInfo] $invocationContext, [bool] $full): Base($subscriptionId, $invocationContext) 
     { 
 		$this.SubscriptionId = $subscriptionId
 		$this.Full = $full
-        $this.ControlSettings = $this.LoadServerConfigFile("ControlSettings.json");
+		$this.ControlSettings = $this.LoadServerConfigFile("ControlSettings.json");
+		$this.InvocationContext = $invocationContext;
 	}
 
 	hidden [void] GetComplianceScanData()
@@ -326,17 +329,17 @@ class ComplianceInfo: CommandBase
 		$ComplianceMessage.ComplianceCount = $ComplianceCount
 		$this.ComplianceMessageSummary += $ComplianceMessage
 	}
-	hidden [void] UpdateStorageComplianceData([string] $subId, [InvocationInfo] $invocationContext)
+	hidden [void] UpdateStorageComplianceData()
 	{
+		$ComplianceRptHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());
+		$this.PublishCustomMessage("Fetching data from backend. This may take a few minutes..");
 		try
 		{
-			$ComplianceRptHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());
-			$this.PublishCustomMessage("Fetching data from backend. This may take a few minutes..");
-			$ComplianceRptHelper.FetchComplianceStateFromDb($subId, $invocationContext)
-			$this.PublishCustomMessage("Completed. Please run GRS and GSS with co-admin access once to make sure the latest data is in place.");
+			$message = $ComplianceRptHelper.FetchComplianceStateFromDb();
+			$this.PublishCustomMessage($message);
+			
 
-		}
-		catch
+		}catch
 		{
 			[EventBase]::PublishGenericException($_);
 		}
