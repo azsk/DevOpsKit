@@ -47,7 +47,7 @@
         "Automated": "Yes",
         "MethodName": "CheckClusterNetworkProfile",
         "Rationale": "Restricting cluster access with inbound and outbound traffic via NSGs limits the network exposure for cluster and reduces the attack surface.",
-        "Recommendation": "You should restrict IP range and port as per application needs. Refer: https://docs.microsoft.com/en-us/azure/hdinsight/hdinsight-extend-hadoop-virtual-network",
+        "Recommendation": "You should restrict IP range and port as per application needs. Refer: https://docs.microsoft.com/en-us/azure/hdinsight/hdinsight-extend-hadoop-virtual-network. Note: In case the IP range is indeterminate (for instance, if the client is a PaaS endpoint), you may need to attest this control.",
         "Tags": [
           "SDL",
           "TCP",

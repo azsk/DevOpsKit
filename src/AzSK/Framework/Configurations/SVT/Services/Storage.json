@@ -115,7 +115,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Using appropriate IP-based ACLs ensures that data in storage is protected and accessible only to entities from an expected set of endpoints.",
-      "Recommendation": "Restrict storage SAS tokens to specific IP addresses/ranges where possible. Refer: https://docs.microsoft.com/en-us/azure/storage/storage-dotnet-shared-access-signature-part-1.",
+      "Recommendation": "Restrict storage SAS tokens to specific IP addresses/ranges where possible. Refer: https://docs.microsoft.com/en-us/azure/storage/storage-dotnet-shared-access-signature-part-1. Note: In case the IP range is indeterminate (for instance, if the client is a PaaS endpoint), you may need to attest this control.",
       "Tags": [
         "SDL",
         "TCP",
