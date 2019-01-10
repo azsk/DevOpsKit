@@ -70,7 +70,7 @@
         "Automated": "No",
         "MethodName": "",
         "Rationale": "Publish profile of App Services contains deployment and FTP credentials. There are 2 risks with this. First, the credentials can get easily leaked during the various workflows involving the publish profile. Secondly, use of public profiles weakens auditability of deployment actions.",
-        "Recommendation": "No predefined role should be present in the App Service and all the custom roles must have all 'publishxml' operations added as the Non Actions, e.g. 'microsoft.web/sites/publishxml/read'.",
+        "Recommendation": "No predefined role should be present in the App Service and all the custom roles must have all 'publishxml' operations added as the Non Actions, e.g. 'microsoft.web/sites/publishxml/read'. Refer https://docs.microsoft.com/en-us/azure/app-service/faq-deployment#i-am-just-getting-started-with-app-service-web-apps-how-do-i-publish-my-code for exploring ways to securely deploy app service.",
         "Tags": [
           "SDL",
           "TCP",
