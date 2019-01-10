@@ -454,7 +454,24 @@
             ],
       "Enabled": true,
       "Rationale": "Permanent access increase the risk of a malicious user getting that access and inadvertently impacting a sensitive resource. To minimize this risk ensure that critical resources present in subscription are accessed only by the legitimate users when required. PIM facilitates this by limiting users to only assume higher privileges in a just in time (JIT) manner (or by assigning privileges for a shortened duration after which privileges are revoked automatically)."
-     }
-
+     },
+     {
+      "ControlID": "Azure_Subscription_Config_Add_Required_Tags",
+      "Description": "Mandatory tags must be set per your organization policy",
+      "Id": "SubscriptionCore290",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckMandatoryTags",
+      "Recommendation": "Run command 'Set-AzSKSubscriptionRBAC'. This command sets up all mandatory accounts on the target subscription. Run 'Get-Help Set-AzSKSubscriptionRBAC -full' for more help. ",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "SubscriptionCore"
+      ],
+      "Enabled": true,     
+      "Rationale": "Certain tags are expected to be present in all resources to support enterprise wide functions (e.g., security visibility based on environment, security scanning, cost optimization, etc.). The script checks for presence of such 'mandatory' and 'scenario-specific' tags. "
+    }
   ]
 }

@@ -62,7 +62,10 @@ function Get-AzSKInfo
         $ControlIds,
 
 		[switch]
-        $UseBaselineControls,
+		$UseBaselineControls,
+		
+		[switch]
+        $UsePreviewBaselineControls,
 
 		[string]
         $FilterTags,
@@ -138,7 +141,7 @@ function Get-AzSKInfo
 							$Full = $false
 						}
 
-						$controlsInfo = [ControlsInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation, $ResourceTypeName, $ResourceType, $ControlIds, $UseBaselineControls, $FilterTags, $Full, $ControlSeverity, $ControlIdContains);
+						$controlsInfo = [ControlsInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation, $ResourceTypeName, $ResourceType, $ControlIds, $UseBaselineControls, $UsePreviewBaselineControls, $FilterTags, $Full, $ControlSeverity, $ControlIdContains);
 						if ($controlsInfo) 
 						{
 							return $controlsInfo.InvokeFunction($controlsInfo.GetControlDetails);
