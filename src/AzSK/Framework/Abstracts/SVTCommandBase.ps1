@@ -225,7 +225,7 @@ class SVTCommandBase: CommandBase {
                 }
                 else {
                     [MessageData] $data = [MessageData]@{
-                        Message     = "You don't have the required permissions to perform control attestation. If you'd like to perform control attestation, please request your subscription owner to grant you 'Contributor' access to the '$([ConfigurationManager]::GetAzSKConfigData().AzSKRGName)' resource group.";
+                        Message     = "You don't have the required permissions to perform control attestation. If you'd like to perform control attestation, please request your subscription owner to grant you 'Contributor' access to the '$([ConfigurationManager]::GetAzSKConfigData().AzSKRGName)' resource group. `nNote: If your permissions were elevated recently, please run the 'Disconnect-AzureRmAccount' command to clear the Azure cache and try again.";
                         MessageType = [MessageType]::Error;
                     };
                     $this.PublishCustomMessage($data)
