@@ -103,7 +103,7 @@ class ControlsInfo: CommandBase
 			{
 				$baselineControls += $this.ControlSettings.PreviewBaselineControls.SubscriptionControlIdList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
 			}
-
+			$this.ControlIds = $baselineControls
 		}
 		$resourcetypes | ForEach-Object{
 					$controls = [ConfigurationManager]::GetSVTConfig($_.JsonFileName); 

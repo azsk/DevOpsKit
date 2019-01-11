@@ -330,7 +330,15 @@ class ServicesSecurityStatus: SVTCommandBase
 				$this.ControlIds += $controlIds;
 
 			}
-			$this.Resolver.SVTResources = $ResourcesWithBaselineFilter
+			if($this.UseBaselineControls)
+			{
+				$this.Resolver.SVTResources += $ResourcesWithBaselineFilter
+			}
+			else
+			{
+				$this.Resolver.SVTResources = $ResourcesWithBaselineFilter
+			}
+			
 		}
 	}
 
