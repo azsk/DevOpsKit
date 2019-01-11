@@ -195,16 +195,31 @@ class ComplianceReportHelper: ComplianceBase
 				$scanResult.LastResultTransitionOn = [System.DateTime]::UtcNow.ToString("s");
 				$scanResult.PreviousVerificationResult = $scanResult.VerificationResult;
 			}
-
-			if($scanResult.FirstScannedOn -eq [Constants]::AzSKDefaultDateTime)
+			
+			if($scanResult.FirstScannedOn -eq [Constants]::AzSKDefaultDateTime -or (get-date $scanResult.FirstScannedOn) -gt (Get-Date $currentSVTResult.FirstScannedOn ))
 			{
-				$scanResult.FirstScannedOn = [System.DateTime]::UtcNow.ToString("s");
+				if($currentSVTResult.FirstScannedOn -eq [Constants]::AzSKDefaultDateTime)
+				{
+					$scanResult.FirstScannedOn = [System.DateTime]::UtcNow.ToString("s");
+				}
+				else 
+				{
+					$scanResult.FirstScannedOn = $currentSVTResult.FirstScannedOn.ToString("s");
+				}
 			}
 
 			if($scanResult.FirstFailedOn -eq [Constants]::AzSKDefaultDateTime -and $currentSVTResult.ActualVerificationResult -ne [VerificationResult]::Passed)
 			{
-				$scanResult.FirstFailedOn = [System.DateTime]::UtcNow.ToString("s");
+				if($currentSVTResult.FirstFailedOn -eq [Constants]::AzSKDefaultDateTime)
+				{
+					$scanResult.FirstFailedOn = [System.DateTime]::UtcNow.ToString("s");
+				}
+				else 
+				{
+					$scanResult.FirstFailedOn = $currentSVTResult.FirstFailedOn.ToString("s");
+				}
 			}
+			
 			$scanResult.IsControlInGrace=$currentSVTResult.IsControlInGrace
 			$scanResult.ScannedBy = [Helpers]::GetCurrentRMContext().Account
 			$scanResult.ScanSource = $this.ScanSource
@@ -370,5 +385,101 @@ class ComplianceReportHelper: ComplianceBase
 		else {
 			return "";
 		}	
+	}
+
+	hidden [string] FetchComplianceStateFromDb()
+	{
+		
+			$result =  [RemoteAPIHelper]::GetComplianceSnapshot($this.SubscriptionContext.SubscriptionId)
+			if(-not [string]::IsNullOrEmpty($result) -and $result -ne '[]')
+			{
+				$Complianceinfo = ConvertFrom-Json -InputObject $result
+				if(($Complianceinfo | Measure-Object).Count -gt 0)
+				{
+					$ComplianceState = New-Object -TypeName "System.Collections.Generic.List[SVTEventContext]";
+					$subContext= $this.SubscriptionContext;
+					foreach ($item in $Complianceinfo)
+					{
+						$CResult= New-Object -TypeName ControlResult
+						$StateData = New-Object -TypeName StateData
+						$SVTEvent= New-Object -TypeName SVTEventContext
+						$controlDetails = New-Object -TypeName ControlItem
+						$resourceDetails=[ResourceContext]::new()
+						$CResult.ChildResourceName = "";
+						$CResult.VerificationResult = $item.VerificationResult
+						$CResult.ActualVerificationResult = $item.ActualVerificationResult;
+						if(-not [string]::IsNullOrEmpty($item.FirstFailedOn))
+						{
+							$CResult.FirstFailedOn = get-date $item.FirstFailedOn
+						}
+						if(-not [string]::IsNullOrEmpty($item.FirstScannedOn))
+						{
+							$CResult.FirstScannedOn = get-date $item.FirstScannedOn
+						}
+						$CResult.MaximumAllowedGraceDays=$item.MaximumAllowedGraceDays;
+						$scanFromDays = [System.DateTime]::UtcNow.Subtract($CResult.FirstScannedOn)
+						# Setting isControlInGrace Flag		
+						if($scanFromDays.Days -le $CResult.MaximumAllowedGraceDays)
+						{
+							$CResult.IsControlInGrace = $true
+						}
+						else
+						{
+							$CResult.IsControlInGrace = $false
+						}
+						$StateData.AttestedBy = $item.attestedBy;
+						$StateData.AttestedDate = $item.attestedDate
+						$StateData.Justification = $item.Justification
+						$CResult.StateManagement.AttestedStateData=$StateData
+						$controlDetails.ControlId=$item.ControlId
+						$CResult.CurrentSessionContext.IsLatestPSModule =$true
+						$CResult.CurrentSessionContext.Permissions.HasRequiredAccess = $true
+						$CResult.CurrentSessionContext.Permissions.HasAttestationWritePermissions = $this.azskStorageInstance.HaveWritePermissions
+						$CResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions = $this.azskStorageInstance.HaveWritePermissions 
+						$controlDetails.Id=$item.ControlIntId
+						$controlDetails.ControlSeverity=$item.ControlSeverity
+						$SVTEvent.ControlResults = $CResult;
+						if($item.IsBaselineControl -eq 1)
+						{
+							$controlDetails.IsBaselineControl=$true
+						}
+						else 
+						{
+							$controlDetails.IsBaselineControl=$false				
+						}
+						$SVTEvent.ControlItem=$controlDetails;
+						$resourceDetails.ResourceName=$item.resourceName;
+						$SVTEvent.FeatureName=$item.FeatureName;
+						$resourceDetails.ResourceGroupName=$item.ResourceGroupName;			
+						$SVTEvent.SubscriptionContext = $subContext
+						$resourceDetails.ResourceId= $SVTEvent.SubscriptionContext.Scope;
+						if(-not [string]::IsNullOrEmpty($item.ResourceId))
+						{
+							$resourceDetails.ResourceId = $item.ResourceId;
+						}
+						$SVTEvent.ResourceContext=$resourceDetails
+						$ComplianceState.Add($SVTEvent);
+
+
+					}
+				
+					$this.StoreComplianceDataInUserSubscription($ComplianceState);
+					return "Compliance data has been successfully stored in storage "
+				}
+				else 
+				{
+					
+						return $result
+				
+				}
+			}
+			else
+			 {
+					return "No records have been found for this subscription. Make sure the subscription was scanned atleast once before running this command"
+				
+			}
+		
+		
+		
 	}
 }
