@@ -65,8 +65,7 @@ function Get-AzSKInfo
         $ControlIds,
 
 		[switch]
-		[Alias("ubc")]
-        $UseBaselineControls,
+		$UseBaselineControls,
 
 		[string]
         $FilterTags,
