@@ -1006,9 +1006,13 @@ class SubscriptionCore: SVTBase
 					$controlResult.AddMessage([Constants]::UnderScoreLineLine)
 				}
 				
-				if($rgTagStatus)
+				if(-not $rgTagStatus)
 				{
 					$controlResult.AddMessage([VerificationResult]::Failed, "Resource group(s) failed to comply with mandatory tags." )
+				}
+				else
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed, "Resource group(s) comply with mandatory tags." )
 				}				
 			}
 			else
