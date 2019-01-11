@@ -31,7 +31,9 @@ namespace AzSK.ARMChecker.Lib
                 return new List<ControlResult> { ControlResult.NotSupported(resource) };
             }
             var results = new List<ControlResult>();
-            foreach (var control in controlSet.Controls)
+            var controlsToEvaluate = controlSet.Controls.Where(c => c.IsEnabled == true);
+            
+            foreach (var control in controlsToEvaluate)
             {
                 control.FeatureName = controlSet.FeatureName;
                 control.SupportedResources = controlSet.supportedResourceTypes.ToArray().ToSingleString(" , ");
@@ -47,7 +49,9 @@ namespace AzSK.ARMChecker.Lib
             var featureName = resources?.First().FeatureName;
             var controlSet = resourceControlSets?.FirstOrDefault(x => x.FeatureName.Equals(featureName, StringComparison.OrdinalIgnoreCase));
             var results = new List<ControlResult>();
-            foreach (var control in controlSet.Controls)
+            var controlsToEvaluate = controlSet.Controls.Where(c => c.IsEnabled == true);
+            
+            foreach (var control in controlsToEvaluate)
             {
                 List<string> resourcePathList = new List<string>();
                 ControlResult controlResult = null;

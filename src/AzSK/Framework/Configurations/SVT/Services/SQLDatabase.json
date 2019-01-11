@@ -89,7 +89,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Using the IP firewall rules ensures that access to the data or the service is restricted to a specific set of IPs. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets and makes your database more portable.",
-      "Recommendation": "Wherever feasible, restrict each SQL Database to a limited set of IP addresses/ranges that require access to that database. Refer: https://docs.microsoft.com/en-us/azure/sql-database/sql-database-firewall-configure",
+      "Recommendation": "Wherever feasible, restrict each SQL Database to a limited set of IP addresses/ranges that require access to that database. Refer: https://docs.microsoft.com/en-us/azure/sql-database/sql-database-firewall-configure. Note: In case the IP range is indeterminate (for instance, if the client is a PaaS endpoint), you may need to attest this control.",
       "Tags": [
         "SDL",
         "TCP",

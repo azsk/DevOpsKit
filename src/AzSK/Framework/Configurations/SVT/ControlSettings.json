@@ -278,6 +278,14 @@
     "ExpiryInDays": 2,
     "SupportedSources": []
   },
+  "PreviewBaselineControls": {
+    "ResourceTypeControlIdMappingList": [
+    ],
+    "SubscriptionControlIdList": [
+    ],
+    "ExpiryInDays": 2,
+    "SupportedSources": []
+  },
   "CloudService": {
     "LatestOSSKUIDs": [ "WA-GUEST-OS-4.44_201707-01" ]
   },
@@ -329,5 +337,9 @@
     "High": "High",
     "Medium": "Medium",
     "Low": "Low"
-  }
+  },
+  "MandatoryTags":[
+   
+  ]
+
 }
