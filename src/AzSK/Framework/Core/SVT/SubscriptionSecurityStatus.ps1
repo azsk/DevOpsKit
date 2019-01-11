@@ -6,7 +6,6 @@ class SubscriptionSecurityStatus: SVTCommandBase
         Base($subscriptionId, $invocationContext)
     { 
 		$this.UseBaselineControls = $invocationContext.BoundParameters["UseBaselineControls"];
-		$this.UsePreviewBaselineControls = $invocationContext.BoundParameters["UsePreviewBaselineControls"];
 		$this.BaselineFilterCheck();
 	}
 
@@ -105,19 +104,6 @@ class SubscriptionSecurityStatus: SVTCommandBase
 			if(-not [system.String]::IsNullOrEmpty($baselineControlIds))
 			{
 				$this.ControlIds = $controlIds;			
-			}
-		}
-
-		$previewBaselineControlsDetails = $partialScanMngr.GetPreviewBaselineControlDetails()
-		#If Scan source is in supported sources or baselineControls switch is available
-		if ($null -ne $previewBaselineControlsDetails -and ($previewBaselineControlsDetails.SubscriptionControlIdList | Measure-Object).Count -gt 0 -and ($previewBaselineControlsDetails.SupportedSources -contains $scanSource -or $this.UsePreviewBaselineControls))
-		{
-			#Get the list of baseline control ids
-			$controlIds = $previewBaselineControlsDetails.SubscriptionControlIdList
-			$previewBaselineControlIds = [system.String]::Join(",",$controlIds);		
-			if(-not [system.String]::IsNullOrEmpty($previewBaselineControlIds))
-			{
-				$this.ControlIds += $controlIds;			
 			}
 		}
 	}	

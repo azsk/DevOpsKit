@@ -12,14 +12,25 @@ class APIManagement: SVTBase
     APIManagement([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
         Base($subscriptionId, $resourceGroupName, $resourceName) 
     { 
-
-		$this.GetResourceObject();
+		if($this.GetResourceObject())
+		{
+			$this.APIMContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+			$this.APIMInstance = Get-AzureRmApiManagement -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
+			$this.APIMAPIs = Get-AzureRmApiManagementApi -Context $this.APIMContext
+			$this.APIMProducts = Get-AzureRmApiManagementProduct -Context $this.APIMContext
+		}
 	}
 
 	APIManagement([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 
-		$this.GetResourceObject();
+		if($this.GetResourceObject())
+		{
+			$this.APIMContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+			$this.APIMInstance = Get-AzureRmApiManagement -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
+			$this.APIMAPIs = Get-AzureRmApiManagementApi -Context $this.APIMContext
+			$this.APIMProducts = Get-AzureRmApiManagementProduct -Context $this.APIMContext
+		}
 	}
 
 	 hidden [PSObject] GetResourceObject()
@@ -29,35 +40,10 @@ class APIManagement: SVTBase
             if(-not $this.ResourceObject)
             {
                 throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))
-			}
-			elseif($this.ResourceObject)
-			{
-				$this.APIMContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
-				$this.APIMInstance = Get-AzureRmApiManagement -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
-				$this.APIMAPIs = Get-AzureRmApiManagementApi -Context $this.APIMContext
-				$this.APIMProducts = Get-AzureRmApiManagementProduct -Context $this.APIMContext
-			}
+            }
         }
         return $this.ResourceObject;
-	}
-	
-	[ControlItem[]] ApplyServiceFilters([ControlItem[]] $controls)
-	{
-		$result = @();
-		if($this.ResourceObject)
-		{
-			$result += $controls;
-			if(-not $this.APIMAPIs)
-			{
-				$result = $result | Where-Object {$_.Tags -notcontains "APIMAPIs" }
-			}
-			if(-not $this.APIMProducts)
-			{
-				$result = $result | Where-Object {$_.Tags -notcontains "APIMProducts" }
-			}
-		}
-		return $result;
-	}
+    }
 
 	hidden [ControlResult] CheckAPIMMetricAlert([ControlResult] $controlResult)
     {
@@ -226,7 +212,7 @@ class APIManagement: SVTBase
 
 	hidden [ControlResult] CheckDefaultProductsExist([ControlResult] $controlResult)
     {
-		if( $null -ne $this.APIMProducts)
+		if( $null -ne $this.APIMContext)
 		{
 			$Product = $this.APIMProducts
 			if(($null -ne $Product) -and ($Product.ProductId -contains 'starter' -or $Product.ProductId -contains 'unlimited'))
@@ -278,7 +264,7 @@ class APIManagement: SVTBase
 			    $AllowedOrigins = $APIPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
 			    if($null -ne $AllowedOrigins)
 				{
-					$Policy = "" | Select-Object Scope, Name, Id, AllowedOrigins
+					$Policy = "" | Select Scope, Name, Id, AllowedOrigins
 					$Policy.Scope = "API"
 					$Policy.Name = $_.Name
 					$Policy.Id = $_.ApiId
@@ -294,7 +280,7 @@ class APIManagement: SVTBase
 			        $AllowedOrigins = $OperationPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
 			        if($null -ne $AllowedOrigins)
 			        {
-			            $Policy = "" | Select-Object Scope, ScopeName, ScopeId, AllowedOrigins
+			            $Policy = "" | Select Scope, ScopeName, ScopeId, AllowedOrigins
 			            $Policy.Scope = "Operation"
 				    	$Policy.ScopeName = $_.Name
 				    	$Policy.ScopeId = $_.OperationId
@@ -570,11 +556,11 @@ class APIManagement: SVTBase
 			$Temp = Compare-Object -ReferenceObject $UserAuthDisabledApi.ApiID -DifferenceObject $JWTValidatePolicyNotFound.ApiId -IncludeEqual | Where-Object { $_.SideIndicator -eq "==" }
 			if(($null -ne $JWTValidatePolicyNotFound) -and ($null -ne $UserAuthDisabledApi) -and ($null -ne $Temp))
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "The 'validate-jwt' policy is not configured in below APIs.", $JWTValidatePolicyNotFound) 
+				$controlResult.AddMessage([VerificationResult]::Failed, "The ‘validate-jwt’ policy is not configured in below APIs.", $JWTValidatePolicyNotFound) 
 			}
 			elseif($null -ne $JWTValidatePolicyNotFound)
 			{
-			    $controlResult.AddMessage([VerificationResult]::Verify,"The 'validate-jwt' policy is not configured in below APIs.", $JWTValidatePolicyNotFound)
+			    $controlResult.AddMessage([VerificationResult]::Verify,"The ‘validate-jwt’ policy is not configured in below APIs.", $JWTValidatePolicyNotFound)
 			}
 			else
 			{

@@ -102,7 +102,6 @@ Class OMSHelper{
 			$out.IsLatestPSModule = $ControlResult.CurrentSessionContext.IsLatestPSModule
 			$out.PolicyOrgName = $AzSKContext.PolicyOrgName
 			$out.IsControlInGrace = $ControlResult.IsControlInGrace
-			$out.ScannedBy=[Helpers]::GetCurrentRMContext().Account
 			#mapping the attestation properties
 			if($null -ne $ControlResult -and $null -ne $ControlResult.StateManagement -and $null -ne $ControlResult.StateManagement.AttestedStateData)
 			{
@@ -365,7 +364,6 @@ Class OMSModel {
 	[string] $ExpiryDate
 	[string] $PartialScanIdentifier
 	[string] $PolicyOrgName
-	[string] $ScannedBy
 }
 
 Class OMSResourceInvModel{

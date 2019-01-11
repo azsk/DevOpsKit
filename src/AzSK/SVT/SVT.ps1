@@ -169,11 +169,6 @@ function Get-AzSKAzureServicesSecurityStatus
 		$UseBaselineControls,
 
 		[switch]
-		[Parameter(Mandatory = $false)]
-		[Alias("upbc")]
-		$UsePreviewBaselineControls,
-
-		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("upc")]
 		$UsePartialCommits,	
@@ -370,11 +365,6 @@ function Get-AzSKSubscriptionSecurityStatus
 		[Parameter(Mandatory = $false)]
 		[Alias("ubc")]
 		$UseBaselineControls,
-
-		[switch]
-		[Parameter(Mandatory = $false)]
-		[Alias("upbc")]
-		$UsePreviewBaselineControls,
 
 		[switch]
         [Parameter(Mandatory = $false)]
@@ -703,11 +693,6 @@ function Get-AzSKControlsStatus
 		[Parameter(Mandatory = $false)]
 		[Alias("ubc")]
 		$UseBaselineControls,
-
-		[switch]
-		[Parameter(Mandatory = $false)]
-		[Alias("upbc")]
-		$UsePreviewBaselineControls,
 
 		[switch]
         [Parameter(Mandatory = $false)]

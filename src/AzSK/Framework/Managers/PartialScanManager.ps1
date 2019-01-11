@@ -457,17 +457,4 @@ class PartialScanManager
 	{
 		return  $this.ControlSettings.BaselineControls
 	}
-
-	[PSObject] GetPreviewBaselineControlDetails()
-	{
-		if([Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls"))
-		{
-			return  $this.ControlSettings.PreviewBaselineControls
-		}
-		else
-		{
-			return $null
-		}
-		
-	}
 }

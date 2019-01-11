@@ -63,7 +63,7 @@
       "Automated": "Yes",
       "MethodName": "CheckTriggersAccessControl",
       "Rationale": "Specifying the IP range ensures that the triggers can be invoked only from a restricted set of endpoints.",
-      "Recommendation": "Provide access control by navigating to Portal --> Logic App --> Workflow settings --> Access Control Configuration and setting the IP addresses/ranges. Do not add IP range $($this.ControlSettings.UniversalIPRange) as this means access to all IPs. Note: In case the IP range is indeterminate (for instance, if the client is a PaaS endpoint), you may need to attest this control.",
+      "Recommendation": "Provide access control by navigating to Portal --> Logic App --> Workflow settings --> Access Control Configuration and setting the IP addresses/ranges. Do not add IP range $($this.ControlSettings.UniversalIPRange) as this means access to all IPs.",
       "Tags": [
         "SDL",
         "TCP",
@@ -80,7 +80,7 @@
       "Automated": "Yes",
       "MethodName": "CheckContentsAccessControl",
       "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets.",
-      "Recommendation": "Provide access control by navigating to Portal --> Logic App --> Workflow settings --> Access Control Configuration and setting the IP addresses/ranges. Do not add IP range $($this.ControlSettings.UniversalIPRange) as this means access to all IPs. Note: In case the IP range is indeterminate (for instance, if the client is a PaaS endpoint), you may need to attest this control.",
+      "Recommendation": "Provide access control by navigating to Portal --> Logic App --> Workflow settings --> Access Control Configuration and setting the IP addresses/ranges. Do not add IP range $($this.ControlSettings.UniversalIPRange) as this means access to all IPs.",
       "Tags": [
         "SDL",
         "TCP",
