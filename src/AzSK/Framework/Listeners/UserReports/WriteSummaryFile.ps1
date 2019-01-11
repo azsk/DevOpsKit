@@ -196,10 +196,22 @@ class WriteSummaryFile: FileOutputBase
 			} | Select-Object -First 1);
 
 		#$anyFixableControls = $null -ne ($arguments | Where-Object { $_.ControlItem.FixControl } | Select-Object -First 1);
-
+		#Validate if preview baseline control flag is passed to mark csv
+		$UsePreviewBaselineControls = $false
+		if($this.InvocationContext.BoundParameters['UsePreviewBaselineControls'] -eq $True)
+		{
+			[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
+			$previewBaselineControlsDetails = $partialScanMngr.GetPreviewBaselineControlDetails()
+			if($previewBaselineControlsDetails)
+			{
+				$UsePreviewBaselineControls =$True
+			}
+		}
         $arguments | ForEach-Object {
             $item = $_
             if ($item -and $item.ControlResults) {
+				
+
                 $item.ControlResults | ForEach-Object{
                     $csvItem = [CsvOutputItem]@{
                         ControlID = $item.ControlItem.ControlID;
@@ -238,7 +250,7 @@ class WriteSummaryFile: FileOutputBase
 					{
 						$csvItem.IsBaselineControl = "No";
 					}
-			
+
 					if($anyAttestedControls)
 					{
 						$csvItem.ActualStatus = $_.ActualVerificationResult.ToString();
@@ -250,11 +262,28 @@ class WriteSummaryFile: FileOutputBase
                         $csvItem.ResourceGroupName = $item.ResourceContext.ResourceGroupName;
 						$csvItem.ResourceId = $item.ResourceContext.ResourceId;
 						$csvItem.DetailedLogFile = "/$([Helpers]::SanitizeFolderName($item.ResourceContext.ResourceGroupName))/$($item.FeatureName).LOG";
+
+						if($UsePreviewBaselineControls)
+						{
+							$baselineControl = $previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Where-Object {$_.ControlIds -contains $csvItem.ControlID}
+							if(($baselineControl | Measure-Object).Count -gt 0 )
+							{
+								$csvItem.IsBaselineControl = "Yes";
+							}
+						}
 					}
 					else
 					{
 					    $csvItem.ResourceId = $item.SubscriptionContext.scope;
 						$csvItem.DetailedLogFile = "/$([Helpers]::SanitizeFolderName($item.SubscriptionContext.SubscriptionName))/$($item.FeatureName).LOG"
+						if($UsePreviewBaselineControls)
+						{
+							$baselineControl = $previewBaselineControlsDetails.SubscriptionControlIdList | Where-Object {$_ -contains $csvItem.ControlID}
+							if(($baselineControl | Measure-Object).Count -gt 0 )
+							{
+								$csvItem.IsBaselineControl = "Yes";
+							}
+						}
 					}
 
 					if($_.AttestationStatus -ne [AttestationStatus]::None)

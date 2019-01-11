@@ -17,6 +17,7 @@ class ServicesSecurityStatus: SVTCommandBase
 		#BaseLineControlFilter with control ids
 		$this.UsePartialCommits =$invocationContext.BoundParameters["UsePartialCommits"];
 		$this.UseBaselineControls = $invocationContext.BoundParameters["UseBaselineControls"];
+		$this.UsePreviewBaselineControls = $invocationContext.BoundParameters["UsePreviewBaselineControls"];
 		$this.CentralStorageAccount = $invocationContext.BoundParameters["CentralStorageAccount"];
 		[PartialScanManager]::ClearInstance();
 		$this.BaselineFilterCheck();
@@ -328,6 +329,26 @@ class ServicesSecurityStatus: SVTCommandBase
 			$this.Resolver.SVTResources = $ResourcesWithBaselineFilter
 		}
 
+		#Preview Baseline Controls
+		$previewBaselineControlsDetails = $partialScanMngr.GetPreviewBaselineControlDetails()
+		#If Scan source is in supported sources or baselineControls switch is available
+		if ($null -ne $previewBaselineControlsDetails -and ($previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -gt 0 -and ($previewBaselineControlsDetails.SupportedSources -contains $scanSource -or $this.UsePreviewBaselineControls))
+		{
+			
+			$baselineResourceTypes = $previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Select-Object ResourceType | Foreach-Object {$_.ResourceType}
+			#Filter SVT resources based on baseline resource types
+			$ResourcesWithBaselineFilter =$this.Resolver.SVTResources | Where-Object {$null -ne $_.ResourceTypeMapping -and   $_.ResourceTypeMapping.ResourceTypeName -in $baselineResourceTypes }
+			
+			#Get the list of control ids
+			$controlIds = $previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
+			$previewBaselineControlIds = [system.String]::Join(",",$controlIds);
+			if(-not [system.String]::IsNullOrEmpty($previewBaselineControlIds))
+			{
+				$this.ControlIds += $controlIds;
+
+			}
+			$this.Resolver.SVTResources = $ResourcesWithBaselineFilter
+		}
 	}
 
 	[void] UsePartialCommitsCheck()

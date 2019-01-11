@@ -946,7 +946,84 @@ class SubscriptionCore: SVTBase
 
 		return $controlResult
 
-	}	   
+	}
+	
+	hidden [ControlResult] CheckMandatoryTags([ControlResult] $controlResult)
+	{
+		#Check if mandatory tags list present
+		if([Helpers]::CheckMember($this.ControlSettings,"MandatoryTags") -and ($this.ControlSettings.MandatoryTags | Measure-Object).Count -ne 0)
+		{
+			$resourceGroups = Get-AzureRmResourceGroup
+			if(($resourceGroups | Measure-Object).Count -gt 0)
+			{
+				$rgTagStatus = $true
+				$controlResult.AddMessage("`nTotal number of RGs:" + ($resourceGroups | Measure-Object).Count)
+				$this.ControlSettings.MandatoryTags | ForEach-Object {
+					$tagObject = $_
+					
+					$controlResult.AddMessage("`nPolicy Requirement: `n`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpectedValues: '$($tagObject.Values)'")
+
+					#Step1 Validate if tag present on RG 			
+					$rgListwithoutTags = $resourceGroups | Where-Object { $_.Tags | Where-Object { $_ -eq $null -or (-not $_.ContainsKey($tagObject.Name))}}
+					
+					if(($rgListwithoutTags | Measure-Object).Count -gt 0)
+					{
+						$controlResult.AddMessage("`nTotal number of RGs without Tag: " + ($rgListwithoutTags | Measure-Object).Count, ($rgListwithoutTags | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
+					}
+					
+					$rgListwithTags = $resourceGroups | Where-Object { $_.Tags | Where-Object { $_ -eq $null -or ( $_.ContainsKey($tagObject.Name))}}
+					
+					if(($rgListwithTags| Measure-Object).Count -gt 0)
+					{
+						if($tagObject.Values -notcontains "*")
+						{
+							#Validate if expected tag value is present 
+							$rgListwithoutTagValue = $rgListwithTags | Where-Object { $_.Tags[$tagObject.Name] -notin $tagObject.Values} #$rgListwithTags | Where-Object { $_.Tags | Where-Object { $_.GetEnumerator() | Where-Object { $_.Key -eq $tagObject.Name -and $_.Value -notin $tagObject.Values}}}
+							if(($rgListwithoutTagValue | Measure-Object).Count -gt 0)
+							{
+								$rgTagStatus = $false
+								$controlResult.AddMessage("`nTotal number of RGs without expected value $($tagObject.Values): " + ($rgListwithoutTagValue | Measure-Object).Count, ($rgListwithoutTagValue | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
+							}
+						}
+
+						#Validate tag value type
+						if($tagObject.ValidateTagValueType -and ($rgListwithTags| Measure-Object).Count -gt 0)
+						{     
+							switch($tagObject.Type)
+							{
+								("Guid") {  
+									$emptyGuid = [Guid]::Empty 
+									$RGListWithoutExpectedTypeValue = $rgListwithTags | Where-Object { (-not [Guid]::TryParse($_.Tags[$tagObject.Name], [ref] $emptyGuid))} #$rgListwithTags | Where-Object { $_.Tags | Where-Object { $_.GetEnumerator() | Where-Object {$_.Key -eq $tagObject.Name -and (-not [Guid]::TryParse($_.Value, [ref] $emptyGuid))}}}
+									if(($RGListWithoutExpectedTypeValue | Measure-Object).Count -gt 0)
+									{
+										$rgTagStatus = $false
+										$controlResult.AddMessage("`nTotal number of RGs without expected value type: " + ($RGListWithoutExpectedTypeValue | Measure-Object).Count,($RGListWithoutExpectedTypeValue | Select-Object ResourceGroupName | foreach {$_.ResourceGroupName}))
+									}
+								}
+							}
+						}
+					}
+					$controlResult.AddMessage([Constants]::UnderScoreLineLine)
+				}
+				
+				if($rgTagStatus)
+				{
+					$controlResult.AddMessage([VerificationResult]::Failed, "Resource group(s) failed to comply with mandatory tags." )
+				}				
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed,"No resource group(s) found" )
+			}
+		}
+		else {
+			$controlResult.AddMessage([VerificationResult]::Passed,"No mandatory tags required" )
+		}
+
+		return $controlResult
+	}
+
+
 	hidden [void] LoadRBACConfig()
 	{
 		if(($this.MandatoryAccounts | Measure-Object).Count -eq 0 `
