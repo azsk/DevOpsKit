@@ -84,7 +84,7 @@ class RemoteApiHelper {
     static [void] PostPolicyComplianceTelemetry($PolicyComplianceData){
 		[RemoteApiHelper]::PostJsonContent("/policycompliancedata", $PolicyComplianceData) | Out-Null	
     }
-    static [string] GetComplianceSnapshot([string] $parameters){
+    static [PSObject] GetComplianceSnapshot([string] $parameters){
 		return([RemoteApiHelper]::GetJsonContent("/scanresults/fetchcompliancedata", $parameters) )	
     }
     
