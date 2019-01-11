@@ -21,6 +21,7 @@
          "PremiumSku",
          "GeneralPurposeStorage",
          "BlobStorage",
+         "HNSDisabled",
          "OwnerAccess",
          "ResourceLocked"
       ],
