@@ -284,6 +284,7 @@ class ServicesSecurityStatus: SVTCommandBase
 	{
 		#Load ControlSetting Resource Types and Filter resources
 		$scanSource = [AzSKSettings]::GetInstance().GetScanSource();
+		$ResourcesWithBaselineFilter =@()
 		#Load ControlSetting Resource Types and Filter resources
 		if($this.CentralStorageAccount){
 			[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance($this.CentralStorageAccount, $this.SubscriptionContext.SubscriptionId);	
@@ -308,8 +309,7 @@ class ServicesSecurityStatus: SVTCommandBase
 			{
 				$this.ControlIds = $controlIds;
 
-			}
-			$this.Resolver.SVTResources = $ResourcesWithBaselineFilter
+			}		
 		}
 
 		#Preview Baseline Controls
@@ -320,7 +320,7 @@ class ServicesSecurityStatus: SVTCommandBase
 			
 			$baselineResourceTypes = $previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Select-Object ResourceType | Foreach-Object {$_.ResourceType}
 			#Filter SVT resources based on baseline resource types
-			$ResourcesWithBaselineFilter =$this.Resolver.SVTResources | Where-Object {$null -ne $_.ResourceTypeMapping -and   $_.ResourceTypeMapping.ResourceTypeName -in $baselineResourceTypes }
+			$ResourcesWithBaselineFilter +=$this.Resolver.SVTResources | Where-Object {$null -ne $_.ResourceTypeMapping -and   $_.ResourceTypeMapping.ResourceTypeName -in $baselineResourceTypes }
 			
 			#Get the list of control ids
 			$controlIds = $previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
@@ -329,17 +329,14 @@ class ServicesSecurityStatus: SVTCommandBase
 			{
 				$this.ControlIds += $controlIds;
 
-			}
-			if($this.UseBaselineControls)
-			{
-				$this.Resolver.SVTResources += $ResourcesWithBaselineFilter
-			}
-			else
-			{
-				$this.Resolver.SVTResources = $ResourcesWithBaselineFilter
-			}
-			
+			}			
 		}
+
+		if(($ResourcesWithBaselineFilter | Measure-Object).Count -gt 0)
+		{
+			$this.Resolver.SVTResources = $ResourcesWithBaselineFilter
+		}
+
 	}
 
 	[void] UsePartialCommitsCheck()
