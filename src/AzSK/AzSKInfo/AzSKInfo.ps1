@@ -97,6 +97,7 @@ function Get-AzSKInfo
 		$ControlIdContains,
 
 		[switch]
+		[Alias("sc")]
 		$Sync,
 		
 		[switch]

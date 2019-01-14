@@ -243,12 +243,14 @@ class ServicesSecurityStatus: SVTCommandBase
 			try
 			{
 				[SVTEventContext[]] $childResourceResults = @();
-				$childResources | Group-Object -Property "ResourceId" | ForEach-Object {
-					$_.Group[0].RunningLatestPSModule = $this.RunningLatestPSModule
-					$this.SetSVTBaseProperties($_.Group[0])
-					$childResourceResults += $_.Group[0].$methodNameToCall();
-					$result += $childResourceResults;
+				$temp=  $childResources |Sort-Object -Property @{Expression={$_.ResourceId}} -Unique
+				$temp| ForEach-Object {
+					$_.RunningLatestPSModule = $this.RunningLatestPSModule
+					$this.SetSVTBaseProperties($_)
+					$childResourceResults += $_.$methodNameToCall();
+					
 				}
+				$result += $childResourceResults;
 			}
 			catch
 			{

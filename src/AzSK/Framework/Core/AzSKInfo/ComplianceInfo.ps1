@@ -330,7 +330,7 @@ class ComplianceInfo: CommandBase
 	hidden [void] UpdateStorageComplianceData()
 	{
 		$ComplianceRptHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());
-		$this.PublishCustomMessage("Fetching data from backend. This may take a few minutes..");
+		$this.PublishCustomMessage("Fetching data from backend. This may take a while...");
 		try
 		{
 			$message = $ComplianceRptHelper.FetchComplianceStateFromDb();
