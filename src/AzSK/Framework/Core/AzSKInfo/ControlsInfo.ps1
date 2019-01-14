@@ -102,7 +102,7 @@ class ControlsInfo: CommandBase
 			}
 			if([Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.SubscriptionControlIdList") )
 			{
-				$previewBaselineControls += $this.ControlSettings.PreviewBaselineControls.SubscriptionControlIdList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
+				$previewBaselineControls += $this.ControlSettings.PreviewBaselineControls.SubscriptionControlIdList | ForEach-Object {  $_ }
 			}
 			$baselineControls += $previewBaselineControls
 			$this.ControlIds += $previewBaselineControls
