@@ -73,7 +73,8 @@
                 "TCP",
                 "Automated",
                 "DP",
-                "APIManagement"
+                "APIManagement",
+                "APIMAPIs"
             ],
             "Enabled": true
         },
@@ -144,7 +145,8 @@
                 "TCP",
                 "Automated",
                 "DP",
-                "APIManagement"
+                "APIManagement",
+                "APIMProducts"
             ],
             "Enabled": true
         },
@@ -162,7 +164,8 @@
                 "TCP",
                 "Automated",
                 "DP",
-                "APIManagement"
+                "APIManagement",
+                "APIMAPIs"
             ],
             "Enabled": true
         },
@@ -180,7 +183,8 @@
                 "TCP",
                 "Automated",
                 "DP",
-                "APIManagement"
+                "APIManagement",
+                "APIMAPIs"
             ],
             "Enabled": true
         },
@@ -252,7 +256,8 @@
                 "TCP",
                 "Automated",
                 "AuthZ",
-                "APIManagement"
+                "APIManagement",
+                "APIMAPIs"
             ],
             "Enabled": true
         },
@@ -306,7 +311,8 @@
                 "TCP",
                 "Automated",
                 "AuthZ",
-                "APIManagement"
+                "APIManagement",
+                "APIMAPIs"
             ],
             "Enabled": true
         },
@@ -378,7 +384,8 @@
                 "TCP",
                 "Automated",
                 "AuthN",
-                "APIManagement"
+                "APIManagement",
+                "APIMAPIs"
             ],
             "Enabled": true
         },
@@ -396,7 +403,8 @@
                 "TCP",
                 "Automated",
                 "AuthZ",
-                "APIManagement"
+                "APIManagement",
+                "APIMProducts"
             ],
             "Enabled": true
         },
@@ -415,7 +423,7 @@
                 "Automated",
                 "DP",
                 "APIManagement",
-                "OwnerAccess"
+                "APIMProducts"
             ],
             "Enabled": true
         },
@@ -452,7 +460,8 @@
             "TCP",
             "Manual",
             "AuthZ",
-            "APIManagement"
+            "APIManagement",
+            "APIMProducts"
             ],
             "Enabled": true
         }
