@@ -961,13 +961,14 @@ class SubscriptionCore: SVTBase
 				$this.ControlSettings.MandatoryTags | ForEach-Object {
 					$tagObject = $_
 					
-					$controlResult.AddMessage("`nPolicy Requirement: `n`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpectedValues: '$($tagObject.Values)'")
+					$controlResult.AddMessage("`nPolicy Requirement: `n`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpected Values: '$($tagObject.Values)'")
 
 					#Step1 Validate if tag present on RG 			
 					$rgListwithoutTags = $resourceGroups | Where-Object { $_.Tags | Where-Object { $_ -eq $null -or (-not $_.ContainsKey($tagObject.Name))}}
 					
 					if(($rgListwithoutTags | Measure-Object).Count -gt 0)
 					{
+						$rgTagStatus = $false
 						$controlResult.AddMessage("`nTotal number of RGs without Tag: " + ($rgListwithoutTags | Measure-Object).Count, ($rgListwithoutTags | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
 					}
 					
@@ -982,7 +983,7 @@ class SubscriptionCore: SVTBase
 							if(($rgListwithoutTagValue | Measure-Object).Count -gt 0)
 							{
 								$rgTagStatus = $false
-								$controlResult.AddMessage("`nTotal number of RGs without expected value $($tagObject.Values): " + ($rgListwithoutTagValue | Measure-Object).Count, ($rgListwithoutTagValue | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
+								$controlResult.AddMessage("`nTotal number of RGs without expected value : " + ($rgListwithoutTagValue | Measure-Object).Count, ($rgListwithoutTagValue | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
 							}
 						}
 
@@ -1006,9 +1007,13 @@ class SubscriptionCore: SVTBase
 					$controlResult.AddMessage([Constants]::UnderScoreLineLine)
 				}
 				
-				if($rgTagStatus)
+				if(-not $rgTagStatus)
 				{
 					$controlResult.AddMessage([VerificationResult]::Failed, "Resource group(s) failed to comply with mandatory tags." )
+				}
+				else
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed, "Resource group(s) comply with mandatory tags." )
 				}				
 			}
 			else

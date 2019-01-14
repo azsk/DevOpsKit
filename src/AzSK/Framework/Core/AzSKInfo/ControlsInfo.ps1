@@ -93,16 +93,19 @@ class ControlsInfo: CommandBase
 			$this.ControlIds = $baselineControls
 		}
 
+		$previewBaselineControls = @();
 		if($this.PreviewBaslineControls)
 		{
 			if([Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.ResourceTypeControlIdMappingList") )
 			{
-				$baselineControls += $this.ControlSettings.PreviewBaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
+				$previewBaselineControls += $this.ControlSettings.PreviewBaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
 			}
 			if([Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.SubscriptionControlIdList") )
 			{
-				$baselineControls += $this.ControlSettings.PreviewBaselineControls.SubscriptionControlIdList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
+				$previewBaselineControls += $this.ControlSettings.PreviewBaselineControls.SubscriptionControlIdList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
 			}
+			$baselineControls += $previewBaselineControls
+			$this.ControlIds += $previewBaselineControls
 
 		}
 		$resourcetypes | ForEach-Object{

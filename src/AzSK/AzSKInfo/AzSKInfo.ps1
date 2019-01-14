@@ -50,6 +50,7 @@ function Get-AzSKInfo
 	Param(
 		[Parameter(Mandatory = $false)]
 		[ValidateSet("SubscriptionInfo", "ControlInfo", "HostInfo" , "AttestationInfo", "ComplianceInfo")] 
+		[Alias("it")]
 		$InfoType,
 
 		[ResourceTypeName]
@@ -65,12 +66,15 @@ function Get-AzSKInfo
         $ControlIds,
 
 		[switch]
+		[Alias("ubc")]
 		$UseBaselineControls,
 
 		[switch]
+		[Alias("upbc")]
         $UsePreviewBaselineControls,
 
 		[string]
+		[Alias("ft")]
         $FilterTags,
 
 		[string]
@@ -85,9 +89,11 @@ function Get-AzSKInfo
 		[Alias("ResourceName","rns")]
 		$ResourceNames,
 
+		[Alias("cs")]
 		$ControlSeverity,
 
 		[string]
+		[Alias("cidc")]
 		$ControlIdContains,
 
 		[switch]
@@ -95,6 +101,7 @@ function Get-AzSKInfo
 		
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder,
 
 		[Parameter(Mandatory = $false)]
@@ -272,15 +279,18 @@ function Update-AzSKPersistedState
 
 		[string]
 		[Parameter(Mandatory = $false, HelpMessage = "Path to file containing list of controls for which state has to be updated.", ParameterSetName = "UserComments")]
+		[Alias("sp")]
 		$FilePath,
 
 		[ValidateSet("UserComments")]
 		[Parameter(Mandatory = $true, HelpMessage = "This represents the specific type of DevOps Kit state that has to be updated.", ParameterSetName = "UserComments")]
+		[Alias("st")]
 		$StateType,
 	
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.", ParameterSetName = "Default")]
-        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.", ParameterSetName = "UserComments")]
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.", ParameterSetName = "UserComments")]
+		[Alias("dnof")]
 		$DoNotOpenOutputFolder
     )
 
