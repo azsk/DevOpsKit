@@ -66,7 +66,7 @@ function Get-AzSKInfo
 
 		[switch]
 		$UseBaselineControls,
-		
+
 		[switch]
         $UsePreviewBaselineControls,
 

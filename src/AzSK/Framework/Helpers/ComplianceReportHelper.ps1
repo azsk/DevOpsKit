@@ -391,9 +391,7 @@ class ComplianceReportHelper: ComplianceBase
 	{
 		
 			$result =  [RemoteAPIHelper]::GetComplianceSnapshot($this.SubscriptionContext.SubscriptionId)
-			if(-not [string]::IsNullOrEmpty($result) -and $result -ne '[]')
-			{
-				$Complianceinfo = ConvertFrom-Json -InputObject $result
+			$Complianceinfo = ConvertFrom-Json -InputObject $result
 				if(($Complianceinfo | Measure-Object).Count -gt 0)
 				{
 					$ComplianceState = New-Object -TypeName "System.Collections.Generic.List[SVTEventContext]";
@@ -432,14 +430,14 @@ class ComplianceReportHelper: ComplianceBase
 						$StateData.Justification = $item.Justification
 						$CResult.StateManagement.AttestedStateData=$StateData
 						$controlDetails.ControlId=$item.ControlId
-						$CResult.CurrentSessionContext.IsLatestPSModule =$true
+						$CResult.CurrentSessionContext.IsLatestPSModule = $this.azskStorageInstance.RunningLatestPSModule
 						$CResult.CurrentSessionContext.Permissions.HasRequiredAccess = $true
 						$CResult.CurrentSessionContext.Permissions.HasAttestationWritePermissions = $this.azskStorageInstance.HaveWritePermissions
 						$CResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions = $this.azskStorageInstance.HaveWritePermissions 
 						$controlDetails.Id=$item.ControlIntId
 						$controlDetails.ControlSeverity=$item.ControlSeverity
 						$SVTEvent.ControlResults = $CResult;
-						if($item.IsBaselineControl -eq 1)
+						if($item.IsBaselineControl)
 						{
 							$controlDetails.IsBaselineControl=$true
 						}
@@ -469,15 +467,11 @@ class ComplianceReportHelper: ComplianceBase
 				else 
 				{
 					
-						return $result
-				
-				}
-			}
-			else
-			 {
 					return "No records have been found for this subscription. Make sure the subscription was scanned atleast once before running this command"
 				
-			}
+				}
+
+			
 		
 		
 		

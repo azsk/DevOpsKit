@@ -10,7 +10,6 @@ class ComplianceInfo: CommandBase
 	hidden $baselineControls = @();
 	hidden [PSObject] $ControlSettings
 	hidden [PSObject] $EmptyResource = @();
-	hidden [InvocationInfo] $InvocationContext
 	
 	 
 	ComplianceInfo([string] $subscriptionId, [InvocationInfo] $invocationContext, [bool] $full): Base($subscriptionId, $invocationContext) 
@@ -18,7 +17,6 @@ class ComplianceInfo: CommandBase
 		$this.SubscriptionId = $subscriptionId
 		$this.Full = $full
 		$this.ControlSettings = $this.LoadServerConfigFile("ControlSettings.json");
-		$this.InvocationContext = $invocationContext;
 	}
 
 	hidden [void] GetComplianceScanData()
