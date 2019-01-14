@@ -148,6 +148,7 @@ class ServicesSecurityStatus: SVTCommandBase
 		$this.PublishCustomMessage("`nNumber of resources for which security controls will be evaluated: $($automatedResources.Count)",[MessageType]::Info);
 		$totalResources = $automatedResources.Count;
 		[int] $currentCount = 0;
+		$childResources = @();
 		$automatedResources | ForEach-Object {
 			$exceptionMessage = "Exception for resource: [ResourceType: $($_.ResourceTypeMapping.ResourceTypeName)] [ResourceGroupName: $($_.ResourceGroupName)] [ResourceName: $($_.ResourceName)]"
             try
@@ -187,14 +188,10 @@ class ServicesSecurityStatus: SVTCommandBase
 				[SVTEventContext[]] $currentResourceResults = @();
 				if($svtObject)
 				{
-					$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule
+					$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule;
 					$this.SetSVTBaseProperties($svtObject);
+					$childResources += $svtObject.ChildSvtObjects;
 					$currentResourceResults += $svtObject.$methodNameToCall();
-					$svtObject.ChildSvtObjects | ForEach-Object {
-						$_.RunningLatestPSModule = $this.RunningLatestPSModule
-						$this.SetSVTBaseProperties($_)
-						$currentResourceResults += $_.$methodNameToCall();
-					}
 					$result += $currentResourceResults;
 
 				}
@@ -228,7 +225,9 @@ class ServicesSecurityStatus: SVTCommandBase
 					{
 						$this.PublishException($_);
 					}
+
 				}
+				
 					
 				# Register/Deregister all listeners to cleanup the memory
 				[ListenerHelper]::RegisterListeners();
@@ -238,7 +237,25 @@ class ServicesSecurityStatus: SVTCommandBase
 				$this.PublishCustomMessage($exceptionMessage);
 				$this.CommandError($_);
             }
-        }
+		}
+		if(($childResources | Measure-Object).Count -gt 0)
+		{
+			try
+			{
+				[SVTEventContext[]] $childResourceResults = @();
+				$childResources | Group-Object -Property "ResourceId" | ForEach-Object {
+					$_.Group[0].RunningLatestPSModule = $this.RunningLatestPSModule
+					$this.SetSVTBaseProperties($_.Group[0])
+					$childResourceResults += $_.Group[0].$methodNameToCall();
+					$result += $childResourceResults;
+				}
+			}
+			catch
+			{
+				$this.PublishCustomMessage($_);
+				
+			}
+		}
 		
 		
 		return $result;
