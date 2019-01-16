@@ -2,30 +2,40 @@
 Set-StrictMode -Version Latest
 class AzSKCfg: SVTBase
 {
-
+    $RGPerms = $false
 	AzSKCfg([string] $subscriptionId,[SVTResource] $svtResource):
         Base($subscriptionId,  $svtResource )
     {
-       
+		
     }
 	hidden [ControlResult] CheckifCAPresent([ControlResult] $controlResult)
 	{
-		$AutomationAccount=[Constants]::AutomationAccount
 		$AzSKRGName=[ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+        $this.RGPerms = $this.ControlStateExt.HasControlStateReadAccessPermissions()
+		if ($this.RGPerms){
 
-		$caAutomationAccount = Get-AzureRmAutomationAccount -Name  $AutomationAccount -ResourceGroupName $AzSKRGName -ErrorAction SilentlyContinue
-		if($caAutomationAccount)
-		{
+			$AutomationAccount=[Constants]::AutomationAccount
 			
-			$controlResult.AddMessage([VerificationResult]::Passed,
-                                    [MessageData]::new("CA account '$($AutomationAccount)' is present in the subscription."));
-        
+
+			$caAutomationAccount = Get-AzureRmAutomationAccount -Name  $AutomationAccount -ResourceGroupName $AzSKRGName -ErrorAction SilentlyContinue
+			if($caAutomationAccount)
+			{
+				
+				$controlResult.AddMessage([VerificationResult]::Passed,
+										[MessageData]::new("CA account '$($AutomationAccount)' is present in the subscription."));
+			
+			}
+			else
+			{
+					$controlResult.AddMessage([VerificationResult]::Failed,
+										[MessageData]::new("CA account '$($AutomationAccount)' is not present in the subscription."));
+		
+			}
 		}
-		else
-		{
-				$controlResult.AddMessage([VerificationResult]::Failed,
-                                    [MessageData]::new("CA account '$($AutomationAccount)' is not present in the subscription."));
-    
+		else{
+			$controlResult.AddMessage([VerificationResult]::Manual,
+										[MessageData]::new("You do not have required permissions to evaluate this control. You will need reader access on ["+ $AzSKRGName +"]" ));
+
 		}
 
 	return $controlResult
@@ -33,10 +43,12 @@ class AzSKCfg: SVTBase
 
 	hidden [ControlResult] CheckHealthofCA([ControlResult] $controlResult)
 	{
+        $this.RGPerms = $this.ControlStateExt.HasControlStateReadAccessPermissions()
+		$AzSKRGName=[ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+	if ($this.RGPerms){
 		$HasGraphAPIAccess = [RoleAssignmentHelper]::HasGraphAccess();
 		
 		$AutomationAccount=[Constants]::AutomationAccount
-		$AzSKRGName=[ConfigurationManager]::GetAzSKConfigData().AzSKRGName
 		$AzSKRG = Get-AzureRmResourceGroup -Name $AzSKRGName -ErrorAction SilentlyContinue	
 		$stepCount = 0;
 
@@ -190,6 +202,11 @@ class AzSKCfg: SVTBase
 			$controlResult.AddMessage([VerificationResult]::Failed,
                             [MessageData]::new("CA account '$($AutomationAccount)' is not present in the subscription."));
 		}
+}
+    else{
+    			$controlResult.AddMessage([VerificationResult]::Manual,
+										[MessageData]::new("You do not have required permissions to evaluate this control. You will need reader access on ["+ $AzSKRGName +"]" ));
+    }
 		return $controlResult
 	}
 
