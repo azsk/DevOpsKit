@@ -467,7 +467,7 @@ class ComplianceReportHelper: ComplianceBase
 				else 
 				{
 					
-					return "No records have been found for this subscription. Make sure the subscription was scanned atleast once before running this command"
+					return "No records have been found for this subscription. Make sure the complete subscription was scanned with co-administrator/owner access atleast once before running this command"
 				
 				}
 
