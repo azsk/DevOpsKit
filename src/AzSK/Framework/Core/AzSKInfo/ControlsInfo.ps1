@@ -6,6 +6,7 @@ class ControlsInfo: CommandBase
 	hidden [string] $ResourceTypeName
 	hidden [string] $ResourceType
 	hidden [bool] $BaslineControls
+	hidden [bool] $PreviewBaslineControls
 	hidden [PSObject] $ControlSettings
 	hidden [string[]] $Tags = @();
 	hidden [string[]] $ControlIds = @();
@@ -14,12 +15,13 @@ class ControlsInfo: CommandBase
 	hidden [string] $ControlSeverity
 	hidden [string] $ControlIdContains
 
-	ControlsInfo([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $resourceTypeName, [string] $resourceType, [string] $controlIds, [bool] $baslineControls, [string] $tags, [bool] $full, 
+	ControlsInfo([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $resourceTypeName, [string] $resourceType, [string] $controlIds, [bool] $baslineControls,[bool] $previewBaslineControls, [string] $tags, [bool] $full, 
 					[string] $controlSeverity, [string] $controlIdContains) :  Base($subscriptionId, $invocationContext)
     { 
 		$this.ResourceTypeName = $resourceTypeName;
 		$this.ResourceType = $resourceType;
 		$this.BaslineControls = $baslineControls;
+		$this.PreviewBaslineControls = $previewBaslineControls
 		$this.Full = $full;
 		$this.ControlSeverity = $controlSeverity;
 		$this.ControlIdContains = $controlIdContains
@@ -83,11 +85,29 @@ class ControlsInfo: CommandBase
 		$baselineControls = @();
 		$baselineControls += $this.ControlSettings.BaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
 		$baselineControls += $this.ControlSettings.BaselineControls.SubscriptionControlIdList | ForEach-Object { $_ }
+		
+		
+		
 		if($this.BaslineControls)
 		{
 			$this.ControlIds = $baselineControls
 		}
 
+		$previewBaselineControls = @();
+		if($this.PreviewBaslineControls)
+		{
+			if([Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.ResourceTypeControlIdMappingList") )
+			{
+				$previewBaselineControls += $this.ControlSettings.PreviewBaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
+			}
+			if([Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.SubscriptionControlIdList") )
+			{
+				$previewBaselineControls += $this.ControlSettings.PreviewBaselineControls.SubscriptionControlIdList | ForEach-Object {  $_ }
+			}
+			$baselineControls += $previewBaselineControls
+			$this.ControlIds += $previewBaselineControls
+
+		}
 		$resourcetypes | ForEach-Object{
 					$controls = [ConfigurationManager]::GetSVTConfig($_.JsonFileName); 
 

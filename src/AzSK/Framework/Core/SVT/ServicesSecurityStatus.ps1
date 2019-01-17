@@ -17,6 +17,7 @@ class ServicesSecurityStatus: SVTCommandBase
 		#BaseLineControlFilter with control ids
 		$this.UsePartialCommits =$invocationContext.BoundParameters["UsePartialCommits"];
 		$this.UseBaselineControls = $invocationContext.BoundParameters["UseBaselineControls"];
+		$this.UsePreviewBaselineControls = $invocationContext.BoundParameters["UsePreviewBaselineControls"];
 		$this.CentralStorageAccount = $invocationContext.BoundParameters["CentralStorageAccount"];
 		[PartialScanManager]::ClearInstance();
 		$this.BaselineFilterCheck();
@@ -147,6 +148,7 @@ class ServicesSecurityStatus: SVTCommandBase
 		$this.PublishCustomMessage("`nNumber of resources for which security controls will be evaluated: $($automatedResources.Count)",[MessageType]::Info);
 		$totalResources = $automatedResources.Count;
 		[int] $currentCount = 0;
+		$childResources = @();
 		$automatedResources | ForEach-Object {
 			$exceptionMessage = "Exception for resource: [ResourceType: $($_.ResourceTypeMapping.ResourceTypeName)] [ResourceGroupName: $($_.ResourceGroupName)] [ResourceName: $($_.ResourceName)]"
             try
@@ -186,14 +188,10 @@ class ServicesSecurityStatus: SVTCommandBase
 				[SVTEventContext[]] $currentResourceResults = @();
 				if($svtObject)
 				{
-					$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule
+					$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule;
 					$this.SetSVTBaseProperties($svtObject);
+					$childResources += $svtObject.ChildSvtObjects;
 					$currentResourceResults += $svtObject.$methodNameToCall();
-					$svtObject.ChildSvtObjects | ForEach-Object {
-						$_.RunningLatestPSModule = $this.RunningLatestPSModule
-						$this.SetSVTBaseProperties($_)
-						$currentResourceResults += $_.$methodNameToCall();
-					}
 					$result += $currentResourceResults;
 
 				}
@@ -227,7 +225,9 @@ class ServicesSecurityStatus: SVTCommandBase
 					{
 						$this.PublishException($_);
 					}
+
 				}
+				
 					
 				# Register/Deregister all listeners to cleanup the memory
 				[ListenerHelper]::RegisterListeners();
@@ -237,7 +237,27 @@ class ServicesSecurityStatus: SVTCommandBase
 				$this.PublishCustomMessage($exceptionMessage);
 				$this.CommandError($_);
             }
-        }
+		}
+		if(($childResources | Measure-Object).Count -gt 0)
+		{
+			try
+			{
+				[SVTEventContext[]] $childResourceResults = @();
+				$temp=  $childResources |Sort-Object -Property @{Expression={$_.ResourceId}} -Unique
+				$temp| ForEach-Object {
+					$_.RunningLatestPSModule = $this.RunningLatestPSModule
+					$this.SetSVTBaseProperties($_)
+					$childResourceResults += $_.$methodNameToCall();
+					
+				}
+				$result += $childResourceResults;
+			}
+			catch
+			{
+				$this.PublishCustomMessage($_);
+				
+			}
+		}
 		
 		
 		return $result;
@@ -283,6 +303,7 @@ class ServicesSecurityStatus: SVTCommandBase
 	{
 		#Load ControlSetting Resource Types and Filter resources
 		$scanSource = [AzSKSettings]::GetInstance().GetScanSource();
+		$ResourcesWithBaselineFilter =@()
 		#Load ControlSetting Resource Types and Filter resources
 		if($this.CentralStorageAccount){
 			[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance($this.CentralStorageAccount, $this.SubscriptionContext.SubscriptionId);	
@@ -307,7 +328,31 @@ class ServicesSecurityStatus: SVTCommandBase
 			{
 				$this.ControlIds = $controlIds;
 
-			}
+			}		
+		}
+
+		#Preview Baseline Controls
+		$previewBaselineControlsDetails = $partialScanMngr.GetPreviewBaselineControlDetails()
+		#If Scan source is in supported sources or baselineControls switch is available
+		if ($null -ne $previewBaselineControlsDetails -and ($previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -gt 0 -and ($previewBaselineControlsDetails.SupportedSources -contains $scanSource -or $this.UsePreviewBaselineControls))
+		{
+			
+			$baselineResourceTypes = $previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Select-Object ResourceType | Foreach-Object {$_.ResourceType}
+			#Filter SVT resources based on baseline resource types
+			$ResourcesWithBaselineFilter +=$this.Resolver.SVTResources | Where-Object {$null -ne $_.ResourceTypeMapping -and   $_.ResourceTypeMapping.ResourceTypeName -in $baselineResourceTypes }
+			
+			#Get the list of control ids
+			$controlIds = $previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
+			$previewBaselineControlIds = [system.String]::Join(",",$controlIds);
+			if(-not [system.String]::IsNullOrEmpty($previewBaselineControlIds))
+			{
+				$this.ControlIds += $controlIds;
+
+			}			
+		}
+
+		if(($ResourcesWithBaselineFilter | Measure-Object).Count -gt 0)
+		{
 			$this.Resolver.SVTResources = $ResourcesWithBaselineFilter
 		}
 

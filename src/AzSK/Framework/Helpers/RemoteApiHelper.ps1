@@ -9,25 +9,46 @@ class RemoteApiHelper {
         return [Helpers]::GetAccessToken($ResourceAppIdURI);
     }
 
-    hidden static [psobject] PostContent($uri, $content, $type) {
-        try {
-            $accessToken = [RemoteApiHelper]::GetAccessToken()
-            $result = Invoke-WebRequest -Uri $([RemoteApiHelper]::ApiBaseEndpoint + $uri) `
-                -Method Post `
+    hidden static [psobject] PostContent($uri, $content, $type) 
+    {
+            try {
+                $accessToken = [RemoteApiHelper]::GetAccessToken()
+                $result = Invoke-WebRequest -Uri $([RemoteApiHelper]::ApiBaseEndpoint + $uri) `
+                    -Method Post `
+                    -Body $content `
+                    -ContentType $type `
+                    -Headers @{"Authorization" = "Bearer $accessToken"} `
+                    -UseBasicParsing
+                return $result
+            }
+            catch {
+                return "ERROR"
+            }
+    }  
+    
+    hidden static [psobject] GetContent($uri, $content, $type) 
+    {
+        $url = [RemoteApiHelper]::ApiBaseEndpoint + $uri;
+        $accessToken = [RemoteApiHelper]::GetAccessToken()
+            $result = Invoke-WebRequest -Uri $url `
+                -Method POST `
                 -Body $content `
                 -ContentType $type `
                 -Headers @{"Authorization" = "Bearer $accessToken"} `
                 -UseBasicParsing
-            return $result
-        }
-        catch {
-            return "ERROR"
-        }
+                
+            return $result.Content
+              
     }
+
 
     hidden static [psobject] PostJsonContent($uri, $obj) {
         $postContent = [Helpers]::ConvertToJsonCustomCompressed($obj)
         return [RemoteApiHelper]::PostContent($uri, $postContent, "application/json")
+    }
+    hidden static [psobject] GetJsonContent($uri, $obj) {
+        $postContent = [Helpers]::ConvertToJsonCustomCompressed($obj)
+        return [RemoteApiHelper]::GetContent($uri, $postContent, "application/json")
     }
 
     static [void] PostSubscriptionScanResult($scanResult) {
@@ -62,6 +83,9 @@ class RemoteApiHelper {
 
     static [void] PostPolicyComplianceTelemetry($PolicyComplianceData){
 		[RemoteApiHelper]::PostJsonContent("/policycompliancedata", $PolicyComplianceData) | Out-Null	
+    }
+    static [PSObject] GetComplianceSnapshot([string] $parameters){
+		return([RemoteApiHelper]::GetJsonContent("/scanresults/fetchcompliancedata", $parameters) )	
     }
     
     hidden static [psobject] ConvertToSimpleSet([SVTEventContext[]] $contexts) {
