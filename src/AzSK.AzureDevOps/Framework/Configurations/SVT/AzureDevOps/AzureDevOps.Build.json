@@ -1,0 +1,94 @@
+{
+    "FeatureName":  "Build",
+    "Reference":  "aka.ms/azsktcp/Build",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+      "ControlID": "AzureDevOps_Build_AuthZ_Min_RBAC_Access",
+      "Description": "All teams/groups must be granted minimum required permissions on build defination",
+      "Id": "Build110",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/policies/permissions?view=vsts",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Build_DP_No_PlainText_Secrets_In_Defination",
+      "Description": "Secrets and keys must not be stored as plain text in build variables/task parameters",
+      "Id": "Build120",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckCredInVariables",
+      "Rationale": "Keeping secrets such as connection strings, passwords, keys, etc. in clear text can lead to easy compromise. Making them secret type variables ensures that they are protected at rest.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=vsts&tabs=yaml%2Cbatch#secret-variables",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "Audit"       
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Build_Config_Add_StaticCodeAnalyzer",
+      "Description": "Static code analyzer must be enabled on build",
+      "Id": "Build140",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Static code analyzer ensure that the code is following all rules for security",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/articles/security-validation-cicd-pipeline?view=vsts#ci-continuous-integration",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "Config"
+      ],
+      "Enabled": true
+    },
+    {
+        "ControlID": "AzureDevOps_Build_DP_Store_SecretFiles_in_Secure_Library",
+        "Description": " Secure Files library must be used to store secret files such as signing certificates, Apple Provisioning Profiles, Android KeyStore files, and SSH keys",
+        "Id": "Build150",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Keeping secret files such as signing certificates, Apple Provisioning Profiles, Android KeyStore files, SSH keys etc. in repository can lead to easy compromise at various avenues during an application's lifecycle. Storing them in a secure library ensures that they are protected at rest.",
+        "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/devops/pipelines/library/secure-files?view=vsts",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "DP"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Build_SI_Review_InActive_Build",
+        "Description": " Inactive build must be removed",
+        "Id": "Build160",
+        "ControlSeverity": "Low",
+        "Automated": "Yes",
+        "MethodName": "CheckInActiveBuild",
+        "Rationale": "Each additional build having access at repositories increases the attack surface. To minimize this risk ensure that only activite and legitimate build resources present in Organization",
+        "Recommendation": "https://docs.microsoft.com/en-us/rest/api/azure/devops/build/definitions/delete?view=azure-devops-rest-5.0",
+        "Tags": [
+          "SDL",
+          "Best Practice",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      }
+    
+  ]
+}
