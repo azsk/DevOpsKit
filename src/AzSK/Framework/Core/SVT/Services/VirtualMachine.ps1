@@ -693,7 +693,7 @@ class VirtualMachine: SVTBase
 			{
 				$controlResult.VerificationResult = [VerificationResult]::Verify
 				$controlResult.AddMessage("Unable to validate baseline status from workspace.Please verify.");
-				$controlResult.AddMessage("Details of failing baseline rules can be obtained from OMS workspace :" ,$workspaceId);
+				$controlResult.AddMessage("Details of failing baseline rules can be obtained from Log Analytics workspace :" ,$workspaceId);
 				$controlResult.AddMessage("The following query can be used to obtain failing baseline rules :  ",$queryforFailingBaseline);
 			}
 		}

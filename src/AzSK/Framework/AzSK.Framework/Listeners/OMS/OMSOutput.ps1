@@ -188,7 +188,7 @@ class OMSOutput: ListenerBase
 			{
 				if(-not [OMSOutput]::IsIssueLogged)
 				{
-					$this.PublishCustomMessage("An error occurred while pushing data to OMS. Please check logs for more details. AzSK control evaluation results will not be sent to the configured OMS workspace from this environment until the error is resolved.", [MessageType]::Warning);
+					$this.PublishCustomMessage("An error occurred while pushing data to Log Analytics. Please check logs for more details. AzSK control evaluation results will not be sent to the configured Log Analytics workspace from this environment until the error is resolved.", [MessageType]::Warning);
 					$this.PublishException($_);
 					[OMSOutput]::IsIssueLogged = $true
 				}
@@ -196,7 +196,7 @@ class OMSOutput: ListenerBase
 		}
 		catch
 		{
-			[Exception] $ex = [Exception]::new("Error sending events to OMS. The following exception occurred: `r`n$($_.Exception.Message) `r`nFor more on AzSK OMS setup, refer: https://aka.ms/devopskit/ca", $_.Exception)
+			[Exception] $ex = [Exception]::new("Error sending events to Log Analytics. The following exception occurred: `r`n$($_.Exception.Message) `r`nFor more on AzSK Log Analytics workspace setup, refer: https://aka.ms/devopskit/ca", $_.Exception)
 			throw [SuppressedException] $ex
 		}
 
@@ -251,9 +251,4 @@ class OMSOutput: ListenerBase
 		}
 		[OMSHelper]::WriteControlResult($commandModel,"AzSK_CommandEvent")
 	}
-	}
-
-	
-
-
-
+}

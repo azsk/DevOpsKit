@@ -1,62 +1,63 @@
 Set-StrictMode -Version Latest
-function Set-AzSKOMSSettings
+function Set-AzSKMonitoringSettings
 {
 	<#
 	.SYNOPSIS
-	This command would help in updating the OMS configuration settings under the current powershell session.
+	This command would help in updating the Log Analytics configuration settings under the current powershell session.
 	.DESCRIPTION
-	This command will update the OMS settings under the current powershell session. This also remembers the current settings and use them in the subsequent sessions.
+	This command will update the Log Analytics settings under the current powershell session. This also remembers the current settings and use them in the subsequent sessions.
 	
 	.PARAMETER OMSWorkspaceID
-		Workspace ID of your OMS instance. Control scan results get pushed to this instance.
+		Workspace ID of your Log Analytics instance. Control scan results get pushed to this instance.
 	.PARAMETER OMSSharedKey
-		Shared key of your OMS instance.
+		Shared key of your Log Analytics instance.
 	.PARAMETER AltOMSWorkspaceID
-		Alternate workspaceId of your OMS instance. Control scan results get pushed to this instance.
+		Workspace ID of your alternate Log Analytics instance. Control scan results get pushed to this instance.
 	.PARAMETER AltOMSSharedKey
-		Workspace shared key of your alternate OMS instance.
+		Workspace shared key of your alternate Log Analytics instance.
 	.PARAMETER Source
-		Provide the source of OMS Events. (e. g. CA,CICD,SDL)
+		Provide the source of Log Analytics Events. (e. g. CA,CICD,SDL)
 	.PARAMETER Disable
-		Use -Disable option to clean the OMS setting under the current instance.		
+		Use -Disable option to clean the Log Analytics setting under the current instance.		
 
 	.LINK
 	https://aka.ms/azskossdocs 
 
 	#>
+	[Alias("Set-AzSKOMSSettings")]
 	param(
         
-		[Parameter(Mandatory = $false, HelpMessage="Workspace ID of your OMS instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
+		[Parameter(Mandatory = $false, HelpMessage="Workspace ID of your Log Analytics instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("owid")]
+		[Alias("owid","wid")]
         $OMSWorkspaceID,
 
-        [Parameter(Mandatory = $false, HelpMessage="Shared key of your OMS instance.", ParameterSetName = "Setup")]
+        [Parameter(Mandatory = $false, HelpMessage="Shared key of your Log Analytics instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("okey")]
+		[Alias("okey","wkey")]
         $OMSSharedKey,
 
-		[Parameter(Mandatory = $false, HelpMessage="Alternate Workspace ID of your OMS instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
+		[Parameter(Mandatory = $false, HelpMessage="Workspace ID of your alternate Log Analytics instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("aowid")]
+		[Alias("aowid","awid")]
         $AltOMSWorkspaceID,
 
-        [Parameter(Mandatory = $false, HelpMessage="Shared key of your alternate OMS instance.", ParameterSetName = "Setup")]
+        [Parameter(Mandatory = $false, HelpMessage="Shared key of your alternate Log Analytics instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("aokey")]
+		[Alias("aokey","awkey")]
         $AltOMSSharedKey,
 
-		[Parameter(Mandatory = $false, HelpMessage="Provide the source of OMS Events.(e.g. CC,CICD,SDL)", ParameterSetName = "Setup")]
+		[Parameter(Mandatory = $false, HelpMessage="Provide the source of Log Analytics Events.(e.g. CC,CICD,SDL)", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("so")]
+		[Alias("so","sla")]
         $Source,
 
-        [Parameter(Mandatory = $true, HelpMessage="Use -Disable option to clean the OMS setting under the current instance.", ParameterSetName = "Disable")]
+        [Parameter(Mandatory = $true, HelpMessage="Use -Disable option to clean the Log Analytics setting under the current instance.", ParameterSetName = "Disable")]
         [switch]
 		[Alias("dsbl")]
         $Disable
@@ -113,7 +114,7 @@ function Set-AzSKOMSSettings
 			}
 			$appSettings.OMSType = "AzSK"
 			[ConfigurationManager]::UpdateAzSKSettings($appSettings);
-			[EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine + "`r`nWe have added new queries for the OMS solution. These will help reflect the aggregate control pass/fail status more accurately. Please go here to get them:  https://aka.ms/devopskit/omsqueries `r`n",[MessageType]::Warning);
+			[EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine + "`r`nWe have added new queries for the Monitoring solution. These will help reflect the aggregate control pass/fail status more accurately. Please go here to get them:  https://aka.ms/devopskit/omsqueries `r`n",[MessageType]::Warning);
 			[EventBase]::PublishGenericCustomMessage("Successfully changed policy settings");
 		}
 		catch
@@ -127,22 +128,22 @@ function Set-AzSKOMSSettings
 	}
 }
 
-function Install-AzSKOMSSolution
+function Install-AzSKMonitoringSolution
 {
 	<#
 
 	.SYNOPSIS
-	This command would help in creating security dashboard in OMS
+	This command would help in creating security dashboard in Log Analytics Workspace
 
 	.DESCRIPTION
-	This command would help in creating security dashboard in OMS
+	This command would help in creating security dashboard in Log Analytics Workspace
 
 	.PARAMETER OMSSubscriptionId
-		Id of subscription hosting OMS workspace
+		Id of subscription hosting Log Analytics workspace
 	.PARAMETER OMSResourceGroup
-		Resource group hosting OMS workspace
+		Resource group hosting Log Analytics workspace
 	.PARAMETER OMSWorkspaceId
-		Workspace ID of the OMS workspace name which will be used for monitoring.
+		Workspace ID of the Log Analytics workspace which will be used for monitoring.
 	.PARAMETER ViewName
 		Provide the custom name for your DevOps Kit security view.
 	.PARAMETER ValidateOnly
@@ -158,26 +159,27 @@ function Install-AzSKOMSSolution
 	https://aka.ms/azskossdocs
 
 	#>
+	[Alias("Install-AzSKOMSSolution")]
     param(
-        [Parameter(ParameterSetName="NewModel", HelpMessage="Id of subscription hosting OMS workspace", Mandatory = $true)]
+        [Parameter(ParameterSetName="NewModel", HelpMessage="Id of subscription hosting Log Analytics workspace", Mandatory = $true)]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("omssubid","omssid")]
+		[Alias("omssubid","omssid","lawsubid","lawsid")]
 		$OMSSubscriptionId,  
 				
-		[Parameter(ParameterSetName="NewModel", HelpMessage="Resource group hosting OMS workspace", Mandatory = $true)]
+		[Parameter(ParameterSetName="NewModel", HelpMessage="Resource group hosting Log Analytics workspace", Mandatory = $true)]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("omsrg")]
+		[Alias("omsrg","lawrg")]
 		$OMSResourceGroup, 
 
-		[Parameter(ParameterSetName="NewModel", HelpMessage="Workspace ID of the OMS workspace name which will be used for monitoring.", Mandatory = $true)]
+		[Parameter(ParameterSetName="NewModel", HelpMessage="Workspace ID of the Log Analytics workspace which will be used for monitoring.", Mandatory = $true)]
         [string]
-		[Alias("owid")]
+		[Alias("owid","wid")]
 		[ValidateNotNullOrEmpty()]
 		$OMSWorkspaceId, 
 		
-		[Parameter(ParameterSetName="NewModel", HelpMessage="Provide the custom name for your devopskit security view", Mandatory = $false)]
+		[Parameter(ParameterSetName="NewModel", HelpMessage="Provide the custom name for your DevOps Kit security view", Mandatory = $false)]
         [string]
 		[Alias("vname")]
 		$ViewName = "SecurityCompliance", 
