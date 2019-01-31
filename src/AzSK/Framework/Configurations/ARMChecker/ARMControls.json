@@ -23,6 +23,118 @@
       ]
     },
     {
+      "featureName": "ServiceFabric",
+      "supportedResourceTypes": [ "Microsoft.ServiceFabric/clusters" ],
+      "controls": [
+        {
+          "id": "ServiceFabric300",
+          "controlId": "Azure_ServiceFabric_SI_Set_Auto_Update_Cluster",
+          "isEnabled": true,
+          "description": "Upgrade mode should be set to automatic for cluster",
+          "rationale": "Clusters with unsupported fabric version can become targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in software.",
+          "recommendation": "You can set your cluster to receive automatic fabric upgrades as they are released by Microsoft, for details please refer: https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-upgrade",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.upgradeMode" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "Automatic",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "ServiceFabric220",
+          "controlId": "Azure_ServiceFabric_AuthN_Client_AuthN_AAD_Only",
+          "isEnabled": true,
+          "description": "Client authentication must be performed only via Azure Active Directory",
+          "rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control. All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+          "recommendation": "A Service Fabric cluster offers several entry points to its management functionality, including the web-based Service Fabric Explorer, Visual Studio and PowerShell. Access to the cluster must be controlled using AAD. Refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-cluster-creation-via-arm/#_set-up-azure-active-directory-for-client-authentication",
+          "severity": "High",
+          "jsonPath": [ "$.properties.azureActiveDirectory.tenantId" ],
+          "matchType": "StringWhitespace",
+          "data": {
+            "value": false
+          }
+        },
+        {
+          "id": "ServiceFabric220",
+          "controlId": "Azure_ServiceFabric_AuthN_Client_AuthN_AAD_Only",
+          "isEnabled": true,
+          "description": "Client authentication must be performed only via Azure Active Directory",
+          "rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control. All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+          "recommendation": "A Service Fabric cluster offers several entry points to its management functionality, including the web-based Service Fabric Explorer, Visual Studio and PowerShell. Access to the cluster must be controlled using AAD. Refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-cluster-creation-via-arm/#_set-up-azure-active-directory-for-client-authentication",
+          "severity": "High",
+          "jsonPath": [ "$.properties.azureActiveDirectory.clusterApplication" ],
+          "matchType": "StringWhitespace",
+          "data": {
+            "value": false
+          }
+        },
+        {
+          "id": "ServiceFabric220",
+          "controlId": "Azure_ServiceFabric_AuthN_Client_AuthN_AAD_Only",
+          "isEnabled": true,
+          "description": "Client authentication must be performed only via Azure Active Directory",
+          "rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control. All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+          "recommendation": "A Service Fabric cluster offers several entry points to its management functionality, including the web-based Service Fabric Explorer, Visual Studio and PowerShell. Access to the cluster must be controlled using AAD. Refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-cluster-creation-via-arm/#_set-up-azure-active-directory-for-client-authentication",
+          "severity": "High",
+          "jsonPath": [ "$.properties.azureActiveDirectory.clientApplication" ],
+          "matchType": "StringWhitespace",
+          "data": {
+            "value": false
+          }
+        },
+        {
+          "id": "ServiceFabric230",
+          "controlId": "Azure_ServiceFabric_DP_Set_Property_ClusterProtectionLevel",
+          "isEnabled": true,
+          "description": "The ClusterProtectionLevel property must be set to EncryptAndSign",
+          "rationale": "With cluster protection level set to 'EncryptAndSign', all the node-to-node messages are encrypted and digitally signed. This protects the intra-cluster communication from eavesdropping/tampering/man-in-the-middle attacks on the network.",
+          "recommendation": "Service Fabric provides three levels of protection (None, Sign and EncryptAndSign) for node to node communication using cluster primary certificate. The protection level can be specified using property 'ClusterProtectionLevel' inside Service Fabric ARM template. The value of 'ClusterProtectionLevel' must be set to 'EncryptAndSign' to ensure that all the node-to-node messages are encrypted and digitally signed. Configure 'ClusterProtectionLevel' using ARM template as follows: ARM Template --> Resources --> Select resource type 'Microsoft.ServiceFabric/clusters' --> 'fabricSettings' --> Add 'ClusterProtectionLevel' property with value 'EncryptAndSign'.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.fabricSettings[0].name" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "Security",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "ServiceFabric230",
+          "controlId": "Azure_ServiceFabric_DP_Set_Property_ClusterProtectionLevel",
+          "isEnabled": true,
+          "description": "The ClusterProtectionLevel property must be set to EncryptAndSign",
+          "rationale": "With cluster protection level set to 'EncryptAndSign', all the node-to-node messages are encrypted and digitally signed. This protects the intra-cluster communication from eavesdropping/tampering/man-in-the-middle attacks on the network.",
+          "recommendation": "Service Fabric provides three levels of protection (None, Sign and EncryptAndSign) for node to node communication using cluster primary certificate. The protection level can be specified using property 'ClusterProtectionLevel' inside Service Fabric ARM template. The value of 'ClusterProtectionLevel' must be set to 'EncryptAndSign' to ensure that all the node-to-node messages are encrypted and digitally signed. Configure 'ClusterProtectionLevel' using ARM template as follows: ARM Template --> Resources --> Select resource type 'Microsoft.ServiceFabric/clusters' --> 'fabricSettings' --> Add 'ClusterProtectionLevel' property with value 'EncryptAndSign'.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.fabricSettings[0].parameters[0].name" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "ClusterProtectionLevel",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "ServiceFabric230",
+          "controlId": "Azure_ServiceFabric_DP_Set_Property_ClusterProtectionLevel",
+          "isEnabled": true,
+          "description": "The ClusterProtectionLevel property must be set to EncryptAndSign",
+          "rationale": "With cluster protection level set to 'EncryptAndSign', all the node-to-node messages are encrypted and digitally signed. This protects the intra-cluster communication from eavesdropping/tampering/man-in-the-middle attacks on the network.",
+          "recommendation": "Service Fabric provides three levels of protection (None, Sign and EncryptAndSign) for node to node communication using cluster primary certificate. The protection level can be specified using property 'ClusterProtectionLevel' inside Service Fabric ARM template. The value of 'ClusterProtectionLevel' must be set to 'EncryptAndSign' to ensure that all the node-to-node messages are encrypted and digitally signed. Configure 'ClusterProtectionLevel' using ARM template as follows: ARM Template --> Resources --> Select resource type 'Microsoft.ServiceFabric/clusters' --> 'fabricSettings' --> Add 'ClusterProtectionLevel' property with value 'EncryptAndSign'.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.fabricSettings[0].parameters[0].value" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "EncryptAndSign",
+            "isCaseSensitive": false
+          }
+        }
+      ]
+    },
+    {
       "featureName": "DataLakeStore",
       "supportedResourceTypes": [ "Microsoft.DataLakeStore/accounts" ],
       "controls": [
@@ -447,6 +559,24 @@
           "matchType": "StringWhitespace",
           "data": {
             "value": false
+          }
+          
+        },
+        {
+          "id": "AppService400",
+          "apiVersions": [ "2016-08-01" ],
+          "controlId": "Azure_AppService_AuthN_Use_Managed_Service_Identity",
+          "isEnabled": true,
+          "description": "Use Managed Service Identity (MSI) for accessing other AAD-protected resources from the app service.",
+          "rationale": "Managed Service Identity (MSI) allows your app to easily access other AAD-protected resources such as Azure Key Vault. The identity is managed by the Azure platform and eliminates the need to provision/manage/rotate any secrets thus reducing the overall risk.",
+          "recommendation": "Go to Azure Portal --> your App Service --> Settings --> Managed Service Identity --> Register with AAD --> ON",
+          "severity": "Medium",
+          "jsonPath": [ "$.identity.type" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "SystemAssigned",
+            "isCaseSensitive": false
           }
         }
       ]
