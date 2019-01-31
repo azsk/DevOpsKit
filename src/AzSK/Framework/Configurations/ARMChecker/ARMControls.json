@@ -280,7 +280,7 @@
     },
     {
       "featureName": "SqlServer",
-      "supportedResourceTypes": [ "Microsoft.Sql/servers","transparentDataEncryption" ,"administrators", "securityAlertPolicies", "databases", "auditingSettings", "firewallrules" ],
+      "supportedResourceTypes": [ "Microsoft.Sql/servers", "transparentDataEncryption", "administrators", "securityAlertPolicies", "databases", "auditingSettings", "firewallrules" ],
       "controls": [
         {
           "id": "SQLDatabase120",
@@ -380,7 +380,7 @@
             "isCaseSensitive": false
           }
         }
-       
+
       ]
     },
     {
@@ -560,7 +560,7 @@
           "data": {
             "value": false
           }
-          
+
         },
         {
           "id": "AppService400",
@@ -645,7 +645,133 @@
           }
         }
       ]
+    },
+    {
+      "featureName": "LogicApps",
+      "supportedResourceTypes": [ "Microsoft.Logic/workflows" ],
+      "controls": [
+        {
+          "id": "LogicApps150",
+          "controlId": "Azure_LogicApps_AuthZ_Provide_Triggers_Access_Control",
+          "isEnabled": true,
+          "description": "If Logic App fires on an HTTP Request (e.g. Request or Webhook) then provide IP ranges for triggers to prevent unauthorized access",
+          "rationale": "Specifying the IP range ensures that the triggers can be invoked only from a restricted set of endpoints.",
+          "recommendation": "Do not add IP range $($this.ControlSettings.UniversalIPRange) as this means access to all IPs. Note: In case the IP range is indeterminate (for instance, if the client is a PaaS endpoint), you may need to attest this control. Please refer https://docs.microsoft.com/en-us/azure/logic-apps/logic-apps-securing-a-logic-app#set-ip-ranges---logic-app-deployment-template",
+          "severity": "High",
+          "jsonPath": [ "$.properties.accessControl.triggers.allowedCallerIpAddresses.addressRange" ],
+          "matchType": "VerifiableSingleToken",
+          "data": {}
+        },
+        {
+          "id": "LogicApps160",
+          "controlId": "Azure_LogicApps_AuthZ_Provide_Contents_Access_Control",
+          "isEnabled": true,
+          "description": "Must provide IP ranges for contents to prevent unauthorized access to inputs/outputs data of Logic App run history",
+          "rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets.",
+          "recommendation": "Do not add IP range $($this.ControlSettings.UniversalIPRange) as this means access to all IPs. Note: In case the IP range is indeterminate (for instance, if the client is a PaaS endpoint), you may need to attest this control. Please refer https://docs.microsoft.com/en-us/azure/logic-apps/logic-apps-securing-a-logic-app#set-ip-ranges---logic-app-deployment-template-1",
+          "severity": "High",
+          "jsonPath": [ "$.properties.accessControl.contents.allowedCallerIpAddresses.addressRange" ],
+          "matchType": "VerifiableSingleToken",
+          "data": {}
+        }
+      ]
+    },
+    {
+      "featureName": "ContainerRegistry",
+      "supportedResourceTypes": [ "Microsoft.ContainerRegistry/registries" ],
+      "controls": [
+        {
+          "id": "ContainerRegistry110",
+          "controlId": "Azure_ContainerRegistry_AuthZ_Disable_Admin_Account",
+          "isEnabled": true,
+          "description": "The Admin account in Container Registry should be disabled",
+          "rationale": "The Admin user account is designed for a single user to access the registry. Multiple users authenticating with the admin account appear as just one user to the registry. This leads to loss of auditability. Using AAD-based identity ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.",
+          "recommendation": "Run command 'Update-AzureRmContainerRegistry -DisableAdminUser -Name '<ContainerRegistryName>' -ResourceGroupName '<RGName>'. Run 'Get-Help Update-AzureRmContainerRegistry -full' for more help. You can add AAD-based SPNs or user accounts to the appropriate RBAC role instead.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.adminUserEnabled" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "featureName": "KeyVault",
+      "supportedResourceTypes": [ "Microsoft.KeyVault/vaults" ],
+      "controls": [
+        {
+          "id": "KeyVault140",
+          "controlId": "Azure_KeyVault_AuthZ_Grant_Min_Access_policies",
+          "isEnabled": true,
+          "Description": "All Key Vault access policies must be defined with minimum required permissions to keys and secrets",
+          "Rationale": "Granting minimum access by defining Key Vault access policies ensures that applications/users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+          "Recommendation": "Use command Set-AzureRmKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}'  -PermissionsToKeys '{PermissionsToKeys}' -PermissionsToSecrets '{PermissionsToSecrets}'  -PermissionsToCertificates '{PermissionsToCertificates}' -ObjectId '{ObjectId}'. Refer:  https://docs.microsoft.com/en-us/powershell/module/azurerm.keyvault/set-azurermkeyvaultaccesspolicy",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.accessPolicies" ],
+          "matchType": "VerifiableSingleToken",
+          "data": {}
+        },
+        {
+          "id": "KeyVault150",
+          "controlId": "Azure_KeyVault_AuthZ_Configure_Advanced_Access_Policies",
+          "isEnabled": true,
+          "Description": "Advanced access policies must be configured on a need basis",
+          "Rationale": "Advanced access policy allows Azure services (Azure Resource Manager, Virtual Machine, Disk Encryption etc.) to seamlessly access Key Vault. To avoid unintentional access to Key Vault from Azure services, advanced access policies must be configured only as required.",
+          "Recommendation": "Remove any advanced policies that are not required using the command: Remove-AzureRmKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}' -EnabledForDeployment -EnabledForTemplateDeployment -EnabledForDiskEncryption. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.keyvault/remove-azurermkeyvaultaccesspolicy",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.enabledForDeployment" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": false
+          }
+        },
+        {
+          "id": "KeyVault150",
+          "controlId": "Azure_KeyVault_AuthZ_Configure_Advanced_Access_Policies",
+          "isEnabled": true,
+          "Description": "Advanced access policies must be configured on a need basis",
+          "Rationale": "Advanced access policy allows Azure services (Azure Resource Manager, Virtual Machine, Disk Encryption etc.) to seamlessly access Key Vault. To avoid unintentional access to Key Vault from Azure services, advanced access policies must be configured only as required.",
+          "Recommendation": "Remove any advanced policies that are not required using the command: Remove-AzureRmKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}' -EnabledForDeployment -EnabledForTemplateDeployment -EnabledForDiskEncryption. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.keyvault/remove-azurermkeyvaultaccesspolicy",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.enabledForDiskEncryption" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": false
+          }
+        },
+        {
+          "id": "KeyVault150",
+          "controlId": "Azure_KeyVault_AuthZ_Configure_Advanced_Access_Policies",
+          "isEnabled": true,
+          "Description": "Advanced access policies must be configured on a need basis",
+          "Rationale": "Advanced access policy allows Azure services (Azure Resource Manager, Virtual Machine, Disk Encryption etc.) to seamlessly access Key Vault. To avoid unintentional access to Key Vault from Azure services, advanced access policies must be configured only as required.",
+          "Recommendation": "Remove any advanced policies that are not required using the command: Remove-AzureRmKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}' -EnabledForDeployment -EnabledForTemplateDeployment -EnabledForDiskEncryption. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.keyvault/remove-azurermkeyvaultaccesspolicy",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.enabledForTemplateDeployment" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": false
+          }
+
+        },
+        {
+          "id": "KeyVault230",
+          "controlId": "Azure_KeyVault_SI_Enable_SoftDelete",
+          "isEnabled": true,
+          "Description": "Soft delete must be enabled to allow recovery of deleted Key Vault and any objects (keys, secrets, etc.) contained in it.",
+          "Rationale": "Enabling soft delete feature on Key Vault acts as a safety measure to recover inadvertently or maliciously deleted Key Vault and any objects (keys, secrets, etc.) contained in it.",
+          "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/key-vault/key-vault-soft-delete-powershell to enable soft delete feature on Key Vault.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.enableSoftDelete" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": true
+          }
+        }
+      ]
     }
+
 
   ]
 }
