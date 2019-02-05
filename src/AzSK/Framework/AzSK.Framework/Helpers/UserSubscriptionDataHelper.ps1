@@ -24,13 +24,13 @@ class UserSubscriptionDataHelper: AzSKRoot
 
 	static [PSObject] GetUserSubscriptionRG()
 	{
-		$ResourceGroup = Get-AzureRmResourceGroup -Name $([UserSubscriptionDataHelper]::ResourceGroupName) -ErrorAction Stop
+		$ResourceGroup = Get-AzResourceGroup -Name $([UserSubscriptionDataHelper]::ResourceGroupName) -ErrorAction Stop
 		return $ResourceGroup
 	}
 	static [PSObject] GetUserSubscriptionStorage()
 	{
 		$StorageAccountPreName = [Constants]::StorageAccountPreName
-		$storageAccount = Get-AzureRmResource -ResourceGroupName $([UserSubscriptionDataHelper]::ResourceGroupName) `
+		$storageAccount = Get-AzResource -ResourceGroupName $([UserSubscriptionDataHelper]::ResourceGroupName) `
 		-Name "*$StorageAccountPreName*" `
 		-ResourceType $([UserSubscriptionDataHelper]::StorageResourceType) `
 		-ErrorAction Stop
@@ -60,9 +60,9 @@ class UserSubscriptionDataHelper: AzSKRoot
 		$container = $null
 		if($storage)
 		{
-			$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $([UserSubscriptionDataHelper]::ResourceGroupName) -Name $storage.Name
-			$currentContext = New-AzureStorageContext -StorageAccountName $storage.Name -StorageAccountKey $keys[0].Value -Protocol Https
-			$container = Get-AzureStorageContainer -Name $ContainerName -Context $currentContext -ErrorAction SilentlyContinue | Out-Null
+			$keys = Get-AzStorageAccountKey -ResourceGroupName $([UserSubscriptionDataHelper]::ResourceGroupName) -Name $storage.Name
+			$currentContext = New-AzStorageContext -StorageAccountName $storage.Name -StorageAccountKey $keys[0].Value -Protocol Https
+			$container = Get-AzStorageContainer -Name $ContainerName -Context $currentContext -ErrorAction SilentlyContinue | Out-Null
 		}
 		return $container
 	}
@@ -75,7 +75,7 @@ class UserSubscriptionDataHelper: AzSKRoot
 	{
 		$RGName = [OldConstants]::AzSDKRGName
 		$StorageAccountPreName = [OldConstants]::StorageAccountPreName
-		$existingStorage = Get-AzureRmResource -ResourceGroupName $RGName `
+		$existingStorage = Get-AzResource -ResourceGroupName $RGName `
 		-Name "*$($StorageAccountPreName)*" `
 		-ResourceType $([UserSubscriptionDataHelper]::StorageResourceType) `
 		-ErrorAction Stop
@@ -89,7 +89,7 @@ class UserSubscriptionDataHelper: AzSKRoot
 	static [PSObject] GetOldRG()
 	{
 		$RGName = [OldConstants]::AzSDKRGName
-		$ResourceGroup = Get-AzureRmResourceGroup -Name $RGName -ErrorAction SilentlyContinue
+		$ResourceGroup = Get-AzResourceGroup -Name $RGName -ErrorAction SilentlyContinue
 		return $ResourceGroup
 	}
 	
@@ -100,7 +100,7 @@ class UserSubscriptionDataHelper: AzSKRoot
 		$StorageName = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage().Name
         try 
         {
-            Set-AzureRmStorageAccount -ResourceGroupName $RGName -Name $StorageName -UpgradeToStorageV2 -ErrorAction Stop 
+            Set-AzStorageAccount -ResourceGroupName $RGName -Name $StorageName -UpgradeToStorageV2 -ErrorAction Stop 
         }
         catch
         {
@@ -112,16 +112,16 @@ class UserSubscriptionDataHelper: AzSKRoot
 		$storageAccount = $null
         do 
         {
-            $storageAccount = Get-AzureRmStorageAccount -ResourceGroupName $RGName -Name $StorageName -ErrorAction SilentlyContinue
+            $storageAccount = Get-AzStorageAccount -ResourceGroupName $RGName -Name $StorageName -ErrorAction SilentlyContinue
             Start-Sleep -seconds 2
             $retryAccount++
         } while (!$storageAccount -and $retryAccount -ne 6)
         if($storageAccount)
         {
             $storageContext = $storageAccount.Context 
-            Set-AzureStorageServiceLoggingProperty -ServiceType Blob -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
-            Set-AzureStorageServiceLoggingProperty -ServiceType Queue -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
-            Set-AzureStorageServiceLoggingProperty -ServiceType Table -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
+            Set-AzStorageServiceLoggingProperty -ServiceType Blob -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
+            Set-AzStorageServiceLoggingProperty -ServiceType Queue -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
+            Set-AzStorageServiceLoggingProperty -ServiceType Table -LoggingOperations 'All' -Context $storageContext -RetentionDays '365' -PassThru
 			return $storageAccount
         }
 		else

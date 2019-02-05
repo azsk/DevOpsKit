@@ -100,10 +100,10 @@ class VirtualMachine: SVTBase
 							#Fetch Public IPs to persist in the virtual machine metadata
 							if($_.PublicIpAddress)
 							{
-								$ipResource = Get-AzureRmResource -ResourceId $_.PublicIpAddress.Id 
+								$ipResource = Get-AzResource -ResourceId $_.PublicIpAddress.Id 
 								if($ipResource)
 								{
-									$publicIpObject = Get-AzureRmPublicIpAddress -Name $ipResource.Name -ResourceGroupName $ipResource.ResourceGroupName
+									$publicIpObject = Get-AzPublicIpAddress -Name $ipResource.Name -ResourceGroupName $ipResource.ResourceGroupName
 									if($publicIpObject)
 									{
 										#$_.PublicIpAddress = $publicIpObject;
@@ -114,7 +114,7 @@ class VirtualMachine: SVTBase
 							$subnetId = $_.Subnet.Id;		
 							$subnetName = $subnetId.Substring($subnetId.LastIndexOf("/") + 1);
 							#vnet id = trim '/subnets/' from subnet id 
-							$vnetResource = Get-AzureRmResource -ResourceId $subnetId.Substring(0, $subnetId.IndexOf("/subnets/"))
+							$vnetResource = Get-AzResource -ResourceId $subnetId.Substring(0, $subnetId.IndexOf("/subnets/"))
 
 							$vnetResource | ForEach-Object {
 								$vnet = $_
@@ -128,7 +128,7 @@ class VirtualMachine: SVTBase
 											$gatewayname = $subnet.properties.ipConfigurations[0].id.Substring($subnet.properties.ipConfigurations[0].id.LastIndexOf("Microsoft.Network/virtualNetworkGateways/") + 41);
 											$gatewayname = $gatewayname.Substring(0, $gatewayname.IndexOf("/"));
 
-											$gatewayObject = Get-AzureRmVirtualNetworkGateway -Name $gatewayname -ResourceGroupName $vnet.ResourceGroupName
+											$gatewayObject = Get-AzVirtualNetworkGateway -Name $gatewayname -ResourceGroupName $vnet.ResourceGroupName
 											if( $gatewayObject.GatewayType -eq "ExpressRoute")
 											{
 												$IsVMConnectedToERvNet= $true
@@ -154,7 +154,7 @@ class VirtualMachine: SVTBase
 
 	hidden [bool] GetVMDeallocationStatus()
 	{
-		$vmStatusObj = Get-AzureRmVM -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName -Status -WarningAction SilentlyContinue 
+		$vmStatusObj = Get-AzVM -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName -Status -WarningAction SilentlyContinue 
 		if($vmStatusObj.Statuses -and ($vmStatusObj.Statuses | Where-Object { $_.Code.ToLower() -eq "powerState/running" }))
 		{
 			return $false			
@@ -168,7 +168,7 @@ class VirtualMachine: SVTBase
     hidden [PSVirtualMachine] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzureRmVM -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName  -WarningAction SilentlyContinue 
+            $this.ResourceObject = Get-AzVM -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName  -WarningAction SilentlyContinue 
 
             if(-not $this.ResourceObject)
             {
@@ -226,10 +226,10 @@ class VirtualMachine: SVTBase
 			{
 				$this.ResourceObject.NetworkProfile.NetworkInterfaces | 
 					ForEach-Object {          
-						$currentNic = Get-AzureRmResource -ResourceId $_.Id -ErrorAction SilentlyContinue
+						$currentNic = Get-AzResource -ResourceId $_.Id -ErrorAction SilentlyContinue
 						if($currentNic)
 						{
-							$nicResource = Get-AzureRmNetworkInterface -Name $currentNic.Name `
+							$nicResource = Get-AzNetworkInterface -Name $currentNic.Name `
 												-ResourceGroupName $currentNic.ResourceGroupName `
 												-ExpandResource NetworkSecurityGroup `
 												-ErrorAction SilentlyContinue
@@ -373,19 +373,19 @@ class VirtualMachine: SVTBase
 							$subnetId = $_.Subnet.Id;		
 							$subnetName = $subnetId.Substring($subnetId.LastIndexOf("/") + 1);
 							#vnet id = trim '/subnets/' from subnet id 
-							$vnetResource = Get-AzureRmResource -ResourceId $subnetId.Substring(0, $subnetId.IndexOf("/subnets/"))
+							$vnetResource = Get-AzResource -ResourceId $subnetId.Substring(0, $subnetId.IndexOf("/subnets/"))
 							if($vnetResource)
 							{
-								$vnetObject = Get-AzureRmVirtualNetwork -Name $vnetResource.Name -ResourceGroupName $vnetResource.ResourceGroupName
+								$vnetObject = Get-AzVirtualNetwork -Name $vnetResource.Name -ResourceGroupName $vnetResource.ResourceGroupName
 								if($vnetObject)
 								{
-									$subnetConfig = Get-AzureRmVirtualNetworkSubnetConfig -Name $subnetName -VirtualNetwork $vnetObject
+									$subnetConfig = Get-AzVirtualNetworkSubnetConfig -Name $subnetName -VirtualNetwork $vnetObject
 									if($subnetConfig -and $subnetConfig.NetworkSecurityGroup -and $subnetConfig.NetworkSecurityGroup.Id)
 									{
-										$nsgResource = Get-AzureRmResource -ResourceId $subnetConfig.NetworkSecurityGroup.Id
+										$nsgResource = Get-AzResource -ResourceId $subnetConfig.NetworkSecurityGroup.Id
 										if($nsgResource)
 										{
-											$nsgObject = Get-AzureRmNetworkSecurityGroup -Name $nsgResource.Name -ResourceGroupName $nsgResource.ResourceGroupName
+											$nsgObject = Get-AzNetworkSecurityGroup -Name $nsgResource.Name -ResourceGroupName $nsgResource.ResourceGroupName
 											if($nsgObject)
 											{
 												if($nsgObject.SecurityRules.Count -gt 0)
@@ -430,10 +430,10 @@ class VirtualMachine: SVTBase
 			ForEach-Object {
 				$_.IpConfigurations | Where-Object { $_.PublicIpAddress } |
 					ForEach-Object {
-						$ipResource = Get-AzureRmResource -ResourceId $_.PublicIpAddress.Id 
+						$ipResource = Get-AzResource -ResourceId $_.PublicIpAddress.Id 
 						if($ipResource)
 						{
-							$publicIpObject = Get-AzureRmPublicIpAddress -Name $ipResource.Name -ResourceGroupName $ipResource.ResourceGroupName
+							$publicIpObject = Get-AzPublicIpAddress -Name $ipResource.Name -ResourceGroupName $ipResource.ResourceGroupName
 							if($publicIpObject)
 							{
 								$_.PublicIpAddress = $publicIpObject;
@@ -742,7 +742,7 @@ class VirtualMachine: SVTBase
 				ForEach-Object {	
 					try
 					{
-						$effectiveNSG = Get-AzureRmEffectiveNetworkSecurityGroup -NetworkInterfaceName $_.Name -ResourceGroupName $_.ResourceGroupName -WarningAction SilentlyContinue -ErrorAction Stop
+						$effectiveNSG = Get-AzEffectiveNetworkSecurityGroup -NetworkInterfaceName $_.Name -ResourceGroupName $_.ResourceGroupName -WarningAction SilentlyContinue -ErrorAction Stop
 					}
 					catch
 					{

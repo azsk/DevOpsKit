@@ -15,11 +15,11 @@ class SQLDatabaseFix: FixServicesBase
     {
 		[MessageData[]] $detailedLogs = @();
 
-		if((Get-AzureRmSqlServerActiveDirectoryAdministrator -ResourceGroup $this.ResourceGroupName -Server $this.ResourceName | Measure-Object).Count -le 0)
+		if((Get-AzSqlServerActiveDirectoryAdministrator -ResourceGroup $this.ResourceGroupName -Server $this.ResourceName | Measure-Object).Count -le 0)
 		{
 			$adAdmin = $parameters.ActiveDirectoryAdminEmailId;
 			$detailedLogs += [MessageData]::new("Setting up Active Directory admin [$adAdmin] for server [$($this.ResourceName)]...");
-			$adAdminResult = Set-AzureRmSqlServerActiveDirectoryAdministrator `
+			$adAdminResult = Set-AzSqlServerActiveDirectoryAdministrator `
 								-ResourceGroupName $this.ResourceGroupName `
 								-ServerName $this.ResourceName `
 								-DisplayName $adAdmin `
@@ -41,14 +41,14 @@ class SQLDatabaseFix: FixServicesBase
 		try
 		{
 			$sqlDatabases = @();
-			$sqlDatabases += Get-AzureRmSqlDatabase -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName -ErrorAction Stop |
+			$sqlDatabases += Get-AzSqlDatabase -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName -ErrorAction Stop |
 									Where-Object { $_.DatabaseName -ne "master" }
 			$sqlDatabases | ForEach-Object {
 				$database = $_
 				if($database.Status -eq 'Online')
 				{
 					try {
-						$tdeStatus = Get-AzureRmSqlDatabaseTransparentDataEncryption `
+						$tdeStatus = Get-AzSqlDatabaseTransparentDataEncryption `
 										-ResourceGroupName $this.ResourceGroupName `
 										-ServerName $this.ResourceName `
 										-DatabaseName $database.DatabaseName `
@@ -56,7 +56,7 @@ class SQLDatabaseFix: FixServicesBase
 
 						if($tdeStatus.State -ne [TransparentDataEncryptionStateType]::Enabled) {
 							$detailedLogs += [MessageData]::new("Enabling SQL TDE on database [$($database.DatabaseName)]...");
-							$tdeStatus = Set-AzureRmSqlDatabaseTransparentDataEncryption `
+							$tdeStatus = Set-AzSqlDatabaseTransparentDataEncryption `
 											-ResourceGroupName $this.ResourceGroupName `
 											-ServerName $this.ResourceName `
 											-DatabaseName $database.DatabaseName `
@@ -89,7 +89,7 @@ class SQLDatabaseFix: FixServicesBase
 		[MessageData[]] $detailedLogs = @();
 		$storageAccountName = $parameters.StorageAccountName;
 		$detailedLogs += [MessageData]::new("Setting up audit policy for server [$($this.ResourceName)] with storage account [$storageAccountName]...");
-        Set-AzureRmSqlServerAuditing `
+        Set-AzSqlServerAuditing `
 				-ResourceGroupName $this.ResourceGroupName `
 				-ServerName $this.ResourceName `
 				-StorageAccountName $storageAccountName `
@@ -107,7 +107,7 @@ class SQLDatabaseFix: FixServicesBase
 		$storageAccountName = $parameters.StorageAccountName;
 		$detailedLogs += [MessageData]::new("Setting up audit policy for database [$databaseName] with storage account [$storageAccountName]...");
 		
-		Set-AzureRmSqlDatabaseAuditing `
+		Set-AzSqlDatabaseAuditing `
 				-ResourceGroupName $this.ResourceGroupName `
 				-ServerName $this.ResourceName `
 				-DatabaseName $databaseName `
@@ -133,7 +133,7 @@ class SQLDatabaseFix: FixServicesBase
 			$detailedLogs += $this.EnableServerAuditingPolicy($parameters)
 		}
 
-        Set-AzureRmSqlServerThreatDetectionPolicy `
+        Set-AzSqlServerThreatDetectionPolicy `
 				-ResourceGroupName $this.ResourceGroupName `
 				-ServerName $this.ResourceName `
 				-StorageAccountName $storageAccountName `
@@ -159,7 +159,7 @@ class SQLDatabaseFix: FixServicesBase
 			$detailedLogs += $this.EnableDatabaseAuditingPolicy($parameters, $databaseName);
 		}
 
-		Set-AzureRmSqlDatabaseThreatDetectionPolicy `
+		Set-AzSqlDatabaseThreatDetectionPolicy `
 				-ResourceGroupName $this.ResourceGroupName `
 				-ServerName $this.ResourceName `
 				-DatabaseName $databaseName `
@@ -176,7 +176,7 @@ class SQLDatabaseFix: FixServicesBase
 	hidden [bool] IsServerAuditEnabled()
 	{
 		$result = $false;
-        $serverAudit = Get-AzureRmSqlServerAuditing -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName; 
+        $serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName; 
 		$result = ($serverAudit -and $serverAudit.AuditState -eq [AuditStateType]::Enabled)
 		return $result
 	}
@@ -184,7 +184,7 @@ class SQLDatabaseFix: FixServicesBase
 	hidden [bool] IsDatabaseAuditEnabled([string] $databaseName)
 	{
 		$result = $false;
-        $dbAudit = Get-AzureRmSqlDatabaseAuditing -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName -DatabaseName $databaseName; 
+        $dbAudit = Get-AzSqlDatabaseAuditing -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName -DatabaseName $databaseName; 
 		$result = ($dbAudit -and $dbAudit.AuditState -eq [AuditStateType]::Enabled)
 		return $result
 	}

@@ -84,7 +84,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale":  "Setting up storage data source using PowerShell command eliminates the risk of exposing storage account key (because the key itself is not displayed on the GUI at all).",
-      "Recommendation": "Setup storage data source using PowerShell command 'Add-AzureRmDataLakeAnalyticsDataSource -ResourceGroupName <ResourceGroup> -Account <ADLAAccount> -AzureBlob <StorageAccount> -AccessKey ((Get-AzureRmStorageAccountKey -ResourceGroupName <ResourceGroupOfStorageAccount> -Name <StorageAccountName>).Key1",
+      "Recommendation": "Setup storage data source using PowerShell command 'Add-AzureRmDataLakeAnalyticsDataSource -ResourceGroupName <ResourceGroup> -Account <ADLAAccount> -AzureBlob <StorageAccount> -AccessKey ((Get-AzStorageAccountKey -ResourceGroupName <ResourceGroupOfStorageAccount> -Name <StorageAccountName>).Key1",
       "Tags": [
         "SDL",
         "Best Practice",

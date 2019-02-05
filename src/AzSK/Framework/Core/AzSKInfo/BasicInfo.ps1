@@ -16,7 +16,7 @@ class BasicInfo: CommandBase
     { 
 		$this.DoNotOpenOutputFolder = $true;
 		$this.AzSKRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-		$this.AzSKRG = Get-AzureRmResourceGroup -Name $this.AzSKRGName -ErrorAction SilentlyContinue
+		$this.AzSKRG = Get-AzResourceGroup -Name $this.AzSKRGName -ErrorAction SilentlyContinue
 	}
 	
 	GetBasicInfo()
@@ -26,7 +26,7 @@ class BasicInfo: CommandBase
 		$rmContext = [Helpers]::GetCurrentRMContext();
 		$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nList of subscriptions " + $rmContext.Account.Type + " " + $rmContext.Account +" is having access to`r`n" + [Constants]::SingleDashLine, [MessageType]::Default);
 		
-		$subscriptions = Get-AzureRmSubscription
+		$subscriptions = Get-AzSubscription
 		$this.PublishCustomMessage(($subscriptions | Select-Object @{N='Subscription Id'; E={$_.Id}}, @{N='Subscription Name'; E={$_.Name}} | Format-Table | Out-String), [MessageType]::Default)
 		
 		$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nExamining " + $this.InvocationContext.MyCommand.ModuleName +" components for subscription: " + $this.SubscriptionContext.SubscriptionId + " ("+ $this.SubscriptionContext.SubscriptionName +")" +"`r`n" + [Constants]::SingleDashLine, [MessageType]::Default);
@@ -183,7 +183,7 @@ class BasicInfo: CommandBase
 		$configuredVersion = "Not Available"
 		$serverVersion = ([ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion);
 		$actionMessage = "Use 'Install-AzSKContinuousAssurance' to install Continuous Assurance"
-		$caAutomationAccount = Get-AzureRmAutomationAccount -Name $this.AutomationAccountName -ResourceGroupName $this.AzSKRGName -ErrorAction SilentlyContinue
+		$caAutomationAccount = Get-AzAutomationAccount -Name $this.AutomationAccountName -ResourceGroupName $this.AzSKRGName -ErrorAction SilentlyContinue
 		if($caAutomationAccount -and $caAutomationAccount.Tags.Count -gt 0 -and $caAutomationAccount.Tags.Contains('AzSKVersion'))
 		{
 			$configuredVersion = $caAutomationAccount.Tags['AzSKVersion']

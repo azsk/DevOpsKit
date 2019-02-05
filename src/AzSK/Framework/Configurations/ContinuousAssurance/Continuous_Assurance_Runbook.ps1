@@ -86,14 +86,14 @@ function PublishEvent([string] $EventName, [hashtable] $Properties, [hashtable] 
 function CreateHelperSchedule($nextRetryIntervalInMinutes)
 {
     #create next run schedule
-    Get-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName `
-    -ResourceGroupName $AutomationAccountRG -Name $CAHelperScheduleName -ErrorAction SilentlyContinue | Remove-AzureRmAutomationSchedule -Force
+    Get-AzAutomationSchedule -AutomationAccountName $AutomationAccountName `
+    -ResourceGroupName $AutomationAccountRG -Name $CAHelperScheduleName -ErrorAction SilentlyContinue | Remove-AzAutomationSchedule -Force
 
-    New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $CAHelperScheduleName `
+    New-AzAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $CAHelperScheduleName `
                     -ResourceGroupName $AutomationAccountRG -StartTime $(get-date).AddMinutes($nextRetryIntervalInMinutes) `
                     -OneTime -ErrorAction Stop | Out-Null
 
-    Register-AzureRmAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $CAHelperScheduleName `
+    Register-AzAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $CAHelperScheduleName `
                     -ResourceGroupName $AutomationAccountRG `
                     -AutomationAccountName $AutomationAccountName -ErrorAction Stop | Out-Null
 	PublishEvent -EventName "CA Job Rescheduled" -Properties @{"IntervalInMinutes" = $nextRetryIntervalInMinutes}
@@ -228,9 +228,9 @@ try
 		if($Null -ne $loginCmdlets)
 		{
 			#AzureRm.profile version = 5.x.x
-			if($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Connect-AzureRmAccount"}))
+			if($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Connect-AzAccount"}))
 			{
-				Connect-AzureRmAccount `
+				Connect-AzAccount `
 				-Environment $AzureEnv `
 				-ServicePrincipal `
 				-TenantId $RunAsConnection.TenantId `
@@ -257,7 +257,7 @@ try
 			throw "RB: Failed to login to Azure. Check if AzureRm.profile module is present."
 		}
 		
-		Set-AzureRmContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
+		Set-AzContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
 	}
 	catch
 	{

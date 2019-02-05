@@ -7,7 +7,7 @@
 	$ModuleList.Keys | ForEach-Object{
 	$ModuleName = $_
     $ModuleVersion = $ModuleList.Item($_)
-    $Module = Get-AzureRmAutomationModule `
+    $Module = Get-AzAutomationModule `
         -ResourceGroupName $AutomationAccountRG `
         -AutomationAccountName $AutomationAccountName `
         -Name $ModuleName -ErrorAction SilentlyContinue
@@ -74,7 +74,7 @@ function DownloadModule
 		$retryCount = 0
 		do{
 			$retryCount++
-			$AutomationModule = New-AzureRmAutomationModule `
+			$AutomationModule = New-AzAutomationModule `
 					-ResourceGroupName $AutomationAccountRG `
 					-AutomationAccountName $AutomationAccountName `
 					-Name $ModuleName `
@@ -93,7 +93,7 @@ function DownloadModule
                 {
                     #Module is in extracting state
                     Start-Sleep -Seconds 120
-                    $AutomationModule = $AutomationModule | Get-AzureRmAutomationModule
+                    $AutomationModule = $AutomationModule | Get-AzAutomationModule
                 }
                 if($AutomationModule.ProvisioningState -eq "Failed")
                 {
@@ -113,7 +113,7 @@ function IsModuleHealthy
 		[string] $ModuleVersion
     )
 	$SearchResult = SearchModule -ModuleName $ModuleName -ModuleVersion $ModuleVersion
-    $Module = Get-AzureRmAutomationModule `
+    $Module = Get-AzAutomationModule `
         -ResourceGroupName $AutomationAccountRG `
         -AutomationAccountName $AutomationAccountName `
         -Name $ModuleName -ErrorAction SilentlyContinue
@@ -286,34 +286,34 @@ function AddDependentModules
 
 function RemoveOnetimeHelperSchedule()
 {
-	$schedule = Get-AzureRmAutomationSchedule -Name $CAHelperScheduleName `
+	$schedule = Get-AzAutomationSchedule -Name $CAHelperScheduleName `
 	-ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName `
 	-ErrorAction SilentlyContinue
 	
 	if(($schedule | Measure-Object).Count -gt 0 -and ($schedule.Frequency -eq [Microsoft.Azure.Commands.Automation.Model.ScheduleFrequency]::Onetime))
 	{
-		Remove-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $CAHelperScheduleName -ResourceGroupName $AutomationAccountRG -Force -ErrorAction SilentlyContinue | Out-Null		
+		Remove-AzAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $CAHelperScheduleName -ResourceGroupName $AutomationAccountRG -Force -ErrorAction SilentlyContinue | Out-Null		
 	}
 }
 function CreateNewScheduleIfNotExists($scheduleName,$startTime)
 {
-	$scheduleExists = (Get-AzureRmAutomationSchedule -Name $scheduleName `
+	$scheduleExists = (Get-AzAutomationSchedule -Name $scheduleName `
 	-ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName `
 	-ErrorAction SilentlyContinue | Measure-Object).Count -gt 0 
 	
 	if(!$scheduleExists)
 	{
-		New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleName `
+		New-AzAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleName `
                     -ResourceGroupName $AutomationAccountRG -StartTime $startTime `
 					-HourInterval 1 -Description "This schedule ensures that CA activity initiated by the Scan_Schedule actually completes. Do not disable/delete this schedule." `
 					-ErrorAction Stop | Out-Null
 	}
 
-	$isRegistered = (Get-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG `
+	$isRegistered = (Get-AzAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG `
 						-RunbookName $RunbookName -ScheduleName $scheduleName -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0
 	if(!$isRegistered)
 	{
-		Register-AzureRmAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $scheduleName `
+		Register-AzAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $scheduleName `
 		-ResourceGroupName $AutomationAccountRG `
 		-AutomationAccountName $AutomationAccountName -ErrorAction Stop | Out-Null
 	}
@@ -342,25 +342,25 @@ function CreateHelperSchedules()
 
 function DisableHelperSchedules()
 {
-	Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
+	Get-AzAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
 	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*"} | `
 	Set-AzureRmAutomationSchedule -IsEnabled $false | Out-Null
 }
 function DisableHelperSchedules($excludeSchedule)
 {
-	Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
+	Get-AzAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
 	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*" -and $_.Name -ne $excludeSchedule} | `
 	Set-AzureRmAutomationSchedule -IsEnabled $false | Out-Null
 }
 function FindNearestSchedule($intervalInMins)
 {
 	$desiredNextRun = $(get-date).ToUniversalTime().AddMinutes($intervalInMins)
-	$finalSchedule = Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
+	$finalSchedule = Get-AzAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
 	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*" -and ($_.ExpiryTime.UtcDateTime -gt $(get-date).ToUniversalTime()) -and ($_.NextRun.UtcDateTime -ge $desiredNextRun)} | `
 	Sort-Object -Property NextRun | Select-Object -First 1
     if(($finalSchedule|Measure-Object).Count -eq 0)
     {
-        $finalSchedule = Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
+        $finalSchedule = Get-AzAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
         Where-Object {$_.Name -ilike "*$CAHelperScheduleName*" -and ($_.ExpiryTime.UtcDateTime -gt $(get-date).ToUniversalTime()) -and ($_.NextRun.UtcDateTime -le $desiredNextRun)} | `
         Sort-Object -Property NextRun -Descending | Select-Object -First 1
     }
@@ -446,7 +446,7 @@ function CheckAndUpdateExpiringPolicyUrl{
 		}
 		
 		#Export runbook to local directory
-		Export-AzureRmAutomationRunbook -Name $RunbookName -OutputFolder $outputFolderPath `
+		Export-AzAutomationRunbook -Name $RunbookName -OutputFolder $outputFolderPath `
 		-ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName `
 		-Force -Slot Published | Out-Null
 
@@ -481,14 +481,14 @@ function CheckAndUpdateExpiringPolicyUrl{
 			Write-Output ("CS: Found that runbook policy setup url SAS token is getting expired. Updating policy url with latest SAS token.")
 			$runbookContent | Out-File $runbookFilePath -Encoding utf8 -Force
 			#Remove existing runbook
-			$existingRunbook = Get-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName `
+			$existingRunbook = Get-AzAutomationRunbook -AutomationAccountName $AutomationAccountName `
 			-ResourceGroupName $AutomationAccountRG -RunbookName $RunbookName
-			$existingRunbook | remove-azurermautomationrunbook -Force
+			$existingRunbook | Remove-AzAutomationRunbook -Force
 		   
 			#Import latest runbook
 			$Description = "This runbook is responsible for running subscription health scan and resource scans (SVTs). It also keeps all modules up to date."
 			
-			Import-AzureRmAutomationRunbook -Name $RunbookName -Description $Description -Type 'PowerShell' `
+			Import-AzAutomationRunbook -Name $RunbookName -Description $Description -Type 'PowerShell' `
 			-Path $runbookFilePath `
 			-LogProgress $false -LogVerbose $false `
 			-AutomationAccountName $AutomationAccountName `
@@ -505,7 +505,7 @@ function CheckAndUpdateExpiringPolicyUrl{
 
 function IsScanComplete()
 {
-	$helperScheduleCount = (Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
+	$helperScheduleCount = (Get-AzAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue | `
 	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*"}|Measure-Object).Count
 	return ($helperScheduleCount -gt 1 -and $helperScheduleCount -lt 4)
 }
@@ -551,7 +551,7 @@ try
 		CreateHelperSchedules
 		return
 	}
-	$jobs = Get-AzureRmAutomationJob -Name $RunbookName -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName
+	$jobs = Get-AzAutomationJob -Name $RunbookName -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName
 
 	#Find out how many times has CA runbook run today for this account...
 	$TodaysJobs = $jobs | Where-Object {$_.CreationTime.UtcDateTime.Date -eq $(get-date).ToUniversalTime().Date}
@@ -610,7 +610,7 @@ try
 	#region: check modules health 
 	#Examine the AzSK module(s) currently present in the automation account
 	$azskmodules = @()
-	$azskModules += Get-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG `
+	$azskModules += Get-AzAutomationModule -ResourceGroupName $AutomationAccountRG `
 						-AutomationAccountName $AutomationAccountName `
 						-ErrorAction SilentlyContinue | Where-Object { $_.Name -ilike "azsk*" }  
 
@@ -620,23 +620,23 @@ try
 		#Multiple modules! This anomaly can happen, for e.g., if someone setup AzSKPreview and then switched to AzSK (prod).
 		#Clean up all AzSK* modules.
 		Write-Output ("CS: Found mulitple AzSK* modules in the automation account. Cleaning them up and importing a fresh one.")
-		$azskModules | ForEach-Object { Remove-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $_.Name -ErrorAction SilentlyContinue -Force }
+		$azskModules | ForEach-Object { Remove-AzAutomationModule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $_.Name -ErrorAction SilentlyContinue -Force }
 	}
 	elseif($azskModules.Count -eq 1 -and $azskModules[0].Name -ne $AzSKModuleName)
 	{
 		Write-Output ("CS: Found [$($azskModules[0].Name)] in the automation account when looking for: [$AzSKModuleName]. Cleaning it up and importing a fresh one.")
-		Remove-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $azskModules[0].Name -ErrorAction SilentlyContinue -Force
+		Remove-AzAutomationModule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $azskModules[0].Name -ErrorAction SilentlyContinue -Force
 	}
 
 	#check health of various Azure PS modules (AzSK dependencies)
-	$azureModules = Get-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG `
+	$azureModules = Get-AzAutomationModule -ResourceGroupName $AutomationAccountRG `
 							-AutomationAccountName $AutomationAccountName `
 							-ErrorAction SilentlyContinue
 
 	#healthy modules will have 'ProvisioningState' == Succeeded or Created!
 	$areAzureModulesUnhealthy= ($azureModules| Where-Object { $_.Name -like 'Azure*' -and -not ($_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created")} | Measure-Object).Count -gt 0
 
-	$azskModule = Get-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG `
+	$azskModule = Get-AzAutomationModule -ResourceGroupName $AutomationAccountRG `
 							-AutomationAccountName $AutomationAccountName `
 							-Name $AzSKModuleName -ErrorAction SilentlyContinue
 

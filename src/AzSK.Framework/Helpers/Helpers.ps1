@@ -58,7 +58,7 @@ class Helpers {
 	{
 		if (-not [Helpers]::currentRMContext)
 		{
-			$rmContext = Get-AzureRmContext -ErrorAction Stop
+			$rmContext = Get-AzContext -ErrorAction Stop
 
 			if ((-not $rmContext) -or ($rmContext -and (-not $rmContext.Subscription -or -not $rmContext.Account))) {
 				[EventBase]::PublishGenericCustomMessage("No active Azure login session found. Initiating login flow...", [MessageType]::Warning);
@@ -72,7 +72,7 @@ class Helpers {
                 if(-not [string]::IsNullOrWhiteSpace($AzureEnvironment) -and $AzureEnvironment -ne [Constants]::DefaultAzureEnvironment) 
                 {
                     try{
-                        $rmLogin = Connect-AzureRmAccount -EnvironmentName $AzureEnvironment
+                        $rmLogin = Connect-AzAccount -EnvironmentName $AzureEnvironment
                     }
                     catch{
                         [EventBase]::PublishGenericException($_);
@@ -80,7 +80,7 @@ class Helpers {
                 }
                 else
                 {
-                $rmLogin = Connect-AzureRmAccount
+                $rmLogin = Connect-AzAccount
                 }
 				if ($rmLogin) {
                     $rmContext = $rmLogin.Context;	
@@ -903,10 +903,10 @@ class Helpers {
             [Helpers]::RegisterResourceProviderIfNotRegistered("microsoft.insights");
 
             #create storage
-            $status = Get-AzureRmStorageAccountNameAvailability -Name $StorageName
+            $status = Get-AzStorageAccountNameAvailability -Name $StorageName
             if($null -ne $status -and  $status.NameAvailable -eq $true)
             {
-                $newStorage = New-AzureRmStorageAccount -ResourceGroupName $ResourceGroup `
+                $newStorage = New-AzStorageAccount -ResourceGroupName $ResourceGroup `
                     -Name $StorageName `
                     -Type $storageSku `
                     -Location $Location `
@@ -917,7 +917,7 @@ class Helpers {
 
                 $retryAccount = 0
                 do {
-                    $storageObject = Get-AzureRmStorageAccount -ResourceGroupName $ResourceGroup -Name $StorageName -ErrorAction SilentlyContinue
+                    $storageObject = Get-AzStorageAccount -ResourceGroupName $ResourceGroup -Name $StorageName -ErrorAction SilentlyContinue
                     Start-Sleep -seconds 2
                     $retryAccount++
                 }while (!$storageObject -and $retryAccount -ne 6)
@@ -926,8 +926,8 @@ class Helpers {
 
                     #set diagnostics on
                     $currentContext = $storageObject.Context
-                    Set-AzureStorageServiceLoggingProperty -ServiceType Blob -LoggingOperations All -Context $currentContext -RetentionDays 365 -PassThru -ErrorAction Stop
-                    Set-AzureStorageServiceMetricsProperty -MetricsType Hour -ServiceType Blob -Context $currentContext -MetricsLevel ServiceAndApi -RetentionDays 365 -PassThru -ErrorAction Stop
+                    Set-AzStorageServiceLoggingProperty -ServiceType Blob -LoggingOperations All -Context $currentContext -RetentionDays 365 -PassThru -ErrorAction Stop
+                    Set-AzStorageServiceMetricsProperty -MetricsType Hour -ServiceType Blob -Context $currentContext -MetricsLevel ServiceAndApi -RetentionDays 365 -PassThru -ErrorAction Stop
                 }
             }
             else
@@ -939,7 +939,7 @@ class Helpers {
             [EventBase]::PublishGenericException($_);
             $storageObject = $null
             #clean-up storage if error occurs
-            if ((Get-AzureRmResource -ResourceGroupName $ResourceGroup -Name $StorageName|Measure-Object).Count -gt 0) {
+            if ((Get-AzResource -ResourceGroupName $ResourceGroup -Name $StorageName|Measure-Object).Count -gt 0) {
             # caused deletion of storage on any exception.
                 # Remove-AzureRmStorageAccount -ResourceGroupName $ResourceGroup -Name $StorageName -Force -ErrorAction SilentlyContinue
                 
@@ -976,7 +976,7 @@ class Helpers {
 	}
 
 	static [void] SetResourceGroupTags([string]$RGName, [PSObject]$TagsHashTable, [bool] $Remove, [bool] $update) {
-		$azskResourceGroup = Get-AzureRmResourceGroup -Name $RGName -ErrorAction SilentlyContinue;
+		$azskResourceGroup = Get-AzResourceGroup -Name $RGName -ErrorAction SilentlyContinue;
 		if(($azskResourceGroup | Measure-Object).Count -gt 0)
 		{
 			$tags = $azskResourceGroup.Tags;
@@ -1007,7 +1007,7 @@ class Helpers {
 			}
 			try
 			{
-				Set-AzureRmResourceGroup -Name $RGName -Tag $tags -ErrorAction Stop
+				Set-AzResourceGroup -Name $RGName -Tag $tags -ErrorAction Stop
 			}
 			catch
 			{
@@ -1018,7 +1018,7 @@ class Helpers {
     }
 
 	static [void] SetResourceTags([string] $ResourceId, [PSObject] $TagsHashTable, [bool] $Remove, [bool] $update) {
-		$azskResource = Get-AzureRmResource -ResourceId $ResourceId -ErrorAction SilentlyContinue;
+		$azskResource = Get-AzResource -ResourceId $ResourceId -ErrorAction SilentlyContinue;
 		if(($azskResource | Measure-Object).Count -gt 0)
 		{
 			$tags = $azskResource.Tags;
@@ -1049,7 +1049,7 @@ class Helpers {
 			}			
 			try
 			{
-				Set-AzureRmResource -ResourceId $ResourceId -Tag $tags -Force -ErrorAction Stop
+				Set-AzResource -ResourceId $ResourceId -Tag $tags -Force -ErrorAction Stop
 			}
 			catch
 			{
@@ -1060,7 +1060,7 @@ class Helpers {
 
 	static [PSObject] GetResourceGroupTags([string]$RGName)
 	{
-		$azskResourceGroup = Get-AzureRmResourceGroup -Name $RGName -ErrorAction SilentlyContinue;
+		$azskResourceGroup = Get-AzResourceGroup -Name $RGName -ErrorAction SilentlyContinue;
 		$tags = @{}
 		if(($azskResourceGroup | Measure-Object).Count -gt 0)
 		{
@@ -1075,7 +1075,7 @@ class Helpers {
 
 	static [string] GetResourceGroupTag([string]$RGName, [string] $tagName)
 	{
-		$azskResourceGroup = Get-AzureRmResourceGroup -Name $RGName -ErrorAction SilentlyContinue;
+		$azskResourceGroup = Get-AzResourceGroup -Name $RGName -ErrorAction SilentlyContinue;
 		$tags = @{}
 		if(($azskResourceGroup | Measure-Object).Count -gt 0)
 		{
@@ -1102,7 +1102,7 @@ class Helpers {
                     "CreationTime" = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss");
                 }
             
-            $newRG = New-AzureRmResourceGroup -Name $ResourceGroup -Location $Location `
+            $newRG = New-AzResourceGroup -Name $ResourceGroup -Location $Location `
                 -Tag $RGTags `
                 -ErrorAction Stop
 
@@ -1117,7 +1117,7 @@ class Helpers {
 
     static [void] CreateNewResourceGroupIfNotExists([string]$ResourceGroup, [string]$Location, [string] $Version) 
     {
-       if((Get-AzureRmResourceGroup -Name $ResourceGroup -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0)
+       if((Get-AzResourceGroup -Name $ResourceGroup -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0)
 	    {
 		    [Helpers]::NewAzSKResourceGroup($ResourceGroup,$Location,$Version)
 	    }  
@@ -1146,7 +1146,7 @@ class Helpers {
 		#Ignore errors in case user doesn't have subscription scope role/not authorized to perform role assignment read
 		$roleAssignments = @();
 		#same tenant
-		$roleAssignments += Get-AzureRmRoleAssignment -Scope "/subscriptions/$SubscriptionId" -IncludeClassicAdministrators -ErrorAction SilentlyContinue | Where-Object { ($_.SignInName -like '*#EXT#@*.onmicrosoft.com' -and $_.SignInName.Split("#EXT#")[0] -eq ($signInId -replace "@","_")) -or $_.SignInName -eq $signInId }
+		$roleAssignments += Get-AzRoleAssignment -Scope "/subscriptions/$SubscriptionId" -IncludeClassicAdministrators -ErrorAction SilentlyContinue | Where-Object { ($_.SignInName -like '*#EXT#@*.onmicrosoft.com' -and $_.SignInName.Split("#EXT#")[0] -eq ($signInId -replace "@","_")) -or $_.SignInName -eq $signInId }
 
 		$userRoles = @();
 		if(($roleAssignments | Measure-Object).Count -gt 0)
@@ -1227,7 +1227,7 @@ class Helpers {
 		{
 			[EventBase]::PublishGenericCustomMessage(" `r`nThe resource provider: [$provideNamespace] is not registered on the subscription. `r`nRegistering resource provider, this can take up to a minute...", [MessageType]::Warning);
 
-			Register-AzureRmResourceProvider -ProviderNamespace $provideNamespace
+			Register-AzResourceProvider -ProviderNamespace $provideNamespace
 
 			$retryCount = 10;
 			while($retryCount -ne 0 -and (-not [Helpers]::IsProviderRegistered($provideNamespace)))
@@ -1251,7 +1251,7 @@ class Helpers {
 
 	hidden static [bool] IsProviderRegistered([string] $provideNamespace)
 	{
-		return ((Get-AzureRmResourceProvider -ProviderNamespace $provideNamespace | Where-Object { $_.RegistrationState -ne "Registered" } | Measure-Object).Count -eq 0);
+		return ((Get-AzResourceProvider -ProviderNamespace $provideNamespace | Where-Object { $_.RegistrationState -ne "Registered" } | Measure-Object).Count -eq 0);
 	}
 
 	static [PSObject] DeepCopy([PSObject] $inputObject)
@@ -1269,10 +1269,10 @@ class Helpers {
 	{
 		$result = $false;
 		$gateways = @();
-		$gateways += Get-AzureRmVirtualNetworkGateway -ResourceGroupName $resourceGroupName | Where-Object { $_.GatewayType -eq "ExpressRoute" }
+		$gateways += Get-AzVirtualNetworkGateway -ResourceGroupName $resourceGroupName | Where-Object { $_.GatewayType -eq "ExpressRoute" }
 		if($gateways.Count -ne 0)
 		{
-			$vNet = Get-AzureRmVirtualNetwork -Name $resourceName -ResourceGroupName $resourceGroupName 
+			$vNet = Get-AzVirtualNetwork -Name $resourceName -ResourceGroupName $resourceGroupName 
 			if($vnet)
 			{
 				$subnetIds = @();
@@ -1433,9 +1433,9 @@ class Helpers {
 		While($null -eq $assignedRole -and $retryCount -le 6)
 		{
 			#Assign RBAC to SPN - contributor at RG
-			New-AzureRMRoleAssignment -Scope $Scope -RoleDefinitionName $Role -ServicePrincipalName $ApplicationId -ErrorAction SilentlyContinue | Out-Null
+			New-AzRoleAssignment -Scope $Scope -RoleDefinitionName $Role -ServicePrincipalName $ApplicationId -ErrorAction SilentlyContinue | Out-Null
 			Start-Sleep -Seconds 10
-			$assignedRole = Get-AzureRmRoleAssignment -ServicePrincipalName $ApplicationId -Scope $Scope -RoleDefinitionName $Role -ErrorAction SilentlyContinue
+			$assignedRole = Get-AzRoleAssignment -ServicePrincipalName $ApplicationId -Scope $Scope -RoleDefinitionName $Role -ErrorAction SilentlyContinue
 			$retryCount++;
 		}
 		if($null -eq $assignedRole -and $retryCount -gt 6)

@@ -23,7 +23,7 @@ class DataFactory: SVTBase
 	hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzureRmDataFactory -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+            $this.ResourceObject = Get-AzDataFactory -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
 				if(-not $this.ResourceObject)
 				{
 					throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))
@@ -64,20 +64,20 @@ class DataFactory: SVTBase
     
         # Get linked services details
 		
-        $this.adfDetails.LinkedserviceDetails += Get-AzureRmDataFactoryLinkedService -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
+        $this.adfDetails.LinkedserviceDetails += Get-AzDataFactoryLinkedService -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
 		
 
         try{
         # Get pipelines count
 
              $pipelines = @();
-             $pipelines += Get-AzureRmDataFactoryPipeline -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
+             $pipelines += Get-AzDataFactoryPipeline -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
 		     $this.adfDetails.PipelinesCount = ($pipelines | Measure-Object).Count;
 
        
              #Get Dataset count
              $datasets = @();
-             $datasets += Get-AzureRmDataFactoryDataset -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
+             $datasets += Get-AzDataFactoryDataset -ResourceGroupName $this.ResourceContext.ResourceGroupName -DataFactoryName $this.ResourceContext.ResourceName;
              $this.adfDetails.DatasetsCount +=  ($datasets | Measure-Object).Count;
         }
         catch{

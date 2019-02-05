@@ -197,17 +197,17 @@ Class OMSHelper{
 		{
 			$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
 			#Step 2: Validate if CA is enabled on subscription
-			$automationAccDetails= Get-AzureRmAutomationAccount -ResourceGroupName $rgName -ErrorAction SilentlyContinue 
+			$automationAccDetails= Get-AzAutomationAccount -ResourceGroupName $rgName -ErrorAction SilentlyContinue 
 			if($automationAccDetails)
 			{
 				if([string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId))
 				{
 					#Step 3: Get workspace id from automation account variables
-					$omsWorkSpaceId = Get-AzureRmAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
+					$omsWorkSpaceId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
 					#Step 4: set workspace id and share key in setting file
 					if($omsWorkSpaceId)
 					{
-						$omsSharedKey = Get-AzureRmAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSSharedKey"						
+						$omsSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSSharedKey"						
 						if([Helpers]::CheckMember($omsSharedKey,"Value") -and (-not [string]::IsNullOrWhiteSpace($omsSharedKey.Value)))
 						{
 							#Step 6: Assign it to AzSKSettings Object
@@ -228,11 +228,11 @@ Class OMSHelper{
 				if([string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId))
 				{
 					#Step 3: Get workspace id from automation account variables
-					$omsWorkSpaceId = Get-AzureRmAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+					$omsWorkSpaceId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
 					#Step 4: set workspace id and share key in setting file
 					if($omsWorkSpaceId)
 					{
-						$omsSharedKey = Get-AzureRmAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSSharedKey"						
+						$omsSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSSharedKey"						
 						if([Helpers]::CheckMember($omsSharedKey,"Value") -and (-not [string]::IsNullOrWhiteSpace($omsSharedKey.Value)))
 						{
 							#Step 6: Assign it to AzSKSettings Object

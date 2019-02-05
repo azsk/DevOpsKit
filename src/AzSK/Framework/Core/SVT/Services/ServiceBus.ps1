@@ -25,7 +25,7 @@ class ServiceBus: SVTBase
         if (-not $this.NamespacePolicies) {
 			try
 			{
-				$this.NamespacePolicies = (Get-AzureRmServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
+				$this.NamespacePolicies = (Get-AzServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
 							-NamespaceName $this.ResourceContext.ResourceName | Select-Object Id, Name, Rights)
 			}
 			catch
@@ -39,7 +39,7 @@ class ServiceBus: SVTBase
 		if (-not $this.Queues) {
 			try
 			{
-				$this.Queues = Get-AzureRmServiceBusQueue -ResourceGroup $this.ResourceContext.ResourceGroupName -NamespaceName $this.ResourceContext.ResourceName
+				$this.Queues = Get-AzServiceBusQueue -ResourceGroup $this.ResourceContext.ResourceGroupName -NamespaceName $this.ResourceContext.ResourceName
 			}
 			catch
 			{
@@ -52,7 +52,7 @@ class ServiceBus: SVTBase
 		if (-not $this.Topics) {
 			try
 			{
-				$this.Topics = Get-AzureRmServiceBusTopic -ResourceGroup $this.ResourceContext.ResourceGroupName -NamespaceName $this.ResourceContext.ResourceName
+				$this.Topics = Get-AzServiceBusTopic -ResourceGroup $this.ResourceContext.ResourceGroupName -NamespaceName $this.ResourceContext.ResourceName
 			}
 			catch
 			{
@@ -71,7 +71,7 @@ class ServiceBus: SVTBase
 			{
 				try
 				{
-					$queuePolicies = Get-AzureRmServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
+					$queuePolicies = Get-AzServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
 										-NamespaceName $this.ResourceContext.ResourceName -Queue $queue.Name
 
 					$this.QueueAccessPolicies.Add($queue, ($queuePolicies | Select-Object Id, Name, Rights))	
@@ -93,7 +93,7 @@ class ServiceBus: SVTBase
 			{
 				try
 				{
-					$topicPolicies = Get-AzureRmServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
+					$topicPolicies = Get-AzServiceBusAuthorizationRule -ResourceGroup $this.ResourceContext.ResourceGroupName `
 										-NamespaceName $this.ResourceContext.ResourceName -Topic $topic.Name
 
 					$this.TopicAccessPolicies.Add($topic, ($topicPolicies| Select-Object Id, Name, Rights))	

@@ -154,7 +154,7 @@ class WriteCAStatus: ListenerBase
                         $PolicyUri = [string]::Format("{0}subscriptions/{1}/providers/Microsoft.PolicyInsights/policyStates/latest/queryResults?api-version=2018-07-01-preview",$resourceAppIdUri,$subId)
                         $policyCompliance = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Post, $PolicyUri,$null);
                         $policyCompliance = $policyCompliance | Select-Object ResourceId,PolicyDefinitionId,PolicyAssignmentName,IsCompliant,PolicyAssignmentScope
-                        #$policyCompliance = Get-AzureRmPolicyState -SubscriptionId $subId | Select-Object ResourceId,PolicyDefinitionId,PolicyAssignmentName,IsCompliant,PolicyAssignmentScope
+                        #$policyCompliance = Get-AzPolicyState -SubscriptionId $subId | Select-Object ResourceId,PolicyDefinitionId,PolicyAssignmentName,IsCompliant,PolicyAssignmentScope
                         [RemoteApiHelper]::PostPolicyComplianceTelemetry($policyCompliance);
                     }
                     catch {

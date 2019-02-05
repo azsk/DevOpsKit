@@ -11,7 +11,7 @@
             "Automated": "Yes",
             "MethodName": "CheckRBACAccess",
             "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-            "Recommendation": "Remove any excessive privileges granted on the API Management Service. Run command: Remove-AzureRmRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help.",
+            "Recommendation": "Remove any excessive privileges granted on the API Management Service. Run command: Remove-AzRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
             "Tags": [
                 "SDL",
                 "TCP",
@@ -30,7 +30,7 @@
             "Automated": "Yes",
             "MethodName": "CheckAPIMMetricAlert",
             "Rationale": "Metric alert for occurrence of unauthorized gateway requests help the admin to identify security breach attempts.",
-            "Recommendation": "Add or update a metric-based alert rule by using command Add-AzureRmMetricAlertRule -Location '{Location}'-MetricName 'UnauthorizedRequests' -Name '{alertName}' -Operator 'GreaterThan' -ResourceGroup '{ResourceGroupName}' -TargetResourceId '{TargetResourceId}' -Threshold 0 -TimeAggregationOperator 'Total' -WindowSize '01:00:00'  -Action '{Comma-separated list of actions}'. Please refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-use-azure-monitor#set-up-an-alert-rule-for-unauthorized-request.",
+            "Recommendation": "Add or update a metric-based alert rule by using command Add-AzMetricAlertRule -Location '{Location}'-MetricName 'UnauthorizedRequests' -Name '{alertName}' -Operator 'GreaterThan' -ResourceGroup '{ResourceGroupName}' -TargetResourceId '{TargetResourceId}' -Threshold 0 -TimeAggregationOperator 'Total' -WindowSize '01:00:00'  -Action '{Comma-separated list of actions}'. Please refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-use-azure-monitor#set-up-an-alert-rule-for-unauthorized-request.",
             "Tags": [
                 "SDL",
                 "TCP",

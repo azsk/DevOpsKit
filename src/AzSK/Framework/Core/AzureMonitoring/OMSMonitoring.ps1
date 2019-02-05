@@ -20,13 +20,13 @@ class OMSMonitoring: CommandBase
 			
 					$this.OMSResourceGroup = $_omsResourceGroup
 					$this.OMSWorkspaceId = $_omsWorkspaceId
-					$omsWorkSpaceInstance = Get-AzureRmOperationalInsightsWorkspace | Where-Object {$_.CustomerId -eq "$_omsWorkspaceId" -and $_.ResourceGroupName -eq  "$($this.OMSResourceGroup)"}
+					$omsWorkSpaceInstance = Get-AzOperationalInsightsWorkspace | Where-Object {$_.CustomerId -eq "$_omsWorkspaceId" -and $_.ResourceGroupName -eq  "$($this.OMSResourceGroup)"}
 					if($null -eq $omsWorkSpaceInstance)
 					{
 						throw [SuppressedException] "Invalid OMS Workspace."
 					}
 					$this.OMSWorkspaceName = $omsWorkSpaceInstance.Name;
-					$locationInstance = Get-AzureRmLocation | Where-Object { $_.DisplayName -eq $omsWorkSpaceInstance.Location -or  $_.Location -eq $omsWorkSpaceInstance.Location } 
+					$locationInstance = Get-AzLocation | Where-Object { $_.DisplayName -eq $omsWorkSpaceInstance.Location -or  $_.Location -eq $omsWorkSpaceInstance.Location } 
 					$this.OMSLocation = $locationInstance.Location
 				
 		
@@ -84,7 +84,7 @@ class OMSMonitoring: CommandBase
 		$ErrorMessages = @()
         if ($_validateOnly) {
             $ErrorMessages =@()
-                Test-AzureRmResourceGroupDeployment -ResourceGroupName $this.OMSResourceGroup `
+                Test-AzResourceGroupDeployment -ResourceGroupName $this.OMSResourceGroup `
                                                     -TemplateFile $this.OMSGenericTemplateFilepath `
                                                     -TemplateParameterObject $OptionalParameters -Verbose
 		}
@@ -92,7 +92,7 @@ class OMSMonitoring: CommandBase
 
             $ErrorMessages =@()
 			$SubErrorMessages = @()
-            New-AzureRmResourceGroupDeployment -Name ((Get-ChildItem $this.OMSGenericTemplateFilepath).BaseName + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
+            New-AzResourceGroupDeployment -Name ((Get-ChildItem $this.OMSGenericTemplateFilepath).BaseName + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
                                         -ResourceGroupName $this.OMSResourceGroup `
                                         -TemplateFile $this.OMSGenericTemplateFilepath  `
                                         -TemplateParameterObject $OptionalParameters `
