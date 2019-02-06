@@ -56,7 +56,7 @@ class Storage: SVTBase
 		else{
 			$result = $result | Where-Object {$_.Tags -contains "GeneralPurposeStorage" }
 		}
-		
+		$resource = Get-AzureRmResource -ResourceId $this.ResourceContext.ResourceId;
 		$recourcelocktype = Get-AzureRmResourceLock -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType
 		if($recourcelocktype)
 		{
@@ -65,9 +65,15 @@ class Storage: SVTBase
 				$result = $result | Where-Object {$_.Tags -notcontains "ResourceLocked" }
 			}
 			$this.LockExists = $true;
+
+            # Check for tags if it contains any azure locked application tag, skip control scan
+            if($resource.Tags.ContainsKey("application") -and $resource.Tags.Containskey("databricks-environment") -and $resource.Tags.application -eq "databricks")
+            {
+               $result = $result | Where-Object {$_.ControlID -ne "Azure_Storage_AuthN_Dont_Allow_Anonymous" }
+            }
+
 		}
 
-		$resource = Get-AzureRmResource -ResourceId $this.ResourceContext.ResourceId;
 		#Disabling the control 'Azure_Storage_AuthN_Dont_Allow_Anonymous' for Data Lake Storage Gen2 resources with hierarchical namespace accounts enabled as blob storage is not currently supported.
 		if(([Helpers]::CheckMember($resource.Properties, "isHnsEnabled") -and ($resource.Properties.isHnsEnabled -eq $true))){
 			$result = $result | Where-Object {$_.Tags -notcontains "HNSDisabled" }
