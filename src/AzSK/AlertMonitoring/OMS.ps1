@@ -30,31 +30,31 @@ function Set-AzSKMonitoringSettings
 		[Parameter(Mandatory = $false, HelpMessage="Workspace ID of your Log Analytics instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("owid","wid")]
+		[Alias("owid","wid","WorkspaceID")]
         $OMSWorkspaceID,
 
         [Parameter(Mandatory = $false, HelpMessage="Shared key of your Log Analytics instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("okey","wkey")]
+		[Alias("okey","wkey","SharedKey")]
         $OMSSharedKey,
 
 		[Parameter(Mandatory = $false, HelpMessage="Workspace ID of your alternate Log Analytics instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("aowid","awid")]
+		[Alias("aowid","awid","AltWorkspaceID")]
         $AltOMSWorkspaceID,
 
         [Parameter(Mandatory = $false, HelpMessage="Shared key of your alternate Log Analytics instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("aokey","awkey")]
+		[Alias("aokey","awkey","AltSharedKey")]
         $AltOMSSharedKey,
 
 		[Parameter(Mandatory = $false, HelpMessage="Provide the source of Log Analytics Events.(e.g. CC,CICD,SDL)", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("so","sla")]
+		[Alias("so")]
         $Source,
 
         [Parameter(Mandatory = $true, HelpMessage="Use -Disable option to clean the Log Analytics setting under the current instance.", ParameterSetName = "Disable")]
@@ -164,18 +164,18 @@ function Install-AzSKMonitoringSolution
         [Parameter(ParameterSetName="NewModel", HelpMessage="Id of subscription hosting Log Analytics workspace", Mandatory = $true)]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("omssubid","omssid","lawsubid","lawsid")]
+		[Alias("omssubid","omssid","lawsubid","lawsid","LAWSubscriptionID")]
 		$OMSSubscriptionId,  
 				
 		[Parameter(ParameterSetName="NewModel", HelpMessage="Resource group hosting Log Analytics workspace", Mandatory = $true)]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("omsrg","lawrg")]
+		[Alias("omsrg","lawrg","LAWResourceGroup")]
 		$OMSResourceGroup, 
 
 		[Parameter(ParameterSetName="NewModel", HelpMessage="Workspace ID of the Log Analytics workspace which will be used for monitoring.", Mandatory = $true)]
         [string]
-		[Alias("owid","wid")]
+		[Alias("owid","wid","WorkspaceID")]
 		[ValidateNotNullOrEmpty()]
 		$OMSWorkspaceId, 
 		
@@ -203,6 +203,7 @@ function Install-AzSKMonitoringSolution
 	{
 		try
 		{
+			Write-Host "WARNING: The command 'Install-AzSKOMSSolution' will soon be deprecated. It will be renamed to 'Install-AzSKMonitoringSolution'.`n" -ForegroundColor Yellow
 			$OMSMonitoringInstance = [OMSMonitoring]::new($OMSSubscriptionId, $OMSResourceGroup, $OMSWorkspaceId, $PSCmdlet.MyInvocation);
 			$OMSMonitoringInstance.InvokeFunction($OMSMonitoringInstance.ConfigureOMS, @($ViewName, $ValidateOnly));
 		}
