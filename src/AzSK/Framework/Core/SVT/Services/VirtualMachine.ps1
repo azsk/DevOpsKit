@@ -16,7 +16,12 @@ class VirtualMachine: SVTBase
     VirtualMachine([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
         Base($subscriptionId, $resourceGroupName, $resourceName) 
     { 
-        $this.GetResourceObject();		
+		$this.GetResourceObject();	
+		$this.GetVMDetails();
+		$metadata= [PSObject]::new();
+		$metadata| Add-Member -Name VMDetails -Value $this.VMDetails -MemberType NoteProperty;
+		$metadata| Add-Member -Name VMASCDetails -Value $this.ASCSettings -MemberType NoteProperty;				
+		$this.AddResourceMetadata($metadata);	
     }
     
 	VirtualMachine([string] $subscriptionId, [SVTResource] $svtResource): 
