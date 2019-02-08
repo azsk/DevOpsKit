@@ -3360,9 +3360,9 @@ class CCAutomation: CommandBase
 	}
 	hidden [void] FixCAModules()
 	{
-		$automationModuleName = "AzureRM.Automation"
-		$storageModuleName = "Azure.Storage"
-        $profileModuleName = "AzureRm.profile"
+		$automationModuleName = "Az.Automation"
+		$storageModuleName = "Az.Storage"
+        $profileModuleName = "Az.Accounts"
 		$dependentModules = @()
 		$this.OutputObject.Modules = @() 
 		

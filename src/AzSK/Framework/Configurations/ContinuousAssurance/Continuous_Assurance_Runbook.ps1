@@ -224,13 +224,28 @@ try
 		
 		$appId = $RunAsConnection.ApplicationId 
 		Write-Output ("RB: Logging in to Azure for appId: [$appId]")
+		$Azlogin = Get-Command -Noun "AzAccount" -ErrorAction SilentlyContinue
 		$loginCmdlets = Get-Command -Noun "AzureRmAccount" -ErrorAction SilentlyContinue
+        if($Null -ne $Azlogin)
+        {if($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Connect-AzAccount"}))
+			{
+            Connect-AzAccount `
+				-Environment $AzureEnv `
+				-ServicePrincipal `
+				-Tenant $RunAsConnection.TenantId `
+				-ApplicationId $RunAsConnection.ApplicationId `
+				-CertificateThumbprint $RunAsConnection.CertificateThumbprint | Out-Null
+			
+           Set-AzContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
+        }}
+        else
+        {
 		if($Null -ne $loginCmdlets)
 		{
 			#AzureRm.profile version = 5.x.x
-			if($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Connect-AzAccount"}))
+			if($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Connect-AzureRmAccount"}))
 			{
-				Connect-AzAccount `
+				Connect-AzureRmAccount `
 				-Environment $AzureEnv `
 				-ServicePrincipal `
 				-TenantId $RunAsConnection.TenantId `
@@ -251,13 +266,13 @@ try
 			{
 				throw "RB: Failed to login to Azure. Check if AzureRm.profile module is present."
 			}
+            Set-AzureRmContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
 		}
 		else
 		{
 			throw "RB: Failed to login to Azure. Check if AzureRm.profile module is present."
 		}
-		
-		Set-AzContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
+	
 	}
 	catch
 	{
@@ -313,3 +328,4 @@ catch
 	throw;
 }
 #----------------------------------Runbook end-------------------------------------------------------------------------
+

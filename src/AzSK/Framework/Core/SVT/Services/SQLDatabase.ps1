@@ -70,7 +70,7 @@ class SQLDatabase: SVTBase
 		return $result;
 	}
 
-    hidden [ControlResult] CheckSqlServerVersionUpgrade([ControlResult] $controlResult)
+    <#hidden [ControlResult] CheckSqlServerVersionUpgrade([ControlResult] $controlResult)
     {
         $upgradeStatus = Get-AzSqlServerUpgrade -ResourceGroupName  $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
 
@@ -87,7 +87,7 @@ class SQLDatabase: SVTBase
         }
 
         return $controlResult;
-    }
+    }#>
 
     hidden [ControlResult] CheckSqlServerAuditing([ControlResult] $controlResult)
     {
