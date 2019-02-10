@@ -462,7 +462,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckMandatoryTags",
-      "Recommendation": "Verify whether the mandatory tags as per your organization policy is present on all the resource groups. Reference: https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-using-tags#portal",
+      "Recommendation": "Verify whether the mandatory tags as per your organization policy are present on all the resource groups. Reference: https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-using-tags#portal",
       "Tags": [
         "SDL",
         "TCP",
