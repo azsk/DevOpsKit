@@ -110,7 +110,7 @@ class ERvNet : SVTIaasBase
 
 	hidden [ControlResult] CheckVnetPeering([ControlResult] $controlResult)
     {
-        $vnetPeerings = Get-AzureRmVirtualNetworkPeering -VirtualNetworkName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+        $vnetPeerings = Get-AzVirtualNetworkPeering -VirtualNetworkName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
         if($null -ne $vnetPeerings -and ($vnetPeerings|Measure-Object).count -gt 0)
         {
 			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Below peering found on ERVNet", $vnetPeerings));
@@ -211,7 +211,7 @@ class ERvNet : SVTIaasBase
     {
         $nonERvNetGateways = @()
 		$hasTCPPassed = $true
-        $gateways = Get-AzureRmVirtualNetworkGateway -ResourceGroupName $this.ResourceContext.ResourceGroupName
+        $gateways = Get-AzVirtualNetworkGateway -ResourceGroupName $this.ResourceContext.ResourceGroupName
         $count = 0
         if(($null -ne $gateways) -and (($gateways | Measure-Object).count -gt 0))
         {
@@ -267,7 +267,7 @@ class ERvNet : SVTIaasBase
     {
 		$invalidlbList = @()
         $hasTCPPassed = $true
-        $ilbs = Get-AzureRmLoadBalancer
+        $ilbs = Get-AzLoadBalancer
         $count = 0
 
         if($null -ne $ilbs -and ($ilbs|Measure-Object).count -gt 0)
@@ -287,7 +287,7 @@ class ERvNet : SVTIaasBase
                                 {
                                     $subParts = $frontEndIpConfig.PublicIpAddress.Id.Split('/')
                                     $publicIpResourceName = $subParts[$subParts.Length-1]
-                                    $pubResourceName = Get-AzureRmPublicIpAddress -Name $publicIpResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+                                    $pubResourceName = Get-AzPublicIpAddress -Name $publicIpResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
                                     $hasTCPPassed = $false
 
 									$invalidlb = New-Object System.Object
@@ -326,7 +326,7 @@ class ERvNet : SVTIaasBase
 
 	hidden [ControlResult] CheckOnlyNetworkResourceExist([ControlResult] $controlResult)
     {
-        $resources = [array](Get-AzureRmResource -ResourceGroupName $this.ResourceContext.ResourceGroupName)
+        $resources = [array](Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName)
 
         if($null -ne $resources)
         {
@@ -353,7 +353,7 @@ class ERvNet : SVTIaasBase
 
 	hidden [ControlResult] CheckResourceLockConfigured([ControlResult] $controlResult)
     {
-        $locks = [array](Get-AzureRMResourceLock -ResourceGroupName $this.ResourceContext.ResourceGroupName -AtScope)
+        $locks = [array](Get-AzResourceLock -ResourceGroupName $this.ResourceContext.ResourceGroupName -AtScope)
 
         if($null -eq $locks -or $locks.Length -le 0)
         {
@@ -394,7 +394,7 @@ class ERvNet : SVTIaasBase
                 $haveMatchedTags = (($tags | Where-Object { $UserTags.Contains($_.Trim().ToLower()) }).Length -gt 0)
                 if($polEnabled -and $haveMatchedTags)
                 {
-                    $mandatoryPolicies = [array](Get-AzureRMPolicyAssignment | Where-Object {$_.Name -eq $policyDefinitionName})
+                    $mandatoryPolicies = [array](Get-AzPolicyAssignment | Where-Object {$_.Name -eq $policyDefinitionName})
                     if($null -eq $mandatoryPolicies -or $mandatoryPolicies.Length -le 0)
                     {
                         $hasTCPPassed = $false

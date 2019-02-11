@@ -39,8 +39,8 @@ class ResourceGroupHelper: AzSKRoot
 	{
 		if(-not $this.ResourceGroup)
 		{
-			$rg = Get-AzureRmResourceGroup -Name $this.ResourceGroupName -ErrorAction ignore
-			#$rg = Get-AzureRmResourceGroup | Where-Object { $_.ResourceGroupName -eq $this.ResourceGroupName } | Select-Object -First 1
+			$rg = Get-AzResourceGroup -Name $this.ResourceGroupName -ErrorAction ignore
+			#$rg = Get-AzResourceGroup | Where-Object { $_.ResourceGroupName -eq $this.ResourceGroupName } | Select-Object -First 1
 			if(-not $rg)
 			{
 				$this.PublishCustomMessage("Creating resource group [$($this.ResourceGroupName)]...");
@@ -117,7 +117,7 @@ class StorageHelper: ResourceGroupHelper
                     $isAzSKStorage = $true
                 }               
 			}   
-            $existingResources = Get-AzureRmResource -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType
+            $existingResources = Get-AzResource -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType
             
             # Assuming 1 storage account is needed on Resource group
 			if(($existingResources | Measure-Object).Count -gt 1)
@@ -143,7 +143,7 @@ class StorageHelper: ResourceGroupHelper
 			}
 
 			# Fetch the Storage account context
-			$this.StorageAccount = Get-AzureRmStorageAccount -ResourceGroupName $this.ResourceGroupName -Name $this.StorageAccountName -ErrorAction Ignore
+			$this.StorageAccount = Get-AzStorageAccount -ResourceGroupName $this.ResourceGroupName -Name $this.StorageAccountName -ErrorAction Ignore
 			if(-not ($this.StorageAccount -and $this.StorageAccount.Context))
 			{
 				$this.StorageAccount = $null;
@@ -151,7 +151,7 @@ class StorageHelper: ResourceGroupHelper
 			}
 
 			#fetch access key
-			$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $this.ResourceGroupName -Name $this.StorageAccountName -ErrorAction SilentlyContinue 
+			$keys = Get-AzStorageAccountKey -ResourceGroupName $this.ResourceGroupName -Name $this.StorageAccountName -ErrorAction SilentlyContinue 
 			if($keys)
 			{
 				$this.AccessKey = $keys[0].Value;
@@ -180,11 +180,11 @@ class StorageHelper: ResourceGroupHelper
 
 		$this.CreateStorageIfNotExists();
 
-		$container = Get-AzureStorageContainer -Context $this.StorageAccount.Context -Name $containerName -ErrorAction Ignore
+		$container = Get-AzStorageContainer -Context $this.StorageAccount.Context -Name $containerName -ErrorAction Ignore
 		if(($container| Measure-Object).Count -eq 0)
 		{
 			$this.PublishCustomMessage("Creating storage container [$containerName]...");
-			$container = New-AzureStorageContainer -Context $this.StorageAccount.Context -Name $containerName -Permission $accessType
+			$container = New-AzStorageContainer -Context $this.StorageAccount.Context -Name $containerName -Permission $accessType
 			if($container)
 			{
 				$this.PublishCustomMessage("Successfully created storage container [$containerName]", [MessageType]::Update);
@@ -208,11 +208,11 @@ class StorageHelper: ResourceGroupHelper
 
 		$this.CreateStorageIfNotExists();
 
-		$table = Get-AzureStorageTable -Context $this.StorageAccount.Context -Name $tableName -ErrorAction Ignore
+		$table = Get-AzStorageTable -Context $this.StorageAccount.Context -Name $tableName -ErrorAction Ignore
 		if(($table| Measure-Object).Count -eq 0)
 		{
 			$this.PublishCustomMessage("Creating table [$tableName]...");
-			$table = New-AzureStorageTable -Name $tableName -Context $this.StorageAccount.Context 
+			$table = New-AzStorageTable -Name $tableName -Context $this.StorageAccount.Context 
 			if($table)
 			{
 				$this.PublishCustomMessage("Successfully created table: [$tableName] in storage: [$($this.StorageAccountName)]", [MessageType]::Update);
@@ -244,9 +244,9 @@ class StorageHelper: ResourceGroupHelper
 		try
 		{
 			
-			New-AzureStorageContainer -Context $this.StorageAccount.Context -Name $writeTestContainerName -ErrorAction Stop
+			New-AzStorageContainer -Context $this.StorageAccount.Context -Name $writeTestContainerName -ErrorAction Stop
 			$this.HaveWritePermissions = 1
-			Remove-AzureStorageContainer -Name $writeTestContainerName -Context  $this.StorageAccount.Context -ErrorAction SilentlyContinue -Force
+			Remove-AzStorageContainer -Name $writeTestContainerName -Context  $this.StorageAccount.Context -ErrorAction SilentlyContinue -Force
 		}
 		catch
 		{
@@ -298,15 +298,15 @@ class StorageHelper: ResourceGroupHelper
 					try {
 						if($overwrite)
 						{
-							Set-AzureStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context -Force | Out-Null
+							Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context -Force | Out-Null
 						}
 						else
 						{
-							$currentBlob = Get-AzureStorageBlob -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -ErrorAction Ignore
+							$currentBlob = Get-AzStorageBlob -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -ErrorAction Ignore
 						
 							if(-not $currentBlob)
 							{
-								Set-AzureStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context | Out-Null
+								Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context | Out-Null
 							}
 						}
 						$loopValue = 0;
@@ -338,10 +338,10 @@ class StorageHelper: ResourceGroupHelper
 			try {
 				if($overwrite)
 				{
-					Get-AzureStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $destinationPath -Force -ErrorAction Stop
+					Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $destinationPath -Force -ErrorAction Stop
 				}
 				else {
-					Get-AzureStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $destinationPath -ErrorAction Stop
+					Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $destinationPath -ErrorAction Stop
 				}
 				$loopValue = 0;
 			}
@@ -374,10 +374,10 @@ class StorageHelper: ResourceGroupHelper
 			try {
 				if($overwrite)
 				{
-					$blobDetails= Get-AzureStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -Force -ErrorAction Stop
+					$blobDetails= Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -Force -ErrorAction Stop
 				}
 				else {
-					$blobDetails= Get-AzureStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -ErrorAction Stop
+					$blobDetails= Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -ErrorAction Stop
 				}
 				$loopValue = 0;
 			}
@@ -397,7 +397,7 @@ class StorageHelper: ResourceGroupHelper
 	[string] GenerateSASToken([string] $containerName)
 	{
 		$this.CreateStorageContainerIfNotExists($containerName);
-		$sasToken = New-AzureStorageContainerSASToken -Name $containerName -Context $this.StorageAccount.Context -ExpiryTime (Get-Date).AddMonths(6) -Permission rl -Protocol HttpsOnly -StartTime (Get-Date).AddDays(-1)
+		$sasToken = New-AzStorageContainerSASToken -Name $containerName -Context $this.StorageAccount.Context -ExpiryTime (Get-Date).AddMonths(6) -Permission rl -Protocol HttpsOnly -StartTime (Get-Date).AddDays(-1)
 		if([string]::IsNullOrWhiteSpace($sasToken))
 		{
 			throw ([SuppressedException]::new("Unable to create SAS token for storage account [$($this.StorageAccountName)]", [SuppressedExceptionType]::InvalidOperation))
@@ -407,7 +407,7 @@ class StorageHelper: ResourceGroupHelper
 	[string] GenerateTableSASToken([string] $tableName)
 	{
 		$this.CreateTableIfNotExists($tableName);
-		$sasToken = New-AzureStorageTableSASToken -Context $this.StorageAccount.Context -Name $tableName -Permission rau -Protocol HttpsOnly -StartTime (Get-Date).AddDays(-1) -ExpiryTime (Get-Date).AddHours(6) 
+		$sasToken = New-AzStorageTableSASToken -Context $this.StorageAccount.Context -Name $tableName -Permission rau -Protocol HttpsOnly -StartTime (Get-Date).AddDays(-1) -ExpiryTime (Get-Date).AddHours(6) 
 		if([string]::IsNullOrWhiteSpace($sasToken))
 		{
 			throw ([SuppressedException]::new("Unable to create SAS token for table [$tableName] in storage account [$($this.StorageAccountName)]", [SuppressedExceptionType]::InvalidOperation))
@@ -418,7 +418,7 @@ class StorageHelper: ResourceGroupHelper
 	[void] GetStorageAccountInstance()
 	{
 		# Fetch the Storage account context
-		$this.StorageAccount = Get-AzureRmStorageAccount -ResourceGroupName $this.ResourceGroupName -Name $this.StorageAccountName -ErrorAction Ignore
+		$this.StorageAccount = Get-AzStorageAccount -ResourceGroupName $this.ResourceGroupName -Name $this.StorageAccountName -ErrorAction Ignore
 		if(-not ($this.StorageAccount -and $this.StorageAccount.Context))
 		{
 			$this.StorageAccount = $null;
@@ -447,16 +447,16 @@ class StorageHelper: ResourceGroupHelper
 		{
 			$loopValue = $loopValue - 1;
 			try {
-				$blobs = Get-AzureStorageBlob -Container $containerName -Context $($this.StorageAccount.Context) | Where-Object {$_.Name -like "*$folderName*"}				 
+				$blobs = Get-AzStorageBlob -Container $containerName -Context $($this.StorageAccount.Context) | Where-Object {$_.Name -like "*$folderName*"}				 
 				foreach ($blob in $blobs)
 				{
 					$blobName = $blob.Name
 					if($overwrite)
 					{
-						$blobList+=	Get-AzureStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -Force -ErrorAction Stop
+						$blobList+=	Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -Force -ErrorAction Stop
 					}
 					else{
-						$blobList+= Get-AzureStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -ErrorAction Stop
+						$blobList+= Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -ErrorAction Stop
 					}
 				}
 				$loopValue = 0;
@@ -502,7 +502,7 @@ class AppInsightHelper: ResourceGroupHelper
 		{
 			$this.CreateResourceGroupIfNotExists();
 			[Helpers]::RegisterResourceProviderIfNotRegistered("microsoft.insights");
-			$existingResources = Get-AzureRmResource -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType
+			$existingResources = Get-AzResource -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType
 
 			# Assuming 1 storage account is needed on Resource group
 			if(($existingResources | Measure-Object).Count -gt 1)
@@ -512,7 +512,7 @@ class AppInsightHelper: ResourceGroupHelper
 			elseif(($existingResources | Measure-Object).Count -eq 0)
 			{
 				$this.PublishCustomMessage("Creating an application insight resource ["+ $this.AppInsightName +"]...");
-				$newResource = New-AzureRmResource -ResourceName $this.AppInsightName -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType `
+				$newResource = New-AzResource -ResourceName $this.AppInsightName -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType `
 									-Location $this.AppInsightLocation -PropertyObject @{"Application_Type"="web"} -Force
 				if($newResource)
 				{
@@ -529,7 +529,7 @@ class AppInsightHelper: ResourceGroupHelper
 			}
 
 			# Fetch the application insight
-			$this.AppInsightInstance = Get-AzureRmResource -Name $this.AppInsightName -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType -ExpandProperties 
+			$this.AppInsightInstance = Get-AzResource -Name $this.AppInsightName -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType -ExpandProperties 
 			if(-not ($this.AppInsightInstance -and $this.AppInsightInstance.Properties))
 			{
 				$this.AppInsightInstance = $null;

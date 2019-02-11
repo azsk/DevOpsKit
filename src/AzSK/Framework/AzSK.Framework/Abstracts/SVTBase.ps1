@@ -185,7 +185,7 @@ class SVTBase: AzSKRoot
 		{
 			if($this.ResourceContext)
 			{
-           		$resource = Get-AzureRmResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+           		$resource = Get-AzResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
 
 				if($resource)
 				{
@@ -636,7 +636,7 @@ class SVTBase: AzSKRoot
 	{
 		$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName
 		$defnResourceId = $this.GetResourceId() + $controlItem.PolicyDefnResourceIdSuffix
-		$policyState = Get-AzureRmPolicyState -ResourceId $defnResourceId -Filter "PolicyDefinitionId eq '/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)' and PolicySetDefinitionName eq '$initiativeName'"
+		$policyState = Get-AzPolicyState -ResourceId $defnResourceId -Filter "PolicyDefinitionId eq '/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)' and PolicySetDefinitionName eq '$initiativeName'"
 		if($policyState)
         {
             $policyStateObject = $policyState | Select-Object ResourceId, PolicyAssignmentId, PolicyDefinitionId, PolicyAssignmentScope, PolicyDefinitionAction, PolicySetDefinitionName, IsCompliant
@@ -1068,7 +1068,7 @@ class SVTBase: AzSKRoot
 		$diagnostics = $Null
 		try
 		{
-			$diagnostics = Get-AzureRmDiagnosticSetting -ResourceId $this.GetResourceId() -ErrorAction Stop -WarningAction SilentlyContinue
+			$diagnostics = Get-AzDiagnosticSetting -ResourceId $this.GetResourceId() -ErrorAction Stop -WarningAction SilentlyContinue
 		}
 		catch
 		{
@@ -1183,7 +1183,7 @@ class SVTBase: AzSKRoot
 				$resIdMessageString = "for nested resource [$extendedResourceName]";
 			}
 
-			$resourceAlerts = (Get-AzureRmAlertRule -ResourceGroup $this.ResourceContext.ResourceGroupName -WarningAction SilentlyContinue) |
+			$resourceAlerts = (Get-AzAlertRule -ResourceGroup $this.ResourceContext.ResourceGroupName -WarningAction SilentlyContinue) |
 								Where-Object { $_.Condition -and $_.Condition.DataSource } |
 								Where-Object { $_.Condition.DataSource.ResourceUri -eq $resId };
 

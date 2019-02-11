@@ -22,7 +22,7 @@ class ContainerInstances: SVTBase
            # $this.ResourceObject = Get-AzureRmContainerGroup -Name $this.ResourceContext.ResourceName `
 											#-ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction SilentlyContinue
 
-            $this.ResourceObject = Get-AzureRmResource -Name $this.ResourceContext.ResourceName `
+            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName `
 											-ResourceGroupName $this.ResourceContext.ResourceGroupName -ExpandProperties
 
             if(-not $this.ResourceObject)

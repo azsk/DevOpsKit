@@ -12,13 +12,13 @@ class TrafficManagerFix: FixServicesBase
     {
 		[MessageData[]] $detailedLogs = @();
 		$detailedLogs += [MessageData]::new("Enabling 'HTTPS' protocol for endpoint monitoring on Traffic Manager Profile [$($this.ResourceName)]...");
-		$TrafficManagerProfile = Get-AzureRmTrafficManagerProfile -Name  $this.ResourceName -ResourceGroupName $this.ResourceGroupName 
+		$TrafficManagerProfile = Get-AzTrafficManagerProfile -Name  $this.ResourceName -ResourceGroupName $this.ResourceGroupName 
 		$TrafficManagerProfile.MonitorProtocol = 'HTTPS'
 		if([string]::IsNullOrWhiteSpace($TrafficManagerProfile.MonitorPath))
 		{
 			$TrafficManagerProfile.MonitorPath='/'
 		}
-		Set-AzureRmTrafficManagerProfile -TrafficManagerProfile $TrafficManagerProfile
+		Set-AzTrafficManagerProfile -TrafficManagerProfile $TrafficManagerProfile
 		$detailedLogs += [MessageData]::new("'HTTPS' protocol is enabled for endpoint monitoring on Traffic Manager Profile [$($this.ResourceName)]");
 		return $detailedLogs;
     }

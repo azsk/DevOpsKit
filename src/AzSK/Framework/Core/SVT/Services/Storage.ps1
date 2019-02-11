@@ -21,7 +21,7 @@ class Storage: SVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzureRmStorageAccount -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
+            $this.ResourceObject = Get-AzStorageAccount -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
                                                          
             if(-not $this.ResourceObject)
             {
@@ -56,7 +56,8 @@ class Storage: SVTBase
 		else{
 			$result = $result | Where-Object {$_.Tags -contains "GeneralPurposeStorage" }
 		}
-		$recourcelocktype = Get-AzureRmResourceLock -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType
+		
+		$recourcelocktype = Get-AzResourceLock -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType
 		if($recourcelocktype)
 		{
 			if($this.ResourceContext.ResourceGroupName -eq [OldConstants]::AzSDKRGName)
@@ -71,11 +72,8 @@ class Storage: SVTBase
 				 }
 			}
 		}
-		$resource = Get-AzureRmResource -ResourceId $this.ResourceContext.ResourceId;
+		$resource = Get-AzResource -ResourceId $this.ResourceContext.ResourceId;
 		#Disabling the control 'Azure_Storage_AuthN_Dont_Allow_Anonymous' for Data Lake Storage Gen2 resources with hierarchical namespace accounts enabled as blob storage is not currently supported.
-		if(([Helpers]::CheckMember($resource.Properties, "isHnsEnabled") -and ($resource.Properties.isHnsEnabled -eq $true))){
-			$result = $result | Where-Object {$_.Tags -notcontains "HNSDisabled" }
-		}
 
 		return $result;
 	}
@@ -85,7 +83,7 @@ class Storage: SVTBase
 		$allContainers = @();
 		try
 		{
-			$allContainers += Get-AzureStorageContainer -Context $this.ResourceObject.Context -ErrorAction Stop
+			$allContainers += Get-AzStorageContainer -Context $this.ResourceObject.Context -ErrorAction Stop
 		}
 		catch
 		{
@@ -360,7 +358,7 @@ class Storage: SVTBase
 
 	hidden [boolean] GetServiceLoggingProperty([string] $serviceType, [ControlResult] $controlResult)
 		{
-			$loggingProperty = Get-AzureStorageServiceLoggingProperty -ServiceType $ServiceType -Context $this.ResourceObject.Context -ErrorAction Stop
+			$loggingProperty = Get-AzStorageServiceLoggingProperty -ServiceType $ServiceType -Context $this.ResourceObject.Context -ErrorAction Stop
 			if($null -ne $loggingProperty){
 				#Check For Retention day's
 				if($loggingProperty.LoggingOperations -eq [LoggingOperations]::All -and (($loggingProperty.RetentionDays -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever) -or ($loggingProperty.RetentionDays -ge $this.ControlSettings.Diagnostics_RetentionPeriod_Min))){
@@ -380,7 +378,7 @@ class Storage: SVTBase
 
 	hidden [boolean] GetServiceMetricsProperty([string] $serviceType,[ControlResult] $controlResult)
 		{
-			$serviceMetricsProperty= Get-AzureStorageServiceMetricsProperty -MetricsType Hour -ServiceType $ServiceType -Context $this.ResourceObject.Context  -ErrorAction Stop
+			$serviceMetricsProperty= Get-AzStorageServiceMetricsProperty -MetricsType Hour -ServiceType $ServiceType -Context $this.ResourceObject.Context  -ErrorAction Stop
 			if($null -ne $serviceMetricsProperty){
 				#Check for Retention day's
 				if($serviceMetricsProperty.MetricsLevel -eq [MetricsLevel]::ServiceAndApi -and (($serviceMetricsProperty.RetentionDays -ge $this.ControlSettings.Diagnostics_RetentionPeriod_Min) -or ($serviceMetricsProperty.RetentionDays -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever)))
@@ -429,10 +427,10 @@ class Storage: SVTBase
 			#Currently only 'General purpose' or 'Blob storage' account kind is present 
 			#If new storage kind is introduced code needs to be updated as per new storage kind	
 			if($this.ResourceObject.Kind -eq "BlobStorage"){
-				$corsRules+= Get-AzureStorageCORSRule -Context $this.ResourceObject.Context -ServiceType Blob -ErrorAction Stop
+				$corsRules+= Get-AzStorageCORSRule -Context $this.ResourceObject.Context -ServiceType Blob -ErrorAction Stop
 			}
 			else{
-				"Blob","File","Table","Queue"|ForEach-Object {$corsRules +=Get-AzureStorageCORSRule -Context $this.ResourceObject.Context -ServiceType $_ -ErrorAction Stop}
+				"Blob","File","Table","Queue"|ForEach-Object {$corsRules +=Get-AzStorageCORSRule -Context $this.ResourceObject.Context -ServiceType $_ -ErrorAction Stop}
 			}			   		   		   
 			if($corsRules.Count -eq 0){
 				$controlResult.AddMessage([VerificationResult]::Passed,[MessageData]::new("The CORS feature has not been enabled on this storage account."));

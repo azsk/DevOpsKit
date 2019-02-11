@@ -26,7 +26,7 @@ class SVTIaasBase: SVTBase
 	hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzureRmVirtualNetwork -ResourceGroupName $this.ResourceContext.ResourceGroupName `
+            $this.ResourceObject = Get-AzVirtualNetwork -ResourceGroupName $this.ResourceContext.ResourceGroupName `
 											 -Name $this.ResourceContext.ResourceName
             if(-not $this.ResourceObject)
             {
@@ -53,7 +53,7 @@ class SVTIaasBase: SVTBase
 								$nicresourceid =  $currentipconfig.Substring(0,$currentipconfig.LastIndexOf("ipconfigurations")-1)
 								try
 								{
-									$nic = Get-AzureRmResource -ResourceId $nicresourceid
+									$nic = Get-AzResource -ResourceId $nicresourceid
 									$this.vNetNics += $nic
 								}
 								catch
@@ -93,8 +93,8 @@ class SVTIaasBase: SVTBase
 							{
 								if(($ipconfiguration | Get-Member -Name "Properties") -and ($ipconfiguration.Properties | Get-Member -Name "PublicIpAddress") -and $ipconfiguration.Properties.PublicIpAddress)
 								{
-									$IPResource = Get-AzureRmResource -ResourceId $ipconfiguration.Properties.PublicIpAddress.Id
-									$pubResourceName = Get-AzureRmPublicIpAddress -Name $IPResource.Name -ResourceGroupName $IPResource.ResourceGroupName
+									$IPResource = Get-AzResource -ResourceId $ipconfiguration.Properties.PublicIpAddress.Id
+									$pubResourceName = Get-AzPublicIpAddress -Name $IPResource.Name -ResourceGroupName $IPResource.ResourceGroupName
 									$PublicIpAddresses += $pubResourceName.IpAddress
 								}
 								$PrivateIpAddresses += $ipconfiguration.Properties.PrivateIpAddress
@@ -109,7 +109,7 @@ class SVTIaasBase: SVTBase
 
 						if(($nicproperties | Get-Member -Name "VirtualMachine") -and $nicproperties.VirtualMachine )
 						{
-							$vmresource = Get-AzureRmResource -ResourceId $nicproperties.VirtualMachine.Id
+							$vmresource = Get-AzResource -ResourceId $nicproperties.VirtualMachine.Id
 							$out.VMName = $vmresource.Name
 						}
 						else {
@@ -122,7 +122,7 @@ class SVTIaasBase: SVTBase
 
 						if(($nicproperties | Get-Member -Name "NetworkSecurityGroup") -and $nicproperties.NetworkSecurityGroup)
 						{
-							$nsgresource = Get-AzureRmResource -ResourceId $nicproperties.NetworkSecurityGroup.Id
+							$nsgresource = Get-AzResource -ResourceId $nicproperties.NetworkSecurityGroup.Id
 							$out.NetworkSecurityGroupName = $nsgresource.Name
 						}
 						$this.vNetNicsOutput += $out

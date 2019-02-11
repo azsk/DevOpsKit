@@ -20,9 +20,9 @@ class NotificationHub: SVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzureRmResource  -Name "*$($this.ResourceContext.ResourceName)*" -ResourceType "Microsoft.NotificationHubs/namespaces/notificationHubs"
+            $this.ResourceObject = Get-AzResource  -Name "*$($this.ResourceContext.ResourceName)*" -ResourceType "Microsoft.NotificationHubs/namespaces/notificationHubs"
 			$Namespace = $this.ResourceObject.Name.split("/")[0] 
-			$this.NamespaceObject = Get-AzureRmNotificationHubsNamespace -ResourceGroup $this.ResourceContext.ResourceGroupName -Namespace $Namespace
+			$this.NamespaceObject = Get-AzNotificationHubsNamespace -ResourceGroup $this.ResourceContext.ResourceGroupName -Namespace $Namespace
 
             if(-not $this.ResourceObject)
             {
@@ -36,7 +36,7 @@ class NotificationHub: SVTBase
 	hidden [ControlResult] CheckAuthorizationRule([ControlResult] $controlResult)
 	{
 		$resourceName = ($this.ResourceContext.ResourceName.Split("/")[1]);
-	 $accessPolicieswithManageRights =  (Get-AzureRmNotificationHubAuthorizationRules `
+	 $accessPolicieswithManageRights =  (Get-AzNotificationHubAuthorizationRules `
                                             -ResourceGroup $this.ResourceContext.ResourceGroupName `
                                             -Namespace $this.NamespaceObject.Name `
                                             -NotificationHub $resourceName) `

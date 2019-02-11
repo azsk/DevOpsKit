@@ -111,7 +111,7 @@ class VirtualNetwork: SVTIaasBase
                 $InvalidRulesList = @()
                 $subnetsWithNSG | ForEach-Object{
 							$nsgid = $_.NetworkSecurityGroup.Id
-							$nsglist = Get-AzureRmResource -ResourceId $nsgid
+							$nsglist = Get-AzResource -ResourceId $nsgid
 
 							$nsglist | ForEach-Object{
 								$rules = $_.Properties.SecurityRules
@@ -162,7 +162,7 @@ class VirtualNetwork: SVTIaasBase
 						{
 							$currentipconfig = $currentipconfig.Id.ToLower()
 							$gatewayresourceid =  $currentipconfig.Substring(0,$currentipconfig.LastIndexOf("ipconfigurations")-1)
-							$gateway = Get-AzureRmResource -ResourceId $gatewayresourceid
+							$gateway = Get-AzResource -ResourceId $gatewayresourceid
 
 							$vNetGateway = New-Object System.Object
 							$vNetGateway | Add-Member -type NoteProperty -name ResourceName -Value $gateway.Name
@@ -192,7 +192,7 @@ class VirtualNetwork: SVTIaasBase
 
 	hidden [ControlResult] CheckVnetPeering([ControlResult] $controlResult)
     {
-        $vnetPeerings = Get-AzureRmVirtualNetworkPeering -VirtualNetworkName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+        $vnetPeerings = Get-AzVirtualNetworkPeering -VirtualNetworkName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
         if($null -ne $vnetPeerings -and ($vnetPeerings|Measure-Object).count -gt 0)
         {
 			$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Verify below peering found on VNet", $vnetPeerings));

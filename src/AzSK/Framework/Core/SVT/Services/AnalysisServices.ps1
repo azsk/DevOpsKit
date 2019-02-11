@@ -19,9 +19,9 @@ class AnalysisServices: SVTBase
     {
         if (-not $this.ResourceObject) 
 		{
-			#Using command Get-AzureRmResource to get resource details (Admin and Backups details).
+			#Using command Get-AzResource to get resource details (Admin and Backups details).
 			#Get-AzureRmAnalysisServicesServer command not provides Backups details 
-            $this.ResourceObject = Get-AzureRmResource -Name $this.ResourceContext.ResourceName `
+            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName `
                                                        -ResourceGroupName $this.ResourceContext.ResourceGroupName `
                                                        -ResourceType $this.ResourceContext.ResourceType
             if(-not $this.ResourceObject)

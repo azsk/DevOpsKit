@@ -25,7 +25,7 @@ class SQLDatabase: SVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject =   Get-AzureRmResource -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+            $this.ResourceObject =   Get-AzResource -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
 
             if(-not $this.ResourceObject)
             {
@@ -42,7 +42,7 @@ class SQLDatabase: SVTBase
 			try
 			{
 				$this.SqlDatabases = @();
-				$this.SqlDatabases += Get-AzureRmSqlDatabase -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop |
+				$this.SqlDatabases += Get-AzRmSqlDatabase -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop |
 								Where-Object { $_.DatabaseName -ne "master" }
 				$this.ChildResourceNames = @();
 				$this.SqlDatabases | ForEach-Object {
@@ -70,9 +70,9 @@ class SQLDatabase: SVTBase
 		return $result;
 	}
 
-    hidden [ControlResult] CheckSqlServerVersionUpgrade([ControlResult] $controlResult)
+    <#hidden [ControlResult] CheckSqlServerVersionUpgrade([ControlResult] $controlResult)
     {
-        $upgradeStatus = Get-AzureRmSqlServerUpgrade -ResourceGroupName  $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
+        $upgradeStatus = Get-AzSqlServerUpgrade -ResourceGroupName  $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
 
         $controlResult.AddMessage([MessageData]::new("Current status of SQL Database server upgrade -",
 			                                         $upgradeStatus));
@@ -87,11 +87,11 @@ class SQLDatabase: SVTBase
         }
 
         return $controlResult;
-    }
+    }#>
 
     hidden [ControlResult] CheckSqlServerAuditing([ControlResult] $controlResult)
     {
-        $serverAudit = Get-AzureRmSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
+        $serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
 
 		$controlResult.AddMessage([MessageData]::new("Current audit status for SQL server [$($this.ResourceContext.ResourceName)]:", $serverAudit))
 
@@ -134,7 +134,7 @@ class SQLDatabase: SVTBase
             $this.SqlDatabases | ForEach-Object {
 				$dbName = $_.DatabaseName;
 				try {
-					$tdeStatus = Get-AzureRmSqlDatabaseTransparentDataEncryption `
+					$tdeStatus = Get-AzRmSqlDatabaseTransparentDataEncryption `
 					-ResourceGroupName $this.ResourceContext.ResourceGroupName `
 					-ServerName $this.ResourceContext.ResourceName `
 					-DatabaseName $dbName `
@@ -188,7 +188,7 @@ class SQLDatabase: SVTBase
 
     hidden [ControlResult] CheckSqlServerADAdmin([ControlResult] $controlResult)
     {
-        $adAdmin = Get-AzureRmSqlServerActiveDirectoryAdministrator -ResourceGroup $this.ResourceContext.ResourceGroupName -Server $this.ResourceContext.ResourceName.ToLower() -ErrorAction Stop
+        $adAdmin = Get-AzSqlServerActiveDirectoryAdministrator -ResourceGroup $this.ResourceContext.ResourceGroupName -Server $this.ResourceContext.ResourceName.ToLower() -ErrorAction Stop
 
         $controlResult.AddMessage([MessageData]::new("Current status of Active Directory Admin for ["+ $this.ResourceContext.ResourceName +"] is"));
 
@@ -210,12 +210,12 @@ class SQLDatabase: SVTBase
         $isCompliant = $false
 
 		#First check if the server auditing is enabled, without which TD does not work
-	    $serverAudit = Get-AzureRmSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName.ToLower() -ErrorAction Stop
+	    $serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName.ToLower() -ErrorAction Stop
 
 		if($null -ne $serverAudit){
 			#Check if Audit is Enabled 
 				if($serverAudit.AuditState -eq [AuditStateType]::Enabled){
-						$serverThreat = Get-AzureRmSqlServerThreatDetectionPolicy `
+						$serverThreat = Get-AzSqlServerThreatDetectionPolicy `
 									-ResourceGroupName $this.ResourceContext.ResourceGroupName `
 									-ServerName $this.ResourceContext.ResourceName.ToLower() `
 									-ErrorAction Stop
@@ -349,7 +349,7 @@ class SQLDatabase: SVTBase
 				$dbName = $_.DatabaseName;
 				try
 				{
-					$dbMaskingPolicy = Get-AzureRmSqlDatabaseDataMaskingPolicy `
+					$dbMaskingPolicy = Get-AzRmSqlDatabaseDataMaskingPolicy `
 									-ResourceGroupName $this.ResourceContext.ResourceGroupName `
 									-ServerName $this.ResourceContext.ResourceName `
 									-DatabaseName $dbName
@@ -407,10 +407,10 @@ class SQLDatabase: SVTBase
 
 	hidden [bool] IsServerThreatDetectionEnabled(){
 			$isCompliant = $false
-			$serverAudit = Get-AzureRmSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
+			$serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
 			if($null -ne $serverAudit){
 				if($serverAudit.AuditState -eq 'Enabled'){
-							$serverThreat = Get-AzureRmSqlServerThreatDetectionPolicy `
+							$serverThreat = Get-AzSqlServerThreatDetectionPolicy `
                                 			-ResourceGroupName $this.ResourceContext.ResourceGroupName `
                                 			-ServerName $this.ResourceContext.ResourceName `
                                 			-ErrorAction Stop
@@ -426,7 +426,7 @@ class SQLDatabase: SVTBase
 	hidden 	[PSObject[]] GetSqlServerFirewallRules()
 	{
 		if ($null -eq $this.SqlFirewallDetails) {
-            $this.SqlFirewallDetails = Get-AzureRmSqlServerFirewallRule -ResourceGroupName $this.ResourceContext.ResourceGroupName  -ServerName $this.ResourceContext.ResourceName
+            $this.SqlFirewallDetails = Get-AzSqlServerFirewallRule -ResourceGroupName $this.ResourceContext.ResourceGroupName  -ServerName $this.ResourceContext.ResourceName
         }
         return $this.SqlFirewallDetails;
 	}

@@ -89,15 +89,15 @@ class PartialScanManager
 		try
 		{
 			#Able to read the container then read permissions are good
-			$containerObject = Get-AzureStorageContainer -Context $this.AzSKStorageAccount.Context -Name $this.CAScanProgressSnapshotsContainerName -ErrorAction Stop
+			$containerObject = Get-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $this.CAScanProgressSnapshotsContainerName -ErrorAction Stop
 			$this.ScanProgressSnapshotsContainer = $containerObject;
 		}
 		catch
 		{
 			try
 			{
-				New-AzureStorageContainer -Context $this.AzSKStorageAccount.Context -Name $this.CAScanProgressSnapshotsContainerName -ErrorAction SilentlyContinue
-				$containerObject = Get-AzureStorageContainer -Context $this.AzSKStorageAccount.Context -Name $this.CAScanProgressSnapshotsContainerName -ErrorAction SilentlyContinue
+				New-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $this.CAScanProgressSnapshotsContainerName -ErrorAction SilentlyContinue
+				$containerObject = Get-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $this.CAScanProgressSnapshotsContainerName -ErrorAction SilentlyContinue
 				$this.ScanProgressSnapshotsContainer = $containerObject;
 			}
 			catch
@@ -115,7 +115,7 @@ class PartialScanManager
 		}
 		if($null -ne $this.AzSKResourceGroup)
 		{
-			$StorageAccount = Get-AzureRmStorageAccount -ResourceGroupName $this.AzSKResourceGroup.ResourceGroupName | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction SilentlyContinue
+			$StorageAccount = Get-AzStorageAccount -ResourceGroupName $this.AzSKResourceGroup.ResourceGroupName | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction SilentlyContinue
 			#if no storage account found then it assumes that there is no control state feature is not used and if there are more than one storage account found it assumes the same
 			$this.AzSKStorageAccount = $StorageAccount;
 		}
@@ -124,7 +124,7 @@ class PartialScanManager
 	hidden [PSObject] GetAzSKRG()
 	{
 		$azSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
-		$resourceGroup = Get-AzureRmResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
+		$resourceGroup = Get-AzResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
 		$this.AzSKResourceGroup = $resourceGroup
 		return $resourceGroup;
 	}
@@ -200,16 +200,16 @@ class PartialScanManager
 			}
 
 			$masterFilePath = "$AzSKTemp\$($($this.ResourceScanTrackerBlobName).Replace('/','\'))"
-			$controlStateBlob = Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$($this.ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
+			$controlStateBlob = Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$($this.ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
 
 			if($null -ne $controlStateBlob)
 			{
-				Get-AzureStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force                
+				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force                
 				$partialScanResources  = Get-ChildItem -Path $masterFilePath -Force | Get-Content | ConvertFrom-Json
 				if($partialScanResources -ne $null -and ($partialScanResources.ResourceMapTable | Measure-Object).Count -gt 0 -and ($partialScanResources.ResourceMapTable | Where-Object {$_.State -notin ([ScanState]::COMP,[ScanState]::ERR)} | Measure-Object).Count -eq 0)
 				{
 					$this.ArchiveBlob("_End_");
-					Remove-AzureStorageBlob -CloudBlob $controlStateBlob.ICloudBlob -Force -Context $this.AzSKStorageAccount.Context 
+					Remove-AzStorageBlob -CloudBlob $controlStateBlob.ICloudBlob -Force -Context $this.AzSKStorageAccount.Context 
 				}	
 			}			
 			$this.ResourceScanTrackerObj = $null
@@ -267,7 +267,7 @@ class PartialScanManager
 
 			$masterFilePath = "$AzSKTemp\$($($this.ResourceScanTrackerBlobName).Replace('/','\'))"
 			[Helpers]::ConvertToJsonCustom($this.ResourceScanTrackerObj) | Out-File $masterFilePath -Force
-			Set-AzureStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "$($this.ResourceScanTrackerBlobName)" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
+			Set-AzStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "$($this.ResourceScanTrackerBlobName)" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
 		}
 	}
 
@@ -311,18 +311,18 @@ class PartialScanManager
 					
 				$masterFilePath = "$AzSKTemp\$archiveName"
 			}
-			$controlStateBlob = Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$($this.ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
+			$controlStateBlob = Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$($this.ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
 			if($null -ne $controlStateBlob)
 			{
-				Get-AzureStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force			
-				Set-AzureStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "Archive/$archiveName" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
+				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force			
+				Set-AzStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "Archive/$archiveName" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
 			}
 	
 			#purge old archives
 			$NotBefore = [DateTime]::Now.AddDays(-30);
-			$OldLogCount = (Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$($this.ResourceScanTrackerBlobName)" | Where-Object { $_.LastModified -lt $NotBefore} | Measure-Object).Count
+			$OldLogCount = (Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$($this.ResourceScanTrackerBlobName)" | Where-Object { $_.LastModified -lt $NotBefore} | Measure-Object).Count
 	
-			Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$($this.ResourceScanTrackerBlobName)" | Where-Object { $_.LastModified -lt $NotBefore} | Remove-AzureStorageBlob -Force -ErrorAction SilentlyContinue			
+			Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$($this.ResourceScanTrackerBlobName)" | Where-Object { $_.LastModified -lt $NotBefore} | Remove-AzStorageBlob -Force -ErrorAction SilentlyContinue			
 		}
 		catch
 		{
@@ -358,13 +358,13 @@ class PartialScanManager
 			}
 
 			$masterFilePath = "$AzSKTemp\$($($this.ResourceScanTrackerBlobName).Replace('/','\'))"
-			$controlStateBlob = Get-AzureStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$($this.ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
+			$controlStateBlob = Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$($this.ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
 							
 			if($null -ne $controlStateBlob)
 			{
-				Get-AzureStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force
+				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force
 				$this.ResourceScanTrackerObj = Get-ChildItem -Path $masterFilePath -Force | Get-Content | ConvertFrom-Json
-				$resources = Get-AzureRmResource
+				$resources = Get-AzResource
 				#filter resources which are removed from subscription
 				$this.ResourceScanTrackerObj.ResourceMapTable = $this.ResourceScanTrackerObj.ResourceMapTable | Where-Object{$resources.ResourceId -contains $_.Id -or $_.Id -eq "AzSKCfg"}
 			}			

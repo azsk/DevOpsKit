@@ -35,12 +35,12 @@ class ControlStateExtension
 	{
 		$azSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
 
-		$resourceGroup = Get-AzureRmResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
+		$resourceGroup = Get-AzResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
 		if($createIfNotExists -and ($null -eq $resourceGroup -or ($resourceGroup | Measure-Object).Count -eq 0))
 		{
 			if([Helpers]::NewAzSKResourceGroup($azSKConfigData.AzSKRGName, $azSKConfigData.AzSKLocation, ""))
 			{
-				$resourceGroup = Get-AzureRmResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
+				$resourceGroup = Get-AzResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
 			}
 		}
 		$this.AzSKResourceGroup = $resourceGroup
@@ -63,7 +63,7 @@ class ControlStateExtension
 				$loopValue = $loopValue - 1;
 				try
 				{
-					$StorageAccount = Get-AzureRmStorageAccount -ResourceGroupName $this.AzSKResourceGroup.ResourceGroupName -ErrorAction Stop | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction Stop 
+					$StorageAccount = Get-AzStorageAccount -ResourceGroupName $this.AzSKResourceGroup.ResourceGroupName -ErrorAction Stop | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction Stop 
 					$loopValue = 0;
 				}
 				catch
@@ -85,7 +85,7 @@ class ControlStateExtension
 						$loopValue = $loopValue - 1;
 						try
 						{
-							$StorageAccount = Get-AzureRmStorageAccount -ResourceGroupName $this.AzSKResourceGroup.ResourceGroupName -ErrorAction Stop | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction Stop 					
+							$StorageAccount = Get-AzStorageAccount -ResourceGroupName $this.AzSKResourceGroup.ResourceGroupName -ErrorAction Stop | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction Stop 					
 							$loopValue = 0;
 						}
 						catch
@@ -122,19 +122,19 @@ class ControlStateExtension
 		#see if user can create the test container in the storage account. If yes then user have both RW permissions. 
 		try
 		{
-			$containerObject = Get-AzureStorageContainer -Context $this.AzSKStorageAccount.Context -Name $writeTestContainerName -ErrorAction SilentlyContinue
+			$containerObject = Get-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $writeTestContainerName -ErrorAction SilentlyContinue
 			if($null -ne $containerObject)
 			{
-				Remove-AzureStorageContainer -Name $writeTestContainerName -Context  $this.AzSKStorageAccount.Context -ErrorAction Stop -Force
+				Remove-AzStorageContainer -Name $writeTestContainerName -Context  $this.AzSKStorageAccount.Context -ErrorAction Stop -Force
 				$this.HasControlStateWritePermissions = 1
 				$this.HasControlStateReadPermissions = 1
 			}
 			else
 			{
-				New-AzureStorageContainer -Context $this.AzSKStorageAccount.Context -Name $writeTestContainerName -ErrorAction Stop
+				New-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $writeTestContainerName -ErrorAction Stop
 				$this.HasControlStateWritePermissions = 1
 				$this.HasControlStateReadPermissions = 1
-				Remove-AzureStorageContainer -Name $writeTestContainerName -Context  $this.AzSKStorageAccount.Context -ErrorAction SilentlyContinue -Force
+				Remove-AzStorageContainer -Name $writeTestContainerName -Context  $this.AzSKStorageAccount.Context -ErrorAction SilentlyContinue -Force
 			}				
 		}
 		catch
@@ -147,9 +147,9 @@ class ControlStateExtension
 			{
 				if($createIfNotExists)
 				{
-					New-AzureStorageContainer -Context $this.AzSKStorageAccount.Context -Name $ContainerName -ErrorAction SilentlyContinue
+					New-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $ContainerName -ErrorAction SilentlyContinue
 				}
-				$containerObject = Get-AzureStorageContainer -Context $this.AzSKStorageAccount.Context -Name $ContainerName -ErrorAction SilentlyContinue
+				$containerObject = Get-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $ContainerName -ErrorAction SilentlyContinue
 				$this.AzSKStorageContainer = $containerObject;					
 			}
 			catch
@@ -163,7 +163,7 @@ class ControlStateExtension
 			try
 			{
 				#Able to read the container then read permissions are good
-				$containerObject = Get-AzureStorageContainer -Context $this.AzSKStorageAccount.Context -Name $ContainerName -ErrorAction Stop
+				$containerObject = Get-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $ContainerName -ErrorAction Stop
 				$this.AzSKStorageContainer = $containerObject;
 				$this.HasControlStateReadPermissions = 1
 			}
@@ -201,7 +201,7 @@ class ControlStateExtension
 			$loopValue = $loopValue - 1;
 			try
 			{
-				$indexerBlob = Get-AzureStorageBlob -Container $ContainerName -Blob $this.IndexerBlobName -Context $StorageAccount.Context -ErrorAction Stop
+				$indexerBlob = Get-AzStorageBlob -Container $ContainerName -Blob $this.IndexerBlobName -Context $StorageAccount.Context -ErrorAction Stop
 				$loopValue = 0;
 			}
 			catch
@@ -228,7 +228,7 @@ class ControlStateExtension
 			$loopValue = $loopValue - 1;
 			try
 			{
-				Get-AzureStorageBlobContent -CloudBlob $indexerBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
+				Get-AzStorageBlobContent -CloudBlob $indexerBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
 				$indexerObject = Get-ChildItem -Path "$AzSKTemp\$($this.IndexerBlobName)" -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json
 				$loopValue = 0;
 			}
@@ -274,7 +274,7 @@ class ControlStateExtension
 					while($loopValue -gt 0 -and $null -eq $controlStateBlob)
 					{
 						$loopValue = $loopValue - 1;
-						$controlStateBlob = Get-AzureStorageBlob -Container $ContainerName -Blob $controlStateBlobName -Context $StorageAccount.Context -ErrorAction SilentlyContinue
+						$controlStateBlob = Get-AzStorageBlob -Container $ContainerName -Blob $controlStateBlobName -Context $StorageAccount.Context -ErrorAction SilentlyContinue
 					}
 
 					if($null -eq $controlStateBlob)
@@ -293,7 +293,7 @@ class ControlStateExtension
 						$loopValue = $loopValue - 1;
 						try
 						{
-							Get-AzureStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
+							Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
 							$loopValue = 0;
 						}
 						catch
@@ -397,7 +397,7 @@ class ControlStateExtension
 					$loopValue = $loopValue - 1;
 					try
 					{
-						Set-AzureStorageBlobContent -File $state.FullName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
+						Set-AzStorageBlobContent -File $state.FullName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
 						$loopValue = 0;
 					}
 					catch
@@ -410,7 +410,7 @@ class ControlStateExtension
 		else
 		{
 			#clean up the container as there is no indexer
-			Get-AzureStorageBlob -Container $ContainerName -Context $StorageAccount.Context | Remove-AzureStorageBlob  
+			Get-AzStorageBlob -Container $ContainerName -Context $StorageAccount.Context | Remove-AzStorageBlob  
 		}
 	}
 
@@ -451,7 +451,7 @@ class ControlStateExtension
 					$loopValue = $loopValue - 1;
 					try
 					{
-						Set-AzureStorageBlobContent -File $state.FullName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
+						Set-AzStorageBlobContent -File $state.FullName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
 						$loopValue = 0;
 					}
 					catch
@@ -467,7 +467,7 @@ class ControlStateExtension
 			$loopValue = $loopValue - 1;
 			try
 			{
-				Remove-AzureStorageBlob -Blob "$hash.json" -Context $StorageAccount.Context -Container $ContainerName -Force -ErrorAction Stop
+				Remove-AzStorageBlob -Blob "$hash.json" -Context $StorageAccount.Context -Container $ContainerName -Force -ErrorAction Stop
 				$loopValue = 0;
 			}
 			catch
@@ -499,8 +499,8 @@ class ControlStateExtension
 			$loopValue = $loopValue - 1;
 			try
 			{
-				$controlStateBlob = Get-AzureStorageBlob -Container $ContainerName -Blob $controlStateBlobName -Context $StorageAccount.Context -ErrorAction Stop
-				Get-AzureStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination "$AzSKTemp\ExistingControlStates" -Force -ErrorAction Stop
+				$controlStateBlob = Get-AzStorageBlob -Container $ContainerName -Blob $controlStateBlobName -Context $StorageAccount.Context -ErrorAction Stop
+				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination "$AzSKTemp\ExistingControlStates" -Force -ErrorAction Stop
 				$ControlStatesJson = Get-ChildItem -Path "$AzSKTemp\ExistingControlStates\$controlStateBlobName" -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json 
 				$loopValue = 0;
 			}

@@ -13,7 +13,7 @@ class Automation: SVTBase
     }
 	hidden [ControlResult] CheckWebhooks([ControlResult] $controlResult)
     {   
-		$webhooks = Get-AzureRmAutomationWebhook -AutomationAccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
+		$webhooks = Get-AzAutomationWebhook -AutomationAccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
 		if(($webhooks|Measure-Object).Count -gt 0)
 		{
 			$webhookdata = $webhooks | Select-Object ResourceGroupName, AutomationAccountName, Name, Description, IsEnabled, Parameters, RunbookName, WebhookURI, HybridWorker
@@ -28,7 +28,7 @@ class Automation: SVTBase
     }
 	hidden [ControlResult] CheckWebhookExpiry([ControlResult] $controlResult)
     {   
-		$webhooks = Get-AzureRmAutomationWebhook -AutomationAccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
+		$webhooks = Get-AzAutomationWebhook -AutomationAccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
 		$longExpiryWebhooks = @()
 		if(($webhooks|Measure-Object).Count -gt 0)
 		{
@@ -59,7 +59,7 @@ class Automation: SVTBase
     }
 	hidden [ControlResult] CheckVariables([ControlResult] $controlResult)
     {   
-		$variables = Get-AzureRmAutomationVariable -AutomationAccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
+		$variables = Get-AzAutomationVariable -AutomationAccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
 		if(($variables|Measure-Object).Count -gt 0 )
 		{
 			if($this.ResourceContext.ResourceGroupName -eq [ConfigurationManager]::GetAzSKConfigData().AzSKRGName -and [Helpers]::CheckMember($this.ControlSettings,"Automation.variablesToSkip"))
@@ -103,12 +103,12 @@ class Automation: SVTBase
     }
 	hidden [ControlResult] CheckOMSSetup([ControlResult] $controlResult)
     {   
-		$resource = Get-AzureRmResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType "Microsoft.Automation/automationAccounts" -ErrorAction Stop
+		$resource = Get-AzResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType "Microsoft.Automation/automationAccounts" -ErrorAction Stop
 		$resourceId = $resource.ResourceId
 		$diaSettings = $null
 		try 
 		{
-			$diaSettings = Get-AzureRmDiagnosticSetting -ResourceId $resourceId -ErrorAction Stop -WarningAction SilentlyContinue
+			$diaSettings = Get-AzDiagnosticSetting -ResourceId $resourceId -ErrorAction Stop -WarningAction SilentlyContinue
 		}
 		catch
 		{

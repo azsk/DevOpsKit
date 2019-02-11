@@ -86,14 +86,14 @@ function PublishEvent([string] $EventName, [hashtable] $Properties, [hashtable] 
 function CreateHelperSchedule($nextRetryIntervalInMinutes)
 {
     #create next run schedule
-    Get-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName `
-    -ResourceGroupName $AutomationAccountRG -Name $CAHelperScheduleName -ErrorAction SilentlyContinue | Remove-AzureRmAutomationSchedule -Force
+    Get-AzAutomationSchedule -AutomationAccountName $AutomationAccountName `
+    -ResourceGroupName $AutomationAccountRG -Name $CAHelperScheduleName -ErrorAction SilentlyContinue | Remove-AzAutomationSchedule -Force
 
-    New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $CAHelperScheduleName `
+    New-AzAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $CAHelperScheduleName `
                     -ResourceGroupName $AutomationAccountRG -StartTime $(get-date).AddMinutes($nextRetryIntervalInMinutes) `
                     -OneTime -ErrorAction Stop | Out-Null
 
-    Register-AzureRmAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $CAHelperScheduleName `
+    Register-AzAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $CAHelperScheduleName `
                     -ResourceGroupName $AutomationAccountRG `
                     -AutomationAccountName $AutomationAccountName -ErrorAction Stop | Out-Null
 	PublishEvent -EventName "CA Job Rescheduled" -Properties @{"IntervalInMinutes" = $nextRetryIntervalInMinutes}
@@ -224,7 +224,21 @@ try
 		
 		$appId = $RunAsConnection.ApplicationId 
 		Write-Output ("RB: Logging in to Azure for appId: [$appId]")
+		$Azlogin = Get-Command -Name "Connect-AzAccount" -ErrorAction SilentlyContinue
 		$loginCmdlets = Get-Command -Noun "AzureRmAccount" -ErrorAction SilentlyContinue
+        if($Null -ne $Azlogin)
+        {
+            Connect-AzAccount `
+				-Environment $AzureEnv `
+				-ServicePrincipal `
+				-Tenant $RunAsConnection.TenantId `
+				-ApplicationId $RunAsConnection.ApplicationId `
+				-CertificateThumbprint $RunAsConnection.CertificateThumbprint | Out-Null
+			
+           Set-AzContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
+        }
+        else
+        {
 		if($Null -ne $loginCmdlets)
 		{
 			#AzureRm.profile version = 5.x.x
@@ -251,14 +265,15 @@ try
 			{
 				throw "RB: Failed to login to Azure. Check if AzureRm.profile module is present."
 			}
+            Set-AzureRmContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
 		}
 		else
 		{
 			throw "RB: Failed to login to Azure. Check if AzureRm.profile module is present."
 		}
-		
-		Set-AzureRmContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
+	
 	}
+    }
 	catch
 	{
 		Write-Output ("RB: Failed to login to Azure with AzSK AppId: [$appId].")
@@ -313,3 +328,4 @@ catch
 	throw;
 }
 #----------------------------------Runbook end-------------------------------------------------------------------------
+

@@ -10,11 +10,11 @@ class RoleAssignmentHelper
 		{
 			if($includeClassicAdministrators)
 			{
-				$roleAssignments = Get-AzureRmRoleAssignment -Scope $scope -IncludeClassicAdministrators -ErrorAction Stop;
+				$roleAssignments = Get-AzRoleAssignment -Scope $scope -IncludeClassicAdministrators -ErrorAction Stop;
 			}
 			else
 			{
-				$roleAssignments = Get-AzureRmRoleAssignment -Scope $scope -ErrorAction Stop;
+				$roleAssignments = Get-AzRoleAssignment -Scope $scope -ErrorAction Stop;
 			}
 			return $roleAssignments;		
 		}
@@ -40,11 +40,11 @@ class RoleAssignmentHelper
 		{
 			if($includeClassicAdministrators)
 			{
-				$roleAssignments = Get-AzureRmRoleAssignment -IncludeClassicAdministrators -ErrorAction Stop;
+				$roleAssignments = Get-AzRoleAssignment -IncludeClassicAdministrators -ErrorAction Stop;
 			}
 			else
 			{
-				$roleAssignments = Get-AzureRmRoleAssignment -ErrorAction Stop;
+				$roleAssignments = Get-AzRoleAssignment -ErrorAction Stop;
 			}
 			return $roleAssignments;
 		}
@@ -65,11 +65,11 @@ class RoleAssignmentHelper
 		{
 			if($includeClassicAdministrators)
 			{
-				$roleAssignments = Get-AzureRmRoleAssignment -ResourceGroupName $resourceGroupName -IncludeClassicAdministrators -ErrorAction Stop;
+				$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -IncludeClassicAdministrators -ErrorAction Stop;
 			}
 			else
 			{
-				$roleAssignments = Get-AzureRmRoleAssignment -ResourceGroupName $resourceGroupName -ErrorAction Stop;
+				$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ErrorAction Stop;
 			}
 			return $roleAssignments;
 		}
@@ -90,11 +90,11 @@ class RoleAssignmentHelper
 		{
 			if($includeClassicAdministrators)
 			{
-				$roleAssignments = Get-AzureRmRoleAssignment -ResourceGroupName $resourceGroupName -ResourceName $resourceName -ResourceType $resourceType -IncludeClassicAdministrators -ErrorAction Stop;
+				$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ResourceName $resourceName -ResourceType $resourceType -IncludeClassicAdministrators -ErrorAction Stop;
 			}
 			else
 			{
-				$roleAssignments = Get-AzureRmRoleAssignment -ResourceGroupName $resourceGroupName -ResourceName $resourceName -ResourceType $resourceType -ErrorAction Stop;
+				$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ResourceName $resourceName -ResourceType $resourceType -ErrorAction Stop;
 			}
 
 			return $roleAssignments;
@@ -153,7 +153,7 @@ class RoleAssignmentHelper
 				$roleDefinitionId = $_.roleDefinitionId.Substring($_.roleDefinitionId.LastIndexOf("/") + 1);
 				$roleDefinitionName = [string]::Empty
 		
-				$roleDefinition = (Get-AzureRmRoleDefinition -Id $roleDefinitionId -ErrorAction SilentlyContinue) | Select-Object -First 1
+				$roleDefinition = (Get-AzRoleDefinition -Id $roleDefinitionId -ErrorAction SilentlyContinue) | Select-Object -First 1
 				if($roleDefinition -and [Helpers]::CheckMember($roleDefinition,"Name")) 
 				{ 
 					$roleDefinitionName = $roleDefinition.Name;

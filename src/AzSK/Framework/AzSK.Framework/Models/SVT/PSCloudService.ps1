@@ -22,7 +22,7 @@ class PSCloudService
 
 	[void] LoadCloudConfiguration()
 	{
-		$cloudServiceSlots = Get-AzureRmResource -ResourceGroupName $this.CloudServiceRGName `
+		$cloudServiceSlots = Get-AzResource -ResourceGroupName $this.CloudServiceRGName `
 								-Name $this.CloudServiceName `
 								-ResourceType "$($this.CloudServiceResourceType)/slots" `
 								-ApiVersion $this.CloudServiceAPIVersion
@@ -54,7 +54,7 @@ class PSCloudService
 				}
 
 				#get roles
-				$cloudServiceRoles = Get-AzureRmResource -ResourceGroupName $this.CloudServiceRGName `
+				$cloudServiceRoles = Get-AzResource -ResourceGroupName $this.CloudServiceRGName `
 										-Name "$($this.CloudServiceName)/$($DeploymentSlot.SlotName)" `
 										-ResourceType "$($this.CloudServiceResourceType)/slots/roles" `
 										-ApiVersion $this.CloudServiceAPIVersion

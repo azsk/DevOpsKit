@@ -14,7 +14,7 @@ class CosmosDb : SVTBase
 	{
 		if(-not $this.Resource)
 		{
-			$this.Resource = Get-AzureRmResource -Name $this.ResourceContext.ResourceName `
+			$this.Resource = Get-AzResource -Name $this.ResourceContext.ResourceName `
 											-ResourceGroupName $this.ResourceContext.ResourceGroupName `
 											-ResourceType $this.ResourceContext.ResourceType
             if(-not $this.Resource)

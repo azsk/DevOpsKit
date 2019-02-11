@@ -17,7 +17,7 @@ class StorageFix: FixServicesBase
 	{
 		if(-not $this.ResourceObject)
 		{
-			$this.ResourceObject = Get-AzureRmStorageAccount -Name $this.ResourceName -ResourceGroupName $this.ResourceGroupName
+			$this.ResourceObject = Get-AzStorageAccount -Name $this.ResourceName -ResourceGroupName $this.ResourceGroupName
 		}
 
 		return $this.ResourceObject;
@@ -28,7 +28,7 @@ class StorageFix: FixServicesBase
 		[MessageData[]] $detailedLogs = @();
 		$skuName = $parameters.SkuName;
 		$detailedLogs += [MessageData]::new("Setting up the Sku [$skuName] for storage [$($this.ResourceName)]...");
-		Set-AzureRmStorageAccount -Name $this.ResourceName -ResourceGroupName $this.ResourceGroupName -SkuName $skuName
+		Set-AzStorageAccount -Name $this.ResourceName -ResourceGroupName $this.ResourceGroupName -SkuName $skuName
 		$detailedLogs += [MessageData]::new("Sku setup completed for storage [$($this.ResourceName)]");
 		return $detailedLogs;
     }
@@ -37,7 +37,7 @@ class StorageFix: FixServicesBase
     {
 		[MessageData[]] $detailedLogs = @();
 		$detailedLogs += [MessageData]::new("Enabling 'HTTPS traffic only' on storage [$($this.ResourceName)]...");
-		Set-AzureRmStorageAccount -Name $this.ResourceName -ResourceGroupName $this.ResourceGroupName -EnableHttpsTrafficOnly $true
+		Set-AzStorageAccount -Name $this.ResourceName -ResourceGroupName $this.ResourceGroupName -EnableHttpsTrafficOnly $true
 		$detailedLogs += [MessageData]::new("'HTTPS traffic only' is enabled on storage [$($this.ResourceName)]");
 		return $detailedLogs;
     }
@@ -53,13 +53,13 @@ class StorageFix: FixServicesBase
         
 			if($serviceMapping)
 			{
-				$emailAction = New-AzureRmAlertRuleEmail -SendToServiceOwner -WarningAction SilentlyContinue
+				$emailAction = New-AzAlertRuleEmail -SendToServiceOwner -WarningAction SilentlyContinue
 				$serviceMapping.Services | 
 				ForEach-Object {
 					$targetId = $storageObject.Id + "/services/" + $_
 
 					$alertName = $this.ResourceName + $_ + "alert"
-					Add-AzureRmMetricAlertRule -Location $storageObject.Location `
+					Add-AzMetricAlertRule -Location $storageObject.Location `
 						-MetricName AnonymousSuccess `
 						-Name $alertName `
 						-Operator GreaterThan `
@@ -96,7 +96,7 @@ class StorageFix: FixServicesBase
 				#Check Metrics diagnostics log property
 				$serviceMapping.DiagnosticsLogServices | 
 				ForEach-Object {
-					Set-AzureStorageServiceLoggingProperty `
+					Set-AzStorageServiceLoggingProperty `
 						-ServiceType $_ `
 						-LoggingOperations All `
 						-Context $storageObject.Context `
@@ -107,7 +107,7 @@ class StorageFix: FixServicesBase
 				#Check Metrics logging property
 				$serviceMapping.Services | 
 				ForEach-Object {
-					Set-AzureStorageServiceMetricsProperty `
+					Set-AzStorageServiceMetricsProperty `
 						-MetricsType Hour `
 						-ServiceType $_ `
 						-Context $storageObject.Context `
@@ -135,12 +135,12 @@ class StorageFix: FixServicesBase
 		if($storageObject)
 		{
 			$allContainers = @();
-			$allContainers += Get-AzureStorageContainer -Context $storageObject.Context -ErrorAction Stop
+			$allContainers += Get-AzStorageContainer -Context $storageObject.Context -ErrorAction Stop
 
 			if($allContainers.Count -ne 0)
 			{
 				$allContainers | ForEach-Object {
-					Set-AzureStorageContainerAcl -Name $_.Name -Permission Off -Context $storageObject.Context
+					Set-AzStorageContainerAcl -Name $_.Name -Permission Off -Context $storageObject.Context
 				};
 				$detailedLogs += [MessageData]::new("Anonymous access has been disabled on all containers on storage [$($this.ResourceName)]");
 			}
