@@ -60,9 +60,8 @@ class SubscriptionCore: SVTBase
 		$scope = $this.SubscriptionContext.Scope;
 
 		$SubAdmins = @();
-		$SubAdmins += $this.RoleAssignments | Where-Object { $_.RoleDefinitionName -eq 'CoAdministrator' `
-																				-or $_.RoleDefinitionName -like '*ServiceAdministrator*' `
-																				-or ($_.RoleDefinitionName -eq 'Owner' -and $_.Scope -eq $scope)}
+		$SubAdmins += $this.RoleAssignments | Where-Object { ($_.RoleDefinitionName -like '*ServiceAdministrator*' `
+																				-or $_.RoleDefinitionName -eq 'Owner') -and $_.Scope -eq $scope}
 		
 		if($this.HasGraphAPIAccess -eq $false)
 		{
@@ -112,7 +111,8 @@ class SubscriptionCore: SVTBase
 			$controlResult.VerificationResult = [VerificationResult]::Failed
 			$controlResult.AddMessage("Number of admins/owners configured at subscription scope are more than the approved limit: $($this.ControlSettings.NoOfApprovedAdmins). Total: " + $ClientSubAdmins.Count);
 		}
-		else {
+		else
+		{
 			$controlResult.AddMessage([VerificationResult]::Passed,
 										"Number of admins/owners configured at subscription scope are with in approved limit: $($this.ControlSettings.NoOfApprovedAdmins). Total: " + $ClientSubAdmins.Count);
 		}
