@@ -14,13 +14,9 @@ function ConvertStringToBoolean($strToConvert)
 function RunAzSKScan() {
 
 	################################ Begin: Configure AzSK for the scan ######################################### 
-<<<<<<< HEAD
-	#set OMS settings
-=======
 		#set the source as CA by default
 		Set-AzSKOMSSettings -Source "CA"
 	#set Monitoring settings
->>>>>>> 43b75d1f32b1cc3580c3fc0c4f151525e7d9ff65
     if(-not [string]::IsNullOrWhiteSpace($OMSWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($OMSWorkspaceSharedKey))
 	{
 		Set-AzSKOMSSettings -OMSWorkspaceID $OMSWorkspaceId -OMSSharedKey $OMSWorkspaceSharedKey -Source "CA"

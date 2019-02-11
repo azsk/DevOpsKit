@@ -3837,13 +3837,8 @@ class CCAutomation: CommandBase
 		{
 			if($null -ne $altOMSWSID)
 			{
-<<<<<<< HEAD
 				$this.PublishCustomMessage("Removing AltOMS settings... ");
 				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
-=======
-				$this.PublishCustomMessage("Removing Alt Log Analytics workspace settings... ");
-				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
->>>>>>> 43b75d1f32b1cc3580c3fc0c4f151525e7d9ff65
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue			
 				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue		
