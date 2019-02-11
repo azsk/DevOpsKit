@@ -1062,7 +1062,7 @@ class SVTBase: AzSKRoot
 			$nonCompliantLogs = $diagnostics.Logs |
 								Where-Object { -not ($_.Enabled -and
 											($_.RetentionPolicy.Days -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever -or
-											$_.RetentionPolicy.Days -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Min))};
+											$_.RetentionPolicy.Days -ge $this.ControlSettings.Diagnostics_RetentionPeriod_Min))};
 
 			$selectedDiagnosticsProps = $diagnostics | Select-Object -Property Logs, Metrics, StorageAccountId, EventHubName, Name;
 
