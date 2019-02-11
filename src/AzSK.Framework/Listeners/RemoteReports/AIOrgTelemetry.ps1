@@ -221,6 +221,9 @@ class AIOrgTelemetry: ListenerBase {
 		$properties.Add("ControlId", $context.ControlItem.ControlID);
 		$properties.Add("ControlSeverity", $context.ControlItem.ControlSeverity);
 		$properties.Add("IsBaselineControl", $context.ControlItem.IsBaselineControl)
+		#add PreviewBaselineFlag
+		$properties.Add("IsPreviewBaselineControl", $context.ControlItem.IsPreviewBaselineControl)
+		
 		if (!$context.ControlItem.Enabled) {
 			$properties.Add("VerificationResult", [VerificationResult]::Disabled)
 			$properties.Add("AttestationStatus", [AttestationStatus]::None)
