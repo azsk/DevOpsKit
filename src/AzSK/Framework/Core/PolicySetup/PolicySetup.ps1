@@ -388,10 +388,10 @@ class PolicySetup: CommandBase
 					Out-File -InputObject $RunbookCoreSetupContent -Force -FilePath $($RunbookCoreSetupFile.FullName) -Encoding utf8
 				}
 			}
-			$RunbookCoreSetupBackupFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetupBackupFile.ps1" } | Select -First 1
+			$RunbookCoreSetupBackupFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetupBack.ps1" } | Select -First 1
 			if((($RunbookCoreSetupBackupFile | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::CARunbooks)
 			{
-				$coreSetupFilePath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookCoreSetupBackupFile.ps1"
+				$coreSetupFilePath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookCoreSetupBackup.ps1"
 				Copy-Item ($coreSetupFilePath) ($this.RunbookFolderPath + "RunbookCoreSetupBackup.ps1") -Force
 				#Check for environment specific installer file
 				$fileName = $this.RunbookFolderPath + "RunbookCoreSetupBackup.ps1";

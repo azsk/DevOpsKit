@@ -239,7 +239,6 @@ try
 		
 		$appId = $RunAsConnection.ApplicationId 
         Write-Output ("RB: Logging in to Azure for appId: [$appId]")
-		$loginCmdlets = Get-Command -Noun "AzAccount" -ErrorAction SilentlyContinue
 		$Azlogin = Get-Command -Name "Connect-AzAccount" -ErrorAction SilentlyContinue
 		$loginCmdlets = Get-Command -Noun "AzureRmAccount" -ErrorAction SilentlyContinue
         if($Null -ne $Azlogin)
