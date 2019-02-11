@@ -1,7 +1,7 @@
 ﻿Set-StrictMode -Version Latest 
 Class OMSHelper{
 	static [string] $DefaultOMSType = "AzSK"
-	hidden static [int] $isOMSSettingValid = 0  #-1:Fail (OMS Empty, OMS Return Error) | 1:CA | 0:Local
+	hidden static [int] $isOMSSettingValid = 0  #-1:Fail (Log Analytics workspace Empty, Log Analytics workspace Return Error) | 1:CA | 0:Local
 	hidden static [int] $isAltOMSSettingValid = 0
 	# Create the function to create and post the request
 	static PostOMSData([string] $OMSWorkspaceID, [string] $SharedKey, $Body, $LogType, $OMSType)
@@ -39,11 +39,11 @@ Class OMSHelper{
 				switch([OMSHelper]::$("is"+$OMSType+"SettingValid"))
 				{
 					0 { $warningMsg += "The $($OMSType) workspace id or key is invalid in the local settings file. You can use Set-AzSKOMSSettings with correct values to update it.";}
-					1 { $warningMsg += "The $($OMSType) workspace id or key is invalid in the ContinuousAssurance configuration. You can use Update-AzSKContinuousAssurance with the correct OMS values to correct it."; }
+					1 { $warningMsg += "The $($OMSType) workspace id or key is invalid in the ContinuousAssurance configuration. You can use Update-AzSKContinuousAssurance with the correct Log Analytics workspace values to correct it."; }
 				}
 				[EventBase]::PublishGenericCustomMessage(" `r`nWARNING: $($warningMsg)", [MessageType]::Warning);
 				
-				#Flag to disable OMS scan 
+				#Flag to disable Log Analytics scan 
 				[OMSHelper]::$("is"+$OMSType+"SettingValid") = -1
 			}
 		}
@@ -157,7 +157,7 @@ Class OMSHelper{
 		}
 		catch
 		{			
-			throw ([SuppressedException]::new("Error sending events to OMS. The following exception occurred: `r`n$($_.Exception.Message) `r`nFor more on AzSK OMS setup, refer: https://aka.ms/devopskit/ca"));
+			throw ([SuppressedException]::new("Error sending events to Log Analytics. The following exception occurred: `r`n$($_.Exception.Message) `r`nFor more on AzSK Log Analytics workspace setup, refer: https://aka.ms/devopskit/ca"));
 		}
 	}
 
@@ -190,9 +190,9 @@ Class OMSHelper{
 	
 	static [void] SetOMSDetails()
 	{
-		#Check if Settings already contain details of OMS
+		#Check if Settings already contain details of Log Analytics workspace
 		$settings = [ConfigurationManager]::GetAzSKSettings()
-		#Step 1: if OMS details are not present on machine
+		#Step 1: if Log Analytics workspace details are not present on machine
 		if([string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId) -or [string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId))
 		{
 			$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
@@ -204,7 +204,7 @@ Class OMSHelper{
 				{
 					#Step 3: Get workspace id from automation account variables
 					$omsWorkSpaceId = Get-AzureRmAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
-					#Step 4: set workspace id and share key in setting file
+					#Step 4: set workspace id and shared key in setting file
 					if($omsWorkSpaceId)
 					{
 						$omsSharedKey = Get-AzureRmAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSSharedKey"						
@@ -229,7 +229,7 @@ Class OMSHelper{
 				{
 					#Step 3: Get workspace id from automation account variables
 					$omsWorkSpaceId = Get-AzureRmAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
-					#Step 4: set workspace id and share key in setting file
+					#Step 4: set workspace id and shared key in setting file
 					if($omsWorkSpaceId)
 					{
 						$omsSharedKey = Get-AzureRmAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSSharedKey"						
