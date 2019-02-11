@@ -648,10 +648,10 @@ function DisableHelperSchedules()
 # Main ScanAgent code
 #############################################################################################################
 try {	
-	if ([string]::IsNullOrWhiteSpace($Global:CheckforAz))
+	if(-not $Global:isAzAvailable)
     {
 		$accessToken = Get-AzSKAccessToken -ResourceAppIdURI "https://management.core.windows.net/"
-		$onlinePolicyStoreUrl = "https://getazsdkcontrolsmspreview.azurewebsites.net/api/files?version=`$Version&fileName=`$FileName"
+		$onlinePolicyStoreUrl = "https://getazsdkcontrolsmsstaging.azurewebsites.net/api/files?version=`$Version&fileName=`$FileName"
 		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName "RunbookScanAgentBackUp.ps1" -version "1.0.0"
 	}
 	else {

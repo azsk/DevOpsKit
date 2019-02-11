@@ -239,7 +239,7 @@ try
 		
 		$appId = $RunAsConnection.ApplicationId 
         Write-Output ("RB: Logging in to Azure for appId: [$appId]")
-		$loginCmdlets = Get-Command -Noun "AzureRmAccount" -ErrorAction SilentlyContinue
+		$loginCmdlets = Get-Command -Noun "AzAccount" -ErrorAction SilentlyContinue
 		if($Null -ne $loginCmdlets)
 		{
 			#AzureRm.profile version = 5.x.x

@@ -227,7 +227,7 @@ try
 		$Azlogin = Get-Command -Noun "AzAccount" -ErrorAction SilentlyContinue
 		$loginCmdlets = Get-Command -Noun "AzureRmAccount" -ErrorAction SilentlyContinue
         if($Null -ne $Azlogin)
-        {if($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Connect-AzAccount"}))
+        {if($Null -ne ($Azlogin | Where-Object{$_.Name -eq "Connect-AzAccount"}))
 			{
             Connect-AzAccount `
 				-Environment $AzureEnv `
@@ -274,6 +274,7 @@ try
 		}
 	
 	}
+    }
 	catch
 	{
 		Write-Output ("RB: Failed to login to Azure with AzSK AppId: [$appId].")
