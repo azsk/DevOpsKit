@@ -113,23 +113,7 @@ class WritePsConsole: FileOutputBase
                 $currentInstance.PublishException($_);
             }
         });
-		#Removing duplicate registry of CommandCompleted Event
-   #     $this.RegisterEvent([AzSKRootEvent]::CommandCompleted, {
-   #         $currentInstance = [WritePsConsole]::GetInstance();
-   #         try 
-   #         {
-			#	$currentInstance.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info)
-			#	$currentInstance.WriteMessage("Logs have been exported to: '$([WriteFolderPath]::GetInstance().FolderPath)'", [MessageType]::Info)
-			#	$currentInstance.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info)
-				
-			#	$currentInstance.FilePath = "";
-			#}
-   #         catch 
-   #         {
-   #             $currentInstance.PublishException($_);
-   #         }
-   #     });
-        
+		        
         $this.RegisterEvent([AzSKRootEvent]::CommandCompleted, {
             $currentInstance = [WritePsConsole]::GetInstance();
             try 
