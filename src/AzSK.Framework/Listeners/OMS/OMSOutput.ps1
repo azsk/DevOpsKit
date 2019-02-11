@@ -31,6 +31,7 @@ class OMSOutput: ListenerBase
 				try 
 				{
 				    $currentInstance.SetRunIdentifier([AzSKRootEventArgument] ($Event.SourceArgs | Select-Object -First 1));                         
+					
 					[OMSOutput]::IsIssueLogged = $false
 				}
 				catch 
@@ -44,6 +45,22 @@ class OMSOutput: ListenerBase
 				try 
 				{
 					[OMSHelper]::SetOMSDetails();
+					$settings = [ConfigurationManager]::GetAzSKSettings()
+					$currentInstance.PublishCustomMessage("Sending scan events to the following OMS workspace(s):",[MessageType]::Info);
+					if(-not [string]::IsNullOrEmpty($settings.OMSWorkspaceId))
+					{
+						$currentInstance.PublishCustomMessage("Log Analytics WorkspaceId:	    $($settings.OMSWorkspaceId)",[MessageType]::Info);
+					}
+					if(-not [string]::IsNullOrEmpty($settings.AltOMSWorkspaceId))
+					{
+						$currentInstance.PublishCustomMessage("Alt Log Analytics WorkspaceId:	$($settings.AltOMSWorkspaceId)`n",[MessageType]::Info);
+						$currentInstance.PublishCustomMessage("`n");
+					}
+					else
+					{
+						$currentInstance.PublishCustomMessage("`n");
+					}
+					
 					$currentInstance.CommandAction($Event,"Command Started");
 				}
 				catch{
@@ -72,6 +89,7 @@ class OMSOutput: ListenerBase
 				try 
 				{
 					$currentInstance.CommandAction($Event,"Command Started");
+
 				}
 				catch 
 				{
