@@ -177,13 +177,13 @@
                "isEnabled": true,
                "description": "The latest version of .NET framework version should be used for App Service",
                "rationale": "",
-               "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.0''. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+               "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.7''. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
                "severity": "Low",
                "jsonPath": "$.properties.siteConfig.netFrameworkVersion",
                "matchType": "StringSingleToken",
                "data": {
                   "type": "Allow",
-                  "value": "v4.6",
+                  "value": "v4.7",
                   "isCaseSensitive": false
                }
             },
