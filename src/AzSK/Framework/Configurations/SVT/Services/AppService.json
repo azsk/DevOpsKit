@@ -225,7 +225,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceDotNetFrameworkVersion",
         "Rationale": "Running on older .Net versions could mean you are not using latest security classes. Usage of such old classes and types can make your application vulnerable.",
-        "Recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.0''. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+        "Recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.7''. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
         "Tags": [
           "SDL",
           "Best Practice",
