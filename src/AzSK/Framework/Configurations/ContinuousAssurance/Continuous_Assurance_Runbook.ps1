@@ -224,11 +224,10 @@ try
 		
 		$appId = $RunAsConnection.ApplicationId 
 		Write-Output ("RB: Logging in to Azure for appId: [$appId]")
-		$Azlogin = Get-Command -Noun "AzAccount" -ErrorAction SilentlyContinue
+		$Azlogin = Get-Command -Name "Connect-AzAccount" -ErrorAction SilentlyContinue
 		$loginCmdlets = Get-Command -Noun "AzureRmAccount" -ErrorAction SilentlyContinue
         if($Null -ne $Azlogin)
-        {if($Null -ne ($Azlogin | Where-Object{$_.Name -eq "Connect-AzAccount"}))
-			{
+        {
             Connect-AzAccount `
 				-Environment $AzureEnv `
 				-ServicePrincipal `
@@ -237,7 +236,7 @@ try
 				-CertificateThumbprint $RunAsConnection.CertificateThumbprint | Out-Null
 			
            Set-AzContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
-        }}
+        }
         else
         {
 		if($Null -ne $loginCmdlets)
