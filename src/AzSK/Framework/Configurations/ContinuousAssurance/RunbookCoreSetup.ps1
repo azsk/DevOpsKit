@@ -422,12 +422,12 @@ try
 	Write-Output("CS: Starting core setup...")
 
 	###Config start--------------------------------------------------
-	$AzSKModuleName = "AzSKStaging"
+	$AzSKModuleName = "AzSK"
 	$RunbookName = "Continuous_Assurance_Runbook"
 	
 	#These get set as constants during the build process (e.g., AzSKStaging will have a diff URL)
 	#PublicPSGalleryUrl is always same.
-	$AzSKPSGalleryUrl = "https://www.poshtestgallery.com"
+	$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
 	$PublicPSGalleryUrl = "https://www.powershellgallery.com"
 
 	#This gets replaced when org-policy is created/updated. This is the org-specific

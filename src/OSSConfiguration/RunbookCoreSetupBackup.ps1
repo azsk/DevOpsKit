@@ -383,18 +383,18 @@ try
 	Write-Output("CS: Starting core setup...")
 
 	###Config start--------------------------------------------------
-	$AzSKModuleName = "AzSKStaging"
+	$AzSKModuleName = "AzSK"
 	$RunbookName = "Continuous_Assurance_Runbook"
 	
 	#These get set as constants during the build process (e.g., AzSKStaging will have a diff URL)
 	#PublicPSGalleryUrl is always same.
-	$AzSKPSGalleryUrl = "https://www.poshtestgallery.com"
+	$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
 	$PublicPSGalleryUrl = "https://www.powershellgallery.com"
 
 	#This gets replaced when org-policy is created/updated. This is the org-specific
 	#url that helps bootstrap which module version to use within an org setup
 	$azskVersionForOrg = "#AzSKConfigURL#"
-	
+
 	#We use this to check if another job is running...
 	$Global:FoundExistingJob = $false;
 	###Config end----------------------------------------------------
