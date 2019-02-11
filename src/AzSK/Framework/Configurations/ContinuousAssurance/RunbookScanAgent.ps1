@@ -651,7 +651,7 @@ try {
 	if(-not $Global:isAzAvailable)
     {
 		$accessToken = Get-AzSKAccessToken -ResourceAppIdURI "https://management.core.windows.net/"
-		$onlinePolicyStoreUrl = "https://getazsdkcontrolsmsstaging.azurewebsites.net/api/files?version=`$Version&fileName=`$FileName"
+		$onlinePolicyStoreUrl = "[#ScanAgentBackup#]"
 		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName "RunbookScanAgentBackUp.ps1" -version "1.0.0"
 	}
 	else {

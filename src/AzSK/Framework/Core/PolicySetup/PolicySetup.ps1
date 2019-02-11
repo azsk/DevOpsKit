@@ -351,6 +351,12 @@ class PolicySetup: CommandBase
 			{
 				$caFilePath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookScanAgent.ps1"
 				Copy-Item ($caFilePath) ($this.RunbookFolderPath + "RunbookScanAgent.ps1") -Force
+				$fileName = $this.RunbookFolderPath + "RunbookScanAgent.ps1";
+				$policyStoreUrl	= [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl.Replace('$',"``$")
+				$fileContent = Get-Content -Path $fileName;
+				$fileContent = $fileContent.Replace("#ScanAgentBackup#", $policyStoreUrl);
+				$caFilePathbackup = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookScanAgentBackup.ps1"
+				Copy-Item ($caFilePath) ($this.RunbookFolderPath + "RunbookScanAgentBackup.ps1") -Force
 			}
 
 			$RunbookCoreSetupFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetup.ps1" } | Select -First 1
@@ -364,6 +370,9 @@ class PolicySetup: CommandBase
 				{
 					$fileContent = Get-Content -Path $fileName;
 					$fileContent = $fileContent.Replace("#AzSKConfigURL#", $this.AzSKConfigURL);
+					$CoreSetupSrcUrl = [ConfigurationManager]::GetAzSKConfigData().CASetupRunbookURL.Replace('$',"``$")
+					$CoreSetupSrcUrlBackup = $CoreSetupSrcUrl.Replace("RunbookCoreSetup","RunbookCoreSetupbackup")
+			        $fileContent = $fileContent.Replace("#CoreSetupBackup#", $CoreSetupSrcUrlBackup);
 					Out-File -InputObject $fileContent -Force -FilePath $($this.RunbookFolderPath + "RunbookCoreSetup.ps1") -Encoding utf8
 				}
 			}
@@ -377,6 +386,32 @@ class PolicySetup: CommandBase
 				{
 					$RunbookCoreSetupContent = $RunbookCoreSetupContent.Replace($coreSetupAzSkVersionForOrgUrl,$this.AzSKConfigURL)
 					Out-File -InputObject $RunbookCoreSetupContent -Force -FilePath $($RunbookCoreSetupFile.FullName) -Encoding utf8
+				}
+			}
+			$RunbookCoreSetupBackupFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetupBackupFile.ps1" } | Select -First 1
+			if((($RunbookCoreSetupBackupFile | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::CARunbooks)
+			{
+				$coreSetupFilePath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookCoreSetupBackupFile.ps1"
+				Copy-Item ($coreSetupFilePath) ($this.RunbookFolderPath + "RunbookCoreSetupBackup.ps1") -Force
+				#Check for environment specific installer file
+				$fileName = $this.RunbookFolderPath + "RunbookCoreSetupBackup.ps1";
+				if(Test-Path -Path $fileName)
+				{
+					$fileContent = Get-Content -Path $fileName;
+					$fileContent = $fileContent.Replace("#AzSKConfigURL#", $this.AzSKConfigURL);
+					Out-File -InputObject $fileContent -Force -FilePath $($this.RunbookFolderPath + "RunbookCoreSetupBackup.ps1") -Encoding utf8
+				}
+			}
+			#If RunbookCoreSetup already exists, check for SAS token expiry and update with latest token 
+			else {
+				$RunbookCoreSetupContent =  Get-Content -Path $RunbookCoreSetupBackupFile.FullName
+				#Validate AzSkVersionForOrgUrl command
+				$pattern = 'azskVersionForOrg = "(.*?)"'
+				$coreSetupAzSkVersionForOrgUrl = [Helpers]::GetSubString($RunbookCoreSetupContent,$pattern)
+				if(-not [string]::IsNullOrEmpty($coreSetupAzSkVersionForOrgUrl) -and [Helpers]::IsSASTokenUpdateRequired($coreSetupAzSkVersionForOrgUrl))
+				{
+					$RunbookCoreSetupContent = $RunbookCoreSetupContent.Replace($coreSetupAzSkVersionForOrgUrl,$this.AzSKConfigURL)
+					Out-File -InputObject $RunbookCoreSetupContent -Force -FilePath $($RunbookCoreSetupBackupFile.FullName) -Encoding utf8
 				}
 			}
 
@@ -497,8 +532,6 @@ class PolicySetup: CommandBase
 		}
 		$allFiles = @();
 		$allFiles += Get-ChildItem $this.ConfigFolderPath -Recurse -Force | Where-Object { $_.mode -match "-a---" }
-
-		
 
 		if($allFiles.Count -ne 0)
 		{
