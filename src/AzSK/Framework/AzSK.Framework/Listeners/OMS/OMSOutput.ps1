@@ -44,6 +44,22 @@ class OMSOutput: ListenerBase
 				try 
 				{
 					[OMSHelper]::SetOMSDetails();
+					$settings = [ConfigurationManager]::GetAzSKSettings()
+					$currentInstance.PublishCustomMessage("Sending scan events to the following OMS workspace(s):",[MessageType]::Info);
+					if(-not [string]::IsNullOrEmpty($settings.OMSWorkspaceId))
+					{
+						$currentInstance.PublishCustomMessage("Log Analytics Workspace Id:	    $($settings.OMSWorkspaceId)",[MessageType]::Info);
+					}
+					if(-not [string]::IsNullOrEmpty($settings.AltOMSWorkspaceId))
+					{
+						$currentInstance.PublishCustomMessage("Alt Log Analytics Workspace Id:	$($settings.AltOMSWorkspaceId)`n",[MessageType]::Info);
+						$currentInstance.PublishCustomMessage("`n");
+					}
+					else
+					{
+						$currentInstance.PublishCustomMessage("`n");
+					}
+					
 					$currentInstance.CommandAction($Event,"Command Started");
 				}
 				catch{
