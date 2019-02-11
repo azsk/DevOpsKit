@@ -49,11 +49,11 @@ class OMSOutput: ListenerBase
 					$currentInstance.PublishCustomMessage("Sending scan events to the following OMS workspace(s):",[MessageType]::Info);
 					if(-not [string]::IsNullOrEmpty($settings.OMSWorkspaceId))
 					{
-						$currentInstance.PublishCustomMessage("Log Analytics WorkspaceId:	    $($settings.OMSWorkspaceId)",[MessageType]::Info);
+						$currentInstance.PublishCustomMessage("Log Analytics Workspace Id:	    $($settings.OMSWorkspaceId)",[MessageType]::Info);
 					}
 					if(-not [string]::IsNullOrEmpty($settings.AltOMSWorkspaceId))
 					{
-						$currentInstance.PublishCustomMessage("Alt Log Analytics WorkspaceId:	$($settings.AltOMSWorkspaceId)`n",[MessageType]::Info);
+						$currentInstance.PublishCustomMessage("Alt Log Analytics Workspace sId:	$($settings.AltOMSWorkspaceId)`n",[MessageType]::Info);
 						$currentInstance.PublishCustomMessage("`n");
 					}
 					else
