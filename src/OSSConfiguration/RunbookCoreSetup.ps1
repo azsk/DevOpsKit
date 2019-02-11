@@ -409,7 +409,7 @@ function IsScanComplete()
 
 $isAzAutomationAvailable = Get-Command -Name "Get-AzAutomationSchedule" -ErrorAction SilentlyContinue
 $isAzAccountsAvailable =  Get-Module Az.Accounts
-if ((-not [string]::IsNullOrWhiteSpace($isAzAutomationAvailable)) -and (-not [string]::IsNullOrWhiteSpace($isAzAutomationAvailable))
+if ((-not [string]::IsNullOrWhiteSpace($isAzAccountsAvailable)) -and (-not [string]::IsNullOrWhiteSpace($isAzAutomationAvailable))
 {	
 $Global:isAzAvailable = $true
 }

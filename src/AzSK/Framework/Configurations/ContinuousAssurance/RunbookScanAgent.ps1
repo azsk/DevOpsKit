@@ -684,7 +684,7 @@ try {
 	$AlertRunbookName="Alert_Runbook"
 
 	#Defaults.
-    	$AzSKModuleName = "AzSKStaging"
+    	$AzSKModuleName = "AzSK"
 	$StorageAccountRG = "AzSKRG"
 	#In case of multiple CAs in single sub we use sub-container to host working files for each individual CA 
 	#Sub-container has the same name as each CA automation account RG (hence guaranteed to be unique)

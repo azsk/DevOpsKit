@@ -640,14 +640,21 @@ function DisableHelperSchedules()
 {
 	Get-AzAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
 	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*"} | `
-	Set-AzureRmAutomationSchedule -IsEnabled $false | Out-Null
+	Set-AzAutomationSchedule -IsEnabled $false | Out-Null
 	
 }
 
 #############################################################################################################
 # Main ScanAgent code
 #############################################################################################################
-try {
+try {	
+	if(-not $Global:isAzAvailable)
+    {
+		$accessToken = Get-AzSKAccessToken -ResourceAppIdURI "https://management.core.windows.net/"
+		$onlinePolicyStoreUrl = "[#ScanAgentBackup#]"
+		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName "RunbookScanAgentBackUp.ps1" -version "1.0.0"
+	}
+	else {
     #start timer
     $scanAgentTimer = [System.Diagnostics.Stopwatch]::StartNew();
 	Write-Output("SA: Scan agent starting...")
@@ -752,7 +759,7 @@ try {
 	
 	PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
 	Write-Output("SA: Scan agent completed...")
-
+	}
 }
 catch {
 	Write-Output("SA: Unexpected error during CA scan agent execution...`r`nError details: " + ($_ | Out-String))
