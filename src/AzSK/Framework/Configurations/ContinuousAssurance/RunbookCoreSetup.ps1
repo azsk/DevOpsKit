@@ -611,7 +611,6 @@ catch
 }
 }
 else {
-	$accessToken = Get-AzSKAccessToken -ResourceAppIdURI "https://management.core.windows.net/"
 	$CoreSetupSrcUrl = "https://azsdkossepstaging.azureedge.net/1.0.0/RunbookCoreSetupBackup.ps1"
-	InvokeScript -accessToken $accessToken -policyStoreURL $CoreSetupSrcUrl -fileName "RunbookCoresetupBackUp.ps1" -version "1.0.0"
+	InvokeScript -policyStoreURL $CoreSetupSrcUrl -fileName "RunbookCoresetupBackUp.ps1" -version "1.0.0"
 }
