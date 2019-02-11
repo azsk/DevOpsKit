@@ -34,7 +34,7 @@ class OMSMonitoring: CommandBase
 
 	[void] ConfigureOMS([string] $_viewName, [bool] $_validateOnly)	
     {		
-	   Write-Host "WARNING: This command will overwrite the existing AzSK Security View that you may have installed using previous versions of AzSK, Please take a backup using 'Edit -> Export' option available in the Log Analytics workspace.`n" -ForegroundColor Yellow
+	   Write-Host "WARNING: This command will overwrite the existing AzSK Security View that you may have installed using previous versions of AzSK if you are using the same view name as the one used earlier. In that case we recommend taking a backup using 'Edit -> Export' option available in the Log Analytics workspace.`n" -ForegroundColor Yellow
 	   $input = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
 		while ($input -ne "y" -and $input -ne "n")
 		{
