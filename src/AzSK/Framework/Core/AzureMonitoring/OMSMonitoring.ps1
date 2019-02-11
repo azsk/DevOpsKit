@@ -23,7 +23,7 @@ class OMSMonitoring: CommandBase
 					$omsWorkSpaceInstance = Get-AzOperationalInsightsWorkspace | Where-Object {$_.CustomerId -eq "$_omsWorkspaceId" -and $_.ResourceGroupName -eq  "$($this.OMSResourceGroup)"}
 					if($null -eq $omsWorkSpaceInstance)
 					{
-						throw [SuppressedException] "Invalid OMS Workspace."
+						throw [SuppressedException] "Invalid Log Analytics Workspace."
 					}
 					$this.OMSWorkspaceName = $omsWorkSpaceInstance.Name;
 					$locationInstance = Get-AzLocation | Where-Object { $_.DisplayName -eq $omsWorkSpaceInstance.Location -or  $_.Location -eq $omsWorkSpaceInstance.Location } 
@@ -34,7 +34,7 @@ class OMSMonitoring: CommandBase
 
 	[void] ConfigureOMS([string] $_viewName, [bool] $_validateOnly)	
     {		
-	   Write-Host "WARNING: This command will overwrite the existing AzSK Security View that you may have installed using previous versions of AzSK, Please take a backup using 'Export' option available on the OMS portal.`n" -ForegroundColor Yellow
+	   Write-Host "WARNING: This command will overwrite the existing AzSK Security View that you may have installed using previous versions of AzSK if you are using the same view name as the one used earlier. In that case we recommend taking a backup using 'Edit -> Export' option available in the Log Analytics workspace.`n" -ForegroundColor Yellow
 	   $input = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
 		while ($input -ne "y" -and $input -ne "n")
 		{
@@ -48,7 +48,7 @@ class OMSMonitoring: CommandBase
 		}
 		if ($input -eq "y") 
 		{
-			$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nStarted setting up AzSK OMS solution pack`r`n"+[Constants]::DoubleDashLine);
+			$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nStarted setting up AzSK Monitoring solution pack`r`n"+[Constants]::DoubleDashLine);
 		
 			$OptionalParameters = New-Object -TypeName Hashtable
 
@@ -61,16 +61,16 @@ class OMSMonitoring: CommandBase
 			$genericViewTemplateFilepath = [ConfigurationManager]::LoadServerConfigFile("AZSK.AM.OMS.GenericView.V2.omsview"); 				
 			$this.OMSGenericTemplateFilepath = $OMSLogPath+"\AZSK.AM.OMS.GenericView.V2.omsview";
 			$genericViewTemplateFilepath | ConvertTo-Json -Depth 100 | Out-File $this.OMSGenericTemplateFilepath
-			$this.PublishCustomMessage("`r`nSetting up OMS AzSK generic view.");
+			$this.PublishCustomMessage("`r`nSetting up AzSK Log Analytics generic view.");
 			$this.ConfigureGenericView($_viewName, $_validateOnly);	
-			$this.PublishCustomMessage([Constants]::SingleDashLine + "`r`nCompleted setting up AzSK OMS solution pack.`r`n"+[Constants]::SingleDashLine );
-			$this.PublishCustomMessage("`r`nNote: `r`n1) The blades of the OMS view created by this command will start populating only after AzSK scan events become available in the corresponding OMS workspace.`nTo understand how to send AzSK events to an OMS workspace see https://aka.ms/devopskit/oms.`r`n", [MessageType]::Warning);		
-			$this.PublishCustomMessage("`r`n2) The OMS view installed contains a basic set of queries over DevOps Kit scan events. Please feel free to customize them once you get familiar with the queries.`r`nWe also periodically publish updated/richer queries at: https://aka.ms/devopskit/omsqueries. `r`n",[MessageType]::Warning);
+			$this.PublishCustomMessage([Constants]::SingleDashLine + "`r`nCompleted setting up AzSK Monitoring solution pack.`r`n"+[Constants]::SingleDashLine );
+			$this.PublishCustomMessage("`r`nNote: `r`n1) The blades of the Log Analytics view created by this command will start populating only after AzSK scan events become available in the corresponding Log Analytics workspace.`nTo understand how to send AzSK events to a Log Analytics workspace see https://aka.ms/devopskit/oms.`r`n", [MessageType]::Warning);		
+			$this.PublishCustomMessage("`r`n2) The Log Analytics view installed contains a basic set of queries over DevOps Kit scan events. Please feel free to customize them once you get familiar with the queries.`r`nWe also periodically publish updated/richer queries at: https://aka.ms/devopskit/omsqueries. `r`n",[MessageType]::Warning);
 		
 		}
 		if ($input -eq "n")
 		{
-			$this.PublishCustomMessage("Skipping installation of AzSK OMS solution pack...`n" , [MessageType]::Info)
+			$this.PublishCustomMessage("Skipping installation of AzSK Monitoring solution pack...`n" , [MessageType]::Info)
 			return;
 		}
     }
@@ -80,7 +80,7 @@ class OMSMonitoring: CommandBase
 		$OptionalParameters = New-Object -TypeName Hashtable
 
 		$OptionalParameters = $this.GetOMSGenericViewParameters($_viewName);
-		$this.PublishCustomMessage([MessageData]::new("Starting template deployment for OMS generic view. Detailed logs are shown below."));
+		$this.PublishCustomMessage([MessageData]::new("Starting template deployment for Log Analytics generic view. Detailed logs are shown below."));
 		$ErrorMessages = @()
         if ($_validateOnly) {
             $ErrorMessages =@()
@@ -107,7 +107,7 @@ class OMSMonitoring: CommandBase
         }
 		else
 		{
-			$this.PublishCustomMessage([MessageData]::new("Completed template deployment for OMS generic view."));			
+			$this.PublishCustomMessage([MessageData]::new("Completed template deployment for Log Analytics generic view."));			
 		}
 	}
 
@@ -126,6 +126,5 @@ class OMSMonitoring: CommandBase
 		$omsParams.Add("omsSubscriptionId",$this.SubscriptionContext.SubscriptionId);
 		$omsParams.Add("omsWorkspaceName",$this.OMSWorkspaceName);
 		return $omsParams;
-	}
-	
+	}	
 }

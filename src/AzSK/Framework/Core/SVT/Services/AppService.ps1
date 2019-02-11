@@ -100,7 +100,7 @@ class AppService: SVTBase
 		{
 			$controlResult.AddMessage([MessageData]::new("Custom domains are configured for resource " + $this.ResourceContext.ResourceName), $customHostNames);
 
-			$SSLStateNotEnabled = $this.ResourceObject.Properties.hostNameSslStates | Where-Object { (($customHostNames | Measure-Object) -contains $_.name) -and  ($_.sslState -eq 'Disabled')} | Select-Object -Property Name
+			$SSLStateNotEnabled = $this.ResourceObject.Properties.hostNameSslStates | Where-Object { ($customHostNames -contains $_.name) -and  ($_.sslState -eq 'Disabled')} | Select-Object -Property Name
 			if($null -eq $SSLStateNotEnabled)
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed,

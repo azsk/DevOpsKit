@@ -462,7 +462,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckMandatoryTags",
-      "Recommendation": "Run command 'Set-AzSKSubscriptionRBAC'. This command sets up all mandatory accounts on the target subscription. Run 'Get-Help Set-AzSKSubscriptionRBAC -full' for more help. ",
+      "Recommendation": "Verify whether the mandatory tags as per your organization policy are present on all the resource groups. Reference: https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-using-tags#portal",
       "Tags": [
         "SDL",
         "TCP",

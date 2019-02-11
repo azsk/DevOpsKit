@@ -14,12 +14,12 @@ function ConvertStringToBoolean($strToConvert)
 function RunAzSKScan() {
 
 	################################ Begin: Configure AzSK for the scan ######################################### 
-	#set OMS settings
+	#set Log Analytics workspace settings
     if(-not [string]::IsNullOrWhiteSpace($OMSWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($OMSWorkspaceSharedKey))
 	{
 		Set-AzSKOMSSettings -OMSWorkspaceID $OMSWorkspaceId -OMSSharedKey $OMSWorkspaceSharedKey -Source "CA"
 	}
-	#set alternate OMS if available
+	#set alternate Log Analytics workspace if available
 	if(-not [string]::IsNullOrWhiteSpace($AltOMSWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($AltOMSWorkspaceSharedKey))
 	{
 		Set-AzSKOMSSettings -AltOMSWorkspaceId $AltOMSWorkspaceId -AltOMSSharedKey $AltOMSWorkspaceSharedKey -Source "CA"
@@ -663,7 +663,7 @@ try {
 	#Setup during Install-CA. These are the RGs that CA will scan. "*" is allowed.
 	$ResourceGroupNames = Get-AutomationVariable -Name "AppResourceGroupNames"
 	
-	#Primary OMS WS info. This is mandatory. CA will send events to this WS.
+	#Primary Log Analytics WS info. This is mandatory. CA will send events to this WS.
     $OMSWorkspaceId = Get-AutomationVariable -Name "OMSWorkspaceId"
 	$OMSWorkspaceSharedKey = Get-AutomationVariable -Name "OMSSharedKey"
 	

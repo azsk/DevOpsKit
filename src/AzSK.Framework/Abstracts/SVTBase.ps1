@@ -128,10 +128,15 @@ class SVTBase: AzSKRoot
 				{
 					$_.IsBaselineControl = $true
 				}
+				#AddPreviewBaselineFlag
+				if($this.CheckPreviewBaselineControl($_.ControlID))
+				{
+					$_.IsPreviewBaselineControl = $true
+				}
             }
         }
     }
-
+	#Add PreviewBaselineControls
 	hidden [bool] CheckBaselineControl($controlId)
 	{
 		if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"BaselineControls.ResourceTypeControlIdMappingList"))
@@ -147,6 +152,27 @@ class SVTBase: AzSKRoot
 		{
 		  $baselineControl = $this.ControlSettings.BaselineControls.SubscriptionControlIdList | Where-Object {$_ -eq $controlId}
 		   if(($baselineControl | Measure-Object).Count -gt 0 )
+			{
+				return $true
+			}
+		}
+		return $false
+	}
+	hidden [bool] CheckPreviewBaselineControl($controlId)
+	{
+		if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.ResourceTypeControlIdMappingList"))
+		{
+		  $PreviewBaselineControls = $this.ControlSettings.PreviewBaselineControls.ResourceTypeControlIdMappingList | Where-Object {$_.ControlIds -contains $controlId}
+		   if(($PreviewBaselineControls | Measure-Object).Count -gt 0 )
+			{
+				return $true
+			}
+		}
+
+		if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.SubscriptionControlIdList"))
+		{
+		  $PreviewBaselineControls = $this.ControlSettings.PreviewBaselineControls.SubscriptionControlIdList | Where-Object {$_ -eq $controlId}
+		   if(($PreviewBaselineControls | Measure-Object).Count -gt 0 )
 			{
 				return $true
 			}
@@ -1062,7 +1088,7 @@ class SVTBase: AzSKRoot
 			$nonCompliantLogs = $diagnostics.Logs |
 								Where-Object { -not ($_.Enabled -and
 											($_.RetentionPolicy.Days -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever -or
-											$_.RetentionPolicy.Days -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Min))};
+											$_.RetentionPolicy.Days -ge $this.ControlSettings.Diagnostics_RetentionPeriod_Min))};
 
 			$selectedDiagnosticsProps = $diagnostics | Select-Object -Property Logs, Metrics, StorageAccountId, EventHubName, Name;
 

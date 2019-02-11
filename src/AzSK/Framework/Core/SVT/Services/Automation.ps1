@@ -114,7 +114,7 @@ class Automation: SVTBase
 		{
 			if([Helpers]::CheckMember($_.Exception, "Response") -and ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "Log Analytics(OMS) is not configured with this Automation account.")
+				$controlResult.AddMessage([VerificationResult]::Failed, "Log Analytics workspace is not configured with this Automation account.")
 				return $controlResult
 			}
 			else
@@ -124,13 +124,12 @@ class Automation: SVTBase
 		}
 		if($null -ne $diaSettings -and (Get-Member -InputObject $diaSettings -Name WorkspaceId -MemberType Properties) -and $null -ne $diaSettings.WorkspaceId)
 		{
-			$controlResult.AddMessage([VerificationResult]::Passed, "Log Analytics(OMS) is configured with this Automation account. OMS Workspace Id is given below.", $diaSettings.WorkspaceId)
+			$controlResult.AddMessage([VerificationResult]::Passed, "Log Analytics workspace is configured with this Automation account. Log Analytics Workspace Id is given below.", $diaSettings.WorkspaceId)
 		}
 		else
 		{
-			$controlResult.AddMessage([VerificationResult]::Failed, "Log Analytics(OMS) is not configured with this Automation account.")
+			$controlResult.AddMessage([VerificationResult]::Failed, "Log Analytics workspace is not configured with this Automation account.")
 		}
 		return $controlResult;
-    }
-	
+    }	
 }

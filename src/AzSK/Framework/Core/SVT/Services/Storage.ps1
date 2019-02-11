@@ -56,8 +56,12 @@ class Storage: SVTBase
 		else{
 			$result = $result | Where-Object {$_.Tags -contains "GeneralPurposeStorage" }
 		}
+<<<<<<< HEAD
 		
 		$recourcelocktype = Get-AzResourceLock -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType
+=======
+		$recourcelocktype = Get-AzureRmResourceLock -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType
+>>>>>>> 43b75d1f32b1cc3580c3fc0c4f151525e7d9ff65
 		if($recourcelocktype)
 		{
 			if($this.ResourceContext.ResourceGroupName -eq [OldConstants]::AzSDKRGName)
@@ -65,9 +69,19 @@ class Storage: SVTBase
 				$result = $result | Where-Object {$_.Tags -notcontains "ResourceLocked" }
 			}
 			$this.LockExists = $true;
+			$this.ControlSettings.LockedResourcesTags | ForEach-Object{
+				 if($this.ResourceObject.Tags.ContainsKey($_.TagName) -and $this.ResourceObject.Tags[$_.TagName] -eq $_.TagValue)
+				 {
+					$result = $result | Where-Object {$_.Tags -notcontains "ResourceLocked" }
+				 }
+			}
 		}
+<<<<<<< HEAD
 
 		$resource = Get-AzResource -ResourceId $this.ResourceContext.ResourceId;
+=======
+		$resource = Get-AzureRmResource -ResourceId $this.ResourceContext.ResourceId;
+>>>>>>> 43b75d1f32b1cc3580c3fc0c4f151525e7d9ff65
 		#Disabling the control 'Azure_Storage_AuthN_Dont_Allow_Anonymous' for Data Lake Storage Gen2 resources with hierarchical namespace accounts enabled as blob storage is not currently supported.
 		if(([Helpers]::CheckMember($resource.Properties, "isHnsEnabled") -and ($resource.Properties.isHnsEnabled -eq $true))){
 			$result = $result | Where-Object {$_.Tags -notcontains "HNSDisabled" }
@@ -359,7 +373,7 @@ class Storage: SVTBase
 			$loggingProperty = Get-AzStorageServiceLoggingProperty -ServiceType $ServiceType -Context $this.ResourceObject.Context -ErrorAction Stop
 			if($null -ne $loggingProperty){
 				#Check For Retention day's
-				if($loggingProperty.LoggingOperations -eq [LoggingOperations]::All -and (($loggingProperty.RetentionDays -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever) -or ($loggingProperty.RetentionDays -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Min))){
+				if($loggingProperty.LoggingOperations -eq [LoggingOperations]::All -and (($loggingProperty.RetentionDays -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever) -or ($loggingProperty.RetentionDays -ge $this.ControlSettings.Diagnostics_RetentionPeriod_Min))){
 						return $True
 				} 
 				else{
@@ -379,7 +393,7 @@ class Storage: SVTBase
 			$serviceMetricsProperty= Get-AzStorageServiceMetricsProperty -MetricsType Hour -ServiceType $ServiceType -Context $this.ResourceObject.Context  -ErrorAction Stop
 			if($null -ne $serviceMetricsProperty){
 				#Check for Retention day's
-				if($serviceMetricsProperty.MetricsLevel -eq [MetricsLevel]::ServiceAndApi -and (($serviceMetricsProperty.RetentionDays -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Min) -or ($serviceMetricsProperty.RetentionDays -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever)))
+				if($serviceMetricsProperty.MetricsLevel -eq [MetricsLevel]::ServiceAndApi -and (($serviceMetricsProperty.RetentionDays -ge $this.ControlSettings.Diagnostics_RetentionPeriod_Min) -or ($serviceMetricsProperty.RetentionDays -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever)))
 				{
 					return $True
 				}
