@@ -167,7 +167,10 @@ class ServicesSecurityStatus: SVTCommandBase
 				try
 				{
 					$extensionSVTClassName = $svtClassName + "Ext";
-					$extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName);				
+					if(-not ($extensionSVTClassName -as [type]))
+					{
+						$extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName); 
+					}	
 					if([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath))
 					{
 						$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
