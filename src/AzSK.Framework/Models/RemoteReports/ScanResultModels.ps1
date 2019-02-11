@@ -30,8 +30,10 @@ class ControlResultBase {
     [string] $Justification;
     [string] $AttestedState;
     [string] $CurrentState;
-	[bool] $IsBaselineControl;
-	[string] $UserComments;
+    [bool] $IsBaselineControl;
+    # add PreviewBaselineFlag
+    [string] $UserComments;
+    [bool] $IsPreviewBaselineControl;
 	[bool] $HasOwnerAccessTag;
 	[int] $MaximumAllowedGraceDays=0;
 }

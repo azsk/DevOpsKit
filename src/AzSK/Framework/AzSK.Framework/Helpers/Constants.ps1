@@ -109,7 +109,7 @@ class Constants
 	static [string] $ResourceDeploymentActionGroupName = "ResourceDeploymentActionGroup"
 
 	# Append recommendation when control require elevated permission
-	static [string] $RequireOwnerPermMessage = "(The status for this control has been marked as 'Manual' because elevated (Co-Admin/Owner/Contributor) permission is required to check security configuration for this resource. You can re-run the control with the appropriate privilege.) "
+	static [string] $RequireOwnerPermMessage = "(The status for this control has been marked as 'Manual' because elevated (Co-Admin/Owner/Contributor, as applicable) permission is required to check security configuration for this resource. You can re-run the control with the appropriate privilege.) "
 	static [string] $OwnerAccessTagName = "OwnerAccess"
 
 	static [string] $BlankSubscriptionId = "00000000-0000-0000-0000-000000000000"
@@ -147,7 +147,7 @@ class Constants
 	static [string] $WebhookAuthZHeaderValue = "WebhookAuthZHeaderValue"
 	static [string] $DisableAlertRunbook = "DisableAlertRunbook"
 	static [string] $CATargetSubsBlobName= "TargetSubs.json"
-	static [string] $CoAdminElevatePermissionMsg = "(If you are 'Owner' then please elevate to 'Co-Admin' in the portal and re-run in a *fresh* PS console.)"
+	static [string] $CoAdminElevatePermissionMsg = "(If you are 'Owner' then please elevate to 'Co-Admin' in the portal and re-run in a *fresh* PS console. `nNote: If the elevated permissions are not reflected, please run the 'Disconnect-AzureRmAccount' command to clear the Azure cache and try again.)"
 
 	static [string] $CommandNameChangeWarning = "The command {0} shall be renamed to {1} in a future release ('SDK' shall be replaced with 'SK').";
 	static [string] $MultipleModulesWarning =  "Found multiple modules ({0} and {1}) loaded in the PS session.`r`n"+

@@ -252,6 +252,12 @@
     "StandardGRS",
     "StandardRAGRS"
   ],
+  "LockedResourcesTags": [
+    {
+       "TagName": "application",
+       "TagValue": "databricks"
+    }
+  ],
   "RedisCache": {
     "FirewallApplicableSku": [
       "Premium"

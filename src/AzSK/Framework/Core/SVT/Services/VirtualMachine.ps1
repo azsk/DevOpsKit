@@ -16,7 +16,12 @@ class VirtualMachine: SVTBase
     VirtualMachine([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
         Base($subscriptionId, $resourceGroupName, $resourceName) 
     { 
-        $this.GetResourceObject();		
+		$this.GetResourceObject();	
+		$this.GetVMDetails();
+		$metadata= [PSObject]::new();
+		$metadata| Add-Member -Name VMDetails -Value $this.VMDetails -MemberType NoteProperty;
+		$metadata| Add-Member -Name VMASCDetails -Value $this.ASCSettings -MemberType NoteProperty;				
+		$this.AddResourceMetadata($metadata);	
     }
     
 	VirtualMachine([string] $subscriptionId, [SVTResource] $svtResource): 
@@ -693,7 +698,7 @@ class VirtualMachine: SVTBase
 			{
 				$controlResult.VerificationResult = [VerificationResult]::Verify
 				$controlResult.AddMessage("Unable to validate baseline status from workspace.Please verify.");
-				$controlResult.AddMessage("Details of failing baseline rules can be obtained from OMS workspace :" ,$workspaceId);
+				$controlResult.AddMessage("Details of failing baseline rules can be obtained from Log Analytics workspace :" ,$workspaceId);
 				$controlResult.AddMessage("The following query can be used to obtain failing baseline rules :  ",$queryforFailingBaseline);
 			}
 		}

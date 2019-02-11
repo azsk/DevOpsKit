@@ -1,7 +1,7 @@
 ﻿Set-StrictMode -Version Latest 
 Class OMSHelper{
 	static [string] $DefaultOMSType = "AzSK"
-	hidden static [int] $isOMSSettingValid = 0  #-1:Fail (OMS Empty, OMS Return Error) | 1:CA | 0:Local
+	hidden static [int] $isOMSSettingValid = 0  #-1:Fail (Log Analytics workspace Empty, Log Analytics workspace Return Error) | 1:CA | 0:Local
 	hidden static [int] $isAltOMSSettingValid = 0
 	# Create the function to create and post the request
 	static PostOMSData([string] $OMSWorkspaceID, [string] $SharedKey, $Body, $LogType, $OMSType)
@@ -43,7 +43,7 @@ Class OMSHelper{
 				}
 				[EventBase]::PublishGenericCustomMessage(" `r`nWARNING: $($warningMsg)", [MessageType]::Warning);
 				
-				#Flag to disable OMS scan 
+				#Flag to disable Log Analytics scan 
 				[OMSHelper]::$("is"+$OMSType+"SettingValid") = -1
 			}
 		}
@@ -97,6 +97,8 @@ Class OMSHelper{
 			$out.HasRequiredAccess = $ControlResult.CurrentSessionContext.Permissions.HasRequiredAccess 
 			$out.ScannerVersion = $AzSKContext.Version
 			$out.IsBaselineControl = $eventContext.ControlItem.IsBaselineControl
+			#addPreviewBaselineControl Flag
+			$out.IsPreviewBaselineControl = $eventContext.ControlItem.IsPreviewBaselineControl
 			$out.HasAttestationWritePermissions = $ControlResult.CurrentSessionContext.Permissions.HasAttestationWritePermissions
 			$out.HasAttestationReadPermissions = $ControlResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions				
 			$out.IsLatestPSModule = $ControlResult.CurrentSessionContext.IsLatestPSModule
@@ -157,7 +159,7 @@ Class OMSHelper{
 		}
 		catch
 		{			
-			throw ([SuppressedException]::new("Error sending events to OMS. The following exception occurred: `r`n$($_.Exception.Message) `r`nFor more on AzSK OMS setup, refer: https://aka.ms/devopskit/ca"));
+			throw ([SuppressedException]::new("Error sending events to Log Analytics. The following exception occurred: `r`n$($_.Exception.Message) `r`nFor more on AzSK Log Analytics workspace setup, refer: https://aka.ms/devopskit/ca"));
 		}
 	}
 
@@ -183,6 +185,8 @@ Class OMSHelper{
             $set.ControlSeverity = $item.ControlItem.ControlSeverity
 			$set.Tags = $item.ControlItem.Tags
 			$set.IsBaselineControl = $item.ControlItem.IsBaselineControl
+			#add PreviewBaselineFlag
+			$set.IsPreviewBaselineControl = $item.ControlItem.IsPreviewBaselineControl
 			 $ControlSet.Add($set) 
         }
         return $ControlSet;
@@ -190,9 +194,9 @@ Class OMSHelper{
 	
 	static [void] SetOMSDetails()
 	{
-		#Check if Settings already contain details of OMS
+		#Check if Settings already contain details of Log Analytics workspace
 		$settings = [ConfigurationManager]::GetAzSKSettings()
-		#Step 1: if OMS details are not present on machine
+		#Step 1: if Log Analytics workspace details are not present on machine
 		if([string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId) -or [string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId))
 		{
 			$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
@@ -362,6 +366,8 @@ Class OMSModel {
 	[string[]] $Tags
 	[string] $ScannerVersion
 	[bool] $IsBaselineControl
+	#add PreviewBaselineFlag
+	[bool] $IsPreviewBaselineControl
 	[string] $ExpiryDate
 	[string] $PartialScanIdentifier
 	[string] $PolicyOrgName
@@ -383,6 +389,8 @@ Class OMSResourceInvModel{
 	[string] $ControlSeverity
 	[string[]] $Tags
 	[bool] $IsBaselineControl
+	#add PreviewBaselineFlag
+	[bool] $IsPreviewBaselineControl
 }
 
 Class OMSResourceModel{

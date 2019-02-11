@@ -111,11 +111,13 @@
         'Get-AzSKExpressRouteNetworkSecurityStatus',
         'Get-AzSKControlsStatus',
         'Set-AzSKOMSSettings',
+        'Set-AzSKMonitoringSettings',
         'Set-AzSKEventHubSettings',
         'Set-AzSKWebhookSettings',
         'Set-AzSKUsageTelemetryLevel',
         'Set-AzSKLocalAIOrgTelemetrySettings',
         'Install-AzSKOMSSolution',
+        'Install-AzSKMonitoringSolution',
         'Install-AzSKContinuousAssurance',
         'Update-AzSKContinuousAssurance',        
         'Get-AzSKContinuousAssurance',
@@ -200,8 +202,8 @@
 				- Subscription and one or more applications
 
 		* Alerting & Monitoring
-			* OMS Solution for AzSK containing:
-				- Security scanning via OMS-based runbooks
+			* Monitoring Solution for AzSK containing:
+				- Security scanning via Log Analytics-based runbooks
 				- Security dashboard views covering security state/actions'
 
             # External dependent modules of this module
