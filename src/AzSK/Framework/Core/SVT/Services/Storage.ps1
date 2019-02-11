@@ -78,44 +78,44 @@ class Storage: SVTBase
 
 	hidden [ControlResult] CheckStorageContainerPublicAccessTurnOff([ControlResult] $controlResult)
     {
-		$allContainers = @();
-		$allContainersFromAPI = $null;
-		$publicContainersFromAPI = @();
-		$flag = $false
-
-		$ARMManagementUri = [Constants]::ARMManagementUri
-		$uri = [system.string]::Format($ARMManagementUri+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Storage/storageAccounts/{2}/blobServices/default/containers?api-version=2018-07-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
-
-		try 
-		{	
-			$allContainersFromAPI = [WebRequestHelper]::InvokeGetWebRequest($uri);
-		}
-		catch
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableAnonymousAccessCheckUsingAPI",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
 		{
-			throw $_
-		} 
+			$allContainersFromAPI = $null;
+			$publicContainersFromAPI = @();
+			$ARMManagementUri = [Constants]::ARMManagementUri
+			$uri = [system.string]::Format($ARMManagementUri+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Storage/storageAccounts/{2}/blobServices/default/containers?api-version=2018-07-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
 
-		foreach($item in $allContainersFromAPI)
-		{
-			if(-not ($item.properties.publicAccess -eq "None"))
-			{
-				$publicContainersFromAPI += $item
+			try 
+			{	
+				$allContainersFromAPI = [WebRequestHelper]::InvokeGetWebRequest($uri);
 			}
-		}
+			catch
+			{
+				throw $_
+			}
 
-		if($publicContainersFromAPI.Count -gt 0)
-		{
-			$flag = $true
-		}
+			foreach($item in $allContainersFromAPI)
+			{
+				if(-not ($item.properties.publicAccess -eq "None"))
+				{
+					$publicContainersFromAPI += $item
+				}
+			}
 
-		if($flag)
-		{
-			$controlResult.EnableFixControl = $true;
-			$controlResult.AddMessage([VerificationResult]::Failed  , 
-									  [MessageData]::new("Remove public access from following containers. Total - $($publicContainersFromAPI.Count)", ($publicContainersFromAPI.name, $publicContainersFromAPI.properties.publicAccess)));  
+			if($publicContainersFromAPI.Count -eq 0)
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "No containers were found that have public (anonymous) access in this storage account.");
+			}
+			else
+			{
+				$controlResult.EnableFixControl = $true;
+				$controlResult.AddMessage([VerificationResult]::Failed  , 
+										[MessageData]::new("Remove public access from following containers. Total - $($publicContainersFromAPI.Count)", ($publicContainersFromAPI.name, $publicContainersFromAPI.properties.publicAccess)));								
+			}
 		}
 		else
 		{
+			$allContainers = @();
 			try
 			{
 				$allContainers += Get-AzureStorageContainer -Context $this.ResourceObject.Context -ErrorAction Stop

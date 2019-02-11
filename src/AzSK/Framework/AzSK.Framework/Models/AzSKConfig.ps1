@@ -43,6 +43,7 @@ class AzSKConfig
 	[string] $LatestPSGalleryVersion;
 	[string] $SchemaTemplateURL;
 	[bool] $EnableAzurePolicyBasedScan;
+	[bool] $EnableAnonymousAccessCheckUsingAPI;
 	[string] $AzSKInitiativeName;
 	hidden static [AzSKConfig] $Instance = $null;
 	
