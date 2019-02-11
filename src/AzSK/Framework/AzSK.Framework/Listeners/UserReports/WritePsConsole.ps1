@@ -118,22 +118,6 @@ class WritePsConsole: FileOutputBase
             $currentInstance = [WritePsConsole]::GetInstance();
             try 
             {
-				$currentInstance.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info)
-				$currentInstance.WriteMessage("Logs have been exported to: '$([WriteFolderPath]::GetInstance().FolderPath)'", [MessageType]::Info)
-				$currentInstance.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info)
-				
-				$currentInstance.FilePath = "";
-			}
-            catch 
-            {
-                $currentInstance.PublishException($_);
-            }
-        });
-        
-        $this.RegisterEvent([AzSKRootEvent]::CommandCompleted, {
-            $currentInstance = [WritePsConsole]::GetInstance();
-            try 
-            {
 				$messages = $Event.SourceArgs.Messages;
 				if(($messages | Measure-Object).Count -gt 0 -and $Event.SourceArgs.Messages[0].Message -eq "RecommendationData")
 				{
