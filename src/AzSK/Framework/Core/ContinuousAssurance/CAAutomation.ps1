@@ -3404,7 +3404,7 @@ class CCAutomation: CommandBase
 
         #remove AzSK/AzureRm modules so that runbook can fix all the modules
 		$deleteModuleList = Get-AzAutomationModule -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name  -ErrorAction SilentlyContinue | `
-        Where-Object {$_.Name -eq "Az*" -or $_.Name -ilike 'azsk*'} 
+        Where-Object {$_.Name -eq "Az.*" -or $_.Name -ilike 'azsk*'} 
         
         if(($deleteModuleList|Measure-Object).Count -gt 0)
         {

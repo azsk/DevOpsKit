@@ -354,7 +354,8 @@ class PolicySetup: CommandBase
 				$fileName = $this.RunbookFolderPath + "RunbookScanAgent.ps1";
 				$policyStoreUrl	= [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl.Replace('$',"``$")
 				$fileContent = Get-Content -Path $fileName;
-				$fileContent = $fileContent.Replace("#ScanAgentBackup#", $policyStoreUrl);
+				$fileContent = $fileContent.Replace("[#ScanAgentBackup#]", $policyStoreUrl);
+				Out-File -InputObject $fileContent -Force -FilePath $fileName -Encoding utf8
 				$caFilePathbackup = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookScanAgentBackup.ps1"
 				Copy-Item ($caFilePath) ($this.RunbookFolderPath + "RunbookScanAgentBackup.ps1") -Force
 			}
@@ -370,9 +371,8 @@ class PolicySetup: CommandBase
 				{
 					$fileContent = Get-Content -Path $fileName;
 					$fileContent = $fileContent.Replace("#AzSKConfigURL#", $this.AzSKConfigURL);
-					$CoreSetupSrcUrl = [ConfigurationManager]::GetAzSKConfigData().CASetupRunbookURL.Replace('$',"``$")
-					$CoreSetupSrcUrlBackup = $CoreSetupSrcUrl.Replace("RunbookCoreSetup","RunbookCoreSetupbackup")
-			        $fileContent = $fileContent.Replace("#CoreSetupBackup#", $CoreSetupSrcUrlBackup);
+					$policyStoreUrl	= [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl.Replace('$',"``$")
+			        $fileContent = $fileContent.Replace("[#CoreSetupBackup#]", $policyStoreUrl);
 					Out-File -InputObject $fileContent -Force -FilePath $($this.RunbookFolderPath + "RunbookCoreSetup.ps1") -Encoding utf8
 				}
 			}

@@ -432,7 +432,7 @@ try
 
 	#This gets replaced when org-policy is created/updated. This is the org-specific
 	#url that helps bootstrap which module version to use within an org setup
-	$azskVersionForOrg = "#AzSKConfigURL#"
+	$azskVersionForOrg = "https://azsdkossep.azureedge.net/1.0.0/AzSK.Pre.json"
 
 	#We use this to check if another job is running...
 	$Global:FoundExistingJob = $false;
