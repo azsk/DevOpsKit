@@ -39,7 +39,7 @@ Class OMSHelper{
 				switch([OMSHelper]::$("is"+$OMSType+"SettingValid"))
 				{
 					0 { $warningMsg += "The $($OMSType) workspace id or key is invalid in the local settings file. You can use Set-AzSKOMSSettings with correct values to update it.";}
-					1 { $warningMsg += "The $($OMSType) workspace id or key is invalid in the ContinuousAssurance configuration. You can use Update-AzSKContinuousAssurance with the correct OMS values to correct it."; }
+					1 { $warningMsg += "The $($OMSType) workspace id or key is invalid in the ContinuousAssurance configuration. You can use Update-AzSKContinuousAssurance with the correct Log Analytics workspace values to correct it."; }
 				}
 				[EventBase]::PublishGenericCustomMessage(" `r`nWARNING: $($warningMsg)", [MessageType]::Warning);
 				
