@@ -30,7 +30,7 @@ class ConfigurationHelper {
 		}
         #If file not present in App folder load settings from Configurations in Module folder 
         if (!$filePath) {
-            $rootConfigPath = (Get-Item $PSScriptRoot).Parent.Parent.FullName + "\AzSK\Framework\Configurations\";#(Get-Item $PSScriptRoot).Parent.FullName + "\Configurations\";
+            $rootConfigPath = (Get-Item $PSScriptRoot).Parent.FullName + "\Configurations\";
 			
 			$filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
         }
