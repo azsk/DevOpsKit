@@ -39,6 +39,5 @@
   "StoreComplianceSummaryInUserSubscriptions": false,
   "SchemaTemplateURL": "https://azsdkossep.azureedge.net/schemas/3.1803.0/",
   "AzSKInitiativeName":"AzSKInitiative-Preview",
-  "EnableAzurePolicyBasedScan" : false,
-  "EnableAnonymousAccessCheckUsingAPI": false
+  "EnableAzurePolicyBasedScan" : false
 }

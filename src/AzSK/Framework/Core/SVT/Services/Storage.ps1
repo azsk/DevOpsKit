@@ -88,19 +88,19 @@ class Storage: SVTBase
 			try 
 			{	
 				$allContainersFromAPI = [WebRequestHelper]::InvokeGetWebRequest($uri);
+
+				foreach($item in $allContainersFromAPI)
+				{
+					if(-not ($item.properties.publicAccess -eq "None"))
+					{
+						$publicContainersFromAPI += $item
+					}
+				}
 			}
 			catch
 			{
 				throw $_
-			}
-
-			foreach($item in $allContainersFromAPI)
-			{
-				if(-not ($item.properties.publicAccess -eq "None"))
-				{
-					$publicContainersFromAPI += $item
-				}
-			}
+			}			
 
 			if($publicContainersFromAPI.Count -eq 0)
 			{
