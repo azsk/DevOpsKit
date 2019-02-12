@@ -20,7 +20,7 @@ class TrafficManager : SVTBase
         if (-not $this.ResourceObject)
 		{
 		
-            $this.ResourceObject = Get-AzureRmTrafficManagerProfile -Name $this.ResourceContext.ResourceName `
+            $this.ResourceObject = Get-AzTrafficManagerProfile -Name $this.ResourceContext.ResourceName `
 								-ResourceGroupName $this.ResourceContext.ResourceGroupName `
 								-ErrorAction SilentlyContinue
 

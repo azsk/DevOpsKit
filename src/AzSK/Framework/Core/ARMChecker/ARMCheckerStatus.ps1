@@ -460,7 +460,7 @@ class ARMCheckerStatus: EventBase
 			$serverFileContent = [ConfigurationManager]::LoadServerConfigFile("ARMControls.json");
 		}
 		else {
-         $AzureContext = Get-AzureRmContext
+         $AzureContext = Get-AzContext
 	  if(-not [string]::IsNullOrWhiteSpace($AzureContext)) 
 	   {
 		   $serverFileContent = [ConfigurationManager]::LoadServerConfigFile("ARMControls.json");

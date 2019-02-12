@@ -20,7 +20,7 @@ class ServiceFabric : SVTBase
     {
         if (-not $this.ResourceObject) 
 		{
-            $this.ResourceObject =  Get-AzureRmResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType -Name $this.ResourceContext.ResourceName    
+            $this.ResourceObject =  Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType -Name $this.ResourceContext.ResourceName    
 
 			$this.ResourceObject.Tags.GetEnumerator() | Where-Object { $_.Key -eq $this.DefaultTagName } | ForEach-Object {$this.ClusterTagValue = $_.Value }
 			
@@ -177,8 +177,8 @@ class ServiceFabric : SVTBase
 		{
 			#Iterate through all cluster linked VNet resources      
 			$virtualNetworkResources |ForEach-Object{            
-				$virtualNetwork=Get-AzureRmVirtualNetwork -ResourceGroupName $_.ResourceGroupName -Name $_.Name 
-				$subnetConfig = Get-AzureRmVirtualNetworkSubnetConfig -VirtualNetwork $virtualNetwork
+				$virtualNetwork=Get-AzVirtualNetwork -ResourceGroupName $_.ResourceGroupName -Name $_.Name 
+				$subnetConfig = Get-AzVirtualNetworkSubnetConfig -VirtualNetwork $virtualNetwork
 				#Iterate through Subnet and validate if NSG is configured or not
 				$subnetConfig | ForEach-Object{
 					$subnetName =$_.Name
@@ -186,8 +186,8 @@ class ServiceFabric : SVTBase
 					#If NSG is enabled on Subnet display all security rules applied 
 					if($isCompliant)
 					{
-						$nsgResource = Get-AzureRmResource -ResourceId $_.NetworkSecurityGroup.Id
-						$nsgResourceDetails = Get-AzureRmNetworkSecurityGroup -ResourceGroupName $nsgResource.ResourceGroupName -Name $nsgResource.Name                
+						$nsgResource = Get-AzResource -ResourceId $_.NetworkSecurityGroup.Id
+						$nsgResourceDetails = Get-AzNetworkSecurityGroup -ResourceGroupName $nsgResource.ResourceGroupName -Name $nsgResource.Name                
 						
 						$nsgEnabledVNet.Add($subnetName, $nsgResourceDetails)
 					}
@@ -247,7 +247,7 @@ class ServiceFabric : SVTBase
 		#Iterate through cluster linked vmss resources             
 		$vmssResources | ForEach-Object{
 			$VMScaleSetName = $_.Name	
-			$nodeTypeResource = Get-AzureRmVmss -ResourceGroupName  $_.ResourceGroupName -VMScaleSetName  $VMScaleSetName
+			$nodeTypeResource = Get-AzVMss -ResourceGroupName  $_.ResourceGroupName -VMScaleSetName  $VMScaleSetName
 
 			# Fetch diagnostics settings based on OS 
 			if($this.ResourceObject.Properties.vmImage -eq "Linux")
@@ -320,7 +320,7 @@ class ServiceFabric : SVTBase
 			$loadBalancerResources = $this.GetLinkedResources("Microsoft.Network/loadBalancers")
 			#Collect all open ports on load balancer  
 			$loadBalancerResources | ForEach-Object{
-				$loadBalancerResource = Get-AzureRmLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
+				$loadBalancerResource = Get-AzLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
 				$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
 			
 				$loadBalancingRules | ForEach-Object {
@@ -775,7 +775,7 @@ class ServiceFabric : SVTBase
 			$loadBalancerResources = $this.GetLinkedResources("Microsoft.Network/loadBalancers")
 			#Collect all open ports on load balancer  
 			$loadBalancerResources | ForEach-Object{
-				$loadBalancerResource = Get-AzureRmLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
+				$loadBalancerResource = Get-AzLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
 				$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
 			
 				$loadBalancingRules | ForEach-Object {
@@ -964,7 +964,7 @@ class ServiceFabric : SVTBase
 
 	[PSObject] GetLinkedResources([string] $resourceType)
 	{
-	    return  Get-AzureRmResource -TagName $this.DefaultTagName -TagValue $this.ClusterTagValue | Where-Object { ($_.ResourceType -EQ $resourceType) -and ($_.ResourceGroupName -eq $this.ResourceContext.ResourceGroupName) }
+	    return  Get-AzResource -TagName $this.DefaultTagName -TagValue $this.ClusterTagValue | Where-Object { ($_.ResourceType -EQ $resourceType) -and ($_.ResourceGroupName -eq $this.ResourceContext.ResourceGroupName) }
 	}	
 
 }

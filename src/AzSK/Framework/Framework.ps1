@@ -1,12 +1,12 @@
 Set-StrictMode -Version Latest
 
 # load AI dlls using context
-try {Get-AzureRmContext -ErrorAction SilentlyContinue | Out-Null }
+try {Get-AzContext -ErrorAction SilentlyContinue | Out-Null }
 catch 
 { 
 	# No need to break execution 
 }
-$FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Framework"
+$FrameworkPath =  $PSScriptRoot
 
 . $FrameworkPath\Models\Enums.ps1
 

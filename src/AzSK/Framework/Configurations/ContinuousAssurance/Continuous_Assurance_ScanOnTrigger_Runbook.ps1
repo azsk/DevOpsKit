@@ -166,7 +166,7 @@ function GetResourceDetailsfromWebhook($WebHookDataforResourceCreation)
 
 			#Write-Output $resourceidsplit[6]
 
-			#$datafromdeployment = Get-AzureRmResourceGroupDeployment -ResourceGroupName $alertcontext.activityLog.resourceGroupName -Name $resourceidsplit[6] | ConvertTo-Json -Depth 10
+			#$datafromdeployment = Get-AzResourceGroupDeployment -ResourceGroupName $alertcontext.activityLog.resourceGroupName -Name $resourceidsplit[6] | ConvertTo-Json -Depth 10
 			
 			#if(-not [string]::IsNullOrWhiteSpace($datafromdeployment))
 			#{
@@ -239,7 +239,21 @@ try
 		
 		$appId = $RunAsConnection.ApplicationId 
         Write-Output ("RB: Logging in to Azure for appId: [$appId]")
+		$Azlogin = Get-Command -Name "Connect-AzAccount" -ErrorAction SilentlyContinue
 		$loginCmdlets = Get-Command -Noun "AzureRmAccount" -ErrorAction SilentlyContinue
+        if($Null -ne $Azlogin)
+        {
+            Connect-AzAccount `
+				-Environment $AzureEnv `
+				-ServicePrincipal `
+				-Tenant $RunAsConnection.TenantId `
+				-ApplicationId $RunAsConnection.ApplicationId `
+				-CertificateThumbprint $RunAsConnection.CertificateThumbprint | Out-Null
+			
+           Set-AzContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
+        }
+        else
+        {
 		if($Null -ne $loginCmdlets)
 		{
 			#AzureRm.profile version = 5.x.x
@@ -266,13 +280,14 @@ try
 			{
 				throw "RB: Failed to login to Azure. Check if AzureRm.profile module is present."
 			}
+            Set-AzureRmContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
 		}
 		else
 		{
 			throw "RB: Failed to login to Azure. Check if AzureRm.profile module is present."
 		}
-		Set-AzureRmContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
 	}
+}
 	catch
 	{
 		Write-Output ("RB: Failed to login to Azure with AzSK AppId: [$appId].")
@@ -305,10 +320,10 @@ try
 		{
 			if(![string]::IsNullOrWhiteSpace($resourcedetails.ResourceGroupNamefromWebhook))
 			{
-				$automationjoblist =  Get-AzureRmAutomationJob -RunbookName Continuous_Assurance_ScanOnTrigger_Runbook -ResourceGroupName $automationAccountRG -Status Running -AutomationAccountName $automationAccountName
+				$automationjoblist =  Get-AzAutomationJob -RunbookName Continuous_Assurance_ScanOnTrigger_Runbook -ResourceGroupName $automationAccountRG -Status Running -AutomationAccountName $automationAccountName
 				$automationjoblist | ForEach-Object {
 				
-					$jobdetails = Get-AzureRmAutomationJob -AutomationAccountName $_.AutomationAccountName -ResourceGroupName $_.ResourceGroupName -Id $_.JobId
+					$jobdetails = Get-AzAutomationJob -AutomationAccountName $_.AutomationAccountName -ResourceGroupName $_.ResourceGroupName -Id $_.JobId
 				
 					$jobdetails = $jobdetails.JobParameters  	
 					$jobdetailsBody    =   $jobdetails.webhookData.RequestBody

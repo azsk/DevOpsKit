@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckRBACAccess",
       "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-      "Recommendation": "Remove any excessive privileges granted on the Redis Cache. Assign 'Redis Cache Contributor' RBAC role to developers who manages Redis Cache configurations. Run command: Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help. Refer: https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-control-manage-access-powershell",
+      "Recommendation": "Remove any excessive privileges granted on the Redis Cache. Assign 'Redis Cache Contributor' RBAC role to developers who manages Redis Cache configurations. Run command: Remove-AzRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help. Refer: https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-control-manage-access-powershell",
       "Tags": [
         "SDL",
         "TCP",
@@ -85,7 +85,7 @@
       "Automated": "Yes",
       "MethodName": "CheckRedisCacheSSLConfig",
       "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
-      "Recommendation": "To disable Non-SSL port for Redis Cache, run command : Set-AzureRmRedisCache -ResourceGroupName <String> -Name <String> -EnableNonSslPort `$false",
+      "Recommendation": "To disable Non-SSL port for Redis Cache, run command : Set-AzRedisCache -ResourceGroupName <String> -Name <String> -EnableNonSslPort `$false",
       "Tags": [
          "SDL",
          "TCP",

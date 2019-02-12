@@ -11,7 +11,7 @@
         "Automated": "Yes",
         "MethodName": "CheckRBACAccess",
         "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-        "Recommendation": "Remove any excessive privileges granted on the App Service. Run command: Remove-AzureRmRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help.",
+        "Recommendation": "Remove any excessive privileges granted on the App Service. Run command: Remove-AzRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
         "Tags": [
           "SDL",
           "TCP",
@@ -184,7 +184,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceWebSocketsConfiguration",
         "Rationale": "WebSockets protocol (WS) is vulnerable to different types of security attacks. Usage of Web Sockets with in web applications has to be carefully reviewed.",
-        "Recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -WebSocketsEnabled `$false'. Run 'Get-Help Set-AzureRmWebApp -full' for more help. Refer: https://www.owasp.org/index.php/HTML5_Security_Cheat_Sheet#WebSockets",
+        "Recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -WebSocketsEnabled `$false'. Run 'Get-Help Set-AzWebApp -full' for more help. Refer: https://www.owasp.org/index.php/HTML5_Security_Cheat_Sheet#WebSockets",
         "Tags": [
           "SDL",
           "Best Practice",
@@ -225,7 +225,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceDotNetFrameworkVersion",
         "Rationale": "Running on older .Net versions could mean you are not using latest security classes. Usage of such old classes and types can make your application vulnerable.",
-        "Recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.0''. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+        "Recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.0''. Run 'Get-Help Set-AzWebApp -full' for more help.",
         "Tags": [
           "SDL",
           "Best Practice",
@@ -267,7 +267,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceInstanceCount",
         "Rationale": "App Service deployed on multiple instances ensures that the App Service remains available even if an instance is down.",
-        "Recommendation": "Run command 'Set-AzureRmAppServicePlan -Name '<AppServicePlanName>' -ResourceGroupName '<RGName>' -NumberofWorkers '<NumberofInstances>''. Run 'Get-Help Set-AzureRmAppServicePlan -full' for more help.",
+        "Recommendation": "Run command 'Set-AzAppServicePlan -Name '<AppServicePlanName>' -ResourceGroupName '<RGName>' -NumberofWorkers '<NumberofInstances>''. Run 'Get-Help Set-AzAppServicePlan -full' for more help.",
         "Tags": [
           "SDL",
           "TCP",
@@ -308,7 +308,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceDiagnosticLogsConfiguration",
         "Rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
-        "Recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+        "Recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzWebApp -full' for more help.",
         "Tags": [
           "SDL",
           "TCP",
@@ -351,7 +351,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceHttpCertificateSSL",
         "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer eavesdropping attacks.",
-        "Recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -HttpsOnly `$true. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+        "Recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -HttpsOnly `$true. Run 'Get-Help Set-AzWebApp -full' for more help.",
         "Tags": [
           "SDL",
           "TCP",
@@ -547,7 +547,7 @@
         "Automated": "Yes",
         "MethodName": "CheckFunctionsAppHttpCertificateSSL",
         "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer eavesdropping attacks.",
-        "Recommendation": "Run command 'Set-AzureRmResource -ResourceName '<WebAppName>' -ResourceGroupName '<RGName>' -ResourceType 'Microsoft.Web/sites' -Properties @{httpsOnly='true'} -Force '. Run 'Get-Help Set-AzureRmResource -full' for more help. Note:'HttpsOnly' is required only for 'Http Trigger' functions.",
+        "Recommendation": "Run command 'Set-AzResource -ResourceName '<WebAppName>' -ResourceGroupName '<RGName>' -ResourceType 'Microsoft.Web/sites' -Properties @{httpsOnly='true'} -Force '. Run 'Get-Help Set-AzResource -full' for more help. Note:'HttpsOnly' is required only for 'Http Trigger' functions.",
         "Tags": [
           "SDL",
           "TCP",

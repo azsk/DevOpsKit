@@ -10,7 +10,7 @@
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckSubscriptionAdminCount",
-      "Recommendation": "There are 2 steps involved. (1) You need to remove any 'Classic Administrators/Co-Administrators' who should not be in the role. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Subscriptions (c) Select the subscription (d) Go to 'Access Control (IAM)' (e) Right click the co-administrator account that has to be removed and click on the 'Remove co-administrator'. (f) Perform this operation for all the co-administrators that need to be removed from the subscription. (2) You need to remove any unwanted members from the Owners group. To do this simply run the command 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName Owner'.",
+      "Recommendation": "There are 2 steps involved. (1) You need to remove any 'Classic Administrators/Co-Administrators' who should not be in the role. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Subscriptions (c) Select the subscription (d) Go to 'Access Control (IAM)' (e) Right click the co-administrator account that has to be removed and click on the 'Remove co-administrator'. (f) Perform this operation for all the co-administrators that need to be removed from the subscription. (2) You need to remove any unwanted members from the Owners group. To do this simply run the command 'Remove-AzRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName Owner'.",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -28,7 +28,7 @@
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "ValidateCentralAccountsRBAC",
-      "Recommendation": "There are 2 steps involved. (1) You need to remove any 'Classic Administrators/Co-Administrators/Owners' who should not be in the role. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Subscriptions (c) Select the subscription (d) Go to 'Access Control (IAM)' (e) Right click the co-administrator account that has to be removed and click on the 'Remove co-administrator'. (f) Perform this operation for all the co-administrators that need to be removed from the subscription. (2) You need to remove any unwanted members from the Owners group. To do this simply run the command 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName Owner'.",
+      "Recommendation": "There are 2 steps involved. (1) You need to remove any 'Classic Administrators/Co-Administrators/Owners' who should not be in the role. Please follow these steps: (a) Logon to https://portal.azure.com/ (b) Navigate to Subscriptions (c) Select the subscription (d) Go to 'Access Control (IAM)' (e) Right click the co-administrator account that has to be removed and click on the 'Remove co-administrator'. (f) Perform this operation for all the co-administrators that need to be removed from the subscription. (2) You need to remove any unwanted members from the Owners group. To do this simply run the command 'Remove-AzRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName Owner'.",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -114,7 +114,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckNonAADAccountsRBAC",
-      "Recommendation": "Run command Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help.",
+      "Recommendation": "Run command Remove-AzRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
       "Tags": [
         "SDL",
         "TCP",
@@ -140,7 +140,7 @@
       "ControlSeverity": "High",
       "Automated": "No",
       "MethodName": "CheckSVCAccountsRBAC",
-      "Recommendation": "Run command Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help.",
+      "Recommendation": "Run command Remove-AzRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
       "Tags": [
         "SDL",
         "TCP",
@@ -258,7 +258,7 @@
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckSPNsRBAC",
-      "Recommendation": "If this SPN needs access to your subscription, make sure you add it at the specific permission scope and role required for your scenario. For example, sometimes 'Contributor' access at 'Resource Group' scope might work. In other scenarios you may need 'Reader' access at 'Subscription' scope. Exact permission will vary based on your use case. If you want to remove the SPN, run command Remove-AzureRmRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help.",
+      "Recommendation": "If this SPN needs access to your subscription, make sure you add it at the specific permission scope and role required for your scenario. For example, sometimes 'Contributor' access at 'Resource Group' scope might work. In other scenarios you may need 'Reader' access at 'Subscription' scope. Exact permission will vary based on your use case. If you want to remove the SPN, run command Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -285,7 +285,7 @@
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckResourceLocksUsage",
-      "Recommendation": "Consider using Azure resource locks to protect those resources in the subscription that you absolutely cannot afford to be deleted (by accident). You have to identify such resources and apply locks to them. Run command 'New-AzureRmResourceLock'. Run 'Get-Help New-AzureRmResourceLock -full' for more help.",
+      "Recommendation": "Consider using Azure resource locks to protect those resources in the subscription that you absolutely cannot afford to be deleted (by accident). You have to identify such resources and apply locks to them. Run command 'New-AzResourceLock'. Run 'Get-Help New-AzResourceLock -full' for more help.",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -444,7 +444,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckPermanentRoleAssignments",
-      "Recommendation": "Use Privileged Identity Management (PIM) to grant access to privileged roles at subscription scope. To remove existing assignments run: 'Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName {RoleDefinitionName}'. Refer https://docs.microsoft.com/en-us/azure/active-directory/privileged-identity-management/azure-pim-resource-rbac#assign-roles.",
+      "Recommendation": "Use Privileged Identity Management (PIM) to grant access to privileged roles at subscription scope. To remove existing assignments run: 'Remove-AzRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}' -RoleDefinitionName {RoleDefinitionName}'. Refer https://docs.microsoft.com/en-us/azure/active-directory/privileged-identity-management/azure-pim-resource-rbac#assign-roles.",
       "Tags": [
         "SDL",
         "Automated",
@@ -462,7 +462,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckMandatoryTags",
-      "Recommendation": "Run command 'Set-AzSKSubscriptionRBAC'. This command sets up all mandatory accounts on the target subscription. Run 'Get-Help Set-AzSKSubscriptionRBAC -full' for more help. ",
+      "Recommendation": "Verify whether the mandatory tags as per your organization policy are present on all the resource groups. Reference: https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-using-tags#portal",
       "Tags": [
         "SDL",
         "TCP",

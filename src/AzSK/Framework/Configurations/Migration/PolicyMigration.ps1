@@ -30,11 +30,11 @@ class PolicyMigrationHelper
 
 			$azskRGScope = "/subscriptions/$($subscriptionContext.SubscriptionId)/resourceGroups/$([PolicyMigrationHelper]::PolicyRGName)"
 			$resourceLocks = @();
-			$resourceLocks += Get-AzureRmResourceLock -Scope $azskRGScope -ErrorAction Stop
+			$resourceLocks += Get-AzResourceLock -Scope $azskRGScope -ErrorAction Stop
 			if($resourceLocks.Count -gt 0)
 			{
 				$resourceLocks | ForEach-Object {
-					Remove-AzureRmResourceLock -LockId $_.LockId -Force
+					Remove-AzResourceLock -LockId $_.LockId -Force
 				}
 				Write-Host ("Successfully removed the locks on old Org policy resource group.") -ForegroundColor Green;
 			}
@@ -60,7 +60,7 @@ class PolicyMigrationHelper
 		{
 			Write-Host ("Extracting policy files from old Org policy resources...") -ForegroundColor Yellow;
 
-			$oldRg = Get-AzureRmResourceGroup -Name $([PolicyMigrationHelper]::PolicyRGName) -ErrorAction SilentlyContinue
+			$oldRg = Get-AzResourceGroup -Name $([PolicyMigrationHelper]::PolicyRGName) -ErrorAction SilentlyContinue
 			if($oldRg)
 			{
 				$oldResourceGroupLocation = $oldRg.Location;					
@@ -68,7 +68,7 @@ class PolicyMigrationHelper
 			
 			#region extract storage policies
 				$storageAccounts = @();
-				$storageAccounts += Get-AzureRmStorageAccount -ResourceGroupName $([PolicyMigrationHelper]::PolicyRGName) -ErrorAction SilentlyContinue;
+				$storageAccounts += Get-AzStorageAccount -ResourceGroupName $([PolicyMigrationHelper]::PolicyRGName) -ErrorAction SilentlyContinue;
 				$storageAccounts = $storageAccounts | Where-Object { $_.StorageAccountName -like "$([OldConstants]::StorageAccountPreName)*" } ;
 				if(($storageAccounts | Measure-Object).Count -ne 1)
 				{
@@ -76,7 +76,7 @@ class PolicyMigrationHelper
 				}
 				$context = $storageAccounts[0].Context;		
 
-				$policyBlobs = Get-AzureStorageBlob -Container "policies" -Context $context -ErrorAction SilentlyContinue
+				$policyBlobs = Get-AzStorageBlob -Container "policies" -Context $context -ErrorAction SilentlyContinue
 				if(($policyBlobs | Measure-Object).Count -gt 0)
 				{
 					if(-not (Test-Path "$($PolicyInstance.ConfigFolderPath)"))
@@ -99,7 +99,7 @@ class PolicyMigrationHelper
 							continue
 						}
 						$filepath = "$($PolicyInstance.ConfigFolderPath)\$fileName"
-						Get-AzureStorageBlobContent -Blob $blob.Name -Container "policies" -Destination $filepath -Context $context -Force -ErrorAction SilentlyContinue
+						Get-AzStorageBlobContent -Blob $blob.Name -Container "policies" -Destination $filepath -Context $context -Force -ErrorAction SilentlyContinue
 					}
 				}					
 				#endregion
@@ -142,7 +142,7 @@ class PolicyMigrationHelper
 		Write-Host ("Performing last couple of steps...") -ForegroundColor Yellow;
 		#Override existing IWR
 		Write-Host ("Updating old Org-specific installer ('iwr')...") -ForegroundColor Yellow;	
-		Set-AzureStorageBlobContent -File $PolicyInstance.InstallerFile -Container $($PolicyInstance.InstallerContainerName) -BlobType Block -Context $context -Force -ErrorAction Stop						
+		Set-AzStorageBlobContent -File $PolicyInstance.InstallerFile -Container $($PolicyInstance.InstallerContainerName) -BlobType Block -Context $context -Force -ErrorAction Stop						
 		Write-Host ("Successfully updated installer.") -ForegroundColor Green;
 		Write-Host ("Uploading Org policy migration log to storage [$($PolicyInstance.StorageAccountName)]...") -ForegroundColor Yellow;
 		[PolicyMigrationHelper]::PersistMigrationOutput($subscriptionContext.SubscriptionId,[PolicyMigrationHelper]::NewPolicyRGName, $MigrationOutput);		
@@ -168,7 +168,7 @@ class PolicyMigrationHelper
 	{
 		$PrerequisiteCheckResult = $true
 		
-		$PolicyRG= Get-AzureRmResourceGroup -Name $([PolicyMigrationHelper]::PolicyRGName) -ErrorAction SilentlyContinue
+		$PolicyRG= Get-AzResourceGroup -Name $([PolicyMigrationHelper]::PolicyRGName) -ErrorAction SilentlyContinue
 		if(-not $PolicyRG)
 		{
 			$PrerequisiteCheckResult = $false
@@ -216,7 +216,7 @@ class PolicyMigrationHelper
 
 			try{
 				$newStorageRGName = $OrgRGName
-				$newStorageAccount = Get-AzureRmResource -ResourceGroupName $newStorageRGName -ResourceType 'Microsoft.Storage/storageAccounts'
+				$newStorageAccount = Get-AzResource -ResourceGroupName $newStorageRGName -ResourceType 'Microsoft.Storage/storageAccounts'
 				if($newStorageAccount)
 				{
 					$storageHelper = [StorageHelper]::new($subscriptionId,$newStorageRGName,$newStorageAccount.Location, $newStorageAccount.Name);
