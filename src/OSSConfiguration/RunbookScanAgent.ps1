@@ -652,7 +652,7 @@ try {
     {
 		$accessToken = Get-AzSKAccessToken -ResourceAppIdURI "https://management.core.windows.net/"
 		$onlinePolicyStoreUrl = "[#ScanAgentBackup#]"
-		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName "RunbookScanAgentBackUp.ps1" -version "1.0.0"
+		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName "RunbookScanAgentBackup.ps1" -version "1.0.0"
 	}
 	else {
     #start timer

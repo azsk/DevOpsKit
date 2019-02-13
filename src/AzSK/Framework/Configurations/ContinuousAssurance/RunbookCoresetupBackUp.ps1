@@ -1,4 +1,3 @@
-
 function SetModules
 {
     param(
@@ -560,7 +559,9 @@ try
 		Write-Output ("CS: CA core setup completed.")
 		PublishEvent -EventName "CA Setup Succeeded" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 	}	
-	
+		
+	DownloadModule -ModuleName Az.Accounts -ModuleVersion 1.2.1 -Sync $true
+	DownloadModule -ModuleName Az.Automation -ModuleVersion 1.0.0 -Sync $true
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }
 catch

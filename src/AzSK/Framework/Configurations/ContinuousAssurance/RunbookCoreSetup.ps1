@@ -409,7 +409,7 @@ function IsScanComplete()
 
 $isAzAutomationAvailable = Get-Command -Name "Get-AzAutomationSchedule" -ErrorAction SilentlyContinue
 $isAzAccountsAvailable =  Get-Module Az.Accounts
-if ((-not [string]::IsNullOrWhiteSpace($isAzAccountsAvailable)) -and (-not [string]::IsNullOrWhiteSpace($isAzAutomationAvailable))
+if ((-not [string]::IsNullOrWhiteSpace($isAzAccountsAvailable)) -and (-not [string]::IsNullOrWhiteSpace($isAzAutomationAvailable)))
 {	
 $Global:isAzAvailable = $true
 }
@@ -600,8 +600,7 @@ try
 	{
 		Write-Output ("CS: CA core setup completed.")
 		PublishEvent -EventName "CA Setup Succeeded" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
-	}	
-	
+	}
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }
 catch
@@ -612,5 +611,5 @@ catch
 }
 else {
 	$CoreSetupSrcUrl = "[#CoreSetupBackup#]"
-	InvokeScript -policyStoreURL $CoreSetupSrcUrl -fileName "RunbookCoresetupBackUp.ps1" -version "1.0.0"
+	InvokeScript -policyStoreURL $CoreSetupSrcUrl -fileName "RunbookCoresetupBackup.ps1" -version "1.0.0"
 }
