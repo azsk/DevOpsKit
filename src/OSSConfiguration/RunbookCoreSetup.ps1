@@ -8,7 +8,7 @@ function SetModules
 	$ModuleList.Keys | ForEach-Object{
 	$ModuleName = $_
     $ModuleVersion = $ModuleList.Item($_)
-    $Module = Get-AzAutomationSchedule `
+    $Module = Get-AzAutomationmodule `
     -ResourceGroupName $AutomationAccountRG `
     -AutomationAccountName $AutomationAccountName `
     -Name $ModuleName -ErrorAction SilentlyContinue
