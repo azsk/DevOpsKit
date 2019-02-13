@@ -611,6 +611,7 @@ catch
 }
 }
 else {
+	Write-Output ("CS: Invoking core setup backup.")
 	$CoreSetupSrcUrl = "[#CoreSetupBackup#]"
 	InvokeScript -policyStoreURL $CoreSetupSrcUrl -fileName "RunbookCoresetupBackup.ps1" -version "1.0.0"
 }

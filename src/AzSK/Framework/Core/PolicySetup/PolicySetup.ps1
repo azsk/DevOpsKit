@@ -356,8 +356,8 @@ class PolicySetup: CommandBase
 				$fileContent = Get-Content -Path $fileName;
 				$fileContent = $fileContent.Replace("[#ScanAgentBackup#]", $policyStoreUrl);
 				Out-File -InputObject $fileContent -Force -FilePath $fileName -Encoding utf8
-				$caFilePathbackup = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookScanAgentBackup.ps1"
-				Copy-Item ($caFilePath) ($this.RunbookFolderPath + "RunbookScanAgentBackup.ps1") -Force
+				$caFilePathbackup = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookScanAgentAzureRm.ps1"
+				Copy-Item ($caFilePath) ($this.RunbookFolderPath + "RunbookScanAgentAzureRm.ps1") -Force
 			}
 
 			$RunbookCoreSetupFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetup.ps1" } | Select -First 1
@@ -388,18 +388,18 @@ class PolicySetup: CommandBase
 					Out-File -InputObject $RunbookCoreSetupContent -Force -FilePath $($RunbookCoreSetupFile.FullName) -Encoding utf8
 				}
 			}
-			$RunbookCoreSetupBackupFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetupBack.ps1" } | Select -First 1
+			$RunbookCoreSetupBackupFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetupAzureRm.ps1" } | Select -First 1
 			if((($RunbookCoreSetupBackupFile | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::CARunbooks)
 			{
-				$coreSetupFilePath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookCoreSetupBackup.ps1"
-				Copy-Item ($coreSetupFilePath) ($this.RunbookFolderPath + "RunbookCoreSetupBackup.ps1") -Force
+				$coreSetupFilePath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookCoreSetupAzureRm.ps1"
+				Copy-Item ($coreSetupFilePath) ($this.RunbookFolderPath + "RunbookCoreSetupAzureRm.ps1") -Force
 				#Check for environment specific installer file
-				$fileName = $this.RunbookFolderPath + "RunbookCoreSetupBackup.ps1";
+				$fileName = $this.RunbookFolderPath + "RunbookCoreSetupAzureRm.ps1";
 				if(Test-Path -Path $fileName)
 				{
 					$fileContent = Get-Content -Path $fileName;
 					$fileContent = $fileContent.Replace("#AzSKConfigURL#", $this.AzSKConfigURL);
-					Out-File -InputObject $fileContent -Force -FilePath $($this.RunbookFolderPath + "RunbookCoreSetupBackup.ps1") -Encoding utf8
+					Out-File -InputObject $fileContent -Force -FilePath $($this.RunbookFolderPath + "RunbookCoreSetupAzureRm.ps1") -Encoding utf8
 				}
 			}
 			#If RunbookCoreSetup already exists, check for SAS token expiry and update with latest token 
