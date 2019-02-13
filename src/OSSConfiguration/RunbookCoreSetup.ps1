@@ -61,7 +61,8 @@ function DownloadModule
 		#$ModuleName/$AzSK... etc. are defined in the core setup (start) code further below
 		if($ModuleName -imatch "AzSK*")
 		{
-	        $ModuleContentUrl = "$AzSKPSGalleryUrl/api/v2/package/$ModuleName/$ModuleVersion"			
+			$ModuleContentUrl = "$AzSKPSGalleryUrl/api/v2/package/$ModuleName/$ModuleVersion"	
+			Write-Output("CS: Downloading $ModuleName from $ModuleContentUrl")		
 		}
 
         # Find the actual blob storage location of the Module

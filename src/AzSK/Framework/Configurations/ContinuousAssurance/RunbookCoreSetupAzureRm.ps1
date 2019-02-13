@@ -25,7 +25,7 @@ function SetModules
 		#module is in extraction state
 		if($Module.ProvisioningState -ne "Failed" -and $Module.ProvisioningState -ne "Succeeded" -and $Module.ProvisioningState -ne "Created")
 		{
-			Write-Output("CS: Current provisioning state for module: [$ModuleName] is: [$($Module.ProvisioningState)]")
+			Write-Output("CS.o: Current provisioning state for module: [$ModuleName] is: [$($Module.ProvisioningState)]")
 		}
 		#Check if module with specified version already exists
         elseif(IsModuleHealthy -ModuleName $ModuleName -ModuleVersion $ModuleVersion)
@@ -61,7 +61,8 @@ function DownloadModule
 		#$ModuleName/$AzSK... etc. are defined in the core setup (start) code further below
 		if($ModuleName -imatch "AzSK*")
 		{
-	        $ModuleContentUrl = "$AzSKPSGalleryUrl/api/v2/package/$ModuleName/$ModuleVersion"			
+			$ModuleContentUrl = "$AzSKPSGalleryUrl/api/v2/package/$ModuleName/$ModuleVersion"	
+			Write-Output("CS.o: Downloading $ModuleName from $ModuleContentUrl")		
 		}
 
         # Find the actual blob storage location of the Module
@@ -83,7 +84,7 @@ function DownloadModule
             -ContentLink $ActualUrl
 		} while($null -eq $AutomationModule -and $retryCount -le 3)
 
-		Write-Output("CS: Importing module: [$ModuleName] Version: [$ModuleVersion] into the CA automation account.")
+		Write-Output("CS.o: Importing module: [$ModuleName] Version: [$ModuleVersion] into the CA automation account.")
 
 		if($Sync)
 		{
@@ -99,7 +100,7 @@ function DownloadModule
                 }
                 if($AutomationModule.ProvisioningState -eq "Failed")
                 {
-					Write-Output ("CS: Failed to import: [$AutomationModule] into the automation account. Will retry in a bit.")
+					Write-Output ("CS.o: Failed to import: [$AutomationModule] into the automation account. Will retry in a bit.")
 					return;
                 }
 		}
@@ -192,7 +193,7 @@ function SearchModule
 
     if(!$SearchResult)
     {
-            Write-Error "CS: Could not find module: [$ModuleName] in gallery: $PSGalleryUrlComputed"
+            Write-Error "CS.o: Could not find module: [$ModuleName] in gallery: $PSGalleryUrlComputed"
             return $null
     }
     else
@@ -294,7 +295,7 @@ function CreateNewScheduleIfNotExists($scheduleName,$startTime)
 function CreateHelperSchedules()
 {
 	RemoveOnetimeHelperSchedule
-	Write-Output("CS: Creating required helper schedule(s)...")	
+	Write-Output("CS.o: Creating required helper schedule(s)...")	
 	for($i = 1;$i -le 4; $i++)
 	{
 		$scheduleName = ""
@@ -351,7 +352,7 @@ function EnableHelperSchedule($scheduleName)
 	{
 		DisableHelperSchedules -excludeSchedule $scheduleName
 	}
-	Write-Output ("CS: Scheduled CA helper job :[$scheduleName]")
+	Write-Output ("CS.o: Scheduled CA helper job :[$scheduleName]")
 }
 function ScheduleNewJob($intervalInMins)
 {
@@ -378,195 +379,200 @@ function IsScanComplete()
 
 try
 {
-	$setupTimer = [System.Diagnostics.Stopwatch]::StartNew();
-	PublishEvent -EventName "CA Setup Started"
-	Write-Output("CS: Starting core setup...")
-
-	###Config start--------------------------------------------------
-	$AzSKModuleName = "AzSK"
-	$RunbookName = "Continuous_Assurance_Runbook"
-	
-	#These get set as constants during the build process (e.g., AzSKStaging will have a diff URL)
-	#PublicPSGalleryUrl is always same.
-	$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
-	$PublicPSGalleryUrl = "https://www.powershellgallery.com"
-
-	#This gets replaced when org-policy is created/updated. This is the org-specific
-	#url that helps bootstrap which module version to use within an org setup
-	$azskVersionForOrg = "#AzSKConfigURL#"
-
-	#We use this to check if another job is running...
-	$Global:FoundExistingJob = $false;
-	###Config end----------------------------------------------------
-	#initialize variables
-	$ResultModuleList = [ordered]@{}
-	$retryDownloadIntervalMins = 10
-	$monitorjobIntervalMins = 45
-	$tempUpdateToLatestVersion = Get-AutomationVariable -Name UpdateToLatestAzSKVersion -ErrorAction SilentlyContinue
-    if($null -ne $tempUpdateToLatestVersion)
-    {
-		$UpdateToLatestVersion = ConvertStringToBoolean($tempUpdateToLatestVersion)
-	}
-	#We get sub id from RunAsConnection
-	$SubscriptionID = $RunAsConnection.SubscriptionID
-	
-	if(IsScanComplete)
+	#Check if this is fresh ICA (Profile version )
+	$isBaseProfileModule =  (Get-Module -Name AzureRm.Profile).Version.Major -lt 5
+	if(-not $isBaseProfileModule)
 	{
-		CreateHelperSchedules
-		return
-    }
-    $jobs = Get-AzureRmAutomationJob -Name $RunbookName -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName
-    
-	#Find out how many times has CA runbook run today for this account...
-	$TodaysJobs = $jobs | Where-Object {$_.CreationTime.UtcDateTime.Date -eq $(get-date).ToUniversalTime().Date}
-	
-	#Under normal circumstances, we should not see too many runs on a single day within a CA setup
-	#If that is what is happening, let us stop and also disable further retries on the same day.
-	if($TodaysJobs.Count -gt 25)
-	{
-		Write-Error("CS: Daily job retry limit exceeded. Will disable retries for today. If this recurs each day, please contact your support team.")
-		#The Scan_Schedule will attempt a retry again next day. 
-		#We don't disable Scan_Schedule because then we won't have a way to 'auto-recover' CA setups.
-		PublishEvent -EventName "CA Setup Fatal Error" -Properties @{"JobsCount"=$TodaysJobs.Count} -Metrics @{"TimeTakenInMs" =$setupTimer.ElapsedMilliseconds; "SuccessCount" = 0}
+		$setupTimer = [System.Diagnostics.Stopwatch]::StartNew();
+		PublishEvent -EventName "CA Setup Started"
+		Write-Output("CS.o: Starting core setup...")
+        Write-Output ("CS.o: Downloading AzureRm dependencies...")
+		###Config start--------------------------------------------------
+		$AzSKModuleName = "AzSK"
+		$RunbookName = "Continuous_Assurance_Runbook"
 		
-		#Disable the helper schedule
-		DisableHelperSchedules
-		return;
-	}
-	#Check if a scan job is already running. If so, we don't need to duplicate effort!
-	$TotalJobsRunning = $jobs | Where-Object { $_.Status -in ("Queued", "Starting", "Resuming", "Running",  "Activating")}
+		#These get set as constants during the build process (e.g., AzSKStaging will have a diff URL)
+		#PublicPSGalleryUrl is always same.
+		$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
+		$PublicPSGalleryUrl = "https://www.powershellgallery.com"
 
-	ScheduleNewJob -intervalInMins $monitorjobIntervalMins 
-	$NoOfRecentActiveRunningJobs = 0    
-    if(($TotalJobsRunning|Measure-Object).Count -gt 1)
-    {
-        $TotalJobsRunning|ForEach-Object{
-            #Automation account should have terminated the job after 3hrs (current default behavior). If not, let us stop it.
-            if(((GET-DATE).ToUniversalTime() - $_.StartTime.UtcDateTime).TotalMinutes -gt 210)
-            {
-                $jobId = $_.JobId
-                try
-                {           
-                    Stop-AzureRmAutomationJob -Id $jobId -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName                  
-                }
-                catch
-                {
-                    #Eat exception as not able to stop the existing running job
-                    Write-Output ("CS: Error while stopping job [" + $jobId + "]")
-                }
-            }
-            else
-            {               
-                $NoOfRecentActiveRunningJobs = $NoOfRecentActiveRunningJobs + 1             
-            }
-        }       
-        
-        #A job is already running. Let it take care of things....       
-        if($NoOfRecentActiveRunningJobs -gt 1)
-        {
-            $Global:FoundExistingJob = $true;   
-            return;
-        }
-    }
+		#This gets replaced when org-policy is created/updated. This is the org-specific
+		#url that helps bootstrap which module version to use within an org setup
+		$azskVersionForOrg = "#AzSKConfigURL#"
 
-	#region: check modules health 
-	#Examine the AzSK module(s) currently present in the automation account
-    $azskmodules = @()
-    $azskModules += Get-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG `
-                -AutomationAccountName $AutomationAccountName `
-                -ErrorAction SilentlyContinue | Where-Object { $_.Name -ilike "azsk*" }
-	Write-Output ("CS: Looking for module: [$AzSKModuleName] in account: [$AutomationAccountName] in RG: [$AutomationAccountRG]")
-	if($azskModules.Count -gt 1)
-	{
-		#Multiple modules! This anomaly can happen, for e.g., if someone setup AzSKPreview and then switched to AzSK (prod).
-		#Clean up all AzSK* modules.
-		Write-Output ("CS: Found mulitple AzSK* modules in the automation account. Cleaning them up and importing a fresh one.")
-		$azskModules | ForEach-Object { Remove-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $_.Name -ErrorAction SilentlyContinue -Force }
-	}
-	elseif($azskModules.Count -eq 1 -and $azskModules[0].Name -ne $AzSKModuleName)
-	{
-		Write-Output ("CS: Found [$($azskModules[0].Name)] in the automation account when looking for: [$AzSKModuleName]. Cleaning it up and importing a fresh one.")
-        Remove-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $azskModules[0].Name -ErrorAction SilentlyContinue -Force
-    }
-    #check health of various Azure PS modules (AzSK dependencies)
-    $azureModules = Get-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG `
-                            -AutomationAccountName $AutomationAccountName `
-                            -ErrorAction SilentlyContinue
+		#We use this to check if another job is running...
+		$Global:FoundExistingJob = $false;
+		###Config end----------------------------------------------------
+		#initialize variables
+		$ResultModuleList = [ordered]@{}
+		$retryDownloadIntervalMins = 10
+		$monitorjobIntervalMins = 45
+		$tempUpdateToLatestVersion = Get-AutomationVariable -Name UpdateToLatestAzSKVersion -ErrorAction SilentlyContinue
+		if($null -ne $tempUpdateToLatestVersion)
+		{
+			$UpdateToLatestVersion = ConvertStringToBoolean($tempUpdateToLatestVersion)
+		}
+		#We get sub id from RunAsConnection
+		$SubscriptionID = $RunAsConnection.SubscriptionID
+		
+		if(IsScanComplete)
+		{
+			CreateHelperSchedules
+			return
+		}
+		$jobs = Get-AzureRmAutomationJob -Name $RunbookName -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName
+		
+		#Find out how many times has CA runbook run today for this account...
+		$TodaysJobs = $jobs | Where-Object {$_.CreationTime.UtcDateTime.Date -eq $(get-date).ToUniversalTime().Date}
+		
+		#Under normal circumstances, we should not see too many runs on a single day within a CA setup
+		#If that is what is happening, let us stop and also disable further retries on the same day.
+		if($TodaysJobs.Count -gt 25)
+		{
+			Write-Error("CS.o: Daily job retry limit exceeded. Will disable retries for today. If this recurs each day, please contact your support team.")
+			#The Scan_Schedule will attempt a retry again next day. 
+			#We don't disable Scan_Schedule because then we won't have a way to 'auto-recover' CA setups.
+			PublishEvent -EventName "CA Setup Fatal Error" -Properties @{"JobsCount"=$TodaysJobs.Count} -Metrics @{"TimeTakenInMs" =$setupTimer.ElapsedMilliseconds; "SuccessCount" = 0}
+			
+			#Disable the helper schedule
+			DisableHelperSchedules
+			return;
+		}
+		#Check if a scan job is already running. If so, we don't need to duplicate effort!
+		$TotalJobsRunning = $jobs | Where-Object { $_.Status -in ("Queued", "Starting", "Resuming", "Running",  "Activating")}
 
-    #healthy modules will have 'ProvisioningState' == Succeeded or Created!
-    $areAzureModulesUnhealthy= ($azureModules| Where-Object { $_.Name -like 'Azure*' -and -not ($_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created")} | Measure-Object).Count -gt 0
+		ScheduleNewJob -intervalInMins $monitorjobIntervalMins 
+		$NoOfRecentActiveRunningJobs = 0    
+		if(($TotalJobsRunning|Measure-Object).Count -gt 1)
+		{
+			$TotalJobsRunning|ForEach-Object{
+				#Automation account should have terminated the job after 3hrs (current default behavior). If not, let us stop it.
+				if(((GET-DATE).ToUniversalTime() - $_.StartTime.UtcDateTime).TotalMinutes -gt 210)
+				{
+					$jobId = $_.JobId
+					try
+					{           
+						Stop-AzureRmAutomationJob -Id $jobId -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName                  
+					}
+					catch
+					{
+						#Eat exception as not able to stop the existing running job
+						Write-Output ("CS.o: Error while stopping job [" + $jobId + "]")
+					}
+				}
+				else
+				{               
+					$NoOfRecentActiveRunningJobs = $NoOfRecentActiveRunningJobs + 1             
+				}
+			}       
+			
+			#A job is already running. Let it take care of things....       
+			if($NoOfRecentActiveRunningJobs -gt 1)
+			{
+				$Global:FoundExistingJob = $true;   
+				return;
+			}
+		}
 
-    $azskModule = Get-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG `
-                            -AutomationAccountName $AutomationAccountName `
-                            -Name $AzSKModuleName -ErrorAction SilentlyContinue
+		#region: check modules health 
+		#Examine the AzSK module(s) currently present in the automation account
+		$azskmodules = @()
+		$azskModules += Get-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG `
+					-AutomationAccountName $AutomationAccountName `
+					-ErrorAction SilentlyContinue | Where-Object { $_.Name -ilike "azsk*" }
+		Write-Output ("CS.o: Looking for module: [$AzSKModuleName] in account: [$AutomationAccountName] in RG: [$AutomationAccountRG]")
+		if($azskModules.Count -gt 1)
+		{
+			#Multiple modules! This anomaly can happen, for e.g., if someone setup AzSKPreview and then switched to AzSK (prod).
+			#Clean up all AzSK* modules.
+			Write-Output ("CS.o: Found mulitple AzSK* modules in the automation account. Cleaning them up and importing a fresh one.")
+			$azskModules | ForEach-Object { Remove-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $_.Name -ErrorAction SilentlyContinue -Force }
+		}
+		elseif($azskModules.Count -eq 1 -and $azskModules[0].Name -ne $AzSKModuleName)
+		{
+			Write-Output ("CS.o: Found [$($azskModules[0].Name)] in the automation account when looking for: [$AzSKModuleName]. Cleaning it up and importing a fresh one.")
+			Remove-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $azskModules[0].Name -ErrorAction SilentlyContinue -Force
+		}
+		#check health of various Azure PS modules (AzSK dependencies)
+		$azureModules = Get-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG `
+								-AutomationAccountName $AutomationAccountName `
+								-ErrorAction SilentlyContinue
 
-	$isAzSKAvailable = ($azskModule | Where-Object {$_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created"} | Measure-Object).Count -gt 0
+		#healthy modules will have 'ProvisioningState' == Succeeded or Created!
+		$areAzureModulesUnhealthy= ($azureModules| Where-Object { $_.Name -like 'Azure*' -and -not ($_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created")} | Measure-Object).Count -gt 0
 
-	if($isAzSKAvailable)
-	{
-		Import-Module $AzSKModuleName 
-	}
-    $isAzSKLatest = IsModuleHealthy -ModuleName $AzSKModuleName        
-	$isSetupComplete = $isAzSKLatest -and -not $areAzureModulesUnhealthy
-	$azskSearchResult = SearchModule -ModuleName $AzSKModuleName
-    $desiredAzSKVersion = $azskSearchResult.properties.Version  #Note this may not be literally the latest version if org-policy prefers otherwise!
-	#endregion
-	if($azskModule -and ($azskModule.Version -ne  $desiredAzSKVersion))
-	{
-		Write-Output ("CS: Installed $AzSKModuleName version: [" + $azskModule.Version + "] in provisioning state: [" + $azskModule.ProvisioningState + "]. Expected version: [$desiredAzSKVersion]")
-	}
-	#Telemetry
-	PublishEvent -EventName "CA Setup Required Modules State" -Properties @{
-	"ModuleStateAzSK"= $azskModule.ProvisioningState; `
-	"InstalledModuleVersionAzSK"=$azskModule.Version; `
-	"RequiredModuleVersionAzSK"=$desiredAzSKVersion; `
-	"IsCompleteAzSK"=$isAzSKLatest; `
-	"IsComplete"=$isSetupComplete
-	}
+		$azskModule = Get-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG `
+								-AutomationAccountName $AutomationAccountName `
+								-Name $AzSKModuleName -ErrorAction SilentlyContinue
 
-	#If the automation account does not have all modules in expected state, we have some work to do...
-	if(!$isSetupComplete)
-	{		
-		Write-Output ("CS: Checking and importing missing modules into the automation account...");
-		#Module list is in hashtable format : key = modulename , value = version (This is useful to fetch version of specific module by name)
-		$finalModuleList = [ordered]@{}
+		$isAzSKAvailable = ($azskModule | Where-Object {$_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created"} | Measure-Object).Count -gt 0
 
-		#Get dependencies of AzSK module
-		PublishEvent -EventName "CA Setup Computing Dependencies"
-		AddDependentModules -InputModuleList @{$AzSKModuleName=""} | Out-Null
+		if($isAzSKAvailable)
+		{
+			Import-Module $AzSKModuleName 
+		}
+		$isAzSKLatest = IsModuleHealthy -ModuleName $AzSKModuleName        
+		$isSetupComplete = $isAzSKLatest -and -not $areAzureModulesUnhealthy
+		$azskSearchResult = SearchModule -ModuleName $AzSKModuleName
+		$desiredAzSKVersion = $azskSearchResult.properties.Version  #Note this may not be literally the latest version if org-policy prefers otherwise!
+		#endregion
+		if($azskModule -and ($azskModule.Version -ne  $desiredAzSKVersion))
+		{
+			Write-Output ("CS.o: Installed $AzSKModuleName version: [" + $azskModule.Version + "] in provisioning state: [" + $azskModule.ProvisioningState + "]. Expected version: [$desiredAzSKVersion]")
+		}
+		#Telemetry
+		PublishEvent -EventName "CA Setup Required Modules State" -Properties @{
+		"ModuleStateAzSK"= $azskModule.ProvisioningState; `
+		"InstalledModuleVersionAzSK"=$azskModule.Version; `
+		"RequiredModuleVersionAzSK"=$desiredAzSKVersion; `
+		"IsCompleteAzSK"=$isAzSKLatest; `
+		"IsComplete"=$isSetupComplete
+		}
 
-		#Azure modules to be downloaded first should be added first in finalModuleList
-        $baseModuleList = [ordered]@{}
-        $baseModuleList.Add("AzureRM.Profile",$ResultModuleList.Item("AzureRM.Profile"))
-        $baseModuleList.Add("AzureRM.Automation",$ResultModuleList.Item("AzureRM.Automation"))
-        $ResultModuleList.Remove("AzureRM.Profile")
-        $ResultModuleList.Remove("AzureRM.Automation")
-        $syncModules = @("AzureRM.Profile", "AzureRM.Automation");
-		$finalModuleList += $baseModuleList
-		$finalModuleList += $ResultModuleList
-		SetModules -ModuleList $finalModuleList -SyncModuleList $syncModules
+		#If the automation account does not have all modules in expected state, we have some work to do...
+		if(!$isSetupComplete)
+		{		
+			Write-Output ("CS.o: Checking and importing missing modules into the automation account...");
+			#Module list is in hashtable format : key = modulename , value = version (This is useful to fetch version of specific module by name)
+			$finalModuleList = [ordered]@{}
 
-		Write-Output("CS: Creating helper schedule for importing modules into the automation account...")
-		ScheduleNewJob -intervalInMins $retryDownloadIntervalMins
-	}
-	#Let us be really sure AzSK is ready to run cmdlets before calling it done!
-	elseif((Get-Command -Name "Get-AzSKAzureServicesSecurityStatus" -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
-	{
-		Write-Output ("CS: AzSK not fully ready to run. Creating helper schedule for another retry...")
-		ScheduleNewJob -intervalInMins $retryDownloadIntervalMins
-	}
-	else
-	{
-		Write-Output ("CS: CA core setup completed.")
-		PublishEvent -EventName "CA Setup Succeeded" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
+			#Get dependencies of AzSK module
+			PublishEvent -EventName "CA Setup Computing Dependencies"
+			AddDependentModules -InputModuleList @{$AzSKModuleName=""} | Out-Null
+
+			#Azure modules to be downloaded first should be added first in finalModuleList
+			$baseModuleList = [ordered]@{}
+			$baseModuleList.Add("AzureRM.Profile",$ResultModuleList.Item("AzureRM.Profile"))
+			$baseModuleList.Add("AzureRM.Automation",$ResultModuleList.Item("AzureRM.Automation"))
+			$ResultModuleList.Remove("AzureRM.Profile")
+			$ResultModuleList.Remove("AzureRM.Automation")
+			$syncModules = @("AzureRM.Profile", "AzureRM.Automation");
+			$finalModuleList += $baseModuleList
+			$finalModuleList += $ResultModuleList
+			SetModules -ModuleList $finalModuleList -SyncModuleList $syncModules
+
+			Write-Output("CS.o: Creating helper schedule for importing modules into the automation account...")
+			ScheduleNewJob -intervalInMins $retryDownloadIntervalMins
+		}
+		#Let us be really sure AzSK is ready to run cmdlets before calling it done!
+		elseif((Get-Command -Name "Get-AzSKAzureServicesSecurityStatus" -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
+		{
+			Write-Output ("CS.o: AzSK not fully ready to run. Creating helper schedule for another retry...")
+			ScheduleNewJob -intervalInMins $retryDownloadIntervalMins
+		}
+		else
+		{
+			Write-Output ("CS.o: CA core setup completed.")
+			PublishEvent -EventName "CA Setup Succeeded" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
+		}	
 	}	
-		
+	Write-Output ("CS.o: Downloading Az.Accounts and Az.Automation.")
 	DownloadModule -ModuleName Az.Accounts -ModuleVersion 1.2.1 -Sync $true
 	DownloadModule -ModuleName Az.Automation -ModuleVersion 1.0.0 -Sync $true
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }
 catch
 {
-	Write-Error("CS: Error during core setup: " + ($_ | Out-String))
+	Write-Error("CS.o: Error during core setup: " + ($_ | Out-String))
 	PublishEvent -EventName "CA Setup Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) } -Metrics @{"TimeTakenInMs" =$setupTimer.ElapsedMilliseconds; "SuccessCount" = 0}
 }
