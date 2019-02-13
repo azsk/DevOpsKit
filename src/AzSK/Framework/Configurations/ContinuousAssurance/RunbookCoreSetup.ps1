@@ -613,6 +613,6 @@ if($Global:isAzAvailable)
 }
 else {
 	Write-Output ("CS: Az module is not available. Invoking core setup AzureRm script.")
-	$CoreSetupSrcUrl = "[#CoreSetupBackup#]"
+	$CoreSetupSrcUrl = "[#CoreSetupAzureRm#]"
 	InvokeScript -policyStoreURL $CoreSetupSrcUrl -fileName "RunbookCoresetupAzureRm.ps1" -version "1.0.0"
 }
