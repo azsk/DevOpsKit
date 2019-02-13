@@ -35,7 +35,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlDatabaseTDE",
       "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-      "Recommendation": "Run command Set-AzRmSqlDatabaseTransparentDataEncryption -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -DatabaseName '{DatabaseName}' -State 'Enabled'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/set-azRmSqlDatabasetransparentdataencryption *Note:If Blob Auditing or Threat Detection are enabled on the server, they will always apply to the database, regardless of the database level settings.",
+      "Recommendation": "Run command Set-AzSqlDatabaseTransparentDataEncryption -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -DatabaseName '{DatabaseName}' -State 'Enabled'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/set-azRmSqlDatabasetransparentdataencryption *Note:If Blob Auditing or Threat Detection are enabled on the server, they will always apply to the database, regardless of the database level settings.",
       "Tags": [
         "SDL",
         "TCP",
@@ -220,7 +220,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlServerDataMaskingPolicy",
       "Rationale": "Database dynamic data masking limits sensitive data exposure by masking it to non-privileged users and hides the sensitive data in the result set of a query over designated database fields. When used dynamic data masking should cover all sensitive columns.",
-      "Recommendation": "(As applicable) Set Data Masking Rules using the following steps: (1) Run command Set-AzRmSqlDatabaseDataMaskingRule -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'  -DatabaseName '{DataBaseName}' -SchemaName '{SchemaName}' -TableName  '{TableName}' -ColumnName '{ColumnName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/set-azRmSqlDatabasedatamaskingrule (2) Verify the privileged users to whom access is granted to view Unmasked data columns.",
+      "Recommendation": "(As applicable) Set Data Masking Rules using the following steps: (1) Run command Set-AzSqlDatabaseDataMaskingRule -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'  -DatabaseName '{DataBaseName}' -SchemaName '{SchemaName}' -TableName  '{TableName}' -ColumnName '{ColumnName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/set-azRmSqlDatabasedatamaskingrule (2) Verify the privileged users to whom access is granted to view Unmasked data columns.",
       "Tags": [
         "SDL",
         "TCP",
