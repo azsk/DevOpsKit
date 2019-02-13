@@ -31,6 +31,7 @@ class OMSOutput: ListenerBase
 				try 
 				{
 				    $currentInstance.SetRunIdentifier([AzSKRootEventArgument] ($Event.SourceArgs | Select-Object -First 1));                         
+					
 					[OMSOutput]::IsIssueLogged = $false
 				}
 				catch 
@@ -44,6 +45,25 @@ class OMSOutput: ListenerBase
 				try 
 				{
 					[OMSHelper]::SetOMSDetails();
+					$settings = [ConfigurationManager]::GetAzSKSettings()
+					$allWorkspaces = Get-AzOperationalInsightsWorkspace
+					$currentInstance.PublishCustomMessage("Scan events will be sent to the following Log Analytics workspace(s):",[MessageType]::Info);
+					if(-not [string]::IsNullOrEmpty($settings.OMSWorkspaceId))
+					{
+						$workspaceDetails = $allWorkspaces | Where-Object {$_.CustomerId -eq $settings.OMSWorkspaceId}
+						$currentInstance.PublishCustomMessage("WSId: $($settings.OMSWorkspaceId), WSName: $($workspaceDetails.Name)`n",[MessageType]::Info);
+					}
+					if(-not [string]::IsNullOrEmpty($settings.AltOMSWorkspaceId))
+					{
+						$altWorkspaceDetails = $allWorkspaces | Where-Object {$_.CustomerId -eq $settings.AltOMSWorkspaceId}
+						$currentInstance.PublishCustomMessage("AltWsId:	$($settings.AltOMSWorkspaceId), AltWsName: $($altWorkspaceDetails.Name)`n",[MessageType]::Info);
+						$currentInstance.PublishCustomMessage("`n");
+					}
+					else
+					{
+						$currentInstance.PublishCustomMessage("`n");
+					}
+					
 					$currentInstance.CommandAction($Event,"Command Started");
 				}
 				catch{
@@ -72,6 +92,7 @@ class OMSOutput: ListenerBase
 				try 
 				{
 					$currentInstance.CommandAction($Event,"Command Started");
+
 				}
 				catch 
 				{
@@ -251,4 +272,9 @@ class OMSOutput: ListenerBase
 		}
 		[OMSHelper]::WriteControlResult($commandModel,"AzSK_CommandEvent")
 	}
-}
+	}
+
+	
+
+
+

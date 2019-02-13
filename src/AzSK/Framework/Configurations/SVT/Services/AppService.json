@@ -180,7 +180,7 @@
         "ControlID": "Azure_AppService_Config_Disable_Web_Sockets",
         "Description": "Web Sockets should be disabled for App Service",
         "Id": "AppService220",
-        "ControlSeverity": "Medium",
+        "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckAppServiceWebSocketsConfiguration",
         "Rationale": "WebSockets protocol (WS) is vulnerable to different types of security attacks. Usage of Web Sockets with in web applications has to be carefully reviewed.",

@@ -42,7 +42,7 @@ class SQLDatabase: SVTBase
 			try
 			{
 				$this.SqlDatabases = @();
-				$this.SqlDatabases += Get-AzRmSqlDatabase -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop |
+				$this.SqlDatabases += Get-AzSqlDatabase -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop |
 								Where-Object { $_.DatabaseName -ne "master" }
 				$this.ChildResourceNames = @();
 				$this.SqlDatabases | ForEach-Object {
@@ -134,7 +134,7 @@ class SQLDatabase: SVTBase
             $this.SqlDatabases | ForEach-Object {
 				$dbName = $_.DatabaseName;
 				try {
-					$tdeStatus = Get-AzRmSqlDatabaseTransparentDataEncryption `
+					$tdeStatus = Get-AzSqlDatabaseTransparentDataEncryption `
 					-ResourceGroupName $this.ResourceContext.ResourceGroupName `
 					-ServerName $this.ResourceContext.ResourceName `
 					-DatabaseName $dbName `
@@ -349,7 +349,7 @@ class SQLDatabase: SVTBase
 				$dbName = $_.DatabaseName;
 				try
 				{
-					$dbMaskingPolicy = Get-AzRmSqlDatabaseDataMaskingPolicy `
+					$dbMaskingPolicy = Get-AzSqlDatabaseDataMaskingPolicy `
 									-ResourceGroupName $this.ResourceContext.ResourceGroupName `
 									-ServerName $this.ResourceContext.ResourceName `
 									-DatabaseName $dbName

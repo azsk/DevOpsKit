@@ -48,7 +48,7 @@
         "Automated": "No",
         "MethodName": "",
         "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-        "Recommendation": "To enable encryption for a SQL DB, run command 'Set-AzRmSqlDatabaseTransparentDataEncryption -DatabaseName '<DBName>' -ResourceGroupName '<RGName>' -ServerName '<SQLServerName>' -State 'Enabled''. Run 'Get-Help Set-AzRmSqlDatabaseTransparentDataEncryption -full' for more help.",
+        "Recommendation": "To enable encryption for a SQL DB, run command 'Set-AzSqlDatabaseTransparentDataEncryption -DatabaseName '<DBName>' -ResourceGroupName '<RGName>' -ServerName '<SQLServerName>' -State 'Enabled''. Run 'Get-Help Set-AzRmSqlDatabaseTransparentDataEncryption -full' for more help.",
         "Tags": [
           "SDL",
           "TCP",

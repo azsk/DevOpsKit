@@ -128,6 +128,7 @@ class SVTBase: AzSKRoot
 				{
 					$_.IsBaselineControl = $true
 				}
+				#AddPreviewBaselineFlag
 				if($this.CheckPreviewBaselineControl($_.ControlID))
 				{
 					$_.IsPreviewBaselineControl = $true
@@ -135,7 +136,7 @@ class SVTBase: AzSKRoot
             }
         }
     }
-	#Add PreviewBaselineCheckMethod
+	#Add PreviewBaselineControls
 	hidden [bool] CheckBaselineControl($controlId)
 	{
 		if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"BaselineControls.ResourceTypeControlIdMappingList"))

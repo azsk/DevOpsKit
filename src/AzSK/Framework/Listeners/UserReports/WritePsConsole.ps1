@@ -113,7 +113,7 @@ class WritePsConsole: FileOutputBase
                 $currentInstance.PublishException($_);
             }
         });
-
+		        
         $this.RegisterEvent([AzSKRootEvent]::CommandCompleted, {
             $currentInstance = [WritePsConsole]::GetInstance();
             try 

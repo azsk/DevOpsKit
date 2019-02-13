@@ -430,43 +430,54 @@ class Helpers {
         }
     }
 
-    static [string] GetAccessToken([string] $resourceAppIdUri, [string] $tenantId) {
+    static [string] GetAccessToken([string] $resourceAppIdUri, [string] $tenantId) 
+    {
         $rmContext = [Helpers]::GetCurrentRMContext()
-
+        $token = [string]::Empty
         if (-not $rmContext) {
-			throw ([SuppressedException]::new(("No Azure login found"), [SuppressedExceptionType]::InvalidOperation))
+        throw ([SuppressedException]::new(("No Azure login found"), [SuppressedExceptionType]::InvalidOperation))
         }
-
-        if ([string]::IsNullOrEmpty($tenantId) -and [Helpers]::CheckMember($rmContext, "Tenant")) {
-            $tenantId = $rmContext.Tenant.Id
+        
+        if ([string]::IsNullOrEmpty($tenantId) -and [Helpers]::CheckMember($rmContext,"Tenant")) {
+        $tenantId = $rmContext.Tenant.Id
         }
-
-        $allEndpoints = @();
-        $resourceConstant = [AzureEnvironment+Endpoint] |
-            Get-Member -Static -MemberType Properties |
-            Where-Object {
-            $endpoint = [AzureEnvironmentExtensions]::GetEndpoint($rmContext.Environment, $_.Name)
-            $allEndpoints += $endpoint;
-            (-not [string]::IsNullOrWhiteSpace($endpoint) -and ($endpoint.Trimend('/') -eq $resourceAppIdUri.Trimend('/')))
-        } | Select-Object -First 1
-
-        if (-not $resourceConstant) {
-			throw ([SuppressedException]::new(("The resource URL [$resourceAppIdUri] is not supported. Supported values are: " + ($allEndpoints -join ", ")), [SuppressedExceptionType]::InvalidOperation))
+        
+        $tokenCache = $rmContext.TokenCache
+        $tokenObject = $tokenCache.ReadItems()
+        $tokenObject = $tokenObject |where { $_.TenantId -eq $tenantId -and $_.Resource.Trimend('/') -eq $resourceAppIdUri.Trimend('/') }
+        if($tokenObject)
+        {
+        $token= $tokenObject.AccessToken
         }
-
-        $authResult = [AzureSession]::Instance.AuthenticationFactory.Authenticate(
-            $rmContext.Account,
-            $rmContext.Environment,
-            $tenantId,
-            [System.Security.SecureString] $null,
-            [Microsoft.Azure.Commands.Common.Authentication.ShowDialog]::Auto,$null,
-            $resourceConstant.Name);
-
-        if (-not ($authResult -and (-not [string]::IsNullOrWhiteSpace($authResult.AccessToken)))) {
-			throw ([SuppressedException]::new(("Unable to get access token. Authentication Failed."), [SuppressedExceptionType]::Generic))
+        else {
+        throw ([SuppressedException]::new(("The resource URL [$resourceAppIdUri] is not supported. Supported values are: " ), [SuppressedExceptionType]::InvalidOperation))
         }
-
-        return $authResult.AccessToken;
+        # $allEndpoints = @();
+        # $resourceConstant = [AzureEnvironment+Endpoint] |
+        # Get-Member -Static -MemberType Properties |
+        # Where-Object {
+        # $endpoint = [AzureEnvironmentExtensions]::GetEndpoint($rmContext.Environment, $_.Name)
+        # $allEndpoints += $endpoint;
+        # (-not [string]::IsNullOrWhiteSpace($endpoint) -and ($endpoint.Trimend('/') -eq $resourceAppIdUri.Trimend('/')))
+        # } | Select-Object -First 1
+        
+        # if (-not $resourceConstant) {
+        #   throw ([SuppressedException]::new(("The resource URL [$resourceAppIdUri] is not supported. Supported values are: " + ($allEndpoints -join ", ")), [SuppressedExceptionType]::InvalidOperation))
+        # }
+        
+        # $authResult = [AzureSession]::Instance.AuthenticationFactory.Authenticate(
+        # $rmContext.Account,
+        # $rmContext.Environment,
+        # $tenantId,
+        # [System.Security.SecureString] $null,
+        # [Microsoft.Azure.Commands.Common.Authentication.ShowDialog]::Auto,$null,
+        # $resourceConstant.Name);
+        
+        # if (-not ($authResult -and (-not [string]::IsNullOrWhiteSpace($authResult.AccessToken)))) {
+        #   throw ([SuppressedException]::new(("Unable to get access token. Authentication Failed."), [SuppressedExceptionType]::Generic))
+        # }
+        return $token
+        #return $authResult.AccessToken;
     }
 
     static [string] GetAccessToken([string] $resourceAppIdUri) {

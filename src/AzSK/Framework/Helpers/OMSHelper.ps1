@@ -97,7 +97,7 @@ Class OMSHelper{
 			$out.HasRequiredAccess = $ControlResult.CurrentSessionContext.Permissions.HasRequiredAccess 
 			$out.ScannerVersion = $AzSKContext.Version
 			$out.IsBaselineControl = $eventContext.ControlItem.IsBaselineControl
-			#add PreviewBaselineFlag
+			#addPreviewBaselineControl Flag
 			$out.IsPreviewBaselineControl = $eventContext.ControlItem.IsPreviewBaselineControl
 			$out.HasAttestationWritePermissions = $ControlResult.CurrentSessionContext.Permissions.HasAttestationWritePermissions
 			$out.HasAttestationReadPermissions = $ControlResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions				
@@ -185,9 +185,8 @@ Class OMSHelper{
             $set.ControlSeverity = $item.ControlItem.ControlSeverity
 			$set.Tags = $item.ControlItem.Tags
 			$set.IsBaselineControl = $item.ControlItem.IsBaselineControl
-			# add PreviewBaselineFlag
+			#add PreviewBaselineFlag
 			$set.IsPreviewBaselineControl = $item.ControlItem.IsPreviewBaselineControl
-			
 			 $ControlSet.Add($set) 
         }
         return $ControlSet;
@@ -367,7 +366,7 @@ Class OMSModel {
 	[string[]] $Tags
 	[string] $ScannerVersion
 	[bool] $IsBaselineControl
-	# add PreviewBaselineFlag
+	#add PreviewBaselineFlag
 	[bool] $IsPreviewBaselineControl
 	[string] $ExpiryDate
 	[string] $PartialScanIdentifier
@@ -390,9 +389,8 @@ Class OMSResourceInvModel{
 	[string] $ControlSeverity
 	[string[]] $Tags
 	[bool] $IsBaselineControl
-	# add PreviewBaselineFlag
+	#add PreviewBaselineFlag
 	[bool] $IsPreviewBaselineControl
-	
 }
 
 Class OMSResourceModel{

@@ -103,9 +103,9 @@ class RemoteReportHelper
 		$result.AttestationStatus = $controlResult.AttestationStatus
 		$result.VerificationResult = $controlResult.VerificationResult
 		$result.HasRequiredAccess = $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess
-		$result.IsBaselineControl = $control.IsBaselineControl		
-		# add PreviewBaselineFlag
-		$result.IsPreviewBaselineControl = $control.IsPreviewBaselineControl	
+		$result.IsBaselineControl = $control.IsBaselineControl
+		#add PreviewBaselineFlag
+		$result.IsPreviewBaselineControl = $control.IsPreviewBaselineControl
 		$result.MaximumAllowedGraceDays = $controlResult.MaximumAllowedGraceDays
 		if($control.Tags.Contains("OwnerAccess")  -or $control.Tags.Contains("GraphRead"))
 		{
@@ -147,7 +147,7 @@ class RemoteReportHelper
 		$result.VerificationResult = $controlResult.VerificationResult
 		$result.HasRequiredAccess = $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess
 		$result.IsBaselineControl = $control.IsBaselineControl
-		# add PreviewBaselineFlag
+		#add PreviewBaselineFlag
 		$result.IsPreviewBaselineControl = $control.IsPreviewBaselineControl
 		$result.UserComments = $controlResult.UserComments
 		$result.MaximumAllowedGraceDays = $controlResult.MaximumAllowedGraceDays

@@ -35,8 +35,8 @@ class ControlItem
     hidden [FixControl] $FixControl = $null;
 	[int] $AttestationExpiryPeriodInDays
     [bool] $IsBaselineControl
-    # add PreviewBaselineFlag
-    [bool] $IsPreviewBaselineControl
+    #add PreviewBaselineFlag
+	[bool] $IsPreviewBaselineControl;
 	[DateTime] $GraceExpiryDate
 	[int] $NewControlGracePeriodInDays
 	[int] $AttestationPeriodInDays

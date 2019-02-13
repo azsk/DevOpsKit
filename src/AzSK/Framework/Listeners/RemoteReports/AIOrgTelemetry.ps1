@@ -133,7 +133,7 @@ class AIOrgTelemetry: ListenerBase {
 			   $resourceGroups = Get-AzResourceGroup
 			   $telemetryEvents = [System.Collections.ArrayList]::new()
 					   foreach($res in $resources){
-                           $rgTags = ($resourceGroups | where-object {$_.Name -eq $res.ResourceGroupName}).Tags;
+                           $rgTags = ($resourceGroups | where-object {$_.ResourceGroupName  -eq $res.ResourceGroupName}).Tags;
 						   $resourceProperties = @{
 						   "Name" = $res.Name;
 						   "ResourceId" = $res.ResourceId;
@@ -221,8 +221,9 @@ class AIOrgTelemetry: ListenerBase {
 		$properties.Add("ControlId", $context.ControlItem.ControlID);
 		$properties.Add("ControlSeverity", $context.ControlItem.ControlSeverity);
 		$properties.Add("IsBaselineControl", $context.ControlItem.IsBaselineControl)
-		# add PreviewBaselineFlag
+		#add PreviewBaselineFlag
 		$properties.Add("IsPreviewBaselineControl", $context.ControlItem.IsPreviewBaselineControl)
+		
 		if (!$context.ControlItem.Enabled) {
 			$properties.Add("VerificationResult", [VerificationResult]::Disabled)
 			$properties.Add("AttestationStatus", [AttestationStatus]::None)

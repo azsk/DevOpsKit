@@ -136,11 +136,6 @@ class CommandHelper
 		# OMS
 		[CommandDetails]@{
             Verb = "Install";
-            Noun = "AzSKOMSSolution";
-            ShortName = "IOM";
-		},
-		[CommandDetails]@{
-            Verb = "Install";
             Noun = "AzSKMonitoringSolution";
             ShortName = "IMS";
         },
@@ -217,11 +212,6 @@ class CommandHelper
             Noun = "AzSKPolicySettings";
             ShortName = "SPS";
         },
-		[CommandDetails]@{
-            Verb = "Set";
-            Noun = "AzSKOMSSettings";
-            ShortName = "SOS";
-		},
 		[CommandDetails]@{
             Verb = "Set";
             Noun = "AzSKMonitoringSettings";

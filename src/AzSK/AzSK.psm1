@@ -1,6 +1,6 @@
 ﻿Set-StrictMode -Version Latest
 Write-Host "Importing Az modules. This may take a while..." -ForegroundColor Yellow
-Import-Module Az.Accounts -RequiredVersion 1.2.1
+Import-Module Az.Accounts -RequiredVersion 1.2.1 -WarningAction SilentlyContinue
 Enable-AzureRMAlias
 
 . $PSScriptRoot\Framework\Framework.ps1
@@ -496,6 +496,6 @@ function Clear-AzSKSessionState {
 
 }
 
-$FrameworkPath =  ((Get-Item $PSScriptRoot).Parent).FullName +"\AzSK.Framework"
+$FrameworkPath =  $PSScriptRoot
 
-. $FrameworkPath\Helpers\AliasHelper.ps1
+. $FrameworkPath\Framework\Helpers\AliasHelper.ps1
