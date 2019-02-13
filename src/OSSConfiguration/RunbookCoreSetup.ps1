@@ -613,6 +613,6 @@ catch
 }
 else {
 	Write-Output ("CS: Invoking core setup backup.")
-	$CoreSetupSrcUrl = "[#CoreSetupAzureRm#]"
+	$CoreSetupSrcUrl = "https://azsdkossep.azureedge.net/1.0.0/RunbookCoreSetupAzureRm.ps1"
 	InvokeScript -policyStoreURL $CoreSetupSrcUrl -fileName "RunbookCoreSetupAzureRm.ps1" -version "1.0.0"
 }
