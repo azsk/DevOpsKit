@@ -46,14 +46,17 @@ class OMSOutput: ListenerBase
 				{
 					[OMSHelper]::SetOMSDetails();
 					$settings = [ConfigurationManager]::GetAzSKSettings()
-					$currentInstance.PublishCustomMessage("Sending scan events to the following OMS workspace(s):",[MessageType]::Info);
+					$allWorkspaces = Get-AzOperationalInsightsWorkspace
+					$currentInstance.PublishCustomMessage("Scan events will be sent to the following Log Analytics workspace(s):",[MessageType]::Info);
 					if(-not [string]::IsNullOrEmpty($settings.OMSWorkspaceId))
 					{
-						$currentInstance.PublishCustomMessage("Log Analytics Workspace Id:	    $($settings.OMSWorkspaceId)",[MessageType]::Info);
+						$workspaceDetails = $allWorkspaces | Where-Object {$_.CustomerId -eq $settings.OMSWorkspaceId}
+						$currentInstance.PublishCustomMessage("WSId: $($settings.OMSWorkspaceId), WSName: $($workspaceDetails.Name)`n",[MessageType]::Info);
 					}
 					if(-not [string]::IsNullOrEmpty($settings.AltOMSWorkspaceId))
 					{
-						$currentInstance.PublishCustomMessage("Alt Log Analytics Workspace sId:	$($settings.AltOMSWorkspaceId)`n",[MessageType]::Info);
+						$altWorkspaceDetails = $allWorkspaces | Where-Object {$_.CustomerId -eq $settings.AltOMSWorkspaceId}
+						$currentInstance.PublishCustomMessage("AltWsId:	$($settings.AltOMSWorkspaceId), AltWsName: $($altWorkspaceDetails.Name)`n",[MessageType]::Info);
 						$currentInstance.PublishCustomMessage("`n");
 					}
 					else
