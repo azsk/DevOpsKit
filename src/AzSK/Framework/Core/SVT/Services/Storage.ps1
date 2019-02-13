@@ -80,38 +80,76 @@ class Storage: SVTBase
 
 	hidden [ControlResult] CheckStorageContainerPublicAccessTurnOff([ControlResult] $controlResult)
     {
-		$allContainers = @();
-		try
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableAnonymousAccessCheckUsingAPI",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
 		{
-			$allContainers += Get-AzStorageContainer -Context $this.ResourceObject.Context -ErrorAction Stop
-		}
-		catch
-		{
-			if(([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden) -or $this.LockExists)
+			$allContainersFromAPI = $null;
+			$publicContainersFromAPI = @();
+			$ARMManagementUri = [Constants]::ARMManagementUri
+			$uri = [system.string]::Format($ARMManagementUri+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Storage/storageAccounts/{2}/blobServices/default/containers?api-version=2018-07-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
+
+			try 
+			{	
+				$allContainersFromAPI = [WebRequestHelper]::InvokeGetWebRequest($uri);
+
+				foreach($item in $allContainersFromAPI)
+				{
+					if(-not ($item.properties.publicAccess -eq "None"))
+					{
+						$publicContainersFromAPI += $item
+					}
+				}
+			}
+			catch
 			{
-				#Setting this property ensures that this control result will not be considered for the central telemetry, as control does not have the required permissions.
-				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-				$controlResult.AddMessage([VerificationResult]::Manual, ($_.Exception).Message);	
-				return $controlResult
+				throw $_
+			}			
+
+			if($publicContainersFromAPI.Count -eq 0)
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "No containers were found that have public (anonymous) access in this storage account.");
 			}
 			else
 			{
-				throw $_
+				$controlResult.EnableFixControl = $true;
+				$controlResult.AddMessage([VerificationResult]::Failed  , 
+										[MessageData]::new("Remove public access from following containers. Total - $($publicContainersFromAPI.Count)", ($publicContainersFromAPI.name, $publicContainersFromAPI.properties.publicAccess)));								
 			}
 		}
-
-		#Containers other than private
-		$publicContainers = $allContainers | Where-Object { $_.PublicAccess -ne  [Microsoft.WindowsAzure.Storage.Blob.BlobContainerPublicAccessType]::Off }
-			
-		if(($publicContainers | Measure-Object ).Count -eq 0)
-		{
-			$controlResult.AddMessage([VerificationResult]::Passed, "No containers were found that have public (anonymous) access in this storage account.");
-		}                 
 		else
 		{
-			$controlResult.EnableFixControl = $true;
-			$controlResult.AddMessage([VerificationResult]::Failed  , 
-									  [MessageData]::new("Remove public access from following containers. Total - $(($publicContainers | Measure-Object ).Count)", ($publicContainers | Select-Object -Property Name, PublicAccess)));  
+			$allContainers = @();
+			try
+			{
+				$allContainers += Get-AzureStorageContainer -Context $this.ResourceObject.Context -ErrorAction Stop
+			}
+			catch
+			{
+				if(([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden) -or $this.LockExists)
+				{
+					#Setting this property ensures that this control result will not be considered for the central telemetry, as control does not have the required permissions.
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+					$controlResult.AddMessage([VerificationResult]::Manual, ($_.Exception).Message);	
+					return $controlResult
+				}
+				else
+				{
+					throw $_
+				}
+			}
+
+			#Containers other than private
+			$publicContainers = $allContainers | Where-Object { $_.PublicAccess -ne  [Microsoft.WindowsAzure.Storage.Blob.BlobContainerPublicAccessType]::Off }
+				
+			if(($publicContainers | Measure-Object ).Count -eq 0)
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "No containers were found that have public (anonymous) access in this storage account.");
+			}                 
+			else
+			{
+				$controlResult.EnableFixControl = $true;
+				$controlResult.AddMessage([VerificationResult]::Failed  , 
+										[MessageData]::new("Remove public access from following containers. Total - $(($publicContainers | Measure-Object ).Count)", ($publicContainers | Select-Object -Property Name, PublicAccess)));  
+			}
 		}
 
 		return $controlResult;
