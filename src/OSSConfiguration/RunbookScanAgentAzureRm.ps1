@@ -68,7 +68,7 @@ function RunAzSKScan() {
 	if(($existingStorage|Measure-Object).Count -gt 1)
 	{
 		$existingStorage = $existingStorage[0]
-		Write-Output ("SA: Multiple storage accounts found in resource group. Using Storage Account: [$($existingStorage.StorageAccountName)] for storing logs")
+		Write-Output ("SA.o: Multiple storage accounts found in resource group. Using Storage Account: [$($existingStorage.StorageAccountName)] for storing logs")
 	}
 	$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $StorageAccountRG -Name $existingStorage.StorageAccountName
 
@@ -148,14 +148,14 @@ function RunAzSKScan() {
 				$subId = $candidateSubToScan.SubscriptionId;
 				Set-AzureRmContext -SubscriptionId $subId | Out-Null
 					
-				Write-Output ("SA: Scan status details:")
-				Write-Output ("SA: Subscription id: [" + $subId + "]")
+				Write-Output ("SA.o: Scan status details:")
+				Write-Output ("SA.o: Subscription id: [" + $subId + "]")
 				
 				if($preScanStatus -ne 'RES'){
-					Write-Output ("SA: Existing status: ["+ $_.Status + "], New status: [" + $preScanStatus+ "], Scan allowed?: ["+ $isScanAllowed + "], Post scan status: [" + $postStatus + "]")
+					Write-Output ("SA.o: Existing status: ["+ $_.Status + "], New status: [" + $preScanStatus+ "], Scan allowed?: ["+ $isScanAllowed + "], Post scan status: [" + $postStatus + "]")
 				}
 				else{
-					Write-Output ("SA: Existing status: ["+ $_.Status + "], Scan allowed?: ["+ $isScanAllowed + "], Post scan status: [" + $postStatus + "]")
+					Write-Output ("SA.o: Existing status: ["+ $_.Status + "], Scan allowed?: ["+ $isScanAllowed + "], Post scan status: [" + $postStatus + "]")
 				}
 
 				# $preScanStatus will be 'RES' in case when scan is in progress and max-duration has not been consumed
@@ -165,12 +165,12 @@ function RunAzSKScan() {
 				}
 
 				if($isScanAllowed){
-					Write-Output ("SA: Multi-sub Scan. Started scan for subscription: [$subId]")
+					Write-Output ("SA.o: Multi-sub Scan. Started scan for subscription: [$subId]")
 
 					#In case of multi-sub scan logging option applies to all subs
 					RunAzSKScanForASub -SubscriptionID $subId -LoggingOption $candidateSubToScan.LoggingOption -StorageContext $centralStorageContext -CentralStorageAccount $existingStorage
 					PersistSubscriptionSnapshot -SubscriptionID $subId -Status $postStatus -StorageContext $centralStorageContext 
-					Write-Output ("SA: Multi-sub Scan. Completed scan for subscription: [$subId]")
+					Write-Output ("SA.o: Multi-sub Scan. Completed scan for subscription: [$subId]")
 				}		
 			}
 			
@@ -184,9 +184,9 @@ function RunAzSKScan() {
 	{
 		#Just the vanilla single-sub CA scan (individual CA setup)
 		$subId = $RunAsConnection.SubscriptionID
-		Write-Output ("SA: Single sub Scan. Starting scan for subscription: [$subId]")
+		Write-Output ("SA.o: Single sub Scan. Starting scan for subscription: [$subId]")
 		RunAzSKScanForASub -SubscriptionID $subId -LoggingOption "CentralSub" -StorageContext $centralStorageContext 
-		Write-Output ("SA: Single sub Scan. Completed scan for subscription: [$subId]")
+		Write-Output ("SA.o: Single sub Scan. Completed scan for subscription: [$subId]")
 	}   
 }
 
@@ -207,7 +207,7 @@ function RunAzSKScanForASub
 	Clear-AzSKSessionState
 
     #------------------------------------Subscription scan----------------------------------------------------------------
-    Write-Output ("SA: Running command 'Get-AzSKSubscriptionSecurityStatus' (GSS) for sub: [$SubscriptionID]")
+    Write-Output ("SA.o: Running command 'Get-AzSKSubscriptionSecurityStatus' (GSS) for sub: [$SubscriptionID]")
     $subScanTimer = [System.Diagnostics.Stopwatch]::StartNew();
     PublishEvent -EventName "CA Scan Subscription Started"
     $gssResultPath = Get-AzSKSubscriptionSecurityStatus -SubscriptionId $SubscriptionID -ExcludeTags "OwnerAccess" 
@@ -216,12 +216,12 @@ function RunAzSKScanForASub
     if ([string]::IsNullOrWhiteSpace($gssResultPath)) 
     {
         PublishEvent -EventName "CA Scan Subscription Error" -Metrics @{"TimeTakenInMs" = $subScanTimer.ElapsedMilliseconds; "SuccessCount" = 0}
-        Write-Output ("SA: Subscription scan failed.")
+        Write-Output ("SA.o: Subscription scan failed.")
     }
     else 
     {
         PublishEvent -EventName "CA Scan Subscription Completed" -Metrics @{"TimeTakenInMs" = $subScanTimer.ElapsedMilliseconds; "SuccessCount" = 1}
-        Write-Output ("SA: Subscription scan succeeded.")
+        Write-Output ("SA.o: Subscription scan succeeded.")
         $parentFolderPath = (Get-Item $gssResultPath).parent.FullName
     }
 
@@ -233,13 +233,13 @@ function RunAzSKScanForASub
 
 	if(-not [string]::IsNullOrWhiteSpace($ResourceGroupNamefromWebhook))
 	{
-		Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) on added resource for sub: [$SubscriptionID], RGs: [$ResourceGroupNamefromWebhook]")
+		Write-Output ("SA.o: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) on added resource for sub: [$SubscriptionID], RGs: [$ResourceGroupNamefromWebhook]")
 		$rgname = $ResourceGroupNamefromWebhook | Out-string
 		$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $rgname -ExcludeTags "OwnerAccess,RBAC"
 	}
 	elseif($null -eq $WebHookDataforResourceCreation)
 	{
-		Write-Output ("SA: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
+		Write-Output ("SA.o: Running command 'Get-AzSKAzureServicesSecurityStatus' (GRS) for sub: [$SubscriptionID], RGs: [$ResourceGroupNames]")
 		if($null -ne $CentralStorageAccount)
 		{
 			$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC"  -CentralStorageAccount $CentralStorageAccount -UsePartialCommits
@@ -253,12 +253,12 @@ function RunAzSKScanForASub
     #---------------------------Check resources scan status--------------------------------------------------------------
     if ([string]::IsNullOrWhiteSpace($svtResultPath)) 
     {
-        Write-Output ("SA: Azure resources scan failed.")
+        Write-Output ("SA.o: Azure resources scan failed.")
         PublishEvent -EventName "CA Scan Services Error" -Metrics @{"TimeTakenInMs" = $serviceScanTimer.ElapsedMilliseconds; "SuccessCount" = 0}
     }
     else 
     {
-        Write-Output ("SA: Azure resources scan succeeded.")
+        Write-Output ("SA.o: Azure resources scan succeeded.")
         $parentFolderPath = (Get-Item $svtResultPath).parent.FullName
         PublishEvent -EventName "CA Scan Services Completed" -Metrics @{"TimeTakenInMs" = $serviceScanTimer.ElapsedMilliseconds; "SuccessCount" = 1}
     }
@@ -271,14 +271,14 @@ function RunAzSKScanForASub
 		{
 			if($LoggingOption -ne "CentralSub")
 			{
-				Write-Output ("SA: Multi-sub Scan. Storing scan results to child (target) subscription...")
+				Write-Output ("SA.o: Multi-sub Scan. Storing scan results to child (target) subscription...")
 
 				#save scan results in individual subs 
                 $existingStorage = Get-AzureRmStorageAccount -ResourceGroupName $StorageAccountRG | Where-Object {$_.StorageAccountName  -like 'azsk*'}
 				if(($existingStorage|Measure-Object).Count -gt 1)
 				{
 					$existingStorage = $existingStorage[0]
-					Write-Output ("SA: Multiple storage accounts found in resource group. Using Storage Account: [$($existingStorage.StorageAccountName)] for storing logs")
+					Write-Output ("SA.o: Multiple storage accounts found in resource group. Using Storage Account: [$($existingStorage.StorageAccountName)] for storing logs")
 				}
 
 				$archiveFilePath = "$parentFolderPath\AutomationLogs_" + $(Get-Date -format "yyyyMMdd_HHmmss") + ".zip"
@@ -298,7 +298,7 @@ function RunAzSKScanForASub
 			}
 			else
 			{
-				Write-Output ("SA: Multi-sub Scan. Storing scan results to central subscription...")
+				Write-Output ("SA.o: Multi-sub Scan. Storing scan results to central subscription...")
 				PersistToStorageAccount -StorageContext $StorageContext -GssResultPath $gssResultPath -SvtResultPath $svtResultPath -SubscriptionId $SubscriptionID
 				#remove scan reports older than one month
 				PurgeOlderScanReports -StorageContext $StorageContext
@@ -306,7 +306,7 @@ function RunAzSKScanForASub
 		}#IsCentralMode
 		else
 		{
-			Write-Output ("SA: Single-sub Scan. Storing scan results to subscription...")
+			Write-Output ("SA.o: Single-sub Scan. Storing scan results to subscription...")
 			PersistToStorageAccount -StorageContext $StorageContext -GssResultPath $gssResultPath -SvtResultPath $svtResultPath -SubscriptionId $SubscriptionID
 			#remove scan reports older than one month
 			PurgeOlderScanReports -StorageContext $StorageContext
@@ -356,11 +356,11 @@ function PersistToStorageAccount
                 Compress-Archive -Path $GssResultPath -CompressionLevel Optimal -DestinationPath $archiveFilePath -Update
             }
             Set-AzureStorageBlobContent -File $archiveFilePath -Container $CAScanLogsContainerName -Context $StorageContext -Blob $storageLocation -ErrorAction Stop | Out-Null
-            Write-Output ("SA: Exported reports to storage: [$StorageAccountName]")
+            Write-Output ("SA.o: Exported reports to storage: [$StorageAccountName]")
             PublishEvent -EventName "CA Scan Reports Persisted" -Properties @{"StorageAccountName" = $StorageAccountName; "ArchiveFilePath" = $archiveFilePath } -Metrics @{"SuccessCount" = 1}
         }
         catch {
-            Write-Output ("SA: Could not export reports to storage: [$StorageAccountName]. `r`nError details:" + ($_ | Out-String))
+            Write-Output ("SA.o: Could not export reports to storage: [$StorageAccountName]. `r`nError details:" + ($_ | Out-String))
             PublishEvent -EventName "CA Scan Reports Persist Error" -Properties @{"ErrorRecord" = ($_ | Out-String); "StorageAccountName" = $StorageAccountName; "ArchiveFilePath" = $archiveFilePath } -Metrics @{"SuccessCount" = 0}
             throw $_.Exception
         }        
@@ -380,7 +380,7 @@ function PurgeOlderScanReports
 	if($OldLogCount -gt 0)
 	{
 		#Deleted successfully all the old reports
-		Write-Output ("SA: Removed CA scan logs/reports older than date: [$($NotBefore.ToShortDateString())] from storage account: [$StorageAccountName]")
+		Write-Output ("SA.o: Removed CA scan logs/reports older than date: [$($NotBefore.ToShortDateString())] from storage account: [$StorageAccountName]")
 	}
 }
 
@@ -426,7 +426,7 @@ function CheckForSubscriptionsSnapshotData()
 		$CAScanDataBlobObject = Get-AzureStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $currentContext -ErrorAction SilentlyContinue 
 		if($null -ne $CAScanDataBlobObject)
 		{
-			Write-Output("SA: Multi-sub scan in progress. Reading progress tracking file...")
+			Write-Output("SA.o: Multi-sub scan in progress. Reading progress tracking file...")
 			#Found an active scan, download progress-tracker file to our temp location.
 			Get-AzureStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $currentContext -Destination $destinationFolderPath -Force | Out-Null
 			
@@ -435,7 +435,7 @@ function CheckForSubscriptionsSnapshotData()
 		}
 		else
 		{
-			Write-Output("SA: Multi-sub scan starting up. Creating new progress tracking file...")
+			Write-Output("SA.o: Multi-sub scan starting up. Creating new progress tracking file...")
 
 			#No active scan in progress. This is likely the start of a fresh scan. 
 			#We will need to *create* the progress-tracker file before starting the scan.
@@ -462,7 +462,7 @@ function CheckForSubscriptionsSnapshotData()
 				$Global:subsToScan | ConvertTo-Json -Depth 10 | Out-File $CAActiveScanSnapshotBlobPath
 				Set-AzureStorageBlobContent -File $CAActiveScanSnapshotBlobPath -Blob $CAActiveScanSnapshotBlobName -Container $CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force | Out-Null
 			}
-			Write-Output("SA: Multi-sub scan. New progress tracking file uploaded to container...")
+			Write-Output("SA.o: Multi-sub scan. New progress tracking file uploaded to container...")
 
 		}
 		if(($Global:subsToScan | Measure-Object).Count -gt 0)
@@ -471,7 +471,7 @@ function CheckForSubscriptionsSnapshotData()
 		}
 	}
 	catch {
-		Write-Output("SA: Unexpected error while reading multi-sub scan artefacts from storage...`r`nError details: "+ ($_ | Out-String))
+		Write-Output("SA.o: Unexpected error while reading multi-sub scan artefacts from storage...`r`nError details: "+ ($_ | Out-String))
 		PublishEvent -EventName "CA Scan Error-PreviewSnapshotComputation" -Properties @{ "ErrorRecord" = ($_ | Out-String) } -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds; "SuccessCount" = 0}
 		$Global:IsCentralMode = $false;
 	}
@@ -525,7 +525,7 @@ function PersistSubscriptionSnapshot
 				
 				if($Status -eq "ERR")
 				{
-					Write-Output("SA: Unable to scan subscription: [$SubscriptionID]. Moving on to the next one...")					
+					Write-Output("SA.o: Unable to scan subscription: [$SubscriptionID]. Moving on to the next one...")					
 				}
 			}
 
@@ -542,17 +542,17 @@ function PersistSubscriptionSnapshot
 				if($errSubsCount -gt 0)
 				{
 					#We archive *only* if sub(s) went into 'ERR' status 
-					Write-Output("SA: Archiving ActiveScanTracker.json as there were some errors...")
+					Write-Output("SA.o: Archiving ActiveScanTracker.json as there were some errors...")
 					ArchiveBlob -StorageContext $StorageContext
-					Write-Output ("SA: Scan could not be completed for a total of [$errSubsCount] subscription(s).`nSee subscriptions with 'ERR' state in:`n`t $StorageAccountRG -> $($StorageContext.StorageAccountName) -> $CAMultiSubScanConfigContainerName -> Archive -> ActiveScanTracker_<timestamp>.ERR.json.")
+					Write-Output ("SA.o: Scan could not be completed for a total of [$errSubsCount] subscription(s).`nSee subscriptions with 'ERR' state in:`n`t $StorageAccountRG -> $($StorageContext.StorageAccountName) -> $CAMultiSubScanConfigContainerName -> Archive -> ActiveScanTracker_<timestamp>.ERR.json.")
 				}
-				Write-Output("SA: Multi-sub scan: Removing ActiveScanTracker.json")
+				Write-Output("SA.o: Multi-sub scan: Removing ActiveScanTracker.json")
 				Remove-AzureStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $StorageContext -Force
 			}
 		}
 	}
 	catch {
-		Write-Output("SA: Multi-sub Scan: An error occurred during persisting progress snapshot...`nError details:" + ($_ | Out-String) )
+		Write-Output("SA.o: Multi-sub Scan: An error occurred during persisting progress snapshot...`nError details:" + ($_ | Out-String) )
 		PublishEvent -EventName "CA Scan Error-PreviewSnapshotPersist" -Properties @{ "ErrorRecord" = ($_ | Out-String) } -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds; "SuccessCount" = 0}
 		$Global:IsCentralMode = $false;
 	}
@@ -590,7 +590,7 @@ function ArchiveBlob
 		catch
 		{
 			#eat exception as archive should not impact actual flow
-			Write-Output("SA: Multi-sub Scan: Not able to archive active scan tracker")
+			Write-Output("SA.o: Multi-sub Scan: Not able to archive active scan tracker")
 		}
 	}
 
@@ -649,7 +649,7 @@ function DisableHelperSchedules()
 #############################################################################################################
     #start timer
     $scanAgentTimer = [System.Diagnostics.Stopwatch]::StartNew();
-	Write-Output("SA: Scan agent starting...")
+	Write-Output("SA.o: Scan agent starting...")
 
 	#config start
 	#Setup during Install-CA. These are the RGs that CA will scan. "*" is allowed.
@@ -701,7 +701,7 @@ function DisableHelperSchedules()
 	#Another job is already running
 	if($Global:FoundExistingJob)
 	{
-		Write-Output("SA: Found another job running. Returning from the current one...")
+		Write-Output("SA.o: Found another job running. Returning from the current one...")
 		return;
 	}
 
@@ -715,7 +715,7 @@ function DisableHelperSchedules()
     }
 	else {
 		PublishEvent -EventName "CA Job Skipped" -Properties @{"SubscriptionId" = $RunAsConnection.SubscriptionID} -Metrics @{"TimeTakenInMs" = $timer.ElapsedMilliseconds; "SuccessCount" = 1}
-		Write-Output("SA: The module: {$AzSKModuleName} is not available/ready. Skipping AzSK scan. Will retry in the next run.")
+		Write-Output("SA.o: The module: {$AzSKModuleName} is not available/ready. Skipping AzSK scan. Will retry in the next run.")
 		return;
 	}
 
@@ -723,7 +723,7 @@ function DisableHelperSchedules()
     if ((Get-Command -Name "Get-AzSKAzureServicesSecurityStatus" -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0) {
         
         PublishEvent -EventName "CA Job Skipped" -Properties @{"SubscriptionId" = $RunAsConnection.SubscriptionID} -Metrics @{"TimeTakenInMs" = $timer.ElapsedMilliseconds; "SuccessCount" = 1}
-		Write-Output("SA: The module: {$AzSKModuleName} is not available/ready. Skipping AzSK scan. Will retry in the next run.")
+		Write-Output("SA.o: The module: {$AzSKModuleName} is not available/ready. Skipping AzSK scan. Will retry in the next run.")
 		return;
     }
 		
@@ -733,7 +733,7 @@ function DisableHelperSchedules()
 	{
 		if ($isAzSKAvailable) {
 		#Remove helper schedule as AzSK module is available
-		Write-Output("SA: Disabling helper schedule...")
+		Write-Output("SA.o: Disabling helper schedule...")
 		DisableHelperSchedules	
 		}
 
@@ -745,9 +745,9 @@ function DisableHelperSchedules()
 		catch
 		{
 			  PublishEvent -EventName "Alert Monitoring Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) }
-			  Write-Output("SA: (Non-fatal) Error while updating Alert Monitoring setup...")
+			  Write-Output("SA.o: (Non-fatal) Error while updating Alert Monitoring setup...")
 		}
 	}
 	
 	PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
-	Write-Output("SA: Scan agent completed...")
+	Write-Output("SA.o: Scan agent completed...")

@@ -8,7 +8,7 @@ function SetModules
 	$ModuleList.Keys | ForEach-Object{
 	$ModuleName = $_
     $ModuleVersion = $ModuleList.Item($_)
-    $Module = Get-AzAutomationSchedule `
+    $Module = Get-AzAutomationmodule `
     -ResourceGroupName $AutomationAccountRG `
     -AutomationAccountName $AutomationAccountName `
     -Name $ModuleName -ErrorAction SilentlyContinue
@@ -61,7 +61,8 @@ function DownloadModule
 		#$ModuleName/$AzSK... etc. are defined in the core setup (start) code further below
 		if($ModuleName -imatch "AzSK*")
 		{
-	        $ModuleContentUrl = "$AzSKPSGalleryUrl/api/v2/package/$ModuleName/$ModuleVersion"			
+			$ModuleContentUrl = "$AzSKPSGalleryUrl/api/v2/package/$ModuleName/$ModuleVersion"	
+			Write-Output("CS: Downloading $ModuleName from $ModuleContentUrl")		
 		}
 
         # Find the actual blob storage location of the Module
@@ -409,7 +410,7 @@ function IsScanComplete()
 
 $isAzAutomationAvailable = Get-Command -Name "Get-AzAutomationSchedule" -ErrorAction SilentlyContinue
 $isAzAccountsAvailable =  Get-Module Az.Accounts
-if ((-not [string]::IsNullOrWhiteSpace($isAzAccountsAvailable)) -and (-not [string]::IsNullOrWhiteSpace($isAzAutomationAvailable))
+if ((-not [string]::IsNullOrWhiteSpace($isAzAccountsAvailable)) -and (-not [string]::IsNullOrWhiteSpace($isAzAutomationAvailable)))
 {	
 $Global:isAzAvailable = $true
 }
@@ -611,6 +612,7 @@ catch
 }
 }
 else {
-	$CoreSetupSrcUrl = "[#CoreSetupBackup#]"
-	InvokeScript -policyStoreURL $CoreSetupSrcUrl -fileName "RunbookCoresetupBackUp.ps1" -version "1.0.0"
+	Write-Output ("CS: Invoking core setup backup.")
+	$CoreSetupSrcUrl = "[#CoreSetupAzureRm#]"
+	InvokeScript -policyStoreURL $CoreSetupSrcUrl -fileName "RunbookCoreSetupAzureRm.ps1" -version "1.0.0"
 }

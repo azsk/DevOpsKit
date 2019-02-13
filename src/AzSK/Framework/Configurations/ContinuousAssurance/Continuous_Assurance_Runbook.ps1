@@ -220,7 +220,7 @@ try
 	}
 	try
 	{
-		Write-Output("RB: Started runbook execution...")
+		Write-Output("RB: Started runbook execution (Az.*)...")
 		
 		$appId = $RunAsConnection.ApplicationId 
 		Write-Output ("RB: Logging in to Azure for appId: [$appId]")
@@ -234,7 +234,7 @@ try
 				-Tenant $RunAsConnection.TenantId `
 				-ApplicationId $RunAsConnection.ApplicationId `
 				-CertificateThumbprint $RunAsConnection.CertificateThumbprint | Out-Null
-			
+			Write-Output ("RB: Logged in using Az")
            Set-AzContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
         }
         else
@@ -250,6 +250,7 @@ try
 				-TenantId $RunAsConnection.TenantId `
 				-ApplicationId $RunAsConnection.ApplicationId `
 				-CertificateThumbprint $RunAsConnection.CertificateThumbprint | Out-Null
+				Write-Output ("RB: Logged in using AzureRm.Profile 5.x")
 			}
 			#AzureRm.profile version = 4.x.x
 			elseif ($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Add-AzureRmAccount"})) 
@@ -260,6 +261,7 @@ try
 				-TenantId $RunAsConnection.TenantId `
 				-ApplicationId $RunAsConnection.ApplicationId `
 				-CertificateThumbprint $RunAsConnection.CertificateThumbprint | Out-Null
+				Write-Output ("RB: Logged in using AzureRm.Profile base version")
 			}
 			else
 			{

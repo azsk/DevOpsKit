@@ -652,9 +652,10 @@ function DisableHelperSchedules()
 try {	
 	if(-not $Global:isAzAvailable)
     {
+		Write-Output ("CS: Invoking core setup backup.")
 		$accessToken = Get-AzSKAccessToken -ResourceAppIdURI "https://management.core.windows.net/"
-		$onlinePolicyStoreUrl = "[#ScanAgentBackup#]"
-		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName "RunbookScanAgentBackUp.ps1" -version "1.0.0"
+		$onlinePolicyStoreUrl = "[#ScanAgentAzureRm#]"
+		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName "RunbookScanAgentAzureRm.ps1" -version "1.0.0"
 	}
 	else {
     #start timer
