@@ -381,7 +381,7 @@
       "ControlID": "Azure_Subscription_SI_Classic_Resources",
       "Description": "Do not use any classic resources on a subscription",
       "Id": "SubscriptionCore260",
-      "ControlSeverity": "Medium",
+      "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckPresenceOfClassicResources",
       "Recommendation": "Migrate each v1/ASM-based resource in your app to a corresponding v2/ARM-based resource. Refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/migration-classic-resource-manager-overview",
@@ -462,7 +462,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckMandatoryTags",
-      "Recommendation": "Verify whether the mandatory tags as per your organization policy are present on all the resource groups. Reference: https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-using-tags#portal",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-using-tags#portal",
       "Tags": [
         "SDL",
         "TCP",
