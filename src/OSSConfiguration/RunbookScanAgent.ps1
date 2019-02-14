@@ -652,7 +652,7 @@ try {
     {
 		Write-Output ("CS: Invoking core setup backup.")
 		$accessToken = Get-AzSKAccessToken -ResourceAppIdURI "https://management.core.windows.net/"
-		$onlinePolicyStoreUrl = "[#ScanAgentAzureRm#]"
+		$onlinePolicyStoreUrl = "https://azsdkossep.azureedge.net/1.0.0/RunbookScanAgentAzureRm.ps1"
 		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName "RunbookScanAgentAzureRm.ps1" -version "1.0.0"
 	}
 	else {

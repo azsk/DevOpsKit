@@ -380,6 +380,7 @@ function IsScanComplete()
 try
 {
 	#Check if this is fresh ICA (Profile version )
+	$azskVersionForOrg = "#AzSKConfigURL#"
 	$isBaseProfileModule =  (Get-Module -Name AzureRm.Profile).Version.Major -lt 5
 	if(-not $isBaseProfileModule)
 	{
@@ -398,7 +399,6 @@ try
 
 		#This gets replaced when org-policy is created/updated. This is the org-specific
 		#url that helps bootstrap which module version to use within an org setup
-		$azskVersionForOrg = "#AzSKConfigURL#"
 
 		#We use this to check if another job is running...
 		$Global:FoundExistingJob = $false;
