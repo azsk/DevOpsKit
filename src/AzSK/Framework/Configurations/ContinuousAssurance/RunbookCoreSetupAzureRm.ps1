@@ -381,6 +381,8 @@ try
 {
 	#Check if this is fresh ICA (Profile version )
 	$azskVersionForOrg = "#AzSKConfigURL#"
+	$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
+	$PublicPSGalleryUrl = "https://www.powershellgallery.com"
 	$isBaseProfileModule =  (Get-Module -Name AzureRm.Profile).Version.Major -lt 5
 	if(-not $isBaseProfileModule)
 	{
@@ -394,8 +396,6 @@ try
 		
 		#These get set as constants during the build process (e.g., AzSKStaging will have a diff URL)
 		#PublicPSGalleryUrl is always same.
-		$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
-		$PublicPSGalleryUrl = "https://www.powershellgallery.com"
 
 		#This gets replaced when org-policy is created/updated. This is the org-specific
 		#url that helps bootstrap which module version to use within an org setup

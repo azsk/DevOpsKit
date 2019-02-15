@@ -381,6 +381,8 @@ try
 {
 	#Check if this is fresh ICA (Profile version )
 	$azskVersionForOrg = "https://azsdkossep.azureedge.net/1.0.0/AzSK.Pre.json"
+	$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
+	$PublicPSGalleryUrl = "https://www.powershellgallery.com"
 	$isBaseProfileModule =  (Get-Module -Name AzureRm.Profile).Version.Major -lt 5
 	if(-not $isBaseProfileModule)
 	{
