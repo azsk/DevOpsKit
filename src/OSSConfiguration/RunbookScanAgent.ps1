@@ -10,7 +10,7 @@ function ConvertStringToBoolean($strToConvert)
     }
 }
 
-function UploadFilesToBlob([string] $containerName, [string] $blobName, [string] $fileName,[AzureStorageContext] $stgCtx) {
+function UploadFilesToBlob([string] $containerName, [string] $blobName, [string] $fileName,[object] $stgCtx) {
 	$blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($blobName)
 	$task = $blob.UploadFromFileAsync($fileName)
 	$task.Wait()

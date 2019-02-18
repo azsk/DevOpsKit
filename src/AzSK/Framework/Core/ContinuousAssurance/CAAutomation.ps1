@@ -156,7 +156,7 @@ class CCAutomation: CommandBase
 		}
 	}
 
-	hidden [void] UploadFilesToBlob([string] $containerName, [string] $blobName, [string] $fileName,[AzureStorageContext] $stgCtx)
+	hidden [void] UploadFilesToBlob([string] $containerName, [string] $blobName, [string] $fileName,[object] $stgCtx)
 	{
         $blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($blobName)
 		$task = $blob.UploadFromFileAsync($fileName)
