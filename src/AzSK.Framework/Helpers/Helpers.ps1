@@ -440,18 +440,6 @@ class Helpers {
         if ([string]::IsNullOrEmpty($tenantId) -and [Helpers]::CheckMember($rmContext,"Tenant")) {
         $tenantId = $rmContext.Tenant.Id
         }
-        $allEndpoints = @();
-        $resourceConstant = [AzureEnvironment+Endpoint] |
-        Get-Member -Static -MemberType Properties |
-        Where-Object {
-        $endpoint = [AzureEnvironmentExtensions]::GetEndpoint($rmContext.Environment, $_.Name)
-        $allEndpoints += $endpoint;
-        (-not [string]::IsNullOrWhiteSpace($endpoint) -and ($endpoint.Trimend('/') -eq $resourceAppIdUri.Trimend('/')))
-        } | Select-Object -First 1
-        
-        if (-not $resourceConstant) {
-          throw ([SuppressedException]::new(("The resource URL [$resourceAppIdUri] is not supported. Supported values are: " + ($allEndpoints -join ", ")), [SuppressedExceptionType]::InvalidOperation))
-        }
         
         $authResult = [AzureSession]::Instance.AuthenticationFactory.Authenticate(
         $rmContext.Account,

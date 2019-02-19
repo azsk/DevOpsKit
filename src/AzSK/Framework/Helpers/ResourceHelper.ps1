@@ -270,20 +270,6 @@ class StorageHelper: ResourceGroupHelper
 		return $this.UploadFilesToBlob([string] $containerName, $accessType, $blobPath, $filesToUpload, $true);
 	}
 	
-	[void] UploadFilesToBlob([string] $containerName, [string] $blobPath, [System.IO.FileInfo] $fileToUpload, [object] $stgCtx)
-	{
-		$blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($blobPath)
-		$task = $blob.UploadFromFileAsync($fileToUpload)
-		$task.Wait()
-		if ($task.IsCompleted -and !$task.IsFaulted)
-		{
-		Write-Output("Transfer succeeded!")
-		}
-		else
-		{
-		Write-Output("Transfer failed!! Retry?")
-		}
-	}
 	[AzureStorageContainer] UploadFilesToBlob([string] $containerName, [BlobContainerPublicAccessType] $accessType, [string] $blobPath, [System.IO.FileInfo[]] $filesToUpload, [bool] $overwrite)
 	{
 		$result = $null;
