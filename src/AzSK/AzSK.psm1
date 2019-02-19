@@ -512,7 +512,8 @@ function Set-AzSKStorageBlobContent([string] $fileName, [string] $blobName, [str
             }
             else
             {
-                Write-Host "Transfer failed!!"
+                Write-Host "Transferring files to storage has failed!!"
+                
             }
         }
 	}
