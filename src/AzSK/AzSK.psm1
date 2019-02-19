@@ -498,9 +498,23 @@ function Clear-AzSKSessionState {
 
 function Set-AzSKStorageBlobContent([string] $fileName, [string] $blobName, [string] $containerName, [object] $stgCtx)
 	{
-        $blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($blobName)
-		$task = $blob.UploadFromFileAsync($fileName)
-		$task.Wait()
+        if([FeatureFlightingManager]::GetFeatureStatus("IsSetAzStorageBlobAvailable","*") -eq $true)
+        {
+            Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $fileName -Context $stgCtx -Force | Out-Null
+        }
+        else {
+            $blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($blobName)
+            $task = $blob.UploadFromFileAsync($fileName)
+            $task.Wait()
+            if ($task.IsCompleted -and !$task.IsFaulted)
+            {
+               Write-Host "Transfer succeeded!"
+            }
+            else
+            {
+                Write-Host "Transfer failed!! Retry?"
+            }
+        }
 	}
 
 $FrameworkPath =  $PSScriptRoot
