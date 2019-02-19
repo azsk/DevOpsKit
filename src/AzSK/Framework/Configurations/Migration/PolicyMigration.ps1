@@ -142,7 +142,8 @@ class PolicyMigrationHelper
 		Write-Host ("Performing last couple of steps...") -ForegroundColor Yellow;
 		#Override existing IWR
 		Write-Host ("Updating old Org-specific installer ('iwr')...") -ForegroundColor Yellow;	
-		Set-AzStorageBlobContent -File $PolicyInstance.InstallerFile -Container $($PolicyInstance.InstallerContainerName) -BlobType Block -Context $context -Force -ErrorAction Stop						
+		Set-AzSKStorageBlobContent -fileName $PolicyInstance.InstallerFile -blobName $PolicyInstance.InstallerFile -containerName $($PolicyInstance.InstallerContainerName) -stgCtx $context
+		#Set-AzStorageBlobContent -File $PolicyInstance.InstallerFile -Container $($PolicyInstance.InstallerContainerName) -BlobType Block -Context $context -Force -ErrorAction Stop						
 		Write-Host ("Successfully updated installer.") -ForegroundColor Green;
 		Write-Host ("Uploading Org policy migration log to storage [$($PolicyInstance.StorageAccountName)]...") -ForegroundColor Yellow;
 		[PolicyMigrationHelper]::PersistMigrationOutput($subscriptionContext.SubscriptionId,[PolicyMigrationHelper]::NewPolicyRGName, $MigrationOutput);		

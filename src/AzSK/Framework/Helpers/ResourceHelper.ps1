@@ -269,7 +269,21 @@ class StorageHelper: ResourceGroupHelper
 	{
 		return $this.UploadFilesToBlob([string] $containerName, $accessType, $blobPath, $filesToUpload, $true);
 	}
-
+	
+	[void] UploadFilesToBlob([string] $containerName, [string] $blobPath, [System.IO.FileInfo] $fileToUpload, [object] $stgCtx)
+	{
+		$blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($blobPath)
+		$task = $blob.UploadFromFileAsync($fileToUpload)
+		$task.Wait()
+		if ($task.IsCompleted -and !$task.IsFaulted)
+		{
+		Write-Output("Transfer succeeded!")
+		}
+		else
+		{
+		Write-Output("Transfer failed!! Retry?")
+		}
+	}
 	[AzureStorageContainer] UploadFilesToBlob([string] $containerName, [BlobContainerPublicAccessType] $accessType, [string] $blobPath, [System.IO.FileInfo[]] $filesToUpload, [bool] $overwrite)
 	{
 		$result = $null;
@@ -298,11 +312,8 @@ class StorageHelper: ResourceGroupHelper
 					try {
 						if($overwrite)
 						{
+							Set-AzSKStorageBlobContent -fileName $_.FullName -blobName $blobName -containerName $containerName -stgCtx $this.StorageAccount.Context
 							#Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context -Force | Out-Null
-						    $stgCtx = $this.StorageAccount.Context
-							$blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($blobName)
-							$task = $blob.UploadFromFileAsync($_.FullName)
-							$task.Wait()
 						}
 						else
 						{
@@ -310,11 +321,8 @@ class StorageHelper: ResourceGroupHelper
 						
 							if(-not $currentBlob)
 							{
+								Set-AzSKStorageBlobContent -fileName $_.FullName -blobName $blobName -containerName $containerName -stgCtx $this.StorageAccount.Context
 								#Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context | Out-Null
-								$stgCtx = $this.StorageAccount.Context
-								$blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($blobName)
-								$task = $blob.UploadFromFileAsync($_.FullName)
-								$task.Wait()
 							}
 						}
 						$loopValue = 0;

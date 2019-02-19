@@ -397,10 +397,7 @@ class ControlStateExtension
 					$loopValue = $loopValue - 1;
 					try
 					{
-						$stgCtx = $StorageAccount.Context
-						$blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($state.FullName)
-						$task = $blob.UploadFromFileAsync($state.FullName)
-						$task.Wait()
+						Set-AzSKStorageBlobContent -fileName $state.FullName -blobName $state.FullName -containerName $ContainerName -stgCtx $StorageAccount.Context
 						#Set-AzStorageBlobContent -File $state.FullName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
 						$loopValue = 0;
 					}
@@ -455,10 +452,7 @@ class ControlStateExtension
 					$loopValue = $loopValue - 1;
 					try
 					{
-						$stgCtx = $StorageAccount.Context
-						$blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($state.FullName)
-						$task = $blob.UploadFromFileAsync($state.FullName)
-						$task.Wait()
+						Set-AzSKStorageBlobContent -fileName $state.FullName -blobName $state.FullName -containerName $ContainerName -stgCtx $StorageAccount.Context
 						#Set-AzStorageBlobContent -File $state.FullName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
 						$loopValue = 0;
 					}

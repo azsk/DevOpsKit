@@ -298,11 +298,8 @@ class StorageHelper: ResourceGroupHelper
 					try {
 						if($overwrite)
 						{
+							 Set-AzSKStorageBlobContent -fileName $_.FullName -blobName $blobName -containerName $containerName -stgCtx $this.StorageAccount.Context
 							 #Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context -Force | Out-Null
-							 $stgCtx = $this.StorageAccount.Context
-							 $blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($blobName)
-							 $task = $blob.UploadFromFileAsync($_.FullName)
-							 $task.Wait()
 						}
 						else
 						{
@@ -310,11 +307,8 @@ class StorageHelper: ResourceGroupHelper
 						
 							if(-not $currentBlob)
 							{
+								Set-AzSKStorageBlobContent -fileName $_.FullName -blobName $blobName -containerName $containerName -stgCtx $this.StorageAccount.Context
 								#Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context | Out-Null
-								$stgCtx = $this.StorageAccount.Context
-								$blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($blobName)
-								$task = $blob.UploadFromFileAsync($_.FullName)
-								$task.Wait()
 							}
 						}
 						$loopValue = 0;

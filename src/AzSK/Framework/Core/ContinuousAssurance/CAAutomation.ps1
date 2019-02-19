@@ -156,13 +156,6 @@ class CCAutomation: CommandBase
 		}
 	}
 
-	hidden [void] UploadFilesToBlob([string] $containerName, [string] $blobName, [string] $fileName,[object] $stgCtx)
-	{
-        $blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($blobName)
-		$task = $blob.UploadFromFileAsync($fileName)
-		$task.Wait()
-	}
-
 	hidden [void] SetOMSSettings([string] $OMSWorkspaceId, [string] $OMSSharedKey,[string] $AltOMSWorkspaceId, [string] $AltOMSSharedKey)
 	{
 		if($this.UserConfig)
@@ -465,7 +458,7 @@ class CCAutomation: CommandBase
 				#endregion
 
 				#Save the scan objects in blob stoage#
-				$this.UploadFilesToBlob($this.CAMultiSubScanConfigContainerName, $this.CATargetSubsBlobName, $filename, $currentContext)
+				Set-AzSKStorageBlobContent -fileName $filename -blobName $this.CATargetSubsBlobName -containerName $this.CAMultiSubScanConfigContainerName -stgCtx $currentContext
 				#Set-AzStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
 			}
 
@@ -1080,7 +1073,7 @@ class CCAutomation: CommandBase
 				}
 
 				#Save the scan objects in blob stoage#
-				$this.UploadFilesToBlob($this.CAMultiSubScanConfigContainerName, $this.CATargetSubsBlobName, $filename, $currentContext)
+				Set-AzSKStorageBlobContent -fileName $filename -blobName $this.CATargetSubsBlobName -containerName $this.CAMultiSubScanConfigContainerName -stgCtx $currentContext
 				#Set-AzStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
 			}
 			#endregion		
@@ -2447,8 +2440,8 @@ class CCAutomation: CommandBase
 			}
 
 				#Save the scan objects in blob stoage#
-			$this.UploadFilesToBlob($this.CAMultiSubScanConfigContainerName, $this.CATargetSubsBlobName, $filename, $currentContext)
-			#Set-AzStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
+				Set-AzSKStorageBlobContent -fileName $filename -blobName $this.CATargetSubsBlobName -containerName $this.CAMultiSubScanConfigContainerName -stgCtx $currentContext
+				#Set-AzStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
 		}
 		else
 		{

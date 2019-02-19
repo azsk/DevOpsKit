@@ -496,6 +496,13 @@ function Clear-AzSKSessionState {
 
 }
 
+function Set-AzSKStorageBlobContent([string] $fileName, [string] $blobName, [string] $containerName, [object] $stgCtx)
+	{
+        $blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($blobName)
+		$task = $blob.UploadFromFileAsync($fileName)
+		$task.Wait()
+	}
+
 $FrameworkPath =  $PSScriptRoot
 
 . $FrameworkPath\Framework\Helpers\AliasHelper.ps1

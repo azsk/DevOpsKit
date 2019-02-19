@@ -267,11 +267,8 @@ class PartialScanManager
 
 			$masterFilePath = "$AzSKTemp\$($($this.ResourceScanTrackerBlobName).Replace('/','\'))"
 			[Helpers]::ConvertToJsonCustom($this.ResourceScanTrackerObj) | Out-File $masterFilePath -Force
-			$stgCtx = $this.StorageAccount.Context
-			$blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($this.CAScanProgressSnapshotsContainerName).GetBlockBlobReference("$($this.ResourceScanTrackerBlobName)")
-			$task = $blob.UploadFromFileAsync($masterFilePath)
-			$task.Wait()
-			#Set-AzStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "$($this.ResourceScanTrackerBlobName)" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
+			Set-AzSKStorageBlobContent -fileName $masterFilePath -blobName "$($this.ResourceScanTrackerBlobName)" -containerName $this.CAScanProgressSnapshotsContainerName -stgCtx $this.AzSKStorageAccount.Context			
+		    #Set-AzStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "$($this.ResourceScanTrackerBlobName)" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
 		}
 	}
 
@@ -319,10 +316,7 @@ class PartialScanManager
 			if($null -ne $controlStateBlob)
 			{
 				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force			
-				$stgCtx = $this.StorageAccount.Context
-				$blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($this.CAScanProgressSnapshotsContainerName).GetBlockBlobReference("Archive/$archiveName")
-				$task = $blob.UploadFromFileAsync($masterFilePath)
-				$task.Wait()
+				Set-AzSKStorageBlobContent -fileName $masterFilePath -blobName "Archive/$archiveName" -containerName $this.CAScanProgressSnapshotsContainerName -stgCtx $this.AzSKStorageAccount.Context
 				#Set-AzStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "Archive/$archiveName" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
 			}
 	
