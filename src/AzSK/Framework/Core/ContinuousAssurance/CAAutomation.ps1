@@ -458,7 +458,7 @@ class CCAutomation: CommandBase
 				#endregion
 
 				#Save the scan objects in blob stoage#
-				Set-AzSKStorageBlobContent -fileName $filename -blobName $this.CATargetSubsBlobName -containerName $this.CAMultiSubScanConfigContainerName -stgCtx $currentContext
+				[AzureRmHelper]::UploadStorageBlobContent($filename, $this.CATargetSubsBlobName, $this.CAMultiSubScanConfigContainerName, $currentContext)
 				#Set-AzStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
 			}
 
@@ -1073,7 +1073,7 @@ class CCAutomation: CommandBase
 				}
 
 				#Save the scan objects in blob stoage#
-				Set-AzSKStorageBlobContent -fileName $filename -blobName $this.CATargetSubsBlobName -containerName $this.CAMultiSubScanConfigContainerName -stgCtx $currentContext
+				[AzureRmHelper]::UploadStorageBlobContent($filename, $this.CATargetSubsBlobName, $this.CAMultiSubScanConfigContainerName, $currentContext)
 				#Set-AzStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
 			}
 			#endregion		
@@ -2440,7 +2440,7 @@ class CCAutomation: CommandBase
 			}
 
 				#Save the scan objects in blob stoage#
-				Set-AzSKStorageBlobContent -fileName $filename -blobName $this.CATargetSubsBlobName -containerName $this.CAMultiSubScanConfigContainerName -stgCtx $currentContext
+				[AzureRmHelper]::UploadStorageBlobContent($filename, $this.CATargetSubsBlobName, $this.CAMultiSubScanConfigContainerName, $currentContext)
 				#Set-AzStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
 		}
 		else

@@ -11,9 +11,15 @@ function ConvertStringToBoolean($strToConvert)
 }
 
 function UploadFilesToBlob([string] $containerName, [string] $blobName, [string] $fileName,[object] $stgCtx) {
+	try {
+		Set-AzStorageBlobContent -File $fileName -Container $containerName -Context $stgCtx -Blob $blobName -ErrorAction Stop | Out-Null
+	}
+	catch {
+		
 	$blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($blobName)
 	$task = $blob.UploadFromFileAsync($fileName)
 	$task.Wait()
+	}
 }
 function RunAzSKScan() {
 

@@ -298,7 +298,7 @@ class StorageHelper: ResourceGroupHelper
 					try {
 						if($overwrite)
 						{
-							Set-AzSKStorageBlobContent -fileName $_.FullName -blobName $blobName -containerName $containerName -stgCtx $this.StorageAccount.Context
+							[AzureRmHelper]::UploadStorageBlobContent($_.FullName, $blobName, $containerName ,$this.StorageAccount.Context)
 							#Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context -Force | Out-Null
 						}
 						else
@@ -307,7 +307,7 @@ class StorageHelper: ResourceGroupHelper
 						
 							if(-not $currentBlob)
 							{
-								Set-AzSKStorageBlobContent -fileName $_.FullName -blobName $blobName -containerName $containerName -stgCtx $this.StorageAccount.Context
+								[AzureRmHelper]::UploadStorageBlobContent($_.FullName, $blobName, $containerName, $this.StorageAccount.Context)
 								#Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context | Out-Null
 							}
 						}

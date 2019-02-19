@@ -381,6 +381,8 @@ try
 {
 	#Check if this is fresh ICA (Profile version )
 	$azskVersionForOrg = "#AzSKConfigURL#"
+	#These get set as constants during the build process (e.g., AzSKStaging will have a diff URL)
+	#PublicPSGalleryUrl is always same.
 	$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
 	$PublicPSGalleryUrl = "https://www.powershellgallery.com"
 	$isBaseProfileModule =  (Get-Module -Name AzureRm.Profile).Version.Major -lt 5

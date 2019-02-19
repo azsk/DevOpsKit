@@ -67,6 +67,7 @@ $FrameworkPath =  $PSScriptRoot
 #Managers
 . $FrameworkPath\Managers\ConfigurationManager.ps1
 . $FrameworkPath\Managers\FeatureFlightingManager.ps1
+. $FrameworkPath\Helpers\AzureRmHelper.ps1
 . $FrameworkPath\Managers\ControlStateExtension.ps1
 . $FrameworkPath\Managers\AzSKPDFExtension.ps1
 . $FrameworkPath\Managers\PartialScanManager.ps1
