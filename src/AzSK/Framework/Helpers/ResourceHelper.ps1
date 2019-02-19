@@ -269,7 +269,7 @@ class StorageHelper: ResourceGroupHelper
 	{
 		return $this.UploadFilesToBlob([string] $containerName, $accessType, $blobPath, $filesToUpload, $true);
 	}
-
+	
 	[AzureStorageContainer] UploadFilesToBlob([string] $containerName, [BlobContainerPublicAccessType] $accessType, [string] $blobPath, [System.IO.FileInfo[]] $filesToUpload, [bool] $overwrite)
 	{
 		$result = $null;
@@ -298,7 +298,8 @@ class StorageHelper: ResourceGroupHelper
 					try {
 						if($overwrite)
 						{
-							Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context -Force | Out-Null
+							[AzureRmHelper]::UploadStorageBlobContent($_.FullName, $blobName, $containerName ,$this.StorageAccount.Context)
+							#Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context -Force | Out-Null
 						}
 						else
 						{
@@ -306,7 +307,8 @@ class StorageHelper: ResourceGroupHelper
 						
 							if(-not $currentBlob)
 							{
-								Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context | Out-Null
+								[AzureRmHelper]::UploadStorageBlobContent($_.FullName, $blobName, $containerName, $this.StorageAccount.Context)
+								#Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context | Out-Null
 							}
 						}
 						$loopValue = 0;

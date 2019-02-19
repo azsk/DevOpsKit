@@ -11,6 +11,15 @@
       "IsEnabled": false      
     },
     {
+      "Name": "IsSetAzStorageBlobAvailable",
+      "Description" : "",
+      "Sources" : ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],      
+      "UnderPreview" : false,
+      "IsEnabled": false      
+    },
+    {
       "Name": "EnableAnonymousAccessCheckUsingAPI",
       "Description" : "",
       "Sources" : ["*"],
