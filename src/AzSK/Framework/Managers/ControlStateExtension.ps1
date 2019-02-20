@@ -228,7 +228,8 @@ class ControlStateExtension
 			$loopValue = $loopValue - 1;
 			try
 			{
-				Get-AzStorageBlobContent -CloudBlob $indexerBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
+				[AzHelper]::GetStorageBlobContent($AzSKTemp,$this.IndexerBlobName ,$this.IndexerBlobName , $containerName ,$this.StorageAccount.Context)
+				#Get-AzStorageBlobContent -CloudBlob $indexerBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
 				$indexerObject = Get-ChildItem -Path "$AzSKTemp\$($this.IndexerBlobName)" -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json
 				$loopValue = 0;
 			}
@@ -293,7 +294,8 @@ class ControlStateExtension
 						$loopValue = $loopValue - 1;
 						try
 						{
-							Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
+							[AzHelper]::GetStorageBlobContent($AzSKTemp,$controlStateBlobName ,$controlStateBlobName , $containerName ,$StorageAccount.Context)
+							#Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
 							$loopValue = 0;
 						}
 						catch
@@ -397,7 +399,7 @@ class ControlStateExtension
 					$loopValue = $loopValue - 1;
 					try
 					{
-						[AzureRmHelper]::UploadStorageBlobContent($state.FullName,  $state.FullName, $ContainerName, $StorageAccount.Context)
+						[AzHelper]::UploadStorageBlobContent($state.FullName , $state.FullName , $ContainerName, $StorageAccount.Context)
 						#Set-AzStorageBlobContent -File $state.FullName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
 						$loopValue = 0;
 					}
@@ -452,7 +454,7 @@ class ControlStateExtension
 					$loopValue = $loopValue - 1;
 					try
 					{
-						[AzureRmHelper]::UploadStorageBlobContent( $state.FullName, $state.FullName, $ContainerName, $StorageAccount.Context)
+						[AzHelper]::UploadStorageBlobContent($state.FullName, $state.FullName, $ContainerName, $StorageAccount.Context)
 						#Set-AzStorageBlobContent -File $state.FullName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
 						$loopValue = 0;
 					}
@@ -502,7 +504,8 @@ class ControlStateExtension
 			try
 			{
 				$controlStateBlob = Get-AzStorageBlob -Container $ContainerName -Blob $controlStateBlobName -Context $StorageAccount.Context -ErrorAction Stop
-				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination "$AzSKTemp\ExistingControlStates" -Force -ErrorAction Stop
+                [AzHelper]::GetStorageBlobContent("$AzSKTemp\ExistingControlStates",$controlStateBlobName ,$controlStateBlobName , $containerName ,$StorageAccount.Context)
+				#Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination "$AzSKTemp\ExistingControlStates" -Force -ErrorAction Stop
 				$ControlStatesJson = Get-ChildItem -Path "$AzSKTemp\ExistingControlStates\$controlStateBlobName" -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json 
 				$loopValue = 0;
 			}
