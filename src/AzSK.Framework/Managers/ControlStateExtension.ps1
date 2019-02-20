@@ -228,7 +228,8 @@ class ControlStateExtension
 			$loopValue = $loopValue - 1;
 			try
 			{
-				Get-AzStorageBlobContent -CloudBlob $indexerBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
+				[AzureRmHelper]::GetStorageBlobContent($AzSKTemp,$indexerBlob.ICloudBlob ,$this.IndexerBlobName , $containerName ,$this.StorageAccount.Context)
+				#Get-AzStorageBlobContent -CloudBlob $indexerBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
 				$indexerObject = Get-ChildItem -Path "$AzSKTemp\$($this.IndexerBlobName)" -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json
 				$loopValue = 0;
 			}
@@ -293,7 +294,8 @@ class ControlStateExtension
 						$loopValue = $loopValue - 1;
 						try
 						{
-							Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
+							[AzureRmHelper]::GetStorageBlobContent($AzSKTemp,$controlStateBlob.ICloudBlob ,$controlStateBlobName , $containerName ,$StorageAccount.Context)
+							#Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
 							$loopValue = 0;
 						}
 						catch
@@ -502,7 +504,8 @@ class ControlStateExtension
 			try
 			{
 				$controlStateBlob = Get-AzStorageBlob -Container $ContainerName -Blob $controlStateBlobName -Context $StorageAccount.Context -ErrorAction Stop
-				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination "$AzSKTemp\ExistingControlStates" -Force -ErrorAction Stop
+                [AzureRmHelper]::GetStorageBlobContent("$AzSKTemp\ExistingControlStates",$controlStateBlob.ICloudBlob ,$controlStateBlobName , $containerName ,$StorageAccount.Context)
+				#Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination "$AzSKTemp\ExistingControlStates" -Force -ErrorAction Stop
 				$ControlStatesJson = Get-ChildItem -Path "$AzSKTemp\ExistingControlStates\$controlStateBlobName" -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json 
 				$loopValue = 0;
 			}

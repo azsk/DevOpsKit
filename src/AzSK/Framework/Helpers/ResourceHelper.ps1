@@ -269,7 +269,7 @@ class StorageHelper: ResourceGroupHelper
 	{
 		return $this.UploadFilesToBlob([string] $containerName, $accessType, $blobPath, $filesToUpload, $true);
 	}
-	
+
 	[AzureStorageContainer] UploadFilesToBlob([string] $containerName, [BlobContainerPublicAccessType] $accessType, [string] $blobPath, [System.IO.FileInfo[]] $filesToUpload, [bool] $overwrite)
 	{
 		$result = $null;
@@ -298,8 +298,8 @@ class StorageHelper: ResourceGroupHelper
 					try {
 						if($overwrite)
 						{
-							[AzureRmHelper]::UploadStorageBlobContent($_.FullName, $blobName, $containerName ,$this.StorageAccount.Context)
-							#Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context -Force | Out-Null
+							 [AzureRmHelper]::UploadStorageBlobContent($_.FullName, $blobName , $containerName ,$this.StorageAccount.Context)
+							 #Set-AzStorageBlobContent -Blob $blobName -Container $containerName -File $_.FullName -Context $this.StorageAccount.Context -Force | Out-Null
 						}
 						else
 						{
@@ -340,10 +340,12 @@ class StorageHelper: ResourceGroupHelper
 			try {
 				if($overwrite)
 				{
-					Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $destinationPath -Force -ErrorAction Stop
+					[AzureRmHelper]::GetStorageBlobContent($destinationPath, $blobName , $containerName ,$this.StorageAccount.Context)
+					#Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $destinationPath -Force -ErrorAction Stop
 				}
 				else {
-					Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $destinationPath -ErrorAction Stop
+					[AzureRmHelper]::GetStorageBlobContent($destinationPath, $blobName , $containerName ,$this.StorageAccount.Context)
+					#Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $destinationPath -ErrorAction Stop
 				}
 				$loopValue = 0;
 			}
@@ -376,10 +378,12 @@ class StorageHelper: ResourceGroupHelper
 			try {
 				if($overwrite)
 				{
-					$blobDetails= Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -Force -ErrorAction Stop
+					[AzureRmHelper]::GetStorageBlobContent($copyDestinationPath, $blobName , $containerName ,$this.StorageAccount.Context)
+					#$blobDetails= Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -Force -ErrorAction Stop
 				}
 				else {
-					$blobDetails= Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -ErrorAction Stop
+					[AzureRmHelper]::GetStorageBlobContent($copyDestinationPath, $blobName , $containerName ,$this.StorageAccount.Context)
+					#$blobDetails= Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -ErrorAction Stop
 				}
 				$loopValue = 0;
 			}
@@ -455,10 +459,12 @@ class StorageHelper: ResourceGroupHelper
 					$blobName = $blob.Name
 					if($overwrite)
 					{
-						$blobList+=	Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -Force -ErrorAction Stop
+						[AzureRmHelper]::GetStorageBlobContent($copyDestinationPath, $blobName , $containerName ,$this.StorageAccount.Context)
+					    #$blobList+=	Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -Force -ErrorAction Stop
 					}
 					else{
-						$blobList+= Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -ErrorAction Stop
+						[AzureRmHelper]::GetStorageBlobContent($copyDestinationPath, $blobName , $containerName ,$this.StorageAccount.Context)
+						#$blobList+= Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -ErrorAction Stop
 					}
 				}
 				$loopValue = 0;
