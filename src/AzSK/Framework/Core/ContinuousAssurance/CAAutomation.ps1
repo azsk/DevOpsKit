@@ -458,7 +458,7 @@ class CCAutomation: CommandBase
 				#endregion
 
 				#Save the scan objects in blob stoage#
-				[AzureRmHelper]::UploadStorageBlobContent($filename, $this.CATargetSubsBlobName, $this.CAMultiSubScanConfigContainerName, $currentContext)
+				[AzHelper]::UploadStorageBlobContent($filename, $this.CATargetSubsBlobName, $this.CAMultiSubScanConfigContainerName, $currentContext)
 				#Set-AzStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
 			}
 
@@ -887,7 +887,7 @@ class CCAutomation: CommandBase
 					$CAScanDataBlobContent = $null;
 					if($null -ne $CAScanDataBlobObject)
 					{
-						$CAScanDataBlobContentObject = [AzureRmHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
+						$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
 						#$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
 						$CAScanDataBlobContent = Get-ChildItem -Path "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)" -Force | Get-Content | ConvertFrom-Json
 					}
@@ -1074,7 +1074,7 @@ class CCAutomation: CommandBase
 				}
 
 				#Save the scan objects in blob stoage#
-				[AzureRmHelper]::UploadStorageBlobContent($filename, $this.CATargetSubsBlobName, $this.CAMultiSubScanConfigContainerName, $currentContext)
+				[AzHelper]::UploadStorageBlobContent($filename, $this.CATargetSubsBlobName, $this.CAMultiSubScanConfigContainerName, $currentContext)
 				#Set-AzStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
 			}
 			#endregion		
@@ -1591,7 +1591,7 @@ class CCAutomation: CommandBase
 			if($null -ne $CAScanDataBlobObject)
 			{
 				$this.IsCentralScanModeOn = $true;
-				$CAScanDataBlobContentObject = [AzureRmHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
+				$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
 				$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
 				$CAScanDataBlobContent = Get-ChildItem -Path "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)" -Force | Get-Content | ConvertFrom-Json
 
@@ -2154,7 +2154,7 @@ class CCAutomation: CommandBase
 			$CAScanDataBlobObject = Get-AzStorageBlob -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -ErrorAction SilentlyContinue 
 			if($null -ne $CAScanDataBlobObject)
 			{
-				$CAScanDataBlobContentObject = [AzureRmHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
+				$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
 				#$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
 				$CAScanDataBlobContent = Get-ChildItem -Path "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)" -Force | Get-Content | ConvertFrom-Json
 			}
@@ -2443,7 +2443,7 @@ class CCAutomation: CommandBase
 			}
 
 				#Save the scan objects in blob stoage#
-				[AzureRmHelper]::UploadStorageBlobContent($filename, $this.CATargetSubsBlobName, $this.CAMultiSubScanConfigContainerName, $currentContext)
+				[AzHelper]::UploadStorageBlobContent($filename, $this.CATargetSubsBlobName, $this.CAMultiSubScanConfigContainerName, $currentContext)
 				#Set-AzStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
 		}
 		else

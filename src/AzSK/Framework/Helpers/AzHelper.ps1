@@ -1,4 +1,4 @@
-class AzureRmHelper
+class AzHelper
 {
 static [void] UploadStorageBlobContent([string] $fileName, [string] $blobName, [string] $containerName, [object] $stgCtx)
 	{
