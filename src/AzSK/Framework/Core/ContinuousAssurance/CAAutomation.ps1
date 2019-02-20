@@ -887,7 +887,7 @@ class CCAutomation: CommandBase
 					$CAScanDataBlobContent = $null;
 					if($null -ne $CAScanDataBlobObject)
 					{
-						$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
+						$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($this.AzSKCATempFolderPath, $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
 						#$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
 						$CAScanDataBlobContent = Get-ChildItem -Path "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)" -Force | Get-Content | ConvertFrom-Json
 					}

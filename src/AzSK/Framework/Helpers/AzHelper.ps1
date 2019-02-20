@@ -17,6 +17,13 @@ static [void] UploadStorageBlobContent([string] $fileName, [string] $blobName, [
             }
         }
     }
+
+    static [object] GetStorageBlobContent([string] $folderName, [string] $fileName, [string] $blobName, [string] $containerName, [object] $stgCtx)
+	{
+             $fileName = $folderName + $fileName
+             return [AzHelper]::GetStorageBlobContent($fileName, $blobName, $containerName, $stgCtx)
+    }
+
     static [object] GetStorageBlobContent([string] $fileName, [string] $blobName, [string] $containerName, [object] $stgCtx)
 	{
         if([FeatureFlightingManager]::GetFeatureStatus("IsSetAzStorageBlobAvailable","*") -eq $true)
