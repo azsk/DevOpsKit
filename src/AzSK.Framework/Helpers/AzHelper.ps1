@@ -20,7 +20,7 @@ static [void] UploadStorageBlobContent([string] $fileName, [string] $blobName, [
 
     static [object] GetStorageBlobContent([string] $folderName, [string] $fileName, [string] $blobName, [string] $containerName, [object] $stgCtx)
 	{
-             $fileName = $folderName + $fileName
+             $fileName = $folderName.TrimEnd("\")+ "\" + $fileName
              return [AzHelper]::GetStorageBlobContent($fileName, $blobName, $containerName, $stgCtx)
     }
 
