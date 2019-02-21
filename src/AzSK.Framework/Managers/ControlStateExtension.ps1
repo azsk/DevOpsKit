@@ -399,7 +399,7 @@ class ControlStateExtension
 					$loopValue = $loopValue - 1;
 					try
 					{
-						[AzHelper]::UploadStorageBlobContent($state.FullName , $state.FullName.Split("\")[-1] , $ContainerName, $StorageAccount.Context)
+						[AzHelper]::UploadStorageBlobContent($state.FullName , $state.Name , $ContainerName, $StorageAccount.Context)
 						#Set-AzStorageBlobContent -File $state.FullName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
 						$loopValue = 0;
 					}
@@ -454,7 +454,7 @@ class ControlStateExtension
 					$loopValue = $loopValue - 1;
 					try
 					{
-						[AzHelper]::UploadStorageBlobContent($state.FullName, $state.FullName.Split("\")[-1], $ContainerName, $StorageAccount.Context)
+						[AzHelper]::UploadStorageBlobContent($state.FullName, $state.Name , $ContainerName, $StorageAccount.Context)
 						#Set-AzStorageBlobContent -File $state.FullName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
 						$loopValue = 0;
 					}
