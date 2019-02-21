@@ -975,7 +975,7 @@ class Helpers {
 			{
 				$TagsHashTable.Keys | ForEach-Object {
 					$key = $_;
-					if($tags.ContainsKey($key))
+					if($null -ne $tags -and $tags.ContainsKey($key))
 					{
 						if($update)
 						{
@@ -1017,7 +1017,7 @@ class Helpers {
 			{
 				$TagsHashTable.Keys | ForEach-Object {
 					$key = $_;
-					if($tags.ContainsKey($key))
+					if($null -ne $tags -and $tags.ContainsKey($key))
 					{
 						if($update)
 						{
