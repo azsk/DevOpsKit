@@ -228,7 +228,7 @@ class ControlStateExtension
 			$loopValue = $loopValue - 1;
 			try
 			{
-				[AzHelper]::GetStorageBlobContent($AzSKTemp,$this.IndexerBlobName ,$this.IndexerBlobName , $containerName , $StorageAccount.Context)
+				[AzHelper]::GetStorageBlobContent($AzSKTemp,$this.IndexerBlobName ,$this.IndexerBlobName , $containerName ,$StorageAccount.Context)
 				#Get-AzStorageBlobContent -CloudBlob $indexerBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
 				$indexerObject = Get-ChildItem -Path "$AzSKTemp\$($this.IndexerBlobName)" -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json
 				$loopValue = 0;
