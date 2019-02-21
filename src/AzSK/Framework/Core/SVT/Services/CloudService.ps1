@@ -297,7 +297,7 @@ class CloudService: SVTBase
 					{
 						$DeploymentSlot.Roles | ForEach-Object {
 							$Role = $_;
-							if($null -ne $Role.Extensions)
+							if($Role.Extensions)
 							{
 								$Role.Extensions | ForEach-Object {
 									$extension = $_;
@@ -332,7 +332,7 @@ class CloudService: SVTBase
 			}
 			else
 			{
-				$controlResult.VerificationResult = [VerificationResult]::Passed;
+				$controlResult.VerificationResult = [VerificationResult]::Failed;
 			}
 		}
 		else
