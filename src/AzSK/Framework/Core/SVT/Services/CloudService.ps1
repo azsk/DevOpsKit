@@ -285,65 +285,66 @@ class CloudService: SVTBase
 
 	hidden [ControlResult] CheckCloudServiceAntiMalwareStatus([ControlResult] $controlResult)
 	{
-		if($this.hasClassicPermissions)
-		{
-			$isCompliant = $false;
-			$extensions = @{};
-			if($null -ne $this.ResourceObject -and $null -ne $this.ResourceObject.DeploymentSlots)
-			{
-				$this.ResourceObject.DeploymentSlots | ForEach-Object {
-					$DeploymentSlot = $_;
-					if($null -ne $DeploymentSlot -and $null -ne $DeploymentSlot.Roles)
-					{
-						$DeploymentSlot.Roles | ForEach-Object {
-							$Role = $_;
-							if($Role.Extensions)
-							{
-								$Role.Extensions | ForEach-Object {
-									$extension = $_;
-									$extensions.Add($DeploymentSlot.SlotName + "->" + $extension.RoleName,"Disabled");
-									if($null -ne $extension -and $null -ne $extension.ExtensionId)
-									{
-										$extension.ExtensionId | ForEach-Object {
-											$extensionId = $_
-											if($extensionId.Id -like "*Antimalware*")
-											{
-												$extensions[$DeploymentSlot.SlotName + "->" + $extension.RoleName] = "Enabled"
-											}
-										}
+		  if($this.hasClassicPermissions)
+		  {
+				 $isCompliant = $false;
+				 $extensions = @{};
+				 if($null -ne $this.ResourceObject -and $null -ne $this.ResourceObject.DeploymentSlots)
+				 {
+					   $this.ResourceObject.DeploymentSlots | ForEach-Object {
+							  $DeploymentSlot = $_;
+							  if($null -ne $DeploymentSlot -and $null -ne $DeploymentSlot.Roles)
+							  {
+									$DeploymentSlot.Roles | ForEach-Object {
+										   $Role = $_;
+						 $extensions.Add($DeploymentSlot.SlotName + "->" + $Role.RoleName,"Disabled");
+										   if(-not [string]::IsNullOrWhiteSpace($Role.Extensions))
+										   {
+												  $Role.Extensions | ForEach-Object {
+														$extension = $_;
+														if($null -ne $extension -and $null -ne $extension.ExtensionId)
+														{
+															   $extension.ExtensionId | ForEach-Object {
+																	 $extensionId = $_
+																	 if($extensionId.Id -like "*Antimalware*")
+																	 {
+																			$extensions[$DeploymentSlot.SlotName + "->" + $Role.RoleName] = "Enabled"
+																	 }
+															   }
+														}
+												 }
+										   }
 									}
-								}
-							}
-						}
-					}
-				}
-			}			
+							  }
+					   }
+				 }                   
 
-			if($extensions.Count -gt 0)
-			{
-				if(($extensions.Values | Where-Object { $_ -eq "Disabled"} | Measure-Object).Count -le 0)
-				{
-					$controlResult.VerificationResult = [VerificationResult]::Passed;
-				}
-				else
-				{
-					$controlResult.AddMessage([VerificationResult]::Failed,  "Antimalware extension is not enabled on cloud service.", $extensions);
-				}
-			}
-			else
-			{
-				$controlResult.VerificationResult = [VerificationResult]::Failed;
-			}
-		}
-		else
-		{
-			#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesn't have the required permissions
-			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-			$controlResult.AddMessage([VerificationResult]::Manual, "You do not have required permissions to check for antimalware extension on this cloud service. This control requires 'Co-Admin' privilege.");	
-			$controlResult.AddMessage([MessageData]::new([Constants]::CoAdminElevatePermissionMsg));		
-		}
-		return $controlResult;
+				 if($extensions.Count -gt 0)
+				 {
+					   if(($extensions.Values | Where-Object { $_ -eq "Disabled"} | Measure-Object).Count -le 0)
+					   {
+							  $controlResult.VerificationResult = [VerificationResult]::Passed;
+					   }
+					   else
+					   {
+							  $controlResult.AddMessage([VerificationResult]::Failed,  "Antimalware extension is not enabled on cloud service.", $extensions);
+					   }
+				 }
+				 else
+				 {
+					   $controlResult.VerificationResult = [VerificationResult]::Passed;
+				 }
+		  }
+		  else
+		  {
+				 #Setting this property ensures that this control result wont be considered for the central telemetry. As control doesn't have the required permissions
+		  $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+				 $controlResult.AddMessage([VerificationResult]::Manual, "You do not have required permissions to check for antimalware extension on this cloud service. This control requires 'Co-Admin' privilege."); 
+		  $controlResult.AddMessage([MessageData]::new([Constants]::CoAdminElevatePermissionMsg));             
+		  }
+		  return $controlResult;
 	}
+
 
 	hidden [ControlResult] CheckCloudServiceOSPatchStatus([ControlResult] $controlResult)
 	{
