@@ -22,6 +22,17 @@ function UploadFilesToBlob([string] $containerName, [string] $blobName, [string]
 	#todo:print status
 	}
 }
+
+function GetFilesFromBlob([string] $containerName, [string] $blobName, [string] $fileName,[object] $stgCtx) {
+	$blob = Get-AzStorageBlob -Container $containerName -Blob $blobName -Context $stgCtx
+	$task = $blob.ICloudBlob.DownloadToFileAsync($fileName,[System.IO.FileMode]::Create)
+	$task.Wait()
+	if (-not ($task.IsCompleted -and !$task.IsFaulted))
+	{
+		#Need to change write method
+		Write-Debug "Downloading file from" + $blobName + " has failed!!"
+	}
+}
 function RunAzSKScan() {
 
 	################################ Begin: Configure AzSK for the scan ######################################### 
@@ -440,7 +451,8 @@ function CheckForSubscriptionsSnapshotData()
 		{
 			Write-Output("SA: Multi-sub scan in progress. Reading progress tracking file...")
 			#Found an active scan, download progress-tracker file to our temp location.
-			Get-AzStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $currentContext -Destination $destinationFolderPath -Force | Out-Null
+			GetFilesFromBlob -containerName $CAMultiSubScanConfigContainerName -blobName $CAActiveScanSnapshotBlobName -fileName $($destinationFolderPath + $CAActiveScanSnapshotBlobName) -stgCtx $currentContext
+			#Get-AzStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $currentContext -Destination $destinationFolderPath -Force | Out-Null
 			
 			#Read the state of various subscriptions in the target list from the progress-tracker file.
 			$Global:subsToScan = [array](Get-ChildItem -Path $CAActiveScanSnapshotBlobPath -Force | Get-Content | ConvertFrom-Json)			
@@ -452,7 +464,8 @@ function CheckForSubscriptionsSnapshotData()
 			#No active scan in progress. This is likely the start of a fresh scan. 
 			#We will need to *create* the progress-tracker file before starting the scan.
 			$CAScanDataBlobObject = Get-AzStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CATargetSubsBlobName -Context $currentContext -ErrorAction Stop | Out-Null
-			Get-AzStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CATargetSubsBlobName -Context $currentContext -Destination $destinationFolderPath -Force | Out-Null
+			GetFilesFromBlob -containerName $CAMultiSubScanConfigContainerName -blobName $CATargetSubsBlobName -fileName $($destinationFolderPath + $CATargetSubsBlobName) -stgCtx $currentContext
+			#Get-AzStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CATargetSubsBlobName -Context $currentContext -Destination $destinationFolderPath -Force | Out-Null
 	
 			$CAScanDataBlobContent = Get-ChildItem -Path "$CATargetSubsBlobPath" -Force | Get-Content | ConvertFrom-Json
 
@@ -517,7 +530,8 @@ function PersistSubscriptionSnapshot
 		if($null -ne $CAScanDataBlobObject)
 		{
 			#We found a blob for active scan... locate the provided subscription in it to update its status.
-			Get-AzStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $StorageContext -Destination $destinationFolderPath -Force | Out-Null
+			GetFilesFromBlob -containerName $CAMultiSubScanConfigContainerName -blobName $CAActiveScanSnapshotBlobName -fileName $($destinationFolderPath + $CAActiveScanSnapshotBlobName) -stgCtx $StorageContext
+			#Get-AzStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $StorageContext -Destination $destinationFolderPath -Force | Out-Null
 			$subsToScan = [array](Get-ChildItem -Path $CAActiveScanSnapshotBlobPath -Force | Get-Content | ConvertFrom-Json)
 
 			$matchedSubId = $subsToScan | Where-Object {$_.SubscriptionId -eq $SubscriptionID}
@@ -597,7 +611,8 @@ function ArchiveBlob
 			$activeSnapshotBlob = Get-AzStorageBlob -Container $CAMultiSubScanConfigContainerName -Context $StorageContext -Blob ($activeSnapshotBlob+".json") -ErrorAction SilentlyContinue
 			if($null -ne $activeSnapshotBlob)
 			{
-				Get-AzStorageBlobContent -CloudBlob $activeSnapshotBlob.ICloudBlob -Context $StorageContext -Destination $masterFilePath -Force | Out-Null	
+				GetFilesFromBlob -containerName $CAMultiSubScanConfigContainerName -blobName ($activeSnapshotBlob+".json") -fileName $masterFilePath -stgCtx $StorageContext
+			    #Get-AzStorageBlobContent -CloudBlob $activeSnapshotBlob.ICloudBlob -Context $StorageContext -Destination $masterFilePath -Force | Out-Null	
 				UploadFilesToBlob -containerName $CAMultiSubScanConfigContainerName -blobName $CAActiveScanSnapshotArchiveBlobName -fileName $masterFilePath -stgCtx $StorageContext		
 				#Set-AzStorageBlobContent -File $masterFilePath -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotArchiveBlobName -BlobType Block -Context $StorageContext -Force | Out-Null
 			}
