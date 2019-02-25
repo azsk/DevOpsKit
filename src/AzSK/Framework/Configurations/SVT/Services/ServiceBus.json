@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckServiceBusRootPolicy",
       "Rationale": "A 'namespace' level access policy provides access to all Queues/Topics in a namespace. However, using an access policy at entity (Queue/Topic) level provides access only to the specific entity. Thus using the latter is inline with the principle of least privilege.",
-      "Recommendation": "Remove all the authorization rules from Service Bus namespace except RootManageSharedAccessKey using Remove-AzureRmServiceBusAuthorizationRule command. Run 'Get-Help Remove-AzureRmServiceBusAuthorizationRule -full' for more help. Use the Azure portal to configure shared access policies with appropriate claims at the specific entity (Topic/Queue) scope.",
+      "Recommendation": "Remove all the authorization rules from Service Bus namespace except RootManageSharedAccessKey using Remove-AzServiceBusAuthorizationRule command. Run 'Get-Help Remove-AzServiceBusAuthorizationRule -full' for more help. Use the Azure portal to configure shared access policies with appropriate claims at the specific entity (Topic/Queue) scope.",
       "Tags": [
         "SDL",
         "TCP",
