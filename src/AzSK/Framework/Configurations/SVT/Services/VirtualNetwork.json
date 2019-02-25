@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckPublicIps",
       "Rationale": "Public IPs provide direct access over the internet exposing the resource(s) to all type of attacks over the public network.",
-      "Recommendation": "Unutilized Public IP address must be removed from virtual network. For more information visit: https://docs.microsoft.com/en-us/powershell/module/azurerm.network/remove-azurermpublicipaddress",
+      "Recommendation": "Unutilized Public IP address must be removed from virtual network. For more information visit: https://docs.microsoft.com/en-us/powershell/module/az.network/remove-azpublicipaddress",
       "Tags": [
         "SDL",
         "TCP",
