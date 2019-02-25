@@ -111,7 +111,7 @@ class PolicySetup: CommandBase
 		if([string]::IsNullOrWhiteSpace($this.AppInsightName) -or [string]::IsNullOrWhiteSpace($appInsightLocation))
 		{
 			$azskInsights = @();
-			$azskInsights += Get-AzureRmResource -ResourceType 'Microsoft.Insights/components' -ResourceGroupName $this.ResourceGroupName -ErrorAction SilentlyContinue
+			$azskInsights += Get-AzResource -ResourceType 'Microsoft.Insights/components' -ResourceGroupName $this.ResourceGroupName -ErrorAction SilentlyContinue
 			if(($azskInsights | Measure-Object).Count -eq 1)
 			{
 				$this.AppInsightName = $azskInsights[0].Name;
@@ -124,7 +124,7 @@ class PolicySetup: CommandBase
 		if( [string]::IsNullOrWhiteSpace($resourceGroupLocation))
 		{
 			$azskRG = @();
-			$azskRG += Get-AzureRmResourceGroup -Name $this.ResourceGroupName -ErrorAction SilentlyContinue
+			$azskRG += Get-AzResourceGroup -Name $this.ResourceGroupName -ErrorAction SilentlyContinue
 			if(($azskRG | Measure-Object).Count -eq 1)
 			{
 				$this.ResourceGroupLocation = $azskRG[0].Location;			
@@ -351,6 +351,13 @@ class PolicySetup: CommandBase
 			{
 				$caFilePath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookScanAgent.ps1"
 				Copy-Item ($caFilePath) ($this.RunbookFolderPath + "RunbookScanAgent.ps1") -Force
+				$fileName = $this.RunbookFolderPath + "RunbookScanAgent.ps1";
+				$policyStoreUrl	= [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl.Replace('$',"``$")
+				$fileContent = Get-Content -Path $fileName;
+				$fileContent = $fileContent.Replace("[#ScanAgentAzureRm#]", $this.PolicyUrl);
+				Out-File -InputObject $fileContent -Force -FilePath $fileName -Encoding utf8
+				$caFilePathbackup = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookScanAgentAzureRm.ps1"
+				Copy-Item ($caFilePath) ($this.RunbookFolderPath + "RunbookScanAgentAzureRm.ps1") -Force
 			}
 
 			$RunbookCoreSetupFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetup.ps1" } | Select -First 1
@@ -364,6 +371,8 @@ class PolicySetup: CommandBase
 				{
 					$fileContent = Get-Content -Path $fileName;
 					$fileContent = $fileContent.Replace("#AzSKConfigURL#", $this.AzSKConfigURL);
+					$policyStoreUrl	= [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl.Replace('$',"``$")
+			        $fileContent = $fileContent.Replace("[#CoreSetupAzureRm#]", $this.PolicyUrl);
 					Out-File -InputObject $fileContent -Force -FilePath $($this.RunbookFolderPath + "RunbookCoreSetup.ps1") -Encoding utf8
 				}
 			}
@@ -377,6 +386,32 @@ class PolicySetup: CommandBase
 				{
 					$RunbookCoreSetupContent = $RunbookCoreSetupContent.Replace($coreSetupAzSkVersionForOrgUrl,$this.AzSKConfigURL)
 					Out-File -InputObject $RunbookCoreSetupContent -Force -FilePath $($RunbookCoreSetupFile.FullName) -Encoding utf8
+				}
+			}
+			$RunbookCoreSetupAzureRmFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetupAzureRm.ps1" } | Select -First 1
+			if((($RunbookCoreSetupAzureRmFile | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::CARunbooks)
+			{
+				$coreSetupFilePath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookCoreSetupAzureRm.ps1"
+				Copy-Item ($coreSetupFilePath) ($this.RunbookFolderPath + "RunbookCoreSetupAzureRm.ps1") -Force
+				#Check for environment specific installer file
+				$fileName = $this.RunbookFolderPath + "RunbookCoreSetupAzureRm.ps1";
+				if(Test-Path -Path $fileName)
+				{
+					$fileContent = Get-Content -Path $fileName;
+					$fileContent = $fileContent.Replace("#AzSKConfigURL#", $this.AzSKConfigURL);
+					Out-File -InputObject $fileContent -Force -FilePath $($this.RunbookFolderPath + "RunbookCoreSetupAzureRm.ps1") -Encoding utf8
+				}
+			}
+			#If RunbookCoreSetup already exists, check for SAS token expiry and update with latest token 
+			else {
+				$RunbookCoreSetupContent =  Get-Content -Path $RunbookCoreSetupAzureRmFile.FullName
+				#Validate AzSkVersionForOrgUrl command
+				$pattern = 'azskVersionForOrg = "(.*?)"'
+				$coreSetupAzSkVersionForOrgUrl = [Helpers]::GetSubString($RunbookCoreSetupContent,$pattern)
+				if(-not [string]::IsNullOrEmpty($coreSetupAzSkVersionForOrgUrl) -and [Helpers]::IsSASTokenUpdateRequired($coreSetupAzSkVersionForOrgUrl))
+				{
+					$RunbookCoreSetupContent = $RunbookCoreSetupContent.Replace($coreSetupAzSkVersionForOrgUrl,$this.AzSKConfigURL)
+					Out-File -InputObject $RunbookCoreSetupContent -Force -FilePath $($RunbookCoreSetupAzureRmFile.FullName) -Encoding utf8
 				}
 			}
 
@@ -498,8 +533,6 @@ class PolicySetup: CommandBase
 		$allFiles = @();
 		$allFiles += Get-ChildItem $this.ConfigFolderPath -Recurse -Force | Where-Object { $_.mode -match "-a---" }
 
-		
-
 		if($allFiles.Count -ne 0)
 		{
 			$this.StorageAccountInstance.UploadFilesToBlob($this.ConfigContainerName, $this.Version, $allFiles);
@@ -524,7 +557,7 @@ class PolicySetup: CommandBase
 	[void] CreateMonitoringDashboard()
 	{
 		#Validate if monitoring dashboard is already created
-		$dashboardResource = Get-AzureRmResource -ResourceType "Microsoft.Portal/dashboards" -ResourceGroupName $($this.ResourceGroupName) -ErrorAction SilentlyContinue
+		$dashboardResource = Get-AzResource -ResourceType "Microsoft.Portal/dashboards" -ResourceGroupName $($this.ResourceGroupName) -ErrorAction SilentlyContinue
 		if((($dashboardResource | Measure-Object).Count -eq 0 ) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::MonitoringDashboard) 
 		{
 			$this.PublishCustomMessage("Creating DevOps Kit ops monitoring dashboard in the policy host subscription...");
@@ -550,7 +583,7 @@ class PolicySetup: CommandBase
 			$parameters.Add("Location",$this.MonitoringDashboardLocation)
 			$parameters.Add("DashboardTitle","DevOps Kit Monitoring Dashboard [$($this.OrgFullName)]")
 
-			New-AzureRmResourceGroupDeployment -Name "MonitoringDashboard" -TemplateFile $MonitoringDashboardTemplatePath   -ResourceGroupName $($this.ResourceGroupName) -TemplateParameterObject $parameters   
+			New-AzResourceGroupDeployment -Name "MonitoringDashboard" -TemplateFile $MonitoringDashboardTemplatePath   -ResourceGroupName $($this.ResourceGroupName) -TemplateParameterObject $parameters   
 			$this.PublishCustomMessage("Successfully created monitoring dashboard. It lets you monitor the operations for various DevOps Kit workflows at your org.(e.g., CA issues, anomalous control drifts, evaluation errors, etc.). You can access it through this link: ", [MessageType]::Update);
 			$rmContext = [Helpers]::GetCurrentRMContext();
 			$tenantId = $rmContext.Tenant.Id
@@ -561,7 +594,7 @@ class PolicySetup: CommandBase
 
 	[void] ValidatePolicyExists()
 	{
-		$OrgPolicyRG = Get-AzureRmResourceGroup -Name $this.ResourceGroupName -ErrorAction SilentlyContinue
+		$OrgPolicyRG = Get-AzResourceGroup -Name $this.ResourceGroupName -ErrorAction SilentlyContinue
 
 		if(-not $OrgPolicyRG)
 		{
@@ -594,7 +627,7 @@ class PolicySetup: CommandBase
 		#region Check 01: Presence of Org policy resources		
 		$stepCount++		
 		$checkDescription = "Presence of Org policy resources(Policy StorageAccount/Telemetry AppInsights/Monitoring Dashboard)."
-		$policyResourceGroup= Get-AzureRmResourceGroup -Name $($this.ResourceGroupName) -ErrorAction SilentlyContinue  
+		$policyResourceGroup= Get-AzResourceGroup -Name $($this.ResourceGroupName) -ErrorAction SilentlyContinue  
 		if(-not $policyResourceGroup)
 		{
 			$PolicyScanOutput.Resources.ResourceGroup = $false
@@ -609,7 +642,7 @@ class PolicySetup: CommandBase
 			$PolicyScanOutput.Resources.ResourceGroup = $true
 
 			#b. Validate presense of policy resources storage, app insight and monitoring dashboard
-		$policyResources= Get-AzureRmResource -ResourceGroupName $($this.ResourceGroupName)
+		$policyResources= Get-AzResource -ResourceGroupName $($this.ResourceGroupName)
 		#Check if poliy store  is present 
 		$missingResources =@()
 		$policyStore = $policyResources  | Where-Object {$_.ResourceType -eq "Microsoft.Storage/storageAccounts" }
@@ -1059,7 +1092,7 @@ class PolicySetup: CommandBase
 			}
 			
 			#Validate ControlTelemetryKey 
-			$appInsightResource= Get-AzureRMApplicationInsights -ResourceGroupName $appInsight.ResourceGroupName -Name $appInsight.Name
+			$appInsightResource= Get-AzApplicationInsights -ResourceGroupName $appInsight.ResourceGroupName -Name $appInsight.Name
 			$InstrumentationKey =  $appInsightResource.InstrumentationKey
 
 			if([Helpers]::CheckMember($AzSKConfigContent,"ControlTelemetryKey") -and $AzSKConfigContent.ControlTelemetryKey -and $AzSKConfigContent.ControlTelemetryKey -eq $InstrumentationKey)
@@ -1204,8 +1237,8 @@ class PolicySetup: CommandBase
 		$caResourceGroupName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
 		$subscriptionId = $this.SubscriptionContext.SubscriptionId
 		$CARunbookOutput= $PolicyScanOutput.Configurations.CARunbook
-		$azskRG = Get-AzureRmResourceGroup -Name $caResourceGroupName -ErrorAction SilentlyContinue
-		$automationAccount = Get-AzureRmAutomationAccount -ResourceGroupName $caResourceGroupName -Name $automationAccountName -ErrorAction SilentlyContinue
+		$azskRG = Get-AzResourceGroup -Name $caResourceGroupName -ErrorAction SilentlyContinue
+		$automationAccount = Get-AzAutomationAccount -ResourceGroupName $caResourceGroupName -Name $automationAccountName -ErrorAction SilentlyContinue
 
 		if($azskRG -and $automationAccount)
 		{

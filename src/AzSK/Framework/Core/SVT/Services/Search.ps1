@@ -19,7 +19,7 @@ class Search: SVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzureRmResource -Name $this.ResourceContext.ResourceName  `
+            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
                                         -ResourceType  "Microsoft.Search/searchServices" `
                                         -ResourceGroupName $this.ResourceContext.ResourceGroupName `
                                         -ErrorAction Stop

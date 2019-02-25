@@ -1,224 +1,224 @@
 {
-  "FeatureName": "VirtualMachine",
-  "Reference": "aka.ms/azsktcp/virtualmachine",
-  "IsMaintenanceMode": false,
-   "Controls": [
-      {
-         "ControlID": "Azure_VirtualMachine_Deploy_Latest_OS_Version",
-         "Description": "Virtual Machine should have latest OS version installed",
-         "Id": "VirtualMachine110",
-         "ControlSeverity": "Medium",
-         "Automated": "Yes",
-         "MethodName": "CheckOSVersion",
-         "Rationale": "Being on the latest OS version significantly reduces risks from security design issues and security bugs that may be present in older versions.",
-         "Recommendation": "Run command 'Update-AzureRmVM -ResourceGroupName {resourceGroupName} -VM (Get-AzureRmVM -ResourceGroupName {resourceGroupName} -Name {vmName})' . Run 'Get-Help Update-AzureRmVM -full' for more help.",
-         "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "Deploy",
-            "Windows",
-            "Linux",
-            "ERvNet",
-            "VirtualMachine"
-         ],
-         "Enabled": true
-      },
-      {
-         "ControlID": "Azure_VirtualMachine_SI_Enable_Antimalware",
-         "Description": "Antimalware must be enabled with real time protection on Windows Virtual Machine",
-         "Id": "VirtualMachine130",
-         "ControlSeverity": "High",
-         "Automated": "Yes",
-         "MethodName": "CheckAntimalwareStatus",
-         "Rationale": "Enabling antimalware protection minimizes the risks from existing and new attacks from various types of malware. Microsoft Antimalware provide real-time protection, scheduled scanning, malware remediation, signature updates, engine updates, samples reporting, exclusion event collection etc.",
-         "Recommendation": "To install antimalware, Go to Azure Portal --> VM Properties --> Extensions --> Add 'Microsoft Antimalware' --> Enable Real-Time Protection and Scheduled Scan --> Click Ok. If antimalware is already present on VM, validate and resolve endpoint protection recommendations in ASC. Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-install-endpoint-protection, https://docs.microsoft.com/en-us/azure/security/azure-security-antimalware",
-         "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "Config",
-            "Windows",            
-            "SOX",
-            "SI",
-            "ERvNet",
-            "VirtualMachine"
-         ],
-         "Enabled": true
-      },
-    {
-      "ControlID": "Azure_VirtualMachine_Config_Enable_NSG",
-      "Description": "NSG must be configured for Virtual Machine",
-      "Id": "VirtualMachine140",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckNSGConfig",
-      "Rationale": "Restricting inbound and outbound traffic via NSGs limits the network exposure of a VM by reducing the attack surface.",
-      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/endpoints-in-resource-manager, https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-create-nsg-arm-ps",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "Config",
-        "Windows",
-        "Linux",
-        "VirtualMachine"
-      ],
-      "Enabled": true
-    },
-      {
-         "ControlID": "Azure_VirtualMachine_NetSec_Justify_PublicIPs",
-         "Description": "Public IPs on a Virtual Machine should carefully reviewed",
-         "Id": "VirtualMachine150",
-         "ControlSeverity": "High",
-         "Automated": "Yes",
-         "MethodName": "CheckPublicIP",
-         "Rationale": "Public IPs provide direct access over the internet exposing the VM to attacks over the public network. Hence each public IP on a VM must be reviewed carefully.",
-         "Recommendation": "Go to Azure Portal --> VM Settings --> Networking --> Network Interfaces --> <Select NIC> --> IP Configurations --> <Select IP Configs with Public IP> --> Click 'Disabled' --> Save. Refer: https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-public-ip-address ",
-         "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "NetSec",
-            "Windows",
-            "Linux",
-            "ERvNet",
-            "VirtualMachine"
-         ],
-         "Enabled": true,
-         "DataObjectProperties": [
-            "PublicIpAllocationMethod",
-            "IpConfiguration",
-            "Id",
-            "DnsSettings"
-         ]
-      },
-      {
-         "ControlID": "Azure_VirtualMachine_DP_Enable_Disk_Encryption",
-         "Description": "Disk encryption must be enabled on both OS and data disks for Windows Virtual Machine",
-         "Id": "VirtualMachine160",
-         "ControlSeverity": "High",
-         "Automated": "Yes",
-         "MethodName": "CheckDiskEncryption",
-         "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements. In the case of VMs, both OS and data disks may contain sensitive information that needs to be protected at rest. Hence disk encryption must be enabled for both.",
-         "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-disk-encryption?toc=%2fazure%2fsecurity%2ftoc.json",
-         "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "DP",
-            "Windows",
-            "Linux",
-            "ERvNet",
-            "VirtualMachine"
-         ],
-         "Enabled": true
-      },
-      {
-         "ControlID": "Azure_VirtualMachine_SI_ASC_OS_Vulnerabilities",
-         "Description": "Virtual Machine must be in a healthy state in Azure Security Center",
-         "Id": "VirtualMachine171",
-         "ControlSeverity": "High",
-         "Automated": "Yes",
-         "MethodName": "CheckASCVMSecurityBaselineStatus",
-         "Rationale":  "Azure Security Center raises alerts (which are typically indicative of resources that are not compliant with some baseline security protection). It is important that these alerts/actions are resolved promptly in order to eliminate the exposure to attacks.",
-         "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-remediate-os-vulnerabilities",
-         "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "Audit",
-            "Windows",
-            "Linux",
-            "VirtualMachine"
-         ],
-         "Enabled": true
-      },
-      {
-         "ControlID": "Azure_VirtualMachine_SI_Missing_OS_Patches",
-         "Description": "Virtual Machine must have all the required OS patches installed.",
-         "Id": "VirtualMachine172",
-         "ControlSeverity": "High",
-         "Automated": "Yes",
-         "MethodName": "CheckASCVMMissingPatchingStatus",
-         "Rationale": "Un-patched VMs are easy targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in operating systems and related software.",
-         "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-apply-system-updates . It takes 24 hours to reflect the latest status at ASC.",
-         "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "Audit",
-            "Windows",
-            "SOX",
-            "SI",
-            "Linux",
-            "ERvNet",
-            "VirtualMachine"
-         ],
-         "Enabled": true
-      },
-      {
-         "ControlID": "Azure_VirtualMachine_SI_ASC_Recommendations",
-         "Description": "Virtual Machine must implement all the flagged ASC recommendations.",
-         "Id": "VirtualMachine173",
-         "ControlSeverity": "High",
-         "Automated": "Yes",
-         "MethodName": "CheckASCVMRecommendations",
-         "Rationale": "Azure Security Center provide various security recommendations for resources that are not compliant with some baseline security protection. It is important that these recommendations are resolved promptly in order to eliminate the exposure to attacks.",
-         "Recommendation": "First, examine the detailed AzSK log file for this VM to find out the specific recommendations this control is currently failing for. Review the ASC documentation for those recommendations and implement the suggested fixes. (Note: Not all ASC recommendations are flagged by AzSK. So the first step is critical.). Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-virtual-machine-recommendations",
-         "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "Audit",
-            "Windows",
-            "Linux",
-            "ERvNet",
-            "VirtualMachine"
-         ],
-         "Enabled": true
-      },
-      {
-         "ControlID": "Azure_VirtualMachine_Audit_Enable_Diagnostics",
-         "Description": "Diagnostics (IaaSDiagnostics extension on Windows; LinuxDiagnostic extension on Linux) must be enabled on Virtual Machine",
-         "Id": "VirtualMachine180",
-         "ControlSeverity": "Medium",
-         "Automated": "Yes",
-         "MethodName": "CheckVMDiagnostics",
-         "Rationale": "Diagnostics logs are needed for creating activity trail while investigating an incident or a compromise.",
-         "Recommendation": "Go to Azure Portal --> VM Properties --> Diagnostics settings --> Enable guest-level-monitoring. Refer: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/azure-diagnostics",
-         "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "Audit",
-            "Windows",
-            "Linux",
-            "ERvNet",
-            "VirtualMachine"
-         ],
-         "Enabled": true
-      },
-      {
-         "ControlID": "Azure_VirtualMachine_NetSec_Dont_Open_Management_Ports",
-         "Description": "Do not leave management ports open on Virtual Machines",
-         "Id": "VirtualMachine190",
-         "ControlSeverity": "Critical",
-         "Automated": "Yes",
-         "MethodName": "CheckOpenPorts",
-         "Rationale": "Open remote management ports expose a VM/compute node to a high level of risk from internet-based attacks that attempt to brute force credentials to gain admin access to the machine.",
-         "Recommendation": "Go to Azure Portal --> VM Settings --> Networking --> Inbound security rules --> Select security rule which allows management ports (e.g. RDP-3389, WINRM-5985, SSH-22) --> Click 'Deny' under Action --> Click Save.",
-         "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "NetSec",
-            "Windows",
-            "Linux",
-          "OwnerAccess",
-          "VirtualMachine"
-         ],
-         "Enabled": true
-      }
-   ]
-}
+   "FeatureName": "VirtualMachine",
+   "Reference": "aka.ms/azsktcp/virtualmachine",
+   "IsMaintenanceMode": false,
+    "Controls": [
+       {
+          "ControlID": "Azure_VirtualMachine_Deploy_Latest_OS_Version",
+          "Description": "Virtual Machine should have latest OS version installed",
+          "Id": "VirtualMachine110",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckOSVersion",
+          "Rationale": "Being on the latest OS version significantly reduces risks from security design issues and security bugs that may be present in older versions.",
+          "Recommendation": "Run command 'Update-AzureRmVM -ResourceGroupName {resourceGroupName} -VM (Get-AzVM -ResourceGroupName {resourceGroupName} -Name {vmName})' . Run 'Get-Help Update-AzureRmVM -full' for more help.",
+          "Tags": [
+             "SDL",
+             "TCP",
+             "Automated",
+             "Deploy",
+             "Windows",
+             "Linux",
+             "ERvNet",
+             "VirtualMachine"
+          ],
+          "Enabled": true
+       },
+       {
+          "ControlID": "Azure_VirtualMachine_SI_Enable_Antimalware",
+          "Description": "Antimalware must be enabled with real time protection on Windows Virtual Machine",
+          "Id": "VirtualMachine130",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckAntimalwareStatus",
+          "Rationale": "Enabling antimalware protection minimizes the risks from existing and new attacks from various types of malware. Microsoft Antimalware provide real-time protection, scheduled scanning, malware remediation, signature updates, engine updates, samples reporting, exclusion event collection etc.",
+          "Recommendation": "To install antimalware, Go to Azure Portal --> VM Properties --> Extensions --> Add 'Microsoft Antimalware' --> Enable Real-Time Protection and Scheduled Scan --> Click Ok. If antimalware is already present on VM, validate and resolve endpoint protection recommendations in ASC. Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-install-endpoint-protection, https://docs.microsoft.com/en-us/azure/security/azure-security-antimalware",
+          "Tags": [
+             "SDL",
+             "TCP",
+             "Automated",
+             "Config",
+             "Windows",            
+             "SOX",
+             "SI",
+             "ERvNet",
+             "VirtualMachine"
+          ],
+          "Enabled": true
+       },
+     {
+       "ControlID": "Azure_VirtualMachine_Config_Enable_NSG",
+       "Description": "NSG must be configured for Virtual Machine",
+       "Id": "VirtualMachine140",
+       "ControlSeverity": "Medium",
+       "Automated": "Yes",
+       "MethodName": "CheckNSGConfig",
+       "Rationale": "Restricting inbound and outbound traffic via NSGs limits the network exposure of a VM by reducing the attack surface.",
+       "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/endpoints-in-resource-manager, https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-create-nsg-arm-ps",
+       "Tags": [
+         "SDL",
+         "TCP",
+         "Automated",
+         "Config",
+         "Windows",
+         "Linux",
+         "VirtualMachine"
+       ],
+       "Enabled": true
+     },
+       {
+          "ControlID": "Azure_VirtualMachine_NetSec_Justify_PublicIPs",
+          "Description": "Public IPs on a Virtual Machine should carefully reviewed",
+          "Id": "VirtualMachine150",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckPublicIP",
+          "Rationale": "Public IPs provide direct access over the internet exposing the VM to attacks over the public network. Hence each public IP on a VM must be reviewed carefully.",
+          "Recommendation": "Go to Azure Portal --> VM Settings --> Networking --> Network Interfaces --> <Select NIC> --> IP Configurations --> <Select IP Configs with Public IP> --> Click 'Disabled' --> Save. Refer: https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-public-ip-address ",
+          "Tags": [
+             "SDL",
+             "TCP",
+             "Automated",
+             "NetSec",
+             "Windows",
+             "Linux",
+             "ERvNet",
+             "VirtualMachine"
+          ],
+          "Enabled": true,
+          "DataObjectProperties": [
+             "PublicIpAllocationMethod",
+             "IpConfiguration",
+             "Id",
+             "DnsSettings"
+          ]
+       },
+       {
+          "ControlID": "Azure_VirtualMachine_DP_Enable_Disk_Encryption",
+          "Description": "Disk encryption must be enabled on both OS and data disks for Windows Virtual Machine",
+          "Id": "VirtualMachine160",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckDiskEncryption",
+          "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements. In the case of VMs, both OS and data disks may contain sensitive information that needs to be protected at rest. Hence disk encryption must be enabled for both.",
+          "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-disk-encryption?toc=%2fazure%2fsecurity%2ftoc.json",
+          "Tags": [
+             "SDL",
+             "TCP",
+             "Automated",
+             "DP",
+             "Windows",
+             "ERvNet",
+             "VirtualMachine"
+          ],
+          "Enabled": true
+       },
+       {
+          "ControlID": "Azure_VirtualMachine_SI_ASC_OS_Vulnerabilities",
+          "Description": "Virtual Machine must be in a healthy state in Azure Security Center",
+          "Id": "VirtualMachine171",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckASCVMSecurityBaselineStatus",
+          "Rationale":  "Azure Security Center raises alerts (which are typically indicative of resources that are not compliant with some baseline security protection). It is important that these alerts/actions are resolved promptly in order to eliminate the exposure to attacks.",
+          "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-remediate-os-vulnerabilities",
+          "Tags": [
+             "SDL",
+             "TCP",
+             "Automated",
+             "Audit",
+             "Windows",
+             "Linux",
+             "VirtualMachine"
+          ],
+          "Enabled": true
+       },
+       {
+          "ControlID": "Azure_VirtualMachine_SI_Missing_OS_Patches",
+          "Description": "Virtual Machine must have all the required OS patches installed.",
+          "Id": "VirtualMachine172",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckASCVMMissingPatchingStatus",
+          "Rationale": "Un-patched VMs are easy targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in operating systems and related software.",
+          "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-apply-system-updates . It takes 24 hours to reflect the latest status at ASC.",
+          "Tags": [
+             "SDL",
+             "TCP",
+             "Automated",
+             "Audit",
+             "Windows",
+             "SOX",
+             "SI",
+             "Linux",
+             "ERvNet",
+             "VirtualMachine"
+          ],
+          "Enabled": true
+       },
+       {
+          "ControlID": "Azure_VirtualMachine_SI_ASC_Recommendations",
+          "Description": "Virtual Machine must implement all the flagged ASC recommendations.",
+          "Id": "VirtualMachine173",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckASCVMRecommendations",
+          "Rationale": "Azure Security Center provide various security recommendations for resources that are not compliant with some baseline security protection. It is important that these recommendations are resolved promptly in order to eliminate the exposure to attacks.",
+          "Recommendation": "First, examine the detailed AzSK log file for this VM to find out the specific recommendations this control is currently failing for. Review the ASC documentation for those recommendations and implement the suggested fixes. (Note: Not all ASC recommendations are flagged by AzSK. So the first step is critical.). Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-virtual-machine-recommendations",
+          "Tags": [
+             "SDL",
+             "TCP",
+             "Automated",
+             "Audit",
+             "Windows",
+             "Linux",
+             "ERvNet",
+             "VirtualMachine"
+          ],
+          "Enabled": true
+       },
+       {
+          "ControlID": "Azure_VirtualMachine_Audit_Enable_Diagnostics",
+          "Description": "Diagnostics (IaaSDiagnostics extension on Windows; LinuxDiagnostic extension on Linux) must be enabled on Virtual Machine",
+          "Id": "VirtualMachine180",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckVMDiagnostics",
+          "Rationale": "Diagnostics logs are needed for creating activity trail while investigating an incident or a compromise.",
+          "Recommendation": "Go to Azure Portal --> VM Properties --> Diagnostics settings --> Enable guest-level-monitoring. Refer: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/azure-diagnostics",
+          "Tags": [
+             "SDL",
+             "TCP",
+             "Automated",
+             "Audit",
+             "Windows",
+             "Linux",
+             "ERvNet",
+             "VirtualMachine"
+          ],
+          "Enabled": true
+       },
+       {
+          "ControlID": "Azure_VirtualMachine_NetSec_Dont_Open_Management_Ports",
+          "Description": "Do not leave management ports open on Virtual Machines",
+          "Id": "VirtualMachine190",
+          "ControlSeverity": "Critical",
+          "Automated": "Yes",
+          "MethodName": "CheckOpenPorts",
+          "Rationale": "Open remote management ports expose a VM/compute node to a high level of risk from internet-based attacks that attempt to brute force credentials to gain admin access to the machine.",
+          "Recommendation": "Go to Azure Portal --> VM Settings --> Networking --> Inbound security rules --> Select security rule which allows management ports (e.g. RDP-3389, WINRM-5985, SSH-22) --> Click 'Deny' under Action --> Click Save.",
+          "Tags": [
+             "SDL",
+             "TCP",
+             "Automated",
+             "NetSec",
+             "Windows",
+             "Linux",
+           "OwnerAccess",
+           "VirtualMachine"
+          ],
+          "Enabled": true
+       }
+    ]
+ }
+ 

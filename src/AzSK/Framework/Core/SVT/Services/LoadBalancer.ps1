@@ -16,7 +16,7 @@ class LoadBalancer: SVTBase
 	hidden [ControlResult] CheckPublicIP([ControlResult] $controlResult)
 	{	
 		$publicIps = @();
-		$loadBalancer = Get-AzureRmLoadBalancer -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
+		$loadBalancer = Get-AzLoadBalancer -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
 		if([Helpers]::CheckMember($loadBalancer,"FrontendIpConfigurations"))
         {
 			$loadBalancer.FrontendIpConfigurations | 
@@ -24,10 +24,10 @@ class LoadBalancer: SVTBase
 					Set-Variable -Name feIpConfigurations -Scope Local -Value $_
 					if(($feIpConfigurations | Get-Member -Name "PublicIpAddress") -and $feIpConfigurations.PublicIpAddress)
 					{
-						$ipResource = Get-AzureRmResource -ResourceId $feIpConfigurations.PublicIpAddress.Id 
+						$ipResource = Get-AzResource -ResourceId $feIpConfigurations.PublicIpAddress.Id 
 						if($ipResource)
 						{
-						   $publicIpObject = Get-AzureRmPublicIpAddress -Name $ipResource.Name -ResourceGroupName $ipResource.ResourceGroupName
+						   $publicIpObject = Get-AzPublicIpAddress -Name $ipResource.Name -ResourceGroupName $ipResource.ResourceGroupName
 						   if($publicIpObject)
 						   {
 								$_.PublicIpAddress = $publicIpObject;

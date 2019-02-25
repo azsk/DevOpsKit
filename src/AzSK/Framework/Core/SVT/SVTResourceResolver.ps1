@@ -259,7 +259,7 @@ class SVTResourceResolver: AzSKRoot
 
 	hidden [System.Object[]] FindAzureRmResource([string] $resourceGroupName)
 	{
-		$expression = "Get-AzureRmResource";
+		$expression = "Get-AzResource";
 
 		if(-not [string]::IsNullOrEmpty($resourceGroupName))
 		{

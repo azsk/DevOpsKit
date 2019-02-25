@@ -25,7 +25,7 @@ class KeyVault: SVTBase
     {
         if (-not $this.ResourceObject) 
 		{
-            $this.ResourceObject = Get-AzureRmKeyVault -VaultName $this.ResourceContext.ResourceName `
+            $this.ResourceObject = Get-AzKeyVault -VaultName $this.ResourceContext.ResourceName `
                                             -ResourceGroupName $this.ResourceContext.ResourceGroupName
             if(-not $this.ResourceObject)
             {
@@ -43,11 +43,11 @@ class KeyVault: SVTBase
 		try{
 				if($currentContext.Account.Type -eq 'User')
 				{
-					$CurrentContextObjectId=Get-AzureRmADUser -UserPrincipalName $CurrentContextId|Select-Object -Property Id
+					$CurrentContextObjectId=Get-AzADUser -UserPrincipalName $CurrentContextId|Select-Object -Property Id
 				}
 				elseif($currentContext.Account.Type -eq 'ServicePrincipal')
 				{
-					$CurrentContextObjectId=Get-AzureRmADServicePrincipal -ServicePrincipalName $CurrentContextId|Select-Object -Property Id
+					$CurrentContextObjectId=Get-AzADServicePrincipal -ServicePrincipalName $CurrentContextId|Select-Object -Property Id
 				}
 				$accessPolicies = $this.ResourceObject.AccessPolicies
 				$currentContextAccess=$accessPolicies|Where-Object{$_.ObjectId -eq $CurrentContextObjectId.Id }
@@ -118,17 +118,17 @@ class KeyVault: SVTBase
 					try
 					{
 						$keysResult = @();
-						$keysResult += Get-AzureKeyVaultKey -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
+						$keysResult += Get-AzKeyVaultKey -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
 										Where-Object { $_.Enabled -eq $true };
 
 						$this.AllEnabledKeys = @();
 						if($keysResult.Count -gt 0) 
 						{
 							$keysResult | ForEach-Object {
-								Get-AzureKeyVaultKey -VaultName $this.ResourceContext.ResourceName -Name $_.Name -IncludeVersions |
+								Get-AzKeyVaultKey -VaultName $this.ResourceContext.ResourceName -Name $_.Name -IncludeVersions |
 								Where-Object { $_.Enabled -eq $true } | 
 								ForEach-Object {
-									$this.AllEnabledKeys += Get-AzureKeyVaultKey -VaultName $this.ResourceContext.ResourceName -Name $_.Name -Version $_.Version ;
+									$this.AllEnabledKeys += Get-AzKeyVaultKey -VaultName $this.ResourceContext.ResourceName -Name $_.Name -Version $_.Version ;
 								}
 							}
 						}
@@ -169,17 +169,17 @@ class KeyVault: SVTBase
 				try
 				{
 					$secretsResult = @();
-					$secretsResult += Get-AzureKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
+					$secretsResult += Get-AzKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
 									Where-Object { $_.Enabled -eq $true };
 
 					$this.AllEnabledSecrets = @();
 					if($secretsResult.Count -gt 0) 
 					{
 						$secretsResult | ForEach-Object {
-							Get-AzureKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -Name $_.Name -IncludeVersions |
+							Get-AzKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -Name $_.Name -IncludeVersions |
 							Where-Object { $_.Enabled -eq $true } | 
 							ForEach-Object {
-								$this.AllEnabledSecrets += Get-AzureKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -Name $_.Name -Version $_.Version ;
+								$this.AllEnabledSecrets += Get-AzKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -Name $_.Name -Version $_.Version ;
 							}
 						}
 					}
@@ -273,7 +273,7 @@ class KeyVault: SVTBase
               $appList = $this.GetAzureRmKeyVaultApplications()
               $appList |
                 ForEach-Object {
-                    $credentials = Get-AzureRmADAppCredential -ApplicationId $_.ApplicationId
+                    $credentials = Get-AzADAppCredential -ApplicationId $_.ApplicationId
                     $compliance =  if (($credentials| Where-Object { $_.Type -eq $this.ControlSettings.KeyVault.ADAppCredentialTypePwd } | Measure-Object).Count -eq 0 ) { "Yes" } else { "No" } ;
                     $output = New-Object System.Object
                     $output | Add-Member -type NoteProperty -name AzureADAppName -Value $_.DisplayName
@@ -510,9 +510,9 @@ class KeyVault: SVTBase
         $applicationList = @();
         $this.ResourceObject.AccessPolicies  | 
         ForEach-Object { 
-            $svcPrincipal= Get-AzureRmADServicePrincipal -ObjectId $_.ObjectId
+            $svcPrincipal= Get-AzADServicePrincipal -ObjectId $_.ObjectId
             if($svcPrincipal){
-                $application = Get-AzureRmADApplication -ApplicationId $svcPrincipal.ApplicationId
+                $application = Get-AzADApplication -ApplicationId $svcPrincipal.ApplicationId
                 if($application){
                     $applicationList += $application
                 }

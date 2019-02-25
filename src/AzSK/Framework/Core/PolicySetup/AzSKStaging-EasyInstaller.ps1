@@ -2,7 +2,7 @@
 
 Param(
     [string] $OnlinePolicyStoreUrl = "#PolicyUrl#" ,
-    [string] $RepoUrl = "https://dtlgalleryint.cloudapp.net/",
+    [string] $RepoUrl = "https://www.poshtestgallery.com/",
 	[string] $RepoName = "AzSKStaging",
     [string] $DocumentationUrl = "http://aka.ms/AzSKOSSDocs",
     [string] $ControlDetailsUrl = "http://aka.ms/AzSKOSSTCP",

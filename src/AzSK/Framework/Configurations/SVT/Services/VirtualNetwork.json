@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckPublicIps",
       "Rationale": "Public IPs provide direct access over the internet exposing the resource(s) to all type of attacks over the public network.",
-      "Recommendation": "Unutilized Public IP address must be removed from virtual network. For more information visit: https://docs.microsoft.com/en-us/powershell/module/azurerm.network/remove-azurermpublicipaddress",
+      "Recommendation": "Unutilized Public IP address must be removed from virtual network. For more information visit: https://docs.microsoft.com/en-us/powershell/module/az.network/remove-azpublicipaddress",
       "Tags": [
         "SDL",
         "TCP",
@@ -99,7 +99,7 @@
       "Automated": "Yes",
       "MethodName": "CheckRBACAccess",
       "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-      "Recommendation": "Remove any excessive privileges granted on the Virtual Network. Run command: Remove-AzureRmRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help.",
+      "Recommendation": "Remove any excessive privileges granted on the Virtual Network. Run command: Remove-AzRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
       "Tags": [
         "SDL",
         "TCP",

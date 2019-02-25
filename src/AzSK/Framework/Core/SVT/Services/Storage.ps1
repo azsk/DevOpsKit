@@ -21,7 +21,7 @@ class Storage: SVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzureRmStorageAccount -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
+            $this.ResourceObject = Get-AzStorageAccount -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
                                                          
             if(-not $this.ResourceObject)
             {
@@ -57,7 +57,7 @@ class Storage: SVTBase
 			$result = $result | Where-Object {$_.Tags -contains "GeneralPurposeStorage" }
 		}
 		
-		$recourcelocktype = Get-AzureRmResourceLock -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType
+		$recourcelocktype = Get-AzResourceLock -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType
 		if($recourcelocktype)
 		{
 			if($this.ResourceContext.ResourceGroupName -eq [OldConstants]::AzSDKRGName)
@@ -65,51 +65,91 @@ class Storage: SVTBase
 				$result = $result | Where-Object {$_.Tags -notcontains "ResourceLocked" }
 			}
 			$this.LockExists = $true;
+			$this.ControlSettings.LockedResourcesTags | ForEach-Object{
+				 if($this.ResourceObject.Tags.ContainsKey($_.TagName) -and $this.ResourceObject.Tags[$_.TagName] -eq $_.TagValue)
+				 {
+					$result = $result | Where-Object {$_.Tags -notcontains "ResourceLocked" }
+				 }
+			}
 		}
-
-		$resource = Get-AzureRmResource -ResourceId $this.ResourceContext.ResourceId;
+		$resource = Get-AzResource -ResourceId $this.ResourceContext.ResourceId;
 		#Disabling the control 'Azure_Storage_AuthN_Dont_Allow_Anonymous' for Data Lake Storage Gen2 resources with hierarchical namespace accounts enabled as blob storage is not currently supported.
-		if(([Helpers]::CheckMember($resource.Properties, "isHnsEnabled") -and ($resource.Properties.isHnsEnabled -eq $true))){
-			$result = $result | Where-Object {$_.Tags -notcontains "HNSDisabled" }
-		}
 
 		return $result;
 	}
 
 	hidden [ControlResult] CheckStorageContainerPublicAccessTurnOff([ControlResult] $controlResult)
     {
-		$allContainers = @();
-		try
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableAnonymousAccessCheckUsingAPI",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
 		{
-			$allContainers += Get-AzureStorageContainer -Context $this.ResourceObject.Context -ErrorAction Stop
-		}
-		catch
-		{
-			if(([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden) -or $this.LockExists)
+			$allContainersFromAPI = $null;
+			$publicContainersFromAPI = @();
+			$ARMManagementUri = [Constants]::ARMManagementUri
+			$uri = [system.string]::Format($ARMManagementUri+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Storage/storageAccounts/{2}/blobServices/default/containers?api-version=2018-07-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
+
+			try 
+			{	
+				$allContainersFromAPI = [WebRequestHelper]::InvokeGetWebRequest($uri);
+
+				foreach($item in $allContainersFromAPI)
+				{
+					if(-not ($item.properties.publicAccess -eq "None"))
+					{
+						$publicContainersFromAPI += $item
+					}
+				}
+			}
+			catch
 			{
-				#Setting this property ensures that this control result will not be considered for the central telemetry, as control does not have the required permissions.
-				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-				$controlResult.AddMessage([VerificationResult]::Manual, ($_.Exception).Message);	
-				return $controlResult
+				throw $_
+			}			
+
+			if($publicContainersFromAPI.Count -eq 0)
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "No containers were found that have public (anonymous) access in this storage account.");
 			}
 			else
 			{
-				throw $_
+				$controlResult.EnableFixControl = $true;
+				$controlResult.AddMessage([VerificationResult]::Failed  , 
+										[MessageData]::new("Remove public access from following containers. Total - $($publicContainersFromAPI.Count)", ($publicContainersFromAPI.name, $publicContainersFromAPI.properties.publicAccess)));								
 			}
 		}
-
-		#Containers other than private
-		$publicContainers = $allContainers | Where-Object { $_.PublicAccess -ne  [Microsoft.WindowsAzure.Storage.Blob.BlobContainerPublicAccessType]::Off }
-			
-		if(($publicContainers | Measure-Object ).Count -eq 0)
-		{
-			$controlResult.AddMessage([VerificationResult]::Passed, "No containers were found that have public (anonymous) access in this storage account.");
-		}                 
 		else
 		{
-			$controlResult.EnableFixControl = $true;
-			$controlResult.AddMessage([VerificationResult]::Failed  , 
-									  [MessageData]::new("Remove public access from following containers. Total - $(($publicContainers | Measure-Object ).Count)", ($publicContainers | Select-Object -Property Name, PublicAccess)));  
+			$allContainers = @();
+			try
+			{
+				$allContainers += Get-AzureStorageContainer -Context $this.ResourceObject.Context -ErrorAction Stop
+			}
+			catch
+			{
+				if(([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden) -or $this.LockExists)
+				{
+					#Setting this property ensures that this control result will not be considered for the central telemetry, as control does not have the required permissions.
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+					$controlResult.AddMessage([VerificationResult]::Manual, ($_.Exception).Message);	
+					return $controlResult
+				}
+				else
+				{
+					throw $_
+				}
+			}
+
+			#Containers other than private
+			$publicContainers = $allContainers | Where-Object { $_.PublicAccess -ne  [Microsoft.WindowsAzure.Storage.Blob.BlobContainerPublicAccessType]::Off }
+				
+			if(($publicContainers | Measure-Object ).Count -eq 0)
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "No containers were found that have public (anonymous) access in this storage account.");
+			}                 
+			else
+			{
+				$controlResult.EnableFixControl = $true;
+				$controlResult.AddMessage([VerificationResult]::Failed  , 
+										[MessageData]::new("Remove public access from following containers. Total - $(($publicContainers | Measure-Object ).Count)", ($publicContainers | Select-Object -Property Name, PublicAccess)));  
+			}
 		}
 
 		return $controlResult;
@@ -356,10 +396,10 @@ class Storage: SVTBase
 
 	hidden [boolean] GetServiceLoggingProperty([string] $serviceType, [ControlResult] $controlResult)
 		{
-			$loggingProperty = Get-AzureStorageServiceLoggingProperty -ServiceType $ServiceType -Context $this.ResourceObject.Context -ErrorAction Stop
+			$loggingProperty = Get-AzStorageServiceLoggingProperty -ServiceType $ServiceType -Context $this.ResourceObject.Context -ErrorAction Stop
 			if($null -ne $loggingProperty){
 				#Check For Retention day's
-				if($loggingProperty.LoggingOperations -eq [LoggingOperations]::All -and (($loggingProperty.RetentionDays -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever) -or ($loggingProperty.RetentionDays -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Min))){
+				if($loggingProperty.LoggingOperations -eq [LoggingOperations]::All -and (($loggingProperty.RetentionDays -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever) -or ($loggingProperty.RetentionDays -ge $this.ControlSettings.Diagnostics_RetentionPeriod_Min))){
 						return $True
 				} 
 				else{
@@ -376,10 +416,10 @@ class Storage: SVTBase
 
 	hidden [boolean] GetServiceMetricsProperty([string] $serviceType,[ControlResult] $controlResult)
 		{
-			$serviceMetricsProperty= Get-AzureStorageServiceMetricsProperty -MetricsType Hour -ServiceType $ServiceType -Context $this.ResourceObject.Context  -ErrorAction Stop
+			$serviceMetricsProperty= Get-AzStorageServiceMetricsProperty -MetricsType Hour -ServiceType $ServiceType -Context $this.ResourceObject.Context  -ErrorAction Stop
 			if($null -ne $serviceMetricsProperty){
 				#Check for Retention day's
-				if($serviceMetricsProperty.MetricsLevel -eq [MetricsLevel]::ServiceAndApi -and (($serviceMetricsProperty.RetentionDays -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Min) -or ($serviceMetricsProperty.RetentionDays -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever)))
+				if($serviceMetricsProperty.MetricsLevel -eq [MetricsLevel]::ServiceAndApi -and (($serviceMetricsProperty.RetentionDays -ge $this.ControlSettings.Diagnostics_RetentionPeriod_Min) -or ($serviceMetricsProperty.RetentionDays -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever)))
 				{
 					return $True
 				}
@@ -425,10 +465,10 @@ class Storage: SVTBase
 			#Currently only 'General purpose' or 'Blob storage' account kind is present 
 			#If new storage kind is introduced code needs to be updated as per new storage kind	
 			if($this.ResourceObject.Kind -eq "BlobStorage"){
-				$corsRules+= Get-AzureStorageCORSRule -Context $this.ResourceObject.Context -ServiceType Blob -ErrorAction Stop
+				$corsRules+= Get-AzStorageCORSRule -Context $this.ResourceObject.Context -ServiceType Blob -ErrorAction Stop
 			}
 			else{
-				"Blob","File","Table","Queue"|ForEach-Object {$corsRules +=Get-AzureStorageCORSRule -Context $this.ResourceObject.Context -ServiceType $_ -ErrorAction Stop}
+				"Blob","File","Table","Queue"|ForEach-Object {$corsRules +=Get-AzStorageCORSRule -Context $this.ResourceObject.Context -ServiceType $_ -ErrorAction Stop}
 			}			   		   		   
 			if($corsRules.Count -eq 0){
 				$controlResult.AddMessage([VerificationResult]::Passed,[MessageData]::new("The CORS feature has not been enabled on this storage account."));

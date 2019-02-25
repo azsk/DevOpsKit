@@ -18,7 +18,7 @@ class RedisCache: SVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject =   Get-AzureRmRedisCache -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
+            $this.ResourceObject =   Get-AzRedisCache -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
                                                          
             if(-not $this.ResourceObject)
             {
@@ -33,7 +33,7 @@ class RedisCache: SVTBase
 		 #check for applicable sku
 		 #PowerShell Get command is provided for Firewall setting. Using Rest API to get firewall details
 		#  $uri    = [string]::Format("{0}{1}/firewallRules?api-version=2016-04-01",[WebRequestHelper]::AzureManagementUri,$this.ResourceObject.Id)
-         $result = Get-AzureRmRedisCacheFirewallRule -ResourceGroupName  $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
+         $result = Get-AzRedisCacheFirewallRule -ResourceGroupName  $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
 		 
 		 if($null -ne $result){
 			 #Filtering web request response and getting only required details

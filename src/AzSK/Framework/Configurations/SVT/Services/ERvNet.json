@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckPublicIps",
       "Rationale": "Public IP addresses on an ER-connected virtual network can expose the corporate network to security attacks from the internet.",
-      "Recommendation": "Any Public IP addresses you added to an ER-connected virtual network must be removed. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.network/remove-azurermpublicipaddress",
+      "Recommendation": "Any Public IP addresses you added to an ER-connected virtual network must be removed. Refer: https://docs.microsoft.com/en-us/powershell/module/az.network/Remove-AzPublicIpAddress",
       "Tags": [
         "SDL",
         "TCP",
@@ -139,7 +139,7 @@
       "Automated": "Yes",
       "MethodName": "CheckVnetPeering",
       "Rationale": "A virtual network peering on an ER-connected circuit establishes a link to another virtual network whereby traffic egress and ingress can evade inspection from network security appliances. This creates a direct risk to corpnet security.",
-      "Recommendation": "Remove any VNet peering you added using the 'Remove-AzureRmVirtualNetworkPeering' PS command. Run 'Get-Help Remove-AzureRmVirtualNetworkPeering -full' for more help.",
+      "Recommendation": "Remove any VNet peering you added using the 'Remove-AzVirtualNetworkPeering' PS command. Run 'Get-Help Remove-AzVirtualNetworkPeering -full' for more help.",
       "Tags": [
         "SDL",
         "TCP",
@@ -157,7 +157,7 @@
       "Automated": "Yes",
       "MethodName": "CheckInternalLoadBalancers",
       "Rationale": "External load balancers on an ER-connected vNet can expose the corporate network to security attacks from the internet.",
-      "Recommendation": "Remove any external load balancers you may have added using the 'Remove-AzureRmLoadBalancer' PS command. Run 'Get-Help Remove-AzureRmLoadBalancer -full' for more help.",
+      "Recommendation": "Remove any external load balancers you may have added using the 'Remove-AzLoadBalancer' PS command. Run 'Get-Help Remove-AzLoadBalancer -full' for more help.",
       "Tags": [
         "SDL",
         "TCP",
@@ -197,7 +197,7 @@
       "Automated": "Yes",
       "MethodName": "CheckResourceLockConfigured",
       "Rationale": "The ERNetwork resource group is a critical component that facilitates provisioning of an ER-connection for your subscription. A resource lock is deployed on the ERNetwork resource group to keep you from deleting it accidentally. Removing this lock increases the chances of accidental write/delete of this resource group and that can impact ER-connectivity of your subscription.",
-      "Recommendation": "Create a ReadOnly resource lock for every ER Network resource group using command New-AzureRmResourceLock -LockName '{LockName}' -LockLevel 'ReadOnly' -Scope '/subscriptions/{SubscriptionId}/resourceGroups/{ERNetworkResourceGroup}'. Run 'Get-Help New-AzureRmResourceLock -full' for more help.",
+      "Recommendation": "Create a ReadOnly resource lock for every ER Network resource group using command New-AzResourceLock -LockName '{LockName}' -LockLevel 'ReadOnly' -Scope '/subscriptions/{SubscriptionId}/resourceGroups/{ERNetworkResourceGroup}'. Run 'Get-Help New-AzResourceLock -full' for more help.",
       "Tags": [
         "SDL",
         "TCP",
