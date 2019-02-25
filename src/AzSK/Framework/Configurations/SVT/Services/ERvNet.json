@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckPublicIps",
       "Rationale": "Public IP addresses on an ER-connected virtual network can expose the corporate network to security attacks from the internet.",
-      "Recommendation": "Any Public IP addresses you added to an ER-connected virtual network must be removed. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.network/remove-azurermpublicipaddress",
+      "Recommendation": "Any Public IP addresses you added to an ER-connected virtual network must be removed. Refer: https://docs.microsoft.com/en-us/powershell/module/az.network/Remove-AzPublicIpAddress",
       "Tags": [
         "SDL",
         "TCP",
@@ -139,7 +139,7 @@
       "Automated": "Yes",
       "MethodName": "CheckVnetPeering",
       "Rationale": "A virtual network peering on an ER-connected circuit establishes a link to another virtual network whereby traffic egress and ingress can evade inspection from network security appliances. This creates a direct risk to corpnet security.",
-      "Recommendation": "Remove any VNet peering you added using the 'Remove-AzureRmVirtualNetworkPeering' PS command. Run 'Get-Help Remove-AzureRmVirtualNetworkPeering -full' for more help.",
+      "Recommendation": "Remove any VNet peering you added using the 'Remove-AzVirtualNetworkPeering' PS command. Run 'Get-Help Remove-AzVirtualNetworkPeering -full' for more help.",
       "Tags": [
         "SDL",
         "TCP",
@@ -157,7 +157,7 @@
       "Automated": "Yes",
       "MethodName": "CheckInternalLoadBalancers",
       "Rationale": "External load balancers on an ER-connected vNet can expose the corporate network to security attacks from the internet.",
-      "Recommendation": "Remove any external load balancers you may have added using the 'Remove-AzureRmLoadBalancer' PS command. Run 'Get-Help Remove-AzureRmLoadBalancer -full' for more help.",
+      "Recommendation": "Remove any external load balancers you may have added using the 'Remove-AzLoadBalancer' PS command. Run 'Get-Help Remove-AzLoadBalancer -full' for more help.",
       "Tags": [
         "SDL",
         "TCP",
