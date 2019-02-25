@@ -133,7 +133,7 @@ class AIOrgTelemetry: ListenerBase {
 			   $resourceGroups = Get-AzResourceGroup
 			   $telemetryEvents = [System.Collections.ArrayList]::new()
 					   foreach($res in $resources){
-               $rgTags = ($resourceGroups | where-object {$_.ResourceGroupName  -eq $res.ResourceGroupName}).Tags;
+               					   $rgTags = ($resourceGroups | where-object {$_.ResourceGroupName  -eq $res.ResourceGroupName}).Tags;
 						   $resourceProperties = @{
 						   "Name" = $res.Name;
 						   "ResourceId" = $res.ResourceId;
