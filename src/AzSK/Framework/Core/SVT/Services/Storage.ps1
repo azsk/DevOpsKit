@@ -93,10 +93,13 @@ class Storage: SVTBase
 
 				foreach($item in $allContainersFromAPI)
 				{
-					if(-not ($item.properties.publicAccess -eq "None"))
-					{
-						$publicContainersFromAPI += $item
-					}
+                    if(-not ([string]::IsNullOrWhiteSpace($item.value)))
+                    {
+					    if(-not ($item.properties.publicAccess -eq "None"))
+					    {
+						    $publicContainersFromAPI += $item
+					    }
+                    }
 				}
 			}
 			catch
