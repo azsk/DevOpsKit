@@ -38,7 +38,7 @@
                "isEnabled": true,
                "description": "HTTPS protocol must be used for accessing Storage Account resources",
                "rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks. When enabling HTTPS one must remember to simultaneously disable access over plain HTTP else data can still be subject to compromise over clear text connections.",
-               "recommendation": "RRun command 'Set-AzStorageAccount -ResourceGroupName <RGName> -Name <StorageAccountName> -EnableHttpsTrafficOnly $true'. Run 'Get-Help Set-AzStorageAccount -full' for more help.",
+               "recommendation": "Run command 'Set-AzStorageAccount -ResourceGroupName <RGName> -Name <StorageAccountName> -EnableHttpsTrafficOnly $true'. Run 'Get-Help Set-AzStorageAccount -full' for more help.",
                "severity": "High",
                "jsonPath": "$.properties.supportsHttpsTrafficOnly",
                "matchType": "Boolean",
