@@ -28,7 +28,7 @@ class Databricks: SVTBase
         if (-not $this.ResourceObject)
 		{
 		
-            $this.ResourceObject = Get-AzureRmResource -Name $this.ResourceContext.ResourceName  `
+            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
                                         -ResourceType $this.ResourceContext.ResourceType `
                                         -ResourceGroupName $this.ResourceContext.ResourceGroupName
 
@@ -50,7 +50,7 @@ class Databricks: SVTBase
     hidden [ControlResult] CheckVnetPeering([ControlResult] $controlResult)
     {
 	    
-        $vnetPeerings = Get-AzureRmVirtualNetworkPeering -VirtualNetworkName "workers-vnet" -ResourceGroupName $this.ManagedResourceGroupName
+        $vnetPeerings = Get-AzVirtualNetworkPeering -VirtualNetworkName "workers-vnet" -ResourceGroupName $this.ManagedResourceGroupName
         if($null -ne $vnetPeerings  -and ($vnetPeerings|Measure-Object).count -gt 0)
         {
 			$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Verify below peering found on VNet", $vnetPeerings));

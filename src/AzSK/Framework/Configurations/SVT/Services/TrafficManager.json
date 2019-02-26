@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckRBACAccess",
       "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-      "Recommendation": "Clean up any unauthorized users on the Traffic Manager Profile. Run command Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '{scope}}' -RoleDefinitionName {role definition name}'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' to get the complete details about this command.",
+      "Recommendation": "Clean up any unauthorized users on the Traffic Manager Profile. Run command Remove-AzRoleAssignment -SignInName '{signInName}' -Scope '{scope}}' -RoleDefinitionName {role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' to get the complete details about this command.",
       "Tags": [
         "SDL",
         "TCP",

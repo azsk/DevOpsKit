@@ -76,7 +76,7 @@ class SecurityCenter: AzSKRoot
 			$policyName = $this.PolicyObject.policySettings.name;
 
 			try {
-				$this.CurrentPolicyObject = Get-AzureRmPolicyAssignment -Name $policyName
+				$this.CurrentPolicyObject = Get-AzPolicyAssignment -Name $policyName
 			}
 			catch {
 				#eat the exception as it would throw in non availability of policy

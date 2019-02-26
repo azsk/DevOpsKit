@@ -1,312 +1,247 @@
 {
-        "BaselineControls": {
-                "ResourceTypeControlIdMappingList": [
-                  {
-                    "ResourceType": "AppService",
-                    "ControlIds": [
-                      "Azure_AppService_DP_Dont_Allow_HTTP_Access",
-                      "Azure_AppService_Config_Disable_Remote_Debugging",
-                      "Azure_AppService_AuthN_Use_AAD_for_Client_AuthN"
-                    ]
-                  },
-                  {
-                    "ResourceType": "CloudService",
-                    "ControlIds": [
-                      "Azure_CloudService_DP_DontAllow_HTTP_Access_InputEndpoints",
-                      "Azure_CloudService_SI_Auto_OSUpdate",
-                      "Azure_CloudService_SI_Enable_AntiMalware",
-                      "Azure_CloudService_SI_Disable_RemoteDesktop_Access",
-                      "Azure_CloudService_AuthN_Use_AAD_for_Client_AuthN"
-                    ]
-                  },
-                  {
-                    "ResourceType": "ERvNet",
-                    "ControlIds": [
-                      "Azure_ERvNet_NetSec_Dont_Use_PublicIPs",
-                      "Azure_ERvNet_NetSec_Dont_Enable_IPForwarding_for_NICs",
-                      "Azure_ERvNet_NetSec_Dont_Add_UDRs_on_Subnets",
-                      "Azure_ERvNet_NetSec_Dont_Add_VPN_Gateways",
-                      "Azure_ERvNet_NetSec_Dont_Use_VNet_Peerings",
-                      "Azure_ERvNet_NetSec_Use_Only_Internal_Load_Balancers"
-                    ]
-                  },
-                  {
-                    "ResourceType": "SQLDatabase",
-                    "ControlIds": [
-                      "Azure_SQLDatabase_DP_Enable_TDE",
-                      "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
-                      "Azure_SQLDatabase_Audit_Enable_Threat_Detection_DB",
-                      "Azure_SQLDatabase_AuthZ_Use_AAD_Admin"
-                    ]
-                  },
-                  {
-                    "ResourceType": "Storage",
-                    "ControlIds": [
-                      "Azure_Storage_AuthN_Dont_Allow_Anonymous",
-                      "Azure_Storage_DP_Encrypt_In_Transit"
-                    ]
-                  },
-                  {
-                    "ResourceType": "DataLakeStore",
-                    "ControlIds": [
-                      "Azure_DataLakeStore_DP_Encrypt_At_Rest"
-                    ]
-                  },
-                  {
-                    "ResourceType": "CDN",
-                    "ControlIds": [
-                      "Azure_CDN_DP_Enable_Https"
-                    ]
-                  },
-                  {
-                    "ResourceType": "RedisCache",
-                    "ControlIds": [
-                      "Azure_RedisCache_DP_Use_SSL_Port"
-                    ]
-                  },
-                  {
-                    "ResourceType": "TrafficManager",
-                    "ControlIds": [
-                      "Azure_TrafficManager_DP_Enable_HTTPS"
-                    ]
-                  },
-                  {
-                    "ResourceType": "ServiceFabric",
-                    "ControlIds": [
-                      "Azure_ServiceFabric_AuthN_Client_AuthN_AAD_Only"
-                    ]
-                  },
-                  {
-                    "ResourceType": "AzSKCfg",
-                    "ControlIds": [
-                      "Azure_AzSKCfg_Check_Presence_of_CA",
-                      "Azure_AzSKCfg_Check_Health_of_CA",
-                      "Azure_AzSKCfg_Check_Presence_of_Latest_AzSK_Module"
-                    ]
-                  }
-                ],
-                "SubscriptionControlIdList": [
-                  "Azure_Subscription_AuthZ_Add_Required_Central_Accounts",
-                  "Azure_Subscription_AuthZ_Remove_Deprecated_Accounts",
-                  "Azure_Subscription_AuthZ_Dont_Use_NonAD_Identities",
-                  "Azure_Subscription_AuthZ_Remove_Management_Certs",
-                  "Azure_Subscription_Config_Azure_Security_Center",
-                  "Azure_Subscription_Config_ARM_Policy",
-                  "Azure_Subscription_Audit_Configure_Critical_Alerts"
-                ],
-                "ExpiryInDays": 2,
-                "SupportedSources": [ "NA" ]
-              },
-              "PreviewBaselineControls": {
-                "ResourceTypeControlIdMappingList": [
-                  {
-                    "ResourceType": "APIConnection",
-                    "ControlIds": [
-                      "Azure_APIConnection_AuthN_Connectors_Use_AAD",
-                      "Azure_APIConnection_DP_Encrypt_Data_In_Transit"
-                    ]
-                  },
-                  {
-                    "ResourceType": "AppService",
-                    "ControlIds": [
-                      "Azure_AppService_DP_Dont_Allow_HTTP_Access_Fn",
-                      "Azure_AppService_DP_Website_Load_Certificates_Not_All",
-                      "Azure_AppService_AuthN_Use_Managed_Service_Identity",
-                      "Azure_AppService_Authz_Use_Function_Authorization_level_Fn",
-                      "Azure_AppService_Config_Disable_Web_Sockets",
-                      "Azure_AppService_Configure_EditMode_ReadOnly_Fn"
-                    ]
-                  },
-                  {
-                    "ResourceType": "Automation",
-                    "ControlIds": [
-                      "Azure_Automation_DP_Use_Encrypted_Variables",
-                      "Azure_Automation_Audit_Configure_Log_Analytics",
-                      "Azure_Automation_DP_Minimal_Webhook_Validity"
-                    ]
-                  },
-                  {
-                    "ResourceType": "Batch",
-                    "ControlIds": [
-                      "Azure_Batch_Audit_Enable_Diagnostics_Log"
-                    ]
-                  },
-                  {
-                    "ResourceType": "BotService",
-                    "ControlIds": [
-                      "Azure_BotService_Enable_Required_Channels_Only",
-                      "Azure_BotService_Audit_Enable_Monitoring"
-                    ]
-                  },
-                  {
-                    "ResourceType": "CloudService",
-                    "ControlIds": [
-                      "Azure_CloudService_SI_Disable_RemoteDebugging",
-                      "Azure_CloudService_SI_Validate_InputEndpoints"
-                    ]
-                  },
-                  {
-                    "ResourceType": "ContainerInstances",
-                    "ControlIds": [
-                      "Azure_ContainerInstances_NetSec_Justify_PublicIP_and_Ports"
-            
-                    ]
-                  },
-                  {
-                    "ResourceType": "ContainerRegistry",
-                    "ControlIds": [
-                      "Azure_ContainerRegistry_AuthZ_Disable_Admin_Account",
-                      "Azure_ContainerRegistry_DP_Enable_Content_Trust"
-                    ]
-                  },
-                  {
-                    "ResourceType": "CosmosDB",
-                    "ControlIds": [
-                      "Azure_CosmosDB_AuthZ_Enable_Firewall",
-                      "Azure_CosmosDB_Config_Default_Consistency"
-                    ]
-                  },
-                  {
-                    "ResourceType": "DataFactory",
-                    "ControlIds": [
-                      "Azure_DataFactory_DP_LinkSvc_Encrypt_In_Transit"
-                    ]
-                  },
-                  {
-                    "ResourceType": "DataLakeAnalytics",
-                    "ControlIds": [
-                      "Azure_DataLakeAnalytics_DP_Encrypt_At_Rest",
-                      "Azure_DataLakeAnalytics_Audit_Enable_Diagnostics_Log"
-            
-                    ]
-                  },
-                  {
-                    "ResourceType": "DataLakeStore",
-                    "ControlIds": [
-            
-                      "Azure_DataLakeStore_AuthZ_Assign_ACLs_On_FileSystem",
-                      "Azure_DataLakeStore_Audit_Enable_Diagnostics_Log",
-                      "Azure_DataLakeStore_AuthZ_Enable_Firewall"
-                    ]
-                  },
-                  {
-                    "ResourceType": "ERvNet",
-                    "ControlIds": [
-                      "Azure_ERvNet_SI_Add_Only_Network_Resources",
-                      "Azure_ERvNet_SI_Dont_Remove_ARM_Policy",
-                      "Azure_ERvNet_SI_Dont_Remove_Resource_Lock",
-                      "Azure_ERvNet_NetSec_Dont_Use_Multi_NIC_VMs",
-                      "Azure_ERvNet_NetSec_Dont_Use_NSGs_on_GatewaySubnet"
-                    ]
-                  },
-                  {
-                    "ResourceType": "EventHub",
-                    "ControlIds": [
-                      "Azure_EventHub_Audit_Enable_Diagnostics_Log",
-                      "Azure_EventHub_AuthZ_Dont_Use_Policies_At_Event_Hub_Namespace"
-                    ]
-                  },
-                  {
-                    "ResourceType": "KeyVault",
-                    "ControlIds": [
-                      "Azure_KeyVault_AuthN_Dont_Share_KeyVault_Unless_Trust",
-                      "Azure_KeyVault_AuthN_Use_Cert_Auth_for_Apps",
-                      "Azure_KeyVault_AuthZ_Grant_Min_RBAC_Access",
-                      "Azure_KeyVault_Audit_Enable_Diagnostics_Log",
-                      "Azure_KeyVault_AuthZ_Configure_Advanced_Access_Policies",
-                      "Azure_KeyVault_DP_Keys_Secrets_Check_Expiry_Date",
-                      "Azure_KeyVault_SI_Enable_SoftDelete"
-                    ]
-                  },
-                  {
-                    "ResourceType": "LoadBalancer",
-                    "ControlIds": [
-                      "Azure_LoadBalancer_NetSec_Justify_PublicIPs",
-                      "Azure_LoadBalancer_Audit_Enable_Diagnostics_Log"
-                    ]
-                  },
-                  {
-                    "ResourceType": "LogicApps",
-                    "ControlIds": [
-                      "Azure_LogicApps_DP_Dont_Allow_PlainText_Secrets_In_Codeview",
-                      "Azure_LogicApps_Audit_Enable_Diagnostics_Log"
-                    ]
-                  },
-                  {
-                    "ResourceType": "NotificationHub",
-                    "ControlIds": [
-                      "Azure_NotificationHub_AuthZ_Dont_Use_Manage_Access_Permission"
-                    ]
-                  },
-                  {
-                    "ResourceType": "Search",
-                    "ControlIds": [
-                      "Azure_Search_Audit_Enable_Diagnostics_Log"
-                    ]
-                  },
-                  {
-                    "ResourceType": "ServiceBus",
-                    "ControlIds": [
-                      "Azure_ServiceBus_AuthZ_Dont_Use_Policies_At_SB_Namespace",
-                      "Azure_ServiceBus_Audit_Enable_Diagnostics_Log"
-                    ]
-                  },
-                  {
-                    "ResourceType": "ServiceFabric",
-                    "ControlIds": [
-                      "Azure_ServiceFabric_AuthN_Self_Signed_Cert",
-                      "Azure_ServiceFabric_AuthZ_Security_Mode_Enabled",
-                      "Azure_ServiceFabric_DP_Set_Property_ClusterProtectionLevel",
-                      "Azure_ServiceFabric_Audit_Use_Diagnostics_Log",
-                      "Azure_ServiceFabric_AuthN_NSG_Enabled"
-                    ]
-                  },
-                  {
-                    "ResourceType": "StreamAnalytics",
-                    "ControlIds": [
-                      "Azure_StreamAnalytics_Audit_Issue_Alert_Runtime_Errors_Failed_Functions",
-                      "Azure_StreamAnalytics_Audit_Enable_Diagnostics_Log"
-                    ]
-                  },
-                  {
-                    "ResourceType": "SQLDatabase",
-                    "ControlIds": [
-                      "Azure_SQLDatabase_Audit_Enable_Logging_and_Monitoring_Server",
-                      "Azure_SQLDatabase_AuthZ_Firewall_Deny_Access_AzureServices"
-                    ]
-                  },
-                  {
-                    "ResourceType": "Storage",
-                    "ControlIds": [
-                      "Azure_Storage_DP_Restrict_CORS_Access"
-                    ]
-                  },
-                  {
-                    "ResourceType": "VirtualMachine",
-                    "ControlIds": [
-                      "Azure_VirtualMachine_DP_Enable_Disk_Encryption",
-                      "Azure_VirtualMachine_NetSec_Dont_Open_Management_Ports",
-                      "Azure_VirtualMachine_NetSec_Justify_PublicIPs"
-                    ]
-                  },
-                  {
-                    "ResourceType": "VirtualNetwork",
-                    "ControlIds": [
-                      "Azure_VNet_NetSec_Justify_PublicIPs",
-                      "Azure_VNet_NetSec_Configure_NSG",
-                      "Azure_VNet_NetSec_Dont_Use_NSGs_on_GatewaySubnet"
-                    ]
-                  }
-                ],
-                "SubscriptionControlIdList": [
-                  "Azure_Subscription_Audit_Resolve_Azure_Security_Center_Alerts",
-                  "Azure_Subscription_AuthZ_Dont_Use_SVC_Accounts_No_MFA",
-                  "Azure_Subscription_AuthZ_Limit_ClassicAdmin_Count",
-                  "Azure_Subscription_NetSec_Justify_PublicIPs",
-                  "Azure_Subscription_SI_Dont_Use_Classic_VMs",
-                  "Azure_Subscription_Config_Add_Required_Tags"
-                ],
-                "ExpiryInDays": 2,
-                "SupportedSources": [ "NA" ]
-              }
+  "BaselineControls": {
+    "ResourceTypeControlIdMappingList": [
+      {
+        "ResourceType": "AppService",
+        "ControlIds": [
+          "Azure_AppService_DP_Dont_Allow_HTTP_Access",
+          "Azure_AppService_Config_Disable_Remote_Debugging",
+          "Azure_AppService_AuthN_Use_AAD_for_Client_AuthN"
+        ]
+      },
+      {
+        "ResourceType": "CloudService",
+        "ControlIds": [
+          "Azure_CloudService_DP_DontAllow_HTTP_Access_InputEndpoints",
+          "Azure_CloudService_SI_Auto_OSUpdate",
+          "Azure_CloudService_SI_Enable_AntiMalware",
+          "Azure_CloudService_SI_Disable_RemoteDesktop_Access",
+          "Azure_CloudService_AuthN_Use_AAD_for_Client_AuthN"
+        ]
+      },
+      {
+        "ResourceType": "ERvNet",
+        "ControlIds": [
+          "Azure_ERvNet_NetSec_Dont_Use_PublicIPs",
+          "Azure_ERvNet_NetSec_Dont_Enable_IPForwarding_for_NICs",
+          "Azure_ERvNet_NetSec_Dont_Add_UDRs_on_Subnets",
+          "Azure_ERvNet_NetSec_Dont_Add_VPN_Gateways",
+          "Azure_ERvNet_NetSec_Dont_Use_VNet_Peerings",
+          "Azure_ERvNet_NetSec_Use_Only_Internal_Load_Balancers"
+        ]
+      },
+      {
+        "ResourceType": "SQLDatabase",
+        "ControlIds": [
+          "Azure_SQLDatabase_DP_Enable_TDE",
+          "Azure_SQLDatabase_Audit_Enable_Threat_Detection_Server",
+          "Azure_SQLDatabase_AuthZ_Use_AAD_Admin"
+        ]
+      },
+      {
+        "ResourceType": "Storage",
+        "ControlIds": [
+          "Azure_Storage_AuthN_Dont_Allow_Anonymous",
+          "Azure_Storage_DP_Encrypt_In_Transit"
+        ]
+      },
+      {
+        "ResourceType": "DataLakeStore",
+        "ControlIds": [
+          "Azure_DataLakeStore_DP_Encrypt_At_Rest"
+        ]
+      },
+      {
+        "ResourceType": "CDN",
+        "ControlIds": [
+          "Azure_CDN_DP_Enable_Https"
+        ]
+      },
+      {
+        "ResourceType": "RedisCache",
+        "ControlIds": [
+          "Azure_RedisCache_DP_Use_SSL_Port"
+        ]
+      },
+      {
+        "ResourceType": "TrafficManager",
+        "ControlIds": [
+          "Azure_TrafficManager_DP_Enable_HTTPS"
+        ]
+      },
+      {
+        "ResourceType": "ServiceFabric",
+        "ControlIds": [
+          "Azure_ServiceFabric_AuthN_Client_AuthN_AAD_Only"
+        ]
+      },
+      {
+        "ResourceType": "AzSKCfg",
+        "ControlIds": [
+          "Azure_AzSKCfg_Check_Presence_of_CA",
+          "Azure_AzSKCfg_Check_Health_of_CA",
+          "Azure_AzSKCfg_Check_Presence_of_Latest_AzSK_Module"
+        ]
+      }
+    ],
+    "SubscriptionControlIdList": [
+      "Azure_Subscription_AuthZ_Add_Required_Central_Accounts",
+      "Azure_Subscription_AuthZ_Remove_Deprecated_Accounts",
+      "Azure_Subscription_AuthZ_Dont_Use_NonAD_Identities",
+      "Azure_Subscription_AuthZ_Remove_Management_Certs",
+      "Azure_Subscription_Config_Azure_Security_Center",
+      "Azure_Subscription_Config_ARM_Policy",
+      "Azure_Subscription_Audit_Configure_Critical_Alerts"
+    ],
+    "ExpiryInDays": 2,
+    "SupportedSources": [ "NA" ]
+  },
+  "PreviewBaselineControls": {
+    "ResourceTypeControlIdMappingList": [
+      {
+        "ResourceType": "APIConnection",
+        "ControlIds": [
+          "Azure_APIConnection_AuthN_Connectors_Use_AAD",
+          "Azure_APIConnection_DP_Encrypt_Data_In_Transit"
+        ]
+      },
+      {
+        "ResourceType": "AppService",
+        "ControlIds": [
+          "Azure_AppService_DP_Dont_Allow_HTTP_Access_Fn",
+          "Azure_AppService_DP_Website_Load_Certificates_Not_All",                   
+          "Azure_AppService_Config_Disable_Web_Sockets"
+        ]
+      },
+      {
+        "ResourceType": "Automation",
+        "ControlIds": [
+          "Azure_Automation_DP_Use_Encrypted_Variables"
+        ]
+      },      
+      {
+        "ResourceType": "BotService",
+        "ControlIds": [
+          "Azure_BotService_Enable_Required_Channels_Only"
+        ]
+      },
+      {
+        "ResourceType": "CloudService",
+        "ControlIds": [
+          "Azure_CloudService_SI_Disable_RemoteDebugging"
+        ]
+      },
+      {
+        "ResourceType": "ContainerInstances",
+        "ControlIds": [
+          "Azure_ContainerInstances_NetSec_Justify_PublicIP_and_Ports"
+
+        ]
+      },
+      {
+        "ResourceType": "CosmosDB",
+        "ControlIds": [
+          "Azure_CosmosDB_AuthZ_Enable_Firewall",
+          "Azure_CosmosDB_Config_Default_Consistency"
+        ]
+      },
+      {
+        "ResourceType": "DataFactory",
+        "ControlIds": [
+          "Azure_DataFactory_DP_LinkSvc_Encrypt_In_Transit"
+        ]
+      },
+      {
+        "ResourceType": "DataLakeAnalytics",
+        "ControlIds": [
+          "Azure_DataLakeAnalytics_DP_Encrypt_At_Rest"
+        ]
+      },
+      {
+        "ResourceType": "DataLakeStore",
+        "ControlIds": [
+
+          "Azure_DataLakeStore_AuthZ_Assign_ACLs_On_FileSystem"
+        ]
+      },
+      {
+        "ResourceType": "ERvNet",
+        "ControlIds": [
+          "Azure_ERvNet_SI_Add_Only_Network_Resources",
+          "Azure_ERvNet_SI_Dont_Remove_ARM_Policy",
+          "Azure_ERvNet_SI_Dont_Remove_Resource_Lock"
+        ]
+      },
+      {
+        "ResourceType": "KeyVault",
+        "ControlIds": [
+          "Azure_KeyVault_AuthN_Dont_Share_KeyVault_Unless_Trust",
+          "Azure_KeyVault_AuthN_Use_Cert_Auth_for_Apps",
+          "Azure_KeyVault_AuthZ_Grant_Min_RBAC_Access"
+        ]
+      },
+      {
+        "ResourceType": "LoadBalancer",
+        "ControlIds": [
+          "Azure_LoadBalancer_NetSec_Justify_PublicIPs"
+        ]
+      },
+      {
+        "ResourceType": "LogicApps",
+        "ControlIds": [
+          "Azure_LogicApps_DP_Dont_Allow_PlainText_Secrets_In_Codeview"
+        ]
+      },
+      {
+        "ResourceType": "NotificationHub",
+        "ControlIds": [
+          "Azure_NotificationHub_AuthZ_Dont_Use_Manage_Access_Permission"
+        ]
+      },
+      {
+        "ResourceType": "ServiceBus",
+        "ControlIds": [
+          "Azure_ServiceBus_AuthZ_Dont_Use_Policies_At_SB_Namespace"
+        ]
+      },
+      {
+        "ResourceType": "ServiceFabric",
+        "ControlIds": [
+          "Azure_ServiceFabric_AuthN_Self_Signed_Cert",
+          "Azure_ServiceFabric_AuthZ_Security_Mode_Enabled",
+          "Azure_ServiceFabric_DP_Set_Property_ClusterProtectionLevel"
+        ]
+      },
+      {
+        "ResourceType": "StreamAnalytics",
+        "ControlIds": [
+          "Azure_StreamAnalytics_Audit_Issue_Alert_Runtime_Errors_Failed_Functions"
+        ]
+      },
+      {
+        "ResourceType": "VirtualMachine",
+        "ControlIds": [
+          "Azure_VirtualMachine_DP_Enable_Disk_Encryption",
+          "Azure_VirtualMachine_NetSec_Dont_Open_Management_Ports",
+          "Azure_VirtualMachine_NetSec_Justify_PublicIPs"
+        ]
+      },
+      {
+        "ResourceType": "VirtualNetwork",
+        "ControlIds": [
+          "Azure_VNet_NetSec_Justify_PublicIPs"         
+        ]
+      }
+    ],
+    "SubscriptionControlIdList": [
+      "Azure_Subscription_Audit_Resolve_Azure_Security_Center_Alerts",
+      "Azure_Subscription_AuthZ_Dont_Use_SVC_Accounts_No_MFA",
+      "Azure_Subscription_AuthZ_Limit_ClassicAdmin_Count",
+      "Azure_Subscription_NetSec_Justify_PublicIPs",
+      "Azure_Subscription_Config_Add_Required_Tags",
+      "Azure_Subscription_SI_Classic_Resources"
+    ],
+    "ExpiryInDays": 2,
+    "SupportedSources": [ "NA" ]
+  }
 }

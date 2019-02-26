@@ -20,7 +20,7 @@ class ContainerRegistry: SVTBase
     {
         if (-not $this.ResourceObject) 
 		{
-            $this.ResourceObject = Get-AzureRmContainerRegistry -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+            $this.ResourceObject = Get-AzContainerRegistry -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
 
             if(-not $this.ResourceObject)
             {
@@ -80,7 +80,7 @@ class ContainerRegistry: SVTBase
     hidden [ControlResult] CheckContainerWebhooks([ControlResult] $controlResult)
     {
 
-        $webhooks = Get-AzureRmContainerRegistryWebhook -RegistryName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction SilentlyContinue
+        $webhooks = Get-AzContainerRegistryWebhook -RegistryName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction SilentlyContinue
 
         if(($webhooks | Measure-Object).Count -gt 0)
         {

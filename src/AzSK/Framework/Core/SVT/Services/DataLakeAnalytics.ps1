@@ -18,7 +18,7 @@ class DataLakeAnalytics: SVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzureRmDataLakeAnalyticsAccount -Name $this.ResourceContext.ResourceName `
+            $this.ResourceObject = Get-AzDataLakeAnalyticsAccount -Name $this.ResourceContext.ResourceName `
                                             -ResourceGroupName $this.ResourceContext.ResourceGroupName
             if(-not $this.ResourceObject)
             {
@@ -30,7 +30,7 @@ class DataLakeAnalytics: SVTBase
    
 	hidden [ControlResult] CheckEncryptionAtRest([ControlResult] $controlResult)
     {   
-		$defaultADLSAccount = Get-AzureRmDataLakeStoreAccount -Name $this.ResourceObject.DefaultDataLakeStoreAccount -ResourceGroupName $this.ResourceContext.ResourceGroupName
+		$defaultADLSAccount = Get-AzDataLakeStoreAccount -Name $this.ResourceObject.DefaultDataLakeStoreAccount -ResourceGroupName $this.ResourceContext.ResourceGroupName
 
 		if($defaultADLSAccount)
 		{

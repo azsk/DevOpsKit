@@ -139,7 +139,7 @@ class KubernetesService: SVTBase
 		if([Helpers]::CheckMember($this.ResourceObject,"Properties") -and [Helpers]::CheckMember($this.ResourceObject.Properties,"nodeResourceGroup"))
 		{
 			$nodeRG = $this.ResourceObject.Properties.nodeResourceGroup
-			$vms = Get-AzureRmVM -ResourceGroupName $nodeRG -WarningAction SilentlyContinue 
+			$vms = Get-AzVM -ResourceGroupName $nodeRG -WarningAction SilentlyContinue 
 			if(($vms | Measure-Object).Count -gt 0)
 			{
 				$isManual = $false
@@ -154,10 +154,10 @@ class KubernetesService: SVTBase
 				{
 					$vmObject.NetworkProfile.NetworkInterfaces | 
 					ForEach-Object {          
-						$currentNic = Get-AzureRmResource -ResourceId $_.Id -ErrorAction SilentlyContinue
+						$currentNic = Get-AzResource -ResourceId $_.Id -ErrorAction SilentlyContinue
 						if($currentNic)
 						{
-							$nicResource = Get-AzureRmNetworkInterface -Name $currentNic.Name `
+							$nicResource = Get-AzNetworkInterface -Name $currentNic.Name `
 												-ResourceGroupName $currentNic.ResourceGroupName `
 												-ExpandResource NetworkSecurityGroup `
 												-ErrorAction SilentlyContinue
@@ -173,7 +173,7 @@ class KubernetesService: SVTBase
 					ForEach-Object {	
 					try
 					{
-						$effectiveNSG = Get-AzureRmEffectiveNetworkSecurityGroup -NetworkInterfaceName $_.Name -ResourceGroupName $_.ResourceGroupName -WarningAction SilentlyContinue -ErrorAction Stop
+						$effectiveNSG = Get-AzEffectiveNetworkSecurityGroup -NetworkInterfaceName $_.Name -ResourceGroupName $_.ResourceGroupName -WarningAction SilentlyContinue -ErrorAction Stop
 					}
 					catch
 					{

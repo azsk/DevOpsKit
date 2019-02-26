@@ -150,7 +150,7 @@ class RBAC: CommandBase
 						try
 						{
 							$this.PublishCustomMessage("Adding account [$accountName] to the subscription...");
-							New-AzureRmRoleAssignment -ObjectId $_.ObjectId -Scope $_.Scope -RoleDefinitionName $_.RoleDefinitionName -ErrorAction Stop | Out-Null                                         
+							New-AzRoleAssignment -ObjectId $_.ObjectId -Scope $_.Scope -RoleDefinitionName $_.RoleDefinitionName -ErrorAction Stop | Out-Null                                         
 						}
 						catch
 						{
@@ -395,7 +395,7 @@ class RBAC: CommandBase
 				try
 				{
 					$this.PublishCustomMessage("Removing account [$accountName] from the subscription");
-					Remove-AzureRmRoleAssignment -ObjectId $_.RoleAssignment.ObjectId -Scope $_.RoleAssignment.Scope -RoleDefinitionName $_.RoleAssignment.RoleDefinitionName -ErrorAction Stop | Out-Null                                         
+					Remove-AzRoleAssignment -ObjectId $_.RoleAssignment.ObjectId -Scope $_.RoleAssignment.Scope -RoleDefinitionName $_.RoleAssignment.RoleDefinitionName -ErrorAction Stop | Out-Null                                         
 				}
 				catch
 				{

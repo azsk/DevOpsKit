@@ -13,7 +13,7 @@ class Automation: SVTBase
     }
 	hidden [ControlResult] CheckWebhooks([ControlResult] $controlResult)
     {   
-		$webhooks = Get-AzureRmAutomationWebhook -AutomationAccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
+		$webhooks = Get-AzAutomationWebhook -AutomationAccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
 		if(($webhooks|Measure-Object).Count -gt 0)
 		{
 			$webhookdata = $webhooks | Select-Object ResourceGroupName, AutomationAccountName, Name, Description, IsEnabled, Parameters, RunbookName, WebhookURI, HybridWorker
@@ -28,7 +28,7 @@ class Automation: SVTBase
     }
 	hidden [ControlResult] CheckWebhookExpiry([ControlResult] $controlResult)
     {   
-		$webhooks = Get-AzureRmAutomationWebhook -AutomationAccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
+		$webhooks = Get-AzAutomationWebhook -AutomationAccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
 		$longExpiryWebhooks = @()
 		if(($webhooks|Measure-Object).Count -gt 0)
 		{
@@ -59,7 +59,7 @@ class Automation: SVTBase
     }
 	hidden [ControlResult] CheckVariables([ControlResult] $controlResult)
     {   
-		$variables = Get-AzureRmAutomationVariable -AutomationAccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
+		$variables = Get-AzAutomationVariable -AutomationAccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction Stop
 		if(($variables|Measure-Object).Count -gt 0 )
 		{
 			if($this.ResourceContext.ResourceGroupName -eq [ConfigurationManager]::GetAzSKConfigData().AzSKRGName -and [Helpers]::CheckMember($this.ControlSettings,"Automation.variablesToSkip"))
@@ -103,18 +103,18 @@ class Automation: SVTBase
     }
 	hidden [ControlResult] CheckOMSSetup([ControlResult] $controlResult)
     {   
-		$resource = Get-AzureRmResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType "Microsoft.Automation/automationAccounts" -ErrorAction Stop
+		$resource = Get-AzResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType "Microsoft.Automation/automationAccounts" -ErrorAction Stop
 		$resourceId = $resource.ResourceId
 		$diaSettings = $null
 		try 
 		{
-			$diaSettings = Get-AzureRmDiagnosticSetting -ResourceId $resourceId -ErrorAction Stop -WarningAction SilentlyContinue
+			$diaSettings = Get-AzDiagnosticSetting -ResourceId $resourceId -ErrorAction Stop -WarningAction SilentlyContinue
 		}
 		catch
 		{
 			if([Helpers]::CheckMember($_.Exception, "Response") -and ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "Log Analytics(OMS) is not configured with this Automation account.")
+				$controlResult.AddMessage([VerificationResult]::Failed, "Log Analytics workspace is not configured with this Automation account.")
 				return $controlResult
 			}
 			else
@@ -124,13 +124,12 @@ class Automation: SVTBase
 		}
 		if($null -ne $diaSettings -and (Get-Member -InputObject $diaSettings -Name WorkspaceId -MemberType Properties) -and $null -ne $diaSettings.WorkspaceId)
 		{
-			$controlResult.AddMessage([VerificationResult]::Passed, "Log Analytics(OMS) is configured with this Automation account. OMS Workspace Id is given below.", $diaSettings.WorkspaceId)
+			$controlResult.AddMessage([VerificationResult]::Passed, "Log Analytics workspace is configured with this Automation account. Log Analytics Workspace Id is given below.", $diaSettings.WorkspaceId)
 		}
 		else
 		{
-			$controlResult.AddMessage([VerificationResult]::Failed, "Log Analytics(OMS) is not configured with this Automation account.")
+			$controlResult.AddMessage([VerificationResult]::Failed, "Log Analytics workspace is not configured with this Automation account.")
 		}
 		return $controlResult;
-    }
-	
+    }	
 }

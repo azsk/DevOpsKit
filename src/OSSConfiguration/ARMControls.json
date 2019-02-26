@@ -23,6 +23,118 @@
       ]
     },
     {
+      "featureName": "ServiceFabric",
+      "supportedResourceTypes": [ "Microsoft.ServiceFabric/clusters" ],
+      "controls": [
+        {
+          "id": "ServiceFabric300",
+          "controlId": "Azure_ServiceFabric_SI_Set_Auto_Update_Cluster",
+          "isEnabled": true,
+          "description": "Upgrade mode should be set to automatic for cluster",
+          "rationale": "Clusters with unsupported fabric version can become targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in software.",
+          "recommendation": "You can set your cluster to receive automatic fabric upgrades as they are released by Microsoft, for details please refer: https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-upgrade",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.upgradeMode" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "Automatic",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "ServiceFabric220",
+          "controlId": "Azure_ServiceFabric_AuthN_Client_AuthN_AAD_Only",
+          "isEnabled": true,
+          "description": "Client authentication must be performed only via Azure Active Directory",
+          "rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control. All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+          "recommendation": "A Service Fabric cluster offers several entry points to its management functionality, including the web-based Service Fabric Explorer, Visual Studio and PowerShell. Access to the cluster must be controlled using AAD. Refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-cluster-creation-via-arm/#_set-up-azure-active-directory-for-client-authentication",
+          "severity": "High",
+          "jsonPath": [ "$.properties.azureActiveDirectory.tenantId" ],
+          "matchType": "StringWhitespace",
+          "data": {
+            "value": false
+          }
+        },
+        {
+          "id": "ServiceFabric220",
+          "controlId": "Azure_ServiceFabric_AuthN_Client_AuthN_AAD_Only",
+          "isEnabled": true,
+          "description": "Client authentication must be performed only via Azure Active Directory",
+          "rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control. All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+          "recommendation": "A Service Fabric cluster offers several entry points to its management functionality, including the web-based Service Fabric Explorer, Visual Studio and PowerShell. Access to the cluster must be controlled using AAD. Refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-cluster-creation-via-arm/#_set-up-azure-active-directory-for-client-authentication",
+          "severity": "High",
+          "jsonPath": [ "$.properties.azureActiveDirectory.clusterApplication" ],
+          "matchType": "StringWhitespace",
+          "data": {
+            "value": false
+          }
+        },
+        {
+          "id": "ServiceFabric220",
+          "controlId": "Azure_ServiceFabric_AuthN_Client_AuthN_AAD_Only",
+          "isEnabled": true,
+          "description": "Client authentication must be performed only via Azure Active Directory",
+          "rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control. All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+          "recommendation": "A Service Fabric cluster offers several entry points to its management functionality, including the web-based Service Fabric Explorer, Visual Studio and PowerShell. Access to the cluster must be controlled using AAD. Refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-cluster-creation-via-arm/#_set-up-azure-active-directory-for-client-authentication",
+          "severity": "High",
+          "jsonPath": [ "$.properties.azureActiveDirectory.clientApplication" ],
+          "matchType": "StringWhitespace",
+          "data": {
+            "value": false
+          }
+        },
+        {
+          "id": "ServiceFabric230",
+          "controlId": "Azure_ServiceFabric_DP_Set_Property_ClusterProtectionLevel",
+          "isEnabled": true,
+          "description": "The ClusterProtectionLevel property must be set to EncryptAndSign",
+          "rationale": "With cluster protection level set to 'EncryptAndSign', all the node-to-node messages are encrypted and digitally signed. This protects the intra-cluster communication from eavesdropping/tampering/man-in-the-middle attacks on the network.",
+          "recommendation": "Service Fabric provides three levels of protection (None, Sign and EncryptAndSign) for node to node communication using cluster primary certificate. The protection level can be specified using property 'ClusterProtectionLevel' inside Service Fabric ARM template. The value of 'ClusterProtectionLevel' must be set to 'EncryptAndSign' to ensure that all the node-to-node messages are encrypted and digitally signed. Configure 'ClusterProtectionLevel' using ARM template as follows: ARM Template --> Resources --> Select resource type 'Microsoft.ServiceFabric/clusters' --> 'fabricSettings' --> Add 'ClusterProtectionLevel' property with value 'EncryptAndSign'.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.fabricSettings[0].name" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "Security",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "ServiceFabric230",
+          "controlId": "Azure_ServiceFabric_DP_Set_Property_ClusterProtectionLevel",
+          "isEnabled": true,
+          "description": "The ClusterProtectionLevel property must be set to EncryptAndSign",
+          "rationale": "With cluster protection level set to 'EncryptAndSign', all the node-to-node messages are encrypted and digitally signed. This protects the intra-cluster communication from eavesdropping/tampering/man-in-the-middle attacks on the network.",
+          "recommendation": "Service Fabric provides three levels of protection (None, Sign and EncryptAndSign) for node to node communication using cluster primary certificate. The protection level can be specified using property 'ClusterProtectionLevel' inside Service Fabric ARM template. The value of 'ClusterProtectionLevel' must be set to 'EncryptAndSign' to ensure that all the node-to-node messages are encrypted and digitally signed. Configure 'ClusterProtectionLevel' using ARM template as follows: ARM Template --> Resources --> Select resource type 'Microsoft.ServiceFabric/clusters' --> 'fabricSettings' --> Add 'ClusterProtectionLevel' property with value 'EncryptAndSign'.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.fabricSettings[0].parameters[0].name" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "ClusterProtectionLevel",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "ServiceFabric230",
+          "controlId": "Azure_ServiceFabric_DP_Set_Property_ClusterProtectionLevel",
+          "isEnabled": true,
+          "description": "The ClusterProtectionLevel property must be set to EncryptAndSign",
+          "rationale": "With cluster protection level set to 'EncryptAndSign', all the node-to-node messages are encrypted and digitally signed. This protects the intra-cluster communication from eavesdropping/tampering/man-in-the-middle attacks on the network.",
+          "recommendation": "Service Fabric provides three levels of protection (None, Sign and EncryptAndSign) for node to node communication using cluster primary certificate. The protection level can be specified using property 'ClusterProtectionLevel' inside Service Fabric ARM template. The value of 'ClusterProtectionLevel' must be set to 'EncryptAndSign' to ensure that all the node-to-node messages are encrypted and digitally signed. Configure 'ClusterProtectionLevel' using ARM template as follows: ARM Template --> Resources --> Select resource type 'Microsoft.ServiceFabric/clusters' --> 'fabricSettings' --> Add 'ClusterProtectionLevel' property with value 'EncryptAndSign'.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.fabricSettings[0].parameters[0].value" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "EncryptAndSign",
+            "isCaseSensitive": false
+          }
+        }
+      ]
+    },
+    {
       "featureName": "DataLakeStore",
       "supportedResourceTypes": [ "Microsoft.DataLakeStore/accounts" ],
       "controls": [
@@ -60,7 +172,7 @@
               "isEnabled": true,
               "description": "CDN endpoints must use HTTPS protocol while providing data to the client browser/machine or while fetching data from the origin server",
               "rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
-              "recommendation": "To enable HTTPS protocol: Go to Azure Portal --> your CDN Profile --> your CDN Endpoint --> Origin --> Select HTTPS --> Save. Else implement through PowerShell as follows: `$ce= Get-AzureRmCdnEndpoint -EndpointName <EndpointName> ProfileName '<CDNprofile>' -ResourceGroupName '<RGName>'; `$ce.IsHttpAllowed =`$false; `$ce.IsHttpsAllowed =`$true; Set-AzureRmCdnEndpoint -CdnEndpoint `$ce",
+              "recommendation": "To enable HTTPS protocol: Go to Azure Portal --> your CDN Profile --> your CDN Endpoint --> Origin --> Select HTTPS --> Save. Else implement through PowerShell as follows: `$ce= Get-AzCdnEndpoint -EndpointName <EndpointName> ProfileName '<CDNprofile>' -ResourceGroupName '<RGName>'; `$ce.IsHttpAllowed =`$false; `$ce.IsHttpsAllowed =`$true; Set-AzCdnEndpoint -CdnEndpoint `$ce",
               "severity": "High",
               "jsonPath": [ "$.properties.isHttpsAllowed" ],
               "matchType": "Boolean",
@@ -83,7 +195,7 @@
           "isEnabled": true,
           "description": "Non-SSL port must not be enabled",
           "rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
-          "recommendation": "To disable Non-SSL port for Redis Cache, run command : Set-AzureRmRedisCache -ResourceGroupName <String> -Name <String> -EnableNonSslPort `$false",
+          "recommendation": "To disable Non-SSL port for Redis Cache, run command : Set-AzRedisCache -ResourceGroupName <String> -Name <String> -EnableNonSslPort `$false",
           "severity": "High",
           "jsonPath": [ "$.properties.enableNonSslPort" ],
           "matchType": "Boolean",
@@ -168,7 +280,7 @@
     },
     {
       "featureName": "SqlServer",
-      "supportedResourceTypes": [ "Microsoft.Sql/servers","transparentDataEncryption" ,"administrators", "securityAlertPolicies", "databases", "auditingSettings", "firewallrules" ],
+      "supportedResourceTypes": [ "Microsoft.Sql/servers", "transparentDataEncryption", "administrators", "securityAlertPolicies", "databases", "auditingSettings", "firewallrules" ],
       "controls": [
         {
           "id": "SQLDatabase120",
@@ -268,7 +380,7 @@
             "isCaseSensitive": false
           }
         }
-       
+
       ]
     },
     {
@@ -281,7 +393,7 @@
           "isEnabled": true,
           "description": "HTTPS protocol must be used for accessing Storage Account resources",
           "rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks. When enabling HTTPS one must remember to simultaneously disable access over plain HTTP else data can still be subject to compromise over clear text connections.",
-          "recommendation": "Run command 'Set-AzureRmStorageAccount -ResourceGroupName <RGName> -name <StorageAccountName> -EnableHttpsTrafficOnly `$true'. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help.",
+          "recommendation": "Run command 'Set-AzStorageAccount -ResourceGroupName <RGName> -name <StorageAccountName> -EnableHttpsTrafficOnly `$true'. Run 'Get-Help Set-AzStorageAccount -full' for more help.",
           "severity": "Medium",
           "jsonPath": [ "$.properties.supportsHttpsTrafficOnly" ],
           "matchType": "Boolean",
@@ -300,7 +412,7 @@
           "isEnabled": true,
           "description": "App Service must be deplsoyed on a minimum of two instances to ensure availability",
           "rationale": "App Service deployed on multiple instances ensures that the App Service remains available even if an instance is down.",
-          "recommendation": "Run command 'Set-AzureRmAppServicePlan -Name '<AppServicePlanName>' -ResourceGroupName '<RGName>' -NumberofWorkers '<NumberofInstances>''. Run 'Get-Help Set-AzureRmAppServicePlan -full' for more help.",
+          "recommendation": "Run command 'Set-AzAppServicePlan -Name '<AppServicePlanName>' -ResourceGroupName '<RGName>' -NumberofWorkers '<NumberofInstances>''. Run 'Get-Help Set-AzAppServicePlan -full' for more help.",
           "severity": "Medium",
           "jsonPath": [ "$.sku.capacity" ],
           "matchType": "IntegerValue",
@@ -329,8 +441,8 @@
           "isEnabled": true,
           "description": "Web Sockets should be disabled for App Service",
           "rationale": "",
-          "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -WebSocketsEnabled `$false'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
-          "severity": "Medium",
+          "recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -WebSocketsEnabled `$false'. Run 'Get-Help Set-AzWebApp -full' for more help.",
+          "severity": "High",
           "jsonPath": [ "$.properties.siteConfig.webSocketsEnabled", "$.properties.webSocketsEnabled" ],
           "matchType": "Boolean",
           "data": { "value": false }
@@ -355,13 +467,13 @@
           "isEnabled": true,
           "description": "The latest version of .NET framework version should be used for App Service",
           "rationale": "",
-          "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.0''. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+          "recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.0''. Run 'Get-Help Set-AzWebApp -full' for more help.",
           "severity": "Low",
           "jsonPath": [ "$.properties.siteConfig.netFrameworkVersion", "$.properties.netFrameworkVersion" ],
           "matchType": "StringSingleToken",
           "data": {
             "type": "Allow",
-            "value": "v4.6",
+            "value": "v4.7",
             "isCaseSensitive": false
           }
         },
@@ -372,7 +484,7 @@
           "isEnabled": true,
           "description": "Auditing and Monitoring must be enabled for App Service",
           "rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
-          "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+          "recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzWebApp -full' for more help.",
           "severity": "Medium",
           "jsonPath": [ "$.properties.siteConfig.requestTracingEnabled", "$.properties.requestTracingEnabled" ],
           "matchType": "Boolean",
@@ -385,7 +497,7 @@
           "isEnabled": true,
           "description": "Auditing and Monitoring must be enabled for App Service",
           "rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
-          "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+          "recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzWebApp -full' for more help.",
           "severity": "Medium",
           "jsonPath": [ "$.properties.siteConfig.httpLoggingEnabled", "$.properties.httpLoggingEnabled" ],
           "matchType": "Boolean",
@@ -398,7 +510,7 @@
           "isEnabled": true,
           "description": "Auditing and Monitoring must be enabled for App Service",
           "rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
-          "recommendation": "Run command 'Set-AzureRmWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzureRmWebApp -full' for more help.",
+          "recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -DetailedErrorLoggingEnabled `$true -HttpLoggingEnabled `$true -RequestTracingEnabled `$true'. Run 'Get-Help Set-AzWebApp -full' for more help.",
           "severity": "Medium",
           "jsonPath": [ "$.properties.siteConfig.detailedErrorLoggingEnabled", "$.properties.detailedErrorLoggingEnabled" ],
           "matchType": "Boolean",
@@ -447,6 +559,24 @@
           "matchType": "StringWhitespace",
           "data": {
             "value": false
+          }
+
+        },
+        {
+          "id": "AppService400",
+          "apiVersions": [ "2016-08-01" ],
+          "controlId": "Azure_AppService_AuthN_Use_Managed_Service_Identity",
+          "isEnabled": true,
+          "description": "Use Managed Service Identity (MSI) for accessing other AAD-protected resources from the app service.",
+          "rationale": "Managed Service Identity (MSI) allows your app to easily access other AAD-protected resources such as Azure Key Vault. The identity is managed by the Azure platform and eliminates the need to provision/manage/rotate any secrets thus reducing the overall risk.",
+          "recommendation": "Go to Azure Portal --> your App Service --> Settings --> Managed Service Identity --> Register with AAD --> ON",
+          "severity": "Medium",
+          "jsonPath": [ "$.identity.type" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "SystemAssigned",
+            "isCaseSensitive": false
           }
         }
       ]
@@ -515,7 +645,151 @@
           }
         }
       ]
-    }
+    },
+    {
+      "featureName": "LogicApps",
+      "supportedResourceTypes": [ "Microsoft.Logic/workflows" ],
+      "controls": [
+        {
+          "id": "LogicApps150",
+          "controlId": "Azure_LogicApps_AuthZ_Provide_Triggers_Access_Control",
+          "isEnabled": true,
+          "description": "If Logic App fires on an HTTP Request (e.g. Request or Webhook) then provide IP ranges for triggers to prevent unauthorized access",
+          "rationale": "Specifying the IP range ensures that the triggers can be invoked only from a restricted set of endpoints.",
+          "recommendation": "Do not add IP range $($this.ControlSettings.UniversalIPRange) as this means access to all IPs. Note: In case the IP range is indeterminate (for instance, if the client is a PaaS endpoint), you may need to attest this control. Please refer https://docs.microsoft.com/en-us/azure/logic-apps/logic-apps-securing-a-logic-app#set-ip-ranges---logic-app-deployment-template",
+          "severity": "High",
+          "jsonPath": [ "$.properties.accessControl.triggers.allowedCallerIpAddresses.addressRange" ],
+          "matchType": "VerifiableSingleToken",
+          "data": {}
+        },
+        {
+          "id": "LogicApps160",
+          "controlId": "Azure_LogicApps_AuthZ_Provide_Contents_Access_Control",
+          "isEnabled": true,
+          "description": "Must provide IP ranges for contents to prevent unauthorized access to inputs/outputs data of Logic App run history",
+          "rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets.",
+          "recommendation": "Do not add IP range $($this.ControlSettings.UniversalIPRange) as this means access to all IPs. Note: In case the IP range is indeterminate (for instance, if the client is a PaaS endpoint), you may need to attest this control. Please refer https://docs.microsoft.com/en-us/azure/logic-apps/logic-apps-securing-a-logic-app#set-ip-ranges---logic-app-deployment-template-1",
+          "severity": "High",
+          "jsonPath": [ "$.properties.accessControl.contents.allowedCallerIpAddresses.addressRange" ],
+          "matchType": "VerifiableSingleToken",
+          "data": {}
+        }
+      ]
+    },
+    {
+      "featureName": "ContainerRegistry",
+      "supportedResourceTypes": [ "Microsoft.ContainerRegistry/registries" ],
+      "controls": [
+        {
+          "id": "ContainerRegistry110",
+          "controlId": "Azure_ContainerRegistry_AuthZ_Disable_Admin_Account",
+          "isEnabled": true,
+          "description": "The Admin account in Container Registry should be disabled",
+          "rationale": "The Admin user account is designed for a single user to access the registry. Multiple users authenticating with the admin account appear as just one user to the registry. This leads to loss of auditability. Using AAD-based identity ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.",
+          "recommendation": "Run command 'Update-AzureRmContainerRegistry -DisableAdminUser -Name '<ContainerRegistryName>' -ResourceGroupName '<RGName>'. Run 'Get-Help Update-AzureRmContainerRegistry -full' for more help. You can add AAD-based SPNs or user accounts to the appropriate RBAC role instead.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.adminUserEnabled" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "featureName": "KeyVault",
+      "supportedResourceTypes": [ "Microsoft.KeyVault/vaults" ],
+      "controls": [
+        {
+          "id": "KeyVault140",
+          "controlId": "Azure_KeyVault_AuthZ_Grant_Min_Access_policies",
+          "isEnabled": true,
+          "Description": "All Key Vault access policies must be defined with minimum required permissions to keys and secrets",
+          "Rationale": "Granting minimum access by defining Key Vault access policies ensures that applications/users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+          "Recommendation": "Use command Set-AzureRmKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}'  -PermissionsToKeys '{PermissionsToKeys}' -PermissionsToSecrets '{PermissionsToSecrets}'  -PermissionsToCertificates '{PermissionsToCertificates}' -ObjectId '{ObjectId}'. Refer:  https://docs.microsoft.com/en-us/powershell/module/azurerm.keyvault/set-azurermkeyvaultaccesspolicy",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.accessPolicies" ],
+          "matchType": "VerifiableSingleToken",
+          "data": {}
+        },
+        {
+          "id": "KeyVault150",
+          "controlId": "Azure_KeyVault_AuthZ_Configure_Advanced_Access_Policies",
+          "isEnabled": true,
+          "Description": "Advanced access policies must be configured on a need basis",
+          "Rationale": "Advanced access policy allows Azure services (Azure Resource Manager, Virtual Machine, Disk Encryption etc.) to seamlessly access Key Vault. To avoid unintentional access to Key Vault from Azure services, advanced access policies must be configured only as required.",
+          "Recommendation": "Remove any advanced policies that are not required using the command: Remove-AzureRmKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}' -EnabledForDeployment -EnabledForTemplateDeployment -EnabledForDiskEncryption. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.keyvault/remove-azurermkeyvaultaccesspolicy",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.enabledForDeployment" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": false
+          }
+        },
+        {
+          "id": "KeyVault150",
+          "controlId": "Azure_KeyVault_AuthZ_Configure_Advanced_Access_Policies",
+          "isEnabled": true,
+          "Description": "Advanced access policies must be configured on a need basis",
+          "Rationale": "Advanced access policy allows Azure services (Azure Resource Manager, Virtual Machine, Disk Encryption etc.) to seamlessly access Key Vault. To avoid unintentional access to Key Vault from Azure services, advanced access policies must be configured only as required.",
+          "Recommendation": "Remove any advanced policies that are not required using the command: Remove-AzureRmKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}' -EnabledForDeployment -EnabledForTemplateDeployment -EnabledForDiskEncryption. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.keyvault/remove-azurermkeyvaultaccesspolicy",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.enabledForDiskEncryption" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": false
+          }
+        },
+        {
+          "id": "KeyVault150",
+          "controlId": "Azure_KeyVault_AuthZ_Configure_Advanced_Access_Policies",
+          "isEnabled": true,
+          "Description": "Advanced access policies must be configured on a need basis",
+          "Rationale": "Advanced access policy allows Azure services (Azure Resource Manager, Virtual Machine, Disk Encryption etc.) to seamlessly access Key Vault. To avoid unintentional access to Key Vault from Azure services, advanced access policies must be configured only as required.",
+          "Recommendation": "Remove any advanced policies that are not required using the command: Remove-AzureRmKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}' -EnabledForDeployment -EnabledForTemplateDeployment -EnabledForDiskEncryption. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.keyvault/remove-azurermkeyvaultaccesspolicy",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.enabledForTemplateDeployment" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": false
+          }
 
+        },
+        {
+          "id": "KeyVault230",
+          "controlId": "Azure_KeyVault_SI_Enable_SoftDelete",
+          "isEnabled": true,
+          "Description": "Soft delete must be enabled to allow recovery of deleted Key Vault and any objects (keys, secrets, etc.) contained in it.",
+          "Rationale": "Enabling soft delete feature on Key Vault acts as a safety measure to recover inadvertently or maliciously deleted Key Vault and any objects (keys, secrets, etc.) contained in it.",
+          "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/key-vault/key-vault-soft-delete-powershell to enable soft delete feature on Key Vault.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.enableSoftDelete" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "featureName": "VirtualNetwork",
+      "supportedResourceTypes": [ "Microsoft.Network/virtualNetworks", "Microsoft.Network/networkInterfaces" ],
+      "controls": [
+        {
+          "Id": "VirtualNetwork120",
+          "ControlID": "Azure_VNet_NetSec_Justify_IPForwarding_for_NICs",
+          "isEnabled": true,
+          "Description": "Use of IP Forwarding on any NIC in a virtual network should be scrutinized",
+          "Rationale": "Enabling IP Forwarding on a VM NIC allows the VM to receive traffic addressed to other destinations. IP forwarding is required only in rare scenarios (e.g., using the VM as a network virtual appliance) and those should be reviewed with the network security team.",
+          "Recommendation": "Disable IP Forwarding unless it has been reviewed and approved by network security team. Go to Azure Portal --> Navigate to VM NIC (where IP Forwarding is enabled) --> IP Configurations --> IP Forwarding settings --> Click on 'Disabled'.",
+          "Severity": "High",
+          "jsonPath": [ "$.properties.enableIPForwarding" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": false
+          }
+        }
+      ]
+    }
   ]
 }

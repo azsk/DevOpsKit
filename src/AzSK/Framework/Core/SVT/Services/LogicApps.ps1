@@ -96,7 +96,7 @@ class LogicApps: SVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzureRmResource -Name $this.ResourceContext.ResourceName `
+            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName `
                                             -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType
             if(-not $this.ResourceObject)
             {
@@ -120,7 +120,7 @@ class LogicApps: SVTBase
 					try
 					{
 						$apiConId = ($apiConnections.($_.name) | Select-Object connectionId).connectionId     
-						$apiConObj = Get-AzureRmResource -ResourceId $apiConId
+						$apiConObj = Get-AzResource -ResourceId $apiConId
 						$apiName=$apiConObj.Properties.Api.Name           				
 			
 						$Connector = New-Object PSObject
@@ -193,7 +193,7 @@ class LogicApps: SVTBase
 					try
 					{
 						$apiConId = ($apiConnections.($_.name) | Select-Object connectionId).connectionId     
-						$apiConObj = Get-AzureRmResource -ResourceId $apiConId
+						$apiConObj = Get-AzResource -ResourceId $apiConId
 						$apiName=$apiConObj.Properties.Api.Name           				
 			
 						$Connector = New-Object PSObject
@@ -324,7 +324,7 @@ class LogicApps: SVTBase
     }
 	hidden [ControlResult] CheckLogicAppsInSameRG([ControlResult] $controlResult)
     {
-        $OtherAppsinSameRG= Get-AzureRmResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType | Where-Object{$_.ResourceId -ne $this.ResourceObject.ResourceId }
+        $OtherAppsinSameRG= Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType | Where-Object{$_.ResourceId -ne $this.ResourceObject.ResourceId }
         
 		if($null -ne $OtherAppsinSameRG)
         {

@@ -1,0 +1,59 @@
+{
+    "FeatureName":  "Release",
+    "Reference":  "aka.ms/azsktcp/Release",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+      "ControlID": "AzureDevOps_Release_AuthZ_Min_RBAC_Access",
+      "Description": "All teams/groups must be granted minimum required permissions on release defination",
+      "Id": "Release110",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/policies/permissions?view=vsts",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Release_DP_No_PlainText_Secrets_In_Defination",
+      "Description": "Secrets and keys must not be stored as plain text in release variables/task parameters",
+      "Id": "Release120",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckCredInVariables",
+      "Rationale": "Keeping secrets such as connection strings, passwords, keys, etc. in clear text can lead to easy compromise. Making them secret type variables ensures that they are protected at rest.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=vsts&tabs=yaml%2Cbatch#secret-variables",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "DP"       
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Release_SI_Review_InActive_Release",
+      "Description": " Inactive release must be removed",
+      "Id": "Release130",
+      "ControlSeverity": "Low",
+      "Automated": "Yes",
+      "MethodName": "CheckInActiveRelease",
+      "Rationale": "Each additional release having access at repositories increases the attack surface. To minimize this risk ensure that only activite and legitimate release resources present in Organization",
+      "Recommendation": "https://docs.microsoft.com/en-us/rest/api/azure/devops/release/definitions/delete?view=azure-devops-rest-5.0",
+      "Tags": [
+        "SDL",
+        "Best Practice",
+        "Manual",
+        "SI"
+      ],
+      "Enabled": true
+    }
+    ]
+}

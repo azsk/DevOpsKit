@@ -11,12 +11,12 @@ class Batch: SVTBase
 
 	hidden [ControlResult] CheckBatchStorageSSE([ControlResult] $controlResult)
     {
-		$batchResource = Get-AzureRmBatchAccount -AccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+		$batchResource = Get-AzBatchAccount -AccountName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
         if($batchResource)
         {
             if($batchResource.AutoStorageProperties -and (-not [string]::IsNullOrEmpty($batchResource.AutoStorageProperties.StorageAccountId)))
             {
-                $storageAccount = Get-AzureRmResource -ResourceId $batchResource.AutoStorageProperties.StorageAccountId -ExpandProperties
+                $storageAccount = Get-AzResource -ResourceId $batchResource.AutoStorageProperties.StorageAccountId -ExpandProperties
                 if($storageAccount -and $storageAccount.Properties)
                 {
 
