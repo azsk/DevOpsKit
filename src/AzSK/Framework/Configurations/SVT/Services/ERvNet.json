@@ -197,7 +197,7 @@
       "Automated": "Yes",
       "MethodName": "CheckResourceLockConfigured",
       "Rationale": "The ERNetwork resource group is a critical component that facilitates provisioning of an ER-connection for your subscription. A resource lock is deployed on the ERNetwork resource group to keep you from deleting it accidentally. Removing this lock increases the chances of accidental write/delete of this resource group and that can impact ER-connectivity of your subscription.",
-      "Recommendation": "Create a ReadOnly resource lock for every ER Network resource group using command New-AzureRmResourceLock -LockName '{LockName}' -LockLevel 'ReadOnly' -Scope '/subscriptions/{SubscriptionId}/resourceGroups/{ERNetworkResourceGroup}'. Run 'Get-Help New-AzureRmResourceLock -full' for more help.",
+      "Recommendation": "Create a ReadOnly resource lock for every ER Network resource group using command New-AzResourceLock -LockName '{LockName}' -LockLevel 'ReadOnly' -Scope '/subscriptions/{SubscriptionId}/resourceGroups/{ERNetworkResourceGroup}'. Run 'Get-Help New-AzResourceLock -full' for more help.",
       "Tags": [
         "SDL",
         "TCP",

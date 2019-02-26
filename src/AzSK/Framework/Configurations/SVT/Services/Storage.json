@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckStorageContainerPublicAccessTurnOff",
       "Rationale":  "Data in containers that have anonymous access can be downloaded by anyone on the internet without authentication. This can lead to a compromise of corporate data.",
-      "Recommendation": "Run command 'Set-AzureStorageContainerAcl -Name '<ContainerName>' -Permission 'Off' -Context (New-AzureStorageContext -StorageAccountName '<StorageAccountName>' -StorageAccountKey '<StorageAccountKey>')'. Run 'Get-Help Set-AzureStorageContainerAcl -full' for more help.",
+      "Recommendation": "Run command 'Set-AzStorageContainerAcl -Name '<ContainerName>' -Permission 'Off' -Context (New-AzStorageContext -StorageAccountName '<StorageAccountName>' -StorageAccountKey '<StorageAccountKey>')'. Run 'Get-Help Set-AzStorageContainerAcl -full' for more help.",
       "Tags": [
          "SDL",
          "TCP",
@@ -89,7 +89,7 @@
       "Automated": "Yes",
       "MethodName": "CheckStorageEncryptionInTransit",
       "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks. When enabling HTTPS one must remember to simultaneously disable access over plain HTTP else data can still be subject to compromise over clear text connections.",
-      "Recommendation": "Run command 'Set-AzureRmStorageAccount -ResourceGroupName <RGName> -name <StorageAccountName> -EnableHttpsTrafficOnly `$true'. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help.",
+      "Recommendation": "Run command 'Set-AzStorageAccount -ResourceGroupName <RGName> -Name <StorageAccountName> -EnableHttpsTrafficOnly $true'. Run 'Get-Help Set-AzStorageAccount -full' for more help.",
       "Tags": [
          "SDL",
          "TCP",
