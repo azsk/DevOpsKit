@@ -212,7 +212,7 @@
       "Automated": "Yes",
       "MethodName": "CheckAADClientAuthentication",
       "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control. All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
-      "Recommendation": "A Service Fabric cluster offers several entry points to its management functionality, including the web-based Service Fabric Explorer, Visual Studio and PowerShell. Access to the cluster must be controlled using AAD. Refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-cluster-creation-via-arm/#_set-up-azure-active-directory-for-client-authentication",
+      "Recommendation": "A Service Fabric cluster offers several entry points to its management functionality, including the web-based Service Fabric Explorer, Visual Studio and PowerShell. Access to the cluster must be controlled using AAD. Refer: https://docs.microsoft.com/en-in/azure/service-fabric/service-fabric-cluster-creation-setup-aad",
       "Tags": [
         "SDL",
         "TCP",
