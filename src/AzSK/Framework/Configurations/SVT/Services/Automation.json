@@ -30,7 +30,7 @@
       "Automated": "Yes",
       "MethodName": "CheckWebhooks",
       "Rationale": "If webhook URL is inadequately protected or gets compromised, the runbook can be triggered by unauthorized users.",
-      "Recommendation": "Remove webhook(s) if not required. Run command Remove-AzAutomationWebhook -AutomationAccountName '{AutomationAccountName}' -Name '{WebhookName}' -ResourceGroupName '{ResourceGroupName}",
+      "Recommendation": "Remove webhook(s) if not required. Run command Remove-AzAutomationWebhook -AutomationAccountName '{AutomationAccountName}' -Name '{WebhookName}' -ResourceGroupName '{ResourceGroupName}'",
       "Tags": [
         "SDL",
         "TCP",
@@ -112,7 +112,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
-      "Recommendation": "Run command New-AzureRmAutomationKey -AutomationAccountName '{AutomationAccountName}' -KeyType '{Primary/Secondary}' -ResourceGroupName '{ResourceGroupName}' to rotate keys",
+      "Recommendation": "Run command New-AzAutomationKey -AutomationAccountName '{AutomationAccountName}' -KeyType '{Primary/Secondary}' -ResourceGroupName '{ResourceGroupName}' to rotate keys",
       "Tags": [
          "SDL",
          "TCP",

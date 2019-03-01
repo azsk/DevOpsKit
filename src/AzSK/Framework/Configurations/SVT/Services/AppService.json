@@ -31,7 +31,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceCustomDomainWithSSLConfig",
         "Rationale": "Use of custom domain protects a web application from common attacks such as phishing, session hijacking and other DNS-related attacks.",
-        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Custom Domains and follow the steps mentioned to configure a custom domain. Run command 'New-AzureRmWebAppSSLBinding' to enable the SSL binding for your custom domain. Run 'Get-Help New-AzureRmWebAppSSLBinding -full' for more help.",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Custom Domains and follow the steps mentioned to configure a custom domain. Run command 'New-AzWebAppSSLBinding' to enable the SSL binding for your custom domain. Run 'Get-Help New-AzWebAppSSLBinding -full' for more help.",
         "Tags": [
           "SDL",
           "TCP",
@@ -289,7 +289,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceBackupConfiguration",
         "Rationale": "Enabling backup on App Service ensures that there is always a previous snapshot of App Service data that can be leveraged towards recovery scenarios.",
-        "Recommendation": "Run command 'Edit-AzureRmWebAppBackupConfiguration -FrequencyInterval '1' -FrequencyUnit 'Day' -RetentionPeriodInDays '<0 or 365>' -StartTime '<TimeLessThanOrEqualToCurrentTime>' -Name '<WebAppName>' -ResourceGroupName '<RGName>' -StorageAccountUrl '<StorageAccountUrl>' -KeepAtLeastOneBackup'. Run 'Get-Help Edit-AzureRmWebAppBackupConfiguration -full' for more help.",
+        "Recommendation": "Run command 'Edit-AzWebAppBackupConfiguration -FrequencyInterval '1' -FrequencyUnit 'Day' -RetentionPeriodInDays '<0 or 365>' -StartTime '<TimeLessThanOrEqualToCurrentTime>' -Name '<WebAppName>' -ResourceGroupName '<RGName>' -StorageAccountUrl '<StorageAccountUrl>' -KeepAtLeastOneBackup'. Run 'Get-Help Edit-AzWebAppBackupConfiguration -full' for more help.",
         "Tags": [
           "SDL",
           "Best Practice",

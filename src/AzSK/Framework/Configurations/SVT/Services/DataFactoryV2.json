@@ -47,7 +47,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Using a service identity for authentication ensures that there is a built-in high level of assurance for subsequent access control.",
-      "Recommendation": "If the data factory was created through Azure SDK or REST API and does not have a service identity then run command: Set-AzureRmDataFactoryV2 -ResourceGroupName <resourceGroupName> -Name <dataFactoryName> -Location <region>",
+      "Recommendation": "If the data factory was created through Azure SDK or REST API and does not have a service identity then run command: Set-AzDataFactoryV2 -ResourceGroupName <resourceGroupName> -Name <dataFactoryName> -Location <region>",
       "Tags": [
         "SDL",
         "Best Practice",
