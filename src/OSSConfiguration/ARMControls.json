@@ -686,7 +686,7 @@
           "isEnabled": true,
           "description": "The Admin account in Container Registry should be disabled",
           "rationale": "The Admin user account is designed for a single user to access the registry. Multiple users authenticating with the admin account appear as just one user to the registry. This leads to loss of auditability. Using AAD-based identity ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.",
-          "recommendation": "Run command 'Update-AzureRmContainerRegistry -DisableAdminUser -Name '<ContainerRegistryName>' -ResourceGroupName '<RGName>'. Run 'Get-Help Update-AzureRmContainerRegistry -full' for more help. You can add AAD-based SPNs or user accounts to the appropriate RBAC role instead.",
+          "recommendation": "Run command 'Update-AzContainerRegistry -DisableAdminUser -Name '<ContainerRegistryName>' -ResourceGroupName '<RGName>'. Run 'Get-Help Update-AzContainerRegistry -full' for more help. You can add AAD-based SPNs or user accounts to the appropriate RBAC role instead.",
           "severity": "High",
           "jsonPath": [ "$.properties.adminUserEnabled" ],
           "matchType": "Boolean",

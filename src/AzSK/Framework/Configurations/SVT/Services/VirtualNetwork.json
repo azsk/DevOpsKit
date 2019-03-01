@@ -117,7 +117,7 @@
       "Automated": "Yes",
       "MethodName": "CheckGatewayUsed",
       "Rationale":  "Virtual network gateways enable network traffic between a virtual network and other networks. All such connectivity must be carefully scrutinized to ensure that corporate data is not subject to exposure on untrusted networks.",
-      "Recommendation": "You can remove virtual network gateways using the Remove-AzureRmVirtualNetworkGateway command (unless their presence has been approved by network security team). Run 'Get-Help Remove-AzureRmVirtualNetworkGateway -full' for more help.",
+      "Recommendation": "You can remove virtual network gateways using the Remove-AzVirtualNetworkGateway command (unless their presence has been approved by network security team). Run 'Get-Help Remove-AzVirtualNetworkGateway -full' for more help.",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -134,7 +134,7 @@
       "Automated": "Yes",
       "MethodName": "CheckVnetPeering",
       "Rationale":  "Resources in the peered virtual networks can communicate with each other directly. If the two peered networks are on different sides of a security boundary (e.g., corpnet v. private vNet), this can lead to exposure of corporate data. Hence any VNet peerings should be closely scrutinized and approved by the network security team",
-      "Recommendation": "You can remove any virtual network peerings using the Remove-AzureRmVirtualNetworkPeering command (unless their presence has been approved by network security team). Run 'Get-Help Remove-AzureRmVirtualNetworkPeering -full' for more help.",
+      "Recommendation": "You can remove any virtual network peerings using the Remove-AzVirtualNetworkPeering command (unless their presence has been approved by network security team). Run 'Get-Help Remove-AzVirtualNetworkPeering -full' for more help.",
       "Tags": [
         "SDL",
         "Best Practice",

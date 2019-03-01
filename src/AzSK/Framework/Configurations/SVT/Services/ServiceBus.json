@@ -73,7 +73,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
-      "Recommendation": "Use New-AzureRmServiceBusKey -ResourceGroup <ResourceGroupName> -NamespaceName <NamespaceName> -Queue <QueueName> -RegenerateKeys PrimaryKey/SecondaryKey to regenerate Queue key. Use New-AzureRmServiceBusKey -ResourceGroup <ResourceGroupName> -NamespaceName <NamespaceName> -Topic <TopicName> -RegenerateKeys PrimaryKey/SecondaryKey to regenerate Topic key. Use New-AzureRmServiceBusKey -ResourceGroup <ResourceGroupName> -NamespaceName <NamespaceName> -RegenerateKeys PrimaryKey/SecondaryKey to regenerate namespace key. Caution: Make sure that the newly generated keys are seamlessly deployed to clients to avoid disruption of functionality.",
+      "Recommendation": "Use New-AzServiceBusKey -ResourceGroupName <ResourceGroupName> -Namespace <NamespaceName> -Queue <QueueName> -RegenerateKey PrimaryKey/SecondaryKey to regenerate Queue key. Use New-AzServiceBusKey -ResourceGroupName <ResourceGroupName> -Namespace <NamespaceName> -Topic <TopicName> -RegenerateKey PrimaryKey/SecondaryKey to regenerate Topic key. Use New-AzServiceBusKey -ResourceGroupName <ResourceGroupName> -Namespace <NamespaceName> -RegenerateKey PrimaryKey/SecondaryKey to regenerate namespace key. Caution: Make sure that the newly generated keys are seamlessly deployed to clients to avoid disruption of functionality.",
       "Tags": [
         "SDL",
         "TCP",

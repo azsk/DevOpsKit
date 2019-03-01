@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckEventHubRootPolicy",
       "Rationale": "A 'namespace' level access policy provides access to all Event Hub in a namespace. However, using an access policy at entity (Event Hub) level provides access only to the specific entity. Thus using the latter is inline with the principle of least privilege.",
-      "Recommendation": "Remove all the authorization rules from Event Hub namespace except RootManageSharedAccessKey using Remove-AzureRmEventHubAuthorizationRule command. Run 'Get-Help Remove-AzureRmEventHubAuthorizationRule -full' for more help. Use the Azure portal to configure shared access policies with appropriate claims at the specific Event Hub scope.",
+      "Recommendation": "Remove all the authorization rules from Event Hub namespace except RootManageSharedAccessKey using Remove-AzEventHubAuthorizationRule command. Run 'Get-Help Remove-AzEventHubAuthorizationRule -full' for more help. Use the Azure portal to configure shared access policies with appropriate claims at the specific Event Hub scope.",
       "Tags": [
         "SDL",
         "TCP",

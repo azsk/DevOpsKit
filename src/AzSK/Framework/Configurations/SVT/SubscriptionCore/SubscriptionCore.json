@@ -366,7 +366,7 @@
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckCustomRBACRolesPresence",
-      "Recommendation": "Run command 'Remove-AzureRmRoleDefinition -Id {id}'. Run 'Get-Help Remove-AzureRmRoleDefinition -full' for more help.",
+      "Recommendation": "Run command 'Remove-AzRoleDefinition -Id {id}'. Run 'Get-Help Remove-AzRoleDefinition -full' for more help.",
       "Tags": [
         "SDL",
         "Best Practice",
