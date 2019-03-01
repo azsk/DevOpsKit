@@ -243,7 +243,7 @@ class SecurityCenter: AzSKRoot
                     $currentPolicyObj.$policyName.value = $configuredPolicyObject.$policyName.value
                 }else
                 {
-                   $currentPolicyObj = $currentPolicyObj | Add-Member -NotePropertyName $policyName -NotePropertyValue $configuredPolicyObject.$policyName
+                    $currentPolicyObj | Add-Member -NotePropertyName $policyName -NotePropertyValue $configuredPolicyObject.$policyName
                 }				
 				
 			}
