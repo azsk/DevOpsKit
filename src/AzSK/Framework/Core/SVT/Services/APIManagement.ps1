@@ -32,10 +32,10 @@ class APIManagement: SVTBase
 			}
 			elseif($this.ResourceObject)
 			{
-				$this.APIMContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
-				$this.APIMInstance = Get-AzureRmApiManagement -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
-				$this.APIMAPIs = Get-AzureRmApiManagementApi -Context $this.APIMContext
-				$this.APIMProducts = Get-AzureRmApiManagementProduct -Context $this.APIMContext
+				$this.APIMContext = New-AzApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+				$this.APIMInstance = Get-AzApiManagement -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
+				$this.APIMAPIs = Get-AzApiManagementApi -Context $this.APIMContext
+				$this.APIMProducts = Get-AzApiManagementProduct -Context $this.APIMContext
 			}
         }
         return $this.ResourceObject;
@@ -87,7 +87,7 @@ class APIManagement: SVTBase
 		if( $null -ne $this.APIMContext)
 		{
 			$allNamedValues = @()
-			$allNamedValues += Get-AzureRmApiManagementProperty -Context $this.APIMContext 
+			$allNamedValues += Get-AzApiManagementProperty -Context $this.APIMContext 
 			if($allNamedValues.count -eq 0)
 			{
 			    $controlResult.AddMessage([VerificationResult]::Passed, "Named Values are not added.")
@@ -151,7 +151,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$tenantAccess = Get-AzureRmApiManagementTenantAccess -Context $this.APIMContext
+			$tenantAccess = Get-AzApiManagementTenantAccess -Context $this.APIMContext
 			
 			if(($null -ne $tenantAccess) -and ($tenantAccess.Enabled -eq $true))
 			{
@@ -169,7 +169,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$tenantSyncState = Get-AzureRmApiManagementTenantSyncState -Context $this.APIMContext
+			$tenantSyncState = Get-AzApiManagementTenantSyncState -Context $this.APIMContext
 			
 			if(($tenantSyncState.IsGitEnabled -eq $true) -and ($tenantSyncState.CommitId -ne $null))
 			{
@@ -187,7 +187,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$identityProvider = Get-AzureRmApiManagementIdentityProvider -Context $this.APIMContext
+			$identityProvider = Get-AzApiManagementIdentityProvider -Context $this.APIMContext
 
 			if($null -ne $identityProvider)
 			{
@@ -246,7 +246,7 @@ class APIManagement: SVTBase
 		if(($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
 			$ClientCertAuthDisabledInAPIs = ($this.APIMAPIs).ApiId | ForEach-Object {
-				$apiPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_
+				$apiPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_
 				$certThumbprint = $apiPolicy | Select-Xml -XPath "//inbound//authentication-certificate" | foreach { $_.Node.thumbprint }
 			    if($certThumbprint -eq $null)
 			    {
@@ -273,7 +273,7 @@ class APIManagement: SVTBase
 			$Result = @()
 			$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
 			    #Policy Scope: API
-				$APIPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
+				$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
 				$AllowedOrigins = ""
 			    $AllowedOrigins = $APIPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
 			    if($null -ne $AllowedOrigins)
@@ -288,8 +288,8 @@ class APIManagement: SVTBase
 				}
 			    
 			    #Policy Scope: Operation
-			    Get-AzureRmApiManagementOperation -Context $this.APIMContext -ApiId $_.ApiId | ForEach-Object {
-			        $OperationPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -OperationId $_.OperationId
+			    Get-AzApiManagementOperation -Context $this.APIMContext -ApiId $_.ApiId | ForEach-Object {
+			        $OperationPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -OperationId $_.OperationId
 					$AllowedOrigins = ""
 			        $AllowedOrigins = $OperationPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
 			        if($null -ne $AllowedOrigins)
@@ -332,7 +332,7 @@ class APIManagement: SVTBase
 		{
 			$Result = @()
 			#Policy Scope: Gobal
-			$GlobalPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext
+			$GlobalPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext
 			$RestrictedIPs = ""
 			$RestrictedIPs = $GlobalPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
 			$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
@@ -356,7 +356,7 @@ class APIManagement: SVTBase
 			if($null -ne $this.APIMProducts)
 			{
 				$this.APIMProducts | ForEach-Object {
-			    $ProductPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ProductId $_.ProductId
+			    $ProductPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ProductId $_.ProductId
 			    $RestrictedIPs = ""
 			    $RestrictedIPs = $ProductPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
 			    
@@ -386,7 +386,7 @@ class APIManagement: SVTBase
 			{
 				$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
 					#Policy Scope: API
-					$APIPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
+					$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
 					$RestrictedIPs = ""
 					$RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
 					$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
@@ -408,8 +408,8 @@ class APIManagement: SVTBase
 					$Result += $Policy
 					
 					#Policy Scope: Operation
-					Get-AzureRmApiManagementOperation -Context $this.APIMContext -ApiId $_.ApiId | ForEach-Object {
-						$OperationPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -OperationId $_.OperationId
+					Get-AzApiManagementOperation -Context $this.APIMContext -ApiId $_.ApiId | ForEach-Object {
+						$OperationPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -OperationId $_.OperationId
 						$RestrictedIPs = ""
 						$RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
 						$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
@@ -448,7 +448,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$apimLogger = Get-AzureRmApiManagementLogger -Context $this.APIMContext | Where-Object { $_.Type -eq 'ApplicationInsights' }
+			$apimLogger = Get-AzApiManagementLogger -Context $this.APIMContext | Where-Object { $_.Type -eq 'ApplicationInsights' }
 			
 			if($null -ne $apimLogger)
 			{
@@ -467,7 +467,7 @@ class APIManagement: SVTBase
 		if(($null -ne $this.APIMContext) -and ($null -ne $this.APIMProducts))
 		{
 			$GuestGroupUsedInProductList = $this.APIMProducts | ForEach-Object {
-			    if((Get-AzureRmApiManagementGroup -Context $this.APIMContext -ProductId $_.ProductId).GroupId -contains 'guests')
+			    if((Get-AzApiManagementGroup -Context $this.APIMContext -ProductId $_.ProductId).GroupId -contains 'guests')
 			    {
 			        $_
 			    }
@@ -560,7 +560,7 @@ class APIManagement: SVTBase
 		if(($UserAuthDisabledApi -ne 'ResourceNotFound') -and ($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
 			$JWTValidatePolicyNotFound =  $this.APIMAPIs | ForEach-Object {		
-				$apiPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
+				$apiPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
 				$IsPolicyEnabled = $apiPolicy | Select-Xml -XPath "//inbound//validate-jwt"
 				if($null -eq $IsPolicyEnabled)
 				{
