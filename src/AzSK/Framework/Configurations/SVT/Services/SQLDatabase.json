@@ -88,7 +88,7 @@
       "ControlSeverity": "High",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "Using the IP firewall rules ensures that access to the data or the service is restricted to a specific set of IPs. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets and makes your database more portable.",
+      "Rationale": "Using the IP firewall rules ensures that access to the data or the service is restricted to a specific set of IPs. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios.",
       "Recommendation": "Wherever feasible, restrict each SQL Database to a limited set of IP addresses/ranges that require access to that database. Refer: https://docs.microsoft.com/en-us/azure/sql-database/sql-database-firewall-configure. Note: In case the IP range is indeterminate (for instance, if the client is a PaaS endpoint), you may need to attest this control.",
       "Tags": [
         "SDL",
@@ -157,7 +157,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSqlDatabaseFirewallIPAddressRange",
-      "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets.",
+      "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios.",
       "Recommendation": "Do not configure Any to Any firewall IP address. Run command Remove-AzureRmSqlServerFirewallRule -FirewallRuleName '{AnyToAny FirewallRule Name}' -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/remove-azurermsqlserverfirewallrule",
       "Tags": [
         "SDL",
