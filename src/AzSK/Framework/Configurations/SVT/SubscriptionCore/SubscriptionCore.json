@@ -417,7 +417,7 @@
         "ResourceId",
         "SubscriptionId"
       ],
-      "Rationale": "You should use new AzureRM (v2) resources as the ARM model provides several security enhancements such as: stronger access control (RBAC), better auditing, ARM-based deployment/governance, access to managed identities, access to key vault for secrets, AAD-based authentication, support for tags and resource groups for easier security management, etc."
+      "Rationale": "You should use new Azure (v2) resources as the ARM model provides several security enhancements such as: stronger access control (RBAC), better auditing, ARM-based deployment/governance, access to managed identities, access to key vault for secrets, AAD-based authentication, support for tags and resource groups for easier security management, etc."
     },
     {
       "ControlID": "Azure_Subscription_NetSec_Justify_PublicIPs",
