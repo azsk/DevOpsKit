@@ -111,12 +111,12 @@ class KubernetesService: SVTBase
 	{
 		if([Helpers]::CheckMember($this.ResourceObject,"Properties"))
 		{
-			if([Helpers]::CheckMember($this.ResourceObject.Properties,"omsagent") -and [Helpers]::CheckMember($this.ResourceObject.Properties.omsagent,"config"))
+			if([Helpers]::CheckMember($this.ResourceObject.Properties,"addonProfiles.omsagent") -and [Helpers]::CheckMember($this.ResourceObject.Properties.addonProfiles.omsagent,"config"))
 			{
-				if($this.ResourceObject.Properties.omsagent)
+				if($this.ResourceObject.Properties.addonProfiles.omsagent.config -and $this.ResourceObject.Properties.addonProfiles.omsagent.enabled -eq $true)
 				{
 					$controlResult.AddMessage([VerificationResult]::Passed,
-										[MessageData]::new("Configuration of monitoring agent for resource " + $this.ResourceObject.name + "is ", $this.ResourceObject.Properties.omsagent));
+										[MessageData]::new("Configuration of monitoring agent for resource " + $this.ResourceObject.name + " is ", $this.ResourceObject.Properties.addonProfiles.omsagent));
 				}
 				else
 				{
