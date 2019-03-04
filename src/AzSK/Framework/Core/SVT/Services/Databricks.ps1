@@ -49,18 +49,25 @@ class Databricks: SVTBase
 	
     hidden [ControlResult] CheckVnetPeering([ControlResult] $controlResult)
     {
-	    
-        $vnetPeerings = Get-AzVirtualNetworkPeering -VirtualNetworkName "workers-vnet" -ResourceGroupName $this.ManagedResourceGroupName
-        if($null -ne $vnetPeerings  -and ($vnetPeerings|Measure-Object).count -gt 0)
-        {
-			$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Verify below peering found on VNet", $vnetPeerings));
-			$controlResult.SetStateData("Peering found on VNet", $vnetPeerings);
+				$managedRG = Get-AzResourceGroup -Name $this.ManagedResourceGroupName -ErrorAction SilentlyContinue
+				if($managedRG){
+					$vnetPeerings = Get-AzVirtualNetworkPeering -VirtualNetworkName "workers-vnet" -ResourceGroupName $this.ManagedResourceGroupName
+					if($null -ne $vnetPeerings  -and ($vnetPeerings|Measure-Object).count -gt 0)
+					{
+							$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Verify below peering found on VNet", $vnetPeerings));
+							$controlResult.SetStateData("Peering found on VNet", $vnetPeerings);
+	
+					}
+					else
+					{
+							$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No VNet peering found on VNet", $vnetPeerings));
+					}
 
-        }
-        else
-        {
-			$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No VNet peering found on VNet", $vnetPeerings));
-        }
+				}else{
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+					$controlResult.AddMessage([VerificationResult]::Manual, [MessageData]::new("Managed Resource Group $($this.ManagedResourceGroupName) was not found."));
+				}
+     
 
         return $controlResult;
 	}
