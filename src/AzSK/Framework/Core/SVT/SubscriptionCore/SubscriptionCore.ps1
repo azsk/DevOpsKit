@@ -60,9 +60,14 @@ class SubscriptionCore: SVTBase
 		$scope = $this.SubscriptionContext.Scope;
 
 		$SubAdmins = @();
-		$SubAdmins += $this.RoleAssignments | Where-Object { ($_.RoleDefinitionName -like '*ServiceAdministrator*' `
-																				-or $_.RoleDefinitionName -eq 'Owner') -and $_.Scope -eq $scope}
-		
+		$SubAdmins += $this.RoleAssignments | Where-Object { ($_.RoleDefinitionName -eq 'CoAdministrator' `
+			-or $_.RoleDefinitionName -like '*ServiceAdministrator*' `
+			-or $_.RoleDefinitionName -eq 'Owner') -and $_.Scope -eq $scope}
+
+		#Commented the below code since Co-Admin can exist independently now.
+		#Excluded the Co-Administrator since one couldn't be Co-admin without having the Owner privileges.
+		#$SubAdmins += $this.RoleAssignments | Where-Object { ($_.RoleDefinitionName -like '*ServiceAdministrator*' `
+		#	-or $_.RoleDefinitionName -eq 'Owner') -and $_.Scope -eq $scope}
 		if($this.HasGraphAPIAccess -eq $false)
 		{
 			$this.PublishCustomMessage("Current Azure login context doesn't have graph api access");
@@ -98,11 +103,11 @@ class SubscriptionCore: SVTBase
 			}
 		}
 
-		$controlResult.AddMessage("There are a total of $($SubAdmins.Count) admin/owner accounts in your subscription`r`nOf these, the following $($ClientSubAdmins.Count) admin/owner accounts are not from a central team.", ($ClientSubAdmins | Select-Object DisplayName,SignInName,ObjectType, ObjectId));
+		$controlResult.AddMessage("There are a total of $($SubAdmins.Count) admin/owner accounts in your subscription`r`nOf these, the following $($ClientSubAdmins.Count) admin/owner accounts are not from a central team.", ($ClientSubAdmins | Select-Object DisplayName, SignInName, ObjectType, ObjectId, RoleDefinitionName));
 
 		if(($ApprovedSubAdmins | Measure-Object).Count -gt 0)
 		{
-			$controlResult.AddMessage("The following $($ApprovedSubAdmins.Count) admin/owner (approved) accounts are from a central team:`r`n", ($ApprovedSubAdmins | Select-Object DisplayName, SignInName, ObjectType, ObjectId));
+			$controlResult.AddMessage("The following $($ApprovedSubAdmins.Count) admin/owner (approved) accounts are from a central team:`r`n", ($ApprovedSubAdmins | Select-Object DisplayName, SignInName, ObjectType, ObjectId, RoleDefinitionName));
 		}
 		$controlResult.AddMessage("Note: Approved central team accounts don't count against your limit");
 
