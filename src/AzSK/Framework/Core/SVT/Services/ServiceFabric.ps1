@@ -148,7 +148,7 @@ class ServiceFabric : SVTBase
 		if($null -ne $fabricSecuritySettings)
 		{
 			$clusterProtectionLevel = $fabricSecuritySettings.parameters | Where-Object { $_.name -eq "ClusterProtectionLevel"}
-			if($clusterProtectionLevel.value -eq "EncryptAndSign")
+			if($null -ne $clusterProtectionLevel -and $clusterProtectionLevel.value -eq "EncryptAndSign")
 			{
 			  $controlResult.AddMessage([VerificationResult]::Passed,"Cluster security is ON with 'EncryptAndSign' protection level",$clusterProtectionLevel);
 			}
