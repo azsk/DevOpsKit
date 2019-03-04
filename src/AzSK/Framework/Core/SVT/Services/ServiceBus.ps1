@@ -114,21 +114,13 @@ class ServiceBus: SVTBase
 		$isControlFailed = $false
 		#region "NameSpace"
 
-		if(($this.NamespacePolicies | Measure-Object).count -gt 1)
-		{
-			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Authorization rules for namespace - ["+ $this.ResourceContext.ResourceName +"]. All the authorization rules except 'RootManageSharedAccessKey' must be removed from namespace level. Also validate that 'RootManageSharedAccessKey' authorization rule must not be used at Queue/Topic level to send and receive messages.", 
-				$this.NamespacePolicies));   	
+		if((($this.NamespacePolicies | Measure-Object).count -eq 1) -and (($this.NamespacePolicies.Id.substring($this.NamespacePolicies.Id.Length-25, 25) -eq "RootManageSharedAccessKey"))) {
+			$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Only default authorization rule present for namespace - ["+ $this.ResourceContext.ResourceName +"].", 
+			$this.NamespacePolicies)); 
 		}
-		else
-		{
-            if((($this.NamespacePolicies | Measure-Object).count -eq 1) -and (($this.NamespacePolicies.Id.substring($this.NamespacePolicies.Id.Length-25, 25) -eq "RootManageSharedAccessKey"))) {
-                $controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Only default authorization rule present for namespace - ["+ $this.ResourceContext.ResourceName +"].", 
-				$this.NamespacePolicies)); 
-            }
-            else {
-                $controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Authorization rules for namespace - ["+ $this.ResourceContext.ResourceName +"]. Validate that these rules must not be used at Queue/Topic level to send and receive messages.", 
-				$this.NamespacePolicies));   	
-            }
+		else {
+			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Authorization rules for namespace - ["+ $this.ResourceContext.ResourceName +"]. All the authorization rules except 'RootManageSharedAccessKey' must be removed from namespace level. Also validate that 'RootManageSharedAccessKey' authorization rule must not be used at Queue/Topic level to send and receive messages.", 
+			$this.NamespacePolicies)); 
 		}
 
 		$controlResult.SetStateData("Authorization rules for namespace entities", $this.NamespacePolicies);
