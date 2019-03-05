@@ -43,7 +43,7 @@ class NotificationHub: SVTBase
                                                 | Where-Object Rights -Contains "Manage" `
                                                 | Select-Object -Property Name, Rights  
         if((($accessPolicieswithManageRights | Measure-Object).Count -eq 1) -and ($accessPolicieswithManageRights.Name -eq "DefaultFullSharedAccessSignature")) {
-        $controlResult.AddMessage([VerificationResult]::Passed,
+            $controlResult.AddMessage([VerificationResult]::Verify,
                             [MessageData]::new("Only the default authorization rule has 'Manage' security claim access rights for resource -  ["+ $this.ResourceContext.ResourceName +"]"  , 
                             $accessPolicieswithManageRights));
         }
