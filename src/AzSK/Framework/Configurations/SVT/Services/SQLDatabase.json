@@ -158,7 +158,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlDatabaseFirewallIPAddressRange",
       "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios.",
-      "Recommendation": "Do not configure Any to Any firewall IP address. Run command Remove-AzureRmSqlServerFirewallRule -FirewallRuleName '{AnyToAny FirewallRule Name}' -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/remove-azurermsqlserverfirewallrule",
+      "Recommendation": "Do not configure Any to Any firewall IP address. Run command Remove-AzSqlServerFirewallRule -FirewallRuleName '{AnyToAny FirewallRule Name}' -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.sql/Remove-AzSqlServerFirewallRule",
       "Tags": [
         "SDL",
         "Best Practice",
