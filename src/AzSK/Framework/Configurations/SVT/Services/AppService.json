@@ -225,7 +225,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceDotNetFrameworkVersion",
         "Rationale": "Running on older .Net versions could mean you are not using latest security classes. Usage of such old classes and types can make your application vulnerable.",
-        "Recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.0''. Run 'Get-Help Set-AzWebApp -full' for more help.",
+        "Recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.7''. Run 'Get-Help Set-AzWebApp -full' for more help.",
         "Tags": [
           "SDL",
           "Best Practice",
@@ -395,7 +395,7 @@
         "ControlSeverity": "Medium",
         "Automated": "No",
         "MethodName": "",
-        "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook#working-with-keys for details on Host keys in Functions app.",
+        "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook#authorization-keys for details on Host keys in Functions app.",
         "Tags": [
           "SDL",
           "TCP",
@@ -413,7 +413,7 @@
         "ControlSeverity": "Medium",
         "Automated": "No",
         "MethodName": "",
-        "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook#working-with-keys for details on Host keys in Functions app.",
+        "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook#authorization-keys for details on Host keys in Functions app.",
         "Tags": [
           "SDL",
           "TCP",
@@ -526,7 +526,7 @@
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckAppServiceMsiEnabled",
-        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Managed Service Identity --> Register with AAD --> ON",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Identity --> System assigned --> ON",
         "Tags": [
           "SDL",
           "TCP",

@@ -11,13 +11,17 @@
             "Automated": "Yes",
             "MethodName": "CheckRBACAccess",
             "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-            "Recommendation": "Remove any excessive privileges granted on the API Management Service. Run command: Remove-AzRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
+            "Recommendation": "Remove any excessive privileges granted on the API Management Service. Run command: Remove-AzRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' -RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
             "Tags": [
                 "SDL",
                 "TCP",
                 "Automated",
                 "AuthZ",
                 "RBAC",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement"
             ],
             "Enabled": true
@@ -36,6 +40,10 @@
                 "TCP",
                 "Automated",
                 "Audit",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement"
             ],
             "Enabled": true
@@ -73,6 +81,10 @@
                 "TCP",
                 "Automated",
                 "DP",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement",
                 "APIMAPIs"
             ],
@@ -91,6 +103,10 @@
                 "SDL",
                 "TCP",
                 "BCDR",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",                
                 "APIManagement"
             ],
             "Enabled": true
@@ -109,6 +125,10 @@
                 "TCP",
                 "Automated",
                 "DP",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement"
             ],
             "Enabled": true
@@ -121,12 +141,16 @@
             "Automated": "No",
             "MethodName": "",
             "Rationale": "TLS 1.2 is the latest and most secure protocol. Using 3DES Ciphers, TLS protocols (1.1 and 1.0) and SSL 3.0 exposes the API to meet-in-the-middle attack, chosen-plaintext or known-plaintext attacks.",
-            "Recommendation": "Ensure that secure protocol versions are used between the client and the gateway *and* between the gateway and the backend APIs. Go to Azure Portal --> your API management instance --> Settings --> SSL --> Turn OFF 3DES Ciphers, TLS protocols (1.1 and 1.0) and SSL 3.0 Protocols.",
+            "Recommendation": "Ensure that secure protocol versions are used between the client and the gateway *and* between the gateway and the backend APIs. Go to Azure Portal --> your API management instance --> Settings --> Protocol settings --> Turn OFF 3DES Ciphers, TLS protocols (1.1 and 1.0) and SSL 3.0 Protocols.",
             "Tags": [
                 "SDL",
                 "TCP",
                 "Manual",
                 "DP",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement"
             ],
             "Enabled": true
@@ -145,6 +169,10 @@
                 "TCP",
                 "Automated",
                 "DP",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement",
                 "APIMProducts"
             ],
@@ -164,6 +192,10 @@
                 "TCP",
                 "Automated",
                 "DP",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement",
                 "APIMAPIs"
             ],
@@ -183,6 +215,10 @@
                 "TCP",
                 "Automated",
                 "DP",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement",
                 "APIMAPIs"
             ],
@@ -202,6 +238,10 @@
                 "TCP",
                 "Automated",
                 "AuthN",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement"
             ],
             "Enabled": true
@@ -220,6 +260,8 @@
                 "TCP",
                 "Automated",
                 "NetSec",
+                "PremiumSku",
+                "DeveloperSku",
                 "APIManagement"
             ],
             "Enabled": true
@@ -238,6 +280,10 @@
                 "TCP",
                 "Manual",
                 "DP",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement"
             ],
             "Enabled": true
@@ -256,6 +302,10 @@
                 "TCP",
                 "Automated",
                 "AuthZ",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement",
                 "APIMAPIs"
             ],
@@ -268,13 +318,17 @@
             "ControlSeverity": "Medium",
             "Automated": "Yes",
             "MethodName": "CheckRestrictedCallerIPs",
-            "Rationale": "Using the IP filter policy feature ensures that access to the backend service is restricted to a specific set/group of clients. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets.",
-            "Recommendation": "Use 'ip-filter' policy filters to allow and deny calls from specific IP addresses and/or address ranges. Please refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-access-restriction-policies#RestrictCallerIPs",
+            "Rationale": "Using the IP filter policy feature ensures that access to the backend service is restricted to a specific set/group of clients. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios.",
+            "Recommendation": "Use 'ip-filter' policy filters to allow and deny calls from specific IP addresses and/or address ranges. Do not add IP range $($this.ControlSettings.UniversalIPRange) as that allows access to all possible IPs. Please refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-access-restriction-policies#RestrictCallerIPs",
             "Tags": [
                 "SDL",
                 "TCP",
                 "Automated",
                 "AuthZ",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement"
             ],
             "Enabled": true
@@ -293,6 +347,10 @@
                 "TCP",
                 "Automated",
                 "AuthN",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement"
             ],
             "Enabled": true
@@ -305,13 +363,17 @@
             "Automated": "Yes",
             "MethodName": "CheckUserAuthorizationSettingInAPI",
             "Rationale": "Enabling OAuth/OpenID connect user authorization ensure that only valid users have access, and they can only access resources to which they are entitled.",
-            "Recommendation": "To enable user authorization for an API go to Azure Portal --> your API management instance --> APIs --> Select API --> Settings -> User Authorization. Please refer https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-oauth2.",
+            "Recommendation": "To enable user authorization for an API go to Azure Portal --> your API management instance --> APIs --> Select API --> Settings -> User Authorization -> Enable 'OAuth 2.0' or 'OpenID connect'. Please refer https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-oauth2.",
             "Tags": [
                 "SDL",
                 "TCP",
                 "Automated",
                 "AuthZ",
                 "APIManagement",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIMAPIs"
             ],
             "Enabled": true
@@ -330,6 +392,9 @@
                 "TCP",
                 "Automated",
                 "AuthN",
+                "DeveloperSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement"
             ],
             "Enabled": true
@@ -348,6 +413,10 @@
                 "TCP",
                 "Manual",
                 "DP",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement"
             ],
             "Enabled": true
@@ -366,6 +435,10 @@
                 "TCP",
                 "Automated",
                 "DP",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement"
             ],
             "Enabled": true
@@ -385,6 +458,10 @@
                 "Automated",
                 "AuthN",
                 "APIManagement",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIMAPIs"
             ],
             "Enabled": true
@@ -397,12 +474,16 @@
             "Automated": "Yes",
             "MethodName": "CheckRequiresSubscription",
             "Rationale": "When publishing APIs through Azure API Management (APIM), the easiest and most common way to secure access to the APIs is by using Subscription Keys. To obtain a Subscription Key for accessing APIs, a Subscription is required. This ensures that a Client applications that need to consume the published APIs must subscribe before making calls to those APIs.",
-            "Recommendation": "To enable 'Requires Subscription' go to Azure Portal --> your API management instance --> Products --> Settings. Refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-subscriptions. To create subscription for a user directly from Azure portal refer https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-create-subscriptions",
+            "Recommendation": "To enable 'Requires Subscription' go to Azure Portal --> your API management instance --> Products --> Settings --> 'Requires Subscription'. Refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-subscriptions. To create subscription for a user directly from Azure portal refer https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-create-subscriptions",
             "Tags": [
                 "SDL",
                 "TCP",
                 "Automated",
                 "AuthZ",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement",
                 "APIMProducts"
             ],
@@ -422,6 +503,10 @@
                 "TCP",
                 "Automated",
                 "DP",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
                 "APIManagement",
                 "APIMProducts"
             ],
@@ -441,8 +526,11 @@
                 "TCP",
                 "Automated",
                 "AuthN",
-                "APIManagement",
-                "OwnerAccess"
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
+                "APIManagement"
             ],
             "Enabled": true
         },
@@ -454,12 +542,16 @@
             "Automated": "No",
             "MethodName": "",
             "Rationale": "Enabling 'Requires Approval' ensures that only users approved by API publisher can subscribe to a product.",
-            "Recommendation": "To enable 'Requires Approval' go to Azure Portal --> your API management instance --> Products --> Settings. Refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-subscriptions.",
+            "Recommendation": "To enable 'Requires Approval' go to Azure Portal --> your API management instance --> Products --> Settings --> Select 'Requires Approval'. Refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-subscriptions.",
             "Tags": [
             "SDL",
             "TCP",
             "Manual",
             "AuthZ",
+            "DeveloperSku",
+            "BasicSku",
+            "StandardSku",
+            "PremiumSku",
             "APIManagement",
             "APIMProducts"
             ],
