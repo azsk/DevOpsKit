@@ -48,7 +48,7 @@
             "Automated": "Yes",
             "MethodName": "CheckDiagnosticsSettings",
             "Rationale": "Logs should be retained for a long enough period so that activity trail can be recreated when investigations are required in the event of an incident or a compromise. A period of 1 year is typical for several compliance requirements as well.",
-            "Recommendation": "Run command: Set-AzDiagnosticSetting -ResourceId {'ResourceId'} -Enabled $true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled $true. Alternatively, you can also change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal.",
+            "Recommendation": "Run command: Set-AzDiagnosticSetting -ResourceId {'ResourceId'} -Enabled `$true -StorageAccountId '{StorageAccountId}' -RetentionInDays $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) -RetentionEnabled `$true. Alternatively, you can also change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal.",
             "Tags": [
                 "SDL",
                 "TCP",
@@ -103,7 +103,7 @@
             "Automated": "Yes",
             "MethodName": "CheckSecretNamedValues",
             "Rationale": "Encrypted 'Named Values' are stored securely by the Azure platform.",
-            "Recommendation": "Run command: Set-AzApiManagementProperty -Secret $true -Context {APIContextObject} -Name '{PropertyDisplayName}' -PropertyId '{PropertyId}'. Refer https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-properties. Example: https://docs.microsoft.com/en-us/azure/api-management/api-management-advanced-policies#example-11",
+            "Recommendation": "Run command: Set-AzApiManagementProperty -Secret `$true -Context {APIContextObject} -Name '{PropertyDisplayName}' -PropertyId '{PropertyId}'. Refer https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-properties. Example: https://docs.microsoft.com/en-us/azure/api-management/api-management-advanced-policies#example-11",
             "Tags": [
                 "SDL",
                 "TCP",
@@ -287,7 +287,7 @@
             "Automated": "Yes",
             "MethodName": "CheckManagementAPIDisabled",
             "Rationale": "The credentials used to access API Management REST API provide admin-level access without support for role-based access control and without recording audit logs. For better security it is recommended to make calls through the ARM-based REST API",
-            "Recommendation": "Disable API Management REST API and use the ARM-based REST API instead. Run command: Set-AzApiManagementTenantAccess -Context {APIContextObject} -Enabled $false. To disable 'Enable API Management REST API' manually go to Azure Portal --> your API management instance --> Management API --> Uncheck 'Enable API Management REST API'. Use ARM based REST API mentioned in https://docs.microsoft.com/en-us/rest/api/apimanagement.",
+            "Recommendation": "Disable API Management REST API and use the ARM-based REST API instead. Run command: Set-AzApiManagementTenantAccess -Context {APIContextObject} -Enabled `$false. To disable 'Enable API Management REST API' manually go to Azure Portal --> your API management instance --> Management API --> Uncheck 'Enable API Management REST API'. Use ARM based REST API mentioned in https://docs.microsoft.com/en-us/rest/api/apimanagement.",
             "Tags": [
                 "SDL",
                 "TCP",
