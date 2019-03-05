@@ -84,7 +84,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale":  "Setting up storage data source using PowerShell command eliminates the risk of exposing storage account key (because the key itself is not displayed on the GUI at all).",
-      "Recommendation": "Setup storage data source using PowerShell command 'Add-AzureRmDataLakeAnalyticsDataSource -ResourceGroupName <ResourceGroup> -Account <ADLAAccount> -AzureBlob <StorageAccount> -AccessKey ((Get-AzStorageAccountKey -ResourceGroupName <ResourceGroupOfStorageAccount> -Name <StorageAccountName>).Key1",
+      "Recommendation": "Setup storage data source using PowerShell command 'Add-AzDataLakeAnalyticsDataSource -ResourceGroupName <ResourceGroup> -Account <ADLAAccount> -Blob <StorageAccount> -AccessKey ((Get-AzStorageAccountKey -ResourceGroupName <ResourceGroupOfStorageAccount> -Name <StorageAccountName>).Key1",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -102,7 +102,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale":  "Credentials added in form of plain text in U-SQL job have higher chances of getting compromised. The job code is also likely check in into a code repository so the credential is visible to many parties.",
-      "Recommendation": "Password of the account used to access SQL Azure must be created as a new catalog secret using the 'New-AzureRmDataLakeAnalyticsCatalogSecret' PS command. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.datalakeanalytics/new-azurermdatalakeanalyticscatalogsecret. Then create credential object for this catalog secret using the U-SQL command 'CREATE CREDENTIAL', Refer: https://docs.microsoft.com/en-us/azure/sql-data-warehouse/sql-data-warehouse-load-from-azure-data-lake-store#configure-the-data-source",
+      "Recommendation": "Password of the account used to access SQL Azure must be created as a new catalog credential using the 'New-AzDataLakeAnalyticsCatalogCredential' PS command. Refer: https://docs.microsoft.com/en-us/powershell/module/az.datalakeanalytics/new-azdatalakeanalyticscatalogcredential, https://docs.microsoft.com/en-us/rest/api/datalakeanalytics/catalog/createcredential and https://docs.microsoft.com/en-us/azure/sql-data-warehouse/sql-data-warehouse-load-from-azure-data-lake-store#configure-the-data-source for details.",
       "Tags": [
         "SDL",
         "Best Practice",

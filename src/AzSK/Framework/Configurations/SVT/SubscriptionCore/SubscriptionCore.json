@@ -366,7 +366,7 @@
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckCustomRBACRolesPresence",
-      "Recommendation": "Run command 'Remove-AzureRmRoleDefinition -Id {id}'. Run 'Get-Help Remove-AzureRmRoleDefinition -full' for more help.",
+      "Recommendation": "Run command 'Remove-AzRoleDefinition -Id {id}'. Run 'Get-Help Remove-AzRoleDefinition -full' for more help.",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -417,7 +417,7 @@
         "ResourceId",
         "SubscriptionId"
       ],
-      "Rationale": "You should use new AzureRM (v2) resources as the ARM model provides several security enhancements such as: stronger access control (RBAC), better auditing, ARM-based deployment/governance, access to managed identities, access to key vault for secrets, AAD-based authentication, support for tags and resource groups for easier security management, etc."
+      "Rationale": "You should use new Azure (v2) resources as the ARM model provides several security enhancements such as: stronger access control (RBAC), better auditing, ARM-based deployment/governance, access to managed identities, access to key vault for secrets, AAD-based authentication, support for tags and resource groups for easier security management, etc."
     },
     {
       "ControlID": "Azure_Subscription_NetSec_Justify_PublicIPs",
@@ -426,7 +426,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckPublicIpUsage",
-      "Recommendation": "Verify the list of public IP addresses used and delete the unwanted and unused ones immediately! To delete run 'Remove-AzureRmPublicIpAddress -ResourceGroupName {ResourceGroupName} -Name {PublicIpAddressName}'. You might encounter an error if the public IP resource is associated with some other resource. Refer link: https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-public-ip-address#view-change-settings-for-or-delete-a-public-ip-address for more details.",
+      "Recommendation": "Verify the list of public IP addresses used and delete the unwanted and unused ones immediately! To delete run 'Remove-AzPublicIpAddress -ResourceGroupName {ResourceGroupName} -Name {PublicIpAddressName}'. You might encounter an error if the public IP resource is associated with some other resource. Refer link: https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-public-ip-address#view-change-settings-for-or-delete-a-public-ip-address for more details.",
       "Tags": [
         "SDL",
         "Automated",

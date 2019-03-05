@@ -107,7 +107,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
-      "Recommendation": "Rotate keys at regular intervals. To generate a new key, run command 'New-AzureRmRedisCacheKey'. Run 'Get-Help New-AzureRmRedisCacheKey -full' for more help.",
+      "Recommendation": "Rotate keys at regular intervals. To generate a new key, run command 'New-AzRedisCacheKey'. Run 'Get-Help New-AzRedisCacheKey -full' for more help.",
       "Tags": [
         "SDL",
         "TCP",

@@ -49,7 +49,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Encrypting the sensitive data like secrets/keys minimizes the exposure until runtime. Using the uploaded certificates, compute nodes can decrypt the secrets as needed at runtime.",
-      "Recommendation": "Certificates need to be installed on the compute nodes used by Batch in order to protect sensitive information. Run command New-AzureBatchCertificate  -FilePath '{FilePath}'  -BatchContext '{BatchContext}' -Password '{Password}'. Note: Password value should be a secure string variable. Please refer https://docs.microsoft.com/en-us/azure/batch/batch-api-basics#security-with-certificates",
+      "Recommendation": "Certificates need to be installed on the compute nodes used by Batch in order to protect sensitive information. Run command New-AzBatchCertificate  -FilePath '{FilePath}'  -BatchContext '{BatchContext}' -Password '{Password}'. Note: Password value should be a secure string variable. Please refer https://docs.microsoft.com/en-us/azure/batch/batch-api-basics#security-with-certificates",
       "Tags": [
         "SDL",
         "TCP",
@@ -67,7 +67,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
-      "Recommendation": "Rotate Batch account access keys at regular intervals as per business requirement. Run command New-AzureRmBatchAccountKey -AccountName '{AccountName}'  -KeyType '{KeyType}' -ResourceGroupName '{ResourceGroupName}' Refer:  https://docs.microsoft.com/en-us/powershell/module/azurerm.batch/new-azurermbatchaccountkey",
+      "Recommendation": "Rotate Batch account access keys at regular intervals as per business requirement. Run command New-AzBatchAccountKey -AccountName '{AccountName}'  -KeyType '{KeyType}' -ResourceGroupName '{ResourceGroupName}' Refer: https://docs.microsoft.com/en-us/powershell/module/az.batch/New-AzBatchAccountKey",
       "Tags": [
         "SDL",
         "TCP",

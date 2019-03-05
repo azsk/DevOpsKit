@@ -212,7 +212,7 @@
       "Automated": "Yes",
       "MethodName": "CheckAADClientAuthentication",
       "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control. All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
-      "Recommendation": "A Service Fabric cluster offers several entry points to its management functionality, including the web-based Service Fabric Explorer, Visual Studio and PowerShell. Access to the cluster must be controlled using AAD. Refer: https://azure.microsoft.com/en-in/documentation/articles/service-fabric-cluster-creation-via-arm/#_set-up-azure-active-directory-for-client-authentication",
+      "Recommendation": "A Service Fabric cluster offers several entry points to its management functionality, including the web-based Service Fabric Explorer, Visual Studio and PowerShell. Access to the cluster must be controlled using AAD. Refer: https://docs.microsoft.com/en-in/azure/service-fabric/service-fabric-cluster-creation-setup-aad",
       "Tags": [
         "SDL",
         "TCP",
@@ -255,7 +255,7 @@
       "Automated": "Yes",
       "MethodName": "CheckNSGConfigurations",
       "Rationale": "Use of appropriate NSG rules can limit exposure of Service Fabric cluster in multiple scenarios. For example, RDP connections can be restricted only for specific admin machines. Incoming requests to microservices may be restricted to specific clients. Also, deployments can be restricted to happen only from an allowed range of IP addresses.",
-      "Recommendation": "NSG contains a list of Access Control List (ACL) rules that allow or deny network traffic to Service Fabric node instances in a Virtual Network. NSGs can be associated with either subnets or individual node/VM instances within a subnet. NSG must be used in following scenarios: (1) Restrict RDP connection only from admin machine IP,  (2) Restrict microservice incoming request from trusted source IP, (3(.) Lock down the remote address ranges allowed for microservice deployments. Refer: https://azure.microsoft.com/en-in/documentation/articles/virtual-networks-create-nsg-arm-pportal/",
+      "Recommendation": "NSG contains a list of Access Control List (ACL) rules that allow or deny network traffic to Service Fabric node instances in a Virtual Network. NSGs can be associated with either subnets or individual node/VM instances within a subnet. NSG must be used in following scenarios: (1) Restrict RDP connection only from admin machine IP,  (2) Restrict microservice incoming request from trusted source IP, (3) Lock down the remote address ranges allowed for microservice deployments. Refer: https://azure.microsoft.com/en-in/documentation/articles/virtual-networks-create-nsg-arm-pportal/",
       "Tags": [
         "SDL",
         "TCP",
