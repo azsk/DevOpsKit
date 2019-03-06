@@ -964,7 +964,7 @@ class SubscriptionCore: SVTBase
 					$controlResult.AddMessage("`nPolicy Requirement: `n`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpected Values: '$($tagObject.Values)'")
 
 					#Step1 Validate if tag present on RG 			
-					$rgListwithoutTags = $resourceGroups | Where-Object { $_.Tags | Where-Object { $_ -eq $null -or (-not $_.ContainsKey($tagObject.Name))}}
+					$rgListwithoutTags = $resourceGroups | Where-Object { [string]::IsNullOrWhiteSpace($_.Tags) -or (-not ($_.Tags).ContainsKey($tagObject.Name))}
 					
 					if(($rgListwithoutTags | Measure-Object).Count -gt 0)
 					{
@@ -972,7 +972,7 @@ class SubscriptionCore: SVTBase
 						$controlResult.AddMessage("`nTotal number of RGs without Tag: " + ($rgListwithoutTags | Measure-Object).Count, ($rgListwithoutTags | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
 					}
 					
-					$rgListwithTags = $resourceGroups | Where-Object { $_.Tags | Where-Object { $_ -eq $null -or ( $_.ContainsKey($tagObject.Name))}}
+					$rgListwithTags = $resourceGroups | Where-Object { (-not [string]::IsNullOrWhiteSpace($_.Tags)) -and ($_.Tags).ContainsKey($tagObject.Name) }
 					
 					if(($rgListwithTags| Measure-Object).Count -gt 0)
 					{
