@@ -92,7 +92,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMAPIs)
 		{
-			$nonCompliantAPIs = $this.APIMAPIs | where-object{$_.Protocols.count -gt 1 -or $_.Protocols[0] -ne 'https' }
+			$nonCompliantAPIs = $this.APIMAPIs | where-object{$_.Protocols.count -gt 1 -or $_.Protocols[0] -ne [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementSchema]::Https }
 			if(($nonCompliantAPIs|Measure-Object).Count -gt 0)
 			{
 			    $controlResult.AddMessage([VerificationResult]::Failed, "Below API(s) are configured to use non-secure HTTP access to the backend via API Management.", $nonCompliantAPIs)
@@ -141,7 +141,7 @@ class APIManagement: SVTBase
 
 		if($null -ne $this.APIMProducts)
 		{
-			$Product = $this.APIMProducts | Where-Object { ($_.State -eq 'Published') -and ($_.SubscriptionRequired -eq $false )}
+			$Product = $this.APIMProducts | Where-Object { ($_.State -eq [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementProductState]::Published) -and ($_.SubscriptionRequired -eq $false )}
 			if(($Product | Measure-Object).Count -gt 0)
 			{
 				$controlResult.AddMessage([VerificationResult]::Failed, "'Requires Subscription' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $Product )
@@ -159,7 +159,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMProducts)
 		{
-			$Product = $this.APIMProducts | Where-Object { $_.State -eq 'Published' }
+			$Product = $this.APIMProducts | Where-Object { $_.State -eq [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementProductState]::Published }
 			
 			if(($null -ne $Product) -and ($Product.ApprovalRequired -contains $false))
 			{
@@ -219,7 +219,7 @@ class APIManagement: SVTBase
 
 			if($null -ne $identityProvider)
 			{
-				if($null -ne ($identityProvider | Where-Object {$_.Type -ne "Aad"}))
+				if($null -ne ($identityProvider | Where-Object {$_.Type -ne [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementIdentityProviderType]::Aad}))
 				{				
 					$controlResult.AddMessage([VerificationResult]::Verify, "Below listed Identity provider(s) are enabled in '$($this.ResourceContext.ResourceName)' API management instance. Enterprise applications using APIM must authenticate developers/applications using Azure Active Directory backed credentials.", $identityProvider)
 					$controlResult.SetStateData("Sign in option enabled on developer portal other than AAD", $identityProvider);
@@ -241,7 +241,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMInstance)
 		{
-			if($this.APIMInstance.VpnType -eq 'None')
+			if($this.APIMInstance.VpnType -eq [Microsoft.Azure.Commands.ApiManagement.Models.PsApiManagementVpnType]::None)
 			{
 				$controlResult.AddMessage([VerificationResult]::Verify, "'$($this.ResourceContext.ResourceName)' API management instance is not deployed inside a virtual network. Consider hosting APIM within a virtual network for improved isolation.") 
 			}
@@ -502,7 +502,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$apimLogger = Get-AzApiManagementLogger -Context $this.APIMContext | Where-Object { $_.Type -eq 'ApplicationInsights' }
+			$apimLogger = Get-AzApiManagementLogger -Context $this.APIMContext | Where-Object { $_.Type -eq [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementLoggerType]::ApplicationInsights }
 			
 			if($null -ne $apimLogger)
 			{
@@ -579,7 +579,7 @@ class APIManagement: SVTBase
     {
         if($null -ne $this.APIMInstance)
 		{
-			if(([Helpers]::CheckMember($this.APIMInstance.Identity,"Type",$false)) -and ($this.APIMInstance.Identity.type -eq "SystemAssigned"))
+			if(([Helpers]::CheckMember($this.APIMInstance.Identity,"Type",$false)) -and ($this.APIMInstance.Identity.type -eq [Microsoft.Azure.Commands.ApiManagement.Models.PsApiManagementServiceIdentityType]::SystemAssigned))
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed,
 											 [MessageData]::new("Your APIM instance is using Managed Service Identity(MSI). It is specifically turned On."));
@@ -622,11 +622,11 @@ class APIManagement: SVTBase
 					$_
 				}
 			}
-			[PSObject] $Temp = Compare-Object -ReferenceObject $APIUserAuth.Enabled.ApiID -DifferenceObject $JWTValidatePolicyNotFound.ApiId -IncludeEqual | Where-Object { $_.SideIndicator -eq "==" }
+			$Temp = Compare-Object -ReferenceObject $APIUserAuth.Enabled.ApiID -DifferenceObject $JWTValidatePolicyNotFound.ApiId -IncludeEqual | Where-Object { $_.SideIndicator -eq "==" }
 			if(($JWTValidatePolicyNotFound | Measure-Object).Count -gt 0 -and ($APIUserAuth.Enabled | Measure-Object).Count -gt 0 -and ($Temp | Measure-Object).Count -gt 0)
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "JWT Token validation not found for OAuth/OpenID connect authorization.", $JWTValidatePolicyNotFound)
-				$controlResult.SetStateData("JWT Token validation not found",$JWTValidatePolicyNotFound);
+				$controlResult.AddMessage([VerificationResult]::Failed, "JWT Token validation not found for OAuth/OpenID connect authorization.", $Temp)
+				$controlResult.SetStateData("JWT Token validation not found",$Temp);
 			}
 			elseif(($JWTValidatePolicyNotFound| Measure-Object).Count -gt 0)
 			{
