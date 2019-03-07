@@ -309,7 +309,7 @@ class Databricks: SVTBase
 				$controlResult.SetStateData("Following guest accounts have admin access on workspace:", $guestAdminUsers);
 			}
 			else{
-				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Manually verify that guest accounts should not have admin access on workspace."));
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No guest account with admin access on workspace found."));
 			}
 			
 	   }
