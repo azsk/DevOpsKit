@@ -99,17 +99,19 @@
   "PreviewBaselineControls": {
     "ResourceTypeControlIdMappingList": [
       {
-        "ResourceType": "APIConnection",
+        "ResourceType": "APIManagement",
         "ControlIds": [
-          "Azure_APIConnection_AuthN_Connectors_Use_AAD",
-          "Azure_APIConnection_DP_Encrypt_Data_In_Transit"
+          "Azure_APIManagement_AuthN_Disable_Management_API",
+          "Azure_APIManagement_AuthN_Use_AAD_for_Client_AuthN",
+          "Azure_APIManagement_AuthN_Verify_Delegated_Authentication",
+          "Azure_APIManagement_DP_Dont_Checkin_Secrets_In_Source",
+          "Azure_APIManagement_DP_Use_HTTPS_URL_Scheme"
         ]
       },
       {
         "ResourceType": "AppService",
         "ControlIds": [
           "Azure_AppService_DP_Dont_Allow_HTTP_Access_Fn",
-          "Azure_AppService_DP_Website_Load_Certificates_Not_All",                   
           "Azure_AppService_Config_Disable_Web_Sockets"
         ]
       },
@@ -117,12 +119,6 @@
         "ResourceType": "Automation",
         "ControlIds": [
           "Azure_Automation_DP_Use_Encrypted_Variables"
-        ]
-      },      
-      {
-        "ResourceType": "BotService",
-        "ControlIds": [
-          "Azure_BotService_Enable_Required_Channels_Only"
         ]
       },
       {
@@ -134,34 +130,33 @@
       {
         "ResourceType": "ContainerInstances",
         "ControlIds": [
-          "Azure_ContainerInstances_NetSec_Justify_PublicIP_and_Ports"
+          "Azure_ContainerInstances_AuthZ_Container_Segregation"
+
+        ]
+      },
+      {
+        "ResourceType": "ContainerRegistry",
+        "ControlIds": [
+          "Azure_ContainerRegistry_AuthZ_Disable_Admin_Account"
 
         ]
       },
       {
         "ResourceType": "CosmosDB",
         "ControlIds": [
-          "Azure_CosmosDB_AuthZ_Enable_Firewall",
           "Azure_CosmosDB_Config_Default_Consistency"
         ]
       },
       {
-        "ResourceType": "DataFactory",
+        "ResourceType": "Databricks",
         "ControlIds": [
-          "Azure_DataFactory_DP_LinkSvc_Encrypt_In_Transit"
+          "Azure_Databricks_NetSec_Justify_VNet_Peering"
         ]
       },
       {
         "ResourceType": "DataLakeAnalytics",
         "ControlIds": [
           "Azure_DataLakeAnalytics_DP_Encrypt_At_Rest"
-        ]
-      },
-      {
-        "ResourceType": "DataLakeStore",
-        "ControlIds": [
-
-          "Azure_DataLakeStore_AuthZ_Assign_ACLs_On_FileSystem"
         ]
       },
       {
@@ -173,11 +168,22 @@
         ]
       },
       {
+        "ResourceType": "HDInsight",
+        "ControlIds": [
+          "Azure_HDInsight_Deploy_Supported_Cluster_Version"
+        ]
+      },
+      {
         "ResourceType": "KeyVault",
         "ControlIds": [
-          "Azure_KeyVault_AuthN_Dont_Share_KeyVault_Unless_Trust",
-          "Azure_KeyVault_AuthN_Use_Cert_Auth_for_Apps",
-          "Azure_KeyVault_AuthZ_Grant_Min_RBAC_Access"
+          "Azure_KeyVault_AuthN_Dont_Share_KeyVault_Unless_Trust"
+        ]
+      },
+      {
+        "ResourceType": "KubernetesService",
+        "ControlIds": [
+          "Azure_KubernetesService_AuthN_Enabled_AAD",
+          "Azure_KubernetesService_Deploy_Enable_Cluster_RBAC"
         ]
       },
       {
@@ -187,57 +193,29 @@
         ]
       },
       {
-        "ResourceType": "LogicApps",
-        "ControlIds": [
-          "Azure_LogicApps_DP_Dont_Allow_PlainText_Secrets_In_Codeview"
-        ]
-      },
-      {
         "ResourceType": "NotificationHub",
         "ControlIds": [
           "Azure_NotificationHub_AuthZ_Dont_Use_Manage_Access_Permission"
         ]
       },
       {
-        "ResourceType": "ServiceBus",
-        "ControlIds": [
-          "Azure_ServiceBus_AuthZ_Dont_Use_Policies_At_SB_Namespace"
-        ]
-      },
-      {
         "ResourceType": "ServiceFabric",
         "ControlIds": [
-          "Azure_ServiceFabric_AuthN_Self_Signed_Cert",
-          "Azure_ServiceFabric_AuthZ_Security_Mode_Enabled",
+          "Azure_ServiceFabric_DP_Dont_Expose_Reverse_Proxy_Port",
           "Azure_ServiceFabric_DP_Set_Property_ClusterProtectionLevel"
-        ]
-      },
-      {
-        "ResourceType": "StreamAnalytics",
-        "ControlIds": [
-          "Azure_StreamAnalytics_Audit_Issue_Alert_Runtime_Errors_Failed_Functions"
         ]
       },
       {
         "ResourceType": "VirtualMachine",
         "ControlIds": [
           "Azure_VirtualMachine_DP_Enable_Disk_Encryption",
-          "Azure_VirtualMachine_NetSec_Dont_Open_Management_Ports",
           "Azure_VirtualMachine_NetSec_Justify_PublicIPs"
-        ]
-      },
-      {
-        "ResourceType": "VirtualNetwork",
-        "ControlIds": [
-          "Azure_VNet_NetSec_Justify_PublicIPs"         
         ]
       }
     ],
     "SubscriptionControlIdList": [
       "Azure_Subscription_Audit_Resolve_Azure_Security_Center_Alerts",
-      "Azure_Subscription_AuthZ_Dont_Use_SVC_Accounts_No_MFA",
       "Azure_Subscription_AuthZ_Limit_ClassicAdmin_Count",
-      "Azure_Subscription_NetSec_Justify_PublicIPs",
       "Azure_Subscription_Config_Add_Required_Tags",
       "Azure_Subscription_SI_Classic_Resources"
     ],
