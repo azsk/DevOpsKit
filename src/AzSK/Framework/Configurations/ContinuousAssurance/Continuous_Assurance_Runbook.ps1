@@ -306,12 +306,19 @@ try
 			Write-Output("RB: Getting token for authN to online policy store.")
 			$accessToken = Get-AzSKAccessToken -ResourceAppIdURI $azureRmResourceURI
 		}
-
-		PublishEvent -EventName "CA Job Invoke Scan Started"
-		Write-Output ("RB: Invoking scan agent script. PolicyStoreURL: [" + $onlinePolicyStoreUrl.Substring(0,15) + "*****]")
-		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName $runbookScanAgentScript -version $caScriptsFolder
-		Write-Output ("RB: Scan agent script completed.")
-		PublishEvent -EventName "CA Job Invoke Scan Completed"
+		if($accessToken)
+		{
+			PublishEvent -EventName "CA Job Invoke Scan Started"
+			Write-Output ("RB: Invoking scan agent script. PolicyStoreURL: [" + $onlinePolicyStoreUrl.Substring(0,15) + "*****]")
+			InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName $runbookScanAgentScript -version $caScriptsFolder
+			Write-Output ("RB: Scan agent script completed.")
+			PublishEvent -EventName "CA Job Invoke Scan Completed"
+		}
+		else
+		{
+			Write-Output("RB: Unable to fetch access token. AzSK module not yet ready in the automation account. Will retry in the next run.")
+			PublishEvent -EventName "CA Access Token Not Found"
+		}
 	}
 	else
 	{
