@@ -31,7 +31,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceCustomDomainWithSSLConfig",
         "Rationale": "Use of custom domain protects a web application from common attacks such as phishing, session hijacking and other DNS-related attacks.",
-        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Custom Domains and follow the steps mentioned to configure a custom domain. Run command 'New-AzureRmWebAppSSLBinding' to enable the SSL binding for your custom domain. Run 'Get-Help New-AzureRmWebAppSSLBinding -full' for more help.",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Custom Domains and follow the steps mentioned to configure a custom domain. Run command 'New-AzWebAppSSLBinding' to enable the SSL binding for your custom domain. Run 'Get-Help New-AzWebAppSSLBinding -full' for more help.",
         "Tags": [
           "SDL",
           "TCP",
@@ -184,7 +184,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceWebSocketsConfiguration",
         "Rationale": "WebSockets protocol (WS) is vulnerable to different types of security attacks. Usage of Web Sockets with in web applications has to be carefully reviewed.",
-        "Recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -WebSocketsEnabled `$false'. Run 'Get-Help Set-AzWebApp -full' for more help. Refer: https://www.owasp.org/index.php/HTML5_Security_Cheat_Sheet#WebSockets",
+        "Recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -WebSocketsEnabled `$false'. Run 'Get-Help Set-AzWebApp -full' for more help. Refer: https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/HTML5_Security_Cheat_Sheet.md#websockets",
         "Tags": [
           "SDL",
           "Best Practice",
@@ -225,7 +225,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceDotNetFrameworkVersion",
         "Rationale": "Running on older .Net versions could mean you are not using latest security classes. Usage of such old classes and types can make your application vulnerable.",
-        "Recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.0''. Run 'Get-Help Set-AzWebApp -full' for more help.",
+        "Recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.7''. Run 'Get-Help Set-AzWebApp -full' for more help.",
         "Tags": [
           "SDL",
           "Best Practice",
@@ -289,7 +289,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceBackupConfiguration",
         "Rationale": "Enabling backup on App Service ensures that there is always a previous snapshot of App Service data that can be leveraged towards recovery scenarios.",
-        "Recommendation": "Run command 'Edit-AzureRmWebAppBackupConfiguration -FrequencyInterval '1' -FrequencyUnit 'Day' -RetentionPeriodInDays '<0 or 365>' -StartTime '<TimeLessThanOrEqualToCurrentTime>' -Name '<WebAppName>' -ResourceGroupName '<RGName>' -StorageAccountUrl '<StorageAccountUrl>' -KeepAtLeastOneBackup'. Run 'Get-Help Edit-AzureRmWebAppBackupConfiguration -full' for more help.",
+        "Recommendation": "Run command 'Edit-AzWebAppBackupConfiguration -FrequencyInterval '1' -FrequencyUnit 'Day' -RetentionPeriodInDays '<0 or 365>' -StartTime '<TimeLessThanOrEqualToCurrentTime>' -Name '<WebAppName>' -ResourceGroupName '<RGName>' -StorageAccountUrl '<StorageAccountUrl>' -KeepAtLeastOneBackup'. Run 'Get-Help Edit-AzWebAppBackupConfiguration -full' for more help.",
         "Tags": [
           "SDL",
           "Best Practice",
@@ -395,7 +395,7 @@
         "ControlSeverity": "Medium",
         "Automated": "No",
         "MethodName": "",
-        "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook#working-with-keys for details on Host keys in Functions app.",
+        "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook#authorization-keys for details on Host keys in Functions app.",
         "Tags": [
           "SDL",
           "TCP",
@@ -413,7 +413,7 @@
         "ControlSeverity": "Medium",
         "Automated": "No",
         "MethodName": "",
-        "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook#working-with-keys for details on Host keys in Functions app.",
+        "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook#authorization-keys for details on Host keys in Functions app.",
         "Tags": [
           "SDL",
           "TCP",
@@ -526,7 +526,7 @@
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckAppServiceMsiEnabled",
-        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Managed Service Identity --> Register with AAD --> ON",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Identity --> System assigned --> ON",
         "Tags": [
           "SDL",
           "TCP",

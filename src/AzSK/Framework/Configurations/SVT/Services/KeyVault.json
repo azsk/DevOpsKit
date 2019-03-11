@@ -67,7 +67,7 @@
                          "Automated":  "Yes",
                          "MethodName":  "CheckAccessPolicies",
                          "Rationale":  "Granting minimum access by defining Key Vault access policies ensures that applications/users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-                         "Recommendation":  "Use command Set-AzureRmKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}'  -PermissionsToKeys '{PermissionsToKeys}' -PermissionsToSecrets '{PermissionsToSecrets}'  -PermissionsToCertificates '{PermissionsToCertificates}' -ObjectId '{ObjectId}'. Refer:  https://docs.microsoft.com/en-us/powershell/module/azurerm.keyvault/set-azurermkeyvaultaccesspolicy",
+                         "Recommendation":  "Use command Set-AzKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}'  -PermissionsToKeys '{PermissionsToKeys}' -PermissionsToSecrets '{PermissionsToSecrets}'  -PermissionsToCertificates '{PermissionsToCertificates}' -ObjectId '{ObjectId}'. Refer:  https://docs.microsoft.com/en-us/powershell/module/az.keyvault/Set-AzKeyVaultAccessPolicy",
                          "Tags":  [
                                       "SDL",
                                       "TCP",
@@ -86,7 +86,7 @@
                          "Automated":  "Yes",
                          "MethodName":  "CheckAdvancedAccessPolicies",
                          "Rationale":  "Advanced access policy allows Azure services (Azure Resource Manager, Virtual Machine, Disk Encryption etc.) to seamlessly access Key Vault. To avoid unintentional access to Key Vault from Azure services, advanced access policies must be configured only as required.",
-                         "Recommendation":  "Remove any advanced policies that are not required using the command: Remove-AzureRmKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}' -EnabledForDeployment -EnabledForTemplateDeployment -EnabledForDiskEncryption. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.keyvault/remove-azurermkeyvaultaccesspolicy",
+                         "Recommendation":  "Remove any advanced policies that are not required using the command: Remove-AzKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}' -EnabledForDeployment -EnabledForTemplateDeployment -EnabledForDiskEncryption. Refer: https://docs.microsoft.com/en-us/powershell/module/az.keyvault/Remove-AzKeyVaultAccessPolicy",
                          "Tags":  [
                                       "SDL",
                                       "TCP",
@@ -104,7 +104,7 @@
                          "Automated":  "Yes",
                          "MethodName":  "CheckKeyHSMProtected",
                          "Rationale":  "A hardware security module (HSM) is a physical device that provides extra security for sensitive data like Keys. HSMs make sure that the keys never leave the HSM boundary throughout their lifecycle. Using HSMs for key protection is required for keys that encrypt highly sensitive data (often in regulated environments).",
-                         "Recommendation":  "Remove the non-HSM keys and recreate the removed ones within a destination Key Vault of type HSM. Run command Remove-AzureKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' to remove non-HSM key. Use command Add-AzureKeyVaultKey -VaultName  '{VaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}' -Destination 'HSM' -KeyOps '{KeyOps}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.keyvault/add-azurekeyvaultkey, https://docs.microsoft.com/en-us/powershell/module/azurerm.keyvault/remove-azurekeyvaultkey",
+                         "Recommendation":  "Remove the non-HSM keys and recreate the removed ones within a destination Key Vault of type HSM. Run command Remove-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' to remove non-HSM key. Use command Add-AzKeyVaultKey -VaultName  '{VaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}' -Destination 'HSM' -KeyOps '{KeyOps}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.keyvault/remove-azkeyvaultkey, https://docs.microsoft.com/en-us/powershell/module/az.keyvault/add-azkeyvaultkey",
                          "Tags":  [
                                       "SDL",
                                       "TCP",
@@ -123,7 +123,7 @@
          "Automated": "Yes",
          "MethodName": "CheckKeyExpirationDate",
          "Rationale": "Expiration dates on keys ensure that keys are rotated on a periodic basis. Key rotation is an important security hygiene activity.",
-         "Recommendation": "To add an expiry date to keys, run command: Set-AzureKeyVaultKeyAttribute -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}'. Expiry date should not be more than $($this.ControlSettings.KeyVault.KeyRotationDuration_Days) days for keys. To add an expiry date to secrets, run command: Set-AzureKeyVaultSecretAttribute -VaultName '{KeyVaultName}' -Name '{SecreName}' -Expires '{ExpiryDate}', Expiry date should not be more than $($this.ControlSettings.KeyVault.SecretRotationDuration_Days) days for secrets.",
+         "Recommendation": "To add an expiry date to keys, run command: Update-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}'. Expiry date should not be more than 365 days for keys. To add an expiry date to secrets, run command: Update-AzKeyVaultSecret -VaultName '{KeyVaultName}' -Name '{SecretName}' -Expires '{ExpiryDate}', Expiry date should not be more than 180 days for secrets.",
          "Tags": [
             "SDL",
             "TCP",
@@ -166,7 +166,7 @@
                          "Automated":  "Yes",
                          "MethodName":  "CheckKeyMinimumOperations",
                          "Rationale":  "Restricting the operations to be performed on Keys ensures that applications/users can perform only intended operations. This minimizes exposure of the Keys in case of user/service account compromise.",
-                         "Recommendation":  "Run command Set-AzureKeyVaultKeyAttribute -VaultName '{KeyVaultName}' -Name '{KeyName}' -KeyOps '{KeyOps}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.keyvault/set-azurekeyvaultkeyattribute",
+                         "Recommendation":  "Run command Update-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' -KeyOps '{KeyOps}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.keyvault/update-azkeyvaultkey",
                          "Tags":  [
                                       "SDL",
                                       "TCP",
@@ -203,7 +203,7 @@
                          "Automated":  "No",
                          "MethodName":  "",
                          "Rationale":  "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
-                         "Recommendation":  "Rotate the keys and secrets at regular intervals. Run command: Set-AzureKeyVaultKeyAttribute -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}' -Version '{Version}' to generate new version for key. Run command: Set-AzureKeyVaultSecretAttribute -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}'  -Version  '{Version}'  to generate new version for secret.",
+                         "Recommendation":  "Rotate the keys and secrets at regular intervals. Run command: Update-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}' -Version '{Version}' to generate new version for key. Run command: Update-AzKeyVaultSecret -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}'  -Version  '{Version}'  to generate new version for secret.",
                          "Tags":  [
                                       "SDL",
                                       "TCP",

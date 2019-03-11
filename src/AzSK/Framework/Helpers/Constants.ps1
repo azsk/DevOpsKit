@@ -147,7 +147,7 @@ class Constants
 	static [string] $WebhookAuthZHeaderValue = "WebhookAuthZHeaderValue"
 	static [string] $DisableAlertRunbook = "DisableAlertRunbook"
 	static [string] $CATargetSubsBlobName= "TargetSubs.json"
-	static [string] $CoAdminElevatePermissionMsg = "(If you are 'Owner' then please elevate to 'Co-Admin' in the portal and re-run in a *fresh* PS console. `nNote: If the elevated permissions are not reflected, please run the 'Disconnect-AzureRmAccount' command to clear the Azure cache and try again.)"
+	static [string] $CoAdminElevatePermissionMsg = "(If you are 'Owner' then please elevate to 'Co-Admin' in the portal and re-run in a *fresh* PS console. `nNote: If the elevated permissions are not reflected, please run the 'Disconnect-AzAccount' command to clear the Azure cache and try again.)"
 
 	static [string] $CommandNameChangeWarning = "The command {0} shall be renamed to {1} in a future release ('SDK' shall be replaced with 'SK').";
 	static [string] $MultipleModulesWarning =  "Found multiple modules ({0} and {1}) loaded in the PS session.`r`n"+
