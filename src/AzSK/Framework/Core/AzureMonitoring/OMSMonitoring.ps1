@@ -58,8 +58,8 @@ class OMSMonitoring: CommandBase
 				mkdir -Path $OMSLogPath -Force | Out-Null
 			}
 					
-			$genericViewTemplateFilepath = [ConfigurationManager]::LoadServerConfigFile("AZSK.AM.OMS.GenericView.V2.omsview"); 				
-			$this.OMSGenericTemplateFilepath = $OMSLogPath+"\AZSK.AM.OMS.GenericView.V2.omsview";
+			$genericViewTemplateFilepath = [ConfigurationManager]::LoadServerConfigFile("AZSK.AM.OMS.GenericView.V3.omsview"); 				
+			$this.OMSGenericTemplateFilepath = $OMSLogPath+"\AZSK.AM.OMS.GenericView.V3.omsview";
 			$genericViewTemplateFilepath | ConvertTo-Json -Depth 100 | Out-File $this.OMSGenericTemplateFilepath
 			$this.PublishCustomMessage("`r`nSetting up AzSK Log Analytics generic view.");
 			$this.ConfigureGenericView($_viewName, $_validateOnly);	
@@ -78,7 +78,6 @@ class OMSMonitoring: CommandBase
 	[void] ConfigureGenericView([string] $_viewName, [bool] $_validateOnly)
 	{
 		$OptionalParameters = New-Object -TypeName Hashtable
-
 		$OptionalParameters = $this.GetOMSGenericViewParameters($_viewName);
 		$this.PublishCustomMessage([MessageData]::new("Starting template deployment for Log Analytics generic view. Detailed logs are shown below."));
 		$ErrorMessages = @()
@@ -121,10 +120,11 @@ class OMSMonitoring: CommandBase
 	[Hashtable] GetOMSBaseParameters()
 	{
 		[Hashtable] $omsParams = @{};
-		$omsParams.Add("omsWorkspaceLocation",$this.OMSLocation);
-		$omsParams.Add("omsResourcegroup",$this.OMSResourceGroup);
-		$omsParams.Add("omsSubscriptionId",$this.SubscriptionContext.SubscriptionId);
-		$omsParams.Add("omsWorkspaceName",$this.OMSWorkspaceName);
+		$omsParams.Add("location",$this.OMSLocation);
+		$omsParams.Add("resourcegroup",$this.OMSResourceGroup);
+		$omsParams.Add("subscriptionId",$this.SubscriptionContext.SubscriptionId);
+		$omsParams.Add("workspace",$this.OMSWorkspaceName);
+        $omsParams.Add("workspaceapiversion", "2017-04-26-preview")
 		return $omsParams;
 	}	
 }
