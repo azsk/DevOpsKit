@@ -570,6 +570,7 @@ if($Global:isAzAvailable)
 		#If the automation account does not have all modules in expected state, we have some work to do...
 		if(!$isSetupComplete)
 		{		
+			PublishEvent -EventName "CA Az Stage3 " -Properties @{ "Description"="CA importing Az dependencies"}
 			Write-Output ("CS: Checking and importing missing modules into the automation account...");
 			#Module list is in hashtable format : key = modulename , value = version (This is useful to fetch version of specific module by name)
 			$finalModuleList = [ordered]@{}
