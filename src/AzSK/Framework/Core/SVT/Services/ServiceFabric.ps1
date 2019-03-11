@@ -148,7 +148,7 @@ class ServiceFabric : SVTBase
 		if($null -ne $fabricSecuritySettings)
 		{
 			$clusterProtectionLevel = $fabricSecuritySettings.parameters | Where-Object { $_.name -eq "ClusterProtectionLevel"}
-			if($clusterProtectionLevel.value -eq "EncryptAndSign")
+			if($null -ne $clusterProtectionLevel -and $clusterProtectionLevel.value -eq "EncryptAndSign")
 			{
 			  $controlResult.AddMessage([VerificationResult]::Passed,"Cluster security is ON with 'EncryptAndSign' protection level",$clusterProtectionLevel);
 			}
@@ -316,10 +316,11 @@ class ServiceFabric : SVTBase
 		# if reverse proxy is not enabled in any node, pass TCP
 		if(($reverseProxyEnabledNode | Measure-Object).Count -gt 0)
 		{
-			$loadBalancerBackendPorts = @()
+			$lbWithBackendPorts = @{}
 			$loadBalancerResources = $this.GetLinkedResources("Microsoft.Network/loadBalancers")
 			#Collect all open ports on load balancer  
 			$loadBalancerResources | ForEach-Object{
+			    $loadBalancerBackendPorts = @()
 				$loadBalancerResource = Get-AzLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
 				$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
 			
@@ -327,10 +328,14 @@ class ServiceFabric : SVTBase
 					$loadBalancingRuleId = $_.Id;
 					$loadBalancingRule = $loadBalancerResource.LoadBalancingRules | ? { $_.Id -eq  $loadBalancingRuleId } | Select-Object -First 1
 					$loadBalancerBackendPorts += $loadBalancingRule.BackendPort;
-				};   
+				};  
+				if($loadBalancerBackendPorts.Count -gt 0)
+			    {   
+				  $lbWithBackendPorts.Add($loadBalancerResource.Name, $loadBalancerBackendPorts)
+			    } 
 			}
 			#If no ports open, Pass the TCP
-			if($loadBalancerBackendPorts.Count -eq 0)
+			if($lbWithBackendPorts.Count -eq 0)
 			{
 				$controlResult.AddMessage("No ports enabled in load balancer.")  
 				$controlResultList += $controlResult      
@@ -339,7 +344,14 @@ class ServiceFabric : SVTBase
 			else
 			{
 				$reverseProxyEnabledNode.Keys  | Foreach-Object {
-					if($loadBalancerBackendPorts.Contains( [Int32] $reverseProxyEnabledNode[$_]))
+				    $loadBalancerBackendPorts = @()
+				    $nodeName = $_
+				    $lbWithBackendPorts.Keys | ForEach-Object{
+						if($_.endswith($nodeName)){
+							$loadBalancerBackendPorts = $lbWithBackendPorts[$_]
+						}
+					}
+					if($loadBalancerBackendPorts.Count -gt 0 -and  $loadBalancerBackendPorts.Contains( [Int32] $reverseProxyEnabledNode[$_]))
 					{
 						$isPassed = $false;
 						$controlResult.AddMessage("Reverse proxy port is publicly exposed for node '$_'");

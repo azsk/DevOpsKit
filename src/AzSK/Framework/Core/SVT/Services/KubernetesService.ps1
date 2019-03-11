@@ -91,12 +91,44 @@ class KubernetesService: SVTBase
 	{
 		if(([Helpers]::CheckMember($this.ResourceObject,"Properties")) -and [Helpers]::CheckMember($this.ResourceObject.Properties,"kubernetesVersion"))
 		{
-			$resourceKubernetVersion = [System.Version] $this.ResourceObject.Properties.kubernetesVersion
-			$requiredKubernetsVersion = [System.Version] $this.ControlSettings.KubernetesService.kubernetesVersion
+		    $requiredKubernetsVersion = $null
+		    $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
+            $AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+			$header = "Bearer " + $AccessToken
+			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
 
+			$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.ContainerService/managedClusters/{3}/upgradeProfiles/default?api-version=2018-03-31",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
+			$result = ""
+			$err = $null
+			try {
+				$propertiesToReplace = @{}
+				$propertiesToReplace.Add("httpapplicationroutingzonename", "_httpapplicationroutingzonename")
+				$result = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
+				if(($null -ne $result) -and (($result | Measure-Object).Count -gt 0))
+				{
+					$upgradeProfile = $result.properties.controlPlaneProfile.upgrades
+					$requiredKubernetsVersion = "0.0.0"
+					$upgradeProfile | Foreach-Object { 
+						if([System.Version] $requiredKubernetsVersion -le [System.Version] $_)
+						{ 
+							$requiredKubernetsVersion = $_
+						} 
+					}
+					$requiredKubernetsVersion = [System.Version] $requiredKubernetsVersion
+				}
+			}
+			catch{
+				#If any exception occurs, get required kubernetes version from config
+				$requiredKubernetsVersion = [System.Version] $this.ControlSettings.KubernetesService.kubernetesVersion
+			}
+			$resourceKubernetVersion = [System.Version] $this.ResourceObject.Properties.kubernetesVersion
 			if($resourceKubernetVersion -lt $requiredKubernetsVersion)
 			{
-				$controlResult.VerificationResult = [VerificationResult]::Failed
+				$controlResult.AddMessage([VerificationResult]::Failed,
+										[MessageData]::new("AKS cluster is not running on latest Kubernetes version."));
+				$controlResult.AddMessage([MessageData]::new("Current Kubernetes version: ", $resourceKubernetVersion.ToString()));
+				$controlResult.AddMessage([MessageData]::new("Latest Kubernetes version: ", $requiredKubernetsVersion.ToString()));
+
 			}
 			else
 			{
@@ -111,12 +143,12 @@ class KubernetesService: SVTBase
 	{
 		if([Helpers]::CheckMember($this.ResourceObject,"Properties"))
 		{
-			if([Helpers]::CheckMember($this.ResourceObject.Properties,"omsagent") -and [Helpers]::CheckMember($this.ResourceObject.Properties.omsagent,"config"))
+			if([Helpers]::CheckMember($this.ResourceObject.Properties,"addonProfiles.omsagent") -and [Helpers]::CheckMember($this.ResourceObject.Properties.addonProfiles.omsagent,"config"))
 			{
-				if($this.ResourceObject.Properties.omsagent)
+				if($this.ResourceObject.Properties.addonProfiles.omsagent.config -and $this.ResourceObject.Properties.addonProfiles.omsagent.enabled -eq $true)
 				{
 					$controlResult.AddMessage([VerificationResult]::Passed,
-										[MessageData]::new("Configuration of monitoring agent for resource " + $this.ResourceObject.name + "is ", $this.ResourceObject.Properties.omsagent));
+										[MessageData]::new("Configuration of monitoring agent for resource " + $this.ResourceObject.name + " is ", $this.ResourceObject.Properties.addonProfiles.omsagent));
 				}
 				else
 				{

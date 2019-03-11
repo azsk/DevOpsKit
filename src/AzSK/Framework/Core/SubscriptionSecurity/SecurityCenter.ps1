@@ -237,8 +237,15 @@ class SecurityCenter: AzSKRoot
 			$defaultPoliciesNames = Get-Member -InputObject $this.PolicyObject.policySettings.properties.parameters -MemberType NoteProperty | Select-Object Name
 			$configuredPolicyObject = $this.PolicyObject.policySettings.properties.parameters;
 			$defaultPoliciesNames | ForEach-Object {
-				$policyName = $_.Name;				
-				$currentPolicyObj.$policyName.value = $configuredPolicyObject.$policyName.value
+				$policyName = $_.Name;
+                if([Helpers]::CheckMember($currentPolicyObj,$policyName))
+                {
+                    $currentPolicyObj.$policyName.value = $configuredPolicyObject.$policyName.value
+                }else
+                {
+                    $currentPolicyObj | Add-Member -NotePropertyName $policyName -NotePropertyValue $configuredPolicyObject.$policyName
+                }				
+				
 			}
 			$this.PolicyObject.policySettings.properties.parameters = $currentPolicyObj;
 		}		
@@ -253,13 +260,18 @@ class SecurityCenter: AzSKRoot
 			$defaultPoliciesNames = Get-Member -InputObject $this.PolicyObject.policySettings.properties.parameters -MemberType NoteProperty | Select-Object Name
 			$configuredPolicyObject = $this.PolicyObject.policySettings.properties.parameters;
 			$defaultPoliciesNames | ForEach-Object {
-				$policyName = $_.Name;				
-				if($currentPolicyObj.$policyName.value -ne $configuredPolicyObject.$policyName.value)
+				$policyName = $_.Name;		
+             		
+				if((-not [Helpers]::CheckMember($currentPolicyObj,$policyName)) -or ($currentPolicyObj.$policyName.value -ne $configuredPolicyObject.$policyName.value))
 				{
 					$MisConfiguredPolicies += ("Misconfigured Policy: [" + $policyName + "]");
 				}
+                
 			}
-		}
+		}elseif($null -eq $this.CurrentPolicyObject -and  $null -ne $this.PolicyObject.policySettings)
+        {
+            $MisConfiguredPolicies += ("ASC Policies are misconfigured");   
+        }
 		return $MisConfiguredPolicies;		
 	}	
 }
