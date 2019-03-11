@@ -141,7 +141,8 @@
         'Get-AzSKARMTemplateSecurityStatus',
         'Clear-AzSKSessionState',
 		'Update-AzSKPersistedState'
-        'Get-AzSKSecurityRecommendationReport'
+        'Get-AzSKSecurityRecommendationReport',
+        'Set-AzSKPIMConfiguration'
     )
 
     # Cmdlets to export from this module
