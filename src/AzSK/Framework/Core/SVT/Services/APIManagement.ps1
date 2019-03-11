@@ -233,7 +233,7 @@ class APIManagement: SVTBase
 				$IsBasicRegistrationEnabled = $json.settings.'CustomPortalSettings.RegistrationEnabled'
 			}
 			
-			# Check if registration using Identity provider is enabled
+			# Check if sign in using external Identity provider is enabled
 			$identityProvider = Get-AzApiManagementIdentityProvider -Context $this.APIMContext
 			$nonAADIdentityProvider = $identityProvider | Where-Object {$_.Type -ne [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementIdentityProviderType]::Aad}
 			
