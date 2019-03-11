@@ -17,7 +17,7 @@ class CDN: SVTBase
 
 	hidden [ControlResult] CheckCDNHttpsProtocol([ControlResult] $controlResult)
 	{
-		$cdnEndpoints = Get-AzureRmCdnEndpoint -ProfileName $this.ResourceContext.ResourceName `
+		$cdnEndpoints = Get-AzCdnEndpoint -ProfileName $this.ResourceContext.ResourceName `
 							-ResourceGroupName $this.ResourceContext.ResourceGroupName `
 							-ErrorAction Stop
 		

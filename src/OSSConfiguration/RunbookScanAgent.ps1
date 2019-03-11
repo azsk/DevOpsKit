@@ -10,16 +10,38 @@ function ConvertStringToBoolean($strToConvert)
     }
 }
 
+function UploadFilesToBlob([string] $containerName, [string] $blobName, [string] $fileName,[object] $stgCtx) {
+	try {
+		Set-AzStorageBlobContent -File $fileName -Container $containerName -Context $stgCtx -Blob $blobName -ErrorAction Stop | Out-Null
+	}
+	catch {
+		
+	$blob = $stgCtx.StorageAccount.CreateCloudBlobClient().GetContainerReference($containerName).GetBlockBlobReference($blobName)
+	$task = $blob.UploadFromFileAsync($fileName)
+	$task.Wait()
+	#todo:print status
+	}
+}
 
+function GetFilesFromBlob([string] $containerName, [string] $blobName, [string] $fileName,[object] $stgCtx) {
+	$blob = Get-AzStorageBlob -Container $containerName -Blob $blobName -Context $stgCtx
+	$task = $blob.ICloudBlob.DownloadToFileAsync($fileName,[System.IO.FileMode]::Create)
+	$task.Wait()
+	if (-not ($task.IsCompleted -and !$task.IsFaulted))
+	{
+		#Need to change write method
+		Write-Debug "Downloading file from" + $blobName + " has failed!!"
+	}
+}
 function RunAzSKScan() {
 
 	################################ Begin: Configure AzSK for the scan ######################################### 
-	#set OMS settings
+	#set Log Analytics workspace settings
     if(-not [string]::IsNullOrWhiteSpace($OMSWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($OMSWorkspaceSharedKey))
 	{
 		Set-AzSKOMSSettings -OMSWorkspaceID $OMSWorkspaceId -OMSSharedKey $OMSWorkspaceSharedKey -Source "CA"
 	}
-	#set alternate OMS if available
+	#set alternate Log Analytics workspace if available
 	if(-not [string]::IsNullOrWhiteSpace($AltOMSWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($AltOMSWorkspaceSharedKey))
 	{
 		Set-AzSKOMSSettings -AltOMSWorkspaceId $AltOMSWorkspaceId -AltOMSSharedKey $AltOMSWorkspaceSharedKey -Source "CA"
@@ -63,18 +85,18 @@ function RunAzSKScan() {
     CheckForSubscriptionsSnapshotData
 	
     #Get the current storagecontext
-	$existingStorage = Get-AzureRmStorageAccount -ResourceGroupName $StorageAccountRG | Where-Object {$_.StorageAccountName  -like 'azsk*'}
+	$existingStorage = Get-AzStorageAccount -ResourceGroupName $StorageAccountRG | Where-Object {$_.StorageAccountName  -like 'azsk*'}
 	
 	if(($existingStorage|Measure-Object).Count -gt 1)
 	{
 		$existingStorage = $existingStorage[0]
 		Write-Output ("SA: Multiple storage accounts found in resource group. Using Storage Account: [$($existingStorage.StorageAccountName)] for storing logs")
 	}
-	$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $StorageAccountRG -Name $existingStorage.StorageAccountName
+	$keys = Get-AzStorageAccountKey -ResourceGroupName $StorageAccountRG -Name $existingStorage.StorageAccountName
 
 	#The 'centralStorageContext' always represents the parent subscription storage. 
 	#In multi-sub scan this is the central sub. In single sub scan, this is just the storage in that sub.
-	$centralStorageContext = New-AzureStorageContext -StorageAccountName $existingStorage.StorageAccountName -StorageAccountKey $keys[0].Value -Protocol Https
+	$centralStorageContext = New-AzStorageContext -StorageAccountName $existingStorage.StorageAccountName -StorageAccountKey $keys[0].Value -Protocol Https
 	
     if($Global:IsCentralMode)
 	{
@@ -146,7 +168,7 @@ function RunAzSKScan() {
 
 				#Let us switch context to the target subscription.
 				$subId = $candidateSubToScan.SubscriptionId;
-				Set-AzureRmContext -SubscriptionId $subId | Out-Null
+				Set-AzContext -SubscriptionId $subId | Out-Null
 					
 				Write-Output ("SA: Scan status details:")
 				Write-Output ("SA: Subscription id: [" + $subId + "]")
@@ -177,7 +199,7 @@ function RunAzSKScan() {
 		}			
 		finally{
 			#Always return back to central subscription context.
-			Set-AzureRmContext -SubscriptionId $RunAsConnection.SubscriptionID | Out-Null
+			Set-AzContext -SubscriptionId $RunAsConnection.SubscriptionID | Out-Null
 		}
 	}#IsCentralMode
 	else
@@ -263,7 +285,7 @@ function RunAzSKScanForASub
         PublishEvent -EventName "CA Scan Services Completed" -Metrics @{"TimeTakenInMs" = $serviceScanTimer.ElapsedMilliseconds; "SuccessCount" = 1}
     }
 	#----------------------------------------Export reports to storage---------------------------------------------------
-	
+	PublishEvent -EventName "CA Az Stage4" -Properties @{"Description" = "CA Scanning with Az*"  }
 	#If either of the scans (GSS/GRS) completed, let us save the results.
     if (![string]::IsNullOrWhiteSpace($gssResultPath) -or ![string]::IsNullOrWhiteSpace($svtResultPath)) 
     {
@@ -274,7 +296,7 @@ function RunAzSKScanForASub
 				Write-Output ("SA: Multi-sub Scan. Storing scan results to child (target) subscription...")
 
 				#save scan results in individual subs 
-                $existingStorage = Get-AzureRmStorageAccount -ResourceGroupName $StorageAccountRG | Where-Object {$_.StorageAccountName  -like 'azsk*'}
+                $existingStorage = Get-AzStorageAccount -ResourceGroupName $StorageAccountRG | Where-Object {$_.StorageAccountName  -like 'azsk*'}
 				if(($existingStorage|Measure-Object).Count -gt 1)
 				{
 					$existingStorage = $existingStorage[0]
@@ -282,13 +304,13 @@ function RunAzSKScanForASub
 				}
 
 				$archiveFilePath = "$parentFolderPath\AutomationLogs_" + $(Get-Date -format "yyyyMMdd_HHmmss") + ".zip"
-				$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $StorageAccountRG -Name $existingStorage.StorageAccountName
-				$localStorageContext = New-AzureStorageContext -StorageAccountName $existingStorage.StorageAccountName -StorageAccountKey $keys[0].Value -Protocol Https
+				$keys = Get-AzStorageAccountKey -ResourceGroupName $StorageAccountRG -Name $existingStorage.StorageAccountName
+				$localStorageContext = New-AzStorageContext -StorageAccountName $existingStorage.StorageAccountName -StorageAccountKey $keys[0].Value -Protocol Https
 				try {
-					Get-AzureStorageContainer -Name $CAScanLogsContainerName -Context $localStorageContext -ErrorAction Stop | Out-Null
+					Get-AzStorageContainer -Name $CAScanLogsContainerName -Context $localStorageContext -ErrorAction Stop | Out-Null
 				}
 				catch {
-					New-AzureStorageContainer -Name $CAScanLogsContainerName -Context $localStorageContext | Out-Null
+					New-AzStorageContainer -Name $CAScanLogsContainerName -Context $localStorageContext | Out-Null
 				}
 
 				PersistToStorageAccount -StorageContext $localStorageContext -GssResultPath $gssResultPath -SvtResultPath $svtResultPath -SubscriptionId $SubscriptionID
@@ -341,10 +363,10 @@ function PersistToStorageAccount
 		$storageLocation="$SubContainerName/$SubscriptionId/AutomationLogs_" + $timestamp + ".zip"
             
 		try {			
-			Get-AzureStorageContainer -Name $CAScanLogsContainerName -Context $StorageContext -ErrorAction Stop | Out-Null
+			Get-AzStorageContainer -Name $CAScanLogsContainerName -Context $StorageContext -ErrorAction Stop | Out-Null
 		}
 		catch {
-			New-AzureStorageContainer -Name $CAScanLogsContainerName -Context $StorageContext | Out-Null
+			New-AzStorageContainer -Name $CAScanLogsContainerName -Context $StorageContext | Out-Null
 		}
 
 		#Persist the files to the storage account using the passed storage context
@@ -354,8 +376,9 @@ function PersistToStorageAccount
             }
             if (![string]::IsNullOrWhiteSpace($GssResultPath)) {
                 Compress-Archive -Path $GssResultPath -CompressionLevel Optimal -DestinationPath $archiveFilePath -Update
-            }
-            Set-AzureStorageBlobContent -File $archiveFilePath -Container $CAScanLogsContainerName -Context $StorageContext -Blob $storageLocation -ErrorAction Stop | Out-Null
+			}
+			UploadFilesToBlob -containerName $CAScanLogsContainerName -blobName $storageLocation -fileName $archiveFilePath -stgCtx $StorageContext
+            #Set-AzStorageBlobContent -File $archiveFilePath -Container $CAScanLogsContainerName -Context $StorageContext -Blob $storageLocation -ErrorAction Stop | Out-Null
             Write-Output ("SA: Exported reports to storage: [$StorageAccountName]")
             PublishEvent -EventName "CA Scan Reports Persisted" -Properties @{"StorageAccountName" = $StorageAccountName; "ArchiveFilePath" = $archiveFilePath } -Metrics @{"SuccessCount" = 1}
         }
@@ -373,9 +396,9 @@ function PurgeOlderScanReports
 		$StorageContext
 	)
 	$NotBefore = [DateTime]::Now.AddDays(-30);
-	$OldLogCount = (Get-AzureStorageBlob -Container $CAScanLogsContainerName -Context $StorageContext | Where-Object { $_.LastModified -lt $NotBefore} | Measure-Object).Count
+	$OldLogCount = (Get-AzStorageBlob -Container $CAScanLogsContainerName -Context $StorageContext | Where-Object { $_.LastModified -lt $NotBefore} | Measure-Object).Count
 
-	Get-AzureStorageBlob -Container $CAScanLogsContainerName -Context $StorageContext | Where-Object { $_.LastModified -lt $NotBefore} | Remove-AzureStorageBlob -Force -ErrorAction SilentlyContinue
+	Get-AzStorageBlob -Container $CAScanLogsContainerName -Context $StorageContext | Where-Object { $_.LastModified -lt $NotBefore} | Remove-AzStorageBlob -Force -ErrorAction SilentlyContinue
 
 	if($OldLogCount -gt 0)
 	{
@@ -408,11 +431,11 @@ function CheckForSubscriptionsSnapshotData()
 		$CAActiveScanSnapshotBlobPath = "$destinationFolderPath\$CAActiveScanSnapshotBlobName"
 		$CATargetSubsBlobPath = "$destinationFolderPath\$CATargetSubsBlobName"
 
-		$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $StorageAccountRG  -Name $StorageAccountName
-		$currentContext = New-AzureStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $keys[0].Value -Protocol Https
+		$keys = Get-AzStorageAccountKey -ResourceGroupName $StorageAccountRG  -Name $StorageAccountName
+		$currentContext = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $keys[0].Value -Protocol Https
 		
 		#Fetch TargetSubs blob from storage.
-		$CAScanSourceDataBlobObject = Get-AzureStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CATargetSubsBlobName -Context $currentContext -ErrorAction SilentlyContinue
+		$CAScanSourceDataBlobObject = Get-AzStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CATargetSubsBlobName -Context $currentContext -ErrorAction SilentlyContinue
 
 		#If TargetSubs were NOT found, we are not operating in 'central-scan' mode
 		if($null -eq $CAScanSourceDataBlobObject)
@@ -423,12 +446,13 @@ function CheckForSubscriptionsSnapshotData()
 		
 
 		#See if some of the target subs have already been scanned or a scan is in progress
-		$CAScanDataBlobObject = Get-AzureStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $currentContext -ErrorAction SilentlyContinue 
+		$CAScanDataBlobObject = Get-AzStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $currentContext -ErrorAction SilentlyContinue 
 		if($null -ne $CAScanDataBlobObject)
 		{
 			Write-Output("SA: Multi-sub scan in progress. Reading progress tracking file...")
 			#Found an active scan, download progress-tracker file to our temp location.
-			Get-AzureStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $currentContext -Destination $destinationFolderPath -Force | Out-Null
+			GetFilesFromBlob -containerName $CAMultiSubScanConfigContainerName -blobName $CAActiveScanSnapshotBlobName -fileName $($destinationFolderPath + $CAActiveScanSnapshotBlobName) -stgCtx $currentContext
+			#Get-AzStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $currentContext -Destination $destinationFolderPath -Force | Out-Null
 			
 			#Read the state of various subscriptions in the target list from the progress-tracker file.
 			$Global:subsToScan = [array](Get-ChildItem -Path $CAActiveScanSnapshotBlobPath -Force | Get-Content | ConvertFrom-Json)			
@@ -439,8 +463,9 @@ function CheckForSubscriptionsSnapshotData()
 
 			#No active scan in progress. This is likely the start of a fresh scan. 
 			#We will need to *create* the progress-tracker file before starting the scan.
-			$CAScanDataBlobObject = Get-AzureStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CATargetSubsBlobName -Context $currentContext -ErrorAction Stop | Out-Null
-			Get-AzureStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CATargetSubsBlobName -Context $currentContext -Destination $destinationFolderPath -Force | Out-Null
+			$CAScanDataBlobObject = Get-AzStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CATargetSubsBlobName -Context $currentContext -ErrorAction Stop | Out-Null
+			GetFilesFromBlob -containerName $CAMultiSubScanConfigContainerName -blobName $CATargetSubsBlobName -fileName $($destinationFolderPath + $CATargetSubsBlobName) -stgCtx $currentContext
+			#Get-AzStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CATargetSubsBlobName -Context $currentContext -Destination $destinationFolderPath -Force | Out-Null
 	
 			$CAScanDataBlobContent = Get-ChildItem -Path "$CATargetSubsBlobPath" -Force | Get-Content | ConvertFrom-Json
 
@@ -460,7 +485,8 @@ function CheckForSubscriptionsSnapshotData()
                         $Global:subsToScan += $out;
 				}				
 				$Global:subsToScan | ConvertTo-Json -Depth 10 | Out-File $CAActiveScanSnapshotBlobPath
-				Set-AzureStorageBlobContent -File $CAActiveScanSnapshotBlobPath -Blob $CAActiveScanSnapshotBlobName -Container $CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force | Out-Null
+				UploadFilesToBlob -containerName $CAMultiSubScanConfigContainerName -blobName $CAActiveScanSnapshotBlobName -fileName $CAActiveScanSnapshotBlobPath -stgCtx $currentContext
+				#Set-AzStorageBlobContent -File $CAActiveScanSnapshotBlobPath -Blob $CAActiveScanSnapshotBlobName -Container $CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force | Out-Null
 			}
 			Write-Output("SA: Multi-sub scan. New progress tracking file uploaded to container...")
 
@@ -500,11 +526,12 @@ function PersistSubscriptionSnapshot
 		$CAActiveScanSnapshotBlobPath = "$destinationFolderPath\$CAActiveScanSnapshotBlobName"
 		
 		#Fetch if there is any existing active scan snapshot
-		$CAScanDataBlobObject = Get-AzureStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $StorageContext -ErrorAction SilentlyContinue 
+		$CAScanDataBlobObject = Get-AzStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $StorageContext -ErrorAction SilentlyContinue 
 		if($null -ne $CAScanDataBlobObject)
 		{
 			#We found a blob for active scan... locate the provided subscription in it to update its status.
-			Get-AzureStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $StorageContext -Destination $destinationFolderPath -Force | Out-Null
+			GetFilesFromBlob -containerName $CAMultiSubScanConfigContainerName -blobName $CAActiveScanSnapshotBlobName -fileName $($destinationFolderPath + $CAActiveScanSnapshotBlobName) -stgCtx $StorageContext
+			#Get-AzStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $StorageContext -Destination $destinationFolderPath -Force | Out-Null
 			$subsToScan = [array](Get-ChildItem -Path $CAActiveScanSnapshotBlobPath -Force | Get-Content | ConvertFrom-Json)
 
 			$matchedSubId = $subsToScan | Where-Object {$_.SubscriptionId -eq $SubscriptionID}
@@ -532,7 +559,8 @@ function PersistSubscriptionSnapshot
 			
 			#Write the updated status back to the storage blob  
 			$subsToScan | ConvertTo-Json -Depth 10 | Out-File $CAActiveScanSnapshotBlobPath
-			Set-AzureStorageBlobContent -File $CAActiveScanSnapshotBlobPath -Blob $CAActiveScanSnapshotBlobName -Container $CAMultiSubScanConfigContainerName -BlobType Block -Context $StorageContext -Force | Out-Null
+			UploadFilesToBlob -containerName $CAMultiSubScanConfigContainerName -blobName $CAActiveScanSnapshotBlobName -fileName $CAActiveScanSnapshotBlobPath -stgCtx $StorageContext
+			#Set-AzStorageBlobContent -File $CAActiveScanSnapshotBlobPath -Blob $CAActiveScanSnapshotBlobName -Container $CAMultiSubScanConfigContainerName -BlobType Block -Context $StorageContext -Force | Out-Null
 
 			#This is the last persist status. Archiving it for diagnosys purpose.
 			if(($subsToScan | Where-Object { $_.Status -notin ("COM","ERR")} | Measure-Object).Count -eq 0)
@@ -547,7 +575,7 @@ function PersistSubscriptionSnapshot
 					Write-Output ("SA: Scan could not be completed for a total of [$errSubsCount] subscription(s).`nSee subscriptions with 'ERR' state in:`n`t $StorageAccountRG -> $($StorageContext.StorageAccountName) -> $CAMultiSubScanConfigContainerName -> Archive -> ActiveScanTracker_<timestamp>.ERR.json.")
 				}
 				Write-Output("SA: Multi-sub scan: Removing ActiveScanTracker.json")
-				Remove-AzureStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $StorageContext -Force
+				Remove-AzStorageBlob -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $StorageContext -Force
 			}
 		}
 	}
@@ -580,11 +608,13 @@ function ArchiveBlob
 			{
 				$CAActiveScanSnapshotArchiveBlobName = "$SubContainerName\Archive\$archiveName"
 			}
-			$activeSnapshotBlob = Get-AzureStorageBlob -Container $CAMultiSubScanConfigContainerName -Context $StorageContext -Blob ($activeSnapshotBlob+".json") -ErrorAction SilentlyContinue
+			$activeSnapshotBlob = Get-AzStorageBlob -Container $CAMultiSubScanConfigContainerName -Context $StorageContext -Blob ($activeSnapshotBlob+".json") -ErrorAction SilentlyContinue
 			if($null -ne $activeSnapshotBlob)
 			{
-				Get-AzureStorageBlobContent -CloudBlob $activeSnapshotBlob.ICloudBlob -Context $StorageContext -Destination $masterFilePath -Force | Out-Null			
-				Set-AzureStorageBlobContent -File $masterFilePath -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotArchiveBlobName -BlobType Block -Context $StorageContext -Force | Out-Null
+				GetFilesFromBlob -containerName $CAMultiSubScanConfigContainerName -blobName ($activeSnapshotBlob+".json") -fileName $masterFilePath -stgCtx $StorageContext
+			    #Get-AzStorageBlobContent -CloudBlob $activeSnapshotBlob.ICloudBlob -Context $StorageContext -Destination $masterFilePath -Force | Out-Null	
+				UploadFilesToBlob -containerName $CAMultiSubScanConfigContainerName -blobName $CAActiveScanSnapshotArchiveBlobName -fileName $masterFilePath -stgCtx $StorageContext		
+				#Set-AzStorageBlobContent -File $masterFilePath -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotArchiveBlobName -BlobType Block -Context $StorageContext -Force | Out-Null
 			}
 		}
 		catch
@@ -612,7 +642,7 @@ function UpdateAlertMonitoring
 	  }
 	  else
 	  {
-	    $AlertRunbookPresent= Get-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $ResourceGroup -Name $AlertRunBookFullName -ErrorAction SilentlyContinue
+	    $AlertRunbookPresent= Get-AzAutomationRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $ResourceGroup -Name $AlertRunBookFullName -ErrorAction SilentlyContinue
 	    if(-not $AlertRunbookPresent)
 	    {
 	      Set-AzSKAlertMonitoring -SubscriptionId $SubscriptionID -Force | Out-Null
@@ -620,7 +650,7 @@ function UpdateAlertMonitoring
 	    }
  	    else
 		{		  
-		  $ExistingWebhook=Get-AzureRmAutomationWebhook -RunbookName $AlertRunbookPresent.Name -ResourceGroup $ResourceGroup -AutomationAccountName $AlertRunbookPresent.AutomationAccountName
+		  $ExistingWebhook=Get-AzAutomationWebhook -RunbookName $AlertRunbookPresent.Name -ResourceGroup $ResourceGroup -AutomationAccountName $AlertRunbookPresent.AutomationAccountName
           if(($null -ne $ExistingWebhook) -and ((Get-Date).AddHours(24) -gt $ExistingWebhook.ExpiryTime.DateTime))
           {
              #update existing webhook for alert runbook
@@ -638,16 +668,24 @@ function UpdateAlertMonitoring
 }
 function DisableHelperSchedules()
 {
-	Get-AzureRmAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
+	Get-AzAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
 	Where-Object {$_.Name -ilike "*$CAHelperScheduleName*"} | `
-	Set-AzureRmAutomationSchedule -IsEnabled $false | Out-Null
+	Set-AzAutomationSchedule -IsEnabled $false | Out-Null
 	
 }
 
 #############################################################################################################
 # Main ScanAgent code
 #############################################################################################################
-try {
+try {	
+	if(-not $Global:isAzAvailable)
+    {
+		Write-Output ("CS: Invoking core setup backup.")
+		$accessToken = Get-AzSKAccessToken -ResourceAppIdURI "https://management.core.windows.net/"
+		$onlinePolicyStoreUrl = "https://azsdkossep.azureedge.net/1.0.0/RunbookScanAgentAzureRm.ps1"
+		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName "RunbookScanAgentAzureRm.ps1" -version "1.0.0"
+	}
+	else {
     #start timer
     $scanAgentTimer = [System.Diagnostics.Stopwatch]::StartNew();
 	Write-Output("SA: Scan agent starting...")
@@ -656,7 +694,7 @@ try {
 	#Setup during Install-CA. These are the RGs that CA will scan. "*" is allowed.
 	$ResourceGroupNames = Get-AutomationVariable -Name "AppResourceGroupNames"
 	
-	#Primary OMS WS info. This is mandatory. CA will send events to this WS.
+	#Primary Log Analytics WS info. This is mandatory. CA will send events to this WS.
     $OMSWorkspaceId = Get-AutomationVariable -Name "OMSWorkspaceId"
 	$OMSWorkspaceSharedKey = Get-AutomationVariable -Name "OMSSharedKey"
 	
@@ -697,7 +735,7 @@ try {
 	$Global:IsCentralMode = $false;
 
 	$Global:subsToScan = @();
-    Set-AzureRmContext -SubscriptionId $SubscriptionID;
+    Set-AzContext -SubscriptionId $SubscriptionID;
 	
 	#Another job is already running
 	if($Global:FoundExistingJob)
@@ -706,7 +744,7 @@ try {
 		return;
 	}
 
-    $isAzSKAvailable = (Get-AzureRmAutomationModule -ResourceGroupName $AutomationAccountRG `
+    $isAzSKAvailable = (Get-AzAutomationModule -ResourceGroupName $AutomationAccountRG `
             -AutomationAccountName $AutomationAccountName `
             -Name $AzSKModuleName -ErrorAction SilentlyContinue | `
             Where-Object {$_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created"} | `
@@ -752,7 +790,7 @@ try {
 	
 	PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
 	Write-Output("SA: Scan agent completed...")
-
+	}
 }
 catch {
 	Write-Output("SA: Unexpected error during CA scan agent execution...`r`nError details: " + ($_ | Out-String))

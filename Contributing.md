@@ -140,7 +140,7 @@ Follow the steps below to add a manual control:</br>
 > * ControlID, Id should not be repeated/duplicated.
 
 **Add automated control**</br>
-You may also add controls that can be automated using AzureRm PowerShell or ARM API calls. Before automating a control, make sure you have knowledge about the permissions/access required to validate the control.
+You may also add controls that can be automated using Az PowerShell or ARM API calls. Before automating a control, make sure you have knowledge about the permissions/access required to validate the control.
 
 Follow the steps below to add an automated control:</br>
 **1.** Add control entry in the policy file for the Azure Service that can be found under the path "AzSK\Framework\Configurations\SVT\Services\<FeatureName>.Json".

@@ -77,7 +77,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer eavesdropping attacks.",
-      "Recommendation": "Make Web App linked to Bot Service to use Https using command 'Set-AzureRmResource -ResourceName '<WebAppName>' -ResourceGroupName '<RGName>' -ResourceType 'Microsoft.Web/sites' -Properties @{httpsOnly='true'} -Force '. Run 'Get-Help Set-AzureRmResource -full' for more help.",
+      "Recommendation": "Make Web App linked to Bot Service to use Https using command 'Set-AzResource -ResourceName '<WebAppName>' -ResourceGroupName '<RGName>' -ResourceType 'Microsoft.Web/sites' -Properties @{httpsOnly='true'} -Force '. Run 'Get-Help Set-AzResource -full' for more help.",
       "Tags": [
         "SDL",
         "TCP",

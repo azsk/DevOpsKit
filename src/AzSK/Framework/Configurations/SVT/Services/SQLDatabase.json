@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlServerADAdmin",
       "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control. All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
-      "Recommendation": "Run command Set-AzureRmSqlServerActiveDirectoryAdministrator -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -DisplayName '{AzureAdAdmin Display Name}' Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/set-azurermsqlserveractivedirectoryadministrator",
+      "Recommendation": "Run command Set-AzSqlServerActiveDirectoryAdministrator -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -DisplayName '{AzureAdAdmin Display Name}' Refer: https://docs.microsoft.com/en-us/powershell/module/az.sql/set-azsqlserveractivedirectoryadministrator",
       "Tags": [
         "SDL",
         "TCP",
@@ -35,7 +35,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlDatabaseTDE",
       "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-      "Recommendation": "Run command Set-AzureRmSqlDatabaseTransparentDataEncryption -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -DatabaseName '{DatabaseName}' -State 'Enabled'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/set-azurermsqldatabasetransparentdataencryption *Note:If Blob Auditing or Threat Detection are enabled on the server, they will always apply to the database, regardless of the database level settings.",
+      "Recommendation": "Run command Set-AzSqlDatabaseTransparentDataEncryption -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -DatabaseName '{DatabaseName}' -State 'Enabled'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.sql/set-azsqldatabasetransparentdataencryption *Note:If Blob Auditing or Threat Detection are enabled on the server, they will always apply to the database, regardless of the database level settings.",
       "Tags": [
         "SDL",
         "TCP",
@@ -61,7 +61,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlServerThreatDetection",
       "Rationale": "Enabling threat detection helps generate alerts about suspicious activity that might indicate attacks such as SQL Injection, login from a new location, unusual usage patterns and related attacks in a timely manner.",
-      "Recommendation": "First run command 'Set-AzureRmSqlServerAuditing -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountName '{StorageAccountName}' -State 'Enabled' -RetentionInDays $($this.ControlSettings.SqlServer.AuditRetentionPeriod_Min)'.Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/set-AzureRmSqlServerAuditing. Then run command 'Set-AzureRmSqlServerThreatDetectionPolicy -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountName '{StorageAccountName}' -EmailAdmins `$true -ExcludedDetectionType 'None''.",
+      "Recommendation": "First run command 'Set-AzSqlServerAuditing -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountName '{StorageAccountName}' -State 'Enabled' -RetentionInDays 365'.Refer: https://docs.microsoft.com/en-us/powershell/module/az.sql/set-azsqlserverauditing. Then run command 'Set-AzSqlServerThreatDetectionPolicy -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountName '{StorageAccountName}' -EmailAdmins `$true -ExcludedDetectionType 'None''.",
       "Tags": [
         "SDL",
         "TCP",
@@ -88,7 +88,7 @@
       "ControlSeverity": "High",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "Using the IP firewall rules ensures that access to the data or the service is restricted to a specific set of IPs. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets and makes your database more portable.",
+      "Rationale": "Using the IP firewall rules ensures that access to the data or the service is restricted to a specific set of IPs. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios.",
       "Recommendation": "Wherever feasible, restrict each SQL Database to a limited set of IP addresses/ranges that require access to that database. Refer: https://docs.microsoft.com/en-us/azure/sql-database/sql-database-firewall-configure. Note: In case the IP range is indeterminate (for instance, if the client is a PaaS endpoint), you may need to attest this control.",
       "Tags": [
         "SDL",
@@ -157,8 +157,8 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSqlDatabaseFirewallIPAddressRange",
-      "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets.",
-      "Recommendation": "Do not configure Any to Any firewall IP address. Run command Remove-AzureRmSqlServerFirewallRule -FirewallRuleName '{AnyToAny FirewallRule Name}' -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/remove-azurermsqlserverfirewallrule",
+      "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios.",
+      "Recommendation": "Do not configure Any to Any firewall IP address. Run command Remove-AzSqlServerFirewallRule -FirewallRuleName '{AnyToAny FirewallRule Name}' -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.sql/Remove-AzSqlServerFirewallRule",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -176,7 +176,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlServerAuditing",
       "Rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
-      "Recommendation": "Run command  Set-AzureRmSqlServerAuditing -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'  -StorageAccountName '{StorageAccountName}' -State 'Enabled' -RetentionInDays $($this.ControlSettings.SqlServer.AuditRetentionPeriod_Min). Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/set-AzureRmSqlServerAuditing",
+      "Recommendation": "Run command Set-AzSqlServerAuditing -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountName '{StorageAccountName}' -State 'Enabled' -RetentionInDays $($this.ControlSettings.SqlServer.AuditRetentionPeriod_Min). Refer: https://docs.microsoft.com/en-us/powershell/module/az.sql/set-azsqlserverauditing",
       "Tags": [
         "SDL",
         "TCP",
@@ -220,7 +220,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlServerDataMaskingPolicy",
       "Rationale": "Database dynamic data masking limits sensitive data exposure by masking it to non-privileged users and hides the sensitive data in the result set of a query over designated database fields. When used dynamic data masking should cover all sensitive columns.",
-      "Recommendation": "(As applicable) Set Data Masking Rules using the following steps: (1) Run command Set-AzureRmSqlDatabaseDataMaskingRule -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'  -DatabaseName '{DataBaseName}' -SchemaName '{SchemaName}' -TableName  '{TableName}' -ColumnName '{ColumnName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/set-azurermsqldatabasedatamaskingrule (2) Verify the privileged users to whom access is granted to view Unmasked data columns.",
+      "Recommendation": "(As applicable) Set Data Masking Rules using the following steps: (1) Run command Set-AzSqlDatabaseDataMaskingRule -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -DatabaseName '{DataBaseName}' -SchemaName '{SchemaName}' -TableName  '{TableName}' -ColumnName '{ColumnName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.sql/set-azsqldatabasedatamaskingrule (2) Verify the privileged users to whom access is granted to view Unmasked data columns.",
       "Tags": [
         "SDL",
         "TCP",
@@ -237,7 +237,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlServerFirewallAccessAzureService",
       "Rationale": "The 'Allow access to Azure services' setting configures a very broad range of IP addresses from Azure as permitted to access the SQL Server. Please make sure your scenario really requires this setting before enabling it. Turning it ON exposes your SQL Server to risk of attacks from resources (IPs) owned by others in the Azure region.",
-      "Recommendation": "Turn off the allow access to Azure services flag. Run command Remove-AzureRmSqlServerFirewallRule -FirewallRuleName 'AllowAllWindowsAzureIps' -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.sql/remove-azurermsqlserverfirewallrule",
+      "Recommendation": "Turn off the allow access to Azure services flag. Run command Remove-AzSqlServerFirewallRule -FirewallRuleName 'AllowAllWindowsAzureIps' -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.sql/remove-azsqlserverfirewallrule",
       "Tags": [
         "SDL",
         "Best Practice",

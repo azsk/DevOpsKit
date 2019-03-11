@@ -13,7 +13,7 @@ class HDInsight: SVTBase
     {
         if (-not $this.ResourceObject)
 		{
-            $this.ResourceObject = Get-AzureRmResource -ResourceId $this.ResourceContext.ResourceId -ExpandProperties
+            $this.ResourceObject = Get-AzResource -ResourceId $this.ResourceContext.ResourceId -ExpandProperties
             if(-not $this.ResourceObject)
             {
 				throw ([SuppressedException]::new(("Resource '$($this.ResourceContext.ResourceName)' not found under Resource Group '$($this.ResourceContext.ResourceGroupName)'"), [SuppressedExceptionType]::InvalidOperation))

@@ -11,7 +11,7 @@
         "Automated": "Yes",
         "MethodName": "CheckRBACAccess",
         "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-        "Recommendation": "Remove any excessive privileges granted on the Search service. Run command: Remove-AzureRmRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help.",
+        "Recommendation": "Remove any excessive privileges granted on the Search service. Run command: Remove-AzRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
         "Tags": [
           "SDL",
           "TCP",
@@ -30,7 +30,7 @@
         "Automated": "No",
         "MethodName": "",
         "Rationale": "Granting minimum access to monitoring and support team ensures that they are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of data compromise.",
-        "Recommendation": "Remove any excessive privileges granted on the Search service to monitoring/support teams. Run command: Remove-AzureRmRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help.",
+        "Recommendation": "Remove any excessive privileges granted on the Search service to monitoring/support teams. Run command: Remove-AzRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
         "Tags": [
           "SDL",
           "Best Practice",
@@ -48,7 +48,7 @@
         "Automated": "No",
         "MethodName": "",
         "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements.",
-        "Recommendation": "To enable encryption for a SQL DB, run command 'Set-AzureRmSqlDatabaseTransparentDataEncryption -DatabaseName '<DBName>' -ResourceGroupName '<RGName>' -ServerName '<SQLServerName>' -State 'Enabled''. Run 'Get-Help Set-AzureRmSqlDatabaseTransparentDataEncryption -full' for more help.",
+        "Recommendation": "To enable encryption for a SQL DB, run command 'Set-AzSqlDatabaseTransparentDataEncryption -DatabaseName '<DBName>' -ResourceGroupName '<RGName>' -ServerName '<SQLServerName>' -State 'Enabled''. Run 'Get-Help Set-AzSqlDatabaseTransparentDataEncryption -full' for more help.",
         "Tags": [
           "SDL",
           "TCP",

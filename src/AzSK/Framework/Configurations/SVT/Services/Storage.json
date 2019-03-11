@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckStorageContainerPublicAccessTurnOff",
       "Rationale":  "Data in containers that have anonymous access can be downloaded by anyone on the internet without authentication. This can lead to a compromise of corporate data.",
-      "Recommendation": "Run command 'Set-AzureStorageContainerAcl -Name '<ContainerName>' -Permission 'Off' -Context (New-AzureStorageContext -StorageAccountName '<StorageAccountName>' -StorageAccountKey '<StorageAccountKey>')'. Run 'Get-Help Set-AzureStorageContainerAcl -full' for more help.",
+      "Recommendation": "Run command 'Set-AzStorageContainerAcl -Name '<ContainerName>' -Permission 'Off' -Context (New-AzStorageContext -StorageAccountName '<StorageAccountName>' -StorageAccountKey '<StorageAccountKey>')'. Run 'Get-Help Set-AzStorageContainerAcl -full' for more help.",
       "Tags": [
          "SDL",
          "TCP",
@@ -39,7 +39,7 @@
       "Automated": "Yes",
       "MethodName": "CheckStorageMetricAlert",
       "Rationale": "Alert rules for anonymous authentication requests enable you to detect any suspicious and malicious activity early and respond in a timely manner.",
-      "Recommendation": "Run command 'Add-AzureRmMetricAlertRule -MetricName 'AnonymousSuccess' -Operator 'GreaterThan' -Threshold '<Threshold count>' -TimeAggregationOperator 'Total' -WindowSize '<Duration window>' -Action '<New-AzureRmAlertRuleEmail -SendToServiceOwner>' -Name '<AlertName>' -ResourceGroup '<RGName>' -TargetResourceId '<TargetResourceId>' -Location '<Location>''. TargetResourceId format is '<StorageResourceId>/services/<blob/file/queue/table>'. Run 'Get-Help Add-AzureRmMetricAlertRule -full' for more help. Note: You will need to enable this for all service types within Storage (Blob, File, Table, Queue, etc.) even if you are only using one of them.",
+      "Recommendation": "Run command 'Add-AzMetricAlertRule -MetricName 'AnonymousSuccess' -Operator 'GreaterThan' -Threshold '<Threshold count>' -TimeAggregationOperator 'Total' -WindowSize '<Duration window>' -Action '<New-AzAlertRuleEmail -SendToServiceOwner>' -Name '<AlertName>' -ResourceGroup '<RGName>' -TargetResourceId '<TargetResourceId>' -Location '<Location>''. TargetResourceId format is '<StorageResourceId>/services/<blob/file/queue/table>'. Run 'Get-Help Add-AzMetricAlertRule -full' for more help. Note: You will need to enable this for all service types within Storage (Blob, File, Table, Queue, etc.) even if you are only using one of them.",
       "Tags": [
         "SDL",
         "TCP",
@@ -63,7 +63,7 @@
       "Automated": "Yes",
       "MethodName": "CheckStorageEnableDiagnosticsLog",
       "Rationale": "Logging and monitoring of authentication request data can help to detect suspicious and malicious activities early and respond in a timely manner.",
-      "Recommendation": "Run command 'Set-AzureStorageServiceLoggingProperty -ServiceType '<Blob/Queue/Table>' -LoggingOperations 'All' -Context '<StorageContext>' -RetentionDays '365' -PassThru'. Run 'Get-Help Set-AzureStorageServiceLoggingProperty -full' for more help. Set-AzureStorageServiceMetricsProperty -MetricsType 'Hour' -ServiceType '<Blob/Queue/Table/File>' -Context '<StorageContext>' -MetricsLevel 'ServiceAndApi' -RetentionDays '365' -PassThru. Run 'Get-Help Set-AzureStorageServiceMetricsProperty -full' for more help.",
+      "Recommendation": "Run command 'Set-AzStorageServiceLoggingProperty -ServiceType '<Blob/Queue/Table>' -LoggingOperations 'All' -Context '<StorageContext>' -RetentionDays '365' -PassThru'. Run 'Get-Help Set-AzStorageServiceLoggingProperty -full' for more help. Set-AzStorageServiceMetricsProperty -MetricsType 'Hour' -ServiceType '<Blob/Queue/Table/File>' -Context '<StorageContext>' -MetricsLevel 'ServiceAndApi' -RetentionDays '365' -PassThru. Run 'Get-Help Set-AzStorageServiceMetricsProperty -full' for more help.",
       "Tags": [
          "SDL",
          "TCP",
@@ -89,7 +89,7 @@
       "Automated": "Yes",
       "MethodName": "CheckStorageEncryptionInTransit",
       "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks. When enabling HTTPS one must remember to simultaneously disable access over plain HTTP else data can still be subject to compromise over clear text connections.",
-      "Recommendation": "Run command 'Set-AzureRmStorageAccount -ResourceGroupName <RGName> -name <StorageAccountName> -EnableHttpsTrafficOnly `$true'. Run 'Get-Help Set-AzureRmStorageAccount -full' for more help.",
+      "Recommendation": "Run command 'Set-AzStorageAccount -ResourceGroupName <RGName> -Name <StorageAccountName> -EnableHttpsTrafficOnly `$true'. Run 'Get-Help Set-AzStorageAccount -full' for more help.",
       "Tags": [
          "SDL",
          "TCP",
@@ -158,7 +158,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
-      "Recommendation": "Rotate Storage Account keys on a periodic basis. To generated a new key, run command 'New-AzureRmStorageAccountKey -KeyName '<key1/key2>' -Name '<StorageAccountName>' -ResourceGroupName '<RGName>'. Deploy the new key or derived SAS tokens to various clients as appropriate. Run 'Get-Help New-AzureRmStorageAccountKey -full' for more help.",
+      "Recommendation": "Rotate Storage Account keys on a periodic basis. To generated a new key, run command 'New-AzStorageAccountKey -KeyName '<key1/key2>' -Name '<StorageAccountName>' -ResourceGroupName '<RGName>'. Deploy the new key or derived SAS tokens to various clients as appropriate. Run 'Get-Help New-AzStorageAccountKey -full' for more help.",
       "Tags": [
         "SDL",
         "TCP",

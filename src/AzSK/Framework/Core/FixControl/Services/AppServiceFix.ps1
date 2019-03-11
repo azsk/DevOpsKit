@@ -11,7 +11,7 @@ class AppServiceFix: FixServicesBase
 	{
 		if(-not $this.ResourceObject)
 		{
-			$this.ResourceObject = Get-AzureRmWebApp -Name $this.ResourceName -ResourceGroupName $this.ResourceGroupName
+			$this.ResourceObject = Get-AzWebApp -Name $this.ResourceName -ResourceGroupName $this.ResourceGroupName
 		}
 
 		return $this.ResourceObject;
@@ -22,7 +22,7 @@ class AppServiceFix: FixServicesBase
 		[MessageData[]] $detailedLogs = @();
 		
 		$detailedLogs += [MessageData]::new("Disabling web socket for app service [$($this.ResourceName)]...");
-		$result = Set-AzureRmWebApp `
+		$result = Set-AzWebApp `
 					-ResourceGroupName $this.ResourceGroupName `
 					-Name $this.ResourceName `
 					-WebSocketsEnabled $false `
@@ -38,7 +38,7 @@ class AppServiceFix: FixServicesBase
 		[MessageData[]] $detailedLogs = @();
 		
 		$detailedLogs += [MessageData]::new("Setting up .Net version for app service [$($this.ResourceName)]...");
-		$result = Set-AzureRmWebApp `
+		$result = Set-AzWebApp `
 					-ResourceGroupName $this.ResourceGroupName `
 					-Name $this.ResourceName `
 					-NetFrameworkVersion $this.ControlSettings.AppService.LatestDotNetFrameworkVersionNumber `
@@ -54,7 +54,7 @@ class AppServiceFix: FixServicesBase
 		[MessageData[]] $detailedLogs = @();
 		
 		$detailedLogs += [MessageData]::new("Setting up platform architecture to 64 bit for app service [$($this.ResourceName)]...");
-		$result = Set-AzureRmWebApp `
+		$result = Set-AzWebApp `
 					-ResourceGroupName $this.ResourceGroupName `
 					-Name $this.ResourceName `
 					-Use32BitWorkerProcess $false `
@@ -70,7 +70,7 @@ class AppServiceFix: FixServicesBase
 		[MessageData[]] $detailedLogs = @();
 		
 		$detailedLogs += [MessageData]::new("Setting up logging and request tracing for app service [$($this.ResourceName)]...");
-		$result = Set-AzureRmWebApp `
+		$result = Set-AzWebApp `
 					-ResourceGroupName $this.ResourceGroupName `
 					-Name $this.ResourceName `
 					-DetailedErrorLoggingEnabled $true `
@@ -92,7 +92,7 @@ class AppServiceFix: FixServicesBase
 		$appServiceObject = $this.FetchAppServiceObject();
 		if($appServiceObject)
 		{
-			$serverFarm = Get-AzureRmResource -ResourceId $appServiceObject.ServerFarmId
+			$serverFarm = Get-AzResource -ResourceId $appServiceObject.ServerFarmId
 
 			if($serverFarm)
 			{
@@ -102,7 +102,7 @@ class AppServiceFix: FixServicesBase
 				}
 				else
 				{
-					$result = Set-AzureRmAppServicePlan `
+					$result = Set-AzAppServicePlan `
 									-Name $serverFarm.Name `
 									-ResourceGroupName $serverFarm.ResourceGroupName `
 									-NumberofWorkers $instanceCount `
@@ -128,7 +128,7 @@ class AppServiceFix: FixServicesBase
 		[MessageData[]] $detailedLogs = @();
 		
 		$detailedLogs += [MessageData]::new("Enabling HTTPS only flag for app service [$($this.ResourceName)]...");
-		$result = Set-AzureRmResource -ResourceName $this.ResourceName `
+		$result = Set-AzResource -ResourceName $this.ResourceName `
 						-ResourceGroupName $this.ResourceGroupName `
 						-ResourceType 'Microsoft.Web/sites' `
 						-Properties @{httpsOnly='true'} `

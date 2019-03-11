@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckServiceBusRootPolicy",
       "Rationale": "A 'namespace' level access policy provides access to all Queues/Topics in a namespace. However, using an access policy at entity (Queue/Topic) level provides access only to the specific entity. Thus using the latter is inline with the principle of least privilege.",
-      "Recommendation": "Remove all the authorization rules from Service Bus namespace except RootManageSharedAccessKey using Remove-AzureRmServiceBusAuthorizationRule command. Run 'Get-Help Remove-AzureRmServiceBusAuthorizationRule -full' for more help. Use the Azure portal to configure shared access policies with appropriate claims at the specific entity (Topic/Queue) scope.",
+      "Recommendation": "Remove all the authorization rules from Service Bus namespace except RootManageSharedAccessKey using Remove-AzServiceBusAuthorizationRule command. Run 'Get-Help Remove-AzServiceBusAuthorizationRule -full' for more help. Use the Azure portal to configure shared access policies with appropriate claims at the specific entity (Topic/Queue) scope.",
       "Tags": [
         "SDL",
         "TCP",
@@ -73,7 +73,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
-      "Recommendation": "Use New-AzureRmServiceBusKey -ResourceGroup <ResourceGroupName> -NamespaceName <NamespaceName> -Queue <QueueName> -RegenerateKeys PrimaryKey/SecondaryKey to regenerate Queue key. Use New-AzureRmServiceBusKey -ResourceGroup <ResourceGroupName> -NamespaceName <NamespaceName> -Topic <TopicName> -RegenerateKeys PrimaryKey/SecondaryKey to regenerate Topic key. Use New-AzureRmServiceBusKey -ResourceGroup <ResourceGroupName> -NamespaceName <NamespaceName> -RegenerateKeys PrimaryKey/SecondaryKey to regenerate namespace key. Caution: Make sure that the newly generated keys are seamlessly deployed to clients to avoid disruption of functionality.",
+      "Recommendation": "Use New-AzServiceBusKey -ResourceGroupName <ResourceGroupName> -Namespace <NamespaceName> -Queue <QueueName> -RegenerateKey PrimaryKey/SecondaryKey to regenerate Queue key. Use New-AzServiceBusKey -ResourceGroupName <ResourceGroupName> -Namespace <NamespaceName> -Topic <TopicName> -RegenerateKey PrimaryKey/SecondaryKey to regenerate Topic key. Use New-AzServiceBusKey -ResourceGroupName <ResourceGroupName> -Namespace <NamespaceName> -RegenerateKey PrimaryKey/SecondaryKey to regenerate namespace key. Caution: Make sure that the newly generated keys are seamlessly deployed to clients to avoid disruption of functionality.",
       "Tags": [
         "SDL",
         "TCP",

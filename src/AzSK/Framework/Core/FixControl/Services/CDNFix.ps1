@@ -13,7 +13,7 @@ class CDNFix: FixServicesBase
 		[MessageData[]] $detailedLogs = @();
 		$detailedLogs += [MessageData]::new("Enabling 'HTTPS' protocol for CDN endpoints in CDN Profile [$($this.ResourceName)]...");
 	
-		$cdnEndpoints = Get-AzureRmCdnEndpoint -ProfileName $this.ResourceName `
+		$cdnEndpoints = Get-AzCdnEndpoint -ProfileName $this.ResourceName `
 							-ResourceGroupName $this.ResourceGroupName `
 							-ErrorAction Stop
 		$httpAllowedEndpointList =  $cdnEndpoints | Where-Object { $_.IsHttpAllowed -eq $true }
@@ -21,10 +21,10 @@ class CDNFix: FixServicesBase
 
 		$httpAllowedEndpointList |	 ForEach-Object{
 
-			$httpEndpoint= Get-AzureRmCdnEndpoint -EndpointName $_.Name -ProfileName $this.ResourceName  -ResourceGroupName $this.ResourceGroupName
+			$httpEndpoint= Get-AzCdnEndpoint -EndpointName $_.Name -ProfileName $this.ResourceName  -ResourceGroupName $this.ResourceGroupName
 			$httpEndpoint.IsHttpAllowed =$false
 			$httpEndpoint.IsHttpsAllowed =$true
-			Set-AzureRmCdnEndpoint -CdnEndpoint $httpEndpoint
+			Set-AzCdnEndpoint -CdnEndpoint $httpEndpoint
 		
 		}
 		$detailedLogs += [MessageData]::new("'HTTPS' protocol is enabled for all CDN endpoints in CDN Profile [$($this.ResourceName)]");

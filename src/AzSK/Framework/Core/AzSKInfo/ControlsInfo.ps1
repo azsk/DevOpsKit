@@ -172,6 +172,16 @@ class ControlsInfo: CommandBase
 					{
 						$isBaselineControls = "No"
 					}
+
+					$ControlSeverity = $_.ControlSeverity
+					if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverity"))
+					{
+						$_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
+					}
+					else
+					{
+						$_.ControlSeverity = $ControlSeverity
+					}
 										
 					$ctrlObj = New-Object -TypeName PSObject
 					$ctrlObj | Add-Member -NotePropertyName FeatureName -NotePropertyValue $featureName 
@@ -198,10 +208,10 @@ class ControlsInfo: CommandBase
 				$ctrlSummary = New-Object -TypeName PSObject
 				$ctrlSummary | Add-Member -NotePropertyName FeatureName -NotePropertyValue $featureName 
 				$ctrlSummary | Add-Member -NotePropertyName Total -NotePropertyValue ($SVTConfig[$_]).Count
-				$ctrlSummary | Add-Member -NotePropertyName Critical -NotePropertyValue (($SVTConfig[$_] | Where-Object { $_.ControlSeverity -eq "Critical" })|Measure-Object).Count
-				$ctrlSummary | Add-Member -NotePropertyName High -NotePropertyValue (($SVTConfig[$_] | Where-Object { $_.ControlSeverity -eq "High" })|Measure-Object).Count
-				$ctrlSummary | Add-Member -NotePropertyName Medium -NotePropertyValue (($SVTConfig[$_] | Where-Object { $_.ControlSeverity -eq "Medium" })|Measure-Object).Count
-				$ctrlSummary | Add-Member -NotePropertyName Low -NotePropertyValue (($SVTConfig[$_] | Where-Object { $_.ControlSeverity -eq "Low" })|Measure-Object).Count
+				$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('Critical') -NotePropertyValue (($SVTConfig[$_] | Where-Object { $_.ControlSeverity -eq $this.GetControlSeverity("Critical") })|Measure-Object).Count
+				$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('High') -NotePropertyValue (($SVTConfig[$_] | Where-Object { $_.ControlSeverity -eq $this.GetControlSeverity("High") })|Measure-Object).Count
+				$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('Medium') -NotePropertyValue (($SVTConfig[$_] | Where-Object { $_.ControlSeverity -eq $this.GetControlSeverity("Medium") })|Measure-Object).Count
+				$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('Low') -NotePropertyValue (($SVTConfig[$_] | Where-Object { $_.ControlSeverity -eq $this.GetControlSeverity("Low") })|Measure-Object).Count
 				$controlSummary += $ctrlSummary
 			}
 
@@ -231,18 +241,19 @@ class ControlsInfo: CommandBase
 			$ctrlSummary = New-Object -TypeName PSObject
 			$ctrlSummary | Add-Member -NotePropertyName FeatureName -NotePropertyValue "Total" 
 			$ctrlSummary | Add-Member -NotePropertyName Total -NotePropertyValue ($controlSummary | Measure-Object 'Total' -Sum).Sum
-			$ctrlSummary | Add-Member -NotePropertyName Critical -NotePropertyValue ($controlSummary | Measure-Object 'Critical' -Sum).Sum
-			$ctrlSummary | Add-Member -NotePropertyName High -NotePropertyValue ($controlSummary | Measure-Object 'High' -Sum).Sum
-			$ctrlSummary | Add-Member -NotePropertyName Medium -NotePropertyValue ($controlSummary | Measure-Object 'Medium' -Sum).Sum
-			$ctrlSummary | Add-Member -NotePropertyName Low -NotePropertyValue ($controlSummary | Measure-Object 'Low' -Sum).Sum
+
+			$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('Critical') -NotePropertyValue ($controlSummary | Measure-Object "$($this.GetControlSeverity('Critical'))" -Sum).Sum
+			$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('High') -NotePropertyValue ($controlSummary | Measure-Object "$($this.GetControlSeverity('High'))" -Sum).Sum
+			$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('Medium') -NotePropertyValue ($controlSummary | Measure-Object "$($this.GetControlSeverity('Medium'))" -Sum).Sum
+			$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('Low') -NotePropertyValue ($controlSummary | Measure-Object "$($this.GetControlSeverity('Low'))" -Sum).Sum
 
 			$totalSummaryMarker = New-Object -TypeName PSObject
 			$totalSummaryMarker | Add-Member -NotePropertyName FeatureName -NotePropertyValue $this.SummaryMarkerText
 			$totalSummaryMarker | Add-Member -NotePropertyName Total -NotePropertyValue $this.SummaryMarkerText
-			$totalSummaryMarker | Add-Member -NotePropertyName Critical -NotePropertyValue $this.SummaryMarkerText
-			$totalSummaryMarker | Add-Member -NotePropertyName High -NotePropertyValue $this.SummaryMarkerText
-			$totalSummaryMarker | Add-Member -NotePropertyName Medium -NotePropertyValue $this.SummaryMarkerText
-			$totalSummaryMarker | Add-Member -NotePropertyName Low -NotePropertyValue $this.SummaryMarkerText
+			$totalSummaryMarker | Add-Member -NotePropertyName $this.GetControlSeverity('Critical') -NotePropertyValue $this.SummaryMarkerText
+			$totalSummaryMarker | Add-Member -NotePropertyName $this.GetControlSeverity('High') -NotePropertyValue $this.SummaryMarkerText
+			$totalSummaryMarker | Add-Member -NotePropertyName $this.GetControlSeverity('Medium') -NotePropertyValue $this.SummaryMarkerText
+			$totalSummaryMarker | Add-Member -NotePropertyName $this.GetControlSeverity('Low') -NotePropertyValue $this.SummaryMarkerText
 
 			$controlSummary += $totalSummaryMarker
 			$controlSummary += $ctrlSummary
@@ -250,7 +261,16 @@ class ControlsInfo: CommandBase
 			$this.PublishCustomMessage(($controlSummary | Format-Table | Out-String), [MessageType]::Default)
 		}
         
-    }
+	}
+	
+	[string] GetControlSeverity($ControlSeverityFromServer)
+	{
+		if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverityFromServer"))
+		{
+			$ControlSeverityFromServer = $this.ControlSettings.ControlSeverity.$ControlSeverityFromServer
+		}
+		return $ControlSeverityFromServer
+	}
 }
 
 class WriteCSVData

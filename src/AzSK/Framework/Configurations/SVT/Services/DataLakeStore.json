@@ -48,7 +48,7 @@
       "Automated": "Yes",
       "MethodName": "CheckACLAccess",
       "Rationale": "Using appropriate ACLs ensures that data in ADLS is protected and accessible only to the entities with a legitimate need to access it.",
-      "Recommendation": "Use PS command 'Set-AzureRmDataLakeStoreItemAcl [-Account] <String> [-Path] <DataLakeStorePathInstance> [-Acl] <DataLakeStoreItemAcl>'. Refer: https://docs.microsoft.com/en-us/azure/data-lake-store/data-lake-store-secure-data#a-namefilepermissionsaassign-users-or-security-group-as-acls-to-the-azure-data-lake-store-file-system. To remove any user or group from ACLs refer: https://docs.microsoft.com/en-us/azure/data-lake-store/data-lake-store-secure-data#remove-security-group-acls-from-a-data-lake-storage-gen1-file-system",
+      "Recommendation": "Use PS command 'Set-AzDataLakeStoreItemAcl [-Account] <String> [-Path] <DataLakeStorePathInstance> [-Acl] <DataLakeStoreItemAcl>'. Refer: https://docs.microsoft.com/en-us/azure/data-lake-store/data-lake-store-secure-data#a-namefilepermissionsaassign-users-or-security-group-as-acls-to-the-azure-data-lake-store-file-system. To remove any user or group from ACLs refer: https://docs.microsoft.com/en-us/azure/data-lake-store/data-lake-store-secure-data#remove-security-group-acls-from-a-data-lake-storage-gen1-file-system",
       "Tags": [
         "SDL",
         "TCP",
@@ -66,7 +66,7 @@
       "Automated": "Yes",
       "MethodName": "CheckFirewall",
       "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. While this may not be feasible in all scenarios, when it can be used, it provides an extra layer of access control protection for critical assets.",
-      "Recommendation": "Enable firewall and add rules for specific IP/IP ranges. Do not add the IP range $($this.ControlSettings.UniversalIPRange) as it means open access for all IPs. Refer: https://docs.microsoft.com/en-us/powershell/module/azurerm.datalakestore/add-azurermdatalakestorefirewallrule. Note: In case the IP range is indeterminate (for instance, if the client is a PaaS endpoint), you may need to attest this control.",
+      "Recommendation": "Enable firewall and add rules for specific IP/IP ranges. Do not add the IP range $($this.ControlSettings.UniversalIPRange) as it means open access for all IPs. Refer: https://docs.microsoft.com/en-us/powershell/module/az.datalakestore/add-azdatalakestorefirewallrule. Note: In case the IP range is indeterminate (for instance, if the client is a PaaS endpoint), you may need to attest this control.",
       "Tags": [
         "SDL",
         "TCP",
@@ -213,7 +213,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Data should not be retained for periods longer than required for business use case scenarios. Purging/cleaning up data periodically minimizes risk from compromise while also helping limit the costs of maintaining it.",
-      "Recommendation": "Set expiry date by navigating to file in ADLS data explorer and the 'Set Expiry' property or use PS Command 'Set-AzureRmDataLakeStoreItemExpiry [-Account] <String> [-Path] <DataLakeStorePathInstance> [[-Expiration] <DateTimeOffset>]'",
+      "Recommendation": "Set expiry date by navigating to file in ADLS data explorer and the 'Set Expiry' property or use PS Command 'Set-AzDataLakeStoreItemExpiry [-Account] <String> [-Path] <DataLakeStorePathInstance> [[-Expiration] <DateTimeOffset>]'",
       "Tags": [ 
       	"SDL",
         "Best Practice",
