@@ -203,7 +203,10 @@ function Install-AzSKMonitoringSolution
 	{
 		try
 		{
-			Write-Host "WARNING: The command 'Install-AzSKOMSSolution' will soon be deprecated. It will be renamed to 'Install-AzSKMonitoringSolution'.`n" -ForegroundColor Yellow
+			if($PSCmdlet.MyInvocation.InvocationName.ToUpper().Equals("INSTALL-AZSKOMSSOLUTION"))
+			{
+				Write-Host "WARNING: The command 'Install-AzSKOMSSolution' will soon be deprecated. It will be renamed to 'Install-AzSKMonitoringSolution'.`n" -ForegroundColor Yellow
+			}
 			$OMSMonitoringInstance = [OMSMonitoring]::new($OMSSubscriptionId, $OMSResourceGroup, $OMSWorkspaceId, $PSCmdlet.MyInvocation);
 			$OMSMonitoringInstance.InvokeFunction($OMSMonitoringInstance.ConfigureOMS, @($ViewName, $ValidateOnly));
 		}
