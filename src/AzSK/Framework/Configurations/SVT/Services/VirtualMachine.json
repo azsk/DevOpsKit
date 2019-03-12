@@ -11,7 +11,7 @@
           "Automated": "Yes",
           "MethodName": "CheckOSVersion",
           "Rationale": "Being on the latest OS version significantly reduces risks from security design issues and security bugs that may be present in older versions.",
-          "Recommendation": "Run command 'Update-AzureRmVM -ResourceGroupName {resourceGroupName} -VM (Get-AzVM -ResourceGroupName {resourceGroupName} -Name {vmName})' . Run 'Get-Help Update-AzureRmVM -full' for more help.",
+          "Recommendation": "Run command 'Update-AzVM -ResourceGroupName {resourceGroupName} -VM (Get-AzVM -ResourceGroupName {resourceGroupName} -Name {vmName})' . Run 'Get-Help Update-AzVM -full' for more help.",
           "Tags": [
              "SDL",
              "TCP",

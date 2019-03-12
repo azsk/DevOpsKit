@@ -15,7 +15,7 @@ class SQLDatabaseFix: FixServicesBase
     {
 		[MessageData[]] $detailedLogs = @();
 
-		if((Get-AzSqlServerActiveDirectoryAdministrator -ResourceGroup $this.ResourceGroupName -Server $this.ResourceName | Measure-Object).Count -le 0)
+		if((Get-AzSqlServerActiveDirectoryAdministrator -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName | Measure-Object).Count -le 0)
 		{
 			$adAdmin = $parameters.ActiveDirectoryAdminEmailId;
 			$detailedLogs += [MessageData]::new("Setting up Active Directory admin [$adAdmin] for server [$($this.ResourceName)]...");

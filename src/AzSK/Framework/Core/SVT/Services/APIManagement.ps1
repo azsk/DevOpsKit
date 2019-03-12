@@ -32,10 +32,10 @@ class APIManagement: SVTBase
 			}
 			elseif($this.ResourceObject)
 			{
-				$this.APIMContext = New-AzureRmApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
-				$this.APIMInstance = Get-AzureRmApiManagement -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
-				$this.APIMAPIs = Get-AzureRmApiManagementApi -Context $this.APIMContext
-				$this.APIMProducts = Get-AzureRmApiManagementProduct -Context $this.APIMContext
+				$this.APIMContext = New-AzApiManagementContext -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServiceName $this.ResourceContext.ResourceName
+				$this.APIMInstance = Get-AzApiManagement -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
+				$this.APIMAPIs = Get-AzApiManagementApi -Context $this.APIMContext
+				$this.APIMProducts = Get-AzApiManagementProduct -Context $this.APIMContext
 			}
         }
         return $this.ResourceObject;
@@ -46,7 +46,30 @@ class APIManagement: SVTBase
 		$result = @();
 		if($this.ResourceObject)
 		{
-			$result += $controls;
+			if($controls.Count -eq 0)
+			{
+				return $controls;
+			}
+
+			# Filter controls based on Tier
+			if($this.APIMInstance.Sku -eq "Premium")
+			{
+				$result += $controls | Where-Object {$_.Tags -contains "PremiumSku" }
+			}
+			elseif($this.APIMInstance.Sku -eq "Standard")
+			{
+				$result += $controls | Where-Object {$_.Tags -contains "StandardSku" }
+			}
+			elseif($this.APIMInstance.Sku -eq "Basic")
+			{
+				$result += $controls | Where-Object {$_.Tags -contains "BasicSku" }
+			}
+			elseif($this.APIMInstance.Sku -eq "Developer")
+			{
+				$result += $controls | Where-Object {$_.Tags -contains "DeveloperSku" }
+			}
+
+			# Filter controls: API and Products
 			if(-not $this.APIMAPIs)
 			{
 				$result = $result | Where-Object {$_.Tags -notcontains "APIMAPIs" }
@@ -55,6 +78,7 @@ class APIManagement: SVTBase
 			{
 				$result = $result | Where-Object {$_.Tags -notcontains "APIMProducts" }
 			}
+			
 		}
 		return $result;
 	}
@@ -68,10 +92,11 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMAPIs)
 		{
-			$noncompliantAPIs = $this.APIMAPIs | where-object{$_.Protocols.count -gt 1 -or $_.Protocols[0] -ne 'https' }
-			if(($noncompliantAPIs|Measure-Object).Count -gt 0)
+			$nonCompliantAPIs = $this.APIMAPIs | where-object{$_.Protocols.count -gt 1 -or $_.Protocols[0] -ne [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementSchema]::Https }
+			if(($nonCompliantAPIs|Measure-Object).Count -gt 0)
 			{
-			    $controlResult.AddMessage([VerificationResult]::Failed, "Below API(s) are configured to use non-secure HTTP access to the backend via API Management.", $noncompliantAPIs)
+			    $controlResult.AddMessage([VerificationResult]::Failed, "Below API(s) are configured to use non-secure HTTP access to the backend via API Management.", $nonCompliantAPIs)
+				$controlResult.SetStateData("API(s) using non-secure HTTP access", $nonCompliantAPIs);
 			}
 			else
 			{
@@ -87,18 +112,18 @@ class APIManagement: SVTBase
 		if( $null -ne $this.APIMContext)
 		{
 			$allNamedValues = @()
-			$allNamedValues += Get-AzureRmApiManagementProperty -Context $this.APIMContext 
+			$allNamedValues += Get-AzApiManagementProperty -Context $this.APIMContext 
 			if($allNamedValues.count -eq 0)
 			{
-			    $controlResult.AddMessage([VerificationResult]::Passed, "Named Values are not added.")
-			    
+			    $controlResult.AddMessage([VerificationResult]::Passed, "No named values are present in this API Management service.")	    
 			}
 			else
 			{
 			    $nonsecretNamedValues = $allNamedValues | where-object {$_.Secret -eq $false}
-			    if(($nonsecretNamedValues|Measure-Object).Count -gt 0)
+			    if(($nonsecretNamedValues |Measure-Object).Count -gt 0)
 			    {
-			        $controlResult.AddMessage([VerificationResult]::Verify, "Below Named Values are not marked as secret values. Please mark it as secret if it contains critical data.", $nonsecretNamedValues)
+			        $controlResult.AddMessage([VerificationResult]::Verify, "Below named value(s) are not marked as secret, use secret named value if it contains sensitive data.", $nonsecretNamedValues.Id)
+					$controlResult.SetStateData("Unencrypted variable(s)", $nonsecretNamedValues.Id);
 			    }
 			    else
 			    {
@@ -111,14 +136,16 @@ class APIManagement: SVTBase
     
 	hidden [ControlResult] CheckRequiresSubscription([ControlResult] $controlResult)
     {
+		# Currently, two more subscription scopes: all APIs and a single API are available in the API Management Consumption tier only.
+		# We do not recommend All APIs scope because a single key will grant access all APIs within an API Management instance.
+
 		if($null -ne $this.APIMProducts)
 		{
-			$Product = $this.APIMProducts | Where-Object { $_.State -eq 'Published' }
-			
-			if(($null -ne $Product) -and ($Product.SubscriptionRequired -contains $false))
+			$Product = $this.APIMProducts | Where-Object { ($_.State -eq [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementProductState]::Published) -and ($_.SubscriptionRequired -eq $false )}
+			if(($Product | Measure-Object).Count -gt 0)
 			{
-				$Product =  $Product | Where-Object { $_.SubscriptionRequired -eq $false}
-				$controlResult.AddMessage([VerificationResult]::Failed, "'Requires Subscription' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $Product ) 
+				$controlResult.AddMessage([VerificationResult]::Failed, "'Requires Subscription' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $Product )
+				$controlResult.SetStateData("API product(s) open for public access without the requirement of subscriptions", $Product);
 			}
 			else
 			{
@@ -132,12 +159,13 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMProducts)
 		{
-			$Product = $this.APIMProducts | Where-Object { $_.State -eq 'Published' }
+			$Product = $this.APIMProducts | Where-Object { $_.State -eq [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementProductState]::Published }
 			
 			if(($null -ne $Product) -and ($Product.ApprovalRequired -contains $false))
 			{
 				$Product = $Product | Where-Object { $_.ApprovalRequired -eq $false}
-				$controlResult.AddMessage([VerificationResult]::Verify, "'Requires Approval' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $Product) 
+				$controlResult.AddMessage([VerificationResult]::Verify, "'Requires Approval' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $Product)
+				$controlResult.SetStateData("API product(s) where subscription attempts are auto-approved", $Product);
 			}
 			else
 			{
@@ -151,7 +179,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$tenantAccess = Get-AzureRmApiManagementTenantAccess -Context $this.APIMContext
+			$tenantAccess = Get-AzApiManagementTenantAccess -Context $this.APIMContext
 			
 			if(($null -ne $tenantAccess) -and ($tenantAccess.Enabled -eq $true))
 			{
@@ -169,7 +197,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$tenantSyncState = Get-AzureRmApiManagementTenantSyncState -Context $this.APIMContext
+			$tenantSyncState = Get-AzApiManagementTenantSyncState -Context $this.APIMContext
 			
 			if(($tenantSyncState.IsGitEnabled -eq $true) -and ($tenantSyncState.CommitId -ne $null))
 			{
@@ -187,13 +215,14 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$identityProvider = Get-AzureRmApiManagementIdentityProvider -Context $this.APIMContext
+			$identityProvider = Get-AzApiManagementIdentityProvider -Context $this.APIMContext
 
 			if($null -ne $identityProvider)
 			{
-				if($null -ne ($identityProvider | Where-Object {$_.Type -ne "Aad"}))
+				if($null -ne ($identityProvider | Where-Object {$_.Type -ne [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementIdentityProviderType]::Aad}))
 				{				
 					$controlResult.AddMessage([VerificationResult]::Verify, "Below listed Identity provider(s) are enabled in '$($this.ResourceContext.ResourceName)' API management instance. Enterprise applications using APIM must authenticate developers/applications using Azure Active Directory backed credentials.", $identityProvider)
+					$controlResult.SetStateData("Sign in option enabled on developer portal other than AAD", $identityProvider);
 				}
 				else
 				{
@@ -212,7 +241,7 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMInstance)
 		{
-			if($this.APIMInstance.VpnType -eq 'None')
+			if($this.APIMInstance.VpnType -eq [Microsoft.Azure.Commands.ApiManagement.Models.PsApiManagementVpnType]::None)
 			{
 				$controlResult.AddMessage([VerificationResult]::Verify, "'$($this.ResourceContext.ResourceName)' API management instance is not deployed inside a virtual network. Consider hosting APIM within a virtual network for improved isolation.") 
 			}
@@ -228,10 +257,11 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMProducts)
 		{
-			$Product = $this.APIMProducts
-			if(($null -ne $Product) -and ($Product.ProductId -contains 'starter' -or $Product.ProductId -contains 'unlimited'))
+			$Product = $this.APIMProducts | Where-Object { ($_.ProductId -eq 'starter') -or ($_.ProductId -eq 'unlimited') }
+			if(($Product | Measure-Object).Count -gt 0)
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "APIM contains sample products. Delete the two sample products: Starter and Unlimited.") 
+				$controlResult.AddMessage([VerificationResult]::Failed, "APIM contains sample products. Delete the two sample products: Starter and Unlimited.",$Product) 
+				$controlResult.SetStateData("APIM service sample product", $Product);
 			}
 			else
 			{
@@ -246,7 +276,7 @@ class APIManagement: SVTBase
 		if(($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
 			$ClientCertAuthDisabledInAPIs = ($this.APIMAPIs).ApiId | ForEach-Object {
-				$apiPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_
+				$apiPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_
 				$certThumbprint = $apiPolicy | Select-Xml -XPath "//inbound//authentication-certificate" | foreach { $_.Node.thumbprint }
 			    if($certThumbprint -eq $null)
 			    {
@@ -256,7 +286,8 @@ class APIManagement: SVTBase
 
 			if($null -ne $ClientCertAuthDisabledInAPIs)
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "Client Certificate is not enabled in below APIs.", $ClientCertAuthDisabledInAPIs) 
+				$controlResult.AddMessage([VerificationResult]::Failed, "Gateway authentication using client certificate is not enabled in below APIs.", $ClientCertAuthDisabledInAPIs) 
+				$controlResult.SetStateData("Gateway authentication using client certificate is not enabled in APIs", $ClientCertAuthDisabledInAPIs);
 			}
 			else
 			{
@@ -273,7 +304,7 @@ class APIManagement: SVTBase
 			$Result = @()
 			$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
 			    #Policy Scope: API
-				$APIPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
+				$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
 				$AllowedOrigins = ""
 			    $AllowedOrigins = $APIPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
 			    if($null -ne $AllowedOrigins)
@@ -288,8 +319,8 @@ class APIManagement: SVTBase
 				}
 			    
 			    #Policy Scope: Operation
-			    Get-AzureRmApiManagementOperation -Context $this.APIMContext -ApiId $_.ApiId | ForEach-Object {
-			        $OperationPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -OperationId $_.OperationId
+			    Get-AzApiManagementOperation -Context $this.APIMContext -ApiId $_.ApiId | ForEach-Object {
+			        $OperationPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -OperationId $_.OperationId
 					$AllowedOrigins = ""
 			        $AllowedOrigins = $OperationPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
 			        if($null -ne $AllowedOrigins)
@@ -311,11 +342,13 @@ class APIManagement: SVTBase
 			{
 				$controlResult.AddMessage([VerificationResult]::Failed  , 
 				                      [MessageData]::new("CORS is enabled in APIM with access from all domains ('*') " + $this.ResourceContext.ResourceName, $FailedResult));
+				$controlResult.SetStateData("CORS setting Allowed Origins", $FailedResult);
 			}
 			elseif(($Result | Measure-Object).Count -gt 0)
 			{
 				$controlResult.AddMessage([VerificationResult]::Verify,
 					[MessageData]::new("CORS is enabled in APIM with access from below custom domains."),$Result);
+				$controlResult.SetStateData("CORS setting Allowed Origins",$Result);
 			}
 			else
 			{
@@ -332,19 +365,19 @@ class APIManagement: SVTBase
 		{
 			$Result = @()
 			#Policy Scope: Gobal
-			$GlobalPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext
+			$GlobalPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext
 			$RestrictedIPs = ""
 			$RestrictedIPs = $GlobalPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
-			$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
+			$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AddressRange, Status
 			$Policy.Scope = "Global"
 			$Policy.ScopeName = "NA"
 			$Policy.ScopeId = "NA"
 			$Policy.Action = ""
-			$Policy.AllowedIPs = ""
+			$Policy.AddressRange = ""
 			if($null -ne $RestrictedIPs)
 			{
 			    $Policy.Action = $RestrictedIPs.Action
-			    $Policy.AllowedIPs = $RestrictedIPs.InnerXML
+			    $Policy.AddressRange = $RestrictedIPs | Select-Object Address, Address-Range
 			    $Policy.Status = 'Enabled'
 			}
 			else
@@ -356,20 +389,20 @@ class APIManagement: SVTBase
 			if($null -ne $this.APIMProducts)
 			{
 				$this.APIMProducts | ForEach-Object {
-			    $ProductPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ProductId $_.ProductId
+			    $ProductPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ProductId $_.ProductId
 			    $RestrictedIPs = ""
 			    $RestrictedIPs = $ProductPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
 			    
-				$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
+				$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AddressRange, Status
 			    $Policy.Scope = "Product"
 			    $Policy.ScopeName = $_.Title
 			    $Policy.ScopeId = $_.ProductId
 				$Policy.Action = ""
-				$Policy.AllowedIPs = ""
+				$Policy.AddressRange = ""
 			    if($null -ne $RestrictedIPs)
 			    {
 			        $Policy.Action = $RestrictedIPs.Action
-			        $Policy.AllowedIPs = $RestrictedIPs.InnerXML
+			        $Policy.AddressRange = $RestrictedIPs | Select-Object Address, Address-Range
 					$Policy.Status = 'Enabled'
 			    }
 				else
@@ -386,19 +419,19 @@ class APIManagement: SVTBase
 			{
 				$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
 					#Policy Scope: API
-					$APIPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
+					$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
 					$RestrictedIPs = ""
 					$RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
-					$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
+					$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AddressRange, Status
 					$Policy.Scope = "API"
 					$Policy.ScopeName = $_.Name
 					$Policy.ScopeId = $_.ApiId
 					$Policy.Action = ""
-					$Policy.AllowedIPs = ""
+					$Policy.AddressRange = ""
 					if($null -ne $RestrictedIPs)
 					{
 					    $Policy.Action = $RestrictedIPs.Action
-					    $Policy.AllowedIPs = $RestrictedIPs.InnerXML
+					    $Policy.AddressRange = $RestrictedIPs | Select-Object Address, Address-Range
 						$Policy.Status = 'Enabled'
 					}
 					else
@@ -408,20 +441,20 @@ class APIManagement: SVTBase
 					$Result += $Policy
 					
 					#Policy Scope: Operation
-					Get-AzureRmApiManagementOperation -Context $this.APIMContext -ApiId $_.ApiId | ForEach-Object {
-						$OperationPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -OperationId $_.OperationId
+					Get-AzApiManagementOperation -Context $this.APIMContext -ApiId $_.ApiId | ForEach-Object {
+						$OperationPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -OperationId $_.OperationId
 						$RestrictedIPs = ""
 						$RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
-						$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AllowedIPs, Status
+						$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AddressRange, Status
 						$Policy.Scope = "Operation"
 						$Policy.ScopeName = $_.Name
 						$Policy.ScopeId = $_.OperationId
 						$Policy.Action = ""
-						$Policy.AllowedIPs = ""
+						$Policy.AddressRange = ""
 						if($null -ne $RestrictedIPs)
 						{
 						    $Policy.Action = $RestrictedIPs.Action
-						    $Policy.AllowedIPs = $RestrictedIPs.InnerXML
+						    $Policy.AddressRange = $RestrictedIPs | Select-Object Address, Address-Range
 							$Policy.Status = 'Enabled'
 						}
 						else
@@ -432,13 +465,34 @@ class APIManagement: SVTBase
 					}
 				}
 			}
-			if($null -ne $Result)
+
+			#Fail control if universal address range 0.0.0.0-255.255.255.255 is used
+			$anyToAnyIPFilter = @()
+			$allowedIPRange = $Result | Where-Object { $_.Action -eq 'Allow' }
+			$anyToAnyIPFilter = $allowedIPRange | ForEach-Object {
+				$AddressRange = $_.AddressRange[0].'address-range' | Where-Object { 
+					(($_.from -eq $this.ControlSettings.IPRangeStartIP -and $_.to -eq $this.ControlSettings.IPRangeEndIP) -or `
+					($_.from -eq $this.ControlSettings.IPRangeEndIP -and $_.to -eq $this.ControlSettings.IPRangeStartIP))
+				}; 
+				if($AddressRange)
+				{
+					return $_
+				}
+			}
+
+			if(($anyToAnyIPFilter | Measure-Object).Count -gt 0)
 			{
-				$controlResult.AddMessage([VerificationResult]::Verify, "Below IP restriction(s) are configured in $($this.ResourceContext.ResourceName) API management instance.", $Result) 
+				$controlResult.AddMessage([VerificationResult]::Failed, "Below IP restriction(s) are configured in $($this.ResourceContext.ResourceName) API management instance.", $anyToAnyIPFilter)
+				$controlResult.SetStateData("Restricted caller IPs",$anyToAnyIPFilter);
+			}
+			elseif(($Result | Measure-Object).Count -gt 0)
+			{
+				$controlResult.AddMessage([VerificationResult]::Verify, "Below IP restriction(s) are configured in $($this.ResourceContext.ResourceName) API management instance.", $Result)
+				$controlResult.SetStateData("Restricted caller IPs",$Result);
 			}
 			else
 			{
-			    $controlResult.AddMessage([VerificationResult]::Verify,"Unable to validate control.Please verify from portal, IP restirction is enabled for APIs.")
+			    $controlResult.AddMessage([VerificationResult]::Verify,"Unable to validate control. Please verify from portal that IP restirction is enabled for APIs.")
 			}
 		}	
 		return $controlResult;
@@ -448,11 +502,12 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$apimLogger = Get-AzureRmApiManagementLogger -Context $this.APIMContext | Where-Object { $_.Type -eq 'ApplicationInsights' }
+			$apimLogger = Get-AzApiManagementLogger -Context $this.APIMContext | Where-Object { $_.Type -eq [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementLoggerType]::ApplicationInsights }
 			
 			if($null -ne $apimLogger)
 			{
 				$controlResult.AddMessage([VerificationResult]::Verify, "Application Insights logger is enabled for" + $this.ResourceContext.ResourceName, $apimLogger) 
+				$controlResult.SetStateData("APIs using Application Insights for logging",$apimLogger);
 			}
 			else
 			{
@@ -467,7 +522,7 @@ class APIManagement: SVTBase
 		if(($null -ne $this.APIMContext) -and ($null -ne $this.APIMProducts))
 		{
 			$GuestGroupUsedInProductList = $this.APIMProducts | ForEach-Object {
-			    if((Get-AzureRmApiManagementGroup -Context $this.APIMContext -ProductId $_.ProductId).GroupId -contains 'guests')
+			    if((Get-AzApiManagementGroup -Context $this.APIMContext -ProductId $_.ProductId).GroupId -contains 'guests')
 			    {
 			        $_
 			    }
@@ -476,6 +531,7 @@ class APIManagement: SVTBase
 			if($null -ne $GuestGroupUsedInProductList)
 			{
 				$controlResult.AddMessage([VerificationResult]::Verify, "Guest groups is added to below products access control.", $GuestGroupUsedInProductList) 
+				$controlResult.SetStateData("Products open to Guest users",$GuestGroupUsedInProductList);
 			}
 			else
 			{
@@ -514,7 +570,7 @@ class APIManagement: SVTBase
 		else
 		{
 		   $controlResult.AddMessage([VerificationResult]::Verify,
-								 [MessageData]::new("Unable to validate control.Please verify from portal, Delegated authentication is On or Off."));
+								 [MessageData]::new("Unable to validate control. Please verify from portal if the Delegated authentication is On, then it is implemented securely."));
 		}
 		return $controlResult;
     }
@@ -523,7 +579,7 @@ class APIManagement: SVTBase
     {
         if($null -ne $this.APIMInstance)
 		{
-			if(([Helpers]::CheckMember($this.APIMInstance,"Identity.Type")) -and ($this.APIMInstance.Identity.type -eq "SystemAssigned"))
+			if(([Helpers]::CheckMember($this.APIMInstance.Identity,"Type",$false)) -and ($this.APIMInstance.Identity.type -eq [Microsoft.Azure.Commands.ApiManagement.Models.PsApiManagementServiceIdentityType]::SystemAssigned))
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed,
 											 [MessageData]::new("Your APIM instance is using Managed Service Identity(MSI). It is specifically turned On."));
@@ -539,42 +595,43 @@ class APIManagement: SVTBase
 	
 	hidden [ControlResult] CheckUserAuthorizationSettingInAPI([ControlResult] $controlResult)
     {       
-		$UserAuthDisabledApi = $this.CheckUserAuthorizationSettingEnabledinAPI();
-		if($UserAuthDisabledApi -ne 'ResourceNotFound')
+		$APIUserAuth = $this.CheckUserAuthorizationSettingEnabledinAPI();
+		if(($APIUserAuth.Disabled | Measure-Object).Count -gt 0)
 		{
-			if($null -ne $UserAuthDisabledApi)
-			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "User Authorization : OAuth 2.0 or OpenID connect is not enabled in below APIs.", $UserAuthDisabledApi) 
-			}
-			else
-			{
-			    $controlResult.AddMessage([VerificationResult]::Passed,"")
-			}
+			$controlResult.AddMessage([VerificationResult]::Failed, "User Authorization : OAuth 2.0 or OpenID connect is not enabled in below APIs.", $APIUserAuth.Disabled)
+			$controlResult.SetStateData("User Authorization not enabled in APIs",$APIUserAuth.Disabled);
+		}
+		else
+		{
+		    $controlResult.AddMessage([VerificationResult]::Passed,"")
 		}
 		return $controlResult;
     }
 
 	hidden [ControlResult] CheckJWTValidatePolicyInAPI([ControlResult] $controlResult)
     {       
-		$UserAuthDisabledApi = $this.CheckUserAuthorizationSettingEnabledinAPI();
-		if(($UserAuthDisabledApi -ne 'ResourceNotFound') -and ($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
+		$APIUserAuth = $this.CheckUserAuthorizationSettingEnabledinAPI();
+		$JWTValidatePolicyNotFound = @()
+		if(($APIUserAuth -ne 'ResourceNotFound') -and ($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
 			$JWTValidatePolicyNotFound =  $this.APIMAPIs | ForEach-Object {		
-				$apiPolicy = Get-AzureRmApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
+				$apiPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
 				$IsPolicyEnabled = $apiPolicy | Select-Xml -XPath "//inbound//validate-jwt"
 				if($null -eq $IsPolicyEnabled)
 				{
 					$_
 				}
 			}
-			$Temp = Compare-Object -ReferenceObject $UserAuthDisabledApi.ApiID -DifferenceObject $JWTValidatePolicyNotFound.ApiId -IncludeEqual | Where-Object { $_.SideIndicator -eq "==" }
-			if(($null -ne $JWTValidatePolicyNotFound) -and ($null -ne $UserAuthDisabledApi) -and ($null -ne $Temp))
+			$Temp = Compare-Object -ReferenceObject $APIUserAuth.Enabled.ApiID -DifferenceObject $JWTValidatePolicyNotFound.ApiId -IncludeEqual | Where-Object { $_.SideIndicator -eq "==" }
+			if(($JWTValidatePolicyNotFound | Measure-Object).Count -gt 0 -and ($APIUserAuth.Enabled | Measure-Object).Count -gt 0 -and ($Temp | Measure-Object).Count -gt 0)
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "The 'validate-jwt' policy is not configured in below APIs.", $JWTValidatePolicyNotFound) 
+				$controlResult.AddMessage([VerificationResult]::Failed, "JWT Token validation not found for OAuth/OpenID connect authorization.", $Temp)
+				$controlResult.SetStateData("JWT Token validation not found",$Temp);
 			}
-			elseif($null -ne $JWTValidatePolicyNotFound)
+			elseif(($JWTValidatePolicyNotFound| Measure-Object).Count -gt 0)
 			{
 			    $controlResult.AddMessage([VerificationResult]::Verify,"The 'validate-jwt' policy is not configured in below APIs.", $JWTValidatePolicyNotFound)
+				$controlResult.SetStateData("JWT Token validation not found",$JWTValidatePolicyNotFound);
 			}
 			else
 			{
@@ -589,7 +646,9 @@ class APIManagement: SVTBase
 		if( $null -ne $this.APIMContext -and ($null -ne $this.APIMAPIs))
 		{
 			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-			$UserAuthDisabledApi = @()
+			$APIUserAuth = "" | Select-Object Enabled, Disabled
+			$APIUserAuth.Enabled = @()
+			$APIUserAuth.Disabled = @()
 			$this.APIMAPIs | ForEach-Object {
 				$uri=[system.string]::Format($ResourceAppIdURI+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.ApiManagement/service/{2}/apis/{3}?api-version=2018-06-01-preview",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName,$_.ApiId)
 				$json=$null;
@@ -603,13 +662,17 @@ class APIManagement: SVTBase
 				}
 				if(($null -ne $json) -and (($json | Measure-Object).Count -gt 0))
 				{
-					if(([Helpers]::CheckMember($json[0],"properties.authenticationSettings")) -and (-not ([Helpers]::CheckMember($json, "properties.authenticationSettings.oAuth2") -or [Helpers]::CheckMember($json, "properties.authenticationSettings.openid"))))
+					if(([Helpers]::CheckMember($json[0],"properties.authenticationSettings")) -and ([Helpers]::CheckMember($json, "properties.authenticationSettings.oAuth2") -or [Helpers]::CheckMember($json, "properties.authenticationSettings.openid")))
 					{
-						$UserAuthDisabledApi += $_
+						$APIUserAuth.Enabled += $_
+					}
+					else
+					{
+						$APIUserAuth.Disabled += $_
 					}
 				}
 			}
-			return $UserAuthDisabledApi;
+			return $APIUserAuth;
 		}
 		else
 		{

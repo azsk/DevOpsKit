@@ -1405,7 +1405,7 @@ class CCAutomation: CommandBase
 			if([System.Version]$azskCurrentCARunbookVersion -ne [System.Version]$azskLatestCARunbookVersion)
 			{
 				$detailedMsg  = "AzSK current runbook version $([System.Version]$azskCurrentCARunbookVersion) and latest runbook version $([System.Version]$azskLatestCARunbookVersion)";
-				$resultMsg  = "CA runbook is not current as per the required latest version. It is always recomended to update your runbook to the latest version possible by running the command: 'Update-AzSKSubscriptionSecurity -SubscriptionId <subId>'"
+				$resultMsg  = "CA runbook is not current as per the required latest version. It is always recommended to update your runbook to the latest version possible by running the command: 'Update-AzSKContinuousAssurance -SubscriptionId <subId>'"
 				$resultStatus = "Unhealthy"
 			}
 			else
@@ -1416,7 +1416,7 @@ class CCAutomation: CommandBase
 		}
 		else
 		{
-			$resultMsg = "CA Runbook is too old.`r`nRun command 'Update-AzSKSubscriptionSecurity -SubscriptionId <subId>'."
+			$resultMsg = "CA Runbook is too old.`r`nRun command 'Update-AzSKContinuousAssurance -SubscriptionId <subId>'."
 			$resultStatus = "OK"
 			$shouldReturn = $true
 		}	
@@ -2109,7 +2109,7 @@ class CCAutomation: CommandBase
 				if((![string]::IsNullOrWhiteSpace($azskCurrentCARunbookVersion) -and ([System.Version]$azskCurrentCARunbookVersion -lt [System.Version]$azskMinReqdRunbookVersion)) -or [string]::IsNullOrWhiteSpace($azskCurrentCARunbookVersion))
 				{
 					$isHealthy = $false
-					$currentMessage = [MessageData]::new("WARNING: The runbook used by Continuous Assurance for this subscription is too old.`r`nPlease run command 'Update-AzSKSubscriptionSecurity -SubscriptionId <subId>'.",  [MessageType]::Warning);
+					$currentMessage = [MessageData]::new("WARNING: The runbook used by Continuous Assurance for this subscription is too old.`r`nPlease run command 'Update-AzSKContinuousAssurance -SubscriptionId <subId>'.",  [MessageType]::Warning);
 					$this.PublishCustomMessage($currentMessage);					
 				}
 			}

@@ -569,6 +569,7 @@ try
 		}	
 	}	
 	Write-Output ("CS.o: Downloading Az.Accounts and Az.Automation.")
+	PublishEvent -EventName "CA Az Stage1" -Properties @{"Description" = "Installing Az.Accounts and Az.Automation"  }
 	DownloadModule -ModuleName Az.Accounts -ModuleVersion 1.2.1 -Sync $true
 	DownloadModule -ModuleName Az.Automation -ModuleVersion 1.0.0 -Sync $true
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}

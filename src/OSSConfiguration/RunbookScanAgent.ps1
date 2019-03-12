@@ -285,7 +285,7 @@ function RunAzSKScanForASub
         PublishEvent -EventName "CA Scan Services Completed" -Metrics @{"TimeTakenInMs" = $serviceScanTimer.ElapsedMilliseconds; "SuccessCount" = 1}
     }
 	#----------------------------------------Export reports to storage---------------------------------------------------
-	
+	PublishEvent -EventName "CA Az Stage4" -Properties @{"Description" = "CA Scanning with Az*"  }
 	#If either of the scans (GSS/GRS) completed, let us save the results.
     if (![string]::IsNullOrWhiteSpace($gssResultPath) -or ![string]::IsNullOrWhiteSpace($svtResultPath)) 
     {

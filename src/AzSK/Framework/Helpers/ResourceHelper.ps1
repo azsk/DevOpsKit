@@ -457,15 +457,7 @@ class StorageHelper: ResourceGroupHelper
 				foreach ($blob in $blobs)
 				{
 					$blobName = $blob.Name
-					if($overwrite)
-					{
-						[AzHelper]::GetStorageBlobContent($copyDestinationPath, $blobName , $containerName ,$this.StorageAccount.Context)
-					    #$blobList+=	Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -Force -ErrorAction Stop
-					}
-					else{
-						[AzHelper]::GetStorageBlobContent($copyDestinationPath, $blobName , $containerName ,$this.StorageAccount.Context)
-						#$blobList+= Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Context $this.StorageAccount.Context -Destination $copyDestinationPath -ErrorAction Stop
-					}
+					$blobList+= [AzHelper]::GetStorageBlobContent($copyDestinationPath, $blobName.Split("/")[-1], $blobName , $containerName ,$this.StorageAccount.Context)
 				}
 				$loopValue = 0;
 			}
