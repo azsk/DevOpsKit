@@ -46,7 +46,7 @@
           ],
           "Enabled": true
        },
-     {
+       {
        "ControlID": "Azure_VirtualMachine_Config_Enable_NSG",
        "Description": "NSG must be configured for Virtual Machine",
        "Id": "VirtualMachine140",
@@ -218,7 +218,27 @@
            "VirtualMachine"
           ],
           "Enabled": true
-       }
+       },
+       {
+         "ControlID": "Azure_VirtualMachine_SI_Enable_Vuln_Solution",
+         "Description": "Vulnerability assessment solution should be installed on VM",
+         "Id": "VirtualMachine200",
+         "ControlSeverity": "Medium",
+         "Automated": "Yes",
+         "MethodName": "CheckVulnAgentStatus",
+         "Rationale": "Known vulnerabilities in the system can be easy targets for attackers and can compromise the security of the entire network, vulnerability assessment solution can help to detect vulnerabilities in the system.",
+         "Recommendation": "To install vulnerability assessment solution, please refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-vulnerability-assessment-recommendations",
+         "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "Config",
+            "Windows",   
+            "SI",
+            "VirtualMachine"
+         ],
+         "Enabled": true
+      }
     ]
  }
  
