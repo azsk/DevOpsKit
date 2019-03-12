@@ -228,18 +228,26 @@ class APIManagement: SVTBase
 			{
 				$json=$null;
 			}
+			$failMsg = ""
 			if($null -ne $json)
 			{
-				$IsBasicRegistrationEnabled = $json.settings.'CustomPortalSettings.RegistrationEnabled'
+				if([Helpers]::CheckMember($json,"settings"))
+				{
+					$IsBasicRegistrationEnabled = $json.settings.'CustomPortalSettings.RegistrationEnabled'
+				}
+				else
+				{
+					$failMsg = "Unable to validate control. Please verify from portal that user registration using 'Username and Password' is disabled. To verify, go to APIM service instance -> Settings -> Identities."
+				}	
 			}
 			
 			# Check if sign in using external Identity provider is enabled
 			$identityProvider = Get-AzApiManagementIdentityProvider -Context $this.APIMContext
-			$nonAADIdentityProvider = $identityProvider | Where-Object {$_.Type -ne [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementIdentityProviderType]::Aad}
+			$nonAADIdentityProvider = $identityProvider | Where-Object { $this.ControlSettings.APIManagement.AllowedIdentityProvider -notcontains  $_.Type}
 			
 			# Consolidate result for attestation drift
 			$result = @()
-			if($IsBasicRegistrationEnabled -eq $true)
+			if(($IsBasicRegistrationEnabled -eq $true) -or (-not [string]::IsNullOrEmpty($failMsg)))
 			{
 				$result += "Username and Password"
 			}
@@ -250,7 +258,7 @@ class APIManagement: SVTBase
 
 			if(($result | Measure-Object).Count -gt 0)
 			{		
-				$controlResult.AddMessage([VerificationResult]::Verify, "Below listed Identity provider(s) are enabled in '$($this.ResourceContext.ResourceName)' API management instance. Enterprise applications using APIM must authenticate developers/applications using Azure Active Directory backed credentials.", $result)
+				$controlResult.AddMessage([VerificationResult]::Verify, "$($failMsg)`r`nBelow listed Identity provider(s) are enabled in '$($this.ResourceContext.ResourceName)' API management instance. Enterprise applications using APIM must authenticate developers/applications using Azure Active Directory backed credentials.", $result)
 				$controlResult.SetStateData("Sign in option enabled on developer portal other than AAD", $result);
 			}
 			else
