@@ -93,7 +93,8 @@ class Storage: SVTBase
 
 				foreach($item in $allContainersFromAPI)
 				{
-                    if(-not ([string]::IsNullOrWhiteSpace($item.value)))
+					#To check if it is not an Empty object.
+                    if([Helpers]::CheckMember($item,"id"))
                     {
 					    if(-not ($item.properties.publicAccess -eq "None"))
 					    {
