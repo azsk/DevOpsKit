@@ -1480,6 +1480,7 @@ class PolicySetup: CommandBase
 	#Function to download all policies from Org policy store
 	[PSObject] DownloadPolicy()
 	{
+		[bool] $downloadPolicy = $true
 		$PolicyList =@()
 		$this.PublishCustomMessage("Downloading policies to location:[$($this.FolderPath)]...", [MessageType]::Info);	
 		$this.StorageAccountInstance.GetStorageAccountInstance()
@@ -1490,15 +1491,19 @@ class PolicySetup: CommandBase
 			$answer= Read-Host
 			if($answer.ToLower() -ne "y" )
 			{
+				$downloadPolicy = $false
 				$this.PublishCustomMessage("Skipped downloading policies.", [MessageType]::Update);
 				#return
 			}
 		}
-		#Downloading policies
-		$PolicyList+=$this.StorageAccountInstance.DownloadFilesFromContainer($this.ConfigContainerName, $this.Version, $this.ConfigFolderPath, $true,$true)
-		$PolicyList+=$this.StorageAccountInstance.DownloadFilesFromContainer($this.ConfigContainerName, $this.RunbookBaseVersion, $this.RunbookFolderPath, $true,$true)
-		$PolicyList+=$this.StorageAccountInstance.DownloadFilesFromContainer($this.InstallerContainerName, "", $this.InstallerFolderPath, $true,$true)
-		$this.PublishCustomMessage("Completed downloading policies", [MessageType]::Update);
+		if($downloadPolicy)
+		{
+			#Downloading policies
+			$PolicyList+=$this.StorageAccountInstance.DownloadFilesFromContainer($this.ConfigContainerName, $this.Version, $this.ConfigFolderPath, $true,$true)
+			$PolicyList+=$this.StorageAccountInstance.DownloadFilesFromContainer($this.ConfigContainerName, $this.RunbookBaseVersion, $this.RunbookFolderPath, $true,$true)
+			$PolicyList+=$this.StorageAccountInstance.DownloadFilesFromContainer($this.InstallerContainerName, "", $this.InstallerFolderPath, $true,$true)
+			$this.PublishCustomMessage("Completed downloading policies", [MessageType]::Update);
+		}
 		return $PolicyList
 	}
 
