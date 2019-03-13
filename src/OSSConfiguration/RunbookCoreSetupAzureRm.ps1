@@ -388,34 +388,28 @@ try
 	$isBaseProfileModule =  (Get-Module -Name AzureRm.Profile).Version.Major -lt 5
 	$tags=@{};
 	$RunbookVersion="";
-	try
+	$RmRunbookVersion="3.1803.0";
+	if($isBaseProfileModule)
 	{
-		$azskResourceGroup = Get-AzureRmResourceGroup -Name $AutomationAccountRG -ErrorAction SilentlyContinue;
-		if(($azskResourceGroup | Measure-Object).Count -gt 0)
+		try
 		{
-			$tags = $azskResourceGroup.Tags;
-			if($tags.ContainsKey("AzSKVersion"))
+			$azskResourceGroup = Get-AzureRmResourceGroup -Name $AutomationAccountRG -ErrorAction SilentlyContinue;
+			if(($azskResourceGroup | Measure-Object).Count -gt 0)
 			{
-				$RunbookVersion = $tags['AzSKCARunbookVersion']
+				$tags = $azskResourceGroup.Tags;
+				if($tags.ContainsKey("AzSKVersion"))
+				{
+					$RunbookVersion = $tags['AzSKCARunbookVersion']
+				}
+										
 			}
-			
+		}
+		catch
+		{
+			Write-Output("Unable to fetch tags")
 		}
 	}
-	catch
-	{
-		$azskResourceGroup = Get-AzResourceGroup -Name $AutomationAccountRG -ErrorAction SilentlyContinue;
-		if(($azskResourceGroup | Measure-Object).Count -gt 0)
-		{
-			$tags = $azskResourceGroup.Tags;
-			if($tags.ContainsKey("AzSKVersion"))
-			{
-				$RunbookVersion = $tags['AzSKCARunbookVersion']
-			}
-			
-		}
-	}
-
-	if(-not $isBaseProfileModule -or ($RunbookVersion -eq "3.1803.0") )
+	if(-not $isBaseProfileModule -or ($RunbookVersion -eq $RmRunbookVersion) )
 	{
 		$setupTimer = [System.Diagnostics.Stopwatch]::StartNew();
 		PublishEvent -EventName "CA Setup Started"
