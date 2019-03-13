@@ -401,7 +401,6 @@ try
 				{
 					$RunbookVersion = $tags['AzSKCARunbookVersion']
 				}
-				
 			}
 		}
 		catch
