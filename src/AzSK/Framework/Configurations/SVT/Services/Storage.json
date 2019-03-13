@@ -22,7 +22,6 @@
          "GeneralPurposeStorage",
          "BlobStorage",
          "HNSDisabled",
-         "OwnerAccess",
          "ResourceLocked"
       ],
       "Enabled": true,
