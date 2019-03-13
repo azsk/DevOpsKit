@@ -6,7 +6,7 @@ catch
 { 
 	# No need to break execution 
 }
-$FrameworkPath =  $PSScriptRoot
+$FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Framework"
 
 . $FrameworkPath\Models\Enums.ps1
 

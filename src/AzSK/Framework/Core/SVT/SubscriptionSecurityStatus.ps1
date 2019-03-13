@@ -107,6 +107,10 @@ class SubscriptionSecurityStatus: SVTCommandBase
 				$this.ControlIds = $controlIds;			
 			}
 		}
+		elseif (($baselineControlsDetails.SubscriptionControlIdList | Measure-Object).Count -eq 0 -and $this.UseBaselineControls) 
+		{
+			throw ([SuppressedException]::new(("There are no baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+		}
 
 		$previewBaselineControlsDetails = $partialScanMngr.GetPreviewBaselineControlDetails()
 		#If Scan source is in supported sources or baselineControls switch is available
@@ -119,6 +123,10 @@ class SubscriptionSecurityStatus: SVTCommandBase
 			{
 				$this.ControlIds += $controlIds;			
 			}
+		}
+		elseif (($previewBaselineControlsDetails.SubscriptionControlIdList | Measure-Object).Count -eq 0 -and $this.UsePreviewBaselineControls) 
+		{
+			throw ([SuppressedException]::new(("There are no preview baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
 		}
 	}	
 }

@@ -350,6 +350,59 @@ class VirtualMachine: SVTBase
 		return $controlResult;
 	}
 
+	hidden [ControlResult] CheckVulnAgentStatus([ControlResult] $controlResult)
+	{
+		if(-not $this.VMDetails.IsVMDeallocated)
+		{
+			$requiredVulnExtension = $this.VMControlSettings.VulnAssessmentSolution.AgentName
+			$requiredVulnExtensionVersion =  [System.Version] $this.VMControlSettings.VulnAssessmentSolution.RequiredVersion
+			if([Helpers]::CheckMember($this.ResourceObject, "Extensions")){
+				$installedVulnExtension = $this.ResourceObject.Extensions | Where-Object {$_.Name -eq $requiredVulnExtension} 
+				if($null -ne $installedVulnExtension -and $installedVulnExtension.ProvisioningState -eq "Succeeded"){
+					$currentVulnExtensionVersion = $null
+					try {
+						$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
+						$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+						$header = "Bearer " + $AccessToken
+						$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
+						$propertiesToReplace = @{}
+						$propertiesToReplace.Add("httpapplicationroutingzonename", "_httpapplicationroutingzonename")
+						$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/extensions/{4}?api-version=2018-06-01&`$expand=instanceView",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName,$requiredVulnExtension)
+						$result = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
+						$currentVulnExtensionVersion = [System.Version] $result.properties.instanceView.typeHandlerVersion
+					}
+					catch {
+						# If any exception occurs, while fetching details of Extension mark control as manual
+						$currentVulnExtensionVersion = $null
+					}
+					if($null -eq $currentVulnExtensionVersion )
+					{
+						$controlResult.AddMessage([VerificationResult]::Manual, "Not able to fetch details of vulnerability assessment extension '$($requiredVulnExtension)'.");
+					}
+					elseif($currentVulnExtensionVersion -lt $requiredVulnExtensionVersion){
+
+						$controlResult.AddMessage([VerificationResult]::Failed, "Vulnerability assessment solution '$($requiredVulnExtension)' is present but current verison is not latest.");
+						$controlResult.AddMessage("Current version : $($currentVulnExtensionVersion), Required version: $($requiredVulnExtensionVersion)");
+						$controlResult.SetStateData("Current version of $($requiredVulnExtension) present is:", $currentVulnExtensionVersion.ToString());
+					
+					}else{
+
+						$controlResult.AddMessage([VerificationResult]::Passed, "Required vulnerability assessment solution '$($requiredVulnExtension)' is present in VM.");
+					}
+				}else{
+					$controlResult.AddMessage([VerificationResult]::Failed, "Required vulnerability assessment solution '$($requiredVulnExtension)' is not present in VM.");
+				}
+			}else{
+				$controlResult.AddMessage([VerificationResult]::Failed, "Required vulnerability assessment solution '$($requiredVulnExtension)' is not present in VM.");
+			}
+		}
+		else
+		{
+			$controlResult.AddMessage([VerificationResult]::Verify, "This VM is currently in a 'deallocated' state. Unable to check security controls on it.");
+		}
+		return $controlResult;
+	}
+
 	hidden [ControlResult] CheckNSGConfig([ControlResult] $controlResult)
 	{
 		$controlResult.VerificationResult = [VerificationResult]::Failed;
