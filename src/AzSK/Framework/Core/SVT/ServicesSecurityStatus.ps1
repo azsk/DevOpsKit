@@ -333,6 +333,10 @@ class ServicesSecurityStatus: SVTCommandBase
 
 			}		
 		}
+		elseif (($baselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -eq 0 -and $this.UseBaselineControls) 
+		{
+			throw ([SuppressedException]::new(("There are no baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+		}
 
 		#Preview Baseline Controls
 		$previewBaselineControlsDetails = $partialScanMngr.GetPreviewBaselineControlDetails()
@@ -352,6 +356,11 @@ class ServicesSecurityStatus: SVTCommandBase
 				$this.ControlIds += $controlIds;
 			}			
 		}
+		elseif (($previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -eq 0 -and $this.UsePreviewBaselineControls) 
+		{
+			throw ([SuppressedException]::new(("There are no preview baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+		}
+
 
 		if(($ResourcesWithBaselineFilter | Measure-Object).Count -gt 0)
 		{
