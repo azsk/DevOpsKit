@@ -51,6 +51,10 @@ class AzSKConfig
         if ( $null -eq  [AzSKConfig]::Instance)
         {
             [AzSKConfig]::Instance = [AzSKConfig]::LoadRootConfiguration($useOnlinePolicyStore,$onlineStoreUri,$enableAADAuthForOnlinePolicyStore)
+		}
+		if(-not ([string]::IsNullOrWhiteSpace([AzSKConfig]::Instance.AzSKServerVersion)))
+        {
+            [AzSKConfig]::Instance.MaintenanceMessage = ([AzSKConfig]::Instance.MaintenanceMessage -f [AzSKConfig]::Instance.AzSKServerVersion);       
         }
 
         return [AzSKConfig]::Instance
