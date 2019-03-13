@@ -386,7 +386,36 @@ try
 	$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
 	$PublicPSGalleryUrl = "https://www.powershellgallery.com"
 	$isBaseProfileModule =  (Get-Module -Name AzureRm.Profile).Version.Major -lt 5
-	if(-not $isBaseProfileModule)
+	$tags=@{};
+	$RunbookVersion="";
+	try
+	{
+		$azskResourceGroup = Get-AzureRmResourceGroup -Name $AutomationAccountRG -ErrorAction SilentlyContinue;
+		if(($azskResourceGroup | Measure-Object).Count -gt 0)
+		{
+			$tags = $azskResourceGroup.Tags;
+			if($tags.ContainsKey("AzSKVersion"))
+			{
+				$RunbookVersion = $tags['AzSKCARunbookVersion']
+			}
+			
+		}
+	}
+	catch
+	{
+		$azskResourceGroup = Get-AzResourceGroup -Name $AutomationAccountRG -ErrorAction SilentlyContinue;
+		if(($azskResourceGroup | Measure-Object).Count -gt 0)
+		{
+			$tags = $azskResourceGroup.Tags;
+			if($tags.ContainsKey("AzSKVersion"))
+			{
+				$RunbookVersion = $tags['AzSKCARunbookVersion']
+			}
+			
+		}
+	}
+
+	if(-not $isBaseProfileModule -or ($RunbookVersion -eq "3.1803.0") )
 	{
 		$setupTimer = [System.Diagnostics.Stopwatch]::StartNew();
 		PublishEvent -EventName "CA Setup Started"
