@@ -2,7 +2,7 @@
 #Acquire Access token
 class PIM: CommandBase
 {
-    hidden $APIroot = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/";
+    hidden $APIroot =  [string]::Empty
     hidden $headerParams = "";
     hidden $UserId = "";
     hidden  $AccessToken="";
@@ -13,7 +13,7 @@ class PIM: CommandBase
     {
         $this.AccessToken = "";
         $this.AccountId="";
-        
+        $this.APIroot = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/";
     }
   
 #Acquire Access token
