@@ -300,12 +300,9 @@ try
 	#We start with a check for 'Get-AzSKAccessToken' to ensure that AzSK module is ready (and loaded)
 	if((Get-Command -Name "Get-AzSKAccessToken" -ErrorAction SilentlyContinue|Measure-Object).Count -gt 0)
 	{
-		#If policy store authN is set to true, get a token. (mostly for org policy/OSS, this will be 'false')
-		if($enableAADAuthForOnlinePolicyStore -eq "true")
-		{
+		#If policy store authN is set to true, get a token. (mostly for org policy/OSS, this will be 'false'
 			Write-Output("RB: Getting token for authN to online policy store.")
 			$accessToken = Get-AzSKAccessToken -ResourceAppIdURI $azureRmResourceURI
-		}
 		if($accessToken)
 		{
 			PublishEvent -EventName "CA Job Invoke Scan Started"
