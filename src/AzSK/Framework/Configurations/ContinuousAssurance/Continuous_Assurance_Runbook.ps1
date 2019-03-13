@@ -301,21 +301,32 @@ try
 	if((Get-Command -Name "Get-AzSKAccessToken" -ErrorAction SilentlyContinue|Measure-Object).Count -gt 0)
 	{
 		#If policy store authN is set to true, get a token. (mostly for org policy/OSS, this will be 'false'
+		if($enableAADAuthForOnlinePolicyStore -eq "true")
+		{
 			Write-Output("RB: Getting token for authN to online policy store.")
 			$accessToken = Get-AzSKAccessToken -ResourceAppIdURI $azureRmResourceURI
-		if($accessToken)
+			if(-not $accessToken)
+			{
+				Write-Output("RB: Unable to fetch access token. AzSK module not yet ready in the automation account. Will retry in the next run.")
+				PublishEvent -EventName "CA Access Token Not Found"
+			}
+			else{
+				PublishEvent -EventName "CA Job Invoke Scan Started"
+				Write-Output ("RB: Invoking scan agent script. PolicyStoreURL: [" + $onlinePolicyStoreUrl.Substring(0,15) + "*****]")
+				InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName $runbookScanAgentScript -version $caScriptsFolder
+				Write-Output ("RB: Scan agent script completed.")
+				PublishEvent -EventName "CA Job Invoke Scan Completed"
+			}
+		}
+		else{
 		{
 			PublishEvent -EventName "CA Job Invoke Scan Started"
 			Write-Output ("RB: Invoking scan agent script. PolicyStoreURL: [" + $onlinePolicyStoreUrl.Substring(0,15) + "*****]")
-			InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName $runbookScanAgentScript -version $caScriptsFolder
+			InvokeScript -policyStoreURL $onlinePolicyStoreUrl -fileName $runbookScanAgentScript -version $caScriptsFolder
 			Write-Output ("RB: Scan agent script completed.")
 			PublishEvent -EventName "CA Job Invoke Scan Completed"
 		}
-		else
-		{
-			Write-Output("RB: Unable to fetch access token. AzSK module not yet ready in the automation account. Will retry in the next run.")
-			PublishEvent -EventName "CA Access Token Not Found"
-		}
+		
 	}
 	else
 	{
