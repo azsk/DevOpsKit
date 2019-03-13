@@ -54,8 +54,14 @@ class AzSKRoot: EventBase
 		{
 		    if(($currentContext.Subscription.Id -ne $this.SubscriptionContext.SubscriptionId) -and ($this.SubscriptionContext.SubscriptionId -ne [Constants]::BlankSubscriptionId))
 			{
-				$currentContext = Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId -ErrorAction Stop   
-        
+				try 
+				{
+					$currentContext = Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId -ErrorAction Stop   
+				}
+				catch 
+				{
+					throw [SuppressedException] ("Please provide a valid tenant or a valid subscription.​") 
+				}
 				    
 				# $currentContext will contain the desired subscription (or $null if id is wrong or no permission)
 				if ($null -eq $currentContext)
