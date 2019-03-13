@@ -499,4 +499,4 @@ function Clear-AzSKSessionState {
 
 $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent).FullName +"\AzSK.Framework"
 
-. $FrameworkPath\Framework\Helpers\AliasHelper.ps1
+. $FrameworkPath\Helpers\AliasHelper.ps1
