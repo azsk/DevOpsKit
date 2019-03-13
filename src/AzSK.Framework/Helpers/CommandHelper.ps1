@@ -256,6 +256,11 @@ class CommandHelper
             Verb = "Get";
             Noun = "AzSKARMTemplateSecurityStatus";
             ShortName = "GATS";
+        },
+		[CommandDetails]@{
+            Verb = "Set";
+            Noun = "AzSKPIMConfiguration";
+            ShortName = "PIM";
         }
     );
 

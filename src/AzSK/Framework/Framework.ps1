@@ -159,5 +159,5 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $PSScriptRoot\Core\AzSKInfo\ComplianceInfo.ps1
 . $PSScriptRoot\Core\AzSKInfo\PersistedStateInfo.ps1
 . $PSScriptRoot\Core\ARMChecker\ARMCheckerStatus.ps1
-
 . $PSScriptRoot\Core\PolicySetup\PolicySetup.ps1
+. $PSScriptRoot\Core\PIM\PIMScript.ps1
