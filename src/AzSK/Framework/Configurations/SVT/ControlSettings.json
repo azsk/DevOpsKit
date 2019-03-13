@@ -24,6 +24,11 @@
   "KubernetesService": {
     "kubernetesVersion": "1.12.6"
   },
+  "APIManagement": {
+    "AllowedIdentityProvider": [
+      "Aad"
+    ]
+  },
   "VirtualMachine": {
     "Windows": {
       "SupportedSkuList": [],
