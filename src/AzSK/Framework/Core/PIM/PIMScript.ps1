@@ -545,9 +545,6 @@ hidden [void] PIMScript()
             
         }
         while ($input -gt 6 -or ($input -lt 1) )
-
-    Write-Host "" 
-
     
              
 }     
