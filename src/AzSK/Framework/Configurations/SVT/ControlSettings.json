@@ -318,7 +318,8 @@
     }
   },
   "SubscriptionCore": {
-    "EnableV1AlertFailure": false
+    "EnableV1AlertFailure": false,
+    "ASCTier": "Standard"
   },
   "HDInsight": {
     "MinSupportedClusterVersion": "3.6.0"

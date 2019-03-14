@@ -1033,6 +1033,31 @@ class SubscriptionCore: SVTBase
 		return $controlResult
 	}
 
+	hidden [ControlResult] CheckASCTier ([ControlResult] $controlResult)
+	{
+		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
+        $validatedUri ="$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings/default?api-version=2017-08-01-preview"
+        $ascTierContentDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+
+		if([Helpers]::CheckMember($ascTierContentDetails,"properties.pricingTier"))
+		{
+			$ascTier = "Standard"
+			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ASCTier"))
+			{
+				$ascTier = $this.ControlSettings.SubscriptionCore.ASCTier
+			}
+			
+			if($ascTierContentDetails.properties.pricingTier -eq $ascTier)
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "Expected '$ascTier' tier is configured for ASC" )
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed, "Expected '$ascTier' tier is configured for ASC" )
+			}
+		}
+		return $controlResult
+	}
 
 	hidden [void] LoadRBACConfig()
 	{
