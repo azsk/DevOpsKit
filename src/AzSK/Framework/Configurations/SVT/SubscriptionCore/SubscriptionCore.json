@@ -472,6 +472,24 @@
       ],
       "Enabled": true,     
       "Rationale": "Certain tags are expected to be present in all resources to support enterprise wide functions (e.g., security visibility based on environment, security scanning, cost optimization, etc.). The script checks for presence of such 'mandatory' and 'scenario-specific' tags. "
+    },
+    {
+      "ControlID": "Azure_Subscription_Config_ASC_Tier",
+      "Description": "$($this.ControlSettings.SubscriptionCore.ASCTier) tier must be enabled for Azure Security Center",
+      "Id": "SubscriptionCore300",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckASCTier",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-pricing",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "SubscriptionCore"
+      ],
+      "Enabled": true,     
+      "Rationale": "ASC standard tier enables advanced threat detection capabilities, which uses built-in behavioral analytics and machine learning to identify attacks and zero-day exploits, access and application controls to reduce exposure to network attacks and malware, and more"
     }
   ]
 }
