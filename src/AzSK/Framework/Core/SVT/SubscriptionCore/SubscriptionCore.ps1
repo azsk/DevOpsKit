@@ -665,18 +665,18 @@ class SubscriptionCore: SVTBase
                             $alertDiffList += $alert
                         }
 						#if alert exists then verify operation list 
-						else
-						{
-							$diffObj= $foundAlert.Properties.condition.allOf[2].anyOf | Select-Object equals
-							$refObj= $alert.AlertOperationList | Where-Object {$_.Enabled -eq $true} | Select-Object OperationName
-							$opDiffList= Compare-Object -ReferenceObject $refObj -DifferenceObject $diffObj | Select-Object -property @{N='OperationList';E={$_.InputObject.equals}}  
-							if($null -ne $opDiffList)
-							{
-								$opList=  $opDiffList.OperationList
-								$foundRequiredAlerts = $false
-								$operationDiffList += @{Name=$alertName; Description=$alert.Description; OperationNameList = $opList }
-							}
-						}
+						# else
+						# {
+						# 	$diffObj= $foundAlert.Properties.condition.allOf[2].anyOf | Select-Object equals
+						# 	$refObj= $alert.AlertOperationList | Where-Object {$_.Enabled -eq $true} | Select-Object OperationName
+						# 	$opDiffList= Compare-Object -ReferenceObject $refObj -DifferenceObject $diffObj | Select-Object -property @{N='OperationList';E={$_.InputObject.equals}}  
+						# 	if($null -ne $opDiffList)
+						# 	{
+						# 		$opList=  $opDiffList.OperationList
+						# 		$foundRequiredAlerts = $false
+						# 		$operationDiffList += @{Name=$alertName; Description=$alert.Description; OperationNameList = $opList }
+						# 	}
+						# }
                     }
                 }
             }
