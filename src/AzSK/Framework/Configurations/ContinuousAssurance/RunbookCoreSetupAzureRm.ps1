@@ -397,10 +397,12 @@ try
 			if(($azskResourceGroup | Measure-Object).Count -gt 0)
 			{
 				$tags = $azskResourceGroup.Tags;
-				if($tags.ContainsKey("AzSKVersion"))
-				{
-					$RunbookVersion = $tags['AzSKCARunbookVersion']
-				}
+                if($null -ne $tags)
+                {
+                    $RunbookVersionTag = $tags| Where-Object{ $_.Name -eq 'AzSKCARunbookVersion'}
+                    $RunbookVersion = $RunbookVersionTag.Value
+                }
+				
 			}
 		}
 		catch
