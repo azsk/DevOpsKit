@@ -24,6 +24,11 @@
   "KubernetesService": {
     "kubernetesVersion": "1.12.6"
   },
+  "APIManagement": {
+    "AllowedIdentityProvider": [
+      "Aad"
+    ]
+  },
   "VirtualMachine": {
     "Windows": {
       "SupportedSkuList": [],
@@ -240,7 +245,7 @@
   "AppService": {
     "Backup_RetentionPeriod_Min": 365,
     "Backup_RetentionPeriod_Forever": 0,
-    "LatestDotNetFrameworkVersionNumber": "v4.7",
+    "LatestDotNetFrameworkVersionNumber": "v4.0",
     "Minimum_Instance_Count": 2,
     "AADAuthAPIVersion": "2016-08-01",
     "LoadCertAppSettings": "WEBSITE_LOAD_CERTIFICATES"

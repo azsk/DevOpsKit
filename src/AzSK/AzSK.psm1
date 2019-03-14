@@ -5,7 +5,7 @@ Enable-AzureRMAlias
 
 . $PSScriptRoot\Framework\Framework.ps1
 
-@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring", "$PSScriptRoot\SubscriptionSecurity", "$PSScriptRoot\ContinuousAssurance" , "$PSScriptRoot\AzSKInfo", "$PSScriptRoot\PolicySetup", "$PSScriptRoot\ARMChecker") |
+@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring", "$PSScriptRoot\SubscriptionSecurity", "$PSScriptRoot\ContinuousAssurance" , "$PSScriptRoot\AzSKInfo", "$PSScriptRoot\PolicySetup", "$PSScriptRoot\ARMChecker","$PSScriptRoot\PIM") |
     ForEach-Object {
     (Get-ChildItem -Path $_ -Recurse -File -Include "*.ps1") |
         ForEach-Object {
@@ -497,6 +497,6 @@ function Clear-AzSKSessionState {
 }
 
 
-$FrameworkPath =  $PSScriptRoot
+$FrameworkPath =  ((Get-Item $PSScriptRoot).Parent).FullName +"\AzSK.Framework"
 
-. $FrameworkPath\Framework\Helpers\AliasHelper.ps1
+. $FrameworkPath\Helpers\AliasHelper.ps1

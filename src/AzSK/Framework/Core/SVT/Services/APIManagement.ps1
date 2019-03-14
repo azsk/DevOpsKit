@@ -215,19 +215,51 @@ class APIManagement: SVTBase
     {
 		if( $null -ne $this.APIMContext)
 		{
-			$identityProvider = Get-AzApiManagementIdentityProvider -Context $this.APIMContext
-
-			if($null -ne $identityProvider)
+			# Check if registration using 'Username and Password' is enabled
+			$IsBasicRegistrationEnabled = $false
+			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()			
+			$uri=[system.string]::Format($ResourceAppIdURI+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.ApiManagement/service/{2}/tenant/settings?api-version=2018-06-01-preview",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
+			$json=$null;
+        	try 
 			{
-				if($null -ne ($identityProvider | Where-Object {$_.Type -ne [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementIdentityProviderType]::Aad}))
-				{				
-					$controlResult.AddMessage([VerificationResult]::Verify, "Below listed Identity provider(s) are enabled in '$($this.ResourceContext.ResourceName)' API management instance. Enterprise applications using APIM must authenticate developers/applications using Azure Active Directory backed credentials.", $identityProvider)
-					$controlResult.SetStateData("Sign in option enabled on developer portal other than AAD", $identityProvider);
+				$json=[WebRequestHelper]::InvokeGetWebRequest($uri);
+			} 
+			catch
+			{
+				$json=$null;
+			}
+			$failMsg = ""
+			if($null -ne $json)
+			{
+				if([Helpers]::CheckMember($json,"settings"))
+				{
+					$IsBasicRegistrationEnabled = $json.settings.'CustomPortalSettings.RegistrationEnabled'
 				}
 				else
 				{
-					$controlResult.AddMessage([VerificationResult]::Passed,"")
-				}
+					$failMsg = "Unable to validate control. Please verify from portal that user registration using 'Username and Password' is disabled. To verify, go to APIM service instance -> Settings -> Identities."
+				}	
+			}
+			
+			# Check if sign in using external Identity provider is enabled
+			$identityProvider = Get-AzApiManagementIdentityProvider -Context $this.APIMContext
+			$nonAADIdentityProvider = $identityProvider | Where-Object { $this.ControlSettings.APIManagement.AllowedIdentityProvider -notcontains  $_.Type}
+			
+			# Consolidate result for attestation drift
+			$result = @()
+			if(($IsBasicRegistrationEnabled -eq $true) -or (-not [string]::IsNullOrEmpty($failMsg)))
+			{
+				$result += "Username and Password"
+			}
+			if(($nonAADIdentityProvider | Measure-Object).Count -gt 0)
+			{
+				$result += $nonAADIdentityProvider | ForEach-Object {$_.Type}
+			}
+
+			if(($result | Measure-Object).Count -gt 0)
+			{		
+				$controlResult.AddMessage([VerificationResult]::Verify, "$($failMsg)`r`nBelow listed Identity provider(s) are enabled in '$($this.ResourceContext.ResourceName)' API management instance. Enterprise applications using APIM must authenticate developers/applications using Azure Active Directory backed credentials.", $result)
+				$controlResult.SetStateData("Sign in option enabled on developer portal other than AAD", $result);
 			}
 			else
 			{
@@ -547,7 +579,7 @@ class APIManagement: SVTBase
 		$uri=[system.string]::Format($ResourceAppIdURI+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.ApiManagement/service/{2}/portalsettings/delegation?api-version=2018-06-01-preview",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
 		$json=$null;
         try 
-		{ 	
+		{
 			$json=[WebRequestHelper]::InvokeGetWebRequest($uri);
 		} 
 		catch
@@ -564,7 +596,7 @@ class APIManagement: SVTBase
 			else
 			{
 			  $controlResult.AddMessage([VerificationResult]::Passed,
-									 [MessageData]::new(""));
+									 [MessageData]::new("Your APIM instance is not using Delegated authentication. It is specifically turned Off."));
 			}
 		}
 		else
@@ -622,7 +654,11 @@ class APIManagement: SVTBase
 					$_
 				}
 			}
-			$Temp = Compare-Object -ReferenceObject $APIUserAuth.Enabled.ApiID -DifferenceObject $JWTValidatePolicyNotFound.ApiId -IncludeEqual | Where-Object { $_.SideIndicator -eq "==" }
+			$Temp = @()
+			if(($JWTValidatePolicyNotFound | Measure-Object).Count -gt 0 -and ($APIUserAuth.Enabled | Measure-Object).Count -gt 0)
+			{
+				$Temp = Compare-Object -ReferenceObject $APIUserAuth.Enabled.ApiID -DifferenceObject $JWTValidatePolicyNotFound.ApiId -IncludeEqual | Where-Object { $_.SideIndicator -eq "==" }
+			}
 			if(($JWTValidatePolicyNotFound | Measure-Object).Count -gt 0 -and ($APIUserAuth.Enabled | Measure-Object).Count -gt 0 -and ($Temp | Measure-Object).Count -gt 0)
 			{
 				$controlResult.AddMessage([VerificationResult]::Failed, "JWT Token validation not found for OAuth/OpenID connect authorization.", $Temp)

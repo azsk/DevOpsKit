@@ -393,7 +393,7 @@ class AppService: SVTBase
 					if($null -ne $backupConfiguration)
 					{
 						$controlResult.AddMessage([MessageData]::new("Configured backup for resource " + $this.ResourceContext.ResourceName + " is not as per the security guidelines. Please make sure that the configured backup is inline with below settings:-"));
-						$controlResult.AddMessage([MessageData]::new("Enabled=True, StorageAccountEncryption=Enabled, RetentionPeriodInDays=0 or RetentionPeriodInDays>=365, BackupStartTime<=CurrentTime, KeepAtLeastOneBackup=True", $backupConfiguration));
+						$controlResult.AddMessage([MessageData]::new("Enabled=True, StorageAccountEncryption=Enabled, RetentionPeriodInDays=0 or RetentionPeriodInDays>=" + $this.ControlSettings.AppService.Backup_RetentionPeriod_Min +", BackupStartTime<=CurrentTime, KeepAtLeastOneBackup=True", $backupConfiguration));
 					}
 					else
 					{
