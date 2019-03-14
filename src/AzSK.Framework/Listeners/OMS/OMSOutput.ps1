@@ -53,7 +53,7 @@ class OMSOutput: ListenerBase
 					}
 					if(-not [string]::IsNullOrEmpty($settings.AltOMSWorkspaceId))
 					{
-						$currentInstance.PublishCustomMessage("AltWsId:	$($settings.AltOMSWorkspaceId)`n",[MessageType]::Info);
+						$currentInstance.PublishCustomMessage("AltWsId: $($settings.AltOMSWorkspaceId)`n",[MessageType]::Info);
 						$currentInstance.PublishCustomMessage("`n");
 					}
 					else
