@@ -152,7 +152,7 @@ class AIOrgTelemetryHelper {
 				# No need to break execution
             }
             try {
-                $Properties.Add("PowerShellVersion", $PSVersionTable.PSVersion.ToString());
+                $Properties.Add("PowerShellVersion", (Get-Variable -Name PSVersionTable).Value.PSVersion.Tostring());
             }
             catch
 			{
