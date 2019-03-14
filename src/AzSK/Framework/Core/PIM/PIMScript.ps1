@@ -201,7 +201,7 @@ hidden Activate()
         {
             Write-Host "  Enter activation duration in hours between 1 to 8 hours: " -ForegroundColor Cyan -NoNewline
             [int] $hours =  Read-Host
-            while($hours -lt 0 -or $hours -gt 8)
+            while($hours -lt 1 -or $hours -gt 8)
             {
                 Write-Host "  Invalid input" -ForegroundColor Yellow
                 Write-Host "  Enter activation duration in hours between 1 to 8 hours: " -ForegroundColor Cyan -NoNewline
@@ -212,7 +212,7 @@ hidden Activate()
         {
             Write-Host "   Please enter a valid integer value: " -ForegroundColor Yellow -NoNewline
             [int] $hours = Read-Host
-            while($hours -lt 0 -or $hours -gt 8)
+            while($hours -lt 1 -or $hours -gt 8)
             {
                 Write-Host "  Invalid input" -ForegroundColor Yellow
                 Write-Host "  Enter activation duration in hours between 1 to 8 hours: " -ForegroundColor Cyan -NoNewline
@@ -423,7 +423,7 @@ hidden AssignmentEligible()
             {
                 Write-Host "  Enter the period in days between 1 to 90 days for role assignment: " -ForegroundColor Cyan -NoNewline
                 [int]$days= Read-Host 
-                while($days -gt 90 -or $days -lt 0)
+                while($days -gt 90 -or $days -lt 1)
                 {
                     Write-Host "  Invalid input" -ForegroundColor Yellow
                     Write-Host "  Enter the period in days between 1 to 90 days for role assignment: " -ForegroundColor Cyan -NoNewline
@@ -436,7 +436,7 @@ hidden AssignmentEligible()
                 Write-Host "  Please enter a integer value between 1 to 90" -ForegroundColor Yellow -NoNewline
                 Write-Host "  Enter the period in days between 1 to 90 days for role assignment: " -ForegroundColor Cyan
                 [int]$days= Read-Host 
-                while($days -gt 90 -or $days -lt 0)
+                while($days -gt 90 -or $days -lt 1)
                 {
                     Write-Host "  Invalid input" -ForegroundColor Yellow
                     Write-Host "  Enter the period in days between 1 to 90 days for role assignment: " -ForegroundColor Cyan -NoNewline
@@ -482,72 +482,76 @@ ShowMenu()
             $this.PublishCustomMessage("  4. Assign a role to user" )
             $this.PublishCustomMessage("  5. Check permanent access on subscription for a role")
             $this.PublishCustomMessage("  6. Exit")
+            $this.PublishCustomMessage("")
             $this.PublishCustomMessage("`n###################################################################################")
 }
-hidden [void] PIMScript(){
+
+hidden [void] PIMScript()
+{
     try
     {
         $this.AcquireToken();
+    }
+    catch
+    {
+        Write-Host "Unable to fetch access token. Run Connect-AzAccount and then execute this command" -ForegroundColor Red
+    }  
+     
     do
         {
             $this.ShowMenu();
             Write-Host " Enter your selection: " -ForegroundColor Cyan -NoNewline
             $input = Read-Host 
             switch ($input)
-            {
-                '1'
                 {
-                    $assignments = $this.MyJitAssignments(1)
-                    if(($assignments | Measure-Object).Count -gt 0)
+                    '1'
                     {
-                       $this.PublishCustomMessage("Role assignments:",[MessageType]::Default)
-                       $this.PublishCustomMessage("");
-                       $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
-                       $this.PublishCustomMessage(($assignments | Format-Table -AutoSize Id,RoleName,ResourceName,ResourceType,ExpirationDate| Out-String),[MessageType]::Default)
-                       $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
-                       $this.PublishCustomMessage("");
+                        $assignments = $this.MyJitAssignments(1)
+                        if(($assignments | Measure-Object).Count -gt 0)
+                        {
+                        $this.PublishCustomMessage("Role assignments:",[MessageType]::Default)
+                        $this.PublishCustomMessage("");
+                        $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
+                        $this.PublishCustomMessage(($assignments | Format-Table -AutoSize Id,RoleName,ResourceName,ResourceType,ExpirationDate| Out-String),[MessageType]::Default)
+                        $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
+                        $this.PublishCustomMessage("");
+                        }
+                        else
+                        {
+                            $this.PublishCustomMessage("No eligible roles found for the current login",[MessageType]::Warning);
+                        }
                     }
-                    else
+                    '2'
                     {
-                        $this.PublishCustomMessage("No eligible roles found for the current login",[MessageType]::Warning);
+                        $this.Activate()
+                    }
+                    '3'
+                    {
+                        $this.Deactivate()
+                    }
+                    '4'
+                    {
+                        $this.AssignmentEligible()
+                    }
+                    '5'
+                    {
+                        $this.ListAssignment()
+                    }
+                    '6'
+                    {
+                        return
                     }
                 }
-                '2'
-                {
-                    $this.Activate()
-                }
-                '3'
-                {
-                    $this.Deactivate()
-                }
-                '4'
-                {
-                    $this.AssignmentEligible()
-                }
-                '5'
-                {
-                    $this.ListAssignment()
-                }
-                '6'
-                {
-                    return
-                }
-            }
+            
         }
-        until ($input -eq '0')
+        while ($input -gt 6 -or ($input -lt 1) )
 
-        Write-Host "" 
+    Write-Host "" 
 
-    }
-    catch
-    {
-           Write-Host "Unable to fetch token. Please run the script in a fresh powershell session" -ForegroundColor Red
-            return;      
+    
+             
+}     
 
-    }      
-
-
-}
 
 
 }
