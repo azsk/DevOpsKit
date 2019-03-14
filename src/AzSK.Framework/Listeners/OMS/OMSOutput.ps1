@@ -51,6 +51,7 @@ class OMSOutput: ListenerBase
 					{
 						$currentInstance.PublishCustomMessage("WSId: $($settings.OMSWorkspaceId)`n",[MessageType]::Info);
 					}
+
 					if(-not [string]::IsNullOrEmpty($settings.AltOMSWorkspaceId))
 					{
 						$currentInstance.PublishCustomMessage("AltWsId: $($settings.AltOMSWorkspaceId)`n",[MessageType]::Info);
