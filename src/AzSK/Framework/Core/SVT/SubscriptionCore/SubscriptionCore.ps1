@@ -1053,7 +1053,7 @@ class SubscriptionCore: SVTBase
 			}
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "Expected '$ascTier' tier is configured for ASC" )
+				$controlResult.AddMessage([VerificationResult]::Failed, "Expected '$ascTier' tier is not configured for ASC" )
 			}
 		}
 		return $controlResult
