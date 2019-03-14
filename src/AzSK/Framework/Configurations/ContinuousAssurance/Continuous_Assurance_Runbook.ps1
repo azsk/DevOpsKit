@@ -318,7 +318,7 @@ try
 				PublishEvent -EventName "CA Job Invoke Scan Completed"
 			}
 		}
-		else{
+		else
 		{
 			PublishEvent -EventName "CA Job Invoke Scan Started"
 			Write-Output ("RB: Invoking scan agent script. PolicyStoreURL: [" + $onlinePolicyStoreUrl.Substring(0,15) + "*****]")
