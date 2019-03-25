@@ -138,7 +138,7 @@ namespace AzSK.ARMChecker.Lib
                                 {
                                     var resourceNameString = ParseArmFunctionAndParam(matchedResource.Resource.ResourceName, ParamAndVarKeys);
                                     var resourceNameComponent = resourceNameString.Split('/');
-                                    if (resourceNameComponent.Last().Equals(dependencyComponentArray.Last(), StringComparison.OrdinalIgnoreCase))
+                                    if (resourceNameComponent.Last().Equals(dependencyComponentArray.Last(), StringComparison.OrdinalIgnoreCase) && resourceNode.Token != matchedResource.Token)
                                     {
                                         ResourceNode resourceTuple = (ResourceNode)resourceNode.Clone();
                                         resourceTuple.LastChildResource = matchedResource;
@@ -178,7 +178,7 @@ namespace AzSK.ARMChecker.Lib
                     {
                         for (int j = 0; j < relatedResources.Count; j++)
                         {
-                            if (MergedResources[i].LastChildResource != null && MergedResources[i].LastChildResource.Token.Equals(relatedResources[j].Token))
+                            if (i != j && MergedResources[i].LastChildResource != null && MergedResources[i].LastChildResource.Token.Equals(relatedResources[j].Token))
                             {
                                 MergedResources[i].LastChildResource.ChildResource = relatedResources[j].ChildResource;
                                 MergedResources[i].LastChildResource = relatedResources[j].LastChildResource;
@@ -325,6 +325,8 @@ namespace AzSK.ARMChecker.Lib
                                 if (i_supported.Contains(resourceset1.Resource.ResourceType) == false)
                                 {
                                 var dependsOnList = resourceset1.Resource.Resource.GetValueCaseInsensitive("dependsOn");
+                                var Source_resourcetype = resourceset1.Resource.Resource.GetValueCaseInsensitive("type").ToString();
+                                Source_resourcetype = Source_resourcetype.Split('/')[0];
                                 if (dependsOnList != null && dependsOnList.Any())
                                 {
                                     foreach (var dependency in dependsOnList)
@@ -337,7 +339,9 @@ namespace AzSK.ARMChecker.Lib
                                         {
                                             var resourceNameString = ParseArmFunctionAndParam(t_resourceset.Resource.ResourceName, ParamAndVarKeys);
                                             var resourceNameComponent = resourceNameString.Split('/');
-                                            if (resourceNameComponent.Last().Equals(dependencyComponentArray.Last(), StringComparison.OrdinalIgnoreCase))
+                                            var Target_resourcetype = t_resourceset.Resource.Resource.GetValueCaseInsensitive("type").ToString();
+                                            Target_resourcetype = Target_resourcetype.Split('/')[0];
+                                            if (resourceNameComponent.Last().Equals(dependencyComponentArray.Last(), StringComparison.OrdinalIgnoreCase) && Source_resourcetype.Equals(Target_resourcetype))
                                             {
                                                 ResourceNode rn = new ResourceNode();
                                                 rn.Resource = resourceset1.Resource;

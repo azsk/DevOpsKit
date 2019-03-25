@@ -25,7 +25,7 @@ class EventHub: SVTBase
         if (-not $this.NamespacePolicies) {
 			try
 			{
-				$this.NamespacePolicies = (Get-AzureRmEventHubAuthorizationRule -ResourceGroupName $this.ResourceContext.ResourceGroupName `
+				$this.NamespacePolicies = (Get-AzEventHubAuthorizationRule -ResourceGroupName $this.ResourceContext.ResourceGroupName `
 						-NamespaceName $this.ResourceContext.ResourceName | Select-Object Id, Name, Rights)
 			}
 			catch
@@ -38,7 +38,7 @@ class EventHub: SVTBase
 		if (-not $this.EventHubs) {
 			try
 			{
-				$this.EventHubs = Get-AzureRmEventHub -ResourceGroupName $this.ResourceContext.ResourceGroupName -NamespaceName $this.ResourceContext.ResourceName
+				$this.EventHubs = Get-AzEventHub -ResourceGroupName $this.ResourceContext.ResourceGroupName -NamespaceName $this.ResourceContext.ResourceName
 			}
 			catch
 			{
@@ -57,7 +57,7 @@ class EventHub: SVTBase
 			{
 				try
 				{
-					$eventHubPolicies = Get-AzureRmEventHubAuthorizationRule -ResourceGroupName $this.ResourceContext.ResourceGroupName `
+					$eventHubPolicies = Get-AzEventHubAuthorizationRule -ResourceGroupName $this.ResourceContext.ResourceGroupName `
 										-NamespaceName $this.ResourceContext.ResourceName -EventHubName $eventHub.Name
 
 					$this.EHChildAccessPolicies.Add($eventHub, ($eventHubPolicies | Select-Object Id, Name, Rights))	

@@ -11,7 +11,7 @@ class SecurityRecommendationsReport: CommandBase
 
     { 
 		$this.AzSKRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-		$this.AzSKRG = Get-AzureRmResourceGroup -Name $this.AzSKRGName -ErrorAction SilentlyContinue
+		$this.AzSKRG = Get-AzResourceGroup -Name $this.AzSKRGName -ErrorAction SilentlyContinue
 	}
 
 	hidden [System.Object]get_hash([SecurityReportInput] $Input){
@@ -84,7 +84,7 @@ class SecurityRecommendationsReport: CommandBase
 			[SecurityReportInput] $userInput = [SecurityReportInput]::new();
 			if(-not [string]::IsNullOrWhiteSpace($ResourceGroupName))
 			{
-				$resources = Get-AzureRmResource -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+				$resources = Get-AzResource -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
 				if(($resources | Measure-Object).Count -gt 0)
 				{
 					[SVTMapping]::GetSupportedResourceMap();

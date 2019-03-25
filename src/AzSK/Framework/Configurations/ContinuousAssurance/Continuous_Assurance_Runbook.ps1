@@ -86,14 +86,14 @@ function PublishEvent([string] $EventName, [hashtable] $Properties, [hashtable] 
 function CreateHelperSchedule($nextRetryIntervalInMinutes)
 {
     #create next run schedule
-    Get-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName `
-    -ResourceGroupName $AutomationAccountRG -Name $CAHelperScheduleName -ErrorAction SilentlyContinue | Remove-AzureRmAutomationSchedule -Force
+    Get-AzAutomationSchedule -AutomationAccountName $AutomationAccountName `
+    -ResourceGroupName $AutomationAccountRG -Name $CAHelperScheduleName -ErrorAction SilentlyContinue | Remove-AzAutomationSchedule -Force
 
-    New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $CAHelperScheduleName `
+    New-AzAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $CAHelperScheduleName `
                     -ResourceGroupName $AutomationAccountRG -StartTime $(get-date).AddMinutes($nextRetryIntervalInMinutes) `
                     -OneTime -ErrorAction Stop | Out-Null
 
-    Register-AzureRmAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $CAHelperScheduleName `
+    Register-AzAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $CAHelperScheduleName `
                     -ResourceGroupName $AutomationAccountRG `
                     -AutomationAccountName $AutomationAccountName -ErrorAction Stop | Out-Null
 	PublishEvent -EventName "CA Job Rescheduled" -Properties @{"IntervalInMinutes" = $nextRetryIntervalInMinutes}
@@ -220,11 +220,25 @@ try
 	}
 	try
 	{
-		Write-Output("RB: Started runbook execution...")
+		Write-Output("RB: Started runbook execution (Az.*)...")
 		
 		$appId = $RunAsConnection.ApplicationId 
 		Write-Output ("RB: Logging in to Azure for appId: [$appId]")
+		$Azlogin = Get-Command -Name "Connect-AzAccount" -ErrorAction SilentlyContinue
 		$loginCmdlets = Get-Command -Noun "AzureRmAccount" -ErrorAction SilentlyContinue
+        if($Null -ne $Azlogin)
+        {
+            Connect-AzAccount `
+				-Environment $AzureEnv `
+				-ServicePrincipal `
+				-Tenant $RunAsConnection.TenantId `
+				-ApplicationId $RunAsConnection.ApplicationId `
+				-CertificateThumbprint $RunAsConnection.CertificateThumbprint | Out-Null
+			Write-Output ("RB: Logged in using Az")
+           Set-AzContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
+        }
+        else
+        {
 		if($Null -ne $loginCmdlets)
 		{
 			#AzureRm.profile version = 5.x.x
@@ -236,6 +250,7 @@ try
 				-TenantId $RunAsConnection.TenantId `
 				-ApplicationId $RunAsConnection.ApplicationId `
 				-CertificateThumbprint $RunAsConnection.CertificateThumbprint | Out-Null
+				Write-Output ("RB: Logged in using AzureRm.Profile 5.x")
 			}
 			#AzureRm.profile version = 4.x.x
 			elseif ($Null -ne ($loginCmdlets | Where-Object{$_.Name -eq "Add-AzureRmAccount"})) 
@@ -246,19 +261,21 @@ try
 				-TenantId $RunAsConnection.TenantId `
 				-ApplicationId $RunAsConnection.ApplicationId `
 				-CertificateThumbprint $RunAsConnection.CertificateThumbprint | Out-Null
+				Write-Output ("RB: Logged in using AzureRm.Profile base version")
 			}
 			else
 			{
 				throw "RB: Failed to login to Azure. Check if AzureRm.profile module is present."
 			}
+            Set-AzureRmContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
 		}
 		else
 		{
 			throw "RB: Failed to login to Azure. Check if AzureRm.profile module is present."
 		}
-		
-		Set-AzureRmContext -SubscriptionId $RunAsConnection.SubscriptionID  | Out-Null
+	
 	}
+    }
 	catch
 	{
 		Write-Output ("RB: Failed to login to Azure with AzSK AppId: [$appId].")
@@ -283,18 +300,33 @@ try
 	#We start with a check for 'Get-AzSKAccessToken' to ensure that AzSK module is ready (and loaded)
 	if((Get-Command -Name "Get-AzSKAccessToken" -ErrorAction SilentlyContinue|Measure-Object).Count -gt 0)
 	{
-		#If policy store authN is set to true, get a token. (mostly for org policy/OSS, this will be 'false')
+		#If policy store authN is set to true, get a token. (mostly for org policy/OSS, this will be 'false'
 		if($enableAADAuthForOnlinePolicyStore -eq "true")
 		{
 			Write-Output("RB: Getting token for authN to online policy store.")
 			$accessToken = Get-AzSKAccessToken -ResourceAppIdURI $azureRmResourceURI
+			if(-not $accessToken)
+			{
+				Write-Output("RB: Unable to fetch access token. AzSK module not yet ready in the automation account. Will retry in the next run.")
+				PublishEvent -EventName "CA Access Token Not Found"
+			}
+			else{
+				PublishEvent -EventName "CA Job Invoke Scan Started"
+				Write-Output ("RB: Invoking scan agent script. PolicyStoreURL: [" + $onlinePolicyStoreUrl.Substring(0,15) + "*****]")
+				InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName $runbookScanAgentScript -version $caScriptsFolder
+				Write-Output ("RB: Scan agent script completed.")
+				PublishEvent -EventName "CA Job Invoke Scan Completed"
+			}
 		}
-
-		PublishEvent -EventName "CA Job Invoke Scan Started"
-		Write-Output ("RB: Invoking scan agent script. PolicyStoreURL: [" + $onlinePolicyStoreUrl.Substring(0,15) + "*****]")
-		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName $runbookScanAgentScript -version $caScriptsFolder
-		Write-Output ("RB: Scan agent script completed.")
-		PublishEvent -EventName "CA Job Invoke Scan Completed"
+		else
+		{
+			PublishEvent -EventName "CA Job Invoke Scan Started"
+			Write-Output ("RB: Invoking scan agent script. PolicyStoreURL: [" + $onlinePolicyStoreUrl.Substring(0,15) + "*****]")
+			InvokeScript -policyStoreURL $onlinePolicyStoreUrl -fileName $runbookScanAgentScript -version $caScriptsFolder
+			Write-Output ("RB: Scan agent script completed.")
+			PublishEvent -EventName "CA Job Invoke Scan Completed"
+		}
+		
 	}
 	else
 	{
@@ -313,3 +345,4 @@ catch
 	throw;
 }
 #----------------------------------Runbook end-------------------------------------------------------------------------
+

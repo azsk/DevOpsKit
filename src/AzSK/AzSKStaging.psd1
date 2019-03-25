@@ -49,42 +49,37 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules        = @(
-        @{ModuleName = 'AzureRM.Profile'; RequiredVersion = '5.5.1'}
-		@{ModuleName = 'Azure.Storage'; RequiredVersion = '4.5.0'}
-        @{ModuleName = 'AzureRM.AnalysisServices'; RequiredVersion = '0.6.14'}
-        @{ModuleName = 'AzureRM.ApiManagement'; RequiredVersion = '6.1.5'}
-		@{ModuleName = 'AzureRM.ApplicationInsights'; RequiredVersion = '0.1.8'}
-		@{ModuleName = 'AzureRM.Automation'; RequiredVersion = '5.1.1'}
-		@{ModuleName = 'AzureRM.Batch'; RequiredVersion = '4.1.5'}
-		@{ModuleName = 'AzureRM.Cdn'; RequiredVersion = '5.0.5'}
-		@{ModuleName = 'AzureRM.Compute'; RequiredVersion = '5.5.2'}
-		@{ModuleName = 'AzureRM.DataFactories'; RequiredVersion = '5.0.3'}
-		@{ModuleName = 'AzureRM.DataFactoryV2'; RequiredVersion = '0.5.10'}
-		@{ModuleName = 'AzureRM.DataLakeAnalytics'; RequiredVersion = '5.1.4'}
-		@{ModuleName = 'AzureRM.DataLakeStore'; RequiredVersion = '6.1.2'}
-		@{ModuleName = 'AzureRM.EventHub'; RequiredVersion = '0.6.10'}
-		@{ModuleName = 'AzureRM.HDInsight'; RequiredVersion = '4.1.8'}
-		@{ModuleName = 'AzureRM.Insights'; RequiredVersion = '5.1.3'}
-		@{ModuleName = 'AzureRM.KeyVault'; RequiredVersion = '5.2.1'}
-		@{ModuleName = 'AzureRM.LogicApp'; RequiredVersion = '4.1.4'}
-		@{ModuleName = 'AzureRM.Network'; RequiredVersion = '6.6.1'}
-		@{ModuleName = 'AzureRM.NotificationHubs'; RequiredVersion = '5.0.3'}
-        @{ModuleName = 'AzureRM.OperationalInsights'; RequiredVersion = '5.0.6'}
-		@{ModuleName = 'AzureRM.PolicyInsights'; RequiredVersion = '1.0.4'}        
-		@{ModuleName = 'AzureRM.RedisCache'; RequiredVersion = '5.0.5'}		
-		@{ModuleName = 'AzureRM.Resources'; RequiredVersion = '6.4.2'}
-		@{ModuleName = 'AzureRM.Scheduler'; RequiredVersion = '0.16.10'}
-		@{ModuleName = 'AzureRM.ServiceBus'; RequiredVersion = '0.6.11'}
-		@{ModuleName = 'AzureRM.ServiceFabric'; RequiredVersion = '0.3.12'}
-		@{ModuleName = 'AzureRM.Sql'; RequiredVersion = '4.11.3'}
-		@{ModuleName = 'AzureRM.Storage'; RequiredVersion = '5.0.4'}
-		@{ModuleName = 'AzureRM.StreamAnalytics'; RequiredVersion = '4.0.10'}
-		@{ModuleName = 'AzureRM.Tags'; RequiredVersion = '4.0.5'}
-		@{ModuleName = 'AzureRM.TrafficManager'; RequiredVersion = '4.1.1'}		
-		@{ModuleName = 'AzureRM.Websites'; RequiredVersion = '5.0.9'}	
-		@{ModuleName = 'AzureRM.ContainerInstance'; RequiredVersion = '0.2.10'}	
-        @{ModuleName = 'AzureRM.ContainerRegistry'; RequiredVersion = '1.0.10'}
-        @{ModuleName = 'AzureRM.HDInsight'; RequiredVersion = '4.1.8'}	
+        @{ModuleName = 'Az.Accounts'; RequiredVersion = '1.2.1'}
+		@{ModuleName = 'Az.Storage'; RequiredVersion = '1.0.1'}
+        @{ModuleName = 'Az.AnalysisServices'; RequiredVersion = '1.0.0'}
+        @{ModuleName = 'Az.ApiManagement'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.ApplicationInsights'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.Automation'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.Batch'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.Cdn'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.Compute'; RequiredVersion = '1.1.0'}
+		@{ModuleName = 'Az.DataFactory'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.DataLakeAnalytics'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.DataLakeStore'; RequiredVersion = '1.0.1'}
+		@{ModuleName = 'Az.EventHub'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.HDInsight'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.Monitor'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.KeyVault'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.LogicApp'; RequiredVersion = '1.1.0'}
+		@{ModuleName = 'Az.Network'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.NotificationHubs'; RequiredVersion = '1.0.0'}
+        @{ModuleName = 'Az.OperationalInsights'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.PolicyInsights'; RequiredVersion = '1.0.0'}        
+		@{ModuleName = 'Az.RedisCache'; RequiredVersion = '1.0.0'}		
+		@{ModuleName = 'Az.Resources'; RequiredVersion = '1.1.0'}
+		@{ModuleName = 'Az.ServiceBus'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.ServiceFabric'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.Sql'; RequiredVersion = '1.0.1'}
+		@{ModuleName = 'Az.StreamAnalytics'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.TrafficManager'; RequiredVersion = '1.0.0'}		
+		@{ModuleName = 'Az.Websites'; RequiredVersion = '1.0.1'}	
+		@{ModuleName = 'Az.ContainerInstance'; RequiredVersion = '1.0.0'}	
+        @{ModuleName = 'Az.ContainerRegistry'; RequiredVersion = '1.0.0'}
     )
 
     # Assemblies that must be loaded prior to importing this module
@@ -111,11 +106,13 @@
         'Get-AzSKExpressRouteNetworkSecurityStatus',
         'Get-AzSKControlsStatus',
         'Set-AzSKOMSSettings',
+        'Set-AzSKMonitoringSettings',
         'Set-AzSKEventHubSettings',
         'Set-AzSKWebhookSettings',
         'Set-AzSKUsageTelemetryLevel',
         'Set-AzSKLocalAIOrgTelemetrySettings',
         'Install-AzSKOMSSolution',
+        'Install-AzSKMonitoringSolution',
         'Install-AzSKContinuousAssurance',
         'Update-AzSKContinuousAssurance',        
         'Get-AzSKContinuousAssurance',
@@ -144,7 +141,8 @@
         'Get-AzSKARMTemplateSecurityStatus',
         'Clear-AzSKSessionState',
 		'Update-AzSKPersistedState'
-        'Get-AzSKSecurityRecommendationReport'
+        'Get-AzSKSecurityRecommendationReport',
+        'Set-AzSKPIMConfiguration'
     )
 
     # Cmdlets to export from this module
@@ -200,8 +198,8 @@
 				- Subscription and one or more applications
 
 		* Alerting & Monitoring
-			* OMS Solution for AzSK containing:
-				- Security scanning via OMS-based runbooks
+			* Monitoring Solution for AzSK containing:
+				- Security scanning via Log Analytics-based runbooks
 				- Security dashboard views covering security state/actions'
 
             # External dependent modules of this module

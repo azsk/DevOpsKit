@@ -34,7 +34,7 @@ class AppService: SVTBase
         if (-not $this.ResourceObject)
 		{
 			# Get App Service details
-            $this.ResourceObject = Get-AzureRmResource -Name $this.ResourceContext.ResourceName  `
+            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
                                         -ResourceType $this.ResourceContext.ResourceType `
                                         -ResourceGroupName $this.ResourceContext.ResourceGroupName
 
@@ -44,12 +44,12 @@ class AppService: SVTBase
             }
 
 			# Get web sites details
-			$this.WebAppDetails = Get-AzureRmWebApp -Name $this.ResourceContext.ResourceName `
+			$this.WebAppDetails = Get-AzWebApp -Name $this.ResourceContext.ResourceName `
 									-ResourceGroupName $this.ResourceContext.ResourceGroupName
 
 			try
 			{ 
-				$this.AuthenticationSettings = Invoke-AzureRmResourceAction -ResourceType "Microsoft.Web/sites/config/authsettings" `
+				$this.AuthenticationSettings = Invoke-AzResourceAction -ResourceType "Microsoft.Web/sites/config/authsettings" `
                                                                                     -ResourceGroupName $this.ResourceContext.ResourceGroupName `
                                                                                     -ResourceName $this.ResourceContext.ResourceName `
                                                                                     -Action list `
@@ -100,7 +100,7 @@ class AppService: SVTBase
 		{
 			$controlResult.AddMessage([MessageData]::new("Custom domains are configured for resource " + $this.ResourceContext.ResourceName), $customHostNames);
 
-			$SSLStateNotEnabled = $this.ResourceObject.Properties.hostNameSslStates | Where-Object { (($customHostNames | Measure-Object) -contains $_.name) -and  ($_.sslState -eq 'Disabled')} | Select-Object -Property Name
+			$SSLStateNotEnabled = $this.ResourceObject.Properties.hostNameSslStates | Where-Object { ($customHostNames -contains $_.name) -and  ($_.sslState -eq 'Disabled')} | Select-Object -Property Name
 			if($null -eq $SSLStateNotEnabled)
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed,
@@ -129,6 +129,11 @@ class AppService: SVTBase
 			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 			$controlResult.AddMessage([VerificationResult]::Manual,
                                     [MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+		}
+		elseif($this.WebAppDetails.State -eq "Stopped")
+		{
+			$controlResult.AddMessage([VerificationResult]::Manual,
+                                    [MessageData]::new("Control can not be validated as the resource is in 'Stopped' state."));
 		}
 		else
 		{
@@ -341,7 +346,7 @@ class AppService: SVTBase
     hidden [ControlResult] CheckAppServiceInstanceCount([ControlResult] $controlResult)
 	{
 		# Get number of instances
-        $sku = (Get-AzureRmResource -ResourceId $this.ResourceObject.Properties.ServerFarmId).Sku
+        $sku = (Get-AzResource -ResourceId $this.ResourceObject.Properties.ServerFarmId).Sku
 
 		if($sku.Capacity -ge $this.ControlSettings.AppService.Minimum_Instance_Count)
         {
@@ -369,7 +374,7 @@ class AppService: SVTBase
 			}
 			else
 			{
-				$backupConfiguration = Get-AzureRmWebAppBackupConfiguration `
+				$backupConfiguration = Get-AzWebAppBackupConfiguration `
 													-ResourceGroupName $this.ResourceContext.ResourceGroupName `
 													-Name $this.ResourceContext.ResourceName `
 													-ErrorAction Stop
@@ -393,7 +398,7 @@ class AppService: SVTBase
 					if($null -ne $backupConfiguration)
 					{
 						$controlResult.AddMessage([MessageData]::new("Configured backup for resource " + $this.ResourceContext.ResourceName + " is not as per the security guidelines. Please make sure that the configured backup is inline with below settings:-"));
-						$controlResult.AddMessage([MessageData]::new("Enabled=True, StorageAccountEncryption=Enabled, RetentionPeriodInDays=0 or RetentionPeriodInDays>=365, BackupStartTime<=CurrentTime, KeepAtLeastOneBackup=True", $backupConfiguration));
+						$controlResult.AddMessage([MessageData]::new("Enabled=True, StorageAccountEncryption=Enabled, RetentionPeriodInDays=0 or RetentionPeriodInDays>=" + $this.ControlSettings.AppService.Backup_RetentionPeriod_Min +", BackupStartTime<=CurrentTime, KeepAtLeastOneBackup=True", $backupConfiguration));
 					}
 					else
 					{
@@ -471,12 +476,17 @@ class AppService: SVTBase
     hidden [ControlResult] CheckFunctionsAppHttpCertificateSSL([ControlResult] $controlResult)
 	{	
 			if($this.IsReaderRole)
-				{
-					#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
-					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-					$controlResult.AddMessage([VerificationResult]::Manual,
-                                    [MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
-				}
+			{
+				#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+				$controlResult.AddMessage([VerificationResult]::Manual,
+                                [MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+			}
+			elseif($this.WebAppDetails.State -eq "Stopped")
+			{
+				$controlResult.AddMessage([VerificationResult]::Manual,
+                                [MessageData]::new("Control can not be validated as the resource is in 'Stopped' state."));
+			}
 			else
 				{
 				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()

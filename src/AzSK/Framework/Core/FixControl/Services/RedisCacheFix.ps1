@@ -14,7 +14,7 @@ class RedisCacheFix: FixServicesBase
 
 		[MessageData[]] $detailedLogs = @();
 		$detailedLogs += [MessageData]::new("Disabling Non SSL port on RedisCache :  [$($this.ResourceName)]...");
-		Set-AzureRmRedisCache -ResourceGroupName $this.ResourceGroupName -Name $this.ResourceName -EnableNonSslPort $false
+		Set-AzRedisCache -ResourceGroupName $this.ResourceGroupName -Name $this.ResourceName -EnableNonSslPort $false
 		$detailedLogs += [MessageData]::new("Disabled Non SSL port on RedisCache : [$($this.ResourceName)]");
 		return $detailedLogs;	
 		

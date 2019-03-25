@@ -167,7 +167,10 @@ class ServicesSecurityStatus: SVTCommandBase
 				try
 				{
 					$extensionSVTClassName = $svtClassName + "Ext";
-					$extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName);				
+					if(-not ($extensionSVTClassName -as [type]))
+					{
+						$extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName); 
+					}	
 					if([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath))
 					{
 						$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
@@ -319,7 +322,7 @@ class ServicesSecurityStatus: SVTCommandBase
 			#$this.PublishCustomMessage("Running cmdlet with baseline resource types and controls.", [MessageType]::Warning);
 			$baselineResourceTypes = $baselineControlsDetails.ResourceTypeControlIdMappingList | Select-Object ResourceType | Foreach-Object {$_.ResourceType}
 			#Filter SVT resources based on baseline resource types
-			$ResourcesWithBaselineFilter =$this.Resolver.SVTResources | Where-Object {$null -ne $_.ResourceTypeMapping -and   $_.ResourceTypeMapping.ResourceTypeName -in $baselineResourceTypes }
+			$ResourcesWithBaselineFilter += $this.Resolver.SVTResources | Where-Object {$null -ne $_.ResourceTypeMapping -and   $_.ResourceTypeMapping.ResourceTypeName -in $baselineResourceTypes }
 			
 			#Get the list of control ids
 			$controlIds = $baselineControlsDetails.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
@@ -330,6 +333,10 @@ class ServicesSecurityStatus: SVTCommandBase
 
 			}		
 		}
+		elseif (($baselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -eq 0 -and $this.UseBaselineControls) 
+		{
+			throw ([SuppressedException]::new(("There are no baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+		}
 
 		#Preview Baseline Controls
 		$previewBaselineControlsDetails = $partialScanMngr.GetPreviewBaselineControlDetails()
@@ -337,9 +344,9 @@ class ServicesSecurityStatus: SVTCommandBase
 		if ($null -ne $previewBaselineControlsDetails -and ($previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -gt 0 -and ($previewBaselineControlsDetails.SupportedSources -contains $scanSource -or $this.UsePreviewBaselineControls))
 		{
 			
-			$baselineResourceTypes = $previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Select-Object ResourceType | Foreach-Object {$_.ResourceType}
-			#Filter SVT resources based on baseline resource types
-			$ResourcesWithBaselineFilter +=$this.Resolver.SVTResources | Where-Object {$null -ne $_.ResourceTypeMapping -and   $_.ResourceTypeMapping.ResourceTypeName -in $baselineResourceTypes }
+			$previewBaselineResourceTypes = $previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Select-Object ResourceType | Foreach-Object {$_.ResourceType}
+			#Filter SVT resources based on preview baseline baseline resource types
+			$ResourcesWithBaselineFilter += $this.Resolver.SVTResources | Where-Object {$null -ne $_.ResourceTypeMapping -and   $_.ResourceTypeMapping.ResourceTypeName -in $previewBaselineResourceTypes }
 			
 			#Get the list of control ids
 			$controlIds = $previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
@@ -347,15 +354,18 @@ class ServicesSecurityStatus: SVTCommandBase
 			if(-not [system.String]::IsNullOrEmpty($previewBaselineControlIds))
 			{
 				$this.ControlIds += $controlIds;
-
 			}			
 		}
+		elseif (($previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -eq 0 -and $this.UsePreviewBaselineControls) 
+		{
+			throw ([SuppressedException]::new(("There are no preview baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+		}
+
 
 		if(($ResourcesWithBaselineFilter | Measure-Object).Count -gt 0)
 		{
 			$this.Resolver.SVTResources = $ResourcesWithBaselineFilter
 		}
-
 	}
 
 	[void] UsePartialCommitsCheck()

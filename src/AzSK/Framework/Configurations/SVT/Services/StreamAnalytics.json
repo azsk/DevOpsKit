@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckRBACAccess",
       "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-      "Recommendation": "Remove any excessive privileges granted on the Stream Analytics. Assign 'Log Analytics Contributor' RBAC role to developers who manages Stream Analytics configurations. Run command: Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help. Refer: https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-control-manage-access-powershell",
+      "Recommendation": "Remove any excessive privileges granted on the Stream Analytics. Assign 'Log Analytics Contributor' RBAC role to developers who manages Stream Analytics configurations. Run command: Remove-AzRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help. Refer: https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-control-manage-access-powershell",
       "Tags": [
         "SDL",
         "TCP",
@@ -69,7 +69,7 @@
       "Automated": "Yes",
       "MethodName": "CheckStreamAnalyticsMetricAlert",
       "Rationale": "Using alert rules, one can ensure high availability of important/critical services by monitoring jobs and getting alerts for runtime errors and job failures.",
-      "Recommendation": "Run the 2 commands: (1) Add-AzureRmMetricAlertRule -MetricName 'Errors' -Operator 'GreaterThan' -Threshold '0' -TimeAggregationOperator 'Total' -WindowSize '00:05:00' -Action '<New-AzureRmAlertRuleEmail -SendToServiceOwner>' -Name '<Alert-Name-1>' -ResourceGroup '<RGName>' -TargetResourceId '<TargetResourceId>' -Location '<Location>'' (2) Add-AzureRmMetricAlertRule -MetricName 'AMLCalloutFailedRequests' -Operator 'GreaterThan' -Threshold '0' -TimeAggregationOperator 'Total' -WindowSize '00:05:00' -Action '<New-AzureRmAlertRuleEmail -SendToServiceOwner>' -Name '<Alert-Name-2>' -ResourceGroup '<RGName>' -TargetResourceId '<TargetResourceId>' -Location '<Location>''. Note: Make sure you choose different names for Alert-Name-1 and Alert-Name-2 above. Run 'Get-Help Add-AzureRmMetricAlertRule -full' for more help.",
+      "Recommendation": "Run the 2 commands: (1) Add-AzMetricAlertRule -MetricName 'Errors' -Operator 'GreaterThan' -Threshold '0' -TimeAggregationOperator 'Total' -WindowSize '00:05:00' -Action '<New-AzAlertRuleEmail -SendToServiceOwner>' -Name '<Alert-Name-1>' -ResourceGroupName '<RGName>' -TargetResourceId '<TargetResourceId>' -Location '<Location>'' (2) Add-AzMetricAlertRule -MetricName 'AMLCalloutFailedRequests' -Operator 'GreaterThan' -Threshold '0' -TimeAggregationOperator 'Total' -WindowSize '00:05:00' -Action '<New-AzAlertRuleEmail -SendToServiceOwner>' -Name '<Alert-Name-2>' -ResourceGroupName '<RGName>' -TargetResourceId '<TargetResourceId>' -Location '<Location>''. Note: Make sure you choose different names for Alert-Name-1 and Alert-Name-2 above. Run 'Get-Help Add-AzMetricAlertRule -full' for more help.",
       "Tags": [
          "SDL",
          "TCP",

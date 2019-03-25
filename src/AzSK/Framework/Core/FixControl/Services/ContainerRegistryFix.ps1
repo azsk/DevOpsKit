@@ -13,7 +13,7 @@ class ContainerRegistryFix: FixServicesBase
 		[MessageData[]] $detailedLogs = @();
 		
 		$detailedLogs += [MessageData]::new("Disabling admin account for Container Registry [$($this.ResourceName)]...");
-        $result = Update-AzureRmContainerRegistry `
+        $result = Update-AzContainerRegistry `
                     -ResourceGroupName $this.ResourceGroupName `
                     -Name $this.ResourceName `
                     -DisableAdminUser `

@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckRBACAccess",
       "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-      "Recommendation": "Remove any excessive privileges granted on the Automation account. Run command Remove-AzureRmRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzureRmRoleAssignment -full' for more help. Assign 'Automation Operator' RBAC role to members who need to start/stop/suspend/resume jobs. Refer: https://docs.microsoft.com/en-us/azure/automation/automation-role-based-access-control, https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-control-manage-access-powershell",
+      "Recommendation": "Remove any excessive privileges granted on the Automation account. Run command Remove-AzRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help. Assign 'Automation Operator' RBAC role to members who need to start/stop/suspend/resume jobs. Refer: https://docs.microsoft.com/en-us/azure/automation/automation-role-based-access-control, https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-control-manage-access-powershell",
       "Tags": [
         "SDL",
         "TCP",
@@ -30,7 +30,7 @@
       "Automated": "Yes",
       "MethodName": "CheckWebhooks",
       "Rationale": "If webhook URL is inadequately protected or gets compromised, the runbook can be triggered by unauthorized users.",
-      "Recommendation": "Remove webhook(s) if not required. Run command Remove-AzureRmAutomationWebhook -AutomationAccountName '{AutomationAccountName}' -Name '{WebhookName}' -ResourceGroupName '{ResourceGroupName}",
+      "Recommendation": "Remove webhook(s) if not required. Run command Remove-AzAutomationWebhook -AutomationAccountName '{AutomationAccountName}' -Name '{WebhookName}' -ResourceGroupName '{ResourceGroupName}'",
       "Tags": [
         "SDL",
         "TCP",
@@ -65,8 +65,8 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckVariables",
-      "Rationale": "Encrypted variables are stored securely by the Azure platform. Moreover, their values cannot be retrieved from the Get-AzureRmAutomationVariable cmdlet that ships as part of the Azure PowerShell module.",
-      "Recommendation": "Encrypt variable if it stores sensitive data. Create a new encrypted copy of each unencrypted variable in the automation account and delete the unencrypted variables later. Run command 'New-AzureRmAutomationVariable -AutomationAccountName '{AutomationAccountName}' -Name '{VariableName}' -Encrypted `$true -Value '{Value} -ResourceGroupName '{ResourceGroupName}' and 'Remove-AzureRmAutomationVariable -AutomationAccountName '{AutomationAccountName}' -Name '{VariableName}' -ResourceGroupName '{ResourceGroupName}'",
+      "Rationale": "Encrypted variables are stored securely by the Azure platform. Moreover, their values cannot be retrieved from the Get-AzAutomationVariable cmdlet that ships as part of the Azure PowerShell module.",
+      "Recommendation": "Encrypt variable if it stores sensitive data. Create a new encrypted copy of each unencrypted variable in the automation account and delete the unencrypted variables later. Run command 'New-AzAutomationVariable -AutomationAccountName '{AutomationAccountName}' -Name '{VariableName}' -Encrypted `$true -Value '{Value} -ResourceGroupName '{ResourceGroupName}' and 'Remove-AzAutomationVariable -AutomationAccountName '{AutomationAccountName}' -Name '{VariableName}' -ResourceGroupName '{ResourceGroupName}'",
       "Tags": [
         "SDL",
         "TCP",
@@ -112,7 +112,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
-      "Recommendation": "Run command New-AzureRmAutomationKey -AutomationAccountName '{AutomationAccountName}' -KeyType '{Primary/Secondary}' -ResourceGroupName '{ResourceGroupName}' to rotate keys",
+      "Recommendation": "Run command New-AzAutomationKey -AutomationAccountName '{AutomationAccountName}' -KeyType '{Primary/Secondary}' -ResourceGroupName '{ResourceGroupName}' to rotate keys",
       "Tags": [
          "SDL",
          "TCP",
@@ -131,7 +131,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
-      "Recommendation": "Remove existing certificate and connection using command Remove-AzureRmAutomationCertificate and Remove-AzureRmAutomationConnection. Create new certificate and connection using commands New-AzureRmAutomationCertificate and New-AzureRmAutomationConnection. Refer : https://docs.microsoft.com/en-us/azure/automation/automation-create-runas-account",
+      "Recommendation": "Remove existing certificate and connection using command Remove-AzAutomationCertificate and Remove-AzAutomationConnection. Create new certificate and connection using commands New-AzAutomationCertificate and New-AzAutomationConnection. Refer : https://docs.microsoft.com/en-us/azure/automation/automation-create-runas-account",
       "Tags": [
          "SDL",
          "Best Practice",

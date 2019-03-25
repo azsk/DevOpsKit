@@ -60,10 +60,14 @@ class SubscriptionCore: SVTBase
 		$scope = $this.SubscriptionContext.Scope;
 
 		$SubAdmins = @();
-		$SubAdmins += $this.RoleAssignments | Where-Object { $_.RoleDefinitionName -eq 'CoAdministrator' `
-																				-or $_.RoleDefinitionName -like '*ServiceAdministrator*' `
-																				-or ($_.RoleDefinitionName -eq 'Owner' -and $_.Scope -eq $scope)}
-		
+		$SubAdmins += $this.RoleAssignments | Where-Object { ($_.RoleDefinitionName -eq 'CoAdministrator' `
+			-or $_.RoleDefinitionName -like '*ServiceAdministrator*' `
+			-or $_.RoleDefinitionName -eq 'Owner') -and $_.Scope -eq $scope}
+
+		#Commented the below code since Co-Admin can exist independently now.
+		#Excluded the Co-Administrator since one couldn't be Co-admin without having the Owner privileges.
+		#$SubAdmins += $this.RoleAssignments | Where-Object { ($_.RoleDefinitionName -like '*ServiceAdministrator*' `
+		#	-or $_.RoleDefinitionName -eq 'Owner') -and $_.Scope -eq $scope}
 		if($this.HasGraphAPIAccess -eq $false)
 		{
 			$this.PublishCustomMessage("Current Azure login context doesn't have graph api access");
@@ -99,11 +103,11 @@ class SubscriptionCore: SVTBase
 			}
 		}
 
-		$controlResult.AddMessage("There are a total of $($SubAdmins.Count) admin/owner accounts in your subscription`r`nOf these, the following $($ClientSubAdmins.Count) admin/owner accounts are not from a central team.", ($ClientSubAdmins | Select-Object DisplayName,SignInName,ObjectType, ObjectId));
+		$controlResult.AddMessage("There are a total of $($SubAdmins.Count) admin/owner accounts in your subscription`r`nOf these, the following $($ClientSubAdmins.Count) admin/owner accounts are not from a central team.", ($ClientSubAdmins | Select-Object DisplayName, SignInName, ObjectType, ObjectId, RoleDefinitionName));
 
 		if(($ApprovedSubAdmins | Measure-Object).Count -gt 0)
 		{
-			$controlResult.AddMessage("The following $($ApprovedSubAdmins.Count) admin/owner (approved) accounts are from a central team:`r`n", ($ApprovedSubAdmins | Select-Object DisplayName, SignInName, ObjectType, ObjectId));
+			$controlResult.AddMessage("The following $($ApprovedSubAdmins.Count) admin/owner (approved) accounts are from a central team:`r`n", ($ApprovedSubAdmins | Select-Object DisplayName, SignInName, ObjectType, ObjectId, RoleDefinitionName));
 		}
 		$controlResult.AddMessage("Note: Approved central team accounts don't count against your limit");
 
@@ -112,7 +116,8 @@ class SubscriptionCore: SVTBase
 			$controlResult.VerificationResult = [VerificationResult]::Failed
 			$controlResult.AddMessage("Number of admins/owners configured at subscription scope are more than the approved limit: $($this.ControlSettings.NoOfApprovedAdmins). Total: " + $ClientSubAdmins.Count);
 		}
-		else {
+		else
+		{
 			$controlResult.AddMessage([VerificationResult]::Passed,
 										"Number of admins/owners configured at subscription scope are with in approved limit: $($this.ControlSettings.NoOfApprovedAdmins). Total: " + $ClientSubAdmins.Count);
 		}
@@ -538,7 +543,7 @@ class SubscriptionCore: SVTBase
 		$lockDtls = $null
         #Command will throw exception if no locks found
         try {
-                $lockDtls = Get-AzureRmResourceLock -ErrorAction Stop # -Scope "/subscriptions/$SubscriptionId"
+                $lockDtls = Get-AzResourceLock -ErrorAction Stop # -Scope "/subscriptions/$SubscriptionId"
         }
         catch
         {
@@ -635,11 +640,11 @@ class SubscriptionCore: SVTBase
             $subInsightsAlertsConfig =[array]($subInsightsAlertsConfig)
 
 			
-            $alertsRG = [array] (Get-AzureRmResourceGroup | Where-Object {$_.ResourceGroupName -eq "$AlertsPkgRG"})
+            $alertsRG = [array] (Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -eq "$AlertsPkgRG"})
             $configuredAlerts = $null
             if (($alertsRG | Measure-Object).Count -eq 1)
             {
-                $configuredAlerts = Get-AzureRmResource -ResourceType "Microsoft.Insights/activityLogAlerts" -ResourceGroupName  $AlertsPkgRG -ExpandProperties -ErrorAction SilentlyContinue
+                $configuredAlerts = Get-AzResource -ResourceType "Microsoft.Insights/activityLogAlerts" -ResourceGroupName  $AlertsPkgRG -ExpandProperties -ErrorAction SilentlyContinue
             }
 
             if((($alertsRG | Measure-Object).Count -eq 1) -and ($null -ne $configuredAlerts)){
@@ -660,18 +665,18 @@ class SubscriptionCore: SVTBase
                             $alertDiffList += $alert
                         }
 						#if alert exists then verify operation list 
-						else
-						{
-							$diffObj= $foundAlert.Properties.condition.allOf[2].anyOf | Select-Object equals
-							$refObj= $alert.AlertOperationList | Where-Object {$_.Enabled -eq $true} | Select-Object OperationName
-							$opDiffList= Compare-Object -ReferenceObject $refObj -DifferenceObject $diffObj | Select-Object -property @{N='OperationList';E={$_.InputObject.equals}}  
-							if($null -ne $opDiffList)
-							{
-								$opList=  $opDiffList.OperationList
-								$foundRequiredAlerts = $false
-								$operationDiffList += @{Name=$alertName; Description=$alert.Description; OperationNameList = $opList }
-							}
-						}
+						# else
+						# {
+						# 	$diffObj= $foundAlert.Properties.condition.allOf[2].anyOf | Select-Object equals
+						# 	$refObj= $alert.AlertOperationList | Where-Object {$_.Enabled -eq $true} | Select-Object OperationName
+						# 	$opDiffList= Compare-Object -ReferenceObject $refObj -DifferenceObject $diffObj | Select-Object -property @{N='OperationList';E={$_.InputObject.equals}}  
+						# 	if($null -ne $opDiffList)
+						# 	{
+						# 		$opList=  $opDiffList.OperationList
+						# 		$foundRequiredAlerts = $false
+						# 		$operationDiffList += @{Name=$alertName; Description=$alert.Description; OperationNameList = $opList }
+						# 	}
+						# }
                     }
                 }
             }
@@ -735,11 +740,11 @@ class SubscriptionCore: SVTBase
             $subInsightsAlertsConfig =[array]($subInsightsAlertsConfig)
 
 			$AlertsPkgRG = "AzSKAlertsRG"
-            $alertsRG = [array] (Get-AzureRmResourceGroup | Where-Object {$_.ResourceGroupName -match "^$AlertsPkgRG"})
+            $alertsRG = [array] (Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -match "^$AlertsPkgRG"})
             $configuredAlerts = $null
             if (($alertsRG | Measure-Object).Count -eq 1)
             {
-                $configuredAlerts = Get-AzureRmAlertRule -ResourceGroup $AlertsPkgRG -WarningAction SilentlyContinue
+                $configuredAlerts = Get-AzAlertRule -ResourceGroup $AlertsPkgRG -WarningAction SilentlyContinue
             }
 
             if((($alertsRG | Measure-Object).Count -eq 1) -and ($null -ne $configuredAlerts)){
@@ -786,7 +791,7 @@ class SubscriptionCore: SVTBase
 		$whitelistedCustomRoleIds = @();
 		$whitelistedCustomRoleIds += $this.ControlSettings.WhitelistedCustomRBACRoles | Select-Object -Property Id | Select-Object -ExpandProperty Id
 		$CustomRBACAssignedRolesCount=0;
-		$customRoles += Get-AzureRmRoleDefinition -Custom | Where-Object { $whitelistedCustomRoleIds -notcontains $_.Id };
+		$customRoles += Get-AzRoleDefinition -Custom | Where-Object { $whitelistedCustomRoleIds -notcontains $_.Id };
 		$customRoles | ForEach-Object {
 			$role = $_;
 			$roleWithAssignment = $role | Select-Object *, RoleAssignmentCount;
@@ -817,7 +822,7 @@ class SubscriptionCore: SVTBase
 
 	hidden [ControlResult] CheckPresenceOfClassicResources([ControlResult] $controlResult)
 	{
-       $classicResources = [array] (Get-AzureRMResource | Where-Object {$_.ResourceType -like "*classic*"} )
+       $classicResources = [array] (Get-AzResource | Where-Object {$_.ResourceType -like "*classic*"} )
         if(($classicResources | Measure-Object).Count -gt 0)
         {
 			#$controlResult.SetStateData("Classic resources on subscription", $classicResources);
@@ -827,10 +832,10 @@ class SubscriptionCore: SVTBase
 			$ClassicVMCount = 0;
 			$ClassicVNetCount = 0;
 
-			$ClassicVMCount = (Get-AzureRmResource -ResourceType Microsoft.ClassicCompute/virtualMachines | Measure-Object).Count;
-			$ClassicStorageCount = (Get-AzureRmResource -ResourceType Microsoft.ClassicStorage/storageAccounts | Measure-Object).Count;
-			$CloudServiceCount = (Get-AzureRmResource -ResourceType Microsoft.ClassicCompute/domainNames | Measure-Object).Count;
-			$ClassicVNetCount = (Get-AzureRmResource -ResourceType Microsoft.ClassicNetwork/virtualNetworks | Measure-Object).Count;
+			$ClassicVMCount = (Get-AzResource -ResourceType Microsoft.ClassicCompute/virtualMachines | Measure-Object).Count;
+			$ClassicStorageCount = (Get-AzResource -ResourceType Microsoft.ClassicStorage/storageAccounts | Measure-Object).Count;
+			$CloudServiceCount = (Get-AzResource -ResourceType Microsoft.ClassicCompute/domainNames | Measure-Object).Count;
+			$ClassicVNetCount = (Get-AzResource -ResourceType Microsoft.ClassicNetwork/virtualNetworks | Measure-Object).Count;
 
             #$controlResult.AddMessage([VerificationResult]::Failed, "Found classic resources on the subscription.", $classicResources, $true, "ClassicResources")
 
@@ -856,7 +861,7 @@ class SubscriptionCore: SVTBase
 
 	hidden [ControlResult] CheckPresenceOfClassicVMs([ControlResult] $controlResult)
 	{
-        $classicVMResources = [array] (Get-AzureRmResource -ResourceType Microsoft.ClassicCompute/virtualMachines)
+        $classicVMResources = [array] (Get-AzResource -ResourceType Microsoft.ClassicCompute/virtualMachines)
         if(($classicVMResources | Measure-Object).Count -gt 0)
         {
 			$controlResult.SetStateData("Classic virtual machines on subscription", $classicVMResources);
@@ -873,7 +878,7 @@ class SubscriptionCore: SVTBase
 
 	hidden [ControlResult] CheckPublicIpUsage([ControlResult] $controlResult)
 	{
-		$publicIps = Get-AzureRmPublicIpAddress
+		$publicIps = Get-AzPublicIpAddress
 		$ipFlatList = [System.Collections.ArrayList]::new()
 		foreach($publicIp in $publicIps){
 			$ip = $publicIp | Select-Object ResourceGroupName, Name, Location, PublicIpAllocationMethod, IpAddress, PublicIpAddressVersion, AssociatedResourceType, AssociatedResourceId, AssociatedResourceName, Fqdn
@@ -953,7 +958,7 @@ class SubscriptionCore: SVTBase
 		#Check if mandatory tags list present
 		if([Helpers]::CheckMember($this.ControlSettings,"MandatoryTags") -and ($this.ControlSettings.MandatoryTags | Measure-Object).Count -ne 0)
 		{
-			$resourceGroups = Get-AzureRmResourceGroup
+			$resourceGroups = Get-AzResourceGroup
 			if(($resourceGroups | Measure-Object).Count -gt 0)
 			{
 				$rgTagStatus = $true
@@ -964,7 +969,7 @@ class SubscriptionCore: SVTBase
 					$controlResult.AddMessage("`nPolicy Requirement: `n`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpected Values: '$($tagObject.Values)'")
 
 					#Step1 Validate if tag present on RG 			
-					$rgListwithoutTags = $resourceGroups | Where-Object { $_.Tags | Where-Object { $_ -eq $null -or (-not $_.ContainsKey($tagObject.Name))}}
+					$rgListwithoutTags = $resourceGroups | Where-Object { [string]::IsNullOrWhiteSpace($_.Tags) -or (-not ($_.Tags).ContainsKey($tagObject.Name))}
 					
 					if(($rgListwithoutTags | Measure-Object).Count -gt 0)
 					{
@@ -972,7 +977,7 @@ class SubscriptionCore: SVTBase
 						$controlResult.AddMessage("`nTotal number of RGs without Tag: " + ($rgListwithoutTags | Measure-Object).Count, ($rgListwithoutTags | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
 					}
 					
-					$rgListwithTags = $resourceGroups | Where-Object { $_.Tags | Where-Object { $_ -eq $null -or ( $_.ContainsKey($tagObject.Name))}}
+					$rgListwithTags = $resourceGroups | Where-Object { (-not [string]::IsNullOrWhiteSpace($_.Tags)) -and ($_.Tags).ContainsKey($tagObject.Name) }
 					
 					if(($rgListwithTags| Measure-Object).Count -gt 0)
 					{
@@ -1028,6 +1033,31 @@ class SubscriptionCore: SVTBase
 		return $controlResult
 	}
 
+	hidden [ControlResult] CheckASCTier ([ControlResult] $controlResult)
+	{
+		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
+        $validatedUri ="$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings/default?api-version=2017-08-01-preview"
+        $ascTierContentDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+
+		if([Helpers]::CheckMember($ascTierContentDetails,"properties.pricingTier"))
+		{
+			$ascTier = "Standard"
+			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ASCTier"))
+			{
+				$ascTier = $this.ControlSettings.SubscriptionCore.ASCTier
+			}
+			
+			if($ascTierContentDetails.properties.pricingTier -eq $ascTier)
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "Expected '$ascTier' tier is configured for ASC" )
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed, "Expected '$ascTier' tier is not configured for ASC" )
+			}
+		}
+		return $controlResult
+	}
 
 	hidden [void] LoadRBACConfig()
 	{

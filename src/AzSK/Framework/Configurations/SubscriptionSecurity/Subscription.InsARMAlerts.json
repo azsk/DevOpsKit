@@ -389,7 +389,457 @@
           ],
           "Severity": "High",
           "Enabled": true
-        }
+        },
+        {
+            "Name":  "AzSK_Delete_Redis_Cache_Patch_Schedule",
+            "Description":  "Delete the patch schedule of a Redis Cache",
+            "OperationName":  "Microsoft.Cache/redis/patchSchedules/delete",
+            "Tags":  [
+                         "Mandatory"
+                     ],
+            "Severity":  "High",
+            "Enabled":  true
+        },
+        {
+            "Name":  "AzSK_List_Document_DB_Keys",
+            "Description":  "List keys of a database account",
+            "OperationName":  "Microsoft.DocumentDB/databaseAccounts/listKeys/action",
+            "Tags":  [
+                         "Mandatory"
+                     ],
+            "Severity":  "High",
+            "Enabled":  true
+        },
+        {
+            "Name":  "AzSK_Regenerate_Document_DB_Keys",
+            "Description":  "Rotate keys of a database account",
+            "OperationName":  "Microsoft.DocumentDB/databaseAccounts/regenerateKey/action",
+            "Tags":  [
+                         "Mandatory"
+                     ],
+            "Severity":  "High",
+            "Enabled":  true
+        },
+        {
+            "Name":  "AzSK_Regenerate_Redis_Cache_Keys",
+            "Description":  "Change the value of Redis Cache access keys in the management portal",
+            "OperationName":  "Microsoft.Cache/redis/regenerateKey/action",
+            "Tags":  [
+                         "Mandatory"
+                     ],
+            "Severity":  "High",
+            "Enabled":  true
+        },
+        {
+            "Name":  "AzSK_Update_Redis_Cache_Firewall_Rules",
+            "Description":  "Edit the IP firewall rules of a Redis Cache",
+            "OperationName":  "Microsoft.Cache/redis/firewallRules/write",
+            "Tags":  [
+                         "Mandatory"
+                     ],
+            "Severity":  "High",
+            "Enabled":  true
+        },
+        {
+            "Name":  "AzSK_Delete_Redis_Cache_Firewall_Rules",
+            "Description":  "Delete IP firewall rules of a Redis Cache",
+            "OperationName":  "Microsoft.Cache/redis/firewallRules/delete",
+            "Tags":  [
+                         "Mandatory"
+                     ],
+            "Severity":  "High",
+            "Enabled":  true
+        },
+        {
+          "Name":  "AzSK_Get_Kubernetes_Cluster_Access_Pofile",
+          "Description":  "Get a managed cluster access profile by role name using list credential",
+          "OperationName":  "Microsoft.ContainerService/managedClusters/accessProfiles/listCredential/action",
+          "Tags":  [
+                       "Mandatory"
+                   ],
+          "Severity":  "High",
+          "Enabled":  true
+      },
+      {
+        "Name":  "AzSK_List_AKS_Cluster_Admin_Credential",
+        "Description":  "List the clusterAdmin credential of a managed cluster",
+        "OperationName":  "Microsoft.ContainerService/managedClusters/listClusterAdminCredential/action",
+        "Tags":  [
+                     "Mandatory"
+                 ],
+        "Severity":  "High",
+        "Enabled":  true
+     },
+     {
+         "Name":  "AzSK_List_ContainerRegistry_Credentials",
+         "Description":  "Lists the login credentials for the specified container registry.",
+         "OperationName":  "Microsoft.ContainerRegistry/registries/listCredentials/action",
+         "Tags":  [
+                      "Mandatory"
+                  ],
+         "Severity":  "High",
+         "Enabled":  true
+     },
+     {
+         "Name":  "AzSK_Regenerate_Container_Registry_Credentials",
+         "Description":  "Regenerates one of the login credentials for the specified container registry.",
+         "OperationName":  "Microsoft.ContainerRegistry/registries/regenerateCredential/action",
+         "Tags":  [
+                      "Mandatory"
+                  ],
+         "Severity":  "High",
+         "Enabled":  true
+     },
+     {
+         "Name":  "AzSK_Delete_Container_Registry_VirtualNetwork_Or_Subnets",
+         "Description":  "Notifies Microsoft.ContainerRegistry that virtual network or subnet is being deleted",
+         "OperationName":  "Microsoft.ContainerRegistry/locations/deleteVirtualNetworkOrSubnets/action",
+         "Tags":  [
+                      "Mandatory"
+                  ],
+         "Severity":  "High",
+         "Enabled":  true
+     },   
+     {
+         "Name":  "AzSK_Delete_Container_Instance_VirtualNetwork_Or_Subnets",
+         "Description":  "Notifies Microsoft.ContainerInstance that virtual network or subnet is being deleted.",
+         "OperationName":  "Microsoft.ContainerInstance/locations/deleteVirtualNetworkOrSubnets/action",
+         "Tags":  [
+                      "Mandatory"
+                  ],
+         "Severity":  "High",
+         "Enabled":  true
+     },
+     {
+         "Name":  "AzSK_Update_HDInsight_Cluster_Gateway_Settings",
+         "Description":  "Update gateway settings for HDInsight Cluster",
+         "OperationName":  "Microsoft.HDInsight/clusters/updateGatewaySettings/action",
+         "Tags":  [
+                      "Mandatory"
+                  ],
+         "Severity":  "High",
+         "Enabled":  true
+     },
+     {
+         "Name":  "AzSK_Get_HDInsight_Cluster_Configurations",
+         "Description":  "Get HDInsight Cluster Configurations",
+         "OperationName":  "Microsoft.HDInsight/clusters/configurations/action",
+         "Tags":  [
+                      "Mandatory"
+                  ],
+         "Severity":  "High",
+         "Enabled":  true
+     },
+     {
+         "Name":  "AzSK_Create_Or_Update_HDInsight_Cluster_Application",
+         "Description":  "Create or Update Application for HDInsight Cluster",
+         "OperationName":  "Microsoft.HDInsight/clusters/applications/write",
+         "Tags":  [
+                      "Mandatory"
+                  ],
+         "Severity":  "High",
+         "Enabled":  true
+     },
+     {
+         "Name":  "AzSK_Delete_HDInsight_Cluster_Application",
+         "Description":  "Delete Application for HDInsight Cluster",
+         "OperationName":  "Microsoft.HDInsight/clusters/applications/delete",
+         "Tags":  [
+                      "Mandatory"
+                  ],
+         "Severity":  "High",
+         "Enabled":  true
+     },
+     {
+         "Name":  "AzSK_Create_or_Update_NameSpace_Authorization_Rule",
+         "Description":  "Create a Namespace level Authorization Rules and update its properties. The Authorization Rules Access Rights",
+         "OperationName":  "Microsoft.NotificationHubs/Namespaces/authorizationRules/write",
+         "Tags":  [
+                      "Mandatory"
+                  ],
+         "Severity":  "High",
+         "Enabled":  true
+     },
+     {
+         "Name":  "AzSK_Create_or_Update_NotificationHubs_Authorization_Rule",
+         "Description":  "Create Notification Hub Authorization Rules and Update its properties. The Authorization Rules Access Rights",
+         "OperationName":  "Microsoft.NotificationHubs/Namespaces/NotificationHubs/authorizationRules/write",
+         "Tags":  [
+                      "Mandatory"
+                  ],
+         "Severity":  "High",
+         "Enabled":  true
+     },
+     {
+         "Name":  "AzSK_List_NotificationHubs_Namespace_Keys",
+         "Description":  "Get the Connection String to the Namespace",
+         "OperationName":  "Microsoft.NotificationHubs/Namespaces/authorizationRules/listkeys/action",
+         "Tags":  [
+                      "Mandatory"
+                  ],
+         "Severity":  "High",
+         "Enabled":  true
+     },
+     {
+         "Name":  "AzSK_Regenerate_NotificationHubs_Namespace_Authorization_Rule_Keys",
+         "Description":  "Namespace Authorization Rule Regenerate Primary/SecondaryKey",
+         "OperationName":  "Microsoft.NotificationHubs/Namespaces/authorizationRules/regenerateKeys/action",
+         "Tags":  [
+                      "Mandatory"
+                  ],
+         "Severity":  "High",
+         "Enabled":  true
+     },
+     {
+         "Name":  "AzSK_List_NotificationHubs_Keys",
+         "Description":  "Get the Connection String to the Notification Hub",
+         "OperationName":  "Microsoft.NotificationHubs/Namespaces/NotificationHubs/authorizationRules/listkeys/action",
+         "Tags":  [
+                      "Mandatory"
+                  ],
+         "Severity":  "High",
+         "Enabled":  true
+     },
+     {
+         "Name":  "AzSK_Regenerate_NotificationHubs_Authorization_Rule_Keys",
+         "Description":  "Notification Hub Authorization Rule Regenerate Primary/SecondaryKey",
+         "OperationName":  "Microsoft.NotificationHubs/Namespaces/NotificationHubs/authorizationRules/regenerateKeys/action",
+         "Tags":  [
+                      "Mandatory"
+                  ],
+         "Severity":  "High",
+         "Enabled":  true
+     },
+     {
+        "Name":  "AzSK_Generate_CDN_Profile_SSO_URI",
+        "Description":  "Generate SSO URI. The URI can be used to access cdn supplemental portal",
+        "OperationName":  "Microsoft.Cdn/profiles/GenerateSsoUri/action",
+        "Tags":  [
+                     "Mandatory"
+                 ],
+        "Severity":  "High",
+        "Enabled":  true
+     },
+      {
+          "Name": "AzSK_Disable_CDN_Profile_Endpoint_Custom_Https",
+          "Description": "Disable Custom Https endpoint on custom domains",
+          "OperationName": "Microsoft.Cdn/profiles/endpoints/customdomains/DisableCustomHttps/action",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+       },
+       {
+      "Name":  "AzSK_Regenerate_Automation_Account_Keys",
+      "Description":  "Writes a request to regenerate Azure Automation DSC keys",
+      "OperationName":  "Microsoft.Automation/automationAccounts/agentRegistrationInformation/regenerateKey/action",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Register_ApiManagement_User",
+      "Description":  "Register a new user",
+      "OperationName":  "Microsoft.ApiManagement/service/users/action",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Create_or_Update_ApiManagement_Group",
+      "Description":  "Create new group or Update existing group details",
+      "OperationName":  "Microsoft.ApiManagement/service/groups/write",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Add_User_ApiManagement_Group",
+      "Description":  "Add existing user to existing group",
+      "OperationName":  "Microsoft.ApiManagement/service/groups/users/write",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Create_or_Update_ApiManagement_User",
+      "Description":  "Register a new user or Update account details of an existing user",
+      "OperationName":  "Microsoft.ApiManagement/service/users/write",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Get_ApiManagement_User_Access_Token",
+      "Description":  "Get token access token for a user",
+      "OperationName":  "Microsoft.ApiManagement/service/users/token/action",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Generate_ApiManagement_SSO_URL",
+      "Description":  "Generate SSO URL. The URL can be used to access admin portal",
+      "OperationName":  "Microsoft.ApiManagement/service/users/generateSsoUrl/action",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Get_ApiManagement_SSO_Token",
+      "Description":  "Gets SSO token that can be used to login into API Management Service Legacy portal as an administrator",
+      "OperationName":  "Microsoft.ApiManagement/service/getssotoken/action",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Update_ApiManagement_Network_Configuration",
+      "Description":  "Updates the Microsoft.ApiManagement resources running in Virtual Network to pick updated Network Settings.",
+      "OperationName":  "Microsoft.ApiManagement/service/applynetworkconfigurationupdates/action",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Regenerate_ApiManagement_Primary_Access_Key",
+      "Description":  "Regenerate primary access key",
+      "OperationName":  "Microsoft.ApiManagement/service/tenant/regeneratePrimaryKey/action",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Regenerate_ApiManagement_Secondary_Access_Key",
+      "Description":  "Regenerate secondary access key",
+      "OperationName":  "Microsoft.ApiManagement/service/tenant/regenerateSecondaryKey/action",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Set_ApiManagement_Product_Policy",
+      "Description":  "Set policy configuration for existing product",
+      "OperationName":  "Microsoft.ApiManagement/service/products/policy/write",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Delete_ApiManagement_Product_Policy",
+      "Description":  "Remove policy configuration from existing product",
+      "OperationName":  "Microsoft.ApiManagement/service/products/policy/delete",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Set_ApiManagement_Product_Policies",
+      "Description":  "Set policy configuration details for Product",
+      "OperationName":  "Microsoft.ApiManagement/service/products/policies/write",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Delete_ApiManagement_Product_Policies",
+      "Description":  "Remove policy configuration from Product policies",
+      "OperationName":  "Microsoft.ApiManagement/service/products/policies/delete",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Regenerate_ApiManagement_Subscription_Primary_Key",
+      "Description":  "Regenerate subscription primary key",
+      "OperationName":  "Microsoft.ApiManagement/service/subscriptions/regeneratePrimaryKey/action",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Regenerate_ApiManagement_Subscription_Secondary_Key",
+      "Description":  "Regenerate subscription secondary key",
+      "OperationName":  "Microsoft.ApiManagement/service/subscriptions/regenerateSecondaryKey/action",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Set_ApiManagement_Operation_Policy",
+      "Description":  "Set policy configuration details for operation",
+      "OperationName":  "Microsoft.ApiManagement/service/apis/operations/policy/write",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Delete_ApiManagement_Operation_Policy",
+      "Description":  "Remove policy configuration from operation",
+      "OperationName":  "Microsoft.ApiManagement/service/apis/operations/policy/delete",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Set_ApiManagement_Operation_Policies",
+      "Description":  "Set policy configuration details for API Operation",
+      "OperationName":  "Microsoft.ApiManagement/service/apis/operations/policies/write",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  },
+  {
+      "Name":  "AzSK_Delete_ApiManagement_Operation_Policies",
+      "Description":  "Remove policy configuration from API Operation policies",
+      "OperationName":  "Microsoft.ApiManagement/service/apis/operations/policies/delete",
+      "Tags":  [
+                   "Mandatory"
+               ],
+      "Severity":  "High",
+      "Enabled":  true
+  }
       ]
     },
     {
@@ -880,6 +1330,36 @@
           ],
           "Severity": "High",
           "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_Or_Update_Traffic_Manager_Profile_Endpoint",
+          "Description": "Add a new Azure Endpoint in an existing Traffic Manager Profile or update the properties of an existing Azure Endpoint in that Traffic Manager Profile.",
+          "OperationName": "Microsoft.Network/trafficManagerProfiles/azureEndpoints/write",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+            "Name":  "AzSK_Create_Or_Update_Traffic_Manager_External_Endpoint",
+            "Description":  "Add a new External Endpoint in an existing Traffic Manager Profile or update the properties of an existing External Endpoint in that Traffic Manager Profile.",
+            "OperationName":  "Microsoft.Network/trafficManagerProfiles/externalEndpoints/write",
+            "Tags":  [
+                         "Mandatory"
+                     ],
+            "Severity":  "High",
+            "Enabled":  true
+        },
+        {
+            "Name":  "AzSK_Create_Or_Update_Traffic_Manager_Nested_Endpoint",
+            "Description":  "Add a new Nested Endpoint in an existing Traffic Manager Profile or update the properties of an existing Nested Endpoint in that Traffic Manager Profile.",
+            "OperationName":  "Microsoft.Network/trafficManagerProfiles/nestedEndpoints/write",
+            "Tags":  [
+                         "Mandatory"
+                     ],
+            "Severity":  "High",
+            "Enabled":  true
         }
       ]
     },

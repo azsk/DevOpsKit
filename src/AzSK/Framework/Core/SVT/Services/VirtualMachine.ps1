@@ -16,7 +16,12 @@ class VirtualMachine: SVTBase
     VirtualMachine([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
         Base($subscriptionId, $resourceGroupName, $resourceName) 
     { 
-        $this.GetResourceObject();		
+		$this.GetResourceObject();	
+		$this.GetVMDetails();
+		$metadata= [PSObject]::new();
+		$metadata| Add-Member -Name VMDetails -Value $this.VMDetails -MemberType NoteProperty;
+		$metadata| Add-Member -Name VMASCDetails -Value $this.ASCSettings -MemberType NoteProperty;				
+		$this.AddResourceMetadata($metadata);	
     }
     
 	VirtualMachine([string] $subscriptionId, [SVTResource] $svtResource): 
@@ -100,10 +105,10 @@ class VirtualMachine: SVTBase
 							#Fetch Public IPs to persist in the virtual machine metadata
 							if($_.PublicIpAddress)
 							{
-								$ipResource = Get-AzureRmResource -ResourceId $_.PublicIpAddress.Id 
+								$ipResource = Get-AzResource -ResourceId $_.PublicIpAddress.Id 
 								if($ipResource)
 								{
-									$publicIpObject = Get-AzureRmPublicIpAddress -Name $ipResource.Name -ResourceGroupName $ipResource.ResourceGroupName
+									$publicIpObject = Get-AzPublicIpAddress -Name $ipResource.Name -ResourceGroupName $ipResource.ResourceGroupName
 									if($publicIpObject)
 									{
 										#$_.PublicIpAddress = $publicIpObject;
@@ -114,7 +119,7 @@ class VirtualMachine: SVTBase
 							$subnetId = $_.Subnet.Id;		
 							$subnetName = $subnetId.Substring($subnetId.LastIndexOf("/") + 1);
 							#vnet id = trim '/subnets/' from subnet id 
-							$vnetResource = Get-AzureRmResource -ResourceId $subnetId.Substring(0, $subnetId.IndexOf("/subnets/"))
+							$vnetResource = Get-AzResource -ResourceId $subnetId.Substring(0, $subnetId.IndexOf("/subnets/"))
 
 							$vnetResource | ForEach-Object {
 								$vnet = $_
@@ -128,7 +133,7 @@ class VirtualMachine: SVTBase
 											$gatewayname = $subnet.properties.ipConfigurations[0].id.Substring($subnet.properties.ipConfigurations[0].id.LastIndexOf("Microsoft.Network/virtualNetworkGateways/") + 41);
 											$gatewayname = $gatewayname.Substring(0, $gatewayname.IndexOf("/"));
 
-											$gatewayObject = Get-AzureRmVirtualNetworkGateway -Name $gatewayname -ResourceGroupName $vnet.ResourceGroupName
+											$gatewayObject = Get-AzVirtualNetworkGateway -Name $gatewayname -ResourceGroupName $vnet.ResourceGroupName
 											if( $gatewayObject.GatewayType -eq "ExpressRoute")
 											{
 												$IsVMConnectedToERvNet= $true
@@ -154,7 +159,7 @@ class VirtualMachine: SVTBase
 
 	hidden [bool] GetVMDeallocationStatus()
 	{
-		$vmStatusObj = Get-AzureRmVM -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName -Status -WarningAction SilentlyContinue 
+		$vmStatusObj = Get-AzVM -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName -Status -WarningAction SilentlyContinue 
 		if($vmStatusObj.Statuses -and ($vmStatusObj.Statuses | Where-Object { $_.Code.ToLower() -eq "powerState/running" }))
 		{
 			return $false			
@@ -168,7 +173,7 @@ class VirtualMachine: SVTBase
     hidden [PSVirtualMachine] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzureRmVM -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName  -WarningAction SilentlyContinue 
+            $this.ResourceObject = Get-AzVM -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName  -WarningAction SilentlyContinue 
 
             if(-not $this.ResourceObject)
             {
@@ -226,10 +231,10 @@ class VirtualMachine: SVTBase
 			{
 				$this.ResourceObject.NetworkProfile.NetworkInterfaces | 
 					ForEach-Object {          
-						$currentNic = Get-AzureRmResource -ResourceId $_.Id -ErrorAction SilentlyContinue
+						$currentNic = Get-AzResource -ResourceId $_.Id -ErrorAction SilentlyContinue
 						if($currentNic)
 						{
-							$nicResource = Get-AzureRmNetworkInterface -Name $currentNic.Name `
+							$nicResource = Get-AzNetworkInterface -Name $currentNic.Name `
 												-ResourceGroupName $currentNic.ResourceGroupName `
 												-ExpandResource NetworkSecurityGroup `
 												-ErrorAction SilentlyContinue
@@ -345,6 +350,59 @@ class VirtualMachine: SVTBase
 		return $controlResult;
 	}
 
+	hidden [ControlResult] CheckVulnAgentStatus([ControlResult] $controlResult)
+	{
+		if(-not $this.VMDetails.IsVMDeallocated)
+		{
+			$requiredVulnExtension = $this.VMControlSettings.VulnAssessmentSolution.AgentName
+			$requiredVulnExtensionVersion =  [System.Version] $this.VMControlSettings.VulnAssessmentSolution.RequiredVersion
+			if([Helpers]::CheckMember($this.ResourceObject, "Extensions")){
+				$installedVulnExtension = $this.ResourceObject.Extensions | Where-Object {$_.Name -eq $requiredVulnExtension} 
+				if($null -ne $installedVulnExtension -and $installedVulnExtension.ProvisioningState -eq "Succeeded"){
+					$currentVulnExtensionVersion = $null
+					try {
+						$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
+						$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+						$header = "Bearer " + $AccessToken
+						$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
+						$propertiesToReplace = @{}
+						$propertiesToReplace.Add("httpapplicationroutingzonename", "_httpapplicationroutingzonename")
+						$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/extensions/{4}?api-version=2018-06-01&`$expand=instanceView",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName,$requiredVulnExtension)
+						$result = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
+						$currentVulnExtensionVersion = [System.Version] $result.properties.instanceView.typeHandlerVersion
+					}
+					catch {
+						# If any exception occurs, while fetching details of Extension mark control as manual
+						$currentVulnExtensionVersion = $null
+					}
+					if($null -eq $currentVulnExtensionVersion )
+					{
+						$controlResult.AddMessage([VerificationResult]::Manual, "Not able to fetch details of vulnerability assessment extension '$($requiredVulnExtension)'.");
+					}
+					elseif($currentVulnExtensionVersion -lt $requiredVulnExtensionVersion){
+
+						$controlResult.AddMessage([VerificationResult]::Failed, "Vulnerability assessment solution '$($requiredVulnExtension)' is present but current verison is not latest.");
+						$controlResult.AddMessage("Current version : $($currentVulnExtensionVersion), Required version: $($requiredVulnExtensionVersion)");
+						$controlResult.SetStateData("Current version of $($requiredVulnExtension) present is:", $currentVulnExtensionVersion.ToString());
+					
+					}else{
+
+						$controlResult.AddMessage([VerificationResult]::Passed, "Required vulnerability assessment solution '$($requiredVulnExtension)' is present in VM.");
+					}
+				}else{
+					$controlResult.AddMessage([VerificationResult]::Failed, "Required vulnerability assessment solution '$($requiredVulnExtension)' is not present in VM.");
+				}
+			}else{
+				$controlResult.AddMessage([VerificationResult]::Failed, "Required vulnerability assessment solution '$($requiredVulnExtension)' is not present in VM.");
+			}
+		}
+		else
+		{
+			$controlResult.AddMessage([VerificationResult]::Verify, "This VM is currently in a 'deallocated' state. Unable to check security controls on it.");
+		}
+		return $controlResult;
+	}
+
 	hidden [ControlResult] CheckNSGConfig([ControlResult] $controlResult)
 	{
 		$controlResult.VerificationResult = [VerificationResult]::Failed;
@@ -373,19 +431,19 @@ class VirtualMachine: SVTBase
 							$subnetId = $_.Subnet.Id;		
 							$subnetName = $subnetId.Substring($subnetId.LastIndexOf("/") + 1);
 							#vnet id = trim '/subnets/' from subnet id 
-							$vnetResource = Get-AzureRmResource -ResourceId $subnetId.Substring(0, $subnetId.IndexOf("/subnets/"))
+							$vnetResource = Get-AzResource -ResourceId $subnetId.Substring(0, $subnetId.IndexOf("/subnets/"))
 							if($vnetResource)
 							{
-								$vnetObject = Get-AzureRmVirtualNetwork -Name $vnetResource.Name -ResourceGroupName $vnetResource.ResourceGroupName
+								$vnetObject = Get-AzVirtualNetwork -Name $vnetResource.Name -ResourceGroupName $vnetResource.ResourceGroupName
 								if($vnetObject)
 								{
-									$subnetConfig = Get-AzureRmVirtualNetworkSubnetConfig -Name $subnetName -VirtualNetwork $vnetObject
+									$subnetConfig = Get-AzVirtualNetworkSubnetConfig -Name $subnetName -VirtualNetwork $vnetObject
 									if($subnetConfig -and $subnetConfig.NetworkSecurityGroup -and $subnetConfig.NetworkSecurityGroup.Id)
 									{
-										$nsgResource = Get-AzureRmResource -ResourceId $subnetConfig.NetworkSecurityGroup.Id
+										$nsgResource = Get-AzResource -ResourceId $subnetConfig.NetworkSecurityGroup.Id
 										if($nsgResource)
 										{
-											$nsgObject = Get-AzureRmNetworkSecurityGroup -Name $nsgResource.Name -ResourceGroupName $nsgResource.ResourceGroupName
+											$nsgObject = Get-AzNetworkSecurityGroup -Name $nsgResource.Name -ResourceGroupName $nsgResource.ResourceGroupName
 											if($nsgObject)
 											{
 												if($nsgObject.SecurityRules.Count -gt 0)
@@ -430,10 +488,10 @@ class VirtualMachine: SVTBase
 			ForEach-Object {
 				$_.IpConfigurations | Where-Object { $_.PublicIpAddress } |
 					ForEach-Object {
-						$ipResource = Get-AzureRmResource -ResourceId $_.PublicIpAddress.Id 
+						$ipResource = Get-AzResource -ResourceId $_.PublicIpAddress.Id 
 						if($ipResource)
 						{
-							$publicIpObject = Get-AzureRmPublicIpAddress -Name $ipResource.Name -ResourceGroupName $ipResource.ResourceGroupName
+							$publicIpObject = Get-AzPublicIpAddress -Name $ipResource.Name -ResourceGroupName $ipResource.ResourceGroupName
 							if($publicIpObject)
 							{
 								$_.PublicIpAddress = $publicIpObject;
@@ -693,7 +751,7 @@ class VirtualMachine: SVTBase
 			{
 				$controlResult.VerificationResult = [VerificationResult]::Verify
 				$controlResult.AddMessage("Unable to validate baseline status from workspace.Please verify.");
-				$controlResult.AddMessage("Details of failing baseline rules can be obtained from OMS workspace :" ,$workspaceId);
+				$controlResult.AddMessage("Details of failing baseline rules can be obtained from Log Analytics workspace :" ,$workspaceId);
 				$controlResult.AddMessage("The following query can be used to obtain failing baseline rules :  ",$queryforFailingBaseline);
 			}
 		}
@@ -742,7 +800,7 @@ class VirtualMachine: SVTBase
 				ForEach-Object {	
 					try
 					{
-						$effectiveNSG = Get-AzureRmEffectiveNetworkSecurityGroup -NetworkInterfaceName $_.Name -ResourceGroupName $_.ResourceGroupName -WarningAction SilentlyContinue -ErrorAction Stop
+						$effectiveNSG = Get-AzEffectiveNetworkSecurityGroup -NetworkInterfaceName $_.Name -ResourceGroupName $_.ResourceGroupName -WarningAction SilentlyContinue -ErrorAction Stop
 					}
 					catch
 					{

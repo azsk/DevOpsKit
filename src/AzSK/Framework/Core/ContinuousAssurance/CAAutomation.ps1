@@ -297,7 +297,7 @@ class CCAutomation: CommandBase
 					"CreationTime"=$timestamp;
 					"LastModified"=$timestamp
 					}
-					Set-AzureRmStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
+					Set-AzStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
 				} 
 			}
 			
@@ -342,7 +342,7 @@ class CCAutomation: CommandBase
 						$out.StorageAccountName = $this.UserConfig.StorageAccountName;
 						$out.LoggingOption = $this.LoggingOption.ToString();
 
-						Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
+						Set-AzContext -SubscriptionId $caSubId | Out-Null
 						$existingStorage = $null;
 						try
 						{
@@ -358,7 +358,7 @@ class CCAutomation: CommandBase
 							if($this.LoggingOption -eq [CAReportsLocation]::IndividualSubs)
 							{
 								#region :create new resource group/check if RG exists. This is required for the CA SPN to read the attestation data. 
-								if((Get-AzureRmResourceGroup -Name $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
+								if((Get-AzResourceGroup -Name $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
 								{
 									$this.PublishCustomMessage("Creating AzSK RG...");
 									[Helpers]::NewAzSKResourceGroup($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
@@ -434,7 +434,7 @@ class CCAutomation: CommandBase
 					}
 				}
 				#set context back to central sub
-				Set-AzureRmContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null			
+				Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null			
 				#region: Create Scan objects			
                 $filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
 
@@ -447,18 +447,19 @@ class CCAutomation: CommandBase
 						
 				$caStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 				$this.UserConfig.StorageAccountName = $caStorageAccount.Name
-				$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $this.UserConfig.StorageAccountRG  -Name $this.UserConfig.StorageAccountName
-				$currentContext = New-AzureStorageContext -StorageAccountName $this.UserConfig.StorageAccountName -StorageAccountKey $keys[0].Value -Protocol Https
+				$keys = Get-AzStorageAccountKey -ResourceGroupName $this.UserConfig.StorageAccountRG  -Name $this.UserConfig.StorageAccountName
+				$currentContext = New-AzStorageContext -StorageAccountName $this.UserConfig.StorageAccountName -StorageAccountKey $keys[0].Value -Protocol Https
 				try {
-					Get-AzureStorageContainer -Name $this.CAMultiSubScanConfigContainerName -Context $currentContext -ErrorAction Stop | Out-Null
+					Get-AzStorageContainer -Name $this.CAMultiSubScanConfigContainerName -Context $currentContext -ErrorAction Stop | Out-Null
 				}
 				catch {
-					New-AzureStorageContainer -Name $this.CAMultiSubScanConfigContainerName -Context $currentContext | Out-Null
+					New-AzStorageContainer -Name $this.CAMultiSubScanConfigContainerName -Context $currentContext | Out-Null
 				}
 				#endregion
 
 				#Save the scan objects in blob stoage#
-				Set-AzureStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
+				[AzHelper]::UploadStorageBlobContent($filename, $this.CATargetSubsBlobName, $this.CAMultiSubScanConfigContainerName, $currentContext)
+				#Set-AzStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
 			}
 
 			#endregion		
@@ -475,9 +476,9 @@ class CCAutomation: CommandBase
 			$this.PublishCustomMessage([Constants]::SingleDashLine + "`r`nCompleted setup phase-1 for AzSK Continuous Assurance.`r`n"+
 			"Setup phase-2 has been triggered and will continue automatically in the background. This involves loading all PS modules CA requires to run, scheduling runbook, etc. This phase may take up to 2 hours to complete.`r`n"+
 			"You can check the overall status of installation using the '$($this.getCommandName)' command 2 hours after running '$($this.installCommandName)' command.`r`n"+
-			"Once phase-2 setup completes, your subscription and resources (from the specified resource groups) will be scanned periodically by CA. All security control evaluation results will be sent to the OMS workspace specified during CA installation.`r`n"+
+			"Once phase-2 setup completes, your subscription and resources (from the specified resource groups) will be scanned periodically by CA. All security control evaluation results will be sent to the Log Analytics workspace specified during CA installation.`r`n"+
 			"You may subsequently update any of the parameters specified during installation using the '$($this.updateCommandName)' command. If you specified '*' for resource groups, new resource groups will be automatically picked up for scanning.`r`n"+
-			"You should use the AzSK OMS solution to monitor your subscription and resource health status.`r`n",[MessageType]::Update)
+			"You should use the AzSK Monitoring solution to monitor your subscription and resource health status.`r`n",[MessageType]::Update)
 			$messages += [MessageData]::new("The following resources were created in resource group: ["+$this.AutomationAccount.ResourceGroup+"] as part of Continuous Assurance",$this.OutputObject)
 		}
 		catch
@@ -493,16 +494,16 @@ class CCAutomation: CommandBase
 					$account = $this.GetCADetailedResourceInstance()
 					if(($account|Measure-Object).Count -gt 0)
 					{
-						$account | Remove-AzureRmAutomationAccount -Force -ErrorAction SilentlyContinue
+						$account | Remove-AzAutomationAccount -Force -ErrorAction SilentlyContinue
 					}
 				}
 				#clean AD App only if AD App was newly created
 				if(![string]::IsNullOrWhiteSpace($this.AutomationAccount.AzureADAppName) -and !$this.IsCustomAADAppName)
 				{
-					$ADApplication = Get-AzureRmADApplication -DisplayNameStartWith $this.AutomationAccount.AzureADAppName -ErrorAction SilentlyContinue | Where-Object -Property DisplayName -eq $this.AutomationAccount.AzureADAppName
+					$ADApplication = Get-AzADApplication -DisplayNameStartWith $this.AutomationAccount.AzureADAppName -ErrorAction SilentlyContinue | Where-Object -Property DisplayName -eq $this.AutomationAccount.AzureADAppName
 					if($ADApplication)
 					{
-						Remove-AzureRmADApplication -ObjectId $ADApplication.ObjectId -Force -ErrorAction Stop
+						Remove-AzADApplication -ObjectId $ADApplication.ObjectId -Force -ErrorAction Stop
 					}
 				}
 			}
@@ -614,7 +615,7 @@ class CCAutomation: CommandBase
 				else
 				{
 					#check cert expiry 
-					$runAsCertificate = Get-AzureRmAutomationCertificate -AutomationAccountName $this.AutomationAccount.Name `
+					$runAsCertificate = Get-AzAutomationCertificate -AutomationAccountName $this.AutomationAccount.Name `
 					-Name $this.certificateAssetName `
 					-ResourceGroupName $this.AutomationAccount.ResourceGroup -ErrorAction SilentlyContinue
 					if($runAsCertificate)
@@ -652,7 +653,7 @@ class CCAutomation: CommandBase
 					{
 						$existingAppId = $runAsConnection.FieldDefinitionValues.ApplicationId
 						$this.CAAADApplicationID = $existingAppId;
-						$ADApp = Get-AzureRmADApplication -ApplicationId $existingAppId -ErrorAction SilentlyContinue
+						$ADApp = Get-AzADApplication -ApplicationId $existingAppId -ErrorAction SilentlyContinue
 						if($this.IsCentralScanModeOn)
 						{
 							if(-not ($null -ne $ADApp -and $ADApp.DisplayName -like "$($this.AzSKCentralSPNFormatString)*"))
@@ -661,7 +662,7 @@ class CCAutomation: CommandBase
 								$ADApp = $null
 							}
 						}
-						$ServicePrincipal = Get-AzureRmADServicePrincipal -ServicePrincipalName $existingAppId -ErrorAction SilentlyContinue
+						$ServicePrincipal = Get-AzADServicePrincipal -ServicePrincipalName $existingAppId -ErrorAction SilentlyContinue
 						if($ADApp -and $ServicePrincipal)
 						{
 							$this.SetCASPNPermissions($this.CAAADApplicationID)
@@ -735,7 +736,7 @@ class CCAutomation: CommandBase
 					"CreationTime"=$timestamp;
 					"LastModified"=$timestamp
 					}
-					Set-AzureRmStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
+					Set-AzStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
 				}
 			
 				#update storage account variable with new value
@@ -751,13 +752,13 @@ class CCAutomation: CommandBase
 		
 			#endregion
 
-			#region :update user configurable variables (OMS details and App RGs) which are present in params
+			#region :update user configurable variables (Log Analytics workspace details and App RGs) which are present in params
             if($null -ne $this.UserConfig -and $null -ne $this.UserConfig.OMSCredential)
 			{
                 #OMSSettings
                 if(![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSWorkspaceId) -xor ![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSSharedKey))
 				{
-				    $this.PublishCustomMessage("Warning: OMS settings are either incomplete or invalid. To configure OMS in CA, please rerun this command with 'OMSWorkspaceId' and 'OMSSharedKey' parameters.",[MessageType]::Warning)
+				    $this.PublishCustomMessage("Warning: Log Analytics workspace settings are either incomplete or invalid. To configure Log Analytics workspace in CA, please rerun this command with 'OMSWorkspaceId' and 'OMSSharedKey' parameters.",[MessageType]::Warning)
 				}
 				elseif(![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSWorkspaceId) -and ![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSSharedKey))
 				{
@@ -765,7 +766,7 @@ class CCAutomation: CommandBase
 			    	    Name = "OMSWorkspaceId";
 			    	    Value = $this.UserConfig.OMSCredential.OMSWorkspaceId;
 			    	    IsEncrypted = $false;
-			    	    Description ="OMS Workspace Id"
+			    	    Description ="Log Analytics Workspace Id"
 			        }
 			        $this.UpdateVariable($varOmsWSID)
 			        $this.PublishCustomMessage("Updating variable: ["+$varOmsWSID.Name+"]")
@@ -774,7 +775,7 @@ class CCAutomation: CommandBase
 			             Name = "OMSSharedKey";
 			             Value = $this.UserConfig.OMSCredential.OMSSharedKey;
 			             IsEncrypted = $false;
-			             Description ="OMS Workspace Shared Key"
+			             Description ="Log Analytics Workspace Shared Key"
 			        }
 			        $this.UpdateVariable($varOMSSharedKey)
 			        $this.PublishCustomMessage("Updating variable: ["+$varOMSSharedKey.Name+"]")
@@ -783,7 +784,7 @@ class CCAutomation: CommandBase
 				#AltOMSSettings
 				if(![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSWorkspaceId) -xor ![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSSharedKey))
                 {
-                    $this.PublishCustomMessage("Warning: Alt OMS settings are either incomplete or invalid. To configure Alt OMS in CA, please rerun this command with 'AltOMSWorkspaceId' and 'AltOMSSharedKey' parameters.",[MessageType]::Warning)
+                    $this.PublishCustomMessage("Warning: Alt Log Analytics workspace settings are either incomplete or invalid. To configure Alt Log Analytics workspace in CA, please rerun this command with 'AltOMSWorkspaceId' and 'AltOMSSharedKey' parameters.",[MessageType]::Warning)
                 }
                 elseif(![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSWorkspaceId) -and ![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSSharedKey))
                 {
@@ -791,7 +792,7 @@ class CCAutomation: CommandBase
 		        		Name = "AltOMSWorkspaceId";
 		        		Value = $this.UserConfig.AltOMSCredential.OMSWorkspaceId;
 		        		IsEncrypted = $false;
-		        		Description ="Alternate OMS Workspace Id"
+		        		Description ="Alternate Log Analytics Workspace Id"
 		        	}
 		        	$this.UpdateVariable($varAltOMSWSID)
 		        	$this.PublishCustomMessage("Updating variable: ["+$varAltOMSWSID.Name+"]")
@@ -800,7 +801,7 @@ class CCAutomation: CommandBase
 		        		Name = "AltOMSSharedKey";
 		        		Value = $this.UserConfig.AltOMSCredential.OMSSharedKey;
 		        		IsEncrypted = $false;
-		        		Description ="Alternate OMS Workspace Shared Key"
+		        		Description ="Alternate Log Analytics Workspace Shared Key"
 		        	}
 		        	$this.UpdateVariable($varAltOMSWSKey)
 		        	$this.PublishCustomMessage("Updating variable: ["+$varAltOMSWSKey.Name+"]")
@@ -880,13 +881,14 @@ class CCAutomation: CommandBase
 				    {
 					    mkdir -Path $(Split-Path -Parent $filename) -Force
 				    }
-					$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $this.UserConfig.StorageAccountName
-					$currentContext = New-AzureStorageContext -StorageAccountName $this.UserConfig.StorageAccountName -StorageAccountKey $keys[0].Value -Protocol Https
-					$CAScanDataBlobObject = Get-AzureStorageBlob -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -ErrorAction SilentlyContinue
+					$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $this.UserConfig.StorageAccountName
+					$currentContext = New-AzStorageContext -StorageAccountName $this.UserConfig.StorageAccountName -StorageAccountKey $keys[0].Value -Protocol Https
+					$CAScanDataBlobObject = Get-AzStorageBlob -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -ErrorAction SilentlyContinue
 					$CAScanDataBlobContent = $null;
 					if($null -ne $CAScanDataBlobObject)
 					{
-						$CAScanDataBlobContentObject = Get-AzureStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
+						$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($this.AzSKCATempFolderPath, $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
+						#$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
 						$CAScanDataBlobContent = Get-ChildItem -Path "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)" -Force | Get-Content | ConvertFrom-Json
 					}
 
@@ -923,7 +925,7 @@ class CCAutomation: CommandBase
 							$out.LoggingOption = $this.LoggingOption.ToString();
 							$out.StorageAccountName = $this.UserConfig.StorageAccountName;	
 							
-							Set-AzureRmContext -SubscriptionId $caSubId | Out-Null
+							Set-AzContext -SubscriptionId $caSubId | Out-Null
 							$existingStorage = $null;
 							try
 							{
@@ -975,7 +977,7 @@ class CCAutomation: CommandBase
 											"CreationTime"=$timestamp;
 											"LastModified"=$timestamp
 											}
-											Set-AzureRmStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
+											Set-AzStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
 										}
 										$out.StorageAccountName = $newStorageName;
 									}	
@@ -1038,7 +1040,7 @@ class CCAutomation: CommandBase
 				}
 				finally{
 					#setting the context back to the parent subscription
-					Set-AzureRmContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
+					Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
 				}
 
 				#add if the host subscription is not there in the current scanobjects 
@@ -1062,24 +1064,25 @@ class CCAutomation: CommandBase
 				[Helpers]::ConvertToJsonCustom($existingScanObjects) | Out-File $filename -Force
 			
 				$caStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-				$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup  -Name $caStorageAccount.Name
-				$currentContext = New-AzureStorageContext -StorageAccountName $caStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
+				$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup  -Name $caStorageAccount.Name
+				$currentContext = New-AzStorageContext -StorageAccountName $caStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
 				try {
-					Get-AzureStorageContainer -Name $this.CAMultiSubScanConfigContainerName -Context $currentContext -ErrorAction Stop | Out-Null
+					Get-AzStorageContainer -Name $this.CAMultiSubScanConfigContainerName -Context $currentContext -ErrorAction Stop | Out-Null
 				}
 				catch {
-					New-AzureStorageContainer -Name $this.CAMultiSubScanConfigContainerName -Context $currentContext | Out-Null
+					New-AzStorageContainer -Name $this.CAMultiSubScanConfigContainerName -Context $currentContext | Out-Null
 				}
 
 				#Save the scan objects in blob stoage#
-				Set-AzureStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
+				[AzHelper]::UploadStorageBlobContent($filename, $this.CATargetSubsBlobName, $this.CAMultiSubScanConfigContainerName, $currentContext)
+				#Set-AzStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
 			}
 			#endregion		
 
 			#region: update runbook & schedule
 		
 			#unlink CA main runbook from existing schedules
-			$scheduledRunbooks = Get-AzureRmAutomationScheduledRunbook -AutomationAccountName $this.AutomationAccount.Name `
+			$scheduledRunbooks = Get-AzAutomationScheduledRunbook -AutomationAccountName $this.AutomationAccount.Name `
 			-ResourceGroupName $this.AutomationAccount.ResourceGroup | Where-Object {$_.RunbookName -eq $this.RunbookName}
 
 			if(($scheduledRunbooks|Measure-Object).Count -gt 0)
@@ -1087,14 +1090,14 @@ class CCAutomation: CommandBase
 				#check if runbook exists to unlink schedules
 			
 				$scheduledRunbooks | ForEach-Object {
-						Unregister-AzureRmAutomationScheduledRunbook -RunbookName $_.RunbookName -ScheduleName $_.ScheduleName `
+						UnRegister-AzAutomationScheduledRunbook -RunbookName $_.RunbookName -ScheduleName $_.ScheduleName `
 						-ResourceGroupName $_.ResourceGroupName `
 						-AutomationAccountName $_.AutomationAccountName -ErrorAction Stop -Force | Out-Null
 				};
 			}
 
 			#Update required runbooks (remove + recreate runbook)
-			$existingRunbooks = Get-AzureRmAutomationRunbook -AutomationAccountName $this.AutomationAccount.Name `
+			$existingRunbooks = Get-AzAutomationRunbook -AutomationAccountName $this.AutomationAccount.Name `
 			-ResourceGroupName $this.AutomationAccount.ResourceGroup 
 			
 			#Update main runbook and alert runbook by default
@@ -1111,7 +1114,7 @@ class CCAutomation: CommandBase
 			#remove existing and create new runbook
 			if(($filteredRunbooksToUpdate|Measure-Object).Count -gt 0)
 			{
-				$filteredRunbooksToUpdate | Remove-AzureRmAutomationRunbook -Force -ErrorAction SilentlyContinue
+				$filteredRunbooksToUpdate | Remove-AzAutomationRunbook -Force -ErrorAction SilentlyContinue
 			}
 			
 			$this.NewCCRunbook()
@@ -1128,7 +1131,7 @@ class CCAutomation: CommandBase
 			if(($scheduledRunbooks|Measure-Object).Count -gt 0)
 			{
 				$scheduledRunbooks | ForEach-Object {
-					Register-AzureRmAutomationScheduledRunbook -RunbookName $this.RunbookName -ScheduleName $_.ScheduleName `
+					Register-AzAutomationScheduledRunbook -RunbookName $this.RunbookName -ScheduleName $_.ScheduleName `
 					-ResourceGroupName $_.ResourceGroupName `
 					-AutomationAccountName $_.AutomationAccountName -ErrorAction Stop | Out-Null
 				};
@@ -1193,7 +1196,7 @@ class CCAutomation: CommandBase
 	[void] CleanUpOlderAssets()
 	{
 		#cleanup older schedules 
-		Get-AzureRmAutomationSchedule -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name | Where-Object { $_.Name -eq "Scan_Schedule" -or $_.Name -eq "Next_Run_Schedule"} | Remove-AzureRmAutomationSchedule -Force
+		Get-AzAutomationSchedule -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name | Where-Object { $_.Name -eq "Scan_Schedule" -or $_.Name -eq "Next_Run_Schedule"} | Remove-AzAutomationSchedule -Force
 	}
 
 	[MessageData[]] FormatGetCACheckMessage($checkCount, $description, $resultStatus, $resultMsg, $detailedMsg, $summaryTable)
@@ -1316,16 +1319,16 @@ class CCAutomation: CommandBase
 		$altOMSWsId = $this.GetAltOMSWSID()
 		$webhookUrl = $this.GetWebhookURL()
 		$appRGs = $this.GetAppRGs()
-		$runbook = Get-AzureRmAutomationRunbook -AutomationAccountName $this.AutomationAccount.Name `
+		$runbook = Get-AzAutomationRunbook -AutomationAccountName $this.AutomationAccount.Name `
 		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.RunbookName -ErrorAction SilentlyContinue
 		$activeSchedules = $this.GetActiveSchedules($this.RunbookName)
 		$runAsConnection = $this.GetRunAsConnection()
-		$runAsCertificate = Get-AzureRmAutomationCertificate -AutomationAccountName $this.AutomationAccount.Name `
+		$runAsCertificate = Get-AzAutomationCertificate -AutomationAccountName $this.AutomationAccount.Name `
 		-Name $this.certificateAssetName `
 		-ResourceGroupName $this.AutomationAccount.ResourceGroup -ErrorAction SilentlyContinue
 		$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 		$azskCurrentCARunbookVersion = ""
-		$azskRG = Get-AzureRmResourceGroup $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue
+		$azskRG = Get-AzResourceGroup $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue
 		if($null -ne $azskRG)
 		{
 			if(($azskRG.Tags | Measure-Object).Count -gt 0 -and $azskRG.Tags.ContainsKey($this.RunbookVersionTagName))
@@ -1366,7 +1369,7 @@ class CCAutomation: CommandBase
 
 		$caSummaryTable.Item("AzureADAppID") = $runAsConnection.FieldDefinitionValues["ApplicationId"]
 		#find AD App name
-		$ADapp = Get-AzureRmADApplication -ApplicationId $runAsConnection.FieldDefinitionValues.ApplicationId -ErrorAction SilentlyContinue		
+		$ADapp = Get-AzADApplication -ApplicationId $runAsConnection.FieldDefinitionValues.ApplicationId -ErrorAction SilentlyContinue		
 		if($ADApp)
 		{
 			$caSummaryTable.Item("AzureADAppName") = $ADapp.DisplayName
@@ -1402,7 +1405,7 @@ class CCAutomation: CommandBase
 			if([System.Version]$azskCurrentCARunbookVersion -ne [System.Version]$azskLatestCARunbookVersion)
 			{
 				$detailedMsg  = "AzSK current runbook version $([System.Version]$azskCurrentCARunbookVersion) and latest runbook version $([System.Version]$azskLatestCARunbookVersion)";
-				$resultMsg  = "CA runbook is not current as per the required latest version. It is always recomended to update your runbook to the latest version possible by running the command: 'Update-AzSKSubscriptionSecurity -SubscriptionId <subId>'"
+				$resultMsg  = "CA runbook is not current as per the required latest version. It is always recommended to update your runbook to the latest version possible by running the command: 'Update-AzSKContinuousAssurance -SubscriptionId <subId>'"
 				$resultStatus = "Unhealthy"
 			}
 			else
@@ -1413,7 +1416,7 @@ class CCAutomation: CommandBase
 		}
 		else
 		{
-			$resultMsg = "CA Runbook is too old.`r`nRun command 'Update-AzSKSubscriptionSecurity -SubscriptionId <subId>'."
+			$resultMsg = "CA Runbook is too old.`r`nRun command 'Update-AzSKContinuousAssurance -SubscriptionId <subId>'."
 			$resultStatus = "OK"
 			$shouldReturn = $true
 		}	
@@ -1431,7 +1434,7 @@ class CCAutomation: CommandBase
 
 		#region:Step 2: Check if AzSK module is in available state in Assets, if no then display error message
 		$stepCount++
-		$azskAutomationModuleList = Get-AzureRmAutomationModule -AutomationAccountName $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup 
+		$azskAutomationModuleList = Get-AzAutomationModule -AutomationAccountName $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup 
 		if(($azskAutomationModuleList | Measure-Object).Count -gt 0)
 		{
 			#Check the state of AzSK Module
@@ -1440,7 +1443,7 @@ class CCAutomation: CommandBase
 			$azskAutomationModule = $azskAutomationModuleList | Where-Object { $_.Name -eq $azskModuleName -and ($_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created")} 
 			if(($azskAutomationModule | Measure-Object).Count -gt 0)
 			{
-				$azskModuleWithVersion = Get-AzureRmAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
+				$azskModuleWithVersion = Get-AzAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup `
 				-Name $azskModuleName
 				$serverVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($azskModuleName));
@@ -1516,7 +1519,7 @@ class CCAutomation: CommandBase
 			$checkDescription = "Inspecting CA module: $($azskModuleName)'s dependent modules. This may take a few min..."
 			if($this.ExhaustiveCheck)
 			{
-				$azskModuleWithVersion = Get-AzureRmAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
+				$azskModuleWithVersion = Get-AzAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup `
 				-Name $azskModuleName
 				$azskServerModules = $this.GetDependentModules($azskModuleName,$azskModuleWithVersion.Version)
@@ -1582,13 +1585,14 @@ class CCAutomation: CommandBase
 			{
 				mkdir -Path $(Split-Path -Parent $filename) -Force
 			}
-			$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $reportsStorageAccount.Name
-			$currentContext = New-AzureStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
-			$CAScanDataBlobObject = Get-AzureStorageBlob -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -ErrorAction SilentlyContinue 
+			$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $reportsStorageAccount.Name
+			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
+			$CAScanDataBlobObject = Get-AzStorageBlob -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -ErrorAction SilentlyContinue 
 			if($null -ne $CAScanDataBlobObject)
 			{
 				$this.IsCentralScanModeOn = $true;
-				$CAScanDataBlobContentObject = Get-AzureStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
+				$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
+				$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
 				$CAScanDataBlobContent = Get-ChildItem -Path "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)" -Force | Get-Content | ConvertFrom-Json
 
 				#create the active snapshot from the ca scan objects					
@@ -1624,7 +1628,7 @@ class CCAutomation: CommandBase
 		if($runAsConnection)
 		{			
 			$this.CAAADApplicationID = $runAsConnection.FieldDefinitionValues.ApplicationId
-			$spObject = Get-AzureRmADServicePrincipal -ServicePrincipalName $this.CAAADApplicationID -ErrorAction SilentlyContinue
+			$spObject = Get-AzADServicePrincipal -ServicePrincipalName $this.CAAADApplicationID -ErrorAction SilentlyContinue
 			$spName=""
 			if($spObject){$spName = $spObject.DisplayName}
 			$haveSubscriptionRBACAccess = $true;
@@ -1641,7 +1645,7 @@ class CCAutomation: CommandBase
 						{
 							$subRBACoutput = "" | Select-Object TargetSubscriptionId, HasSubscriptionCARBACAccess, HasRGCARBACAccess , HasRequiredAccessPermissions, IsStoragePresent 
 							$subRBACoutput.TargetSubscriptionId = $_;
-							Set-AzureRmContext -SubscriptionId $subRBACoutput.TargetSubscriptionId | Out-Null
+							Set-AzContext -SubscriptionId $subRBACoutput.TargetSubscriptionId | Out-Null
 							try {
 								$subStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 							}
@@ -1686,7 +1690,7 @@ class CCAutomation: CommandBase
 				finally
 				{
 					#setting the context back to the parent subscription
-					Set-AzureRmContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
+					Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
 				}
 
 				$detailedMsg = [MessageData]::new("TargetSubscriptions RBAC permissions data", $subRBACoutputs);
@@ -1752,7 +1756,7 @@ class CCAutomation: CommandBase
 		{
 			$detailedMsg = [MessageData]::new("CA certificate expiry date: [$($runAsCertificate.ExpiryTime.ToString("yyyy-MM-dd"))]");
 
-			$ADapp = Get-AzureRmADApplication -ApplicationId $runAsConnection.FieldDefinitionValues.ApplicationId -ErrorAction SilentlyContinue
+			$ADapp = Get-AzADApplication -ApplicationId $runAsConnection.FieldDefinitionValues.ApplicationId -ErrorAction SilentlyContinue
 			if(($runAsCertificate.ExpiryTime.UtcDateTime - $(get-date).ToUniversalTime()).TotalMinutes -lt 0)
 			{
 				
@@ -1813,7 +1817,7 @@ class CCAutomation: CommandBase
 							$tgtSubStorageAccount.TargetSubscriptionId = $_.SubscriptionId;
 							$tgtSubStorageAccount.LoggingOption = $_.LoggingOption;
 							$tgtSubStorageAccount.CentralStorageAccountName = $centralStorageAccountName
-							Set-AzureRmContext -SubscriptionId $tgtSubStorageAccount.TargetSubscriptionId  | Out-Null
+							Set-AzContext -SubscriptionId $tgtSubStorageAccount.TargetSubscriptionId  | Out-Null
 							$reportsStorageAccount = $null;
 							try
 							{
@@ -1855,7 +1859,7 @@ class CCAutomation: CommandBase
 			finally
 			{
 				#setting the context back to the parent subscription
-				Set-AzureRmContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
+				Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
 			}
 			$detailedMsg = [MessageData]::new("Target Subscriptions storage account configuration:", $tgtSubStorageAccounts);
 		}
@@ -1931,17 +1935,17 @@ class CCAutomation: CommandBase
 		}
 		$detailedMsg = $Null
 		#endregion	
-		#region: Step 9: Check OMS configuration values in variables, if it's empty then display error message (this will not validate OMS credentials)
+		#region: Step 9: Check Log Analytics workspace configuration values in variables, if it's empty then display error message (this will not validate Log Analytics credentials)
 		$stepCount++
 	
-		$checkDescription = "Inspecting OMS configuration."
+		$checkDescription = "Inspecting Log Analytics workspace configuration."
         
 		$IsOMSSettingSetup = !([string]::IsNullOrEmpty($omsWsId)) -and $this.IsOMSKeyVariableAvailable()
 		$IsAltOMSSettingSetup = !([string]::IsNullOrEmpty($altOMSWsId)) -and $this.IsAltOMSKeyVariableAvailable()
 		
         if(!$IsOMSSettingSetup -and !$IsAltOMSSettingSetup)
 		{
-			$failMsg = "OMS settings is not set up."			
+			$failMsg = "Log Analytics workspace settings is not set up."			
 			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -OMSWorkspaceId <OMSWorkspaceId> -OMSSharedKey <OMSSharedKey>'."
 			$resultMsg +="$failMsg`r`n$resolvemsg"
 			$resultStatus = "Warning"
@@ -2019,7 +2023,7 @@ class CCAutomation: CommandBase
 
 		#region: Step 12: Check if last job is not successful or job hasn't run in last 2 days
 		$stepCount++		
-		$recentJobs = Get-AzureRmAutomationJob -ResourceGroupName $this.AutomationAccount.ResourceGroup `
+		$recentJobs = Get-AzAutomationJob -ResourceGroupName $this.AutomationAccount.ResourceGroup `
 		-AutomationAccountName $this.AutomationAccount.Name `
 		-RunbookName $this.RunbookName | 
 		Sort-Object LastModifiedTime -Descending |
@@ -2093,7 +2097,7 @@ class CCAutomation: CommandBase
 				}
 				$azskLatestCARunbookVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion
 				$azskCurrentCARunbookVersion = ""
-				$azskRG = Get-AzureRmResourceGroup $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue
+				$azskRG = Get-AzResourceGroup $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue
 				if($null -ne $azskRG)
 				{
 					if(($azskRG.Tags | Measure-Object).Count -gt 0 -and $azskRG.Tags.ContainsKey($this.RunbookVersionTagName))
@@ -2105,7 +2109,7 @@ class CCAutomation: CommandBase
 				if((![string]::IsNullOrWhiteSpace($azskCurrentCARunbookVersion) -and ([System.Version]$azskCurrentCARunbookVersion -lt [System.Version]$azskMinReqdRunbookVersion)) -or [string]::IsNullOrWhiteSpace($azskCurrentCARunbookVersion))
 				{
 					$isHealthy = $false
-					$currentMessage = [MessageData]::new("WARNING: The runbook used by Continuous Assurance for this subscription is too old.`r`nPlease run command 'Update-AzSKSubscriptionSecurity -SubscriptionId <subId>'.",  [MessageType]::Warning);
+					$currentMessage = [MessageData]::new("WARNING: The runbook used by Continuous Assurance for this subscription is too old.`r`nPlease run command 'Update-AzSKContinuousAssurance -SubscriptionId <subId>'.",  [MessageType]::Warning);
 					$this.PublishCustomMessage($currentMessage);					
 				}
 			}
@@ -2145,12 +2149,13 @@ class CCAutomation: CommandBase
 			{
 				mkdir -Path $(Split-Path -Parent $filename) -Force
 			}
-			$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $reportsStorageAccount.Name
-			$currentContext = New-AzureStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
-			$CAScanDataBlobObject = Get-AzureStorageBlob -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -ErrorAction SilentlyContinue 
+			$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $reportsStorageAccount.Name
+			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
+			$CAScanDataBlobObject = Get-AzStorageBlob -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -ErrorAction SilentlyContinue 
 			if($null -ne $CAScanDataBlobObject)
 			{
-				$CAScanDataBlobContentObject = Get-AzureStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
+				$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
+				#$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
 				$CAScanDataBlobContent = Get-ChildItem -Path "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)" -Force | Get-Content | ConvertFrom-Json
 			}
 		}
@@ -2199,7 +2204,7 @@ class CCAutomation: CommandBase
 					{
 						$runAsConnection = $this.GetRunAsConnection()
 						#user selected yes
-						Remove-AzureRmAutomationAccount -ResourceGroupName $_.ResourceGroupName -name $_.AutomationAccountName -Force -ErrorAction stop
+						Remove-AzAutomationAccount -ResourceGroupName $_.ResourceGroupName -name $_.AutomationAccountName -Force -ErrorAction stop
 						$messages += [MessageData]::new("Removed Automation Account: [$($_.AutomationAccountName)] from resource group: [$($this.AutomationAccount.ResourceGroup)]")
 						$this.PublishCustomMessage("Removed Automation Account: [$($_.AutomationAccountName)] from resource group: [$($this.AutomationAccount.ResourceGroup)]")
 						$IsAutomationAccountRemoved = $true;
@@ -2280,10 +2285,10 @@ class CCAutomation: CommandBase
 
 	[void] ClearResourceofDeploymentScan()
 	{
-		Remove-AzureRmAutomationRunbook -AutomationAccountName ($this.AutomationAccount.Name) -Name ([Constants]::Alert_ResourceCreation_Runbook) -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Force -ErrorAction SilentlyContinue
+		Remove-AzAutomationRunbook -AutomationAccountName ($this.AutomationAccount.Name) -Name ([Constants]::Alert_ResourceCreation_Runbook) -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Force -ErrorAction SilentlyContinue
 		$alert = [Alerts]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "Deployment,CICD");
 		$alert.RemoveAlerts("WebHookForResourceCreationAlerts",$false);
-		Remove-AzureRmResource -ResourceType "Microsoft.Insights/actiongroups" -ResourceGroupName "AzSKRG" -Name ([Constants]::ResourceDeploymentActionGroupName) -Force
+		Remove-AzResource -ResourceType "Microsoft.Insights/actiongroups" -ResourceGroupName "AzSKRG" -Name ([Constants]::ResourceDeploymentActionGroupName) -Force
 	}
 
 	[void] SetAzSKAlertMonitoringRunbook($Force)
@@ -2338,7 +2343,7 @@ class CCAutomation: CommandBase
 
 			try
 			{
-				Set-AzureRmContext -SubscriptionId $targetSub.SubscriptionId | Out-Null
+				Set-AzContext -SubscriptionId $targetSub.SubscriptionId | Out-Null
 				#step 1: Remove any permissions related to SPN in the target sub
 				if(-not [string]::IsNullOrWhiteSpace($CAAADCentralSPN))
 				{
@@ -2405,7 +2410,7 @@ class CCAutomation: CommandBase
 			finally
 			{
 				#setting the context back to the parent subscription
-				Set-AzureRmContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
+				Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
 			}
 			if($centralLogsDelete)
 			{
@@ -2415,8 +2420,8 @@ class CCAutomation: CommandBase
 
 		#region: remove the scanobject from the storage account
 		$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage();
-		$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $reportsStorageAccount.Name
-		$currentContext = New-AzureStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
+		$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $reportsStorageAccount.Name
+		$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
 
 		#Persist only if there are more than one scan object. Count greater than 1 as to check if there are any other subscription apart from the central one
 		if(($finalTargetSubs | Measure-Object).Count -gt 1)
@@ -2431,19 +2436,20 @@ class CCAutomation: CommandBase
 
 			#get the scanobjects container
 			try {
-				Get-AzureStorageContainer -Name $this.CAMultiSubScanConfigContainerName -Context $currentContext -ErrorAction Stop | Out-Null
+				Get-AzStorageContainer -Name $this.CAMultiSubScanConfigContainerName -Context $currentContext -ErrorAction Stop | Out-Null
 			}
 			catch {
-				New-AzureStorageContainer -Name $this.CAMultiSubScanConfigContainerName -Context $currentContext | Out-Null
+				New-AzStorageContainer -Name $this.CAMultiSubScanConfigContainerName -Context $currentContext | Out-Null
 			}
 
 				#Save the scan objects in blob stoage#
-			Set-AzureStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
+				[AzHelper]::UploadStorageBlobContent($filename, $this.CATargetSubsBlobName, $this.CAMultiSubScanConfigContainerName, $currentContext)
+				#Set-AzStorageBlobContent -File $filename -Blob $this.CATargetSubsBlobName -Container $this.CAMultiSubScanConfigContainerName -BlobType Block -Context $currentContext -Force
 		}
 		else
 		{
 			#Remove the scan objects container
-			Remove-AzureStorageContainer -Name $this.CAMultiSubScanConfigContainerName -Context $currentContext -Force
+			Remove-AzStorageContainer -Name $this.CAMultiSubScanConfigContainerName -Context $currentContext -Force
 		}
 		#endregion
 	}
@@ -2462,9 +2468,9 @@ class CCAutomation: CommandBase
 
 		if(($existingStorage | Measure-Object).Count -gt 0)
 		{
-			$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $existingStorage.ResourceGroupName -Name $existingStorage.Name 
-			$storageContext = New-AzureStorageContext -StorageAccountName $existingStorage.Name -StorageAccountKey $keys[0].Value -Protocol Https
-			$existingContainer = Get-AzureStorageContainer -Name $this.CAScanOutputLogsContainerName -Context $storageContext -ErrorAction SilentlyContinue
+			$keys = Get-AzStorageAccountKey -ResourceGroupName $existingStorage.ResourceGroupName -Name $existingStorage.Name 
+			$storageContext = New-AzStorageContext -StorageAccountName $existingStorage.Name -StorageAccountKey $keys[0].Value -Protocol Https
+			$existingContainer = Get-AzStorageContainer -Name $this.CAScanOutputLogsContainerName -Context $storageContext -ErrorAction SilentlyContinue
 						
 			if($existingContainer)
 			{
@@ -2486,8 +2492,8 @@ class CCAutomation: CommandBase
 				if($result -eq 0)
 				{
 					#user selected yes			
-					$existingContainer | Remove-AzureStorageContainer -Force -ErrorAction SilentlyContinue
-					if((Get-AzureStorageContainer -Name $this.CAScanOutputLogsContainerName -Context $storageContext -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
+					$existingContainer | Remove-AzStorageContainer -Force -ErrorAction SilentlyContinue
+					if((Get-AzStorageContainer -Name $this.CAScanOutputLogsContainerName -Context $storageContext -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
 					{
 						#deleted successfully in confirmation box
 						$messages += [MessageData]::new("Removed container: [$($this.CAScanOutputLogsContainerName)] from storage account: [$($existingStorage.Name)]")
@@ -2519,7 +2525,7 @@ class CCAutomation: CommandBase
 		#fetch SP permissions
 		try
 		{
-			Get-AzureRmRoleAssignment -serviceprincipalname $CAAADSPN | Remove-AzureRmRoleAssignment
+			Get-AzRoleAssignment -serviceprincipalname $CAAADSPN | Remove-AzRoleAssignment
 		}
 		catch{
 			return $false;
@@ -2533,7 +2539,7 @@ class CCAutomation: CommandBase
 	{
         if(($null -ne $this.AutomationAccount) -and ($null -eq $this.AutomationAccount.BasicResourceInstance))
         {
-            $this.AutomationAccount.BasicResourceInstance = Get-AzureRmResource -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -ErrorAction silentlycontinue
+            $this.AutomationAccount.BasicResourceInstance = Get-AzResource -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -ErrorAction silentlycontinue
         }
 		return $this.AutomationAccount.BasicResourceInstance
 	}
@@ -2541,14 +2547,14 @@ class CCAutomation: CommandBase
 	{
         if(($null -ne $this.AutomationAccount) -and ($null -eq $this.AutomationAccount.DetailedResourceInstance))
         {
-            $this.AutomationAccount.DetailedResourceInstance = Get-AzureRMAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -ErrorAction silentlycontinue
+            $this.AutomationAccount.DetailedResourceInstance = Get-AzAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $this.AutomationAccount.Name -ErrorAction silentlycontinue
         }
 		return $this.AutomationAccount.DetailedResourceInstance
 	}
 	hidden [bool] IsCAInstallationValid()
 	{
 		$isValid = $true
-		$automationResources = Get-AzureRmResource -ResourceGroupName $this.AutomationAccount.ResourceGroup -ResourceType "Microsoft.Automation/automationAccounts"
+		$automationResources = Get-AzResource -ResourceGroupName $this.AutomationAccount.ResourceGroup -ResourceType "Microsoft.Automation/automationAccounts"
 		if(($automationResources|Measure-Object).Count)
 		{
 			$isValid = $false
@@ -2589,7 +2595,7 @@ class CCAutomation: CommandBase
 			"LastModified"=$timestamp
 			}
 
-		$this.OutputObject.AutomationAccount  = New-AzureRmAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup `
+		$this.OutputObject.AutomationAccount  = New-AzAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup `
 		-Name $this.AutomationAccount.Name -Location $this.AutomationAccount.Location `
 		-Plan Basic -Tags $this.AutomationAccount.AccountTags -ErrorAction Stop | Select-Object AutomationAccountName,Location,Plan,ResourceGroupName,State,Tags
 	}
@@ -2642,7 +2648,7 @@ class CCAutomation: CommandBase
 			$this.PublishCustomMessage("Updating runbook: [$($_.Name)]")
 			$filePath = $this.AddConfigValues($_.Name+".ps1");
 			
-			Import-AzureRmAutomationRunbook -Name $_.Name -Description $_.Description -Type $_.Type `
+			Import-AzAutomationRunbook -Name $_.Name -Description $_.Description -Type $_.Type `
 			-Path $filePath `
 			-LogProgress $_.LogProgress -LogVerbose $_.LogVerbose `
 			-AutomationAccountName $this.AutomationAccount.Name `
@@ -2668,7 +2674,7 @@ class CCAutomation: CommandBase
 		$this.Runbooks | ForEach-Object{		
 			$filePath = $this.AddConfigValues($_.Name+".ps1");
 			
-			Import-AzureRmAutomationRunbook -Name $_.Name -Description $_.Description -Type $_.Type `
+			Import-AzAutomationRunbook -Name $_.Name -Description $_.Description -Type $_.Type `
 			-Path $filePath `
 			-LogProgress $_.LogProgress -LogVerbose $_.LogVerbose `
 			-AutomationAccountName $this.AutomationAccount.Name `
@@ -2705,23 +2711,23 @@ class CCAutomation: CommandBase
 			$scheduleName = $_.Name
 
 			#remove existing schedule if exists
-			if((Get-AzureRmAutomationSchedule -Name $scheduleName `
+			if((Get-AzAutomationSchedule -Name $scheduleName `
 			-ResourceGroupName $this.AutomationAccount.ResourceGroup `
 			-AutomationAccountName $this.AutomationAccount.Name `
 			-ErrorAction SilentlyContinue|Measure-Object).Count -gt 0)
 			{
-				Remove-AzureRmAutomationSchedule -Name $scheduleName `
+				Remove-AzAutomationSchedule -Name $scheduleName `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup `
 				-AutomationAccountName $this.AutomationAccount.Name -Force `
 				-ErrorAction Stop
 			}
 			#create new schedule
-			New-AzureRmAutomationSchedule -AutomationAccountName $this.AutomationAccount.Name -Name $scheduleName `
+			New-AzAutomationSchedule -AutomationAccountName $this.AutomationAccount.Name -Name $scheduleName `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -StartTime $_.StartTime `
 				-Description $_.Description -HourInterval $_.Interval -ErrorAction Stop
 			
 			$_.LinkedRubooks | ForEach-Object{
-				Register-AzureRmAutomationScheduledRunbook -RunbookName $_ -ScheduleName $scheduleName `
+				Register-AzAutomationScheduledRunbook -RunbookName $_ -ScheduleName $scheduleName `
 				 -ResourceGroupName $this.AutomationAccount.ResourceGroup `
 				 -AutomationAccountName $this.AutomationAccount.Name -ErrorAction Stop
 			}
@@ -2752,13 +2758,13 @@ class CCAutomation: CommandBase
 			Name = [Constants]::OMSWorkspaceId;
 			Value = $this.UserConfig.OMSCredential.OMSWorkspaceId;
 			IsEncrypted = $false;
-			Description ="OMS Workspace Id"
+			Description ="Log Analytics Workspace Id"
         }
 		$varOMSWSKey = [Variable]@{
 			Name = [Constants]::OMSSharedKey;
 			Value = $this.UserConfig.OMSCredential.OMSSharedKey;
 			IsEncrypted = $false;
-			Description ="OMS Workspace Shared Key"
+			Description ="Log Analytics Workspace Shared Key"
         }
 
 		$this.Variables += @($varAppRG,$varOMSWSID,$varOMSWSKey,$varStorageName)
@@ -2770,13 +2776,13 @@ class CCAutomation: CommandBase
 				Name = [Constants]::AltOMSWorkspaceId;
 				Value = $this.UserConfig.AltOMSCredential.OMSWorkspaceId;
 				IsEncrypted = $false;
-				Description ="Alternate OMS Workspace Id"
+				Description ="Alternate Log Analytics Workspace Id"
 			}
 			$varAltOMSWSKey = [Variable]@{
 				Name = [Constants]::AltOMSSharedKey;
 				Value = $this.UserConfig.AltOMSCredential.OMSSharedKey;
 				IsEncrypted = $false;
-				Description ="Alternate OMS Workspace Shared Key"
+				Description ="Alternate Log Analytics Workspace Shared Key"
 			}
 			$this.Variables += @($varAltOMSWSID,$varAltOMSWSKey)
 		}
@@ -2819,7 +2825,7 @@ class CCAutomation: CommandBase
 
 		$this.Variables|ForEach-Object{
 
-			New-AzureRmAutomationVariable -Name $_.Name -Encrypted $_.IsEncrypted `
+			New-AzAutomationVariable -Name $_.Name -Encrypted $_.IsEncrypted `
 			-Description $_.Description -Value $_.Value `
 			-ResourceGroupName $this.AutomationAccount.ResourceGroup `
 			-AutomationAccountName $this.AutomationAccount.Name -ErrorAction Stop
@@ -2854,7 +2860,7 @@ class CCAutomation: CommandBase
                 
                 $subscriptionScope = "/subscriptions/{0}" -f $this.SubscriptionContext.SubscriptionId
                 
-                $azskRoleAssignments = Get-AzureRmRoleAssignment -Scope $subscriptionScope -RoleDefinitionName Reader | Where-Object { $_.DisplayName -like "$($azskspnformatstring)*" }
+                $azskRoleAssignments = Get-AzRoleAssignment -Scope $subscriptionScope -RoleDefinitionName Reader | Where-Object { $_.DisplayName -like "$($azskspnformatstring)*" }
 				$cnt = ($azskRoleAssignments | Measure-Object).Count
 			    if($cnt -gt 0)
 			    {				
@@ -2867,10 +2873,10 @@ class CCAutomation: CommandBase
 						    $this.PublishCustomMessage("Trying account: ["+ $azskRoleAssignment.DisplayName +"]")
                             #get aad app id from service principal object detail
                             $aadApplication = $null
-                            $spDetail = Get-AzureRmADServicePrincipal -ObjectId $azskRoleAssignment.ObjectId
+                            $spDetail = Get-AzADServicePrincipal -ObjectId $azskRoleAssignment.ObjectId
                             if($spDetail)
                             {
-                                $aadApplication = Get-AzureRmADApplication -ApplicationId $spDetail.ApplicationId
+                                $aadApplication = Get-AzADApplication -ApplicationId $spDetail.ApplicationId
                             }
                             else
                             {throw;}#SP not found, continue to next SP
@@ -2935,11 +2941,11 @@ class CCAutomation: CommandBase
 		{
 			#fetch existing AD App used in connection
 			$appID = ""
-			$connection = Get-AzureRmAutomationConnection -AutomationAccountName $this.AutomationAccount.Name `
+			$connection = Get-AzAutomationConnection -AutomationAccountName $this.AutomationAccount.Name `
 			-ResourceGroupName  $this.AutomationAccount.ResourceGroup -Name $this.connectionAssetName -ErrorAction Stop
 		
 			$appID = $connection.FieldDefinitionValues.ApplicationId
-			$azskADAppName = (Get-AzureRmADApplication -ApplicationId $connection.FieldDefinitionValues.ApplicationId -ErrorAction stop).DisplayName
+			$azskADAppName = (Get-AzADApplication -ApplicationId $connection.FieldDefinitionValues.ApplicationId -ErrorAction stop).DisplayName
 		
 			$this.CAAADApplicationID = $appID;
 		
@@ -2966,7 +2972,7 @@ class CCAutomation: CommandBase
 	
     hidden [string] CreateServicePrincipalIfNotExists([string] $azSKADAppName)
     {
-		$aadApplication = Get-AzureRmADApplication -DisplayNameStartWith $azskADAppName | Where-Object -Property DisplayName -eq $azskADAppName
+		$aadApplication = Get-AzADApplication -DisplayNameStartWith $azskADAppName | Where-Object -Property DisplayName -eq $azskADAppName
 		if(($aadApplication|measure-object).Count -gt 1)
 		{
 			$this.PublishCustomMessage("Found more than one AAD applications with name: [$azskADAppName] in the directory. Can't reuse AAD app.")
@@ -2984,7 +2990,7 @@ class CCAutomation: CommandBase
 			$this.PublishCustomMessage("Creating new AAD application: [$azskADAppName]. This may take a few min...")
 				
 			#create new AAD App
-			$aadApplication = New-AzureRmADApplication -DisplayName $azskADAppName `
+			$aadApplication = New-AzADApplication -DisplayName $azskADAppName `
 			-HomePage ("https://" + $azskADAppName) `
 			-IdentifierUris ("https://" + $azskADAppName) -ErrorAction Stop
 				
@@ -2992,7 +2998,7 @@ class CCAutomation: CommandBase
 
 			#create new SP
 			$this.PublishCustomMessage("Creating new service principal (SPN) for the AAD application. This will be used as the runtime account for AzSK CA")
-			New-AzureRMADServicePrincipal -ApplicationId $aadApplication.ApplicationId -ErrorAction Stop | Out-Null   
+			New-AzADServicePrincipal -ApplicationId $aadApplication.ApplicationId -ErrorAction Stop | Out-Null   
 				
 			Start-Sleep -Seconds 30                         
 		}
@@ -3120,12 +3126,12 @@ class CCAutomation: CommandBase
 	hidden [void] UpdateVariable($VariableObj)
 	{	
 		#remove existing and create new variable
-		$existingVar = Get-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $VariableObj.Name -ErrorAction SilentlyContinue
+		$existingVar = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $VariableObj.Name -ErrorAction SilentlyContinue
 		if(($existingVar|Measure-Object).Count -gt 0)
 		{
-			$existingVar|Remove-AzureRmAutomationVariable -ErrorAction Stop
+			$existingVar|Remove-AzAutomationVariable -ErrorAction Stop
 		}
-		$newVariable = New-AzureRmAutomationVariable -Name $VariableObj.Name `
+		$newVariable = New-AzAutomationVariable -Name $VariableObj.Name `
 		-Description $VariableObj.Description`
 		-Encrypted $VariableObj.IsEncrypted `
 		-Value $VariableObj.Value `
@@ -3137,21 +3143,21 @@ class CCAutomation: CommandBase
 	hidden [void] RemoveCCAzureRunAsConnectionIfExists()
 	{
 		#remove existing azurerunasconnection
-		if((Get-AzureRmAutomationConnection -Name $this.connectionAssetName -ResourceGroupName $this.AutomationAccount.ResourceGroup `
+		if((Get-AzAutomationConnection -Name $this.connectionAssetName -ResourceGroupName $this.AutomationAccount.ResourceGroup `
 		-AutomationAccountName $this.AutomationAccount.Name -ErrorAction SilentlyContinue|Measure-Object).Count -gt 0)
 		{
-			Remove-AzureRmAutomationConnection -ResourceGroupName $this.AutomationAccount.ResourceGroup`
+			Remove-AzAutomationConnection -ResourceGroupName $this.AutomationAccount.ResourceGroup`
 		 -AutomationAccountName $this.AutomationAccount.Name -Name $this.connectionAssetName -Force -ErrorAction stop
 		}
 	}
 	hidden [void] RemoveCCAzureRunAsCertificateIfExists()
 	{
 		#remove existing certificate
-		$isCertPresent = Get-AzureRmAutomationCertificate -ResourceGroupName $this.AutomationAccount.ResourceGroup `
+		$isCertPresent = Get-AzAutomationCertificate -ResourceGroupName $this.AutomationAccount.ResourceGroup `
 		-AutomationAccountName $this.AutomationAccount.Name -Name $this.certificateAssetName -ErrorAction SilentlyContinue
 		if($isCertPresent)
 		{
-			Remove-AzureRmAutomationCertificate -ResourceGroupName $this.AutomationAccount.ResourceGroup `
+			Remove-AzAutomationCertificate -ResourceGroupName $this.AutomationAccount.ResourceGroup `
 			-AutomationAccountName $this.AutomationAccount.Name -Name $this.certificateAssetName -ErrorAction SilentlyContinue
 		}
 	}
@@ -3159,10 +3165,10 @@ class CCAutomation: CommandBase
 	hidden [PSObject] NewCCConnection($appId,$thumbPrint)
 	{
 		
-		$tenantID = (Get-AzureRmContext -ErrorAction Stop).Tenant.Id
+		$tenantID = (Get-AzContext -ErrorAction Stop).Tenant.Id
 		$ConnectionFieldValues = @{"ApplicationId" = $appID; "TenantId" = $tenantID; "CertificateThumbprint" = $thumbPrint; "SubscriptionId" = $this.SubscriptionContext.SubscriptionId}
 		
-		$newConnectionAsset = New-AzureRmAutomationConnection -ResourceGroupName $this.AutomationAccount.ResourceGroup `
+		$newConnectionAsset = New-AzAutomationConnection -ResourceGroupName $this.AutomationAccount.ResourceGroup `
 		-AutomationAccountName  $this.AutomationAccount.Name -Name $this.connectionAssetName -ConnectionTypeName AzureServicePrincipal `
 		-ConnectionFieldValues $ConnectionFieldValues -Description "This connection authenticates runbook with service principal" -ErrorAction stop
 
@@ -3170,7 +3176,7 @@ class CCAutomation: CommandBase
 	}
 	hidden [PSObject] NewCCCertificate($pfxFilePath,[Security.SecureString]$secureCertPassword)
 	{
-		$newCertificateAsset = New-AzureRmAutomationCertificate -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name `
+		$newCertificateAsset = New-AzAutomationCertificate -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name `
 		-Path $pfxFilePath -Name $this.certificateAssetName -Password $secureCertPassword -ErrorAction Stop
 
 		return $newCertificateAsset
@@ -3202,14 +3208,14 @@ class CCAutomation: CommandBase
 				$moduleContentUrl = (Invoke-WebRequest -Uri $moduleContentUrl -MaximumRedirection 0 -UseBasicParsing -ErrorAction Ignore).Headers.Location 
 			} while(!$moduleContentUrl.Contains(".nupkg"))
 
-			$automationModule = New-AzureRmAutomationModule `
+			$automationModule = New-AzAutomationModule `
 					-ResourceGroupName $this.AutomationAccount.ResourceGroup `
 					-AutomationAccountName $this.AutomationAccount.Name `
 					-Name $moduleName `
 					-ContentLink $actualUrl
 			$this.OutputObject.Modules += ($automationModule|Select-Object Name)
 
-			$automationModule = Get-AzureRmAutomationModule -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name -Name $moduleName
+			$automationModule = Get-AzAutomationModule -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name -Name $moduleName
 
 			while(
 				$automationModule.ProvisioningState -ne "Created" -and
@@ -3219,7 +3225,7 @@ class CCAutomation: CommandBase
 			{
 				#Module is in extracting state
 				Start-Sleep -Seconds 120
-				$automationModule = $automationModule | Get-AzureRmAutomationModule
+				$automationModule = $automationModule | Get-AzAutomationModule
 			}                
 		}
 	}
@@ -3270,14 +3276,14 @@ class CCAutomation: CommandBase
 		$azskModule =$this.GetModuleName();
 		
 		#get existing module details
-		$existingModule = Get-AzureRmAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
+		$existingModule = Get-AzAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
 		 -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $moduleName `
 		 | Where-Object {($_.IsGlobal -ne $true) -and ($_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created")}
 		
 		#Get required module version
 		if([string]::IsNullOrWhiteSpace($azskVersion))
 		{
-			$azskModuleWithVersion = Get-AzureRmAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
+			$azskModuleWithVersion = Get-AzAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
 					-ResourceGroupName $this.AutomationAccount.ResourceGroup `
 					-Name $azskModule
 			if(($azskModuleWithVersion|Measure-Object).Count -ne 0)
@@ -3314,14 +3320,14 @@ class CCAutomation: CommandBase
 		$azskModule=$this.GetModuleName().ToUpper()
 		$moduleVersion=[string]::Empty
 
-		$existingModule = Get-AzureRmAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
+		$existingModule = Get-AzAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
 		 -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $moduleName `
 		 | Where-Object {$_.IsGlobal -ne $true}
 
 		if(($existingModule|Measure-Object).Count -ne 0)
 		{
 			#remove module, hence it will be converted to global module
-			Remove-AzureRmAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
+			Remove-AzAutomationModule -AutomationAccountName $this.AutomationAccount.Name `
 		 -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $moduleName -Force -ErrorAction Stop | Out-Null
 		}
 	} 
@@ -3360,9 +3366,9 @@ class CCAutomation: CommandBase
 	}
 	hidden [void] FixCAModules()
 	{
-		$automationModuleName = "AzureRM.Automation"
-		$storageModuleName = "Azure.Storage"
-        $profileModuleName = "AzureRm.profile"
+		$automationModuleName = "Az.Automation"
+		$storageModuleName = "Az.Storage"
+        $profileModuleName = "Az.Accounts"
 		$dependentModules = @()
 		$this.OutputObject.Modules = @() 
 		
@@ -3403,49 +3409,49 @@ class CCAutomation: CommandBase
 		}
 
         #remove AzSK/AzureRm modules so that runbook can fix all the modules
-		$deleteModuleList = Get-AzureRmAutomationModule -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name  -ErrorAction SilentlyContinue | `
-        Where-Object {$_.Name -eq "AzureRm" -or $_.Name -ilike 'azsk*'} 
+		$deleteModuleList = Get-AzAutomationModule -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name  -ErrorAction SilentlyContinue | `
+        Where-Object {$_.Name -eq "Az.*" -or $_.Name -ilike 'azsk*'} 
         
         if(($deleteModuleList|Measure-Object).Count -gt 0)
         {
             $deleteModuleList | ForEach-Object{
                 $this.PublishCustomMessage("Deleting module: [$($_.Name)] from the account...")   
-                Remove-AzureRmAutomationModule -Name $deleteModuleList.Name -AutomationAccountName $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup -Force -ErrorAction SilentlyContinue
+                Remove-AzAutomationModule -Name $deleteModuleList.Name -AutomationAccountName $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup -Force -ErrorAction SilentlyContinue
 			}
 			$this.PublishCustomMessage("Required modules will be imported automatically when the next CA scan commences.")
 		}
 		
 		#start the runbook once the modules are fixed and runbook will try to complete the scan
-		Start-AzureRmAutomationRunbook -Name $this.RunbookName -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name -ErrorAction SilentlyContinue | Out-Null		 
+		Start-AzAutomationRunbook -Name $this.RunbookName -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name -ErrorAction SilentlyContinue | Out-Null		 
 	}
 	
 	hidden [void] ResolveStorageCompliance($storageName,$ResourceId,$resourceGroup,$containerName)
 	{
 		$controlSettings = $this.LoadServerConfigFile("ControlSettings.json");
-	    $storageObject = Get-AzureRmStorageAccount -ResourceGroupName $resourceGroup -Name $storageName -ErrorAction Stop
-	    $keys = Get-AzureRmStorageAccountKey -ResourceGroupName $resourceGroup -Name $storageName 
-	    $currentContext = New-AzureStorageContext -StorageAccountName $storageName -StorageAccountKey $keys[0].Value -Protocol Https
+	    $storageObject = Get-AzStorageAccount -ResourceGroupName $resourceGroup -Name $storageName -ErrorAction Stop
+	    $keys = Get-AzStorageAccountKey -ResourceGroupName $resourceGroup -Name $storageName 
+	    $currentContext = New-AzStorageContext -StorageAccountName $storageName -StorageAccountKey $keys[0].Value -Protocol Https
 	
 		#Azure_Storage_AuthN_Dont_Allow_Anonymous
-		$keys = Get-AzureRmStorageAccountKey -ResourceGroupName $resourceGroup -Name $storageName		
-		$storageContext = New-AzureStorageContext -StorageAccountName $storageName -StorageAccountKey $keys[0].Value -Protocol Https
-		$existingContainer = Get-AzureStorageContainer -Name $containerName -Context $storageContext -ErrorAction SilentlyContinue
+		$keys = Get-AzStorageAccountKey -ResourceGroupName $resourceGroup -Name $storageName		
+		$storageContext = New-AzStorageContext -StorageAccountName $storageName -StorageAccountKey $keys[0].Value -Protocol Https
+		$existingContainer = Get-AzStorageContainer -Name $containerName -Context $storageContext -ErrorAction SilentlyContinue
 		if($existingContainer)
 		{
-			Set-AzureStorageContainerAcl -Name  $containerName -Permission 'Off' -Context $currentContext 
+			Set-AzStorageContainerAcl -Name  $containerName -Permission 'Off' -Context $currentContext 
 		}
 	    
 		
 		$storageSku = [Constants]::NewStorageSku
-	    Set-AzureRmStorageAccount -Name $storageName  -ResourceGroupName $resourceGroup -SkuName $storageSku
+	    Set-AzStorageAccount -Name $storageName  -ResourceGroupName $resourceGroup -SkuName $storageSku
 	    
 		#Azure_Storage_Audit_AuthN_Requests
 	    $currentContext = $storageObject.Context
-	    Set-AzureStorageServiceLoggingProperty -ServiceType Blob -LoggingOperations All -Context $currentContext -RetentionDays 365 -PassThru
-	    Set-AzureStorageServiceMetricsProperty -MetricsType Hour -ServiceType Blob -Context $currentContext -MetricsLevel ServiceAndApi -RetentionDays 365 -PassThru
+	    Set-AzStorageServiceLoggingProperty -ServiceType Blob -LoggingOperations All -Context $currentContext -RetentionDays 365 -PassThru
+	    Set-AzStorageServiceMetricsProperty -MetricsType Hour -ServiceType Blob -Context $currentContext -MetricsLevel ServiceAndApi -RetentionDays 365 -PassThru
 	    
 		#Azure_Storage_DP_Encrypt_In_Transit
-	    Set-AzureRmStorageAccount -ResourceGroupName $resourceGroup -Name $storageName -EnableHttpsTrafficOnly $true
+	    Set-AzStorageAccount -ResourceGroupName $resourceGroup -Name $storageName -EnableHttpsTrafficOnly $true
 	}
 	hidden [bool] CheckStorageMetricAlertConfiguration([PSObject[]] $metricSettings,[string] $resourceGroup, [string] $extendedResourceName)
 	{
@@ -3459,7 +3465,7 @@ class CCAutomation: CommandBase
 				$resIdMessageString = "for nested resource [$extendedResourceName]";
 			}
 
-			$resourceAlerts = (Get-AzureRmAlertRule -ResourceGroup $resourceGroup -Name "*" -WarningAction SilentlyContinue) | 
+			$resourceAlerts = (Get-AzAlertRule -ResourceGroup $resourceGroup -Name "*" -WarningAction SilentlyContinue) | 
 								Where-Object { $_.Condition -and $_.Condition.DataSource } |
 								Where-Object { $_.Condition.DataSource.ResourceUri -eq $resId }; 
 			 		
@@ -3508,7 +3514,7 @@ class CCAutomation: CommandBase
 	#get recent job
 	hidden [PSObject] GetLastJob($runbookName)
 	{
-		$lastJob = Get-AzureRmAutomationJob -ResourceGroupName $this.AutomationAccount.ResourceGroup `
+		$lastJob = Get-AzAutomationJob -ResourceGroupName $this.AutomationAccount.ResourceGroup `
 		-AutomationAccountName $this.AutomationAccount.Name `
 		-RunbookName $runbookName | 
 		Sort-Object LastModifiedTime -Descending | 
@@ -3519,12 +3525,12 @@ class CCAutomation: CommandBase
 	#Check if active schedules
 	hidden [PSObject] GetActiveSchedules($runbookName)
 	{
-		$runbookSchedulesList = Get-AzureRmAutomationScheduledRunbook -ResourceGroupName $this.AutomationAccount.ResourceGroup `
+		$runbookSchedulesList = Get-AzAutomationScheduledRunbook -ResourceGroupName $this.AutomationAccount.ResourceGroup `
 		-AutomationAccountName $this.AutomationAccount.Name `
 		-RunbookName $runbookName -ErrorAction Stop
 		if($runbookSchedulesList)
 		{
-			$schedules = Get-AzureRmAutomationSchedule -ResourceGroupName $this.AutomationAccount.ResourceGroup `
+			$schedules = Get-AzAutomationSchedule -ResourceGroupName $this.AutomationAccount.ResourceGroup `
 			-AutomationAccountName $this.AutomationAccount.Name -Name $this.ScheduleName  | Where-Object{ $_.Name -eq $this.ScheduleName}
 			$activeSchedule = $schedules | Where-Object{$_.IsEnabled -and `
 			$_.Frequency -ne [Microsoft.Azure.Commands.Automation.Model.ScheduleFrequency]::Onetime -and `
@@ -3541,7 +3547,7 @@ class CCAutomation: CommandBase
 	#get OMS WS ID
 	hidden [PSObject] GetOMSWSID()
 	{
-		$omsWsId = Get-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+		$omsWsId = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
 		if($omsWsId -and ($null -ne $omsWsId.Value))
 		{
@@ -3555,7 +3561,7 @@ class CCAutomation: CommandBase
 	#get ALT OMS WS ID
 	hidden [PSObject] GetAltOMSWSID()
 	{
-		$altOMSWsId = Get-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+		$altOMSWsId = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
 		if($altOMSWsId -and ($null -ne $altOMSWsId.Value))
 		{
@@ -3569,7 +3575,7 @@ class CCAutomation: CommandBase
 	#get Webhook URL
 	hidden [PSObject] GetWebhookURL()
 	{
-		$whUrl = Get-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+		$whUrl = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookUrl" -ErrorAction SilentlyContinue
 		if($whUrl -and ($null -ne $whUrl.Value))
 		{
@@ -3583,7 +3589,7 @@ class CCAutomation: CommandBase
 	#Check OMS Key is present
 	hidden [boolean] IsOMSKeyVariableAvailable()
 	{
-		$omsKey = Get-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+		$omsKey = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSSharedKey" -ErrorAction SilentlyContinue
 		if($omsKey)
 		{
@@ -3597,7 +3603,7 @@ class CCAutomation: CommandBase
 	#Check OMS Key is present
 	hidden [boolean] IsAltOMSKeyVariableAvailable()
 	{
-		$omsKey = Get-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+		$omsKey = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
 		if($omsKey)
 		{
@@ -3611,7 +3617,7 @@ class CCAutomation: CommandBase
 	#get reports storage value from variable
 	hidden [PSObject] GetReportsStorageAccountNameVariable()
 	{
-		$storageVariable = Get-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+		$storageVariable = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "ReportsStorageAccountName" -ErrorAction SilentlyContinue
 		if($storageVariable -and ($null -ne $storageVariable.Value))
 		{
@@ -3625,7 +3631,7 @@ class CCAutomation: CommandBase
 	#get App RGs
 	hidden [PSObject] GetAppRGs()
 	{
-		$appRGs = Get-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+		$appRGs = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AppResourceGroupNames" -ErrorAction SilentlyContinue
 		if($appRGs -and ($null -ne $appRGs.Value))
 		{
@@ -3639,7 +3645,7 @@ class CCAutomation: CommandBase
 	#get connection
 	hidden [PSObject] GetRunAsConnection()
 	{
-		$connection = Get-AzureRmAutomationConnection -AutomationAccountName $this.AutomationAccount.Name `
+		$connection = Get-AzAutomationConnection -AutomationAccountName $this.AutomationAccount.Name `
 			-Name $this.connectionAssetName -ResourceGroupName `
 			$this.AutomationAccount.ResourceGroup -ErrorAction SilentlyContinue
 		if((Get-Member -InputObject $connection -Name FieldDefinitionValues -MemberType Properties) -and $connection.FieldDefinitionValues.ContainsKey("ApplicationId"))
@@ -3658,7 +3664,7 @@ class CCAutomation: CommandBase
 	hidden [PSObject] CheckContinuousAssuranceStorage()
 	{	
 		#Check from name
-		$existingStorage = Get-AzureRmResource -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name "*azsk*" -ResourceType "Microsoft.Storage/storageAccounts"
+		$existingStorage = Get-AzResource -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name "*azsk*" -ResourceType "Microsoft.Storage/storageAccounts"
 		if(($existingStorage|Measure-Object).Count -gt 1)
 		{
 			throw ([SuppressedException]::new(("Multiple storage accounts found in resource group: [$($this.AutomationAccount.CoreResourceGroup)]. This is not expected. Please contact support team."), [SuppressedExceptionType]::InvalidOperation))
@@ -3669,8 +3675,8 @@ class CCAutomation: CommandBase
 	hidden [bool] CheckSPSubscriptionAccess($applicationId)
 	{
 		#fetch SP permissions
-		$spPermissions = Get-AzureRmRoleAssignment -serviceprincipalname $applicationId
-		$currentContext = Get-AzureRMContext
+		$spPermissions = Get-AzRoleAssignment -serviceprincipalname $applicationId
+		$currentContext = Get-AzContext
 		$haveSubscriptionAccess = $false
 		#Check subscription access
 		if(($spPermissions|measure-object).count -gt 0)
@@ -3701,11 +3707,11 @@ class CCAutomation: CommandBase
 
 	hidden [bool] CheckServicePrincipalRGAccess($applicationId, $rgName, $roleName)
 	{
-		$spPermissions = Get-AzureRmRoleAssignment -serviceprincipalname $applicationId
+		$spPermissions = Get-AzRoleAssignment -serviceprincipalname $applicationId
 		#Check subscription access
 		if(($spPermissions|Measure-Object).count -gt 0)
 		{
-			$haveRGAccess = ($spPermissions | Where-Object {$_.scope -eq (Get-AzureRmResourceGroup -Name $rgName).ResourceId -and $_.RoleDefinitionName -eq $roleName }|measure-object).count -gt 0
+			$haveRGAccess = ($spPermissions | Where-Object {$_.scope -eq (Get-AzResourceGroup -Name $rgName).ResourceId -and $_.RoleDefinitionName -eq $roleName }|measure-object).count -gt 0
 			return $haveRGAccess	
 		}
 		else
@@ -3728,10 +3734,10 @@ class CCAutomation: CommandBase
 		While($null -eq $SPNContributorRole -and $retryCount -le 6)
 		{
 			#Assign RBAC to SPN - contributor at RG
-			$rGroup = Get-AzureRmResourceGroup -Name $rgName -ErrorAction Stop
-			New-AzureRMRoleAssignment -Scope $rGroup.ResourceId -RoleDefinitionName $roleName -ServicePrincipalName $applicationId -ErrorAction SilentlyContinue | Out-Null
+			$rGroup = Get-AzResourceGroup -Name $rgName -ErrorAction Stop
+			New-AzRoleAssignment -Scope $rGroup.ResourceId -RoleDefinitionName $roleName -ServicePrincipalName $applicationId -ErrorAction SilentlyContinue | Out-Null
 			Start-Sleep -Seconds 10
-			$SPNContributorRole = Get-AzureRmRoleAssignment -ServicePrincipalName $applicationId `
+			$SPNContributorRole = Get-AzRoleAssignment -ServicePrincipalName $applicationId `
 			-Scope $rGroup.ResourceId `
 			-RoleDefinitionName $roleName `
 			-ErrorAction SilentlyContinue
@@ -3746,14 +3752,14 @@ class CCAutomation: CommandBase
 	{
 		$SPNReaderRole = $null
 		$this.PublishCustomMessage("Adding SPN to [Reader] role at [Subscription] scope...")
-		$context = Get-AzureRmContext
+		$context = Get-AzContext
 		$retryCount = 0;
 		While($null -eq $SPNReaderRole -and $retryCount -le 6)
 		{
 			#Assign RBAC to SPN - Reader at subscription level 
-			New-AzureRMRoleAssignment -RoleDefinitionName 'Reader' -ServicePrincipalName $applicationId -ErrorAction SilentlyContinue | Out-Null
+			New-AzRoleAssignment -RoleDefinitionName 'Reader' -ServicePrincipalName $applicationId -ErrorAction SilentlyContinue | Out-Null
 			Start-Sleep -Seconds 10
-			$SPNReaderRole = Get-AzureRmRoleAssignment -ServicePrincipalName $applicationId `
+			$SPNReaderRole = Get-AzRoleAssignment -ServicePrincipalName $applicationId `
 			-Scope "/subscriptions/$($context.Subscription.Id)" `
 			-RoleDefinitionName 'Reader' -ErrorAction SilentlyContinue
 			$retryCount++;
@@ -3810,19 +3816,19 @@ class CCAutomation: CommandBase
 			if($null -ne $OMSVariable)
 			{			
 				$this.PublishCustomMessage("Removing OMS settings... ");
-				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue			
-				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSSharedKey" -ErrorAction SilentlyContinue		
 				$this.PublishCustomMessage("Completed")
 			}
 			else
 			{
-				$this.PublishCustomMessage("Unable to find OMS workspace Id for current Automation Account ")
+				$this.PublishCustomMessage("Unable to find Log Analytics workspace Id for current Automation Account ")
 			}
 		}catch
 		{
-			$this.PublishCustomMessage("Unable to remove OMS settings.")
+			$this.PublishCustomMessage("Unable to remove Log Analytics workspace settings.")
 		}
 	}
 	hidden [void] RemoveAltOMSSettings()
@@ -3833,20 +3839,20 @@ class CCAutomation: CommandBase
 			if($null -ne $altOMSWSID)
 			{
 				$this.PublishCustomMessage("Removing AltOMS settings... ");
-				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue			
-				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue		
 				$this.PublishCustomMessage("Completed")
 			}
 			else
 			{
-				$this.PublishCustomMessage("Unable to find AltOMS workspace Id for current Automation Account ")
+				$this.PublishCustomMessage("Unable to find Alt Log Analytics workspace Id for current Automation Account ")
 
 			}
 		}catch
 		{
-			$this.PublishCustomMessage("Unable to remove AltOMS settings.")
+			$this.PublishCustomMessage("Unable to remove Alt Log Analytics workspace settings.")
 		}
 	}
 	hidden [void] RemoveWebhookSettings()
@@ -3857,11 +3863,11 @@ class CCAutomation: CommandBase
 			if($null -ne $WebhookUrl)
 			{
 				$this.PublishCustomMessage("Removing Webhook settings... ")
-				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookUrl" -ErrorAction SilentlyContinue			
-				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookAuthZHeaderName" -ErrorAction SilentlyContinue		
-				Remove-AzureRmAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "WebhookAuthZHeaderValue" -ErrorAction SilentlyContinue		
 				$this.PublishCustomMessage("Completed")
 			}

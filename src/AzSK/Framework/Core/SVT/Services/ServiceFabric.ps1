@@ -20,7 +20,7 @@ class ServiceFabric : SVTBase
     {
         if (-not $this.ResourceObject) 
 		{
-            $this.ResourceObject =  Get-AzureRmResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType -Name $this.ResourceContext.ResourceName    
+            $this.ResourceObject =  Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType -Name $this.ResourceContext.ResourceName    
 
 			$this.ResourceObject.Tags.GetEnumerator() | Where-Object { $_.Key -eq $this.DefaultTagName } | ForEach-Object {$this.ClusterTagValue = $_.Value }
 			
@@ -148,7 +148,7 @@ class ServiceFabric : SVTBase
 		if($null -ne $fabricSecuritySettings)
 		{
 			$clusterProtectionLevel = $fabricSecuritySettings.parameters | Where-Object { $_.name -eq "ClusterProtectionLevel"}
-			if($clusterProtectionLevel.value -eq "EncryptAndSign")
+			if($null -ne $clusterProtectionLevel -and $clusterProtectionLevel.value -eq "EncryptAndSign")
 			{
 			  $controlResult.AddMessage([VerificationResult]::Passed,"Cluster security is ON with 'EncryptAndSign' protection level",$clusterProtectionLevel);
 			}
@@ -177,8 +177,8 @@ class ServiceFabric : SVTBase
 		{
 			#Iterate through all cluster linked VNet resources      
 			$virtualNetworkResources |ForEach-Object{            
-				$virtualNetwork=Get-AzureRmVirtualNetwork -ResourceGroupName $_.ResourceGroupName -Name $_.Name 
-				$subnetConfig = Get-AzureRmVirtualNetworkSubnetConfig -VirtualNetwork $virtualNetwork
+				$virtualNetwork=Get-AzVirtualNetwork -ResourceGroupName $_.ResourceGroupName -Name $_.Name 
+				$subnetConfig = Get-AzVirtualNetworkSubnetConfig -VirtualNetwork $virtualNetwork
 				#Iterate through Subnet and validate if NSG is configured or not
 				$subnetConfig | ForEach-Object{
 					$subnetName =$_.Name
@@ -186,8 +186,8 @@ class ServiceFabric : SVTBase
 					#If NSG is enabled on Subnet display all security rules applied 
 					if($isCompliant)
 					{
-						$nsgResource = Get-AzureRmResource -ResourceId $_.NetworkSecurityGroup.Id
-						$nsgResourceDetails = Get-AzureRmNetworkSecurityGroup -ResourceGroupName $nsgResource.ResourceGroupName -Name $nsgResource.Name                
+						$nsgResource = Get-AzResource -ResourceId $_.NetworkSecurityGroup.Id
+						$nsgResourceDetails = Get-AzNetworkSecurityGroup -ResourceGroupName $nsgResource.ResourceGroupName -Name $nsgResource.Name                
 						
 						$nsgEnabledVNet.Add($subnetName, $nsgResourceDetails)
 					}
@@ -247,7 +247,7 @@ class ServiceFabric : SVTBase
 		#Iterate through cluster linked vmss resources             
 		$vmssResources | ForEach-Object{
 			$VMScaleSetName = $_.Name	
-			$nodeTypeResource = Get-AzureRmVmss -ResourceGroupName  $_.ResourceGroupName -VMScaleSetName  $VMScaleSetName
+			$nodeTypeResource = Get-AzVMss -ResourceGroupName  $_.ResourceGroupName -VMScaleSetName  $VMScaleSetName
 
 			# Fetch diagnostics settings based on OS 
 			if($this.ResourceObject.Properties.vmImage -eq "Linux")
@@ -316,21 +316,37 @@ class ServiceFabric : SVTBase
 		# if reverse proxy is not enabled in any node, pass TCP
 		if(($reverseProxyEnabledNode | Measure-Object).Count -gt 0)
 		{
-			$loadBalancerBackendPorts = @()
+			$lbWithBackendPorts = @{}
 			$loadBalancerResources = $this.GetLinkedResources("Microsoft.Network/loadBalancers")
 			#Collect all open ports on load balancer  
 			$loadBalancerResources | ForEach-Object{
-				$loadBalancerResource = Get-AzureRmLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
+			    $loadBalancerBackendPorts = @()
+				$loadBalancerResource = Get-AzLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
 				$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
 			
 				$loadBalancingRules | ForEach-Object {
 					$loadBalancingRuleId = $_.Id;
 					$loadBalancingRule = $loadBalancerResource.LoadBalancingRules | ? { $_.Id -eq  $loadBalancingRuleId } | Select-Object -First 1
 					$loadBalancerBackendPorts += $loadBalancingRule.BackendPort;
-				};   
+				};  
+				if($loadBalancerBackendPorts.Count -gt 0)
+			    {   
+				
+				  if([Helpers]::CheckMember($loadBalancerResource.BackendAddressPools,"BackendIpConfigurations") -and  ($loadBalancerResource.BackendAddressPools.BackendIpConfigurations | Measure-Object).Count -gt 0){
+					$backEndIpConfiguration = $loadBalancerResource.BackendAddressPools.BackendIpConfigurations | Select -First 1
+					$pattern = "providers/Microsoft.Compute/virtualMachineScaleSets/(.*?)/"
+					$result = [regex]::match($backEndIpConfiguration.Id, $pattern)
+					if($result.Success){
+						$nodeName = $result.Groups[1].Value
+						$lbWithBackendPorts.Add($nodeName, $loadBalancerBackendPorts)
+					}
+
+				  }
+				  
+			    } 
 			}
 			#If no ports open, Pass the TCP
-			if($loadBalancerBackendPorts.Count -eq 0)
+			if($lbWithBackendPorts.Count -eq 0)
 			{
 				$controlResult.AddMessage("No ports enabled in load balancer.")  
 				$controlResultList += $controlResult      
@@ -339,7 +355,14 @@ class ServiceFabric : SVTBase
 			else
 			{
 				$reverseProxyEnabledNode.Keys  | Foreach-Object {
-					if($loadBalancerBackendPorts.Contains( [Int32] $reverseProxyEnabledNode[$_]))
+				    $loadBalancerBackendPorts = @()
+				    $nodeName = $_
+				    $lbWithBackendPorts.Keys | ForEach-Object{
+						if($_ -eq $nodeName){
+							$loadBalancerBackendPorts = $lbWithBackendPorts[$_]
+						}
+					}
+					if($loadBalancerBackendPorts.Count -gt 0 -and  $loadBalancerBackendPorts.Contains( [Int32] $reverseProxyEnabledNode[$_]))
 					{
 						$isPassed = $false;
 						$controlResult.AddMessage("Reverse proxy port is publicly exposed for node '$_'");
@@ -775,7 +798,7 @@ class ServiceFabric : SVTBase
 			$loadBalancerResources = $this.GetLinkedResources("Microsoft.Network/loadBalancers")
 			#Collect all open ports on load balancer  
 			$loadBalancerResources | ForEach-Object{
-				$loadBalancerResource = Get-AzureRmLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
+				$loadBalancerResource = Get-AzLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
 				$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
 			
 				$loadBalancingRules | ForEach-Object {
@@ -964,7 +987,7 @@ class ServiceFabric : SVTBase
 
 	[PSObject] GetLinkedResources([string] $resourceType)
 	{
-	    return  Get-AzureRmResource -TagName $this.DefaultTagName -TagValue $this.ClusterTagValue | Where-Object { ($_.ResourceType -EQ $resourceType) -and ($_.ResourceGroupName -eq $this.ResourceContext.ResourceGroupName) }
+	    return  Get-AzResource -TagName $this.DefaultTagName -TagValue $this.ClusterTagValue | Where-Object { ($_.ResourceType -EQ $resourceType) -and ($_.ResourceGroupName -eq $this.ResourceContext.ResourceGroupName) }
 	}	
 
 }
