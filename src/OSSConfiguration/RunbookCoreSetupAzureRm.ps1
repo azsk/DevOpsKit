@@ -347,7 +347,26 @@ function EnableHelperSchedule($scheduleName)
         $scheduleName = $scheduleName[0]
     }
     #Enable only required schedule and disable others
-    $enabledSchedule = Set-AzureRmAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true -ErrorAction SilentlyContinue
+	$isRegistered = (Get-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG `
+						-RunbookName $RunbookName -ScheduleName $scheduleName -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0
+	if(!$isRegistered)
+	{
+		Write-Output ("CS.o: CA Runbook is not linked to the Scheduler. Linking....")
+		$sched = Register-AzureRmAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $scheduleName `
+		-ResourceGroupName $AutomationAccountRG `
+		-AutomationAccountName $AutomationAccountName   
+		if($sched)
+		{
+			Write-Output ("CS.o: Linked RB: [$($sched.RunbookName)]")
+            PublishEvent -EventName "CA Helper schedule relinked" -Properties @{"ScheduleName" = ($sched.ScheduleName);} 
+		}
+		else{
+			Write-Output ("CS.o: Failed to link RB. Will retry later.")
+			PublishEvent -EventName "CA Helper schedule relink failed" -Properties @{"ScheduleName" = ($scheduleName);}
+		}
+
+	}
+	$enabledSchedule = Set-AzureRmAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true -ErrorAction SilentlyContinue
 	if(($enabledSchedule|Measure-Object).Count -gt 0 -and $enabledSchedule.IsEnabled)
 	{
 		DisableHelperSchedules -excludeSchedule $scheduleName
