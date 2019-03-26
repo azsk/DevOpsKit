@@ -592,8 +592,8 @@ try
 			PublishEvent -EventName "CA Setup Succeeded" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 		}	
 	}	
-	Write-Output ("CS.o: Downloading Az.Accounts and Az.Automation.")
-	PublishEvent -EventName "CA Az Stage1" -Properties @{"Description" = "Installing Az.Accounts and Az.Automation"  }
+	Write-Output ("CS.o: Checking if Az.Accounts and Az.Automation present in automation account.")
+	PublishEvent -EventName "CA Az Stage1" -Properties @{"Description" = "Checking if Az.Accounts and Az.Automation present in automation account."  }
 	$AzModule = Get-AzureRmAutomationModule `
     -ResourceGroupName $AutomationAccountRG `
     -AutomationAccountName $AutomationAccountName `
