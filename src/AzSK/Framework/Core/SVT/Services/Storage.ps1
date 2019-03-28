@@ -77,11 +77,9 @@ class Storage: SVTBase
 
 		if(([Helpers]::CheckMember($resource.Properties, "isHnsEnabled") -and ($resource.Properties.isHnsEnabled -eq $true)))
 		{
-
-             $result = $result | Where-Object {$_.Tags -notcontains "HNSDisabled" }
-
+			$result = $result | Where-Object {$_.Tags -notcontains "HNSDisabled"}
 		}
-		
+
 		return $result;
 	}
 
