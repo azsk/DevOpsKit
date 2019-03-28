@@ -1417,7 +1417,7 @@ class CCAutomation: CommandBase
 		else
 		{
 			$resultMsg = "CA Runbook is too old.`r`nRun command 'Update-AzSKContinuousAssurance -SubscriptionId <subId>'."
-			$resultStatus = "Unhealthy"
+			$resultStatus = "OK"
 			$shouldReturn = $true
 		}	
 		if($shouldReturn)
