@@ -12,7 +12,7 @@
     RootModule             = '.\AzSK.AzureDevOps.psm1'
 
     # Version number of this module.
-    ModuleVersion          = '0.9.0'
+    ModuleVersion          = '0.9.4'
 
     # ID used to uniquely identify this module
     GUID                   = '02499e92-5b56-4156-9606-383a7ba720f9'

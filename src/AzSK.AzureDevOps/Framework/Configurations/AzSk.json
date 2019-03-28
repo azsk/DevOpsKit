@@ -23,7 +23,7 @@
    "InstallationCommand": "Install-Module -Name AzSK -Scope CurrentUser -AllowClobber -Force",
    "OutputFolderPath": "",
    "BackwardCompatibleVersionCount": 2,
-   "AzSKCARunbookVersion": "3.1902.0",
+   "AzSKCARunbookVersion": "3.1803.0",
    "ConfigSchemaBaseVersion": "3.1803.0",
    "RunbookScanAgentBaseVersion": "1.0.0",
    "AllowSelfSignedWebhookCertificate": false,

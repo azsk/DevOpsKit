@@ -98,7 +98,7 @@ class Build: SVTBase
 
         $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
 
-        if([Helpers]::CheckMember($responseObj,"dataProviders") -and $responseObj.dataProviders.'ms.vss-build-web.ci-data-provider'-and  $responseObj.dataProviders.'ms.vss-build-web.ci-data-provider'.historyView.builds)
+        if([Helpers]::CheckMember($responseObj,"dataProviders") -and $responseObj.dataProviders.'ms.vss-build-web.ci-data-provider' -and [Helpers]::CheckMember($responseObj.dataProviders.'ms.vss-build-web.ci-data-provider'.historyView,"builds") -and  $responseObj.dataProviders.'ms.vss-build-web.ci-data-provider'.historyView.builds)
         {
 
             $builds = $responseObj.dataProviders.'ms.vss-build-web.ci-data-provider'.historyView.builds
