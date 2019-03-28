@@ -1,0 +1,24 @@
+{
+    "FeatureName":  "User",
+    "Reference":  "aka.ms/azsktcp/user",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+      "ControlID": "AAD_User_Set_Emergency_Contacts",
+      "Description": "Users must set emergency contacts in AAD.",
+      "Id": "User110",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckEmergencyContacts",
+      "Rationale": "TODO.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthN"
+      ],
+      "Enabled": true
+    }
+]
+}

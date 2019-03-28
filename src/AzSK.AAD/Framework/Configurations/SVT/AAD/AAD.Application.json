@@ -1,0 +1,61 @@
+{
+    "FeatureName":  "Application",
+    "Reference":  "aka.ms/azsktcp/Application",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+      "ControlID": "AAD_Application_AuthZ_Min_RBAC_Access",
+      "Description": "All teams/groups must be granted minimum required permissions on build defination",
+      "Id": "App110",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/policies/permissions?view=vsts",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_Remove_Test_Demo_Apps",
+      "Description": "Test or demo apps older than 3 (TODO) months should be removed from AAD.",
+      "Id": "App120",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckOldTestDemoApps",
+      "Rationale": "Demo apps expose attack vectors...don't keep them too long.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_DP_Return_URLs_HTTPS",
+      "Description": "All return URLs configured for an application must be HTTPS endpoints.",
+      "Id": "App130",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckReturnURLsAreHTTPS",
+      "Rationale": "Return URL HTTPS...TODO.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    }
+  ]
+}

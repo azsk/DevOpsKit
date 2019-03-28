@@ -1,0 +1,75 @@
+{
+    "FeatureName":  "Tenant",
+    "Reference":  "aka.ms/azsktcp/tenant",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+      "ControlID": "AAD_Tenant_Review_Guest_Access_Config",
+      "Description": "Review Guest acess...",
+      "Id": "Tenant110",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckAADGuestAccessConfig",
+      "Rationale": "TODO.",
+      "Recommendation": "Refer: https://docs.microsoft.com/ TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+        "ControlID": "AAD_Tenant_Review_MFA_Settings",
+        "Description": "Ensure that MFA is turned ON for users.",
+        "Id": "Tenant120",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckMFASettings",
+        "Rationale": "TODO-MFA.",
+        "Recommendation": "Go to..TODO",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthN"
+        ],
+        "Enabled": true
+      },
+      {
+          "ControlID": "AAD_Tenant_Users_Cannot_Create_Apps",
+          "Description": "Do not permit users to create apps in tenant by default.",
+          "Id": "Tenant130",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckUserPermissionsToCreateApps",
+          "Rationale": "TODO-App-Create.",
+          "Recommendation": "Go to..TODO",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+            "ControlID": "AAD_Tenant_Users_Cannot_Invite_Guests",
+            "Description": "Do not permit users to create invite guests to the tenant.",
+            "Id": "Tenant140",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "CheckUserPermissionToInviteGuests",
+            "Rationale": "TODO-Guest-Invite.",
+            "Recommendation": "Go to..TODO",
+            "Tags": [
+              "SDL",
+              "TCP",
+              "Automated",
+              "AuthN"
+            ],
+            "Enabled": true
+          }
+    ]
+    }

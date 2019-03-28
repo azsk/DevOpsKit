@@ -1,0 +1,41 @@
+{
+    "FeatureName":  "ServicePrincipal",
+    "Reference":  "aka.ms/azsktcp/serviceprincipal",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+      {
+        "ControlID": "AAD_ServicePrincipal_Use_Cert_Credentials",
+        "Description": "SPNs must not use password creds - use cert creds instead.",
+        "Id": "SPN110",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckSPNPasswordCredentials",
+        "Rationale": "TODO.",
+        "Recommendation": "Refer: TODO",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthN"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AAD_ServicePrincipal_Review_Legacy_SPN",
+        "Description": "SPNs of type legacy should be carefully reviewed.",
+        "Id": "SPN120",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "ReviewLegacySPN",
+        "Rationale": "TODO.",
+        "Recommendation": "Refer: TODO",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthN"
+        ],
+        "Enabled": true
+      }
+]
+}
