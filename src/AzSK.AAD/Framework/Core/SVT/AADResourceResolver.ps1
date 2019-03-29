@@ -82,7 +82,7 @@ class AADResourceResolver: Resolver
 
         #Get apps owned by user
         $currUser = [Helpers]::GetCurrentSessionUser();
-        $userCreatedObjects = Get-AzureADUserCreatedObject -ObjectId $currUser
+        $userCreatedObjects = [array] (Get-AzureADUserCreatedObject -ObjectId $currUser)
 
         $appTypeMapping = ([SVTMapping]::AADResourceMapping |
             Where-Object { $_.ResourceType -eq 'AAD.Application' } |
@@ -125,7 +125,7 @@ class AADResourceResolver: Resolver
 
         #TODO delta between user-created/user-owned for Apps/SPNs?
         $nObj = $maxObj
-        $userOwnedObjects =  Get-AzureADUserOwnedObject -ObjectId $currUser
+        $userOwnedObjects =  [array] (Get-AzureADUserOwnedObject -ObjectId $currUser)
         $grpTypeMapping = ([SVTMapping]::AADResourceMapping |
             Where-Object { $_.ResourceType -eq 'AAD.Group' } |
             Select-Object -First 1)

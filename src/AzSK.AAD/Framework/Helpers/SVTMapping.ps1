@@ -332,8 +332,8 @@ class SVTMapping
         },
 		[ResourceTypeMapping]@{
             ResourceType = "AAD.Application";
-            JsonFileName = "AAD.Application.json";
             ClassName = "Application";
+            JsonFileName = "AAD.Application.json";
             ResourceTypeName = "App";            
         },
         [ResourceTypeMapping]@{
@@ -344,7 +344,7 @@ class SVTMapping
         },
         [ResourceTypeMapping]@{
             ResourceType = "AAD.Group";
-			ClassName = "Grpup";
+			ClassName = "Group";
 			JsonFileName = "AAD.Group.json";
 			ResourceTypeName = "Group";
         }

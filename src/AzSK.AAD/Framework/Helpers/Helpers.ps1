@@ -103,14 +103,30 @@ class Helpers {
 
     hidden static [PSObject] GetCurrentAzContext()
     {
+        if ([Helpers]::currentAzContext -eq $null)
+        {
+            throw "Cannot call this method before getting a sign-in context"
+        }
+        return [Helpers]::currentAzContext
+    }
+    
+    hidden static [PSObject] GetCurrentAzContext($desiredTenantId)
+    {
         if(-not [Helpers]::currentAzContext)
         {
             $azContext = Get-AzContext 
 
-            if ($azContext -eq $null)
+            if ($azContext -eq $null -or ($desiredTenantId -ne $null -and $azContext.Tenant.Id -ne $desiredTenantId))
             {
+                if ($azContext) #If we have a context for another tenant, disconnect.
+                {
+                    Disconnect-AzAccount -ErrorAction Stop
+                }
+                #Now try to fetch a fresh context.
                 try {
-                        $azContext = Connect-AzAccount -ErrorAction Stop
+                        $azureContext = Connect-AzAccount -ErrorAction Stop
+                        #On a fresh login, the 'cached' context object we care about is inside the AzureContext
+                        $azContext = $azureContext.Context 
                 }
                 catch {
                     Write-Error("Could not login to Azure environment...")
@@ -121,7 +137,16 @@ class Helpers {
         }
         return [Helpers]::currentAzContext
     }
+
     hidden static [PSObject] GetCurrentAADContext()
+    {
+        if ([Helpers]::currentAADContext -eq $null)
+        {
+            throw "Cannot call this method before getting a sign-in context"
+        }
+        return [Helpers]::currentAADContext
+    }
+    hidden static [PSObject] GetCurrentAADContext($desiredTenantId)
     {
         if(-not [Helpers]::currentAADContext)
         {
@@ -129,7 +154,7 @@ class Helpers {
             #Try leveraging Azure context if available
             try {
                 #Either throws or returns non-null
-                $azContext = [Helpers]::GetCurrentAzContext()
+                $azContext = [Helpers]::GetCurrentAzContext($desiredTenantId)
 
                 $tenantId = $azContext.Tenant.Id
                 $accountId = $azContext.Account.Id
@@ -1033,7 +1058,7 @@ class Helpers {
     }
 
     static [string] GetCurrentSessionUser() {
-        $context = [Helpers]::GetCurrentAADContext()
+        $context = [Helpers]::GetCurrentAADContext() 
         if ($null -ne $context) {
             return $context.Account.Id
         }
