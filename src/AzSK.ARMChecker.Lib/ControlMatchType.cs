@@ -14,6 +14,8 @@
 		RegExpressionMultiToken, // Multi Tokens
 		VerifiableSingleToken, // Single Tokens
 		VerifiableMultiToken, // Multi Tokens
-		Custom // Multi Tokens
-	}
+		Custom, // Multi Tokens
+        NullableSingleToken
+
+    }
 }

@@ -3,20 +3,28 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using AzSK.ARMChecker.Lib.Extensions;
+using System.Collections;
 
 namespace AzSK.ARMChecker.Lib
 {
     public class ControlEvaluator
     {
         private readonly JObject _template;
-        private readonly JObject _externalParameters;
+        private  readonly JObject _externalParameters;
+        private  static JObject _externalParametersDict;
+        private static JObject _armTemplate;
 
         public ControlEvaluator(JObject template, JObject externalParameters)
         {
             _template = template;
             _externalParameters = externalParameters;
+            SetParametersList();
         }
-
+        public void SetParametersList()
+        {
+            _externalParametersDict = _externalParameters;
+            _armTemplate = _template;
+        }
         public ControlResult Evaluate(ResourceControl control, JObject resource)
         {
             switch (control.MatchType)
@@ -47,6 +55,8 @@ namespace AzSK.ARMChecker.Lib
                     return ControlResult.NotSupported(resource);
                 case ControlMatchType.Custom:
                     return ControlResult.NotSupported(resource);
+                case ControlMatchType.NullableSingleToken:
+                    return EvaluateNullableSingleToken(control, resource);
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -158,6 +168,23 @@ namespace AzSK.ARMChecker.Lib
             result.VerificationResult = VerificationResult.Passed;
             return result;
         }
+    
+        private static ControlResult EvaluateNullableSingleToken(ResourceControl control, JObject resource)
+        {
+            var result = ExtractSingleToken(control, resource, out object actual, out BooleanControlData match);
+            result.ExpectedValue = "";
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
+            if (result.IsTokenNotFound || result.IsTokenNotValid)
+            {
+                result.VerificationResult = VerificationResult.Passed;
+            }
+            else
+            {
+                result.VerificationResult = VerificationResult.Verify;
+            }
+            return result;
+          
+        }
 
         private static ControlResult ExtractSingleToken<TV, TM>(ResourceControl control, JObject resource, out TV actual,
             out TM match)
@@ -176,7 +203,48 @@ namespace AzSK.ARMChecker.Lib
             if (tokenNotFound) result.IsTokenNotValid = true;
             try
             {
-                actual = tokenNotFound ? default(TV) : token.Value<TV>();
+                if(tokenNotFound)
+                {
+                    actual = default(TV);
+                }
+                else
+                {
+                    var tokenValue = default(TV);
+                    bool paramterValueFound = false;
+                    // Check if current token is parameter 
+                    if (token.Value<String>().CheckIsParameter())
+                    {
+                        var parameterKey = token.Value<String>().GetParameterKey();
+                        if (parameterKey != null)
+                        {
+                            // Check if parameter value is present in external parameter file
+                            if (_externalParametersDict.ContainsKey("parameters"))
+                            {
+                                JObject externalParameters = _externalParametersDict["parameters"].Value<JObject>();
+                                var externalParamValue = externalParameters.Properties().Where(p => p.Name == parameterKey).Select(p => p.Value["value"].Value<TV>());
+                                if (externalParamValue != null && externalParamValue.Count() > 0)
+                                {
+                                    paramterValueFound = true;
+                                    tokenValue = externalParamValue.First();
+                                }
+
+                            }
+                            // If parameter value is not present in external parameter file, check for default value
+                            if (!paramterValueFound)
+                            {
+                                JObject innerParameters = _armTemplate["parameters"].Value<JObject>();
+                                tokenValue = innerParameters.Properties().Where(p => p.Name == parameterKey).Select(p => p.Value["defaultValue"].Value<TV>()).FirstOrDefault();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        tokenValue = token.Value<TV>();
+              
+                    }
+                    actual = tokenValue;
+                }
+                
             }
             catch (Exception)
             {
@@ -216,5 +284,6 @@ namespace AzSK.ARMChecker.Lib
             return result;
         }
 
+       
     }
 }
