@@ -928,7 +928,7 @@ class SubscriptionCore: SVTBase
 		
 		$criticalRoles = $this.ControlSettings.CriticalPIMRoles;
 		$permanentRoles = $this.permanentAssignments;
-		if([Helpers]::CheckMember($this.ControlSettings,"whitelistedPermanentRoles"))
+		if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
 		{
 			$whitelistedPermanentRoles = $this.ControlSettings.whitelistedPermanentRoles
 		}
