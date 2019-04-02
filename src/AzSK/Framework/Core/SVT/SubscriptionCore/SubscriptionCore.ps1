@@ -919,17 +919,27 @@ class SubscriptionCore: SVTBase
 
 	hidden [ControlResult] CheckPermanentRoleAssignments([ControlResult] $controlResult)
 	{
-		$message='';
+		$message = '';
+		$whitelistedPermanentRoles = $null
 		if($null -eq $this.PIMAssignments -and $null -eq $this.permanentAssignments)
 		{
 			$message=$this.GetPIMRoles();
 		}
 		
-		$criticalRoles=$this.ControlSettings.CriticalPIMRoles;
-		$permanentRoles=$this.permanentAssignments;
-		if(($permanentRoles| measure-object).Count -gt 0 )
+		$criticalRoles = $this.ControlSettings.CriticalPIMRoles;
+		$permanentRoles = $this.permanentAssignments;
+		if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
 		{
-			$criticalPermanentRoles=$permanentRoles|Where-Object{$_.RoleDefinitionName -in $criticalRoles}
+			$whitelistedPermanentRoles = $this.ControlSettings.whitelistedPermanentRoles
+		}
+		
+		if(($permanentRoles | measure-object).Count -gt 0 )
+		{
+			$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles}
+			if($null -ne $whitelistedPermanentRoles)
+			{
+				$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}
+			}
 			if(($criticalPermanentRoles| measure-object).Count -gt 0)
 			{
 				$controlResult.SetStateData("Permanent role assignments present on subscription",$criticalPermanentRoles)
