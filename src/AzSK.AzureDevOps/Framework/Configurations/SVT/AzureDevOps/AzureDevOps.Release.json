@@ -22,7 +22,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Release_DP_No_PlainText_Secrets_In_Defination",
+      "ControlID": "AzureDevOps_Release_DP_No_PlainText_Secrets_In_Definition",
       "Description": "Secrets and keys must not be stored as plain text in release variables/task parameters",
       "Id": "Release120",
       "ControlSeverity": "High",
@@ -52,6 +52,44 @@
         "Best Practice",
         "Manual",
         "SI"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Release_##_Disable_InheritPermissions",
+      "Description": "##",
+      "Id": "Release130",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckRBACInheritPermissions",
+      "Rationale": "##",
+      "Recommendation": "##",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Best Practice",
+        "Automated",
+        "##",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Release_##_Min_Group_Access",
+      "Description": "##",
+      "Id": "Release140",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckGroupPermissions",
+      "Rationale": "##",
+      "Recommendation": "##",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Best Practice",
+        "Automated",
+        "##",
+        "RBAC"
       ],
       "Enabled": true
     }

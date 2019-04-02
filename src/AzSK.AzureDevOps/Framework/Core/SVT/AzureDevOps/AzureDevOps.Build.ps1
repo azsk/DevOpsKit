@@ -2,9 +2,12 @@ Set-StrictMode -Version Latest
 class Build: SVTBase
 {    
 
+    hidden [PSObject] $buildObj;
+    
     Build([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     {
-
+        # Get build object
+        $this.buildObj = [WebRequestHelper]::InvokeGetWebRequest($this.ResourceContext.ResourceId);
     }
 
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
@@ -66,27 +69,24 @@ class Build: SVTBase
 
     hidden [ControlResult] CheckInActiveBuild([ControlResult] $controlResult)
     {
-
-        $apiURL = $this.ResourceContext.ResourceId
-        $buildObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        if($buildObj)
+        if($this.buildObj)
         {
-                    $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery/project/{1}?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$buildObj.project.id;
+                    $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery/project/{1}?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$this.buildObj.project.id;
             $inputbody =  "{
                 'contributionIds': [
                     'ms.vss-build-web.ci-data-provider'
                 ],
                 'dataProviderContext': {
                     'properties': {
-                        'definitionIds': '$($buildObj.id)',
-                        'definitionId': '$($buildObj.id)',
+                        'definitionIds': '$($this.buildObj.id)',
+                        'definitionId': '$($this.buildObj.id)',
                         'view': 'buildsHistory',
                         'hubQuery': 'true',
                         'sourcePage': {
-                            'url': 'https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/AzSDKDemoRepo/_build?definitionId=$($buildObj.id)',
+                            'url': 'https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/AzSDKDemoRepo/_build?definitionId=$($this.buildObj.id)',
                             'routeId': 'ms.vss-build-web.ci-definitions-hub-route',
                             'routeValues': {
-                                'project': '$($buildObj.project.name)',
+                                'project': '$($this.buildObj.project.name)',
                                 'viewname': 'definitions',
                                 'controller': 'ContributedPage',
                                 'action': 'Execute'
@@ -94,7 +94,7 @@ class Build: SVTBase
                         }
                     }
                 }
-        }"  | ConvertFrom-Json #-f $($buildObj.id),$this.SubscriptionContext.SubscriptionName,$buildObj.project.name
+        }"  | ConvertFrom-Json #-f $($this.buildObj.id),$this.SubscriptionContext.SubscriptionName,$this.buildObj.project.name
 
         $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
 
@@ -136,9 +136,66 @@ class Build: SVTBase
                                                 "No build history found. Build is inactive.");
         }
     }
-        
-        
-        
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckRBACInheritPermissions([ControlResult] $controlResult)
+    {
+        # Get security namespace identifier of current build.
+        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
+        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        $securityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
+
+        # Here 'permissionSet' = security namespace identifier, 'token' = project id and 'tokenDisplayVal' = build name
+        $apiURL = "https://{0}.visualstudio.com/{1}/_admin/_security/index?useApiUrl=true&permissionSet={2}&token={3}%2F{4}&tokenDisplayVal={5}&style=min" -f $($this.SubscriptionContext.SubscriptionName), $($this.buildObj.project.id), $($securityNamespaceId), $($this.buildObj.project.id), $($this.buildObj.id), $($this.buildObj.name) ;
+        $header = [WebRequestHelper]::GetAuthHeaderFromUri($apiURL);
+        $responseObj = Invoke-RestMethod -Method Get -Uri $apiURL -Headers $header -UseBasicParsing
+        $responseObj = ($responseObj.SelectNodes("//script") | Where-Object { $_.class -eq "permissions-context" }).InnerXML | ConvertFrom-Json; 
+        if($responseObj.inheritPermissions -eq $true)
+        {
+            $controlResult.AddMessage([VerificationResult]::Failed,"##");
+        }
+        else 
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"##");    
+        }
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckGroupPermissions([ControlResult] $controlResult)
+    {
+        # Get security namespace identifier of current build.
+        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
+        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        $securityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
+
+        # Here 'permissionSet' = security namespace identifier, 'token' = project id and 'tokenDisplayVal' = build name
+        $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/ReadExplicitIdentitiesJson?__v=5&permissionSetId={2}&permissionSetToken={3}%2F{4}" -f $($this.SubscriptionContext.SubscriptionName), $($this.buildObj.project.id), $($securityNamespaceId), $($this.buildObj.project.id), $($this.buildObj.id);
+        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        $securityGroups = $responseObj.identities | Where-Object { $_.IdentityType -eq "group" }
+        $nonWhitelistedSecurityGroups =  $securityGroups | ForEach-Object {
+            $inScope = $false
+            $groupIdentity = $_
+            $Match = $this.ControlSettings.Build.WhitelistedBuiltInSecurityGroups.Where({$_.Name -eq $groupIdentity.FriendlyDisplayName})
+            if(($Match | Measure-Object).Count -gt 0)
+            {
+               $inScope = ($Match.Level -eq "Project" -and $groupIdentity.Scope -eq $this.ResourceContext.ResourceGroupName) -or 
+               ($Match.Level -eq "Organization" -and $groupIdentity.Scope -eq $this.SubscriptionContext.SubscriptionName)
+            }                    
+            if(-not $inScope)
+            {
+               return $groupIdentity
+            }
+        }
+        if(($nonWhitelistedSecurityGroups | Measure-Object).Count -eq 0)
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"##");
+        }
+        else 
+        {
+            $controlResult.AddMessage([VerificationResult]::Verify,"##");
+            $controlResult.SetStateData("##", $nonWhitelistedSecurityGroups);
+        }
         return $controlResult
     }
 }

@@ -71,24 +71,62 @@
           "DP"
         ],
         "Enabled": true
-      },
-      {
-        "ControlID": "AzureDevOps_Build_SI_Review_InActive_Build",
-        "Description": " Inactive build must be removed",
-        "Id": "Build160",
-        "ControlSeverity": "Low",
-        "Automated": "Yes",
-        "MethodName": "CheckInActiveBuild",
-        "Rationale": "Each additional build having access at repositories increases the attack surface. To minimize this risk ensure that only activite and legitimate build resources present in Organization",
-        "Recommendation": "https://docs.microsoft.com/en-us/rest/api/azure/devops/build/definitions/delete?view=azure-devops-rest-5.0",
-        "Tags": [
-          "SDL",
-          "Best Practice",
-          "Manual",
-          "SI"
-        ],
-        "Enabled": true
-      }
+    },
+    {
+      "ControlID": "AzureDevOps_Build_SI_Review_InActive_Build",
+      "Description": "Inactive build must be removed",
+      "Id": "Build160",
+      "ControlSeverity": "Low",
+      "Automated": "Yes",
+      "MethodName": "CheckInActiveBuild",
+      "Rationale": "Each additional build having access at repositories increases the attack surface. To minimize this risk ensure that only activite and legitimate build resources present in Organization",
+      "Recommendation": "https://docs.microsoft.com/en-us/rest/api/azure/devops/build/definitions/delete?view=azure-devops-rest-5.0",
+      "Tags": [
+        "SDL",
+        "Best Practice",
+        "Manual",
+        "SI"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Build_##_Disable_InheritPermissions",
+      "Description": "##",
+      "Id": "Build170",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckRBACInheritPermissions",
+      "Rationale": "##",
+      "Recommendation": "##",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Best Practice",
+        "Automated",
+        "##",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Build_##_Min_Group_Access",
+      "Description": "##",
+      "Id": "Build180",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckGroupPermissions",
+      "Rationale": "##",
+      "Recommendation": "##",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Best Practice",
+        "Automated",
+        "##",
+        "RBAC"
+      ],
+      "Enabled": true
+    }
     
   ]
 }

@@ -331,10 +331,38 @@
     "Low": "Low"
   },
   "Build":{
-    "BuildHistoryPeriodInDays": 180
+    "BuildHistoryPeriodInDays": 180,
+    "WhitelistedBuiltInSecurityGroups":[
+      {
+        "Name":  "Readers",
+        "Level": "Project"
+      },
+      {
+        "Name":  "Project Administrators",
+        "Level": "Project"
+      },
+      {
+        "Name":  "Project Collection Administrators",
+        "Level": "Organization"
+      }
+    ]
   },
   "Release":{
-    "ReleaseHistoryPeriodInDays": 180
+    "ReleaseHistoryPeriodInDays": 180,
+    "WhitelistedBuiltInSecurityGroups":[
+      {
+        "Name":  "Readers",
+        "Level": "Project"
+      },
+      {
+        "Name":  "Project Administrators",
+        "Level": "Project"
+      },
+      {
+        "Name":  "Project Collection Administrators",
+        "Level": "Organization"
+      }
+    ]
   },
   "Organization":{
     "InActiveUserActivityLogsPeriodInDays": 365

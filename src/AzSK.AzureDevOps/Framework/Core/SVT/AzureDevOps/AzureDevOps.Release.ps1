@@ -1,10 +1,12 @@
 Set-StrictMode -Version Latest 
 class Release: SVTBase
-{    
+{   
 
+    hidden [PSObject] $releaseObj;
+    
     Release([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     {
-
+        $this.releaseObj = [WebRequestHelper]::InvokeGetWebRequest($this.ResourceContext.ResourceId);
     }
 
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
@@ -68,11 +70,11 @@ class Release: SVTBase
     {
 
         $apiURL = $this.ResourceContext.ResourceId
-        $releaesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        if($releaesObj)
+        $this.releaseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        if($this.releaseObj)
         {
-            $pattern = "https://vsrm.dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/(.*?)/_apis/Release/definitions/$($releaesObj.id)" 
-            $projectId = [regex]::match($releaesObj.url.ToLower(), $pattern.ToLower()).Groups[1].Value
+            $pattern = "https://vsrm.dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/(.*?)/_apis/Release/definitions/$($this.releaseObj.id)" 
+            $projectId = [regex]::match($this.releaseObj.url.ToLower(), $pattern.ToLower()).Groups[1].Value
             $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery/project/{1}?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$projectId;
             $inputbody =  "{
                 'contributionIds': [
@@ -80,11 +82,11 @@ class Release: SVTBase
                 ],
                 'dataProviderContext': {
                     'properties': {
-                        'definitionIds': '$($releaesObj.id)',
-                        'definitionId': '$($releaesObj.id)',
+                        'definitionIds': '$($this.releaseObj.id)',
+                        'definitionId': '$($this.releaseObj.id)',
                         'fetchAllReleases': true,
                         'sourcePage': {
-                            'url': 'https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/AzSDKDemoRepo/_release?view=mine&definitionId=$($releaesObj.id)',
+                            'url': 'https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/AzSDKDemoRepo/_release?view=mine&definitionId=$($this.releaseObj.id)',
                             'routeId': 'ms.vss-releaseManagement-web.hub-explorer-3-default-route',
                             'routeValues': {
                                 'project': '$($this.ResourceContext.ResourceGroupName)',
@@ -137,6 +139,69 @@ class Release: SVTBase
                                                 "No release history found. release is inactive.");
         }
     } 
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckRBACInheritPermissions ([ControlResult] $controlResult)
+    {
+        $projectId = $this.releaseObj.artifacts.definitionReference.project.id
+        # Get security namespace identifier of current release pipeline.
+        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
+        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        $securityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ReleaseManagement") -and ($_.actions.name -contains "ViewReleaseDefinition")}).namespaceId
+
+        # Here 'permissionSet' = security namespace identifier, 'token' = project id
+        $apiURL = "https://{0}.visualstudio.com/{1}/_admin/_security/index?useApiUrl=true&permissionSet={2}&token={3}%2F{4}&style=min" -f $($this.SubscriptionContext.SubscriptionName), $($projectId), $($securityNamespaceId), $($projectId), $($this.releaseObj.id);
+        $header = [WebRequestHelper]::GetAuthHeaderFromUri($apiURL);
+        $responseObj = Invoke-RestMethod -Method Get -Uri $apiURL -Headers $header -UseBasicParsing
+        $responseObj = ($responseObj.SelectNodes("//script") | Where-Object { $_.class -eq "permissions-context" }).InnerXML | ConvertFrom-Json; 
+        if($responseObj.inheritPermissions -eq $true)
+        {
+            $controlResult.AddMessage([VerificationResult]::Failed,"##");
+        }
+        else 
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"##");
+        }
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckGroupPermissions ([ControlResult] $controlResult)
+    {
+        $pattern = "https://$($this.SubscriptionContext.SubscriptionName).vsrm.visualstudio.com/(.*?)/_apis/Release/definitions/$($this.releaseObj.id)"
+        $projectId = [regex]::match($this.releaseObj.url.ToLower(), $pattern.ToLower()).Groups[1].Value
+        # Get security namespace identifier of current release pipeline.
+        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
+        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        $securityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ReleaseManagement") -and ($_.actions.name -contains "ViewReleaseDefinition")}).namespaceId
+
+        # Here 'permissionSet' = security namespace identifier, 'token' = project id
+        $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/ReadExplicitIdentitiesJson?__v=5&permissionSetId={2}&permissionSetToken={3}%2F{4}" -f $($this.SubscriptionContext.SubscriptionName), $($projectId), $($securityNamespaceId), $($projectId), $($this.releaseObj.id);
+        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        $securityGroups = $responseObj.identities | Where-Object { $_.IdentityType -eq "group" }
+        $nonWhitelistedSecurityGroups =  $securityGroups | ForEach-Object {
+            $inScope = $false
+            $groupIdentity = $_
+            $Match = $this.ControlSettings.Release.WhitelistedBuiltInSecurityGroups.Where({$_.Name -eq $groupIdentity.FriendlyDisplayName})
+            if(($Match | Measure-Object).Count -gt 0)
+            {
+               $inScope = ($Match.Level -eq "Project" -and $groupIdentity.Scope -eq $this.ResourceContext.ResourceGroupName) -or 
+               ($Match.Level -eq "Organization" -and $groupIdentity.Scope -eq $this.SubscriptionContext.SubscriptionName)
+            }                    
+            if(-not $inScope)
+            {
+               return $groupIdentity
+            }
+        }
+        if(($nonWhitelistedSecurityGroups | Measure-Object).Count -eq 0)
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"##");
+        }
+        else 
+        {
+            $controlResult.AddMessage([VerificationResult]::Verify,"##");
+            $controlResult.SetStateData("##", $nonWhitelistedSecurityGroups);
+        }
         return $controlResult
     }
 }

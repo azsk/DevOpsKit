@@ -2,9 +2,14 @@ Set-StrictMode -Version Latest
 class ServiceConnection: SVTBase
 {    
     [PSObject] $ServiceEndPointsObj = $null
+    [PSObject] $projectObj = $null
     ServiceConnection([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     { 
-        
+        # Get project id
+        $apiURL = "https://dev.azure.com/{0}/_apis/projects/{1}?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName), $($this.ResourceContext.ResourceGroupName);
+        $this.projectObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+
+        # Get service connection details
         $apiURL = "https://dev.azure.com/{0}/{1}/_apis/serviceendpoint/endpoints?api-version=4.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$($this.ResourceContext.ResourceGroupName);
         $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 	    $this.ServiceEndPointsObj = $responseObj
@@ -143,6 +148,38 @@ class ServiceConnection: SVTBase
         else {
             $controlResult.AddMessage([VerificationResult]::Failed,
                                         "Below endpoints are used with secret based auth",$inactiveEnpoints);
+        }
+        return $controlResult;
+    }
+
+    hidden [ControlResult] CheckRBACInheritPermissions ([ControlResult] $controlResult)
+	{
+        $inheritPermissionsEnabled = @()
+        # Get security namespace identifier of service endpoints.
+        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
+        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        $securityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ServiceEndpoints")}).namespaceId
+
+        
+        $this.ServiceEndPointsObj | ForEach-Object{
+            $Endpoint = $_
+            $apiURL = "https://dev.azure.com/{0}/_apis/accesscontrollists/{1}?token=endpoints/{2}/{3}&api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName),$securityNamespaceId,$($this.projectObj.id),$($Endpoint.id);
+            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+            if($responseObj.inheritPermissions -eq $true)
+            {
+                $inheritPermissionsEnabled += @{EndPointName= $Endpoint.Name; Creator = $Endpoint.createdBy.displayName; inheritPermissions=$responseObj.inheritPermissions }
+            }
+            
+        }
+
+        if($inheritPermissionsEnabled.Count -eq 0)
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"##");
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Failed,"##");
+            $controlResult.SetStateData("##", $inheritPermissionsEnabled);
         }
         return $controlResult;
     }

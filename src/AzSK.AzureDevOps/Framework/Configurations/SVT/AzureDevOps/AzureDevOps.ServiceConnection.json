@@ -38,40 +38,40 @@
       "Enabled": true,
       "Rationale": "Just like AD-based service accounts, SPNs have a single credential and most scenarios that use them cannot support multi-factor authentication. As a result, adding SPNs to a subscription in 'Owners' or 'Contributors' roles is risky."
     },
-     {
-        "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Justify_Connection_Admin",
-        "Description": "Justify all identities that are granted with admin/user access for extensions.",
-        "Id": "ServiceConnection130",
-        "ControlSeverity": "High",
-        "Automated": "No",
-        "MethodName": "CheckServiceConnectionAdmins",
-        "Rationale": "Accounts with admin access can install/manage extensions for Organization. Members with this access without a legitimate business reason increase the risk for Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
-        "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Servicie Connections --> Roles --> Verify connection admin and users",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Manual",
-          "AuthZ"
-        ],
-        "Enabled": true
-      },
-      {
-        "ControlID": "AzureDevOps_ServiceConnection_Audit_RequestHistory",
-        "Description": "Request history must be reviewed validate request is coming from legitimate build/release defination",
-        "Id": "ServiceConnection140",
-        "ControlSeverity": "High",
-        "Automated": "No",
-        "MethodName": "",
-        "Rationale": "Periodic reviews of request history logs ensures that sevice connection been used from legitimate build definations and avoid major compromise.",
-        "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Servicie Connections --> Request History --> Validate connection is been used from legitimate build/release definations only",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Manual",
-          "Audit"
-        ],
-        "Enabled": true
-      },
+    {
+      "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Justify_Connection_Admin",
+      "Description": "Justify all identities that are granted with admin/user access for extensions.",
+      "Id": "ServiceConnection130",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "CheckServiceConnectionAdmins",
+      "Rationale": "Accounts with admin access can install/manage extensions for Organization. Members with this access without a legitimate business reason increase the risk for Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
+      "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Servicie Connections --> Roles --> Verify connection admin and users",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "AuthZ"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_ServiceConnection_Audit_RequestHistory",
+      "Description": "Request history must be reviewed validate request is coming from legitimate build/release defination",
+      "Id": "ServiceConnection140",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Periodic reviews of request history logs ensures that sevice connection been used from legitimate build definations and avoid major compromise.",
+      "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Servicie Connections --> Request History --> Validate connection is been used from legitimate build/release definations only",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "Audit"
+      ],
+      "Enabled": true
+    },
     {
       "ControlID": "AzureDevOps_ServiceConnection_Authz_Dont_Use_Classic_Connections",
       "Description": "Do not use any classic resources on a subscription",
@@ -88,6 +88,24 @@
       ],
       "Enabled": true,
       "Rationale": "You should use new ARM/v2 resources as the ARM model provides several security enhancements such as: stronger access control (RBAC), better auditing, ARM-based deployment/governance, access to managed identities, access to key vault for secrets, AAD-based authentication, support for tags and resource groups for easier security management, etc."
+    },
+    {
+      "ControlID": "AzureDevOps_ServiceConnection_##_Disable_InheritPermissions",
+      "Description": "##",
+      "Id": "ServiceConnection160",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckRBACInheritPermissions",
+      "Recommendation": "##",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "##",
+        "RBAC"
+      ],
+      "Enabled": true,
+      "Rationale": "##"
     }
 ]
 }
