@@ -965,9 +965,11 @@ class SubscriptionCore: SVTBase
 			$rgListwithoutTagValue = [System.Collections.ArrayList]::new()
 			$RGListWithoutExpectedTypeValue = [System.Collections.ArrayList]::new()
 
+			$controlResult.AddMessage("`nPolicy Requirement:`n")
+
 			$this.ControlSettings.MandatoryTags | ForEach-Object {
 				$tagObject = $_
-				$controlResult.AddMessage("`nPolicy Requirement: `n`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpected Values: '$($tagObject.Values)'`n")
+				$controlResult.AddMessage("`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpected Values: '$($tagObject.Values)'`n`n")
 			}
 
 			if(($resourceGroups | Measure-Object).Count -gt 0)
