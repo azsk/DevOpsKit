@@ -409,6 +409,9 @@ try
 		{
 			Write-Output("Unable to fetch tags")
 		}
+		$retryDownloadIntervalMins = 15
+		Write-Output ("CS.o: AzSK not fully ready to run. Creating helper schedule for another retry...")
+		ScheduleNewJob -intervalInMins $retryDownloadIntervalMins
 	}
 	if(-not $isBaseProfileModule -or ($RunbookVersion -eq $RmRunbookVersion) )
 	{
