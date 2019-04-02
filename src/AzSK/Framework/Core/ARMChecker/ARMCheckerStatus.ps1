@@ -166,6 +166,7 @@ class ARMCheckerStatus: EventBase
 					$relatedParameterFile = $ParameterFiles | Where-Object { $_.Name -eq $relatedParameterFileName }
 					if($null -ne $relatedParameterFile)
 					{
+						$relatedParameterFile = $relatedParameterFile | Select-Object -First 1
 						$paramterFileContent = Get-Content $relatedParameterFile.FullName -Raw
 					}
 					$libResults = $armEvaluator.Evaluate($armTemplateContent, $paramterFileContent);
