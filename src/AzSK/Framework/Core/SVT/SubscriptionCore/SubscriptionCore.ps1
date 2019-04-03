@@ -967,11 +967,13 @@ class SubscriptionCore: SVTBase
 
 			$controlResult.AddMessage("`nPolicy Requirement:`n")
 
+			#Gives the mandatory tags expected along with the expected values
 			$this.ControlSettings.MandatoryTags | ForEach-Object {
 				$tagObject = $_
 				$controlResult.AddMessage("`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpected Values: '$($tagObject.Values)'`n`n")
 			}
 
+			#This loop checks the mandatory tags RG-wise and computes lists on the basis of that
 			if(($resourceGroups | Measure-Object).Count -gt 0)
 			{
 				$rgTagStatus = $true
