@@ -993,6 +993,7 @@ class SubscriptionCore: SVTBase
 						{
 							if (($currentRg.Tags.Keys -imatch $tagObject.Name).Count -gt 1) 
 							{
+								#This captures all those RGs which have the same mandatory tags placed on them two or more times
 								if ($rgListwithDuplicateTags -notcontains $currentRg) 
 								{
 									$rgListwithDuplicateTags.Add($currentRg) | Out-Null
@@ -1013,6 +1014,7 @@ class SubscriptionCore: SVTBase
 								}	
 								if($tagObject.ValidateTagValueType)
 								{     
+									#This is basically for checking if the ComponentId is in proper GUID format
 									switch($tagObject.Type)
 									{
 										("Guid") {  
