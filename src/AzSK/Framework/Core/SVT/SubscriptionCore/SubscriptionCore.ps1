@@ -665,18 +665,18 @@ class SubscriptionCore: SVTBase
                             $alertDiffList += $alert
                         }
 						#if alert exists then verify operation list 
-						else
-						{
-							$diffObj= $foundAlert.Properties.condition.allOf[2].anyOf | Select-Object equals
-							$refObj= $alert.AlertOperationList | Where-Object {$_.Enabled -eq $true} | Select-Object OperationName
-							$opDiffList= Compare-Object -ReferenceObject $refObj -DifferenceObject $diffObj | Select-Object -property @{N='OperationList';E={$_.InputObject.equals}}  
-							if($null -ne $opDiffList)
-							{
-								$opList=  $opDiffList.OperationList
-								$foundRequiredAlerts = $false
-								$operationDiffList += @{Name=$alertName; Description=$alert.Description; OperationNameList = $opList }
-							}
-						}
+						# else
+						# {
+						# 	$diffObj= $foundAlert.Properties.condition.allOf[2].anyOf | Select-Object equals
+						# 	$refObj= $alert.AlertOperationList | Where-Object {$_.Enabled -eq $true} | Select-Object OperationName
+						# 	$opDiffList= Compare-Object -ReferenceObject $refObj -DifferenceObject $diffObj | Select-Object -property @{N='OperationList';E={$_.InputObject.equals}}  
+						# 	if($null -ne $opDiffList)
+						# 	{
+						# 		$opList=  $opDiffList.OperationList
+						# 		$foundRequiredAlerts = $false
+						# 		$operationDiffList += @{Name=$alertName; Description=$alert.Description; OperationNameList = $opList }
+						# 	}
+						# }
                     }
                 }
             }
@@ -919,17 +919,27 @@ class SubscriptionCore: SVTBase
 
 	hidden [ControlResult] CheckPermanentRoleAssignments([ControlResult] $controlResult)
 	{
-		$message='';
+		$message = '';
+		$whitelistedPermanentRoles = $null
 		if($null -eq $this.PIMAssignments -and $null -eq $this.permanentAssignments)
 		{
 			$message=$this.GetPIMRoles();
 		}
 		
-		$criticalRoles=$this.ControlSettings.CriticalPIMRoles;
-		$permanentRoles=$this.permanentAssignments;
-		if(($permanentRoles| measure-object).Count -gt 0 )
+		$criticalRoles = $this.ControlSettings.CriticalPIMRoles;
+		$permanentRoles = $this.permanentAssignments;
+		if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
 		{
-			$criticalPermanentRoles=$permanentRoles|Where-Object{$_.RoleDefinitionName -in $criticalRoles}
+			$whitelistedPermanentRoles = $this.ControlSettings.whitelistedPermanentRoles
+		}
+		
+		if(($permanentRoles | measure-object).Count -gt 0 )
+		{
+			$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles}
+			if($null -ne $whitelistedPermanentRoles)
+			{
+				$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}
+			}
 			if(($criticalPermanentRoles| measure-object).Count -gt 0)
 			{
 				$controlResult.SetStateData("Permanent role assignments present on subscription",$criticalPermanentRoles)
@@ -1076,6 +1086,32 @@ class SubscriptionCore: SVTBase
 			$controlResult.AddMessage([VerificationResult]::Passed,"No mandatory tags required" )
 		}
 
+		return $controlResult
+	}
+
+	hidden [ControlResult] CheckASCTier ([ControlResult] $controlResult)
+	{
+		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
+        $validatedUri ="$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings/default?api-version=2017-08-01-preview"
+        $ascTierContentDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+
+		if([Helpers]::CheckMember($ascTierContentDetails,"properties.pricingTier"))
+		{
+			$ascTier = "Standard"
+			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ASCTier"))
+			{
+				$ascTier = $this.ControlSettings.SubscriptionCore.ASCTier
+			}
+			
+			if($ascTierContentDetails.properties.pricingTier -eq $ascTier)
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "Expected '$ascTier' tier is configured for ASC" )
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed, "Expected '$ascTier' tier is not configured for ASC" )
+			}
+		}
 		return $controlResult
 	}
 

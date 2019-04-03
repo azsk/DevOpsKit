@@ -150,6 +150,14 @@ class AIOrgTelemetryHelper {
 			{
 				# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
 				# No need to break execution
+            }
+            try {
+                $Properties.Add("PowerShellVersion", (Get-Variable -Name PSVersionTable).Value.PSVersion.Tostring());
+            }
+            catch
+			{
+				# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
+				# No need to break execution
 			}
             try {
                 $module = Get-Module 'AzSK*' | Select-Object -First 1

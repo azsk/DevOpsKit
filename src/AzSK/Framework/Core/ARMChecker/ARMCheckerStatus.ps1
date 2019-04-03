@@ -85,6 +85,7 @@ class ARMCheckerStatus: EventBase
 		$filesToExclude=@()
 		$filesToExcludeCount=0
 		$excludedFiles=@()
+		$filteredFiles = @();
 		try{
 		  if(-not([string]::IsNullOrEmpty($exemptControlListPath)) -and (Test-Path -path $exemptControlListPath -PathType Leaf))
 		  {
@@ -97,7 +98,6 @@ class ARMCheckerStatus: EventBase
 		if(-not([string]::IsNullOrEmpty($ExcludeFiles)))
 		{
 		  $ExcludeFileFilters = @();
-          $filteredFiles = @();
 		  $ExcludeFileFilters = $this.ConvertToStringArray($ExcludeFiles);
 		  $ExcludeFileFilters | ForEach-Object {
 			if($isRecurse -eq $true)
@@ -112,13 +112,13 @@ class ARMCheckerStatus: EventBase
 			   $filesToExclude | Select-Object Name | ForEach-Object { $filteredFiles += $_.Name}
 			}
 		  }
-		  $filesToExclude = $filteredFiles -join ","
+		$filesToExclude = $filteredFiles -join ","
 		$filesToExcludeCount = ($filesToExclude| Measure-Object).Count 
 		}
 		foreach($armTemplate in $ARMTemplates)
 		{
 		    $armFileName = $armTemplate.FullName.Replace($baseDirectory, ".");
-		    if(($filesToExcludeCount -eq 0) -or (-not $filesToExclude.Contains($armTemplate.Name)))
+		    if(($filesToExcludeCount -eq 0) -or (-not $filteredFiles.Contains($armTemplate.Name)))
 			{		
 			try
 			{

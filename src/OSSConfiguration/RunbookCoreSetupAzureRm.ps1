@@ -347,7 +347,26 @@ function EnableHelperSchedule($scheduleName)
         $scheduleName = $scheduleName[0]
     }
     #Enable only required schedule and disable others
-    $enabledSchedule = Set-AzureRmAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true -ErrorAction SilentlyContinue
+	$isRegistered = (Get-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG `
+						-RunbookName $RunbookName -ScheduleName $scheduleName -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0
+	if(!$isRegistered)
+	{
+		Write-Output ("CS.o: CA Runbook is not linked to the Scheduler. Linking....")
+		$sched = Register-AzureRmAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $scheduleName `
+		-ResourceGroupName $AutomationAccountRG `
+		-AutomationAccountName $AutomationAccountName   
+		if($sched)
+		{
+			Write-Output ("CS.o: Linked RB: [$($sched.RunbookName)]")
+            PublishEvent -EventName "CA Helper schedule relinked" -Properties @{"ScheduleName" = ($sched.ScheduleName);} 
+		}
+		else{
+			Write-Output ("CS.o: Failed to link RB. Will retry later.")
+			PublishEvent -EventName "CA Helper schedule relink failed" -Properties @{"ScheduleName" = ($scheduleName);}
+		}
+
+	}
+	$enabledSchedule = Set-AzureRmAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true -ErrorAction SilentlyContinue
 	if(($enabledSchedule|Measure-Object).Count -gt 0 -and $enabledSchedule.IsEnabled)
 	{
 		DisableHelperSchedules -excludeSchedule $scheduleName
@@ -388,34 +407,32 @@ try
 	$isBaseProfileModule =  (Get-Module -Name AzureRm.Profile).Version.Major -lt 5
 	$tags=@{};
 	$RunbookVersion="";
-	try
+	$RmRunbookVersion="3.1803.0";
+	if($isBaseProfileModule)
 	{
-		$azskResourceGroup = Get-AzureRmResourceGroup -Name $AutomationAccountRG -ErrorAction SilentlyContinue;
-		if(($azskResourceGroup | Measure-Object).Count -gt 0)
+		try
 		{
-			$tags = $azskResourceGroup.Tags;
-			if($tags.ContainsKey("AzSKVersion"))
+			$azskResourceGroup = Get-AzureRmResourceGroup -Name $AutomationAccountRG -ErrorAction SilentlyContinue;
+			if(($azskResourceGroup | Measure-Object).Count -gt 0)
 			{
-				$RunbookVersion = $tags['AzSKCARunbookVersion']
+				$tags = $azskResourceGroup.Tags;
+                if($null -ne $tags)
+                {
+                    $RunbookVersionTag = $tags| Where-Object{ $_.Name -eq 'AzSKCARunbookVersion'}
+                    $RunbookVersion = $RunbookVersionTag.Value
+                }
+				
 			}
-			
 		}
-	}
-	catch
-	{
-		$azskResourceGroup = Get-AzResourceGroup -Name $AutomationAccountRG -ErrorAction SilentlyContinue;
-		if(($azskResourceGroup | Measure-Object).Count -gt 0)
+		catch
 		{
-			$tags = $azskResourceGroup.Tags;
-			if($tags.ContainsKey("AzSKVersion"))
-			{
-				$RunbookVersion = $tags['AzSKCARunbookVersion']
-			}
-			
+			Write-Output("Unable to fetch tags")
 		}
+		$retryDownloadIntervalMins = 15
+		Write-Output ("CS.o: AzSK not fully ready to run. Creating helper schedule for another retry...")
+		ScheduleNewJob -intervalInMins $retryDownloadIntervalMins
 	}
-
-	if(-not $isBaseProfileModule -or ($RunbookVersion -eq "3.1803.0") )
+	if(-not $isBaseProfileModule -or ($RunbookVersion -eq $RmRunbookVersion) )
 	{
 		$setupTimer = [System.Diagnostics.Stopwatch]::StartNew();
 		PublishEvent -EventName "CA Setup Started"
@@ -595,10 +612,24 @@ try
 			PublishEvent -EventName "CA Setup Succeeded" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 		}	
 	}	
-	Write-Output ("CS.o: Downloading Az.Accounts and Az.Automation.")
-	PublishEvent -EventName "CA Az Stage1" -Properties @{"Description" = "Installing Az.Accounts and Az.Automation"  }
+	Write-Output ("CS.o: Checking if Az.Accounts and Az.Automation present in automation account.")
+	PublishEvent -EventName "CA Az Stage1" -Properties @{"Description" = "Checking if Az.Accounts and Az.Automation present in automation account."  }
+	$AzModule = Get-AzureRmAutomationModule `
+    -ResourceGroupName $AutomationAccountRG `
+    -AutomationAccountName $AutomationAccountName `
+	-Name "Az.Accounts" -ErrorAction SilentlyContinue
+	if(-not $AzModule)
+	{
 	DownloadModule -ModuleName Az.Accounts -ModuleVersion 1.2.1 -Sync $true
+	}
+	$AzModule = Get-AzureRmAutomationModule `
+    -ResourceGroupName $AutomationAccountRG `
+    -AutomationAccountName $AutomationAccountName `
+	-Name "Az.Automation" -ErrorAction SilentlyContinue
+	if(-not $AzModule)
+	{
 	DownloadModule -ModuleName Az.Automation -ModuleVersion 1.0.0 -Sync $true
+	}
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }
 catch

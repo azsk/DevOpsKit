@@ -331,7 +331,18 @@ class ServiceFabric : SVTBase
 				};  
 				if($loadBalancerBackendPorts.Count -gt 0)
 			    {   
-				  $lbWithBackendPorts.Add($loadBalancerResource.Name, $loadBalancerBackendPorts)
+				
+				  if([Helpers]::CheckMember($loadBalancerResource.BackendAddressPools,"BackendIpConfigurations") -and  ($loadBalancerResource.BackendAddressPools.BackendIpConfigurations | Measure-Object).Count -gt 0){
+					$backEndIpConfiguration = $loadBalancerResource.BackendAddressPools.BackendIpConfigurations | Select -First 1
+					$pattern = "providers/Microsoft.Compute/virtualMachineScaleSets/(.*?)/"
+					$result = [regex]::match($backEndIpConfiguration.Id, $pattern)
+					if($result.Success){
+						$nodeName = $result.Groups[1].Value
+						$lbWithBackendPorts.Add($nodeName, $loadBalancerBackendPorts)
+					}
+
+				  }
+				  
 			    } 
 			}
 			#If no ports open, Pass the TCP
@@ -347,7 +358,7 @@ class ServiceFabric : SVTBase
 				    $loadBalancerBackendPorts = @()
 				    $nodeName = $_
 				    $lbWithBackendPorts.Keys | ForEach-Object{
-						if($_.endswith($nodeName)){
+						if($_ -eq $nodeName){
 							$loadBalancerBackendPorts = $lbWithBackendPorts[$_]
 						}
 					}

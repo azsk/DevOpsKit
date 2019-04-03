@@ -6,7 +6,7 @@ catch
 { 
 	# No need to break execution 
 }
-$FrameworkPath =  $PSScriptRoot
+$FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Framework"
 
 . $FrameworkPath\Models\Enums.ps1
 
@@ -159,5 +159,5 @@ $FrameworkPath =  $PSScriptRoot
 . $PSScriptRoot\Core\AzSKInfo\ComplianceInfo.ps1
 . $PSScriptRoot\Core\AzSKInfo\PersistedStateInfo.ps1
 . $PSScriptRoot\Core\ARMChecker\ARMCheckerStatus.ps1
-
 . $PSScriptRoot\Core\PolicySetup\PolicySetup.ps1
+. $PSScriptRoot\Core\PIM\PIMScript.ps1

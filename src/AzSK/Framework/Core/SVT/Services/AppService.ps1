@@ -130,6 +130,11 @@ class AppService: SVTBase
 			$controlResult.AddMessage([VerificationResult]::Manual,
                                     [MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
 		}
+		elseif([Helpers]::CheckMember($this.WebAppDetails,"State") -and ($this.WebAppDetails.State -eq "Stopped"))
+		{
+			$controlResult.AddMessage([VerificationResult]::Manual,
+                                    [MessageData]::new("Control can not be validated as the resource is in 'Stopped' state."));
+		}
 		else
 		{
 			#Checks if functions app present
@@ -471,14 +476,19 @@ class AppService: SVTBase
     hidden [ControlResult] CheckFunctionsAppHttpCertificateSSL([ControlResult] $controlResult)
 	{	
 			if($this.IsReaderRole)
-				{
-					#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
-					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-					$controlResult.AddMessage([VerificationResult]::Manual,
-                                    [MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
-				}
+			{
+				#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+				$controlResult.AddMessage([VerificationResult]::Manual,
+                                [MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+			}
+			elseif([Helpers]::CheckMember($this.WebAppDetails,"State") -and ($this.WebAppDetails.State -eq "Stopped"))
+			{
+				$controlResult.AddMessage([VerificationResult]::Manual,
+                                [MessageData]::new("Control can not be validated as the resource is in 'Stopped' state."));
+			}
 			else
-				{
+			{
 				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
 				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 				$authorisationToken = "Bearer " + $accessToken
@@ -618,6 +628,11 @@ class AppService: SVTBase
 			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 			$controlResult.AddMessage([VerificationResult]::Manual,
                                     [MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+		}
+		elseif([Helpers]::CheckMember($this.WebAppDetails,"State") -and ($this.WebAppDetails.State -eq "Stopped"))
+		{
+			$controlResult.AddMessage([VerificationResult]::Manual,
+                                    [MessageData]::new("Control can not be validated as the resource is in 'Stopped' state."));
 		}
 		else
 		{
