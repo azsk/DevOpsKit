@@ -5,12 +5,12 @@
   "Controls": [
     {
       "ControlID": "AAD_Group_Use_Security_Enabled",
-      "Description": "All AAD groups must be security enabled (TODO - not really!)",
+      "Description": "All AAD groups must be security enabled (TODO - TBD)",
       "Id": "Group110",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckGroupsIsSecurityEnabled",
-      "Rationale": "TODO.",
+      "Rationale": "TODO-group-sec-enabled.",
       "Recommendation": "Refer: TODO",
       "Tags": [
         "SDL",
@@ -28,7 +28,25 @@
       "ControlSeverity": "Medium",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "TODO.",
+      "Rationale": "TODO-group-no-nesting.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Group_Must_Have_Native_Owner",
+      "Description": "Group must have at least one non-guest (native) owner.",
+      "Id": "Group130",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckGroupHasNonGuestOwner",
+      "Rationale": "TODO-group-non-guest-owner",
       "Recommendation": "Refer: TODO",
       "Tags": [
         "SDL",

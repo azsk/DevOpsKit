@@ -66,17 +66,17 @@ class Application: SVTBase
             {
                 $controlResult.AddMessage("Found $($nonHttpURLs.Count) non-HTTPS URLs.");
             }
-
-            if ($ret -eq $true)
-            {
-                $controlResult.AddMessage([VerificationResult]::Passed,
-                                            "No non-HTTPS URLs in replyURLs.");
-            }
-            else
-            {
-                $controlResult.AddMessage([VerificationResult]::Failed,
-                                            "Found one or more non-HTTPS URLs in replyURLs.","TODO_FIX");
-            }
+        }
+        
+        if ($ret -eq $true)
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,
+                                        "No non-HTTPS URLs in replyURLs.");
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Failed,
+                                        "Found one or more non-HTTPS URLs in replyURLs.","TODO_FIX");
         }
         return $controlResult;
     }

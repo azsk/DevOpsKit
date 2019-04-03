@@ -4,13 +4,13 @@
     "IsMaintenanceMode":  false,
   "Controls": [
     {
-      "ControlID": "AAD_Tenant_Review_Guest_Access_Config",
-      "Description": "Review Guest acess...",
+      "ControlID": "AAD_Tenant_Guests_Have_Limited_Access",
+      "Description": "Guests must not be granted full access to the directory",
       "Id": "Tenant110",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckAADGuestAccessConfig",
-      "Rationale": "TODO.",
+      "MethodName": "CheckGuestsHaveLimitedAccess",
+      "Rationale": "TODO.Guest-limit-access",
       "Recommendation": "Refer: https://docs.microsoft.com/ TODO",
       "Tags": [
         "SDL",
@@ -21,13 +21,30 @@
       "Enabled": true
     },
     {
-        "ControlID": "AAD_Tenant_Review_MFA_Settings",
-        "Description": "Ensure that MFA is turned ON for users.",
+      "ControlID": "AAD_Tenant_Guests_Should_Not_Invite",
+      "Description": "Guests must not be allowed to invite other guests",
+      "Id": "Tenant111",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckGuestsIfCanInvite",
+      "Rationale": "TODO.Guest-ability-to-invite",
+      "Recommendation": "Refer: https://docs.microsoft.com/ TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+        "ControlID": "AAD_Tenant_Admins_Must_Use_MFA",
+        "Description": "Admins must use baseline MFA policy.",
         "Id": "Tenant120",
         "ControlSeverity": "High",
         "Automated": "Yes",
-        "MethodName": "CheckMFASettings",
-        "Rationale": "TODO-MFA.",
+        "MethodName": "CheckBaselineMFAPolicyForAdmins",
+        "Rationale": "TODO-baseline-MFA-admins.",
         "Recommendation": "Go to..TODO",
         "Tags": [
           "SDL",
@@ -50,7 +67,7 @@
             "SDL",
             "TCP",
             "Automated",
-            "AuthN"
+            "AuthZ"
           ],
           "Enabled": true
         },
@@ -63,6 +80,57 @@
             "MethodName": "CheckUserPermissionToInviteGuests",
             "Rationale": "TODO-Guest-Invite.",
             "Recommendation": "Go to..TODO",
+            "Tags": [
+              "SDL",
+              "TCP",
+              "Automated",
+              "AuthZ"
+            ],
+            "Enabled": true
+          },
+          {
+            "ControlID": "AAD_Tenant_CA_Min_Questions_To_Reset",
+            "Description": "At least 3 (TBD) questions should be required for password reset.",
+            "Id": "Tenant150",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckMinQuestionsForSSPR",
+            "Rationale": "TODO-SSPR-min-ques.",
+            "Recommendation": "Go to..TODO-sspr",
+            "Tags": [
+              "SDL",
+              "TCP",
+              "Automated",
+              "AuthN"
+            ],
+            "Enabled": true
+          },   
+          {
+            "ControlID": "AAD_Tenant_CA_User_Notification_On_Password_Reset",
+            "Description": "Users must be notified upon password reset.",
+            "Id": "Tenant160",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckUserNotificationUponSSPR",
+            "Rationale": "TODO-SSPR-user-notify.",
+            "Recommendation": "Go to..TODO-sspr",
+            "Tags": [
+              "SDL",
+              "TCP",
+              "Automated",
+              "AuthN"
+            ],
+            "Enabled": true
+          },
+          {
+            "ControlID": "AAD_Tenant_CA_Min_Questions_To_Reset",
+            "Description": "All admins must be notified upon any admin password reset.",
+            "Id": "Tenant170",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "CheckAdminNotificationUponSSPR",
+            "Rationale": "TODO-SSPR-admin-notify.",
+            "Recommendation": "Go to..TODO-sspr",
             "Tags": [
               "SDL",
               "TCP",
