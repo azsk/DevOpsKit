@@ -465,7 +465,7 @@ hidden AssignmentEligible()
     }
     else
     {
-       $this.PublishCustomMessage("You are not elligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.",[MessageType]::Warning)
+       $this.PublishCustomMessage("You are not eligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount -UseDeviceAuthentication and re-run the script.",[MessageType]::Warning)
     }
 }
 
@@ -494,7 +494,7 @@ hidden [void] PIMScript()
     }
     catch
     {
-        Write-Host "Unable to fetch access token. Run Connect-AzAccount and then execute this command" -ForegroundColor Red
+        Write-Host "Unable to fetch access token. Run Connect-AzAccount -UseDeviceAuthentication and then execute this command" -ForegroundColor Red
         return;
     }  
      
