@@ -247,8 +247,8 @@
          "ControlSeverity": "Medium",
          "Automated": "Yes",
          "MethodName": "CheckGuestConfigExtension",
-         "Rationale": "TBD",
-         "Recommendation": "TBD",
+         "Rationale": "Known OS/framework vulnerabilities in a system can be easy targets for attackers. An attacker can start by compromising a VM/container with such a vulnerability and can eventually compromise the security of the entire network. A vulnerability assessment solution can help to detect/warn about vulnerabilities in the system and facilitate addressing them in a timely manner.",
+         "Recommendation": "To install vulnerability assessment solution, please refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-vulnerability-assessment-recommendations",
          "Tags": [
            "SDL",
            "TCP",

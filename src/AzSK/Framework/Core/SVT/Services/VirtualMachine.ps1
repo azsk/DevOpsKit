@@ -475,6 +475,7 @@ class VirtualMachine: SVTBase
 				if($null -ne $result)
 				{	
 					$controlResult.AddMessage("Required guest configuration assignments '$($guestConfigurationAssignmentName)' is present.");
+					$controlResult.AddMessage($result);
 				
 				}
 			}catch{
