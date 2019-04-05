@@ -239,7 +239,28 @@
           "VirtualMachine"
         ],
         "Enabled": true
-      }
+      },
+      {
+         "ControlID": "Azure_VirtualMachine_SI_Install_GuestConfig_Extension",
+         "Description": "Guest config extension should be installed on VM",
+         "Id": "VirtualMachine210",
+         "ControlSeverity": "Medium",
+         "Automated": "Yes",
+         "MethodName": "CheckGuestConfigExtension",
+         "Rationale": "TBD",
+         "Recommendation": "TBD",
+         "Tags": [
+           "SDL",
+           "TCP",
+           "Automated",
+           "Config",
+           "Windows",
+           "Linux",
+           "SI",
+           "VirtualMachine"
+         ],
+         "Enabled": true
+       }
     ]
  }
  
