@@ -6,6 +6,7 @@
 		Boolean, // Single Token
 		IntegerValue, // Single Token
 		ItemCount, // Multi Tokens
+        ItemProperties, //Multi Tokens
 		StringLength, // Single Token
 		StringWhitespace, // Single Token
 		StringSingleToken, // Single Token
@@ -14,6 +15,9 @@
 		RegExpressionMultiToken, // Multi Tokens
 		VerifiableSingleToken, // Single Tokens
 		VerifiableMultiToken, // Multi Tokens
-		Custom // Multi Tokens
-	}
+		Custom, // Multi Tokens
+        NullableSingleToken, //Single Tokens
+
+
+    }
 }
