@@ -7,6 +7,7 @@ class PIM: CommandBase
     hidden $UserId = "";
     hidden  $AccessToken="";
     hidden $AccountId="" ;
+    hidden $abortflow = 0;
 
     PIM([string] $subscriptionId, [InvocationInfo] $invocationContext)
     : Base([string] $subscriptionId, [InvocationInfo] $invocationContext)
@@ -42,7 +43,8 @@ hidden [PSObject] MyJitAssignments($active)
      }
     $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $urlme -Method Get
     $assignments = ConvertFrom-Json $response.Content
-    $assignments = $assignments.value
+    $assignments = $assignments.value 
+    $assignments = $assignments | Sort-Object  roleDefinition.resource.type , roleDefinition.resource.displayName
     $obj = @()
     Write-Host ""
     if(($assignments | Measure-Object).Count -gt 0)
@@ -120,9 +122,9 @@ hidden [PSObject] ListRoles($resourceId)
 }
 
 #List Assignment
-hidden [PSObject] ListAssignmentsWithFilter($resourceId, $roleDefinitionId)
+hidden [PSObject] ListAssignmentsWithFilter($resourceId)
 {
-    $url = $this.APIroot + "resources/" + $resourceId + "`/roleAssignments?`$expand=subject,roleDefinition(`$expand=resource)&`$filter=(roleDefinition/id+eq+'" + $roleDefinitionId + "')"
+    $url = $this.APIroot + "resources/" + $resourceId + "`/roleAssignments?`$expand=subject,roleDefinition(`$expand=resource)"
     # Write-Host $url
 
     $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $url -Method Get
@@ -185,16 +187,22 @@ hidden Activate()
         $this.PublishCustomMessage("Role assignments:",[MessageType]::Default)
         $this.PublishCustomMessage("");
         $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
-        $this.PublishCustomMessage($($assignments | Format-Table -AutoSize -Wrap Id,RoleName,ResourceName,ResourceType,ExpirationDate | Out-String),[MessageType]::Default)
+        $this.PublishCustomMessage($($assignments  | Format-Table -AutoSize -Wrap Id,RoleName,ResourceName,ResourceType,ExpirationDate | Out-String),[MessageType]::Default)
         $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
         $this.PublishCustomMessage("")
         Write-Host "  Enter Id to activate: " -ForegroundColor Cyan -NoNewline 
         $choice = Read-Host 
         while($choice -notin $assignments.Id)
         {
+            if($choice -eq 0)
+            {
+
+                return;
+                $this.abortflow = 1;
+            }
            Write-Host "  Invalid input" -ForegroundColor Yellow 
            Write-Host "  Enter Id to activate: " -ForegroundColor Cyan -NoNewline
-          $choice = Read-Host 
+           $choice = Read-Host 
         }
 
         try
@@ -203,6 +211,11 @@ hidden Activate()
             [int] $hours =  Read-Host
             while($hours -lt 1 -or $hours -gt 8)
             {
+                if($choice -eq 0)
+                {
+                    return;
+                    $this.abortflow = 1;
+                }
                 Write-Host "  Invalid input" -ForegroundColor Yellow
                 Write-Host "  Enter activation duration in hours between 1 to 8 hours: " -ForegroundColor Cyan -NoNewline
                [int] $hours = Read-Host 
@@ -214,6 +227,11 @@ hidden Activate()
             [int] $hours = Read-Host
             while($hours -lt 1 -or $hours -gt 8)
             {
+                if($choice -eq 0)
+                {
+                    return;
+                    $this.abortflow = 1;
+                }
                 Write-Host "  Invalid input" -ForegroundColor Yellow
                 Write-Host "  Enter activation duration in hours between 1 to 8 hours: " -ForegroundColor Cyan -NoNewline
                [int] $hours = Read-Host
@@ -266,6 +284,11 @@ hidden Deactivate()
             $choice = Read-Host
             while($choice -notin $assignments.Id)
             {
+                if($choice -eq 0)
+                {
+                    return;
+                    $this.abortflow = 1;
+                }
                  Write-Host "  Invalid input" -ForegroundColor Yellow
                  Write-Host "  Pick Id to deactivate: " -ForegroundColor Cyan -NoNewline
                 $choice = Read-Host 
@@ -309,10 +332,15 @@ ListAssignment()
         $this.PublishCustomMessage($($resources | Format-Table -AutoSize -Wrap Id, ResourceName, Type, ExternalId | Out-String),[MessageType]::Default)
         $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
         $this.PublishCustomMessage("")
-        Write-Host "  Pick a resource Id for assigment: " -ForegroundColor Cyan -NoNewline
+        Write-Host "  Pick a resource Id to check permanent assigment: " -ForegroundColor Cyan -NoNewline
         $res_choice = Read-Host 
         while($res_choice -notin $resources.Id)
         {
+            if($res_choice -eq 0)
+            {
+                return;
+                $this.abortflow = 1;
+            }
              Write-Host "  Invalid input" -ForegroundColor Yellow
              Write-Host "  Pick a resource Id for assigment: " -ForegroundColor Cyan -NoNewline
             $res_choice = Read-Host            
@@ -320,31 +348,41 @@ ListAssignment()
         $resourceId = $resources[$res_choice-1].ResourceId
 
         #List and Pick a role
-        $roles = $this.ListRoles($resourceId) |  Where-Object{ $_.SubjectCount -gt 0}
-        $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
-        $this.PublishCustomMessage($($roles | Format-Table -AutoSize -Wrap Id, RoleName, RoleDefinitionId | Out-String),[MessageType]::Default)
-        $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
-        $this.PublishCustomMessage("")
-        Write-Host "  Pick a role Id: " -ForegroundColor Cyan -NoNewline
-        $role_choice = Read-Host
-        while($role_choice -notin $roles.Id)
-        {
-             Write-Host "  Invalid input" -ForegroundColor Yellow
-             Write-Host "  Pick a role Id: " -ForegroundColor Cyan -NoNewline
-            $role_choice = Read-Host 
-        }
-        $roleDefinitionId = $roles[$role_choice-1].RoleDefinitionId
-        #write-Host $roleDefinitionId
+        # $roles = $this.ListRoles($resourceId) |  Where-Object{ $_.SubjectCount -gt 0}
+        # $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
+        # $this.PublishCustomMessage($($roles | Format-Table -AutoSize -Wrap Id, RoleName, RoleDefinitionId | Out-String),[MessageType]::Default)
+        # $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
+        # $this.PublishCustomMessage("")
+        # Write-Host "  Pick a role Id: " -ForegroundColor Cyan -NoNewline
+        # $role_choice = Read-Host
+        # while($role_choice -notin $roles.Id)
+        # {
+        #     if($role_choice -eq 0)
+        #     {
+        #         return;
+        #         $this.abortflow = 1;
+        #     }
+        #      Write-Host "  Invalid input" -ForegroundColor Yellow
+        #      Write-Host "  Pick a role Id: " -ForegroundColor Cyan -NoNewline
+        #     $role_choice = Read-Host 
+        # }
+        # $roleDefinitionId = $roles[$role_choice-1].RoleDefinitionId
+        # #write-Host $roleDefinitionId
 
         #List Member
-        $roleAssignments=$this.ListAssignmentsWithFilter($resourceId,$roleDefinitionId)
+        $roleAssignments=$this.ListAssignmentsWithFilter($resourceId)
         $permanentAssignment=$roleAssignments | Where-Object{$_.IsPermanent -eq $true}
         if(($permanentAssignment | Measure-Object).Count -gt 0)
         {
+            $permanentAssignment = $permanentAssignment | Group-Object -Property RoleName
+            $permanentAssignment| ForEach-Object{
+			$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
+			$this.PublishCustomMessage($_.Name+": ")
             $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
-            $this.PublishCustomMessage($($permanentAssignment | Format-Table UserName, ResourceType,ResourceId | Out-String),[MessageType]::Default)
-            $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
+            $this.PublishCustomMessage($($_.Group[0]| Format-Table UserName, ResourceType, ResourceId | Out-String),[MessageType]::Default)
+            $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)            
             $this.PublishCustomMessage("")
+            }
         }
         else
         {
@@ -372,6 +410,11 @@ hidden AssignmentEligible()
             $res_choice = Read-Host 
             while($res_choice -notin $resources.Id)
             {
+                if($res_choice -eq 0)
+                {
+                    return;
+                    $this.abortflow = 1;
+                }
                  Write-Host "  Invalid input" -ForegroundColor Yellow
                  Write-Host "  Pick a resource Id for assigment: " -ForegroundColor Cyan -NoNewline
                 $res_choice = Read-Host 
@@ -388,6 +431,11 @@ hidden AssignmentEligible()
             $role_choice = Read-Host 
              while($role_choice -notin $roles.Id)
             {
+                if($role_choice -eq 0)
+                {
+                    return;
+                    $this.abortflow = 1;
+                }
                 Write-Host "  Invalid input" -ForegroundColor Yellow
                 Write-Host "  Pick a role Id: " -ForegroundColor Cyan -NoNewline
                 $role_choice = Read-Host 
@@ -402,6 +450,11 @@ hidden AssignmentEligible()
                 $users = Get-AzADUser -UserPrincipalName $user_search
                 while(($users | Measure-Object).Count -ne 1)
                 {
+                    if($users -eq 0)
+                    {
+                        return;
+                        $this.abortflow = 1;
+                    }
                     $this.PublishCustomMessage("Unable to fetch details of the principal name provided, please make sure to enter the correct values.", [MessageType]::Warning)
                     Write-Host "  Please enter the Principal Name ( e.g. 'xyz@contoso.com') of the user to whom role has to be assigned: " -ForegroundColor Cyan -NoNewline
                     $user_search = Read-Host 
@@ -425,6 +478,11 @@ hidden AssignmentEligible()
                 [int]$days= Read-Host 
                 while($days -gt 90 -or $days -lt 1)
                 {
+                    if($days -eq 0)
+                    {
+                        return;
+                        $this.abortflow = 1;
+                    }
                     Write-Host "  Invalid input" -ForegroundColor Yellow
                     Write-Host "  Enter the period in days between 1 to 90 days for role assignment: " -ForegroundColor Cyan -NoNewline
                     $days= Read-Host 
@@ -438,6 +496,11 @@ hidden AssignmentEligible()
                 [int]$days= Read-Host 
                 while($days -gt 90 -or $days -lt 1)
                 {
+                    if($days -eq 0)
+                    {
+                        return;
+                        $this.abortflow = 1;
+                    }
                     Write-Host "  Invalid input" -ForegroundColor Yellow
                     Write-Host "  Enter the period in days between 1 to 90 days for role assignment: " -ForegroundColor Cyan -NoNewline
                     $days= Read-Host 
@@ -498,7 +561,7 @@ hidden [void] PIMScript()
         return;
     }  
      
-    do
+        do
         {
             $this.ShowMenu();
             Write-Host " Enter your selection: " -ForegroundColor Cyan -NoNewline
@@ -542,10 +605,14 @@ hidden [void] PIMScript()
                     {
                         return
                     }
+                    
                 }
-            
+            if($this.abortflow)
+            {
+                return;
+            }
         }
-        while ($input -gt 6 -or ($input -lt 1) )
+        until($input -lt 1 )
     
              
 }     
