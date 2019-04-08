@@ -75,6 +75,11 @@ class Storage: SVTBase
 		$resource = Get-AzResource -ResourceId $this.ResourceContext.ResourceId;
 		#Disabling the control 'Azure_Storage_AuthN_Dont_Allow_Anonymous' for Data Lake Storage Gen2 resources with hierarchical namespace accounts enabled as blob storage is not currently supported.
 
+		if(([Helpers]::CheckMember($resource.Properties, "isHnsEnabled") -and ($resource.Properties.isHnsEnabled -eq $true)))
+		{
+			$result = $result | Where-Object {$_.Tags -notcontains "HNSDisabled"}
+		}
+
 		return $result;
 	}
 

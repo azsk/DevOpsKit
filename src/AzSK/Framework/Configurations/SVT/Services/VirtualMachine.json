@@ -101,7 +101,7 @@
           "Automated": "Yes",
           "MethodName": "CheckDiskEncryption",
           "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements. In the case of VMs, both OS and data disks may contain sensitive information that needs to be protected at rest. Hence disk encryption must be enabled for both.",
-          "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-disk-encryption?toc=%2fazure%2fsecurity%2ftoc.json",
+          "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-disk-encryption?toc=%2fazure%2fsecurity%2ftoc.json. Note: After enabling disk encryption, it takes some time for changes to reflect in Azure Security Center (ASC). Thus, if you scan immediately, the control may still fail even though the VM itself shows as encrypted. Please wait a few hours to ascertain the fix.",
           "Tags": [
              "SDL",
              "TCP",
@@ -239,7 +239,28 @@
           "VirtualMachine"
         ],
         "Enabled": true
-      }
+      },
+      {
+         "ControlID": "Azure_VirtualMachine_SI_Install_GuestConfig_Extension",
+         "Description": "Guest config extension should be installed on VM",
+         "Id": "VirtualMachine210",
+         "ControlSeverity": "Medium",
+         "Automated": "Yes",
+         "MethodName": "CheckGuestConfigExtension",
+         "Rationale": "Known OS/framework vulnerabilities in a system can be easy targets for attackers. An attacker can start by compromising a VM/container with such a vulnerability and can eventually compromise the security of the entire network. A vulnerability assessment solution can help to detect/warn about vulnerabilities in the system and facilitate addressing them in a timely manner.",
+         "Recommendation": "To install vulnerability assessment solution, please refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-vulnerability-assessment-recommendations",
+         "Tags": [
+           "SDL",
+           "TCP",
+           "Automated",
+           "Config",
+           "Windows",
+           "Linux",
+           "SI",
+           "VirtualMachine"
+         ],
+         "Enabled": true
+       }
     ]
  }
  

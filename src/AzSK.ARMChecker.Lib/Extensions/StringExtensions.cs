@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace AzSK.ARMChecker.Lib.Extensions
 {
@@ -104,6 +105,42 @@ namespace AzSK.ARMChecker.Lib.Extensions
             {
                 return false;
             }
+        }
+
+        public static bool CheckIsParameter(this string input)
+        {
+            if (input.CheckIsFunction())
+            {
+                input = input.Remove(0, 1).Trim();
+                input = input.Remove(input.Length - 1, 1).Trim();
+                if(input.StartsWith("parameters(", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+ 
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public static string GetParameterKey(this string input)
+        {
+            var match = Regex.Match(input, @"parameters\(\'(.*)\'\)");
+            if(match.Success)
+            {
+                return match.Groups[1].Value;
+            }
+            else
+            {
+                return null;
+            }
+            
         }
     }
 }

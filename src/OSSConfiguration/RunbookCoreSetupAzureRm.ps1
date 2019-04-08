@@ -428,6 +428,9 @@ try
 		{
 			Write-Output("Unable to fetch tags")
 		}
+		$retryDownloadIntervalMins = 15
+		Write-Output ("CS.o: AzSK not fully ready to run. Creating helper schedule for another retry...")
+		ScheduleNewJob -intervalInMins $retryDownloadIntervalMins
 	}
 	if(-not $isBaseProfileModule -or ($RunbookVersion -eq $RmRunbookVersion) )
 	{
@@ -609,10 +612,24 @@ try
 			PublishEvent -EventName "CA Setup Succeeded" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 		}	
 	}	
-	Write-Output ("CS.o: Downloading Az.Accounts and Az.Automation.")
-	PublishEvent -EventName "CA Az Stage1" -Properties @{"Description" = "Installing Az.Accounts and Az.Automation"  }
+	Write-Output ("CS.o: Checking if Az.Accounts and Az.Automation present in automation account.")
+	PublishEvent -EventName "CA Az Stage1" -Properties @{"Description" = "Checking if Az.Accounts and Az.Automation present in automation account."  }
+	$AzModule = Get-AzureRmAutomationModule `
+    -ResourceGroupName $AutomationAccountRG `
+    -AutomationAccountName $AutomationAccountName `
+	-Name "Az.Accounts" -ErrorAction SilentlyContinue
+	if(-not $AzModule)
+	{
 	DownloadModule -ModuleName Az.Accounts -ModuleVersion 1.2.1 -Sync $true
+	}
+	$AzModule = Get-AzureRmAutomationModule `
+    -ResourceGroupName $AutomationAccountRG `
+    -AutomationAccountName $AutomationAccountName `
+	-Name "Az.Automation" -ErrorAction SilentlyContinue
+	if(-not $AzModule)
+	{
 	DownloadModule -ModuleName Az.Automation -ModuleVersion 1.0.0 -Sync $true
+	}
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }
 catch
