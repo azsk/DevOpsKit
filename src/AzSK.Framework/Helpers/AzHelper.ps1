@@ -26,10 +26,10 @@ static [void] UploadStorageBlobContent([string] $fileName, [string] $blobName, [
 
     static [object] GetStorageBlobContent([string] $fileName, [string] $blobName, [string] $containerName, [object] $stgCtx)
 	{
-        #if([FeatureFlightingManager]::GetFeatureStatus("IsSetAzStorageBlobAvailable","*") -eq $true)
-        #{
+        if([FeatureFlightingManager]::GetFeatureStatus("IsSetAzStorageBlobAvailable","*") -eq $true)
+        {
             $result = Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Destination $fileName -Context $stgCtx -Force 
-        <#}
+        }
         else {
             $blob = Get-AzStorageBlob -Container $containerName -Blob $blobName -Context $stgCtx
             $task = $blob.ICloudBlob.DownloadToFileAsync($fileName,[System.IO.FileMode]::Create)
@@ -40,7 +40,7 @@ static [void] UploadStorageBlobContent([string] $fileName, [string] $blobName, [
 				Write-Debug "Downloading file from" + $blobName + " has failed!!"
             }
             $result = $blob 
-        }#>
+        }
         return $result
     }
 }
