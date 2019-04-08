@@ -482,6 +482,15 @@ class VirtualMachine: SVTBase
 				$controlStatus = [VerificationResult]::Failed
 				$controlResult.AddMessage("Required guest configuration assignments '$($guestConfigurationAssignmentName)' is not present.");	
 			}
+
+			# Check if Managed System Identity is enabled on VM
+
+			if([Helpers]::CheckMember($this.ResourceObject, "Identity") -and $this.ResourceObject.Identity.Type -eq "SystemAssigned"){
+				$controlResult.AddMessage("SystemAssigned managed identity is enabled on VM.");
+			}else{
+				$controlStatus = [VerificationResult]::Failed
+				$controlResult.AddMessage("The VM does not have a SystemAssigned managed identity");
+			}
 		}
 		else
 		{

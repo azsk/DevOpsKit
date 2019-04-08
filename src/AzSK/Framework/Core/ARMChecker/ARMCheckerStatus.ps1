@@ -159,6 +159,8 @@ class ARMCheckerStatus: EventBase
 			{
 				$results = @();
 				$csvResultsForCurFile=@();
+				$relatedParameterFile = $null
+				$relatedParameterFileName = $null
 				$armTemplateContent = Get-Content $armTemplate.FullName -Raw	
 				if($null -ne $ParameterFiles -and ($ParameterFiles | Measure-Object).Count -gt 0)
 				{
@@ -179,6 +181,9 @@ class ARMCheckerStatus: EventBase
 				$results += $libResults | Where-Object {$_.VerificationResult -ne "NotSupported"} | Select-Object -ExcludeProperty "IsEnabled"		
 		
 				$this.WriteMessage(([Constants]::DoubleDashLine + "`r`nStarting analysis: [FileName: $armFileName] `r`n" + [Constants]::SingleDashLine), [MessageType]::Info);
+				if($null -ne $relatedParameterFile){
+					$this.WriteMessage(("`r`n[ParameterFileName: $relatedParameterFileName] `r`n" + [Constants]::SingleDashLine), [MessageType]::Info);
+				}
 				if($results.Count -gt 0)
 				{   $scannedFileCount += 1;
 					foreach($result in $results)
