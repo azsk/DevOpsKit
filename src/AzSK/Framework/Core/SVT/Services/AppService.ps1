@@ -130,11 +130,6 @@ class AppService: SVTBase
 			$controlResult.AddMessage([VerificationResult]::Manual,
                                     [MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
 		}
-		elseif($this.WebAppDetails.State -eq "Stopped")
-		{
-			$controlResult.AddMessage([VerificationResult]::Manual,
-                                    [MessageData]::new("Control can not be validated as the resource is in 'Stopped' state."));
-		}
 		else
 		{
 			#Checks if functions app present
@@ -165,38 +160,48 @@ class AppService: SVTBase
 					$AppURL = $this.FormatURL($temp[0])
 					$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 				}
-				
-				$functionDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
-		
-				#check if functions are present in FunctionApp	
-				if([Helpers]::CheckMember($functionDetail,"config"))
+
+				try
 				{
-					$bindingsDetail =$functionDetail.config.bindings
-	   				$ishttpTriggerFunction=$false
-					if(($bindingsDetail| Measure-Object).Count -gt 0)
-					{
-						$bindingsDetail |	 ForEach-Object{
-						if($_.type -eq "httpTrigger" )
+				
+						$functionDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
+				
+						#check if functions are present in FunctionApp	
+						if([Helpers]::CheckMember($functionDetail,"config"))
+						{
+							$bindingsDetail =$functionDetail.config.bindings
+								$ishttpTriggerFunction=$false
+							if(($bindingsDetail| Measure-Object).Count -gt 0)
+							{
+								$bindingsDetail |	 ForEach-Object{
+								if($_.type -eq "httpTrigger" )
+										{
+										$ishttpTriggerFunction=$true
+									}
+								}
+								#if HTTP trigger function is not present, then AAD authentication is not required
+								if(!$ishttpTriggerFunction)
 								{
-								$ishttpTriggerFunction=$true
+									$controlResult.AddMessage([VerificationResult]::Passed,
+											[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is not required."));
+									return $controlResult;
+								}
 							}
 						}
-						#if HTTP trigger function is not present, then AAD authentication is not required
-						if(!$ishttpTriggerFunction)
+						#if no function is present in Functions App, then AAD authentication is not required
+						else
 						{
-							$controlResult.AddMessage([VerificationResult]::Passed,
+						$controlResult.AddMessage([VerificationResult]::Passed,
 									[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is not required."));
-							return $controlResult;
+						return $controlResult;
+					
 						}
-					}
 				}
-				#if no function is present in Functions App, then AAD authentication is not required
-				else
+				catch
 				{
-				$controlResult.AddMessage([VerificationResult]::Passed,
-							[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is not required."));
-				 return $controlResult;
-			
+					$controlResult.AddMessage([VerificationResult]::Manual,
+					        [MessageData]::new("Unable to fetch details of functions."));
+					return $controlResult;
 				}
 				
 			}
@@ -482,11 +487,6 @@ class AppService: SVTBase
 				$controlResult.AddMessage([VerificationResult]::Manual,
                                 [MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
 			}
-			elseif($this.WebAppDetails.State -eq "Stopped")
-			{
-				$controlResult.AddMessage([VerificationResult]::Manual,
-                                [MessageData]::new("Control can not be validated as the resource is in 'Stopped' state."));
-			}
 			else
 				{
 				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
@@ -513,53 +513,63 @@ class AppService: SVTBase
 					$AppURL = $this.FormatURL($temp[0])
 					$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
 				}
-				#$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
-				$functionDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
-		
-			#check if functions are present in FunctionApp	
-			if([Helpers]::CheckMember($functionDetail,"config"))
-			{
-				$bindingsDetail =$functionDetail.config.bindings
-	   			$ishttpTriggerFunction=$false
-				if(($bindingsDetail| Measure-Object).Count -gt 0)
+				try 
 				{
-				$bindingsDetail |	 ForEach-Object{
-					if($_.type -eq "httpTrigger" )
-					 {
-						$ishttpTriggerFunction=$true
-					}
-				}
-				#if HTTP trigger function is not present, then Http check is not required
-				if(!$ishttpTriggerFunction)
-					{
-
-					$controlResult.AddMessage([VerificationResult]::Passed,
-						[MessageData]::new("Enabling 'HttpsOnly' is not required for resource " + $this.ResourceContext.ResourceName + "."));
-				
-				}
-				else
-					{
-						$isHttpsEnabled = $this.ResourceObject.Properties.httpsOnly
-						if($isHttpsEnabled)
-								{
-										$controlResult.VerificationResult = [VerificationResult]::Passed
-								}
-						else
-								{
-										$controlResult.VerificationResult = [VerificationResult]::Failed
-								}
-					}
-
+					#$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
+					$functionDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
 			
-			}
-	
-			}
-			#if no function is present in Functions App, then Http check is not required
-			else
-			{
-				$controlResult.AddMessage([VerificationResult]::Passed,
-						[MessageData]::new("Enabling 'HttpsOnly' is not required for this resource " + $this.ResourceContext.ResourceName + "."));
-			}
+					#check if functions are present in FunctionApp	
+					if([Helpers]::CheckMember($functionDetail,"config"))
+					{
+						$bindingsDetail =$functionDetail.config.bindings
+							$ishttpTriggerFunction=$false
+						if(($bindingsDetail| Measure-Object).Count -gt 0)
+						{
+						$bindingsDetail |	 ForEach-Object{
+							if($_.type -eq "httpTrigger" )
+							{
+								$ishttpTriggerFunction=$true
+							}
+						}
+						#if HTTP trigger function is not present, then Http check is not required
+						if(!$ishttpTriggerFunction)
+							{
+
+							$controlResult.AddMessage([VerificationResult]::Passed,
+								[MessageData]::new("Enabling 'HttpsOnly' is not required for resource " + $this.ResourceContext.ResourceName + "."));
+						
+						}
+						else
+							{
+								$isHttpsEnabled = $this.ResourceObject.Properties.httpsOnly
+								if($isHttpsEnabled)
+										{
+												$controlResult.VerificationResult = [VerificationResult]::Passed
+										}
+								else
+										{
+												$controlResult.VerificationResult = [VerificationResult]::Failed
+										}
+							}
+
+					
+					}
+			
+					}
+					#if no function is present in Functions App, then Http check is not required
+					else
+					{
+						$controlResult.AddMessage([VerificationResult]::Passed,
+								[MessageData]::new("Enabling 'HttpsOnly' is not required for this resource " + $this.ResourceContext.ResourceName + "."));
+					}	
+				}
+				catch 
+				{
+					$controlResult.AddMessage([VerificationResult]::Manual,
+								[MessageData]::new("Unable to fetch details of functions."));
+						
+				}
+				
 		}
 		return $controlResult;
     	
