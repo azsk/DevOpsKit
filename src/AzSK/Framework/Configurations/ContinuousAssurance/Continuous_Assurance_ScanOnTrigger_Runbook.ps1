@@ -368,6 +368,13 @@ try
 			$accessToken = Get-AzSKAccessToken -ResourceAppIdURI $azureRmResourceURI
 		}
 
+		$isAzAutomationAvailable = Get-Command -Name "Get-AzAutomationSchedule" -ErrorAction SilentlyContinue
+		$isAzAccountsAvailable =  Get-Module Az.Accounts
+		if ((-not [string]::IsNullOrWhiteSpace($isAzAccountsAvailable)) -and (-not [string]::IsNullOrWhiteSpace($isAzAutomationAvailable)))
+		{    
+		    $Global:isAzAvailable = $true
+		}
+
 		PublishEvent -EventName "CA Job Invoke Scan Started"
 		Write-Output ("RB: Invoking scan agent script. PolicyStoreURL: [" + $onlinePolicyStoreUrl.Substring(0,15) + "*****]")
 		InvokeScript -accessToken $accessToken -policyStoreURL $onlinePolicyStoreUrl -fileName $runbookScanAgentScript -version $caScriptsFolder
