@@ -259,7 +259,7 @@
            "SI",
            "VirtualMachine"
          ],
-         "Enabled": true
+         "Enabled": false
        }
     ]
  }
