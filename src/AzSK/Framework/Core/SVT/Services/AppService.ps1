@@ -229,6 +229,22 @@ class AppService: SVTBase
 				
 				if($AADEnabled)
 				{
+					if([FeatureFlightingManager]::GetFeatureStatus("EnableAppServiceAADAuthAllowAnonymousCheck",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+					{
+						if(([Helpers]::CheckMember($this.AuthenticationSettings.Properties,"unauthenticatedClientAction")))
+						{
+							
+							Add-Member -InputObject $aadSettings -MemberType NoteProperty -Name "UnauthenticatedClientAction" -Value $this.AuthenticationSettings.Properties.unauthenticatedClientAction
+							if( $this.AuthenticationSettings.Properties.unauthenticatedClientAction -eq 'AllowAnonymous')
+							{
+								$controlResult.AddMessage([VerificationResult]::Failed,
+											[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled."));
+								$controlResult.AddMessage("Action to take when request is not authenticated is set to $($this.AuthenticationSettings.Properties.unauthenticatedClientAction)")
+								$controlResult.AddMessage($aadSettings);
+								return $controlResult;
+							}
+						}
+					}
 					$controlResult.AddMessage([VerificationResult]::Passed,
 											[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled", $aadSettings));
 				}
