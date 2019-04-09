@@ -588,7 +588,7 @@ class PolicySetup: CommandBase
 			$rmContext = [Helpers]::GetCurrentRMContext();
 			$tenantId = $rmContext.Tenant.Id
 			$this.PublishCustomMessage("https://ms.portal.azure.com/#$($tenantId)/dashboard/arm/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($this.ResourceGroupName)/providers/microsoft.portal/dashboards/devopskitmonitoring",[MessageType]::Update)
-			$this.PublishCustomMessage('If you are not able to see monitoring dashbaord with help of above link. You can navigate to below path `n Go to Azure Portal --> Select "Browse all dashboards" in dashboard dropdown --> Select type "Shared Dashboard" --> Select subscription where policy is setup -->Select "DevOps Kit Monitoring Dashboard [OrgName]"')
+			$this.PublishCustomMessage('If you are not able to see monitoring dashboard with help of above link. You can navigate to below path `n Go to Azure Portal --> Select "Browse all dashboards" in dashboard dropdown --> Select type "Shared Dashboard" --> Select subscription where policy is setup -->Select "DevOps Kit Monitoring Dashboard [OrgName]"')
 		}
 	}
 
