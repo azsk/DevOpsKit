@@ -1368,13 +1368,13 @@ class CCAutomation: CommandBase
 		    	$scheduleList += ($_.Name +" (Frequency: "+$_.Interval+" "+$_.Frequency+")")
 		    }
             $caSummaryTable.Item("Schedules") = $scheduleList -join ","
+        }
 
-		    $caSummaryTable.Item("AzureADAppID") = $runAsConnection.FieldDefinitionValues["ApplicationId"]
-        } 
-		
-		#find AD App name
         if($runAsConnection)
         {
+            $caSummaryTable.Item("AzureADAppID") = $runAsConnection.FieldDefinitionValues["ApplicationId"]
+		    
+            #find AD App name
 		    $ADapp = Get-AzADApplication -ApplicationId $runAsConnection.FieldDefinitionValues.ApplicationId -ErrorAction SilentlyContinue		
 		    if($ADApp)
 		    {
