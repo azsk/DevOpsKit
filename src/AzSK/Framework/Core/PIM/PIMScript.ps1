@@ -531,7 +531,7 @@ hidden [void] PIMScript()
     }
     catch
     {
-        Write-Host "Unable to fetch access token. Run Connect-AzAccount and then execute this command" -ForegroundColor Red
+        Write-Host "Unable to fetch access token. Run Connect-AzAccount -UseDeviceAuthentication and then execute this command." -ForegroundColor Red
         return;
     }  
      
