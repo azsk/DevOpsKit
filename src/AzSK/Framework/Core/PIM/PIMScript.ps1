@@ -501,7 +501,7 @@ hidden AssignmentEligible()
     }
     else
     {
-       $this.PublishCustomMessage("You are not elligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.",[MessageType]::Warning)
+       $this.PublishCustomMessage("You are not eligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.",[MessageType]::Warning)
     }
 }
 
