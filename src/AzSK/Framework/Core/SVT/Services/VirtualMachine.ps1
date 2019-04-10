@@ -623,39 +623,33 @@ class VirtualMachine: SVTBase
 
 	hidden [ControlResult] CheckDiskEncryption([ControlResult] $controlResult)
 	{	
-		if(-not $this.VMDetails.IsVMDeallocated)
-		{
-			$ascDiskEncryptionStatus = $false;
+	    #Do not check for deallocated status for the VM and directly show the status from ASC
+		$ascDiskEncryptionStatus = $false;
 
-			if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
+		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
+		{
+			$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryption};
+			if($null -ne $adeSetting)
 			{
-				$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryption};
-				if($null -ne $adeSetting)
+				if($adeSetting.assessmentResult -eq 'Healthy')
 				{
-					if($adeSetting.assessmentResult -eq 'Healthy')
-					{
-						$ascDiskEncryptionStatus = $true;
-					}
+					$ascDiskEncryptionStatus = $true;
 				}
-				$controlResult.AddMessage("VM disk encryption details:", $adeSetting);
-			}				
+			}
+			$controlResult.AddMessage("VM disk encryption details:", $adeSetting);
+		}				
 				
-			if($ascDiskEncryptionStatus)
-			{
-				$verificationResult  = [VerificationResult]::Passed;
-				$message = "All Virtual Machine disks (OS and Data disks) are encrypted. Validated the status through ASC.";
-				$controlResult.AddMessage($verificationResult, $message);
-			}
-			else
-			{            
-				$verificationResult  = [VerificationResult]::Failed;
-				$message = "All Virtual Machine disks (OS and Data disks) are not encrypted. Validated the status through ASC.";
-				$controlResult.AddMessage($verificationResult, $message);
-			}
+		if($ascDiskEncryptionStatus)
+		{
+			$verificationResult  = [VerificationResult]::Passed;
+			$message = "All Virtual Machine disks (OS and Data disks) are encrypted. Validated the status through ASC.";
+			$controlResult.AddMessage($verificationResult, $message);
 		}
 		else
-		{
-			$controlResult.AddMessage([VerificationResult]::Verify, "This VM is currently in a 'deallocated' state. Unable to check security controls on it.");
+		{            
+			$verificationResult  = [VerificationResult]::Failed;
+			$message = "All Virtual Machine disks (OS and Data disks) are not encrypted. Validated the status through ASC.";
+			$controlResult.AddMessage($verificationResult, $message);
 		}
 		return $controlResult;
 	}
