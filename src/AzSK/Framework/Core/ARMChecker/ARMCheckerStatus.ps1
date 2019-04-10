@@ -51,13 +51,48 @@ class ARMCheckerStatus: EventBase
 	}
 
 
-	[string] EvaluateStatus([string] $armTemplatePath,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles)
+	[string] EvaluateStatus([string] $armTemplatePath, [string] $parameterFilePath ,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles)
 	{
 	    if(-not (Test-Path -path $armTemplatePath))
 		{
 			$this.WriteMessage("ARMTemplate file path or folder path is empty, verify that the path is correct and try again", [MessageType]::Error);
 			return $null;
 		}
+
+		# Check if parameter file path is provided by user
+		if([string]::IsNullOrEmpty($parameterFilePath))
+		{
+			$parameterFileProvided = $false;
+		}else{
+			$parameterFileProvided = $true;
+		}
+
+		# Check if provided parameter file path is valid  
+		if($parameterFileProvided -and -not (Test-Path -path $parameterFilePath))
+		{
+		    $parameterFileProvided = $false;
+			$this.WriteMessage("Template parameter file path or folder path is empty, verify that the path is correct and try again", [MessageType]::Warning);
+		}
+
+		# Check if provided parameter file path is a single file or folder 
+		$ParameterFiles = $null;
+		$paramterFileContent = $null;
+		if($parameterFileProvided -and (Test-Path -path $parameterFilePath -PathType Leaf))
+		{
+		  $paramterFileContent = Get-Content $parameterFilePath -Raw
+		}elseif ($parameterFileProvided) {
+			if($isRecurse -eq $true)
+			{
+				$ParameterFiles = Get-ChildItem -Path $parameterFilePath -Recurse -Filter '*.parameters.json' 
+			}
+			else
+			{
+				$ParameterFiles = Get-ChildItem -Path $parameterFilePath -Filter '*.parameters.json' 
+			}
+		}
+			
+		
+
 		$this.PSLogPath = "";
 		$baseDirectory = [System.IO.Path]::GetDirectoryName($armTemplatePath);
 	    if($isRecurse -eq $true)
@@ -90,7 +125,7 @@ class ARMCheckerStatus: EventBase
 		  if(-not([string]::IsNullOrEmpty($exemptControlListPath)) -and (Test-Path -path $exemptControlListPath -PathType Leaf))
 		  {
 		    $exemptControlListFile=Get-Content $exemptControlListPath | ConvertFrom-Csv
-	        $exemptControlList=$exemptControlListFile| where{$_.Status -eq "Failed"}
+	        $exemptControlList=$exemptControlListFile| where {$_.Status -eq "Failed"}
 		  }
 		}catch{
 		    $this.WriteMessage("Unable to read file containing list of controls to skip, Please verify file path.", [MessageType]::Warning);
@@ -124,11 +159,31 @@ class ARMCheckerStatus: EventBase
 			{
 				$results = @();
 				$csvResultsForCurFile=@();
-				$armTemplateContent = Get-Content $armTemplate.FullName -Raw		
-				$libResults = $armEvaluator.Evaluate($armTemplateContent, $null);
+				$relatedParameterFile = $null
+				$relatedParameterFileName = $null
+				$armTemplateContent = Get-Content $armTemplate.FullName -Raw	
+				if($null -ne $ParameterFiles -and ($ParameterFiles | Measure-Object).Count -gt 0)
+				{
+					$relatedParameterFileName = $armTemplate.Name.Replace(".json",".parameters.json");
+					$relatedParameterFile = $ParameterFiles | Where-Object { $_.Name -eq $relatedParameterFileName }
+					if($null -ne $relatedParameterFile)
+					{
+						$relatedParameterFile = $relatedParameterFile | Select-Object -First 1
+						$paramterFileContent = Get-Content $relatedParameterFile.FullName -Raw
+					}
+					$libResults = $armEvaluator.Evaluate($armTemplateContent, $paramterFileContent);
+				}else
+				{
+					$libResults = $armEvaluator.Evaluate($armTemplateContent, $paramterFileContent);
+					#$libResults = $armEvaluator.Evaluate($armTemplateContent, $null);
+				}
+				
 				$results += $libResults | Where-Object {$_.VerificationResult -ne "NotSupported"} | Select-Object -ExcludeProperty "IsEnabled"		
 		
 				$this.WriteMessage(([Constants]::DoubleDashLine + "`r`nStarting analysis: [FileName: $armFileName] `r`n" + [Constants]::SingleDashLine), [MessageType]::Info);
+				if($null -ne $relatedParameterFile){
+					$this.WriteMessage(("`r`n[ParameterFileName: $relatedParameterFileName] `r`n" + [Constants]::SingleDashLine), [MessageType]::Info);
+				}
 				if($results.Count -gt 0)
 				{   $scannedFileCount += 1;
 					foreach($result in $results)
@@ -250,7 +305,7 @@ class ARMCheckerStatus: EventBase
 				$this.AddSkippedFilesLog([Helpers]::ConvertObjectToString($_, $false));
 			};
 			$this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Warning);
-			$this.WriteMessage("One or more files were skipped during the scan. Either the files are invalid as ARM templates or those resource types are currently not supported by this command.`nPlease verify the files and re-run the command. For files that should not be included in the scan, you can use the '-ExcludeFiles' parameter.",[MessageType]::Error);
+			$this.WriteMessage("One or more files were skipped during the scan. `nEither the files are invalid as ARM templates or those resource types are currently not supported by this command.`nPlease verify the files and re-run the command. `nFor files that should not be included in the scan, you can use the '-ExcludeFiles' parameter.",[MessageType]::Error);
 			$this.WriteMessage([Constants]::SingleDashLine, [MessageType]::Warning);
 		}
 

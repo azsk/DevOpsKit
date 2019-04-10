@@ -33,6 +33,11 @@ function Get-AzSKARMTemplateSecurityStatus
 		[Alias("atp")]
         $ARMTemplatePath,
 
+		[Parameter(Mandatory = $false, HelpMessage = "Path to Template paramter file or folder")]
+        [string]        
+		[Alias("pfp")]
+        $ParameterFilePath,
+
 		[Parameter(Mandatory = $false, HelpMessage = "Gets the ARM Temaplates in the specified locations and in all child folders of the locations")]
         [switch]  
 		[Alias("rcs")]
@@ -66,7 +71,7 @@ function Get-AzSKARMTemplateSecurityStatus
 			$armStatus = [ARMCheckerStatus]::new($PSCmdlet.MyInvocation);
 			if ($armStatus) 
 			{
-				return $armStatus.EvaluateStatus($ARMTemplatePath, $Recurse,$SkipControlsFromFile,$ExcludeFiles);				
+				return $armStatus.EvaluateStatus($ARMTemplatePath,$ParameterFilePath,$Recurse,$SkipControlsFromFile,$ExcludeFiles);				
 			}    
 		}
 		catch 
