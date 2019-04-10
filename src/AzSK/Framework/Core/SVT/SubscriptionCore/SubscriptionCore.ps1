@@ -1017,7 +1017,7 @@ class SubscriptionCore: SVTBase
 																					{
 																									("Guid") {  
 																													$emptyGuid = [Guid]::Empty 
-																													$RGListWithoutExpectedTypeValue = $rgListwithTags | Where-Object { (-not [Guid]::TryParse($_.Tags[$tagObject.Name], [ref] $emptyGuid))} #$rgListwithTags | Where-Object { $_.Tags | Where-Object { $_.GetEnumerator() | Where-Object {$_.Key -eq $tagObject.Name -and (-not [Guid]::TryParse($_.Value, [ref] $emptyGuid))}}}
+																													$RGListWithoutExpectedTypeValue = $rgListwithTags | Where-Object { (-not [Guid]::TryParse($_.Tags[$_.Tags.Keys -match "\b$($tagObject.Name)\b"], [ref] $emptyGuid))} #$rgListwithTags | Where-Object { $_.Tags | Where-Object { $_.GetEnumerator() | Where-Object {$_.Key -eq $tagObject.Name -and (-not [Guid]::TryParse($_.Value, [ref] $emptyGuid))}}}
 																													if(($RGListWithoutExpectedTypeValue | Measure-Object).Count -gt 0)
 																													{
 																																	$rgTagStatus = $false
