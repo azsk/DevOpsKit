@@ -321,7 +321,7 @@ class KeyVault: SVTBase
     }
 
    
-	hidden [ControlResult] CheckAppsSharingKayVault([ControlResult] $controlResult)
+	hidden [ControlResult] CheckAppsSharingKeyVault([ControlResult] $controlResult)
 	{
 		$appList = $this.GetAzureRmKeyVaultApplications() 
       

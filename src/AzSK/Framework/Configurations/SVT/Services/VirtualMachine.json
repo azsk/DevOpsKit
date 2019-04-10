@@ -68,7 +68,7 @@
      },
        {
           "ControlID": "Azure_VirtualMachine_NetSec_Justify_PublicIPs",
-          "Description": "Public IPs on a Virtual Machine should carefully reviewed",
+          "Description": "Public IPs on a Virtual Machine should be carefully reviewed",
           "Id": "VirtualMachine150",
           "ControlSeverity": "High",
           "Automated": "Yes",

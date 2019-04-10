@@ -28,7 +28,7 @@
                          "Id":  "KeyVault120",
                          "ControlSeverity": "High",
                          "Automated":  "Yes",
-                         "MethodName":  "CheckAppsSharingKayVault",
+                         "MethodName":  "CheckAppsSharingKeyVault",
                          "Rationale":  "Key Vault contains critical information like credentials/secrets etc. All applications can access all secrets from a given Key Vault. This can violate trust boundaries between applications.",
                          "Recommendation":  "Ensure that there is a clear need for apps to share secrets if they are sharing a Key Vault. Else setup independent Key Vaults for each application.",
                          "Tags":  [
