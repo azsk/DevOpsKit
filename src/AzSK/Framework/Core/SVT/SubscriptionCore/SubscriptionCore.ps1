@@ -988,7 +988,7 @@ class SubscriptionCore: SVTBase
 						$controlResult.AddMessage("`nTotal number of RGs without Tag: " + ($rgListwithoutTags | Measure-Object).Count, ($rgListwithoutTags | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
 					}
 					
-					$rgListwithDuplicateTags = $resourceGroups | Where-Object { (-not [string]::IsNullOrWhiteSpace($_.Tags)) -and (($_.Tags.Keys -icontains $tagObject.Name) | Measure-Object).Count -gt 1 }
+					$rgListwithDuplicateTags = $resourceGroups | Where-Object { (-not [string]::IsNullOrWhiteSpace($_.Tags)) -and (($_.Tags.Keys -match "\b$($tagObject.Name)\b") | Measure-Object).Count -gt 1 }
 					
 					if(($rgListwithDuplicateTags | Measure-Object).Count -gt 0)
 					{
@@ -996,14 +996,14 @@ class SubscriptionCore: SVTBase
 						$controlResult.AddMessage("`nTotal number of RGs with duplicate Tag(multiple Tags with same name): " + ($rgListwithDuplicateTags | Measure-Object).Count, ($rgListwithDuplicateTags | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
 					}
 
-					$rgListwithTags = $resourceGroups | Where-Object { (-not [string]::IsNullOrWhiteSpace($_.Tags)) -and (($_.Tags.Keys -icontains $tagObject.Name) | Measure-Object).Count -eq 1 }
+					$rgListwithTags = $resourceGroups | Where-Object { (-not [string]::IsNullOrWhiteSpace($_.Tags)) -and (($_.Tags.Keys -match "\b$($tagObject.Name)\b") | Measure-Object).Count -eq 1 }
 					
 					if(($rgListwithTags| Measure-Object).Count -gt 0)
 					{
 						if($tagObject.Values -notcontains "*")
 						{
 							#Validate if expected tag value is present 
-							$rgListwithoutTagValue = $rgListwithTags | Where-Object { $_.Tags[$tagObject.Name] -inotin $tagObject.Values} #$rgListwithTags | Where-Object { $_.Tags | Where-Object { $_.GetEnumerator() | Where-Object { $_.Key -eq $tagObject.Name -and $_.Value -notin $tagObject.Values}}}
+							$rgListwithoutTagValue = $rgListwithTags | Where-Object { $_.Tags[$_.Tags.Keys -match "\b$($tagObject.Name)\b"] -inotin $tagObject.Values} #$rgListwithTags | Where-Object { $_.Tags | Where-Object { $_.GetEnumerator() | Where-Object { $_.Key -eq $tagObject.Name -and $_.Value -notin $tagObject.Values}}}
 							if(($rgListwithoutTagValue | Measure-Object).Count -gt 0)
 							{
 								$rgTagStatus = $false
