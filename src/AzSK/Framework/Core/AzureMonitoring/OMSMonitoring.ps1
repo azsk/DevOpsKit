@@ -58,8 +58,8 @@ class OMSMonitoring: CommandBase
 				mkdir -Path $OMSLogPath -Force | Out-Null
 			}
 					
-			$genericViewTemplateFilepath = [ConfigurationManager]::LoadServerConfigFile("AZSK.AM.OMS.GenericView.V3.omsview"); 				
-			$this.OMSGenericTemplateFilepath = $OMSLogPath+"\AZSK.AM.OMS.GenericView.V3.omsview";
+			$genericViewTemplateFilepath = [ConfigurationManager]::LoadServerConfigFile("AZSK.AM.OMS.GenericView.V4.omsview"); 				
+			$this.OMSGenericTemplateFilepath = $OMSLogPath+"\AZSK.AM.OMS.GenericView.V4.omsview";
 			$genericViewTemplateFilepath | ConvertTo-Json -Depth 100 | Out-File $this.OMSGenericTemplateFilepath
 			$this.PublishCustomMessage("`r`nSetting up AzSK Log Analytics generic view.");
 			$this.ConfigureGenericView($_viewName, $_validateOnly);	
