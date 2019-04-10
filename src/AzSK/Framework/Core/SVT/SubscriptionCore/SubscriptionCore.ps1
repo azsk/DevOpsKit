@@ -970,103 +970,66 @@ class SubscriptionCore: SVTBase
 		if([Helpers]::CheckMember($this.ControlSettings,"MandatoryTags") -and ($this.ControlSettings.MandatoryTags | Measure-Object).Count -ne 0)
 		{
 			$resourceGroups = Get-AzResourceGroup
-			$rgListwithoutTags = [System.Collections.ArrayList]::new()
-			$rgListwithDuplicateTags = [System.Collections.ArrayList]::new()
-			$rgListwithoutTagValue = [System.Collections.ArrayList]::new()
-			$RGListWithoutExpectedTypeValue = [System.Collections.ArrayList]::new()
-
-			$controlResult.AddMessage("`nPolicy Requirement:`n")
-
-			#Gives the mandatory tags expected along with the expected values
-			$this.ControlSettings.MandatoryTags | ForEach-Object {
-				$tagObject = $_
-				$controlResult.AddMessage("`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpected Values: '$($tagObject.Values)'`n`n")
-			}
-
-			#This loop checks the mandatory tags RG-wise and computes lists on the basis of that
 			if(($resourceGroups | Measure-Object).Count -gt 0)
 			{
 				$rgTagStatus = $true
 				$controlResult.AddMessage("`nTotal number of RGs:" + ($resourceGroups | Measure-Object).Count)
-				
-				$resourceGroups | ForEach-Object {
-					$currentRg = $_
-					$this.ControlSettings.MandatoryTags | ForEach-Object {
-						$tagObject = $_
+				$this.ControlSettings.MandatoryTags | ForEach-Object {
+					$tagObject = $_
+					
+					$controlResult.AddMessage("`nPolicy Requirement: `n`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpected Values: '$($tagObject.Values)'")
 
-						if ([string]::IsNullOrWhiteSpace($currentRg.Tags) -or (-not ($currentRg.Tags.keys -imatch $tagObject.Name))) 
+					#Step1 Validate if tag present on RG 			
+					$rgListwithoutTags = $resourceGroups | Where-Object { [string]::IsNullOrWhiteSpace($_.Tags) -or (-not ($_.Tags.Keys -icontains $tagObject.Name))}
+					
+					if(($rgListwithoutTags | Measure-Object).Count -gt 0)
+					{
+						$rgTagStatus = $false
+						$controlResult.AddMessage("`nTotal number of RGs without Tag: " + ($rgListwithoutTags | Measure-Object).Count, ($rgListwithoutTags | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
+					}
+					
+					$rgListwithDuplicateTags = $resourceGroups | Where-Object { (-not [string]::IsNullOrWhiteSpace($_.Tags)) -and (($_.Tags.Keys -icontains $tagObject.Name) | Measure-Object).Count -gt 1 }
+					
+					if(($rgListwithDuplicateTags | Measure-Object).Count -gt 0)
+					{
+						$rgTagStatus = $false
+						$controlResult.AddMessage("`nTotal number of RGs with duplicate Tag(multiple Tags with same name): " + ($rgListwithDuplicateTags | Measure-Object).Count, ($rgListwithDuplicateTags | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
+					}
+
+					$rgListwithTags = $resourceGroups | Where-Object { (-not [string]::IsNullOrWhiteSpace($_.Tags)) -and (($_.Tags.Keys -icontains $tagObject.Name) | Measure-Object).Count -eq 1 }
+					
+					if(($rgListwithTags| Measure-Object).Count -gt 0)
+					{
+						if($tagObject.Values -notcontains "*")
 						{
-							if ($rgListwithoutTags -notcontains $currentRg) 
+							#Validate if expected tag value is present 
+							$rgListwithoutTagValue = $rgListwithTags | Where-Object { $_.Tags[$tagObject.Name] -inotin $tagObject.Values} #$rgListwithTags | Where-Object { $_.Tags | Where-Object { $_.GetEnumerator() | Where-Object { $_.Key -eq $tagObject.Name -and $_.Value -notin $tagObject.Values}}}
+							if(($rgListwithoutTagValue | Measure-Object).Count -gt 0)
 							{
-								$rgListwithoutTags.Add($currentRg) | Out-Null
+								$rgTagStatus = $false
+								$controlResult.AddMessage("`nTotal number of RGs without expected value : " + ($rgListwithoutTagValue | Measure-Object).Count, ($rgListwithoutTagValue | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
 							}
 						}
-						else 
-						{
-							if (($currentRg.Tags.Keys -imatch $tagObject.Name).Count -gt 1) 
+
+						#Validate tag value type
+						if($tagObject.ValidateTagValueType -and ($rgListwithTags| Measure-Object).Count -gt 0)
+						{     
+							switch($tagObject.Type)
 							{
-								#This captures all those RGs which have the same mandatory tags placed on them two or more times
-								if ($rgListwithDuplicateTags -notcontains $currentRg) 
-								{
-									$rgListwithDuplicateTags.Add($currentRg) | Out-Null
-								}
-							}
-							else 
-							{
-								if($tagObject.Values -notcontains "*")
-								{
-									#Validate if expected tag value is present 
-									if (($currentRg.Tags[$currentRg.Tags.Keys -imatch $tagObject.Name] -notin $tagObject.Values) -and ($rgListwithoutTagValue -notcontains $currentRg))
+								("Guid") {  
+									$emptyGuid = [Guid]::Empty 
+									$RGListWithoutExpectedTypeValue = $rgListwithTags | Where-Object { (-not [Guid]::TryParse($_.Tags[$tagObject.Name], [ref] $emptyGuid))} #$rgListwithTags | Where-Object { $_.Tags | Where-Object { $_.GetEnumerator() | Where-Object {$_.Key -eq $tagObject.Name -and (-not [Guid]::TryParse($_.Value, [ref] $emptyGuid))}}}
+									if(($RGListWithoutExpectedTypeValue | Measure-Object).Count -gt 0)
 									{
-										if ($rgListwithoutTagValue -notcontains $currentRg) 
-										{
-											$rgListwithoutTagValue.Add($currentRg) | Out-Null											
-										}
-									}
-								}	
-								if($tagObject.ValidateTagValueType)
-								{     
-									#This is basically for checking if the ComponentId is in proper GUID format
-									switch($tagObject.Type)
-									{
-										("Guid") {  
-											$emptyGuid = [Guid]::Empty 
-											if (-not [Guid]::TryParse($currentRg.Tags[$currentRg.Tags.Keys -imatch $tagObject.Name], [ref] $emptyGuid)) {
-												$RGListWithoutExpectedTypeValue.Add($currentRg) | Out-Null
-											}
-										}
+										$rgTagStatus = $false
+										$controlResult.AddMessage("`nTotal number of RGs without expected value type: " + ($RGListWithoutExpectedTypeValue | Measure-Object).Count,($RGListWithoutExpectedTypeValue | Select-Object ResourceGroupName | foreach {$_.ResourceGroupName}))
 									}
 								}
 							}
 						}
 					}
+					$controlResult.AddMessage([Constants]::UnderScoreLineLine)
 				}
-				if(($rgListwithoutTags | Measure-Object).Count -gt 0)
-				{
-					$rgTagStatus = $false
-					$controlResult.AddMessage("`nTotal number of RGs without Tag: " + ($rgListwithoutTags | Measure-Object).Count, ($rgListwithoutTags | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
-				}
-
-				if(($rgListwithDuplicateTags | Measure-Object).Count -gt 0)
-				{
-					$rgTagStatus = $false
-					$controlResult.AddMessage("`nTotal number of RGs with duplicate Tags: " + ($rgListwithDuplicateTags | Measure-Object).Count, ($rgListwithDuplicateTags | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
-				}
-
-	
-				if(($rgListwithoutTagValue | Measure-Object).Count -gt 0)
-				{
-					$rgTagStatus = $false
-					$controlResult.AddMessage("`nTotal number of RGs without expected value : " + ($rgListwithoutTagValue | Measure-Object).Count, ($rgListwithoutTagValue | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
-				}	
-	
-				if(($RGListWithoutExpectedTypeValue | Measure-Object).Count -gt 0)
-				{
-					$rgTagStatus = $false
-					$controlResult.AddMessage("`nTotal number of RGs without expected value type: " + ($RGListWithoutExpectedTypeValue | Measure-Object).Count,($RGListWithoutExpectedTypeValue | Select-Object ResourceGroupName | foreach {$_.ResourceGroupName}))
-				}	
-
-				$controlResult.AddMessage([Constants]::UnderScoreLineLine)
 				
 				if(-not $rgTagStatus)
 				{
@@ -1077,7 +1040,7 @@ class SubscriptionCore: SVTBase
 					$controlResult.AddMessage([VerificationResult]::Passed, "Resource group(s) comply with mandatory tags." )
 				}				
 			}
-			else 
+			else
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed,"No resource group(s) found" )
 			}
