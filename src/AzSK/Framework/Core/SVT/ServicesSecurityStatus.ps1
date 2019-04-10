@@ -396,8 +396,8 @@ class ServicesSecurityStatus: SVTCommandBase
 					$this.PublishCustomMessage("Resuming scan from last commit. $(($nonScannedResourcesList | Measure-Object).Count) out of $(($allResourcesList | Measure-Object).Count) resources will be scanned.", [MessageType]::Warning);
 					$nonScannedResourceIdList = $nonScannedResourcesList | Select-Object Id | ForEach-Object { $_.Id}
 					#Filter SVT resources based on master resources list available and scan completed
-					$this.Resolver.SVTResources = $this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList }				
 					[AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details", @{"TotalSVTResources"= $($this.Resolver.SVTResources | Where-Object { $_.ResourceTypeMapping } | Measure-Object).Count;"TotalUnscannedResource"=$(($nonScannedResourcesList | Measure-Object).Count); "Total Pending Resource" = $(($allResourcesList | Measure-Object).Count)},$null)
+					$this.Resolver.SVTResources = $this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList }				
 				}
 				else{
 					$this.IsPartialCommitScanActive = $false;
