@@ -407,23 +407,11 @@ class VirtualMachine: SVTBase
 	{
 		if(-not $this.VMDetails.IsVMDeallocated)
 		{
-			$requiredGuestExtension = $null
-			$requiredGuestExtensionVersion = $null
-			$VMType = $this.ResourceObject.StorageProfile.OsDisk.OsType
 			$guestConfigurationAssignmentName = "SMSClientStatus"
 			$controlStatus = [VerificationResult]::Manual
-
-			if($VMType -eq [Microsoft.Azure.Management.Compute.Models.OperatingSystemTypes]::Linux)
-			{
-				$requiredGuestExtension = "ConfigurationForLinux"
-				$requiredGuestExtensionVersion =  [System.Version] "1.11.0.0"
-			}
-			elseif($VMType -eq [Microsoft.Azure.Management.Compute.Models.OperatingSystemTypes]::Windows)
-			{
-				$requiredGuestExtension = "ConfigurationForWindows"
-				$requiredGuestExtensionVersion =  [System.Version] "1.11.0.0"
-			}
-
+            $requiredGuestExtension  = $this.VMControlSettings.GuestExtension.Name
+			$requiredGuestExtensionVersion =  [System.Version] $this.VMControlSettings.GuestExtension.RequiredVersion
+			
             $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
 			$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
 			$header = "Bearer " + $AccessToken

@@ -236,6 +236,7 @@
           "Windows",
           "Linux",
           "SI",
+          "ERvNet",
           "VirtualMachine"
         ],
         "Enabled": true
@@ -257,6 +258,7 @@
            "Windows",
            "Linux",
            "SI",
+           "ERvNet",
            "VirtualMachine"
          ],
          "Enabled": false
