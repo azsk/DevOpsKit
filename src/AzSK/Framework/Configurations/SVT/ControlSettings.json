@@ -51,6 +51,10 @@
       "VulnAssessmentSolution":{
         "AgentName": "QualysAgent",
         "RequiredVersion":"1.6.4.9"
+      },
+      "GuestExtension": {
+        "Name": "ConfigurationForWindows",
+        "RequiredVersion": "1.11.0.0"
       }
     },
     "Linux": {
@@ -74,6 +78,10 @@
       "VulnAssessmentSolution": {
         "AgentName": "QualysAgentLinux",
         "RequiredVersion": "1.6.0.96"
+      },
+      "GuestExtension": {
+        "Name": "ConfigurationForLinux",
+        "RequiredVersion": "1.9.0.0"
       }
     },
     "Windows_OS_Baseline_Ids": [],

@@ -236,19 +236,20 @@
           "Windows",
           "Linux",
           "SI",
+          "ERvNet",
           "VirtualMachine"
         ],
         "Enabled": true
       },
       {
          "ControlID": "Azure_VirtualMachine_SI_Install_GuestConfig_Extension",
-         "Description": "Guest config extension should be installed on VM",
+         "Description": "Guest configuration extension should be installed on VM",
          "Id": "VirtualMachine210",
          "ControlSeverity": "Medium",
          "Automated": "Yes",
          "MethodName": "CheckGuestConfigExtension",
-         "Rationale": "Known OS/framework vulnerabilities in a system can be easy targets for attackers. An attacker can start by compromising a VM/container with such a vulnerability and can eventually compromise the security of the entire network. A vulnerability assessment solution can help to detect/warn about vulnerabilities in the system and facilitate addressing them in a timely manner.",
-         "Recommendation": "To install vulnerability assessment solution, please refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-vulnerability-assessment-recommendations",
+         "Rationale": "Installing Guest configuration extension on VM allows you to run In-Guest Policy on the VM, making it possible to monitor system and security policies on the VM.",
+         "Recommendation": "This control corresponds to an internal POC at Microsoft. Hence it is 'disabled' in the AzSK module. We may enable it after fine tuning in a future release. Until then, please ignore this control.",
          "Tags": [
            "SDL",
            "TCP",
@@ -257,6 +258,7 @@
            "Windows",
            "Linux",
            "SI",
+           "ERvNet",
            "VirtualMachine"
          ],
          "Enabled": false
