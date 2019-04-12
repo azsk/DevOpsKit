@@ -25,7 +25,7 @@ class ARMPolicy: CommandBase
 		$this.UpdateInitiative = $updateInitiative;
 	}
 
-	hidden [PSObject[]] GetApplicableARMPolices()
+	hidden [PSObject[]] GetApplicableARMPolicies()
 	{
 		if($null -eq $this.ApplicableARMPolicies)
 		{
@@ -66,14 +66,14 @@ class ARMPolicy: CommandBase
 		$this.RemoveDeprecatedPolicies();
 		if(($this.ARMPolicyObj.Policies | Measure-Object).Count -ne 0)
 		{
-			if($this.GetApplicableARMPolices() -ne 0)
+			if($this.GetApplicableARMPolicies() -ne 0)
 			{
-				$startMessage = [MessageData]::new("Processing AzSK ARM policies. Total policies: $($this.GetApplicableARMPolices().Count)");
+				$startMessage = [MessageData]::new("Processing AzSK ARM policies. Total policies: $($this.GetApplicableARMPolicies().Count)");
 				$messages += $startMessage;
 				$this.PublishCustomMessage($startMessage);
 				$this.PublishCustomMessage("Note: Configuring ARM policies can take about 2-3 min...", [MessageType]::Warning);				
 
-				$disabledPolicies = $this.GetApplicableARMPolices() | Where-Object { -not $_.Enabled };
+				$disabledPolicies = $this.GetApplicableARMPolicies() | Where-Object { -not $_.Enabled };
 				if(($disabledPolicies | Measure-Object).Count -ne 0)
 				{
 					$disabledMessage = "Found ARM policies which are disabled. Total disabled policies: $($disabledPolicies.Count)";
@@ -82,7 +82,7 @@ class ARMPolicy: CommandBase
 				}
 
 				$enabledPolicies = @();
-				$enabledPolicies += $this.GetApplicableARMPolices() | Where-Object { $_.Enabled };
+				$enabledPolicies += $this.GetApplicableARMPolicies() | Where-Object { $_.Enabled };
 				if($enabledPolicies.Count -ne 0)
 				{
 					$messages += [MessageData]::new([Constants]::SingleDashLine + "`r`nAdding following ARM policies to the subscription. Total policies: $($enabledPolicies.Count)", $enabledPolicies);                                            								
@@ -272,14 +272,14 @@ class ARMPolicy: CommandBase
 		[MessageData[]] $messages = @();
 		if(($this.ARMPolicyObj.Policies | Measure-Object).Count -ne 0)
 		{
-			if($this.GetApplicableARMPolices() -ne 0)
+			if($this.GetApplicableARMPolicies() -ne 0)
 			{
-				$startMessage = [MessageData]::new("Processing ARM policies. Tags:[$([string]::Join(",", $this.FilterTags))]. Total policies: $($this.GetApplicableARMPolices().Count)");
+				$startMessage = [MessageData]::new("Processing ARM policies. Tags:[$([string]::Join(",", $this.FilterTags))]. Total policies: $($this.GetApplicableARMPolicies().Count)");
 				$messages += $startMessage;
 				$this.PublishCustomMessage($startMessage);
 				$this.PublishCustomMessage("Note: Removing ARM policies can take few minutes depending on number of policies to be processed...", [MessageType]::Warning);				
 
-				$disabledPolicies = $this.GetApplicableARMPolices() | Where-Object { -not $_.Enabled };
+				$disabledPolicies = $this.GetApplicableARMPolicies() | Where-Object { -not $_.Enabled };
 				if(($disabledPolicies | Measure-Object).Count -ne 0)
 				{
 					$disabledMessage = "Found ARM policies which are disabled and will not be removed. Total disabled policies: $($disabledPolicies.Count)";
@@ -293,7 +293,7 @@ class ARMPolicy: CommandBase
 				$enabledPolicies = @();
 				if($currentPolicies.Count -ne 0)
 				{
-					$enabledPolicies += $this.GetApplicableARMPolices() | Where-Object { $_.Enabled -and $currentPolicies -contains $_.policyDefinitionName };
+					$enabledPolicies += $this.GetApplicableARMPolicies() | Where-Object { $_.Enabled -and $currentPolicies -contains $_.policyDefinitionName };
 				}
 				
 				if($enabledPolicies.Count -ne 0)
@@ -486,7 +486,7 @@ class ARMPolicy: CommandBase
 	[string[]] ValidatePolicyConfiguration()
 	{		
 		$NonCompliantObjects = @();
-		$enabledPolicies = $this.GetApplicableARMPolices() | Where-Object { $_.Enabled };
+		$enabledPolicies = $this.GetApplicableARMPolicies() | Where-Object { $_.Enabled };
 		if($null -ne $this.ARMPolicyObj -and ($enabledPolicies | Measure-Object).Count -gt 0)
 		{
 			$RequiredPolicyDefns = @();			
