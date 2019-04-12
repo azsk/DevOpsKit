@@ -1,4 +1,3 @@
-
 #Acquire Access token
 class PIM: CommandBase
 {
@@ -197,8 +196,8 @@ hidden Activate()
             if($choice -eq 0)
             {
 
-                return;
                 $this.abortflow = 1;
+                return;
             }
            Write-Host "  Invalid input" -ForegroundColor Yellow 
            Write-Host "  Enter Id to activate: " -ForegroundColor Cyan -NoNewline
@@ -213,8 +212,8 @@ hidden Activate()
             {
                 if($choice -eq 0)
                 {
-                    return;
                     $this.abortflow = 1;
+                    return;
                 }
                 Write-Host "  Invalid input" -ForegroundColor Yellow
                 Write-Host "  Enter activation duration in hours between 1 to 8 hours: " -ForegroundColor Cyan -NoNewline
@@ -229,8 +228,8 @@ hidden Activate()
             {
                 if($choice -eq 0)
                 {
-                    return;
                     $this.abortflow = 1;
+                     return;
                 }
                 Write-Host "  Invalid input" -ForegroundColor Yellow
                 Write-Host "  Enter activation duration in hours between 1 to 8 hours: " -ForegroundColor Cyan -NoNewline
@@ -286,8 +285,8 @@ hidden Deactivate()
             {
                 if($choice -eq 0)
                 {
-                    return;
                     $this.abortflow = 1;
+                     return;
                 }
                  Write-Host "  Invalid input" -ForegroundColor Yellow
                  Write-Host "  Pick Id to deactivate: " -ForegroundColor Cyan -NoNewline
@@ -337,9 +336,9 @@ ListAssignment()
         while($res_choice -notin $resources.Id)
         {
             if($res_choice -eq 0)
-            {
-                return;
+            {                
                 $this.abortflow = 1;
+                return;
             }
              Write-Host "  Invalid input" -ForegroundColor Yellow
              Write-Host "  Pick a resource Id for assigment: " -ForegroundColor Cyan -NoNewline
@@ -347,42 +346,15 @@ ListAssignment()
         }
         $resourceId = $resources[$res_choice-1].ResourceId
 
-        #List and Pick a role
-        # $roles = $this.ListRoles($resourceId) |  Where-Object{ $_.SubjectCount -gt 0}
-        # $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
-        # $this.PublishCustomMessage($($roles | Format-Table -AutoSize -Wrap Id, RoleName, RoleDefinitionId | Out-String),[MessageType]::Default)
-        # $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
-        # $this.PublishCustomMessage("")
-        # Write-Host "  Pick a role Id: " -ForegroundColor Cyan -NoNewline
-        # $role_choice = Read-Host
-        # while($role_choice -notin $roles.Id)
-        # {
-        #     if($role_choice -eq 0)
-        #     {
-        #         return;
-        #         $this.abortflow = 1;
-        #     }
-        #      Write-Host "  Invalid input" -ForegroundColor Yellow
-        #      Write-Host "  Pick a role Id: " -ForegroundColor Cyan -NoNewline
-        #     $role_choice = Read-Host 
-        # }
-        # $roleDefinitionId = $roles[$role_choice-1].RoleDefinitionId
-        # #write-Host $roleDefinitionId
-
         #List Member
         $roleAssignments=$this.ListAssignmentsWithFilter($resourceId)
         $permanentAssignment=$roleAssignments | Where-Object{$_.IsPermanent -eq $true}
         if(($permanentAssignment | Measure-Object).Count -gt 0)
         {
-            $permanentAssignment = $permanentAssignment | Group-Object -Property RoleName
-            $permanentAssignment| ForEach-Object{
-			$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
-			$this.PublishCustomMessage($_.Name+": ")
-            $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
-            $this.PublishCustomMessage($($_.Group[0]| Format-Table UserName, ResourceType, ResourceId | Out-String),[MessageType]::Default)
-            $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)            
+            $permanentAssignment = $permanentAssignment| Sort-Object -Property RoleName,Name 
             $this.PublishCustomMessage("")
-            }
+            $this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Default)
+            $this.PublishCustomMessage($($permanentAssignment | Format-Table -Property RoleName, UserName, ResourceType | Out-String),[MessageType]::Default)
         }
         else
         {
@@ -412,8 +384,8 @@ hidden AssignmentEligible()
             {
                 if($res_choice -eq 0)
                 {
-                    return;
-                    $this.abortflow = 1;
+                     $this.abortflow = 1;
+                     return;
                 }
                  Write-Host "  Invalid input" -ForegroundColor Yellow
                  Write-Host "  Pick a resource Id for assigment: " -ForegroundColor Cyan -NoNewline
@@ -433,8 +405,8 @@ hidden AssignmentEligible()
             {
                 if($role_choice -eq 0)
                 {
-                    return;
-                    $this.abortflow = 1;
+                   $this.abortflow = 1;
+                   return;
                 }
                 Write-Host "  Invalid input" -ForegroundColor Yellow
                 Write-Host "  Pick a role Id: " -ForegroundColor Cyan -NoNewline
@@ -452,8 +424,8 @@ hidden AssignmentEligible()
                 {
                     if($users -eq 0)
                     {
-                        return;
                         $this.abortflow = 1;
+                         return;
                     }
                     $this.PublishCustomMessage("Unable to fetch details of the principal name provided, please make sure to enter the correct values.", [MessageType]::Warning)
                     Write-Host "  Please enter the Principal Name ( e.g. 'xyz@contoso.com') of the user to whom role has to be assigned: " -ForegroundColor Cyan -NoNewline
@@ -480,8 +452,8 @@ hidden AssignmentEligible()
                 {
                     if($days -eq 0)
                     {
-                        return;
                         $this.abortflow = 1;
+                        return;
                     }
                     Write-Host "  Invalid input" -ForegroundColor Yellow
                     Write-Host "  Enter the period in days between 1 to 90 days for role assignment: " -ForegroundColor Cyan -NoNewline
@@ -498,8 +470,8 @@ hidden AssignmentEligible()
                 {
                     if($days -eq 0)
                     {
-                        return;
                         $this.abortflow = 1;
+                        return;
                     }
                     Write-Host "  Invalid input" -ForegroundColor Yellow
                     Write-Host "  Enter the period in days between 1 to 90 days for role assignment: " -ForegroundColor Cyan -NoNewline
@@ -528,7 +500,7 @@ hidden AssignmentEligible()
     }
     else
     {
-       $this.PublishCustomMessage("You are not eligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount -UseDeviceAuthentication and re-run the script.",[MessageType]::Warning)
+       $this.PublishCustomMessage("You are not eligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.",[MessageType]::Warning)
     }
 }
 
@@ -538,7 +510,7 @@ ShowMenu()
             $this.PublishCustomMessage("")
             $this.PublishCustomMessage("`n###################################################################################")
             $this.PublishCustomMessage("")
-            $this.PublishCustomMessage("Azure PIM Assignment Menu")
+            $this.PublishCustomMessage("  PIM Assignment Menu")
             $this.PublishCustomMessage("  1. List your eligible role assignments")
             $this.PublishCustomMessage("  2. Activate an eligible role" )
             $this.PublishCustomMessage("  3. Deactivate an active role" )
@@ -547,6 +519,7 @@ ShowMenu()
             $this.PublishCustomMessage("  6. Exit")
             $this.PublishCustomMessage("")
             $this.PublishCustomMessage("`n###################################################################################")
+            $this.PublishCustomMessage(" Note: Enter 0 during any stage to abort the PIM workflow. ", [MessageType]::Warning)
 }
 
 hidden [void] PIMScript()
@@ -557,7 +530,7 @@ hidden [void] PIMScript()
     }
     catch
     {
-        Write-Host "Unable to fetch access token. Run Connect-AzAccount -UseDeviceAuthentication and then execute this command" -ForegroundColor Red
+        Write-Host "Unable to fetch access token. Run Connect-AzAccount -UseDeviceAuthentication and then execute this command." -ForegroundColor Red
         return;
     }  
      
@@ -620,6 +593,3 @@ hidden [void] PIMScript()
 
 
 }
-
-
-
