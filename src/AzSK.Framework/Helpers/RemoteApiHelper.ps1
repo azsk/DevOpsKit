@@ -85,7 +85,7 @@ class RemoteApiHelper {
 		[RemoteApiHelper]::PostJsonContent("/policycompliancedata", $PolicyComplianceData) | Out-Null	
     }
     static [PSObject] GetComplianceSnapshot([string] $parameters){
-		return([RemoteApiHelper]::GetJsonContent("/scanresults/fetchcompliancedata", $parameters) )	
+		return([RemoteApiHelper]::GetJsonContent("/compliancedata", $parameters) )	
     }
     
     hidden static [psobject] ConvertToSimpleSet([SVTEventContext[]] $contexts) {
