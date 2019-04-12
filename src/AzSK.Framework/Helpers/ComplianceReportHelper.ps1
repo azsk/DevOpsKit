@@ -204,7 +204,7 @@ class ComplianceReportHelper: ComplianceBase
 				}
 				else 
 				{
-					$scanResult.FirstScannedOn = ([datetime] $currentSVTResult.FirstScannedOn).ToString("s");
+					$scanResult.FirstScannedOn = (get-date $currentSVTResult.FirstScannedOn).ToString("s");
 				}
 			}
 
