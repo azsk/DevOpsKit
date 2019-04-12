@@ -407,10 +407,11 @@ class VirtualMachine: SVTBase
 	{
 		if(-not $this.VMDetails.IsVMDeallocated)
 		{
-			$guestConfigurationAssignmentName = "SMSClientStatus"
+			$guestConfigurationAssignmentName = $this.VMControlSettings.GuestExtension.AssignmentName
 			$controlStatus = [VerificationResult]::Manual
             $requiredGuestExtension  = $this.VMControlSettings.GuestExtension.Name
 			$requiredGuestExtensionVersion =  [System.Version] $this.VMControlSettings.GuestExtension.RequiredVersion
+			
 			
             $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
 			$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
