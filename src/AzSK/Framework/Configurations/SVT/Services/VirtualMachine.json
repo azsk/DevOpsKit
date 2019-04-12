@@ -242,13 +242,13 @@
         "Enabled": true
       },
       {
-         "ControlID": "Azure_VirtualMachine_SI_Install_GuestConfig_Extension",
-         "Description": "Guest configuration extension should be installed on VM",
+         "ControlID": "Azure_VirtualMachine_SI_Deploy_GuestConfig_Extension",
+         "Description": "Guest Configuration extension must be deployed to the VM using Azure Policy assignment",
          "Id": "VirtualMachine210",
          "ControlSeverity": "Medium",
          "Automated": "Yes",
          "MethodName": "CheckGuestConfigExtension",
-         "Rationale": "Installing Guest configuration extension on VM allows you to run In-Guest Policy on the VM, making it possible to monitor system and security policies on the VM.",
+         "Rationale": "Installing Guest configuration extension on VM allows you to run In-Guest Policy on the VM, making it possible to monitor system and security policies for compliance checks in the VM.",
          "Recommendation": "This control corresponds to an internal POC at Microsoft. Hence it is 'disabled' in the AzSK module. We may enable it after fine tuning in a future release. Until then, please ignore this control.",
          "Tags": [
            "SDL",
