@@ -887,14 +887,14 @@ class VirtualMachine: SVTBase
 					{
 						$isManual = $true
 						$statusCode = ($_.Exception).InnerException.Response.StatusCode;
-						if($statusCode -eq [System.Net.HttpStatusCode]::BadRequest -or $statusCode -eq [System.Net.HttpStatusCode]::Forbidden)
+						if($statusCode -eq [System.Net.HttpStatusCode]::BadRequest -or $statusCode -eq [System.Net.HttpStatusCode]::Forbidden -or $statusCode -eq [System.Net.HttpStatusCode]::Conflict)
 						{							
 							$controlResult.AddMessage(($_.Exception).InnerException.Message);	
 						}
-						else
-						{
-							throw $_
-						}
+						# else
+						# {
+						# 	throw $_
+						# }
 					}
 				if($effectiveNSG)
 					{
