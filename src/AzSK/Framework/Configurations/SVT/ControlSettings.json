@@ -341,12 +341,12 @@
   },
   "DefaultValidAttestationStates": [ "NotAnIssue", "WillFixLater", "WillNotFix" ],
   "NewControlGracePeriodInDays": {
-    "Default": 60,
+    "Default": 30,
     "ControlSeverity": {
-      "Critical": 7,
+      "Critical": 30,
       "High": 30,
-      "Medium": 60,
-      "Low": 90
+      "Medium": 30,
+      "Low": 30
     }
   },
   "AttestationPeriodInDays": {
