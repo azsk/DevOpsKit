@@ -8,11 +8,6 @@ Set-StrictMode -Version Latest
 
 class Helpers {
 
-    static hidden [PSObject] $currentAADContext;
-    static hidden [PSObject] $currentAzContext;
-    static hidden [PSObject] $currentRMContext;
-    static hidden [PSObject] $AADAPIAccessToken;
-    static hidden [CommandType] $ScanType
     hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson) {
 		$rootConfigPath = [Constants]::AzSKAppFolderPath + "\" ;
 		return [Helpers]::LoadOfflineConfigFile($fileName, $true,$rootConfigPath);
@@ -62,198 +57,6 @@ class Helpers {
 
         return $fileContent;
     }
-
-	hidden static [PSObject] GetCurrentRMContext()
-	{
-		if (-not [Helpers]::currentRMContext)
-		{
-			$rmContext = Get-AzureRmContext -ErrorAction Stop
-
-			if ((-not $rmContext) -or ($rmContext -and (-not $rmContext.Subscription -or -not $rmContext.Account))) {
-				[EventBase]::PublishGenericCustomMessage("No active Azure login session found. Initiating login flow...", [MessageType]::Warning);
-                [PSObject]$rmLogin = $null
-                $AzureEnvironment = [Constants]::DefaultAzureEnvironment
-                $AzskSettings = [Helpers]::LoadOfflineConfigFile("AzSK.AzureDevOps.Settings.json", $true)          
-                if([Helpers]::CheckMember($AzskSettings,"AzureEnvironment"))
-                {
-                   $AzureEnvironment = $AzskSettings.AzureEnvironment
-                }
-                if(-not [string]::IsNullOrWhiteSpace($AzureEnvironment) -and $AzureEnvironment -ne [Constants]::DefaultAzureEnvironment) 
-                {
-                    try{
-                        $rmLogin = Connect-AzureRmAccount -EnvironmentName $AzureEnvironment
-                    }
-                    catch{
-                        [EventBase]::PublishGenericException($_);
-                    }         
-                }
-                else
-                {
-                $rmLogin = Connect-AzureRmAccount
-                }
-				if ($rmLogin) {
-                    $rmContext = $rmLogin.Context;	
-				}
-            }
-            [Helpers]::currentRMContext = $rmContext
-		}
-
-		return [Helpers]::currentRMContext
-	}
-
-    hidden static [PSObject] GetCurrentAzContext()
-    {
-        if ([Helpers]::currentAzContext -eq $null)
-        {
-            throw "Cannot call this method before getting a sign-in context"
-        }
-        return [Helpers]::currentAzContext
-    }
-    
-    hidden static [PSObject] GetCurrentAzContext($desiredTenantId)
-    {
-        if(-not [Helpers]::currentAzContext)
-        {
-            $azContext = Get-AzContext 
-
-            if ($azContext -eq $null -or ($desiredTenantId -ne $null -and $azContext.Tenant.Id -ne $desiredTenantId))
-            {
-                if ($azContext) #If we have a context for another tenant, disconnect.
-                {
-                    Disconnect-AzAccount -ErrorAction Stop
-                }
-                #Now try to fetch a fresh context.
-                try {
-                        $azureContext = Connect-AzAccount -ErrorAction Stop
-                        #On a fresh login, the 'cached' context object we care about is inside the AzureContext
-                        $azContext = $azureContext.Context 
-                }
-                catch {
-                    Write-Error("Could not login to Azure environment...")
-                    throw ("TODO: SuppressedException? Could not login to Azure envmt.")   
-                }
-            }
-            [Helpers]::currentAzContext = $azContext
-        }
-        return [Helpers]::currentAzContext
-    }
-
-    hidden static [PSObject] GetCurrentAADContext()
-    {
-        if ([Helpers]::currentAADContext -eq $null)
-        {
-            throw "Cannot call this method before getting a sign-in context"
-        }
-        return [Helpers]::currentAADContext
-    }
-    hidden static [PSObject] GetCurrentAADContext($desiredTenantId)
-    {
-        if(-not [Helpers]::currentAADContext)
-        {
-            $aadContext = $null
-            #Try leveraging Azure context if available
-            try {
-                #Either throws or returns non-null
-                $azContext = [Helpers]::GetCurrentAzContext($desiredTenantId)
-
-                $tenantId = $azContext.Tenant.Id
-                $accountId = $azContext.Account.Id
-                $aadContext = Connect-AzureAD -TenantId $tenantId -AccountId $accountId -ErrorAction Stop
-            }
-            catch {
-                Write-Warning("Could not get Az/AzureAD context.")
-                throw "TODO: ExceptionType?. Could not get Az/AAD context."
-            }
-
-            [Helpers]::ScanType = [CommandType]::AAD
-            [Helpers]::currentAADContext = $aadContext
-            Write-Output("Current AAD Domain: $($aadContext).TenantDomain TenanId: $($aadContext).TenantId")
-        }
-
-        return [Helpers]::currentAADContext
-    }
-
-
-    hidden static [PSObject] GetCurrentAADAPIToken()
-    {
-        if(-not [Helpers]::AADAPIAccessToken)
-        {
-            $apiToken = $null
-            
-            $AADAPIGuid = "74658136-14ec-4630-ad9b-26e160ff0fc6" #TODO: Move to Globals!
-
-            #Try leveraging Azure context if available
-            try {
-                #Either throws or returns non-null
-                $azContext = [Helpers]::GetCurrentAzContext()
-                $apiToken = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate($azContext.Account, $azContext.Environment, $azContext.Tenant.Id, $null, "Never", $null, $AADAPIGuid)
-            }
-            catch {
-                Write-Warning("Could not get AAD API token for $AADAPIGuid.")
-                throw "TODO: ExceptionType?. Could not get AAD API token for $AADAPIGuid."
-            }
-
-            [Helpers]::AADAPIAccessToken = $apiToken
-            Write-Output("Successfully acquired API access token for $AADAPIGuid")
-		}
-        return [Helpers]::AADAPIAccessToken
-    }
-
-    hidden static [PSObject] InvokeAADAPI($methodUrl)
-    { 
-        $apiToken = [Helpers]::GetCurrentAADAPIToken()
-
-        $apiRoot = "https://main.iam.ad.ext.azure.com" #TODO: move to Globals
-        
-        $apiMethod = $methodUrl
-        $targetUrl = $apiRoot+$apiMethod
-
-        $headers = @{
-            "Authorization" = "Bearer $($apiToken.AccessToken)" 
-            'X-Requested-With'= 'XMLHttpRequest'
-            'x-ms-client-request-id'= [guid]::NewGuid()
-            'x-ms-correlation-id' = [guid]::NewGuid()}
-
-
-        $response = $null
-
-        try {
-            $response = Invoke-RestMethod $targetUrl -Headers $headers -Method GET
-        }
-        catch {
-            Write-Error("TODO: Exception? API call failed")
-            throw "TODO: Exception? API call failed"
-        }
-        return $response
-    }
-
-    <# TODO: some code that can levearge cached AzureRm token to avoid another sign-in to AAD
-        $rmAccount = Add-AzureRmAccount -SubscriptionId $subscriptionId
-        $tenantId = (Get-AzureRmSubscription -SubscriptionId $subscriptionId).TenantId
-        $tokenCache = $rmAccount.Context.TokenCache
-        $cachedTokens = $tokenCache.ReadItems() `
-                | where { $_.TenantId -eq $tenantId } `
-                | Sort-Object -Property ExpiresOn -Descending
-        Connect-AzureAD -TenantId $tenantId `
-                        -AadAccessToken $cachedTokens[0].AccessToken `
-                        -AccountId $rmAccount.Context.Account.Id    
-    ================
-        # login
-        Login-AzureRmAccount
-        # perform other Azure operations...
-
-        $currentAzureContext = Get-AzureRmContext
-        $tenantId = $currentAzureContext.Tenant.Id
-        $accountId = $currentAzureContext.Account.Id
-        Connect-AzureAD -TenantId $tenantId -AccountId $accountId          
-    =================
-    [Microsoft.Open.Azure.AD.CommonLibrary.AzureSession]::AccessTokens['AccessToken']          
-    #>
-    
-	hidden static [void] ResetCurrentRMContext()
-	{
-		[Helpers]::currentRMContext = $null
-	}
 
     static AbstractClass($obj, $classType) {
         $type = $obj.GetType()
@@ -585,46 +388,6 @@ class Helpers {
             Else {
                 return "$PSON"
             }
-        }
-    }
-
-    static [string] GetAccessToken([string] $resourceAppIdUri, [string] $tenantId) {
-        return [Helpers]::GetAzureDevOpsAccessToken();
-    }
-
-    static [string] GetAzureDevOpsAccessToken()
-    {
-        # TODO: Handlle login
-        if([Helpers]::currentAzureDevOpsContext)
-        {
-            return [Helpers]::currentAzureDevOpsContext.AccessToken
-        }
-        else
-        {
-            return $null
-        }
-    }
-
-    static [string] GetAccessToken([string] $resourceAppIdUri) {
-        if([Helpers]::ScanType -eq [CommandType]::AzureDevOps)
-        {
-            return [Helpers]::GetAzureDevOpsAccessToken()
-        }
-        else {
-            return [Helpers]::GetAccessToken($resourceAppIdUri, "");    
-        }
-        
-    }
-
-    static [string] GetAccessToken()
-    {
-        if([Helpers]::ScanType -eq [CommandType]::AzureDevOps)
-        {
-            return [Helpers]::GetAzureDevOpsAccessToken()
-        }
-        else {
-            #TODO : Fix ResourceID
-            return [Helpers]::GetAccessToken("", "");    
         }
     }
 
@@ -1056,17 +819,6 @@ class Helpers {
         }
         return $HashValue.ToString()
     }
-
-    static [string] GetCurrentSessionUser() {
-        $context = [Helpers]::GetCurrentAADContext() 
-        if ($null -ne $context) {
-            return $context.Account.Id
-        }
-        else {
-            return "NO_ACTIVE_SESSION"
-        }
-    }
-    
     
     static [VerificationResult] EvaluateVerificationResult([VerificationResult] $verificationResult, [AttestationStatus] $attestationStatus) {
         [VerificationResult] $result = $verificationResult;
@@ -1105,22 +857,6 @@ class Helpers {
         }
         return $result;
     }
-
-    static [PSObject] NewSecurePassword() {
-        #create password
-        $randomBytes = New-Object Byte[] 32
-        $provider = [System.Security.Cryptography.RNGCryptoServiceProvider]::Create()
-        $provider.GetBytes($randomBytes)
-        $provider.Dispose()
-        $pwstring = [System.Convert]::ToBase64String($randomBytes)
-        $newPassword = new-object securestring
-        $pwstring.ToCharArray() | ForEach-Object {
-            $newPassword.AppendChar($_)
-        }
-		$encryptedPassword = ConvertFrom-SecureString -SecureString $newPassword -Key (1..16)
-		$securePassword = ConvertTo-SecureString -String $encryptedPassword -Key (1..16)
-		return $securePassword
-	}
 
 	static [void] RegisterResourceProviderIfNotRegistered([string] $provideNamespace)
 	{
@@ -1201,24 +937,6 @@ class Helpers {
 		return $result; 
 	}
 
-	static [bool] ValidateEmail([string]$address){
-		$validAddress = ($address -as [System.Net.Mail.MailAddress])
-		return ($null -ne $validAddress -and  $validAddress.Address -eq $address )
-	}
-
-	#Returns invalid email list
-	static [string[]] ValidateEmailList([string[]]$emailList )
-	{
-		$invalidEmails = @();
-		   $emailList | ForEach-Object {
-			if(-not [Helpers]::ValidateEmail($_))
-			{
-				$invalidEmails += $_
-			}
-		}
-		return $invalidEmails
-    }
-    
     static [Object] MergeObjects([Object] $source,[Object] $extend, [string] $idName)
 	{
         $idPropName = "Id";
@@ -1332,25 +1050,8 @@ class Helpers {
 				Out-File -InputObject $fileContent -Force -FilePath $file.FullName -Encoding utf8
 			}
 		}
-	}
-	static [void] SetSPNPermission($Scope,$ApplicationId,$Role)
-	{
-		$assignedRole = $null
-		$retryCount = 0;
-		While($null -eq $assignedRole -and $retryCount -le 6)
-		{
-			#Assign RBAC to SPN - contributor at RG
-			New-AzureRMRoleAssignment -Scope $Scope -RoleDefinitionName $Role -ServicePrincipalName $ApplicationId -ErrorAction SilentlyContinue | Out-Null
-			Start-Sleep -Seconds 10
-			$assignedRole = Get-AzureRmRoleAssignment -ServicePrincipalName $ApplicationId -Scope $Scope -RoleDefinitionName $Role -ErrorAction SilentlyContinue
-			$retryCount++;
-		}
-		if($null -eq $assignedRole -and $retryCount -gt 6)
-		{
-			throw ([SuppressedException]::new(("SPN permission could not be set"), [SuppressedExceptionType]::InvalidOperation))
-		}
-	}
-
+    }
+    
 	static [void] CleanupLocalFolder($folderPath)
 	{
 		try
@@ -1364,18 +1065,6 @@ class Helpers {
 			#this call happens from finally block. Try to clean the files, if it don't happen it would get cleaned in the next attempt
 		}	
     }	
-   
-    static [string] CreateStorageAccountSharedKey([string] $StringToSign,[string] $AccountName,[string] $AccessKey)
-	{
-        $KeyBytes = [System.Convert]::FromBase64String($AccessKey)
-        $HMAC = New-Object System.Security.Cryptography.HMACSHA256
-        $HMAC.Key = $KeyBytes
-        $UnsignedBytes = [System.Text.Encoding]::UTF8.GetBytes($StringToSign)
-        $KeyHash = $HMAC.ComputeHash($UnsignedBytes)
-        $SignedString = [System.Convert]::ToBase64String($KeyHash)
-        $sharedKey = $AccountName+":"+$SignedString
-        return $sharedKey    	
-    }
 
     static [void] CreateFolderIfNotExist($FolderPath,$MakeFolderEmpty)
     {
@@ -1408,6 +1097,57 @@ class Helpers {
         }
     }
 
+    
+    static [PSObject] NewSecurePassword() {
+        #create password
+        $randomBytes = New-Object Byte[] 32
+        $provider = [System.Security.Cryptography.RNGCryptoServiceProvider]::Create()
+        $provider.GetBytes($randomBytes)
+        $provider.Dispose()
+        $pwstring = [System.Convert]::ToBase64String($randomBytes)
+        $newPassword = new-object securestring
+        $pwstring.ToCharArray() | ForEach-Object {
+            $newPassword.AppendChar($_)
+        }
+		$encryptedPassword = ConvertFrom-SecureString -SecureString $newPassword -Key (1..16)
+		$securePassword = ConvertTo-SecureString -String $encryptedPassword -Key (1..16)
+		return $securePassword
+	}
+
+
+    #TODO: Move to ActiveDirectoryHelper?
+    static [void] SetSPNPermission($Scope,$ApplicationId,$Role)
+	{
+		$assignedRole = $null
+		$retryCount = 0;
+		While($null -eq $assignedRole -and $retryCount -le 6)
+		{
+			#Assign RBAC to SPN - contributor at RG
+			New-AzureRMRoleAssignment -Scope $Scope -RoleDefinitionName $Role -ServicePrincipalName $ApplicationId -ErrorAction SilentlyContinue | Out-Null
+			Start-Sleep -Seconds 10
+			$assignedRole = Get-AzureRmRoleAssignment -ServicePrincipalName $ApplicationId -Scope $Scope -RoleDefinitionName $Role -ErrorAction SilentlyContinue
+			$retryCount++;
+		}
+		if($null -eq $assignedRole -and $retryCount -gt 6)
+		{
+			throw ([SuppressedException]::new(("SPN permission could not be set"), [SuppressedExceptionType]::InvalidOperation))
+		}
+    }
+    
+    #TODO: StorageHelper?
+    static [string] CreateStorageAccountSharedKey([string] $StringToSign,[string] $AccountName,[string] $AccessKey)
+	{
+        $KeyBytes = [System.Convert]::FromBase64String($AccessKey)
+        $HMAC = New-Object System.Security.Cryptography.HMACSHA256
+        $HMAC.Key = $KeyBytes
+        $UnsignedBytes = [System.Text.Encoding]::UTF8.GetBytes($StringToSign)
+        $KeyHash = $HMAC.ComputeHash($UnsignedBytes)
+        $SignedString = [System.Convert]::ToBase64String($KeyHash)
+        $sharedKey = $AccountName+":"+$SignedString
+        return $sharedKey    	
+    }
+
+    #TODO: StorageHelper?
     Static [bool] IsSASTokenUpdateRequired($policyUrl)
 	{
         [System.Uri] $validatedUri = $null;
@@ -1428,6 +1168,7 @@ class Helpers {
         return $IsSASTokenUpdateRequired
     }
 
+    #TODO: StorageHelper?
     Static [string] GetUriWithUpdatedSASToken($policyUrl, $updateUrl)
 	{
         [System.Uri] $validatedUri = $null;
@@ -1441,5 +1182,22 @@ class Helpers {
         }
         return $UpdatedUrl
     }
-}
 
+    static [bool] ValidateEmail([string]$address){
+		$validAddress = ($address -as [System.Net.Mail.MailAddress])
+		return ($null -ne $validAddress -and  $validAddress.Address -eq $address )
+	}
+
+	#Returns invalid email list
+	static [string[]] ValidateEmailList([string[]]$emailList )
+	{
+		$invalidEmails = @();
+		   $emailList | ForEach-Object {
+			if(-not [Helpers]::ValidateEmail($_))
+			{
+				$invalidEmails += $_
+			}
+		}
+		return $invalidEmails
+    }
+}

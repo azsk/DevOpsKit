@@ -16,29 +16,35 @@ class Tenant: SVTBase
     {
         if ($this.AADPermissions -eq $null)
         {
-            $this.AADPermissions = [Helpers]::InvokeAADAPI("/api/Permissions")
+            $this.AADPermissions = [WebRequestHelper]::InvokeAADAPI("/api/Permissions")
         }
 
         if ($this.CASettings -eq $null)
         {
-            $this.CASettings = [Helpers]::InvokeAADAPI("/api/PasswordReset/PasswordResetPolicies")
+            $this.CASettings = [WebRequestHelper]::InvokeAADAPI("/api/PasswordReset/PasswordResetPolicies")
         }
 
         if ($this.AdminMFASettings -eq $null)
         {
-            $this.AdminMFASettings = [Helpers]::InvokeAADAPI("/api/BaselinePolicies/RequireMfaForAdmins")
+            $this.AdminMFASettings = [WebRequestHelper]::InvokeAADAPI("/api/BaselinePolicies/RequireMfaForAdmins")
         }
 
         if ($this.B2BSettings -eq $null)
         {
-            $this.B2BSettings = [Helpers]::InvokeAADAPI("/api/Directories/B2BDirectoryProperties")
+            $this.B2BSettings = [WebRequestHelper]::InvokeAADAPI("/api/Directories/B2BDirectoryProperties")
         }
     }
 
     hidden [ControlResult] CheckGuestsHaveLimitedAccess([ControlResult] $controlResult)
 	{
         $b2b = $this.B2BSettings
-        if($b2b.restrictDirectoryAccess -ne $true) #Guests permissions are limited?
+
+        if ($b2b -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Error,
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
+        }
+        elseif($b2b.restrictDirectoryAccess -ne $true) #Guests permissions are limited?
         {
                 $controlResult.AddMessage([VerificationResult]::Failed,
                                         [MessageData]::new("Guest account directory permissions are not restricted."));
@@ -54,7 +60,12 @@ class Tenant: SVTBase
     hidden [ControlResult] CheckGuestsIfCanInvite([ControlResult] $controlResult)
 	{
         $b2b = $this.B2BSettings
-        if($b2b.limitedAccessCanAddExternalUsers -eq $true) #Guests can invite?
+        if ($b2b -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Error,
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
+        }
+        elseif($b2b.limitedAccessCanAddExternalUsers -eq $true) #Guests can invite?
         {
                 $controlResult.AddMessage([VerificationResult]::Failed,
                                         [MessageData]::new("Guest have privilege to invite other guests."));
@@ -70,7 +81,12 @@ class Tenant: SVTBase
     hidden [ControlResult] CheckBaselineMFAPolicyForAdmins([ControlResult] $controlResult)
 	{
         $adminSettings = $this.AdminMFASettings
-        if($adminSettings.enable -eq $false -or $adminSettings.state -eq  0)
+        if ($adminSettings -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Error,
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
+        }
+        elseif($adminSettings.enable -eq $false -or $adminSettings.state -eq  0)
         {
             $controlResult.AddMessage([VerificationResult]::Failed,
                                         [MessageData]::new("MFA is set as 'not required' for admin accounts."));
@@ -86,7 +102,12 @@ class Tenant: SVTBase
     hidden [ControlResult] CheckUserPermissionsToCreateApps([ControlResult] $controlResult)
 	{
         $aadPerms = $this.AADPermissions
-        if($aadPerms.allowedActions.application.Contains('create')) #has to match case
+        if ($aadPerms -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Error,
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
+        }
+        elseif ($aadPerms.allowedActions.application.Contains('create')) #has to match case
         {
             $controlResult.AddMessage([VerificationResult]::Failed,
                                         [MessageData]::new("Regular users have privilege to create new apps."));
@@ -103,7 +124,12 @@ class Tenant: SVTBase
 	{
         $aadPerms = $this.AADPermissions
 
-        if($aadPerms.allowedActions.user.Contains('inviteguest')) #has to match case
+        if ($aadPerms -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Error,
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
+        }
+        elseif($aadPerms.allowedActions.user.Contains('inviteguest')) #has to match case
         {
             $controlResult.AddMessage([VerificationResult]::Failed,
                                         [MessageData]::new("Regular users have privilege to invite guests."));
@@ -119,7 +145,12 @@ class Tenant: SVTBase
     hidden [ControlResult] CheckMinQuestionsForSSPR([ControlResult] $controlResult)
 	{
         $sspr = $this.CASettings
-        if($sspr.numberOfQuestionsToReset -lt 3)
+        if ($sspr -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Error,
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
+        }
+        elseif ($sspr.numberOfQuestionsToReset -lt 3)
         {
             $controlResult.AddMessage([VerificationResult]::Failed,
                                         [MessageData]::new("Found that less than 3 questions are required for password reset."));
@@ -135,7 +166,12 @@ class Tenant: SVTBase
     hidden [ControlResult] CheckUserNotificationUponSSPR([ControlResult] $controlResult)
 	{
         $sspr = $this.CASettings
-        if($sspr.notifyUsersOnPasswordReset -ne $true)
+        if ($sspr -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Error,
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
+        }
+        elseif($sspr.notifyUsersOnPasswordReset -ne $true)
         {
             $controlResult.AddMessage([VerificationResult]::Failed,
                                         [MessageData]::new("User notification not configured for password resets."));
@@ -151,7 +187,12 @@ class Tenant: SVTBase
     hidden [ControlResult] CheckAdminNotificationUponSSPR([ControlResult] $controlResult)
 	{
         $sspr = $this.CASettings
-        if($sspr.notifyOnAdminPasswordReset -ne $true)
+        if ($sspr -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Error,
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
+        }
+        elseif($sspr.notifyOnAdminPasswordReset -ne $true)
         {
             $controlResult.AddMessage([VerificationResult]::Failed,
                                         [MessageData]::new("Notification to all admins not configured for admin password resets."));

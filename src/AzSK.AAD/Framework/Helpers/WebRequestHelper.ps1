@@ -5,6 +5,9 @@ class WebRequestHelper {
 	hidden static [string] $GraphApiUri = "https://graph.windows.net/";
 	hidden static [string] $ClassicManagementUri = "https://management.core.windows.net/";
 
+	hidden static [string] $AADAPIGuid = "74658136-14ec-4630-ad9b-26e160ff0fc6";
+	hidden static [string] $AADAPIUrl = "https://main.iam.ad.ext.azure.com";
+
     static [System.Object[]] InvokeGetWebRequest([string] $uri, [Hashtable] $headers) 
 	{
         return [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null);
@@ -20,7 +23,7 @@ class WebRequestHelper {
 		$azureEnv= [AzSKSettings]::GetInstance().AzureEnvironment
 		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne [Constants]::DefaultAzureEnvironment))
 		{
-		return [Helpers]::GetCurrentRMContext().Environment.ResourceManagerUrl
+		return [AccountHelper]::GetCurrentRmContext().Environment.ResourceManagerUrl
 		}
 		return "https://management.azure.com/"
 	}
@@ -30,7 +33,7 @@ class WebRequestHelper {
 		$azureEnv= [AzSKSettings]::GetInstance().AzureEnvironment
 		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne [Constants]::DefaultAzureEnvironment))
 		{
-		return [Helpers]::GetCurrentRMContext().Environment.ServiceManagementUrl
+		return [AccountHelper]::GetCurrentRmContext().Environment.ServiceManagementUrl
 		}
 		return "https://management.core.windows.net/"
 	}
@@ -328,5 +331,46 @@ Content-Type: multipart/mixed; boundary={1}
 
         return $outputValues;
 	}
+	
+    hidden static [PSObject] InvokeAADAPI($methodUrl)
+    { 
+        $apiToken = [AccountHelper]::GetCurrentAADAPIToken()
 
+        $apiRoot = [WebRequestHelper]::GetAADAPIUrl();
+        
+        $apiMethod = $methodUrl
+        $targetUrl = $apiRoot+$apiMethod
+
+        $headers = @{
+            "Authorization" = "Bearer $($apiToken.AccessToken)" 
+            'X-Requested-With'= 'XMLHttpRequest'
+            'x-ms-client-request-id'= [guid]::NewGuid()
+            'x-ms-correlation-id' = [guid]::NewGuid()}
+
+
+        $response = $null
+
+        try {
+            $response = Invoke-RestMethod $targetUrl -Headers $headers -Method GET
+        }
+        catch {
+			#TODO: (1) Correct exception treatment? (2) Seems to lose evaluated tenant controls altogether (3) Write-Host from catch does not show on console? (4) $msg = "xyz"??
+			#TODO: how to write exception details just to detailed log? 
+			Write-Host -ForegroundColor Yellow "Error calling AAD API endpoint: $apiMethod.`nYou may not have sufficient permission to evaluate all controls.`nStatus for controls that could not be evaluated will show as 'Error' in the report."
+			#TODO: Absorbing exception and returning $response = $null below.
+        }
+        return $response
+	}
+	
+	hidden static [string] GetAADAPIUrl()
+	{
+		#BUGBUG: Add handling for Azure Gov.
+		return [WebRequestHelper]::AADAPIUrl;
+	}
+
+	hidden static [string] GetAADAPIGuid()
+	{
+		#BUGBUG: Will this also change for Azure Gov?
+		return [WebRequestHelper]::AADAPIGuid;
+	}
 }

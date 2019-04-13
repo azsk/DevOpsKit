@@ -7,7 +7,7 @@ class IdentityHelpers
 	{
 		$return = $null    		
 		$header = "Bearer " + $GraphAccessToken
-		$RMContext = [Helpers]::GetCurrentRMContext()
+		$RMContext = [AccountHelper]::GetCurrentRmContext()
 		$headers = @{"Authorization"=$header;"Content-Type"="application/json"}
 		$uri=""    
 		$output = $null

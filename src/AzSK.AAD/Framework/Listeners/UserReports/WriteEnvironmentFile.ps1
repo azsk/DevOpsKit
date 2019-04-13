@@ -93,7 +93,7 @@ class WriteEnvironmentFile: FileOutputBase
 		$this.AddOutputLog([Helpers]::ConvertObjectToString($loadedModules, $false));
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 
-		#$rmContext = [Helpers]::GetCurrentRMContext()
+		#$rmContext = [AccountHelper]::GetCurrentRmContext()
 
 		# $this.AddOutputLog("Logged-in user context");
 		# $this.AddOutputLog([Helpers]::ConvertObjectToString(($rmContext.Account | Select-Object -Property Id, Type, ExtendedProperties), $false));

@@ -187,7 +187,7 @@ class SVTControlAttestation
 					$controlState.State = [StateData]::new();
 				}
 
-				$controlState.State.AttestedBy = [Helpers]::GetCurrentSessionUser();
+				$controlState.State.AttestedBy = [AccountHelper]::GetCurrentSessionUser();
 				$controlState.State.AttestedDate = [DateTime]::UtcNow;
 				$controlState.State.Justification = $Justification				
 				
@@ -270,7 +270,7 @@ class SVTControlAttestation
 							$controlState.State = [StateData]::new();
 						}
 						$this.dirtyCommitState = $true
-						$controlState.State.AttestedBy = [Helpers]::GetCurrentSessionUser();
+						$controlState.State.AttestedBy = [AccountHelper]::GetCurrentSessionUser();
 						$controlState.State.AttestedDate = [DateTime]::UtcNow;
 						$controlState.State.Justification = $this.attestOptions.JustificationText				
 			}

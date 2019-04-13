@@ -39,24 +39,10 @@ class AADResourceResolver: Resolver
         }
     }
 
-    [void] LoadAzureResources()
+    [void] LoadResourcesForScan()
 	{
-        
-        #Call APIS for Organization,User/Builds/Releases/ServiceConnections 
-        #Select Org/User by default...
-        #Call API Command Loop 
-
-        #BUGBUG: dummy resource, remove!
-        <#
-        $svtResource = [SVTResource]::new();
-        $svtResource.ResourceName = $this.tenantId;
-        $svtResource.ResourceType = "AAD.Application";
-        $svtResource.ResourceId = "AAD/$($this.tenantId)/"
-        $svtResource.ResourceTypeMapping = ([SVTMapping]::AADResourceMapping |
-                                        Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
-                                        Select-Object -First 1)
-        $this.SVTResources +=$svtResource
-    #>
+        $tenantInfoMsg = [AccountHelper]::GetCurrentTenantInfo();
+        Write-Host -ForegroundColor Green $tenantInfoMsg  #TODO: PublishCustomMessage...just before #-of-resources...etc.?
 
         #Core controls are evaluated by default.
         $svtResource = [SVTResource]::new();
@@ -81,9 +67,9 @@ class AADResourceResolver: Resolver
         #>
 
         #Get apps owned by user
-        $currUser = [Helpers]::GetCurrentSessionUser();
-        $userCreatedObjects = [array] (Get-AzureADUserCreatedObject -ObjectId $currUser)
-
+        $currUser = [AccountHelper]::GetCurrentSessionUser();
+        #BUGBUG-tmp-workaround-mprabhu11AAD: $userCreatedObjects = [array] (Get-AzureADUserCreatedObject -ObjectId $currUser)
+        $userCreatedObjects = [array] (Get-AzureADApplication -Top 20)
         $appTypeMapping = ([SVTMapping]::AADResourceMapping |
             Where-Object { $_.ResourceType -eq 'AAD.Application' } |
             Select-Object -First 1)
@@ -109,6 +95,9 @@ class AADResourceResolver: Resolver
             Where-Object { $_.ResourceType -eq 'AAD.ServicePrincipal' } |
             Select-Object -First 1)
 
+        #BUGBUG: Uncomment below as tmp workaround for mprabhu11live to resolve to some SPNs
+        #$userCreatedObjects = [array] (Get-AzureADServicePrincipal -Top 20)
+        
         foreach ($obj in $userCreatedObjects) {
             if ($obj.ObjectType -eq 'ServicePrincipal') 
             {

@@ -73,7 +73,7 @@
         },
         {
             "ControlID": "AAD_Tenant_Users_Cannot_Invite_Guests",
-            "Description": "Do not permit users to create invite guests to the tenant.",
+            "Description": "Do not permit users to invite guests to the tenant.",
             "Id": "Tenant140",
             "ControlSeverity": "High",
             "Automated": "Yes",

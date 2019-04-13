@@ -163,7 +163,7 @@ class AIOrgTelemetryHelper {
 			}
             try 
 			{
-                $azureContext = [Helpers]::GetCurrentRMContext()
+                $azureContext = [AccountHelper]::GetCurrentRmContext()
                 try 
 				{
                     $Properties.Add([TelemetryKeys]::tenantId, $azureContext.Subscription.Id)
@@ -398,7 +398,7 @@ class AIOrgTelemetryHelper {
 		try{
 		$EventObj.data.baseData.properties.Add("tenantId",[AIOrgTelemetryHelper]::CommonProperties.tenantId)
 		$EventObj.data.baseData.properties.Add("TenantName",[AIOrgTelemetryHelper]::CommonProperties.TenantName)		
-		$azureContext = [Helpers]::GetCurrentRMContext()
+		$azureContext = [AccountHelper]::GetCurrentRmContext()
 		$EventObj.data.baseData.properties.Add("TenantId", $azureContext.Tenant.Id)
 		$EventObj.data.baseData.properties.Add("AccountId", $azureContext.Account.Id)
 		}

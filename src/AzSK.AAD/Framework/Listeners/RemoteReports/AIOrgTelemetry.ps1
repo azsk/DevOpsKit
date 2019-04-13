@@ -128,7 +128,7 @@
 # 		   {
 # 			   $scanSource = [RemoteReportHelper]::GetScanSource();
 # 			   if($scanSource -ne [ScanSource]::Runbook) { return; }
-#                $tenantId = ([Helpers]::GetCurrentRMContext()).Subscription.Id;
+#                $tenantId = ([AccountHelper]::GetCurrentRmContext()).Subscription.Id;
 # 			   $resources= Get-AzureRmResource
 # 			   $resourceGroups = Get-AzureRmResourceGroup
 # 			   $telemetryEvents = [System.Collections.ArrayList]::new()
@@ -308,7 +308,7 @@
 # 				# No need to break execution
 # 			}
 #             try {
-#                 $azureContext = [Helpers]::GetCurrentRMContext()
+#                 $azureContext = [AccountHelper]::GetCurrentRmContext()
 #                 try {
 #                     $telemetryEvent.properties.Add([TelemetryKeys]::tenantId, $azureContext.Subscription.Id)
 #                 }

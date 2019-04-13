@@ -15,7 +15,7 @@ class AzSKRoot: EventBase
 				Scope = "/Organization/$tenantId";
 				TenantName = $tenantId;
 			};
-			[Helpers]::GetCurrentAADContext($tenantId)			
+			[AccountHelper]::GetCurrentAADContext($tenantId)			
 		}
 		else
 		{

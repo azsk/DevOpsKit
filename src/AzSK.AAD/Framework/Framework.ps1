@@ -20,7 +20,7 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 . $PSScriptRoot\Helpers\Helpers.ps1
 
 #Helpers (independent of models)
-
+. $PSScriptRoot\Helpers\AccountHelper.ps1
 . $PSScriptRoot\Helpers\ConfigurationHelper.ps1
 
 . $PSScriptRoot\Models\AzSKConfig.ps1

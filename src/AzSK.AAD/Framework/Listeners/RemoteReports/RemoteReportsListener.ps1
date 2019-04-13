@@ -131,7 +131,7 @@ class RemoteReportsListener: ListenerBase {
 	{
 		$currentInstance = [RemoteReportsListener]::GetInstance();
 		$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-		$tenantId = ([Helpers]::GetCurrentRMContext()).Subscription.Id;
+		$tenantId = ([AccountHelper]::GetCurrentRmContext()).Subscription.Id;
 		$resourceGroups = Get-AzureRmResourceGroup
         $resourcesDetails = @();
 		$resourcesFlat = [ResourceInventory]::RawResources

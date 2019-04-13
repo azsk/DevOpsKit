@@ -271,7 +271,7 @@ class ConfigurationHelper {
 		{
 			if($enableAADAuthForOnlinePolicyStore)
 			{		
-			$rmContext = [Helpers]::GetCurrentRMContext();
+			$rmContext = [AccountHelper]::GetCurrentRmContext();
 			if(-not [string]::IsNullOrWhiteSpace($rmContext.Environment.Name) -and $rmContext.Environment.Name -ne [Constants]::DefaultAzureEnvironment)
 		     {
 				   $ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl
