@@ -217,7 +217,7 @@ class SVTCommandBase: CommandBase {
 				{
                     Copy-Item $dataCollectionPath $AzureRMDataCollectionFilePath					
                 }
-				Disable-AzureRmDataCollection  | Out-Null
+				Disable-AzDataCollection  | Out-Null
 			}
 		}
     }
@@ -231,7 +231,7 @@ class SVTCommandBase: CommandBase {
             $dataCollectionProfile = Get-Content -path $AzureRMDataCollectionSettingFilepath | ConvertFrom-Json
             if($dataCollectionProfile -and $dataCollectionProfile.enableAzureDataCollection)
             {
-                Enable-AzureRmDataCollection  | Out-Null
+                Enable-AzDataCollection  | Out-Null
             }
         }
 
@@ -242,18 +242,18 @@ class SVTCommandBase: CommandBase {
         $scanSource = [AzSKSettings]::GetInstance().GetScanSource();
         if($scanSource -eq "SDL" -or [string]::IsNullOrWhiteSpace($scanSource))
         {
-            $olderRG = Get-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -ErrorAction SilentlyContinue
+            $olderRG = Get-AzResourceGroup -Name $([OldConstants]::AzSDKRGName) -ErrorAction SilentlyContinue
             if($null -ne $olderRG)
             {
-                $resources = Get-AzureRmResource -ResourceGroupName $([OldConstants]::AzSDKRGName)
+                $resources = Get-AzResource -ResourceGroupName $([OldConstants]::AzSDKRGName)
                 try {
                     $azsdkRGScope = "/subscriptions/$($this.TenantContext.tenantId)/resourceGroups/$([OldConstants]::AzSDKRGName)"
                     $resourceLocks = @();
-                    $resourceLocks += Get-AzureRmResourceLock -Scope $azsdkRGScope -ErrorAction Stop
+                    $resourceLocks += Get-AzResourceLock -Scope $azsdkRGScope -ErrorAction Stop
                     if($resourceLocks.Count -gt 0)
                     {
                         $resourceLocks | ForEach-Object {
-                            Remove-AzureRmResourceLock -LockId $_.LockId -Force -ErrorAction Stop
+                            Remove-AzResourceLock -LockId $_.LockId -Force -ErrorAction Stop
                         }                 
                     }
 
@@ -275,17 +275,17 @@ class SVTCommandBase: CommandBase {
                             }
                             if($option -eq "y")
                             {
-                                Remove-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob
+                                Remove-AzResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob
                             }
                         }
                         else
                         {
-                            Remove-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob                            
+                            Remove-AzResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob                            
                         }
                     }
                     else 
                     {
-                        Remove-AzureRmResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob
+                        Remove-AzResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob
                     }
                 }
                 catch {

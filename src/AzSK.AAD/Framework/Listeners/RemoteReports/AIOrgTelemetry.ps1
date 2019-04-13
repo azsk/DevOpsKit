@@ -129,8 +129,8 @@
 # 			   $scanSource = [RemoteReportHelper]::GetScanSource();
 # 			   if($scanSource -ne [ScanSource]::Runbook) { return; }
 #                $tenantId = ([AccountHelper]::GetCurrentRmContext()).Subscription.Id;
-# 			   $resources= Get-AzureRmResource
-# 			   $resourceGroups = Get-AzureRmResourceGroup
+# 			   $resources= Get-AzResource
+# 			   $resourceGroups = Get-AzResourceGroup
 # 			   $telemetryEvents = [System.Collections.ArrayList]::new()
 # 					   foreach($res in $resources){
 #                            $rgTags = ($resourceGroups | where-object {$_.Name -eq $res.ResourceGroupName}).Tags;

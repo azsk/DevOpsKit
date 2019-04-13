@@ -18,7 +18,7 @@ class AccountHelper {
 	{
 		if (-not [AccountHelper]::currentRMContext)
 		{
-			$rmContext = Get-AzureRmContext -ErrorAction Stop
+			$rmContext = Get-AzContext -ErrorAction Stop
 
 			if ((-not $rmContext) -or ($rmContext -and (-not $rmContext.Subscription -or -not $rmContext.Account))) {
 				[EventBase]::PublishGenericCustomMessage("No active Azure login session found. Initiating login flow...", [MessageType]::Warning);
@@ -32,7 +32,7 @@ class AccountHelper {
                 if(-not [string]::IsNullOrWhiteSpace($AzureEnvironment) -and $AzureEnvironment -ne [Constants]::DefaultAzureEnvironment) 
                 {
                     try{
-                        $rmLogin = Connect-AzureRmAccount -EnvironmentName $AzureEnvironment
+                        $rmLogin = Connect-AzAccount -EnvironmentName $AzureEnvironment
                     }
                     catch{
                         [EventBase]::PublishGenericException($_);
@@ -40,7 +40,7 @@ class AccountHelper {
                 }
                 else
                 {
-                $rmLogin = Connect-AzureRmAccount
+                $rmLogin = Connect-AzAccount
                 }
 				if ($rmLogin) {
                     $rmContext = $rmLogin.Context;	

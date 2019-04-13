@@ -162,7 +162,7 @@ class SVTBase: AzSKRoot
 			{
 				if(-not [string]::ISNullOrEmpty($this.ResourceContext.ResourceGroupName))
 				{
-					$resource = Get-AzureRmResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+					$resource = Get-AzResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
 
 					if($resource)
 					{

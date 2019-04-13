@@ -870,7 +870,7 @@ class Helpers {
 		{
 			[EventBase]::PublishGenericCustomMessage(" `r`nThe resource provider: [$provideNamespace] is not registered on the subscription. `r`nRegistering resource provider, this can take up to a minute...", [MessageType]::Warning);
 
-			Register-AzureRmResourceProvider -ProviderNamespace $provideNamespace
+			Register-AzResourceProvider -ProviderNamespace $provideNamespace
 
 			$retryCount = 10;
 			while($retryCount -ne 0 -and (-not [Helpers]::IsProviderRegistered($provideNamespace)))
@@ -894,7 +894,7 @@ class Helpers {
 
 	hidden static [bool] IsProviderRegistered([string] $provideNamespace)
 	{
-		return ((Get-AzureRmResourceProvider -ProviderNamespace $provideNamespace | Where-Object { $_.RegistrationState -ne "Registered" } | Measure-Object).Count -eq 0);
+		return ((Get-AzResourceProvider -ProviderNamespace $provideNamespace | Where-Object { $_.RegistrationState -ne "Registered" } | Measure-Object).Count -eq 0);
 	}
 
 	static [PSObject] DeepCopy([PSObject] $inputObject)
@@ -912,10 +912,10 @@ class Helpers {
 	{
 		$result = $false;
 		$gateways = @();
-		$gateways += Get-AzureRmVirtualNetworkGateway -ResourceGroupName $resourceGroupName | Where-Object { $_.GatewayType -eq "ExpressRoute" }
+		$gateways += Get-AzVirtualNetworkGateway -ResourceGroupName $resourceGroupName | Where-Object { $_.GatewayType -eq "ExpressRoute" }
 		if($gateways.Count -ne 0)
 		{
-			$vNet = Get-AzureRmVirtualNetwork -Name $resourceName -ResourceGroupName $resourceGroupName 
+			$vNet = Get-AzVirtualNetwork -Name $resourceName -ResourceGroupName $resourceGroupName 
 			if($vnet)
 			{
 				$subnetIds = @();
@@ -1123,9 +1123,9 @@ class Helpers {
 		While($null -eq $assignedRole -and $retryCount -le 6)
 		{
 			#Assign RBAC to SPN - contributor at RG
-			New-AzureRMRoleAssignment -Scope $Scope -RoleDefinitionName $Role -ServicePrincipalName $ApplicationId -ErrorAction SilentlyContinue | Out-Null
+			New-AzRoleAssignment -Scope $Scope -RoleDefinitionName $Role -ServicePrincipalName $ApplicationId -ErrorAction SilentlyContinue | Out-Null
 			Start-Sleep -Seconds 10
-			$assignedRole = Get-AzureRmRoleAssignment -ServicePrincipalName $ApplicationId -Scope $Scope -RoleDefinitionName $Role -ErrorAction SilentlyContinue
+			$assignedRole = Get-AzRoleAssignment -ServicePrincipalName $ApplicationId -Scope $Scope -RoleDefinitionName $Role -ErrorAction SilentlyContinue
 			$retryCount++;
 		}
 		if($null -eq $assignedRole -and $retryCount -gt 6)
