@@ -44,6 +44,8 @@ class AADResourceResolver: Resolver
         $tenantInfoMsg = [AccountHelper]::GetCurrentTenantInfo();
         Write-Host -ForegroundColor Green $tenantInfoMsg  #TODO: PublishCustomMessage...just before #-of-resources...etc.?
 
+        $bAdmin = [AccountHelper]::IsUserInAPermanentAdminRole();
+
         #Core controls are evaluated by default.
         $svtResource = [SVTResource]::new();
         $svtResource.ResourceName = $this.tenantId;
@@ -95,8 +97,8 @@ class AADResourceResolver: Resolver
             Where-Object { $_.ResourceType -eq 'AAD.ServicePrincipal' } |
             Select-Object -First 1)
 
-        #BUGBUG: Uncomment below as tmp workaround for mprabhu11live to resolve to some SPNs
-        #$userCreatedObjects = [array] (Get-AzureADServicePrincipal -Top 20)
+        #BUGBUG: temp workaround to get SPNs for the trial (live sub)
+        $userCreatedObjects = [array] (Get-AzureADServicePrincipal -Top 20)
         
         foreach ($obj in $userCreatedObjects) {
             if ($obj.ObjectType -eq 'ServicePrincipal') 

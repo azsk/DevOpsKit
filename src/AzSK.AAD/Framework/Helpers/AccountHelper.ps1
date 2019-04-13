@@ -6,13 +6,47 @@ using namespace Microsoft.IdentityModel.Clients.ActiveDirectory
 
 Set-StrictMode -Version Latest
 
+
+
+# Represents subset of directory roles that we check against for 'AAD admin-or-not'
+[Flags()]
+enum PrivilegedAADRoles
+{
+    None = 0
+    SecurityReader = 1
+    UserAccountAdmin = 2
+    SecurityAdmin = 4
+    CompanyAdmin = 8
+}
+
+#Creates an object for our (internal) representation of a privileged role
+#The term 'privileged' or 'privRole' here refers to directory roles we consider in 'admin-or-not' check
+#It does not refer to AAD-PIM (at least as yet)
+function New-PrivRole()
+{
+  param ($DisplayName, $ObjectId, $AADPrivRole)
+
+  $privRole = new-object PSObject
+
+  $privRole | add-member -type NoteProperty -Name DisplayName -Value $DisplayName
+  $privRole | add-member -type NoteProperty -Name ObjectId -Value $ObjectId
+  $privRole | add-member -type NoteProperty -Name AADPrivRole -Value $AADPrivRole
+
+  return $privRole
+}
+
 class AccountHelper {
     static hidden [PSObject] $currentAADContext;
     static hidden [PSObject] $currentAzContext;
-    static hidden [PSObject] $currentRMContext;
     static hidden [PSObject] $AADAPIAccessToken;
     static hidden [string] $tenantInfoMsg;
+
+    static hidden [PSObject] $currentAADUserObject;
+
     static hidden [CommandType] $ScanType;
+
+    static hidden [PrivilegedAADRoles] $UserAADPrivRoles = [PrivilegedAADRoles]::None; 
+    static hidden [bool] $rolesLoaded = $false;
 
     hidden static [PSObject] GetCurrentRMContext()
 	{
@@ -40,7 +74,7 @@ class AccountHelper {
                 }
                 else
                 {
-                $rmLogin = Connect-AzAccount
+                    $rmLogin = Connect-AzAccount
                 }
 				if ($rmLogin) {
                     $rmContext = $rmLogin.Context;	
@@ -103,6 +137,7 @@ class AccountHelper {
         if(-not [AccountHelper]::currentAADContext)
         {
             $aadContext = $null
+            $aadUserObj = $null
             #Try leveraging Azure context if available
             try {
                 #Either throws or returns non-null
@@ -111,6 +146,9 @@ class AccountHelper {
                 $tenantId = $azContext.Tenant.Id
                 $accountId = $azContext.Account.Id
                 $aadContext = Connect-AzureAD -TenantId $tenantId -AccountId $accountId -ErrorAction Stop
+
+                $upn = $aadContext.Account.Id
+                $aadUserObj = Get-AzureADUser -Filter "UserPrincipalName eq '$upn'"
             }
             catch {
                 Write-Warning("Could not get Az/AzureAD context.")
@@ -119,7 +157,7 @@ class AccountHelper {
 
             [AccountHelper]::ScanType = [CommandType]::AAD
             [AccountHelper]::currentAADContext = $aadContext
-            
+            [AccountHelper]::currentAADUserObject = $aadUserObj
             [AccountHelper]::tenantInfoMsg = "Current AAD Domain: $($aadContext.TenantDomain)`nTenanId: $($aadContext.TenantId)"
         }
 
@@ -141,7 +179,77 @@ class AccountHelper {
             return "NO_ACTIVE_SESSION"
         }
     }
-    
+
+    hidden static [PSObject] GetCurrentAADUserObject()
+    {
+        return [AccountHelper]::currentAADUserObject   
+    }
+
+    hidden static [PSObject] GetEnabledPrivRolesInTenant()
+    {
+        #Get subset of directory level roles that have been enabled in this tenant. (Not orgs enable all roles.)
+        $enabledDirRoles = [array] (Get-AzureADDirectoryRole)
+
+        #$srRole = $activeRoles | ? { $_.DisplayName -eq "Security Reader"}
+        
+        $apr = @()
+        $enabledDirRoles | % {
+            $ar = $_
+        
+            switch ($ar.DisplayName)
+            {
+                'Security Reader' { 
+                    $apr += New-PrivRole -DisplayName 'Security Reader' -ObjectId $ar.ObjectId -AADPrivRole ([PrivilegedAADRoles]::SecurityReader)
+                }
+        
+                'User Account Administrator' { 
+                    $apr += New-PrivRole -DisplayName 'User Account Administrator' -ObjectId $ar.ObjectId -AADPrivRole ([PrivilegedAADRoles]::UserAccountAdmin)
+                }
+                 
+                'Security Administrator' {
+                    $apr += New-PrivRole -DisplayName 'Security Administrator' -ObjectId $ar.ObjectId -AADPrivRole ([PrivilegedAADRoles]::SecurityAdmin)
+                }
+        
+                'Company Administrator' {
+                    $apr += New-PrivRole -DisplayName 'Company Administrator' -ObjectId $ar.ObjectId -AADPrivRole ([PrivilegedAADRoles]::CompanyAdmin)
+                }
+            }
+        }
+        return $apr        
+    } 
+
+    #Returns a bit flag representing all roles we consider 'admin-like' that the user is currently a member of. 
+    #TODO: This only uses 'permanent' membership checks currently. Need to augment for PIM.
+    static [PrivilegedAADRoles] GetUserPrivTenantRoles([String] $uid)
+    {
+        if ([AccountHelper]::rolesLoaded -eq $false)
+        {
+            $upr = [PrivilegedAADRoles]::None
+            $apr = [AccountHelper]::GetEnabledPrivRolesInTenant()
+            $apr | % {
+                $pr = $_
+                #Write-Host "$pr.AADPrivRole"
+                $roleMembers = [array] (Get-AzureADDirectoryRoleMember -ObjectId $pr.ObjectId)
+                Write-Host "Count: $($roleMembers.Count)"
+                $roleMembers | % { if ($_.ObjectId -eq $uid) {$upr = $upr -bor $pr.AADPrivRole}}
+            }    
+
+            [AccountHelper]::UserAADPrivRoles = $upr
+            [AccountHelper]::rolesLoaded = $true
+        }
+        return [AccountHelper]::UserAADPrivRoles
+    }
+
+    #Is user a member of any directory role we consider 'admin-equiv.'?
+    #Note: #TODO: This does not check for PIM-based role membership yet.
+    static [bool] IsUserInAPermanentAdminRole()
+    {
+        $uid = ([AccountHelper]::GetCurrentAADUserObject()).ObjectId
+        $upr = [AccountHelper]::GetUserPrivTenantRoles($uid)
+        return ($upr -ne [PrivilegedAADRoles]::None) 
+    }
+
+
     hidden static [PSObject] GetCurrentAADAPIToken()
     {
         if(-not [AccountHelper]::AADAPIAccessToken)
@@ -215,4 +323,3 @@ class AccountHelper {
         }
     }
 }
-
