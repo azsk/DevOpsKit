@@ -38,7 +38,7 @@ class Group: SVTBase
         #TODO: may need more logic (e.g., can Groups or SPNs be 'Group Owners'?)
         $ret = $false
 
-        if ($go.Count -ne 0)
+        if ($go -ne $null -and $go.Count -ne 0)
         {
             $go | % {
                 $o = $_

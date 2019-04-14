@@ -1,23 +1,23 @@
 Set-StrictMode -Version Latest
-
-function Get-AzSKAADSecurityStatus
+function Get-AzSKAADSecurityStatusTenant
 {
 	<#
 	.SYNOPSIS
-	This command would help in validating the security controls for the Azure resources meeting the specified input criteria.
+	This command scans an Azure Active Directory (AAD) for tenant wide security issues and best practices.
 	.DESCRIPTION
-	This command will execute the security controls and will validate their status as 'Success' or 'Failure' based on the security guidance. Refer https://aka.ms/azskossdocs for more information 
+	This command scans various artifacts in an AAD tenant for security settings and best practices. It generates a report containing evaluation results and fix recommendations. 
+	Refer AAD module section at https://aka.ms/devopskit/docs for more information.
 	
 	.PARAMETER TenantId
-		Organization name for which the security evaluation has to be performed.
+	(Optional) TenantId of the AAD tenant for which security checks need to be performed.
 	
 	
 
 	.NOTES
-	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
+	This command scans various artifacts in an AAD tenant for security settings and best practices.
 
 	.LINK
-	https://aka.ms/azskossdocs 
+	https://aka.ms/devopskit/docs 
 
 	#>
 
@@ -25,28 +25,14 @@ function Get-AzSKAADSecurityStatus
 	Param
 	(
 		[string]		 
-		[Parameter(Position = 0, Mandatory = $true, HelpMessage="AAD tenant for which security evaluation has to be performed.")]
+		[Parameter(Position = 0, Mandatory = $false, HelpMessage="AAD tenant for which security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("tid")]
 		$TenantId,
-		
-		[string]		 
-		[Parameter(HelpMessage="Users for which security needs to be evaluated.")]
-		[ValidateNotNullOrEmpty()]
-		[Alias("usr")]
-		$UserNames,
 
-		[string]
-		[Parameter( HelpMessage="Apps for which security needs to be evaluated.")]
-		[ValidateNotNullOrEmpty()]
-		[Alias("app")]
-		$AppNames,
-
-		[string]
-		[Parameter(HelpMessage="Connected orgs for which security needs to be evaluated.")]
-		[ValidateNotNullOrEmpty()]
-		[Alias("org")]
-		$OrgNames
+		[int]
+		[Parameter(Position = 1, Mandatory = $false, HelpMessage="Max # of objects to check. Default is 3 (for preview release).")]
+		$MaxObj = 3
 	)
 	Begin
 	{
@@ -58,7 +44,87 @@ function Get-AzSKAADSecurityStatus
 	{
 	try 
 		{
-			$resolver = [AADResourceResolver]::new($TenantId,  $userNames, $appNames, $orgNames);
+			$resolver = [AADResourceResolver]::new($TenantId, $true); #pass $true to scan tenant
+			$resolver.SetMaxObjectsToScan($MaxObj)
+
+			#If user didn't pass the tenantId, we set it after getting the login ctx (in the resolver).
+			if ([string]::IsNullOrEmpty($TenantId))
+			{
+				$TenantId = $resolver.TenantId 
+			}
+
+			$secStatus = [ServicesSecurityStatus]::new($TenantId, $PSCmdlet.MyInvocation, $resolver);
+			if ($secStatus) 
+			{		
+				return $secStatus.EvaluateControlStatus();
+			}    
+		}
+		catch 
+		{
+			[EventBase]::PublishGenericException($_);
+		}  
+	}
+	
+	End
+	{
+		[ListenerHelper]::UnregisterListeners();
+	}
+}
+
+
+
+function Get-AzSKAADSecurityStatusUser
+{
+	<#
+	.SYNOPSIS
+	This command scans various user-created or user-owned objects in an Azure Active Directory (AAD) tenant for security issues and best practices.
+	.DESCRIPTION
+	This command scans various user-created or user-owned objects in an AAD tenant for security settings and best practices. 
+	It generates a report containing evaluation results and fix recommendations. 
+	Refer AAD module section at https://aka.ms/devopskit/docs for more information.
+	
+	.PARAMETER TenantId
+	(Optional) TenantId of the AAD tenant for which security checks need to be performed.
+	
+	
+	.NOTES
+	This command scans various user-created or user-owned objects in an AAD tenant for security settings and best practices.
+
+	.LINK
+	https://aka.ms/devopskit/docs 
+
+	#>
+	[OutputType([String])]
+	Param
+	(
+		[string]		 
+		[Parameter(Position = 0, Mandatory = $false, HelpMessage="AAD tenant for which security evaluation has to be performed.")]
+		[ValidateNotNullOrEmpty()]
+		[Alias("tid")]
+		$TenantId,
+
+		[int]
+		[Parameter(Position = 1, Mandatory = $false, HelpMessage="Max # of objects to check. Default is 3 (for preview release).")]
+		$MaxObj = 3
+	)
+	Begin
+	{
+		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
+		[ListenerHelper]::RegisterListeners();
+	}
+
+	Process
+	{
+	try 
+		{
+			$resolver = [AADResourceResolver]::new($TenantId, $false); #pass $false to indicate that the scan is for indiv. user
+			$resolver.SetMaxObjectsToScan($MaxObj)
+			
+			#If user didn't pass the tenantId, we set it after getting the login ctx (in the resolver).
+			if ([string]::IsNullOrEmpty($TenantId))
+			{
+				$TenantId = $resolver.TenantId 
+			}
 			$secStatus = [ServicesSecurityStatus]::new($TenantId, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		

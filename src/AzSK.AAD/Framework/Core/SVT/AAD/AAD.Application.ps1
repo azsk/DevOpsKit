@@ -34,7 +34,7 @@ class Application: SVTBase
         {
             #TODO: How can we determine how old an app entry is (or if it is 'active'?)
             $controlResult.AddMessage([VerificationResult]::Verify,
-                                        "Found one or more demo/test apps. Review and cleanup","TODO_FIX");
+                                        "Found one or more demo/test apps. Review and cleanup","(TODO) Review apps that are not in use.");
         }
         return $controlResult;
     }
@@ -76,7 +76,7 @@ class Application: SVTBase
         else
         {
             $controlResult.AddMessage([VerificationResult]::Failed,
-                                        "Found one or more non-HTTPS URLs in replyURLs.","TODO_FIX");
+                                        "Found one or more non-HTTPS URLs in replyURLs.","(TODO) Please review and change them to HTTPS.");
         }
         return $controlResult;
     }

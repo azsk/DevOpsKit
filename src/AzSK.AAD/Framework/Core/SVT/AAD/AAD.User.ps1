@@ -12,7 +12,7 @@ class User: SVTBase
         if(3 -gt 0)
         {
                 $controlResult.AddMessage([VerificationResult]::Failed,
-                                        "User does not have contacts set.","TODO_FIX");
+                                        "User does not have contacts set.","Please set the contact info.");
         }
         else
         {

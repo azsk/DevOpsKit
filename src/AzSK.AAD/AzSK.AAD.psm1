@@ -10,7 +10,7 @@
     }
 }
 
-function Set-AzSKAzureDevOpsPolicySettings {
+function Set-AzSKAADPolicySettings {
     <#
 	.SYNOPSIS
 	This command would help to set online policy store URL.

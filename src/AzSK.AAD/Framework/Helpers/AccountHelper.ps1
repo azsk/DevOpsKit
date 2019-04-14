@@ -38,6 +38,7 @@ function New-PrivRole()
 class AccountHelper {
     static hidden [PSObject] $currentAADContext;
     static hidden [PSObject] $currentAzContext;
+    static hidden [PSObject] $currentRMContext;
     static hidden [PSObject] $AADAPIAccessToken;
     static hidden [string] $tenantInfoMsg;
 
@@ -95,13 +96,15 @@ class AccountHelper {
         return [AccountHelper]::currentAzContext
     }
     
+    # Can be called with $null (when tenantId is not specified by the user)
     hidden static [PSObject] GetCurrentAzContext($desiredTenantId)
     {
         if(-not [AccountHelper]::currentAzContext)
         {
             $azContext = Get-AzContext 
 
-            if ($azContext -eq $null -or ($desiredTenantId -ne $null -and $azContext.Tenant.Id -ne $desiredTenantId))
+            #If there's no Az ctx, or it is indeterminate (user has no Azure subscription) or the tenantId in the azCtx does not match desired tenantId
+            if ($azContext -eq $null -or $azContext.Tenant -eq $null -or (-not [string]::IsNullOrEmpty($desiredTenantId) -and $azContext.Tenant.Id -ne $desiredTenantId))
             {
                 if ($azContext) #If we have a context for another tenant, disconnect.
                 {
@@ -132,7 +135,7 @@ class AccountHelper {
         return [AccountHelper]::currentAADContext
     }
 
-    hidden static [PSObject] GetCurrentAADContext($desiredTenantId)
+    hidden static [PSObject] GetCurrentAADContext($desiredTenantId) #Can be $null if user did not pass one.
     {
         if(-not [AccountHelper]::currentAADContext)
         {
@@ -143,9 +146,18 @@ class AccountHelper {
                 #Either throws or returns non-null
                 $azContext = [AccountHelper]::GetCurrentAzContext($desiredTenantId)
 
-                $tenantId = $azContext.Tenant.Id
                 $accountId = $azContext.Account.Id
-                $aadContext = Connect-AzureAD -TenantId $tenantId -AccountId $accountId -ErrorAction Stop
+
+                if ($azContext.Tenant -ne $null)
+                {
+                    $tenantId = $azContext.Tenant.Id
+                    $aadContext = Connect-AzureAD -TenantId $tenantId -AccountId $accountId -ErrorAction Stop
+                }
+                else 
+                {
+                    $aadContext = Connect-AzureAd -AccountId $accountId -ErrorAction Stop
+                    $tenantId = $aadContext.TenantId
+                }
 
                 $upn = $aadContext.Account.Id
                 $aadUserObj = Get-AzureADUser -Filter "UserPrincipalName eq '$upn'"
@@ -230,7 +242,7 @@ class AccountHelper {
                 $pr = $_
                 #Write-Host "$pr.AADPrivRole"
                 $roleMembers = [array] (Get-AzureADDirectoryRoleMember -ObjectId $pr.ObjectId)
-                Write-Host "Count: $($roleMembers.Count)"
+                #Write-Host "Count: $($roleMembers.Count)"
                 $roleMembers | % { if ($_.ObjectId -eq $uid) {$upr = $upr -bor $pr.AADPrivRole}}
             }    
 
@@ -262,7 +274,15 @@ class AccountHelper {
             try {
                 #Either throws or returns non-null
                 $azContext = [AccountHelper]::GetCurrentAzContext()
-                $apiToken = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate($azContext.Account, $azContext.Environment, $azContext.Tenant.Id, $null, "Never", $null, $AADAPIGuid)
+                $tenantId = $null
+                if ($azContext.Tenant -ne $null) #happens if user does not have any Azure subs.
+                {
+                    $tenantId = $azContext.Tenant.Id
+                }
+                else {
+                    $tenantId = ([AccountHelper]::GetCurrentAADContext()).TenantId 
+                }
+                $apiToken = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate($azContext.Account, $azContext.Environment, $tenantId, $null, "Never", $null, $AADAPIGuid)
             }
             catch {
                 Write-Warning("Could not get AAD API token for $AADAPIGuid.")

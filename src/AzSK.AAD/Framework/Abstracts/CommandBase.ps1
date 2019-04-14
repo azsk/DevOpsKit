@@ -51,7 +51,7 @@ class CommandBase: AzSKRoot {
         }
 
 		# Reset cached context
-		[AccountHelper]::ResetCurrentRmContext()
+		[AccountHelper]::ResetCurrentRmContext()  #BUGBUG - why is this needed? (Create/call ResetAzContext accordingly)
 
         $this.PublishRunIdentifier($this.InvocationContext);
 		[AIOrgTelemetryHelper]::TrackCommandExecution("Command Started",

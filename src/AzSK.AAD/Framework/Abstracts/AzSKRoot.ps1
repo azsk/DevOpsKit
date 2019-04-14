@@ -8,19 +8,18 @@ class AzSKRoot: EventBase
     {   
         [Helpers]::AbstractClass($this, [AzSKRoot]);
         
-		if((-not [string]::IsNullOrEmpty($tenantId)))
+		$aadCtx = [AccountHelper]::GetCurrentAADContext($tenantId)	
+		
+		#If the user did not specify a tenantId, we determine it from AAD ctx (from the login session)
+		if ([string]::IsNullOrEmpty($tenantId))
 		{
-			$this.TenantContext = [TenantContext]@{
-				TenantId = $tenantId;
-				Scope = "/Organization/$tenantId";
-				TenantName = $tenantId;
-			};
-			[AccountHelper]::GetCurrentAADContext($tenantId)			
+			$tenantId = $aadCtx.TenantId
 		}
-		else
-		{
-			throw [SuppressedException] ("OrganizationName name [$tenantId] is either malformed or incorrect.")
-		}
+		$this.TenantContext = [TenantContext] @{
+			TenantId = $tenantId;
+			Scope = "/Organization/$tenantId";
+			TenantName = $aadCtx.TenantDomain;
+		};
 	}
 	
     [PSObject] LoadServerConfigFile([string] $fileName)

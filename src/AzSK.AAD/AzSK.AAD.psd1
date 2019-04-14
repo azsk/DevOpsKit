@@ -67,7 +67,7 @@
   
     # Functions to export from this module
     FunctionsToExport      = @(
-        'Get-AzSKAADSecurityStatus'
+        'Get-AzSKAADSecurityStatusTenant', 'Get-AzSKAADSecurityStatusUser'
     )
 
     # Cmdlets to export from this module
@@ -90,7 +90,7 @@
         PSData = @{
 
             # Tags applied to this module. These help with module discovery in online galleries.
-            Tags         = 'AzureDevOps', 'AzSK', 'AzureDevops_Security'
+            Tags         = 'AAD', 'AzSK', 'AzureActiveDirectory', 'AADSecurity'
 
             # A URL to the license for this module.
             LicenseUri   = 'https://github.com/azsk/azsk-docs/blob/master/LICENSE'
@@ -103,11 +103,11 @@
 
             # ReleaseNotes of this module
             ReleaseNotes = '
-		* Azure DevOps Security Health Check For
-            * Organization
-            * Project
-            * User
-            * Pipeline (Build and Release) '
+		* Azure Active Directory (AAD) security controls for
+            * Users
+            * Apps & SPNs
+            * Various tenant wide settings
+            * Etc. '
 
         }
     } # End of PSData hashtable
