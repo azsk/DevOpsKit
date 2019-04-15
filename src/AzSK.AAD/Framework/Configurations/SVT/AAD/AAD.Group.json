@@ -5,7 +5,7 @@
   "Controls": [
     {
       "ControlID": "AAD_Group_Use_Security_Enabled",
-      "Description": "All AAD groups must be security enabled (TODO - TBD)",
+      "Description": "All AAD groups must be security enabled (TBD)",
       "Id": "Group110",
       "ControlSeverity": "High",
       "Automated": "Yes",

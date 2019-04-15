@@ -23,7 +23,7 @@
     },
     {
       "ControlID": "AAD_Application_Remove_Test_Demo_Apps",
-      "Description": "Test or demo apps older than 3 (TODO) months should be removed from AAD.",
+      "Description": "Old test/demo apps should be removed from the tenant.",
       "Id": "App120",
       "ControlSeverity": "High",
       "Automated": "Yes",

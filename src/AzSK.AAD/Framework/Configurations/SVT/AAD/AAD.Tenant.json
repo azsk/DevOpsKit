@@ -90,7 +90,7 @@
           },
           {
             "ControlID": "AAD_Tenant_CA_Min_Questions_To_Reset",
-            "Description": "At least 3 (TBD) questions should be required for password reset.",
+            "Description": "At least 3 questions should be required for password reset (TBD)",
             "Id": "Tenant150",
             "ControlSeverity": "Medium",
             "Automated": "Yes",

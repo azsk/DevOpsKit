@@ -34,7 +34,7 @@ class Application: SVTBase
         {
             #TODO: How can we determine how old an app entry is (or if it is 'active'?)
             $controlResult.AddMessage([VerificationResult]::Verify,
-                                        "Found one or more demo/test apps. Review and cleanup","(TODO) Review apps that are not in use.");
+                                        "Found one or more demo/test apps. Review and cleanup.","(TODO) Review apps that are not in use.");
         }
         return $controlResult;
     }
