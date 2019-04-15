@@ -27,7 +27,7 @@ class ListenerBase: EventBase
         $this.RegisteredEvents | Sort-Object -Descending | 
 		ForEach-Object {
             try{
-            Unregister-Event -tenantId $_ -Force -ErrorAction SilentlyContinue
+            Unregister-Event -SubscriptionId $_ -Force -ErrorAction SilentlyContinue
             Remove-Job -Id $_ -Force -ErrorAction SilentlyContinue 
             }
             Catch{
