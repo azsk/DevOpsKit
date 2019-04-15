@@ -332,39 +332,40 @@
   },
   "Build":{
     "BuildHistoryPeriodInDays": 180,
-    "WhitelistedBuiltInSecurityGroups":[
+    "WhitelistedUserIdentities":[
       {
-        "Name":  "Readers",
-        "Level": "Project"
-      },
-      {
-        "Name":  "Project Administrators",
-        "Level": "Project"
-      },
-      {
-        "Name":  "Project Collection Administrators",
-        "Level": "Organization"
+        "Domain" : "Build",
+        "DisplayName" : [
+          "OneITVSO Build Service (MicrosoftIT)",
+          "Project Collection Build Service (MicrosoftIT)"
+        ]
       }
     ]
   },
   "Release":{
     "ReleaseHistoryPeriodInDays": 180,
-    "WhitelistedBuiltInSecurityGroups":[
+    "WhitelistedUserIdentities":[
       {
-        "Name":  "Readers",
-        "Level": "Project"
-      },
-      {
-        "Name":  "Project Administrators",
-        "Level": "Project"
-      },
-      {
-        "Name":  "Project Collection Administrators",
-        "Level": "Organization"
+        "Domain" : "Build",
+        "DisplayName" : [
+          "OneITVSO Build Service (MicrosoftIT)",
+          "Project Collection Build Service (MicrosoftIT)"
+        ]
       }
+    ],
+    "RequirePreDeployApprovals": [
+      "Production",
+      "Pre-Production",
+      "Prod",
+      "Pre-Prod"
     ]
   },
   "Organization":{
     "InActiveUserActivityLogsPeriodInDays": 365
+  },
+  "ServiceConnection":{
+    "WhitelistedGroupIdentities": [
+      "Endpoint Administrators"
+    ]
   }
 }

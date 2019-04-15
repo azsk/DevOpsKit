@@ -3,11 +3,17 @@ class Build: SVTBase
 {    
 
     hidden [PSObject] $buildObj;
+    hidden [string] $securityNamespaceId;
     
     Build([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     {
         # Get build object
-        $this.buildObj = [WebRequestHelper]::InvokeGetWebRequest($this.ResourceContext.ResourceId);
+        $apiURL = $this.ResourceContext.ResourceId
+        $this.buildObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        # Get security namespace identifier of current build.
+        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
+        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        $this.securityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
     }
 
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
@@ -20,9 +26,7 @@ class Build: SVTBase
             $ToolPath = Get-ChildItem -Path $ToolFolderPath -File -Include $ScanToolName -Recurse 
             if($ToolPath)
             {
-                $apiURL = $this.ResourceContext.ResourceId
-                $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-                if($responseObj)
+                if($this.buildObj)
                 {
                     try
                     {
@@ -33,7 +37,7 @@ class Build: SVTBase
                             mkdir -Path $buildDefPath -Force | Out-Null
                         }
 
-                        $responseObj | ConvertTo-Json -Depth 5 | Out-File "$buildDefPath\$buildDefFileName.json"
+                        $this.buildObj | ConvertTo-Json -Depth 5 | Out-File "$buildDefPath\$buildDefFileName.json"
                         $searcherPath = Get-ChildItem -Path $($ToolPath.Directory.FullName) -Include "buildsearchers.xml" -Recurse
                         ."$($Toolpath.FullName)" -I $buildDefPath -S $searcherPath -f csv -Ve 1 -O "$buildDefPath\Scan"    
                         
@@ -71,7 +75,7 @@ class Build: SVTBase
     {
         if($this.buildObj)
         {
-                    $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery/project/{1}?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$this.buildObj.project.id;
+            $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery/project/{1}?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$($this.buildObj.project.id);
             $inputbody =  "{
                 'contributionIds': [
                     'ms.vss-build-web.ci-data-provider'
@@ -139,62 +143,75 @@ class Build: SVTBase
         return $controlResult
     }
 
-    hidden [ControlResult] CheckRBACInheritPermissions([ControlResult] $controlResult)
+    hidden [ControlResult] CheckInheritPermissions([ControlResult] $controlResult)
     {
-        # Get security namespace identifier of current build.
-        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
-        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $securityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
-
         # Here 'permissionSet' = security namespace identifier, 'token' = project id and 'tokenDisplayVal' = build name
-        $apiURL = "https://{0}.visualstudio.com/{1}/_admin/_security/index?useApiUrl=true&permissionSet={2}&token={3}%2F{4}&tokenDisplayVal={5}&style=min" -f $($this.SubscriptionContext.SubscriptionName), $($this.buildObj.project.id), $($securityNamespaceId), $($this.buildObj.project.id), $($this.buildObj.id), $($this.buildObj.name) ;
+        $apiURL = "https://{0}.visualstudio.com/{1}/_admin/_security/index?useApiUrl=true&permissionSet={2}&token={3}%2F{4}&tokenDisplayVal={5}&style=min" -f $($this.SubscriptionContext.SubscriptionName), $($this.buildObj.project.id), $($this.securityNamespaceId), $($this.buildObj.project.id), $($this.buildObj.id), $($this.buildObj.name) ;
         $header = [WebRequestHelper]::GetAuthHeaderFromUri($apiURL);
         $responseObj = Invoke-RestMethod -Method Get -Uri $apiURL -Headers $header -UseBasicParsing
         $responseObj = ($responseObj.SelectNodes("//script") | Where-Object { $_.class -eq "permissions-context" }).InnerXML | ConvertFrom-Json; 
-        if($responseObj.inheritPermissions -eq $true)
+        if(-not $responseObj)
         {
-            $controlResult.AddMessage([VerificationResult]::Failed,"##");
+            $controlResult.AddMessage([VerificationResult]::Failed,"Unable to verify inherit permission option. Please navigate to the your build pipeline and verify that inherit permission is disabled.",$responseObj);
+        }
+        elseif($responseObj.inheritPermissions -eq $true)
+        {
+            $controlResult.AddMessage([VerificationResult]::Failed,"Build pipeline is using inherit permissions. It is specifically turned ON.",$responseObj);
         }
         else 
         {
-            $controlResult.AddMessage([VerificationResult]::Passed,"##");    
+            $controlResult.AddMessage([VerificationResult]::Passed,"Build pipeline is not using inherit permissions. It is specifically turned OFF.");    
         }
         return $controlResult
     }
 
-    hidden [ControlResult] CheckGroupPermissions([ControlResult] $controlResult)
+    hidden [ControlResult] CheckRBACAccess([ControlResult] $controlResult)
     {
-        # Get security namespace identifier of current build.
-        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
-        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $securityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
-
         # Here 'permissionSet' = security namespace identifier, 'token' = project id and 'tokenDisplayVal' = build name
-        $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/ReadExplicitIdentitiesJson?__v=5&permissionSetId={2}&permissionSetToken={3}%2F{4}" -f $($this.SubscriptionContext.SubscriptionName), $($this.buildObj.project.id), $($securityNamespaceId), $($this.buildObj.project.id), $($this.buildObj.id);
+        $buildDefinitionPath = $this.buildObj.Path.Trim("\").Replace(" ","+").Replace("\","%2F")
+        $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/ReadExplicitIdentitiesJson?__v=5&permissionSetId={2}&permissionSetToken={3}%2F{4}%2F{5}" -f $($this.SubscriptionContext.SubscriptionName), $($this.buildObj.project.id), $($this.securityNamespaceId), $($this.buildObj.project.id), $($buildDefinitionPath), $($this.buildObj.id);
         $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $securityGroups = $responseObj.identities | Where-Object { $_.IdentityType -eq "group" }
-        $nonWhitelistedSecurityGroups =  $securityGroups | ForEach-Object {
-            $inScope = $false
-            $groupIdentity = $_
-            $Match = $this.ControlSettings.Build.WhitelistedBuiltInSecurityGroups.Where({$_.Name -eq $groupIdentity.FriendlyDisplayName})
-            if(($Match | Measure-Object).Count -gt 0)
-            {
-               $inScope = ($Match.Level -eq "Project" -and $groupIdentity.Scope -eq $this.ResourceContext.ResourceGroupName) -or 
-               ($Match.Level -eq "Organization" -and $groupIdentity.Scope -eq $this.SubscriptionContext.SubscriptionName)
-            }                    
-            if(-not $inScope)
-            {
-               return $groupIdentity
+        $accessList = @()
+        $whitelistedUserIdentities = @()
+        # release owner
+        $whitelistedUserIdentities += $this.buildObj.authoredBy.id
+        if(($responseObj.identities|Measure-Object).Count -gt 0)
+        {
+            $whitelistedUserIdentities += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" }| ForEach-Object {
+                $identity = $_
+                $whitelistedIdentity = $this.ControlSettings.Build.WhitelistedUserIdentities | Where-Object { $_.Domain -eq $identity.Domain -and $_.DisplayName -eq $identity.DisplayName }
+                if(($whitelistedIdentity | Measure-Object).Count -gt 0)
+                {
+                    return $identity.TeamFoundationId
+                }
+            }
+
+            $accessList += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" } | ForEach-Object {
+                $identity = $_ 
+                if($whitelistedUserIdentities -notcontains $identity.TeamFoundationId)
+                {
+                    $apiURL = $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.buildObj.project.id), $($identity.TeamFoundationId) ,$($this.securityNamespaceId),$($this.buildObj.project.id), $($buildDefinitionPath), $($this.buildObj.id);
+                    $identityPermissions = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+                    return @{ IdentityName = $identity.DisplayName; IdentityType = $identity.IdentityType; Permissions = ($identityPermissions.Permissions | Select-Object @{Name="Name"; Expression = {$_.displayName}},@{Name="Permission"; Expression = {$_.permissionDisplayString}}) }
+                }
+            }
+
+            $accessList += $responseObj.identities | Where-Object { $_.IdentityType -eq "group" } | ForEach-Object {
+                $identity = $_ 
+                $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.buildObj.project.id), $($identity.TeamFoundationId) ,$($this.securityNamespaceId),$($this.buildObj.project.id), $($buildDefinitionPath), $($this.buildObj.id);
+                $identityPermissions = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+                return @{ IdentityName = $identity.DisplayName; IdentityType = $identity.IdentityType; IsAadGroup = $identity.IsAadGroup ;Permissions = ($identityPermissions.Permissions | Select-Object @{Name="Name"; Expression = {$_.displayName}},@{Name="Permission"; Expression = {$_.permissionDisplayString}}) }
             }
         }
-        if(($nonWhitelistedSecurityGroups | Measure-Object).Count -eq 0)
+        if(($accessList | Measure-Object).Count -ne 0)
         {
-            $controlResult.AddMessage([VerificationResult]::Passed,"##");
+            $controlResult.AddMessage([VerificationResult]::Verify,"Validate that the following identities have explicitly provided with RBAC access to resource - [$($this.ResourceContext.ResourceName)]", $accessList);
+            $controlResult.SetStateData("Build pipeline access list: ", $accessList);
         }
-        else 
+        else
         {
-            $controlResult.AddMessage([VerificationResult]::Verify,"##");
-            $controlResult.SetStateData("##", $nonWhitelistedSecurityGroups);
+            $controlResult.AddMessage([VerificationResult]::Passed,"No identities have been explicitly provided with RBAC access to resource - [$($this.ResourceContext.ResourceName)] other than build pipeline owner and default groups");
+            $controlResult.AddMessage("List of whitelisted user identities:",$whitelistedUserIdentities)
         }
         return $controlResult
     }

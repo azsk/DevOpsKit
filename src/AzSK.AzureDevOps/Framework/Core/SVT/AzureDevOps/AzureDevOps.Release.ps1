@@ -2,11 +2,23 @@ Set-StrictMode -Version Latest
 class Release: SVTBase
 {   
 
-    hidden [PSObject] $releaseObj;
+    hidden [PSObject] $ReleaseObj;
+    hidden [string] $ProjectId;
+    hidden [string] $securityNamespaceId;
+
     
     Release([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     {
-        $this.releaseObj = [WebRequestHelper]::InvokeGetWebRequest($this.ResourceContext.ResourceId);
+        # Get release object
+        $apiURL = $this.ResourceContext.ResourceId
+        $this.ReleaseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        # Get project id
+        $pattern = "https://$($this.SubscriptionContext.SubscriptionName).vsrm.visualstudio.com/(.*?)/_apis/Release/definitions/$($this.ReleaseObj.id)"
+        $this.ProjectId = [regex]::match($this.ReleaseObj.url.ToLower(), $pattern.ToLower()).Groups[1].Value
+        # Get security namespace identifier of current release pipeline.
+        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
+        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ReleaseManagement") -and ($_.actions.name -contains "ViewReleaseDefinition")}).namespaceId
     }
 
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
@@ -17,10 +29,8 @@ class Release: SVTBase
         {
             $ToolPath = Get-ChildItem -Path $ToolFolderPath -File -Filter $ScanToolName -Recurse 
             if($ToolPath)
-            {
-                $apiURL = $this.ResourceContext.ResourceId
-                $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-                if($responseObj)
+            { 
+                if($this.ReleaseObj)
                 {
                     try
                     {
@@ -31,7 +41,7 @@ class Release: SVTBase
                             mkdir -Path $releaseDefPath -Force | Out-Null
                         }
 
-                        $responseObj | ConvertTo-Json -Depth 5 | Out-File "$releaseDefPath\$releaseDefFileName.json"
+                        $this.ReleaseObj | ConvertTo-Json -Depth 5 | Out-File "$releaseDefPath\$releaseDefFileName.json"
                         $searcherPath = Get-ChildItem -Path $($ToolPath.Directory.FullName) -Include "buildsearchers.xml" -Recurse
                         ."$($Toolpath.FullName)" -I $releaseDefPath -S "$($searcherPath.FullName)" -f csv -Ve 1 -O "$releaseDefPath\Scan"    
                         
@@ -67,26 +77,21 @@ class Release: SVTBase
     }
 
     hidden [ControlResult] CheckInActiveRelease([ControlResult] $controlResult)
-    {
-
-        $apiURL = $this.ResourceContext.ResourceId
-        $this.releaseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        if($this.releaseObj)
+    {        
+        if($this.ReleaseObj)
         {
-            $pattern = "https://vsrm.dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/(.*?)/_apis/Release/definitions/$($this.releaseObj.id)" 
-            $projectId = [regex]::match($this.releaseObj.url.ToLower(), $pattern.ToLower()).Groups[1].Value
-            $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery/project/{1}?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$projectId;
+            $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery/project/{1}?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$this.ProjectId;
             $inputbody =  "{
                 'contributionIds': [
                     'ms.vss-releaseManagement-web.releases-list-data-provider'
                 ],
                 'dataProviderContext': {
                     'properties': {
-                        'definitionIds': '$($this.releaseObj.id)',
-                        'definitionId': '$($this.releaseObj.id)',
+                        'definitionIds': '$($this.ReleaseObj.id)',
+                        'definitionId': '$($this.ReleaseObj.id)',
                         'fetchAllReleases': true,
                         'sourcePage': {
-                            'url': 'https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/AzSDKDemoRepo/_release?view=mine&definitionId=$($this.releaseObj.id)',
+                            'url': 'https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/AzSDKDemoRepo/_release?view=mine&definitionId=$($this.ReleaseObj.id)',
                             'routeId': 'ms.vss-releaseManagement-web.hub-explorer-3-default-route',
                             'routeValues': {
                                 'project': '$($this.ResourceContext.ResourceGroupName)',
@@ -142,65 +147,146 @@ class Release: SVTBase
         return $controlResult
     }
 
-    hidden [ControlResult] CheckRBACInheritPermissions ([ControlResult] $controlResult)
+    hidden [ControlResult] CheckInheritPermissions([ControlResult] $controlResult)
     {
-        $projectId = $this.releaseObj.artifacts.definitionReference.project.id
-        # Get security namespace identifier of current release pipeline.
-        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
-        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $securityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ReleaseManagement") -and ($_.actions.name -contains "ViewReleaseDefinition")}).namespaceId
-
         # Here 'permissionSet' = security namespace identifier, 'token' = project id
-        $apiURL = "https://{0}.visualstudio.com/{1}/_admin/_security/index?useApiUrl=true&permissionSet={2}&token={3}%2F{4}&style=min" -f $($this.SubscriptionContext.SubscriptionName), $($projectId), $($securityNamespaceId), $($projectId), $($this.releaseObj.id);
+        $apiURL = "https://{0}.visualstudio.com/{1}/_admin/_security/index?useApiUrl=true&permissionSet={2}&token={3}%2F{4}&style=min" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($this.SecurityNamespaceId), $($this.ProjectId), $($this.ReleaseObj.id);
         $header = [WebRequestHelper]::GetAuthHeaderFromUri($apiURL);
         $responseObj = Invoke-RestMethod -Method Get -Uri $apiURL -Headers $header -UseBasicParsing
         $responseObj = ($responseObj.SelectNodes("//script") | Where-Object { $_.class -eq "permissions-context" }).InnerXML | ConvertFrom-Json; 
         if($responseObj.inheritPermissions -eq $true)
         {
-            $controlResult.AddMessage([VerificationResult]::Failed,"##");
+            $controlResult.AddMessage([VerificationResult]::Failed,"Release pipeline is using inherit permissions. It is specifically turned ON.",$responseObj);
         }
         else 
         {
-            $controlResult.AddMessage([VerificationResult]::Passed,"##");
+            $controlResult.AddMessage([VerificationResult]::Passed,"Release pipeline is not using inherit permissions. It is specifically turned OFF.");
         }
         return $controlResult
     }
 
-    hidden [ControlResult] CheckGroupPermissions ([ControlResult] $controlResult)
+    hidden [ControlResult] CheckPreDeploymentApproval ([ControlResult] $controlResult)
     {
-        $pattern = "https://$($this.SubscriptionContext.SubscriptionName).vsrm.visualstudio.com/(.*?)/_apis/Release/definitions/$($this.releaseObj.id)"
-        $projectId = [regex]::match($this.releaseObj.url.ToLower(), $pattern.ToLower()).Groups[1].Value
-        # Get security namespace identifier of current release pipeline.
-        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
-        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $securityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ReleaseManagement") -and ($_.actions.name -contains "ViewReleaseDefinition")}).namespaceId
-
-        # Here 'permissionSet' = security namespace identifier, 'token' = project id
-        $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/ReadExplicitIdentitiesJson?__v=5&permissionSetId={2}&permissionSetToken={3}%2F{4}" -f $($this.SubscriptionContext.SubscriptionName), $($projectId), $($securityNamespaceId), $($projectId), $($this.releaseObj.id);
-        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $securityGroups = $responseObj.identities | Where-Object { $_.IdentityType -eq "group" }
-        $nonWhitelistedSecurityGroups =  $securityGroups | ForEach-Object {
-            $inScope = $false
-            $groupIdentity = $_
-            $Match = $this.ControlSettings.Release.WhitelistedBuiltInSecurityGroups.Where({$_.Name -eq $groupIdentity.FriendlyDisplayName})
-            if(($Match | Measure-Object).Count -gt 0)
+        $releaseStages = $this.ReleaseObj.environments | Where-Object { $this.ControlSettings.Release.RequirePreDeployApprovals -contains $_.name.Trim()}
+        if($releaseStages)
+        {
+            $nonComplaintStages = $releaseStages | ForEach-Object { 
+                $releaseStage = $_
+                if([Helpers]::CheckMember($releaseStage,"preDeployApprovals.approvals.isAutomated") -and $releaseStage.preDeployApprovals.approvals.isAutomated -eq $true) 
+                {
+                    return @{ ReleaseStage = $($releaseStage | Select-Object id,name, @{Name = "Owner"; Expression = {$_.owner.displayName}}) ; PreDeploymentApproval = $($releaseStage.preDeployApprovals) }  
+                }
+            }
+            
+            if(($nonComplaintStages | Measure-Object).Count -gt 0)
             {
-               $inScope = ($Match.Level -eq "Project" -and $groupIdentity.Scope -eq $this.ResourceContext.ResourceGroupName) -or 
-               ($Match.Level -eq "Organization" -and $groupIdentity.Scope -eq $this.SubscriptionContext.SubscriptionName)
-            }                    
-            if(-not $inScope)
+                $controlResult.AddMessage([VerificationResult]::Failed,"Pre-deployment approvals is not enabled for following release stages in [$($this.ReleaseObj.name)] pipeline.", $nonComplaintStages);
+                $controlResult.SetStateData("Non-compliant release stages:", $nonComplaintStages);
+            }
+            else 
             {
-               return $groupIdentity
+                $complaintStages = $releaseStages | ForEach-Object {
+                    $releaseStage = $_
+                    return @{ ReleaseStage = $($releaseStage | Select-Object id,name, @{Name = "Owner"; Expression = {$_.owner.displayName}}) ; PreDeploymentApproval = $($releaseStage.preDeployApprovals) }
+                }
+                $controlResult.AddMessage([VerificationResult]::Passed,"Pre-deployment approvals is enabled for following release stages.",$complaintStages);
             }
         }
-        if(($nonWhitelistedSecurityGroups | Measure-Object).Count -eq 0)
+        else
         {
-            $controlResult.AddMessage([VerificationResult]::Passed,"##");
+            $otherStages = $this.ReleaseObj.environments | ForEach-Object {
+                $releaseStage = $_
+                return @{ ReleaseStage = $($releaseStage | Select-Object id,name, @{Name = "Owner"; Expression = {$_.owner.displayName}}) ; PreDeploymentApproval = $($releaseStage.preDeployApprovals) }
+            }
+            $controlResult.AddMessage([VerificationResult]::Verify,"No release stage found matching to $($this.ControlSettings.Release.RequirePreDeployApprovals -join ", ") in [$($this.ReleaseObj.name)] pipeline. Please verify that pre-deployment approval is enabled for production deployment.");
+            if ($otherStages) {
+                $controlResult.AddMessage($otherStages)
+            }
         }
-        else 
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckPreDeploymentApprovers ([ControlResult] $controlResult)
+    {
+        $releaseStages = $this.ReleaseObj.environments | Where-Object { $this.ControlSettings.Release.RequirePreDeployApprovals -contains $_.name.Trim()}
+        if($releaseStages)
         {
-            $controlResult.AddMessage([VerificationResult]::Verify,"##");
-            $controlResult.SetStateData("##", $nonWhitelistedSecurityGroups);
+            $approversList = $releaseStages | ForEach-Object { 
+                $releaseStage = $_
+                if([Helpers]::CheckMember($releaseStage,"preDeployApprovals.approvals.isAutomated") -and $($releaseStage.preDeployApprovals.approvals.isAutomated -eq $false))
+                {
+                    if([Helpers]::CheckMember($releaseStage,"preDeployApprovals.approvals.approver"))
+                    {
+                        return @{ ReleaseStageName= $releaseStage.Name; Approvers = $releaseStage.preDeployApprovals.approvals.approver }
+                    }
+                }
+            }
+            if(($approversList | Measure-Object).Count -eq 0)
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed,"No approvers found. Please ensure that pre-deployment approval is enabled for production release stages");
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Verify,"Validate users/groups added as approver within release pipeline.",$approversList);
+                $controlResult.SetStateData("List of approvers for each release stage: ", $approversList);
+            }
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"No release stage found matching to $($this.ControlSettings.Release.RequirePreDeployApprovals -join ", ") in [$($this.ReleaseObj.name)] pipeline.");
+        }
+        
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckRBACAccess ([ControlResult] $controlResult)
+    {
+        # This functions is to check users permissions on release definition. Groups' permissions check is not added here.
+        $releaseDefinitionPath = $this.ReleaseObj.Path.Trim("\").Replace(" ","+").Replace("\","%2F")
+        $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/ReadExplicitIdentitiesJson?__v=5&permissionSetId={2}&permissionSetToken={3}%2F{4}%2F{5}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($this.SecurityNamespaceId), $($this.ProjectId), $($releaseDefinitionPath) ,$($this.ReleaseObj.id);
+        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        $accessList = @()
+        $whitelistedUserIdentities = @()
+        # exclude release owner
+        $whitelistedUserIdentities += $this.ReleaseObj.createdBy.id
+        if([Helpers]::CheckMember($responseObj,"identities") -and ($responseObj.identities|Measure-Object).Count -gt 0)
+        {
+            $whitelistedUserIdentities += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" }| ForEach-Object {
+                $identity = $_
+                $whitelistedIdentity = $this.ControlSettings.Release.WhitelistedUserIdentities | Where-Object { $_.Domain -eq $identity.Domain -and $_.DisplayName -eq $identity.DisplayName }
+                if(($whitelistedIdentity | Measure-Object).Count -gt 0)
+                {
+                    return $identity.TeamFoundationId
+                }
+            }
+
+            $accessList += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" } | ForEach-Object {
+                $identity = $_ 
+                if($whitelistedUserIdentities -notcontains $identity.TeamFoundationId)
+                {
+                    $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($identity.TeamFoundationId) ,$($this.SecurityNamespaceId), $($this.ProjectId), $($releaseDefinitionPath), $($this.ReleaseObj.id);
+                    $identityPermissions = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+                    return @{ IdentityName = $identity.DisplayName; IdentityType = $identity.IdentityType; Permissions = ($identityPermissions.Permissions | Select-Object @{Name="Name"; Expression = {$_.displayName}},@{Name="Permission"; Expression = {$_.permissionDisplayString}}) }
+                }
+            }
+
+            $accessList += $responseObj.identities | Where-Object { $_.IdentityType -eq "group" } | ForEach-Object {
+                $identity = $_ 
+                $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($identity.TeamFoundationId) ,$($this.SecurityNamespaceId), $($this.ProjectId), $($releaseDefinitionPath), $($this.ReleaseObj.id);
+                $identityPermissions = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+                return @{ IdentityName = $identity.DisplayName; IdentityType = $identity.IdentityType; IsAadGroup = $identity.IsAadGroup ;Permissions = ($identityPermissions.Permissions | Select-Object @{Name="Name"; Expression = {$_.displayName}},@{Name="Permission"; Expression = {$_.permissionDisplayString}}) }
+            }
+        }
+        
+        if(($accessList | Measure-Object).Count -ne 0)
+        {
+            $controlResult.AddMessage([VerificationResult]::Verify,"Validate that the following identities have explicitly provided with RBAC access to resource - [$($this.ResourceContext.ResourceName)]", $accessList);
+            $controlResult.SetStateData("Release pipeline access list: ", $accessList);
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"No identities have been explicitly provided with RBAC access to resource - [$($this.ResourceContext.ResourceName)] other than release pipeline owner and default groups");
+            $controlResult.AddMessage("List of whitelisted user identities:",$whitelistedUserIdentities)
         }
         return $controlResult
     }
