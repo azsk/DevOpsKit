@@ -56,6 +56,42 @@
         "RBAC"
       ],
       "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_Check_Orphan_App",
+      "Description": "Do not permit apps with no owners in the tenant.",
+      "Id": "App140",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckOrphanedApp",
+      "Rationale": "TODO-App-has-no-owner.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_Check_FTE_Owner",
+      "Description": "Apps must have at least one FTE owner.",
+      "Id": "App150",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckAppFTEOwner",
+      "Rationale": "TODO-App-has-FTE-owner.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
     }
   ]
 }

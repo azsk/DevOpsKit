@@ -80,6 +80,54 @@ class Application: SVTBase
         }
         return $controlResult;
     }
-#avail-to-other-tenants -> $false
-#allow-guests-access -> $false
+
+    
+    hidden [ControlResult] CheckOrphanedApp([ControlResult] $controlResult)
+    {
+        $app = $this.GetResourceObject()
+
+        $owners = [array] (Get-AzureADApplicationOwner -ObjectId $app.ObjectId)
+        if ($owners -eq $null -or $owners.Count -eq 0)
+        {
+                $controlResult.AddMessage([VerificationResult]::Failed,
+                                        [MessageData]::new("This app has no owner configured: $($app.DisplayName)"));
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,
+                                        [MessageData]::new("App has an owner configured."));
+        }
+        return $controlResult;
+    }
+    
+    hidden [ControlResult] CheckAppFTEOwner([ControlResult] $controlResult)
+    {
+        $app = $this.GetResourceObject()
+
+        $owners = [array] (Get-AzureADApplicationOwner -ObjectId $app.ObjectId)
+        if ($owners -eq $null -or $owners.Count -eq 0)
+        {
+                $controlResult.AddMessage([VerificationResult]::Failed,
+                                        [MessageData]::new("This app has no owner configured: $($app.DisplayName)"));
+        }
+        elseif ($owners.Count -gt 0)
+        {
+            $bFTE = $false
+            $owners | % { 
+                #If one of the users is non-Guest (== 'Member'), we are good.
+                if ($_.UserType -ne 'Guest') {$bFTE = $true}
+            }
+            if ($bFTE)
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed,
+                                    [MessageData]::new("One or more owners of app are FTEs."));
+            }
+            else {
+                $controlResult.AddMessage([VerificationResult]::Failed,
+                                    [MessageData]::new("All owners of app: [$($app.DisplayName)] are 'Guest' users. At least one FTE owner should be added."));                
+            }
+        }
+        return $controlResult;
+    }
+
 }

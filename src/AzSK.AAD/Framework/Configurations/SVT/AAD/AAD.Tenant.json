@@ -138,6 +138,23 @@
               "AuthN"
             ],
             "Enabled": true
+          },
+          {
+            "ControlID": "AAD_Tenant_Security_Contact_Info",
+            "Description": "Security compliance notification phone and email must be set",
+            "Id": "Tenant180",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckTenantSecurityContactInfoIsSet",
+            "Rationale": "TODO-Set-Security-Contact-Info",
+            "Recommendation": "Refer: https://docs.microsoft.com/ TODO",
+            "Tags": [
+              "SDL",
+              "TCP",
+              "Automated",
+              "RBAC"
+            ],
+            "Enabled": true
           }
     ]
     }

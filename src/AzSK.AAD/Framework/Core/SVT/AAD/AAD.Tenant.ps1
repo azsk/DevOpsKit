@@ -35,6 +35,43 @@ class Tenant: SVTBase
         }
     }
 
+    hidden [ControlResult] CheckTenantSecurityContactInfoIsSet([ControlResult] $controlResult)
+    {
+        $td = Get-AzureADTenantDetail
+
+        $result = $false
+        $missing = ""
+        try {
+            #Check that at least 1 email and at least 1 phone number are set.
+            $bEmail = ($td.SecurityComplianceNotificationMails.Count -gt 0 -and -not [string]::IsNullOrEmpty($td.SecurityComplianceNotificationMails[0]))
+            $bPhone = ($td.SecurityComplianceNotificationPhones.Count -gt 0 -and -not [string]::IsNullOrEmpty($td.SecurityComplianceNotificationPhones[0]))
+            if ($bEmail -and $bPhone )
+            {
+                $result = $true
+            }
+            else {
+                $missing = if (-not $bEmail) {"`n`tSecurityComplianceNotificationMails "} else {""} 
+                $missing += if (-not $bPhone) {"`n`tSecurityComplianceNotificationPhone"} else {""}
+            }
+        }
+        catch {
+            $controlResult.AddMessage([VerificationResult]::Error, [MessageData]::new("Error reading Security Compliance Notification settings. Perhaps your AAD SKU does not support them."));
+        }
+
+        if ($result -eq $false)
+        {
+            $controlResult.AddMessage([VerificationResult]::Failed,
+                                    [MessageData]::new("Security compliance notification are not correctly set for the tenant."));
+            $controlResult.AddMessage("The following are missing: $missing")
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,
+                                        [MessageData]::new("Security compliance notification phone/email are both set as expected."));
+        }
+        return $controlResult;
+    }
+
     hidden [ControlResult] CheckGuestsHaveLimitedAccess([ControlResult] $controlResult)
 	{
         $b2b = $this.B2BSettings

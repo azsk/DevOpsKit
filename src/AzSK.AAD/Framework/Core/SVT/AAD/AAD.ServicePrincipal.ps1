@@ -55,4 +55,67 @@ class ServicePrincipal: SVTBase
         }
         return $controlResult;
     }
+
+    hidden [ControlResult] CheckCertNearingExpiry([ControlResult] $controlResult)
+    {
+        $spn = $this.GetResourceObject()
+
+        $spk = [array] $spn.KeyCredentials
+        if ($spk -eq $null -or $spk.Count -eq 0)
+        {
+            #No key creds, pass the control.
+            $controlResult.AddMessage([VerificationResult]::Passed,
+                                [MessageData]::new("SPN [$($spn.DisplayName)] does not have a key credential configured. Passing control by default."));
+
+        }
+        else 
+        {
+            $renew = @()
+            $expireDays = 30
+            $expiringSoon = ([DateTime]::Today).AddDays($expireDays)  #TODO: 30 days should be moved to config.
+            $needToRenew = $false
+            $spk | % {
+                $k = $_
+                if ($k.EndDate -le $expiringSoon)
+                {
+                    $renew += $k.KeyId
+                    $needToRenew = $true
+                }
+            }
+
+            if ($needToRenew -eq $true) #found some key close to expiry
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed,
+                                    [MessageData]::new("One or more keys of SPN [$($spn.DisplayName)] have expired or are nearing expiry (<$expireDays days)."));
+
+                $renewList = $renew -join ", "
+                $controlResult.AddMessage([MessageData]::new("KeyIds nearing expiry:`n`t$renewList"));
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed,
+                                            [MessageData]::new("None of the configured keys for SPN [$($spn.DisplayName)] are nearing expiry (<$expireDays days)."));
+            }
+        }
+        return $controlResult;
+    }
+
+    <#
+        hidden [ControlResult] TBD([ControlResult] $controlResult)
+        {
+            $spn = $this.GetResourceObject()
+
+            if ($spn.xyz)
+            {
+                    $controlResult.AddMessage([VerificationResult]::Failed,
+                                            [MessageData]::new("Todo. Please review: $($this.SPNName)"));
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed,
+                                            [MessageData]::new("Todo. PassMsg."));
+            }
+            return $controlResult;
+        }
+    #>
 }

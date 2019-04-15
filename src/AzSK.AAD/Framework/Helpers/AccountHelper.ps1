@@ -290,7 +290,7 @@ class AccountHelper {
             }
 
             [AccountHelper]::AADAPIAccessToken = $apiToken
-            Write-Host("Successfully acquired API access token for $AADAPIGuid")
+            #TODO move to detailed log: Write-Host("Successfully acquired API access token for $AADAPIGuid")
 		}
         return [AccountHelper]::AADAPIAccessToken
     }

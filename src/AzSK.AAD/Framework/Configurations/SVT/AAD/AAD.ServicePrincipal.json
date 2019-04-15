@@ -36,6 +36,23 @@
           "AuthN"
         ],
         "Enabled": true
+      },
+      {
+        "ControlID": "AAD_ServicePrincipal_Check_Key_Expiry",
+        "Description": "SPN key credentials should be renewed before expiry",
+        "Id": "SPN130",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckCertNearingExpiry",
+        "Rationale": "TODO-SPN-key-expiry.",
+        "Recommendation": "Refer: TODO",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthN"
+        ],
+        "Enabled": true
       }
 ]
 }
