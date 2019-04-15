@@ -12,10 +12,10 @@
     RootModule             = '.\AzSK.AAD.psm1'
 
     # Version number of this module.
-    ModuleVersion          = '0.9.4'
+    ModuleVersion          = '0.8.1'
 
     # ID used to uniquely identify this module
-    GUID                   = '02499e92-5b56-4156-9606-383a7ba720f9'
+    GUID                   = 'b9bba5c3-9036-4163-b0b0-6d4e83519b0a'
 
     # Author of this module
     Author                 = 'AzSK Team'
@@ -24,10 +24,10 @@
     CompanyName            = 'Microsoft Corporation'
 
     # Copyright statement for this module
-    Copyright              = '(c) 2017 Microsoft Corporation. All rights reserved.'
+    Copyright              = '(c) 2019 Microsoft Corporation. All rights reserved.'
 
     # Description of the functionality provided by this module
-    Description            = 'DevSecOps Kit for AzureDevOps(AzSK) - Preview'
+    Description            = 'Security Checks for Azure Active Directory (Preview)'
 
     # Minimum version of the Windows PowerShell engine required by this module
     PowerShellVersion      = '5.0'
@@ -103,7 +103,7 @@
 
             # ReleaseNotes of this module
             ReleaseNotes = '
-		* Azure Active Directory (AAD) security controls for
+		    * Azure Active Directory (AAD) security controls for
             * Users
             * Apps & SPNs
             * Various tenant wide settings
