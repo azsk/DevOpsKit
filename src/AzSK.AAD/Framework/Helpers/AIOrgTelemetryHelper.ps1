@@ -441,6 +441,8 @@ class AIOrgTelemetryHelper {
 
 	
 static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryEvents,[string] $type) {
+    #TODO: Revisit AI telemetry post-preview
+    <#
     try {
 
         $eventlist = [System.Collections.ArrayList]::new()
@@ -486,19 +488,20 @@ static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryE
 
         $eventJson = ConvertTo-Json $eventlist -Depth 100 -Compress
 
-        Write-Warning("TODO: AI Org Telemetry IWR turned OFF.")
-<#
+        #Write-Warning("TODO: AI Org Telemetry IWR turned OFF.")
+
         Invoke-WebRequest -Uri "https://dc.services.visualstudio.com/v2/track" `
             -Method Post `
             -ContentType "application/x-json-stream" `
             -Body $eventJson `
             -UseBasicParsing | Out-Null
-  #>
+
         }
     catch {
 		# Left blank intentionally
 		# Error while sending CA events to telemetry. No need to break the execution.
     }
+      #>
 }
 
 }
