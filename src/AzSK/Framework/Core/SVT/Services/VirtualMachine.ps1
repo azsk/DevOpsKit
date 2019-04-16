@@ -357,7 +357,7 @@ class VirtualMachine: SVTBase
 			$requiredVulnExtension = $this.VMControlSettings.VulnAssessmentSolution.AgentName
 			$requiredVulnExtensionVersion =  [System.Version] $this.VMControlSettings.VulnAssessmentSolution.RequiredVersion
 			if([Helpers]::CheckMember($this.ResourceObject, "Extensions")){
-				$installedVulnExtension = $this.ResourceObject.Extensions | Where-Object {$_.Name -eq $requiredVulnExtension} 
+				$installedVulnExtension = $this.ResourceObject.Extensions | Where-Object {$_.VirtualMachineExtensionType -eq $requiredVulnExtension} 
 				if($null -ne $installedVulnExtension -and $installedVulnExtension.ProvisioningState -eq "Succeeded"){
 					$currentVulnExtensionVersion = $null
 					try {
@@ -402,6 +402,94 @@ class VirtualMachine: SVTBase
 		}
 		return $controlResult;
 	}
+
+	hidden [ControlResult] CheckGuestConfigExtension([ControlResult] $controlResult)
+	{
+		if(-not $this.VMDetails.IsVMDeallocated)
+		{
+			$guestConfigurationAssignmentName = $this.VMControlSettings.GuestExtension.AssignmentName
+			$controlStatus = [VerificationResult]::Manual
+            $requiredGuestExtension  = $this.VMControlSettings.GuestExtension.Name
+			$requiredGuestExtensionVersion =  [System.Version] $this.VMControlSettings.GuestExtension.RequiredVersion
+			
+			
+            $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
+			$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+			$header = "Bearer " + $AccessToken
+			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
+			$propertiesToReplace = @{}
+			$propertiesToReplace.Add("httpapplicationroutingzonename", "_httpapplicationroutingzonename")
+
+			# Check if Guest Configuration extension is present
+			if([Helpers]::CheckMember($this.ResourceObject, "Extensions")){
+				$installedGuestExtension = $this.ResourceObject.Extensions | Where-Object {$_.VirtualMachineExtensionType -eq $requiredGuestExtension -and $_.Publisher -eq "Microsoft.GuestConfiguration"} 
+				if($null -ne $installedGuestExtension -and $installedGuestExtension.ProvisioningState -eq "Succeeded"){
+					$currentGuestExtensionVersion = $null
+					try {
+						$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/extensions/{4}?api-version=2018-06-01&`$expand=instanceView",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName,$requiredGuestExtension)
+						$result = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
+						$currentGuestExtensionVersion = [System.Version] $result.properties.instanceView.typeHandlerVersion
+					}
+					catch {
+						# If any exception occurs, while fetching details of Extension mark control as manual
+						$currentGuestExtensionVersion = $null
+					}
+					if($null -eq $currentGuestExtensionVersion )
+					{
+						$controlResult.AddMessage("Not able to fetch details of guest configuration extension '$($requiredGuestExtension)'.");
+					}
+					elseif($currentGuestExtensionVersion -lt $requiredGuestExtensionVersion){
+                        $controlStatus = [VerificationResult]::Failed
+						$controlResult.AddMessage("Guest configuration extension '$($requiredGuestExtensionVersion)' is present but current verison is not latest.");
+						$controlResult.AddMessage("Current version : $($currentGuestExtensionVersion), Required version: $($requiredGuestExtensionVersion)");
+						$controlResult.SetStateData("Current version of $($requiredGuestExtensionVersion) present is:", $currentGuestExtensionVersion.ToString());
+					
+					}else{
+			            $controlStatus = [VerificationResult]::Passed
+						$controlResult.AddMessage("Required guest configuration extension '$($requiredGuestExtension)' is present in VM.");
+					}
+				}else{
+					$controlStatus = [VerificationResult]::Failed
+					$controlResult.AddMessage("Required guest configuration extension '$($requiredGuestExtension)' is not present in VM.");
+				}
+			}else{
+				$controlStatus = [VerificationResult]::Failed
+				$controlResult.AddMessage("Required guest configuration extension '$($requiredGuestExtension)' is not present in VM.");
+			}
+
+            # Check if reuired Guest Configuration Assignments is present
+            try{
+				$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/providers/Microsoft.GuestConfiguration/guestConfigurationAssignments/{4}?api-version=2018-06-30-preview",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName,$guestConfigurationAssignmentName)
+				$result = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
+				if($null -ne $result)
+				{	
+					$controlResult.AddMessage("Required guest configuration assignments '$($guestConfigurationAssignmentName)' is present.");
+					$controlResult.AddMessage($result);
+				
+				}
+			}catch{
+				$controlStatus = [VerificationResult]::Failed
+				$controlResult.AddMessage("Required guest configuration assignments '$($guestConfigurationAssignmentName)' is not present.");	
+			}
+
+			# Check if Managed System Identity is enabled on VM
+
+			if([Helpers]::CheckMember($this.ResourceObject, "Identity") -and $this.ResourceObject.Identity.Type -eq "SystemAssigned"){
+				$controlResult.AddMessage("SystemAssigned managed identity is enabled on VM.");
+			}else{
+				$controlStatus = [VerificationResult]::Failed
+				$controlResult.AddMessage("The VM does not have a SystemAssigned managed identity");
+			}
+		}
+		else
+		{
+			$controlStatus = [VerificationResult]::Verify
+			$controlResult.AddMessage("This VM is currently in a 'deallocated' state. Unable to check security controls on it.");
+		}
+		$controlResult.VerificationResult = $controlStatus
+		return $controlResult;
+	}
+
 
 	hidden [ControlResult] CheckNSGConfig([ControlResult] $controlResult)
 	{
@@ -524,39 +612,33 @@ class VirtualMachine: SVTBase
 
 	hidden [ControlResult] CheckDiskEncryption([ControlResult] $controlResult)
 	{	
-		if(-not $this.VMDetails.IsVMDeallocated)
-		{
-			$ascDiskEncryptionStatus = $false;
+	    #Do not check for deallocated status for the VM and directly show the status from ASC
+		$ascDiskEncryptionStatus = $false;
 
-			if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
+		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
+		{
+			$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryption};
+			if($null -ne $adeSetting)
 			{
-				$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryption};
-				if($null -ne $adeSetting)
+				if($adeSetting.assessmentResult -eq 'Healthy')
 				{
-					if($adeSetting.assessmentResult -eq 'Healthy')
-					{
-						$ascDiskEncryptionStatus = $true;
-					}
+					$ascDiskEncryptionStatus = $true;
 				}
-				$controlResult.AddMessage("VM disk encryption details:", $adeSetting);
-			}				
+			}
+			$controlResult.AddMessage("VM disk encryption details:", $adeSetting);
+		}				
 				
-			if($ascDiskEncryptionStatus)
-			{
-				$verificationResult  = [VerificationResult]::Passed;
-				$message = "All Virtual Machine disks (OS and Data disks) are encrypted. Validated the status through ASC.";
-				$controlResult.AddMessage($verificationResult, $message);
-			}
-			else
-			{            
-				$verificationResult  = [VerificationResult]::Failed;
-				$message = "All Virtual Machine disks (OS and Data disks) are not encrypted. Validated the status through ASC.";
-				$controlResult.AddMessage($verificationResult, $message);
-			}
+		if($ascDiskEncryptionStatus)
+		{
+			$verificationResult  = [VerificationResult]::Passed;
+			$message = "All Virtual Machine disks (OS and Data disks) are encrypted. Validated the status through ASC.";
+			$controlResult.AddMessage($verificationResult, $message);
 		}
 		else
-		{
-			$controlResult.AddMessage([VerificationResult]::Verify, "This VM is currently in a 'deallocated' state. Unable to check security controls on it.");
+		{            
+			$verificationResult  = [VerificationResult]::Failed;
+			$message = "All Virtual Machine disks (OS and Data disks) are not encrypted. Validated the status through ASC.";
+			$controlResult.AddMessage($verificationResult, $message);
 		}
 		return $controlResult;
 	}
@@ -806,14 +888,14 @@ class VirtualMachine: SVTBase
 					{
 						$isManual = $true
 						$statusCode = ($_.Exception).InnerException.Response.StatusCode;
-						if($statusCode -eq [System.Net.HttpStatusCode]::BadRequest -or $statusCode -eq [System.Net.HttpStatusCode]::Forbidden)
+						if($statusCode -eq [System.Net.HttpStatusCode]::BadRequest -or $statusCode -eq [System.Net.HttpStatusCode]::Forbidden -or $statusCode -eq [System.Net.HttpStatusCode]::Conflict)
 						{							
 							$controlResult.AddMessage(($_.Exception).InnerException.Message);	
 						}
-						else
-						{
-							throw $_
-						}
+						# else
+						# {
+						# 	throw $_
+						# }
 					}
 				if($effectiveNSG)
 					{

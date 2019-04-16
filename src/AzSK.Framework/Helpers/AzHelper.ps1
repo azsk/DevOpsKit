@@ -28,7 +28,7 @@ static [void] UploadStorageBlobContent([string] $fileName, [string] $blobName, [
 	{
         if([FeatureFlightingManager]::GetFeatureStatus("IsSetAzStorageBlobAvailable","*") -eq $true)
         {
-            $result = Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Destination $fileName -Context $stgCtx -Force | Out-Null
+            $result = Get-AzStorageBlobContent -Blob $blobName -Container $containerName -Destination $fileName -Context $stgCtx -Force 
         }
         else {
             $blob = Get-AzStorageBlob -Container $containerName -Blob $blobName -Context $stgCtx

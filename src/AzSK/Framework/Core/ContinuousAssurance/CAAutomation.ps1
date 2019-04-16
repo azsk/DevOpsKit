@@ -1327,7 +1327,7 @@ class CCAutomation: CommandBase
 		-Name $this.certificateAssetName `
 		-ResourceGroupName $this.AutomationAccount.ResourceGroup -ErrorAction SilentlyContinue
 		$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-		$azskCurrentCARunbookVersion = ""
+		$azskCurrentCARunbookVersion = ""       
 		$azskRG = Get-AzResourceGroup $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue
 		if($null -ne $azskRG)
 		{
@@ -1362,20 +1362,34 @@ class CCAutomation: CommandBase
 		$caSummaryTable.Item("Runbooks") = $runbook.Name -join ","
 		#get schedules
 		$scheduleList = @()
-		$activeSchedules|ForEach-Object{
-			$scheduleList += ($_.Name +" (Frequency: "+$_.Interval+" "+$_.Frequency+")")
-		} 
-		$caSummaryTable.Item("Schedules") = $scheduleList -join ","
+        if(($activeSchedules | Measure-Object).Count -gt 0)
+        {
+		    $activeSchedules|ForEach-Object{
+		    	$scheduleList += ($_.Name +" (Frequency: "+$_.Interval+" "+$_.Frequency+")")
+		    }
+            $caSummaryTable.Item("Schedules") = $scheduleList -join ","
+        }
 
-		$caSummaryTable.Item("AzureADAppID") = $runAsConnection.FieldDefinitionValues["ApplicationId"]
-		#find AD App name
-		$ADapp = Get-AzADApplication -ApplicationId $runAsConnection.FieldDefinitionValues.ApplicationId -ErrorAction SilentlyContinue		
-		if($ADApp)
-		{
-			$caSummaryTable.Item("AzureADAppName") = $ADapp.DisplayName
-		}
-		$caSummaryTable.Item("CertificateExpiry") = $runAsCertificate.ExpiryTime
-		$caSummaryTable.Item("AzSKReportsStorageAccountName") = $reportsStorageAccount.Name
+        if($runAsConnection)
+        {
+            $caSummaryTable.Item("AzureADAppID") = $runAsConnection.FieldDefinitionValues["ApplicationId"]
+		    
+            #find AD App name
+		    $ADapp = Get-AzADApplication -ApplicationId $runAsConnection.FieldDefinitionValues.ApplicationId -ErrorAction SilentlyContinue		
+		    if($ADApp)
+		    {
+		    	$caSummaryTable.Item("AzureADAppName") = $ADapp.DisplayName
+		    }
+        }
+        if($runAsCertificate)
+        {
+		    $caSummaryTable.Item("CertificateExpiry") = $runAsCertificate.ExpiryTime
+        }
+
+        if($reportsStorageAccount)
+        {
+		    $caSummaryTable.Item("AzSKReportsStorageAccountName") = $reportsStorageAccount.Name
+        }
 		$caSummaryTable.Item("RunbookVersion") = "Current version: [$azskCurrentCARunbookVersion] Latest version: [$azskLatestCARunbookVersion]"
 		
 		$caSummaryTable = $caSummaryTable.GetEnumerator() |Sort-Object -Property Name|Format-Table -AutoSize -Wrap |Out-String		
@@ -1417,7 +1431,7 @@ class CCAutomation: CommandBase
 		else
 		{
 			$resultMsg = "CA Runbook is too old.`r`nRun command 'Update-AzSKContinuousAssurance -SubscriptionId <subId>'."
-			$resultStatus = "OK"
+			$resultStatus = "Failed"
 			$shouldReturn = $true
 		}	
 		if($shouldReturn)
