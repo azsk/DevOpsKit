@@ -78,7 +78,7 @@ class Tenant: SVTBase
 
         if ($b2b -eq $null)
         {
-            $controlResult.AddMessage([VerificationResult]::Error,
+            $controlResult.AddMessage([VerificationResult]::Manual,
                 [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
         }
         elseif($b2b.restrictDirectoryAccess -ne $true) #Guests permissions are limited?
@@ -99,7 +99,7 @@ class Tenant: SVTBase
         $b2b = $this.B2BSettings
         if ($b2b -eq $null)
         {
-            $controlResult.AddMessage([VerificationResult]::Error,
+            $controlResult.AddMessage([VerificationResult]::Manual,
                 [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
         }
         elseif($b2b.limitedAccessCanAddExternalUsers -eq $true) #Guests can invite?
@@ -120,7 +120,7 @@ class Tenant: SVTBase
         $adminSettings = $this.AdminMFASettings
         if ($adminSettings -eq $null)
         {
-            $controlResult.AddMessage([VerificationResult]::Error,
+            $controlResult.AddMessage([VerificationResult]::Manual,
                 [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
         }
         elseif($adminSettings.enable -eq $false -or $adminSettings.state -eq  0)
@@ -141,7 +141,7 @@ class Tenant: SVTBase
         $aadPerms = $this.AADPermissions
         if ($aadPerms -eq $null)
         {
-            $controlResult.AddMessage([VerificationResult]::Error,
+            $controlResult.AddMessage([VerificationResult]::Manual,
                 [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
         }
         elseif ($aadPerms.allowedActions.application.Contains('create')) #has to match case
@@ -163,7 +163,7 @@ class Tenant: SVTBase
 
         if ($aadPerms -eq $null)
         {
-            $controlResult.AddMessage([VerificationResult]::Error,
+            $controlResult.AddMessage([VerificationResult]::Manual,
                 [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
         }
         elseif($aadPerms.allowedActions.user.Contains('inviteguest')) #has to match case
@@ -184,7 +184,7 @@ class Tenant: SVTBase
         $sspr = $this.CASettings
         if ($sspr -eq $null)
         {
-            $controlResult.AddMessage([VerificationResult]::Error,
+            $controlResult.AddMessage([VerificationResult]::Manual,
                 [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
         }
         elseif ($sspr.numberOfQuestionsToReset -lt 3)
@@ -205,7 +205,7 @@ class Tenant: SVTBase
         $sspr = $this.CASettings
         if ($sspr -eq $null)
         {
-            $controlResult.AddMessage([VerificationResult]::Error,
+            $controlResult.AddMessage([VerificationResult]::Manual,
                 [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
         }
         elseif($sspr.notifyUsersOnPasswordReset -ne $true)
@@ -226,7 +226,7 @@ class Tenant: SVTBase
         $sspr = $this.CASettings
         if ($sspr -eq $null)
         {
-            $controlResult.AddMessage([VerificationResult]::Error,
+            $controlResult.AddMessage([VerificationResult]::Manual,
                 [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
         }
         elseif($sspr.notifyOnAdminPasswordReset -ne $true)

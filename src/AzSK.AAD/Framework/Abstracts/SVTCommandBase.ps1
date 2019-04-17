@@ -198,7 +198,7 @@ class SVTCommandBase: CommandBase {
 		#Disable AzureRM telemetry setting until scan is completed.
 		#This has been added to improve the performarnce of scan commands
         #Telemetry will be re-enabled once scan is completed
-        Write-Warning("Disabling AzureRm/Az telemetry - investigate why needed?")		
+       # BUGBUG  Write-Warning("Disabling AzureRm/Az telemetry - investigate why needed?")		
 		$dataCollectionPath = "$env:APPDATA\Windows Azure Powershell\AzurePSDataCollectionProfile.json"
 		if(Test-Path -Path $dataCollectionPath)
 		{

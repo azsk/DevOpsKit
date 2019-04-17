@@ -137,8 +137,15 @@ class AccountHelper {
 
     hidden static [PSObject] GetCurrentAADContext($desiredTenantId) #Can be $null if user did not pass one.
     {
-        if(-not [AccountHelper]::currentAADContext)
+        $currAADCtx = [AccountHelper]::currentAADContext
+
+        # If we don't have a context *or* the context does not match a non-null desired tenant
+        if(-not $currAADCtx -or (-not [String]::IsNullOrEmpty($desiredTenantId) -and $desiredTenantId -ne $currAADCtx.TenantID))
         {
+            #Clear both AAD/Az Contexts as they may not be useful (some other tenant) if we are here.
+            [AccountHelper]::currentAADContext = $null
+            [AccountHelper]::currentAzContext = $null
+
             $aadContext = $null
             $aadUserObj = $null
             #Try leveraging Azure context if available
@@ -170,7 +177,7 @@ class AccountHelper {
             [AccountHelper]::ScanType = [CommandType]::AAD
             [AccountHelper]::currentAADContext = $aadContext
             [AccountHelper]::currentAADUserObject = $aadUserObj
-            [AccountHelper]::tenantInfoMsg = "Current AAD Domain: $($aadContext.TenantDomain)`nTenanId: $($aadContext.TenantId)"
+            [AccountHelper]::tenantInfoMsg = "AAD Tenant Info: `n`tDomain: $($aadContext.TenantDomain)`n`tTenanId: $($aadContext.TenantId)"
         }
 
         return [AccountHelper]::currentAADContext

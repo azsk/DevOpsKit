@@ -59,7 +59,7 @@
     },
     {
       "ControlID": "AAD_Application_Check_Orphan_App",
-      "Description": "Do not permit apps with no owners in the tenant.",
+      "Description": "Do not permit orphaned apps (i.e., apps with no owners) in the tenant.",
       "Id": "App140",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
@@ -77,7 +77,7 @@
     },
     {
       "ControlID": "AAD_Application_Check_FTE_Owner",
-      "Description": "Apps must have at least one FTE owner.",
+      "Description": "At least one of the owners of an app must be an FTE.",
       "Id": "App150",
       "ControlSeverity": "Medium",
       "Automated": "Yes",

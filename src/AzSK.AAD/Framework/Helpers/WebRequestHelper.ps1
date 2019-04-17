@@ -356,7 +356,7 @@ Content-Type: multipart/mixed; boundary={1}
         catch {
 			#TODO: (1) Correct exception treatment? (2) Seems to lose evaluated tenant controls altogether (3) Write-Host from catch does not show on console? (4) $msg = "xyz"??
 			#TODO: how to write exception details just to detailed log? 
-			Write-Host -ForegroundColor Yellow "Error calling AAD API endpoint: $apiMethod.`nYou may not have sufficient permission to evaluate all controls.`nStatus for controls that could not be evaluated will show as 'Error' in the report."
+			Write-Host -ForegroundColor Yellow "Error calling AAD API endpoint: $apiMethod.`nYou may not have sufficient permission to evaluate all controls.`nStatus for controls that could not be evaluated will show as 'Manual' in the report."
 			#TODO: Absorbing exception and returning $response = $null below.
         }
         return $response
