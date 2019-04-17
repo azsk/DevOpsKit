@@ -6,6 +6,8 @@ class Tenant: SVTBase
     hidden [PSObject] $CASettings;
     hidden [PSObject] $AdminMFASettings;
     hidden [PSObject] $B2BSettings;
+    static [int] $RecommendedMaxDevicePerUserLimit = 20; #TODO: ControlSettings
+    hidden [PSObject] $DeviceSettings;
 
     Tenant([string] $tenantId, [SVTResource] $svtResource): Base($tenantId, $svtResource) 
     {
@@ -32,6 +34,11 @@ class Tenant: SVTBase
         if ($this.B2BSettings -eq $null)
         {
             $this.B2BSettings = [WebRequestHelper]::InvokeAADAPI("/api/Directories/B2BDirectoryProperties")
+        }
+
+        if ($this.DeviceSettings -eq $null)
+        {
+            $this.DeviceSettings = [WebRequestHelper]::InvokeAADAPI("/api/DeviceSetting")
         }
     }
 
@@ -238,6 +245,56 @@ class Tenant: SVTBase
         {
             $controlResult.AddMessage([VerificationResult]::Passed,
                                         [MessageData]::new("Notification to all admins is configured for admin password resets."));
+        }
+        return $controlResult;
+    }
+
+    hidden [ControlResult] CheckRequireMFAForJoin([ControlResult] $controlResult)
+    {
+        $ds = $this.DeviceSettings
+
+        if ($ds -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Manual,
+                            [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));           
+        }
+        else
+        {
+            if (-not $ds.requireMfaSetting)
+            {
+                    $controlResult.AddMessage([VerificationResult]::Failed,
+                                            [MessageData]::new("Please enable MFA as a requirement for joining devices to the tenant."));
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed,
+                                            [MessageData]::new("MFA is enabled as a requirement for joining new devices to the tenant."));
+            }
+        }
+        return $controlResult;
+    }
+
+    hidden [ControlResult] CheckMaxDeviceLimitSet([ControlResult] $controlResult)
+    {
+        $ds = $this.DeviceSettings
+
+        if ($ds -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Manual,
+                                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));           
+        }
+        else
+        {
+            if ($ds.maxDeviceNumberPerUserSetting -gt [Tenant]::RecommendedMaxDevicePerUserLimit)
+            {
+                    $controlResult.AddMessage([VerificationResult]::Failed,
+                                            [MessageData]::new("Max device per user limit is not set or too high. Recommended: ["+ [Tenant]::RecommendedMaxDevicePerUserLimit + "]."));
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed,
+                                            [MessageData]::new("Max device per user limit is set at [$($ds.maxDeviceNumberPerUserSetting)]."));
+            }
         }
         return $controlResult;
     }

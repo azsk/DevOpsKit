@@ -1,0 +1,23 @@
+{
+    "FeatureName":  "Device",
+    "Reference":  "aka.ms/azsktcp/device",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+      "ControlID": "AAD_Device_Review_Stale_Devices",
+      "Description": "Review and remove stale devices from the directory",
+      "Id": "Device110",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckStaleDevices",
+      "Rationale": "TODO-check-stale-devices.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual"
+      ],
+      "Enabled": true
+    }
+    ]
+}

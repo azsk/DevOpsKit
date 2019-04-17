@@ -155,6 +155,42 @@
               "RBAC"
             ],
             "Enabled": true
+          },
+          {
+            "ControlID": "AAD_Tenant_Device_Require_MFA_For_Join",
+            "Description": "Enable 'require MFA' for joining devices to tenant.",
+            "Id": "Tenant190",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckRequireMFAForJoin",
+            "Rationale": "TODO-require-MFA-join.",
+            "Recommendation": "Refer: TODO",
+            "Tags": [
+              "SDL",
+              "TCP",
+              "Manual",
+              "AuthZ",
+              "RBAC"
+            ],
+            "Enabled": true
+          },
+          {
+            "ControlID": "AAD_Tenant_Device_Set_Max_Per_User_Limit",
+            "Description": "Set a max device limit for users in the tenant.",
+            "Id": "Tenant200",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckMaxDeviceLimitSet",
+            "Rationale": "TODO-max-device-limit",
+            "Recommendation": "Refer: TODO",
+            "Tags": [
+              "SDL",
+              "TCP",
+              "Manual",
+              "AuthZ",
+              "RBAC"
+            ],
+            "Enabled": true
           }
     ]
     }

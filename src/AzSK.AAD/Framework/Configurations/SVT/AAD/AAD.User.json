@@ -1,16 +1,33 @@
 {
-    "FeatureName":  "User",
-    "Reference":  "aka.ms/azsktcp/user",
-    "IsMaintenanceMode":  false,
+  "FeatureName":  "User",
+  "Reference":  "aka.ms/azsktcp/user",
+  "IsMaintenanceMode":  false,
   "Controls": [
     {
-      "ControlID": "AAD_User_Set_Emergency_Contacts",
-      "Description": "Users must set emergency contacts in AAD.",
+      "ControlID": "AAD_User_Do_Not_Disable_Password_Expiration",
+      "Description": "Do not disable password expiration policy for users.",
       "Id": "User110",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckEmergencyContacts",
-      "Rationale": "TODO.",
+      "MethodName": "CheckPasswordExpiration",
+      "Rationale": "TODO-password-expire.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthN"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_User_Do_Not_Disable_Strong_Password",
+      "Description": "Do not disable strong password policy for users.",
+      "Id": "User120",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckStrongPassword",
+      "Rationale": "TODO-strong-password.",
       "Recommendation": "Refer: TODO",
       "Tags": [
         "SDL",
