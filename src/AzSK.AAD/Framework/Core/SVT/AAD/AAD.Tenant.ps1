@@ -275,6 +275,7 @@ class Tenant: SVTBase
 	{
         #TODO: Move this to common/.ctor similar to API calls.
         #TODO: Expand this to other privileged roles (Security Admin, etc. - see AccountHelper)
+        #TODO: This and other RBAC checks should cover PIM-eligible members.
         $ca = Get-AzureAdDirectoryRole -Filter "DisplayName eq 'Company Administrator'"
         $rm = @()
 
