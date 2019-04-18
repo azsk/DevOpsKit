@@ -64,7 +64,7 @@ class AADResourceResolver: Resolver
             $this.SVTResources +=$svtResource
         }
 
-        $currUser = [AccountHelper]::GetCurrentSessionUser();
+        $currUser = [AccountHelper]::GetCurrentSessionUserObjectId();
 
         $userOwnedObjects = @()
 

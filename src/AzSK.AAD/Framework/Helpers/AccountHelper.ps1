@@ -120,6 +120,8 @@ class AccountHelper {
             #If there's no Az ctx, or it is indeterminate (user has no Azure subscription) or the tenantId in the azCtx does not match desired tenantId
             if ($azContext -eq $null -or $azContext.Tenant -eq $null -or (-not [string]::IsNullOrEmpty($desiredTenantId) -and $azContext.Tenant.Id -ne $desiredTenantId))
             {
+                #TODO: Consider simplifying this...use AzCtx only if no tenantId or tenantId matches...for all else just do fresh ConnectAzureAD??
+                #Better than clearing up existing AzCtx a user may want to keep using otherwise.
                 if ($azContext) #If we have a context for another tenant, disconnect.
                 {
                     Disconnect-AzAccount -ErrorAction Stop
@@ -167,9 +169,32 @@ class AccountHelper {
 
                 $accountId = $azContext.Account.Id
 
-                if ($azContext.Tenant -ne $null)
+                $tenantId = $null
+                $crossTenant = $false
+                if (-not [string]::IsNullOrEmpty($desiredTenantId))
                 {
-                    $tenantId = $azContext.Tenant.Id
+                    $tenantId = $desiredTenantId
+                }
+                
+                if ($azContext.Tenant -ne $null) #Can be $null when a user has no Azure subscriptions.
+                {
+                    $nativeTenantId = $azContext.Tenant.Id
+                    if ($tenantId -eq $null) #No desired tenant passed in
+                    {
+                        $tenantId = $nativeTenantId
+                    }
+                    else
+                    {
+                        #Check if desiredTenant and native tenant are diff => this user is guest in the desired tenant
+                        if ($nativeTenantId -ne $desiredTenantId)
+                        {
+                            $crossTenant = $true
+                        }
+                    }
+                }
+
+                if (-not [string]::IsNullOrEmpty($tenantId))
+                {
                     $aadContext = Connect-AzureAD -TenantId $tenantId -AccountId $accountId -ErrorAction Stop
                 }
                 else 
@@ -179,7 +204,18 @@ class AccountHelper {
                 }
 
                 $upn = $aadContext.Account.Id
-                $aadUserObj = Get-AzureADUser -Filter "UserPrincipalName eq '$upn'"
+                if (-not $crossTenant) 
+                {
+                    #in this case UPN is same as signin name use
+                    $aadUserObj = Get-AzureADUser -Filter "UserPrincipalName eq '$upn'"
+                }
+                else 
+                {
+                    #Cross-tenant, UPN is the mangled version e.g., joe_contoso.com#desiredtenant.com
+                    $upnx = (($upn -replace '@', '_')+'#')
+                    $filter = "startswith(UserPrincipalName,'" + $upnx + "')"
+                    $aadUserObj = Get-AzureAdUser -Filter $filter
+                }
             }
             catch {
                 Write-Warning("Could not get Az/AzureAD context.")
@@ -209,6 +245,11 @@ class AccountHelper {
         else {
             return "NO_ACTIVE_SESSION"
         }
+    }
+
+    static [string] GetCurrentSessionUserObjectId() 
+    {
+        return ([AccountHelper]::GetCurrentAADUserObject()).ObjectId;
     }
 
     hidden static [PSObject] GetCurrentAADUserObject()
