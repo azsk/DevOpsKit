@@ -6,6 +6,10 @@ class Tenant: SVTBase
     hidden [PSObject] $CASettings;
     hidden [PSObject] $AdminMFASettings;
     hidden [PSObject] $B2BSettings;
+    hidden [PSObject] $MFASettings;
+    hidden [PSObject] $SSPRSettings;
+    hidden [PSObject] $EnterpriseAppSettings;
+    hidden [PSObject] $MFABypassList;
     static [int] $RecommendedMaxDevicePerUserLimit = 20; #TODO: ControlSettings
     hidden [PSObject] $DeviceSettings;
 
@@ -31,6 +35,11 @@ class Tenant: SVTBase
             $this.AdminMFASettings = [WebRequestHelper]::InvokeAADAPI("/api/BaselinePolicies/RequireMfaForAdmins")
         }
 
+        if ($this.MFASettings -eq $null)
+        {
+            $this.MFASettings = [WebRequestHelper]::InvokeAADAPI("/api/MultiFactorAuthentication/TenantModel")
+        }
+
         if ($this.B2BSettings -eq $null)
         {
             $this.B2BSettings = [WebRequestHelper]::InvokeAADAPI("/api/Directories/B2BDirectoryProperties")
@@ -39,6 +48,21 @@ class Tenant: SVTBase
         if ($this.DeviceSettings -eq $null)
         {
             $this.DeviceSettings = [WebRequestHelper]::InvokeAADAPI("/api/DeviceSetting")
+        }
+
+        if ($this.MFABypassList -eq $null)
+        {
+            $this.MFABypassList = [WebRequestHelper]::InvokeAADAPI("/api/MultifactorAuthentication/BypassedUser")
+        }
+
+        if ($this.SSPRSettings -eq $null)
+        {
+            $this.SSPRSettings = [WebRequestHelper]::InvokeAADAPI("/api/PasswordReset/PasswordResetPolicies")
+        }
+
+        if ($this.EnterpriseAppSettings -eq $null)
+        {
+            $this.EnterpriseAppSettings = [WebRequestHelper]::InvokeAADAPI("/api/EnterpriseApplications/UserSettings")
         }
     }
 
@@ -143,26 +167,176 @@ class Tenant: SVTBase
         return $controlResult;
     }
 
+
+    hidden [ControlResult] MFACheckUsersCanNotifyFraud([ControlResult] $controlResult)
+	{
+        $mfa = $this.MFASettings
+        if ($mfa -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Manual,
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
+        }
+        elseif($mfa.enableFraudAlert -eq $true) #Users can notify about fraud
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,
+                                [MessageData]::new("Users have the permission to raise fraud alerts."));
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Failed,
+                               [MessageData]::new("Users do not have the permission to raise fraud alerts."));
+
+        }
+        return $controlResult;
+    }
+
+    hidden [ControlResult] MFAReviewBypassedUsers([ControlResult] $controlResult)
+	{
+        $bp = $this.MFABypassList
+        if ($bp -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Manual,
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission")); #TODO: Empty BP list case?
+        }
+        elseif($bp.Count -eq 0) #No users on bypass list
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,
+                                [MessageData]::new("No users found on the MFA bypass list."));
+        }
+        else
+        {
+            $bpUsers = @()
+            $bp | % {$bpUsers += $_.Username}
+            $bpUsersList = $bpUsers -join ", "
+            $controlResult.AddMessage([VerificationResult]::Verify,
+                               [MessageData]::new("Found the following users on MFA bypass list. Please review.`n`t $bpUsersList" ));
+
+        }
+        return $controlResult;
+    }
+
+
     hidden [ControlResult] CheckUserPermissionsToCreateApps([ControlResult] $controlResult)
 	{
         $aadPerms = $this.AADPermissions
         if ($aadPerms -eq $null)
         {
             $controlResult.AddMessage([VerificationResult]::Manual,
-                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
+                                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
         }
         elseif ($aadPerms.allowedActions.application.Contains('create')) #has to match case
         {
             $controlResult.AddMessage([VerificationResult]::Failed,
-                                        [MessageData]::new("Regular users have privilege to create new apps."));
+                                [MessageData]::new("Regular users have privilege to create new apps."));
         }
         else
         {
             $controlResult.AddMessage([VerificationResult]::Passed,
-                                        [MessageData]::new("Regular users do not have privilege to create new apps."));
+                                [MessageData]::new("Regular users do not have privilege to create new apps."));
+        }
+        
+        return $controlResult;
+    }
+
+    hidden [ControlResult] CheckEnoughGlobalAdmins([ControlResult] $controlResult)
+	{
+
+        $ca = Get-AzureAdDirectoryRole -Filter "DisplayName eq 'Company Administrator'"
+        $rm = @()
+
+        try 
+        {
+            $rm = @(Get-AzureADDirectoryRoleMember -ObjectId $ca.ObjectId)
+        }
+        catch 
+        {
+            $rm = $null
+        }
+        
+        if ($rm -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Manual,
+                                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
+        }
+        elseif ($rm.Count -le 2) #TODO: ControlSettings!
+        {
+            $controlResult.AddMessage([VerificationResult]::Failed,
+                                [MessageData]::new("Only [$($rm.Count)] global administrator found."));
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,
+                                [MessageData]::new("Found [$($rm.Count)] global administrators."));
         }
         return $controlResult;
     }
+
+    hidden [ControlResult] CheckNoGuestsInGlobalAdminRole([ControlResult] $controlResult)
+	{
+        #TODO: Move this to common/.ctor similar to API calls.
+        #TODO: Expand this to other privileged roles (Security Admin, etc. - see AccountHelper)
+        $ca = Get-AzureAdDirectoryRole -Filter "DisplayName eq 'Company Administrator'"
+        $rm = @()
+
+        try 
+        {
+            $rm = @(Get-AzureADDirectoryRoleMember -ObjectId $ca.ObjectId)
+        }
+        catch 
+        {
+            $rm = $null
+        }
+        
+        if ($rm -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Manual,
+                                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
+        }
+        else
+        {
+            $foundGuests = $false
+            $guests = @()
+            
+            $rm | % {if ($_.ObjectType -eq 'User' -and $_.UserType -eq 'Guest') {$foundGuests = $true; $guests += "$($_.DisplayName) ($($_.ObjectId))"}}
+            $guestList = $guests -join "`n`t"
+            if ($foundGuests)
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed,
+                                    [MessageData]::new("Found the following 'Guest' users in Global Admin role: `n`t$guestList."));
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed,
+                                    [MessageData]::new("Did not find any 'Guest' member in Global Admin role."));
+            }
+        }
+        return $controlResult;
+    }
+
+    
+    hidden [ControlResult] CheckTenantDataAccessForApps([ControlResult] $controlResult)
+	{
+        $eas = $this.EnterpriseAppSettings
+
+        if ($eas -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Manual,
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission")); #TODO: Empty BP list case?
+        }
+        elseif($eas.usersCanAllowAppsToAccessData -eq $true) #Users can approve apps to access tenant data
+        {
+            $controlResult.AddMessage([VerificationResult]::Failed,
+                                [MessageData]::new("Users are permitted to approve app access to tenant data without admin consent."));
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,
+                               [MessageData]::new("Users are not permitted to approve app access to tenant data without admin consent." ));
+
+        }
+        return $controlResult;
+    }
+
 
     hidden [ControlResult] CheckUserPermissionToInviteGuests([ControlResult] $controlResult)
 	{
@@ -245,6 +419,30 @@ class Tenant: SVTBase
         {
             $controlResult.AddMessage([VerificationResult]::Passed,
                                         [MessageData]::new("Notification to all admins is configured for admin password resets."));
+        }
+        return $controlResult;
+    }
+
+    
+
+    hidden [ControlResult] SSPRMinAuthNMethodsRequired([ControlResult] $controlResult)
+	{
+        $sspr = $this.SSPRSettings
+        if ($sspr -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Manual,
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission")); #TODO: Empty BP list case?
+        }
+        elseif($sspr.numberOfAuthenticationMethodsRequired -gt 1) #At least 2 methods. TODO: ControlSettings?
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,
+                                [MessageData]::new("More than one authentication methods are required to reset password."));
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Failed,
+                               [MessageData]::new("Ensure that at least two methods are required during a self-service password reset." ));
+
         }
         return $controlResult;
     }

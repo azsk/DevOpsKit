@@ -5,7 +5,7 @@
   "Controls": [
       {
         "ControlID": "AAD_ServicePrincipal_Use_Cert_Credentials",
-        "Description": "SPNs must not use password creds - use cert creds instead.",
+        "Description": "SPNs must not use password creds - use cert creds instead",
         "Id": "SPN110",
         "ControlSeverity": "High",
         "Automated": "Yes",
@@ -22,7 +22,7 @@
       },
       {
         "ControlID": "AAD_ServicePrincipal_Review_Legacy_SPN",
-        "Description": "SPNs of type legacy should be carefully reviewed.",
+        "Description": "SPNs of type legacy should be carefully reviewed",
         "Id": "SPN120",
         "ControlSeverity": "High",
         "Automated": "Yes",

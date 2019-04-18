@@ -5,7 +5,7 @@
   "Controls": [
     {
       "ControlID": "AAD_User_Do_Not_Disable_Password_Expiration",
-      "Description": "Do not disable password expiration policy for users.",
+      "Description": "Do not disable password expiration policy for users",
       "Id": "User110",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -22,7 +22,7 @@
     },
     {
       "ControlID": "AAD_User_Do_Not_Disable_Strong_Password",
-      "Description": "Do not disable strong password policy for users.",
+      "Description": "Do not disable strong password policy for users",
       "Id": "User120",
       "ControlSeverity": "High",
       "Automated": "Yes",

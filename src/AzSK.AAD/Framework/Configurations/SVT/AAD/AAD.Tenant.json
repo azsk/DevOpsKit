@@ -4,7 +4,7 @@
     "IsMaintenanceMode":  false,
   "Controls": [
     {
-      "ControlID": "AAD_Tenant_Guests_Have_Limited_Access",
+      "ControlID": "AAD_Tenant_RBAC_Guests_Have_Limited_Access",
       "Description": "Guests must not be granted full access to the directory",
       "Id": "Tenant110",
       "ControlSeverity": "High",
@@ -21,7 +21,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AAD_Tenant_Guests_Should_Not_Invite",
+      "ControlID": "AAD_Tenant_RBAC_Guests_Should_Not_Invite",
       "Description": "Guests must not be allowed to invite other guests",
       "Id": "Tenant111",
       "ControlSeverity": "High",
@@ -38,8 +38,8 @@
       "Enabled": true
     },
     {
-        "ControlID": "AAD_Tenant_Admins_Must_Use_MFA",
-        "Description": "Admins must use baseline MFA policy.",
+        "ControlID": "AAD_Tenant_MFA_Admins_Must_Use_MFA",
+        "Description": "Admins must use baseline MFA policy",
         "Id": "Tenant120",
         "ControlSeverity": "High",
         "Automated": "Yes",
@@ -55,8 +55,8 @@
         "Enabled": true
       },
       {
-          "ControlID": "AAD_Tenant_Users_Cannot_Create_Apps",
-          "Description": "Do not permit users to create apps in tenant by default.",
+          "ControlID": "AAD_Tenant_Apps_Users_Cannot_Create_Apps",
+          "Description": "Do not permit users to create apps in tenant by default",
           "Id": "Tenant130",
           "ControlSeverity": "High",
           "Automated": "Yes",
@@ -72,125 +72,227 @@
           "Enabled": true
         },
         {
-            "ControlID": "AAD_Tenant_Users_Cannot_Invite_Guests",
-            "Description": "Do not permit users to invite guests to the tenant.",
-            "Id": "Tenant140",
-            "ControlSeverity": "High",
-            "Automated": "Yes",
-            "MethodName": "CheckUserPermissionToInviteGuests",
-            "Rationale": "TODO-Guest-Invite.",
-            "Recommendation": "Go to..TODO",
-            "Tags": [
-              "SDL",
-              "TCP",
-              "Automated",
-              "AuthZ"
-            ],
-            "Enabled": true
-          },
-          {
-            "ControlID": "AAD_Tenant_CA_Min_Questions_To_Reset",
-            "Description": "At least 3 questions should be required for password reset (TBD)",
-            "Id": "Tenant150",
-            "ControlSeverity": "Medium",
-            "Automated": "Yes",
-            "MethodName": "CheckMinQuestionsForSSPR",
-            "Rationale": "TODO-SSPR-min-ques.",
-            "Recommendation": "Go to..TODO-sspr",
-            "Tags": [
-              "SDL",
-              "TCP",
-              "Automated",
-              "AuthN"
-            ],
-            "Enabled": true
-          },   
-          {
-            "ControlID": "AAD_Tenant_CA_User_Notification_On_Password_Reset",
-            "Description": "Users must be notified upon password reset.",
-            "Id": "Tenant160",
-            "ControlSeverity": "Medium",
-            "Automated": "Yes",
-            "MethodName": "CheckUserNotificationUponSSPR",
-            "Rationale": "TODO-SSPR-user-notify.",
-            "Recommendation": "Go to..TODO-sspr",
-            "Tags": [
-              "SDL",
-              "TCP",
-              "Automated",
-              "AuthN"
-            ],
-            "Enabled": true
-          },
-          {
-            "ControlID": "AAD_Tenant_CA_Min_Questions_To_Reset",
-            "Description": "All admins must be notified upon any admin password reset.",
-            "Id": "Tenant170",
-            "ControlSeverity": "High",
-            "Automated": "Yes",
-            "MethodName": "CheckAdminNotificationUponSSPR",
-            "Rationale": "TODO-SSPR-admin-notify.",
-            "Recommendation": "Go to..TODO-sspr",
-            "Tags": [
-              "SDL",
-              "TCP",
-              "Automated",
-              "AuthN"
-            ],
-            "Enabled": true
-          },
-          {
-            "ControlID": "AAD_Tenant_Security_Contact_Info",
-            "Description": "Security compliance notification phone and email must be set",
-            "Id": "Tenant180",
-            "ControlSeverity": "Medium",
-            "Automated": "Yes",
-            "MethodName": "CheckTenantSecurityContactInfoIsSet",
-            "Rationale": "TODO-Set-Security-Contact-Info",
-            "Recommendation": "Refer: https://docs.microsoft.com/ TODO",
-            "Tags": [
-              "SDL",
-              "TCP",
-              "Automated",
-              "RBAC"
-            ],
-            "Enabled": true
-          },
-          {
-            "ControlID": "AAD_Tenant_Device_Require_MFA_For_Join",
-            "Description": "Enable 'require MFA' for joining devices to tenant.",
-            "Id": "Tenant190",
-            "ControlSeverity": "Medium",
-            "Automated": "Yes",
-            "MethodName": "CheckRequireMFAForJoin",
-            "Rationale": "TODO-require-MFA-join.",
-            "Recommendation": "Refer: TODO",
-            "Tags": [
-              "SDL",
-              "TCP",
-              "Manual",
-              "AuthZ",
-              "RBAC"
-            ],
-            "Enabled": true
-          },
-          {
-            "ControlID": "AAD_Tenant_Device_Set_Max_Per_User_Limit",
-            "Description": "Set a max device limit for users in the tenant.",
-            "Id": "Tenant200",
-            "ControlSeverity": "Medium",
-            "Automated": "Yes",
-            "MethodName": "CheckMaxDeviceLimitSet",
-            "Rationale": "TODO-max-device-limit",
-            "Recommendation": "Refer: TODO",
-            "Tags": [
-              "SDL",
-              "TCP",
-              "Manual",
-              "AuthZ",
-              "RBAC"
-            ],
-            "Enabled": true
-          }
-    ]
+          "ControlID": "AAD_Tenant_RBAC_Users_Cannot_Invite_Guests",
+          "Description": "Do not permit users to invite guests to the tenant",
+          "Id": "Tenant140",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckUserPermissionToInviteGuests",
+          "Rationale": "TODO-Guest-Invite.",
+          "Recommendation": "Go to..TODO",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthZ"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_SSPR_Min_Questions_To_Reset",
+          "Description": "At least 3 questions should be required for password reset",
+          "Id": "Tenant150",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckMinQuestionsForSSPR",
+          "Rationale": "TODO-SSPR-min-ques.",
+          "Recommendation": "Go to..TODO-sspr",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },   
+        {
+          "ControlID": "AAD_Tenant_SSPR_User_Notification_On_Password_Reset",
+          "Description": "Users must be notified upon password reset",
+          "Id": "Tenant160",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckUserNotificationUponSSPR",
+          "Rationale": "TODO-SSPR-user-notify.",
+          "Recommendation": "Go to..TODO-sspr",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_SSPR_Admin_Notify_On_Admin_Password_Reset",
+          "Description": "All admins must be notified upon any admin password reset",
+          "Id": "Tenant170",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckAdminNotificationUponSSPR",
+          "Rationale": "TODO-SSPR-admin-notify.",
+          "Recommendation": "Go to..TODO-sspr",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_Misc_Security_Contact_Info",
+          "Description": "Security compliance notification phone and email must be set",
+          "Id": "Tenant180",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckTenantSecurityContactInfoIsSet",
+          "Rationale": "TODO-Set-Security-Contact-Info",
+          "Recommendation": "Refer: https://docs.microsoft.com/ TODO",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "RBAC"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_Device_Require_MFA_For_Join",
+          "Description": "Enable 'require MFA' for joining devices to tenant",
+          "Id": "Tenant190",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckRequireMFAForJoin",
+          "Rationale": "TODO-require-MFA-join.",
+          "Recommendation": "Refer: TODO",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Manual",
+            "AuthZ",
+            "RBAC"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_Device_Set_Max_Per_User_Limit",
+          "Description": "Set a max device limit for users in the tenant",
+          "Id": "Tenant200",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckMaxDeviceLimitSet",
+          "Rationale": "TODO-max-device-limit",
+          "Recommendation": "Refer: TODO",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Manual",
+            "AuthZ",
+            "RBAC"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_MFA_Review_Bypassed_Users",
+          "Description": "Review list of current 'MFA-bypassed' users in the tenant",
+          "Id": "Tenant180",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "MFAReviewBypassedUsers",
+          "Rationale": "TODO-MFA-review-bypassed-users.",
+          "Recommendation": "Go to..TODO-mfa",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_MFA_Users_Can_Notify_Fraud",
+          "Description": "Allow users to send notifications about possible fraud",
+          "Id": "Tenant190",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "MFACheckUsersCanNotifyFraud",
+          "Rationale": "TODO-MFA-users-fraud-notify.",
+          "Recommendation": "Go to..TODO-mfa",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_SSPR_Min_AuthN_Methods",
+          "Description": "Require at least two authentication methods for password reset",
+          "Id": "Tenant200",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "SSPRMinAuthNMethodsRequired",
+          "Rationale": "TODO-SSPR-require-two-methods.",
+          "Recommendation": "Go to..TODO-sspr",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_Apps_Regulate_Data_Access_Approval",
+          "Description": "Do not allow users to approve tenant data access for external apps",
+          "Id": "Tenant210",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckTenantDataAccessForApps",
+          "Rationale": "TODO-apps-data-access.",
+          "Recommendation": "Go to..TODO-apps-da",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthZ"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_RBAC_Min_Global_Admins",
+          "Description": "Include at least three members in global admin role",
+          "Id": "Tenant220",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckEnoughGlobalAdmins",
+          "Rationale": "TODO-rbac-min-3-admins.",
+          "Recommendation": "Go to..TODO-RBAC-min-3-admins",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthZ"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_RBAC_No_Guest_Global_Admins",
+          "Description": "Guest users must not be made members of global admin role",
+          "Id": "Tenant230",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckNoGuestsInGlobalAdminRole",
+          "Rationale": "TODO-RBAC-no-guest-admins.",
+          "Recommendation": "Go to..TODO-RBAC-no-guest-admins",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        }
+      ]
     }

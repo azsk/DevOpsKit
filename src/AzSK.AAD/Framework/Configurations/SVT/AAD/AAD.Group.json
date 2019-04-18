@@ -22,27 +22,9 @@
       "Enabled": true
     },
     {
-      "ControlID": "AAD_Group_Do_Not_Nest",
-      "Description": "Do not nest AAD groups.",
-      "Id": "Group120",
-      "ControlSeverity": "Medium",
-      "Automated": "No",
-      "MethodName": "",
-      "Rationale": "TODO-group-no-nesting.",
-      "Recommendation": "Refer: TODO",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Manual",
-        "AuthZ",
-        "RBAC"
-      ],
-      "Enabled": true
-    },
-    {
       "ControlID": "AAD_Group_Must_Have_Native_Owner",
-      "Description": "Group must have at least one non-guest (native) owner.",
-      "Id": "Group130",
+      "Description": "Group must have at least one non-guest (native) owner",
+      "Id": "Group120",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckGroupHasNonGuestOwner",
