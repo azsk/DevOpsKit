@@ -95,6 +95,20 @@ class AccountHelper {
         }
         return [AccountHelper]::currentAzContext
     }
+
+    hidden static [void] ClearTenantContext()
+    {
+        [AccountHelper]::currentAADContext = $null;
+        [AccountHelper]::currentAzContext = $null;
+        [AccountHelper]::currentRMContext = $null;
+        [AccountHelper]::AADAPIAccessToken = $null;
+        [AccountHelper]::tenantInfoMsg = $null;
+
+        [AccountHelper]::currentAADUserObject = $null;
+        
+        [AccountHelper]::UserAADPrivRoles = [PrivilegedAADRoles]::None; 
+        [AccountHelper]::rolesLoaded = $false;    
+    }
     
     # Can be called with $null (when tenantId is not specified by the user)
     hidden static [PSObject] GetCurrentAzContext($desiredTenantId)
@@ -142,9 +156,7 @@ class AccountHelper {
         # If we don't have a context *or* the context does not match a non-null desired tenant
         if(-not $currAADCtx -or (-not [String]::IsNullOrEmpty($desiredTenantId) -and $desiredTenantId -ne $currAADCtx.TenantID))
         {
-            #Clear both AAD/Az Contexts as they may not be useful (some other tenant) if we are here.
-            [AccountHelper]::currentAADContext = $null
-            [AccountHelper]::currentAzContext = $null
+            [AccountHelper]::ClearTenantContext()
 
             $aadContext = $null
             $aadUserObj = $null
