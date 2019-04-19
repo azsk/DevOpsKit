@@ -48,7 +48,10 @@
     ProcessorArchitecture  = 'None'
 
     # Modules that must be imported into the global environment prior to importing this module
-    RequiredModules        = @('Az.Accounts','AzureAD')
+    RequiredModules        = @(
+            @{ModuleName = 'Az.Accounts'; RequiredVersion = '1.2.1'}
+            @{ModuleName = 'AzureAD'; RequiredVersion = '2.0.2.4'}
+        )
 
     # Assemblies that must be loaded prior to importing this module
     RequiredAssemblies = @('.\Lib\Newtonsoft.Json.dll','.\Lib\Microsoft.ApplicationInsights.dll','.\Lib\Microsoft.IdentityModel.Clients.ActiveDirectory.dll')
