@@ -10,7 +10,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckPasswordExpiration",
-      "Rationale": "TODO-password-expire.",
+      "Rationale": "Users with password expiration disabled represent a long term risk to the tenant in the event of password compromise. Ensuring that password expiration is enabled for everyone ensures that the window of attack is limited.",
       "Recommendation": "Refer: TODO",
       "Tags": [
         "SDL",
@@ -27,7 +27,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckStrongPassword",
-      "Rationale": "TODO-strong-password.",
+      "Rationale": "Strong passwords are harder to compromise. When strong passwords are disabled for a user, their account becomes vulnerable to various brute-force password guessing/cracking attacks.",
       "Recommendation": "Refer: TODO",
       "Tags": [
         "SDL",

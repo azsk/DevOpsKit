@@ -9,7 +9,7 @@ class ServicePrincipal: SVTBase
         $objId = $svtResource.ResourceId
 
         $this.ResourceObject = Get-AzureADObjectByObjectId -ObjectIds $objId
-        $this.SPNName = "TODO_SPN_Name_Here" #? $this.ResourceObject.DisplayName
+        $this.SPNName = $this.ResourceObject.DisplayName
         
     }
 
@@ -28,7 +28,7 @@ class ServicePrincipal: SVTBase
 
 
                 $controlResult.AddMessage([VerificationResult]::Failed,
-                                        [MessageData]::new("Found $nPswd assword credentials on SPN: $($this.SPNName).")); 
+                                        [MessageData]::new("Found $nPswd password credentials on SPN: $($this.SPNName).")); 
                                         
         }
         else

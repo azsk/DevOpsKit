@@ -3,8 +3,8 @@
 Each AzSK cmdlet writes output to a folder whose location is determined as below:
 
 --------------------------------------------------------------
-AzSK-Root-Output-Folder = %LocalAppData%\Microsoft\AzSK.AzureDevOpsLogs 
-	E.g., "C:\Users\<userName>\AppData\Local\Microsoft\AzSK.AzureDevOpsLogs"
+AzSK-Root-Output-Folder = %LocalAppData%\Microsoft\AzSK.AADLogs 
+	E.g., "C:\Users\<userName>\AppData\Local\Microsoft\AzSK.AADLogs"
 
 --------------------------------------------------------------
 Sub-Folder = Org_<Orgnization Name>\<Timestamp>_<CommandAbbreviation> 
@@ -13,7 +13,7 @@ Sub-Folder = Org_<Orgnization Name>\<Timestamp>_<CommandAbbreviation>
 
 --------------------------------------------------------------
 Thus, the full path to an output folder for a specific cmdlet might look like: 
-	E.g., "C:\Users\userName\AppData\Local\Microsoft\AzSK.AzureDevOpsLogs.Logs\Org_[yourSubscriptionName]\20170321_183800_GSS"
+	E.g., "C:\Users\userName\AppData\Local\Microsoft\AzSK.AADLogs\Org_[yourSubscriptionName]\20170321_183800_GSS"
 
 By default, cmdlets open this folder upon completion of the cmdlet (we assume you'd be interested in examining the control evaluation status, etc.)
 
@@ -45,7 +45,7 @@ The contents of the output folder are organized as under:
 		\EnvironmentDetails.LOG				
 		[This is the log file containing environment data of current PowerShell session.]
 		\SecurityEvaluationData.json		
-		[This is the detailed security data for each control that was evaluated. This file will be generated only for SVT cmdlets like Get-AzSKAzureDevOpsSecurityStatus etc.]
+		[This is the detailed security data for each control that was evaluated. This file will be generated only for SVT cmdlets like Get-AzSKAADTenantSecurityStatus etc.]
 
 
 	\FixControlScripts						

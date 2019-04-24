@@ -20,6 +20,8 @@ class Tenant: SVTBase
 
     hidden GetAADSettings()
     {
+        $this.PublishCustomMessage("`nQuerying tenant API endpoints. This may take a few seconds...");
+
         if ($this.AADPermissions -eq $null)
         {
             $this.AADPermissions = [WebRequestHelper]::InvokeAADAPI("/api/Permissions")
@@ -63,6 +65,20 @@ class Tenant: SVTBase
         if ($this.EnterpriseAppSettings -eq $null)
         {
             $this.EnterpriseAppSettings = [WebRequestHelper]::InvokeAADAPI("/api/EnterpriseApplications/UserSettings")
+        }
+
+        if ($this.AADPermissions -eq $null -or 
+            $this.CASettings -eq $null -or
+            $this.AdminMFASettings -eq $null -or
+            $this.MFASettings -eq $null -or
+            $this.B2BSettings -eq $null -or
+            $this.DeviceSettings -eq $null -or
+            $this.MFABypassList -eq $null -or
+            $this.SSPRSettings -eq $null -or
+            $this.EnterpriseAppSettings -eq $null
+        )
+        {
+            Write-Host -ForegroundColor Yellow "`nYou may not have sufficient permission to evaluate all controls.`nStatus for controls that could not be evaluated will show as 'Manual' in the report."
         }
     }
 

@@ -10,7 +10,7 @@
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckSPNPasswordCredentials",
-        "Rationale": "TODO.",
+        "Rationale": "Password credentials tend to be easier to compromise via various attacks. They are also symmetric leading to attack vectors on both ends of the flow. Use of certificate credentials alleviates these shortcomings.",
         "Recommendation": "Refer: TODO",
         "Tags": [
           "SDL",
@@ -27,7 +27,7 @@
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "ReviewLegacySPN",
-        "Rationale": "TODO.",
+        "Rationale": "The 'Legacy' SPN type is only for backward compatibility. Ensure that all such entries are carefully reviewed and purged where appropriate.",
         "Recommendation": "Refer: TODO",
         "Tags": [
           "SDL",
@@ -44,7 +44,7 @@
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckCertNearingExpiry",
-        "Rationale": "TODO-SPN-key-expiry.",
+        "Rationale": "SPN credentials should be rotated in a timely manner to ensure availability of the app/service that is using the SPN.",
         "Recommendation": "Refer: TODO",
         "Tags": [
           "SDL",

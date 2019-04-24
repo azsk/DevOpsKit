@@ -171,6 +171,7 @@ class Constants
 	static [string] $DefaultReplyUri = "urn:ietf:wg:oauth:2.0:oob"
 	static [string] $DefaultAzureDevOpsResourceId = "499b84ac-1321-427f-aa17-267ca6975798"
 
+	#Constants for AAD (#TODO)
 
 	static [void] SetAzSKModuleName($moduleName)
 	{

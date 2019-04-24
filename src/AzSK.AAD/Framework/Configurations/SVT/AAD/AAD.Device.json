@@ -10,7 +10,7 @@
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckStaleDevices",
-      "Rationale": "TODO-check-stale-devices.",
+      "Rationale": "Devices that have not been active for long are likely to also be out of compliance in terms of patches and security configuration. Such devices should be regularly reviewed and removed from the tenant (or forced to become compliant) as appropriate.",
       "Recommendation": "Refer: TODO",
       "Tags": [
         "SDL",

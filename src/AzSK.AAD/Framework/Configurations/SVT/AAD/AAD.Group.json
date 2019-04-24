@@ -10,7 +10,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckGroupsIsSecurityEnabled",
-      "Rationale": "TODO-group-sec-enabled.",
+      "Rationale": "TBD. Need to discuss/review this further.",
       "Recommendation": "Refer: TODO",
       "Tags": [
         "SDL",
@@ -22,13 +22,13 @@
       "Enabled": true
     },
     {
-      "ControlID": "AAD_Group_Must_Have_Native_Owner",
+      "ControlID": "AAD_Group_Require_FTE_Owner",
       "Description": "Group must have at least one non-guest (native) owner",
       "Id": "Group120",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckGroupHasNonGuestOwner",
-      "Rationale": "TODO-group-non-guest-owner",
+      "Rationale": "Guest users in a tenant can be transient. Ensuring that at least one FTE owner is accountable for managing a group, approving/reviewing membership, etc. leads to better governance.",
       "Recommendation": "Refer: TODO",
       "Tags": [
         "SDL",

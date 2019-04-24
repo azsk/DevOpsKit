@@ -262,6 +262,16 @@ class CommandHelper
             Noun = "AzSKAzureDevOpsSecurityStatus";
 			ShortName = "GADS";
 			CommandType = [CommandType]::AzureDevOps;
+        },
+		[CommandDetails]@{
+            Verb = "Get";
+            Noun = "AzSKAADTenantSecurityStatus";
+            ShortName = "GTS";
+        },
+		[CommandDetails]@{
+            Verb = "Get";
+            Noun = "AzSKAADUserSecurityStatus";
+            ShortName = "GUS";
         }
     );
 

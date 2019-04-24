@@ -361,6 +361,7 @@ class AccountHelper {
 		[AccountHelper]::currentRMContext = $null
 	}
 
+    #TODO: Review calls to this. Should we have an AAD-version for it? Or just remove...
     static [string] GetAccessToken([string] $resourceAppIdUri, [string] $tenantId) 
     {
         return [AccountHelper]::GetAzureDevOpsAccessToken();
