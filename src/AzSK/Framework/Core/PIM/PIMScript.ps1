@@ -605,7 +605,7 @@ hidden TransitionFromPermanentRolesToPIM()
         {    
             $this.PublishCustomMessage($($permanentRolesForTransition | Format-Table -AutoSize -Wrap UserName, ResourceName, ResourceType, RoleName | Out-String),[MessageType]::Default)
             $this.PublishCustomMessage("");
-            Write-Host "The above shown permanent assignments will removed and corresponding PIM roles will assigned. Do you want to continue? (Y/N)" -ForegroundColor Yellow
+            Write-Host "For the above shown permanent assignments corresponding PIM roles will be assigned. Do you want to continue? (Y/N)" -ForegroundColor Yellow
             $ToContinue = Read-Host
             if($ToContinue -eq 'y')
             {            
@@ -783,11 +783,11 @@ hidden RemovePermanentAssignments([PSObject[]] $users)
                     }
                     else 
                     {
-                        $this.PublishCustomMessage("No permanent assignments found for the scope", [MessageType]::Warning)
+                        $this.PublishCustomMessage("No permanent assignments for '$(($criticalRoles) -join ", ")' roles found for the scope", [MessageType]::Warning)
                         return;
                     }
                 }
-                $successfullyassignedRoles = $null;
+                $successfullyassignedRoles = @();
                 $allAssignedRole = $allRoles | Where-Object{$_.IsPermanent -eq $false}
                 $currentContext = [Helpers]::GetCurrentRmContext();
                 $permanentRolesForTransition = $permanentRolesForTransition | Where-Object{$_.PrincipalName -ne $currentContext.Account.Id}
@@ -797,7 +797,7 @@ hidden RemovePermanentAssignments([PSObject[]] $users)
                     
                         if($_.SubjectId -eq $allUser.SubjectId -and $_.RoleName -eq $allUser.RoleName)
                         {
-                            $successfullyassignedRoles+=$_;
+                            $successfullyassignedRoles+=$_
                         } 
                     }
                 } 
