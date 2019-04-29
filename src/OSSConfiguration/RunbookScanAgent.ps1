@@ -530,9 +530,9 @@ function PersistSubscriptionSnapshot
 		if($null -ne $CAScanDataBlobObject)
 		{
 			#We found a blob for active scan... locate the provided subscription in it to update its status.
-			GetFilesFromBlob -containerName $CAMultiSubScanConfigContainerName -blobName $CAActiveScanSnapshotBlobName -fileName $($destinationFolderPath + $CAActiveScanSnapshotBlobName) -stgCtx $StorageContext
+			#GetFilesFromBlob -containerName $CAMultiSubScanConfigContainerName -blobName $CAActiveScanSnapshotBlobName -fileName $($destinationFolderPath + $CAActiveScanSnapshotBlobName) -stgCtx $StorageContext
 			Get-AzStorageBlobContent -Container $CAMultiSubScanConfigContainerName -Blob $CAActiveScanSnapshotBlobName -Context $StorageContext -Destination $destinationFolderPath -Force | Out-Null
-			#$subsToScan = [array](Get-ChildItem -Path $CAActiveScanSnapshotBlobPath -Force | Get-Content | ConvertFrom-Json)
+			$subsToScan = [array](Get-ChildItem -Path $CAActiveScanSnapshotBlobPath -Force | Get-Content | ConvertFrom-Json)
 
 			$matchedSubId = $subsToScan | Where-Object {$_.SubscriptionId -eq $SubscriptionID}
 

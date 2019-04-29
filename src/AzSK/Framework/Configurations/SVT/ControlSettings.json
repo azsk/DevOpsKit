@@ -51,6 +51,11 @@
       "VulnAssessmentSolution":{
         "AgentName": "QualysAgent",
         "RequiredVersion":"1.6.4.9"
+      },
+      "GuestExtension": {
+        "Name": "ConfigurationForWindows",
+        "RequiredVersion": "1.11.0.0",
+        "AssignmentName" : "SMSClientStatus" 
       }
     },
     "Linux": {
@@ -74,6 +79,11 @@
       "VulnAssessmentSolution": {
         "AgentName": "QualysAgentLinux",
         "RequiredVersion": "1.6.0.96"
+      },
+      "GuestExtension": {
+        "Name": "ConfigurationForLinux",
+        "RequiredVersion": "1.9.0",
+        "AssignmentName" : "SMSClientStatus" 
       }
     },
     "Windows_OS_Baseline_Ids": [],
@@ -331,12 +341,12 @@
   },
   "DefaultValidAttestationStates": [ "NotAnIssue", "WillFixLater", "WillNotFix" ],
   "NewControlGracePeriodInDays": {
-    "Default": 60,
+    "Default": 30,
     "ControlSeverity": {
-      "Critical": 7,
+      "Critical": 30,
       "High": 30,
-      "Medium": 60,
-      "Low": 90
+      "Medium": 30,
+      "Low": 30
     }
   },
   "AttestationPeriodInDays": {
