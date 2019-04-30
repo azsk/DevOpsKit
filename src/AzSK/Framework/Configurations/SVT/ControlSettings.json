@@ -6,7 +6,8 @@
     "SecretRotationDuration_Days": 180,
     "KeyType": "RSA-HSM",
     "ADAppCredentialTypeCrt": "AsymmetricX509Cert",
-    "ADAppCredentialTypePwd": "Password"
+    "ADAppCredentialTypePwd": "Password",
+    "MaxRecommendedVersions": 3
   },
   "SqlServer": {
     "AuditRetentionPeriod_Min": 365,
@@ -369,7 +370,6 @@
     "Low": "Low"
   },
   "MandatoryTags":[
-   
+  
   ]
-
 }
