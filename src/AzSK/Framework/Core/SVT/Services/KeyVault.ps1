@@ -127,7 +127,7 @@ class KeyVault: SVTBase
 							$keysResult | ForEach-Object {
 								Get-AzKeyVaultKey -VaultName $this.ResourceContext.ResourceName -Name $_.Name -IncludeVersions |
 								Where-Object { $_.Enabled -eq $true } | 
-                                Select-Object -First 3 |
+                                Select-Object -First $this.ControlSettings.KeyVault.MaxRecommendedVersions |
 								ForEach-Object {
                                     $this.AllEnabledKeys += Get-AzKeyVaultKey -VaultName $this.ResourceContext.ResourceName -Name $_.Name -Version $_.Version ;
 								}
@@ -179,7 +179,7 @@ class KeyVault: SVTBase
 						$secretsResult | ForEach-Object {
 							Get-AzKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -Name $_.Name -IncludeVersions |
 							Where-Object { $_.Enabled -eq $true } | 
-                            Select-Object -First 3 |
+                            Select-Object -First $this.ControlSettings.KeyVault.MaxRecommendedVersions |
 							ForEach-Object {
 								$this.AllEnabledSecrets += Get-AzKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -Name $_.Name -Version $_.Version ;
 							}
@@ -555,12 +555,13 @@ class KeyVault: SVTBase
 					{
 						$keysResult | ForEach-Object {
 							$count = 0
+							$currentKey = $_
 							Get-AzKeyVaultKey -VaultName $this.ResourceContext.ResourceName -Name $_.Name -IncludeVersions |
 							Where-Object { $_.Enabled -eq $true } | 
 							ForEach-Object {
-								if ($count -eq 3) 
+								if ($count -eq $this.ControlSettings.KeyVault.MaxRecommendedVersions) 
 								{
-									$allExcessVersionKeys += Get-AzKeyVaultKey -VaultName $this.ResourceContext.ResourceName -Name $_.Name;
+									$allExcessVersionKeys += $currentKey
 									break
 								}
 								$count++
@@ -607,12 +608,13 @@ class KeyVault: SVTBase
 					{
 						$secretsResult | ForEach-Object {
 							$count = 0
+							$currentSecret = $_
 							Get-AzKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -Name $_.Name -IncludeVersions |
 							Where-Object { $_.Enabled -eq $true } | 
 							ForEach-Object {
-								if ($count -eq 3) 
+								if ($count -eq $this.ControlSettings.KeyVault.MaxRecommendedVersions) 
 								{
-									$allExcessVersionSecrets += Get-AzKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -Name $_.Name;
+									$allExcessVersionSecrets += $currentSecret
 									break
 								}
 								$count++
@@ -653,25 +655,25 @@ class KeyVault: SVTBase
 		{
 			if ($excessKeys.Count -ne 0) 
 			{
-				$excessKeysDetails = $excessKeys | Select-Object Name, Version -ExpandProperty Attributes;
+				$excessKeysDetails = $excessKeys | Select-Object Name, Version, Enabled, Created, Updated, RecoveryLevel;
 				$excessVersionResources += $excessKeysDetails
 				$controlResult.AddMessage([VerificationResult]::Failed,
-					[MessageData]::new("Following Keys have more than 3 enabled versions."  , 
+					[MessageData]::new("Following Keys have more than "+ $this.ControlSettings.KeyVault.MaxRecommendedVersions +" enabled versions."  , 
 							($excessKeysDetails )));	
 			}
 			if ($excessSecrets.Count -ne 0) 
 			{
-				$excessSecretsDetails = $excessSecrets | Select-Object Name, Version -ExpandProperty Attributes;
+				$excessSecretsDetails = $excessSecrets | Select-Object Name, Version, Enabled, Created, Updated, RecoveryLevel;
 				$excessVersionResources += $excessSecretsDetails
 				$controlResult.AddMessage([VerificationResult]::Failed,
-					[MessageData]::new("Following Secrets have more than 3 enabled versions."  , 
+					[MessageData]::new("Following Secrets have more than "+ $this.ControlSettings.KeyVault.MaxRecommendedVersions +" enabled versions."  , 
 							($excessSecretsDetails )));	
 			}	
 
 			if($excessVersionResources.Count -gt 0)
 			{
                 $excessVersionResourcesDetails = $excessVersionResources | Select-Object -Property Name, Version, Enabled, Created, Updated, RecoveryLevel
-				$controlResult.SetStateData("Following keys and secrets have more than 3 enabled versions.", 
+				$controlResult.SetStateData("Following keys and secrets have more than "+ $this.ControlSettings.KeyVault.MaxRecommendedVersions +" enabled versions.", 
 				    ($excessVersionResourcesDetails));
 			}
 
@@ -696,7 +698,7 @@ class KeyVault: SVTBase
 				if ($excessKeys.Count -eq 0 -and $excessSecrets.Count -eq 0)
 				{
 					$controlResult.AddMessage( [VerificationResult]::Passed,
-					[MessageData]::new("All Keys and Secrets have at the most 3 versions enabled for Key Vault - ["+ $this.ResourceContext.ResourceName +"]"));   
+					[MessageData]::new("All Keys and Secrets have at the most "+ $this.ControlSettings.KeyVault.MaxRecommendedVersions +" versions enabled for Key Vault - ["+ $this.ResourceContext.ResourceName +"]"));   
 				}		
 			}
 		}
