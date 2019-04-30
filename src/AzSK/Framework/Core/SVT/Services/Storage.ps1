@@ -89,8 +89,8 @@ class Storage: SVTBase
 		{
 			$allContainersFromAPI = $null;
 			$publicContainersFromAPI = @();
-			$ARMManagementUri = [Constants]::ARMManagementUri
-			$uri = [system.string]::Format($ARMManagementUri+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Storage/storageAccounts/{2}/blobServices/default/containers?api-version=2018-07-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
+			$AzureManagementUri = [WebRequestHelper]::GetResourceManagerUrl()
+			$uri = [system.string]::Format($AzureManagementUri+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Storage/storageAccounts/{2}/blobServices/default/containers?api-version=2018-07-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
 
 			try 
 			{	
