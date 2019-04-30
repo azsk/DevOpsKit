@@ -163,8 +163,6 @@ class EventHub: SVTBase
 		}
         
 		#endregion
-           
-		$controlResult.VerificationResult = [VerificationResult]::Verify;
 
 		return $controlResult;
 	}
