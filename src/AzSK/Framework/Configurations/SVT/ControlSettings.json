@@ -367,7 +367,7 @@
     "Low": "Low"
   },
   "MandatoryTags":[
-   
-  ]
-
+    
+  ],
+  "WhitelistedResourceGroups": ["ERNetwork-[0-9]*", "ERvNet*", "ERNetwork*"]
 }
