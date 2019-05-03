@@ -1,11 +1,11 @@
 Set-StrictMode -Version Latest
 class AzSKSettings {
-    [string] $OMSWorkspaceId;
-    [string] $OMSSharedKey;
-	[string] $AltOMSWorkspaceId;
-    [string] $AltOMSSharedKey;
-    [string] $OMSType;
-	[string] $OMSSource;
+    [string] $LAWorkspaceId;
+    [string] $LAWSharedKey;
+	[string] $AltLAWorkspaceId;
+    [string] $AltLAWSharedKey;
+    [string] $LAWType;
+	[string] $LAWSource;
 
 	[string] $EventHubNamespace;
 	[string] $EventHubName;
@@ -171,6 +171,6 @@ class AzSKSettings {
 	
 	hidden [string] GetScanSource()
 	{
-		return $this.OMSSource
+		return $this.LAWSource
 	}
 }

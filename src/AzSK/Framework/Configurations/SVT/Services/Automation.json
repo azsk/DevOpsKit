@@ -183,7 +183,7 @@
       "Id": "Automation200",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
-      "MethodName": "CheckOMSSetup",
+      "MethodName": "CheckLogAnalyticsSetup",
       "Rationale": "Using Log Analytics, one can ensure high availability of important/critical services by monitoring jobs and getting alerts for job failures.",
       "Recommendation": "You can change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal",
       "Tags": [

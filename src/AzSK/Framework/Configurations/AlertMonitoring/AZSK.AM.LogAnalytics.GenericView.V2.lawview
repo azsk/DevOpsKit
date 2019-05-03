@@ -2,23 +2,23 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "omsWorkspaceLocation": {
+    "lawWorkspaceLocation": {
       "type": "string",
       "defaultValue": ""
     },
-    "omsResourcegroup": {
+    "lawResourcegroup": {
       "type": "string",
       "defaultValue": ""
     },
-    "omsSubscriptionId": {
+    "lawSubscriptionId": {
       "type": "string",
       "defaultValue": ""
     },
-    "omsWorkspaceName": {
+    "lawWorkspaceName": {
       "type": "string",
       "defaultValue": ""
     },
-    "omsWorkspaceApiVersion": {
+    "lawWorkspaceApiVersion": {
       "type": "string",
       "defaultValue": "2015-11-01-preview"
     },
@@ -32,20 +32,20 @@
   },
   "resources": [
     {
-      "apiVersion": "[parameters('omsWorkspaceApiVersion')]",
-      "name": "[parameters('omsWorkspaceName')]",
+      "apiVersion": "[parameters('lawWorkspaceApiVersion')]",
+      "name": "[parameters('lawWorkspaceName')]",
       "type": "Microsoft.OperationalInsights/workspaces",
-      "location": "[parameters('omsWorkspaceLocation')]",
-      "id": "[Concat('/subscriptions/', parameters('omsSubscriptionId'), '/resourceGroups/', parameters('omsResourcegroup'), '/providers/Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]",
+      "location": "[parameters('lawWorkspaceLocation')]",
+      "id": "[Concat('/subscriptions/', parameters('lawSubscriptionId'), '/resourceGroups/', parameters('lawResourcegroup'), '/providers/Microsoft.OperationalInsights/workspaces/', parameters('lawWorkspaceName'))]",
       "resources": [
         {
           "apiVersion": "2015-11-01-preview",
           "name": "[variables('ViewName')]",
           "type": "views",
-          "location": "[parameters('omsWorkspaceLocation')]",
-          "id": "[Concat('/subscriptions/', parameters('omsSubscriptionId'), '/resourceGroups/', parameters('omsResourcegroup'), '/providers/Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'),'/views/',variables('ViewName'))]",
+          "location": "[parameters('lawWorkspaceLocation')]",
+          "id": "[Concat('/subscriptions/', parameters('lawSubscriptionId'), '/resourceGroups/', parameters('lawResourcegroup'), '/providers/Microsoft.OperationalInsights/workspaces/', parameters('lawWorkspaceName'),'/views/',variables('ViewName'))]",
           "dependson": [
-            "[Concat('/subscriptions/', parameters('omsSubscriptionId'), '/resourceGroups/', parameters('omsResourcegroup'), '/providers/Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+            "[Concat('/subscriptions/', parameters('lawSubscriptionId'), '/resourceGroups/', parameters('lawResourcegroup'), '/providers/Microsoft.OperationalInsights/workspaces/', parameters('lawWorkspaceName'))]"
           ],
           "properties": {
             "DisplayName": "[variables('ViewName')]",

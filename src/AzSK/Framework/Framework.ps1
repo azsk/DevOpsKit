@@ -72,7 +72,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Managers\AzSKPDFExtension.ps1
 . $FrameworkPath\Managers\PartialScanManager.ps1
 
-. $FrameworkPath\Helpers\OMSHelper.ps1
+. $FrameworkPath\Helpers\LogAnalyticsHelper.ps1
 . $FrameworkPath\Helpers\RemoteReportHelper.ps1
 . $FrameworkPath\Helpers\RemoteApiHelper.ps1
 . $PSScriptRoot\Core\PrivacyNotice.ps1
@@ -107,7 +107,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Listeners\RemoteReports\RemoteReportsListener.ps1
 . $FrameworkPath\Listeners\RemoteReports\AIOrgTelemetry.ps1
 . $FrameworkPath\Listeners\RemoteReports\UsageTelemetry.ps1
-. $FrameworkPath\Listeners\OMS\OMSOutput.ps1
+. $FrameworkPath\Listeners\LogAnalytics\LogAnalyticsOutput.ps1
 . $FrameworkPath\Listeners\FixControl\WriteFixControlFiles.ps1
 . $FrameworkPath\Listeners\EventHub\EventHubOutput.ps1
 . $FrameworkPath\Listeners\Webhook\WebhookOutput.ps1
@@ -145,7 +145,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 . $PSScriptRoot\Core\FixControl\FixControlConfigResolver.ps1
 . $PSScriptRoot\Core\FixControl\ControlSecurityFixes.ps1
-. $PSScriptRoot\Core\AzureMonitoring\OMSMonitoring.ps1
+. $PSScriptRoot\Core\AzureMonitoring\LogAnalyticsMonitoring.ps1
 . $PSScriptRoot\Core\SVT\SubscriptionCore\SubscriptionCore.ps1
 . $PSScriptRoot\Core\SVT\AzSKCfg\AzSKCfg.ps1
 . $PSScriptRoot\Core\SVT\SVTResourceResolver.ps1
