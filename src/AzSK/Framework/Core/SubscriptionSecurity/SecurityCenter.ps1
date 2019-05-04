@@ -141,7 +141,7 @@ class SecurityCenter: AzSKRoot
 			}
             catch
             {
-				#return failure status if api throws exception.
+				#return failure status if api throws exception. Check
 				return "AutoProvisioning: [ASC is either not configured or not able to fetch ASC provisioning status due to access issue]"
 			}
 			$autoProvisionObject = $this.PolicyObject.autoProvisioning
