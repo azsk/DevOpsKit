@@ -17,7 +17,7 @@ class Application: SVTBase
 
     hidden [ControlResult] CheckOldTestDemoApps([ControlResult] $controlResult)
 	{
-        $demoAppNames = @('demo', 'test', 'pilot')    #TODO: This should be in org-policy
+        $demoAppNames = $this.ControlSettings.Application.TestDemoPoCNames 
 
         $demoAppsRegex = [string]::Join('|', $demoAppNames) 
 
@@ -32,7 +32,6 @@ class Application: SVTBase
         }
         else
         {
-            #TODO: How can we determine how old an app entry is (or if it is 'active'?)
             $controlResult.AddMessage([VerificationResult]::Verify,
                                         "Found one or more demo/test apps. Review and cleanup.","(TODO) Review apps that are not in use.");
         }

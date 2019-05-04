@@ -10,7 +10,7 @@ class Tenant: SVTBase
     hidden [PSObject] $SSPRSettings;
     hidden [PSObject] $EnterpriseAppSettings;
     hidden [PSObject] $MFABypassList;
-    static [int] $RecommendedMaxDevicePerUserLimit = 20; #TODO: ControlSettings
+    #static [int] $RecommendedMaxDevicePerUserLimit = 20;
     hidden [PSObject] $DeviceSettings;
 
     Tenant([string] $tenantId, [SVTResource] $svtResource): Base($tenantId, $svtResource) 
@@ -212,7 +212,7 @@ class Tenant: SVTBase
         if ($bp -eq $null)
         {
             $controlResult.AddMessage([VerificationResult]::Manual,
-                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission")); #TODO: Empty BP list case?
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission")); #BUGBUG: Empty BP list case?
         }
         elseif($bp.Count -eq 0) #No users on bypass list
         {
@@ -269,15 +269,16 @@ class Tenant: SVTBase
             $rm = $null
         }
         
+        $recommendedMinGlobalAdmins = $this.ControlSettings.Tenant.RecommendedMinGlobalAdmins
         if ($rm -eq $null)
         {
             $controlResult.AddMessage([VerificationResult]::Manual,
                                 [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
         }
-        elseif ($rm.Count -le 2) #TODO: ControlSettings!
+        elseif ($rm.Count -le $recommendedMinGlobalAdmins) 
         {
             $controlResult.AddMessage([VerificationResult]::Failed,
-                                [MessageData]::new("Only [$($rm.Count)] global administrator found."));
+                                [MessageData]::new("Only [$($rm.Count)] global administrator(s) found."));
         }
         else
         {
@@ -338,7 +339,7 @@ class Tenant: SVTBase
         if ($eas -eq $null)
         {
             $controlResult.AddMessage([VerificationResult]::Manual,
-                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission")); #TODO: Empty BP list case?
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission")); #BUGBUG: Empty BP list case?
         }
         elseif($eas.usersCanAllowAppsToAccessData -eq $true) #Users can approve apps to access tenant data
         {
@@ -445,12 +446,13 @@ class Tenant: SVTBase
     hidden [ControlResult] SSPRMinAuthNMethodsRequired([ControlResult] $controlResult)
 	{
         $sspr = $this.SSPRSettings
+        $minAuthNMethodsRequired = $this.ControlSettings.Tenant.SSPRMinAuthNMethodsRequired
         if ($sspr -eq $null)
         {
             $controlResult.AddMessage([VerificationResult]::Manual,
-                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission")); #TODO: Empty BP list case?
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission")); #BUGBUG: Empty BP list case?
         }
-        elseif($sspr.numberOfAuthenticationMethodsRequired -gt 1) #At least 2 methods. TODO: ControlSettings?
+        elseif($sspr.numberOfAuthenticationMethodsRequired -ge $minAuthNMethodsRequired)
         {
             $controlResult.AddMessage([VerificationResult]::Passed,
                                 [MessageData]::new("More than one authentication methods are required to reset password."));
@@ -500,10 +502,11 @@ class Tenant: SVTBase
         }
         else
         {
-            if ($ds.maxDeviceNumberPerUserSetting -gt [Tenant]::RecommendedMaxDevicePerUserLimit)
+            $recommendedMaxDevicePerUserLimit = $this.ControlSettings.Tenant.RecommendedMaxDevicePerUserLimit
+            if ($ds.maxDeviceNumberPerUserSetting -gt $recommendedMaxDevicePerUserLimit)
             {
                     $controlResult.AddMessage([VerificationResult]::Failed,
-                                            [MessageData]::new("Max device per user limit is not set or too high. Recommended: ["+ [Tenant]::RecommendedMaxDevicePerUserLimit + "]."));
+                                            [MessageData]::new("Max device per user limit is not set or too high. Recommended: ["+ $recommendedMaxDevicePerUserLimit + "]."));
             }
             else
             {

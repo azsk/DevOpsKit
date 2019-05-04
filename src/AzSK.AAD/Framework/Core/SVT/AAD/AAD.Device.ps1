@@ -2,7 +2,7 @@ Set-StrictMode -Version Latest
 class Device: SVTBase
 {    
     hidden [PSObject] $ResourceObject;
-    static [int] $InactiveDaysLimit = 180; #TODO: ControlSettings, TODO: statics ok? (in-session tenant change?)
+    #static [int] $InactiveDaysLimit = 180; #BUGBUG: statics ok? (in-session tenant change?)
     Device([string] $tenantId, [SVTResource] $svtResource): Base($tenantId, $svtResource) 
     {
         $objId = $svtResource.ResourceId
@@ -19,7 +19,8 @@ class Device: SVTBase
         $d = $this.GetResourceObject()
 
         $lastLoginDateTime = $d[0].ApproximateLastLogonTimeStamp 
-        $inactiveThreshold = ([DateTime]::Today).AddDays(-([Device]::InactiveDaysLimit))
+        $inactiveDaysLimit = $this.ControlSettings.Device.InactiveDeviceLimitInDays;
+        $inactiveThreshold = ([DateTime]::Today).AddDays(-$inactiveDaysLimit)
         if($lastLoginDateTime -lt $inactiveThreshold)
         {
             $controlResult.AddMessage([VerificationResult]::Failed,

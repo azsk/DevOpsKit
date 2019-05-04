@@ -61,6 +61,7 @@ class ServicePrincipal: SVTBase
         $spn = $this.GetResourceObject()
 
         $spk = [array] $spn.KeyCredentials
+
         if ($spk -eq $null -or $spk.Count -eq 0)
         {
             #No key creds, pass the control.
@@ -71,8 +72,8 @@ class ServicePrincipal: SVTBase
         else 
         {
             $renew = @()
-            $expireDays = 30
-            $expiringSoon = ([DateTime]::Today).AddDays($expireDays)  #TODO: 30 days should be moved to config.
+            $expireDays = $this.ControlSettings.ServicePrincipal.ApproachingExpiryThresholdInDays;
+            $expiringSoon = ([DateTime]::Today).AddDays($expireDays)  
             $needToRenew = $false
             $spk | % {
                 $k = $_
@@ -108,12 +109,12 @@ class ServicePrincipal: SVTBase
             if ($spn.xyz)
             {
                     $controlResult.AddMessage([VerificationResult]::Failed,
-                                            [MessageData]::new("Todo. Please review: $($this.SPNName)"));
+                                            [MessageData]::new("Please review: $($this.SPNName)"));
             }
             else
             {
                 $controlResult.AddMessage([VerificationResult]::Passed,
-                                            [MessageData]::new("Todo. PassMsg."));
+                                            [MessageData]::new("PassMsg."));
             }
             return $controlResult;
         }
