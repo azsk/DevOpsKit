@@ -12,7 +12,6 @@ class Alerts: CommandBase
 	hidden [string] $ResourceGroup ;
 	hidden [string] $ResourceGroupLocation;
 	hidden [PSObject] $AlertPolicyObj = $null
-	hidden [string] $V1AlertRGName;
 	hidden [string] $RunbookName=[Constants]::AlertRunbookName
 	hidden [string] $Alert_ResourceCreation_Runbook=[Constants]::Alert_ResourceCreation_Runbook
 	
@@ -22,7 +21,6 @@ class Alerts: CommandBase
 	Alerts([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $tags): 
         Base($subscriptionId, $invocationContext)
     {
-		$this.V1AlertRGName = [OldConstants]::V1AlertRGName
 		$this.ResourceGroup = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
 		$this.AlertPolicyObj =  $this.LoadServerConfigFile("Subscription.InsARMAlerts.json");
 		$this.FilterTags = $this.ConvertToStringArray($tags);
@@ -690,22 +688,6 @@ class Alerts: CommandBase
 		}
 		
 		return 	$actionGroupResourceId
-	}
-
-	hidden [MessageData[]] CleanV1Alerts()
-	{
-		#Validate if V1(Old) Alert RG present 
-		$messages = @();
-		$existingRG = Get-AzResourceGroup -Name $this.V1AlertRGName -ErrorAction SilentlyContinue
-		if($existingRG)
-		{
-			# Remove all locks
-			$messages += $this.RemoveAllResourceGroupLocks();
-			$messages += [MessageData]::new("Found old deprecated alert resource group (AzSKAlertsRG). Removing all V1 AzSK configured alerts by removing deprecated resource group");
-			Remove-AzResourceGroup -Name $this.V1AlertRGName -Force
-		}
-
-		return $messages
 	}
 
 	hidden [MessageData[]] RemoveAllResourceGroupLocks()

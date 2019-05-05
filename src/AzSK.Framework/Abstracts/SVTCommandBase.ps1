@@ -86,8 +86,7 @@ class SVTCommandBase: CommandBase {
 			}			
         }
         
-        #check and delete if older RG found. Remove this code post 8/15/2018 release
-        $this.RemoveOldAzSDKRG();
+        
         #Create necessary resources to save compliance data in user's subscription
         if($this.IsLocalComplianceStoreEnabled)
         {
@@ -251,63 +250,5 @@ class SVTCommandBase: CommandBase {
     {
         #Enabled AzureRM telemetry which got disabled at the start of command
         Enable-AzDataCollection  | Out-Null
-    }
-
-    hidden [void] RemoveOldAzSDKRG()
-    {
-        $scanSource = [AzSKSettings]::GetInstance().GetScanSource();
-        if($scanSource -eq "SDL" -or [string]::IsNullOrWhiteSpace($scanSource))
-        {
-            $olderRG = Get-AzResourceGroup -Name $([OldConstants]::AzSDKRGName) -ErrorAction SilentlyContinue
-            if($null -ne $olderRG)
-            {
-                $resources = Get-AzResource -ResourceGroupName $([OldConstants]::AzSDKRGName)
-                try {
-                    $azsdkRGScope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourceGroups/$([OldConstants]::AzSDKRGName)"
-                    $resourceLocks = @();
-                    $resourceLocks += Get-AzResourceLock -Scope $azsdkRGScope -ErrorAction Stop
-                    if($resourceLocks.Count -gt 0)
-                    {
-                        $resourceLocks | ForEach-Object {
-                            Remove-AzResourceLock -LockId $_.LockId -Force -ErrorAction Stop
-                        }                 
-                    }
-
-                    if(($resources | Measure-Object).Count -gt 0)
-                    {
-                        $otherResources = $resources | Where-Object { -not ($_.Name -like "$([OldConstants]::StorageAccountPreName)*")} 
-                        if(($otherResources | Measure-Object).Count -gt 0)
-                        {
-                            Write-Host "WARNING: Found non DevOps Kit resources under older RG [$([OldConstants]::AzSDKRGName)] as shown below:" -ForegroundColor Yellow
-                            $otherResources
-                            Write-Host "We are about to delete the older resource group including all the resources inside." -ForegroundColor Yellow
-                            $option = Read-Host "Do you want to continue (Y/N) ?";
-                            $option = $option.Trim();
-                            While($option -ne "y" -and $option -ne "n")
-                            {
-                                Write-Host "Provide correct option (Y/N)."
-                                $option = Read-Host "Do you want to continue (Y/N) ?";
-                                $option = $option.Trim();
-                            }
-                            if($option -eq "y")
-                            {
-                                Remove-AzResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob
-                            }
-                        }
-                        else
-                        {
-                            Remove-AzResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob                            
-                        }
-                    }
-                    else 
-                    {
-                        Remove-AzResourceGroup -Name $([OldConstants]::AzSDKRGName) -Force -AsJob
-                    }
-                }
-                catch {
-                    #eat exception
-                }  
-            }          
-        }
     }
 }

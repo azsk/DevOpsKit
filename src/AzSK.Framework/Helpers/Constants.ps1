@@ -132,8 +132,6 @@ class Constants
 
 	static [int] $DefaultControlExpiryInDays = 90
 	static [int] $PartialScanMaxRetryCount = 3
-	static [string] $NewModuleName = "AzSK"
-	static [string] $OldModuleName = "AzSDK"
 
 	#CA variables names
 	static [string] $AppResourceGroupNames = "AppResourceGroupNames"

@@ -12,8 +12,6 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 #Constants
 . $FrameworkPath\Helpers\Constants.ps1
-. $FrameworkPath\Helpers\OldConstants.ps1
-
 
 #Models
 . $FrameworkPath\Models\AzSKGenericEvent.ps1

@@ -270,8 +270,6 @@ class CommandHelper
 		[CommandHelper]::CheckCommandPrerequisites($invocationContext);
 		[CommandHelper]::SetAzSKModuleName($invocationContext);
 		[CommandHelper]::SetCurrentAzSKModuleVersion($invocationContext);
-		# display warning if alias
-		[CommandHelper]::CheckForAlias($invocationContext.InvocationName)
 	}
 
 	static CheckCommandPrerequisites([InvocationInfo] $invocationContext)
@@ -308,21 +306,6 @@ class CommandHelper
 		{
 			Write-Debug "Not able to validate version dependency $_"
 		}
-		#check if old and new both modules are loaded in same session		
-		$newModule = Get-Module|Where-Object {$_.Name -like "$([Constants]::NewModuleName)*"} | Select-Object -First 1
-		$oldModule = Get-Module|Where-Object {$_.Name -like "$([Constants]::OldModuleName)*"} | Select-Object -First 1
-		if($newModule -and $oldModule)
-		{	 
-			$warningMsg = [String]::Format([Constants]::MultipleModulesWarning, $newModule.Name,$oldModule.Name,$newModule.Name)
-			Write-Host $warningMsg -ForegroundColor Yellow
-			#stop execution
-			throw ([SuppressedException]::new("",[SuppressedExceptionType]::Generic))
-		}
-		else
-		{
-			# Continue execution without any error or warning
-			Write-Debug ("Multiple modules ($([Constants]::NewModuleName) and $([Constants]::OldModuleName)) load validation successful")
-		}
 		
 	}
 
@@ -338,18 +321,6 @@ class CommandHelper
 		if($invocationContext)
 		{
 			[Constants]::SetAzSKCurrentModuleVersion($invocationContext.MyCommand.Version);
-		}
-	}
-
-	static [void] CheckForAlias([string] $methodName)
-	{
-		if($methodName -like "*-$([Constants]::OldModuleName)*")
-		{
-			#get correct casing 
-			$methodName = get-command -Name $methodName
-			$newMethodName = $methodName -replace ("-"+[Constants]::OldModuleName),("-"+[Constants]::NewModuleName);
-			$CommandNameChangeWarning = [Constants]::CommandNameChangeWarning -f $methodName,$newMethodName
-			Write-Warning $CommandNameChangeWarning
 		}
 	}
 }

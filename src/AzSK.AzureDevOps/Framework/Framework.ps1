@@ -6,7 +6,6 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 
 #Constants
 . $PSScriptRoot\Helpers\Constants.ps1
-. $PSScriptRoot\Helpers\OldConstants.ps1
 
 
 #Models

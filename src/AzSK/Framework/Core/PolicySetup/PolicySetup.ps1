@@ -309,7 +309,6 @@ class PolicySetup: CommandBase
 			$fileContent = Get-Content -Path $fileName;
 			$fileContent = $fileContent.Replace("#PolicyUrl#", $this.PolicyUrl);
 			$fileContent = $fileContent.Replace("#ModuleName#", $([Constants]::AzSKModuleName));
-			$fileContent = $fileContent.Replace("#OldModuleName#", [Constants]::OldModuleName);
 			$fileContent = $fileContent.Replace("#OrgName#", $this.OrgFullName);
 			$fileContent = $fileContent.Replace("#AzureEnv#", $this.AzureEnvironment);
 			$fileContent = $fileContent.Replace("#AzSKConfigURL#", $this.AzSKConfigURL);

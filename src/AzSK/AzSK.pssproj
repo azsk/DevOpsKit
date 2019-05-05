@@ -126,7 +126,6 @@
     <Compile Include="Framework\Core\SVT\Services\HDInsight.ps1" />
     <Compile Include="Framework\Core\SVT\Services\KubernetesService.ps1" />
     <Compile Include="Framework\Helpers\AliasHelper.ps1" />
-    <Compile Include="Framework\Helpers\OldConstants.ps1" />
     <Compile Include="Framework\Helpers\OMSHelper.ps1" />
     <Compile Include="Framework\Helpers\ComplianceReportHelper.ps1" />
     <Compile Include="Framework\Helpers\UserSubscriptionDataHelper.ps1" />

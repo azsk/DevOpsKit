@@ -14,8 +14,6 @@ Param(
 	[switch] $UpdateToLatestVersion
 )
 
-[string] $OldModuleName = "#OldModuleName#"
-[string] $OldAzSDKConfigURL = ""
 [string] $ModuleName = "#ModuleName#"
 [string] $OrgName = "#OrgName#"
 [string] $SupportEmail = "azsksupext@microsoft.com"
@@ -85,22 +83,6 @@ function BootstrapRepo {
     Write-Host "Completed $ModuleName repository configuration." -ForegroundColor Green
 }
 
-function CheckIfMultipleModulesLoaded
-{
-   #check if old module is loaded in same session
-	$oldModule = Get-Module|Where-Object {$_.Name -like "$OldModuleName*"} | Select-Object -First 1
-	if($oldModule)
-	{	 
-		$warningMsg = "Found older module ($OldModuleName) loaded in the PS session.`r`n"+
-			"Stopping installation."
-        $recommendationMsg = "Recommendation: Please start a fresh PS session and try again to avoid getting into this situation."
-		Write-Host $warningMsg -ForegroundColor Red
-		Write-Host $recommendationMsg -ForegroundColor Yellow
-        
-		#stop execution
-        break
-	}
-}
 
 function BootstrapSetup ($moduleName, $versionConfigUrl)
 {
@@ -243,7 +225,6 @@ function BootstrapOrgPolicy{
 
 function BootstrapInstaller {
     BootstrapRepo
-    #BootstrapSetup -moduleName $OldModuleName -versionConfigUrl $OldAzSDKConfigURL -uninstallAll $true
     BootstrapSetup -moduleName $ModuleName -versionConfigUrl $AzSKConfigURL
     BootstrapOrgPolicy
 
@@ -267,7 +248,6 @@ function CheckPrerequsites {
     Write-Host "Checking Prerequisites... " -ForegroundColor Yellow
     CheckPSVersion
     CheckNugetPackageProvider
-    CheckIfMultipleModulesLoaded
 }
 
 function Init {
