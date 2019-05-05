@@ -461,10 +461,7 @@ class SVTBase: AzSKRoot
 			{
 				$filteredControls += $filterControlsById;
 			}
-			$this.ApplicableControls = $filteredControls;
-			#this filtering has been done as the first step it self;
-			#$this.ApplicableControls += $this.ApplyServiceFilters($filteredControls);
-			
+			$this.ApplicableControls = $filteredControls;			
 		}
 		return $this.ApplicableControls;
 	}

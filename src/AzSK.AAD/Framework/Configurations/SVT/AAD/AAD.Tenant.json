@@ -101,7 +101,8 @@
             "SDL",
             "TCP",
             "Automated",
-            "AuthN"
+            "AuthN",
+            "SSPR"
           ],
           "Enabled": true
         },   
@@ -118,7 +119,8 @@
             "SDL",
             "TCP",
             "Automated",
-            "AuthN"
+            "AuthN",
+            "SSPR"
           ],
           "Enabled": true
         },
@@ -135,7 +137,8 @@
             "SDL",
             "TCP",
             "Automated",
-            "AuthN"
+            "AuthN",
+            "SSPR"
           ],
           "Enabled": true
         },
@@ -239,7 +242,8 @@
             "SDL",
             "TCP",
             "Automated",
-            "AuthN"
+            "AuthN",
+            "SSPR"
           ],
           "Enabled": true
         },

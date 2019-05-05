@@ -82,6 +82,26 @@ class Tenant: SVTBase
         }
     }
 
+    [ControlItem[]] ApplyServiceFilters([ControlItem[]] $controls)
+	{
+		if($controls.Count -eq 0)
+		{
+			return $controls;
+		}
+
+		$result = $controls;
+
+        $sspr = $this.CASettings
+
+        #If we definitively determine that SSPR is not enabled for this tenant, exclude SSPR-specific controls
+		if ($sspr -ne $null -and $sspr.EnablementType -eq 0)
+		{
+			$result = $result | Where-Object {$_.Tags -notcontains "SSPR"}
+		}
+
+		return $result;
+    }
+    
     hidden [ControlResult] CheckTenantSecurityContactInfoIsSet([ControlResult] $controlResult)
     {
         $td = Get-AzureADTenantDetail
