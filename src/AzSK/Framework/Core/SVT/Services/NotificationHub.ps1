@@ -5,12 +5,6 @@ class NotificationHub: SVTBase
     hidden [PSObject] $ResourceObject;
 	hidden [PSObject] $NamespaceObject;
 
-    NotificationHub([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
-
 	NotificationHub([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 

@@ -4,12 +4,6 @@ class Search: SVTBase
 {       
     hidden [PSObject] $ResourceObject;
 
-    Search([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
-
 	Search([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 

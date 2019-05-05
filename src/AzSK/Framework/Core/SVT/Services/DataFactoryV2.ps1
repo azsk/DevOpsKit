@@ -5,16 +5,10 @@ class DataFactoryV2: SVTBase
     hidden [PSObject] $ResourceObject;
     hidden [ADFV2Details] $adfDetails = [ADFV2Details]::new()
 
-    DataFactoryV2([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-    }
-
 	DataFactoryV2([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 
          $this.GetResourceObject();
-
     }
 
     hidden [PSObject] GetResourceObject()

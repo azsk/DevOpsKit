@@ -3,11 +3,6 @@ class StreamAnalytics: SVTBase
 {       
     hidden [PSObject] $ResourceObject;
 
-    StreamAnalytics([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-                 Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-    }
-
     StreamAnalytics([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 

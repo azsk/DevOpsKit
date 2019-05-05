@@ -2,11 +2,6 @@
 Set-StrictMode -Version Latest
 class ERvNet : SVTIaasBase
 {
-    ERvNet([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
-        Base($subscriptionId, $resourceGroupName, $resourceName)
-    {
-    }
-
 	ERvNet([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId, $svtResource)
     {

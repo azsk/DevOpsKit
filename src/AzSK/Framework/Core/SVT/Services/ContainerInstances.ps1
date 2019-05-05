@@ -3,12 +3,6 @@ class ContainerInstances: SVTBase
 {       
     hidden [PSObject] $ResourceObject;
 
-    ContainerInstances([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
-
     ContainerInstances([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 

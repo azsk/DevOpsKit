@@ -2,12 +2,6 @@ Set-StrictMode -Version Latest
 class AnalysisServices: SVTBase
 {    
 	hidden [PSObject] $ResourceObject;
-	   
-    AnalysisServices([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-	     $this.GetResourceObject();
-	}
 
     AnalysisServices([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 

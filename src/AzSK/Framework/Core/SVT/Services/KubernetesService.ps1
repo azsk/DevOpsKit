@@ -1,14 +1,7 @@
 Set-StrictMode -Version Latest 
 class KubernetesService: SVTBase
 {
-
 	hidden [PSObject] $ResourceObject;
-	
-	KubernetesService([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-		$this.GetResourceObject();
-    }
 
     KubernetesService([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 

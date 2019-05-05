@@ -3,11 +3,6 @@ class LoadBalancer: SVTBase
 {       
     hidden [PSObject] $ResourceObject;
 
-    LoadBalancer([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-                 Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-    }
-
     LoadBalancer([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 

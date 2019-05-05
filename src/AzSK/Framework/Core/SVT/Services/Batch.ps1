@@ -1,10 +1,6 @@
 Set-StrictMode -Version Latest 
 class Batch: SVTBase
 {       
-    Batch([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    {  }
-
 	Batch([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     {  }

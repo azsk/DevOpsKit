@@ -7,12 +7,6 @@ class KeyVault: SVTBase
     hidden [PSObject[]] $AllEnabledSecrets = $null;
 	hidden [boolean] $HasFetchKeysPermissions=$false;
 	hidden [boolean] $HasFetchSecretsPermissions=$true;
-    KeyVault([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-		$this.CheckCurrentContextPermissionsOnVaultObjects();
-    }
 
     KeyVault([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 

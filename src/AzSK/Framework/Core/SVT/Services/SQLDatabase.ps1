@@ -10,12 +10,6 @@ class SQLDatabase: SVTBase
     hidden [PSObject[]] $SqlDatabases = $null;
 	hidden [PSObject[]] $SqlFirewallDetails = $null;
 
-    SQLDatabase([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
-        Base($subscriptionId, $resourceGroupName, $resourceName)
-    {
-        $this.GetResourceObject();
-    }
-
 	SQLDatabase([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId, $svtResource)
     {

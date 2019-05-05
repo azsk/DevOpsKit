@@ -6,13 +6,6 @@ class EventHub: SVTBase
 	hidden [PSObject[]] $EventHubs = @();
 	hidden [HashTable] $EHChildAccessPolicies = @{};
 
-    EventHub([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-		$this.GetEventHubDetails();
-		$this.GetEHAccessPolicies();
-    }
-
 	EventHub([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 

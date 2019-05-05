@@ -9,13 +9,6 @@ class Databricks: SVTBase
 	hidden [bool] $HasAdminAccess = $false;
 	hidden [bool] $IsTokenRead = $false;
 
-    Databricks([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-                 Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-	 
-		$this.GetResourceObject();
-    }
-
     Databricks([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 

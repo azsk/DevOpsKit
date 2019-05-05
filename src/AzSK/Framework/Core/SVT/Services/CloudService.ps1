@@ -9,13 +9,6 @@ class CloudService: SVTBase
 	hidden [bool] $hasClassicPermissions = $true;
 	hidden [string] $cloudServiceAPIVersion = "2016-04-01"
 
-
-	CloudService([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
-
 	CloudService([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 

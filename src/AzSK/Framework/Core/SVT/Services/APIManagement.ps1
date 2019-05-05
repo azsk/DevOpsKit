@@ -9,13 +9,6 @@ class APIManagement: SVTBase
 
 	hidden [PSObject] $ResourceObject;
 
-    APIManagement([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-
-		$this.GetResourceObject();
-	}
-
 	APIManagement([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 

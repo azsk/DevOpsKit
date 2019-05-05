@@ -8,11 +8,6 @@ class ServiceBus: SVTBase
 	hidden [HashTable] $QueueAccessPolicies = @{};
 	hidden [Hashtable] $TopicAccessPolicies = @{};
 
-    ServiceBus([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-    }
-
 	ServiceBus([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 

@@ -31,14 +31,6 @@ class APIConnection: SVTBase
     hidden [PSObject] $ResourceObject;
 	hidden [APIConnectionConnectorsMetadata] $LogicAppConnectorsMetadata
 
-	
-    APIConnection([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();		
-		$this.LogicAppConnectorsMetadata = [APIConnectionConnectorsMetadata] ($this.LoadServerConfigFile("LogicApps.Connectors.json"));
-    }
-
     APIConnection([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 

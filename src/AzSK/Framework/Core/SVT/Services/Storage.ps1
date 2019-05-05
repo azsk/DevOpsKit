@@ -6,12 +6,6 @@ class Storage: SVTBase
 	hidden [PSObject] $ResourceObject;
 	hidden [bool] $LockExists = $false;
 
-    Storage([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-                 Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
-
     Storage([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 

@@ -2,12 +2,6 @@ Set-StrictMode -Version Latest
 class TrafficManager : SVTBase
 {
 	hidden [PSObject] $ResourceObject;
-	
-	TrafficManager([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
-        Base($subscriptionId, $resourceGroupName, $resourceName)
-    {
-		   $this.GetResourceObject();
-    }
 
     TrafficManager([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId, $svtResource)

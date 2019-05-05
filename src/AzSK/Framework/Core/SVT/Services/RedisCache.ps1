@@ -3,12 +3,6 @@ class RedisCache: SVTBase
 {       
     hidden [PSObject] $ResourceObject;
 
-    RedisCache([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-                 Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
-
     RedisCache([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 

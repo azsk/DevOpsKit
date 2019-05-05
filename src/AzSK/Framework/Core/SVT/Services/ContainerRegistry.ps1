@@ -4,12 +4,6 @@ class ContainerRegistry: SVTBase
     hidden [PSObject] $ResourceObject;
     hidden [PSObject] $AccessList;
 
-    ContainerRegistry([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
-
     ContainerRegistry([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 

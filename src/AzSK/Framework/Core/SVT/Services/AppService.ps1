@@ -7,14 +7,6 @@ class AppService: SVTBase
 	hidden [PSObject] $AuthenticationSettings;
 	hidden [bool] $IsReaderRole;
 
-    AppService([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
-        Base($subscriptionId, $resourceGroupName, $resourceName)
-    {
-        $this.GetResourceObject();
-		$this.AddResourceMetadata($this.ResourceObject.Properties)
-
-    }
-
     AppService([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId, $svtResource)
     {
