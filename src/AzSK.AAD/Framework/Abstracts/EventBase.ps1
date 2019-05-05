@@ -6,7 +6,8 @@ Set-StrictMode -Version Latest
 class EventBase
 {
     [string] $RunIdentifier = "default";
-    [InvocationInfo] $InvocationContext;
+	[InvocationInfo] $InvocationContext;
+	static [int] $logLvl = 0;
 
 	[string] GenerateRunIdentifier()
 	{
@@ -18,6 +19,8 @@ class EventBase
 		New-Event -SourceIdentifier $eventType  `
 			-Sender $this `
 			-EventArguments $eventArgument | Out-Null
+
+		if ([EventBase]::logLvl -ge 1){Write-Host -ForegroundColor Magenta "NewEvt type: $eventType from objType: $($this.GetType())"}
     }
 
 	[void] PublishException([ErrorRecord] $eventArgument)
