@@ -17,8 +17,6 @@ function Set-AzSKAzureSecurityCenterPolicies
 			Switch to specify whether to open output folder containing all security evaluation report or not.
 	.PARAMETER SecurityPhoneNumber
 			Provide a security contact international information phone number including the country code (for example, +1-425-1234567)
-	.PARAMETER OptionalPolicies
-			Switch to specify whether to set the optional ASC policies.
 
 	.LINK
 	https://aka.ms/azskossdocs 
@@ -46,12 +44,7 @@ function Set-AzSKAzureSecurityCenterPolicies
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.")]
 		[Alias("dnof")]
-		$DoNotOpenOutputFolder,
-
-		[switch]
-        [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to set the optional ASC policies.")]
-		[Alias("op")]
-		$OptionalPolicies
+		$DoNotOpenOutputFolder
     )
 
 	Begin
@@ -69,12 +62,7 @@ function Set-AzSKAzureSecurityCenterPolicies
 			{
 				$secCenter.SecurityContactEmails = $SecurityContactEmails;
 				$secCenter.SecurityPhoneNumber = $SecurityPhoneNumber;
-				$setOptionalPolicy = $false;
-
-				if ($OptionalPolicies){
-					$setOptionalPolicy = $true;
-				}
-				return $secCenter.SetPolicies($setOptionalPolicy);
+				return $secCenter.SetPolicies();
 			}
 		}
 		catch 
