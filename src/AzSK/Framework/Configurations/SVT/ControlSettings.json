@@ -6,7 +6,8 @@
     "SecretRotationDuration_Days": 180,
     "KeyType": "RSA-HSM",
     "ADAppCredentialTypeCrt": "AsymmetricX509Cert",
-    "ADAppCredentialTypePwd": "Password"
+    "ADAppCredentialTypePwd": "Password",
+    "MaxRecommendedVersions": 3
   },
   "SqlServer": {
     "AuditRetentionPeriod_Min": 365,
@@ -54,7 +55,8 @@
       },
       "GuestExtension": {
         "Name": "ConfigurationForWindows",
-        "RequiredVersion": "1.11.0.0"
+        "RequiredVersion": "1.11.0.0",
+        "AssignmentName" : "SMSClientStatus" 
       }
     },
     "Linux": {
@@ -81,7 +83,8 @@
       },
       "GuestExtension": {
         "Name": "ConfigurationForLinux",
-        "RequiredVersion": "1.9.0.0"
+        "RequiredVersion": "1.9.0",
+        "AssignmentName" : "SMSClientStatus" 
       }
     },
     "Windows_OS_Baseline_Ids": [],
@@ -339,12 +342,12 @@
   },
   "DefaultValidAttestationStates": [ "NotAnIssue", "WillFixLater", "WillNotFix" ],
   "NewControlGracePeriodInDays": {
-    "Default": 60,
+    "Default": 30,
     "ControlSeverity": {
-      "Critical": 7,
+      "Critical": 30,
       "High": 30,
-      "Medium": 60,
-      "Low": 90
+      "Medium": 30,
+      "Low": 30
     }
   },
   "AttestationPeriodInDays": {
@@ -370,4 +373,5 @@
 
   ],
   "WhitelistedResourceGroups": []
+  ]
 }

@@ -196,7 +196,7 @@ class ComplianceReportHelper: ComplianceBase
 				$scanResult.PreviousVerificationResult = $scanResult.VerificationResult;
 			}
 			
-			if($scanResult.FirstScannedOn -eq [Constants]::AzSKDefaultDateTime -or (get-date $scanResult.FirstScannedOn) -gt (Get-Date $currentSVTResult.FirstScannedOn ))
+			if($scanResult.FirstScannedOn -eq [Constants]::AzSKDefaultDateTime -or ([datetime] $scanResult.FirstScannedOn) -gt ([datetime] $currentSVTResult.FirstScannedOn) )
 			{
 				if($currentSVTResult.FirstScannedOn -eq [Constants]::AzSKDefaultDateTime)
 				{
@@ -204,7 +204,7 @@ class ComplianceReportHelper: ComplianceBase
 				}
 				else 
 				{
-					$scanResult.FirstScannedOn = $currentSVTResult.FirstScannedOn.ToString("s");
+					$scanResult.FirstScannedOn = (get-date $currentSVTResult.FirstScannedOn).ToString("s");
 				}
 			}
 
