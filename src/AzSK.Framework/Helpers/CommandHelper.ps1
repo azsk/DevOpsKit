@@ -261,6 +261,11 @@ class CommandHelper
             Verb = "Set";
             Noun = "AzSKPIMConfiguration";
             ShortName = "PIM";
+		}
+		[CommandDetails]@{
+            Verb = "Get";
+            Noun = "AzSKPIMConfiguration";
+            ShortName = "ListPIM";
         }
     );
 
