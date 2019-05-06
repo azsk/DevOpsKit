@@ -7,6 +7,7 @@
 		IntegerValue, // Single Token
 		ItemCount, // Multi Tokens
         ItemProperties, //Multi Tokens
+        SecureParam, //Single Token
 		StringLength, // Single Token
 		StringWhitespace, // Single Token
 		StringSingleToken, // Single Token
