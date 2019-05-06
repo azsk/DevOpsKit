@@ -776,8 +776,8 @@
       "supportedResourceTypes": [ "Microsoft.Network/virtualNetworks", "Microsoft.Network/networkInterfaces" ],
       "controls": [
         {
-          "Id": "VirtualNetwork120",
-          "ControlID": "Azure_VNet_NetSec_Justify_IPForwarding_for_NICs",
+          "id": "VirtualNetwork120",
+          "controlId": "Azure_VNet_NetSec_Justify_IPForwarding_for_NICs",
           "isEnabled": true,
           "Description": "Use of IP Forwarding on any NIC in a virtual network should be scrutinized",
           "Rationale": "Enabling IP Forwarding on a VM NIC allows the VM to receive traffic addressed to other destinations. IP forwarding is required only in rare scenarios (e.g., using the VM as a network virtual appliance) and those should be reviewed with the network security team.",
