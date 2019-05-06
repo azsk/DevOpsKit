@@ -370,6 +370,7 @@
     "Low": "Low"
   },
   "MandatoryTags":[
-  
-  ]
+
+  ],
+  "WhitelistedResourceGroups": []
 }
