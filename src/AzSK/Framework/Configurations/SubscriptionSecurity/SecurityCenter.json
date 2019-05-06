@@ -1,4 +1,4 @@
-﻿{    
+﻿{
     "Version": "3.1809.0",    
     "autoProvisioning" : {
         "id": "/subscriptions/{0}/providers/Microsoft.Security/autoProvisioningSettings/default",
@@ -47,7 +47,34 @@
                 },            
                 "storageEncryptionMonitoringEffect": {
                 "value": "Audit"
-                }                     
+                }                 
+            },
+            "description": "This policy assignment was automatically created by Azure Security Center",
+            "metadata": {
+                "assignedBy": "Security Center"
+            }
+        },
+        "id": "/subscriptions/{0}/providers/Microsoft.Authorization/policyAsssignments/SecurityCenterBuiltIn",
+        "type": "Microsoft.Authorization/policyAssignments",
+        "name": "SecurityCenterBuiltIn"
+    },
+    "optionalPolicySettings" : {
+        "sku": {
+        "name": "A0",
+        "tier": "Free"
+        },
+        "properties": {
+            "displayName": "ASC Default (subscription: {0})",
+            "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/1f3afdf9-d0c9-4c3d-847f-89da613e70a8",
+            "scope": "/subscriptions/{0}",
+            "notScopes": [],
+            "parameters": {                                                              
+                "sqlServerAuditingMonitoringEffect": {
+                "value": "AuditIfNotExists"
+                },
+                "encryptionOfAutomationAccountMonitoringEffect": {
+                "value": "Audit"
+                }
             },
             "description": "This policy assignment was automatically created by Azure Security Center",
             "metadata": {
