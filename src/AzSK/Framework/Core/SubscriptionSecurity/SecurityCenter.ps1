@@ -24,7 +24,7 @@ class SecurityCenter: AzSKRoot
 		[SecurityCenterHelper]::RegisterResourceProvider();
 		$this.LoadPolicies(); 
 		$this.LoadCurrentPolicy();
-		#calling this function as it would fetch the current contact phone number settings. 
+		#calling this function as it would fetch the current contact phone number settings
 		$this.CheckSecurityContactSettings();
 	}
 
