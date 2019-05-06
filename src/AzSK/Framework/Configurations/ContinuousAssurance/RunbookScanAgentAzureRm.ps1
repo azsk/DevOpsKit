@@ -672,13 +672,27 @@ Write-Output("SA.o: Scan agent starting...")
 $ResourceGroupNames = Get-AutomationVariable -Name "AppResourceGroupNames"
 
 #Primary Log Analytics Workspace info. This is mandatory. CA will send events to this WS.
-$LAWorkspaceId = Get-AutomationVariable -Name "LAWorkspaceId"
-$LAWorkspaceSharedKey = Get-AutomationVariable -Name "LAWSharedKey"
+#$LAWorkspaceId = Get-AutomationVariable -Name "LAWorkspaceId"
+#$LAWorkspaceSharedKey = Get-AutomationVariable -Name "LAWSharedKey"
+$LAWorkspaceId = Get-AutomationVariable -Name "OMSWorkspaceId"
+New-AzureRmAutomationVariable -AutomationAccountName $LAWorkspaceId.AutomationAccountName -Name "LAWorkspaceId" -Encrypted $False -Value $LAWorkspaceId.Value -ResourceGroupName $LAWorkspaceId.ResourceGroupName -ErrorAction SilentlyContinue
+Set-AzureRmAutomationVariable $LAWorkspaceId.AutomationAccountName -Name "LAWorkspaceId" -ResourceGroupName $LAWorkspaceId.ResourceGroupName -Description $LAWorkspaceId.Description -ErrorAction SilentlyContinue
+
+$LAWorkspaceSharedKey = Get-AutomationVariable -Name "OMSSharedKey"		
+New-AzureRmAutomationVariable -AutomationAccountName $LAWorkspaceSharedKey.AutomationAccountName -Name "LAWSharedKey" -Encrypted $False -Value $LAWorkspaceSharedKey.Value -ResourceGroupName $LAWorkspaceSharedKey.ResourceGroupName -ErrorAction SilentlyContinue
+Set-AzureRmAutomationVariable $LAWorkspaceSharedKey.AutomationAccountName -Name "LAWSharedKey" -ResourceGroupName $LAWorkspaceSharedKey.ResourceGroupName -Description $LAWorkspaceSharedKey.Description -ErrorAction SilentlyContinue
 
 #Secondary/alternate Log Analytics Workspace info. This is optional. Facilitates federal/state type models.
-$AltLAWorkspaceId = Get-AutomationVariable -Name "AltLAWorkspaceId" -ErrorAction SilentlyContinue
-$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltLAWSharedKey" -ErrorAction SilentlyContinue
+#$AltLAWorkspaceId = Get-AutomationVariable -Name "AltLAWorkspaceId" -ErrorAction SilentlyContinue
+#$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltLAWSharedKey" -ErrorAction SilentlyContinue
+$AltLAWorkspaceId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+New-AzureRmAutomationVariable -AutomationAccountName $AltLAWorkspaceId.AutomationAccountName -Name "AltLAWorkspaceId" -Encrypted $False -Value $AltLAWorkspaceId.Value -ResourceGroupName $AltLAWorkspaceId.ResourceGroupName -ErrorAction SilentlyContinue
+Set-AzureRmAutomationVariable $AltLAWorkspaceId.AutomationAccountName -Name "AltLAWorkspaceId" -ResourceGroupName $AltLAWorkspaceId.ResourceGroupName -Description $AltLAWorkspaceId.Description -ErrorAction SilentlyContinue
 
+$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
+New-AzureRmAutomationVariable -AutomationAccountName $AltLAWorkspaceSharedKey.AutomationAccountName -Name "AltLAWSharedKey" -Encrypted $False -Value $AltLAWorkspaceSharedKey.Value -ResourceGroupName $AltLAWorkspaceSharedKey.ResourceGroupName -ErrorAction SilentlyContinue
+Set-AzureRmAutomationVariable $AltLAWorkspaceSharedKey.AutomationAccountName -Name "AltLAWSharedKey" -ResourceGroupName $AltLAWorkspaceSharedKey.ResourceGroupName -Description $AltLAWorkspaceSharedKey.Description -ErrorAction SilentlyContinue
+	
 #CA can also optionally be configured to send events to a Webhook. 
 $WebhookUrl = Get-AutomationVariable -Name "WebhookUrl" -ErrorAction SilentlyContinue
 $WebhookAuthZHeaderName = Get-AutomationVariable -Name "WebhookAuthZHeaderName" -ErrorAction SilentlyContinue

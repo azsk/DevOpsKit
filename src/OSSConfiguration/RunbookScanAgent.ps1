@@ -42,7 +42,7 @@ function RunAzSKScan()
 	#set Log Analytics workspace settings
     if(-not [string]::IsNullOrWhiteSpace($LAWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($LAWorkspaceSharedKey))
 	{
-		Set-AzSKMonitoringSettings -LAWorkspaceID $LAWorkspaceId -LAWSharedKey $LAWorkspaceSharedKey -Source "CA"
+		Set-AzSKMonitoringSettings -LAWorkspaceId $LAWorkspaceId -LAWSharedKey $LAWorkspaceSharedKey -Source "CA"
 	}
 	#set alternate Log Analytics workspace if available
 	if(-not [string]::IsNullOrWhiteSpace($AltLAWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($AltLAWorkspaceSharedKey))
@@ -714,12 +714,27 @@ try
 		$ResourceGroupNames = Get-AutomationVariable -Name "AppResourceGroupNames"
 	
 		#Primary Log Analytics Workspace info. This is mandatory. CA will send events to this WS.
-		$LAWorkspaceId = Get-AutomationVariable -Name "LAWorkspaceId"
-		$LAWorkspaceSharedKey = Get-AutomationVariable -Name "LAWSharedKey"
-	
+		#$LAWorkspaceId = Get-AutomationVariable -Name "LAWorkspaceId"
+		#$LAWorkspaceSharedKey = Get-AutomationVariable -Name "LAWSharedKey"
+		$LAWorkspaceId = Get-AutomationVariable -Name "OMSWorkspaceId"
+		New-AzAutomationVariable -AutomationAccountName $LAWorkspaceId.AutomationAccountName -Name "LAWorkspaceId" -Encrypted $False -Value $LAWorkspaceId.Value -ResourceGroupName $LAWorkspaceId.ResourceGroupName -ErrorAction SilentlyContinue
+		Set-AzAutomationVariable $LAWorkspaceId.AutomationAccountName -Name "LAWorkspaceId" -ResourceGroupName $LAWorkspaceId.ResourceGroupName -Description $LAWorkspaceId.Description -ErrorAction SilentlyContinue
+
+		$LAWorkspaceSharedKey = Get-AutomationVariable -Name "OMSSharedKey"		
+		New-AzAutomationVariable -AutomationAccountName $LAWorkspaceSharedKey.AutomationAccountName -Name "LAWSharedKey" -Encrypted $False -Value $LAWorkspaceSharedKey.Value -ResourceGroupName $LAWorkspaceSharedKey.ResourceGroupName -ErrorAction SilentlyContinue
+		Set-AzAutomationVariable $LAWorkspaceSharedKey.AutomationAccountName -Name "LAWSharedKey" -ResourceGroupName $LAWorkspaceSharedKey.ResourceGroupName -Description $LAWorkspaceSharedKey.Description -ErrorAction SilentlyContinue
+
 		#Secondary/alternate Log Analytics Workspace info. This is optional. Facilitates federal/state type models.
-		$AltLAWorkspaceId = Get-AutomationVariable -Name "AltLAWorkspaceId" -ErrorAction SilentlyContinue
-		$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltLAWSharedKey" -ErrorAction SilentlyContinue
+		#$AltLAWorkspaceId = Get-AutomationVariable -Name "AltLAWorkspaceId" -ErrorAction SilentlyContinue
+		#$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltLAWSharedKey" -ErrorAction SilentlyContinue
+		$AltLAWorkspaceId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+		New-AzAutomationVariable -AutomationAccountName $AltLAWorkspaceId.AutomationAccountName -Name "AltLAWorkspaceId" -Encrypted $False -Value $AltLAWorkspaceId.Value -ResourceGroupName $AltLAWorkspaceId.ResourceGroupName -ErrorAction SilentlyContinue
+		Set-AzAutomationVariable $AltLAWorkspaceId.AutomationAccountName -Name "AltLAWorkspaceId" -ResourceGroupName $AltLAWorkspaceId.ResourceGroupName -Description $AltLAWorkspaceId.Description -ErrorAction SilentlyContinue
+
+		$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
+		New-AzAutomationVariable -AutomationAccountName $AltLAWorkspaceSharedKey.AutomationAccountName -Name "AltLAWSharedKey" -Encrypted $False -Value $AltLAWorkspaceSharedKey.Value -ResourceGroupName $AltLAWorkspaceSharedKey.ResourceGroupName -ErrorAction SilentlyContinue
+		Set-AzAutomationVariable $AltLAWorkspaceSharedKey.AutomationAccountName -Name "AltLAWSharedKey" -ResourceGroupName $AltLAWorkspaceSharedKey.ResourceGroupName -Description $AltLAWorkspaceSharedKey.Description -ErrorAction SilentlyContinue
+
 	
 		#CA can also optionally be configured to send events to a Webhook.
 		$WebhookUrl = Get-AutomationVariable -Name "WebhookUrl" -ErrorAction SilentlyContinue

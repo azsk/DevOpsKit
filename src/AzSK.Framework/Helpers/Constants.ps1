@@ -138,6 +138,10 @@ class Constants
 	#CA variables names
 	static [string] $AppResourceGroupNames = "AppResourceGroupNames"
 	static [string] $ReportsStorageAccountName = "ReportsStorageAccountName"
+	static [string] $OMSWorkspaceId = "OMSWorkspaceId"
+	static [string] $OMSSharedKey = "OMSSharedKey"
+	static [string] $AltOMSWorkspaceId = "AltOMSWorkspaceId"
+	static [string] $AltOMSSharedKey = "AltOMSSharedKey"
 	static [string] $LAWorkspaceId = "LAWorkspaceId"
 	static [string] $LAWSharedKey = "LAWSharedKey"
 	static [string] $AltLAWorkspaceId = "AltLAWorkspaceId"

@@ -211,11 +211,13 @@ Class LogAnalyticsHelper
 				if([string]::IsNullOrWhiteSpace($settings.LAWorkspaceId))
 				{
 					#Step 3: Get workspace id from automation account variables
-					$workspaceId = Get-AzAutomationVariable -ResourceGroupName $automationAccountDetails.ResourceGroupName -AutomationAccountName $automationAccountDetails.AutomationAccountName -Name "LAWorkspaceId" -ErrorAction SilentlyContinue
+					#$workspaceId = Get-AzAutomationVariable -ResourceGroupName $automationAccountDetails.ResourceGroupName -AutomationAccountName $automationAccountDetails.AutomationAccountName -Name "LAWorkspaceId" -ErrorAction SilentlyContinue
+					$workspaceId = Get-AzAutomationVariable -ResourceGroupName $automationAccountDetails.ResourceGroupName -AutomationAccountName $automationAccountDetails.AutomationAccountName -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
 					#Step 4: set workspace id and shared key in settings file
 					if($workspaceId)
 					{
-						$sharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccountDetails.ResourceGroupName -AutomationAccountName $automationAccountDetails.AutomationAccountName -Name "LAWSharedKey"						
+						#$sharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccountDetails.ResourceGroupName -AutomationAccountName $automationAccountDetails.AutomationAccountName -Name "LAWSharedKey"
+						$sharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccountDetails.ResourceGroupName -AutomationAccountName $automationAccountDetails.AutomationAccountName -Name "OMSSharedKey"
 						if([Helpers]::CheckMember($sharedKey,"Value") -and (-not [string]::IsNullOrWhiteSpace($sharedKey.Value)))
 						{
 							#Step 6: Assign it to AzSKSettings Object
@@ -234,11 +236,13 @@ Class LogAnalyticsHelper
 				if([string]::IsNullOrWhiteSpace($settings.AltLAWorkspaceId))
 				{
 					#Step 3: Get workspace id from automation account variables
-					$altWorkspaceId = Get-AzAutomationVariable -ResourceGroupName $automationAccountDetails.ResourceGroupName -AutomationAccountName $automationAccountDetails.AutomationAccountName -Name "AltLAWorkspaceId" -ErrorAction SilentlyContinue
+					#$altWorkspaceId = Get-AzAutomationVariable -ResourceGroupName $automationAccountDetails.ResourceGroupName -AutomationAccountName $automationAccountDetails.AutomationAccountName -Name "AltLAWorkspaceId" -ErrorAction SilentlyContinue
+					$altWorkspaceId = Get-AzAutomationVariable -ResourceGroupName $automationAccountDetails.ResourceGroupName -AutomationAccountName $automationAccountDetails.AutomationAccountName -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
 					#Step 4: set alt workspace id and alt shared key in settings file
 					if($altWorkspaceId)
 					{
-						$altSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccountDetails.ResourceGroupName -AutomationAccountName $automationAccountDetails.AutomationAccountName -Name "AltLAWSharedKey"						
+						#$altSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccountDetails.ResourceGroupName -AutomationAccountName $automationAccountDetails.AutomationAccountName -Name "AltLAWSharedKey"
+						$altSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccountDetails.ResourceGroupName -AutomationAccountName $automationAccountDetails.AutomationAccountName -Name "AltOMSSharedKey"
 						if([Helpers]::CheckMember($altSharedKey,"Value") -and (-not [string]::IsNullOrWhiteSpace($altSharedKey.Value)))
 						{
 							#Step 6: Assign it to AzSKSettings Object
