@@ -12,6 +12,8 @@ class SubscriptionCore: SVTBase
 	hidden [PSObject] $CurrentContext;
 	hidden [bool] $HasGraphAPIAccess;
 	hidden [PSObject] $MisConfiguredASCPolicies;
+	hidden [PSObject] $MisConfiguredOptionalASCPolicies;
+	hidden [PSObject] $AllMisConfiguredASCPolicies;
 	hidden [SecurityCenter] $SecurityCenterInstance;
 	hidden [string[]] $SubscriptionMandatoryTags = @();
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $PIMAssignments;
@@ -38,6 +40,7 @@ class SubscriptionCore: SVTBase
 		#Compute the policies ahead to get the security Contact Phone number and email id
 		$this.SecurityCenterInstance = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId,$false);
 		$this.MisConfiguredASCPolicies = $this.SecurityCenterInstance.CheckASCCompliance();
+		$this.MisConfiguredOptionalASCPolicies = $this.SecurityCenterInstance.CheckOptionalSecurityPolicySettings();
 
 		#Fetch AzSKRGTags
 		$azskRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
@@ -458,12 +461,19 @@ class SubscriptionCore: SVTBase
 		if ($this.SecurityCenterInstance)
 		{
 			#$controlResult.AddMessage([MessageData]::new("Security center policies must be configured with settings mentioned below:", $this.SecurityCenterInstance.Policy.properties));			
+			$this.AllMisConfiguredASCPolicies += $this.MisConfiguredOptionalASCPolicies;
+			$this.AllMisConfiguredASCPolicies += $this.MisConfiguredASCPolicies;
+
+			if(($this.AllMisConfiguredASCPolicies | Measure-Object).Count -ne 0)
+			{
+				$controlResult.SetStateData("Security Center misconfigured mandatory and optional policies", $this.AllMisConfiguredASCPolicies);
+			}
 
 			if(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0)
 			{
 				$controlResult.EnableFixControl = $true;
 
-				$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredASCPolicies);
+				#$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredASCPolicies);
 				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredASCPolicies));
 			}
 			# elseif(-not $this.SecurityCenterInstance.IsLatestVersion -and $this.SecurityCenterInstance.IsValidVersion)
