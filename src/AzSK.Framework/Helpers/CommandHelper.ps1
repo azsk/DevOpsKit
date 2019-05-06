@@ -158,18 +158,21 @@ class CommandHelper
             Noun = "AzSKOrganizationPolicy";
             ShortName = "IOP";
 			IsLatestRequired = $false;
+			IsOrgPolicyRequired = $false;
         },
 		[CommandDetails]@{
             Verb = "Update";
             Noun = "AzSKOrganizationPolicy";
             ShortName = "UOP";
 			IsLatestRequired = $false;
+			IsOrgPolicyRequired = $false;
 		},
 		[CommandDetails]@{
             Verb = "Get";
             Noun = "AzSKOrganizationPolicyStats";
             ShortName = "GOP";
 			IsLatestRequired = $false;
+			IsOrgPolicyRequired = $false;
         },
 		[CommandDetails]@{
             Verb = "Get";
