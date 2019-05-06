@@ -58,6 +58,7 @@ function Set-AzSKPIMConfiguration {
 		$DurationInHours,
 		
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ConvertPermanentAssignmentToPIM")]
         [ValidateNotNullOrEmpty()]
         [int]
         $DurationInDays,
@@ -87,7 +88,7 @@ function Set-AzSKPIMConfiguration {
 
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [ValidateNotNullOrEmpty()]
-        [ValidateSet("MatchingEligibleAssignments", "All")]
+        [ValidateSet("MatchingEligibleAssignments", "AllExceptMe")]
         [string]
         $RemoveAssignmentFor #Name to be finalized
 
@@ -111,7 +112,7 @@ function Set-AzSKPIMConfiguration {
                 $pimconfig.InvokeFunction($pimconfig.AssignPIMRole, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalName, $DurationInDays))
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'ConvertPermanentAssignmentToPIM') {
-                $pimconfig.InvokeFunction($pimconfig.TransitionFromPermanentRolesToPIM, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames))
+                $pimconfig.InvokeFunction($pimconfig.TransitionFromPermanentRolesToPIM, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays))
             }	
             elseif ($PSCmdlet.ParameterSetName -eq 'RemovePermanentAssignment') {
                 $pimconfig.InvokeFunction($pimconfig.RemovePermanentAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor))
@@ -164,8 +165,8 @@ function Get-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         [ValidateNotNullOrEmpty()]
-        [string]
-		$RoleName
+        [string[]]
+		$RoleNames
 
     )
     Begin {
@@ -182,17 +183,17 @@ function Get-AzSKPIMConfiguration {
 				$pimconfig.InvokeFunction($pimconfig.ListMyEligibleRoles)		
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'ListPermanentAssignments') {
-                $pimconfig.InvokeFunction($pimconfig.ListAssignment, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames $true))
+                $pimconfig.InvokeFunction($pimconfig.ListAssignment, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $true))
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'ListPIMAssignments') {
-                $pimconfig.InvokeFunction($pimconfig.ListAssignment, @($SubscriptionId, $ResourceGroupName, $ResourceName, $false))
+                $pimconfig.InvokeFunction($pimconfig.ListAssignment, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $false))
             }
             else {
 				
             }
         }
         catch {
-
+            $this.PublishGenericException($_);
         }
     }
     End {

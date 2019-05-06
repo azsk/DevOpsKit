@@ -30,8 +30,6 @@ class PIM: CommandBase {
     hidden [PSObject] MyJitAssignments() {
         $this.AcquireToken();    
         $urlme = $this.APIroot + "/roleAssignments?`$expand=linkedEligibleRoleAssignment,subject,roleDefinition(`$expand=resource)&`$filter=(subject/id%20eq%20%27$($this.UserId)%27)+and+(assignmentState%20eq%20%27Eligible%27)"
-    
-    
         $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $urlme -Method Get
         $assignments = ConvertFrom-Json $response.Content
         $assignments = $assignments.value 
@@ -216,27 +214,6 @@ class PIM: CommandBase {
     return $assignments
     }
 
-    #List Users
-    hidden [PSObject]  ListUsers($user_search) {
-        $url = $this.APIroot + "users?`$filter=startswith(displayName,'" + $user_search + "')"
-        #Write-Host $url
-
-        $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $url -Method Get
-        $users = ConvertFrom-Json $response.Content
-        $i = 0
-        $obj = @()
-        foreach ($user in $users.value) {
-            $item = New-Object psobject -Property @{
-                Id       = ++$i
-                UserId   = $user.id
-                UserName = $user.DisplayName
-            }
-            $obj = $obj + $item
-        }
-
-        return $obj
-    }
-
     #Activates the user
     hidden Activate($SubscriptionId, $ResourceGroupName, $ResourceName, $roleName, $Justification, $Duration) {
         $this.AcquireToken();
@@ -246,7 +223,7 @@ class PIM: CommandBase {
         if (($assignments | Measure-Object).Count -gt 0) {
             $matchingAssignment = $assignments | Where-Object { $_.OriginalId -eq $resource.ExternalId -and $_.RoleName -eq $roleName }
             if (($matchingAssignment | Measure-Object).Count -gt 0) {
-                $this.PublishCustomMessage("Requesting activation of your $($matchingAssignment.RoleName) role on $($matchingAssignment.ResourceName). ", [MessageType]::Update);
+                $this.PublishCustomMessage("Requesting activation of your [$($matchingAssignment.RoleName)] role on [$($matchingAssignment.ResourceName)]... ", [MessageType]::Default);
                 $resourceId = $matchingAssignment.ResourceId
                 $roleDefinitionId = $matchingAssignment.RoleId
                 $subjectId = $matchingAssignment.SubjectId
@@ -257,7 +234,7 @@ class PIM: CommandBase {
                 try {
                     $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $RequestActivationurl -Method Post -ContentType "application/json" -Body $postParams
                     if ($response.StatusCode -eq 201) {
-                        $this.PublishCustomMessage("Activation queued successfully ... ", [MessageType]::Update);
+                        $this.PublishCustomMessage("Activation queued successfully.", [MessageType]::Update);
                     }
                  
                 }
@@ -266,11 +243,11 @@ class PIM: CommandBase {
                 }
             }
             else {
-                $this.PublishCustomMessage(" No matching eligible role found for the current context", [MessageType]::Warning)
+                $this.PublishCustomMessage("No matching eligible role found for the current context", [MessageType]::Warning)
             }
         }    
         else {
-            $this.PublishCustomMessage(" No eligible role found for the current context", [MessageType]::Warning)
+            $this.PublishCustomMessage("No eligible role found for the current context", [MessageType]::Warning)
         }
     }
 
@@ -311,35 +288,34 @@ class PIM: CommandBase {
     }
 
     #List RoleAssignment
-    hidden [PSObject] ListAssignment($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $CheckPermanent,) {
-        #List and Pick resource
+    hidden ListAssignment($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $CheckPermanent) {
         $this.AcquireToken();
+        $criticalRoles = @();
+        $criticalRoles+= $this.ConvertToStringArray($RoleNames)
         $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName)
-
         $permanentAssignment = $null
-        if (($resources | Measure-Object).Count -gt 0) {
-       
+        if (($resources | Measure-Object).Count -gt 0) {       
             $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $CheckPermanent)
-            $Assignments = $roleAssignments | Where-Object {$_.MemberType -ne 'Inherited' -and $_.RoleName -in $RoleNames}
-            if (($Assignments | Measure-Object).Count -gt 0) {
-                $Assignments = $Assignments | Sort-Object -Property RoleName, Name 
+            $roleAssignments = $roleAssignments | Where-Object {$_.RoleName -in $criticalRoles -and $_.MemberType -ne 'Inherited'}
+            if (($roleAssignments | Measure-Object).Count -gt 0) {
+                $roleAssignments = $roleAssignments | Sort-Object -Property RoleName, Name 
                 $this.PublishCustomMessage("")
                 $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
-                $this.PublishCustomMessage($($Assignments | Format-Table -Property RoleName, UserName, ResourceType | Out-String), [MessageType]::Default)
+                $this.PublishCustomMessage($($roleAssignments | Format-Table -Property @{Label ="Role"; Expression = {$_.RoleName}}, PrincipalName, @{Label ="Type"; Expression = {$_.SubjectType}} | Out-String), [MessageType]::Default)
             }
             else {
                 if ($CheckPermanent) {
-                    $this.PublishCustomMessage(" No permanent assignments found for this combination.", [MessageType]::Warning);
+                    $this.PublishCustomMessage("No permanent assignments found for this combination.", [MessageType]::Warning);
                 }
                 else {
-                    $this.PublishCustomMessage(" No PIM eligible assignments found for this combination.", [MessageType]::Warning);
+                    $this.PublishCustomMessage("No PIM eligible assignments found for this combination.", [MessageType]::Warning);
                 }    
             }
         }
         else {
             $this.PublishCustomMessage("No active assignments found for the current logged in context.", [MessageType]::Warning )
         }
-        return $permanentAssignment;
+        
     }
 
     #Assign a user to Eligible Role
@@ -352,19 +328,18 @@ class PIM: CommandBase {
             $roleDefinitionId = ($roles | Where-Object { $_.RoleName -eq $RoleName }).RoleDefinitionId
             $users = $null
             $subjectId = "";
-            #Get Object Id of usesr by Name, and get input for allowed time of role assignment
             try {
                 $users = Get-AzADUser -UserPrincipalName $PrincipalName
             }
             catch {
-                $this.PublishCustomMessage("  Unable to fetch details of the principal name provided.", [MessageType]::Warning)
+                $this.PublishCustomMessage("Unable to fetch details of the principal name provided.", [MessageType]::Warning)
                 return;
             }
             if (($users | Measure-Object).Count -gt 0) {
                 $subjectId = $users.Id
             }
             else {
-                $this.PublishCustomMessage("  Unable to fetch details of the principal name provided.", [MessageType]::Error)
+                $this.PublishCustomMessage("Unable to fetch details of the principal name provided.", [MessageType]::Error)
                 return;
             }            
             $url = $this.APIroot + "/roleAssignmentRequests"
@@ -378,7 +353,7 @@ class PIM: CommandBase {
             try {
                 $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $url -Method Post -ContentType "application/json" -Body $postParams
                 if ($response.StatusCode -eq 201) {
-                    $this.PublishCustomMessage("Assignment request for $PrincipalName for the $RoleName role on $($resolvedResource.ResourceName) queued successfully ...", [MessageType]::Update);
+                    $this.PublishCustomMessage("Assignment request for [$PrincipalName] for the [$RoleName] role on [$($resolvedResource.ResourceName)] queued successfully ...", [MessageType]::Update);
                 }  
                 if ($response.StatusCode -eq 401) {
                     $this.PublishCustomMessage("You are not eligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
@@ -409,7 +384,7 @@ class PIM: CommandBase {
         }
     }
 
-    hidden TransitionFromPermanentRolesToPIM($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName) {
+    hidden TransitionFromPermanentRolesToPIM($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $DurationInDays) {
        
         $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName)
         if (($resolvedResource | Measure-Object).Count -gt 0) {    
@@ -418,33 +393,36 @@ class PIM: CommandBase {
             $role = ($roles | Where-Object { $_.RoleName -eq $RoleName })
             $roleDefinitionId = $role.RoleDefinitionId
             $CriticalRoles = $role.RoleName #$ControlSettings.CriticalPIMRoles 
-            $this.PublishCustomMessage("  Fetching permanent assignment for '$(($criticalRoles) -join ", ")' on $($resolvedResource.Type): $($resolvedResource.ResourceName )")
+            $this.PublishCustomMessage("Fetching permanent assignment for [$(($criticalRoles) -join ", ")] on [$($resolvedResource.Type)]-[$($resolvedResource.ResourceName )]")
             $permanentRoles = $this.ListAssignmentsWithFilter($resourceId, $true)
             if (($permanentRoles | Measure-Object).Count -gt 0) {
                 $permanentRolesForTransition = $permanentRoles | Where-Object { $_.SubjectType -eq 'User' -and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
                 if (($permanentRolesForTransition | Measure-Object).Count -gt 0) {    
-                    $this.PublishCustomMessage($($permanentRolesForTransition | Format-Table -AutoSize -Wrap UserName, ResourceName, ResourceType, RoleName | Out-String), [MessageType]::Default)
+                    $this.PublishCustomMessage($($permanentRolesForTransition | Format-Table -AutoSize -Wrap PrincipalName, ResourceName, ResourceType, RoleName | Out-String), [MessageType]::Default)
                     $this.PublishCustomMessage("");
-                    Write-Host "  For the above shown permanent assignments corresponding PIM roles will be assigned. Do you want to continue? (Y/N)" -ForegroundColor Yellow
+                    Write-Host "The role assignments shown above will be moved from 'permanent' to 'PIM'. Please confirm (Y/N): " -ForegroundColor Yellow
                     $ToContinue = Read-Host
                     if ($ToContinue -eq 'y') {               
-                        $Assignmenturl = $this.APIroot + "/roleAssignmentRequests"  
+                        $Assignmenturl = $this.APIroot + "/roleAssignmentRequests"
                         $roles = $this.ListRoles($resourceId)  
-                        Write-Host "  Enter the duration in days for role assignment" -ForegroundColor Cyan
-                        $ts = Read-Host;
+                        $ts = $DurationInDays;
+                        $totalPermanentAssignments = $permanentRolesForTransition.Count
+                        $this.PublishCustomMessage("Initiating PIM assignment for [$totalPermanentAssignments] permanent assignments...");
                         $permanentRolesForTransition | ForEach-Object {
+                            $i=1
                             $roleName = $_.RoleName
                             $roleDefinitionId = ($roles | Where-Object { $_.RoleName -eq $roleName }).RoleDefinitionId 
                             $subjectId = $_.SubjectId
+                            $PrincipalName = $_.PrincipalName
                             #$Scope= $_.OriginalId
                             $postParams = '{"assignmentState":"Eligible","type":"AdminAdd","reason":"Assign","roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $subjectId + '","schedule":{"startDateTime":"' + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","endDateTime":"' + ((get-date).AddDays($ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")) + '","type":"Once"}}'
                             try {
-                                $this.PublishCustomMessage("");
+                                
                                 $this.PublishCustomMessage([Constants]::SingleDashLine)
-                                $this.PublishCustomMessage("Requesting PIM assignment for '$($_.RoleName)' role for $($_.UserName) on $($_.ResourceType) '$($resolvedResource.ResourceName)'...");
+                                # $this.PublishCustomMessage("Requesting PIM assignment for [$($_.RoleName)' role for $($_.PrincipalName) on $($_.ResourceType) '$($resolvedResource.ResourceName)'...");
                                 $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $Assignmenturl -Method Post -ContentType "application/json" -Body $postParams
                                 if ($response.StatusCode -eq 201) {
-                                    $this.PublishCustomMessage("Assignment request queued successfully.", [MessageType]::Warning);
+                                    $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] Successfully requested PIM assignment for [$PrincipalName]", [MessageType]::Warning);
                                 }
                                 $this.PublishCustomMessage([Constants]::SingleDashLine)
                           
@@ -454,13 +432,13 @@ class PIM: CommandBase {
                                 $code = $_.ErrorDetails.Message | ConvertFrom-Json
                           
                                 if ($code.error.code -eq "RoleAssignmentExists") {
-                                    $this.PublishCustomMessage("  PIM Assignment for the above already exists.", [MessageType]::Default)
+                                    $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] PIM Assignment for [$PrincipalName] already exists.", [MessageType]::Default)
                                 }
                                 else {
                                     $this.PublishCustomMessage("$($code.error)", [MessageType]::Error)
                                 }
                             }         
-          
+                            $i++;
                         }#foreach
                       
                     }
@@ -469,11 +447,11 @@ class PIM: CommandBase {
                     }
                 }
                 else {
-                    $this.PublishCustomMessage(" No permanent assignments eligible for PIM assignment found.", [MessageType]::Warning);       
+                    $this.PublishCustomMessage("No permanent assignments eligible for PIM assignment found.", [MessageType]::Warning);       
                 }
             }
             else {
-                $this.PublishCustomMessage(" No permanent assignments found for this resource.", [MessageType]::Warning);       
+                $this.PublishCustomMessage("No permanent assignments found for this resource.", [MessageType]::Warning);       
             }
         }
 
@@ -486,8 +464,8 @@ class PIM: CommandBase {
         $resourceId = ($resolvedResource).ResourceId 
         $users = @();
         $CriticalRoles = $RoleName 
-        $this.PublishCustomMessage("  Fetching permanent assignment for '$(($criticalRoles) -join ", ")' role on $($resolvedResource.Type): $($resolvedResource.ResourceName )")
-        $this.PublishCustomMessage("Note: Assignments for the current context running the command will not be subjected to removal. ", [MessageType]::Warning)
+        $this.PublishCustomMessage("Note: This command will *not* remove your permanent assignment if one exists.", [MessageType]::Warning)
+        $this.PublishCustomMessage("Fetching permanent assignment for [$(($criticalRoles) -join ", ")] role on [$($resolvedResource.Type)]-[$($resolvedResource.ResourceName )]")
         $permanentRoles = $this.ListAssignmentsWithFilter($resourceId, $true)
         $eligibleAssignments = $this.ListAssignmentsWithFilter($resourceId, $false)
         $eligibleAssignments = $eligibleAssignments | Where-Object { $_.SubjectType -eq 'User' -and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
@@ -515,18 +493,18 @@ class PIM: CommandBase {
         }
     
     if (($users | Measure-Object).Count -gt 0) {
-                
-        
-        $this.PublishCustomMessage("Following user assignments would be removed. $($users | Format-Table -Property UserName, RoleName, OriginalId | Out-String)")
-        $this.PublishCustomMessage("");
-        Write-Host "Do you want to proceed? (Y/N)" -ForegroundColor Yellow
+        $totalRemovableAssignments = $users.Count      
+        $this.PublishCustomMessage($($users | Format-Table -Property PrincipalName, RoleName, OriginalId | Out-String),[MemberType]::Default)
+        $this.PublishCustomMessage("The role assignments shown above will be moved from 'permanent' to 'PIM'. Please confirm (Y/N): ")
         $userResp = Read-Host 
         if ($userResp -eq 'y') {
+            $i=0
+            $this.PublishCustomMessage("Initiating removal of [$totalRemovableAssignments] permanent assignments...")
             foreach ($user in $users) {
+                $i++;
                 $this.PublishCustomMessage([Constants]::SingleDashLine);
-                $this.PublishCustomMessage("Requesting removal of permanent assignment of'$($user.RoleName)' role for $($user.UserName) from $($user.OriginalId)")
                 Remove-AzRoleAssignment -SignInName $user.PrincipalName -RoleDefinitionName $user.RoleName -Scope $user.OriginalId
-                $this.PublishCustomMessage("Successfully removed permanent assignment", [MessageType]::Update )                
+                $this.PublishCustomMessage("[$i`/$totalRemovableAssignments]Successfully removed permanent assignment", [MessageType]::Update )                
                 $this.PublishCustomMessage([Constants]::SingleDashLine);
 
             }
@@ -566,8 +544,8 @@ class PIM: CommandBase {
                 $this.abortflow = 1;
                 return ;
             }
-            Write-Host "  Invalid input" -ForegroundColor Yellow
-            Write-Host "  Pick a valid # for resource type: " -ForegroundColor Cyan -NoNewline
+            Write-Host "Invalid input" -ForegroundColor Yellow
+            Write-Host "Pick a valid # for resource type: " -ForegroundColor Cyan -NoNewline
             $resourceTypeId = Read-Host       
         }
         $resourceId = $null
@@ -580,7 +558,7 @@ class PIM: CommandBase {
                     $this.abortflow = 1;
                     return;
                 }
-                Write-Host "  Invalid input" -ForegroundColor Yellow
+                Write-Host "Invalid input" -ForegroundColor Yellow
                 Write-Host "Please enter the resource group name for for which role settings are required to configured" -ForegroundColor Cyan
                 $rgname = Read-Host 
             }
@@ -590,15 +568,15 @@ class PIM: CommandBase {
         else {
        
             $this.PublishCustomMessage($($resources | Format-Table -AutoSize -Wrap @{Label = "#"; Expression = { $_.Id } }, ResourceName, Type, ExternalId | Out-String), [MessageType]::Default)
-            Write-Host "  Enter # for which role settings are required to configured" -ForegroundColor Cyan
+            Write-Host "Enter # for which role settings are required to configured" -ForegroundColor Cyan
             $res_choice = Read-Host 
             while ($res_choice -notin $resources.Id) {
                 if ($res_choice -eq 0) {                
                     $this.abortflow = 1;
                     return ;
                 }
-                Write-Host "  Invalid input" -ForegroundColor Yellow
-                Write-Host "  Pick a resource Id for assigment: " -ForegroundColor Cyan -NoNewline
+                Write-Host "Invalid input" -ForegroundColor Yellow
+                Write-Host "Pick a resource Id for assigment: " -ForegroundColor Cyan -NoNewline
                 $res_choice = Read-Host            
             }
             $resourceId = ($resources | Where-Object { $_.Id -eq $res_choice }).ResourceId 
@@ -611,15 +589,15 @@ class PIM: CommandBase {
         $this.PublishCustomMessage($($roles | Format-Table -AutoSize -Wrap Id, RoleName, RoleDefinitionId | Out-String), [MessageType]::Default)
         $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
         $this.PublishCustomMessage("")
-        Write-Host "  Pick a role Id: " -ForegroundColor Cyan -NoNewline
+        Write-Host "Pick a role Id: " -ForegroundColor Cyan -NoNewline
         $role_choice = Read-Host 
         while ($role_choice -notin $roles.Id) {
             if ($role_choice -eq 0) {
                 $this.abortflow = 1;
                 return;
             }
-            Write-Host "  Invalid input" -ForegroundColor Yellow
-            Write-Host "  Pick a role Id: " -ForegroundColor Cyan -NoNewline
+            Write-Host "Invalid input" -ForegroundColor Yellow
+            Write-Host "Pick a role Id: " -ForegroundColor Cyan -NoNewline
             $role_choice = Read-Host 
         }
         $roleDefinitionId = $roles[$role_choice - 1].RoleDefinitionId
@@ -635,12 +613,12 @@ class PIM: CommandBase {
             $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $url -Method Get
             $roleSettings = $response.Content | ConvertFrom-Json
             $ChosenRolesSetting = $roleSettings.value | Where-Object { $_.roleDefinitionId -eq $roleDefinitionId }
-            Write-Host "  Do you want to allow permanent eligible assignment for $roleName for Resource: $resourceName ? (Y/N) " -ForegroundColor Cyan
+            Write-Host "Do you want to allow permanent eligible assignment for $roleName for Resource: $resourceName ? (Y/N) " -ForegroundColor Cyan
             $allowPermanentEligibleAssignment = Read-Host
             # $roleSettings.
             $eligibleAdminDays = 90;
             if ($allowPermanentEligibleAssignment -eq 'y') {
-                Write-Host "  Enter the duration in days you want to expire eligible assignment" -ForegroundColor Cyan
+                Write-Host "Enter the duration in days you want to expire eligible assignment" -ForegroundColor Cyan
                 $eligibleAdminDays = Read-Host 
             }
             $eligibleAdminDaysInMin = $eligibleAdminDays * 1440
@@ -714,7 +692,7 @@ class PIM: CommandBase {
             if ($requireApprover -eq 'y') {
 
                 Write-Host "Enter the Approvers" -ForegroundColor Cyan
-                Write-Host "  Please enter the Principal Name ( e.g. 'xyz@contoso.com') of the approver: " -ForegroundColor Cyan -NoNewline
+                Write-Host "Please enter the Principal Name ( e.g. 'xyz@contoso.com') of the approver: " -ForegroundColor Cyan -NoNewline
                 $user_search = Read-Host 
                 try {
                     $users = Get-AzADUser -UserPrincipalName $user_search
@@ -724,7 +702,7 @@ class PIM: CommandBase {
                             return;
                         }
                         $this.PublishCustomMessage("Unable to fetch details of the principal name provided, please make sure to enter the correct values.", [MessageType]::Warning)
-                        Write-Host "  Please enter the Principal Name ( e.g. 'xyz@contoso.com') of the user to whom role has to be assigned: " -ForegroundColor Cyan -NoNewline
+                        Write-Host "Please enter the Principal Name ( e.g. 'xyz@contoso.com') of the user to whom role has to be assigned: " -ForegroundColor Cyan -NoNewline
                         $user_search = Read-Host 
                         $users = Get-AzADUser -UserPrincipalName $user_search
                     }
@@ -751,90 +729,6 @@ class PIM: CommandBase {
             $this.PublishCustomMessage($_)
         }
     }
-
-
-    #Show menu
-    ShowMenu() {
-        $this.PublishCustomMessage("")
-        $this.PublishCustomMessage("`n###################################################################################")
-        $this.PublishCustomMessage("")
-        $this.PublishCustomMessage("  PIM Assignment Menu")
-        $this.PublishCustomMessage("  1. List your eligible role assignments")
-        $this.PublishCustomMessage("  2. Activate an eligible role" )
-        $this.PublishCustomMessage("  3. Deactivate an active role" )
-        $this.PublishCustomMessage("  4. Assign a role to user" )
-        $this.PublishCustomMessage("  5. Check permanent access on subscription for a role")
-        $this.PublishCustomMessage("  6. Assign PIM roles to permanent assignments")
-        $this.PublishCustomMessage("  7. Remove permanent assignemnts for eligible assignments.")
-        # $this.PublishCustomMessage("  7. Configure role settings")
-        # $this.PublishCustomMessage("  0. Exit")
-        $this.PublishCustomMessage("")
-        $this.PublishCustomMessage("`n###################################################################################")
-        $this.PublishCustomMessage(" Note: Enter 0 during any stage to abort the PIM workflow. ", [MessageType]::Warning)
-    }
-
-    hidden [void] PIMScript() {
-        try {
-            $this.AcquireToken();
-        }
-        catch {
-            Write-Host "Unable to fetch access token. Run Connect-AzAccount -UseDeviceAuthentication and then execute this command." -ForegroundColor Red
-            return;
-        }  
-     
-        do {
-            $this.ShowMenu();
-            Write-Host " Enter your selection: " -ForegroundColor Cyan -NoNewline
-            $input = Read-Host 
-            switch ($input) {
-                '1' {
-                    $assignments = $this.MyJitAssignments()
-                    if (($assignments | Measure-Object).Count -gt 0) {
-                        $this.PublishCustomMessage("Role assignments:", [MessageType]::Default)
-                        $this.PublishCustomMessage("");
-                        $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
-                        $this.PublishCustomMessage(($assignments | Format-Table -AutoSize Id, RoleName, ResourceName, ResourceType, ExpirationDate | Out-String), [MessageType]::Default)
-                        $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
-                        $this.PublishCustomMessage("");
-                    }
-                    else {
-                        $this.PublishCustomMessage("No eligible roles found for the current login", [MessageType]::Warning);
-                    }
-                }
-                '2' {
-                    $this.Activate()
-                }
-                '3' {
-                    $this.Deactivate()
-                }
-                '4' {
-                    $this.AssignmentEligible()
-                }
-                '5' {
-                    $this.ListAssignment()
-                }
-                '6' {
-                    $this.TransitionFromPermanentRolesToPIM()
-                }
-                '7' {
-                    $this.RemovePermanentAssignments($null)
-                }
-                '8' {
-                    $this.ConfigureRoleSetting();
-                }
-                    
-            }
-            if ($this.abortflow) {
-                return;
-            }
-        }
-        until($input -lt 1 )
-    
-             
-    }     
-
-
-
 }
 
 class PIMResource {
