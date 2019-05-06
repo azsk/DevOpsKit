@@ -50,7 +50,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceADAuthentication",
         "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
-        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Authentication/Authorization --> turn on 'App Service Authentication' --> Click on 'Azure Active Directory' under Authentication Providers to configure the AAD authentication. Note: If you are implementing this control via code, then you can attest to the same and mark this as passed. Note: In case of Functions apps, AAD authentication is required only for 'Http Trigger' functions.",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Authentication/Authorization --> turn on 'App Service Authentication' --> Click on 'Azure Active Directory' under Authentication Providers to configure the AAD authentication. There will be a list of options to choose from under 'Action to take when request is not authenticated'. Please make sure that this value is not set to 'Allow Anonymous requests (no action)'. Note: If you are implementing this control via code, then you can attest to the same and mark this as passed. Note: In case of Functions apps, AAD authentication is required only for 'Http Trigger' functions.",
         "Tags": [
           "SDL",
           "TCP",
