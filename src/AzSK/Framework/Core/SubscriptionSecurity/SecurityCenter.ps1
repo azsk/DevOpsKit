@@ -4,6 +4,7 @@ class SecurityCenter: AzSKRoot
 {    	
 	[PSObject] $PolicyObject = $null;
 	[PSObject] $CurrentPolicyObject = $null;
+	[bool] $PolicyAPIFail = $false;
 	[string] $Off = "Off";
 	[string] $On = "On";
 	[string] $ContactPhoneNumber;
@@ -79,6 +80,7 @@ class SecurityCenter: AzSKRoot
 				$this.CurrentPolicyObject = Get-AzPolicyAssignment -Name $policyName
 			}
 			catch {
+				$this.PolicyAPIFail = $true;
 				#eat the exception as it would throw in non availability of policy
 			}			
 		}
@@ -323,7 +325,15 @@ class SecurityCenter: AzSKRoot
 			}
 		}elseif($null -eq $this.CurrentPolicyObject -and  $null -ne $this.PolicyObject.policySettings)
         {
-            $MisConfiguredPolicies += (" Mandatory ASC Policies are misconfigured");   
+			if($this.PolicyAPIFail)
+			{
+				$MisConfiguredPolicies += ("Mandatory ASC Policies information can't be fetched due to API access failure.");
+			}
+			else
+			{
+				$MisConfiguredPolicies += ("Mandatory ASC Policies are not configured");	
+			}
+               
         }
 		
 		return $MisConfiguredPolicies;		
@@ -347,7 +357,14 @@ class SecurityCenter: AzSKRoot
 		}
 	 	}elseif($null -eq $this.CurrentPolicyObject -and  $null -ne $this.PolicyObject.optionalPolicySettings)
          {
-             $MisConfiguredOptionalPolicies += ("Optional ASC Policies are misconfigured");   
+            if($this.PolicyAPIFail)
+			{
+				$MisConfiguredOptionalPolicies += ("Optional ASC Policies information can't be fetched due to API access failure.");
+			}
+			else
+			{
+				$MisConfiguredOptionalPolicies += ("Optional ASC Policies are not configured");	
+			}
          }
 	
 	 	return $MisConfiguredOptionalPolicies;		
