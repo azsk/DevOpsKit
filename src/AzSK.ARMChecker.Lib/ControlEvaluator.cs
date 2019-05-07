@@ -39,6 +39,8 @@ namespace AzSK.ARMChecker.Lib
                     return EvaluateItemCount(control, resource);
                 case ControlMatchType.ItemProperties:
                     return EvaluateItemProperties(control, resource);
+                case ControlMatchType.SecureParam:
+                    return EvaluateSecureParam(control, resource);
                 case ControlMatchType.StringLength:
                     return ControlResult.NotSupported(resource);
                 case ControlMatchType.StringWhitespace:
@@ -188,6 +190,37 @@ namespace AzSK.ARMChecker.Lib
             return result;
         }
 
+        private static ControlResult EvaluateSecureParam(ResourceControl control, JObject resource)
+        {
+            var result = ExtractSingleToken(control, resource, out string actual, out BooleanControlData match,false);
+            result.ExpectedValue = "Parameter type: SecureString";
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
+            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
+            string parameterType = null;
+            try
+            {
+                if (actual != null && actual.CheckIsParameter())
+                {
+                    var parameterKey = actual.GetParameterKey();
+                    if (parameterKey != null)
+                    {
+                        JObject innerParameters = _armTemplate["parameters"].Value<JObject>();
+                        parameterType = innerParameters.Properties().Where(p => p.Name == parameterKey).Select(p => p.Value["type"].Value<String>()).FirstOrDefault();
+                    }
+                }
+            }
+            catch(Exception)
+            {
+                 parameterType = null;
+                // No need to block execution, mark control as fail
+            }
+            if(parameterType.IsNotNullOrWhiteSpace() && parameterType.Equals("SecureString", StringComparison.OrdinalIgnoreCase))
+            {
+               result.VerificationResult = VerificationResult.Passed;
+            }
+            return result;
+        }
+
         private static ControlResult EvaluateVerifiableSingleToken(ResourceControl control, JObject resource)
         {
             var result = ExtractSingleToken(control, resource, out object actual, out BooleanControlData match);
@@ -216,7 +249,7 @@ namespace AzSK.ARMChecker.Lib
         }
 
         private static ControlResult ExtractSingleToken<TV, TM>(ResourceControl control, JObject resource, out TV actual,
-            out TM match)
+            out TM match, bool validateParameters = true)
         {
             JToken token = null;
             foreach (var jsonPath in control.JsonPath)
@@ -241,7 +274,7 @@ namespace AzSK.ARMChecker.Lib
                     var tokenValue = default(TV);
                     bool paramterValueFound = false;
                     // Check if current token is parameter 
-                    if (token.Value<String>().CheckIsParameter())
+                    if (validateParameters && token.Value<String>().CheckIsParameter())
                     {
                         var parameterKey = token.Value<String>().GetParameterKey();
                         if (parameterKey != null)
@@ -311,7 +344,7 @@ namespace AzSK.ARMChecker.Lib
                     var tokenValues = default(IEnumerable<TV>);
                     bool paramterValueFound = false;
                     // Check if current token is parameter 
-                    if (tokens.Values<TV>().First().ToString().CheckIsParameter())
+                    if (tokens.Values<TV>().FirstOrDefault() != null && tokens.Values<TV>().First().ToString().CheckIsParameter())
                     {
                         var parameterKey = tokens.Values<String>().First().GetParameterKey();
                         if (parameterKey != null)

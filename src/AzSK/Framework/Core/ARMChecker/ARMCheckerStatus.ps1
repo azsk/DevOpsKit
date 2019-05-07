@@ -125,7 +125,7 @@ class ARMCheckerStatus: EventBase
 		  if(-not([string]::IsNullOrEmpty($exemptControlListPath)) -and (Test-Path -path $exemptControlListPath -PathType Leaf))
 		  {
 		    $exemptControlListFile=Get-Content $exemptControlListPath | ConvertFrom-Csv
-	        $exemptControlList=$exemptControlListFile| where {$_.Status -eq "Failed"}
+	        $exemptControlList=$exemptControlListFile| where {$_.Status -eq "Failed" -or $_.Status -eq "Verify"}
 		  }
 		}catch{
 		    $this.WriteMessage("Unable to read file containing list of controls to skip, Please verify file path.", [MessageType]::Warning);
