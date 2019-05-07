@@ -343,7 +343,7 @@ Class LogAnalyticsHelper
 	}
 }
 
-Class LAWModel
+Class LogAnalyticsModel
 {
 	[string] $RunIdentifier
 	[string] $ResourceType 

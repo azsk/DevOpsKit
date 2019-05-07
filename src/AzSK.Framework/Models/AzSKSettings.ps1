@@ -103,6 +103,41 @@ class AzSKSettings {
 				$parsedSettings | Get-Member -MemberType Properties |
 					ForEach-Object {
 						$propertyName = $_.Name;
+
+						if($propertyName -eq "LAWorkspaceId" -or $propertyName -eq "LAWSharedKey" -or $propertyName -eq "AltLAWorkspaceId" -or $propertyName -eq "AltLAWSharedKey" -or $propertyName -eq "LAWType" -or $propertyName -eq "LAWSource")
+						{
+							switch($propertyName)
+							{
+								"LAWorkspaceId"{
+									$newSetting = "OMSWorkspaceId"
+									break;
+								}
+								"LAWSharedKey"{
+									$newSetting = "OMSSharedKey"
+									break;
+								}
+								"AltLAWorkspaceId"{
+									$newSetting = "AltOMSWorkspaceId"
+									break;
+								}
+								"AltLAWSharedKey"{
+									$newSetting = "AltOMSSharedKey"
+									break;
+								}
+								"LAWType"{
+									$newSetting = "OMSType"
+									break;
+								}
+								"LAWSource"{
+									$newSetting = "OMSSource"
+									break;
+								}								
+							}
+
+							$parsedSettings.$propertyName = $localAppDataSettings.$newSetting
+							$migratedPropNames += $newSetting;
+						}
+
 						if([Helpers]::CheckMember($localAppDataSettings, $propertyName))
 						{
 							$parsedSettings.$propertyName = $localAppDataSettings.$propertyName;

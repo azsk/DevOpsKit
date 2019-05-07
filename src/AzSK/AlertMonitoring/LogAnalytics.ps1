@@ -24,30 +24,31 @@ function Set-AzSKMonitoringSettings
 	https://aka.ms/azskossdocs 
 
 	#>
+	[Alias("Set-AzSKOMSSettings")]
 	param(
         
 		[Parameter(Mandatory = $false, HelpMessage="Workspace Id of your Log Analytics instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("wid")]
+		[Alias("wid","OMSWorkspaceID")]
         $WorkspaceId,
 
         [Parameter(Mandatory = $false, HelpMessage="Shared key of your Log Analytics instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("wkey")]
+		[Alias("wkey","OMSSharedKey")]
         $SharedKey,
 
 		[Parameter(Mandatory = $false, HelpMessage="Workspace Id of your alternate Log Analytics instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("awid")]
+		[Alias("awid","AltOMSWorkspaceID")]
         $AltWorkspaceId,
 
         [Parameter(Mandatory = $false, HelpMessage="Shared key of your alternate Log Analytics instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("awkey")]
+		[Alias("awkey","AltOMSSharedKey")]
         $AltSharedKey,
 
 		[Parameter(Mandatory = $false, HelpMessage="Provide the source of Log Analytics Events.(e.g. CC,CICD,SDL)", ParameterSetName = "Setup")]
@@ -157,22 +158,23 @@ function Install-AzSKMonitoringSolution
 	https://aka.ms/azskossdocs
 
 	#>
+	[Alias("Install-AzSKOMSSolution")]
     param(
         [Parameter(ParameterSetName="NewModel", HelpMessage="Id of subscription hosting Log Analytics workspace", Mandatory = $true)]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("lawsubid","lawsid")]
+		[Alias("lawsubid","lawsid","OMSSubscriptionId")]
 		$LAWSubscriptionId,  
 				
 		[Parameter(ParameterSetName="NewModel", HelpMessage="Resource group hosting Log Analytics workspace", Mandatory = $true)]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("lawrg")]
+		[Alias("lawrg","OMSResourceGroup")]
 		$LAWResourceGroup, 
 
 		[Parameter(ParameterSetName="NewModel", HelpMessage="Workspace ID of the Log Analytics workspace which will be used for monitoring.", Mandatory = $true)]
         [string]
-		[Alias("wid")]
+		[Alias("wid","OMSWorkspaceId")]
 		[ValidateNotNullOrEmpty()]
 		$WorkspaceId, 
 		

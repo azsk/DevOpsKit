@@ -105,11 +105,13 @@
         'Get-AzSKSubscriptionSecurityStatus',
         'Get-AzSKExpressRouteNetworkSecurityStatus',
         'Get-AzSKControlsStatus',
+        'Set-AzSKOMSSettings'
         'Set-AzSKMonitoringSettings',
         'Set-AzSKEventHubSettings',
         'Set-AzSKWebhookSettings',
         'Set-AzSKUsageTelemetryLevel',
         'Set-AzSKLocalAIOrgTelemetrySettings',
+        'Install-AzSKOMSSolution',
         'Install-AzSKMonitoringSolution',
         'Install-AzSKContinuousAssurance',
         'Update-AzSKContinuousAssurance',        
