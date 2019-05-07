@@ -341,7 +341,7 @@ class CommandBase: AzSKRoot {
 		$tagsOnSub =  [Helpers]::GetResourceGroupTags($AzSKConfigData.AzSKRGName)
 		$IsTagSettingRequired = $false
 		$commandMetadata= $this.GetCommandMetadata()
-		if(([Helpers]::CheckMember($commandMetadata,"IsOrgPolicyRequired")) -and  $commandMetadata.IsOrgPolicyRequired)
+		if(([Helpers]::CheckMember($commandMetadata,"IsOrgPolicyMandatory")) -and  $commandMetadata.IsOrgPolicyMandatory)
 		{
 			if($tagsOnSub)
 			{
