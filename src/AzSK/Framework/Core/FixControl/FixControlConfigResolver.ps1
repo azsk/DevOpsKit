@@ -185,7 +185,7 @@ class FixControlConfigResolver: EventBase
 			{
 				$this.PublishCustomMessage("Saving the parameter file with the input values...");
 				$this.ConfigFilePath = $this.FolderPath + "\FixControlConfig-" + $this.GenerateRunIdentifier() + ".json";
-				[Helpers]::ConvertToJsonCustom($this.FixControlResult, 15, 15) | Out-File $this.ConfigFilePath
+				[JsonHelper]::ConvertToJsonCustom($this.FixControlResult, 15, 15) | Out-File $this.ConfigFilePath
 				$this.PublishCustomMessage("Parameter file has been saved to: '$($this.ConfigFilePath)'");
 			}
 			else

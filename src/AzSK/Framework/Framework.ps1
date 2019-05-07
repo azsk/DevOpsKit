@@ -21,8 +21,9 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Models\FeatureFlight.ps1
 . $FrameworkPath\Helpers\CommandHelper.ps1
 . $FrameworkPath\Abstracts\EventBase.ps1
+. $FrameworkPath\Helpers\JsonHelper.ps1
 . $FrameworkPath\Helpers\Helpers.ps1
-
+. $FrameworkPath\Helpers\ContextHelper.ps1
 #Helpers (independent of models)
 
 . $FrameworkPath\Helpers\ConfigurationHelper.ps1
@@ -50,7 +51,8 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 #Helpers
 . $FrameworkPath\Helpers\Helpers.ps1
-
+. $FrameworkPath\Managers\ConfigurationManager.ps1
+. $FrameworkPath\Helpers\ResourceHelper.ps1
 . $FrameworkPath\Helpers\WebRequestHelper.ps1
 . $FrameworkPath\Helpers\ActiveDirectoryHelper.ps1
 . $FrameworkPath\Helpers\RoleAssignmentHelper.ps1
@@ -63,7 +65,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 
 #Managers
-. $FrameworkPath\Managers\ConfigurationManager.ps1
+
 . $FrameworkPath\Managers\FeatureFlightingManager.ps1
 . $FrameworkPath\Helpers\AzHelper.ps1
 . $FrameworkPath\Managers\ControlStateExtension.ps1
@@ -87,7 +89,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Abstracts\ListenerBase.ps1
 . $FrameworkPath\Abstracts\FileOutputBase.ps1
 
-. $FrameworkPath\Helpers\ResourceHelper.ps1
+
 . $FrameworkPath\Helpers\UserSubscriptionDataHelper.ps1
 . $FrameworkPath\Abstracts\ComplianceBase.ps1
 . $FrameworkPath\Helpers\ComplianceReportHelper.ps1

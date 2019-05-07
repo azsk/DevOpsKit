@@ -267,7 +267,7 @@ class PartialScanManager
 			}
 
 			$masterFilePath = "$AzSKTemp\$($($this.ResourceScanTrackerBlobName).Replace('/','\'))"
-			[Helpers]::ConvertToJsonCustom($this.ResourceScanTrackerObj) | Out-File $masterFilePath -Force
+			[JsonHelper]::ConvertToJsonCustom($this.ResourceScanTrackerObj) | Out-File $masterFilePath -Force
 			[AzHelper]::UploadStorageBlobContent($masterFilePath, "$($this.ResourceScanTrackerBlobName)", $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)		
 		    #Set-AzStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "$($this.ResourceScanTrackerBlobName)" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
 		}

@@ -584,7 +584,7 @@ class PolicySetup: CommandBase
 
 			New-AzResourceGroupDeployment -Name "MonitoringDashboard" -TemplateFile $MonitoringDashboardTemplatePath   -ResourceGroupName $($this.ResourceGroupName) -TemplateParameterObject $parameters   
 			$this.PublishCustomMessage("Successfully created monitoring dashboard. It lets you monitor the operations for various DevOps Kit workflows at your org.(e.g., CA issues, anomalous control drifts, evaluation errors, etc.). You can access it through this link: ", [MessageType]::Update);
-			$rmContext = [Helpers]::GetCurrentRMContext();
+			$rmContext = [ContextHelper]::GetCurrentRMContext();
 			$tenantId = $rmContext.Tenant.Id
 			$this.PublishCustomMessage("https://ms.portal.azure.com/#$($tenantId)/dashboard/arm/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($this.ResourceGroupName)/providers/microsoft.portal/dashboards/devopskitmonitoring",[MessageType]::Update)
 			$this.PublishCustomMessage('If you are not able to see monitoring dashboard with help of above link. You can navigate to below path `n Go to Azure Portal --> Select "Browse all dashboards" in dashboard dropdown --> Select type "Shared Dashboard" --> Select subscription where policy is setup -->Select "DevOps Kit Monitoring Dashboard [OrgName]"')
@@ -1244,7 +1244,7 @@ class PolicySetup: CommandBase
 			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
 			$validatedUri = $ResourceAppIdURI+"subscriptions/$subscriptionId/resourceGroups/$caResourceGroupName/providers/Microsoft.Automation/automationAccounts/$automationAccountName/runbooks/$runbookName/content?api-version=2015-10-31"
 			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-			$accessToken=[Helpers]::GetAccessToken($ResourceAppIdURI)
+			$accessToken=[ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			$serverFileContent = Invoke-RestMethod `
 												-Method GET `
 												-Uri $validatedUri `

@@ -111,7 +111,7 @@ class ComplianceReportHelper: ComplianceBase
 			$CanonicalizedResource = "/$AccountName/$TableName()"
 			$SigningParts=@($Verb,$ContentMD5,$ContentType,$Date,$CanonicalizedResource)
 			$StringToSign = [String]::Join("`n",$SigningParts)
-			$sharedKey = [Helpers]::CreateStorageAccountSharedKey($StringToSign,$AccountName,$AccessKey)
+			$sharedKey = [StorageHelper]::CreateStorageAccountSharedKey($StringToSign,$AccountName,$AccessKey)
 
 			$xmsdate = $Date
 			$headers = @{"Accept"="application/json";"x-ms-date"=$xmsdate;"Authorization"="SharedKey $sharedKey";"x-ms-version"="2018-03-28"}
@@ -221,7 +221,7 @@ class ComplianceReportHelper: ComplianceBase
 			}
 			
 			$scanResult.IsControlInGrace=$currentSVTResult.IsControlInGrace
-			$scanResult.ScannedBy = [Helpers]::GetCurrentRMContext().Account
+			$scanResult.ScannedBy = [ContextHelper]::GetCurrentRMContext().Account
 			$scanResult.ScanSource = $this.ScanSource
 			$scanResult.ScannerVersion = $this.ScannerVersion
 			#TODO check in the case sub control					

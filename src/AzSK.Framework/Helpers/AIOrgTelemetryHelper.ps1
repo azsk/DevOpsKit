@@ -171,7 +171,7 @@ class AIOrgTelemetryHelper {
 			}
             try 
 			{
-                $azureContext = [Helpers]::GetCurrentRMContext()
+                $azureContext = [ContextHelper]::GetCurrentRMContext()
                 try 
 				{
                     $Properties.Add([TelemetryKeys]::SubscriptionId, $azureContext.Subscription.Id)
@@ -281,7 +281,7 @@ class AIOrgTelemetryHelper {
             $Properties.Add("Param" + $_, $value)
             $params.Add("$_", $value)
         }
-        $Properties.Add("Params", [Helpers]::ConvertToJsonCustomCompressed($params))
+        $Properties.Add("Params", [JsonHelper]::ConvertToJsonCustomCompressed($params))
         $loadedModules = Get-Module | ForEach-Object { $_.Name + "=" + $_.Version.ToString()}
         $Properties.Add("LoadedModules" , ($loadedModules -join ';'))
         return $Properties;
@@ -406,7 +406,7 @@ class AIOrgTelemetryHelper {
 		try{
 		$EventObj.data.baseData.properties.Add("SubscriptionId",[AIOrgTelemetryHelper]::CommonProperties.SubscriptionId)
 		$EventObj.data.baseData.properties.Add("SubscriptionName",[AIOrgTelemetryHelper]::CommonProperties.SubscriptionName)		
-		$azureContext = [Helpers]::GetCurrentRMContext()
+		$azureContext = [ContextHelper]::GetCurrentRMContext()
 		$EventObj.data.baseData.properties.Add("TenantId", $azureContext.Tenant.Id)
 		$EventObj.data.baseData.properties.Add("AccountId", $azureContext.Account.Id)
 		}

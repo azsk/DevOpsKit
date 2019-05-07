@@ -351,7 +351,7 @@ class VirtualMachine: SVTBase
 					$currentVulnExtensionVersion = $null
 					try {
 						$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
-						$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+						$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 						$header = "Bearer " + $AccessToken
 						$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
 						$propertiesToReplace = @{}
@@ -403,7 +403,7 @@ class VirtualMachine: SVTBase
 			
 			
             $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
-			$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+			$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			$header = "Bearer " + $AccessToken
 			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
 			$propertiesToReplace = @{}
@@ -751,7 +751,7 @@ class VirtualMachine: SVTBase
 		$activeRecommendations = @()
 		$ASCWhitelistedRecommendations = @();
 		$ASCWhitelistedRecommendations += $this.VMControlSettings.ASCRecommendations;
-		#[Helpers]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
+		#[ResourceHelper]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
 		$tasks = [SecurityCenterHelper]::InvokeGetASCTasks($this.SubscriptionContext.SubscriptionId);
         $found = $false;
 		if($null -ne $ASCWhitelistedRecommendations -and $null -ne $tasks)

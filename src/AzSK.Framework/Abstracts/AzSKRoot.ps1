@@ -28,7 +28,7 @@ class AzSKRoot: EventBase
     
     hidden [void] SetAzureContext()
     {
-		$currentContext = [Helpers]::GetCurrentRMContext()
+		$currentContext = [ContextHelper]::GetCurrentRMContext()
 
         if((-not $currentContext) -or ($currentContext -and ((-not $currentContext.Subscription -and ($this.SubscriptionContext.SubscriptionId -ne [Constants]::BlankSubscriptionId)) `
 				-or -not $currentContext.Account)))
@@ -68,8 +68,8 @@ class AzSKRoot: EventBase
 				{
 					throw [SuppressedException] ("Invalid Subscription Id [" + $this.SubscriptionContext.SubscriptionId + "]") 
 				}
-				[Helpers]::ResetCurrentRMContext()
-				[Helpers]::GetCurrentRMContext()
+				[ContextHelper]::ResetCurrentRMContext()
+				[ContextHelper]::GetCurrentRMContext()
 			}
 			elseif(($currentContext.Subscription.Id -ne $this.SubscriptionContext.SubscriptionId) -and ($this.SubscriptionContext.SubscriptionId -eq [Constants]::BlankSubscriptionId))
 			{
@@ -199,7 +199,7 @@ class AzSKRoot: EventBase
 	[bool] IsLatestVersionConfiguredOnSub([String] $ConfigVersion,[string] $TagName)
 	{
 		$IsLatestVersionPresent = $false
-		$tagsOnSub =  [Helpers]::GetResourceGroupTags([ConfigurationManager]::GetAzSKConfigData().AzSKRGName) 
+		$tagsOnSub =  [ResourceGroupHelper]::GetResourceGroupTags([ConfigurationManager]::GetAzSKConfigData().AzSKRGName) 
 		if($tagsOnSub)
 		{
 			$SubConfigVersion= $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -eq $TagName -and $_.Value -eq $ConfigVersion}

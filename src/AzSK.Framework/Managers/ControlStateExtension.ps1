@@ -38,7 +38,7 @@ class ControlStateExtension
 		$resourceGroup = Get-AzResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
 		if($createIfNotExists -and ($null -eq $resourceGroup -or ($resourceGroup | Measure-Object).Count -eq 0))
 		{
-			if([Helpers]::NewAzSKResourceGroup($azSKConfigData.AzSKRGName, $azSKConfigData.AzSKLocation, ""))
+			if([ResourceGroupHelper]::NewAzSKResourceGroup($azSKConfigData.AzSKRGName, $azSKConfigData.AzSKLocation, ""))
 			{
 				$resourceGroup = Get-AzResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
 			}
@@ -76,7 +76,7 @@ class ControlStateExtension
 			if($createIfNotExists -and ($null -eq $StorageAccount -or ($StorageAccount | Measure-Object).Count -eq 0))
 			{
 				$storageAccountName = ("azsk" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"));	
-				$storageObject = [Helpers]::NewAzskCompliantStorage($storageAccountName, $this.AzSKResourceGroup.ResourceGroupName, $azSKConfigData.AzSKLocation)
+				$storageObject = [StorageHelper]::NewAzskCompliantStorage($storageAccountName, $this.AzSKResourceGroup.ResourceGroupName, $azSKConfigData.AzSKLocation)
 				if($null -ne $storageObject -and ($storageObject | Measure-Object).Count -gt 0)
 				{
 					$loopValue = $this.retryCount;
@@ -384,12 +384,12 @@ class ControlStateExtension
 		}
 		if(($finalControlStates|Measure-Object).Count -gt 0)
 		{
-			[Helpers]::ConvertToJsonCustom($finalControlStates) | Out-File $fileName -Force		
+			[JsonHelper]::ConvertToJsonCustom($finalControlStates) | Out-File $fileName -Force		
 		}
 
 		if($null -ne $this.ControlStateIndexer)
 		{				
-			[Helpers]::ConvertToJsonCustom($this.ControlStateIndexer) | Out-File $indexerPath -Force
+			[JsonHelper]::ConvertToJsonCustom($this.ControlStateIndexer) | Out-File $indexerPath -Force
 			$controlStateArray = Get-ChildItem -Path "$AzSKTemp\ControlState"				
 			$controlStateArray | ForEach-Object {
 				$state = $_;
@@ -444,7 +444,7 @@ class ControlStateExtension
 		$this.UpdateControlIndexer($id, $null, $true);
 		if($null -ne $this.ControlStateIndexer)
 		{				
-			[Helpers]::ConvertToJsonCustom($this.ControlStateIndexer) | Out-File $indexerPath -Force
+			[JsonHelper]::ConvertToJsonCustom($this.ControlStateIndexer) | Out-File $indexerPath -Force
 			$controlStateArray = Get-ChildItem -Path "$AzSKTemp\ControlState"				
 			$controlStateArray | ForEach-Object {
 				$state = $_
@@ -586,7 +586,7 @@ class ControlStateExtension
 						$currentIndexObject = $filteredIndexerObject | Select-Object -Last 1
 					}					
 					$currentIndexObject.ExpiryTime = [DateTime]::UtcNow.AddMonths(3);
-					$currentIndexObject.AttestedBy =  [Helpers]::GetCurrentSessionUser();
+					$currentIndexObject.AttestedBy =  [ContextHelper]::GetCurrentSessionUser();
 					$currentIndexObject.AttestedDate = [DateTime]::UtcNow;
 					$currentIndexObject.Version = "1.0";
 				}
@@ -596,7 +596,7 @@ class ControlStateExtension
 					$currentIndexObject.ResourceId = $id
 					$currentIndexObject.HashId = $tempHash;
 					$currentIndexObject.ExpiryTime = [DateTime]::UtcNow.AddMonths(3);
-					$currentIndexObject.AttestedBy = [Helpers]::GetCurrentSessionUser();
+					$currentIndexObject.AttestedBy = [ContextHelper]::GetCurrentSessionUser();
 					$currentIndexObject.AttestedDate = [DateTime]::UtcNow;
 					$currentIndexObject.Version = "1.0";
 				}

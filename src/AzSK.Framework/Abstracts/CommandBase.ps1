@@ -88,7 +88,7 @@ class CommandBase: AzSKRoot {
         }
 
 		# Reset cached context
-		[Helpers]::ResetCurrentRMContext()
+		[ContextHelper]::ResetCurrentRMContext()
 
         $this.PublishRunIdentifier($this.InvocationContext);
 		[AIOrgTelemetryHelper]::TrackCommandExecution("Command Started",
@@ -338,7 +338,7 @@ class CommandBase: AzSKRoot {
 	[bool] ValidateOrgPolicyOnSubscription([bool] $Force)
 	{
 		$AzSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
-		$tagsOnSub =  [Helpers]::GetResourceGroupTags($AzSKConfigData.AzSKRGName)
+		$tagsOnSub =  [ResourceGroupHelper]::GetResourceGroupTags($AzSKConfigData.AzSKRGName)
 		$IsTagSettingRequired = $false 
 		if($tagsOnSub)
 		{
@@ -379,7 +379,7 @@ class CommandBase: AzSKRoot {
 		try
 		{
 			$AzSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
-			$tagsOnSub =  [Helpers]::GetResourceGroupTags($AzSKConfigData.AzSKRGName) 
+			$tagsOnSub =  [ResourceGroupHelper]::GetResourceGroupTags($AzSKConfigData.AzSKRGName) 
 			if($tagsOnSub)
 			{
 				$SubOrgTag= $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -like "AzSKOrgName*"}			
@@ -390,7 +390,7 @@ class CommandBase: AzSKRoot {
 					if(($SubOrgTag | Measure-Object).Count -gt 0)
 					{
 						$SubOrgTag | ForEach-Object{
-							[Helpers]::SetResourceGroupTags($AzSKConfigData.AzSKRGName,@{$_.Name=$_.Value}, $true)               
+							[ResourceGroupHelper]::SetResourceGroupTags($AzSKConfigData.AzSKRGName,@{$_.Name=$_.Value}, $true)               
 						}
 					}
 					$TagName = [Constants]::OrgPolicyTagPrefix +$AzSKConfigData.PolicyOrgName
@@ -399,7 +399,7 @@ class CommandBase: AzSKRoot {
 					{
 						$SupportMail = "Not Available"
 					}   
-					[Helpers]::SetResourceGroupTags($AzSKConfigData.AzSKRGName,@{$TagName=$SupportMail}, $false)                
+					[ResourceGroupHelper]::SetResourceGroupTags($AzSKConfigData.AzSKRGName,@{$TagName=$SupportMail}, $false)                
 									
 				}
                 					

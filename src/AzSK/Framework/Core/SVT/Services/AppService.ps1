@@ -128,7 +128,7 @@ class AppService: SVTBase
 			if([Helpers]::CheckMember($this.ResourceObject, "Kind") -and ($this.ResourceObject.Kind -eq "functionapp"))
 			{
 				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+				$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 				$authorisationToken = "Bearer " + $accessToken
 				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
 
@@ -497,7 +497,7 @@ class AppService: SVTBase
 				else
 			{
 				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+				$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 				$authorisationToken = "Bearer " + $accessToken
 				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
 				if([Helpers]::CheckMember($this.WebAppDetails,"EnabledHostNames"))
@@ -655,7 +655,7 @@ class AppService: SVTBase
 		else
 		{
 		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-		$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		$authorisationToken = "Bearer " + $accessToken
 		$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
 		if([Helpers]::CheckMember($this.WebAppDetails,"EnabledHostNames"))

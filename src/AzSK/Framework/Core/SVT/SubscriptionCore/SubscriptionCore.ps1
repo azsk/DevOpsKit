@@ -27,7 +27,7 @@ class SubscriptionCore: SVTBase
 	hidden [void] GetResourceObject()
 	{
 		$this.ASCSettings = [AzureSecurityCenter]::new()
-		$this.CurrentContext = [Helpers]::GetCurrentRMContext();
+		$this.CurrentContext = [ContextHelper]::GetCurrentRMContext();
 		$this.MandatoryAccounts = $null
 		$this.RoleAssignments = $null
 		$this.ApprovedAdmins = $null
@@ -41,7 +41,7 @@ class SubscriptionCore: SVTBase
 
 		#Fetch AzSKRGTags
 		$azskRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-		$azskRGTags = [Helpers]::GetResourceGroupTags($azskRG) ;
+		$azskRGTags = [ResourceGroupHelper]::GetResourceGroupTags($azskRG) ;
 
 		[hashtable] $subscriptionMetada = @{}
 		$subscriptionMetada.Add("HasGraphAccess",$this.HasGraphAPIAccess);
@@ -321,7 +321,7 @@ class SubscriptionCore: SVTBase
 			$serviceAccounts = @()
 			if($null -ne $this.CurrentContext)
 			{
-				$GraphAccessToken = [Helpers]::GetAccessToken([WebRequestHelper]::GraphAPIUri)
+				$GraphAccessToken = [ContextHelper]::GetAccessToken([WebRequestHelper]::GraphAPIUri)
 			}
 
 			$uniqueUsers = @();
@@ -579,7 +579,7 @@ class SubscriptionCore: SVTBase
 		[string] $CurrentVersion = "0.0.0";
 		[string] $LatestVersion = "0.0.0";
 		$AzSKRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-		# $CurrentVersion = [Helpers]::GetResourceGroupTag($AzSKRG, [Constants]::ARMPolicyConfigVersionTagName)
+		# $CurrentVersion = [ResourceGroupHelper]::GetResourceGroupTag($AzSKRG, [Constants]::ARMPolicyConfigVersionTagName)
 		# if([string]::IsNullOrWhiteSpace($CurrentVersion))
 		# {
 		# 	$CurrentVersion = "0.0.0"
@@ -625,7 +625,7 @@ class SubscriptionCore: SVTBase
 		[string] $CurrentVersion = "0.0.0";
 		[string] $LatestVersion = "0.0.0";
 		$AlertsPkgRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-		$CurrentVersion = [Helpers]::GetResourceGroupTag($AlertsPkgRG, [Constants]::AzSKAlertsVersionTagName)
+		$CurrentVersion = [ResourceGroupHelper]::GetResourceGroupTag($AlertsPkgRG, [Constants]::AzSKAlertsVersionTagName)
 		if([string]::IsNullOrWhiteSpace($CurrentVersion))
 		{
 			$CurrentVersion = "0.0.0"
@@ -1128,7 +1128,7 @@ class SubscriptionCore: SVTBase
 	hidden [void] GetManagementCertificates()
 	{
 		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-		$ClassicAccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$ClassicAccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		if($null -ne $ClassicAccessToken)
 		{
 			$header = "Bearer " + $ClassicAccessToken
@@ -1153,7 +1153,7 @@ class SubscriptionCore: SVTBase
 	hidden [void] GetASCAlerts()
 	{
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		if($null -ne $AccessToken)
 		{
 			$header = "Bearer " + $AccessToken
@@ -1210,7 +1210,7 @@ class SubscriptionCore: SVTBase
 		if($null -eq $this.PIMAssignments)
 		{
 			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-			$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+			$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			if($null -ne $AccessToken)
 			{
 				$authorisationToken = "Bearer " + $accessToken

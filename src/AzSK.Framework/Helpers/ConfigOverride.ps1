@@ -105,7 +105,7 @@ class ConfigOverride
 			$folderName += "\";
 		}
 
-		[Helpers]::ConvertToJsonCustom(($this.ParsedFile | Select-Object -Property $this.ChangedProperties)) | Out-File -Force -FilePath ($folderName + $this.ConfigFileName) -Encoding utf8
+		[JsonHelper]::ConvertToJsonCustom(($this.ParsedFile | Select-Object -Property $this.ChangedProperties)) | Out-File -Force -FilePath ($folderName + $this.ConfigFileName) -Encoding utf8
 	}
 
 	[void] static ClearConfigInstance()

@@ -45,7 +45,7 @@ class CloudService: SVTBase
 		try
 		{		
 			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-			$ClassicAccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+			$ClassicAccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			if($null -ne $ClassicAccessToken) 
 			{
 				$header = "Bearer " + $ClassicAccessToken

@@ -150,7 +150,7 @@ class WriteCAStatus: ListenerBase
                     try {
                         $subId = $CustomObjectData.Value;
                         $resourceAppIdUri = [WebRequestHelper]::GetResourceManagerUrl()
-                        $accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+                        $accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
                         $PolicyUri = [string]::Format("{0}subscriptions/{1}/providers/Microsoft.PolicyInsights/policyStates/latest/queryResults?api-version=2018-07-01-preview",$resourceAppIdUri,$subId)
                         $policyCompliance = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Post, $PolicyUri,$null);
                         $policyCompliance = $policyCompliance | Select-Object ResourceId,PolicyDefinitionId,PolicyAssignmentName,IsCompliant,PolicyAssignmentScope

@@ -105,7 +105,7 @@ class SecurityRecommendationsReport: CommandBase
 			{
 				$userInput.Categories = $Categories
 			}
-			$content = [Helpers]::ConvertToJsonCustomCompressed($userInput);
+			$content = [JsonHelper]::ConvertToJsonCustomCompressed($userInput);
 			#write-host $content;
 			$headers = @{};
 			$RecommendationURI = [constants]::RecommendationURI;

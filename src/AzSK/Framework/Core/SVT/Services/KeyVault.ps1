@@ -31,7 +31,7 @@ class KeyVault: SVTBase
 	hidden [void] CheckCurrentContextPermissionsOnVaultObjects()
 	{
 
-		$currentContext=[Helpers]::GetCurrentRMContext();
+		$currentContext=[ContextHelper]::GetCurrentRMContext();
 		$CurrentContextId=$currentContext.Account.Id;
 		$CurrentContextObjectId=$null
 		try{

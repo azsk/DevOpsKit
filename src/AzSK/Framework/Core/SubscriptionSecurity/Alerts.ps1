@@ -158,7 +158,7 @@ class Alerts: CommandBase
 						if($errorCount -eq 0)
 						{
 							#setting the tag at AzSKRG
-							[Helpers]::SetResourceGroupTags($rgName,@{[Constants]::AzSKAlertsVersionTagName=$this.AlertPolicyObj.Version}, $true)
+							[ResourceGroupHelper]::SetResourceGroupTags($rgName,@{[Constants]::AzSKAlertsVersionTagName=$this.AlertPolicyObj.Version}, $true)
 
 							$resultMessages += [MessageData]::new("All alerts have been removed from the subscription successfully`r`n" + [Constants]::SingleDashLine, [MessageType]::Update);
 							if($DeleteActionGroup)
@@ -299,7 +299,7 @@ class Alerts: CommandBase
 						$existingRG = Get-AzResourceGroup -Name $this.ResourceGroup -ErrorAction SilentlyContinue
 						if(-not $existingRG)
 						{
-							[Helpers]::NewAzSKResourceGroup($this.ResourceGroup,$this.ResourceGroupLocation,$this.GetCurrentModuleVersion())						
+							[ResourceGroupHelper]::NewAzSKResourceGroup($this.ResourceGroup,$this.ResourceGroupLocation,$this.GetCurrentModuleVersion())						
 						}
 						$messages += [MessageData]::new("All the alerts registered by this script will be placed in a resource group named: $($this.ResourceGroup)");
 						$isTargetResourceGroup = -not [string]::IsNullOrWhiteSpace($targetResourceGroup);
@@ -376,7 +376,7 @@ class Alerts: CommandBase
 						{
 							#setting the tag at AzSKRG
 							$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-							[Helpers]::SetResourceGroupTags($azskRGName,@{[Constants]::AzSKAlertsVersionTagName=$this.AlertPolicyObj.Version}, $false)
+							[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::AzSKAlertsVersionTagName=$this.AlertPolicyObj.Version}, $false)
 
 							#After successfully setting V2 alerts, clean V1 alert rules
 											
@@ -444,7 +444,7 @@ class Alerts: CommandBase
 						$existingRG = Get-AzResourceGroup -Name $this.ResourceGroup -ErrorAction SilentlyContinue
 						if(-not $existingRG)
 						{
-							[Helpers]::NewAzSKResourceGroup($this.ResourceGroup,$this.ResourceGroupLocation,$this.GetCurrentModuleVersion())						
+							[ResourceGroupHelper]::NewAzSKResourceGroup($this.ResourceGroup,$this.ResourceGroupLocation,$this.GetCurrentModuleVersion())						
 						}
 						$messages += [MessageData]::new("All the alerts registered by this script will be placed in a resource group named: $($this.ResourceGroup)");
 
@@ -490,7 +490,7 @@ class Alerts: CommandBase
 						{
 							#setting the tag at AzSKRG
 							$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-							[Helpers]::SetResourceGroupTags($azskRGName,@{[Constants]::AzSKAlertsVersionTagName=$this.AlertPolicyObj.Version}, $false)
+							[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::AzSKAlertsVersionTagName=$this.AlertPolicyObj.Version}, $false)
 
 							#After successfully setting V2 alerts, clean V1 alert rules
 											

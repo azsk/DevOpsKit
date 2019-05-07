@@ -298,7 +298,7 @@ class AzSKCfg: SVTBase
 	{
 		#fetch SP permissions
 		$spPermissions = Get-AzRoleAssignment -serviceprincipalname $applicationId 
-		$currentContext = [Helpers]::GetCurrentRMContext();
+		$currentContext = [ContextHelper]::GetCurrentRMContext();
 		#Check subscription access
 		if(($spPermissions|measure-object).count -gt 0)
 		{

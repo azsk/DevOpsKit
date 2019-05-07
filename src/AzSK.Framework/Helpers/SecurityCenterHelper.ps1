@@ -23,7 +23,7 @@ class SecurityCenterHelper
         if([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri))
 		{
 			return @{
-				"Authorization"= ("Bearer " + [Helpers]::GetAccessToken($validatedUri.GetLeftPart([System.UriPartial]::Authority))); 
+				"Authorization"= ("Bearer " + [ContextHelper]::GetAccessToken($validatedUri.GetLeftPart([System.UriPartial]::Authority))); 
 				"Content-Type"="application/json"
 			};
 
@@ -46,7 +46,7 @@ class SecurityCenterHelper
 		
 		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
 		#[SecurityCenterHelper]::RegisterResourceProvider();
-	    $rmContext = [Helpers]::GetCurrentRMContext();
+	    $rmContext = [ContextHelper]::GetCurrentRMContext();
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 		$uri = $ResourceAppIdURI + "subscriptions/$subscriptionId/providers/$([SecurityCenterHelper]::ProviderNamespace)/$($apiType)$($apiVersion)";
         return [WebRequestHelper]::InvokeGetWebRequest($uri);
@@ -61,7 +61,7 @@ class SecurityCenterHelper
 
 		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
 		#[SecurityCenterHelper]::RegisterResourceProvider();
-        $rmContext = [Helpers]::GetCurrentRMContext();
+        $rmContext = [ContextHelper]::GetCurrentRMContext();
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 		$uri = $ResourceAppIdURI.TrimEnd("/") + $resourceId + $apiVersion;
 		return [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
@@ -73,7 +73,7 @@ class SecurityCenterHelper
 		{ 	
 			if([SecurityCenterHelper]::ASCSecurityStatus -eq $null)
 			{
-				$rmContext = [Helpers]::GetCurrentRMContext();
+				$rmContext = [ContextHelper]::GetCurrentRMContext();
 		        $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 				$uri = [System.String]::Format("{0}subscriptions/{1}/providers/microsoft.Security/securityStatuses?api-version=2015-06-01-preview", $ResourceAppIdURI, $subscriptionId)
 				$result = [WebRequestHelper]::InvokeGetWebRequest($uri);					
@@ -115,8 +115,8 @@ class SecurityCenterHelper
 
 	static [void] RegisterResourceProvider()
 	{
-		[Helpers]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::PolicyProviderNamespace);
-		[Helpers]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
+		[ResourceHelper]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::PolicyProviderNamespace);
+		[ResourceHelper]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
 	}
 
 	static [void] RegisterResourceProviderNoException()

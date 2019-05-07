@@ -127,7 +127,7 @@ class RBAC: CommandBase
 		{
 			#setting the tag at AzSKRG
 			$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-			[Helpers]::SetResourceGroupTags($azskRGName,@{"CentralRBACVersion"=$this.Policy.ActiveCentralAccountsVersion},$false)
+			[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{"CentralRBACVersion"=$this.Policy.ActiveCentralAccountsVersion},$false)
 
 			#set the tag on subscription based on server tag	
 			# Set Active accounts
@@ -302,7 +302,7 @@ class RBAC: CommandBase
 		{
 			#setting the tag at AzSKRG
 			$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-			[Helpers]::SetResourceGroupTags($azskRGName,@{[Constants]::DeprecatedRBACVersionTagName=$this.Policy.DeprecatedAccountsVersion}, $false)			
+			[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::DeprecatedRBACVersionTagName=$this.Policy.DeprecatedAccountsVersion}, $false)			
 
 			if($this.Policy.ValidActiveAccounts.Count -ne 0)
 			{
@@ -324,7 +324,7 @@ class RBAC: CommandBase
 					$this.LoadActiveAccountStatus();
 
 					$messages += $this.RemoveRoleAssignments($this.MatchedActiveAccounts);
-					[Helpers]::SetResourceGroupTags($azskRGName,@{[Constants]::CentralRBACVersionTagName=$this.Policy.ActiveCentralAccountsVersion}, $true)
+					[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::CentralRBACVersionTagName=$this.Policy.ActiveCentralAccountsVersion}, $true)
 				}
 				else
 				{

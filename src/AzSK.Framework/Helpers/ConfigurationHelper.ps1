@@ -272,7 +272,7 @@ class ConfigurationHelper {
 		{
 			if($enableAADAuthForOnlinePolicyStore)
 			{		
-			$rmContext = [Helpers]::GetCurrentRMContext();
+			$rmContext = [ContextHelper]::GetCurrentRMContext();
 			if(-not [string]::IsNullOrWhiteSpace($rmContext.Environment.Name) -and $rmContext.Environment.Name -ne [Constants]::DefaultAzureEnvironment)
 		     {
 				   $ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl
@@ -280,7 +280,7 @@ class ConfigurationHelper {
 			 else {
 				$ResourceAppIdURI = "https://management.core.windows.net/"
 			 }
-				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+				$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 				$serverFileContent = Invoke-RestMethod `
 									-Method GET `
 									-Uri $validatedUri `

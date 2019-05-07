@@ -22,8 +22,8 @@ class PIM: CommandBase
 {
     # Using helper method to get current context and access token   
     $ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-    $this.AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI);
-    $this.AccountId = [Helpers]::GetCurrentSessionUser()
+    $this.AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI);
+    $this.AccountId = [ContextHelper]::GetCurrentSessionUser()
     $this.UserId = (Get-AzADUser -UserPrincipalName  $this.AccountId).Id
     $this.headerParams= @{'Authorization'="Bearer $($this.AccessToken)"}
     
@@ -789,7 +789,7 @@ hidden RemovePermanentAssignments([PSObject[]] $users)
                 }
                 $successfullyassignedRoles = @();
                 $allAssignedRole = $allRoles | Where-Object{$_.IsPermanent -eq $false}
-                $currentContext = [Helpers]::GetCurrentRmContext();
+                $currentContext = [ContextHelper]::GetCurrentRMContext();
                 $permanentRolesForTransition = $permanentRolesForTransition | Where-Object{$_.PrincipalName -ne $currentContext.Account.Id}
                 $allAssignedRole| ForEach-Object{
                     $allUser = $_;
