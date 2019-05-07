@@ -79,9 +79,9 @@ class PIM: CommandBase {
         #If context has access over resourcegroups or resources with same name, get a match based on Subscription and rg passed in param
         if (($resolvedResource | Measure-Object).Count -gt 1) {       
            
-            $resolvedResource = $resolvedResource | Where-Object { $_.ExternalId -match  $SubscriptionId}
-            if(-not([string]::IsNullOrEmpty($ResourceGroupName))){
-                $resolvedResource = $resolvedResource | Where-Object { $_.ExternalId -match  $ResourceGroupName}
+            $resolvedResource = $resolvedResource | Where-Object { $_.ExternalId -match $SubscriptionId }
+            if (-not([string]::IsNullOrEmpty($ResourceGroupName))) {
+                $resolvedResource = $resolvedResource | Where-Object { $_.ExternalId -match $ResourceGroupName }
             }
         
         }
@@ -176,7 +176,7 @@ class PIM: CommandBase {
         $roleAssignments = ConvertFrom-Json $response.Content
         $i = 0
         $obj = @()
-        $assignments =@();
+        $assignments = @();
         foreach ($roleAssignment in $roleAssignments.value) {
             $item = New-Object psobject -Property @{
                 Id               = ++$i
@@ -198,20 +198,18 @@ class PIM: CommandBase {
             }
             $obj = $obj + $item
         }
-        if($obj.Count -gt 0)
-        {
-            if($IsPermanent)
-            {
-                $assignments = $obj | Where-Object{$_.IsPermanent -eq $true}
+        if ($obj.Count -gt 0) {
+            if ($IsPermanent) {
+                $assignments = $obj | Where-Object { $_.IsPermanent -eq $true }
                 
             }
-            else{
-                $assignments = $obj | Where-Object{$_.IsPermanent -eq $false}
+            else {
+                $assignments = $obj | Where-Object { $_.IsPermanent -eq $false }
                 
             }
         }
         
-    return $assignments
+        return $assignments
     }
 
     #Activates the user
@@ -291,17 +289,17 @@ class PIM: CommandBase {
     hidden ListAssignment($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $CheckPermanent) {
         $this.AcquireToken();
         $criticalRoles = @();
-        $criticalRoles+= $this.ConvertToStringArray($RoleNames)
+        $criticalRoles += $this.ConvertToStringArray($RoleNames)
         $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName)
         $permanentAssignment = $null
         if (($resources | Measure-Object).Count -gt 0) {       
             $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $CheckPermanent)
-            $roleAssignments = $roleAssignments | Where-Object {$_.RoleName -in $criticalRoles -and $_.MemberType -ne 'Inherited'}
+            $roleAssignments = $roleAssignments | Where-Object { $_.RoleName -in $criticalRoles -and $_.MemberType -ne 'Inherited' }
             if (($roleAssignments | Measure-Object).Count -gt 0) {
                 $roleAssignments = $roleAssignments | Sort-Object -Property RoleName, Name 
                 $this.PublishCustomMessage("")
                 $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
-                $this.PublishCustomMessage($($roleAssignments | Format-Table -Property @{Label ="Role"; Expression = {$_.RoleName}}, PrincipalName, @{Label ="Type"; Expression = {$_.SubjectType}} | Out-String), [MessageType]::Default)
+                $this.PublishCustomMessage($($roleAssignments | Format-Table -Property @{Label = "Role"; Expression = { $_.RoleName } }, PrincipalName, @{Label = "Type"; Expression = { $_.SubjectType } } | Out-String), [MessageType]::Default)
             }
             else {
                 if ($CheckPermanent) {
@@ -409,7 +407,7 @@ class PIM: CommandBase {
                         $totalPermanentAssignments = $permanentRolesForTransition.Count
                         $this.PublishCustomMessage("Initiating PIM assignment for [$totalPermanentAssignments] permanent assignments...");
                         $permanentRolesForTransition | ForEach-Object {
-                            $i=1
+                            $i = 1
                             $roleName = $_.RoleName
                             $roleDefinitionId = ($roles | Where-Object { $_.RoleName -eq $roleName }).RoleDefinitionId 
                             $subjectId = $_.SubjectId
@@ -474,50 +472,49 @@ class PIM: CommandBase {
             $successfullyassignedRoles = @();
             $currentContext = [Helpers]::GetCurrentRmContext();
             $permanentRolesForTransition = $permanentRolesForTransition | Where-Object { $_.PrincipalName -ne $currentContext.Account.Id }
-            if($OnlyPIMEligibleAssignments -ne 'AllExcpetMe')
-            {
-            $eligibleAssignments | ForEach-Object {
-            $allUser = $_;
-            $permanentRolesForTransition | ForEach-Object {
+            if ($OnlyPIMEligibleAssignments -ne 'AllExcpetMe') {
+                $eligibleAssignments | ForEach-Object {
+                    $allUser = $_;
+                    $permanentRolesForTransition | ForEach-Object {
                 
-                if ($_.SubjectId -eq $allUser.SubjectId -and $_.RoleName -eq $allUser.RoleName) {
-                    $successfullyassignedRoles += $_
-                    } 
-                }
-            }             
-            $users = $successfullyassignedRoles            
+                        if ($_.SubjectId -eq $allUser.SubjectId -and $_.RoleName -eq $allUser.RoleName) {
+                            $successfullyassignedRoles += $_
+                        } 
+                    }
+                }             
+                $users = $successfullyassignedRoles            
             }
             else {
                 $users = $permanentRolesForTransition
             }
         }
     
-    if (($users | Measure-Object).Count -gt 0) {
-        $totalRemovableAssignments = $users.Count      
-        $this.PublishCustomMessage($($users | Format-Table -Property PrincipalName, RoleName, OriginalId | Out-String),[MemberType]::Default)
-        $this.PublishCustomMessage("The role assignments shown above will be moved from 'permanent' to 'PIM'. Please confirm (Y/N): ")
-        $userResp = Read-Host 
-        if ($userResp -eq 'y') {
-            $i=0
-            $this.PublishCustomMessage("Initiating removal of [$totalRemovableAssignments] permanent assignments...")
-            foreach ($user in $users) {
-                $i++;
-                $this.PublishCustomMessage([Constants]::SingleDashLine);
-                Remove-AzRoleAssignment -SignInName $user.PrincipalName -RoleDefinitionName $user.RoleName -Scope $user.OriginalId
-                $this.PublishCustomMessage("[$i`/$totalRemovableAssignments]Successfully removed permanent assignment", [MessageType]::Update )                
-                $this.PublishCustomMessage([Constants]::SingleDashLine);
+        if (($users | Measure-Object).Count -gt 0) {
+            $totalRemovableAssignments = $users.Count      
+            $this.PublishCustomMessage($($users | Format-Table -Property PrincipalName, RoleName, OriginalId | Out-String), [MemberType]::Default)
+            $this.PublishCustomMessage("The role assignments shown above will be moved from 'permanent' to 'PIM'. Please confirm (Y/N): ")
+            $userResp = Read-Host 
+            if ($userResp -eq 'y') {
+                $i = 0
+                $this.PublishCustomMessage("Initiating removal of [$totalRemovableAssignments] permanent assignments...")
+                foreach ($user in $users) {
+                    $i++;
+                    $this.PublishCustomMessage([Constants]::SingleDashLine);
+                    Remove-AzRoleAssignment -SignInName $user.PrincipalName -RoleDefinitionName $user.RoleName -Scope $user.OriginalId
+                    $this.PublishCustomMessage("[$i`/$totalRemovableAssignments]Successfully removed permanent assignment", [MessageType]::Update )                
+                    $this.PublishCustomMessage([Constants]::SingleDashLine);
 
+                }
             }
         }
-    }
-    else {
-        if($OnlyPIMEligibleAssignments -ne 'All'){
-            $this.PublishCustomMessage("No eligible roles corresponding to permanent assignments found for the scope", [MessageType]::Warning)
-        }
         else {
-            $this.PublishCustomMessage("No permanent assignments found for the scope", [MessageType]::Warning)
+            if ($OnlyPIMEligibleAssignments -ne 'All') {
+                $this.PublishCustomMessage("No eligible roles corresponding to permanent assignments found for the scope", [MessageType]::Warning)
+            }
+            else {
+                $this.PublishCustomMessage("No permanent assignments found for the scope", [MessageType]::Warning)
+            }
         }
-    }
 
     }
 
