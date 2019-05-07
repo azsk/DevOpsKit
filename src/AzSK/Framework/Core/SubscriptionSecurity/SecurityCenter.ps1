@@ -24,7 +24,7 @@ class SecurityCenter: AzSKRoot
 		[SecurityCenterHelper]::RegisterResourceProvider();
 		$this.LoadPolicies(); 
 		$this.LoadCurrentPolicy();
-		#calling this function as it would fetch the current contact phone number settings 
+		#calling this function as it would fetch the current contact phone number settings
 		$this.CheckSecurityContactSettings();
 	}
 
@@ -89,7 +89,7 @@ class SecurityCenter: AzSKRoot
 		$this.PolicyObject = [ConfigurationManager]::LoadServerConfigFile("SecurityCenter.json");
 	}
 
-	[MessageData[]] SetPolicies([bool] $updateProvisioningSettings, [bool] $updatePolicies, [bool] $updateSecurityContacts, [bool] $setOptionalPolicy)
+	[MessageData[]] SetPolicies([bool] $updateProvisioningSettings, [bool] $updatePolicies, [bool] $updateSecurityContacts)
     {				
 		[MessageData[]] $messages = @();
 		$this.PublishCustomMessage("Updating SecurityCenter policies...`n" + [Constants]::SingleDashLine, [MessageType]::Warning);
@@ -104,12 +104,6 @@ class SecurityCenter: AzSKRoot
 			$this.PublishCustomMessage("Updating SecurityPolicy settings...", [MessageType]::Warning);
 			$this.SetSecurityPolicySettings();						
 			$this.PublishCustomMessage("Completed updating SecurityPolicy settings.", [MessageType]::Update);
-		}
-		if($setOptionalPolicy)
-		{
-			$this.PublishCustomMessage("Updating optional SecurityPolicy settings...", [MessageType]::Warning);
-			$this.SetSecurityOptionalPolicySettings();						
-			$this.PublishCustomMessage("Completed optional SecurityPolicy settings.", [MessageType]::Update);
 		}
 		if($updateSecurityContacts)
 		{
@@ -226,35 +220,11 @@ class SecurityCenter: AzSKRoot
 		return $messages;
 	}
 
-	[MessageData[]] SetSecurityOptionalPolicySettings()
-	{
-		[MessageData[]] $messages = @();
-		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.optionalPolicySettings)
-		{	
-			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()				
-			$this.UpdateOptionalPolicyObject();
-			$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments/SecurityCenterBuiltIn$([SecurityCenterHelper]::ApiVersionLatest)";
-			$body = $this.PolicyObject.optionalPolicySettings | ConvertTo-Json -Depth 10
-			$body = $body.Replace("{0}",$this.SubscriptionContext.SubscriptionId) | ConvertFrom-Json;
-		  	[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
-		}
-		return $messages;
-	}
-
 	[string[]] CheckSecurityPolicySettings()
 	{
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.policySettings)
 		{	
 			return $this.ValidatePolicyObject();											
-		}
-		return $null;
-	}
-
-	[string[]] CheckOptionalSecurityPolicySettings()
-	{
-		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.optionalPolicySettings)
-		{	
-			return $this.ValidateOptionalPolicyObject();											
 		}
 		return $null;
 	}
@@ -281,32 +251,9 @@ class SecurityCenter: AzSKRoot
 		}		
 	}	
 
-	[void] UpdateOptionalPolicyObject()
-	{
-		if($null -ne $this.CurrentPolicyObject -and $null -ne $this.PolicyObject.optionalPolicySettings)	
-		{
-			$currentPolicyObj = $this.CurrentPolicyObject.Properties.parameters;
-			$defaultPoliciesNames = Get-Member -InputObject $this.PolicyObject.optionalPolicySettings.properties.parameters -MemberType NoteProperty | Select-Object Name
-			$configuredPolicyObject = $this.PolicyObject.optionalPolicySettings.properties.parameters;
-			$defaultPoliciesNames | ForEach-Object {
-				$policyName = $_.Name;
-                if([Helpers]::CheckMember($currentPolicyObj,$policyName))
-                {
-                    $currentPolicyObj.$policyName.value = $configuredPolicyObject.$policyName.value
-                }else
-                {
-                    $currentPolicyObj | Add-Member -NotePropertyName $policyName -NotePropertyValue $configuredPolicyObject.$policyName
-                }				
-				
-			}
-			$this.PolicyObject.optionalPolicySettings.properties.parameters = $currentPolicyObj;
-		}		
-	}	
-
 	[string[]] ValidatePolicyObject()
 	{
 		[string[]] $MisConfiguredPolicies = @();
-
 		if($null -ne $this.CurrentPolicyObject -and $null -ne $this.PolicyObject.policySettings)	
 		{
 			$currentPolicyObj = $this.CurrentPolicyObject.Properties.parameters;
@@ -317,39 +264,14 @@ class SecurityCenter: AzSKRoot
              		
 				if((-not [Helpers]::CheckMember($currentPolicyObj,$policyName)) -or ($currentPolicyObj.$policyName.value -ne $configuredPolicyObject.$policyName.value))
 				{
-					$MisConfiguredPolicies += ("Misconfigured Mandatory Policy: [" + $policyName + "]");
+					$MisConfiguredPolicies += ("Misconfigured Policy: [" + $policyName + "]");
 				}
                 
 			}
 		}elseif($null -eq $this.CurrentPolicyObject -and  $null -ne $this.PolicyObject.policySettings)
         {
-            $MisConfiguredPolicies += (" Mandatory ASC Policies are misconfigured");   
+            $MisConfiguredPolicies += ("ASC Policies are misconfigured");   
         }
-		
 		return $MisConfiguredPolicies;		
-	}	
-	[string[]] ValidateOptionalPolicyObject()
-	{
-	 	[string[]] $MisConfiguredOptionalPolicies = @();
-		if($null -ne $this.CurrentPolicyObject -and $null -ne $this.PolicyObject.optionalPolicySettings)	
-		{
-			$currentPolicyObj = $this.CurrentPolicyObject.Properties.parameters;
-			$optionalPoliciesNames = Get-Member -InputObject $this.PolicyObject.optionalPolicySettings.properties.parameters -MemberType NoteProperty | Select-Object Name
-			$configuredOptionalPolicyObject = $this.PolicyObject.optionalPolicySettings.properties.parameters;
-			$optionalPoliciesNames | ForEach-Object {
-				$policyName = $_.Name;		
-						
-				if((-not [Helpers]::CheckMember($currentPolicyObj,$policyName)) -or ($currentPolicyObj.$policyName.value -ne $configuredOptionalPolicyObject.$policyName.value))
-				{
-					$MisConfiguredOptionalPolicies += ("Misconfigured Optional Policy: [" + $policyName + "]");
-				}
-				
-		}
-	 	}elseif($null -eq $this.CurrentPolicyObject -and  $null -ne $this.PolicyObject.optionalPolicySettings)
-         {
-             $MisConfiguredOptionalPolicies += ("Optional ASC Policies are misconfigured");   
-         }
-	
-	 	return $MisConfiguredOptionalPolicies;		
 	}	
 }
