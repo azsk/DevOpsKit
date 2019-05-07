@@ -1,7 +1,7 @@
 Set-StrictMode -Version Latest
 
 class AIOrgTelemetryHelper {
-    static hidden [string[]] $ParamsToMask = @("LAWSharedKey");
+    static hidden [string[]] $ParamsToMask = @("OMSSharedKey");
     static hidden [Microsoft.ApplicationInsights.TelemetryClient] $OrgTelemetryClient;
     static hidden [Microsoft.ApplicationInsights.TelemetryClient] $UsageTelemetryClient;
 	static [PSObject] $CommonProperties;

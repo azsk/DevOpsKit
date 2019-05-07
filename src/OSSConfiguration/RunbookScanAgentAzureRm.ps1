@@ -676,10 +676,20 @@ $ResourceGroupNames = Get-AutomationVariable -Name "AppResourceGroupNames"
 #$LAWorkspaceId = Get-AutomationVariable -Name "LAWorkspaceId"
 #$LAWorkspaceSharedKey = Get-AutomationVariable -Name "LAWSharedKey"
 $LAWorkspaceId = Get-AutomationVariable -Name "OMSWorkspaceId"
+$existingLAWorkspaceId = Get-AutomationVariable -Name "LAWorkspaceId" -ErrorAction SilentlyContinue
+if(($existingLAWorkspaceId | Measure-Object).Count -gt 0)
+{
+	$existingLAWorkspaceId | Remove-AzureRmAutomationVariable -ErrorAction SilentlyContinue
+}
 New-AzureRmAutomationVariable -AutomationAccountName $LAWorkspaceId.AutomationAccountName -Name "LAWorkspaceId" -Encrypted $False -Value $LAWorkspaceId.Value -ResourceGroupName $LAWorkspaceId.ResourceGroupName -ErrorAction SilentlyContinue
 Set-AzureRmAutomationVariable $LAWorkspaceId.AutomationAccountName -Name "LAWorkspaceId" -ResourceGroupName $LAWorkspaceId.ResourceGroupName -Description $LAWorkspaceId.Description -ErrorAction SilentlyContinue
 
 $LAWorkspaceSharedKey = Get-AutomationVariable -Name "OMSSharedKey"		
+$existingLAWorkspaceSharedKey = Get-AutomationVariable -Name "LAWSharedKey" -ErrorAction SilentlyContinue
+if(($existingLAWorkspaceSharedKey | Measure-Object).Count -gt 0)
+{
+	$existingLAWorkspaceSharedKey | Remove-AzureRmAutomationVariable -ErrorAction SilentlyContinue
+}
 New-AzureRmAutomationVariable -AutomationAccountName $LAWorkspaceSharedKey.AutomationAccountName -Name "LAWSharedKey" -Encrypted $False -Value $LAWorkspaceSharedKey.Value -ResourceGroupName $LAWorkspaceSharedKey.ResourceGroupName -ErrorAction SilentlyContinue
 Set-AzureRmAutomationVariable $LAWorkspaceSharedKey.AutomationAccountName -Name "LAWSharedKey" -ResourceGroupName $LAWorkspaceSharedKey.ResourceGroupName -Description $LAWorkspaceSharedKey.Description -ErrorAction SilentlyContinue
 
@@ -687,10 +697,20 @@ Set-AzureRmAutomationVariable $LAWorkspaceSharedKey.AutomationAccountName -Name 
 #$AltLAWorkspaceId = Get-AutomationVariable -Name "AltLAWorkspaceId" -ErrorAction SilentlyContinue
 #$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltLAWSharedKey" -ErrorAction SilentlyContinue
 $AltLAWorkspaceId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+$existingAltLAWorkspaceId = Get-AutomationVariable -Name "AltLAWorkspaceId" -ErrorAction SilentlyContinue
+if(($existingAltLAWorkspaceId | Measure-Object).Count -gt 0)
+{
+	$existingAltLAWorkspaceId | Remove-AzureRmAutomationVariable -ErrorAction SilentlyContinue
+}
 New-AzureRmAutomationVariable -AutomationAccountName $AltLAWorkspaceId.AutomationAccountName -Name "AltLAWorkspaceId" -Encrypted $False -Value $AltLAWorkspaceId.Value -ResourceGroupName $AltLAWorkspaceId.ResourceGroupName -ErrorAction SilentlyContinue
 Set-AzureRmAutomationVariable $AltLAWorkspaceId.AutomationAccountName -Name "AltLAWorkspaceId" -ResourceGroupName $AltLAWorkspaceId.ResourceGroupName -Description $AltLAWorkspaceId.Description -ErrorAction SilentlyContinue
 
 $AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
+$existingAltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltLAWSharedKey" -ErrorAction SilentlyContinue
+if(($existingAltLAWorkspaceSharedKey | Measure-Object).Count -gt 0)
+{
+	$existingAltLAWorkspaceSharedKey | Remove-AzureRmAutomationVariable -ErrorAction SilentlyContinue
+}
 New-AzureRmAutomationVariable -AutomationAccountName $AltLAWorkspaceSharedKey.AutomationAccountName -Name "AltLAWSharedKey" -Encrypted $False -Value $AltLAWorkspaceSharedKey.Value -ResourceGroupName $AltLAWorkspaceSharedKey.ResourceGroupName -ErrorAction SilentlyContinue
 Set-AzureRmAutomationVariable $AltLAWorkspaceSharedKey.AutomationAccountName -Name "AltLAWSharedKey" -ResourceGroupName $AltLAWorkspaceSharedKey.ResourceGroupName -Description $AltLAWorkspaceSharedKey.Description -ErrorAction SilentlyContinue
 	

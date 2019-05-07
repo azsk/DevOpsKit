@@ -758,7 +758,7 @@ class CCAutomation: CommandBase
 				elseif(![string]::IsNullOrWhiteSpace($this.UserConfig.LAWCredential.LAWorkspaceId) -and ![string]::IsNullOrWhiteSpace($this.UserConfig.LAWCredential.LAWSharedKey))
 				{
 				    $varLAWorkspaceId = [Variable]@{
-			    	    Name = "LAWorkspaceId";
+			    	    Name = "OMSWorkspaceId";
 			    	    Value = $this.UserConfig.LAWCredential.LAWorkspaceId;
 			    	    IsEncrypted = $false;
 			    	    Description ="Log Analytics Workspace Id"
@@ -767,7 +767,7 @@ class CCAutomation: CommandBase
 			        $this.PublishCustomMessage("Updating variable: [" + $varLAWorkspaceId.Name + "]")
 
                     $varLAWSharedKey = [Variable]@{
-			             Name = "LAWSharedKey";
+			             Name = "OMSSharedKey";
 			             Value = $this.UserConfig.LAWCredential.LAWSharedKey;
 			             IsEncrypted = $false;
 			             Description ="Log Analytics Workspace Shared Key"
@@ -1301,6 +1301,8 @@ class CCAutomation: CommandBase
 		$caSummaryTable = @{
 			"AutomationAccountName" = $noValueMsg;
 			"AppResourceGroupNames" = $noValueMsg;
+			"OMSWorkspaceId" = $noValueMsg;
+			"AltOMSWorkspaceId" = $noValueMsg;
 			"LAWorkspaceId" = $noValueMsg;
 			"AltLAWorkspaceId" = $noValueMsg;
 			"WebhookUrl" = $noValueMsg;
@@ -1343,11 +1345,13 @@ class CCAutomation: CommandBase
 		$caSummaryTable.Item("AutomationAccountName") = $caAutomationAccount.AutomationAccountName
 		if($laWsId)
 		{
+			$caSummaryTable.Item("OMSWorkspaceId") = $laWsId.Value
 			$caSummaryTable.Item("LAWorkspaceId") = $laWsId.Value
 		}
 
 		if($altLAWsId)
 		{
+			$caSummaryTable.Item("AltOMSWorkspaceId") = $altLAWsId.Value
 			$caSummaryTable.Item("AltLAWorkspaceId") = $altLAWsId.Value
 		}
 
