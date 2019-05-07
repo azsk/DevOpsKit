@@ -5,6 +5,6 @@ class CommandDetails
 	[string] $Verb = "";
 	[string] $ShortName = "";
 	[bool] $IsLatestRequired = $true;
-	[bool] $IsOrgPolicyTagRequired = $true;
+	[bool] $IsOrgPolicyMandatory = $true;
 	[bool] $HasAzSKComponentWritePermission = $true;
 }
