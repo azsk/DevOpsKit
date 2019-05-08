@@ -784,7 +784,7 @@ class CCAutomation: CommandBase
                 elseif(![string]::IsNullOrWhiteSpace($this.UserConfig.AltLAWCredential.LAWorkspaceId) -and ![string]::IsNullOrWhiteSpace($this.UserConfig.AltLAWCredential.LAWSharedKey))
                 {
 		        	$varAltLAWorkspaceId = [Variable]@{
-		        		Name = "AltLAWorkspaceId";
+		        		Name = "AltOMSWorkspaceId";
 		        		Value = $this.UserConfig.AltLAWCredential.LAWorkspaceId;
 		        		IsEncrypted = $false;
 		        		Description ="Alternate Log Analytics Workspace Id"
@@ -793,7 +793,7 @@ class CCAutomation: CommandBase
 		        	$this.PublishCustomMessage("Updating variable: [" + $varAltLAWorkspaceId.Name + "]")
 
 		        	$varAltLAWSharedKey = [Variable]@{
-		        		Name = "AltLAWSharedKey";
+		        		Name = "AltOMSSharedKey";
 		        		Value = $this.UserConfig.AltLAWCredential.LAWSharedKey;
 		        		IsEncrypted = $false;
 		        		Description ="Alternate Log Analytics Workspace Shared Key"
