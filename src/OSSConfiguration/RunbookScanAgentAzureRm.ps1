@@ -16,12 +16,12 @@ function RunAzSKScan()
 	#set Log Analytics workspace settings
     if(-not [string]::IsNullOrWhiteSpace($LAWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($LAWorkspaceSharedKey))
 	{
-		Set-AzSKMonitoringSettings -LAWorkspaceId $LAWorkspaceId -LAWSharedKey $LAWorkspaceSharedKey -Source "CA"
+		Set-AzSKMonitoringSettings -WorkspaceId $LAWorkspaceId -SharedKey $LAWorkspaceSharedKey -Source "CA"
 	}
 	#set alternate Log Analytics workspace if available
 	if(-not [string]::IsNullOrWhiteSpace($AltLAWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($AltLAWorkspaceSharedKey))
 	{
-		Set-AzSKMonitoringSettings -AltLAWorkspaceId $AltLAWorkspaceId -AltLAWSharedKey $AltLAWorkspaceSharedKey -Source "CA"
+		Set-AzSKMonitoringSettings -AltWorkspaceId $AltLAWorkspaceId -AltSharedKey $AltLAWorkspaceSharedKey -Source "CA"
 	}
     #set webhook settings
 	if(-not [string]::IsNullOrWhiteSpace($WebhookUrl))	
@@ -673,47 +673,73 @@ Write-Output("SA.o: Scan agent starting...")
 $ResourceGroupNames = Get-AutomationVariable -Name "AppResourceGroupNames"
 
 #Primary Log Analytics Workspace info. This is mandatory. CA will send events to this WS.
-#$LAWorkspaceId = Get-AutomationVariable -Name "LAWorkspaceId"
-#$LAWorkspaceSharedKey = Get-AutomationVariable -Name "LAWSharedKey"
-$LAWorkspaceId = Get-AutomationVariable -Name "OMSWorkspaceId"
-$existingLAWorkspaceId = Get-AutomationVariable -Name "LAWorkspaceId" -ErrorAction SilentlyContinue
-if(($existingLAWorkspaceId | Measure-Object).Count -gt 0)
+$LAWorkspaceIdDetails = Get-AzureRmAutomationVariable -Name "OMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG
+$LAWorkspaceId = $LAWorkspaceIdDetails.Value
+Write-Output("Checking if the variable LAWorkspaceId already exists...")
+$existingLAWorkspaceId = Get-AzureRmAutomationVariable -Name "LAWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+if(($existingLAWorkspaceId | Measure-Object).Count -eq 0)
 {
-	$existingLAWorkspaceId | Remove-AzureRmAutomationVariable -ErrorAction SilentlyContinue
+	Write-Output("Adding the variable LAWorkspaceId...")
+	New-AzureRmAutomationVariable -AutomationAccountName $LAWorkspaceIdDetails.AutomationAccountName -Name "LAWorkspaceId" -Encrypted $False -Value $LAWorkspaceIdDetails.Value -ResourceGroupName $LAWorkspaceIdDetails.ResourceGroupName -ErrorAction SilentlyContinue
+	Set-AzureRmAutomationVariable $LAWorkspaceIdDetails.AutomationAccountName -Name "LAWorkspaceId" -ResourceGroupName $LAWorkspaceIdDetails.ResourceGroupName -Description $LAWorkspaceIdDetails.Description -ErrorAction SilentlyContinue
 }
-New-AzureRmAutomationVariable -AutomationAccountName $LAWorkspaceId.AutomationAccountName -Name "LAWorkspaceId" -Encrypted $False -Value $LAWorkspaceId.Value -ResourceGroupName $LAWorkspaceId.ResourceGroupName -ErrorAction SilentlyContinue
-Set-AzureRmAutomationVariable $LAWorkspaceId.AutomationAccountName -Name "LAWorkspaceId" -ResourceGroupName $LAWorkspaceId.ResourceGroupName -Description $LAWorkspaceId.Description -ErrorAction SilentlyContinue
+else
+{
+	Write-Output("LAWorkspaceId already exists...")
+}
 
-$LAWorkspaceSharedKey = Get-AutomationVariable -Name "OMSSharedKey"		
-$existingLAWorkspaceSharedKey = Get-AutomationVariable -Name "LAWSharedKey" -ErrorAction SilentlyContinue
-if(($existingLAWorkspaceSharedKey | Measure-Object).Count -gt 0)
+$LAWorkspaceSharedKeyDetails = Get-AzureRmAutomationVariable -Name "OMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG
+$LAWorkspaceSharedKey = $LAWorkspaceSharedKeyDetails.Value
+Write-Output("Checking if the variable LAWSharedKey already exists...")	
+$existingLAWorkspaceSharedKey = Get-AzureRmAutomationVariable -Name "LAWSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+if(($existingLAWorkspaceSharedKey | Measure-Object).Count -eq 0)
 {
-	$existingLAWorkspaceSharedKey | Remove-AzureRmAutomationVariable -ErrorAction SilentlyContinue
+	Write-Output("Adding the variable LAWSharedKey...")
+	New-AzureRmAutomationVariable -AutomationAccountName $LAWorkspaceSharedKeyDetails.AutomationAccountName -Name "LAWSharedKey" -Encrypted $False -Value $LAWorkspaceSharedKeyDetails.Value -ResourceGroupName $LAWorkspaceSharedKeyDetails.ResourceGroupName -ErrorAction SilentlyContinue
+	Set-AzureRmAutomationVariable $LAWorkspaceSharedKeyDetails.AutomationAccountName -Name "LAWSharedKey" -ResourceGroupName $LAWorkspaceSharedKeyDetails.ResourceGroupName -Description $LAWorkspaceSharedKeyDetails.Description -ErrorAction SilentlyContinue
 }
-New-AzureRmAutomationVariable -AutomationAccountName $LAWorkspaceSharedKey.AutomationAccountName -Name "LAWSharedKey" -Encrypted $False -Value $LAWorkspaceSharedKey.Value -ResourceGroupName $LAWorkspaceSharedKey.ResourceGroupName -ErrorAction SilentlyContinue
-Set-AzureRmAutomationVariable $LAWorkspaceSharedKey.AutomationAccountName -Name "LAWSharedKey" -ResourceGroupName $LAWorkspaceSharedKey.ResourceGroupName -Description $LAWorkspaceSharedKey.Description -ErrorAction SilentlyContinue
+else
+{
+	Write-Output("LAWSharedKey already exists...")
+}
 
 #Secondary/alternate Log Analytics Workspace info. This is optional. Facilitates federal/state type models.
-#$AltLAWorkspaceId = Get-AutomationVariable -Name "AltLAWorkspaceId" -ErrorAction SilentlyContinue
-#$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltLAWSharedKey" -ErrorAction SilentlyContinue
+$AltLAWorkspaceIdDetails = Get-AzureRmAutomationVariable -Name "AltOMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
 $AltLAWorkspaceId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
-$existingAltLAWorkspaceId = Get-AutomationVariable -Name "AltLAWorkspaceId" -ErrorAction SilentlyContinue
-if(($existingAltLAWorkspaceId | Measure-Object).Count -gt 0)
+if(($AltLAWorkspaceIdDetails | Measure-Object).Count -gt 0)
 {
-	$existingAltLAWorkspaceId | Remove-AzureRmAutomationVariable -ErrorAction SilentlyContinue
+	Write-Output("Checking if the variable AltLAWorkspaceId already exists...")
+	$existingAltLAWorkspaceId = Get-AzureRmAutomationVariable -Name "AltLAWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+	if(($existingAltLAWorkspaceId | Measure-Object).Count -eq 0)
+	{
+		Write-Output("Adding the variable AltLAWorkspaceId...")
+		New-AzureRmAutomationVariable -AutomationAccountName $AltLAWorkspaceIdDetails.AutomationAccountName -Name "AltLAWorkspaceId" -Encrypted $False -Value $AltLAWorkspaceIdDetails.Value -ResourceGroupName $AltLAWorkspaceIdDetails.ResourceGroupName -ErrorAction SilentlyContinue
+		Set-AzureRmAutomationVariable $AltLAWorkspaceIdDetails.AutomationAccountName -Name "AltLAWorkspaceId" -ResourceGroupName $AltLAWorkspaceIdDetails.ResourceGroupName -Description $AltLAWorkspaceIdDetails.Description -ErrorAction SilentlyContinue
+	}
+	else
+	{
+		Write-Output("AltLAWorkspaceId already exists...")
+	}
 }
-New-AzureRmAutomationVariable -AutomationAccountName $AltLAWorkspaceId.AutomationAccountName -Name "AltLAWorkspaceId" -Encrypted $False -Value $AltLAWorkspaceId.Value -ResourceGroupName $AltLAWorkspaceId.ResourceGroupName -ErrorAction SilentlyContinue
-Set-AzureRmAutomationVariable $AltLAWorkspaceId.AutomationAccountName -Name "AltLAWorkspaceId" -ResourceGroupName $AltLAWorkspaceId.ResourceGroupName -Description $AltLAWorkspaceId.Description -ErrorAction SilentlyContinue
 
+$AltLAWorkspaceSharedKeyDetails = Get-AzureRmAutomationVariable -Name "AltOMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
 $AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
-$existingAltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltLAWSharedKey" -ErrorAction SilentlyContinue
-if(($existingAltLAWorkspaceSharedKey | Measure-Object).Count -gt 0)
+if(($AltLAWorkspaceSharedKeyDetails | Measure-Object).Count -gt 0)
 {
-	$existingAltLAWorkspaceSharedKey | Remove-AzureRmAutomationVariable -ErrorAction SilentlyContinue
+	Write-Output("Checking if the variable AltLAWSharedKey already exists...")
+	$existingAltLAWorkspaceSharedKey = Get-AzureRmAutomationVariable -Name "AltLAWSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+	if(($existingAltLAWorkspaceSharedKey | Measure-Object).Count -eq 0)
+	{
+		Write-Output("Adding the variable AltLAWSharedKey...")
+		New-AzureRmAutomationVariable -AutomationAccountName $AltLAWorkspaceSharedKeyDetails.AutomationAccountName -Name "AltLAWSharedKey" -Encrypted $False -Value $AltLAWorkspaceSharedKeyDetails.Value -ResourceGroupName $AltLAWorkspaceSharedKeyDetails.ResourceGroupName -ErrorAction SilentlyContinue
+		Set-AzureRmAutomationVariable $AltLAWorkspaceSharedKeyDetails.AutomationAccountName -Name "AltLAWSharedKey" -ResourceGroupName $AltLAWorkspaceSharedKeyDetails.ResourceGroupName -Description $AltLAWorkspaceSharedKeyDetails.Description -ErrorAction SilentlyContinue
+	}
+	else
+	{
+		Write-Output("AltLAWSharedKey already exists...")
+	}
 }
-New-AzureRmAutomationVariable -AutomationAccountName $AltLAWorkspaceSharedKey.AutomationAccountName -Name "AltLAWSharedKey" -Encrypted $False -Value $AltLAWorkspaceSharedKey.Value -ResourceGroupName $AltLAWorkspaceSharedKey.ResourceGroupName -ErrorAction SilentlyContinue
-Set-AzureRmAutomationVariable $AltLAWorkspaceSharedKey.AutomationAccountName -Name "AltLAWSharedKey" -ResourceGroupName $AltLAWorkspaceSharedKey.ResourceGroupName -Description $AltLAWorkspaceSharedKey.Description -ErrorAction SilentlyContinue
-	
+
 #CA can also optionally be configured to send events to a Webhook. 
 $WebhookUrl = Get-AutomationVariable -Name "WebhookUrl" -ErrorAction SilentlyContinue
 $WebhookAuthZHeaderName = Get-AutomationVariable -Name "WebhookAuthZHeaderName" -ErrorAction SilentlyContinue
