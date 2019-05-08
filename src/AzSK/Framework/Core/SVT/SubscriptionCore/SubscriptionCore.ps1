@@ -641,7 +641,7 @@ class SubscriptionCore: SVTBase
 		$LatestVersion = $alertConfig.Version;
 
         # Get currently configured alerts from azure portal
-        if($subInsightsAlertsConfig.Count -gt 0)
+        if(($subInsightsAlertsConfig | Measure-Object).Count -gt 0)
 		{		
             $alertsRG = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -eq "$alertsPkgRG"}
             if (($alertsRG | Measure-Object).Count -eq 1)
@@ -651,15 +651,15 @@ class SubscriptionCore: SVTBase
 			if(($configuredAlerts | Measure-Object).Count -gt 0)
 			{
 				$matchingAlertRulesNames = Compare-Object -ReferenceObject $configuredAlerts.Name -DifferenceObject $subInsightsAlertsConfig.Name -IncludeEqual -ExcludeDifferent
-				if($matchingAlertRulesNames.count -gt 0)
+				if(($matchingAlertRulesNames| Measure-Object).count -gt 0)
 				{
 					$configuredAlerts = $configuredAlerts | Where-Object { $matchingAlertRulesNames.InputObject -contains $_.Name }
 					$currentAlertsOperationsList = $configuredAlerts | ForEach-Object { $_.Properties.condition.allOf[2].anyOf} | Select-Object -property @{N='OperationName';E={$_.equals}} -Unique
 					$requiredAlertsOperationsList = ($subInsightsAlertsConfig | Where{ $_.Tags -contains $this.SubscriptionMandatoryTags}).AlertOperationList.OperationName
-					if(($currentAlertsOperationsList.Count -gt 0) -and ($requiredAlertsOperationsList -gt 0))
+					if((($currentAlertsOperationsList| Measure-Object).Count -gt 0) -and (($requiredAlertsOperationsList | Measure-Object).Count -gt 0))
 					{
 						$operationsDiffList = Compare-Object -ReferenceObject $requiredAlertsOperationsList -DifferenceObject $currentAlertsOperationsList.OperationName | Where-Object { $_.SideIndicator -eq "<=" }
-						if($operationsDiffList.Count -eq 0)
+						if(($operationsDiffList| Measure-Object).Count -eq 0)
 						{
 							$foundRequiredAlerts = $true
 						}
@@ -669,11 +669,11 @@ class SubscriptionCore: SVTBase
 							$foundRequiredAlerts = $false
 						}
 					}
-					elseif($requiredAlertsOperationsList -eq 0)
+					elseif(($requiredAlertsOperationsList| Measure-Object).Count -eq 0)
 					{
 						$foundRequiredAlerts = $true
 					}
-					elseif($currentAlertsOperationsList.Count -eq 0)
+					elseif(($currentAlertsOperationsList.Count| Measure-Object).Count -eq 0)
 					{
 						$foundRequiredAlerts = $false
 					}
