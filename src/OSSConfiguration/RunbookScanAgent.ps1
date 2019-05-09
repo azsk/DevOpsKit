@@ -715,71 +715,13 @@ try
 
 		#Primary Log Analytics Workspace info. This is mandatory. CA will send events to this WS.
 		$LAWorkspaceIdDetails = Get-AzAutomationVariable -Name "OMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG
-		$LAWorkspaceId = $LAWorkspaceIdDetails.Value
-		Write-Output("Checking if the variable LAWorkspaceId already exists...")
-		$existingLAWorkspaceId = Get-AzAutomationVariable -Name "LAWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
-		if(($existingLAWorkspaceId | Measure-Object).Count -eq 0)
-		{
-			Write-Output("Adding the variable LAWorkspaceId...")
-			New-AzAutomationVariable -AutomationAccountName $LAWorkspaceIdDetails.AutomationAccountName -Name "LAWorkspaceId" -Encrypted $False -Value $LAWorkspaceIdDetails.Value -ResourceGroupName $LAWorkspaceIdDetails.ResourceGroupName -ErrorAction SilentlyContinue
-			Set-AzAutomationVariable $LAWorkspaceIdDetails.AutomationAccountName -Name "LAWorkspaceId" -ResourceGroupName $LAWorkspaceIdDetails.ResourceGroupName -Description $LAWorkspaceIdDetails.Description -ErrorAction SilentlyContinue
-		}
-		else
-		{
-			Write-Output("LAWorkspaceId already exists...")
-		}
-		
+		$LAWorkspaceId = $LAWorkspaceIdDetails.Value		
 		$LAWorkspaceSharedKeyDetails = Get-AzAutomationVariable -Name "OMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG
 		$LAWorkspaceSharedKey = $LAWorkspaceSharedKeyDetails.Value
-		Write-Output("Checking if the variable LAWSharedKey already exists...")	
-		$existingLAWorkspaceSharedKey = Get-AzAutomationVariable -Name "LAWSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
-		if(($existingLAWorkspaceSharedKey | Measure-Object).Count -eq 0)
-		{			
-			Write-Output("Adding the variable LAWSharedKey...")
-			New-AzAutomationVariable -AutomationAccountName $LAWorkspaceSharedKeyDetails.AutomationAccountName -Name "LAWSharedKey" -Encrypted $False -Value $LAWorkspaceSharedKeyDetails.Value -ResourceGroupName $LAWorkspaceSharedKeyDetails.ResourceGroupName -ErrorAction SilentlyContinue
-			Set-AzAutomationVariable $LAWorkspaceSharedKeyDetails.AutomationAccountName -Name "LAWSharedKey" -ResourceGroupName $LAWorkspaceSharedKeyDetails.ResourceGroupName -Description $LAWorkspaceSharedKeyDetails.Description -ErrorAction SilentlyContinue
-		}
-		else
-		{
-			Write-Output("LAWSharedKey already exists...")
-		}
 		
-		#Secondary/alternate Log Analytics Workspace info. This is optional. Facilitates federal/state type models.		
-		$AltLAWorkspaceIdDetails = Get-AzAutomationVariable -Name "AltOMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		#Secondary/alternate Log Analytics Workspace info. This is optional. Facilitates federal/state type models.
 		$AltLAWorkspaceId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
-		if(($AltLAWorkspaceIdDetails | Measure-Object).Count -gt 0)
-		{
-			Write-Output("Checking if the variable AltLAWorkspaceId already exists...")
-			$existingAltLAWorkspaceId = Get-AzAutomationVariable -Name "AltLAWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
-			if(($existingAltLAWorkspaceId | Measure-Object).Count -eq 0)
-			{
-				Write-Output("Adding the variable AltLAWorkspaceId...")
-				New-AzAutomationVariable -AutomationAccountName $AltLAWorkspaceIdDetails.AutomationAccountName -Name "AltLAWorkspaceId" -Encrypted $False -Value $AltLAWorkspaceIdDetails.Value -ResourceGroupName $AltLAWorkspaceIdDetails.ResourceGroupName -ErrorAction SilentlyContinue
-				Set-AzAutomationVariable $AltLAWorkspaceIdDetails.AutomationAccountName -Name "AltLAWorkspaceId" -ResourceGroupName $AltLAWorkspaceIdDetails.ResourceGroupName -Description $AltLAWorkspaceIdDetails.Description -ErrorAction SilentlyContinue
-			}
-			else
-			{
-				Write-Output("AltLAWorkspaceId already exists...")
-			}
-		}
-
-		$AltLAWorkspaceSharedKeyDetails = Get-AzAutomationVariable -Name "AltOMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
 		$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
-		if(($AltLAWorkspaceSharedKeyDetails | Measure-Object).Count -gt 0)
-		{
-			Write-Output("Checking if the variable AltLAWSharedKey already exists...")
-			$existingAltLAWorkspaceSharedKey = Get-AzAutomationVariable -Name "AltLAWSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
-			if(($existingAltLAWorkspaceSharedKey | Measure-Object).Count -eq 0)
-			{
-				Write-Output("Adding the variable AltLAWSharedKey...")
-				New-AzAutomationVariable -AutomationAccountName $AltLAWorkspaceSharedKeyDetails.AutomationAccountName -Name "AltLAWSharedKey" -Encrypted $False -Value $AltLAWorkspaceSharedKeyDetails.Value -ResourceGroupName $AltLAWorkspaceSharedKeyDetails.ResourceGroupName -ErrorAction SilentlyContinue
-				Set-AzAutomationVariable $AltLAWorkspaceSharedKeyDetails.AutomationAccountName -Name "AltLAWSharedKey" -ResourceGroupName $AltLAWorkspaceSharedKeyDetails.ResourceGroupName -Description $AltLAWorkspaceSharedKeyDetails.Description -ErrorAction SilentlyContinue
-			}
-			else
-			{
-				Write-Output("AltLAWSharedKey already exists...")
-			}
-		}
 	
 		#CA can also optionally be configured to send events to a Webhook.
 		$WebhookUrl = Get-AutomationVariable -Name "WebhookUrl" -ErrorAction SilentlyContinue
@@ -871,6 +813,77 @@ try
 	
 		PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
 		Write-Output("SA: Scan agent completed...")
+
+		#------------------------------------Add Log Analytics specific Automation variables-------------------
+		try
+		{
+			PublishEvent -EventName "Adding Log Analytics variables Start"
+
+			$newLAWorkspaceIdName = "LAWorkspaceId"			
+			$newLAWSharedKeyName = "LAWSharedKey"
+			$newAltLAWorkspaceIdName = "AltLAWorkspaceId"
+			$newAltLAWSharedKeyName = "AltLAWSharedKey"
+			$altLAWorkspaceIdDetails = Get-AzAutomationVariable -Name "AltOMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+			$altLAWorkspaceSharedKeyDetails = Get-AzAutomationVariable -Name "AltOMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		
+			#Primary Log Analytics Workspace variables.
+			Write-Output("Checking if the variable LAWorkspaceId already exists...")
+			$existingLAWorkspaceId = Get-AzAutomationVariable -Name $newLAWorkspaceIdName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+			if(($existingLAWorkspaceId | Measure-Object).Count -gt 0)
+			{
+				Write-Output("LAWorkspaceId already exists...removing it...")
+				Remove-AzAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $newLAWorkspaceIdName
+			}
+			Write-Output("Adding the variable LAWorkspaceId...")
+			New-AzAutomationVariable -AutomationAccountName $LAWorkspaceIdDetails.AutomationAccountName -Name $newLAWorkspaceIdName -Encrypted $False -Value $LAWorkspaceIdDetails.Value -ResourceGroupName $LAWorkspaceIdDetails.ResourceGroupName -ErrorAction SilentlyContinue
+			Set-AzAutomationVariable $LAWorkspaceIdDetails.AutomationAccountName -Name $newLAWorkspaceIdName -ResourceGroupName $LAWorkspaceIdDetails.ResourceGroupName -Description $LAWorkspaceIdDetails.Description -ErrorAction SilentlyContinue
+
+			Write-Output("Checking if the variable LAWSharedKey already exists...")	
+			$existingLAWorkspaceSharedKey = Get-AzAutomationVariable -Name $newLAWSharedKeyName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+			if(($existingLAWorkspaceSharedKey | Measure-Object).Count -gt 0)
+			{
+				Write-Output("LAWSharedKey already exists...removing it...")
+				Remove-AzAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $newLAWSharedKeyName
+			}
+			Write-Output("Adding the variable LAWSharedKey...")
+			New-AzAutomationVariable -AutomationAccountName $LAWorkspaceSharedKeyDetails.AutomationAccountName -Name $newLAWSharedKeyName -Encrypted $False -Value $LAWorkspaceSharedKeyDetails.Value -ResourceGroupName $LAWorkspaceSharedKeyDetails.ResourceGroupName -ErrorAction SilentlyContinue
+			Set-AzAutomationVariable $LAWorkspaceSharedKeyDetails.AutomationAccountName -Name $newLAWSharedKeyName -ResourceGroupName $LAWorkspaceSharedKeyDetails.ResourceGroupName -Description $LAWorkspaceSharedKeyDetails.Description -ErrorAction SilentlyContinue
+
+			#Secondary/Alternate Log Analytics Workspace variables.
+			if(($altLAWorkspaceIdDetails | Measure-Object).Count -gt 0)
+			{
+				Write-Output("Checking if the variable AltLAWorkspaceId already exists...")
+				$existingAltLAWorkspaceId = Get-AzAutomationVariable -Name $newAltLAWorkspaceIdName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+				if(($existingAltLAWorkspaceId | Measure-Object).Count -eq 0)
+				{
+					Write-Output("AltLAWorkspaceId already exists...removing it...")
+					Remove-AzAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $newAltLAWorkspaceIdName
+				}
+				Write-Output("Adding the variable AltLAWorkspaceId...")
+				New-AzAutomationVariable -AutomationAccountName $altLAWorkspaceIdDetails.AutomationAccountName -Name $newAltLAWorkspaceIdName -Encrypted $False -Value $altLAWorkspaceIdDetails.Value -ResourceGroupName $altLAWorkspaceIdDetails.ResourceGroupName -ErrorAction SilentlyContinue
+				Set-AzAutomationVariable $altLAWorkspaceIdDetails.AutomationAccountName -Name $newAltLAWorkspaceIdName -ResourceGroupName $altLAWorkspaceIdDetails.ResourceGroupName -Description $altLAWorkspaceIdDetails.Description -ErrorAction SilentlyContinue
+			}
+			
+			if(($altLAWorkspaceSharedKeyDetails | Measure-Object).Count -gt 0)
+			{
+				Write-Output("Checking if the variable AltLAWSharedKey already exists...")
+				$existingAltLAWorkspaceSharedKey = Get-AzAutomationVariable -Name $newAltLAWSharedKeyName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+				if(($existingAltLAWorkspaceSharedKey | Measure-Object).Count -eq 0)
+				{
+					Write-Output("AltLAWSharedKey already exists...removing it...")
+					Remove-AzAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $newAltLAWSharedKeyName
+				}
+				Write-Output("Adding the variable AltLAWSharedKey...")
+				New-AzAutomationVariable -AutomationAccountName $altLAWorkspaceSharedKeyDetails.AutomationAccountName -Name $newAltLAWSharedKeyName -Encrypted $False -Value $altLAWorkspaceSharedKeyDetails.Value -ResourceGroupName $altLAWorkspaceSharedKeyDetails.ResourceGroupName -ErrorAction SilentlyContinue
+				Set-AzAutomationVariable $altLAWorkspaceSharedKeyDetails.AutomationAccountName -Name $newAltLAWSharedKeyName -ResourceGroupName $altLAWorkspaceSharedKeyDetails.ResourceGroupName -Description $altLAWorkspaceSharedKeyDetails.Description -ErrorAction SilentlyContinue
+			}
+			
+			PublishEvent -EventName "Adding Log Analytics variables Complete"
+		}
+		catch
+		{
+			PublishEvent -EventName "Adding Log Analytics variables addition/update Error" -Properties @{"ErrorRecord" = ($_ | Out-String)}
+		}
 	}
 }
 catch
