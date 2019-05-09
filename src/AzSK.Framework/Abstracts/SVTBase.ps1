@@ -19,6 +19,7 @@ class SVTBase: AzSKRoot
 	[string[]] $ExcludeTags = @();
 	[string[]] $ControlIds = @();
 	[string[]] $ExcludeControlIds = @();
+	[hashtable] $ResourceTags = @{}
 	[bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
 	[string] $PartialScanIdentifier = [string]::Empty
@@ -98,6 +99,7 @@ class SVTBase: AzSKRoot
             ResourceTypeName = $svtResource.ResourceTypeMapping.ResourceTypeName;
         };
 		$this.ResourceContext.ResourceId = $this.GetResourceId();
+		$this.ResourceContext.ResourceGroupTags = $this.ResourceTags;
 	}
 
     hidden [void] LoadSvtConfig([string] $controlsJsonFileName)
@@ -182,12 +184,11 @@ class SVTBase: AzSKRoot
 
 	hidden [string] GetResourceId()
     {
+		$resource = Get-AzResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
 		if ([string]::IsNullOrEmpty($this.ResourceId))
 		{
 			if($this.ResourceContext)
 			{
-           		$resource = Get-AzResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
-
 				if($resource)
 				{
 					$this.ResourceId = $resource.ResourceId;
@@ -200,6 +201,17 @@ class SVTBase: AzSKRoot
 			else
 			{
 				$this.ResourceId = $this.SubscriptionContext.Scope;
+			}
+		}
+
+		### set resource tags
+		if($resource)
+		{
+			#Check tag null # Put in try catch for safe failure
+			$tags =   (Get-AzResourceGroup | where-object {$_.ResourceGroupName  -eq $resource.ResourceGroupName}).Tags
+			if( $tags -and ($tags | Measure-Object).Count -gt 0)
+			{
+				$this.ResourceTags = $tags
 			}
 		}
 

@@ -118,6 +118,18 @@ Class LogAnalyticsHelper
 				$out.AttestedDate = $attestedData.AttestedDate
 				$out.ExpiryDate = $attestedData.ExpiryDate
 			}
+			
+			try
+			{
+				$out.Env = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\benv\b"]
+				$out.ComponentId = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\bcomponentid\b"]
+			}
+			catch
+			{
+				$out.Env = ""
+				$out.ComponentId = ""
+			}
+
 			$output += $out
 		}
 		return $output	
@@ -380,6 +392,8 @@ Class LogAnalyticsModel
 	[string] $PartialScanIdentifier
 	[string] $PolicyOrgName
 	[string] $ScannedBy
+	[string] $Env
+	[string] $ComponentId
 }
 
 Class LAWResourceInvModel

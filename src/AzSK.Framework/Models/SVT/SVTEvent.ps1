@@ -31,7 +31,8 @@ class ResourceContext
     [string] $ResourceName = ""
     [string] $ResourceType = ""
 	[hashtable] $ResourceMetadata = @{}
-    [string] $ResourceTypeName = ""
+	[string] $ResourceTypeName = ""
+	[hashtable] $ResourceGroupTags = @{}
 }
 
 class ControlResult
