@@ -616,69 +616,73 @@ class SubscriptionCore: SVTBase
 	hidden [ControlResult] CheckCriticalAlertsPresence([ControlResult] $controlResult)
 	{
         $alertDiffList = @()
-		$operationDiffList = @()
+		$operationsDiffList = @()
+        $foundRequiredAlerts = $false
+		$isValidVersion = $false;
+		$isLatestVersion = $false;
+		$currentVersion = "0.0.0";
+		$latestVersion = "0.0.0";
+		$configuredAlerts = $null
+    
+        # Get list of alerts from Json file
 		$alertConfig =  $this.LoadServerConfigFile("Subscription.InsARMAlerts.json");
-		$subInsightsAlertsConfig = $alertConfig.AlertList | Where-Object {$_.tags -contains "Mandatory"}
-        $foundRequiredAlerts = $true
-		[bool] $IsValidVersion = $false;
-		[bool] $IsLatestVersion = $false;
-		[string] $CurrentVersion = "0.0.0";
-		[string] $LatestVersion = "0.0.0";
-		$AlertsPkgRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-		$CurrentVersion = [Helpers]::GetResourceGroupTag($AlertsPkgRG, [Constants]::AzSKAlertsVersionTagName)
-		if([string]::IsNullOrWhiteSpace($CurrentVersion))
+		$subInsightsAlertsConfig = $alertConfig.AlertList | Where-Object { ($_.tags -contains "Mandatory") -or ($_.tags -contains "Optional")}
+        
+        # Get currently set alert's version
+		$alertsPkgRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+		$currentVersion = [Helpers]::GetResourceGroupTag($alertsPkgRG, [Constants]::AzSKAlertsVersionTagName)
+		if([string]::IsNullOrWhiteSpace($currentVersion))
 		{
-			$CurrentVersion = "0.0.0"
+			$currentVersion = "0.0.0"
 		}
 		$minSupportedVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKAlertsMinReqdVersion 
 		$IsLatestVersion = $this.IsLatestVersionConfiguredOnSub($alertConfig.Version,[Constants]::AzSKAlertsVersionTagName);
-		$IsValidVersion = $this.IsLatestVersionConfiguredOnSub($alertConfig.Version,[Constants]::AzSKAlertsVersionTagName) -or [System.Version]$minSupportedVersion -le [System.Version]$CurrentVersion ;
+		$IsValidVersion = ($IsLatestVersion) -or ([System.Version]$minSupportedVersion -le [System.Version]$currentVersion) ;
 		$LatestVersion = $alertConfig.Version;
 
-        if($null -ne $subInsightsAlertsConfig)
-        {
-            $subInsightsAlertsConfig =[array]($subInsightsAlertsConfig)
-
-			
-            $alertsRG = [array] (Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -eq "$AlertsPkgRG"})
-            $configuredAlerts = $null
+        # Get currently configured alerts from azure portal
+        if(($subInsightsAlertsConfig | Measure-Object).Count -gt 0)
+		{		
+            $alertsRG = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -eq "$alertsPkgRG"}
             if (($alertsRG | Measure-Object).Count -eq 1)
             {
-                $configuredAlerts = Get-AzResource -ResourceType "Microsoft.Insights/activityLogAlerts" -ResourceGroupName  $AlertsPkgRG -ExpandProperties -ErrorAction SilentlyContinue
-            }
-
-            if((($alertsRG | Measure-Object).Count -eq 1) -and ($null -ne $configuredAlerts)){
-                $subInsightsAlertsConfig | ForEach-Object{                    
-					Set-Variable -Name alert -Scope Local -Value $_
-                    Set-Variable -Name alertEnabled -Scope Local -Value $_.Enabled
-                    Set-Variable -Name alertName -Scope Local -Value $_.Name
-                    Set-Variable -Name tags -Scope Local -Value $_.Tags
-                    $haveMatchedTags = ((($tags | Where-Object { $this.SubscriptionMandatoryTags -contains $_ }) | Measure-Object).Count -gt 0)
-                    
-					if($alertEnabled -and $haveMatchedTags)
-                    {
-                        $foundAlert = [array]($configuredAlerts | Where-Object  {$_.Name -eq $alertName})
-						#Verify if alert present
-                        if($null -eq $foundAlert -or ($foundAlert | Measure-Object).Count -le 0)
-                        {
-                            $foundRequiredAlerts = $false
-                            $alertDiffList += $alert
-                        }
-						#if alert exists then verify operation list 
-						# else
-						# {
-						# 	$diffObj= $foundAlert.Properties.condition.allOf[2].anyOf | Select-Object equals
-						# 	$refObj= $alert.AlertOperationList | Where-Object {$_.Enabled -eq $true} | Select-Object OperationName
-						# 	$opDiffList= Compare-Object -ReferenceObject $refObj -DifferenceObject $diffObj | Select-Object -property @{N='OperationList';E={$_.InputObject.equals}}  
-						# 	if($null -ne $opDiffList)
-						# 	{
-						# 		$opList=  $opDiffList.OperationList
-						# 		$foundRequiredAlerts = $false
-						# 		$operationDiffList += @{Name=$alertName; Description=$alert.Description; OperationNameList = $opList }
-						# 	}
-						# }
-                    }
-                }
+                $configuredAlerts = Get-AzResource -ResourceType "Microsoft.Insights/activityLogAlerts" -ResourceGroupName  $alertsPkgRG -ExpandProperties -ErrorAction SilentlyContinue
+			}			
+			if(($configuredAlerts | Measure-Object).Count -gt 0)
+			{
+				$matchingAlertRulesNames = Compare-Object -ReferenceObject $configuredAlerts.Name -DifferenceObject $subInsightsAlertsConfig.Name -IncludeEqual -ExcludeDifferent
+				if(($matchingAlertRulesNames| Measure-Object).count -gt 0)
+				{
+					$configuredAlerts = $configuredAlerts | Where-Object { $matchingAlertRulesNames.InputObject -contains $_.Name }
+					$currentAlertsOperationsList = $configuredAlerts | ForEach-Object { $_.Properties.condition.allOf[2].anyOf} | Select-Object -property @{N='OperationName';E={$_.equals}} -Unique
+					$requiredAlertsOperationsList = ($subInsightsAlertsConfig | Where{ $_.Tags -contains $this.SubscriptionMandatoryTags}).AlertOperationList.OperationName
+					if((($currentAlertsOperationsList| Measure-Object).Count -gt 0) -and (($requiredAlertsOperationsList | Measure-Object).Count -gt 0))
+					{
+						$operationsDiffList = Compare-Object -ReferenceObject $requiredAlertsOperationsList -DifferenceObject $currentAlertsOperationsList.OperationName | Where-Object { $_.SideIndicator -eq "<=" }
+						if(($operationsDiffList| Measure-Object).Count -eq 0)
+						{
+							$foundRequiredAlerts = $true
+						}
+						else
+						{
+							$operationsDiffList = $operationsDiffList.InputObject
+							$foundRequiredAlerts = $false
+						}
+					}
+					elseif(($requiredAlertsOperationsList| Measure-Object).Count -eq 0)
+					{
+						$foundRequiredAlerts = $true
+					}
+					elseif(($currentAlertsOperationsList.Count| Measure-Object).Count -eq 0)
+					{
+						$foundRequiredAlerts = $false
+					}
+				}
+				else
+				{
+					# Alert(s) not found in specified RG
+					$foundRequiredAlerts = $false
+				}
             }
             else {
 				#If new alerts are not found and server flag EnableV1AlertFailure is false, 
@@ -693,7 +697,11 @@ class SubscriptionCore: SVTBase
 				}
             }
         }
-
+		else
+		{
+			# No alert(s) defined in JSON file
+			$foundRequiredAlerts = $true	
+		}
         if($foundRequiredAlerts)
         {
             $controlResult.AddMessage([VerificationResult]::Passed, "Insights alerts has been configured on the subscription.");
@@ -717,14 +725,11 @@ class SubscriptionCore: SVTBase
 					$controlResult.AddMessage([VerificationResult]::Failed, "Missing mandatory critical alerts list on the subscription.", $alertDiffList);	
 					$controlResult.SetStateData("Missing mandatory critical alerts", $alertDiffList);
 				}
-				if(($operationDiffList | Measure-Object).Count -ne 0)
+				if(($operationsDiffList | Measure-Object).Count -ne 0)
 				{
-					$controlResult.AddMessage([VerificationResult]::Failed, "Operation mismatch in critical alerts on the subscription.", $operationDiffList);	
-					$controlResult.SetStateData("Missing mandatory critical alerts", $operationDiffList);
-				}
-				
-
-									
+					$controlResult.AddMessage([VerificationResult]::Failed, "Operation mismatch in critical alerts on the subscription.", $operationsDiffList);	
+					$controlResult.SetStateData("Missing mandatory critical alerts", $operationsDiffList);
+				}								
         }
 		return $controlResult
 	}
@@ -739,12 +744,12 @@ class SubscriptionCore: SVTBase
         {
             $subInsightsAlertsConfig =[array]($subInsightsAlertsConfig)
 
-			$AlertsPkgRG = "AzSKAlertsRG"
-            $alertsRG = [array] (Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -match "^$AlertsPkgRG"})
+			$alertsPkgRG = "AzSKAlertsRG"
+            $alertsRG = [array] (Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -match "^$alertsPkgRG"})
             $configuredAlerts = $null
             if (($alertsRG | Measure-Object).Count -eq 1)
             {
-                $configuredAlerts = Get-AzAlertRule -ResourceGroup $AlertsPkgRG -WarningAction SilentlyContinue
+                $configuredAlerts = Get-AzAlertRule -ResourceGroup $alertsPkgRG -WarningAction SilentlyContinue
             }
 
             if((($alertsRG | Measure-Object).Count -eq 1) -and ($null -ne $configuredAlerts)){

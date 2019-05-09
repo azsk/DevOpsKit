@@ -6,7 +6,7 @@
       "Description": "Alerts for SQL",
       "Enabled": true,
       "Tags": [
-        "Mandatory"
+        "Optional"
       ],
       "AlertOperationList": [
         {
@@ -14,7 +14,7 @@
           "Description": "Create or update server administrator",
           "OperationName": "Microsoft.Sql/servers/administrators/write",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -24,7 +24,7 @@
           "Description": "Delete server administrator from the server",
           "OperationName": "Microsoft.Sql/servers/administrators/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -34,7 +34,7 @@
           "Description": "Create or update server firewall rule that controls IP address range allowed to connect to the server",
           "OperationName": "Microsoft.Sql/servers/firewallRules/write",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -44,7 +44,7 @@
           "Description": "Delete firewall rule from the server",
           "OperationName": "Microsoft.Sql/servers/firewallRules/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -54,7 +54,7 @@
           "Description": "Delete existing elastic database pool",
           "OperationName": "Microsoft.Sql/servers/elasticPools/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -64,7 +64,7 @@
           "Description": "Delete a server and all contained databases and elastic pools",
           "OperationName": "Microsoft.Sql/servers/databases/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -74,7 +74,7 @@
           "Description": "Terminate the replication relationship forcefully and with potential data loss",
           "OperationName": "Microsoft.Sql/servers/databases/replicationLinks/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -84,7 +84,7 @@
           "Description": "Terminate the replication relationship forcefully or after synchronizing with the partner",
           "OperationName": "Microsoft.Sql/servers/databases/replicationLinks/unlink/action",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -94,7 +94,7 @@
           "Description": "Change data masking policy for a given database",
           "OperationName": "Microsoft.Sql/servers/databases/dataMaskingPolicies/write",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -104,7 +104,7 @@
           "Description": "Delete data masking policy rule for a given database",
           "OperationName": "Microsoft.Sql/servers/databases/dataMaskingPolicies/rules/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -114,7 +114,7 @@
           "Description": "Change data masking policy rule for a given database",
           "OperationName": "Microsoft.Sql/servers/databases/dataMaskingPolicies/rules/write",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -124,7 +124,7 @@
           "Description": "Change connection policy for a given database",
           "OperationName": "Microsoft.Sql/servers/databases/connectionPolicies/write",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -134,7 +134,7 @@
           "Description": "Enable or disable transparent data encryption for a given database",
           "OperationName": "Microsoft.Sql/servers/databases/transparentDataEncryption/write",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -144,7 +144,7 @@
           "Description": "Change auditing policy for a given database",
           "OperationName": "Microsoft.Sql/servers/databases/auditingPolicies/write",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -154,7 +154,7 @@
           "Description": "Creates a virtual network rule with the specified parameters or updates the properties or tags  for the specified virtual network rule.",
           "OperationName": "Microsoft.Sql/servers/virtualNetworkRules/write",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -164,7 +164,7 @@
           "Description": "Deletes an existing Virtual Network Rule.",
           "OperationName": "Microsoft.Sql/servers/virtualNetworkRules/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -177,7 +177,7 @@
       "Description": "Alerts for Azure Services",
       "Enabled": true,
       "Tags": [
-        "Mandatory"
+        "Optional"
       ],
       "AlertOperationList": [
         {
@@ -185,7 +185,7 @@
           "Description": "Create a Namespace level Authorization Rules and update its properties. The Authorization Rules Access Rights, the Primary and Secondary Keys can be updated.",
           "OperationName": "Microsoft.ServiceBus/namespaces/authorizationRules/write",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -195,7 +195,7 @@
           "Description": "Delete Namespace Authorization Rule. The Default Namespace Authorization Rule cannot be deleted. ",
           "OperationName": "Microsoft.ServiceBus/namespaces/authorizationRules/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -205,7 +205,7 @@
           "Description": "Get the Connection String to the Namespace",
           "OperationName": "Microsoft.ServiceBus/namespaces/authorizationRules/listkeys/action",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -215,7 +215,7 @@
           "Description": "Operation to delete Queue Resource",
           "OperationName": "Microsoft.ServiceBus/namespaces/queues/Delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -225,7 +225,7 @@
           "Description": "Create Queue Authorization Rules and Update its properties. The Authorization Rules Access Rights, the Primary and Secondary Keys can be updated.",
           "OperationName": "Microsoft.ServiceBus/namespaces/queues/authorizationRules/write",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -235,7 +235,7 @@
           "Description": "Operation to delete Queue Authorization Rules",
           "OperationName": "Microsoft.ServiceBus/namespaces/queues/authorizationRules/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -245,7 +245,7 @@
           "Description": "Get the Connection String to Queue",
           "OperationName": "Microsoft.ServiceBus/namespaces/queues/authorizationRules/listkeys/action",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -255,7 +255,7 @@
           "Description": "Operation to delete Topic Resource",
           "OperationName": "Microsoft.ServiceBus/namespaces/topics/Delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -265,7 +265,7 @@
           "Description": "Create Topic Authorization Rules and Update its properties. The Authorization Rules Access Rights, the Primary and Secondary Keys can be updated.",
           "OperationName": "Microsoft.ServiceBus/namespaces/topics/authorizationRules/write",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -275,7 +275,7 @@
           "Description": "Operation to delete Topic Authorization Rules",
           "OperationName": "Microsoft.ServiceBus/namespaces/topics/authorizationRules/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -285,7 +285,7 @@
           "Description": "Get the Connection String to Topic",
           "OperationName": "Microsoft.ServiceBus/namespaces/topics/authorizationRules/listkeys/action",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -295,7 +295,7 @@
           "Description": "Operation to delete TopicSubscription Resource",
           "OperationName": "Microsoft.ServiceBus/namespaces/topics/subscriptions/Delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -305,7 +305,7 @@
           "Description": "Delete an existed DataLakeStore account",
           "OperationName": "Microsoft.DataLakeStore/accounts/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -315,7 +315,7 @@
           "Description": "Create or update a firewall rule",
           "OperationName": "Microsoft.DataLakeStore/accounts/firewallRules/write",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "Medium",
           "Enabled": true
@@ -325,7 +325,7 @@
           "Description": "Delete the DataLakeAnalytics account",
           "OperationName": "Microsoft.DataLakeAnalytics/accounts/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -335,7 +335,7 @@
           "Description": "Unlink a Storage account from the DataLakeAnalytics account",
           "OperationName": "Microsoft.DataLakeAnalytics/accounts/storageAccounts/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -345,7 +345,7 @@
           "Description": "Unlink a DataLakeStore account from the DataLakeAnalytics account",
           "OperationName": "Microsoft.DataLakeAnalytics/accounts/dataLakeStoreAccounts/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -355,7 +355,7 @@
           "Description": "Creates a new virtual machine or updates an existing virtual machine",
           "OperationName": "Microsoft.Compute/virtualMachines/write",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -365,7 +365,7 @@
           "Description": "Deletes the virtual machine",
           "OperationName": "Microsoft.Compute/virtualMachines/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -375,7 +375,7 @@
           "Description": "Creates a new virtual machine extension or updates an existing one.",
           "OperationName": "Microsoft.Compute/virtualMachines/extensions/write",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -385,7 +385,7 @@
           "Description": "Deletes the virtual machine extension.",
           "OperationName": "Microsoft.Compute/virtualMachines/extensions/delete",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -395,7 +395,7 @@
             "Description":  "Delete the patch schedule of a Redis Cache",
             "OperationName":  "Microsoft.Cache/redis/patchSchedules/delete",
             "Tags":  [
-                         "Mandatory"
+                         "Optional"
                      ],
             "Severity":  "High",
             "Enabled":  true
@@ -405,7 +405,7 @@
             "Description":  "List keys of a database account",
             "OperationName":  "Microsoft.DocumentDB/databaseAccounts/listKeys/action",
             "Tags":  [
-                         "Mandatory"
+                         "Optional"
                      ],
             "Severity":  "High",
             "Enabled":  true
@@ -415,7 +415,7 @@
             "Description":  "Rotate keys of a database account",
             "OperationName":  "Microsoft.DocumentDB/databaseAccounts/regenerateKey/action",
             "Tags":  [
-                         "Mandatory"
+                         "Optional"
                      ],
             "Severity":  "High",
             "Enabled":  true
@@ -425,7 +425,7 @@
             "Description":  "Change the value of Redis Cache access keys in the management portal",
             "OperationName":  "Microsoft.Cache/redis/regenerateKey/action",
             "Tags":  [
-                         "Mandatory"
+                         "Optional"
                      ],
             "Severity":  "High",
             "Enabled":  true
@@ -435,7 +435,7 @@
             "Description":  "Edit the IP firewall rules of a Redis Cache",
             "OperationName":  "Microsoft.Cache/redis/firewallRules/write",
             "Tags":  [
-                         "Mandatory"
+                         "Optional"
                      ],
             "Severity":  "High",
             "Enabled":  true
@@ -445,7 +445,7 @@
             "Description":  "Delete IP firewall rules of a Redis Cache",
             "OperationName":  "Microsoft.Cache/redis/firewallRules/delete",
             "Tags":  [
-                         "Mandatory"
+                         "Optional"
                      ],
             "Severity":  "High",
             "Enabled":  true
@@ -455,7 +455,7 @@
           "Description":  "Get a managed cluster access profile by role name using list credential",
           "OperationName":  "Microsoft.ContainerService/managedClusters/accessProfiles/listCredential/action",
           "Tags":  [
-                       "Mandatory"
+                       "Optional"
                    ],
           "Severity":  "High",
           "Enabled":  true
@@ -465,7 +465,7 @@
         "Description":  "List the clusterAdmin credential of a managed cluster",
         "OperationName":  "Microsoft.ContainerService/managedClusters/listClusterAdminCredential/action",
         "Tags":  [
-                     "Mandatory"
+                     "Optional"
                  ],
         "Severity":  "High",
         "Enabled":  true
@@ -475,7 +475,7 @@
          "Description":  "Lists the login credentials for the specified container registry.",
          "OperationName":  "Microsoft.ContainerRegistry/registries/listCredentials/action",
          "Tags":  [
-                      "Mandatory"
+                      "Optional"
                   ],
          "Severity":  "High",
          "Enabled":  true
@@ -485,7 +485,7 @@
          "Description":  "Regenerates one of the login credentials for the specified container registry.",
          "OperationName":  "Microsoft.ContainerRegistry/registries/regenerateCredential/action",
          "Tags":  [
-                      "Mandatory"
+                      "Optional"
                   ],
          "Severity":  "High",
          "Enabled":  true
@@ -495,7 +495,7 @@
          "Description":  "Notifies Microsoft.ContainerRegistry that virtual network or subnet is being deleted",
          "OperationName":  "Microsoft.ContainerRegistry/locations/deleteVirtualNetworkOrSubnets/action",
          "Tags":  [
-                      "Mandatory"
+                      "Optional"
                   ],
          "Severity":  "High",
          "Enabled":  true
@@ -505,7 +505,7 @@
          "Description":  "Notifies Microsoft.ContainerInstance that virtual network or subnet is being deleted.",
          "OperationName":  "Microsoft.ContainerInstance/locations/deleteVirtualNetworkOrSubnets/action",
          "Tags":  [
-                      "Mandatory"
+                      "Optional"
                   ],
          "Severity":  "High",
          "Enabled":  true
@@ -515,7 +515,7 @@
          "Description":  "Update gateway settings for HDInsight Cluster",
          "OperationName":  "Microsoft.HDInsight/clusters/updateGatewaySettings/action",
          "Tags":  [
-                      "Mandatory"
+                      "Optional"
                   ],
          "Severity":  "High",
          "Enabled":  true
@@ -525,7 +525,7 @@
          "Description":  "Get HDInsight Cluster Configurations",
          "OperationName":  "Microsoft.HDInsight/clusters/configurations/action",
          "Tags":  [
-                      "Mandatory"
+                      "Optional"
                   ],
          "Severity":  "High",
          "Enabled":  true
@@ -535,7 +535,7 @@
          "Description":  "Create or Update Application for HDInsight Cluster",
          "OperationName":  "Microsoft.HDInsight/clusters/applications/write",
          "Tags":  [
-                      "Mandatory"
+                      "Optional"
                   ],
          "Severity":  "High",
          "Enabled":  true
@@ -545,7 +545,7 @@
          "Description":  "Delete Application for HDInsight Cluster",
          "OperationName":  "Microsoft.HDInsight/clusters/applications/delete",
          "Tags":  [
-                      "Mandatory"
+                      "Optional"
                   ],
          "Severity":  "High",
          "Enabled":  true
@@ -555,7 +555,7 @@
          "Description":  "Create a Namespace level Authorization Rules and update its properties. The Authorization Rules Access Rights",
          "OperationName":  "Microsoft.NotificationHubs/Namespaces/authorizationRules/write",
          "Tags":  [
-                      "Mandatory"
+                      "Optional"
                   ],
          "Severity":  "High",
          "Enabled":  true
@@ -565,7 +565,7 @@
          "Description":  "Create Notification Hub Authorization Rules and Update its properties. The Authorization Rules Access Rights",
          "OperationName":  "Microsoft.NotificationHubs/Namespaces/NotificationHubs/authorizationRules/write",
          "Tags":  [
-                      "Mandatory"
+                      "Optional"
                   ],
          "Severity":  "High",
          "Enabled":  true
@@ -575,7 +575,7 @@
          "Description":  "Get the Connection String to the Namespace",
          "OperationName":  "Microsoft.NotificationHubs/Namespaces/authorizationRules/listkeys/action",
          "Tags":  [
-                      "Mandatory"
+                      "Optional"
                   ],
          "Severity":  "High",
          "Enabled":  true
@@ -585,7 +585,7 @@
          "Description":  "Namespace Authorization Rule Regenerate Primary/SecondaryKey",
          "OperationName":  "Microsoft.NotificationHubs/Namespaces/authorizationRules/regenerateKeys/action",
          "Tags":  [
-                      "Mandatory"
+                      "Optional"
                   ],
          "Severity":  "High",
          "Enabled":  true
@@ -595,7 +595,7 @@
          "Description":  "Get the Connection String to the Notification Hub",
          "OperationName":  "Microsoft.NotificationHubs/Namespaces/NotificationHubs/authorizationRules/listkeys/action",
          "Tags":  [
-                      "Mandatory"
+                      "Optional"
                   ],
          "Severity":  "High",
          "Enabled":  true
@@ -605,7 +605,7 @@
          "Description":  "Notification Hub Authorization Rule Regenerate Primary/SecondaryKey",
          "OperationName":  "Microsoft.NotificationHubs/Namespaces/NotificationHubs/authorizationRules/regenerateKeys/action",
          "Tags":  [
-                      "Mandatory"
+                      "Optional"
                   ],
          "Severity":  "High",
          "Enabled":  true
@@ -615,7 +615,7 @@
         "Description":  "Generate SSO URI. The URI can be used to access cdn supplemental portal",
         "OperationName":  "Microsoft.Cdn/profiles/GenerateSsoUri/action",
         "Tags":  [
-                     "Mandatory"
+                     "Optional"
                  ],
         "Severity":  "High",
         "Enabled":  true
@@ -625,7 +625,7 @@
           "Description": "Disable Custom Https endpoint on custom domains",
           "OperationName": "Microsoft.Cdn/profiles/endpoints/customdomains/DisableCustomHttps/action",
           "Tags": [
-            "Mandatory"
+            "Optional"
           ],
           "Severity": "High",
           "Enabled": true
@@ -635,7 +635,7 @@
       "Description":  "Writes a request to regenerate Azure Automation DSC keys",
       "OperationName":  "Microsoft.Automation/automationAccounts/agentRegistrationInformation/regenerateKey/action",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -645,7 +645,7 @@
       "Description":  "Register a new user",
       "OperationName":  "Microsoft.ApiManagement/service/users/action",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -655,7 +655,7 @@
       "Description":  "Create new group or Update existing group details",
       "OperationName":  "Microsoft.ApiManagement/service/groups/write",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -665,7 +665,7 @@
       "Description":  "Add existing user to existing group",
       "OperationName":  "Microsoft.ApiManagement/service/groups/users/write",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -675,7 +675,7 @@
       "Description":  "Register a new user or Update account details of an existing user",
       "OperationName":  "Microsoft.ApiManagement/service/users/write",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -685,7 +685,7 @@
       "Description":  "Get token access token for a user",
       "OperationName":  "Microsoft.ApiManagement/service/users/token/action",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -695,7 +695,7 @@
       "Description":  "Generate SSO URL. The URL can be used to access admin portal",
       "OperationName":  "Microsoft.ApiManagement/service/users/generateSsoUrl/action",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -705,7 +705,7 @@
       "Description":  "Gets SSO token that can be used to login into API Management Service Legacy portal as an administrator",
       "OperationName":  "Microsoft.ApiManagement/service/getssotoken/action",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -715,7 +715,7 @@
       "Description":  "Updates the Microsoft.ApiManagement resources running in Virtual Network to pick updated Network Settings.",
       "OperationName":  "Microsoft.ApiManagement/service/applynetworkconfigurationupdates/action",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -725,7 +725,7 @@
       "Description":  "Regenerate primary access key",
       "OperationName":  "Microsoft.ApiManagement/service/tenant/regeneratePrimaryKey/action",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -735,7 +735,7 @@
       "Description":  "Regenerate secondary access key",
       "OperationName":  "Microsoft.ApiManagement/service/tenant/regenerateSecondaryKey/action",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -745,7 +745,7 @@
       "Description":  "Set policy configuration for existing product",
       "OperationName":  "Microsoft.ApiManagement/service/products/policy/write",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -755,7 +755,7 @@
       "Description":  "Remove policy configuration from existing product",
       "OperationName":  "Microsoft.ApiManagement/service/products/policy/delete",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -765,7 +765,7 @@
       "Description":  "Set policy configuration details for Product",
       "OperationName":  "Microsoft.ApiManagement/service/products/policies/write",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -775,7 +775,7 @@
       "Description":  "Remove policy configuration from Product policies",
       "OperationName":  "Microsoft.ApiManagement/service/products/policies/delete",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -785,7 +785,7 @@
       "Description":  "Regenerate subscription primary key",
       "OperationName":  "Microsoft.ApiManagement/service/subscriptions/regeneratePrimaryKey/action",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -795,7 +795,7 @@
       "Description":  "Regenerate subscription secondary key",
       "OperationName":  "Microsoft.ApiManagement/service/subscriptions/regenerateSecondaryKey/action",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -805,7 +805,7 @@
       "Description":  "Set policy configuration details for operation",
       "OperationName":  "Microsoft.ApiManagement/service/apis/operations/policy/write",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -815,7 +815,7 @@
       "Description":  "Remove policy configuration from operation",
       "OperationName":  "Microsoft.ApiManagement/service/apis/operations/policy/delete",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -825,7 +825,7 @@
       "Description":  "Set policy configuration details for API Operation",
       "OperationName":  "Microsoft.ApiManagement/service/apis/operations/policies/write",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -835,7 +835,7 @@
       "Description":  "Remove policy configuration from API Operation policies",
       "OperationName":  "Microsoft.ApiManagement/service/apis/operations/policies/delete",
       "Tags":  [
-                   "Mandatory"
+                   "Optional"
                ],
       "Severity":  "High",
       "Enabled":  true
@@ -845,6 +845,848 @@
     {
       "Name": "AzSK_Subscription_Alert",
       "Description": "Alerts for Subscription Activities",
+      "Enabled": true,
+      "Tags": [
+        "Optional"
+      ],
+      "AlertOperationList": [
+        {
+          "Name": "AzSK_Assign_the_caller_to_User_Access_Administrator_role",
+          "Description": "Grants the caller User Access Administrator access at the tenant scope",
+          "OperationName": "Microsoft.Authorization/elevateAccess/action",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "Critical",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Set_administrator",
+          "Description": "Add or modify administrator to a subscription.",
+          "OperationName": "Microsoft.Authorization/classicAdministrators/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "Critical",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_administrator",
+          "Description": "Removes the administrator from the subscription.",
+          "OperationName": "Microsoft.Authorization/classicAdministrators/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "Critical",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Add_management_locks",
+          "Description": "Add locks at the specified scope.",
+          "OperationName": "Microsoft.Authorization/locks/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_management_locks",
+          "Description": "Delete locks at the specified scope.",
+          "OperationName": "Microsoft.Authorization/locks/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_policy_assignment",
+          "Description": "Delete a policy assignment at the specified scope.",
+          "OperationName": "Microsoft.Authorization/policyAssignments/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_policy_assignment",
+          "Description": "Create a policy assignment at the specified scope.",
+          "OperationName": "Microsoft.Authorization/policyAssignments/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_policy_definition",
+          "Description": "Delete a policy definition.",
+          "OperationName": "Microsoft.Authorization/policyDefinitions/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_role_assignment",
+          "Description": "Create a role assignment at the specified scope.",
+          "OperationName": "Microsoft.Authorization/roleAssignments/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_role_assignment",
+          "Description": "Delete a role assignment at the specified scope.",
+          "OperationName": "Microsoft.Authorization/roleAssignments/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Activity_log_alert_delete",
+          "Description": "Deleting an activity log alert",
+          "OperationName": "Microsoft.Insights/ActivityLogAlerts/Delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Activity_log_alert_write",
+          "Description": "Writing an activity log alert",
+          "OperationName": "Microsoft.Insights/ActivityLogAlerts/Write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Action_group_write",
+          "Description": "Writing an action group",
+          "OperationName": "Microsoft.Insights/ActionGroups/Write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Action_group_delete",
+          "Description": "Deleting an action group",
+          "OperationName": "Microsoft.Insights/ActionGroups/Delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        }
+
+      ]
+    },
+    {
+      "Name": "AzSK_Network_Alert",
+      "Description": "Alerts for Network",
+      "Enabled": true,
+      "Tags": [
+        "Optional"
+      ],
+      "AlertOperationList": [
+        {
+          "Name": "AzSK_Create_or_Update_DNS_Zone",
+          "Description": "Create or update a DNS zone within a resource group.  Used to update the tags on a DNS zone resource. Note that this command can not be used to create or update record sets within the zone.",
+          "OperationName": "Microsoft.Network/dnszones/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "Critical",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_DNS_Zone",
+          "Description": "Delete the DNS zone, in JSON format. The zone properties include tags, etag, numberOfRecordSets, and maxNumberOfRecordSets.",
+          "OperationName": "Microsoft.Network/dnszones/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "Critical",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_update_record_set_of_type_MX",
+          "Description": "Create or update a record set of type ?MX? within a DNS zone. The records specified will replace the current records in the record set.",
+          "OperationName": "Microsoft.Network/dnszones/MX/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_record_set_of_type_MX",
+          "Description": "Remove the record set of a given name and type ?MX? from a DNS zone.",
+          "OperationName": "Microsoft.Network/dnszones/MX/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_update_record_set_of_type_AAAA",
+          "Description": "Create or update a record set of type ?AAAA? within a DNS zone. The records specified will replace the current records in the record set.",
+          "OperationName": "Microsoft.Network/dnszones/AAAA/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "Critical",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_record_set_of_type_AAAA",
+          "Description": "Remove the record set of a given name and type ?AAAA? from a DNS zone.",
+          "OperationName": "Microsoft.Network/dnszones/AAAA/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_update_record_set_of_type_CNAME",
+          "Description": "Create or update a record set of type ?CNAME? within a DNS zone. The records specified will replace the current records in the record set.",
+          "OperationName": "Microsoft.Network/dnszones/CNAME/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_record_set_of_type_CNAME",
+          "Description": "Remove the record set of a given name and type ?CNAME? from a DNS zone.",
+          "OperationName": "Microsoft.Network/dnszones/CNAME/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_update_record_set_of_type_A",
+          "Description": "Create or update a record set of type ?A? within a DNS zone. The records specified will replace the current records in the record set.",
+          "OperationName": "Microsoft.Network/dnszones/A/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_record_set_of_type_A",
+          "Description": "Remove the record set of a given name and type ?A? from a DNS zone.",
+          "OperationName": "Microsoft.Network/dnszones/A/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_Update_Network_Interface",
+          "Description": "Creates a network interface or updates an existing network interface. ",
+          "OperationName": "Microsoft.Network/networkInterfaces/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Join_Virtual_Machine_to_a_network_interface",
+          "Description": "Joins a Virtual Machine to a network interface",
+          "OperationName": "Microsoft.Network/networkInterfaces/join/action",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_Network_Interface",
+          "Description": "Deletes a network interface",
+          "OperationName": "Microsoft.Network/networkInterfaces/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_Public_Ip_Address",
+          "Description": "Deletes a public IP address.",
+          "OperationName": "Microsoft.Network/publicIPAddresses/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_Update_Virtual_Network",
+          "Description": "Creates a virtual network or updates an existing virtual network",
+          "OperationName": "Microsoft.Network/virtualNetworks/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_Virtual_Network",
+          "Description": "Deletes a virtual network",
+          "OperationName": "Microsoft.Network/virtualNetworks/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Peer_Virtual_Networks",
+          "Description": "Peers a virtual network with another virtual network",
+          "OperationName": "Microsoft.Network/virtualNetworks/peer/action",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_Update_Virtual_Network_Peering",
+          "Description": "Creates a virtual network peering or updates an existing virtual network peering",
+          "OperationName": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_Virtual_Network_Peering",
+          "Description": "Deletes a virtual network peering",
+          "OperationName": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_Update_Virtual_Network_Subnet",
+          "Description": "Creates a virtual network subnet or updates an existing virtual network subnet",
+          "OperationName": "Microsoft.Network/virtualNetworks/subnets/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_Virtual_Network_Subnet",
+          "Description": "Deletes a virtual network subnet",
+          "OperationName": "Microsoft.Network/virtualNetworks/subnets/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Join_Virtual_Network",
+          "Description": "Joins a virtual network",
+          "OperationName": "Microsoft.Network/virtualNetworks/subnets/join/action",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_Update_Network_Security_Group",
+          "Description": "Creates a network security group or updates an existing network security group",
+          "OperationName": "Microsoft.Network/networkSecurityGroups/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_Network_Security_Group",
+          "Description": "Deletes a network security group",
+          "OperationName": "Microsoft.Network/networkSecurityGroups/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Join_Network_Security_Group",
+          "Description": "Joins a network security group",
+          "OperationName": "Microsoft.Network/networkSecurityGroups/join/action",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_Update_Security_Rule",
+          "Description": "Creates a security rule or updates an existing security rule",
+          "OperationName": "Microsoft.Network/networkSecurityGroups/securityRules/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_Security_Rule",
+          "Description": "Deletes a security rule",
+          "OperationName": "Microsoft.Network/networkSecurityGroups/securityRules/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_Update_Route_Table",
+          "Description": "Creates a route table or Updates an existing route table",
+          "OperationName": "Microsoft.Network/routeTables/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_Route_Table",
+          "Description": "Deletes a route table definition",
+          "OperationName": "Microsoft.Network/routeTables/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Join_Route_Table",
+          "Description": "Joins a route table",
+          "OperationName": "Microsoft.Network/routeTables/join/action",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_Update_Route",
+          "Description": "Creates a route or Updates an existing route",
+          "OperationName": "Microsoft.Network/routeTables/routes/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_Route",
+          "Description": "Deletes a route definition",
+          "OperationName": "Microsoft.Network/routeTables/routes/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_Update_Load_Balancer_Inbound_Nat_Rule",
+          "Description": "Creates a load balancer inbound nat rule or updates an existing load balancer inbound nat rule",
+          "OperationName": "Microsoft.Network/loadBalancers/inboundNatRules/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_Or_Update_Traffic_Manager_Profile_Endpoint",
+          "Description": "Add a new Azure Endpoint in an existing Traffic Manager Profile or update the properties of an existing Azure Endpoint in that Traffic Manager Profile.",
+          "OperationName": "Microsoft.Network/trafficManagerProfiles/azureEndpoints/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+            "Name":  "AzSK_Create_Or_Update_Traffic_Manager_External_Endpoint",
+            "Description":  "Add a new External Endpoint in an existing Traffic Manager Profile or update the properties of an existing External Endpoint in that Traffic Manager Profile.",
+            "OperationName":  "Microsoft.Network/trafficManagerProfiles/externalEndpoints/write",
+            "Tags":  [
+                         "Optional"
+                     ],
+            "Severity":  "High",
+            "Enabled":  true
+        },
+        {
+            "Name":  "AzSK_Create_Or_Update_Traffic_Manager_Nested_Endpoint",
+            "Description":  "Add a new Nested Endpoint in an existing Traffic Manager Profile or update the properties of an existing Nested Endpoint in that Traffic Manager Profile.",
+            "OperationName":  "Microsoft.Network/trafficManagerProfiles/nestedEndpoints/write",
+            "Tags":  [
+                         "Optional"
+                     ],
+            "Severity":  "High",
+            "Enabled":  true
+        }
+      ]
+    },
+    {
+      "Name": "AzSK_Web_Alert",
+      "Description": "Alerts for Web ",
+      "Enabled": true,
+      "Tags": [
+        "Optional"
+      ],
+      "AlertOperationList": [
+        {
+          "Name": "AzSK_Delete_Web_App",
+          "Description": "Delete an existing Web App.",
+          "OperationName": "Microsoft.Web/sites/Delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Swap_Web_App_with_a_slot",
+          "Description": "Swap Web App with another slot.",
+          "OperationName": "Microsoft.Web/sites/slotsswap/Action",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Apply_Web_App_Slot_Configuration_to_web_app",
+          "Description": "Apply web app slot configuration from target slot to the current web app.",
+          "OperationName": "Microsoft.Web/sites/applySlotConfig/Action",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Update_Web_App_Slot_Configuration",
+          "Description": "Update Web App Slot configuration settings.",
+          "OperationName": "Microsoft.Web/sites/slots/config/Write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_List_Web_App_Slot_Security_Sensitive_Settings",
+          "Description": "List Web App Slot security sensitive settings, such as publishing credentials, app settings and connection strings",
+          "OperationName": "Microsoft.Web/sites/slots/config/list/Action",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Update_Web_App_Configuration",
+          "Description": "Update Web App's configuration settings.",
+          "OperationName": "Microsoft.Web/sites/config/Write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_List_Web_App_Security_Sensitive_Settings",
+          "Description": "List Web App's security sensitive settings, such as publishing credentials, app settings and connection strings",
+          "OperationName": "Microsoft.Web/sites/config/list/Action",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_List_Web_App_Function_Secrets",
+          "Description": "List Web App Function Secrets.",
+          "OperationName": "Microsoft.Web/sites/functions/listSecrets/Action",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Add_or_Update_Certificate",
+          "Description": "Add a new certificate or update an existing one.",
+          "OperationName": "Microsoft.Web/certificates/Write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_Certificate",
+          "Description": "Delete an existing certificate.",
+          "OperationName": "Microsoft.Web/certificates/Delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Update_Publishing_Users",
+          "Description": "Update Publishing Users.",
+          "OperationName": "Microsoft.web/publishingusers/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Get_Web_App_Publishing_Profile",
+          "Description": "Get publishing profile xml for a Web App.",
+          "OperationName": "Microsoft.Web/sites/publishxml/Action",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Update_Web_Apps_VNet_Connections",
+          "Description": "Update Web Apps Virtual Network Connections.",
+          "OperationName": "Microsoft.web/sites/virtualnetworkconnections/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_ Delete_Web_Apps_VNet_Connections",
+          "Description": "Delete Web Apps Virtual Network Connections.",
+          "OperationName": "Microsoft.web/sites/virtualnetworkconnections/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        }
+      ]
+    },
+    {
+      "Name": "AzSK_KeyVault_Alert",
+      "ResourceType": "Microsoft.KeyVault/vaults",
+      "Description": "Alerts for KeyVault",
+      "Enabled": true,
+      "Tags": [
+        "Optional"
+      ],
+      "AlertOperationList": [
+        {
+          "Name": "AzSK_Update_Key_Vault",
+          "Description": "Create a new key vault or update the properties of an existing key vault",
+          "OperationName": "Microsoft.KeyVault/vaults/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_Key_Vault",
+          "Description": "Delete a key vault",
+          "OperationName": "Microsoft.KeyVault/vaults/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Use_Vault_for_Virtual_Machines",
+          "Description": "Enables access to secrets in a key vault when deploying a virtual machine",
+          "OperationName": "Microsoft.KeyVault/vaults/deploy/action",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_View_Secret_Properties",
+          "Description": "View the properties of a secret, but not its value",
+          "OperationName": "Microsoft.KeyVault/vaults/secrets/read",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Update_Secret",
+          "Description": "Create a new secret or update the value of an existing secret",
+          "OperationName": "Microsoft.KeyVault/vaults/secrets/write",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        }
+      ]
+    },
+    {
+      "Name": "AzSK_Storage_Alert",
+      "Description": "Alerts for Storage Account",
+      "Enabled": true,
+      "Tags": [
+        "Optional"
+      ],
+      "AlertOperationList": [
+        {
+          "Name": "AzSK_Delete_Storage_Account",
+          "Description": "Deletes an existing storage account.",
+          "OperationName": "Microsoft.Storage/storageAccounts/delete",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Regenerate_Storage_Account_Keys",
+          "Description": "Regenerates the access keys for the specified storage account.",
+          "OperationName": "Microsoft.Storage/storageAccounts/regeneratekey/action",
+          "Tags": [
+            "Optional"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        }
+      ]
+    },
+    {
+      "Name": "AzSK_Critical_Alert",
+      "Description": "Alerts for Critical Operation",
+      "Enabled": true,
+      "Tags": [
+        "SMS"
+      ],
+      "AlertOperationList": [
+        {
+          "Name": "AzSK_Assign_the_caller_to_User_Access_Administrator_Role",
+          "Description": "Grants the caller User Access Administrator access at the tenant scope",
+          "OperationName": "Microsoft.Authorization/elevateAccess/action",
+          "Tags": [
+            "SMS"
+          ],
+          "Severity": "Critical",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Set_Administrator",
+          "Description": "Add or modify administrator to a subscription.",
+          "OperationName": "Microsoft.Authorization/classicAdministrators/write",
+          "Tags": [
+            "SMS"
+          ],
+          "Severity": "Critical",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_Administrator",
+          "Description": "Removes the administrator from the subscription.",
+          "OperationName": "Microsoft.Authorization/classicAdministrators/delete",
+          "Tags": [
+            "SMS"
+          ],
+          "Severity": "Critical",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Action_Group_Write",
+          "Description": "Writing an action group",
+          "OperationName": "Microsoft.Insights/ActionGroups/Write",
+          "Tags": [
+            "SMS"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Action_Group_Delete",
+          "Description": "Deleting an action group",
+          "OperationName": "Microsoft.Insights/ActionGroups/Delete",
+          "Tags": [
+            "SMS"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        }
+      ]
+    },
+    {
+      "Name": "AzSK_Resource_Deployment_Alert",
+      "Description": "Alerts for Resource Creation Operation",
+      "Enabled": true,
+      "Tags": [
+        "Deployment"
+      ],
+      "AlertOperationList": [
+        {
+          "Name": "AzSK_Create_new_or_update_existing_resource",
+          "Description": "Creates or updates an deployment.",
+          "OperationName": "Microsoft.Resources/deployments/write",
+          "Tags": [
+            "Deployment"
+          ],
+          "Severity": "Critical",
+          "Enabled": true
+        }
+      ]
+    }, 
+    {
+      "Name": "AzSK_Mandatory_Alert",
+      "Description": "Alerts for Critical Activities",
       "Enabled": true,
       "Tags": [
         "Mandatory"
@@ -991,697 +1833,6 @@
           "Enabled": true
         }
 
-      ]
-    },
-    {
-      "Name": "AzSK_Network_Alert",
-      "Description": "Alerts for Network",
-      "Enabled": true,
-      "Tags": [
-        "Mandatory"
-      ],
-      "AlertOperationList": [
-        {
-          "Name": "AzSK_Create_or_Update_DNS_Zone",
-          "Description": "Create or update a DNS zone within a resource group.  Used to update the tags on a DNS zone resource. Note that this command can not be used to create or update record sets within the zone.",
-          "OperationName": "Microsoft.Network/dnszones/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "Critical",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_DNS_Zone",
-          "Description": "Delete the DNS zone, in JSON format. The zone properties include tags, etag, numberOfRecordSets, and maxNumberOfRecordSets.",
-          "OperationName": "Microsoft.Network/dnszones/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "Critical",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Create_or_update_record_set_of_type_MX",
-          "Description": "Create or update a record set of type ?MX? within a DNS zone. The records specified will replace the current records in the record set.",
-          "OperationName": "Microsoft.Network/dnszones/MX/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_record_set_of_type_MX",
-          "Description": "Remove the record set of a given name and type ?MX? from a DNS zone.",
-          "OperationName": "Microsoft.Network/dnszones/MX/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Create_or_update_record_set_of_type_AAAA",
-          "Description": "Create or update a record set of type ?AAAA? within a DNS zone. The records specified will replace the current records in the record set.",
-          "OperationName": "Microsoft.Network/dnszones/AAAA/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "Critical",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_record_set_of_type_AAAA",
-          "Description": "Remove the record set of a given name and type ?AAAA? from a DNS zone.",
-          "OperationName": "Microsoft.Network/dnszones/AAAA/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Create_or_update_record_set_of_type_CNAME",
-          "Description": "Create or update a record set of type ?CNAME? within a DNS zone. The records specified will replace the current records in the record set.",
-          "OperationName": "Microsoft.Network/dnszones/CNAME/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_record_set_of_type_CNAME",
-          "Description": "Remove the record set of a given name and type ?CNAME? from a DNS zone.",
-          "OperationName": "Microsoft.Network/dnszones/CNAME/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Create_or_update_record_set_of_type_A",
-          "Description": "Create or update a record set of type ?A? within a DNS zone. The records specified will replace the current records in the record set.",
-          "OperationName": "Microsoft.Network/dnszones/A/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_record_set_of_type_A",
-          "Description": "Remove the record set of a given name and type ?A? from a DNS zone.",
-          "OperationName": "Microsoft.Network/dnszones/A/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Create_or_Update_Network_Interface",
-          "Description": "Creates a network interface or updates an existing network interface. ",
-          "OperationName": "Microsoft.Network/networkInterfaces/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Join_Virtual_Machine_to_a_network_interface",
-          "Description": "Joins a Virtual Machine to a network interface",
-          "OperationName": "Microsoft.Network/networkInterfaces/join/action",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_Network_Interface",
-          "Description": "Deletes a network interface",
-          "OperationName": "Microsoft.Network/networkInterfaces/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_Public_Ip_Address",
-          "Description": "Deletes a public IP address.",
-          "OperationName": "Microsoft.Network/publicIPAddresses/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Create_or_Update_Virtual_Network",
-          "Description": "Creates a virtual network or updates an existing virtual network",
-          "OperationName": "Microsoft.Network/virtualNetworks/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_Virtual_Network",
-          "Description": "Deletes a virtual network",
-          "OperationName": "Microsoft.Network/virtualNetworks/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Peer_Virtual_Networks",
-          "Description": "Peers a virtual network with another virtual network",
-          "OperationName": "Microsoft.Network/virtualNetworks/peer/action",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Create_or_Update_Virtual_Network_Peering",
-          "Description": "Creates a virtual network peering or updates an existing virtual network peering",
-          "OperationName": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_Virtual_Network_Peering",
-          "Description": "Deletes a virtual network peering",
-          "OperationName": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Create_or_Update_Virtual_Network_Subnet",
-          "Description": "Creates a virtual network subnet or updates an existing virtual network subnet",
-          "OperationName": "Microsoft.Network/virtualNetworks/subnets/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_Virtual_Network_Subnet",
-          "Description": "Deletes a virtual network subnet",
-          "OperationName": "Microsoft.Network/virtualNetworks/subnets/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Join_Virtual_Network",
-          "Description": "Joins a virtual network",
-          "OperationName": "Microsoft.Network/virtualNetworks/subnets/join/action",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Create_or_Update_Network_Security_Group",
-          "Description": "Creates a network security group or updates an existing network security group",
-          "OperationName": "Microsoft.Network/networkSecurityGroups/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_Network_Security_Group",
-          "Description": "Deletes a network security group",
-          "OperationName": "Microsoft.Network/networkSecurityGroups/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Join_Network_Security_Group",
-          "Description": "Joins a network security group",
-          "OperationName": "Microsoft.Network/networkSecurityGroups/join/action",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Create_or_Update_Security_Rule",
-          "Description": "Creates a security rule or updates an existing security rule",
-          "OperationName": "Microsoft.Network/networkSecurityGroups/securityRules/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_Security_Rule",
-          "Description": "Deletes a security rule",
-          "OperationName": "Microsoft.Network/networkSecurityGroups/securityRules/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Create_or_Update_Route_Table",
-          "Description": "Creates a route table or Updates an existing route table",
-          "OperationName": "Microsoft.Network/routeTables/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_Route_Table",
-          "Description": "Deletes a route table definition",
-          "OperationName": "Microsoft.Network/routeTables/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Join_Route_Table",
-          "Description": "Joins a route table",
-          "OperationName": "Microsoft.Network/routeTables/join/action",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Create_or_Update_Route",
-          "Description": "Creates a route or Updates an existing route",
-          "OperationName": "Microsoft.Network/routeTables/routes/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_Route",
-          "Description": "Deletes a route definition",
-          "OperationName": "Microsoft.Network/routeTables/routes/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Create_or_Update_Load_Balancer_Inbound_Nat_Rule",
-          "Description": "Creates a load balancer inbound nat rule or updates an existing load balancer inbound nat rule",
-          "OperationName": "Microsoft.Network/loadBalancers/inboundNatRules/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Create_Or_Update_Traffic_Manager_Profile_Endpoint",
-          "Description": "Add a new Azure Endpoint in an existing Traffic Manager Profile or update the properties of an existing Azure Endpoint in that Traffic Manager Profile.",
-          "OperationName": "Microsoft.Network/trafficManagerProfiles/azureEndpoints/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-            "Name":  "AzSK_Create_Or_Update_Traffic_Manager_External_Endpoint",
-            "Description":  "Add a new External Endpoint in an existing Traffic Manager Profile or update the properties of an existing External Endpoint in that Traffic Manager Profile.",
-            "OperationName":  "Microsoft.Network/trafficManagerProfiles/externalEndpoints/write",
-            "Tags":  [
-                         "Mandatory"
-                     ],
-            "Severity":  "High",
-            "Enabled":  true
-        },
-        {
-            "Name":  "AzSK_Create_Or_Update_Traffic_Manager_Nested_Endpoint",
-            "Description":  "Add a new Nested Endpoint in an existing Traffic Manager Profile or update the properties of an existing Nested Endpoint in that Traffic Manager Profile.",
-            "OperationName":  "Microsoft.Network/trafficManagerProfiles/nestedEndpoints/write",
-            "Tags":  [
-                         "Mandatory"
-                     ],
-            "Severity":  "High",
-            "Enabled":  true
-        }
-      ]
-    },
-    {
-      "Name": "AzSK_Web_Alert",
-      "Description": "Alerts for Web ",
-      "Enabled": true,
-      "Tags": [
-        "Mandatory"
-      ],
-      "AlertOperationList": [
-        {
-          "Name": "AzSK_Delete_Web_App",
-          "Description": "Delete an existing Web App.",
-          "OperationName": "Microsoft.Web/sites/Delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Swap_Web_App_with_a_slot",
-          "Description": "Swap Web App with another slot.",
-          "OperationName": "Microsoft.Web/sites/slotsswap/Action",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Apply_Web_App_Slot_Configuration_to_web_app",
-          "Description": "Apply web app slot configuration from target slot to the current web app.",
-          "OperationName": "Microsoft.Web/sites/applySlotConfig/Action",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Update_Web_App_Slot_Configuration",
-          "Description": "Update Web App Slot configuration settings.",
-          "OperationName": "Microsoft.Web/sites/slots/config/Write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_List_Web_App_Slot_Security_Sensitive_Settings",
-          "Description": "List Web App Slot security sensitive settings, such as publishing credentials, app settings and connection strings",
-          "OperationName": "Microsoft.Web/sites/slots/config/list/Action",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Update_Web_App_Configuration",
-          "Description": "Update Web App's configuration settings.",
-          "OperationName": "Microsoft.Web/sites/config/Write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_List_Web_App_Security_Sensitive_Settings",
-          "Description": "List Web App's security sensitive settings, such as publishing credentials, app settings and connection strings",
-          "OperationName": "Microsoft.Web/sites/config/list/Action",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_List_Web_App_Function_Secrets",
-          "Description": "List Web App Function Secrets.",
-          "OperationName": "Microsoft.Web/sites/functions/listSecrets/Action",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Add_or_Update_Certificate",
-          "Description": "Add a new certificate or update an existing one.",
-          "OperationName": "Microsoft.Web/certificates/Write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_Certificate",
-          "Description": "Delete an existing certificate.",
-          "OperationName": "Microsoft.Web/certificates/Delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Update_Publishing_Users",
-          "Description": "Update Publishing Users.",
-          "OperationName": "Microsoft.web/publishingusers/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Get_Web_App_Publishing_Profile",
-          "Description": "Get publishing profile xml for a Web App.",
-          "OperationName": "Microsoft.Web/sites/publishxml/Action",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Update_Web_Apps_VNet_Connections",
-          "Description": "Update Web Apps Virtual Network Connections.",
-          "OperationName": "Microsoft.web/sites/virtualnetworkconnections/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_ Delete_Web_Apps_VNet_Connections",
-          "Description": "Delete Web Apps Virtual Network Connections.",
-          "OperationName": "Microsoft.web/sites/virtualnetworkconnections/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        }
-      ]
-    },
-    {
-      "Name": "AzSK_KeyVault_Alert",
-      "ResourceType": "Microsoft.KeyVault/vaults",
-      "Description": "Alerts for KeyVault",
-      "Enabled": true,
-      "Tags": [
-        "Mandatory"
-      ],
-      "AlertOperationList": [
-        {
-          "Name": "AzSK_Update_Key_Vault",
-          "Description": "Create a new key vault or update the properties of an existing key vault",
-          "OperationName": "Microsoft.KeyVault/vaults/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_Key_Vault",
-          "Description": "Delete a key vault",
-          "OperationName": "Microsoft.KeyVault/vaults/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Use_Vault_for_Virtual_Machines",
-          "Description": "Enables access to secrets in a key vault when deploying a virtual machine",
-          "OperationName": "Microsoft.KeyVault/vaults/deploy/action",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_View_Secret_Properties",
-          "Description": "View the properties of a secret, but not its value",
-          "OperationName": "Microsoft.KeyVault/vaults/secrets/read",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Update_Secret",
-          "Description": "Create a new secret or update the value of an existing secret",
-          "OperationName": "Microsoft.KeyVault/vaults/secrets/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        }
-      ]
-    },
-    {
-      "Name": "AzSK_Storage_Alert",
-      "Description": "Alerts for Storage Account",
-      "Enabled": true,
-      "Tags": [
-        "Mandatory"
-      ],
-      "AlertOperationList": [
-        {
-          "Name": "AzSK_Delete_Storage_Account",
-          "Description": "Deletes an existing storage account.",
-          "OperationName": "Microsoft.Storage/storageAccounts/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Regenerate_Storage_Account_Keys",
-          "Description": "Regenerates the access keys for the specified storage account.",
-          "OperationName": "Microsoft.Storage/storageAccounts/regeneratekey/action",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        }
-      ]
-    },
-    {
-      "Name": "AzSK_Critical_Alert",
-      "Description": "Alerts for Critical Operation",
-      "Enabled": true,
-      "Tags": [
-        "SMS"
-      ],
-      "AlertOperationList": [
-        {
-          "Name": "AzSK_Assign_the_caller_to_User_Access_Administrator_Role",
-          "Description": "Grants the caller User Access Administrator access at the tenant scope",
-          "OperationName": "Microsoft.Authorization/elevateAccess/action",
-          "Tags": [
-            "SMS"
-          ],
-          "Severity": "Critical",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Set_Administrator",
-          "Description": "Add or modify administrator to a subscription.",
-          "OperationName": "Microsoft.Authorization/classicAdministrators/write",
-          "Tags": [
-            "SMS"
-          ],
-          "Severity": "Critical",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_Administrator",
-          "Description": "Removes the administrator from the subscription.",
-          "OperationName": "Microsoft.Authorization/classicAdministrators/delete",
-          "Tags": [
-            "SMS"
-          ],
-          "Severity": "Critical",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Action_Group_Write",
-          "Description": "Writing an action group",
-          "OperationName": "Microsoft.Insights/ActionGroups/Write",
-          "Tags": [
-            "SMS"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Action_Group_Delete",
-          "Description": "Deleting an action group",
-          "OperationName": "Microsoft.Insights/ActionGroups/Delete",
-          "Tags": [
-            "SMS"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        }
-      ]
-    },
-    {
-      "Name": "AzSK_Resource_Deployment_Alert",
-      "Description": "Alerts for Resource Creation Operation",
-      "Enabled": true,
-      "Tags": [
-        "Deployment"
-      ],
-      "AlertOperationList": [
-        {
-          "Name": "AzSK_Create_new_or_update_existing_resource",
-          "Description": "Creates or updates an deployment.",
-          "OperationName": "Microsoft.Resources/deployments/write",
-          "Tags": [
-            "Deployment"
-          ],
-          "Severity": "Critical",
-          "Enabled": true
-        }
       ]
     }
   ]
