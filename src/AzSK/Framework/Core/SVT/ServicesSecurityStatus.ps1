@@ -234,7 +234,7 @@ class ServicesSecurityStatus: SVTCommandBase
 				
 					
 				# Register/Deregister all listeners to cleanup the memory
-				[ListenerHelper]::RegisterListeners();
+				#[ListenerHelper]::RegisterListeners();
 			}
             catch
             {
