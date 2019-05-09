@@ -90,7 +90,7 @@ function Set-AzSKPIMConfiguration {
         [ValidateNotNullOrEmpty()]
         [ValidateSet("MatchingEligibleAssignments", "AllExceptMe")]
         [string]
-        $RemoveAssignmentFor, #Name to be finalized
+        $RemoveAssignmentFor,
 
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
 		[Parameter(Mandatory = $false, ParameterSetName = "ConvertPermanentAssignmentToPIM")]		
