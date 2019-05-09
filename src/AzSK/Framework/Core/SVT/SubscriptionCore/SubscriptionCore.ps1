@@ -12,6 +12,7 @@ class SubscriptionCore: SVTBase
 	hidden [PSObject] $CurrentContext;
 	hidden [bool] $HasGraphAPIAccess;
 	hidden [PSObject] $MisConfiguredASCPolicies;
+	hidden [PSObject] $MisConfiguredOptionalASCPolicies;
 	hidden [SecurityCenter] $SecurityCenterInstance;
 	hidden [string[]] $SubscriptionMandatoryTags = @();
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $PIMAssignments;
@@ -38,6 +39,7 @@ class SubscriptionCore: SVTBase
 		#Compute the policies ahead to get the security Contact Phone number and email id
 		$this.SecurityCenterInstance = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId,$false);
 		$this.MisConfiguredASCPolicies = $this.SecurityCenterInstance.CheckASCCompliance();
+		$this.MisConfiguredOptionalASCPolicies = $this.SecurityCenterInstance.CheckOptionalSecurityPolicySettings();
 
 		#Fetch AzSKRGTags
 		$azskRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
@@ -458,6 +460,9 @@ class SubscriptionCore: SVTBase
 		if ($this.SecurityCenterInstance)
 		{
 			#$controlResult.AddMessage([MessageData]::new("Security center policies must be configured with settings mentioned below:", $this.SecurityCenterInstance.Policy.properties));			
+
+			$this.SubscriptionContext.SubscriptionMetadata.Add("MissingOptionalASCPolicies",$this.MisConfiguredOptionalASCPolicies);
+			$this.SubscriptionContext.SubscriptionMetadata.Add("MissingMandatoryASCPolicies",$this.MisConfiguredASCPolicies);
 
 			if(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0)
 			{
@@ -973,14 +978,8 @@ class SubscriptionCore: SVTBase
 					#Check if mandatory tags list present
 			if([Helpers]::CheckMember($this.ControlSettings,"MandatoryTags") -and ($this.ControlSettings.MandatoryTags | Measure-Object).Count -ne 0)
 			{
-				$whitelistedResourceGroupsRegex = [System.Collections.ArrayList]::new()
-				if ([Helpers]::CheckMember($this.ControlSettings,"WhitelistedResourceGroups") -and ($this.ControlSettings.WhitelistedResourceGroups | Measure-Object).Count -ne 0) 
-				{
-					$whitelistedResourceGroupsRegex = $this.ControlSettings.WhitelistedResourceGroups						
-				}
-				$whitelistedResourceGroupsRegex = (('^' + (($whitelistedResourceGroupsRegex |foreach {[regex]::escape($_)}) –join '|') + '$')) -replace '[\\]',''
-				$resourceGroups = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -inotmatch $whitelistedResourceGroupsRegex}
-				if(($resourceGroups | Measure-Object).Count -gt 0)
+					$resourceGroups = Get-AzResourceGroup
+					if(($resourceGroups | Measure-Object).Count -gt 0)
 					{
 									$rgTagStatus = $true
 									$controlResult.AddMessage("`nTotal number of RGs:" + ($resourceGroups | Measure-Object).Count)
