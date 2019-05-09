@@ -193,6 +193,7 @@ class WritePsConsole: FileOutputBase
 					$currentInstance.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info)	
 				}								
 				$currentInstance.FilePath = "";
+				##Print Error##
 			}
             catch 
             {
