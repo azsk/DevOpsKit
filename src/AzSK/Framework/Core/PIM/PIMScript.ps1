@@ -198,7 +198,7 @@ class PIM: CommandBase {
             }
             $obj = $obj + $item
         }
-        if ($obj.Count -gt 0) {
+        if (($obj | Measure-Object).Count -gt 0) {
             if ($IsPermanent) {
                 $assignments = $obj | Where-Object { $_.IsPermanent -eq $true }
                 
@@ -382,7 +382,7 @@ class PIM: CommandBase {
         }
     }
 
-    hidden TransitionFromPermanentRolesToPIM($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $DurationInDays) {
+    hidden TransitionFromPermanentRolesToPIM($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $DurationInDays, $Force) {
        
         $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName)
         if (($resolvedResource | Measure-Object).Count -gt 0) {    
@@ -395,16 +395,20 @@ class PIM: CommandBase {
             $permanentRoles = $this.ListAssignmentsWithFilter($resourceId, $true)
             if (($permanentRoles | Measure-Object).Count -gt 0) {
                 $permanentRolesForTransition = $permanentRoles | Where-Object { $_.SubjectType -eq 'User' -and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
-                if (($permanentRolesForTransition | Measure-Object).Count -gt 0) {    
-                    $this.PublishCustomMessage($($permanentRolesForTransition | Format-Table -AutoSize -Wrap PrincipalName, ResourceName, ResourceType, RoleName | Out-String), [MessageType]::Default)
-                    $this.PublishCustomMessage("");
-                    Write-Host "The role assignments shown above will be moved from 'permanent' to 'PIM'. Please confirm (Y/N): " -ForegroundColor Yellow
-                    $ToContinue = Read-Host
-                    if ($ToContinue -eq 'y') {               
+                if (($permanentRolesForTransition | Measure-Object).Count -gt 0) {
+                    $ToContinue = ''
+                    if(!$Force)
+                    {
+                        $this.PublishCustomMessage($($permanentRolesForTransition | Format-Table -AutoSize -Wrap PrincipalName, ResourceName, ResourceType, RoleName | Out-String), [MessageType]::Default)
+                        $this.PublishCustomMessage("");
+                        Write-Host "The role assignments shown above will be moved from 'permanent' to 'PIM'. Please confirm (Y/N): " -ForegroundColor Yellow
+                        $ToContinue = Read-Host
+                    }
+                    if ($ToContinue -eq 'y' -or $Force) {               
                         $Assignmenturl = $this.APIroot + "/roleAssignmentRequests"
                         $roles = $this.ListRoles($resourceId)  
                         $ts = $DurationInDays;
-                        $totalPermanentAssignments = $permanentRolesForTransition.Count
+                        $totalPermanentAssignments = ($permanentRolesForTransition | Measure-Object).Count
                         $this.PublishCustomMessage("Initiating PIM assignment for [$totalPermanentAssignments] permanent assignments...");
                         $permanentRolesForTransition | ForEach-Object {
                             $i = 1
@@ -456,7 +460,7 @@ class PIM: CommandBase {
     
     }
 
-    hidden RemovePermanentAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $OnlyPIMEligibleAssignments) {
+    hidden RemovePermanentAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $OnlyPIMEligibleAssignments, $Force) {
         $this.AcquireToken();
         $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName)
         $resourceId = ($resolvedResource).ResourceId 
@@ -490,11 +494,15 @@ class PIM: CommandBase {
         }
     
         if (($users | Measure-Object).Count -gt 0) {
-            $totalRemovableAssignments = $users.Count      
-            $this.PublishCustomMessage($($users | Format-Table -Property PrincipalName, RoleName, OriginalId | Out-String), [MemberType]::Default)
-            $this.PublishCustomMessage("The role assignments shown above will be moved from 'permanent' to 'PIM'. Please confirm (Y/N): ")
-            $userResp = Read-Host 
-            if ($userResp -eq 'y') {
+            $userResp = ''
+            $totalRemovableAssignments = ($users | Measure-Object).Count
+            if(!$Force)
+			{
+                $this.PublishCustomMessage($($users | Format-Table -Property PrincipalName, RoleName, OriginalId | Out-String), [MessageType]::Default)
+                Write-Host "The role assignments shown above will be moved from 'permanent' to 'PIM'. Please confirm (Y/N): " -ForegroundColor Yellow
+                $userResp = Read-Host
+            } 
+            if ($userResp -eq 'y' -or $Force) {
                 $i = 0
                 $this.PublishCustomMessage("Initiating removal of [$totalRemovableAssignments] permanent assignments...")
                 foreach ($user in $users) {
@@ -517,8 +525,6 @@ class PIM: CommandBase {
         }
 
     }
-
-   
 }
 
 class PIMResource {

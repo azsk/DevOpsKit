@@ -90,9 +90,18 @@ function Set-AzSKPIMConfiguration {
         [ValidateNotNullOrEmpty()]
         [ValidateSet("MatchingEligibleAssignments", "AllExceptMe")]
         [string]
-        $RemoveAssignmentFor #Name to be finalized
+        $RemoveAssignmentFor, #Name to be finalized
 
-
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
+		[Parameter(Mandatory = $false, ParameterSetName = "ConvertPermanentAssignmentToPIM")]		
+		[switch]
+		[Alias("f")]
+        $Force,
+        
+        [switch]
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
+		[Alias("dnof")]
+		$DoNotOpenOutputFolder
     )
     Begin {
         [CommandHelper]::BeginCommand($MyInvocation);
@@ -112,10 +121,10 @@ function Set-AzSKPIMConfiguration {
                 $pimconfig.InvokeFunction($pimconfig.AssignPIMRole, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalName, $DurationInDays))
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'ConvertPermanentAssignmentToPIM') {
-                $pimconfig.InvokeFunction($pimconfig.TransitionFromPermanentRolesToPIM, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays))
+                $pimconfig.InvokeFunction($pimconfig.TransitionFromPermanentRolesToPIM, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $Force))
             }	
             elseif ($PSCmdlet.ParameterSetName -eq 'RemovePermanentAssignment') {
-                $pimconfig.InvokeFunction($pimconfig.RemovePermanentAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor))
+                $pimconfig.InvokeFunction($pimconfig.RemovePermanentAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $Force))
             }			
             else {
                 Write-Output("Invalid Parameter Set")	
@@ -166,7 +175,12 @@ function Get-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         [ValidateNotNullOrEmpty()]
         [string[]]
-		$RoleNames
+		$RoleNames,
+        
+        [switch]
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
+		[Alias("dnof")]
+		$DoNotOpenOutputFolder
 
     )
     Begin {
