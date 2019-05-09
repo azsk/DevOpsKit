@@ -115,6 +115,15 @@ Class OMSHelper{
 				$out.AttestedDate = $attestedData.AttestedDate
 				$out.ExpiryDate = $attestedData.ExpiryDate
 			}
+            # try catch
+            try {
+                $out.Env = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\benv\b"]
+			    $out.ComponentId = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\bcomponentid\b"]
+            } catch {
+                $out.Env = ""
+                $out.ComponentId = ""
+            }
+            # ec
 			$output += $out
 		}
 		return $output	
@@ -372,6 +381,8 @@ Class OMSModel {
 	[string] $PartialScanIdentifier
 	[string] $PolicyOrgName
 	[string] $ScannedBy
+	[string] $Env
+	[string] $ComponentId
 }
 
 Class OMSResourceInvModel{
