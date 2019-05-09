@@ -1426,7 +1426,7 @@ class CCAutomation: CommandBase
 			{
 				$detailedMsg  = "AzSK current runbook version $([System.Version]$azskCurrentCARunbookVersion) and latest runbook version $([System.Version]$azskLatestCARunbookVersion)";
 				$resultMsg  = "CA runbook is not current as per the required latest version. It is always recommended to update your runbook to the latest version possible by running the command: 'Update-AzSKContinuousAssurance -SubscriptionId <subId>'"
-				$resultStatus = "Unhealthy"
+				$resultStatus = "Failed"
 			}
 			else
 			{
