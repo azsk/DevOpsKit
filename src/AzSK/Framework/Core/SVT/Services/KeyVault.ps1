@@ -682,26 +682,42 @@ class KeyVault: SVTBase
 			}
 			else 
 			{
-				$keysResult = @();
-				$keysResult += Get-AzKeyVaultKey -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
-								Where-Object { $_.Enabled -eq $true };
+				try 
+				{
+					$keysResult = @();
+					$keysResult += Get-AzKeyVaultKey -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
+									Where-Object { $_.Enabled -eq $true };
+					
+					$secretsResult = @();
+					$secretsResult += Get-AzKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
+									Where-Object { $_.Enabled -eq $true };
 				
-				$secretsResult = @();
-				$secretsResult += Get-AzKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
-								Where-Object { $_.Enabled -eq $true };
-			
-				if ($keysResult.Count -eq 0 -and $secretsResult.Count -eq 0) 
-				{
-					$controlResult.AddMessage( [VerificationResult]::Passed,
-					[MessageData]::new("No Keys and Secrets are enabled for Key Vault - ["+ $this.ResourceContext.ResourceName +"]"));   
-				}
-				else 
-				{
-					if ($excessKeys.Count -eq 0 -and $excessSecrets.Count -eq 0)
+					if ($keysResult.Count -eq 0 -and $secretsResult.Count -eq 0) 
 					{
 						$controlResult.AddMessage( [VerificationResult]::Passed,
-						[MessageData]::new("All Keys and Secrets have at the most "+ $this.ControlSettings.KeyVault.MaxRecommendedVersions +" versions enabled for Key Vault - ["+ $this.ResourceContext.ResourceName +"]"));   
-					}		
+						[MessageData]::new("No Keys and Secrets are enabled for Key Vault - ["+ $this.ResourceContext.ResourceName +"]"));   
+					}
+					else 
+					{
+						if ($excessKeys.Count -eq 0 -and $excessSecrets.Count -eq 0)
+						{
+							$controlResult.AddMessage( [VerificationResult]::Passed,
+							[MessageData]::new("All Keys and Secrets have at the most "+ $this.ControlSettings.KeyVault.MaxRecommendedVersions +" versions enabled for Key Vault - ["+ $this.ResourceContext.ResourceName +"]"));   
+						}		
+					}	
+				}
+				catch 
+				{
+					if ($_.Exception.GetType().FullName -eq "Microsoft.Azure.KeyVault.Models.KeyVaultErrorException")
+					{
+						$controlResult.AddMessage([VerificationResult]::Manual,
+							[MessageData]::new("Access denied: Read access is required on Key Vault Secrets and Keys to validate the number of secrets and keys."));
+					}
+					else
+					{
+						throw $_
+					}
+					
 				}
 			}	
 		}
