@@ -130,7 +130,14 @@ class PIM: CommandBase {
             
             }
             catch {
-                $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
+                {
+                    $this.PublishCustomMessage($_.ErrorDetails.Message,[MessageType]::Error)
+                }
+                else
+                {
+                    $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                }
             }
         }
         else {
@@ -160,7 +167,14 @@ class PIM: CommandBase {
             }
             catch
             {
-                $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
+                {
+                    $this.PublishCustomMessage($_.ErrorDetails.Message,[MessageType]::Error)
+                }
+                else
+                {
+                    $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                }
                 return $null;
             }
         }
@@ -267,12 +281,19 @@ class PIM: CommandBase {
                 try {
                     $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $RequestActivationurl -Method Post -ContentType "application/json" -Body $postParams
                     if ($response.StatusCode -eq 201) {
-                        $this.PublishCustomMessage("Activation queued successfully. The role(s) should get activated in a few mins.", [MessageType]::Update);
+                        $this.PublishCustomMessage("Activation queued successfully. The role(s) should get activated in a few minutes.", [MessageType]::Update);
                     }
                  
                 }
                 catch {
-                    $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                    if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
+                    {
+                        $this.PublishCustomMessage($_.ErrorDetails.Message,[MessageType]::Error)
+                    }
+                    else
+                    {
+                        $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                    }
                 }
             }
             else {
@@ -292,7 +313,8 @@ class PIM: CommandBase {
 
         if (($assignments | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resource.ExternalId))) {
             $matchingAssignment = $assignments | Where-Object { $_.OriginalId -eq $resource.ExternalId -and $_.RoleName -eq $roleName }
-            if (($matchingAssignment | Measure-Object).Count -gt 0) {     
+            if (($matchingAssignment | Measure-Object).Count -gt 0)
+            {     
                 $this.PublishCustomMessage("Requesting deactivation of your [$($matchingAssignment.RoleName)] role on [$($matchingAssignment.ResourceName)]... ", [MessageType]::Info);
                 $id = $matchingAssignment.IdGuid
                 $resourceId = $matchingAssignment.ResourceId
@@ -303,14 +325,23 @@ class PIM: CommandBase {
                 try {
                     $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $deactivaturl -Method Post -ContentType "application/json" -Body $postParams
                     if ($response.StatusCode -eq '201') {
-                        $this.PublishCustomMessage("Deactivation queued successfully. The role(s) will take a few mins to get deactivated. ", [MessageType]::Update);
+                        $this.PublishCustomMessage("Deactivation queued successfully. The role(s) should get deactivated in a few minutes.", [MessageType]::Update);
                     }
-
-            
                 }
                 catch {
-                    $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                    if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
+                    {
+                        $this.PublishCustomMessage($_.ErrorDetails.Message,[MessageType]::Error)
+                    }
+                    else
+                    {
+                        $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                    }
                 }
+            }
+            else
+            {
+                $this.PublishCustomMessage("No active assignments found for the current context.", [MessageType]::Warning);
             }
         }
         else {
@@ -393,19 +424,25 @@ class PIM: CommandBase {
             try {
                 $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $url -Method Post -ContentType "application/json" -Body $postParams
                 if ($response.StatusCode -eq 201) {
-                    $this.PublishCustomMessage("Assignment request for [$PrincipalName] for the [$RoleName] role on [$($resolvedResource.ResourceName)] queued successfully...", [MessageType]::Update);
+                    $this.PublishCustomMessage("Assignment request for [$PrincipalName] for the [$RoleName] role on [$($resolvedResource.ResourceName)] queued successfully.", [MessageType]::Update);
                 }  
                 if ($response.StatusCode -eq 401) {
                     $this.PublishCustomMessage("You are not eligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
                 }          
             }
             catch {
-                $this.PublishCustomMessage($_.Exception, [MessageType]::Error)   
-                        
+                if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
+                {
+                    $this.PublishCustomMessage($_.ErrorDetails.Message,[MessageType]::Error)
+                }
+                else
+                {
+                    $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                }         
             }
         }
         else {
-            $this.PublishCustomMessage("No matching resource found for assignment.", [MessageType]::Error)
+            $this.PublishCustomMessage("No matching resource found for assignment.", [MessageType]::Warning)
         }
     }
 
@@ -466,13 +503,13 @@ class PIM: CommandBase {
                                 # $this.PublishCustomMessage("Requesting PIM assignment for [$($_.RoleName)' role for $($_.PrincipalName) on $($_.ResourceType) '$($resolvedResource.ResourceName)'...");
                                 $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $Assignmenturl -Method Post -ContentType "application/json" -Body $postParams
                                 if ($response.StatusCode -eq 201) {
-                                    $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] Successfully requested PIM assignment for [$PrincipalName]", [MessageType]::Warning);
+                                    $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] Successfully requested PIM assignment for [$PrincipalName]", [MessageType]::Update);
                                 }
                                 $this.PublishCustomMessage([Constants]::SingleDashLine)
                           
                             }
                             catch {
-                                try
+                                if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
                                 {
                                     $code = $_.ErrorDetails.Message | ConvertFrom-Json
                                     if ($code.error.code -eq "RoleAssignmentExists") {
@@ -482,11 +519,10 @@ class PIM: CommandBase {
                                         $this.PublishCustomMessage("$($code.error)", [MessageType]::Error)
                                     }
                                 }
-                                catch
+                                else
                                 {
-                                    # This catch block has been added in case ErrorDetails.Message is not found
                                     $this.PublishCustomMessage("$($_.Exception)", [MessageType]::Error)
-                                }                               
+                                }                                                             
                             }         
                             $i++;
                         }#foreach  
@@ -505,7 +541,7 @@ class PIM: CommandBase {
         }
         else
         {
-            $this.PublishCustomMessage("No matching resource found.", [MessageType]::Error)
+            $this.PublishCustomMessage("No matching resource found for the current context.", [MessageType]::Warning)
         }
     }
 
@@ -518,7 +554,7 @@ class PIM: CommandBase {
             $users = @();
             $CriticalRoles = $RoleNames.split(",").Trim()
             $this.PublishCustomMessage("Note: This command will *not* remove your permanent assignment if one exists.", [MessageType]::Warning)
-            $this.PublishCustomMessage("Fetching permanent assignment for [$(($criticalRoles) -join ", ")] role on $($resolvedResource.Type) [$($resolvedResource.ResourceName)]...", [MessageType]::Cyan)
+            $this.PublishCustomMessage("Fetching permanent assignment for [$(($criticalRoles) -join ", ")] role on $($resolvedResource.Type) [$($resolvedResource.ResourceName)]...", [MessageType]::Info)
             $permanentRoles = $this.ListAssignmentsWithFilter($resourceId, $true)
             $eligibleAssignments = $this.ListAssignmentsWithFilter($resourceId, $false)
             $eligibleAssignments = $eligibleAssignments | Where-Object { $_.SubjectType -eq 'User' -and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
@@ -572,7 +608,7 @@ class PIM: CommandBase {
         }
         else
         {
-            $this.PublishCustomMessage("No matching resource found.", [MessageType]::Error)
+            $this.PublishCustomMessage("No matching resource found for the current context.", [MessageType]::Warning)
         }
     }
 }
