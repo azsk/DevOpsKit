@@ -226,7 +226,31 @@ class AppService: SVTBase
 						}
 					}
 				}				
+
+				if($AADEnabled){
+					#Check if any non AAD authenticaion is also enabled
+					$nonAadSettings = New-Object PSObject
+					$nonAADAuthEnabled = $false
+					$NonAADAuthProviders = $this.ControlSettings.AppService.NonAADAuthProviders 
+					ForEach($authProvider in 	$NonAADAuthProviders){
+						if([Helpers]::CheckMember($this.AuthenticationSettings.Properties,$authProvider)){
+							$nonAADAuthEnabled = $true
+							Add-Member -InputObject $nonAadSettings -MemberType NoteProperty -Name $authProvider -Value $this.AuthenticationSettings.Properties.$($authProvider)
+						}
+					}
+					if($nonAADAuthEnabled ){
+						$controlResult.AddMessage("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled "+ $aadSettings)
+						$controlResult.AddMessage([VerificationResult]::Failed,
+						[MessageData]::new("Authentication Mechanism other than AAD is also enabled for " + $this.ResourceContext.ResourceName ));
+						$controlResult.AddMessage($nonAadSettings);
+						$controlResult.SetStateData("App Service authentication settings", $aadSettings);
+						return $controlResult;
+					}
+					
+				}
 				
+         
+
 				if($AADEnabled)
 				{
 					if([FeatureFlightingManager]::GetFeatureStatus("EnableAppServiceAADAuthAllowAnonymousCheck",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
