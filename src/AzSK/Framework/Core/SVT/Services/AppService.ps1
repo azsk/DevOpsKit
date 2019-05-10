@@ -227,30 +227,32 @@ class AppService: SVTBase
 					}
 				}				
 
-				if($AADEnabled){
-					#Check if any non AAD authenticaion is also enabled
+			
+				#Check if any non AAD authenticaion is also enabled
+				if([Helpers]::CheckMember($this.ControlSettings,"AppService.NonAADAuthProperties")){
 					$nonAadSettings = New-Object PSObject
 					$nonAADAuthEnabled = $false
-					$NonAADAuthProviders = $this.ControlSettings.AppService.NonAADAuthProviders 
-					ForEach($authProvider in 	$NonAADAuthProviders){
-						if([Helpers]::CheckMember($this.AuthenticationSettings.Properties,$authProvider)){
+					$NonAADAuthProperties = $this.ControlSettings.AppService.NonAADAuthProperties 
+					ForEach($authProperty in 	$NonAADAuthProperties){
+						if([Helpers]::CheckMember($this.AuthenticationSettings.Properties,$authProperty)){
 							$nonAADAuthEnabled = $true
-							Add-Member -InputObject $nonAadSettings -MemberType NoteProperty -Name $authProvider -Value $this.AuthenticationSettings.Properties.$($authProvider)
+							Add-Member -InputObject $nonAadSettings -MemberType NoteProperty -Name $authProperty -Value $this.AuthenticationSettings.Properties.$($authProperty)
 						}
 					}
 					if($nonAADAuthEnabled ){
-						$controlResult.AddMessage("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled "+ $aadSettings)
+						if($AADEnabled)
+						{
+							$controlResult.AddMessage("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled "+ $aadSettings)
+						}
+						#Fail the control if non AAD authentication is enabled, irrespective of AAD is enabled or not 
 						$controlResult.AddMessage([VerificationResult]::Failed,
-						[MessageData]::new("Authentication Mechanism other than AAD is also enabled for " + $this.ResourceContext.ResourceName ));
+						[MessageData]::new("Authentication mechanism other than AAD is enabled for " + $this.ResourceContext.ResourceName ));
 						$controlResult.AddMessage($nonAadSettings);
 						$controlResult.SetStateData("App Service authentication settings", $aadSettings);
 						return $controlResult;
 					}
-					
 				}
 				
-         
-
 				if($AADEnabled)
 				{
 					if([FeatureFlightingManager]::GetFeatureStatus("EnableAppServiceAADAuthAllowAnonymousCheck",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
