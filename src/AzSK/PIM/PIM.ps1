@@ -67,14 +67,14 @@ function Set-AzSKPIMConfiguration {
         [ValidateNotNullOrEmpty()]
         [string]
         $Justification,
-
+        
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $true, ParameterSetName = "Deactivate")]
         [ValidateNotNullOrEmpty()]
         [string]
-		$RoleName,
-		
+        $RoleName,
+
         [Parameter(Mandatory = $true, ParameterSetName = "ConvertPermanentAssignmentToPIM")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
         [ValidateNotNullOrEmpty()]
@@ -101,7 +101,7 @@ function Set-AzSKPIMConfiguration {
         [switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		[Alias("dnof")]
-		$DoNotOpenOutputFolder
+		$DoNotOpenOutputFolder = $true
     )
     Begin {
         [CommandHelper]::BeginCommand($MyInvocation);
@@ -110,7 +110,7 @@ function Set-AzSKPIMConfiguration {
     Process {
         try {
 			
-            $pimconfig = [PIM]::new($SubscriptionId, $MyInvocation);
+            $pimconfig = [PIM]::new([Constants]::BlankSubscriptionId, $MyInvocation);
             if ($PSCmdlet.ParameterSetName -eq 'Activate') {
                 $pimconfig.InvokeFunction($pimconfig.Activate, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $Justification, $DurationInHours))
             }
@@ -180,7 +180,7 @@ function Get-AzSKPIMConfiguration {
         [switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		[Alias("dnof")]
-		$DoNotOpenOutputFolder
+		$DoNotOpenOutputFolder = $true
 
     )
     Begin {
@@ -192,7 +192,7 @@ function Get-AzSKPIMConfiguration {
             if (-not $SubscriptionId) {
                 $SubscriptionId = [Constants]::BlankSubscriptionId
             }
-            $pimconfig = [PIM]::new($SubscriptionId, $MyInvocation);
+            $pimconfig = [PIM]::new([Constants]::BlankSubscriptionId, $MyInvocation);
             if ($PSCmdlet.ParameterSetName -eq 'ListMyRole') {
 				$pimconfig.InvokeFunction($pimconfig.ListMyEligibleRoles)		
             }
@@ -207,7 +207,7 @@ function Get-AzSKPIMConfiguration {
             }
         }
         catch {
-            $this.PublishGenericException($_);
+            [EventBase]::PublishGenericException($_);
         }
     }
     End {
