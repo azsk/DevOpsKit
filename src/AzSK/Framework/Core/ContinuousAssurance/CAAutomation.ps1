@@ -764,7 +764,15 @@ class CCAutomation: CommandBase
 			    	    Description ="Log Analytics Workspace Id"
 			        }
 			        $this.UpdateVariable($varLAWorkspaceId)
-			        $this.PublishCustomMessage("Updating variable: [" + $varLAWorkspaceId.Name + "]")
+					$this.PublishCustomMessage("Updating variable: [" + $varLAWorkspaceId.Name + "]")
+					
+					$varNewLAWorkspaceId = [Variable]@{
+			    	    Name = "LAWorkspaceId";
+			    	    Value = $this.UserConfig.LAWCredential.LAWorkspaceId;
+			    	    IsEncrypted = $false;
+			    	    Description ="Log Analytics Workspace Id"
+			        }
+			        $this.UpdateVariable($varNewLAWorkspaceId)
 
                     $varLAWSharedKey = [Variable]@{
 			             Name = "OMSSharedKey";
@@ -773,7 +781,15 @@ class CCAutomation: CommandBase
 			             Description ="Log Analytics Workspace Shared Key"
 			        }
 			        $this.UpdateVariable($varLAWSharedKey)
-			        $this.PublishCustomMessage("Updating variable: [" + $varLAWSharedKey.Name + "]")
+					$this.PublishCustomMessage("Updating variable: [" + $varLAWSharedKey.Name + "]")
+					
+					$varNewLAWSharedKey = [Variable]@{
+						Name = "LAWSharedKey";
+						Value = $this.UserConfig.LAWCredential.LAWSharedKey;
+						IsEncrypted = $false;
+						Description ="Log Analytics Workspace Shared Key"
+				   }
+				   $this.UpdateVariable($varNewLAWSharedKey)
 				}
 				
 				#AltLAWSettings
@@ -792,6 +808,14 @@ class CCAutomation: CommandBase
 		        	$this.UpdateVariable($varAltLAWorkspaceId)
 		        	$this.PublishCustomMessage("Updating variable: [" + $varAltLAWorkspaceId.Name + "]")
 
+					$varNewAltLAWorkspaceId = [Variable]@{
+		        		Name = "AltLAWorkspaceId";
+		        		Value = $this.UserConfig.AltLAWCredential.LAWorkspaceId;
+		        		IsEncrypted = $false;
+		        		Description ="Alternate Log Analytics Workspace Id"
+		        	}
+		        	$this.UpdateVariable($varNewAltLAWorkspaceId)
+
 		        	$varAltLAWSharedKey = [Variable]@{
 		        		Name = "AltOMSSharedKey";
 		        		Value = $this.UserConfig.AltLAWCredential.LAWSharedKey;
@@ -799,7 +823,15 @@ class CCAutomation: CommandBase
 		        		Description ="Alternate Log Analytics Workspace Shared Key"
 		        	}
 		        	$this.UpdateVariable($varAltLAWSharedKey)
-		        	$this.PublishCustomMessage("Updating variable: [" + $varAltLAWSharedKey.Name + "]")
+					$this.PublishCustomMessage("Updating variable: [" + $varAltLAWSharedKey.Name + "]")
+					
+					$varNewAltLAWSharedKey = [Variable]@{
+		        		Name = "AltLAWSharedKey";
+		        		Value = $this.UserConfig.AltLAWCredential.LAWSharedKey;
+		        		IsEncrypted = $false;
+		        		Description ="Alternate Log Analytics Workspace Shared Key"
+		        	}
+		        	$this.UpdateVariable($varNewAltLAWSharedKey)
                 }
             }
             
