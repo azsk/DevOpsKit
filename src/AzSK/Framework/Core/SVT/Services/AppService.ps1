@@ -226,6 +226,32 @@ class AppService: SVTBase
 						}
 					}
 				}				
+
+			
+				#Check if any non AAD authenticaion is also enabled
+				if([Helpers]::CheckMember($this.ControlSettings,"AppService.NonAADAuthProperties")){
+					$nonAadSettings = New-Object PSObject
+					$nonAADAuthEnabled = $false
+					$NonAADAuthProperties = $this.ControlSettings.AppService.NonAADAuthProperties 
+					ForEach($authProperty in 	$NonAADAuthProperties){
+						if([Helpers]::CheckMember($this.AuthenticationSettings.Properties,$authProperty)){
+							$nonAADAuthEnabled = $true
+							Add-Member -InputObject $nonAadSettings -MemberType NoteProperty -Name $authProperty -Value $this.AuthenticationSettings.Properties.$($authProperty)
+						}
+					}
+					if($nonAADAuthEnabled ){
+						if($AADEnabled)
+						{
+							$controlResult.AddMessage("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled "+ $aadSettings)
+						}
+						#Fail the control if non AAD authentication is enabled, irrespective of AAD is enabled or not 
+						$controlResult.AddMessage([VerificationResult]::Failed,
+						[MessageData]::new("Authentication mechanism other than AAD is enabled for " + $this.ResourceContext.ResourceName ));
+						$controlResult.AddMessage($nonAadSettings);
+						$controlResult.SetStateData("App Service authentication settings", $nonAadSettings);
+						return $controlResult;
+					}
+				}
 				
 				if($AADEnabled)
 				{
