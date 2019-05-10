@@ -854,7 +854,7 @@ try
 			{
 				Write-Output("Checking if the variable AltLAWorkspaceId already exists...")
 				$existingAltLAWorkspaceId = Get-AzAutomationVariable -Name $newAltLAWorkspaceIdName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
-				if(($existingAltLAWorkspaceId | Measure-Object).Count -eq 0)
+				if(($existingAltLAWorkspaceId | Measure-Object).Count -gt 0)
 				{
 					Write-Output("AltLAWorkspaceId already exists...removing it...")
 					Remove-AzAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $newAltLAWorkspaceIdName
@@ -868,7 +868,7 @@ try
 			{
 				Write-Output("Checking if the variable AltLAWSharedKey already exists...")
 				$existingAltLAWorkspaceSharedKey = Get-AzAutomationVariable -Name $newAltLAWSharedKeyName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
-				if(($existingAltLAWorkspaceSharedKey | Measure-Object).Count -eq 0)
+				if(($existingAltLAWorkspaceSharedKey | Measure-Object).Count -gt 0)
 				{
 					Write-Output("AltLAWSharedKey already exists...removing it...")
 					Remove-AzAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $newAltLAWSharedKeyName
