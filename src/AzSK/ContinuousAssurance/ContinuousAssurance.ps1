@@ -60,7 +60,7 @@ function Install-AzSKContinuousAssurance
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Id of the subscription in which Automation Account needs to be installed.")]
         [string]
 		[Alias("sid", "HostSubscriptionId", "hsid")]
-		$SubscriptionId ,
+		$SubscriptionId,
 
 		[Parameter(Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Comma separated values of target subscriptionIds that will be monitored through CA from a central subscription.")]
         [string]
@@ -96,28 +96,28 @@ function Install-AzSKContinuousAssurance
         [Parameter(Position = 2, Mandatory = $true, ParameterSetName = "Default", HelpMessage="Workspace ID of Log Analytics workspace where security scan results will be populated.")]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("lwid","wid")]
+		[Alias("lwid","wid","OMSWorkspaceId")]
 		$LAWorkspaceId,
 
         [Parameter(Position = 3, Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Shared key of Log Analytics workspace which is used to monitor security scan results.")]
         [Parameter(Position = 3, Mandatory = $true, ParameterSetName = "Default", HelpMessage="Shared key of Log Analytics workspace which is used to monitor security scan results.")]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("lwkey","wkey")]
+		[Alias("lwkey","wkey","OMSSharedKey")]
 		$LAWSharedKey,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
 		[ValidateNotNullOrEmpty()]
         [string]
-		[Alias("alwid","awid")]
+		[Alias("alwid","awid","AltOMSWorkspaceId")]
 		$AltLAWorkspaceId,
 
         [Parameter(Mandatory = $false, ParameterSetName = "Default")]
         [Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
 		[ValidateNotNullOrEmpty()]
         [string]
-		[Alias("alkey","awkey")]
+		[Alias("alkey","awkey","AltOMSSharedKey")]
 		$AltLAWSharedKey,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
