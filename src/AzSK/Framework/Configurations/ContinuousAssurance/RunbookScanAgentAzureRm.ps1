@@ -786,55 +786,47 @@ try
 	$altLAWorkspaceSharedKeyDetails = Get-AzureRmAutomationVariable -Name "AltOMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
 
 	#Primary Log Analytics Workspace variables.
-	Write-Output("Checking if the variable LAWorkspaceId already exists...")
+	Write-Output("Checking if the variable LAWorkspaceId exists...")
 	$existingLAWorkspaceId = Get-AzureRmAutomationVariable -Name $newLAWorkspaceIdName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
-	if(($existingLAWorkspaceId | Measure-Object).Count -gt 0)
+	if(($existingLAWorkspaceId | Measure-Object).Count -eq 0)
 	{
-		Write-Output("LAWorkspaceId already exists...removing it...")
-		Remove-AzureRmAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $newLAWorkspaceIdName
+		Write-Output("Adding the variable LAWorkspaceId...")
+		New-AzureRmAutomationVariable -AutomationAccountName $LAWorkspaceIdDetails.AutomationAccountName -Name $newLAWorkspaceIdName -Encrypted $False -Value $LAWorkspaceIdDetails.Value -ResourceGroupName $LAWorkspaceIdDetails.ResourceGroupName -ErrorAction SilentlyContinue
+		Set-AzureRmAutomationVariable $LAWorkspaceIdDetails.AutomationAccountName -Name $newLAWorkspaceIdName -ResourceGroupName $LAWorkspaceIdDetails.ResourceGroupName -Description $LAWorkspaceIdDetails.Description -ErrorAction SilentlyContinue
 	}
-	Write-Output("Adding the variable LAWorkspaceId...")
-	New-AzureRmAutomationVariable -AutomationAccountName $LAWorkspaceIdDetails.AutomationAccountName -Name $newLAWorkspaceIdName -Encrypted $False -Value $LAWorkspaceIdDetails.Value -ResourceGroupName $LAWorkspaceIdDetails.ResourceGroupName -ErrorAction SilentlyContinue
-	Set-AzureRmAutomationVariable $LAWorkspaceIdDetails.AutomationAccountName -Name $newLAWorkspaceIdName -ResourceGroupName $LAWorkspaceIdDetails.ResourceGroupName -Description $LAWorkspaceIdDetails.Description -ErrorAction SilentlyContinue
-
-	Write-Output("Checking if the variable LAWSharedKey already exists...")	
+	
+	Write-Output("Checking if the variable LAWSharedKey exists...")	
 	$existingLAWorkspaceSharedKey = Get-AzureRmAutomationVariable -Name $newLAWSharedKeyName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
-	if(($existingLAWorkspaceSharedKey | Measure-Object).Count -gt 0)
+	if(($existingLAWorkspaceSharedKey | Measure-Object).Count -eq 0)
 	{
-		Write-Output("LAWSharedKey already exists...removing it...")
-		Remove-AzureRmAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $newLAWSharedKeyName
+		Write-Output("Adding the variable LAWSharedKey...")
+		New-AzureRmAutomationVariable -AutomationAccountName $LAWorkspaceSharedKeyDetails.AutomationAccountName -Name $newLAWSharedKeyName -Encrypted $False -Value $LAWorkspaceSharedKeyDetails.Value -ResourceGroupName $LAWorkspaceSharedKeyDetails.ResourceGroupName -ErrorAction SilentlyContinue
+		Set-AzureRmAutomationVariable $LAWorkspaceSharedKeyDetails.AutomationAccountName -Name $newLAWSharedKeyName -ResourceGroupName $LAWorkspaceSharedKeyDetails.ResourceGroupName -Description $LAWorkspaceSharedKeyDetails.Description -ErrorAction SilentlyContinue
 	}
-	Write-Output("Adding the variable LAWSharedKey...")
-	New-AzureRmAutomationVariable -AutomationAccountName $LAWorkspaceSharedKeyDetails.AutomationAccountName -Name $newLAWSharedKeyName -Encrypted $False -Value $LAWorkspaceSharedKeyDetails.Value -ResourceGroupName $LAWorkspaceSharedKeyDetails.ResourceGroupName -ErrorAction SilentlyContinue
-	Set-AzureRmAutomationVariable $LAWorkspaceSharedKeyDetails.AutomationAccountName -Name $newLAWSharedKeyName -ResourceGroupName $LAWorkspaceSharedKeyDetails.ResourceGroupName -Description $LAWorkspaceSharedKeyDetails.Description -ErrorAction SilentlyContinue
-
+	
 	#Secondary/Alternate Log Analytics Workspace variables.
 	if(($altLAWorkspaceIdDetails | Measure-Object).Count -gt 0)
 	{
-		Write-Output("Checking if the variable AltLAWorkspaceId already exists...")
+		Write-Output("Checking if the variable AltLAWorkspaceId exists...")
 		$existingAltLAWorkspaceId = Get-AzureRmAutomationVariable -Name $newAltLAWorkspaceIdName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
-		if(($existingAltLAWorkspaceId | Measure-Object).Count -gt 0)
+		if(($existingAltLAWorkspaceId | Measure-Object).Count -eq 0)
 		{
-			Write-Output("AltLAWorkspaceId already exists...removing it...")
-			Remove-AzureRmAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $newAltLAWorkspaceIdName
+			Write-Output("Adding the variable AltLAWorkspaceId...")
+			New-AzureRmAutomationVariable -AutomationAccountName $altLAWorkspaceIdDetails.AutomationAccountName -Name $newAltLAWorkspaceIdName -Encrypted $False -Value $altLAWorkspaceIdDetails.Value -ResourceGroupName $altLAWorkspaceIdDetails.ResourceGroupName -ErrorAction SilentlyContinue
+			Set-AzureRmAutomationVariable $altLAWorkspaceIdDetails.AutomationAccountName -Name $newAltLAWorkspaceIdName -ResourceGroupName $altLAWorkspaceIdDetails.ResourceGroupName -Description $altLAWorkspaceIdDetails.Description -ErrorAction SilentlyContinue
 		}
-		Write-Output("Adding the variable AltLAWorkspaceId...")
-		New-AzureRmAutomationVariable -AutomationAccountName $altLAWorkspaceIdDetails.AutomationAccountName -Name $newAltLAWorkspaceIdName -Encrypted $False -Value $altLAWorkspaceIdDetails.Value -ResourceGroupName $altLAWorkspaceIdDetails.ResourceGroupName -ErrorAction SilentlyContinue
-		Set-AzureRmAutomationVariable $altLAWorkspaceIdDetails.AutomationAccountName -Name $newAltLAWorkspaceIdName -ResourceGroupName $altLAWorkspaceIdDetails.ResourceGroupName -Description $altLAWorkspaceIdDetails.Description -ErrorAction SilentlyContinue
 	}
 	
 	if(($altLAWorkspaceSharedKeyDetails | Measure-Object).Count -gt 0)
 	{
-		Write-Output("Checking if the variable AltLAWSharedKey already exists...")
+		Write-Output("Checking if the variable AltLAWSharedKey exists...")
 		$existingAltLAWorkspaceSharedKey = Get-AzureRmAutomationVariable -Name $newAltLAWSharedKeyName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
-		if(($existingAltLAWorkspaceSharedKey | Measure-Object).Count -gt 0)
+		if(($existingAltLAWorkspaceSharedKey | Measure-Object).Count -eq 0)
 		{
-			Write-Output("AltLAWSharedKey already exists...removing it...")
-			Remove-AzureRmAutomationVariable -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName -Name $newAltLAWSharedKeyName
+			Write-Output("Adding the variable AltLAWSharedKey...")
+			New-AzureRmAutomationVariable -AutomationAccountName $altLAWorkspaceSharedKeyDetails.AutomationAccountName -Name $newAltLAWSharedKeyName -Encrypted $False -Value $altLAWorkspaceSharedKeyDetails.Value -ResourceGroupName $altLAWorkspaceSharedKeyDetails.ResourceGroupName -ErrorAction SilentlyContinue
+			Set-AzureRmAutomationVariable $altLAWorkspaceSharedKeyDetails.AutomationAccountName -Name $newAltLAWSharedKeyName -ResourceGroupName $altLAWorkspaceSharedKeyDetails.ResourceGroupName -Description $altLAWorkspaceSharedKeyDetails.Description -ErrorAction SilentlyContinue
 		}
-		Write-Output("Adding the variable AltLAWSharedKey...")
-		New-AzureRmAutomationVariable -AutomationAccountName $altLAWorkspaceSharedKeyDetails.AutomationAccountName -Name $newAltLAWSharedKeyName -Encrypted $False -Value $altLAWorkspaceSharedKeyDetails.Value -ResourceGroupName $altLAWorkspaceSharedKeyDetails.ResourceGroupName -ErrorAction SilentlyContinue
-		Set-AzureRmAutomationVariable $altLAWorkspaceSharedKeyDetails.AutomationAccountName -Name $newAltLAWSharedKeyName -ResourceGroupName $altLAWorkspaceSharedKeyDetails.ResourceGroupName -Description $altLAWorkspaceSharedKeyDetails.Description -ErrorAction SilentlyContinue
 	}
 	
 	PublishEvent -EventName "Adding Log Analytics variables Complete"
