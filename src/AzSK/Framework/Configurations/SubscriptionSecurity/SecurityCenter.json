@@ -119,6 +119,18 @@
                 },            
                 "sqlManagedInstanceAdvancedDataSecurityMonitoringEffect": {
                     "value": "AuditIfNotExists"
+                },
+                "identityEnableMFAForOwnerPermissionsMonitoringEffect": {
+                    "value": "Disabled"
+                },
+                "identityEnableMFAForWritePermissionsMonitoringEffect": {
+                    "value": "Disabled"
+                },            
+                "identityEnableMFAForReadPermissionsMonitoringEffect": {
+                    "value": "Disabled"
+                },
+                "diagnosticsLogsInRedisCacheMonitoringEffect": {
+                    "value":"Audit"
                 }
             },
             "description": "This policy assignment was automatically created by Azure Security Center",
@@ -172,6 +184,9 @@
                     "value": "AuditIfNotExists"
                 },
                 "accessRulesInEventHubNamespaceMonitoringEffect": {
+                    "value": "Disabled"
+                },
+                "accessRulesInEventHubMonitoringEffect": {
                     "value": "Disabled"
                 },
                 "diagnosticsLogsInKeyVaultMonitoringEffect": {
