@@ -259,7 +259,13 @@
     "LatestDotNetFrameworkVersionNumber": "v4.0",
     "Minimum_Instance_Count": 2,
     "AADAuthAPIVersion": "2016-08-01",
-    "LoadCertAppSettings": "WEBSITE_LOAD_CERTIFICATES"
+    "LoadCertAppSettings": "WEBSITE_LOAD_CERTIFICATES",
+    "NonAADAuthProperties": [
+      "googleClientId",
+      "facebookAppId",
+      "twitterConsumerKey",
+      "microsoftAccountClientId"
+    ]
   },
   "StorageDiagnosticsSkuMapping": [
     "StandardGRS",
