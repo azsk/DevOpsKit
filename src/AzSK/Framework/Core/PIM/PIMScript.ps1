@@ -156,7 +156,7 @@ class PIM: CommandBase {
                     $values = ConvertFrom-Json $response.Content
                     $resources += $values.value
                     $hasOdata = $values | Get-Member -Name '@odata.nextLink'
-                }�
+                }
             }
             catch
             {
