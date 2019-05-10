@@ -347,28 +347,28 @@ function Update-AzSKContinuousAssurance
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
 		[ValidateNotNullOrEmpty()]	
         [string]
-		[Alias("lwid","wid")]
+		[Alias("lwid","wid","OMSWorkspaceId")]
 		$LAWorkspaceId,
 
         [Parameter(Mandatory = $false, ParameterSetName = "Default")]
         [Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
 		[ValidateNotNullOrEmpty()]
         [string]
-		[Alias("lwkey","wkey")]
+		[Alias("lwkey","wkey","OMSSharedKey")]
 		$LAWSharedKey,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
 		[ValidateNotNullOrEmpty()]
         [string]
-		[Alias("alwid","awid")]
+		[Alias("alwid","awid","AltOMSWorkspaceId")]
 		$AltLAWorkspaceId,
 
         [Parameter(Mandatory = $false, ParameterSetName = "Default")]
         [Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
 		[ValidateNotNullOrEmpty()]
         [string]
-		[Alias("alkey","awkey")]
+		[Alias("alkey","awkey","AltOMSSharedKey")]
 		$AltLAWSharedKey,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
