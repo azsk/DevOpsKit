@@ -248,7 +248,7 @@ class AppService: SVTBase
 						$controlResult.AddMessage([VerificationResult]::Failed,
 						[MessageData]::new("Authentication mechanism other than AAD is enabled for " + $this.ResourceContext.ResourceName ));
 						$controlResult.AddMessage($nonAadSettings);
-						$controlResult.SetStateData("App Service authentication settings", $aadSettings);
+						$controlResult.SetStateData("App Service authentication settings", $nonAadSettings);
 						return $controlResult;
 					}
 				}
