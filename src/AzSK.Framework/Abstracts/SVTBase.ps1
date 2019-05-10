@@ -184,11 +184,13 @@ class SVTBase: AzSKRoot
 
 	hidden [string] GetResourceId()
     {
-		$resource = Get-AzResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+        
 		if ([string]::IsNullOrEmpty($this.ResourceId))
 		{
+            
 			if($this.ResourceContext)
 			{
+                $resource = Get-AzResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
 				if($resource)
 				{
 					$this.ResourceId = $resource.ResourceId;
@@ -203,18 +205,18 @@ class SVTBase: AzSKRoot
 				$this.ResourceId = $this.SubscriptionContext.Scope;
 			}
 		}
-
-		### set resource tags
-		if($resource)
-		{
-			#Check tag null # Put in try catch for safe failure
-			$tags =   (Get-AzResourceGroup | where-object {$_.ResourceGroupName  -eq $resource.ResourceGroupName}).Tags
-			if( $tags -and ($tags | Measure-Object).Count -gt 0)
-			{
-				$this.ResourceTags = $tags
-			}
-		}
-
+    
+        if ($this.ResourceTags.Count -eq 0) {
+            try {
+                $tags = (Get-AzResourceGroup -Name $this.ResourceContext.ResourceGroupName).Tags
+                if( $tags -and ($tags | Measure-Object).Count -gt 0)
+                {
+		            $this.ResourceTags = $tags
+		        }
+            } catch {
+                # flow shouldn't break if there are errors in fetching tags eg. locked resource groups
+            }
+        }
 		return $this.ResourceId;
     }
 
