@@ -205,7 +205,7 @@ class SVTBase: AzSKRoot
 			}
 		}
 		
-		if ($this.ResourceContext -and $this.ResourceTags.Count -eq 0) {
+		if ($this.ResourceId -and $this.ResourceContext -and $this.ResourceTags.Count -eq 0) {
 			try {
 				$tags = (Get-AzResourceGroup -Name $this.ResourceContext.ResourceGroupName).Tags
 				if( $tags -and ($tags | Measure-Object).Count -gt 0)
