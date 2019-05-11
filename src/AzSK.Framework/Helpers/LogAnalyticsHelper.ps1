@@ -83,6 +83,22 @@ Class LogAnalyticsHelper
 				$out.ResourceId = $eventContext.ResourceContext.ResourceId
 				$out.ChildResourceName = $controlResult.ChildResourceName
 				$out.PartialScanIdentifier = $eventContext.PartialScanIdentifier
+				# Try catch block for Env and ComponentId tags if tags throws exceptions in case of null objects
+				try
+				{
+					$out.Env = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\benv\b"]
+				}
+				catch
+				{
+					$out.Env = ""	
+				}
+				try
+				{
+					$out.ComponentId = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\bcomponentid\b"]
+				}
+				catch{
+					$out.ComponentId = ""
+				}
 			}
 			
 			$out.Reference = $eventContext.Metadata.Reference
@@ -117,17 +133,6 @@ Class LogAnalyticsHelper
 				$out.Justification = $attestedData.Justification;
 				$out.AttestedDate = $attestedData.AttestedDate
 				$out.ExpiryDate = $attestedData.ExpiryDate
-			}
-			
-			try
-			{
-				$out.Env = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\benv\b"]
-				$out.ComponentId = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\bcomponentid\b"]
-			}
-			catch
-			{
-				$out.Env = ""
-				$out.ComponentId = ""
 			}
 
 			$output += $out
