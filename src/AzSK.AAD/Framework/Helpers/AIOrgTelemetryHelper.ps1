@@ -442,7 +442,7 @@ class AIOrgTelemetryHelper {
 	
 static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryEvents,[string] $type) {
     #TODO: Revisit AI telemetry post-preview
-    <#
+
     try {
 
         $eventlist = [System.Collections.ArrayList]::new()
@@ -501,7 +501,6 @@ static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryE
 		# Left blank intentionally
 		# Error while sending CA events to telemetry. No need to break the execution.
     }
-      #>
 }
 
 }
