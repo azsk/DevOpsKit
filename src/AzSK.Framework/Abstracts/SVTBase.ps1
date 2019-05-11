@@ -198,24 +198,24 @@ class SVTBase: AzSKRoot
 				{
 					throw [SuppressedException] "Unable to find the Azure resource - [ResourceType: $($this.ResourceContext.ResourceType)] [ResourceGroupName: $($this.ResourceContext.ResourceGroupName)] [ResourceName: $($this.ResourceContext.ResourceName)]"
 				}
-				
-				if ($this.ResourceTags.Count -eq 0) {
-					try {
-						$tags = (Get-AzResourceGroup -Name $this.ResourceContext.ResourceGroupName).Tags
-						if( $tags -and ($tags | Measure-Object).Count -gt 0)
-						{
-							$this.ResourceTags = $tags
-						}
-					} catch {
-						# flow shouldn't break if there are errors in fetching tags eg. locked resource groups
-					}
-				}
 			}
 			else
 			{
 				$this.ResourceId = $this.SubscriptionContext.Scope;
 			}
-		}    
+		}
+		
+		if ($this.ResourceContext -and $this.ResourceTags.Count -eq 0) {
+			try {
+				$tags = (Get-AzResourceGroup -Name $this.ResourceContext.ResourceGroupName).Tags
+				if( $tags -and ($tags | Measure-Object).Count -gt 0)
+				{
+					$this.ResourceTags = $tags
+				}
+			} catch {
+				# flow shouldn't break if there are errors in fetching tags eg. locked resource groups
+			}
+		}   
         
 		return $this.ResourceId;
     }
