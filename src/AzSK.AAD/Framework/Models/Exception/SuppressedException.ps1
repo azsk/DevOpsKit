@@ -6,6 +6,7 @@ enum SuppressedExceptionType
 	NullArgument
 	Generic
 	InvalidOperation
+	AccessDenied
 }
 
 class SuppressedException : System.Exception

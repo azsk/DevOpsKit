@@ -267,6 +267,7 @@ class ConfigurationHelper {
 		$uri = $global:ExecutionContext.InvokeCommand.ExpandString($onlineStoreUri)
 		[System.Uri] $validatedUri = $null;
 		$ResourceAppIdURI = "https://management.core.windows.net/"
+		#TODO/BUGBUG: Need to tweak this for AAD scans. Would we need a serverconfig?
 		if([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri))
 		{
 			if($enableAADAuthForOnlinePolicyStore)
@@ -279,7 +280,7 @@ class ConfigurationHelper {
 			 else {
 				$ResourceAppIdURI = "https://management.core.windows.net/"
 			 }
-				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+				$accessToken = [AccountHelper]::GetAccessToken($ResourceAppIdURI)
 				$serverFileContent = Invoke-RestMethod `
 									-Method GET `
 									-Uri $validatedUri `

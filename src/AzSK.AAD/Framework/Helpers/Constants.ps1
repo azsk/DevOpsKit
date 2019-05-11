@@ -172,6 +172,8 @@ class Constants
 	static [string] $DefaultAzureDevOpsResourceId = "499b84ac-1321-427f-aa17-267ca6975798"
 
 	#Constants for AAD (#TODO)
+	static [string] $AADAPIGuid = "74658136-14ec-4630-ad9b-26e160ff0fc6"
+	static [string] $AADAPIUrl = "https://main.iam.ad.ext.azure.com"
 
 	static [void] SetAzSKModuleName($moduleName)
 	{

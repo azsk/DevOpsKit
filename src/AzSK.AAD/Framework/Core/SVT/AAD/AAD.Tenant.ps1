@@ -20,7 +20,7 @@ class Tenant: SVTBase
 
     hidden GetAADSettings()
     {
-        $this.PublishCustomMessage("`nQuerying tenant API endpoints. This may take a few seconds...");
+        $this.PublishCustomMessage("`r`nQuerying tenant API endpoints. This may take a few seconds...`r`nYou may see error messages in case you don't have access to all APIs.");
 
         if ($this.AADPermissions -eq $null)
         {

@@ -3,10 +3,11 @@
 class RemoteApiHelper {
     hidden static [string] $ApiBaseEndpoint = [ConfigurationManager]::GetAzSKConfigData().AzSKApiBaseURL; #"https://localhost:44348/api"
 
+    #TODO: Reconcile this with AccountHelper::GetAccessToken()
     hidden static [string] GetAccessToken() {
         $rmContext = [AccountHelper]::GetCurrentRmContext();
 		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-        return [Helpers]::GetAccessToken($ResourceAppIdURI);
+        return [AccountHelper]::GetAccessToken($ResourceAppIdURI);
     }
 
     hidden static [psobject] PostContent($uri, $content, $type) {

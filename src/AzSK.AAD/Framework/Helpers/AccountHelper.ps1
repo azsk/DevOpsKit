@@ -91,7 +91,7 @@ class AccountHelper {
     {
         if ([AccountHelper]::currentAzContext -eq $null)
         {
-            throw "Cannot call this method before getting a sign-in context"
+            throw ([SuppressedException]::new(("Cannot call this method before getting a sign-in context!"), [SuppressedExceptionType]::InvalidOperation))
         }
         return [AccountHelper]::currentAzContext
     }
@@ -133,8 +133,8 @@ class AccountHelper {
                         $azContext = $azureContext.Context 
                 }
                 catch {
-                    Write-Error("Could not login to Azure environment...")
-                    throw ("TODO: SuppressedException? Could not login to Azure envmt.")   
+                    Write-Error "Could not login to Azure environment..." #TODO: PublishCustomMessage equivalent for 'static' classes?
+                    throw ([SuppressedException]::new(("Could not login to Azure envmt. Will try direct Connect-AzureAD...."), [SuppressedExceptionType]::AccessDenied))   
                 }
             }
             [AccountHelper]::currentAzContext = $azContext
@@ -146,7 +146,7 @@ class AccountHelper {
     {
         if ([AccountHelper]::currentAADContext -eq $null)
         {
-            throw "Cannot call this method before getting a sign-in context"
+            throw ([SuppressedException]::new(("Cannot call this method before getting a sign-in context!"), [SuppressedExceptionType]::InvalidOperation))
         }
         return [AccountHelper]::currentAADContext
     }
@@ -164,22 +164,29 @@ class AccountHelper {
             $aadUserObj = $null
             #Try leveraging Azure context if available
             try {
-                #Either throws or returns non-null
-                $azContext = [AccountHelper]::GetCurrentAzContext($desiredTenantId)
-
-                $accountId = $azContext.Account.Id
-
                 $tenantId = $null
                 $crossTenant = $false
+                $accountId = $null
+
                 if (-not [string]::IsNullOrEmpty($desiredTenantId))
                 {
                     $tenantId = $desiredTenantId
                 }
+
+                $azContext = $null
+                try {
+                    #Either throws or returns non-null
+                    $azContext = [AccountHelper]::GetCurrentAzContext($desiredTenantId)
+                    $accountId = $azContext.Account.Id    
+                }
+                catch {
+                    Write-Warning "Could not acquire Azure context. Falling back to Connect-AzureAD..."
+                }
                 
-                if ($azContext.Tenant -ne $null) #Can be $null when a user has no Azure subscriptions.
+                if ($azContext -ne $null -and $azContext.Tenant -ne $null) #Can be $null when a user has no Azure subscriptions.
                 {
                     $nativeTenantId = $azContext.Tenant.Id
-                    if ($tenantId -eq $null) #No desired tenant passed in
+                    if ($tenantId -eq $null) #No 'desired tenant' passed in by user
                     {
                         $tenantId = $nativeTenantId
                     }
@@ -193,14 +200,25 @@ class AccountHelper {
                     }
                 }
 
-                if (-not [string]::IsNullOrEmpty($tenantId))
+                $aadContext = $null
+                if (-not [string]::IsNullOrEmpty($tenantId) -and -not [string]::IsNullOrEmpty($accountId))
                 {
                     $aadContext = Connect-AzureAD -TenantId $tenantId -AccountId $accountId -ErrorAction Stop
                 }
-                else 
+                elseif (-not [string]::IsNullOrEmpty($accountId)) 
                 {
                     $aadContext = Connect-AzureAd -AccountId $accountId -ErrorAction Stop
                     $tenantId = $aadContext.TenantId
+                }
+                else {
+                    $aadContext = Connect-AzureAd -ErrorAction Stop
+                    $tenantId = $aadContext.TenantId
+                }
+
+                if (-not [String]::IsNullOrEmpty($desiredTenantId) -and $desiredTenantId -ne $aadContext.TenantID)
+                {
+                    Write-Error "Mismatch between desired tenantId: $desiredTenantId and tenantId from login context: $($aadContext.TenantId).`r`nYou may have mistyped the value of 'tenantId' parameter. Please try again!"
+                    throw ([SuppressedException]::new("Mismatch between desired tenantId: $desiredTenantId and tenantId from login context: $($aadContext.TenantId)", [SuppressedExceptionType]::Generic))
                 }
 
                 $upn = $aadContext.Account.Id
@@ -218,8 +236,7 @@ class AccountHelper {
                 }
             }
             catch {
-                Write-Warning("Could not get Az/AzureAD context.")
-                throw "TODO: ExceptionType?. Could not get Az/AAD context."
+                throw ([SuppressedException]::new("Could not acquire an AAD tenant context!`r`n$_", [SuppressedExceptionType]::Generic))
             }
 
             [AccountHelper]::ScanType = [CommandType]::AAD
@@ -328,7 +345,7 @@ class AccountHelper {
         {
             $apiToken = $null
             
-            $AADAPIGuid = "74658136-14ec-4630-ad9b-26e160ff0fc6" #BUGBUG: Resolve loading order issue if we use [WebRequestHelper]::GetAADAPIGuid();
+            $AADAPIGuid = [Constants]::AADAPIGuid
 
             #Try leveraging Azure context if available
             try {
@@ -345,8 +362,8 @@ class AccountHelper {
                 $apiToken = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate($azContext.Account, $azContext.Environment, $tenantId, $null, "Never", $null, $AADAPIGuid)
             }
             catch {
-                Write-Warning("Could not get AAD API token for $AADAPIGuid.")
-                throw "TODO: ExceptionType?. Could not get AAD API token for $AADAPIGuid."
+                Write-Warning "Could not get AAD API token for: $AADAPIGuid."
+                throw ([SuppressedException]::new("Could not get AAD API token for: $AADAPIGuid.", [SuppressedExceptionType]::Generic))
             }
 
             [AccountHelper]::AADAPIAccessToken = $apiToken

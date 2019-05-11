@@ -14,7 +14,7 @@ class WritePsConsole: FileOutputBase
     }
 
     [void] RegisterEvents()
-    {        
+    {     
         $this.UnregisterEvents();
 
 		# Mandatory: Generate Run Identifier Event
@@ -351,6 +351,18 @@ class WritePsConsole: FileOutputBase
             }
         });
 		
+		<#$this.RegisterEvent([AzSKRootEvent]::PublishCustomData, {
+            $currentInstance = [WritePsConsole]::GetInstance();
+            try
+            {				
+				Write-Host -ForegroundColor White "Hello World2!"
+            }
+            catch
+            {
+                $currentInstance.PublishException($_);
+            }
+        });#>
+
 		$this.RegisterEvent([SVTEvent]::ControlDisabled, {
             $currentInstance = [WritePsConsole]::GetInstance();
             try 

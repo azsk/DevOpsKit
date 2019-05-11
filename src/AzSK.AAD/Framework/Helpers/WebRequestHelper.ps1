@@ -1,12 +1,9 @@
 Set-StrictMode -Version Latest 
 class WebRequestHelper {
-   
+	#TODO: shouldn't these be in 'Constants' as well?
 	hidden static [string] $AzureManagementUri = "https://management.azure.com/";
 	hidden static [string] $GraphApiUri = "https://graph.windows.net/";
 	hidden static [string] $ClassicManagementUri = "https://management.core.windows.net/";
-
-	hidden static [string] $AADAPIGuid = "74658136-14ec-4630-ad9b-26e160ff0fc6";
-	hidden static [string] $AADAPIUrl = "https://main.iam.ad.ext.azure.com";
 
     static [System.Object[]] InvokeGetWebRequest([string] $uri, [Hashtable] $headers) 
 	{
@@ -44,7 +41,7 @@ class WebRequestHelper {
         if([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri))
 		{
 			return @{
-				"Authorization"= ("Bearer " + [Helpers]::GetAccessToken($validatedUri.GetLeftPart([System.UriPartial]::Authority))); 
+				"Authorization"= ("Bearer " + [AccountHelper]::GetAccessToken($validatedUri.GetLeftPart([System.UriPartial]::Authority))); 
 				"Content-Type"="application/json"
 			};
 
@@ -354,10 +351,11 @@ Content-Type: multipart/mixed; boundary={1}
             $response = Invoke-RestMethod $targetUrl -Headers $headers -Method GET
         }
         catch {
-			#TODO: (1) Correct exception treatment? (2) Seems to lose evaluated tenant controls altogether (3) Write-Host from catch does not show on console? (4) $msg = "xyz"??
-			#TODO: how to write exception details just to detailed log? 
+			#TODO: (1) Correct exception treatment? 
+			#TODO: How to write exception details just to detailed log and not on-screen? 
 			Write-Host -ForegroundColor Yellow "Error calling AAD API endpoint: $apiMethod."
 			#TODO: Absorbing exception and returning $response = $null below.
+			$response = $null
         }
         return $response
 	}
@@ -365,12 +363,12 @@ Content-Type: multipart/mixed; boundary={1}
 	hidden static [string] GetAADAPIUrl()
 	{
 		#BUGBUG: Add handling for Azure Gov.
-		return [WebRequestHelper]::AADAPIUrl;
+		return [Constants]::AADAPIUrl;
 	}
 
 	hidden static [string] GetAADAPIGuid()
 	{
 		#BUGBUG: Will this also change for Azure Gov?
-		return [WebRequestHelper]::AADAPIGuid;
+		return Constants::AADAPIGuid;
 	}
 }

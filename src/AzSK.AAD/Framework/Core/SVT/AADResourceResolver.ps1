@@ -45,7 +45,8 @@ class AADResourceResolver: Resolver
     [void] LoadResourcesForScan()
 	{
         $tenantInfoMsg = [AccountHelper]::GetCurrentTenantInfo();
-        Write-Host -ForegroundColor Green $tenantInfoMsg  #TODO: Need to do with PublishCustomMessage...just before #-of-resources...etc.?
+        #Write-Host -ForegroundColor Green $tenantInfoMsg  #TODO: Need to do with PublishCustomMessage...just before #-of-resources...etc.?
+        $this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`n$tenantInfoMsg`r`n" + [Constants]::DoubleDashLine, [MessageType]::Update )
 
         #TODO: TBD - for use later...
         $bAdmin = [AccountHelper]::IsUserInAPermanentAdminRole();
@@ -53,11 +54,10 @@ class AADResourceResolver: Resolver
         #scanTenant is used to determine is the scan is tenant wide or just within the scope of the current (logged-in) user.
         if ($this.scanTenant)
         {
-            #Core controls are evaluated by default.
             $svtResource = [SVTResource]::new();
-            $svtResource.ResourceName = $this.tenantId;
+            $svtResource.ResourceName = $this.tenantContext.TenantName;
             $svtResource.ResourceType = "AAD.Tenant";
-            $svtResource.ResourceId = "Organization/$($this.tenantId)/"  #TODO
+            $svtResource.ResourceId = $this.tenantId
             $svtResource.ResourceTypeMapping = ([SVTMapping]::AADResourceMapping |
                                             Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                             Select-Object -First 1)
@@ -101,7 +101,8 @@ class AADResourceResolver: Resolver
             foreach ($obj in $appObjects) {
                 $svtResource = [SVTResource]::new();
                 $svtResource.ResourceName = $obj.DisplayName;
-                $svtResource.ResourceGroupName = $currUser #TODO
+                $svtResource.ResourceGroupName = ""  #If blank, the column gets skipped in CSV file. 
+                #TODO: If rgName == "" then all LOGs end up in root folder alongside CSV, README.txt. May need to have a reasonable 'mock' RGName.
                 $svtResource.ResourceType = "AAD.Application";
                 $svtResource.ResourceId = $obj.ObjectId     
                 $svtResource.ResourceTypeMapping = $appTypeMapping   
@@ -129,7 +130,7 @@ class AADResourceResolver: Resolver
             foreach ($obj in $spnObjects) {
                 $svtResource = [SVTResource]::new();
                 $svtResource.ResourceName = $obj.DisplayName;
-                $svtResource.ResourceGroupName = $currUser #TODO
+                $svtResource.ResourceGroupName = ""  #If blank, the column gets skipped in CSV file.
                 $svtResource.ResourceType = "AAD.ServicePrincipal";
                 $svtResource.ResourceId = $obj.ObjectId     
                 $svtResource.ResourceTypeMapping = $spnTypeMapping   
@@ -157,7 +158,7 @@ class AADResourceResolver: Resolver
             foreach ($obj in $deviceObjects) {
                 $svtResource = [SVTResource]::new();
                 $svtResource.ResourceName = $obj.DisplayName;
-                $svtResource.ResourceGroupName = $currUser #TODO
+                $svtResource.ResourceGroupName = ""  #If blank, the column gets skipped in CSV file.
                 $svtResource.ResourceType = "AAD.Device";
                 $svtResource.ResourceId = $obj.ObjectId     
                 $svtResource.ResourceTypeMapping = $deviceTypeMapping   
@@ -187,7 +188,7 @@ class AADResourceResolver: Resolver
             foreach ($obj in $userObjects) {
                 $svtResource = [SVTResource]::new();
                 $svtResource.ResourceName = $obj.DisplayName;
-                $svtResource.ResourceGroupName = $currUser #TODO
+                $svtResource.ResourceGroupName = ""  #If blank, the column gets skipped in CSV file.
                 $svtResource.ResourceType = "AAD.User";
                 $svtResource.ResourceId = $obj.ObjectId     
                 $svtResource.ResourceTypeMapping = $userTypeMapping   
@@ -218,7 +219,7 @@ class AADResourceResolver: Resolver
             foreach ($obj in $grpObjects) {
                 $svtResource = [SVTResource]::new();
                 $svtResource.ResourceName = $obj.DisplayName;
-                $svtResource.ResourceGroupName = $currUser #TODO
+                $svtResource.ResourceGroupName = ""  #If blank, the column gets skipped in CSV file.
                 $svtResource.ResourceType = "AAD.Group";
                 $svtResource.ResourceId = $obj.ObjectId     
                 $svtResource.ResourceTypeMapping = $grpTypeMapping   

@@ -28,6 +28,7 @@ class EventHubOutput: ListenerBase
 
 		$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
 			$currentInstance = [EventHubOutput]::GetInstance();
+			#Write-Host -ForegroundColor White "Hello World!"
 			try
 			{
 				$currentInstance.WriteControlResult([SVTEventContext[]] ($Event.SourceArgs));
