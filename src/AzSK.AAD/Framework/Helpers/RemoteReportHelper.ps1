@@ -185,11 +185,16 @@ class RemoteReportHelper
 	{
 		$settings = [ConfigurationManager]::GetAzSKConfigData();
 		$telemetryKey = $settings.ControlTelemetryKey
-		[guid]$key = [guid]::NewGuid()
+
+		#BUGBUG: Need to address same 'perf' concern as AIOrgTMKey below!
+		[guid]$key = [guid]::NewGuid() 
+		
 		if([guid]::TryParse($telemetryKey, [ref] $key) -and ![guid]::Empty.Equals($key))
 		{
 			return $telemetryKey;
 		}
+		#BUGBUG: What is the intent here? 
+		#BUGBUG: It appears that if telemetryKey in config is 00000- (and no server setting) this will return 0000--...
 		return [ConfigurationManager]::GetAzSKSettings().LocalControlTelemetryKey;
 	}
 
@@ -198,12 +203,15 @@ class RemoteReportHelper
 		$settings = [ConfigurationManager]::GetAzSKConfigData();
 		$telemetryKey = $settings.ControlTelemetryKey
 		#BUGBUG: We should not burn a Guid each time like this. Just check non-null and perhaps length...
+		#If we need a mock guid, make one up 01234567-89ab-cdef-0123456789abcdef
 		#Also, cache the result and the fact that it has been set/checked (upon first call)
+		#TODO: Even otherwise, checking bEnabled first is much more optimal. Most people will have it as $false.
 		[guid]$key = [guid]::NewGuid()
 		if([guid]::TryParse($telemetryKey, [ref] $key) -and ![guid]::Empty.Equals($key))
 		{
 			return $settings.EnableControlTelemetry;
-		}
+		} 
+		#BUGBUG: Unclear why this would return LocalEnable...
 		return [ConfigurationManager]::GetAzSKSettings().LocalEnableControlTelemetry;
 	}
 

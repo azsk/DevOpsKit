@@ -3,8 +3,10 @@ Set-StrictMode -Version Latest
 class AIOrgTelemetryHelper {
     static hidden [string[]] $ParamsToMask = @("OMSSharedKey");
     static hidden [Microsoft.ApplicationInsights.TelemetryClient] $OrgTelemetryClient;
-    static hidden [Microsoft.ApplicationInsights.TelemetryClient] $UsageTelemetryClient;
-	static [PSObject] $CommonProperties;
+
+    #This is a helper object for the actual OrgTelemetry listener. 
+    #In some places it's methods also get called directly (outside of the event listener/handler scheme)
+    static [PSObject] $CommonProperties;
     static AIOrgTelemetryHelper() {
         [AIOrgTelemetryHelper]::OrgTelemetryClient = [Microsoft.ApplicationInsights.TelemetryClient]::new()
     }
@@ -36,8 +38,12 @@ class AIOrgTelemetryHelper {
         #[AIOrgTelemetryHelper]::OrgTelemetryClient.Flush();
     }
 
+    #TODO-Perf: It appears that Properties object is copied multiple times. See if it is possible to use just one (by-ref) copy per 'send-event-to-ai' operation.
     static [void] TrackCommandExecution([string] $Name, [hashtable] $Properties, [hashtable] $Metrics, [System.Management.Automation.InvocationInfo] $invocationContext) {
-        if (![RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { return; };
+        if (![RemoteReportHelper]::IsAIOrgTelemetryEnabled()) 
+        { 
+            return; 
+        }
         $Properties = [AIOrgTelemetryHelper]::AttachInvocationInfo($Properties, $invocationContext);
         [AIOrgTelemetryHelper]::TrackEventInternal($Name, $Properties, $Metrics);
         [AIOrgTelemetryHelper]::OrgTelemetryClient.Flush();
@@ -63,31 +69,37 @@ class AIOrgTelemetryHelper {
 			$Metrics = [AIOrgTelemetryHelper]::AttachCommonMetrics($Metrics);
 			$ex = [Microsoft.ApplicationInsights.DataContracts.ExceptionTelemetry]::new()
 			$ex.Exception = $ErrorRecord.Exception
-			try{
+            try
+            {
 				$ex.Properties.Add("ScriptStackTrace", $ErrorRecord.ScriptStackTrace)
 			}
-			catch{
+            catch
+            {
 					# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
 					# No need to break execution
-				}
+            }
 			$Properties.Keys | ForEach-Object {
-				try{
-					$ex.Properties.Add($_, $Properties[$_].ToString());
+                try
+                {
+                    $event.Properties[$_] = $Properties[$_].ToString();
 				}
-				catch{
+                catch
+                {
 					# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
 					# No need to break execution
 				}
 			}
 			$Metrics.Keys | ForEach-Object {
-				try{
-					$ex.Metrics.Add($_, $Metrics[$_]);
+                try
+                {
+                    $event.Metrics[$_] = $Metrics[$_].ToString();
 				}
 				catch{
 					# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
 					# No need to break execution
 				}
-			}
+            }
+            #BUGBUG: Why is this set/fetched for each invocation?
 			[AIOrgTelemetryHelper]::OrgTelemetryClient.InstrumentationKey = [RemoteReportHelper]::GetAIOrgTelemetryKey();
 			[AIOrgTelemetryHelper]::OrgTelemetryClient.TrackException($ex);
 			[AIOrgTelemetryHelper]::OrgTelemetryClient.Flush();
@@ -106,8 +118,9 @@ class AIOrgTelemetryHelper {
             $event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
             $event.Name = $Name
             $Properties.Keys | ForEach-Object {
-                try {
-                    $event.Properties.Add($_, ($Properties[$_].ToString()));
+                try 
+                {
+                    $event.Properties[$_] = $Properties[$_].ToString();
                 }
                 catch
 				{
@@ -116,15 +129,17 @@ class AIOrgTelemetryHelper {
 				}
             }
             $Metrics.Keys | ForEach-Object {
-                try {
-                    $event.Metrics.Add($_, $Metrics[$_]);
+                try 
+                {
+                    $event.Metrics[$_] = $Metrics[$_].ToString();
                 }
                 catch
 				{
 					# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
 					# No need to break execution
 				}
-            }
+            } 
+            #BUGBUG: Why is this set/fetched for each invocation? It ought to be set by now. :-(
             [AIOrgTelemetryHelper]::OrgTelemetryClient.InstrumentationKey = [RemoteReportHelper]::GetAIOrgTelemetryKey();
             [AIOrgTelemetryHelper]::OrgTelemetryClient.TrackEvent($event);
         }
@@ -347,68 +362,68 @@ class AIOrgTelemetryHelper {
 		}
 	}
 	static [void] PublishARMCheckerEvent([System.Collections.ArrayList] $armcheckerscantelemetryEvents) {  
-	try
-	{
-	 #Attach Common Properties to each EventObject
-	 $armcheckerscantelemetryEvents | ForEach-Object -Begin{
-	 $module = Get-Module 'AzSK*' | Select-Object -First 1
-	 } -Process {
-	            $_.Properties.Add("ScannerModuleName", $module.Name);
-                $_.Properties.Add("ScannerVersion", $module.Version.ToString());
-				$_.Properties.Add("Command","Get-AzSKARMChecker")
-	 } -End {}
+        try
+        {
+        #Attach Common Properties to each EventObject
+        $armcheckerscantelemetryEvents | ForEach-Object -Begin{
+        $module = Get-Module 'AzSK*' | Select-Object -First 1
+        } -Process {
+                    $_.Properties.Add("ScannerModuleName", $module.Name);
+                    $_.Properties.Add("ScannerVersion", $module.Version.ToString());
+                    $_.Properties.Add("Command","Get-AzSKARMChecker")
+        } -End {}
 
-	 [AIOrgTelemetryHelper]::PublishEvent($armcheckerscantelemetryEvents,"Usage");
-   }
-   catch{
-    # Left blank intentionally
-    # Error while sending events to telemetry. No need to break the execution.
-   }
+        [AIOrgTelemetryHelper]::PublishEvent($armcheckerscantelemetryEvents,"Usage");
+    }
+    catch{
+        # Left blank intentionally
+        # Error while sending events to telemetry. No need to break the execution.
+    }
 
-}
+    }
 
-    static [PSObject] GetEventBaseObject([string] $EventName) {
-	$telemetryKey= [RemoteReportHelper]::GetAIOrgTelemetryKey()
-    $eventObj = "" | Select-Object data, iKey, name, tags, time
-    $eventObj.iKey = $telemetryKey
-    $eventObj.name = "Microsoft.ApplicationInsights." + $telemetryKey.Replace("-", "") + ".Event"
-    $eventObj.time = [datetime]::UtcNow.ToString("o")
+        static [PSObject] GetEventBaseObject([string] $EventName) {
+        $telemetryKey= [RemoteReportHelper]::GetAIOrgTelemetryKey()
+        $eventObj = "" | Select-Object data, iKey, name, tags, time
+        $eventObj.iKey = $telemetryKey
+        $eventObj.name = "Microsoft.ApplicationInsights." + $telemetryKey.Replace("-", "") + ".Event"
+        $eventObj.time = [datetime]::UtcNow.ToString("o")
 
-    $eventObj.tags = "" | Select-Object ai.internal.sdkVersion
-    $eventObj.tags.'ai.internal.sdkVersion' = "dotnet: 2.1.0.26048"
+        $eventObj.tags = "" | Select-Object ai.internal.sdkVersion
+        $eventObj.tags.'ai.internal.sdkVersion' = "dotnet: 2.1.0.26048"
 
-    $eventObj.data = "" | Select-Object baseData, baseType
-    $eventObj.data.baseType = "EventData"
-    $eventObj.data.baseData = "" | Select-Object ver, name, measurements, properties
+        $eventObj.data = "" | Select-Object baseData, baseType
+        $eventObj.data.baseType = "EventData"
+        $eventObj.data.baseData = "" | Select-Object ver, name, measurements, properties
 
-    $eventObj.data.baseData.ver = 2
-    $eventObj.data.baseData.name = $EventName
+        $eventObj.data.baseData.ver = 2
+        $eventObj.data.baseData.name = $EventName
 
-    $eventObj.data.baseData.measurements = New-Object 'system.collections.generic.dictionary[string,double]'
-    $eventObj.data.baseData.properties = New-Object 'system.collections.generic.dictionary[string,string]'
+        $eventObj.data.baseData.measurements = New-Object 'system.collections.generic.dictionary[string,double]'
+        $eventObj.data.baseData.properties = New-Object 'system.collections.generic.dictionary[string,string]'
 
-    return $eventObj;
+        return $eventObj;
 	}
 
 	#Telemetry functions -- start here
-  static [PSObject]  SetCommonProperties([psobject] $EventObj) {
-    $notAvailable = "NA"
-    if([AIOrgTelemetryHelper]::CommonProperties)
-	 {	
-		try{
-		$EventObj.data.baseData.properties.Add("tenantId",[AIOrgTelemetryHelper]::CommonProperties.tenantId)
-		$EventObj.data.baseData.properties.Add("TenantName",[AIOrgTelemetryHelper]::CommonProperties.TenantName)		
-		$azureContext = [AccountHelper]::GetCurrentRmContext()
-		$EventObj.data.baseData.properties.Add("TenantId", $azureContext.Tenant.Id)
-		$EventObj.data.baseData.properties.Add("AccountId", $azureContext.Account.Id)
-		}
-		catch{
-			# Eat the current exception which typically happens to avoid any break in event push
-			# No need to break execution
-		}
-	 }
-	  return $EventObj
-}
+    static [PSObject]  SetCommonProperties([psobject] $EventObj) {
+        $notAvailable = "NA"
+        if([AIOrgTelemetryHelper]::CommonProperties)
+        {	
+            try{
+            $EventObj.data.baseData.properties.Add("tenantId",[AIOrgTelemetryHelper]::CommonProperties.tenantId)
+            $EventObj.data.baseData.properties.Add("TenantName",[AIOrgTelemetryHelper]::CommonProperties.TenantName)		
+            $azureContext = [AccountHelper]::GetCurrentRmContext()
+            $EventObj.data.baseData.properties.Add("TenantId", $azureContext.Tenant.Id)
+            $EventObj.data.baseData.properties.Add("AccountId", $azureContext.Account.Id)
+            }
+            catch{
+                # Eat the current exception which typically happens to avoid any break in event push
+                # No need to break execution
+            }
+        }
+        return $EventObj
+    }
 
 	static [PSObject] GetUsageEventBaseObject([string] $EventName,[string] $type) {
 		$eventObj = "" | Select-Object data, iKey, name, tags, time
@@ -437,59 +452,54 @@ class AIOrgTelemetryHelper {
 		$eventObj.data.baseData.properties = New-Object 'system.collections.generic.dictionary[string,string]'
 
 		return $eventObj;
-}
+    }
 
 	
-static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryEvents,[string] $type) {
-    #TODO: Revisit AI telemetry post-preview
+    static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryEvents,[string] $type) {
+        #TODO: Revisit AI telemetry post-preview
 
-    try {
+        try {
 
-        $eventlist = [System.Collections.ArrayList]::new()
+            $eventlist = [System.Collections.ArrayList]::new()
 
-        $servicescantelemetryEvents | ForEach-Object {
-        
-        $eventObj = [AIOrgTelemetryHelper]::GetUsageEventBaseObject($_.Name,$type)
-        #SetCommonProperties -EventObj $eventObj
+            $servicescantelemetryEvents | ForEach-Object {
+            
+            $eventObj = [AIOrgTelemetryHelper]::GetUsageEventBaseObject($_.Name,$type)
+            #SetCommonProperties -EventObj $eventObj
 
-        $currenteventobj = $_
-        if ($null -ne $currenteventobj.Properties) {
-            $currenteventobj.Properties.Keys | ForEach-Object {
-                try {
-                    if (!$eventObj.data.baseData.properties.ContainsKey($_)) {
-                        $eventObj.data.baseData.properties.Add($_ , $currenteventobj.Properties[$_].ToString())
+            $currenteventobj = $_
+            if ($null -ne $currenteventobj.Properties) {
+                $currenteventobj.Properties.Keys | ForEach-Object {
+                    try {
+                        if (!$eventObj.data.baseData.properties.ContainsKey($_)) {
+                            $eventObj.data.baseData.properties.Add($_ , $currenteventobj.Properties[$_].ToString())
+                        }
+                    }
+                    catch
+                    {
+                        # Left blank intentionally
+                        # Error while sending CA events to telemetry. No need to break the execution.
                     }
                 }
-                catch
-				{
-					# Left blank intentionally
-					# Error while sending CA events to telemetry. No need to break the execution.
-				}
             }
-        }
-        if ($null -ne $currenteventobj.Metrics) {
-            $currenteventobj.Metrics.Keys | ForEach-Object {
-                try {
-                    $metric = $currenteventobj.Metrics[$_] -as [double]
-                    if (!$eventObj.data.baseData.measurements.ContainsKey($_) -and $null -ne $metric) {
-                        $eventObj.data.baseData.measurements.Add($_ , $currenteventobj.Metrics[$_])
+            if ($null -ne $currenteventobj.Metrics) {
+                $currenteventobj.Metrics.Keys | ForEach-Object {
+                    try {
+                        $metric = $currenteventobj.Metrics[$_] -as [double]
+                        if (!$eventObj.data.baseData.measurements.ContainsKey($_) -and $null -ne $metric) {
+                            $eventObj.data.baseData.measurements.Add($_ , $currenteventobj.Metrics[$_])
+                        }
+                    }
+                    catch {
+                        # Left blank intentionally
+                        # Error while sending CA events to telemetry. No need to break the execution.
                     }
                 }
-                catch {
-					# Left blank intentionally
-					# Error while sending CA events to telemetry. No need to break the execution.
-				}
             }
+            $eventlist.Add($eventObj)  
         }
-        
-        $eventlist.Add($eventObj)
-        
-        }
-
         $eventJson = ConvertTo-Json $eventlist -Depth 100 -Compress
-
         #Write-Warning("TODO: AI Org Telemetry IWR turned OFF.")
-
         Invoke-WebRequest -Uri "https://dc.services.visualstudio.com/v2/track" `
             -Method Post `
             -ContentType "application/x-json-stream" `
@@ -497,10 +507,10 @@ static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryE
             -UseBasicParsing | Out-Null
 
         }
-    catch {
-		# Left blank intentionally
-		# Error while sending CA events to telemetry. No need to break the execution.
+        catch {
+            # Left blank intentionally
+            # Error while sending CA events to telemetry. No need to break the execution.
+        }
     }
-}
 
 }

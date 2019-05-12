@@ -16,9 +16,9 @@ class ListenerHelper
 		[OMSOutput]::GetInstance().RegisterEvents();
         [EventHubOutput]::GetInstance().RegisterEvents();
         [WebhookOutput]::GetInstance().RegisterEvents();
-		#[AIOrgTelemetry]::GetInstance().RegisterEvents();
+		[AIOrgTelemetry]::GetInstance().RegisterEvents();
         [UsageTelemetry]::GetInstance().RegisterEvents();
-        #[RemoteReportsListener]::GetInstance().RegisterEvents();
+        [RemoteReportsListener]::GetInstance().RegisterEvents();
         [WriteEnvironmentFile]::GetInstance().RegisterEvents();
         [WriteFixControlFiles]::GetInstance().RegisterEvents();
         [SecurityRecommendationReport]::GetInstance().RegisterEvents();
@@ -36,9 +36,9 @@ class ListenerHelper
 		[OMSOutput]::GetInstance().UnregisterEvents();
         [EventHubOutput]::GetInstance().UnregisterEvents();
         [WebhookOutput]::GetInstance().UnregisterEvents();
-		#[AIOrgTelemetry]::GetInstance().UnregisterEvents();
+		[AIOrgTelemetry]::GetInstance().UnregisterEvents();
         [UsageTelemetry]::GetInstance().UnregisterEvents();
-        #[RemoteReportsListener]::GetInstance().UnregisterEvents();
+        [RemoteReportsListener]::GetInstance().UnregisterEvents();
         [WriteEnvironmentFile]::GetInstance().UnregisterEvents();
         [WriteFixControlFiles]::GetInstance().UnregisterEvents();
         [SecurityRecommendationReport]::GetInstance().UnregisterEvents();

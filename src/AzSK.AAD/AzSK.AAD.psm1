@@ -97,6 +97,8 @@ function Set-AzSKLocalAIOrgTelemetrySettings {
     }
     Process {
         try { 
+            #TODO: This should support both params as optional (we can always throw an error if neither is provided)
+            #TODO: That is, if a key is provided, assume bEnable=$true...else look for bEnabled and toggle telemetry.
             $azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
             $azskSettings.LocalControlTelemetryKey = $LocalAIOrgTelemetryKey
             $azskSettings.LocalEnableControlTelemetry = $EnableLocalAIOrgTelemetry

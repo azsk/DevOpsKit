@@ -1,8 +1,8 @@
 ﻿Set-StrictMode -Version Latest
 
+#There's only one instance of this per session.
 class UsageTelemetry: ListenerBase {
 	[Microsoft.ApplicationInsights.TelemetryClient] $TelemetryClient;
-
     hidden UsageTelemetry() {
 		$this.TelemetryClient = [Microsoft.ApplicationInsights.TelemetryClient]::new()
 		$this.TelemetryClient.InstrumentationKey = [Constants]::UsageTelemetryKey
