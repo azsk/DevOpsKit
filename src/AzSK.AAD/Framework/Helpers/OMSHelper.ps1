@@ -1,9 +1,11 @@
 ﻿Set-StrictMode -Version Latest 
 Class OMSHelper{
-	static [string] $DefaultOMSType = "AzSK"
-	hidden static [int] $isOMSSettingValid = 0  #-1:Fail (OMS Empty, OMS Return Error) | 1:CA | 0:Local
+	static [string] $DefaultOMSType = "AzSK_AAD"
+	static [string] $CommandEventType = "AzSK_AAD_CommandEvent"
+	hidden static [int] $isOMSSettingValid = 0  #-1:Fail (OMS Empty, OMS Return Error) | 0:Local
 	hidden static [int] $isAltOMSSettingValid = 0
 	# Create the function to create and post the request
+	# BUGBUG: Need to rename OMSType here...it is used for 'LogType'. Perhaps OMSInstance (=OMS, AltOMS) or something?
 	static PostOMSData([string] $OMSWorkspaceID, [string] $SharedKey, $Body, $LogType, $OMSType)
 	{
 		try
@@ -134,7 +136,7 @@ Class OMSHelper{
 			{
 				$OMSEventType = $settings.OMSType
 			}
-
+			#TODO: This check may not be needed, given the IsSendingOMSEvents() check in the handler!
 			if((-not [string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId)) -or (-not [string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId)))
 			{
 				$omsDataObject | ForEach-Object{
@@ -187,68 +189,27 @@ Class OMSHelper{
         return $ControlSet;
 	}
 	
-	# static [void] SetOMSDetails()
-	# {
-	# 	#Check if Settings already contain details of OMS
-	# 	$settings = [ConfigurationManager]::GetAzSKSettings()
-	# 	#Step 1: if OMS details are not present on machine
-	# 	if([string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId) -or [string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId))
-	# 	{
-	# 		$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-	# 		#Step 2: Validate if CA is enabled on subscription
-	# 		$automationAccDetails= Get-AzAutomationAccount -ResourceGroupName $rgName -ErrorAction SilentlyContinue 
-	# 		if($automationAccDetails)
-	# 		{
-	# 			if([string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId))
-	# 			{
-	# 				#Step 3: Get workspace id from automation account variables
-	# 				$omsWorkSpaceId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
-	# 				#Step 4: set workspace id and share key in setting file
-	# 				if($omsWorkSpaceId)
-	# 				{
-	# 					$omsSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSSharedKey"						
-	# 					if([Helpers]::CheckMember($omsSharedKey,"Value") -and (-not [string]::IsNullOrWhiteSpace($omsSharedKey.Value)))
-	# 					{
-	# 						#Step 6: Assign it to AzSKSettings Object
-	# 						$settings.OMSWorkspaceId = $omsWorkSpaceId.Value
-	# 						$settings.OMSSharedKey = $omsSharedKey.Value
-	# 						[OMSHelper]::isOMSSettingValid = 1
-	# 					}					
+	static [void] SetOMSDetails($currentInstance)
+	{
+		#Check if Settings already contain details of OMS
+		$settings = [ConfigurationManager]::GetAzSKSettings()
 
-	# 				}
-	# 			}
-
-	# 			if([string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId) -or [string]::IsNullOrWhiteSpace($settings.OMSSharedKey))
-	# 			{
-	# 				[OMSHelper]::isOMSSettingValid = -1
-	# 			}
-
-
-	# 			if([string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId))
-	# 			{
-	# 				#Step 3: Get workspace id from automation account variables
-	# 				$omsWorkSpaceId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
-	# 				#Step 4: set workspace id and share key in setting file
-	# 				if($omsWorkSpaceId)
-	# 				{
-	# 					$omsSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSSharedKey"						
-	# 					if([Helpers]::CheckMember($omsSharedKey,"Value") -and (-not [string]::IsNullOrWhiteSpace($omsSharedKey.Value)))
-	# 					{
-	# 						#Step 6: Assign it to AzSKSettings Object
-	# 						$settings.AltOMSWorkspaceId = $omsWorkSpaceId.Value
-	# 						$settings.AltOMSSharedKey = $omsSharedKey.Value
-	# 						[OMSHelper]::isAltOMSSettingValid = 1
-	# 					}
-	# 				}
-	# 			}
-				
-	# 			if([string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId) -or [string]::IsNullOrWhiteSpace($settings.AltOMSSharedKey))
-	# 			{
-	# 				[OMSHelper]::isAltOMSSettingValid = -1
-	# 			}				
-	# 		}
-	# 	}		
-	# }
+		if([string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId) -or [string]::IsNullOrWhiteSpace($settings.OMSSharedKey))
+		{
+			[OMSHelper]::isOMSSettingValid = -1
+		}
+			
+		if([string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId) -or [string]::IsNullOrWhiteSpace($settings.AltOMSSharedKey))
+		{
+			[OMSHelper]::isAltOMSSettingValid = -1
+		}		
+		
+		#If either of the settings are valid, remember so in OMSOutput object to help with efficiency
+		if ([OMSHelper]::isOMSSettingValid -ne -1 -or [OMSHelper]::isAltOMSSettingValid -ne -1)
+		{
+			$currentInstance.SetSendingOMSEvents()	
+		}
+	}
 
 	static PostResourceInventory([AzSKContextDetails] $AzSKContext)
 	{

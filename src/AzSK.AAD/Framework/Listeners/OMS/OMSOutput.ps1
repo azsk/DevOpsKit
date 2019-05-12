@@ -7,8 +7,21 @@ class OMSOutput: ListenerBase
 	static [string] $DefaultOMSSource = "SDL"
 	#This value must be set in respective environment i.e. CICD,CA   
 	hidden static [bool] $IsIssueLogged = $false
+	#Is there an actual OMS workspace we will send events to?
+	hidden [bool] $bSendingOMSEvents 
 	OMSOutput()
 	{
+		$this.bSendingOMSEvents = $false  #Gets set later when command-started event fires.
+	}
+
+	[void] SetSendingOMSEvents()
+	{
+		$this.bSendingOMSEvents = $true
+	}
+
+	[bool] IsSendingOMSEvents()
+	{
+		return $this.bSendingOMSEvents
 	}
 
 	static [OMSOutput] GetInstance()
@@ -42,8 +55,12 @@ class OMSOutput: ListenerBase
 				$currentInstance = [OMSOutput]::GetInstance();
 				try 
 				{
-					#[OMSHelper]::SetOMSDetails();
-					$currentInstance.CommandAction($Event,"Command Started");
+					[OMSHelper]::SetOMSDetails($currentInstance); #This will also set the IsSendingOMSEvents flag.
+
+					if ($currentInstance.IsSendingOMSEvents()) #All similar checks except this one can be outside the try-catch.
+					{
+						$currentInstance.CommandAction($Event,"Command Started");
+					}
 				}
 				catch{
 					$currentInstance.PublishException($_);
@@ -68,57 +85,72 @@ class OMSOutput: ListenerBase
 
 			$this.RegisterEvent([AzSKRootEvent]::CommandStarted, {
 				$currentInstance = [OMSOutput]::GetInstance();
-				try 
+				#BUGBUG: Should there be a SetOMSDetails() here as well? (See above.)
+				if ($currentInstance.IsSendingOMSEvents())
 				{
-					$currentInstance.CommandAction($Event,"Command Started");
-				}
-				catch 
-				{
-				    $currentInstance.PublishException($_);
+					try 
+					{
+						$currentInstance.CommandAction($Event,"Command Started");
+					}
+					catch 
+					{
+						$currentInstance.PublishException($_);
+					}
 				}
 			});
 
 
 			$this.RegisterEvent([AzSKRootEvent]::CommandCompleted, {
 				$currentInstance = [OMSOutput]::GetInstance();
-				try 
+				if ($currentInstance.IsSendingOMSEvents())
 				{
-					$currentInstance.CommandAction($Event,"Command Completed");					
-				}
-				catch 
-				{
-					$currentInstance.PublishException($_);
+					try 
+					{
+						$currentInstance.CommandAction($Event,"Command Completed");					
+					
+					}
+					catch 
+					{
+						$currentInstance.PublishException($_);
+					}
 				}
 			});
 
 			$this.RegisterEvent([SVTEvent]::CommandCompleted, {
 				$currentInstance = [OMSOutput]::GetInstance();
-				try 
-				{
-					$currentInstance.CommandAction($Event,"Command Completed");				
-				}
-				catch 
-				{
-				    $currentInstance.PublishException($_);
+				if ($currentInstance.IsSendingOMSEvents())
+				{	
+					try 
+					{
+			
+						$currentInstance.CommandAction($Event,"Command Completed");				
+					}
+					catch 
+					{
+						$currentInstance.PublishException($_);
+					}
 				}
 			});
 
 
 			$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
 				$currentInstance = [OMSOutput]::GetInstance();
-				try
+				if ($currentInstance.IsSendingOMSEvents())
 				{
-					$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-					$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
-					#foreach($svtEventContext in $SVTEventContexts)
-					#{
-					#	$currentInstance.WriteControlResult($svtEventContext);
-					#}
-					$currentInstance.WriteControlResult($SVTEventContexts);
-				}
-				catch
-				{
-					$currentInstance.PublishException($_);
+					try
+					{
+						$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
+						$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
+						#foreach($svtEventContext in $SVTEventContexts)
+						#{
+						#	$currentInstance.WriteControlResult($svtEventContext);
+						#}
+						$currentInstance.WriteControlResult($SVTEventContexts);
+					}
+					catch
+					{
+						$currentInstance.PublishException($_);
+					}
 				}
 			});
 
@@ -127,7 +159,7 @@ class OMSOutput: ListenerBase
 			# 	$currentInstance = [OMSOutput]::GetInstance();
 			# 	try
 			# 	{
-			# 		[OMSHelper]::SetOMSDetails();
+			# 		[OMSHelper]::SetOMSDetails($currentInstance); 
 			# 		if(-not ([OMSHelper]::isOMSSettingValid -eq -1 -and [OMSHelper]::isAltOMSSettingValid -eq -1))
 			# 		{
 			# 			$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
@@ -184,7 +216,7 @@ class OMSOutput: ListenerBase
 			}
 			catch
 			{
-				if(-not [OMSOutput]::IsIssueLogged)
+				if(-not [OMSOutput]::IsIssueLogged) #TODO: consider keeping track of failed attempts and stop attempting to send to OMS? (May need to tweak SetSendingToOMS/IsSendingToOMS logic)
 				{
 					$this.PublishCustomMessage("An error occurred while pushing data to OMS. Please check logs for more details. AzSK control evaluation results will not be sent to the configured OMS workspace from this environment until the error is resolved.", [MessageType]::Warning);
 					$this.PublishException($_);
@@ -198,33 +230,33 @@ class OMSOutput: ListenerBase
 			throw [SuppressedException] $ex
 		}
 
-		}
+	}
 
-		hidden [AzSKContextDetails] GetAzSKContextDetails()
+	hidden [AzSKContextDetails] GetAzSKContextDetails()
+	{
+		#TODO-Perf: Can we not cache this for reuse after creating it once? (Perhaps cache in the OMSOutput object for reuse per-cmdlet run?)
+		$AzSKContext = [AzSKContextDetails]::new();
+		$AzSKContext.RunIdentifier= $this.RunIdentifier;
+		$commandMetadata = $this.GetCommandMetadata();
+		if($commandMetadata)
 		{
+			$AzSKContext.RunIdentifier += "_" + $commandMetadata.ShortName;
+		}			
+		$AzSKContext.Version = $scannerVersion = $this.GetCurrentModuleVersion()
+		$settings = [ConfigurationManager]::GetAzSKSettings()
 
-			$AzSKContext = [AzSKContextDetails]::new();
-			$AzSKContext.RunIdentifier= $this.RunIdentifier;
-			$commandMetadata = $this.GetCommandMetadata();
-			if($commandMetadata)
-			{
-				$AzSKContext.RunIdentifier += "_" + $commandMetadata.ShortName;
-			}			
-			$AzSKContext.Version = $scannerVersion = $this.GetCurrentModuleVersion()
-			$settings = [ConfigurationManager]::GetAzSKSettings()
-
-			if(-not [string]::IsNullOrWhiteSpace($settings.OMSSource))
-			{
-				$AzSKContext.Source = $settings.OMSSource
-			}
-			else
-			{
-				$AzSKContext.Source = [OMSOutput]::DefaultOMSSource
-			}
-			$AzSKContext.PolicyOrgName =  [ConfigurationManager]::GetAzSKConfigData().PolicyOrgName
-
-				return $AzSKContext
+		if(-not [string]::IsNullOrWhiteSpace($settings.OMSSource))
+		{
+			$AzSKContext.Source = $settings.OMSSource
 		}
+		else
+		{
+			$AzSKContext.Source = [OMSOutput]::DefaultOMSSource
+		}
+		$AzSKContext.PolicyOrgName =  [ConfigurationManager]::GetAzSKConfigData().PolicyOrgName
+
+			return $AzSKContext
+	}
 
 	hidden [void] CommandAction($event,$eventName)
 	{
@@ -247,9 +279,9 @@ class OMSOutput: ListenerBase
 		{
 			$commandModel.PartialScanIdentifier = $arg.PartialScanIdentifier
 		}
-		[OMSHelper]::WriteControlResult($commandModel,"AzSK_CommandEvent")
+		[OMSHelper]::WriteControlResult($commandModel,[OMSHelper]::CommandEventType)
 	}
-	}
+}
 
 	
 
