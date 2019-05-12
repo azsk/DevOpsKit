@@ -79,7 +79,8 @@ class ConfigurationHelper {
 			{
 				return [ConfigurationHelper]::ServerConfigMetadata;
 			}
-			#First load offline OSS Content
+			#First load offline OSS Content 
+			#TODO-Perf: should we cache indiv. local files (and even server downloaded ones) for session-scope?
 			$fileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName)
 
 			#Check if policy present in server using metadata file
@@ -92,18 +93,21 @@ class ConfigurationHelper {
 						try
 						{
 							$Version = [System.Version] ($global:ExecutionContext.SessionState.Module.Version);
+							#Look for the policy-file under the current module-version subfolder at the policy-store-URL
 							$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $policyFileName, $enableAADAuthForOnlinePolicyStore);
 							[ConfigurationHelper]::ConfigVersion = $Version;
 						}
 						catch
 						{
-							try{
+							try{ #BUGBUG/TODO: Need comments here!!
 								$Version = ([ConfigurationHelper]::LoadOfflineConfigFile("AzSK.json")).ConfigSchemaBaseVersion;
 								$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $policyFileName, $enableAADAuthForOnlinePolicyStore);
 								[ConfigurationHelper]::ConfigVersion = $Version;
 							}
-							catch{
-								if(Test-Path $onlineStoreUri)
+							catch{ 
+								#BUGBUG: Does Test-Path support URLs?
+								#BUGBUG: Even if it did, this should this not be the *resolvedURL* as opposed to the raw one (which has placeholders)
+								if(Test-Path $onlineStoreUri) 
 								{	
 									[EventBase]::PublishGenericCustomMessage("Running Org-Policy from local policy store location: [$onlineStoreUri]", [MessageType]::Warning);
 									$serverFileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName, $true, $onlineStoreUri)
@@ -137,13 +141,15 @@ class ConfigurationHelper {
 				}
 				catch 
 				{
-					[ConfigurationHelper]::OfflineMode = $true;
+					#Something is seriously wrong...switch to 'offlineMode' so we do not attempt further downloads from online-policy-url...
+					[ConfigurationHelper]::OfflineMode = $true; 
 
+					#Post this problem to log, only once.
 					if(-not [ConfigurationHelper]::IsIssueLogged)
 					{
 						if([Helpers]::CheckMember($_,"Exception.Response.StatusCode") -and  $_.Exception.Response.StatusCode.ToString().ToLower() -eq "unauthorized")
 						{
-							#[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. The current Azure subscription is not linked to your org tenant."), [MessageType]::Warning);
+							#[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy: $policyFileName. The server policy location may be incorrect or you may not have access to it."), [MessageType]::Warning);
 							[ConfigurationHelper]::IsIssueLogged = $true
 						}
 						elseif($policyFileName -eq [Constants]::ServerConfigMetadataFileName)
@@ -337,7 +343,8 @@ class ConfigurationHelper {
 		#Check if Config meta data is null and load the meta data from server
 		if($null -eq [ConfigurationHelper]::ServerConfigMetadata)
 		{
-			#if File is meta data file then return true
+			#If file being sought is the server-config-metadata file then return $true, this is to break the chicken-and-egg for 'ServerConfigMetadata.json'
+			#This means that we will *always* attempt to download *at least* 'ServerConfigMetadata.json' from server if not anything else.
 			if($fileName -eq [Constants]::ServerConfigMetadataFileName)
 			{
 				return $true

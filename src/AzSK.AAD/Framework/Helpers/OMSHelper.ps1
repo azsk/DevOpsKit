@@ -5,7 +5,7 @@ Class OMSHelper{
 	hidden static [int] $isOMSSettingValid = 0  #-1:Fail (OMS Empty, OMS Return Error) | 0:Local
 	hidden static [int] $isAltOMSSettingValid = 0
 	# Create the function to create and post the request
-	# BUGBUG: Need to rename OMSType here...it is used for 'LogType'. Perhaps OMSInstance (=OMS, AltOMS) or something?
+	# BUGBUG: Need to rename OMSType here...it is used for 'LogType' in almost all other places. Perhaps OMSInstance (=OMS, AltOMS) or something?
 	static PostOMSData([string] $OMSWorkspaceID, [string] $SharedKey, $Body, $LogType, $OMSType)
 	{
 		try

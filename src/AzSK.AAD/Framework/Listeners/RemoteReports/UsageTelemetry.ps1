@@ -183,7 +183,10 @@ class UsageTelemetry: ListenerBase {
 	static [bool] IsAnonymousTelemetryActive()
 	{
 		$azskSettings = [ConfigurationManager]::GetAzSKSettings();
-		if($azskSettings.UsageTelemetryLevel -eq "anonymous") { return $true; }
+		if($azskSettings.UsageTelemetryLevel -eq "Anonymous") 
+		{ 
+			return $true; 
+		}
 		else
 		{
 			return $false;

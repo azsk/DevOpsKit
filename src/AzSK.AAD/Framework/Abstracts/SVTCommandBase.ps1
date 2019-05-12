@@ -149,6 +149,7 @@ class SVTCommandBase: CommandBase {
     }
 
     [void] PostCommandCompletedAction([SVTEventContext[]] $arguments) {
+        #TODO: Attestation for AAD controls?
         # if ($this.AttestationOptions -ne $null -and $this.AttestationOptions.AttestControls -ne [AttestControls]::None) {
         #     try {
         #         [SVTControlAttestation] $svtControlAttestation = [SVTControlAttestation]::new($arguments, $this.AttestationOptions, $this.TenantContext, $this.InvocationContext);

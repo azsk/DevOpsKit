@@ -70,7 +70,8 @@
   
     # Functions to export from this module
     FunctionsToExport      = @(
-        'Get-AzSKAADSecurityStatusTenant', 'Get-AzSKAADSecurityStatusUser', 'Set-AzSKMonitoringSettings'
+        'Get-AzSKAADSecurityStatusTenant', 'Get-AzSKAADSecurityStatusUser', 'Set-AzSKMonitoringSettings', 
+        'Set-AzSKLocalAIOrgTelemetrySettings', 'Set-AzSKUsageTelemetryLevel' 
     )
 
     # Cmdlets to export from this module

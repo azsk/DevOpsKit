@@ -43,7 +43,8 @@ class AzSKSettings {
 
 
 	
-	hidden static SetDefaultSettings([AzSKSettings] $settings) {
+	hidden static SetDefaultSettings([AzSKSettings] $settings) { 
+		#BUGBUG/TODO: Rename? What does 'Default' imply here? AzureEnvironment?
 		if($null -ne  $settings -and [string]::IsNullOrWhiteSpace( $settings.AzureEnvironment))
 		{
             $settings.AzureEnvironment = [Constants]::DefaultAzureEnvironment

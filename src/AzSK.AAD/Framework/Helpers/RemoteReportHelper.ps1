@@ -197,6 +197,8 @@ class RemoteReportHelper
 	{
 		$settings = [ConfigurationManager]::GetAzSKConfigData();
 		$telemetryKey = $settings.ControlTelemetryKey
+		#BUGBUG: We should not burn a Guid each time like this. Just check non-null and perhaps length...
+		#Also, cache the result and the fact that it has been set/checked (upon first call)
 		[guid]$key = [guid]::NewGuid()
 		if([guid]::TryParse($telemetryKey, [ref] $key) -and ![guid]::Empty.Equals($key))
 		{
