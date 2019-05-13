@@ -208,6 +208,11 @@ namespace AzSK.ARMChecker.Lib
                         parameterType = innerParameters.Properties().Where(p => p.Name == parameterKey).Select(p => p.Value["type"].Value<String>()).FirstOrDefault();
                     }
                 }
+                else
+                {
+                    // If property value is not a parameter, mark control status as Verify
+                    result.VerificationResult = VerificationResult.Verify;
+                }
             }
             catch(Exception)
             {

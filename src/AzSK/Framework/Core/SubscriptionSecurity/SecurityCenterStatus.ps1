@@ -13,7 +13,7 @@ class SecurityCenterStatus: CommandBase
         Base($subscriptionId, $invocationContext)
     { }
 
-	[string] SetPolicies()
+	[string] SetPolicies([bool] $setOptionalPolicy)
     {	
 		$secCenter = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId,$this.SecurityContactEmails, $this.SecurityPhoneNumber);
 
@@ -22,7 +22,7 @@ class SecurityCenterStatus: CommandBase
 			$updatePolicies = $true;
 			$updateSecurityContacts = $true;
 			$updateProvisioningSettings = $true;
-			return $this.InvokeFunction($secCenter.SetPolicies,@($updateProvisioningSettings,$updatePolicies,$updateSecurityContacts));
+			return $this.InvokeFunction($secCenter.SetPolicies,@($updateProvisioningSettings,$updatePolicies,$updateSecurityContacts,$setOptionalPolicy));
 		}
 
 		return "";

@@ -421,7 +421,10 @@ class SVTBase: AzSKRoot
 			{
 				$this.EvaluationStarted();
 				$resourceSecurityResult += $this.GetControlsStateResult();
-				$this.EvaluationCompleted($resourceSecurityResult);
+				if(($resourceSecurityResult | Measure-Object).Count -gt 0)
+				{
+					$this.EvaluationCompleted($resourceSecurityResult);
+				}
 			}
         }
         return $resourceSecurityResult;
