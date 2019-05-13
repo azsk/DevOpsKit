@@ -263,12 +263,14 @@ class CommandHelper
 		[CommandDetails]@{
             Verb = "Set";
             Noun = "AzSKPIMConfiguration";
-            ShortName = "PIM";
+			ShortName = "PIM";
+			IsOrgPolicyMandatory = $false;
 		}
 		[CommandDetails]@{
             Verb = "Get";
             Noun = "AzSKPIMConfiguration";
-            ShortName = "ListPIM";
+			ShortName = "ListPIM";
+			IsOrgPolicyMandatory = $false;
         }
     );
 
