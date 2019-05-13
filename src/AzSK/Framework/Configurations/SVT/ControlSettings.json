@@ -56,7 +56,8 @@
       "GuestExtension": {
         "Name": "ConfigurationForWindows",
         "RequiredVersion": "1.11.0.0",
-        "AssignmentName" : "SMSClientStatus" 
+        "AssignmentName" : "SMSClientStatus",
+        "CheckPolicyAssignment":true
       }
     },
     "Linux": {
@@ -84,7 +85,8 @@
       "GuestExtension": {
         "Name": "ConfigurationForLinux",
         "RequiredVersion": "1.9.0",
-        "AssignmentName" : "SMSClientStatus" 
+        "AssignmentName" : "SMSClientStatus",
+        "CheckPolicyAssignment":true
       }
     },
     "Windows_OS_Baseline_Ids": [],
