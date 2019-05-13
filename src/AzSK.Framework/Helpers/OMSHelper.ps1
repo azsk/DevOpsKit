@@ -80,6 +80,26 @@ Class OMSHelper{
 				$out.ResourceId = $eventContext.ResourceContext.ResourceId
 				$out.ChildResourceName=$ControlResult.ChildResourceName
 				$out.PartialScanIdentifier=$eventContext.PartialScanIdentifier
+
+				#Send OMS telmetry for RG tags if feature is enabled and resource group tags are available
+				if ([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupTagTelemetry","*") -eq $true -and  $eventContext.ResourceContext.ResourceGroupTags.Count -gt 0) {
+					# Try catch block for Env and ComponentId tags if tags throws exceptions in case of null objects
+					try
+					{
+						$out.Env = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\benv\b"]
+					}
+					catch
+					{
+						$out.Env = [string]::Empty;	
+					}
+					try
+					{
+						$out.ComponentId = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\bcomponentid\b"]
+					}
+					catch{
+						$out.ComponentId = [string]::Empty
+					}
+				}
 			}
 
 			$out.Reference=$eventContext.Metadata.Reference
