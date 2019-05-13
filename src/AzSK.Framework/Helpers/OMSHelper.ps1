@@ -82,23 +82,28 @@ Class OMSHelper{
 				$out.PartialScanIdentifier=$eventContext.PartialScanIdentifier
 
 				#Send OMS telmetry for RG tags if feature is enabled and resource group tags are available
-				if ([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupTagTelemetry","*") -eq $true -and  $eventContext.ResourceContext.ResourceGroupTags.Count -gt 0) {
-					# Try catch block for Env and ComponentId tags if tags throws exceptions in case of null objects
-					try
-					{
-						$out.Env = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\benv\b"]
+				try{
+					if ([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupTagTelemetry","*") -eq $true -and  $eventContext.ResourceContext.ResourceGroupTags.Count -gt 0) {
+						# Try catch block for Env and ComponentId tags if tags throws exceptions in case of null objects
+						try
+						{
+							$out.Env = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\benv\b"]
+						}
+						catch
+						{
+							$out.Env = [string]::Empty;	
+						}
+						try
+						{
+							$out.ComponentId = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\bcomponentid\b"]
+						}
+						catch{
+							$out.ComponentId = [string]::Empty
+						}
 					}
-					catch
-					{
-						$out.Env = [string]::Empty;	
-					}
-					try
-					{
-						$out.ComponentId = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\bcomponentid\b"]
-					}
-					catch{
-						$out.ComponentId = [string]::Empty
-					}
+				}
+				catch{
+					#Execution should not break if any excepiton in case of tag telemetry logging. <TODO: Add exception telemetry>
 				}
 			}
 
