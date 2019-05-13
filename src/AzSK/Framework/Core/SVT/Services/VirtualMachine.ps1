@@ -411,6 +411,7 @@ class VirtualMachine: SVTBase
 			$controlStatus = [VerificationResult]::Manual
             $requiredGuestExtension  = $this.VMControlSettings.GuestExtension.Name
 			$requiredGuestExtensionVersion =  [System.Version] $this.VMControlSettings.GuestExtension.RequiredVersion
+			$checkPolicyAssignment = $this.VMControlSettings.GuestExtension.CheckPolicyAssignment
 			
 			
             $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
@@ -446,20 +447,23 @@ class VirtualMachine: SVTBase
 				$controlResult.AddMessage("Required guest configuration extension '$($requiredGuestExtension)' is not present in VM.");
 			}
 
-            # Check if reuired Guest Configuration Assignments is present
-            try{
-				$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/providers/Microsoft.GuestConfiguration/guestConfigurationAssignments/{4}?api-version=2018-11-20",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName,$guestConfigurationAssignmentName)
-				$result = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
-				if($null -ne $result)
-				{	
-					$controlResult.AddMessage("Required guest configuration assignments '$($guestConfigurationAssignmentName)' is present.");
-					$controlResult.AddMessage($result);
-				
+			# Check if reuired Guest Configuration Assignments is present
+			if($checkPolicyAssignment -eq $true){
+				try{
+					$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/providers/Microsoft.GuestConfiguration/guestConfigurationAssignments/{4}?api-version=2018-11-20",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName,$guestConfigurationAssignmentName)
+					$result = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
+					if($null -ne $result)
+					{	
+						$controlResult.AddMessage("Required guest configuration assignments '$($guestConfigurationAssignmentName)' is present.");
+						$controlResult.AddMessage($result);
+					
+					}
+				}catch{
+					$controlStatus = [VerificationResult]::Failed
+					$controlResult.AddMessage("Required guest configuration assignments '$($guestConfigurationAssignmentName)' is not present.");	
 				}
-			}catch{
-				$controlStatus = [VerificationResult]::Failed
-				$controlResult.AddMessage("Required guest configuration assignments '$($guestConfigurationAssignmentName)' is not present.");	
 			}
+        
 
 			# Check if Managed System Identity is enabled on VM
 
