@@ -392,6 +392,8 @@ Class OMSModel {
 	[string] $PartialScanIdentifier
 	[string] $PolicyOrgName
 	[string] $ScannedBy
+	[string] $Env
+	[string] $ComponentId
 }
 
 Class OMSResourceInvModel{
