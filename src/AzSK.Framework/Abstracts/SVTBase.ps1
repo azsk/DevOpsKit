@@ -19,6 +19,7 @@ class SVTBase: AzSKRoot
 	[string[]] $ExcludeTags = @();
 	[string[]] $ControlIds = @();
 	[string[]] $ExcludeControlIds = @();
+	[hashtable] $ResourceTags = @{}
 	[bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
 	[string] $PartialScanIdentifier = [string]::Empty
@@ -98,6 +99,7 @@ class SVTBase: AzSKRoot
             ResourceTypeName = $svtResource.ResourceTypeMapping.ResourceTypeName;
         };
 		$this.ResourceContext.ResourceId = $this.GetResourceId();
+		$this.ResourceContext.ResourceGroupTags = $this.ResourceTags;
 	}
 
     hidden [void] LoadSvtConfig([string] $controlsJsonFileName)
@@ -203,6 +205,18 @@ class SVTBase: AzSKRoot
 			}
 		}
 
+		try {
+			if ([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupTagTelemetry","*") -eq $true -and $this.ResourceId -and $this.ResourceContext -and $this.ResourceTags.Count -eq 0) {
+				
+					$tags = (Get-AzResourceGroup -Name $this.ResourceContext.ResourceGroupName).Tags
+					if( $tags -and ($tags | Measure-Object).Count -gt 0)
+					{
+						$this.ResourceTags = $tags
+					}			
+			}   
+		} catch {
+			# flow shouldn't break if there are errors in fetching tags eg. locked resource groups. <TODO: Add exception telemetry>
+		}
 		return $this.ResourceId;
     }
 

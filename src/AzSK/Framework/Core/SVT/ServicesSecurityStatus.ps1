@@ -234,7 +234,10 @@ class ServicesSecurityStatus: SVTCommandBase
 				
 					
 				# Register/Deregister all listeners to cleanup the memory
-				#[ListenerHelper]::RegisterListeners();
+				if([FeatureFlightingManager]::GetFeatureStatus("EnableListenerReset","*") -eq $true)
+				{
+					[ListenerHelper]::RegisterListeners();
+				}
 			}
             catch
             {
