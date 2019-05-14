@@ -776,8 +776,8 @@
       "supportedResourceTypes": [ "Microsoft.Network/networkInterfaces" ],
       "controls": [
         {
-          "Id": "VirtualNetwork120",
-          "ControlID": "Azure_VNet_NetSec_Justify_IPForwarding_for_NICs",
+          "id": "VirtualNetwork120",
+          "controlId": "Azure_VNet_NetSec_Justify_IPForwarding_for_NICs",
           "isEnabled": true,
           "Description": "Use of IP Forwarding on any NIC in a virtual network should be scrutinized",
           "Rationale": "Enabling IP Forwarding on a VM NIC allows the VM to receive traffic addressed to other destinations. IP forwarding is required only in rare scenarios (e.g., using the VM as a network virtual appliance) and those should be reviewed with the network security team.",
@@ -787,6 +787,82 @@
           "matchType": "Boolean",
           "data": {
             "value": false
+          }
+        }
+      ]
+    },
+    {
+      "featureName": "ContainerInstances",
+      "supportedResourceTypes": [ "Microsoft.ContainerInstance/containerGroups" ],
+      "controls": [
+          {
+              "Id": "ContainerInstances110",
+              "ControlID": "Azure_ContainerInstances_NetSec_Justify_PublicIP_and_Ports",
+              "isEnabled": true,
+              "Description": "Use of public IP address and ports should be carefully reviewed",
+              "Rationale": "Public IP address provides direct access over the internet exposing the container to all type of attacks over the public network.",
+              "Recommendation": "Add public IP address and ports to a container only as required. Ensure that the resulting data flows are carefully reviewed.",
+              "Severity": "High",
+              "jsonPath": [ "$.properties.ipAddress" ],
+              "matchType": "NullableSingleToken",
+              "data": {}
+          },
+          {
+              "Id": "ContainerInstances140",
+              "ControlID": "Azure_ContainerInstances_AuthZ_Container_Segregation",
+              "isEnabled": true,
+              "Description": "A container group must contain only containers which trust each other",
+              "Rationale": "Containers hosted in the same container group can monitor traffic of other containers within the group and can also access the file system of the host OS. Hence a container group must not host containers which do not trust each other. In other words, do not mix containers across trust boundaries in the same group.",
+              "Recommendation": "Carefully review the role and privileges required by each container in a container group. If the privilege levels and access requirements are different, then consider segregating the containers into separate groups.",
+              "Severity": "High",
+              "jsonPath": [ "$.properties.containers" ],
+              "matchType": "ItemCount",
+              "data": {
+                  "type": "LesserThan",
+                  "value": 2
+              }
+          }
+      ]
+    },
+    {
+      "featureName": "EventHub",
+      "supportedResourceTypes": [ "Microsoft.EventHub/namespaces","Microsoft.EventHub/namespaces/AuthorizationRules","Microsoft.EventHub/namespaces/eventhubs/authorizationRules" ],
+      "controls": [
+        {
+          "ControlID": "Azure_EventHub_AuthZ_Use_Min_Permissions_Access_Policies",
+          "Description": "Access policies must be defined with minimum required permissions to the Event Hub",
+          "Id": "EventHub140",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckEventHubAuthorizationRule",
+          "Rationale": "Granting minimum access ensures that users are granted just enough permissions to perform their tasks. This minimizes the set of operations that can be preformed on the resource by an attacker in case of access policy key compromise.",
+          "Recommendation": "Ensure that client apps use shared access policies with the least required privilege and at the Event Hub scope. For instance, if the client app is only reading events from the event hub (as opposed to sending), then the policy used must only include the 'Listen' claim. Refer: https://docs.microsoft.com/en-us/azure/event-hubs/event-hubs-authentication-and-security-model-overview",  
+          "jsonPath": [ "$.properties.rights" ],
+          "matchType": "ItemCount",
+          "data": {
+            "type":"LesserThan",
+            "value":2
+          }
+        }
+     ]
+    },
+    {
+      "featureName": "Search",
+      "supportedResourceTypes": [ "Microsoft.Search/searchServices" ],
+      "controls": [
+        {
+          "id": "Search170",
+          "controlId": "Azure_Search_Availability_Configure_Three_Replicas",
+          "isEnabled": true,
+          "description": "Search service must have at least three replicas for high availability",
+          "rationale": "High availability can be achieved by adding replicas. Each replica has one copy of an index, so adding one more replica translates to one more index that can be used to service query requests. Minimum of three replicas are required since the azure team has specified three to be the borderline value for the same",
+          "recommendation": "Go to Azure Portal --> your Search service --> Settings --> Scale --> Replicas. Ensure that at least 3 replicas are setup.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.replicaCount" ],
+          "matchType": "IntegerValue",
+          "data": {
+            "type": "GreaterThan",
+            "value": 2
           }
         }
       ]
