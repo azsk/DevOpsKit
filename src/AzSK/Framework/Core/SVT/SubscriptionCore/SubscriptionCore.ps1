@@ -978,7 +978,14 @@ class SubscriptionCore: SVTBase
 					#Check if mandatory tags list present
 			if([Helpers]::CheckMember($this.ControlSettings,"MandatoryTags") -and ($this.ControlSettings.MandatoryTags | Measure-Object).Count -ne 0)
 			{
-					$resourceGroups = Get-AzResourceGroup
+				$whitelistedResourceGroupsRegex = [System.Collections.ArrayList]::new()
+				if ([Helpers]::CheckMember($this.ControlSettings,"WhitelistedResourceGroups") -and ($this.ControlSettings.WhitelistedResourceGroups | Measure-Object).Count -ne 0) 
+				{
+					$whitelistedResourceGroupsRegex = $this.ControlSettings.WhitelistedResourceGroups						
+				}
+				$whitelistedResourceGroupsRegex = (('^' + (($whitelistedResourceGroupsRegex |foreach {[regex]::escape($_)}) –join '|') + '$')) -replace '[\\]',''
+				$resourceGroups = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -inotmatch $whitelistedResourceGroupsRegex}
+
 					if(($resourceGroups | Measure-Object).Count -gt 0)
 					{
 									$rgTagStatus = $true
