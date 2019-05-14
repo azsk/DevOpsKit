@@ -327,7 +327,7 @@ class SecurityCenter: AzSKRoot
         {
 			if($this.PolicyAPIFail)
 			{
-				$MisConfiguredPolicies += ("Mandatory ASC Policies information can't be fetched due to API access failure.");
+				$MisConfiguredPolicies += ("Mandatory ASC Policies information can't be fetched beacuse either mandatory ASC policies are not configured or due to API access failure.");
 			}
 			else
 			{
