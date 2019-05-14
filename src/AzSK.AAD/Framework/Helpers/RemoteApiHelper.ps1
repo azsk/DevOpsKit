@@ -1,5 +1,6 @@
 ﻿Set-StrictMode -Version Latest
 
+#Helper functions used by RemoteReportListner (for sending events to controls API)
 class RemoteApiHelper {
     hidden static [string] $ApiBaseEndpoint = [ConfigurationManager]::GetAzSKConfigData().AzSKApiBaseURL; #"https://localhost:44348/api"
 

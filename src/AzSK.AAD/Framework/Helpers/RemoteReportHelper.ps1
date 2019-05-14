@@ -1,5 +1,6 @@
 Set-StrictMode -Version Latest
 
+#Helper functions used by various listeners that send events remotely (e.g., OMS, AIOrg/Control-Telemetry, User/Anon-Telemetry, RemoteReportsListener, etc.)
 class RemoteReportHelper
 {
 	hidden static [string[]] $IgnoreScanParamList = "DoNotOpenOutputFolder";
@@ -195,6 +196,7 @@ class RemoteReportHelper
 		}
 		#BUGBUG: What is the intent here? 
 		#BUGBUG: It appears that if telemetryKey in config is 00000- (and no server setting) this will return 0000--...
+		#TODO: This should work smoothly if we support locally forwarded OrgTelemetry in OSS mode... 
 		return [ConfigurationManager]::GetAzSKSettings().LocalControlTelemetryKey;
 	}
 

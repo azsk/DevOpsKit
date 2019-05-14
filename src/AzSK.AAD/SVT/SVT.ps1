@@ -34,7 +34,7 @@ function Get-AzSKAADSecurityStatusTenant
 		[Parameter(Position = 1, Mandatory = $false, HelpMessage="Comma separated list of object types to scan [Application, ServicePrincipal, Group, User, Device, All (default)].")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("otp")]
-		[ValidateSet("All","Application", "Device", "Group", "ServicePrincipal", "User")]
+		[ValidateSet("All","Application", "Device", "Group", "ServicePrincipal", "User", "None")]
 		$ObjectTypes = @("All"),
 
 		[int]
@@ -115,7 +115,7 @@ function Get-AzSKAADSecurityStatusUser
 		[Parameter(Position = 1, Mandatory = $false, HelpMessage="Comma separated list of object types to scan [Application, ServicePrincipal, Group, User, Device, All (default)].")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("otp")]
-		[ValidateSet("All","Application", "Device", "Group", "ServicePrincipal", "User")]
+		[ValidateSet("All","Application", "Device", "Group", "ServicePrincipal", "User", "None")]
 		$ObjectTypes = @("All"),		
 
 		[int]

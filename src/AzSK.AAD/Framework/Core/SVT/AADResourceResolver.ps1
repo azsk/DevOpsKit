@@ -29,7 +29,19 @@ class AADResourceResolver: Resolver
         
         if ($objTypesToScan.Contains("All"))
         {
+            if ($objTypesToScan.Count -ne 1)
+            {
+                throw ([SuppressedException]::new("The objectType 'All' cannot be used in combination with other types.", [SuppressedExceptionType]::InvalidOperation))
+            }
             $this.ObjectTypesToScan = [AADResourceResolver]::AllTypes
+        }
+        elseif ($objTypesToScan.Contains("None"))
+        {
+            if ($objTypesToScan.Count -ne 1)
+            {
+                throw ([SuppressedException]::new("The objectType 'None' cannot be used in combination with other types.", [SuppressedExceptionType]::InvalidOperation))
+            }
+            $this.ObjectTypesToScan = $objTypesToScan
         }
         else
         {

@@ -110,6 +110,7 @@ class ServicesSecurityStatus: SVTCommandBase
 		if(($resourcesList | Measure-Object).Count -eq 0)
 		{
 			$this.PublishCustomMessage("No security controls/resources match the input criteria specified. `nPlease rerun the command using a different set of criteria.");
+			#TODO: why not: $this.WriteMessage("No security controls/resources match the input criteria specified. `nPlease rerun the command using a different set of criteria.",[MessageType]::Warning)
 			return $result;
 		}
 		$this.PublishCustomMessage("Number of resources: $($this.resolver.SVTResourcesFoundCount)");

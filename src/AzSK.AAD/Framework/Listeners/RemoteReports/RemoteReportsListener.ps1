@@ -1,5 +1,6 @@
 Set-StrictMode -Version Latest
 
+#This is used to send events to the controls API (to directly save to org DB)
 class RemoteReportsListener: ListenerBase {
 
     hidden RemoteReportsListener() {
