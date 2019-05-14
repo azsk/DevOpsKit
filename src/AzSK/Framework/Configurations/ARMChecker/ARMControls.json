@@ -773,7 +773,7 @@
     },
     {
       "featureName": "VirtualNetwork",
-      "supportedResourceTypes": [ "Microsoft.Network/virtualNetworks", "Microsoft.Network/networkInterfaces" ],
+      "supportedResourceTypes": [ "Microsoft.Network/networkInterfaces" ],
       "controls": [
         {
           "id": "VirtualNetwork120",
