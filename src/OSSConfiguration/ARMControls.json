@@ -773,7 +773,7 @@
     },
     {
       "featureName": "VirtualNetwork",
-      "supportedResourceTypes": [ "Microsoft.Network/virtualNetworks", "Microsoft.Network/networkInterfaces" ],
+      "supportedResourceTypes": [ "Microsoft.Network/networkInterfaces" ],
       "controls": [
         {
           "Id": "VirtualNetwork120",
@@ -784,6 +784,26 @@
           "Recommendation": "Disable IP Forwarding unless it has been reviewed and approved by network security team. Go to Azure Portal --> Navigate to VM NIC (where IP Forwarding is enabled) --> IP Configurations --> IP Forwarding settings --> Click on 'Disabled'.",
           "Severity": "High",
           "jsonPath": [ "$.properties.enableIPForwarding" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "featureName": "NotificationHub",
+      "supportedResourceTypes": [ "Microsoft.NotificationHubs/namespaces", "Microsoft.NotificationHubs/namespaces/AuthorizationRules", "Microsoft.NotificationHubs/namespaces/notificationHubs/authorizationRules", "Microsoft.NotificationHubs/namespaces/notificationHubs" ],
+      "controls": [
+        {
+          "Id": "NotificationHub160",
+          "ControlID": "Azure_NotificationHub_AuthZ_Dont_Use_Manage_Access_Permission",
+          "isEnabled": true,
+          "Description": "Access policies on Notification Hub must not have Manage access permissions",
+          "Rationale": "Manage security claim has the highest level of access (Create/Update/Read/Delete/Read registrations by tag) on Notification Hub. Using this key for runtime scenarios violates the principle of least privileged access. It is akin to running as 'sa' or 'localsystem'.",
+          "Recommendation": "Use 'Send' and 'Listen' manage policies as access permissions for clients and back ends. Refer: https://docs.microsoft.com/en-us/azure/notification-hubs/notification-hubs-push-notification-security",
+          "Severity": "High",
+          "jsonPath": [ "$.properties.rights" ],
           "matchType": "Boolean",
           "data": {
             "value": false
