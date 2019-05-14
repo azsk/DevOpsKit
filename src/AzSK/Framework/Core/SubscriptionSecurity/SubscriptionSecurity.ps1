@@ -42,7 +42,8 @@ class SubscriptionSecurity: CommandBase
 				$updatePolicies = $true;
 				$updateSecurityContacts = $true;
 				$updateProvisioningSettings = $true;
-				$messages += $secCenter.SetPolicies($updateProvisioningSettings,$updatePolicies,$updateSecurityContacts);
+				$updateOptionalPolicies = $false;
+				$messages += $secCenter.SetPolicies($updateProvisioningSettings,$updatePolicies,$updateSecurityContacts,$updateOptionalPolicies);
 				$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nCompleted Security Center configuration`r`n" + [Constants]::DoubleDashLine, [MessageType]::Update);
 			} 
 		}
@@ -184,8 +185,9 @@ class SubscriptionSecurity: CommandBase
 				$updatePolicies = $true;
 				$updateSecurityContacts = $false;
 				$updateProvisioningSettings = $true;
+				$updateOptionalPolicies = $false;
 				#calling the ASC policy method with default params i.e. without ASC security poc email and phone number
-				$messages += $secCenter.SetPolicies($updateProvisioningSettings,$updatePolicies,$updateSecurityContacts);
+				$messages += $secCenter.SetPolicies($updateProvisioningSettings,$updatePolicies,$updateSecurityContacts,$updateOptionalPolicies);
 				$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nCompleted updates for Security Center configuration`r`n" + [Constants]::DoubleDashLine, [MessageType]::Update);
 			} 
 		}
