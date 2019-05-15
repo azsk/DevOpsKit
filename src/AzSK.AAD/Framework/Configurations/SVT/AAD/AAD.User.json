@@ -4,9 +4,26 @@
   "IsMaintenanceMode":  false,
   "Controls": [
     {
+      "ControlID": "AAD_User_DirSync_Setting_Should_Match_Tenant",
+      "Description": "A user's dirsync-enabled setting must match the tenant level setting",
+      "Id": "User110",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckUserDirSyncSetting",
+      "Rationale": "When a tenant is setup with dir-sync, users are usually created on-premise and synchronized outbound. In such a case, seeing a user object with dirsync setting that does not match the tenant's setting is likely an anomaly and needs scrutiny.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthN"
+      ],
+      "Enabled": true
+    },
+    {
       "ControlID": "AAD_User_Do_Not_Disable_Password_Expiration",
       "Description": "Do not disable password expiration policy for users",
-      "Id": "User110",
+      "Id": "User120",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckPasswordExpiration",
@@ -23,7 +40,7 @@
     {
       "ControlID": "AAD_User_Do_Not_Disable_Strong_Password",
       "Description": "Do not disable strong password policy for users",
-      "Id": "User120",
+      "Id": "User130",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckStrongPassword",

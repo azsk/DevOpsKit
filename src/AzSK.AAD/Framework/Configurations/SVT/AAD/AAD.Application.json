@@ -22,7 +22,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AAD_Application_Permit_Only_HTTPS_ReturnURLs",
+      "ControlID": "AAD_Application_ReturnURLs_Use_HTTPS",
       "Description": "All return URLs configured for an application must be HTTPS endpoints",
       "Id": "App130",
       "ControlSeverity": "High",
@@ -90,6 +90,74 @@
         "Automated",
         "AuthZ",
         "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_HomePage_Use_HTTPS",
+      "Description": "The home page URL for an application must be an HTTPS endpoint",
+      "Id": "App170",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckHomePageIsHTTPS",
+      "Rationale": "Using HTTPS ensures that sensitive data is not disclosed during transit and that the application's clients are not spoofed by rogue endpoint posing as the application.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_LogoutURLs_Use_HTTPS",
+      "Description": "The logout URL configured for an application must be an HTTPS endpoint",
+      "Id": "App180",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckLogoutURLIsHTTPS",
+      "Rationale": "The logout URL for an application is used during authentication flows. Not using an HTTPS URL for this may lead to disclosure of authentication info/tokens.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthN",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_Must_Have_Privacy_Disclosure",
+      "Description": "All enterprise apps must use a privacy disclosure statement",
+      "Id": "App190",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckPrivacyDisclosure",
+      "Rationale": "Adding an appropriate and uniform privacy disclosure for all enterprise apps helps users make correct privacy-related choices when deciding to use the applications. This is also a regulatory requirement in most jurisdictions.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "Privacy"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_Must_Restrict_To_Tenant",
+      "Description": "Enterprise (line of business) apps should be tenant scope only",
+      "Id": "App200",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckAppIsCurrentTenantOnly",
+      "Rationale": "Line of business (LOB) applications are usually written to meet a specific company's business needs. Such applications should be restricted to the current tenant only (i.e., the tenant where they are registered).",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated"
       ],
       "Enabled": true
     }

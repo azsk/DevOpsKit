@@ -297,6 +297,74 @@
             "AuthN"
           ],
           "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_AuthN_Use_Custom_Banned_Passwords",
+          "Description": "Ensure that custom banned passwords list is configured for use",
+          "Id": "Tenant240",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckCustomBannedPasswordConfig",
+          "Rationale": "Although AAD uses a common 'banned passwords' list, user accounts in your tenant will be more secure if you configure additional passwords that are locality/region specific. The 'custom banned passwords' feature supports this requirement.",
+          "Recommendation": "Go to..TODO-RBAC-custom-banned-pswd-config",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_AuthN_Enforce_Banned_Passwords_OnPrem",
+          "Description": "Ensure that banned password check is enabled on-prem and set to 'Enforce' level",
+          "Id": "Tenant250",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckOnPremBannedPasswordsEnforced",
+          "Rationale": "Use of banned passwords should be barred regardless of whether the user sets a password on-prem or in the cloud. Using the 'Enforce' mode as opposed to 'Audit' ensures that users will not be able to set banned passwords on-prem.",
+          "Recommendation": "Go to..TODO-AuthN-on-prem-banned-pswd",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_Privacy_Configure_Valid_Privacy_Contact",
+          "Description": "Ensure that tenant-wide privacy contact email is set to a valid (current) non-guest user",
+          "Id": "Tenant260",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckPrivacyContactIsValid",
+          "Rationale": "A correct tenant-wide privacy contact setting ensures that internal/external users are aware of who should be contacted for resolution/clarification of privacy issues. This is also a regulatory requirement in most jurisdictions.",
+          "Recommendation": "Go to..TODO-Priv-contact-mail-valid",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "Privacy"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_Privacy_Configure_Valid_Privacy_Statement",
+          "Description": "Ensure that a privacy statement is configured and points to a valid URL",
+          "Id": "Tenant270",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckPrivacyStatementIsValid",
+          "Rationale": "The privacy disclosure/statement helps internal and external users understand how their personal data is processed by in the tenant/directory environment. This is also a regulatory requirement in most jurisdictions.",
+          "Recommendation": "Go to..TODO-Priv-contact-mail-valid",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "Privacy"
+          ],
+          "Enabled": true
         }
       ]
     }

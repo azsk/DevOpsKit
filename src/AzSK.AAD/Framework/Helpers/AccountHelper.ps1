@@ -40,7 +40,10 @@ class AccountHelper {
     static hidden [PSObject] $currentAzContext;
     static hidden [PSObject] $currentRMContext;
     static hidden [PSObject] $AADAPIAccessToken;
-    static hidden [string] $tenantInfoMsg;
+
+	#TODO: 'static' => most of these will get set for session! (Also statics in [Tenant] class)
+	#TODO: May need to consider situations where user runs for 2 diff tenants in same session...
+    static hidden [string] $tenantInfoMsg; 
 
     static hidden [PSObject] $currentAADUserObject;
 

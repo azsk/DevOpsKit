@@ -10,8 +10,12 @@ class Tenant: SVTBase
     hidden [PSObject] $SSPRSettings;
     hidden [PSObject] $EnterpriseAppSettings;
     hidden [PSObject] $MFABypassList;
+    hidden [PSObject] $AuthNPasswordPolicySettings;
     #static [int] $RecommendedMaxDevicePerUserLimit = 20;
     hidden [PSObject] $DeviceSettings;
+
+    hidden static [PSObject] $TenantDetails;
+    hidden static [bool] $isDirSyncEnabled = $false;
 
     Tenant([string] $tenantId, [SVTResource] $svtResource): Base($tenantId, $svtResource) 
     {
@@ -21,6 +25,12 @@ class Tenant: SVTBase
     hidden GetAADSettings()
     {
         $this.PublishCustomMessage("`r`nQuerying tenant API endpoints. This may take a few seconds...`r`nYou may see error messages in case you don't have access to all APIs.");
+
+        if ([Tenant]::TenantDetails -eq $null)
+        {
+            [Tenant]::TenantDetails = Get-AzureADTenantDetail
+            [Tenant]::isDirSyncEnabled = [Tenant]::TenantDetails.DirSyncEnabled
+        }
 
         if ($this.AADPermissions -eq $null)
         {
@@ -57,17 +67,24 @@ class Tenant: SVTBase
             $this.MFABypassList = [WebRequestHelper]::InvokeAADAPI("/api/MultifactorAuthentication/BypassedUser")
         }
 
+
         if ($this.SSPRSettings -eq $null)
         {
             $this.SSPRSettings = [WebRequestHelper]::InvokeAADAPI("/api/PasswordReset/PasswordResetPolicies")
         }
-
+            
+        if ($this.AuthNPasswordPolicySettings -eq $null) 
+        {
+            $this.AuthNPasswordPolicySettings = [WebRequestHelper]::InvokeAADAPI("/api/AuthenticationMethods/PasswordPolicy")
+        }
+    
         if ($this.EnterpriseAppSettings -eq $null)
         {
             $this.EnterpriseAppSettings = [WebRequestHelper]::InvokeAADAPI("/api/EnterpriseApplications/UserSettings")
         }
 
-        if ($this.AADPermissions -eq $null -or 
+        if ([Tenant]::TenantDetails -eq $null -or
+            $this.AADPermissions -eq $null -or 
             $this.CASettings -eq $null -or
             $this.AdminMFASettings -eq $null -or
             $this.MFASettings -eq $null -or
@@ -75,11 +92,22 @@ class Tenant: SVTBase
             $this.DeviceSettings -eq $null -or
             $this.MFABypassList -eq $null -or
             $this.SSPRSettings -eq $null -or
+            $this.AuthNPasswordPolicySettings -eq $null -or
             $this.EnterpriseAppSettings -eq $null
         )
         {
             Write-Host -ForegroundColor Yellow "`nYou may not have sufficient permission to evaluate all controls.`nStatus for controls that could not be evaluated will show as 'Manual' in the report."
         }
+    }
+    static [bool] IsDirectorySyncEnabled()
+    {
+        #We need to check this because it may not get set if tenant controls are not being scanned.
+        if ([Tenant]::TenantDetails -eq $null)
+        {
+            [Tenant]::TenantDetails = Get-AzureADTenantDetail
+            [Tenant]::isDirSyncEnabled = [Tenant]::TenantDetails.DirSyncEnabled
+        }
+        return [Tenant]::isDirSyncEnabled
     }
 
     [ControlItem[]] ApplyServiceFilters([ControlItem[]] $controls)
@@ -104,7 +132,7 @@ class Tenant: SVTBase
     
     hidden [ControlResult] CheckTenantSecurityContactInfoIsSet([ControlResult] $controlResult)
     {
-        $td = Get-AzureADTenantDetail
+        $td = [Tenant]::TenantDetails
 
         $result = $false
         $missing = ""
@@ -135,6 +163,52 @@ class Tenant: SVTBase
         {
             $controlResult.AddMessage([VerificationResult]::Passed,
                                         [MessageData]::new("Security compliance notification phone/email are both set as expected."));
+        }
+
+        return $controlResult;
+    }
+
+    hidden [ControlResult] CheckCustomBannedPasswordConfig([ControlResult] $controlResult)
+	{
+        
+        $pps = $this.AuthNPasswordPolicySettings
+
+        if ($pps -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Manual,
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
+        }
+        elseif($pps.enforceCustomBannedPasswords -eq $false -or ($pps.customBannedPasswords | Measure-Object).Count -eq 0) #Custom banned passwords not used?
+        {
+            $controlResult.AddMessage([VerificationResult]::Failed,
+                                        [MessageData]::new("Custom banned passwords setting is disabled or banned password list is empty."));
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,
+                                        [MessageData]::new("Custom banned passwords are enabled and list is correctly configured."));
+        }
+        return $controlResult;
+    }
+
+    hidden [ControlResult] CheckOnPremBannedPasswordsEnforced([ControlResult] $controlResult)
+	{
+        $pps = $this.AuthNPasswordPolicySettings
+
+        if ($pps -eq $null)
+        {
+            $controlResult.AddMessage([VerificationResult]::Manual,
+                [MessageData]::new("Unable to evaluate control. You may not have sufficient permission"));
+        }
+        elseif($pps.enableBannedPasswordCheckOnPremises -eq $false -or $pps.bannedPasswordCheckOnPremisesMode -ne 1) #Check on-prem enforcement of banned passwords
+        {
+                $controlResult.AddMessage([VerificationResult]::Failed,
+                                        [MessageData]::new("Banned passwords check is not enabled for on-prem or mode is not set to 'Enforced'."));
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,
+                                        [MessageData]::new("Banned passwords check is correctly enabled with mode set to 'Enforced'."));
         }
         return $controlResult;
     }
@@ -202,7 +276,6 @@ class Tenant: SVTBase
         }
         return $controlResult;
     }
-
 
     hidden [ControlResult] MFACheckUsersCanNotifyFraud([ControlResult] $controlResult)
 	{
@@ -536,4 +609,87 @@ class Tenant: SVTBase
         }
         return $controlResult;
     }
-}
+
+    hidden [ControlResult] CheckPrivacyContactIsValid([ControlResult] $controlResult)
+	{
+        $td = [Tenant]::TenantDetails
+
+        $ret = $false
+        $msg = "No privacy profile configured for tenant."
+
+        if ( ($td.PrivacyProfile | Measure-Object).Count -ne 0 )
+        {
+            if (-not [String]::IsNullOrEmpty($td.privacyProfile.contactEmail)) 
+            {
+                $privacyContact = $td.privacyProfile.contactEmail
+                $pcUser = $null
+                try 
+                {
+                    $pcUser = Get-AzureAdUser -ObjectId $privacyContact
+                }
+                catch 
+                {
+                    #Filter-based searches do not 'throw', they just return $null if not found.
+                    $pcUser = Get-AzureADUser -Filter "UserPrincipalName eq '$privacyContact'"
+
+                    if ($pcUser -eq $null)
+                    {
+                        $pcUser = Get-AzureADUser -Filter "Mail eq '$privacyContact'"
+                    }
+                    #TODO: worth another try? $pcUser = Get-AzureAdUser -SearchString ($privacyContact.Substring(0,$privacyContact.IndexOf('@')))
+                }        
+                
+                if ($pcUser -eq $null) 
+                {   
+                    $msg ="Could not resolve privacy contact setting to an actual user: [$privacyContact]"
+                }
+                else
+                {
+                    #PCM "Checking if User: $($pcUser.DisplayName) is member"
+                    if (-not ($pcUser.AccountEnabled -and $pcUser.UserType -eq 'Member')) 
+                    {
+                        $msg = "User [$($pcUser.DisplayName) ($privacyContact)] set as the privacy contact is either disabled or a non-member (i.e., guest) user."
+                    }
+                    else 
+                    {
+                        $ret = $true #only success point in the method.
+                        $msg = "Found valid (non-guest) privacy contact set as user: [$($pcUser.DisplayName) ($privacyContact)]."
+                    }
+                }
+            }
+        }
+
+        if ($ret -eq $false)
+        {
+                $controlResult.AddMessage([VerificationResult]::Failed,
+                                        [MessageData]::new($msg));
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,
+                                        [MessageData]::new($msg));
+        }
+        return $controlResult;
+    }
+
+    hidden [ControlResult] CheckPrivacyStatementIsValid([ControlResult] $controlResult)
+	{
+        $td = [Tenant]::TenantDetails
+
+        if ( ($td.PrivacyProfile | Measure-Object).Count -eq 0 -or 
+            [String]::IsNullOrEmpty($td.privacyProfile.statementUrl) -or 
+            (-not ($td.privacyProfile.statementUrl -match [Constants]::RegExForValidURL))
+        ) 
+        {
+        
+            $controlResult.AddMessage([VerificationResult]::Failed,
+                                [MessageData]::new("Privacy profile is incorrectly configured."));
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,
+                                [MessageData]::new("Privacy profile is correctly configured. Privacy Statement URL: [$($td.privacyProfile.statementUrl)]"));
+        }
+        return $controlResult;
+    }
+}#class

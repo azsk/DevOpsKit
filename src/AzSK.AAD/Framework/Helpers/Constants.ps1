@@ -174,6 +174,8 @@ class Constants
 	#Constants for AAD (#TODO)
 	static [string] $AADAPIGuid = "74658136-14ec-4630-ad9b-26e160ff0fc6"
 	static [string] $AADAPIUrl = "https://main.iam.ad.ext.azure.com"
+	static [string] $RegExForValidURL = "(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})"
+
 
 	static [void] SetAzSKModuleName($moduleName)
 	{
