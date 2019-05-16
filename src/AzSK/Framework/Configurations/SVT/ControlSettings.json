@@ -6,7 +6,8 @@
     "SecretRotationDuration_Days": 180,
     "KeyType": "RSA-HSM",
     "ADAppCredentialTypeCrt": "AsymmetricX509Cert",
-    "ADAppCredentialTypePwd": "Password"
+    "ADAppCredentialTypePwd": "Password",
+    "MaxRecommendedVersions": 3
   },
   "SqlServer": {
     "AuditRetentionPeriod_Min": 365,
@@ -55,7 +56,8 @@
       "GuestExtension": {
         "Name": "ConfigurationForWindows",
         "RequiredVersion": "1.11.0.0",
-        "AssignmentName" : "SMSClientStatus" 
+        "AssignmentName" : "SMSClientStatus",
+        "CheckPolicyAssignment":true
       }
     },
     "Linux": {
@@ -83,7 +85,8 @@
       "GuestExtension": {
         "Name": "ConfigurationForLinux",
         "RequiredVersion": "1.9.0",
-        "AssignmentName" : "SMSClientStatus" 
+        "AssignmentName" : "SMSClientStatus",
+        "CheckPolicyAssignment": false
       }
     },
     "Windows_OS_Baseline_Ids": [],
@@ -258,7 +261,13 @@
     "LatestDotNetFrameworkVersionNumber": "v4.0",
     "Minimum_Instance_Count": 2,
     "AADAuthAPIVersion": "2016-08-01",
-    "LoadCertAppSettings": "WEBSITE_LOAD_CERTIFICATES"
+    "LoadCertAppSettings": "WEBSITE_LOAD_CERTIFICATES",
+    "NonAADAuthProperties": [
+      "googleClientId",
+      "facebookAppId",
+      "twitterConsumerKey",
+      "microsoftAccountClientId"
+    ]
   },
   "StorageDiagnosticsSkuMapping": [
     "StandardGRS",
@@ -369,7 +378,7 @@
     "Low": "Low"
   },
   "MandatoryTags":[
-   
-  ]
 
+  ],
+  "WhitelistedResourceGroups": []
 }

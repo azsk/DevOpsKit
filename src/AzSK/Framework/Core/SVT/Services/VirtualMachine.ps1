@@ -411,6 +411,7 @@ class VirtualMachine: SVTBase
 			$controlStatus = [VerificationResult]::Manual
             $requiredGuestExtension  = $this.VMControlSettings.GuestExtension.Name
 			$requiredGuestExtensionVersion =  [System.Version] $this.VMControlSettings.GuestExtension.RequiredVersion
+			$checkPolicyAssignment = $this.VMControlSettings.GuestExtension.CheckPolicyAssignment
 			
 			
             $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
@@ -424,6 +425,9 @@ class VirtualMachine: SVTBase
 			if([Helpers]::CheckMember($this.ResourceObject, "Extensions")){
 				$installedGuestExtension = $this.ResourceObject.Extensions | Where-Object {$_.VirtualMachineExtensionType -eq $requiredGuestExtension -and $_.Publisher -eq "Microsoft.GuestConfiguration"} 
 				if($null -ne $installedGuestExtension -and $installedGuestExtension.ProvisioningState -eq "Succeeded"){
+					$controlStatus = [VerificationResult]::Passed
+					$controlResult.AddMessage("Required guest configuration extension '$($requiredGuestExtension)' is present in VM.");
+
 					$currentGuestExtensionVersion = $null
 					try {
 						$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/extensions/{4}?api-version=2018-06-01&`$expand=instanceView",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName,$requiredGuestExtension)
@@ -432,21 +436,7 @@ class VirtualMachine: SVTBase
 					}
 					catch {
 						# If any exception occurs, while fetching details of Extension mark control as manual
-						$currentGuestExtensionVersion = $null
-					}
-					if($null -eq $currentGuestExtensionVersion )
-					{
-						$controlResult.AddMessage("Not able to fetch details of guest configuration extension '$($requiredGuestExtension)'.");
-					}
-					elseif($currentGuestExtensionVersion -lt $requiredGuestExtensionVersion){
-                        $controlStatus = [VerificationResult]::Failed
-						$controlResult.AddMessage("Guest configuration extension '$($requiredGuestExtensionVersion)' is present but current verison is not latest.");
-						$controlResult.AddMessage("Current version : $($currentGuestExtensionVersion), Required version: $($requiredGuestExtensionVersion)");
-						$controlResult.SetStateData("Current version of $($requiredGuestExtensionVersion) present is:", $currentGuestExtensionVersion.ToString());
-					
-					}else{
-			            $controlStatus = [VerificationResult]::Passed
-						$controlResult.AddMessage("Required guest configuration extension '$($requiredGuestExtension)' is present in VM.");
+						# Skip check for version
 					}
 				}else{
 					$controlStatus = [VerificationResult]::Failed
@@ -457,20 +447,23 @@ class VirtualMachine: SVTBase
 				$controlResult.AddMessage("Required guest configuration extension '$($requiredGuestExtension)' is not present in VM.");
 			}
 
-            # Check if reuired Guest Configuration Assignments is present
-            try{
-				$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/providers/Microsoft.GuestConfiguration/guestConfigurationAssignments/{4}?api-version=2018-06-30-preview",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName,$guestConfigurationAssignmentName)
-				$result = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
-				if($null -ne $result)
-				{	
-					$controlResult.AddMessage("Required guest configuration assignments '$($guestConfigurationAssignmentName)' is present.");
-					$controlResult.AddMessage($result);
-				
+			# Check if reuired Guest Configuration Assignments is present
+			if($checkPolicyAssignment -eq $true){
+				try{
+					$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/providers/Microsoft.GuestConfiguration/guestConfigurationAssignments/{4}?api-version=2018-11-20",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName,$guestConfigurationAssignmentName)
+					$result = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
+					if($null -ne $result)
+					{	
+						$controlResult.AddMessage("Required guest configuration assignments '$($guestConfigurationAssignmentName)' is present.");
+						$controlResult.AddMessage($result);
+					
+					}
+				}catch{
+					$controlStatus = [VerificationResult]::Failed
+					$controlResult.AddMessage("Required guest configuration assignments '$($guestConfigurationAssignmentName)' is not present.");	
 				}
-			}catch{
-				$controlStatus = [VerificationResult]::Failed
-				$controlResult.AddMessage("Required guest configuration assignments '$($guestConfigurationAssignmentName)' is not present.");	
 			}
+        
 
 			# Check if Managed System Identity is enabled on VM
 

@@ -247,6 +247,24 @@
          "KeyVault"
       ],
       "Enabled": true
-   }
+   },
+   {
+    "ControlID": "Azure_KeyVault_Avoid_Excessive_Versions_Keys_Secrets",
+    "Description": "Too many versions of keys or secrets should not be in use.",
+    "Id": "KeyVault240",
+    "ControlSeverity": "Medium",
+    "Automated": "Yes",
+    "MethodName": "CheckExcessVersions",
+    "Rationale": "Having too many active versions can lead to increased complexity of solutions due to difficulty of tracking what is in use where, indirectly leading to security vulnerability due to oversight. Additionally, it can also adversely affect performance and availability.",
+    "Recommendation": "Disable older versions of keys and secrets that are no longer required. Go to the Azure Portal > Key Vault > Settings > Keys or Secrets. Select the key or secret that has too many versions, and choose the version that needs to be disabled. Set 'Enabled' attribute as 'No'. For more on the Azure Key Vault service limits, refer: https://docs.microsoft.com/en-us/azure/key-vault/key-vault-service-limits",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Automated",
+      "KeySecretPermissions",
+      "KeyVault"
+    ],
+    "Enabled": true
+  }
                  ]
 }

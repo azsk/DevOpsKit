@@ -125,7 +125,7 @@ class ARMCheckerStatus: EventBase
 		  if(-not([string]::IsNullOrEmpty($exemptControlListPath)) -and (Test-Path -path $exemptControlListPath -PathType Leaf))
 		  {
 		    $exemptControlListFile=Get-Content $exemptControlListPath | ConvertFrom-Csv
-	        $exemptControlList=$exemptControlListFile| where {$_.Status -eq "Failed"}
+	        $exemptControlList=$exemptControlListFile| where {$_.Status -eq "Failed" -or $_.Status -eq "Verify"}
 		  }
 		}catch{
 		    $this.WriteMessage("Unable to read file containing list of controls to skip, Please verify file path.", [MessageType]::Warning);
@@ -504,28 +504,59 @@ class ARMCheckerStatus: EventBase
         Add-Content -Value $message -Path $this.SFLogPath        
 	} 
 	
+	hidden [Object] MergeExtensionFile([Object] $source,[Object] $extend)
+	{ 	
+		if([Helpers]::CheckMember($extend,"resourceControlSets")){
+			$extend.resourceControlSets | ForEach-Object {
+				try{
+						$currentFeature  = $_
+						$existingFeature = $source.resourceControlSets | Where-Object {$_.featureName -eq $currentFeature.featureName } 
+						if($existingFeature -ne $null)
+						{
+							$existingFeature.controls += $currentFeature.controls
+						
+						}else{
+						
+							$source.resourceControlSets += $currentFeature
+						}
+					}catch{
+							# No need to break execution, source file will be returned
+					}
+			}
+
+		}
+		
+			
+	   return $source;
+	}
+
+
 	hidden [string] LoadARMControlsFile()
 	{ 	
 	   $serverFileContent=$null;
 	   $ARMControlsFileURI = [Constants]::ARMControlsFileURI
+	   $checkExtensionFile = $false
 	   try
 	   {
-		if(-not [ConfigurationManager]::GetLocalAzSKSettings().EnableAADAuthForOnlinePolicyStore)
-		{
-			$serverFileContent = [ConfigurationManager]::LoadServerConfigFile("ARMControls.json");
-		}
-		else {
-         $AzureContext = Get-AzContext
-	  if(-not [string]::IsNullOrWhiteSpace($AzureContext)) 
-	   {
-		   $serverFileContent = [ConfigurationManager]::LoadServerConfigFile("ARMControls.json");
-	   }
-	   else
-	   {
-		   $serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($ARMControlsFileURI, '', '', '');
-	   }
-	}
-	}
+			if(-not [ConfigurationManager]::GetLocalAzSKSettings().EnableAADAuthForOnlinePolicyStore)
+			{
+				$serverFileContent = [ConfigurationManager]::LoadServerConfigFile("ARMControls.json");
+				$checkExtensionFile = $true
+			}
+			else 
+			{
+				$AzureContext = Get-AzContext
+				if(-not [string]::IsNullOrWhiteSpace($AzureContext)) 
+				{
+					$serverFileContent = [ConfigurationManager]::LoadServerConfigFile("ARMControls.json");
+					$checkExtensionFile = $true
+				}
+				else
+				{
+					$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($ARMControlsFileURI, '', '', '');
+				}
+	        }
+	    }
 	   catch
 	   {
          try
@@ -538,17 +569,20 @@ class ARMCheckerStatus: EventBase
 		 # Load Offline File
          }
 	   }
-	   if($null -ne $serverFileContent)
-	   {
-	     $serverFileContent = $serverFileContent | ConvertTo-Json -Depth 10
-	   }else
+	   if($null -eq $serverFileContent)
 	   {
 	     $serverFileContent = [ConfigurationHelper]::LoadOfflineConfigFile("ARMControls.json", $false);
-		 $serverFileContent=$serverFileContent | ConvertTo-Json -Depth 10
-		}
-
+	   }
+	   #Check if extension file is present on server
+	   $extFileContent = $null
+       if($checkExtensionFile -eq $true){
+		$extFileContent = [ConfigurationManager]::LoadServerFileRaw("ARMControls.ext.json");
+	   }
+	   if($null -ne $extFileContent ){
+		$serverFileContent = $this.MergeExtensionFile($serverFileContent, $extFileContent )
+	   }
+	   $serverFileContent= $serverFileContent | ConvertTo-Json -Depth 10
 	   return $serverFileContent;
 	}
 
 }
-

@@ -107,17 +107,18 @@ class AIOrgTelemetryHelper {
             $event.Name = $Name
             $Properties.Keys | ForEach-Object {
                 try {
-                    $event.Properties.Add($_, ($Properties[$_].ToString()));
+                    $event.Properties[$_] = $Properties[$_].ToString();
                 }
                 catch
 				{
+                    $_
 					# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
 					# No need to break execution
 				}
             }
             $Metrics.Keys | ForEach-Object {
                 try {
-                    $event.Metrics.Add($_, $Metrics[$_]);
+                    $event.Metrics[$_] = $Metrics[$_].ToString();
                 }
                 catch
 				{
