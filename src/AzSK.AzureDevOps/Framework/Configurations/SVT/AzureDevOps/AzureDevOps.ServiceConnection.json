@@ -113,9 +113,9 @@
     "Id": "ServiceConnection170",
     "ControlSeverity": "High",
     "Automated": "Yes",
-    "MethodName": "CheckGroupsPermissions",
+    "MethodName": "CheckGlobalGroupsAddedToServiceConnections",
     "Rationale": "Global security groups are maintained at organization and project level and may contain users at a very broad scope (e.g., all users in the organization). Granting elevated permissions to these groups can risk exposure of service connections to unwarranted individuals.",
-    "Recommendation": "Refer detailed log files for the list of non compliant service connections. To remediate this follow steps given here: 1. Navigate to the project settings page 2. Select service connection under pipelines category  3. Select your service connection from the list 4. Select Roles from the menu 5. Check for a global security group - (a) global security group added as a User (b) global security group added as an Administrator 6. Remove all global security groups. 7. Save changes and refresh the page to confirm that your changes have been saved. Note: Global security groups are maintained at organization and project level and may contain users at a very broad scope (e.g., all users in the organization).",
+    "Recommendation": "Refer detailed log files for the list of non compliant service connections. To remediate this follow steps given here: 1. Navigate to the project settings page 2. Select service connection under pipelines category  3. Select your service connection from the list 4. Select Roles from the menu 5. Check for a global security group - (a) global security group added as a User (b) global security group added as an Administrator 6. Remove all global security groups. 7. Save changes and refresh the page to confirm that your changes have been saved. Note: Global security groups are the groups maintained at organization and project level and may contain users at a very broad scope (e.g., all users in the organization). For more information, refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops#secure-a-service-connection",
     "Tags": [
       "SDL",
       "TCP",

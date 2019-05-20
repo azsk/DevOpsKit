@@ -91,12 +91,14 @@ class SVTCommandBase: CommandBase {
         $arg.ExceptionMessage = $exception;
 
         $this.PublishEvent([SVTEvent]::CommandError, $arg);
-        $this.CheckAndEnableAzureRMTelemetry()
+        # TODO: This function is breaking on new machine. The function is using AzureRM command and AzureDevOps does not have any Azure cmdlet dependancy.
+        # $this.CheckAndEnableAzureRMTelemetry()
     }
 
     hidden [void] CommandCompleted([SVTEventContext[]] $arguments) {
         $this.PublishEvent([SVTEvent]::CommandCompleted, $arguments);
-        $this.CheckAndEnableAzureRMTelemetry()
+        # TODO: This function is breaking on new machine. The function is using AzureRM command and AzureDevOps does not have any Azure cmdlet dependancy.
+        # $this.CheckAndEnableAzureRMTelemetry()
     }
 
     [string] EvaluateControlStatus() {

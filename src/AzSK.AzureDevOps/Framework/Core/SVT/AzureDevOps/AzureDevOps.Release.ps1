@@ -241,53 +241,65 @@ class Release: SVTBase
 
     hidden [ControlResult] CheckRBACAccess ([ControlResult] $controlResult)
     {
-        # This functions is to check users permissions on release definition. Groups' permissions check is not added here.
-        $releaseDefinitionPath = $this.ReleaseObj.Path.Trim("\").Replace(" ","+").Replace("\","%2F")
-        $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/ReadExplicitIdentitiesJson?__v=5&permissionSetId={2}&permissionSetToken={3}%2F{4}%2F{5}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($this.SecurityNamespaceId), $($this.ProjectId), $($releaseDefinitionPath) ,$($this.ReleaseObj.id);
-        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $accessList = @()
-        $whitelistedUserIdentities = @()
-        # exclude release owner
-        $whitelistedUserIdentities += $this.ReleaseObj.createdBy.id
-        if([Helpers]::CheckMember($responseObj,"identities") -and ($responseObj.identities|Measure-Object).Count -gt 0)
+        $failMsg = $null
+        try
         {
-            $whitelistedUserIdentities += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" }| ForEach-Object {
-                $identity = $_
-                $whitelistedIdentity = $this.ControlSettings.Release.WhitelistedUserIdentities | Where-Object { $_.Domain -eq $identity.Domain -and $_.DisplayName -eq $identity.DisplayName }
-                if(($whitelistedIdentity | Measure-Object).Count -gt 0)
-                {
-                    return $identity.TeamFoundationId
+            # This functions is to check users permissions on release definition. Groups' permissions check is not added here.
+            $releaseDefinitionPath = $this.ReleaseObj.Path.Trim("\").Replace(" ","+").Replace("\","%2F")
+            $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/ReadExplicitIdentitiesJson?__v=5&permissionSetId={2}&permissionSetToken={3}%2F{4}%2F{5}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($this.SecurityNamespaceId), $($this.ProjectId), $($releaseDefinitionPath) ,$($this.ReleaseObj.id);
+            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+            $accessList = @()
+            $whitelistedUserIdentities = @()
+            # exclude release owner
+            $whitelistedUserIdentities += $this.ReleaseObj.createdBy.id
+            if([Helpers]::CheckMember($responseObj,"identities") -and ($responseObj.identities|Measure-Object).Count -gt 0)
+            {
+                $whitelistedUserIdentities += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" }| ForEach-Object {
+                    $identity = $_
+                    $whitelistedIdentity = $this.ControlSettings.Release.WhitelistedUserIdentities | Where-Object { $_.Domain -eq $identity.Domain -and $_.DisplayName -eq $identity.DisplayName }
+                    if(($whitelistedIdentity | Measure-Object).Count -gt 0)
+                    {
+                        return $identity.TeamFoundationId
+                    }
                 }
-            }
 
-            $accessList += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" } | ForEach-Object {
-                $identity = $_ 
-                if($whitelistedUserIdentities -notcontains $identity.TeamFoundationId)
-                {
+                $accessList += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" } | ForEach-Object {
+                    $identity = $_ 
+                    if($whitelistedUserIdentities -notcontains $identity.TeamFoundationId)
+                    {
+                        $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($identity.TeamFoundationId) ,$($this.SecurityNamespaceId), $($this.ProjectId), $($releaseDefinitionPath), $($this.ReleaseObj.id);
+                        $identityPermissions = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+                        return @{ IdentityName = $identity.DisplayName; IdentityType = $identity.IdentityType; Permissions = ($identityPermissions.Permissions | Select-Object @{Name="Name"; Expression = {$_.displayName}},@{Name="Permission"; Expression = {$_.permissionDisplayString}}) }
+                    }
+                }
+
+                $accessList += $responseObj.identities | Where-Object { $_.IdentityType -eq "group" } | ForEach-Object {
+                    $identity = $_ 
                     $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($identity.TeamFoundationId) ,$($this.SecurityNamespaceId), $($this.ProjectId), $($releaseDefinitionPath), $($this.ReleaseObj.id);
                     $identityPermissions = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-                    return @{ IdentityName = $identity.DisplayName; IdentityType = $identity.IdentityType; Permissions = ($identityPermissions.Permissions | Select-Object @{Name="Name"; Expression = {$_.displayName}},@{Name="Permission"; Expression = {$_.permissionDisplayString}}) }
+                    return @{ IdentityName = $identity.DisplayName; IdentityType = $identity.IdentityType; IsAadGroup = $identity.IsAadGroup ;Permissions = ($identityPermissions.Permissions | Select-Object @{Name="Name"; Expression = {$_.displayName}},@{Name="Permission"; Expression = {$_.permissionDisplayString}}) }
                 }
             }
-
-            $accessList += $responseObj.identities | Where-Object { $_.IdentityType -eq "group" } | ForEach-Object {
-                $identity = $_ 
-                $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($identity.TeamFoundationId) ,$($this.SecurityNamespaceId), $($this.ProjectId), $($releaseDefinitionPath), $($this.ReleaseObj.id);
-                $identityPermissions = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-                return @{ IdentityName = $identity.DisplayName; IdentityType = $identity.IdentityType; IsAadGroup = $identity.IsAadGroup ;Permissions = ($identityPermissions.Permissions | Select-Object @{Name="Name"; Expression = {$_.displayName}},@{Name="Permission"; Expression = {$_.permissionDisplayString}}) }
+            
+            if(($accessList | Measure-Object).Count -ne 0)
+            {
+                $controlResult.AddMessage([VerificationResult]::Verify,"Validate that the following identities have been provided with minimum RBAC access to [$($this.ResourceContext.ResourceName)] pipeline", $accessList);
+                $controlResult.SetStateData("Release pipeline access list: ", $accessList);
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed,"No identities have been explicitly provided with RBAC access to [$($this.ResourceContext.ResourceName)] pipeline other than release pipeline owner and default groups");
+                $controlResult.AddMessage("List of whitelisted user identities:",$whitelistedUserIdentities)
             }
         }
-        
-        if(($accessList | Measure-Object).Count -ne 0)
+        catch
         {
-            $controlResult.AddMessage([VerificationResult]::Verify,"Validate that the following identities have explicitly provided with RBAC access to resource - [$($this.ResourceContext.ResourceName)]", $accessList);
-            $controlResult.SetStateData("Release pipeline access list: ", $accessList);
+            $failMsg = $_
         }
-        else
+        if(![string]::IsNullOrEmpty($failMsg))
         {
-            $controlResult.AddMessage([VerificationResult]::Passed,"No identities have been explicitly provided with RBAC access to resource - [$($this.ResourceContext.ResourceName)] other than release pipeline owner and default groups");
-            $controlResult.AddMessage("List of whitelisted user identities:",$whitelistedUserIdentities)
-        }
+            $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch release pipeline details. $($failMsg)Please verify from portal all teams/groups are granted minimum required permissions on release definition.");
+        }       
         return $controlResult
     }
 }
