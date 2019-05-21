@@ -133,7 +133,7 @@ class CommandHelper
 			HasAzSKComponentWritePermission = $true;
         },
 
-		# OMS
+		# Log Analytics
 		[CommandDetails]@{
             Verb = "Install";
             Noun = "AzSKMonitoringSolution";

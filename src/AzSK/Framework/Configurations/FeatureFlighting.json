@@ -54,7 +54,24 @@
       "DisabledForSubs": [],      
       "UnderPreview" : false,
       "IsEnabled": false
+    },
+    {
+      "Name": "EnableAdditionOfLogAnalyticsVariables",
+      "Description" : "Enable this to add new Log Analytics variables with the values of the existing OMS ones through RunbookScanAgent/Update CA.",
+      "Sources" : ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],      
+      "UnderPreview" : false,
+      "IsEnabled": false
+    },
+    {
+      "Name": "EnableDeletionOfOMSVariables",
+      "Description" : "Enable this to delete the existing OMS variables from the Automation account on running Update CA.",
+      "Sources" : ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],      
+      "UnderPreview" : false,
+      "IsEnabled": false
     }
-
   ]
 }

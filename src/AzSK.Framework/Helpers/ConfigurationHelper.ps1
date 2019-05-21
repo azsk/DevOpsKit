@@ -39,7 +39,7 @@ class ConfigurationHelper {
 		{
 			if($parseJson)
 			{
-				if($extension -eq ".json" -or $extension -eq ".omsview")
+				if($extension -eq ".json" -or $extension -eq ".lawview")
 				{
 					$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) | ConvertFrom-Json
 				}

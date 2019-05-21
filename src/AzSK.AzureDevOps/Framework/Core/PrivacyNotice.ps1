@@ -8,9 +8,9 @@ class PrivacyNotice {
 		if(-not $appSettings.PrivacyNoticeAccepted)
 		{
 			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
-			if(-not [string]::IsNullOrWhiteSpace($appSettings.OMSSource))
+			if(-not [string]::IsNullOrWhiteSpace($appSettings.LAWSource))
 			{
-				$source = $appSettings.OMSSource;
+				$source = $appSettings.LAWSource;
 			}
 			if(($azskConfig.PrivacyAcceptedSources | Measure-Object).Count -gt 0 -and ($azskConfig.PrivacyAcceptedSources -contains $source))
 			{
