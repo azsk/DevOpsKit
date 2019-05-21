@@ -847,7 +847,7 @@
       "Description": "Alerts for Subscription Activities",
       "Enabled": true,
       "Tags": [
-        "Optional"
+        "Mandatory"
       ],
       "AlertOperationList": [
         {
@@ -855,7 +855,7 @@
           "Description": "Grants the caller User Access Administrator access at the tenant scope",
           "OperationName": "Microsoft.Authorization/elevateAccess/action",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "Critical",
           "Enabled": true
@@ -865,7 +865,7 @@
           "Description": "Add or modify administrator to a subscription.",
           "OperationName": "Microsoft.Authorization/classicAdministrators/write",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "Critical",
           "Enabled": true
@@ -875,7 +875,7 @@
           "Description": "Removes the administrator from the subscription.",
           "OperationName": "Microsoft.Authorization/classicAdministrators/delete",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "Critical",
           "Enabled": true
@@ -885,7 +885,7 @@
           "Description": "Add locks at the specified scope.",
           "OperationName": "Microsoft.Authorization/locks/write",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "High",
           "Enabled": true
@@ -895,7 +895,7 @@
           "Description": "Delete locks at the specified scope.",
           "OperationName": "Microsoft.Authorization/locks/delete",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "High",
           "Enabled": true
@@ -905,7 +905,7 @@
           "Description": "Delete a policy assignment at the specified scope.",
           "OperationName": "Microsoft.Authorization/policyAssignments/delete",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "High",
           "Enabled": true
@@ -915,7 +915,7 @@
           "Description": "Create a policy assignment at the specified scope.",
           "OperationName": "Microsoft.Authorization/policyAssignments/write",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "High",
           "Enabled": true
@@ -925,7 +925,7 @@
           "Description": "Delete a policy definition.",
           "OperationName": "Microsoft.Authorization/policyDefinitions/delete",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "High",
           "Enabled": true
@@ -935,7 +935,7 @@
           "Description": "Create a role assignment at the specified scope.",
           "OperationName": "Microsoft.Authorization/roleAssignments/write",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "High",
           "Enabled": true
@@ -945,7 +945,7 @@
           "Description": "Delete a role assignment at the specified scope.",
           "OperationName": "Microsoft.Authorization/roleAssignments/delete",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "High",
           "Enabled": true
@@ -955,7 +955,7 @@
           "Description": "Deleting an activity log alert",
           "OperationName": "Microsoft.Insights/ActivityLogAlerts/Delete",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "High",
           "Enabled": true
@@ -965,7 +965,7 @@
           "Description": "Writing an activity log alert",
           "OperationName": "Microsoft.Insights/ActivityLogAlerts/Write",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "High",
           "Enabled": true
@@ -975,7 +975,7 @@
           "Description": "Writing an action group",
           "OperationName": "Microsoft.Insights/ActionGroups/Write",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "High",
           "Enabled": true
@@ -985,7 +985,7 @@
           "Description": "Deleting an action group",
           "OperationName": "Microsoft.Insights/ActionGroups/Delete",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "High",
           "Enabled": true
@@ -1576,10 +1576,10 @@
     },
     {
       "Name": "AzSK_Storage_Alert",
-      "Description": "Alerts for Storage Account",
+      "Description": "Alerts for Storage",
       "Enabled": true,
       "Tags": [
-        "Optional"
+        "Mandatory"
       ],
       "AlertOperationList": [
         {
@@ -1587,7 +1587,7 @@
           "Description": "Deletes an existing storage account.",
           "OperationName": "Microsoft.Storage/storageAccounts/delete",
           "Tags": [
-            "Optional"
+            "Mandatory"
           ],
           "Severity": "High",
           "Enabled": true
@@ -1597,7 +1597,17 @@
           "Description": "Regenerates the access keys for the specified storage account.",
           "OperationName": "Microsoft.Storage/storageAccounts/regeneratekey/action",
           "Tags": [
-            "Optional"
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_DataLakeStore_Account",
+          "Description": "Delete an existed DataLakeStore account",
+          "OperationName": "Microsoft.DataLakeStore/accounts/delete",
+          "Tags": [
+            "Mandatory"
           ],
           "Severity": "High",
           "Enabled": true
@@ -1683,49 +1693,19 @@
           "Enabled": true
         }
       ]
-    }, 
+    },
     {
-      "Name": "AzSK_Mandatory_Alert",
-      "Description": "Alerts for Critical Activities",
+      "Name": "AzSK_Database_Alert",
+      "Description": "Alerts for Database",
       "Enabled": true,
       "Tags": [
         "Mandatory"
       ],
       "AlertOperationList": [
         {
-          "Name": "AzSK_Assign_the_caller_to_User_Access_Administrator_role",
-          "Description": "Grants the caller User Access Administrator access at the tenant scope",
-          "OperationName": "Microsoft.Authorization/elevateAccess/action",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "Critical",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Set_administrator",
-          "Description": "Add or modify administrator to a subscription.",
-          "OperationName": "Microsoft.Authorization/classicAdministrators/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "Critical",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_administrator",
-          "Description": "Removes the administrator from the subscription.",
-          "OperationName": "Microsoft.Authorization/classicAdministrators/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "Critical",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Add_management_locks",
-          "Description": "Add locks at the specified scope.",
-          "OperationName": "Microsoft.Authorization/locks/write",
+          "Name": "AzSK_Create_new_or_update_existing_server_administrator",
+          "Description": "Create or update server administrator",
+          "OperationName": "Microsoft.Sql/servers/administrators/write",
           "Tags": [
             "Mandatory"
           ],
@@ -1733,9 +1713,9 @@
           "Enabled": true
         },
         {
-          "Name": "AzSK_Delete_management_locks",
-          "Description": "Delete locks at the specified scope.",
-          "OperationName": "Microsoft.Authorization/locks/delete",
+          "Name": "AzSK_Delete_server_administrator",
+          "Description": "Delete server administrator from the server",
+          "OperationName": "Microsoft.Sql/servers/administrators/delete",
           "Tags": [
             "Mandatory"
           ],
@@ -1743,9 +1723,9 @@
           "Enabled": true
         },
         {
-          "Name": "AzSK_Delete_policy_assignment",
-          "Description": "Delete a policy assignment at the specified scope.",
-          "OperationName": "Microsoft.Authorization/policyAssignments/delete",
+          "Name": "AzSK_Create_new_or_update_existing_server_firewall_rule",
+          "Description": "Create or update server firewall rule that controls IP address range allowed to connect to the server",
+          "OperationName": "Microsoft.Sql/servers/firewallRules/write",
           "Tags": [
             "Mandatory"
           ],
@@ -1753,9 +1733,9 @@
           "Enabled": true
         },
         {
-          "Name": "AzSK_Create_policy_assignment",
-          "Description": "Create a policy assignment at the specified scope.",
-          "OperationName": "Microsoft.Authorization/policyAssignments/write",
+          "Name": "AzSK_Delete_server_firewall_rule",
+          "Description": "Delete firewall rule from the server",
+          "OperationName": "Microsoft.Sql/servers/firewallRules/delete",
           "Tags": [
             "Mandatory"
           ],
@@ -1763,9 +1743,9 @@
           "Enabled": true
         },
         {
-          "Name": "AzSK_Delete_policy_definition",
-          "Description": "Delete a policy definition.",
-          "OperationName": "Microsoft.Authorization/policyDefinitions/delete",
+          "Name": "AzSK_Delete_elastic_database_pool",
+          "Description": "Delete existing elastic database pool",
+          "OperationName": "Microsoft.Sql/servers/elasticPools/delete",
           "Tags": [
             "Mandatory"
           ],
@@ -1773,66 +1753,235 @@
           "Enabled": true
         },
         {
-          "Name": "AzSK_Create_role_assignment",
-          "Description": "Create a role assignment at the specified scope.",
-          "OperationName": "Microsoft.Authorization/roleAssignments/write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Delete_role_assignment",
-          "Description": "Delete a role assignment at the specified scope.",
-          "OperationName": "Microsoft.Authorization/roleAssignments/delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Activity_log_alert_delete",
-          "Description": "Deleting an activity log alert",
-          "OperationName": "Microsoft.Insights/ActivityLogAlerts/Delete",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Activity_log_alert_write",
-          "Description": "Writing an activity log alert",
-          "OperationName": "Microsoft.Insights/ActivityLogAlerts/Write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Action_group_write",
-          "Description": "Writing an action group",
-          "OperationName": "Microsoft.Insights/ActionGroups/Write",
-          "Tags": [
-            "Mandatory"
-          ],
-          "Severity": "High",
-          "Enabled": true
-        },
-        {
-          "Name": "AzSK_Action_group_delete",
-          "Description": "Deleting an action group",
-          "OperationName": "Microsoft.Insights/ActionGroups/Delete",
+          "Name": "AzSK_Delete_existing_server",
+          "Description": "Delete a server and all contained databases and elastic pools",
+          "OperationName": "Microsoft.Sql/servers/databases/delete",
           "Tags": [
             "Mandatory"
           ],
           "Severity": "High",
           "Enabled": true
         }
-
+      ]
+    },
+    {
+      "Name": "AzSK_Networking_Alert",
+      "Description": "Alerts for Network",
+      "Enabled": true,
+      "Tags": [
+        "Mandatory"
+      ],
+      "AlertOperationList": [
+        {
+          "Name": "AzSK_Create_or_Update_DNS_Zone",
+          "Description": "Create or update a DNS zone within a resource group.  Used to update the tags on a DNS zone resource. Note that this command can not be used to create or update record sets within the zone.",
+          "OperationName": "Microsoft.Network/dnszones/write",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "Critical",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_DNS_Zone",
+          "Description": "Delete the DNS zone, in JSON format. The zone properties include tags, etag, numberOfRecordSets, and maxNumberOfRecordSets.",
+          "OperationName": "Microsoft.Network/dnszones/delete",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "Critical",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_update_record_set_of_type_MX",
+          "Description": "Create or update a record set of type ?MX? within a DNS zone. The records specified will replace the current records in the record set.",
+          "OperationName": "Microsoft.Network/dnszones/MX/write",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_record_set_of_type_MX",
+          "Description": "Remove the record set of a given name and type ?MX? from a DNS zone.",
+          "OperationName": "Microsoft.Network/dnszones/MX/delete",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_update_record_set_of_type_AAAA",
+          "Description": "Create or update a record set of type ?AAAA? within a DNS zone. The records specified will replace the current records in the record set.",
+          "OperationName": "Microsoft.Network/dnszones/AAAA/write",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "Critical",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_record_set_of_type_AAAA",
+          "Description": "Remove the record set of a given name and type ?AAAA? from a DNS zone.",
+          "OperationName": "Microsoft.Network/dnszones/AAAA/delete",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_update_record_set_of_type_CNAME",
+          "Description": "Create or update a record set of type ?CNAME? within a DNS zone. The records specified will replace the current records in the record set.",
+          "OperationName": "Microsoft.Network/dnszones/CNAME/write",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_record_set_of_type_CNAME",
+          "Description": "Remove the record set of a given name and type ?CNAME? from a DNS zone.",
+          "OperationName": "Microsoft.Network/dnszones/CNAME/delete",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Create_or_update_record_set_of_type_A",
+          "Description": "Create or update a record set of type ?A? within a DNS zone. The records specified will replace the current records in the record set.",
+          "OperationName": "Microsoft.Network/dnszones/A/write",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_record_set_of_type_A",
+          "Description": "Remove the record set of a given name and type ?A? from a DNS zone.",
+          "OperationName": "Microsoft.Network/dnszones/A/delete",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_Virtual_Network",
+          "Description": "Deletes a virtual network",
+          "OperationName": "Microsoft.Network/virtualNetworks/delete",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        }
+      ]
+    },
+    {
+      "Name": "AzSK_Security_Alert",
+      "Description": "Alerts for KeyVault",
+      "Enabled": true,
+      "Tags": [
+        "Mandatory"
+      ],
+      "AlertOperationList": [
+        {
+          "Name": "AzSK_Update_Key_Vault",
+          "Description": "Create a new key vault or update the properties of an existing key vault",
+          "OperationName": "Microsoft.KeyVault/vaults/write",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Delete_Key_Vault",
+          "Description": "Delete a key vault",
+          "OperationName": "Microsoft.KeyVault/vaults/delete",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        },
+        {
+          "Name": "AzSK_Update_Secret",
+          "Description": "Create a new secret or update the value of an existing secret",
+          "OperationName": "Microsoft.KeyVault/vaults/secrets/write",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        }
+      ]
+    },
+    {
+      "Name": "AzSK_Analytics_Alert",
+      "Description": "Alerts for Analytics",
+      "Enabled": true,
+      "Tags": [
+        "Mandatory"
+      ],
+      "AlertOperationList": [
+      {
+        "Name": "AzSK_Delete_DataLakeAnalytics_Account",
+        "Description": "Delete the DataLakeAnalytics account",
+        "OperationName": "Microsoft.DataLakeAnalytics/accounts/delete",
+        "Tags": [
+          "Mandatory"
+        ],
+        "Severity": "High",
+        "Enabled": true
+      }
+      ]
+    },
+    {
+      "Name": "AzSK_Compute_Alert",
+      "Description": "Alerts for Compute",
+      "Enabled": true,
+      "Tags": [
+        "Mandatory"
+      ],
+      "AlertOperationList": [
+        {
+          "Name": "AzSK_Delete_Virtual_Machine",
+          "Description": "Deletes the virtual machine",
+          "OperationName": "Microsoft.Compute/virtualMachines/delete",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        }
+      ]
+    },
+    {
+      "Name": "AzSK_Web_Alert_v2",
+      "Description": "Alerts for Web",
+      "Enabled": true,
+      "Tags": [
+        "Mandatory"
+      ],
+      "AlertOperationList": [
+        {
+          "Name": "AzSK_Delete_Web_App",
+          "Description": "Delete an existing Web App.",
+          "OperationName": "Microsoft.Web/sites/Delete",
+          "Tags": [
+            "Mandatory"
+          ],
+          "Severity": "High",
+          "Enabled": true
+        }
       ]
     }
   ]
