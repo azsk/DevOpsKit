@@ -779,8 +779,8 @@ function AddAutomationVariable
 	#------------------------------------Add Log Analytics specific Automation variables-------------------
 	try
 	{
-		if([FeatureFlightingManager]::GetFeatureStatus("EnableAdditionOfLogAnalyticsVariables", $SubscriptionID) -eq $true)
-		{
+		#if([FeatureFlightingManager]::GetFeatureStatus("EnableAdditionOfLogAnalyticsVariables", $SubscriptionID) -eq $true)
+		#{
 			PublishEvent -EventName "Adding Log Analytics variables Start"
 
 			$newLAWorkspaceIdName = "LAWorkspaceId"			
@@ -808,7 +808,7 @@ function AddAutomationVariable
 			}
 			
 			PublishEvent -EventName "Adding Log Analytics variables Complete"
-		}
+		#}
 	}
 	catch
 	{
