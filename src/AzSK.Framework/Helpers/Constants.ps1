@@ -157,7 +157,7 @@ class Constants
 	static [string] $MultipleModulesWarning =  "Found multiple modules ({0} and {1}) loaded in the PS session.`r`n"+
 			"Stopping cmdlet execution.`r`n"+
 			"Recommendation: Please start a fresh PS session and run 'Import-Module {2}' first to avoid getting into this situation.`r`n"
-			
+
 	#Constants for Org Policy
 	static [string] $OrgPolicyTagPrefix = "AzSKOrgName_"
 	static [int] $SASTokenExpiryReminderInDays = 30
