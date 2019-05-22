@@ -679,13 +679,31 @@ function AddAutomationVariable
 	#Setup during Install-CA. These are the RGs that CA will scan. "*" is allowed.
 	$ResourceGroupNames = Get-AutomationVariable -Name "AppResourceGroupNames"
 	
-	#Primary Log Analytics Workspace info. This is mandatory. CA will send events to this WS.
-    $LAWorkspaceId = Get-AutomationVariable -Name "OMSWorkspaceId"
-	$LAWorkspaceSharedKey = Get-AutomationVariable -Name "OMSSharedKey"
+	#Primary Log Analytics workspace info. This is mandatory. CA will send events to this WS.
+	$LAWorkspaceId = Get-AutomationVariable -Name "LAWorkspaceId" -ErrorAction SilentlyContinue
+	if(($LAWorkspaceId | Measure-Object).Count -eq 0)
+	{
+		$LAWorkspaceId = Get-AutomationVariable -Name "OMSWorkspaceId"
+	}
+
+	$LAWorkspaceSharedKey = Get-AutomationVariable -Name "LAWSharedKey" -ErrorAction SilentlyContinue
+	if(($LAWorkspaceSharedKey | Measure-Object).Count -eq 0)
+	{
+		$LAWorkspaceSharedKey = Get-AutomationVariable -Name "OMSSharedKey"
+	}
 	
-	#Secondary/alternate Log Analytics Workspace info. This is optional. Facilitates federal/state type models.
-	$AltLAWorkspaceId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
-	$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
+	#Secondary/alternate Log Analytics workspace info. This is optional. Facilitates federal/state type models.
+	$AltLAWorkspaceId = Get-AutomationVariable -Name "AltLAWorkspaceId" -ErrorAction SilentlyContinue
+	if(($AltLAWorkspaceId | Measure-Object).Count -eq 0)
+	{
+		$AltLAWorkspaceId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+	}
+
+	$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltLAWSharedKey" -ErrorAction SilentlyContinue
+	if(($AltLAWorkspaceSharedKey | Measure-Object).Count -eq 0)
+	{
+		$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
+	}
 	
 	#CA can also optionally be configured to send events to a Webhook. 
 	$WebhookUrl = Get-AutomationVariable -Name "WebhookUrl" -ErrorAction SilentlyContinue
@@ -785,23 +803,22 @@ function AddAutomationVariable
 		$newLAWSharedKeyName = "LAWSharedKey"
 		$newAltLAWorkspaceIdName = "AltLAWorkspaceId"
 		$newAltLAWSharedKeyName = "AltLAWSharedKey"
-		$laWorkspaceIdDetails = Get-AzureRmAutomationVariable -Name "OMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG
-		$laWorkspaceSharedKeyDetails = Get-AzureRmAutomationVariable -Name "OMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG
+		$laWorkspaceIdDetails = Get-AzureRmAutomationVariable -Name "OMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		$laWorkspaceSharedKeyDetails = Get-AzureRmAutomationVariable -Name "OMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
 		$altLAWorkspaceIdDetails = Get-AzureRmAutomationVariable -Name "AltOMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
 		$altLAWorkspaceSharedKeyDetails = Get-AzureRmAutomationVariable -Name "AltOMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
 	
 		#Adding Primary Log Analytics Workspace variables.
-		AddAutomationVariable -VariableName $newLAWorkspaceIdName -Details $laWorkspaceIdDetails
-		AddAutomationVariable -VariableName $newLAWSharedKeyName -Details $laWorkspaceSharedKeyDetails
+		if(($laWorkspaceIdDetails | Measure-Object).Count -gt 0)
+		{
+			AddAutomationVariable -VariableName $newLAWorkspaceIdName -Details $laWorkspaceIdDetails
+			AddAutomationVariable -VariableName $newLAWSharedKeyName -Details $laWorkspaceSharedKeyDetails
+		}
 		
 		#Adding Secondary/Alternate Log Analytics Workspace variables.
 		if(($altLAWorkspaceIdDetails | Measure-Object).Count -gt 0)
 		{
 			AddAutomationVariable -VariableName $newAltLAWorkspaceIdName -Details $altLAWorkspaceIdDetails
-		}
-		
-		if(($altLAWorkspaceSharedKeyDetails | Measure-Object).Count -gt 0)
-		{
 			AddAutomationVariable -VariableName $newAltLAWSharedKeyName -Details $altLAWorkspaceSharedKeyDetails
 		}
 		
