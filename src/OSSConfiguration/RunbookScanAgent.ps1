@@ -694,13 +694,31 @@ try {
 	$ResourceGroupNames = Get-AutomationVariable -Name "AppResourceGroupNames"
 	
 	#Primary Log Analytics workspace info. This is mandatory. CA will send events to this WS.
-    $LAWorkspaceId = Get-AutomationVariable -Name "OMSWorkspaceId"
-	$LAWorkspaceSharedKey = Get-AutomationVariable -Name "OMSSharedKey"
+	$LAWorkspaceId = Get-AutomationVariable -Name "LAWorkspaceId" -ErrorAction SilentlyContinue
+	if(($LAWorkspaceId | Measure-Object).Count -eq 0)
+	{
+		$LAWorkspaceId = Get-AutomationVariable -Name "OMSWorkspaceId"
+	}
+
+	$LAWorkspaceSharedKey = Get-AutomationVariable -Name "LAWSharedKey" -ErrorAction SilentlyContinue
+	if(($LAWorkspaceSharedKey | Measure-Object).Count -eq 0)
+	{
+		$LAWorkspaceSharedKey = Get-AutomationVariable -Name "OMSSharedKey"
+	}
 	
 	#Secondary/alternate Log Analytics workspace info. This is optional. Facilitates federal/state type models.
-	$AltLAWorkspaceId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
-	$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
-	
+	$AltLAWorkspaceId = Get-AutomationVariable -Name "AltLAWorkspaceId" -ErrorAction SilentlyContinue
+	if(($AltLAWorkspaceId | Measure-Object).Count -eq 0)
+	{
+		$AltLAWorkspaceId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+	}
+
+	$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltLAWSharedKey" -ErrorAction SilentlyContinue
+	if(($AltLAWorkspaceSharedKey | Measure-Object).Count -eq 0)
+	{
+		$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
+	}
+
 	#CA can also optionally be configured to send events to a Webhook. 
 	$WebhookUrl = Get-AutomationVariable -Name "WebhookUrl" -ErrorAction SilentlyContinue
     $WebhookAuthZHeaderName = Get-AutomationVariable -Name "WebhookAuthZHeaderName" -ErrorAction SilentlyContinue
