@@ -854,13 +854,19 @@ try
 			if(($laWorkspaceIdDetails | Measure-Object).Count -gt 0)
 			{
 				AddAutomationVariable -VariableName $newLAWorkspaceIdName -Details $laWorkspaceIdDetails
+			}
+			if(($laWorkspaceSharedKeyDetails | Measure-Object).Count -gt 0)
+			{
 				AddAutomationVariable -VariableName $newLAWSharedKeyName -Details $laWorkspaceSharedKeyDetails
 			}
-			
+					
 			#Adding Secondary/Alternate Log Analytics Workspace variables.
 			if(($altLAWorkspaceIdDetails | Measure-Object).Count -gt 0)
 			{
 				AddAutomationVariable -VariableName $newAltLAWorkspaceIdName -Details $altLAWorkspaceIdDetails
+			}
+			if(($altLAWorkspaceSharedKeyDetails | Measure-Object).Count -gt 0)
+			{
 				AddAutomationVariable -VariableName $newAltLAWSharedKeyName -Details $altLAWorkspaceSharedKeyDetails
 			}
 			

@@ -704,7 +704,7 @@ function AddAutomationVariable
 	{
 		$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
 	}
-	
+
 	#CA can also optionally be configured to send events to a Webhook. 
 	$WebhookUrl = Get-AutomationVariable -Name "WebhookUrl" -ErrorAction SilentlyContinue
     $WebhookAuthZHeaderName = Get-AutomationVariable -Name "WebhookAuthZHeaderName" -ErrorAction SilentlyContinue
@@ -812,13 +812,19 @@ function AddAutomationVariable
 		if(($laWorkspaceIdDetails | Measure-Object).Count -gt 0)
 		{
 			AddAutomationVariable -VariableName $newLAWorkspaceIdName -Details $laWorkspaceIdDetails
+		}
+		if(($laWorkspaceSharedKeyDetails | Measure-Object).Count -gt 0)
+		{
 			AddAutomationVariable -VariableName $newLAWSharedKeyName -Details $laWorkspaceSharedKeyDetails
 		}
-		
+				
 		#Adding Secondary/Alternate Log Analytics Workspace variables.
 		if(($altLAWorkspaceIdDetails | Measure-Object).Count -gt 0)
 		{
 			AddAutomationVariable -VariableName $newAltLAWorkspaceIdName -Details $altLAWorkspaceIdDetails
+		}
+		if(($altLAWorkspaceSharedKeyDetails | Measure-Object).Count -gt 0)
+		{
 			AddAutomationVariable -VariableName $newAltLAWSharedKeyName -Details $altLAWorkspaceSharedKeyDetails
 		}
 		
