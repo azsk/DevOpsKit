@@ -779,36 +779,33 @@ function AddAutomationVariable
 	#------------------------------------Add Log Analytics specific Automation variables-------------------
 	try
 	{
-		#if([FeatureFlightingManager]::GetFeatureStatus("EnableAdditionOfLogAnalyticsVariables", $SubscriptionID) -eq $true)
-		#{
-			PublishEvent -EventName "Adding Log Analytics variables Start"
+		PublishEvent -EventName "Adding Log Analytics variables Start"
 
-			$newLAWorkspaceIdName = "LAWorkspaceId"			
-			$newLAWSharedKeyName = "LAWSharedKey"
-			$newAltLAWorkspaceIdName = "AltLAWorkspaceId"
-			$newAltLAWSharedKeyName = "AltLAWSharedKey"
-			$laWorkspaceIdDetails = Get-AzureRmAutomationVariable -Name "OMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG
-			$laWorkspaceSharedKeyDetails = Get-AzureRmAutomationVariable -Name "OMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG
-			$altLAWorkspaceIdDetails = Get-AzureRmAutomationVariable -Name "AltOMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
-			$altLAWorkspaceSharedKeyDetails = Get-AzureRmAutomationVariable -Name "AltOMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		$newLAWorkspaceIdName = "LAWorkspaceId"			
+		$newLAWSharedKeyName = "LAWSharedKey"
+		$newAltLAWorkspaceIdName = "AltLAWorkspaceId"
+		$newAltLAWSharedKeyName = "AltLAWSharedKey"
+		$laWorkspaceIdDetails = Get-AzureRmAutomationVariable -Name "OMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG
+		$laWorkspaceSharedKeyDetails = Get-AzureRmAutomationVariable -Name "OMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG
+		$altLAWorkspaceIdDetails = Get-AzureRmAutomationVariable -Name "AltOMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		$altLAWorkspaceSharedKeyDetails = Get-AzureRmAutomationVariable -Name "AltOMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+	
+		#Adding Primary Log Analytics Workspace variables.
+		AddAutomationVariable -VariableName $newLAWorkspaceIdName -Details $laWorkspaceIdDetails
+		AddAutomationVariable -VariableName $newLAWSharedKeyName -Details $laWorkspaceSharedKeyDetails
 		
-			#Adding Primary Log Analytics Workspace variables.
-			AddAutomationVariable -VariableName $newLAWorkspaceIdName -Details $laWorkspaceIdDetails
-			AddAutomationVariable -VariableName $newLAWSharedKeyName -Details $laWorkspaceSharedKeyDetails
-			
-			#Adding Secondary/Alternate Log Analytics Workspace variables.
-			if(($altLAWorkspaceIdDetails | Measure-Object).Count -gt 0)
-			{
-				AddAutomationVariable -VariableName $newAltLAWorkspaceIdName -Details $altLAWorkspaceIdDetails
-			}
-			
-			if(($altLAWorkspaceSharedKeyDetails | Measure-Object).Count -gt 0)
-			{
-				AddAutomationVariable -VariableName $newAltLAWSharedKeyName -Details $altLAWorkspaceSharedKeyDetails
-			}
-			
-			PublishEvent -EventName "Adding Log Analytics variables Complete"
-		#}
+		#Adding Secondary/Alternate Log Analytics Workspace variables.
+		if(($altLAWorkspaceIdDetails | Measure-Object).Count -gt 0)
+		{
+			AddAutomationVariable -VariableName $newAltLAWorkspaceIdName -Details $altLAWorkspaceIdDetails
+		}
+		
+		if(($altLAWorkspaceSharedKeyDetails | Measure-Object).Count -gt 0)
+		{
+			AddAutomationVariable -VariableName $newAltLAWSharedKeyName -Details $altLAWorkspaceSharedKeyDetails
+		}
+		
+		PublishEvent -EventName "Adding Log Analytics variables Complete"
 	}
 	catch
 	{

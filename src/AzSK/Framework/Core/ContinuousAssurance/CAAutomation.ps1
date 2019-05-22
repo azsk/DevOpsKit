@@ -43,6 +43,8 @@ class CCAutomation: CommandBase
 	[int] $defaultScanIntervalInHours = 24;
 	[bool] $LAWVariablesExist = $false;
 	[bool] $AltLAWVariablesExist = $false;
+	[bool] $OMSVariablesExist = $false;
+	[bool] $AltOMSVariablesExist = $false;
 	
 	CCAutomation(
 	[string] $subscriptionId, `
@@ -763,43 +765,36 @@ class CCAutomation: CommandBase
 				elseif(![string]::IsNullOrWhiteSpace($this.UserConfig.LAWCredential.WorkspaceId) -and ![string]::IsNullOrWhiteSpace($this.UserConfig.LAWCredential.SharedKey))
 				{
 				    $varOMSWorkspaceId = [Variable]@{
-			    	    Name = "OMSWorkspaceId";
+			    	    Name = [Constants]::OMSWorkspaceId;
 			    	    Value = $this.UserConfig.LAWCredential.WorkspaceId;
 			    	    IsEncrypted = $false;
 			    	    Description ="Log Analytics Workspace Id"
 			        }
 			        $this.UpdateVariable($varOMSWorkspaceId)
-			        $this.PublishCustomMessage("Updating variable: ["+$varOMSWorkspaceId.Name+"]")
 
                     $varOMSSharedKey = [Variable]@{
-			             Name = "OMSSharedKey";
+			             Name = [Constants]::OMSSharedKey;
 			             Value = $this.UserConfig.LAWCredential.SharedKey;
 			             IsEncrypted = $false;
 			             Description ="Log Analytics Workspace Shared Key"
 			        }
 			        $this.UpdateVariable($varOMSSharedKey)
-					$this.PublishCustomMessage("Updating variable: ["+$varOMSSharedKey.Name+"]")
 					
-					if([FeatureFlightingManager]::GetFeatureStatus("EnableAdditionOfLogAnalyticsVariables", $($this.SubscriptionContext.SubscriptionId)) -eq $true)
-					{
-						$varLAWorkspaceId = [Variable]@{
-							Name = "LAWorkspaceId";
-							Value = $this.UserConfig.LAWCredential.WorkspaceId;
-							IsEncrypted = $false;
-							Description ="Log Analytics Workspace Id"
-						}
-						$this.UpdateVariable($varLAWorkspaceId)
-						$this.PublishCustomMessage("Updating variable: [" + $varLAWorkspaceId.Name + "]")
-	
-						$varLAWSharedKey = [Variable]@{
-							 Name = "LAWSharedKey";
-							 Value = $this.UserConfig.LAWCredential.SharedKey;
-							 IsEncrypted = $false;
-							 Description ="Log Analytics Workspace Shared Key"
-						}
-						$this.UpdateVariable($varLAWSharedKey)
-						$this.PublishCustomMessage("Updating variable: [" + $varLAWSharedKey.Name + "]")
+					$varLAWorkspaceId = [Variable]@{
+						Name = [Constants]::LAWorkspaceId;
+						Value = $this.UserConfig.LAWCredential.WorkspaceId;
+						IsEncrypted = $false;
+						Description ="Log Analytics Workspace Id"
 					}
+					$this.UpdateVariable($varLAWorkspaceId)
+
+					$varLAWSharedKey = [Variable]@{
+						 Name = [Constants]::LAWSharedKey;
+						 Value = $this.UserConfig.LAWCredential.SharedKey;
+						 IsEncrypted = $false;
+						 Description ="Log Analytics Workspace Shared Key"
+					}
+					$this.UpdateVariable($varLAWSharedKey)
 				}
 				
 				#Alt Log Analytics Workspace Settings
@@ -810,43 +805,36 @@ class CCAutomation: CommandBase
                 elseif(![string]::IsNullOrWhiteSpace($this.UserConfig.AltLAWCredential.WorkspaceId) -and ![string]::IsNullOrWhiteSpace($this.UserConfig.AltLAWCredential.SharedKey))
                 {
 		        	$varAltOMSWorkspaceId = [Variable]@{
-		        		Name = "AltOMSWorkspaceId";
+		        		Name = [Constants]::AltOMSWorkspaceId;
 		        		Value = $this.UserConfig.AltLAWCredential.WorkspaceId;
 		        		IsEncrypted = $false;
 		        		Description ="Alternate Log Analytics Workspace Id"
 		        	}
 		        	$this.UpdateVariable($varAltOMSWorkspaceId)
-		        	$this.PublishCustomMessage("Updating variable: ["+$varAltOMSWorkspaceId.Name+"]")
 
 		        	$varAltOMSSharedKey = [Variable]@{
-		        		Name = "AltOMSSharedKey";
+		        		Name = [Constants]::AltOMSSharedKey;
 		        		Value = $this.UserConfig.AltLAWCredential.SharedKey;
 		        		IsEncrypted = $false;
 		        		Description ="Alternate Log Analytics Workspace Shared Key"
 		        	}
-		        	$this.UpdateVariable($varAltOMSSharedKey)
-					$this.PublishCustomMessage("Updating variable: ["+$varAltOMSSharedKey.Name+"]")					
+		        	$this.UpdateVariable($varAltOMSSharedKey)				
 
-					if([FeatureFlightingManager]::GetFeatureStatus("EnableAdditionOfLogAnalyticsVariables", $($this.SubscriptionContext.SubscriptionId)) -eq $true)
-					{
-						$varAltLAWorkspaceId = [Variable]@{
-							Name = "AltLAWorkspaceId";
-							Value = $this.UserConfig.AltLAWCredential.WorkspaceId;
-							IsEncrypted = $false;
-							Description ="Alternate Log Analytics Workspace Id"
-						}
-						$this.UpdateVariable($varAltLAWorkspaceId)
-						$this.PublishCustomMessage("Updating variable: [" + $varAltLAWorkspaceId.Name + "]")
-	
-						$varAltLAWSharedKey = [Variable]@{
-							Name = "AltLAWSharedKey";
-							Value = $this.UserConfig.AltLAWCredential.SharedKey;
-							IsEncrypted = $false;
-							Description ="Alternate Log Analytics Workspace Shared Key"
-						}
-						$this.UpdateVariable($varAltLAWSharedKey)
-						$this.PublishCustomMessage("Updating variable: [" + $varAltLAWSharedKey.Name + "]")
+					$varAltLAWorkspaceId = [Variable]@{
+						Name = [Constants]::AltLAWorkspaceId;
+						Value = $this.UserConfig.AltLAWCredential.WorkspaceId;
+						IsEncrypted = $false;
+						Description ="Alternate Log Analytics Workspace Id"
 					}
+					$this.UpdateVariable($varAltLAWorkspaceId)
+
+					$varAltLAWSharedKey = [Variable]@{
+						Name = [Constants]::AltLAWSharedKey;
+						Value = $this.UserConfig.AltLAWCredential.SharedKey;
+						IsEncrypted = $false;
+						Description ="Alternate Log Analytics Workspace Shared Key"
+					}
+					$this.UpdateVariable($varAltLAWSharedKey)
                 }
             }
             
@@ -860,7 +848,6 @@ class CCAutomation: CommandBase
 					Description ="Webhook Url"
 				}
 				$this.UpdateVariable($varWebhookUrl)
-				$this.PublishCustomMessage("Updating variable: ["+$varWebhookUrl.Name+"]")
 			}
 			if($null -ne $this.UserConfig -and $null -ne $this.UserConfig.WebhookDetails `
 				-and -not [string]::IsNullOrWhiteSpace($this.UserConfig.WebhookDetails.AuthZHeaderName) `
@@ -873,7 +860,6 @@ class CCAutomation: CommandBase
 					Description ="Webhook AuthZ header name"
 				}
 				$this.UpdateVariable($varWebhookAuthZHeaderName)
-				$this.PublishCustomMessage("Updating variable: ["+$varWebhookAuthZHeaderName.Name+"]")
 
 				$varWebhookAuthZHeaderValue = [Variable]@{
 					Name = "WebhookAuthZHeaderValue";
@@ -881,8 +867,7 @@ class CCAutomation: CommandBase
 					IsEncrypted = $true;
 					Description ="Webhook AuthZ header value"
 				}
-				$this.UpdateVariable($varWebhookAuthZHeaderValue)
-				$this.PublishCustomMessage("Updating variable: ["+$varWebhookAuthZHeaderValue.Name+"]")				
+				$this.UpdateVariable($varWebhookAuthZHeaderValue)			
 			}
 
 			if($null -ne $this.UserConfig -and ![string]::IsNullOrWhiteSpace($this.UserConfig.ResourceGroupNames))
@@ -894,7 +879,6 @@ class CCAutomation: CommandBase
 				Description ="Comma separated values of the different resource groups that has to be scanned"
 				}
 				$this.UpdateVariable($varAppRG)
-				$this.PublishCustomMessage("Updating variable: ["+$varAppRG.Name+"]")
 			}
 			else
 			{
@@ -1385,7 +1369,10 @@ class CCAutomation: CommandBase
 		$caSummaryTable.Item("AutomationAccountName") = $caAutomationAccount.AutomationAccountName
 		if($logAnayticsWorkspaceDetails)
 		{
-			$caSummaryTable.Item("OMSWorkspaceId") = $logAnayticsWorkspaceDetails.Value
+			if($this.OMSVariablesExist)
+			{
+				$caSummaryTable.Item("OMSWorkspaceId") = $logAnayticsWorkspaceDetails.Value
+			}
 			if($this.LAWVariablesExist)
 			{
 				$caSummaryTable.Item("LAWorkspaceId") = $logAnayticsWorkspaceDetails.Value
@@ -1394,7 +1381,11 @@ class CCAutomation: CommandBase
 
 		if($altLogAnayticsWorkspaceDetails)
 		{
-			$caSummaryTable.Item("AltOMSWorkspaceId") = $altLogAnayticsWorkspaceDetails.Value
+			if($this.AltOMSVariablesExist)
+			{
+				$caSummaryTable.Item("AltOMSWorkspaceId") = $altLogAnayticsWorkspaceDetails.Value
+			}
+			
 			if($this.AltLAWVariablesExist)
 			{
 				$caSummaryTable.Item("AltLAWorkspaceId") = $altLogAnayticsWorkspaceDetails.Value
@@ -2820,74 +2811,37 @@ class CCAutomation: CommandBase
         }
 
 		#Log Analytics workspace Settings
-		$varOMSWorkspaceId = [Variable]@{
-			Name = [Constants]::OMSWorkspaceId;
+		$varLAWorkspaceId = [Variable]@{
+			Name = [Constants]::LAWorkspaceId;
 			Value = $this.UserConfig.LAWCredential.WorkspaceId;
 			IsEncrypted = $false;
 			Description ="Log Analytics Workspace Id"
         }
-		$varOMSSharedKey = [Variable]@{
-			Name = [Constants]::OMSSharedKey;
+		$varLAWSharedKey = [Variable]@{
+			Name = [Constants]::LAWSharedKey;
 			Value = $this.UserConfig.LAWCredential.SharedKey;
 			IsEncrypted = $false;
 			Description ="Log Analytics Workspace Shared Key"
         }
 
-		$this.Variables += @($varAppRG,$varOMSWorkspaceId,$varOMSSharedKey,$varStorageName)
+		$this.Variables += @($varAppRG, $varLAWorkspaceId, $varLAWSharedKey, $varStorageName)
 
 		#Alt Log Analytics workspace Settings
 		if($null -ne $this.UserConfig.AltLAWCredential -and -not [string]::IsNullOrWhiteSpace($this.UserConfig.AltLAWCredential.WorkspaceId) -and -not [string]::IsNullOrWhiteSpace($this.UserConfig.AltLAWCredential.SharedKey))
 		{
-			$varAltOMSWorkspaceId = [Variable]@{
-				Name = [Constants]::AltOMSWorkspaceId;
+			$varAltLAWorkspaceId = [Variable]@{
+				Name = [Constants]::AltLAWorkspaceId;
 				Value = $this.UserConfig.AltLAWCredential.WorkspaceId;
 				IsEncrypted = $false;
 				Description ="Alternate Log Analytics Workspace Id"
 			}
-			$varAltOMSSharedKey = [Variable]@{
+			$varAltLAWSharedKey = [Variable]@{
 				Name = [Constants]::AltOMSSharedKey;
 				Value = $this.UserConfig.AltLAWCredential.SharedKey;
 				IsEncrypted = $false;
 				Description ="Alternate Log Analytics Workspace Shared Key"
 			}
-			$this.Variables += @($varAltOMSWorkspaceId,$varAltOMSSharedKey)
-		}
-
-		if([FeatureFlightingManager]::GetFeatureStatus("EnableAdditionOfLogAnalyticsVariables", $($this.SubscriptionContext.SubscriptionId)) -eq $true)
-		{
-			#Log Analytics workspace Settings
-			$varLAWorkspaceId = [Variable]@{
-				Name = [Constants]::LAWorkspaceId;
-				Value = $this.UserConfig.LAWCredential.WorkspaceId;
-				IsEncrypted = $false;
-				Description ="Log Analytics Workspace Id"
-			}
-			$varLAWSharedKey = [Variable]@{
-				Name = [Constants]::LAWSharedKey;
-				Value = $this.UserConfig.LAWCredential.SharedKey;
-				IsEncrypted = $false;
-				Description ="Log Analytics Workspace Shared Key"
-			}
-
-			$this.Variables += @($varLAWorkspaceId, $varLAWSharedKey)
-
-			#Alt Log Analytics workspace Settings
-			if($null -ne $this.UserConfig.AltLAWCredential -and -not [string]::IsNullOrWhiteSpace($this.UserConfig.AltLAWCredential.WorkspaceId) -and -not [string]::IsNullOrWhiteSpace($this.UserConfig.AltLAWCredential.SharedKey))
-			{
-				$varAltLAWorkspaceId = [Variable]@{
-					Name = [Constants]::AltLAWorkspaceId;
-					Value = $this.UserConfig.AltLAWCredential.WorkspaceId;
-					IsEncrypted = $false;
-					Description ="Alternate Log Analytics Workspace Id"
-				}
-				$varAltLAWSharedKey = [Variable]@{
-					Name = [Constants]::AltLAWSharedKey;
-					Value = $this.UserConfig.AltLAWCredential.SharedKey;
-					IsEncrypted = $false;
-					Description ="Alternate Log Analytics Workspace Shared Key"
-				}
-				$this.Variables += @($varAltLAWorkspaceId, $varAltLAWSharedKey)
-			}
+			$this.Variables += @($varAltLAWorkspaceId, $varAltLAWSharedKey)
 		}
 
 		#Webhook settings
@@ -3228,20 +3182,32 @@ class CCAutomation: CommandBase
 	
 	hidden [void] UpdateVariable($VariableObj)
 	{	
+		$doNotAdd = $false
 		#remove existing and create new variable
 		$existingVar = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $VariableObj.Name -ErrorAction SilentlyContinue
 		if(($existingVar|Measure-Object).Count -gt 0)
 		{
 			$existingVar|Remove-AzAutomationVariable -ErrorAction Stop
 		}
-		$newVariable = New-AzAutomationVariable -Name $VariableObj.Name `
-		-Description $VariableObj.Description`
-		-Encrypted $VariableObj.IsEncrypted `
-		-Value $VariableObj.Value `
-		-ResourceGroupName $this.AutomationAccount.ResourceGroup `
-		-AutomationAccountName $this.AutomationAccount.Name -ErrorAction Stop 
-		
-		$this.OutputObject.Variables += ($newVariable | Select-Object Name,Description,Value) 
+		#If the OMS variables don't already exist - it means the ICA was run using v3.14.0 or later.
+		#We do not want addition of OMS variables on UCA in that case.
+		elseif(($VariableObj.Name -eq [Constants]::OMSWorkspaceId) -or ($VariableObj.Name -eq [Constants]::OMSSharedKey) -or ($VariableObj.Name -eq [Constants]::AltOMSWorkspaceId) -or ($VariableObj.Name -eq [Constants]::AltOMSSharedKey))
+		{
+			$doNotAdd = $true
+		}
+
+		if(!$doNotAdd)
+		{
+			$newVariable = New-AzAutomationVariable -Name $VariableObj.Name `
+			-Description $VariableObj.Description`
+			-Encrypted $VariableObj.IsEncrypted `
+			-Value $VariableObj.Value `
+			-ResourceGroupName $this.AutomationAccount.ResourceGroup `
+			-AutomationAccountName $this.AutomationAccount.Name -ErrorAction Stop 
+			
+			$this.OutputObject.Variables += ($newVariable | Select-Object Name,Description,Value)
+			$this.PublishCustomMessage("Updating variable: [" + $VariableObj.Name + "]")
+		}
 	}
 	hidden [void] RemoveCCAzureRunAsConnectionIfExists()
 	{
@@ -3661,6 +3627,10 @@ class CCAutomation: CommandBase
 		{
 			$laWorkspaceIdDetails = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 			-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
+			if(($laWorkspaceIdDetails | Measure-Object).Count -gt 0)
+			{
+				$this.OMSVariablesExist = $true;
+			}
 		}
 		
 		if($laWorkspaceIdDetails -and ($null -ne $laWorkspaceIdDetails.Value))
@@ -3686,6 +3656,10 @@ class CCAutomation: CommandBase
 		{
 			$altLAWorkspaceIdDetails = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 			-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+			if(($altLAWorkspaceIdDetails | Measure-Object).Count -gt 0)
+			{
+				$this.AltOMSVariablesExist = $true;
+			}
 		}
 		
 		if($altLAWorkspaceIdDetails -and ($null -ne $altLAWorkspaceIdDetails.Value))
