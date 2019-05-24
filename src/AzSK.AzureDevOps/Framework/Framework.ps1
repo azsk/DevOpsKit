@@ -59,7 +59,7 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 . $PSScriptRoot\Managers\FeatureFlightingManager.ps1
 . $PSScriptRoot\Managers\AzSKPDFExtension.ps1
 
-. $PSScriptRoot\Helpers\OMSHelper.ps1
+. $PSScriptRoot\Helpers\LogAnalyticsHelper.ps1
 . $PSScriptRoot\Helpers\RemoteReportHelper.ps1
 . $PSScriptRoot\Helpers\RemoteApiHelper.ps1
 . $PSScriptRoot\Core\PrivacyNotice.ps1
@@ -91,7 +91,7 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 . $PSScriptRoot\Listeners\RemoteReports\RemoteReportsListener.ps1
 . $PSScriptRoot\Listeners\RemoteReports\AIOrgTelemetry.ps1
 . $PSScriptRoot\Listeners\RemoteReports\UsageTelemetry.ps1
-. $PSScriptRoot\Listeners\OMS\OMSOutput.ps1
+. $PSScriptRoot\Listeners\LogAnalytics\LogAnalyticsOutput.ps1
 . $PSScriptRoot\Listeners\FixControl\WriteFixControlFiles.ps1
 . $PSScriptRoot\Listeners\EventHub\EventHubOutput.ps1
 . $PSScriptRoot\Listeners\Webhook\WebhookOutput.ps1

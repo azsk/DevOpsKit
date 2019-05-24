@@ -72,7 +72,7 @@
     <Folder Include="Framework\Listeners\FixControl\FixControlScripts\" />
     <Folder Include="Framework\Listeners\LocalSubscriptionReport\" />
     <Folder Include="Framework\Listeners\RemoteReports\" />
-    <Folder Include="Framework\Listeners\OMS\" />
+    <Folder Include="Framework\Listeners\LogAnalytics\" />
     <Folder Include="Framework\Listeners\UserReports\" />
     <Folder Include="Framework\Listeners\Webhook\" />
     <Folder Include="Framework\Managers\" />
@@ -94,7 +94,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AlertMonitoring\EventHubSetup.ps1" />
-    <Compile Include="AlertMonitoring\OMS.ps1" />
+    <Compile Include="AlertMonitoring\LogAnalytics.ps1" />
     <Compile Include="AlertMonitoring\WebhookSetup.ps1" />
     <Compile Include="ARMChecker\ARMChecker.ps1" />
     <Compile Include="AzSKStaging.psd1" />
@@ -126,7 +126,7 @@
     <Compile Include="Framework\Core\SVT\Services\HDInsight.ps1" />
     <Compile Include="Framework\Core\SVT\Services\KubernetesService.ps1" />
     <Compile Include="Framework\Helpers\AliasHelper.ps1" />
-    <Compile Include="Framework\Helpers\OMSHelper.ps1" />
+    <Compile Include="Framework\Helpers\LogAnalyticsHelper.ps1" />
     <Compile Include="Framework\Helpers\ComplianceReportHelper.ps1" />
     <Compile Include="Framework\Helpers\UserSubscriptionDataHelper.ps1" />
     <Compile Include="Framework\Listeners\LocalSubscriptionReport\StorageReport.ps1" />
@@ -161,7 +161,7 @@
     <Compile Include="Framework\Configurations\SubscriptionSecurity\Subscription.RBAC.json" />
     <Compile Include="Framework\Configurations\SubscriptionSecurity\Subscription.RBAC.sample.json" />
     <Compile Include="Framework\Core\ContinuousAssurance\CAAutomation.ps1" />
-    <Compile Include="Framework\Core\AzureMonitoring\OMSMonitoring.ps1" />
+    <Compile Include="Framework\Core\AzureMonitoring\LogAnalyticsMonitoring.ps1" />
     <Compile Include="Framework\Core\PrivacyNotice.ps1" />
     <Compile Include="Framework\Core\FixControl\Services\AppServiceFix.ps1" />
     <Compile Include="Framework\Core\FixControl\Services\StorageFix.ps1" />
@@ -250,7 +250,7 @@
     <Compile Include="Framework\Listeners\RemoteReports\UsageTelemetry.ps1" />
     <Compile Include="Framework\Listeners\RemoteReports\RemoteReportsListener.ps1" />
     <Compile Include="Framework\Listeners\ListenerHelper.ps1" />
-    <Compile Include="Framework\Listeners\OMS\OMSOutput.ps1" />
+    <Compile Include="Framework\Listeners\LogAnalytics\LogAnalyticsOutput.ps1" />
     <Compile Include="Framework\Listeners\UserReports\WriteDataFile.ps1" />
     <Compile Include="Framework\Listeners\UserReports\WriteDetailedLog.ps1" />
     <Compile Include="Framework\Listeners\UserReports\WriteEnvironmentFile.ps1" />
@@ -295,8 +295,8 @@
     <Content Include="ARMCheckerLib\AzSK.ARMChecker.Lib.dll" />
     <Content Include="ARMCheckerLib\controls.gen.json" />
     <Content Include="ARMCheckerLib\Newtonsoft.Json.dll" />
-    <Content Include="Framework\Configurations\AlertMonitoring\AZSK.AM.OMS.GenericView.V2.omsview" />
-    <Content Include="Framework\Configurations\AlertMonitoring\OMSSettings.json" />
+    <Content Include="Framework\Configurations\AlertMonitoring\AZSK.AM.LogAnalytics.GenericView.V2.lawview" />
+    <Content Include="Framework\Configurations\AlertMonitoring\LogAnalyticsSettings.json" />
     <Content Include="Framework\Configurations\ARMChecker\ARMControls.json" />
     <Content Include="Framework\Configurations\AzSKSettings.json" />
     <Content Include="Framework\Configurations\SubscriptionSecurity\SecurityCenter.json" />

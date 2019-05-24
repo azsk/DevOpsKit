@@ -1,38 +1,38 @@
 Set-StrictMode -Version Latest 
 
-class OMSMonitoring: CommandBase
+class LogAnalyticsMonitoring: CommandBase
 {
-	[string] $OMSSampleViewTemplateFilepath;
-	[string] $OMSSearchesTemplateFilepath;
-	[string] $OMSAlertsTemplateFilepath;
-	[string] $OMSGenericTemplateFilepath;
+	[string] $LAWSampleViewTemplateFilepath;
+	[string] $LAWSearchesTemplateFilepath;
+	[string] $LAWAlertsTemplateFilepath;
+	[string] $LAWGenericTemplateFilepath;
 	
-	[string] $OMSLocation;
-	[string] $OMSResourceGroup;
-	[string] $OMSWorkspaceName;
-	[string] $OMSWorkspaceId;
+	[string] $LAWLocation;
+	[string] $LAWResourceGroup;
+	[string] $LAWorkspaceName;
+	[string] $LAWorkspaceId;
 	[string] $ApplicationSubscriptionName
 
-	OMSMonitoring([string] $_omsSubscriptionId,[string] $_omsResourceGroup,[string] $_omsWorkspaceId, [InvocationInfo] $invocationContext): 
-        Base([string] $_omsSubscriptionId, $invocationContext) 
+	LogAnalyticsMonitoring([string] $_lawSubscriptionId,[string] $_lawResourceGroup,[string] $_laWorkspaceId, [InvocationInfo] $invocationContext): 
+        Base([string] $_lawSubscriptionId, $invocationContext) 
     { 	
 		
 			
-					$this.OMSResourceGroup = $_omsResourceGroup
-					$this.OMSWorkspaceId = $_omsWorkspaceId
-					$omsWorkSpaceInstance = Get-AzOperationalInsightsWorkspace | Where-Object {$_.CustomerId -eq "$_omsWorkspaceId" -and $_.ResourceGroupName -eq  "$($this.OMSResourceGroup)"}
-					if($null -eq $omsWorkSpaceInstance)
+					$this.LAWResourceGroup = $_lawResourceGroup
+					$this.LAWorkspaceId = $_laWorkspaceId
+					$laWorkspaceInstance = Get-AzOperationalInsightsWorkspace | Where-Object {$_.CustomerId -eq "$_laWorkspaceId" -and $_.ResourceGroupName -eq  "$($this.LAWResourceGroup)"}
+					if($null -eq $laWorkspaceInstance)
 					{
 						throw [SuppressedException] "Invalid Log Analytics Workspace."
 					}
-					$this.OMSWorkspaceName = $omsWorkSpaceInstance.Name;
-					$locationInstance = Get-AzLocation | Where-Object { $_.DisplayName -eq $omsWorkSpaceInstance.Location -or  $_.Location -eq $omsWorkSpaceInstance.Location } 
-					$this.OMSLocation = $locationInstance.Location
+					$this.LAWorkspaceName = $laWorkspaceInstance.Name;
+					$locationInstance = Get-AzLocation | Where-Object { $_.DisplayName -eq $laWorkspaceInstance.Location -or  $_.Location -eq $laWorkspaceInstance.Location } 
+					$this.LAWLocation = $locationInstance.Location
 				
 		
 	}
 
-	[void] ConfigureOMS([string] $_viewName, [bool] $_validateOnly)	
+	[void] ConfigureLAW([string] $_viewName, [bool] $_validateOnly)	
     {		
 	   Write-Host "WARNING: This command will overwrite the existing AzSK Security View that you may have installed using previous versions of AzSK if you are using the same view name as the one used earlier. In that case we recommend taking a backup using 'Edit -> Export' option available in the Log Analytics workspace.`n" -ForegroundColor Yellow
 	   $input = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
@@ -52,15 +52,15 @@ class OMSMonitoring: CommandBase
 		
 			$OptionalParameters = New-Object -TypeName Hashtable
 
-			$OMSLogPath = [Constants]::AzSKTempFolderPath + "\OMS";
-			if(-not (Test-Path -Path $OMSLogPath))
+			$LAWLogPath = [Constants]::AzSKTempFolderPath + "\LogAnalytics";
+			if(-not (Test-Path -Path $LAWLogPath))
 			{
-				mkdir -Path $OMSLogPath -Force | Out-Null
+				mkdir -Path $LAWLogPath -Force | Out-Null
 			}
 					
-			$genericViewTemplateFilepath = [ConfigurationManager]::LoadServerConfigFile("AZSK.AM.OMS.GenericView.V5.omsview"); 				
-			$this.OMSGenericTemplateFilepath = $OMSLogPath+"\AZSK.AM.OMS.GenericView.V5.omsview";
-			$genericViewTemplateFilepath | ConvertTo-Json -Depth 100 | Out-File $this.OMSGenericTemplateFilepath
+			$genericViewTemplateFilepath = [ConfigurationManager]::LoadServerConfigFile("AZSK.AM.LogAnalytics.GenericView.V5.lawview"); 				
+			$this.LAWGenericTemplateFilepath = $LAWLogPath+"\AZSK.AM.LogAnalytics.GenericView.V5.lawview";
+			$genericViewTemplateFilepath | ConvertTo-Json -Depth 100 | Out-File $this.LAWGenericTemplateFilepath
 			$this.PublishCustomMessage("`r`nSetting up AzSK Log Analytics generic view.");
 			$this.ConfigureGenericView($_viewName, $_validateOnly);	
 			$this.PublishCustomMessage([Constants]::SingleDashLine + "`r`nCompleted setting up AzSK Monitoring solution pack.`r`n"+[Constants]::SingleDashLine );
@@ -78,22 +78,22 @@ class OMSMonitoring: CommandBase
 	[void] ConfigureGenericView([string] $_viewName, [bool] $_validateOnly)
 	{
 		$OptionalParameters = New-Object -TypeName Hashtable
-		$OptionalParameters = $this.GetOMSGenericViewParameters($_viewName);
+		$OptionalParameters = $this.GetLAWGenericViewParameters($_viewName);
 		$this.PublishCustomMessage([MessageData]::new("Starting template deployment for Log Analytics generic view. Detailed logs are shown below."));
 		$ErrorMessages = @()
         if ($_validateOnly) {
             $ErrorMessages =@()
-                Test-AzResourceGroupDeployment -ResourceGroupName $this.OMSResourceGroup `
-                                                    -TemplateFile $this.OMSGenericTemplateFilepath `
+                Test-AzResourceGroupDeployment -ResourceGroupName $this.LAWResourceGroup `
+                                                    -TemplateFile $this.LAWGenericTemplateFilepath `
                                                     -TemplateParameterObject $OptionalParameters -Verbose
 		}
         else {
 
             $ErrorMessages =@()
 			$SubErrorMessages = @()
-            New-AzResourceGroupDeployment -Name ((Get-ChildItem $this.OMSGenericTemplateFilepath).BaseName + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
-                                        -ResourceGroupName $this.OMSResourceGroup `
-                                        -TemplateFile $this.OMSGenericTemplateFilepath  `
+            New-AzResourceGroupDeployment -Name ((Get-ChildItem $this.LAWGenericTemplateFilepath).BaseName + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
+                                        -ResourceGroupName $this.LAWResourceGroup `
+                                        -TemplateFile $this.LAWGenericTemplateFilepath  `
                                         -TemplateParameterObject $OptionalParameters `
                                         -Verbose -Force -ErrorVariable SubErrorMessages
             $SubErrorMessages = $SubErrorMessages | ForEach-Object { $_.Exception.Message.TrimEnd("`r`n") }
@@ -110,21 +110,21 @@ class OMSMonitoring: CommandBase
 		}
 	}
 
-	[Hashtable] GetOMSGenericViewParameters([string] $_applicationName)
+	[Hashtable] GetLAWGenericViewParameters([string] $_applicationName)
 	{
-		[Hashtable] $omsParams = $this.GetOMSBaseParameters();
-		$omsParams.Add("viewName",$_applicationName);
-		return $omsParams;
+		[Hashtable] $lawParams = $this.GetLAWBaseParameters();
+		$lawParams.Add("viewName",$_applicationName);
+		return $lawParams;
 	}
 
-	[Hashtable] GetOMSBaseParameters()
+	[Hashtable] GetLAWBaseParameters()
 	{
-		[Hashtable] $omsParams = @{};
-		$omsParams.Add("location",$this.OMSLocation);
-		$omsParams.Add("resourcegroup",$this.OMSResourceGroup);
-		$omsParams.Add("subscriptionId",$this.SubscriptionContext.SubscriptionId);
-		$omsParams.Add("workspace",$this.OMSWorkspaceName);
-        $omsParams.Add("workspaceapiversion", "2017-04-26-preview")
-		return $omsParams;
+		[Hashtable] $lawParams = @{};
+		$lawParams.Add("location",$this.LAWLocation);
+		$lawParams.Add("resourcegroup",$this.LAWResourceGroup);
+		$lawParams.Add("subscriptionId",$this.SubscriptionContext.SubscriptionId);
+		$lawParams.Add("workspace",$this.LAWorkspaceName);
+        $lawParams.Add("workspaceapiversion", "2017-04-26-preview")
+		return $lawParams;
 	}	
 }

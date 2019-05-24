@@ -7,13 +7,13 @@ function Set-AzSKMonitoringSettings
 	.DESCRIPTION
 	This command will update the Log Analytics settings under the current powershell session. This also remembers the current settings and use them in the subsequent sessions.
 	
-	.PARAMETER OMSWorkspaceID
+	.PARAMETER WorkspaceId
 		Workspace ID of your Log Analytics instance. Control scan results get pushed to this instance.
-	.PARAMETER OMSSharedKey
+	.PARAMETER SharedKey
 		Shared key of your Log Analytics instance.
-	.PARAMETER AltOMSWorkspaceID
+	.PARAMETER AltWorkspaceId
 		Workspace ID of your alternate Log Analytics instance. Control scan results get pushed to this instance.
-	.PARAMETER AltOMSSharedKey
+	.PARAMETER AltSharedKey
 		Workspace shared key of your alternate Log Analytics instance.
 	.PARAMETER Source
 		Provide the source of Log Analytics Events. (e. g. CA,CICD,SDL)
@@ -30,26 +30,26 @@ function Set-AzSKMonitoringSettings
 		[Parameter(Mandatory = $false, HelpMessage="Workspace ID of your Log Analytics instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("owid","wid","WorkspaceID")]
-        $OMSWorkspaceID,
+		[Alias("wid","OMSWorkspaceID")]
+        $WorkspaceId,
 
         [Parameter(Mandatory = $false, HelpMessage="Shared key of your Log Analytics instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("okey","wkey","SharedKey")]
-        $OMSSharedKey,
+		[Alias("wkey","OMSSharedKey")]
+        $SharedKey,
 
 		[Parameter(Mandatory = $false, HelpMessage="Workspace ID of your alternate Log Analytics instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("aowid","awid","AltWorkspaceID")]
-        $AltOMSWorkspaceID,
+		[Alias("awid","AltOMSWorkspaceID")]
+        $AltWorkspaceId,
 
         [Parameter(Mandatory = $false, HelpMessage="Shared key of your alternate Log Analytics instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("aokey","awkey","AltSharedKey")]
-        $AltOMSSharedKey,
+		[Alias("awkey","AltOMSSharedKey")]
+        $AltSharedKey,
 
 		[Parameter(Mandatory = $false, HelpMessage="Provide the source of Log Analytics Events.(e.g. CC,CICD,SDL)", ParameterSetName = "Setup")]
         [AllowEmptyString()]
@@ -75,44 +75,44 @@ function Set-AzSKMonitoringSettings
 			$appSettings = [ConfigurationManager]::GetLocalAzSKSettings();
 			if(-not $Disable) 
 			{
-				if(-not [string]::IsNullOrWhiteSpace($OMSWorkspaceID) -and -not [string]::IsNullOrWhiteSpace($OMSSharedKey))
+				if(-not [string]::IsNullOrWhiteSpace($WorkspaceId) -and -not [string]::IsNullOrWhiteSpace($SharedKey))
 				{
-					$appSettings.OMSWorkspaceId = $OMSWorkspaceID
-					$appSettings.OMSSharedKey = $OMSSharedKey
+					$appSettings.LAWorkspaceId = $WorkspaceId
+					$appSettings.LAWSharedKey = $SharedKey
 				}
-				elseif(([string]::IsNullOrWhiteSpace($OMSWorkspaceID) -and -not [string]::IsNullOrWhiteSpace($OMSSharedKey)) `
-						-and (-not [string]::IsNullOrWhiteSpace($OMSWorkspaceID) -and [string]::IsNullOrWhiteSpace($OMSSharedKey)))
+				elseif(([string]::IsNullOrWhiteSpace($WorkspaceId) -and -not [string]::IsNullOrWhiteSpace($SharedKey)) `
+						-and (-not [string]::IsNullOrWhiteSpace($WorkspaceId) -and [string]::IsNullOrWhiteSpace($SharedKey)))
 				{					
-					[EventBase]::PublishGenericCustomMessage("You need to send both the OMSWorkspaceId and OMSSharedKey", [MessageType]::Error);
+					[EventBase]::PublishGenericCustomMessage("You need to send both the WorkspaceId and SharedKey", [MessageType]::Error);
 					return;
 				}
-				if(-not [string]::IsNullOrWhiteSpace($AltOMSWorkspaceID) -and -not [string]::IsNullOrWhiteSpace($AltOMSSharedKey))
+				if(-not [string]::IsNullOrWhiteSpace($AltWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($AltSharedKey))
 				{
-					$appSettings.AltOMSWorkspaceId = $AltOMSWorkspaceID
-					$appSettings.AltOMSSharedKey = $AltOMSSharedKey
+					$appSettings.AltLAWorkspaceId = $AltWorkspaceId
+					$appSettings.AltLAWSharedKey = $AltSharedKey
 				}
-				elseif(([string]::IsNullOrWhiteSpace($AltOMSWorkspaceID) -and -not [string]::IsNullOrWhiteSpace($AltOMSSharedKey)) `
-						-and (-not [string]::IsNullOrWhiteSpace($AltOMSWorkspaceID) -and [string]::IsNullOrWhiteSpace($AltOMSSharedKey)))
+				elseif(([string]::IsNullOrWhiteSpace($AltWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($AltSharedKey)) `
+						-and (-not [string]::IsNullOrWhiteSpace($AltWorkspaceId) -and [string]::IsNullOrWhiteSpace($AltSharedKey)))
 				{					
-					[EventBase]::PublishGenericCustomMessage("You need to send both the AltOMSWorkspaceId and AltOMSSharedKey", [MessageType]::Error);
+					[EventBase]::PublishGenericCustomMessage("You need to send both the AltWorkspaceId and AltSharedKey", [MessageType]::Error);
 					return;
 				}
 			}
 			else {
-				$appSettings.OMSWorkspaceId = ""
-				$appSettings.OMSSharedKey = ""
-				$appSettings.AltOMSWorkspaceId = ""
-				$appSettings.AltOMSSharedKey = ""
+				$appSettings.LAWorkspaceId = ""
+				$appSettings.LAWSharedKey = ""
+				$appSettings.AltLAWorkspaceId = ""
+				$appSettings.AltLAWSharedKey = ""
 			}
 			if(-not [string]::IsNullOrWhiteSpace($Source))
 			{				
-				$appSettings.OMSSource = $Source
+				$appSettings.LAWSource = $Source
 			}
 			else
 			{
-				$appSettings.OMSSource = "SDL"
+				$appSettings.LAWSource = "SDL"
 			}
-			$appSettings.OMSType = "AzSK"
+			$appSettings.LAWType = "AzSK"
 			[ConfigurationManager]::UpdateAzSKSettings($appSettings);
 			[EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine + "`r`nWe have added new queries for the Monitoring solution. These will help reflect the aggregate control pass/fail status more accurately. Please go here to get them:  https://aka.ms/devopskit/omsqueries `r`n",[MessageType]::Warning);
 			[EventBase]::PublishGenericCustomMessage("Successfully changed policy settings");
@@ -138,11 +138,11 @@ function Install-AzSKMonitoringSolution
 	.DESCRIPTION
 	This command would help in creating security dashboard in Log Analytics Workspace
 
-	.PARAMETER OMSSubscriptionId
+	.PARAMETER LAWSubscriptionId
 		Id of subscription hosting Log Analytics workspace
-	.PARAMETER OMSResourceGroup
+	.PARAMETER LAWResourceGroup
 		Resource group hosting Log Analytics workspace
-	.PARAMETER OMSWorkspaceId
+	.PARAMETER WorkspaceId
 		Workspace ID of the Log Analytics workspace which will be used for monitoring.
 	.PARAMETER ViewName
 		Provide the custom name for your DevOps Kit security view.
@@ -164,20 +164,20 @@ function Install-AzSKMonitoringSolution
         [Parameter(ParameterSetName="NewModel", HelpMessage="Id of subscription hosting Log Analytics workspace", Mandatory = $true)]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("omssubid","omssid","lawsubid","lawsid","LAWSubscriptionID")]
-		$OMSSubscriptionId,  
+		[Alias("lawsubid","lawsid","OMSSubscriptionId")]
+		$LAWSubscriptionId,  
 				
 		[Parameter(ParameterSetName="NewModel", HelpMessage="Resource group hosting Log Analytics workspace", Mandatory = $true)]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("omsrg","lawrg","LAWResourceGroup")]
-		$OMSResourceGroup, 
+		[Alias("lawrg","OMSResourceGroup")]
+		$LAWResourceGroup, 
 
 		[Parameter(ParameterSetName="NewModel", HelpMessage="Workspace ID of the Log Analytics workspace which will be used for monitoring.", Mandatory = $true)]
         [string]
-		[Alias("owid","wid","WorkspaceID")]
+		[Alias("wid","OMSWorkspaceId")]
 		[ValidateNotNullOrEmpty()]
-		$OMSWorkspaceId, 
+		$WorkspaceId, 
 		
 		[Parameter(ParameterSetName="NewModel", HelpMessage="Provide the custom name for your DevOps Kit security view", Mandatory = $false)]
         [string]
@@ -205,10 +205,10 @@ function Install-AzSKMonitoringSolution
 		{
 			if($PSCmdlet.MyInvocation.InvocationName.ToUpper().Equals("INSTALL-AZSKOMSSOLUTION"))
 			{
-				Write-Host "WARNING: The command 'Install-AzSKOMSSolution' will soon be deprecated. It will be renamed to 'Install-AzSKMonitoringSolution'.`n" -ForegroundColor Yellow
+				Write-Host "WARNING: The command 'Install-AzSKOMSSolution' will soon be deprecated. It will be replaced by 'Install-AzSKMonitoringSolution'.`n" -ForegroundColor Yellow
 			}
-			$OMSMonitoringInstance = [OMSMonitoring]::new($OMSSubscriptionId, $OMSResourceGroup, $OMSWorkspaceId, $PSCmdlet.MyInvocation);
-			$OMSMonitoringInstance.InvokeFunction($OMSMonitoringInstance.ConfigureOMS, @($ViewName, $ValidateOnly));
+			$monitoringInstance = [LogAnalyticsMonitoring]::new($LAWSubscriptionId, $LAWResourceGroup, $WorkspaceId, $PSCmdlet.MyInvocation);
+			$monitoringInstance.InvokeFunction($monitoringInstance.ConfigureLAW, @($ViewName, $ValidateOnly));
 		}
 		catch
 		{

@@ -327,8 +327,22 @@ class APIManagement: SVTBase
 		if(($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
 			$Result = @()
+			$MaxOpenSocketcount = 800
+			$SleepTime = 30
+			if([Helpers]::CheckMember($this.ControlSettings,"SleepTime"))
+			{
+				$SleepTime = $this.ControlSettings.SleepTime
+			}
+			if([Helpers]::CheckMember($this.ControlSettings,"MaxOpenSocketcount"))
+			{
+				$MaxOpenSocketcount = $this.ControlSettings.MaxOpenSocketcount
+			}
 			$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
 			    #Policy Scope: API
+                if((Get-NetTCPConnection).count -ge $MaxOpenSocketcount)
+                {
+                sleep($SleepTime)
+                }
 				$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
 				$AllowedOrigins = ""
 			    $AllowedOrigins = $APIPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
@@ -437,13 +451,26 @@ class APIManagement: SVTBase
 				$Result += $Policy
 			}
 			}
-			
 			#Policy Scope: API
 			#Policy Scope: Operation
+			$MaxOpenSocketcount = 800
+			$SleepTime = 30
+			if([Helpers]::CheckMember($this.ControlSettings,"SleepTime"))
+			{
+				$SleepTime = $this.ControlSettings.SleepTime
+			}
+			if([Helpers]::CheckMember($this.ControlSettings,"MaxOpenSocketcount"))
+			{
+				$MaxOpenSocketcount = $this.ControlSettings.MaxOpenSocketcount
+			}
 			if($null -ne $this.APIMAPIs)
 			{
 				$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
 					#Policy Scope: API
+                    if((Get-NetTCPConnection).count -ge $MaxOpenSocketcount)
+                    {
+                        sleep($SleepTime)
+                    }
 					$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
 					$RestrictedIPs = ""
 					$RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }

@@ -1,24 +1,24 @@
-﻿Set-StrictMode -Version Latest 
+Set-StrictMode -Version Latest 
 
-class OMSOutput: ListenerBase
+class LogAnalyticsOutput: ListenerBase
 {		
-	hidden static [OMSOutput] $Instance = $null;  
+	hidden static [LogAnalyticsOutput] $Instance = $null;  
 	#Default source is kept as SDL / PowerShell. 
-	static [string] $DefaultOMSSource = "SDL"
+	static [string] $DefaultLAWSource = "SDL"
 	#This value must be set in respective environment i.e. CICD,CA   
 	hidden static [bool] $IsIssueLogged = $false
-	OMSOutput()
+	LogAnalyticsOutput()
 	{
 		
 	}
 
-	static [OMSOutput] GetInstance()
+	static [LogAnalyticsOutput] GetInstance()
 	{
-		if($null -eq [OMSOutput]::Instance)
+		if($null -eq [LogAnalyticsOutput]::Instance)
 		{
-			[OMSOutput]::Instance = [OMSOutput]::new();
+			[LogAnalyticsOutput]::Instance = [LogAnalyticsOutput]::new();
 		}
-		return [OMSOutput]::Instance;
+		return [LogAnalyticsOutput]::Instance;
 	}
 
 	[void] RegisterEvents()
@@ -27,12 +27,12 @@ class OMSOutput: ListenerBase
 
 			# Mandatory: Generate Run Identifier Event
 			$this.RegisterEvent([AzSKRootEvent]::GenerateRunIdentifier, {
-				$currentInstance = [OMSOutput]::GetInstance();
+				$currentInstance = [LogAnalyticsOutput]::GetInstance();
 				try 
 				{
 				    $currentInstance.SetRunIdentifier([AzSKRootEventArgument] ($Event.SourceArgs | Select-Object -First 1));                         
 					
-					[OMSOutput]::IsIssueLogged = $false
+					[LogAnalyticsOutput]::IsIssueLogged = $false
 				}
 				catch 
 				{
@@ -41,20 +41,20 @@ class OMSOutput: ListenerBase
 			});	
 			
 			$this.RegisterEvent([SVTEvent]::CommandStarted, {
-				$currentInstance = [OMSOutput]::GetInstance();
+				$currentInstance = [LogAnalyticsOutput]::GetInstance();
 				try 
 				{
-					[OMSHelper]::SetOMSDetails();
+					[LogAnalyticsHelper]::SetLAWDetails();
 					$settings = [ConfigurationManager]::GetAzSKSettings()
 					$currentInstance.PublishCustomMessage("Scan events will be sent to the following Log Analytics workspace(s):",[MessageType]::Info);
-					if(-not [string]::IsNullOrEmpty($settings.OMSWorkspaceId))
+					if(-not [string]::IsNullOrEmpty($settings.LAWorkspaceId))
 					{
-						$currentInstance.PublishCustomMessage("WSId: $($settings.OMSWorkspaceId)`n",[MessageType]::Info);
+						$currentInstance.PublishCustomMessage("WSId: $($settings.LAWorkspaceId)`n",[MessageType]::Info);
 					}
 
-					if(-not [string]::IsNullOrEmpty($settings.AltOMSWorkspaceId))
+					if(-not [string]::IsNullOrEmpty($settings.AltLAWorkspaceId))
 					{
-						$currentInstance.PublishCustomMessage("AltWsId: $($settings.AltOMSWorkspaceId)`n",[MessageType]::Info);
+						$currentInstance.PublishCustomMessage("AltWsId: $($settings.AltLAWorkspaceId)`n",[MessageType]::Info);
 						$currentInstance.PublishCustomMessage("`n");
 					}
 					else
@@ -69,13 +69,13 @@ class OMSOutput: ListenerBase
 				}
 				
 				#TODO: Disabling OMS inventory call. Need to rework on performance part.
-				# if(-not ([OMSHelper]::isOMSSettingValid -eq -1 -and [OMSHelper]::isAltOMSSettingValid -eq -1))
+				# if(-not ([LogAnalyticsHelper]::IsLAWSettingValid -eq -1 -and [LogAnalyticsHelper]::IsAltLAWSettingValid -eq -1))
 				# {
 				# 	try
 				# 	{
 				# 		$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
 				# 		if(!$invocationContext.BoundParameters.ContainsKey("SubscriptionId")) {return;}
-				# 		[OMSHelper]::PostResourceInventory($currentInstance.GetAzSKContextDetails())
+				# 		[LogAnalyticsHelper]::PostResourceInventory($currentInstance.GetAzSKContextDetails())
 				# 	}
 				# 	catch
 				# 	{
@@ -86,7 +86,7 @@ class OMSOutput: ListenerBase
 
 
 			$this.RegisterEvent([AzSKRootEvent]::CommandStarted, {
-				$currentInstance = [OMSOutput]::GetInstance();
+				$currentInstance = [LogAnalyticsOutput]::GetInstance();
 				try 
 				{
 					$currentInstance.CommandAction($Event,"Command Started");
@@ -100,7 +100,7 @@ class OMSOutput: ListenerBase
 
 
 			$this.RegisterEvent([AzSKRootEvent]::CommandCompleted, {
-				$currentInstance = [OMSOutput]::GetInstance();
+				$currentInstance = [LogAnalyticsOutput]::GetInstance();
 				try 
 				{
 					$currentInstance.CommandAction($Event,"Command Completed");					
@@ -112,7 +112,7 @@ class OMSOutput: ListenerBase
 			});
 
 			$this.RegisterEvent([SVTEvent]::CommandCompleted, {
-				$currentInstance = [OMSOutput]::GetInstance();
+				$currentInstance = [LogAnalyticsOutput]::GetInstance();
 				try 
 				{
 					$currentInstance.CommandAction($Event,"Command Completed");				
@@ -125,7 +125,7 @@ class OMSOutput: ListenerBase
 
 
 			$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
-				$currentInstance = [OMSOutput]::GetInstance();
+				$currentInstance = [LogAnalyticsOutput]::GetInstance();
 				try
 				{
 					$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
@@ -144,16 +144,16 @@ class OMSOutput: ListenerBase
 
 
 			# $this.RegisterEvent([SVTEvent]::WriteInventory, {
-			# 	$currentInstance = [OMSOutput]::GetInstance();
+			# 	$currentInstance = [LogAnalyticsOutput]::GetInstance();
 			# 	try
 			# 	{
-			# 		[OMSHelper]::SetOMSDetails();
-			# 		if(-not ([OMSHelper]::isOMSSettingValid -eq -1 -and [OMSHelper]::isAltOMSSettingValid -eq -1))
+			# 		[LogAnalyticsHelper]::SetLAWDetails();
+			# 		if(-not ([LogAnalyticsHelper]::IsLAWSettingValid -eq -1 -and [LogAnalyticsHelper]::IsAltLAWSettingValid -eq -1))
 			# 		{
 			# 			$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
 			# 			$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
 						
-			# 			[OMSHelper]::PostApplicableControlSet($SVTEventContexts,$currentInstance.GetAzSKContextDetails());
+			# 			[LogAnalyticsHelper]::PostApplicableControlSet($SVTEventContexts,$currentInstance.GetAzSKContextDetails());
 			# 		}
 			# 	}
 			# 	catch
@@ -173,11 +173,11 @@ class OMSOutput: ListenerBase
 
             try{
                 
-				if((-not [string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId)) -or (-not [string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId)))
+				if((-not [string]::IsNullOrWhiteSpace($settings.LAWorkspaceId)) -or (-not [string]::IsNullOrWhiteSpace($settings.AltLAWorkspaceId)))
 				{
 					$eventContextAll | ForEach-Object{
 					$eventContext = $_
-						$tempBodyObjects = [OMSHelper]::GetOMSBodyObjects($eventContext,$this.GetAzSKContextDetails())
+						$tempBodyObjects = [LogAnalyticsHelper]::GetLAWBodyObjects($eventContext,$this.GetAzSKContextDetails())
                     
 						$tempBodyObjects | ForEach-Object{
 							Set-Variable -Name tempBody -Value $_ -Scope Local
@@ -186,18 +186,18 @@ class OMSOutput: ListenerBase
 					}
 					
 					$body = $tempBodyObjectsAll | ConvertTo-Json
-					$omsBodyByteArray = ([System.Text.Encoding]::UTF8.GetBytes($body))
+					$lawBodyByteArray = ([System.Text.Encoding]::UTF8.GetBytes($body))
 
 					#publish to primary workspace
-					if(-not [string]::IsNullOrWhiteSpace($settings.OMSWorkspaceId) -and [OMSHelper]::isOMSSettingValid -ne -1)
+					if(-not [string]::IsNullOrWhiteSpace($settings.LAWorkspaceId) -and [LogAnalyticsHelper]::IsLAWSettingValid -ne -1)
 					{
-						[OMSHelper]::PostOMSData($settings.OMSWorkspaceId, $settings.OMSSharedKey, $omsBodyByteArray, $settings.OMSType, 'OMS')
+						[LogAnalyticsHelper]::PostLAWData($settings.LAWorkspaceId, $settings.LAWSharedKey, $lawBodyByteArray, $settings.LAWType, 'LAW')
 					}
 
 					#publish to secondary workspace
-					if(-not [string]::IsNullOrWhiteSpace($settings.AltOMSWorkspaceId) -and [OMSHelper]::isAltOMSSettingValid -ne -1)
+					if(-not [string]::IsNullOrWhiteSpace($settings.AltLAWorkspaceId) -and [LogAnalyticsHelper]::IsAltLAWSettingValid -ne -1)
 					{
-						[OMSHelper]::PostOMSData($settings.AltOMSWorkspaceId, $settings.AltOMSSharedKey, $omsBodyByteArray, $settings.OMSType, 'AltOMS')
+						[LogAnalyticsHelper]::PostLAWData($settings.AltLAWorkspaceId, $settings.AltLAWSharedKey, $lawBodyByteArray, $settings.LAWType, 'AltLAW')
 					}
 				}
 
@@ -205,11 +205,11 @@ class OMSOutput: ListenerBase
 			}
 			catch
 			{
-				if(-not [OMSOutput]::IsIssueLogged)
+				if(-not [LogAnalyticsOutput]::IsIssueLogged)
 				{
 					$this.PublishCustomMessage("An error occurred while pushing data to Log Analytics. Please check logs for more details. AzSK control evaluation results will not be sent to the configured Log Analytics workspace from this environment until the error is resolved.", [MessageType]::Warning);
 					$this.PublishException($_);
-					[OMSOutput]::IsIssueLogged = $true
+					[LogAnalyticsOutput]::IsIssueLogged = $true
 				}
 			}
 		}
@@ -234,13 +234,13 @@ class OMSOutput: ListenerBase
 			$AzSKContext.Version = $scannerVersion = $this.GetCurrentModuleVersion()
 			$settings = [ConfigurationManager]::GetAzSKSettings()
 
-			if(-not [string]::IsNullOrWhiteSpace($settings.OMSSource))
+			if(-not [string]::IsNullOrWhiteSpace($settings.LAWSource))
 			{
-				$AzSKContext.Source = $settings.OMSSource
+				$AzSKContext.Source = $settings.LAWSource
 			}
 			else
 			{
-				$AzSKContext.Source = [OMSOutput]::DefaultOMSSource
+				$AzSKContext.Source = [LogAnalyticsOutput]::DefaultLAWSource
 			}
 			$AzSKContext.PolicyOrgName =  [ConfigurationManager]::GetAzSKConfigData().PolicyOrgName
 
@@ -268,7 +268,7 @@ class OMSOutput: ListenerBase
 		{
 			$commandModel.PartialScanIdentifier = $arg.PartialScanIdentifier
 		}
-		[OMSHelper]::WriteControlResult($commandModel,"AzSK_CommandEvent")
+		[LogAnalyticsHelper]::WriteControlResult($commandModel,"AzSK_CommandEvent")
 	}
 	}
 

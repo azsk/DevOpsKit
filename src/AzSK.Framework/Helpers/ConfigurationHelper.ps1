@@ -39,7 +39,7 @@ class ConfigurationHelper {
 		{
 			if($parseJson)
 			{
-				if($extension -eq ".json" -or $extension -eq ".omsview")
+				if($extension -eq ".json" -or $extension -eq ".lawview")
 				{
 					$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) | ConvertFrom-Json
 				}
@@ -308,7 +308,7 @@ class ConfigurationHelper {
 	#Need to rethink on this function logic
 	hidden static [PSObject] LoadModuleJsonFile([string] $fileName) {
 	
-	 $rootConfigPath = (Get-Item $PSScriptRoot).Parent.FullName + "\Configurations\";
+	 $rootConfigPath = (Get-Item $PSScriptRoot).Parent.Parent.FullName + "\AzSK\Framework\Configurations\";
      $filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
 	 if ($filePath) {
             $fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) | ConvertFrom-Json

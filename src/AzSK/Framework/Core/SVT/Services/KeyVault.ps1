@@ -568,7 +568,7 @@ class KeyVault: SVTBase
 					if ($_.Exception.GetType().FullName -eq "Microsoft.Azure.KeyVault.Models.KeyVaultErrorException")
 					{
 						$controlResult.AddMessage([VerificationResult]::Manual,
-							[MessageData]::new("Access denied: Read access is required on Key Vault Keys."));
+							[MessageData]::new("Access denied: Read access is required on Key Vault Keys to validate the number of keys."));
 					}
 					else
 					{
@@ -580,7 +580,7 @@ class KeyVault: SVTBase
 		{
 			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 			$controlResult.AddMessage([VerificationResult]::Manual,
-				[MessageData]::new("Control can not be validated due to insufficient access permission on keys"));
+				[MessageData]::new("Number of keys can not be validated due to insufficient access permission on keys"));
 		}
 
 		return $allExcessVersionKeys;
@@ -621,7 +621,7 @@ class KeyVault: SVTBase
 					if ($_.Exception.GetType().FullName -eq "Microsoft.Azure.KeyVault.Models.KeyVaultErrorException")
 					{
 						$controlResult.AddMessage([VerificationResult]::Manual,
-							[MessageData]::new("Access denied: Read access is required on Key Vault Secrets."));
+							[MessageData]::new("Access denied: Read access is required on Key Vault Secrets to validate the number of secrets."));
 					}
 					else
 					{
@@ -633,7 +633,7 @@ class KeyVault: SVTBase
 		{
 			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 			$controlResult.AddMessage([VerificationResult]::Manual,
-				[MessageData]::new("Control can not be validated due to insufficient access permission on secrets"));
+				[MessageData]::new("Number of secrets can not be validated due to insufficient access permission on secrets"));
 		}
 
 		return $allExcessVersionSecrets;
@@ -641,60 +641,85 @@ class KeyVault: SVTBase
 
 	hidden [ControlResult] CheckExcessVersions([ControlResult] $controlResult)
 	{
-		$excessKeys = $this.CheckExcessKeyVersions($controlResult);
-		$excessSecrets = $this.CheckExcessSecretVersions($controlResult);
-		$excessVersionResources = @();
-
-		if ($excessKeys.Count -ne 0 -or $excessSecrets.Count -ne 0) 
+		if($this.HasFetchSecretsPermissions -eq $true -or $this.HasFetchKeysPermissions -eq $true)
 		{
-			if ($excessKeys.Count -ne 0) 
+			$excessKeys = $this.CheckExcessKeyVersions($controlResult);
+			$excessSecrets = $this.CheckExcessSecretVersions($controlResult);
+			$excessVersionResources = @();
+	
+			if ($excessKeys.Count -ne 0 -or $excessSecrets.Count -ne 0) 
 			{
-				$excessKeysDetails = $excessKeys | Select-Object Name, Version, Enabled, Created, Updated, RecoveryLevel;
-				$excessVersionResources += $excessKeysDetails
-				$controlResult.AddMessage([VerificationResult]::Failed,
-					[MessageData]::new("Following Keys have more than "+ $this.ControlSettings.KeyVault.MaxRecommendedVersions +" enabled versions."  , 
-							($excessKeysDetails )));	
-			}
-			if ($excessSecrets.Count -ne 0) 
-			{
-				$excessSecretsDetails = $excessSecrets | Select-Object Name, Version, Enabled, Created, Updated, RecoveryLevel;
-				$excessVersionResources += $excessSecretsDetails
-				$controlResult.AddMessage([VerificationResult]::Failed,
-					[MessageData]::new("Following Secrets have more than "+ $this.ControlSettings.KeyVault.MaxRecommendedVersions +" enabled versions."  , 
-							($excessSecretsDetails )));	
-			}	
-
-			if($excessVersionResources.Count -gt 0)
-			{
-                $excessVersionResourcesDetails = $excessVersionResources | Select-Object -Property Name, Version, Enabled, Created, Updated, RecoveryLevel
-				$controlResult.SetStateData("Following keys and secrets have more than "+ $this.ControlSettings.KeyVault.MaxRecommendedVersions +" enabled versions.", 
-				    ($excessVersionResourcesDetails));
-			}
-
-		}
-		else 
-		{
-			$keysResult = @();
-			$keysResult += Get-AzKeyVaultKey -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
-							Where-Object { $_.Enabled -eq $true };
-			
-			$secretsResult = @();
-			$secretsResult += Get-AzKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
-							Where-Object { $_.Enabled -eq $true };
-		
-			if ($keysResult.Count -eq 0 -and $secretsResult.Count -eq 0) 
-			{
-				$controlResult.AddMessage( [VerificationResult]::Passed,
-				[MessageData]::new("No Keys and Secrets are enabled for Key Vault - ["+ $this.ResourceContext.ResourceName +"]"));   
+				if ($excessKeys.Count -ne 0) 
+				{
+					$excessKeysDetails = $excessKeys | Select-Object Name, Version, Enabled, Created, Updated, RecoveryLevel;
+					$excessVersionResources += $excessKeysDetails
+					$controlResult.AddMessage([VerificationResult]::Failed,
+						[MessageData]::new("Following Keys have more than "+ $this.ControlSettings.KeyVault.MaxRecommendedVersions +" enabled versions."  , 
+								($excessKeysDetails )));	
+				}
+				if ($excessSecrets.Count -ne 0) 
+				{
+					$excessSecretsDetails = $excessSecrets | Select-Object Name, Version, Enabled, Created, Updated, RecoveryLevel;
+					$excessVersionResources += $excessSecretsDetails
+					$controlResult.AddMessage([VerificationResult]::Failed,
+						[MessageData]::new("Following Secrets have more than "+ $this.ControlSettings.KeyVault.MaxRecommendedVersions +" enabled versions."  , 
+								($excessSecretsDetails )));	
+				}	
+	
+				if($excessVersionResources.Count -gt 0)
+				{
+					$excessVersionResourcesDetails = $excessVersionResources | Select-Object -Property Name, Version, Enabled, Created, Updated, RecoveryLevel
+					$controlResult.SetStateData("Following keys and secrets have more than "+ $this.ControlSettings.KeyVault.MaxRecommendedVersions +" enabled versions.", 
+						($excessVersionResourcesDetails));
+				}
+	
 			}
 			else 
 			{
-				if ($excessKeys.Count -eq 0 -and $excessSecrets.Count -eq 0)
+				try 
 				{
-					$controlResult.AddMessage( [VerificationResult]::Passed,
-					[MessageData]::new("All Keys and Secrets have at the most "+ $this.ControlSettings.KeyVault.MaxRecommendedVersions +" versions enabled for Key Vault - ["+ $this.ResourceContext.ResourceName +"]"));   
-				}		
-			}
+					$keysResult = @();
+					$keysResult += Get-AzKeyVaultKey -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
+									Where-Object { $_.Enabled -eq $true };
+					
+					$secretsResult = @();
+					$secretsResult += Get-AzKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
+									Where-Object { $_.Enabled -eq $true };
+				
+					if ($keysResult.Count -eq 0 -and $secretsResult.Count -eq 0) 
+					{
+						$controlResult.AddMessage( [VerificationResult]::Passed,
+						[MessageData]::new("No Keys and Secrets are enabled for Key Vault - ["+ $this.ResourceContext.ResourceName +"]"));   
+					}
+					else 
+					{
+						if ($excessKeys.Count -eq 0 -and $excessSecrets.Count -eq 0)
+						{
+							$controlResult.AddMessage( [VerificationResult]::Passed,
+							[MessageData]::new("All Keys and Secrets have at the most "+ $this.ControlSettings.KeyVault.MaxRecommendedVersions +" versions enabled for Key Vault - ["+ $this.ResourceContext.ResourceName +"]"));   
+						}		
+					}	
+				}
+				catch 
+				{
+					if ($_.Exception.GetType().FullName -eq "Microsoft.Azure.KeyVault.Models.KeyVaultErrorException")
+					{
+						$controlResult.AddMessage([VerificationResult]::Manual,
+							[MessageData]::new("Access denied: Read access is required on Key Vault Secrets and Keys to validate the number of secrets and keys."));
+					}
+					else
+					{
+						throw $_
+					}
+					
+				}
+			}	
+		}
+		else
+		{
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			$controlResult.AddMessage([VerificationResult]::Manual,
+				[MessageData]::new("Control can not be validated due to insufficient access permission on keys and secrets"));
 		}
 
 		return $controlResult
