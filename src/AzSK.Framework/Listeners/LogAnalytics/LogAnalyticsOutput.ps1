@@ -44,17 +44,17 @@ class LogAnalyticsOutput: ListenerBase
 				$currentInstance = [LogAnalyticsOutput]::GetInstance();
 				try 
 				{
-					[LogAnalyticsHelper]::SetLAWDetails();
+					[LogAnalyticsHelper]::SetLAWSDetails();
 					$settings = [ConfigurationManager]::GetAzSKSettings()
 					$currentInstance.PublishCustomMessage("Scan events will be sent to the following Log Analytics workspace(s):",[MessageType]::Info);
-					if(-not [string]::IsNullOrEmpty($settings.LAWorkspaceId))
+					if(-not [string]::IsNullOrEmpty($settings.LAWSId))
 					{
-						$currentInstance.PublishCustomMessage("WSId: $($settings.LAWorkspaceId)`n",[MessageType]::Info);
+						$currentInstance.PublishCustomMessage("WSId: $($settings.LAWSId)`n",[MessageType]::Info);
 					}
 
-					if(-not [string]::IsNullOrEmpty($settings.AltLAWorkspaceId))
+					if(-not [string]::IsNullOrEmpty($settings.AltLAWSId))
 					{
-						$currentInstance.PublishCustomMessage("AltWsId: $($settings.AltLAWorkspaceId)`n",[MessageType]::Info);
+						$currentInstance.PublishCustomMessage("AltWsId: $($settings.AltLAWSId)`n",[MessageType]::Info);
 						$currentInstance.PublishCustomMessage("`n");
 					}
 					else
@@ -69,7 +69,7 @@ class LogAnalyticsOutput: ListenerBase
 				}
 				
 				#TODO: Disabling OMS inventory call. Need to rework on performance part.
-				# if(-not ([LogAnalyticsHelper]::IsLAWSettingValid -eq -1 -and [LogAnalyticsHelper]::IsAltLAWSettingValid -eq -1))
+				# if(-not ([LogAnalyticsHelper]::IsLAWSSettingValid -eq -1 -and [LogAnalyticsHelper]::IsAltLAWSSettingValid -eq -1))
 				# {
 				# 	try
 				# 	{
@@ -147,8 +147,8 @@ class LogAnalyticsOutput: ListenerBase
 			# 	$currentInstance = [LogAnalyticsOutput]::GetInstance();
 			# 	try
 			# 	{
-			# 		[LogAnalyticsHelper]::SetLAWDetails();
-			# 		if(-not ([LogAnalyticsHelper]::IsLAWSettingValid -eq -1 -and [LogAnalyticsHelper]::IsAltLAWSettingValid -eq -1))
+			# 		[LogAnalyticsHelper]::SetLAWSDetails();
+			# 		if(-not ([LogAnalyticsHelper]::IsLAWSSettingValid -eq -1 -and [LogAnalyticsHelper]::IsAltLAWSSettingValid -eq -1))
 			# 		{
 			# 			$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
 			# 			$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
@@ -173,11 +173,11 @@ class LogAnalyticsOutput: ListenerBase
 
             try{
                 
-				if((-not [string]::IsNullOrWhiteSpace($settings.LAWorkspaceId)) -or (-not [string]::IsNullOrWhiteSpace($settings.AltLAWorkspaceId)))
+				if((-not [string]::IsNullOrWhiteSpace($settings.LAWSId)) -or (-not [string]::IsNullOrWhiteSpace($settings.AltLAWSId)))
 				{
 					$eventContextAll | ForEach-Object{
 					$eventContext = $_
-						$tempBodyObjects = [LogAnalyticsHelper]::GetLAWBodyObjects($eventContext,$this.GetAzSKContextDetails())
+						$tempBodyObjects = [LogAnalyticsHelper]::GetLAWSBodyObjects($eventContext,$this.GetAzSKContextDetails())
                     
 						$tempBodyObjects | ForEach-Object{
 							Set-Variable -Name tempBody -Value $_ -Scope Local
@@ -189,15 +189,15 @@ class LogAnalyticsOutput: ListenerBase
 					$lawBodyByteArray = ([System.Text.Encoding]::UTF8.GetBytes($body))
 
 					#publish to primary workspace
-					if(-not [string]::IsNullOrWhiteSpace($settings.LAWorkspaceId) -and [LogAnalyticsHelper]::IsLAWSettingValid -ne -1)
+					if(-not [string]::IsNullOrWhiteSpace($settings.LAWSId) -and [LogAnalyticsHelper]::IsLAWSSettingValid -ne -1)
 					{
-						[LogAnalyticsHelper]::PostLAWData($settings.LAWorkspaceId, $settings.LAWSharedKey, $lawBodyByteArray, $settings.LAWType, 'LAW')
+						[LogAnalyticsHelper]::PostLAWSData($settings.LAWSId, $settings.LAWSSharedKey, $lawBodyByteArray, $settings.LAType, 'LAW')
 					}
 
 					#publish to secondary workspace
-					if(-not [string]::IsNullOrWhiteSpace($settings.AltLAWorkspaceId) -and [LogAnalyticsHelper]::IsAltLAWSettingValid -ne -1)
+					if(-not [string]::IsNullOrWhiteSpace($settings.AltLAWSId) -and [LogAnalyticsHelper]::IsAltLAWSSettingValid -ne -1)
 					{
-						[LogAnalyticsHelper]::PostLAWData($settings.AltLAWorkspaceId, $settings.AltLAWSharedKey, $lawBodyByteArray, $settings.LAWType, 'AltLAW')
+						[LogAnalyticsHelper]::PostLAWSData($settings.AltLAWSId, $settings.AltLAWSSharedKey, $lawBodyByteArray, $settings.LAType, 'AltLAW')
 					}
 				}
 
@@ -234,9 +234,9 @@ class LogAnalyticsOutput: ListenerBase
 			$AzSKContext.Version = $scannerVersion = $this.GetCurrentModuleVersion()
 			$settings = [ConfigurationManager]::GetAzSKSettings()
 
-			if(-not [string]::IsNullOrWhiteSpace($settings.LAWSource))
+			if(-not [string]::IsNullOrWhiteSpace($settings.LASource))
 			{
-				$AzSKContext.Source = $settings.LAWSource
+				$AzSKContext.Source = $settings.LASource
 			}
 			else
 			{

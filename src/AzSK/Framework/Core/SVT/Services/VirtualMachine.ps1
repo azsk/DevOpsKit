@@ -187,10 +187,10 @@ class VirtualMachine: SVTBase
 
 		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings,"properties.resourceDetails"))
 		{
-			$lawSetting = $this.ASCSettings.properties.resourceDetails | Where-Object {$_.name -eq $this.ControlSettings.VirtualMachine.ASCPolicies.ResourceDetailsKeys.WorkspaceId };
-			if($null -ne $lawSetting)
+			$laWSSetting = $this.ASCSettings.properties.resourceDetails | Where-Object {$_.name -eq $this.ControlSettings.VirtualMachine.ASCPolicies.ResourceDetailsKeys.WorkspaceId };
+			if($null -ne $laWSSetting)
 			{
-				$this.Workspace = $lawSetting.value;
+				$this.Workspace = $laWSSetting.value;
 			}
 		}
 

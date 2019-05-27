@@ -2,37 +2,37 @@ Set-StrictMode -Version Latest
 
 class LogAnalyticsMonitoring: CommandBase
 {
-	[string] $LAWSampleViewTemplateFilepath;
-	[string] $LAWSearchesTemplateFilepath;
-	[string] $LAWAlertsTemplateFilepath;
-	[string] $LAWGenericTemplateFilepath;
+	[string] $LAWSSampleViewTemplateFilepath;
+	[string] $LAWSSearchesTemplateFilepath;
+	[string] $LAWSAlertsTemplateFilepath;
+	[string] $LAWSGenericTemplateFilepath;
 	
-	[string] $LAWLocation;
-	[string] $LAWResourceGroup;
-	[string] $LAWorkspaceName;
-	[string] $LAWorkspaceId;
+	[string] $LAWSLocation;
+	[string] $LAWSResourceGroup;
+	[string] $LAWSName;
+	[string] $LAWSId;
 	[string] $ApplicationSubscriptionName
 
-	LogAnalyticsMonitoring([string] $_lawSubscriptionId,[string] $_lawResourceGroup,[string] $_laWorkspaceId, [InvocationInfo] $invocationContext): 
-        Base([string] $_lawSubscriptionId, $invocationContext) 
+	LogAnalyticsMonitoring([string] $_laWSSubscriptionId,[string] $_laWSResourceGroup,[string] $_laWSId, [InvocationInfo] $invocationContext): 
+        Base([string] $_laWSSubscriptionId, $invocationContext) 
     { 	
 		
 			
-					$this.LAWResourceGroup = $_lawResourceGroup
-					$this.LAWorkspaceId = $_laWorkspaceId
-					$laWorkspaceInstance = Get-AzOperationalInsightsWorkspace | Where-Object {$_.CustomerId -eq "$_laWorkspaceId" -and $_.ResourceGroupName -eq  "$($this.LAWResourceGroup)"}
-					if($null -eq $laWorkspaceInstance)
+					$this.LAWSResourceGroup = $_laWSResourceGroup
+					$this.LAWSId = $_laWSId
+					$laWSInstance = Get-AzOperationalInsightsWorkspace | Where-Object {$_.CustomerId -eq "$_laWSId" -and $_.ResourceGroupName -eq  "$($this.LAWSResourceGroup)"}
+					if($null -eq $laWSInstance)
 					{
 						throw [SuppressedException] "Invalid Log Analytics Workspace."
 					}
-					$this.LAWorkspaceName = $laWorkspaceInstance.Name;
-					$locationInstance = Get-AzLocation | Where-Object { $_.DisplayName -eq $laWorkspaceInstance.Location -or  $_.Location -eq $laWorkspaceInstance.Location } 
-					$this.LAWLocation = $locationInstance.Location
+					$this.LAWSName = $laWSInstance.Name;
+					$locationInstance = Get-AzLocation | Where-Object { $_.DisplayName -eq $laWSInstance.Location -or  $_.Location -eq $laWSInstance.Location } 
+					$this.LAWSLocation = $locationInstance.Location
 				
 		
 	}
 
-	[void] ConfigureLAW([string] $_viewName, [bool] $_validateOnly)	
+	[void] ConfigureLAWS([string] $_viewName, [bool] $_validateOnly)	
     {		
 	   Write-Host "WARNING: This command will overwrite the existing AzSK Security View that you may have installed using previous versions of AzSK if you are using the same view name as the one used earlier. In that case we recommend taking a backup using 'Edit -> Export' option available in the Log Analytics workspace.`n" -ForegroundColor Yellow
 	   $input = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
@@ -52,15 +52,15 @@ class LogAnalyticsMonitoring: CommandBase
 		
 			$OptionalParameters = New-Object -TypeName Hashtable
 
-			$LAWLogPath = [Constants]::AzSKTempFolderPath + "\LogAnalytics";
-			if(-not (Test-Path -Path $LAWLogPath))
+			$LAWSLogPath = [Constants]::AzSKTempFolderPath + "\LogAnalytics";
+			if(-not (Test-Path -Path $LAWSLogPath))
 			{
-				mkdir -Path $LAWLogPath -Force | Out-Null
+				mkdir -Path $LAWSLogPath -Force | Out-Null
 			}
 					
-			$genericViewTemplateFilepath = [ConfigurationManager]::LoadServerConfigFile("AZSK.AM.LogAnalytics.GenericView.V5.lawview"); 				
-			$this.LAWGenericTemplateFilepath = $LAWLogPath+"\AZSK.AM.LogAnalytics.GenericView.V5.lawview";
-			$genericViewTemplateFilepath | ConvertTo-Json -Depth 100 | Out-File $this.LAWGenericTemplateFilepath
+			$genericViewTemplateFilepath = [ConfigurationManager]::LoadServerConfigFile("AZSK.AM.LogAnalytics.GenericView.V5.lawsview"); 				
+			$this.LAWSGenericTemplateFilepath = $LAWSLogPath+"\AZSK.AM.LogAnalytics.GenericView.V5.lawsview";
+			$genericViewTemplateFilepath | ConvertTo-Json -Depth 100 | Out-File $this.LAWSGenericTemplateFilepath
 			$this.PublishCustomMessage("`r`nSetting up AzSK Log Analytics generic view.");
 			$this.ConfigureGenericView($_viewName, $_validateOnly);	
 			$this.PublishCustomMessage([Constants]::SingleDashLine + "`r`nCompleted setting up AzSK Monitoring solution pack.`r`n"+[Constants]::SingleDashLine );
@@ -78,22 +78,22 @@ class LogAnalyticsMonitoring: CommandBase
 	[void] ConfigureGenericView([string] $_viewName, [bool] $_validateOnly)
 	{
 		$OptionalParameters = New-Object -TypeName Hashtable
-		$OptionalParameters = $this.GetLAWGenericViewParameters($_viewName);
+		$OptionalParameters = $this.GetLAWSGenericViewParameters($_viewName);
 		$this.PublishCustomMessage([MessageData]::new("Starting template deployment for Log Analytics generic view. Detailed logs are shown below."));
 		$ErrorMessages = @()
         if ($_validateOnly) {
             $ErrorMessages =@()
-                Test-AzResourceGroupDeployment -ResourceGroupName $this.LAWResourceGroup `
-                                                    -TemplateFile $this.LAWGenericTemplateFilepath `
+                Test-AzResourceGroupDeployment -ResourceGroupName $this.LAWSResourceGroup `
+                                                    -TemplateFile $this.LAWSGenericTemplateFilepath `
                                                     -TemplateParameterObject $OptionalParameters -Verbose
 		}
         else {
 
             $ErrorMessages =@()
 			$SubErrorMessages = @()
-            New-AzResourceGroupDeployment -Name ((Get-ChildItem $this.LAWGenericTemplateFilepath).BaseName + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
-                                        -ResourceGroupName $this.LAWResourceGroup `
-                                        -TemplateFile $this.LAWGenericTemplateFilepath  `
+            New-AzResourceGroupDeployment -Name ((Get-ChildItem $this.LAWSGenericTemplateFilepath).BaseName + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
+                                        -ResourceGroupName $this.LAWSResourceGroup `
+                                        -TemplateFile $this.LAWSGenericTemplateFilepath  `
                                         -TemplateParameterObject $OptionalParameters `
                                         -Verbose -Force -ErrorVariable SubErrorMessages
             $SubErrorMessages = $SubErrorMessages | ForEach-Object { $_.Exception.Message.TrimEnd("`r`n") }
@@ -110,21 +110,21 @@ class LogAnalyticsMonitoring: CommandBase
 		}
 	}
 
-	[Hashtable] GetLAWGenericViewParameters([string] $_applicationName)
+	[Hashtable] GetLAWSGenericViewParameters([string] $_applicationName)
 	{
-		[Hashtable] $lawParams = $this.GetLAWBaseParameters();
-		$lawParams.Add("viewName",$_applicationName);
-		return $lawParams;
+		[Hashtable] $laWSParams = $this.GetLAWSBaseParameters();
+		$laWSParams.Add("viewName",$_applicationName);
+		return $laWSParams;
 	}
 
-	[Hashtable] GetLAWBaseParameters()
+	[Hashtable] GetLAWSBaseParameters()
 	{
-		[Hashtable] $lawParams = @{};
-		$lawParams.Add("location",$this.LAWLocation);
-		$lawParams.Add("resourcegroup",$this.LAWResourceGroup);
-		$lawParams.Add("subscriptionId",$this.SubscriptionContext.SubscriptionId);
-		$lawParams.Add("workspace",$this.LAWorkspaceName);
-        $lawParams.Add("workspaceapiversion", "2017-04-26-preview")
-		return $lawParams;
+		[Hashtable] $laWSParams = @{};
+		$laWSParams.Add("location",$this.LAWSLocation);
+		$laWSParams.Add("resourcegroup",$this.LAWSResourceGroup);
+		$laWSParams.Add("subscriptionId",$this.SubscriptionContext.SubscriptionId);
+		$laWSParams.Add("workspace",$this.LAWSName);
+        $laWSParams.Add("workspaceapiversion", "2017-04-26-preview")
+		return $laWSParams;
 	}	
 }

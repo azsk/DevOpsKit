@@ -296,7 +296,7 @@
     <Content Include="ARMCheckerLib\AzSK.ARMChecker.Lib.dll" />
     <Content Include="ARMCheckerLib\controls.gen.json" />
     <Content Include="ARMCheckerLib\Newtonsoft.Json.dll" />
-    <Content Include="Framework\Configurations\AlertMonitoring\AZSK.AM.LogAnalytics.GenericView.V2.lawview" />
+    <Content Include="Framework\Configurations\AlertMonitoring\AZSK.AM.LogAnalytics.GenericView.V2.lawsview" />
     <Content Include="Framework\Configurations\AlertMonitoring\LogAnalyticsSettings.json" />
     <Content Include="Framework\Configurations\ARMChecker\ARMControls.json" />
     <Content Include="Framework\Configurations\AzSKSettings.json" />

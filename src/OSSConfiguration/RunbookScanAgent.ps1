@@ -37,14 +37,14 @@ function RunAzSKScan() {
 
 	################################ Begin: Configure AzSK for the scan ######################################### 
 	#set Log Analytics workspace settings
-    if(-not [string]::IsNullOrWhiteSpace($LAWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($LAWorkspaceSharedKey))
+    if(-not [string]::IsNullOrWhiteSpace($LAWSId) -and -not [string]::IsNullOrWhiteSpace($LAWSSharedKey))
 	{
-		Set-AzSKMonitoringSettings -WorkspaceId $LAWorkspaceId -SharedKey $LAWorkspaceSharedKey -Source "CA"
+		Set-AzSKMonitoringSettings -WorkspaceId $LAWSId -SharedKey $LAWSSharedKey -Source "CA"
 	}
 	#set alternate Log Analytics workspace if available
-	if(-not [string]::IsNullOrWhiteSpace($AltLAWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($AltLAWorkspaceSharedKey))
+	if(-not [string]::IsNullOrWhiteSpace($AltLAWSId) -and -not [string]::IsNullOrWhiteSpace($AltLAWSSharedKey))
 	{
-		Set-AzSKMonitoringSettings -AltWorkspaceId $AltLAWorkspaceId -AltSharedKey $AltLAWorkspaceSharedKey -Source "CA"
+		Set-AzSKMonitoringSettings -AltWorkspaceId $AltLAWSId -AltSharedKey $AltLAWSSharedKey -Source "CA"
 	}
     #set webhook settings
 	if(-not [string]::IsNullOrWhiteSpace($WebhookUrl))	
@@ -77,7 +77,7 @@ function RunAzSKScan() {
     PublishEvent -EventName "CA Scan Started" -Properties @{
         "ResourceGroupNames"       = $ResourceGroupNames; `
             "OnlinePolicyStoreUrl" = $OnlinePolicyStoreUrl; `
-            "LAWorkspaceId"       = $LAWorkspaceId;
+            "LAWSId"       = $LAWSId;
     }
 
 	#Check if the central scan mode is enabled. Read/prepare artefacts if so.
@@ -694,29 +694,29 @@ try {
 	$ResourceGroupNames = Get-AutomationVariable -Name "AppResourceGroupNames"
 	
 	#Primary Log Analytics workspace info. This is mandatory. CA will send events to this WS.
-	$LAWorkspaceId = Get-AutomationVariable -Name "LAWorkspaceId" -ErrorAction SilentlyContinue
-	if(($LAWorkspaceId | Measure-Object).Count -eq 0)
+	$LAWSId = Get-AutomationVariable -Name "LAWSId" -ErrorAction SilentlyContinue
+	if(($LAWSId | Measure-Object).Count -eq 0)
 	{
-		$LAWorkspaceId = Get-AutomationVariable -Name "OMSWorkspaceId"
+		$LAWSId = Get-AutomationVariable -Name "OMSWorkspaceId"
 	}
 
-	$LAWorkspaceSharedKey = Get-AutomationVariable -Name "LAWSharedKey" -ErrorAction SilentlyContinue
-	if(($LAWorkspaceSharedKey | Measure-Object).Count -eq 0)
+	$LAWSSharedKey = Get-AutomationVariable -Name "LAWSSharedKey" -ErrorAction SilentlyContinue
+	if(($LAWSSharedKey | Measure-Object).Count -eq 0)
 	{
-		$LAWorkspaceSharedKey = Get-AutomationVariable -Name "OMSSharedKey"
+		$LAWSSharedKey = Get-AutomationVariable -Name "OMSSharedKey"
 	}
 	
 	#Secondary/alternate Log Analytics workspace info. This is optional. Facilitates federal/state type models.
-	$AltLAWorkspaceId = Get-AutomationVariable -Name "AltLAWorkspaceId" -ErrorAction SilentlyContinue
-	if(($AltLAWorkspaceId | Measure-Object).Count -eq 0)
+	$AltLAWSId = Get-AutomationVariable -Name "AltLAWSId" -ErrorAction SilentlyContinue
+	if(($AltLAWSId | Measure-Object).Count -eq 0)
 	{
-		$AltLAWorkspaceId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+		$AltLAWSId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
 	}
 
-	$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltLAWSharedKey" -ErrorAction SilentlyContinue
-	if(($AltLAWorkspaceSharedKey | Measure-Object).Count -eq 0)
+	$AltLAWSSharedKey = Get-AutomationVariable -Name "AltLAWSSharedKey" -ErrorAction SilentlyContinue
+	if(($AltLAWSSharedKey | Measure-Object).Count -eq 0)
 	{
-		$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
+		$AltLAWSSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
 	}
 
 	#CA can also optionally be configured to send events to a Webhook. 

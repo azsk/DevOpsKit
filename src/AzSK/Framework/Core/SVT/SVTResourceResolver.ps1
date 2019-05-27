@@ -105,8 +105,8 @@ class SVTResourceResolver: AzSKRoot
 			if($EnableDevOpsKitSetupCheck)
 			{
 				$settings = [ConfigurationManager]::GetAzSKSettings();
-				[string] $lawSource = $settings.LAWSource;
-				if([string]::IsNullOrWhiteSpace($lawSource) -or $lawSource -eq "SDL"){					
+				[string] $laSource = $settings.LASource;
+				if([string]::IsNullOrWhiteSpace($laSource) -or $laSource -eq "SDL"){					
 					$AzSKCfgResource= [SVTResource]::new();
 					$AzSKCfgResource.ResourceId = 'AzSKCfg';
 					$AzSKCfgResource.ResourceGroupName = 'AzSKCfg';
