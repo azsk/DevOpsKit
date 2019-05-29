@@ -230,11 +230,22 @@ Class LogAnalyticsHelper{
 				if([string]::IsNullOrWhiteSpace($settings.LAWSId))
 				{
 					#Step 3: Get workspace id from automation account variables
-					$laWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
+					#Try getting the values from the LAWS variables, if they don't exist, read value from OMS variables
+					$laWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "LAWSId" -ErrorAction SilentlyContinue
+					if(($laWSId | Measure-Object).Count -eq 0)
+					{
+						$laWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
+					}
+					
 					#Step 4: set workspace id and shared key in setting file
 					if($laWSId)
 					{
-						$laWSSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSSharedKey"						
+						$laWSSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "LAWSSharedKey" -ErrorAction SilentlyContinue	
+						if(($laWSSharedKey | Measure-Object).Count -eq 0)
+						{
+							$laWSSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSSharedKey"
+						}
+
 						if([Helpers]::CheckMember($laWSSharedKey,"Value") -and (-not [string]::IsNullOrWhiteSpace($laWSSharedKey.Value)))
 						{
 							#Step 6: Assign it to AzSKSettings Object
@@ -254,12 +265,22 @@ Class LogAnalyticsHelper{
 
 				if([string]::IsNullOrWhiteSpace($settings.AltLAWSId))
 				{
-					#Step 3: Get workspace id from automation account variables
-					$altLAWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
-					#Step 4: set workspace id and shared key in setting file
+					#Step 3: Get alternate workspace id from automation account variables
+					#Try getting the values from the LAWS variables, if they don't exist, read value from OMS variables
+					$altLAWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltLAWSId" -ErrorAction SilentlyContinue
+					if(($altLAWSId | Measure-Object).Count -eq 0)
+					{
+						$altLAWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+					}
+
+					#Step 4: set alternate workspace id and shared key in setting file
 					if($altLAWSId)
 					{
-						$altLAWSSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSSharedKey"						
+						$altLAWSSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltLAWSSharedKey" -ErrorAction SilentlyContinue
+						if(($altLAWSSharedKey | Measure-Object).Count -eq 0)
+						{
+							$altLAWSSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSSharedKey"
+						}
 						if([Helpers]::CheckMember($altLAWSSharedKey,"Value") -and (-not [string]::IsNullOrWhiteSpace($altLAWSSharedKey.Value)))
 						{
 							#Step 6: Assign it to AzSKSettings Object
