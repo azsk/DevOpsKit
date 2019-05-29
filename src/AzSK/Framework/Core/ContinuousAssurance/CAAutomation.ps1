@@ -1343,8 +1343,14 @@ class CCAutomation: CommandBase
 		}
 		$caOverallSummary = @()
 		#Fetch automation account components
-		$logAnayticsWorkspaceDetails = $this.GetLogAnalyticsWorkspaceId()		
-		$altLogAnayticsWorkspaceDetails = $this.GetAltLogAnalyticsWorkspaceId()
+		$laWSDetails = $this.GetLAWSId()
+		$altLAWSDetails = $this.GetAltLAWSId()
+
+		#Start: Code to be deleted when OMS variables will be completely removed
+		$omsWSDetails = $null
+		$altOMSWSDetails = $null
+		#End: Code to be deleted when OMS variables will be completely removed
+
 		$webhookUrl = $this.GetWebhookURL()
 		$appRGs = $this.GetAppRGs()
 		$runbook = Get-AzAutomationRunbook -AutomationAccountName $this.AutomationAccount.Name `
@@ -1367,30 +1373,26 @@ class CCAutomation: CommandBase
 		$azskLatestCARunbookVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion
 		
 		$caSummaryTable.Item("AutomationAccountName") = $caAutomationAccount.AutomationAccountName
-		if($logAnayticsWorkspaceDetails)
+
+		if($laWSDetails)
 		{
-			if($this.OMSVariablesExist)
-			{
-				$caSummaryTable.Item("OMSWorkspaceId") = $logAnayticsWorkspaceDetails.Value
-			}
-			if($this.LAWSVariablesExist)
-			{
-				$caSummaryTable.Item("LAWSId") = $logAnayticsWorkspaceDetails.Value
-			}
+			$caSummaryTable.Item("LAWSId") = $laWSDetails.Value
+		}
+		if($altLAWSDetails)
+		{
+			$caSummaryTable.Item("AltLAWSId") = $altLAWSDetails.Value
 		}
 
-		if($altLogAnayticsWorkspaceDetails)
+		#Start: Code to be deleted when OMS variables will be completely removed
+		if($omsWSDetails)
 		{
-			if($this.AltOMSVariablesExist)
-			{
-				$caSummaryTable.Item("AltOMSWorkspaceId") = $altLogAnayticsWorkspaceDetails.Value
-			}
-			
-			if($this.AltLAWSVariablesExist)
-			{
-				$caSummaryTable.Item("AltLAWSId") = $altLogAnayticsWorkspaceDetails.Value
-			}
+			$caSummaryTable.Item("OMSWorkspaceId") = $omsWSDetails.Value
 		}
+		if($altOMSWSDetails)
+		{
+			$caSummaryTable.Item("AltOMSWorkspaceId") = $altOMSWSDetails.Value
+		}
+		#End: Code to be deleted when OMS variables will be completely removed
 
 		if($webhookUrl)
 		{
@@ -1996,11 +1998,13 @@ class CCAutomation: CommandBase
 		$stepCount++
 	
 		$checkDescription = "Inspecting Log Analytics workspace configuration."
-        
-		$isLogAnalyticsSettingSetup = !([string]::IsNullOrEmpty($logAnayticsWorkspaceDetails)) -and $this.IsLAWSKeyVariableAvailable()
-		$isAltLogAnalyticsSettingSetup = !([string]::IsNullOrEmpty($altLogAnayticsWorkspaceDetails)) -and $this.IsAltLAWSKeyVariableAvailable()
 		
-        if(!$isLogAnalyticsSettingSetup -and !$isAltLogAnalyticsSettingSetup)
+		#If either new/old LAWS/OMS variables are available, it means that the Log Analytics Settings are fine.
+		#The second condition can be deleted after the OMS variables are removed completely.
+		$isLAWSSettingSetup = (!([string]::IsNullOrEmpty($laWSDetails)) -and $this.IsLAWSKeyVariableAvailable()) -or (!([string]::IsNullOrEmpty($omsWSDetails)) -and $this.IsOMSKeyVariableAvailable())
+		$isAltLAWSSettingSetup = (!([string]::IsNullOrEmpty($altLAWSDetails)) -and $this.IsAltLAWSKeyVariableAvailable()) -or (!([string]::IsNullOrEmpty($altOMSWSDetails)) -and $this.IsAltOMSKeyVariableAvailable())
+				
+        if(!$isLAWSSettingSetup -and !$isAltLAWSSettingSetup)
 		{
 			$failMsg = "Log Analytics workspace setting is not set up."			
 			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -LAWSId <LAWSId> -LAWSSharedKey <LAWSSharedKey>'."
@@ -3614,24 +3618,10 @@ class CCAutomation: CommandBase
 	}
 
 	#get Log Analytics Workspace ID
-	hidden [PSObject] GetLogAnalyticsWorkspaceId()
+	hidden [PSObject] GetLAWSId()
 	{
 		$laWSIdDetails = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "LAWSId" -ErrorAction SilentlyContinue
-
-		if(($laWSIdDetails | Measure-Object).Count -gt 0)
-		{
-			$this.LAWSVariablesExist = $true;
-		}
-		else
-		{
-			$laWSIdDetails = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
-			-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
-			if(($laWSIdDetails | Measure-Object).Count -gt 0)
-			{
-				$this.OMSVariablesExist = $true;
-			}
-		}
 		
 		if($laWSIdDetails -and ($null -ne $laWSIdDetails.Value))
 		{
@@ -3643,24 +3633,10 @@ class CCAutomation: CommandBase
 		}
 	}
 	#get Alt Log Analytics Workspace ID
-	hidden [PSObject] GetAltLogAnalyticsWorkspaceId()
+	hidden [PSObject] GetAltLAWSId()
 	{
 		$altLAWSIdDetails = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltLAWSId" -ErrorAction SilentlyContinue
-
-		if(($altLAWSIdDetails | Measure-Object).Count -gt 0)
-		{
-			$this.AltLAWSVariablesExist = $true;
-		}
-		else
-		{
-			$altLAWSIdDetails = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
-			-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
-			if(($altLAWSIdDetails | Measure-Object).Count -gt 0)
-			{
-				$this.AltOMSVariablesExist = $true;
-			}
-		}
 		
 		if($altLAWSIdDetails -and ($null -ne $altLAWSIdDetails.Value))
 		{
@@ -3671,6 +3647,39 @@ class CCAutomation: CommandBase
 			return $null
 		}
 	}
+
+	#Start: Code to be deleted when OMS variables will be completely removed
+	#get Log Analytics Workspace ID: From OMS variables
+	hidden [PSObject] GetOMSWorkspaceId()
+	{
+		$omsWSIdDetails = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+			-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
+		
+		if($omsWSIdDetails -and ($null -ne $omsWSIdDetails.Value))
+		{
+			return $omsWSIdDetails|Select-Object Description,Name,Value
+		}
+		else
+		{
+			return $null
+		}
+	}
+	#get Alt Log Analytics Workspace ID: From OMS variables
+	hidden [PSObject] GetAltOMSWorkspaceId()
+	{
+		$altOMSWSIdDetails = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+			-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+			
+		if($altOMSWSIdDetails -and ($null -ne $altOMSWSIdDetails.Value))
+		{
+			return $altOMSWSIdDetails |Select-Object Description,Name,Value
+		}
+		else
+		{
+			return $null
+		}
+	}
+	#End: Code to be deleted when OMS variables will be completely removed
 
 	#get Webhook URL
 	hidden [PSObject] GetWebhookURL()
@@ -3690,7 +3699,8 @@ class CCAutomation: CommandBase
 	hidden [boolean] IsLAWSKeyVariableAvailable()
 	{
 		$laWSKey = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
-		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSSharedKey" -ErrorAction SilentlyContinue
+		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "LAWSSharedKey" -ErrorAction SilentlyContinue
+		
 		if($laWSKey)
 		{
 			return $true
@@ -3704,7 +3714,8 @@ class CCAutomation: CommandBase
 	hidden [boolean] IsAltLAWSKeyVariableAvailable()
 	{
 		$altLAWSKey = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
-		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
+		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltLAWSSharedKey" -ErrorAction SilentlyContinue
+		
 		if($altLAWSKey)
 		{
 			return $true
@@ -3714,6 +3725,40 @@ class CCAutomation: CommandBase
 			return $false
 		}
 	}
+
+	#Start: Code to be deleted when OMS variables will be completely removed
+	#Check Log Analytics Key is present: From OMS variables
+	hidden [boolean] IsOMSKeyVariableAvailable()
+	{
+		$omsSharedKey = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+			-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSSharedKey" -ErrorAction SilentlyContinue
+		
+		if($omsSharedKey)
+		{
+			return $true
+		}
+		else
+		{
+			return $false
+		}
+	}
+	#Check Alt Log Analytics Key is present: From OMS variables
+	hidden [boolean] IsAltOMSKeyVariableAvailable()
+	{
+		$altOMSSharedKey = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+			-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
+		
+		if($altOMSSharedKey)
+		{
+			return $true
+		}
+		else
+		{
+			return $false
+		}
+	}
+	#End: Code to be deleted when OMS variables will be completely removed
+
 	#get reports storage value from variable
 	hidden [PSObject] GetReportsStorageAccountNameVariable()
 	{
@@ -3910,10 +3955,11 @@ class CCAutomation: CommandBase
 	#region: Remove configured setting from CA
 	hidden [void] RemoveLAWSSettings()
 	{
-		$logAnayticsWorkspaceDetails = $this.GetLogAnalyticsWorkspaceId()
+		$laWSDetails = $this.GetLAWSId()
+		$omsWSDetails = $this.GetOMSWorkspaceId()
 		try
 		{
-			if($null -ne $logAnayticsWorkspaceDetails)
+			if(($null -ne $laWSDetails) -or ($null -ne $omsWSDetails))
 			{			
 				$this.PublishCustomMessage("Removing Log Analytics workspace settings... ");
 				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
@@ -3937,10 +3983,11 @@ class CCAutomation: CommandBase
 	}
 	hidden [void] RemoveAltLAWSSettings()
 	{
-		$altLogAnayticsWorkspaceDetails = $this.GetAltLogAnalyticsWorkspaceId();
+		$altLAWSDetails = $this.GetAltLAWSId();
+		$altOMSWSDetails = $this.GetAltOMSWorkspaceId();
 		try
 		{
-			if($null -ne $altLogAnayticsWorkspaceDetails)
+			if(($null -ne $altLAWSDetails) -or ($null -ne $altOMSWSDetails))
 			{
 				$this.PublishCustomMessage("Removing Alt Log Analytics workspace settings... ");
 				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
