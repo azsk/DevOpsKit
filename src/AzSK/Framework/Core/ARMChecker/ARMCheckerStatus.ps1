@@ -51,7 +51,7 @@ class ARMCheckerStatus: EventBase
 	}
 
 
-	[string] EvaluateStatus([string] $armTemplatePath, [string] $parameterFilePath ,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles)
+	[string] EvaluateStatus([string] $armTemplatePath, [string] $parameterFilePath ,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles, [string] $ExcludeControlIds)
 	{
 	    if(-not (Test-Path -path $armTemplatePath))
 		{
@@ -150,6 +150,14 @@ class ARMCheckerStatus: EventBase
 		$filesToExclude = $filteredFiles -join ","
 		$filesToExcludeCount = ($filesToExclude| Measure-Object).Count 
 		}
+
+		# Check if exclude control ids are provided by user 
+		$ControlsToExclude = @();
+		if(-not([string]::IsNullOrEmpty($ExcludeControlIds)))
+		{
+		  $ControlsToExclude = $this.ConvertToStringArray($ExcludeControlIds);
+		}
+
 		foreach($armTemplate in $ARMTemplates)
 		{
 		    $armFileName = $armTemplate.FullName.Replace($baseDirectory, ".");
@@ -180,6 +188,10 @@ class ARMCheckerStatus: EventBase
 				
 				$results += $libResults | Where-Object {$_.VerificationResult -ne "NotSupported"} | Select-Object -ExcludeProperty "IsEnabled"		
 		
+				if($results.Count -gt 0 -and $ControlsToExclude.Count -gt 0){
+					$results = $results | Where-Object {$ControlsToExclude -notcontains $_.ControlId}
+				}
+
 				$this.WriteMessage(([Constants]::DoubleDashLine + "`r`nStarting analysis: [FileName: $armFileName] `r`n" + [Constants]::SingleDashLine), [MessageType]::Info);
 				if($null -ne $relatedParameterFile){
 					$this.WriteMessage(("`r`n[ParameterFileName: $relatedParameterFileName] `r`n" + [Constants]::SingleDashLine), [MessageType]::Info);

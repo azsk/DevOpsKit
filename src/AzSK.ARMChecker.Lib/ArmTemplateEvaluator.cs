@@ -72,11 +72,11 @@ namespace AzSK.ARMChecker.Lib
                 Features c = new Features();
                 c.FeatureName = i.FeatureName;
                 c.supportedResourceTypes = i.supportedResourceTypes;
-                for(int j=0;j<c.supportedResourceTypes.Count();j++)
-                {
-                    var temp = c.supportedResourceTypes[j].Split('/');
-                    c.supportedResourceTypes[j] = temp.Last();
-                }
+                //for(int j=0;j<c.supportedResourceTypes.Count();j++)
+                //{
+                //    var temp = c.supportedResourceTypes[j].Split('/');
+                //    c.supportedResourceTypes[j] = temp.Last();
+                //}
                 c.count = i.supportedResourceTypes.Count();
                 listOfAllPrimaryResource.Add(c);
             }
@@ -105,7 +105,7 @@ namespace AzSK.ARMChecker.Lib
                     ParamAndVarKeys.Add(variableKey, variableValue);
                 }
             }
-            convert_to_flat(resources);
+            ConvertToFlatResourceList(resources);
             var groupedResources = ResourceList?.GroupBy(x => x.Resource.FeatureName);
             // Use for intial relation tuples
             List<ResourceNode> relatedResources = new List<ResourceNode>();
@@ -468,34 +468,37 @@ namespace AzSK.ARMChecker.Lib
             }
         }
 
-        public void convert_to_flat(JToken resources)
+        public void ConvertToFlatResourceList(JToken resources, string parentResourceType =null)
         {
            
             foreach (JObject resource in resources)
             {
+                if(parentResourceType != null)
+                {
+                    var type = resource.GetValueCaseInsensitive<string>("type");
+                    type = parentResourceType + "/"+ type;
+                    resource["type"] = type;
+                }
+
                 if (resource.GetValueCaseInsensitive("resources") != null)
                 {
-                    var t = resource.GetValueCaseInsensitive("resources");
+                    var childResources = resource.GetValueCaseInsensitive("resources");
                     resource.Remove("resources");
-                    create_intialList(resource);
-                    convert_to_flat(t);
-                    
+                    CreateInitialResourceList(resource);
+                    string parentType = resource.GetValueCaseInsensitive<string>("type");
+                    ConvertToFlatResourceList(childResources, parentType);
                 }
                 else
                 {
-                    create_intialList(resource);
+                    CreateInitialResourceList(resource);
                 }
             }
         }
-        public void create_intialList(JObject resource)
+        public void CreateInitialResourceList(JObject resource)
         {
 
-            // Create initial list of all resource without linking
+                // Create initial list of all resource without linking
                 var type = resource.GetValueCaseInsensitive<string>("type");
-                var temp = type.Split('/');
-                type = temp.Last();
-            if (type == "auditingSettings")
-                type = "auditingPolicies";
                 var name = resource.GetValueCaseInsensitive<string>("name");
                 var featureSet = listOfAllPrimaryResource?.FirstOrDefault(x => x.supportedResourceTypes.Any(y => y.Equals(type, StringComparison.OrdinalIgnoreCase)));
                 // Console.WriteLine(featureSet);

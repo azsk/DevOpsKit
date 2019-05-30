@@ -51,7 +51,13 @@ function Get-AzSKARMTemplateSecurityStatus
 		[Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of JSON files to be excluded from scan")]
         [string]  
 		[Alias("ef")]
-        $ExcludeFiles,
+		$ExcludeFiles,
+		
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of control ids to be excluded from scan")]		
+		[Alias("xcids")]
+		[AllowEmptyString()]
+		$ExcludeControlIds,
 
 		[Parameter(Mandatory = $false, HelpMessage = "Path to file containing list of controls to skip")]
         [string]  
@@ -71,7 +77,7 @@ function Get-AzSKARMTemplateSecurityStatus
 			$armStatus = [ARMCheckerStatus]::new($PSCmdlet.MyInvocation);
 			if ($armStatus) 
 			{
-				return $armStatus.EvaluateStatus($ARMTemplatePath,$ParameterFilePath,$Recurse,$SkipControlsFromFile,$ExcludeFiles);				
+				return $armStatus.EvaluateStatus($ARMTemplatePath,$ParameterFilePath,$Recurse,$SkipControlsFromFile,$ExcludeFiles,$ExcludeControlIds);				
 			}    
 		}
 		catch 
