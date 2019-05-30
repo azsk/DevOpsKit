@@ -59,6 +59,22 @@ function Get-AzSKARMTemplateSecurityStatus
 		[AllowEmptyString()]
 		$ExcludeControlIds,
 
+		[string] 
+        [Parameter(Mandatory = $false, HelpMessage="Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.")]
+		[Alias("cids")]
+		[AllowEmptyString()]
+		$ControlIds,
+		
+		[switch]
+		[Parameter(Mandatory = $false)]
+		[Alias("ubc")]
+		$UseBaselineControls,
+
+		[switch]
+		[Parameter(Mandatory = $false)]
+		[Alias("upbc")]
+		$UsePreviewBaselineControls,
+
 		[Parameter(Mandatory = $false, HelpMessage = "Path to file containing list of controls to skip")]
         [string]  
 		[Alias("scf")]
@@ -77,7 +93,7 @@ function Get-AzSKARMTemplateSecurityStatus
 			$armStatus = [ARMCheckerStatus]::new($PSCmdlet.MyInvocation);
 			if ($armStatus) 
 			{
-				return $armStatus.EvaluateStatus($ARMTemplatePath,$ParameterFilePath,$Recurse,$SkipControlsFromFile,$ExcludeFiles,$ExcludeControlIds);				
+				return $armStatus.EvaluateStatus($ARMTemplatePath,$ParameterFilePath,$Recurse,$SkipControlsFromFile,$ExcludeFiles,$ExcludeControlIds,$ControlIds,$UseBaselineControls,$UsePreviewBaselineControls);				
 			}    
 		}
 		catch 

@@ -4,6 +4,7 @@ Set-StrictMode -Version Latest
 class ARMCheckerStatus: EventBase
 {
 	hidden [string] $ARMControls;
+	hidden [string []] $BaselineControls;
 	hidden [string] $PSLogPath;
 	hidden [string] $SFLogPath;
 	[bool] $DoNotOpenOutputFolder = $false;
@@ -18,7 +19,6 @@ class ARMCheckerStatus: EventBase
 
 		#load config file here.
 		$this.ARMControls=$this.LoadARMControlsFile();
-		#$this.ARMControls = [ConfigurationHelper]::LoadOfflineConfigFile("ARMControls.json", $false);
 		if([string]::IsNullOrWhiteSpace($this.ARMControls))
 		{
 			throw ([SuppressedException]::new(("There are no controls to evaluate in ARM checker. Please contact support team."), [SuppressedExceptionType]::InvalidOperation))
@@ -51,13 +51,16 @@ class ARMCheckerStatus: EventBase
 	}
 
 
-	[string] EvaluateStatus([string] $armTemplatePath, [string] $parameterFilePath ,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles, [string] $ExcludeControlIds)
+	[string] EvaluateStatus([string] $armTemplatePath, [string] $parameterFilePath ,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles, [string] $ExcludeControlIds, [string] $ControlIds,[Boolean] $UseBaselineControls,[Boolean] $UsePreviewBaselineControls)
 	{
 	    if(-not (Test-Path -path $armTemplatePath))
 		{
 			$this.WriteMessage("ARMTemplate file path or folder path is empty, verify that the path is correct and try again", [MessageType]::Error);
 			return $null;
 		}
+		
+		#load baseline control list 
+		$this.LoadControlSettingsFile($UseBaselineControls, $UsePreviewBaselineControls);
 
 		# Check if parameter file path is provided by user
 		if([string]::IsNullOrEmpty($parameterFilePath))
@@ -151,6 +154,16 @@ class ARMCheckerStatus: EventBase
 		$filesToExcludeCount = ($filesToExclude| Measure-Object).Count 
 		}
 
+		# TODO:- Check if both are provided, return
+		# Code Pending
+
+		# Check if specific control ids to scan are provided by user  
+		$ControlsToScan = @();
+		if(-not([string]::IsNullOrEmpty($ControlIds)))
+		{
+		  $ControlsToScan = $this.ConvertToStringArray($ControlIds);
+		} 
+
 		# Check if exclude control ids are provided by user 
 		$ControlsToExclude = @();
 		if(-not([string]::IsNullOrEmpty($ExcludeControlIds)))
@@ -188,10 +201,19 @@ class ARMCheckerStatus: EventBase
 				
 				$results += $libResults | Where-Object {$_.VerificationResult -ne "NotSupported"} | Select-Object -ExcludeProperty "IsEnabled"		
 		
+				if($results.Count -gt 0 -and $this.BaselineControls.Count -gt 0){
+					$results = $results | Where-Object {$this.BaselineControls -contains $_.ControlId}
+				}
+
+				if($results.Count -gt 0 -and $ControlsToScan.Count -gt 0){
+					$results = $results | Where-Object {$ControlsToScan -contains $_.ControlId}
+				}
+
 				if($results.Count -gt 0 -and $ControlsToExclude.Count -gt 0){
 					$results = $results | Where-Object {$ControlsToExclude -notcontains $_.ControlId}
 				}
 
+				
 				$this.WriteMessage(([Constants]::DoubleDashLine + "`r`nStarting analysis: [FileName: $armFileName] `r`n" + [Constants]::SingleDashLine), [MessageType]::Info);
 				if($null -ne $relatedParameterFile){
 					$this.WriteMessage(("`r`n[ParameterFileName: $relatedParameterFileName] `r`n" + [Constants]::SingleDashLine), [MessageType]::Info);
@@ -597,4 +619,66 @@ class ARMCheckerStatus: EventBase
 	   return $serverFileContent;
 	}
 
+	hidden [void] LoadControlSettingsFile([Boolean] $UseBaselineControls, [Boolean] $UsePreviewBaselineControls)
+	{ 	
+			
+		if($UseBaselineControls -eq $true -or $UsePreviewBaselineControls -eq $true){
+			# Fetch control Settings data
+			$ControlSettings = $null
+			if(-not [ConfigurationManager]::GetLocalAzSKSettings().EnableAADAuthForOnlinePolicyStore)
+			{
+				$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+			}
+			else 
+			{
+				$AzureContext = Get-AzContext
+				if(-not [string]::IsNullOrWhiteSpace($AzureContext)) 
+				{
+					$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+				}
+				else
+				{
+					# Todo : Ask user to login and return
+					# Code Pending
+					Write-Host "Login context is required to use Baseline and PreviewBaseline filter" -ForegroundColor Red 
+				}
+			}
+			# Filter control list for baseline controls
+			$baselineControlList = @();
+			if($UseBaselineControls)
+			{
+				if([Helpers]::CheckMember($ControlSettings ,"BaselineControls.ResourceTypeControlIdMappingList"))
+				{
+					$baselineControlList += $ControlSettings.BaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
+				}
+			
+			}
+			# Filter control list for preview baseline controls
+			$previewBaselineControls = @();
+			if($UsePreviewBaselineControls)
+			{
+				if([Helpers]::CheckMember($ControlSettings,"PreviewBaselineControls.ResourceTypeControlIdMappingList") )
+				{
+					$previewBaselineControls += $ControlSettings.PreviewBaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
+				}
+				$baselineControlList += $previewBaselineControls
+			}
+
+			if($baselineControlList -and $baselineControlList.Count -gt 0)
+			{
+				$this.BaselineControls += $baselineControlList
+				$this.BaselineControls | ForEach-Object {
+					Write-Host $_ -ForegroundColor Cyan 
+				}
+			}else{
+				# Todo : Warn user to that no baseline or previebaseline control found
+				# Code Pending - Need to confirm in such case should we blcok scan or jsut continue with warning
+				Write-Host "No Baseline or PreviewBaseline controls found" -ForegroundColor Yellow 
+				$this.BaselineControls = @()
+			}
+		}else{
+			$this.BaselineControls = @()
+		}
+		
+	}
 }
