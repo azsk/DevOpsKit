@@ -201,15 +201,15 @@ class ARMCheckerStatus: EventBase
 				
 				$results += $libResults | Where-Object {$_.VerificationResult -ne "NotSupported"} | Select-Object -ExcludeProperty "IsEnabled"		
 		
-				if($results.Count -gt 0 -and $this.BaselineControls.Count -gt 0){
+				if($null -ne $results -and ( $results| Measure-Object).Count -gt 0 -and $this.BaselineControls.Count -gt 0){
 					$results = $results | Where-Object {$this.BaselineControls -contains $_.ControlId}
 				}
 
-				if($results.Count -gt 0 -and $ControlsToScan.Count -gt 0){
+				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0 -and ( $ControlsToScan | Measure-Object).Count -gt 0){
 					$results = $results | Where-Object {$ControlsToScan -contains $_.ControlId}
 				}
 
-				if($results.Count -gt 0 -and $ControlsToExclude.Count -gt 0){
+				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0  -and ( $ControlsToExclude | Measure-Object).Count -gt 0){
 					$results = $results | Where-Object {$ControlsToExclude -notcontains $_.ControlId}
 				}
 
@@ -218,7 +218,7 @@ class ARMCheckerStatus: EventBase
 				if($null -ne $relatedParameterFile){
 					$this.WriteMessage(("`r`n[ParameterFileName: $relatedParameterFileName] `r`n" + [Constants]::SingleDashLine), [MessageType]::Info);
 				}
-				if($results.Count -gt 0)
+				if($null -ne $results -and ($results | Measure-Object).Count -gt 0)
 				{   $scannedFileCount += 1;
 					foreach($result in $results)
 					{	       
