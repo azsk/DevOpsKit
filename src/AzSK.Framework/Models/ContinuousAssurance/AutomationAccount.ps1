@@ -21,8 +21,8 @@ class AutomationAccount
 class UserConfig
 {
 	  hidden [string] $ResourceGroupNames
-	  hidden [LAWCredential] $LAWCredential
-	  hidden [LAWCredential] $AltLAWCredential
+	  hidden [LAWSCredential] $LAWSCredential
+	  hidden [LAWSCredential] $AltLAWSCredential
 	  hidden [WebhookSetting] $WebhookDetails
 	  hidden [string] $StorageAccountName
 	  hidden [string] $StorageAccountRG
@@ -35,7 +35,7 @@ class WebhookSetting
 	hidden [string] $AuthZHeaderValue;
 }
 
-class LAWCredential
+class LAWSCredential
 {
 	hidden [string] $WorkspaceId
 	hidden [string] $SharedKey

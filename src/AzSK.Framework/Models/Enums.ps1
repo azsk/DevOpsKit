@@ -151,7 +151,7 @@ enum OverrideConfigurationType
 
 enum RemoveConfiguredCASetting
 {
-	LAWSettings
-	AltLAWSettings
+	LAWSSettings
+	AltLAWSSettings
 	WebhookSettings
 }

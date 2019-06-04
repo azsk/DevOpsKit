@@ -15,14 +15,14 @@ function RunAzSKScan() {
 
 	################################ Begin: Configure AzSK for the scan ######################################### 
 	#set Log Analytics workspace settings
-    if(-not [string]::IsNullOrWhiteSpace($LAWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($LAWorkspaceSharedKey))
+    if(-not [string]::IsNullOrWhiteSpace($LAWSId) -and -not [string]::IsNullOrWhiteSpace($LAWSSharedKey))
 	{
-		Set-AzSKMonitoringSettings -WorkspaceId $LAWorkspaceId -SharedKey $LAWorkspaceSharedKey -Source "CA"
+		Set-AzSKMonitoringSettings -WorkspaceId $LAWSId -SharedKey $LAWSSharedKey -Source "CA"
 	}
 	#set alternate Log Analytics workspace if available
-	if(-not [string]::IsNullOrWhiteSpace($AltLAWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($AltLAWorkspaceSharedKey))
+	if(-not [string]::IsNullOrWhiteSpace($AltLAWSId) -and -not [string]::IsNullOrWhiteSpace($AltLAWSSharedKey))
 	{
-		Set-AzSKMonitoringSettings -AltWorkspaceId $AltLAWorkspaceId -AltSharedKey $AltLAWorkspaceSharedKey -Source "CA"
+		Set-AzSKMonitoringSettings -AltWorkspaceId $AltLAWSId -AltSharedKey $AltLAWSSharedKey -Source "CA"
 	}
     #set webhook settings
 	if(-not [string]::IsNullOrWhiteSpace($WebhookUrl))	
@@ -55,7 +55,7 @@ function RunAzSKScan() {
     PublishEvent -EventName "CA Scan Started" -Properties @{
         "ResourceGroupNames"       = $ResourceGroupNames; `
             "OnlinePolicyStoreUrl" = $OnlinePolicyStoreUrl; `
-            "LAWorkspaceId"       = $LAWorkspaceId;
+            "LAWSId"       = $LAWSId;
     }
 
 	#Check if the central scan mode is enabled. Read/prepare artefacts if so.
@@ -680,29 +680,29 @@ function AddAutomationVariable
 	$ResourceGroupNames = Get-AutomationVariable -Name "AppResourceGroupNames"
 	
 	#Primary Log Analytics workspace info. This is mandatory. CA will send events to this WS.
-	$LAWorkspaceId = Get-AutomationVariable -Name "LAWorkspaceId" -ErrorAction SilentlyContinue
-	if(($LAWorkspaceId | Measure-Object).Count -eq 0)
+	$LAWSId = Get-AutomationVariable -Name "LAWSId" -ErrorAction SilentlyContinue
+	if(($LAWSId | Measure-Object).Count -eq 0)
 	{
-		$LAWorkspaceId = Get-AutomationVariable -Name "OMSWorkspaceId"
+		$LAWSId = Get-AutomationVariable -Name "OMSWorkspaceId"
 	}
 
-	$LAWorkspaceSharedKey = Get-AutomationVariable -Name "LAWSharedKey" -ErrorAction SilentlyContinue
-	if(($LAWorkspaceSharedKey | Measure-Object).Count -eq 0)
+	$LAWSSharedKey = Get-AutomationVariable -Name "LAWSSharedKey" -ErrorAction SilentlyContinue
+	if(($LAWSSharedKey | Measure-Object).Count -eq 0)
 	{
-		$LAWorkspaceSharedKey = Get-AutomationVariable -Name "OMSSharedKey"
+		$LAWSSharedKey = Get-AutomationVariable -Name "OMSSharedKey"
 	}
 	
 	#Secondary/alternate Log Analytics workspace info. This is optional. Facilitates federal/state type models.
-	$AltLAWorkspaceId = Get-AutomationVariable -Name "AltLAWorkspaceId" -ErrorAction SilentlyContinue
-	if(($AltLAWorkspaceId | Measure-Object).Count -eq 0)
+	$AltLAWSId = Get-AutomationVariable -Name "AltLAWSId" -ErrorAction SilentlyContinue
+	if(($AltLAWSId | Measure-Object).Count -eq 0)
 	{
-		$AltLAWorkspaceId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+		$AltLAWSId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
 	}
 
-	$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltLAWSharedKey" -ErrorAction SilentlyContinue
-	if(($AltLAWorkspaceSharedKey | Measure-Object).Count -eq 0)
+	$AltLAWSSharedKey = Get-AutomationVariable -Name "AltLAWSSharedKey" -ErrorAction SilentlyContinue
+	if(($AltLAWSSharedKey | Measure-Object).Count -eq 0)
 	{
-		$AltLAWorkspaceSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
+		$AltLAWSSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
 	}
 
 	#CA can also optionally be configured to send events to a Webhook. 
@@ -799,33 +799,33 @@ function AddAutomationVariable
 	{
 		PublishEvent -EventName "Adding Log Analytics variables Start"
 
-		$newLAWorkspaceIdName = "LAWorkspaceId"			
-		$newLAWSharedKeyName = "LAWSharedKey"
-		$newAltLAWorkspaceIdName = "AltLAWorkspaceId"
-		$newAltLAWSharedKeyName = "AltLAWSharedKey"
-		$laWorkspaceIdDetails = Get-AzureRmAutomationVariable -Name "OMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
-		$laWorkspaceSharedKeyDetails = Get-AzureRmAutomationVariable -Name "OMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
-		$altLAWorkspaceIdDetails = Get-AzureRmAutomationVariable -Name "AltOMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
-		$altLAWorkspaceSharedKeyDetails = Get-AzureRmAutomationVariable -Name "AltOMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		$newLAWSIdName = "LAWSId"			
+		$newLAWSSharedKeyName = "LAWSSharedKey"
+		$newAltLAWSIdName = "AltLAWSId"
+		$newAltLAWSSharedKeyName = "AltLAWSSharedKey"
+		$laWSIdDetails = Get-AzureRmAutomationVariable -Name "OMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		$laWSSharedKeyDetails = Get-AzureRmAutomationVariable -Name "OMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		$altLAWSIdDetails = Get-AzureRmAutomationVariable -Name "AltOMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		$altLAWSSharedKeyDetails = Get-AzureRmAutomationVariable -Name "AltOMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
 	
 		#Adding Primary Log Analytics Workspace variables.
-		if(($laWorkspaceIdDetails | Measure-Object).Count -gt 0)
+		if(($laWSIdDetails | Measure-Object).Count -gt 0)
 		{
-			AddAutomationVariable -VariableName $newLAWorkspaceIdName -Details $laWorkspaceIdDetails
+			AddAutomationVariable -VariableName $newLAWSIdName -Details $laWSIdDetails
 		}
-		if(($laWorkspaceSharedKeyDetails | Measure-Object).Count -gt 0)
+		if(($laWSSharedKeyDetails | Measure-Object).Count -gt 0)
 		{
-			AddAutomationVariable -VariableName $newLAWSharedKeyName -Details $laWorkspaceSharedKeyDetails
+			AddAutomationVariable -VariableName $newLAWSSharedKeyName -Details $laWSSharedKeyDetails
 		}
 				
 		#Adding Secondary/Alternate Log Analytics Workspace variables.
-		if(($altLAWorkspaceIdDetails | Measure-Object).Count -gt 0)
+		if(($altLAWSIdDetails | Measure-Object).Count -gt 0)
 		{
-			AddAutomationVariable -VariableName $newAltLAWorkspaceIdName -Details $altLAWorkspaceIdDetails
+			AddAutomationVariable -VariableName $newAltLAWSIdName -Details $altLAWSIdDetails
 		}
-		if(($altLAWorkspaceSharedKeyDetails | Measure-Object).Count -gt 0)
+		if(($altLAWSSharedKeyDetails | Measure-Object).Count -gt 0)
 		{
-			AddAutomationVariable -VariableName $newAltLAWSharedKeyName -Details $altLAWorkspaceSharedKeyDetails
+			AddAutomationVariable -VariableName $newAltLAWSSharedKeyName -Details $altLAWSSharedKeyDetails
 		}
 		
 		PublishEvent -EventName "Adding Log Analytics variables Complete"

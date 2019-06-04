@@ -77,8 +77,8 @@ function Set-AzSKMonitoringSettings
 			{
 				if(-not [string]::IsNullOrWhiteSpace($WorkspaceId) -and -not [string]::IsNullOrWhiteSpace($SharedKey))
 				{
-					$appSettings.LAWorkspaceId = $WorkspaceId
-					$appSettings.LAWSharedKey = $SharedKey
+					$appSettings.LAWSId = $WorkspaceId
+					$appSettings.LAWSSharedKey = $SharedKey
 				}
 				elseif(([string]::IsNullOrWhiteSpace($WorkspaceId) -and -not [string]::IsNullOrWhiteSpace($SharedKey)) `
 						-and (-not [string]::IsNullOrWhiteSpace($WorkspaceId) -and [string]::IsNullOrWhiteSpace($SharedKey)))
@@ -88,8 +88,8 @@ function Set-AzSKMonitoringSettings
 				}
 				if(-not [string]::IsNullOrWhiteSpace($AltWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($AltSharedKey))
 				{
-					$appSettings.AltLAWorkspaceId = $AltWorkspaceId
-					$appSettings.AltLAWSharedKey = $AltSharedKey
+					$appSettings.AltLAWSId = $AltWorkspaceId
+					$appSettings.AltLAWSSharedKey = $AltSharedKey
 				}
 				elseif(([string]::IsNullOrWhiteSpace($AltWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($AltSharedKey)) `
 						-and (-not [string]::IsNullOrWhiteSpace($AltWorkspaceId) -and [string]::IsNullOrWhiteSpace($AltSharedKey)))
@@ -99,20 +99,20 @@ function Set-AzSKMonitoringSettings
 				}
 			}
 			else {
-				$appSettings.LAWorkspaceId = ""
-				$appSettings.LAWSharedKey = ""
-				$appSettings.AltLAWorkspaceId = ""
-				$appSettings.AltLAWSharedKey = ""
+				$appSettings.LAWSId = ""
+				$appSettings.LAWSSharedKey = ""
+				$appSettings.AltLAWSId = ""
+				$appSettings.AltLAWSSharedKey = ""
 			}
 			if(-not [string]::IsNullOrWhiteSpace($Source))
 			{				
-				$appSettings.LAWSource = $Source
+				$appSettings.LASource = $Source
 			}
 			else
 			{
-				$appSettings.LAWSource = "SDL"
+				$appSettings.LASource = "SDL"
 			}
-			$appSettings.LAWType = "AzSK"
+			$appSettings.LAType = "AzSK"
 			[ConfigurationManager]::UpdateAzSKSettings($appSettings);
 			[EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine + "`r`nWe have added new queries for the Monitoring solution. These will help reflect the aggregate control pass/fail status more accurately. Please go here to get them:  https://aka.ms/devopskit/omsqueries `r`n",[MessageType]::Warning);
 			[EventBase]::PublishGenericCustomMessage("Successfully changed policy settings");
@@ -138,9 +138,9 @@ function Install-AzSKMonitoringSolution
 	.DESCRIPTION
 	This command would help in creating security dashboard in Log Analytics Workspace
 
-	.PARAMETER LAWSubscriptionId
+	.PARAMETER LAWSSubscriptionId
 		Id of subscription hosting Log Analytics workspace
-	.PARAMETER LAWResourceGroup
+	.PARAMETER LAWSResourceGroup
 		Resource group hosting Log Analytics workspace
 	.PARAMETER WorkspaceId
 		Workspace ID of the Log Analytics workspace which will be used for monitoring.
@@ -164,14 +164,14 @@ function Install-AzSKMonitoringSolution
         [Parameter(ParameterSetName="NewModel", HelpMessage="Id of subscription hosting Log Analytics workspace", Mandatory = $true)]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("lawsubid","lawsid","OMSSubscriptionId")]
-		$LAWSubscriptionId,  
+		[Alias("lawssubid","lawssid","OMSSubscriptionId")]
+		$LAWSSubscriptionId,  
 				
 		[Parameter(ParameterSetName="NewModel", HelpMessage="Resource group hosting Log Analytics workspace", Mandatory = $true)]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("lawrg","OMSResourceGroup")]
-		$LAWResourceGroup, 
+		[Alias("lawsrg","OMSResourceGroup")]
+		$LAWSResourceGroup, 
 
 		[Parameter(ParameterSetName="NewModel", HelpMessage="Workspace ID of the Log Analytics workspace which will be used for monitoring.", Mandatory = $true)]
         [string]
@@ -207,8 +207,8 @@ function Install-AzSKMonitoringSolution
 			{
 				Write-Host "WARNING: The command 'Install-AzSKOMSSolution' will soon be deprecated. It will be replaced by 'Install-AzSKMonitoringSolution'.`n" -ForegroundColor Yellow
 			}
-			$monitoringInstance = [LogAnalyticsMonitoring]::new($LAWSubscriptionId, $LAWResourceGroup, $WorkspaceId, $PSCmdlet.MyInvocation);
-			$monitoringInstance.InvokeFunction($monitoringInstance.ConfigureLAW, @($ViewName, $ValidateOnly));
+			$monitoringInstance = [LogAnalyticsMonitoring]::new($LAWSSubscriptionId, $LAWSResourceGroup, $WorkspaceId, $PSCmdlet.MyInvocation);
+			$monitoringInstance.InvokeFunction($monitoringInstance.ConfigureLAWS, @($ViewName, $ValidateOnly));
 		}
 		catch
 		{

@@ -97,7 +97,7 @@ class Constants
 	static [string] $VersionWarningMessage = ("Using the latest version ensures that AzSK security commands you run use the latest, most up-to-date controls. `r`nResults from the current version should not be considered towards compliance requirements.`r`n" + [Constants]::DoubleDashLine);
 	static [string] $UsageTelemetryKey = "cf4c5e1a-d68d-4ea1-9901-37b67f58a192";
 	static [string] $AzSKRGLocation = "eastus2";
-	static [string] $RequestURI = "https://management.azure.com/{0}?api-version=2015-03-20";
+	static [string] $LAWSRequestURI = "https://management.azure.com/{0}?api-version=2015-03-20";
 	static [string] $NewStorageSku = "Standard_LRS";
 	static [string] $NewStorageKind = "BlobStorage";
 	static [string] $ARMControlsFileURI = "https://azsdkossep.azureedge.net/1.0.0/ARMControls.json";
@@ -140,10 +140,10 @@ class Constants
 	static [string] $OMSSharedKey = "OMSSharedKey"
 	static [string] $AltOMSWorkspaceId = "AltOMSWorkspaceId"
 	static [string] $AltOMSSharedKey = "AltOMSSharedKey"
-	static [string] $LAWorkspaceId = "LAWorkspaceId"
-	static [string] $LAWSharedKey = "LAWSharedKey"
-	static [string] $AltLAWorkspaceId = "AltLAWorkspaceId"
-	static [string] $AltLAWSharedKey = "AltLAWSharedKey"
+	static [string] $LAWSId = "LAWSId"
+	static [string] $LAWSSharedKey = "LAWSSharedKey"
+	static [string] $AltLAWSId = "AltLAWSId"
+	static [string] $AltLAWSSharedKey = "AltLAWSSharedKey"
 	static [string] $WebhookUrl = "WebhookUrl"
 	static [string] $WebhookAuthZHeaderName = "WebhookAuthZHeaderName"
 	static [string] $WebhookAuthZHeaderValue = "WebhookAuthZHeaderValue"

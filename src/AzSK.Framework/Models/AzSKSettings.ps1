@@ -1,11 +1,11 @@
 Set-StrictMode -Version Latest
 class AzSKSettings {
-    [string] $LAWorkspaceId;
-    [string] $LAWSharedKey;
-	[string] $AltLAWorkspaceId;
-    [string] $AltLAWSharedKey;
-    [string] $LAWType;
-	[string] $LAWSource;
+    [string] $LAWSId;
+    [string] $LAWSSharedKey;
+	[string] $AltLAWSId;
+    [string] $AltLAWSSharedKey;
+    [string] $LAType;
+	[string] $LASource;
 
 	[string] $EventHubNamespace;
 	[string] $EventHubName;
@@ -94,31 +94,31 @@ class AzSKSettings {
 					ForEach-Object {
 						$propertyName = $_.Name;
 
-						if($propertyName -eq "LAWorkspaceId" -or $propertyName -eq "LAWSharedKey" -or $propertyName -eq "AltLAWorkspaceId" -or $propertyName -eq "AltLAWSharedKey" -or $propertyName -eq "LAWType" -or $propertyName -eq "LAWSource")
+						if($propertyName -eq "LAWSId" -or $propertyName -eq "LAWSSharedKey" -or $propertyName -eq "AltLAWSId" -or $propertyName -eq "AltLAWSSharedKey" -or $propertyName -eq "LAType" -or $propertyName -eq "LASource")
 						{
 							switch($propertyName)
 							{
-								"LAWorkspaceId"{
+								"LAWSId"{
 									$newSetting = "OMSWorkspaceId"
 									break;
 								}
-								"LAWSharedKey"{
+								"LAWSSharedKey"{
 									$newSetting = "OMSSharedKey"
 									break;
 								}
-								"AltLAWorkspaceId"{
+								"AltLAWSId"{
 									$newSetting = "AltOMSWorkspaceId"
 									break;
 								}
-								"AltLAWSharedKey"{
+								"AltLAWSSharedKey"{
 									$newSetting = "AltOMSSharedKey"
 									break;
 								}
-								"LAWType"{
+								"LAType"{
 									$newSetting = "OMSType"
 									break;
 								}
-								"LAWSource"{
+								"LASource"{
 									$newSetting = "OMSSource"
 									break;
 								}								
@@ -196,6 +196,6 @@ class AzSKSettings {
 	
 	hidden [string] GetScanSource()
 	{
-		return $this.LAWSource
+		return $this.LASource
 	}
 }

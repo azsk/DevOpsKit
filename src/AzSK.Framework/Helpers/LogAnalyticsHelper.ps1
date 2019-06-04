@@ -1,25 +1,25 @@
 Set-StrictMode -Version Latest 
 Class LogAnalyticsHelper{
-	static [string] $DefaultLAWType = "AzSK"
-	hidden static [int] $IsLAWSettingValid = 0  #-1:Fail (Log Analytics workspace Empty, Log Analytics workspace Return Error) | 1:CA | 0:Local
-	hidden static [int] $IsAltLAWSettingValid = 0
+	static [string] $DefaultLAType = "AzSK"
+	hidden static [int] $IsLAWSSettingValid = 0  #-1:Fail (Log Analytics workspace Empty, Log Analytics workspace Return Error) | 1:CA | 0:Local
+	hidden static [int] $IsAltLAWSSettingValid = 0
 	# Create the function to create and post the request
-	static PostLAWData([string] $workspaceId, [string] $sharedKey, $body, $logType, $lawType)
+	static PostLAWSData([string] $workspaceId, [string] $sharedKey, $body, $logType, $laType)
 	{
 		try
 		{
-			if(($lawType | Measure-Object).Count -gt 0 -and [LogAnalyticsHelper]::$("is"+$lawType+"SettingValid") -ne -1)
+			if(($laType | Measure-Object).Count -gt 0 -and [LogAnalyticsHelper]::$("is"+$laType+"SettingValid") -ne -1)
 			{
 				if([string]::IsNullOrWhiteSpace($logType))
 				{
-					$logType = [LogAnalyticsHelper]::DefaultLAWType
+					$logType = [LogAnalyticsHelper]::DefaultLAType
 				}
 				[string] $method = "POST"
 				[string] $contentType = "application/json"
 				[string] $resource = "/api/logs"
 				$rfc1123date = [System.DateTime]::UtcNow.ToString("r")
 				[int] $contentLength = $body.Length
-				[string] $signature = [LogAnalyticsHelper]::GetLAWSignature($workspaceId , $sharedKey , $rfc1123date ,$contentLength ,$method ,$contentType ,$resource)
+				[string] $signature = [LogAnalyticsHelper]::GetLAWSSignature($workspaceId , $sharedKey , $rfc1123date ,$contentLength ,$method ,$contentType ,$resource)
 				[string] $uri = "https://" + $workspaceId + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
 				[DateTime] $TimeStampField = [System.DateTime]::UtcNow
 				$headers = @{
@@ -34,22 +34,22 @@ Class LogAnalyticsHelper{
 		catch
 		{
 			$warningMsg=""
-			if($lawType -eq 'LAW' -or $lawType -eq 'AltLAW')
+			if($laType -eq 'LAWS' -or $laType -eq 'AltLAWS')
 			{	
-				switch([LogAnalyticsHelper]::$("is"+$lawType+"SettingValid"))
+				switch([LogAnalyticsHelper]::$("is"+$laType+"SettingValid"))
 				{
-					0 { $warningMsg += "The $($lawType) workspace id or key is invalid in the local settings file. You can use Set-AzSKMonitoringSettings with correct values to update it.";}
-					1 { $warningMsg += "The $($lawType) workspace id or key is invalid in the ContinuousAssurance configuration. You can use Update-AzSKContinuousAssurance with the correct Log Analytics workspace values to correct it."; }
+					0 { $warningMsg += "The $($laType) workspace id or key is invalid in the local settings file. You can use Set-AzSKMonitoringSettings with correct values to update it.";}
+					1 { $warningMsg += "The $($laType) workspace id or key is invalid in the ContinuousAssurance configuration. You can use Update-AzSKContinuousAssurance with the correct Log Analytics workspace values to correct it."; }
 				}
 				[EventBase]::PublishGenericCustomMessage(" `r`nWARNING: $($warningMsg)", [MessageType]::Warning);
 				
 				#Flag to disable Log Analytics scan 
-				[LogAnalyticsHelper]::$("is"+$lawType+"SettingValid") = -1
+				[LogAnalyticsHelper]::$("is"+$laType+"SettingValid") = -1
 			}
 		}
 	}
 
-	static [string] GetLAWSignature ($workspaceId, $sharedKey, $Date, $ContentLength, $Method, $ContentType, $Resource)
+	static [string] GetLAWSSignature ($workspaceId, $sharedKey, $Date, $ContentLength, $Method, $ContentType, $Resource)
 	{
 			[string] $xHeaders = "x-ms-date:" + $Date
 			[string] $stringToHash = $Method + "`n" + $ContentLength + "`n" + $ContentType + "`n" + $xHeaders + "`n" + $Resource
@@ -66,12 +66,12 @@ Class LogAnalyticsHelper{
 			return $authorization   
 	}
 
-	static [PSObject[]] GetLAWBodyObjects([SVTEventContext] $eventContext,[AzSKContextDetails] $AzSKContext)
+	static [PSObject[]] GetLAWSBodyObjects([SVTEventContext] $eventContext,[AzSKContextDetails] $AzSKContext)
 	{
 		[PSObject[]] $output = @();		
 		[array] $eventContext.ControlResults | ForEach-Object{
 			Set-Variable -Name ControlResult -Value $_ -Scope Local
-			$out = [LAWModel]::new() 
+			$out = [LAWSModel]::new() 
 			if($eventContext.IsResource())
 			{
 				$out.ResourceType=$eventContext.ResourceContext.ResourceType
@@ -151,31 +151,31 @@ Class LogAnalyticsHelper{
         [LogAnalyticsHelper]::WriteControlResult($set,"AzSK_Inventory")		
     }
 
-	static [void] WriteControlResult([PSObject[]] $lawDataObject, [string] $lawEventType)
+	static [void] WriteControlResult([PSObject[]] $lawsDataObject, [string] $laEventType)
 	{
 		try
 		{
 			$settings = [ConfigurationManager]::GetAzSKSettings()
-			if([string]::IsNullOrWhiteSpace($lawEventType))
+			if([string]::IsNullOrWhiteSpace($laEventType))
 			{
-				$lawEventType = $settings.LAWType
+				$laEventType = $settings.LAType
 			}
 
-			if((-not [string]::IsNullOrWhiteSpace($settings.LAWorkspaceId)) -or (-not [string]::IsNullOrWhiteSpace($settings.AltLAWorkspaceId)))
+			if((-not [string]::IsNullOrWhiteSpace($settings.LAWSId)) -or (-not [string]::IsNullOrWhiteSpace($settings.AltLAWSId)))
 			{
-				$lawDataObject | ForEach-Object{
+				$lawsDataObject | ForEach-Object{
 					Set-Variable -Name tempBody -Value $_ -Scope Local
 					$body = $tempBody | ConvertTo-Json
-					$lawBodyByteArray = ([System.Text.Encoding]::UTF8.GetBytes($body))
+					$lawsBodyByteArray = ([System.Text.Encoding]::UTF8.GetBytes($body))
 					#publish to primary workspace
-					if(-not [string]::IsNullOrWhiteSpace($settings.LAWorkspaceId) -and [LogAnalyticsHelper]::IsLAWSettingValid -ne -1)
+					if(-not [string]::IsNullOrWhiteSpace($settings.LAWSId) -and [LogAnalyticsHelper]::IsLAWSSettingValid -ne -1)
 					{
-						[LogAnalyticsHelper]::PostLAWData($settings.LAWorkspaceId, $settings.LAWSharedKey, $lawBodyByteArray, $lawEventType, 'LAW')
+						[LogAnalyticsHelper]::PostLAWSData($settings.LAWSId, $settings.LAWSSharedKey, $lawsBodyByteArray, $laEventType, 'LAWS')
 					}
 					#publish to secondary workspace
-					if(-not [string]::IsNullOrWhiteSpace($settings.AltLAWorkspaceId) -and [LogAnalyticsHelper]::IsAltLAWSettingValid -ne -1)
+					if(-not [string]::IsNullOrWhiteSpace($settings.AltLAWSId) -and [LogAnalyticsHelper]::IsAltLAWSSettingValid -ne -1)
 					{
-						[LogAnalyticsHelper]::PostLAWData($settings.AltLAWorkspaceId, $settings.AltLAWSharedKey, $lawBodyByteArray, $lawEventType, 'AltLAW')
+						[LogAnalyticsHelper]::PostLAWSData($settings.AltLAWSId, $settings.AltLAWSSharedKey, $lawsBodyByteArray, $laEventType, 'AltLAWS')
 					}				
 				}            
 			}
@@ -190,7 +190,7 @@ Class LogAnalyticsHelper{
 	{
         $ControlSet = [System.Collections.ArrayList]::new()
         foreach ($item in $contexts) {
-			$set = [LAWResourceInvModel]::new()
+			$set = [LAWSResourceInvModel]::new()
 			$set.RunIdentifier = $AzSKContext.RunIdentifier
 			$set.SubscriptionId = $item.SubscriptionContext.SubscriptionId
 			$set.SubscriptionName = $item.SubscriptionContext.SubscriptionName
@@ -215,64 +215,85 @@ Class LogAnalyticsHelper{
         return $ControlSet;
 	}
 	
-	static [void] SetLAWDetails()
+	static [void] SetLAWSDetails()
 	{
 		#Check if Settings already contain details of Log Analytics workspace
 		$settings = [ConfigurationManager]::GetAzSKSettings()
 		#Step 1: if Log Analytics workspace details are not present on machine
-		if([string]::IsNullOrWhiteSpace($settings.LAWorkspaceId) -or [string]::IsNullOrWhiteSpace($settings.AltLAWorkspaceId))
+		if([string]::IsNullOrWhiteSpace($settings.LAWSId) -or [string]::IsNullOrWhiteSpace($settings.AltLAWSId))
 		{
 			$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
 			#Step 2: Validate if CA is enabled on subscription
 			$automationAccDetails= Get-AzAutomationAccount -ResourceGroupName $rgName -ErrorAction SilentlyContinue 
 			if($automationAccDetails)
 			{
-				if([string]::IsNullOrWhiteSpace($settings.LAWorkspaceId))
+				if([string]::IsNullOrWhiteSpace($settings.LAWSId))
 				{
 					#Step 3: Get workspace id from automation account variables
-					$laWorkSpaceId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
-					#Step 4: set workspace id and shared key in setting file
-					if($laWorkSpaceId)
+					#Try getting the values from the LAWS variables, if they don't exist, read value from OMS variables
+					$laWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "LAWSId" -ErrorAction SilentlyContinue
+					if(($laWSId | Measure-Object).Count -eq 0)
 					{
-						$lawSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSSharedKey"						
-						if([Helpers]::CheckMember($lawSharedKey,"Value") -and (-not [string]::IsNullOrWhiteSpace($lawSharedKey.Value)))
+						$laWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
+					}
+					
+					#Step 4: set workspace id and shared key in setting file
+					if($laWSId)
+					{
+						$laWSSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "LAWSSharedKey" -ErrorAction SilentlyContinue	
+						if(($laWSSharedKey | Measure-Object).Count -eq 0)
+						{
+							$laWSSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSSharedKey"
+						}
+
+						if([Helpers]::CheckMember($laWSSharedKey,"Value") -and (-not [string]::IsNullOrWhiteSpace($laWSSharedKey.Value)))
 						{
 							#Step 6: Assign it to AzSKSettings Object
-							$settings.LAWorkspaceId = $laWorkSpaceId.Value
-							$settings.LAWSharedKey = $lawSharedKey.Value
-							[LogAnalyticsHelper]::IsLAWSettingValid = 1
+							$settings.LAWSId = $laWSId.Value
+							$settings.LAWSSharedKey = $laWSSharedKey.Value
+							[LogAnalyticsHelper]::IsLAWSSettingValid = 1
 						}					
 
 					}
 				}
 
-				if([string]::IsNullOrWhiteSpace($settings.LAWorkspaceId) -or [string]::IsNullOrWhiteSpace($settings.LAWSharedKey))
+				if([string]::IsNullOrWhiteSpace($settings.LAWSId) -or [string]::IsNullOrWhiteSpace($settings.LAWSSharedKey))
 				{
-					[LogAnalyticsHelper]::IsLAWSettingValid = -1
+					[LogAnalyticsHelper]::IsLAWSSettingValid = -1
 				}
 
 
-				if([string]::IsNullOrWhiteSpace($settings.AltLAWorkspaceId))
+				if([string]::IsNullOrWhiteSpace($settings.AltLAWSId))
 				{
-					#Step 3: Get workspace id from automation account variables
-					$altLAWorkSpaceId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
-					#Step 4: set workspace id and shared key in setting file
-					if($altLAWorkSpaceId)
+					#Step 3: Get alternate workspace id from automation account variables
+					#Try getting the values from the LAWS variables, if they don't exist, read value from OMS variables
+					$altLAWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltLAWSId" -ErrorAction SilentlyContinue
+					if(($altLAWSId | Measure-Object).Count -eq 0)
 					{
-						$altLAWSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSSharedKey"						
-						if([Helpers]::CheckMember($altLAWSharedKey,"Value") -and (-not [string]::IsNullOrWhiteSpace($altLAWSharedKey.Value)))
+						$altLAWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+					}
+
+					#Step 4: set alternate workspace id and shared key in setting file
+					if($altLAWSId)
+					{
+						$altLAWSSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltLAWSSharedKey" -ErrorAction SilentlyContinue
+						if(($altLAWSSharedKey | Measure-Object).Count -eq 0)
+						{
+							$altLAWSSharedKey = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "AltOMSSharedKey"
+						}
+						if([Helpers]::CheckMember($altLAWSSharedKey,"Value") -and (-not [string]::IsNullOrWhiteSpace($altLAWSSharedKey.Value)))
 						{
 							#Step 6: Assign it to AzSKSettings Object
-							$settings.AltLAWorkspaceId = $altLAWorkSpaceId.Value
-							$settings.AltLAWSharedKey = $altLAWSharedKey.Value
-							[LogAnalyticsHelper]::IsAltLAWSettingValid = 1
+							$settings.AltLAWSId = $altLAWSId.Value
+							$settings.AltLAWSSharedKey = $altLAWSSharedKey.Value
+							[LogAnalyticsHelper]::IsAltLAWSSettingValid = 1
 						}
 					}
 				}
 				
-				if([string]::IsNullOrWhiteSpace($settings.AltLAWorkspaceId) -or [string]::IsNullOrWhiteSpace($settings.AltLAWSharedKey))
+				if([string]::IsNullOrWhiteSpace($settings.AltLAWSId) -or [string]::IsNullOrWhiteSpace($settings.AltLAWSSharedKey))
 				{
-					[LogAnalyticsHelper]::IsAltLAWSettingValid = -1
+					[LogAnalyticsHelper]::IsAltLAWSSettingValid = -1
 				}				
 			}
 		}		
@@ -285,7 +306,7 @@ Class LogAnalyticsHelper{
 			$resourceSet = [System.Collections.ArrayList]::new()
 			[ResourceInventory]::FetchResources();
 			foreach($resource in [ResourceInventory]::FilteredResources){
-				$set = [LAWResourceModel]::new()
+				$set = [LAWSResourceModel]::new()
 				$set.RunIdentifier = $AzSKContext.RunIdentifier
 				$set.SubscriptionId = $resource.SubscriptionId
 				#$set.SubscriptionName = $item.SubscriptionContext.SubscriptionName
@@ -299,8 +320,8 @@ Class LogAnalyticsHelper{
 			$resourceSet.Add($set) 
 		}
 			[LogAnalyticsHelper]::WriteControlResult($resourceSet,"AzSK_Inventory")
-			$lawMetadata = [ConfigurationManager]::LoadServerConfigFile("LogAnalyticsSettings.json")
-			[LogAnalyticsHelper]::WriteControlResult($lawMetadata,"AzSK_MetaData")
+			$laMetadata = [ConfigurationManager]::LoadServerConfigFile("LogAnalyticsSettings.json")
+			[LogAnalyticsHelper]::WriteControlResult($laMetadata,"AzSK_MetaData")
 		}			
 	}
 
@@ -359,7 +380,7 @@ Class LogAnalyticsHelper{
 
 
 
-Class LAWModel {
+Class LAWSModel {
 	[string] $RunIdentifier
 	[string] $ResourceType 
 	[string] $ResourceGroup 
@@ -399,7 +420,7 @@ Class LAWModel {
 	[string] $ComponentId
 }
 
-Class LAWResourceInvModel{
+Class LAWSResourceInvModel{
 	[string] $RunIdentifier
 	[string] $SubscriptionId
 	[string] $SubscriptionName
@@ -418,7 +439,7 @@ Class LAWResourceInvModel{
 	[bool] $IsPreviewBaselineControl
 }
 
-Class LAWResourceModel{
+Class LAWSResourceModel{
 	[string] $RunIdentifier
 	[string] $SubscriptionId
 	[string] $Source
