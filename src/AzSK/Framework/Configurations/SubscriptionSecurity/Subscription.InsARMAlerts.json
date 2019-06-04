@@ -1023,7 +1023,7 @@
         },
         {
           "Name": "AzSK_Create_or_update_record_set_of_type_MX",
-          "Description": "Create or update a record set of type ?MX? within a DNS zone. The records specified will replace the current records in the record set.",
+          "Description": "Create or update a record set of type MX within a DNS zone. The records specified will replace the current records in the record set.",
           "OperationName": "Microsoft.Network/dnszones/MX/write",
           "Tags": [
             "Optional"
@@ -1033,7 +1033,7 @@
         },
         {
           "Name": "AzSK_Delete_record_set_of_type_MX",
-          "Description": "Remove the record set of a given name and type ?MX? from a DNS zone.",
+          "Description": "Remove the record set of a given name and type MX from a DNS zone.",
           "OperationName": "Microsoft.Network/dnszones/MX/delete",
           "Tags": [
             "Optional"
@@ -1043,7 +1043,7 @@
         },
         {
           "Name": "AzSK_Create_or_update_record_set_of_type_AAAA",
-          "Description": "Create or update a record set of type ?AAAA? within a DNS zone. The records specified will replace the current records in the record set.",
+          "Description": "Create or update a record set of type AAAA within a DNS zone. The records specified will replace the current records in the record set.",
           "OperationName": "Microsoft.Network/dnszones/AAAA/write",
           "Tags": [
             "Optional"
@@ -1053,7 +1053,7 @@
         },
         {
           "Name": "AzSK_Delete_record_set_of_type_AAAA",
-          "Description": "Remove the record set of a given name and type ?AAAA? from a DNS zone.",
+          "Description": "Remove the record set of a given name and type AAAA from a DNS zone.",
           "OperationName": "Microsoft.Network/dnszones/AAAA/delete",
           "Tags": [
             "Optional"
@@ -1063,7 +1063,7 @@
         },
         {
           "Name": "AzSK_Create_or_update_record_set_of_type_CNAME",
-          "Description": "Create or update a record set of type ?CNAME? within a DNS zone. The records specified will replace the current records in the record set.",
+          "Description": "Create or update a record set of type CNAME within a DNS zone. The records specified will replace the current records in the record set.",
           "OperationName": "Microsoft.Network/dnszones/CNAME/write",
           "Tags": [
             "Optional"
@@ -1073,7 +1073,7 @@
         },
         {
           "Name": "AzSK_Delete_record_set_of_type_CNAME",
-          "Description": "Remove the record set of a given name and type ?CNAME? from a DNS zone.",
+          "Description": "Remove the record set of a given name and type CNAME from a DNS zone.",
           "OperationName": "Microsoft.Network/dnszones/CNAME/delete",
           "Tags": [
             "Optional"
@@ -1083,7 +1083,7 @@
         },
         {
           "Name": "AzSK_Create_or_update_record_set_of_type_A",
-          "Description": "Create or update a record set of type ?A? within a DNS zone. The records specified will replace the current records in the record set.",
+          "Description": "Create or update a record set of type A within a DNS zone. The records specified will replace the current records in the record set.",
           "OperationName": "Microsoft.Network/dnszones/A/write",
           "Tags": [
             "Optional"
@@ -1093,7 +1093,7 @@
         },
         {
           "Name": "AzSK_Delete_record_set_of_type_A",
-          "Description": "Remove the record set of a given name and type ?A? from a DNS zone.",
+          "Description": "Remove the record set of a given name and type A from a DNS zone.",
           "OperationName": "Microsoft.Network/dnszones/A/delete",
           "Tags": [
             "Optional"
@@ -1794,7 +1794,7 @@
         },
         {
           "Name": "AzSK_Create_or_update_record_set_of_type_MX",
-          "Description": "Create or update a record set of type ?MX? within a DNS zone. The records specified will replace the current records in the record set.",
+          "Description": "Create or update a record set of type MX within a DNS zone. The records specified will replace the current records in the record set.",
           "OperationName": "Microsoft.Network/dnszones/MX/write",
           "Tags": [
             "Mandatory"
@@ -1804,7 +1804,7 @@
         },
         {
           "Name": "AzSK_Delete_record_set_of_type_MX",
-          "Description": "Remove the record set of a given name and type ?MX? from a DNS zone.",
+          "Description": "Remove the record set of a given name and type MX from a DNS zone.",
           "OperationName": "Microsoft.Network/dnszones/MX/delete",
           "Tags": [
             "Mandatory"
@@ -1814,7 +1814,7 @@
         },
         {
           "Name": "AzSK_Create_or_update_record_set_of_type_AAAA",
-          "Description": "Create or update a record set of type ?AAAA? within a DNS zone. The records specified will replace the current records in the record set.",
+          "Description": "Create or update a record set of type AAAA within a DNS zone. The records specified will replace the current records in the record set.",
           "OperationName": "Microsoft.Network/dnszones/AAAA/write",
           "Tags": [
             "Mandatory"
@@ -1824,7 +1824,7 @@
         },
         {
           "Name": "AzSK_Delete_record_set_of_type_AAAA",
-          "Description": "Remove the record set of a given name and type ?AAAA? from a DNS zone.",
+          "Description": "Remove the record set of a given name and type AAAA from a DNS zone.",
           "OperationName": "Microsoft.Network/dnszones/AAAA/delete",
           "Tags": [
             "Mandatory"
@@ -1834,7 +1834,7 @@
         },
         {
           "Name": "AzSK_Create_or_update_record_set_of_type_CNAME",
-          "Description": "Create or update a record set of type ?CNAME? within a DNS zone. The records specified will replace the current records in the record set.",
+          "Description": "Create or update a record set of type CNAME within a DNS zone. The records specified will replace the current records in the record set.",
           "OperationName": "Microsoft.Network/dnszones/CNAME/write",
           "Tags": [
             "Mandatory"
@@ -1844,7 +1844,7 @@
         },
         {
           "Name": "AzSK_Delete_record_set_of_type_CNAME",
-          "Description": "Remove the record set of a given name and type ?CNAME? from a DNS zone.",
+          "Description": "Remove the record set of a given name and type CNAME from a DNS zone.",
           "OperationName": "Microsoft.Network/dnszones/CNAME/delete",
           "Tags": [
             "Mandatory"
@@ -1854,7 +1854,7 @@
         },
         {
           "Name": "AzSK_Create_or_update_record_set_of_type_A",
-          "Description": "Create or update a record set of type ?A? within a DNS zone. The records specified will replace the current records in the record set.",
+          "Description": "Create or update a record set of type A within a DNS zone. The records specified will replace the current records in the record set.",
           "OperationName": "Microsoft.Network/dnszones/A/write",
           "Tags": [
             "Mandatory"
@@ -1864,7 +1864,7 @@
         },
         {
           "Name": "AzSK_Delete_record_set_of_type_A",
-          "Description": "Remove the record set of a given name and type ?A? from a DNS zone.",
+          "Description": "Remove the record set of a given name and type A from a DNS zone.",
           "OperationName": "Microsoft.Network/dnszones/A/delete",
           "Tags": [
             "Mandatory"
