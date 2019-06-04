@@ -223,25 +223,41 @@ class WriteDetailedLog: FileOutputBase
 				# Add attestation data to log
 				if($_.StateManagement -and $_.StateManagement.AttestedStateData)
 				{
-					$this.AddOutputLog([Constants]::SingleDashLine);					
-
+					$this.AddOutputLog([Constants]::SingleDashLine);			
 					$stateObject = $_.StateManagement.AttestedStateData;
-					$this.AddOutputLog("Justification: $($stateObject.Justification)");
-					$this.AddOutputLog("Attested by: [$($stateObject.AttestedBy)] on [$($stateObject.AttestedDate)]");
+					if([Helpers]::CheckMember($_.StateManagement.CurrentStateData,"DataObject"))
+					{
+						$currentStateObject = [Helpers]::ConvertToJsonCustom($_.StateManagement.CurrentStateData.DataObject) | ConvertFrom-Json
+					}
+					else 
+					{
+						$currentStateObject="";
+					}
 					if($_.AttestationStatus -eq [AttestationStatus]::None)
 					{
-						$this.AddOutputLog("**State drift occurred**: The attested state doesn't match with the current state. Attestation status has been reset.");
-						if(-not [string]::IsNullOrWhiteSpace($stateObject.Message))
+						if([Helpers]::CheckMember($stateObject ,"hasStateDrifted" ) -and $stateObject.hasStateDrifted -and ($null -ne $stateObject.DataObject) -and [Helpers]::CompareObject($stateObject.DataObject, $currentStateObject, $true)) #if state was drifted and then brought back to attested state
 						{
-							$this.AddOutputLog($stateObject.Message);
+							
+								$this.AddOutputLog("There was a configuration change for this control due to which the attestation status has been reset. Please re-attest with the desired (new) configuration.")
+							
 						}
+						else
+						{
+							$this.AddOutputLog("Justification: $($stateObject.Justification)");
+							$this.AddOutputLog("Attested by: [$($stateObject.AttestedBy)] on [$($stateObject.AttestedDate)]");
+							$this.AddOutputLog("**State drift occurred**: The attested state doesn't match with the current state. Attestation status has been reset.");
+							if(-not [string]::IsNullOrWhiteSpace($stateObject.Message))
+							{
+								$this.AddOutputLog($stateObject.Message);
+							}
 
-						if ($stateObject.DataObject) 
-						{							
-							$this.AddOutputLog("Attestation Data");
-							$this.AddOutputLog([Helpers]::ConvertObjectToString($stateObject.DataObject, $false));                    
+							if ($stateObject.DataObject) 
+							{							
+								$this.AddOutputLog("Attestation Data");
+								$this.AddOutputLog([Helpers]::ConvertObjectToString($stateObject.DataObject, $false));                    
+							}
 						}
-					}
+					}#state drift
 					else
 					{
 						$this.AddOutputLog("Attestation status: [$($_.AttestationStatus)]");

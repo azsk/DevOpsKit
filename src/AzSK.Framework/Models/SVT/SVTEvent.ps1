@@ -129,6 +129,7 @@ class StateData: MessageDataBase
 	[string] $AttestedBy =""
 	[DateTime] $AttestedDate
 	[string] $ExpiryDate =""
+	[boolean] $hasStateDrifted = $false #flag to detect attestation state drif
 	StateData()
 	{
 	}

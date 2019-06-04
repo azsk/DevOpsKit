@@ -768,10 +768,11 @@ class SVTBase: AzSKRoot
 			{
 				$this.ResourceState | ForEach-Object {
 					$controlState = $_;
-					if(($this.DirtyResourceStates | Where-Object { $_.InternalId -eq $controlState.InternalId -and $_.ChildResourceName -eq $controlState.ChildResourceName } | Measure-Object).Count -eq 0)
+					if(($this.DirtyResourceStates | Where-Object { $_.InternalId -eq $controlState.InternalId -and $_.ChildResourceName -eq $controlState.ChildResourceName } | Measure-Object).Count -eq 0 -or($_.State.hasStateDrifted)) #checking if the state was previously detected as drifted
 					{
 						$effectiveResourceStates += $controlState;
 					}
+					
 				}
 			}
 			else
@@ -779,7 +780,8 @@ class SVTBase: AzSKRoot
 				#If no dirty states found then no action needed.
 				return;
 			}
-
+			#update hasStateDrifted in case there was a drift observed
+			
 			#get the uniqueid from the first control result. Here we can take first as it would come here for each resource.
 			$id = $ControlResults[0].GetUniqueId();
 
@@ -792,6 +794,7 @@ class SVTBase: AzSKRoot
 		$tempHasRequiredAccess = $true;
 		$controlState = @();
 		$controlStateValue = @();
+        $hasStatDriftoccured = $false
 		try
 		{
 			# Get policy compliance if org-level flag is enabled and policy is found 
@@ -898,18 +901,30 @@ class SVTBase: AzSKRoot
 											# Objects match, change result based on attestation status
 											if($eventContext.ControlItem.AttestComparisionType -and $eventContext.ControlItem.AttestComparisionType -eq [ComparisionType]::NumLesserOrEqual)
 											{
-												if([Helpers]::CompareObject($childResourceState.State.DataObject, $currentStateDataObject, $true,$eventContext.ControlItem.AttestComparisionType))
+												if([Helpers]::CompareObject($childResourceState.State.DataObject, $currentStateDataObject, $true,$eventContext.ControlItem.AttestComparisionType) -and -not($childResourceState.State.hasStateDrifted)) 
 												{
 													$this.ModifyControlResult($currentItem, $childResourceState);
 												}
+                                                else #To update hasStateDrifted flag in attested state and add in dirty resource state to update storage
+                                                {
+													$childResourceState.State.hasStateDrifted = $true
+													$this.DirtyResourceStates +=$childResourceState
+                                                }
 												
 											}
 											else
 											{
-												if([Helpers]::CompareObject($childResourceState.State.DataObject, $currentStateDataObject, $true))
+												if([Helpers]::CompareObject($childResourceState.State.DataObject, $currentStateDataObject, $true) -and -not($childResourceState.State.hasStateDrifted))
 												{
 														$this.ModifyControlResult($currentItem, $childResourceState);
 												}
+                                                else #To update hasStateDrifted flag in attested state and add in dirty resource state to update storage
+                                                {
+														$childResourceState.State.hasStateDrifted = $true
+														$this.DirtyResourceStates +=$childResourceState
+														
+                                                }
+                                                    
 											}
 										}
 										catch
