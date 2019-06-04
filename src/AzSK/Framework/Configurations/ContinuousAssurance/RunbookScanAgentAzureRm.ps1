@@ -14,15 +14,15 @@ function ConvertStringToBoolean($strToConvert)
 function RunAzSKScan() {
 
 	################################ Begin: Configure AzSK for the scan ######################################### 
-	#set OMS settings
-    if(-not [string]::IsNullOrWhiteSpace($OMSWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($OMSWorkspaceSharedKey))
+	#set Log Analytics workspace settings
+    if(-not [string]::IsNullOrWhiteSpace($LAWSId) -and -not [string]::IsNullOrWhiteSpace($LAWSSharedKey))
 	{
-		Set-AzSKOMSSettings -OMSWorkspaceID $OMSWorkspaceId -OMSSharedKey $OMSWorkspaceSharedKey -Source "CA"
+		Set-AzSKMonitoringSettings -WorkspaceId $LAWSId -SharedKey $LAWSSharedKey -Source "CA"
 	}
-	#set alternate OMS if available
-	if(-not [string]::IsNullOrWhiteSpace($AltOMSWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($AltOMSWorkspaceSharedKey))
+	#set alternate Log Analytics workspace if available
+	if(-not [string]::IsNullOrWhiteSpace($AltLAWSId) -and -not [string]::IsNullOrWhiteSpace($AltLAWSSharedKey))
 	{
-		Set-AzSKOMSSettings -AltOMSWorkspaceId $AltOMSWorkspaceId -AltOMSSharedKey $AltOMSWorkspaceSharedKey -Source "CA"
+		Set-AzSKMonitoringSettings -AltWorkspaceId $AltLAWSId -AltSharedKey $AltLAWSSharedKey -Source "CA"
 	}
     #set webhook settings
 	if(-not [string]::IsNullOrWhiteSpace($WebhookUrl))	
@@ -55,7 +55,7 @@ function RunAzSKScan() {
     PublishEvent -EventName "CA Scan Started" -Properties @{
         "ResourceGroupNames"       = $ResourceGroupNames; `
             "OnlinePolicyStoreUrl" = $OnlinePolicyStoreUrl; `
-            "OMSWorkspaceId"       = $OMSWorkspaceId;
+            "LAWSId"       = $LAWSId;
     }
 
 	#Check if the central scan mode is enabled. Read/prepare artefacts if so.
@@ -644,6 +644,30 @@ function DisableHelperSchedules()
 	
 }
 
+function AddAutomationVariable
+{
+	param
+	(   
+	    $VariableName,
+		$Details		
+	)
+	try
+	{
+		Write-Output("Checking if the variable " + $VariableName + " exists...")
+		$existingVariable = Get-AzureRmAutomationVariable -Name $VariableName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		if(($existingVariable | Measure-Object).Count -eq 0)
+		{
+			Write-Output("Adding the variable " + $VariableName + "...")
+			New-AzureRmAutomationVariable -AutomationAccountName $Details.AutomationAccountName -Name $VariableName -Encrypted $False -Value $Details.Value -ResourceGroupName $Details.ResourceGroupName -ErrorAction SilentlyContinue
+			Set-AzureRmAutomationVariable $Details.AutomationAccountName -Name $VariableName -ResourceGroupName $Details.ResourceGroupName -Description $Details.Description -ErrorAction SilentlyContinue
+		}
+	}
+	catch
+	{
+		throw $_.Exception
+	}
+}
+
 #############################################################################################################
 # Main ScanAgent code
 #############################################################################################################
@@ -655,14 +679,32 @@ function DisableHelperSchedules()
 	#Setup during Install-CA. These are the RGs that CA will scan. "*" is allowed.
 	$ResourceGroupNames = Get-AutomationVariable -Name "AppResourceGroupNames"
 	
-	#Primary OMS WS info. This is mandatory. CA will send events to this WS.
-    $OMSWorkspaceId = Get-AutomationVariable -Name "OMSWorkspaceId"
-	$OMSWorkspaceSharedKey = Get-AutomationVariable -Name "OMSSharedKey"
+	#Primary Log Analytics workspace info. This is mandatory. CA will send events to this WS.
+	$LAWSId = Get-AutomationVariable -Name "LAWSId" -ErrorAction SilentlyContinue
+	if(($LAWSId | Measure-Object).Count -eq 0)
+	{
+		$LAWSId = Get-AutomationVariable -Name "OMSWorkspaceId"
+	}
+
+	$LAWSSharedKey = Get-AutomationVariable -Name "LAWSSharedKey" -ErrorAction SilentlyContinue
+	if(($LAWSSharedKey | Measure-Object).Count -eq 0)
+	{
+		$LAWSSharedKey = Get-AutomationVariable -Name "OMSSharedKey"
+	}
 	
-	#Secondary/alternate WS info. This is optional. Facilitates federal/state type models.
-	$AltOMSWorkspaceId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
-	$AltOMSWorkspaceSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
-	
+	#Secondary/alternate Log Analytics workspace info. This is optional. Facilitates federal/state type models.
+	$AltLAWSId = Get-AutomationVariable -Name "AltLAWSId" -ErrorAction SilentlyContinue
+	if(($AltLAWSId | Measure-Object).Count -eq 0)
+	{
+		$AltLAWSId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+	}
+
+	$AltLAWSSharedKey = Get-AutomationVariable -Name "AltLAWSSharedKey" -ErrorAction SilentlyContinue
+	if(($AltLAWSSharedKey | Measure-Object).Count -eq 0)
+	{
+		$AltLAWSSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
+	}
+
 	#CA can also optionally be configured to send events to a Webhook. 
 	$WebhookUrl = Get-AutomationVariable -Name "WebhookUrl" -ErrorAction SilentlyContinue
     $WebhookAuthZHeaderName = Get-AutomationVariable -Name "WebhookAuthZHeaderName" -ErrorAction SilentlyContinue
@@ -751,3 +793,44 @@ function DisableHelperSchedules()
 	
 	PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
 	Write-Output("SA.o: Scan agent completed...")
+
+	#------------------------------------Add Log Analytics specific Automation variables-------------------
+	try
+	{
+		PublishEvent -EventName "Adding Log Analytics variables Start"
+
+		$newLAWSIdName = "LAWSId"			
+		$newLAWSSharedKeyName = "LAWSSharedKey"
+		$newAltLAWSIdName = "AltLAWSId"
+		$newAltLAWSSharedKeyName = "AltLAWSSharedKey"
+		$laWSIdDetails = Get-AzureRmAutomationVariable -Name "OMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		$laWSSharedKeyDetails = Get-AzureRmAutomationVariable -Name "OMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		$altLAWSIdDetails = Get-AzureRmAutomationVariable -Name "AltOMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		$altLAWSSharedKeyDetails = Get-AzureRmAutomationVariable -Name "AltOMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+	
+		#Adding Primary Log Analytics Workspace variables.
+		if(($laWSIdDetails | Measure-Object).Count -gt 0)
+		{
+			AddAutomationVariable -VariableName $newLAWSIdName -Details $laWSIdDetails
+		}
+		if(($laWSSharedKeyDetails | Measure-Object).Count -gt 0)
+		{
+			AddAutomationVariable -VariableName $newLAWSSharedKeyName -Details $laWSSharedKeyDetails
+		}
+				
+		#Adding Secondary/Alternate Log Analytics Workspace variables.
+		if(($altLAWSIdDetails | Measure-Object).Count -gt 0)
+		{
+			AddAutomationVariable -VariableName $newAltLAWSIdName -Details $altLAWSIdDetails
+		}
+		if(($altLAWSSharedKeyDetails | Measure-Object).Count -gt 0)
+		{
+			AddAutomationVariable -VariableName $newAltLAWSSharedKeyName -Details $altLAWSSharedKeyDetails
+		}
+		
+		PublishEvent -EventName "Adding Log Analytics variables Complete"
+	}
+	catch
+	{
+		PublishEvent -EventName "Adding Log Analytics variables addition/update Error" -Properties @{"ErrorRecord" = ($_ | Out-String)}
+	}

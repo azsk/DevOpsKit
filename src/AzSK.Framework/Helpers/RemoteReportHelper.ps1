@@ -171,15 +171,15 @@ class RemoteReportHelper
 	static [ScanSource] GetScanSource()
 	{		
 		$settings = [ConfigurationManager]::GetAzSKSettings();
-		[string] $omsSource = $settings.OMSSource;
-		if([string]::IsNullOrWhiteSpace($omsSource)){
+		[string] $laSource = $settings.LASource;
+		if([string]::IsNullOrWhiteSpace($laSource)){
 			return [ScanSource]::SpotCheck
 		}
-		if($omsSource.Equals("CICD", [System.StringComparison]::OrdinalIgnoreCase)){
+		if($laSource.Equals("CICD", [System.StringComparison]::OrdinalIgnoreCase)){
 			return [ScanSource]::VSO
 		}
-		if($omsSource.Equals("CC", [System.StringComparison]::OrdinalIgnoreCase) -or
-			$omsSource.Equals("CA", [System.StringComparison]::OrdinalIgnoreCase)){
+		if($laSource.Equals("CC", [System.StringComparison]::OrdinalIgnoreCase) -or
+			$laSource.Equals("CA", [System.StringComparison]::OrdinalIgnoreCase)){
 			return [ScanSource]::Runbook
 		}
 		return [ScanSource]::SpotCheck

@@ -35,17 +35,17 @@ function GetFilesFromBlob([string] $containerName, [string] $blobName, [string] 
 function RunAzSKScan() {
 
 	################################ Begin: Configure AzSK for the scan ######################################### 
-		#set the source as CA by default
-		Set-AzSKOMSSettings -Source "CA"
+	#set the source as CA by default
+	Set-AzSKMonitoringSettings -Source "CA"
 	#set Monitoring settings
-    if(-not [string]::IsNullOrWhiteSpace($OMSWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($OMSWorkspaceSharedKey))
+    if(-not [string]::IsNullOrWhiteSpace($LAWSId) -and -not [string]::IsNullOrWhiteSpace($LAWSSharedKey))
 	{
-		Set-AzSKOMSSettings -OMSWorkspaceID $OMSWorkspaceId -OMSSharedKey $OMSWorkspaceSharedKey -Source "CA"
+		Set-AzSKMonitoringSettings -WorkspaceId $LAWSId -SharedKey $LAWSSharedKey -Source "CA"
 	}
 	#set alternate Log Analytics workspace if available
-	if(-not [string]::IsNullOrWhiteSpace($AltOMSWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($AltOMSWorkspaceSharedKey))
+	if(-not [string]::IsNullOrWhiteSpace($AltLAWSId) -and -not [string]::IsNullOrWhiteSpace($AltLAWSSharedKey))
 	{
-		Set-AzSKOMSSettings -AltOMSWorkspaceId $AltOMSWorkspaceId -AltOMSSharedKey $AltOMSWorkspaceSharedKey -Source "CA"
+		Set-AzSKMonitoringSettings -AltWorkspaceId $AltLAWSId -AltSharedKey $AltLAWSSharedKey -Source "CA"
 	}
     #set webhook settings
 	if(-not [string]::IsNullOrWhiteSpace($WebhookUrl))	
@@ -78,7 +78,7 @@ function RunAzSKScan() {
     PublishEvent -EventName "CA Scan Started" -Properties @{
         "ResourceGroupNames"       = $ResourceGroupNames; `
             "OnlinePolicyStoreUrl" = $OnlinePolicyStoreUrl; `
-            "OMSWorkspaceId"       = $OMSWorkspaceId;
+            "LAWSId"       = $LAWSId;
     }
 
 	#Check if the central scan mode is enabled. Read/prepare artefacts if so.
@@ -675,10 +675,35 @@ function DisableHelperSchedules()
 	
 }
 
+function AddAutomationVariable
+{
+	param
+	(   
+	    $VariableName,
+		$Details		
+	)
+	try
+	{
+		Write-Output("Checking if the variable " + $VariableName + " exists...")
+		$existingVariable = Get-AzAutomationVariable -Name $VariableName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		if(($existingVariable | Measure-Object).Count -eq 0)
+		{
+			Write-Output("Adding the variable " + $VariableName + "...")
+			New-AzAutomationVariable -AutomationAccountName $Details.AutomationAccountName -Name $VariableName -Encrypted $False -Value $Details.Value -ResourceGroupName $Details.ResourceGroupName -ErrorAction SilentlyContinue
+			Set-AzAutomationVariable $Details.AutomationAccountName -Name $VariableName -ResourceGroupName $Details.ResourceGroupName -Description $Details.Description -ErrorAction SilentlyContinue
+		}
+	}
+	catch
+	{
+		throw $_.Exception
+	}
+}
+
 #############################################################################################################
 # Main ScanAgent code
 #############################################################################################################
-try {	
+try
+{	
 	if(-not $Global:isAzAvailable)
     {
 		Write-Output ("CS: Invoking core setup backup.")
@@ -686,111 +711,171 @@ try {
 		$onlinePolicyStoreUrl = "[#ScanAgentAzureRm#]"
 		InvokeScript -policyStoreURL $onlinePolicyStoreUrl -fileName "RunbookScanAgentAzureRm.ps1" -version "1.0.0"
 	}
-	else {
-    #start timer
-    $scanAgentTimer = [System.Diagnostics.Stopwatch]::StartNew();
-	Write-Output("SA: Scan agent starting...")
-
-	#config start
-	#Setup during Install-CA. These are the RGs that CA will scan. "*" is allowed.
-	$ResourceGroupNames = Get-AutomationVariable -Name "AppResourceGroupNames"
-	
-	#Primary Log Analytics workspace info. This is mandatory. CA will send events to this WS.
-    $OMSWorkspaceId = Get-AutomationVariable -Name "OMSWorkspaceId"
-	$OMSWorkspaceSharedKey = Get-AutomationVariable -Name "OMSSharedKey"
-	
-	#Secondary/alternate WS info. This is optional. Facilitates federal/state type models.
-	$AltOMSWorkspaceId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
-	$AltOMSWorkspaceSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
-	
-	#CA can also optionally be configured to send events to a Webhook. 
-	$WebhookUrl = Get-AutomationVariable -Name "WebhookUrl" -ErrorAction SilentlyContinue
-    $WebhookAuthZHeaderName = Get-AutomationVariable -Name "WebhookAuthZHeaderName" -ErrorAction SilentlyContinue
-	$WebhookAuthZHeaderValue = Get-AutomationVariable -Name "WebhookAuthZHeaderValue" -ErrorAction SilentlyContinue
-	
-	#This is the storage account where scan reports will be stored (in ZIP form)
-	$StorageAccountName = Get-AutomationVariable -Name "ReportsStorageAccountName"
-
-	#This is to enable/disable Alerts runbook. (Used if an org wants to collect alerts info from across subs.)
-    $DisableAlertRunbook = Get-AutomationVariable -Name "DisableAlertRunbook" -ErrorAction SilentlyContinue
-	$AlertRunbookName="Alert_Runbook"
-
-	#Defaults.
-    	$AzSKModuleName = "AzSK"
-	$StorageAccountRG = "AzSKRG"
-	#In case of multiple CAs in single sub we use sub-container to host working files for each individual CA 
-	#Sub-container has the same name as each CA automation account RG (hence guaranteed to be unique)
-	$SubContainerName = $AutomationAccountRG
-	
-	$CAMultiSubScanConfigContainerName = "ca-multisubscan-config"
-	$CAScanLogsContainerName="ca-scan-logs"
-	
-	#Max time we will spend to scan a single sub
-	$MaxScanHours = 8
-	
-	##config end
-
-	#We get sub id from RunAsConnection
-
-	$SubscriptionID = $RunAsConnection.SubscriptionID
-	$Global:IsCentralMode = $false;
-
-	$Global:subsToScan = @();
-    Set-AzContext -SubscriptionId $SubscriptionID;
-	
-	#Another job is already running
-	if($Global:FoundExistingJob)
+	else
 	{
-		Write-Output("SA: Found another job running. Returning from the current one...")
-		return;
-	}
+		#start timer
+		$scanAgentTimer = [System.Diagnostics.Stopwatch]::StartNew();
+		Write-Output("SA: Scan agent starting...")
 
-    $isAzSKAvailable = (Get-AzAutomationModule -ResourceGroupName $AutomationAccountRG `
-            -AutomationAccountName $AutomationAccountName `
-            -Name $AzSKModuleName -ErrorAction SilentlyContinue | `
-            Where-Object {$_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created"} | `
-            Measure-Object).Count -gt 0
-    if ($isAzSKAvailable) {
-        Import-Module $AzSKModuleName
-    }
-	else {
-		PublishEvent -EventName "CA Job Skipped" -Properties @{"SubscriptionId" = $RunAsConnection.SubscriptionID} -Metrics @{"TimeTakenInMs" = $timer.ElapsedMilliseconds; "SuccessCount" = 1}
-		Write-Output("SA: The module: {$AzSKModuleName} is not available/ready. Skipping AzSK scan. Will retry in the next run.")
-		return;
-	}
-
-    #Return if modules are not ready
-    if ((Get-Command -Name "Get-AzSKAzureServicesSecurityStatus" -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0) {
-        
-        PublishEvent -EventName "CA Job Skipped" -Properties @{"SubscriptionId" = $RunAsConnection.SubscriptionID} -Metrics @{"TimeTakenInMs" = $timer.ElapsedMilliseconds; "SuccessCount" = 1}
-		Write-Output("SA: The module: {$AzSKModuleName} is not available/ready. Skipping AzSK scan. Will retry in the next run.")
-		return;
-    }
+		#config start
+		#Setup during Install-CA. These are the RGs that CA will scan. "*" is allowed.
+		$ResourceGroupNames = Get-AutomationVariable -Name "AppResourceGroupNames"
 		
-	#Scan and save results to storage
-    RunAzSKScan
-	if($null -eq $WebHookDataforResourceCreation)
-	{
-		if ($isAzSKAvailable) {
-		#Remove helper schedule as AzSK module is available
-		Write-Output("SA: Disabling helper schedule...")
-		DisableHelperSchedules	
+		#Primary Log Analytics workspace info. This is mandatory. CA will send events to this WS.
+		$LAWSId = Get-AutomationVariable -Name "LAWSId" -ErrorAction SilentlyContinue
+		if(($LAWSId | Measure-Object).Count -eq 0)
+		{
+			$LAWSId = Get-AutomationVariable -Name "OMSWorkspaceId"
 		}
 
-		#Call UpdateAlertMonitoring to setup or Remove Alert Monitoring Runbook
+		$LAWSSharedKey = Get-AutomationVariable -Name "LAWSSharedKey" -ErrorAction SilentlyContinue
+		if(($LAWSSharedKey | Measure-Object).Count -eq 0)
+		{
+			$LAWSSharedKey = Get-AutomationVariable -Name "OMSSharedKey"
+		}
+		
+		#Secondary/alternate Log Analytics workspace info. This is optional. Facilitates federal/state type models.
+		$AltLAWSId = Get-AutomationVariable -Name "AltLAWSId" -ErrorAction SilentlyContinue
+		if(($AltLAWSId | Measure-Object).Count -eq 0)
+		{
+			$AltLAWSId = Get-AutomationVariable -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+		}
+
+		$AltLAWSSharedKey = Get-AutomationVariable -Name "AltLAWSSharedKey" -ErrorAction SilentlyContinue
+		if(($AltLAWSSharedKey | Measure-Object).Count -eq 0)
+		{
+			$AltLAWSSharedKey = Get-AutomationVariable -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
+		}
+		
+		#CA can also optionally be configured to send events to a Webhook. 
+		$WebhookUrl = Get-AutomationVariable -Name "WebhookUrl" -ErrorAction SilentlyContinue
+		$WebhookAuthZHeaderName = Get-AutomationVariable -Name "WebhookAuthZHeaderName" -ErrorAction SilentlyContinue
+		$WebhookAuthZHeaderValue = Get-AutomationVariable -Name "WebhookAuthZHeaderValue" -ErrorAction SilentlyContinue
+		
+		#This is the storage account where scan reports will be stored (in ZIP form)
+		$StorageAccountName = Get-AutomationVariable -Name "ReportsStorageAccountName"
+
+		#This is to enable/disable Alerts runbook. (Used if an org wants to collect alerts info from across subs.)
+		$DisableAlertRunbook = Get-AutomationVariable -Name "DisableAlertRunbook" -ErrorAction SilentlyContinue
+		$AlertRunbookName="Alert_Runbook"
+
+		#Defaults.
+			$AzSKModuleName = "AzSK"
+		$StorageAccountRG = "AzSKRG"
+		#In case of multiple CAs in single sub we use sub-container to host working files for each individual CA 
+		#Sub-container has the same name as each CA automation account RG (hence guaranteed to be unique)
+		$SubContainerName = $AutomationAccountRG
+		
+		$CAMultiSubScanConfigContainerName = "ca-multisubscan-config"
+		$CAScanLogsContainerName="ca-scan-logs"
+		
+		#Max time we will spend to scan a single sub
+		$MaxScanHours = 8
+		
+		##config end
+
+		#We get sub id from RunAsConnection
+
+		$SubscriptionID = $RunAsConnection.SubscriptionID
+		$Global:IsCentralMode = $false;
+
+		$Global:subsToScan = @();
+		Set-AzContext -SubscriptionId $SubscriptionID;
+		
+		#Another job is already running
+		if($Global:FoundExistingJob)
+		{
+			Write-Output("SA: Found another job running. Returning from the current one...")
+			return;
+		}
+
+		$isAzSKAvailable = (Get-AzAutomationModule -ResourceGroupName $AutomationAccountRG `
+				-AutomationAccountName $AutomationAccountName `
+				-Name $AzSKModuleName -ErrorAction SilentlyContinue | `
+				Where-Object {$_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created"} | `
+				Measure-Object).Count -gt 0
+		if ($isAzSKAvailable) {
+			Import-Module $AzSKModuleName
+		}
+		else {
+			PublishEvent -EventName "CA Job Skipped" -Properties @{"SubscriptionId" = $RunAsConnection.SubscriptionID} -Metrics @{"TimeTakenInMs" = $timer.ElapsedMilliseconds; "SuccessCount" = 1}
+			Write-Output("SA: The module: {$AzSKModuleName} is not available/ready. Skipping AzSK scan. Will retry in the next run.")
+			return;
+		}
+
+		#Return if modules are not ready
+		if ((Get-Command -Name "Get-AzSKAzureServicesSecurityStatus" -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0) {
+			
+			PublishEvent -EventName "CA Job Skipped" -Properties @{"SubscriptionId" = $RunAsConnection.SubscriptionID} -Metrics @{"TimeTakenInMs" = $timer.ElapsedMilliseconds; "SuccessCount" = 1}
+			Write-Output("SA: The module: {$AzSKModuleName} is not available/ready. Skipping AzSK scan. Will retry in the next run.")
+			return;
+		}
+			
+		#Scan and save results to storage
+		RunAzSKScan
+		if($null -eq $WebHookDataforResourceCreation)
+		{
+			if ($isAzSKAvailable) {
+			#Remove helper schedule as AzSK module is available
+			Write-Output("SA: Disabling helper schedule...")
+			DisableHelperSchedules	
+			}
+
+			#Call UpdateAlertMonitoring to setup or Remove Alert Monitoring Runbook
+			try
+			{	
+				UpdateAlertMonitoring -DisableAlertRunbook $DisableAlertRunbook -AlertRunBookFullName $AlertRunbookName -SubscriptionID $SubscriptionID -ResourceGroup $StorageAccountRG 
+			}
+			catch
+			{
+				PublishEvent -EventName "Alert Monitoring Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) }
+				Write-Output("SA: (Non-fatal) Error while updating Alert Monitoring setup...")
+			}
+		}
+		
+		PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
+		Write-Output("SA: Scan agent completed...")
+
+		#------------------------------------Add Log Analytics specific Automation variables-------------------
 		try
-		{	
-	 		UpdateAlertMonitoring -DisableAlertRunbook $DisableAlertRunbook -AlertRunBookFullName $AlertRunbookName -SubscriptionID $SubscriptionID -ResourceGroup $StorageAccountRG 
+		{
+			PublishEvent -EventName "Adding Log Analytics variables Start"
+
+			$newLAWSIdName = "LAWSId"			
+			$newLAWSSharedKeyName = "LAWSSharedKey"
+			$newAltLAWSIdName = "AltLAWSId"
+			$newAltLAWSSharedKeyName = "AltLAWSSharedKey"
+			$laWSIdDetails = Get-AzAutomationVariable -Name "OMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+			$laWSSharedKeyDetails = Get-AzAutomationVariable -Name "OMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+			$altLAWSIdDetails = Get-AzAutomationVariable -Name "AltOMSWorkspaceId" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+			$altLAWSSharedKeyDetails = Get-AzAutomationVariable -Name "AltOMSSharedKey" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+		
+			#Adding Primary Log Analytics Workspace variables.
+			if(($laWSIdDetails | Measure-Object).Count -gt 0)
+			{
+				AddAutomationVariable -VariableName $newLAWSIdName -Details $laWSIdDetails
+			}
+			if(($laWSSharedKeyDetails | Measure-Object).Count -gt 0)
+			{
+				AddAutomationVariable -VariableName $newLAWSSharedKeyName -Details $laWSSharedKeyDetails
+			}
+					
+			#Adding Secondary/Alternate Log Analytics Workspace variables.
+			if(($altLAWSIdDetails | Measure-Object).Count -gt 0)
+			{
+				AddAutomationVariable -VariableName $newAltLAWSIdName -Details $altLAWSIdDetails
+			}
+			if(($altLAWSSharedKeyDetails | Measure-Object).Count -gt 0)
+			{
+				AddAutomationVariable -VariableName $newAltLAWSSharedKeyName -Details $altLAWSSharedKeyDetails
+			}
+			
+			PublishEvent -EventName "Adding Log Analytics variables Complete"
 		}
 		catch
 		{
-			  PublishEvent -EventName "Alert Monitoring Error" -Properties @{ "ErrorRecord" = ($_ | Out-String) }
-			  Write-Output("SA: (Non-fatal) Error while updating Alert Monitoring setup...")
+			PublishEvent -EventName "Adding Log Analytics variables addition/update Error" -Properties @{"ErrorRecord" = ($_ | Out-String)}
 		}
-	}
-	
-	PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
-	Write-Output("SA: Scan agent completed...")
 	}
 }
 catch {
