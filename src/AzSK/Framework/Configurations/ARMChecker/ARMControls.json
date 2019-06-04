@@ -326,12 +326,8 @@
           "recommendation": "",
           "severity": "High",
           "jsonPath": [ "$.properties.emailAccountAdmins" ],
-          "matchType": "StringSingleToken",
-          "data": {
-            "type": "Allow",
-            "value": "Enabled",
-            "isCaseSensitive": false
-          }
+          "matchType": "Boolean",
+          "data": { "value": true }
         },
         {
           "id": "SQLDatabase160",
