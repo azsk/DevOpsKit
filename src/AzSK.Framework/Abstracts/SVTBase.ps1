@@ -794,7 +794,6 @@ class SVTBase: AzSKRoot
 		$tempHasRequiredAccess = $true;
 		$controlState = @();
 		$controlStateValue = @();
-        $hasStatDriftoccured = $false
 		try
 		{
 			# Get policy compliance if org-level flag is enabled and policy is found 
