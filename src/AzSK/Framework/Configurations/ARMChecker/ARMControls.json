@@ -280,7 +280,7 @@
     },
     {
       "featureName": "SqlServer",
-      "supportedResourceTypes": [ "Microsoft.Sql/servers", "transparentDataEncryption", "administrators", "securityAlertPolicies", "databases", "auditingSettings", "firewallrules" ],
+      "supportedResourceTypes": [ "Microsoft.Sql/servers", "Microsoft.Sql/servers/databases", "Microsoft.Sql/servers/databases/transparentDataEncryption", "Microsoft.Sql/servers/databases/auditingSettings", "Microsoft.Sql/servers/auditingSettings", "Microsoft.Sql/servers/administrators", "Microsoft.Sql/servers/securityAlertPolicies", "Microsoft.Sql/servers/firewallrules" ],
       "controls": [
         {
           "id": "SQLDatabase120",

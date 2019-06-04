@@ -60,7 +60,10 @@ class ARMCheckerStatus: EventBase
 		}
 		
 		#load baseline control list 
-		$this.LoadControlSettingsFile($UseBaselineControls, $UsePreviewBaselineControls);
+		$ErrorLoadingControlSettings = $this.LoadControlSettingsFile($UseBaselineControls, $UsePreviewBaselineControls);
+		if($ErrorLoadingControlSettings){
+			return $null;
+		}
 
 		# Check if parameter file path is provided by user
 		if([string]::IsNullOrEmpty($parameterFilePath))
@@ -154,8 +157,11 @@ class ARMCheckerStatus: EventBase
 		$filesToExcludeCount = ($filesToExclude| Measure-Object).Count 
 		}
 
-		# TODO:- Check if both are provided, return
-		# Code Pending
+		# Check if both -ControlIds and ExcludeControlIds switch are provided , return with error message
+		if(-not([string]::IsNullOrEmpty($ControlIds)) -and -not([string]::IsNullOrEmpty($ExcludeControlIds))){
+			$this.WriteMessage("InvalidArgument: Both the parameters 'ControlIds' and 'ExcludeControlIds' contain values. You should use only one of these parameters.", [MessageType]::Error);
+		    return $null;
+		}
 
 		# Check if specific control ids to scan are provided by user  
 		$ControlsToScan = @();
@@ -205,7 +211,7 @@ class ARMCheckerStatus: EventBase
 					$results = $results | Where-Object {$this.BaselineControls -contains $_.ControlId}
 				}
 
-				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0 -and ( $ControlsToScan | Measure-Object).Count -gt 0){
+				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0 -and ( $ControlsToScan | Measure-Object).Count -gt 0 -and $this.BaselineControls.Count -eq 0){
 					$results = $results | Where-Object {$ControlsToScan -contains $_.ControlId}
 				}
 
@@ -619,7 +625,7 @@ class ARMCheckerStatus: EventBase
 	   return $serverFileContent;
 	}
 
-	hidden [void] LoadControlSettingsFile([Boolean] $UseBaselineControls, [Boolean] $UsePreviewBaselineControls)
+	hidden [boolean] LoadControlSettingsFile([Boolean] $UseBaselineControls, [Boolean] $UsePreviewBaselineControls)
 	{ 	
 			
 		if($UseBaselineControls -eq $true -or $UsePreviewBaselineControls -eq $true){
@@ -638,9 +644,9 @@ class ARMCheckerStatus: EventBase
 				}
 				else
 				{
-					# Todo : Ask user to login and return
-					# Code Pending
-					Write-Host "Login context is required to use Baseline and PreviewBaseline filter" -ForegroundColor Red 
+					Write-Host "Login context is required to scan Baseline/PreviewBaseline controls." -ForegroundColor Red 
+					# return true if EnableAADAuthForOnlinePolicyStore is true but Az login context is null
+					return $true
 				}
 			}
 			# Filter control list for baseline controls
@@ -667,18 +673,14 @@ class ARMCheckerStatus: EventBase
 			if($baselineControlList -and $baselineControlList.Count -gt 0)
 			{
 				$this.BaselineControls += $baselineControlList
-				$this.BaselineControls | ForEach-Object {
-					Write-Host $_ -ForegroundColor Cyan 
-				}
+				
 			}else{
-				# Todo : Warn user to that no baseline or previebaseline control found
-				# Code Pending - Need to confirm in such case should we blcok scan or jsut continue with warning
-				Write-Host "No Baseline or PreviewBaseline controls found" -ForegroundColor Yellow 
+				Write-Host "No Baseline or PreviewBaseline controls found." -ForegroundColor Yellow 
 				$this.BaselineControls = @()
 			}
 		}else{
 			$this.BaselineControls = @()
 		}
-		
+		return $false
 	}
 }
