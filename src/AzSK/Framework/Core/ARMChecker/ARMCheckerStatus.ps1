@@ -163,6 +163,18 @@ class ARMCheckerStatus: EventBase
 		    return $null;
 		}
 
+		# Check if both -ControlIds and UseBaselineControls switch are provided , return with error message
+		if(-not([string]::IsNullOrEmpty($ControlIds)) -and $UseBaselineControls){
+			$this.WriteMessage("InvalidArgument: Both the parameters 'ControlIds' and 'UseBaselineControls' contain values. You should use only one of these parameters.", [MessageType]::Error);
+			return $null;
+		}
+
+		# Check if both -ControlIds and UsePreviewBaselineControls switch are provided , return with error message
+		if(-not([string]::IsNullOrEmpty($ControlIds)) -and $UsePreviewBaselineControls){
+			$this.WriteMessage("InvalidArgument: Both the parameters 'ControlIds' and 'UsePreviewBaselineControls' contain values. You should use only one of these parameters.", [MessageType]::Error);
+			return $null;
+		}
+
 		# Check if specific control ids to scan are provided by user  
 		$ControlsToScan = @();
 		if(-not([string]::IsNullOrEmpty($ControlIds)))
