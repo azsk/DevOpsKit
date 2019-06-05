@@ -101,7 +101,7 @@ function Set-AzSKPIMConfiguration {
         [switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		[Alias("dnof")]
-		$DoNotOpenOutputFolder = $true
+		$DoNotOpenOutputFolder
     )
     Begin {
         [CommandHelper]::BeginCommand($MyInvocation);
@@ -180,7 +180,7 @@ function Get-AzSKPIMConfiguration {
         [switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		[Alias("dnof")]
-		$DoNotOpenOutputFolder = $true
+		$DoNotOpenOutputFolder
 
     )
     Begin {

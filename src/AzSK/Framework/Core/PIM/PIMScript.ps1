@@ -10,6 +10,7 @@ class PIM: CommandBase {
 
     PIM([string] $subscriptionId, [InvocationInfo] $invocationContext)
     : Base([string] $subscriptionId, [InvocationInfo] $invocationContext) {
+        $this.DoNotOpenOutputFolder = $true;
         $this.AccessToken = "";
         $this.AccountId = "";
         $this.APIroot = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/";
