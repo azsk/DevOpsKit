@@ -223,7 +223,7 @@ class ARMCheckerStatus: EventBase
 					$results = $results | Where-Object {$this.BaselineControls -contains $_.ControlId}
 				}
 
-				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0 -and ( $ControlsToScan | Measure-Object).Count -gt 0 -and $this.BaselineControls.Count -eq 0){
+				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0 -and ( $ControlsToScan | Measure-Object).Count -gt 0 ){
 					$results = $results | Where-Object {$ControlsToScan -contains $_.ControlId}
 				}
 
