@@ -8,6 +8,14 @@ class EventBase
     [string] $RunIdentifier = "default";
     [InvocationInfo] $InvocationContext;
 
+	EventBase()
+	{
+		
+	}
+	EventBase($Id)
+	{
+
+	}
 	[string] GenerateRunIdentifier()
 	{
         return $(Get-Date -format "yyyyMMdd_HHmmss");

@@ -20,7 +20,7 @@ class PIM: CommandBase {
         # Using helper method to get current context and access token   
         $ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
         $this.AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI);
-        $this.AccountId = [Helpers]::GetCurrentSessionUser()
+        $this.AccountId = [ContextHelper]::GetCurrentSessionUser()
         $this.UserId = (Get-AzADUser -UserPrincipalName  $this.AccountId).Id
         $this.headerParams = @{'Authorization' = "Bearer $($this.AccessToken)" }
     
