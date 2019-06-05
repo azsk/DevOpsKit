@@ -25,6 +25,7 @@ class SVTBase: AzSKRoot
 	[string] $PartialScanIdentifier = [string]::Empty
 	[ComplianceStateTableEntity[]] $ComplianceStateData = @();
 	[PSObject[]] $ChildSvtObjects = @();
+	[PSObject[]] $MetricAlerts = @();
     SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId)
     {		
@@ -1190,6 +1191,16 @@ class SVTBase: AzSKRoot
 		}
 	}
 
+	# This function returns all the metric alerts set within a subsciption
+	hidden [PSObject[]] GetMetricAlerts([string] $apiURL)
+	{
+		if(($this.MetricAlerts | Measure-Object).Count -eq 0)
+		{
+			$this.MetricAlerts = [WebRequestHelper]::InvokeGetWebRequest($apiURL)
+		}
+		return $this.MetricAlerts
+	}
+
 	hidden [bool] CheckMetricAlertConfiguration([PSObject[]] $metricSettings, [ControlResult] $controlResult, [string] $extendedResourceName)
 	{
 		$result = $false;
@@ -1211,7 +1222,16 @@ class SVTBase: AzSKRoot
 			# get non-classic alerts
             try
             {
-                $customObject = '{
+                $apiURL = "https://management.azure.com/subscriptions/{0}/providers/Microsoft.Insights/metricAlerts?api-version=2018-03-01" -f $($this.SubscriptionContext.SubscriptionId)
+                $v2Alerts = $this.GetMetricAlerts($apiURL)                
+                $v2Alerts = $v2Alerts | Where-Object { $_.properties.scopes -contains $resId }
+                if(($v2Alerts |  Measure-Object).Count -gt 0)
+                {
+                    $v2Alerts |  ForEach-Object {
+						if([Helpers]::CheckMember($_,"properties"))
+						{
+    
+							$alert = '{
                                   "Condition":  {
                                                     "DataSource":  {
                                                                        "MetricName":  ""
@@ -1227,32 +1247,41 @@ class SVTBase: AzSKRoot
                                   "Name" : "",
 								  "Type" : "",
 								  "AlertType" : "V2Alert"
-                                }' | ConvertFrom-Json
-                $apiURL = "https://management.azure.com/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Insights/metricAlerts?api-version=2018-03-01" -f $($this.SubscriptionContext.SubscriptionId), $($this.ResourceContext.ResourceGroupName)
-                $v2Alerts = [WebRequestHelper]::InvokeGetWebRequest($apiURL)                
-                $v2Alerts = $v2Alerts | Where-Object { $_.properties.scopes -contains $resId }
-                if(($v2Alerts |  Measure-Object).Count -gt 0)
-                {
-                    $resourceAlerts += $v2Alerts |  ForEach-Object {
-                        $alert = New-Object -TypeName PSObject -ArgumentList $customObject
-						$alert.Condition.DataSource.MetricName = $_.properties.criteria.allOf.metricName
-						$alert.Condition.OperatorProperty = $_.properties.criteria.allOf.operator
-						$alert.Condition.Threshold = $_.properties.criteria.allOf.threshold
-						$alert.Condition.TimeAggregation = $_.properties.criteria.allOf.timeAggregation
-						$alert.Condition.WindowSize = [Xml.XmlConvert]::ToTimeSpan("$($_.properties.windowSize)")
-						$alert.Actions = [System.Collections.Generic.List[Microsoft.Azure.Management.Monitor.Models.RuleAction]]::new()
-						$actionGroupTemp = $_.properties.Actions.actionGroupId.Split("/")
-						$actionGroup = Get-AzActionGroup -ResourceGroupName $actionGroupTemp[4] -Name $actionGroupTemp[-1] -WarningAction SilentlyContinue
-						if($actionGroup.EmailReceivers.Status -eq [Microsoft.Azure.Management.Monitor.Models.ReceiverStatus]::Enabled)
-						{
-							$alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -WarningAction SilentlyContinue));
-						}						
-                        $alert.Description = $_.properties.description
-                        $alert.IsEnabled = $_.properties.enabled
-                        $alert.Name = $_.name
-                        $alert.Type = $_.type
-						
-                        return $alert
+                            }' | ConvertFrom-Json
+							if([Helpers]::CheckMember($_,"properties.criteria.allOf"))
+							{
+								$alert.Condition.DataSource.MetricName = $_.properties.criteria.allOf.metricName
+								$alert.Condition.OperatorProperty = $_.properties.criteria.allOf.operator
+								$alert.Condition.Threshold = [int] $_.properties.criteria.allOf.threshold
+								$alert.Condition.TimeAggregation = $_.properties.criteria.allOf.timeAggregation
+							}
+							$alert.Condition.WindowSize = ([Xml.XmlConvert]::ToTimeSpan("$($_.properties.windowSize)")).ToString()
+							$alert.Actions = [System.Collections.Generic.List[Microsoft.Azure.Management.Monitor.Models.RuleAction]]::new()
+							if([Helpers]::CheckMember($_.properties,"Actions.actionGroupId"))
+							{
+								$actionGroupTemp = $_.properties.Actions.actionGroupId.Split("/")
+								$actionGroup = Get-AzActionGroup -ResourceGroupName $actionGroupTemp[4] -Name $actionGroupTemp[-1] -WarningAction SilentlyContinue
+								if($actionGroup.EmailReceivers.Status -eq [Microsoft.Azure.Management.Monitor.Models.ReceiverStatus]::Enabled)
+								{
+									if([Helpers]::CheckMember($actionGroup,"EmailReceivers.EmailAddress"))
+									{
+										$alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -CustomEmail $actionGroup.EmailReceivers.EmailAddress  -WarningAction SilentlyContinue));
+									}
+									else
+									{
+										$alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -WarningAction SilentlyContinue));
+									}	
+								}
+							}				
+							$alert.Description = $_.properties.description
+							$alert.IsEnabled = $_.properties.enabled
+							$alert.Name = $_.name
+							$alert.Type = $_.type
+                            if(($alert|Measure-Object).Count -gt 0)
+                            {
+                               $resourceAlerts += $alert 
+                            }
+						}
                     }
                 }   
             }
