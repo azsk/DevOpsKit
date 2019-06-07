@@ -57,6 +57,13 @@ class VirtualMachine: SVTBase
 		{
 			$result=$result | Where-Object { $_.Tags -contains "ERvNet" };
 		}
+		# Applying filter to exclude certain controls for Databricks locked RG resources
+		if([Helpers]::CheckMember($this.ControlSettings, "DataBricksFilters.TagName") -and [Helpers]::CheckMember($this.ControlSettings, "DataBricksFilters.TagValue")){
+			if([Helpers]::CheckMember($this.ResourceObject, "Tags") -and $this.ResourceObject.Tags[$this.ControlSettings.DataBricksFilters.TagName] -eq $this.ControlSettings.DataBricksFilters.TagValue){
+				$result=$result | Where-Object { $_.Tags -notcontains "FilterDatabricks" };
+			}
+		}
+		
 		return $result;
 	}
 
@@ -483,6 +490,64 @@ class VirtualMachine: SVTBase
 		return $controlResult;
 	}
 
+	hidden [ControlResult] CheckGuestConfigPolicyStatus([ControlResult] $controlResult)
+	{
+		if(-not $this.VMDetails.IsVMDeallocated)
+		{
+			$controlStatus = [VerificationResult]::Failed
+            $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
+			$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+			$header = "Bearer " + $AccessToken
+			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
+			$propertiesToReplace = @{}
+			$propertiesToReplace.Add("httpapplicationroutingzonename", "_httpapplicationroutingzonename")
+            $policyAssignments = @();
+			try {
+					$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/providers/Microsoft.GuestConfiguration/guestConfigurationAssignments?api-version=2018-06-30-preview",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
+					$response = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
+					if($response -ne $null -and ($response|Measure-Object).Count -gt 0)
+					{
+						foreach($assignment in $response){
+						 if([Helpers]::CheckMember($assignment, "name") -and [Helpers]::CheckMember($assignment, "properties.complianceStatus")){
+							$assignmentObject = "" | Select-Object "assignmentName", "complianceStatus" 
+							$assignmentObject.assignmentName = $assignment.name
+							$assignmentObject.complianceStatus = $assignment.properties.complianceStatus
+							$policyAssignments += $assignmentObject
+						 }
+
+						}
+					}
+					if(($policyAssignments | Measure-Object).Count -gt 0){
+
+						$nonCompliantPolicyAssignment = $policyAssignments | Where-Object { $_.complianceStatus -ne "Compliant"}
+						if($null -ne $nonCompliantPolicyAssignment -and ( $nonCompliantPolicyAssignment | Measure-Object).Count -gt 0 ){
+							$controlStatus = [VerificationResult]::Failed
+							$controlResult.AddMessage("For following guest configuration assignment, compliance status is 'NonCompliant' or  'Pending'.");
+							$controlResult.AddMessage($nonCompliantPolicyAssignment);
+						}else{
+							$controlStatus = [VerificationResult]::Passed
+							$controlResult.AddMessage("For all guest configuration assignment, compliance status is 'Compliant'.");
+							$controlResult.AddMessage($policyAssignments);
+						}
+						
+					}else{
+						$controlStatus = [VerificationResult]::Failed
+						$controlResult.AddMessage("No guest configuration policy assignment found.");
+					}
+				}
+				catch {
+					$controlStatus = [VerificationResult]::Failed
+					$controlResult.AddMessage("Not able to fetch guest configuration policy assignments details.");
+				}
+		}
+		else
+		{
+			$controlStatus = [VerificationResult]::Verify
+			$controlResult.AddMessage("This VM is currently in a 'deallocated' state. Unable to check security controls on it.");
+		}
+		$controlResult.VerificationResult = $controlStatus
+		return $controlResult;
+	}
 
 	hidden [ControlResult] CheckNSGConfig([ControlResult] $controlResult)
 	{

@@ -269,6 +269,10 @@
       "microsoftAccountClientId"
     ]
   },
+  "DataBricksFilters":{
+   "TagName": "Vendor",
+    "TagValue": "Databricks"
+  },
   "StorageDiagnosticsSkuMapping": [
     "StandardGRS",
     "StandardLRS",
