@@ -97,7 +97,8 @@
          "StandardSku",
          "PremiumSku",
         "GeneralPurposeStorage",
-        "BlobStorage"
+        "BlobStorage",
+        "PremiumFileShareStorage"
       ],
       "PolicyDefinitionGuid":"404c3081-a854-4457-ae30-26a93ef643f9",
       "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/404c3081-a854-4457-ae30-26a93ef643f9",
