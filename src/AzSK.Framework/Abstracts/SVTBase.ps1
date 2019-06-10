@@ -25,7 +25,6 @@ class SVTBase: AzSKRoot
 	[string] $PartialScanIdentifier = [string]::Empty
 	[ComplianceStateTableEntity[]] $ComplianceStateData = @();
 	[PSObject[]] $ChildSvtObjects = @();
-	[PSObject[]] $MetricAlerts = @();
     SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId)
     {		
@@ -1191,16 +1190,6 @@ class SVTBase: AzSKRoot
 		}
 	}
 
-	# This function returns all the metric alerts set within a subsciption
-	hidden [PSObject[]] GetMetricAlerts([string] $apiURL)
-	{
-		if(($this.MetricAlerts | Measure-Object).Count -eq 0)
-		{
-			$this.MetricAlerts = [WebRequestHelper]::InvokeGetWebRequest($apiURL)
-		}
-		return $this.MetricAlerts
-	}
-
 	hidden [bool] CheckMetricAlertConfiguration([PSObject[]] $metricSettings, [ControlResult] $controlResult, [string] $extendedResourceName)
 	{
 		$result = $false;
@@ -1222,8 +1211,8 @@ class SVTBase: AzSKRoot
 			# get non-classic alerts
             try
             {
-                $apiURL = "https://management.azure.com/subscriptions/{0}/providers/Microsoft.Insights/metricAlerts?api-version=2018-03-01" -f $($this.SubscriptionContext.SubscriptionId)
-                $v2Alerts = $this.GetMetricAlerts($apiURL)                
+                $apiURL = "https://management.azure.com/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Insights/metricAlerts?api-version=2018-03-01" -f $($this.SubscriptionContext.SubscriptionId), $this.ResourceContext.ResourceGroupName
+                $v2Alerts = [WebRequestHelper]::InvokeGetWebRequest($apiURL)                
                 $v2Alerts = $v2Alerts | Where-Object { $_.properties.scopes -contains $resId }
                 if(($v2Alerts |  Measure-Object).Count -gt 0)
                 {
