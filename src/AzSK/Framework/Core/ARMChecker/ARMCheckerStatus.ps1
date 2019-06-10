@@ -656,7 +656,7 @@ class ARMCheckerStatus: EventBase
 				}
 				else
 				{
-					Write-Host "Login context is required to scan Baseline/PreviewBaseline controls." -ForegroundColor Red 
+					Write-Host "No Azure login found. Azure login context is required to fetch baseline controls defined for this policy." -ForegroundColor Red 
 					# return true if EnableAADAuthForOnlinePolicyStore is true but Az login context is null
 					return $true
 				}
