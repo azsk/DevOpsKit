@@ -1202,9 +1202,82 @@ class SVTBase: AzSKRoot
 				$resIdMessageString = "for nested resource [$extendedResourceName]";
 			}
 
-			$resourceAlerts = (Get-AzAlertRule -ResourceGroup $this.ResourceContext.ResourceGroupName -WarningAction SilentlyContinue) |
+			$resourceAlerts = @()
+            # get classic alerts
+			$resourceAlerts += (Get-AzAlertRule -ResourceGroup $this.ResourceContext.ResourceGroupName -WarningAction SilentlyContinue) |
 								Where-Object { $_.Condition -and $_.Condition.DataSource } |
 								Where-Object { $_.Condition.DataSource.ResourceUri -eq $resId };
+
+			# get non-classic alerts
+            try
+            {
+                $apiURL = "https://management.azure.com/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Insights/metricAlerts?api-version=2018-03-01" -f $($this.SubscriptionContext.SubscriptionId), $this.ResourceContext.ResourceGroupName
+                $v2Alerts = [WebRequestHelper]::InvokeGetWebRequest($apiURL)                
+                $v2Alerts = $v2Alerts | Where-Object { $_.properties.scopes -contains $resId }
+                if(($v2Alerts |  Measure-Object).Count -gt 0)
+                {
+                    $v2Alerts |  ForEach-Object {
+						if([Helpers]::CheckMember($_,"properties"))
+						{
+    
+							$alert = '{
+                                  "Condition":  {
+                                                    "DataSource":  {
+                                                                       "MetricName":  ""
+                                                                   },
+                                                    "OperatorProperty":  "",
+                                                    "Threshold": "" ,
+                                                    "TimeAggregation":  "",
+                                                    "WindowSize":  ""
+                                                },
+                                  "Actions"  :  null,
+                                  "Description" : "",
+                                  "IsEnabled":  "",
+                                  "Name" : "",
+								  "Type" : "",
+								  "AlertType" : "V2Alert"
+                            }' | ConvertFrom-Json
+							if([Helpers]::CheckMember($_,"properties.criteria.allOf"))
+							{
+								$alert.Condition.DataSource.MetricName = $_.properties.criteria.allOf.metricName
+								$alert.Condition.OperatorProperty = $_.properties.criteria.allOf.operator
+								$alert.Condition.Threshold = [int] $_.properties.criteria.allOf.threshold
+								$alert.Condition.TimeAggregation = $_.properties.criteria.allOf.timeAggregation
+							}
+							$alert.Condition.WindowSize = ([Xml.XmlConvert]::ToTimeSpan("$($_.properties.windowSize)")).ToString()
+							$alert.Actions = [System.Collections.Generic.List[Microsoft.Azure.Management.Monitor.Models.RuleAction]]::new()
+							if([Helpers]::CheckMember($_.properties,"Actions.actionGroupId"))
+							{
+								$actionGroupTemp = $_.properties.Actions.actionGroupId.Split("/")
+								$actionGroup = Get-AzActionGroup -ResourceGroupName $actionGroupTemp[4] -Name $actionGroupTemp[-1] -WarningAction SilentlyContinue
+								if($actionGroup.EmailReceivers.Status -eq [Microsoft.Azure.Management.Monitor.Models.ReceiverStatus]::Enabled)
+								{
+									if([Helpers]::CheckMember($actionGroup,"EmailReceivers.EmailAddress"))
+									{
+										$alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -CustomEmail $actionGroup.EmailReceivers.EmailAddress  -WarningAction SilentlyContinue));
+									}
+									else
+									{
+										$alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -WarningAction SilentlyContinue));
+									}	
+								}
+							}				
+							$alert.Description = $_.properties.description
+							$alert.IsEnabled = $_.properties.enabled
+							$alert.Name = $_.name
+							$alert.Type = $_.type
+                            if(($alert|Measure-Object).Count -gt 0)
+                            {
+                               $resourceAlerts += $alert 
+                            }
+						}
+                    }
+                }   
+            }
+            catch
+            {
+                $this.PublishException($_);
+            }
 
 			$nonConfiguredMetrices = @();
 			$misConfiguredMetrices = @();
