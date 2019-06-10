@@ -660,7 +660,8 @@ class SubscriptionCore: SVTBase
 				{
 					$configuredAlerts = $configuredAlerts | Where-Object { $matchingAlertRulesNames.InputObject -contains $_.Name }
 					$currentAlertsOperationsList = $configuredAlerts | ForEach-Object { $_.Properties.condition.allOf[2].anyOf} | Select-Object -property @{N='OperationName';E={$_.equals}} -Unique
-					$requiredAlertsOperationsList = ($subInsightsAlertsConfig | Where{ $_.Tags -contains $this.SubscriptionMandatoryTags}).AlertOperationList.OperationName
+                    $requiredAlertsOperations = ($subInsightsAlertsConfig | Where{ $_.Tags -contains $this.SubscriptionMandatoryTags}).AlertOperationList 
+                    $requiredAlertsOperationsList = ($requiredAlertsOperations | Where-Object { $_.Tags -contains $this.SubscriptionMandatoryTags }).OperationName
 					if((($currentAlertsOperationsList| Measure-Object).Count -gt 0) -and (($requiredAlertsOperationsList | Measure-Object).Count -gt 0))
 					{
 						$operationsDiffList = Compare-Object -ReferenceObject $requiredAlertsOperationsList -DifferenceObject $currentAlertsOperationsList.OperationName | Where-Object { $_.SideIndicator -eq "<=" }
