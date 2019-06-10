@@ -131,7 +131,7 @@ class ARMCheckerStatus: EventBase
 		  if(-not([string]::IsNullOrEmpty($exemptControlListPath)) -and (Test-Path -path $exemptControlListPath -PathType Leaf))
 		  {
 		    $exemptControlListFile=Get-Content $exemptControlListPath | ConvertFrom-Csv
-	        $exemptControlList=$exemptControlListFile| where {$_.Status -eq "Failed" -or $_.Status -eq "Verify"}
+	        $exemptControlList=$exemptControlListFile| where {$_.Status -eq "Failed" -or $_.Status -eq "Verify"} 
 		  }
 		}catch{
 		    $this.WriteMessage("Unable to read file containing list of controls to skip, Please verify file path.", [MessageType]::Warning);
@@ -278,7 +278,7 @@ class ARMCheckerStatus: EventBase
 						$csvResultItem.ResourcePath = $result.ResourceDataMarker.JsonPath	
 						if(($exemptControlList|Measure-Object).Count -gt 0)
 						{				
-                         $csvResultItem = Compare-Object -ReferenceObject $csvResultItem -DifferenceObject $exemptControlList -PassThru -IncludeEqual -Property ControlId,PropertyPath,FilePath 
+                         $csvResultItem = Compare-Object -ReferenceObject $csvResultItem -DifferenceObject $exemptControlList -PassThru -IncludeEqual -Property ControlId,PropertyPath 
 		                 $csvResultItem| ForEach-Object {
 		                               if($_.SideIndicator -eq "==")
 			                           {
