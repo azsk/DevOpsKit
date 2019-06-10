@@ -328,7 +328,16 @@ class VirtualMachine: SVTBase
 		#Do not check for deallocated status for the VM and directly show the status from ASC
 		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
-			$antimalwareSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.EndpointProtection};
+			$antimalwareSetting = $null
+			if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+			{
+				$antimalwareSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.EndpointProtectionAssessmentKey};
+			}
+			else 
+			{
+				$antimalwareSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.EndpointProtection};
+			}
+
 			if($null -ne $antimalwareSetting)
 			{
 				$controlResult.AddMessage("VM endpoint protection details:", $antimalwareSetting);
@@ -675,7 +684,16 @@ class VirtualMachine: SVTBase
 
 		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
-			$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryption};
+			$adeSetting = $null
+			if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+			{
+				$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryptionAssessmentKey};
+			}
+			else 
+			{
+				$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryption};
+			}
+
 			if($null -ne $adeSetting)
 			{
 				if($adeSetting.assessmentResult -eq 'Healthy')
@@ -740,7 +758,16 @@ class VirtualMachine: SVTBase
 
 		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
-			$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScan};
+			$vulnSetting = $null
+			if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+			{
+				$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScanAssessmentKey};
+			}
+			else 
+			{
+				$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScan};
+			}
+
 			if($null -ne $vulnSetting)
 			{
 				if($vulnSetting.assessmentResult -eq 'Healthy')
@@ -783,7 +810,16 @@ class VirtualMachine: SVTBase
 
 				if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 				{
-					$patchSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.OSUpdates};
+					$patchSetting = $null
+					if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+					{
+						$patchSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.OSUpdatesAssessmentKey};
+					}
+					else 
+					{
+						$patchSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.OSUpdates};
+					}
+
 					if($null -ne $patchSetting)
 					{
 						$ascPatchStatus = $patchSetting.assessmentResult;
@@ -875,7 +911,16 @@ class VirtualMachine: SVTBase
 
 			if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 			{
-				$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScan};
+				$vulnSetting = $null
+				if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+				{
+					$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScanAssessmentKey};
+				}
+				else 
+				{
+					$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScan};
+				}
+
 				if($null -ne $vulnSetting)
 				{
 					$vulnStatus = $vulnSetting.assessmentResult;
