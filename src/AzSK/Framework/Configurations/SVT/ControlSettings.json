@@ -93,10 +93,15 @@
     "ASCPolicies": {
       "PolicyAssignment": {
         "EndpointProtection": "Install endpoint protection solution on your machines",
+        "EndpointProtectionAssessmentKey": "83f577bd-a1b6-b7e1-0891-12ca19d1e6df",
         "DiskEncryption": "Apply Disk Encryption on your virtual machines",
+        "DiskEncryptionAssessmentKey": "d57a4221-a804-52ca-3dea-768284f06bb7",
         "VulnerabilityScan": "Remediate vulnerabilities in security configuration on your machines",
+        "VulnerabilityScanAssessmentKey": "181ac480-f7c4-544b-9865-11b8ffe87f47",
         "OSUpdates": "Install system updates on your machines",
-        "MonitoringAgent": "Install monitoring agent on your machines"
+        "OSUpdatesAssessmentKey": "4ab6e3c5-74dd-8b35-9ab9-f61b30875b27",
+        "MonitoringAgent": "Install monitoring agent on your machines",
+        "MonitoringAgentAssessmentKey": "d1db3318-01ff-16de-29eb-28b344515626"
       },
       "ResourceDetailsKeys": {
         "WorkspaceId": "Reporting workspace customer id"
