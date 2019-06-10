@@ -528,14 +528,20 @@ class APIManagement: SVTBase
 			#Fail control if universal address range 0.0.0.0-255.255.255.255 is used
 			$anyToAnyIPFilter = @()
 			$allowedIPRange = $Result | Where-Object { $_.Action -eq 'Allow' }
-			$anyToAnyIPFilter = $allowedIPRange | ForEach-Object {
-				$AddressRange = $_.AddressRange[0].'address-range' | Where-Object { 
-					(($_.from -eq $this.ControlSettings.IPRangeStartIP -and $_.to -eq $this.ControlSettings.IPRangeEndIP) -or `
-					($_.from -eq $this.ControlSettings.IPRangeEndIP -and $_.to -eq $this.ControlSettings.IPRangeStartIP))
-				}; 
-				if($AddressRange)
-				{
-					return $_
+			if(($allowedIPRange | Measure-Object).Count -gt 0)
+			{
+				$anyToAnyIPFilter = $allowedIPRange | ForEach-Object {
+					$AddressRange = $_.AddressRange[0].'address-range' | Where-Object { 
+						if(($_ | Measure-Object).Count -gt 0)
+						{
+							(($_.from -eq $this.ControlSettings.IPRangeStartIP -and $_.to -eq $this.ControlSettings.IPRangeEndIP) -or `
+							($_.from -eq $this.ControlSettings.IPRangeEndIP -and $_.to -eq $this.ControlSettings.IPRangeStartIP))
+						}
+					}; 
+					if($AddressRange)
+					{
+						return $_
+					}
 				}
 			}
 
