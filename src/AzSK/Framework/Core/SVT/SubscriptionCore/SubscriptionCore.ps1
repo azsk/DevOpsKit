@@ -624,6 +624,7 @@ class SubscriptionCore: SVTBase
 	}
 
 	hidden [ControlResult] CheckCriticalAlertsPresence([ControlResult] $controlResult)
+	hidden [ControlResult] CheckCriticalAlertsPresence([ControlResult] $controlResult)
 	{
         $alertDiffList = @()
 		$operationsDiffList = @()
@@ -743,6 +744,7 @@ class SubscriptionCore: SVTBase
         }
 		return $controlResult
 	}
+
 
 	#Below function is to check V1 critical alerts presence. This is temporary function to support backward compatibility for alert.
 	hidden [bool] CheckV1CriticalAlertsPresence()
