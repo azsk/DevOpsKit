@@ -666,7 +666,12 @@ class SubscriptionCore: SVTBase
 					$configuredAlerts = $configuredAlerts | Where-Object { $matchingAlertRulesNames.InputObject -contains $_.Name }
 					if(($configuredAlerts | Measure-Object).Count -gt 0)
 					{
-						$currentAlertsOperationsList = $configuredAlerts | ForEach-Object { $_.Properties.condition.allOf[2].anyOf} | Select-Object -property @{N='OperationName';E={$_.equals}} -Unique	
+						$currentAlertsOperationsList = $configuredAlerts | ForEach-Object { 
+							if([Helpers]::CheckMember($_,"Properties.condition") -and (($_.Properties.condition.allOf | Measure-Object).Count -eq 3) -and [Helpers]::CheckMember($_.Properties.condition.allOf[2],"anyOf"))
+							{
+								$_.Properties.condition.allOf[2].anyOf
+							}
+						} | Select-Object -property @{N='OperationName';E={$_.equals}} -Unique	
 					}
 					else
 					{
