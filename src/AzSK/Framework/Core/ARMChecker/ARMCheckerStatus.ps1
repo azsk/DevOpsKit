@@ -687,7 +687,7 @@ class ARMCheckerStatus: EventBase
 				$this.BaselineControls += $baselineControlList
 				
 			}else{
-				Write-Host "No Baseline or PreviewBaseline controls found." -ForegroundColor Yellow 
+				Write-Host "There are no baseline controls defined for this policy." -ForegroundColor Yellow 
 				$this.BaselineControls = @()
 			}
 		}else{
