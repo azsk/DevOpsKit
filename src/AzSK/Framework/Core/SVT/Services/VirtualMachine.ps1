@@ -531,12 +531,13 @@ class VirtualMachine: SVTBase
 						}
 						
 					}else{
-						$controlStatus = [VerificationResult]::Failed
+						$controlStatus = [VerificationResult]::Verify
 						$controlResult.AddMessage("No guest configuration policy assignment found.");
 					}
 				}
 				catch {
-					$controlStatus = [VerificationResult]::Failed
+					
+					$controlStatus = [VerificationResult]::Verify
 					$controlResult.AddMessage("Not able to fetch guest configuration policy assignments details.");
 				}
 		}

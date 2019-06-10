@@ -262,7 +262,7 @@
            "ERvNet",
            "VirtualMachine"
          ],
-         "Enabled": false
+         "Enabled": true
        },
        {
          "ControlID": "Azure_VirtualMachine_SI_GuestConfig_Policy_Health",
