@@ -36,7 +36,9 @@
                                       "TCP",
                                       "Automated",
                                       "AuthN",
-                                      "KeyVault"
+                                      "KeyVault",
+                                      "OwnerAccess",
+                                      "GraphRead"
                                   ],
                          "Enabled":  true
                      },
