@@ -357,8 +357,6 @@ class ServicesSecurityStatus: SVTCommandBase
 			}
 			$ResourcesWithBaselineFilter += $this.Resolver.SVTResources | Where-Object {$null -ne $_.ResourceTypeMapping -and  $_.ResourceTypeMapping.ResourceTypeName -in $previewBaselineResourceTypes -and $_.ResourceId -notin $BaselineResourceList }
 			
-			$ResourcesWithBaselineFilter = $ResourcesWithBaselineFilter | Sort-Object -Unique
-
 			#Get the list of control ids
 			$controlIds = $previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
 			$previewBaselineControlIds = [system.String]::Join(",",$controlIds);
