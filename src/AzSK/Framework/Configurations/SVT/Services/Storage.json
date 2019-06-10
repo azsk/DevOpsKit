@@ -22,7 +22,8 @@
          "GeneralPurposeStorage",
          "BlobStorage",
          "HNSDisabled",
-         "ResourceLocked"
+         "ResourceLocked",
+         "PremiumFileShareNotSupported"
       ],
       "Enabled": true,
       "FixControl": {

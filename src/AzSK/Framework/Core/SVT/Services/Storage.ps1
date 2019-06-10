@@ -72,6 +72,13 @@ class Storage: SVTBase
 				 }
 			}
 		}
+
+		#Disabling the control 'Azure_Storage_AuthN_Dont_Allow_Anonymous' for FileShare type available in Premium storage account as blobs and containers are not supported in it.
+		if([Helpers]::CheckMember($this.ResourceObject, "Kind") -and ($this.ResourceObject.Kind -eq "FileStorage"))
+		{
+			$result = $result | Where-Object {$_.Tags -notcontains "PremiumFileShareNotSupported"}
+		}
+
 		$resource = Get-AzResource -ResourceId $this.ResourceContext.ResourceId;
 		#Disabling the control 'Azure_Storage_AuthN_Dont_Allow_Anonymous' for Data Lake Storage Gen2 resources with hierarchical namespace accounts enabled as blob storage is not currently supported.
 
