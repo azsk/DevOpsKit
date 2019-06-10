@@ -83,7 +83,8 @@
              "Windows",
              "Linux",
              "ERvNet",
-             "VirtualMachine"
+             "VirtualMachine",
+             "FilterDatabricks"
           ],
           "Enabled": true,
           "DataObjectProperties": [
@@ -262,6 +263,28 @@
            "VirtualMachine"
          ],
          "Enabled": false
+       },
+       {
+         "ControlID": "Azure_VirtualMachine_SI_GuestConfig_Policy_Health",
+         "Description": "Guest Configuration extension must be deployed to the VM using Azure Policy assignment",
+         "Id": "VirtualMachine220",
+         "ControlSeverity": "Medium",
+         "Automated": "Yes",
+         "MethodName": "CheckGuestConfigPolicyStatus",
+         "Rationale": "Installing Guest configuration extension on VM allows you to run In-Guest Policy on the VM, making it possible to monitor system and security policies for compliance checks in the VM.",
+         "Recommendation": "Run Get-AzVMGuestPolicyStatus -ResourceGroupName <VM Resource group name> -VMName <VM Name> to get further details like Compliance reason, last check time etc.",
+         "Tags": [
+           "SDL",
+           "TCP",
+           "Automated",
+           "Config",
+           "Windows",
+           "Linux",
+           "SI",
+           "ERvNet",
+           "VirtualMachine"
+         ],
+         "Enabled": true
        }
     ]
  }
