@@ -72,15 +72,9 @@ namespace AzSK.ARMChecker.Lib
                 Features c = new Features();
                 c.FeatureName = i.FeatureName;
                 c.supportedResourceTypes = i.supportedResourceTypes;
-                //for(int j=0;j<c.supportedResourceTypes.Count();j++)
-                //{
-                //    var temp = c.supportedResourceTypes[j].Split('/');
-                //    c.supportedResourceTypes[j] = temp.Last();
-                //}
                 c.count = i.supportedResourceTypes.Count();
                 listOfAllPrimaryResource.Add(c);
             }
-            //listOfAllPrimaryResource = _resourceControlSets.Select(x => new { supportedResourceTypes = x.supportedResourceTypes, FeatureName = x.FeatureName }).ToList();//.ToDictionary(x=>x.ResourceType,x=>x.FeatureName);
             // Fetch all resources , variables , parameters
             var resources = armTemplate.GetValueCaseInsensitive("resources");
             var parameters = armTemplate.GetValueCaseInsensitive("parameters");
