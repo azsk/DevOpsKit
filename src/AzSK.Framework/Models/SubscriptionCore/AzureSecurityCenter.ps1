@@ -13,12 +13,13 @@ class AzureSecurityCenter
         if($null -ne $alertObjects -and ($alertObjects | Measure-Object).Count -gt 0)
         {                
             $alertObjects | ForEach-Object { 
-                $out = "" | Select-Object AlertDisplayName, AlertName, Description, State, ReportedTimeUTC, RemediationSteps
+                $out = "" | Select-Object AlertDisplayName, AlertName, Description, State, ReportedTimeUTC, ReportedSeverity, RemediationSteps
 				Set-Variable -Name AlertDisplayName -Value $_.properties.alertDisplayName        
 				Set-Variable -Name AlertName -Value $_.properties.alertName
 				Set-Variable -Name Description -Value $_.properties.description
 				Set-Variable -Name State -Value $_.properties.state
 				Set-Variable -Name ReportedTimeUTC -Value $_.properties.reportedTimeUtc
+                Set-Variable -Name ReportedSeverity -Value $_.properties.reportedSeverity
 				Set-Variable -Name RemediationSteps -Value $_.properties.remediationSteps
 
 				$out.AlertDisplayName = $AlertDisplayName
@@ -26,6 +27,7 @@ class AzureSecurityCenter
 				$out.Description = $Description
 				$out.State = $State
 				$out.ReportedTimeUTC = $ReportedTimeUTC
+                $out.ReportedSeverity = $ReportedSeverity
 				$out.RemediationSteps = $RemediationSteps
 				$activeAlerts += $out
             }

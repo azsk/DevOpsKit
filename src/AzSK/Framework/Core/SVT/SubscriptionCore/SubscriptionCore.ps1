@@ -494,11 +494,16 @@ class SubscriptionCore: SVTBase
 	hidden [ControlResult] CheckAzureSecurityCenterAlerts([ControlResult] $controlResult)
 	{
 		$this.GetASCAlerts()
-
-		$activeAlerts = ($this.ASCSettings.Alerts | Where-Object {$_.State -eq "Active"})
+       $activeAlerts = ($this.ASCSettings.Alerts | Where-Object {$_.State -eq "Active" })
 		if(($activeAlerts | Measure-Object).Count -gt 0)
 		{
-			$controlResult.SetStateData("Active alert in Security Center", $activeAlerts);
+            if([Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsThresholdInDays') -and [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsSeverityLevels'))
+            { 
+				$AlertDaysCheck = $this.ControlSettings.ASCAlertsDaysFilter
+				$AlertSeverityCheck = $this.ControlSettings.ASCAlertsSeverityFilter				
+                $activeAlerts = $activeAlerts | Where-Object{ (([System.DateTime]::UtcNow) -gt  [System.DateTime]::Parse($_.ReportedTimeUTC).AddDays($AlertDaysCheck)) -and $_.ReportedSeverity -in $AlertSeverityCheck}
+            }
+			$controlResult.SetStateData("Active alert in Security Center", ($activeAlerts | Select-Object AlertName, ReportedTimeUTC));
 			$controlResult.AddMessage([VerificationResult]::Failed,"Azure Security Center have active alerts that need to resolved.")
 		}
 		else {
@@ -659,16 +664,8 @@ class SubscriptionCore: SVTBase
 				if(($matchingAlertRulesNames| Measure-Object).count -gt 0)
 				{
 					$configuredAlerts = $configuredAlerts | Where-Object { $matchingAlertRulesNames.InputObject -contains $_.Name }
-					if(($configuredAlerts | Measure-Object).Count -gt 0)
-					{
-						$currentAlertsOperationsList = $configuredAlerts | ForEach-Object { $_.Properties.condition.allOf[2].anyOf} | Select-Object -property @{N='OperationName';E={$_.equals}} -Unique	
-					}
-					else
-					{
-						$currentAlertsOperationsList = $null
-					}
-                    $requiredAlertsOperations = ($subInsightsAlertsConfig | Where{ $_.Tags -contains $this.SubscriptionMandatoryTags}).AlertOperationList 
-                    $requiredAlertsOperationsList = ($requiredAlertsOperations | Where-Object { $_.Tags -contains $this.SubscriptionMandatoryTags }).OperationName
+					$currentAlertsOperationsList = $configuredAlerts | ForEach-Object { $_.Properties.condition.allOf[2].anyOf} | Select-Object -property @{N='OperationName';E={$_.equals}} -Unique
+					$requiredAlertsOperationsList = ($subInsightsAlertsConfig | Where{ $_.Tags -contains $this.SubscriptionMandatoryTags}).AlertOperationList.OperationName
 					if((($currentAlertsOperationsList| Measure-Object).Count -gt 0) -and (($requiredAlertsOperationsList | Measure-Object).Count -gt 0))
 					{
 						$operationsDiffList = Compare-Object -ReferenceObject $requiredAlertsOperationsList -DifferenceObject $currentAlertsOperationsList.OperationName | Where-Object { $_.SideIndicator -eq "<=" }
@@ -686,7 +683,7 @@ class SubscriptionCore: SVTBase
 					{
 						$foundRequiredAlerts = $true
 					}
-					elseif(($currentAlertsOperationsList | Measure-Object).Count -eq 0)
+					elseif(($currentAlertsOperationsList.Count| Measure-Object).Count -eq 0)
 					{
 						$foundRequiredAlerts = $false
 					}
@@ -876,7 +873,6 @@ class SubscriptionCore: SVTBase
 
 		return $controlResult
 	}
-
 	hidden [ControlResult] CheckPresenceOfClassicVMs([ControlResult] $controlResult)
 	{
         $classicVMResources = [array] (Get-AzResource -ResourceType Microsoft.ClassicCompute/virtualMachines)

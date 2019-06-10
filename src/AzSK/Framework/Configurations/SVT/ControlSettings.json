@@ -106,6 +106,8 @@
   "NoOfApprovedAdmins": 5,
   "NoOfClassicAdminsLimit": 2,
   "CriticalPIMRoles": [ "Owner", "Contributor" ],
+  "ASCAlertsThresholdInDays": 30,
+  "ASCAlertsSeverityLevels":["High"],
   "WhitelistedMgmtCerts": {
     "Thumbprints": [],
     "ApprovedValidityRangeInDays": 732
