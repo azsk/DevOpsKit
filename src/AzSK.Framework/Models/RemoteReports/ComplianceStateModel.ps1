@@ -25,6 +25,7 @@ class ComplianceStateTableEntity
     [string] $Justification = "";
     [string] $PreviousVerificationResult = ([VerificationResult]::Manual).ToString();
 	[bool] $IsBaselineControl;
+	[bool] $IsPreviewBaselineControl;
 	[bool] $HasOwnerAccessTag;
 
 	#Tracking information
