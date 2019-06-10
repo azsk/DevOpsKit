@@ -350,8 +350,15 @@ class ServicesSecurityStatus: SVTCommandBase
 			
 			$previewBaselineResourceTypes = $previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Select-Object ResourceType | Foreach-Object {$_.ResourceType}
 			#Filter SVT resources based on preview baseline baseline resource types
-			$ResourcesWithBaselineFilter += $this.Resolver.SVTResources | Where-Object {$null -ne $_.ResourceTypeMapping -and   $_.ResourceTypeMapping.ResourceTypeName -in $previewBaselineResourceTypes }
+			$BaselineResourceList = @()
+			if(($ResourcesWithBaselineFilter | Measure-Object).Count -gt 0)
+			{
+				$BaselineResourceList += $ResourcesWithBaselineFilter | Foreach-Object { $_.ResourceId}
+			}
+			$ResourcesWithBaselineFilter += $this.Resolver.SVTResources | Where-Object {$null -ne $_.ResourceTypeMapping -and  $_.ResourceTypeMapping.ResourceTypeName -in $previewBaselineResourceTypes -and $_.ResourceId -notin $BaselineResourceList }
 			
+			$ResourcesWithBaselineFilter = $ResourcesWithBaselineFilter | Sort-Object -Unique
+
 			#Get the list of control ids
 			$controlIds = $previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
 			$previewBaselineControlIds = [system.String]::Join(",",$controlIds);
