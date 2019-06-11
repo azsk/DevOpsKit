@@ -191,13 +191,13 @@ class LogAnalyticsOutput: ListenerBase
 					#publish to primary workspace
 					if(-not [string]::IsNullOrWhiteSpace($settings.LAWSId) -and [LogAnalyticsHelper]::IsLAWSSettingValid -ne -1)
 					{
-						[LogAnalyticsHelper]::PostLAWSData($settings.LAWSId, $settings.LAWSSharedKey, $lawBodyByteArray, $settings.LAType, 'LAW')
+						[LogAnalyticsHelper]::PostLAWSData($settings.LAWSId, $settings.LAWSSharedKey, $lawBodyByteArray, $settings.LAType, 'LAWS')
 					}
 
 					#publish to secondary workspace
 					if(-not [string]::IsNullOrWhiteSpace($settings.AltLAWSId) -and [LogAnalyticsHelper]::IsAltLAWSSettingValid -ne -1)
 					{
-						[LogAnalyticsHelper]::PostLAWSData($settings.AltLAWSId, $settings.AltLAWSSharedKey, $lawBodyByteArray, $settings.LAType, 'AltLAW')
+						[LogAnalyticsHelper]::PostLAWSData($settings.AltLAWSId, $settings.AltLAWSSharedKey, $lawBodyByteArray, $settings.LAType, 'AltLAWS')
 					}
 				}
 
