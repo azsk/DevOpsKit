@@ -501,59 +501,53 @@ class VirtualMachine: SVTBase
 
 	hidden [ControlResult] CheckGuestConfigPolicyStatus([ControlResult] $controlResult)
 	{
-		if(-not $this.VMDetails.IsVMDeallocated)
-		{
-			$controlStatus = [VerificationResult]::Failed
-            $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
-			$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
-			$header = "Bearer " + $AccessToken
-			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
-			$propertiesToReplace = @{}
-			$propertiesToReplace.Add("httpapplicationroutingzonename", "_httpapplicationroutingzonename")
-            $policyAssignments = @();
-			try {
-					$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/providers/Microsoft.GuestConfiguration/guestConfigurationAssignments?api-version=2018-06-30-preview",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
-					$response = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
-					if($response -ne $null -and ($response|Measure-Object).Count -gt 0)
-					{
-						foreach($assignment in $response){
-						 if([Helpers]::CheckMember($assignment, "name") -and [Helpers]::CheckMember($assignment, "properties.complianceStatus")){
-							$assignmentObject = "" | Select-Object "assignmentName", "complianceStatus" 
-							$assignmentObject.assignmentName = $assignment.name
-							$assignmentObject.complianceStatus = $assignment.properties.complianceStatus
-							$policyAssignments += $assignmentObject
-						 }
-
+		$controlStatus = [VerificationResult]::Failed
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
+		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$header = "Bearer " + $AccessToken
+		$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
+		$propertiesToReplace = @{}
+		$propertiesToReplace.Add("httpapplicationroutingzonename", "_httpapplicationroutingzonename")
+		$policyAssignments = @();
+		try {
+				$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/providers/Microsoft.GuestConfiguration/guestConfigurationAssignments?api-version=2018-06-30-preview",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
+				$response = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
+				if($response -ne $null -and ($response|Measure-Object).Count -gt 0)
+				{
+					foreach($assignment in $response){
+						if([Helpers]::CheckMember($assignment, "name") -and [Helpers]::CheckMember($assignment, "properties.complianceStatus")){
+						$assignmentObject = "" | Select-Object "assignmentName", "complianceStatus" 
+						$assignmentObject.assignmentName = $assignment.name
+						$assignmentObject.complianceStatus = $assignment.properties.complianceStatus
+						$policyAssignments += $assignmentObject
 						}
+
 					}
-					if(($policyAssignments | Measure-Object).Count -gt 0){
+				}
+				if(($policyAssignments | Measure-Object).Count -gt 0){
 
-						$nonCompliantPolicyAssignment = $policyAssignments | Where-Object { $_.complianceStatus -ne "Compliant"}
-						if($null -ne $nonCompliantPolicyAssignment -and ( $nonCompliantPolicyAssignment | Measure-Object).Count -gt 0 ){
-							$controlStatus = [VerificationResult]::Failed
-							$controlResult.AddMessage("For following guest configuration assignment, compliance status is 'NonCompliant' or  'Pending'.");
-							$controlResult.AddMessage($nonCompliantPolicyAssignment);
-						}else{
-							$controlStatus = [VerificationResult]::Passed
-							$controlResult.AddMessage("For all guest configuration assignment, compliance status is 'Compliant'.");
-							$controlResult.AddMessage($policyAssignments);
-						}
-						
-					}else{
+					$nonCompliantPolicyAssignment = $policyAssignments | Where-Object { $_.complianceStatus -ne "Compliant"}
+					if($null -ne $nonCompliantPolicyAssignment -and ( $nonCompliantPolicyAssignment | Measure-Object).Count -gt 0 ){
 						$controlStatus = [VerificationResult]::Failed
-						$controlResult.AddMessage("No guest configuration policy assignment found.");
+						$controlResult.AddMessage("For following guest configuration assignment, compliance status is 'NonCompliant' or  'Pending'.");
+						$controlResult.AddMessage($nonCompliantPolicyAssignment);
+					}else{
+						$controlStatus = [VerificationResult]::Passed
+						$controlResult.AddMessage("For all guest configuration assignment, compliance status is 'Compliant'.");
+						$controlResult.AddMessage($policyAssignments);
 					}
+					
+				}else{
+					$controlStatus = [VerificationResult]::Verify
+					$controlResult.AddMessage("No guest configuration policy assignment found.");
 				}
-				catch {
-					$controlStatus = [VerificationResult]::Failed
-					$controlResult.AddMessage("Not able to fetch guest configuration policy assignments details.");
-				}
-		}
-		else
-		{
-			$controlStatus = [VerificationResult]::Verify
-			$controlResult.AddMessage("This VM is currently in a 'deallocated' state. Unable to check security controls on it.");
-		}
+			}
+			catch {
+
+				$controlStatus = [VerificationResult]::Verify
+				$controlResult.AddMessage("Not able to fetch guest configuration policy assignments details.");
+			}
+		
 		$controlResult.VerificationResult = $controlStatus
 		return $controlResult;
 	}

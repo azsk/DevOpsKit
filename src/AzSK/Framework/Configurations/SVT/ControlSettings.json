@@ -57,7 +57,7 @@
         "Name": "ConfigurationForWindows",
         "RequiredVersion": "1.11.0.0",
         "AssignmentName" : "SMSClientStatus",
-        "CheckPolicyAssignment":true
+        "CheckPolicyAssignment":false
       }
     },
     "Linux": {
