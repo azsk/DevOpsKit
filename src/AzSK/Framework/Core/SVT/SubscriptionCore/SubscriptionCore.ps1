@@ -495,23 +495,36 @@ class SubscriptionCore: SVTBase
 	{
 		$this.GetASCAlerts()
 		$activeAlerts = ($this.ASCSettings.Alerts | Where-Object {$_.State -eq "Active" })
-		 if(($activeAlerts | Measure-Object).Count -gt 0)
-		 {
-			 if([Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsThresholdInDays') -and [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsSeverityLevels'))
-			 { 
-				 $AlertDaysCheck = $this.ControlSettings.ASCAlertsDaysFilter
-				 $AlertSeverityCheck = $this.ControlSettings.ASCAlertsSeverityFilter				
-				 $activeAlerts = $activeAlerts | Where-Object{ (([System.DateTime]::UtcNow) -gt  [System.DateTime]::Parse($_.ReportedTimeUTC).AddDays($AlertDaysCheck)) -and $_.ReportedSeverity -in $AlertSeverityCheck}
-			 }
+		if(($activeAlerts | Measure-Object).Count -gt 0 )
+		{
+			  if( [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsThresholdInDays') -and [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsSeverityLevels'))
+			  {
+				 $AlertDaysCheck = $this.ControlSettings.ASCAlertsThresholdInDays
+				 $AlertSeverityCheck = $this.ControlSettings.ASCAlertsSeverityLevels				
+				 $activeAlerts = $activeAlerts | Where-Object{ ( [System.DateTime]::Parse($_.ReportedTimeUTC).AddDays($AlertDaysCheck) -ge ([System.DateTime]::UtcNow)) -and $_.ReportedSeverity -in $AlertSeverityCheck}
+				 if(($activeAlerts | Measure-Object).Count -gt 0)
+				 {
+					$controlResult.SetStateData("Active alert in Security Center", ($activeAlerts | Select-Object AlertName, ReportedTimeUTC));
+					$controlResult.AddMessage([VerificationResult]::Failed,"Azure Security Center have active alerts that need to resolved.")
+                    $controlResult.AddMessage(($activeAlerts | Select-Object State, AlertDisplayName, AlertName, Description, ReportedTimeUTC,ReportedSeverity, RemediationSteps))
+					return $controlResult;
+				 }
+				 else
+				 {
+					$controlResult.VerificationResult =[VerificationResult]::Passed
+					return $controlResult;
+				 }
+			  }
 			 $controlResult.SetStateData("Active alert in Security Center", ($activeAlerts | Select-Object AlertName, ReportedTimeUTC));
 			 $controlResult.AddMessage([VerificationResult]::Failed,"Azure Security Center have active alerts that need to resolved.")
-		 }
-		 else {
+             $controlResult.AddMessage(($activeAlerts | Select-Object State, AlertDisplayName, AlertName, Description, ReportedTimeUTC,ReportedSeverity, RemediationSteps))
+
+				
+		}
+		else 
+		{
 			 $controlResult.VerificationResult =[VerificationResult]::Passed
-		 }
- 
-		 $controlResult.AddMessage(($activeAlerts | Select-Object State, AlertDisplayName, AlertName, Description, ReportedTimeUTC, RemediationSteps))
- 
+		}
 		 return $controlResult
 	}	
 
