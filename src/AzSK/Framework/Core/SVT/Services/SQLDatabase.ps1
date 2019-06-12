@@ -151,7 +151,7 @@ class SQLDatabase: SVTBase
 				}
 				catch {
 					$atleastOneFailed = $true
-					$errorDB += $_.DatabaseName
+					$errorDB += $dbName
 				}
 				
 			} #End of ForEach-Object
@@ -370,7 +370,7 @@ class SQLDatabase: SVTBase
 						}
 					}
 					catch {
-						$errorDB += $_.DatabaseName
+						$errorDB += $dbName
 					}
 				}
 
