@@ -593,7 +593,7 @@
           "matchType": "StringSingleToken",
           "data": {
             "type": "Allow",
-            "value": "1.11.5",
+            "value": "1.14.0",
             "isCaseSensitive": false
           }
         },
