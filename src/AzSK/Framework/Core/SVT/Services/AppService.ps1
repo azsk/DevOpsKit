@@ -390,20 +390,30 @@ class AppService: SVTBase
     }
 
     hidden [ControlResult] CheckAppServiceInstanceCount([ControlResult] $controlResult)
-	{
-		# Get number of instances
-		$sku = (Get-AzResource -ResourceId $this.ResourceObject.Properties.ServerFarmId).Sku
+		{
+			# Get number of instances
+			$resource = Get-AzResource -ResourceId $this.ResourceObject.Properties.ServerFarmId
+			if(($resource|Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($resource,"Sku"))
+			{
+				$sku = $resource.Sku
+				if($sku.Capacity -ge $this.ControlSettings.AppService.Minimum_Instance_Count)
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("SKU for resource " + $this.ResourceContext.ResourceName + " is :", $sku));
+				}
+				else
+				{
+					$controlResult.EnableFixControl = $true;
+					$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("SKU for resource " + $this.ResourceContext.ResourceName + " is :", $sku));
+				}
+			}
+			else
+			{
+					$controlResult.EnableFixControl = $true;
+					$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Resource not found. Please verify that the app service exists."));
+			}
+			
 
-		if($sku.Capacity -ge $this.ControlSettings.AppService.Minimum_Instance_Count)
-        {
-			$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("SKU for resource " + $this.ResourceContext.ResourceName + " is :", $sku));
-        }
-		else
-        {
-			$controlResult.EnableFixControl = $true;
-			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("SKU for resource " + $this.ResourceContext.ResourceName + " is :", $sku));
-        }
-        return $controlResult;
+      return $controlResult;
     }
 
     hidden [ControlResult] CheckAppServiceBackupConfiguration([ControlResult] $controlResult)
