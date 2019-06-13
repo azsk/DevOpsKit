@@ -335,7 +335,7 @@ class ComplianceInfo: CommandBase {
 
         $objectToExport = $this.ComplianceScanResult
         if (-not $this.Full) {
-            $objectToExport = $this.ComplianceScanResult | Select-Object "ControlId", "VerificationResult", "ActualVerificationResult", "FeatureName", "ResourceGroupName", "ResourceName", "ChildResourceName", "IsBaselineControl", "IsPreviewBaselineControl", `
+            $objectToExport = $this.ComplianceScanResult | Select-Object "ControlId", "VerificationResult", "ActualVerificationResult", "FeatureName", "ResourceGroupName", "ResourceName", "ChildResourceName", "IsBaselineControl", `
                 "ControlSeverity", "AttestationStatus", "AttestedBy", "Justification", "LastScannedOn", "ScanSource", "ScannedBy", "ScannerModuleName", "ScannerVersion", "IsControlInGrace"
         }
 
