@@ -190,7 +190,7 @@
                     "value": "Disabled"
                 },
                 "diagnosticsLogsInKeyVaultMonitoringEffect": {
-                    "value": "Disabled"
+                    "value": "AuditIfNotExists"
                 },
                 "diagnosticsLogsInLogicAppsMonitoringEffect": {
                     "value": "AuditIfNotExists"
