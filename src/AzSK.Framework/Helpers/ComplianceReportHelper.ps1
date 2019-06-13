@@ -453,14 +453,17 @@ class ComplianceReportHelper: ComplianceBase
 				{
 					$controlDetails.IsBaselineControl=$false				
 				}
-				if($item.IsPreviewBaselineControl)
-				{
-					$controlDetails.IsPreviewBaselineControl=$true
-				}
-				else 
-				{
-					$controlDetails.IsPreviewBaselineControl=$false				
-				}
+
+				#<TODO: Currently remote API does not return PreviewBaselineControl flag. Disabling below code>
+				# if($item.IsPreviewBaselineControl)
+				# {
+				# 	$controlDetails.IsPreviewBaselineControl=$true
+				# }
+				# else 
+				# {
+				# 	$controlDetails.IsPreviewBaselineControl=$false				
+				# }
+				
 				$SVTEvent.ControlItem=$controlDetails;
 				$resourceDetails.ResourceName=$item.resourceName;
 				$SVTEvent.FeatureName=$item.FeatureName;
