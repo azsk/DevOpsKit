@@ -378,46 +378,53 @@ class ERvNet : SVTIaasBase
     {
 		$controlSettings = $this.LoadServerConfigFile("Subscription.ARMPolicies.json");
 
-        $hasTCPPassed = $true
-        $UserTags = @()
-        $UserTags += "mandatory"
-        $UserTags += "sdo"
         $output = @()
+        $missingPolicies = @()
         if($null -ne $controlSettings -and [Helpers]::CheckMember($controlSettings,"Policies"))
         {
             $policies = $controlSettings.Policies
-            $policies | ForEach-Object{
-                Set-Variable -Name pol -Scope Local -Value $_
-                Set-Variable -Name polEnabled -Scope Local -Value $_.enabled
-                Set-Variable -Name policyDefinitionName -Scope Local -Value $_.policyDefinitionName
-                Set-Variable -Name tags -Scope Local -Value $_.tags
-                $haveMatchedTags = (($tags | Where-Object { $UserTags.Contains($_.Trim().ToLower()) }).Length -gt 0)
-                if($polEnabled -and $haveMatchedTags)
-                {
-                    $mandatoryPolicies = [array](Get-AzPolicyAssignment | Where-Object {$_.Name -eq $policyDefinitionName})
-                    if($null -eq $mandatoryPolicies -or $mandatoryPolicies.Length -le 0)
+            $sdoPolicies = @()
+            $sdoPolicies += $policies | Where-Object {(($_.tags.Trim().ToLower().Contains("sdo")) -and ($_.enabled))}
+            if(($sdoPolicies | Measure-Object).Count -gt 0)
+            {
+                $sdoPolicies | ForEach-Object{
+                    Set-Variable -Name pol -Scope Local -Value $_
+                    Set-Variable -Name policyDefinitionName -Scope Local -Value $_.policyDefinitionName
+                    Set-Variable -Name tags -Scope Local -Value $_.tags
+
+                    $foundPolicies = [array](Get-AzPolicyAssignment | Where-Object {$_.Name -eq $policyDefinitionName})
+                    if($null -ne $foundPolicies)
                     {
-                        $hasTCPPassed = $false
-                        $output += $pol
+                        if($foundPolicies.Length -gt 0)
+                        {
+                            $output += $pol
+                        }
+                        else{
+                            $missingPolicies += $pol
+                        }
                     }
+                    else{
+                        $missingPolicies += $pol
+                    }
+                    
                 }
+
             }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed,[MessageData]::new("No mandatory ARM policies required to be configured on the subscription because of ERNetwork."));
+            }
+            
+        }
+        if(($missingPolicies | Measure-Object).Count -le 0)
+        {
+            $controlResult.VerificationResult = [VerificationResult]::Passed;
         }
         else
-		{
-			$controlResult.AddMessage([MessageData]::new("No mandatory ARM policies required to be configured on the subscription because of ERNetwork."));
-        }
-
-        if(-not $hasTCPPassed)
         {
-			$controlResult.SetStateData("Missing mandatory policies", $output);
-			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Some of the mandatory policies are missing which are demanded by the control tags - ["+ $UserTags +"]", $output ));
+			$controlResult.SetStateData("Missing mandatory policies", $missingPolicies);
+			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Some of the mandatory policies are missing which are demanded by the control tags."));
         }
-        else
-        {
-			$controlResult.VerificationResult = [VerificationResult]::Passed;
-        }
-
         return $controlResult;
     }
 }
