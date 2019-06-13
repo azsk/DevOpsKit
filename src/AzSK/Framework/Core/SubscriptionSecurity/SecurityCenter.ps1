@@ -95,6 +95,11 @@ class SecurityCenter: AzSKRoot
     {				
 		[MessageData[]] $messages = @();
 		$this.PublishCustomMessage("Updating SecurityCenter policies...`n" + [Constants]::SingleDashLine, [MessageType]::Warning);
+
+		$this.PublishCustomMessage("Updating Security Center version...", [MessageType]::Warning);
+		$this.SetSecurityCenterVersion();		
+		$this.PublishCustomMessage("Completed updating Security Center version.", [MessageType]::Update);
+
 		if($updateProvisioningSettings)
 		{
 			$this.PublishCustomMessage("Updating AutoProvision settings...", [MessageType]::Warning);
@@ -122,6 +127,17 @@ class SecurityCenter: AzSKRoot
 		$this.PublishCustomMessage([Constants]::SingleDashLine + "`nCompleted configuring SecurityCenter.", [MessageType]::Update);
 		return $messages;
     }
+
+	[MessageData[]] SetSecurityCenterVersion()
+	{
+		[MessageData[]] $messages = @();
+		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.autoProvisioning)
+		{			
+			$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
+			[Helpers]::SetResourceGroupTags($azskRGName,@{[Constants]::SecurityCenterConfigVersionTagName=$this.PolicyObject.Version},$false)				
+		}
+		return $messages;
+	}
 
 	[MessageData[]] SetAutoProvisioningSettings()
 	{
@@ -260,7 +276,7 @@ class SecurityCenter: AzSKRoot
 						$body = New-Object PSObject
 						$body | Add-Member -NotePropertyName sku -NotePropertyValue $_.sku
 						$body | Add-Member -NotePropertyName id -NotePropertyValue $_.PolicyAssignmentId
-						$body | Add-Member -NotePropertyName type -NotePropertyValue "Microsoft.Authorization/policyAssignments"
+						$body | Add-Member -NotePropertyName type -NotePropertyValue $_.ResourceType
 						$body | Add-Member -NotePropertyName name -NotePropertyValue $_.Name
 						$body | Add-Member -NotePropertyName properties -NotePropertyValue $_.properties
 
@@ -320,7 +336,7 @@ class SecurityCenter: AzSKRoot
 						$body = New-Object PSObject
 						$body | Add-Member -NotePropertyName sku -NotePropertyValue $_.sku
 						$body | Add-Member -NotePropertyName id -NotePropertyValue $_.PolicyAssignmentId
-						$body | Add-Member -NotePropertyName type -NotePropertyValue "Microsoft.Authorization/policyAssignments"
+						$body | Add-Member -NotePropertyName type -NotePropertyValue $_.ResourceType
 						$body | Add-Member -NotePropertyName name -NotePropertyValue $_.Name
 						$body | Add-Member -NotePropertyName properties -NotePropertyValue $_.properties
 
