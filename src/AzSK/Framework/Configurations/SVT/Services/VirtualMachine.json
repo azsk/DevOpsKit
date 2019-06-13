@@ -272,7 +272,7 @@
          "Automated": "Yes",
          "MethodName": "CheckGuestConfigPolicyStatus",
          "Rationale": "In-guest policies cover various native (data-plane)  security requirements for a VM.  A VM that is compliant to these requirements has a lower overall exposure to getting compromised.",
-         "Recommendation": "Run Get-AzVMGuestPolicyStatus -ResourceGroupName <VM Resource group name> -VMName <VM Name> to get further details like Compliance reason, last check time etc.",
+         "Recommendation": "Run Get-AzVMGuestPolicyStatus -ResourceGroupName <VM Resource group name> -VMName <VM Name> to get further details like Compliance reason, last check time etc. and ensure that the issues are resolved.",
          "Tags": [
            "SDL",
            "TCP",
