@@ -1347,8 +1347,8 @@ class CCAutomation: CommandBase
 		$altLAWSDetails = $this.GetAltLAWSId()
 
 		#Start: Code to be deleted when OMS variables will be completely removed
-		$omsWSDetails = $null
-		$altOMSWSDetails = $null
+		$omsWSDetails = $this.GetOMSWorkspaceId()
+		$altOMSWSDetails = $this.GetAltOMSWorkspaceId()
 		#End: Code to be deleted when OMS variables will be completely removed
 
 		$webhookUrl = $this.GetWebhookURL()
@@ -1383,14 +1383,21 @@ class CCAutomation: CommandBase
 			$caSummaryTable.Item("AltLAWSId") = $altLAWSDetails.Value
 		}
 
-		#Start: Code to be deleted when OMS variables will be completely removed
+		#Start: Code to be deleted when OMS variables will be completely removed		
 		if($omsWSDetails)
 		{
 			$caSummaryTable.Item("OMSWorkspaceId") = $omsWSDetails.Value
+            if($altOMSWSDetails)
+		    {
+			    $caSummaryTable.Item("AltOMSWorkspaceId") = $altOMSWSDetails.Value
+		    }
 		}
-		if($altOMSWSDetails)
+		#If OMS details are not present - it means it is a fresh CA install post v3.14.0,
+		#meaning the automation account will not have OMS* variables - therefore removing them from the CA summary.
+		else
 		{
-			$caSummaryTable.Item("AltOMSWorkspaceId") = $altOMSWSDetails.Value
+			$caSummaryTable.Remove("OMSWorkspaceId")
+			$caSummaryTable.Remove("AltOMSWorkspaceId")
 		}
 		#End: Code to be deleted when OMS variables will be completely removed
 
