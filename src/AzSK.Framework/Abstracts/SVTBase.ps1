@@ -1213,7 +1213,7 @@ class SVTBase: AzSKRoot
             {
                 $apiURL = "https://management.azure.com/subscriptions/{0}/providers/Microsoft.Insights/metricAlerts?api-version=2018-03-01&`$filter=targetResource eq '{1}'" -f $($this.SubscriptionContext.SubscriptionId), $resId
 				$v2Alerts = [WebRequestHelper]::InvokeGetWebRequest($apiURL) 
-                if([Helpers]::CheckMember($v2Alerts[0],"id"))
+                if(($v2Alerts | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($v2Alerts[0],"id"))
                 {
                     $v2Alerts |  ForEach-Object {
 						if([Helpers]::CheckMember($_,"properties"))
