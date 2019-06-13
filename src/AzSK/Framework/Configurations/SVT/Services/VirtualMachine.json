@@ -250,7 +250,7 @@
          "Automated": "Yes",
          "MethodName": "CheckGuestConfigExtension",
          "Rationale": "Installing Guest configuration extension on VM allows you to run In-Guest Policy on the VM, making it possible to monitor system and security policies for compliance checks in the VM.",
-         "Recommendation": "1- Enable MSI: Go to Azure Portal --> VM Settings --> Identity --> System assigned --> Status --> On --> Click Save. 2- Install Azure Guest Configuration extension: Set-AzVMExtension -ResourceGroupName '{VM Resource Group Name}'  -VMName  '{VM Resource Group Name}'  -Name '$($this.ControlSettings.VirtualMachine.$($this.VMDetails.OSType).GuestExtension.Name)' -Publisher 'Microsoft.GuestConfiguration' -Type '$($this.ControlSettings.VirtualMachine.$($this.VMDetails.OSType).GuestExtension.Name)' ",
+         "Recommendation": "This control checks that the VM meets the following criteria: [a] Guest Configuration Extension is installed and provisioned successfully, [b] 'SystemAssigned' managed identity (MSI) is enabled for the VM. Both, the required Guest Configuration extension and a system-assigned MSI, will be automatically deployed and configured when the machine is in scope for an Azure Policy assignment that includes definitions in the Guest Configuration category.",
          "Tags": [
            "SDL",
            "TCP",
@@ -272,7 +272,7 @@
          "Automated": "Yes",
          "MethodName": "CheckGuestConfigPolicyStatus",
          "Rationale": "In-guest policies cover various native (data-plane)  security requirements for a VM.  A VM that is compliant to these requirements has a lower overall exposure to getting compromised.",
-         "Recommendation": "Run Get-AzVMGuestPolicyStatus -ResourceGroupName <VM Resource group name> -VMName <VM Name> to get further details like Compliance reason, last check time etc.",
+         "Recommendation": "Run Get-AzVMGuestPolicyStatus -ResourceGroupName <VM Resource group name> -VMName <VM Name> to get further details like Compliance reason, last check time etc. and ensure that the issues are resolved.",
          "Tags": [
            "SDL",
            "TCP",
