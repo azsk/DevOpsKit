@@ -125,7 +125,8 @@
         "StandardSku",
         "PremiumSku",
         "GeneralPurposeStorage",
-        "BlobStorage"
+        "BlobStorage",
+        "PremiumFileShareStorage"
       ],
       "Enabled": true
     },
@@ -146,7 +147,8 @@
         "StandardSku",
         "PremiumSku",
         "GeneralPurposeStorage",
-        "BlobStorage"
+        "BlobStorage",
+        "PremiumFileShareStorage"
       ],
       "Enabled": true
     },
@@ -167,7 +169,8 @@
         "StandardSku",
         "PremiumSku",
         "GeneralPurposeStorage",
-        "BlobStorage"
+        "BlobStorage",
+        "PremiumFileShareStorage"
       ],
       "Enabled": true
     },
@@ -188,7 +191,8 @@
         "StandardSku",
         "PremiumSku",
         "GeneralPurposeStorage",
-        "BlobStorage"
+        "BlobStorage",
+        "PremiumFileShareStorage"
       ],
       "Enabled": true
     },
