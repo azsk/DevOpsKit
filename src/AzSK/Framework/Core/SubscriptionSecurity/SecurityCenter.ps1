@@ -74,15 +74,15 @@ class SecurityCenter: AzSKRoot
 	{
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.policySettings)
 		{
-			#Fetching all the ASC initiative assignments.
-			$policyDefinitionId = $this.PolicyObject.policySettings.properties.policyDefinitionId;
+			$policyName = $this.PolicyObject.policySettings.name;
 
 			try {
-				$this.CurrentPolicyObject = Get-AzPolicyAssignment -PolicyDefinitionId $policyDefinitionId
+				$this.CurrentPolicyObject = Get-AzPolicyAssignment -Name $policyName
 			}
 			catch {
 				$this.PolicyAPIFail = $true;
-			}		
+				#eat the exception as it would throw in non availability of policy
+			}			
 		}
 	}
 	
@@ -232,122 +232,30 @@ class SecurityCenter: AzSKRoot
 	[MessageData[]] SetSecurityPolicySettings()
 	{
 		[MessageData[]] $messages = @();
-
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.policySettings)
 		{	
-			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
-			
-			$defaultPoliciesNames = Get-Member -InputObject $this.PolicyObject.policySettings.properties.parameters -MemberType NoteProperty | Select-Object Name
-			$configuredPolicyObject = $this.PolicyObject.policySettings.properties.parameters;	
-
+			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()				
 			$this.UpdatePolicyObject();
-			
 			$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments/SecurityCenterBuiltIn$([SecurityCenterHelper]::ApiVersionLatest)";
 			$body = $this.PolicyObject.policySettings | ConvertTo-Json -Depth 10
 			$body = $body.Replace("{0}",$this.SubscriptionContext.SubscriptionId) | ConvertFrom-Json;
 		  	[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
-
-			if($null -ne $this.CurrentPolicyObject)
-			{
-			
-				[PSObject] $defaultDisabledPoliciesNames = @(); # This will store the mandatory policies name that require 'Disabled' policy effect.
-				$defaultPoliciesNames | ForEach-Object{
-					$policyName = $_.Name;
-					if($configuredPolicyObject.$policyName.value -eq "Disabled"){
-						$defaultDisabledPoliciesNames += $policyName; 
-					}
-				}
-
-
-				$this.CurrentPolicyObject | where{
-					$currentPolicyObj = $_.Properties.parameters #For each ASC policy assignment, we will set the policies in $defaultDisabledPoliciesNames to 'Disabled' effect so that overall effect across sub is 'Disabled'.
-					$defaultDisabledPoliciesNames | where{
-						$policyName = $_;
-						if([Helpers]::CheckMember($currentPolicyObj,$policyName) -and ($currentPolicyObj.$policyName.value -ne $configuredPolicyObject.$policyName.value))
-                		{
-                    		$currentPolicyObj.$policyName.value = $configuredPolicyObject.$policyName.value
-						}
-					}
-
-					
-						$_.Properties.parameters = $currentPolicyObj;
-						$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($_.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments/$($_.Name)$([SecurityCenterHelper]::ApiVersionLatest)";
-
-						$body = New-Object PSObject
-						$body | Add-Member -NotePropertyName sku -NotePropertyValue $_.sku
-						$body | Add-Member -NotePropertyName id -NotePropertyValue $_.PolicyAssignmentId
-						$body | Add-Member -NotePropertyName type -NotePropertyValue $_.ResourceType
-						$body | Add-Member -NotePropertyName name -NotePropertyValue $_.Name
-						$body | Add-Member -NotePropertyName properties -NotePropertyValue $_.properties
-
-						[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
-					
-
-
-				}
-			} 
 		}
-
 		return $messages;
 	}
 
 	[MessageData[]] SetSecurityOptionalPolicySettings()
 	{
 		[MessageData[]] $messages = @();
-
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.optionalPolicySettings)
 		{	
-			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
-
-			$optionalPoliciesNames = Get-Member -InputObject $this.PolicyObject.optionalPolicySettings.properties.parameters -MemberType NoteProperty | Select-Object Name
-			$configuredOptionalPolicyObject = $this.PolicyObject.optionalPolicySettings.properties.parameters;
-
+			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()				
 			$this.UpdateOptionalPolicyObject();
-			
 			$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments/SecurityCenterBuiltIn$([SecurityCenterHelper]::ApiVersionLatest)";
 			$body = $this.PolicyObject.optionalPolicySettings | ConvertTo-Json -Depth 10
 			$body = $body.Replace("{0}",$this.SubscriptionContext.SubscriptionId) | ConvertFrom-Json;
 		  	[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
-
-			if($null -ne $this.CurrentPolicyObject)
-			{
-
-				[PSObject] $optionalDisabledPoliciesNames = @(); # This will store the optional policies name that require 'Disabled' policy effect.
-				$optionalPoliciesNames | ForEach-Object{
-					$policyName = $_.Name;
-					if($configuredOptionalPolicyObject.$policyName.value -eq "Disabled"){
-						$optionalDisabledPoliciesNames += $policyName; 
-					}
-				}
-
-				$this.CurrentPolicyObject | where{
-					$currentPolicyObj = $_.Properties.parameters #For each ASC policy assignment, we will set the policies in $optionalDisabledPoliciesNames to 'Disabled' effect so that overall effect across sub is 'Disabled'.
-					$optionalDisabledPoliciesNames | where{
-						$policyName = $_;
-						if([Helpers]::CheckMember($currentPolicyObj,$policyName) -and ($currentPolicyObj.$policyName.value -ne $configuredOptionalPolicyObject.$policyName.value))
-                		{
-                    		$currentPolicyObj.$policyName.value = $configuredOptionalPolicyObject.$policyName.value
-						}
-					}
-
-						$_.Properties.parameters = $currentPolicyObj;
-						$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($_.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments/$($_.Name)$([SecurityCenterHelper]::ApiVersionLatest)";
-
-						$body = New-Object PSObject
-						$body | Add-Member -NotePropertyName sku -NotePropertyValue $_.sku
-						$body | Add-Member -NotePropertyName id -NotePropertyValue $_.PolicyAssignmentId
-						$body | Add-Member -NotePropertyName type -NotePropertyValue $_.ResourceType
-						$body | Add-Member -NotePropertyName name -NotePropertyValue $_.Name
-						$body | Add-Member -NotePropertyName properties -NotePropertyValue $_.properties
-
-						[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
-					
-
-
-				}
-			}   
 		}
-
 		return $messages;
 	}
 
@@ -373,26 +281,21 @@ class SecurityCenter: AzSKRoot
 	{
 		if($null -ne $this.CurrentPolicyObject -and $null -ne $this.PolicyObject.policySettings)	
 		{
-			$ASCAssignment = $this.CurrentPolicyObject | where {$_.Name -eq $this.PolicyObject.policySettings.name}
-			$ASCcount = ($ASCAssignment | Measure-Object).Count
-			if($ASCcount -eq 1)
-			{
-				$currentPolicyObj = $ASCAssignment.Properties.parameters;
-				$defaultPoliciesNames = Get-Member -InputObject $this.PolicyObject.policySettings.properties.parameters -MemberType NoteProperty | Select-Object Name
-				$configuredPolicyObject = $this.PolicyObject.policySettings.properties.parameters;
-				$defaultPoliciesNames | ForEach-Object {
-					$policyName = $_.Name;
-					if([Helpers]::CheckMember($currentPolicyObj,$policyName))
-					{
-						$currentPolicyObj.$policyName.value = $configuredPolicyObject.$policyName.value
-					}else
-					{
-						$currentPolicyObj | Add-Member -NotePropertyName $policyName -NotePropertyValue $configuredPolicyObject.$policyName
-					}				
-					
-				}
-				$this.PolicyObject.policySettings.properties.parameters = $currentPolicyObj;
+			$currentPolicyObj = $this.CurrentPolicyObject.Properties.parameters;
+			$defaultPoliciesNames = Get-Member -InputObject $this.PolicyObject.policySettings.properties.parameters -MemberType NoteProperty | Select-Object Name
+			$configuredPolicyObject = $this.PolicyObject.policySettings.properties.parameters;
+			$defaultPoliciesNames | ForEach-Object {
+				$policyName = $_.Name;
+                if([Helpers]::CheckMember($currentPolicyObj,$policyName))
+                {
+                    $currentPolicyObj.$policyName.value = $configuredPolicyObject.$policyName.value
+                }else
+                {
+                    $currentPolicyObj | Add-Member -NotePropertyName $policyName -NotePropertyValue $configuredPolicyObject.$policyName
+                }				
+				
 			}
+			$this.PolicyObject.policySettings.properties.parameters = $currentPolicyObj;
 		}		
 	}	
 
@@ -400,26 +303,21 @@ class SecurityCenter: AzSKRoot
 	{
 		if($null -ne $this.CurrentPolicyObject -and $null -ne $this.PolicyObject.optionalPolicySettings)	
 		{
-			$ASCAssignment = $this.CurrentPolicyObject | where {$_.Name -eq $this.PolicyObject.policySettings.name}
-			$ASCcount = ($ASCAssignment | Measure-Object).Count
-			if($ASCcount -eq 1)
-			{
-				$currentPolicyObj = $ASCAssignment.Properties.parameters;
-				$optionalPoliciesNames = Get-Member -InputObject $this.PolicyObject.optionalPolicySettings.properties.parameters -MemberType NoteProperty | Select-Object Name
-				$configuredOptionalPolicyObject = $this.PolicyObject.optionalPolicySettings.properties.parameters;
-				$optionalPoliciesNames | ForEach-Object {
-					$policyName = $_.Name;
-					if([Helpers]::CheckMember($currentPolicyObj,$policyName))
-					{
-						$currentPolicyObj.$policyName.value = $configuredOptionalPolicyObject.$policyName.value
-					}else
-					{
-						$currentPolicyObj | Add-Member -NotePropertyName $policyName -NotePropertyValue $configuredOptionalPolicyObject.$policyName
-					}				
-					
-				}
-				$this.PolicyObject.optionalPolicySettings.properties.parameters = $currentPolicyObj;
+			$currentPolicyObj = $this.CurrentPolicyObject.Properties.parameters;
+			$defaultPoliciesNames = Get-Member -InputObject $this.PolicyObject.optionalPolicySettings.properties.parameters -MemberType NoteProperty | Select-Object Name
+			$configuredPolicyObject = $this.PolicyObject.optionalPolicySettings.properties.parameters;
+			$defaultPoliciesNames | ForEach-Object {
+				$policyName = $_.Name;
+                if([Helpers]::CheckMember($currentPolicyObj,$policyName))
+                {
+                    $currentPolicyObj.$policyName.value = $configuredPolicyObject.$policyName.value
+                }else
+                {
+                    $currentPolicyObj | Add-Member -NotePropertyName $policyName -NotePropertyValue $configuredPolicyObject.$policyName
+                }				
+				
 			}
+			$this.PolicyObject.optionalPolicySettings.properties.parameters = $currentPolicyObj;
 		}		
 	}	
 
@@ -427,52 +325,21 @@ class SecurityCenter: AzSKRoot
 	{
 		[string[]] $MisConfiguredPolicies = @();
 
-		if($null -ne $this.CurrentPolicyObject -and $null -ne $this.PolicyObject.policySettings)
+		if($null -ne $this.CurrentPolicyObject -and $null -ne $this.PolicyObject.policySettings)	
 		{
-			$assignCount = ($this.CurrentPolicyObject | Measure-Object).Count # Total no. of ASC initiative assignments (duplicates).
+			$currentPolicyObj = $this.CurrentPolicyObject.Properties.parameters;
 			$defaultPoliciesNames = Get-Member -InputObject $this.PolicyObject.policySettings.properties.parameters -MemberType NoteProperty | Select-Object Name
 			$configuredPolicyObject = $this.PolicyObject.policySettings.properties.parameters;
-
 			$defaultPoliciesNames | ForEach-Object {
 				$policyName = $_.Name;		
-                $counter = 0; 					# count of misconfigured instances of the policy under iteration.
-				$polNotFoundCounter = 0;		# count of assignments in which the policy under iteration is absent.
-
-				if($configuredPolicyObject.$policyName.value -ne "Disabled")				# If the desired effect of a policy is not "Disabled" i.e. "Audit/AuditIfNotExists", then atleast one initiative assignment should have the correct effect so that the policy is correctly configured on the sub.
+             		
+				if((-not [Helpers]::CheckMember($currentPolicyObj,$policyName)) -or ($currentPolicyObj.$policyName.value -ne $configuredPolicyObject.$policyName.value))
 				{
-					$enabledAssignments = $this.CurrentPolicyObject | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -eq $configuredPolicyObject.$policyName.value}	
-					$counter = ($enabledAssignments | Measure-Object).Count
-
-					if($counter -eq 0) # If policy is absent/misconfigured in all the assignments, then the overall effect of the policy is opposite of what is required (Here "Audit/AuditIfNotExists").
-					{
-						$MisConfiguredPolicies += ("Misconfigured Mandatory Policy: [" + $policyName + "]");
-					}
-
+					$MisConfiguredPolicies += ("Misconfigured Mandatory Policy: [" + $policyName + "]");
 				}
-				elseif($configuredPolicyObject.$policyName.value -eq "Disabled")           # If the desired effect of a policy is "Disabled", then no initiative assignments should have a stronger effect (Audit / AuditIfNotExists) for the policy under consideration.
-				{
-		
-					$enabledAssignments = $this.CurrentPolicyObject | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -ne $configuredPolicyObject.$policyName.value}	
-					$counter = ($enabledAssignments | Measure-Object).Count
-
-					if($counter -gt 0)		# This means in atleast one assignment, the effect is not 'Disabled', i.e it is "Audit/AuditIfNotExists" making the stronger effect win.
-					{
-						$MisConfiguredPolicies += ("Misconfigured Mandatory Policy: [" + $policyName + "]");
-					}
-					else					# This means either the policy is absent in all the assignments or it is configured correctly wherever present.
-					{
-						$absentAssignments = $this.CurrentPolicyObject | where{-not [Helpers]::CheckMember($_.Properties.parameters,$policyName)}
-						$polNotFoundCounter = ($absentAssignments | Measure-Object).Count
-						if($polNotFoundCounter -eq $assignCount)		# This means policy is absent across all assignments meaning it is not in effect on the sub.
-						{
-							$MisConfiguredPolicies += ("Misconfigured Mandatory Policy: [" + $policyName + "]");
-						}
-					}
-				}
+                
 			}
-
-		}
-		elseif($null -eq $this.CurrentPolicyObject -and  $null -ne $this.PolicyObject.policySettings)
+		}elseif($null -eq $this.CurrentPolicyObject -and  $null -ne $this.PolicyObject.policySettings)
         {
 			if($this.PolicyAPIFail)
 			{
@@ -490,67 +357,31 @@ class SecurityCenter: AzSKRoot
 	[string[]] ValidateOptionalPolicyObject()
 	{
 	 	[string[]] $MisConfiguredOptionalPolicies = @();
-
-		if($null -ne $this.CurrentPolicyObject -and $null -ne $this.PolicyObject.optionalPolicySettings)
+		if($null -ne $this.CurrentPolicyObject -and $null -ne $this.PolicyObject.optionalPolicySettings)	
 		{
-			$assignCount = ($this.CurrentPolicyObject | Measure-Object).Count 				# Total no. of ASC initiative assignments (duplicates).
+			$currentPolicyObj = $this.CurrentPolicyObject.Properties.parameters;
 			$optionalPoliciesNames = Get-Member -InputObject $this.PolicyObject.optionalPolicySettings.properties.parameters -MemberType NoteProperty | Select-Object Name
 			$configuredOptionalPolicyObject = $this.PolicyObject.optionalPolicySettings.properties.parameters;
-
 			$optionalPoliciesNames | ForEach-Object {
 				$policyName = $_.Name;		
-                $counter = 0;							# count of misconfigured instances of the policy under iteration.
-				$polNotFoundCounter = 0;				# count of assignments in which the policy under iteration is absent.
-
-
-				if($configuredOptionalPolicyObject.$policyName.value -ne "Disabled")		# If the desired effect of a policy is not "Disabled" i.e. "Audit/AuditIfNotExists", then atleast one initiative assignment should have the correct effect so that the policy is correctly configured on the sub.
+						
+				if((-not [Helpers]::CheckMember($currentPolicyObj,$policyName)) -or ($currentPolicyObj.$policyName.value -ne $configuredOptionalPolicyObject.$policyName.value))
 				{
-
-					$enabledAssignments = $this.CurrentPolicyObject | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -eq $configuredOptionalPolicyObject.$policyName.value}	
-					$counter = ($enabledAssignments | Measure-Object).Count
-
-					if($counter -eq 0)			# If policy is absent/misconfigured in all the assignments, then the overall effect of the policy is opposite of what is required (Here "Audit/AuditIfNotExists").
-					{
-						$MisConfiguredOptionalPolicies += ("Misconfigured Optional Policy: [" + $policyName + "]");
-					}
-
+					$MisConfiguredOptionalPolicies += ("Misconfigured Optional Policy: [" + $policyName + "]");
 				}
-				elseif($configuredOptionalPolicyObject.$policyName.value -eq "Disabled")    # If the desired effect of a policy is "Disabled", then no initiative assignments should have a stronger effect (Audit / AuditIfNotExists) for the policy under consideration.
-				{
-	
-					$enabledAssignments = $this.CurrentPolicyObject | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -ne $configuredOptionalPolicyObject.$policyName.value}	
-					$counter = ($enabledAssignments | Measure-Object).Count
-
-					if($counter -gt 0)				# This means in atleast one assignment, the effect is not 'Disabled', i.e it is "Audit/AuditIfNotExists" making the stronger effect win.
-					{
-						$MisConfiguredOptionalPolicies += ("Misconfigured Optional Policy: [" + $policyName + "]");
-					}
-					else							# This means either the policy is absent in all the assignments or it is configured correctly wherever present.
-					{
-						$absentAssignments = $this.CurrentPolicyObject | where{-not [Helpers]::CheckMember($_.Properties.parameters,$policyName)}
-						$polNotFoundCounter = ($absentAssignments | Measure-Object).Count
-
-						if($polNotFoundCounter -eq $assignCount)		# This means policy is absent across all assignments meaning it is not in effect on the sub.
-						{
-							$MisConfiguredOptionalPolicies += ("Misconfigured Optional Policy: [" + $policyName + "]");
-						}
-					}
-				}
-			}
-
+				
 		}
-		elseif($null -eq $this.CurrentPolicyObject -and  $null -ne $this.PolicyObject.optionalPolicySettings)
-        {
-			if($this.PolicyAPIFail)
+	 	}elseif($null -eq $this.CurrentPolicyObject -and  $null -ne $this.PolicyObject.optionalPolicySettings)
+         {
+            if($this.PolicyAPIFail)
 			{
-				$MisConfiguredOptionalPolicies += ("Optional ASC Policies information can't be fetched beacuse either mandatory ASC policies are not configured or due to API access failure.");
+				$MisConfiguredOptionalPolicies += ("Optional ASC Policies information can't be fetched due to API access failure.");
 			}
 			else
 			{
 				$MisConfiguredOptionalPolicies += ("Optional ASC Policies are not configured");	
 			}
-               
-        }
+         }
 	
 	 	return $MisConfiguredOptionalPolicies;		
 	}	
