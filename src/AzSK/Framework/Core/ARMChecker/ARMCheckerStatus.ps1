@@ -4,6 +4,7 @@ Set-StrictMode -Version Latest
 class ARMCheckerStatus: EventBase
 {
 	hidden [string] $ARMControls;
+	hidden [string []] $BaselineControls;
 	hidden [string] $PSLogPath;
 	hidden [string] $SFLogPath;
 	[bool] $DoNotOpenOutputFolder = $false;
@@ -18,7 +19,6 @@ class ARMCheckerStatus: EventBase
 
 		#load config file here.
 		$this.ARMControls=$this.LoadARMControlsFile();
-		#$this.ARMControls = [ConfigurationHelper]::LoadOfflineConfigFile("ARMControls.json", $false);
 		if([string]::IsNullOrWhiteSpace($this.ARMControls))
 		{
 			throw ([SuppressedException]::new(("There are no controls to evaluate in ARM checker. Please contact support team."), [SuppressedExceptionType]::InvalidOperation))
@@ -51,11 +51,17 @@ class ARMCheckerStatus: EventBase
 	}
 
 
-	[string] EvaluateStatus([string] $armTemplatePath, [string] $parameterFilePath ,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles)
+	[string] EvaluateStatus([string] $armTemplatePath, [string] $parameterFilePath ,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles, [string] $ExcludeControlIds, [string] $ControlIds,[Boolean] $UseBaselineControls,[Boolean] $UsePreviewBaselineControls)
 	{
 	    if(-not (Test-Path -path $armTemplatePath))
 		{
 			$this.WriteMessage("ARMTemplate file path or folder path is empty, verify that the path is correct and try again", [MessageType]::Error);
+			return $null;
+		}
+		
+		#load baseline control list 
+		$ErrorLoadingControlSettings = $this.LoadControlSettingsFile($UseBaselineControls, $UsePreviewBaselineControls);
+		if($ErrorLoadingControlSettings){
 			return $null;
 		}
 
@@ -125,7 +131,7 @@ class ARMCheckerStatus: EventBase
 		  if(-not([string]::IsNullOrEmpty($exemptControlListPath)) -and (Test-Path -path $exemptControlListPath -PathType Leaf))
 		  {
 		    $exemptControlListFile=Get-Content $exemptControlListPath | ConvertFrom-Csv
-	        $exemptControlList=$exemptControlListFile| where {$_.Status -eq "Failed" -or $_.Status -eq "Verify"}
+	        $exemptControlList=$exemptControlListFile| where {$_.Status -eq "Failed" -or $_.Status -eq "Verify"} 
 		  }
 		}catch{
 		    $this.WriteMessage("Unable to read file containing list of controls to skip, Please verify file path.", [MessageType]::Warning);
@@ -150,6 +156,39 @@ class ARMCheckerStatus: EventBase
 		$filesToExclude = $filteredFiles -join ","
 		$filesToExcludeCount = ($filesToExclude| Measure-Object).Count 
 		}
+
+		# Check if both -ControlIds and ExcludeControlIds switch are provided , return with error message
+		if(-not([string]::IsNullOrEmpty($ControlIds)) -and -not([string]::IsNullOrEmpty($ExcludeControlIds))){
+			$this.WriteMessage("InvalidArgument: Both the parameters 'ControlIds' and 'ExcludeControlIds' contain values. You should use only one of these parameters.", [MessageType]::Error);
+		    return $null;
+		}
+
+		# Check if both -ControlIds and UseBaselineControls switch are provided , return with error message
+		if(-not([string]::IsNullOrEmpty($ControlIds)) -and $UseBaselineControls){
+			$this.WriteMessage("InvalidArgument: Both the parameters 'ControlIds' and 'UseBaselineControls' contain values. You should use only one of these parameters.", [MessageType]::Error);
+			return $null;
+		}
+
+		# Check if both -ControlIds and UsePreviewBaselineControls switch are provided , return with error message
+		if(-not([string]::IsNullOrEmpty($ControlIds)) -and $UsePreviewBaselineControls){
+			$this.WriteMessage("InvalidArgument: Both the parameters 'ControlIds' and 'UsePreviewBaselineControls' contain values. You should use only one of these parameters.", [MessageType]::Error);
+			return $null;
+		}
+
+		# Check if specific control ids to scan are provided by user  
+		$ControlsToScan = @();
+		if(-not([string]::IsNullOrEmpty($ControlIds)))
+		{
+		  $ControlsToScan = $this.ConvertToStringArray($ControlIds);
+		} 
+
+		# Check if exclude control ids are provided by user 
+		$ControlsToExclude = @();
+		if(-not([string]::IsNullOrEmpty($ExcludeControlIds)))
+		{
+		  $ControlsToExclude = $this.ConvertToStringArray($ExcludeControlIds);
+		}
+
 		foreach($armTemplate in $ARMTemplates)
 		{
 		    $armFileName = $armTemplate.FullName.Replace($baseDirectory, ".");
@@ -180,11 +219,24 @@ class ARMCheckerStatus: EventBase
 				
 				$results += $libResults | Where-Object {$_.VerificationResult -ne "NotSupported"} | Select-Object -ExcludeProperty "IsEnabled"		
 		
+				if($null -ne $results -and ( $results| Measure-Object).Count -gt 0 -and $this.BaselineControls.Count -gt 0){
+					$results = $results | Where-Object {$this.BaselineControls -contains $_.ControlId}
+				}
+
+				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0 -and ( $ControlsToScan | Measure-Object).Count -gt 0 ){
+					$results = $results | Where-Object {$ControlsToScan -contains $_.ControlId}
+				}
+
+				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0  -and ( $ControlsToExclude | Measure-Object).Count -gt 0){
+					$results = $results | Where-Object {$ControlsToExclude -notcontains $_.ControlId}
+				}
+
+				
 				$this.WriteMessage(([Constants]::DoubleDashLine + "`r`nStarting analysis: [FileName: $armFileName] `r`n" + [Constants]::SingleDashLine), [MessageType]::Info);
 				if($null -ne $relatedParameterFile){
 					$this.WriteMessage(("`r`n[ParameterFileName: $relatedParameterFileName] `r`n" + [Constants]::SingleDashLine), [MessageType]::Info);
 				}
-				if($results.Count -gt 0)
+				if($null -ne $results -and ($results | Measure-Object).Count -gt 0)
 				{   $scannedFileCount += 1;
 					foreach($result in $results)
 					{	       
@@ -226,7 +278,7 @@ class ARMCheckerStatus: EventBase
 						$csvResultItem.ResourcePath = $result.ResourceDataMarker.JsonPath	
 						if(($exemptControlList|Measure-Object).Count -gt 0)
 						{				
-                         $csvResultItem = Compare-Object -ReferenceObject $csvResultItem -DifferenceObject $exemptControlList -PassThru -IncludeEqual -Property ControlId,PropertyPath,FilePath 
+                         $csvResultItem = Compare-Object -ReferenceObject $csvResultItem -DifferenceObject $exemptControlList -PassThru -IncludeEqual -Property ControlId,PropertyPath 
 		                 $csvResultItem| ForEach-Object {
 		                               if($_.SideIndicator -eq "==")
 			                           {
@@ -585,4 +637,62 @@ class ARMCheckerStatus: EventBase
 	   return $serverFileContent;
 	}
 
+	hidden [boolean] LoadControlSettingsFile([Boolean] $UseBaselineControls, [Boolean] $UsePreviewBaselineControls)
+	{ 	
+			
+		if($UseBaselineControls -eq $true -or $UsePreviewBaselineControls -eq $true){
+			# Fetch control Settings data
+			$ControlSettings = $null
+			if(-not [ConfigurationManager]::GetLocalAzSKSettings().EnableAADAuthForOnlinePolicyStore)
+			{
+				$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+			}
+			else 
+			{
+				$AzureContext = Get-AzContext
+				if(-not [string]::IsNullOrWhiteSpace($AzureContext)) 
+				{
+					$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+				}
+				else
+				{
+					Write-Host "No Azure login found. Azure login context is required to fetch baseline controls defined for this policy." -ForegroundColor Red 
+					# return true if EnableAADAuthForOnlinePolicyStore is true but Az login context is null
+					return $true
+				}
+			}
+			# Filter control list for baseline controls
+			$baselineControlList = @();
+			if($UseBaselineControls)
+			{
+				if([Helpers]::CheckMember($ControlSettings ,"BaselineControls.ResourceTypeControlIdMappingList"))
+				{
+					$baselineControlList += $ControlSettings.BaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
+				}
+			
+			}
+			# Filter control list for preview baseline controls
+			$previewBaselineControls = @();
+			if($UsePreviewBaselineControls)
+			{
+				if([Helpers]::CheckMember($ControlSettings,"PreviewBaselineControls.ResourceTypeControlIdMappingList") )
+				{
+					$previewBaselineControls += $ControlSettings.PreviewBaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
+				}
+				$baselineControlList += $previewBaselineControls
+			}
+
+			if($baselineControlList -and $baselineControlList.Count -gt 0)
+			{
+				$this.BaselineControls += $baselineControlList
+				
+			}else{
+				Write-Host "There are no baseline controls defined for this policy." -ForegroundColor Yellow 
+				$this.BaselineControls = @()
+			}
+		}else{
+			$this.BaselineControls = @()
+		}
+		return $false
+	}
 }

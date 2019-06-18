@@ -54,7 +54,15 @@
       "DisabledForSubs": [],      
       "UnderPreview" : false,
       "IsEnabled": false
+    },
+    {
+      "Name": "EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
     }
-
   ]
 }

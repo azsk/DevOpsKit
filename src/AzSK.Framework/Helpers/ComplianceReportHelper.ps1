@@ -138,6 +138,10 @@ class ComplianceReportHelper: ComplianceBase
 				{
 					$props += "IsControlInGrace"
 				}
+                if("IsPreviewBaselineControl" -notin $props)
+				{
+					$props += "IsPreviewBaselineControl"
+				}
 			
 				if(($props | Measure-Object).Count -gt 0)
 				{
@@ -266,6 +270,7 @@ class ComplianceReportHelper: ComplianceBase
 			$scanResult.HasAttestationReadPermissions = $currentSVTResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions
 			$scanResult.UserComments = $currentSVTResult.UserComments
 			$scanResult.IsBaselineControl = $controlItem.IsBaselineControl
+			$scanResult.IsPreviewBaselineControl = $controlItem.IsPreviewBaselineControl
 			
 			if($controlItem.Tags.Contains("OwnerAccess") -or $controlItem.Tags.Contains("GraphRead"))
 			{
@@ -442,12 +447,23 @@ class ComplianceReportHelper: ComplianceBase
 				$SVTEvent.ControlResults = $CResult;
 				if($item.IsBaselineControl)
 				{
-					$controlDetails.IsBaselineControl=$true
+					$controlDetails.IsBaselineControl=$true	
 				}
 				else 
 				{
 					$controlDetails.IsBaselineControl=$false				
 				}
+
+				#<TODO: Currently remote API does not return PreviewBaselineControl flag. Disabling below code>
+				# if($item.IsPreviewBaselineControl)
+				# {
+				# 	$controlDetails.IsPreviewBaselineControl=$true
+				# }
+				# else 
+				# {
+				# 	$controlDetails.IsPreviewBaselineControl=$false				
+				# }
+				
 				$SVTEvent.ControlItem=$controlDetails;
 				$resourceDetails.ResourceName=$item.resourceName;
 				$SVTEvent.FeatureName=$item.FeatureName;

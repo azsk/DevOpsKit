@@ -10,6 +10,7 @@ class PIM: CommandBase {
 
     PIM([string] $subscriptionId, [InvocationInfo] $invocationContext)
     : Base([string] $subscriptionId, [InvocationInfo] $invocationContext) {
+        $this.DoNotOpenOutputFolder = $true;
         $this.AccessToken = "";
         $this.AccountId = "";
         $this.APIroot = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/";
@@ -372,7 +373,7 @@ class PIM: CommandBase {
                 $roleAssignments = $roleAssignments | Sort-Object -Property RoleName, Name 
                 $this.PublishCustomMessage("")
                 $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
-                $this.PublishCustomMessage($($roleAssignments | Format-Table -Property @{Label = "Role"; Expression = { $_.RoleName } }, PrincipalName, @{Label = "Type"; Expression = { $_.SubjectType } } | Out-String), [MessageType]::Default)
+                $this.PublishCustomMessage($($roleAssignments | Format-Table -Property @{Label = "Role"; Expression = { $_.RoleName } }, PrincipalName, AssignmentState, @{Label = "Type"; Expression = { $_.SubjectType } } | Out-String), [MessageType]::Default)
             }
             else {
                 if ($CheckPermanent) {

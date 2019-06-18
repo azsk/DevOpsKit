@@ -21,8 +21,8 @@ class AutomationAccount
 class UserConfig
 {
 	  hidden [string] $ResourceGroupNames
-	  hidden [OMSCredential] $OMSCredential
-	  hidden [OMSCredential] $AltOMSCredential
+	  hidden [LAWSCredential] $LAWSCredential
+	  hidden [LAWSCredential] $AltLAWSCredential
 	  hidden [WebhookSetting] $WebhookDetails
 	  hidden [string] $StorageAccountName
 	  hidden [string] $StorageAccountRG
@@ -35,10 +35,10 @@ class WebhookSetting
 	hidden [string] $AuthZHeaderValue;
 }
 
-class OMSCredential
+class LAWSCredential
 {
-	hidden [string] $OMSWorkspaceId
-	hidden [string] $OMSSharedKey
+	hidden [string] $WorkspaceId
+	hidden [string] $SharedKey
 }
 class SelfSignedCertificate
 {

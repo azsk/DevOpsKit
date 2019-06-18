@@ -34,7 +34,7 @@
             "Automated": "Yes",
             "MethodName": "CheckAPIMMetricAlert",
             "Rationale": "Metric alert for occurrence of unauthorized gateway requests help the admin to identify security breach attempts.",
-            "Recommendation": "Add or update a metric-based alert rule by using command Add-AzMetricAlertRule -Location '{Location}'-MetricName 'UnauthorizedRequests' -Name '{alertName}' -Operator 'GreaterThan' -ResourceGroupName '{ResourceGroupName}' -TargetResourceId '{TargetResourceId}' -Threshold 0 -TimeAggregationOperator 'Total' -WindowSize '01:00:00' -Action '{Comma-separated list of actions}'. Please refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-use-azure-monitor#set-up-an-alert-rule-for-unauthorized-request.",
+            "Recommendation": "To setup an alert rule: (1) Go to API management instance -> 'Alerts' -> 'New alert rule' -> 'Add condition' (2) Select Signal type as 'Metrics' -> Select 'Unauthorized Gateway Request' -> Select a. Operator = 'Greater Than' b. Aggregation type = 'Total' c. Threshold value = '0' and d. Aggregation granularity = '1 hour' (3) Select an existing Action Group or create a new one of type 'Email/SMS/Push/Voice'. Select 'Email' option and specify the email id. Please refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-use-azure-monitor#set-up-an-alert-rule-for-unauthorized-request.",
             "Tags": [
                 "SDL",
                 "TCP",

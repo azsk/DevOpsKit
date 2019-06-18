@@ -494,20 +494,38 @@ class SubscriptionCore: SVTBase
 	hidden [ControlResult] CheckAzureSecurityCenterAlerts([ControlResult] $controlResult)
 	{
 		$this.GetASCAlerts()
-
-		$activeAlerts = ($this.ASCSettings.Alerts | Where-Object {$_.State -eq "Active"})
-		if(($activeAlerts | Measure-Object).Count -gt 0)
+		$activeAlerts = ($this.ASCSettings.Alerts | Where-Object {$_.State -eq "Active" })
+		if(($activeAlerts | Measure-Object).Count -gt 0 )
 		{
-			$controlResult.SetStateData("Active alert in Security Center", $activeAlerts);
-			$controlResult.AddMessage([VerificationResult]::Failed,"Azure Security Center have active alerts that need to resolved.")
-		}
-		else {
-			$controlResult.VerificationResult =[VerificationResult]::Passed
-		}
+			  if( [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsThresholdInDays') -and [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsSeverityLevels'))
+			  {
+				 $AlertDaysCheck = $this.ControlSettings.ASCAlertsThresholdInDays
+				 $AlertSeverityCheck = $this.ControlSettings.ASCAlertsSeverityLevels				
+				 $activeAlerts = $activeAlerts | Where-Object{ ( [System.DateTime]::Parse($_.ReportedTimeUTC).AddDays($AlertDaysCheck) -ge ([System.DateTime]::UtcNow)) -and $_.ReportedSeverity -in $AlertSeverityCheck}
+				 if(($activeAlerts | Measure-Object).Count -gt 0)
+				 {
+					$controlResult.SetStateData("Active alert in Security Center", ($activeAlerts | Select-Object AlertName, ReportedTimeUTC));
+					$controlResult.AddMessage([VerificationResult]::Failed,"Azure Security Center have active alerts that need to resolved.")
+                    $controlResult.AddMessage(($activeAlerts | Select-Object State, AlertDisplayName, AlertName, Description, ReportedTimeUTC,ReportedSeverity, RemediationSteps))
+					return $controlResult;
+				 }
+				 else
+				 {
+					$controlResult.VerificationResult =[VerificationResult]::Passed
+					return $controlResult;
+				 }
+			  }
+			 $controlResult.SetStateData("Active alert in Security Center", ($activeAlerts | Select-Object AlertName, ReportedTimeUTC));
+			 $controlResult.AddMessage([VerificationResult]::Failed,"Azure Security Center have active alerts that need to resolved.")
+             $controlResult.AddMessage(($activeAlerts | Select-Object State, AlertDisplayName, AlertName, Description, ReportedTimeUTC,ReportedSeverity, RemediationSteps))
 
-		$controlResult.AddMessage(($activeAlerts | Select-Object State, AlertDisplayName, AlertName, Description, ReportedTimeUTC, RemediationSteps))
-
-		return $controlResult
+				
+		}
+		else 
+		{
+			 $controlResult.VerificationResult =[VerificationResult]::Passed
+		}
+		 return $controlResult
 	}	
 
 	hidden [ControlResult] CheckSPNsRBAC([ControlResult] $controlResult)
@@ -659,8 +677,21 @@ class SubscriptionCore: SVTBase
 				if(($matchingAlertRulesNames| Measure-Object).count -gt 0)
 				{
 					$configuredAlerts = $configuredAlerts | Where-Object { $matchingAlertRulesNames.InputObject -contains $_.Name }
-					$currentAlertsOperationsList = $configuredAlerts | ForEach-Object { $_.Properties.condition.allOf[2].anyOf} | Select-Object -property @{N='OperationName';E={$_.equals}} -Unique
-					$requiredAlertsOperationsList = ($subInsightsAlertsConfig | Where{ $_.Tags -contains $this.SubscriptionMandatoryTags}).AlertOperationList.OperationName
+					if(($configuredAlerts | Measure-Object).Count -gt 0)
+					{
+						$currentAlertsOperationsList = $configuredAlerts | ForEach-Object { 
+							if([Helpers]::CheckMember($_,"Properties.condition") -and (($_.Properties.condition.allOf | Measure-Object).Count -eq 3) -and [Helpers]::CheckMember($_.Properties.condition.allOf[2],"anyOf"))
+							{
+								$_.Properties.condition.allOf[2].anyOf
+							}
+						} | Select-Object -property @{N='OperationName';E={$_.equals}} -Unique	
+					}
+					else
+					{
+						$currentAlertsOperationsList = $null
+					}
+                    $requiredAlertsOperations = ($subInsightsAlertsConfig | Where{ $_.Tags -contains $this.SubscriptionMandatoryTags}).AlertOperationList 
+                    $requiredAlertsOperationsList = ($requiredAlertsOperations | Where-Object { $_.Tags -contains $this.SubscriptionMandatoryTags }).OperationName
 					if((($currentAlertsOperationsList| Measure-Object).Count -gt 0) -and (($requiredAlertsOperationsList | Measure-Object).Count -gt 0))
 					{
 						$operationsDiffList = Compare-Object -ReferenceObject $requiredAlertsOperationsList -DifferenceObject $currentAlertsOperationsList.OperationName | Where-Object { $_.SideIndicator -eq "<=" }
@@ -678,7 +709,7 @@ class SubscriptionCore: SVTBase
 					{
 						$foundRequiredAlerts = $true
 					}
-					elseif(($currentAlertsOperationsList.Count| Measure-Object).Count -eq 0)
+					elseif(($currentAlertsOperationsList | Measure-Object).Count -eq 0)
 					{
 						$foundRequiredAlerts = $false
 					}

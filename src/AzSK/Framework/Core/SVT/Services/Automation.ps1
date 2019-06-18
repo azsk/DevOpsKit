@@ -101,7 +101,7 @@ class Automation: SVTBase
 		}
 		return $controlResult;
     }
-	hidden [ControlResult] CheckOMSSetup([ControlResult] $controlResult)
+	hidden [ControlResult] CheckLAWSSetup([ControlResult] $controlResult)
     {   
 		$resource = Get-AzResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType "Microsoft.Automation/automationAccounts" -ErrorAction Stop
 		$resourceId = $resource.ResourceId

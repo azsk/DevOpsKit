@@ -1,11 +1,11 @@
 Set-StrictMode -Version Latest
 class AzSKSettings {
-    [string] $OMSWorkspaceId;
-    [string] $OMSSharedKey;
-	[string] $AltOMSWorkspaceId;
-    [string] $AltOMSSharedKey;
-    [string] $OMSType;
-	[string] $OMSSource;
+    [string] $LAWSId;
+    [string] $LAWSSharedKey;
+	[string] $AltLAWSId;
+    [string] $AltLAWSSharedKey;
+    [string] $LAType;
+	[string] $LASource;
 
 	[string] $EventHubNamespace;
 	[string] $EventHubName;
@@ -24,7 +24,6 @@ class AzSKSettings {
 
 	[string] $OutputFolderPath;
 
-
 	[TertiaryBool] $AllowSelfSignedWebhookCertificate;
 	[bool] $EnableAADAuthForOnlinePolicyStore;
     [bool] $UseOnlinePolicyStore;
@@ -37,10 +36,8 @@ class AzSKSettings {
 	[bool] $IsCentralScanModeOn = $false;
     hidden static [AzSKSettings] $Instance = $null;
 	hidden static [string] $FileName = "AzSKSettings.json";
-	[bool] $StoreComplianceSummaryInUserSubscriptions;
+	[bool] $StoreComplianceSummaryInUserSubscriptions;	
 
-
-	
 	hidden static SetDefaultSettings([AzSKSettings] $settings) {
 		if($null -ne  $settings -and [string]::IsNullOrWhiteSpace( $settings.AzureEnvironment))
 		{
@@ -103,12 +100,47 @@ class AzSKSettings {
 				$parsedSettings | Get-Member -MemberType Properties |
 					ForEach-Object {
 						$propertyName = $_.Name;
+
+						if($propertyName -eq "LAWSId" -or $propertyName -eq "LAWSSharedKey" -or $propertyName -eq "AltLAWSId" -or $propertyName -eq "AltLAWSSharedKey" -or $propertyName -eq "LAType" -or $propertyName -eq "LASource")
+						{
+							switch($propertyName)
+							{
+								"LAWSId"{
+									$newSetting = "OMSWorkspaceId"
+									break;
+								}
+								"LAWSSharedKey"{
+									$newSetting = "OMSSharedKey"
+									break;
+								}
+								"AltLAWSId"{
+									$newSetting = "AltOMSWorkspaceId"
+									break;
+								}
+								"AltLAWSSharedKey"{
+									$newSetting = "AltOMSSharedKey"
+									break;
+								}
+								"LAType"{
+									$newSetting = "OMSType"
+									break;
+								}
+								"LASource"{
+									$newSetting = "OMSSource"
+									break;
+								}								
+							}
+							$parsedSettings.$propertyName = $localAppDataSettings.$newSetting
+							$migratedPropNames += $newSetting;
+						}
+
 						if([Helpers]::CheckMember($localAppDataSettings, $propertyName))
 						{
 							$parsedSettings.$propertyName = $localAppDataSettings.$propertyName;
 							$migratedPropNames += $propertyName;
 						}
 					};
+
 				if($migratedPropNames.Count -ne 0)
 				{
                     [AzSKSettings]::Update($parsedSettings);
@@ -171,6 +203,6 @@ class AzSKSettings {
 	
 	hidden [string] GetScanSource()
 	{
-		return $this.OMSSource
+		return $this.LASource
 	}
 }

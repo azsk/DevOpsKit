@@ -1,5 +1,5 @@
 ﻿{
-    "Version": "3.1809.0",    
+    "Version": "3.1906.0",    
     "autoProvisioning" : {
         "id": "/subscriptions/{0}/providers/Microsoft.Security/autoProvisioningSettings/default",
         "name": "default",
@@ -190,7 +190,7 @@
                     "value": "Disabled"
                 },
                 "diagnosticsLogsInKeyVaultMonitoringEffect": {
-                    "value": "Disabled"
+                    "value": "AuditIfNotExists"
                 },
                 "diagnosticsLogsInLogicAppsMonitoringEffect": {
                     "value": "AuditIfNotExists"

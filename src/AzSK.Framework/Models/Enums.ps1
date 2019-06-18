@@ -80,7 +80,7 @@ enum SubscriptionScanKind
     Complete
 }
 
-enum OMSInstallationOption
+enum MonitoringSolutionInstallationOption
 {
 	All
 	Queries
@@ -151,7 +151,7 @@ enum OverrideConfigurationType
 
 enum RemoveConfiguredCASetting
 {
-	OMSSettings
-	AltOMSSettings
+	LAWSSettings
+	AltLAWSSettings
 	WebhookSettings
 }

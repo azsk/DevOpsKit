@@ -41,9 +41,11 @@ class CCAutomation: CommandBase
 	[string] $MinReqdCARunbookVersion = "2.1709.0"
 	[string] $RunbookVersionTagName = "AzSKCARunbookVersion"
 	[int] $defaultScanIntervalInHours = 24;
-
-
-
+	[bool] $LAWSVariablesExist = $false;
+	[bool] $AltLAWSVariablesExist = $false;
+	[bool] $OMSVariablesExist = $false;
+	[bool] $AltOMSVariablesExist = $false;
+	
 	CCAutomation(
 	[string] $subscriptionId, `
 	[InvocationInfo] $invocationContext, `
@@ -156,17 +158,17 @@ class CCAutomation: CommandBase
 		}
 	}
 
-	hidden [void] SetOMSSettings([string] $OMSWorkspaceId, [string] $OMSSharedKey,[string] $AltOMSWorkspaceId, [string] $AltOMSSharedKey)
+	hidden [void] SetLAWSSettings([string] $laWSId, [string] $laWSSharedKey,[string] $altLAWSId, [string] $altLAWSSharedKey)
 	{
 		if($this.UserConfig)
 		{
-			$this.UserConfig.OMSCredential = [OMSCredential]@{
-				OMSWorkspaceId = $OMSWorkspaceId;
-				OMSSharedKey = $OMSSharedKey;
+			$this.UserConfig.LAWSCredential = [LAWSCredential]@{
+				WorkspaceId = $laWSId;
+				SharedKey = $laWSSharedKey;
 			};
-			$this.UserConfig.AltOMSCredential = [OMSCredential]@{
-				OMSWorkspaceId = $AltOMSWorkspaceId;
-				OMSSharedKey = $AltOMSSharedKey;
+			$this.UserConfig.AltLAWSCredential = [LAWSCredential]@{
+				WorkspaceId = $altLAWSId;
+				SharedKey = $altLAWSSharedKey;
 			};
 		}		
 	}
@@ -753,58 +755,86 @@ class CCAutomation: CommandBase
 			#endregion
 
 			#region :update user configurable variables (Log Analytics workspace details and App RGs) which are present in params
-            if($null -ne $this.UserConfig -and $null -ne $this.UserConfig.OMSCredential)
+            if($null -ne $this.UserConfig -and $null -ne $this.UserConfig.LAWSCredential)
 			{
-                #OMSSettings
-                if(![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSWorkspaceId) -xor ![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSSharedKey))
+                #Log Analytics Workspace Settings
+                if(![string]::IsNullOrWhiteSpace($this.UserConfig.LAWSCredential.WorkspaceId) -xor ![string]::IsNullOrWhiteSpace($this.UserConfig.LAWSCredential.SharedKey))
 				{
-				    $this.PublishCustomMessage("Warning: Log Analytics workspace settings are either incomplete or invalid. To configure Log Analytics workspace in CA, please rerun this command with 'OMSWorkspaceId' and 'OMSSharedKey' parameters.",[MessageType]::Warning)
+				    $this.PublishCustomMessage("Warning: Log Analytics workspace settings are either incomplete or invalid. To configure Log Analytics workspace in CA, please rerun this command with 'LAWSId' and 'LAWSSharedKey' parameters.",[MessageType]::Warning)
 				}
-				elseif(![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSWorkspaceId) -and ![string]::IsNullOrWhiteSpace($this.UserConfig.OMSCredential.OMSSharedKey))
+				elseif(![string]::IsNullOrWhiteSpace($this.UserConfig.LAWSCredential.WorkspaceId) -and ![string]::IsNullOrWhiteSpace($this.UserConfig.LAWSCredential.SharedKey))
 				{
-				    $varOmsWSID = [Variable]@{
-			    	    Name = "OMSWorkspaceId";
-			    	    Value = $this.UserConfig.OMSCredential.OMSWorkspaceId;
+				    $varOMSWorkspaceId = [Variable]@{
+			    	    Name = [Constants]::OMSWorkspaceId;
+			    	    Value = $this.UserConfig.LAWSCredential.WorkspaceId;
 			    	    IsEncrypted = $false;
 			    	    Description ="Log Analytics Workspace Id"
 			        }
-			        $this.UpdateVariable($varOmsWSID)
-			        $this.PublishCustomMessage("Updating variable: ["+$varOmsWSID.Name+"]")
+			        $this.UpdateVariable($varOMSWorkspaceId)
 
                     $varOMSSharedKey = [Variable]@{
-			             Name = "OMSSharedKey";
-			             Value = $this.UserConfig.OMSCredential.OMSSharedKey;
+			             Name = [Constants]::OMSSharedKey;
+			             Value = $this.UserConfig.LAWSCredential.SharedKey;
 			             IsEncrypted = $false;
 			             Description ="Log Analytics Workspace Shared Key"
 			        }
 			        $this.UpdateVariable($varOMSSharedKey)
-			        $this.PublishCustomMessage("Updating variable: ["+$varOMSSharedKey.Name+"]")
+					
+					$varLAWSId = [Variable]@{
+						Name = [Constants]::LAWSId;
+						Value = $this.UserConfig.LAWSCredential.WorkspaceId;
+						IsEncrypted = $false;
+						Description ="Log Analytics Workspace Id"
+					}
+					$this.UpdateVariable($varLAWSId)
+
+					$varLAWSSharedKey = [Variable]@{
+						 Name = [Constants]::LAWSSharedKey;
+						 Value = $this.UserConfig.LAWSCredential.SharedKey;
+						 IsEncrypted = $false;
+						 Description ="Log Analytics Workspace Shared Key"
+					}
+					$this.UpdateVariable($varLAWSSharedKey)
 				}
 				
-				#AltOMSSettings
-				if(![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSWorkspaceId) -xor ![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSSharedKey))
+				#Alt Log Analytics Workspace Settings
+				if(![string]::IsNullOrWhiteSpace($this.UserConfig.AltLAWSCredential.WorkspaceId) -xor ![string]::IsNullOrWhiteSpace($this.UserConfig.AltLAWSCredential.SharedKey))
                 {
-                    $this.PublishCustomMessage("Warning: Alt Log Analytics workspace settings are either incomplete or invalid. To configure Alt Log Analytics workspace in CA, please rerun this command with 'AltOMSWorkspaceId' and 'AltOMSSharedKey' parameters.",[MessageType]::Warning)
+                    $this.PublishCustomMessage("Warning: Alt Log Analytics workspace settings are either incomplete or invalid. To configure Alt Log Analytics workspace in CA, please rerun this command with 'AltLAWSId' and 'AltLAWSSharedKey' parameters.",[MessageType]::Warning)
                 }
-                elseif(![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSWorkspaceId) -and ![string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSSharedKey))
+                elseif(![string]::IsNullOrWhiteSpace($this.UserConfig.AltLAWSCredential.WorkspaceId) -and ![string]::IsNullOrWhiteSpace($this.UserConfig.AltLAWSCredential.SharedKey))
                 {
-		        	$varAltOMSWSID = [Variable]@{
-		        		Name = "AltOMSWorkspaceId";
-		        		Value = $this.UserConfig.AltOMSCredential.OMSWorkspaceId;
+		        	$varAltOMSWorkspaceId = [Variable]@{
+		        		Name = [Constants]::AltOMSWorkspaceId;
+		        		Value = $this.UserConfig.AltLAWSCredential.WorkspaceId;
 		        		IsEncrypted = $false;
 		        		Description ="Alternate Log Analytics Workspace Id"
 		        	}
-		        	$this.UpdateVariable($varAltOMSWSID)
-		        	$this.PublishCustomMessage("Updating variable: ["+$varAltOMSWSID.Name+"]")
+		        	$this.UpdateVariable($varAltOMSWorkspaceId)
 
-		        	$varAltOMSWSKey = [Variable]@{
-		        		Name = "AltOMSSharedKey";
-		        		Value = $this.UserConfig.AltOMSCredential.OMSSharedKey;
+		        	$varAltOMSSharedKey = [Variable]@{
+		        		Name = [Constants]::AltOMSSharedKey;
+		        		Value = $this.UserConfig.AltLAWSCredential.SharedKey;
 		        		IsEncrypted = $false;
 		        		Description ="Alternate Log Analytics Workspace Shared Key"
 		        	}
-		        	$this.UpdateVariable($varAltOMSWSKey)
-		        	$this.PublishCustomMessage("Updating variable: ["+$varAltOMSWSKey.Name+"]")
+		        	$this.UpdateVariable($varAltOMSSharedKey)				
+
+					$varAltLAWSId = [Variable]@{
+						Name = [Constants]::AltLAWSId;
+						Value = $this.UserConfig.AltLAWSCredential.WorkspaceId;
+						IsEncrypted = $false;
+						Description ="Alternate Log Analytics Workspace Id"
+					}
+					$this.UpdateVariable($varAltLAWSId)
+
+					$varAltLAWSSharedKey = [Variable]@{
+						Name = [Constants]::AltLAWSSharedKey;
+						Value = $this.UserConfig.AltLAWSCredential.SharedKey;
+						IsEncrypted = $false;
+						Description ="Alternate Log Analytics Workspace Shared Key"
+					}
+					$this.UpdateVariable($varAltLAWSSharedKey)
                 }
             }
             
@@ -818,7 +848,6 @@ class CCAutomation: CommandBase
 					Description ="Webhook Url"
 				}
 				$this.UpdateVariable($varWebhookUrl)
-				$this.PublishCustomMessage("Updating variable: ["+$varWebhookUrl.Name+"]")
 			}
 			if($null -ne $this.UserConfig -and $null -ne $this.UserConfig.WebhookDetails `
 				-and -not [string]::IsNullOrWhiteSpace($this.UserConfig.WebhookDetails.AuthZHeaderName) `
@@ -831,7 +860,6 @@ class CCAutomation: CommandBase
 					Description ="Webhook AuthZ header name"
 				}
 				$this.UpdateVariable($varWebhookAuthZHeaderName)
-				$this.PublishCustomMessage("Updating variable: ["+$varWebhookAuthZHeaderName.Name+"]")
 
 				$varWebhookAuthZHeaderValue = [Variable]@{
 					Name = "WebhookAuthZHeaderValue";
@@ -839,8 +867,7 @@ class CCAutomation: CommandBase
 					IsEncrypted = $true;
 					Description ="Webhook AuthZ header value"
 				}
-				$this.UpdateVariable($varWebhookAuthZHeaderValue)
-				$this.PublishCustomMessage("Updating variable: ["+$varWebhookAuthZHeaderValue.Name+"]")				
+				$this.UpdateVariable($varWebhookAuthZHeaderValue)			
 			}
 
 			if($null -ne $this.UserConfig -and ![string]::IsNullOrWhiteSpace($this.UserConfig.ResourceGroupNames))
@@ -852,7 +879,6 @@ class CCAutomation: CommandBase
 				Description ="Comma separated values of the different resource groups that has to be scanned"
 				}
 				$this.UpdateVariable($varAppRG)
-				$this.PublishCustomMessage("Updating variable: ["+$varAppRG.Name+"]")
 			}
 			else
 			{
@@ -1301,6 +1327,8 @@ class CCAutomation: CommandBase
 		"AppResourceGroupNames"=$noValueMsg;
 		"OMSWorkspaceId"=$noValueMsg;
 		"AltOMSWorkspaceId"=$noValueMsg;
+		"LAWSId" = $noValueMsg;
+		"AltLAWSId" = $noValueMsg;
 		"WebhookUrl"=$noValueMsg;
 		"AzureADAppID"=$noValueMsg;
 		"AzureADAppName"=$noValueMsg;
@@ -1315,8 +1343,14 @@ class CCAutomation: CommandBase
 		}
 		$caOverallSummary = @()
 		#Fetch automation account components
-		$omsWsId = $this.GetOMSWSID()		
-		$altOMSWsId = $this.GetAltOMSWSID()
+		$laWSDetails = $this.GetLAWSId()
+		$altLAWSDetails = $this.GetAltLAWSId()
+
+		#Start: Code to be deleted when OMS variables will be completely removed
+		$omsWSDetails = $this.GetOMSWorkspaceId()
+		$altOMSWSDetails = $this.GetAltOMSWorkspaceId()
+		#End: Code to be deleted when OMS variables will be completely removed
+
 		$webhookUrl = $this.GetWebhookURL()
 		$appRGs = $this.GetAppRGs()
 		$runbook = Get-AzAutomationRunbook -AutomationAccountName $this.AutomationAccount.Name `
@@ -1339,15 +1373,33 @@ class CCAutomation: CommandBase
 		$azskLatestCARunbookVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion
 		
 		$caSummaryTable.Item("AutomationAccountName") = $caAutomationAccount.AutomationAccountName
-		if($omsWsId)
+
+		if($laWSDetails)
 		{
-			$caSummaryTable.Item("OMSWorkspaceId") = $omsWsId.Value
+			$caSummaryTable.Item("LAWSId") = $laWSDetails.Value
+		}
+		if($altLAWSDetails)
+		{
+			$caSummaryTable.Item("AltLAWSId") = $altLAWSDetails.Value
 		}
 
-		if($altOMSWsId)
+		#Start: Code to be deleted when OMS variables will be completely removed		
+		if($omsWSDetails)
 		{
-			$caSummaryTable.Item("AltOMSWorkspaceId") = $altOMSWsId.Value
+			$caSummaryTable.Item("OMSWorkspaceId") = $omsWSDetails.Value
+            if($altOMSWSDetails)
+		    {
+			    $caSummaryTable.Item("AltOMSWorkspaceId") = $altOMSWSDetails.Value
+		    }
 		}
+		#If OMS details are not present - it means it is a fresh CA install post v3.14.0,
+		#meaning the automation account will not have OMS* variables - therefore removing them from the CA summary.
+		else
+		{
+			$caSummaryTable.Remove("OMSWorkspaceId")
+			$caSummaryTable.Remove("AltOMSWorkspaceId")
+		}
+		#End: Code to be deleted when OMS variables will be completely removed
 
 		if($webhookUrl)
 		{
@@ -1953,14 +2005,16 @@ class CCAutomation: CommandBase
 		$stepCount++
 	
 		$checkDescription = "Inspecting Log Analytics workspace configuration."
-        
-		$IsOMSSettingSetup = !([string]::IsNullOrEmpty($omsWsId)) -and $this.IsOMSKeyVariableAvailable()
-		$IsAltOMSSettingSetup = !([string]::IsNullOrEmpty($altOMSWsId)) -and $this.IsAltOMSKeyVariableAvailable()
 		
-        if(!$IsOMSSettingSetup -and !$IsAltOMSSettingSetup)
+		#If either new/old LAWS/OMS variables are available, it means that the Log Analytics Settings are fine.
+		#The second condition can be deleted after the OMS variables are removed completely.
+		$isLAWSSettingSetup = (!([string]::IsNullOrEmpty($laWSDetails)) -and $this.IsLAWSKeyVariableAvailable()) -or (!([string]::IsNullOrEmpty($omsWSDetails)) -and $this.IsOMSKeyVariableAvailable())
+		$isAltLAWSSettingSetup = (!([string]::IsNullOrEmpty($altLAWSDetails)) -and $this.IsAltLAWSKeyVariableAvailable()) -or (!([string]::IsNullOrEmpty($altOMSWSDetails)) -and $this.IsAltOMSKeyVariableAvailable())
+				
+        if(!$isLAWSSettingSetup -and !$isAltLAWSSettingSetup)
 		{
-			$failMsg = "Log Analytics workspace settings is not set up."			
-			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -OMSWorkspaceId <OMSWorkspaceId> -OMSSharedKey <OMSSharedKey>'."
+			$failMsg = "Log Analytics workspace setting is not set up."			
+			$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -LAWSId <LAWSId> -LAWSSharedKey <LAWSSharedKey>'."
 			$resultMsg +="$failMsg`r`n$resolvemsg"
 			$resultStatus = "Warning"
 			$shouldReturn = $false
@@ -2767,38 +2821,38 @@ class CCAutomation: CommandBase
 			Description ="Name of storage account where CA scan reports will be stored"
         }
 
-		#OMS settings
-		$varOMSWSID = [Variable]@{
-			Name = [Constants]::OMSWorkspaceId;
-			Value = $this.UserConfig.OMSCredential.OMSWorkspaceId;
+		#Log Analytics workspace Settings
+		$varLAWSId = [Variable]@{
+			Name = [Constants]::LAWSId;
+			Value = $this.UserConfig.LAWSCredential.WorkspaceId;
 			IsEncrypted = $false;
 			Description ="Log Analytics Workspace Id"
         }
-		$varOMSWSKey = [Variable]@{
-			Name = [Constants]::OMSSharedKey;
-			Value = $this.UserConfig.OMSCredential.OMSSharedKey;
+		$varLAWSSharedKey = [Variable]@{
+			Name = [Constants]::LAWSSharedKey;
+			Value = $this.UserConfig.LAWSCredential.SharedKey;
 			IsEncrypted = $false;
 			Description ="Log Analytics Workspace Shared Key"
         }
 
-		$this.Variables += @($varAppRG,$varOMSWSID,$varOMSWSKey,$varStorageName)
+		$this.Variables += @($varAppRG, $varLAWSId, $varLAWSSharedKey, $varStorageName)
 
-		#AltOMSSettings
-		if($null -ne $this.UserConfig.AltOMSCredential -and -not [string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($this.UserConfig.AltOMSCredential.OMSSharedKey))
+		#Alt Log Analytics workspace Settings
+		if($null -ne $this.UserConfig.AltLAWSCredential -and -not [string]::IsNullOrWhiteSpace($this.UserConfig.AltLAWSCredential.WorkspaceId) -and -not [string]::IsNullOrWhiteSpace($this.UserConfig.AltLAWSCredential.SharedKey))
 		{
-			$varAltOMSWSID = [Variable]@{
-				Name = [Constants]::AltOMSWorkspaceId;
-				Value = $this.UserConfig.AltOMSCredential.OMSWorkspaceId;
+			$varAltLAWSId = [Variable]@{
+				Name = [Constants]::AltLAWSId;
+				Value = $this.UserConfig.AltLAWSCredential.WorkspaceId;
 				IsEncrypted = $false;
 				Description ="Alternate Log Analytics Workspace Id"
 			}
-			$varAltOMSWSKey = [Variable]@{
+			$varAltLAWSSharedKey = [Variable]@{
 				Name = [Constants]::AltOMSSharedKey;
-				Value = $this.UserConfig.AltOMSCredential.OMSSharedKey;
+				Value = $this.UserConfig.AltLAWSCredential.SharedKey;
 				IsEncrypted = $false;
 				Description ="Alternate Log Analytics Workspace Shared Key"
 			}
-			$this.Variables += @($varAltOMSWSID,$varAltOMSWSKey)
+			$this.Variables += @($varAltLAWSId, $varAltLAWSSharedKey)
 		}
 
 		#Webhook settings
@@ -3139,20 +3193,32 @@ class CCAutomation: CommandBase
 	
 	hidden [void] UpdateVariable($VariableObj)
 	{	
+		$doNotAdd = $false
 		#remove existing and create new variable
 		$existingVar = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name -ResourceGroupName $this.AutomationAccount.ResourceGroup -Name $VariableObj.Name -ErrorAction SilentlyContinue
 		if(($existingVar|Measure-Object).Count -gt 0)
 		{
 			$existingVar|Remove-AzAutomationVariable -ErrorAction Stop
 		}
-		$newVariable = New-AzAutomationVariable -Name $VariableObj.Name `
-		-Description $VariableObj.Description`
-		-Encrypted $VariableObj.IsEncrypted `
-		-Value $VariableObj.Value `
-		-ResourceGroupName $this.AutomationAccount.ResourceGroup `
-		-AutomationAccountName $this.AutomationAccount.Name -ErrorAction Stop 
-		
-		$this.OutputObject.Variables += ($newVariable | Select-Object Name,Description,Value) 
+		#If the OMS variables don't already exist - it means the ICA was run using v3.14.0 or later.
+		#We do not want addition of OMS variables on UCA in that case.
+		elseif(($VariableObj.Name -eq [Constants]::OMSWorkspaceId) -or ($VariableObj.Name -eq [Constants]::OMSSharedKey) -or ($VariableObj.Name -eq [Constants]::AltOMSWorkspaceId) -or ($VariableObj.Name -eq [Constants]::AltOMSSharedKey))
+		{
+			$doNotAdd = $true
+		}
+
+		if(!$doNotAdd)
+		{
+			$newVariable = New-AzAutomationVariable -Name $VariableObj.Name `
+			-Description $VariableObj.Description`
+			-Encrypted $VariableObj.IsEncrypted `
+			-Value $VariableObj.Value `
+			-ResourceGroupName $this.AutomationAccount.ResourceGroup `
+			-AutomationAccountName $this.AutomationAccount.Name -ErrorAction Stop 
+			
+			$this.OutputObject.Variables += ($newVariable | Select-Object Name,Description,Value)
+			$this.PublishCustomMessage("Updating variable: [" + $VariableObj.Name + "]")
+		}
 	}
 	hidden [void] RemoveCCAzureRunAsConnectionIfExists()
 	{
@@ -3558,34 +3624,70 @@ class CCAutomation: CommandBase
 		}
 	}
 
-	#get OMS WS ID
-	hidden [PSObject] GetOMSWSID()
+	#get Log Analytics Workspace ID
+	hidden [PSObject] GetLAWSId()
 	{
-		$omsWsId = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
-		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
-		if($omsWsId -and ($null -ne $omsWsId.Value))
+		$laWSIdDetails = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "LAWSId" -ErrorAction SilentlyContinue
+		
+		if($laWSIdDetails -and ($null -ne $laWSIdDetails.Value))
 		{
-			return $omsWsId|Select-Object Description,Name,Value
+			return $laWSIdDetails|Select-Object Description,Name,Value
 		}
 		else
 		{
 			return $null
 		}
 	}
-	#get ALT OMS WS ID
-	hidden [PSObject] GetAltOMSWSID()
+	#get Alt Log Analytics Workspace ID
+	hidden [PSObject] GetAltLAWSId()
 	{
-		$altOMSWsId = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
-		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
-		if($altOMSWsId -and ($null -ne $altOMSWsId.Value))
+		$altLAWSIdDetails = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltLAWSId" -ErrorAction SilentlyContinue
+		
+		if($altLAWSIdDetails -and ($null -ne $altLAWSIdDetails.Value))
 		{
-			return $altOMSWsId |Select-Object Description,Name,Value
+			return $altLAWSIdDetails |Select-Object Description,Name,Value
 		}
 		else
 		{
 			return $null
 		}
 	}
+
+	#Start: Code to be deleted when OMS variables will be completely removed
+	#get Log Analytics Workspace ID: From OMS variables
+	hidden [PSObject] GetOMSWorkspaceId()
+	{
+		$omsWSIdDetails = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+			-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
+		
+		if($omsWSIdDetails -and ($null -ne $omsWSIdDetails.Value))
+		{
+			return $omsWSIdDetails|Select-Object Description,Name,Value
+		}
+		else
+		{
+			return $null
+		}
+	}
+	#get Alt Log Analytics Workspace ID: From OMS variables
+	hidden [PSObject] GetAltOMSWorkspaceId()
+	{
+		$altOMSWSIdDetails = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+			-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue
+			
+		if($altOMSWSIdDetails -and ($null -ne $altOMSWSIdDetails.Value))
+		{
+			return $altOMSWSIdDetails |Select-Object Description,Name,Value
+		}
+		else
+		{
+			return $null
+		}
+	}
+	#End: Code to be deleted when OMS variables will be completely removed
+
 	#get Webhook URL
 	hidden [PSObject] GetWebhookURL()
 	{
@@ -3600,12 +3702,45 @@ class CCAutomation: CommandBase
 			return $null
 		}
 	}
-	#Check OMS Key is present
+	#Check Log Analytics Key is present
+	hidden [boolean] IsLAWSKeyVariableAvailable()
+	{
+		$laWSKey = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "LAWSSharedKey" -ErrorAction SilentlyContinue
+		
+		if($laWSKey)
+		{
+			return $true
+		}
+		else
+		{
+			return $false
+		}
+	}
+	#Check Alt Log Analytics Key is present
+	hidden [boolean] IsAltLAWSKeyVariableAvailable()
+	{
+		$altLAWSKey = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltLAWSSharedKey" -ErrorAction SilentlyContinue
+		
+		if($altLAWSKey)
+		{
+			return $true
+		}
+		else
+		{
+			return $false
+		}
+	}
+
+	#Start: Code to be deleted when OMS variables will be completely removed
+	#Check Log Analytics Key is present: From OMS variables
 	hidden [boolean] IsOMSKeyVariableAvailable()
 	{
-		$omsKey = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
-		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSSharedKey" -ErrorAction SilentlyContinue
-		if($omsKey)
+		$omsSharedKey = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+			-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSSharedKey" -ErrorAction SilentlyContinue
+		
+		if($omsSharedKey)
 		{
 			return $true
 		}
@@ -3614,12 +3749,13 @@ class CCAutomation: CommandBase
 			return $false
 		}
 	}
-	#Check OMS Key is present
+	#Check Alt Log Analytics Key is present: From OMS variables
 	hidden [boolean] IsAltOMSKeyVariableAvailable()
 	{
-		$omsKey = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
-		-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
-		if($omsKey)
+		$altOMSSharedKey = Get-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+			-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
+		
+		if($altOMSSharedKey)
 		{
 			return $true
 		}
@@ -3628,6 +3764,8 @@ class CCAutomation: CommandBase
 			return $false
 		}
 	}
+	#End: Code to be deleted when OMS variables will be completely removed
+
 	#get reports storage value from variable
 	hidden [PSObject] GetReportsStorageAccountNameVariable()
 	{
@@ -3822,18 +3960,23 @@ class CCAutomation: CommandBase
 	#endregion
 
 	#region: Remove configured setting from CA
-	hidden [void] RemoveOMSSettings()
+	hidden [void] RemoveLAWSSettings()
 	{
-		$OMSVariable = $this.GetOMSWSID()
+		$laWSDetails = $this.GetLAWSId()
+		$omsWSDetails = $this.GetOMSWorkspaceId()
 		try
 		{
-			if($null -ne $OMSVariable)
+			if(($null -ne $laWSDetails) -or ($null -ne $omsWSDetails))
 			{			
-				$this.PublishCustomMessage("Removing OMS settings... ");
+				$this.PublishCustomMessage("Removing Log Analytics workspace settings... ");
 				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue			
 				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
-				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSSharedKey" -ErrorAction SilentlyContinue		
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "OMSSharedKey" -ErrorAction SilentlyContinue
+				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "LAWSId" -ErrorAction SilentlyContinue			
+				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "LAWSSharedKey" -ErrorAction SilentlyContinue	
 				$this.PublishCustomMessage("Completed")
 			}
 			else
@@ -3845,18 +3988,23 @@ class CCAutomation: CommandBase
 			$this.PublishCustomMessage("Unable to remove Log Analytics workspace settings.")
 		}
 	}
-	hidden [void] RemoveAltOMSSettings()
+	hidden [void] RemoveAltLAWSSettings()
 	{
-		$altOMSWSID=$this.GetAltOMSWSID();
+		$altLAWSDetails = $this.GetAltLAWSId();
+		$altOMSWSDetails = $this.GetAltOMSWorkspaceId();
 		try
 		{
-			if($null -ne $altOMSWSID)
+			if(($null -ne $altLAWSDetails) -or ($null -ne $altOMSWSDetails))
 			{
-				$this.PublishCustomMessage("Removing AltOMS settings... ");
+				$this.PublishCustomMessage("Removing Alt Log Analytics workspace settings... ");
 				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
 				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSWorkspaceId" -ErrorAction SilentlyContinue			
 				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
-				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue		
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltOMSSharedKey" -ErrorAction SilentlyContinue
+				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltLAWSId" -ErrorAction SilentlyContinue			
+				Remove-AzAutomationVariable -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName $this.AutomationAccount.ResourceGroup -Name "AltLAWSSharedKey" -ErrorAction SilentlyContinue		
 				$this.PublishCustomMessage("Completed")
 			}
 			else

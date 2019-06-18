@@ -280,7 +280,7 @@
     },
     {
       "featureName": "SqlServer",
-      "supportedResourceTypes": [ "Microsoft.Sql/servers", "transparentDataEncryption", "administrators", "securityAlertPolicies", "databases", "auditingSettings", "firewallrules" ],
+      "supportedResourceTypes": [ "Microsoft.Sql/servers", "Microsoft.Sql/servers/databases", "Microsoft.Sql/servers/databases/transparentDataEncryption", "Microsoft.Sql/servers/databases/auditingSettings", "Microsoft.Sql/servers/auditingSettings", "Microsoft.Sql/servers/administrators", "Microsoft.Sql/servers/securityAlertPolicies", "Microsoft.Sql/servers/firewallrules" ],
       "controls": [
         {
           "id": "SQLDatabase120",
@@ -326,12 +326,8 @@
           "recommendation": "",
           "severity": "High",
           "jsonPath": [ "$.properties.emailAccountAdmins" ],
-          "matchType": "StringSingleToken",
-          "data": {
-            "type": "Allow",
-            "value": "Enabled",
-            "isCaseSensitive": false
-          }
+          "matchType": "Boolean",
+          "data": { "value": true }
         },
         {
           "id": "SQLDatabase160",
@@ -410,7 +406,7 @@
           "apiVersions": [ "2016-09-01" ],
           "controlId": "Azure_AppService_BCDR_Use_Multiple_Instances",
           "isEnabled": true,
-          "description": "App Service must be deplsoyed on a minimum of two instances to ensure availability",
+          "description": "App Service must be deployed on a minimum of two instances to ensure availability",
           "rationale": "App Service deployed on multiple instances ensures that the App Service remains available even if an instance is down.",
           "recommendation": "Run command 'Set-AzAppServicePlan -Name '<AppServicePlanName>' -ResourceGroupName '<RGName>' -NumberofWorkers '<NumberofInstances>''. Run 'Get-Help Set-AzAppServicePlan -full' for more help.",
           "severity": "Medium",
@@ -597,7 +593,7 @@
           "matchType": "StringSingleToken",
           "data": {
             "type": "Allow",
-            "value": "1.11.5",
+            "value": "1.14.0",
             "isCaseSensitive": false
           }
         },

@@ -13,7 +13,7 @@ class ListenerHelper
         [WriteSummaryFile]::GetInstance().RegisterEvents();
         [WritePsConsole]::GetInstance().RegisterEvents();
         [WriteDataFile]::GetInstance().RegisterEvents();
-		[OMSOutput]::GetInstance().RegisterEvents();
+		[LogAnalyticsOutput]::GetInstance().RegisterEvents();
         [EventHubOutput]::GetInstance().RegisterEvents();
         [WebhookOutput]::GetInstance().RegisterEvents();
 		[AIOrgTelemetry]::GetInstance().RegisterEvents();
@@ -34,7 +34,7 @@ class ListenerHelper
         [WriteSummaryFile]::GetInstance().UnregisterEvents();
         [WritePsConsole]::GetInstance().UnregisterEvents();
         [WriteDataFile]::GetInstance().UnregisterEvents();
-		[OMSOutput]::GetInstance().UnregisterEvents();
+		[LogAnalyticsOutput]::GetInstance().UnregisterEvents();
         [EventHubOutput]::GetInstance().UnregisterEvents();
         [WebhookOutput]::GetInstance().UnregisterEvents();
 		[AIOrgTelemetry]::GetInstance().UnregisterEvents();

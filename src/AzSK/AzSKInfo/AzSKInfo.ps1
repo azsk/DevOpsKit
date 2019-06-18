@@ -221,7 +221,7 @@ function Get-AzSKInfo
 								}
 								else
 								{	
-								return $complianceInfo.InvokeFunction($complianceInfo.GetComplianceInfo);
+									return $complianceInfo.InvokeFunction($complianceInfo.GetComplianceInfo, @($UseBaselineControls, $UsePreviewBaselineControls));
 								}	
 						}
 						
