@@ -144,21 +144,21 @@ class PolicySetup: CommandBase
 			$this.MonitoringDashboardLocation = $this.ResourceGroupLocation
 		}
 		
-		$this.FolderPath = [System.Environment]::GetFolderPath("Desktop") + "\" + $prefix + "-Policy\";
+		$this.FolderPath = Join-Path $([System.Environment]::GetFolderPath("Desktop")) ($prefix + "-Policy");
 		if(-not [string]::IsNullOrWhiteSpace($localPolicyFolderPath))
 		{
 			try
 			{
-				if (-not $localPolicyFolderPath.EndsWith("\"))
-				{
-					$localPolicyFolderPath += "\";
-				}
+				# if (-not $localPolicyFolderPath.EndsWith([Constants]::GenericSlash))
+				# {
+				# 	$localPolicyFolderPath += [Constants]::GenericSlash;
+				# }
 
 				#$localPolicyFolderPath += $prefix + "-Policy\";
 
 				if (-not (Test-Path $localPolicyFolderPath))
 				{
-					mkdir -Path $localPolicyFolderPath -ErrorAction Stop | Out-Null
+					New-Item -ItemType Directory -Path $localPolicyFolderPath -ErrorAction Stop | Out-Null
 				}				
 				$this.FolderPath = $localPolicyFolderPath;
 			}
@@ -171,12 +171,12 @@ class PolicySetup: CommandBase
 		$this.StorageAccountInstance = [StorageHelper]::new($subscriptionId, $this.ResourceGroupName , $resourceGroupLocation, $this.StorageAccountName);
 		$this.AppInsightInstance = [AppInsightHelper]::new($subscriptionId, $this.ResourceGroupName , $resourceGroupLocation, $appInsightLocation, $this.AppInsightName);
 
-		$this.ConfigFolderPath = $this.FolderPath + "Config\";
-		$this.InstallerFolderPath = $this.FolderPath + "Installer\";
-		$this.RunbookFolderPath = $this.FolderPath + "CA-Runbook\";
+		$this.ConfigFolderPath = Join-Path $this.FolderPath  "Config";
+		$this.InstallerFolderPath = Join-Path $this.FolderPath "Installer";
+		$this.RunbookFolderPath = Join-Path $this.FolderPath "CA-Runbook";
 		
 		$this.InstallerFileName = $moduleName + "-EasyInstaller.ps1";
-		$this.InstallerFile = $this.InstallerFolderPath + $this.InstallerFileName;
+		$this.InstallerFile = Join-Path $this.InstallerFolderPath $this.InstallerFileName;
 
 		#Setup base version
 		$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
@@ -300,10 +300,10 @@ class PolicySetup: CommandBase
 			$folderName = [System.IO.Path]::GetDirectoryName($this.InstallerFile);
 
 			# Check for environment specific installer file
-			$fileName = $PSScriptRoot + "\" + [Constants]::AzSKModuleName +"-EasyInstaller.ps1";
+			$fileName = Join-Path $PSScriptRoot ([Constants]::AzSKModuleName +"-EasyInstaller.ps1");
 			if(-not (Test-Path -Path $fileName))
 			{
-				$fileName = $PSScriptRoot + "\EasyInstaller.ps1";
+				$fileName = Join-Path $PSScriptRoot "EasyInstaller.ps1";
 			}
 			#$fileName = $PSScriptRoot + "\EasyInstaller.ps1";
 			$fileContent = Get-Content -Path $fileName;
@@ -322,13 +322,9 @@ class PolicySetup: CommandBase
 
 			if (-not (Test-Path $folderName))
 			{
-				mkdir -Path $folderName -ErrorAction Stop | Out-Null
+				New-Item -ItemType Directory -Path $folderName -ErrorAction Stop | Out-Null
 			}
 
-			if (-not $folderName.EndsWith("\"))
-			{
-				$folderName += "\";
-			}
 
 			Out-File -InputObject $fileContent -Force -FilePath $this.InstallerFile -Encoding utf8
 		}
@@ -344,36 +340,36 @@ class PolicySetup: CommandBase
 		{
 			if (-not (Test-Path $this.RunbookFolderPath))
 			{
-				mkdir -Path $this.RunbookFolderPath -ErrorAction Stop | Out-Null
+				New-Item -ItemType Directory -Path $this.RunbookFolderPath -ErrorAction Stop | Out-Null
 			}
 
 			if(((Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookScanAgent.ps1" } | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::CARunbooks)
 			{
-				$caFilePath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookScanAgent.ps1"
-				Copy-Item ($caFilePath) ($this.RunbookFolderPath + "RunbookScanAgent.ps1") -Force
-				$fileName = $this.RunbookFolderPath + "RunbookScanAgent.ps1";
+				$caFilePath = Join-Path (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName -ChildPath "Configurations" | Join-Path -ChildPath "ContinuousAssurance" | Join-Path -ChildPath "RunbookScanAgent.ps1";
+				Copy-Item ($caFilePath) (Join-Path $this.RunbookFolderPath "RunbookScanAgent.ps1") -Force
+				$fileName = Join-Path $this.RunbookFolderPath "RunbookScanAgent.ps1";
 				$policyStoreUrl	= [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl.Replace('$',"``$")
 				$fileContent = Get-Content -Path $fileName;
 				$fileContent = $fileContent.Replace("[#ScanAgentAzureRm#]", $this.PolicyUrl);
 				Out-File -InputObject $fileContent -Force -FilePath $fileName -Encoding utf8
-				$caFilePathbackup = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookScanAgentAzureRm.ps1"
-				Copy-Item ($caFilePath) ($this.RunbookFolderPath + "RunbookScanAgentAzureRm.ps1") -Force
+				$caFilePathbackup = Join-Path (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName "Configurations" | Join-Path -ChildPath "ContinuousAssurance" | Join-Path -ChildPath "RunbookScanAgentAzureRm.ps1"
+				Copy-Item ($caFilePath) (Join-Path $this.RunbookFolderPath  "RunbookScanAgentAzureRm.ps1") -Force
 			}
 
 			$RunbookCoreSetupFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetup.ps1" } | Select -First 1
 			if((($RunbookCoreSetupFile | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::CARunbooks)
 			{
-				$coreSetupFilePath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookCoreSetup.ps1"
-				Copy-Item ($coreSetupFilePath) ($this.RunbookFolderPath + "RunbookCoreSetup.ps1") -Force
+				$coreSetupFilePath = Join-Path (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName "Configurations" | Join-Path -ChildPath "ContinuousAssurance" | Join-Path -ChildPath "RunbookCoreSetup.ps1"
+				Copy-Item ($coreSetupFilePath) (Join-Path $this.RunbookFolderPath "RunbookCoreSetup.ps1") -Force
 				#Check for environment specific installer file
-				$fileName = $this.RunbookFolderPath + "RunbookCoreSetup.ps1";
+				$fileName = Join-Path $this.RunbookFolderPath "RunbookCoreSetup.ps1";
 				if(Test-Path -Path $fileName)
 				{
 					$fileContent = Get-Content -Path $fileName;
 					$fileContent = $fileContent.Replace("#AzSKConfigURL#", $this.AzSKConfigURL);
 					$policyStoreUrl	= [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl.Replace('$',"``$")
 			        $fileContent = $fileContent.Replace("[#CoreSetupAzureRm#]", $this.PolicyUrl);
-					Out-File -InputObject $fileContent -Force -FilePath $($this.RunbookFolderPath + "RunbookCoreSetup.ps1") -Encoding utf8
+					Out-File -InputObject $fileContent -Force -FilePath $(Join-Path $this.RunbookFolderPath "RunbookCoreSetup.ps1") -Encoding utf8
 				}
 			}
 			#If RunbookCoreSetup already exists, check for SAS token expiry and update with latest token 
@@ -391,15 +387,15 @@ class PolicySetup: CommandBase
 			$RunbookCoreSetupAzureRmFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetupAzureRm.ps1" } | Select -First 1
 			if((($RunbookCoreSetupAzureRmFile | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::CARunbooks)
 			{
-				$coreSetupFilePath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName + "\Configurations\ContinuousAssurance\RunbookCoreSetupAzureRm.ps1"
-				Copy-Item ($coreSetupFilePath) ($this.RunbookFolderPath + "RunbookCoreSetupAzureRm.ps1") -Force
+				$coreSetupFilePath = Join-Path (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName "Configurations" | Join-Path -ChildPath "ContinuousAssurance" | Join-Path -ChildPath "RunbookCoreSetupAzureRm.ps1"
+				Copy-Item ($coreSetupFilePath) (Join-Path $this.RunbookFolderPath "RunbookCoreSetupAzureRm.ps1") -Force
 				#Check for environment specific installer file
-				$fileName = $this.RunbookFolderPath + "RunbookCoreSetupAzureRm.ps1";
+				$fileName = Join-Path $this.RunbookFolderPath "RunbookCoreSetupAzureRm.ps1";
 				if(Test-Path -Path $fileName)
 				{
 					$fileContent = Get-Content -Path $fileName;
 					$fileContent = $fileContent.Replace("#AzSKConfigURL#", $this.AzSKConfigURL);
-					Out-File -InputObject $fileContent -Force -FilePath $($this.RunbookFolderPath + "RunbookCoreSetupAzureRm.ps1") -Encoding utf8
+					Out-File -InputObject $fileContent -Force -FilePath $(Join-Path $this.RunbookFolderPath "RunbookCoreSetupAzureRm.ps1") -Encoding utf8
 				}
 			}
 			#If RunbookCoreSetup already exists, check for SAS token expiry and update with latest token 
@@ -431,7 +427,7 @@ class PolicySetup: CommandBase
 					}
 				}
 				$azskConfig= @{ "CurrentVersionForOrg"= $moduleVersion};
-				$azskConfig | ConvertTo-Json | Out-File "$($this.RunbookFolderPath)\AzSK.Pre.json" -Force
+				$azskConfig | ConvertTo-Json | Out-File "$(Join-Path $this.RunbookFolderPath "AzSK.Pre.json")" -Force
 			}
 
 			
@@ -541,7 +537,7 @@ class PolicySetup: CommandBase
 		{
 			$this.PublishCustomMessage(" `r`n.No configuration files found under folder [$($this.ConfigFolderPath)]", [MessageType]::Warning);
 		}
-		Copy-Item ($PSScriptRoot + "\README.txt") ($($This.FolderPath) + "README.txt") -Force
+		Copy-Item (Join-Path $PSScriptRoot "README.txt") (Join-Path $($This.FolderPath) "README.txt") -Force
 		$this.CreateMonitoringDashboard()
 		$this.PublishCustomMessage(" `r`nThe setup has been completed and policies have been copied to [$($this.FolderPath)].`r`nRun the command below to install Organization specific version.`r`n$($this.IWRCommand)", [MessageType]::Update);
 		$this.PublishCustomMessage(" `r`nNote: This is a basic setup and uses a public access blob for storing your org's installer. Once you have richer org policies, consider using a location/end-point protected by your tenant authentication.", [MessageType]::Warning);
@@ -562,13 +558,13 @@ class PolicySetup: CommandBase
 		{
 			$this.PublishCustomMessage("Creating DevOps Kit ops monitoring dashboard in the policy host subscription...");
 			#Store dashboard template to temp location
-			$MonitoringDashboardTemplatePath = [Constants]::AzSKTempFolderPath + "\MonitoringDashboard";
+			$MonitoringDashboardTemplatePath = Join-Path $([Constants]::AzSKTempFolderPath) "MonitoringDashboard";
 			if(-not (Test-Path -Path $MonitoringDashboardTemplatePath))
 			{
-				mkdir -Path $MonitoringDashboardTemplatePath -Force | Out-Null
+				New-Item -ItemType Directory -Path $MonitoringDashboardTemplatePath -Force | Out-Null
 			}						
 			$MonitoringDashboardTemplateObj = [ConfigurationManager]::LoadServerConfigFile("MonitoringDashboard.json"); 				
-			$MonitoringDashboardTemplatePath = $MonitoringDashboardTemplatePath+"\MonitoringDashboard.json";
+			$MonitoringDashboardTemplatePath = Join-Path $MonitoringDashboardTemplatePath "MonitoringDashboard.json";
 			$MonitoringDashboardTemplateObj | ConvertTo-Json -Depth 100 | Out-File $MonitoringDashboardTemplatePath 
 
 			#Create arm template parameter specific to the org
@@ -620,7 +616,7 @@ class PolicySetup: CommandBase
 		[PSObject] $PolicyScanOutput = @{}
 		$PolicyScanOutput.Resources = @{}
 		
-		$policyTempFolder = [Constants]::AzSKTempFolderPath+ "Policies\";
+		$policyTempFolder = Join-Path $([Constants]::AzSKTempFolderPath) "Policies";
 		$orgPolicyOverallSummary = @()
 		$appInsight =$null
 
@@ -715,9 +711,9 @@ class PolicySetup: CommandBase
 		$this.StorageAccountInstance.GetStorageAccountInstance()
 		$this.FolderPath = $policyTempFolder 
 		[Helpers]::CleanupLocalFolder($this.FolderPath)
-		$this.ConfigFolderPath = $this.FolderPath + "Config\";
-		$this.InstallerFolderPath = $this.FolderPath + "Installer\";
-		$this.RunbookFolderPath = $this.FolderPath + "CA-Runbook\";
+		$this.ConfigFolderPath = Join-Path $this.FolderPath "Config";
+		$this.InstallerFolderPath =Join-Path $this.FolderPath "Installer";
+		$this.RunbookFolderPath = Join-Path $this.FolderPath "CA-Runbook";
 		$policyBloblist = $this.DownloadPolicy()
 
 		$currentContext = $this.StorageAccountInstance.StorageAccount.Context
@@ -1379,11 +1375,11 @@ class PolicySetup: CommandBase
 						{
 							$schemaDefinationContent = $schemaDefination | ConvertTo-Json -Depth 10
 							$jsonContent = Get-Content  $_.FullName
-							$libraryPath = (Get-Item $PSScriptRoot).Parent.Parent.Parent.FullName+ "\ARMCheckerLib";
+							$libraryPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.Parent.FullName "ARMCheckerLib";
 							$ErrorMessages= Start-Job  -ScriptBlock {
 								param($jsonContent,$schemaDefinationContent,$libraryPath )
-								Add-Type -Path "$libraryPath\Newtonsoft.Json.dll"
-								Add-Type -Path "$libraryPath\Newtonsoft.Json.Schema.dll"
+								Add-Type -Path (Join-Path $libraryPath "Newtonsoft.Json.dll")
+								Add-Type -Path (Join-Path $libraryPath "Newtonsoft.Json.Schema.dll")
 								$Token = [Newtonsoft.Json.Linq.JToken]::Parse($jsonContent)
 								$Schema = [Newtonsoft.Json.Schema.JSchema]::Parse($schemaDefinationContent)
 								$ErrorMessages = New-Object "System.Collections.Generic.List[string]"						
@@ -1512,7 +1508,7 @@ class PolicySetup: CommandBase
 	{
 		$this.PublishCustomMessage("Downloading latest policy index file[ServerConfigMetadata.json] from Org policy store...", [MessageType]::Info);
 		#Download ServConfigMetadata (index file) from policy store
-		$serverConfigMetadataBlobName = $this.Version+"\"+ [Constants]::ServerConfigMetadataFileName
+		$serverConfigMetadataBlobName = Join-Path $this.Version $([Constants]::ServerConfigMetadataFileName)
 		$this.StorageAccountInstance.GetStorageAccountInstance()
 		$this.StorageAccountInstance.DownloadFilesFromBlob($this.ConfigContainerName, $serverConfigMetadataBlobName, $this.FolderPath, $true,$true)
 		$this.PublishCustomMessage("Completed downloading latest policy index file.", [MessageType]::Update);

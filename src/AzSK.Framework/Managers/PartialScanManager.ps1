@@ -46,11 +46,11 @@ class PartialScanManager
         {
            if([ConfigurationManager]::GetAzSKSettings().IsCentralScanModeOn)
 		   {
-				$this.ResourceScanTrackerBlobName = $SubscriptionId + "/" + [Constants]::ResourceScanTrackerCMBlobName
+				$this.ResourceScanTrackerBlobName = Join-Path $SubscriptionId $([Constants]::ResourceScanTrackerCMBlobName)
 		   }
 		   else
 		   {
-				$this.ResourceScanTrackerBlobName =  $SubscriptionId + "/" + [Constants]::ResourceScanTrackerBlobName
+				$this.ResourceScanTrackerBlobName = Join-Path $SubscriptionId $([Constants]::ResourceScanTrackerBlobName)
 		   }
         }
 		#$this.GetResourceScanTrackerObject($SubscriptionId);
@@ -184,28 +184,28 @@ class PartialScanManager
 	{
 		if($null -ne $this.ResourceScanTrackerObj)
 		{
-			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState\PartialScanData";
+			$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "TempState"| Join-Path -ChildPath "PartialScanData";
 			
 			if(![string]::isnullorwhitespace($this.subId)){
-				if(-not (Test-Path "$AzSKTemp\$($this.subId)"))
+				if(-not (Test-Path (Join-Path $AzSKTemp $this.subId)))
 				{
-					mkdir -Path "$AzSKTemp\$($this.subId)" -ErrorAction Stop | Out-Null
+					New-Item -ItemType Directory -Path (Join-Path $AzSKTemp $this.subId) -ErrorAction Stop | Out-Null
 				}
 			}
 			else{
 				if(-not (Test-Path "$AzSKTemp"))
 				{
-					mkdir -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
+					New-Item -ItemType Directory -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
 				}
 			}
 
-			$masterFilePath = "$AzSKTemp\$($($this.ResourceScanTrackerBlobName).Replace('/','\'))"
+			$masterFilePath = Join-Path $AzSKTemp $($this.ResourceScanTrackerBlobName)
 			$controlStateBlob = Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$($this.ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
 
 			if($null -ne $controlStateBlob)
 			{
-				[AzHelper]::GetStorageBlobContent($masterFilePath,"$($this.ResourceScanTrackerBlobName)" , $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)
-				#Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force                
+				#[AzHelper]::GetStorageBlobContent($masterFilePath,"$($this.ResourceScanTrackerBlobName)" , $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)
+				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force                
 				$partialScanResources  = Get-ChildItem -Path $masterFilePath -Force | Get-Content | ConvertFrom-Json
 				if($partialScanResources -ne $null -and ($partialScanResources.ResourceMapTable | Measure-Object).Count -gt 0 -and ($partialScanResources.ResourceMapTable | Where-Object {$_.State -notin ([ScanState]::COMP,[ScanState]::ERR)} | Measure-Object).Count -eq 0)
 				{
@@ -251,25 +251,25 @@ class PartialScanManager
 		$this.GetResourceScanTrackerObject();
 		if($null -ne $this.ResourceScanTrackerObj)
 		{
-			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState\PartialScanData";
+			$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "TempState" | Join-Path -ChildPath "PartialScanData";
 			
 			if(![string]::isnullorwhitespace($this.subId)){
-				if(-not (Test-Path "$AzSKTemp\$($this.subId)"))
+				if(-not (Test-Path (Join-Path $AzSKTemp $this.subId)))
 				{
-					mkdir -Path "$AzSKTemp\$($this.subId)" -ErrorAction Stop | Out-Null
+					New-Item -ItemType Directory -Path (Join-Path $AzSKTemp $this.subId) -ErrorAction Stop | Out-Null
 				}	
 			}
 			else{
 				if(-not (Test-Path "$AzSKTemp"))
 				{
-					mkdir -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
+					New-Item -ItemType Directory -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
 				}
 			}
 
-			$masterFilePath = "$AzSKTemp\$($($this.ResourceScanTrackerBlobName).Replace('/','\'))"
+			$masterFilePath =Join-Path $AzSKTemp $($this.ResourceScanTrackerBlobName)
 			[Helpers]::ConvertToJsonCustom($this.ResourceScanTrackerObj) | Out-File $masterFilePath -Force
-			[AzHelper]::UploadStorageBlobContent($masterFilePath, "$($this.ResourceScanTrackerBlobName)", $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)		
-		    #Set-AzStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "$($this.ResourceScanTrackerBlobName)" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
+			#[AzHelper]::UploadStorageBlobContent($masterFilePath, "$($this.ResourceScanTrackerBlobName)", $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)		
+		    Set-AzStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "$($this.ResourceScanTrackerBlobName)" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
 		}
 	}
 
@@ -282,12 +282,12 @@ class PartialScanManager
 	{
 		try
 		{
-			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState\PartialScanData";
-
+			$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "TempState" | Join-Path -ChildPath "PartialScanData";
+			
 			if(![string]::isnullorwhitespace($this.subId)){
-				if(-not (Test-Path "$AzSKTemp\$($this.subId)"))
+				if(-not (Test-Path (Join-Path $AzSKTemp $this.subId)))
 				{
-					mkdir -Path "$AzSKTemp\$($this.subId)" -ErrorAction Stop | Out-Null
+					New-Item -ItemType Directory -Path (Join-Path $AzSKTemp $this.subId) -ErrorAction Stop | Out-Null
 				}
 				$archiveName =  $this.CAScanProgressSnapshotsContainerName + $token +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + ".json";
 				
@@ -296,13 +296,13 @@ class PartialScanManager
 					$archiveName =  $this.CAScanProgressSnapshotsContainerName + $token +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + "_CentralMode" + ".json";
 				}
 				
-				$masterFilePath = "$AzSKTemp\$($this.subId)\$archiveName"
-				$archiveName = [PartialScanManager]::Instance.subId + "/" + $archiveName;
+				$masterFilePath = Join-Path $AzSKTemp $($this.subId) | Join-Path -ChildPath $archiveName
+				$archiveName = Join-Path $([PartialScanManager]::Instance.subId) $archiveName;
 			}
 			else{
 				if(-not (Test-Path "$AzSKTemp"))
 				{
-					mkdir -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
+					New-Item -ItemType Directory -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
 				}
 				$archiveName =  $this.CAScanProgressSnapshotsContainerName + $token +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + ".json";
 				
@@ -311,15 +311,15 @@ class PartialScanManager
 					$archiveName =  $this.CAScanProgressSnapshotsContainerName + $token +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + "_CentralMode" + ".json";
 				}
 					
-				$masterFilePath = "$AzSKTemp\$archiveName"
+				$masterFilePath = Join-Path $AzSKTemp $archiveName;
 			}
 			$controlStateBlob = Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$($this.ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
 			if($null -ne $controlStateBlob)
 			{
-				[AzHelper]::GetStorageBlobContent($masterFilePath, "$($this.ResourceScanTrackerBlobName)" , $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)
-				#Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force			
-				[AzHelper]::UploadStorageBlobContent( $masterFilePath, "Archive/$archiveName", $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)
-				#Set-AzStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "Archive/$archiveName" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
+				#[AzHelper]::GetStorageBlobContent($masterFilePath, "$($this.ResourceScanTrackerBlobName)" , $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)
+				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force			
+				#[AzHelper]::UploadStorageBlobContent( $masterFilePath, "Archive/$archiveName", $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)
+				Set-AzStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob (Join-Path "Archive" $archiveName) -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
 			}
 	
 			#purge old archives
@@ -346,28 +346,28 @@ class PartialScanManager
 			{
 				return;
 			}
-			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\TempState\PartialScanData";
-
+			$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "TempState" | Join-Path -ChildPath "PartialScanData";
+			
 			if(![string]::isnullorwhitespace($this.subId)){
-				if(-not (Test-Path "$AzSKTemp\$($this.subId)"))
+				if(-not (Test-Path (Join-Path $AzSKTemp $this.subId)))
 				{
-					mkdir -Path "$AzSKTemp\$($this.subId)" -ErrorAction Stop | Out-Null
+					New-Item -ItemType Directory -Path (Join-Path $AzSKTemp $this.subId) -ErrorAction Stop | Out-Null
 				}
 			}
 			else{
 				if(-not (Test-Path "$AzSKTemp"))
 				{
-					mkdir -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
+					New-Item -ItemType Directory -Path "$AzSKTemp" -ErrorAction Stop | Out-Null
 				}
 			}
 
-			$masterFilePath = "$AzSKTemp\$($($this.ResourceScanTrackerBlobName).Replace('/','\'))"
+			$masterFilePath = Join-Path $AzSKTemp $($this.ResourceScanTrackerBlobName)
 			$controlStateBlob = Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$($this.ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
 							
 			if($null -ne $controlStateBlob)
 			{
-				[AzHelper]::GetStorageBlobContent($masterFilePath, "$($this.ResourceScanTrackerBlobName)", $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)
-				#Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force
+				#[AzHelper]::GetStorageBlobContent($masterFilePath, "$($this.ResourceScanTrackerBlobName)", $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)
+				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force
 				$this.ResourceScanTrackerObj = Get-ChildItem -Path $masterFilePath -Force | Get-Content | ConvertFrom-Json
 				$resources = Get-AzResource
 				#filter resources which are removed from subscription
