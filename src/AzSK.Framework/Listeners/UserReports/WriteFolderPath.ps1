@@ -56,7 +56,7 @@ class WriteFolderPath: FileOutputBase
 	[void] CommandStartedAction([SubscriptionContext] $context)
 	{
 		$this.SetFolderPath($context);
-		Copy-Item $PSScriptRoot\README.txt $this.FolderPath
+		Copy-Item (Join-Path $PSScriptRoot "README.txt") $this.FolderPath
 	}
 
 }

@@ -299,7 +299,7 @@ class CommandBase: AzSKRoot {
 			{
 				New-Item -Path $AzSKTemp -ItemType Directory -Force
 			}
-			Remove-Item -Path "$AzSKTemp\au_*" -Force -Recurse -ErrorAction SilentlyContinue
+			Remove-Item -Path (Join-Path $AzSKTemp "au_*") -Force -Recurse -ErrorAction SilentlyContinue
 
 			$autoUpdateContent = $autoUpdateContent.Replace("##installurl##",$AutoUpdateCommand);
 			$autoUpdateContent | Out-File (Join-Path $AzSKTemp $fileName) -Force

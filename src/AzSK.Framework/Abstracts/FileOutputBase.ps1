@@ -136,11 +136,11 @@ class FileOutputBase: ListenerBase
         }
 
         $outputPath = $this.FolderPath;
-        if (-not $outputPath.EndsWith("\")) {
-            $outputPath += "\";
-        }
+        # if (-not $outputPath.EndsWith("\")) {
+        #     $outputPath += "\";
+        # }
         if ([string]::IsNullOrEmpty($fileName)) {
-            $outputPath += $(Get-Date -format "yyyyMMdd_HHmmss") + ".LOG";
+            $outputPath = Join-Path outputPath ($(Get-Date -format "yyyyMMdd_HHmmss") + ".LOG");
         }
         else {
             $outputPath += $fileName;            

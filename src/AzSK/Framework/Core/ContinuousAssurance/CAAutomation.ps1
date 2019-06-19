@@ -442,7 +442,7 @@ class CCAutomation: CommandBase
 
 				if(-not (Split-Path -Parent $filename | Test-Path))
 				{
-					mkdir -Path $(Split-Path -Parent $filename) -Force
+					New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 				}
 				
 				[Helpers]::ConvertToJsonCustom($scanobjects) | Out-File $filename -Force
@@ -905,7 +905,7 @@ class CCAutomation: CommandBase
 
 				    if(-not (Split-Path -Parent $filename | Test-Path))
 				    {
-					    mkdir -Path $(Split-Path -Parent $filename) -Force
+					    New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 				    }
 					$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $this.UserConfig.StorageAccountName
 					$currentContext = New-AzStorageContext -StorageAccountName $this.UserConfig.StorageAccountName -StorageAccountKey $keys[0].Value -Protocol Https
@@ -1085,7 +1085,7 @@ class CCAutomation: CommandBase
 
 				if(-not (Split-Path -Parent $filename | Test-Path))
 				{
-					mkdir -Path $(Split-Path -Parent $filename) -Force
+					New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 				}
 				[Helpers]::ConvertToJsonCustom($existingScanObjects) | Out-File $filename -Force
 			
@@ -1649,7 +1649,7 @@ class CCAutomation: CommandBase
 
 			if(-not (Split-Path -Parent $filename | Test-Path))
 			{
-				mkdir -Path $(Split-Path -Parent $filename) -Force
+				New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 			}
 			$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $reportsStorageAccount.Name
 			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
@@ -2215,7 +2215,7 @@ class CCAutomation: CommandBase
 
 			if(-not (Split-Path -Parent $filename | Test-Path))
 			{
-				mkdir -Path $(Split-Path -Parent $filename) -Force
+				New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 			}
 			$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $reportsStorageAccount.Name
 			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
@@ -2498,7 +2498,7 @@ class CCAutomation: CommandBase
 
 			if(-not (Split-Path -Parent $filename | Test-Path))
 			{
-				mkdir -Path $(Split-Path -Parent $filename) -Force
+				New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 			}
 			[Helpers]::ConvertToJsonCustom($finalTargetSubs) | Out-File $filename -Force							
 
