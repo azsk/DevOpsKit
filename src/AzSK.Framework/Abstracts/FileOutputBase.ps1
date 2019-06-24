@@ -140,10 +140,10 @@ class FileOutputBase: ListenerBase
         #     $outputPath += "\";
         # }
         if ([string]::IsNullOrEmpty($fileName)) {
-            $outputPath = Join-Path outputPath ($(Get-Date -format "yyyyMMdd_HHmmss") + ".LOG");
+            $outputPath = Join-Path $outputPath ($(Get-Date -format "yyyyMMdd_HHmmss") + ".LOG");
         }
         else {
-            $outputPath += $fileName;            
+            $outputPath = Join-Path $outputPath $fileName;            
         }
 		return $outputPath;
 	}
