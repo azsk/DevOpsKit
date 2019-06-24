@@ -28,7 +28,7 @@ class CCAutomation: CommandBase
 	hidden [string] $CAMultiSubScanConfigContainerName = [Constants]::CAMultiSubScanConfigContainerName
 	hidden [string] $AzSKCentralSPNFormatString = "AzSK_CA_SPNc_"
 	hidden [string] $AzSKLocalSPNFormatString = "AzSK_CA_SPN_"
-	hidden [string] $AzSKCATempFolderPath = ($env:temp + "\AzSKTemp\")
+	hidden [string] $AzSKCATempFolderPath = (Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Temp" |Join-Path -ChildPath "AzSKTemp")
 	[bool] $SkipTargetSubscriptionConfig = $false;
 	[bool] $IsCentralScanModeOn = $false;
 	[bool] $IsMultiCAModeOn = $false;
@@ -92,7 +92,7 @@ class CCAutomation: CommandBase
 		if($this.AutomationAccount.ResourceGroup -ne $this.AutomationAccount.CoreResourceGroup)
 		{
 			$this.IsMultiCAModeOn = $true
-            $this.CATargetSubsBlobName = "$($this.AutomationAccount.ResourceGroup)\$([Constants]::CATargetSubsBlobName)";
+            $this.CATargetSubsBlobName = Join-Path $($this.AutomationAccount.ResourceGroup) $([Constants]::CATargetSubsBlobName);
 		}
 		$this.UserConfig = [UserConfig]@{			
 			ResourceGroupNames = $ResourceGroupNames
@@ -145,7 +145,7 @@ class CCAutomation: CommandBase
 		if($this.AutomationAccount.ResourceGroup -ne $this.AutomationAccount.CoreResourceGroup)
 		{
 			$this.IsMultiCAModeOn = $true
-            $this.CATargetSubsBlobName = "$($this.AutomationAccount.ResourceGroup)\$([Constants]::CATargetSubsBlobName)";
+            $this.CATargetSubsBlobName = Join-Path $($this.AutomationAccount.ResourceGroup) $([Constants]::CATargetSubsBlobName);
 		}
 		$this.UserConfig = [UserConfig]::new();
 		$this.DoNotOpenOutputFolder = $true;
@@ -438,7 +438,7 @@ class CCAutomation: CommandBase
 				#set context back to central sub
 				Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null			
 				#region: Create Scan objects			
-                $filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
+                $filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
 
 				if(-not (Split-Path -Parent $filename | Test-Path))
 				{
@@ -901,7 +901,7 @@ class CCAutomation: CommandBase
 					#Add the current sub as scanning object
 					
 					
-                    $filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
+                    $filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
 
 				    if(-not (Split-Path -Parent $filename | Test-Path))
 				    {
@@ -915,7 +915,7 @@ class CCAutomation: CommandBase
 					{
 						$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($this.AzSKCATempFolderPath, $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
 						#$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
-						$CAScanDataBlobContent = Get-ChildItem -Path "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)" -Force | Get-Content | ConvertFrom-Json
+						$CAScanDataBlobContent = Get-ChildItem -Path Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName) -Force | Get-Content | ConvertFrom-Json
 					}
 
 					if(($CAScanDataBlobContent | Measure-Object).Count -gt 0)
@@ -1081,7 +1081,7 @@ class CCAutomation: CommandBase
 					$existingScanObjects += $scanobject;
 				}
 
-				$filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
+				$filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
 
 				if(-not (Split-Path -Parent $filename | Test-Path))
 				{
@@ -1645,7 +1645,7 @@ class CCAutomation: CommandBase
 		[CAScanModel[]] $scanobjects = @();
 		if(($reportsStorageAccount | Measure-Object).Count -eq 1)
 		{
-			$filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
+			$filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
 
 			if(-not (Split-Path -Parent $filename | Test-Path))
 			{
@@ -1659,7 +1659,7 @@ class CCAutomation: CommandBase
 				$this.IsCentralScanModeOn = $true;
 				$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
 				$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
-				$CAScanDataBlobContent = Get-ChildItem -Path "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)" -Force | Get-Content | ConvertFrom-Json
+				$CAScanDataBlobContent = Get-ChildItem -Path (Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)) -Force | Get-Content | ConvertFrom-Json
 
 				#create the active snapshot from the ca scan objects					
 				$this.TargetSubscriptionIds = ""
@@ -2211,7 +2211,7 @@ class CCAutomation: CommandBase
 		
 		if(($reportsStorageAccount | Measure-Object).Count -eq 1)
 		{
-			$filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
+			$filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
 
 			if(-not (Split-Path -Parent $filename | Test-Path))
 			{
@@ -2224,7 +2224,7 @@ class CCAutomation: CommandBase
 			{
 				$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
 				#$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
-				$CAScanDataBlobContent = Get-ChildItem -Path "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)" -Force | Get-Content | ConvertFrom-Json
+				$CAScanDataBlobContent = Get-ChildItem -Path Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName) -Force | Get-Content | ConvertFrom-Json
 			}
 		}
 		if(($CAScanDataBlobContent | Measure-Object).Count -gt 0)
@@ -2494,7 +2494,7 @@ class CCAutomation: CommandBase
 		#Persist only if there are more than one scan object. Count greater than 1 as to check if there are any other subscription apart from the central one
 		if(($finalTargetSubs | Measure-Object).Count -gt 1)
 		{
-			$filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
+			$filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
 
 			if(-not (Split-Path -Parent $filename | Test-Path))
 			{
@@ -3081,14 +3081,21 @@ class CCAutomation: CommandBase
         {
             #create new self-signed certificate 
             $this.PublishCustomMessage("Generating new credential for AzSK CA SPN")
-		    $selfsignedCertificate = [ActiveDirectoryHelper]::NewSelfSignedCertificate($azskADAppName,$this.certificateDetail.CertStartDate,$this.certificateDetail.CertEndDate,$this.certificateDetail.Provider)
+		    #$selfsignedCertificate = [ActiveDirectoryHelper]::NewSelfSignedCertificate($azskADAppName,$this.certificateDetail.CertStartDate,$this.certificateDetail.CertEndDate,$this.certificateDetail.Provider)
 			
 		    #create password
 			     
 		    $secureCertPassword = [Helpers]::NewSecurePassword()
 
-		    $pfxFilePath = $env:TEMP+ "\temp.pfx"
-		    Export-PfxCertificate -Cert $selfsignedCertificate -Password $secureCertPassword -FilePath $pfxFilePath | Out-Null 
+		    $pfxFilePath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Temp" |Join-Path -ChildPath "temp.pfx"
+		    #Export-PfxCertificate -Cert $selfsignedCertificate -Password $secureCertPassword -FilePath $pfxFilePath | Out-Null 
+            $selfsignedCertificate = New-SelfSignedCertificate -CommonName "$azskADAppName" `
+                                                                    -OutCertPath $pfxFilePath `
+																	-NotBefore $this.certificateDetail.CertStartDate `
+																	-NotAfter $this.certificateDetail.CertEndDate `
+                                                                    -Passphrase $secureCertPassword `
+																	-KeyUsage DataEncipherment
+
 		    $publicCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(,$selfsignedCertificate.GetRawCertData())
 			
             try
@@ -3143,6 +3150,7 @@ class CCAutomation: CommandBase
         }     
     }
     
+    
     hidden [void] SetCASPNPermissions([string] $appID)
     {
 		$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
@@ -3152,7 +3160,7 @@ class CCAutomation: CommandBase
     
 	hidden [string] AddConfigValues([string]$fileName)
 	{
-		$outputFilePath = "$Env:LOCALAPPDATA\$fileName";
+		$outputFilePath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) $fileName;
 
 		$ccRunbook = $this.LoadServerConfigFile($fileName)
 		#append escape character (`) before '$' symbol
