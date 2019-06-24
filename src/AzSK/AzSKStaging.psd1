@@ -80,7 +80,6 @@
 		@{ModuleName = 'Az.Websites'; RequiredVersion = '1.0.1'}	
 		@{ModuleName = 'Az.ContainerInstance'; RequiredVersion = '1.0.0'}	
         @{ModuleName = 'Az.ContainerRegistry'; RequiredVersion = '1.0.0'}
-        @{ModuleName = 'SelfSignedCertificate'; RequiredVersion = '0.0.4'}
     )
 
     # Assemblies that must be loaded prior to importing this module
