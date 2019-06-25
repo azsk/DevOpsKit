@@ -46,20 +46,29 @@ class LogAnalyticsOutput: ListenerBase
 				{
 					[LogAnalyticsHelper]::SetLAWSDetails();
 					$settings = [ConfigurationManager]::GetAzSKSettings()
-					$currentInstance.PublishCustomMessage("Scan events will be sent to the following Log Analytics workspace(s):",[MessageType]::Info);
-					if(-not [string]::IsNullOrEmpty($settings.LAWSId))
+					
+					if((-not [string]::IsNullOrEmpty($settings.LAWSId)) -or (-not [string]::IsNullOrEmpty($settings.AltLAWSId)))
 					{
-						$currentInstance.PublishCustomMessage("WSId: $($settings.LAWSId)`n",[MessageType]::Info);
-					}
+						$currentInstance.PublishCustomMessage("Scan events will be sent to the following Log Analytics workspace(s):",[MessageType]::Info);
 
-					if(-not [string]::IsNullOrEmpty($settings.AltLAWSId))
-					{
-						$currentInstance.PublishCustomMessage("AltWsId: $($settings.AltLAWSId)`n",[MessageType]::Info);
-						$currentInstance.PublishCustomMessage("`n");
+						if(-not [string]::IsNullOrEmpty($settings.LAWSId))
+						{						
+							$currentInstance.PublishCustomMessage("WSId: $($settings.LAWSId)`n",[MessageType]::Info);
+						}
+						
+						if(-not [string]::IsNullOrEmpty($settings.AltLAWSId))
+						{
+							$currentInstance.PublishCustomMessage("AltWsId: $($settings.AltLAWSId)`n",[MessageType]::Info);
+							$currentInstance.PublishCustomMessage("`n");
+						}
+						else
+						{
+							$currentInstance.PublishCustomMessage("`n");
+						}
 					}
 					else
 					{
-						$currentInstance.PublishCustomMessage("`n");
+						$currentInstance.PublishCustomMessage("Log Analytics workspace is not configured.`n",[MessageType]::Warning);
 					}
 					
 					$currentInstance.CommandAction($Event,"Command Started");
