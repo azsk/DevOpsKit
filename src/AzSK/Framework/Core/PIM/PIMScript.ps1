@@ -443,7 +443,7 @@ class PIM: CommandBase {
             }
         }
         else {
-            $this.PublishCustomMessage("No matching resource found for assignment.", [MessageType]::Warning)
+            $this.PublishCustomMessage( "Unable to find resource on which assignment was requested. Either the resource does not exist or you may not have permissions for assigning a role on it", [MessageType]::Warning)
         }
     }
 
