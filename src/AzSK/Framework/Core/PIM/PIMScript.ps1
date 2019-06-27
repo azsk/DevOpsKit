@@ -112,24 +112,26 @@ class PIM: CommandBase {
     hidden [System.Collections.Generic.List[PIMResource]] ListResources($type, $resourceName) {
         $this.AcquireToken();
         $resources = $null
+        $resourceUrl = $null
         # This seperation is required due to nature of API, it operates in paging/batching manner when we query for all types
         # Note: At present, we do not provide PIM operation management for management group. However, if needed in the future, it can be added in the else statement. >> $filter=(type%20eq%20%27managementgroup%27)
         
-        if($type -eq 'resource') {
-            $resourceUrl = $this.APIroot + "/resources?`$select=id,displayName,type&`$filter=(type%20ne%20%27resourcegroup%27%20and%20type%20ne%20%27subscription%27%20and%20type%20ne%20%27managementgroup%27)%20and%20contains(tolower(displayName),%20%27{0}%27)" -f $resourceName.ToLower()
-        }
-        elseif($type -eq 'subscription')
+        if($type -eq 'subscription')
         {
+            # Fetch PIM details of the all subscriptions user has access to
             $resourceUrl = $this.APIroot + "/resources?`$select=id,displayName,type&`$filter=(type%20eq%20%27subscription%27)&`$orderby=type"
         }
         elseif($type -eq 'resourcegroup')
         {
+            # Fetch PIM details of the specified resource group
             $resourceUrl = $this.APIroot + "/resources?`$select=id,displayName,type&`$filter=(type%20eq%20%27resourcegroup%27)%20and%20contains(tolower(displayName),%20%27{0}%27)&`$orderby=type" -f $resourceName.ToLower()
         }
-        else
-        {    
-            $resourceUrl = $this.APIroot + "/resources?`$select=id,displayName,type&`$orderby=type"
-        }
+        elseif($type -eq 'resource')
+        {
+            # Fetch PIM details of the specified resource
+            $resourceUrl = $this.APIroot + "/resources?`$select=id,displayName,type&`$filter=(type%20ne%20%27resourcegroup%27%20and%20type%20ne%20%27subscription%27%20and%20type%20ne%20%27managementgroup%27)%20and%20contains(tolower(displayName),%20%27{0}%27)" -f $resourceName.ToLower()
+        }               
+        
         $response = $null
         try
         {
@@ -199,8 +201,6 @@ class PIM: CommandBase {
     hidden [PSObject] ListAssignmentsWithFilter($resourceId, $IsPermanent) {
         $this.AcquireToken()
         $url = $this.APIroot + "/resources/" + $resourceId + "`/roleAssignments?`$expand=subject,roleDefinition(`$expand=resource)"
-        #Write-Host $url
-
         $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $url -Method Get
         $roleAssignments = ConvertFrom-Json $response.Content
         $i = 0
