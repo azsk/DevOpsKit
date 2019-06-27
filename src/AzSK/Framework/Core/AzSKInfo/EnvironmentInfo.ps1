@@ -36,7 +36,7 @@ class EnvironmentInfo: CommandBase
 		$this.PublishCustomMessage([Helpers]::ConvertObjectToString($configurations, $true), [MessageType]::Default);
 		$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 
-		$this.PublishCustomMessage("`r`nAzureRM context`r`n" + [Constants]::SingleDashLine, [MessageType]::Default);
+		$this.PublishCustomMessage("`r`nAz context`r`n" + [Constants]::SingleDashLine, [MessageType]::Default);
 		$this.PublishCustomMessage([Helpers]::ConvertObjectToString(($rmContext | Select-Object -Property Subscription, Tenant), $false), [MessageType]::Default);
 	}
 }
