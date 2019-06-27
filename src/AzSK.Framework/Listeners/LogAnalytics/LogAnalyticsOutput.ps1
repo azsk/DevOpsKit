@@ -68,7 +68,7 @@ class LogAnalyticsOutput: ListenerBase
 					}
 					else
 					{
-						$currentInstance.PublishCustomMessage("Log Analytics workspace is not configured.`n",[MessageType]::Warning);
+						$currentInstance.PublishCustomMessage("Scan events are currently not being sent to a Log Analytics workspace. To set one up refer: https://github.com/azsk/DevOpsKit-docs/tree/master/05-Alerting-and-Monitoring#b-testing-log-anaytics-workspace-connectivity `n",[MessageType]::Warning);						
 					}
 					
 					$currentInstance.CommandAction($Event,"Command Started");
