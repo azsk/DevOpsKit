@@ -321,7 +321,7 @@ class ConfigurationHelper {
 
 	hidden static [PSObject] LoadModuleRawFile([string] $fileName) {
 	
-	 $rootConfigPath = (Get-Item $PSScriptRoot).Parent.FullName + "\Configurations\";
+	 $rootConfigPath = (Get-Item $PSScriptRoot).Parent.Parent.FullName + "\AzSK\Framework\Configurations\";
      $filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
 	 if ($filePath) {
             $fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) 

@@ -1,21 +1,37 @@
+<#
+.Description
+	Base class for all command classes. 
+	Provides functionality to fire events/operations at command levels like command started, 
+	command completed and perform operation like generate run-identifier, invoke auto module update, 
+	open log folder at the end of commmand execution etc
+#>
 using namespace System.Management.Automation
 Set-StrictMode -Version Latest
-# Base class for all classes being called from PS commands
-# Provides functionality to fire important events at command call
-class CommandBase: AzSKRoot {
+
+class CommandBase: CommandBaseExt {
+
+	#Region: Properties 
     [string[]] $FilterTags = @();
 	[bool] $DoNotOpenOutputFolder = $false;
 	[bool] $Force = $false
-	[bool] $IsLocalComplianceStoreEnabled = $false
+	#EndRegion
+
+	#Region: Constructor 
     CommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
-    Base($subscriptionId) {
+    Base($subscriptionId,$invocationContext) {
+
         [Helpers]::AbstractClass($this, [CommandBase]);
-        if (-not $invocationContext) {
+		
+		if (-not $invocationContext) {
             throw [System.ArgumentException] ("The argument 'invocationContext' is null. Pass the `$PSCmdlet.MyInvocation from PowerShell command.");
-        }
-        $this.InvocationContext = $invocationContext;
+		}
+		
+		$this.InvocationContext = $invocationContext;
+		
+		#Validate if privacy is accepted by user
 		[PrivacyNotice]::ValidatePrivacyAcceptance()
 
+		#Initialize common parameter sets
 		if($null -ne $this.InvocationContext.BoundParameters["DoNotOpenOutputFolder"])
 		{
 			$this.DoNotOpenOutputFolder = $this.InvocationContext.BoundParameters["DoNotOpenOutputFolder"];
@@ -23,49 +39,19 @@ class CommandBase: AzSKRoot {
 		if($null -ne $this.InvocationContext.BoundParameters["Force"])
 		{
 			$this.Force = $this.InvocationContext.BoundParameters["Force"];
-		}		
-		#Validate if command is getting run with correct Org Policy
-		$IsTagSettingRequired=$this.ValidateOrgPolicyOnSubscription($this.Force)
-		#Validate if policy url token is getting expired 
-		$onlinePolicyStoreUrl = [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl
-		if([Helpers]::IsSASTokenUpdateRequired($onlinePolicyStoreUrl))
-		{
-			#Check if CA Setup Runbook URL token is valid and update it with local policy token
-			$CASetupRunbookUrl = [ConfigurationManager]::GetAzSKConfigData().CASetupRunbookURL
-			if(-not [Helpers]::IsSASTokenUpdateRequired($CASetupRunbookUrl))
-			{
-				[ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl = [Helpers]::GetUriWithUpdatedSASToken($onlinePolicyStoreUrl,$CASetupRunbookUrl)				
-				[AzSKSettings]::Update([ConfigurationManager]::GetAzSKSettings())
-			}
-			else
-			{
-				[EventBase]::PublishGenericCustomMessage("Org policy settings is getting expired. Please run installer(IWR) command to update with latest policy. ", [MessageType]::Warning);
-			}
 		}
+	}
+	#EndRegion
 
-		 #Validate if command has AzSK component write permission
-		$commandMetadata= $this.GetCommandMetadata()
-		if(([Helpers]::CheckMember($commandMetadata,"HasAzSKComponentWritePermission")) -and  $commandMetadata.HasAzSKComponentWritePermission -and ($IsTagSettingRequired -or $this.Force))
-		{
-			#If command is running with Org-neutral Policy or switch Org policy, Set Org Policy tag on subscription
-			$this.SetOrgPolicyTag($this.Force)
-		}	
-
-		$azskConfigComplianceFlag = [ConfigurationManager]::GetAzSKConfigData().StoreComplianceSummaryInUserSubscriptions;	
-        $localSettingComplianceFlag = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
-        #return if feature is turned off at server config
-        if($azskConfigComplianceFlag -or $localSettingComplianceFlag) 
-		{
-			$this.IsLocalComplianceStoreEnabled = $true
-		}     
-		#clear azsk storage instance
-		[StorageHelper]::AzSKStorageHelperInstance = $null;
-
-    }
-
+	#Region: Command level listerner events 
     [void] CommandStarted() {
         $this.PublishAzSKRootEvent([AzSKRootEvent]::CommandStarted, $this.CheckModuleVersion());
-    }
+	}
+	
+	[void] PostCommandStartedAction()
+	{
+		
+	}
 
     [void] CommandError([System.Management.Automation.ErrorRecord] $exception) {
         [AzSKRootEventArgument] $arguments = $this.CreateRootEventArgumentObject();
@@ -76,8 +62,34 @@ class CommandBase: AzSKRoot {
 
     [void] CommandCompleted([MessageData[]] $messages) {
         $this.PublishAzSKRootEvent([AzSKRootEvent]::CommandCompleted, $messages);
+	}
+	
+	[void] CommandProgress([int] $totalItems, [int] $currentItem) {
+        $this.CommandProgress($totalItems, $currentItem, 1);
     }
 
+    [void] CommandProgress([int] $totalItems, [int] $currentItem, [int] $granularity) {
+        if ($totalItems -gt 0) {
+            # $granularity indicates the number of items after which percentage progress will be printed
+            # Set the max granularity to total items
+            if ($granularity -gt $totalItems) {
+                $granularity = $totalItems;
+            }
+
+            # Conditions for posting progress: 0%, 100% and based on granularity
+            if ($currentItem -eq 0 -or $currentItem -eq $totalItems -or (($currentItem % $granularity) -eq 0)) {
+                $this.PublishCustomMessage("$([int](($currentItem / $totalItems) * 100))% Completed");
+            }
+        }
+    }
+
+    # Dummy function declaration to define the function signature
+    [void] PostCommandCompletedAction([MessageData[]] $messages)
+	{ }
+	#EndRegion
+
+	#Region: Helper function to invoke function based on method name. 
+	# This is method called from command(GRS/GSS etc) files and resposinble for printing command start/end messages using listeners  
     [string] InvokeFunction([PSMethod] $methodToCall) {
         return $this.InvokeFunction($methodToCall, @());
     }
@@ -87,22 +99,28 @@ class CommandBase: AzSKRoot {
             throw [System.ArgumentException] ("The argument 'methodToCall' is null. Pass the reference of method to call. e.g.: [YourClass]::new().YourMethod");
         }
 
-		# Reset cached context
+		# Reset cached context <TODO Framework: Fix Dependancy on RM module>
 		[ContextHelper]::ResetCurrentRMContext()
 
-        $this.PublishRunIdentifier($this.InvocationContext);
+		# Publish runidentifier(YYYYMMDD_HHMMSS) used by all listener as identifier for scan,creating log folder 
+		$this.PublishRunIdentifier($this.InvocationContext);
+		
+		# <TODO Framework: Move command time calculation methods to AIOrgTelmetry Listener>
+		
 		[AIOrgTelemetryHelper]::TrackCommandExecution("Command Started",
 			@{"RunIdentifier" = $this.RunIdentifier}, @{}, $this.InvocationContext);
         $sw = [System.Diagnostics.Stopwatch]::StartNew();
-        $isExecutionSuccessful = $true
+		
+		# Publish command init events
         $this.CommandStarted();
 		$this.PostCommandStartedAction();
+
+		# Invoke method with arguments
         $methodResult = @();
         try {
            $methodResult = $methodToCall.Invoke($arguments);
         }
         catch {
-            $isExecutionSuccessful = $true
             # Unwrapping the first layer of exception which is added by Invoke function
 			[AIOrgTelemetryHelper]::TrackCommandExecution("Command Errored",
 				@{"RunIdentifier" = $this.RunIdentifier; "ErrorRecord"= $_.Exception.InnerException.ErrorRecord},
@@ -111,6 +129,7 @@ class CommandBase: AzSKRoot {
             $this.CommandError($_.Exception.InnerException.ErrorRecord);
         }
 
+		# Publish command complete events
         $this.CommandCompleted($methodResult);
 		[AIOrgTelemetryHelper]::TrackCommandExecution("Command Completed",
 			@{"RunIdentifier" = $this.RunIdentifier},
@@ -120,9 +139,9 @@ class CommandBase: AzSKRoot {
 
         $folderPath = $this.GetOutputFolderPath();
 
+		# <TODO Framework: Move PDF generation method based on listener>
         #Generate PDF report
         $GeneratePDFReport = $this.InvocationContext.BoundParameters["GeneratePDF"];
-
         try {
             if (-not [string]::IsNullOrEmpty($folderpath)) {
                 switch ($GeneratePDFReport) {
@@ -143,6 +162,7 @@ class CommandBase: AzSKRoot {
             $this.CommandError($_);
         }
 
+		# 
         $AttestControlParamFound = $this.InvocationContext.BoundParameters["AttestControls"];
 		if($null -eq $AttestControlParamFound)
 		{
@@ -159,20 +179,17 @@ class CommandBase: AzSKRoot {
 			}
 		}
         return $folderPath;
-
-		# Call clear temp folder function.
-    }
-
-	[void] PostCommandStartedAction()
-	{
-		
 	}
+	#EndRegion
 
+	
+	# Function to get output log folder from WriteFolder listener 
     [string] GetOutputFolderPath() {
         return [WriteFolderPath]::GetInstance().FolderPath;
     }
 
-
+	# <TODO Framework: Move to module helper class>
+	# Function to validate module version based on Org policy and showcase warning for update or block commands if version is less than last two minor version
     [void] CheckModuleVersion() {
 		 
 		$currentModuleVersion = [System.Version] $this.GetCurrentModuleVersion()
@@ -214,8 +231,10 @@ class CommandBase: AzSKRoot {
 			}
 		}
 		
-    }
-
+	}
+	
+	# <TODO Framework: Move to module helper class>
+	# Funtion to execute module auto update flow based on switch
 	[void] InvokeAutoUpdate()
 	{
 		$AutoUpdateSwitch= [ConfigurationManager]::GetAzSKSettings().AutoUpdateSwitch;
@@ -309,108 +328,6 @@ class CommandBase: AzSKRoot {
 		catch
 		{
 			$this.CommandError($_.Exception.InnerException.ErrorRecord);
-		}
-	}
-
-    [void] CommandProgress([int] $totalItems, [int] $currentItem) {
-        $this.CommandProgress($totalItems, $currentItem, 1);
-    }
-
-    [void] CommandProgress([int] $totalItems, [int] $currentItem, [int] $granularity) {
-        if ($totalItems -gt 0) {
-            # $granularity indicates the number of items after which percentage progress will be printed
-            # Set the max granularity to total items
-            if ($granularity -gt $totalItems) {
-                $granularity = $totalItems;
-            }
-
-            # Conditions for posting progress: 0%, 100% and based on granularity
-            if ($currentItem -eq 0 -or $currentItem -eq $totalItems -or (($currentItem % $granularity) -eq 0)) {
-                $this.PublishCustomMessage("$([int](($currentItem / $totalItems) * 100))% Completed");
-            }
-        }
-    }
-
-    # Dummy function declaration to define the function signature
-    [void] PostCommandCompletedAction([MessageData[]] $messages)
-	{ }
-	
-	[bool] ValidateOrgPolicyOnSubscription([bool] $Force)
-	{
-		$AzSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
-		$tagsOnSub =  [ResourceGroupHelper]::GetResourceGroupTags($AzSKConfigData.AzSKRGName)
-		$IsTagSettingRequired = $false
-		$commandMetadata= $this.GetCommandMetadata()
-		if(([Helpers]::CheckMember($commandMetadata,"IsOrgPolicyMandatory")) -and  $commandMetadata.IsOrgPolicyMandatory)
-		{
-			if($tagsOnSub)
-			{
-				$SubOrgTag= $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -like "AzSKOrgName*"}
-				
-				if(($SubOrgTag | Measure-Object).Count -gt 0)
-				{
-					$OrgName =$SubOrgTag.Name.Split("_")[1]		
-					if(-not [string]::IsNullOrWhiteSpace($OrgName) -and  $OrgName -ne $AzSKConfigData.PolicyOrgName)
-					{
-						if($AzSKConfigData.PolicyOrgName -eq "org-neutral")
-						{
-							throw [SuppressedException]::new("The current subscription has been configured with DevOps kit policy for the '$OrgName' Org, However the DevOps kit command is running with a different ('$($AzSKConfigData.PolicyOrgName)') Org policy. `nPlease review FAQ at: https://aka.ms/devopskit/orgpolicy/faq and correct this condition depending upon which context(manual,CICD,CA scan) you are seeing this error. If FAQ does not help to resolve the issue, please contact your Org policy Owner ($($SubOrgTag.Value)).",[SuppressedExceptionType]::Generic)
-							
-						}
-						else
-						{	
-							if(-not $Force)
-							{
-								$this.PublishCustomMessage("Warning: The current subscription has been configured with DevOps kit policy for the '$OrgName' Org, However the DevOps kit command is running with a different ('$($AzSKConfigData.PolicyOrgName)') Org policy. `nPlease review FAQ at: https://aka.ms/devopskit/orgpolicy/faq and correct this condition depending upon which context(manual,CICD,CA scan) you are seeing this error. If FAQ does not help to resolve the issue, please contact your Org policy Owner ($($SubOrgTag.Value)).",[MessageType]::Warning);
-								$IsTagSettingRequired = $false
-							}					
-						}
-					}              
-				}
-				elseif($AzSKConfigData.PolicyOrgName -ne "org-neutral"){				
-					$IsTagSettingRequired =$true			
-				}			 
-			}
-			else {
-				$IsTagSettingRequired = $true
-			}
-		}
-		return $IsTagSettingRequired	
-	}
-
-	[void] SetOrgPolicyTag([bool] $Force)
-	{
-		try
-		{
-			$AzSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
-			$tagsOnSub =  [ResourceGroupHelper]::GetResourceGroupTags($AzSKConfigData.AzSKRGName) 
-			if($tagsOnSub)
-			{
-				$SubOrgTag= $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -like "AzSKOrgName*"}			
-				if(
-                    (($SubOrgTag | Measure-Object).Count -eq 0 -and $AzSKConfigData.PolicyOrgName -ne "org-neutral") -or 
-                    (($SubOrgTag | Measure-Object).Count -gt 0 -and $AzSKConfigData.PolicyOrgName -ne "org-neutral" -and $AzSKConfigData.PolicyOrgName -ne $SubOrgTag.Value -and $Force))
-				{
-					if(($SubOrgTag | Measure-Object).Count -gt 0)
-					{
-						$SubOrgTag | ForEach-Object{
-							[ResourceGroupHelper]::SetResourceGroupTags($AzSKConfigData.AzSKRGName,@{$_.Name=$_.Value}, $true)               
-						}
-					}
-					$TagName = [Constants]::OrgPolicyTagPrefix +$AzSKConfigData.PolicyOrgName
-					$SupportMail = $AzSKConfigData.SupportDL
-					if(-not [string]::IsNullOrWhiteSpace($SupportMail) -and  [Constants]::SupportDL -eq $SupportMail)
-					{
-						$SupportMail = "Not Available"
-					}   
-					[ResourceGroupHelper]::SetResourceGroupTags($AzSKConfigData.AzSKRGName,@{$TagName=$SupportMail}, $false)                
-									
-				}
-                					
-			}
-		}
-		catch{
-			# Exception occurred during setting tag. This is kept blank intentionaly to avoid flow break
 		}
 	}
 }

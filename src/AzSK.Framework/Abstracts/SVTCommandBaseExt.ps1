@@ -7,35 +7,18 @@
 #>
 using namespace System.Management.Automation
 Set-StrictMode -Version Latest
-class SVTCommandBase: SVTCommandBaseExt {
+class SVTCommandBaseExt: CommandBase {
 
-    #Region: Properties 
-    [string[]] $ExcludeTags = @();
-    [string[]] $ControlIds = @();
-	[string[]] $ExcludeControlIds = @();
-    [string] $ControlIdString = "";
-	[string] $ExcludeControlIdString = "";
-    [bool] $UsePartialCommits;
-    [bool] $UseBaselineControls;
-    [bool] $UsePreviewBaselineControls;
-    [PSObject] $CentralStorageAccount;
-	[string] $PartialScanIdentifier = [string]::Empty;
-    hidden [ControlStateExtension] $ControlStateExt;
-    hidden [bool] $UserHasStateAccess = $false;
-    [bool] $GenerateFixScript = $false;
-	[bool] $IncludeUserComments = $false;
-    [AttestationOptions] $AttestationOptions;
-    hidden [ComplianceReportHelper] $ComplianceReportHelper = $null;
-    hidden [ComplianceBase] $ComplianceBase = $null;
-    hidden [string] $AttestationUniqueRunId;
-    #EndRegion
+
 
     #Region Constructor
-    SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
+    SVTCommandBaseExt([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
 
-        [Helpers]::AbstractClass($this, [SVTCommandBase]);
+        [Helpers]::AbstractClass($this, [SVTCommandBaseExt]);
         
+        $this.CheckAndDisableAzureRMTelemetry()
+       
         $this.AttestationUniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
         #Fetching the resourceInventory once for each SVT command execution
         [ResourceInventory]::Clear();
@@ -55,14 +38,6 @@ class SVTCommandBase: SVTCommandBaseExt {
     }
     #EndRegion
 
-
-    hidden [SVTEventContext] CreateSVTEventContextObject() {
-        return [SVTEventContext]@{
-            SubscriptionContext = $this.SubscriptionContext;
-            PartialScanIdentifier = $this.PartialScanIdentifier
-            };
-    }
-
     hidden [void] ClearSingletons()
     {
         #clear ASC security status
@@ -72,7 +47,6 @@ class SVTCommandBase: SVTCommandBaseExt {
 
     hidden [void] CommandStarted() {
 
-        #<TODO Framework: Find the purpose of function and move to respective place>
         $this.ClearSingletons();
 
         [SVTEventContext] $arg = $this.CreateSVTEventContextObject();
@@ -247,5 +221,20 @@ class SVTCommandBase: SVTCommandBaseExt {
                 $this.CommandError($_);
             }
         }
+    }
+
+    hidden [void] CheckAndDisableAzureRMTelemetry()
+	{
+		#Disable AzureRM telemetry setting until scan is completed.
+		#This has been added to improve the performarnce of scan commands
+		#Telemetry will be re-enabled once scan is completed
+        Disable-AzDataCollection  | Out-Null
+
+    }
+    
+    hidden [void] CheckAndEnableAzureRMTelemetry()
+    {
+        #Enabled AzureRM telemetry which got disabled at the start of command
+        Enable-AzDataCollection  | Out-Null
     }
 }

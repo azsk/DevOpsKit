@@ -79,6 +79,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 
 #Abstracts
+. $FrameworkPath\Abstracts\AzSKRootExt.ps1
 . $FrameworkPath\Abstracts\AzSKRoot.ps1
 . $FrameworkPath\Abstracts\SVTBase.ps1
 
@@ -91,7 +92,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 
 . $FrameworkPath\Helpers\UserSubscriptionDataHelper.ps1
-. $FrameworkPath\Abstracts\ComplianceBase.ps1
+. $PSScriptRoot\Abstract\ComplianceBase.ps1
 . $FrameworkPath\Helpers\ComplianceReportHelper.ps1
 
 #Listeners
@@ -118,7 +119,10 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 #Remaining Abstracts
 . $PSScriptRoot\Core\SVT\SVTControlAttestation.ps1
+. $FrameworkPath\Abstracts\CommandBaseExt.ps1
 . $FrameworkPath\Abstracts\CommandBase.ps1
+
+
 
 #SubscriptionSecurity
 . $PSScriptRoot\Core\SubscriptionSecurity\Alerts.ps1
@@ -128,6 +132,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $PSScriptRoot\Core\ContinuousAssurance\CAAutomation.ps1
 
 #Remaining Abstracts
+. $FrameworkPath\Abstracts\SVTCommandBaseExt.ps1
 . $FrameworkPath\Abstracts\SVTCommandBase.ps1
 
 #Core
@@ -141,6 +146,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
     ForEach-Object {
     . $_.FullName
 }
+
 . $PSScriptRoot\Core\SubscriptionSecurity\SubscriptionSecurity.ps1
 
 . $PSScriptRoot\Core\FixControl\FixControlConfigResolver.ps1
