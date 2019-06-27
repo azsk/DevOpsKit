@@ -94,20 +94,21 @@ class ControlsInfo: CommandBase
 		}
 
 		$previewBaselineControls = @();
+
+		if([Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.ResourceTypeControlIdMappingList") )
+		{
+			$previewBaselineControls += $this.ControlSettings.PreviewBaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
+		}
+		if([Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.SubscriptionControlIdList") )
+		{
+			$previewBaselineControls += $this.ControlSettings.PreviewBaselineControls.SubscriptionControlIdList | ForEach-Object {  $_ }
+		}
+
 		if($this.PreviewBaslineControls)
 		{
-			if([Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.ResourceTypeControlIdMappingList") )
-			{
-				$previewBaselineControls += $this.ControlSettings.PreviewBaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
-			}
-			if([Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.SubscriptionControlIdList") )
-			{
-				$previewBaselineControls += $this.ControlSettings.PreviewBaselineControls.SubscriptionControlIdList | ForEach-Object {  $_ }
-			}
-			$baselineControls += $previewBaselineControls
 			$this.ControlIds += $previewBaselineControls
-
 		}
+
 		$resourcetypes | ForEach-Object{
 					$controls = [ConfigurationManager]::GetSVTConfig($_.JsonFileName); 
 
@@ -173,6 +174,15 @@ class ControlsInfo: CommandBase
 						$isBaselineControls = "No"
 					}
 
+					if($previewBaselineControls -contains $_.ControlID)
+					{
+						$isPreviewBaselineControls = "Yes"
+					}
+					else
+					{
+						$isPreviewBaselineControls = "No"
+					}
+
 					$ControlSeverity = $_.ControlSeverity
 					if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverity"))
 					{
@@ -189,6 +199,7 @@ class ControlsInfo: CommandBase
 					$ctrlObj | Add-Member -NotePropertyName Description -NotePropertyValue $_.Description
 					$ctrlObj | Add-Member -NotePropertyName ControlSeverity -NotePropertyValue $_.ControlSeverity
 					$ctrlObj | Add-Member -NotePropertyName IsBaselineControl -NotePropertyValue $isBaselineControls
+					$ctrlObj | Add-Member -NotePropertyName IsPreviewBaselineControl -NotePropertyValue $isPreviewBaselineControls
 					$ctrlObj | Add-Member -NotePropertyName Rationale -NotePropertyValue $_.Rationale
 					$ctrlObj | Add-Member -NotePropertyName Recommendation -NotePropertyValue $_.Recommendation
 					$ctrlObj | Add-Member -NotePropertyName Automated -NotePropertyValue $_.Automated

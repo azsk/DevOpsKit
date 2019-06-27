@@ -69,7 +69,7 @@
       "Automated": "Yes",
       "MethodName": "CheckStreamAnalyticsMetricAlert",
       "Rationale": "Using alert rules, one can ensure high availability of important/critical services by monitoring jobs and getting alerts for runtime errors and job failures.",
-      "Recommendation": "Run the 2 commands: (1) Add-AzMetricAlertRule -MetricName 'Errors' -Operator 'GreaterThan' -Threshold '0' -TimeAggregationOperator 'Total' -WindowSize '00:05:00' -Action '<New-AzAlertRuleEmail -SendToServiceOwner>' -Name '<Alert-Name-1>' -ResourceGroupName '<RGName>' -TargetResourceId '<TargetResourceId>' -Location '<Location>'' (2) Add-AzMetricAlertRule -MetricName 'AMLCalloutFailedRequests' -Operator 'GreaterThan' -Threshold '0' -TimeAggregationOperator 'Total' -WindowSize '00:05:00' -Action '<New-AzAlertRuleEmail -SendToServiceOwner>' -Name '<Alert-Name-2>' -ResourceGroupName '<RGName>' -TargetResourceId '<TargetResourceId>' -Location '<Location>''. Note: Make sure you choose different names for Alert-Name-1 and Alert-Name-2 above. Run 'Get-Help Add-AzMetricAlertRule -full' for more help.",
+      "Recommendation": "To setup alert rule for 'Failed Function Requests' and 'Runtime Errors' events: (1) Go to Stream Analytics service -> 'Alerts' -> 'New alert rule' -> 'Add condition' (2) Select Signal type as 'Metrics' -> Select 'Failed Function Requests'/'Runtime Errors' -> Select a. Operator =  'Greater Than' b. Aggregation type = 'Total' c. Threshold value = '0' and d. Aggregation granularity = '5 minute' (3) Select an existing Action Group or create a new one of type 'Email/SMS/Push/Voice'. Select 'Email' option and specify the email id.",
       "Tags": [
          "SDL",
          "TCP",

@@ -142,7 +142,7 @@
       "Automated": "Yes",
       "MethodName": "CheckBatchMetricAlert",
       "Rationale": "Metric alerts should be enabled to get alerts for issues that impacts the performance of batch resource when a metric crosses a certain threshold.",
-      "Recommendation": "Add or update a metric-based alert rule by using command Add-AzMetricAlertRule -Location '{Location}'-MetricName 'PoolDeleteCompleteEvent' -Name '{alertName}' -Operator 'GreaterThan' -ResourceGroup '{ResourceGroupName}' -TargetResourceId '{TargetResourceId}' -Threshold 0 -TimeAggregationOperator 'Total' -WindowSize '01:00:00'  -Action '{Comma-separated list of actions}'",
+      "Recommendation": "To setup alert rule for 'Pool Delete Complete Events' and 'Pool Delete Start Events' events (1) Go to Batch service -> 'Alerts' -> 'New alert rule' -> 'Add condition' (2) Select Signal type as 'Metrics' -> Select 'Pool Delete Complete Events'/'Pool Delete Start Events' -> Select a. Operator = 'Greater Than' b. Aggregation type = 'Total' c. Threshold value = '0' and d. Aggregation granularity = '1 hour' (3) Select an existing Action Group or create a new one of type 'Email/SMS/Push/Voice'. Select 'Email' option and specify the email id.",
       "Tags": [
         "SDL",
         "Best Practice",

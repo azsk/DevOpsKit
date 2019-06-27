@@ -95,6 +95,11 @@ class SecurityCenter: AzSKRoot
     {				
 		[MessageData[]] $messages = @();
 		$this.PublishCustomMessage("Updating SecurityCenter policies...`n" + [Constants]::SingleDashLine, [MessageType]::Warning);
+
+		$this.PublishCustomMessage("Updating Security Center version...", [MessageType]::Warning);
+		$this.SetSecurityCenterVersion();		
+		$this.PublishCustomMessage("Completed updating Security Center version.", [MessageType]::Update);
+
 		if($updateProvisioningSettings)
 		{
 			$this.PublishCustomMessage("Updating AutoProvision settings...", [MessageType]::Warning);
@@ -122,6 +127,17 @@ class SecurityCenter: AzSKRoot
 		$this.PublishCustomMessage([Constants]::SingleDashLine + "`nCompleted configuring SecurityCenter.", [MessageType]::Update);
 		return $messages;
     }
+
+	[MessageData[]] SetSecurityCenterVersion()
+	{
+		[MessageData[]] $messages = @();
+		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.autoProvisioning)
+		{			
+			$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
+			[Helpers]::SetResourceGroupTags($azskRGName,@{[Constants]::SecurityCenterConfigVersionTagName=$this.PolicyObject.Version},$false)				
+		}
+		return $messages;
+	}
 
 	[MessageData[]] SetAutoProvisioningSettings()
 	{

@@ -250,6 +250,14 @@ class WriteSummaryFile: FileOutputBase
 					{
 						$csvItem.IsBaselineControl = "No";
 					}
+					if($item.ControlItem.IsPreviewBaselineControl)
+					{
+						$csvItem.IsPreviewBaselineControl = "Yes";
+					}
+					else
+					{
+						$csvItem.IsPreviewBaselineControl = "No";
+					}
 
 					if($anyAttestedControls)
 					{
@@ -263,27 +271,13 @@ class WriteSummaryFile: FileOutputBase
 						$csvItem.ResourceId = $item.ResourceContext.ResourceId;
 						$csvItem.DetailedLogFile = "/$([Helpers]::SanitizeFolderName($item.ResourceContext.ResourceGroupName))/$($item.FeatureName).LOG";
 
-						if($UsePreviewBaselineControls)
-						{
-							$baselineControl = $previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Where-Object {$_.ControlIds -contains $csvItem.ControlID}
-							if(($baselineControl | Measure-Object).Count -gt 0 )
-							{
-								$csvItem.IsBaselineControl = "Yes";
-							}
-						}
+						
 					}
 					else
 					{
 					    $csvItem.ResourceId = $item.SubscriptionContext.scope;
 						$csvItem.DetailedLogFile = "/$([Helpers]::SanitizeFolderName($item.SubscriptionContext.SubscriptionName))/$($item.FeatureName).LOG"
-						if($UsePreviewBaselineControls)
-						{
-							$baselineControl = $previewBaselineControlsDetails.SubscriptionControlIdList | Where-Object {$_ -contains $csvItem.ControlID}
-							if(($baselineControl | Measure-Object).Count -gt 0 )
-							{
-								$csvItem.IsBaselineControl = "Yes";
-							}
-						}
+						
 					}
 
 					if($_.AttestationStatus -ne [AttestationStatus]::None)
