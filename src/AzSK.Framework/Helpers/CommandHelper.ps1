@@ -179,6 +179,7 @@ class CommandHelper
             Noun = "AzSKInfo";
             ShortName = "GAI";
 			IsLatestRequired = $false;
+			IsOrgPolicyMandatory = $false;
 		},
 		[CommandDetails]@{
             Verb = "Get";

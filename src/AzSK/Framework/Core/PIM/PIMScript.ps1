@@ -12,7 +12,7 @@ class PIM: CommandBase {
         $this.DoNotOpenOutputFolder = $true;
         $this.AccessToken = "";
         $this.AccountId = "";
-        $this.APIroot = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/";
+        $this.APIroot = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources";
     }
   
     #Acquire Access token
@@ -84,8 +84,8 @@ class PIM: CommandBase {
             ResourceType = $rtype
             ResourceName = $selectedResourceName
         }
-        $resources = $this.ListResources($item.ResourceType);
-        if($item.ResourceType -eq 'resource' -and ($null -ne $resources))
+        $resources = $this.ListResources($item.ResourceType, $item.ResourceName);
+        if($item.ResourceType -eq 'resource')
         {
             $resolvedResource = $resources | Where-Object { $_.ResourceName -eq $item.ResourceName}
             #If context has access over resourcegroups or resources with same name, get a match based on Subscription and rg passed in param
@@ -121,77 +121,57 @@ class PIM: CommandBase {
         return $resolvedResource    
     }
     #List all the resources accessible to context.
-    hidden [System.Collections.Generic.List[PIMResource]] ListResources($type) {
+    hidden [System.Collections.Generic.List[PIMResource]] ListResources($type, $resourceName) {
         $this.AcquireToken();
         $resources = $null
-        #this seperation is required due to nature of API, it operates in paging/batching manner when we query for all types
-        if ($type -eq 'resource') {
-            $Resourceurl = $this.APIroot + "/resources?`$select=id,displayName,type&`$filter=(type%20ne%20%27resourcegroup%27%20and%20type%20ne%20%27subscription%27%20and%20type%20ne%20%27managementgroup%27%20and%20type%20ne%20%27resourcegroup%27%20and%20type%20ne%20%27subscription%27%20and%20type%20ne%20%27managementgroup%27)" 
-            try {                
-                    $response = $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $Resourceurl -Method Get
-                    $values = ConvertFrom-Json $response.Content
-                    $resources = $values.value
-                    $hasOdata = $values | Get-Member -Name '@odata.nextLink'
-                    while ($null -ne $hasOdata -and -not([string]::IsNullOrEmpty(($values).'@odata.nextLink'))) {
-                        $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $(($values).'@odata.nextLink') -Method Get
-                        $values = ConvertFrom-Json $response.Content
-                        $resources += $values.value
-                        $hasOdata = $values | Get-Member -Name '@odata.nextLink'
-                    
-                }
-            
-            
-            }
-            catch {
-                if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
-                {
-                    $this.PublishCustomMessage($_.ErrorDetails.Message,[MessageType]::Error)
-                }
-                else
-                {
-                    $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
-                }
+        $resourceUrl = $null
+        # This seperation is required due to nature of API, it operates in paging/batching manner when we query for all types
+        # Note: At present, we do not provide PIM operation management for management group. However, if needed in the future, it can be added in the else statement. >> $filter=(type%20eq%20%27managementgroup%27)
+        
+        if($type -eq 'subscription')
+        {
+            # Fetch PIM details of the all subscriptions user has access to
+            $resourceUrl = $this.APIroot + "/resources?`$select=id,displayName,type&`$filter=(type%20eq%20%27subscription%27)&`$orderby=type"
+        }
+        elseif($type -eq 'resourcegroup')
+        {
+            # Fetch PIM details of the specified resource group
+            $resourceUrl = $this.APIroot + "/resources?`$select=id,displayName,type&`$filter=(type%20eq%20%27resourcegroup%27)%20and%20contains(tolower(displayName),%20%27{0}%27)&`$orderby=type" -f $resourceName.ToLower()
+        }
+        elseif($type -eq 'resource')
+        {
+            # Fetch PIM details of the specified resource
+            $resourceUrl = $this.APIroot + "/resources?`$select=id,displayName,type&`$filter=(type%20ne%20%27resourcegroup%27%20and%20type%20ne%20%27subscription%27%20and%20type%20ne%20%27managementgroup%27)%20and%20contains(tolower(displayName),%20%27{0}%27)" -f $resourceName.ToLower()
+        }               
+        
+        $response = $null
+        try
+        {
+            $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $resourceUrl -Method Get
+            $values = ConvertFrom-Json $response.Content
+            $resources = $values.value
+            $hasOdata = $values | Get-Member -Name '@odata.nextLink'
+            while ($null -ne $hasOdata -and -not([string]::IsNullOrEmpty(($values).'@odata.nextLink')))
+            {
+                $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $(($values).'@odata.nextLink') -Method Get
+                $values = ConvertFrom-Json $response.Content
+                $resources += $values.value
+                $hasOdata = $values | Get-Member -Name '@odata.nextLink'
             }
         }
-        else {
-            #TODO - why is management group also used in the else part filter?
-            if ($type -eq 'subscription')
+        catch
+        {
+            if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
             {
-                $Resourceurl = $this.APIroot + "/resources?`$select=id,displayName,type&`$filter=(type%20eq%20%27subscription%27or%20type%20eq%20%27managementgroup%27)&`$orderby=type"
+                $this.PublishCustomMessage($_.ErrorDetails.Message,[MessageType]::Error)
             }
             else
             {
-                $Resourceurl = $this.APIroot + "/resources?`$select=id,displayName,type&`$filter=(type%20eq%20%27resourcegroup%27or%20type%20eq%20%27managementgroup%27)&`$orderby=type"
+                $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
             }
-            $response = $null
-            try
-            {
-                $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $Resourceurl -Method Get
-                $values = ConvertFrom-Json $response.Content
-                $resources = $values.value
-                $hasOdata = $values | Get-Member -Name '@odata.nextLink'
-                while ($null -ne $hasOdata -and -not([string]::IsNullOrEmpty(($values).'@odata.nextLink')))
-                {
-                    $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $(($values).'@odata.nextLink') -Method Get
-                    $values = ConvertFrom-Json $response.Content
-                    $resources += $values.value
-                    $hasOdata = $values | Get-Member -Name '@odata.nextLink'
-                }
-            }
-            catch
-            {
-                if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
-                {
-                    $err = $_.ErrorDetails.Message| ConvertFrom-Json
-                    throw [SuppressedException]::new($err.error.message,[SuppressedExceptionType]::Generic)
-                }
-                else
-                {
-                    throw [SuppressedException]::new($_.Exception, [SuppressedExceptionType]::Generic)
-                }
-                return $null;
-            }
+            return $null;
         }
+        
         $i = 0
         $obj = New-Object "System.Collections.Generic.List[PIMResource]"
         foreach ($resource in $resources) {
@@ -212,7 +192,8 @@ class PIM: CommandBase {
     hidden [PSObject] ListRoles($resourceId) {
         $this.AcquireToken();
         $url = $this.APIroot + "resources/" + $resourceId + "/roleDefinitions?`$select=id,displayName,type,templateId,resourceId,externalId,subjectCount,eligibleAssignmentCount,activeAssignmentCount&`$orderby=activeAssignmentCount%20desc"
-        $roles = [WebRequestHelper]::InvokeWebRequest('Get', $url, $this.headerParams, $null, [string]::Empty, $false )
+        $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $url -Method Get
+        $roles = ConvertFrom-Json $response.Content
         $i = 0
         $obj = @()
         foreach ($role in $roles.value) {
@@ -285,7 +266,7 @@ class PIM: CommandBase {
                 $resourceId = $matchingAssignment.ResourceId
                 $roleDefinitionId = $matchingAssignment.RoleId
                 $subjectId = $matchingAssignment.SubjectId
-                $RoleActivationurl = $this.APIroot + "roleAssignmentRequests "
+                $RoleActivationurl = $this.APIroot + "/roleAssignmentRequests "
                 $postParams = '{"roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $subjectId + '","assignmentState":"Active","type":"UserAdd","reason":"' + $Justification + '","schedule":{"type":"Once","startDateTime":"' + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","duration":"PT' + $Duration + 'H"},"linkedEligibleRoleAssignmentId":"' + $matchingAssignment.IdGuid + '"}'
                 $response = [WebRequestHelper]::InvokeWebRequest('Post', $RoleActivationurl, $this.headerParams, $postParams, "application/json", $false )
                     if ($response.StatusCode -eq 201) {
