@@ -11,7 +11,14 @@ class ResourceInventory
             [ResourceInventory]::RawResources = Get-AzResource
             $supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
             # Not considering nested resources to reduce complexity
-            [ResourceInventory]::FilteredResources = [ResourceInventory]::RawResources | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }        
+            if(-not [string]::IsNullOrWhiteSpace([ResourceInventory]::RawResources))
+            {
+                [ResourceInventory]::FilteredResources = [ResourceInventory]::RawResources | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }        
+            }
+            else 
+            {
+                [ResourceInventory]::FilteredResources = $null;
+            }
         }                      
     }
 
