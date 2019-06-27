@@ -14,7 +14,7 @@ class NotificationHub: SVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzResource  -Name "*$($this.ResourceContext.ResourceName)*" -ResourceType "Microsoft.NotificationHubs/namespaces/notificationHubs"
+            $this.ResourceObject = $this.ResourceContext.ResourceDetails
 			$Namespace = $this.ResourceObject.Name.split("/")[0] 
 			$this.NamespaceObject = Get-AzNotificationHubsNamespace -ResourceGroup $this.ResourceContext.ResourceGroupName -Namespace $Namespace
 

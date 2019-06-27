@@ -24,6 +24,7 @@ class SVTEvent
 	static [string] $WriteInventory = "AzSK.SVT.WriteInventory"; #Custom event to write resource inventory
 }
 
+#Class for resource details 
 class ResourceContext
 {
 	[string] $ResourceId =""
@@ -33,6 +34,8 @@ class ResourceContext
 	[hashtable] $ResourceMetadata = @{}
 	[string] $ResourceTypeName = ""
 	[hashtable] $ResourceGroupTags = @{}
+	[PSObject] $ResourceDetails
+	[psobject] $ResourceGroupDetails
 }
 
 class ControlResult

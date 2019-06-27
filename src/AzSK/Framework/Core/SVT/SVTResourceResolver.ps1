@@ -177,6 +177,7 @@ class SVTResourceResolver: AzSKRoot
 				$svtResource.ResourceName = $resource.Name;
 				$svtResource.ResourceType = $resource.ResourceType;
 				$svtResource.Location = $resource.Location;
+				$svtResource.ResourceDetails = $_
 
 				if($this.ResourceTypeName -ne [ResourceTypeName]::All)
 				{

@@ -19,7 +19,7 @@ class SQLDatabase: SVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject =   Get-AzResource -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
+            $this.ResourceObject =   $this.ResourceContext.ResourceDetails
 
             if(-not $this.ResourceObject)
             {

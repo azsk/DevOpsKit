@@ -15,9 +15,7 @@ class BotService: SVTBase
         if (-not $this.ResourceObject)
 		{
 			# Get App Service details
-            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
-                                        -ResourceType $this.ResourceContext.ResourceType `
-                                        -ResourceGroupName $this.ResourceContext.ResourceGroupName
+            $this.ResourceObject = $this.ResourceContext.ResourceDetails
 
             if(-not $this.ResourceObject)
             {

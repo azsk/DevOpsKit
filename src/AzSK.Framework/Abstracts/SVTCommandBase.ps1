@@ -159,7 +159,7 @@ class SVTCommandBase: SVTCommandBaseExt {
         $svtObject.GenerateFixScript = $this.GenerateFixScript;
         $svtObject.InvocationContext = $this.InvocationContext;
         # ToDo: Assumption: usercomment will only work when storage report feature flag is enable
-        $resourceId = $svtObject.GetResourceId(); 
+        $resourceId = $svtObject.ResourceId; 
 		$svtObject.ComplianceStateData = $this.FetchComplianceStateData($resourceId);
 
         #Include Server Side Exclude Tags
