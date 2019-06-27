@@ -61,6 +61,8 @@ namespace AzSK.ARMChecker.Lib
                     return ControlResult.NotSupported(resource);
                 case ControlMatchType.NullableSingleToken:
                     return EvaluateNullableSingleToken(control, resource);
+                case ControlMatchType.VersionSingleToken:
+                    return EvaluateSingleVersionToken(control, resource);
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -190,6 +192,36 @@ namespace AzSK.ARMChecker.Lib
             return result;
         }
 
+        private static ControlResult EvaluateSingleVersionToken(ResourceControl control, JObject resource)
+        {
+            var result = ExtractSingleToken(control, resource, out string actual, out StringSingleTokenControlData match);
+            result.ExpectedValue = match.Type + " '" + match.Value + "'";
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
+            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
+            var actualVersion = new Version(actual);
+            var requiredVersion = new Version(match.Value);
+            switch (match.Type)
+             {
+                 case ControlDataMatchType.GreaterThan:
+                     if (actualVersion >requiredVersion) result.VerificationResult = VerificationResult.Passed;
+                     break;
+                 case ControlDataMatchType.LesserThan:
+                     if (actualVersion < requiredVersion) result.VerificationResult = VerificationResult.Passed;
+                     break;
+                 case ControlDataMatchType.Equals:
+                     if (actualVersion == requiredVersion) result.VerificationResult = VerificationResult.Passed;
+                     break;
+                case ControlDataMatchType.GreaterThanEqual:
+                    if (actualVersion >= requiredVersion) result.VerificationResult = VerificationResult.Passed;
+                    break;
+                case ControlDataMatchType.LesserThanEqual:
+                    if (actualVersion <= requiredVersion) result.VerificationResult = VerificationResult.Passed;
+                    break;
+                default:
+                     throw new ArgumentOutOfRangeException();
+             }
+            return result;
+        }
         private static ControlResult EvaluateSecureParam(ResourceControl control, JObject resource)
         {
             var result = ExtractSingleToken(control, resource, out string actual, out BooleanControlData match,false);
