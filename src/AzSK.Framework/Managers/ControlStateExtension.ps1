@@ -9,6 +9,7 @@ class ControlStateExtension
 	#Static attestation index file object. 
 	#This gets cashed for every scan and reset for every fresh scan command in servicessecurity status 
 	[PSObject] $ControlStateIndexer = $null;
+	#Property indicates if Attestation index file is present in blob 
 	[bool] $IsControlStateIndexerPresent = $true;
 	hidden [int] $HasControlStateReadPermissions = -1;
 	hidden [int] $HasControlStateWritePermissions = -1;
@@ -33,7 +34,7 @@ class ControlStateExtension
 			$this.UniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
 		}
 		$this.GetAzSKControlStateContainer($CreateResourcesIfNotExists)
-		#Reset attestation index file which gets cached for command
+		#Reset attestation index file and set attestation index file present flag to get fresh index file from storage
 		$this.ControlStateIndexer = $null;
 		$this.IsControlStateIndexerPresent = $true
 	}
@@ -195,6 +196,7 @@ class ControlStateExtension
 			return $false;
 		}
 
+		#Cache code: Fetch index file only if index file is null and it is present on storage blob
 		if(-not $this.ControlStateIndexer -and $this.IsControlStateIndexerPresent)
 		{
 
@@ -223,6 +225,7 @@ class ControlStateExtension
 			#Attestation index blob is not preset then return
 			if($null -eq $indexerBlob)
 			{			
+				#Set attenstation index file is not present on blob storage
 				$this.IsControlStateIndexerPresent = $false
 				return $true;
 			}
