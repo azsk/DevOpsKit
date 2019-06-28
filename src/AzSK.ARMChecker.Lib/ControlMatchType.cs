@@ -18,7 +18,7 @@
 		VerifiableMultiToken, // Multi Tokens
 		Custom, // Multi Tokens
         NullableSingleToken, //Single Tokens
-
+        VersionSingleToken //Single Tokens
 
     }
 }

@@ -6,6 +6,8 @@
 		NotAllow,
 		GreaterThan,
 		LesserThan,
-		Equals
-	}
+		Equals,
+        GreaterThanEqual,
+        LesserThanEqual
+    }
 }
