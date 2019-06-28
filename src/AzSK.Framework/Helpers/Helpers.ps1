@@ -836,5 +836,17 @@ class Helpers {
         }
         return $UpdatedUrl
     }
+
+    static [string] CreateSharedKey([string] $StringToSign,[string] $ResourceName,[string] $AccessKey)
+	{
+        $KeyBytes = [System.Convert]::FromBase64String($AccessKey)
+        $HMAC = New-Object System.Security.Cryptography.HMACSHA256
+        $HMAC.Key = $KeyBytes
+        $UnsignedBytes = [System.Text.Encoding]::UTF8.GetBytes($StringToSign)
+        $KeyHash = $HMAC.ComputeHash($UnsignedBytes)
+        $SignedString = [System.Convert]::ToBase64String($KeyHash)
+        $sharedKey = $ResourceName+":"+$SignedString
+        return $sharedKey    	
+    }
 }
 

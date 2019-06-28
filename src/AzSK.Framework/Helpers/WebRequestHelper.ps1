@@ -169,7 +169,7 @@ class WebRequestHelper {
 		$CanonicalizedResource = "/$StorageAccountName/`$batch"
 		$SigningParts=@($Verb,$ContentMD5,$ContentType,$Date,$CanonicalizedResource)
 		$StringToSign = [String]::Join("`n",$SigningParts)
-		$sharedKey = ""#[StorageHelper]::CreateStorageAccountSharedKey($StringToSign,$StorageAccountName,$AccessKey)
+		$sharedKey = [Helpers]::CreateSharedKey($StringToSign,$StorageAccountName,$AccessKey)
 
 		$xmsdate = $Date
 		$changeset = "changeset_$([guid]::NewGuid().ToString())"
