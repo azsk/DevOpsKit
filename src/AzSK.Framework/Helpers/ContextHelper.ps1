@@ -11,7 +11,7 @@ class ContextHelper
 				[EventBase]::PublishGenericCustomMessage("No active Azure login session found. Initiating login flow...", [MessageType]::Warning);
                 [PSObject]$rmLogin = $null
                 $AzureEnvironment = [Constants]::DefaultAzureEnvironment
-                $AzskSettings = [ContextHelper]::LoadOfflineConfigFile("AzSKSettings.json", $true)          
+                $AzskSettings = [Helpers]::LoadOfflineConfigFile("AzSKSettings.json", $true)          
                 if([Helpers]::CheckMember($AzskSettings,"AzureEnvironment"))
                 {
                    $AzureEnvironment = $AzskSettings.AzureEnvironment

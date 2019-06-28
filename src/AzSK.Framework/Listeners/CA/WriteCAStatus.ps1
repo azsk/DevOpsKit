@@ -38,13 +38,10 @@ class WriteCAStatus: ListenerBase
 				{
 					if($props.IsResource())
 					{
-						#Update resource scan completion in CA storage account
-						$scanSource = [AzSKSettings]::GetInstance().GetScanSource();
-						[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
-						$baselineControlsDetails = $partialScanMngr.GetBaselineControlDetails()
-						#If Scan source is in supported sources or UsePartialCommits switch is available
-						if ($currentInstance.InvocationContext.BoundParameters["UsePartialCommits"] -or ($baselineControlsDetails.SupportedSources -contains $scanSource))
+						#if Use partial commit is ON. Update scan tracker with resource completion status.
+						if ($currentInstance.InvocationContext.BoundParameters["UsePartialCommits"] )
 						{
+                            [PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
 							$partialScanMngr.UpdateResourceStatus( $props.ResourceContext.ResourceId,"COMP");
 						}
 					}					
@@ -67,7 +64,7 @@ class WriteCAStatus: ListenerBase
                     $scanSource = [RemoteReportHelper]::GetScanSource();
                     if($scanSource -ne [ScanSource]::Runbook) { return; }                                             			               
                     [ComplianceStateTableEntity[]] $ResourceFlatEntries = @();
-                    $complianceReportHelper = [ComplianceReportHelper]::new($props.SubscriptionContext, $version); 
+                    $complianceReportHelper = [ComplianceReportHelper]::GetInstance($props.SubscriptionContext, $version); 
                     $complianceData = $null;
                     if($complianceReportHelper.HaveRequiredPermissions())
                     {
@@ -190,7 +187,7 @@ class WriteCAStatus: ListenerBase
                             [ComplianceStateTableEntity[]] $RecordsToBeDeleted = @();         
                             $partitionKey = [Helpers]::ComputeHash($ResourceControlsDataMini.ResourceId.ToLower());                
                             $partitionKeys += $partitionKey
-                            $complianceReportHelper = [ComplianceReportHelper]::new($props.SubscriptionContext, $version); 
+                            $complianceReportHelper = [ComplianceReportHelper]::GetInstance($props.SubscriptionContext, $version); 
 
                             $ComplianceStateData = $null;
 

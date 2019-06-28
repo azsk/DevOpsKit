@@ -39,19 +39,6 @@ class SVTCommandBase: SVTCommandBaseExt {
         $this.AttestationUniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
         #Fetching the resourceInventory once for each SVT command execution
         [ResourceInventory]::Clear();
-
-         #Create necessary resources to save compliance data in user's subscription
-         if($this.IsLocalComplianceStoreEnabled)
-         {
-            if($null -eq $this.ComplianceReportHelper)
-            {
-                $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());                  
-            }
-            if(-not $this.ComplianceReportHelper.HaveRequiredPermissions())
-            {
-                $this.IsLocalComplianceStoreEnabled = $false;
-            }
-         }
     }
     #EndRegion
 
@@ -95,19 +82,9 @@ class SVTCommandBase: SVTCommandBaseExt {
 			else
 			{
 				throw [SuppressedException] ("Multiple controlIds specified. `nBulk attestation mode supports only one controlId at a time.`n")
-			}			
+			}	
         }
         
-        
-        #Create necessary resources to save compliance data in user's subscription
-        if($this.IsLocalComplianceStoreEnabled)
-        {
-            $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());  
-            if(-not $this.ComplianceReportHelper.HaveRequiredPermissions())
-            {
-                $this.IsLocalComplianceStoreEnabled = $false;
-            }
-        }
 	    $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
 
@@ -175,7 +152,6 @@ class SVTCommandBase: SVTCommandBaseExt {
 		}
 		
         # ToDo: Utilize exiting functions
-        $this.InitializeControlState();
         $svtObject.ControlStateExt = $this.ControlStateExt;
     }
 

@@ -8,9 +8,7 @@
 using namespace System.Management.Automation
 Set-StrictMode -Version Latest
 class SVTCommandBaseExt: CommandBase {
-
-
-
+    
     #Region Constructor
     SVTCommandBaseExt([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
@@ -24,11 +22,14 @@ class SVTCommandBaseExt: CommandBase {
         [ResourceInventory]::Clear();
 
          #Create necessary resources to save compliance data in user's subscription
+         #<TODO Perf Issue - ComplianceReportHelper fetch RG/Storage. Then creates RG/Storage/table if not exists. Check permissions for write etc>
          if($this.IsLocalComplianceStoreEnabled)
          {
             if($null -eq $this.ComplianceReportHelper)
             {
-                $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());                  
+                #Reset cached compliance report helper instance for accessing first fetch
+                [ComplianceReportHelper]::Instance = $null
+                $this.ComplianceReportHelper = [ComplianceReportHelper]::GetInstance($this.SubscriptionContext, $this.GetCurrentModuleVersion());                  
             }
             if(-not $this.ComplianceReportHelper.HaveRequiredPermissions())
             {
@@ -72,16 +73,6 @@ class SVTCommandBaseExt: CommandBase {
 			}			
         }
         
-        
-        #Create necessary resources to save compliance data in user's subscription
-        if($this.IsLocalComplianceStoreEnabled)
-        {
-            $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());  
-            if(-not $this.ComplianceReportHelper.HaveRequiredPermissions())
-            {
-                $this.IsLocalComplianceStoreEnabled = $false;
-            }
-        }
 	    $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
 
