@@ -6,10 +6,14 @@ class ControlStateExtension
 	hidden [PSObject] $AzSKResourceGroup = $null;
 	hidden [PSObject] $AzSKStorageAccount = $null;
 	hidden [PSObject] $AzSKStorageContainer = $null;
-	hidden [PSObject] $ControlStateIndexer = $null;	
+	#Static attestation index file object. 
+	#This gets cashed for every scan and reset for every fresh scan command in servicessecurity status 
+	[PSObject] $ControlStateIndexer = $null;
+	[bool] $IsControlStateIndexerPresent = $true;
 	hidden [int] $HasControlStateReadPermissions = -1;
 	hidden [int] $HasControlStateWritePermissions = -1;
 	hidden [string]	$IndexerBlobName ="Resource.index.json"
+
 	hidden [int] $retryCount = 3;
 	hidden [string] $UniqueRunId;
 
@@ -29,6 +33,9 @@ class ControlStateExtension
 			$this.UniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
 		}
 		$this.GetAzSKControlStateContainer($CreateResourcesIfNotExists)
+		#Reset attestation index file which gets cached for command
+		$this.ControlStateIndexer = $null;
+		$this.IsControlStateIndexerPresent = $true
 	}
 
 	hidden [PSObject] GetAzSKRG([bool] $createIfNotExists)
@@ -187,58 +194,67 @@ class ControlStateExtension
 		{
 			return $false;
 		}
-		$StorageAccount = $this.AzSKStorageAccount;
-		$containerObject = $this.AzSKStorageContainer;
-		$ContainerName = ""
-		if($null -ne $this.AzSKStorageContainer)
-		{
-			$ContainerName = $this.AzSKStorageContainer.Name
-		}		
-		$indexerBlob = $null;		
-		$loopValue = $this.retryCount;
-		while($loopValue -gt 0)
-		{
-			$loopValue = $loopValue - 1;
-			try
-			{
-				$indexerBlob = Get-AzStorageBlob -Container $ContainerName -Blob $this.IndexerBlobName -Context $StorageAccount.Context -ErrorAction Stop
-				$loopValue = 0;
-			}
-			catch
-			{
-				#Do Nothing. Below code would create a default indexer.
-			}
-		}
-		[ControlStateIndexer[]] $indexerObjects = @();
-		$this.ControlStateIndexer  = $indexerObjects
-		if($null -eq $indexerBlob)
-		{			
-			return $true;
-		}
-		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)\ServerControlState";
-		if(-not (Test-Path -Path $AzSKTemp))
-		{
-			mkdir -Path $AzSKTemp -Force
-		}
 
-		$indexerObject = @();
-		$loopValue = $this.retryCount;
-		while($loopValue -gt 0)
+		if(-not $this.ControlStateIndexer -and $this.IsControlStateIndexerPresent)
 		{
-			$loopValue = $loopValue - 1;
-			try
+
+			$StorageAccount = $this.AzSKStorageAccount;
+			$ContainerName = ""
+			if($null -ne $this.AzSKStorageContainer)
 			{
-				[AzHelper]::GetStorageBlobContent($AzSKTemp,$this.IndexerBlobName ,$this.IndexerBlobName , $containerName ,$StorageAccount.Context)
-				#Get-AzStorageBlobContent -CloudBlob $indexerBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
-				$indexerObject = Get-ChildItem -Path "$AzSKTemp\$($this.IndexerBlobName)" -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json
-				$loopValue = 0;
-			}
-			catch
+				$ContainerName = $this.AzSKStorageContainer.Name
+			}		
+			$indexerBlob = $null;		
+			$loopValue = $this.retryCount;
+			while($loopValue -gt 0)
 			{
-				#eat this exception and retry
+				$loopValue = $loopValue - 1;
+				try
+				{
+					$indexerBlob = Get-AzStorageBlob -Container $ContainerName -Blob $this.IndexerBlobName -Context $StorageAccount.Context -ErrorAction Stop
+					$loopValue = 0;
+				}
+				catch
+				{
+					#Do Nothing. Below code would create a default indexer.
+				}
 			}
+
+			#Attestation index blob is not preset then return
+			if($null -eq $indexerBlob)
+			{			
+				$this.IsControlStateIndexerPresent = $false
+				return $true;
+			}
+
+			[ControlStateIndexer[]] $indexerObjects = @();
+			$this.ControlStateIndexer  = $indexerObjects
+			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)\ServerControlState";
+			if(-not (Test-Path -Path $AzSKTemp))
+			{
+				mkdir -Path $AzSKTemp -Force
+			}
+
+			$indexerObject = @();
+			$loopValue = $this.retryCount;
+			while($loopValue -gt 0)
+			{
+				$loopValue = $loopValue - 1;
+				try
+				{
+					[AzHelper]::GetStorageBlobContent($AzSKTemp,$this.IndexerBlobName ,$this.IndexerBlobName , $containerName ,$StorageAccount.Context)
+					#Get-AzStorageBlobContent -CloudBlob $indexerBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
+					$indexerObject = Get-ChildItem -Path "$AzSKTemp\$($this.IndexerBlobName)" -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json
+					$loopValue = 0;
+				}
+				catch
+				{
+					#eat this exception and retry
+				}
+			}
+			$this.ControlStateIndexer += $indexerObject;
 		}
-		$this.ControlStateIndexer += $indexerObject;
+		
 		return $true;
 	}
 
@@ -251,7 +267,7 @@ class ControlStateExtension
 			if($null -ne $this.ControlStateIndexer -and  $retVal)
 			{
 				$indexes = @();
-				$indexes += $this.ControlStateIndexer 
+				$indexes += $this.ControlStateIndexer
 				$hashId = [Helpers]::ComputeHash($id)
 				$selectedIndex = $indexes | Where-Object { $_.HashId -eq $hashId}
 				
