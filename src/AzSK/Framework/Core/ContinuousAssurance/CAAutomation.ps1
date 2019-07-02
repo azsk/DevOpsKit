@@ -11,7 +11,7 @@ class CCAutomation: CommandBase
 	hidden [Variable[]] $Variables = @()
 	hidden [UserConfig] $UserConfig 
 	hidden [PSObject] $OutputObject = @{}
-	hidden [SelfSignedCertificate] $certificateDetail = [SelfSignedCertificate]::new()
+	#hidden [SelfSignedCertificate] $certificateDetail = [SelfSignedCertificate]::new()
 	hidden [Hashtable] $reportStorageTags = @{}
 	hidden [string] $exceptionMsg = "There was an error while configuring Automation Account."
 	hidden [boolean] $isExistingADApp = $false
@@ -3080,28 +3080,74 @@ class CCAutomation: CommandBase
         try
         {
             #create new self-signed certificate 
-            $this.PublishCustomMessage("Generating new credential for AzSK CA SPN")
-		    #$selfsignedCertificate = [ActiveDirectoryHelper]::NewSelfSignedCertificate($azskADAppName,$this.certificateDetail.CertStartDate,$this.certificateDetail.CertEndDate,$this.certificateDetail.Provider)
-			
-		    #create password
-			     
+            $this.PublishCustomMessage("Generating new credential for AzSK CA SPN")  
 		    $secureCertPassword = [Helpers]::NewSecurePassword()
 
 		    $pfxFilePath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Temp" |Join-Path -ChildPath "temp.pfx"
-		    #Export-PfxCertificate -Cert $selfsignedCertificate -Password $secureCertPassword -FilePath $pfxFilePath | Out-Null 
-            $selfsignedCertificate = New-SelfSignedCertificate -CommonName "$azskADAppName" `
-                                                                    -OutCertPath $pfxFilePath `
-																	-NotBefore $this.certificateDetail.CertStartDate `
-																	-NotAfter $this.certificateDetail.CertEndDate `
-                                                                    -Passphrase $secureCertPassword `
-																	-KeyUsage DataEncipherment
+			#Export-PfxCertificate -Cert $selfsignedCertificate -Password $secureCertPassword -FilePath $pfxFilePath | Out-Null
+			$certificate = [SelfSignedCertificate]::new()
+			[bool]$ForCertificateAuthority = $false
+			$KeyLength = 2048
+			[System.Security.Cryptography.X509Certificates.X509KeyUsageFlags]$KeyUsage = [System.Security.Cryptography.X509Certificates.X509KeyUsageFlags]::DataEncipherment
+			$extensions = [System.Collections.Generic.List[System.Security.Cryptography.X509Certificates.X509Extension]]::new()
+			$keyUsages = [System.Security.Cryptography.X509Certificates.X509KeyUsageExtension]::new(
+                    $KeyUsage,
+                    <# critical #> $false)
+			$extensions.Add($keyUsages)
+			# Create Basic Constraints
+            $basicConstraints = [System.Security.Cryptography.X509Certificates.X509BasicConstraintsExtension]::new(
+                <# certificateAuthority #> $ForCertificateAuthority,
+                <# hasPathLengthConstraint #> $false,
+                <# pathLengthConstraint #> 0,
+                <# critical #> $false)
+			$extensions.Add($basicConstraints)
+			# Create Private Key
+            $key = [System.Security.Cryptography.RSA]::Create($KeyLength)
 
-		    $publicCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(,$selfsignedCertificate.GetRawCertData())
+            # Create the subject of the certificate
+            $subject = "CN=$azskADAppName"
+
+            # Create Certificate Request
+            $certRequest = [System.Security.Cryptography.X509Certificates.CertificateRequest]::new(
+                $subject,
+                $key,
+                [System.Security.Cryptography.HashAlgorithmName]::SHA256,
+                [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+
+            # Create the Subject Key Identifier extension
+            $subjectKeyIdentifier = [System.Security.Cryptography.X509Certificates.X509SubjectKeyIdentifierExtension]::new(
+                $certRequest.PublicKey,
+                <# critical #> $false)
+			$extensions.Add($subjectKeyIdentifier)
+			foreach ($extension in $extensions)
+            {
+                $certRequest.CertificateExtensions.Add($extension)
+            }
+
+            $cert = $certRequest.CreateSelfSigned($certificate.CertStartDate, $certificate.CertEndDate)
+            $IsWindows = [Environment]::OSVersion.VersionString.Contains('Windows')
+            # FriendlyName is not supported on UNIX platforms
+            if ($IsWindows)
+            {
+                $cert.FriendlyName = $azskADAppName
+            }
+			$CertificateFormat = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pfx
+			[System.Security.Cryptography.X509Certificates.X509Certificate2]$x509Certificate2 = $cert
+			$bytes = $x509Certificate2.Export($CertificateFormat, $secureCertPassword)
+            try
+            {
+                [System.IO.File]::WriteAllBytes($pfxFilePath, $bytes)
+            }
+            finally
+            {
+                [array]::Clear($bytes, 0, $bytes.Length)
+            }
+		    $publicCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(,$x509Certificate2.GetRawCertData())
 			
             try
             {
                 #Authenticating AAD App service principal with newly created certificate credential  
-		        [ActiveDirectoryHelper]::UpdateADAppCredential($appID,$publicCert,$this.certificateDetail.CredStartDate,$this.certificateDetail.CredEndDate,"False")
+		        [ActiveDirectoryHelper]::UpdateADAppCredential($appID,$publicCert,$certificate.CredStartDate,$certificate.CredEndDate,"False")
             }
             catch
             {

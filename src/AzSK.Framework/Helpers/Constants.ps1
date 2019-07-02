@@ -179,13 +179,7 @@ class Constants
 			[Constants]::AzSKLogFolderPath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) "Microsoft"
 			[Constants]::AzSKTempFolderPath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Temp" |Join-Path -ChildPath $([Constants]::AzSKModuleName)
 			[Constants]::AzSKExtensionsFolderPath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Microsoft" |Join-Path -ChildPath $([Constants]::AzSKModuleName) |Join-Path -ChildPath "Extensions"	
-			if([Environment]::OSVersion.VersionString.Contains('Windows'))
-		    {
-				[Constants]::GenericSlash = "\"
-			}
-			else {
-				[Constants]::GenericSlash = "/"
-				}
+			
 		}
 	}
 	static [void] SetAzSKCurrentModuleVersion($moduleVersion)

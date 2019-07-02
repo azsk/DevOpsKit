@@ -349,6 +349,10 @@ class ControlStateExtension
         
 		$hash = [Helpers]::ComputeHash($id) 
 		$indexerPath = Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath $this.IndexerBlobName;
+		if(-not (Test-Path -Path (Join-Path $AzSKTemp "ControlState")))
+		{
+			New-Item -ItemType Directory -Path (Join-Path $AzSKTemp "ControlState") -Force
+		}
 		$fileName = Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath ($hash+".json");
 		
 		$StorageAccount = $this.AzSKStorageAccount;						
