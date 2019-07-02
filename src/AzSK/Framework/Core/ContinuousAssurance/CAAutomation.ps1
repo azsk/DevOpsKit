@@ -3084,7 +3084,7 @@ class CCAutomation: CommandBase
 		    $secureCertPassword = [Helpers]::NewSecurePassword()
 
 			$pfxFilePath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Temp" |Join-Path -ChildPath "temp.pfx"
-			if(-not (Test-Path $(Join-Path $AzSKTemp "Temp")))
+			if(-not (Test-Path $(Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) "Temp")))
 			{
 				New-Item -ItemType Directory -Path (Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) "Temp") -ErrorAction Stop | Out-Null
 			}
