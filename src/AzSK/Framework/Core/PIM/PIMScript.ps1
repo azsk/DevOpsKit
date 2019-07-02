@@ -192,8 +192,7 @@ class PIM: CommandBase {
     hidden [PSObject] ListRoles($resourceId) {
         $this.AcquireToken();
         $url = $this.APIroot + "resources/" + $resourceId + "/roleDefinitions?`$select=id,displayName,type,templateId,resourceId,externalId,subjectCount,eligibleAssignmentCount,activeAssignmentCount&`$orderby=activeAssignmentCount%20desc"
-        $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $url -Method Get
-        $roles = ConvertFrom-Json $response.Content
+        $roles = [WebRequestHelper]::InvokeWebRequest("Get", $url, $this.headerParams, $null, [string]::Empty, $false )
         $i = 0
         $obj = @()
         foreach ($role in $roles.value) {
