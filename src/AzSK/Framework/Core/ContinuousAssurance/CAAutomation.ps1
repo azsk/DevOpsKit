@@ -3083,7 +3083,11 @@ class CCAutomation: CommandBase
             $this.PublishCustomMessage("Generating new credential for AzSK CA SPN")  
 		    $secureCertPassword = [Helpers]::NewSecurePassword()
 
-		    $pfxFilePath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Temp" |Join-Path -ChildPath "temp.pfx"
+			$pfxFilePath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Temp" |Join-Path -ChildPath "temp.pfx"
+			if(-not (Test-Path $(Join-Path $AzSKTemp "Temp")))
+			{
+				New-Item -ItemType Directory -Path (Join-Path $AzSKTemp "Temp") -ErrorAction Stop | Out-Null
+			}
 			#Export-PfxCertificate -Cert $selfsignedCertificate -Password $secureCertPassword -FilePath $pfxFilePath | Out-Null
 			$certificate = [SelfSignedCertificate]::new()
 			[bool]$ForCertificateAuthority = $false

@@ -344,7 +344,7 @@ class ControlStateExtension
 		}
 		else
 		{
-			Remove-Item -Path $(Join-Path $AzSKTemp "ControlState") -Force -Recurse 
+			Remove-Item -Path $(Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath '*' ) -Force -Recurse 
 		}
         
 		$hash = [Helpers]::ComputeHash($id) 
@@ -431,7 +431,7 @@ class ControlStateExtension
 		}
 		else
 		{
-			Remove-Item -Path $(Join-Path $AzSKTemp "ControlState") -Force -Recurse
+			Remove-Item -Path $(Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath '*') -Force -Recurse
 		}
 
 		$hash = [Helpers]::ComputeHash($id);
