@@ -849,8 +849,9 @@ class Alerts: CommandBase
 	}
 	hidden [string] RemoveActionGroupWebhookUri()
 	{
+		$type = "Alert"
 	  $actionGroupResourceId = $this.GetAlertActionGroup($this.ResourceGroup, [Constants]::AlertActionGroupName)
-	  $runBookResourceID= $this.GetAlertRunBookResourceId()
+	  $runBookResourceID= $this.GetAlertRunBookResourceId($type)
 
 	  if($null -ne $actionGroupResourceId -and (-not [string]::IsNullOrWhiteSpace($runBookResourceID)))
 	  {

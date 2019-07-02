@@ -77,7 +77,7 @@ function Get-AzSKSupportedResourceTypes {
 	{
 		try 
 		{
-			[SVTMapping]::Mapping | Select-Object -Property ResourceTypeName, ResourceType | Sort-Object -Property ResourceTypeName;
+			[SVTMapping]::Mapping | Where-Object { $_.ResourceTypeName} | Select-Object -Property ResourceTypeName, ResourceType | Sort-Object -Property ResourceTypeName;
 		}
 		catch 
 		{
