@@ -31,12 +31,14 @@ class TelemetryRBAC
 	[string] $SubscriptionId="";
 	[string] $Scope="";
 	[string] $DisplayName="";
+	[string] $MemberType="";
 	[string] $ObjectId="";
 	[string] $ObjectType="";
 	[string] $RoleAssignmentId="";
 	[string] $RoleDefinitionId="";
 	[string] $RoleDefinitionName="";
 	[bool] $IsPIMEnabled;
+	
 }
 enum RBACAccountType
 {
