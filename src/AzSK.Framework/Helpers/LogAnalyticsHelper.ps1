@@ -38,8 +38,8 @@ Class LogAnalyticsHelper{
 			{	
 				switch([LogAnalyticsHelper]::$("is"+$laType+"SettingValid"))
 				{
-					0 { $warningMsg += "The $($laType) workspace id or key is invalid in the local settings file. You can use Set-AzSKMonitoringSettings with correct values to update it.";}
-					1 { $warningMsg += "The $($laType) workspace id or key is invalid in the ContinuousAssurance configuration. You can use Update-AzSKContinuousAssurance with the correct Log Analytics workspace values to correct it."; }
+					0 { $warningMsg += "The $($laType) id or key is invalid in the local settings file. You can use Set-AzSKMonitoringSettings with correct values to update it.";}
+					1 { $warningMsg += "The $($laType) id or key is invalid in the ContinuousAssurance configuration. You can use Update-AzSKContinuousAssurance with the correct Log Analytics workspace values to correct it."; }
 				}
 				[EventBase]::PublishGenericCustomMessage(" `r`nWARNING: $($warningMsg)", [MessageType]::Warning);
 				

@@ -39,12 +39,12 @@ function RunAzSKScan() {
 	#set Log Analytics workspace settings
     if(-not [string]::IsNullOrWhiteSpace($LAWSId) -and -not [string]::IsNullOrWhiteSpace($LAWSSharedKey))
 	{
-		Set-AzSKMonitoringSettings -WorkspaceId $LAWSId -SharedKey $LAWSSharedKey -Source "CA"
+		Set-AzSKMonitoringSettings -LAWSId $LAWSId -LAWSSharedKey $LAWSSharedKey -Source "CA"
 	}
 	#set alternate Log Analytics workspace if available
 	if(-not [string]::IsNullOrWhiteSpace($AltLAWSId) -and -not [string]::IsNullOrWhiteSpace($AltLAWSSharedKey))
 	{
-		Set-AzSKMonitoringSettings -AltWorkspaceId $AltLAWSId -AltSharedKey $AltLAWSSharedKey -Source "CA"
+		Set-AzSKMonitoringSettings -AltLAWSId $AltLAWSId -AltLAWSSharedKey $AltLAWSSharedKey -Source "CA"
 	}
     #set webhook settings
 	if(-not [string]::IsNullOrWhiteSpace($WebhookUrl))	
