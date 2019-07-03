@@ -144,6 +144,20 @@ class ServicesSecurityStatus: SVTCommandBase
 		{
 			$this.ReportNonAutomatedResources();
 		}
+
+		#Begin-perf-optimize for ControlIds parameter  
+        #If controlIds are specified  filter only to applicable resources
+        $allTargetControlIds = @($this.ControlIds)
+        $allTargetControlIds += $this.ConvertToStringArray($this.ControlIdString)
+        if ($allTargetControlIds.Count -gt 0)
+        {
+            #Infer resource type names from control ids 
+            $allTargetResourceTypeNames = @($allTargetControlIds | % { ($_ -split '_')[1]})
+            $allTargetResourceTypeNamesUnique = @($allTargetResourceTypeNames | Sort-Object -Unique)
+            $automatedResources = @($automatedResources | Where-Object {$allTargetResourceTypeNamesUnique -contains $_.ResourceTypeMapping.ResourceTypeName -or $_.ResourceType -match 'AzSKCfg'})
+        }
+		#End-perf-optimize
+
 					
 		$this.PublishCustomMessage("`nNumber of resources for which security controls will be evaluated: $($automatedResources.Count)",[MessageType]::Info);
 		
