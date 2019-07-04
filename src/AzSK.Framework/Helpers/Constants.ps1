@@ -167,7 +167,6 @@ class Constants
 	static [DateTime] $AzSKDefaultDateTime = '1900-01-01T00:00:00'
 	static [int] $ControlResultComplianceInDays = 3 ;
 	static [string] $ComplianceReportPath = (Join-Path $([Constants]::AzSKAppFolderPath) -ChildPath "TempState" |Join-Path -ChildPath "ComplianceData") ;
-    static [string] $GenericSlash = "/"
 	static [string] $ServerConfigMetadataFileName = "ServerConfigMetadata.json"
 
 	static [void] SetAzSKModuleName($moduleName)
