@@ -1,7 +1,7 @@
 using namespace Microsoft.Azure.Management.Storage.Models
 using namespace Microsoft.WindowsAzure.Storage.Shared.Protocol
 Set-StrictMode -Version Latest 
-class Storage: SVTBase
+class Storage: AzSVTBase
 {       
 	hidden [PSObject] $ResourceObject;
 	hidden [bool] $LockExists = $false;

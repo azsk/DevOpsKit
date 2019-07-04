@@ -1,6 +1,6 @@
 #using namespace Microsoft.Azure.Commands.Search.Models
 Set-StrictMode -Version Latest 
-class Search: SVTBase
+class Search: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
 

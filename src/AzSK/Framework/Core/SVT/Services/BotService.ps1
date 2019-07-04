@@ -1,6 +1,6 @@
 
 Set-StrictMode -Version Latest 
-class BotService: SVTBase
+class BotService: AzSVTBase
 {
     hidden [PSObject] $ResourceObject;
 

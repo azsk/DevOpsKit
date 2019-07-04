@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class HDInsight: SVTBase
+class HDInsight: AzSVTBase
 {
     hidden [PSObject] $ResourceObject;
     HDInsight([string] $subscriptionId, [SVTResource] $svtResource):

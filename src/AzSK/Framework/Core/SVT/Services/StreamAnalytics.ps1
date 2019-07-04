@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class StreamAnalytics: SVTBase
+class StreamAnalytics: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
 

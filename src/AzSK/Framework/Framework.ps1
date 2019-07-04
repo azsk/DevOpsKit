@@ -82,6 +82,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Abstracts\AzSKRootExt.ps1
 . $FrameworkPath\Abstracts\AzSKRoot.ps1
 . $FrameworkPath\Abstracts\SVTBase.ps1
+. $FrameworkPath\Abstracts\AzSVTBase.ps1
 
 . $FrameworkPath\Abstracts\FixControl\FixControlBase.ps1
 . $FrameworkPath\Abstracts\FixControl\FixServicesBase.ps1

@@ -1,6 +1,6 @@
 ﻿#using namespace Microsoft.Azure.Commands.Search.Models
 Set-StrictMode -Version Latest
-class SubscriptionCore: SVTBase
+class SubscriptionCore: AzSVTBase
 {
 	hidden [AzureSecurityCenter] $ASCSettings
 	hidden [ManagementCertificate[]] $ManagementCertificates

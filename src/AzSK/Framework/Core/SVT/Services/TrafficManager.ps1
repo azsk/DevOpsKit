@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest
-class TrafficManager : SVTBase
+class TrafficManager : AzSVTBase
 {
 	hidden [PSObject] $ResourceObject;
 

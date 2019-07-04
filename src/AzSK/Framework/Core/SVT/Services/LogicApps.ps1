@@ -25,7 +25,7 @@ class LogicAppConnectorsMetadata
 	[LogicAppNotApprovedConnector[]] $notApprovedConnectors = @()	
 }
 
-class LogicApps: SVTBase
+class LogicApps: AzSVTBase
 {   
     hidden [PSObject] $ResourceObject;
 	hidden [LogicAppConnectorsMetadata] $LogicAppConnectorsMetadata

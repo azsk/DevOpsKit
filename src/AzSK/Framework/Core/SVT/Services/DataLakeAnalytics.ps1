@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class DataLakeAnalytics: SVTBase
+class DataLakeAnalytics: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
 

@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class LoadBalancer: SVTBase
+class LoadBalancer: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
 

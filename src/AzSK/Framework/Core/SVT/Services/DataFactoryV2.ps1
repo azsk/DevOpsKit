@@ -1,6 +1,6 @@
 #using namespace Microsoft.Azure.Commands.DataFactory.Models
 Set-StrictMode -Version Latest 
-class DataFactoryV2: SVTBase
+class DataFactoryV2: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
     hidden [ADFV2Details] $adfDetails = [ADFV2Details]::new()

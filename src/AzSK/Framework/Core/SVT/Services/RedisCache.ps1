@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class RedisCache: SVTBase
+class RedisCache: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
 

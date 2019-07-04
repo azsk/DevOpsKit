@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest
-class SVTIaasBase: SVTBase
+class SVTIaasBase: AzSVTBase
 {
 	hidden [PSObject] $ResourceObject;
 	hidden [PSObject[]] $vNetNics;
