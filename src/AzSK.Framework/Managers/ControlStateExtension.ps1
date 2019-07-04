@@ -508,7 +508,6 @@ class ControlStateExtension
 			try
 			{
 				$controlStateBlob = Get-AzStorageBlob -Container $ContainerName -Blob $controlStateBlobName -Context $StorageAccount.Context -ErrorAction Stop
-                #[AzHelper]::GetStorageBlobContent("$AzSKTemp\ExistingControlStates",$controlStateBlobName ,$controlStateBlobName , $containerName ,$StorageAccount.Context)
 				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination (Join-Path $AzSKTemp "ExistingControlStates") -Force -ErrorAction Stop
 				$ControlStatesJson = Get-ChildItem -Path (Join-Path $AzSKTemp "ExistingControlStates" | Join-Path -ChildPath $controlStateBlobName) -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json 
 				$loopValue = 0;

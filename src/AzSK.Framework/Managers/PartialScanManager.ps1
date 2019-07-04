@@ -204,7 +204,6 @@ class PartialScanManager
 
 			if($null -ne $controlStateBlob)
 			{
-				#[AzHelper]::GetStorageBlobContent($masterFilePath,"$($this.ResourceScanTrackerBlobName)" , $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)
 				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force                
 				$partialScanResources  = Get-ChildItem -Path $masterFilePath -Force | Get-Content | ConvertFrom-Json
 				if($partialScanResources -ne $null -and ($partialScanResources.ResourceMapTable | Measure-Object).Count -gt 0 -and ($partialScanResources.ResourceMapTable | Where-Object {$_.State -notin ([ScanState]::COMP,[ScanState]::ERR)} | Measure-Object).Count -eq 0)
@@ -268,8 +267,7 @@ class PartialScanManager
 
 			$masterFilePath =Join-Path $AzSKTemp $($this.ResourceScanTrackerBlobName)
 			[Helpers]::ConvertToJsonCustom($this.ResourceScanTrackerObj) | Out-File $masterFilePath -Force
-			#[AzHelper]::UploadStorageBlobContent($masterFilePath, "$($this.ResourceScanTrackerBlobName)", $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)		
-		    Set-AzStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "$($this.ResourceScanTrackerBlobName)" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
+			Set-AzStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "$($this.ResourceScanTrackerBlobName)" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
 		}
 	}
 
@@ -316,9 +314,7 @@ class PartialScanManager
 			$controlStateBlob = Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.AzSKStorageAccount.Context -Blob "$($this.ResourceScanTrackerBlobName)" -ErrorAction SilentlyContinue
 			if($null -ne $controlStateBlob)
 			{
-				#[AzHelper]::GetStorageBlobContent($masterFilePath, "$($this.ResourceScanTrackerBlobName)" , $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)
 				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force			
-				#[AzHelper]::UploadStorageBlobContent( $masterFilePath, "Archive/$archiveName", $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)
 				Set-AzStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob (Join-Path "Archive" $archiveName) -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
 			}
 	
@@ -366,7 +362,6 @@ class PartialScanManager
 							
 			if($null -ne $controlStateBlob)
 			{
-				#[AzHelper]::GetStorageBlobContent($masterFilePath, "$($this.ResourceScanTrackerBlobName)", $this.CAScanProgressSnapshotsContainerName, $this.AzSKStorageAccount.Context)
 				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force
 				$this.ResourceScanTrackerObj = Get-ChildItem -Path $masterFilePath -Force | Get-Content | ConvertFrom-Json
 				$resources = Get-AzResource

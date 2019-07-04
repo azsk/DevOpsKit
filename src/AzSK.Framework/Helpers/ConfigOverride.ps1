@@ -101,10 +101,6 @@ class ConfigOverride
 			New-Item -ItemType Directory -Path $folderName -ErrorAction Stop | Out-Null
 		}
 
-		# if (-not $folderName.EndsWith("\"))
-		# {
-		# 	$folderName += "\";
-		# }
 		[Helpers]::ConvertToJsonCustom(($this.ParsedFile | Select-Object -Property $this.ChangedProperties)) | Out-File -Force -FilePath ( Join-Path $folderName $this.ConfigFileName) -Encoding utf8
 	}
 

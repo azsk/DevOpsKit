@@ -50,10 +50,6 @@ class FileOutputBase: ListenerBase
 				$basePath = [Constants]::AzSKLogFolderPath;
 			}
 
-			# if (-not $basePath.EndsWith("\")) {
-			# 	$basePath += "\";
-			# }
-
 			$outputPath = Join-Path $basePath ($([Constants]::AzSKModuleName)+"Logs")  ;
 
 			$sanitizedPath = [Helpers]::SanitizeFolderName($context.SubscriptionName);
@@ -135,10 +131,8 @@ class FileOutputBase: ListenerBase
             return $outputPath;
         }
 
-        $outputPath = $this.FolderPath;
-        # if (-not $outputPath.EndsWith("\")) {
-        #     $outputPath += "\";
-        # }
+		$outputPath = $this.FolderPath;
+		
         if ([string]::IsNullOrEmpty($fileName)) {
             $outputPath = Join-Path $outputPath ($(Get-Date -format "yyyyMMdd_HHmmss") + ".LOG");
         }
