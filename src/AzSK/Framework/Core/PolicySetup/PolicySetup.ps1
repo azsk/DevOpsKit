@@ -149,13 +149,7 @@ class PolicySetup: CommandBase
 		{
 			try
 			{
-				# if (-not $localPolicyFolderPath.EndsWith([Constants]::GenericSlash))
-				# {
-				# 	$localPolicyFolderPath += [Constants]::GenericSlash;
-				# }
-
-				#$localPolicyFolderPath += $prefix + "-Policy\";
-
+				
 				if (-not (Test-Path $localPolicyFolderPath))
 				{
 					New-Item -ItemType Directory -Path $localPolicyFolderPath -ErrorAction Stop | Out-Null
