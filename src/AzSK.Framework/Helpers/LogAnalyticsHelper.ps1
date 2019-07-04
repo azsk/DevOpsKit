@@ -34,13 +34,27 @@ Class LogAnalyticsHelper{
 		catch
 		{
 			$warningMsg=""
-			if($laType -eq 'LAWS' -or $laType -eq 'AltLAWS')
-			{	
+			if($laType -eq 'LAWS')
+			{
 				switch([LogAnalyticsHelper]::$("is"+$laType+"SettingValid"))
 				{
-					0 { $warningMsg += "The $($laType) id or key is invalid in the local settings file. You can use Set-AzSKMonitoringSettings with correct values to update it.";}
-					1 { $warningMsg += "The $($laType) id or key is invalid in the ContinuousAssurance configuration. You can use Update-AzSKContinuousAssurance with the correct Log Analytics workspace values to correct it."; }
+					0 { $warningMsg += "The Log Analytics workspace ID or key is invalid in the local settings file. Use Set-AzSKMonitoringSettings to update either/both with corrected values.";}
+					1 { $warningMsg += "The Log Analytics workspace ID or key is invalid in the ContinuousAssurance configuration. Use Update-AzSKContinuousAssurance to update either/both with corrected values."; }
 				}
+				
+				[EventBase]::PublishGenericCustomMessage(" `r`nWARNING: $($warningMsg)", [MessageType]::Warning);
+				
+				#Flag to disable Log Analytics scan 
+				[LogAnalyticsHelper]::$("is"+$laType+"SettingValid") = -1
+			}
+			elseif($laType -eq 'AltLAWS')
+			{
+				switch([LogAnalyticsHelper]::$("is"+$laType+"SettingValid"))
+				{
+					0 { $warningMsg += "The alternate Log Analytics workspace ID or key is invalid in the local settings file. Use Set-AzSKMonitoringSettings to update either/both with corrected values.";}
+					1 { $warningMsg += "The alternate Log Analytics workspace ID or key is invalid in the ContinuousAssurance configuration. Use Update-AzSKContinuousAssurance to update either/both with corrected values."; }
+				}
+				
 				[EventBase]::PublishGenericCustomMessage(" `r`nWARNING: $($warningMsg)", [MessageType]::Warning);
 				
 				#Flag to disable Log Analytics scan 
