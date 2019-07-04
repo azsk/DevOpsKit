@@ -143,6 +143,45 @@ class SVTBase: AzSKRoot
 				}
             }
         }
+	}
+	hidden [void] LoadSvtConfig([string] $controlsJsonFileName)
+    {
+        $this.ControlSettings = $this.LoadServerConfigFile("ControlSettings.json");
+
+        if (-not $this.SVTConfig) {
+            $this.SVTConfig =  [ConfigurationManager]::GetSVTConfig($controlsJsonFileName);
+			
+            $this.SVTConfig.Controls | Foreach-Object {
+
+				#Expand description and recommendation string if any dynamic values defined field using control settings
+                $_.Description = $global:ExecutionContext.InvokeCommand.ExpandString($_.Description)
+                $_.Recommendation = $global:ExecutionContext.InvokeCommand.ExpandString($_.Recommendation)
+				
+				$ControlSeverity = $_.ControlSeverity
+				#Check if ControlSeverity is customized/overridden using controlsettings configurations
+                if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverity"))
+                {
+                    $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
+                }
+
+				#<TODO Framework: Do we really need to trim method name as it is defined by developer>
+				if(-not [string]::IsNullOrEmpty($_.MethodName))
+				{
+					$_.MethodName = $_.MethodName.Trim();
+				}
+
+				#Check if 
+				if($this.CheckBaselineControl($_.ControlID))
+				{
+					$_.IsBaselineControl = $true
+				}
+				#AddPreviewBaselineFlag
+				if($this.CheckPreviewBaselineControl($_.ControlID))
+				{
+					$_.IsPreviewBaselineControl = $true
+				}
+            }
+        }
     }
 	#stub to be used when Baseline configuration exists 
 	hidden [bool] CheckBaselineControl($controlId)
