@@ -7,13 +7,13 @@ function Set-AzSKMonitoringSettings
 	.DESCRIPTION
 	This command will update the Log Analytics settings under the current powershell session. This also remembers the current settings and use them in the subsequent sessions.
 	
-	.PARAMETER WorkspaceId
+	.PARAMETER LAWSId
 		Workspace ID of your Log Analytics instance. Control scan results get pushed to this instance.
-	.PARAMETER SharedKey
+	.PARAMETER LAWSSharedKey
 		Shared key of your Log Analytics instance.
-	.PARAMETER AltWorkspaceId
+	.PARAMETER AltLAWSId
 		Workspace ID of your alternate Log Analytics instance. Control scan results get pushed to this instance.
-	.PARAMETER AltSharedKey
+	.PARAMETER AltLAWSSharedKey
 		Workspace shared key of your alternate Log Analytics instance.
 	.PARAMETER Source
 		Provide the source of Log Analytics Events. (e. g. CA,CICD,SDL)
@@ -30,26 +30,26 @@ function Set-AzSKMonitoringSettings
 		[Parameter(Mandatory = $false, HelpMessage="Workspace ID of your Log Analytics instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("wid","OMSWorkspaceID")]
-        $WorkspaceId,
+		[Alias("wid","OMSWorkspaceID","WorkspaceId")]
+        $LAWSId,
 
         [Parameter(Mandatory = $false, HelpMessage="Shared key of your Log Analytics instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("wkey","OMSSharedKey")]
-        $SharedKey,
+		[Alias("wkey","OMSSharedKey","SharedKey")]
+        $LAWSSharedKey,
 
 		[Parameter(Mandatory = $false, HelpMessage="Workspace ID of your alternate Log Analytics instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("awid","AltOMSWorkspaceID")]
-        $AltWorkspaceId,
+		[Alias("awid","AltOMSWorkspaceID","AltWorkspaceId")]
+        $AltLAWSId,
 
         [Parameter(Mandatory = $false, HelpMessage="Shared key of your alternate Log Analytics instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("awkey","AltOMSSharedKey")]
-        $AltSharedKey,
+		[Alias("awkey","AltOMSSharedKey","AltSharedKey")]
+        $AltLAWSSharedKey,
 
 		[Parameter(Mandatory = $false, HelpMessage="Provide the source of Log Analytics Events.(e.g. CC,CICD,SDL)", ParameterSetName = "Setup")]
         [AllowEmptyString()]
@@ -75,26 +75,26 @@ function Set-AzSKMonitoringSettings
 			$appSettings = [ConfigurationManager]::GetLocalAzSKSettings();
 			if(-not $Disable) 
 			{
-				if(-not [string]::IsNullOrWhiteSpace($WorkspaceId) -and -not [string]::IsNullOrWhiteSpace($SharedKey))
+				if(-not [string]::IsNullOrWhiteSpace($LAWSId) -and -not [string]::IsNullOrWhiteSpace($LAWSSharedKey))
 				{
-					$appSettings.LAWSId = $WorkspaceId
-					$appSettings.LAWSSharedKey = $SharedKey
+					$appSettings.LAWSId = $LAWSId
+					$appSettings.LAWSSharedKey = $LAWSSharedKey
 				}
-				elseif(([string]::IsNullOrWhiteSpace($WorkspaceId) -and -not [string]::IsNullOrWhiteSpace($SharedKey)) `
-						-and (-not [string]::IsNullOrWhiteSpace($WorkspaceId) -and [string]::IsNullOrWhiteSpace($SharedKey)))
+				elseif(([string]::IsNullOrWhiteSpace($LAWSId) -and -not [string]::IsNullOrWhiteSpace($LAWSSharedKey)) `
+						-and (-not [string]::IsNullOrWhiteSpace($LAWSId) -and [string]::IsNullOrWhiteSpace($LAWSSharedKey)))
 				{					
-					[EventBase]::PublishGenericCustomMessage("You need to send both the WorkspaceId and SharedKey", [MessageType]::Error);
+					[EventBase]::PublishGenericCustomMessage("You need to send both the LAWSId and LAWSSharedKey", [MessageType]::Error);
 					return;
 				}
-				if(-not [string]::IsNullOrWhiteSpace($AltWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($AltSharedKey))
+				if(-not [string]::IsNullOrWhiteSpace($AltLAWSId) -and -not [string]::IsNullOrWhiteSpace($AltLAWSSharedKey))
 				{
-					$appSettings.AltLAWSId = $AltWorkspaceId
-					$appSettings.AltLAWSSharedKey = $AltSharedKey
+					$appSettings.AltLAWSId = $AltLAWSId
+					$appSettings.AltLAWSSharedKey = $AltLAWSSharedKey
 				}
-				elseif(([string]::IsNullOrWhiteSpace($AltWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($AltSharedKey)) `
-						-and (-not [string]::IsNullOrWhiteSpace($AltWorkspaceId) -and [string]::IsNullOrWhiteSpace($AltSharedKey)))
+				elseif(([string]::IsNullOrWhiteSpace($AltLAWSId) -and -not [string]::IsNullOrWhiteSpace($AltLAWSSharedKey)) `
+						-and (-not [string]::IsNullOrWhiteSpace($AltLAWSId) -and [string]::IsNullOrWhiteSpace($AltLAWSSharedKey)))
 				{					
-					[EventBase]::PublishGenericCustomMessage("You need to send both the AltWorkspaceId and AltSharedKey", [MessageType]::Error);
+					[EventBase]::PublishGenericCustomMessage("You need to send both the AltLAWSId and AltLAWSSharedKey", [MessageType]::Error);
 					return;
 				}
 			}
@@ -142,7 +142,7 @@ function Install-AzSKMonitoringSolution
 		Id of subscription hosting Log Analytics workspace
 	.PARAMETER LAWSResourceGroup
 		Resource group hosting Log Analytics workspace
-	.PARAMETER WorkspaceId
+	.PARAMETER LAWSId
 		Workspace ID of the Log Analytics workspace which will be used for monitoring.
 	.PARAMETER ViewName
 		Provide the custom name for your DevOps Kit security view.
@@ -175,9 +175,9 @@ function Install-AzSKMonitoringSolution
 
 		[Parameter(ParameterSetName="NewModel", HelpMessage="Workspace ID of the Log Analytics workspace which will be used for monitoring.", Mandatory = $true)]
         [string]
-		[Alias("wid","OMSWorkspaceId")]
+		[Alias("wid","OMSWorkspaceId","WorkspaceId")]
 		[ValidateNotNullOrEmpty()]
-		$WorkspaceId, 
+		$LAWSId, 
 		
 		[Parameter(ParameterSetName="NewModel", HelpMessage="Provide the custom name for your DevOps Kit security view", Mandatory = $false)]
         [string]
@@ -207,7 +207,7 @@ function Install-AzSKMonitoringSolution
 			{
 				Write-Host "WARNING: The command 'Install-AzSKOMSSolution' will soon be deprecated. It will be replaced by 'Install-AzSKMonitoringSolution'.`n" -ForegroundColor Yellow
 			}
-			$monitoringInstance = [LogAnalyticsMonitoring]::new($LAWSSubscriptionId, $LAWSResourceGroup, $WorkspaceId, $PSCmdlet.MyInvocation);
+			$monitoringInstance = [LogAnalyticsMonitoring]::new($LAWSSubscriptionId, $LAWSResourceGroup, $LAWSId, $PSCmdlet.MyInvocation);
 			$monitoringInstance.InvokeFunction($monitoringInstance.ConfigureLAWS, @($ViewName, $ValidateOnly));
 		}
 		catch

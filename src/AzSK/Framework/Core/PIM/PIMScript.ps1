@@ -1,4 +1,3 @@
-
 #Acquire Access token
 class PIM: CommandBase {
     hidden $APIroot = [string]::Empty
@@ -21,41 +20,51 @@ class PIM: CommandBase {
         # Using helper method to get current context and access token   
         $ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
         $this.AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI);
-        $this.AccountId = [Helpers]::GetCurrentSessionUser()
-        $this.UserId = (Get-AzADUser -UserPrincipalName  $this.AccountId).Id
         $this.headerParams = @{'Authorization' = "Bearer $($this.AccessToken)" }
+        $this.AccountId = [Helpers]::GetCurrentSessionUser()
+        $ADUserDetails = Get-AzADUser -UserPrincipalName  $this.AccountId
+        if($null -ne $ADUserDetails) {
+        $this.UserId = ($ADUserDetails).Id
+        }
+        
+        
     
     }
 
     #Gets the jit assignments for logged-in user
     hidden [PSObject] MyJitAssignments() {
-        $this.AcquireToken();    
-        $urlme = $this.APIroot + "/roleAssignments?`$expand=linkedEligibleRoleAssignment,subject,roleDefinition(`$expand=resource)&`$filter=(subject/id%20eq%20%27$($this.UserId)%27)+and+(assignmentState%20eq%20%27Eligible%27)"
-        $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $urlme -Method Get
-        $assignments = ConvertFrom-Json $response.Content
-        $assignments = $assignments.value 
-        $assignments = $assignments | Sort-Object  roleDefinition.resource.type , roleDefinition.resource.displayName
-        $obj = @()        
-        if (($assignments | Measure-Object).Count -gt 0) {
-            $i = 0
-            foreach ($assignment in $assignments) {
-                $item = New-Object psobject -Property @{
-                    Id             = ++$i
-                    IdGuid         = $assignment.id
-                    ResourceId     = $assignment.roleDefinition.resource.id
-                    OriginalId     = $assignment.roleDefinition.resource.externalId
-                    ResourceName   = $assignment.roleDefinition.resource.displayName
-                    ResourceType   = $assignment.roleDefinition.resource.type
-                    RoleId         = $assignment.roleDefinition.id
-                    RoleName       = $assignment.roleDefinition.displayName
-                    ExpirationDate = $assignment.endDateTime
-                    SubjectId      = $assignment.subject.id
+        $this.AcquireToken();  
+        if( -not [string]::IsNullOrEmpty($this.UserId))
+        {  
+            $urlme = $this.APIroot + "/roleAssignments?`$expand=linkedEligibleRoleAssignment,subject,roleDefinition(`$expand=resource)&`$filter=(subject/id%20eq%20%27$($this.UserId)%27)+and+(assignmentState%20eq%20%27Eligible%27)"
+            $assignments = [WebRequestHelper]::InvokeWebRequest('Get', $urlme, $this.headerParams, $null, [string]::Empty, $false )
+            $assignments = $assignments | Sort-Object  roleDefinition.resource.type , roleDefinition.resource.displayName
+            $obj = @()        
+            if (($assignments | Measure-Object).Count -gt 0) {
+                $i = 0
+                foreach ($assignment in $assignments) {
+                    $item = New-Object psobject -Property @{
+                        Id             = ++$i
+                        IdGuid         = $assignment.id
+                        ResourceId     = $assignment.roleDefinition.resource.id
+                        OriginalId     = $assignment.roleDefinition.resource.externalId
+                        ResourceName   = $assignment.roleDefinition.resource.displayName
+                        ResourceType   = $assignment.roleDefinition.resource.type
+                        RoleId         = $assignment.roleDefinition.id
+                        RoleName       = $assignment.roleDefinition.displayName
+                        ExpirationDate = $assignment.endDateTime
+                        SubjectId      = $assignment.subject.id
+                    }
+                    $obj = $obj + $item
                 }
-                $obj = $obj + $item
             }
+            
+            return $obj
         }
-         
-        return $obj
+        else {
+            $this.PublishCustomMessage("Unable to retrieve details for the current context.",[MessageType]::Error)
+            return $null
+        }
     }
 
     # This function resolves the resource that matches to parameters passed in command
@@ -100,10 +109,13 @@ class PIM: CommandBase {
             {
                 $resolvedResource.ExternalId = "/subscriptions/$($SubscriptionId.Trim())/resourceGroups/$($item.ResourceName)"
             }
-            $temp = $resources | Where-Object { $_.ExternalId -eq $resolvedResource.ExternalId}
-            if(($temp| Measure-Object).Count -gt 0)
+            if($null -ne $resources)
             {
-                $resolvedResource = $temp
+                $temp = $resources | Where-Object { $_.ExternalId -eq $resolvedResource.ExternalId}
+                if(($temp| Measure-Object).Count -gt 0)
+                {
+                    $resolvedResource = $temp
+                }
             }
         }
         return $resolvedResource    
@@ -179,9 +191,8 @@ class PIM: CommandBase {
     #List roles
     hidden [PSObject] ListRoles($resourceId) {
         $this.AcquireToken();
-        $url = $this.APIroot + "/resources/" + $resourceId + "/roleDefinitions?`$select=id,displayName,type,templateId,resourceId,externalId,subjectCount,eligibleAssignmentCount,activeAssignmentCount&`$orderby=activeAssignmentCount%20desc"
-        $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $url -Method Get
-        $roles = ConvertFrom-Json $response.Content
+        $url = $this.APIroot + "resources/" + $resourceId + "/roleDefinitions?`$select=id,displayName,type,templateId,resourceId,externalId,subjectCount,eligibleAssignmentCount,activeAssignmentCount&`$orderby=activeAssignmentCount%20desc"
+        $roles = [WebRequestHelper]::InvokeWebRequest("Get", $url, $this.headerParams, $null, [string]::Empty, $false )
         $i = 0
         $obj = @()
         foreach ($role in $roles.value) {
@@ -200,9 +211,9 @@ class PIM: CommandBase {
     #List Assignment
     hidden [PSObject] ListAssignmentsWithFilter($resourceId, $IsPermanent) {
         $this.AcquireToken()
-        $url = $this.APIroot + "/resources/" + $resourceId + "`/roleAssignments?`$expand=subject,roleDefinition(`$expand=resource)"
-        $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $url -Method Get
-        $roleAssignments = ConvertFrom-Json $response.Content
+        $url = $this.APIroot + "resources/" + $resourceId + "`/roleAssignments?`$expand=subject,roleDefinition(`$expand=resource)"
+        #Write-Host $url
+        $roleAssignments = [WebRequestHelper]::InvokeWebRequest('Get', $url, $this.headerParams, $null, [string]::Empty, $false )
         $i = 0
         $obj = @()
         $assignments = @();
@@ -254,27 +265,12 @@ class PIM: CommandBase {
                 $resourceId = $matchingAssignment.ResourceId
                 $roleDefinitionId = $matchingAssignment.RoleId
                 $subjectId = $matchingAssignment.SubjectId
-                $RequestActivationurl = $this.APIroot + "/roleAssignmentRequests "
+                $RoleActivationurl = $this.APIroot + "/roleAssignmentRequests "
                 $postParams = '{"roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $subjectId + '","assignmentState":"Active","type":"UserAdd","reason":"' + $Justification + '","schedule":{"type":"Once","startDateTime":"' + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","duration":"PT' + $Duration + 'H"},"linkedEligibleRoleAssignmentId":"' + $matchingAssignment.IdGuid + '"}'
-       
-    
-                try {
-                    $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $RequestActivationurl -Method Post -ContentType "application/json" -Body $postParams
+                $response = [WebRequestHelper]::InvokeWebRequest('Post', $RoleActivationurl, $this.headerParams, $postParams, "application/json", $false )
                     if ($response.StatusCode -eq 201) {
                         $this.PublishCustomMessage("Activation queued successfully. The role(s) should get activated in a few minutes.", [MessageType]::Update);
                     }
-                 
-                }
-                catch {
-                    if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
-                    {
-                        $this.PublishCustomMessage($_.ErrorDetails.Message,[MessageType]::Error)
-                    }
-                    else
-                    {
-                        $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
-                    }
-                }
             }
             else {
                 $this.PublishCustomMessage("No matching eligible role found for the current context", [MessageType]::Warning)
@@ -288,46 +284,36 @@ class PIM: CommandBase {
     #Deactivates the user
     hidden Deactivate($SubscriptionId, $ResourceGroupName, $ResourceName, $roleName) {
         $this.AcquireToken();
-        $assignments = $this.MyJitAssignments() | Where-Object { -not [string]::IsNullorEmpty($_.ExpirationDate) }
-        $resource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName)
+        $assignments = $this.MyJitAssignments() 
+        if(($assignments| Measure-Object).Count -gt 0) {
+            $assignments = $assignments|Where-Object { -not [string]::IsNullorEmpty($_.ExpirationDate) }
+            $resource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName)
 
-        if (($assignments | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resource.ExternalId))) {
-            $matchingAssignment = $assignments | Where-Object { $_.OriginalId -eq $resource.ExternalId -and $_.RoleName -eq $roleName }
-            if (($matchingAssignment | Measure-Object).Count -gt 0)
-            {     
-                $this.PublishCustomMessage("Requesting deactivation of your [$($matchingAssignment.RoleName)] role on [$($matchingAssignment.ResourceName)]... ", [MessageType]::Info);
-                $id = $matchingAssignment.IdGuid
-                $resourceId = $matchingAssignment.ResourceId
-                $roleDefinitionId = $matchingAssignment.RoleId
-                $subjectId = $matchingAssignment.SubjectId
-                $deactivaturl = $this.APIroot + "/roleAssignmentRequests "
-                $postParams = '{"roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $subjectId + '","assignmentState":"Active","type":"UserRemove","linkedEligibleRoleAssignmentId":"' + $id + '"}'
-                try {
-                    $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $deactivaturl -Method Post -ContentType "application/json" -Body $postParams
-                    if ($response.StatusCode -eq '201') {
-                        $this.PublishCustomMessage("Deactivation queued successfully. The role(s) should get deactivated in a few minutes.", [MessageType]::Update);
-                    }
+            if (($assignments | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resource.ExternalId))) {
+                $matchingAssignment = $assignments | Where-Object { $_.OriginalId -eq $resource.ExternalId -and $_.RoleName -eq $roleName }
+                if (($matchingAssignment | Measure-Object).Count -gt 0)
+                {     
+                    $this.PublishCustomMessage("Requesting deactivation of your [$($matchingAssignment.RoleName)] role on [$($matchingAssignment.ResourceName)]... ", [MessageType]::Info);
+                    $id = $matchingAssignment.IdGuid
+                    $resourceId = $matchingAssignment.ResourceId
+                    $roleDefinitionId = $matchingAssignment.RoleId
+                    $subjectId = $matchingAssignment.SubjectId
+                    $deactivationurl = $this.APIroot + "/roleAssignmentRequests "
+                    $postParams = '{"roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $subjectId + '","assignmentState":"Active","type":"UserRemove","linkedEligibleRoleAssignmentId":"' + $id + '"}'
+                    $response = [WebRequestHelper]::InvokeWebRequest('Post', $deactivationurl, $this.headerParams, $postParams, "application/json", $false )
+                        if ($response.StatusCode -eq '201') {
+                            $this.PublishCustomMessage("Deactivation queued successfully. The role(s) should get deactivated in a few minutes.", [MessageType]::Update);
+                        }
                 }
-                catch {
-                    if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
-                    {
-                        $this.PublishCustomMessage($_.ErrorDetails.Message,[MessageType]::Error)
-                    }
-                    else
-                    {
-                        $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
-                    }
+                else
+                {
+                    $this.PublishCustomMessage("No active assignments found for the current context.", [MessageType]::Warning);
                 }
             }
-            else
-            {
+            else {
                 $this.PublishCustomMessage("No active assignments found for the current context.", [MessageType]::Warning);
             }
         }
-        else {
-            $this.PublishCustomMessage("No active assignments found for the current context.", [MessageType]::Warning);
-        }
-    
 
     }
 
@@ -337,7 +323,6 @@ class PIM: CommandBase {
         $criticalRoles = @();
         $criticalRoles += $this.ConvertToStringArray($RoleNames)
         $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName)
-        $permanentAssignment = $null
         if (($resources | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resources.ResourceId))) {       
             $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $CheckPermanent)
             if(-not [String]::IsNullOrEmpty($RoleNames))
@@ -400,29 +385,18 @@ class PIM: CommandBase {
             }
             $ts = New-TimeSpan -Days $duration
             $postParams = '{"assignmentState":"Eligible","type":"AdminAdd","reason":"Assign","roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $subjectId + '","schedule":{"startDateTime":"' + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","endDateTime":"' + ((get-date) + $ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","type":"Once"}}'
-    
-            try {
-                $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $url -Method Post -ContentType "application/json" -Body $postParams
-                if ($response.StatusCode -eq 201) {
-                    $this.PublishCustomMessage("Assignment request for [$PrincipalName] for the [$RoleName] role on [$($resolvedResource.ResourceName)] queued successfully.", [MessageType]::Update);
-                }  
-                if ($response.StatusCode -eq 401) {
-                    $this.PublishCustomMessage("You are not eligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
-                }          
-            }
-            catch {
-                if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
-                {
-                    $this.PublishCustomMessage($_.ErrorDetails.Message,[MessageType]::Error)
-                }
-                else
-                {
-                    $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
-                }         
-            }
+            $response = [WebRequestHelper]::InvokeWebRequest('Post', $url, $this.headerParams, $postParams, "application/json", $false )
+            if ($response.StatusCode -eq 201) {
+                $this.PublishCustomMessage("Assignment request for [$PrincipalName] for the [$RoleName] role on [$($resolvedResource.ResourceName)] queued successfully.", [MessageType]::Update);
+            }  
+            if ($response.StatusCode -eq 401) {
+                $this.PublishCustomMessage("You are not eligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
+            }          
+            
+           
         }
         else {
-            $this.PublishCustomMessage("No matching resource found for assignment.", [MessageType]::Warning)
+            $this.PublishCustomMessage( "Unable to find resource on which assignment was requested. Either the resource does not exist or you may not have permissions for assigning a role on it", [MessageType]::Warning)
         }
     }
 
@@ -477,21 +451,20 @@ class PIM: CommandBase {
                             $PrincipalName = $_.PrincipalName
                             #$Scope= $_.OriginalId
                             $postParams = '{"assignmentState":"Eligible","type":"AdminAdd","reason":"Assign","roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $subjectId + '","schedule":{"startDateTime":"' + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","endDateTime":"' + ((get-date).AddDays($ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")) + '","type":"Once"}}'
-                            try {
-                                
+                            
                                 $this.PublishCustomMessage([Constants]::SingleDashLine)
                                 # $this.PublishCustomMessage("Requesting PIM assignment for [$($_.RoleName)' role for $($_.PrincipalName) on $($_.ResourceType) '$($resolvedResource.ResourceName)'...");
-                                $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $Assignmenturl -Method Post -ContentType "application/json" -Body $postParams
+                               try{
+                                $response = [WebRequestHelper]::InvokeWebRequest('Post', $Assignmenturl, $this.headerParams, $postParams, "application/json", $false )
                                 if ($response.StatusCode -eq 201) {
                                     $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] Successfully requested PIM assignment for [$PrincipalName]", [MessageType]::Update);
                                 }
                                 $this.PublishCustomMessage([Constants]::SingleDashLine)
                           
-                            }
+                               }
                             catch {
-                                if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
+                                if([Helpers]::CheckMember($_,"error.code"))
                                 {
-                                    $code = $_.ErrorDetails.Message | ConvertFrom-Json
                                     if ($code.error.code -eq "RoleAssignmentExists") {
                                         $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] PIM Assignment for [$PrincipalName] already exists.", [MessageType]::Update)
                                     }

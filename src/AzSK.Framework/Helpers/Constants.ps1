@@ -88,10 +88,10 @@ class Constants
 	}
 
 	static [string] $StorageAccountPreName= "azsk"
-	static [string] $AzSKAppFolderPath = $Env:LOCALAPPDATA + "\Microsoft\" + [Constants]::AzSKModuleName
-	static [string] $AzSKLogFolderPath = $Env:LOCALAPPDATA + "\Microsoft\"
-	static [string] $AzSKTempFolderPath = $env:TEMP + "\" + [Constants]::AzSKModuleName + "\"
-	static [string] $AzSKExtensionsFolderPath = $Env:LOCALAPPDATA + "\Microsoft\" + [Constants]::AzSKModuleName + "\Extensions"
+	static [string] $AzSKAppFolderPath = [Environment]::GetFolderPath('LocalApplicationData') + "/Microsoft/" + [Constants]::AzSKModuleName
+	static [string] $AzSKLogFolderPath = [Environment]::GetFolderPath('LocalApplicationData') + "/Microsoft/"
+	static [string] $AzSKTempFolderPath = [Environment]::GetFolderPath('LocalApplicationData') + "/Temp" + "/" + [Constants]::AzSKModuleName + "/"
+	static [string] $AzSKExtensionsFolderPath = [Environment]::GetFolderPath('LocalApplicationData') + "/Microsoft/" + [Constants]::AzSKModuleName + "/Extensions"
 	static [string] $ARMManagementUri = "https://management.azure.com/";	
 	static [string] $VersionCheckMessage = "A newer version of AzSK is available: Version {0} `r`nTo update, run the command below in a fresh PS window:`r`n" ;
 	static [string] $VersionWarningMessage = ("Using the latest version ensures that AzSK security commands you run use the latest, most up-to-date controls. `r`nResults from the current version should not be considered towards compliance requirements.`r`n" + [Constants]::DoubleDashLine);
@@ -165,9 +165,8 @@ class Constants
 	#static [string] $ComplianceReportContainerName = "compliance-state"
 	static [string] $ComplianceReportTableName = "ComplianceState"
 	static [DateTime] $AzSKDefaultDateTime = '1900-01-01T00:00:00'
-	static [int] $ControlResultComplianceInDays = 3
-	static [string] $ComplianceReportPath = [Constants]::AzSKAppFolderPath + "\TempState\ComplianceData"
-
+	static [int] $ControlResultComplianceInDays = 3 ;
+	static [string] $ComplianceReportPath = (Join-Path $([Constants]::AzSKAppFolderPath) -ChildPath "TempState" |Join-Path -ChildPath "ComplianceData") ;
 	static [string] $ServerConfigMetadataFileName = "ServerConfigMetadata.json"
 
 	#Constants for credential rotation metadata
@@ -179,8 +178,11 @@ class Constants
 		if(-not [string]::IsNullOrWhiteSpace($moduleName))
 		{
 			[Constants]::AzSKModuleName = $moduleName.Replace("azsk","AzSK");
-			[Constants]::AzSKAppFolderPath = $Env:LOCALAPPDATA + "\Microsoft\" + [Constants]::AzSKModuleName
-			[Constants]::AzSKTempFolderPath = $env:TEMP + "\" + [Constants]::AzSKModuleName + "\"
+			[Constants]::AzSKAppFolderPath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Microsoft" |Join-Path -ChildPath $([Constants]::AzSKModuleName)
+			[Constants]::AzSKLogFolderPath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) "Microsoft"
+			[Constants]::AzSKTempFolderPath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Temp" |Join-Path -ChildPath $([Constants]::AzSKModuleName)
+			[Constants]::AzSKExtensionsFolderPath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Microsoft" |Join-Path -ChildPath $([Constants]::AzSKModuleName) |Join-Path -ChildPath "Extensions"	
+			
 		}
 	}
 	static [void] SetAzSKCurrentModuleVersion($moduleVersion)
