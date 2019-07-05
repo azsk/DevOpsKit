@@ -110,7 +110,10 @@
   },
   "NoOfApprovedAdmins": 5,
   "NoOfClassicAdminsLimit": 2,
-  "CriticalPIMRoles": [ "Owner", "Contributor" ],  
+  "CriticalPIMRoles": { 
+    "Subscription" : [ "Owner", "Contributor", "User Access Administrator" ],
+    "ResourceGroup" : [ "Owner", "User Access Administrator" ]
+  },
   "ASCAlertsSeverityLevels": [ "High" ],
   "ASCAlertsThresholdInDays": 30,
   "WhitelistedMgmtCerts": {
