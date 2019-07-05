@@ -85,7 +85,8 @@ class ConfigOverride
 
 	[void] WriteToFolder()
 	{
-		$this.WriteToFolder([Constants]::AzSKAppFolderPath + "\Temp\PolicySetup");
+		$folderPath = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath "PolicySetup" ;
+		$this.WriteToFolder($folderPath)
 	}
 
 	[void] WriteToFolder([string] $folderName)
@@ -97,15 +98,10 @@ class ConfigOverride
 
 		if (-not (Test-Path $folderName)) 
 		{
-			mkdir -Path $folderName -ErrorAction Stop | Out-Null
+			New-Item -ItemType Directory -Path $folderName -ErrorAction Stop | Out-Null
 		}
 
-		if (-not $folderName.EndsWith("\"))
-		{
-			$folderName += "\";
-		}
-
-		[Helpers]::ConvertToJsonCustom(($this.ParsedFile | Select-Object -Property $this.ChangedProperties)) | Out-File -Force -FilePath ($folderName + $this.ConfigFileName) -Encoding utf8
+		[Helpers]::ConvertToJsonCustom(($this.ParsedFile | Select-Object -Property $this.ChangedProperties)) | Out-File -Force -FilePath ( Join-Path $folderName $this.ConfigFileName) -Encoding utf8
 	}
 
 	[void] static ClearConfigInstance()

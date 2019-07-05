@@ -113,11 +113,11 @@ class ARMCheckerStatus: EventBase
 	    $armEvaluator = [AzSK.ARMChecker.Lib.ArmTemplateEvaluator]::new([string] $this.ARMControls);
 		$skippedFiles = @();
 		$timeMarker = [datetime]::Now.ToString("yyyyMMdd_HHmmss")
-		$resultsFolder = [Constants]::AzSKLogFolderPath + [Constants]::AzSKModuleName + "Logs\ARMChecker\" + $timeMarker + "\";
-		$csvFilePath = $resultsFolder + "ARMCheckerResults_" + $timeMarker + ".csv";
+		$resultsFolder = Join-Path $([Constants]::AzSKLogFolderPath) $([Constants]::AzSKModuleName + "Logs") | Join-Path -ChildPath "ARMChecker" | Join-Path -ChildPath $timeMarker ;
+		$csvFilePath = Join-Path $resultsFolder ("ARMCheckerResults_" + $timeMarker + ".csv");
 		[System.IO.Directory]::CreateDirectory($resultsFolder) | Out-Null
-		$this.PSLogPath = $resultsFolder + "PowerShellOutput.LOG";
-		$this.SFLogPath = $resultsFolder + "SkippedFiles.LOG";
+		$this.PSLogPath = Join-Path $resultsFolder "PowerShellOutput.LOG";
+		$this.SFLogPath = Join-Path $resultsFolder "SkippedFiles.LOG";
 		$this.CommandStartedAction();
 		$csvResults = @();
 		$armcheckerscantelemetryEvents = [System.Collections.ArrayList]::new()

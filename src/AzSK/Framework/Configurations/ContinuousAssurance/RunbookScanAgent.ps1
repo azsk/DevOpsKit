@@ -426,7 +426,7 @@ function CheckForSubscriptionsSnapshotData()
 		$destinationFolderPath = $env:temp + "\AzSKTemp\"
 		if(-not (Test-Path -Path $destinationFolderPath))
 		{
-			mkdir -Path $destinationFolderPath -Force | Out-Null
+			New-Item -ItemType Directory -Path $destinationFolderPath -Force | Out-Null
 		}
 
 		$CAActiveScanSnapshotBlobPath = "$destinationFolderPath\$CAActiveScanSnapshotBlobName"
@@ -522,7 +522,7 @@ function PersistSubscriptionSnapshot
 
 		if(-not (Test-Path -Path $destinationFolderPath))
 		{
-			mkdir -Path $destinationFolderPath -Force | Out-Null
+			New-Item -ItemType Directory -Path $destinationFolderPath -Force | Out-Null
 		}
 		$CAActiveScanSnapshotBlobPath = "$destinationFolderPath\$CAActiveScanSnapshotBlobName"
 		
@@ -599,7 +599,7 @@ function ArchiveBlob
 			$ArchiveTemp = $env:temp + "\AzSKTemp\Archive"
 			if(-not (Test-Path -Path $ArchiveTemp))
 			{
-				mkdir -Path $ArchiveTemp -Force | Out-Null
+				New-Item -ItemType Directory -Path $ArchiveTemp -Force | Out-Null
 			}			
 		
 			$archiveName =  $activeSnapshotBlob + "_" +  (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + ".ERR.json";
