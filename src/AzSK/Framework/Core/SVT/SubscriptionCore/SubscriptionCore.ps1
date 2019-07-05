@@ -1372,7 +1372,7 @@ class SubscriptionCore: AzSVTBase
 		if($null -eq $this.RGLevelPIMAssignments)
 		{
 			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-			$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+			$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			if($null -ne $AccessToken)
 			{
 				$authorisationToken = "Bearer " + $accessToken

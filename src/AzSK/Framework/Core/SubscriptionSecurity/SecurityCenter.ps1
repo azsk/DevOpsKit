@@ -134,7 +134,7 @@ class SecurityCenter: AzSKRoot
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.autoProvisioning)
 		{			
 			$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-			[Helpers]::SetResourceGroupTags($azskRGName,@{[Constants]::SecurityCenterConfigVersionTagName=$this.PolicyObject.Version},$false)				
+			[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::SecurityCenterConfigVersionTagName=$this.PolicyObject.Version},$false)				
 		}
 		return $messages;
 	}

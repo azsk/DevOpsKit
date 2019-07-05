@@ -492,7 +492,7 @@ class VirtualMachine: AzSVTBase
 	{
 		$controlStatus = [VerificationResult]::Failed
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
-		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		$header = "Bearer " + $AccessToken
 		$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
 		$propertiesToReplace = @{}

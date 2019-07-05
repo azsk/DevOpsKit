@@ -514,7 +514,7 @@ class PIM: CommandBase {
             if (($permanentRoles | Measure-Object).Count -gt 0) {
                 $permanentRolesForTransition = $permanentRoles | Where-Object { $_.SubjectType -eq 'User' -and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
                 $successfullyassignedRoles = @();
-                $currentContext = [Helpers]::GetCurrentRmContext();
+                $currentContext = [ContextHelper]::GetCurrentRmContext();
                 $permanentRolesForTransition = $permanentRolesForTransition | Where-Object { $_.PrincipalName -ne $currentContext.Account.Id }
                 if ($RemoveAssignmentFor -ne "AllExceptMe") {
                     $eligibleAssignments | ForEach-Object {
