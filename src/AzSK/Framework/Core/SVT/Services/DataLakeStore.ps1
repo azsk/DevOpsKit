@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class DataLakeStore: SVTBase
+class DataLakeStore: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
 

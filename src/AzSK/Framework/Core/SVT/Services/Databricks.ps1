@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class Databricks: SVTBase
+class Databricks: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
 	hidden [string] $ManagedResourceGroupName;

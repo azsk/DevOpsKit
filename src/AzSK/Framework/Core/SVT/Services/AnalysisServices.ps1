@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class AnalysisServices: SVTBase
+class AnalysisServices: AzSVTBase
 {    
 	hidden [PSObject] $ResourceObject;
 

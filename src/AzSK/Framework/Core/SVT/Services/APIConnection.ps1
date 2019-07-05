@@ -25,7 +25,7 @@ class APIConnectionConnectorsMetadata
 	[APIConnectionNotApprovedConnector[]] $notApprovedConnectors = @()	
 }
 
-class APIConnection: SVTBase
+class APIConnection: AzSVTBase
 {   
 	hidden [PSObject] $LogicAppObject;
     hidden [PSObject] $ResourceObject;

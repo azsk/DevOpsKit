@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class KubernetesService: SVTBase
+class KubernetesService: AzSVTBase
 {
 	hidden [PSObject] $ResourceObject;
 

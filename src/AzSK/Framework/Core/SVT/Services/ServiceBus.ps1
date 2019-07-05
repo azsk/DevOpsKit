@@ -1,6 +1,6 @@
 ﻿#using namespace Microsoft.Azure.Commands.ServiceBus.Models
 Set-StrictMode -Version Latest 
-class ServiceBus: SVTBase
+class ServiceBus: AzSVTBase
 {       
 	hidden [PSObject[]] $NamespacePolicies = @() ;
 	hidden [PSObject[]] $Queues = @() ;

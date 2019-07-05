@@ -1,6 +1,6 @@
 ﻿#using namespace Microsoft.Azure.Commands.KeyVault.Models
 Set-StrictMode -Version Latest 
-class NotificationHub: SVTBase
+class NotificationHub: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
 	hidden [PSObject] $NamespaceObject;

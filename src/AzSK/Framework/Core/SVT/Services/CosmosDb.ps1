@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest
 
-class CosmosDb : SVTBase
+class CosmosDb : AzSVTBase
 {
 	hidden [PSObject] $Resource;
 

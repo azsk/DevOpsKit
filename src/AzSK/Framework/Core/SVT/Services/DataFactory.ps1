@@ -1,6 +1,6 @@
 #using namespace Microsoft.Azure.Commands.DataFactory.Models
 Set-StrictMode -Version Latest 
-class DataFactory: SVTBase
+class DataFactory: AzSVTBase
 {       
 
     hidden [PSObject] $ResourceObject;

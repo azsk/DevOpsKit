@@ -351,7 +351,7 @@ class ServicesSecurityStatus: SVTCommandBase
 
 			$previewBaselineControlsDetails = $null
 			#if use preview baseline switch is passed and preview baseline list property present 
-			if($this.UsePreviewBaselineControls -and [Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls"))
+			if($this.UsePreviewBaselineControls -and [Helpers]::CheckMember($ControlSettings,"PreviewBaselineControls"))
 			{
 				$previewBaselineControlsDetails = $ControlSettings.PreviewBaselineControls
 				#if preview baseline list is defined in settings

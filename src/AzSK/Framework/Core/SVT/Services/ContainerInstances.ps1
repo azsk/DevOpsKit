@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class ContainerInstances: SVTBase
+class ContainerInstances: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
 

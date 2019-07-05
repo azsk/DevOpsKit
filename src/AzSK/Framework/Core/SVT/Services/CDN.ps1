@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest
-class CDN: SVTBase
+class CDN: AzSVTBase
 {
 	hidden [PSObject] $ResourceObject;
 

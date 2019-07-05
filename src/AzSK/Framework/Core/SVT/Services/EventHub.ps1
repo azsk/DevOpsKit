@@ -1,6 +1,6 @@
 #using namespace Microsoft.Azure.Commands.EventHub.Models
 Set-StrictMode -Version Latest 
-class EventHub: SVTBase
+class EventHub: AzSVTBase
 {       
 	hidden [PSObject[]] $NamespacePolicies = @();
 	hidden [PSObject[]] $EventHubs = @();

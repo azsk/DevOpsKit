@@ -3,7 +3,7 @@
 # CloudServices.ps1
 #
 Set-StrictMode -Version Latest 
-class CloudService: SVTBase
+class CloudService: AzSVTBase
 {
 	hidden [PSCloudService] $ResourceObject;
 	hidden [bool] $hasClassicPermissions = $true;
