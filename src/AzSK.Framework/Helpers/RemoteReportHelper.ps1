@@ -212,7 +212,7 @@ class RemoteReportHelper
 	static [string] Mask([psobject] $toMask)
 	{
 		$sha384 = [System.Security.Cryptography.SHA384Managed]::new()
-		$maskBytes = [System.Text.Encoding]::UTF8.GetBytes($toMask.ToString())
+		$maskBytes = [System.Text.Encoding]::UTF8.GetBytes($toMask.ToString().ToLower())
 		$maskBytes = $sha384.ComputeHash($maskBytes)
 		$sha384.Dispose()
 		$take = 16
