@@ -27,7 +27,7 @@ class Build: SVTBase
                         $buildDefPath = [Constants]::AzSKTempFolderPath + "\Builds\"+ $buildDefFileName + "\";
                         if(-not (Test-Path -Path $buildDefPath))
                         {
-                            mkdir -Path $buildDefPath -Force | Out-Null
+                            New-Item -ItemType Directory -Path $buildDefPath -Force | Out-Null
                         }
 
                         $responseObj | ConvertTo-Json -Depth 5 | Out-File "$buildDefPath\$buildDefFileName.json"

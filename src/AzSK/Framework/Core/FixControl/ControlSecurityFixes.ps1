@@ -20,8 +20,8 @@ class ControlSecurityFixes: CommandBase
 		if(-not [string]::IsNullOrEmpty($parameterFilePath))
         {
 			$this.ParameterFilePath = $parameterFilePath;
-			$this.FolderPaths += [System.IO.Path]::GetDirectoryName($parameterFilePath) + "\Services\";
-			$this.FolderPaths += "$PSScriptRoot\Services\";
+			$this.FolderPaths += Join-Path $([System.IO.Path]::GetDirectoryName($parameterFilePath)) "Services";
+			$this.FolderPaths += Join-Path $PSScriptRoot "Services";
 		}
 		else
 		{

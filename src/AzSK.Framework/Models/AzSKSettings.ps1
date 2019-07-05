@@ -69,7 +69,7 @@ class AzSKSettings {
 		$localAppDataSettings = $null
 
 		# TBR : AzSDK cleanup on local machine for Local settings folder
-		$AzSDKAppFolderPath = $Env:LOCALAPPDATA + "\Microsoft\" + "AzSDK*"
+		$AzSDKAppFolderPath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Microsoft"| Join-Path -ChildPath "AzSDK"
 		if(Test-Path -Path $AzSDKAppFolderPath)
 		{
 		    Get-ChildItem -Path $AzSDKAppFolderPath -Directory | Remove-Item -Recurse -Force
@@ -183,22 +183,22 @@ class AzSKSettings {
 	{
 		if (-not (Test-Path $([Constants]::AzSKAppFolderPath)))
 		{
-			mkdir -Path $([Constants]::AzSKAppFolderPath) -ErrorAction Stop | Out-Null
+			New-Item -ItemType Directory -Path $([Constants]::AzSKAppFolderPath) -ErrorAction Stop | Out-Null
 		}
 
 		#persisting back to file
-		[AzSKSettings]::Instance | ConvertTo-Json | Out-File -Force -FilePath ([Constants]::AzSKAppFolderPath + "\" + [AzSKSettings]::FileName)
+		[AzSKSettings]::Instance | ConvertTo-Json | Out-File -Force -FilePath (Join-Path $([Constants]::AzSKAppFolderPath) $([AzSKSettings]::FileName))
 	}
 
     static [void] Update([AzSKSettings] $localSettings)
 	{
 		if (-not (Test-Path $([Constants]::AzSKAppFolderPath)))
 		{
-			mkdir -Path $([Constants]::AzSKAppFolderPath) -ErrorAction Stop | Out-Null
+			New-Item -ItemType Directory -Path $([Constants]::AzSKAppFolderPath) -ErrorAction Stop | Out-Null
 		}
 
 		#persisting back to file
-		$localSettings | ConvertTo-Json | Out-File -Force -FilePath ([Constants]::AzSKAppFolderPath + "\" + [AzSKSettings]::FileName)
+		$localSettings | ConvertTo-Json | Out-File -Force -FilePath (Join-Path $([Constants]::AzSKAppFolderPath) $([AzSKSettings]::FileName))
 	}
 	
 	hidden [string] GetScanSource()

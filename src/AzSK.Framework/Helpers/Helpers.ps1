@@ -7,12 +7,12 @@ class Helpers {
 
     static hidden [PSObject] $currentRMContext;
     hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson) {
-		$rootConfigPath = [Constants]::AzSKAppFolderPath + "\" ;
+		$rootConfigPath = [Constants]::AzSKAppFolderPath ;
 		return [Helpers]::LoadOfflineConfigFile($fileName, $true,$rootConfigPath);
 	}
     hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson, $path) {
 		#Load file from AzSK App folder
-		$rootConfigPath = $path + "\" ;	
+		$rootConfigPath = $path ;	
         
 		$extension = [System.IO.Path]::GetExtension($fileName);
 
@@ -23,7 +23,7 @@ class Helpers {
 		}
         #If file not present in App folder load settings from Configurations in Module folder 
         if (!$filePath) {
-            $rootConfigPath = (Get-Item $PSScriptRoot).Parent.FullName + "\Configurations\";
+            $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.FullName "Configurations";
             $filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
         }
 
@@ -1462,7 +1462,7 @@ class Helpers {
     {
         if(-not (Test-Path $FolderPath))
 		{
-			mkdir -Path $FolderPath -ErrorAction Stop | Out-Null
+			New-Item -ItemType Directory -Path $FolderPath -ErrorAction Stop | Out-Null
         }
         elseif($MakeFolderEmpty)
         {
