@@ -170,6 +170,10 @@ class Constants
 
 	static [string] $ServerConfigMetadataFileName = "ServerConfigMetadata.json"
 
+	#Constants for credential rotation metadata
+	static [string] $RotationMetadataSubPath = "\Temp\RotationMetadata"
+	static [string] $RotationMetadataContainerName = "rotation-metadata"
+
 	static [void] SetAzSKModuleName($moduleName)
 	{
 		if(-not [string]::IsNullOrWhiteSpace($moduleName))
