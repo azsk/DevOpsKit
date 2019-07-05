@@ -53,6 +53,7 @@ class SVTIaasBase: AzSVTBase
 								$nicresourceid =  $currentipconfig.Substring(0,$currentipconfig.LastIndexOf("ipconfigurations")-1)
 								try
 								{
+									#<TODO: Perf Issue - Get-AzResource is called in foreach which will Provider list and perform issue. Resource Ids can be passed from base location>
 									$nic = Get-AzResource -ResourceId $nicresourceid
 									$this.vNetNics += $nic
 								}

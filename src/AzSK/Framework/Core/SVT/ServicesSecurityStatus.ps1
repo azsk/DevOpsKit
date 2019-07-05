@@ -144,6 +144,15 @@ class ServicesSecurityStatus: SVTCommandBase
 		{
 			$this.ReportNonAutomatedResources();
 		}
+
+		#Begin-perf-optimize for ControlIds parameter  
+		#If controlIds are specified  filter only to applicable resources
+		#Filter resources based control tags like OwnerAccess, GraphAccess,RBAC, Authz, SOX etc 
+		$this.MapTagsToControlIds();
+		#Filter automated resources based on control ids 
+        $automatedResources = $this.MapControlsToResourceTypes($automatedResources)
+		#End-perf-optimize
+
 					
 		$this.PublishCustomMessage("`nNumber of resources for which security controls will be evaluated: $($automatedResources.Count)",[MessageType]::Info);
 		
@@ -427,6 +436,71 @@ class ServicesSecurityStatus: SVTCommandBase
 				$this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
 
 			}
+	}
+
+	#Get list of controlIds based control tags like OwnerAccess, GraphAccess,RBAC, Authz, SOX etc.
+	[void] MapTagsToControlIds()
+	{
+		#Check if filtertags or exclude filter tags parameter is passed from user then get mapped control ids
+		if(-not [string]::IsNullOrEmpty($this.FilterTags) -or -not [string]::IsNullOrEmpty($this.ExcludeTags))
+		{
+			$resourcetypes = @() 
+			$controlList = @()
+			#Get list of all supported resource Types
+			$resourcetypes += ([SVTMapping]::Mapping | Sort-Object ResourceTypeName | Select-Object JsonFileName )
+
+			$resourcetypes | ForEach-Object{
+				#Fetch control json for all resource type and collect all control jsons
+				$controlJson = [ConfigurationManager]::GetSVTConfig($_.JsonFileName); 
+				if ([Helpers]::CheckMember($controlJson, "Controls")) 
+				{
+					$controlList += $controlJson.Controls | Where-Object {$_.Enabled}
+				}
+			}
+
+			#If FilterTags are specified, limit the candidate set to matching controls
+			if (-not [string]::IsNullOrEmpty($this.FilterTags))
+			{
+				$filterTagList = $this.ConvertToStringArray($this.FilterTags)
+				$controlIdsWithFilterTagList = @()
+				#Look at each candidate control's tags and see if there's a match in FilterTags
+				$filterTagList | ForEach-Object {
+					$tagName = $_ 
+					$controlIdsWithFilterTagList += $controlList | Where-Object{ $tagName -in $_.Tags  } | ForEach-Object{ $_.ControlId}
+				}
+				#Assign filtered control Id with tag name 
+				$this.ControlIds = $controlIdsWithFilterTagList
+			}
+
+			#If FilterTags are specified, limit the candidate set to matching controls
+			#Note: currently either includeTag or excludeTag will work at a time. Combined flag result will be overridden by excludeTags 
+			if (-not [string]::IsNullOrEmpty($this.ExcludeTags))
+			{
+				$excludeFilterTagList = $this.ConvertToStringArray($this.ExcludeTags)
+				$controlIdsWithFilterTagList = @()
+				#Look at each candidate control's tags and see if there's a match in FilterTags
+				$excludeFilterTagList | ForEach-Object {
+					$tagName = $_ 
+					$controlIdsWithFilterTagList += $controlList | Where-Object{ $tagName -notin $_.Tags  } | ForEach-Object{ $_.ControlId}
+				}
+				#Assign filtered control Id with tag name 
+				$this.ControlIds = $controlIdsWithFilterTagList
+			}
+		}		
+	}
+
+	[PSObject] MapControlsToResourceTypes([PSObject] $automatedResources)
+	{
+		$allTargetControlIds = @($this.ControlIds)
+        $allTargetControlIds += $this.ConvertToStringArray($this.ControlIdString)
+        if ($allTargetControlIds.Count -gt 0)
+        {
+            #Infer resource type names from control ids 
+            $allTargetResourceTypeNames = @($allTargetControlIds | ForEach-Object { ($_ -split '_')[1]})
+            $allTargetResourceTypeNamesUnique = @($allTargetResourceTypeNames | Sort-Object -Unique)
+            $automatedResources = @($automatedResources | Where-Object {$allTargetResourceTypeNamesUnique -contains $_.ResourceTypeMapping.ResourceTypeName -or $_.ResourceType -match 'AzSKCfg'})
+		}
+		return $automatedResources
 	}
 
 	[void] UpdateRetryCountForPartialScan()
