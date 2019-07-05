@@ -19,7 +19,9 @@
           "AuthZ",
           "RBAC",
           "AppService",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true
       },
@@ -38,7 +40,9 @@
           "Automated",
           "DP",
           "AppService",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true
       },
@@ -58,7 +62,9 @@
           "AuthN",
           "OwnerAccess",
           "AppService",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true
       },
@@ -77,7 +83,9 @@
           "Manual",
           "Deploy",
           "AppService",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true
       },
@@ -96,7 +104,9 @@
           "Manual",
           "AuthZ",
           "AppService",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true
       },
@@ -115,7 +125,9 @@
           "Manual",
           "DP",
           "AppService",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true
       },
@@ -134,7 +146,9 @@
           "Manual",
           "DP",
           "AppService",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true
       },
@@ -153,7 +167,9 @@
           "Manual",
           "Deploy",
           "AppService",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true
       },
@@ -172,7 +188,9 @@
           "Automated",
           "Config",
           "AppService",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true
       },
@@ -191,7 +209,9 @@
           "Automated",
           "Config",
           "AppService",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true,
         "FixControl": {
@@ -213,7 +233,9 @@
           "Best Practice",
           "Automated",
           "BCDR",
-          "AppService"
+          "AppService",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true
       },
@@ -232,7 +254,9 @@
           "Automated",
           "Deploy",
           "AppService",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true,
         "FixControl": {
@@ -255,7 +279,9 @@
           "Manual",
           "Deploy",
           "AppService",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true
       },
@@ -273,7 +299,9 @@
           "TCP",
           "Automated",
           "BCDR",
-          "AppService"
+          "AppService",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true,
         "FixControl": {
@@ -296,7 +324,9 @@
           "Automated",
           "BCDR",
           "OwnerAccess",
-          "AppService"
+          "AppService",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true
       },
@@ -315,7 +345,9 @@
           "Automated",
           "Audit",
           "AppService",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true,
         "FixControl": {
@@ -339,7 +371,9 @@
           "Best Practice",
           "Manual",
           "BCDR",
-          "AppService"
+          "AppService",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true
       },
@@ -358,7 +392,9 @@
           "Automated",
           "DP",
           "AppService",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true,
         "FixControl": {
@@ -383,7 +419,9 @@
           "DP",
           "AppService",
           "FunctionApp",
-          "OwnerAccess"
+          "OwnerAccess",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true
       },
@@ -401,7 +439,9 @@
           "TCP",
           "Manual",
           "DP",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true,
         "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks."
@@ -419,7 +459,9 @@
           "TCP",
           "Manual",
           "DP",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true,
         "Rationale": "Host Keys grant full access to all the functions within a function app. Not sharing this key with individual clients ensures that clients are granted just enough permissions to invoke a particular function"
@@ -439,7 +481,9 @@
           "Config",
           "AuthZ",
           "OwnerAccess",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
           ],
         "Enabled": true,
         "Rationale": "Use 'Function' authorization level to ensure that users with minimum of function keys should only be able to invoke the function. This is in accordance with the principle of least privilege."
@@ -458,7 +502,9 @@
           "TCP",
           "Automated",
           "Config",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true,
         "Rationale": "Using 'Read Only' mode ensures that source code is changes come in via a CICD pipeline and not directly through portal. This ensures that code changes are properly audited."
@@ -476,7 +522,9 @@
           "TCP",
           "Manual",
           "DP",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true,
         "Rationale": "Different function keys for individual clients promotes separation of concerns. It also makes revocation easier to manage in the event of a compromise of one client."
@@ -496,7 +544,9 @@
           "DP",
           "AppService",
           "FunctionApp",
-          "OwnerAccess"
+          "OwnerAccess",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true,
         "Rationale": "CORS enables applications running under one domain to access a resource under another domain. Using '*' (allow all) for CORS setting means that an application running under any domain can have access to your application's resources and data. Restricting allowed origins to the specific set that needs access aligns with the principle of least privilege."
@@ -514,7 +564,9 @@
           "TCP",
           "Config",
           "AppService",
-          "Manual"
+          "Manual",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true,
         "Rationale": "Alert rules for unauthorized requests enable you to detect any suspicious and malicious activity early enough."
@@ -534,7 +586,9 @@
           "Config",
           "AppService",
           "FunctionApp",
-          "OwnerAccess"
+          "OwnerAccess",
+          "Windows",
+          "Linux"
         ],
         "Enabled": true,
         "Rationale": "Managed Service Identity (MSI) allows your app to easily access other AAD-protected resources such as Azure Key Vault. The identity is managed by the Azure platform and eliminates the need to provision/manage/rotate any secrets thus reducing the overall risk. "
@@ -554,9 +608,93 @@
           "Automated",
           "DP",
           "OwnerAccess",
-          "FunctionApp"
+          "FunctionApp",
+          "Windows",
+          "Linux"
         ],
        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_AppService_DP_Use_Latest_TLS_Version",
+        "Description": "The latest supported version of TLS should be used for App Service",
+        "Id": "AppService420",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceTLSVersion",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> TLS/SSL --> Minimum TLS version --> set to latest version.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "DP",
+          "AppService",
+          "FunctionApp",
+          "Windows",
+          "Linux"
+        ],
+        "Enabled": true,
+        "Rationale": "TLS provides privacy and data integrity between client and server. Using latest TLS version significantly reduces risks from security design issues and security bugs that may be present in older versions."
+      }, 
+      {
+        "ControlID": "Azure_AppService_DP_Verify_Installed_Extension",
+        "Description": "Extension installed on a App Service should be carefully reviewed.",
+        "Id": "AppService430",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceInstalledExtensions",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Development Tools --> Extensions --> Verify installed extensions.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "DP",
+          "AppService",
+          "FunctionApp",
+          "Windows"
+        ],
+        "Enabled": true,
+        "Rationale": "Each extension is something like a plugin that adds functionality to your App Service. Installing extensions that are not reuiqred can be dangerous as some third party extensions may have some known vulnerabilities which introduces unnecessary avenues for attack."
+      },  
+      {
+        "ControlID": "Azure_AppService_DP_Restrict_Access",
+        "Description": "Setup access restrictions for App Service",
+        "Id": "AppService440",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceAccessRestriction" ,
+        "Recommendation": "Go to Azure Portal --> your App Service --> Networking --> Access Restrictions --> Configure Access Restrictions --> Add/Verify access restriction rule for app and scm site. For more information, refer: https://docs.microsoft.com/en-us/azure/app-service/app-service-ip-restrictions",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "DP",
+          "AppService",
+          "FunctionApp",
+          "Windows",
+          "Linux"
+        ],
+        "Enabled": true,
+        "Rationale": "Using the IP/VNet subnet rules based access restriction ensures that access to the data or the service is restricted to a specific set of IPs. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios."
+      },  
+      {
+        "ControlID": "Azure_AppService_DP_Disable_CORS_Request_Credential",
+        "Description": "Ensure that CORS request credentials is disabled for App Service.",
+        "Id": "AppService450",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceCORSCredential",
+        "Recommendation": "Go to Azure Portal --> your App Service --> API --> CORS --> Request Credentials --> Disable Access-Control-Allow-Credentials. Note: No action is needed if you are not using CORS for your app.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "DP",
+          "AppService",
+          "FunctionApp",
+          "Windows"
+        ],
+        "Enabled": true,
+        "Rationale": "CORS enables applications running under one domain to access a resource under another domain. Allowing cross-origin credentials is a security risk. A website at another domain can send a signed-in user's credentials to the app on the user's behalf without the user's knowledge."
       }
      
     ]
