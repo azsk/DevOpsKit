@@ -157,6 +157,7 @@ class SVTCommandBase: SVTCommandBaseExt {
 		}
 		
         # ToDo: Utilize exiting functions
+        $this.InitializeControlState();
         $svtObject.ControlStateExt = $this.ControlStateExt;
     }
 
