@@ -14,7 +14,9 @@ class AnalysisServices: SVTBase
         if (-not $this.ResourceObject) 
 		{
 			#Get resource object from context 
-			$this.ResourceObject =  $this.ResourceContext.ResourceDetails
+			$this.ResourceObject =   Get-AzResource -Name $this.ResourceContext.ResourceName `
+									-ResourceGroupName $this.ResourceContext.ResourceGroupName `
+									-ResourceType $this.ResourceContext.ResourceType
 			
             if(-not $this.ResourceObject)
             {

@@ -25,8 +25,10 @@ class AppService: SVTBase
     {
         if (-not $this.ResourceObject)
 		{
-			# Get App Service details
-            $this.ResourceObject = $this.ResourceContext.ResourceDetails
+			# Get App Service details. Here Inbuild ResourceDetails property can not be leveraged as GAR cmdlet return extra properties when ResourceType parameter is passed
+            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
+			-ResourceType $this.ResourceContext.ResourceType `
+			-ResourceGroupName $this.ResourceContext.ResourceGroupName
 
             if(-not $this.ResourceObject)
             {

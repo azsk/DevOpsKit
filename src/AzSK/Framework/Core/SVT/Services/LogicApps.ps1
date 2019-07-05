@@ -89,7 +89,9 @@ class LogicApps: SVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = $this.ResourceContext.ResourceDetails
+            $this.ResourceObject =  Get-AzResource -Name $this.ResourceContext.ResourceName `
+			-ResourceGroupName $this.ResourceContext.ResourceGroupName `
+			-ResourceType $this.ResourceContext.ResourceType
             if(-not $this.ResourceObject)
             {
                 throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))
