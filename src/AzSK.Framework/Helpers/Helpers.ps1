@@ -1236,6 +1236,7 @@ class Helpers {
 		}
 	}
 
+    # <TODO: Perf Issue - Too costly call for each time we check for provider>
 	hidden static [bool] IsProviderRegistered([string] $provideNamespace)
 	{
 		return ((Get-AzResourceProvider -ProviderNamespace $provideNamespace | Where-Object { $_.RegistrationState -ne "Registered" } | Measure-Object).Count -eq 0);
