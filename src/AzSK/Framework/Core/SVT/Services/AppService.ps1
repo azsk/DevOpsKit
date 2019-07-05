@@ -1,6 +1,6 @@
 #using namespace Microsoft.Azure.Commands.AppService.Models
 Set-StrictMode -Version Latest
-class AppService: SVTBase
+class AppService: AzSVTBase
 {
     hidden [PSObject] $ResourceObject;
 	hidden [PSObject] $WebAppDetails;

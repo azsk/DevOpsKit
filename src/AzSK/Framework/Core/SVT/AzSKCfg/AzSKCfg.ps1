@@ -1,6 +1,6 @@
 
 Set-StrictMode -Version Latest
-class AzSKCfg: SVTBase
+class AzSKCfg: AzSVTBase
 {
     $RGPerms = $false
 	AzSKCfg([string] $subscriptionId,[SVTResource] $svtResource):

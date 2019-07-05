@@ -3,7 +3,7 @@ using namespace Microsoft.Azure.Commands.Compute.Models
 using namespace Microsoft.Azure.Management.Compute.Models
 Set-StrictMode -Version Latest 
 
-class VirtualMachine: SVTBase
+class VirtualMachine: AzSVTBase
 {       
     hidden [PSVirtualMachine] $ResourceObject;
     hidden [PSNetworkInterface[]] $VMNICs = $null;

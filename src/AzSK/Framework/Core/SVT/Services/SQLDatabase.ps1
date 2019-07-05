@@ -4,7 +4,7 @@ using namespace Microsoft.Azure.Commands.Sql.TransparentDataEncryption.Model
 using namespace Microsoft.Azure.Commands.Sql.ThreatDetection.Model
 
 Set-StrictMode -Version Latest
-class SQLDatabase: SVTBase
+class SQLDatabase: AzSVTBase
 {
     hidden [PSObject] $ResourceObject;
     hidden [PSObject[]] $SqlDatabases = $null;

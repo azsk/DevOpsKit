@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class Batch: SVTBase
+class Batch: AzSVTBase
 {       
 	Batch([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 

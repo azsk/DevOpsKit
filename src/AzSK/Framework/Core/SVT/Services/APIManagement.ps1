@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class APIManagement: SVTBase
+class APIManagement: AzSVTBase
 {   
 
 	hidden [PSObject] $APIMContext = $null;

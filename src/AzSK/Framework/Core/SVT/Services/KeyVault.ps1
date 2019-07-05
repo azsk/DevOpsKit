@@ -1,6 +1,6 @@
 using namespace Microsoft.Azure.Commands.KeyVault.Models
 Set-StrictMode -Version Latest 
-class KeyVault: SVTBase
+class KeyVault: AzSVTBase
 {       
     hidden [PSKeyVaultIdentityItem] $ResourceObject;
     hidden [PSObject[]] $AllEnabledKeys = $null;
