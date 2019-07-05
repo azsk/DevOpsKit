@@ -206,6 +206,7 @@ class SVTBase: AzSKRoot
 		}
 
 		try {
+
 			if ([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupTagTelemetry","*") -eq $true -and $this.ResourceId -and $this.ResourceContext -and $this.ResourceTags.Count -eq 0) {
 				
 					$tags = (Get-AzResourceGroup -Name $this.ResourceContext.ResourceGroupName).Tags
@@ -462,44 +463,81 @@ class SVTBase: AzSKRoot
 				$filterControlsById = $filterControlsById | Where-Object { $this.ExcludeControlIds -notcontains $_.ControlId };
 			}
 
-			if(($this.FilterTags | Measure-Object).Count -ne 0 -or ($this.ExcludeTags | Measure-Object).Count -ne 0)
-			{
-				if(($filterControlsById | Measure-Object).Count -gt 0){
-				$filterControlsById | ForEach-Object {
-					Set-Variable -Name control -Value $_ -Scope Local
-					Set-Variable -Name filterMatch -Value $false -Scope Local
-					Set-Variable -Name excludeMatch -Value $false -Scope Local
-					$control.Tags | ForEach-Object {
-						Set-Variable -Name cTag -Value $_ -Scope Local
+			#Filter controls based on filterstags and excludetags
+			$filterTagsCount = ($this.FilterTags | Measure-Object).Count
+            $excludeTagsCount = ($this.ExcludeTags | Measure-Object).Count
+            
+            $unfilteredControlsCount = ($filterControlsById | Measure-Object).Count
 
-						if(($this.FilterTags | Measure-Object).Count -ne 0 `
-							-and ($this.FilterTags | Where-Object { $_ -like $cTag} | Measure-Object).Count -ne 0)
-						{
-							$filterMatch = $true
-						}
-						elseif(($this.FilterTags | Measure-Object).Count -eq 0)
-						{
-							$filterMatch = $true
-						}
-						if(($this.ExcludeTags | Measure-Object).Count -ne 0 `
-							-and ($this.ExcludeTags | Where-Object { $_ -like $cTag} | Measure-Object).Count -ne 0)
-						{
-							$excludeMatch = $true
-						}
-					}
+			if($unfilteredControlsCount -gt 0) #If we have any controls at this point...
+            {
+                #If FilterTags are specified, limit the candidate set to matching controls
+                if ($filterTagsCount -gt 0)
+                {
+                    #Look at each candidate control's tags and see if there's a match in FilterTags
+                    $filterControlsById | ForEach-Object {
+                        Set-Variable -Name control -Value $_ -Scope Local
+                        Set-Variable -Name filterMatch -Value $false -Scope Local
+                        
+						$filterMatch = $false
+												
+						$control.Tags | ForEach-Object {
+													Set-Variable -Name cTag -Value $_ -Scope Local
 
-					if(($filterMatch  -and -not $excludeMatch) `
-							-or (-not $filterMatch -and -not $excludeMatch))
-					{
-						$filteredControls += $control
+													if( ($this.FilterTags | Where-Object { $_ -like $cTag} | Measure-Object).Count -ne 0)
+													{
+														$filterMatch = $true
+													}
+												}
+
+                        #Add if this control has a tag that matches FilterTags 
+                        if ($filterMatch) 
+                        {
+                            $filteredControls += $control
+                        }   
+                    }                     
+                }
+                else #No FilterTags specified, so all controls qualify
+                {
+                    $filteredControls = $filterControlsById
+                }
+
+                #Note: Candidate controls list is now in $filteredControls...we will use that to calculate $filteredControlsFinal
+                $filteredControlsFinal = @()
+                if ($excludeTagsCount -eq 0)
+                {
+                    #If exclude tags are not specified, then not much to do.
+                    $filteredControlsFinal = $filteredControls
+                }
+                else 
+                {
+                    #ExludeTags _are_ specified, we need to check if candidate set has to be reduced...
+                    
+                    #Look at each candidate control's tags and see if there's a match in ExcludeTags
+                    $filteredControls | ForEach-Object {
+                        Set-Variable -Name control -Value $_ -Scope Local
+                        Set-Variable -Name excludeMatch -Value $false -Scope Local
+                        $excludeMatch = $false
+
+                        $control.Tags | ForEach-Object {
+                              Set-Variable -Name cTag -Value $_ -Scope Local
+
+                              if(($this.ExcludeTags | Where-Object { $_ -like $cTag} | Measure-Object).Count -ne 0)
+                              {
+                                    $excludeMatch = $true
+                              }
+                        }
+                        
+                        #Add to final list if this control *does-not* have a tag that matches ExcludeTags
+                        if (-not $excludeMatch) 
+                        {
+                            $filteredControlsFinal += $control
+                        }   
 					}
-				}
-				}
-			}
-			else
-			{
-				$filteredControls += $filterControlsById;
-			}
+					$filteredControls = $filteredControlsFinal                
+                } 
+            }
+
 			$this.ApplicableControls = $filteredControls;
 			#this filtering has been done as the first step it self;
 			#$this.ApplicableControls += $this.ApplyServiceFilters($filteredControls);
@@ -1426,6 +1464,7 @@ class SVTBase: AzSKRoot
 					{
 						$currentControl.FirstFailedOn = [DateTime]::UtcNow
 					}
+
 					if($null -ne $matchedControlResult -and ($matchedControlResult | Measure-Object).Count -gt 0)
 					{
 						$currentControl.UserComments = $matchedControlResult.UserComments
