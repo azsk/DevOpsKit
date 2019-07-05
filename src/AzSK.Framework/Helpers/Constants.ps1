@@ -170,7 +170,7 @@ class Constants
 	static [string] $ServerConfigMetadataFileName = "ServerConfigMetadata.json"
 
 	#Constants for credential rotation metadata
-	static [string] $RotationMetadataSubPath = "\Temp\RotationMetadata"
+	static [string] $RotationMetadataSubPath = (Join-Path "Temp" -ChildPath "RotationMetadata");
 	static [string] $RotationMetadataContainerName = "rotation-metadata"
 
 	static [void] SetAzSKModuleName($moduleName)
@@ -182,7 +182,6 @@ class Constants
 			[Constants]::AzSKLogFolderPath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) "Microsoft"
 			[Constants]::AzSKTempFolderPath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Temp" |Join-Path -ChildPath $([Constants]::AzSKModuleName)
 			[Constants]::AzSKExtensionsFolderPath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Microsoft" |Join-Path -ChildPath $([Constants]::AzSKModuleName) |Join-Path -ChildPath "Extensions"	
-			
 		}
 	}
 	static [void] SetAzSKCurrentModuleVersion($moduleVersion)
