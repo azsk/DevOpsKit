@@ -480,7 +480,8 @@ class SVTControlAttestation
 		}
 		finally
 		{
-			[Helpers]::CleanupLocalFolder([Constants]::AzSKAppFolderPath + "\Temp\$($this.controlStateExtension.UniqueRunId)");
+			$folderPath = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $($this.controlStateExtension.UniqueRunId)
+			[Helpers]::CleanupLocalFolder($folderPath);
 		}
 	}	
 

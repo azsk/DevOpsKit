@@ -997,7 +997,7 @@ class SVTBase: AzSKRoot
 		return $expiryInDays
 	}
 
-	
+
 	hidden AddResourceMetadata([PSObject] $metadataObj)
 	{
 

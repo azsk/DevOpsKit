@@ -74,6 +74,11 @@ class SVTCommandBase: SVTCommandBaseExt {
         }
         #check to limit multi controlids in the bulk attestation mode
         $ctrlIds = $this.ConvertToStringArray($this.ControlIdString);
+        # Block scan if both ControlsIds and UBC/UPBC parameters contain values 
+        if($null -ne $ctrlIds -and $ctrlIds.Count -gt 0 -and ($this.UseBaselineControls -or $this.UsePreviewBaselineControls)){
+            throw [SuppressedException] ("Both the parameters 'ControlIds' and 'UseBaselineControls/UsePreviewBaselineControls' contain values. `nYou should use only one of these parameters.`n")
+        }
+
         if ($null -ne $this.AttestationOptions -and (-not [string]::IsNullOrWhiteSpace($this.AttestationOptions.JustificationText) -or $this.AttestationOptions.IsBulkClearModeOn) -and ($ctrlIds.Count -gt 1 -or $this.UseBaselineControls)) {
 			if($this.UseBaselineControls)
 			{

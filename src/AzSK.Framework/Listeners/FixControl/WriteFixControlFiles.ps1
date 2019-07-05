@@ -3,7 +3,7 @@ class WriteFixControlFiles: FileOutputBase
 {   
     hidden static [WriteFixControlFiles] $Instance = $null;
     hidden static [string] $FixFolderPath = "FixControlScripts";
-    hidden static [string] $FixFilePath = "\Core\FixControl\Services\";
+    hidden static [string] $FixFilePath = (Join-Path "Core" "FixControl" | Join-Path -ChildPath "Services");
     
     hidden static [string] $RunScriptMessage = "# AzSK repair function uses files from the 'Services' sub-folder in this folder";
 	 hidden static [string] $RunAzureServicesSecurity = '
@@ -100,7 +100,7 @@ Repair-AzSKSubscriptionSecurity `
 	hidden [void] InitializeFolder([SubscriptionContext] $subContext, [string[]] $fixControlFileNames, [string] $runScriptContent)
 	{
 		$this.SetFolderPath($subContext);
-		Copy-Item ("$PSScriptRoot\" + [WriteFixControlFiles]::FixFolderPath) $this.FolderPath -Recurse
+		Copy-Item (Join-Path $PSScriptRoot $([WriteFixControlFiles]::FixFolderPath)) $this.FolderPath -Recurse
 
         $this.SetFilePath($subContext, [WriteFixControlFiles]::FixFolderPath, "RunFixScript.ps1");
 		Add-Content -Value $runScriptContent -Path $this.FilePath
@@ -110,8 +110,8 @@ Repair-AzSKSubscriptionSecurity `
 		$parentFolderPath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName;
 		$parentFolderPath += [WriteFixControlFiles]::FixFilePath;
 		$fixControlFileNames | ForEach-Object {
-			mkdir -Path ($this.FolderPath + "\Services\") | Out-Null
-			Copy-Item ($parentFolderPath + $_) ($this.FolderPath + "\Services\" + $_)
+			New-Item -ItemType Directory -Path (Join-Path $this.FolderPath "Services") | Out-Null
+			Copy-Item ($parentFolderPath + $_) (Join-Path $this.FolderPath "Services" | Join-Path -ChildPath $_)
 		};
 	}
 

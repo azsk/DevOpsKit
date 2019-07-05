@@ -145,7 +145,7 @@ class SQLDatabase: AzSVTBase
 				}
 				catch {
 					$atleastOneFailed = $true
-					$errorDB += $_.DatabaseName
+					$errorDB += $dbName
 				}
 				
 			} #End of ForEach-Object
@@ -364,7 +364,7 @@ class SQLDatabase: AzSVTBase
 						}
 					}
 					catch {
-						$errorDB += $_.DatabaseName
+						$errorDB += $dbName
 					}
 				}
 

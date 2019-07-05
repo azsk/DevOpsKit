@@ -179,6 +179,7 @@ class CommandHelper
             Noun = "AzSKInfo";
             ShortName = "GAI";
 			IsLatestRequired = $false;
+			IsOrgPolicyMandatory = $false;
 		},
 		[CommandDetails]@{
             Verb = "Get";
@@ -269,7 +270,7 @@ class CommandHelper
 		[CommandDetails]@{
             Verb = "Get";
             Noun = "AzSKPIMConfiguration";
-			ShortName = "ListPIM";
+			ShortName = "GetPIM";
 			IsOrgPolicyMandatory = $false;
         }
     );

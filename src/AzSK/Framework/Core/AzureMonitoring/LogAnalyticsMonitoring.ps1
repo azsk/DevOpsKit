@@ -52,14 +52,14 @@ class LogAnalyticsMonitoring: CommandBase
 		
 			$OptionalParameters = New-Object -TypeName Hashtable
 
-			$LAWSLogPath = [Constants]::AzSKTempFolderPath + "\LogAnalytics";
+			$LAWSLogPath = Join-Path $([Constants]::AzSKTempFolderPath) "LogAnalytics";
 			if(-not (Test-Path -Path $LAWSLogPath))
 			{
-				mkdir -Path $LAWSLogPath -Force | Out-Null
+				New-Item -Path $LAWSLogPath -ItemType Directory -Force | Out-Null
 			}
 					
 			$genericViewTemplateFilepath = [ConfigurationManager]::LoadServerConfigFile("AZSK.AM.LogAnalytics.GenericView.V5.lawsview"); 				
-			$this.LAWSGenericTemplateFilepath = $LAWSLogPath+"\AZSK.AM.LogAnalytics.GenericView.V5.lawsview";
+			$this.LAWSGenericTemplateFilepath = Join-Path $LAWSLogPath "AZSK.AM.LogAnalytics.GenericView.V5.lawsview";
 			$genericViewTemplateFilepath | ConvertTo-Json -Depth 100 | Out-File $this.LAWSGenericTemplateFilepath
 			$this.PublishCustomMessage("`r`nSetting up AzSK Log Analytics generic view.");
 			$this.ConfigureGenericView($_viewName, $_validateOnly);	

@@ -221,6 +221,21 @@ class ControlStateExtension
 					#Do Nothing. Below code would create a default indexer.
 				}
 			}
+#<<<<<<< HEAD  PS COre changes conflicts
+#=======
+# 		}
+# 		[ControlStateIndexer[]] $indexerObjects = @();
+# 		$this.ControlStateIndexer  = $indexerObjects
+# 		if($null -eq $indexerBlob)
+# 		{			
+# 			return $true;
+# 		}
+# 		$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState";
+# 		if(-not (Test-Path -Path $AzSKTemp))
+# 		{
+# 			New-Item -ItemType Directory -Path $AzSKTemp -Force
+# 		}
+# >>>>>>> origin/develop
 
 			#Attestation index blob is not preset then return
 			if($null -eq $indexerBlob)
@@ -235,7 +250,7 @@ class ControlStateExtension
 			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)\ServerControlState";
 			if(-not (Test-Path -Path $AzSKTemp))
 			{
-				mkdir -Path $AzSKTemp -Force
+				New-Item -ItemType Directory -Path $AzSKTemp -Force | Out-Null
 			}
 
 			$indexerObject = @();
@@ -247,7 +262,7 @@ class ControlStateExtension
 				{
 					[AzHelper]::GetStorageBlobContent($AzSKTemp,$this.IndexerBlobName ,$this.IndexerBlobName , $containerName ,$StorageAccount.Context)
 					#Get-AzStorageBlobContent -CloudBlob $indexerBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
-					$indexerObject = Get-ChildItem -Path "$AzSKTemp\$($this.IndexerBlobName)" -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json
+					$indexerObject = Get-ChildItem -Path (Join-Path $AzSKTemp $($this.IndexerBlobName)) -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json
 					$loopValue = 0;
 				}
 				catch
@@ -301,10 +316,10 @@ class ControlStateExtension
 					{
 						return $null;
 					}
-					$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)\ServerControlState";
+					$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState";
 					if(-not (Test-Path -Path $AzSKTemp))
 					{
-						mkdir -Path $AzSKTemp -Force
+						New-Item -ItemType Directory -Path $AzSKTemp -Force
 					}
 
 					$loopValue = $this.retryCount;
@@ -322,7 +337,7 @@ class ControlStateExtension
 							#eat this exception and retry
 						}
 					}
-					$ControlStatesJson = Get-ChildItem -Path "$AzSKTemp\$controlStateBlobName" -Force | Get-Content | ConvertFrom-Json 
+					$ControlStatesJson = Get-ChildItem -Path (Join-Path $AzSKTemp $controlStateBlobName) -Force | Get-Content | ConvertFrom-Json 
 					if($null -ne $ControlStatesJson)
 					{					
 						$ControlStatesJson | ForEach-Object {
@@ -349,25 +364,30 @@ class ControlStateExtension
 			return $controlStates;
 		}
 		finally{
-			[Helpers]::CleanupLocalFolder([Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)");
+			$folderpath = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId ;
+			[Helpers]::CleanupLocalFolder($folderpath);
 		}
 	}
 
 	hidden [void] SetControlState([string] $id, [ControlState[]] $controlStates, [bool] $Override)
 	{		
-		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)\ServerControlState";				
-		if(-not (Test-Path "$AzSKTemp\ControlState"))
+		$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState";				
+		if(-not (Test-Path $(Join-Path $AzSKTemp "ControlState")))
 		{
-			mkdir -Path "$AzSKTemp\ControlState" -ErrorAction Stop | Out-Null
+			New-Item -ItemType Directory -Path $(Join-Path $AzSKTemp "ControlState") -ErrorAction Stop | Out-Null
 		}
 		else
 		{
-			Remove-Item -Path "$AzSKTemp\ControlState\*" -Force -Recurse 
+			Remove-Item -Path $(Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath '*' ) -Force -Recurse 
 		}
-
-		$hash = [Helpers]::ComputeHash($id);
-		$indexerPath = "$AzSKTemp\ControlState\$($this.IndexerBlobName)"
-		$fileName = "$AzSKTemp\ControlState\$hash.json"	
+        
+		$hash = [Helpers]::ComputeHash($id) 
+		$indexerPath = Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath $this.IndexerBlobName;
+		if(-not (Test-Path -Path (Join-Path $AzSKTemp "ControlState")))
+		{
+			New-Item -ItemType Directory -Path (Join-Path $AzSKTemp "ControlState") -Force
+		}
+		$fileName = Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath ($hash+".json");
 		
 		$StorageAccount = $this.AzSKStorageAccount;						
 		$containerObject = $this.AzSKStorageContainer
@@ -408,8 +428,9 @@ class ControlStateExtension
 
 		if($null -ne $this.ControlStateIndexer)
 		{				
+
 			[JsonHelper]::ConvertToJsonCustom($this.ControlStateIndexer) | Out-File $indexerPath -Force
-			$controlStateArray = Get-ChildItem -Path "$AzSKTemp\ControlState"				
+			$controlStateArray = Get-ChildItem -Path (Join-Path $AzSKTemp "ControlState")
 			$controlStateArray | ForEach-Object {
 				$state = $_;
 				$loopValue = $this.retryCount;
@@ -438,20 +459,19 @@ class ControlStateExtension
 
 	hidden [void] PurgeControlState([string] $id)
 	{		
-		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)\ServerControlState";				
-		if(-not (Test-Path "$AzSKTemp\ControlState"))
+		$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState";				
+		if(-not (Test-Path $(Join-Path $AzSKTemp "ControlState")))
 		{
-			mkdir -Path "$AzSKTemp\ControlState" -ErrorAction Stop | Out-Null
+			New-Item -ItemType Directory -Path (Join-Path $AzSKTemp "ControlState") -ErrorAction Stop | Out-Null
 		}
 		else
 		{
-			Remove-Item -Path "$AzSKTemp\ControlState\*" -Force 
+			Remove-Item -Path $(Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath '*') -Force -Recurse
 		}
 
 		$hash = [Helpers]::ComputeHash($id);
-		$indexerPath = "$AzSKTemp\ControlState\$($this.IndexerBlobName)"
-		$fileName = "$AzSKTemp\ControlState\$hash.json"	
-		
+		$indexerPath = Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath $this.IndexerBlobName ;
+		$fileName = Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath ("$hash.json");
 		$StorageAccount = $this.AzSKStorageAccount;						
 		$containerObject = $this.AzSKStorageContainer
 		$ContainerName = ""
@@ -464,7 +484,7 @@ class ControlStateExtension
 		if($null -ne $this.ControlStateIndexer)
 		{				
 			[JsonHelper]::ConvertToJsonCustom($this.ControlStateIndexer) | Out-File $indexerPath -Force
-			$controlStateArray = Get-ChildItem -Path "$AzSKTemp\ControlState"				
+			$controlStateArray = Get-ChildItem -Path (Join-Path $AzSKTemp "ControlState");				
 			$controlStateArray | ForEach-Object {
 				$state = $_
 				$loopValue = $this.retryCount;
@@ -502,10 +522,10 @@ class ControlStateExtension
 
 	hidden [ControlState[]] GetPersistedControlStates([string] $controlStateBlobName)
 	{
-		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)\ServerControlState";
-		if(-not (Test-Path "$AzSKTemp\ExistingControlStates"))
+		$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState";
+		if(-not (Test-Path (Join-Path $AzSKTemp "ExistingControlStates")))
 		{
-			mkdir -Path "$AzSKTemp\ExistingControlStates" -ErrorAction Stop | Out-Null
+			New-Item -ItemType Directory -Path (Join-Path $AzSKTemp "ExistingControlStates") -ErrorAction Stop | Out-Null
 		}
 		$StorageAccount = $this.AzSKStorageAccount;						
 		$containerObject = $this.AzSKStorageContainer
@@ -523,9 +543,8 @@ class ControlStateExtension
 			try
 			{
 				$controlStateBlob = Get-AzStorageBlob -Container $ContainerName -Blob $controlStateBlobName -Context $StorageAccount.Context -ErrorAction Stop
-                [AzHelper]::GetStorageBlobContent("$AzSKTemp\ExistingControlStates",$controlStateBlobName ,$controlStateBlobName , $containerName ,$StorageAccount.Context)
-				#Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination "$AzSKTemp\ExistingControlStates" -Force -ErrorAction Stop
-				$ControlStatesJson = Get-ChildItem -Path "$AzSKTemp\ExistingControlStates\$controlStateBlobName" -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json 
+				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination (Join-Path $AzSKTemp "ExistingControlStates") -Force -ErrorAction Stop
+				$ControlStatesJson = Get-ChildItem -Path (Join-Path $AzSKTemp "ExistingControlStates" | Join-Path -ChildPath $controlStateBlobName) -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json 
 				$loopValue = 0;
 			}
 			catch

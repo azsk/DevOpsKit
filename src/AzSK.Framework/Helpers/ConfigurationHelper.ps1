@@ -15,12 +15,12 @@ class ConfigurationHelper {
 		return [ConfigurationHelper]::LoadOfflineConfigFile($fileName, $true);
 	}
 	hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson) {
-		$rootConfigPath = [Constants]::AzSKAppFolderPath + "\" ;
+		$rootConfigPath = [Constants]::AzSKAppFolderPath  ;
 		return [ConfigurationHelper]::LoadOfflineConfigFile($fileName, $true,$rootConfigPath);
 	}
     hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson, $path) {
 		#Load file from AzSK App folder
-		$rootConfigPath = $path + "\" ;	
+		$rootConfigPath = $path ;	
         
 		$extension = [System.IO.Path]::GetExtension($fileName);
 
@@ -31,7 +31,7 @@ class ConfigurationHelper {
 		}
         #If file not present in App folder load settings from Configurations in Module folder 
         if (!$filePath) {
-            $rootConfigPath = (Get-Item $PSScriptRoot).Parent.Parent.FullName + "\AzSK\Framework\Configurations\";
+            $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName "AzSK" | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
 			
 			$filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
         }
@@ -42,16 +42,16 @@ class ConfigurationHelper {
 			{
 				if($extension -eq ".json" -or $extension -eq ".lawsview")
 				{
-					$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) | ConvertFrom-Json
+					$fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) | ConvertFrom-Json
 				}
 				else
 				{
-					$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) 
+					$fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) 
 				}
 			}
 			else
 			{
-				$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) 
+				$fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) 
 			}
         }
         else {
@@ -327,10 +327,10 @@ class ConfigurationHelper {
 	#Need to rethink on this function logic
 	hidden static [PSObject] LoadModuleJsonFile([string] $fileName) {
 	
-	 $rootConfigPath = (Get-Item $PSScriptRoot).Parent.Parent.FullName + "\AzSK\Framework\Configurations\";
+	 $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName "AzSK" | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
      $filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
 	 if ($filePath) {
-            $fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) | ConvertFrom-Json
+            $fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) | ConvertFrom-Json
         }
         else {
             throw "Unable to find the specified file '$fileName'"          
@@ -340,10 +340,11 @@ class ConfigurationHelper {
 
 	hidden static [PSObject] LoadModuleRawFile([string] $fileName) {
 	
-	 $rootConfigPath = (Get-Item $PSScriptRoot).Parent.Parent.FullName + "\AzSK\Framework\Configurations\";
+	 $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName "AzSK" | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
+
      $filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
 	 if ($filePath) {
-            $fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) 
+            $fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) 
         }
         else {
             throw "Unable to find the specified file '$fileName'"          

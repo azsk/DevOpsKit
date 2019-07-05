@@ -176,22 +176,22 @@ class AzSKSettings {
 	{
 		if (-not (Test-Path $([Constants]::AzSKAppFolderPath)))
 		{
-			mkdir -Path $([Constants]::AzSKAppFolderPath) -ErrorAction Stop | Out-Null
+			New-Item -ItemType Directory -Path $([Constants]::AzSKAppFolderPath) -ErrorAction Stop | Out-Null
 		}
 
 		#persisting back to file
-		[AzSKSettings]::Instance | ConvertTo-Json | Out-File -Force -FilePath ([Constants]::AzSKAppFolderPath + "\" + [AzSKSettings]::FileName)
+		[AzSKSettings]::Instance | ConvertTo-Json | Out-File -Force -FilePath (Join-Path $([Constants]::AzSKAppFolderPath) $([AzSKSettings]::FileName))
 	}
 
     static [void] Update([AzSKSettings] $localSettings)
 	{
 		if (-not (Test-Path $([Constants]::AzSKAppFolderPath)))
 		{
-			mkdir -Path $([Constants]::AzSKAppFolderPath) -ErrorAction Stop | Out-Null
+			New-Item -ItemType Directory -Path $([Constants]::AzSKAppFolderPath) -ErrorAction Stop | Out-Null
 		}
 
 		#persisting back to file
-		$localSettings | ConvertTo-Json | Out-File -Force -FilePath ([Constants]::AzSKAppFolderPath + "\" + [AzSKSettings]::FileName)
+		$localSettings | ConvertTo-Json | Out-File -Force -FilePath (Join-Path $([Constants]::AzSKAppFolderPath) $([AzSKSettings]::FileName))
 	}
 	
 	hidden [string] GetScanSource()

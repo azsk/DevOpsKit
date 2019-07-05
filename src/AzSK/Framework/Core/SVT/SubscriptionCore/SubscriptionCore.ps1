@@ -17,6 +17,8 @@ class SubscriptionCore: AzSVTBase
 	hidden [string[]] $SubscriptionMandatoryTags = @();
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $PIMAssignments;
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $permanentAssignments;
+	hidden [System.Collections.Generic.List[TelemetryRBAC]] $RGLevelPIMAssignments;
+	hidden [System.Collections.Generic.List[TelemetryRBAC]] $RGLevelPermanentAssignments;
 	hidden [CustomData] $CustomObject;
 
 	SubscriptionCore([string] $subscriptionId):
@@ -494,20 +496,38 @@ class SubscriptionCore: AzSVTBase
 	hidden [ControlResult] CheckAzureSecurityCenterAlerts([ControlResult] $controlResult)
 	{
 		$this.GetASCAlerts()
-
-		$activeAlerts = ($this.ASCSettings.Alerts | Where-Object {$_.State -eq "Active"})
-		if(($activeAlerts | Measure-Object).Count -gt 0)
+		$activeAlerts = ($this.ASCSettings.Alerts | Where-Object {$_.State -eq "Active" })
+		if(($activeAlerts | Measure-Object).Count -gt 0 )
 		{
-			$controlResult.SetStateData("Active alert in Security Center", $activeAlerts);
-			$controlResult.AddMessage([VerificationResult]::Failed,"Azure Security Center have active alerts that need to resolved.")
-		}
-		else {
-			$controlResult.VerificationResult =[VerificationResult]::Passed
-		}
+			  if( [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsThresholdInDays') -and [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsSeverityLevels'))
+			  {
+				 $AlertDaysCheck = $this.ControlSettings.ASCAlertsThresholdInDays
+				 $AlertSeverityCheck = $this.ControlSettings.ASCAlertsSeverityLevels				
+				 $activeAlerts = $activeAlerts | Where-Object{ ( [System.DateTime]::Parse($_.ReportedTimeUTC).AddDays($AlertDaysCheck) -ge ([System.DateTime]::UtcNow)) -and $_.ReportedSeverity -in $AlertSeverityCheck}
+				 if(($activeAlerts | Measure-Object).Count -gt 0)
+				 {
+					$controlResult.SetStateData("Active alert in Security Center", ($activeAlerts | Select-Object AlertName, ReportedTimeUTC));
+					$controlResult.AddMessage([VerificationResult]::Failed,"Azure Security Center have active alerts that need to resolved.")
+                    $controlResult.AddMessage(($activeAlerts | Select-Object State, AlertDisplayName, AlertName, Description, ReportedTimeUTC,ReportedSeverity, RemediationSteps))
+					return $controlResult;
+				 }
+				 else
+				 {
+					$controlResult.VerificationResult =[VerificationResult]::Passed
+					return $controlResult;
+				 }
+			  }
+			 $controlResult.SetStateData("Active alert in Security Center", ($activeAlerts | Select-Object AlertName, ReportedTimeUTC));
+			 $controlResult.AddMessage([VerificationResult]::Failed,"Azure Security Center have active alerts that need to resolved.")
+             $controlResult.AddMessage(($activeAlerts | Select-Object State, AlertDisplayName, AlertName, Description, ReportedTimeUTC,ReportedSeverity, RemediationSteps))
 
-		$controlResult.AddMessage(($activeAlerts | Select-Object State, AlertDisplayName, AlertName, Description, ReportedTimeUTC, RemediationSteps))
-
-		return $controlResult
+				
+		}
+		else 
+		{
+			 $controlResult.VerificationResult =[VerificationResult]::Passed
+		}
+		 return $controlResult
 	}	
 
 	hidden [ControlResult] CheckSPNsRBAC([ControlResult] $controlResult)
@@ -659,8 +679,21 @@ class SubscriptionCore: AzSVTBase
 				if(($matchingAlertRulesNames| Measure-Object).count -gt 0)
 				{
 					$configuredAlerts = $configuredAlerts | Where-Object { $matchingAlertRulesNames.InputObject -contains $_.Name }
-					$currentAlertsOperationsList = $configuredAlerts | ForEach-Object { $_.Properties.condition.allOf[2].anyOf} | Select-Object -property @{N='OperationName';E={$_.equals}} -Unique
-					$requiredAlertsOperationsList = ($subInsightsAlertsConfig | Where{ $_.Tags -contains $this.SubscriptionMandatoryTags}).AlertOperationList.OperationName
+					if(($configuredAlerts | Measure-Object).Count -gt 0)
+					{
+						$currentAlertsOperationsList = $configuredAlerts | ForEach-Object { 
+							if([Helpers]::CheckMember($_,"Properties.condition") -and (($_.Properties.condition.allOf | Measure-Object).Count -eq 3) -and [Helpers]::CheckMember($_.Properties.condition.allOf[2],"anyOf"))
+							{
+								$_.Properties.condition.allOf[2].anyOf
+							}
+						} | Select-Object -property @{N='OperationName';E={$_.equals}} -Unique	
+					}
+					else
+					{
+						$currentAlertsOperationsList = $null
+					}
+                    $requiredAlertsOperations = ($subInsightsAlertsConfig | Where{ $_.Tags -contains $this.SubscriptionMandatoryTags}).AlertOperationList 
+                    $requiredAlertsOperationsList = ($requiredAlertsOperations | Where-Object { $_.Tags -contains $this.SubscriptionMandatoryTags }).OperationName
 					if((($currentAlertsOperationsList| Measure-Object).Count -gt 0) -and (($requiredAlertsOperationsList | Measure-Object).Count -gt 0))
 					{
 						$operationsDiffList = Compare-Object -ReferenceObject $requiredAlertsOperationsList -DifferenceObject $currentAlertsOperationsList.OperationName | Where-Object { $_.SideIndicator -eq "<=" }
@@ -678,7 +711,7 @@ class SubscriptionCore: AzSVTBase
 					{
 						$foundRequiredAlerts = $true
 					}
-					elseif(($currentAlertsOperationsList.Count| Measure-Object).Count -eq 0)
+					elseif(($currentAlertsOperationsList | Measure-Object).Count -eq 0)
 					{
 						$foundRequiredAlerts = $false
 					}
@@ -936,7 +969,7 @@ class SubscriptionCore: AzSVTBase
 			$message=$this.GetPIMRoles();
 		}
 		
-		$criticalRoles = $this.ControlSettings.CriticalPIMRoles;
+		$criticalRoles = $this.ControlSettings.CriticalPIMRoles.Subscription;
 		$permanentRoles = $this.permanentAssignments;
 		if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
 		{
@@ -955,6 +988,49 @@ class SubscriptionCore: AzSVTBase
 				$controlResult.SetStateData("Permanent role assignments present on subscription",$criticalPermanentRoles)
 				$controlResult.AddMessage([VerificationResult]::Failed, "Subscription contains permanent role assignment for critical roles : $criticalRoles")
 				$permanentRolesbyRoleDefinition=$criticalPermanentRoles|Sort-Object -Property RoleDefinitionName
+				$controlResult.AddMessage($permanentRolesbyRoleDefinition);
+				
+			}
+			else 
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed)
+			}
+		}
+		else
+		{
+			$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+			$controlResult.AddMessage($message);
+		}
+
+		return $controlResult
+
+	}
+
+	hidden [ControlResult] CheckRGLevelPermanentRoleAssignments([ControlResult] $controlResult)
+	{
+		$message = '';
+		$whitelistedPermanentRoles = $null
+		$message=$this.GetRGLevelPIMRoles();
+		
+		$criticalRoles = $this.ControlSettings.CriticalPIMRoles.ResourceGroup;
+		$permanentRoles = $this.RGLevelPermanentAssignments;
+		if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
+		{
+			$whitelistedPermanentRoles = $this.ControlSettings.whitelistedPermanentRoles
+		}
+		
+		if(($permanentRoles | measure-object).Count -gt 0 )
+		{
+			$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles}
+			if($null -ne $whitelistedPermanentRoles)
+			{
+				$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}
+			}
+			if(($criticalPermanentRoles| measure-object).Count -gt 0)
+			{
+				$controlResult.SetStateData("Permanent role assignments present on resource groups",$criticalPermanentRoles)
+				$controlResult.AddMessage([VerificationResult]::Failed, "Resource groups contains permanent role assignment for critical roles : $($criticalRoles -join ',')")
+				$permanentRolesbyRoleDefinition=$criticalPermanentRoles|Sort-Object -Property RoleDefinitionName | Select-Object SubscriptionId, @{Name="Scope"; Expression={$_.Scope.Split("/")[-1]}}, DisplayName, ObjectType, RoleDefinitionName
 				$controlResult.AddMessage($permanentRolesbyRoleDefinition);
 				
 			}
@@ -1220,7 +1296,7 @@ class SubscriptionCore: AzSVTBase
 			$this.ASCSettings.Alerts = [AzureSecurityCenter]::GetASCAlerts($output)
 		}
 	}	
-   
+
 	hidden [string] GetPIMRoles()
 	{
 		$message='';
@@ -1257,7 +1333,8 @@ class SubscriptionCore: AzSVTBase
 							$item.RoleDefinitionName = $roleAssignment.roleDefinition.displayName
 							$item.ObjectId = $roleAssignment.subject.id
 							$item.DisplayName = $roleAssignment.subject.displayName
-							$item.ObjectType=$roleAssignment.subject.type;	
+							$item.ObjectType=$roleAssignment.subject.type;
+							$item.MemberType = $roleAssignment.memberType;
 							if($roleAssignment.IsPermanent -eq $false)
 							{
 								#If roleAssignment is non permanent and not active
@@ -1275,7 +1352,80 @@ class SubscriptionCore: AzSVTBase
 
 							}
 						}
-				
+						
+					}
+					$message='OK';
+				}
+				catch
+				{
+					$message=$_;
+				}
+			}
+		}
+
+		return($message);
+	}
+
+	hidden [string] GetRGLevelPIMRoles()
+	{
+		$message='';
+		if($null -eq $this.RGLevelPIMAssignments)
+		{
+			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
+			$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+			if($null -ne $AccessToken)
+			{
+				$authorisationToken = "Bearer " + $accessToken
+				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
+				$uri=[Constants]::PIMAPIUri +"?`$filter=type%20eq%20%27resourcegroup%27&`$orderby=displayName"
+				try
+				{
+					#Get external id for the current subscription
+					$response=[WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
+					$subId=$this.SubscriptionContext.SubscriptionId;
+					$extID=$response| Where-Object{$_.externalId.split('/') -contains $subId}
+					$resourceIDs=$extID.id;
+					$this.RGLevelPIMAssignments=@();
+					$this.RGLevelPermanentAssignments=@();
+					if($null -ne $response -and $null -ne $resourceIDs)
+					{
+						foreach($resourceID in $resourceIDs)
+						{
+							#Get RoleAssignments from PIM API 
+							$url=[string]::Format([Constants]::PIMAPIUri +"/{0}/roleAssignments?`$expand=subject,roleDefinition(`$expand=resource)", $resourceID)
+							$responseContent=[WebRequestHelper]::InvokeGetWebRequest($url, $headers)
+							foreach ($roleAssignment in $responseContent)
+							{
+								$item= New-Object TelemetryRBAC 
+								$item.SubscriptionId= $subId;
+								$item.RoleAssignmentId = $roleAssignment.externalId
+								$item.RoleDefinitionId=$roleAssignment.roleDefinition.templateId
+								$item.Scope=$roleAssignment.roleDefinition.resource.externalId;
+								$item.RoleDefinitionName = $roleAssignment.roleDefinition.displayName
+								$item.ObjectId = $roleAssignment.subject.id
+								$item.DisplayName = $roleAssignment.subject.displayName
+								$item.ObjectType=$roleAssignment.subject.type;
+								$item.MemberType = $roleAssignment.memberType;
+								if($roleAssignment.memberType -ne 'Inherited')
+								{
+									if($roleAssignment.IsPermanent -eq $false)
+									{
+										#If roleAssignment is non permanent and not active
+										$item.IsPIMEnabled=$true;
+										if($roleAssignment.assignmentState -eq "Eligible")
+										{
+											$this.RGLevelPIMAssignments.Add($item);
+										}
+									}
+									else
+									{
+										#If roleAssignment is permanent
+										$item.IsPIMEnabled=$false;
+										$this.RGLevelpermanentAssignments.Add($item);
+									}
+								}
+							}
+						}
 					}
 					$message='OK';
 				}

@@ -308,7 +308,7 @@ class CommandBase: CommandBaseExt {
 			Write-Host "Set-AzSKPolicySettings -AutoUpdate Off`n" -ForegroundColor Green
 			return
 		}
-		$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\";
+		$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp";
 		try
 		{
 			$fileName = "au_" + $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss") + ".ps1";
@@ -316,14 +316,14 @@ class CommandBase: CommandBaseExt {
 			$autoUpdateContent = [ConfigurationHelper]::LoadOfflineConfigFile("ModuleAutoUpdate.ps1");
 			if(-not (Test-Path -Path $AzSKTemp))
 			{
-				mkdir -Path $AzSKTemp -Force
+				New-Item -Path $AzSKTemp -ItemType Directory -Force
 			}
-			Remove-Item -Path "$AzSKTemp\au_*" -Force -Recurse -ErrorAction SilentlyContinue
+			Remove-Item -Path (Join-Path $AzSKTemp "au_*") -Force -Recurse -ErrorAction SilentlyContinue
 
 			$autoUpdateContent = $autoUpdateContent.Replace("##installurl##",$AutoUpdateCommand);
-			$autoUpdateContent | Out-File "$AzSKTemp\$fileName" -Force
+			$autoUpdateContent | Out-File (Join-Path $AzSKTemp $fileName) -Force
 
-			Start-Process -WindowStyle Normal -FilePath "powershell.exe" -ArgumentList "$AzSKTemp\$fileName"
+			Start-Process -WindowStyle Normal -FilePath "powershell.exe" -ArgumentList (Join-Path $AzSKTemp $fileName)
 		}
 		catch
 		{
