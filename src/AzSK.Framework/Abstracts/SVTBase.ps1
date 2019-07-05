@@ -42,7 +42,7 @@ class SVTBase: AzSKRoot
 
 	}
 	SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
-	Base($subscriptionId)
+	Base($subscriptionId, [SVTResource] $svtResource)
 	{		
 		$this.CreateInstance($svtResource);
 	}

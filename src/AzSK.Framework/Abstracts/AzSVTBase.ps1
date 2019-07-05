@@ -10,6 +10,11 @@ class AzSVTBase: SVTBase{
 	{
 		$this.CreateInstance();
 	}
+	AzSVTBase([string] $subscriptionId, [SVTResource] $svtResource):
+	Base($subscriptionId)
+	{		
+		$this.CreateInstance($svtResource);
+	}
 	 #Create instance for subscription scan 
 	 hidden [void] CreateInstance()
 	 {
