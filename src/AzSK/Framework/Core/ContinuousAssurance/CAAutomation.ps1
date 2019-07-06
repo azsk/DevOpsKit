@@ -3212,7 +3212,7 @@ class CCAutomation: CommandBase
 		catch
 		{
 				Write-Warning "Ignoring error while assigning CA SPN permissions for SPN: [$appID]."
-				Write-Warning "Make sure this SPN is 'Contributor' on AzSKRG and 'Reader' on the subscription (or on the target RGs for CA scan)."
+				Write-Warning "Make sure this SPN is 'Contributor' on AzSKRG and 'Reader' on the subscription."
 		}
 
     }
