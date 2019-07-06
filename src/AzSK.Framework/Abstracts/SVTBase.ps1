@@ -451,7 +451,29 @@ class SVTBase: AzSKRoot
 
 			if($this.ControlIds.Count -ne 0)
 			{
-				$filterControlsById += $this.FeatureApplicableControls | Where-Object { $this.ControlIds -Contains $_.ControlId };
+				#If severity-specification option is used (instead of indiv. controlId list)
+				#e.g. grs -s <SubId> -ControlIds "Severity:High,Severity:Moderate"
+                if ($this.ControlIds[0] -match ":")
+                {
+                    foreach ($sevSpec in $this.ControlIds)
+                    {
+                        $sevProp = $sevSpec.Substring(0, $sevSpec.IndexOf(":")).Trim()
+                        $sevVal = $sevSpec.Substring($sevSpec.IndexOf(":")+1).Trim() #SevVal can be Critical/High, etc. (or Important, Moderate if org-severity mapping is in use)
+                        if ($sevProp -eq "Severity" -or $sevProp -eq "ControlSeverity")
+                        {
+                            $filterControlsById += $this.FeatureApplicableControls | Where-Object { $_.ControlSeverity -eq $sevVal };
+                        }
+                        else
+                        {
+                            Write-Warning ("Ignoring item in 'ControlIds' parameter: [$sevSpec]")
+                        }
+                    }
+				}
+				#Else filter controlIds based on passed parameters
+                else
+                {
+                    $filterControlsById += $this.FeatureApplicableControls | Where-Object { $this.ControlIds -Contains $_.ControlId };
+                }
 			}
 			else
 			{

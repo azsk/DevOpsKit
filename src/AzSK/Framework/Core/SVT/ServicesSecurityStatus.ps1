@@ -481,8 +481,9 @@ class ServicesSecurityStatus: SVTCommandBase
 	[PSObject] MapControlsToResourceTypes([PSObject] $automatedResources)
 	{
 		$allTargetControlIds = @($this.ControlIds)
-        $allTargetControlIds += $this.ConvertToStringArray($this.ControlIdString)
-        if ($allTargetControlIds.Count -gt 0)
+		$allTargetControlIds += $this.ConvertToStringArray($this.ControlIdString)
+		#Do this only for the actual controlIds case (not the Severity-Spec "Severity:High" case)
+        if ($allTargetControlIds.Count -gt 0 -and $allTargetControlIds[0] -notmatch ":")
         {
             #Infer resource type names from control ids 
             $allTargetResourceTypeNames = @($allTargetControlIds | ForEach-Object { ($_ -split '_')[1]})
