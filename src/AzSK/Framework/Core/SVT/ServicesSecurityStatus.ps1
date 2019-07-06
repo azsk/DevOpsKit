@@ -489,7 +489,7 @@ class ServicesSecurityStatus: SVTCommandBase
             #Infer resource type names from control ids 
             $allTargetResourceTypeNames = @($allTargetControlIds | ForEach-Object { ($_ -split '_')[1]})
             $allTargetResourceTypeNamesUnique = @($allTargetResourceTypeNames | Sort-Object -Unique)
-            $automatedResources = @($automatedResources | Where-Object {$allTargetResourceTypeNamesUnique -contains $_.ResourceTypeMapping.ResourceTypeName -or $_.ResourceType -match 'AzSKCfg'})
+            $automatedResources = @($automatedResources | Where-Object {$allTargetResourceTypeNamesUnique -contains $_.ResourceTypeMapping.ResourceTypeName -or $_.ResourceType -match 'AzSKCfg' -or $_.ResourceTypeMapping.ResourceTypeName -match 'VirtualNetwork'})
 		}
 		return $automatedResources
 	}
