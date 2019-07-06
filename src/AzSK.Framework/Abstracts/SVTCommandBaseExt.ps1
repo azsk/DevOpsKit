@@ -139,8 +139,6 @@ class SVTCommandBaseExt: CommandBase {
 			$svtObject.PartialScanIdentifier =$this.PartialScanIdentifier
 		}
 		
-        # ToDo: Utilize exiting functions
-        $this.InitializeControlState();
         $svtObject.ControlStateExt = $this.ControlStateExt;
     }
 

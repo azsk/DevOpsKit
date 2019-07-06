@@ -37,6 +37,8 @@ class SVTCommandBase: SVTCommandBaseExt {
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
         
         $this.AttestationUniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
+        #Initiate Compliance State
+        $this.InitializeControlState();
         #Fetching the resourceInventory once for each SVT command execution
         [ResourceInventory]::Clear();
     }
@@ -157,7 +159,6 @@ class SVTCommandBase: SVTCommandBaseExt {
 		}
 		
         # ToDo: Utilize exiting functions
-        $this.InitializeControlState();
         $svtObject.ControlStateExt = $this.ControlStateExt;
     }
 

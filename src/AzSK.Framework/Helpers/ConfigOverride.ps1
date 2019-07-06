@@ -115,6 +115,6 @@ class ConfigOverride
 		[ConfigurationHelper]::IsIssueLogged = $false
 		[ConfigurationHelper]::LocalPolicyEnabled = $false
 		[ContextHelper]::currentRMContext = $null
-		[ConfigurationHelper]::PolicyCacheContent = $null
+		[ConfigurationHelper]::PolicyCacheContent = @()
 	}
 }
