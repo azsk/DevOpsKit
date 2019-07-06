@@ -268,7 +268,8 @@ function RunAzSKScanForASub
 		}
 		else 
 		{
-			$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
+			#Scan controls 
+			$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $ResourceGroupNames -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
 		}
 	}
    
