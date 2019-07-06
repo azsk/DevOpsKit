@@ -3204,8 +3204,17 @@ class CCAutomation: CommandBase
     hidden [void] SetCASPNPermissions([string] $appID)
     {
 		$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
-		$this.SetSPNSubscriptionAccessIfNotAssigned($appID)
-        $this.SetSPNRGAccessIfNotAssigned($appID)
+		try 
+		{
+				$this.SetSPNRGAccessIfNotAssigned($appID)
+				$this.SetSPNSubscriptionAccessIfNotAssigned($appID)
+		}
+		catch
+		{
+				Write-Warning "Ignoring error while assigning CA SPN permissions for SPN: [$appID]."
+				Write-Warning "Make sure this SPN is 'Contributor' on AzSKRG and 'Reader' on the subscription (or on the target RGs for CA scan)."
+		}
+
     }
     
 	hidden [string] AddConfigValues([string]$fileName)
