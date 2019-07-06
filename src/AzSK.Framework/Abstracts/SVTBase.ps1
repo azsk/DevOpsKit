@@ -457,16 +457,25 @@ class SVTBase: AzSKRoot
                 {
                     foreach ($sevSpec in $this.ControlIds)
                     {
-                        $sevProp = $sevSpec.Substring(0, $sevSpec.IndexOf(":")).Trim()
-                        $sevVal = $sevSpec.Substring($sevSpec.IndexOf(":")+1).Trim() #SevVal can be Critical/High, etc. (or Important, Moderate if org-severity mapping is in use)
-                        if ($sevProp -eq "Severity" -or $sevProp -eq "ControlSeverity")
-                        {
-                            $filterControlsById += $this.FeatureApplicableControls | Where-Object { $_.ControlSeverity -eq $sevVal };
-                        }
-                        else
-                        {
-                            Write-Warning ("Ignoring item in 'ControlIds' parameter: [$sevSpec]")
-                        }
+						if ($sevSpec -match ":")
+						{
+
+							$sevProp = $sevSpec.Substring(0, $sevSpec.IndexOf(":")).Trim()
+							$sevVal = $sevSpec.Substring($sevSpec.IndexOf(":")+1).Trim() #SevVal can be Critical/High, etc. (or Important, Moderate if org-severity mapping is in use)
+							if ($sevProp -eq "Severity" -or $sevProp -eq "ControlSeverity")
+							{
+								$filterControlsById += $this.FeatureApplicableControls | Where-Object { $_.ControlSeverity -eq $sevVal };
+							}
+							else
+							{
+								Write-Warning ("Ignoring item in 'ControlIds' parameter: [$sevSpec]")
+							}
+						}
+						else 
+						{
+							Write-Warning ("Ignoring item in 'ControlIds' parameter: [$sevSpec]")
+						}
+
                     }
 				}
 				#Else filter controlIds based on passed parameters
