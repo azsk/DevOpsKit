@@ -1,6 +1,6 @@
 ﻿using namespace System.Management.Automation
 Set-StrictMode -Version Latest 
-class CCAutomation: CommandBase
+class CCAutomation: AzCommandBase
 { 
 	hidden [AutomationAccount] $AutomationAccount
 	[string] $TargetSubscriptionIds = "";

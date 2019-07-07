@@ -171,6 +171,31 @@ class ResourceGroupHelper: EventBase
 		}
     }
 
+	static [bool] IsLatestVersionConfiguredOnSub([String] $ConfigVersion,[string] $TagName,[string] $FeatureName)
+	{
+		$IsLatestVersionPresent = [ResourceGroupHelper]::IsLatestVersionConfiguredOnSub($ConfigVersion,$TagName)
+		if($IsLatestVersionPresent){
+			#<TODO Framework: Use Publish Custom Message and use only one function for latest configurations versions>
+			Write-Host "$FeatureName configuration in your subscription is already up to date. If you would like to reconfigure, please rerun the command with '-Force' parameter." -ForegroundColor Cyan
+		}				
+		return $IsLatestVersionPresent		
+	}
+
+	static [bool] IsLatestVersionConfiguredOnSub([String] $ConfigVersion,[string] $TagName)
+	{
+		$IsLatestVersionPresent = $false
+		$tagsOnSub =  [ResourceGroupHelper]::GetResourceGroupTags([ConfigurationManager]::GetAzSKConfigData().AzSKRGName) 
+		if($tagsOnSub)
+		{
+			$SubConfigVersion= $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -eq $TagName -and $_.Value -eq $ConfigVersion}
+			
+			if(($SubConfigVersion | Measure-Object).Count -gt 0)
+			{
+				$IsLatestVersionPresent = $true				
+			}			
+		}
+		return $IsLatestVersionPresent		
+	}
 
 }
 

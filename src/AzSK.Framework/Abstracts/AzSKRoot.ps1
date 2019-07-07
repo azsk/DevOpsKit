@@ -6,7 +6,7 @@
 #>
 
 Set-StrictMode -Version Latest
-class AzSKRoot: AzSKRootExt
+class AzSKRoot: EventBase
 { 
     #Region: Properties
     [SubscriptionContext] $SubscriptionContext;
@@ -16,11 +16,12 @@ class AzSKRoot: AzSKRootExt
     #Region: Constructor 
     AzSKRoot([string] $subscriptionId) :Base($subscriptionId)
     {
+        #Initialize context 
+        $ContextHelper = [ContextHelper]::new()
+        $this.SubscriptionContext = $ContextHelper.SetContext($subscriptionId)
     }
     #EndRegion
     
-
-
     #Function to load server configuration file
     [PSObject] LoadServerConfigFile([string] $fileName)
     {

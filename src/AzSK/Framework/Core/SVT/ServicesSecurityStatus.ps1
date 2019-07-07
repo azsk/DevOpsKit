@@ -1,5 +1,5 @@
 ﻿Set-StrictMode -Version Latest
-class ServicesSecurityStatus: SVTCommandBase
+class ServicesSecurityStatus: AzSVTCommandBase
 {
 	[SVTResourceResolver] $Resolver = $null;
 	[bool] $IsPartialCommitScanActive = $false;

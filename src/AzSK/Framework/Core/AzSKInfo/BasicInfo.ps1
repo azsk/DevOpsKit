@@ -1,7 +1,7 @@
 using namespace System.Management.Automation
 Set-StrictMode -Version Latest 
 
-class BasicInfo: CommandBase
+class BasicInfo: AzCommandBase
 {    
 	
 	hidden [PSObject] $AzSKRG = $null

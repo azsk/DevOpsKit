@@ -2,7 +2,7 @@ using namespace System.Management.Automation
 Set-StrictMode -Version Latest 
 
 # Class to implement Subscription alert controls 
-class Alerts: CommandBase
+class Alerts: AzCommandBase
 {    
 	hidden [PSObject[]] $Policy = $null;
 	
@@ -221,7 +221,7 @@ class Alerts: CommandBase
 			}
 		}
 
-		if($this.Force -or -not ($this.IsLatestVersionConfiguredOnSub($this.AlertPolicyObj.Version,[Constants]::AzSKAlertsVersionTagName,"Alerts")))
+		if($this.Force -or -not ([ResourceGroupHelper]::IsLatestVersionConfiguredOnSub($this.AlertPolicyObj.Version,[Constants]::AzSKAlertsVersionTagName,"Alerts")))
 		{
 			$allEmails = @();
 			# Parameter validation

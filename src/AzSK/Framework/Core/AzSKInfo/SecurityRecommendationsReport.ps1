@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest 
 
-class SecurityRecommendationsReport: CommandBase
+class SecurityRecommendationsReport: AzCommandBase
 {    
 	hidden [PSObject] $AzSKRG = $null
 	hidden [String] $AzSKRGName = ""

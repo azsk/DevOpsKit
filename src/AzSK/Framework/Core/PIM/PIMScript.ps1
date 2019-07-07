@@ -1,5 +1,5 @@
 #Acquire Access token
-class PIM: CommandBase {
+class PIM: AzCommandBase {
     hidden $APIroot = [string]::Empty
     hidden $headerParams = "";
     hidden $UserId = "";

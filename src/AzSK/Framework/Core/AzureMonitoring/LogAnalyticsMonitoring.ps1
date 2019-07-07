@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest 
 
-class LogAnalyticsMonitoring: CommandBase
+class LogAnalyticsMonitoring: AzCommandBase
 {
 	[string] $LAWSSampleViewTemplateFilepath;
 	[string] $LAWSSearchesTemplateFilepath;

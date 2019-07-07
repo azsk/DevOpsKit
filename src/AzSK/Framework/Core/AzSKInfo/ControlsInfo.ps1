@@ -1,7 +1,7 @@
 using namespace System.Management.Automation
 Set-StrictMode -Version Latest 
 
-class ControlsInfo: CommandBase
+class ControlsInfo: AzCommandBase
 {    
 	hidden [string] $ResourceTypeName
 	hidden [string] $ResourceType

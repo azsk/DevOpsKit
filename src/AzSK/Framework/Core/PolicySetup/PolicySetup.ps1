@@ -5,7 +5,7 @@ using namespace Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel
 using namespace Newtonsoft.Json.Schema
 Set-StrictMode -Version Latest
 
-class PolicySetup: CommandBase
+class PolicySetup: AzCommandBase
 {
 	[StorageHelper] $StorageAccountInstance;
 	[AppInsightHelper] $AppInsightInstance;

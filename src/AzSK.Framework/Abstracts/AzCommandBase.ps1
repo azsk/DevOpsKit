@@ -6,31 +6,19 @@
 
 using namespace System.Management.Automation
 Set-StrictMode -Version Latest
-class CommandBaseExt: AzSKRoot {
+class AzCommandBase: CommandBase {
 
 	#Region: Properties
 	[bool] $IsLocalComplianceStoreEnabled = $false
 	#EndRegion
 
 	#Region: Constructor 
-    CommandBaseExt([string] $subscriptionId, [InvocationInfo] $invocationContext): Base($subscriptionId) {
+    AzCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext): Base($subscriptionId, $invocationContext) {
 
-		[Helpers]::AbstractClass($this, [CommandBaseExt]);
-		
-		if (-not $invocationContext) {
-            throw [System.ArgumentException] ("The argument 'invocationContext' is null. Pass the `$PSCmdlet.MyInvocation from PowerShell command.");
-        }	
-		
-        #<TODO Framework: Optimize force parameter from root location>
-        $this.InvocationContext = $invocationContext;
-		$force = $false
-		if($null -ne $invocationContext.BoundParameters["Force"])
-		{
-			$force = $invocationContext.BoundParameters["Force"];
-		}
+		[Helpers]::AbstractClass($this, [AzCommandBase]);
 
 		#Validate if command is getting run with correct Org Policy
-		$IsTagSettingRequired = $this.ValidateOrgPolicyOnSubscription($force)
+		$IsTagSettingRequired = $this.ValidateOrgPolicyOnSubscription($this.Force)
 		
 		#Validate if policy url token is getting expired 
 		$onlinePolicyStoreUrl = [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl
@@ -52,10 +40,10 @@ class CommandBaseExt: AzSKRoot {
 
 		 #Validate if command has AzSK component write permission
 		$commandMetadata= $this.GetCommandMetadata()
-		if(([Helpers]::CheckMember($commandMetadata,"HasAzSKComponentWritePermission")) -and  $commandMetadata.HasAzSKComponentWritePermission -and ($IsTagSettingRequired -or $force))
+		if(([Helpers]::CheckMember($commandMetadata,"HasAzSKComponentWritePermission")) -and  $commandMetadata.HasAzSKComponentWritePermission -and ($IsTagSettingRequired -or $this.Force))
 		{
 			#If command is running with Org-neutral Policy or switch Org policy, Set Org Policy tag on subscription
-			$this.SetOrgPolicyTag($force)
+			$this.SetOrgPolicyTag($this.Force)
 		}	
 
 		$azskConfigComplianceFlag = [ConfigurationManager]::GetAzSKConfigData().StoreComplianceSummaryInUserSubscriptions;	

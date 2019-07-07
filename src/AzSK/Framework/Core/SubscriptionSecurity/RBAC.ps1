@@ -3,7 +3,7 @@ using namespace System.Management.Automation
 Set-StrictMode -Version Latest 
 
 # Class to implement Subscription RBAC controls 
-class RBAC: CommandBase
+class RBAC: AzCommandBase
 {    
 	hidden [SubscriptionRBAC] $Policy = $null;
 
@@ -123,7 +123,7 @@ class RBAC: CommandBase
 		[MessageData[]] $resultMessages = @();
 		[CCAutomation] $caAutomation = [CCAutomation]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext);
 		$caAutomation.RecoverCASPN();
-		if($this.Force -or -not ($this.IsLatestVersionConfiguredOnSub($this.Policy.ActiveCentralAccountsVersion,[Constants]::CentralRBACVersionTagName,"CentralRBAC")))
+		if($this.Force -or -not ([ResourceGroupHelper]::IsLatestVersionConfiguredOnSub($this.Policy.ActiveCentralAccountsVersion,[Constants]::CentralRBACVersionTagName,"CentralRBAC")))
 		{
 			#setting the tag at AzSKRG
 			$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
@@ -298,7 +298,7 @@ class RBAC: CommandBase
 	[MessageData[]] RemoveRBACAccounts()
     {	
 		[MessageData[]] $messages = @();
-		if($this.Force -or -not ($this.IsLatestVersionConfiguredOnSub($this.Policy.DeprecatedAccountsVersion,[Constants]::DeprecatedRBACVersionTagName,"DeprecatedRBAC")))
+		if($this.Force -or -not ([ResourceGroupHelper]::IsLatestVersionConfiguredOnSub($this.Policy.DeprecatedAccountsVersion,[Constants]::DeprecatedRBACVersionTagName,"DeprecatedRBAC")))
 		{
 			#setting the tag at AzSKRG
 			$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;

@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class SubscriptionSecurityStatus: SVTCommandBase
+class SubscriptionSecurityStatus: AzSVTCommandBase
 {
 
 	SubscriptionSecurityStatus([string] $subscriptionId, [InvocationInfo] $invocationContext): 

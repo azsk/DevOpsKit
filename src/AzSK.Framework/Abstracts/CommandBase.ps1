@@ -8,7 +8,7 @@
 using namespace System.Management.Automation
 Set-StrictMode -Version Latest
 
-class CommandBase: CommandBaseExt {
+class CommandBase: AzSKRoot {
 
 	#Region: Properties 
     [string[]] $FilterTags = @();
@@ -18,7 +18,7 @@ class CommandBase: CommandBaseExt {
 
 	#Region: Constructor 
     CommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
-    Base($subscriptionId,$invocationContext) {
+    Base($subscriptionId) {
 
         [Helpers]::AbstractClass($this, [CommandBase]);
 		

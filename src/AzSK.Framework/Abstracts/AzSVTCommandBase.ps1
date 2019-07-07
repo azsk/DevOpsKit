@@ -7,13 +7,13 @@
 #>
 using namespace System.Management.Automation
 Set-StrictMode -Version Latest
-class SVTCommandBaseExt: CommandBase {
+class AzSVTCommandBase: SVTCommandBase {
     
     #Region Constructor
-    SVTCommandBaseExt([string] $subscriptionId, [InvocationInfo] $invocationContext):
+    AzSVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
 
-        [Helpers]::AbstractClass($this, [SVTCommandBaseExt]);
+        [Helpers]::AbstractClass($this, [AzSVTCommandBase]);
         
         $this.CheckAndDisableAzureRMTelemetry()
        
@@ -21,6 +21,8 @@ class SVTCommandBaseExt: CommandBase {
         #Fetching the resourceInventory once for each SVT command execution
         [ResourceInventory]::Clear();
 
+         #Initiate Compliance State
+         $this.InitializeControlState();
          #Create necessary resources to save compliance data in user's subscription
          #<TODO Perf Issue - ComplianceReportHelper fetch RG/Storage. Then creates RG/Storage/table if not exists. Check permissions for write etc>
          if($this.IsLocalComplianceStoreEnabled)
@@ -46,34 +48,12 @@ class SVTCommandBaseExt: CommandBase {
         [SecurityCenterHelper]::Recommendations = $null;
     }
 
-    hidden [void] CommandStarted() {
-
+    #Az Related command started events 
+     [void] CommandStartedExt() {
+        #<TODO Framework: Find the purpose of function and move to respective place
         $this.ClearSingletons();
 
-        [SVTEventContext] $arg = $this.CreateSVTEventContextObject();
-        $this.InitializeControlState();        
-        $versionMessage = $this.CheckModuleVersion();
-        if ($versionMessage) {
-            $arg.Messages += $versionMessage;
-        }
-
-        if ($null -ne $this.AttestationOptions -and $this.AttestationOptions.AttestControls -eq [AttestControls]::NotAttested -and $this.AttestationOptions.IsBulkClearModeOn) {
-            throw [SuppressedException] ("The 'BulkClear' option does not apply to 'NotAttested' controls.`n")
-        }
-        #check to limit multi controlids in the bulk attestation mode
-        $ctrlIds = $this.ConvertToStringArray($this.ControlIdString);
-        if ($null -ne $this.AttestationOptions -and (-not [string]::IsNullOrWhiteSpace($this.AttestationOptions.JustificationText) -or $this.AttestationOptions.IsBulkClearModeOn) -and ($ctrlIds.Count -gt 1 -or $this.UseBaselineControls)) {
-			if($this.UseBaselineControls)
-			{
-				throw [SuppressedException] ("UseBaselineControls flag should not be passed in case of Bulk attestation. This results in multiple controls. `nBulk attestation mode supports only one controlId at a time.`n")
-			}
-			else
-			{
-				throw [SuppressedException] ("Multiple controlIds specified. `nBulk attestation mode supports only one controlId at a time.`n")
-			}			
-        }
-        
-	    $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
+        $this.InitializeControlState();
     }
 
 	[void] PostCommandStartedAction()
@@ -90,59 +70,17 @@ class SVTCommandBaseExt: CommandBase {
 		$customData.Name = "PolicyComplianceTelemetry";		
 		$customData.Value = $this.SubscriptionContext.SubscriptionId;
 		$this.PublishCustomData($customData);			
-	}
-    hidden [void] CommandError([System.Management.Automation.ErrorRecord] $exception) {
-        [SVTEventContext] $arg = $this.CreateSVTEventContextObject();
-        $arg.ExceptionMessage = $exception;
-
-        $this.PublishEvent([SVTEvent]::CommandError, $arg);
+    }
+    
+    [void] CommandErrorExt([System.Management.Automation.ErrorRecord] $exception) {
         $this.CheckAndEnableAzureRMTelemetry()
     }
 
-    hidden [void] CommandCompleted([SVTEventContext[]] $arguments) {
-        $this.PublishEvent([SVTEvent]::CommandCompleted, $arguments);
+    [void] CommandCompletedExt([SVTEventContext[]] $arguments) {
         $this.CheckAndEnableAzureRMTelemetry()
     }
 
-    [string] EvaluateControlStatus() {
-        return ([CommandBase]$this).InvokeFunction($this.RunAllControls);
-    }
-
-    # Dummy function declaration to define the function signature
-    # Function is supposed to override in derived class
-    hidden [SVTEventContext[]] RunAllControls() {
-        return @();
-    }
-
-    hidden [void] SetSVTBaseProperties([PSObject] $svtObject) {
-        $svtObject.FilterTags = $this.ConvertToStringArray($this.FilterTags);
-        $svtObject.ExcludeTags = $this.ConvertToStringArray($this.ExcludeTags);
-        $svtObject.ControlIds += $this.ControlIds;
-        $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
-		$svtObject.ExcludeControlIds += $this.ExcludeControlIds;
-        $svtObject.ExcludeControlIds += $this.ConvertToStringArray($this.ExcludeControlIdString);
-        $svtObject.GenerateFixScript = $this.GenerateFixScript;
-        $svtObject.InvocationContext = $this.InvocationContext;
-        # ToDo: Assumption: usercomment will only work when storage report feature flag is enable
-        $resourceId = $svtObject.ResourceId; 
-		$svtObject.ComplianceStateData = $this.FetchComplianceStateData($resourceId);
-
-        #Include Server Side Exclude Tags
-        $svtObject.ExcludeTags += [ConfigurationManager]::GetAzSKConfigData().DefaultControlExculdeTags
-
-        #Include Server Side Filter Tags
-        $svtObject.FilterTags += [ConfigurationManager]::GetAzSKConfigData().DefaultControlFiltersTags
-
-		#Set Partial Unique Identifier
-		if($svtObject.ResourceContext)
-		{
-			$svtObject.PartialScanIdentifier =$this.PartialScanIdentifier
-		}
-		
-        $svtObject.ControlStateExt = $this.ControlStateExt;
-    }
-
-    hidden [ComplianceStateTableEntity[]] FetchComplianceStateData([string] $resourceId)
+    [ComplianceStateTableEntity[]] FetchComplianceStateData([string] $resourceId)
 	{
         [ComplianceStateTableEntity[]] $ComplianceStateData = @();
         if($this.IsLocalComplianceStoreEnabled)
@@ -158,7 +96,7 @@ class SVTCommandBaseExt: CommandBase {
         return $ComplianceStateData;
 	}
 
-    hidden [void] InitializeControlState() {
+    [void] InitializeControlState() {
         if (-not $this.ControlStateExt) {
             $this.ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
             $this.ControlStateExt.UniqueRunId = $this.AttestationUniqueRunId
