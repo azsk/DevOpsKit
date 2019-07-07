@@ -442,7 +442,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 	[void] MapTagsToControlIds()
 	{
 		#Check if filtertags or exclude filter tags parameter is passed from user then get mapped control ids
-		if(-not [string]::IsNullOrEmpty($this.FilterTags) -or -not [string]::IsNullOrEmpty($this.ExcludeTags))
+		if(-not [string]::IsNullOrEmpty($this.FilterTags) ) #-or -not [string]::IsNullOrEmpty($this.ExcludeTags)
 		{
 			$resourcetypes = @() 
 			$controlList = @()
@@ -472,20 +472,21 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				$this.ControlIds = $controlIdsWithFilterTagList
 			}
 
-			#If FilterTags are specified, limit the candidate set to matching controls
-			#Note: currently either includeTag or excludeTag will work at a time. Combined flag result will be overridden by excludeTags 
-			if (-not [string]::IsNullOrEmpty($this.ExcludeTags))
-			{
-				$excludeFilterTagList = $this.ConvertToStringArray($this.ExcludeTags)
-				$controlIdsWithFilterTagList = @()
-				#Look at each candidate control's tags and see if there's a match in FilterTags
-				$excludeFilterTagList | ForEach-Object {
-					$tagName = $_ 
-					$controlIdsWithFilterTagList += $controlList | Where-Object{ $tagName -notin $_.Tags  } | ForEach-Object{ $_.ControlId}
-				}
-				#Assign filtered control Id with tag name 
-				$this.ControlIds = $controlIdsWithFilterTagList
-			}
+			#********** Commentiing Exclude tags logic as this will not require perf optimization as excludeTags mostly will result in most of the resources
+			# #If FilterTags are specified, limit the candidate set to matching controls
+			# #Note: currently either includeTag or excludeTag will work at a time. Combined flag result will be overridden by excludeTags 
+			# if (-not [string]::IsNullOrEmpty($this.ExcludeTags))
+			# {
+			# 	$excludeFilterTagList = $this.ConvertToStringArray($this.ExcludeTags)
+			# 	$controlIdsWithFilterTagList = @()
+			# 	#Look at each candidate control's tags and see if there's a match in FilterTags
+			# 	$excludeFilterTagList | ForEach-Object {
+			# 		$tagName = $_ 
+			# 		$controlIdsWithFilterTagList += $controlList | Where-Object{ $tagName -notin $_.Tags  } | ForEach-Object{ $_.ControlId}
+			# 	}
+			# 	#Assign filtered control Id with tag name 
+			# 	$this.ControlIds = $controlIdsWithFilterTagList
+			# }
 		}		
 	}
 
@@ -499,7 +500,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
             #Infer resource type names from control ids 
             $allTargetResourceTypeNames = @($allTargetControlIds | ForEach-Object { ($_ -split '_')[1]})
             $allTargetResourceTypeNamesUnique = @($allTargetResourceTypeNames | Sort-Object -Unique)
-            $automatedResources = @($automatedResources | Where-Object {$allTargetResourceTypeNamesUnique -contains $_.ResourceTypeMapping.ResourceTypeName -or $_.ResourceType -match 'AzSKCfg'})
+            $automatedResources = @($automatedResources | Where-Object {$allTargetResourceTypeNamesUnique -contains $_.ResourceTypeMapping.ResourceTypeName -or $_.ResourceType -match 'AzSKCfg' -or $_.ResourceTypeMapping.ResourceTypeName -match 'VirtualNetwork'})
 		}
 		return $automatedResources
 	}

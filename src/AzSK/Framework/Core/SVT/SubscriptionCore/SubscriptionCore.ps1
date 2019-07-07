@@ -595,7 +595,7 @@ class SubscriptionCore: AzSVTBase
 	hidden [ControlResult] CheckARMPoliciesCompliance([ControlResult] $controlResult)
 	{
 
-		$subARMPol = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "", $false);
+		$subARMPol = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "Mandatory", $false);
         $output = @()
         $foundMandatoryPolicies = $true
 

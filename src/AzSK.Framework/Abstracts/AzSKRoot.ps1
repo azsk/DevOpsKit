@@ -14,7 +14,7 @@ class AzSKRoot: EventBase
     #EndRegion
 
     #Region: Constructor 
-    AzSKRoot([string] $subscriptionId) :Base($subscriptionId)
+    AzSKRoot([string] $subscriptionId)
     {
         #Initialize context 
         $ContextHelper = [ContextHelper]::new()
