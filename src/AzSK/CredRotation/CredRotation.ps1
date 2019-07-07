@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest
 
-function Set-AzSKCredentialAlert { 
+function New-AzSKCredentialAlert { 
    
     <#
 	.SYNOPSIS
@@ -98,7 +98,7 @@ function Set-AzSKCredentialAlert {
                 $cred.comment = $Comment
 
                 if($CredentialLocation -eq "Other"){
-                    $cred.InvokeFunction($cred.SetAlert, @($CredentialLocation, $null, $null, $null, $null, $null, $null, $null))
+                    $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation, $null, $null, $null, $null, $null, $null, $null))
                 }
                 elseif($CredentialLocation -eq "AppService"){
                     $ResourceGroupName = Read-Host "`nProvide the resource group name of the appservice"
@@ -115,7 +115,7 @@ function Set-AzSKCredentialAlert {
                     }
             
                     $AppConfigName = Read-Host "`nProvide the app config name where the credential is used"      
-                    $cred.InvokeFunction($cred.SetAlert, @($CredentialLocation, $ResourceGroupName, $ResourceName, $AppConfigType, $AppConfigName, $null, $null, $null))
+                    $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation, $ResourceGroupName, $ResourceName, $AppConfigType, $AppConfigName, $null, $null, $null))
                 }
                 elseif($CredentialLocation -eq "KeyVault"){
 
@@ -130,7 +130,7 @@ function Set-AzSKCredentialAlert {
                         $KVCredentialType = "Secret"
                     }
                     $KVCredentialName = Read-Host "`nProvide the key vault credential name"                    
-                    $cred.InvokeFunction($cred.SetAlert, @($CredentialLocation, $null, $null, $null, $null, $KVName, $KVCredentialType, $KVCredentialName))
+                    $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation, $null, $null, $null, $null, $KVName, $KVCredentialType, $KVCredentialName))
                 }
                 
             }
@@ -261,7 +261,7 @@ function Remove-AzSKCredentialAlert {
     }
 }
 
-function Update-AzSKCredentialAlert { 
+function Set-AzSKCredentialAlert { 
    
     <#
 	.SYNOPSIS
@@ -326,7 +326,62 @@ function Update-AzSKCredentialAlert {
 			
             $cred = [CredRotation]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){
-                $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment))            
+                $cred.InvokeFunction($cred.SetAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment))            
+            }
+	
+        }
+        catch {
+            [EventBase]::PublishGenericException($_);
+        }  
+    }
+    End {
+        [ListenerHelper]::UnregisterListeners();
+    }
+}
+
+function Update-AzSKCredentialAlert { 
+   
+     <#
+	.SYNOPSIS
+	This command would help to update the last rotated timestamp of the credential.
+	.DESCRIPTION
+	This command would help to update the last rotated timestamp of the credential.
+    
+	.PARAMETER SubscriptionId
+		Provide the subscription id.
+	.PARAMETER CredentialName
+		Provide the credential name.
+	
+	.LINK
+	https://aka.ms/azskossdocs
+
+	#>
+    Param(
+        [Parameter(Mandatory = $true, HelpMessage = "Provide the subscription id")]
+        [string]
+		[Alias("s")]
+        $SubscriptionId,
+
+        [Parameter(Mandatory = $true, HelpMessage = "Provide the credential name")]
+        [string]
+		[Alias("cn")]
+        $CredentialName,
+
+        [Parameter(Mandatory = $true, HelpMessage = "Provide the comment for the credential")]
+        [string]
+		[Alias("cmt")]
+        $Comment
+    )
+    Begin {
+        [CommandHelper]::BeginCommand($MyInvocation);
+        [ListenerHelper]::RegisterListeners();
+    }
+    Process {
+        try {
+			
+            $cred = [CredRotation]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+            if($cred){
+                $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$Comment))            
             }
 	
         }

@@ -17,11 +17,6 @@ class CredRotation : CommandBase{
         Base($subscriptionId, $invocationContext)
     { }
 
-    hidden [void] dummy()
-	{
-		Write-Host "1"
-	}
-
     hidden [void] GetAzSKRotationMetadatContainer()
 	{
 		if($null -eq $this.AzSKStorageAccount)
@@ -185,7 +180,7 @@ class CredRotation : CommandBase{
 		}
 	}
 
-	[void] SetAlert($CredentialLocation, $ResourceGroupName, $ResourceName, $AppConfigType, $AppConfigName, $KVName, $KVCredentialType, $KVCredentialName)
+	[void] NewAlert($CredentialLocation, $ResourceGroupName, $ResourceName, $AppConfigType, $AppConfigName, $KVName, $KVCredentialType, $KVCredentialName)
 	{           
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $($this.credName)
 		$file += ".json"
@@ -309,7 +304,7 @@ class CredRotation : CommandBase{
 			}
 			if($result -eq 0)
 			{
-				#user selected yes	
+				#user selected yes
 				Write-Host "Removing the rotation/expiry notification on the credential [$CredentialName]" 
 				$blobContent | Remove-AzStorageBlob 
 				Write-Host "Successfully removed the rotation/expiry notification on the credential [$CredentialName]" -ForegroundColor Green
@@ -331,7 +326,7 @@ class CredRotation : CommandBase{
         $this.PublishCustomMessage("Run Get-AzSKCredentialAlert to list all the credentials onboarded for rotation/expiry notification.")
 	}
 	
-	[void] UpdateAlert($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment)
+	[void] SetAlert($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment)
 	{           
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $CredentialName
 		$file += ".json"
@@ -399,4 +394,125 @@ class CredRotation : CommandBase{
 		}
         $this.PublishCustomMessage("Run Get-AzSKCredentialAlert to list all the credentials onboarded for rotation/expiry notification.")
 	}
+
+	[void] UpdateAlert($CredentialName,$Comment)
+	{           
+        $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $($this.credName)
+		$file += ".json"
+        $this.GetAzSKRotationMetadatContainer()
+        $blobName = $CredentialName + ".json"
+		$appConfig =@{};
+		$appConfigValue = $null;
+
+		$tempSubPath = Join-Path $($this.AzSKTemp) $($this.SubscriptionContext.SubscriptionId)
+
+        if(![string]::isnullorwhitespace($this.SubscriptionContext.SubscriptionId)){
+			if(-not (Test-Path $tempSubPath))
+			{
+				New-Item -ItemType Directory -Path $tempSubPath -ErrorAction Stop | Out-Null
+			}	
+		}
+		else{
+			if(-not (Test-Path "$($this.AzSKTemp)"))
+			{
+				New-Item -ItemType Directory -Path "$($this.AzSKTemp)" -ErrorAction Stop | Out-Null
+			}
+		}
+
+        $blobContent = Get-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -Destination $file -Force -ErrorAction Ignore
+        if($blobContent){
+            $credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json;
+			$user = ([Helpers]::GetCurrentRMContext()).Account.Id;
+			Write-Host "Updating the rotation details for the credential [$CredentialName]" 
+			
+			if($credentialInfo.credLocation -eq "AppService"){
+				
+				Write-Host "Fetching the app service [$($credentialInfo.resourceName)] details"
+				$resource = Get-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName
+				
+				if($credentialInfo.appConfigType -eq "Application Settings"){
+					$appConfig = $resource.SiteConfig.AppSettings 
+					$appConfigValue = Read-Host "Enter the new secret for the application setting - [$($credentialInfo.appConfigName)]" -AsSecureString 
+					$appConfigValue = [System.Runtime.InteropServices.marshal]::PtrToStringAuto([System.Runtime.InteropServices.marshal]::SecureStringToBSTR($appConfigValue))
+				}
+				elseif($credentialInfo.appConfigType -eq "Connection String"){
+					$appConfig = $resource.SiteConfig.ConnectionStrings
+					$appConfigValue = Read-Host "Enter the new secret for the connection string - [$($credentialInfo.appConfigName)]" -AsSecureString
+					$appConfigValue = [System.Runtime.InteropServices.marshal]::PtrToStringAuto([System.Runtime.InteropServices.marshal]::SecureStringToBSTR($appConfigValue))
+				}
+
+				$hash = @{}
+
+				foreach ($setting in $appConfig) {
+					if($setting.Name -eq $credentialInfo.appConfigName){
+						$hash[$setting.Name] = $appConfigValue
+					}
+					else{
+						$hash[$setting.Name] = $setting.Value
+					}
+				}
+
+				Write-Host "Updating the app service configuration" 
+				if($credentialInfo.appConfigType -eq "Application Settings"){
+					Set-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName -AppSettings $hash | Out-Null
+				}
+				elseif($credentialInfo.appConfigType -eq "Connection String"){
+					Set-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName -ConnectionStrings $hash | Out-Null
+				}
+				Write-Host "Successfully updated the app config" -ForegroundColor Green
+			}			
+
+			if($credentialInfo.credLocation -eq "KeyVault")
+			{
+				if($credentialInfo.kvCredType -eq "Key")
+				{
+					$currentKey = Get-AzKeyVaultKey -VaultName $credentialInfo.kvName -Name $credentialInfo.kvCredName -ErrorAction SilentlyContinue
+					if(($currentKey | Measure-Object).Count -ne 0)
+					{
+						$currentTime = [DateTime]::UtcNow
+						$expiryTime = $currentTime.AddDays($credentialInfo.rotationInt)
+					
+						$newKey = Add-AzKeyVaultKey -VaultName $credentialInfo.kvName -Name $credentialInfo.kvCredName -Expires $ExpiryTime -Destination Software
+						
+						$credentialInfo.expiryTime = $newKey.Expires
+						$credentialInfo.version = $newKey.Version
+						#Update-AzKeyVaultSecret -VaultName $credentialInfo.kvName -Name $credentialInfo.kvCredName -Enable $false -Version $currentKey.Version
+					}
+				}
+				elseif($credentialInfo.kvCredType -eq "Secret")
+				{
+					$currentSecret = Get-AzKeyVaultSecret -VaultName $credentialInfo.kvName -Name $credentialInfo.kvCredName -ErrorAction SilentlyContinue
+					if(($currentSecret | Measure-Object).Count -ne 0)
+					{
+						$currentTime = [DateTime]::UtcNow
+						$expiryTime = $currentTime.AddDays($credentialInfo.rotationInt)
+
+						$secret = Read-Host "Enter the new secret value for the key vault credential - [$($credentialInfo.kvCredName)]" -AsSecureString 
+					
+						$newSecret = Set-AzKeyVaultSecret -VaultName $credentialInfo.kvName -Name $credentialInfo.kvCredName -SecretValue $secret -Expires $ExpiryTime
+						$credentialInfo.expiryTime = $newSecret.Expires
+						$credentialInfo.version = $newSecret.Version
+						
+						#Update-AzKeyVaultSecret -VaultName $credentialInfo.kvName -Name $credentialInfo.kvCredName -Enable $false -Version $currentSecret.Version
+					}
+				}
+				Write-Host "Older version of this credential has not been disabled to maintain availability of exisiting applications. Please update the version at the required locations & then disable the older version." -ForegroundColor Yellow
+			}
+
+			$credentialInfo.lastUpdatedOn = [DateTime]::UtcNow
+			$credentialInfo.lastUpdatedBy = $user
+			$credentialInfo.comment = $Comment
+			$credentialInfo | ConvertTo-Json -Depth 10 | Out-File $file -Force
+			Set-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -File $file -Force | Out-Null
+
+			Write-Host "Successfully updated the rotation details for the credential [$CredentialName]" -ForegroundColor Green
+        }
+        else{
+            Write-Host "Credential [$CredentialName] not found." -ForegroundColor Red
+        }
+		if(Test-Path $file)
+		{
+			Remove-Item -Path $file
+		}
+	}	
 }

@@ -147,7 +147,8 @@
         'Set-AzSKCredentialAlert',
         'Get-AzSKCredentialAlert',
         'Remove-AzSKCredentialAlert',
-        'Update-AzSKCredentialAlert'
+        'Update-AzSKCredentialAlert',
+        'New-AzSKCredentialAlert'
     )
 
     # Cmdlets to export from this module
