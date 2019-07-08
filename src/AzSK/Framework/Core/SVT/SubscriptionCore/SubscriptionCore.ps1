@@ -1532,11 +1532,11 @@ class SubscriptionCore: SVTBase
 				$currentTime = [DateTime]::UtcNow;
 				$lastRotatedTime = $credentialInfo.lastUpdatedOn;
 				$expiryTime = $lastRotatedTime.AddDays($credentialInfo.rotationInt);
-				if($expiryTime -le $currentTime){
+				if($expiryTime -le $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credHighTH)){
 					$expiredCount += 1;
 					$expiredCredentials += $credentialInfo;
 				}
-				elseif(($expiryTime -gt $currentTime) -and ($expiryTime.AddDays(-($this.ControlSettings.SubscriptionCore.credHighTH)) -le $currentTime)){
+				elseif(($expiryTime -gt $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credHighTH)) -and ($expiryTime -le $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credModerateTH))){
 					$aboutToExpireCount +=1;
 					$aboutToExpireCredentials += $credentialInfo;
 				}
