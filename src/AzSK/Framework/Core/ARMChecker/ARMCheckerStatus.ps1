@@ -51,7 +51,7 @@ class ARMCheckerStatus: EventBase
 	}
 
 
-	[string] EvaluateStatus([string] $armTemplatePath, [string] $parameterFilePath ,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles, [string] $ExcludeControlIds, [string] $ControlIds,[Boolean] $UseBaselineControls,[Boolean] $UsePreviewBaselineControls)
+	[string] EvaluateStatus([string] $armTemplatePath, [string] $parameterFilePath ,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles, [string] $ExcludeControlIds, [string] $ControlIds,[Boolean] $UseBaselineControls,[Boolean] $UsePreviewBaselineControls, [string[]]$Severity)
 	{
 	    if(-not (Test-Path -path $armTemplatePath))
 		{
@@ -127,6 +127,7 @@ class ARMCheckerStatus: EventBase
 		$filesToExcludeCount=0
 		$excludedFiles=@()
 		$filteredFiles = @();
+		$ControlsToScanBySeverity =@();
 		try{
 		  if(-not([string]::IsNullOrEmpty($exemptControlListPath)) -and (Test-Path -path $exemptControlListPath -PathType Leaf))
 		  {
@@ -182,6 +183,11 @@ class ARMCheckerStatus: EventBase
 		  $ControlsToScan = $this.ConvertToStringArray($ControlIds);
 		} 
 
+		if(-not([string]::IsNullOrEmpty($Severity)))
+		{
+		  $ControlsToScanBySeverity = $this.ConvertToStringArray($Severity);
+		} 
+
 		# Check if exclude control ids are provided by user 
 		$ControlsToExclude = @();
 		if(-not([string]::IsNullOrEmpty($ExcludeControlIds)))
@@ -229,6 +235,10 @@ class ARMCheckerStatus: EventBase
 
 				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0  -and ( $ControlsToExclude | Measure-Object).Count -gt 0){
 					$results = $results | Where-Object {$ControlsToExclude -notcontains $_.ControlId}
+				}
+
+				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0  -and ( $ControlsToScanBySeverity | Measure-Object).Count -gt 0){
+					$results = $results | Where-Object {$_.Severity -in $ControlsToScanBySeverity}
 				}
 
 				
