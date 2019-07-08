@@ -130,7 +130,7 @@ class CredRotation : CommandBase{
 			$this.PublishCustomMessage("`n")
 			}
 			else{
-				$this.PublishCustomMessage("Entry for the credential [$CredentialName] was not found. Run Get-AzSKCredentialAlert to list all the credentials onboarded for rotation/expiry notification. ",[MessageType]::Critical)
+				$this.PublishCustomMessage("Entry for the credential [$CredentialName] was not found. Run Get-AzSKTrackedCredential to list all the credentials onboarded for rotation/expiry notification. ",[MessageType]::Critical)
 			}
     	}
 		else{
@@ -210,7 +210,7 @@ class CredRotation : CommandBase{
 
         $blobContent = Get-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -Destination $file -Force -ErrorAction Ignore
         if($blobContent){
-            $this.PublishCustomMessage("Entry for the credential [$($this.credName)] already exists. Run Update-AzSKCredentialALert to update alert configurations for the existing credential.", [MessageType]::Error);
+            $this.PublishCustomMessage("Entry for the credential [$($this.credName)] already exists. Run Update-AzSKTrackedCredential to update alert configurations for the existing credential.", [MessageType]::Error);
         }
         else{
             
@@ -265,7 +265,7 @@ class CredRotation : CommandBase{
 		{
 			Remove-Item -Path $file
 		}
-        $this.PublishCustomMessage("Run Get-AzSKCredentialAlert to list all the credentials onboarded for rotation/expiry notification.")
+        $this.PublishCustomMessage("Run Get-AzSKTrackedCredential to list all the credentials onboarded for rotation/expiry notification.")
 	}
 
 	[void] RemoveAlert($CredentialName,$Force)

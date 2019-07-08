@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest
 
-function New-AzSKCredentialAlert { 
+function New-AzSKTrackedCredential { 
    
     <#
 	.SYNOPSIS
@@ -145,7 +145,7 @@ function New-AzSKCredentialAlert {
     }
 }
 
-function Get-AzSKCredentialAlert { 
+function Get-AzSKTrackedCredential { 
    
     <#
 	.SYNOPSIS
@@ -201,7 +201,7 @@ function Get-AzSKCredentialAlert {
 
 }
 
-function Remove-AzSKCredentialAlert { 
+function Remove-AzSKTrackedCredential { 
    
     <#
 	.SYNOPSIS
@@ -261,7 +261,7 @@ function Remove-AzSKCredentialAlert {
     }
 }
 
-function Set-AzSKCredentialAlert { 
+function Set-AzSKTrackedCredential { 
    
     <#
 	.SYNOPSIS
@@ -339,7 +339,7 @@ function Set-AzSKCredentialAlert {
     }
 }
 
-function Update-AzSKCredentialAlert { 
+function Update-AzSKTrackedCredential { 
    
      <#
 	.SYNOPSIS

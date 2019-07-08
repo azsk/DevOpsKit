@@ -144,11 +144,11 @@
         'Get-AzSKSecurityRecommendationReport',
         'Set-AzSKPIMConfiguration',
         'Get-AzSKPIMConfiguration',
-        'Set-AzSKCredentialAlert',
-        'Get-AzSKCredentialAlert',
-        'Remove-AzSKCredentialAlert',
-        'Update-AzSKCredentialAlert',
-        'New-AzSKCredentialAlert'
+        'Set-AzSKTrackedCredential',
+        'Get-AzSKTrackedCredential',
+        'Remove-AzSKTrackedCredential',
+        'Update-AzSKTrackedCredential',
+        'New-AzSKTrackedCredential'
     )
 
     # Cmdlets to export from this module
