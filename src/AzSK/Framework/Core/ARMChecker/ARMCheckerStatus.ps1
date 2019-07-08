@@ -224,35 +224,7 @@ class ARMCheckerStatus: EventBase
 				}
 
 				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0 -and ( $ControlsToScan | Measure-Object).Count -gt 0 ){
-                    if ($ControlsToScan[0] -match ":") #Check if ":" based severity-filter is used for ControlIds string
-                    {
-                        $sevResults = @()
-                        foreach ($sevSpec in $ControlsToScan)
-                        {
-							if ($sevSpec -match ":")
-                            {
-								$sevProp = $sevSpec.Substring(0, $sevSpec.IndexOf(":")).Trim()
-								$sevVal = $sevSpec.Substring($sevSpec.IndexOf(":")+1).Trim() #BUGBUG: Need to support org-sev-mapping in ARMChecker too! 
-								if ($sevProp -eq "Severity" -or $sevProp -eq "ControlSeverity")
-								{
-									$sevResults += $results | Where-Object { $_.Severity -eq $sevVal };
-								}
-								else
-								{
-									Write-Warning ("Ignoring item in 'ControlIds' parameter: [$sevSpec]")
-								}
-                            }
-                            else 
-                            {
-                                Write-Warning ("Ignoring item in 'ControlIds' parameter: [$sevSpec]")
-                            }
-                        }
-                        #Reduce returned results to those filtered per severity-spec in ControlIds string
-                        $results = $sevResults 
-                    }
-                    else {
-                        $results = $results | Where-Object {$ControlsToScan -contains $_.ControlId} 
-                    }
+                    $results = $results | Where-Object {$ControlsToScan -contains $_.ControlId}
                     
                 }
 
