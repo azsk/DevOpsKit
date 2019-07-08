@@ -261,7 +261,7 @@ function Remove-AzSKTrackedCredential {
     }
 }
 
-function Set-AzSKTrackedCredential { 
+function Update-AzSKTrackedCredential { 
    
     <#
 	.SYNOPSIS
@@ -315,7 +315,13 @@ function Set-AzSKTrackedCredential {
         [Parameter(Mandatory = $true, HelpMessage = "Provide the comment for the credential")]
         [string]
 		[Alias("cmt")]
-        $Comment
+        $Comment,
+        
+        [Parameter(Mandatory = $false, HelpMessage = "Switch for rotating credential at source.")]
+        [switch]
+		[Alias("rc")]
+        $RotateCredential
+
     )
     Begin {
         [CommandHelper]::BeginCommand($MyInvocation);
@@ -326,62 +332,13 @@ function Set-AzSKTrackedCredential {
 			
             $cred = [CredRotation]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){
-                $cred.InvokeFunction($cred.SetAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment))            
-            }
-	
-        }
-        catch {
-            [EventBase]::PublishGenericException($_);
-        }  
-    }
-    End {
-        [ListenerHelper]::UnregisterListeners();
-    }
-}
-
-function Update-AzSKTrackedCredential { 
-   
-     <#
-	.SYNOPSIS
-	This command would help to update the last rotated timestamp of the credential.
-	.DESCRIPTION
-	This command would help to update the last rotated timestamp of the credential.
-    
-	.PARAMETER SubscriptionId
-		Provide the subscription id.
-	.PARAMETER CredentialName
-		Provide the credential name.
-	
-	.LINK
-	https://aka.ms/azskossdocs
-
-	#>
-    Param(
-        [Parameter(Mandatory = $true, HelpMessage = "Provide the subscription id")]
-        [string]
-		[Alias("s")]
-        $SubscriptionId,
-
-        [Parameter(Mandatory = $true, HelpMessage = "Provide the credential name")]
-        [string]
-		[Alias("cn")]
-        $CredentialName,
-
-        [Parameter(Mandatory = $true, HelpMessage = "Provide the comment for the credential")]
-        [string]
-		[Alias("cmt")]
-        $Comment
-    )
-    Begin {
-        [CommandHelper]::BeginCommand($MyInvocation);
-        [ListenerHelper]::RegisterListeners();
-    }
-    Process {
-        try {
-			
-            $cred = [CredRotation]::new($SubscriptionId, $PSCmdlet.MyInvocation);
-            if($cred){
-                $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$Comment))            
+                if($RotateCredential){
+                    $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$true)) 
+                }
+                else{
+                    $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$false)) 
+                }
+                           
             }
 	
         }

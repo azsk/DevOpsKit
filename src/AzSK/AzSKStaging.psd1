@@ -144,7 +144,6 @@
         'Get-AzSKSecurityRecommendationReport',
         'Set-AzSKPIMConfiguration',
         'Get-AzSKPIMConfiguration',
-        'Set-AzSKTrackedCredential',
         'Get-AzSKTrackedCredential',
         'Remove-AzSKTrackedCredential',
         'Update-AzSKTrackedCredential',
