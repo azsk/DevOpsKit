@@ -401,7 +401,7 @@ class CredRotation : CommandBase{
 
 	[void] UpdateAlert($CredentialName,$Comment)
 	{           
-        $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $($this.credName)
+        $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $CredentialName
 		$file += ".json"
         $this.GetAzSKRotationMetadatContainer()
         $blobName = $CredentialName + ".json"
@@ -439,7 +439,7 @@ class CredRotation : CommandBase{
 					$appConfigValue = Read-Host "Enter the new secret for the application setting - [$($credentialInfo.appConfigName)]" -AsSecureString 
 					$appConfigValue = [System.Runtime.InteropServices.marshal]::PtrToStringAuto([System.Runtime.InteropServices.marshal]::SecureStringToBSTR($appConfigValue))
 				}
-				elseif($credentialInfo.appConfigType -eq "Connection String"){
+				elseif($credentialInfo.appConfigType -eq "Connection Strings"){
 					$appConfig = $resource.SiteConfig.ConnectionStrings
 					$appConfigValue = Read-Host "Enter the new secret for the connection string - [$($credentialInfo.appConfigName)]" -AsSecureString
 					$appConfigValue = [System.Runtime.InteropServices.marshal]::PtrToStringAuto([System.Runtime.InteropServices.marshal]::SecureStringToBSTR($appConfigValue))
@@ -460,7 +460,7 @@ class CredRotation : CommandBase{
 				if($credentialInfo.appConfigType -eq "Application Settings"){
 					Set-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName -AppSettings $hash | Out-Null
 				}
-				elseif($credentialInfo.appConfigType -eq "Connection String"){
+				elseif($credentialInfo.appConfigType -eq "Connection Strings"){
 					Set-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName -ConnectionStrings $hash | Out-Null
 				}
 				$this.PublishCustomMessage("Successfully updated the app config", [MessageType]::Update)
