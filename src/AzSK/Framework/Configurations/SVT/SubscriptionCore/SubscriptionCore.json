@@ -508,6 +508,24 @@
       ],
       "Enabled": true,     
       "Rationale": "ASC standard tier enables advanced threat detection capabilities, which uses built-in behavioral analytics and machine learning to identify attacks and zero-day exploits, access and application controls to reduce exposure to network attacks and malware, and more"
+    },
+    {
+      "ControlID": "Azure_Subscription_Check_Credentials_Expiry",
+      "Description": "TBD",
+      "Id": "SubscriptionCore310",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckCredExpiry",
+     "Recommendation": "TBD",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "SubscriptionCore"
+      ],
+      "Enabled": true,     
+      "Rationale": "TBD"
     }
   ]
 }

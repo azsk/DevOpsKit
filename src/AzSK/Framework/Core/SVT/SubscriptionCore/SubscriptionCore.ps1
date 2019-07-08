@@ -1488,6 +1488,72 @@ class SubscriptionCore: SVTBase
 	
 	}
 
+	hidden [ControlResult] CheckCredExpiry([ControlResult] $controlResult)
+    {
+        $AzSKRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+        $containerName = [Constants]::RotationMetadataContainerName
+        $StorageAccount = Get-AzStorageAccount -ResourceGroupName $AzSKRG | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction SilentlyContinue
+        $keys = Get-AzStorageAccountKey -ResourceGroupName $AzSKRG -Name $StorageAccount.StorageAccountName -ErrorAction SilentlyContinue
+        $context = New-AzStorageContext -StorageAccountName $StorageAccount.StorageAccountName -StorageAccountKey $keys.Value[0]
+        $container = Get-AzStorageContainer -Name $containerName -Context $context -ErrorAction Ignore
+        
+		if($container){
+			$credBlobs = $container | Get-AzStorageBlob
 
+			$expiredCount = 0;
+			$aboutToExpireCount = 0;
+			[PSObject] $expiredCredentials = @();
+			[PSObject] $aboutToExpireCredentials = @();
 
+			$AzSKTemp = (Join-Path $([Constants]::AzSKAppFolderPath) $([Constants]::RotationMetadataSubPath)); 
+
+			$tempSubPath = Join-Path $AzSKTemp $($this.SubscriptionContext.SubscriptionId)
+
+			if(![string]::isnullorwhitespace($this.SubscriptionContext.SubscriptionId)){
+				if(-not (Test-Path $tempSubPath))
+				{
+					New-Item -ItemType Directory -Path $tempSubPath -ErrorAction Stop | Out-Null
+				}	
+			}
+			else{
+				if(-not (Test-Path $AzSKTemp))
+				{
+					New-Item -ItemType Directory -Path $AzSKTemp -ErrorAction Stop | Out-Null
+				}
+			}
+
+			$credBlobs | ForEach-Object{
+				$file = $AzSKTemp + "\$($this.SubscriptionContext.SubscriptionId)\" + $_.Name
+				$file = Join-Path $AzSKTemp -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $($_.Name)
+				
+				$blobContent = Get-AzStorageBlobContent -Blob $_.Name -Container $container.Name -Context $context -Destination $file -Force -ErrorAction Ignore    
+				$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
+
+				$currentTime = [DateTime]::UtcNow;
+				$lastRotatedTime = $credentialInfo.lastUpdatedOn;
+				$expiryTime = $lastRotatedTime.AddDays($credentialInfo.rotationInt);
+				if($expiryTime -le $currentTime){
+					$expiredCount += 1;
+					$expiredCredentials += $credentialInfo;
+				}
+				elseif(($expiryTime -gt $currentTime) -and ($expiryTime.AddDays(-($this.ControlSettings.SubscriptionCore.credHighTH)) -le $currentTime)){
+					$aboutToExpireCount +=1;
+					$aboutToExpireCredentials += $credentialInfo;
+				}
+			}
+			if($expiredCount -gt 0){
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following credentials have expired. Please rotate them.", $expiredCredentials));    
+				if($aboutToExpireCount -gt 0){
+					$controlResult.AddMessage("Following credentials are about to expire. Please rotate them soon.",$aboutToExpireCredentials)
+				}
+			}
+			elseif($aboutToExpireCount -gt 0){
+				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Following credentials are about to expire. Please rotate them soon.",$aboutToExpireCredentials))
+			}
+			else{
+				$controlResult.VerificationResult = [VerificationResult]::Passed
+			}
+		}
+		return $controlResult
+    }
 }
