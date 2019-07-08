@@ -924,13 +924,14 @@ class AppService: SVTBase
 		{	
 				$ipSecurityRestrictions = $false
 				$scmIpSecurityRestrictions = 	$false
+				$controlResult.VerificationResult = [VerificationResult]::Verify
 				$scmIpSecurityRestrictionsUseMain = $this.SiteConfigs.Properties.scmIpSecurityRestrictionsUseMain
 				# Check IP restrictions for main website
 				if($null -eq $this.SiteConfigs.Properties.ipSecurityRestrictions){
-					$controlResult.AddMessage("IP rule based access restriction is not set up app " +$this.ResourceContext.ResourceName);
+					$controlResult.AddMessage("IP rule based access restriction is not set up for app: " +$this.ResourceContext.ResourceName);
 				}else{
 					$ipSecurityRestrictions = $true
-					$controlResult.AddMessage("Following IP rule based access restriction is cofigured for app "+$this.ResourceContext.ResourceName);
+					$controlResult.AddMessage("Following IP rule based access restriction is cofigured for app: "+$this.ResourceContext.ResourceName);
 					$controlResult.AddMessage($this.SiteConfigs.Properties.ipSecurityRestrictions);
 				}
 				# Check IP restrictions for scm website
@@ -942,15 +943,8 @@ class AppService: SVTBase
 					$controlResult.AddMessage("IP based access restriction is not set up for scm site used by app.");
 				}else{
 					$ipSecurityRestrictions = $true
-					$controlResult.AddMessage("Following IP based access restriction is configured for scm site used by app.");
+					$controlResult.AddMessage("Following IP based access restriction is configured for scm site used by app:");
 					$controlResult.AddMessage($this.SiteConfigs.Properties.scmIpSecurityRestrictions);
-				}
-				# If IP restriction is configured for both main and scm website, 
-				# control state will be marked as verify else as failed
-				if($ipSecurityRestrictions -and $scmIpSecurityRestrictions){
-					$controlResult.VerificationResult = [VerificationResult]::Verify
-				}else{
-					$controlResult.VerificationResult = [VerificationResult]::Failed
 				}
 				return $controlResult;
 		}
@@ -963,9 +957,10 @@ class AppService: SVTBase
 					 $supportCredentials = $true	
 					 $controlResult.AddMessage("CORS Response header 'Access-Control-Allow-Credentials' is enabled for resource.");
 				}else{
+				   $controlResult.VerificationResult = [VerificationResult]::Passed
 				   $controlResult.AddMessage("CORS Response header 'Access-Control-Allow-Credentials' is disabled for resource.");
 				}
-				$controlResult.SetStateData("Response header 'Access-Control-Allow-Credentials' is set to",$supportCredentials);
+				$controlResult.SetStateData("Response header 'Access-Control-Allow-Credentials' is set to: ",$supportCredentials);
 				return $controlResult;
 		}
 

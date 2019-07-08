@@ -615,13 +615,13 @@
        "Enabled": true
       },
       {
-        "ControlID": "Azure_AppService_DP_Use_Latest_TLS_Version",
-        "Description": "The latest supported version of TLS should be used for App Service",
+        "ControlID": "Azure_AppService_DP_Use_Approved_TLS_Version",
+        "Description": "Use approved version of TLS for the App Service",
         "Id": "AppService420",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckAppServiceTLSVersion",
-        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> TLS/SSL --> Minimum TLS version --> set to latest version.",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> TLS/SSL --> Minimum TLS version --> set to org approved version (see detailed logs).",
         "Tags": [
           "SDL",
           "TCP",
@@ -633,11 +633,11 @@
           "Linux"
         ],
         "Enabled": true,
-        "Rationale": "TLS provides privacy and data integrity between client and server. Using latest TLS version significantly reduces risks from security design issues and security bugs that may be present in older versions."
+        "Rationale": "TLS provides privacy and data integrity between client and server. Using approved TLS version significantly reduces risks from security design issues and security bugs that may be present in older versions."
       }, 
       {
-        "ControlID": "Azure_AppService_DP_Verify_Installed_Extension",
-        "Description": "Extension installed on a App Service should be carefully reviewed.",
+        "ControlID": "Azure_AppService_DP_Verify_Installed_Extensions",
+        "Description": "Extensions installed on a App Service should be carefully reviewed",
         "Id": "AppService430",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
@@ -653,16 +653,16 @@
           "Windows"
         ],
         "Enabled": true,
-        "Rationale": "Each extension is something like a plugin that adds functionality to your App Service. Installing extensions that are not reuiqred can be dangerous as some third party extensions may have some known vulnerabilities which introduces unnecessary avenues for attack."
+        "Rationale": "Each extension is something like a plugin that adds functionality to your App Service. Installing unknown/unverified extensions can be dangerous as some third party extensions may have vulnerabilities which introduce unnecessary avenues for attack."
       },  
       {
-        "ControlID": "Azure_AppService_DP_Restrict_Access",
-        "Description": "Setup access restrictions for App Service",
+        "ControlID": "Azure_AppService_AuthZ_Configure_IP_Restrictions",
+        "Description": "Setup IP-based access restrictions for App Service if feasible",
         "Id": "AppService440",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckAppServiceAccessRestriction" ,
-        "Recommendation": "Go to Azure Portal --> your App Service --> Networking --> Access Restrictions --> Configure Access Restrictions --> Add/Verify access restriction rule for app and scm site. For more information, refer: https://docs.microsoft.com/en-us/azure/app-service/app-service-ip-restrictions",
+        "Recommendation": "Consider using IP-based access restrictions for App Service if feasible. Steps: Go to Azure Portal --> your App Service --> Networking --> Access Restrictions --> Configure Access Restrictions --> Add/Verify access restriction rule for app and scm site. For more information, refer: https://docs.microsoft.com/en-us/azure/app-service/app-service-ip-restrictions",
         "Tags": [
           "SDL",
           "TCP",
@@ -677,13 +677,13 @@
         "Rationale": "Using the IP/VNet subnet rules based access restriction ensures that access to the data or the service is restricted to a specific set of IPs. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios."
       },  
       {
-        "ControlID": "Azure_AppService_DP_Disable_CORS_Request_Credential",
-        "Description": "Ensure that CORS request credentials is disabled for App Service.",
+        "ControlID": "Azure_AppService_DP_Review_CORS_Request_Credential",
+        "Description": "Review use of credentials in CORS request for App Service",
         "Id": "AppService450",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckAppServiceCORSCredential",
-        "Recommendation": "Go to Azure Portal --> your App Service --> API --> CORS --> Request Credentials --> Disable Access-Control-Allow-Credentials. Note: No action is needed if you are not using CORS for your app.",
+        "Recommendation": "Go to Azure Portal --> your App Service --> API --> CORS --> Request Credentials --> Review if you need to enable 'Access-Control-Allow-Credentials'. Note: No action is needed if you are not using CORS for your app.",
         "Tags": [
           "SDL",
           "TCP",
