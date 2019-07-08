@@ -303,7 +303,7 @@ class SubscriptionCore: SVTBase
 				if( ($liveAccounts | Measure-Object).Count -gt 0 -and  [Helpers]::CheckMember($this.ControlSettings.SubscriptionCore,"WhitelistedNonADIndentitiesPatterns") -and ($this.ControlSettings.SubscriptionCore.WhitelistedNonADIndentitiesPatterns | Measure-Object).Count -ne 0)
 				{
 					$WhiteListedNonADIdentitiesPattern = (('^' + (($this.ControlSettings.SubscriptionCore.WhitelistedNonADIndentitiesPatterns |foreach {[regex]::escape($_)}) –join '|') + '$')) -replace '[\\]',''
-					$liveAccounts = [array]($liveAccounts | Where-Object {$_.SignInName -and $_.SignInName.ToLower() -imatch $WhiteListedNonADIdentitiesPattern} )
+					$liveAccounts = [array]($liveAccounts | Where-Object {$_.SignInName -and $_.SignInName.ToLower() -inotmatch $WhiteListedNonADIdentitiesPattern} )
 				}				
 			}
 
