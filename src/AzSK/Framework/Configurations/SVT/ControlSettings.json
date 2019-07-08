@@ -352,7 +352,9 @@
   },
   "SubscriptionCore": {
     "EnableV1AlertFailure": false,
-    "ASCTier": "Standard"
+    "ASCTier": "Standard",
+    "NonADIdentitiesPatterns" : ["(.)*#ext#@(.)*.onmicrosoft.com"],
+    "WhitelistedNonADIndentitiesPatterns" : []
   },
   "HDInsight": {
     "MinSupportedClusterVersion": "3.6.0"

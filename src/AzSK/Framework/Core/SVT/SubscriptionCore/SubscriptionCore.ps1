@@ -293,8 +293,19 @@ class SubscriptionCore: SVTBase
 		{
 			$this.GetRoleAssignments()
 			Set-Variable -Name liveAccounts -Scope Local
+			$liveAccounts =@()
 
-			$liveAccounts = [array]($this.RoleAssignments | Where-Object {$_.SignInName -like '*#EXT#@*.onmicrosoft.com'} )
+			if ([Helpers]::CheckMember($this.ControlSettings.SubscriptionCore,"NonADIdentitiesPatterns") -and ($this.ControlSettings.SubscriptionCore.NonADIdentitiesPatterns | Measure-Object).Count -ne 0) 
+			{
+				$NonADIdentitiesPattern = (('^' + (($this.ControlSettings.SubscriptionCore.NonADIdentitiesPatterns |foreach {[regex]::escape($_)}) –join '|') + '$')) -replace '[\\]',''
+				$liveAccounts = [array]($this.RoleAssignments | Where-Object {$_.SignInName -and $_.SignInName.ToLower() -imatch $NonADIdentitiesPattern} )
+				#Exclude whitelisted patterns for non-AD identities
+				if( ($liveAccounts | Measure-Object).Count -gt 0 -and  [Helpers]::CheckMember($this.ControlSettings.SubscriptionCore,"WhitelistedNonADIndentitiesPatterns") -and ($this.ControlSettings.SubscriptionCore.WhitelistedNonADIndentitiesPatterns | Measure-Object).Count -ne 0)
+				{
+					$WhiteListedNonADIdentitiesPattern = (('^' + (($this.ControlSettings.SubscriptionCore.WhitelistedNonADIndentitiesPatterns |foreach {[regex]::escape($_)}) –join '|') + '$')) -replace '[\\]',''
+					$liveAccounts = [array]($liveAccounts | Where-Object {$_.SignInName -and $_.SignInName.ToLower() -imatch $WhiteListedNonADIdentitiesPattern} )
+				}				
+			}
 
 			if(($liveAccounts | Measure-Object).Count -gt 0)
 			{
