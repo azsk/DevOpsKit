@@ -98,36 +98,39 @@ class CredRotation : CommandBase{
 			if($blobContent){    
 			$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
 
-			Write-Host "Alert details for the credential [$CredentialName] `n" 
+			$this.PublishCustomMessage("`n")
+			$this.PublishCustomMessage("Alert details for the credential [$CredentialName] `n`n", [MessageType]::Info) 
+			$this.PublishCustomMessage("`n")
 
-			Write-Host "Name:									$($credentialInfo.credName)"
-			Write-Host "Location: 								$($credentialInfo.credLocation)"
-			Write-Host "Rotation interval in days: 				$($credentialInfo.rotationInt)"
-			Write-Host "Alert email: 							$($credentialInfo.emailId)"
-			Write-Host "Alert phone: 							$($credentialInfo.contactNumber)"
-			Write-Host "Entry created on: 						$($credentialInfo.firstUpdatedOn)"
-			Write-Host "Entry created by: 						$($credentialInfo.firstUpdatedBy)"
-			Write-Host "Last updated on: 						$($credentialInfo.lastUpdatedOn)"
-			Write-Host "Last updated by: 						$($credentialInfo.lastUpdatedBy)"
+			$this.PublishCustomMessage("Name:`t`t`t`t`t`t`t`t`t$($credentialInfo.credName)", [MessageType]::Default)
+			$this.PublishCustomMessage("Location:`t`t`t`t`t`t`t`t$($credentialInfo.credLocation)", [MessageType]::Default)
+			$this.PublishCustomMessage("Rotation interval in days:`t`t`t`t$($credentialInfo.rotationInt)", [MessageType]::Default)
+			$this.PublishCustomMessage("Alert email:`t`t`t`t`t`t`t$($credentialInfo.emailId)", [MessageType]::Default)
+			$this.PublishCustomMessage("Alert phone:`t`t`t`t`t`t`t$($credentialInfo.contactNumber)", [MessageType]::Default)
+			$this.PublishCustomMessage("Entry created on:`t`t`t`t`t`t$($credentialInfo.firstUpdatedOn)", [MessageType]::Default)
+			$this.PublishCustomMessage("Entry created by:`t`t`t`t`t`t$($credentialInfo.firstUpdatedBy)", [MessageType]::Default)
+			$this.PublishCustomMessage("Last updated on:`t`t`t`t`t`t$($credentialInfo.lastUpdatedOn)", [MessageType]::Default)
+			$this.PublishCustomMessage("Last updated by:`t`t`t`t`t`t$($credentialInfo.lastUpdatedBy)", [MessageType]::Default)
 
 			if($credentialInfo.credLocation -eq "AppService"){
-				Write-Host "Resource group: 						$($credentialInfo.resourceGroup)"
-				Write-Host "Resource name: 							$($credentialInfo.resourceName)"
-				Write-Host "Application configuration type: 		$($credentialInfo.appConfigType)"
-				Write-Host "Application configuration name: 		$($credentialInfo.appConfigName)"
+				$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceGroup)", [MessageType]::Default)
+				$this.PublishCustomMessage("Resource name:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", [MessageType]::Default)
+				$this.PublishCustomMessage("Application configuration type:`t`t`t$($credentialInfo.appConfigType)", [MessageType]::Default)
+				$this.PublishCustomMessage("Application configuration name:`t`t`t$($credentialInfo.appConfigName)", [MessageType]::Default)
 			}
 			if($credentialInfo.credLocation -eq "KeyVault"){
-				Write-Host "Key vault name: 						$($credentialInfo.kvName)"
-				Write-Host "Key vault credential type: 				$($credentialInfo.kvCredType)"
-				Write-Host "Key vault credential name: 				$($credentialInfo.kvCredName)"
-				Write-Host "Expiry time: 							$($credentialInfo.expiryTime)"
-				Write-Host "Version: 								$($credentialInfo.Version)"
+				$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", [MessageType]::Default)
+				$this.PublishCustomMessage("Key vault credential type:`t`t`t`t$($credentialInfo.kvCredType)", [MessageType]::Default)
+				$this.PublishCustomMessage("Key vault credential name:`t`t`t`t$($credentialInfo.kvCredName)", [MessageType]::Default)
+				$this.PublishCustomMessage("Expiry time:`t`t`t`t`t`t`t$($credentialInfo.expiryTime)", [MessageType]::Default)
+				$this.PublishCustomMessage("Version:`t`t`t`t`t`t`t`t$($credentialInfo.Version)", [MessageType]::Default)
 			}
 
-			Write-Host "Comment: 								$($credentialInfo.comment)`n"
+			$this.PublishCustomMessage("Comment:`t`t`t`t`t`t`t`t$($credentialInfo.comment)`n", [MessageType]::Default)
+			$this.PublishCustomMessage("`n")
 			}
 			else{
-				Write-Host "Entry for the credential [$CredentialName] was not found. Run Get-AzSKCredentialAlert to list all the credentials onboarded for rotation/expiry notification. " -ForegroundColor Red
+				$this.PublishCustomMessage("Entry for the credential [$CredentialName] was not found. Run Get-AzSKCredentialAlert to list all the credentials onboarded for rotation/expiry notification. ",[MessageType]::Critical)
 			}
     	}
 		else{
@@ -135,42 +138,45 @@ class CredRotation : CommandBase{
 			$blob = Get-AzStorageBlob -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -ErrorAction Ignore
 
 			if($blob){
-				Write-Host "`nListing alert details for all the credentials `n`n"
+				$this.PublishCustomMessage("`n")
+				$this.PublishCustomMessage("`nListing alert details for all the credentials `n`n",[MessageType]::Update)
+				$this.PublishCustomMessage("`n")
 				$blob | where {
 					$_ | Get-AzStorageBlobContent -Destination $file -Force | Out-Null
 					$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
 
-					Write-Host "Alert details for the credential [$($credentialInfo.credName)] `n" 
-
-					Write-Host "Name:									$($credentialInfo.credName)"
-					Write-Host "Location: 								$($credentialInfo.credLocation)"
-					Write-Host "Rotation interval in days: 				$($credentialInfo.rotationInt)"
-					Write-Host "Alert email: 							$($credentialInfo.emailId)"
-					Write-Host "Alert phone: 							$($credentialInfo.contactNumber)"
-					Write-Host "Entry created on: 						$($credentialInfo.firstUpdatedOn)"
-					Write-Host "Entry created by: 						$($credentialInfo.firstUpdatedBy)"
-					Write-Host "Last updated on: 						$($credentialInfo.lastUpdatedOn)"
-					Write-Host "Last updated by: 						$($credentialInfo.lastUpdatedBy)"
+					$this.PublishCustomMessage("Alert details for the credential [$($credentialInfo.credName)] `n`n",[MessageType]::Info) 
+					$this.PublishCustomMessage("`n")
+					$this.PublishCustomMessage("Name:`t`t`t`t`t`t`t`t`t$($credentialInfo.credName)", [MessageType]::Default)
+					$this.PublishCustomMessage("Location:`t`t`t`t`t`t`t`t$($credentialInfo.credLocation)", [MessageType]::Default)
+					$this.PublishCustomMessage("Rotation interval in days:`t`t`t`t$($credentialInfo.rotationInt)", [MessageType]::Default)
+					$this.PublishCustomMessage("Alert email:`t`t`t`t`t`t`t$($credentialInfo.emailId)", [MessageType]::Default)
+					$this.PublishCustomMessage("Alert phone:`t`t`t`t`t`t`t$($credentialInfo.contactNumber)", [MessageType]::Default)
+					$this.PublishCustomMessage("Entry created on:`t`t`t`t`t`t$($credentialInfo.firstUpdatedOn)", [MessageType]::Default)
+					$this.PublishCustomMessage("Entry created by:`t`t`t`t`t`t$($credentialInfo.firstUpdatedBy)", [MessageType]::Default)
+					$this.PublishCustomMessage("Last updated on:`t`t`t`t`t`t$($credentialInfo.lastUpdatedOn)", [MessageType]::Default)
+					$this.PublishCustomMessage("Last updated by:`t`t`t`t`t`t$($credentialInfo.lastUpdatedBy)", [MessageType]::Default)
 
 					if($credentialInfo.credLocation -eq "AppService"){
-						Write-Host "Resource group: 						$($credentialInfo.resourceGroup)"
-						Write-Host "Resource name: 							$($credentialInfo.resourceName)"
-						Write-Host "Application configuration type: 		$($credentialInfo.appConfigType)"
-						Write-Host "Application configuration name: 		$($credentialInfo.appConfigName)"
+						$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceGroup)", [MessageType]::Default)
+						$this.PublishCustomMessage("Resource name:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", [MessageType]::Default)
+						$this.PublishCustomMessage("Application configuration type:`t`t`t$($credentialInfo.appConfigType)", [MessageType]::Default)
+						$this.PublishCustomMessage("Application configuration name:`t`t`t$($credentialInfo.appConfigName)", [MessageType]::Default)
 					}
 					if($credentialInfo.credLocation -eq "KeyVault"){
-						Write-Host "Key vault name: 						$($credentialInfo.kvName)"
-						Write-Host "Key vault credential type: 				$($credentialInfo.kvCredType)"
-						Write-Host "Key vault credential name: 				$($credentialInfo.kvCredName)"
-						Write-Host "Expiry time: 							$($credentialInfo.expiryTime)"
-						Write-Host "Version: 								$($credentialInfo.Version)"
+						$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", [MessageType]::Default)
+						$this.PublishCustomMessage("Key vault credential type:`t`t`t`t$($credentialInfo.kvCredType)", [MessageType]::Default)
+						$this.PublishCustomMessage("Key vault credential name:`t`t`t`t$($credentialInfo.kvCredName)", [MessageType]::Default)
+						$this.PublishCustomMessage("Expiry time:`t`t`t`t`t`t`t$($credentialInfo.expiryTime)", [MessageType]::Default)
+						$this.PublishCustomMessage("Version:`t`t`t`t`t`t`t`t$($credentialInfo.Version)", [MessageType]::Default)
 					}
 
-					Write-Host "Comment: 								$($credentialInfo.comment)`n"
+					$this.PublishCustomMessage("Comment:`t`t`t`t`t`t`t`t$($credentialInfo.comment)`n", [MessageType]::Default)
+					$this.PublishCustomMessage("`n")
 				}
 			}
 			else{
-				Write-Host "No credential entries found for rotation/expiry alert." -ForegroundColor Red
+				$this.PublishCustomMessage("No credential entries found for rotation/expiry alert.", [MessageType]::Critical)
 			}		
 		}
 
@@ -210,7 +216,7 @@ class CredRotation : CommandBase{
             
             $startTime = [DateTime]::UtcNow
             $user = ([Helpers]::GetCurrentRMContext()).Account.Id
-            $this.PublishCustomMessage("Onboarding the credential [$($this.credName)] for rotation/expiry notification")
+            $this.PublishCustomMessage("Onboarding the credential [$($this.credName)] for rotation/expiry notification", [MessageType]::Default)
             $credentialInfo = New-Object PSObject
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name credLocation -Value $this.credLocation
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name credName -Value $this.credName
@@ -305,25 +311,24 @@ class CredRotation : CommandBase{
 			if($result -eq 0)
 			{
 				#user selected yes
-				Write-Host "Removing the rotation/expiry notification on the credential [$CredentialName]" 
+				$this.PublishCustomMessage("Removing the rotation/expiry notification on the credential [$CredentialName]", [MessageType]::Default) 
 				$blobContent | Remove-AzStorageBlob 
-				Write-Host "Successfully removed the rotation/expiry notification on the credential [$CredentialName]" -ForegroundColor Green
+				$this.PublishCustomMessage("Successfully removed the rotation/expiry notification on the credential [$CredentialName]", [MessageType]::Update)
 			}
 			#user selected no in confirmation box
 			else
 			{
-				Write-Host "You have chosen not to remove rotation/expiry notification on the credential [$CredentialName]" 
+				$this.PublishCustomMessage("You have chosen not to remove rotation/expiry notification on the credential [$CredentialName]", [MessageType]::Default) 
 			}        
 
 		}
 		else{
-			Write-Host "Entry for the credential [$CredentialName] not found." -ForegroundColor Red
+			$this.PublishCustomMessage("Entry for the credential [$CredentialName] not found.", [MessageType]::Critical)
 		}
 		if(Test-Path $file)
 		{
 			Remove-Item -Path $file
 		}
-        $this.PublishCustomMessage("Run Get-AzSKCredentialAlert to list all the credentials onboarded for rotation/expiry notification.")
 	}
 	
 	[void] SetAlert($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment)
@@ -350,7 +355,7 @@ class CredRotation : CommandBase{
 
         $blobContent = Get-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -Destination $file -Force -ErrorAction Ignore
 		if($blobContent){
-			Write-Host "Updating alert details for the credential [$CredentialName]" 
+			$this.PublishCustomMessage("Updating alert details for the credential [$CredentialName]", [MessageType]::Default) 
 			$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
 
 			if ($RotationIntervalInDays)
@@ -383,16 +388,15 @@ class CredRotation : CommandBase{
 
 			$credentialInfo | ConvertTo-Json -Depth 10 | Out-File $file -Force
 			Set-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -File $file -Force | Out-Null
-			Write-Host "Successfully updated alert details for the credential [$CredentialName]" -ForegroundColor Green
+			$this.PublishCustomMessage("Successfully updated alert details for the credential [$CredentialName]", [MessageType]::Update) 
 		}
 		else{
-			Write-Host "Entry for the credential [$CredentialName] not found." -ForegroundColor Red
+			$this.PublishCustomMessage("Entry for the credential [$CredentialName] not found.", [MessageType]::Critical)
 		}
 		if(Test-Path $file)
 		{
 			Remove-Item -Path $file
 		}
-        $this.PublishCustomMessage("Run Get-AzSKCredentialAlert to list all the credentials onboarded for rotation/expiry notification.")
 	}
 
 	[void] UpdateAlert($CredentialName,$Comment)
@@ -423,11 +427,11 @@ class CredRotation : CommandBase{
         if($blobContent){
             $credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json;
 			$user = ([Helpers]::GetCurrentRMContext()).Account.Id;
-			Write-Host "Updating the rotation details for the credential [$CredentialName]" 
+			$this.PublishCustomMessage("Updating the rotation details for the credential [$CredentialName]", [MessageType]::Default)  
 			
 			if($credentialInfo.credLocation -eq "AppService"){
 				
-				Write-Host "Fetching the app service [$($credentialInfo.resourceName)] details"
+				$this.PublishCustomMessage("Fetching the app service [$($credentialInfo.resourceName)] details", [MessageType]::Default)
 				$resource = Get-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName
 				
 				if($credentialInfo.appConfigType -eq "Application Settings"){
@@ -452,14 +456,14 @@ class CredRotation : CommandBase{
 					}
 				}
 
-				Write-Host "Updating the app service configuration" 
+				$this.PublishCustomMessage("Updating the app service configuration" , [MessageType]::Default)
 				if($credentialInfo.appConfigType -eq "Application Settings"){
 					Set-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName -AppSettings $hash | Out-Null
 				}
 				elseif($credentialInfo.appConfigType -eq "Connection String"){
 					Set-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName -ConnectionStrings $hash | Out-Null
 				}
-				Write-Host "Successfully updated the app config" -ForegroundColor Green
+				$this.PublishCustomMessage("Successfully updated the app config", [MessageType]::Update)
 			}			
 
 			if($credentialInfo.credLocation -eq "KeyVault")
@@ -476,7 +480,6 @@ class CredRotation : CommandBase{
 						
 						$credentialInfo.expiryTime = $newKey.Expires
 						$credentialInfo.version = $newKey.Version
-						#Update-AzKeyVaultSecret -VaultName $credentialInfo.kvName -Name $credentialInfo.kvCredName -Enable $false -Version $currentKey.Version
 					}
 				}
 				elseif($credentialInfo.kvCredType -eq "Secret")
@@ -492,11 +495,9 @@ class CredRotation : CommandBase{
 						$newSecret = Set-AzKeyVaultSecret -VaultName $credentialInfo.kvName -Name $credentialInfo.kvCredName -SecretValue $secret -Expires $ExpiryTime
 						$credentialInfo.expiryTime = $newSecret.Expires
 						$credentialInfo.version = $newSecret.Version
-						
-						#Update-AzKeyVaultSecret -VaultName $credentialInfo.kvName -Name $credentialInfo.kvCredName -Enable $false -Version $currentSecret.Version
 					}
 				}
-				Write-Host "Older version of this credential has not been disabled to maintain availability of exisiting applications. Please update the version at the required locations & then disable the older version." -ForegroundColor Yellow
+				$this.PublishCustomMessage("Older version of this credential has not been disabled to maintain availability of exisiting applications. Please update the version at the required locations & then disable the older version.", [MessageType]::Warning)
 			}
 
 			$credentialInfo.lastUpdatedOn = [DateTime]::UtcNow
@@ -505,10 +506,10 @@ class CredRotation : CommandBase{
 			$credentialInfo | ConvertTo-Json -Depth 10 | Out-File $file -Force
 			Set-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -File $file -Force | Out-Null
 
-			Write-Host "Successfully updated the rotation details for the credential [$CredentialName]" -ForegroundColor Green
+			$this.PublishCustomMessage("Successfully updated the rotation details for the credential [$CredentialName]", [MessageType]::Update)
         }
         else{
-            Write-Host "Credential [$CredentialName] not found." -ForegroundColor Red
+            $this.PublishCustomMessage("Credential [$CredentialName] not found.", [MessageType]::Critical)
         }
 		if(Test-Path $file)
 		{
