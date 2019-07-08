@@ -434,26 +434,35 @@ class CredRotation : CommandBase{
 				$this.PublishCustomMessage("Fetching the app service [$($credentialInfo.resourceName)] details", [MessageType]::Default)
 				$resource = Get-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName
 				
+				$hash = @{}
+
 				if($credentialInfo.appConfigType -eq "Application Settings"){
 					$appConfig = $resource.SiteConfig.AppSettings 
 					$appConfigValue = Read-Host "Enter the new secret for the application setting - [$($credentialInfo.appConfigName)]" -AsSecureString 
 					$appConfigValue = [System.Runtime.InteropServices.marshal]::PtrToStringAuto([System.Runtime.InteropServices.marshal]::SecureStringToBSTR($appConfigValue))
+
+					foreach ($setting in $appConfig) {
+						if($setting.Name -eq $credentialInfo.appConfigName){
+							$hash[$setting.Name] = $appConfigValue
+						}
+						else{
+							$hash[$setting.Name] = $setting.Value
+						}
+					}
 				}
 				elseif($credentialInfo.appConfigType -eq "Connection Strings"){
 					$appConfig = $resource.SiteConfig.ConnectionStrings
 					$appConfigValue = Read-Host "Enter the new secret for the connection string - [$($credentialInfo.appConfigName)]" -AsSecureString
 					$appConfigValue = [System.Runtime.InteropServices.marshal]::PtrToStringAuto([System.Runtime.InteropServices.marshal]::SecureStringToBSTR($appConfigValue))
-				}
 
-				$hash = @{}
-
-				foreach ($setting in $appConfig) {
-					if($setting.Name -eq $credentialInfo.appConfigName){
-						$hash[$setting.Name] = $appConfigValue
-					}
-					else{
-						$hash[$setting.Name] = $setting.Value
-					}
+					foreach ($setting in $appConfig) {
+                    	if($setting.Name -eq $credentialInfo.appConfigName){
+                            $hash[$setting.Name] = @{Type=$setting.Type.ToString(); Value=$appConfigValue}
+                        }
+                        else{
+                            $hash[$setting.Name] = @{Type=$setting.Type.ToString(); Value=$setting.ConnectionString}
+                        }
+                    }
 				}
 
 				$this.PublishCustomMessage("Updating the app service configuration" , [MessageType]::Default)
