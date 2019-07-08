@@ -46,7 +46,19 @@ class SubscriptionSecurityStatus: SVTCommandBase
 			[CustomData] $customData = [CustomData]::new();
 			$customData.Name = "SubSVTObject";
 			$customData.Value = $svtObject;
-			$this.PublishCustomData($customData);		
+			$this.PublishCustomData($customData);
+
+			$scanSource = [RemoteReportHelper]::GetScanSource();
+			if($scanSource -eq [ScanSource]::Runbook)
+			{
+				[hashtable] $secContacts = @{}
+				$secContacts.Add("Phone", $svtObject.SecurityCenterInstance.ContactPhoneNumber);
+				$secContacts.Add("Email", $svtObject.SecurityCenterInstance.ContactEmail);
+				$secContacts.Add("AlertNotifications", $svtObject.SecurityCenterInstance.AlertNotifStatus);
+				$secContacts.Add("AlertsToAdmins", $svtObject.SecurityCenterInstance.AlertAdminStatus);
+				[ASCTelemetryHelper]::ascData = [ASCTelemetryHelper]::new($svtObject.SubscriptionContext.SubscriptionId, $svtObject.SecurityCenterInstance.ASCTier, $svtObject.SecurityCenterInstance.AutoProvisioningSettings, $secContacts)
+				[RemoteApiHelper]::PostASCTelemetry([ASCTelemetryHelper]::ascData)
+			}
 		}
 
 		#save result into local compliance report

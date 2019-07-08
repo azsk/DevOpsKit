@@ -35,7 +35,7 @@ class SubscriptionCore: SVTBase
 		$this.ApprovedSPNs = $null
 		$this.DeprecatedAccounts = $null
 		$this.HasGraphAPIAccess = [RoleAssignmentHelper]::HasGraphAccess();
-		
+
 		#Compute the policies ahead to get the security Contact Phone number and email id
 		$this.SecurityCenterInstance = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId,$false);
 		$this.MisConfiguredASCPolicies = $this.SecurityCenterInstance.CheckASCCompliance();
@@ -1103,19 +1103,16 @@ class SubscriptionCore: SVTBase
 
 	hidden [ControlResult] CheckASCTier ([ControlResult] $controlResult)
 	{
-		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
-        $validatedUri ="$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings/default?api-version=2017-08-01-preview"
-        $ascTierContentDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+		$ascTierContentDetails = $this.SecurityCenterInstance.ASCTier;
 
-		if([Helpers]::CheckMember($ascTierContentDetails,"properties.pricingTier"))
+		if(-not [string]::IsNullOrWhiteSpace($ascTierContentDetails))
 		{
 			$ascTier = "Standard"
 			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ASCTier"))
 			{
 				$ascTier = $this.ControlSettings.SubscriptionCore.ASCTier
 			}
-			
-			if($ascTierContentDetails.properties.pricingTier -eq $ascTier)
+			if($ascTierContentDetails -eq $ascTier)
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed, "Expected '$ascTier' tier is configured for ASC" )
 			}

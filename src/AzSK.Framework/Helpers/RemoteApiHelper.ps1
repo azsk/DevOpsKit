@@ -87,6 +87,22 @@ class RemoteApiHelper {
     static [PSObject] GetComplianceSnapshot([string] $parameters){
 		return([RemoteApiHelper]::GetJsonContent("/compliancedata", $parameters) )	
     }
+
+    static [void] PostASCTelemetry($ASCTelemetryData)
+    {
+		$currentDateTime = [DateTime]::UtcNow
+		$ASCTelemetryData | Get-Member -Type Property | ForEach-Object {
+			$ascProperty = @{
+				"SubscriptionId" = $ASCTelemetryData.SubscriptionId;
+                "FeatureName" = "ASC";
+                "ResourceId" = $null;
+				"SubFeatureName" = $_.Name;
+				"Data" = $ASCTelemetryData.($_.Name);
+				"UpdatedOn" = $currentDateTime;
+			}
+            [RemoteApiHelper]::PostJsonContent("/asctelemetrydata", $ascProperty) | Out-Null
+		}
+    }
     
     hidden static [psobject] ConvertToSimpleSet([SVTEventContext[]] $contexts) {
         $firstContext = $contexts[0]
