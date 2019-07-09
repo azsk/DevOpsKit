@@ -590,9 +590,9 @@
           "recommendation": "Refer: https://docs.microsoft.com/en-us/azure/aks/upgrade-cluster.",
           "severity": "Medium",
           "jsonPath": [ "$.properties.kubernetesVersion" ],
-          "matchType": "StringSingleToken",
+          "matchType": "VersionSingleToken",
           "data": {
-            "type": "Allow",
+            "type": "GreaterThanOrEqual",
             "value": "1.14.0",
             "isCaseSensitive": false
           }
@@ -859,6 +859,82 @@
           "data": {
             "type": "GreaterThan",
             "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "featureName": "APIManagement",
+      "supportedResourceTypes": [ "Microsoft.ApiManagement/service",  "Microsoft.ApiManagement/service/apis"],
+      "controls": [
+        {
+          "id": "APIManagement220",
+          "controlId": "Azure_APIManagement_NetSec_Configure_Virtual_Network_For_APIM",
+          "isEnabled": true,
+          "description": "Consider hosting APIM within a virtual network for improved isolation",
+          "rationale": "Azure Virtual Network (VNet) deployment provides enhanced security and isolation for API management instance, as well as backend service, access control policies, and other features to further restrict access.",
+          "recommendation": "Where feasible/practical, host the APIM and APIs within an isolated network. For steps to deploy Azure API Management inside a Virtual Network, refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-using-with-vnet.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.virtualNetworkType" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "NotAllow",
+            "value": "None",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "APIManagement340",
+          "controlId": "Azure_APIManagement_AuthN_Use_Managed_Service_Identity",
+          "isEnabled": true,
+          "description": "Use Managed Service Identity (MSI) for accessing other AAD-protected resources from the API management instance",
+          "rationale": "Managed Service Identity (MSI) allows your API Management instance to easily access other AAD-protected resources, such as Azure Key Vault. The identity is managed by the Azure platform and eliminates the need to provision/manage/rotate any secrets thus reducing the overall risk.",
+          "recommendation": "Go to Azure Portal --> your API management instance --> Settings --> Managed Service Identity --> Register with AAD --> ON",
+          "severity": "Medium",
+          "jsonPath": [ "$.identity.type" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "SystemAssigned",
+            "isCaseSensitive": false
+          }   
+        },
+        {
+          "id": "APIManagement140",
+          "controlId": "Azure_APIManagement_DP_Use_HTTPS_URL_Scheme",
+          "isEnabled": true,
+          "description": "Backend API(s) must be accessible only over HTTPS via API Management service",
+          "rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer eavesdropping attacks.",
+          "recommendation": "Run command: Set-AzApiManagementApi -Context {APIContextObject} -Protocols 'Https' -Name '{APIName}' -ApiId '{APIId}' -ServiceUrl '{ServiceURL}'. Run command : Get-AzApiManagementApi -Context '{APIContextObject}' to get the details of existing APIs. Refer https://docs.microsoft.com/en-us/powershell/module/az.apimanagement/set-azapimanagementapi",
+          "severity": "High",
+          "jsonPath": [ "$.properties.protocols" ],
+          "matchType": "StringMultiToken",
+          "data": {
+            "type": "Equals",
+            "value": ["https"],
+            "isCaseSensitive": false
+          }
+        }
+      ]
+    },
+    {
+      "featureName": "HDInsight",
+      "supportedResourceTypes": [ "Microsoft.HDInsight/clusters" ],
+      "controls": [
+        {
+          "id": "HDInsight110",
+          "controlId": "Azure_HDInsight_Deploy_Supported_Cluster_Version",
+          "isEnabled": true,
+          "description": "HDInsight must have supported HDI cluster version",
+          "rationale": "Being on the latest/supported HDInsight version significantly reduces risks from security bugs or updates that may be present in older or retired cluster versions.",
+          "recommendation": "Refer: https://docs.microsoft.com/en-us/azure/hdinsight/hdinsight-component-versioning?#supported-hdinsight-versions https://docs.microsoft.com/en-us/azure/hdinsight/hdinsight-upgrade-cluster",
+          "severity": "High",
+          "jsonPath": [ "$.properties.clusterVersion" ],
+          "matchType": "VersionSingleToken",
+          "data": {
+            "type": "GreaterThanOrEqual",
+            "value": "3.6.0",
+            "isCaseSensitive": false
           }
         }
       ]

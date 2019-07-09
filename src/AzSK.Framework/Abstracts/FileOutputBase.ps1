@@ -50,11 +50,7 @@ class FileOutputBase: ListenerBase
 				$basePath = [Constants]::AzSKLogFolderPath;
 			}
 
-			if (-not $basePath.EndsWith("\")) {
-				$basePath += "\";
-			}
-
-			$outputPath = $basePath + [Constants]::AzSKModuleName + "Logs\"
+			$outputPath = Join-Path $basePath ($([Constants]::AzSKModuleName)+"Logs")  ;
 
 			$sanitizedPath = [Helpers]::SanitizeFolderName($context.SubscriptionName);
 			if ([string]::IsNullOrEmpty($sanitizedPath)) {
@@ -70,16 +66,16 @@ class FileOutputBase: ListenerBase
 			}
 
 			if ([string]::IsNullOrEmpty($sanitizedPath)) {
-				$outputPath += ("Default\{0}\" -f $runPath);            
+				$outputPath = Join-Path $outputPath -ChildPath "Default" |Join-Path -ChildPath $runPath ;           
 			}
 			else {
-				$outputPath += ("Sub_{0}\{1}\" -f $sanitizedPath, $runPath);            
+				$outputPath = Join-Path $outputPath -ChildPath ("Sub_" + $sanitizedPath) |Join-Path -ChildPath $runPath ;            
 			}
 
 			if (-not [string]::IsNullOrEmpty($subFolderPath)) {
 				$sanitizedPath = [Helpers]::SanitizeFolderName($subFolderPath);
 				if (-not [string]::IsNullOrEmpty($sanitizedPath)) {
-					$outputPath += ("{0}\" -f $sanitizedPath);            
+					$outputPath = Join-Path $outputPath $sanitizedPath ;          
 				}   
 			}
 
@@ -87,7 +83,7 @@ class FileOutputBase: ListenerBase
 			{
 				try
 				{
-					mkdir -Path $outputPath -ErrorAction Stop | Out-Null
+					New-Item -Path $outputPath -ItemType Directory -ErrorAction Stop | Out-Null
 				}
 				catch
 				{
@@ -135,15 +131,13 @@ class FileOutputBase: ListenerBase
             return $outputPath;
         }
 
-        $outputPath = $this.FolderPath;
-        if (-not $outputPath.EndsWith("\")) {
-            $outputPath += "\";
-        }
+		$outputPath = $this.FolderPath;
+		
         if ([string]::IsNullOrEmpty($fileName)) {
-            $outputPath += $(Get-Date -format "yyyyMMdd_HHmmss") + ".LOG";
+            $outputPath = Join-Path $outputPath ($(Get-Date -format "yyyyMMdd_HHmmss") + ".LOG");
         }
         else {
-            $outputPath += $fileName;            
+            $outputPath = Join-Path $outputPath $fileName;            
         }
 		return $outputPath;
 	}

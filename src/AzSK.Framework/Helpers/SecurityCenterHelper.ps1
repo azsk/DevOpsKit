@@ -216,7 +216,18 @@ class ASCTelemetryHelper {
 	[void] GetThreatDetectionSettings()
 	{
 		$uri = "https://s2.security.ext.azure.com/api/threatDetectionSettings/getThreatDetectionSettings?subscriptionId="+$this.SubscriptionId;
-		$result = $this.GetContentFromGetRequest($uri);
+
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
+		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$result = $null;
+
+		if($null -ne $AccessToken)
+		{
+			$header = "Bearer " + $AccessToken
+			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
+
+			$result = [WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
+		}
 
 		if($null -eq $result)
 		{
@@ -264,7 +275,17 @@ class ASCTelemetryHelper {
 	[void] GetSecurityEventsTier()
 	{
 		$uri = "https://s2.security.ext.azure.com/api/securityEventsTier/getSecurityEventsTier?subscriptionId="+$this.SubscriptionId;
-		$result = $this.GetContentFromGetRequest($uri);
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
+		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$result = $null;
+
+		if($null -ne $AccessToken)
+		{
+			$header = "Bearer " + $AccessToken
+			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
+
+			$result = [WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
+		}
 
 		if($null -ne $result)
 		{
@@ -295,7 +316,7 @@ class ASCTelemetryHelper {
 		}
 	}
 
-	[PSObject] GetContentFromPostRequest($uri, $body)
+	[System.Object[]] GetContentFromPostRequest($uri, $body)
 	{
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
@@ -347,56 +368,5 @@ class ASCTelemetryHelper {
 		return $null
 	}
 
-	[PSObject] GetContentFromGetRequest($uri)
-	{
-		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
-		if($null -ne $AccessToken)
-		{
-			$header = "Bearer " + $AccessToken
-			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
-
-			$result = ""
-			$err = $null
-			$output = $null
-			try {
-				$result = Invoke-WebRequest -Method GET -Uri $uri -Headers $headers -UseBasicParsing
-				if($result.StatusCode -ge 200 -and $result.StatusCode -le 399){
-					if($null -ne $result.Content){
-						$json = (ConvertFrom-Json $result.Content)
-						if($null -ne $json){
-							if(($json | Get-Member -Name "value"))
-							{
-								$output += $json.value;
-							}
-							else
-							{
-								$output += $json;
-							}
-						}
-					}
-					return $output
-				}
-
-			}
-			catch{
-				$err = $_
-				if($null -ne $err)
-				{
-					if($null -ne $err.ErrorDetails.Message){
-						$json = (ConvertFrom-Json $err.ErrorDetails.Message)
-						if($null -ne $json){
-							return $json
-							if($json.'odata.error'.code -eq "Request_ResourceNotFound")
-							{
-								return $json.'odata.error'.message
-							}
-						}
-					}
-				}
-			}
-		}
-		return $null
-	}
 }
 

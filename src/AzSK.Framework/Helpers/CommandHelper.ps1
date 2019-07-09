@@ -270,7 +270,7 @@ class CommandHelper
 		[CommandDetails]@{
             Verb = "Get";
             Noun = "AzSKPIMConfiguration";
-			ShortName = "ListPIM";
+			ShortName = "GetPIM";
 			IsOrgPolicyMandatory = $false;
         }
     );
