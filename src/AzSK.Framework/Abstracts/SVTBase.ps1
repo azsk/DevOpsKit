@@ -1,6 +1,12 @@
-﻿Set-StrictMode -Version Latest
+﻿<#
+.Description
+# SVTBase class for all service classes. 
+# Provides functionality to create context object for resources, load controls for resource,
+#>
+Set-StrictMode -Version Latest
 class SVTBase: AzSKRoot
 {
+	#Region: Properties
 	hidden [string] $ResourceId = ""
     [ResourceContext] $ResourceContext = $null;
     hidden [SVTConfig] $SVTConfig
@@ -15,6 +21,7 @@ class SVTBase: AzSKRoot
 	hidden [ControlItem[]] $FeatureApplicableControls = $null;
 	[string[]] $ChildResourceNames = $null;
 	[System.Net.SecurityProtocolType] $currentSecurityProtocol;
+	#User input parameters for controls
 	[string[]] $FilterTags = @();
 	[string[]] $ExcludeTags = @();
 	[string[]] $ControlIds = @();
@@ -25,6 +32,7 @@ class SVTBase: AzSKRoot
 	[string] $PartialScanIdentifier = [string]::Empty
 	[ComplianceStateTableEntity[]] $ComplianceStateData = @();
 	[PSObject[]] $ChildSvtObjects = @();
+	#EndRegion
     SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId)
     {		
@@ -37,25 +45,21 @@ class SVTBase: AzSKRoot
 		$this.CreateInstance();
     }
 
-	SVTBase([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
-        Base($subscriptionId)
-    {
-		$this.CreateInstance([SVTResource]@{
-			ResourceGroupName = $resourceGroupName;
-            ResourceName = $resourceName;
-		});
-    }
+	#Create instance for subscription scan
 	hidden [void] CreateInstance()
 	{
 		[Helpers]::AbstractClass($this, [SVTBase]);
 
-        $this.LoadSvtConfig([SVTMapping]::SubscriptionMapping.JsonFileName);
+		$this.LoadSvtConfig([SVTMapping]::SubscriptionMapping.JsonFileName);
+		$this.ResourceId = $this.SubscriptionContext.Scope;
 	}
 
+	#Create instance for resource scan
 	hidden [void] CreateInstance([SVTResource] $svtResource)
 	{
 		[Helpers]::AbstractClass($this, [SVTBase]);
 
+		#Region: validation for resource object
 		if(-not $svtResource)
 		{
 			throw [System.ArgumentException] ("The argument 'svtResource' is null");
@@ -70,7 +74,9 @@ class SVTBase: AzSKRoot
 		{
 			throw [System.ArgumentException] ("The argument 'ResourceName' is null or empty");
 		}
+		#EndRegion
 
+		
 		if(-not $svtResource.ResourceTypeMapping)
 		{
 			$svtResource.ResourceTypeMapping = [SVTMapping]::Mapping |
@@ -96,9 +102,12 @@ class SVTBase: AzSKRoot
             ResourceGroupName = $svtResource.ResourceGroupName;
             ResourceName = $svtResource.ResourceName;
             ResourceType = $svtResource.ResourceTypeMapping.ResourceType;
-            ResourceTypeName = $svtResource.ResourceTypeMapping.ResourceTypeName;
+			ResourceTypeName = $svtResource.ResourceTypeMapping.ResourceTypeName;
+			ResourceId = $svtResource.ResourceId;
+			ResourceDetails = $svtResource.ResourceDetails;
         };
-		$this.ResourceContext.ResourceId = $this.GetResourceId();
+		
+		#<TODO Perf Issue: Fetch resource group details from resolver itself>
 		$this.ResourceContext.ResourceGroupTags = $this.ResourceTags;
 	}
 
@@ -111,9 +120,11 @@ class SVTBase: AzSKRoot
 			
             $this.SVTConfig.Controls | Foreach-Object {
 
+				#Expand description and recommendation string if any dynamic values defined field using control settings
                 $_.Description = $global:ExecutionContext.InvokeCommand.ExpandString($_.Description)
                 $_.Recommendation = $global:ExecutionContext.InvokeCommand.ExpandString($_.Recommendation)
-                $ControlSeverity = $_.ControlSeverity
+				$ControlSeverity = $_.ControlSeverity
+				#Check if ControlSeverity is customized/overridden using controlsettings configurations
                 if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverity"))
                 {
                     $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
@@ -182,28 +193,8 @@ class SVTBase: AzSKRoot
 		return $false
 	}
 
-	hidden [string] GetResourceId()
+	hidden [void] GetResourceId()
     {
-		if ([string]::IsNullOrEmpty($this.ResourceId))
-		{
-			if($this.ResourceContext)
-			{
-           		$resource = Get-AzResource -Name $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
-
-				if($resource)
-				{
-					$this.ResourceId = $resource.ResourceId;
-				}
-				else
-				{
-					throw [SuppressedException] "Unable to find the Azure resource - [ResourceType: $($this.ResourceContext.ResourceType)] [ResourceGroupName: $($this.ResourceContext.ResourceGroupName)] [ResourceName: $($this.ResourceContext.ResourceName)]"
-				}
-			}
-			else
-			{
-				$this.ResourceId = $this.SubscriptionContext.Scope;
-			}
-		}
 
 		try {
 
@@ -218,9 +209,9 @@ class SVTBase: AzSKRoot
 		} catch {
 			# flow shouldn't break if there are errors in fetching tags eg. locked resource groups. <TODO: Add exception telemetry>
 		}
-		return $this.ResourceId;
     }
 
+	#Check if service is under mentainance and display maintenance warning message
     [bool] ValidateMaintenanceState()
     {
         if ($this.SVTConfig.IsMaintenanceMode) {
@@ -691,7 +682,7 @@ class SVTBase: AzSKRoot
 	hidden [ControlResult] CheckPolicyCompliance([ControlItem] $controlItem, [ControlResult] $controlResult)
 	{
 		$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName
-		$defnResourceId = $this.GetResourceId() + $controlItem.PolicyDefnResourceIdSuffix
+		$defnResourceId = $this.ResourceId + $controlItem.PolicyDefnResourceIdSuffix
 		$policyState = Get-AzPolicyState -ResourceId $defnResourceId -Filter "PolicyDefinitionId eq '/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)' and PolicySetDefinitionName eq '$initiativeName'"
 		if($policyState)
         {
@@ -1007,7 +998,7 @@ class SVTBase: AzSKRoot
 			$this.ResourceState = @();
 			if($this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadAccessPermissions())
 			{
-				$resourceStates = $this.ControlStateExt.GetControlState($this.GetResourceId())
+				$resourceStates = $this.ControlStateExt.GetControlState($this.ResourceId)
 				if($null -ne $resourceStates)
 				{
 					$this.ResourceState += $resourceStates
@@ -1125,7 +1116,7 @@ class SVTBase: AzSKRoot
 		$diagnostics = $Null
 		try
 		{
-			$diagnostics = Get-AzDiagnosticSetting -ResourceId $this.GetResourceId() -ErrorAction Stop -WarningAction SilentlyContinue
+			$diagnostics = Get-AzDiagnosticSetting -ResourceId $this.ResourceId -ErrorAction Stop -WarningAction SilentlyContinue
 		}
 		catch
 		{
@@ -1173,14 +1164,14 @@ class SVTBase: AzSKRoot
 
 	hidden [ControlResult] CheckRBACAccess([ControlResult] $controlResult)
 	{
-		$accessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.GetResourceId(), $false, $true);
+		$accessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.ResourceId, $false, $true);
 
 		return $this.CheckRBACAccess($controlResult, $accessList)
 	}
 
 	hidden [ControlResult] CheckRBACAccess([ControlResult] $controlResult, [PSObject] $accessList)
 	{
-		$resourceAccessList = $accessList | Where-Object { $_.Scope -eq $this.GetResourceId() };
+		$resourceAccessList = $accessList | Where-Object { $_.Scope -eq $this.ResourceId };
 
         $controlResult.VerificationResult = [VerificationResult]::Verify;
 
@@ -1196,7 +1187,7 @@ class SVTBase: AzSKRoot
             $controlResult.AddMessage("No identities have been explicitly provided with RBAC access to resource - [$($this.ResourceContext.ResourceName)]");
         }
 
-        $inheritedAccessList = $accessList | Where-Object { $_.Scope -ne $this.GetResourceId() };
+        $inheritedAccessList = $accessList | Where-Object { $_.Scope -ne $this.ResourceId };
 
 		if(($inheritedAccessList | Measure-Object).Count -ne 0)
         {
@@ -1233,7 +1224,7 @@ class SVTBase: AzSKRoot
 		$result = $false;
 		if($metricSettings -and $metricSettings.Count -ne 0)
 		{
-			$resId = $this.GetResourceId() + $extendedResourceName;
+			$resId = $this.ResourceId + $extendedResourceName;
 			$resIdMessageString = "";
 			if(-not [string]::IsNullOrWhiteSpace($extendedResourceName))
 			{
