@@ -12,7 +12,7 @@
 		StringWhitespace, // Single Token
 		StringSingleToken, // Single Token
 		StringMultiToken, // Multi Tokens
-		RegExpressionSingleToken, // Single Token
+		RegExpressionSingleToken, // Single Token , Currently supports static string matching
 		RegExpressionMultiToken, // Multi Tokens
 		VerifiableSingleToken, // Single Tokens
 		VerifiableMultiToken, // Multi Tokens
