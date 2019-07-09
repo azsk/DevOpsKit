@@ -18,6 +18,7 @@ class SVTBase: AzSKRoot
 	[string[]] $FilterTags = @();
 	[string[]] $ExcludeTags = @();
 	[string[]] $ControlIds = @();
+	[string[]] $Severity = @();
 	[string[]] $ExcludeControlIds = @();
 	[hashtable] $ResourceTags = @{}
 	[bool] $GenerateFixScript = $false;
@@ -384,6 +385,7 @@ class SVTBase: AzSKRoot
         }
         return $contexts;
 	}
+
 	[void] PostTelemetry()
 	{
 	    # Setting the protocol for databricks
@@ -466,7 +468,25 @@ class SVTBase: AzSKRoot
 			#Filter controls based on filterstags and excludetags
 			$filterTagsCount = ($this.FilterTags | Measure-Object).Count
             $excludeTagsCount = ($this.ExcludeTags | Measure-Object).Count
-            
+
+			#filters controls based on Severity
+			if($this.Severity.Count -ne 0 -and ($filterControlsById | Measure-Object).Count -gt 0)
+			{
+				if([Helpers]::CheckMember($this.ControlSettings, 'ControlSeverity'))
+				{
+					$AllowedSeverities = @();
+					$severityMapping = $this.ControlSettings.ControlSeverity
+					#Discard the severity values passed in parameter that do not have mapping in Org settings.
+                    foreach($sev in $severityMapping.psobject.properties)
+                    {                         
+                        $AllowedSeverities +=  $sev.value       
+					}
+					$this.Severity = $this.Severity | Where-Object{ $_ -in $AllowedSeverities}
+				}
+				$filterControlsById = $filterControlsById | Where-Object {$_.ControlSeverity -in $this.Severity };				
+			}
+
+			
             $unfilteredControlsCount = ($filterControlsById | Measure-Object).Count
 
 			if($unfilteredControlsCount -gt 0) #If we have any controls at this point...
