@@ -159,7 +159,7 @@ class CredRotation : CommandBase{
 		}
         
 		if($CredentialName){
-			$blobName = $CredentialName + ".json"
+			$blobName = $CredentialName.ToLower() + ".json"
 			$blobContent = Get-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -Destination $file -Force -ErrorAction Ignore
 			if($blobContent){    
 				$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
@@ -202,7 +202,7 @@ class CredRotation : CommandBase{
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $($this.credName)
 		$file += ".json"
         $this.GetAzSKRotationMetadatContainer()
-        $blobName = $this.credName + ".json"
+        $blobName = ($this.credName).ToLower() + ".json"
 		[bool] $found = $true;
 
 		$tempSubPath = Join-Path $($this.AzSKTemp) $($this.SubscriptionContext.SubscriptionId)
@@ -240,8 +240,6 @@ class CredRotation : CommandBase{
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name comment -Value $this.comment
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name firstUpdatedBy -Value $user
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name lastUpdatedBy -Value $user
-            Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name moderateTH -Value 30
-            Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name highTH -Value 7
 
             if($CredentialLocation -eq "AppService"){
                 Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name resourceGroup -Value $ResourceGroupName
@@ -326,7 +324,7 @@ class CredRotation : CommandBase{
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $CredentialName
 		$file += ".json"
         $this.GetAzSKRotationMetadatContainer()
-        $blobName = $CredentialName + ".json"
+        $blobName = $CredentialName.ToLower() + ".json"
 
 		$tempSubPath = Join-Path $($this.AzSKTemp) $($this.SubscriptionContext.SubscriptionId)
 
@@ -389,7 +387,7 @@ class CredRotation : CommandBase{
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $CredentialName
 		$file += ".json"
         $this.GetAzSKRotationMetadatContainer()
-        $blobName = $CredentialName + ".json"
+        $blobName = $CredentialName.ToLower() + ".json"
 
 		$tempSubPath = Join-Path $($this.AzSKTemp) $($this.SubscriptionContext.SubscriptionId)
 
