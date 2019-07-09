@@ -24,7 +24,7 @@ class PIM: CommandBase {
         $this.AccountId = [Helpers]::GetCurrentSessionUser()
         $ADUserDetails = Get-AzADUser -UserPrincipalName  $this.AccountId
         if($null -ne $ADUserDetails) {
-        $this.UserId = ($ADUserDetails).Id
+        $this.UserId = (Get-AzADUser -UserPrincipalName  $this.AccountId).Id
         }
         
         
