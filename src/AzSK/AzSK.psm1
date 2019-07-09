@@ -5,7 +5,7 @@ Enable-AzureRMAlias
 
 . $PSScriptRoot\Framework\Framework.ps1
 
-@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring", "$PSScriptRoot\SubscriptionSecurity", "$PSScriptRoot\ContinuousAssurance" , "$PSScriptRoot\AzSKInfo", "$PSScriptRoot\PolicySetup", "$PSScriptRoot\ARMChecker","$PSScriptRoot\PIM") |
+@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring", "$PSScriptRoot\SubscriptionSecurity", "$PSScriptRoot\ContinuousAssurance" , "$PSScriptRoot\AzSKInfo", "$PSScriptRoot\PolicySetup", "$PSScriptRoot\ARMChecker","$PSScriptRoot\PIM","$PSScriptRoot\CredRotation") |
     ForEach-Object {
     (Get-ChildItem -Path $_ -Recurse -File -Include "*.ps1") |
         ForEach-Object {
