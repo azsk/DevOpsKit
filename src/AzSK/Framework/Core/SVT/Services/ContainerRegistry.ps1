@@ -28,7 +28,7 @@ class ContainerRegistry: SVTBase
             }
 
             # Get RBAC data to avoid multiple calls
-            $this.AccessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.GetResourceId(), $false, $true);
+            $this.AccessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.ResourceId, $false, $true);
         }
         return $this.ResourceObject;
     }
@@ -57,7 +57,7 @@ class ContainerRegistry: SVTBase
 
     hidden [ControlResult] CheckResourceAccess([ControlResult] $controlResult)
     {
-        $nonSPIdentities = $this.AccessList | Where-Object { $_.Scope -eq $this.GetResourceId() -and $_.ObjectType -ne 'ServicePrincipal' };
+        $nonSPIdentities = $this.AccessList | Where-Object { $_.Scope -eq $this.ResourceId -and $_.ObjectType -ne 'ServicePrincipal' };
         
         if(($nonSPIdentities | Measure-Object).Count -ne 0)
         {
