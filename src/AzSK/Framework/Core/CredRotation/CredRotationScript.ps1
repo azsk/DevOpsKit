@@ -177,7 +177,7 @@ class CredRotation : CommandBase{
 
 			if($blob){
 				$this.PublishCustomMessage("`n")
-				$this.PublishCustomMessage("`nListing alert details for all the credentials `n`n",[MessageType]::Update)
+				$this.PublishCustomMessage("`nListing settings for all the credentials `n`n",[MessageType]::Update)
 				$this.PublishCustomMessage("`n")
 				$blob | where {
 					$_ | Get-AzStorageBlobContent -Destination $file -Force | Out-Null
