@@ -224,8 +224,9 @@ class ARMCheckerStatus: EventBase
 				}
 
 				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0 -and ( $ControlsToScan | Measure-Object).Count -gt 0 ){
-					$results = $results | Where-Object {$ControlsToScan -contains $_.ControlId}
-				}
+                    $results = $results | Where-Object {$ControlsToScan -contains $_.ControlId}
+                    
+                }
 
 				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0  -and ( $ControlsToExclude | Measure-Object).Count -gt 0){
 					$results = $results | Where-Object {$ControlsToExclude -notcontains $_.ControlId}
