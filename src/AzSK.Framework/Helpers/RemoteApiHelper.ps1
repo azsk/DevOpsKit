@@ -95,8 +95,8 @@ class RemoteApiHelper {
 			$ascProperty = @{
 				"SubscriptionId" = $ASCTelemetryData.SubscriptionId;
                 "FeatureName" = "ASC";
+                "SubFeatureName" = $_.Name;
                 "ResourceId" = $null;
-				"SubFeatureName" = $_.Name;
 				"Data" = $ASCTelemetryData.($_.Name);
 				"UpdatedOn" = $currentDateTime;
 			}
