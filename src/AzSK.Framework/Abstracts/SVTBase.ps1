@@ -451,7 +451,7 @@ class SVTBase: AzSKRoot
 
 			if($this.ControlIds.Count -ne 0)
 			{
-				$filterControlsById += $this.FeatureApplicableControls | Where-Object { $this.ControlIds -Contains $_.ControlId };
+                $filterControlsById += $this.FeatureApplicableControls | Where-Object { $this.ControlIds -Contains $_.ControlId };
 			}
 			else
 			{
