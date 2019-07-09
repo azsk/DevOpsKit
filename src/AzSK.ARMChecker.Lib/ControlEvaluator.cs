@@ -51,7 +51,7 @@ namespace AzSK.ARMChecker.Lib
                 case ControlMatchType.StringMultiToken:
                     return EvaluateStringMultiToken(control, resource);
                 case ControlMatchType.RegExpressionSingleToken:
-                    return RegExpressionSingleToken(control, resource);
+                    return EvaluateRegExpressionSingleToken(control, resource);
                 case ControlMatchType.RegExpressionMultiToken:
                     return ControlResult.NotSupported(resource);
                 case ControlMatchType.VerifiableSingleToken:
@@ -246,7 +246,7 @@ namespace AzSK.ARMChecker.Lib
             return result;
         }
 
-        private static ControlResult RegExpressionSingleToken(ResourceControl control, JObject resource)
+        private static ControlResult EvaluateRegExpressionSingleToken(ResourceControl control, JObject resource)
         {
             var result = ExtractSingleToken(control, resource, out string actual, out RegExpressionSingleTokenControlData match);
             result.ExpectedValue = match.Type + " '" + match.Pattern + "'";
