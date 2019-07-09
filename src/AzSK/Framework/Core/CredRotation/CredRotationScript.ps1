@@ -73,7 +73,7 @@ class CredRotation : CommandBase{
 
 	[void] PrintDetails($credentialInfo){
 		$this.PublishCustomMessage("`n")
-		$this.PublishCustomMessage("Alert details for the credential [$($credentialInfo.credName)] `n`n", [MessageType]::Info) 
+		$this.PublishCustomMessage("Settings for the AzSK tracked credential [$($credentialInfo.credName)] `n`n", [MessageType]::Info) 
 		$this.PublishCustomMessage("`n")
 
 		$this.PublishCustomMessage("Name:`t`t`t`t`t`t`t`t`t$($credentialInfo.credName)", [MessageType]::Default)
@@ -85,6 +85,37 @@ class CredRotation : CommandBase{
 		$this.PublishCustomMessage("Created by:`t`t`t`t`t`t`t`t$($credentialInfo.firstUpdatedBy)", [MessageType]::Default)
 		$this.PublishCustomMessage("Last update:`t`t`t`t`t`t`t$($credentialInfo.lastUpdatedOn)", [MessageType]::Default)
 		$this.PublishCustomMessage("Updated by:`t`t`t`t`t`t`t`t$($credentialInfo.lastUpdatedBy)", [MessageType]::Default)
+		$this.PublishCustomMessage("Comment:`t`t`t`t`t`t`t`t$($credentialInfo.comment)`n", [MessageType]::Default)
+
+		if($credentialInfo.credLocation -eq "AppService"){
+			$this.PublishCustomMessage([Constants]::SingleDashLine);
+			$this.PublishCustomMessage("AppService name:`t`t`t`t`t`t$($credentialInfo.resourceGroup)", [MessageType]::Default)
+			$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", [MessageType]::Default)
+			$this.PublishCustomMessage("AppService config type:`t`t`t`t`t$($credentialInfo.appConfigType)", [MessageType]::Default)
+			$this.PublishCustomMessage("AppService config name:`t`t`t`t`t$($credentialInfo.appConfigName)", [MessageType]::Default)
+		}
+		if($credentialInfo.credLocation -eq "KeyVault"){
+			$this.PublishCustomMessage([Constants]::SingleDashLine);
+			$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", [MessageType]::Default)
+			$this.PublishCustomMessage("Credential type:`t`t`t`t`t`t$($credentialInfo.kvCredType)", [MessageType]::Default)
+			$this.PublishCustomMessage("Credential name:`t`t`t`t`t`t$($credentialInfo.kvCredName)", [MessageType]::Default)
+			$this.PublishCustomMessage("Expiry time:`t`t`t`t`t`t`t$($credentialInfo.expiryTime)", [MessageType]::Default)
+			$this.PublishCustomMessage("Version:`t`t`t`t`t`t`t`t$($credentialInfo.Version)", [MessageType]::Default)
+		}
+
+		$this.PublishCustomMessage("`n")		
+	}
+
+	[void] PrintInfo ($credentialInfo){
+		$this.PublishCustomMessage("`n")
+		$this.PublishCustomMessage("Settings for the AzSK tracked credential [$($credentialInfo.credName)] `n`n", [MessageType]::Info) 
+		$this.PublishCustomMessage("`n")
+
+		$this.PublishCustomMessage("Name:`t`t`t`t`t`t`t`t`t$($credentialInfo.credName)", [MessageType]::Default)
+		$this.PublishCustomMessage("Location:`t`t`t`t`t`t`t`t$($credentialInfo.credLocation)", [MessageType]::Default)
+		$this.PublishCustomMessage("Rotation interval (days):`t`t`t`t$($credentialInfo.rotationInt)", [MessageType]::Default)
+		$this.PublishCustomMessage("Alert email:`t`t`t`t`t`t`t$($credentialInfo.emailId)", [MessageType]::Default)
+		$this.PublishCustomMessage("Alert phone:`t`t`t`t`t`t`t$($credentialInfo.contactNumber)", [MessageType]::Default)
 		$this.PublishCustomMessage("Comment:`t`t`t`t`t`t`t`t$($credentialInfo.comment)`n", [MessageType]::Default)
 
 		if($credentialInfo.credLocation -eq "AppService"){
@@ -240,6 +271,7 @@ class CredRotation : CommandBase{
             $credentialInfo | ConvertTo-Json -Depth 10 | Out-File $file -Force
             Set-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -File $file -Force | Out-Null
             $this.PublishCustomMessage("Successfully onboarded the credential [$($this.credName)] for rotation/expiry notification", [MessageType]::Update)
+			$this.PrintInfo($credentialInfo);
         }
 		if(Test-Path $file)
 		{
@@ -453,6 +485,7 @@ class CredRotation : CommandBase{
 			$credentialInfo | ConvertTo-Json -Depth 10 | Out-File $file -Force
 			Set-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -File $file -Force | Out-Null
 			$this.PublishCustomMessage("Successfully updated settings for AzSK tracked credential [$CredentialName]", [MessageType]::Update) 
+			$this.PrintInfo($credentialInfo);
 		}
 		else{
 			$this.PublishCustomMessage("Entry for the credential [$CredentialName] not found.", [MessageType]::Critical)
