@@ -100,7 +100,7 @@ class RemoteApiHelper {
 				"Data" = $ASCTelemetryData.($_.Name);
 				"UpdatedOn" = $currentDateTime;
 			}
-            [RemoteApiHelper]::PostJsonContent("/asctelemetrydata", $ascProperty) | Out-Null
+            [RemoteApiHelper]::PostJsonContent("/inventory/asctelemetrydata", $ascProperty) | Out-Null
 		}
     }
     
