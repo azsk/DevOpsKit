@@ -32,16 +32,16 @@ class Helpers {
 			{
 				if($extension -eq ".json" -or $extension -eq ".lawsview")
 				{
-					$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) | ConvertFrom-Json
+					$fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) | ConvertFrom-Json
 				}
 				else
 				{
-					$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) 
+					$fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) 
 				}
 			}
 			else
 			{
-				$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) 
+				$fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) 
 			}
         }
         else {
