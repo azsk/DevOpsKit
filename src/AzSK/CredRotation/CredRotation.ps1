@@ -29,52 +29,38 @@ function New-AzSKTrackedCredential {
 	#>
     Param(
         [Parameter(Mandatory = $true, ParameterSetName = "Other", Position=0, HelpMessage = "Provide the subscription id")]
-        #[Parameter(Mandatory = $true, ParameterSetName = "AppService", HelpMessage = "Provide the subscription id")]
-        #[Parameter(Mandatory = $true, ParameterSetName = "KeyVault", HelpMessage = "Provide the subscription id")]
         [string]
         [ValidateNotNullOrEmpty()]
         [Alias("s")]
         $SubscriptionId,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Other", Position=1, HelpMessage = "Provide the credential name")]
-        #[Parameter(Mandatory = $true, ParameterSetName = "AppService", HelpMessage = "Provide the credential name")]
-        #[Parameter(Mandatory = $true, ParameterSetName = "KeyVault", HelpMessage = "Provide the credential name")]
         [string]
 		[Alias("cn")]
         $CredentialName,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Other", HelpMessage = "Provide the credential location")]
-        #[Parameter(Mandatory = $true, ParameterSetName = "AppService", HelpMessage = "Provide the credential location")]
-        #[Parameter(Mandatory = $true, ParameterSetName = "KeyVault", HelpMessage = "Provide the credential location")]
         [ValidateSet("Other", "AppService", "KeyVault")]
         [string]
 		[Alias("cl")]
         $CredentialLocation,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Other", HelpMessage = "Provide the rotation interval in days")]
-        #[Parameter(Mandatory = $true, ParameterSetName = "AppService", HelpMessage = "Provide the rotation interval")]
-        #[Parameter(Mandatory = $true, ParameterSetName = "KeyVault", HelpMessage = "Provide the rotation interval")]
         [int]
 		[Alias("rint")]
         $RotationIntervalInDays,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Other", HelpMessage = "Provide the email id for alert")]
-        #[Parameter(Mandatory = $true, ParameterSetName = "AppService", HelpMessage = "Provide the email id for alert")]
-        #[Parameter(Mandatory = $true, ParameterSetName = "KeyVault", HelpMessage = "Provide the email id for alert")]
-        #[string]
+        [string]
 		[Alias("aem")]
         $AlertEmail,
 
         [Parameter(Mandatory = $false, ParameterSetName = "Other", HelpMessage = "Provide the contact number for alert")]
-        #[Parameter(Mandatory = $false, ParameterSetName = "AppService", HelpMessage = "Provide the contact number for alert")]
-        #[Parameter(Mandatory = $false, ParameterSetName = "KeyVault", HelpMessage = "Provide the contact number for alert")]
-        #[string]
+        [string]
 		[Alias("acn")]
         $AlertSMS,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Other", HelpMessage = "Provide the comment for the credential")]
-        #[Parameter(Mandatory = $true, ParameterSetName = "AppService", HelpMessage = "Provide the comment for the credential")]
-        #[Parameter(Mandatory = $true, ParameterSetName = "KeyVault", HelpMessage = "Provide the comment for the credential")]
         [string]
 		[Alias("cmt")]
         $Comment
