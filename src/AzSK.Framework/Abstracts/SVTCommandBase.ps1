@@ -82,7 +82,7 @@ class SVTCommandBase: AzCommandBase {
         }
         
         $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
-        $this.InvokeExtensionMethod($false)
+        $this.InvokeExtensionMethod()
     }
 
     hidden [void] CommandError([System.Management.Automation.ErrorRecord] $exception) {

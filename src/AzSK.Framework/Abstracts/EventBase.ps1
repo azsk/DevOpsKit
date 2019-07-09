@@ -147,6 +147,7 @@ class EventBase
 		[EventBase]::new().PublishCustomMessage($message, $messageType);
 	}
 	
+	#Function to invoke extension method for base classes
 	[void] InvokeExtensionMethod([PSObject] $arguments)
 	{
 		#Get calling method name using PSCallStack
@@ -159,13 +160,26 @@ class EventBase
 				$extensionMethodName = $callingMethodName + "Ext"
 				if(($this.PSobject.Methods.Match($extensionMethodName) | Measure-Object).Count)
 				{
-					if($arguments)
-					{
-						$this.$extensionMethodName($arguments)
-					}
-					else {
-						$this.$extensionMethodName()
-					}					
+					$this.$extensionMethodName($arguments)					
+				}
+			}
+		}
+	}
+
+	#Function to invoke extension method for base classes
+	[void] InvokeExtensionMethod()
+	{
+		#Get calling method name using PSCallStack
+		$stack= (Get-PSCallStack)
+		if($stack.Count -gt 0)
+		{
+			$callingMethodName = $stack[1].FunctionName
+			if($callingMethodName)
+			{
+				$extensionMethodName = $callingMethodName + "Ext"
+				if(($this.PSobject.Methods.Match($extensionMethodName) | Measure-Object).Count)
+				{
+					$this.$extensionMethodName()					
 				}
 			}
 		}
