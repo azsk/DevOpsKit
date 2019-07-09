@@ -185,7 +185,10 @@ class ARMCheckerStatus: EventBase
 
 		if(-not([string]::IsNullOrEmpty($Severity)))
 		{
-		  $ControlsToScanBySeverity = $this.ConvertToStringArray($Severity);
+		  $Severity = $this.ConvertToStringArray($Severity);
+		  #Discard the severity inputs that are not in enum
+		  $Severity = $Severity | Where-Object {$_ -in [Enum]::GetNames('ControlSeverity')}
+		  $ControlsToScanBySeverity = $Severity
 		} 
 
 		# Check if exclude control ids are provided by user 

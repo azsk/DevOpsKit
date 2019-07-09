@@ -470,9 +470,19 @@ class SVTBase: AzSKRoot
             $excludeTagsCount = ($this.ExcludeTags | Measure-Object).Count
 
 			#filters controls based on Severity
-			
 			if($this.Severity.Count -ne 0 -and ($filterControlsById | Measure-Object).Count -gt 0)
 			{
+				if([Helpers]::CheckMember($this.ControlSettings, 'ControlSeverity'))
+				{
+					$AllowedSeverities = @();
+					$severityMapping = $this.ControlSettings.ControlSeverity
+					#Discard the severity values passed in parameter that do not have mapping in Org settings.
+                    foreach($sev in $severityMapping.psobject.properties)
+                    {                         
+                        $AllowedSeverities +=  $sev.value       
+					}
+					$this.Severity = $this.Severity | Where-Object{ $_ -in $AllowedSeverities}
+				}
 				$filterControlsById = $filterControlsById | Where-Object {$_.ControlSeverity -in $this.Severity };				
 			}
 
