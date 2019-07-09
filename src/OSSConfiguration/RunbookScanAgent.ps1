@@ -268,7 +268,16 @@ function RunAzSKScanForASub
 		}
 		else 
 		{
-			$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
+			#Scan for full resource list if resource group names is null or whitespace
+			if ([string]::IsNullOrWhiteSpace($ResourceGroupNames)) 
+    		{
+				$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames "*" -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
+			}
+			#else Scan for resoruce groups mentioned by user parameter
+			else {
+				$svtResultPath = Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionID -ResourceGroupNames $ResourceGroupNames -ExcludeTags "OwnerAccess,RBAC" -UsePartialCommits
+			}
+			
 		}
 	}
    

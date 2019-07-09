@@ -70,7 +70,7 @@ class WebRequestHelper {
 	}
     static [System.Object[]] InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod] $method, [string] $uri, [Hashtable] $headers, [System.Object] $body, [string] $contentType) 
 	{
-        return [WebRequestHelper]::InvokeWebRequest($method, $uri, $headers, $body, $contentType, $false) 
+        return [WebRequestHelper]::InvokeWebRequest($method, $uri, $headers, $body, $contentType, $false, $false) 
 	}
 	static [System.Object[]] InvokeTableStorageBatchWebRequest([string] $RGName, [string] $StorageAccountName, [string] $TableName,[PSObject[]]$Data,[bool]$IsMergeOperation, [string] $AccessKey) 
 	{		
@@ -243,18 +243,19 @@ Content-Type: multipart/mixed; boundary={1}
         return $outputValues;
 	}
 
-	static [System.Object[]] InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod] $method, [string] $uri, [Hashtable] $headers, [System.Object] $body, [string] $contentType, [bool] $isRetryRequired) 
+	static [System.Object[]] InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod] $method, [string] $uri, [Hashtable] $headers, [System.Object] $body, [string] $contentType, [bool] $isRetryRequired, [bool] $returnRawResponse) 
 	{
         $outputValues = @();
 		[System.Uri] $validatedUri = $null;
 		$orginalUri = "";
-		[int] $retryCount = 1
-		if($isRetryRequired)
-		{
-			 $retryCount = 3
-		}
+		
         while ([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri)) 
 		{
+			[int] $retryCount = 1
+			if($isRetryRequired)
+			{
+				$retryCount = 3
+			}
 			if([string]::IsNullOrWhiteSpace($orginalUri))
 			{
 				$orginalUri = $validatedUri.AbsoluteUri;
@@ -292,7 +293,12 @@ Content-Type: multipart/mixed; boundary={1}
 					else 
 					{
 						throw [System.ArgumentException] ("The web request method type '$method' is not supported.")
-					}		
+					}
+					
+					if($returnRawResponse)
+					{
+						return $requestResult
+					}
 			
 					if ($null -ne $requestResult -and $requestResult.StatusCode -ge 200 -and $requestResult.StatusCode -le 399) {
 						if (!$success -and $null -ne $requestResult.Content) {

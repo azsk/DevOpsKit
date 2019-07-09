@@ -354,7 +354,9 @@
     "EnableV1AlertFailure": false,
     "ASCTier": "Standard",
     "credHighTH": 7,
-    "credModerateTH": 30
+    "credModerateTH": 30,
+    "NonADIdentitiesPatterns" : ["(.)*#ext#@(.)*.onmicrosoft.com"],
+    "WhitelistedNonADIndentitiesPatterns" : []
   },
   "HDInsight": {
     "MinSupportedClusterVersion": "3.6.0"
