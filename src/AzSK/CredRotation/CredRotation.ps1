@@ -101,10 +101,21 @@ function New-AzSKTrackedCredential {
                     $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation, $null, $null, $null, $null, $null, $null, $null))
                 }
                 elseif($CredentialLocation -eq "AppService"){
-                    $ResourceGroupName = Read-Host "`nProvide the resource group name of the appservice"
-                    $ResourceName = Read-Host "`nProvide the name of the appservice"
-            
-                    $input = Read-Host "`nProvide the app config type where the credential is used. Enter 1 for 'Application Settings' or 2 for 'Connection Strings'."
+                    Write-Host "`nProvide the following details for the app service: `n"
+                    $ResourceName = Read-Host "App service name"
+                    $ResourceGroupName = Read-Host "Resource group"
+                    
+                    Write-Host "`nEnter"
+                    Write-Host "1 for 'Application Settings'"
+                    Write-Host "2 for 'Connection Strings'`n"
+
+                    $input = Read-Host "App config type"
+                    
+                    while(($input -ne 1) -and ($input -ne 2)){
+                        Write-Host "Incorrect value supplied. Please enter '1' for Application Settings or '2' for Connection Strings." -ForegroundColor Red
+                        $input = Read-Host "App config type"
+                    }
+                    
                     if($input -eq 1)
                     {
                         $AppConfigType = "Application Settings"
@@ -114,13 +125,23 @@ function New-AzSKTrackedCredential {
                         $AppConfigType = "Connection Strings"
                     }
             
-                    $AppConfigName = Read-Host "`nProvide the app config name where the credential is used"      
+                    $AppConfigName = Read-Host "App config name"      
                     $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation, $ResourceGroupName, $ResourceName, $AppConfigType, $AppConfigName, $null, $null, $null))
                 }
                 elseif($CredentialLocation -eq "KeyVault"){
+                    Write-Host "`nProvide the following details for the key vault: `n"
+                    $KVName = Read-Host "Key Vault name"
+                    Write-Host "`nEnter"
+                    Write-Host "1 for 'Key'"
+                    Write-Host "2 for 'Secret'`n"
+                   
+                    $input = Read-Host "`Key Vault credential type"
+                   
+                    while(($input -ne 1) -and ($input -ne 2)){
+                        Write-Host "Incorrect value supplied. Please enter '1' for Key or '2' for Secret." -ForegroundColor Red
+                        $input = Read-Host "Key Vault credential type"
+                    }
 
-                    $KVName = Read-Host "`nProvide the key vault name"
-                    $input = Read-Host "`nProvide the key vault credential type. Enter 1 for 'Key' or 2 for 'Secret'."
                     if($input -eq 1)
                     {
                         $KVCredentialType = "Key"
@@ -129,7 +150,7 @@ function New-AzSKTrackedCredential {
                     {
                         $KVCredentialType = "Secret"
                     }
-                    $KVCredentialName = Read-Host "`nProvide the key vault credential name"                    
+                    $KVCredentialName = Read-Host "Key Vault credential name"                    
                     $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation, $null, $null, $null, $null, $KVName, $KVCredentialType, $KVCredentialName))
                 }
                 

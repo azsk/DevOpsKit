@@ -203,6 +203,7 @@ class CredRotation : CommandBase{
 		$file += ".json"
         $this.GetAzSKRotationMetadatContainer()
         $blobName = $this.credName + ".json"
+		[bool] $found = $true;
 
 		$tempSubPath = Join-Path $($this.AzSKTemp) $($this.SubscriptionContext.SubscriptionId)
 
@@ -247,6 +248,29 @@ class CredRotation : CommandBase{
                 Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name resourceName -Value $ResourceName
                 Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name appConfigType -Value $AppConfigType
                 Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name appConfigName -Value $AppConfigName
+
+				$resource = Get-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName -ErrorAction Ignore
+				if(-not $resource){
+					$found = $false;
+					$this.PublishCustomMessage("Could not find a resource for the given app service name and resource group. Please verify whether the given app service name/resource group is correct.",[MessageType]::Error)
+				}
+				else{
+					if($AppConfigType -eq "Application Settings")
+					{
+						if(-not ($resource.SiteConfig.AppSettings.Name | where-object{$_ -eq $AppConfigName})){
+							$found = $false;
+							$this.PublishCustomMessage("Could not find the app setting [$AppConfigName] in the app service. Please verify whether the given app setting name is correct.",[MessageType]::Error)
+						}
+					}
+					elseif($AppConfigType -eq "Connection Strings")
+					{
+						if(-not ($resource.SiteConfig.ConnectionStrings.Name | where-object{$_ -eq $AppConfigName})){
+							$found = $false;
+							$this.PublishCustomMessage("Could not find the connection string [$AppConfigName] in the app service. Please verify whether the given connection string name is correct.",[MessageType]::Error)
+						}
+					}		
+							
+				}
             }
 
             if($CredentialLocation -eq "KeyVault"){
@@ -256,22 +280,39 @@ class CredRotation : CommandBase{
                 
                 if($KVCredentialType -eq "Key")
                 {
-                    $key = Get-AzKeyVaultKey -VaultName $KVName -Name $KVCredentialName
-                    Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name expiryTime -Value $key.Expires
-                    Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name version -Value $key.Version
+                    $key = Get-AzKeyVaultKey -VaultName $KVName -Name $KVCredentialName -ErrorAction Ignore
+					if($key){
+						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name expiryTime -Value $key.Expires
+                    	Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name version -Value $key.Version
+					}
+                    else{
+						$found = $false;
+						$this.PublishCustomMessage("Could not find a key for the given key vault credential. Please verify whether the given key vault name/key is correct.",[MessageType]::Error)
+					}
                 }
                 elseif($KVCredentialType -eq "Secret")
                 {
-                    $secret = Get-AzKeyVaultSecret -VaultName $KVName -Name $KVCredentialName
-                    Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name expiryTime -Value $secret.Expires
-                    Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name version -Value $secret.Version
+                    $secret = Get-AzKeyVaultSecret -VaultName $KVName -Name $KVCredentialName -ErrorAction Ignore
+					if($secret){
+	                    Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name expiryTime -Value $secret.Expires
+    	                Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name version -Value $secret.Version
+					}
+					else{
+						$found = $false;
+						$this.PublishCustomMessage("Could not find a secret for the given key vault credential. Please verify whether the given key vault name/secret is correct.",[MessageType]::Error)
+					}
                 }
             }
 
-            $credentialInfo | ConvertTo-Json -Depth 10 | Out-File $file -Force
-            Set-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -File $file -Force | Out-Null
-            $this.PublishCustomMessage("Successfully onboarded the credential [$($this.credName)] for rotation/expiry notification", [MessageType]::Update)
-			$this.PrintInfo($credentialInfo);
+			if($found){
+				$credentialInfo | ConvertTo-Json -Depth 10 | Out-File $file -Force
+				Set-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -File $file -Force | Out-Null
+				$this.PublishCustomMessage("Successfully onboarded the credential [$($this.credName)] for rotation/expiry notification", [MessageType]::Update)
+				$this.PrintInfo($credentialInfo);
+			}
+			else{
+				$this.PublishCustomMessage("Could not onboard the credential [$($this.credName)] for rotation/expiry notification", [MessageType]::Error)
+			}
         }
 		if(Test-Path $file)
 		{
