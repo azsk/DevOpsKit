@@ -31,12 +31,16 @@ class SVTCommandBase: CommandBase {
         #Fetching the resourceInventory once for each SVT command execution
         [ResourceInventory]::Clear();
 
+        #Initiate Compliance State
+        $this.InitializeControlState();
          #Create necessary resources to save compliance data in user's subscription
          if($this.IsLocalComplianceStoreEnabled)
          {
             if($null -eq $this.ComplianceReportHelper)
             {
-                $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());                  
+                 #Reset cached compliance report helper instance for accessing first fetch
+                 [ComplianceReportHelper]::Instance = $null
+                 $this.ComplianceReportHelper = [ComplianceReportHelper]::GetInstance($this.SubscriptionContext, $this.GetCurrentModuleVersion());                  
             }
             if(-not $this.ComplianceReportHelper.HaveRequiredPermissions())
             {
@@ -94,14 +98,6 @@ class SVTCommandBase: CommandBase {
         #check and delete if older RG found. Remove this code post 8/15/2018 release
         $this.RemoveOldAzSDKRG();
         #Create necessary resources to save compliance data in user's subscription
-        if($this.IsLocalComplianceStoreEnabled)
-        {
-            $this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());  
-            if(-not $this.ComplianceReportHelper.HaveRequiredPermissions())
-            {
-                $this.IsLocalComplianceStoreEnabled = $false;
-            }
-        }
 	    $this.PublishEvent([SVTEvent]::CommandStarted, $arg);
     }
 
@@ -168,8 +164,8 @@ class SVTCommandBase: CommandBase {
 			$svtObject.PartialScanIdentifier =$this.PartialScanIdentifier
 		}
 		
-        # ToDo: Utilize exiting functions
-        $this.InitializeControlState();
+        # ToDo: Utilize exiting functions Note: Commented Initialize Control State function as it will be called at th start of SVTCommandBase contructor
+        #$this.InitializeControlState();
         $svtObject.ControlStateExt = $this.ControlStateExt;
     }
 
