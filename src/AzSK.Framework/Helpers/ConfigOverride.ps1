@@ -43,11 +43,11 @@ class ConfigOverride
         if ($filePath) {
 			if($extension -eq ".json")
 			{
-				$this.ParsedFile = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) | ConvertFrom-Json
+				$this.ParsedFile = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) | ConvertFrom-Json
 			}
 			else
 			{
-				$this.ParsedFile = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) 
+				$this.ParsedFile = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) 
 			}
         }
         else {
