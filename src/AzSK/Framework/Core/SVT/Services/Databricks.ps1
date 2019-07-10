@@ -240,7 +240,7 @@ class Databricks: SVTBase
 	   if($this.IsTokenAvailable() -and $this.IsUserAdmin())
 	   {    
 	        $controlResult.VerificationResult = [VerificationResult]::Verify;
-		    $accessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.GetResourceId(), $false, $true);
+		    $accessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.ResourceId, $false, $true);
 			$adminAccessList = $accessList | Where-Object { $_.RoleDefinitionName -eq 'Owner' -or $_.RoleDefinitionName -eq 'Contributor'}
 			# Add check for User Type
 			$potentialAdminUsers = @()
