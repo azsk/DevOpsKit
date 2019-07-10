@@ -4,6 +4,7 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using AzSK.ARMChecker.Lib.Extensions;
 using System.Collections;
+using System.Text.RegularExpressions;
 
 namespace AzSK.ARMChecker.Lib
 {
@@ -48,9 +49,9 @@ namespace AzSK.ARMChecker.Lib
                 case ControlMatchType.StringSingleToken:
                     return EvaluateStringSingleToken(control, resource);
                 case ControlMatchType.StringMultiToken:
-                    return ControlResult.NotSupported(resource);
+                    return EvaluateStringMultiToken(control, resource);
                 case ControlMatchType.RegExpressionSingleToken:
-                    return ControlResult.NotSupported(resource);
+                    return EvaluateRegExpressionSingleToken(control, resource);
                 case ControlMatchType.RegExpressionMultiToken:
                     return ControlResult.NotSupported(resource);
                 case ControlMatchType.VerifiableSingleToken:
@@ -155,6 +156,59 @@ namespace AzSK.ARMChecker.Lib
             return result;
         }
 
+        private static ControlResult EvaluateStringMultiToken(ResourceControl control, JObject resource)
+        {
+            var result = ExtractMultiToken(control, resource, out IEnumerable<object> actual, out StringMultiTokenControlData match);
+            result.ExpectedValue = " '" + match.Type + " ':" + " [" + string.Join("", match.Value) + "]";
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
+            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
+            if(actual == null)
+            {
+                return result;
+            }
+            var count = actual.Count();
+            string[] currentValue = new string[count];
+            int index = 0;
+            foreach (var obj in actual)
+            {
+                currentValue[index++] = obj.ToString();
+            }
+            if(match.Type == ControlDataMatchType.Contains)
+            {
+                if (match.Value.Except(currentValue).Any())
+                {
+                    result.VerificationResult = VerificationResult.Failed;
+                }
+                else
+                {
+                    result.VerificationResult = VerificationResult.Passed;
+                }
+            }
+            else if(match.Type == ControlDataMatchType.NotContains){
+                if (match.Value.Except(currentValue).Any())
+                {
+                    result.VerificationResult = VerificationResult.Passed;
+                }
+                else
+                {
+                    result.VerificationResult = VerificationResult.Failed;
+                }
+            }else if(match.Type == ControlDataMatchType.Equals)
+            {
+                Array.Sort(match.Value);
+                Array.Sort(currentValue);
+                if (currentValue.SequenceEqual(match.Value))
+                {
+                    result.VerificationResult = VerificationResult.Passed;
+                }
+                else
+                {
+                    result.VerificationResult = VerificationResult.Failed;
+                }
+            }
+            return result;
+        }
+
         private static ControlResult EvaluateStringWhitespace(ResourceControl control, JObject resource)
         {
             var result = ExtractSingleToken(control, resource, out string actual, out BooleanControlData match);
@@ -192,6 +246,48 @@ namespace AzSK.ARMChecker.Lib
             return result;
         }
 
+        private static ControlResult EvaluateRegExpressionSingleToken(ResourceControl control, JObject resource)
+        {
+            var result = ExtractSingleToken(control, resource, out string actual, out RegExpressionSingleTokenControlData match);
+            result.ExpectedValue = match.Type + " '" + match.Pattern + "'";
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
+            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
+            if(actual == null || match.Pattern == null)
+            {
+                return result;
+            }
+            Regex regex;
+            if(match.IsCaseSensitive)
+            {
+                regex = new Regex(@match.Pattern);
+            }
+            else
+            {
+                regex = new Regex(@match.Pattern, RegexOptions.IgnoreCase);
+            }
+            Match matchPattern = regex.Match(actual);
+            if(match.Type == ControlDataMatchType.Allow)
+            {
+                if(matchPattern.Success)
+                {
+                    result.VerificationResult = VerificationResult.Passed;
+                }else
+                {
+                    result.VerificationResult = VerificationResult.Failed;
+                }
+            }else if(match.Type == ControlDataMatchType.NotAllow)
+            {
+                if (!matchPattern.Success)
+                {
+                    result.VerificationResult = VerificationResult.Passed;
+                }
+                else
+                {
+                    result.VerificationResult = VerificationResult.Failed;
+                }
+            }
+            return result;
+        }
         private static ControlResult EvaluateSingleVersionToken(ResourceControl control, JObject resource)
         {
             var result = ExtractSingleToken(control, resource, out string actual, out StringSingleTokenControlData match);
@@ -211,10 +307,10 @@ namespace AzSK.ARMChecker.Lib
                  case ControlDataMatchType.Equals:
                      if (actualVersion == requiredVersion) result.VerificationResult = VerificationResult.Passed;
                      break;
-                case ControlDataMatchType.GreaterThanEqual:
+                case ControlDataMatchType.GreaterThanOrEqual:
                     if (actualVersion >= requiredVersion) result.VerificationResult = VerificationResult.Passed;
                     break;
-                case ControlDataMatchType.LesserThanEqual:
+                case ControlDataMatchType.LesserThanOrEqual:
                     if (actualVersion <= requiredVersion) result.VerificationResult = VerificationResult.Passed;
                     break;
                 default:

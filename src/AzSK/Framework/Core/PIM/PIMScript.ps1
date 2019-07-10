@@ -406,7 +406,7 @@ class PIM: CommandBase {
             $this.PublishCustomMessage("Your eligible role assignments:", [MessageType]::Default)
             $this.PublishCustomMessage("");
             $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
-            $this.PublishCustomMessage(($assignments | Format-Table -AutoSize Id, RoleName, ResourceName, ResourceType, ExpirationDate | Out-String), [MessageType]::Default)
+            $this.PublishCustomMessage(($assignments | Format-Table -AutoSize @{Label = "ResourceId"; Expression = { $_.OriginalId }} , RoleName, ResourceName, ResourceType, ExpirationDate | Out-String), [MessageType]::Default)
             $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
             $this.PublishCustomMessage("");
         }
