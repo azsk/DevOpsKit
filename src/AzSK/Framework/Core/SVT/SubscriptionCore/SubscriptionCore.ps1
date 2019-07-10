@@ -1554,15 +1554,15 @@ class SubscriptionCore: SVTBase
 			}
 			if($expiredCount -gt 0){
 				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following credentials have expired. Please rotate them.", $expiredCredentials));   
-				$controlResult.AddMessage("Please rotate them soon using the cmd Update-AzSKTrackedCredential with the 'RotateCredential' switch with other required parameters (Subscription Id, credential name, etc.)."); 
+				$controlResult.AddMessage("Please rotate them soon using the cmd Update-AzSKTrackedCredential with the 'UpdateCredential' switch with other required parameters (Subscription Id, credential name, etc.)."); 
 				if($aboutToExpireCount -gt 0){
 					$controlResult.AddMessage("The following AzSK-tracked credentials are about to expire and need to be rotated soon.",$aboutToExpireCredentials)
-					$controlResult.AddMessage("Please rotate them soon using the cmd Update-AzSKTrackedCredential with the 'RotateCredential' switch with other required parameters (Subscription Id, credential name, etc.).");
+					$controlResult.AddMessage("Please rotate them soon using the cmd Update-AzSKTrackedCredential with the 'UpdateCredential' switch with other required parameters (Subscription Id, credential name, etc.).");
 				}
 			}
 			elseif($aboutToExpireCount -gt 0){
 				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("The following AzSK-tracked credentials are about to expire and need to be rotated soon.",$aboutToExpireCredentials))
-				$controlResult.AddMessage("Please rotate them soon using the cmd Update-AzSKTrackedCredential with the 'RotateCredential' switch with other required parameters (Subscription Id, credential name, etc.).");
+				$controlResult.AddMessage("Please rotate them soon using the cmd Update-AzSKTrackedCredential with the 'UpdateCredential' switch with other required parameters (Subscription Id, credential name, etc.).");
 			}
 			else{ # No expired/about-to-expire credentials
 				$controlResult.VerificationResult = [VerificationResult]::Passed

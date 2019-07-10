@@ -516,7 +516,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckCredRotation",
-      "Recommendation": "Run Update-AzSKTrackedCredential with the 'RotateCredential' switch with other required parameters (Subscription Id, credential name, etc.).",
+      "Recommendation": "Run Update-AzSKTrackedCredential with the 'UpdateCredential' switch with other required parameters (Subscription Id, credential name, etc.).",
       "Tags": [
         "SDL",
         "TCP",
