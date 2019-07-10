@@ -88,6 +88,30 @@ class RemoteApiHelper {
 		return([RemoteApiHelper]::GetJsonContent("/compliancedata", $parameters) )	
     }
     
+    static [void] PostASCTelemetry($ASCTelemetryData)
+    {
+        $currentDateTime = [DateTime]::UtcNow
+        $ASCDataList = @();
+        #will remove $awaitedTelemetryList and consequent condition check once we are ready to use the APIs for the properties in the list
+        $awaitedTelemetryList = @("SecureScore", "ThreatDetection", "ASCRecommendations", "SecurityEventsTier")
+		$ASCTelemetryData | Get-Member -Type Property | ForEach-Object {
+            if($_.Name -ne "SubscriptionId" -and (-not ($null -eq $ASCTelemetryData.($_.Name) -or "" -eq $ASCTelemetryData.($_.Name))) -and $awaitedTelemetryList -notcontains $_.Name)
+            {
+                $ascProperty = New-Object psobject -Property @{
+                    SubscriptionId = $ASCTelemetryData.SubscriptionId;
+                    FeatureName = "ASC";
+                    SubFeatureName = $_.Name;
+                    ResourceId = $null;
+                    CustomData = $ASCTelemetryData.($_.Name);
+                    UpdatedOn = $currentDateTime;
+                }
+                $ASCDataList += $ascProperty
+            }
+        }
+        #will uncomment api call once the API for this is up
+        #[RemoteApiHelper]::PostJsonContent("/inventory/asctelemetrydata", $ASCDataList) | Out-Null
+    }
+
     hidden static [psobject] ConvertToSimpleSet([SVTEventContext[]] $contexts) {
         $firstContext = $contexts[0]
         $set = "" | Select-Object "SubscriptionId", "SubscriptionName", "Source", "ScannerVersion", "ControlVersion", "ControlSet"

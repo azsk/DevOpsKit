@@ -1103,11 +1103,9 @@ class SubscriptionCore: SVTBase
 
 	hidden [ControlResult] CheckASCTier ([ControlResult] $controlResult)
 	{
-		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
-        $validatedUri ="$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings/default?api-version=2017-08-01-preview"
-        $ascTierContentDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+		$ascTierContentDetails = $this.SecurityCenterInstance.ASCTier;
 
-		if([Helpers]::CheckMember($ascTierContentDetails,"properties.pricingTier"))
+		if(-not [string]::IsNullOrWhiteSpace($ascTierContentDetails))		
 		{
 			$ascTier = "Standard"
 			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ASCTier"))
@@ -1115,7 +1113,7 @@ class SubscriptionCore: SVTBase
 				$ascTier = $this.ControlSettings.SubscriptionCore.ASCTier
 			}
 			
-			if($ascTierContentDetails.properties.pricingTier -eq $ascTier)
+			if($ascTierContentDetails -eq $ascTier)			
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed, "Expected '$ascTier' tier is configured for ASC" )
 			}
