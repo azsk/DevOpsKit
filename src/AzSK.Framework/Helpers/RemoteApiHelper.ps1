@@ -90,18 +90,20 @@ class RemoteApiHelper {
 
     static [void] PostASCTelemetry($ASCTelemetryData)
     {
-		$currentDateTime = [DateTime]::UtcNow
+        $currentDateTime = [DateTime]::UtcNow
+        $ASCDataList = @();
 		$ASCTelemetryData | Get-Member -Type Property | ForEach-Object {
-			$ascProperty = @{
-				"SubscriptionId" = $ASCTelemetryData.SubscriptionId;
-                "FeatureName" = "ASC";
-                "ResourceId" = $null;
-				"SubFeatureName" = $_.Name;
-				"Data" = $ASCTelemetryData.($_.Name);
-				"UpdatedOn" = $currentDateTime;
+			$ascProperty = New-Object psobject -Property @{
+				SubscriptionId = $ASCTelemetryData.SubscriptionId;
+                FeatureName = "ASC";
+                ResourceId = $null;
+				SubFeatureName = $_.Name;
+				CustomData = $ASCTelemetryData.($_.Name);
+				UpdatedOn = $currentDateTime;
 			}
-            [RemoteApiHelper]::PostJsonContent("/inventory/asctelemetrydata", $ascProperty) | Out-Null
-		}
+            $ASCDataList +=$ascProperty
+        }
+        [RemoteApiHelper]::PostJsonContent("/inventory/asctelemetrydata", $ASCDataList) | Out-Null
     }
     
     hidden static [psobject] ConvertToSimpleSet([SVTEventContext[]] $contexts) {

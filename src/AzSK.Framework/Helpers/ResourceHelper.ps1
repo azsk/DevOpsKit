@@ -364,7 +364,7 @@ class StorageHelper: ResourceGroupHelper
 		$blobDetails =$null
 		if($WithoutVirtualDirectory)
 		{
-			$copyDestinationPath = [Constants]::AzSKTempFolderPath + "ContainerContent\"
+			$copyDestinationPath = Join-Path $([Constants]::AzSKTempFolderPath) "ContainerContent"
 			[Helpers]::CreateFolderIfNotExist($copyDestinationPath,$true)
 		}
 		else
@@ -441,7 +441,7 @@ class StorageHelper: ResourceGroupHelper
 		[Helpers]::CreateFolderIfNotExist($destinationPath,$false)
 		if($WithoutVirtualDirectory)
 		{
-			$copyDestinationPath = [Constants]::AzSKTempFolderPath + "ContainerContent\"
+			$copyDestinationPath = Join-Path $([Constants]::AzSKTempFolderPath) "ContainerContent"
 			[Helpers]::CreateFolderIfNotExist($copyDestinationPath,$true)
 		}
 		else
