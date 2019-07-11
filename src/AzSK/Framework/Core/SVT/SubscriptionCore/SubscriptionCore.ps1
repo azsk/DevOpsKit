@@ -310,8 +310,19 @@ class SubscriptionCore: SVTBase
 		{
 			$this.GetRoleAssignments()
 			Set-Variable -Name liveAccounts -Scope Local
+			$liveAccounts =@()
 
-			$liveAccounts = [array]($this.RoleAssignments | Where-Object {$_.SignInName -like '*#EXT#@*.onmicrosoft.com'} )
+			if ([Helpers]::CheckMember($this.ControlSettings.SubscriptionCore,"NonADIdentitiesPatterns") -and ($this.ControlSettings.SubscriptionCore.NonADIdentitiesPatterns | Measure-Object).Count -ne 0) 
+			{
+				$NonADIdentitiesPattern = (('^' + (($this.ControlSettings.SubscriptionCore.NonADIdentitiesPatterns |foreach {[regex]::escape($_)}) –join '|') + '$')) -replace '[\\]',''
+				$liveAccounts = [array]($this.RoleAssignments | Where-Object {$_.SignInName -and $_.SignInName.ToLower() -imatch $NonADIdentitiesPattern} )
+				#Exclude whitelisted patterns for non-AD identities
+				if( ($liveAccounts | Measure-Object).Count -gt 0 -and  [Helpers]::CheckMember($this.ControlSettings.SubscriptionCore,"WhitelistedNonADIndentitiesPatterns") -and ($this.ControlSettings.SubscriptionCore.WhitelistedNonADIndentitiesPatterns | Measure-Object).Count -ne 0)
+				{
+					$WhiteListedNonADIdentitiesPattern = (('^' + (($this.ControlSettings.SubscriptionCore.WhitelistedNonADIndentitiesPatterns |foreach {[regex]::escape($_)}) –join '|') + '$')) -replace '[\\]',''
+					$liveAccounts = [array]($liveAccounts | Where-Object {$_.SignInName -and $_.SignInName.ToLower() -inotmatch $WhiteListedNonADIdentitiesPattern} )
+				}				
+			}
 
 			if(($liveAccounts | Measure-Object).Count -gt 0)
 			{
@@ -612,7 +623,7 @@ class SubscriptionCore: SVTBase
 	hidden [ControlResult] CheckARMPoliciesCompliance([ControlResult] $controlResult)
 	{
 
-		$subARMPol = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "", $false);
+		$subARMPol = [ARMPolicy]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext, "Mandatory", $false);
         $output = @()
         $foundMandatoryPolicies = $true
 
@@ -1167,11 +1178,9 @@ class SubscriptionCore: SVTBase
 
 	hidden [ControlResult] CheckASCTier ([ControlResult] $controlResult)
 	{
-		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
-        $validatedUri ="$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings/default?api-version=2017-08-01-preview"
-        $ascTierContentDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+		$ascTierContentDetails = $this.SecurityCenterInstance.ASCTier;
 
-		if([Helpers]::CheckMember($ascTierContentDetails,"properties.pricingTier"))
+		if(-not [string]::IsNullOrWhiteSpace($ascTierContentDetails))		
 		{
 			$ascTier = "Standard"
 			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ASCTier"))
@@ -1179,7 +1188,7 @@ class SubscriptionCore: SVTBase
 				$ascTier = $this.ControlSettings.SubscriptionCore.ASCTier
 			}
 			
-			if($ascTierContentDetails.properties.pricingTier -eq $ascTier)
+			if($ascTierContentDetails -eq $ascTier)			
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed, "Expected '$ascTier' tier is configured for ASC" )
 			}
@@ -1516,6 +1525,84 @@ class SubscriptionCore: SVTBase
 	
 	}
 
+	hidden [ControlResult] CheckCredentialHygiene([ControlResult] $controlResult)
+    {
+        $AzSKRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+        $containerName = [Constants]::RotationMetadataContainerName
+        $StorageAccount = Get-AzStorageAccount -ResourceGroupName $AzSKRG | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction SilentlyContinue
+        $keys = Get-AzStorageAccountKey -ResourceGroupName $AzSKRG -Name $StorageAccount.StorageAccountName -ErrorAction SilentlyContinue
+        $context = New-AzStorageContext -StorageAccountName $StorageAccount.StorageAccountName -StorageAccountKey $keys.Value[0]
+        $container = Get-AzStorageContainer -Name $containerName -Context $context -ErrorAction Ignore
+        
+		if($container){
+			$credBlobs = $container | Get-AzStorageBlob
 
+			$expiredCount = 0;
+			$aboutToExpireCount = 0;
+			$healthyCount = 0;
+			[PSObject] $expiredCredentials = @();
+			[PSObject] $aboutToExpireCredentials = @();
+			[PSObject] $healthyCredentials = @();
 
+			$AzSKTemp = (Join-Path $([Constants]::AzSKAppFolderPath) $([Constants]::RotationMetadataSubPath)); 
+
+			$tempSubPath = Join-Path $AzSKTemp $($this.SubscriptionContext.SubscriptionId)
+
+			if(![string]::isnullorwhitespace($this.SubscriptionContext.SubscriptionId)){
+				if(-not (Test-Path $tempSubPath))
+				{
+					New-Item -ItemType Directory -Path $tempSubPath -ErrorAction Stop | Out-Null
+				}	
+			}
+			else{
+				if(-not (Test-Path $AzSKTemp))
+				{
+					New-Item -ItemType Directory -Path $AzSKTemp -ErrorAction Stop | Out-Null
+				}
+			}
+
+			$credBlobs | ForEach-Object{
+				$file = $AzSKTemp + "\$($this.SubscriptionContext.SubscriptionId)\" + $_.Name
+				$file = Join-Path $AzSKTemp -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $($_.Name)
+				
+				$blobContent = Get-AzStorageBlobContent -Blob $_.Name -Container $container.Name -Context $context -Destination $file -Force -ErrorAction Ignore    
+				$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
+
+				$currentTime = [DateTime]::UtcNow;
+				$lastRotatedTime = $credentialInfo.lastUpdatedOn;
+				$expiryTime = $lastRotatedTime.AddDays($credentialInfo.rotationInt);
+				if($expiryTime -le $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credHighTH)){
+					$expiredCount += 1;
+					$expiredCredentials += $credentialInfo;
+				}
+				elseif(($expiryTime -gt $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credHighTH)) -and ($expiryTime -le $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credModerateTH))){
+					$aboutToExpireCount +=1;
+					$aboutToExpireCredentials += $credentialInfo;
+				}
+				else{
+					$healthyCount +=1;
+					$healthyCredentials += $credentialInfo;
+				}
+			}
+
+			$controlResult.AddMessage("`nCredentials that have expired or are very close to expiry: $expiredCount `n", $expiredCredentials)
+			$controlResult.AddMessage("`nCredentials that are approaching expiry: $aboutToExpireCount `n", $aboutToExpireCredentials)
+			$controlResult.AddMessage("`nCredentials that are not near expiry: $healthyCount `n", $healthyCredentials)
+
+			if($expiredCount -gt 0){
+				$controlResult.VerificationResult = [VerificationResult]::Failed;
+				$controlResult.AddMessage("`nPlease update them soon using the cmd Update-AzSKTrackedCredential with the 'ResetLastUpdate' switch with other required parameters (Subscription Id, credential name, etc.).`n")
+			}
+			elseif($aboutToExpireCount -gt 0){
+				$controlResult.VerificationResult = [VerificationResult]::Verify
+			}
+			else{ # No expired/about-to-expire credentials
+				$controlResult.VerificationResult = [VerificationResult]::Passed
+			}
+		}
+		else{ # No tracked credentials.
+			$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("There are no AzSK-tracked credentials in the subscription."))
+		}
+		return $controlResult
+    }
 }

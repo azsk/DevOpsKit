@@ -173,6 +173,11 @@ function Get-AzSKAzureServicesSecurityStatus
 		[Alias("upbc")]
 		$UsePreviewBaselineControls,
 
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage="Specify the severity of controls to be scanned. Example `"High, Medium`"")]
+		[Alias("ControlSeverity")]
+		$Severity,
+
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("upc")]
@@ -238,6 +243,7 @@ function Get-AzSKAzureServicesSecurityStatus
 				$secStatus.FilterTags = $FilterTags;
 				$secStatus.ExcludeTags = $ExcludeTags;
 				$secStatus.ControlIdString = $ControlIds;
+				$secStatus.Severity = $Severity;
 				$secStatus.ExcludeControlIdString = $ExcludeControlIds;
 				$secStatus.GenerateFixScript = $GenerateFixScript;
 
@@ -375,6 +381,11 @@ function Get-AzSKSubscriptionSecurityStatus
 		[Parameter(Mandatory = $false)]
 		[Alias("upbc")]
 		$UsePreviewBaselineControls,
+		
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage="Specify the severity of controls to be scanned. Example `"High, Medium`"")]
+		[Alias("ControlSeverity")]
+		$Severity,
 
 		[switch]
         [Parameter(Mandatory = $false)]
@@ -391,6 +402,7 @@ function Get-AzSKSubscriptionSecurityStatus
 		[Alias("xcids")]
 		[AllowEmptyString()]
 		$ExcludeControlIds
+
 	)
 	Begin
 	{
@@ -408,6 +420,7 @@ function Get-AzSKSubscriptionSecurityStatus
 				$sscore.FilterTags = $FilterTags;
 				$sscore.ExcludeTags = $ExcludeTags;
 				$sscore.ControlIdString = $ControlIds;
+				$sscore.Severity = $Severity;
 				$sscore.ExcludeControlIdString = $ExcludeControlIds;
                 $sscore.IncludeUserComments =$IncludeUserComments;
 
@@ -709,6 +722,12 @@ function Get-AzSKControlsStatus
 		[Alias("upbc")]
 		$UsePreviewBaselineControls,
 
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage="Specify the severity of controls to be scanned. Example `"High, Medium`"")]
+		[Alias("ControlSeverity")]
+		$Severity,
+
+
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("upc")]
@@ -771,6 +790,7 @@ function Get-AzSKControlsStatus
 				$controlReport.FilterTags = $FilterTags;
 				$controlReport.ExcludeTags = $ExcludeTags;
 				$controlReport.ControlIdString = $ControlIds;
+				$controlReport.Severity = $Severity;
 				$controlReport.ExcludeControlIdString = $ExcludeControlIds;
 				$controlReport.GenerateFixScript = $GenerateFixScript;
 				$controlReport.IncludeUserComments =$IncludeUserComments;

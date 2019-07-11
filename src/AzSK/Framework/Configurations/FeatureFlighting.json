@@ -72,6 +72,24 @@
       "DisabledForSubs": [],      
       "UnderPreview" : false,
       "IsEnabled": true
+    },
+    {
+      "Name": "EnableVMASCMetadataCapture",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": false
+    },
+    {
+      "Name": "EnableASCTelemetry",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
     }
   ]
 }

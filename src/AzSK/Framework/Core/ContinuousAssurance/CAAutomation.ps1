@@ -11,7 +11,7 @@ class CCAutomation: CommandBase
 	hidden [Variable[]] $Variables = @()
 	hidden [UserConfig] $UserConfig 
 	hidden [PSObject] $OutputObject = @{}
-	hidden [SelfSignedCertificate] $certificateDetail = [SelfSignedCertificate]::new()
+	#hidden [SelfSignedCertificate] $certificateDetail = [SelfSignedCertificate]::new()
 	hidden [Hashtable] $reportStorageTags = @{}
 	hidden [string] $exceptionMsg = "There was an error while configuring Automation Account."
 	hidden [boolean] $isExistingADApp = $false
@@ -28,7 +28,7 @@ class CCAutomation: CommandBase
 	hidden [string] $CAMultiSubScanConfigContainerName = [Constants]::CAMultiSubScanConfigContainerName
 	hidden [string] $AzSKCentralSPNFormatString = "AzSK_CA_SPNc_"
 	hidden [string] $AzSKLocalSPNFormatString = "AzSK_CA_SPN_"
-	hidden [string] $AzSKCATempFolderPath = ($env:temp + "\AzSKTemp\")
+	hidden [string] $AzSKCATempFolderPath = (Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Temp" |Join-Path -ChildPath "AzSKTemp")
 	[bool] $SkipTargetSubscriptionConfig = $false;
 	[bool] $IsCentralScanModeOn = $false;
 	[bool] $IsMultiCAModeOn = $false;
@@ -92,7 +92,7 @@ class CCAutomation: CommandBase
 		if($this.AutomationAccount.ResourceGroup -ne $this.AutomationAccount.CoreResourceGroup)
 		{
 			$this.IsMultiCAModeOn = $true
-            $this.CATargetSubsBlobName = "$($this.AutomationAccount.ResourceGroup)\$([Constants]::CATargetSubsBlobName)";
+            $this.CATargetSubsBlobName = Join-Path $($this.AutomationAccount.ResourceGroup) $([Constants]::CATargetSubsBlobName);
 		}
 		$this.UserConfig = [UserConfig]@{			
 			ResourceGroupNames = $ResourceGroupNames
@@ -145,7 +145,7 @@ class CCAutomation: CommandBase
 		if($this.AutomationAccount.ResourceGroup -ne $this.AutomationAccount.CoreResourceGroup)
 		{
 			$this.IsMultiCAModeOn = $true
-            $this.CATargetSubsBlobName = "$($this.AutomationAccount.ResourceGroup)\$([Constants]::CATargetSubsBlobName)";
+            $this.CATargetSubsBlobName = Join-Path $($this.AutomationAccount.ResourceGroup) $([Constants]::CATargetSubsBlobName);
 		}
 		$this.UserConfig = [UserConfig]::new();
 		$this.DoNotOpenOutputFolder = $true;
@@ -438,11 +438,11 @@ class CCAutomation: CommandBase
 				#set context back to central sub
 				Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null			
 				#region: Create Scan objects			
-                $filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
+                $filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
 
 				if(-not (Split-Path -Parent $filename | Test-Path))
 				{
-					mkdir -Path $(Split-Path -Parent $filename) -Force
+					New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 				}
 				
 				[Helpers]::ConvertToJsonCustom($scanobjects) | Out-File $filename -Force
@@ -901,11 +901,11 @@ class CCAutomation: CommandBase
 					#Add the current sub as scanning object
 					
 					
-                    $filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
+                    $filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
 
 				    if(-not (Split-Path -Parent $filename | Test-Path))
 				    {
-					    mkdir -Path $(Split-Path -Parent $filename) -Force
+					    New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 				    }
 					$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $this.UserConfig.StorageAccountName
 					$currentContext = New-AzStorageContext -StorageAccountName $this.UserConfig.StorageAccountName -StorageAccountKey $keys[0].Value -Protocol Https
@@ -915,7 +915,7 @@ class CCAutomation: CommandBase
 					{
 						$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($this.AzSKCATempFolderPath, $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
 						#$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
-						$CAScanDataBlobContent = Get-ChildItem -Path "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)" -Force | Get-Content | ConvertFrom-Json
+						$CAScanDataBlobContent = Get-ChildItem -Path Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName) -Force | Get-Content | ConvertFrom-Json
 					}
 
 					if(($CAScanDataBlobContent | Measure-Object).Count -gt 0)
@@ -1081,11 +1081,11 @@ class CCAutomation: CommandBase
 					$existingScanObjects += $scanobject;
 				}
 
-				$filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
+				$filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
 
 				if(-not (Split-Path -Parent $filename | Test-Path))
 				{
-					mkdir -Path $(Split-Path -Parent $filename) -Force
+					New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 				}
 				[Helpers]::ConvertToJsonCustom($existingScanObjects) | Out-File $filename -Force
 			
@@ -1645,11 +1645,11 @@ class CCAutomation: CommandBase
 		[CAScanModel[]] $scanobjects = @();
 		if(($reportsStorageAccount | Measure-Object).Count -eq 1)
 		{
-			$filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
+			$filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
 
 			if(-not (Split-Path -Parent $filename | Test-Path))
 			{
-				mkdir -Path $(Split-Path -Parent $filename) -Force
+				New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 			}
 			$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $reportsStorageAccount.Name
 			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
@@ -1659,7 +1659,7 @@ class CCAutomation: CommandBase
 				$this.IsCentralScanModeOn = $true;
 				$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
 				$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
-				$CAScanDataBlobContent = Get-ChildItem -Path "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)" -Force | Get-Content | ConvertFrom-Json
+				$CAScanDataBlobContent = Get-ChildItem -Path (Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)) -Force | Get-Content | ConvertFrom-Json
 
 				#create the active snapshot from the ca scan objects					
 				$this.TargetSubscriptionIds = ""
@@ -2211,11 +2211,11 @@ class CCAutomation: CommandBase
 		
 		if(($reportsStorageAccount | Measure-Object).Count -eq 1)
 		{
-			$filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
+			$filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
 
 			if(-not (Split-Path -Parent $filename | Test-Path))
 			{
-				mkdir -Path $(Split-Path -Parent $filename) -Force
+				New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 			}
 			$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $reportsStorageAccount.Name
 			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
@@ -2224,7 +2224,7 @@ class CCAutomation: CommandBase
 			{
 				$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
 				#$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
-				$CAScanDataBlobContent = Get-ChildItem -Path "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)" -Force | Get-Content | ConvertFrom-Json
+				$CAScanDataBlobContent = Get-ChildItem -Path Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName) -Force | Get-Content | ConvertFrom-Json
 			}
 		}
 		if(($CAScanDataBlobContent | Measure-Object).Count -gt 0)
@@ -2494,11 +2494,11 @@ class CCAutomation: CommandBase
 		#Persist only if there are more than one scan object. Count greater than 1 as to check if there are any other subscription apart from the central one
 		if(($finalTargetSubs | Measure-Object).Count -gt 1)
 		{
-			$filename = "$($this.AzSKCATempFolderPath)\$($this.CATargetSubsBlobName)"
+			$filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
 
 			if(-not (Split-Path -Parent $filename | Test-Path))
 			{
-				mkdir -Path $(Split-Path -Parent $filename) -Force
+				New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 			}
 			[Helpers]::ConvertToJsonCustom($finalTargetSubs) | Out-File $filename -Force							
 
@@ -3080,21 +3080,78 @@ class CCAutomation: CommandBase
         try
         {
             #create new self-signed certificate 
-            $this.PublishCustomMessage("Generating new credential for AzSK CA SPN")
-		    $selfsignedCertificate = [ActiveDirectoryHelper]::NewSelfSignedCertificate($azskADAppName,$this.certificateDetail.CertStartDate,$this.certificateDetail.CertEndDate,$this.certificateDetail.Provider)
-			
-		    #create password
-			     
+            $this.PublishCustomMessage("Generating new credential for AzSK CA SPN")  
 		    $secureCertPassword = [Helpers]::NewSecurePassword()
 
-		    $pfxFilePath = $env:TEMP+ "\temp.pfx"
-		    Export-PfxCertificate -Cert $selfsignedCertificate -Password $secureCertPassword -FilePath $pfxFilePath | Out-Null 
-		    $publicCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(,$selfsignedCertificate.GetRawCertData())
+			$pfxFilePath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) -ChildPath "Temp" |Join-Path -ChildPath "temp.pfx"
+			if(-not (Test-Path $(Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) "Temp")))
+			{
+				New-Item -ItemType Directory -Path (Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) "Temp") -ErrorAction Stop | Out-Null
+			}
+			#Export-PfxCertificate -Cert $selfsignedCertificate -Password $secureCertPassword -FilePath $pfxFilePath | Out-Null
+			$certificate = [SelfSignedCertificate]::new()
+			[bool]$ForCertificateAuthority = $false
+			$KeyLength = 2048
+			[System.Security.Cryptography.X509Certificates.X509KeyUsageFlags]$KeyUsage = [System.Security.Cryptography.X509Certificates.X509KeyUsageFlags]::DataEncipherment
+			$extensions = [System.Collections.Generic.List[System.Security.Cryptography.X509Certificates.X509Extension]]::new()
+			$keyUsages = [System.Security.Cryptography.X509Certificates.X509KeyUsageExtension]::new(
+                    $KeyUsage,
+                    <# critical #> $false)
+			$extensions.Add($keyUsages)
+			# Create Basic Constraints
+            $basicConstraints = [System.Security.Cryptography.X509Certificates.X509BasicConstraintsExtension]::new(
+                <# certificateAuthority #> $ForCertificateAuthority,
+                <# hasPathLengthConstraint #> $false,
+                <# pathLengthConstraint #> 0,
+                <# critical #> $false)
+			$extensions.Add($basicConstraints)
+			# Create Private Key
+            $key = [System.Security.Cryptography.RSA]::Create($KeyLength)
+
+            # Create the subject of the certificate
+            $subject = "CN=$azskADAppName"
+
+            # Create Certificate Request
+            $certRequest = [System.Security.Cryptography.X509Certificates.CertificateRequest]::new(
+                $subject,
+                $key,
+                [System.Security.Cryptography.HashAlgorithmName]::SHA256,
+                [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+
+            # Create the Subject Key Identifier extension
+            $subjectKeyIdentifier = [System.Security.Cryptography.X509Certificates.X509SubjectKeyIdentifierExtension]::new(
+                $certRequest.PublicKey,
+                <# critical #> $false)
+			$extensions.Add($subjectKeyIdentifier)
+			foreach ($extension in $extensions)
+            {
+                $certRequest.CertificateExtensions.Add($extension)
+            }
+
+            $cert = $certRequest.CreateSelfSigned($certificate.CertStartDate, $certificate.CertEndDate)
+            $IsWindows = [Environment]::OSVersion.VersionString.Contains('Windows')
+            # FriendlyName is not supported on UNIX platforms
+            if ($IsWindows)
+            {
+                $cert.FriendlyName = $azskADAppName
+            }
+			$CertificateFormat = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pfx
+			[System.Security.Cryptography.X509Certificates.X509Certificate2]$x509Certificate2 = $cert
+			$bytes = $x509Certificate2.Export($CertificateFormat, $secureCertPassword)
+            try
+            {
+                [System.IO.File]::WriteAllBytes($pfxFilePath, $bytes)
+            }
+            finally
+            {
+                [array]::Clear($bytes, 0, $bytes.Length)
+            }
+		    $publicCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(,$x509Certificate2.GetRawCertData())
 			
             try
             {
                 #Authenticating AAD App service principal with newly created certificate credential  
-		        [ActiveDirectoryHelper]::UpdateADAppCredential($appID,$publicCert,$this.certificateDetail.CredStartDate,$this.certificateDetail.CredEndDate,"False")
+		        [ActiveDirectoryHelper]::UpdateADAppCredential($appID,$publicCert,$certificate.CredStartDate,$certificate.CredEndDate,"False")
             }
             catch
             {
@@ -3143,16 +3200,26 @@ class CCAutomation: CommandBase
         }     
     }
     
+    
     hidden [void] SetCASPNPermissions([string] $appID)
     {
 		$this.PublishCustomMessage("Configuring permissions for AzSK CA SPN. This may take a few min...")
-		$this.SetSPNSubscriptionAccessIfNotAssigned($appID)
-        $this.SetSPNRGAccessIfNotAssigned($appID)
+		try 
+		{
+				$this.SetSPNRGAccessIfNotAssigned($appID)
+				$this.SetSPNSubscriptionAccessIfNotAssigned($appID)
+		}
+		catch
+		{
+				Write-Warning "Ignoring error while assigning CA SPN permissions for SPN: [$appID]."
+				Write-Warning "Make sure this SPN is 'Contributor' on AzSKRG and 'Reader' on the subscription."
+		}
+
     }
     
 	hidden [string] AddConfigValues([string]$fileName)
 	{
-		$outputFilePath = "$Env:LOCALAPPDATA\$fileName";
+		$outputFilePath = Join-Path $([Environment]::GetFolderPath('LocalApplicationData')) $fileName;
 
 		$ccRunbook = $this.LoadServerConfigFile($fileName)
 		#append escape character (`) before '$' symbol

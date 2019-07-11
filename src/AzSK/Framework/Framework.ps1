@@ -161,3 +161,4 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $PSScriptRoot\Core\ARMChecker\ARMCheckerStatus.ps1
 . $PSScriptRoot\Core\PolicySetup\PolicySetup.ps1
 . $PSScriptRoot\Core\PIM\PIMScript.ps1
+. $PSScriptRoot\Core\CredHygiene\CredHygieneScript.ps1

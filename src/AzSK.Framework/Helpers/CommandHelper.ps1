@@ -270,7 +270,33 @@ class CommandHelper
 		[CommandDetails]@{
             Verb = "Get";
             Noun = "AzSKPIMConfiguration";
-			ShortName = "ListPIM";
+			ShortName = "GetPIM";
+			IsOrgPolicyMandatory = $false;
+        },
+
+		#Cred-Hygiene
+		[CommandDetails]@{
+            Verb = "New";
+            Noun = "AzSKTrackedCredential";
+			ShortName = "NTC";
+			IsOrgPolicyMandatory = $false;
+        },
+		[CommandDetails]@{
+            Verb = "Get";
+            Noun = "AzSKTrackedCredential";
+			ShortName = "GTC";
+			IsOrgPolicyMandatory = $false;
+        },
+		[CommandDetails]@{
+            Verb = "Update";
+            Noun = "AzSKTrackedCredential";
+			ShortName = "UTC";
+			IsOrgPolicyMandatory = $false;
+        },
+		[CommandDetails]@{
+            Verb = "Remove";
+            Noun = "AzSKTrackedCredential";
+			ShortName = "RTC";
 			IsOrgPolicyMandatory = $false;
         }
     );

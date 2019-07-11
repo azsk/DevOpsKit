@@ -143,7 +143,11 @@
 		'Update-AzSKPersistedState'
         'Get-AzSKSecurityRecommendationReport',
         'Set-AzSKPIMConfiguration',
-        'Get-AzSKPIMConfiguration'
+        'Get-AzSKPIMConfiguration',
+        'Get-AzSKTrackedCredential',
+        'Remove-AzSKTrackedCredential',
+        'Update-AzSKTrackedCredential',
+        'New-AzSKTrackedCredential'
     )
 
     # Cmdlets to export from this module

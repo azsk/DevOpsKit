@@ -509,6 +509,24 @@
       ],
       "Enabled": true,     
       "Rationale": "ASC standard tier enables advanced threat detection capabilities, which uses built-in behavioral analytics and machine learning to identify attacks and zero-day exploits, access and application controls to reduce exposure to network attacks and malware, and more"
+    },
+    {
+      "ControlID": "Azure_Subscription_Check_Credential_Rotation",
+      "Description": "Ensure any credentials approaching expiry are rotated soon.",
+      "Id": "SubscriptionCore310",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckCredentialHygiene",
+      "Recommendation": "Run Update-AzSKTrackedCredential with the 'ResetLastUpdate' switch with other required parameters (Subscription Id, credential name, etc.).",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "SubscriptionCore"
+      ],
+      "Enabled": true,     
+      "Rationale": "Periodic credential rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks. Credential expiry can also impact availability of existing apps."
     }
   ]
 }
