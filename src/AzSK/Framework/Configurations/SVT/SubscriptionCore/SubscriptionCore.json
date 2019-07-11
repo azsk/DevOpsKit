@@ -515,7 +515,7 @@
       "Id": "SubscriptionCore310",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckCredRotation",
+      "MethodName": "CheckCredentialHygiene",
       "Recommendation": "Run Update-AzSKTrackedCredential with the 'UpdateCredential' switch with other required parameters (Subscription Id, credential name, etc.).",
       "Tags": [
         "SDL",

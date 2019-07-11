@@ -1499,7 +1499,7 @@ class SubscriptionCore: SVTBase
 	
 	}
 
-	hidden [ControlResult] CheckCredRotation([ControlResult] $controlResult)
+	hidden [ControlResult] CheckCredentialHygiene([ControlResult] $controlResult)
     {
         $AzSKRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
         $containerName = [Constants]::RotationMetadataContainerName

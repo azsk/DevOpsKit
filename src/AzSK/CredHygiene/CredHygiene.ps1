@@ -72,7 +72,7 @@ function New-AzSKTrackedCredential {
     Process {
         try {
 			
-            $cred = [CredRotation]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+            $cred = [CredHygiene]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){
                 $cred.credName = $CredentialName
                 $cred.credLocation = $CredentialLocation
@@ -187,7 +187,7 @@ function Get-AzSKTrackedCredential {
     Process {
         try {
 			
-            $cred = [CredRotation]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+            $cred = [CredHygiene]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){
                 if($CredentialName){
                     $cred.InvokeFunction($cred.GetAlert, @($CredentialName))
@@ -248,7 +248,7 @@ function Remove-AzSKTrackedCredential {
     Process {
         try {
 			
-            $cred = [CredRotation]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+            $cred = [CredHygiene]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){
                 if($Force){
                     $cred.InvokeFunction($cred.RemoveAlert, @($CredentialName, $true))
@@ -337,7 +337,7 @@ function Update-AzSKTrackedCredential {
     Process {
         try {
 			
-            $cred = [CredRotation]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+            $cred = [CredHygiene]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){
                 if($UpdateCredential){
                     $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$true)) 

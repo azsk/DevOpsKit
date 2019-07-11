@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest
 
-class CredRotation : CommandBase{
+class CredHygiene : CommandBase{
     [string] $credName;
     [string] $credLocation;
     [int] $rotationInt;
@@ -13,7 +13,7 @@ class CredRotation : CommandBase{
 	hidden [PSObject] $RotationMetadataContainer = $null;
 	hidden [string] $RotationMetadataContainerName = [Constants]::RotationMetadataContainerName
 
-    CredRotation([string] $subscriptionId, [InvocationInfo] $invocationContext): 
+    CredHygiene([string] $subscriptionId, [InvocationInfo] $invocationContext): 
         Base($subscriptionId, $invocationContext)
     { }
 
