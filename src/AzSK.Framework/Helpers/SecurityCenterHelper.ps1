@@ -13,7 +13,6 @@ class SecurityCenterHelper
 	static [string] $ApiVersion = "?api-version=2015-06-01-preview";
 	static [string] $ApiVersionNew = "?api-version=2017-08-01-preview";
 	static [string] $ApiVersionLatest = "?api-version=2018-03-01";
-	static [PSObject] $ASCSecurityStatus = $null;
 	static [PSObject] $Recommendations = $null;
 	
 
@@ -67,31 +66,22 @@ class SecurityCenterHelper
 		return [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
 	}
 
-	static [PSObject] InvokeSecurityCenterSecurityStatus([string] $subscriptionId)
+	static [PSObject] InvokeSecurityCenterSecurityStatus([string] $subscriptionId, [string] $resourceId)
 	{
 		try 
 		{ 	
-			if([SecurityCenterHelper]::ASCSecurityStatus -eq $null)
+			if((-not [string]::IsNullOrEmpty($subscriptionId)) -and (-not [String]::IsNullOrEmpty($resourceId))) 
 			{
 				$rmContext = [Helpers]::GetCurrentRMContext();
 		        $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-				$uri = [System.String]::Format("{0}subscriptions/{1}/providers/microsoft.Security/securityStatuses?api-version=2015-06-01-preview", $ResourceAppIdURI, $subscriptionId)
+				$uri = [System.String]::Format("{0}subscriptions/{1}/providers/microsoft.Security/securityStatuses?api-version=2015-06-01-preview&`$filter=tolower(Id)%20eq%20tolower('{2}/providers/Microsoft.Security/securityStatuses/{3}')", $ResourceAppIdURI, $subscriptionId, $resourceId, $resourceId.Split("/")[-1])
 				$result = [WebRequestHelper]::InvokeGetWebRequest($uri);					
 				if(($result | Measure-Object).Count -gt 0)
 				{
-					$statusDict = @{};
-					$result | ForEach-Object {
-						$resource = $_;
-						$key = ("$($resource.name):$($resource.properties.type)").ToLower();
-						if(-not $statusDict.ContainsKey($key))
-						{
-							$statusDict.Add($key,$resource);
-						}							
-					}
-					[SecurityCenterHelper]::ASCSecurityStatus = $statusDict;						
+					return $result				
 				}										
 			}				
-			return [SecurityCenterHelper]::ASCSecurityStatus;				
+			return $null
 		} 
 		catch
 		{ 
