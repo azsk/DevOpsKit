@@ -109,7 +109,7 @@ class RemoteApiHelper {
             }
         }
         #will uncomment api call once the API for this is up
-        #[RemoteApiHelper]::PostJsonContent("/inventory/asctelemetrydata", $ASCDataList) | Out-Null
+        [RemoteApiHelper]::PostJsonContent("/inventory/asctelemetrydata", $ASCDataList) | Out-Null
     }
 
     hidden static [psobject] ConvertToSimpleSet([SVTEventContext[]] $contexts) {
