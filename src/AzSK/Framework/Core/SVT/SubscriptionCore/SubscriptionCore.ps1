@@ -54,7 +54,24 @@ class SubscriptionCore: SVTBase
 		$subscriptionMetada.Add("FeatureVersions", $azskRGTags);
 		$this.SubscriptionContext.SubscriptionMetadata = $subscriptionMetada;
 		$this.SubscriptionMandatoryTags += [ConfigurationManager]::GetAzSKConfigData().SubscriptionMandatoryTags;
+
 	}
+
+	[ControlItem[]] ApplyServiceFilters([ControlItem[]] $controls)
+	{
+		$result = $controls;
+
+		#Scan resource group persistent access control only when scan source is equal to CA. We are filtering this control due to performance issue.
+		$isRGPersistentAccessCheckEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupPersistentAccessCheck",$($this.SubscriptionContext.SubscriptionId))
+		if($isRGPersistentAccessCheckEnabled -eq $false)
+		{
+			$result = $result | Where-Object { $_.Tags -notcontains "RGPersistentAccess" }
+		}
+		
+		return $result;
+	}
+
+
 	hidden [ControlResult] CheckSubscriptionAdminCount([ControlResult] $controlResult)
 	{
 		$this.GetRoleAssignments()
@@ -1006,12 +1023,14 @@ class SubscriptionCore: SVTBase
 
 	}
 
+	# This function evaluates permanent role assignments at resource group level.
 	hidden [ControlResult] CheckRGLevelPermanentRoleAssignments([ControlResult] $controlResult)
 	{
 		$message = '';
 		$whitelistedPermanentRoles = $null
 		$message=$this.GetRGLevelPIMRoles();
 		
+		# 'Owner' and 'User Access Administrator' are high privileged roles. These roles should not be give permanent access at resource group level.
 		$criticalRoles = $this.ControlSettings.CriticalPIMRoles.ResourceGroup;
 		$permanentRoles = $this.RGLevelPermanentAssignments;
 		if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
@@ -1030,7 +1049,7 @@ class SubscriptionCore: SVTBase
 			{
 				$controlResult.SetStateData("Permanent role assignments present on resource groups",$criticalPermanentRoles)
 				$controlResult.AddMessage([VerificationResult]::Failed, "Resource groups contains permanent role assignment for critical roles : $($criticalRoles -join ',')")
-				$permanentRolesbyRoleDefinition=$criticalPermanentRoles|Sort-Object -Property RoleDefinitionName | Select-Object SubscriptionId, @{Name="Scope"; Expression={$_.Scope.Split("/")[-1]}}, DisplayName, ObjectType, RoleDefinitionName
+				$permanentRolesbyRoleDefinition=$criticalPermanentRoles|Sort-Object -Property RoleDefinitionName | Select-Object SubscriptionId, @{Name="ResourceGroupName"; Expression={$_.Scope.Split("/")[-1]}}, DisplayName, ObjectType, RoleDefinitionName | Format-List | Out-String
 				$controlResult.AddMessage($permanentRolesbyRoleDefinition);
 				
 			}
@@ -1377,11 +1396,12 @@ class SubscriptionCore: SVTBase
 			{
 				$authorisationToken = "Bearer " + $accessToken
 				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
-				$uri=[Constants]::PIMAPIUri +"?`$filter=type%20eq%20%27resourcegroup%27&`$orderby=displayName"
+				$uri=[Constants]::PIMAPIUri +"?`$filter=(type%20eq%20%27resourcegroup%27)%20and%20contains(tolower(externalId),%20%27{0}%27)&`$orderby=displayName" -f $this.SubscriptionContext.SubscriptionId.ToLower()
 				try
 				{
 					#Get external id for the current subscription
 					$response=[WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
+					
 					$subId=$this.SubscriptionContext.SubscriptionId;
 					$extID=$response| Where-Object{$_.externalId.split('/') -contains $subId}
 					$resourceIDs=$extID.id;
@@ -1389,8 +1409,16 @@ class SubscriptionCore: SVTBase
 					$this.RGLevelPermanentAssignments=@();
 					if($null -ne $response -and $null -ne $resourceIDs)
 					{
+						$loopCount = 0
 						foreach($resourceID in $resourceIDs)
 						{
+							#This check is to avoid too many API calls in a minute
+							$loopCount++;
+							if($loopCount -eq 400)
+							{
+								sleep 60;
+								$loopCount = 0
+							}
 							#Get RoleAssignments from PIM API 
 							$url=[string]::Format([Constants]::PIMAPIUri +"/{0}/roleAssignments?`$expand=subject,roleDefinition(`$expand=resource)", $resourceID)
 							$responseContent=[WebRequestHelper]::InvokeGetWebRequest($url, $headers)
