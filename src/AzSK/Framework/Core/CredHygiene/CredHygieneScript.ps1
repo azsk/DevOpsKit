@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest
 
-class CredRotation : CommandBase{
+class CredHygiene : CommandBase{
     [string] $credName;
     [string] $credLocation;
     [int] $rotationInt;
@@ -13,7 +13,7 @@ class CredRotation : CommandBase{
 	hidden [PSObject] $RotationMetadataContainer = $null;
 	hidden [string] $RotationMetadataContainerName = [Constants]::RotationMetadataContainerName
 
-    CredRotation([string] $subscriptionId, [InvocationInfo] $invocationContext): 
+    CredHygiene([string] $subscriptionId, [InvocationInfo] $invocationContext): 
         Base($subscriptionId, $invocationContext)
     { }
 
@@ -89,6 +89,7 @@ class CredRotation : CommandBase{
 
 		if($credentialInfo.credLocation -eq "AppService"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
+			$this.PublishCustomMessage("Credential Details:");
 			$this.PublishCustomMessage("AppService name:`t`t`t`t`t`t$($credentialInfo.resourceGroup)", [MessageType]::Default)
 			$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", [MessageType]::Default)
 			$this.PublishCustomMessage("AppService config type:`t`t`t`t`t$($credentialInfo.appConfigType)", [MessageType]::Default)
@@ -96,6 +97,7 @@ class CredRotation : CommandBase{
 		}
 		if($credentialInfo.credLocation -eq "KeyVault"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
+			$this.PublishCustomMessage("Credential Details:");
 			$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", [MessageType]::Default)
 			$this.PublishCustomMessage("Credential type:`t`t`t`t`t`t$($credentialInfo.kvCredType)", [MessageType]::Default)
 			$this.PublishCustomMessage("Credential name:`t`t`t`t`t`t$($credentialInfo.kvCredName)", [MessageType]::Default)
@@ -120,6 +122,7 @@ class CredRotation : CommandBase{
 
 		if($credentialInfo.credLocation -eq "AppService"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
+			$this.PublishCustomMessage("Credential Details:");
 			$this.PublishCustomMessage("AppService name:`t`t`t`t`t`t$($credentialInfo.resourceGroup)", [MessageType]::Default)
 			$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", [MessageType]::Default)
 			$this.PublishCustomMessage("AppService config type:`t`t`t`t`t$($credentialInfo.appConfigType)", [MessageType]::Default)
@@ -127,6 +130,7 @@ class CredRotation : CommandBase{
 		}
 		if($credentialInfo.credLocation -eq "KeyVault"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
+			$this.PublishCustomMessage("Credential Details:");
 			$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", [MessageType]::Default)
 			$this.PublishCustomMessage("Credential type:`t`t`t`t`t`t$($credentialInfo.kvCredType)", [MessageType]::Default)
 			$this.PublishCustomMessage("Credential name:`t`t`t`t`t`t$($credentialInfo.kvCredName)", [MessageType]::Default)
@@ -222,7 +226,8 @@ class CredRotation : CommandBase{
 
         $blobContent = Get-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -Destination $file -Force -ErrorAction Ignore
         if($blobContent){
-            $this.PublishCustomMessage("Entry for the credential [$($this.credName)] already exists. Run Update-AzSKTrackedCredential to update alert configurations for the existing credential.", [MessageType]::Error);
+            $this.PublishCustomMessage("Entry for the credential [$($this.credName)] already exists.", [MessageType]::Error);
+			$this.PublishCustomMessage("Run Update-AzSKTrackedCredential to update alert configurations for the existing credential.", [MessageType]::Default)
         }
         else{
             
@@ -250,21 +255,21 @@ class CredRotation : CommandBase{
 				$resource = Get-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName -ErrorAction Ignore
 				if(-not $resource){
 					$found = $false;
-					$this.PublishCustomMessage("Could not find a resource for the given app service name and resource group. Please verify whether the given app service name/resource group is correct.",[MessageType]::Error)
+					$this.PublishCustomMessage("Could not find app service [$ResourceName] and/or resource group [$ResourceGroupName]. Please check the names.",[MessageType]::Error)
 				}
 				else{
 					if($AppConfigType -eq "Application Settings")
 					{
 						if(-not ($resource.SiteConfig.AppSettings.Name | where-object{$_ -eq $AppConfigName})){
 							$found = $false;
-							$this.PublishCustomMessage("Could not find the app setting [$AppConfigName] in the app service. Please verify whether the given app setting name is correct.",[MessageType]::Error)
+							$this.PublishCustomMessage("Could not find app setting [$AppConfigName] in the app service [$ResourceName]. Please check the name.",[MessageType]::Error)
 						}
 					}
 					elseif($AppConfigType -eq "Connection Strings")
 					{
 						if(-not ($resource.SiteConfig.ConnectionStrings.Name | where-object{$_ -eq $AppConfigName})){
 							$found = $false;
-							$this.PublishCustomMessage("Could not find the connection string [$AppConfigName] in the app service. Please verify whether the given connection string name is correct.",[MessageType]::Error)
+							$this.PublishCustomMessage("Could not find connection string [$AppConfigName] in the app service [$ResourceName]. Please check the name.",[MessageType]::Error)
 						}
 					}		
 							
@@ -285,7 +290,7 @@ class CredRotation : CommandBase{
 					}
                     else{
 						$found = $false;
-						$this.PublishCustomMessage("Could not find a key for the given key vault credential. Please verify whether the given key vault name/key is correct.",[MessageType]::Error)
+						$this.PublishCustomMessage("Could not find key [$KVCredentialName] in key vault [$KVName]. Please check the names.",[MessageType]::Error)
 					}
                 }
                 elseif($KVCredentialType -eq "Secret")
@@ -297,7 +302,7 @@ class CredRotation : CommandBase{
 					}
 					else{
 						$found = $false;
-						$this.PublishCustomMessage("Could not find a secret for the given key vault credential. Please verify whether the given key vault name/secret is correct.",[MessageType]::Error)
+						$this.PublishCustomMessage("Could not find secret [$KVCredentialName] in key vault [$KVName]. Please check the names.",[MessageType]::Error)
 					}
                 }
             }
@@ -374,7 +379,7 @@ class CredRotation : CommandBase{
 
 		}
 		else{
-			$this.PublishCustomMessage("Entry for the credential [$CredentialName] not found.", [MessageType]::Critical)
+			$this.PublishCustomMessage("Could not find an entry for credential [$CredentialName].", [MessageType]::Critical)
 		}
 		if(Test-Path $file)
 		{
@@ -382,7 +387,7 @@ class CredRotation : CommandBase{
 		}
 	}
 	
-	[void] UpdateAlert($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$UpdateCredential)
+	[void] UpdateAlert($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$UpdateCredential,$ResetLastUpdate)
 	{           
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $CredentialName
 		$file += ".json"
@@ -519,6 +524,12 @@ class CredRotation : CommandBase{
 				$credentialInfo.lastUpdatedOn = [DateTime]::UtcNow
 				$credentialInfo.lastUpdatedBy = $user
 			}
+			else{
+				if($ResetLastUpdate){
+					$credentialInfo.lastUpdatedOn = [DateTime]::UtcNow
+					$credentialInfo.lastUpdatedBy = $user
+				}
+			}
 
 			$credentialInfo.comment = $Comment
 			$credentialInfo | ConvertTo-Json -Depth 10 | Out-File $file -Force
@@ -527,7 +538,7 @@ class CredRotation : CommandBase{
 			$this.PrintInfo($credentialInfo);
 		}
 		else{
-			$this.PublishCustomMessage("Entry for the credential [$CredentialName] not found.", [MessageType]::Critical)
+			$this.PublishCustomMessage("Could not find an entry for credential [$CredentialName].", [MessageType]::Critical)
 		}
 		if(Test-Path $file)
 		{

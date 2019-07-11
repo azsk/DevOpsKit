@@ -72,7 +72,7 @@ function New-AzSKTrackedCredential {
     Process {
         try {
 			
-            $cred = [CredRotation]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+            $cred = [CredHygiene]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){
                 $cred.credName = $CredentialName
                 $cred.credLocation = $CredentialLocation
@@ -187,7 +187,7 @@ function Get-AzSKTrackedCredential {
     Process {
         try {
 			
-            $cred = [CredRotation]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+            $cred = [CredHygiene]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){
                 if($CredentialName){
                     $cred.InvokeFunction($cred.GetAlert, @($CredentialName))
@@ -248,7 +248,7 @@ function Remove-AzSKTrackedCredential {
     Process {
         try {
 			
-            $cred = [CredRotation]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+            $cred = [CredHygiene]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){
                 if($Force){
                     $cred.InvokeFunction($cred.RemoveAlert, @($CredentialName, $true))
@@ -323,10 +323,15 @@ function Update-AzSKTrackedCredential {
         [string]
 		[Alias("cmt")]
         $Comment,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Switch for rotating credential at source.")]
+        [switch]
+		[Alias("rlu")]
+        $ResetLastUpdate,
         
         [Parameter(Mandatory = $false, HelpMessage = "Switch for rotating credential at source.")]
         [switch]
-		[Alias("rc")]
+		[Alias("uc")]
         $UpdateCredential
 
     )
@@ -337,14 +342,21 @@ function Update-AzSKTrackedCredential {
     Process {
         try {
 			
-            $cred = [CredRotation]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+            $cred = [CredHygiene]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){
+
+                $updatecred = $false;
+                $resetcred = $false;
+                
                 if($UpdateCredential){
-                    $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$true)) 
+                    $updatecred = $true;
                 }
-                else{
-                    $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$false)) 
+                
+                if($ResetLastUpdate){
+                    $resetcred = $true;
                 }
+                
+                $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$updatecred,$resetcred)) 
                            
             }
 	
