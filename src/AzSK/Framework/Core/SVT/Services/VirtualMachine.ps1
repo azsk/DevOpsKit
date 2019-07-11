@@ -210,16 +210,10 @@ class VirtualMachine: SVTBase
 		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
 		try 
 		{ 	
-			$result = [SecurityCenterHelper]::InvokeSecurityCenterSecurityStatus($this.SubscriptionContext.SubscriptionId);
+			$result = [SecurityCenterHelper]::InvokeSecurityCenterSecurityStatus($this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceId);
 			if(($result | Measure-Object).Count -gt 0)
-			{
-				$key = ("$($this.ResourceContext.ResourceName):VirtualMachine").ToLower();
-				$vmSecurityState = $null;
-				if($result.ContainsKey($key))
-				{
-					$vmSecurityState = $result[$key];
-				}			
-				return $vmSecurityState;			
+			{			
+				return $result;			
 			}			
 		}
 		catch
@@ -337,7 +331,7 @@ class VirtualMachine: SVTBase
 			{
 				$antimalwareSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.EndpointProtection};
 			}
-
+			
 			if($null -ne $antimalwareSetting)
 			{
 				$controlResult.AddMessage("VM endpoint protection details:", $antimalwareSetting);
@@ -687,7 +681,7 @@ class VirtualMachine: SVTBase
 			{
 				$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryption};
 			}
-
+			
 			if($null -ne $adeSetting)
 			{
 				if($adeSetting.assessmentResult -eq 'Healthy')
@@ -914,7 +908,7 @@ class VirtualMachine: SVTBase
 				{
 					$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScan};
 				}
-
+				
 				if($null -ne $vulnSetting)
 				{
 					$vulnStatus = $vulnSetting.assessmentResult;
