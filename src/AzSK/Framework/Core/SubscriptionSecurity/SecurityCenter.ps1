@@ -9,6 +9,10 @@ class SecurityCenter: AzSKRoot
 	[string] $On = "On";
 	[string] $ContactPhoneNumber;
 	[string] $ContactEmail;
+	[string] $AlertNotifStatus;
+	[string] $AlertAdminStatus;
+	[string] $AutoProvisioningSettings = "";
+	[string] $ASCTier = "";
 	SecurityCenter([string] $subscriptionId,[bool]$registerASCProvider): 
         Base($subscriptionId)
     { 		
@@ -27,6 +31,10 @@ class SecurityCenter: AzSKRoot
 		$this.LoadCurrentPolicy();
 		#calling this function as it would fetch the current contact phone number settings 
 		$this.CheckSecurityContactSettings();
+		#this function would fetch auto provisioning settings
+		$this.CheckAutoProvisioningSettings();
+		#this function would fetch ASC Tier details
+		$this.CheckASCTierSettings();
 	}
 
 	SecurityCenter([string] $subscriptionId, [string] $securityContactEmail, [string] $securityContactPhoneNumber): 
@@ -45,6 +53,10 @@ class SecurityCenter: AzSKRoot
 		{
 			$this.ContactEmail = $securityContactEmail;
 		}		
+		#this function would fetch auto provisioning settings
+		$this.CheckAutoProvisioningSettings();
+		#this function would fetch ASC Tier details
+		$this.CheckASCTierSettings();
 	}
 
 
@@ -67,6 +79,9 @@ class SecurityCenter: AzSKRoot
 		{
 			$statuses += $response;
 		}
+
+		$this.CheckASCTierSettings();
+
 		return $statuses;
 	}
 
@@ -161,7 +176,11 @@ class SecurityCenter: AzSKRoot
 			$autoProvisioningUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::AutoProvisioningSettingsApi)/default$([SecurityCenterHelper]::ApiVersionNew)";
 			try
             {
-                $response = [WebRequestHelper]::InvokeGetWebRequest($autoProvisioningUri);
+				$response = [WebRequestHelper]::InvokeGetWebRequest($autoProvisioningUri);
+				if([Helpers]::CheckMember($response, "properties.autoProvision"))
+				{
+					$this.AutoProvisioningSettings = $response.properties.autoProvision;
+				}			
 			}
             catch
             {
@@ -213,6 +232,14 @@ class SecurityCenter: AzSKRoot
 			{
 				$this.ContactEmail = $response.properties.email;
 				$this.ContactPhoneNumber = $response.properties.phone;
+				if([Helpers]::CheckMember($response, "properties.alertNotifications"))
+				{
+					$this.AlertNotifStatus = $response.properties.alertNotifications;
+				}
+				if([Helpers]::CheckMember($response, "properties.alertsToAdmins"))
+				{
+					$this.AlertAdminStatus = $response.properties.alertsToAdmins;
+				}
 				if(-not ((-not ([Helpers]::CheckMember($secContactObject,"properties.email",$false)) -or ([Helpers]::CheckMember($response,"properties.email") -and -not [string]::IsNullOrWhiteSpace($response.properties.email)))`
 					 -and (-not ([Helpers]::CheckMember($secContactObject,"properties.phone",$false)) -or ([Helpers]::CheckMember($response,"properties.phone") -and -not [string]::IsNullOrWhiteSpace($response.properties.phone)))`
 					 -and (-not ([Helpers]::CheckMember($secContactObject,"properties.alertNotifications",$false)) -or ([Helpers]::CheckMember($response,"properties.alertNotifications") -and ($response.properties.alertNotifications -eq $secContactObject.properties.alertNotifications)))`
@@ -229,6 +256,18 @@ class SecurityCenter: AzSKRoot
 		return $null;
 	}
 
+	[void] CheckASCTierSettings()
+	{
+		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
+		$validatedUri ="$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings/default?api-version=2017-08-01-preview"
+		$ascTierContentDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+
+ 		if([Helpers]::CheckMember($ascTierContentDetails,"properties.pricingTier"))
+		{
+			$this.ASCTier = $ascTierContentDetails.properties.pricingTier
+		}
+	}
+	
 	[MessageData[]] SetSecurityPolicySettings()
 	{
 		[MessageData[]] $messages = @();
