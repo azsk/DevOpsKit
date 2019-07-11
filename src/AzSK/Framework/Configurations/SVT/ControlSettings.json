@@ -323,6 +323,7 @@
     "WebhookValidityInDays": 60,
     "variablesToSkip": ["AppResourceGroupNames", "ReportsStorageAccountName", "UpdateToLatestAzSKVersion", "OMSSharedKey", "OMSWorkspaceId", "AltOMSWorkspaceId", "AltOMSSharedKey", "LAWSId", "LAWSSharedKey", "AltLAWSId", "AltLAWSSharedKey", "WebhookAuthZHeaderName", "WebhookUrl"]
   },
+  "AllowedResourceTypesForMetadataCapture":["AppService", "VirtualMachine","DataFactory","DataFactoryV2"],
   "BaselineControls": {
     "ResourceTypeControlIdMappingList": [
 

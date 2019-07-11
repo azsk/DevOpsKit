@@ -1415,14 +1415,27 @@ class SVTBase: AzSKRoot
 
 	hidden AddResourceMetadata([PSObject] $metadataObj)
 	{
-
 		[hashtable] $resourceMetadata = New-Object -TypeName Hashtable;
-		$metadataObj.psobject.properties |
-			ForEach-Object {
-				$resourceMetadata.Add($_.name, $_.value)
-			}
+			$metadataObj.psobject.properties |
+				ForEach-Object {
+					$resourceMetadata.Add($_.name, $_.value)
+				}
 
-		$this.ResourceContext.ResourceMetadata = $resourceMetadata
+		if([Helpers]::CheckMember($this.ControlSettings, 'AllowedResourceTypesForMetadataCapture') )
+		{
+			if( $this.ResourceContext.ResourceTypeName -in $this.ControlSettings.AllowedResourceTypesForMetadataCapture)
+			{
+				$this.ResourceContext.ResourceMetadata = $resourceMetadata
+			}
+			else
+			{
+				$this.ResourceContext.ResourceMetadata = $null
+			}
+		}
+		else 
+		{
+			$this.ResourceContext.ResourceMetadata = $resourceMetadata
+		}
 
 	}
 
