@@ -327,7 +327,7 @@ function Update-AzSKTrackedCredential {
         [Parameter(Mandatory = $false, HelpMessage = "Switch for rotating credential at source.")]
         [switch]
 		[Alias("rc")]
-        $RotateCredential
+        $UpdateCredential
 
     )
     Begin {
@@ -339,7 +339,7 @@ function Update-AzSKTrackedCredential {
 			
             $cred = [CredRotation]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){
-                if($RotateCredential){
+                if($UpdateCredential){
                     $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$true)) 
                 }
                 else{

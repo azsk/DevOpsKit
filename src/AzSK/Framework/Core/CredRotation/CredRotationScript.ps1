@@ -382,7 +382,7 @@ class CredRotation : CommandBase{
 		}
 	}
 	
-	[void] UpdateAlert($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$RotateCredential)
+	[void] UpdateAlert($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$UpdateCredential)
 	{           
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $CredentialName
 		$file += ".json"
@@ -425,7 +425,7 @@ class CredRotation : CommandBase{
 				$credentialInfo.contactNumber = $AlertSMS;
 			}
 
-			if($RotateCredential){
+			if($UpdateCredential){
 			
 				if($credentialInfo.credLocation -eq "AppService"){
 					
