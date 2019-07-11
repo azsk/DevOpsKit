@@ -20,7 +20,10 @@ class VirtualMachine: SVTBase
 		$this.GetVMDetails();
 		$metadata= [PSObject]::new();
 		$metadata| Add-Member -Name VMDetails -Value $this.VMDetails -MemberType NoteProperty;
-		$metadata| Add-Member -Name VMASCDetails -Value $this.ASCSettings -MemberType NoteProperty;				
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableVMASCMetadataCapture",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+		{
+			$metadata| Add-Member -Name VMASCDetails -Value $this.ASCSettings -MemberType NoteProperty;
+		}				
 		$this.AddResourceMetadata($metadata);	
     }
     
@@ -31,7 +34,10 @@ class VirtualMachine: SVTBase
 		$this.GetVMDetails();
 		$metadata= [PSObject]::new();
 		$metadata| Add-Member -Name VMDetails -Value $this.VMDetails -MemberType NoteProperty;
-		$metadata| Add-Member -Name VMASCDetails -Value $this.ASCSettings -MemberType NoteProperty;				
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableVMASCMetadataCapture",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+		{
+			$metadata| Add-Member -Name VMASCDetails -Value $this.ASCSettings -MemberType NoteProperty;
+		}
 		$this.AddResourceMetadata($metadata);		
 		
 		#OS type must always be present in configuration setting file
