@@ -1513,8 +1513,10 @@ class SubscriptionCore: SVTBase
 
 			$expiredCount = 0;
 			$aboutToExpireCount = 0;
+			$healthyCount = 0;
 			[PSObject] $expiredCredentials = @();
 			[PSObject] $aboutToExpireCredentials = @();
+			[PSObject] $healthyCredentials = @();
 
 			$AzSKTemp = (Join-Path $([Constants]::AzSKAppFolderPath) $([Constants]::RotationMetadataSubPath)); 
 
@@ -1551,25 +1553,29 @@ class SubscriptionCore: SVTBase
 					$aboutToExpireCount +=1;
 					$aboutToExpireCredentials += $credentialInfo;
 				}
-			}
-			if($expiredCount -gt 0){
-				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following credentials have expired. Please rotate them.", $expiredCredentials));   
-				$controlResult.AddMessage("Please rotate them soon using the cmd Update-AzSKTrackedCredential with the 'UpdateCredential' switch with other required parameters (Subscription Id, credential name, etc.)."); 
-				if($aboutToExpireCount -gt 0){
-					$controlResult.AddMessage("The following AzSK-tracked credentials are about to expire and need to be rotated soon.",$aboutToExpireCredentials)
-					$controlResult.AddMessage("Please rotate them soon using the cmd Update-AzSKTrackedCredential with the 'UpdateCredential' switch with other required parameters (Subscription Id, credential name, etc.).");
+				else{
+					$healthyCount +=1;
+					$healthyCredentials += $credentialInfo;
 				}
 			}
+
+			$controlResult.AddMessage("`nCredentials that have expired or are very close to expiry: $expiredCount `n", $expiredCredentials)
+			$controlResult.AddMessage("`nCredentials that are approaching expiry: $aboutToExpireCount `n", $aboutToExpireCredentials)
+			$controlResult.AddMessage("`nCredentials that are not near expiry: $healthyCount `n", $healthyCredentials)
+
+			if($expiredCount -gt 0){
+				$controlResult.VerificationResult = [VerificationResult]::Failed;
+				$controlResult.AddMessage("`nPlease update them soon using the cmd Update-AzSKTrackedCredential with the 'ResetLastUpdate' switch with other required parameters (Subscription Id, credential name, etc.).`n")
+			}
 			elseif($aboutToExpireCount -gt 0){
-				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("The following AzSK-tracked credentials are about to expire and need to be rotated soon.",$aboutToExpireCredentials))
-				$controlResult.AddMessage("Please rotate them soon using the cmd Update-AzSKTrackedCredential with the 'UpdateCredential' switch with other required parameters (Subscription Id, credential name, etc.).");
+				$controlResult.VerificationResult = [VerificationResult]::Verify
 			}
 			else{ # No expired/about-to-expire credentials
 				$controlResult.VerificationResult = [VerificationResult]::Passed
 			}
 		}
 		else{ # No tracked credentials.
-			$controlResult.VerificationResult = [VerificationResult]::Passed
+			$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("There are no AzSK-tracked credentials in the subscription."))
 		}
 		return $controlResult
     }

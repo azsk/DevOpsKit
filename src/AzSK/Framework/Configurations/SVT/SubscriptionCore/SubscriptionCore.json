@@ -516,7 +516,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckCredentialHygiene",
-      "Recommendation": "Run Update-AzSKTrackedCredential with the 'UpdateCredential' switch with other required parameters (Subscription Id, credential name, etc.).",
+      "Recommendation": "Run Update-AzSKTrackedCredential with the 'ResetLastUpdate' switch with other required parameters (Subscription Id, credential name, etc.).",
       "Tags": [
         "SDL",
         "TCP",

@@ -323,10 +323,15 @@ function Update-AzSKTrackedCredential {
         [string]
 		[Alias("cmt")]
         $Comment,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Switch for rotating credential at source.")]
+        [switch]
+		[Alias("rlu")]
+        $ResetLastUpdate,
         
         [Parameter(Mandatory = $false, HelpMessage = "Switch for rotating credential at source.")]
         [switch]
-		[Alias("rc")]
+		[Alias("uc")]
         $UpdateCredential
 
     )
@@ -339,12 +344,19 @@ function Update-AzSKTrackedCredential {
 			
             $cred = [CredHygiene]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){
+
+                $updatecred = $false;
+                $resetcred = $false;
+                
                 if($UpdateCredential){
-                    $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$true)) 
+                    $updatecred = $true;
                 }
-                else{
-                    $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$false)) 
+                
+                if($ResetLastUpdate){
+                    $resetcred = $true;
                 }
+                
+                $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$updatecred,$resetcred)) 
                            
             }
 	

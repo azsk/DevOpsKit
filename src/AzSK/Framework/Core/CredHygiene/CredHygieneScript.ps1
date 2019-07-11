@@ -387,7 +387,7 @@ class CredHygiene : CommandBase{
 		}
 	}
 	
-	[void] UpdateAlert($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$UpdateCredential)
+	[void] UpdateAlert($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$UpdateCredential,$ResetLastUpdate)
 	{           
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $CredentialName
 		$file += ".json"
@@ -523,6 +523,12 @@ class CredHygiene : CommandBase{
 
 				$credentialInfo.lastUpdatedOn = [DateTime]::UtcNow
 				$credentialInfo.lastUpdatedBy = $user
+			}
+			else{
+				if($ResetLastUpdate){
+					$credentialInfo.lastUpdatedOn = [DateTime]::UtcNow
+					$credentialInfo.lastUpdatedBy = $user
+				}
 			}
 
 			$credentialInfo.comment = $Comment
