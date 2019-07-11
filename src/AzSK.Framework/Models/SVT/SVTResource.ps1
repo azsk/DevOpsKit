@@ -21,5 +21,6 @@ class SVTResource
     [string] $ResourceName = ""; 
     [string] $Location = "";
     [string] $ResourceType = "";
-	hidden [ResourceTypeMapping] $ResourceTypeMapping = $null;
+    hidden [ResourceTypeMapping] $ResourceTypeMapping = $null;
+    [PSObject] $ResourceDetails
 }

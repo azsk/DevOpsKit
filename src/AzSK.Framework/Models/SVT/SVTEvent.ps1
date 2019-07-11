@@ -33,6 +33,8 @@ class ResourceContext
 	[hashtable] $ResourceMetadata = @{}
 	[string] $ResourceTypeName = ""
 	[hashtable] $ResourceGroupTags = @{}
+	[PSObject] $ResourceDetails
+	[psobject] $ResourceGroupDetails
 }
 
 class ControlResult

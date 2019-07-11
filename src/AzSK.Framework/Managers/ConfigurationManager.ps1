@@ -100,14 +100,14 @@ class ConfigurationManager
 
 		if(-not (Test-Path -Path $localExtensionsFolderPath))
 		{
-			mkdir -Path $localExtensionsFolderPath -Force
+			New-Item -ItemType Directory -Path $localExtensionsFolderPath -Force
 		}
 		
 		$extensionScriptCode = [ConfigurationManager]::LoadServerFileRaw($fileName);
 		
 		if(-not [string]::IsNullOrWhiteSpace($extensionScriptCode))
         {
-			$extensionFilePath = "$([Constants]::AzSKExtensionsFolderPath)\$fileName";
+			$extensionFilePath = Join-Path $([Constants]::AzSKExtensionsFolderPath) $fileName;
             Out-File -InputObject $extensionScriptCode -Force -FilePath $extensionFilePath -Encoding utf8;       
 		}
 
