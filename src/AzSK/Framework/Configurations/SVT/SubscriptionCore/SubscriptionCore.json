@@ -468,7 +468,8 @@
         "Automated",
         "Access",
         "AuthZ",
-        "SubscriptionCore"
+        "SubscriptionCore",
+        "RGPersistentAccess"
             ],
       "Enabled": true,
       "Rationale": "Permanent access increase the risk of a malicious user getting that access and inadvertently impacting a sensitive resource. To minimize this risk ensure that critical resources present in resource group are accessed only by the legitimate users when required. PIM facilitates this by limiting users to only assume higher privileges in a just in time (JIT) manner (or by assigning privileges for a shortened duration after which privileges are revoked automatically)."

@@ -208,6 +208,10 @@ Content-Type: multipart/mixed; boundary={1}
 								if (($json | Get-Member -Name "nextLink") -and $json.nextLink) {
 									$uri = $json.nextLink
 								}
+								elseif (($json | Get-Member -Name "@odata.nextLink") -and $json."@odata.nextLink")
+								{
+									$uri = $json."@odata.nextLink"
+								}
 								elseif($requestResult.Headers.ContainsKey('x-ms-continuation-NextPartitionKey'))
 								{
 									$nPKey = $requestResult.Headers["x-ms-continuation-NextPartitionKey"]
