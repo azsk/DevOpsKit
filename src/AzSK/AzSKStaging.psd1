@@ -143,7 +143,11 @@
 		'Update-AzSKPersistedState'
         'Get-AzSKSecurityRecommendationReport',
         'Set-AzSKPIMConfiguration',
-        'Get-AzSKPIMConfiguration'
+        'Get-AzSKPIMConfiguration',
+        'Get-AzSKContinuousAssuraceForCluster',
+        'Remove-AzSKContinuousAssuraceForCluster',
+        'Update-AzSKContinuousAssuraceForCluster',
+        'Install-AzSKContinuousAssuraceForCluster'
     )
 
     # Cmdlets to export from this module
