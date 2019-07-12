@@ -814,7 +814,7 @@ function Install-AzSKContinuousAssuraceForCluster
 {
 	Param(
 
-		[ValidateSet("Databricks", "Kubernetes", "HDInsight")] 
+		[ValidateSet("Databricks", "HDInsight")] 
         [Parameter(Mandatory = $true, HelpMessage="TBD")]
 		[Alias("rt")]
 		$ResourceType,
