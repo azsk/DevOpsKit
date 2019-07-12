@@ -700,11 +700,15 @@ class ARMCheckerStatus: EventBase
 			{
 				$this.BaselineControls += $baselineControlList
 				
-			}else{
-				Write-Host "There are no baseline controls defined for this policy." -ForegroundColor Yellow 
+			}
+			else
+			{
+				Write-Host "There are no baseline/preview-baseline controls defined for your org." -ForegroundColor Yellow 
 				$this.BaselineControls = @()
 			}
-		}else{
+		}
+		else
+		{
 			$this.BaselineControls = @()
 		}
 		return $false
