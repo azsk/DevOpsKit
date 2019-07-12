@@ -69,6 +69,7 @@ class SubscriptionSecurityStatus: SVTCommandBase
 			catch
 			{
 				#eat the exception
+				Write-Host "ASC APIs unavailable" -ForegroundColor Yellow
 			}
 		}
 
