@@ -772,6 +772,7 @@ function Get-CAHD() {
     # Extracting Storage Account
     $storageAccount = $cluster.DefaultStorageAccount.Split(".")[0]
     $sac = Get-AzStorageAccount -Name $storageAccount -ResourceGroupName $resourceGroup -ErrorAction Ignore
+
     while ($sac -eq $null) {
         Write-Host "Storage [$storageAccount] not found in resource group [$resourceGroup]."
         $newRGName = Read-Host -Prompt "Enter the resource group name where [$storageAccount] is"
@@ -784,6 +785,11 @@ function Get-CAHD() {
     $res_name = $cluster.Name
     $metapathtemp = $env:TEMP + "\azskmetatemp.json"
     $metapath = $env:TEMP + "\azskmeta.json"
+    $notebook = Get-AzStorageBlob -Blob "HdiNotebooks/PySpark/AzSK_CA_Scan_Notebook.ipynb" -Container $container -Context $context -ErrorAction Ignore
+    if ($notebook -eq $null) {
+        Write-Host "CA Health not OK. Either the installation is broken or not present. Please re-install using Install-AzSKContinuousAssuranceForCluster" -ForegroundColor $ERR
+        return;
+    }
     $list = New-Object System.Collections.Generic.List[System.Object]
     $filesList = Get-AzStorageBlob -Blob "" -Container $container -Context $context
     foreach ($x in $filesList.Name) {
