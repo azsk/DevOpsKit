@@ -838,7 +838,7 @@ function Get-AzSKContinuousAssuraceForCluster
 {
 	Param(
 
-		[ValidateSet("Databricks", "Kubernetes", "HDInsight")] 
+		[ValidateSet("Databricks", "HDInsight")] 
         [Parameter(Mandatory = $true, HelpMessage="TBD")]
 		[Alias("rt")]
 		$ResourceType
@@ -846,6 +846,8 @@ function Get-AzSKContinuousAssuraceForCluster
 
 	if ($ResourceType -eq "Databricks"){
        Get-CADB
+    } elseif ($ResourceType -eq "HDInsight") {
+       Get-CAHD
     }
     
 }
@@ -854,7 +856,7 @@ function Update-AzSKContinuousAssuraceForCluster
 {
 	Param(
 
-		[ValidateSet("Databricks", "Kubernetes", "HDInsight")] 
+		[ValidateSet("Databricks", "HDInsight")] 
         [Parameter(Mandatory = $true, HelpMessage="TBD")]
 		[Alias("rt")]
 		$ResourceType
@@ -872,7 +874,7 @@ function Remove-AzSKContinuousAssuraceForCluster
 {
 	Param(
 
-		[ValidateSet("Databricks", "Kubernetes", "HDInsight")] 
+		[ValidateSet("Databricks", "HDInsight")] 
         [Parameter(Mandatory = $true, HelpMessage="TBD")]
 		[Alias("rt")]
 		$ResourceType
