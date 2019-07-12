@@ -815,7 +815,7 @@ function Install-AzSKContinuousAssuraceForCluster
 	Param(
 
 		[ValidateSet("Databricks", "HDInsight")] 
-        [Parameter(Mandatory = $true, HelpMessage="TBD")]
+        [Parameter(Mandatory = $true, HelpMessage="This command installs Continuous Assurance on your cluter. This is still in preview.")]
 		[Alias("rt")]
 		$ResourceType,
         
@@ -840,7 +840,7 @@ function Get-AzSKContinuousAssuraceForCluster
 	Param(
 
 		[ValidateSet("Databricks", "HDInsight")] 
-        [Parameter(Mandatory = $true, HelpMessage="TBD")]
+        [Parameter(Mandatory = $true, HelpMessage="This command will fetch the status of your Continuous Assurance on the cluter. This is still in preview.")]
 		[Alias("rt")]
 		$ResourceType
     )
@@ -858,7 +858,7 @@ function Update-AzSKContinuousAssuraceForCluster
 	Param(
 
 		[ValidateSet("Databricks", "HDInsight")] 
-        [Parameter(Mandatory = $true, HelpMessage="TBD")]
+        [Parameter(Mandatory = $true, HelpMessage="This command updates Continuous Assurance on your cluter. This is still in preview.")]
 		[Alias("rt")]
 		$ResourceType
     )
@@ -876,7 +876,7 @@ function Remove-AzSKContinuousAssuraceForCluster
 	Param(
 
 		[ValidateSet("Databricks", "HDInsight")] 
-        [Parameter(Mandatory = $true, HelpMessage="TBD")]
+        [Parameter(Mandatory = $true, HelpMessage="This command removes Continuous Assurance on your cluter. This is still in preview.")]
 		[Alias("rt")]
 		$ResourceType
     )
