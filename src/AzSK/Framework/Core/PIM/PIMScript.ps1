@@ -191,11 +191,11 @@ class PIM: CommandBase {
     #List roles
     hidden [PSObject] ListRoles($resourceId) {
         $this.AcquireToken();
-        $url = $this.APIroot + "resources/" + $resourceId + "/roleDefinitions?`$select=id,displayName,type,templateId,resourceId,externalId,subjectCount,eligibleAssignmentCount,activeAssignmentCount&`$orderby=activeAssignmentCount%20desc"
+        $url = $this.APIroot + "/resources/" + $resourceId + "/roleDefinitions?`$select=id,displayName,type,templateId,resourceId,externalId,subjectCount,eligibleAssignmentCount,activeAssignmentCount&`$orderby=activeAssignmentCount%20desc"
         $roles = [WebRequestHelper]::InvokeWebRequest("Get", $url, $this.headerParams, $null, [string]::Empty, $false, $false )
         $i = 0
         $obj = @()
-        foreach ($role in $roles.value) {
+        foreach ($role in $roles) {
             $item = New-Object psobject -Property @{
                 Id               = ++$i
                 RoleDefinitionId = $role.id
@@ -211,13 +211,13 @@ class PIM: CommandBase {
     #List Assignment
     hidden [PSObject] ListAssignmentsWithFilter($resourceId, $IsPermanent) {
         $this.AcquireToken()
-        $url = $this.APIroot + "resources/" + $resourceId + "`/roleAssignments?`$expand=subject,roleDefinition(`$expand=resource)"
+        $url = $this.APIroot + "/resources/" + $resourceId + "`/roleAssignments?`$expand=subject,roleDefinition(`$expand=resource)"
         #Write-Host $url
         $roleAssignments = [WebRequestHelper]::InvokeWebRequest('Get', $url, $this.headerParams, $null, [string]::Empty, $false, $false )
         $i = 0
         $obj = @()
         $assignments = @();
-        foreach ($roleAssignment in $roleAssignments.value) {
+        foreach ($roleAssignment in $roleAssignments) {
             $item = New-Object psobject -Property @{
                 Id               = ++$i
                 RoleAssignmentId = $roleAssignment.id
@@ -349,7 +349,7 @@ class PIM: CommandBase {
             }
         }
         else {
-            $this.PublishCustomMessage("No active assignments found for the current logged in context.", [MessageType]::Warning )
+            $this.PublishCustomMessage("Unable to query request resource for the current logged in context.", [MessageType]::Warning )
         }
         
     }
@@ -455,7 +455,7 @@ class PIM: CommandBase {
                                 $this.PublishCustomMessage([Constants]::SingleDashLine)
                                 # $this.PublishCustomMessage("Requesting PIM assignment for [$($_.RoleName)' role for $($_.PrincipalName) on $($_.ResourceType) '$($resolvedResource.ResourceName)'...");
                                try{
-                                $response = [WebRequestHelper]::InvokeWebRequest('Post', $Assignmenturl, $this.headerParams, $postParams, "application/json", $false, $true )
+                                $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $Assignmenturl -Method Post -ContentType "application/json" -Body $postParams
                                 if ($response.StatusCode -eq 201) {
                                     $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] Successfully requested PIM assignment for [$PrincipalName]", [MessageType]::Update);
                                 }
@@ -463,19 +463,15 @@ class PIM: CommandBase {
                           
                                }
                             catch {
-                                if([Helpers]::CheckMember($_,"error.code"))
-                                {
-                                    if ($code.error.code -eq "RoleAssignmentExists") {
+                                
+                                    $error = $_ | ConvertFrom-Json
+                                    if ($error.code -eq "RoleAssignmentExists") {
                                         $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] PIM Assignment for [$PrincipalName] already exists.", [MessageType]::Update)
                                     }
                                     else {
-                                        $this.PublishCustomMessage("$($code.error)", [MessageType]::Error)
+                                        $this.PublishCustomMessage("$($error)", [MessageType]::Error)
                                     }
-                                }
-                                else
-                                {
-                                    $this.PublishCustomMessage("$($_.Exception)", [MessageType]::Error)
-                                }                                                             
+                                                                                            
                             }         
                             $i++;
                         }#foreach  
