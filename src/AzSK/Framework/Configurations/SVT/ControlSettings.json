@@ -110,7 +110,10 @@
   },
   "NoOfApprovedAdmins": 5,
   "NoOfClassicAdminsLimit": 2,
-  "CriticalPIMRoles": [ "Owner", "Contributor" ],  
+  "CriticalPIMRoles": { 
+    "Subscription" : [ "Owner", "Contributor", "User Access Administrator" ],
+    "ResourceGroup" : [ "Owner", "User Access Administrator" ]
+  },
   "ASCAlertsSeverityLevels": [ "High" ],
   "ASCAlertsThresholdInDays": 30,
   "WhitelistedMgmtCerts": {
@@ -267,6 +270,7 @@
     "Backup_RetentionPeriod_Forever": 0,
     "LatestDotNetFrameworkVersionNumber": "v4.0",
     "Minimum_Instance_Count": 2,
+    "TLS_Version" : "1.2",
     "AADAuthAPIVersion": "2016-08-01",
     "LoadCertAppSettings": "WEBSITE_LOAD_CERTIFICATES",
     "NonAADAuthProperties": [
@@ -319,6 +323,7 @@
     "WebhookValidityInDays": 60,
     "variablesToSkip": ["AppResourceGroupNames", "ReportsStorageAccountName", "UpdateToLatestAzSKVersion", "OMSSharedKey", "OMSWorkspaceId", "AltOMSWorkspaceId", "AltOMSSharedKey", "LAWSId", "LAWSSharedKey", "AltLAWSId", "AltLAWSSharedKey", "WebhookAuthZHeaderName", "WebhookUrl"]
   },
+  "AllowedResourceTypesForMetadataCapture":["AppService", "VirtualMachine","DataFactory","DataFactoryV2"],
   "BaselineControls": {
     "ResourceTypeControlIdMappingList": [
 
@@ -349,7 +354,11 @@
   },
   "SubscriptionCore": {
     "EnableV1AlertFailure": false,
-    "ASCTier": "Standard"
+    "ASCTier": "Standard",
+    "credHighTH": 7,
+    "credModerateTH": 30,
+    "NonADIdentitiesPatterns" : ["(.)*#ext#@(.)*.onmicrosoft.com"],
+    "WhitelistedNonADIndentitiesPatterns" : []
   },
   "HDInsight": {
     "MinSupportedClusterVersion": "3.6.0"

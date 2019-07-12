@@ -216,7 +216,7 @@ function BootstrapOrgPolicy{
         }
         
 		Import-Module $ModuleName -RequiredVersion $Version -Force     
-	    Set-AzSKPolicySettings -OnlinePolicyStoreUrl $OnlinePolicyStoreUrl -AzureEnvironment $AzureEnvironment -ErrorAction Stop
+	    Set-AzSKPolicySettings -OnlinePolicyStoreUrl $OnlinePolicyStoreUrl -AzureEnvironment $AzureEnvironment -AutoUpdateCommand $AutoUpdateCommand -ErrorAction Stop
 	    Write-Host "Completed $OrgName policy configuration." -ForegroundColor Green
 	}
     catch

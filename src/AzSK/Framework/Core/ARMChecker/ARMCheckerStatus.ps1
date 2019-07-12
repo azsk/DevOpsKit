@@ -51,7 +51,7 @@ class ARMCheckerStatus: EventBase
 	}
 
 
-	[string] EvaluateStatus([string] $armTemplatePath, [string] $parameterFilePath ,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles, [string] $ExcludeControlIds, [string] $ControlIds,[Boolean] $UseBaselineControls,[Boolean] $UsePreviewBaselineControls)
+	[string] EvaluateStatus([string] $armTemplatePath, [string] $parameterFilePath ,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles, [string] $ExcludeControlIds, [string] $ControlIds,[Boolean] $UseBaselineControls,[Boolean] $UsePreviewBaselineControls, [string[]]$Severity)
 	{
 	    if(-not (Test-Path -path $armTemplatePath))
 		{
@@ -113,11 +113,11 @@ class ARMCheckerStatus: EventBase
 	    $armEvaluator = [AzSK.ARMChecker.Lib.ArmTemplateEvaluator]::new([string] $this.ARMControls);
 		$skippedFiles = @();
 		$timeMarker = [datetime]::Now.ToString("yyyyMMdd_HHmmss")
-		$resultsFolder = [Constants]::AzSKLogFolderPath + [Constants]::AzSKModuleName + "Logs\ARMChecker\" + $timeMarker + "\";
-		$csvFilePath = $resultsFolder + "ARMCheckerResults_" + $timeMarker + ".csv";
+		$resultsFolder = Join-Path $([Constants]::AzSKLogFolderPath) $([Constants]::AzSKModuleName + "Logs") | Join-Path -ChildPath "ARMChecker" | Join-Path -ChildPath $timeMarker ;
+		$csvFilePath = Join-Path $resultsFolder ("ARMCheckerResults_" + $timeMarker + ".csv");
 		[System.IO.Directory]::CreateDirectory($resultsFolder) | Out-Null
-		$this.PSLogPath = $resultsFolder + "PowerShellOutput.LOG";
-		$this.SFLogPath = $resultsFolder + "SkippedFiles.LOG";
+		$this.PSLogPath = Join-Path $resultsFolder "PowerShellOutput.LOG";
+		$this.SFLogPath = Join-Path $resultsFolder "SkippedFiles.LOG";
 		$this.CommandStartedAction();
 		$csvResults = @();
 		$armcheckerscantelemetryEvents = [System.Collections.ArrayList]::new()
@@ -127,6 +127,7 @@ class ARMCheckerStatus: EventBase
 		$filesToExcludeCount=0
 		$excludedFiles=@()
 		$filteredFiles = @();
+		$ControlsToScanBySeverity =@();
 		try{
 		  if(-not([string]::IsNullOrEmpty($exemptControlListPath)) -and (Test-Path -path $exemptControlListPath -PathType Leaf))
 		  {
@@ -182,6 +183,14 @@ class ARMCheckerStatus: EventBase
 		  $ControlsToScan = $this.ConvertToStringArray($ControlIds);
 		} 
 
+		if(-not([string]::IsNullOrEmpty($Severity)))
+		{
+		  $Severity = $this.ConvertToStringArray($Severity);
+		  #Discard the severity inputs that are not in enum
+		  $Severity = $Severity | Where-Object {$_ -in [Enum]::GetNames('ControlSeverity')}
+		  $ControlsToScanBySeverity = $Severity
+		} 
+
 		# Check if exclude control ids are provided by user 
 		$ControlsToExclude = @();
 		if(-not([string]::IsNullOrEmpty($ExcludeControlIds)))
@@ -224,11 +233,16 @@ class ARMCheckerStatus: EventBase
 				}
 
 				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0 -and ( $ControlsToScan | Measure-Object).Count -gt 0 ){
-					$results = $results | Where-Object {$ControlsToScan -contains $_.ControlId}
-				}
+                    $results = $results | Where-Object {$ControlsToScan -contains $_.ControlId}
+                    
+                }
 
 				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0  -and ( $ControlsToExclude | Measure-Object).Count -gt 0){
 					$results = $results | Where-Object {$ControlsToExclude -notcontains $_.ControlId}
+				}
+
+				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0  -and ( $ControlsToScanBySeverity | Measure-Object).Count -gt 0){
+					$results = $results | Where-Object {$_.Severity -in $ControlsToScanBySeverity}
 				}
 
 				

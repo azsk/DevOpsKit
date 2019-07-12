@@ -575,6 +575,38 @@ try
 	if($azskModule -and ($azskModule.Version -ne  $desiredAzSKVersion))
 	{
 		Write-Output ("CS: Installed $AzSKModuleName version: [" + $azskModule.Version + "] in provisioning state: [" + $azskModule.ProvisioningState + "]. Expected version: [$desiredAzSKVersion]")
+
+		#########################Invoke AzSK Recovery code in case of module is in importing state longer than 1 day#######################
+		try{
+
+			$unHealthyModuleList = Get-AzAutomationModule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | Where-Object { -not ($_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created") -and $_.LastModifiedTime -lt $(get-date).AddDays(-2)}
+			
+			if(($unHealthyModuleList | Measure-Object).Count -gt 0)
+			{
+				Write-Output ("CS: RecoveryStep- Automation account found in unhealthy status.")
+				PublishEvent -EventName "CA Recovery: Start AzSK recovery"
+				PublishEvent -EventName "CA Recovery:  Unhealthy module list" -Properties @{
+							"ModuleList" =  $unHealthyModuleList | ConvertTo-Json -Depth 5;
+					}
+				
+				$coreModuleList = $unHealthyModuleList | where-Object { $_.Name -eq "Az.Account" -or $_.Name -eq "Az.Automation"}
+
+				if(($coreModuleList| Measure-Object).Count -gt 0)
+				{
+					PublishEvent -EventName "CA Recovery: Found Core module unhealthy"
+				}
+
+				Write-Output ("CS: RecoveryStep- Removing unhealthy modules...")
+				$unHealthyModuleList | Where-Object { $_.Name -notin ("Az.Account","Az.Automation")  } | Remove-AzAutomationModule -Force
+				Write-Output ("CS: RecoveryStep- Completed removing unhealthy modules.")
+				PublishEvent -EventName "CA Recovery: Completed AzSK recovery "
+			}
+		}
+		catch
+		{
+			PublishEvent -EventName "CA Recovery: exception" -Properties @{ "ErrorRecord" = ($_ | Out-String) } 
+		}
+		##############################End of AzSK Recovery code ###################################
 	}
 	#Telemetry
 	PublishEvent -EventName "CA Setup Required Modules State" -Properties @{

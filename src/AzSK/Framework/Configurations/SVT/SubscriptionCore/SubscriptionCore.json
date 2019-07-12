@@ -456,6 +456,25 @@
       "Rationale": "Permanent access increase the risk of a malicious user getting that access and inadvertently impacting a sensitive resource. To minimize this risk ensure that critical resources present in subscription are accessed only by the legitimate users when required. PIM facilitates this by limiting users to only assume higher privileges in a just in time (JIT) manner (or by assigning privileges for a shortened duration after which privileges are revoked automatically)."
      },
      {
+      "ControlID": "Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG",
+      "Description": "Permanent access should not be granted for privileged roles at resource group level",
+      "Id": "SubscriptionCore282",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckRGLevelPermanentRoleAssignments",
+      "Recommendation": "Use Privileged Identity Management (PIM) to grant access to privileged roles at resource group scope. To remove existing assignments run: 'Remove-AzRoleAssignment -SignInName '{signInName}' -Scope '/subscriptions/{subscriptionid}/resourceGroups/{resourceGroupName}' -RoleDefinitionName {RoleDefinitionName}'. Refer https://docs.microsoft.com/en-us/azure/active-directory/privileged-identity-management/azure-pim-resource-rbac#assign-roles.",
+      "Tags": [
+        "SDL",
+        "Automated",
+        "Access",
+        "AuthZ",
+        "SubscriptionCore",
+        "RGPersistentAccess"
+            ],
+      "Enabled": true,
+      "Rationale": "Permanent access increase the risk of a malicious user getting that access and inadvertently impacting a sensitive resource. To minimize this risk ensure that critical resources present in resource group are accessed only by the legitimate users when required. PIM facilitates this by limiting users to only assume higher privileges in a just in time (JIT) manner (or by assigning privileges for a shortened duration after which privileges are revoked automatically)."
+     },
+     {
       "ControlID": "Azure_Subscription_Config_Add_Required_Tags",
       "Description": "Mandatory tags must be set per your organization policy",
       "Id": "SubscriptionCore290",
@@ -490,6 +509,24 @@
       ],
       "Enabled": true,     
       "Rationale": "ASC standard tier enables advanced threat detection capabilities, which uses built-in behavioral analytics and machine learning to identify attacks and zero-day exploits, access and application controls to reduce exposure to network attacks and malware, and more"
+    },
+    {
+      "ControlID": "Azure_Subscription_Check_Credential_Rotation",
+      "Description": "Ensure any credentials approaching expiry are rotated soon.",
+      "Id": "SubscriptionCore310",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckCredentialHygiene",
+      "Recommendation": "Run Update-AzSKTrackedCredential with the 'ResetLastUpdate' switch with other required parameters (Subscription Id, credential name, etc.).",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "SubscriptionCore"
+      ],
+      "Enabled": true,     
+      "Rationale": "Periodic credential rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks. Credential expiry can also impact availability of existing apps."
     }
   ]
 }

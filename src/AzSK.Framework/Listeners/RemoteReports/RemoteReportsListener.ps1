@@ -46,7 +46,7 @@ class RemoteReportsListener: ListenerBase {
 				$resources.ResourceGroups = [System.Collections.ArrayList]::new()
 				$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
 				# # Not considering nested resources to reduce complexity
-				$filteredResources = [ResourceInventory]::FilteredResources | Where-Object { $supportedResourceTypes.ContainsKey($_.ResourceType.ToLower()) }
+				$filteredResources = [ResourceInventory]::FilteredResources
 				$grouped = $filteredResources | Group-Object {$_.ResourceGroupName} | Select-Object Name, Group				
 				foreach($group in $grouped){
 					$resourceGroup = "" | Select-Object Name, Resources

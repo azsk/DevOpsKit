@@ -53,8 +53,11 @@ class ServiceFabric : SVTBase
 	[ControlItem[]] ApplyServiceFilters([ControlItem[]] $controls)
 	{
 		$result = @();
+		$VMType = "Windows"
 		#Check VM type
-		$VMType = $this.ResourceObject.Properties.vmImage
+		if([Helpers]::CheckMember($this.ResourceObject.Properties,"vmImage")){
+			$VMType = $this.ResourceObject.Properties.vmImage
+		}
         if($VMType -eq "Linux")
         {
 			$result += $controls | Where-Object { $_.Tags -contains "Linux" };

@@ -4,7 +4,8 @@ class ComplianceReportHelper: ComplianceBase
 {
     hidden [string] $ScanSource
 	hidden [System.Version] $ScannerVersion
-	hidden [string] $ScanKind 
+	hidden [string] $ScanKind
+	static [ComplianceReportHelper] $Instance
 	
     ComplianceReportHelper([SubscriptionContext] $subscriptionContext,[System.Version] $ScannerVersion):
     Base([SubscriptionContext] $subscriptionContext) 
@@ -12,7 +13,17 @@ class ComplianceReportHelper: ComplianceBase
 		$this.ScanSource = [RemoteReportHelper]::GetScanSource();
 		$this.ScannerVersion = $ScannerVersion
 		$this.ScanKind = [ServiceScanKind]::Partial;
-	} 
+	}
+
+	#Get cached instance for compliance. This is to avoid repeatative calls for base constructor which fetch details of AzSK resources on every resource
+	static [ComplianceReportHelper] GetInstance([SubscriptionContext] $subscriptionContext,[System.Version] $ScannerVersion)
+    {
+        if ( $null -eq  [ComplianceReportHelper]::Instance)
+        {
+			[ComplianceReportHelper]::Instance = [ComplianceReportHelper]::new($subscriptionContext, $ScannerVersion)
+		}
+        return [ComplianceReportHelper]::Instance
+    }
 	
 	hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport()
 	{
@@ -455,14 +466,14 @@ class ComplianceReportHelper: ComplianceBase
 				}
 
 				#<TODO: Currently remote API does not return PreviewBaselineControl flag. Disabling below code>
-				# if($item.IsPreviewBaselineControl)
-				# {
-				# 	$controlDetails.IsPreviewBaselineControl=$true
-				# }
-				# else 
-				# {
-				# 	$controlDetails.IsPreviewBaselineControl=$false				
-				# }
+				if($item.IsPreviewBaselineControl)
+				{
+					$controlDetails.IsPreviewBaselineControl=$true
+				}
+				else 
+				{
+					$controlDetails.IsPreviewBaselineControl=$false				
+				}
 				
 				$SVTEvent.ControlItem=$controlDetails;
 				$resourceDetails.ResourceName=$item.resourceName;
