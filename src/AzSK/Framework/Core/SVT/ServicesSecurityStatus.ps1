@@ -351,7 +351,7 @@ class ServicesSecurityStatus: SVTCommandBase
 			#If baseline switch is passed and there is no baseline control list present then throw exception 
 			elseif (($baselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -eq 0 -and $this.UseBaselineControls) 
 			{
-				throw ([SuppressedException]::new(("There are no baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+				throw ([SuppressedException]::new(("There are no baseline controls defined for your org. No controls will be scanned."), [SuppressedExceptionType]::Generic))
 			}
 
 			#Preview Baseline Controls
@@ -386,7 +386,16 @@ class ServicesSecurityStatus: SVTCommandBase
 				#If preview baseline switch is passed and there is no baseline control list present then throw exception 
 				elseif (($previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -eq 0 -and $this.UsePreviewBaselineControls) 
 				{
-					throw ([SuppressedException]::new(("There are no preview baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+					if(($baselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -eq 0 -and $this.UseBaselineControls)
+					{
+						throw ([SuppressedException]::new(("There are no  baseline and preview-baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+					}
+					if(-not ($this.UseBaselineControls))
+					{
+						throw ([SuppressedException]::new(("There are no preview-baseline controls defined for your org. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+					}
+					
+					
 				}
 			}
 
