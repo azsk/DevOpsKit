@@ -69,7 +69,7 @@ class SubscriptionSecurityStatus: SVTCommandBase
 			catch
 			{
 				#eat the exception
-				Write-Host "ASC APIs unavailable" -ForegroundColor Yellow
+				Write-Warning "Could not post additional ASC telemetry data...`r`nPls ignore for now if the cmdlet run successfully."
 			}
 		}
 
