@@ -28,7 +28,7 @@ function InvokeRestAPICall($EndPoint, $Method, $Body, $ErrorMessage)
 }
 
 
-function Insert-StuffIntoDB($SecretScopeName, $SecretKeyName, $Secret) {
+function Insert-DataIntoDB($SecretScopeName, $SecretKeyName, $Secret) {
     $params = @{
       'scope' = $SecretScopeName;
       "key" = $SecretKeyName;
@@ -62,8 +62,6 @@ function Setup-DataBricks() {
         Write-Host "Error: Resource $res_name not found in current subscription. Please recheck" -ForegroundColor $ERR
         return
     }
-    # $response = $dbresource
-    # $rg_name = $response.ResourceGroupName
     $PAT = Read-Host -Prompt 'Personal Access Token(PAT)'
     $IK = Read-Host -Prompt "Input Instrumentation Key for enabling App Insights (press enter to skip)"
     $PersonalAccessToken = $PAT.Trim()
@@ -119,16 +117,16 @@ function Setup-DataBricks() {
 
     # If Secret already exists it will update secret value
      
-    Insert-StuffIntoDB -SecretScopeName $SecretScopeName -SecretKeyName $SecretKeyName -Secret $PersonalAccessToken
-    Insert-StuffIntoDB -SecretScopeName $SecretScopeName -SecretKeyName "res_name" -Secret $res_name
-    Insert-StuffIntoDB -SecretScopeName $SecretScopeName -SecretKeyName "rg_name" -Secret $rg_name
-    Insert-StuffIntoDB -SecretScopeName $SecretScopeName -SecretKeyName "sid" -Secret $sid
-    Insert-StuffIntoDB -SecretScopeName $SecretScopeName -SecretKeyName "DatabricksHostDomain" -Secret $WorkSpaceBaseUrl
+    Insert-DataIntoDB -SecretScopeName $SecretScopeName -SecretKeyName $SecretKeyName -Secret $PersonalAccessToken
+    Insert-DataIntoDB -SecretScopeName $SecretScopeName -SecretKeyName "res_name" -Secret $res_name
+    Insert-DataIntoDB -SecretScopeName $SecretScopeName -SecretKeyName "rg_name" -Secret $rg_name
+    Insert-DataIntoDB -SecretScopeName $SecretScopeName -SecretKeyName "sid" -Secret $sid
+    Insert-DataIntoDB -SecretScopeName $SecretScopeName -SecretKeyName "DatabricksHostDomain" -Secret $WorkSpaceBaseUrl
 
     #end region
     if ($InstrumentationKey -ne "") {
         # region step 2.5: Put instrumentation key in secret scope
-        Insert-StuffIntoDB -SecretScopeName $SecretScopeName -SecretKeyName $IKName -Secret $InstrumentationKey
+        Insert-DataIntoDB -SecretScopeName $SecretScopeName -SecretKeyName $IKName -Secret $InstrumentationKey
     } else {
         Write-Host "Skipping AppInsight installation, no Instrumentation Key passed" -ForegroundColor $INFO_IMP
     }
@@ -221,7 +219,6 @@ function Setup-DataBricks() {
         # Create job
         Write-Host "Creating Job 'AzSK_CA_Scan_Job' in the workspace" -ForegroundColor $INFO
         $JobConfigServerUrl = $ConfigBaseUrl + "DatabricksCAScanJobConfig.json"
-        #$JobConfigServerUrl = "C:\Users\makul\Desktop\ADB_Config.json"
         $filePath = $env:TEMP + "\DatabricksCAScanJobConfig.json"
         Invoke-RestMethod  -Method Get -Uri $JobConfigServerUrl -OutFile $filePath 
         # Bootstrap basic properties like App Insight Key and job schedule in deployment file
@@ -312,11 +309,11 @@ function Update-DataBricks() {
     # region Step 2: PUT Token in Secret Scope
     
     if($newPAT -ne "") {
-        Insert-StuffIntoDB -SecretScopeName $SecretScopeName -SecretKeyName $SecretKeyName -Secret $newPAT
+        Insert-DataIntoDB -SecretScopeName $SecretScopeName -SecretKeyName $SecretKeyName -Secret $newPAT
     }
 
     if ($InstrumentationKey -ne "") {
-        Insert-StuffIntoDB -SecretScopeName $SecretScopeName -SecretKeyName $IKName -Secret $InstrumentationKey
+        Insert-DataIntoDB -SecretScopeName $SecretScopeName -SecretKeyName $IKName -Secret $InstrumentationKey
     }
     
     # end region
@@ -426,9 +423,7 @@ function Update-DataBricks() {
 }
 
 function Check-SecretPresentInDB($SecretName, $SecretKey, $response) {
-    # Write-Host "Checking if $SecretName is present in the cluster" -ForegroundColor $INFO
     if ($response.secrets.key.Contains($SecretKey)) {
-        # Write-Host "$SecretName present in the cluster" -ForegroundColor $SUCC
         return $true
     } else {
         Write-Host "$SecretName absent in the cluster" -ForegroundColor $ERR
