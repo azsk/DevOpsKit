@@ -1,4 +1,4 @@
-using namespace Newtonsoft.Json
+ using namespace Newtonsoft.Json
 using namespace Microsoft.Azure.Commands.Common.Authentication.Abstractions
 using namespace Microsoft.Azure.Commands.Common.Authentication
 using namespace Microsoft.Azure.Management.Storage.Models
@@ -1340,7 +1340,11 @@ class Helpers {
 			}
 			else
 			{
-				$source = ($source + $extend)  | Select-Object -Unique  
+                $source = ($source + $extend)
+                if ($source.Count -gt 0)
+                {
+                    $source = $source | Select-Object -Unique
+                } 
 			}
 		}
 		else{
