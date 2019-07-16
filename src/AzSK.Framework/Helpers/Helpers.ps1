@@ -1,4 +1,4 @@
-using namespace Newtonsoft.Json
+ using namespace Newtonsoft.Json
 using namespace Microsoft.Azure.Commands.Common.Authentication.Abstractions
 using namespace Microsoft.Azure.Commands.Common.Authentication
 using namespace Microsoft.Azure.Management.Storage.Models
@@ -7,12 +7,12 @@ class Helpers {
 
     static hidden [PSObject] $currentRMContext;
     hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson) {
-		$rootConfigPath = [Constants]::AzSKAppFolderPath + "\" ;
+		$rootConfigPath = [Constants]::AzSKAppFolderPath ;
 		return [Helpers]::LoadOfflineConfigFile($fileName, $true,$rootConfigPath);
 	}
     hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson, $path) {
 		#Load file from AzSK App folder
-		$rootConfigPath = $path + "\" ;	
+		$rootConfigPath = $path ;	
         
 		$extension = [System.IO.Path]::GetExtension($fileName);
 
@@ -23,7 +23,7 @@ class Helpers {
 		}
         #If file not present in App folder load settings from Configurations in Module folder 
         if (!$filePath) {
-            $rootConfigPath = (Get-Item $PSScriptRoot).Parent.FullName + "\Configurations\";
+            $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.FullName "Configurations";
             $filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
         }
 
@@ -33,16 +33,16 @@ class Helpers {
 			{
 				if($extension -eq ".json" -or $extension -eq ".lawsview")
 				{
-					$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) | ConvertFrom-Json
+					$fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) | ConvertFrom-Json
 				}
 				else
 				{
-					$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) 
+					$fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) 
 				}
 			}
 			else
 			{
-				$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) 
+				$fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) 
 			}
         }
         else {
@@ -1236,6 +1236,7 @@ class Helpers {
 		}
 	}
 
+    # <TODO: Perf Issue - Too costly call for each time we check for provider>
 	hidden static [bool] IsProviderRegistered([string] $provideNamespace)
 	{
 		return ((Get-AzResourceProvider -ProviderNamespace $provideNamespace | Where-Object { $_.RegistrationState -ne "Registered" } | Measure-Object).Count -eq 0);
@@ -1339,7 +1340,11 @@ class Helpers {
 			}
 			else
 			{
-				$source = ($source + $extend)  | Select-Object -Unique  
+                $source = ($source + $extend)
+                if ($source.Count -gt 0)
+                {
+                    $source = $source | Select-Object -Unique
+                } 
 			}
 		}
 		else{
@@ -1461,7 +1466,7 @@ class Helpers {
     {
         if(-not (Test-Path $FolderPath))
 		{
-			mkdir -Path $FolderPath -ErrorAction Stop | Out-Null
+			New-Item -ItemType Directory -Path $FolderPath -ErrorAction Stop | Out-Null
         }
         elseif($MakeFolderEmpty)
         {

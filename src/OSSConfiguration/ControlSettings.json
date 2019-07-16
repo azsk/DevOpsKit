@@ -6,7 +6,25 @@
         "ControlIds": [
           "Azure_AppService_DP_Dont_Allow_HTTP_Access",
           "Azure_AppService_Config_Disable_Remote_Debugging",
-          "Azure_AppService_AuthN_Use_AAD_for_Client_AuthN"
+          "Azure_AppService_AuthN_Use_AAD_for_Client_AuthN",
+          "Azure_AppService_DP_Dont_Allow_HTTP_Access_Fn",
+          "Azure_AppService_Config_Disable_Web_Sockets"
+        ]
+      },
+      {
+        "ResourceType": "APIManagement",
+        "ControlIds": [
+          "Azure_APIManagement_AuthN_Disable_Management_API",
+          "Azure_APIManagement_AuthN_Use_AAD_for_Client_AuthN",
+          "Azure_APIManagement_AuthN_Verify_Delegated_Authentication",
+          "Azure_APIManagement_DP_Dont_Checkin_Secrets_In_Source",
+          "Azure_APIManagement_DP_Use_HTTPS_URL_Scheme"
+        ]
+      },
+      {
+        "ResourceType": "Automation",
+        "ControlIds": [
+          "Azure_Automation_DP_Use_Encrypted_Variables"
         ]
       },
       {
@@ -16,7 +34,38 @@
           "Azure_CloudService_SI_Auto_OSUpdate",
           "Azure_CloudService_SI_Enable_AntiMalware",
           "Azure_CloudService_SI_Disable_RemoteDesktop_Access",
-          "Azure_CloudService_AuthN_Use_AAD_for_Client_AuthN"
+          "Azure_CloudService_AuthN_Use_AAD_for_Client_AuthN",
+          "Azure_CloudService_SI_Disable_RemoteDebugging"
+        ]
+      },
+      {
+        "ResourceType": "ContainerInstances",
+        "ControlIds": [
+          "Azure_ContainerInstances_AuthZ_Container_Segregation"
+        ]
+      },
+      {
+        "ResourceType": "ContainerRegistry",
+        "ControlIds": [
+          "Azure_ContainerRegistry_AuthZ_Disable_Admin_Account"
+        ]
+      },
+      {
+        "ResourceType": "CosmosDB",
+        "ControlIds": [
+          "Azure_CosmosDB_Config_Default_Consistency"
+        ]
+      },
+      {
+        "ResourceType": "Databricks",
+        "ControlIds": [
+          "Azure_Databricks_NetSec_Justify_VNet_Peering"
+        ]
+      },
+      {
+        "ResourceType": "DataLakeAnalytics",
+        "ControlIds": [
+          "Azure_DataLakeAnalytics_DP_Encrypt_At_Rest"
         ]
       },
       {
@@ -27,7 +76,16 @@
           "Azure_ERvNet_NetSec_Dont_Add_UDRs_on_Subnets",
           "Azure_ERvNet_NetSec_Dont_Add_VPN_Gateways",
           "Azure_ERvNet_NetSec_Dont_Use_VNet_Peerings",
-          "Azure_ERvNet_NetSec_Use_Only_Internal_Load_Balancers"
+          "Azure_ERvNet_NetSec_Use_Only_Internal_Load_Balancers",
+          "Azure_ERvNet_SI_Add_Only_Network_Resources",
+          "Azure_ERvNet_SI_Dont_Remove_ARM_Policy",
+          "Azure_ERvNet_SI_Dont_Remove_Resource_Lock"
+        ]
+      },
+      {
+        "ResourceType": "HDInsight",
+        "ControlIds": [
+          "Azure_HDInsight_Deploy_Supported_Cluster_Version"
         ]
       },
       {
@@ -52,6 +110,12 @@
         ]
       },
       {
+        "ResourceType": "KeyVault",
+        "ControlIds": [
+          "Azure_KeyVault_AuthN_Dont_Share_KeyVault_Unless_Trust"
+        ]
+      },
+      {
         "ResourceType": "CDN",
         "ControlIds": [
           "Azure_CDN_DP_Enable_Https"
@@ -72,111 +136,9 @@
       {
         "ResourceType": "ServiceFabric",
         "ControlIds": [
-          "Azure_ServiceFabric_AuthN_Client_AuthN_AAD_Only"
-        ]
-      },
-      {
-        "ResourceType": "AzSKCfg",
-        "ControlIds": [
-          "Azure_AzSKCfg_Check_Presence_of_CA",
-          "Azure_AzSKCfg_Check_Health_of_CA",
-          "Azure_AzSKCfg_Check_Presence_of_Latest_AzSK_Module"
-        ]
-      }
-    ],
-    "SubscriptionControlIdList": [
-      "Azure_Subscription_AuthZ_Add_Required_Central_Accounts",
-      "Azure_Subscription_AuthZ_Remove_Deprecated_Accounts",
-      "Azure_Subscription_AuthZ_Dont_Use_NonAD_Identities",
-      "Azure_Subscription_AuthZ_Remove_Management_Certs",
-      "Azure_Subscription_Config_Azure_Security_Center",
-      "Azure_Subscription_Config_ARM_Policy",
-      "Azure_Subscription_Audit_Configure_Critical_Alerts"
-    ],
-    "ExpiryInDays": 2,
-    "SupportedSources": [ "NA" ]
-  },
-  "PreviewBaselineControls": {
-    "ResourceTypeControlIdMappingList": [
-      {
-        "ResourceType": "APIManagement",
-        "ControlIds": [
-          "Azure_APIManagement_AuthN_Disable_Management_API",
-          "Azure_APIManagement_AuthN_Use_AAD_for_Client_AuthN",
-          "Azure_APIManagement_AuthN_Verify_Delegated_Authentication",
-          "Azure_APIManagement_DP_Dont_Checkin_Secrets_In_Source",
-          "Azure_APIManagement_DP_Use_HTTPS_URL_Scheme"
-        ]
-      },
-      {
-        "ResourceType": "AppService",
-        "ControlIds": [
-          "Azure_AppService_DP_Dont_Allow_HTTP_Access_Fn",
-          "Azure_AppService_Config_Disable_Web_Sockets"
-        ]
-      },
-      {
-        "ResourceType": "Automation",
-        "ControlIds": [
-          "Azure_Automation_DP_Use_Encrypted_Variables"
-        ]
-      },
-      {
-        "ResourceType": "CloudService",
-        "ControlIds": [
-          "Azure_CloudService_SI_Disable_RemoteDebugging"
-        ]
-      },
-      {
-        "ResourceType": "ContainerInstances",
-        "ControlIds": [
-          "Azure_ContainerInstances_AuthZ_Container_Segregation"
-
-        ]
-      },
-      {
-        "ResourceType": "ContainerRegistry",
-        "ControlIds": [
-          "Azure_ContainerRegistry_AuthZ_Disable_Admin_Account"
-
-        ]
-      },
-      {
-        "ResourceType": "CosmosDB",
-        "ControlIds": [
-          "Azure_CosmosDB_Config_Default_Consistency"
-        ]
-      },
-      {
-        "ResourceType": "Databricks",
-        "ControlIds": [
-          "Azure_Databricks_NetSec_Justify_VNet_Peering"
-        ]
-      },
-      {
-        "ResourceType": "DataLakeAnalytics",
-        "ControlIds": [
-          "Azure_DataLakeAnalytics_DP_Encrypt_At_Rest"
-        ]
-      },
-      {
-        "ResourceType": "ERvNet",
-        "ControlIds": [
-          "Azure_ERvNet_SI_Add_Only_Network_Resources",
-          "Azure_ERvNet_SI_Dont_Remove_ARM_Policy",
-          "Azure_ERvNet_SI_Dont_Remove_Resource_Lock"
-        ]
-      },
-      {
-        "ResourceType": "HDInsight",
-        "ControlIds": [
-          "Azure_HDInsight_Deploy_Supported_Cluster_Version"
-        ]
-      },
-      {
-        "ResourceType": "KeyVault",
-        "ControlIds": [
-          "Azure_KeyVault_AuthN_Dont_Share_KeyVault_Unless_Trust"
+          "Azure_ServiceFabric_AuthN_Client_AuthN_AAD_Only",
+          "Azure_ServiceFabric_DP_Dont_Expose_Reverse_Proxy_Port",
+          "Azure_ServiceFabric_DP_Set_Property_ClusterProtectionLevel"
         ]
       },
       {
@@ -199,26 +161,40 @@
         ]
       },
       {
-        "ResourceType": "ServiceFabric",
-        "ControlIds": [
-          "Azure_ServiceFabric_DP_Dont_Expose_Reverse_Proxy_Port",
-          "Azure_ServiceFabric_DP_Set_Property_ClusterProtectionLevel"
-        ]
-      },
-      {
         "ResourceType": "VirtualMachine",
         "ControlIds": [
           "Azure_VirtualMachine_DP_Enable_Disk_Encryption",
           "Azure_VirtualMachine_NetSec_Justify_PublicIPs"
         ]
+      },
+      {
+        "ResourceType": "AzSKCfg",
+        "ControlIds": [
+          "Azure_AzSKCfg_Check_Presence_of_CA",
+          "Azure_AzSKCfg_Check_Health_of_CA",
+          "Azure_AzSKCfg_Check_Presence_of_Latest_AzSK_Module"
+        ]
       }
     ],
     "SubscriptionControlIdList": [
+      "Azure_Subscription_AuthZ_Add_Required_Central_Accounts",
+      "Azure_Subscription_AuthZ_Remove_Deprecated_Accounts",
+      "Azure_Subscription_AuthZ_Dont_Use_NonAD_Identities",
+      "Azure_Subscription_AuthZ_Remove_Management_Certs",
+      "Azure_Subscription_Config_Azure_Security_Center",
+      "Azure_Subscription_Config_ARM_Policy",
+      "Azure_Subscription_Audit_Configure_Critical_Alerts",
       "Azure_Subscription_Audit_Resolve_Azure_Security_Center_Alerts",
       "Azure_Subscription_AuthZ_Limit_ClassicAdmin_Count",
       "Azure_Subscription_Config_Add_Required_Tags",
       "Azure_Subscription_SI_Classic_Resources"
     ],
+    "ExpiryInDays": 2,
+    "SupportedSources": [ "NA" ]
+  },
+  "PreviewBaselineControls": {
+    "ResourceTypeControlIdMappingList": [],
+    "SubscriptionControlIdList": [],
     "ExpiryInDays": 2,
     "SupportedSources": [ "NA" ]
   }

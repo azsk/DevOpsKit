@@ -75,6 +75,12 @@ function Get-AzSKARMTemplateSecurityStatus
 		[Alias("upbc")]
 		$UsePreviewBaselineControls,
 
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage="Specify the severity of controls to be scanned. Example `"High, Medium`"")]
+		[Alias("ControlSeverity")]
+		$Severity,
+
+
 		[Parameter(Mandatory = $false, HelpMessage = "Path to file containing list of controls to skip")]
         [string]  
 		[Alias("scf")]
@@ -93,7 +99,7 @@ function Get-AzSKARMTemplateSecurityStatus
 			$armStatus = [ARMCheckerStatus]::new($PSCmdlet.MyInvocation);
 			if ($armStatus) 
 			{
-				return $armStatus.EvaluateStatus($ARMTemplatePath,$ParameterFilePath,$Recurse,$SkipControlsFromFile,$ExcludeFiles,$ExcludeControlIds,$ControlIds,$UseBaselineControls,$UsePreviewBaselineControls);				
+				return $armStatus.EvaluateStatus($ARMTemplatePath,$ParameterFilePath,$Recurse,$SkipControlsFromFile,$ExcludeFiles,$ExcludeControlIds,$ControlIds,$UseBaselineControls,$UsePreviewBaselineControls, $Severity);				
 			}    
 		}
 		catch 

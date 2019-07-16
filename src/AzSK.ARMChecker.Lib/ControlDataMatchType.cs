@@ -6,6 +6,11 @@
 		NotAllow,
 		GreaterThan,
 		LesserThan,
-		Equals
-	}
+		Equals,
+        GreaterThanOrEqual,
+        LesserThanOrEqual,
+        Contains,
+        NotContains
+    
+    }
 }

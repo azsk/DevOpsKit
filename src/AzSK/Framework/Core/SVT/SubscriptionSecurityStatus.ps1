@@ -46,7 +46,31 @@ class SubscriptionSecurityStatus: SVTCommandBase
 			[CustomData] $customData = [CustomData]::new();
 			$customData.Name = "SubSVTObject";
 			$customData.Value = $svtObject;
-			$this.PublishCustomData($customData);		
+			$this.PublishCustomData($customData);	
+
+			try
+			{
+				if([FeatureFlightingManager]::GetFeatureStatus("EnableASCTelemetry",$($svtObject.SubscriptionContext.SubscriptionId)) -eq $true)
+				{
+					$scanSource = [RemoteReportHelper]::GetScanSource();
+					if($scanSource -eq [ScanSource]::Runbook)
+					{
+						$secContacts = New-Object psobject -Property @{
+							Phone = $svtObject.SecurityCenterInstance.ContactPhoneNumber;
+							Email = $svtObject.SecurityCenterInstance.ContactEmail;
+							AlertNotifications = $svtObject.SecurityCenterInstance.AlertNotifStatus;
+							AlertsToAdmins = $svtObject.SecurityCenterInstance.AlertAdminStatus
+						}
+						[ASCTelemetryHelper]::ascData = [ASCTelemetryHelper]::new($svtObject.SubscriptionContext.SubscriptionId, $svtObject.SecurityCenterInstance.ASCTier, $svtObject.SecurityCenterInstance.AutoProvisioningSettings, $secContacts)
+						[RemoteApiHelper]::PostASCTelemetry([ASCTelemetryHelper]::ascData)
+					}	
+				}
+			}
+			catch
+			{
+				#eat the exception
+				Write-Warning "Could not post additional ASC telemetry data...`r`nPlease ignore for now if the cmdlet ran successfully."
+			}
 		}
 
 		#save result into local compliance report
@@ -89,44 +113,60 @@ class SubscriptionSecurityStatus: SVTCommandBase
 	#BaseLineControlFilter Function
 	[void] BaselineFilterCheck()
 	{
-		#Load ControlSetting Resource Types and Filter resources
-		$scanSource = [AzSKSettings]::GetInstance().GetScanSource();
-		#Load ControlSetting Resource Types and Filter resources
-		[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();		
-		$baselineControlsDetails = $partialScanMngr.GetBaselineControlDetails()
-		#If Scan source is in supported sources or baselineControls switch is available
-		if ($null -ne $baselineControlsDetails -and ($baselineControlsDetails.SubscriptionControlIdList | Measure-Object).Count -gt 0 -and ($baselineControlsDetails.SupportedSources -contains $scanSource -or $this.UseBaselineControls))
+		
+		#Check if use baseline or preview baseline flag is passed as parameter
+		if($this.UseBaselineControls -or $this.UsePreviewBaselineControls)
 		{
-			
-			#$this.PublishCustomMessage("Running cmdlet with baseline resource types and controls.", [MessageType]::Warning);
-			#Get the list of baseline control ids
-			$controlIds = $baselineControlsDetails.SubscriptionControlIdList
-			$baselineControlIds = [system.String]::Join(",",$controlIds);		
-			if(-not [system.String]::IsNullOrEmpty($baselineControlIds))
-			{
-				$this.ControlIds = $controlIds;			
-			}
-		}
-		elseif (($baselineControlsDetails.SubscriptionControlIdList | Measure-Object).Count -eq 0 -and $this.UseBaselineControls) 
-		{
-			throw ([SuppressedException]::new(("There are no baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
-		}
+			#Load ControlSetting file
+			$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 
-		$previewBaselineControlsDetails = $partialScanMngr.GetPreviewBaselineControlDetails()
-		#If Scan source is in supported sources or baselineControls switch is available
-		if ($null -ne $previewBaselineControlsDetails -and ($previewBaselineControlsDetails.SubscriptionControlIdList | Measure-Object).Count -gt 0 -and ($previewBaselineControlsDetails.SupportedSources -contains $scanSource -or $this.UsePreviewBaselineControls))
-		{
-			#Get the list of baseline control ids
-			$controlIds = $previewBaselineControlsDetails.SubscriptionControlIdList
-			$previewBaselineControlIds = [system.String]::Join(",",$controlIds);		
-			if(-not [system.String]::IsNullOrEmpty($previewBaselineControlIds))
+			$baselineControlsDetails = $ControlSettings.BaselineControls
+			#if baselineControls switch is available and baseline controls available in settings
+			if ($null -ne $baselineControlsDetails -and ($baselineControlsDetails.SubscriptionControlIdList | Measure-Object).Count -gt 0 -and  $this.UseBaselineControls)
 			{
-				$this.ControlIds += $controlIds;			
+				
+				#$this.PublishCustomMessage("Running cmdlet with baseline resource types and controls.", [MessageType]::Warning);
+				#Get the list of baseline control ids
+				$controlIds = $baselineControlsDetails.SubscriptionControlIdList
+				$baselineControlIds = [system.String]::Join(",",$controlIds);		
+				if(-not [system.String]::IsNullOrEmpty($baselineControlIds))
+				{
+					#Assign baseline control list to ControlIds filter parameter. This controls gets filtered during scan.
+					$this.ControlIds = $controlIds;			
+				}
 			}
-		}
-		elseif (($previewBaselineControlsDetails.SubscriptionControlIdList | Measure-Object).Count -eq 0 -and $this.UsePreviewBaselineControls) 
-		{
-			throw ([SuppressedException]::new(("There are no preview baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+			#If baseline switch is passed and there is no baseline control list present then throw exception 
+			elseif (($baselineControlsDetails.SubscriptionControlIdList | Measure-Object).Count -eq 0 -and $this.UseBaselineControls) 
+			{
+				throw ([SuppressedException]::new(("There are no baseline controls defined for your org. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+			}
+
+			$previewBaselineControlsDetails = $ControlSettings.PreviewBaselineControls
+			#If Scan source is in supported sources or baselineControls switch is available
+			if ($null -ne $previewBaselineControlsDetails -and ($previewBaselineControlsDetails.SubscriptionControlIdList | Measure-Object).Count -gt 0 -and  $this.UsePreviewBaselineControls)
+			{
+				#Get the list of baseline control ids
+				$controlIds = $previewBaselineControlsDetails.SubscriptionControlIdList
+				$previewBaselineControlIds = [system.String]::Join(",",$controlIds);		
+				if(-not [system.String]::IsNullOrEmpty($previewBaselineControlIds))
+				{
+					#Assign preview control list to ControlIds filter parameter. This controls gets filtered during scan.
+					$this.ControlIds += $controlIds;			
+				}
+			}
+			#If preview baseline switch is passed and there is no baseline control list present then throw exception 
+			elseif (($previewBaselineControlsDetails.SubscriptionControlIdList | Measure-Object).Count -eq 0 -and $this.UsePreviewBaselineControls) 
+			{
+				if(($baselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -eq 0 -and $this.UseBaselineControls)
+				{
+					throw ([SuppressedException]::new(("There are no  baseline and preview-baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+				}
+				if(-not ($this.UseBaselineControls))
+				{
+					throw ([SuppressedException]::new(("There are no preview-baseline controls defined for your org. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+				}
+				
+			}
 		}
 	}	
 }
