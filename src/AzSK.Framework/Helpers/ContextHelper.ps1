@@ -138,7 +138,7 @@ class ContextHelper : EventBase
 				}
 				catch 
 				{
-					throw [SuppressedException] ("Please provide a valid tenant or a valid subscription.​") 
+					throw [SuppressedException] ("Please provide a valid tenant or a valid subscription.`nNote: If you are using Privileged Identity Management (PIM), make sure you have activated your access.​") 
 				}
 				    
 				# $currentContext will contain the desired subscription (or $null if id is wrong or no permission)
