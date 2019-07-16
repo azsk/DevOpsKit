@@ -247,7 +247,7 @@ class ControlStateExtension
 
 			[ControlStateIndexer[]] $indexerObjects = @();
 			$this.ControlStateIndexer  = $indexerObjects
-			$AzSKTemp = [Constants]::AzSKAppFolderPath + "\Temp\$($this.UniqueRunId)\ServerControlState";
+			$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState";
 			if(-not (Test-Path -Path $AzSKTemp))
 			{
 				New-Item -ItemType Directory -Path $AzSKTemp -Force | Out-Null

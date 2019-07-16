@@ -1,4 +1,4 @@
-using namespace Newtonsoft.Json
+ using namespace Newtonsoft.Json
 using namespace Microsoft.Azure.Commands.Common.Authentication.Abstractions
 using namespace Microsoft.Azure.Commands.Common.Authentication
 using namespace Microsoft.Azure.Management.Storage.Models
@@ -32,16 +32,16 @@ class Helpers {
 			{
 				if($extension -eq ".json" -or $extension -eq ".lawsview")
 				{
-					$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) | ConvertFrom-Json
+					$fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) | ConvertFrom-Json
 				}
 				else
 				{
-					$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) 
+					$fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) 
 				}
 			}
 			else
 			{
-				$fileContent = (Get-Content -Raw -Path ($rootConfigPath + $filePath)) 
+				$fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) 
 			}
         }
         else {
@@ -683,7 +683,11 @@ class Helpers {
 			}
 			else
 			{
-				$source = ($source + $extend)  | Select-Object -Unique  
+                $source = ($source + $extend)
+                if ($source.Count -gt 0)
+                {
+                    $source = $source | Select-Object -Unique
+                } 
 			}
 		}
 		else{

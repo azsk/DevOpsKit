@@ -20,7 +20,10 @@ class VirtualMachine: AzSVTBase
 		$this.GetVMDetails();
 		$metadata= [PSObject]::new();
 		$metadata| Add-Member -Name VMDetails -Value $this.VMDetails -MemberType NoteProperty;
-		$metadata| Add-Member -Name VMASCDetails -Value $this.ASCSettings -MemberType NoteProperty;				
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableVMASCMetadataCapture",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+		{
+			$metadata| Add-Member -Name VMASCDetails -Value $this.ASCSettings -MemberType NoteProperty;
+		}
 		$this.AddResourceMetadata($metadata);		
 		
 		#OS type must always be present in configuration setting file
@@ -199,16 +202,10 @@ class VirtualMachine: AzSVTBase
 		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
 		try 
 		{ 	
-			$result = [SecurityCenterHelper]::InvokeSecurityCenterSecurityStatus($this.SubscriptionContext.SubscriptionId);
+			$result = [SecurityCenterHelper]::InvokeSecurityCenterSecurityStatus($this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceId);
 			if(($result | Measure-Object).Count -gt 0)
-			{
-				$key = ("$($this.ResourceContext.ResourceName):VirtualMachine").ToLower();
-				$vmSecurityState = $null;
-				if($result.ContainsKey($key))
-				{
-					$vmSecurityState = $result[$key];
-				}			
-				return $vmSecurityState;			
+			{			
+				return $result;			
 			}			
 		}
 		catch
@@ -326,7 +323,7 @@ class VirtualMachine: AzSVTBase
 			{
 				$antimalwareSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.EndpointProtection};
 			}
-
+			
 			if($null -ne $antimalwareSetting)
 			{
 				$controlResult.AddMessage("VM endpoint protection details:", $antimalwareSetting);
@@ -676,7 +673,7 @@ class VirtualMachine: AzSVTBase
 			{
 				$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryption};
 			}
-
+			
 			if($null -ne $adeSetting)
 			{
 				if($adeSetting.assessmentResult -eq 'Healthy')
@@ -903,7 +900,7 @@ class VirtualMachine: AzSVTBase
 				{
 					$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScan};
 				}
-
+				
 				if($null -ne $vulnSetting)
 				{
 					$vulnStatus = $vulnSetting.assessmentResult;

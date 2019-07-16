@@ -208,6 +208,10 @@ Content-Type: multipart/mixed; boundary={1}
 								if (($json | Get-Member -Name "nextLink") -and $json.nextLink) {
 									$uri = $json.nextLink
 								}
+								elseif (($json | Get-Member -Name "@odata.nextLink") -and $json."@odata.nextLink")
+								{
+									$uri = $json."@odata.nextLink"
+								}
 								elseif($requestResult.Headers.ContainsKey('x-ms-continuation-NextPartitionKey'))
 								{
 									$nPKey = $requestResult.Headers["x-ms-continuation-NextPartitionKey"]
@@ -334,10 +338,8 @@ Content-Type: multipart/mixed; boundary={1}
 					{
 						if ($uri.Contains("mspim") -and [Helpers]::CheckMember($_,"ErrorDetails.Message")){
 							$err = $_.ErrorDetails.Message| ConvertFrom-Json
-							throw ([SuppressedException]::new($err.error.message), [SuppressedExceptionType]::Generic)
-							# if ($err.error.code -eq "RoleAssignmentExists") {
-							# 	throw $err;
-							# }
+							throw ([SuppressedException]::new(($err.error.message), [SuppressedExceptionType]::Generic))
+							
 						}
 						elseif([Helpers]::CheckMember($_,"Exception.Response.StatusCode") -and  $_.Exception.Response.StatusCode -eq "Forbidden"){
 							throw ([SuppressedException]::new(("You do not have permission to view the requested resource."), [SuppressedExceptionType]::InvalidOperation))

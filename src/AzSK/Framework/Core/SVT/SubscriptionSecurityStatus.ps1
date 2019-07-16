@@ -46,7 +46,31 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 			[CustomData] $customData = [CustomData]::new();
 			$customData.Name = "SubSVTObject";
 			$customData.Value = $svtObject;
-			$this.PublishCustomData($customData);		
+			$this.PublishCustomData($customData);	
+
+			try
+			{
+				if([FeatureFlightingManager]::GetFeatureStatus("EnableASCTelemetry",$($svtObject.SubscriptionContext.SubscriptionId)) -eq $true)
+				{
+					$scanSource = [RemoteReportHelper]::GetScanSource();
+					if($scanSource -eq [ScanSource]::Runbook)
+					{
+						$secContacts = New-Object psobject -Property @{
+							Phone = $svtObject.SecurityCenterInstance.ContactPhoneNumber;
+							Email = $svtObject.SecurityCenterInstance.ContactEmail;
+							AlertNotifications = $svtObject.SecurityCenterInstance.AlertNotifStatus;
+							AlertsToAdmins = $svtObject.SecurityCenterInstance.AlertAdminStatus
+						}
+						[ASCTelemetryHelper]::ascData = [ASCTelemetryHelper]::new($svtObject.SubscriptionContext.SubscriptionId, $svtObject.SecurityCenterInstance.ASCTier, $svtObject.SecurityCenterInstance.AutoProvisioningSettings, $secContacts)
+						[RemoteApiHelper]::PostASCTelemetry([ASCTelemetryHelper]::ascData)
+					}	
+				}
+			}
+			catch
+			{
+				#eat the exception
+				Write-Warning "Could not post additional ASC telemetry data...`r`nPlease ignore for now if the cmdlet ran successfully."
+			}
 		}
 
 		#save result into local compliance report

@@ -406,6 +406,14 @@ class ConfigurationHelper {
 			return $false
 		}
 	}
+	
+}
+
+#Model to store online policy file content with name. 
+#Used in ConfigurationHelper to cache online policy files
+class Policy{
+    [string] $Name
+    [PSObject] $Content
 }
 
 #Model to store online policy file content with name. 

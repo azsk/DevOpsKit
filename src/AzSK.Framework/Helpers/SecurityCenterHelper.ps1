@@ -13,7 +13,6 @@ class SecurityCenterHelper
 	static [string] $ApiVersion = "?api-version=2015-06-01-preview";
 	static [string] $ApiVersionNew = "?api-version=2017-08-01-preview";
 	static [string] $ApiVersionLatest = "?api-version=2018-03-01";
-	static [PSObject] $ASCSecurityStatus = $null;
 	static [PSObject] $Recommendations = $null;
 	
 
@@ -67,31 +66,22 @@ class SecurityCenterHelper
 		return [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
 	}
 
-	static [PSObject] InvokeSecurityCenterSecurityStatus([string] $subscriptionId)
+	static [PSObject] InvokeSecurityCenterSecurityStatus([string] $subscriptionId, [string] $resourceId)
 	{
 		try 
 		{ 	
-			if([SecurityCenterHelper]::ASCSecurityStatus -eq $null)
+			if((-not [string]::IsNullOrEmpty($subscriptionId)) -and (-not [String]::IsNullOrEmpty($resourceId))) 
 			{
 				$rmContext = [ContextHelper]::GetCurrentRMContext();
 		        $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-				$uri = [System.String]::Format("{0}subscriptions/{1}/providers/microsoft.Security/securityStatuses?api-version=2015-06-01-preview", $ResourceAppIdURI, $subscriptionId)
+				$uri = [System.String]::Format("{0}subscriptions/{1}/providers/microsoft.Security/securityStatuses?api-version=2015-06-01-preview&`$filter=tolower(Id)%20eq%20tolower('{2}/providers/Microsoft.Security/securityStatuses/{3}')", $ResourceAppIdURI, $subscriptionId, $resourceId, $resourceId.Split("/")[-1])
 				$result = [WebRequestHelper]::InvokeGetWebRequest($uri);					
 				if(($result | Measure-Object).Count -gt 0)
 				{
-					$statusDict = @{};
-					$result | ForEach-Object {
-						$resource = $_;
-						$key = ("$($resource.name):$($resource.properties.type)").ToLower();
-						if(-not $statusDict.ContainsKey($key))
-						{
-							$statusDict.Add($key,$resource);
-						}							
-					}
-					[SecurityCenterHelper]::ASCSecurityStatus = $statusDict;						
+					return $result				
 				}										
 			}				
-			return [SecurityCenterHelper]::ASCSecurityStatus;				
+			return $null
 		} 
 		catch
 		{ 
@@ -129,5 +119,242 @@ class SecurityCenterHelper
 		{ 
 			[EventBase]::PublishGenericException($_);
 		}
+	}
+}
+
+
+class ASCTelemetryHelper {
+	[string] $SubscriptionId = "";
+    [string] $ASCTier = "";
+    [PSObject[]] $ResourceTier = $null;
+    [PSObject] $SecurityContactSettings = $null;
+    [PSObject] $SecureScore = $null;
+    [PSObject] $WorkspaceSettings = $null;
+    [string] $SecurityEventsTier = "";
+    [PSObject[]] $ASCRecommendations = $null;
+    [PSObject[]] $ThreatDetection = $null;
+	[string] $AutoProvisioningStatus = "";
+	static [ASCTelemetryHelper] $ascData = $null;
+
+ 	ASCTelemetryHelper([string] $subscriptionId, [string] $ascTierSetting, [string] $autoProvisioningSettings, [PSObject] $securityContacts)
+	{
+		$this.SubscriptionId = $subscriptionId;
+		$this.ASCTier = $ascTierSetting;
+		$this.AutoProvisioningStatus = $autoProvisioningSettings;
+		$this.SecurityContactSettings = $securityContacts;
+		$this.UpdateCurrentInstance();
+	}
+
+ 	[void] UpdateCurrentInstance()
+	{
+		$this.GetASCTierResourceWise();
+		#Some API calls have been commented as we are yet to decide whether we can use them or not
+		#$this.GetSecureScore();
+		#$this.GetThreatDetectionSettings();
+		#$this.GetASCRecommendations();
+		$this.GetWorkspaceSettings();
+		#$this.GetSecurityEventsTier();
+
+ 		[ASCTelemetryHelper]::ascData = $this;
+	}
+
+ 	[void] GetASCTierResourceWise()
+	{
+		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
+		$validatedUri = "$ResourceUrl/subscriptions/$($this.SubscriptionId)/providers/Microsoft.Security/pricings?api-version=2018-06-01"
+		$ascTierResourceWiseDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+
+  		$ascTierResourceWiseDetailsList = [System.Collections.ArrayList]::new()
+		foreach($resourceDetails in $ascTierResourceWiseDetails)
+		{
+			if([Helpers]::CheckMember($resourceDetails,"name"))
+			{
+				if([Helpers]::CheckMember($resourceDetails,"properties.pricingTier"))
+				{
+					$ASCResourceTier = New-Object psobject -Property @{
+						Name = $resourceDetails.name;
+						Tier = $resourceDetails.properties.pricingTier;
+					}
+					$ascTierResourceWiseDetailsList.Add($ASCResourceTier) | Out-Null
+				}
+			}
+		}
+
+  		$this.ResourceTier = $ascTierResourceWiseDetailsList;
+	}
+
+ 	[void] GetSecureScore()
+	{
+		$uri = "https://s2.security.ext.azure.com/api/SecureScore/subscriptions";
+		$body = '{"subscriptionId":["'+$this.SubscriptionId+'"],"limitedSelectedSubscriptionIds":[],"shouldRetrieveDataForLimitedSubscriptions":false}';
+
+ 		$result = $this.GetContentFromPostRequest($uri, $body);
+
+ 		if($null -eq $result)
+		{
+			$this.SecureScore = $null;
+		}
+		else 
+		{
+			$this.SecureScore = New-Object psobject -Property @{
+				CurrentSecureScore = $result.currentSecureScore;
+				MaxSecureScore = $result.maxSecureScore;
+			}
+		}
+	}
+
+ 	[void] GetThreatDetectionSettings()
+	{
+		$uri = "https://s2.security.ext.azure.com/api/threatDetectionSettings/getThreatDetectionSettings?subscriptionId="+$this.SubscriptionId;
+
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
+		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$result = $null;
+
+ 		if($null -ne $AccessToken)
+		{
+			$header = "Bearer " + $AccessToken
+			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
+
+ 			$result = [WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
+		}
+
+ 		if($null -eq $result)
+		{
+			$this.ThreatDetection = $null
+		}
+		else 
+		{
+			$TDEdetailsList = [System.Collections.ArrayList]::new();
+			foreach($TDEdetails in $result)
+			{
+				if([Helpers]::CheckMember($TDEdetails,"name"))
+				{
+					if([Helpers]::CheckMember($TDEdetails,"properties.enabled"))
+					{
+						$TDEtype = New-Object psobject -Property @{
+							Name = $TDEdetails.name;
+							isEnabled = $TDEdetails.properties.enabled;
+						}
+						$TDEdetailsList.Add($TDEtype) | Out-Null
+					}
+				}
+			}
+
+ 			$this.ThreatDetection = $TDEdetailsList;
+		}
+	}
+
+ 	[void] GetASCRecommendations()
+	{
+		$uri = "https://s2.security.ext.azure.com/api/Assessments/aggregated?`$pageSize=40&failedAssessmentsOnly=true";
+		$body = '{"Subscriptions":["'+$this.SubscriptionId+'"],"resourceTypeFilter":[],"limitedSelectedSubscriptions":[],"shouldRetrieveDataForLimitedSubscriptions":false,"resourceGroupIdFilter":[],"resourceIdFilter":[],"categoryFilter":null}'
+
+ 		$result = $this.GetContentFromPostRequest($uri, $body);
+
+ 		if($null -eq $result)
+		{
+			$this.ASCRecommendations = $null
+		}
+		else 
+		{
+			$this.ASCRecommendations = $result.results
+		}
+	}
+
+ 	[void] GetSecurityEventsTier()
+	{
+		$uri = "https://s2.security.ext.azure.com/api/securityEventsTier/getSecurityEventsTier?subscriptionId="+$this.SubscriptionId;
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
+		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$result = $null;
+
+ 		if($null -ne $AccessToken)
+		{
+			$header = "Bearer " + $AccessToken
+			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
+
+ 			$result = [WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
+		}
+
+ 		if($null -ne $result)
+		{
+			$this.SecurityEventsTier = $result.tier
+		}
+		else 
+		{
+			$this.SecurityEventsTier = $null	
+		}
+	}
+
+ 	[void] GetWorkspaceSettings()
+	{
+		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
+		$validatedUri = "$ResourceUrl/subscriptions/$($this.SubscriptionId)/providers/Microsoft.Security/workspaceSettings/default?api-version=2017-08-01-preview"
+		$workspaceSettingsDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+
+ 		if([Helpers]::CheckMember($workspaceSettingsDetails,"properties.workspaceId"))
+		{
+			$this.WorkspaceSettings = New-Object psobject -Property @{
+				WorkspaceId = $workspaceSettingsDetails.properties.workspaceId;
+				Scope = $workspaceSettingsDetails.properties.scope;
+			}
+		}
+		else 
+		{
+			$this.WorkspaceSettings = $null;
+		}
+	}
+
+ 	[PSObject] GetContentFromPostRequest($uri, $body)
+	{
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
+		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		if($null -ne $AccessToken)
+		{
+			$header = "Bearer " + $AccessToken
+			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
+			$result = ""
+			$err = $null
+			$output = $null
+			try {
+				$result = Invoke-WebRequest -Method Post -Uri $uri -Headers $headers -Body $body -ContentType "application/json" -UseBasicParsing
+				if($result.StatusCode -ge 200 -and $result.StatusCode -le 399)
+				{
+					if($null -ne $result.Content){
+						$json = (ConvertFrom-Json $result.Content)
+						if($null -ne $json){
+							if(($json | Get-Member -Name "value"))
+							{
+								$output += $json.value;
+							}
+							else
+							{
+								$output += $json;
+							}
+						}
+					}
+				}
+				return $output
+			}
+			catch
+			{
+				$err = $_
+				if($null -ne $err)
+				{
+					if($null -ne $err.ErrorDetails.Message){
+						$json = (ConvertFrom-Json $err.ErrorDetails.Message)
+						if($null -ne $json){
+							if($json.'odata.error'.code -eq "Request_ResourceNotFound")
+							{
+								return $json.'odata.error'.message
+							}
+							return $json
+						}
+					}
+				}
+			}
+		}
+		return $null
 	}
 }

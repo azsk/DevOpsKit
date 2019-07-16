@@ -915,7 +915,7 @@ class CCAutomation: AzCommandBase
 					{
 						$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($this.AzSKCATempFolderPath, $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
 						#$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
-						$CAScanDataBlobContent = Get-ChildItem -Path Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName) -Force | Get-Content | ConvertFrom-Json
+						$CAScanDataBlobContent = Get-ChildItem -Path (Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)) -Force | Get-Content | ConvertFrom-Json
 					}
 
 					if(($CAScanDataBlobContent | Measure-Object).Count -gt 0)
@@ -2224,7 +2224,7 @@ class CCAutomation: AzCommandBase
 			{
 				$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
 				#$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
-				$CAScanDataBlobContent = Get-ChildItem -Path Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName) -Force | Get-Content | ConvertFrom-Json
+				$CAScanDataBlobContent = Get-ChildItem -Path (Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)) -Force | Get-Content | ConvertFrom-Json
 			}
 		}
 		if(($CAScanDataBlobContent | Measure-Object).Count -gt 0)

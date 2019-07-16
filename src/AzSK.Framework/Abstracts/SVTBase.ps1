@@ -21,11 +21,11 @@ class SVTBase: AzSKRoot
 	hidden [ControlItem[]] $FeatureApplicableControls = $null;
 	[string[]] $ChildResourceNames = $null;
 	[System.Net.SecurityProtocolType] $currentSecurityProtocol;
-
 	#User input parameters for controls
 	[string[]] $FilterTags = @();
 	[string[]] $ExcludeTags = @();
 	[string[]] $ControlIds = @();
+	[string[]] $Severity = @();
 	[string[]] $ExcludeControlIds = @();
 	[hashtable] $ResourceTags = @{}
 	[bool] $GenerateFixScript = $false;
@@ -387,38 +387,7 @@ class SVTBase: AzSKRoot
 
 			if($this.ControlIds.Count -ne 0)
 			{
-				#If severity-specification option is used (instead of indiv. controlId list)
-				#e.g. grs -s <SubId> -ControlIds "Severity:High,Severity:Moderate"
-                if ($this.ControlIds[0] -match ":")
-                {
-                    foreach ($sevSpec in $this.ControlIds)
-                    {
-						if ($sevSpec -match ":")
-						{
-
-							$sevProp = $sevSpec.Substring(0, $sevSpec.IndexOf(":")).Trim()
-							$sevVal = $sevSpec.Substring($sevSpec.IndexOf(":")+1).Trim() #SevVal can be Critical/High, etc. (or Important, Moderate if org-severity mapping is in use)
-							if ($sevProp -eq "Severity" -or $sevProp -eq "ControlSeverity")
-							{
-								$filterControlsById += $this.FeatureApplicableControls | Where-Object { $_.ControlSeverity -eq $sevVal };
-							}
-							else
-							{
-								Write-Warning ("Ignoring item in 'ControlIds' parameter: [$sevSpec]")
-							}
-						}
-						else 
-						{
-							Write-Warning ("Ignoring item in 'ControlIds' parameter: [$sevSpec]")
-						}
-
-                    }
-				}
-				#Else filter controlIds based on passed parameters
-                else
-                {
-                    $filterControlsById += $this.FeatureApplicableControls | Where-Object { $this.ControlIds -Contains $_.ControlId };
-                }
+                $filterControlsById += $this.FeatureApplicableControls | Where-Object { $this.ControlIds -Contains $_.ControlId };
 			}
 			else
 			{
@@ -433,7 +402,25 @@ class SVTBase: AzSKRoot
 			#Filter controls based on filterstags and excludetags
 			$filterTagsCount = ($this.FilterTags | Measure-Object).Count
             $excludeTagsCount = ($this.ExcludeTags | Measure-Object).Count
-            
+
+			#filters controls based on Severity
+			if($this.Severity.Count -ne 0 -and ($filterControlsById | Measure-Object).Count -gt 0)
+			{
+				if([Helpers]::CheckMember($this.ControlSettings, 'ControlSeverity'))
+				{
+					$AllowedSeverities = @();
+					$severityMapping = $this.ControlSettings.ControlSeverity
+					#Discard the severity values passed in parameter that do not have mapping in Org settings.
+                    foreach($sev in $severityMapping.psobject.properties)
+                    {                         
+                        $AllowedSeverities +=  $sev.value       
+					}
+					$this.Severity = $this.Severity | Where-Object{ $_ -in $AllowedSeverities}
+				}
+				$filterControlsById = $filterControlsById | Where-Object {$_.ControlSeverity -in $this.Severity };				
+			}
+
+			
             $unfilteredControlsCount = ($filterControlsById | Measure-Object).Count
 
 			if($unfilteredControlsCount -gt 0) #If we have any controls at this point...
@@ -1068,14 +1055,27 @@ class SVTBase: AzSKRoot
 
 	hidden AddResourceMetadata([PSObject] $metadataObj)
 	{
-
 		[hashtable] $resourceMetadata = New-Object -TypeName Hashtable;
-		$metadataObj.psobject.properties |
-			ForEach-Object {
-				$resourceMetadata.Add($_.name, $_.value)
-			}
+			$metadataObj.psobject.properties |
+				ForEach-Object {
+					$resourceMetadata.Add($_.name, $_.value)
+				}
 
-		$this.ResourceContext.ResourceMetadata = $resourceMetadata
+		if([Helpers]::CheckMember($this.ControlSettings, 'AllowedResourceTypesForMetadataCapture') )
+		{
+			if( $this.ResourceContext.ResourceTypeName -in $this.ControlSettings.AllowedResourceTypesForMetadataCapture)
+			{
+				$this.ResourceContext.ResourceMetadata = $resourceMetadata
+			}
+			else
+			{
+				$this.ResourceContext.ResourceMetadata = $null
+			}
+		}
+		else 
+		{
+			$this.ResourceContext.ResourceMetadata = $resourceMetadata
+		}
 
 	}
 

@@ -51,7 +51,7 @@ class ARMCheckerStatus: EventBase
 	}
 
 
-	[string] EvaluateStatus([string] $armTemplatePath, [string] $parameterFilePath ,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles, [string] $ExcludeControlIds, [string] $ControlIds,[Boolean] $UseBaselineControls,[Boolean] $UsePreviewBaselineControls)
+	[string] EvaluateStatus([string] $armTemplatePath, [string] $parameterFilePath ,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles, [string] $ExcludeControlIds, [string] $ControlIds,[Boolean] $UseBaselineControls,[Boolean] $UsePreviewBaselineControls, [string[]]$Severity)
 	{
 	    if(-not (Test-Path -path $armTemplatePath))
 		{
@@ -127,6 +127,7 @@ class ARMCheckerStatus: EventBase
 		$filesToExcludeCount=0
 		$excludedFiles=@()
 		$filteredFiles = @();
+		$ControlsToScanBySeverity =@();
 		try{
 		  if(-not([string]::IsNullOrEmpty($exemptControlListPath)) -and (Test-Path -path $exemptControlListPath -PathType Leaf))
 		  {
@@ -182,6 +183,14 @@ class ARMCheckerStatus: EventBase
 		  $ControlsToScan = $this.ConvertToStringArray($ControlIds);
 		} 
 
+		if(-not([string]::IsNullOrEmpty($Severity)))
+		{
+		  $Severity = $this.ConvertToStringArray($Severity);
+		  #Discard the severity inputs that are not in enum
+		  $Severity = $Severity | Where-Object {$_ -in [Enum]::GetNames('ControlSeverity')}
+		  $ControlsToScanBySeverity = $Severity
+		} 
+
 		# Check if exclude control ids are provided by user 
 		$ControlsToExclude = @();
 		if(-not([string]::IsNullOrEmpty($ExcludeControlIds)))
@@ -224,40 +233,16 @@ class ARMCheckerStatus: EventBase
 				}
 
 				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0 -and ( $ControlsToScan | Measure-Object).Count -gt 0 ){
-                    if ($ControlsToScan[0] -match ":") #Check if ":" based severity-filter is used for ControlIds string
-                    {
-                        $sevResults = @()
-                        foreach ($sevSpec in $ControlsToScan)
-                        {
-							if ($sevSpec -match ":")
-                            {
-								$sevProp = $sevSpec.Substring(0, $sevSpec.IndexOf(":")).Trim()
-								$sevVal = $sevSpec.Substring($sevSpec.IndexOf(":")+1).Trim() #BUGBUG: Need to support org-sev-mapping in ARMChecker too! 
-								if ($sevProp -eq "Severity" -or $sevProp -eq "ControlSeverity")
-								{
-									$sevResults += $results | Where-Object { $_.Severity -eq $sevVal };
-								}
-								else
-								{
-									Write-Warning ("Ignoring item in 'ControlIds' parameter: [$sevSpec]")
-								}
-                            }
-                            else 
-                            {
-                                Write-Warning ("Ignoring item in 'ControlIds' parameter: [$sevSpec]")
-                            }
-                        }
-                        #Reduce returned results to those filtered per severity-spec in ControlIds string
-                        $results = $sevResults 
-                    }
-                    else {
-                        $results = $results | Where-Object {$ControlsToScan -contains $_.ControlId} 
-                    }
+                    $results = $results | Where-Object {$ControlsToScan -contains $_.ControlId}
                     
                 }
 
 				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0  -and ( $ControlsToExclude | Measure-Object).Count -gt 0){
 					$results = $results | Where-Object {$ControlsToExclude -notcontains $_.ControlId}
+				}
+
+				if($null -ne $results -and ( $results | Measure-Object).Count  -gt 0  -and ( $ControlsToScanBySeverity | Measure-Object).Count -gt 0){
+					$results = $results | Where-Object {$_.Severity -in $ControlsToScanBySeverity}
 				}
 
 				
@@ -715,11 +700,15 @@ class ARMCheckerStatus: EventBase
 			{
 				$this.BaselineControls += $baselineControlList
 				
-			}else{
-				Write-Host "There are no baseline controls defined for this policy." -ForegroundColor Yellow 
+			}
+			else
+			{
+				Write-Host "There are no baseline/preview-baseline controls defined for your org." -ForegroundColor Yellow 
 				$this.BaselineControls = @()
 			}
-		}else{
+		}
+		else
+		{
 			$this.BaselineControls = @()
 		}
 		return $false
