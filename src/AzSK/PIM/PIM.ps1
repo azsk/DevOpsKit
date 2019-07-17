@@ -18,7 +18,8 @@ function Set-AzSKPIMConfiguration {
 		
         [switch]
         [Parameter(Mandatory = $true, ParameterSetName = "ConvertPermanentAssignmentToPIM", HelpMessage = "This switch is required to assign a PIM eligible role.")]
-        $ConvertPermanentAssignmentsToPIM,
+        [Alias ("ConvertPermanentAssignmentsToPIM")]
+        $AssignPIMforPermanentAssignemnts,
 
         [switch]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment", HelpMessage = "This switch is required to assign a PIM eligible role.")]
@@ -121,7 +122,7 @@ function Set-AzSKPIMConfiguration {
                 $pimconfig.InvokeFunction($pimconfig.AssignPIMRole, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalName, $DurationInDays))
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'ConvertPermanentAssignmentToPIM') {
-                $pimconfig.InvokeFunction($pimconfig.TransitionFromPermanentRolesToPIM, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $Force))
+                $pimconfig.InvokeFunction($pimconfig.AssignPIMforPermanentAssignemnts, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $Force))
             }	
             elseif ($PSCmdlet.ParameterSetName -eq 'RemovePermanentAssignment') {
                 $pimconfig.InvokeFunction($pimconfig.RemovePermanentAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $Force))

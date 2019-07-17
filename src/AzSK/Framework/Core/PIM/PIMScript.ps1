@@ -281,7 +281,7 @@ class PIM: CommandBase {
         }
     }
 
-    #Deactivates the user
+    #Deactivates the activated assignment for user
     hidden Deactivate($SubscriptionId, $ResourceGroupName, $ResourceName, $roleName) {
         $this.AcquireToken();
         $assignments = $this.MyJitAssignments() 
@@ -415,7 +415,7 @@ class PIM: CommandBase {
         }
     }
 
-    hidden TransitionFromPermanentRolesToPIM($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $Force) {
+    hidden AssignPIMforPermanentAssignemnts($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $Force) {
        
         $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName)
         if (($resolvedResource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResource.ResourceId))) {    
@@ -465,7 +465,7 @@ class PIM: CommandBase {
                             catch {
                                 
                                     $error = $_ | ConvertFrom-Json
-                                    if ($error.code -eq "RoleAssignmentExists") {
+                                    if ($error.error.code -eq "RoleAssignmentExists") {
                                         $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] PIM Assignment for [$PrincipalName] already exists.", [MessageType]::Update)
                                     }
                                     else {
