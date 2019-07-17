@@ -810,7 +810,7 @@ function Get-CAHD() {
 
 
 
-function Install-AzSKContinuousAssuraceForCluster
+function Install-AzSKContinuousAssuranceForCluster
 {
 	Param(
 
@@ -835,7 +835,7 @@ function Install-AzSKContinuousAssuraceForCluster
 }
 
 
-function Get-AzSKContinuousAssuraceForCluster
+function Get-AzSKContinuousAssuranceForCluster
 {
 	Param(
 
@@ -853,7 +853,7 @@ function Get-AzSKContinuousAssuraceForCluster
     
 }
 
-function Update-AzSKContinuousAssuraceForCluster
+function Update-AzSKContinuousAssuranceForCluster
 {
 	Param(
 
@@ -871,7 +871,7 @@ function Update-AzSKContinuousAssuraceForCluster
     
 }
 
-function Remove-AzSKContinuousAssuraceForCluster
+function Remove-AzSKContinuousAssuranceForCluster
 {
 	Param(
 
