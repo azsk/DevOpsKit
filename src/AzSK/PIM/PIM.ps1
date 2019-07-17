@@ -17,7 +17,7 @@ function Set-AzSKPIMConfiguration {
 
 		
         [switch]
-        [Parameter(Mandatory = $true, ParameterSetName = "ConvertPermanentAssignmentToPIM", HelpMessage = "This switch is required to assign a PIM eligible role.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignPIMforPermanentAssignemnts", HelpMessage = "This switch is required to assign a PIM eligible role.")]
         [Alias ("ConvertPermanentAssignmentsToPIM")]
         $AssignPIMforPermanentAssignemnts,
 
@@ -29,7 +29,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $true, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
-        [Parameter(Mandatory = $true, ParameterSetName = "ConvertPermanentAssignmentToPIM")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignPIMforPermanentAssignemnts")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
         [ValidateNotNullOrEmpty()]
         [string]
@@ -38,7 +38,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Assign")]
-        [Parameter(Mandatory = $false, ParameterSetName = "ConvertPermanentAssignmentToPIM")]
+        [Parameter(Mandatory = $false, ParameterSetName = "AssignPIMforPermanentAssignemnts")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [ValidateNotNullOrEmpty()]
         [string]
@@ -47,7 +47,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Assign")]
-        [Parameter(Mandatory = $false, ParameterSetName = "ConvertPermanentAssignmentToPIM")]
+        [Parameter(Mandatory = $false, ParameterSetName = "AssignPIMforPermanentAssignemnts")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [ValidateNotNullOrEmpty()]
         [string]
@@ -59,7 +59,7 @@ function Set-AzSKPIMConfiguration {
 		$DurationInHours,
 		
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
-        [Parameter(Mandatory = $true, ParameterSetName = "ConvertPermanentAssignmentToPIM")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignPIMforPermanentAssignemnts")]
         [ValidateNotNullOrEmpty()]
         [int]
         $DurationInDays,
@@ -76,7 +76,7 @@ function Set-AzSKPIMConfiguration {
         [string]
         $RoleName,
 
-        [Parameter(Mandatory = $true, ParameterSetName = "ConvertPermanentAssignmentToPIM")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignPIMforPermanentAssignemnts")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
         [ValidateNotNullOrEmpty()]
         [string[]]
@@ -94,7 +94,7 @@ function Set-AzSKPIMConfiguration {
         $RemoveAssignmentFor,
 
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
-		[Parameter(Mandatory = $false, ParameterSetName = "ConvertPermanentAssignmentToPIM")]		
+		[Parameter(Mandatory = $false, ParameterSetName = "AssignPIMforPermanentAssignemnts")]		
 		[switch]
 		[Alias("f")]
         $Force,
@@ -121,7 +121,7 @@ function Set-AzSKPIMConfiguration {
             elseif ($PSCmdlet.ParameterSetName -eq 'Assign') {				
                 $pimconfig.InvokeFunction($pimconfig.AssignPIMRole, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalName, $DurationInDays))
             }
-            elseif ($PSCmdlet.ParameterSetName -eq 'ConvertPermanentAssignmentToPIM') {
+            elseif ($PSCmdlet.ParameterSetName -eq 'AssignPIMforPermanentAssignemnts') {
                 $pimconfig.InvokeFunction($pimconfig.AssignPIMforPermanentAssignemnts, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $Force))
             }	
             elseif ($PSCmdlet.ParameterSetName -eq 'RemovePermanentAssignment') {
