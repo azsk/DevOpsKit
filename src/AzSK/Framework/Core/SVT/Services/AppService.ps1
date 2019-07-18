@@ -24,36 +24,34 @@ class AppService: AzSVTBase
 	}
     hidden [PSObject] GetResourceObject()
     {
-        if (-not $this.ResourceObject)
-		{
-			# Get App Service details. Here Inbuild ResourceDetails property can not be leveraged as GAR cmdlet return extra properties when ResourceType parameter is passed
-            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
-			-ResourceType $this.ResourceContext.ResourceType `
-			-ResourceGroupName $this.ResourceContext.ResourceGroupName
-
-            if(-not $this.ResourceObject)
-            {
-				throw ([SuppressedException]::new(("Resource '$($this.ResourceContext.ResourceName)' not found under Resource Group '$($this.ResourceContext.ResourceGroupName)'"), [SuppressedExceptionType]::InvalidOperation))
-            }
-
-			# Get web sites details
-			$this.WebAppDetails = Get-AzWebApp -Name $this.ResourceContext.ResourceName `
-									-ResourceGroupName $this.ResourceContext.ResourceGroupName
-
-			try
-			{ 
-				$this.AuthenticationSettings = Invoke-AzResourceAction -ResourceType "Microsoft.Web/sites/config/authsettings" `
-                                                                                    -ResourceGroupName $this.ResourceContext.ResourceGroupName `
-                                                                                    -ResourceName $this.ResourceContext.ResourceName `
-                                                                                    -Action list `
-                                                                                    -ApiVersion $this.ControlSettings.AppService.AADAuthAPIVersion `
-                                                                                    -Force `
-                                                                                    -ErrorAction Stop
-				$this.IsReaderRole = $false;
-			}
-			catch
+			if (-not $this.ResourceObject)
 			{
-				if(($_.Exception | Get-Member -Name "HttpStatus" ) -and $_.Exception.HttpStatus -eq "Forbidden")
+				# Get App Service details
+							$this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
+																					-ResourceType $this.ResourceContext.ResourceType `
+																					-ResourceGroupName $this.ResourceContext.ResourceGroupName
+
+							if(-not $this.ResourceObject)
+							{
+					throw ([SuppressedException]::new(("Resource '$($this.ResourceContext.ResourceName)' not found under Resource Group '$($this.ResourceContext.ResourceGroupName)'"), [SuppressedExceptionType]::InvalidOperation))
+							}
+
+				# Get web sites details
+				$this.WebAppDetails = Get-AzWebApp -Name $this.ResourceContext.ResourceName `
+										-ResourceGroupName $this.ResourceContext.ResourceGroupName 
+
+				try
+				{ 
+					$this.AuthenticationSettings = Invoke-AzResourceAction -ResourceType "Microsoft.Web/sites/config/authsettings" `
+																																											-ResourceGroupName $this.ResourceContext.ResourceGroupName `
+																																											-ResourceName $this.ResourceContext.ResourceName `
+																																											-Action list `
+																																											-ApiVersion $this.ControlSettings.AppService.AADAuthAPIVersion `
+																																											-Force `
+																																											-ErrorAction Stop
+					$this.IsReaderRole = $false;
+				}
+				catch
 				{
 					if(($_.Exception | Get-Member -Name "HttpStatus" ) -and $_.Exception.HttpStatus -eq "Forbidden")
 					{
