@@ -44,7 +44,7 @@ class AzSVTCommandBase: SVTCommandBase {
     hidden [void] ClearSingletons()
     {
         #clear ASC security status
-        [SecurityCenterHelper]::ASCSecurityStatus = $null;
+        #[SecurityCenterHelper]::ASCSecurityStatus = $null;
         [SecurityCenterHelper]::Recommendations = $null;
     }
 

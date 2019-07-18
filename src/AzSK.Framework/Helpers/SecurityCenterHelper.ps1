@@ -208,7 +208,7 @@ class ASCTelemetryHelper {
 		$uri = "https://s2.security.ext.azure.com/api/threatDetectionSettings/getThreatDetectionSettings?subscriptionId="+$this.SubscriptionId;
 
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		$result = $null;
 
  		if($null -ne $AccessToken)
@@ -266,7 +266,7 @@ class ASCTelemetryHelper {
 	{
 		$uri = "https://s2.security.ext.azure.com/api/securityEventsTier/getSecurityEventsTier?subscriptionId="+$this.SubscriptionId;
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		$result = $null;
 
  		if($null -ne $AccessToken)
@@ -309,7 +309,7 @@ class ASCTelemetryHelper {
  	[PSObject] GetContentFromPostRequest($uri, $body)
 	{
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		if($null -ne $AccessToken)
 		{
 			$header = "Bearer " + $AccessToken
