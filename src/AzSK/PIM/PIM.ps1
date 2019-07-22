@@ -18,12 +18,16 @@ function Set-AzSKPIMConfiguration {
 		
         [switch]
         [Parameter(Mandatory = $true, ParameterSetName = "AssignPIMforPermanentAssignemnts", HelpMessage = "This switch is required to assign a PIM eligible role.")]
-        [Alias ("ConvertPermanentAssignmentsToPIM")]
         $AssignPIMforPermanentAssignemnts,
 
         [switch]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment", HelpMessage = "This switch is required to assign a PIM eligible role.")]
         $RemovePermanentAssignments,
+
+        
+        [switch]
+        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringPIMAssignments", HelpMessage = "This switch is required to assign a PIM eligible role.")]
+        $ExtendExpiringPIMAssignments,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Default")]
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
@@ -31,6 +35,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
         [Parameter(Mandatory = $true, ParameterSetName = "AssignPIMforPermanentAssignemnts")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringPIMAssignments")]
         [ValidateNotNullOrEmpty()]
         [string]
         $SubscriptionId,
@@ -40,6 +45,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "Assign")]
         [Parameter(Mandatory = $false, ParameterSetName = "AssignPIMforPermanentAssignemnts")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringPIMAssignments")]
         [ValidateNotNullOrEmpty()]
         [string]
         $ResourceGroupName,
@@ -49,6 +55,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "Assign")]
         [Parameter(Mandatory = $false, ParameterSetName = "AssignPIMforPermanentAssignemnts")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringPIMAssignments")]
         [ValidateNotNullOrEmpty()]
         [string]
         $ResourceName,
@@ -60,9 +67,14 @@ function Set-AzSKPIMConfiguration {
 		
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
         [Parameter(Mandatory = $true, ParameterSetName = "AssignPIMforPermanentAssignemnts")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringPIMAssignments")]
         [ValidateNotNullOrEmpty()]
         [int]
         $DurationInDays,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringPIMAssignments")]
+        [int]
+        $ExpiringInDays,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
         [ValidateNotNullOrEmpty()]
@@ -78,15 +90,18 @@ function Set-AzSKPIMConfiguration {
 
         [Parameter(Mandatory = $true, ParameterSetName = "AssignPIMforPermanentAssignemnts")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringPIMAssignments")]
         [ValidateNotNullOrEmpty()]
         [string[]]
         $RoleNames,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
+        [Alias("GroupName")]
         [ValidateNotNullOrEmpty()]
         [string]
         $PrincipalName,
 
+        
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [ValidateNotNullOrEmpty()]
         [ValidateSet("MatchingEligibleAssignments", "AllExceptMe")]
@@ -94,7 +109,8 @@ function Set-AzSKPIMConfiguration {
         $RemoveAssignmentFor,
 
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
-		[Parameter(Mandatory = $false, ParameterSetName = "AssignPIMforPermanentAssignemnts")]		
+        [Parameter(Mandatory = $false, ParameterSetName = "AssignPIMforPermanentAssignemnts")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringPIMAssignments")]		
 		[switch]
 		[Alias("f")]
         $Force,
@@ -126,6 +142,9 @@ function Set-AzSKPIMConfiguration {
             }	
             elseif ($PSCmdlet.ParameterSetName -eq 'RemovePermanentAssignment') {
                 $pimconfig.InvokeFunction($pimconfig.RemovePermanentAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $Force))
+            }
+            elseif ($PSCmdlet.ParameterSetName -eq 'ExtendExpiringPIMAssignments') {
+                $pimconfig.InvokeFunction($pimconfig.ExtendSoonToExpireAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $Force))
             }			
             else {
                 Write-Output("Invalid Parameter Set")	
@@ -151,16 +170,19 @@ function Get-AzSKPIMConfiguration {
         [string]
         [Parameter(Mandatory = $true, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $true, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ListSoonToExpireAssignments")]
         $SubscriptionId,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments")]
         [ValidateNotNullOrEmpty()]
         [string]
         $ResourceGroupName,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments")]
         [string]
         $ResourceName,
 
@@ -172,8 +194,13 @@ function Get-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         $ListPIMAssignments,
 
+        [switch]
+        [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
+        $ListSoonToExpireAssignments,
+
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments")]
         [ValidateNotNullOrEmpty()]
         [string[]]
 		$RoleNames,
@@ -181,7 +208,11 @@ function Get-AzSKPIMConfiguration {
         [switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		[Alias("dnof")]
-		$DoNotOpenOutputFolder
+        $DoNotOpenOutputFolder,
+        
+        [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments")]
+        [int]
+        $ExpiringInDays
 
     )
     Begin {
@@ -202,6 +233,9 @@ function Get-AzSKPIMConfiguration {
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'ListPIMAssignments') {
                 $pimconfig.InvokeFunction($pimconfig.ListAssignment, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $false))
+            }
+            elseif ($PSCmdlet.ParameterSetName -eq 'ListSoonToExpireAssignments') {
+                $pimconfig.InvokeFunction($pimconfig.ListSoonToExpireAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays))
             }
             else {
 				

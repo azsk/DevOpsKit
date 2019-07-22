@@ -337,7 +337,7 @@ class PIM: CommandBase {
                 $roleAssignments = $roleAssignments | Sort-Object -Property RoleName, Name 
                 $this.PublishCustomMessage("")
                 $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
-                $this.PublishCustomMessage($($roleAssignments | Format-Table -Property @{Label = "Role"; Expression = { $_.RoleName } }, PrincipalName, AssignmentState, @{Label = "Type"; Expression = { $_.SubjectType } } | Out-String), [MessageType]::Default)
+                $this.PublishCustomMessage($($roleAssignments | Format-Table -AutoSize -Wrap -Property @{Label = "Role"; Expression = { $_.RoleName } }, PrincipalName, AssignmentState, @{Label = "Type"; Expression = { $_.SubjectType } } | Out-String), [MessageType]::Default)
             }
             else {
                 if ($CheckPermanent) {
@@ -364,8 +364,13 @@ class PIM: CommandBase {
             $roleDefinitionId = ($roles | Where-Object { $_.RoleName -eq $RoleName }).RoleDefinitionId
             $users = $null
             $subjectId = "";
-            try {
+            try 
+            {
                 $users = Get-AzADUser -UserPrincipalName $PrincipalName
+                if($null -eq $users )
+                {
+                    $users = Get-AzADGroup -DisplayName $PrincipalName
+                }
             }
             catch {
                 $this.PublishCustomMessage("Unable to fetch details of the principal name provided.", [MessageType]::Warning)
@@ -406,7 +411,7 @@ class PIM: CommandBase {
             $this.PublishCustomMessage("Your eligible role assignments:", [MessageType]::Default)
             $this.PublishCustomMessage("");
             $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
-            $this.PublishCustomMessage(($assignments | Format-Table -AutoSize @{Label = "ResourceId"; Expression = { $_.OriginalId }} , RoleName, ResourceName, ResourceType, ExpirationDate | Out-String), [MessageType]::Default)
+            $this.PublishCustomMessage(($assignments | Format-Table -AutoSize -Wrap @{Label = "ResourceId"; Expression = { $_.OriginalId }} , RoleName, ResourceName, ResourceType, ExpirationDate | Out-String), [MessageType]::Default)
             $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
             $this.PublishCustomMessage("");
         }
@@ -427,12 +432,12 @@ class PIM: CommandBase {
             $this.PublishCustomMessage("Fetching permanent assignment for [$(($criticalRoles) -join ", ")] role on $($resolvedResource.Type) [$($resolvedResource.ResourceName)]...",[MessageType]::Info)
             $permanentRoles = $this.ListAssignmentsWithFilter($resourceId, $true)
             if (($permanentRoles | Measure-Object).Count -gt 0) {
-                $permanentRolesForTransition = $permanentRoles | Where-Object { $_.SubjectType -eq 'User' -and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
+                $permanentRolesForTransition = $permanentRoles | Where-Object { ($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group'  )-and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
                 if (($permanentRolesForTransition | Measure-Object).Count -gt 0) {
                     $ToContinue = ''
                     if(!$Force)
                     {
-                        $this.PublishCustomMessage($($permanentRolesForTransition | Format-Table -AutoSize -Wrap PrincipalName, ResourceName, ResourceType, RoleName | Out-String), [MessageType]::Default)
+                        $this.PublishCustomMessage($($permanentRolesForTransition | Format-Table -AutoSize -Wrap PrincipalName, ResourceName, SubjectType, ResourceType, RoleName | Out-String), [MessageType]::Default)
                         $this.PublishCustomMessage("");
                         Write-Host "The above role assignments will be moved from 'permanent' to 'PIM'. `nPlease confirm (Y/N): " -ForegroundColor Yellow -NoNewline
                         $ToContinue = Read-Host
@@ -534,7 +539,7 @@ class PIM: CommandBase {
                 $totalRemovableAssignments = ($users | Measure-Object).Count
                 if(!$Force)
                 {
-                    $this.PublishCustomMessage($($users | Format-Table -Property PrincipalName, RoleName, OriginalId | Out-String), [MessageType]::Default)
+                    $this.PublishCustomMessage($($users | Format-Table  -AutoSize -Wrap -Property PrincipalName, RoleName, OriginalId | Out-String), [MessageType]::Default)
                     Write-Host "The above role assignments will be moved from 'permanent' to 'PIM'. `nPlease confirm (Y/N): " -ForegroundColor Yellow -NoNewline
                     $userResp = Read-Host
                 } 
@@ -559,6 +564,89 @@ class PIM: CommandBase {
         {
             $this.PublishCustomMessage("No matching resource found for the current context.", [MessageType]::Warning)
         }
+    }
+
+    hidden  [PSObject] ListSoonToExpireAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays)
+    {
+        $this.AcquireToken();
+        $criticalRoles = @();
+        $soonToExpireAssignments = @();
+        $criticalRoles += $this.ConvertToStringArray($RoleNames)
+        $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName)
+        if(($resources | Measure-Object).Count -gt 0)
+        {
+            $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $false)
+            if(($roleAssignments | Measure-Object).Count)
+            {
+                
+                [int]$soonToExpireWindow = $ExpiringInDays;
+                $soonToExpireAssignments += $roleAssignments | Where-Object {([DateTime]::UTCNow).AddDays($soonToExpireWindow) -gt $_.ExpirationDate -and $_.RoleName -in $criticalRoles -and $_.AssignmentState -eq 'Eligible'}
+                if(($soonToExpireAssignments| Measure-Object).Count -gt 0)
+                {
+                    $this.PublishCustomMessage($($soonToExpireAssignments | Format-Table -AutoSize -Wrap 'SubjectId', 'PrincipalName', 'SubjectType', 'RoleName', 'ExpirationDate'|  Out-String), [MessageType]::Default)
+                }
+            }
+
+        }
+        else
+        {
+            $this.PublishCustomMessage( "Unable to find resource on which assignment was requested. Either the resource does not exist or you may not have permissions for assigning a role on it", [MessageType]::Warning)
+        }
+       return $soonToExpireAssignments
+    }
+
+    # Extend soon to expire assignments
+    hidden  [PSObject] ExtendSoonToExpireAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $force)
+    {
+        $soonToExpireAssignments = $this.ListSoonToExpireAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays);
+        $AssignmetntCount = ($soonToExpireAssignments | Measure-Object).Count
+        $ts =$DurationInDays
+        $url = $this.APIroot +"/roleAssignmentRequests "
+        if($AssignmetntCount -gt 0)
+        {
+            # If force switch is used extend to expire without any prompt
+            $this.PublishCustomMessage("");
+            $this.PublishCustomMessage("Initiating assignment extension for [$AssignmetntCount] PIM assignments..."); #TODO: Check the color
+            $UserResponse = 'N' 
+            [int] $i =1
+            $soonToExpireAssignments | ForEach-Object{
+                    if(-not $force)
+                    {
+                        $this.PublishCustomMessage("");
+                        $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
+                        $this.PublishCustomMessage("[$i/$AssignmetntCount] Do you want to extend assignment for [$($_.PrincipalName)]. Please confirm (Y/N):", [MessageType]::Warning); #TODO: Check the color
+                        $UserResponse = Read-Host
+                    }
+                    else
+                    {
+                        $this.PublishCustomMessage("[$i/$AssignmetntCount] Requesting assignment extension for [$($_.PrincipalName)]",[MessageType]::Default)
+                    }
+
+                    if($force -or ($UserResponse -eq 'Y'))
+                    {
+                        [DateTime]$startDate = $_.ExpirationDate
+                        $postParams = '{"roleDefinitionId":"'+ $_.RoleId+'","resourceId":"'+$_.ResourceId+'","subjectId":"'+ $_.SubjectId+'","assignmentState":"Eligible","type":"AdminExtend","reason":"Admin Extend by '+$this.AccountId+'","schedule":{"type":"Once","startDateTime":"'+ ((get-date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))+'","endDateTime":"'+(($startDate).AddDays($ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))+'"}}'
+                        $response = [WebRequestHelper]::InvokeWebRequest('Post', $url, $this.headerParams, $postParams, "application/json", $false, $true )
+                        if ($response.StatusCode -eq 201) {
+                            $this.PublishCustomMessage("[$i/$AssignmetntCount] Assignment extension request for [$($_.PrincipalName)] for the [$($_.RoleName)] role queued successfully.", [MessageType]::Update);
+                        }  
+                        elseif ($response.StatusCode -eq 401) {
+                            $this.PublishCustomMessage("You are not eligible to extend a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
+                        }
+                        else
+                        {
+                            $this.PublishCustomMessage($response, [MessageType]::Error);
+                        }
+                    }
+                    ++$i;
+                }
+           
+        }
+        else
+        {
+            $this.PublishCustomMessage("No assignments that are expiring in $ExpiringInDays days found",[MessageType]::Error)
+        }
+       return $soonToExpireAssignments
     }
 }
 
