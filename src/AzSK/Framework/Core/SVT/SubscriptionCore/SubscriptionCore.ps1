@@ -1007,7 +1007,7 @@ class SubscriptionCore: SVTBase
 		if(($permanentRoles | measure-object).Count -gt 0 )
 		{
 			
-			$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles -and $_.ObjectType -eq 'User'}
+			$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles -and ($_.ObjectType -eq 'User' -or $_.ObjectType -eq 'Group')}
 			if($null -ne $whitelistedPermanentRoles)
 			{
 				$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}
@@ -1052,7 +1052,7 @@ class SubscriptionCore: SVTBase
 		
 		if(($permanentRoles | measure-object).Count -gt 0 )
 		{
-			$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles -and $_.ObjectType -eq 'User'}
+			$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles -and ($_.ObjectType -eq 'User' -or $_.ObjectType -eq 'Group')}
 			if($null -ne $whitelistedPermanentRoles)
 			{
 				$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}
