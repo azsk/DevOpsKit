@@ -212,17 +212,17 @@ function Setup-DataBricks() {
     if(-not $JobAlreadyExists)
     {
         # Prepare job schedule
-        $Schedule = '"0 0 #h# * * ?"'
-        $jobHrs = ((Get-Date).ToUniversalTime().Hour + 1) % 24
+        $Schedule = '"0 0 #h# * * ?"'
+        $jobHrs = ((Get-Date).ToUniversalTime().Hour + 1) % 24
         $Schedule = $Schedule -replace '\#h\#', $jobHrs
 
         # Create job
         Write-Host "Creating Job 'AzSK_CA_Scan_Job' in the workspace" -ForegroundColor $INFO
         $JobConfigServerUrl = $ConfigBaseUrl + "DatabricksCAScanJobConfig.json"
         $filePath = $env:TEMP + "\DatabricksCAScanJobConfig.json"
-        Invoke-RestMethod  -Method Get -Uri $JobConfigServerUrl -OutFile $filePath 
-        # Bootstrap basic properties like App Insight Key and job schedule in deployment file
-        (Get-Content $filePath) -replace '\#Schedule\#', $Schedule | Set-Content $filePath -Force
+        Invoke-RestMethod -Method Get -Uri $JobConfigServerUrl -OutFile $filePath
+        # Bootstrap basic properties like App Insight Key and job schedule in deployment file
+        (Get-Content $filePath) -replace '\#Schedule\#', $Schedule | Set-Content $filePath -Force
 
         $body = Invoke-RestMethod  -Method Get -Uri $filePath
         $bodyJson  = $body | ConvertTo-Json
@@ -403,9 +403,9 @@ function Update-DataBricks() {
             Write-Host "Creating Job 'AzSK_CA_Scan_Job' in the workspace" -ForegroundColor $INFO
             $JobConfigServerUrl = $ConfigBaseUrl + "DatabricksCAScanJobConfig.json"
             $filePath = $env:TEMP + "\DatabricksCAScanJobConfig.json"
-            Invoke-RestMethod  -Method Get -Uri $JobConfigServerUrl -OutFile $filePath 
-            # Bootstrap basic properties like App Insight Key and job schedule in deployment file
-            (Get-Content $filePath) -replace '\#Schedule\#', $Schedule | Set-Content $filePath -Force
+            Invoke-RestMethod -Method Get -Uri $JobConfigServerUrl -OutFile $filePath
+            # Bootstrap basic properties like App Insight Key and job schedule in deployment file
+            (Get-Content $filePath) -replace '\#Schedule\#', $Schedule | Set-Content $filePath -Force
 
             $body = Invoke-RestMethod  -Method Get -Uri $filePath
             $bodyJson  = $body | ConvertTo-Json
