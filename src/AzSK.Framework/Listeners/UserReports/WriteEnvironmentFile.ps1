@@ -99,7 +99,7 @@ class WriteEnvironmentFile: FileOutputBase
 		$this.AddOutputLog([Helpers]::ConvertObjectToString(($rmContext.Account | Select-Object -Property Id, Type, ExtendedProperties), $false));
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 
-		$this.AddOutputLog("AzureRM context");
+		$this.AddOutputLog("Az context");
 		$this.AddOutputLog([Helpers]::ConvertObjectToString(($rmContext | Select-Object -Property Environment, Subscription, Tenant), $false));
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 	}

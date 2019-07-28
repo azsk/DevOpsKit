@@ -559,7 +559,7 @@ class CCAutomation: AzCommandBase
 			$this.CleanUpOlderAssets();
 			#endregion
 
-			#region: Check AzureRM.Automation/AzureRm.Profile and its dependent modules health
+			#region: Check Az.Automation/Az.Account and its dependent modules health
 			if($FixModules)
 			{
 				$this.PublishCustomMessage("Inspecting modules present in the CA automation account…")

@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class ServiceConnection: AzSVTBase
+class ServiceConnection: SVTBase
 {    
     [PSObject] $ServiceEndPointsObj = $null
     ServiceConnection([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 

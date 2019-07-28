@@ -303,7 +303,7 @@ class CommandHelper
 
 	static BeginCommand([InvocationInfo] $invocationContext)
 	{
-		# Validate Command Prerequisites like AzureRM multiple version load issue
+		# Validate Command Prerequisites like Az multiple version load issue
 		[CommandHelper]::CheckCommandPrerequisites($invocationContext);
 		[CommandHelper]::SetAzSKModuleName($invocationContext);
 		[CommandHelper]::SetCurrentAzSKModuleVersion($invocationContext);

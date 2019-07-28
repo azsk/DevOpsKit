@@ -15,7 +15,7 @@ class AzSVTCommandBase: SVTCommandBase {
 
         [Helpers]::AbstractClass($this, [AzSVTCommandBase]);
         
-        $this.CheckAndDisableAzureRMTelemetry()
+        $this.CheckAndDisableAzTelemetry()
        
         $this.AttestationUniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
         #Fetching the resourceInventory once for each SVT command execution
@@ -73,11 +73,11 @@ class AzSVTCommandBase: SVTCommandBase {
     }
     
     [void] CommandErrorExt([System.Management.Automation.ErrorRecord] $exception) {
-        $this.CheckAndEnableAzureRMTelemetry()
+        $this.CheckAndEnableAzTelemetry()
     }
 
     [void] CommandCompletedExt([SVTEventContext[]] $arguments) {
-        $this.CheckAndEnableAzureRMTelemetry()
+        $this.CheckAndEnableAzTelemetry()
     }
 
     [ComplianceStateTableEntity[]] FetchComplianceStateData([string] $resourceId)
@@ -150,18 +150,18 @@ class AzSVTCommandBase: SVTCommandBase {
         }
     }
 
-    hidden [void] CheckAndDisableAzureRMTelemetry()
+    hidden [void] CheckAndDisableAzTelemetry()
 	{
-		#Disable AzureRM telemetry setting until scan is completed.
+		#Disable Az telemetry setting until scan is completed.
 		#This has been added to improve the performarnce of scan commands
 		#Telemetry will be re-enabled once scan is completed
         Disable-AzDataCollection  | Out-Null
 
     }
     
-    hidden [void] CheckAndEnableAzureRMTelemetry()
+    hidden [void] CheckAndEnableAzTelemetry()
     {
-        #Enabled AzureRM telemetry which got disabled at the start of command
+        #Enabled Az telemetry which got disabled at the start of command
         Enable-AzDataCollection  | Out-Null
     }
 }
