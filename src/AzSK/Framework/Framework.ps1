@@ -93,7 +93,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 
 . $FrameworkPath\Helpers\UserSubscriptionDataHelper.ps1
-. $PSScriptRoot\Abstract\ComplianceBase.ps1
+. $PSScriptRoot\Abstracts\ComplianceBase.ps1
 . $FrameworkPath\Helpers\ComplianceReportHelper.ps1
 
 #Listeners
