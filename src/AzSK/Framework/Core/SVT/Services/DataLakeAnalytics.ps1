@@ -1,13 +1,7 @@
 Set-StrictMode -Version Latest 
-class DataLakeAnalytics: SVTBase
+class DataLakeAnalytics: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
-
-    DataLakeAnalytics([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
 
     DataLakeAnalytics([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 

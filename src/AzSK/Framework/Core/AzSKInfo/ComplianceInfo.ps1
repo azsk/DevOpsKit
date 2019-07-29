@@ -1,7 +1,7 @@
 using namespace System.Management.Automation
 Set-StrictMode -Version Latest 
 
-class ComplianceInfo: CommandBase {    
+class ComplianceInfo: AzCommandBase {    
     hidden [ComplianceMessageSummary[]] $ComplianceMessageSummary = @();
     hidden [ComplianceResult[]] $ComplianceScanResult = @();
     hidden [string] $SubscriptionId

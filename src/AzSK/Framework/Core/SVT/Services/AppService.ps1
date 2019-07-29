@@ -1,20 +1,12 @@
 #using namespace Microsoft.Azure.Commands.AppService.Models
 Set-StrictMode -Version Latest
-class AppService: SVTBase
+class AppService: AzSVTBase
 {
     hidden [PSObject] $ResourceObject;
 	hidden [PSObject] $WebAppDetails;
 	hidden [PSObject] $SiteConfigs;
 	hidden [PSObject] $AuthenticationSettings;
 	hidden [bool] $IsReaderRole;
-
-    AppService([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
-        Base($subscriptionId, $resourceGroupName, $resourceName)
-    {
-        $this.GetResourceObject();
-		$this.AddResourceMetadata($this.ResourceObject.Properties)
-
-    }
 
     AppService([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId, $svtResource)
@@ -148,7 +140,7 @@ class AppService: SVTBase
 			if([Helpers]::CheckMember($this.ResourceObject, "Kind") -and ($this.ResourceObject.Kind -eq "functionapp"))
 			{
 				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+				$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 				$authorisationToken = "Bearer " + $accessToken
 				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
 
@@ -552,7 +544,7 @@ class AppService: SVTBase
 				else
 			{
 				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+				$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 				$authorisationToken = "Bearer " + $accessToken
 				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
 				if([Helpers]::CheckMember($this.WebAppDetails,"EnabledHostNames"))
@@ -710,7 +702,7 @@ class AppService: SVTBase
 		else
 		{
 		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-		$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		$authorisationToken = "Bearer " + $accessToken
 		$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
 		if([Helpers]::CheckMember($this.WebAppDetails,"EnabledHostNames"))

@@ -101,7 +101,8 @@ class ConfigOverride
 			New-Item -ItemType Directory -Path $folderName -ErrorAction Stop | Out-Null
 		}
 
-		[Helpers]::ConvertToJsonCustom(($this.ParsedFile | Select-Object -Property $this.ChangedProperties)) | Out-File -Force -FilePath ( Join-Path $folderName $this.ConfigFileName) -Encoding utf8
+
+		[JsonHelper]::ConvertToJsonCustom(($this.ParsedFile | Select-Object -Property $this.ChangedProperties)) | Out-File -Force -FilePath ( Join-Path $folderName $this.ConfigFileName) -Encoding utf8
 	}
 
 	[void] static ClearConfigInstance()
@@ -113,6 +114,7 @@ class ConfigOverride
 		[ConfigurationHelper]::ConfigVersion = $null
 		[ConfigurationHelper]::IsIssueLogged = $false
 		[ConfigurationHelper]::LocalPolicyEnabled = $false
-		[Helpers]::currentRMContext = $null
+		[ContextHelper]::currentRMContext = $null
+		[ConfigurationHelper]::PolicyCacheContent = @()
 	}
 }

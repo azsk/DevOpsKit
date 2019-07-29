@@ -1,7 +1,7 @@
 using namespace System.Management.Automation
 Set-StrictMode -Version Latest 
 
-class BasicInfo: CommandBase
+class BasicInfo: AzCommandBase
 {    
 	
 	hidden [PSObject] $AzSKRG = $null
@@ -23,7 +23,7 @@ class BasicInfo: CommandBase
 	{
 		$this.PublishCustomMessage("`r`nFetching AzSK Info for current subscription...", [MessageType]::Default);
 
-		$rmContext = [Helpers]::GetCurrentRMContext();
+		$rmContext = [ContextHelper]::GetCurrentRMContext();
 		$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nList of subscriptions " + $rmContext.Account.Type + " " + $rmContext.Account +" is having access to`r`n" + [Constants]::SingleDashLine, [MessageType]::Default);
 		
 		$subscriptions = Get-AzSubscription

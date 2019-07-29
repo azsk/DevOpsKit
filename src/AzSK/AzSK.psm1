@@ -49,7 +49,7 @@ function Get-AzSKAccessToken {
 	{
 		try 
 		{
-			[Helpers]::GetAccessToken($ResourceAppIdURI, $TenantId);		
+			[ContextHelper]::GetAccessToken($ResourceAppIdURI, $TenantId);		
 		}
 		catch 
 		{

@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class SVTStatusReport : SVTCommandBase
+class SVTStatusReport : AzSVTCommandBase
 {
 	[SVTResourceResolver] $ServicesResolver = $null;
 

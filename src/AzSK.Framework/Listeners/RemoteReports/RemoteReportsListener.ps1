@@ -131,7 +131,7 @@ class RemoteReportsListener: ListenerBase {
 	{
 		$currentInstance = [RemoteReportsListener]::GetInstance();
 		$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-		$SubscriptionId = ([Helpers]::GetCurrentRMContext()).Subscription.Id;
+		$SubscriptionId = ([ContextHelper]::GetCurrentRMContext()).Subscription.Id;
 		$resourceGroups = Get-AzResourceGroup
         $resourcesDetails = @();
 		$resourcesFlat = [ResourceInventory]::RawResources
@@ -199,7 +199,7 @@ class RemoteReportsListener: ListenerBase {
 		$scanResult.ScannerVersion = $publisher.GetCurrentModuleVersion()
 		# Using module version as control version by default
 		$scanResult.ControlVersion = $publisher.GetCurrentModuleVersion()
-		$scanResult.Metadata = [Helpers]::ConvertToJsonCustomCompressed($SVTEventContext.SubscriptionContext.SubscriptionMetadata)
+		$scanResult.Metadata = [JsonHelper]::ConvertToJsonCustomCompressed($SVTEventContext.SubscriptionContext.SubscriptionMetadata)
 		if(($SVTEventContexts | Measure-Object).Count -gt 0 -and ($SVTEventContexts[0].ControlResults | Measure-Object).Count -gt 0)
 		{
 			$TempCtrlResult = $SVTEventContexts[0].ControlResults[0];
@@ -247,7 +247,7 @@ class RemoteReportsListener: ListenerBase {
 		$scanResult.ResourceGroup = $SVTEventContextFirst.ResourceContext.ResourceGroupName
 		$scanResult.ResourceName = $SVTEventContextFirst.ResourceContext.ResourceName
 		$scanResult.ResourceId = $SVTEventContextFirst.ResourceContext.ResourceId
-		$scanResult.Metadata = [Helpers]::ConvertToJsonCustomCompressed($SVTEventContextFirst.ResourceContext.ResourceMetadata)
+		$scanResult.Metadata = [JsonHelper]::ConvertToJsonCustomCompressed($SVTEventContextFirst.ResourceContext.ResourceMetadata)
 		
 		if(($SVTEventContexts | Measure-Object).Count -gt 0 -and ($SVTEventContexts[0].ControlResults | Measure-Object).Count -gt 0)
 		{

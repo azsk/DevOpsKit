@@ -2,7 +2,7 @@ using namespace System.Management.Automation
 Set-StrictMode -Version Latest 
 
 # Class to implement Subscription ARM Policy controls 
-class ARMPolicy: CommandBase
+class ARMPolicy: AzCommandBase
 {    
 	hidden [ARMPolicyModel] $ARMPolicyObj = $null;
 	hidden [PolicyInitiative] $SubPolicyInitiative = $null;
@@ -61,7 +61,7 @@ class ARMPolicy: CommandBase
 
 	[MessageData[]] SetARMPolicies()
     {
-		[Helpers]::RegisterResourceProviderIfNotRegistered([ARMPolicy]::PolicyProviderNamespace);
+		[ResourceHelper]::RegisterResourceProviderIfNotRegistered([ARMPolicy]::PolicyProviderNamespace);
 		[MessageData[]] $messages = @();
 		$this.RemoveDeprecatedPolicies();
 		if(($this.ARMPolicyObj.Policies | Measure-Object).Count -ne 0)
@@ -145,7 +145,7 @@ class ARMPolicy: CommandBase
 					{
 						#setting the version tag at AzSKRG
 						$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-						[Helpers]::SetResourceGroupTags($azskRGName,@{[Constants]::ARMPolicyConfigVersionTagName=$this.ARMPolicyObj.Version}, $false)
+						[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::ARMPolicyConfigVersionTagName=$this.ARMPolicyObj.Version}, $false)
 					
 					$resultMessages += [MessageData]::new("All AzSK ARM policies have been added to the subscription successfully`r`n" + [Constants]::SingleDashLine, [MessageType]::Update);
 					}
@@ -326,7 +326,7 @@ class ARMPolicy: CommandBase
 					{
 						#removing the version tag at AzSKRG
 						$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-						[Helpers]::SetResourceGroupTags($azskRGName,@{[Constants]::ARMPolicyConfigVersionTagName=$this.ARMPolicyObj.Version}, $true)
+						[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::ARMPolicyConfigVersionTagName=$this.ARMPolicyObj.Version}, $true)
 						
 						$resultMessages += [MessageData]::new("All ARM policies have been removed from the subscription successfully`r`n" + [Constants]::SingleDashLine, [MessageType]::Update);
 					}
@@ -348,7 +348,7 @@ class ARMPolicy: CommandBase
 					$messages += $noPolicyMessage;
 					$this.PublishCustomMessage($noPolicyMessage);
 					$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-					[Helpers]::SetResourceGroupTags($azskRGName,@{[Constants]::ARMPolicyConfigVersionTagName=$this.ARMPolicyObj.Version}, $true)
+					[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::ARMPolicyConfigVersionTagName=$this.ARMPolicyObj.Version}, $true)
 				}
 			}
 			else

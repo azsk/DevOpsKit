@@ -1,14 +1,8 @@
 #using namespace Microsoft.Azure.Commands.Search.Models
 Set-StrictMode -Version Latest 
-class Search: SVTBase
+class Search: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
-
-    Search([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
 
 	Search([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -19,10 +13,7 @@ class Search: SVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
-                                        -ResourceType  "Microsoft.Search/searchServices" `
-                                        -ResourceGroupName $this.ResourceContext.ResourceGroupName `
-                                        -ErrorAction Stop
+            $this.ResourceObject = $this.ResourceContext.ResourceDetails
 
             if(-not $this.ResourceObject)
             {

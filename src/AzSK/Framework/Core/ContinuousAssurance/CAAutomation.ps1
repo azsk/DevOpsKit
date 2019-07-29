@@ -1,6 +1,6 @@
 ﻿using namespace System.Management.Automation
 Set-StrictMode -Version Latest 
-class CCAutomation: CommandBase
+class CCAutomation: AzCommandBase
 { 
 	hidden [AutomationAccount] $AutomationAccount
 	[string] $TargetSubscriptionIds = "";
@@ -242,12 +242,12 @@ class CCAutomation: CommandBase
 			    $this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nStarted setting up Automation Account for Continuous Assurance (CA)`r`n"+[Constants]::DoubleDashLine);
                 
                 #create AzSKRG resource group
-                [Helpers]::CreateNewResourceGroupIfNotExists($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
+                [ResourceGroupHelper]::CreateNewResourceGroupIfNotExists($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
 				
 				#create RG given by user
 				if($this.IsMultiCAModeOn)
 				{
-                    [Helpers]::CreateNewResourceGroupIfNotExists($this.AutomationAccount.ResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
+                    [ResourceGroupHelper]::CreateNewResourceGroupIfNotExists($this.AutomationAccount.ResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
                 }
 			}
 			
@@ -285,7 +285,7 @@ class CCAutomation: CommandBase
 				#create new storage
 				$this.UserConfig.StorageAccountName = ("azsk" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"))
 				$this.PublishCustomMessage("Creating a storage account: ["+ $this.UserConfig.StorageAccountName +"] for storing reports from CA scans.")
-				$newStorage = [Helpers]::NewAzskCompliantStorage($this.UserConfig.StorageAccountName,$this.UserConfig.StorageAccountRG, $this.AutomationAccount.Location) 
+				$newStorage = [StorageHelper]::NewAzskCompliantStorage($this.UserConfig.StorageAccountName,$this.UserConfig.StorageAccountRG, $this.AutomationAccount.Location) 
 				if(!$newStorage)
 				{
 					$this.cleanupFlag = $true
@@ -363,7 +363,7 @@ class CCAutomation: CommandBase
 								if((Get-AzResourceGroup -Name $this.AutomationAccount.CoreResourceGroup -ErrorAction SilentlyContinue|Measure-Object).Count -eq 0)
 								{
 									$this.PublishCustomMessage("Creating AzSK RG...");
-									[Helpers]::NewAzSKResourceGroup($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
+									[ResourceGroupHelper]::NewAzSKResourceGroup($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())
 								}								
 								#endregion
 
@@ -384,7 +384,7 @@ class CCAutomation: CommandBase
 									#create new storage
 									$caStorageAccountName = ("azsk" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"))
 									$this.PublishCustomMessage("Creating a storage account: [$caStorageAccountName] for storing reports from CA scans.")
-									$newStorage = [Helpers]::NewAzskCompliantStorage($caStorageAccountName,$this.UserConfig.StorageAccountRG, $this.AutomationAccount.Location) 
+									$newStorage = [StorageHelper]::NewAzskCompliantStorage($caStorageAccountName,$this.UserConfig.StorageAccountRG, $this.AutomationAccount.Location) 
 									if(!$newStorage)
 									{
 										$this.cleanupFlag = $true
@@ -399,7 +399,7 @@ class CCAutomation: CommandBase
 										"CreationTime"=$timestamp;
 										"LastModified"=$timestamp
 										}
-										[Helpers]::SetResourceTags($newStorage.Id, $this.reportStorageTags, $false, $true);
+										[ResourceHelper]::SetResourceTags($newStorage.Id, $this.reportStorageTags, $false, $true);
 									} 
 									$out.StorageAccountName = $caStorageAccountName;
 								}
@@ -445,7 +445,7 @@ class CCAutomation: CommandBase
 					New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 				}
 				
-				[Helpers]::ConvertToJsonCustom($scanobjects) | Out-File $filename -Force
+				[JsonHelper]::ConvertToJsonCustom($scanobjects) | Out-File $filename -Force
 						
 				$caStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 				$this.UserConfig.StorageAccountName = $caStorageAccount.Name
@@ -559,7 +559,7 @@ class CCAutomation: CommandBase
 			$this.CleanUpOlderAssets();
 			#endregion
 
-			#region: Check AzureRM.Automation/AzureRm.Profile and its dependent modules health
+			#region: Check Az.Automation/Az.Account and its dependent modules health
 			if($FixModules)
 			{
 				$this.PublishCustomMessage("Inspecting modules present in the CA automation account…")
@@ -725,7 +725,7 @@ class CCAutomation: CommandBase
 				$newStorageName = ("azsk" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"))				
 				$this.PublishCustomMessage("Creating Storage Account: [$newStorageName] for storing reports from CA scans.")
 				$this.UserConfig.StorageAccountName = $newStorageName
-				$newStorage = [Helpers]::NewAzskCompliantStorage($newStorageName, $this.AutomationAccount.CoreResourceGroup, $existingAccount.Location) 
+				$newStorage = [StorageHelper]::NewAzskCompliantStorage($newStorageName, $this.AutomationAccount.CoreResourceGroup, $existingAccount.Location) 
 				if(!$newStorage)
 				{
 					throw ([SuppressedException]::new(($this.exceptionMsg + "Failed to create storage account."), [SuppressedExceptionType]::Generic))
@@ -968,7 +968,7 @@ class CCAutomation: CommandBase
 								{
 									#create new resource group/check if RG exists# 
 				
-									[Helpers]::CreateNewResourceGroupIfNotExists($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())			
+									[ResourceGroupHelper]::CreateNewResourceGroupIfNotExists($this.AutomationAccount.CoreResourceGroup,$this.AutomationAccount.Location,$this.GetCurrentModuleVersion())			
 									
 									#recheck permissions
 									$this.PublishCustomMessage("Checking SPN (AAD app id: $($this.CAAADApplicationID)) permissions on target subscriptions...")
@@ -990,7 +990,7 @@ class CCAutomation: CommandBase
 										#create default storage
 										$newStorageName = ("azsk" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"))
 										$this.PublishCustomMessage("Creating Storage Account: [$newStorageName] for storing reports from CA scans.")
-										$newStorage = [Helpers]::NewAzskCompliantStorage($newStorageName, $this.AutomationAccount.CoreResourceGroup, $existingAccount.Location) 
+										$newStorage = [StorageHelper]::NewAzskCompliantStorage($newStorageName, $this.AutomationAccount.CoreResourceGroup, $existingAccount.Location) 
 										if(!$newStorage)
 										{
 											throw ([SuppressedException]::new(($this.exceptionMsg + "Failed to create storage account."), [SuppressedExceptionType]::Generic))
@@ -1087,7 +1087,7 @@ class CCAutomation: CommandBase
 				{
 					New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 				}
-				[Helpers]::ConvertToJsonCustom($existingScanObjects) | Out-File $filename -Force
+				[JsonHelper]::ConvertToJsonCustom($existingScanObjects) | Out-File $filename -Force
 			
 				$caStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 				$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup  -Name $caStorageAccount.Name
@@ -1198,7 +1198,7 @@ class CCAutomation: CommandBase
             $resourceInstance = $this.GetCABasicResourceInstance()
             if($resourceInstance)
             {
-			    [Helpers]::SetResourceTags($resourceInstance.ResourceId, $automationTags, $false, $true);
+			    [ResourceHelper]::SetResourceTags($resourceInstance.ResourceId, $automationTags, $false, $true);
             }
 		
 			#endregion
@@ -2500,7 +2500,7 @@ class CCAutomation: CommandBase
 			{
 				New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
 			}
-			[Helpers]::ConvertToJsonCustom($finalTargetSubs) | Out-File $filename -Force							
+			[JsonHelper]::ConvertToJsonCustom($finalTargetSubs) | Out-File $filename -Force							
 
 			#get the scanobjects container
 			try {
@@ -2651,7 +2651,7 @@ class CCAutomation: CommandBase
 	hidden [void] NewEmptyAutomationAccount()
 	{
 		#region :check if resource provider is registered
-		[Helpers]::RegisterResourceProviderIfNotRegistered("Microsoft.Automation");
+		[ResourceHelper]::RegisterResourceProviderIfNotRegistered("Microsoft.Automation");
 		#endregion
 
 		#Add tags
@@ -4015,14 +4015,14 @@ class CCAutomation: CommandBase
 		#update version in AzSKRG 
 		$azskRGName = $this.AutomationAccount.CoreResourceGroup;
 		$version = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion;
-		[Helpers]::SetResourceGroupTags($azskRGName,@{ $($this.RunbookVersionTagName)=$version}, $false)
+		[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{ $($this.RunbookVersionTagName)=$version}, $false)
 	}
 	hidden [void] RemoveRunbookVersionTag()
 	{
 		#remove version in AzSKRG 
 		$azskRGName = $this.AutomationAccount.CoreResourceGroup;
 		$version = [ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion;
-		[Helpers]::SetResourceGroupTags($azskRGName,@{$($this.RunbookVersionTagName)=$version}, $true)
+		[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{$($this.RunbookVersionTagName)=$version}, $true)
 	}
 	#endregion
 
