@@ -467,14 +467,14 @@ class PIM: CommandBase {
                                 $this.PublishCustomMessage([Constants]::SingleDashLine)
                           
                                }
-                            catch {
-                                
-                                    $error = $_ | ConvertFrom-Json
-                                    if ($error.error.code -eq "RoleAssignmentExists") {
-                                        $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] PIM Assignment for [$PrincipalName] already exists.", [MessageType]::Update)
+                            catch {                                
+                                   
+                                    $err = $_ | ConvertFrom-Json
+                                    if ($err.error.code -eq "RoleAssignmentExists") {
+                                        $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] PIM Assignment for [$PrincipalName] already exists.", [MessageType]::Warning)
                                     }
                                     else {
-                                        $this.PublishCustomMessage("$($error)", [MessageType]::Error)
+                                        $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] $($err.error.message)", [MessageType]::Error)
                                     }
                                                                                             
                             }         
