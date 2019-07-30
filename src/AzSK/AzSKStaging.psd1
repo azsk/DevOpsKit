@@ -153,7 +153,9 @@
         'Update-AzSKTrackedCredential',
         'New-AzSKTrackedCredential',
         'Get-AzSKContinuousAssuranceForDatabricks',
-        'Install-AzSKContinuousAssuranceForDatabricks'
+        'Install-AzSKContinuousAssuranceForDatabricks',
+        'Update-AzSKContinuousAssuranceForDatabricks',
+        'Remove-AzSKContinuousAssuranceForDatabricks'
     )
 
     # Cmdlets to export from this module

@@ -69,11 +69,10 @@ function Get-AzSKContinuousAssuranceForDatabricks {
     }
     Process {
         try {
-            $ListEP = "/api/2.0/secrets/list?scope=AzSK_CA_Secret_Scope"
             [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
             $ResourceContext = Get-DatabricksParameters
             $CAInstance = [CAForDatabricks]::new($ResourceContext, $MyInvocation)
-            $CAInstance.InvokeFunction($CAInstance.GetCA, @($ListEP))   
+            $CAInstance.InvokeFunction($CAInstance.GetCA)   
         }
         catch {
             [EventBase]::PublishGenericException($_);
@@ -170,9 +169,45 @@ function Update-AzSKContinuousAssuranceForDatabricks{
             [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
             $ResourceContext = Get-DatabricksParameters
             $CAInstance = [CAForDatabricks]::new($ResourceContext, $MyInvocation)
-            $ResourceContext.InstrumentationKey = $InstrumentationKey
-            $CAInstance.InvokeFunction($CAInstance.UpdateCA, $NewPersonalAccessToken, 
-                                       $NewAppInsightKey, $NewSchedule)
+            $CAInstance.InvokeFunction($CAInstance.UpdateCA, @($NewPersonalAccessToken, 
+                                       $NewAppInsightKey, $NewSchedule))
+        } catch {
+            [EventBase]::PublishGenericException($_);
+        }
+    }
+    End {
+        [ListenerHelper]::UnregisterListeners();
+    }
+}
+
+function Remove-AzSKContinuousAssuranceForDatabricks{
+    Param(
+        [string]
+        [Alias("sid")]
+        $SubscriptionId,
+
+        [string]
+        [Alias("wsn")]
+        $WorkspaceName,
+
+        [string]
+        [Alias("rgn")]
+        $ResourceGroupName,
+
+        [string]
+        [Alias("pat")]
+        $PersonalAccessToken
+    )
+    Begin{
+        [CommandHelper]::BeginCommand($MyInvocation);
+        [ListenerHelper]::RegisterListeners();         
+    }
+    Process {
+        try {
+            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
+            $ResourceContext = Get-DatabricksParameters
+            $CAInstance = [CAForDatabricks]::new($ResourceContext, $MyInvocation)
+            $CAInstance.InvokeFunction($CAInstance.RemoveCA)
         } catch {
             [EventBase]::PublishGenericException($_);
         }

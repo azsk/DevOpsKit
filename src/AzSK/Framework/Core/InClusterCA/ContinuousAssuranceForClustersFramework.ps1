@@ -59,7 +59,13 @@ class CAForDatabricks : CommandBase {
         }
     }
 
-    [void] GetCA($ListEP) {
+    [void] GetCA() {
+        # check secret scope exist
+        if(-not $this.CheckAzSKSecretScopeExists()){
+            $this.PublishCustomMessage("AzSK scope not found. CA isn't functioning properly", [MessageType]::Error)
+            return
+        } 
+        $ListEP = "/api/2.0/secrets/list?scope=AzSK_CA_Secret_Scope"
         $fail = $false
         $response = $this.InvokeRestAPICall($ListEP, "GET", $null, "Unable to fetch secrets. Please check if CA instance is present")
         $this.PublishCustomMessage("Checking if runtime permissions are present")
@@ -89,7 +95,7 @@ class CAForDatabricks : CommandBase {
             'scope' = $this.AzSKSecretScopeName;
         } | ConvertTo-Json
         $SecretScopes = $this.InvokeRestAPICall($endPoint, "GET", $Body, "Unable to fetch secret scope, remaining steps will be skipped.")
-        if ($SecretScopes -ne $null `
+        if (-not [string]::IsNullOrEmpty($SecretScopes) `
                 -and ("scopes" -in $SecretScopes.PSobject.Properties.Name) `
                 -and ($SecretScopes.scopes | Measure-object).Count -gt 0) {
             $SecretScope = $SecretScopes.scopes | Where { $_.name -eq $this.AzSKSecretScopeName }
@@ -137,22 +143,20 @@ class CAForDatabricks : CommandBase {
         $AzSKJobs = $JobList.jobs | where { $_.settings.name -eq 'AzSK_CA_Scan_Job' }
         $DeleteEndPoint = "/api/2.0/jobs/delete"
         ForEach ($job in $AzSKJobs) {
-            $this.PublishCustomMessage("Deleting AzSKJob with ID: $job.job_id")
+            $this.PublishCustomMessage("Deleting AzSKJob with ID: $($job.job_id) created by user $($job.creator_user_name)")
             $jid = @{"job_id" = "$($job.job_id)"} | ConvertTo-Json
             $this.InvokeRestAPICall($DeleteEndPoint, "POST", $jid, "Unable to delete job") 
         }
     }
 
     [bool] CheckAzSKWorkspaceExist() {
-        $workspace = "/api/2.0/workspace/get-status?path=/AzSK"
-        $scopebody = @{
-            "scope" = "AzSK_CA_Secret_Scope"
-        } | ConvertTo-Json
+        $workspace = "/api/2.0/workspace/list?path=/"
         $response = $this.InvokeRestAPICall($workspace, "GET", $null, "Unable to fetch workspace.")
-        if ($response.path -eq "/AzSK") {
-            return $true
-        } else {
+        $azskPath = $response | Where {$_.objects.path -eq "/AzSK"}
+        if ([string]::IsNullOrEmpty($azskPath)) {
             return $false
+        } else {
+            return $true
         }
     }
 
@@ -237,11 +241,10 @@ class CAForDatabricks : CommandBase {
             $Body = @{
                 'scope' = $this.AzSKSecretScopeName;
             } | ConvertTo-Json
-            $this.PublishCustomMessage("Creating a new secret scope [$this.SecretScopeName] in the workspace")
+            $this.PublishCustomMessage("Creating a new secret scope [$($this.AzSKSecretScopeName)] in the workspace")
             $EndPoint = "/api/2.0/secrets/scopes/create"
             $ResponseObject = $this.InvokeRestAPICall($EndPoint, "POST", $Body, 
                 "Unable to create secret scope, remaining steps will be skipped.")
-            $this.PublishCustomMessage("Created scope [$this.SecretScopeName].")
         }
 
         
@@ -286,6 +289,9 @@ class CAForDatabricks : CommandBase {
     }
 
     [void] UpdateCA($NewPersonalAccessToken, $NewAppInsightKey, $NewSchedule) {
+        $PatSecretKey = "AzSK_CA_Scan_Key"
+        $IKKey = "AzSK_AppInsight_Key"
+
         # validation- secret scope should already exist
         if (-not $this.CheckAzSKSecretScopeExists()) {
             $this.PublishCustomMessage("AzSK secret scope not found. Please ensure the CA is installed.",
@@ -293,19 +299,20 @@ class CAForDatabricks : CommandBase {
             return
         }
         # update secret scope values
-        $this.InsertDataIntoDB($NewPersonalAccessToken)
-        $this.InsertDataIntoDB($NewAppInsightKey)
+        $this.InsertDataIntoDB($this.AzSKSecretScopeName, $PatSecretKey, $NewPersonalAccessToken)
+        $this.InsertDataIntoDB($this.AzSKSecretScopeName, $IKKey, $NewAppInsightKey)
         # update notebook content
         $this.UploadAzSKNotebookToCluster()
-
+        # update schedule, if passed
         # validation- CA scan job should already exist
-        if (-not $this.CheckAzSKJobExists()) {
-            $this.PublishCustomMessage("CA scan job is abset. Please ensure the CA is installed.")
-        } else {
-            $this.RemoveAzSKScanJob()
-        }
-
-        if (-not [string]::IsNullOrEmpty()) {
+        if (-not [string]::IsNullOrEmpty($NewSchedule)) {
+            if (-not $this.CheckAzSKJobExists()) {
+                $this.PublishCustomMessage("CA scan job is abset. Please ensure the CA is installed.", 
+                                           [MessageType]::Error)
+                return
+            } else {
+                $this.RemoveAzSKScanJob()
+            }
             $this.CreateAzSKScanJob($NewSchedule)
         }
     }
@@ -332,7 +339,7 @@ class CAForDatabricks : CommandBase {
         # remove secret scope
         if ($this.CheckAzSKSecretScopeExists()) {
             $this.RemoveAzSKSecretScope()
-            $this.PublishCustomMessage("AzSK workspace removed")
+            $this.PublishCustomMessage("AzSK secret scope removed")
         } else {
             $this.PublishCustomMessage("AzSK secret scope doesn't exist. Please ensure the CA is installed.",
                                        [MessageType]::Error)
