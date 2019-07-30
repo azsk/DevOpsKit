@@ -106,7 +106,14 @@ class ControlsInfo: AzCommandBase
 
 		if($this.PreviewBaslineControls)
 		{
+			#If preview baseline switch is passed and there is no preview baseline control list present then throw exception 
+			if (($previewBaselineControls | Measure-Object).Count -eq 0 -and -not $this.BaslineControls) 
+			{
+				throw ([SuppressedException]::new(("There are no preview baseline controls defined for this policy."), [SuppressedExceptionType]::Generic))
+			}
+			
 			$this.ControlIds += $previewBaselineControls
+
 		}
 
 		$resourcetypes | ForEach-Object{
