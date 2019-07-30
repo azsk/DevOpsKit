@@ -31,6 +31,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "ConvertPermanentAssignmentToPIM")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
         [ValidateNotNullOrEmpty()]
+        [Alias("sid")]
         [string]
         $SubscriptionId,
 
@@ -40,6 +41,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "ConvertPermanentAssignmentToPIM")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [ValidateNotNullOrEmpty()]
+        [Alias("rgn")]
         [string]
         $ResourceGroupName,
 
@@ -49,6 +51,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "ConvertPermanentAssignmentToPIM")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [ValidateNotNullOrEmpty()]
+        [Alias("rn")]
         [string]
         $ResourceName,
 
@@ -150,16 +153,19 @@ function Get-AzSKPIMConfiguration {
         [string]
         [Parameter(Mandatory = $true, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $true, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
+        [Alias("sid")]
         $SubscriptionId,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         [ValidateNotNullOrEmpty()]
+        [Alias("rgn")]
         [string]
         $ResourceGroupName,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
+        [Alias("rn")]
         [string]
         $ResourceName,
 
