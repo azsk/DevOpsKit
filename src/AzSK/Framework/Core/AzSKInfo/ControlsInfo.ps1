@@ -147,9 +147,6 @@ class ControlsInfo: AzCommandBase
 
 		if($SVTConfig.Keys.Count -gt 0)
 		{
-			$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
-			$this.PublishCustomMessage("`r`nFetching security controls details...", [MessageType]::Default);
-			$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 
 			$SVTConfig.Keys  | Foreach-Object {
 				$featureName = $_
@@ -205,7 +202,7 @@ class ControlsInfo: AzCommandBase
 					$ctrlObj | Add-Member -NotePropertyName Automated -NotePropertyValue $_.Automated
 					$ctrlObj | Add-Member -NotePropertyName SupportsAutoFix -NotePropertyValue $fixControl
 					$tags = [system.String]::Join(", ", $_.Tags)
-					$ctrlObj | Add-Member -NotePropertyName Tags -NotePropertyValue $tags
+					$ctrlObj | Add-Member -NotePropertyName Tags -NotePropertyValue $tags 
 
 					$allControls += $ctrlObj
 
@@ -227,10 +224,10 @@ class ControlsInfo: AzCommandBase
 			}
 
 			$controlCSV = New-Object -TypeName WriteCSVData
-			$controlCSV.FileName = 'Control Details'
+			$controlCSV.FileName = 'Control_Details_' + [String] $this.InvocationContext.Mycommand.ModuleName + "_" + [String] $this.GetCurrentModuleVersion()
 			$controlCSV.FileExtension = 'csv'
 			$controlCSV.FolderPath = ''
-			$controlCSV.MessageData = $allControls
+			$controlCSV.MessageData = $allControls| Sort-Object FeatureName, ControlSeverity
 
 			$this.PublishAzSKRootEvent([AzSKRootEvent]::WriteCSV, $controlCSV);
 		}
@@ -244,10 +241,8 @@ class ControlsInfo: AzCommandBase
 		if($controlSummary.Count -gt 0)
 		{
 			$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
-			$this.PublishCustomMessage("`r`Completed fetching security controls details...", [MessageType]::Default);
-			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
-			$this.PublishCustomMessage("Summary", [MessageType]::Default)
-			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
+			$this.PublishCustomMessage("Summary of controls available in " + $this.InvocationContext.Mycommand.ModuleName +" "+  $this.GetCurrentModuleVersion(), [MessageType]::Default)
+			$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 
 			$ctrlSummary = New-Object -TypeName PSObject
 			$ctrlSummary | Add-Member -NotePropertyName FeatureName -NotePropertyValue "Total" 
