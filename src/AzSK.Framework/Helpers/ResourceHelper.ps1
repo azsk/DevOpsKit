@@ -1,4 +1,4 @@
-﻿using namespace Microsoft.WindowsAzure.Storage.Blob
+﻿using namespace Microsoft.Azure.Storage.Blob
 using namespace Microsoft.Azure.Commands.Management.Storage.Models
 using namespace Microsoft.Azure.Management.Storage.Models
 using namespace Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel

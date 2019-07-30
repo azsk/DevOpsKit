@@ -23,6 +23,7 @@ class StorageFix: FixServicesBase
 		return $this.ResourceObject;
 	}
 
+	# TODO: This function is not being used. Can we remove this function?
 	[MessageData[]] SetSku([PSObject] $parameters)
     {
 		[MessageData[]] $detailedLogs = @();
