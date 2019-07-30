@@ -655,7 +655,7 @@ class SubscriptionCore: AzSVTBase
 		# }
         else
         {
-			# $controlResult.EnableFixControl = $true;
+			$controlResult.EnableFixControl = $true;
 			# if($controlResult.FixControlParameters)
 			# {
 			# 	$controlResult.FixControlParameters.Tags = $this.SubscriptionMandatoryTags;
