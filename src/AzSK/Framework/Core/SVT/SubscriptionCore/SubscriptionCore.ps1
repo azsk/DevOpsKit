@@ -1564,7 +1564,6 @@ class SubscriptionCore: AzSVTBase
 				}
 
 				$credBlobs | ForEach-Object{
-					$file = $AzSKTemp + "\$($this.SubscriptionContext.SubscriptionId)\" + $_.Name
 					$file = Join-Path $AzSKTemp -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $($_.Name)
 					
 					$blobContent = Get-AzStorageBlobContent -Blob $_.Name -Container $container.Name -Context $context -Destination $file -Force -ErrorAction Ignore    
