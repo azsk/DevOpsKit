@@ -298,6 +298,12 @@ class CommandHelper
             Noun = "AzSKTrackedCredential";
 			ShortName = "RTC";
 			IsOrgPolicyMandatory = $false;
+        },
+		[CommandDetails]@{
+            Verb = "Set";
+            Noun = "AzSKSettings";
+            ShortName = "SAS";
+			IsLatestRequired = $false;
         }
     );
 

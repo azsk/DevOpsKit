@@ -497,6 +497,22 @@ function Clear-AzSKSessionState {
 
 }
 
+function Set-AzSKSettings
+{
+    Param
+    (
+        [Parameter(Mandatory = $true, HelpMessage = "Disable org policy check for current session")]
+        [switch]
+        [Alias("dopc")]
+        $DisableOrgPolicyCheckForSession
+    )
+   
+    if ($DisableOrgPolicyCheckForSession) {
+        [CommandHelper]::Mapping | ForEach-Object {
+            $_.IsOrgPolicyMandatory = $false
+        }
+    }
+}
 
 $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent).FullName +"\AzSK.Framework"
 
