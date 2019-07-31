@@ -116,6 +116,7 @@ function Set-AzSKMonitoringSettings
 			[ConfigurationManager]::UpdateAzSKSettings($appSettings);
 			[EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine + "`r`nWe have added new queries for the Monitoring solution. These will help reflect the aggregate control pass/fail status more accurately. Please go here to get them:  https://aka.ms/devopskit/omsqueries `r`n",[MessageType]::Warning);
 			[EventBase]::PublishGenericCustomMessage("Successfully changed policy settings");
+			[ConfigOverride]::ClearConfigInstance()
 		}
 		catch
 		{
