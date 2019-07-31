@@ -52,7 +52,7 @@ function Get-AzSKAzureServicesSecurityStatus
 	.PARAMETER AttestationStatus
 		Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater,NotApplicable,StateConfirmed,ExemptionApproved)
 	.PARAMETER InitiateExemption
-		Use this option to provide exemption for a control from contributing to compliance on the dashboard. Attester must select the attestation reason as 'ExemptionApproved'.
+		Attester will be provided with an additional attestation reason (ExemptionApproved). Use this option to provide exemption for a control from contributing to compliance on the dashboard.
 
 	.NOTES
 	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
@@ -316,7 +316,8 @@ function Get-AzSKSubscriptionSecurityStatus
     .PARAMETER IncludeUserComments
 		Use this switch to display previously stored user comments for controls.
 	.PARAMETER InitiateExemption
-		Use this option to provide exemption for a control from contibuting to compliance on the dashboard. Attester must select the attestation reason as 'ExemptionApproved'.
+		Attester will be provided with an additional attestation reason (ExemptionApproved). Use this option to provide exemption for a control from contributing to compliance on the dashboard.
+		
 	.NOTES
 	This command helps the application team to verify whether their Azure subscription are compliant with the security guidance or not 
 
@@ -489,9 +490,9 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 	.PARAMETER ControlIds
 		Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.
 	.PARAMETER ControlsToAttest
-			Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
+		Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
 	.PARAMETER GenerateFixScript
-			 Provide this option to automatically generate scripts that can be run to address the control failures
+		Provide this option to automatically generate scripts that can be run to address the control failures
 
 	.NOTES
 	This command helps the application team to verify whether their ExpressRoute enabled VNets are compliant with the security guidance or not 
@@ -625,8 +626,8 @@ function Get-AzSKControlsStatus
 	.PARAMETER AttestationStatus
 			Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater,NotApplicable,StateConfirmed,ExemptionApproved)
 	.PARAMETER InitiateExemption
-		Use this option to provide exemption for a control from contributing to compliance on the dashboard. Attester must select the attestation reason as 'ExemptionApproved'.
-
+		Attester will be provided with an additional attestation reason (ExemptionApproved). Use this option to provide exemption for a control from contributing to compliance on the dashboard.
+		
 	.NOTES
 	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
 

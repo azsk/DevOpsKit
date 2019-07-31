@@ -85,6 +85,7 @@ class Constants
 			[AttestationStatus]::WillFixLater	="3";
 			[AttestationStatus]::NotApplicable	="4";
 			[AttestationStatus]::StateConfirmed ="5";
+			[AttestationStatus]::ExemptionApproved ="6";
 	}
 
 	static [string] $StorageAccountPreName= "azsk"
