@@ -1176,6 +1176,10 @@ class Helpers {
                     $result = [VerificationResult]::Passed;
                     break;
                 }
+                ([AttestationStatus]::ExemptionApproved) {
+                    $result = $verificationResult;
+                    break;
+                }
             }
             #}
             #elseif($verificationResult -eq [VerificationResult]::Failed -or $verificationResult -eq [VerificationResult]::Error)

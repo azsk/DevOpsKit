@@ -35,6 +35,7 @@ class SVTControlAttestation
 			"3" { return [AttestationStatus]::WillFixLater;}
 			"4" { return [AttestationStatus]::NotApplicable;}
 			"5" { return [AttestationStatus]::StateConfirmed;}
+			"6" { return [AttestationStatus]::ExemptionApproved;}
 			"9" { 
 					$this.abortProcess = $true;
 					return [AttestationStatus]::None;
@@ -519,7 +520,12 @@ class SVTControlAttestation
 		    }
 		}
 		$ValidAttestationStatesHashTable = [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -in $ValidAttestationStates } | Sort-Object value
-	    return $ValidAttestationStatesHashTable;
+		
+		if($this.attestOptions.IsExemptModeOn)
+		{
+			$ValidAttestationStatesHashTable += [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -eq "ExemptionApproved" }
+		}
+		
+		return $ValidAttestationStatesHashTable;
 	}
-
 }
