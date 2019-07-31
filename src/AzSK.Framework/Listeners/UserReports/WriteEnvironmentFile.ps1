@@ -75,6 +75,7 @@ class WriteEnvironmentFile: FileOutputBase
 
 	[void] CommandStartedAction([SubscriptionContext] $context)
 	{
+      
 		$this.SetFilePath($context, [FileOutputBase]::ETCFolderPath, "EnvironmentDetails.LOG");  	
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 
@@ -88,9 +89,9 @@ class WriteEnvironmentFile: FileOutputBase
 		$this.AddOutputLog([Helpers]::ConvertObjectToString($this.InvocationContext.BoundParameters, $false));
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 
-		$loadedModules = (Get-Module | Select-Object -Property Name, Path, Description, Version);
+		$loadedModules = (Get-Module | Select-Object -Property Name, Version, Path | Format-Table | Out-String);
 		$this.AddOutputLog("Loaded PowerShell modules");
-		$this.AddOutputLog([Helpers]::ConvertObjectToString($loadedModules, $false));
+        $this.AddOutputLog([Helpers]::ConvertObjectToString($loadedModules, $false));      
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 
 		$rmContext = [ContextHelper]::GetCurrentRMContext()
