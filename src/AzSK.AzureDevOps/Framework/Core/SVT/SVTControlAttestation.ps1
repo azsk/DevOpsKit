@@ -523,7 +523,7 @@ class SVTControlAttestation
 		
 		if($this.attestOptions.IsExemptModeOn)
 		{
-			$ValidAttestationStatesHashTable += [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -eq "ExemptionApproved" }
+			$ValidAttestationStatesHashTable += [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -eq [AttestationStatus]::ExemptionApproved }
 		}
 		
 		return $ValidAttestationStatesHashTable;
