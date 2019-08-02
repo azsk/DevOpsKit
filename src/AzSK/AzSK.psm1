@@ -106,8 +106,8 @@ function Set-AzSKPolicySettings {
 			Provide org install URL
 	.PARAMETER AutoUpdate
             Toggle the auto-update feature
-    .PARAMETER DisableOrgPolicyCheckForSession
-			Disable org-policy check for current session
+    	.PARAMETER DisableOrgPolicyCheckForSession
+	    Disable org-policy check for current session
 	
 	.LINK
 	https://aka.ms/azskossdocs
@@ -166,14 +166,15 @@ function Set-AzSKPolicySettings {
     Process {
         try {
 
-            # This check is independent of AzSKSettings.json file.
+            # This setting will disable the mandatory org-policy check for azsk cmdlets in current session. To enable this policy check, use a fresh PS session.
+	    # This is independent of AzSKSettings.json file.
             if ($DisableOrgPolicyCheckForSession) {
                 [CommandHelper]::Mapping | ForEach-Object {
                     $_.IsOrgPolicyMandatory = $false
                 }
             }
 
-			$azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
+	    $azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
             if (-not [string]::IsNullOrWhiteSpace($OnlinePolicyStoreUrl)) {
                 try {
                     $url = [System.Net.WebRequest]::Create($OnlinePolicyStoreUrl)
