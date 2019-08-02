@@ -160,7 +160,8 @@ function Get-AzSKPIMConfiguration {
     (
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "ListMyRole", HelpMessage = "This switch is required to activate a PIM eligible role.")]
-        $ListMyEligibleRoles,
+        [Alias("lmer")]
+	$ListMyEligibleRoles,
 
         [string]
         [Parameter(Mandatory = $true, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
@@ -183,22 +184,25 @@ function Get-AzSKPIMConfiguration {
 
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
-        $ListPermanentAssignments,
+        [Alias("lpa")]
+	$ListPermanentAssignments,
 
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
-        $ListPIMAssignments,
+        [Alias("lpima")]
+	$ListPIMAssignments,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         [ValidateNotNullOrEmpty()]
-        [string[]]
-		$RoleNames,
+        [Alias("rlns")]
+	[string[]]
+	$RoleNames,
         
         [switch]
-		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
-		[Alias("dnof")]
-		$DoNotOpenOutputFolder
+	[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
+	[Alias("dnof")]
+	$DoNotOpenOutputFolder
 
     )
     Begin {
