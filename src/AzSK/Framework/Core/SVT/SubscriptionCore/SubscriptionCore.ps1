@@ -1531,7 +1531,7 @@ class SubscriptionCore: AzSVTBase
         $containerName = [Constants]::RotationMetadataContainerName
         $StorageAccount = Get-AzStorageAccount -ResourceGroupName $AzSKRG | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction SilentlyContinue
         $keys = Get-AzStorageAccountKey -ResourceGroupName $AzSKRG -Name $StorageAccount.StorageAccountName -ErrorAction SilentlyContinue
-		if($keys)
+		if($keys) #Adequate permissions to read credential metadata
 		{
         	$context = New-AzStorageContext -StorageAccountName $StorageAccount.StorageAccountName -StorageAccountKey $keys.Value[0]
 			$container = Get-AzStorageContainer -Name $containerName -Context $context -ErrorAction Ignore
@@ -1539,12 +1539,12 @@ class SubscriptionCore: AzSVTBase
 			if($container){
 				$credBlobs = $container | Get-AzStorageBlob
 
-				$expiredCount = 0;
-				$aboutToExpireCount = 0;
-				$healthyCount = 0;
-				[PSObject] $expiredCredentials = @();
-				[PSObject] $aboutToExpireCredentials = @();
-				[PSObject] $healthyCredentials = @();
+				$expiredCount = 0; # Count of credentials near to expiry (< 7d)/have expired
+				$aboutToExpireCount = 0; # Count of credentials approaching expiry (7d < expiry < 30d)
+				$healthyCount = 0; # Count of credentials far from expiry (> 30d)
+				[PSObject] $expiredCredentials = @(); # List of credentials near to expiry (< 7d)/have expired
+				[PSObject] $aboutToExpireCredentials = @(); # List of credentials approaching expiry (7d < expiry < 30d)
+				[PSObject] $healthyCredentials = @(); # List of credentials far from expiry (> 30d)
 
 				$AzSKTemp = (Join-Path $([Constants]::AzSKAppFolderPath) $([Constants]::RotationMetadataSubPath)); 
 
@@ -1572,15 +1572,15 @@ class SubscriptionCore: AzSVTBase
 					$currentTime = [DateTime]::UtcNow;
 					$lastRotatedTime = $credentialInfo.lastUpdatedOn;
 					$expiryTime = $lastRotatedTime.AddDays($credentialInfo.rotationInt);
-					if($expiryTime -le $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credHighTH)){
+					if($expiryTime -le $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credHighTH)){ #Checking for expired/about to expire credentials
 						$expiredCount += 1;
 						$expiredCredentials += $credentialInfo;
 					}
-					elseif(($expiryTime -gt $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credHighTH)) -and ($expiryTime -le $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credModerateTH))){
+					elseif(($expiryTime -gt $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credHighTH)) -and ($expiryTime -le $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credModerateTH))){ #Checking for credentials nearing expiry.
 						$aboutToExpireCount +=1;
 						$aboutToExpireCredentials += $credentialInfo;
 					}
-					else{
+					else{ #Checking for healthy credentials
 						$healthyCount +=1;
 						$healthyCredentials += $credentialInfo;
 					}
@@ -1590,11 +1590,11 @@ class SubscriptionCore: AzSVTBase
 				$controlResult.AddMessage("`nCredentials that are approaching expiry: $aboutToExpireCount `n", $aboutToExpireCredentials)
 				$controlResult.AddMessage("`nCredentials that are not near expiry: $healthyCount `n", $healthyCredentials)
 
-				if($expiredCount -gt 0){
+				if($expiredCount -gt 0){ # Fail the control if any expired/about to expire credential found
 					$controlResult.VerificationResult = [VerificationResult]::Failed;
 					$controlResult.AddMessage("`nPlease update them soon using the cmd Update-AzSKTrackedCredential with the 'ResetLastUpdate' switch with other required parameters (Subscription Id, credential name, etc.).`n")
 				}
-				elseif($aboutToExpireCount -gt 0){
+				elseif($aboutToExpireCount -gt 0){ # Verify the control if any credential approaching expiry found
 					$controlResult.VerificationResult = [VerificationResult]::Verify
 				}
 				else{ # No expired/about-to-expire credentials
