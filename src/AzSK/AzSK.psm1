@@ -105,7 +105,9 @@ function Set-AzSKPolicySettings {
 	.PARAMETER AutoUpdateCommand
 			Provide org install URL
 	.PARAMETER AutoUpdate
-			Toggle the auto-update feature
+            Toggle the auto-update feature
+    .PARAMETER DisableOrgPolicyCheckForSession
+			Disable org-policy check for current session
 	
 	.LINK
 	https://aka.ms/azskossdocs
@@ -150,7 +152,12 @@ function Set-AzSKPolicySettings {
 
 		[Parameter(Mandatory = $true, ParameterSetName = "CACentralMode")]
 		[switch]
-        $EnableCentralScanMode
+        $EnableCentralScanMode,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Provide the flag to disable org-policy check for current session")]
+        [switch]
+        [Alias("dopc")]
+        $DisableOrgPolicyCheckForSession
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
@@ -158,6 +165,13 @@ function Set-AzSKPolicySettings {
     }
     Process {
         try {
+
+            # This check is independent of AzSKSettings.json file.
+            if ($DisableOrgPolicyCheckForSession) {
+                [CommandHelper]::Mapping | ForEach-Object {
+                    $_.IsOrgPolicyMandatory = $false
+                }
+            }
 
 			$azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
             if (-not [string]::IsNullOrWhiteSpace($OnlinePolicyStoreUrl)) {
@@ -495,23 +509,6 @@ function Clear-AzSKSessionState {
     [ConfigOverride]::ClearConfigInstance()
     Write-Host "Session state cleared." -ForegroundColor Yellow
 
-}
-
-function Set-AzSKSettings
-{
-    Param
-    (
-        [Parameter(Mandatory = $true, HelpMessage = "Disable org policy check for current session")]
-        [switch]
-        [Alias("dopc")]
-        $DisableOrgPolicyCheckForSession
-    )
-   
-    if ($DisableOrgPolicyCheckForSession) {
-        [CommandHelper]::Mapping | ForEach-Object {
-            $_.IsOrgPolicyMandatory = $false
-        }
-    }
 }
 
 $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent).FullName +"\AzSK.Framework"
