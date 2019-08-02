@@ -1,23 +1,15 @@
 #using namespace Microsoft.Azure.Commands.DataFactory.Models
 Set-StrictMode -Version Latest 
-class DataFactory: SVTBase
+class DataFactory: AzSVTBase
 {       
 
     hidden [PSObject] $ResourceObject;
     hidden [ADFDetails] $adfDetails = [ADFDetails]::new()
 
-    DataFactory([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-		$this.GetResourceObject();
-    }
-
 	DataFactory([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 
 		 $this.GetResourceObject();
-
-
     }
 
 	hidden [PSObject] GetResourceObject()

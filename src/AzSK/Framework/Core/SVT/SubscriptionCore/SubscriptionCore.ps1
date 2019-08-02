@@ -1,6 +1,6 @@
 ﻿#using namespace Microsoft.Azure.Commands.Search.Models
 Set-StrictMode -Version Latest
-class SubscriptionCore: SVTBase
+class SubscriptionCore: AzSVTBase
 {
 	hidden [AzureSecurityCenter] $ASCSettings
 	hidden [ManagementCertificate[]] $ManagementCertificates
@@ -30,7 +30,7 @@ class SubscriptionCore: SVTBase
 	hidden [void] GetResourceObject()
 	{
 		$this.ASCSettings = [AzureSecurityCenter]::new()
-		$this.CurrentContext = [Helpers]::GetCurrentRMContext();
+		$this.CurrentContext = [ContextHelper]::GetCurrentRMContext();
 		$this.MandatoryAccounts = $null
 		$this.RoleAssignments = $null
 		$this.ApprovedAdmins = $null
@@ -45,7 +45,7 @@ class SubscriptionCore: SVTBase
 
 		#Fetch AzSKRGTags
 		$azskRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-		$azskRGTags = [Helpers]::GetResourceGroupTags($azskRG) ;
+		$azskRGTags = [ResourceGroupHelper]::GetResourceGroupTags($azskRG) ;
 
 		[hashtable] $subscriptionMetada = @{}
 		$subscriptionMetada.Add("HasGraphAccess",$this.HasGraphAPIAccess);
@@ -353,7 +353,7 @@ class SubscriptionCore: SVTBase
 			$serviceAccounts = @()
 			if($null -ne $this.CurrentContext)
 			{
-				$GraphAccessToken = [Helpers]::GetAccessToken([WebRequestHelper]::GraphAPIUri)
+				$GraphAccessToken = [ContextHelper]::GetAccessToken([WebRequestHelper]::GraphAPIUri)
 			}
 
 			$uniqueUsers = @();
@@ -632,14 +632,14 @@ class SubscriptionCore: SVTBase
 		[string] $CurrentVersion = "0.0.0";
 		[string] $LatestVersion = "0.0.0";
 		$AzSKRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-		# $CurrentVersion = [Helpers]::GetResourceGroupTag($AzSKRG, [Constants]::ARMPolicyConfigVersionTagName)
+		# $CurrentVersion = [ResourceGroupHelper]::GetResourceGroupTag($AzSKRG, [Constants]::ARMPolicyConfigVersionTagName)
 		# if([string]::IsNullOrWhiteSpace($CurrentVersion))
 		# {
 		# 	$CurrentVersion = "0.0.0"
 		# }
 		# $minSupportedVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKARMPolMinReqdVersion 
-		# $IsLatestVersion = $this.IsLatestVersionConfiguredOnSub($subARMPolConfig.Version,[Constants]::ARMPolicyConfigVersionTagName);
-		# $IsValidVersion = $this.IsLatestVersionConfiguredOnSub($subARMPolConfig.Version,[Constants]::ARMPolicyConfigVersionTagName) -or [System.Version]$minSupportedVersion -le [System.Version]$CurrentVersion ;
+		# $IsLatestVersion = [ResourceGroupHelper]::IsLatestVersionConfiguredOnSub($subARMPolConfig.Version,[Constants]::ARMPolicyConfigVersionTagName);
+		# $IsValidVersion = [ResourceGroupHelper]::IsLatestVersionConfiguredOnSub($subARMPolConfig.Version,[Constants]::ARMPolicyConfigVersionTagName) -or [System.Version]$minSupportedVersion -le [System.Version]$CurrentVersion ;
 		# $LatestVersion = $subARMPolConfig.Version;
 
         $nonCompliantPolicies = $subARMPol.ValidatePolicyConfiguration();
@@ -683,13 +683,13 @@ class SubscriptionCore: SVTBase
         
         # Get currently set alert's version
 		$alertsPkgRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-		$currentVersion = [Helpers]::GetResourceGroupTag($alertsPkgRG, [Constants]::AzSKAlertsVersionTagName)
+		$currentVersion = [ResourceGroupHelper]::GetResourceGroupTag($alertsPkgRG, [Constants]::AzSKAlertsVersionTagName)
 		if([string]::IsNullOrWhiteSpace($currentVersion))
 		{
 			$currentVersion = "0.0.0"
 		}
 		$minSupportedVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKAlertsMinReqdVersion 
-		$IsLatestVersion = $this.IsLatestVersionConfiguredOnSub($alertConfig.Version,[Constants]::AzSKAlertsVersionTagName);
+		$IsLatestVersion = [ResourceGroupHelper]::IsLatestVersionConfiguredOnSub($alertConfig.Version,[Constants]::AzSKAlertsVersionTagName);
 		$IsValidVersion = ($IsLatestVersion) -or ([System.Version]$minSupportedVersion -le [System.Version]$currentVersion) ;
 		$LatestVersion = $alertConfig.Version;
 
@@ -1250,7 +1250,7 @@ class SubscriptionCore: SVTBase
 	hidden [void] GetManagementCertificates()
 	{
 		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-		$ClassicAccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$ClassicAccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		if($null -ne $ClassicAccessToken)
 		{
 			$header = "Bearer " + $ClassicAccessToken
@@ -1275,7 +1275,7 @@ class SubscriptionCore: SVTBase
 	hidden [void] GetASCAlerts()
 	{
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		if($null -ne $AccessToken)
 		{
 			$header = "Bearer " + $AccessToken
@@ -1332,7 +1332,7 @@ class SubscriptionCore: SVTBase
 		if($null -eq $this.PIMAssignments)
 		{
 			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-			$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+			$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			if($null -ne $AccessToken)
 			{
 				$authorisationToken = "Bearer " + $accessToken
@@ -1401,7 +1401,7 @@ class SubscriptionCore: SVTBase
 		if($null -eq $this.RGLevelPIMAssignments)
 		{
 			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-			$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+			$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			if($null -ne $AccessToken)
 			{
 				$authorisationToken = "Bearer " + $accessToken

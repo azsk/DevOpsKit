@@ -1,5 +1,5 @@
 #Acquire Access token
-class PIM: CommandBase {
+class PIM: AzCommandBase {
     hidden $APIroot = [string]::Empty
     hidden $headerParams = "";
     hidden $UserId = "";
@@ -19,9 +19,9 @@ class PIM: CommandBase {
     AcquireToken() {
         # Using helper method to get current context and access token   
         $ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-        $this.AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI);
+        $this.AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI);
         $this.headerParams = @{'Authorization' = "Bearer $($this.AccessToken)" }
-        $this.AccountId = [Helpers]::GetCurrentSessionUser()
+        $this.AccountId = [ContextHelper]::GetCurrentSessionUser()
         $ADUserDetails = Get-AzADUser -UserPrincipalName  $this.AccountId
         if($null -ne $ADUserDetails) {
         $this.UserId = ($ADUserDetails).Id
@@ -515,7 +515,7 @@ class PIM: CommandBase {
             if (($permanentRoles | Measure-Object).Count -gt 0) {
                 $permanentRolesForTransition = $permanentRoles | Where-Object { $_.SubjectType -eq 'User' -and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
                 $successfullyassignedRoles = @();
-                $currentContext = [Helpers]::GetCurrentRmContext();
+                $currentContext = [ContextHelper]::GetCurrentRmContext();
                 $permanentRolesForTransition = $permanentRolesForTransition | Where-Object { $_.PrincipalName -ne $currentContext.Account.Id }
                 if ($RemoveAssignmentFor -ne "AllExceptMe") {
                     $eligibleAssignments | ForEach-Object {

@@ -1,17 +1,12 @@
 ﻿#using namespace Microsoft.Azure.Commands.ServiceBus.Models
 Set-StrictMode -Version Latest 
-class ServiceBus: SVTBase
+class ServiceBus: AzSVTBase
 {       
 	hidden [PSObject[]] $NamespacePolicies = @() ;
 	hidden [PSObject[]] $Queues = @() ;
 	hidden [PSObject[]] $Topics = @() ;
 	hidden [HashTable] $QueueAccessPolicies = @{};
 	hidden [Hashtable] $TopicAccessPolicies = @{};
-
-    ServiceBus([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-    }
 
 	ServiceBus([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 

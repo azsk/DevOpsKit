@@ -5,24 +5,30 @@ function Set-AzSKPIMConfiguration {
     (
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "Activate", HelpMessage = "This switch is required to activate a PIM eligible role.")]
-        $ActivateMyRole,
+        [Alias("amr")]
+	$ActivateMyRole,
 
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "Deactivate", HelpMessage = "This switch is required to activate a PIM eligible role.")]
-        $DeactivateMyRole,
+        [Alias("dmr")]
+	$DeactivateMyRole,
 
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "Assign", HelpMessage = "This switch is required to assign a PIM eligible role.")]
-        $AssignRole,
+        [Alias("ar")]
+	$AssignRole,
 
 		
         [switch]
         [Parameter(Mandatory = $true, ParameterSetName = "AssignPIMforPermanentAssignemnts", HelpMessage = "This switch is required to assign a PIM eligible role.")]
+        [Alias("cpa")]
         $AssignPIMforPermanentAssignemnts,
+
 
         [switch]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment", HelpMessage = "This switch is required to assign a PIM eligible role.")]
-        $RemovePermanentAssignments,
+        [Alias("rpa")]
+	$RemovePermanentAssignments,
 
         
         [switch]
@@ -37,6 +43,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringPIMAssignments")]
         [ValidateNotNullOrEmpty()]
+        [Alias("sid")]
         [string]
         $SubscriptionId,
 
@@ -47,6 +54,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringPIMAssignments")]
         [ValidateNotNullOrEmpty()]
+        [Alias("rgn")]
         [string]
         $ResourceGroupName,
 
@@ -57,19 +65,22 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringPIMAssignments")]
         [ValidateNotNullOrEmpty()]
+        [Alias("rn")]
         [string]
         $ResourceName,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
         [ValidateNotNullOrEmpty()]
         [int]
-		$DurationInHours,
+	[Alias("dih")]
+	$DurationInHours,
 		
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
         [Parameter(Mandatory = $true, ParameterSetName = "AssignPIMforPermanentAssignemnts")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringPIMAssignments")]
         [ValidateNotNullOrEmpty()]
-        [int]
+        [Alias("did")]
+	[int]
         $DurationInDays,
 
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringPIMAssignments")]
@@ -78,13 +89,15 @@ function Set-AzSKPIMConfiguration {
 
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
         [ValidateNotNullOrEmpty()]
-        [string]
+        [Alias("jst")]
+	[string]
         $Justification,
         
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $true, ParameterSetName = "Deactivate")]
         [ValidateNotNullOrEmpty()]
+	[Alias("rln")]
         [string]
         $RoleName,
 
@@ -92,12 +105,14 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringPIMAssignments")]
         [ValidateNotNullOrEmpty()]
+	[Alias("rlns")]
         [string[]]
         $RoleNames,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
         [Alias("GroupName")]
         [ValidateNotNullOrEmpty()]
+	[Alias("pn")]
         [string]
         $PrincipalName,
 
@@ -105,6 +120,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [ValidateNotNullOrEmpty()]
         [ValidateSet("MatchingEligibleAssignments", "AllExceptMe")]
+	[Alias("raf")]
         [string]
         $RemoveAssignmentFor,
 
@@ -165,34 +181,40 @@ function Get-AzSKPIMConfiguration {
     (
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "ListMyRole", HelpMessage = "This switch is required to activate a PIM eligible role.")]
-        $ListMyEligibleRoles,
+        [Alias("lmer")]
+	$ListMyEligibleRoles,
 
         [string]
         [Parameter(Mandatory = $true, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $true, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         [Parameter(Mandatory = $true, ParameterSetName = "ListSoonToExpireAssignments")]
+        [Alias("sid")]
         $SubscriptionId,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments")]
         [ValidateNotNullOrEmpty()]
+        [Alias("rgn")]
         [string]
         $ResourceGroupName,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments")]
+        [Alias("rn")]
         [string]
         $ResourceName,
 
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
-        $ListPermanentAssignments,
+        [Alias("lpa")]
+	$ListPermanentAssignments,
 
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
-        $ListPIMAssignments,
+        [Alias("lpima")]
+	$ListPIMAssignments,
 
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
@@ -202,13 +224,14 @@ function Get-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments")]
         [ValidateNotNullOrEmpty()]
-        [string[]]
-		$RoleNames,
+        [Alias("rlns")]
+	[string[]]
+	$RoleNames,
         
         [switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
-		[Alias("dnof")]
-        $DoNotOpenOutputFolder,
+	    [Alias("dnof")]
+	    $DoNotOpenOutputFolder,
         
         [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments")]
         [int]

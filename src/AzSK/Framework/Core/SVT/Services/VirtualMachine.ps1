@@ -3,7 +3,7 @@ using namespace Microsoft.Azure.Commands.Compute.Models
 using namespace Microsoft.Azure.Management.Compute.Models
 Set-StrictMode -Version Latest 
 
-class VirtualMachine: SVTBase
+class VirtualMachine: AzSVTBase
 {       
     hidden [PSVirtualMachine] $ResourceObject;
     hidden [PSNetworkInterface[]] $VMNICs = $null;
@@ -12,20 +12,6 @@ class VirtualMachine: SVTBase
 	hidden [VMDetails] $VMDetails = [VMDetails]::new()
 	hidden [PSObject] $VMControlSettings = $null;
 	hidden [string] $Workspace = "";
-
-    VirtualMachine([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-		$this.GetResourceObject();	
-		$this.GetVMDetails();
-		$metadata= [PSObject]::new();
-		$metadata| Add-Member -Name VMDetails -Value $this.VMDetails -MemberType NoteProperty;
-		if([FeatureFlightingManager]::GetFeatureStatus("EnableVMASCMetadataCapture",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-		{
-			$metadata| Add-Member -Name VMASCDetails -Value $this.ASCSettings -MemberType NoteProperty;
-		}				
-		$this.AddResourceMetadata($metadata);	
-    }
     
 	VirtualMachine([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -378,7 +364,7 @@ class VirtualMachine: SVTBase
 					$currentVulnExtensionVersion = $null
 					try {
 						$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
-						$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+						$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 						$header = "Bearer " + $AccessToken
 						$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
 						$propertiesToReplace = @{}
@@ -431,7 +417,7 @@ class VirtualMachine: SVTBase
 			
 			
             $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
-			$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+			$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			$header = "Bearer " + $AccessToken
 			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
 			$propertiesToReplace = @{}
@@ -503,7 +489,7 @@ class VirtualMachine: SVTBase
 	{
 		$controlStatus = [VerificationResult]::Failed
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
-		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		$header = "Bearer " + $AccessToken
 		$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
 		$propertiesToReplace = @{}
@@ -850,7 +836,7 @@ class VirtualMachine: SVTBase
 		$activeRecommendations = @()
 		$ASCWhitelistedRecommendations = @();
 		$ASCWhitelistedRecommendations += $this.VMControlSettings.ASCRecommendations;
-		#[Helpers]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
+		#[ResourceHelper]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
 		$tasks = [SecurityCenterHelper]::InvokeGetASCTasks($this.SubscriptionContext.SubscriptionId);
         $found = $false;
 		if($null -ne $ASCWhitelistedRecommendations -and $null -ne $tasks)

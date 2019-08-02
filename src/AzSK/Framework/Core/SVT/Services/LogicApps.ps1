@@ -25,17 +25,10 @@ class LogicAppConnectorsMetadata
 	[LogicAppNotApprovedConnector[]] $notApprovedConnectors = @()	
 }
 
-class LogicApps: SVTBase
+class LogicApps: AzSVTBase
 {   
     hidden [PSObject] $ResourceObject;
 	hidden [LogicAppConnectorsMetadata] $LogicAppConnectorsMetadata
-
-    LogicApps([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();		
-		$this.LogicAppConnectorsMetadata = [LogicAppConnectorsMetadata] ($this.LoadServerConfigFile("LogicApps.Connectors.json"));
-    }
 
     LogicApps([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -96,8 +89,9 @@ class LogicApps: SVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName `
-                                            -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType
+            $this.ResourceObject =  Get-AzResource -Name $this.ResourceContext.ResourceName `
+			-ResourceGroupName $this.ResourceContext.ResourceGroupName `
+			-ResourceType $this.ResourceContext.ResourceType
             if(-not $this.ResourceObject)
             {
                 throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))

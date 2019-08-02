@@ -428,7 +428,7 @@ class UsageTelemetry: ListenerBase {
 				# No need to break execution
 			}
 			try{
-				$azureContext = [Helpers]::GetCurrentRMContext()
+				$azureContext = [ContextHelper]::GetCurrentRMContext()
 				try{
 					$Properties.Add([TelemetryKeys]::SubscriptionId, [RemoteReportHelper]::Mask($azureContext.Subscription.Id))
 				}
@@ -563,7 +563,7 @@ class UsageTelemetry: ListenerBase {
 				# No need to break execution
 			}
 			try{
-				$azureContext = [Helpers]::GetCurrentRMContext()
+				$azureContext = [ContextHelper]::GetCurrentRMContext()
 				try{
 					$eventObj.properties.Add([TelemetryKeys]::SubscriptionId, [RemoteReportHelper]::Mask($azureContext.Subscription.Id))
 				}

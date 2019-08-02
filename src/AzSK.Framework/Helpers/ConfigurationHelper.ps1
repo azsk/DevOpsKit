@@ -291,7 +291,7 @@ class ConfigurationHelper {
 		{
 			if($enableAADAuthForOnlinePolicyStore)
 			{		
-			$rmContext = [Helpers]::GetCurrentRMContext();
+			$rmContext = [ContextHelper]::GetCurrentRMContext();
 			if(-not [string]::IsNullOrWhiteSpace($rmContext.Environment.Name) -and $rmContext.Environment.Name -ne [Constants]::DefaultAzureEnvironment)
 		     {
 				   $ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl
@@ -299,7 +299,7 @@ class ConfigurationHelper {
 			 else {
 				$ResourceAppIdURI = "https://management.core.windows.net/"
 			 }
-				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+				$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 				$serverFileContent = Invoke-RestMethod `
 									-Method GET `
 									-Uri $validatedUri `
@@ -340,7 +340,8 @@ class ConfigurationHelper {
 
 	hidden static [PSObject] LoadModuleRawFile([string] $fileName) {
 	
-	 $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.FullName "Configurations";
+	 $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName "AzSK" | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
+
      $filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
 	 if ($filePath) {
             $fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) 
@@ -414,3 +415,4 @@ class Policy{
     [string] $Name
     [PSObject] $Content
 }
+

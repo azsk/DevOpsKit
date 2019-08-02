@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest 
 
-class SecurityRecommendationsReport: CommandBase
+class SecurityRecommendationsReport: AzCommandBase
 {    
 	hidden [PSObject] $AzSKRG = $null
 	hidden [String] $AzSKRGName = ""
@@ -105,7 +105,7 @@ class SecurityRecommendationsReport: CommandBase
 			{
 				$userInput.Categories = $Categories
 			}
-			$content = [Helpers]::ConvertToJsonCustomCompressed($userInput);
+			$content = [JsonHelper]::ConvertToJsonCustomCompressed($userInput);
 			#write-host $content;
 			$headers = @{};
 			$RecommendationURI = [constants]::RecommendationURI;
