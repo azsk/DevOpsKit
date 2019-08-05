@@ -74,7 +74,7 @@ class WriteEnvironmentFile: FileOutputBase
     } 
 
 	[void] CommandStartedAction([SubscriptionContext] $context)
-	{     
+	{       
 		$this.SetFilePath($context, [FileOutputBase]::ETCFolderPath, "EnvironmentDetails.LOG");  	
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 
@@ -88,7 +88,7 @@ class WriteEnvironmentFile: FileOutputBase
 		$this.AddOutputLog([Helpers]::ConvertObjectToString($this.InvocationContext.BoundParameters, $false));
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 
-		$loadedModules = (Get-Module | Select-Object -Property Name, Version, Path | Format-Table | Out-String);
+        $loadedModules = (Get-Module | Select-Object -Property Name, Version, Path | Format-Table -AutoSize -Wrap | Out-String);   
 		$this.AddOutputLog("Loaded PowerShell modules");
         $this.AddOutputLog([Helpers]::ConvertObjectToString($loadedModules, $false));      
 		$this.AddOutputLog([Constants]::DoubleDashLine);
@@ -101,7 +101,7 @@ class WriteEnvironmentFile: FileOutputBase
 
 		$this.AddOutputLog("Az context");
 		$this.AddOutputLog([Helpers]::ConvertObjectToString(($rmContext | Select-Object -Property Environment, Subscription, Tenant), $false));
-		$this.AddOutputLog([Constants]::DoubleDashLine);
+        $this.AddOutputLog([Constants]::DoubleDashLine);
 	}
 
 }
