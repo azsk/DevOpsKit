@@ -2670,8 +2670,11 @@ class CCAutomation: AzCommandBase
 		-Plan Basic -Tags $this.AutomationAccount.AccountTags -ErrorAction Stop | Select-Object AutomationAccountName,Location,Plan,ResourceGroupName,State,Tags
 	}
 	Catch{
-		Write-Warning $_.Exception.Message
-		Write-Warning $_.Exception.Response.Content
+		$this.PublishCustomMessage("$($_.Exception.Message)", [MessageType]::Warning)
+		if([Helpers]::CheckMember($_,"Exception.Response.Content"))
+		{
+			$this.PublishCustomMessage("$($_.Exception.Response.Content)", [MessageType]::Warning)
+		}
 	}
 	
 	}
