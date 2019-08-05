@@ -152,7 +152,7 @@
         'Remove-AzSKTrackedCredential',
         'Update-AzSKTrackedCredential',
         'New-AzSKTrackedCredential',
-        'Get-AzSKContinuousAssuranceForDatabricks',
+        'Get-AzSKContinuousAssuranceForCluster',
         'Install-AzSKContinuousAssuranceForDatabricks',
         'Update-AzSKContinuousAssuranceForDatabricks',
         'Remove-AzSKContinuousAssuranceForDatabricks'

@@ -35,13 +35,13 @@ class CAForDatabricks : CommandBase {
         }
     }
 
-    [void] InsertDataIntoDB($SecretScopeName, $SecretKeyName, $Secret) {
+    [void] InsertDataIntoDB($SecretKeyName, $Secret) {
         if ([string]::IsNullOrEmpty($Secret)) {
             $this.PublishCustomMessage("Skipping inserting $SecretKeyName into cluster")
             return
         }
         $params = @{
-            "scope"        = $SecretScopeName;
+            "scope"        = $this.AzSKSecretScopeName;
             "key"          = $SecretKeyName;
             "string_value" = $Secret
         }
@@ -180,7 +180,6 @@ class CAForDatabricks : CommandBase {
     }
 
     [void] UploadAzSKNotebookToCluster() {
-        # region Step 3: Set up AzSk Notebook in Databricks workspace
         # Create AzSK folder in user workspace, if folder already exists it will do nothing
         if (-not $this.CheckAzSKWorkspaceExist()) {
             $this.CreateAzSKWorkspace()
@@ -223,12 +222,14 @@ class CAForDatabricks : CommandBase {
     }
 
     [void] InstallCA() {
-        # Please don't modify these values
+        # These are the keys that are stored in the secret scope
         $PatSecretKey = "AzSK_CA_Scan_Key"
         $WorkspaceNameKey = "res_name"
         $ResourceGroupNameKey = "rg_name"
         $IKKey = "AzSK_AppInsight_Key"
         $SubscriptionIdKey = "sid"
+        $LASharedSecretKey = "LASharedSecret"
+        $LAWorkspaceIdKey = "LAWorkspaceId"
         $HostNameKey = "DatabricksHostDomain"
         $NotebookFolderPath = "/AzSK"  
 
@@ -251,11 +252,13 @@ class CAForDatabricks : CommandBase {
         # region Step 2: PUT Token in Secret Scope
         # If Secret already exists it will update secret value
         $this.PublishCustomMessage("Installing required secrets into the cluster")
-        $this.InsertDataIntoDB($this.AzSKSecretScopeName, $PatSecretKey, $this.ResourceContext.PersonalAccessToken)
-        $this.InsertDataIntoDB($this.AzSKSecretScopeName, $WorkspaceNameKey, $this.ResourceContext.WorkspaceName)
-        $this.InsertDataIntoDB($this.AzSKSecretScopeName, $ResourceGroupNameKey, $this.ResourceContext.ResourceGroupName)
-        $this.InsertDataIntoDB($this.AzSKSecretScopeName, $SubscriptionIdKey, $this.ResourceContext.SubscriptionId)
-        $this.InsertDataIntoDB($this.AzSKSecretScopeName, $HostNameKey, $this.ResourceContext.WorkspaceBaseUrl)
+        $this.InsertDataIntoDB($PatSecretKey,         $this.ResourceContext.PersonalAccessToken)
+        $this.InsertDataIntoDB($WorkspaceNameKey,     $this.ResourceContext.WorkspaceName)
+        $this.InsertDataIntoDB($ResourceGroupNameKey, $this.ResourceContext.ResourceGroupName)
+        $this.InsertDataIntoDB($SubscriptionIdKey,    $this.ResourceContext.SubscriptionId)
+        $this.InsertDataIntoDB($HostNameKey,          $this.ResourceContext.WorkspaceBaseUrl)
+        $this.InsertDataIntoDB($LASharedSecretKey,    $this.ResourceContext.LASharedSecret)
+        $this.InsertDataIntoDB($LAWorkspaceIdKey,     $this.ResourceContext.LAWorkspaceId)
 
         if ([string]::IsNullOrEmpty($this.ResourceContext.InstrumentationKey)) {
             $this.PublishCustomMessage("Skipping AppInsight installation, no Instrumentation Key passed")
