@@ -199,7 +199,7 @@ class PolicySetup: AzCommandBase
 		if((($askConfigFile | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::AzSKRootConfig)
 		{
 			$azskOverride = [ConfigOverride]::new("AzSK.json");
-			$azskOverride.UpdatePropertyValue("PolicyMessage", "Running $([Constants]::AzSKModuleName) cmdlet using $($this.OrgFullName) policy...");
+			$azskOverride.UpdatePropertyValue("PolicyMessage", "Running $([Constants]::AzSKModuleName) cmdlet using ***$($this.OrgFullName)*** policy...");
 			if(-not [string]::IsNullOrWhiteSpace($this.IWRCommand))
 			{
 				$azskOverride.UpdatePropertyValue("InstallationCommand", $this.IWRCommand);
