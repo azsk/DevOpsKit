@@ -96,9 +96,13 @@ class AppServiceFix: FixServicesBase
 
 			if($serverFarm)
 			{
+			
 				if($serverFarm.Sku.Capacity -ge $this.ControlSettings.AppService.Minimum_Instance_Count)
 				{
 					$detailedLogs += [MessageData]::new("No action is required as minimum $instanceCount instances have already been set up for app service [$($this.ResourceName)].");
+				}
+				elseif([Helpers]::CheckMember($serverFarm,"Properties.maximumNumberOfWorkers") -and $serverFarm.Properties.maximumNumberOfWorkers -le $this.ControlSettings.AppService.Minimum_Instance_Count) {
+					$detailedLogs += [MessageData]::new("Not able to setup minimum $instanceCount instances  for app service [$($this.ResourceName)] as maximum number of instances allowed for current App Service plan is less than $instanceCount.");
 				}
 				else
 				{

@@ -2,10 +2,6 @@
 Set-StrictMode -Version Latest
 class VirtualNetwork: SVTIaasBase
 {
-    VirtualNetwork([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
-        Base($subscriptionId, $resourceGroupName, $resourceName)
-    {
-    }
 
 	VirtualNetwork([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId, $svtResource)

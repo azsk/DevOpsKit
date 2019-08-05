@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class Databricks: SVTBase
+class Databricks: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
 	hidden [string] $ManagedResourceGroupName;
@@ -8,13 +8,6 @@ class Databricks: SVTBase
 	hidden [string] $PersonalAccessToken =""; 
 	hidden [bool] $HasAdminAccess = $false;
 	hidden [bool] $IsTokenRead = $false;
-
-    Databricks([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-                 Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-	 
-		$this.GetResourceObject();
-    }
 
     Databricks([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -29,8 +22,8 @@ class Databricks: SVTBase
 		{
 		
             $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
-                                        -ResourceType $this.ResourceContext.ResourceType `
-                                        -ResourceGroupName $this.ResourceContext.ResourceGroupName
+			-ResourceType $this.ResourceContext.ResourceType `
+			-ResourceGroupName $this.ResourceContext.ResourceGroupName
 
             if(-not $this.ResourceObject)
             {
@@ -40,9 +33,7 @@ class Databricks: SVTBase
 			{
 			   $this.InitializeRequiredVariables();
 			}
-			
         }
-
         return $this.ResourceObject;
     }
 

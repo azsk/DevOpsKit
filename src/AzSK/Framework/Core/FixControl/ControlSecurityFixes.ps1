@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest 
 
-class ControlSecurityFixes: CommandBase
+class ControlSecurityFixes: AzCommandBase
 {    
 	hidden [string] $ParameterFilePath = "";
 	hidden [string[]] $FolderPaths = @();
