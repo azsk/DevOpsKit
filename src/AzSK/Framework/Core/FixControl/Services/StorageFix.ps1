@@ -23,17 +23,6 @@ class StorageFix: FixServicesBase
 		return $this.ResourceObject;
 	}
 
-	# TODO: This function is not being used. Can we remove this function?
-	[MessageData[]] SetSku([PSObject] $parameters)
-    {
-		[MessageData[]] $detailedLogs = @();
-		$skuName = $parameters.SkuName;
-		$detailedLogs += [MessageData]::new("Setting up the Sku [$skuName] for storage [$($this.ResourceName)]...");
-		Set-AzStorageAccount -Name $this.ResourceName -ResourceGroupName $this.ResourceGroupName -SkuName $skuName
-		$detailedLogs += [MessageData]::new("Sku setup completed for storage [$($this.ResourceName)]");
-		return $detailedLogs;
-    }
-
 	[MessageData[]] EnableHttpsTrafficOnly([PSObject] $parameters)
     {
 		[MessageData[]] $detailedLogs = @();
