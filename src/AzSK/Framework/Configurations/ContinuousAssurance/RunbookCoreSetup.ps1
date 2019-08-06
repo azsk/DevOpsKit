@@ -41,6 +41,7 @@ function SetModules
   }
 }
 
+# To download Az base modules with Azure RM base commands
 function DownloadAzModuleWithRM
 {
     param(
