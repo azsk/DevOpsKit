@@ -151,6 +151,19 @@ class LogAnalyticsOutput: ListenerBase
 				}
 			});
 
+			$this.RegisterEvent([SVTEvent]::PostCredHygiene, {
+                $currentInstance = [LogAnalyticsOutput]::GetInstance();
+                try
+                {
+                    $invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
+                    $credentialInfo = $Event.SourceArgs;
+                    [LogAnalyticsHelper]::WriteControlResult( $credentialInfo, "AzSK_CH");
+                }
+                catch
+                {
+                    $currentInstance.PublishException($_);
+                }
+            });
 
 			# $this.RegisterEvent([SVTEvent]::WriteInventory, {
 			# 	$currentInstance = [LogAnalyticsOutput]::GetInstance();

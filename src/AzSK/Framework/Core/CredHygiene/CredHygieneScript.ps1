@@ -546,4 +546,45 @@ class CredHygiene : CommandBase{
 		}
 	}
 
+	[void] InstallAlert($AlertEmail,$AlertSMS)
+	{
+		#$this.PublishCustomMessage("Check!!!", [MessageType]::Critical)
+		$actionGroup = Get-AzActionGroup -Name "AzSKCredHygieneAG" -ResourceGroupName "AzSKRG" -ErrorAction Ignore -WarningAction SilentlyContinue
+		if(($actionGroup | Measure-Object).Count -eq 0){
+			$email = New-AzActionGroupReceiver -Name $AlertEmail -EmailReceiver -EmailAddress $AlertEmail
+			$actionGroup = Set-AzActionGroup -Name "AzSKCredHygieneAG" -ResourceGroupName "AzSKRG" -ShortName "azskchag" -Receiver $email -ErrorAction Ignore -WarningAction SilentlyContinue
+			if($actionGroup){
+				$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+				$automationAccDetails= Get-AzAutomationAccount -ResourceGroupName $rgName -ErrorAction SilentlyContinue 
+				if($automationAccDetails)
+				{
+						$laWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "LAWSId" -ErrorAction SilentlyContinue
+						if(($laWSId | Measure-Object).Count -eq 0)
+						{
+							$laWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
+						}
+						if($laWSId){
+							$laWS = Get-AzOperationalInsightsWorkspace | where{$_.CustomerId -eq $laWSId}
+							if($laWS){
+								$body = [ConfigurationManager]::LoadServerConfigFile("CredentialHygieneAlert.json");
+
+								$dataSourceId = $body.properties.source.dataSourceId | ConvertTo-Json -Depth 10
+								$dataSourceId = $dataSourceId.Replace("{0}",$this.SubscriptionContext.SubscriptionId).Replace("{1}",$laWS.ResourceGroupName).Replace("{2}",$laWS.CustomerId) | ConvertFrom-Json
+								$body.properties.source.dataSourceId = $dataSourceId
+
+								$ag = $body.properties.action.aznsAction.actionGroup[0] | ConvertTo-Json -Depth 10
+								$ag = $ag.Replace("{3}",$actionGroup.Id) | ConvertFrom-Json
+								$body.properties.action.aznsAction.actionGroup[0] = $ag
+								
+								$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
+								$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($laWS.ResourceGroupName)/providers/microsoft.insights/scheduledQueryRules/credHygieneQueryRule?api-version=2018-04-16"
+								
+								[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
+							}
+						}
+				}
+			}
+		}
+	}	 
+
 }
