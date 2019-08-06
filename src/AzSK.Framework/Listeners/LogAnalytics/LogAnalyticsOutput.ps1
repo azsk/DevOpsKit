@@ -157,7 +157,7 @@ class LogAnalyticsOutput: ListenerBase
                 {
                     $invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
                     $credentialInfo = $Event.SourceArgs;
-                    [LogAnalyticsHelper]::WriteControlResult( $credentialInfo, "AzSK_CH");
+                    [LogAnalyticsHelper]::WriteControlResult( $credentialInfo, "AzSK_CredHygiene");
                 }
                 catch
                 {

@@ -370,7 +370,7 @@ function Update-AzSKTrackedCredential {
     }
 }
 
-function Install-AzSKTrackedCredentialAlert { 
+function New-AzSKTrackedCredentialGroup { 
    
     <#
 	.SYNOPSIS

@@ -551,15 +551,10 @@ class CredHygiene : CommandBase{
 		$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
 		$credHygieneAGName = [Constants]::CredHygieneActionGroupName
 		$credHygieneAGShortName = [Constants]::CredHygieneActionGroupShortName
-
-		#Check whether cred hygiene AG already exists.
-		$actionGroup = Get-AzActionGroup -Name $credHygieneAGName -ResourceGroupName $rgName -ErrorAction Ignore -WarningAction SilentlyContinue
-
-		if(($actionGroup | Measure-Object).Count -eq 0){ # If it doesn't exist, create one.
-			$email = New-AzActionGroupReceiver -Name $AlertEmail -EmailReceiver -EmailAddress $AlertEmail
-			$actionGroup = Set-AzActionGroup -Name $credHygieneAGName -ResourceGroupName $rgName -ShortName $credHygieneAGShortName -Receiver $email -ErrorAction Ignore -WarningAction SilentlyContinue
-		}	
-
+		
+		$email = New-AzActionGroupReceiver -Name $AlertEmail -EmailReceiver -EmailAddress $AlertEmail
+		$actionGroup = Set-AzActionGroup -Name $credHygieneAGName -ResourceGroupName $rgName -ShortName $credHygieneAGShortName -Receiver $email -ErrorAction Ignore -WarningAction SilentlyContinue
+		
 		if($actionGroup){
 			$automationAccDetails= Get-AzAutomationAccount -ResourceGroupName $rgName -ErrorAction SilentlyContinue 
 			if($automationAccDetails)
