@@ -548,7 +548,6 @@ class CredHygiene : CommandBase{
 
 	[void] InstallAlert($AlertEmail,$AlertSMS)
 	{
-		#$this.PublishCustomMessage("Check!!!", [MessageType]::Critical)
 		$actionGroup = Get-AzActionGroup -Name "AzSKCredHygieneAG" -ResourceGroupName "AzSKRG" -ErrorAction Ignore -WarningAction SilentlyContinue
 		if(($actionGroup | Measure-Object).Count -eq 0){
 			$email = New-AzActionGroupReceiver -Name $AlertEmail -EmailReceiver -EmailAddress $AlertEmail
