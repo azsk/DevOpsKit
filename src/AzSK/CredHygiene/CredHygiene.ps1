@@ -395,15 +395,10 @@ function Install-AzSKTrackedCredentialAlert {
 		[Alias("s")]
         $SubscriptionId,
 
-        [Parameter(Mandatory = $false, HelpMessage = "Provide the email id for alert")]
+        [Parameter(Mandatory = $true, HelpMessage = "Provide the email id for alert")]
         [string]
 		[Alias("aem")]
-        $AlertEmail,
-
-        [Parameter(Mandatory = $false, HelpMessage = "Provide the contact number for alert")]
-        [string]
-		[Alias("acn")]
-        $AlertSMS
+        $AlertEmail
     )
     Begin {
         [CommandHelper]::BeginCommand($MyInvocation);
@@ -414,7 +409,7 @@ function Install-AzSKTrackedCredentialAlert {
 			
             $cred = [CredHygiene]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){                
-                $cred.InvokeFunction($cred.InstallAlert, @($AlertEmail,$AlertSMS))                            
+                $cred.InvokeFunction($cred.InstallAlert, @($AlertEmail))                            
             }
 	
         }

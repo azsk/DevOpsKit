@@ -1529,9 +1529,13 @@ class SubscriptionCore: AzSVTBase
     {
         $AzSKRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
         $containerName = [Constants]::RotationMetadataContainerName
-        $StorageAccount = Get-AzStorageAccount -ResourceGroupName $AzSKRG | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction SilentlyContinue
-        $keys = Get-AzStorageAccountKey -ResourceGroupName $AzSKRG -Name $StorageAccount.StorageAccountName -ErrorAction SilentlyContinue
-
+        $StorageAccount = Get-AzStorageAccount -ResourceGroupName $AzSKRG -ErrorAction SilentlyContinue | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction SilentlyContinue
+        $keys = $null;
+		
+		if($StorageAccount){
+			$keys = Get-AzStorageAccountKey -ResourceGroupName $AzSKRG -Name $StorageAccount.StorageAccountName -ErrorAction SilentlyContinue
+		}
+		
 		if($keys) #Adequate permissions to read credential metadata
 		{
 			$context = New-AzStorageContext -StorageAccountName $StorageAccount.StorageAccountName -StorageAccountKey $keys.Value[0]
