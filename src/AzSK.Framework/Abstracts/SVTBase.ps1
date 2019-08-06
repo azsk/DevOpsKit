@@ -1039,7 +1039,7 @@ class SVTBase: AzSKRoot
 		try
 		{
 			$expiryIndays = $this.CalculateExpirationInDays([SVTEventContext] $eventcontext,[ControlState] $controlState);
-			#Validate if expiry period is
+			#Validate if expiry period is passed
 			#Added a condition so as to expire attested controls that were in 'Error' state.
 			if(($expiryIndays -ne -1 -and $controlState.State.AttestedDate.AddDays($expiryIndays) -lt [DateTime]::UtcNow) -or ($controlState.ActualVerificationResult -eq [VerificationResult]::Error))
 			{
