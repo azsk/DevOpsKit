@@ -1,11 +1,6 @@
 Set-StrictMode -Version Latest 
-class Automation: SVTBase
+class Automation: AzSVTBase
 {       
-
-    Automation([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-    }
 
     Automation([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 

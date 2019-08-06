@@ -232,7 +232,7 @@ class CredHygiene : CommandBase{
         else{
             
             $startTime = [DateTime]::UtcNow
-            $user = ([Helpers]::GetCurrentRMContext()).Account.Id
+            $user = ([ContextHelper]::GetCurrentRMContext()).Account.Id
             $this.PublishCustomMessage("Onboarding the credential [$($this.credName)] for rotation/expiry notification", [MessageType]::Default)
             $credentialInfo = New-Object PSObject
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name credLocation -Value $this.credLocation
@@ -413,7 +413,7 @@ class CredHygiene : CommandBase{
 		if($blobContent){
 			$this.PublishCustomMessage("Updating settings for AzSK tracked credential [$CredentialName]", [MessageType]::Default) 
 			$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
-			$user = ([Helpers]::GetCurrentRMContext()).Account.Id;
+			$user = ([ContextHelper]::GetCurrentRMContext()).Account.Id;
 
 			if ($RotationIntervalInDays)
 			{

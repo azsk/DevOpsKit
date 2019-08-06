@@ -3,7 +3,7 @@ Set-StrictMode -Version Latest
 
 # The class serves as an intermediate class to call SecurityCenter class
 # SecurityCenter class is being used in SubscriptionCore
-class SecurityCenterStatus: CommandBase
+class SecurityCenterStatus: AzCommandBase
 {   
 	
 	[string] $SecurityContactEmails;

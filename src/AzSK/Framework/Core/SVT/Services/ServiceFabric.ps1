@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class ServiceFabric : SVTBase
+class ServiceFabric : AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
 	hidden [string] $ClusterTagValue;

@@ -25,6 +25,7 @@ class SVTEvent
 	static [string] $PostCredHygiene = "AzSK.SVT.Control.PostCredHygiene";
 }
 
+#Class for resource details 
 class ResourceContext
 {
 	[string] $ResourceId =""

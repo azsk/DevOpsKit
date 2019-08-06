@@ -1,13 +1,7 @@
 Set-StrictMode -Version Latest 
-class ContainerInstances: SVTBase
+class ContainerInstances: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
-
-    ContainerInstances([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
 
     ContainerInstances([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 

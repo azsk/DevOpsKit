@@ -7,7 +7,6 @@ class UserSubscriptionDataHelper: AzSKRoot
 	hidden static [string] $AutomationAccountName = [Constants]::AutomationAccountName
 	hidden static [string] $StorageResourceType = "Microsoft.Storage/storageAccounts";
 
-
 	UserSubscriptionDataHelper([string] $subscriptionId):
 		Base($subscriptionId)
 	{
@@ -69,28 +68,6 @@ class UserSubscriptionDataHelper: AzSKRoot
 	static [string] GetCAName()
 	{
 		return [UserSubscriptionDataHelper]::AutomationAccountName
-	}
-
-	static [PSObject] GetOldStorage()
-	{
-		$RGName = [OldConstants]::AzSDKRGName
-		$StorageAccountPreName = [OldConstants]::StorageAccountPreName
-		$existingStorage = Get-AzResource -ResourceGroupName $RGName `
-		-Name "*$($StorageAccountPreName)*" `
-		-ResourceType $([UserSubscriptionDataHelper]::StorageResourceType) `
-		-ErrorAction Stop
-		if(($existingStorage|Measure-Object).Count -gt 1)
-		{
-			throw [SuppressedException]::new("Multiple storage accounts found in resource group: [$RGName]. This is not expected. Please contact support team.");
-		}
-		return $existingStorage
-	}
-
-	static [PSObject] GetOldRG()
-	{
-		$RGName = [OldConstants]::AzSDKRGName
-		$ResourceGroup = Get-AzResourceGroup -Name $RGName -ErrorAction SilentlyContinue
-		return $ResourceGroup
 	}
 	
 	static [PSObject] UpgradeBlobToV2Storage() 

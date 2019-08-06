@@ -1,17 +1,10 @@
 #using namespace Microsoft.Azure.Commands.EventHub.Models
 Set-StrictMode -Version Latest 
-class EventHub: SVTBase
+class EventHub: AzSVTBase
 {       
 	hidden [PSObject[]] $NamespacePolicies = @();
 	hidden [PSObject[]] $EventHubs = @();
 	hidden [HashTable] $EHChildAccessPolicies = @{};
-
-    EventHub([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-		$this.GetEventHubDetails();
-		$this.GetEHAccessPolicies();
-    }
 
 	EventHub([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 

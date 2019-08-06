@@ -4,17 +4,11 @@ using namespace Microsoft.Azure.Commands.Sql.TransparentDataEncryption.Model
 using namespace Microsoft.Azure.Commands.Sql.ThreatDetection.Model
 
 Set-StrictMode -Version Latest
-class SQLDatabase: SVTBase
+class SQLDatabase: AzSVTBase
 {
     hidden [PSObject] $ResourceObject;
     hidden [PSObject[]] $SqlDatabases = $null;
 	hidden [PSObject[]] $SqlFirewallDetails = $null;
-
-    SQLDatabase([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
-        Base($subscriptionId, $resourceGroupName, $resourceName)
-    {
-        $this.GetResourceObject();
-    }
 
 	SQLDatabase([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId, $svtResource)

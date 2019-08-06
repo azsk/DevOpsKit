@@ -177,8 +177,8 @@ hidden [ControlResult] <ControlMethodName>([ControlResult] $controlResult)
 		  $controlResult.VerificationResult = [VerificationResult]::Verify;  # Valid values are - Passed, Verify, Failed, NotSupported, Error 
  
 		  # Add any number of messages and data objects using function $controlResult.AddMessage(). 
-		  #	Refer file 'AzSDK\Framework\Models\AzSdkEvent.ps1' for definition of 'MessageData' class and its possible contractors. 
-		  #	Refer file 'AzSDK\Framework\Models\SVTEvent.ps1' for definition of 'ControlResult' class and its possible overloads for 'AddMessage' function.
+		  #	Refer file 'AzSK\Framework\Models\AzSkEvent.ps1' for definition of 'MessageData' class and its possible contractors. 
+		  #	Refer file 'AzSK\Framework\Models\SVTEvent.ps1' for definition of 'ControlResult' class and its possible overloads for 'AddMessage' function.
 		  #	Some of the overloads are listed below:
 		  $controlResult.AddMessage("Message text here");
 		  $controlResult.AddMessage([MessageData]::new("Message text here", $<data object containing values to be logged in detailed logs>)); 

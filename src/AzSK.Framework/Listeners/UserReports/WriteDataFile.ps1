@@ -67,8 +67,8 @@ class WriteDataFile: FileOutputBase
 		{
 			if (($arguments | Measure-Object).Count -gt 0) 
 			{				
-				[Helpers]::ConvertToJsonCustom($arguments) | Out-File $this.FilePath
-				#[Helpers]::ConvertToPson($arguments) | Out-File $($this.FilePath.Replace(".json", ".pson"))
+				[JsonHelper]::ConvertToJsonCustom($arguments) | Out-File $this.FilePath
+				#[JsonHelper]::ConvertToPson($arguments) | Out-File $($this.FilePath.Replace(".json", ".pson"))
 			}
 		}
     }
