@@ -549,8 +549,8 @@ class CredHygiene : CommandBase{
 	[void] InstallAlert($AlertEmail)
 	{
 		$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-		$credHygieneAGName = "AzSKCredHygieneAG"
-		$credHygieneAGShortName = "azskchag"
+		$credHygieneAGName = [Constants]::CredHygieneActionGroupName
+		$credHygieneAGShortName = [Constants]::CredHygieneActionGroupShortName
 
 		$actionGroup = Get-AzActionGroup -Name $credHygieneAGName -ResourceGroupName $rgName -ErrorAction Ignore -WarningAction SilentlyContinue
 
@@ -564,12 +564,9 @@ class CredHygiene : CommandBase{
 			if($automationAccDetails)
 			{
 				$laWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "LAWSId" -ErrorAction SilentlyContinue
-				if(($laWSId | Measure-Object).Count -eq 0)
-				{
-					$laWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "OMSWorkspaceId" -ErrorAction SilentlyContinue
-				}
+
 				if($laWSId){
-					$laWS = Get-AzOperationalInsightsWorkspace | where{$_.CustomerId -eq $laWSId}
+					$laWS = Get-AzOperationalInsightsWorkspace | where{$_.CustomerId -eq $laWSId.Value}
 					if($laWS){
 						$body = [ConfigurationManager]::LoadServerConfigFile("CredentialHygieneAlert.json");
 						$dataSourceId = $body.properties.source.dataSourceId | ConvertTo-Json -Depth 10
