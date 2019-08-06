@@ -33,9 +33,9 @@ class SVTControlAttestation
 			"1" { return [AttestationStatus]::NotAnIssue;}
 			"2" { return [AttestationStatus]::WillNotFix;}
 			"3" { return [AttestationStatus]::WillFixLater;}
-			"4" { return [AttestationStatus]::NotApplicable;}
-			"5" { return [AttestationStatus]::StateConfirmed;}
-			"6" { return [AttestationStatus]::ExemptionApproved;}
+			"4" { return [AttestationStatus]::ExemptionApproved;}
+			"5" { return [AttestationStatus]::NotApplicable;}
+			"6" { return [AttestationStatus]::StateConfirmed;}			
 			"9" { 
 					$this.abortProcess = $true;
 					return [AttestationStatus]::None;
@@ -156,6 +156,31 @@ class SVTControlAttestation
 				{
 					return $controlState;
 				}
+
+				#In case when the user selects ExemptionApproved as the reason for attesting,
+				#they'll be prompted to provide the number of days till that approval expires.
+				if($controlState.AttestationStatus -eq [AttestationStatus]::ExemptionApproved)
+				{
+					Write-Host "`nPlease provide the number of days for which the exemption has been approved:" -ForegroundColor Cyan
+					$exemptionExpiryInDays = ""
+					while([string]::IsNullOrWhiteSpace($exemptionExpiryInDays))
+					{
+						$exemptionExpiryInDays = Read-Host "No. of Days"
+						try
+						{
+							$controlItem.ControlItem.AttestationExpiryPeriodInDays = $exemptionExpiryInDays.Trim()
+						}
+						catch
+						{ 
+							
+						}
+						# If the No. of Days is empty then prompting message again to provide the days.
+						if([string]::IsNullOrWhiteSpace($Justification))
+						{
+							Write-Host "`nEmpty space or blank days are not allowed."
+						}
+					}
+				}
 				
 				if($controlState.AttestationStatus -ne [AttestationStatus]::None)
 				{
@@ -190,8 +215,14 @@ class SVTControlAttestation
 
 				$controlState.State.AttestedBy = [Helpers]::GetCurrentSessionUser();
 				$controlState.State.AttestedDate = [DateTime]::UtcNow;
-				$controlState.State.Justification = $Justification				
+				$controlState.State.Justification = $Justification	
 				
+				#In case of control exemption, calculating the exemption(attestation) expiry date beforehand, based on the days entered by the user
+				if($controlState.AttestationStatus -eq [AttestationStatus]::ExemptionApproved)
+				{
+					$controlState.State.ExpiryDate = ($controlState.State.AttestedDate.AddDays($controlItem.ControlItem.AttestationExpiryPeriodInDays)).ToString("MM/dd/yyyy");
+				}
+
 				break;
 			}
 			"2" #Clear Attestation

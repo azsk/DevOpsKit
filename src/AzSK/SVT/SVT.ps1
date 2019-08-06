@@ -51,7 +51,7 @@ function Get-AzSKAzureServicesSecurityStatus
 		Use this option to provide an apt justification with proper business reason.
 	.PARAMETER AttestationStatus
 		Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater,NotApplicable,StateConfirmed,ExemptionApproved)
-	.PARAMETER InitiateExemption
+	.PARAMETER ApplyExemption
 		Attester will be provided with an additional attestation reason (ExemptionApproved). Use this option to provide exemption for a control from contributing to compliance on the dashboard.
 
 	.NOTES
@@ -223,8 +223,8 @@ function Get-AzSKAzureServicesSecurityStatus
 
 		[switch]
         [Parameter(Mandatory = $false)]
-		[Alias("iex")]
-		$InitiateExemption
+		[Alias("aex")]
+		$ApplyExemption
     )
 
 	Begin
@@ -261,7 +261,7 @@ function Get-AzSKAzureServicesSecurityStatus
 				$attestationOptions.JustificationText = $JustificationText
 				$attestationOptions.AttestationStatus = $AttestationStatus
 				$attestationOptions.IsBulkClearModeOn = $BulkClear
-				$attestationOptions.IsExemptModeOn = $InitiateExemption
+				$attestationOptions.IsExemptModeOn = $ApplyExemption
 				$secStatus.AttestationOptions = $attestationOptions;		
 
 				return $secStatus.EvaluateControlStatus();
@@ -315,7 +315,7 @@ function Get-AzSKSubscriptionSecurityStatus
 		Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
     .PARAMETER IncludeUserComments
 		Use this switch to display previously stored user comments for controls.
-	.PARAMETER InitiateExemption
+	.PARAMETER ApplyExemption
 		Attester will be provided with an additional attestation reason (ExemptionApproved). Use this option to provide exemption for a control from contributing to compliance on the dashboard.
 		
 	.NOTES
@@ -416,8 +416,8 @@ function Get-AzSKSubscriptionSecurityStatus
 
 		[switch]
         [Parameter(Mandatory = $false)]
-		[Alias("iex")]
-		$InitiateExemption
+		[Alias("aex")]
+		$ApplyExemption
 	)
 	Begin
 	{
@@ -445,7 +445,7 @@ function Get-AzSKSubscriptionSecurityStatus
 				$attestationOptions.JustificationText = $JustificationText
 				$attestationOptions.AttestationStatus = $AttestationStatus
 				$attestationOptions.IsBulkClearModeOn = $BulkClear
-				$attestationOptions.IsExemptModeOn = $InitiateExemption
+				$attestationOptions.IsExemptModeOn = $ApplyExemption
 				$sscore.AttestationOptions = $attestationOptions;				
 				
 				$sscore.GenerateFixScript = $GenerateFixScript
@@ -625,7 +625,7 @@ function Get-AzSKControlsStatus
 			Use this option to provide an apt justification with proper business reason.
 	.PARAMETER AttestationStatus
 			Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater,NotApplicable,StateConfirmed,ExemptionApproved)
-	.PARAMETER InitiateExemption
+	.PARAMETER ApplyExemption
 		Attester will be provided with an additional attestation reason (ExemptionApproved). Use this option to provide exemption for a control from contributing to compliance on the dashboard.
 		
 	.NOTES
@@ -789,8 +789,8 @@ function Get-AzSKControlsStatus
 
 		[switch]
         [Parameter(Mandatory = $false)]
-		[Alias("iex")]
-		$InitiateExemption
+		[Alias("aex")]
+		$ApplyExemption
     )
 	Begin
 	{
@@ -824,7 +824,7 @@ function Get-AzSKControlsStatus
 				$attestationOptions.JustificationText = $JustificationText
 				$attestationOptions.AttestationStatus = $AttestationStatus
 				$attestationOptions.IsBulkClearModeOn = $BulkClear
-				$attestationOptions.IsExemptModeOn = $InitiateExemption
+				$attestationOptions.IsExemptModeOn = $ApplyExemption
 				$controlReport.AttestationOptions = $attestationOptions;	
 
 				return $controlReport.EvaluateControlStatus();
