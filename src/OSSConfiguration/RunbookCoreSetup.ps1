@@ -41,7 +41,8 @@ function SetModules
   }
 }
 
-function DownloadAzureRMModule
+# To download Az base modules with Azure RM base commands
+function DownloadAzModuleWithRM
 {
     param(
          [string]$ModuleName,
@@ -730,7 +731,7 @@ else {
 	-Name "Az.Accounts" -ErrorAction SilentlyContinue
 	if(-not $AzModule)
 	{
-		DownloadAzureRMModule -ModuleName Az.Accounts -ModuleVersion 1.2.1 -Sync $true
+		DownloadAzModuleWithRM -ModuleName Az.Accounts -ModuleVersion 1.2.1 -Sync $true
 	}
 	$AzModule = Get-AzureRmAutomationModule `
     -ResourceGroupName $AutomationAccountRG `
@@ -738,7 +739,7 @@ else {
 	-Name "Az.Automation" -ErrorAction SilentlyContinue
 	if(-not $AzModule)
 	{
-		DownloadAzureRMModule -ModuleName Az.Automation -ModuleVersion 1.0.0 -Sync $true
+		DownloadAzModuleWithRM -ModuleName Az.Automation -ModuleVersion 1.0.0 -Sync $true
 	}
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }
