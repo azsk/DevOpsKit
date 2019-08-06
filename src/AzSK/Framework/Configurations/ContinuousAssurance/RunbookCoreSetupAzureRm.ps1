@@ -603,7 +603,7 @@ try
 	-Name "Az.Accounts" -ErrorAction SilentlyContinue
 	if(-not $AzModule)
 	{
-	DownloadModule -ModuleName Az.Accounts -ModuleVersion 1.2.1 -Sync $true
+	DownloadModule -ModuleName Az.Accounts -ModuleVersion 1.6.0 -Sync $true
 	}
 	$AzModule = Get-AzureRmAutomationModule `
     -ResourceGroupName $AutomationAccountRG `
