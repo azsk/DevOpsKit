@@ -1587,6 +1587,8 @@ class SubscriptionCore: AzSVTBase
 					}
 					$credAlert.CredentialName = $credentialInfo.credName
 					$credAlert.LastUpdatedBy = $credentialInfo.lastUpdatedBy
+					$credAlert.SubscriptionId = $this.SubscriptionContext.SubscriptionId
+					$credAlert.SubscriptionName = $this.SubscriptionContext.SubscriptionName
 					$credAlertObject += $credAlert;
 					
 					if($expiryTime -le $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credHighTH)){ #Checking for expired/about to expire credentials
@@ -1604,7 +1606,7 @@ class SubscriptionCore: AzSVTBase
 				}
 
 				$this.PublishEvent([SVTEvent]::PostCredHygiene, $credAlertObject)
-				
+
 				$controlResult.AddMessage("`nCredentials that have expired or are very close to expiry: $expiredCount `n", $expiredCredentials)
 				$controlResult.AddMessage("`nCredentials that are approaching expiry: $aboutToExpireCount `n", $aboutToExpireCredentials)
 				$controlResult.AddMessage("`nCredentials that are not near expiry: $healthyCount `n", $healthyCredentials)

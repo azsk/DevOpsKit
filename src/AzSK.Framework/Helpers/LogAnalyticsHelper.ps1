@@ -487,4 +487,6 @@ class CredHygieneAlert{
 	[bool] $IsExpired
     [string] $CredentialName 
     [string] $LastUpdatedBy
+	[string] $SubscriptionId
+	[string] $SubscriptionName
 }
