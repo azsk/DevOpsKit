@@ -1,6 +1,6 @@
 ﻿using namespace System.Management.Automation
 using namespace Microsoft.Azure.Commands.Management.Storage.Models
-using namespace Microsoft.WindowsAzure.Storage.Blob
+using namespace Microsoft.Azure.Storage.Blob
 using namespace Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel
 using namespace Newtonsoft.Json.Schema
 Set-StrictMode -Version Latest
@@ -199,7 +199,7 @@ class PolicySetup: AzCommandBase
 		if((($askConfigFile | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::AzSKRootConfig)
 		{
 			$azskOverride = [ConfigOverride]::new("AzSK.json");
-			$azskOverride.UpdatePropertyValue("PolicyMessage", "Running $([Constants]::AzSKModuleName) cmdlet using $($this.OrgFullName) policy...");
+			$azskOverride.UpdatePropertyValue("PolicyMessage", "Running $([Constants]::AzSKModuleName) cmdlet using ***$($this.OrgFullName)*** policy...");
 			if(-not [string]::IsNullOrWhiteSpace($this.IWRCommand))
 			{
 				$azskOverride.UpdatePropertyValue("InstallationCommand", $this.IWRCommand);

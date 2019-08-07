@@ -1,6 +1,6 @@
 ﻿Set-StrictMode -Version Latest
 Write-Host "Importing Az modules. This may take a while..." -ForegroundColor Yellow
-Import-Module Az.Accounts -RequiredVersion 1.2.1 -WarningAction SilentlyContinue
+Import-Module Az.Accounts -RequiredVersion 1.6.0 -WarningAction SilentlyContinue
 Enable-AzureRMAlias
 
 . $PSScriptRoot\Framework\Framework.ps1
@@ -105,7 +105,9 @@ function Set-AzSKPolicySettings {
 	.PARAMETER AutoUpdateCommand
 			Provide org install URL
 	.PARAMETER AutoUpdate
-			Toggle the auto-update feature
+            Toggle the auto-update feature
+    	.PARAMETER DisableOrgPolicyCheckForSession
+	    Disable org-policy check for current session
 	
 	.LINK
 	https://aka.ms/azskossdocs
@@ -150,7 +152,12 @@ function Set-AzSKPolicySettings {
 
 		[Parameter(Mandatory = $true, ParameterSetName = "CACentralMode")]
 		[switch]
-        $EnableCentralScanMode
+        $EnableCentralScanMode,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Provide the flag to disable org-policy check for current session")]
+        [switch]
+        [Alias("dopc")]
+        $DisableOrgPolicyCheckForSession
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
@@ -159,7 +166,15 @@ function Set-AzSKPolicySettings {
     Process {
         try {
 
-			$azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
+            # This setting will disable the mandatory org-policy check for azsk cmdlets in current session. To enable this policy check, use a fresh PS session.
+	    # This is independent of AzSKSettings.json file.
+            if ($DisableOrgPolicyCheckForSession) {
+                [CommandHelper]::Mapping | ForEach-Object {
+                    $_.IsOrgPolicyMandatory = $false
+                }
+            }
+
+	    $azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
             if (-not [string]::IsNullOrWhiteSpace($OnlinePolicyStoreUrl)) {
                 try {
                     $url = [System.Net.WebRequest]::Create($OnlinePolicyStoreUrl)
@@ -496,7 +511,6 @@ function Clear-AzSKSessionState {
     Write-Host "Session state cleared." -ForegroundColor Yellow
 
 }
-
 
 $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent).FullName +"\AzSK.Framework"
 

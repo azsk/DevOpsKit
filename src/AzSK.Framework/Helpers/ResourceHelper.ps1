@@ -1,6 +1,5 @@
-﻿using namespace Microsoft.WindowsAzure.Storage.Blob
+﻿using namespace Microsoft.Azure.Storage.Blob
 using namespace Microsoft.Azure.Commands.Management.Storage.Models
-using namespace Microsoft.Azure.Management.Storage.Models
 using namespace Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel
 Set-StrictMode -Version Latest
 class ResourceGroupHelper: EventBase
@@ -317,7 +316,7 @@ class StorageHelper: ResourceGroupHelper
 {
 	hidden [PSStorageAccount] $StorageAccount = $null;
 	[string] $StorageAccountName;
-	[Kind] $StorageKind; 
+	[string] $StorageKind; 
 	[string] $AccessKey;
 	[int] $HaveWritePermissions = 0;
 	[int] $retryCount = 3;
@@ -335,7 +334,7 @@ class StorageHelper: ResourceGroupHelper
 		$this.StorageAccountName = $storageAccountName;
 		$this.StorageKind = [Constants]::NewStorageKind;
 	}
-	StorageHelper([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceGroupLocation, [string] $storageAccountName, [Kind] $storageKind):
+	StorageHelper([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceGroupLocation, [string] $storageAccountName, [string] $storageKind):
 		Base($subscriptionId, $resourceGroupName, $resourceGroupLocation)
 	{
 		if([string]::IsNullOrWhiteSpace($storageAccountName))
@@ -743,7 +742,7 @@ class StorageHelper: ResourceGroupHelper
 		return $blobList
 	}
 	
-	static [PSObject] NewAzskCompliantStorage([string]$StorageName, [Kind]$StorageKind,[string]$ResourceGroup,[string]$Location) {
+	static [PSObject] NewAzskCompliantStorage([string]$StorageName, [string]$StorageKind,[string]$ResourceGroup,[string]$Location) {
         $storageSku = [Constants]::NewStorageSku
         $storageObject = $null
         try {
