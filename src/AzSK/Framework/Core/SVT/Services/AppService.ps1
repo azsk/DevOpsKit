@@ -11,8 +11,8 @@ class AppService: AzSVTBase
     AppService([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId, $svtResource)
     {
-        $this.GetResourceObject();
-		$this.AddResourceMetadata($this.ResourceObject.Properties)
+				$this.GetResourceObject();
+	    	$this.AddResourceMetadata($this.ResourceObject.Properties)
 
     }
 
@@ -61,6 +61,10 @@ class AppService: AzSVTBase
 
 				try{
 					$this.SiteConfigs = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType Microsoft.Web/sites/config -ResourceName $this.ResourceContext.ResourceName -ApiVersion 2018-02-01
+				  # Append SiteConfig to ResourceObject
+					if($null -ne $this.SiteConfigs -and [Helpers]::CheckMember($this.SiteConfigs,"Properties") -and [Helpers]::CheckMember($this.ResourceObject.Properties,"siteConfig", $false)){
+						$this.ResourceObject.Properties.siteConfig = $this.SiteConfigs.Properties
+					}
 				}catch{
 					$this.SiteConfigs = $null
 					# No need to break execution , null object is handled in respective controls
@@ -534,6 +538,7 @@ class AppService: AzSVTBase
     }
     hidden [ControlResult] CheckFunctionsAppHttpCertificateSSL([ControlResult] $controlResult)
 	{	
+		  # https://github.com/Azure/azure-functions-core-tools/issues/1173
 			if($this.IsReaderRole)
 			{
 				#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions

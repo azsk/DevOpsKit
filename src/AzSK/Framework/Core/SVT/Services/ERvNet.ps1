@@ -372,14 +372,25 @@ class ERvNet : SVTIaasBase
 	hidden [ControlResult] CheckARMPolicyConfigured([ControlResult] $controlResult)
     {
 		$controlSettings = $this.LoadServerConfigFile("Subscription.ARMPolicies.json");
-
         $output = @()
         $missingPolicies = @()
         if($null -ne $controlSettings -and [Helpers]::CheckMember($controlSettings,"Policies"))
         {
             $policies = $controlSettings.Policies
+            $enabledPolicies = @()
             $sdoPolicies = @()
-            $sdoPolicies += $policies | Where-Object {(($_.tags.Trim().ToLower().Contains("sdo")) -and ($_.enabled))}
+            #Filter to get only enabled and sdo tagged policy
+            $enabledPolicies += $policies | Where-Object {( ($_.tags.Trim().ToLower().Contains("sdo")) -and ($_.enabled) )}
+            #Filter to get policy applicable for current ErvNet RG
+            if(($enabledPolicies | Measure-Object).Count -gt 0){
+                $enabledPolicies | ForEach-Object {
+                    $ErvNetRGPatterns = ((($_.applicableForRGs | ForEach-Object {'^' + [regex]::escape($_) + '$' }) -join '|') ) -replace '[\\]',''
+                    if(($this.ResourceContext.ResourceGroupName.ToLower() -imatch $ErvNetRGPatterns)){
+                        $sdoPolicies += $_
+                    }
+                }
+            }
+
             if(($sdoPolicies | Measure-Object).Count -gt 0)
             {
                 $sdoPolicies | ForEach-Object{
@@ -417,8 +428,9 @@ class ERvNet : SVTIaasBase
         }
         else
         {
+            $missingPolicies = $missingPolicies | select-object "policyDefinitionName"
 			$controlResult.SetStateData("Missing mandatory policies", $missingPolicies);
-			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Some of the mandatory policies are missing which are demanded by the control tags."));
+			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following mandatory policies are missing which are demanded by the control tags:",$missingPolicies));
         }
         return $controlResult;
     }

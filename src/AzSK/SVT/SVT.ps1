@@ -550,7 +550,25 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 
 	if([string]::IsNullOrEmpty($erResourceGroups))
     {
+		# Get applicable RGs for ERvNet from config
 		$erResourceGroups = [ConfigurationManager]::GetAzSKConfigData().ERvNetResourceGroupNames
+		# Get All RGs in subscription
+		$allResourceGroups  = Get-AzResourceGroup -ErrorAction SilentlyContinue 
+		# Select applicable RGs for ERvNet which are present in subscription
+		if($null -ne $allResourceGroups){
+			$allResourceGroups = $allResourceGroups | ForEach-Object {"$($_.ResourceGroupName)"}
+		    $erResourceGroupsArray = @();
+			if(-not([string]::IsNullOrEmpty($erResourceGroups)))
+			{
+				$erResourceGroups.Split(",") | ForEach-Object {
+					if($allResourceGroups.ToLower() -Contains $_.ToLower()){
+						$erResourceGroupsArray += $_
+					}
+				}
+				$erResourceGroups = [system.String]::Join(",", $erResourceGroupsArray)
+			}
+
+		}
 	}
 
 	Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionId -ResourceGroupNames $erResourceGroups -ResourceName $ResourceName `
