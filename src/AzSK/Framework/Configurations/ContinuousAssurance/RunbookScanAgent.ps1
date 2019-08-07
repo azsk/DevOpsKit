@@ -702,20 +702,10 @@ function AddAutomationVariable
 #############################################################################################################
 # Main ScanAgent code
 #############################################################################################################
-try
-{	
-	if(-not $Global:isAzAvailable)
-    {
-		Write-Output ("CS: Invoking core setup backup.")
-		#$accessToken = Get-AzSKAccessToken -ResourceAppIdURI "https://management.core.windows.net/"
-		$onlinePolicyStoreUrl = "[#ScanAgentAzureRm#]"
-		InvokeScript -policyStoreURL $onlinePolicyStoreUrl -fileName "RunbookScanAgentAzureRm.ps1" -version "1.0.0"
-	}
-	else
-	{
-		#start timer
-		$scanAgentTimer = [System.Diagnostics.Stopwatch]::StartNew();
-		Write-Output("SA: Scan agent starting...")
+try {	
+    #start timer
+    $scanAgentTimer = [System.Diagnostics.Stopwatch]::StartNew();
+	Write-Output("SA: Scan agent starting...")
 
 		#config start
 		#Setup during Install-CA. These are the RGs that CA will scan. "*" is allowed.
@@ -876,7 +866,7 @@ try
 		{
 			PublishEvent -EventName "Adding Log Analytics variables addition/update Error" -Properties @{"ErrorRecord" = ($_ | Out-String)}
 		}
-	}
+	
 }
 catch {
 	Write-Output("SA: Unexpected error during CA scan agent execution...`r`nError details: " + ($_ | Out-String))
