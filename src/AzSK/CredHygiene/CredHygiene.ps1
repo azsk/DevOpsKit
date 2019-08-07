@@ -382,8 +382,6 @@ function New-AzSKTrackedCredentialGroup {
 		Provide the subscription id.
 	.PARAMETER AlertEmail
 		Provide the email id for alert.
-	.PARAMETER AlertSMS
-		Provide the contact number for alert.
 	
 	.LINK
 	https://aka.ms/azskossdocs
