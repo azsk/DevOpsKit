@@ -50,6 +50,8 @@ class AzSVTCommandBase: SVTCommandBase {
 
     #Az Related command started events 
      [void] CommandStartedExt() {
+         
+        $this.ValidateAttestationParameters();
         #<TODO Framework: Find the purpose of function and move to respective place
         $this.ClearSingletons();
 
@@ -163,5 +165,30 @@ class AzSVTCommandBase: SVTCommandBase {
     {
         #Enabled Az telemetry which got disabled at the start of command
         Enable-AzDataCollection  | Out-Null
+    }
+
+    #Function to validate attestations parameters for BulkClear, multiple Control Ids, and baseline controls flag
+    hidden [void] ValidateAttestationParameters()
+    {
+        if ($null -ne $this.AttestationOptions -and $this.AttestationOptions.AttestControls -eq [AttestControls]::NotAttested -and $this.AttestationOptions.IsBulkClearModeOn) {
+            throw [SuppressedException] ("The 'BulkClear' option does not apply to 'NotAttested' controls.`n")
+        }
+        #check to limit multi controlids in the bulk attestation mode
+        $ctrlIds = $this.ConvertToStringArray($this.ControlIdString);
+        # Block scan if both ControlsIds and UBC/UPBC parameters contain values 
+        if($null -ne $ctrlIds -and $ctrlIds.Count -gt 0 -and ($this.UseBaselineControls -or $this.UsePreviewBaselineControls)){
+            throw [SuppressedException] ("Both the parameters 'ControlIds' and 'UseBaselineControls/UsePreviewBaselineControls' contain values. `nYou should use only one of these parameters.`n")
+        }
+
+         if ($null -ne $this.AttestationOptions -and (-not [string]::IsNullOrWhiteSpace($this.AttestationOptions.JustificationText) -or $this.AttestationOptions.IsBulkClearModeOn) -and ($ctrlIds.Count -gt 1 -or $this.UseBaselineControls)) {
+			if($this.UseBaselineControls)
+			{
+				throw [SuppressedException] ("UseBaselineControls flag should not be passed in case of Bulk attestation. This results in multiple controls. `nBulk attestation mode supports only one controlId at a time.`n")
+			}
+			else
+			{
+				throw [SuppressedException] ("Multiple controlIds specified. `nBulk attestation mode supports only one controlId at a time.`n")
+			}	
+        }
     }
 }
