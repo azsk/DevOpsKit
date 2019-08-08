@@ -87,6 +87,8 @@ class ARMPolicy: AzCommandBase
 				{
 					$messages += [MessageData]::new([Constants]::SingleDashLine + "`r`nAdding following ARM policies to the subscription. Total policies: $($enabledPolicies.Count)", $enabledPolicies);                                            								
 					$armPoliciesDefns = @{};
+					$errorCount = 0;
+					[MessageData[]] $resultMessages = @();
 					$enabledPolicies | ForEach-Object {
 						$policyName = $_.PolicyDefinitionName;
 						$armPolicy = $null;
@@ -114,9 +116,18 @@ class ARMPolicy: AzCommandBase
 							catch
 							{
 								$messages += [MessageData]::new("Error while adding ARM policy [$policyName] to the subscription", $_, [MessageType]::Error);
+                                $errorCount += 1;
 							}
 						}							
 					};
+					if($errorCount -eq $enabledPolicies.Count )
+					{
+						$resultMessages += [MessageData]::new("No AzSK ARM policies were added to the subscription due to an error. See the log file for details.`r`n" + [Constants]::SingleDashLine, [MessageType]::Error);
+					}
+					elseif($errorCount -gt 0)
+					{
+						$resultMessages += [MessageData]::new("$errorCount/$($enabledPolicies.Count) ARM policy(ies) have not been added to the subscription. See the log file for details.", [MessageType]::Error);
+					}
 					$errorCount = 0;
 					$currentCount = 0;
 					if(($armPoliciesDefns.Keys | Measure-Object).Count -gt 0)
@@ -140,7 +151,6 @@ class ARMPolicy: AzCommandBase
 							$this.CommandProgress($enabledPolicies.Count, $currentCount, 2);
 						};
 					}
-					[MessageData[]] $resultMessages = @();
 					if($errorCount -eq 0)
 					{
 						#setting the version tag at AzSKRG
@@ -494,7 +504,7 @@ class ARMPolicy: AzCommandBase
 				$Policy = $_;
 				try
 				{
-					$PolicyDefn = Get-AzPolicyDefinition -Name $Policy.policyDefinitionName -ErrorAction SilentlyContinue
+					$PolicyDefn = Get-AzPolicyDefinition -Name $Policy.policyDefinitionName -ErrorAction Stop
 					if($null -ne $PolicyDefn)
 					{
 						$RequiredPolicyDefns += $PolicyDefn;
