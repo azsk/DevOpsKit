@@ -152,7 +152,8 @@
         'Get-AzSKTrackedCredential',
         'Remove-AzSKTrackedCredential',
         'Update-AzSKTrackedCredential',
-        'New-AzSKTrackedCredential'
+        'New-AzSKTrackedCredential',
+        'New-AzSKTrackedCredentialGroup'
     )
 
     # Cmdlets to export from this module

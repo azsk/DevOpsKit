@@ -1,7 +1,6 @@
 ﻿Set-StrictMode -Version Latest
 Write-Host "Importing Az modules. This may take a while..." -ForegroundColor Yellow
 Import-Module Az.Accounts -RequiredVersion 1.6.0 -WarningAction SilentlyContinue
-Enable-AzureRMAlias
 
 . $PSScriptRoot\Framework\Framework.ps1
 

@@ -88,15 +88,19 @@ class SQLDatabaseFix: FixServicesBase
     {
 		[MessageData[]] $detailedLogs = @();
 		$storageAccountName = $parameters.StorageAccountName;
+		$storageAccount = Get-AzResource -Name $storageAccountName -ResourceType 'Microsoft.Storage/storageAccounts'
+		if(($storageAccount|Measure-Object).Count -eq 0)
+		{
+			throw "Cannot find a storage account with the name '$($storageAccountName)'. It either does not exist, associated with a different subscription or you do not have the appropriate credentials to access it."
+		}
 		$detailedLogs += [MessageData]::new("Setting up audit policy for server [$($this.ResourceName)] with storage account [$storageAccountName]...");
-        Set-AzSqlServerAuditing `
+		Set-AzSqlServerAudit `
 				-ResourceGroupName $this.ResourceGroupName `
 				-ServerName $this.ResourceName `
-				-StorageAccountName $storageAccountName `
-				-State Enabled `
+				-StorageAccountResourceId $storageAccount.ResourceId `
+				-BlobStorageTargetState Enabled `
 				-RetentionInDays 0 `
 				-ErrorAction Stop
-
 		$detailedLogs += [MessageData]::new("Audit policy has been set up for server [$($this.ResourceName)]");
 		return $detailedLogs;
     }
@@ -105,14 +109,19 @@ class SQLDatabaseFix: FixServicesBase
     {
 		[MessageData[]] $detailedLogs = @();
 		$storageAccountName = $parameters.StorageAccountName;
+		$storageAccount = Get-AzResource -Name $storageAccountName -ResourceType 'Microsoft.Storage/storageAccounts'
+		if(($storageAccount|Measure-Object).Count -eq 0)
+		{
+			throw "Cannot find a storage account with the name '$($storageAccountName)'. It either does not exist, associated with a different subscription or you do not have the appropriate credentials to access it."
+		}
 		$detailedLogs += [MessageData]::new("Setting up audit policy for database [$databaseName] with storage account [$storageAccountName]...");
-		
-		Set-AzSqlDatabaseAuditing `
+	
+		Set-AzSqlDatabaseAudit `
 				-ResourceGroupName $this.ResourceGroupName `
 				-ServerName $this.ResourceName `
 				-DatabaseName $databaseName `
-				-StorageAccountName $storageAccountName `
-				-State Enabled `
+				-StorageAccountResourceId $storageAccount.ResourceId `
+				-BlobStorageTargetState Enabled `
 				-RetentionInDays 0 `
 				-ErrorAction Stop
 
@@ -133,19 +142,22 @@ class SQLDatabaseFix: FixServicesBase
 			$detailedLogs += $this.EnableServerAuditingPolicy($parameters)
 		}
 
-        Set-AzSqlServerThreatDetectionPolicy `
+		# TODO: We are temporarily suppressing the alias deprecation warning message given by the below Az.SQL cmdlet.
+        Update-AzSqlServerAdvancedThreatProtectionSettings `
 				-ResourceGroupName $this.ResourceGroupName `
 				-ServerName $this.ResourceName `
 				-StorageAccountName $storageAccountName `
 				-EmailAdmins $true `
 				-NotificationRecipientsEmails $securityContactEmails `
 				-RetentionInDays 0 `
-				-ErrorAction Stop
+				-ErrorAction Stop `
+				-WarningAction SilentlyContinue
 
 		$detailedLogs += [MessageData]::new("Threat detection has been set up for server [$($this.ResourceName)]");
 		return $detailedLogs;
     }
 
+	# TODO: This function is not being called. We should delete it if not used.
 	[MessageData[]] EnableDatabaseThreatDetection([PSObject] $parameters, [string] $databaseName)
     {
 		[MessageData[]] $detailedLogs = @();
@@ -159,7 +171,8 @@ class SQLDatabaseFix: FixServicesBase
 			$detailedLogs += $this.EnableDatabaseAuditingPolicy($parameters, $databaseName);
 		}
 
-		Set-AzSqlDatabaseThreatDetectionPolicy `
+		# TODO: We are temporarily suppressing the alias deprecation warning message given by the below Az.SQL cmdlet.
+		Update-AzSqlDatabaseAdvancedThreatProtectionSettings `
 				-ResourceGroupName $this.ResourceGroupName `
 				-ServerName $this.ResourceName `
 				-DatabaseName $databaseName `
@@ -167,7 +180,7 @@ class SQLDatabaseFix: FixServicesBase
 				-EmailAdmins $true `
 				-NotificationRecipientsEmails $securityContactEmails `
 				-RetentionInDays 0 `
-				-ErrorAction Stop
+				-ErrorAction Stop -WarningAction SilentlyContinue
 		
 		$detailedLogs += [MessageData]::new("Threat detection has been set up for database [$databaseName]");
 		return $detailedLogs;
@@ -176,17 +189,16 @@ class SQLDatabaseFix: FixServicesBase
 	hidden [bool] IsServerAuditEnabled()
 	{
 		$result = $false;
-		# TODO: We are temprorily handling the warning here. This command will be deprecated in upcoming sprint as per the warning given.
-        $serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName -WarningAction SilentlyContinue; 
-		$result = ($serverAudit -and $serverAudit.AuditState -eq [AuditStateType]::Enabled)
+        $serverAudit = Get-AzSqlServerAudit -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName
+		$result = ($serverAudit -and $serverAudit.BlobStorageTargetState -eq [AuditStateType]::Enabled)
 		return $result
 	}
 
 	hidden [bool] IsDatabaseAuditEnabled([string] $databaseName)
 	{
 		$result = $false;
-        $dbAudit = Get-AzSqlDatabaseAuditing -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName -DatabaseName $databaseName; 
-		$result = ($dbAudit -and $dbAudit.AuditState -eq [AuditStateType]::Enabled)
+        $dbAudit = Get-AzSqlDatabaseAudit -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName -DatabaseName $databaseName; 
+		$result = ($dbAudit -and $dbAudit.BlobStorageTargetState -eq [AuditStateType]::Enabled)
 		return $result
 	}
 }
