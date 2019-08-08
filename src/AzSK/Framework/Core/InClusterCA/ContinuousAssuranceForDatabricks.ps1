@@ -1,4 +1,4 @@
-class CAForDatabricks : CommandBase {
+class DatabricksClusterCA : CommandBase {
     # workspace base URL is required to make all the 
     # API calls
     [PSObject] $ResourceContext;
@@ -6,9 +6,46 @@ class CAForDatabricks : CommandBase {
     [string] $AzSKSecretScopeName = "AzSK_CA_Secret_Scope";
 
 
-    CAForDatabricks([PSObject] $ResourceContext, [InvocationInfo] $invocationContext): 
+    DatabricksClusterCA([PSObject] $ResourceContext, [InvocationInfo] $invocationContext): 
     Base([Constants]::BlankSubscriptionId, $invocationContext) { 
         $this.ResourceContext = $ResourceContext
+    }
+
+    static [PSObject] GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName, $PAT) {
+        if([string]::IsNullOrEmpty($SubscriptionId) -or 
+            [string]::IsNullOrEmpty($WorkspaceName) -or
+            [string]::IsNullOrEmpty($ResourceGroupName) -or
+            [string]::IsNullOrEmpty($PAT)) {
+            Write-Host "Input the following parameters"
+            if ([string]::IsNullOrEmpty($SubscriptionId)) {
+                $SubscriptionId = [Helpers]::ReadInput("Subscription ID")
+            }
+            if ([string]::IsNullOrEmpty($WorkspaceName)) {
+                $WorkspaceName = [Helpers]::ReadInput("Databricks Workspace Name")
+            }
+            if ([string]::IsNullOrEmpty($ResourceGroupName)) {
+                $ResourceGroupName = [Helpers]::ReadInput("Databricks Resource Group Name")
+            }
+            if ([string]::IsNullOrEmpty($PAT)) {
+                $PAT = [Helpers]::ReadInput("Personal Access Token(PAT)")
+            }
+        }
+        Set-AzContext -SubscriptionId $SubscriptionId *> $null
+        $response = Get-AzResource -Name $WorkspaceName -ResourceGroupName $ResourceGroupName
+        $response = $response | Where-Object{$_.ResourceType -eq "Microsoft.Databricks/workspaces"}
+        # wrong name entered, no resource with that name found
+        if ($null -eq $response) {
+            Write-Host "Error: Resource [$WorkspaceName] not found in current subscription. Please recheck" -ForegroundColor Red
+            return $null
+        }
+        $WorkspaceBaseUrl = "https://" +  $response.Location + ".azuredatabricks.net"
+        return @{
+            "SubscriptionId" = $SubscriptionId;
+            "ResourceGroupName" = $ResourceGroupName;
+            "WorkspaceName" = $WorkspaceName;
+            "PersonalAccessToken" = $PAT;
+            "WorkspaceBaseUrl" = $WorkspaceBaseUrl
+        }
     }
 
     [PSObject] InvokeRestAPICall($EndPoint, $Method, $Body, $ErrorMessage) {
@@ -107,7 +144,7 @@ class CAForDatabricks : CommandBase {
     }
 
     [string] GetAzSKNotebookContent() {
-        $NotebookUrl = "https://azsdkdataoss.blob.core.windows.net/azsdk-configurations/recmnds/AzSK_DB.ipynb"
+        $NotebookUrl = [Constants]::DatabricksCANotebookUrl
         # Download notebook flrom server and store it in temp location
         $filePath = $env:TEMP + "\AzSK_CA_Scan_Notebook.ipynb"
         Invoke-RestMethod  -Method Get -Uri $NotebookUrl -OutFile $filePath
@@ -198,7 +235,7 @@ class CAForDatabricks : CommandBase {
     }
 
     [void] CreateAzSKScanJob($Frequency) {
-        $JobConfigServerUrl = "https://azsdkossep.azureedge.net/3.9.0/DatabricksCAScanJobConfig.json"
+        $JobConfigServerUrl = [Constants]::DatabricksScanJobConfigurationUrl
         # if frequency is not mentioned, create the job with 24 hr interval at a
         # time one hour after the scan job is created
         if ([string]::IsNullOrEmpty($Frequency)) {
@@ -302,8 +339,8 @@ class CAForDatabricks : CommandBase {
             return
         }
         # update secret scope values
-        $this.InsertDataIntoDB($this.AzSKSecretScopeName, $PatSecretKey, $NewPersonalAccessToken)
-        $this.InsertDataIntoDB($this.AzSKSecretScopeName, $IKKey, $NewAppInsightKey)
+        $this.InsertDataIntoDB($PatSecretKey, $NewPersonalAccessToken)
+        $this.InsertDataIntoDB($IKKey,        $NewAppInsightKey)
         # update notebook content
         $this.UploadAzSKNotebookToCluster()
         # update schedule, if passed

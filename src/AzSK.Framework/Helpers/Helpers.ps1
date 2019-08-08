@@ -1526,5 +1526,9 @@ class Helpers {
         }
         return $UpdatedUrl
     }
+
+    static [string] ReadInput($Prompt) {
+        return (Read-Host -Prompt $Prompt).Trim()
+    }
 }
 

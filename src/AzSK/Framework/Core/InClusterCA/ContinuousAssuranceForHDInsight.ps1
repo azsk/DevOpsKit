@@ -1,13 +1,56 @@
-class CAForHDInsight : CommandBase {
+class HDInsightClusterCA : CommandBase {
     [PSObject] $ResourceContext;
 
-    CAForHDInsight([PSObject] $ResourceContext, [InvocationInfo] $invocationContext): 
+    HDInsightClusterCA([PSObject] $ResourceContext, [InvocationInfo] $invocationContext): 
     Base([Constants]::BlankSubscriptionId, $invocationContext) { 
         $this.ResourceContext = $ResourceContext
     }
 
+    static [PSObject] GetParameters($SubscriptionId, $ClusterName, $ResourceGroupName) {
+        if([string]::IsNullOrEmpty($SubscriptionId) -or 
+            [string]::IsNullOrEmpty($ClusterName) -or
+            [string]::IsNullOrEmpty($ResourceGroupName)) {
+
+            Write-Host "Input the following parameters"
+            if ([string]::IsNullOrEmpty($SubscriptionId)) {
+                $SubscriptionId = [Helpers]::ReadInput("Subscription ID")
+            }
+            if ([string]::IsNullOrEmpty($ClusterName)) {
+                $ClusterName = [Helpers]::ReadInput("HDInsight Cluster Name")
+            }
+            if ([string]::IsNullOrEmpty($ResourceGroupName)) {
+                $ResourceGroupName = [Helpers]::ReadInput("HDInsight Resource Group Name")
+            }
+        }
+        Set-AzContext -SubscriptionId $SubscriptionId *> $null
+        $Cluster = Get-AzHDInsightCluster -ClusterName $ClusterName -ErrorAction Ignore
+        if ($null -eq $Cluster) { 
+            Write-Host "HDInsight cluster [$ClusterName] wasn't found. Please retry" -ForegroundColor Red
+            throw $_;
+        }
+        $ResourceGroup = $cluster.ResourceGroup
+        # Extracting Storage Account
+        $StorageAccount = $cluster.DefaultStorageAccount.Split(".")[0]
+        $StorageAccountContext = Get-AzStorageAccount -Name $storageAccount `
+                                    -ResourceGroupName $ResourceGroup `
+                                    -ErrorAction Ignore
+        while ($null -eq $StorageAccountContext) {
+            Write-Host "Storage [$StorageAccount] not found in resource group [$resourceGroup]."
+            $NewRGName = Read-Host -Prompt "Enter the resource group name where [$storageAccount] is present."
+            $StorageAccountContext = Get-AzStorageAccount -Name $StorageAccount -ResourceGroupName $NewRGName
+        }
+        return @{
+            "SubscriptionId" =          $SubscriptionId;
+            "StorageAccountContext" =   $StorageAccountContext.Context;
+            "Container" =               $Cluster.DefaultStorageContainer;
+            "ResourceGroup" =           $Cluster.ResourceGroup;
+            "ClusterName" =             $Cluster.Name;
+        }
+    }
+
+
     [void] UploadAzSKNotebookToCluster() {
-        $NotebookUrl = 'https://azsdkdataoss.blob.core.windows.net/azsdk-configurations/recmnds/AzSK_HDI.ipynb'
+        $NotebookUrl = [Constants]::HDInsightCANotebookUrl
         $FilePath = $env:TEMP + "\AzSK_CA_Scan_Notebook.ipynb"
         Invoke-RestMethod  -Method Get -Uri $NotebookUrl -OutFile $filePath
         (Get-Content $FilePath) -replace '\#AI_KEY\#', $this.ResourceContext.InstrumentationKey | Set-Content $FilePath -Force
@@ -27,7 +70,7 @@ class CAForHDInsight : CommandBase {
     }
 
     [void] InstallAzSKPy() {
-        $ScriptActionUri = "https://azsdkdataoss.blob.core.windows.net/azsdk-configurations/recmnds/pipinstall.sh"
+        $ScriptActionUri = [Constants]::AzSKPyInstallUrl
         # Install on both head, and worker nodes
         $NodeTypes = "headnode", "workernode"
         $ScriptActionName = "AzSKInstaller-" + (Get-Date -f MM-dd-yyyy-HH-mm-ss)
@@ -40,7 +83,7 @@ class CAForHDInsight : CommandBase {
     }
 
     [void] UninstallAzSKPy() {
-        $uninstallScript = "https://azsdkdataoss.blob.core.windows.net/azsdk-configurations/recmnds/uninstall.sh"
+        $uninstallScript = [Constants]::AzSKPyUninstallUrl
         # Uninstall on both head, and worker nodes
         $nodeTypes = "headnode", "workernode"
         $uninstallActionName = "AzSKUnInstaller-" + (Get-Date -f MM-dd-yyyy-HH-mm-ss)

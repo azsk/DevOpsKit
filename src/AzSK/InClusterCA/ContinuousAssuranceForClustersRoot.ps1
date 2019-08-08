@@ -1,87 +1,3 @@
-function Read-Input($msg) {
-    return (Read-Host -Prompt $msg).Trim()
-}
-
-function Get-DatabricksParameters() {    
-    if([string]::IsNullOrEmpty($SubscriptionId) -or 
-        [string]::IsNullOrEmpty($WorkspaceName) -or
-        [string]::IsNullOrEmpty($ResourceGroupName) -or
-        [string]::IsNullOrEmpty($PersonalAccessToken)) {
-        Write-Host "Input the following parameters"
-        if ([string]::IsNullOrEmpty($SubscriptionId)) {
-            $SubscriptionId = Read-Input "Subscription ID"
-        }
-        if ([string]::IsNullOrEmpty($WorkspaceName)) {
-            $WorkspaceName = Read-Input "Databricks Workspace Name"
-        }
-        if ([string]::IsNullOrEmpty($ResourceGroupName)) {
-            $ResourceGroupName = Read-Input "Databricks Resource Group Name"
-        }
-        if ([string]::IsNullOrEmpty($PersonalAccessToken)) {
-            $PersonalAccessToken = Read-Input "Personal Access Token(PAT)"
-        }
-    }
-    Set-AzContext -SubscriptionId $SubscriptionId *> $null
-    $response = Get-AzResource -Name $WorkspaceName -ResourceGroupName $ResourceGroupName
-    $response = $response | Where-Object{$_.ResourceType -eq "Microsoft.Databricks/workspaces"}
-    # wrong name entered, no resource with that name found
-    if ($null -eq $response) {
-        Write-Host "Error: Resource [$WorkspaceName] not found in current subscription. Please recheck" -ForegroundColor Red
-        return $null
-    }
-    $WorkspaceBaseUrl = "https://" +  $response.Location + ".azuredatabricks.net"
-    return @{
-        "SubscriptionId" = $SubscriptionId;
-        "ResourceGroupName" = $ResourceGroupName;
-        "WorkspaceName" = $WorkspaceName;
-        "PersonalAccessToken" = $PersonalAccessToken;
-        "WorkspaceBaseUrl" = $WorkspaceBaseUrl
-    }
-}
-
-function Get-HDInsightParameters {
-    if([string]::IsNullOrEmpty($SubscriptionId) -or 
-        [string]::IsNullOrEmpty($ClusterName) -or
-        [string]::IsNullOrEmpty($ResourceGroupName)) {
-
-        Write-Host "Input the following parameters"
-        if ([string]::IsNullOrEmpty($SubscriptionId)) {
-            $SubscriptionId = Read-Input "Subscription ID"
-        }
-        if ([string]::IsNullOrEmpty($ClusterName)) {
-            $ClusterName = Read-Input "HDInsight Cluster Name"
-        }
-        if ([string]::IsNullOrEmpty($ResourceGroupName)) {
-            $ResourceGroupName = Read-Input "HDInsight Resource Group Name"
-        }
-    }
-    Set-AzContext -SubscriptionId $SubscriptionId *> $null
-    $Cluster = Get-AzHDInsightCluster -ClusterName $ClusterName -ErrorAction Ignore
-    if ($null -eq $Cluster) { 
-        Write-Host "HDInsight cluster [$ClusterName] wasn't found. Please retry" -ForegroundColor Red
-        throw $_;
-    }
-    $ResourceGroup = $cluster.ResourceGroup
-    # Extracting Storage Account
-    $StorageAccount = $cluster.DefaultStorageAccount.Split(".")[0]
-    $StorageAccountContext = Get-AzStorageAccount -Name $storageAccount `
-                                -ResourceGroupName $ResourceGroup `
-                                -ErrorAction Ignore
-    while ($null -eq $StorageAccountContext) {
-        Write-Host "Storage [$StorageAccount] not found in resource group [$resourceGroup]."
-        $NewRGName = Read-Host -Prompt "Enter the resource group name where [$storageAccount] is present."
-        $StorageAccountContext = Get-AzStorageAccount -Name $StorageAccount -ResourceGroupName $NewRGName
-    }
-    return @{
-        "SubscriptionId" = $SubscriptionId;
-        "StorageAccountContext" = $StorageAccountContext.Context;
-        "Container" = $Cluster.DefaultStorageContainer;
-        "ResourceGroup" = $Cluster.ResourceGroup;
-        "ClusterName" = $Cluster.Name;
-    }
-}
-
-
 function Get-AzSKContinuousAssuranceForCluster {
     Param(
         [string]
@@ -118,8 +34,12 @@ function Get-AzSKContinuousAssuranceForCluster {
         try {
             if ($ResourceType -eq "Databricks") {
                 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
-                $ResourceContext = Get-DatabricksParameters
-                $CAInstance = [CAForDatabricks]::new($ResourceContext, $MyInvocation)
+                $ResourceContext = [DatabricksClusterCA]::GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName, $PersonalAccessToken)
+                $CAInstance = [DatabricksClusterCA]::new($ResourceContext, $MyInvocation)
+                $CAInstance.InvokeFunction($CAInstance.GetCA)
+            } elseif($ResourceType -eq "HDInsight") {
+                $ResourceContext = [HDInsightClusterCA]::GetParameters($SubscriptionId, $ClusterName, $ResourceGroupName)
+                $CAInstance = [HDInsightClusterCA]::new($ResourceContext, $MyInvocation)
                 $CAInstance.InvokeFunction($CAInstance.GetCA)
             }
         }
@@ -181,16 +101,16 @@ function Install-AzSKContinuousAssuranceForCluster{
         try {
             if ($ResourceType -eq "Databricks") {
                 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
-                $ResourceContext = Get-DatabricksParameters
+                $ResourceContext = [DatabricksClusterCA]::GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName, $PersonalAccessToken)
                 $ResourceContext.InstrumentationKey = $InstrumentationKey
                 $ResourceContext.LAWorkspaceId = $LAWorkspaceId
                 $ResourceContext.LASharedSecret = $LASharedSecret
-                $CAInstance = [CAForDatabricks]::new($ResourceContext, $MyInvocation)
+                $CAInstance = [DatabricksClusterCA]::new($ResourceContext, $MyInvocation)
                 $CAInstance.InvokeFunction($CAInstance.InstallCA)
             } elseif ($Resourcetype -eq "HDInsight") {
-                $ResourceContext = Get-HDInsightParameters
+                $ResourceContext = [HDInsightClusterCA]::GetParameters($SubscriptionId, $ClusterName, $ResourceGroupName)
                 $ResourceContext.InstrumentationKey = $InstrumentationKey
-                $CAInstance = [CAForHDInsight]::new($ResourceContext, $MyInvocation)
+                $CAInstance = [HDInsightClusterCA]::new($ResourceContext, $MyInvocation)
                 $CAInstance.InvokeFunction($CAInstance.InstallCA)
             }
         }
@@ -203,8 +123,13 @@ function Install-AzSKContinuousAssuranceForCluster{
     }
 }
 
-function Update-AzSKContinuousAssuranceForDatabricks{
+function Update-AzSKContinuousAssuranceForCluster{
     Param(
+        [string]
+        [ValidateSet("HDInsight", "Databricks")]
+        [Alias("rt")]
+        $ResourceType,
+
         [string]
         [Alias("sid")]
         $SubscriptionId,
@@ -231,7 +156,15 @@ function Update-AzSKContinuousAssuranceForDatabricks{
 
         [string]
         [Alias("nsed")]
-        $NewSchedule
+        $NewSchedule,
+
+        [string]
+        [Alias("lawsid")]
+        $NewLAWorkspaceId,
+
+        [string]
+        [Alias("lasec")]
+        $NewLASharedSecret
 
     )
 
@@ -241,11 +174,20 @@ function Update-AzSKContinuousAssuranceForDatabricks{
     }
     Process {
         try {
-            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
-            $ResourceContext = Get-DatabricksParameters
-            $CAInstance = [CAForDatabricks]::new($ResourceContext, $MyInvocation)
-            $CAInstance.InvokeFunction($CAInstance.UpdateCA, @($NewPersonalAccessToken, 
-                                       $NewAppInsightKey, $NewSchedule))
+            if ($ResourceType -eq "Databricks") {
+                [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
+                $ResourceContext = [DatabricksClusterCA]::GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName, $PersonalAccessToken)
+                $CAInstance = [DatabricksClusterCA]::new($ResourceContext, $MyInvocation)
+                $CAInstance.InvokeFunction($CAInstance.UpdateCA, @($NewPersonalAccessToken, 
+                                        $NewAppInsightKey, $NewSchedule))
+            } elseif ($Resourcetype -eq "HDInsight") {
+                $ResourceContext = [HDInsightClusterCA]::GetParameters($SubscriptionId, $ClusterName, $ResourceGroupName)
+                $ResourceContext.InstrumentationKey = $NewAppInsightKey
+                $ResourceContext.LAWorkspaceId = $NewLAWorkspaceId
+                $ResourceContext.LASharedSecret = $NewLASharedSecret
+                $CAInstance = [HDInsightClusterCA]::new($ResourceContext, $MyInvocation)
+                $CAInstance.InvokeFunction($CAInstance.UpdateCA)
+            }
         } catch {
             [EventBase]::PublishGenericException($_);
         }
@@ -290,12 +232,12 @@ function Remove-AzSKContinuousAssuranceForCluster {
         try {
             if ($ResourceType -eq "Databricks") {
                 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
-                $ResourceContext = Get-DatabricksParameters
-                $CAInstance = [CAForDatabricks]::new($ResourceContext, $MyInvocation)
+                $ResourceContext = [DatabricksClusterCA]::GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName, $PersonalAccessToken)
+                $CAInstance = [DatabricksClusterCA]::new($ResourceContext, $MyInvocation)
                 $CAInstance.InvokeFunction($CAInstance.RemoveCA)              
             } elseif ($ResourceType -eq "HDInsight") {
-                $ResourceContext = Get-HDInsightParameters
-                $CAInstance = [CAForHDInsight]::new($ResourceContext, $MyInvocation)
+                $ResourceContext = [HDInsightClusterCA]::GetParameters($SubscriptionId, $ClusterName, $ResourceGroupName)
+                $CAInstance = [HDInsightClusterCA]::new($ResourceContext, $MyInvocation)
                 $CAInstance.InvokeFunction($CAInstance.RemoveCA)  
             }
         } catch {
