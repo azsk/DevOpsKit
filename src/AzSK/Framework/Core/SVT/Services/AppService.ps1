@@ -538,7 +538,6 @@ class AppService: AzSVTBase
     }
     hidden [ControlResult] CheckFunctionsAppHttpCertificateSSL([ControlResult] $controlResult)
 	{	
-		  # https://github.com/Azure/azure-functions-core-tools/issues/1173
 			if($this.IsReaderRole)
 			{
 				#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
@@ -901,7 +900,12 @@ class AppService: AzSVTBase
 
 		hidden [ControlResult] CheckAppServiceInstalledExtensions([ControlResult] $controlResult)
 		{	
-				$installedExtensions = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType Microsoft.Web/sites/siteextensions -ResourceName $this.ResourceContext.ResourceName -ApiVersion 2018-02-01
+			  try{
+					$installedExtensions = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType Microsoft.Web/sites/siteextensions -ResourceName $this.ResourceContext.ResourceName -ApiVersion 2018-02-01 -ErrorAction silentlycontinue
+				}
+				catch{
+					$installedExtensions = $null
+				}
 				if($installedExtensions -ne $null -and ($installedExtensions | Measure-Object).Count -gt 0)
 				{
 					$extensions = $installedExtensions | Select-Object "Name", "ResourceId"
