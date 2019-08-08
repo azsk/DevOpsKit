@@ -366,20 +366,16 @@ class PIM: AzCommandBase {
                     return;
                 }            
                 $url = $this.APIroot + "/roleAssignmentRequests"
-                # Update end time
-                if (-not($duration)) {
-                    $duration = 15
-                }
                 $ts = New-TimeSpan -Days $duration
                 $postParams = '{"assignmentState":"Eligible","type":"AdminAdd","reason":"Assign","roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $subjectId + '","schedule":{"startDateTime":"' + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","endDateTime":"' + ((get-date) + $ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","type":"Once"}}'
                 $response = [WebRequestHelper]::InvokeWebRequest('Post', $url, $this.headerParams, $postParams, "application/json", $false, $true )
                 if ($response.StatusCode -eq 201) {
                     $this.PublishCustomMessage("Assignment request for [$PrincipalName] for the [$RoleName] role on [$($resolvedResource.ResourceName)] queued successfully.", [MessageType]::Update);
                 }  
-                if ($response.StatusCode -eq 401) {
+                elseif ($response.StatusCode -eq 401) {
                     $this.PublishCustomMessage("You are not eligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
-                }          
-            
+                }
+                
             }   
         }
         else {
