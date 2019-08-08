@@ -556,6 +556,7 @@ class CredHygiene : CommandBase{
 		$actionGroup = Set-AzActionGroup -Name $credHygieneAGName -ResourceGroupName $rgName -ShortName $credHygieneAGShortName -Receiver $email -ErrorAction Ignore -WarningAction SilentlyContinue
 		
 		if($actionGroup){
+			# We are using LAWS from the same sub for Alert REST API call.
 			$automationAccDetails= Get-AzAutomationAccount -ResourceGroupName $rgName -ErrorAction SilentlyContinue 
 			if($automationAccDetails)
 			{
@@ -580,7 +581,7 @@ class CredHygiene : CommandBase{
 						[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
 					}
 					else{ # LA resource not found.
-						$this.PublishCustomMessage("Log analytics resource with workspace id provided in the CA automation account variables doesn't exist. Please verify the value of log analytics workspace id.", [MessageType]::Error)
+						$this.PublishCustomMessage("Log analytics resource with workspace id [$($laWSId.Value)] provided in the CA automation account variables doesn't exist. Please verify the value of log analytics workspace id.", [MessageType]::Error)
 						$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
 						$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the log analytics workspace id with the correct value in the CA automation account.")
 					}
