@@ -48,6 +48,7 @@ class PolicySetup: CommandBase
 	PolicySetup([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $orgName, [string] $departmentName, [string] $resourceGroupName, [string] $storageAccountName, [string] $appInsightName, [string] $appInsightLocation, [string] $resourceGroupLocation,[string] $AzureEnvironment, [string] $MonitoringDashboardLocation, [string] $localPolicyFolderPath):
         Base($subscriptionId, $invocationContext)
     {
+		$this.DonotOpenOutputFolder = $true;
 		$this.CreateInstance($subscriptionId, $orgName, $departmentName, $AzureEnvironment, $resourceGroupName, $storageAccountName, $appInsightName, $appInsightLocation, $resourceGroupLocation,$MonitoringDashboardLocation, $localPolicyFolderPath);				
 	}
 
