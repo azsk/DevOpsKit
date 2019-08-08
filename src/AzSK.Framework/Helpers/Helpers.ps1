@@ -5,7 +5,6 @@ using namespace Microsoft.Azure.Management.Storage.Models
 Set-StrictMode -Version Latest
 class Helpers {
 
-    static hidden [PSObject] $currentRMContext;
     hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson) {
 		$rootConfigPath = [Constants]::AzSKAppFolderPath ;
 		return [Helpers]::LoadOfflineConfigFile($fileName, $true,$rootConfigPath);
@@ -54,48 +53,7 @@ class Helpers {
 
         return $fileContent;
     }
-	hidden static [PSObject] GetCurrentRMContext()
-	{
-		if (-not [Helpers]::currentRMContext)
-		{
-			$rmContext = Get-AzContext -ErrorAction Stop
 
-			if ((-not $rmContext) -or ($rmContext -and (-not $rmContext.Subscription -or -not $rmContext.Account))) {
-				[EventBase]::PublishGenericCustomMessage("No active Azure login session found. Initiating login flow...", [MessageType]::Warning);
-                [PSObject]$rmLogin = $null
-                $AzureEnvironment = [Constants]::DefaultAzureEnvironment
-                $AzskSettings = [Helpers]::LoadOfflineConfigFile("AzSKSettings.json", $true)          
-                if([Helpers]::CheckMember($AzskSettings,"AzureEnvironment"))
-                {
-                   $AzureEnvironment = $AzskSettings.AzureEnvironment
-                }
-                if(-not [string]::IsNullOrWhiteSpace($AzureEnvironment) -and $AzureEnvironment -ne [Constants]::DefaultAzureEnvironment) 
-                {
-                    try{
-                        $rmLogin = Connect-AzAccount -EnvironmentName $AzureEnvironment
-                    }
-                    catch{
-                        [EventBase]::PublishGenericException($_);
-                    }         
-                }
-                else
-                {
-                $rmLogin = Connect-AzAccount
-                }
-				if ($rmLogin) {
-                    $rmContext = $rmLogin.Context;	
-				}
-            }
-            [Helpers]::currentRMContext = $rmContext
-		}
-
-		return [Helpers]::currentRMContext
-	}
-
-	hidden static [void] ResetCurrentRMContext()
-	{
-		[Helpers]::currentRMContext = $null
-	}
 
     static AbstractClass($obj, $classType) {
         $type = $obj.GetType()
@@ -135,8 +93,8 @@ class Helpers {
                 else {
                     try {
                         #$msg = $dataObject | ConvertTo-Json -Depth 5 | Out-String;
-                        #$msg = [Helpers]::ConvertToJsonCustom($dataObject);
-                        $msg = [Helpers]::ConvertToPson($dataObject);
+                        #$msg = [JsonHelper]::ConvertToJsonCustom($dataObject);
+                        $msg = [JsonHelper]::ConvertToPson($dataObject);
                     }
                     catch {
                         $e = $_
@@ -150,314 +108,6 @@ class Helpers {
         }
 
         return $msg.Trim("`r`n");
-    }
-
-    static [JsonSerializerSettings] $SerializerSettings = $null;
-    hidden static [JsonSerializerSettings] GetSerializerSettings() {
-        if (-not [Helpers]::SerializerSettings) {
-            $settings = [JsonSerializerSettings]::new();
-            $settings.Converters.Add([Converters.StringEnumConverter]::new());
-            $settings.Formatting = [Formatting]::Indented;
-            $settings.NullValueHandling = [NullValueHandling]::Ignore;
-            $settings.ReferenceLoopHandling = [ReferenceLoopHandling]::Ignore;
-            [Helpers]::SerializerSettings = $settings;
-        }
-        return [Helpers]::SerializerSettings;
-    }
-
-    static [string] ConvertToJson([PSObject] $dataObject) {
-        if ($dataObject) {
-            if ($dataObject.GetType() -eq [System.Object[]] -and $dataObject.Count -ne 0) {
-                $list = New-Object -TypeName "System.Collections.Generic.List[$($dataObject[0].GetType().fullname)]";
-                $dataObject | ForEach-Object {
-                    if ($_) {
-                        $list.Add($_);
-                    }
-                }
-                return [JsonConvert]::SerializeObject($list, [Helpers]::GetSerializerSettings());
-            }
-
-            return [JsonConvert]::SerializeObject($dataObject, [Helpers]::GetSerializerSettings());
-        }
-        return "";
-    }
-
-	static [string] ConvertToJsonCustom([PSObject] $Object, [Int]$Depth, [Int]$Layers) {
-        Set-StrictMode -Off
-        $res = [Helpers]::ConvertToJsonCustomNotStrict($Object, $Depth, $Layers, $false)
-        Set-StrictMode -Version Latest
-        return $res
-    }
-
-    static [string] ConvertToJsonCustom([PSObject] $Object) {
-       return [Helpers]::ConvertToJsonCustom($Object, 10, 10);
-    }
-
-    static [string] ConvertToJsonCustomCompressed([PSObject] $Object) {
-        Set-StrictMode -Off
-        $res = [Helpers]::ConvertToJsonCustomNotStrict($Object, 10, 0, $false)
-        Set-StrictMode -Version Latest
-        return $res
-    }
-
-    static [string] ConvertToPson([PSObject] $Object) {
-        Set-StrictMode -Off
-        $res = [Helpers]::ConvertToPsonNotStrict($Object, 10, 10, $false, $false, (Get-Variable -Name PSVersionTable).Value.PSVersion)
-        Set-StrictMode -Version Latest
-        return $res
-    }
-
-    static [string] ConvertToJsonCustomNotStrict([PSObject] $Object, [Int]$Depth, [Int]$Layers, [bool]$IsWind) {
-        $Format = $Null
-        $Quote = If ($Depth -le 0) {""}
-        Else {""""}
-        $Space = If ($Layers -le 0) {""}
-        Else {" "}
-        If ($null-eq $Object) { return "null"}
-        Else {
-            $JSON = If ($Object -is "Array") {
-                $Format = "[", ",$Space", "]"
-                If ($Depth -gt 1) {
-                    For ($i = 0; $i -lt $Object.Count; $i++) {
-                        [Helpers]::ConvertToJsonCustomNotStrict($Object[$i], $Depth - 1, $Layers - 1, $IsWind)
-                    }
-                }
-            }
-            ElseIf ($Object -is "Xml") {
-                $String = New-Object System.IO.StringWriter
-                $Object.Save($String)
-                $Xml = "'" + ([String]$String).Replace("`'", "&apos;") + "'"
-                If ($Layers -le 0) {
-                    ($Xml -Replace "\r\n\s*", "") -Replace "\s+", " "
-                }
-                ElseIf ($Layers -eq 1) {
-                    $Xml
-                }
-                Else {
-                    $Xml.Replace("`r`n", "`r`n    ")
-                }
-                $String.Dispose()
-            }
-            ElseIf ($Object -is "Enum") {
-                "$Quote$($Object.ToString())$Quote"
-            }
-            ElseIf ($Object -is "DateTime") {
-                "$Quote$($Object.ToString("o"))$Quote"
-            }
-            ElseIf ($Object -is "TimeSpan") {
-                "$Quote$($Object.ToString())$Quote"
-            }
-            ElseIf ($Object -is "String") {
-                $Object = ConvertTo-Json $Object -Depth 1
-                "$Object"
-            }
-            ElseIf ($Object -is "Boolean") {
-                If ($Object) {"true"}
-                Else {"false"}
-            }
-            ElseIf ($Object -is "Char") {
-                "$Quote$Object$Quote"
-            }
-            ElseIf ($Object -is "guid") {
-                "$Quote$Object$Quote"
-            }
-            ElseIf ($Object -is "ValueType") {
-                $Object
-            }
-            ElseIf ($Object -is [System.Collections.IDictionary]) {
-                If ($null -eq $Object.Keys) {
-                    return "null"
-                }
-                $Format = "{", ",$Space", "}"
-                If ($Depth -gt 1) {
-                    $Object.GetEnumerator() | ForEach-Object {
-                        $Quote + $_.Key + $Quote + "$Space`:$Space" + ([Helpers]::ConvertToJsonCustomNotStrict($_.Value, $Depth - 1, $Layers - 1, $IsWind))
-                    }
-                }
-            }
-            ElseIf ($Object -is 'System.Collections.IList') {
-                $Format = "[", ",$Space", "]"
-                If ($Depth -gt 1) {
-                    $Object | ForEach-Object {
-                        [Helpers]::ConvertToJsonCustomNotStrict($_, $Depth - 1, $Layers - 1, $IsWind)
-                    }
-                }
-            }
-            ElseIf ($Object -is "Object") {
-                If ($Object -is "System.Management.Automation.ErrorRecord" -and !$IsWind) {
-                    $Depth = 3
-                    $Layers = 3
-                    $IsWind = $true
-                }
-                $Format = "{", ",$Space", "}"
-                If ($Depth -gt 1) {
-                    Get-Member -InputObject $Object -MemberType Properties | ForEach-Object {
-                        $Quote + $_.Name + $Quote + "$Space`:$Space" + ([Helpers]::ConvertToJsonCustomNotStrict($Object.$($_.Name), $Depth - 1, $Layers - 1, $IsWind))
-                    }
-                }
-            }
-            Else {$Object}
-            If ($Format) {
-                $JSON = $Format[0] + (& {
-                        If (($Layers -le 1) -or ($JSON.Count -le 0)) {
-                            $JSON -Join $Format[1]
-                        }
-                        Else {
-                            ("`r`n" + ($JSON -Join "$($Format[1])`r`n")).Replace("`r`n", "`r`n    ") + "`r`n"
-                        }
-                    }) + $Format[2]
-            }
-            return "$JSON"
-        }
-    }
-
-
-    # Adapted from https://stackoverflow.com/questions/15139552/save-hash-table-in-powershell-object-notation-pson
-    # PSON - PowerShell Object Notation
-    static [string] ConvertToPsonNotStrict([PSObject] $Object, [Int]$Depth, [Int]$Layers, [bool]$IsWind, [bool]$Strict, [Version]$Version) {
-        $Format = $Null
-        $Quote = If ($Depth -le 0) {""}
-        Else {""""}
-        $Space = If ($Layers -le 0) {""}
-        Else {" "}
-        If ($null -eq $Object) {
-            return "`$Null"
-        }
-        Else {
-            $Type = "[" + $Object.GetType().Name + "]"
-            $PSON = If ($Object -is "Array") {
-                $Format = "@(", ",$Space", ")"
-                If ($Depth -gt 1) {
-                    For ($i = 0; $i -lt $Object.Count; $i++) {
-                        [Helpers]::ConvertToPsonNotStrict($Object[$i], $Depth - 1, $Layers - 1, $IsWind, $Strict, $Version)
-                    }
-                }
-            }
-            ElseIf ($Object -is "Xml") {
-                $Type = "[Xml]"
-                $String = New-Object System.IO.StringWriter
-                $Object.Save($String)
-                $Xml = "'" + ([String]$String).Replace("`'", "&apos;") + "'"
-                If ($Layers -le 0) {
-                    ($Xml -Replace "\r\n\s*", "") -Replace "\s+", " "
-                }
-                ElseIf ($Layers -eq 1) {
-                    $Xml
-                }
-                Else {
-                    $Xml.Replace("`r`n", "`r`n    ")
-                }
-                $String.Dispose()
-            }
-            ElseIf ($Object -is "Enum") {
-                "$Quote$($Object.ToString())$Quote"
-            }
-            ElseIf ($Object -is "DateTime") {
-                "$Quote$($Object.ToString('s'))$Quote"
-            }
-            ElseIf ($Object -is "TimeSpan") {
-                "$Quote$($Object.ToString())$Quote"
-            }
-            ElseIf ($Object -is "String") {
-                0..11 | ForEach-Object {
-                    $Object = $Object.Replace([String]"```'""`0`a`b`f`n`r`t`v`$"[$_], ('`' + '`''"0abfnrtv$'[$_]))}; "$Quote$Object$Quote"
-            }
-            ElseIf ($Object -is "Boolean") {
-                If ($Object) {"`$True"}
-                Else {"`$False"}
-            }
-            ElseIf ($Object -is "Char") {
-                If ($Strict) {[Int]$Object}
-                Else {"$Quote$Object$Quote"}
-            }
-            ElseIf ($Object -is "guid") {
-                "$Quote$Object$Quote"
-            }
-            ElseIf ($Object -is "ValueType") {
-                $Object
-            }
-            ElseIf ($Object -is [System.Collections.IDictionary]) {
-                If ($null -eq $Object.Keys) {
-                    return "`$Null"
-                }
-                If ($Type -eq "[OrderedDictionary]") {$Type = "[Ordered]"}
-                $Format = "@{", ";$Space", "}"
-                If ($Depth -gt 1) {
-                    $Object.GetEnumerator() | ForEach-Object {
-                        $Quote + $_.Key + $Quote + "$Space=$Space" + ([Helpers]::ConvertToPsonNotStrict($_.Value, $Depth - 1, $Layers - 1, $IsWind, $Strict, $Version))
-                    }
-                }
-            }
-            ElseIf ($Object -is 'System.Collections.IList') {
-                $Format = "@(", ",$Space", ")"
-                If ($Depth -gt 1) {
-                    $Object | ForEach-Object {
-                        [Helpers]::ConvertToPsonNotStrict($_, $Depth - 1, $Layers - 1, $IsWind, $Strict, $Version)
-                    }
-                }
-            }
-            ElseIf ($Object -is "Object") {
-                If ($Object -is "System.Management.Automation.ErrorRecord" -and !$IsWind) {
-                    $Depth = 3
-                    $Layers = 3
-                    $IsWind = $true
-                }
-                If ($Version -le [Version]"2.0") {$Type = "New-Object PSObject -Property "}
-                $Format = "@{", ";$Space", "}"
-                If ($Depth -gt 1) {
-                    Get-Member -InputObject $Object -MemberType Properties | ForEach-Object {
-                        $Quote + $_.Name + $Quote + "$Space=$Space" + ([Helpers]::ConvertToPsonNotStrict($Object.$($_.Name), $Depth - 1, $Layers - 1, $IsWind, $Strict, $Version))
-                    }
-                }
-            }
-            Else {$Object}
-            If ($Format) {
-                $PSON = $Format[0] + (& {
-                        If (($Layers -le 1) -or ($PSON.Count -le 0)) {
-                            $PSON -Join $Format[1]
-                        }
-                        Else {
-                            ("`r`n" + ($PSON -Join "$($Format[1])`r`n")).Replace("`r`n", "`r`n    ") + "`r`n"
-                        }
-                    }) + $Format[2]
-            }
-            If ($Strict) {
-                return "$Type$PSON"
-            }
-            Else {
-                return "$PSON"
-            }
-        }
-    }
-
-    static [string] GetAccessToken([string] $resourceAppIdUri, [string] $tenantId) 
-    {
-        $rmContext = [Helpers]::GetCurrentRMContext()
-        if (-not $rmContext) {
-        throw ([SuppressedException]::new(("No Azure login found"), [SuppressedExceptionType]::InvalidOperation))
-        }
-        
-        if ([string]::IsNullOrEmpty($tenantId) -and [Helpers]::CheckMember($rmContext,"Tenant")) {
-        $tenantId = $rmContext.Tenant.Id
-        }
-        
-        $authResult = [AzureSession]::Instance.AuthenticationFactory.Authenticate(
-        $rmContext.Account,
-        $rmContext.Environment,
-        $tenantId,
-        [System.Security.SecureString] $null,
-        "Never",
-        $null,
-        $resourceAppIdUri);
-        
-        if (-not ($authResult -and (-not [string]::IsNullOrWhiteSpace($authResult.AccessToken)))) {
-          throw ([SuppressedException]::new(("Unable to get access token. Authentication Failed."), [SuppressedExceptionType]::Generic))
-        }
-        return $authResult.AccessToken;
-    }
-
-    static [string] GetAccessToken([string] $resourceAppIdUri) {
-        return [Helpers]::GetAccessToken($resourceAppIdUri, "");
     }
 
     static [bool] CompareObject($referenceObject, $differenceObject) {
@@ -880,64 +530,6 @@ class Helpers {
 
         return $result;
     }
-
-    static [PSObject] NewAzskCompliantStorage([string]$StorageName, [Kind]$StorageKind,[string]$ResourceGroup,[string]$Location) {
-        $storageSku = [Constants]::NewStorageSku
-        $storageObject = $null
-        try {
-            #register resource providers
-            [Helpers]::RegisterResourceProviderIfNotRegistered("Microsoft.Storage");
-            [Helpers]::RegisterResourceProviderIfNotRegistered("microsoft.insights");
-
-            #create storage
-            $status = Get-AzStorageAccountNameAvailability -Name $StorageName
-            if($null -ne $status -and  $status.NameAvailable -eq $true)
-            {
-                $newStorage = New-AzStorageAccount -ResourceGroupName $ResourceGroup `
-                    -Name $StorageName `
-                    -Type $storageSku `
-                    -Location $Location `
-                    -Kind $StorageKind `
-                    -AccessTier Cool `
-                    -EnableHttpsTrafficOnly $true `
-                    -ErrorAction Stop
-
-                $retryAccount = 0
-                do {
-                    $storageObject = Get-AzStorageAccount -ResourceGroupName $ResourceGroup -Name $StorageName -ErrorAction SilentlyContinue
-                    Start-Sleep -seconds 2
-                    $retryAccount++
-                }while (!$storageObject -and $retryAccount -ne 6)
-
-                if ($storageObject) {                                       
-
-                    #set diagnostics on
-                    $currentContext = $storageObject.Context
-                    Set-AzStorageServiceLoggingProperty -ServiceType Blob -LoggingOperations All -Context $currentContext -RetentionDays 365 -PassThru -ErrorAction Stop
-                    Set-AzStorageServiceMetricsProperty -MetricsType Hour -ServiceType Blob -Context $currentContext -MetricsLevel ServiceAndApi -RetentionDays 365 -PassThru -ErrorAction Stop
-                }
-            }
-            else
-            {
-                throw ([SuppressedException]::new(("The specified name for the storage account is not available. Please rerun this command to try a different name."), [SuppressedExceptionType]::Generic));          
-            }
-        }
-        catch {
-            [EventBase]::PublishGenericException($_);
-            $storageObject = $null
-            #clean-up storage if error occurs
-            if ((Get-AzResource -ResourceGroupName $ResourceGroup -Name $StorageName|Measure-Object).Count -gt 0) {
-            # caused deletion of storage on any exception.
-                # Remove-AzureRmStorageAccount -ResourceGroupName $ResourceGroup -Name $StorageName -Force -ErrorAction SilentlyContinue
-                
-            }
-        }
-        return $storageObject
-    }
-    static [PSObject] NewAzskCompliantStorage([string]$StorageName, [string]$ResourceGroup, [string]$Location) {
-      return [Helpers]::NewAzskCompliantStorage($StorageName,[Constants]::NewStorageKind,[string]$ResourceGroup,[string]$Location)
-    }
-
     
     static [string] FetchTagsString([PSObject]$TagsHashTable)
     {
@@ -958,158 +550,6 @@ class Helpers {
         return $tagsString;
     }
 
-	static [void] SetResourceGroupTags([string]$RGName, [PSObject]$TagsHashTable, [bool] $Remove) {
-		[Helpers]::SetResourceGroupTags($RGName, $TagsHashTable, $Remove, $true) 
-	}
-
-	static [void] SetResourceGroupTags([string]$RGName, [PSObject]$TagsHashTable, [bool] $Remove, [bool] $update) {
-		$azskResourceGroup = Get-AzResourceGroup -Name $RGName -ErrorAction SilentlyContinue;
-		if(($azskResourceGroup | Measure-Object).Count -gt 0)
-		{
-			$tags = $azskResourceGroup.Tags;
-			if($null -eq $tags)
-			{
-				$tags = @{}
-			}
-			if(($TagsHashTable | Measure-Object).Count -gt 0)
-			{
-				$TagsHashTable.Keys | ForEach-Object {
-					$key = $_;
-					if($null -ne $tags -and $tags.ContainsKey($key))
-					{
-						if($update)
-						{
-							$tags[$key] = $TagsHashTable[$key];
-						}
-						if($Remove)
-						{
-							$tags.Remove($key);
-						}
-					}
-					elseif(-not $Remove)
-					{
-						$tags.Add($key, $TagsHashTable[$key])
-					}
-				}
-			}
-			try
-			{
-				Set-AzResourceGroup -Name $RGName -Tag $tags -ErrorAction Stop
-			}
-			catch
-			{
-                #Skipping tag exception. Exception can be raised due to privilege issues.
-				#[EventBase]::PublishGenericCustomMessage(" `r`nError occured while adding tag(s) on resource group [$RGName]. $($_.Exception)", [MessageType]::Warning);
-			}
-		}
-    }
-
-	static [void] SetResourceTags([string] $ResourceId, [PSObject] $TagsHashTable, [bool] $Remove, [bool] $update) {
-		$azskResource = Get-AzResource -ResourceId $ResourceId -ErrorAction SilentlyContinue;
-		if(($azskResource | Measure-Object).Count -gt 0)
-		{
-			$tags = $azskResource.Tags;
-			if($null -eq $tags)
-			{
-				$tags = @{}
-			}
-			if(($TagsHashTable | Measure-Object).Count -gt 0)
-			{
-				$TagsHashTable.Keys | ForEach-Object {
-					$key = $_;
-					if($null -ne $tags -and $tags.ContainsKey($key))
-					{
-						if($update)
-						{
-							$tags[$key] = $TagsHashTable[$key];
-						}
-						if($Remove)
-						{
-							$tags.Remove($key);
-						}
-					}
-					elseif(-not $Remove)
-					{
-						$tags.Add($key, $TagsHashTable[$key])
-					}
-				}
-			}			
-			try
-			{
-				Set-AzResource -ResourceId $ResourceId -Tag $tags -Force -ErrorAction Stop
-			}
-			catch
-			{
-				[EventBase]::PublishGenericCustomMessage(" `r`nError occured while adding tag(s) on resource [$ResourceId]. $($_.Exception)", [MessageType]::Warning);
-			}
-		}
-    }
-
-	static [PSObject] GetResourceGroupTags([string]$RGName)
-	{
-		$azskResourceGroup = Get-AzResourceGroup -Name $RGName -ErrorAction SilentlyContinue;
-		$tags = @{}
-		if(($azskResourceGroup | Measure-Object).Count -gt 0)
-		{
-			$tags = $azskResourceGroup.Tags;
-			if($null -eq $tags)
-			{
-				$tags = @{}
-			}
-		}
-		return $tags 
-	}
-
-	static [string] GetResourceGroupTag([string]$RGName, [string] $tagName)
-	{
-		$azskResourceGroup = Get-AzResourceGroup -Name $RGName -ErrorAction SilentlyContinue;
-		$tags = @{}
-		if(($azskResourceGroup | Measure-Object).Count -gt 0)
-		{
-			$tags = $azskResourceGroup.Tags;
-			if(($tags | Measure-Object).Count -gt 0)
-			{
-				return $tags[$tagName];
-			}
-		}
-		return ""; 
-	}
-
-
-
-    static [bool] NewAzSKResourceGroup([string]$ResourceGroup, [string]$Location, [string] $Version) {
-        try {
-            [Hashtable] $RGTags = @{};
-            if ([string]::IsNullOrWhiteSpace($Version))
-			 {
-               $version= [Constants]::AzSKCurrentModuleVersion
-            }
-                $RGTags += @{
-                    "AzSKVersion" = $Version;
-                    "CreationTime" = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss");
-                }
-            
-            $newRG = New-AzResourceGroup -Name $ResourceGroup -Location $Location `
-                -Tag $RGTags `
-                -ErrorAction Stop
-
-            return $true
-        }
-        catch {
-			#return as false in the case of exception. Caller of this function is taking care if the value is false
-            return $false
-        }
-
-    }
-
-    static [void] CreateNewResourceGroupIfNotExists([string]$ResourceGroup, [string]$Location, [string] $Version) 
-    {
-       if((Get-AzResourceGroup -Name $ResourceGroup -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0)
-	    {
-		    [Helpers]::NewAzSKResourceGroup($ResourceGroup,$Location,$Version)
-	    }  
-    }
-
     static [string] ComputeHash([String] $data) {
         $HashValue = [System.Text.StringBuilder]::new()
         [System.Security.Cryptography.HashAlgorithm]::Create("SHA256").ComputeHash([System.Text.Encoding]::UTF8.GetBytes($data))| ForEach-Object {
@@ -1118,36 +558,6 @@ class Helpers {
         return $HashValue.ToString()
     }
 
-    static [string] GetCurrentSessionUser() {
-        $context = [Helpers]::GetCurrentRMContext()
-        if ($null -ne $context) {
-            return $context.Account.Id
-        }
-        else {
-            return "NO_ACTIVE_SESSION"
-        }
-    }
-	static [string[]] GetCurrentUserRoleAtSubscriptionScope([string] $SubscriptionId)
-	{
-		$signInId = [Helpers]::GetCurrentSessionUser()
-		#Ignore errors in case user doesn't have subscription scope role/not authorized to perform role assignment read
-		$roleAssignments = @();
-		#same tenant
-		$roleAssignments += Get-AzRoleAssignment -Scope "/subscriptions/$SubscriptionId" -IncludeClassicAdministrators -ErrorAction SilentlyContinue | Where-Object { ($_.SignInName -like '*#EXT#@*.onmicrosoft.com' -and $_.SignInName.Split("#EXT#")[0] -eq ($signInId -replace "@","_")) -or $_.SignInName -eq $signInId }
-
-		$userRoles = @();
-		if(($roleAssignments | Measure-Object).Count -gt 0)
-		{
-			$roleAssignments | ForEach-Object{
-				$userRoles += ($_.RoleDefinitionName.Split(";"));
-			}
-			return $userRoles;
-		}
-		else
-		{
-			return $null
-		}
-	}
     static [VerificationResult] EvaluateVerificationResult([VerificationResult] $verificationResult, [AttestationStatus] $attestationStatus) {
         [VerificationResult] $result = $verificationResult;
         # No action required if Attestation status is None OR verification result is Passed
@@ -1202,46 +612,6 @@ class Helpers {
 		return $securePassword
 	}
 
-	static [void] RegisterResourceProviderIfNotRegistered([string] $provideNamespace)
-	{
-		if([string]::IsNullOrWhiteSpace($provideNamespace))
-		{
-			throw [System.ArgumentException] "The argument '$provideNamespace' is null or empty";
-		}
-
-		# Check if provider is registered or not
-		if(-not [Helpers]::IsProviderRegistered($provideNamespace))
-		{
-			[EventBase]::PublishGenericCustomMessage(" `r`nThe resource provider: [$provideNamespace] is not registered on the subscription. `r`nRegistering resource provider, this can take up to a minute...", [MessageType]::Warning);
-
-			Register-AzResourceProvider -ProviderNamespace $provideNamespace
-
-			$retryCount = 10;
-			while($retryCount -ne 0 -and (-not [Helpers]::IsProviderRegistered($provideNamespace)))
-			{
-				$timeout = 10
-				Start-Sleep -Seconds $timeout
-				$retryCount--;
-				#[EventBase]::PublishGenericCustomMessage("Checking resource provider status every $timeout seconds...");
-			}
-
-			if(-not [Helpers]::IsProviderRegistered($provideNamespace))
-			{
-				throw ([SuppressedException]::new(("Resource provider: [$provideNamespace] registration failed. `r`nTry registering the resource provider from Azure Portal --> your Subscription --> Resource Providers --> $provideNamespace --> Register"), [SuppressedExceptionType]::Generic))
-			}
-			else
-			{
-				[EventBase]::PublishGenericCustomMessage("Resource provider: [$provideNamespace] registration successful.`r`n ", [MessageType]::Update);
-			}
-		}
-	}
-
-    # <TODO: Perf Issue - Too costly call for each time we check for provider>
-	hidden static [bool] IsProviderRegistered([string] $provideNamespace)
-	{
-		return ((Get-AzResourceProvider -ProviderNamespace $provideNamespace | Where-Object { $_.RegistrationState -ne "Registered" } | Measure-Object).Count -eq 0);
-	}
-
 	static [PSObject] DeepCopy([PSObject] $inputObject)
 	{
 		$memoryStream = New-Object System.IO.MemoryStream
@@ -1253,34 +623,7 @@ class Helpers {
 		return $dataDeep 
 	}
 
-	static [bool] IsvNetExpressRouteConnected($resourceName, $resourceGroupName)
-	{
-		$result = $false;
-		$gateways = @();
-		$gateways += Get-AzVirtualNetworkGateway -ResourceGroupName $resourceGroupName | Where-Object { $_.GatewayType -eq "ExpressRoute" }
-		if($gateways.Count -ne 0)
-		{
-			$vNet = Get-AzVirtualNetwork -Name $resourceName -ResourceGroupName $resourceGroupName 
-			if($vnet)
-			{
-				$subnetIds = @();
-				$vnet | ForEach-Object {
-					if($_.Subnets)
-					{
-						$subnetIds += $_.Subnets | Select-Object -Property Id | Select-Object -ExpandProperty Id
-					}
-				};
-            
-				if($subnetIds.Count -ne 0)
-				{
-					$gateways | ForEach-Object {
-						$result = $result -or (($_.IpConfigurations | Where-Object { $subnetIds -contains $_.Subnet.Id } | Measure-Object).Count -ne 0);
-					};
-				}
-			}
-		}
-		return $result; 
-	}
+
 
 	static [bool] ValidateEmail([string]$address){
 		$validAddress = ($address -as [System.Net.Mail.MailAddress])
@@ -1418,23 +761,6 @@ class Helpers {
 			}
 		}
 	}
-	static [void] SetSPNPermission($Scope,$ApplicationId,$Role)
-	{
-		$assignedRole = $null
-		$retryCount = 0;
-		While($null -eq $assignedRole -and $retryCount -le 6)
-		{
-			#Assign RBAC to SPN - contributor at RG
-			New-AzRoleAssignment -Scope $Scope -RoleDefinitionName $Role -ServicePrincipalName $ApplicationId -ErrorAction SilentlyContinue | Out-Null
-			Start-Sleep -Seconds 10
-			$assignedRole = Get-AzRoleAssignment -ServicePrincipalName $ApplicationId -Scope $Scope -RoleDefinitionName $Role -ErrorAction SilentlyContinue
-			$retryCount++;
-		}
-		if($null -eq $assignedRole -and $retryCount -gt 6)
-		{
-			throw ([SuppressedException]::new(("SPN permission could not be set"), [SuppressedExceptionType]::InvalidOperation))
-		}
-	}
 
 	static [void] CleanupLocalFolder($folderPath)
 	{
@@ -1450,18 +776,6 @@ class Helpers {
 		}	
     }	
    
-    static [string] CreateStorageAccountSharedKey([string] $StringToSign,[string] $AccountName,[string] $AccessKey)
-	{
-        $KeyBytes = [System.Convert]::FromBase64String($AccessKey)
-        $HMAC = New-Object System.Security.Cryptography.HMACSHA256
-        $HMAC.Key = $KeyBytes
-        $UnsignedBytes = [System.Text.Encoding]::UTF8.GetBytes($StringToSign)
-        $KeyHash = $HMAC.ComputeHash($UnsignedBytes)
-        $SignedString = [System.Convert]::ToBase64String($KeyHash)
-        $sharedKey = $AccountName+":"+$SignedString
-        return $sharedKey    	
-    }
-
     static [void] CreateFolderIfNotExist($FolderPath,$MakeFolderEmpty)
     {
         if(-not (Test-Path $FolderPath))
@@ -1470,7 +784,7 @@ class Helpers {
         }
         elseif($MakeFolderEmpty)
         {
-            Remove-Item -Path "$FolderPath*" -Force -Recurse
+            Remove-Item -Path (Join-Path $FolderPath "*") -Force -Recurse
         }
     }
 
@@ -1526,5 +840,18 @@ class Helpers {
         }
         return $UpdatedUrl
     }
+
+    static [string] CreateSharedKey([string] $StringToSign,[string] $ResourceName,[string] $AccessKey)
+	{
+        $KeyBytes = [System.Convert]::FromBase64String($AccessKey)
+        $HMAC = New-Object System.Security.Cryptography.HMACSHA256
+        $HMAC.Key = $KeyBytes
+        $UnsignedBytes = [System.Text.Encoding]::UTF8.GetBytes($StringToSign)
+        $KeyHash = $HMAC.ComputeHash($UnsignedBytes)
+        $SignedString = [System.Convert]::ToBase64String($KeyHash)
+        $sharedKey = $ResourceName+":"+$SignedString
+        return $sharedKey    	
+    }
+
 }
 

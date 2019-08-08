@@ -122,7 +122,7 @@ class AIOrgTelemetry: ListenerBase {
             }
 		});
 		
-	
+
     }
 
 	hidden [void] PushSubscriptionScanResults([SVTEventContext[]] $SVTEventContexts)
@@ -134,7 +134,7 @@ class AIOrgTelemetry: ListenerBase {
 			"ScanKind" = [RemoteReportHelper]::GetSubscriptionScanKind(
 				$this.InvocationContext.MyCommand.Name,
 				$this.InvocationContext.BoundParameters);
-			"SubscriptionMetadata" = [Helpers]::ConvertToJsonCustomCompressed($SVTEventContextFirst.SubscriptionContext.SubscriptionMetadata);
+			"SubscriptionMetadata" = [JsonHelper]::ConvertToJsonCustomCompressed($SVTEventContextFirst.SubscriptionContext.SubscriptionMetadata);
 		}
 		$this.PushControlResults($SVTEventContexts, $baseProperties)
 	}
@@ -152,7 +152,7 @@ class AIOrgTelemetry: ListenerBase {
 			"ResourceGroup" = $SVTEventContextFirst.ResourceContext.ResourceGroupName;
 			"ResourceName" = $SVTEventContextFirst.ResourceContext.ResourceName;
 			"ResourceId" = $SVTEventContextFirst.ResourceContext.ResourceId;
-			"ResourceMetadata" = [Helpers]::ConvertToJsonCustomCompressed($SVTEventContextFirst.ResourceContext.ResourceMetadata);
+			"ResourceMetadata" = [JsonHelper]::ConvertToJsonCustomCompressed($SVTEventContextFirst.ResourceContext.ResourceMetadata);
 		}
 		$this.PushControlResults($SVTEventContexts, $baseProperties)
 	}
@@ -212,12 +212,12 @@ class AIOrgTelemetry: ListenerBase {
 				if(($null -ne $results[0].StateManagement) -and ($null -ne $results[0].StateManagement.AttestedStateData)) {
 					$properties.Add("AttestedBy", $results[0].StateManagement.AttestedStateData.AttestedBy)
 					$properties.Add("Justification", $results[0].StateManagement.AttestedStateData.Justification)
-					$properties.Add("AttestedState", [Helpers]::ConvertToJsonCustomCompressed($results[0].StateManagement.AttestedStateData.DataObject))
+					$properties.Add("AttestedState", [JsonHelper]::ConvertToJsonCustomCompressed($results[0].StateManagement.AttestedStateData.DataObject))
 					$properties.Add("AttestedDate", ($results[0].StateManagement.AttestedStateData.AttestedDate).Tostring("yyyy_MM_dd_hh_mm"))
 					$properties.Add("ExpiryDate",  ([DateTime]$results[0].StateManagement.AttestedStateData.ExpiryDate).Tostring("yyyy_MM_dd_hh_mm"))
 				}
 				if(($null -ne $results[0].StateManagement) -and ($null -ne $results[0].StateManagement.CurrentStateData)) {
-					$properties.Add("CurrentState", [Helpers]::ConvertToJsonCustomCompressed($results[0].StateManagement.CurrentStateData.DataObject))
+					$properties.Add("CurrentState", [JsonHelper]::ConvertToJsonCustomCompressed($results[0].StateManagement.CurrentStateData.DataObject))
 				}
 				$propertiesArray.Add($properties) | Out-Null
 			}elseif($results.Count -gt 1){
@@ -232,12 +232,12 @@ class AIOrgTelemetry: ListenerBase {
 					if(($null -ne $result.StateManagement) -and ($null -ne $result.StateManagement.AttestedStateData)) {
 						$propertiesIn.Add("AttestedBy", $result.StateManagement.AttestedStateData.AttestedBy)
 						$propertiesIn.Add("Justification", $result.StateManagement.AttestedStateData.Justification)
-						$propertiesIn.Add("AttestedState", [Helpers]::ConvertToJsonCustomCompressed($result.StateManagement.AttestedStateData.DataObject))
+						$propertiesIn.Add("AttestedState", [JsonHelper]::ConvertToJsonCustomCompressed($result.StateManagement.AttestedStateData.DataObject))
 						$propertiesIn.Add("AttestedDate", ($result.StateManagement.AttestedStateData.AttestedDate).Tostring("yyyy_MM_dd_hh_mm"))
 					    $propertiesIn.Add("ExpiryDate", ([DateTime]$result.StateManagement.AttestedStateData.ExpiryDate).Tostring("yyyy_MM_dd_hh_mm"))
 					}
 					if(($null -ne $result.StateManagement) -and ($null -ne $result.StateManagement.CurrentStateData)) {
-						$propertiesIn.Add("CurrentState", [Helpers]::ConvertToJsonCustomCompressed($result.StateManagement.CurrentStateData.DataObject))
+						$propertiesIn.Add("CurrentState", [JsonHelper]::ConvertToJsonCustomCompressed($result.StateManagement.CurrentStateData.DataObject))
 					}
 					$propertiesArray.Add($propertiesIn) | Out-Null
 				}
@@ -274,7 +274,7 @@ class AIOrgTelemetry: ListenerBase {
 				# No need to break execution
 			}
             try {
-                $azureContext = [Helpers]::GetCurrentRMContext()
+                $azureContext = [ContextHelper]::GetCurrentRMContext()
                 try {
                     $telemetryEvent.properties.Add([TelemetryKeys]::SubscriptionId, $azureContext.Subscription.Id)
                 }

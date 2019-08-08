@@ -9,10 +9,12 @@ class ControlStateExtension
 	#Static attestation index file object. 
 	#This gets cashed for every scan and reset for every fresh scan command in servicessecurity status 
 	[PSObject] $ControlStateIndexer = $null;
+	#Property indicates if Attestation index file is present in blob 
 	[bool] $IsControlStateIndexerPresent = $true;
 	hidden [int] $HasControlStateReadPermissions = -1;
 	hidden [int] $HasControlStateWritePermissions = -1;
 	hidden [string]	$IndexerBlobName ="Resource.index.json"
+
 	hidden [int] $retryCount = 3;
 	hidden [string] $UniqueRunId;
 
@@ -32,7 +34,7 @@ class ControlStateExtension
 			$this.UniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
 		}
 		$this.GetAzSKControlStateContainer($CreateResourcesIfNotExists)
-		#Reset attestation index file which gets cached for command
+		#Reset attestation index file and set attestation index file present flag to get fresh index file from storage
 		$this.ControlStateIndexer = $null;
 		$this.IsControlStateIndexerPresent = $true
 	}
@@ -44,7 +46,7 @@ class ControlStateExtension
 		$resourceGroup = Get-AzResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
 		if($createIfNotExists -and ($null -eq $resourceGroup -or ($resourceGroup | Measure-Object).Count -eq 0))
 		{
-			if([Helpers]::NewAzSKResourceGroup($azSKConfigData.AzSKRGName, $azSKConfigData.AzSKLocation, ""))
+			if([ResourceGroupHelper]::NewAzSKResourceGroup($azSKConfigData.AzSKRGName, $azSKConfigData.AzSKLocation, ""))
 			{
 				$resourceGroup = Get-AzResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
 			}
@@ -82,7 +84,7 @@ class ControlStateExtension
 			if($createIfNotExists -and ($null -eq $StorageAccount -or ($StorageAccount | Measure-Object).Count -eq 0))
 			{
 				$storageAccountName = ("azsk" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"));	
-				$storageObject = [Helpers]::NewAzskCompliantStorage($storageAccountName, $this.AzSKResourceGroup.ResourceGroupName, $azSKConfigData.AzSKLocation)
+				$storageObject = [StorageHelper]::NewAzskCompliantStorage($storageAccountName, $this.AzSKResourceGroup.ResourceGroupName, $azSKConfigData.AzSKLocation)
 				if($null -ne $storageObject -and ($storageObject | Measure-Object).Count -gt 0)
 				{
 					$loopValue = $this.retryCount;
@@ -194,10 +196,11 @@ class ControlStateExtension
 			return $false;
 		}
 
+		#Cache code: Fetch index file only if index file is null and it is present on storage blob
 		if(-not $this.ControlStateIndexer -and $this.IsControlStateIndexerPresent)
 		{
+
 			$StorageAccount = $this.AzSKStorageAccount;
-			$containerObject = $this.AzSKStorageContainer;
 			$ContainerName = ""
 			if($null -ne $this.AzSKStorageContainer)
 			{
@@ -218,17 +221,36 @@ class ControlStateExtension
 					#Do Nothing. Below code would create a default indexer.
 				}
 			}
-			[ControlStateIndexer[]] $indexerObjects = @();
-			$this.ControlStateIndexer  = $indexerObjects
+#<<<<<<< HEAD  PS COre changes conflicts
+#=======
+# 		}
+# 		[ControlStateIndexer[]] $indexerObjects = @();
+# 		$this.ControlStateIndexer  = $indexerObjects
+# 		if($null -eq $indexerBlob)
+# 		{			
+# 			return $true;
+# 		}
+# 		$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState";
+# 		if(-not (Test-Path -Path $AzSKTemp))
+# 		{
+# 			New-Item -ItemType Directory -Path $AzSKTemp -Force
+# 		}
+# >>>>>>> origin/develop
+
+			#Attestation index blob is not preset then return
 			if($null -eq $indexerBlob)
 			{			
+				#Set attenstation index file is not present on blob storage
 				$this.IsControlStateIndexerPresent = $false
 				return $true;
 			}
+
+			[ControlStateIndexer[]] $indexerObjects = @();
+			$this.ControlStateIndexer  = $indexerObjects
 			$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState";
 			if(-not (Test-Path -Path $AzSKTemp))
 			{
-				New-Item -ItemType Directory -Path $AzSKTemp -Force
+				New-Item -ItemType Directory -Path $AzSKTemp -Force | Out-Null
 			}
 
 			$indexerObject = @();
@@ -250,6 +272,7 @@ class ControlStateExtension
 			}
 			$this.ControlStateIndexer += $indexerObject;
 		}
+		
 		return $true;
 	}
 
@@ -262,7 +285,7 @@ class ControlStateExtension
 			if($null -ne $this.ControlStateIndexer -and  $retVal)
 			{
 				$indexes = @();
-				$indexes += $this.ControlStateIndexer 
+				$indexes += $this.ControlStateIndexer
 				$hashId = [Helpers]::ComputeHash($id)
 				$selectedIndex = $indexes | Where-Object { $_.HashId -eq $hashId}
 				
@@ -400,13 +423,14 @@ class ControlStateExtension
 		}
 		if(($finalControlStates|Measure-Object).Count -gt 0)
 		{
-			[Helpers]::ConvertToJsonCustom($finalControlStates) | Out-File $fileName -Force		
+			[JsonHelper]::ConvertToJsonCustom($finalControlStates) | Out-File $fileName -Force		
 		}
 
 		if($null -ne $this.ControlStateIndexer)
 		{				
-			[Helpers]::ConvertToJsonCustom($this.ControlStateIndexer) | Out-File $indexerPath -Force
-			$controlStateArray = Get-ChildItem -Path (Join-Path $AzSKTemp "ControlState")				
+
+			[JsonHelper]::ConvertToJsonCustom($this.ControlStateIndexer) | Out-File $indexerPath -Force
+			$controlStateArray = Get-ChildItem -Path (Join-Path $AzSKTemp "ControlState")
 			$controlStateArray | ForEach-Object {
 				$state = $_;
 				$loopValue = $this.retryCount;
@@ -459,7 +483,7 @@ class ControlStateExtension
 		$this.UpdateControlIndexer($id, $null, $true);
 		if($null -ne $this.ControlStateIndexer)
 		{				
-			[Helpers]::ConvertToJsonCustom($this.ControlStateIndexer) | Out-File $indexerPath -Force
+			[JsonHelper]::ConvertToJsonCustom($this.ControlStateIndexer) | Out-File $indexerPath -Force
 			$controlStateArray = Get-ChildItem -Path (Join-Path $AzSKTemp "ControlState");				
 			$controlStateArray | ForEach-Object {
 				$state = $_
@@ -600,7 +624,7 @@ class ControlStateExtension
 						$currentIndexObject = $filteredIndexerObject | Select-Object -Last 1
 					}					
 					$currentIndexObject.ExpiryTime = [DateTime]::UtcNow.AddMonths(3);
-					$currentIndexObject.AttestedBy =  [Helpers]::GetCurrentSessionUser();
+					$currentIndexObject.AttestedBy =  [ContextHelper]::GetCurrentSessionUser();
 					$currentIndexObject.AttestedDate = [DateTime]::UtcNow;
 					$currentIndexObject.Version = "1.0";
 				}
@@ -610,7 +634,7 @@ class ControlStateExtension
 					$currentIndexObject.ResourceId = $id
 					$currentIndexObject.HashId = $tempHash;
 					$currentIndexObject.ExpiryTime = [DateTime]::UtcNow.AddMonths(3);
-					$currentIndexObject.AttestedBy = [Helpers]::GetCurrentSessionUser();
+					$currentIndexObject.AttestedBy = [ContextHelper]::GetCurrentSessionUser();
 					$currentIndexObject.AttestedDate = [DateTime]::UtcNow;
 					$currentIndexObject.Version = "1.0";
 				}

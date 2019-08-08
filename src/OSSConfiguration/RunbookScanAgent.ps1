@@ -687,13 +687,6 @@ function DisableHelperSchedules()
 # Main ScanAgent code
 #############################################################################################################
 try {	
-	if(-not $Global:isAzAvailable)
-    {
-		Write-Output ("CS: Invoking backup scan agent.")
-		$onlinePolicyStoreUrl = "https://azsdkossep.azureedge.net/1.0.0/RunbookScanAgentAzureRm.ps1"
-		InvokeScript  -policyStoreURL $onlinePolicyStoreUrl -fileName "RunbookScanAgentAzureRm.ps1" -version "1.0.0"
-	}
-	else {
     #start timer
     $scanAgentTimer = [System.Diagnostics.Stopwatch]::StartNew();
 	Write-Output("SA: Scan agent starting...")
@@ -816,7 +809,7 @@ try {
 	
 	PublishEvent -EventName "CA Scan Completed" -Metrics @{"TimeTakenInMs" = $scanAgentTimer.ElapsedMilliseconds}
 	Write-Output("SA: Scan agent completed...")
-	}
+	
 }
 catch {
 	Write-Output("SA: Unexpected error during CA scan agent execution...`r`nError details: " + ($_ | Out-String))

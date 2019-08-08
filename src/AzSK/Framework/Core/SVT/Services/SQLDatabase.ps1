@@ -4,17 +4,11 @@ using namespace Microsoft.Azure.Commands.Sql.TransparentDataEncryption.Model
 using namespace Microsoft.Azure.Commands.Sql.ThreatDetection.Model
 
 Set-StrictMode -Version Latest
-class SQLDatabase: SVTBase
+class SQLDatabase: AzSVTBase
 {
     hidden [PSObject] $ResourceObject;
     hidden [PSObject[]] $SqlDatabases = $null;
 	hidden [PSObject[]] $SqlFirewallDetails = $null;
-
-    SQLDatabase([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
-        Base($subscriptionId, $resourceGroupName, $resourceName)
-    {
-        $this.GetResourceObject();
-    }
 
 	SQLDatabase([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId, $svtResource)
@@ -91,7 +85,8 @@ class SQLDatabase: SVTBase
 
     hidden [ControlResult] CheckSqlServerAuditing([ControlResult] $controlResult)
     {
-        $serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
+		# TODO: We are temprorily handling the warning here. This command will be deprecated in upcoming sprint as per the warning given.
+        $serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop -WarningAction SilentlyContinue
 
 		$controlResult.AddMessage([MessageData]::new("Current audit status for SQL server [$($this.ResourceContext.ResourceName)]:", $serverAudit))
 
@@ -210,15 +205,17 @@ class SQLDatabase: SVTBase
         $isCompliant = $false
 
 		#First check if the server auditing is enabled, without which TD does not work
-	    $serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName.ToLower() -ErrorAction Stop
+		# TODO: We are temprorily handling the warning here. This command will be deprecated in upcoming sprint as per the warning given.
+	    $serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName.ToLower() -ErrorAction Stop -WarningAction SilentlyContinue
 
 		if($null -ne $serverAudit){
 			#Check if Audit is Enabled 
 				if($serverAudit.AuditState -eq [AuditStateType]::Enabled){
+						# TODO: This command will be deprecated in upcoming release. We are temprorarily handling warning here.
 						$serverThreat = Get-AzSqlServerThreatDetectionPolicy `
 									-ResourceGroupName $this.ResourceContext.ResourceGroupName `
 									-ServerName $this.ResourceContext.ResourceName.ToLower() `
-									-ErrorAction Stop
+									-ErrorAction Stop -WarningAction SilentlyContinue
 
 						$controlResult.AddMessage([MessageData]::new("Current threat detection status for SQL server ["+ $this.ResourceContext.ResourceName +"] is",
 															($serverThreat)));
@@ -407,13 +404,15 @@ class SQLDatabase: SVTBase
 
 	hidden [bool] IsServerThreatDetectionEnabled(){
 			$isCompliant = $false
-			$serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
+			# TODO: We are temprorily handling the warning here. This command will be deprecated in upcoming sprint as per the warning given.
+			$serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop -WarningAction SilentlyContinue
 			if($null -ne $serverAudit){
 				if($serverAudit.AuditState -eq 'Enabled'){
+					# TODO: This command will be deprecated in upcoming release. We are temprorarily handling warning here.
 							$serverThreat = Get-AzSqlServerThreatDetectionPolicy `
                                 			-ResourceGroupName $this.ResourceContext.ResourceGroupName `
                                 			-ServerName $this.ResourceContext.ResourceName `
-                                			-ErrorAction Stop
+                                			-ErrorAction Stop -WarningAction SilentlyContinue
 							$excludedTypeCount = ($serverThreat.ExcludedDetectionTypes | Measure-Object ).Count
 							$isCompliant =  (($serverThreat.ThreatDetectionState -eq [ThreatDetectionStateType]::Enabled) `
                                 			-and ($excludedTypeCount -eq 0) `

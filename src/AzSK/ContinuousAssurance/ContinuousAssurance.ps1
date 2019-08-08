@@ -301,7 +301,7 @@ function Update-AzSKContinuousAssurance
 	.PARAMETER RenewCertificate
 			 Renews certificate credential of CA SPN if the caller is Owner of the AAD Application (SPN). If the caller is not Owner, a new application is created with a corresponding SPN and a certificate owned by the caller. CA uses the updated credential going forward.
 	.PARAMETER FixModules
-			 Use this switch in case 'AzureRm.Automation' module extraction fails in CA Automation Account. 
+			 Use this switch in case 'Az.Automation' module extraction fails in CA Automation Account. 
 	.PARAMETER DoNotOpenOutputFolder
 		Switch to specify whether to open output folder.
 	.NOTES

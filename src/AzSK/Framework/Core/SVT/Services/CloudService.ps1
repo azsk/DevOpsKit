@@ -3,18 +3,11 @@
 # CloudServices.ps1
 #
 Set-StrictMode -Version Latest 
-class CloudService: SVTBase
+class CloudService: AzSVTBase
 {
 	hidden [PSCloudService] $ResourceObject;
 	hidden [bool] $hasClassicPermissions = $true;
 	hidden [string] $cloudServiceAPIVersion = "2016-04-01"
-
-
-	CloudService([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
 
 	CloudService([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -52,7 +45,7 @@ class CloudService: SVTBase
 		try
 		{		
 			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-			$ClassicAccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+			$ClassicAccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			if($null -ne $ClassicAccessToken) 
 			{
 				$header = "Bearer " + $ClassicAccessToken

@@ -120,7 +120,12 @@
     "Thumbprints": [],
     "ApprovedValidityRangeInDays": 732
   },
-  "WhitelistedCustomRBACRoles": [
+  "WhitelistedPermanentRoles": [
+    {
+      "DisplayName": "MS-PIM"
+    }
+  ],
+ "WhitelistedCustomRBACRoles": [
     {
       "Id": "21d96096-b162-414a-8302-d8354f9d91b2",
       "Name": "Azure Service Deploy Release Management Contributor"
@@ -285,19 +290,19 @@
     "TagValue": "Databricks"
   },
   "StorageDiagnosticsSkuMapping": [
-    "StandardGRS",
-    "StandardLRS",
-    "StandardRAGRS",
-    "StandardZRS"
+    "Standard_GRS",
+    "Standard_LRS",
+    "Standard_RAGRS",
+    "Standard_ZRS"
   ],
   "StorageAlertSkuMapping": [
-    "StandardGRS",
-    "StandardLRS",
-    "StandardRAGRS"
+    "Standard_GRS",
+    "Standard_LRS",
+    "Standard_RAGRS"
   ],
   "StorageGeoRedundantSku": [
-    "StandardGRS",
-    "StandardRAGRS"
+    "Standard_GRS",
+    "Standard_RAGRS"
   ],
   "LockedResourcesTags": [
     {
