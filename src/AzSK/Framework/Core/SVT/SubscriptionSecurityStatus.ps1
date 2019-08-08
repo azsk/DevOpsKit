@@ -43,13 +43,8 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 			if($this.Severity)
 			{
 				$this.Severity = $this.ConvertToStringArray($this.Severity)
-				$ValidSevs = [ControlHelper]::CheckValidSeverities($this.Severity);
-				$InvalidSeverities = $this.Severity | Where-Object { $_ -notin $ValidSevs }
-				if($InvalidSeverities)
-				{
-					$this.PublishCustomMessage("WARNING: No matching severity values found for `"$($InvalidSeverities -join ', ')`"",[MessageType]::Warning)
-				}
-				$this.Severity = $ValidSevs
+				$this.Severity = [ControlHelper]::CheckValidSeverities($this.Severity);				
+				 
 			}
 			$this.SetSVTBaseProperties($svtObject);
 			$result += $svtObject.$methodNameToCall();	
