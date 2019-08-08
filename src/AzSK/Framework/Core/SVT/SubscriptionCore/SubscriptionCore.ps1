@@ -632,34 +632,15 @@ class SubscriptionCore: AzSVTBase
 		[string] $CurrentVersion = "0.0.0";
 		[string] $LatestVersion = "0.0.0";
 		$AzSKRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-		# $CurrentVersion = [ResourceGroupHelper]::GetResourceGroupTag($AzSKRG, [Constants]::ARMPolicyConfigVersionTagName)
-		# if([string]::IsNullOrWhiteSpace($CurrentVersion))
-		# {
-		# 	$CurrentVersion = "0.0.0"
-		# }
-		# $minSupportedVersion = [ConfigurationManager]::GetAzSKConfigData().AzSKARMPolMinReqdVersion 
-		# $IsLatestVersion = [ResourceGroupHelper]::IsLatestVersionConfiguredOnSub($subARMPolConfig.Version,[Constants]::ARMPolicyConfigVersionTagName);
-		# $IsValidVersion = [ResourceGroupHelper]::IsLatestVersionConfiguredOnSub($subARMPolConfig.Version,[Constants]::ARMPolicyConfigVersionTagName) -or [System.Version]$minSupportedVersion -le [System.Version]$CurrentVersion ;
-		# $LatestVersion = $subARMPolConfig.Version;
-
         $nonCompliantPolicies = $subARMPol.ValidatePolicyConfiguration();
 
         if(($nonCompliantPolicies | Measure-Object).Count -le 0)
         {
             $controlResult.AddMessage([VerificationResult]::Passed, "Found all the mandatory policies on the Subscription.");
         }
-		# elseif(-not $IsLatestVersion -and $IsValidVersion)
-		# {
-		# 	$this.PublishCustomMessage("WARNING: The Azure Resource Manager policies in your subscription are out of date.`nPlease update to the latest version by running command Update-AzSKSubscriptionSecurity.", [MessageType]::Warning);			
-		# 	$controlResult.AddMessage([VerificationResult]::Passed, "ARM policies has been configured with older policy on the subscription. To update as per latest configuration, run command Update-AzSKSubscriptionSecurity.");
-		# }
         else
         {
-			# $controlResult.EnableFixControl = $true;
-			# if($controlResult.FixControlParameters)
-			# {
-			# 	$controlResult.FixControlParameters.Tags = $this.SubscriptionMandatoryTags;
-			# }
+			$controlResult.EnableFixControl = $true;
 			$controlResult.SetStateData("Missing ARM policies", $nonCompliantPolicies);
 			$controlResult.AddMessage([VerificationResult]::Failed, "Some of the mandatory policies are missing]", $nonCompliantPolicies);
         }

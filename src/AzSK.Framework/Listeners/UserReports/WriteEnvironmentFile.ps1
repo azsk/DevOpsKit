@@ -88,7 +88,7 @@ class WriteEnvironmentFile: FileOutputBase
 		$this.AddOutputLog([Helpers]::ConvertObjectToString($this.InvocationContext.BoundParameters, $false));
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 
-		$loadedModules = (Get-Module | Select-Object -Property Name, Version, Path | Format-Table | Out-String);
+		$loadedModules = (Get-Module | Select-Object -Property Name, Version, Path | Format-Table -AutoSize -Wrap | Out-String);
 		$this.AddOutputLog("Loaded PowerShell modules");
         $this.AddOutputLog([Helpers]::ConvertObjectToString($loadedModules, $false));      
 		$this.AddOutputLog([Constants]::DoubleDashLine);

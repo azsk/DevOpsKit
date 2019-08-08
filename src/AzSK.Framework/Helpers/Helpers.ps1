@@ -784,7 +784,7 @@ class Helpers {
         }
         elseif($MakeFolderEmpty)
         {
-            Remove-Item -Path "$FolderPath*" -Force -Recurse
+            Remove-Item -Path (Join-Path $FolderPath "*") -Force -Recurse
         }
     }
 

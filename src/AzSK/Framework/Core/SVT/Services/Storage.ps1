@@ -144,7 +144,7 @@ class Storage: AzSVTBase
 			}
 
 			#Containers other than private
-			$publicContainers = $allContainers | Where-Object { $_.PublicAccess -ne  [Microsoft.WindowsAzure.Storage.Blob.BlobContainerPublicAccessType]::Off }
+			$publicContainers = $allContainers | Where-Object { $_.PublicAccess -ne  [Microsoft.Azure.Storage.Blob.BlobContainerPublicAccessType]::Off }
 				
 			if(($publicContainers | Measure-Object ).Count -eq 0)
 			{
