@@ -1379,7 +1379,7 @@ class SubscriptionCore: AzSVTBase
 	hidden [string] GetRGLevelPIMRoles()
 	{
 		$message='';
-		if($null -eq $this.RGLevelPIMAssignments)
+		if($null -eq $this.RGLevelPIMAssignments -and $null -eq $this.RGLevelPermanentAssignments)
 		{
 			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
 			$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
@@ -1462,6 +1462,7 @@ class SubscriptionCore: AzSVTBase
 	{
 		$AccessRoles= $this.RoleAssignments;
 		$PIMRoles=$this.PIMAssignments
+		
 		if($AccessRoles -ne $null)
 		{
 			$RBACAssignment = New-Object "System.Collections.Generic.List[TelemetryRBAC]"
@@ -1499,6 +1500,16 @@ class SubscriptionCore: AzSVTBase
 			if($null -ne $PIMRoles){
 				$RBACAssignment.AddRange($PIMRoles);
 			}
+			
+			if($null -ne $this.RGLevelPermanentAssignments)
+			{
+				$RBACAssignment.AddRange($this.RGLevelPermanentAssignments);
+			}
+			if($null -ne $this.RGLevelPIMAssignments)
+			{
+				$RBACAssignment.AddRange($this.RGLevelPIMAssignments);
+			}
+				
 			$this.CustomObject=New-Object CustomData;
 			$this.CustomObject.Value=$RBACAssignment;
 			$this.CustomObject.Name="RBACTelemetry";
