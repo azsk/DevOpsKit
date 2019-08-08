@@ -11,8 +11,8 @@ class AppService: AzSVTBase
     AppService([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId, $svtResource)
     {
-        $this.GetResourceObject();
-		$this.AddResourceMetadata($this.ResourceObject.Properties)
+				$this.GetResourceObject();
+	    	$this.AddResourceMetadata($this.ResourceObject.Properties)
 
     }
 
@@ -61,6 +61,10 @@ class AppService: AzSVTBase
 
 				try{
 					$this.SiteConfigs = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType Microsoft.Web/sites/config -ResourceName $this.ResourceContext.ResourceName -ApiVersion 2018-02-01
+				  # Append SiteConfig to ResourceObject
+					if($null -ne $this.SiteConfigs -and [Helpers]::CheckMember($this.SiteConfigs,"Properties") -and [Helpers]::CheckMember($this.ResourceObject.Properties,"siteConfig", $false)){
+						$this.ResourceObject.Properties.siteConfig = $this.SiteConfigs.Properties
+					}
 				}catch{
 					$this.SiteConfigs = $null
 					# No need to break execution , null object is handled in respective controls
@@ -896,7 +900,12 @@ class AppService: AzSVTBase
 
 		hidden [ControlResult] CheckAppServiceInstalledExtensions([ControlResult] $controlResult)
 		{	
-				$installedExtensions = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType Microsoft.Web/sites/siteextensions -ResourceName $this.ResourceContext.ResourceName -ApiVersion 2018-02-01
+			  try{
+					$installedExtensions = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType Microsoft.Web/sites/siteextensions -ResourceName $this.ResourceContext.ResourceName -ApiVersion 2018-02-01 -ErrorAction silentlycontinue
+				}
+				catch{
+					$installedExtensions = $null
+				}
 				if($installedExtensions -ne $null -and ($installedExtensions | Measure-Object).Count -gt 0)
 				{
 					$extensions = $installedExtensions | Select-Object "Name", "ResourceId"
