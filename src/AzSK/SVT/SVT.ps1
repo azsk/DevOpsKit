@@ -223,7 +223,7 @@ function Get-AzSKAzureServicesSecurityStatus
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 
 	Process
@@ -267,7 +267,7 @@ function Get-AzSKAzureServicesSecurityStatus
 
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -407,7 +407,7 @@ function Get-AzSKSubscriptionSecurityStatus
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);	
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
@@ -443,7 +443,7 @@ function Get-AzSKSubscriptionSecurityStatus
 	}
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -772,7 +772,7 @@ function Get-AzSKControlsStatus
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
@@ -813,6 +813,6 @@ function Get-AzSKControlsStatus
 	}
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }

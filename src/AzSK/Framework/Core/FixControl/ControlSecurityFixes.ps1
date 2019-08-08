@@ -211,7 +211,7 @@ class ControlSecurityFixes: CommandBase
 			}
 
 			# Register/Deregister all listeners to cleanup the memory
-			[ListenerHelper]::RegisterListeners();
+			[AzListenerHelper]::RegisterListeners();
 		}
 		catch 
 		{

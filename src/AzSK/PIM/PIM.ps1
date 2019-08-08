@@ -105,7 +105,7 @@ function Set-AzSKPIMConfiguration {
     )
     Begin {
         [CommandHelper]::BeginCommand($MyInvocation);
-        [ListenerHelper]::RegisterListeners();
+        [AzListenerHelper]::RegisterListeners();
     }
     Process {
         try {
@@ -136,7 +136,7 @@ function Set-AzSKPIMConfiguration {
         }  
     }
     End {
-        [ListenerHelper]::UnregisterListeners();
+        [AzListenerHelper]::UnregisterListeners();
     }
 
 }
@@ -185,7 +185,7 @@ function Get-AzSKPIMConfiguration {
     )
     Begin {
         [CommandHelper]::BeginCommand($MyInvocation);
-        [ListenerHelper]::RegisterListeners();
+        [AzListenerHelper]::RegisterListeners();
     }
     Process {
         try {
@@ -211,7 +211,7 @@ function Get-AzSKPIMConfiguration {
         }
     }
     End {
-        [ListenerHelper]::UnregisterListeners();
+        [AzListenerHelper]::UnregisterListeners();
     }
 }
 

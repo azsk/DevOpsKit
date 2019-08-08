@@ -114,7 +114,9 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Listeners\CA\WriteCAStatus.ps1
 . $FrameworkPath\Listeners\GenericListener\GenericListener.ps1
 . $FrameworkPath\Listeners\SecurityRecommendationReport.ps1
+. $FrameworkPath\Listeners\AzResourceInventoryListener.ps1
 . $FrameworkPath\Listeners\ListenerHelper.ps1
+. $FrameworkPath\Listeners\AzListenerHelper.ps1
 
 #Remaining Abstracts
 . $PSScriptRoot\Core\SVT\SVTControlAttestation.ps1

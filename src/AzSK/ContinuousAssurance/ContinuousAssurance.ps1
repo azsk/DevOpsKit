@@ -183,7 +183,7 @@ function Install-AzSKContinuousAssurance
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
@@ -245,7 +245,7 @@ function Install-AzSKContinuousAssurance
 	}
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -462,7 +462,7 @@ function Update-AzSKContinuousAssurance
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
@@ -528,7 +528,7 @@ function Update-AzSKContinuousAssurance
 	}
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -582,7 +582,7 @@ function Get-AzSKContinuousAssurance
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
@@ -603,7 +603,7 @@ function Get-AzSKContinuousAssurance
 	}
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -683,7 +683,7 @@ function Remove-AzSKContinuousAssurance
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
@@ -710,7 +710,7 @@ function Remove-AzSKContinuousAssurance
 	}
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -756,7 +756,7 @@ function Set-AzSKAlertMonitoring
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
@@ -776,7 +776,7 @@ function Set-AzSKAlertMonitoring
 	}
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -822,7 +822,7 @@ function Remove-AzSKAlertMonitoring
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
@@ -842,7 +842,7 @@ function Remove-AzSKAlertMonitoring
 	}
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 

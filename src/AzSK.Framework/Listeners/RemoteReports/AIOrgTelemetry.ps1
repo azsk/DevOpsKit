@@ -122,44 +122,7 @@ class AIOrgTelemetry: ListenerBase {
             }
 		});
 		
-		$this.RegisterEvent([SVTEvent]::CommandStarted, {
-			$currentInstance = [RemoteReportsListener]::GetInstance();
-		   try
-		   {
-			   $scanSource = [RemoteReportHelper]::GetScanSource();
-			   if($scanSource -ne [ScanSource]::Runbook) { return; }
-               $SubscriptionId = ([Helpers]::GetCurrentRMContext()).Subscription.Id;
-			   $resources= Get-AzResource
-			   $resourceGroups = Get-AzResourceGroup
-			   $telemetryEvents = [System.Collections.ArrayList]::new()
-					   foreach($res in $resources){
-               					   $rgTags = ($resourceGroups | where-object {$_.ResourceGroupName  -eq $res.ResourceGroupName}).Tags;
-						   $resourceProperties = @{
-						   "Name" = $res.Name;
-						   "ResourceId" = $res.ResourceId;
-						   "ResourceName" = $res.Name;
-						   "ResourceType" = $res.ResourceType;
-						   "ResourceGroupName" = $res.ResourceGroupName;
-						   "Location" = $res.Location;
-						   "SubscriptionId" = $SubscriptionId;
-						   "Tags" = [Helpers]::FetchTagsString($res.Tags);
-						   "Env" = $res.Tags.Env;
-							"ComponentID" = $res.Tags.ComponentID;
-							"RGComponentID" = $rgTags.ComponentID;
-							"RGEnv" = $rgTags.Env;
-					   }
-					   $telemetryEvent = "" | Select-Object Name, Properties, Metrics
-					   $telemetryEvent.Name = "Resource Inventory"
-					   $telemetryEvent.Properties = $resourceProperties
-					   $telemetryEvents.Add($telemetryEvent) | Out-Null			   
-					   }
-				[AIOrgTelemetryHelper]::TrackEvents($telemetryEvents);
-
-		   }
-		   catch{
-			$currentInstance.PublishException($_);
-		   }
-		});
+	
     }
 
 	hidden [void] PushSubscriptionScanResults([SVTEventContext[]] $SVTEventContexts)

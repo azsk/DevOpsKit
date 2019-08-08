@@ -97,7 +97,7 @@ class SubscriptionSecurityStatus: SVTCommandBase
 				$this.PublishException($_);
 			}
 		}		
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 		
 		return $result;
 	}

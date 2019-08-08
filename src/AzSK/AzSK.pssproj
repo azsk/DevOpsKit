@@ -250,7 +250,9 @@
     <Compile Include="Framework\Listeners\RemoteReports\TelemetryStrings.ps1" />
     <Compile Include="Framework\Listeners\RemoteReports\UsageTelemetry.ps1" />
     <Compile Include="Framework\Listeners\RemoteReports\RemoteReportsListener.ps1" />
+    <Compile Include="Framework\Listeners\RemoteReports\AzResourceInventoryListener.ps1" />
     <Compile Include="Framework\Listeners\ListenerHelper.ps1" />
+    <Compile Include="Framework\Listeners\AzListenerHelper.ps1" />
     <Compile Include="Framework\Listeners\LogAnalytics\LogAnalyticsOutput.ps1" />
     <Compile Include="Framework\Listeners\UserReports\WriteDataFile.ps1" />
     <Compile Include="Framework\Listeners\UserReports\WriteDetailedLog.ps1" />
