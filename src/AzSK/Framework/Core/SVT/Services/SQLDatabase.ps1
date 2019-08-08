@@ -85,13 +85,12 @@ class SQLDatabase: AzSVTBase
 
     hidden [ControlResult] CheckSqlServerAuditing([ControlResult] $controlResult)
     {
-		# TODO: We are temprorily handling the warning here. This command will be deprecated in upcoming sprint as per the warning given.
-        $serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop -WarningAction SilentlyContinue
+        $serverAudit = Get-AzSqlServerAudit -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
 
 		$controlResult.AddMessage([MessageData]::new("Current audit status for SQL server [$($this.ResourceContext.ResourceName)]:", $serverAudit))
 
 		if($null -ne $serverAudit){
-				$isCompliant = (($serverAudit.AuditState -eq [AuditStateType]::Enabled) `
+				$isCompliant = (($serverAudit.BlobStorageTargetState -eq [AuditStateType]::Enabled) `
                                -and ($serverAudit.RetentionInDays -eq $this.ControlSettings.SqlServer.AuditRetentionPeriod_Min -or $serverAudit.RetentionInDays -eq $this.ControlSettings.SqlServer.AuditRetentionPeriod_Forever))
 
 				if ($isCompliant){
@@ -205,14 +204,13 @@ class SQLDatabase: AzSVTBase
         $isCompliant = $false
 
 		#First check if the server auditing is enabled, without which TD does not work
-		# TODO: We are temprorily handling the warning here. This command will be deprecated in upcoming sprint as per the warning given.
-	    $serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName.ToLower() -ErrorAction Stop -WarningAction SilentlyContinue
+	    $serverAudit = Get-AzSqlServerAudit -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName.ToLower() -ErrorAction Stop
 
 		if($null -ne $serverAudit){
 			#Check if Audit is Enabled 
-				if($serverAudit.AuditState -eq [AuditStateType]::Enabled){
-						# TODO: This command will be deprecated in upcoming release. We are temprorarily handling warning here.
-						$serverThreat = Get-AzSqlServerThreatDetectionPolicy `
+				if($serverAudit.BlobStorageTargetState -eq [AuditStateType]::Enabled){
+					# TODO: We are temporarily suppressing the alias deprecation warning message given by the below Az.SQL cmdlet.
+						$serverThreat = Get-AzSqlServerAdvancedThreatProtectionSettings `
 									-ResourceGroupName $this.ResourceContext.ResourceGroupName `
 									-ServerName $this.ResourceContext.ResourceName.ToLower() `
 									-ErrorAction Stop -WarningAction SilentlyContinue
@@ -402,14 +400,14 @@ class SQLDatabase: AzSVTBase
 		return $controlResult;
 	}
 
+	# TODO: This function is not being called. We can delete this function if not being used. 
 	hidden [bool] IsServerThreatDetectionEnabled(){
 			$isCompliant = $false
-			# TODO: We are temprorily handling the warning here. This command will be deprecated in upcoming sprint as per the warning given.
-			$serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop -WarningAction SilentlyContinue
+			$serverAudit = Get-AzSqlServerAudit -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
 			if($null -ne $serverAudit){
-				if($serverAudit.AuditState -eq 'Enabled'){
-					# TODO: This command will be deprecated in upcoming release. We are temprorarily handling warning here.
-							$serverThreat = Get-AzSqlServerThreatDetectionPolicy `
+				if($serverAudit.BlobStorageTargetState -eq 'Enabled'){
+					# TODO: We are temporarily suppressing the alias deprecation warning message given by the below Az.SQL cmdlet.
+							$serverThreat = Get-AzSqlServerAdvancedThreatProtectionSettings `
                                 			-ResourceGroupName $this.ResourceContext.ResourceGroupName `
                                 			-ServerName $this.ResourceContext.ResourceName `
                                 			-ErrorAction Stop -WarningAction SilentlyContinue
