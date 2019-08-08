@@ -103,7 +103,13 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		{
 			throw [System.ArgumentException] ("The argument 'methodNameToCall' is null. Pass the reference of method to call. e.g.: [YourClass]::new().YourMethod");
 		}
-
+		if($this.Severity)
+		{
+			
+			$this.Severity = $this.ConvertToStringArray($this.Severity)
+			$this.Severity = [ControlHelper]::CheckValidSeverities($this.Severity);
+			
+		}
 		[SVTEventContext[]] $result = @();
 		
 		if(($resourcesList | Measure-Object).Count -eq 0)
@@ -536,5 +542,6 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		$excludedObj | Add-Member -NotePropertyName ExcludedResourceType -NotePropertyValue $SVTResolver.ExcludeResourceTypeName 
 		$excludedObj | Add-Member -NotePropertyName ExcludeResourceNames -NotePropertyValue $SVTResolver.ExcludeResourceNames 
 		$this.PublishAzSKRootEvent([AzSKRootEvent]::WriteExcludedResources,$excludedObj);
-	}	
+	}
+	
 }

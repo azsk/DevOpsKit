@@ -40,6 +40,12 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 		if($svtObject)
 		{
 			$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule
+			if($this.Severity)
+			{
+				$this.Severity = $this.ConvertToStringArray($this.Severity)
+				$this.Severity = [ControlHelper]::CheckValidSeverities($this.Severity);				
+				 
+			}
 			$this.SetSVTBaseProperties($svtObject);
 			$result += $svtObject.$methodNameToCall();	
 			#$this.FetchRBACTelemetry($svtObject);
@@ -162,4 +168,7 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 			}
 		}
 	}	
+
+	
+	
 }
