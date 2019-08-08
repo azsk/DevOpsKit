@@ -69,7 +69,7 @@ class PIM: AzCommandBase {
     }
 
     # This function resolves the resource that matches to parameters passed in command
-    hidden [PIMResource] PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName) {
+    hidden [PIMResource[]] PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName) {
         $this.AcquireToken();  
         $rtype = 'subscription'
         $selectedResourceName = $SubscriptionId.Trim()
@@ -87,6 +87,7 @@ class PIM: AzCommandBase {
             ResourceName = $selectedResourceName
         }
         $resources = $this.ListResources($SubscriptionId, $item.ResourceType, $item.ResourceName);
+        $resolvedResource = [PIMResource]::new()
        if($item.ResourceType -eq 'resource')
         {
             $resolvedResource = $resources | Where-Object { $_.ResourceName -eq $item.ResourceName}
@@ -102,7 +103,7 @@ class PIM: AzCommandBase {
         }
         else
         {
-            $resolvedResource = [PIMResource]::new()
+            
             if($item.ResourceType -eq 'subscription')
             {
                 $resolvedResource.ExternalId = "/subscriptions/$($item.ResourceName)"
@@ -111,6 +112,7 @@ class PIM: AzCommandBase {
             {
                 $resolvedResource.ExternalId = "/subscriptions/$($SubscriptionId.Trim())/resourceGroups/$($item.ResourceName)"
             }
+            
             if($null -ne $resources)
             {
                 $temp = $resources | Where-Object { $_.ExternalId -eq $resolvedResource.ExternalId}
@@ -325,57 +327,60 @@ class PIM: AzCommandBase {
     #Assign a user to Eligible Role
     hidden AssignPIMRole($subscriptionId, $resourcegroupName, $resourceName, $roleName, $PrincipalName, $duration) {
         $this.AcquireToken();
-        $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName)
-        if (($resolvedResource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResource.ResourceId))) {
-            $resourceId = $resolvedResource.ResourceId
-            $roleDefinitionId =""
-            $roles = $this.ListRoles($resourceId)
-            try
+        $resolvedResources = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName)
+        if (($resolvedResources | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResources.ResourceId))) {
+           # if there is same resource name inside and rg for multiple resources, we follow the AzSK standard approach to assign role on both resources
+            foreach($resolvedResource in $resolvedResources)
             {
-                $roleDefinitionId = ($roles | Where-Object { $_.RoleName -eq $RoleName }).RoleDefinitionId
-            }
-            catch
-            {
-               $this.PublishCustomMessage("Unable to find matching role. Please verify the role name provided is correct.",[MessageType]::Error) 
-                return;
-            }
-            $users = $null
-            $subjectId = "";
-            try 
-            {
-                $users = Get-AzADUser -UserPrincipalName $PrincipalName
-                if($null -eq $users )
+                $resourceId = $resolvedResource.ResourceId
+                $roleDefinitionId =""
+                $roles = $this.ListRoles($resourceId)
+                try
                 {
-                    $users = Get-AzADGroup -DisplayName $PrincipalName
+                    $roleDefinitionId = ($roles | Where-Object { $_.RoleName -eq $RoleName }).RoleDefinitionId
                 }
-            }
-            catch {
-                $this.PublishCustomMessage("Unable to fetch details of the principal name provided.", [MessageType]::Warning)
-                return;
-            }
-            if (($users | Measure-Object).Count -gt 0) {
-                $subjectId = $users.Id
-            }
-            else {
-                $this.PublishCustomMessage("Unable to fetch details of the principal name provided.", [MessageType]::Error)
-                return;
-            }            
-            $url = $this.APIroot + "/roleAssignmentRequests"
-            # Update end time
-            if (-not($duration)) {
-                $duration = 15
-            }
-            $ts = New-TimeSpan -Days $duration
-            $postParams = '{"assignmentState":"Eligible","type":"AdminAdd","reason":"Assign","roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $subjectId + '","schedule":{"startDateTime":"' + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","endDateTime":"' + ((get-date) + $ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","type":"Once"}}'
-            $response = [WebRequestHelper]::InvokeWebRequest('Post', $url, $this.headerParams, $postParams, "application/json", $false, $true )
-            if ($response.StatusCode -eq 201) {
-                $this.PublishCustomMessage("Assignment request for [$PrincipalName] for the [$RoleName] role on [$($resolvedResource.ResourceName)] queued successfully.", [MessageType]::Update);
-            }  
-            if ($response.StatusCode -eq 401) {
-                $this.PublishCustomMessage("You are not eligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
-            }          
+                catch
+                {
+                $this.PublishCustomMessage("Unable to find matching role. Please verify the role name provided is correct.",[MessageType]::Error) 
+                    return;
+                }
+                $users = $null
+                $subjectId = "";
+                try 
+                {
+                    $users = Get-AzADUser -UserPrincipalName $PrincipalName
+                    if($null -eq $users )
+                    {
+                        $users = Get-AzADGroup -DisplayName $PrincipalName
+                    }
+                }
+                catch {
+                    $this.PublishCustomMessage("Unable to fetch details of the principal name provided.", [MessageType]::Warning)
+                    return;
+                }
+                if (($users | Measure-Object).Count -gt 0) {
+                    $subjectId = $users.Id
+                }
+                else {
+                    $this.PublishCustomMessage("Unable to fetch details of the principal name provided.", [MessageType]::Error)
+                    return;
+                }            
+                $url = $this.APIroot + "/roleAssignmentRequests"
+                # Update end time
+                if (-not($duration)) {
+                    $duration = 15
+                }
+                $ts = New-TimeSpan -Days $duration
+                $postParams = '{"assignmentState":"Eligible","type":"AdminAdd","reason":"Assign","roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $subjectId + '","schedule":{"startDateTime":"' + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","endDateTime":"' + ((get-date) + $ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","type":"Once"}}'
+                $response = [WebRequestHelper]::InvokeWebRequest('Post', $url, $this.headerParams, $postParams, "application/json", $false, $true )
+                if ($response.StatusCode -eq 201) {
+                    $this.PublishCustomMessage("Assignment request for [$PrincipalName] for the [$RoleName] role on [$($resolvedResource.ResourceName)] queued successfully.", [MessageType]::Update);
+                }  
+                if ($response.StatusCode -eq 401) {
+                    $this.PublishCustomMessage("You are not eligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
+                }          
             
-           
+            }   
         }
         else {
             $this.PublishCustomMessage( "Unable to find resource on which assignment was requested. Either the resource does not exist or you may not have permissions for assigning a role on it", [MessageType]::Warning)
@@ -621,7 +626,7 @@ class PIM: AzCommandBase {
         }
         else
         {
-            $this.PublishCustomMessage("No assignments that are expiring in $ExpiringInDays days found",[MessageType]::Error)
+            $this.PublishCustomMessage("No assignments found expiring in $ExpiringInDays days. ",[MessageType]::Error)
         }
        return $soonToExpireAssignments
     }

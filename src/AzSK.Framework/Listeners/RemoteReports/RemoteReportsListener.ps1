@@ -301,8 +301,13 @@ class RemoteReportsListener: ListenerBase {
 	hidden [void] FetchRBACTelemetry($svtObject)
 	{
 		$svtObject.GetRoleAssignments();
-		$svtObject.PublishRBACTelemetryData();
+		$scanSource = [RemoteReportHelper]::GetScanSource();
+		if([FeatureFlightingManager]::GetFeatureStatus("EnablePIMResourceGroupTagTelemetry","*") -eq $true -and ($scanSource -eq [ScanSource]::Runbook))
+		{
+			$svtObject.GetRGLevelPIMRoles();			
+		}
 		$svtObject.GetPIMRoles();
+		$svtObject.PublishRBACTelemetryData();
 
 	}
 }
