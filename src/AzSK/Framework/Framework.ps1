@@ -24,7 +24,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Abstracts\EventBase.ps1
 . $FrameworkPath\Helpers\JsonHelper.ps1
 . $FrameworkPath\Helpers\Helpers.ps1
-. $FrameworkPath\Helpers\ContextHelper.ps1
+. $FrameworkPath\Helpers\ContextHelper.ps1  
 #Helpers (independent of models)
 
 . $FrameworkPath\Helpers\ConfigurationHelper.ps1
@@ -61,6 +61,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Helpers\SVTMapping.ps1
 . $FrameworkPath\Helpers\IdentityHelpers.ps1
 . $FrameworkPath\Helpers\ConfigOverride.ps1
+. $FrameworkPath\Helpers\ControlHelper.ps1
 
 . $FrameworkPath\Models\Common\ResourceInventory.ps1
 

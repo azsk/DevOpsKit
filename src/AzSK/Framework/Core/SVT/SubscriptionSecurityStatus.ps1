@@ -42,7 +42,14 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 			$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule
 			if($this.Severity)
 			{
-				$this.CheckValidSeverities();
+				$this.Severity = $this.ConvertToStringArray($this.Severity)
+				$ValidSevs = [ControlHelper]::CheckValidSeverities($this.Severity);
+				$InvalidSeverities = $this.Severity | Where-Object { $_ -notin $ValidSevs }
+				if($InvalidSeverities)
+				{
+					$this.PublishCustomMessage("WARNING: No matching severity values found for `"$($InvalidSeverities -join ', ')`"",[MessageType]::Warning)
+				}
+				$this.Severity = $ValidSevs
 			}
 			$this.SetSVTBaseProperties($svtObject);
 			$result += $svtObject.$methodNameToCall();	
@@ -167,29 +174,6 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 		}
 	}	
 
-	#Checks if the severities passed by user are valid and filter out invalid ones
-	[void] CheckValidSeverities()
-	{
-		$ValidSeverities = @();					
-        $ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-        if([Helpers]::CheckMember($ControlSettings, 'ControlSeverity'))
-		{
-					$severityMapping = $ControlSettings.ControlSeverity
-					#Discard the severity values passed in parameter that do not have mapping in Org settings.
-                    foreach($sev in $severityMapping.psobject.properties)
-                    {                         
-                        $ValidSeverities +=  $sev.value       
-					}
-					
-		}
-        $this.Severity = $this.ConvertToStringArray($this.Severity)
-        $InvalidSeverityValues = @();
-		$InvalidSeverityValues += $this.Severity | Where-Object { $_ -notin $ValidSeverities}
-		$this.Severity = $this.Severity | Where-Object { $_ -in $ValidSeverities}
-        if($InvalidSeverityValues.Count -gt 0)
-        {
-            $this.PublishCustomMessage("WARNING: No matching severity values found for $($InvalidSeverityValues -join ', ')",[MessageType]::Warning)
-        }
-
-	}	
+	
+	
 }
