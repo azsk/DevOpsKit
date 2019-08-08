@@ -176,7 +176,8 @@ class SQLDatabaseFix: FixServicesBase
 	hidden [bool] IsServerAuditEnabled()
 	{
 		$result = $false;
-        $serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName; 
+		# TODO: We are temprorily handling the warning here. This command will be deprecated in upcoming sprint as per the warning given.
+        $serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceGroupName -ServerName $this.ResourceName -WarningAction SilentlyContinue; 
 		$result = ($serverAudit -and $serverAudit.AuditState -eq [AuditStateType]::Enabled)
 		return $result
 	}

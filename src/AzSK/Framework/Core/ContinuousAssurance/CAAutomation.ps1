@@ -2650,6 +2650,8 @@ class CCAutomation: AzCommandBase
 	}
 	hidden [void] NewEmptyAutomationAccount()
 	{
+		try {
+			
 		#region :check if resource provider is registered
 		[ResourceHelper]::RegisterResourceProviderIfNotRegistered("Microsoft.Automation");
 		#endregion
@@ -2666,6 +2668,15 @@ class CCAutomation: AzCommandBase
 		$this.OutputObject.AutomationAccount  = New-AzAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup `
 		-Name $this.AutomationAccount.Name -Location $this.AutomationAccount.Location `
 		-Plan Basic -Tags $this.AutomationAccount.AccountTags -ErrorAction Stop | Select-Object AutomationAccountName,Location,Plan,ResourceGroupName,State,Tags
+	}
+	Catch{
+		$this.PublishCustomMessage("$($_.Exception.Message)", [MessageType]::Warning)
+		if([Helpers]::CheckMember($_,"Exception.Response.Content"))
+		{
+			$this.PublishCustomMessage("$($_.Exception.Response.Content)", [MessageType]::Warning)
+		}
+	}
+	
 	}
 	hidden [void] NewCCRunbook()
 	{
