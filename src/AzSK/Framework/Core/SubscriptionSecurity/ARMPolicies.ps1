@@ -122,7 +122,7 @@ class ARMPolicy: AzCommandBase
 					};
 					if($errorCount -eq $enabledPolicies.Count )
 					{
-						$resultMessages += [MessageData]::new("No AzSK ARM policies were added to the subscription due to an error. See the log file for details.`r`n" + [Constants]::SingleDashLine, [MessageType]::Error);
+						$resultMessages += [MessageData]::new("No AzSK ARM policies were added to the subscription due to some error. See the log file for details.`r`n" + [Constants]::SingleDashLine, [MessageType]::Error);
 					}
 					elseif($errorCount -gt 0)
 					{
