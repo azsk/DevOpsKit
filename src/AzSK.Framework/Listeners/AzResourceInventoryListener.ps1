@@ -21,7 +21,7 @@ class AzResourceInventoryListener: ListenerBase
         {
             $scanSource = [RemoteReportHelper]::GetScanSource();
             if($scanSource -ne [ScanSource]::Runbook) { return; }
-            $SubscriptionId = ([Helpers]::GetCurrentRMContext()).Subscription.Id;
+            $SubscriptionId = ([ContextHelper]::GetCurrentRMContext()).Subscription.Id;
             [ResourceInventory]::FetchResources();
             [AzResourceInventoryListener]::PostAzResourceInventory();            
             $resources= [ResourceInventory]::RawResources
@@ -39,6 +39,7 @@ class AzResourceInventoryListener: ListenerBase
                         "Location" = $res.Location;
                         "SubscriptionId" = $SubscriptionId;
                         "Tags" = [Helpers]::FetchTagsString($res.Tags);
+                        "Sku" = $res.Sku
                         "Env" = $res.Tags.Env;
                             "ComponentID" = $res.Tags.ComponentID;
                             "RGComponentID" = $rgTags.ComponentID;
@@ -67,7 +68,7 @@ class AzResourceInventoryListener: ListenerBase
         {
             $scanSource = [RemoteReportHelper]::GetScanSource();
             if($scanSource -ne [ScanSource]::Runbook) { return; }
-            $SubscriptionId = ([Helpers]::GetCurrentRMContext()).Subscription.Id;
+            $SubscriptionId = ([ContextHelper]::GetCurrentRMContext()).Subscription.Id;
             if(-not $SubscriptionId) {return;}
             $resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
             $resources.SubscriptionId = $SubscriptionId
