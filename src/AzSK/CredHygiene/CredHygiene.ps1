@@ -369,3 +369,54 @@ function Update-AzSKTrackedCredential {
         [ListenerHelper]::UnregisterListeners();
     }
 }
+
+function New-AzSKTrackedCredentialGroup { 
+   
+    <#
+	.SYNOPSIS
+	This command would help to update the alert on expiring credentials.
+	.DESCRIPTION
+	This command would help to update the alert on expiring credentials.
+    
+	.PARAMETER SubscriptionId
+		Provide the subscription id.
+	.PARAMETER AlertEmail
+		Provide the email id for alert.
+	
+	.LINK
+	https://aka.ms/azskossdocs
+
+	#>
+    Param(
+        [Parameter(Mandatory = $true, HelpMessage = "Provide the subscription id")]
+        [string]
+		[Alias("s")]
+        $SubscriptionId,
+
+        [Parameter(Mandatory = $true, HelpMessage = "Provide the email id for alert")]
+        [string]
+		[Alias("aem")]
+        $AlertEmail
+    )
+    Begin {
+        [CommandHelper]::BeginCommand($MyInvocation);
+        [ListenerHelper]::RegisterListeners();
+    }
+    Process {
+        try {
+			
+            $cred = [CredHygiene]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+            if($cred){                
+                $cred.InvokeFunction($cred.InstallAlert, @($AlertEmail))                            
+            }
+	
+        }
+        catch {
+            [EventBase]::PublishGenericException($_);
+        }  
+    }
+    End {
+        [ListenerHelper]::UnregisterListeners();
+    }
+}
+
