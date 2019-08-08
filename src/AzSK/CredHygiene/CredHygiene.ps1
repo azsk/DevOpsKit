@@ -67,7 +67,7 @@ function New-AzSKTrackedCredential {
     )
     Begin {
         [CommandHelper]::BeginCommand($MyInvocation);
-        [ListenerHelper]::RegisterListeners();
+        [AzListenerHelper]::RegisterListeners();
     }
     Process {
         try {
@@ -148,7 +148,7 @@ function New-AzSKTrackedCredential {
         }  
     }
     End {
-        [ListenerHelper]::UnregisterListeners();
+        [AzListenerHelper]::UnregisterListeners();
     }
 }
 
@@ -182,7 +182,7 @@ function Get-AzSKTrackedCredential {
     )
     Begin {
         [CommandHelper]::BeginCommand($MyInvocation);
-        [ListenerHelper]::RegisterListeners();
+        [AzListenerHelper]::RegisterListeners();
     }
     Process {
         try {
@@ -203,7 +203,7 @@ function Get-AzSKTrackedCredential {
         }  
     }
     End {
-        [ListenerHelper]::UnregisterListeners();
+        [AzListenerHelper]::UnregisterListeners();
     }
 
 }
@@ -243,7 +243,7 @@ function Remove-AzSKTrackedCredential {
     )
     Begin {
         [CommandHelper]::BeginCommand($MyInvocation);
-        [ListenerHelper]::RegisterListeners();
+        [AzListenerHelper]::RegisterListeners();
     }
     Process {
         try {
@@ -264,7 +264,7 @@ function Remove-AzSKTrackedCredential {
         }  
     }
     End {
-        [ListenerHelper]::UnregisterListeners();
+        [AzListenerHelper]::UnregisterListeners();
     }
 }
 
@@ -337,7 +337,7 @@ function Update-AzSKTrackedCredential {
     )
     Begin {
         [CommandHelper]::BeginCommand($MyInvocation);
-        [ListenerHelper]::RegisterListeners();
+        [AzListenerHelper]::RegisterListeners();
     }
     Process {
         try {
@@ -366,7 +366,7 @@ function Update-AzSKTrackedCredential {
         }  
     }
     End {
-        [ListenerHelper]::UnregisterListeners();
+        [AzListenerHelper]::UnregisterListeners();
     }
 }
 

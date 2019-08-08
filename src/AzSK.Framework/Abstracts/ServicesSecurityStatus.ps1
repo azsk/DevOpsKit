@@ -60,7 +60,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 			{
 				$this.CommandError($_);
 			}
-			#[ListenerHelper]::RegisterListeners();
+			#[AzListenerHelper]::RegisterListeners();
 				 
 			}
 			$svtClassName = [SVTMapping]::SubscriptionMapping.ClassName;
@@ -256,7 +256,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				# Register/Deregister all listeners to cleanup the memory
 				if([FeatureFlightingManager]::GetFeatureStatus("EnableListenerReset","*") -eq $true)
 				{
-					[ListenerHelper]::RegisterListeners();
+					[AzListenerHelper]::RegisterListeners();
 				}
 			}
             catch

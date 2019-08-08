@@ -160,7 +160,7 @@ function Set-AzSKPolicySettings {
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-        [ListenerHelper]::RegisterListeners();
+        [AzListenerHelper]::RegisterListeners();
     }
     Process {
         try {
@@ -230,7 +230,7 @@ function Set-AzSKPolicySettings {
         }
     }
     End {
-        [ListenerHelper]::UnregisterListeners();
+        [AzListenerHelper]::UnregisterListeners();
     }
 }
 
@@ -262,7 +262,7 @@ function Set-AzSKLocalAIOrgTelemetrySettings {
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-        [ListenerHelper]::RegisterListeners();
+        [AzListenerHelper]::RegisterListeners();
     }
     Process {
         try { 
@@ -277,7 +277,7 @@ function Set-AzSKLocalAIOrgTelemetrySettings {
         }
     }
     End {
-        [ListenerHelper]::UnregisterListeners();
+        [AzListenerHelper]::UnregisterListeners();
     }
 }
 
@@ -303,7 +303,7 @@ function Set-AzSKUsageTelemetryLevel {
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-        [ListenerHelper]::RegisterListeners();
+        [AzListenerHelper]::RegisterListeners();
     }
     Process {
         try {
@@ -317,7 +317,7 @@ function Set-AzSKUsageTelemetryLevel {
         }
     }
     End {
-        [ListenerHelper]::UnregisterListeners();
+        [AzListenerHelper]::UnregisterListeners();
     }
 }
 
@@ -367,7 +367,7 @@ function Set-AzSKUserPreference {
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-        [ListenerHelper]::RegisterListeners();
+        [AzListenerHelper]::RegisterListeners();
     }
     Process {
         try {
@@ -404,7 +404,7 @@ function Set-AzSKUserPreference {
         }
     }
     End {
-        [ListenerHelper]::UnregisterListeners();
+        [AzListenerHelper]::UnregisterListeners();
     }
 }
 
@@ -432,7 +432,7 @@ function Send-AzSKInternalData {
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-        [ListenerHelper]::RegisterListeners();
+        [AzListenerHelper]::RegisterListeners();
     }
     Process {
         try {
@@ -447,7 +447,7 @@ function Send-AzSKInternalData {
         }
     }
     End {
-        [ListenerHelper]::UnregisterListeners();
+        [AzListenerHelper]::UnregisterListeners();
     }
 }
 
@@ -475,7 +475,7 @@ function Set-AzSKPrivacyNoticeResponse {
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-        [ListenerHelper]::RegisterListeners();
+        [AzListenerHelper]::RegisterListeners();
     }
     Process {
         try {
@@ -499,7 +499,7 @@ function Set-AzSKPrivacyNoticeResponse {
 
     }
     End {
-        [ListenerHelper]::UnregisterListeners();
+        [AzListenerHelper]::UnregisterListeners();
     }
 }
 

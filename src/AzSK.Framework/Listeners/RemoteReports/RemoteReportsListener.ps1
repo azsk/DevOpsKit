@@ -30,51 +30,7 @@ class RemoteReportsListener: ListenerBase {
             }
         });
 
-		$this.RegisterEvent([SVTEvent]::CommandStarted, {
-			 $currentInstance = [RemoteReportsListener]::GetInstance();
-			try
-			{
-
-				$scanSource = [RemoteReportHelper]::GetScanSource();
-				if($scanSource -ne [ScanSource]::Runbook) { return; }
-				[ResourceInventory]::FetchResources();
-				[RemoteReportsListener]::ReportAllResources();				
-				$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-				if(!$invocationContext.BoundParameters.ContainsKey("SubscriptionId")) {return;}
-				$resources = "" | Select-Object "SubscriptionId", "ResourceGroups"
-				$resources.SubscriptionId = $invocationContext.BoundParameters["SubscriptionId"]
-				$resources.ResourceGroups = [System.Collections.ArrayList]::new()
-				$supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
-				# # Not considering nested resources to reduce complexity
-				$filteredResources = [ResourceInventory]::FilteredResources
-				$grouped = $filteredResources | Group-Object {$_.ResourceGroupName} | Select-Object Name, Group				
-				foreach($group in $grouped){
-					$resourceGroup = "" | Select-Object Name, Resources
-					$resourceGroup.Name = $group.Name
-					$resourceGroup.Resources = [System.Collections.ArrayList]::new()
-					foreach($item in $group.Group){
-						$resource = "" | Select-Object Name, ResourceId, Feature
-						if($item.Name.Contains("/")){
-							$splitName = $item.Name.Split("/")
-							$resource.Name = $splitName[$splitName.Length - 1]
-						}
-						else{
-							$resource.Name = $item.Name;
-						}
-						$resource.ResourceId = $item.ResourceId
-						$resource.Feature = $supportedResourceTypes[$item.ResourceType.ToLower()]
-						$resourceGroup.Resources.Add($resource) | Out-Null
-					}
-					$resources.ResourceGroups.Add($resourceGroup) | Out-Null
-				}
-				[RemoteApiHelper]::PostResourceInventory($resources)
-			}
-			catch
-			{
-				$currentInstance.PublishException($_);
-			}
-		});
-
+		
 		$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
 			$currentInstance = [RemoteReportsListener]::GetInstance();
 			try
@@ -125,64 +81,6 @@ class RemoteReportsListener: ListenerBase {
 
 		
     }
-
-
-	static [void] ReportAllResources()
-	{
-		$currentInstance = [RemoteReportsListener]::GetInstance();
-		$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-		$SubscriptionId = ([ContextHelper]::GetCurrentRMContext()).Subscription.Id;
-		$resourceGroups = Get-AzResourceGroup
-        $resourcesDetails = @();
-		$resourcesFlat = [ResourceInventory]::RawResources
-        foreach($res in $resourcesFlat){
-            $resourceGroup = ($resourceGroups | where-object {$_.ResourceGroupName -eq $res.ResourceGroupName});
-            $resEnv = "";
-            $resComponentId = "";
-            $rgEnv = "";
-            $rgComponentId = "";
-            if([Helpers]::CheckMember($resourceGroup, "Tags")) {
-                $rgTags = $resourceGroup.Tags;
-                if($rgTags.ContainsKey("Env")) 
-                {
-                   $rgEnv = $rgTags.Env;
-                }
-                if($rgTags.ContainsKey("ComponentID")) 
-                {
-                    $rgComponentId = $rgTags.ComponentID;
-                }
-            }
-            if([Helpers]::CheckMember($res, "Tags"))
-            {
-                $resTags = $res.Tags;
-                if($resTags.ContainsKey("Env"))
-                {
-                    $resEnv = $resTags.Env;
-                }
-                if($resTags.ContainsKey("ComponentID"))
-                {
-                    $resComponentId = $resTags.ComponentID;
-                }
-            }
-			$resourceProperties = @{
-			    "Name" = $res.Name;
-			    "ResourceId" = $res.ResourceId;
-			    "ResourceName" = $res.Name;
-			    "ResourceType" = $res.ResourceType;
-			    "ResourceGroupName" = $res.ResourceGroupName;
-			    "Location" = $res.Location;
-			    "SubscriptionId" = $SubscriptionId;
-                "Sku" = $res.Sku;
-			    "Tags" = [Helpers]::FetchTagsString($res.Tags);
-				"Env" = $resEnv;
-				"ComponentID" = $resComponentId;
-				"RGComponentID" = $rgComponentId;
-				"RGEnv" = $rgEnv;
-                }
-                $resourcesDetails += $resourceProperties;
-            }
-		[RemoteApiHelper]::PostResourceFlatInventory($resourcesDetails)
-	}
 
 
 	static [void] ReportSubscriptionScan(

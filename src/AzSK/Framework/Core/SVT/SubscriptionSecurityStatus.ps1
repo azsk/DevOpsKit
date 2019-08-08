@@ -103,7 +103,7 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 				$this.PublishException($_);
 			}
 		}		
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 		
 		return $result;
 	}

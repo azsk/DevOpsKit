@@ -37,10 +37,6 @@ class SVTCommandBase: AzCommandBase {
 
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
         
-        $this.AttestationUniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
-       
-        #Fetching the resourceInventory once for each SVT command execution
-        [ResourceInventory]::Clear();
     }
     #EndRegion
 
