@@ -78,6 +78,7 @@
       "ASCApprovedBaselineStatuses": [ "Healthy" ],
       "QueryforBaselineRule": [ "SecurityBaseline | where TimeGenerated >ago(1d) | where ResourceId ==\"{0}\" | summarize arg_max(TimeGenerated,*)by Description| where AnalyzeResult == \"Failed\" " ],
       "QueryforMissingPatches": [ "Update | where TimeGenerated >ago(1d) |where OSType == \"Linux\" and UpdateState =~ \"Needed\" and iff(isnotnull(toint(Optional)), Optional == false, Optional == \"false\") == true and iff(isnotnull(toint(Approved)), Approved != false, Approved != \"false\") == true and (Classification == \"Security Updates\" or Classification == \"Critical Updates\") and ResourceId ==\"{0}\"| summarize AggregatedValue =dcount(UpdateID) by UpdateID,Title |limit  1000000000 " ],
+      "QueryForLinuxAntimalwareStatus": ["ProtectionStatus | where TimeGenerated > ago(2d) and TypeofProtection == \"Sophos Anti-Virus\" and ProtectionStatus =~ \"Real Time Protection\"  and ResourceId == \"{0}\" | summarize arg_max(TimeGenerated, *)"],
       "VulnAssessmentSolution": {
         "AgentName": "QualysAgentLinux",
         "RequiredVersion": "1.6.0.96"

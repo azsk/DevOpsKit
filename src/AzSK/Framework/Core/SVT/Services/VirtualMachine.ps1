@@ -312,7 +312,30 @@ class VirtualMachine: AzSVTBase
 	hidden [ControlResult] CheckAntimalwareStatus([ControlResult] $controlResult)
 	{
 		#Do not check for deallocated status for the VM and directly show the status from ASC
-		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
+		
+		#Execute block if OS is Linux and WorkSpaceId is configured
+		if($this.VMDetails.OSType -eq [OperatingSystemTypes]::Linux -and [FeatureFlightingManager]::GetFeatureStatus("EnableLinuxAntimwalreCheck",$($this.SubscriptionContext.SubscriptionId))) 
+		{
+
+			if($this.Workspace)
+			{
+				$LinuxAntimalwareStatusWSQuery =[string]::Format($this.VMControlSettings.QueryForLinuxAntimalwareStatus,($this.ResourceContext.ResourceId).ToLower());
+				$queryStatusResult = [LogAnalyticsHelper]::QueryStatusfromWorkspace($this.Workspace, $LinuxAntimalwareStatusWSQuery);
+
+				if($queryStatusResult.Count -gt 0 )
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed,"Antimalware is configured correctly on the VM. Validated the status through ASC workspace query."); 
+				}
+				else {
+					$controlResult.AddMessage([VerificationResult]::Failed,"Antimalware is not configured on the VM. Validated the status through ASC workspace query."); 
+				}
+			}
+			else {
+				$controlResult.AddMessage([VerificationResult]::Manual, "We are not able to check Security Center workspace status. Please validate VM antimalware status manually.");
+			}
+			
+		}
+		elseif($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
 			$antimalwareSetting = $null
 			if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
