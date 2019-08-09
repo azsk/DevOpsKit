@@ -66,7 +66,7 @@ function Set-AzSKMonitoringSettings
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
@@ -114,6 +114,7 @@ function Set-AzSKMonitoringSettings
 			}
 			$appSettings.LAType = "AzSK"
 			[ConfigurationManager]::UpdateAzSKSettings($appSettings);
+			[ConfigOverride]::ClearConfigInstance()
 			[EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine + "`r`nWe have added new queries for the Monitoring solution. These will help reflect the aggregate control pass/fail status more accurately. Please go here to get them:  https://aka.ms/devopskit/omsqueries `r`n",[MessageType]::Warning);
 			[EventBase]::PublishGenericCustomMessage("Successfully changed policy settings");
 		}
@@ -124,7 +125,7 @@ function Set-AzSKMonitoringSettings
 	}
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -197,7 +198,7 @@ function Install-AzSKMonitoringSolution
 	Begin
 	{
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
@@ -217,6 +218,6 @@ function Install-AzSKMonitoringSolution
 	}
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }

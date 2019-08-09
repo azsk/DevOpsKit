@@ -181,7 +181,7 @@ Repair-AzSKSubscriptionSecurity `
 					}
 
 					$this.InitializeFolder(($fixControlEventContext | Select-Object -First 1).SubscriptionContext, $fixControlFileNames, $runScriptContent);
-					[Helpers]::ConvertToJsonCustom($output, 15, 15) | Out-File $this.FilePath
+					[JsonHelper]::ConvertToJsonCustom($output, 15, 15) | Out-File $this.FilePath
 				}				
 			}			
 		}

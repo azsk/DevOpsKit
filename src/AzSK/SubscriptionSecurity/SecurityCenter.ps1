@@ -57,7 +57,7 @@ function Set-AzSKAzureSecurityCenterPolicies
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 
 	Process
@@ -85,6 +85,6 @@ function Set-AzSKAzureSecurityCenterPolicies
 
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }

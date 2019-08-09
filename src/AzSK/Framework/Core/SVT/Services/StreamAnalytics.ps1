@@ -1,12 +1,7 @@
 Set-StrictMode -Version Latest 
-class StreamAnalytics: SVTBase
+class StreamAnalytics: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
-
-    StreamAnalytics([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-                 Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-    }
 
     StreamAnalytics([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 

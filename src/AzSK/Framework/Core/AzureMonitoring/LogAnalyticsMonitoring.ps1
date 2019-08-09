@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest 
 
-class LogAnalyticsMonitoring: CommandBase
+class LogAnalyticsMonitoring: AzCommandBase
 {
 	[string] $LAWSSampleViewTemplateFilepath;
 	[string] $LAWSSearchesTemplateFilepath;
@@ -78,14 +78,11 @@ class LogAnalyticsMonitoring: CommandBase
 		$this.PublishCustomMessage([MessageData]::new("Starting template deployment for Log Analytics generic view. Detailed logs are shown below."));
 		$ErrorMessages = @()
         if ($_validateOnly) {
-            $ErrorMessages =@()
-                Test-AzResourceGroupDeployment -ResourceGroupName $this.LAWSResourceGroup `
+			$ErrorMessages += Test-AzResourceGroupDeployment -ResourceGroupName $this.LAWSResourceGroup `
                                                     -TemplateFile $this.LAWSGenericTemplateFilepath `
                                                     -TemplateParameterObject $OptionalParameters -Verbose
 		}
         else {
-
-            $ErrorMessages =@()
 			$SubErrorMessages = @()
             New-AzResourceGroupDeployment -Name ((Get-ChildItem $this.LAWSGenericTemplateFilepath).BaseName + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
                                         -ResourceGroupName $this.LAWSResourceGroup `

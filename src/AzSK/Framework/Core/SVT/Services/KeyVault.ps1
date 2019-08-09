@@ -1,18 +1,12 @@
 using namespace Microsoft.Azure.Commands.KeyVault.Models
 Set-StrictMode -Version Latest 
-class KeyVault: SVTBase
+class KeyVault: AzSVTBase
 {       
     hidden [PSKeyVaultIdentityItem] $ResourceObject;
     hidden [PSObject[]] $AllEnabledKeys = $null;
     hidden [PSObject[]] $AllEnabledSecrets = $null;
 	hidden [boolean] $HasFetchKeysPermissions=$false;
 	hidden [boolean] $HasFetchSecretsPermissions=$true;
-    KeyVault([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-		$this.CheckCurrentContextPermissionsOnVaultObjects();
-    }
 
     KeyVault([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -37,7 +31,7 @@ class KeyVault: SVTBase
 	hidden [void] CheckCurrentContextPermissionsOnVaultObjects()
 	{
 
-		$currentContext=[Helpers]::GetCurrentRMContext();
+		$currentContext=[ContextHelper]::GetCurrentRMContext();
 		$CurrentContextId=$currentContext.Account.Id;
 		$CurrentContextObjectId=$null
 		try{

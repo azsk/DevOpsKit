@@ -1,14 +1,8 @@
 Set-StrictMode -Version Latest 
-class ContainerRegistry: SVTBase
+class ContainerRegistry: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
     hidden [PSObject] $AccessList;
-
-    ContainerRegistry([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
 
     ContainerRegistry([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 

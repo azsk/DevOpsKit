@@ -266,7 +266,7 @@ class PartialScanManager
 			}
 
 			$masterFilePath =Join-Path $AzSKTemp $($this.ResourceScanTrackerBlobName)
-			[Helpers]::ConvertToJsonCustom($this.ResourceScanTrackerObj) | Out-File $masterFilePath -Force
+			[JsonHelper]::ConvertToJsonCustom($this.ResourceScanTrackerObj) | Out-File $masterFilePath -Force
 			Set-AzStorageBlobContent -File $masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "$($this.ResourceScanTrackerBlobName)" -BlobType Block -Context $this.AzSKStorageAccount.Context -Force
 		}
 	}

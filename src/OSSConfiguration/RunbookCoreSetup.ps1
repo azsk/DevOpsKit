@@ -8,7 +8,7 @@ function SetModules
 	$ModuleList.Keys | ForEach-Object{
 	$ModuleName = $_
     $ModuleVersion = $ModuleList.Item($_)
-    $Module = Get-AzAutomationmodule `
+    $Module = Get-AzAutomationModule `
     -ResourceGroupName $AutomationAccountRG `
     -AutomationAccountName $AutomationAccountName `
     -Name $ModuleName -ErrorAction SilentlyContinue
@@ -41,6 +41,66 @@ function SetModules
   }
 }
 
+# To download Az base modules with Azure RM base commands
+function DownloadAzModuleWithRM
+{
+    param(
+         [string]$ModuleName,
+		 [string]$ModuleVersion,
+		 [bool] $Sync
+    )
+	$SearchResult = SearchModule -ModuleName $ModuleName -ModuleVersion $ModuleVersion
+    if($SearchResult)
+    {
+        $ModuleName = $SearchResult.title.'#text' # get correct casing for the Module name
+        $PackageDetails = Invoke-RestMethod -Method Get -UseBasicParsing -Uri $SearchResult.id
+		$ModuleVersion = $PackageDetails.entry.properties.version
+
+        #Build the content URL for the nuget package
+        $ModuleContentUrl = "$PublicPSGalleryUrl/api/v2/package/$ModuleName/$ModuleVersion"
+
+        # Find the actual blob storage location of the Module
+        do {
+            $ActualUrl = $ModuleContentUrl
+            $ModuleContentUrl = (Invoke-WebRequest -Uri $ModuleContentUrl -MaximumRedirection 0 -UseBasicParsing -ErrorAction Ignore).Headers.Location
+        } while(!$ModuleContentUrl.Contains(".nupkg"))
+
+		$ActualUrl = $ModuleContentUrl
+
+		$retryCount = 0
+		do{
+            $AutomationModule = $null
+            $retryCount++
+            $AutomationModule = New-AzureRmAutomationModule `
+            -ResourceGroupName $AutomationAccountRG `
+            -AutomationAccountName $AutomationAccountName `
+            -Name $ModuleName `
+            -ContentLink $ActualUrl
+		} while($null -eq $AutomationModule -and $retryCount -le 3)
+
+		Write-Output("CS: Importing module: [$ModuleName] Version: [$ModuleVersion] into the CA automation account.")
+
+		if($Sync)
+		{
+		 while(
+                $AutomationModule.ProvisioningState -ne "Created" -and
+                $AutomationModule.ProvisioningState -ne "Succeeded" -and
+                $AutomationModule.ProvisioningState -ne "Failed"
+                )
+                {
+                    #Module is in extracting state
+                    Start-Sleep -Seconds 120
+                    $AutomationModule = $AutomationModule | Get-AzureRmAutomationModule
+                }
+                if($AutomationModule.ProvisioningState -eq "Failed")
+                {
+					Write-Output ("CS: Failed to import: [$AutomationModule] into the automation account. Will retry in a bit.")
+					return;
+                }
+		}
+    }
+
+}
 function DownloadModule
 {
     param(
@@ -433,29 +493,29 @@ if ((-not [string]::IsNullOrWhiteSpace($isAzAccountsAvailable)) -and (-not [stri
 {	
 $Global:isAzAvailable = $true
 }
+$setupTimer = [System.Diagnostics.Stopwatch]::StartNew();
+PublishEvent -EventName "CA Setup Started"
+Write-Output("CS: Starting core setup...")
+
+###Config start--------------------------------------------------
+$AzSKModuleName = "AzSK"
+$RunbookName = "Continuous_Assurance_Runbook"
+
+#These get set as constants during the build process (e.g., AzSKStaging will have a diff URL)
+#PublicPSGalleryUrl is always same.
+$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
+$PublicPSGalleryUrl = "https://www.powershellgallery.com"
+
+#This gets replaced when org-policy is created/updated. This is the org-specific
+#url that helps bootstrap which module version to use within an org setup
+$azskVersionForOrg = "https://azsdkossep.azureedge.net/1.0.0/AzSK.Pre.json"
+
+#We use this to check if another job is running...
+$Global:FoundExistingJob = $false;
 if($Global:isAzAvailable)
 {
 try
 {
-	$setupTimer = [System.Diagnostics.Stopwatch]::StartNew();
-	PublishEvent -EventName "CA Setup Started"
-	Write-Output("CS: Starting core setup...")
-
-	###Config start--------------------------------------------------
-	$AzSKModuleName = "AzSK"
-	$RunbookName = "Continuous_Assurance_Runbook"
-	
-	#These get set as constants during the build process (e.g., AzSKStaging will have a diff URL)
-	#PublicPSGalleryUrl is always same.
-	$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
-	$PublicPSGalleryUrl = "https://www.powershellgallery.com"
-
-	#This gets replaced when org-policy is created/updated. This is the org-specific
-	#url that helps bootstrap which module version to use within an org setup
-	$azskVersionForOrg = "https://azsdkossep.azureedge.net/1.0.0/AzSK.Pre.json"
-
-	#We use this to check if another job is running...
-	$Global:FoundExistingJob = $false;
 	###Config end----------------------------------------------------
 	#initialize variables
 	$ResultModuleList = [ordered]@{}
@@ -664,7 +724,22 @@ catch
 }
 }
 else {
-	Write-Output ("CS: Invoking core setup backup.")
-	$CoreSetupSrcUrl = "https://azsdkossep.azureedge.net/1.0.0/RunbookCoreSetupAzureRm.ps1"
-	InvokeScript -policyStoreURL $CoreSetupSrcUrl -fileName "RunbookCoreSetupAzureRm.ps1" -version "1.0.0"
+	Write-Output ("CS: Checking if Az.Accounts and Az.Automation present in automation account.")
+	$AzModule = Get-AzureRmAutomationModule `
+    -ResourceGroupName $AutomationAccountRG `
+    -AutomationAccountName $AutomationAccountName `
+	-Name "Az.Accounts" -ErrorAction SilentlyContinue
+	if(-not $AzModule)
+	{
+		DownloadAzModuleWithRM -ModuleName Az.Accounts -ModuleVersion 1.2.1 -Sync $true
+	}
+	$AzModule = Get-AzureRmAutomationModule `
+    -ResourceGroupName $AutomationAccountRG `
+    -AutomationAccountName $AutomationAccountName `
+	-Name "Az.Automation" -ErrorAction SilentlyContinue
+	if(-not $AzModule)
+	{
+		DownloadAzModuleWithRM -ModuleName Az.Automation -ModuleVersion 1.0.0 -Sync $true
+	}
+	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }

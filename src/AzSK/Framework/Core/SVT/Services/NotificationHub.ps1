@@ -1,15 +1,9 @@
 ﻿#using namespace Microsoft.Azure.Commands.KeyVault.Models
 Set-StrictMode -Version Latest 
-class NotificationHub: SVTBase
+class NotificationHub: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
 	hidden [PSObject] $NamespaceObject;
-
-    NotificationHub([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
 
 	NotificationHub([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -20,7 +14,7 @@ class NotificationHub: SVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = Get-AzResource  -Name "*$($this.ResourceContext.ResourceName)*" -ResourceType "Microsoft.NotificationHubs/namespaces/notificationHubs"
+            $this.ResourceObject = $this.ResourceContext.ResourceDetails
 			$Namespace = $this.ResourceObject.Name.split("/")[0] 
 			$this.NamespaceObject = Get-AzNotificationHubsNamespace -ResourceGroup $this.ResourceContext.ResourceGroupName -Namespace $Namespace
 
