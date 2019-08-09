@@ -505,7 +505,8 @@ $RunbookName = "Continuous_Assurance_Runbook"
 #PublicPSGalleryUrl is always same.
 $AzSKPSGalleryUrl = "https://www.powershellgallery.com"
 $PublicPSGalleryUrl = "https://www.powershellgallery.com"
-
+$retryDownloadIntervalMins = 10
+$monitorjobIntervalMins = 45
 #This gets replaced when org-policy is created/updated. This is the org-specific
 #url that helps bootstrap which module version to use within an org setup
 $azskVersionForOrg = "https://azsdkossep.azureedge.net/1.0.0/AzSK.Pre.json"
@@ -519,8 +520,6 @@ try
 	###Config end----------------------------------------------------
 	#initialize variables
 	$ResultModuleList = [ordered]@{}
-	$retryDownloadIntervalMins = 10
-	$monitorjobIntervalMins = 45
 	$tempUpdateToLatestVersion = Get-AutomationVariable -Name UpdateToLatestAzSKVersion -ErrorAction SilentlyContinue
     if($null -ne $tempUpdateToLatestVersion)
     {
@@ -741,5 +740,6 @@ else {
 	{
 		DownloadAzModuleWithRM -ModuleName Az.Automation -ModuleVersion 1.0.0 -Sync $true
 	}
+	ScheduleNewJob -intervalInMins $retryDownloadIntervalMins
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }

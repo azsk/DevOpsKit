@@ -500,7 +500,8 @@ Write-Output("CS: Starting core setup...")
 ###Config start--------------------------------------------------
 $AzSKModuleName = "AzSK"
 $RunbookName = "Continuous_Assurance_Runbook"
-
+$retryDownloadIntervalMins = 10
+$monitorjobIntervalMins = 45
 #These get set as constants during the build process (e.g., AzSKStaging will have a diff URL)
 #PublicPSGalleryUrl is always same.
 $AzSKPSGalleryUrl = "https://www.powershellgallery.com"
@@ -519,8 +520,6 @@ try
 	###Config end----------------------------------------------------
 	#initialize variables
 	$ResultModuleList = [ordered]@{}
-	$retryDownloadIntervalMins = 10
-	$monitorjobIntervalMins = 45
 	$tempUpdateToLatestVersion = Get-AutomationVariable -Name UpdateToLatestAzSKVersion -ErrorAction SilentlyContinue
     if($null -ne $tempUpdateToLatestVersion)
     {
@@ -739,5 +738,6 @@ else {
 	{
 		DownloadAzModuleWithRM -ModuleName Az.Automation -ModuleVersion 1.0.0 -Sync $true
 	}
+	ScheduleNewJob -intervalInMins $retryDownloadIntervalMins
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }
