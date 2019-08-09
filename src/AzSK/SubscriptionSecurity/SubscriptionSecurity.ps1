@@ -74,7 +74,7 @@ function Set-AzSKSubscriptionSecurity
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 
 	Process
@@ -102,7 +102,7 @@ function Set-AzSKSubscriptionSecurity
 
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -167,7 +167,7 @@ function Remove-AzSKSubscriptionSecurity
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 
 	Process
@@ -189,7 +189,7 @@ function Remove-AzSKSubscriptionSecurity
 
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -235,7 +235,7 @@ function Update-AzSKSubscriptionSecurity
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 
 	Process
@@ -256,6 +256,6 @@ function Update-AzSKSubscriptionSecurity
 
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }

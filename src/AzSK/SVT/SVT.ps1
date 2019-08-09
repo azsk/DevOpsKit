@@ -107,7 +107,7 @@ function Get-AzSKAzureServicesSecurityStatus
 		$TagName,
 
         [string]
-		[Parameter(Mandatory = $true, ParameterSetName = "TagName", HelpMessage="The value of the tag to query for Azure resource.")]
+		[Parameter(Mandatory = $false, ParameterSetName = "TagName", HelpMessage="The value of the tag to query for Azure resource.")]
 		[Alias("tgvs", "tgv", "TagValue")]
 		$TagValues,
 
@@ -223,7 +223,7 @@ function Get-AzSKAzureServicesSecurityStatus
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 
 	Process
@@ -267,7 +267,7 @@ function Get-AzSKAzureServicesSecurityStatus
 
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -407,7 +407,7 @@ function Get-AzSKSubscriptionSecurityStatus
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);	
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
@@ -443,7 +443,7 @@ function Get-AzSKSubscriptionSecurityStatus
 	}
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -550,7 +550,25 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 
 	if([string]::IsNullOrEmpty($erResourceGroups))
     {
+		# Get applicable RGs for ERvNet from config
 		$erResourceGroups = [ConfigurationManager]::GetAzSKConfigData().ERvNetResourceGroupNames
+		# Get All RGs in subscription
+		$allResourceGroups  = Get-AzResourceGroup -ErrorAction SilentlyContinue 
+		# Select applicable RGs for ERvNet which are present in subscription
+		if($null -ne $allResourceGroups){
+			$allResourceGroups = $allResourceGroups | ForEach-Object {"$($_.ResourceGroupName)"}
+		    $erResourceGroupsArray = @();
+			if(-not([string]::IsNullOrEmpty($erResourceGroups)))
+			{
+				$erResourceGroups.Split(",") | ForEach-Object {
+					if($allResourceGroups.ToLower() -Contains $_.ToLower()){
+						$erResourceGroupsArray += $_
+					}
+				}
+				$erResourceGroups = [system.String]::Join(",", $erResourceGroupsArray)
+			}
+
+		}
 	}
 
 	Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionId -ResourceGroupNames $erResourceGroups -ResourceName $ResourceName `
@@ -657,7 +675,7 @@ function Get-AzSKControlsStatus
 		$TagName,
 
         [string]
-		[Parameter(Mandatory = $true, ParameterSetName = "TagName", HelpMessage="The value of the tag to query for Azure resource.")]
+		[Parameter(Mandatory = $false, ParameterSetName = "TagName", HelpMessage="The value of the tag to query for Azure resource.")]
 		[Alias("tgvs", "tgv", "TagValue")]
 		$TagValues,
 
@@ -772,7 +790,7 @@ function Get-AzSKControlsStatus
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
@@ -813,6 +831,6 @@ function Get-AzSKControlsStatus
 	}
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
