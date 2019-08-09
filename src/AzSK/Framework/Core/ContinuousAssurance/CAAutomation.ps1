@@ -3116,7 +3116,7 @@ class CCAutomation: AzCommandBase
                 <# pathLengthConstraint #> 0,
                 <# critical #> $false)
 			$extensions.Add($basicConstraints)
-			# Create Private Key
+			# Create Private Key using CSP provider since Az.Accounts doesn't support KSP  
             $csp = new-object system.security.cryptography.cspparameters(24, "microsoft enhanced rsa and aes cryptographic provider", [guid]::newguid())
             $key = new-object system.security.cryptography.rsacryptoserviceprovider($keylength, $csp)
             $key.persistkeyincsp = $true
