@@ -193,4 +193,13 @@ class Constants
 			[Constants]::AzSKCurrentModuleVersion = $moduleVersion;
 		}
 	}
+
+	# LogAnalytics view file name
+	static [string] $LogAnalyticsGenericView = "AZSK.AM.LogAnalytics.GenericView.V6.lawsview"
+	# Constants for in cluster CA scanning
+	static [string] $DatabricksScanJobConfigurationUrl = "https://azsdkossep.azureedge.net/incluster_configuration/DatabricksConfiguration.json"
+	static [string] $DatabricksCANotebookUrl = "https://azsdkossep.azureedge.net/incluster_configuration/AzSK_DB.ipynb"
+	static [string] $HDInsightCANotebookUrl = "https://azsdkossep.azureedge.net/incluster_configuration/AzSK_HDI.ipynb"
+	static [string] $AzSKPyInstallUrl = "https://azsdkossep.azureedge.net/incluster_configuration/pipinstall.sh"
+	static [string] $AzSKPyUninstallUrl = "https://azsdkossep.azureedge.net/incluster_configuration/uninstall.sh"
 }
