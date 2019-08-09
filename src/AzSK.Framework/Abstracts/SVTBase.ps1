@@ -1063,9 +1063,9 @@ class SVTBase: AzSKRoot
 	{
 		try
 		{
-			#For exempt controls, no. of days for expiry are provided at the time of attestation, so skipping this calculation
-			#and getting the value using the already saved expiry date.
-			if(($controlState.AttestationStatus -ne [AttestationStatus]::ExemptionApproved) -and ($null -ne $controlState.State.ExpiryDate))
+			#For exempt controls, either the no. of days for expiry were provided at the time of attestation or a default of 6 motnhs was already considered,
+			#therefore skipping this flow and calculating days directly using the expiry date already saved.
+			if($controlState.AttestationStatus -ne [AttestationStatus]::ApprovedException)
 			{
 				#Get controls expiry period. Default value is zero
 				$controlAttestationExpiry = $eventcontext.controlItem.AttestationExpiryPeriodInDays
@@ -1073,6 +1073,7 @@ class SVTBase: AzSKRoot
 				$controlSeverityExpiryPeriod = 0
 				$defaultAttestationExpiryInDays = [Constants]::DefaultControlExpiryInDays;
 				$expiryInDays=-1;
+	
 				if(($eventcontext.ControlResults |Measure-Object).Count -gt 0)	
 				{
 					$isControlInGrace=$eventcontext.ControlResults.IsControlInGrace;
@@ -1128,12 +1129,14 @@ class SVTBase: AzSKRoot
 					}
 				}				
 			}
-			#Calculating the expiry in days for exempt controls
 			else
-			{
-				$expiryDate = (Get-Date $controlState.State.ExpiryDate).ToString('yyyy-dd-MM') -as [DateTime]
-				$expiryInDays = ($expiryDate - $controlState.State.AttestedDate).Days
-			}					
+			{				
+				#Calculating the expiry in days for exempt controls
+				
+				$expiryDate = [DateTime]$controlState.State.ExpiryDate
+				#Adding 1 explicitly to the days since the differnce below excludes the expiryDate and that also needs to be taken into account.
+				$expiryInDays = ($expiryDate - $controlState.State.AttestedDate).Days + 1
+			}								
 		}
 		catch
 		{

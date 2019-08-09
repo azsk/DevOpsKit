@@ -21,7 +21,7 @@ enum AttestationStatus
 	NotFixed
 	WillNotFix
 	WillFixLater
-	ExemptionApproved
+	ApprovedException
 	NotApplicable
 	StateConfirmed	
 }

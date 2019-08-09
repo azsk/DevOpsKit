@@ -1176,7 +1176,7 @@ class Helpers {
                     $result = [VerificationResult]::Passed;
                     break;
                 }
-                ([AttestationStatus]::ExemptionApproved) {
+                ([AttestationStatus]::ApprovedException) {
                     $result = $verificationResult;
                     break;
                 }

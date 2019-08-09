@@ -33,7 +33,7 @@ class SVTControlAttestation
 			"1" { return [AttestationStatus]::NotAnIssue;}
 			"2" { return [AttestationStatus]::WillNotFix;}
 			"3" { return [AttestationStatus]::WillFixLater;}
-			"4" { return [AttestationStatus]::ExemptionApproved;}
+			"4" { return [AttestationStatus]::ApprovedException;}
 			"5" { return [AttestationStatus]::NotApplicable;}
 			"6" { return [AttestationStatus]::StateConfirmed;}
 			
@@ -158,28 +158,45 @@ class SVTControlAttestation
 					return $controlState;
 				}
 				
-				#In case when the user selects ExemptionApproved as the reason for attesting,
+				#In case when the user selects ApprovedException as the reason for attesting,
 				#they'll be prompted to provide the number of days till that approval expires.
-				if($controlState.AttestationStatus -eq [AttestationStatus]::ExemptionApproved)
+				$exceptionApprovalExpiryDate = ""
+				if($controlState.AttestationStatus -eq [AttestationStatus]::ApprovedException)
 				{
-					Write-Host "`nPlease provide the number of days for which the exemption has been approved:" -ForegroundColor Cyan
-					$exemptionExpiryInDays = ""
-					while([string]::IsNullOrWhiteSpace($exemptionExpiryInDays))
+					Write-Host "`nPlease provide the number of days for which the exception has been approved (default is 6 months):" -ForegroundColor Cyan
+					Write-Host "`nNote: The number of days should fall in the next 6 months." -ForegroundColor Yellow
+					$numberOfDays = Read-Host "No. of Days"
+
+					$maxAllowedExceptionApprovalExpiryDate = ([DateTime]::UtcNow).AddMonths(6)					
+
+					try
+					{						
+						if(-not [string]::IsNullOrWhiteSpace($numberOfDays))
+						{
+							#$controlItem.ControlItem.AttestationExpiryPeriodInDays = $numberOfDays.Trim()							
+							$proposedExceptionApprovalExpiryDate = ([DateTime]::UtcNow).AddDays($numberOfDays.Trim())
+
+							if($proposedExceptionApprovalExpiryDate -gt $maxAllowedExceptionApprovalExpiryDate)
+							{
+								Write-Host "`nNote: The exception approval expiry will be set to 6 months." -ForegroundColor Yellow
+								$exceptionApprovalExpiryDate = $maxAllowedExceptionApprovalExpiryDate								
+							}
+							else
+							{
+								$exceptionApprovalExpiryDate = $proposedExceptionApprovalExpiryDate
+							}
+						}
+						else
+						{
+							Write-Host "`nNote: The exception approval expiry will be set to 6 months." -ForegroundColor Yellow
+							$exceptionApprovalExpiryDate = $maxAllowedExceptionApprovalExpiryDate
+						}
+					}
+					catch
 					{
-						$exemptionExpiryInDays = Read-Host "No. of Days"
-						try
-						{
-							$controlItem.ControlItem.AttestationExpiryPeriodInDays = $exemptionExpiryInDays.Trim()
-						}
-						catch
-						{ 
-							
-						}
-						# If the No. of Days is empty then prompting message again to provide the days.
-						if([string]::IsNullOrWhiteSpace($Justification))
-						{
-							Write-Host "`nEmpty space or blank days are not allowed."
-						}
+						Write-Host "`nThe days need to be an integer value." -ForegroundColor Red
+						#Publish Exception
+						$this.PublishException($_)
 					}
 				}
 				
@@ -217,13 +234,6 @@ class SVTControlAttestation
 				$controlState.State.AttestedBy = [Helpers]::GetCurrentSessionUser();
 				$controlState.State.AttestedDate = [DateTime]::UtcNow;
 				$controlState.State.Justification = $Justification
-				
-				#In case of control exemption, calculating the exemption(attestation) expiry date beforehand, based on the days entered by the user
-				if($controlState.AttestationStatus -eq [AttestationStatus]::ExemptionApproved)
-				{
-					$controlState.State.ExpiryDate = ($controlState.State.AttestedDate.AddDays($controlItem.ControlItem.AttestationExpiryPeriodInDays)).ToString("MM/dd/yyyy");
-				}
-				
 				break;
 			}
 			"2" #Clear Attestation
@@ -555,7 +565,7 @@ class SVTControlAttestation
 		
 		if($this.attestOptions.IsExemptModeOn)
 		{
-			$ValidAttestationStatesHashTable += [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -eq [AttestationStatus]::ExemptionApproved }
+			$ValidAttestationStatesHashTable += [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -eq [AttestationStatus]::ApprovedException }
 		}
 		
 		return $ValidAttestationStatesHashTable;
