@@ -322,7 +322,7 @@ class VirtualMachine: AzSVTBase
 				$LinuxAntimalwareStatusWSQuery =[string]::Format($this.VMControlSettings.QueryForLinuxAntimalwareStatus,($this.ResourceContext.ResourceId).ToLower());
 				$queryStatusResult = [LogAnalyticsHelper]::QueryStatusfromWorkspace($this.Workspace, $LinuxAntimalwareStatusWSQuery);
 
-				if(($queryStatusResult | Measure-Object).Count -gt 0 )
+				if($queryStatusResult.Count -gt 0 )
 				{
 					$controlResult.AddMessage([VerificationResult]::Passed,"Antimalware is configured correctly on the VM. Validated the status through ASC workspace query."); 
 				}
