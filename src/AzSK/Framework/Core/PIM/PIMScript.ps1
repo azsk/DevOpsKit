@@ -608,7 +608,7 @@ class PIM: AzCommandBase {
             }
             else 
             {
-                $this.PublishCustomMessage("No eligible assignments found for the provided scope and role. ",[MessageType]::Error)
+                $this.PublishCustomMessage("No eligible assignments found for the provided scope and role(s). ",[MessageType]::Error)
             }
 
         }
