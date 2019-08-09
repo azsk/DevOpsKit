@@ -3117,7 +3117,9 @@ class CCAutomation: AzCommandBase
                 <# critical #> $false)
 			$extensions.Add($basicConstraints)
 			# Create Private Key
-            $key = [System.Security.Cryptography.RSA]::Create($KeyLength)
+            $csp = new-object system.security.cryptography.cspparameters(24, "microsoft enhanced rsa and aes cryptographic provider", [guid]::newguid())
+            $key = new-object system.security.cryptography.rsacryptoserviceprovider($keylength, $csp)
+            $key.persistkeyincsp = $true
 
             # Create the subject of the certificate
             $subject = "CN=$azskADAppName"
