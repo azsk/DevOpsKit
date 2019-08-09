@@ -33,6 +33,7 @@ class SVTStatusReport : AzSVTCommandBase
 				$sscore.ExcludeControlIdString = $this.ExcludeControlIdString;
 				$sscore.GenerateFixScript = $this.GenerateFixScript;
 				$sscore.AttestationOptions = $this.AttestationOptions;
+				$sscore.Severity = $this.Severity;
 
 				$result += $sscore.RunAllControls();
 				$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nCompleted Subscription security controls`r`n" + [Constants]::DoubleDashLine, [MessageType]::Update);
@@ -58,6 +59,7 @@ class SVTStatusReport : AzSVTCommandBase
 				$secStatus.ExcludeControlIdString = $this.ExcludeControlIdString;
 				$secStatus.GenerateFixScript = $this.GenerateFixScript;
 				$secStatus.AttestationOptions = $this.AttestationOptions;
+				$secStatus.Severity = $this.Severity;
 
 				$result += $secStatus.RunAllControls();
 				$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nCompleted Azure services security controls`r`n" + [Constants]::DoubleDashLine, [MessageType]::Update);

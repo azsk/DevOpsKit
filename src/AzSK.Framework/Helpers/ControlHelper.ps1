@@ -24,13 +24,12 @@ class ControlHelper: EventBase{
             $ValidEnumSeverities = [Enum]::GetNames('ControlSeverity')
             $ValidSeverityValues = $ParamSeverities | Where-Object { $_ -in $ValidEnumSeverities}
             $InvalidSeverities = $ParamSeverities | Where-Object { $_ -notin $ValidEnumSeverities }	
-
-            
+           
         }
       
         if($InvalidSeverities)
         {
-           [EventBase]:: PublishGenericCustomMessage("WARNING: No matching severity values found for `"$($InvalidSeverities -join ', ')`"",[MessageType]::Warning)
+           [EventBase]:: PublishGenericCustomMessage("WARNING: No control severity corresponds to `"$($InvalidSeverities -join ', ')`" for your org.",[MessageType]::Warning)
         }
         
         return $ValidSeverityValues

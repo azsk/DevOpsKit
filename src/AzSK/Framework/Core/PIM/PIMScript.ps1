@@ -124,6 +124,7 @@ class PIM: AzCommandBase {
         }
         return $resolvedResource    
     }
+
     #List all the resources accessible to context.
     hidden [System.Collections.Generic.List[PIMResource]] ListResources($subscriptionId, $type, $resourceName) {
         $this.AcquireToken();
@@ -193,8 +194,6 @@ class PIM: AzCommandBase {
         return $obj
     }
 
-
-
     #List roles from PIM API 
     hidden [PSObject] ListRoles($resourceId) {
         $this.AcquireToken();
@@ -257,6 +256,43 @@ class PIM: AzCommandBase {
         }
         
         return $assignments
+    }
+
+    #List Permanent or PIM assignment for a resource
+    hidden ListAssignment($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $CheckPermanent) {
+        $this.AcquireToken();
+        $criticalRoles = @();
+        $criticalRoles += $this.ConvertToStringArray($RoleNames)
+        $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName)
+        if (($resources | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resources.ResourceId))) {       
+            $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $CheckPermanent)
+            if(-not [String]::IsNullOrEmpty($RoleNames))
+            {
+                $roleAssignments = $roleAssignments | Where-Object { $_.RoleName -in $criticalRoles -and $_.MemberType -ne 'Inherited' -and ($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group') }
+            }
+            else
+            {
+                $roleAssignments = $roleAssignments | Where-Object { $_.MemberType -ne 'Inherited' -and ($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group') }
+            }
+            if (($roleAssignments | Measure-Object).Count -gt 0) {
+                $roleAssignments = $roleAssignments | Sort-Object -Property RoleName, Name 
+                $this.PublishCustomMessage("")
+                $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
+                $this.PublishCustomMessage($($roleAssignments | Format-Table -Property @{Label = "Role"; Expression = { $_.RoleName } }, PrincipalName, AssignmentState, @{Label = "Type"; Expression = { $_.SubjectType } } | Out-String), [MessageType]::Default)
+            }
+            else {
+                if ($CheckPermanent) {
+                    $this.PublishCustomMessage("No permanent assignments found for this combination.", [MessageType]::Warning);
+                }
+                else {
+                    $this.PublishCustomMessage("No PIM eligible assignments found for this combination.", [MessageType]::Warning);
+                }    
+            }
+        }
+        else {
+            $this.PublishCustomMessage("Unable to query request resource for the current logged in context.", [MessageType]::Warning )
+        }
+        
     }
 
     #Activates the user assignment for a role
@@ -488,9 +524,9 @@ class PIM: AzCommandBase {
             $this.PublishCustomMessage("Fetching permanent assignment for [$(($criticalRoles) -join ", ")] role on $($resolvedResource.Type) [$($resolvedResource.ResourceName)]...", [MessageType]::Info)
             $permanentRoles = $this.ListAssignmentsWithFilter($resourceId, $true)
             $eligibleAssignments = $this.ListAssignmentsWithFilter($resourceId, $false)
-            $eligibleAssignments = $eligibleAssignments | Where-Object { $_.SubjectType -eq 'User' -and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
+            $eligibleAssignments = $eligibleAssignments | Where-Object { ($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group') -and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
             if (($permanentRoles | Measure-Object).Count -gt 0) {
-                $permanentRolesForTransition = $permanentRoles | Where-Object { $_.SubjectType -eq 'User' -and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
+                $permanentRolesForTransition = $permanentRoles | Where-Object {($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group') -and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
                 $successfullyassignedRoles = @();
                 $currentContext = [ContextHelper]::GetCurrentRmContext();
                 $permanentRolesForTransition = $permanentRolesForTransition | Where-Object { $_.PrincipalName -ne $currentContext.Account.Id }
@@ -554,8 +590,10 @@ class PIM: AzCommandBase {
         if(($resources | Measure-Object).Count -gt 0)
         {
             $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $false)
+            $roleAssignments = $roleAssignments | Where-Object{$_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group' -and $_.memberType -ne 'Inherited'}
             if(($roleAssignments | Measure-Object).Count)
             {
+                
                 
                 [int]$soonToExpireWindow = $ExpiringInDays;
                 $soonToExpireAssignments += $roleAssignments | Where-Object {([DateTime]::UTCNow).AddDays($soonToExpireWindow) -gt $_.ExpirationDate -and $_.RoleName -in $criticalRoles -and $_.AssignmentState -eq 'Eligible'}
@@ -563,6 +601,14 @@ class PIM: AzCommandBase {
                 {
                     $this.PublishCustomMessage($($soonToExpireAssignments | Format-Table  -Wrap 'SubjectId', 'PrincipalName', 'SubjectType', 'ExpirationDate'|  Out-String), [MessageType]::Default)
                 }
+                else 
+                {
+                    $this.PublishCustomMessage("No assignment found for `"$($criticalRoles -join ", ")`" role(s) expiring in $ExpiringInDays days. ",[MessageType]::Error)
+                }
+            }
+            else 
+            {
+                $this.PublishCustomMessage("No eligible assignments found for the provided scope and role. ",[MessageType]::Error)
             }
 
         }
