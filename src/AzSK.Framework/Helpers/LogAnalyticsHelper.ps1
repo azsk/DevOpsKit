@@ -345,7 +345,7 @@ Class LogAnalyticsHelper{
 		try
 		{
 			$body = @{query=$query};
-			$url="https://api.loganalytics.io/beta/workspaces/" +$workspaceId+"/api/query?api-version=2017-01-01-preview"
+			$url="https://api.loganalytics.io/v1/workspaces/" +$workspaceId+"/query"
 			$response=[WebRequestHelper]::InvokePostWebRequest($url ,  $body);
 
 			# Formating the response obtained from querying workspace.
@@ -370,7 +370,7 @@ Class LogAnalyticsHelper{
 								{
 									if($i -lt  $count)
 									{
-										$properties[$col.ColumnName] = $row[$i];
+										$properties[$col.Name] = $row[$i];
 									}
 									$i++;
 								}

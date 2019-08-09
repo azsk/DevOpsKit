@@ -90,6 +90,15 @@
       "DisabledForSubs": [],
       "UnderPreview": false,
       "IsEnabled": false
+    },
+    {
+      "Name": "EnableLinuxAntimwalreCheck",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
     }
   ]
 }
