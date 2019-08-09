@@ -314,7 +314,7 @@ class VirtualMachine: AzSVTBase
 		#Do not check for deallocated status for the VM and directly show the status from ASC
 		
 		#Execute block if OS is Linux and WorkSpaceId is configured
-		if($this.VMDetails.OSType -eq [OperatingSystemTypes]::Linux -and [FeatureFlightingManager]::GetFeatureStatus("EnableLinuxAntimwalreCheck",$($this.SubscriptionContext.SubscriptionId))) 
+		if($this.VMDetails.OSType -eq [OperatingSystemTypes]::Linux -and [FeatureFlightingManager]::GetFeatureStatus("EnableLinuxAntimalwareCheck",$($this.SubscriptionContext.SubscriptionId))) 
 		{
 
 			if($this.Workspace)

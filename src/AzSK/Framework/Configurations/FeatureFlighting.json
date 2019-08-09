@@ -101,7 +101,7 @@
       "IsEnabled": true
     },
     {
-      "Name": "EnableLinuxAntimwalreCheck",
+      "Name": "EnableLinuxAntimalwareCheck",
       "Description": "",
       "Sources": ["*"],
       "EnabledForSubs": [],
