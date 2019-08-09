@@ -15,9 +15,9 @@ class CredHygiene : CommandBase{
 
     CredHygiene([string] $subscriptionId, [InvocationInfo] $invocationContext): 
         Base($subscriptionId, $invocationContext)
-    {
-		$this.DoNotOpenOutputFolder = $true;
-	}
+		{
+			$this.DoNotOpenOutputFolder = $true;
+		}
 
     hidden [void] GetAzSKRotationMetadatContainer()
 	{
