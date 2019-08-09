@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest 
 
-class ControlSecurityFixes: CommandBase
+class ControlSecurityFixes: AzCommandBase
 {    
 	hidden [string] $ParameterFilePath = "";
 	hidden [string[]] $FolderPaths = @();
@@ -174,7 +174,7 @@ class ControlSecurityFixes: CommandBase
 			}
 
 			foreach ($path in $this.FolderPaths) {
-				$fileToLoad = $path + $typeMapping.FixFileName;
+				$fileToLoad = Join-Path $path $typeMapping.FixFileName
 				if(Test-Path -Path $fileToLoad)
 				{
 					. $fileToLoad
@@ -211,7 +211,7 @@ class ControlSecurityFixes: CommandBase
 			}
 
 			# Register/Deregister all listeners to cleanup the memory
-			[ListenerHelper]::RegisterListeners();
+			[AzListenerHelper]::RegisterListeners();
 		}
 		catch 
 		{

@@ -1,6 +1,6 @@
 
 Set-StrictMode -Version Latest
-class AzSKCfg: SVTBase
+class AzSKCfg: AzSVTBase
 {
     $RGPerms = $false
 	AzSKCfg([string] $subscriptionId,[SVTResource] $svtResource):
@@ -298,7 +298,7 @@ class AzSKCfg: SVTBase
 	{
 		#fetch SP permissions
 		$spPermissions = Get-AzRoleAssignment -serviceprincipalname $applicationId 
-		$currentContext = [Helpers]::GetCurrentRMContext();
+		$currentContext = [ContextHelper]::GetCurrentRMContext();
 		#Check subscription access
 		if(($spPermissions|measure-object).count -gt 0)
 		{

@@ -81,7 +81,7 @@ class SVTControlAttestation
 		if($null -ne $tempCurrentStateObject -and $null -ne $tempCurrentStateObject.DataObject)
 		{
 			Write-Host "Configuration data to be attested:" -ForegroundColor Cyan
-			Write-Host "$([Helpers]::ConvertToPson($tempCurrentStateObject.DataObject))"
+			Write-Host "$([JsonHelper]::ConvertToPson($tempCurrentStateObject.DataObject))"
 		}
 
 		if($isPrevAttested -and ($this.AttestControlsChoice -eq [AttestControls]::All -or $this.AttestControlsChoice -eq [AttestControls]::AlreadyAttested))
@@ -231,7 +231,7 @@ class SVTControlAttestation
 					$controlState.State = [StateData]::new();
 				}
 
-				$controlState.State.AttestedBy = [Helpers]::GetCurrentSessionUser();
+				$controlState.State.AttestedBy = [ContextHelper]::GetCurrentSessionUser();
 				$controlState.State.AttestedDate = [DateTime]::UtcNow;
 				$controlState.State.Justification = $Justification
 				break;
@@ -313,7 +313,7 @@ class SVTControlAttestation
 							$controlState.State = [StateData]::new();
 						}
 						$this.dirtyCommitState = $true
-						$controlState.State.AttestedBy = [Helpers]::GetCurrentSessionUser();
+						$controlState.State.AttestedBy = [ContextHelper]::GetCurrentSessionUser();
 						$controlState.State.AttestedDate = [DateTime]::UtcNow;
 						$controlState.State.Justification = $this.attestOptions.JustificationText				
 			}

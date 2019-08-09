@@ -211,7 +211,7 @@ class SVTResourceResolver: AzSKRoot
 					}
 
 					# Check if the resource group name corresponds to ERvNet
-					if(($erVnetResourceGroups -contains $svtResource.ResourceGroupName) -or ([Helpers]::IsvNetExpressRouteConnected($svtResource.ResourceName, $svtResource.ResourceGroupName)))
+					if(($erVnetResourceGroups -contains $svtResource.ResourceGroupName) -or ([ResourceHelper]::IsvNetExpressRouteConnected($svtResource.ResourceName, $svtResource.ResourceGroupName)))
 					{
 						# Set the ERvNet type
 						$svtResource.ResourceTypeMapping = ([SVTMapping]::Mapping |
@@ -233,7 +233,7 @@ class SVTResourceResolver: AzSKRoot
 				}
 			}
 			$this.SVTResourcesFoundCount = ($this.SVTResources | Measure-Object).Count
-					
+				
 			if((($this.ExcludeResourceGroupNames | Measure-Object).Count -gt 0) -or (($this.ExcludeResourceNames)| Measure-Object).Count -gt 0 -or (($this.ExcludeResourceTypeName) -ne 'All'))
 			{
 				$this.SVTResources = $this.ApplyResourceFilter($this.SVTResources)

@@ -134,8 +134,6 @@ class Constants
 
 	static [int] $DefaultControlExpiryInDays = 90
 	static [int] $PartialScanMaxRetryCount = 3
-	static [string] $NewModuleName = "AzSK"
-	static [string] $OldModuleName = "AzSDK"
 
 	#CA variables names
 	static [string] $AppResourceGroupNames = "AppResourceGroupNames"
@@ -174,6 +172,8 @@ class Constants
 	#Constants for credential rotation metadata
 	static [string] $RotationMetadataSubPath = (Join-Path "Temp" -ChildPath "RotationMetadata");
 	static [string] $RotationMetadataContainerName = "rotation-metadata"
+	static [string] $CredHygieneActionGroupName = "AzSKCredHygieneAG"
+	static [string] $CredHygieneActionGroupShortName = "azskchag"
 
 	static [void] SetAzSKModuleName($moduleName)
 	{

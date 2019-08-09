@@ -63,7 +63,7 @@ function Set-AzSKARMPolicies
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 
 	Process
@@ -97,7 +97,7 @@ function Set-AzSKARMPolicies
 
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -149,7 +149,7 @@ function Remove-AzSKARMPolicies
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 
 	Process
@@ -171,6 +171,6 @@ function Remove-AzSKARMPolicies
 
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }

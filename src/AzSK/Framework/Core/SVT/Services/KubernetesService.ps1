@@ -1,14 +1,7 @@
 Set-StrictMode -Version Latest 
-class KubernetesService: SVTBase
+class KubernetesService: AzSVTBase
 {
-
 	hidden [PSObject] $ResourceObject;
-	
-	KubernetesService([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-		$this.GetResourceObject();
-    }
 
     KubernetesService([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -21,7 +14,7 @@ class KubernetesService: SVTBase
         if (-not $this.ResourceObject) 
 		{
 			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
-            $AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+            $AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			if($null -ne $AccessToken)
 			{
 
@@ -93,7 +86,7 @@ class KubernetesService: SVTBase
 		{
 		    $requiredKubernetsVersion = $null
 		    $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
-            $AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+            $AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			$header = "Bearer " + $AccessToken
 			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
 

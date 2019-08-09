@@ -8,6 +8,7 @@
          "tags": [
             "Mandatory"
          ],
+         "applicableForRGs": ["*"],
          "enabled": true,
          "scope": "/subscriptions/$subscriptionId"
       }

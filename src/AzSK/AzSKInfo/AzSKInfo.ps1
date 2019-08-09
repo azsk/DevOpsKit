@@ -124,7 +124,7 @@ function Get-AzSKInfo
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 
 	Process
@@ -245,7 +245,7 @@ function Get-AzSKInfo
 
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 function Update-AzSKPersistedState 
@@ -298,7 +298,7 @@ function Update-AzSKPersistedState
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 
 	Process
@@ -319,7 +319,7 @@ function Update-AzSKPersistedState
 
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -355,7 +355,7 @@ function Get-AzSKSecurityRecommendationReport
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 
 	Process
@@ -376,7 +376,7 @@ function Get-AzSKSecurityRecommendationReport
 
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 

@@ -23,7 +23,7 @@ enum AttestationStatus
 	WillFixLater
 	ApprovedException
 	NotApplicable
-	StateConfirmed	
+	StateConfirmed
 }
 
 enum AttestControls 

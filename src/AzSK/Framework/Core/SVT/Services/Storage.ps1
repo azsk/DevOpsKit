@@ -1,16 +1,10 @@
 using namespace Microsoft.Azure.Management.Storage.Models
 using namespace Microsoft.WindowsAzure.Storage.Shared.Protocol
 Set-StrictMode -Version Latest 
-class Storage: SVTBase
+class Storage: AzSVTBase
 {       
 	hidden [PSObject] $ResourceObject;
 	hidden [bool] $LockExists = $false;
-
-    Storage([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-                 Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
 
     Storage([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -60,10 +54,6 @@ class Storage: SVTBase
 		$recourcelocktype = Get-AzResourceLock -ResourceName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType
 		if($recourcelocktype)
 		{
-			if($this.ResourceContext.ResourceGroupName -eq [OldConstants]::AzSDKRGName)
-			{
-				$result = $result | Where-Object {$_.Tags -notcontains "ResourceLocked" }
-			}
 			$this.LockExists = $true;
 			$this.ControlSettings.LockedResourcesTags | ForEach-Object{
 				 if($this.ResourceObject.Tags.ContainsKey($_.TagName) -and $this.ResourceObject.Tags[$_.TagName] -eq $_.TagValue)
@@ -154,7 +144,7 @@ class Storage: SVTBase
 			}
 
 			#Containers other than private
-			$publicContainers = $allContainers | Where-Object { $_.PublicAccess -ne  [Microsoft.WindowsAzure.Storage.Blob.BlobContainerPublicAccessType]::Off }
+			$publicContainers = $allContainers | Where-Object { $_.PublicAccess -ne  [Microsoft.Azure.Storage.Blob.BlobContainerPublicAccessType]::Off }
 				
 			if(($publicContainers | Measure-Object ).Count -eq 0)
 			{

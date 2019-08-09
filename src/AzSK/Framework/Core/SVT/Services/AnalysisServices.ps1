@@ -1,13 +1,7 @@
 Set-StrictMode -Version Latest 
-class AnalysisServices: SVTBase
+class AnalysisServices: AzSVTBase
 {    
 	hidden [PSObject] $ResourceObject;
-	   
-    AnalysisServices([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-	     $this.GetResourceObject();
-	}
 
     AnalysisServices([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -19,11 +13,11 @@ class AnalysisServices: SVTBase
     {
         if (-not $this.ResourceObject) 
 		{
-			#Using command Get-AzResource to get resource details (Admin and Backups details).
-			#Get-AzureRmAnalysisServicesServer command not provides Backups details 
-            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName `
-                                                       -ResourceGroupName $this.ResourceContext.ResourceGroupName `
-                                                       -ResourceType $this.ResourceContext.ResourceType
+			#Get resource object from context 
+			$this.ResourceObject =   Get-AzResource -Name $this.ResourceContext.ResourceName `
+									-ResourceGroupName $this.ResourceContext.ResourceGroupName `
+									-ResourceType $this.ResourceContext.ResourceType
+			
             if(-not $this.ResourceObject)
             {
 				throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))

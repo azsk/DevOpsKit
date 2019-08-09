@@ -48,38 +48,39 @@
     ProcessorArchitecture  = 'None'
 
     # Modules that must be imported into the global environment prior to importing this module
+    # Az module version: 2.4.0
     RequiredModules        = @(
-        @{ModuleName = 'Az.Accounts'; RequiredVersion = '1.2.1'}
-		@{ModuleName = 'Az.Storage'; RequiredVersion = '1.0.1'}
-        @{ModuleName = 'Az.AnalysisServices'; RequiredVersion = '1.0.0'}
-        @{ModuleName = 'Az.ApiManagement'; RequiredVersion = '1.0.0'}
+        @{ModuleName = 'Az.Accounts'; RequiredVersion = '1.6.0'}
+		@{ModuleName = 'Az.Storage'; RequiredVersion = '1.5.0'}
+        @{ModuleName = 'Az.AnalysisServices'; RequiredVersion = '1.1.0'}
+        @{ModuleName = 'Az.ApiManagement'; RequiredVersion = '1.2.0'}
 		@{ModuleName = 'Az.ApplicationInsights'; RequiredVersion = '1.0.0'}
-		@{ModuleName = 'Az.Automation'; RequiredVersion = '1.0.0'}
-		@{ModuleName = 'Az.Batch'; RequiredVersion = '1.0.0'}
-		@{ModuleName = 'Az.Cdn'; RequiredVersion = '1.0.0'}
-		@{ModuleName = 'Az.Compute'; RequiredVersion = '1.1.0'}
-		@{ModuleName = 'Az.DataFactory'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.Automation'; RequiredVersion = '1.3.0'}
+		@{ModuleName = 'Az.Batch'; RequiredVersion = '1.1.0'}
+		@{ModuleName = 'Az.Cdn'; RequiredVersion = '1.3.0'}
+		@{ModuleName = 'Az.Compute'; RequiredVersion = '2.4.0'}
+		@{ModuleName = 'Az.DataFactory'; RequiredVersion = '1.1.2'}
 		@{ModuleName = 'Az.DataLakeAnalytics'; RequiredVersion = '1.0.0'}
-		@{ModuleName = 'Az.DataLakeStore'; RequiredVersion = '1.0.1'}
-		@{ModuleName = 'Az.EventHub'; RequiredVersion = '1.0.0'}
-		@{ModuleName = 'Az.HDInsight'; RequiredVersion = '1.0.0'}
-		@{ModuleName = 'Az.Monitor'; RequiredVersion = '1.0.0'}
-		@{ModuleName = 'Az.KeyVault'; RequiredVersion = '1.0.0'}
-		@{ModuleName = 'Az.LogicApp'; RequiredVersion = '1.1.0'}
-		@{ModuleName = 'Az.Network'; RequiredVersion = '1.0.0'}
-		@{ModuleName = 'Az.NotificationHubs'; RequiredVersion = '1.0.0'}
-        @{ModuleName = 'Az.OperationalInsights'; RequiredVersion = '1.0.0'}
-		@{ModuleName = 'Az.PolicyInsights'; RequiredVersion = '1.0.0'}        
-		@{ModuleName = 'Az.RedisCache'; RequiredVersion = '1.0.0'}		
-		@{ModuleName = 'Az.Resources'; RequiredVersion = '1.1.0'}
-		@{ModuleName = 'Az.ServiceBus'; RequiredVersion = '1.0.0'}
-		@{ModuleName = 'Az.ServiceFabric'; RequiredVersion = '1.0.0'}
-		@{ModuleName = 'Az.Sql'; RequiredVersion = '1.0.1'}
+		@{ModuleName = 'Az.DataLakeStore'; RequiredVersion = '1.2.1'}
+		@{ModuleName = 'Az.EventHub'; RequiredVersion = '1.2.0'}
+		@{ModuleName = 'Az.HDInsight'; RequiredVersion = '2.0.0'}
+		@{ModuleName = 'Az.Monitor'; RequiredVersion = '1.2.1'}
+		@{ModuleName = 'Az.KeyVault'; RequiredVersion = '1.2.0'}
+		@{ModuleName = 'Az.LogicApp'; RequiredVersion = '1.2.1'}
+		@{ModuleName = 'Az.Network'; RequiredVersion = '1.11.0'}
+		@{ModuleName = 'Az.NotificationHubs'; RequiredVersion = '1.1.0'}
+        @{ModuleName = 'Az.OperationalInsights'; RequiredVersion = '1.3.1'}
+		@{ModuleName = 'Az.PolicyInsights'; RequiredVersion = '1.1.2'}        
+		@{ModuleName = 'Az.RedisCache'; RequiredVersion = '1.1.0'}		
+		@{ModuleName = 'Az.Resources'; RequiredVersion = '1.6.0'}
+		@{ModuleName = 'Az.ServiceBus'; RequiredVersion = '1.2.1'}
+		@{ModuleName = 'Az.ServiceFabric'; RequiredVersion = '1.1.1'}
+		@{ModuleName = 'Az.Sql'; RequiredVersion = '1.13.0'}
 		@{ModuleName = 'Az.StreamAnalytics'; RequiredVersion = '1.0.0'}
-		@{ModuleName = 'Az.TrafficManager'; RequiredVersion = '1.0.0'}		
-		@{ModuleName = 'Az.Websites'; RequiredVersion = '1.0.1'}	
-		@{ModuleName = 'Az.ContainerInstance'; RequiredVersion = '1.0.0'}	
-        @{ModuleName = 'Az.ContainerRegistry'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.TrafficManager'; RequiredVersion = '1.0.1'}		
+		@{ModuleName = 'Az.Websites'; RequiredVersion = '1.3.0'}	
+		@{ModuleName = 'Az.ContainerInstance'; RequiredVersion = '1.0.1'}	
+        @{ModuleName = 'Az.ContainerRegistry'; RequiredVersion = '1.0.1'}
     )
 
     # Assemblies that must be loaded prior to importing this module
@@ -151,7 +152,8 @@
         'Get-AzSKTrackedCredential',
         'Remove-AzSKTrackedCredential',
         'Update-AzSKTrackedCredential',
-        'New-AzSKTrackedCredential'
+        'New-AzSKTrackedCredential',
+        'New-AzSKTrackedCredentialGroup'
     )
 
     # Cmdlets to export from this module

@@ -14,6 +14,7 @@ class ResourceTypeMapping: SubscriptionMapping
     [string] $ResourceType
 }
 
+#Class used to create SVTResources list inside resolver
 class SVTResource
 {
 	[string] $ResourceId = "";
