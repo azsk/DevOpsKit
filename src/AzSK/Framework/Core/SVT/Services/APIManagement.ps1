@@ -85,8 +85,7 @@ class APIManagement: AzSVTBase
     {
 		if( $null -ne $this.APIMAPIs)
 		{
-			$nonCompliantAPIs = $this.APIMAPIs | `
-								Where-Object {$_.Protocols.count -gt 1 -or $_.Protocols[0] -ne [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementSchema]::Https } |`
+			$nonCompliantAPIs = $this.APIMAPIs | Where-Object {$_.Protocols.count -gt 1 -or $_.Protocols[0] -ne [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementSchema]::Https } |`
 								Select-Object ServiceName, ResourceGroupName, Name, ApiId, Protocols, ServiceUrl
 			if(($nonCompliantAPIs|Measure-Object).Count -gt 0)
 			{
