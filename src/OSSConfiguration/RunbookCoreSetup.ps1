@@ -740,6 +740,7 @@ else {
 	{
 		DownloadAzModuleWithRM -ModuleName Az.Automation -ModuleVersion 1.0.0 -Sync $true
 	}
+	Write-Output("CS: Creating helper schedule for importing modules into the automation account...")
 	ScheduleNewJob -intervalInMins $retryDownloadIntervalMins
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }
