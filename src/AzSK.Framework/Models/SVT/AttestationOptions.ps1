@@ -6,4 +6,5 @@ class AttestationOptions
 	[bool] $IsBulkClearModeOn = $false;
 	[string] $JustificationText;
 	[AttestationStatus] $AttestationStatus;
+	[bool] $IsExemptModeOn = $false;
 }
