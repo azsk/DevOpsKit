@@ -85,7 +85,9 @@ class APIManagement: AzSVTBase
     {
 		if( $null -ne $this.APIMAPIs)
 		{
-			$nonCompliantAPIs = $this.APIMAPIs | where-object{$_.Protocols.count -gt 1 -or $_.Protocols[0] -ne [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementSchema]::Https }
+			$nonCompliantAPIs = $this.APIMAPIs | `
+								Where-Object {$_.Protocols.count -gt 1 -or $_.Protocols[0] -ne [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementSchema]::Https } |`
+								Select-Object ServiceName, ResourceGroupName, Name, ApiId, Protocols, ServiceUrl
 			if(($nonCompliantAPIs|Measure-Object).Count -gt 0)
 			{
 			    $controlResult.AddMessage([VerificationResult]::Failed, "Below API(s) are configured to use non-secure HTTP access to the backend via API Management.", $nonCompliantAPIs)
