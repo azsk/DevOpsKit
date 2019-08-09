@@ -363,8 +363,8 @@ Class LogAnalyticsHelper{
 					{
 						foreach ($valuetable in $table) {
 							foreach ($row in $table.Rows) {
-								#If timestamp column value is null means row is empty
-								if($row["TimeGenerated"])
+								#If timestamp/first column value is null means row is empty
+								if($row[0])
 								{
 									$i = 0;
 									$count=$valuetable.Columns.Count;
