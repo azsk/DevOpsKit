@@ -92,6 +92,15 @@
       "IsEnabled": false
     },
     {
+      "Name": "EnablePIMResourceGroupTelemetry",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+    {
       "Name": "EnableLinuxAntimwalreCheck",
       "Description": "",
       "Sources": ["*"],
