@@ -158,6 +158,9 @@ class SVTControlAttestation
 					return $controlState;
 				}
 				
+				#Start: Exception approval for control
+				#Note: Will need to review this once the attestation functioanlity is enabled for AzSKDevOps - whether this option is required here or not!
+				#Please check the code block at line #242 - 247 as well
 				#In case when the user selects ApprovedException as the reason for attesting,
 				#they'll be prompted to provide the number of days till that approval expires.
 				$exceptionApprovalExpiryDate = ""
@@ -199,6 +202,7 @@ class SVTControlAttestation
 						$this.PublishException($_)
 					}
 				}
+				#End: Exception approval for control
 				
 				if($controlState.AttestationStatus -ne [AttestationStatus]::None)
 				{
@@ -234,6 +238,14 @@ class SVTControlAttestation
 				$controlState.State.AttestedBy = [ContextHelper]::GetCurrentSessionUser();
 				$controlState.State.AttestedDate = [DateTime]::UtcNow;
 				$controlState.State.Justification = $Justification
+
+				#In case of control exemption, calculating the exception approval(attestation) expiry date beforehand,
+				#based on the days entered by the user (default 6 months)
+				if($controlState.AttestationStatus -eq [AttestationStatus]::ApprovedException)
+				{
+					$controlState.State.ExpiryDate = $exceptionApprovalExpiryDate.ToString("MM/dd/yyyy");
+				}
+
 				break;
 			}
 			"2" #Clear Attestation
