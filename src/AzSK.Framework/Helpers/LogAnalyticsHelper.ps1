@@ -363,19 +363,24 @@ Class LogAnalyticsHelper{
 					{
 						foreach ($valuetable in $table) {
 							foreach ($row in $table.Rows) {
-								$i = 0;
-								$count=$valuetable.Columns.Count;
-								$properties = @{}            
-								foreach($col in $Columns)
+								#If timestamp column value is null means row is empty
+								if($row["TimeGenerated"])
 								{
-									if($i -lt  $count)
+									$i = 0;
+									$count=$valuetable.Columns.Count;
+									$properties = @{}            
+									foreach($col in $Columns)
 									{
-										$properties[$col.Name] = $row[$i];
+										if($i -lt  $count)
+										{
+											$properties[$col.Name] = $row[$i];
+										}
+										$i++;
 									}
-									$i++;
+									$objectView[$j] = (New-Object PSObject -Property $properties)
+									$j++;
 								}
-								$objectView[$j] = (New-Object PSObject -Property $properties)
-								$j++;
+								
 							}
 						}
 						$result=$objectView;

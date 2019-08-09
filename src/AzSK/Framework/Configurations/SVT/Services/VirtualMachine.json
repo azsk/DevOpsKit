@@ -26,7 +26,7 @@
        },
        {
           "ControlID": "Azure_VirtualMachine_SI_Enable_Antimalware",
-          "Description": "Antimalware must be enabled with real time protection on Windows Virtual Machine",
+          "Description": "Antimalware must be enabled with real time protection on Virtual Machine",
           "Id": "VirtualMachine130",
           "ControlSeverity": "High",
           "Automated": "Yes",
