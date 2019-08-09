@@ -90,15 +90,6 @@
       "DisabledForSubs": [],
       "UnderPreview": false,
       "IsEnabled": false
-    },
-    {
-      "Name": "EnablePIMResourceGroupTagTelemetry",
-      "Description": "",
-      "Sources": [ "*" ],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
     }
   ]
 }
