@@ -139,6 +139,10 @@ function Update-AzSKContinuousAssuranceForCluster{
         $WorkspaceName,
 
         [string]
+        [Alias("cn")]
+        $ClusterName,
+
+        [string]
         [Alias("rgn")]
         $ResourceGroupName,
 
