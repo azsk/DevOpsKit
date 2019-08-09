@@ -561,7 +561,7 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 			if(-not([string]::IsNullOrEmpty($erResourceGroups)))
 			{
 				$erResourceGroups.Split(",") | ForEach-Object {
-					if($allResourceGroups.ToLower() -Contains $_.ToLower()){
+					if($allResourceGroups.Trim().ToLower() -Contains $_.Trim().ToLower()){
 						$erResourceGroupsArray += $_
 					}
 				}
