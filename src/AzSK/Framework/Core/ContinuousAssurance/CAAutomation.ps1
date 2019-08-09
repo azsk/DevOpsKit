@@ -3116,9 +3116,10 @@ class CCAutomation: AzCommandBase
                 <# pathLengthConstraint #> 0,
                 <# critical #> $false)
 			$extensions.Add($basicConstraints)
-			# Create Private Key using CSP provider since Az.Accounts doesn't support KSP  
-            $csp = new-object system.security.cryptography.cspparameters(24, "microsoft enhanced rsa and aes cryptographic provider", [guid]::newguid())
-            $key = new-object system.security.cryptography.rsacryptoserviceprovider($keylength, $csp)
+			# Create Private Key using CSP provider since Az.Accounts doesn't support KSP 
+			# 24 -> PROV_RSA_AES provider
+            $csp = New-Object System.Security.Cryptography.cspparameters(24, "microsoft enhanced rsa and aes cryptographic provider", [guid]::newguid())
+            $key = New-Object System.Security.Cryptography.rsacryptoserviceprovider($keylength, $csp)
             $key.persistkeyincsp = $true
 
             # Create the subject of the certificate
