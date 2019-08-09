@@ -402,6 +402,28 @@ function CreateHelperSchedules()
 	}
 	DisableHelperSchedules
 }
+# Using AzureRM commands to create schedule for the first time since Az modules are not present
+function CreateHelperSchedulesAzureRM()
+{
+	Write-Output("CS: Creating required helper schedule(s)...")	
+	for($i = 1;$i -le 4; $i++)
+	{
+		$scheduleName = ""
+		if($i -eq 1)
+		{
+			$scheduleName = $CAHelperScheduleName
+		}
+		else
+		{
+			$scheduleName = [string]::Concat($CAHelperScheduleName,"_$i")		
+		}
+		$startTime = $(get-date).AddMinutes(15*$i)
+		New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleName `
+						-ResourceGroupName $AutomationAccountRG -StartTime $startTime `
+						-HourInterval 1 -Description "This schedule ensures that CA activity initiated by the Scan_Schedule actually completes. Do not disable/delete this schedule." `
+						-ErrorAction Stop | Out-Null 
+	}
+}
 
 function DisableHelperSchedules()
 {
@@ -505,7 +527,8 @@ $RunbookName = "Continuous_Assurance_Runbook"
 #PublicPSGalleryUrl is always same.
 $AzSKPSGalleryUrl = "https://www.powershellgallery.com"
 $PublicPSGalleryUrl = "https://www.powershellgallery.com"
-
+$retryDownloadIntervalMins = 10
+$monitorjobIntervalMins = 45
 #This gets replaced when org-policy is created/updated. This is the org-specific
 #url that helps bootstrap which module version to use within an org setup
 $azskVersionForOrg = "https://azsdkossep.azureedge.net/1.0.0/AzSK.Pre.json"
@@ -519,8 +542,6 @@ try
 	###Config end----------------------------------------------------
 	#initialize variables
 	$ResultModuleList = [ordered]@{}
-	$retryDownloadIntervalMins = 10
-	$monitorjobIntervalMins = 45
 	$tempUpdateToLatestVersion = Get-AutomationVariable -Name UpdateToLatestAzSKVersion -ErrorAction SilentlyContinue
     if($null -ne $tempUpdateToLatestVersion)
     {
@@ -741,5 +762,7 @@ else {
 	{
 		DownloadAzModuleWithRM -ModuleName Az.Automation -ModuleVersion 1.0.0 -Sync $true
 	}
+	Write-Output("CS: Creating helper schedule for importing modules into the automation account...")
+	CreateHelperSchedulesAzureRM 
 	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }
