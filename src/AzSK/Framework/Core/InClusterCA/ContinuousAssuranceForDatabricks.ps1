@@ -48,6 +48,15 @@ class DatabricksClusterCA : CommandBase {
         }
     }
 
+    [void] InferLASettings() {
+        # infer LA settings if not passed
+        if ([string]::IsNullOrEmpty($this.ResourceContext.LAWorkspaceId)) {
+            $settings = [ConfigurationManager]::GetAzSKSettings()
+            $this.ResourceContext.LAWorkspaceId = $settings.LAWSId
+            $this.ResourceContext.LASharedSecret = $settings.LAWSSharedKey
+        } 
+    }
+
     [PSObject] InvokeRestAPICall($EndPoint, $Method, $Body, $ErrorMessage) {
         try {
             $Header = @{
@@ -270,6 +279,9 @@ class DatabricksClusterCA : CommandBase {
         $HostNameKey = "DatabricksHostDomain"
         $NotebookFolderPath = "/AzSK"  
 
+        # set log analytics keys
+        $this.InferLASettings()
+
         # region Step 1: Create Secret Scope 
         # Check if Secret Scope already exists
         if ($this.CheckAzSKSecretScopeExists()) {
@@ -316,6 +328,10 @@ class DatabricksClusterCA : CommandBase {
             # passing null will create a job with 24hr frequency
             $this.CreateAzSKScanJob($null)
         }
+
+        # print log analytics settings
+        $this.PublishCustomMessage("Log Analytics metrics will be sent to:")
+        $this.PublishCustomMessage("Workspace Id: $($this.ResourceContext.LAWorkspaceId)")
 
         # Footer message
         $this.PublishCustomMessage("`n")
