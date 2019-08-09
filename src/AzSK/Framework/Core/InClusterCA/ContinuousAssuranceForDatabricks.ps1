@@ -51,6 +51,7 @@ class DatabricksClusterCA : CommandBase {
     [void] InferLASettings() {
         # infer LA settings if not passed
         if ([string]::IsNullOrEmpty($this.ResourceContext.LAWorkspaceId)) {
+            [LogAnalyticsHelper]::SetLAWSDetails()
             $settings = [ConfigurationManager]::GetAzSKSettings()
             $this.ResourceContext.LAWorkspaceId = $settings.LAWSId
             $this.ResourceContext.LASharedSecret = $settings.LAWSSharedKey
