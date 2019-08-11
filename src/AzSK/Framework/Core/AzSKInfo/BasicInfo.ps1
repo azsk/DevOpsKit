@@ -110,7 +110,7 @@ class BasicInfo: AzCommandBase
 
 		$configuredVersion = "Not Available"
 		$serverVersion = $rbacPolicy.DeprecatedAccountsVersion
-		$actionMessage = "Use 'Set-AzSKSubscriptionRBAC' to install Central accounts RBAC"
+		$actionMessage = "Use 'Remove-AzSKSubscriptionRBAC' to remove deprecated accounts RBAC"
 
 		if($null -ne $this.AzSKRG -and $this.AzSKRG.Tags.Count -gt 0 -and $this.AzSKRG.Tags.Contains([Constants]::DeprecatedRBACVersionTagName))
 		{
