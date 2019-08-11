@@ -285,6 +285,28 @@
            "VirtualMachine"
          ],
          "Enabled": true
+       },
+       {
+         "ControlID": "Azure_VirtualMachine_SI_Deploy_Required_Extension",
+         "Description": "All required extension must be deployed to the VM",
+         "Id": "VirtualMachine230",
+         "ControlSeverity": "Medium",
+         "Automated": "Yes",
+         "MethodName": "CheckRequiredExtension",
+         "Rationale": "Installing Guest configuration extension on VM allows you to run In-Guest Policy on the VM, making it possible to monitor system and security policies for compliance checks in the VM.",
+         "Recommendation": "This control checks that the VM meets the following criteria: [a] Guest Configuration Extension is installed and provisioned successfully, [b] 'SystemAssigned' managed identity (MSI) is enabled for the VM. Both, the required Guest Configuration extension and a system-assigned MSI, will be automatically deployed and configured when the machine is in scope for an Azure Policy assignment that includes definitions in the Guest Configuration category.",
+         "Tags": [
+           "SDL",
+           "TCP",
+           "Automated",
+           "Config",
+           "Windows",
+           "Linux",
+           "SI",
+           "ERvNet",
+           "VirtualMachine"
+         ],
+         "Enabled": true
        }
     ]
  }
