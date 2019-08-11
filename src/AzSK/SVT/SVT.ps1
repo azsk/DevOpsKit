@@ -50,7 +50,9 @@ function Get-AzSKAzureServicesSecurityStatus
 	.PARAMETER JustificationText
 		Use this option to provide an apt justification with proper business reason.
 	.PARAMETER AttestationStatus
-		Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater,NotApplicable,StateConfirmed)
+		Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater,NotApplicable,StateConfirmed,ApprovedException)
+	.PARAMETER AddException
+		Attester will be provided with an additional attestation reason (ApprovedException). Use this option to provide exemption for a control from contributing to compliance on the dashboard.
 
 	.NOTES
 	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
@@ -107,7 +109,7 @@ function Get-AzSKAzureServicesSecurityStatus
 		$TagName,
 
         [string]
-		[Parameter(Mandatory = $true, ParameterSetName = "TagName", HelpMessage="The value of the tag to query for Azure resource.")]
+		[Parameter(Mandatory = $false, ParameterSetName = "TagName", HelpMessage="The value of the tag to query for Azure resource.")]
 		[Alias("tgvs", "tgv", "TagValue")]
 		$TagValues,
 
@@ -148,7 +150,7 @@ function Get-AzSKAzureServicesSecurityStatus
 		[Alias("jt")]
 		$JustificationText,
 
-		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater","NotApplicable","StateConfirmed")] 
+		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater","NotApplicable","StateConfirmed","ApprovedException")] 
         [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater, NotApplicable,StateConfirmed(if valid for the control))")]
 		[Alias("as")]
 		$AttestationStatus = [AttestationStatus]::None,
@@ -217,13 +219,18 @@ function Get-AzSKAzureServicesSecurityStatus
 		[string]
 		[Alias("xrns")]
 		[Parameter(Mandatory = $false)]
-		$ExcludeResourceNames
+		$ExcludeResourceNames,
+
+		[switch]
+        [Parameter(Mandatory = $false)]
+		[Alias("aex")]
+		$AddException
     )
 
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 
 	Process
@@ -254,6 +261,7 @@ function Get-AzSKAzureServicesSecurityStatus
 				$attestationOptions.JustificationText = $JustificationText
 				$attestationOptions.AttestationStatus = $AttestationStatus
 				$attestationOptions.IsBulkClearModeOn = $BulkClear
+				$attestationOptions.IsExemptModeOn = $AddException
 				$secStatus.AttestationOptions = $attestationOptions;		
 
 				return $secStatus.EvaluateControlStatus();
@@ -267,7 +275,7 @@ function Get-AzSKAzureServicesSecurityStatus
 
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -307,6 +315,9 @@ function Get-AzSKSubscriptionSecurityStatus
 		Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
     .PARAMETER IncludeUserComments
 		Use this switch to display previously stored user comments for controls.
+	.PARAMETER AddException
+		Attester will be provided with an additional attestation reason (ApprovedException). Use this option to provide exemption for a control from contributing to compliance on the dashboard.
+		
 	.NOTES
 	This command helps the application team to verify whether their Azure subscription are compliant with the security guidance or not 
 
@@ -357,7 +368,7 @@ function Get-AzSKSubscriptionSecurityStatus
 		[Alias("jt")]
 		$JustificationText,
 
-		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater","NotApplicable","StateConfirmed")] 
+		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater","NotApplicable","StateConfirmed","ApprovedException")] 
         [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater, NotApplicable, StateConfirmed(if valid for the control))")]
 		[Alias("as")]
 		$AttestationStatus = [AttestationStatus]::None,
@@ -401,13 +412,17 @@ function Get-AzSKSubscriptionSecurityStatus
 		[Parameter(Mandatory = $false)]
 		[Alias("xcids")]
 		[AllowEmptyString()]
-		$ExcludeControlIds
+		$ExcludeControlIds,
 
+		[switch]
+        [Parameter(Mandatory = $false)]
+		[Alias("aex")]
+		$AddException
 	)
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);	
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
@@ -430,6 +445,7 @@ function Get-AzSKSubscriptionSecurityStatus
 				$attestationOptions.JustificationText = $JustificationText
 				$attestationOptions.AttestationStatus = $AttestationStatus
 				$attestationOptions.IsBulkClearModeOn = $BulkClear
+				$attestationOptions.IsExemptModeOn = $AddException
 				$sscore.AttestationOptions = $attestationOptions;				
 				
 				$sscore.GenerateFixScript = $GenerateFixScript
@@ -443,7 +459,7 @@ function Get-AzSKSubscriptionSecurityStatus
 	}
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }
 
@@ -474,9 +490,9 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 	.PARAMETER ControlIds
 		Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.
 	.PARAMETER ControlsToAttest
-			Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
+		Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.
 	.PARAMETER GenerateFixScript
-			 Provide this option to automatically generate scripts that can be run to address the control failures
+		Provide this option to automatically generate scripts that can be run to address the control failures
 
 	.NOTES
 	This command helps the application team to verify whether their ExpressRoute enabled VNets are compliant with the security guidance or not 
@@ -626,8 +642,10 @@ function Get-AzSKControlsStatus
 	.PARAMETER JustificationText
 			Use this option to provide an apt justification with proper business reason.
 	.PARAMETER AttestationStatus
-			Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater,NotApplicable,StateConfirmed)
-
+			Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater,NotApplicable,StateConfirmed,ApprovedException)
+	.PARAMETER AddException
+		Attester will be provided with an additional attestation reason (ApprovedException). Use this option to provide exemption for a control from contributing to compliance on the dashboard.
+		
 	.NOTES
 	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
 
@@ -675,7 +693,7 @@ function Get-AzSKControlsStatus
 		$TagName,
 
         [string]
-		[Parameter(Mandatory = $true, ParameterSetName = "TagName", HelpMessage="The value of the tag to query for Azure resource.")]
+		[Parameter(Mandatory = $false, ParameterSetName = "TagName", HelpMessage="The value of the tag to query for Azure resource.")]
 		[Alias("tgvs", "tgv", "TagValue")]
 		$TagValues,
 
@@ -715,7 +733,7 @@ function Get-AzSKControlsStatus
 		[Alias("jt")]
 		$JustificationText,
 
-		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater","NotApplicable","StateConfirmed")] 
+		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater","NotApplicable","StateConfirmed","ApprovedException")] 
         [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater, NotApplicable, StateConfirmed(if valid for the control))")]
 		[Alias("as")]
 		$AttestationStatus = [AttestationStatus]::None,
@@ -785,12 +803,17 @@ function Get-AzSKControlsStatus
 		[string]
 		[Alias("xrns")]
 		[Parameter(Mandatory = $false)]
-		$ExcludeResourceNames
+		$ExcludeResourceNames,
+
+		[switch]
+        [Parameter(Mandatory = $false)]
+		[Alias("aex")]
+		$AddException
     )
 	Begin
 	{
 		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
@@ -819,6 +842,7 @@ function Get-AzSKControlsStatus
 				$attestationOptions.JustificationText = $JustificationText
 				$attestationOptions.AttestationStatus = $AttestationStatus
 				$attestationOptions.IsBulkClearModeOn = $BulkClear
+				$attestationOptions.IsExemptModeOn = $AddException
 				$controlReport.AttestationOptions = $attestationOptions;	
 
 				return $controlReport.EvaluateControlStatus();
@@ -831,6 +855,6 @@ function Get-AzSKControlsStatus
 	}
 	End
 	{
-		[ListenerHelper]::UnregisterListeners();
+		[AzListenerHelper]::UnregisterListeners();
 	}
 }

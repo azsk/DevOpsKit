@@ -83,8 +83,10 @@ class Constants
 			[AttestationStatus]::NotAnIssue		="1";
 			[AttestationStatus]::WillNotFix		="2";
 			[AttestationStatus]::WillFixLater	="3";
-			[AttestationStatus]::NotApplicable	="4";
-			[AttestationStatus]::StateConfirmed ="5";
+			[AttestationStatus]::ApprovedException ="4";
+			[AttestationStatus]::NotApplicable	="5";
+			[AttestationStatus]::StateConfirmed ="6";
+			
 	}
 
 	static [string] $StorageAccountPreName= "azsk"
@@ -170,6 +172,8 @@ class Constants
 	#Constants for credential rotation metadata
 	static [string] $RotationMetadataSubPath = (Join-Path "Temp" -ChildPath "RotationMetadata");
 	static [string] $RotationMetadataContainerName = "rotation-metadata"
+	static [string] $CredHygieneActionGroupName = "AzSKCredHygieneAG"
+	static [string] $CredHygieneActionGroupShortName = "azskchag"
 
 	static [void] SetAzSKModuleName($moduleName)
 	{
@@ -189,4 +193,13 @@ class Constants
 			[Constants]::AzSKCurrentModuleVersion = $moduleVersion;
 		}
 	}
+
+	# LogAnalytics view file name
+	static [string] $LogAnalyticsGenericView = "AZSK.AM.LogAnalytics.GenericView.V6.lawsview"
+	# Constants for in cluster CA scanning
+	static [string] $DatabricksScanJobConfigurationUrl = "https://azsdkossep.azureedge.net/incluster_configuration/DatabricksConfiguration.json"
+	static [string] $DatabricksCANotebookUrl = "https://azsdkossep.azureedge.net/incluster_configuration/AzSK_DB.ipynb"
+	static [string] $HDInsightCANotebookUrl = "https://azsdkossep.azureedge.net/incluster_configuration/AzSK_HDI.ipynb"
+	static [string] $AzSKPyInstallUrl = "https://azsdkossep.azureedge.net/incluster_configuration/pipinstall.sh"
+	static [string] $AzSKPyUninstallUrl = "https://azsdkossep.azureedge.net/incluster_configuration/uninstall.sh"
 }

@@ -174,7 +174,7 @@ class ControlSecurityFixes: AzCommandBase
 			}
 
 			foreach ($path in $this.FolderPaths) {
-				$fileToLoad = $path + $typeMapping.FixFileName;
+				$fileToLoad = Join-Path $path $typeMapping.FixFileName
 				if(Test-Path -Path $fileToLoad)
 				{
 					. $fileToLoad
@@ -211,7 +211,7 @@ class ControlSecurityFixes: AzCommandBase
 			}
 
 			# Register/Deregister all listeners to cleanup the memory
-			[ListenerHelper]::RegisterListeners();
+			[AzListenerHelper]::RegisterListeners();
 		}
 		catch 
 		{

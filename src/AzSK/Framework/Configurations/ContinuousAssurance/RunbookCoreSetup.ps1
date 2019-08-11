@@ -41,6 +41,66 @@ function SetModules
   }
 }
 
+# To download Az base modules with Azure RM base commands
+function DownloadAzModuleWithRM
+{
+    param(
+         [string]$ModuleName,
+		 [string]$ModuleVersion,
+		 [bool] $Sync
+    )
+	$SearchResult = SearchModule -ModuleName $ModuleName -ModuleVersion $ModuleVersion
+    if($SearchResult)
+    {
+        $ModuleName = $SearchResult.title.'#text' # get correct casing for the Module name
+        $PackageDetails = Invoke-RestMethod -Method Get -UseBasicParsing -Uri $SearchResult.id
+		$ModuleVersion = $PackageDetails.entry.properties.version
+
+        #Build the content URL for the nuget package
+        $ModuleContentUrl = "$PublicPSGalleryUrl/api/v2/package/$ModuleName/$ModuleVersion"
+
+        # Find the actual blob storage location of the Module
+        do {
+            $ActualUrl = $ModuleContentUrl
+            $ModuleContentUrl = (Invoke-WebRequest -Uri $ModuleContentUrl -MaximumRedirection 0 -UseBasicParsing -ErrorAction Ignore).Headers.Location
+        } while(!$ModuleContentUrl.Contains(".nupkg"))
+
+		$ActualUrl = $ModuleContentUrl
+
+		$retryCount = 0
+		do{
+            $AutomationModule = $null
+            $retryCount++
+            $AutomationModule = New-AzureRmAutomationModule `
+            -ResourceGroupName $AutomationAccountRG `
+            -AutomationAccountName $AutomationAccountName `
+            -Name $ModuleName `
+            -ContentLink $ActualUrl
+		} while($null -eq $AutomationModule -and $retryCount -le 3)
+
+		Write-Output("CS: Importing module: [$ModuleName] Version: [$ModuleVersion] into the CA automation account.")
+
+		if($Sync)
+		{
+		 while(
+                $AutomationModule.ProvisioningState -ne "Created" -and
+                $AutomationModule.ProvisioningState -ne "Succeeded" -and
+                $AutomationModule.ProvisioningState -ne "Failed"
+                )
+                {
+                    #Module is in extracting state
+                    Start-Sleep -Seconds 120
+                    $AutomationModule = $AutomationModule | Get-AzureRmAutomationModule
+                }
+                if($AutomationModule.ProvisioningState -eq "Failed")
+                {
+					Write-Output ("CS: Failed to import: [$AutomationModule] into the automation account. Will retry in a bit.")
+					return;
+                }
+		}
+    }
+
+}
 function DownloadModule
 {
     param(
@@ -343,6 +403,28 @@ function CreateHelperSchedules()
 	DisableHelperSchedules
 }
 
+# Using AzureRM commands to create schedule for the first time since Az modules are not present
+function CreateHelperSchedulesAzureRM()
+{
+	Write-Output("CS: Creating required helper schedule(s)...")	
+	for($i = 1;$i -le 4; $i++)
+	{
+		$scheduleName = ""
+		if($i -eq 1)
+		{
+			$scheduleName = $CAHelperScheduleName
+		}
+		else
+		{
+			$scheduleName = [string]::Concat($CAHelperScheduleName,"_$i")		
+		}
+		$startTime = $(get-date).AddMinutes(15*$i)
+		New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleName `
+						-ResourceGroupName $AutomationAccountRG -StartTime $startTime `
+						-HourInterval 1 -Description "This schedule ensures that CA activity initiated by the Scan_Schedule actually completes. Do not disable/delete this schedule." `
+						-ErrorAction Stop | Out-Null 
+	}
+}
 function DisableHelperSchedules()
 {
     Get-AzAutomationSchedule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | `
@@ -378,7 +460,26 @@ function EnableHelperSchedule($scheduleName)
         $scheduleName = $scheduleName[0]
     }
     #Enable only required schedule and disable others
-    $enabledSchedule = Set-AzAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true -ErrorAction SilentlyContinue
+	$isRegistered = (Get-AzAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG `
+						-RunbookName $RunbookName -ScheduleName $scheduleName -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0
+	if(!$isRegistered)
+	{
+		Write-Output ("CS: CA Runbook is not linked to the Scheduler. Linking....")
+		$sched = Register-AzAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $scheduleName `
+		-ResourceGroupName $AutomationAccountRG `
+		-AutomationAccountName $AutomationAccountName   
+		if($sched)
+		{
+			Write-Output ("CS: Linked RB: [$($sched.RunbookName)]")
+            PublishEvent -EventName "CA Helper schedule relinked" -Properties @{"ScheduleName" = ($sched.ScheduleName);} 
+		}
+		else{
+			Write-Output ("CS: Failed to link RB. Will retry later.")
+			PublishEvent -EventName "CA Helper schedule relink failed" -Properties @{"ScheduleName" = ($scheduleName);}
+		}
+
+	}
+	$enabledSchedule = Set-AzAutomationSchedule -Name $scheduleName -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -IsEnabled $true -ErrorAction SilentlyContinue
 	if(($enabledSchedule|Measure-Object).Count -gt 0 -and $enabledSchedule.IsEnabled)
 	{
 		DisableHelperSchedules -excludeSchedule $scheduleName
@@ -414,69 +515,67 @@ if ((-not [string]::IsNullOrWhiteSpace($isAzAccountsAvailable)) -and (-not [stri
 {	
 	$Global:isAzAvailable = $true
 }
+$setupTimer = [System.Diagnostics.Stopwatch]::StartNew();
+PublishEvent -EventName "CA Setup Started"
+Write-Output("CS: Starting core setup...")
+
+###Config start--------------------------------------------------
+$AzSKModuleName = "AzSK"
+$RunbookName = "Continuous_Assurance_Runbook"
+$retryDownloadIntervalMins = 10
+$monitorjobIntervalMins = 45
+#These get set as constants during the build process (e.g., AzSKStaging will have a diff URL)
+#PublicPSGalleryUrl is always same.
+$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
+$PublicPSGalleryUrl = "https://www.powershellgallery.com"
+
+#This gets replaced when org-policy is created/updated. This is the org-specific
+#url that helps bootstrap which module version to use within an org setup
+$azskVersionForOrg = "https://azsdkossep.azureedge.net/1.0.0/AzSK.Pre.json"
+
+#We use this to check if another job is running...
+$Global:FoundExistingJob = $false;
 if($Global:isAzAvailable)
 {
-	Write-Output("CS: Az module is available...")
-	try
+try
+{
+	###Config end----------------------------------------------------
+	#initialize variables
+	$ResultModuleList = [ordered]@{}
+	$tempUpdateToLatestVersion = Get-AutomationVariable -Name UpdateToLatestAzSKVersion -ErrorAction SilentlyContinue
+    if($null -ne $tempUpdateToLatestVersion)
+    {
+		$UpdateToLatestVersion = ConvertStringToBoolean($tempUpdateToLatestVersion)
+	}
+	#We get sub id from RunAsConnection
+	$SubscriptionID = $RunAsConnection.SubscriptionID
+	
+	if(IsScanComplete)
 	{
-		$setupTimer = [System.Diagnostics.Stopwatch]::StartNew();
-		PublishEvent -EventName "CA Setup Started"
-		Write-Output("CS: Starting core setup...")
-
-		###Config start--------------------------------------------------
-		$AzSKModuleName = "AzSK"
-		$RunbookName = "Continuous_Assurance_Runbook"
+		CreateHelperSchedules
+		return
+    }
+    $jobs = Get-AzAutomationJob -Name $RunbookName -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName
+        
+	#Find out how many times has CA runbook run today for this account...
+	$TodaysJobs = $jobs | Where-Object {$_.CreationTime.UtcDateTime.Date -eq $(get-date).ToUniversalTime().Date}
+	
+	
+	#Under normal circumstances, we should not see too many runs on a single day within a CA setup
+	#If that is what is happening, let us stop and also disable further retries on the same day.
+	if($TodaysJobs.Count -gt 25)
+	{
+		Write-Error("CS: Daily job retry limit exceeded. Will disable retries for today. If this recurs each day, please contact your support team.")
+		#The Scan_Schedule will attempt a retry again next day. 
+		#We don't disable Scan_Schedule because then we won't have a way to 'auto-recover' CA setups.
+		PublishEvent -EventName "CA Setup Fatal Error" -Properties @{"JobsCount"=$TodaysJobs.Count} -Metrics @{"TimeTakenInMs" =$setupTimer.ElapsedMilliseconds; "SuccessCount" = 0}
 		
-		#These get set as constants during the build process (e.g., AzSKStaging will have a diff URL)
-		#PublicPSGalleryUrl is always same.
-		$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
-		$PublicPSGalleryUrl = "https://www.powershellgallery.com"
-
-		#This gets replaced when org-policy is created/updated. This is the org-specific
-		#url that helps bootstrap which module version to use within an org setup
-		$azskVersionForOrg = "#AzSKConfigURL#"
-
-		#We use this to check if another job is running...
-		$Global:FoundExistingJob = $false;
-		###Config end----------------------------------------------------
-		#initialize variables
-		$ResultModuleList = [ordered]@{}
-		$retryDownloadIntervalMins = 10
-		$monitorjobIntervalMins = 45
-		$tempUpdateToLatestVersion = Get-AutomationVariable -Name UpdateToLatestAzSKVersion -ErrorAction SilentlyContinue
-		if($null -ne $tempUpdateToLatestVersion)
-		{
-			$UpdateToLatestVersion = ConvertStringToBoolean($tempUpdateToLatestVersion)
-		}
-		#We get sub id from RunAsConnection
-		$SubscriptionID = $RunAsConnection.SubscriptionID
-		
-		if(IsScanComplete)
-		{
-			CreateHelperSchedules
-			return
-		}
-		$jobs = Get-AzAutomationJob -Name $RunbookName -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName
-			
-		#Find out how many times has CA runbook run today for this account...
-		$TodaysJobs = $jobs | Where-Object {$_.CreationTime.UtcDateTime.Date -eq $(get-date).ToUniversalTime().Date}
-		
-		
-		#Under normal circumstances, we should not see too many runs on a single day within a CA setup
-		#If that is what is happening, let us stop and also disable further retries on the same day.
-		if($TodaysJobs.Count -gt 25)
-		{
-			Write-Error("CS: Daily job retry limit exceeded. Will disable retries for today. If this recurs each day, please contact your support team.")
-			#The Scan_Schedule will attempt a retry again next day. 
-			#We don't disable Scan_Schedule because then we won't have a way to 'auto-recover' CA setups.
-			PublishEvent -EventName "CA Setup Fatal Error" -Properties @{"JobsCount"=$TodaysJobs.Count} -Metrics @{"TimeTakenInMs" =$setupTimer.ElapsedMilliseconds; "SuccessCount" = 0}
-			
-			#Disable the helper schedule
-			DisableHelperSchedules
-			return;
-		}
-		#Check if a scan job is already running. If so, we don't need to duplicate effort!
-		$TotalJobsRunning = $jobs | Where-Object { $_.Status -in ("Queued", "Starting", "Resuming", "Running",  "Activating")}
+		#Disable the helper schedule
+		DisableHelperSchedules
+		return;
+	}
+	#Check if a scan job is already running. If so, we don't need to duplicate effort!
+	$TotalJobsRunning = $jobs | Where-Object { $_.Status -in ("Queued", "Starting", "Resuming", "Running",  "Activating")}
 
 		ScheduleNewJob -intervalInMins $monitorjobIntervalMins 
 		$NoOfRecentActiveRunningJobs = 0    
@@ -557,6 +656,37 @@ if($Global:isAzAvailable)
 		if($azskModule -and ($azskModule.Version -ne  $desiredAzSKVersion))
 		{
 			Write-Output ("CS: Installed $AzSKModuleName version: [" + $azskModule.Version + "] in provisioning state: [" + $azskModule.ProvisioningState + "]. Expected version: [$desiredAzSKVersion]")
+	      #########################Invoke AzSK Recovery code in case of module is in importing state longer than 1 day#######################
+		try{
+
+			$unHealthyModuleList = Get-AzAutomationModule -ResourceGroupName $AutomationAccountRG -AutomationAccountName $AutomationAccountName | Where-Object { -not ($_.ProvisioningState -eq "Succeeded" -or $_.ProvisioningState -eq "Created") -and $_.LastModifiedTime -lt $(get-date).AddDays(-2)}
+			
+			if(($unHealthyModuleList | Measure-Object).Count -gt 0)
+			{
+				Write-Output ("CS: RecoveryStep- Automation account found in unhealthy status.")
+				PublishEvent -EventName "CA Recovery: Start AzSK recovery"
+				PublishEvent -EventName "CA Recovery:  Unhealthy module list" -Properties @{
+							"ModuleList" =  $unHealthyModuleList | ConvertTo-Json -Depth 5;
+					}
+				
+				$coreModuleList = $unHealthyModuleList | where-Object { $_.Name -eq "Az.Account" -or $_.Name -eq "Az.Automation"}
+
+				if(($coreModuleList| Measure-Object).Count -gt 0)
+				{
+					PublishEvent -EventName "CA Recovery: Found Core module unhealthy"
+				}
+
+				Write-Output ("CS: RecoveryStep- Removing unhealthy modules...")
+				$unHealthyModuleList | Where-Object { $_.Name -notin ("Az.Account","Az.Automation")  } | Remove-AzAutomationModule -Force
+				Write-Output ("CS: RecoveryStep- Completed removing unhealthy modules.")
+				PublishEvent -EventName "CA Recovery: Completed AzSK recovery "
+			}
+		}
+		catch
+		{
+			PublishEvent -EventName "CA Recovery: exception" -Properties @{ "ErrorRecord" = ($_ | Out-String) } 
+		}
+		##############################End of AzSK Recovery code ###################################
 		}
 		#Telemetry
 		PublishEvent -EventName "CA Setup Required Modules State" -Properties @{
@@ -613,7 +743,24 @@ if($Global:isAzAvailable)
 	}
 }
 else {
-	Write-Output ("CS: Az module is not available. Invoking core setup AzureRm script.")
-	$CoreSetupSrcUrl = "[#CoreSetupAzureRm#]"
-	InvokeScript -policyStoreURL $CoreSetupSrcUrl -fileName "RunbookCoreSetupAzureRm.ps1" -version "1.0.0"
+	Write-Output ("CS: Checking if Az.Accounts and Az.Automation present in automation account.")
+	$AzModule = Get-AzureRmAutomationModule `
+    -ResourceGroupName $AutomationAccountRG `
+    -AutomationAccountName $AutomationAccountName `
+	-Name "Az.Accounts" -ErrorAction SilentlyContinue
+	if(-not $AzModule)
+	{
+		DownloadAzModuleWithRM -ModuleName Az.Accounts -ModuleVersion 1.2.1 -Sync $true
+	}
+	$AzModule = Get-AzureRmAutomationModule `
+    -ResourceGroupName $AutomationAccountRG `
+    -AutomationAccountName $AutomationAccountName `
+	-Name "Az.Automation" -ErrorAction SilentlyContinue
+	if(-not $AzModule)
+	{
+		DownloadAzModuleWithRM -ModuleName Az.Automation -ModuleVersion 1.0.0 -Sync $true
+	}
+	Write-Output("CS: Creating helper schedule for importing modules into the automation account...")
+	CreateHelperSchedulesAzureRM 
+	PublishEvent -EventName "CA Setup Completed" -Metrics @{"TimeTakenInMs" = $setupTimer.ElapsedMilliseconds;"SuccessCount" = 1}
 }

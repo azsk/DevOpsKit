@@ -2650,6 +2650,8 @@ class CCAutomation: AzCommandBase
 	}
 	hidden [void] NewEmptyAutomationAccount()
 	{
+		try {
+			
 		#region :check if resource provider is registered
 		[ResourceHelper]::RegisterResourceProviderIfNotRegistered("Microsoft.Automation");
 		#endregion
@@ -2666,6 +2668,15 @@ class CCAutomation: AzCommandBase
 		$this.OutputObject.AutomationAccount  = New-AzAutomationAccount -ResourceGroupName $this.AutomationAccount.ResourceGroup `
 		-Name $this.AutomationAccount.Name -Location $this.AutomationAccount.Location `
 		-Plan Basic -Tags $this.AutomationAccount.AccountTags -ErrorAction Stop | Select-Object AutomationAccountName,Location,Plan,ResourceGroupName,State,Tags
+	}
+	Catch{
+		$this.PublishCustomMessage("$($_.Exception.Message)", [MessageType]::Warning)
+		if([Helpers]::CheckMember($_,"Exception.Response.Content"))
+		{
+			$this.PublishCustomMessage("$($_.Exception.Response.Content)", [MessageType]::Warning)
+		}
+	}
+	
 	}
 	hidden [void] NewCCRunbook()
 	{
@@ -3105,8 +3116,11 @@ class CCAutomation: AzCommandBase
                 <# pathLengthConstraint #> 0,
                 <# critical #> $false)
 			$extensions.Add($basicConstraints)
-			# Create Private Key
-            $key = [System.Security.Cryptography.RSA]::Create($KeyLength)
+			# Create Private Key using CSP provider since Az.Accounts doesn't support KSP 
+			# 24 -> PROV_RSA_AES provider
+            $csp = New-Object System.Security.Cryptography.CspParameters(24, "Microsoft Enhanced RSA and AES Cryptographic Provider", [Guid]::NewGuid())
+			$key = New-Object System.Security.Cryptography.RSACryptoServiceProvider($KeyLength, $csp)
+			$key.PersistKeyInCsp = $true
 
             # Create the subject of the certificate
             $subject = "CN=$azskADAppName"

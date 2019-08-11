@@ -85,12 +85,12 @@ class SQLDatabase: AzSVTBase
 
     hidden [ControlResult] CheckSqlServerAuditing([ControlResult] $controlResult)
     {
-        $serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
+        $serverAudit = Get-AzSqlServerAudit -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
 
 		$controlResult.AddMessage([MessageData]::new("Current audit status for SQL server [$($this.ResourceContext.ResourceName)]:", $serverAudit))
 
 		if($null -ne $serverAudit){
-				$isCompliant = (($serverAudit.AuditState -eq [AuditStateType]::Enabled) `
+				$isCompliant = (($serverAudit.BlobStorageTargetState -eq [AuditStateType]::Enabled) `
                                -and ($serverAudit.RetentionInDays -eq $this.ControlSettings.SqlServer.AuditRetentionPeriod_Min -or $serverAudit.RetentionInDays -eq $this.ControlSettings.SqlServer.AuditRetentionPeriod_Forever))
 
 				if ($isCompliant){
@@ -204,15 +204,16 @@ class SQLDatabase: AzSVTBase
         $isCompliant = $false
 
 		#First check if the server auditing is enabled, without which TD does not work
-	    $serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName.ToLower() -ErrorAction Stop
+	    $serverAudit = Get-AzSqlServerAudit -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName.ToLower() -ErrorAction Stop
 
 		if($null -ne $serverAudit){
 			#Check if Audit is Enabled 
-				if($serverAudit.AuditState -eq [AuditStateType]::Enabled){
-						$serverThreat = Get-AzSqlServerThreatDetectionPolicy `
+				if($serverAudit.BlobStorageTargetState -eq [AuditStateType]::Enabled){
+					# TODO: We are temporarily suppressing the alias deprecation warning message given by the below Az.SQL cmdlet.
+						$serverThreat = Get-AzSqlServerAdvancedThreatProtectionSettings `
 									-ResourceGroupName $this.ResourceContext.ResourceGroupName `
 									-ServerName $this.ResourceContext.ResourceName.ToLower() `
-									-ErrorAction Stop
+									-ErrorAction Stop -WarningAction SilentlyContinue
 
 						$controlResult.AddMessage([MessageData]::new("Current threat detection status for SQL server ["+ $this.ResourceContext.ResourceName +"] is",
 															($serverThreat)));
@@ -399,15 +400,17 @@ class SQLDatabase: AzSVTBase
 		return $controlResult;
 	}
 
+	# TODO: This function is not being called. We can delete this function if not being used. 
 	hidden [bool] IsServerThreatDetectionEnabled(){
 			$isCompliant = $false
-			$serverAudit = Get-AzSqlServerAuditing -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
+			$serverAudit = Get-AzSqlServerAudit -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
 			if($null -ne $serverAudit){
-				if($serverAudit.AuditState -eq 'Enabled'){
-							$serverThreat = Get-AzSqlServerThreatDetectionPolicy `
+				if($serverAudit.BlobStorageTargetState -eq 'Enabled'){
+					# TODO: We are temporarily suppressing the alias deprecation warning message given by the below Az.SQL cmdlet.
+							$serverThreat = Get-AzSqlServerAdvancedThreatProtectionSettings `
                                 			-ResourceGroupName $this.ResourceContext.ResourceGroupName `
                                 			-ServerName $this.ResourceContext.ResourceName `
-                                			-ErrorAction Stop
+                                			-ErrorAction Stop -WarningAction SilentlyContinue
 							$excludedTypeCount = ($serverThreat.ExcludedDetectionTypes | Measure-Object ).Count
 							$isCompliant =  (($serverThreat.ThreatDetectionState -eq [ThreatDetectionStateType]::Enabled) `
                                 			-and ($excludedTypeCount -eq 0) `

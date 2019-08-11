@@ -586,6 +586,10 @@ class Helpers {
                     $result = [VerificationResult]::Passed;
                     break;
                 }
+                ([AttestationStatus]::ApprovedException) {
+                    $result = $verificationResult;
+                    break;
+                }
             }
             #}
             #elseif($verificationResult -eq [VerificationResult]::Failed -or $verificationResult -eq [VerificationResult]::Error)
@@ -784,7 +788,7 @@ class Helpers {
         }
         elseif($MakeFolderEmpty)
         {
-            Remove-Item -Path "$FolderPath*" -Force -Recurse
+            Remove-Item -Path (Join-Path $FolderPath "*") -Force -Recurse
         }
     }
 
@@ -841,6 +845,10 @@ class Helpers {
         return $UpdatedUrl
     }
 
+    static [string] ReadInput($Prompt) {
+        return (Read-Host -Prompt $Prompt).Trim()
+    }
+    
     static [string] CreateSharedKey([string] $StringToSign,[string] $ResourceName,[string] $AccessKey)
 	{
         $KeyBytes = [System.Convert]::FromBase64String($AccessKey)
@@ -852,6 +860,5 @@ class Helpers {
         $sharedKey = $ResourceName+":"+$SignedString
         return $sharedKey    	
     }
-
 }
 

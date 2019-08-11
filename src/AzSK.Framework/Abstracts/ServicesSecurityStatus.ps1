@@ -60,7 +60,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 			{
 				$this.CommandError($_);
 			}
-			#[ListenerHelper]::RegisterListeners();
+			#[AzListenerHelper]::RegisterListeners();
 				 
 			}
 			$svtClassName = [SVTMapping]::SubscriptionMapping.ClassName;
@@ -103,7 +103,13 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		{
 			throw [System.ArgumentException] ("The argument 'methodNameToCall' is null. Pass the reference of method to call. e.g.: [YourClass]::new().YourMethod");
 		}
-
+		if($this.Severity)
+		{
+			
+			$this.Severity = $this.ConvertToStringArray($this.Severity)
+			$this.Severity = [ControlHelper]::CheckValidSeverities($this.Severity);
+			
+		}
 		[SVTEventContext[]] $result = @();
 		
 		if(($resourcesList | Measure-Object).Count -eq 0)
@@ -250,7 +256,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				# Register/Deregister all listeners to cleanup the memory
 				if([FeatureFlightingManager]::GetFeatureStatus("EnableListenerReset","*") -eq $true)
 				{
-					[ListenerHelper]::RegisterListeners();
+					[AzListenerHelper]::RegisterListeners();
 				}
 			}
             catch
@@ -536,5 +542,6 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		$excludedObj | Add-Member -NotePropertyName ExcludedResourceType -NotePropertyValue $SVTResolver.ExcludeResourceTypeName 
 		$excludedObj | Add-Member -NotePropertyName ExcludeResourceNames -NotePropertyValue $SVTResolver.ExcludeResourceNames 
 		$this.PublishAzSKRootEvent([AzSKRootEvent]::WriteExcludedResources,$excludedObj);
-	}	
+	}
+	
 }
