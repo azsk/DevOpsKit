@@ -48,7 +48,8 @@ function DownloadAzModuleWithRM
          [string]$ModuleName,
 		 [string]$ModuleVersion,
 		 [bool] $Sync
-    )
+	)
+	$ProvisioningState = $true
 	$SearchResult = SearchModule -ModuleName $ModuleName -ModuleVersion $ModuleVersion
     if($SearchResult)
     {
@@ -94,12 +95,16 @@ function DownloadAzModuleWithRM
                 }
                 if($AutomationModule.ProvisioningState -eq "Failed")
                 {
+					$ProvisioningState = $false
 					Write-Output ("CS: Failed to import: [$AutomationModule] into the automation account. Will retry in a bit.")
 					return;
                 }
 		}
     }
-
+    if(-not $ProvisioningState)
+	{
+		DownloadAzModuleWithRM -ModuleName $ModuleName -ModuleVersion $ModuleVersion -Sync $true
+	}
 }
 function DownloadModule
 {
@@ -406,24 +411,21 @@ function CreateHelperSchedules()
 # Using AzureRM commands to create schedule for the first time since Az modules are not present
 function CreateHelperSchedulesAzureRM()
 {
-	Write-Output("CS: Creating required helper schedule(s)...")	
-	for($i = 1;$i -le 4; $i++)
+	Write-Output("CS: Creating required helper schedule...")	
+	$scheduleName = $CAHelperScheduleName
+	$startTime = $(get-date).AddMinutes(15)
+	New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleName `
+					-ResourceGroupName $AutomationAccountRG -StartTime $startTime `
+					-HourInterval 1 -Description "This schedule ensures that CA activity initiated by the Scan_Schedule actually completes. Do not disable/delete this schedule." `
+					-ErrorAction Stop | Out-Null 
+	$isRegistered = (Get-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG `
+	-RunbookName $RunbookName -ScheduleName $scheduleName -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0
+    if(!$isRegistered)
 	{
-		$scheduleName = ""
-		if($i -eq 1)
-		{
-			$scheduleName = $CAHelperScheduleName
-		}
-		else
-		{
-			$scheduleName = [string]::Concat($CAHelperScheduleName,"_$i")		
-		}
-		$startTime = $(get-date).AddMinutes(15*$i)
-		New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleName `
-						-ResourceGroupName $AutomationAccountRG -StartTime $startTime `
-						-HourInterval 1 -Description "This schedule ensures that CA activity initiated by the Scan_Schedule actually completes. Do not disable/delete this schedule." `
-						-ErrorAction Stop | Out-Null 
-	}
+		Register-AzureRmAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $scheduleName `
+		-ResourceGroupName $AutomationAccountRG `
+		-AutomationAccountName $AutomationAccountName -ErrorAction Stop | Out-Null
+	}	
 }
 function DisableHelperSchedules()
 {
