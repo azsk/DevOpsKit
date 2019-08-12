@@ -3116,12 +3116,18 @@ class CCAutomation: AzCommandBase
                 <# pathLengthConstraint #> 0,
                 <# critical #> $false)
 			$extensions.Add($basicConstraints)
+            $IsWindows = [Environment]::OSVersion.VersionString.Contains('Windows')
 			# Create Private Key using CSP provider since Az.Accounts doesn't support KSP 
 			# 24 -> PROV_RSA_AES provider
-            $csp = New-Object System.Security.Cryptography.CspParameters(24, "Microsoft Enhanced RSA and AES Cryptographic Provider", [Guid]::NewGuid())
-			$key = New-Object System.Security.Cryptography.RSACryptoServiceProvider($KeyLength, $csp)
-			$key.PersistKeyInCsp = $true
-
+			if ($IsWindows)
+            {
+                $csp = New-Object System.Security.Cryptography.CspParameters(24, "Microsoft Enhanced RSA and AES Cryptographic Provider", [Guid]::NewGuid())
+				$key = New-Object System.Security.Cryptography.RSACryptoServiceProvider($KeyLength, $csp)
+				$key.PersistKeyInCsp = $true
+			}
+			else {
+				$key = [System.Security.Cryptography.RSA]::Create($KeyLength)
+			}
             # Create the subject of the certificate
             $subject = "CN=$azskADAppName"
 
@@ -3143,7 +3149,6 @@ class CCAutomation: AzCommandBase
             }
 
             $cert = $certRequest.CreateSelfSigned($certificate.CertStartDate, $certificate.CertEndDate)
-            $IsWindows = [Environment]::OSVersion.VersionString.Contains('Windows')
             # FriendlyName is not supported on UNIX platforms
             if ($IsWindows)
             {
