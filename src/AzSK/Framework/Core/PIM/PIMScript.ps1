@@ -553,7 +553,7 @@ class PIM: AzCommandBase {
                 if(!$Force)
                 {
                     $this.PublishCustomMessage($($users | Format-Table  -AutoSize -Wrap -Property PrincipalName, RoleName, OriginalId | Out-String), [MessageType]::Default)
-                    Write-Host "The above role assignments will be moved from 'permanent' to 'PIM'. `nPlease confirm (Y/N): " -ForegroundColor Yellow -NoNewline
+                    Write-Host "The above listed role assignments will be removed. `nPlease confirm (Y/N): " -ForegroundColor Yellow -NoNewline
                     $userResp = Read-Host
                 } 
                 if ($userResp -eq 'y' -or $Force) {
@@ -587,7 +587,7 @@ class PIM: AzCommandBase {
         $soonToExpireAssignments = @();
         $criticalRoles += $this.ConvertToStringArray($RoleNames)
         $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName)
-        if(($resources | Measure-Object).Count -gt 0)
+        if(($resources | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resources.ResourceId)))
         {
             $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $false)
             $roleAssignments = $roleAssignments | Where-Object{$_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group' -and $_.memberType -ne 'Inherited'}
