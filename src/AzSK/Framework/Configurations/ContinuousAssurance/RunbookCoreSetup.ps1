@@ -48,7 +48,8 @@ function DownloadAzModuleWithRM
          [string]$ModuleName,
 		 [string]$ModuleVersion,
 		 [bool] $Sync
-    )
+	)
+	$ProvisioningState = $true
 	$SearchResult = SearchModule -ModuleName $ModuleName -ModuleVersion $ModuleVersion
     if($SearchResult)
     {
@@ -94,12 +95,16 @@ function DownloadAzModuleWithRM
                 }
                 if($AutomationModule.ProvisioningState -eq "Failed")
                 {
+					$ProvisioningState = $false
 					Write-Output ("CS: Failed to import: [$AutomationModule] into the automation account. Will retry in a bit.")
 					return;
                 }
 		}
     }
-
+    if(-not $ProvisioningState)
+	{
+		DownloadAzModuleWithRM -ModuleName $ModuleName -ModuleVersion $ModuleVersion -Sync $true
+	}
 }
 function DownloadModule
 {
