@@ -221,23 +221,11 @@ class ControlStateExtension
 					#Do Nothing. Below code would create a default indexer.
 				}
 			}
-#<<<<<<< HEAD  PS COre changes conflicts
-#=======
-# 		}
-# 		[ControlStateIndexer[]] $indexerObjects = @();
-# 		$this.ControlStateIndexer  = $indexerObjects
-# 		if($null -eq $indexerBlob)
-# 		{			
-# 			return $true;
-# 		}
-# 		$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState";
-# 		if(-not (Test-Path -Path $AzSKTemp))
-# 		{
-# 			New-Item -ItemType Directory -Path $AzSKTemp -Force
-# 		}
-# >>>>>>> origin/develop
+
 
 			#Attestation index blob is not preset then return
+			[ControlStateIndexer[]] $indexerObjects = @();
+			$this.ControlStateIndexer  = $indexerObjects
 			if($null -eq $indexerBlob)
 			{			
 				#Set attenstation index file is not present on blob storage
@@ -245,8 +233,7 @@ class ControlStateExtension
 				return $true;
 			}
 
-			[ControlStateIndexer[]] $indexerObjects = @();
-			$this.ControlStateIndexer  = $indexerObjects
+			
 			$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState";
 			if(-not (Test-Path -Path $AzSKTemp))
 			{

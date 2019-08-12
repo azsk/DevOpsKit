@@ -200,7 +200,7 @@ function Set-AzSKPolicySettings {
             #Set local policy folder path to OnlinePolicyStoreUrl. At runtime it will detect its folder path and starting running cmdlets with local policy.
             if($LocalOrgPolicyFolderPath)
             {
-                if([string]::IsNullOrWhiteSpace($LocalOrgPolicyFolderPath) -and (Test-Path $LocalOrgPolicyFolderPath))
+                if((-not[string]::IsNullOrWhiteSpace($LocalOrgPolicyFolderPath)) -and (Test-Path $LocalOrgPolicyFolderPath))
                 {
                     $azskSettings.OnlinePolicyStoreUrl = $LocalOrgPolicyFolderPath
                 }
@@ -240,8 +240,9 @@ function Set-AzSKPolicySettings {
             else {
                 $azskSettings.AzureEnvironment = [Constants]::DefaultAzureEnvironment
             }
-            [ConfigurationManager]::UpdateAzSKSettings($azskSettings);            
-            [EventBase]::PublishGenericCustomMessage("Successfully configured policy settings. `nStart a fresh PS console/session to ensure any policy updates are (re-)loaded.", [MessageType]::Warning);
+            [ConfigurationManager]::UpdateAzSKSettings($azskSettings);
+            [ConfigOverride]::ClearConfigInstance();            
+            [EventBase]::PublishGenericCustomMessage("Successfully configured policy settings.", [MessageType]::Warning);
         }
         catch {
             [EventBase]::PublishGenericException($_);
