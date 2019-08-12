@@ -226,7 +226,7 @@ function Get-AzSKPIMConfiguration {
 
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
-        [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ListSoonToExpireAssignments")]
         [ValidateNotNullOrEmpty()]
         [Alias("rlns")]
         [string[]]
@@ -237,7 +237,7 @@ function Get-AzSKPIMConfiguration {
 	    [Alias("dnof")]
 	    $DoNotOpenOutputFolder,
         
-        [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ListSoonToExpireAssignments")]
         [int]
         [Alias("eid")]
         $ExpiringInDays

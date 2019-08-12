@@ -109,7 +109,7 @@ class SVTCommandBase: AzCommandBase {
         $svtObject.FilterTags = $this.ConvertToStringArray($this.FilterTags);
         $svtObject.ExcludeTags = $this.ConvertToStringArray($this.ExcludeTags);
         $svtObject.ControlIds += $this.ControlIds;
-        $svtObject.Severity = $this.ConvertToStringArray($this.Severity);;
+        $svtObject.Severity += $this.Severity;
         $svtObject.ControlIds += $this.ConvertToStringArray($this.ControlIdString);
 		$svtObject.ExcludeControlIds += $this.ExcludeControlIds;
         $svtObject.ExcludeControlIds += $this.ConvertToStringArray($this.ExcludeControlIdString);
