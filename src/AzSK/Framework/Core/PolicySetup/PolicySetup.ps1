@@ -575,7 +575,7 @@ class PolicySetup: AzCommandBase
 		[PSObject] $PolicyScanOutput = @{}
 		$PolicyScanOutput.Resources = @{}
 		
-		$policyTempFolder = Join-Path $([Constants]::AzSKTempFolderPath) "Policies";
+		$policyTempFolder = Join-Path $([Constants]::AzSKTempFolderPath) -ChildPath $this.OrgFullName | Join-Path -ChildPath "Policies";
 		$orgPolicyOverallSummary = @()
 		$appInsight =$null
 
@@ -587,7 +587,7 @@ class PolicySetup: AzCommandBase
 		{
 			$PolicyScanOutput.Resources.ResourceGroup = $false
 			$failMsg = "Policy resource group[$($this.ResourceGroupName)] not found."			
-			$resolvemsg = "`r`nIf custom resource names used to create Org policy, pass parameters ResourceGroupName and StorageAccountName to command '$($this.getCommandName)'."
+			$resolvemsg = "Resolution: If custom resource names used to create Org policy, pass parameters ResourceGroupName and StorageAccountName to command '$($this.getCommandName)'."
 			$resultMsg = "$failMsg`r`n$resolvemsg"
 			$resultStatus = "Failed"
 			$shouldReturn = $true
@@ -645,7 +645,7 @@ class PolicySetup: AzCommandBase
 		else
 		{
 			$failMsg = "Missing mandatory resources: $($missingResources -join ",")"			
-			$resolvemsg = "To resolve this run command '$($this.installCommandName)'"
+			$resolvemsg = "Resolution: Run command '$($this.installCommandName)'"
 			$resultMsg = "$failMsg`r`n$resolvemsg"
 			$resultStatus = "Failed"
 			$shouldReturn = $false
@@ -756,7 +756,7 @@ class PolicySetup: AzCommandBase
 		else 
 		{
 			$failMsg = "Missing mandatory policies: $($missingPolicies -join ",") "			
-			$resolvemsg = "To resolve this please run command '$($this.updateCommandName)'"
+			$resolvemsg = "Resolution: Run '$($this.updateCommandName)'"
 			$resultMsg = "$failMsg`r`n$resolvemsg"
 			$resultStatus = "Failed"
 			$shouldReturn = $false
@@ -843,7 +843,7 @@ class PolicySetup: AzCommandBase
 				if([Helpers]::IsSASTokenUpdateRequired($InstallerPolicyUrl) -or [Helpers]::IsSASTokenUpdateRequired($InstallerAzSKPreUrl))
 				{
 					$failMsg = "SAS token for policy urls is getting expired in installer"			
-					$resolvemsg = "To resolve this please run command '$($this.updateCommandName)'."
+					$resolvemsg = "Resolution: Run command '$($this.updateCommandName)'."
 					$resultMsg = "$failMsg`r`n$resolvemsg"
 					$resultStatus = "Failed"
 					$shouldReturn = $false
@@ -857,8 +857,8 @@ class PolicySetup: AzCommandBase
 			}
 			else
 			{
-				$failMsg = "Missing configurations in installer: $($missingInstallerConfigurations -join ",") "			
-				$resolvemsg = "To resolve this please run command '$($this.updateCommandName)'."
+				$failMsg = "Did not find a reference to $($missingInstallerConfigurations -join ",")  in installer."			
+				$resolvemsg = "Resolution: Run '$($this.updateCommandName)' with the usual parameters."
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $false
@@ -903,7 +903,7 @@ class PolicySetup: AzCommandBase
 				$PolicyScanOutput.Configurations.AzSKPre.Status = $true
 				$PolicyScanOutput.Configurations.AzSKPre.CurrentVersionForOrg = $true				
 				$failMsg = "Currently Org policy is running with older AzSK version[$([Helpers]::IsStringEmpty($($AzSKPreConfigContent.CurrentVersionForOrg)))]."			
-				$resolvemsg = "Consider updating it to latest available version[$([Helpers]::IsStringEmpty($($LatestAzSKVersion)))]."
+				$resolvemsg = "Resolution: Consider updating it to latest available version[$([Helpers]::IsStringEmpty($($LatestAzSKVersion)))]."
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Warning"
 				$shouldReturn = $false				
@@ -926,7 +926,7 @@ class PolicySetup: AzCommandBase
 		#region Check 05: Validate CoreSetup 
 		$PolicyScanOutput.Configurations.RunbookCoreSetup = @{}
 		$stepCount++		
-		$checkDescription = "Check continueous assurrance RunbookCoreSetup contains reference for Org version(RunbookCoreSetup.ps1)."
+		$checkDescription = "Continuous Assurance (CA) runbook must reference AzSK version in use for the org."
 		if($PolicyScanOutput.Policies.RunbookCoreSetup)
 		{
 		$RunbookCoreSetupPath =Get-ChildItem -Path $policyTempFolder -File "RunbookCoreSetup.ps1" -Recurse
@@ -935,6 +935,13 @@ class PolicySetup: AzCommandBase
 			#Validate AzSkVersionForOrgUrl command 
 			$pattern = 'azskVersionForOrg = "(.*?)"'
 			$coreSetupAzSkVersionForOrgUrl = [Helpers]::GetSubString($RunbookCoreSetupContent,$pattern)  
+			
+			#Recovery code for extra space included as part of coresetup update
+			if([string]::IsNullOrEmpty($coreSetupAzSkVersionForOrgUrl))
+			{
+				$pattern = 'azskVersionForOrg =  "(.*?)"'
+				$coreSetupAzSkVersionForOrgUrl = [Helpers]::GetSubString($RunbookCoreSetupContent,$pattern)  
+			}
 			
 			$AzSkVersionForOrgUrl = "Not Available"
 			if($policies.AzSKPre)
@@ -960,7 +967,7 @@ class PolicySetup: AzCommandBase
 				if([Helpers]::IsSASTokenUpdateRequired($coreSetupAzSkVersionForOrgUrl) )
 				{
 					$failMsg = "SAS token for policy urls is getting expired in runbookCoreSetup"			
-					$resolvemsg = "To resolve this please run command '$($this.updateCommandName)'."
+					$resolvemsg = "Resolution: Run '$($this.updateCommandName)' with the usual parameters."
 					$resultMsg = "$failMsg`r`n$resolvemsg"
 					$resultStatus = "Failed"
 					$shouldReturn = $false
@@ -976,8 +983,8 @@ class PolicySetup: AzCommandBase
 			}
 			else
 			{
-				$failMsg = "Missing configurations in runbookCoreSetup: $($missingCoreSetupConfigurations -join ",")"			
-				$resolvemsg = "To resolve this please run command '$($this.updateCommandName)' with parameter '-OverrideBaseConfig CARunbooks'"
+				$failMsg = "Did not find a reference to: $($missingCoreSetupConfigurations -join ",") in the CA runbook in RunbookCoreSetup.ps1"			
+				$resolvemsg = "Resolution: Run '$($this.updateCommandName)' with the usual parameters + '-OverrideBaseConfig CARunbooks'"
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $false
@@ -1002,7 +1009,7 @@ class PolicySetup: AzCommandBase
 		#Check 06: Validate AzSKConfig
 		$PolicyScanOutput.Configurations.AzSKConfig = @{}
 		$stepCount++		
-		$checkDescription = "Check AzSKConfig configured with controlTelemetryKey, installation command, Org AzSK version refernce etc.(AzSK.json)."
+		$checkDescription = "Check AzSKConfig configured with controlTelemetryKey, installation command, Org AzSK version reference etc.(AzSK.json)."
 		$AzSKConfiguOutput = $PolicyScanOutput.Configurations.AzSKConfig
 		if($PolicyScanOutput.Policies.AzSKConfig)
 		{
@@ -1151,14 +1158,14 @@ class PolicySetup: AzCommandBase
 				$resolvemsg = [string]::Empty
 				if(($missingAzSKConfigurations | Measure-Object).Count -gt 0)
 				{
-					$failMsg = "Missing configurations in AzSKConfig: $($missingAzSKConfigurations -join ",")."			
-					$resolvemsg = "To resolve this please run command '$($this.updateCommandName)' with parameter '-OverrideBaseConfig AzSKRootConfig'"
+					$failMsg = "Did not find a reference to $($missingAzSKConfigurations -join ",") in AzSKConfig."			
+					$resolvemsg = "Resolution: Run '$($this.updateCommandName)' with the usual parameters + '-OverrideBaseConfig AzSKRootConfig'"
 				}
 				#Check after missing configuration if SAS update required
 				elseIf(($expiringSASTokenConfigurations | Measure-Object).Count -gt 0)
 				{
 					$failMsg = "SAS token for policy urls is getting expired in AzSKConfig: $($expiringSASTokenConfigurations -join ",")."			
-					$resolvemsg = "To resolve this please run command '$($this.updateCommandName)'"
+					$resolvemsg = "Resolution: '$($this.updateCommandName)' with the usual parameters"
 				}
 				
 				$resultMsg = "$failMsg`r`n$resolvemsg"
@@ -1256,7 +1263,7 @@ class PolicySetup: AzCommandBase
 			else
 			{
 				$failMsg = "Installed CA runbook is not configured with Org policy url"			
-				$resolvemsg = "To resolve this please run command 'Update-AzSKContinuousAssurance -SubscriptionId <SubscriptionId>'."
+				$resolvemsg = "Resolution: Run 'Update-AzSKContinuousAssurance -SubscriptionId <SubscriptionId>'."
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $false
@@ -1387,7 +1394,7 @@ class PolicySetup: AzCommandBase
 				{
 					$failMsg +="PS1 files: $($InvalidSchemaPSFiles -Join ',')."
 				}						
-				$resolvemsg = "To resolve this, make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply. For more details about syntax issue, refer detail logs.)"
+				$resolvemsg = "Resolution: Make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply. For more details about syntax issue, refer detail logs.)"
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $false

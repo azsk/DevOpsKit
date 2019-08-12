@@ -114,10 +114,14 @@ function Set-AzSKPolicySettings {
 	#>
     Param(
         [Parameter(Mandatory = $false, HelpMessage = "Provide the Online Policy Store URI")]
-        [Alias("LocalOrgPolicyFolderPath")]
         [string]
 		[Alias("opu")]
         $OnlinePolicyStoreUrl,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Provide the local policy folder path")]
+        [string]
+		[Alias("lopf")]
+        $LocalOrgPolicyFolderPath,
 
         [Parameter(Mandatory = $false, HelpMessage = "Provide the flag to enable online policy")]
         [switch]
@@ -193,6 +197,20 @@ function Set-AzSKPolicySettings {
                 }
             }
 
+            #Set local policy folder path to OnlinePolicyStoreUrl. At runtime it will detect its folder path and starting running cmdlets with local policy.
+            if($LocalOrgPolicyFolderPath)
+            {
+                if((-not[string]::IsNullOrWhiteSpace($LocalOrgPolicyFolderPath)) -and (Test-Path $LocalOrgPolicyFolderPath))
+                {
+                    $azskSettings.OnlinePolicyStoreUrl = $LocalOrgPolicyFolderPath
+                }
+                else {
+                    
+                    [EventBase]::PublishGenericCustomMessage("Policy folder does not exists. Enter valid policy folder path: $LocalOrgPolicyFolderPath", [MessageType]::Error);
+                    return
+                }
+            }
+
             if ($EnableAADAuthForOnlinePolicyStore) {
                 $azskSettings.EnableAADAuthForOnlinePolicyStore = $true
             }
@@ -222,8 +240,9 @@ function Set-AzSKPolicySettings {
             else {
                 $azskSettings.AzureEnvironment = [Constants]::DefaultAzureEnvironment
             }
-            [ConfigurationManager]::UpdateAzSKSettings($azskSettings);            
-            [EventBase]::PublishGenericCustomMessage("Successfully configured policy settings. `nStart a fresh PS console/session to ensure any policy updates are (re-)loaded.", [MessageType]::Warning);
+            [ConfigurationManager]::UpdateAzSKSettings($azskSettings);
+            [ConfigOverride]::ClearConfigInstance();            
+            [EventBase]::PublishGenericCustomMessage("Successfully configured policy settings.", [MessageType]::Warning);
         }
         catch {
             [EventBase]::PublishGenericException($_);
