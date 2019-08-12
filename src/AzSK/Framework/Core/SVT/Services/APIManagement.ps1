@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class APIManagement: SVTBase
+class APIManagement: AzSVTBase
 {   
 
 	hidden [PSObject] $APIMContext = $null;
@@ -8,13 +8,6 @@ class APIManagement: SVTBase
 	hidden [PSObject] $APIMProducts = $null;
 
 	hidden [PSObject] $ResourceObject;
-
-    APIManagement([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-
-		$this.GetResourceObject();
-	}
 
 	APIManagement([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 

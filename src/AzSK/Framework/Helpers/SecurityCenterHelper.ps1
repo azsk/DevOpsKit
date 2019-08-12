@@ -22,7 +22,7 @@ class SecurityCenterHelper
         if([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri))
 		{
 			return @{
-				"Authorization"= ("Bearer " + [Helpers]::GetAccessToken($validatedUri.GetLeftPart([System.UriPartial]::Authority))); 
+				"Authorization"= ("Bearer " + [ContextHelper]::GetAccessToken($validatedUri.GetLeftPart([System.UriPartial]::Authority))); 
 				"Content-Type"="application/json"
 			};
 
@@ -45,7 +45,7 @@ class SecurityCenterHelper
 		
 		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
 		#[SecurityCenterHelper]::RegisterResourceProvider();
-	    $rmContext = [Helpers]::GetCurrentRMContext();
+	    $rmContext = [ContextHelper]::GetCurrentRMContext();
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 		$uri = $ResourceAppIdURI + "subscriptions/$subscriptionId/providers/$([SecurityCenterHelper]::ProviderNamespace)/$($apiType)$($apiVersion)";
         return [WebRequestHelper]::InvokeGetWebRequest($uri);
@@ -60,7 +60,7 @@ class SecurityCenterHelper
 
 		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
 		#[SecurityCenterHelper]::RegisterResourceProvider();
-        $rmContext = [Helpers]::GetCurrentRMContext();
+        $rmContext = [ContextHelper]::GetCurrentRMContext();
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 		$uri = $ResourceAppIdURI.TrimEnd("/") + $resourceId + $apiVersion;
 		return [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
@@ -72,7 +72,7 @@ class SecurityCenterHelper
 		{ 	
 			if((-not [string]::IsNullOrEmpty($subscriptionId)) -and (-not [String]::IsNullOrEmpty($resourceId))) 
 			{
-				$rmContext = [Helpers]::GetCurrentRMContext();
+				$rmContext = [ContextHelper]::GetCurrentRMContext();
 		        $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 				$uri = [System.String]::Format("{0}subscriptions/{1}/providers/microsoft.Security/securityStatuses?api-version=2015-06-01-preview&`$filter=tolower(Id)%20eq%20tolower('{2}/providers/Microsoft.Security/securityStatuses/{3}')", $ResourceAppIdURI, $subscriptionId, $resourceId, $resourceId.Split("/")[-1])
 				$result = [WebRequestHelper]::InvokeGetWebRequest($uri);					
@@ -105,8 +105,8 @@ class SecurityCenterHelper
 
 	static [void] RegisterResourceProvider()
 	{
-		[Helpers]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::PolicyProviderNamespace);
-		[Helpers]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
+		[ResourceHelper]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::PolicyProviderNamespace);
+		[ResourceHelper]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
 	}
 
 	static [void] RegisterResourceProviderNoException()
@@ -208,7 +208,7 @@ class ASCTelemetryHelper {
 		$uri = "https://s2.security.ext.azure.com/api/threatDetectionSettings/getThreatDetectionSettings?subscriptionId="+$this.SubscriptionId;
 
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		$result = $null;
 
  		if($null -ne $AccessToken)
@@ -266,7 +266,7 @@ class ASCTelemetryHelper {
 	{
 		$uri = "https://s2.security.ext.azure.com/api/securityEventsTier/getSecurityEventsTier?subscriptionId="+$this.SubscriptionId;
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		$result = $null;
 
  		if($null -ne $AccessToken)
@@ -309,7 +309,7 @@ class ASCTelemetryHelper {
  	[PSObject] GetContentFromPostRequest($uri, $body)
 	{
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		if($null -ne $AccessToken)
 		{
 			$header = "Bearer " + $AccessToken

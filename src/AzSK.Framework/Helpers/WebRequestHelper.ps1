@@ -20,7 +20,7 @@ class WebRequestHelper {
 		$azureEnv= [AzSKSettings]::GetInstance().AzureEnvironment
 		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne [Constants]::DefaultAzureEnvironment))
 		{
-		return [Helpers]::GetCurrentRMContext().Environment.ResourceManagerUrl
+		return [ContextHelper]::GetCurrentRMContext().Environment.ResourceManagerUrl
 		}
 		return "https://management.azure.com/"
 	}
@@ -30,7 +30,7 @@ class WebRequestHelper {
 		$azureEnv= [AzSKSettings]::GetInstance().AzureEnvironment
 		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne [Constants]::DefaultAzureEnvironment))
 		{
-		return [Helpers]::GetCurrentRMContext().Environment.ServiceManagementUrl
+		return [ContextHelper]::GetCurrentRMContext().Environment.ServiceManagementUrl
 		}
 		return "https://management.core.windows.net/"
 	}
@@ -41,7 +41,7 @@ class WebRequestHelper {
         if([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri))
 		{
 			return @{
-				"Authorization"= ("Bearer " + [Helpers]::GetAccessToken($validatedUri.GetLeftPart([System.UriPartial]::Authority))); 
+				"Authorization"= ("Bearer " + [ContextHelper]::GetAccessToken($validatedUri.GetLeftPart([System.UriPartial]::Authority))); 
 				"Content-Type"="application/json"
 			};
 
@@ -83,7 +83,7 @@ class WebRequestHelper {
 		$CanonicalizedResource = "/$StorageAccountName/`$batch"
 		$SigningParts=@($Verb,$ContentMD5,$ContentType,$Date,$CanonicalizedResource)
 		$StringToSign = [String]::Join("`n",$SigningParts)
-		$sharedKey = [Helpers]::CreateStorageAccountSharedKey($StringToSign,$StorageAccountName,$AccessKey)
+		$sharedKey = [StorageHelper]::CreateStorageAccountSharedKey($StringToSign,$StorageAccountName,$AccessKey)
 
 		$xmsdate = $Date
 		$changeset = "changeset_$([guid]::NewGuid().ToString())"

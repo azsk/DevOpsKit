@@ -1,7 +1,7 @@
 using namespace System.Management.Automation
 Set-StrictMode -Version Latest 
 
-class ComplianceInfo: CommandBase {    
+class ComplianceInfo: AzCommandBase {    
     hidden [ComplianceMessageSummary[]] $ComplianceMessageSummary = @();
     hidden [ComplianceResult[]] $ComplianceScanResult = @();
     hidden [string] $SubscriptionId
@@ -79,7 +79,7 @@ class ComplianceInfo: CommandBase {
 
         $this.GetComplianceScanData($UseBaselineControls, $UsePreviewBaselineControls);
         if (($this.ComplianceScanResult | Measure-Object).Count -le 0) {
-            $this.PublishCustomMessage("No previously persisted compliance data found in the subscription [" + $this.SubscriptionId + "]`nCompliance data will get persisted as you perform scans (or when scans happen from CA/CICD).", [MessageType]::Default);
+            $this.PublishCustomMessage("Could not find compliance data that matches specified criteria. Try with a more permissive switch.", [MessageType]::Default);
             return;
         }			
         #$this.GetControlDetails();

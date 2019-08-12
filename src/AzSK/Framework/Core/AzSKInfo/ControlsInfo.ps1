@@ -1,7 +1,7 @@
 using namespace System.Management.Automation
 Set-StrictMode -Version Latest 
 
-class ControlsInfo: CommandBase
+class ControlsInfo: AzCommandBase
 {    
 	hidden [string] $ResourceTypeName
 	hidden [string] $ResourceType
@@ -106,7 +106,14 @@ class ControlsInfo: CommandBase
 
 		if($this.PreviewBaslineControls)
 		{
+			#If preview baseline switch is passed and there is no preview baseline control list present then throw exception 
+			if (($previewBaselineControls | Measure-Object).Count -eq 0 -and -not $this.BaslineControls) 
+			{
+				throw ([SuppressedException]::new(("There are no preview baseline controls defined for this policy."), [SuppressedExceptionType]::Generic))
+			}
+			
 			$this.ControlIds += $previewBaselineControls
+
 		}
 
 		$resourcetypes | ForEach-Object{
@@ -147,9 +154,6 @@ class ControlsInfo: CommandBase
 
 		if($SVTConfig.Keys.Count -gt 0)
 		{
-			$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
-			$this.PublishCustomMessage("`r`nFetching security controls details...", [MessageType]::Default);
-			$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 
 			$SVTConfig.Keys  | Foreach-Object {
 				$featureName = $_
@@ -205,7 +209,7 @@ class ControlsInfo: CommandBase
 					$ctrlObj | Add-Member -NotePropertyName Automated -NotePropertyValue $_.Automated
 					$ctrlObj | Add-Member -NotePropertyName SupportsAutoFix -NotePropertyValue $fixControl
 					$tags = [system.String]::Join(", ", $_.Tags)
-					$ctrlObj | Add-Member -NotePropertyName Tags -NotePropertyValue $tags
+					$ctrlObj | Add-Member -NotePropertyName Tags -NotePropertyValue $tags 
 
 					$allControls += $ctrlObj
 
@@ -227,10 +231,10 @@ class ControlsInfo: CommandBase
 			}
 
 			$controlCSV = New-Object -TypeName WriteCSVData
-			$controlCSV.FileName = 'Control Details'
+			$controlCSV.FileName = 'Control_Details_' + [String] $this.InvocationContext.Mycommand.ModuleName + "_" + [String] $this.GetCurrentModuleVersion()
 			$controlCSV.FileExtension = 'csv'
 			$controlCSV.FolderPath = ''
-			$controlCSV.MessageData = $allControls
+			$controlCSV.MessageData = $allControls| Sort-Object FeatureName, ControlSeverity
 
 			$this.PublishAzSKRootEvent([AzSKRootEvent]::WriteCSV, $controlCSV);
 		}
@@ -244,10 +248,8 @@ class ControlsInfo: CommandBase
 		if($controlSummary.Count -gt 0)
 		{
 			$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
-			$this.PublishCustomMessage("`r`Completed fetching security controls details...", [MessageType]::Default);
-			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
-			$this.PublishCustomMessage("Summary", [MessageType]::Default)
-			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
+			$this.PublishCustomMessage("Summary of controls available in " + $this.InvocationContext.Mycommand.ModuleName +" "+  $this.GetCurrentModuleVersion(), [MessageType]::Default)
+			$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 
 			$ctrlSummary = New-Object -TypeName PSObject
 			$ctrlSummary | Add-Member -NotePropertyName FeatureName -NotePropertyValue "Total" 

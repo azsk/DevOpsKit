@@ -1,13 +1,7 @@
 Set-StrictMode -Version Latest 
-class DataLakeStore: SVTBase
+class DataLakeStore: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
-
-    DataLakeStore([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-        $this.GetResourceObject();
-    }
 
     DataLakeStore([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 

@@ -22,7 +22,7 @@ class RoleAssignmentHelper
 		{ 
 			# Eat the current exception which typically happens when the caller doesn't have access to GraphAPI. It will fall back to the below custom API based approach.
 		}
-        $rmContext = [Helpers]::GetCurrentRMContext();
+        $rmContext = [ContextHelper]::GetCurrentRMContext();
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 		$requestUri = $ResourceAppIdURI + $scope;
 		$roleAssignments = [RoleAssignmentHelper]::GetRMRoleAssignment($requestUri, $recurse);
@@ -104,7 +104,7 @@ class RoleAssignmentHelper
 			# Eat the current exception which typically happens when the caller doesn't have access to GraphAPI. It will fall back to the below custom API based approach.
 		}
 
-		$currentContext = [Helpers]::GetCurrentRMContext();
+		$currentContext = [ContextHelper]::GetCurrentRMContext();
         $subscriptionId = $currentContext.Subscription.Id;
         $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 		$subscriptionPath = "subscriptions/$subscriptionId";
@@ -222,7 +222,7 @@ class RoleAssignmentHelper
 
 	hidden static [PSRoleAssignment[]] GetAzSKClassicAdministrators()
 	{
-		$currentContext = [Helpers]::GetCurrentRMContext();
+		$currentContext = [ContextHelper]::GetCurrentRMContext();
         $subscriptionId = $currentContext.Subscription.Id;
         $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 		$subscriptionPath = "subscriptions/$subscriptionId";
@@ -250,7 +250,7 @@ class RoleAssignmentHelper
 
 	hidden static [System.Object[]] GetADObjectsByObjectIds([string[]] $objectIds)
 	{
-		$rmContext = [Helpers]::GetCurrentRMContext();
+		$rmContext = [ContextHelper]::GetCurrentRMContext();
 		$tenantId = $rmContext.Tenant.Id
 
 		$uri = [WebRequestHelper]::GraphApiUri + "$tenantId/getObjectsByObjectIds?api-version=1.6"
@@ -271,7 +271,7 @@ class RoleAssignmentHelper
 	hidden static [bool] HasGraphAccess()
 	{
 		$hasAccess = $false;
-		$rmContext = [Helpers]::GetCurrentRMContext()
+		$rmContext = [ContextHelper]::GetCurrentRMContext()
 		$tenantId = $rmContext.Tenant.Id
 	
 		$uri = [WebRequestHelper]::GraphApiUri + "$tenantId/users?`$top=1&api-version=1.6"

@@ -143,7 +143,7 @@ Class LogAnalyticsHelper{
 			$out.IsLatestPSModule = $ControlResult.CurrentSessionContext.IsLatestPSModule
 			$out.PolicyOrgName = $AzSKContext.PolicyOrgName
 			$out.IsControlInGrace = $ControlResult.IsControlInGrace
-			$out.ScannedBy=[Helpers]::GetCurrentRMContext().Account
+			$out.ScannedBy=[ContextHelper]::GetCurrentRMContext().Account
 			#mapping the attestation properties
 			if($null -ne $ControlResult -and $null -ne $ControlResult.StateManagement -and $null -ne $ControlResult.StateManagement.AttestedStateData)
 			{
@@ -479,6 +479,14 @@ Class CommandModel{
 	[string] $MethodName
 	[string] $ModuleName
 	[string] $Parameters
+	[string] $SubscriptionId
+	[string] $SubscriptionName
+}
+class CredHygieneAlert{
+    [int] $ExpiryDueInDays
+	[bool] $IsExpired
+    [string] $CredentialName 
+    [string] $LastUpdatedBy
 	[string] $SubscriptionId
 	[string] $SubscriptionName
 }

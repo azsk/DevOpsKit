@@ -181,7 +181,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceRemoteDebuggingConfiguration",
         "Rationale": "Remote debugging requires inbound ports to be opened on App Service. These ports become easy targets for compromise from various internet based attacks.",
-        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Application Settings --> Remote Debugging --> Click on 'OFF'.",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Configuration --> General Settings --> Remote Debugging --> Click on 'OFF'.",
         "Tags": [
           "SDL",
           "TCP",
@@ -227,7 +227,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceAlwaysOnConfiguration",
         "Rationale": "By default, websites are unloaded if they have been idle for some period of time. However, this may not be ideal for 'high availability' requirements. Configuring 'Always On' can help prevent app services from getting timed out.",
-        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Application Settings --> Always On --> Click on 'ON'.",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Configuration --> General Settings --> Always On --> Click on 'ON'.",
         "Tags": [
           "SDL",
           "Best Practice",
@@ -411,7 +411,7 @@
         "Automated": "Yes",
         "MethodName": "CheckAppServiceLoadCertAppSettings",
         "Rationale": "Using '*' for this parameter means that all certificates will get uploaded to the VM running the website. This will most likely lead to abuse of the principle of least privilege as it is unlikely that the site needs access to all certificates at runtime.",
-        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Application Settings --> App Settings --> Check for 'WEBSITE_LOAD_CERTIFICATES' key and make sure that value is not set to '*'. Instead choose the specific certificate that is required by the App Service. Refer https://msftplayground.com/2016/11/using-certificates-azure-app-services/ for more details.",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Configuration --> Application Settings --> Check for 'WEBSITE_LOAD_CERTIFICATES' key and make sure that value is not set to '*'. Instead choose the specific certificate that is required by the App Service. Refer https://msftplayground.com/2016/11/using-certificates-azure-app-services/ for more details.",
         "Tags": [
           "SDL",
           "TCP",

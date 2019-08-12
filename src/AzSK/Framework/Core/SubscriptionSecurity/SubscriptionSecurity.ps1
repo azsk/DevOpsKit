@@ -3,7 +3,7 @@ Set-StrictMode -Version Latest
 
 # The class serves as an intermediate class to call multiple subscription security module classes
 
-class SubscriptionSecurity: CommandBase
+class SubscriptionSecurity: AzCommandBase
 {    
 	[string] $Tags
 	SubscriptionSecurity([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $tags): 

@@ -23,16 +23,6 @@ class StorageFix: FixServicesBase
 		return $this.ResourceObject;
 	}
 
-	[MessageData[]] SetSku([PSObject] $parameters)
-    {
-		[MessageData[]] $detailedLogs = @();
-		$skuName = $parameters.SkuName;
-		$detailedLogs += [MessageData]::new("Setting up the Sku [$skuName] for storage [$($this.ResourceName)]...");
-		Set-AzStorageAccount -Name $this.ResourceName -ResourceGroupName $this.ResourceGroupName -SkuName $skuName
-		$detailedLogs += [MessageData]::new("Sku setup completed for storage [$($this.ResourceName)]");
-		return $detailedLogs;
-    }
-
 	[MessageData[]] EnableHttpsTrafficOnly([PSObject] $parameters)
     {
 		[MessageData[]] $detailedLogs = @();

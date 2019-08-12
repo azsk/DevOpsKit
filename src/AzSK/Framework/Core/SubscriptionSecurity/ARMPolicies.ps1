@@ -2,7 +2,7 @@ using namespace System.Management.Automation
 Set-StrictMode -Version Latest 
 
 # Class to implement Subscription ARM Policy controls 
-class ARMPolicy: CommandBase
+class ARMPolicy: AzCommandBase
 {    
 	hidden [ARMPolicyModel] $ARMPolicyObj = $null;
 	hidden [PolicyInitiative] $SubPolicyInitiative = $null;
@@ -61,7 +61,7 @@ class ARMPolicy: CommandBase
 
 	[MessageData[]] SetARMPolicies()
     {
-		[Helpers]::RegisterResourceProviderIfNotRegistered([ARMPolicy]::PolicyProviderNamespace);
+		[ResourceHelper]::RegisterResourceProviderIfNotRegistered([ARMPolicy]::PolicyProviderNamespace);
 		[MessageData[]] $messages = @();
 		$this.RemoveDeprecatedPolicies();
 		if(($this.ARMPolicyObj.Policies | Measure-Object).Count -ne 0)
@@ -87,6 +87,8 @@ class ARMPolicy: CommandBase
 				{
 					$messages += [MessageData]::new([Constants]::SingleDashLine + "`r`nAdding following ARM policies to the subscription. Total policies: $($enabledPolicies.Count)", $enabledPolicies);                                            								
 					$armPoliciesDefns = @{};
+					$errorCount = 0;
+					[MessageData[]] $resultMessages = @();
 					$enabledPolicies | ForEach-Object {
 						$policyName = $_.PolicyDefinitionName;
 						$armPolicy = $null;
@@ -114,9 +116,18 @@ class ARMPolicy: CommandBase
 							catch
 							{
 								$messages += [MessageData]::new("Error while adding ARM policy [$policyName] to the subscription", $_, [MessageType]::Error);
+                                $errorCount += 1;
 							}
 						}							
 					};
+					if($errorCount -eq $enabledPolicies.Count )
+					{
+						$resultMessages += [MessageData]::new("No AzSK ARM policies were added to the subscription due to some error. See the log file for details.`r`n" + [Constants]::SingleDashLine, [MessageType]::Error);
+					}
+					elseif($errorCount -gt 0)
+					{
+						$resultMessages += [MessageData]::new("$errorCount/$($enabledPolicies.Count) ARM policy(ies) have not been added to the subscription. See the log file for details.", [MessageType]::Error);
+					}
 					$errorCount = 0;
 					$currentCount = 0;
 					if(($armPoliciesDefns.Keys | Measure-Object).Count -gt 0)
@@ -140,12 +151,11 @@ class ARMPolicy: CommandBase
 							$this.CommandProgress($enabledPolicies.Count, $currentCount, 2);
 						};
 					}
-					[MessageData[]] $resultMessages = @();
 					if($errorCount -eq 0)
 					{
 						#setting the version tag at AzSKRG
 						$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-						[Helpers]::SetResourceGroupTags($azskRGName,@{[Constants]::ARMPolicyConfigVersionTagName=$this.ARMPolicyObj.Version}, $false)
+						[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::ARMPolicyConfigVersionTagName=$this.ARMPolicyObj.Version}, $false)
 					
 					$resultMessages += [MessageData]::new("All AzSK ARM policies have been added to the subscription successfully`r`n" + [Constants]::SingleDashLine, [MessageType]::Update);
 					}
@@ -326,7 +336,7 @@ class ARMPolicy: CommandBase
 					{
 						#removing the version tag at AzSKRG
 						$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-						[Helpers]::SetResourceGroupTags($azskRGName,@{[Constants]::ARMPolicyConfigVersionTagName=$this.ARMPolicyObj.Version}, $true)
+						[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::ARMPolicyConfigVersionTagName=$this.ARMPolicyObj.Version}, $true)
 						
 						$resultMessages += [MessageData]::new("All ARM policies have been removed from the subscription successfully`r`n" + [Constants]::SingleDashLine, [MessageType]::Update);
 					}
@@ -348,7 +358,7 @@ class ARMPolicy: CommandBase
 					$messages += $noPolicyMessage;
 					$this.PublishCustomMessage($noPolicyMessage);
 					$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
-					[Helpers]::SetResourceGroupTags($azskRGName,@{[Constants]::ARMPolicyConfigVersionTagName=$this.ARMPolicyObj.Version}, $true)
+					[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::ARMPolicyConfigVersionTagName=$this.ARMPolicyObj.Version}, $true)
 				}
 			}
 			else
@@ -494,7 +504,7 @@ class ARMPolicy: CommandBase
 				$Policy = $_;
 				try
 				{
-					$PolicyDefn = Get-AzPolicyDefinition -Name $Policy.policyDefinitionName -ErrorAction SilentlyContinue
+					$PolicyDefn = Get-AzPolicyDefinition -Name $Policy.policyDefinitionName -ErrorAction Stop
 					if($null -ne $PolicyDefn)
 					{
 						$RequiredPolicyDefns += $PolicyDefn;

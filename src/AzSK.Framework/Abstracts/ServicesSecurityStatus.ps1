@@ -1,5 +1,5 @@
 ﻿Set-StrictMode -Version Latest
-class ServicesSecurityStatus: SVTCommandBase
+class ServicesSecurityStatus: AzSVTCommandBase
 {
 	[SVTResourceResolver] $Resolver = $null;
 	[bool] $IsPartialCommitScanActive = $false;
@@ -60,7 +60,7 @@ class ServicesSecurityStatus: SVTCommandBase
 			{
 				$this.CommandError($_);
 			}
-			#[ListenerHelper]::RegisterListeners();
+			#[AzListenerHelper]::RegisterListeners();
 				 
 			}
 			$svtClassName = [SVTMapping]::SubscriptionMapping.ClassName;
@@ -103,7 +103,13 @@ class ServicesSecurityStatus: SVTCommandBase
 		{
 			throw [System.ArgumentException] ("The argument 'methodNameToCall' is null. Pass the reference of method to call. e.g.: [YourClass]::new().YourMethod");
 		}
-
+		if($this.Severity)
+		{
+			
+			$this.Severity = $this.ConvertToStringArray($this.Severity)
+			$this.Severity = [ControlHelper]::CheckValidSeverities($this.Severity);
+			
+		}
 		[SVTEventContext[]] $result = @();
 		
 		if(($resourcesList | Measure-Object).Count -eq 0)
@@ -168,11 +174,13 @@ class ServicesSecurityStatus: SVTCommandBase
 				{
 					$this.PublishCustomMessage(" `r`nChecking resource [$currentCount/$totalResources] ");
 				}
+				
 				#Update resource scan retry count in scan snapshot in storage if user partial commit switch is on
 				if($this.UsePartialCommits)
 				{
 					$this.UpdateRetryCountForPartialScan();
 				}
+				
 				$svtClassName = $_.ResourceTypeMapping.ClassName;
 
 				$svtObject = $null;
@@ -248,7 +256,7 @@ class ServicesSecurityStatus: SVTCommandBase
 				# Register/Deregister all listeners to cleanup the memory
 				if([FeatureFlightingManager]::GetFeatureStatus("EnableListenerReset","*") -eq $true)
 				{
-					[ListenerHelper]::RegisterListeners();
+					[AzListenerHelper]::RegisterListeners();
 				}
 			}
             catch
@@ -351,7 +359,7 @@ class ServicesSecurityStatus: SVTCommandBase
 			#If baseline switch is passed and there is no baseline control list present then throw exception 
 			elseif (($baselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -eq 0 -and $this.UseBaselineControls) 
 			{
-				throw ([SuppressedException]::new(("There are no baseline controls defined for your org. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+				throw ([SuppressedException]::new(("There are no baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
 			}
 
 			#Preview Baseline Controls
@@ -386,16 +394,7 @@ class ServicesSecurityStatus: SVTCommandBase
 				#If preview baseline switch is passed and there is no baseline control list present then throw exception 
 				elseif (($previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -eq 0 -and $this.UsePreviewBaselineControls) 
 				{
-					if(($baselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -eq 0 -and $this.UseBaselineControls)
-					{
-						throw ([SuppressedException]::new(("There are no  baseline and preview-baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
-					}
-					if(-not ($this.UseBaselineControls))
-					{
-						throw ([SuppressedException]::new(("There are no preview-baseline controls defined for your org. No controls will be scanned."), [SuppressedExceptionType]::Generic))
-					}
-					
-					
+					throw ([SuppressedException]::new(("There are no preview baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
 				}
 			}
 
@@ -543,5 +542,6 @@ class ServicesSecurityStatus: SVTCommandBase
 		$excludedObj | Add-Member -NotePropertyName ExcludedResourceType -NotePropertyValue $SVTResolver.ExcludeResourceTypeName 
 		$excludedObj | Add-Member -NotePropertyName ExcludeResourceNames -NotePropertyValue $SVTResolver.ExcludeResourceNames 
 		$this.PublishAzSKRootEvent([AzSKRootEvent]::WriteExcludedResources,$excludedObj);
-	}	
+	}
+	
 }
