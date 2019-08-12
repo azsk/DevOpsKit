@@ -148,7 +148,7 @@ class HDInsightClusterCA : CommandBase {
             $json = (Get-Content -Path $metapath)
             $json = $json | ConvertFrom-Json
             $this.PublishCustomMessage("CA Health OK. Following is the summary", [MessageType]::Update)
-            $json
+            $this.PublishCustomMessage([Helpers]::ConvertObjectToString($json, $true))
         }        
     }
 }
