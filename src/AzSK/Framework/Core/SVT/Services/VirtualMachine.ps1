@@ -561,6 +561,71 @@ class VirtualMachine: AzSVTBase
 		return $controlResult;
 	}
 
+	hidden [ControlResult] CheckRequiredExtensions([ControlResult] $controlResult)
+	{
+		if(-not $this.VMDetails.IsVMDeallocated)
+		{
+			$controlStatus = [VerificationResult]::Failed
+			$requiredExtensions  = $this.VMControlSettings.RequiredExtensions
+			
+			if($null -ne $requiredExtensions -and ($requiredExtensions | Measure-Object).Count -gt 0){
+				$unhealthyExtensions = @()
+				$missingExtensions = @()
+				$installedExtensions = @()
+				$hasControlFailed = $false
+				if([Helpers]::CheckMember($this.ResourceObject, "Extensions")){
+
+					$requiredExtensions | ForEach-Object {
+						$requiredExtension = $_
+						$installedExtension = $this.ResourceObject.Extensions | Where-Object {$_.VirtualMachineExtensionType -eq $requiredExtension.ExtensionType <# -and $_.Publisher -eq $requiredExtension.Publisher #> } 
+						if($null -eq $installedExtension){
+							$missingExtensions += $requiredExtension
+							$hasControlFailed = $true
+						}
+						elseif($installedExtension.ProvisioningState -eq "Succeeded"){
+							$installedExtensions += $requiredExtension
+						}else{
+							$unhealthyExtensions += $requiredExtension
+							$hasControlFailed = $true
+						}
+					}
+						
+					if(($installedExtensions | Measure-Object).Count -gt 0){
+						$controlResult.AddMessage("Following extensions are present in VM:",$installedExtensions);
+					}
+					if(($unhealthyExtensions | Measure-Object).Count -gt 0){
+						$controlResult.AddMessage("Following extensions are present in VM but are not healthy:",$unhealthyExtensions);
+					}
+					if(($missingExtensions | Measure-Object).Count -gt 0){
+						$controlResult.AddMessage("Following required extensions are not present in VM:",$missingExtensions);
+					}
+					
+					if($hasControlFailed){
+						$controlStatus = [VerificationResult]::Failed
+						$missingExtensions = $missingExtensions + $unhealthyExtensions
+						$controlResult.SetStateData("Missing or unhealthy extensions:", $missingExtensions);
+					}else{
+						$controlStatus = [VerificationResult]::Passed
+						$controlResult.AddMessage("All required extensions are present in VM.");
+					}
+
+				}else{
+					$controlResult.AddMessage("Following required extensions are not present in VM:",$requiredExtensions);
+				}
+			}else{
+				$controlStatus = [VerificationResult]::Passed
+				$controlResult.AddMessage("No mandatory extensions need to be deployed on VM.");
+			}
+		}
+		else
+		{
+			$controlStatus = [VerificationResult]::Verify
+			$controlResult.AddMessage("This VM is currently in a 'deallocated' state. Unable to check security controls on it.");
+		}
+		$controlResult.VerificationResult = $controlStatus
+		return $controlResult;
+	}
+
 	hidden [ControlResult] CheckNSGConfig([ControlResult] $controlResult)
 	{
 		$controlResult.VerificationResult = [VerificationResult]::Failed;
@@ -1111,6 +1176,8 @@ class VirtualMachine: AzSVTBase
 		}
 		return $vulnerableRules;
 	}
+
+	
 }
 
 

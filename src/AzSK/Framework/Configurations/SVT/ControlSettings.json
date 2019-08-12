@@ -58,7 +58,25 @@
         "RequiredVersion": "1.11.0.0",
         "AssignmentName" : "SMSClientStatus",
         "CheckPolicyAssignment":false
-      }
+      },
+      "RequiredExtensions": [
+        {
+          "ExtensionType": "ConfigurationForWindows",
+          "Publisher": "Microsoft.GuestConfiguration"
+        },
+        {
+          "ExtensionType": "QualysAgent",
+          "Publisher": "Qualys"
+        },
+        {
+          "ExtensionType": "IaaSDiagnostics",
+          "Publisher": "Microsoft.Azure.Diagnostics"
+        },
+        {
+          "ExtensionType": "MicrosoftMonitoringAgent",
+          "Publisher": "Microsoft.EnterpriseCloud.Monitoring"
+        }
+      ]
     },
     "Linux": {
       "SupportedSkuList": [],
@@ -88,7 +106,25 @@
         "RequiredVersion": "1.9.0",
         "AssignmentName" : "SMSClientStatus",
         "CheckPolicyAssignment": false
-      }
+      },
+      "RequiredExtensions": [
+        {
+          "ExtensionType": "ConfigurationForLinux",
+          "Publisher": "Microsoft.GuestConfiguration"
+        },
+        {
+          "ExtensionType": "QualysAgentLinux",
+          "Publisher": "Qualys"
+        },
+        {
+          "ExtensionType": "LinuxDiagnostic",
+          "Publisher": "Microsoft.Azure.Diagnostics"
+        },
+        {
+          "ExtensionType": "OmsAgentForLinux",
+          "Publisher": "Microsoft.EnterpriseCloud.Monitoring"
+        }
+      ]
     },
     "Windows_OS_Baseline_Ids": [],
     "ASCPolicies": {

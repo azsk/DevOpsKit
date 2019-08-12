@@ -286,6 +286,28 @@
            "VirtualMachine"
          ],
          "Enabled": true
+       },
+       {
+         "ControlID": "Azure_VirtualMachine_SI_Deploy_Required_Extension",
+         "Description": "All VM extensions required as per your Org policy must be deployed to the VM",
+         "Id": "VirtualMachine230",
+         "ControlSeverity": "Medium",
+         "Automated": "Yes",
+         "MethodName": "CheckRequiredExtensions",
+         "Rationale": "One or more extensions may be required for maintaining data plane security hygiene and visibility for all Azure VMs in use at an Org. It is important to ensure all required extensions are installed and in healthy provisioning state.",
+         "Recommendation": "Please look at the detailed AzSK scan logs to determine missing or unhealthy extensions and fix them using command: Set-AzVMExtension -ResourceGroupName '<VM Resource Group Name}>'  -VMName  '<VM Resource Name>'  -Name '<Extension Name>' -Publisher '<Publisher>' -Type '<ExtensionType>'",
+         "Tags": [
+           "SDL",
+           "TCP",
+           "Automated",
+           "Config",
+           "Windows",
+           "Linux",
+           "SI",
+           "ERvNet",
+           "VirtualMachine"
+         ],
+         "Enabled": true
        }
     ]
  }
