@@ -561,7 +561,7 @@ class VirtualMachine: AzSVTBase
 		return $controlResult;
 	}
 
-	hidden [ControlResult] CheckRequiredExtension([ControlResult] $controlResult)
+	hidden [ControlResult] CheckRequiredExtensions([ControlResult] $controlResult)
 	{
 		if(-not $this.VMDetails.IsVMDeallocated)
 		{
