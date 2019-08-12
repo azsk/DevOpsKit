@@ -114,10 +114,14 @@ function Set-AzSKPolicySettings {
 	#>
     Param(
         [Parameter(Mandatory = $false, HelpMessage = "Provide the Online Policy Store URI")]
-        [Alias("LocalOrgPolicyFolderPath")]
         [string]
 		[Alias("opu")]
         $OnlinePolicyStoreUrl,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Provide the local policy folder path")]
+        [string]
+		[Alias("lopf")]
+        $LocalOrgPolicyFolderPath,
 
         [Parameter(Mandatory = $false, HelpMessage = "Provide the flag to enable online policy")]
         [switch]
@@ -190,6 +194,20 @@ function Set-AzSKPolicySettings {
                 }
                 else {
                     $azskSettings.EnableAADAuthForOnlinePolicyStore = $false
+                }
+            }
+
+            #Set local policy folder path to OnlinePolicyStoreUrl. At runtime it will detect its folder path and starting running cmdlets with local policy.
+            if($LocalOrgPolicyFolderPath)
+            {
+                if([string]::IsNullOrWhiteSpace($LocalOrgPolicyFolderPath) -and (Test-Path $LocalOrgPolicyFolderPath))
+                {
+                    $azskSettings.OnlinePolicyStoreUrl = $LocalOrgPolicyFolderPath
+                }
+                else {
+                    
+                    [EventBase]::PublishGenericCustomMessage("Policy folder does not exists. Enter valid policy folder path: $LocalOrgPolicyFolderPath", [MessageType]::Error);
+                    return
                 }
             }
 

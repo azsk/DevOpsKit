@@ -936,6 +936,13 @@ class PolicySetup: AzCommandBase
 			$pattern = 'azskVersionForOrg = "(.*?)"'
 			$coreSetupAzSkVersionForOrgUrl = [Helpers]::GetSubString($RunbookCoreSetupContent,$pattern)  
 			
+			#Recovery code for extra space included as part of coresetup update
+			if([string]::IsNullOrEmpty($coreSetupAzSkVersionForOrgUrl))
+			{
+				$pattern = 'azskVersionForOrg =  "(.*?)"'
+				$coreSetupAzSkVersionForOrgUrl = [Helpers]::GetSubString($RunbookCoreSetupContent,$pattern)  
+			}
+			
 			$AzSkVersionForOrgUrl = "Not Available"
 			if($policies.AzSKPre)
 			{
