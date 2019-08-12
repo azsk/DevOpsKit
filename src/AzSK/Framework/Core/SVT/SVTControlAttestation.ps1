@@ -177,7 +177,7 @@ class SVTControlAttestation
 
 							if($proposedExceptionApprovalExpiryDate -gt $maxAllowedExceptionApprovalExpiryDate)
 							{
-								Write-Host "`nNote: The exception approval expiry will be set to 6 months." -ForegroundColor Yellow
+								Write-Host "`nNote: The exception approval expiry will be set to 6 months.`n" -ForegroundColor Yellow
 								$exceptionApprovalExpiryDate = $maxAllowedExceptionApprovalExpiryDate								
 							}
 							else
@@ -187,15 +187,14 @@ class SVTControlAttestation
 						}
 						else
 						{
-							Write-Host "`nNote: The exception approval expiry will be set to 6 months." -ForegroundColor Yellow
+							Write-Host "`nNote: The exception approval expiry will be set to 6 months.`n" -ForegroundColor Yellow
 							$exceptionApprovalExpiryDate = $maxAllowedExceptionApprovalExpiryDate
 						}
 					}
 					catch
 					{
 						Write-Host "`nThe days need to be an integer value." -ForegroundColor Red
-						#Publish Exception
-						$this.PublishException($_)
+						throw $_
 					}
 				}
 				
