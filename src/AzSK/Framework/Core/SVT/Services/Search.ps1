@@ -13,7 +13,9 @@ class Search: AzSVTBase
     hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = $this.ResourceContext.ResourceDetails
+            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
+                                    -ResourceType $this.ResourceContext.ResourceType `
+                                    -ResourceGroupName $this.ResourceContext.ResourceGroupName
 
             if(-not $this.ResourceObject)
             {
