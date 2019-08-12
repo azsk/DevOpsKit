@@ -110,7 +110,7 @@ class BasicInfo: AzCommandBase
 
 		$configuredVersion = "Not Available"
 		$serverVersion = $rbacPolicy.DeprecatedAccountsVersion
-		$actionMessage = "Use 'Set-AzSKSubscriptionRBAC' to install Central accounts RBAC"
+		$actionMessage = "Use 'Remove-AzSKSubscriptionRBAC' to remove deprecated accounts RBAC"
 
 		if($null -ne $this.AzSKRG -and $this.AzSKRG.Tags.Count -gt 0 -and $this.AzSKRG.Tags.Contains([Constants]::DeprecatedRBACVersionTagName))
 		{
@@ -176,10 +176,9 @@ class BasicInfo: AzCommandBase
 		$configuredVersion = "Not Available"
 		$serverVersion = ([ConfigurationManager]::GetAzSKConfigData().AzSKCARunbookVersion);
 		$actionMessage = "Use 'Install-AzSKContinuousAssurance' to install Continuous Assurance"
-		$caAutomationAccount = Get-AzAutomationAccount -Name $this.AutomationAccountName -ResourceGroupName $this.AzSKRGName -ErrorAction SilentlyContinue
-		if($caAutomationAccount -and $caAutomationAccount.Tags.Count -gt 0 -and $caAutomationAccount.Tags.Contains('AzSKVersion'))
+		if($null -ne $this.AzSKRG -and $this.AzSKRG.Tags.Count -gt 0 -and $this.AzSKRG.Tags.Contains('AzSKCARunbookVersion'))
 		{
-			$configuredVersion = $caAutomationAccount.Tags['AzSKVersion']
+			$configuredVersion = $this.AzSKRG.Tags['AzSKCARunbookVersion']
 			if([System.Version]$serverVersion -gt [System.Version]$configuredVersion)
 			{
 				$updateAvailable = $true;

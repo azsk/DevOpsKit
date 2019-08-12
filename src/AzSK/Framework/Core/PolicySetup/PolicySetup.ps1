@@ -465,7 +465,7 @@ class PolicySetup: AzCommandBase
 					{
 						$this.PublishCustomMessage("Invalid schema for PS1 files: $($InvalidSchemaPSFiles -Join ','). Make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply)", [MessageType]::Error);
 					}
-					throw ([SuppressedException]::new("Invalid schema found. Please correct shema and reupload policies.", [SuppressedExceptionType]::Generic))
+					throw ([SuppressedException]::new("Invalid schema found. Please correct schema and reupload policies.", [SuppressedExceptionType]::Generic))
 				}
 			}
 		}
@@ -1516,7 +1516,7 @@ class PolicySetup: AzCommandBase
 				{
 					$this.PublishCustomMessage("Invalid schema for PS1 files: $($InvalidSchemaPSFiles -Join ','). Make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply)", [MessageType]::Error);
 				}
-				throw ([SuppressedException]::new("Invalid schema found. Please correct shema and reupload extensions.", [SuppressedExceptionType]::Generic))
+				throw ([SuppressedException]::new("Invalid schema found. Please correct schema and reupload extensions.", [SuppressedExceptionType]::Generic))
 			}
 			$this.PublishCustomMessage("Completed validating sytax exception for extension files.", [MessageType]::Update);
 			$serverConfigMetadata = Get-Content -Path ($this.FolderPath + $([Constants]::ServerConfigMetadataFileName)) | ConvertFrom-Json
