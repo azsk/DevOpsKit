@@ -103,10 +103,10 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		{
 			throw [System.ArgumentException] ("The argument 'methodNameToCall' is null. Pass the reference of method to call. e.g.: [YourClass]::new().YourMethod");
 		}
+		
+		$this.Severity = $this.ConvertToStringArray($this.Severity) # to handle when no severity is passed in command
 		if($this.Severity)
 		{
-			
-			$this.Severity = $this.ConvertToStringArray($this.Severity)
 			$this.Severity = [ControlHelper]::CheckValidSeverities($this.Severity);
 			
 		}

@@ -40,9 +40,9 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 		if($svtObject)
 		{
 			$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule
+			$this.Severity = $this.ConvertToStringArray($this.Severity) # to handle case when no severity is passed to command
 			if($this.Severity)
 			{
-				$this.Severity = $this.ConvertToStringArray($this.Severity)
 				$this.Severity = [ControlHelper]::CheckValidSeverities($this.Severity);				
 				 
 			}
