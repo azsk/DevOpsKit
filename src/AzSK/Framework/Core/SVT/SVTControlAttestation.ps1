@@ -194,7 +194,7 @@ class SVTControlAttestation
 					catch
 					{
 						Write-Host "`nThe days need to be an integer value." -ForegroundColor Red
-						throw $_
+						throw $_.Exception
 					}
 				}
 				
