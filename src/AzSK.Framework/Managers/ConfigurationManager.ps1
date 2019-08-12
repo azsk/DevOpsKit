@@ -108,7 +108,8 @@ class ConfigurationManager
 		if(-not [string]::IsNullOrWhiteSpace($extensionScriptCode))
         {
 			$extensionFilePath = Join-Path $([Constants]::AzSKExtensionsFolderPath) $fileName;
-            Out-File -InputObject $extensionScriptCode -Force -FilePath $extensionFilePath -Encoding utf8;       
+			Out-File -InputObject $extensionScriptCode -Force -FilePath $extensionFilePath -Encoding utf8;     
+			Set-ItemProperty -Path $extensionFilePath -Name IsReadOnly -Value $true
 		}
 
 		return $extensionFilePath
