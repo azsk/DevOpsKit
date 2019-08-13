@@ -410,7 +410,7 @@ function CreateHelperSchedules()
 # Using AzureRM commands to create schedule for the first time since Az modules are not present
 function CreateHelperSchedulesAzureRM()
 {
-	Write-Output("CS: Creating required helper schedule...")
+	Write-Output("CS: Creating required helper schedule(s)...")
 	for($i = 1;$i -le 4; $i++)
 	{
 		$scheduleName = ""
