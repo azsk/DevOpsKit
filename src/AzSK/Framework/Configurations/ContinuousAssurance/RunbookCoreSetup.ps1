@@ -411,15 +411,26 @@ function CreateHelperSchedules()
 # Using AzureRM commands to create schedule for the first time since Az modules are not present
 function CreateHelperSchedulesAzureRM()
 {
-	Write-Output("CS: Creating required helper schedule...")	
-	$scheduleName = $CAHelperScheduleName
-	$startTime = $(get-date).AddMinutes(15)
-	New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleName `
+	Write-Output("CS: Creating required helper schedule...")
+	for($i = 1;$i -le 4; $i++)
+	{
+		$scheduleName = ""
+		if($i -eq 1)
+		{
+			$scheduleName = $CAHelperScheduleName
+		}
+		else
+		{
+			$scheduleName = [string]::Concat($CAHelperScheduleName,"_$i")		
+		}
+		$startTime = $(get-date).AddMinutes(15*$i)
+		New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleName `
 					-ResourceGroupName $AutomationAccountRG -StartTime $startTime `
 					-HourInterval 1 -Description "This schedule ensures that CA activity initiated by the Scan_Schedule actually completes. Do not disable/delete this schedule." `
 					-ErrorAction Stop | Out-Null 
+	}
 	$isRegistered = (Get-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG `
-	-RunbookName $RunbookName -ScheduleName $scheduleName -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0
+	-RunbookName $RunbookName -ScheduleName $CAHelperScheduleName -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0
     if(!$isRegistered)
 	{
 		Register-AzureRmAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $scheduleName `
