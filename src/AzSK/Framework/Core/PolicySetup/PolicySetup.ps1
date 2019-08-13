@@ -517,7 +517,7 @@ class PolicySetup: AzCommandBase
 		$this.PublishCustomMessage($($this.IWRCommand),[MessageType]::Info)
 		$this.PublishCustomMessage("Installer generated successfully. Run the 'iwr' command above to install Organization specific version.",[MessageType]::Update)
 
-		$this.PublishCustomMessage("IMPORTANT: Make sure anyone in your org who needs to scan according to your policies uses the above 'iwr' command to install AzSK. (They should not use 'install-module AzSK' directly. Anyone using an incorrect setup will not get your custom '$($this.OrgFullName)' policy when they run any AzSK cmdlet.)",[MessageType]::Warning)
+		$this.PublishCustomMessage("`nIMPORTANT: Make sure anyone in your org who needs to scan according to your policies uses the above 'iwr' command to install AzSK. (They should not use 'install-module AzSK' directly. Anyone using an incorrect setup will not get your custom '$($this.OrgFullName)' policy when they run any AzSK cmdlet.)",[MessageType]::Warning)
 		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
 		$this.PublishCustomMessage("[4] Creating DevOps Kit ops monitoring dashboard in the policy host subscription...`n",[MessageType]::Warning)
 		
