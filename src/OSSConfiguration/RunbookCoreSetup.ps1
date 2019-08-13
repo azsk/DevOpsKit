@@ -432,7 +432,7 @@ function CreateHelperSchedulesAzureRM()
 	-RunbookName $RunbookName -ScheduleName $CAHelperScheduleName -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0
     if(!$isRegistered)
 	{
-		Register-AzureRmAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $scheduleName `
+		Register-AzureRmAutomationScheduledRunbook -RunbookName $RunbookName -ScheduleName $CAHelperScheduleName `
 		-ResourceGroupName $AutomationAccountRG `
 		-AutomationAccountName $AutomationAccountName -ErrorAction Stop | Out-Null
 	}	
