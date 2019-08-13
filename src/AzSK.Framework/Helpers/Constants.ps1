@@ -167,6 +167,9 @@ class Constants
 					"   [2] Upload (default/base) policies to the policy server `r`n" +
 					"   [3] Generate an org-specific installer ('iwr' command) for your org `r`n" +
 					"   [4] Create a monitoring dashboard for AzSK setup/operational health across your org `r`n"
+	static [string] $UpdateOrgPolicyInstructionMsg = "This command will perform 2 important operations. It will:`r`n" + 
+	"   [1] Upload policies to the policy server `r`n" +
+	"   [2] Generate an org-specific installer ('iwr' command) for your org `r`n"
 	# Local Subscription Report Constants
 	#static [string] $ComplianceReportContainerName = "compliance-state"
 	static [string] $ComplianceReportTableName = "ComplianceState"

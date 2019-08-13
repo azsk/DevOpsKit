@@ -43,6 +43,7 @@ class PolicySetup: AzCommandBase
 	hidden [string] $removeCommandName = "Remove-AzSKOrganizationPolicy"
 	hidden [string] $installCommandName = "Install-AzSKOrganizationPolicy"
 	hidden [string] $getCommandName = "Get-AzSKOrganizationPolicyStatus"
+	hidden [int] $msgCount = 0;
 	hidden [OverrideConfigurationType] $OverrideConfiguration = [OverrideConfigurationType]::None
 
 	PolicySetup([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $orgName, [string] $departmentName, [string] $resourceGroupName, [string] $storageAccountName, [string] $appInsightName, [string] $appInsightLocation, [string] $resourceGroupLocation,[string] $AzureEnvironment, [string] $MonitoringDashboardLocation, [string] $localPolicyFolderPath):
@@ -399,17 +400,24 @@ class PolicySetup: AzCommandBase
 
 	[MessageData[]] InstallPolicy()
     {
+		$this.msgCount = 0
 		if($this.IsUpdateSwitchOn)
 		{
 			$this.ValidatePolicyExists()
+			$this.PublishCustomMessage([Constants]::UpdateOrgPolicyInstructionMsg);
+		}
+		else{
+			$this.PublishCustomMessage([Constants]::InstallOrgPolicyInstructionMsg);
+			$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
+			$this.msgCount=$this.msgCount + 1
+			$this.PublishCustomMessage("[$($this.msgCount)] Creating/Updating resources for supporting org policy in the policy host subscription...`n",[MessageType]::Warning)
 		}
 
 
-		$this.PublishCustomMessage([Constants]::InstallOrgPolicyInstructionMsg);
+		
 
 
-		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
-		$this.PublishCustomMessage("[1] Creating resources for supporting org policy in the policy host subscription...`n",[MessageType]::Warning)
+		
 		
 
 		if($this.AzureEnvironment -eq "AzureCloud"){
@@ -428,7 +436,11 @@ class PolicySetup: AzCommandBase
 			$this.PolicyUrl = $container.CloudBlobContainer.Uri.AbsoluteUri + "/```$(```$Version)/```$(```$FileName)" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
 			$this.AzSKConfigURL = $container.CloudBlobContainer.Uri.AbsoluteUri + "/$($this.RunbookBaseVersion)/AzSK.Pre.json" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
 
-			$this.PublishCustomMessage("`nAll required resources created successfully.",[MessageType]::Update)
+			if(-not $this.IsUpdateSwitchOn)
+			{
+				$this.PublishCustomMessage("`nAll required resources created/updated successfully.",[MessageType]::Update)
+			}
+			
 		}
 
 		if(Test-Path -Path $this.ConfigFolderPath)
@@ -482,7 +494,8 @@ class PolicySetup: AzCommandBase
 		$this.ModifyInstaller();
 
 		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
-		$this.PublishCustomMessage("[2] Uploading policy files to policy server...`n",[MessageType]::Warning)
+		$this.msgCount=$this.msgCount + 1
+		$this.PublishCustomMessage("[$($this.msgCount)] Uploading policy files to policy server...`n",[MessageType]::Warning)
 		$this.StorageAccountInstance.UploadFilesToBlob($this.InstallerContainerName, "", (Get-ChildItem -Path $this.InstallerFile));
 
 		$this.CopyRunbook();
@@ -513,13 +526,13 @@ class PolicySetup: AzCommandBase
 
 		$this.PublishCustomMessage("All policy files have been uploaded successfully.`n",[MessageType]::Update)
 		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
-		$this.PublishCustomMessage("[3] Generating an org-specific installer ('iwr' command) for your org...`n",[MessageType]::Warning)
+		$this.msgCount=$this.msgCount + 1
+		$this.PublishCustomMessage("[$($this.msgCount)] Generating an org-specific installer ('iwr' command) for your org...`n",[MessageType]::Warning)
 		$this.PublishCustomMessage($($this.IWRCommand),[MessageType]::Info)
-		$this.PublishCustomMessage("Installer generated successfully. Run the 'iwr' command above to install Organization specific version.",[MessageType]::Update)
-
+		$this.PublishCustomMessage("Installer generated successfully. Run the 'iwr' command above to install Organization specific version.`n`n",[MessageType]::Update)
+		$this.PublishCustomMessage("`n")
 		$this.PublishCustomMessage("IMPORTANT: Make sure anyone in your org who needs to scan according to your policies uses the above 'iwr' command to install AzSK. (They should not use 'install-module AzSK' directly. Anyone using an incorrect setup will not get your custom '$($this.OrgFullName)' policy when they run any AzSK cmdlet.)",[MessageType]::Warning)
 		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
-		$this.PublishCustomMessage("[4] Creating DevOps Kit ops monitoring dashboard in the policy host subscription...`n",[MessageType]::Warning)
 		
 		
 		$this.CreateMonitoringDashboard()
@@ -541,7 +554,9 @@ class PolicySetup: AzCommandBase
 		$dashboardResource = Get-AzResource -ResourceType "Microsoft.Portal/dashboards" -ResourceGroupName $($this.ResourceGroupName) -ErrorAction SilentlyContinue
 		if((($dashboardResource | Measure-Object).Count -eq 0 ) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::MonitoringDashboard) 
 		{
-			$this.PublishCustomMessage("Creating DevOps Kit ops monitoring dashboard in the policy host subscription...");
+			$this.msgCount=$this.msgCount + 1
+			$this.PublishCustomMessage("[$($this.msgCount)] Creating DevOps Kit ops monitoring dashboard in the policy host subscription...`n",[MessageType]::Warning)
+			#$this.PublishCustomMessage("Creating DevOps Kit ops monitoring dashboard in the policy host subscription...");
 			#Store dashboard template to temp location
 			$MonitoringDashboardTemplatePath = Join-Path $([Constants]::AzSKTempFolderPath) "MonitoringDashboard";
 			if(-not (Test-Path -Path $MonitoringDashboardTemplatePath))
@@ -928,8 +943,8 @@ class PolicySetup: AzCommandBase
 			{
 				$PolicyScanOutput.Configurations.AzSKPre.Status = $true
 				$PolicyScanOutput.Configurations.AzSKPre.CurrentVersionForOrg = $true				
-				$failMsg = "Currently Org policy is running with older AzSK version[$([Helpers]::IsStringEmpty($($AzSKPreConfigContent.CurrentVersionForOrg)))]."			
-				$resolvemsg = "Resolution: Consider updating it to latest available version[$([Helpers]::IsStringEmpty($($LatestAzSKVersion)))]."
+				$failMsg = "Currently Org policy is running with older AzSK version [$([Helpers]::IsStringEmpty($($AzSKPreConfigContent.CurrentVersionForOrg)))]."			
+				$resolvemsg = "Resolution: Consider updating it to latest available version [$([Helpers]::IsStringEmpty($($LatestAzSKVersion)))]."
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Warning"
 				$shouldReturn = $false				
@@ -1448,7 +1463,7 @@ class PolicySetup: AzCommandBase
 		if(-not $PolicyScanOutput.Resources.Status -or -not $PolicyScanOutput.Policies.Status -or -not $InstallOutput.Status -or -not $PolicyScanOutput.Configurations.AzSKPre.Status -or  -not $PolicyScanOutput.Configurations.RunbookCoreSetup.Status -or  -not $AzSKConfiguOutput.Status -or -not $PolicyScanOutput.SyntaxException.Status -or -not $CARunbookOutput.Status)
 		{
 			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Warning)
-			$this.PublishCustomMessage("Your Org policy configuration is not correctly setup..`nReview the failed check and follow the remedy suggested", [MessageType]::Warning) 
+			$this.PublishCustomMessage("Your Org policy configuration is not correctly setup..`nReview the failed checks and follow the recommendations suggested.", [MessageType]::Warning) 
 			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Warning)
 		}
 		else
@@ -1472,18 +1487,23 @@ class PolicySetup: AzCommandBase
 		$PolicyList =@()
 		$this.PublishCustomMessage("Downloading policies to location:[$($this.FolderPath)]...", [MessageType]::Info);	
 		$this.StorageAccountInstance.GetStorageAccountInstance()
-		$existingPolicyFolderContent= Get-ChildItem -Path $($this.FolderPath)
-		if(($existingPolicyFolderContent | Measure-Object).Count -gt 0)
+
+		if(Test-Path $this.FolderPath)
 		{
-			$this.PublishCustomMessage("Warning: Policy folder already contains files. Downloading policies can override existing files. `nDo you want to continue(Y/N):", $([MessageType]::Warning))
-			$answer= Read-Host
-			if($answer.ToLower() -ne "y" )
+			$existingPolicyFolderContent= Get-ChildItem -Path $($this.FolderPath) -ErrorAction SilentlyContinue
+			if(($existingPolicyFolderContent | Measure-Object).Count -gt 0)
 			{
-				$downloadPolicy = $false
-				$this.PublishCustomMessage("Skipped downloading policies.", [MessageType]::Update);
-				#return
+				$this.PublishCustomMessage("Warning: Policy folder already contains files. Downloading policies can override existing files. `nDo you want to continue(Y/N):", $([MessageType]::Warning))
+				$answer= Read-Host
+				if($answer.ToLower() -ne "y" )
+				{
+					$downloadPolicy = $false
+					$this.PublishCustomMessage("Skipped downloading policies.", [MessageType]::Update);
+					#return
+				}
 			}
 		}
+		
 		if($downloadPolicy)
 		{
 			#Downloading policies
@@ -1506,6 +1526,7 @@ class PolicySetup: AzCommandBase
 		$this.PublishCustomMessage("Completed downloading latest policy index file.", [MessageType]::Update);
 		#Get all extensions 
 		$include=@("*.ext.ps1","*.ext.json",[Constants]::ServerConfigMetadataFileName)
+		
 		$extensionFiles = Get-ChildItem -Path $this.FolderPath -Include $include -Recurse
 		if(($extensionFiles | Measure-Object).Count -gt 0)
 		{
