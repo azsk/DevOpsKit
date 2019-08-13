@@ -404,6 +404,14 @@ class PolicySetup: AzCommandBase
 			$this.ValidatePolicyExists()
 		}
 
+
+		$this.PublishCustomMessage([Constants]::InstallOrgPolicyInstructionMsg);
+
+
+		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
+		$this.PublishCustomMessage("[1] Creating resources for supporting org policy in the policy host subscription...`n",[MessageType]::Warning)
+		
+
 		if($this.AzureEnvironment -eq "AzureCloud"){
 		$this.AppInsightInstance.CreateAppInsightIfNotExists();
 	    }
@@ -419,6 +427,8 @@ class PolicySetup: AzCommandBase
 		{
 			$this.PolicyUrl = $container.CloudBlobContainer.Uri.AbsoluteUri + "/```$(```$Version)/```$(```$FileName)" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
 			$this.AzSKConfigURL = $container.CloudBlobContainer.Uri.AbsoluteUri + "/$($this.RunbookBaseVersion)/AzSK.Pre.json" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
+
+			$this.PublishCustomMessage("`nAll required resources created successfully.",[MessageType]::Update)
 		}
 
 		if(Test-Path -Path $this.ConfigFolderPath)
@@ -470,6 +480,9 @@ class PolicySetup: AzCommandBase
 			}
 		}
 		$this.ModifyInstaller();
+
+		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
+		$this.PublishCustomMessage("[2] Uploading policy files to policy server...`n",[MessageType]::Warning)
 		$this.StorageAccountInstance.UploadFilesToBlob($this.InstallerContainerName, "", (Get-ChildItem -Path $this.InstallerFile));
 
 		$this.CopyRunbook();
@@ -497,8 +510,21 @@ class PolicySetup: AzCommandBase
 			$this.PublishCustomMessage(" `r`n.No configuration files found under folder [$($this.ConfigFolderPath)]", [MessageType]::Warning);
 		}
 		Copy-Item (Join-Path $PSScriptRoot "README.txt") (Join-Path $($This.FolderPath) "README.txt") -Force
+
+		$this.PublishCustomMessage("All policy files have been uploaded successfully.`n",[MessageType]::Update)
+		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
+		$this.PublishCustomMessage("[3] Generating an org-specific installer ('iwr' command) for your org...`n",[MessageType]::Warning)
+		$this.PublishCustomMessage($($this.IWRCommand),[MessageType]::Info)
+		$this.PublishCustomMessage("Installer generated successfully. Run the 'iwr' command above to install Organization specific version.",[MessageType]::Update)
+
+		$this.PublishCustomMessage("IMPORTANT: Make sure anyone in your org who needs to scan according to your policies uses the above 'iwr' command to install AzSK. (They should not use 'install-module AzSK' directly. Anyone using an incorrect setup will not get your custom '$($this.OrgFullName)' policy when they run any AzSK cmdlet.)",[MessageType]::Warning)
+		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
+		$this.PublishCustomMessage("[4] Creating DevOps Kit ops monitoring dashboard in the policy host subscription...`n",[MessageType]::Warning)
+		
+		
 		$this.CreateMonitoringDashboard()
-		$this.PublishCustomMessage(" `r`nThe setup has been completed and policies have been copied to [$($this.FolderPath)].`r`nRun the command below to install Organization specific version.`r`n$($this.IWRCommand)", [MessageType]::Update);
+		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
+		$this.PublishCustomMessage(" `r`nThe setup has been completed and policies have been copied to [$($this.FolderPath)].`r`n", [MessageType]::Update);
 		$this.PublishCustomMessage(" `r`nNote: This is a basic setup and uses a public access blob for storing your org's installer. Once you have richer org policies, consider using a location/end-point protected by your tenant authentication.", [MessageType]::Warning);
 		return @();
 	}
@@ -539,7 +565,7 @@ class PolicySetup: AzCommandBase
 			$parameters.Add("DashboardTitle","DevOps Kit Monitoring Dashboard [$($this.OrgFullName)]")
 
 			New-AzResourceGroupDeployment -Name "MonitoringDashboard" -TemplateFile $MonitoringDashboardTemplatePath   -ResourceGroupName $($this.ResourceGroupName) -TemplateParameterObject $parameters   
-			$this.PublishCustomMessage("Successfully created monitoring dashboard. It lets you monitor the operations for various DevOps Kit workflows at your org.(e.g., CA issues, anomalous control drifts, evaluation errors, etc.). You can access it through this link: ", [MessageType]::Update);
+			$this.PublishCustomMessage("Monitoring dashboard created successfully. It lets you monitor the operations for various DevOps Kit workflows at your org.(e.g., CA issues, anomalous control drifts, evaluation errors, etc.). You can access it through this link: ", [MessageType]::Update);
 			$rmContext = [ContextHelper]::GetCurrentRMContext();
 			$tenantId = $rmContext.Tenant.Id
 			$this.PublishCustomMessage("https://ms.portal.azure.com/#$($tenantId)/dashboard/arm/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($this.ResourceGroupName)/providers/microsoft.portal/dashboards/devopskitmonitoring",[MessageType]::Update)

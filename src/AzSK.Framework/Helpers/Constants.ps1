@@ -161,6 +161,12 @@ class Constants
 	#Constants for Org Policy
 	static [string] $OrgPolicyTagPrefix = "AzSKOrgName_"
 	static [int] $SASTokenExpiryReminderInDays = 30
+
+	static [string] $InstallOrgPolicyInstructionMsg = "This command will perform 4 important operations. It will:`r`n" + 
+					"   [1] Create resources needed to support org policy `r`n" +
+					"   [2] Upload (default/base) policies to the policy server `r`n" +
+					"   [3] Generate an org-specific installer ('iwr' command) for your org `r`n" +
+					"   [4] Create a monitoring dashboard for AzSK setup/operational health across your org `r`n"
 	# Local Subscription Report Constants
 	#static [string] $ComplianceReportContainerName = "compliance-state"
 	static [string] $ComplianceReportTableName = "ComplianceState"
