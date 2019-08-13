@@ -404,7 +404,6 @@ class SVTBase: AzSKRoot
             $excludeTagsCount = ($this.ExcludeTags | Measure-Object).Count
 
 			#filters controls based on Severity
-			$this.Severity =  $this.ConvertToStringArray($this.Severity)
 			if($this.Severity.Count -ne 0 -and ($filterControlsById | Measure-Object).Count -gt 0)
 			{
 				$filterControlsById = $filterControlsById | Where-Object {$_.ControlSeverity -in $this.Severity };				

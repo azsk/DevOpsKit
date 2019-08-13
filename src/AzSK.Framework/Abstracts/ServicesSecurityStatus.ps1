@@ -103,10 +103,10 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		{
 			throw [System.ArgumentException] ("The argument 'methodNameToCall' is null. Pass the reference of method to call. e.g.: [YourClass]::new().YourMethod");
 		}
+		
+		$this.Severity = $this.ConvertToStringArray($this.Severity) # to handle when no severity is passed in command
 		if($this.Severity)
 		{
-			
-			$this.Severity = $this.ConvertToStringArray($this.Severity)
 			$this.Severity = [ControlHelper]::CheckValidSeverities($this.Severity);
 			
 		}
@@ -359,7 +359,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 			#If baseline switch is passed and there is no baseline control list present then throw exception 
 			elseif (($baselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -eq 0 -and $this.UseBaselineControls) 
 			{
-				throw ([SuppressedException]::new(("There are no baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+				throw ([SuppressedException]::new(("There are no baseline controls defined for your org. No controls will be scanned."), [SuppressedExceptionType]::Generic))
 			}
 
 			#Preview Baseline Controls
@@ -394,7 +394,14 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				#If preview baseline switch is passed and there is no baseline control list present then throw exception 
 				elseif (($previewBaselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -eq 0 -and $this.UsePreviewBaselineControls) 
 				{
-					throw ([SuppressedException]::new(("There are no preview baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+					if(($baselineControlsDetails.ResourceTypeControlIdMappingList | Measure-Object).Count -eq 0 -and $this.UseBaselineControls)
+					{
+						throw ([SuppressedException]::new(("There are no  baseline and preview-baseline controls defined for this policy. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+					}
+					if(-not ($this.UseBaselineControls))
+					{
+						throw ([SuppressedException]::new(("There are no preview-baseline controls defined for your org. No controls will be scanned."), [SuppressedExceptionType]::Generic))
+					} 		
 				}
 			}
 
