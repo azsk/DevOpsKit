@@ -868,7 +868,7 @@ class Alerts: AzCommandBase
 			{
 				$RunbookNamebyType = $this.Alert_ResourceCreation_Runbook
 			}
-		     $resourceName=$this.AutomationAccountName+"/"+$RunbookNamebyType
+		   $resourceName= $RunbookNamebyType
 			 $AlertRunBook = Get-AzResource -ResourceType  "Microsoft.Automation/automationAccounts/runbooks" -ResourceGroupName $this.ResourceGroup -Name $resourceName
 			if($AlertRunBook )
 			{

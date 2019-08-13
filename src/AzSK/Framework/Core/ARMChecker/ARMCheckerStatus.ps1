@@ -184,12 +184,18 @@ class ARMCheckerStatus: EventBase
 		} 
 
 		if(-not([string]::IsNullOrEmpty($Severity)))
-		{
-		  $Severity = $this.ConvertToStringArray($Severity);
-		  #Discard the severity inputs that are not in enum
-		  $Severity = $Severity | Where-Object {$_ -in [Enum]::GetNames('ControlSeverity')}
-		  $ControlsToScanBySeverity = $Severity
-		} 
+        {
+			$Severity = $this.ConvertToStringArray($Severity);
+			$InvalidSeverities = @();
+			$InvalidSeverities += $Severity | Where-Object {$_ -notin [Enum]::GetNames('ControlSeverity')}
+			#Discard the severity inputs that are not in enum 
+			$Severity = $Severity | Where-Object {$_ -in [Enum]::GetNames('ControlSeverity')}
+			if($InvalidSeverities.Count -gt 0)
+			{
+				$this.WriteMessage("WARNING: No control severity corresponds to `"$($InvalidSeverities -join ', ')`" for your org.",[MessageType]::Warning);
+			}
+			$ControlsToScanBySeverity = $Severity
+        }
 
 		# Check if exclude control ids are provided by user 
 		$ControlsToExclude = @();
