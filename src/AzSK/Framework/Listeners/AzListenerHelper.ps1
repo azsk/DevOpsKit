@@ -18,7 +18,7 @@ class AzListenerHelper : ListenerHelper
      static [void] UnregisterListeners()
     {
         [ListenerHelper]:: UnRegisterListeners();
-        [ListenerHelper]:: RegisterListeners();
-		[AzResourceInventoryListener]::GetInstance().UnRegisterEvents();
+        [WriteCAStatus]::GetInstance().UnRegisterEvents();
+        [AzResourceInventoryListener]::GetInstance().UnRegisterEvents();
     }	
 }

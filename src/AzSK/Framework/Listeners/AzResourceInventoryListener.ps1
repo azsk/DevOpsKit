@@ -15,6 +15,20 @@ class AzResourceInventoryListener: ListenerBase
      }
     [void] RegisterEvents() 
     {
+        $this.UnregisterEvents();       
+
+        $this.RegisterEvent([AzSKRootEvent]::GenerateRunIdentifier, {
+            $currentInstance = [SecurityRecommendationReport]::GetInstance();
+            try 
+            {
+                $currentInstance.SetRunIdentifier([AzSKRootEventArgument] ($Event.SourceArgs | Select-Object -First 1));
+            }
+            catch 
+            {
+                $currentInstance.PublishException($_);
+            }
+        });
+
         $this.RegisterEvent([SVTEvent]::CommandStarted, {
             $currentInstance = [AzResourceInventoryListener]::GetInstance();
         try
