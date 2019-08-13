@@ -4,7 +4,6 @@ class AzResourceInventoryListener: ListenerBase
     hidden static [AzResourceInventoryListener] $Instance = $null;
     AzResourceInventoryListener():Base()
     {
-        [ResourceInventory]::FetchResources();
         $this.TelemetryClient = [Microsoft.ApplicationInsights.TelemetryClient]::new()
     }
     static [AzResourceInventoryListener] GetInstance() {
