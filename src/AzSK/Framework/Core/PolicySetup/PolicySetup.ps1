@@ -1448,7 +1448,7 @@ class PolicySetup: AzCommandBase
 		if(-not $PolicyScanOutput.Resources.Status -or -not $PolicyScanOutput.Policies.Status -or -not $InstallOutput.Status -or -not $PolicyScanOutput.Configurations.AzSKPre.Status -or  -not $PolicyScanOutput.Configurations.RunbookCoreSetup.Status -or  -not $AzSKConfiguOutput.Status -or -not $PolicyScanOutput.SyntaxException.Status -or -not $CARunbookOutput.Status)
 		{
 			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Warning)
-			$this.PublishCustomMessage("Your Org policy configuration is not correctly setup..`nReview the failed checks and follow the recommendations suggested", [MessageType]::Warning) 
+			$this.PublishCustomMessage("Your Org policy configuration is not correctly setup..`nReview the failed checks and follow the recommendations suggested.", [MessageType]::Warning) 
 			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Warning)
 		}
 		else
