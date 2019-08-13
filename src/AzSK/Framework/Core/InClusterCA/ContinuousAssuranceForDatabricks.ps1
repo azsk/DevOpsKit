@@ -250,11 +250,11 @@ class DatabricksClusterCA : CommandBase {
         # time one hour after the scan job is created
         if ([string]::IsNullOrEmpty($Frequency)) {
             $jobHrs = ((Get-Date).ToUniversalTime().Hour + 1) % 24
-            $Schedule = "0 0 $jobHrs 1/1 * ? *"
+            $Schedule = "0 0 $jobHrs * * ?"
         } else {
             # if frequency is mentioned then run the
             # scan job once every $Frequency hours
-            $Schedule = "0 0 0/$Frequency 1/1 * ? *"           
+            $Schedule = "0 0 */$Frequency * * ?"           
         }
         # schedule expects a single quote around it
         $Schedule = '"' + $Schedule + '"'
