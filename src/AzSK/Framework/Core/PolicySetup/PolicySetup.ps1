@@ -928,8 +928,8 @@ class PolicySetup: AzCommandBase
 			{
 				$PolicyScanOutput.Configurations.AzSKPre.Status = $true
 				$PolicyScanOutput.Configurations.AzSKPre.CurrentVersionForOrg = $true				
-				$failMsg = "Currently Org policy is running with older AzSK version[$([Helpers]::IsStringEmpty($($AzSKPreConfigContent.CurrentVersionForOrg)))]."			
-				$resolvemsg = "Resolution: Consider updating it to latest available version[$([Helpers]::IsStringEmpty($($LatestAzSKVersion)))]."
+				$failMsg = "Currently Org policy is running with older AzSK version [$([Helpers]::IsStringEmpty($($AzSKPreConfigContent.CurrentVersionForOrg)))]."			
+				$resolvemsg = "Resolution: Consider updating it to latest available version [$([Helpers]::IsStringEmpty($($LatestAzSKVersion)))]."
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Warning"
 				$shouldReturn = $false				
@@ -1448,7 +1448,7 @@ class PolicySetup: AzCommandBase
 		if(-not $PolicyScanOutput.Resources.Status -or -not $PolicyScanOutput.Policies.Status -or -not $InstallOutput.Status -or -not $PolicyScanOutput.Configurations.AzSKPre.Status -or  -not $PolicyScanOutput.Configurations.RunbookCoreSetup.Status -or  -not $AzSKConfiguOutput.Status -or -not $PolicyScanOutput.SyntaxException.Status -or -not $CARunbookOutput.Status)
 		{
 			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Warning)
-			$this.PublishCustomMessage("Your Org policy configuration is not correctly setup..`nReview the failed check and follow the remedy suggested", [MessageType]::Warning) 
+			$this.PublishCustomMessage("Your Org policy configuration is not correctly setup..`nReview the failed checks and follow the recommendations suggested", [MessageType]::Warning) 
 			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Warning)
 		}
 		else
