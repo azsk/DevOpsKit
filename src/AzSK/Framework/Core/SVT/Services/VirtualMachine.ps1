@@ -327,7 +327,14 @@ class VirtualMachine: AzSVTBase
 					$controlResult.AddMessage([VerificationResult]::Passed,"Antimalware is configured correctly on the VM. Validated the status through ASC workspace query."); 
 				}
 				else {
-					$controlResult.AddMessage([VerificationResult]::Failed,"Antimalware is not configured on the VM. Validated the status through ASC workspace query."); 
+
+					if(-not $this.VMDetails.IsVMDeallocated)
+					{
+						$controlResult.AddMessage([VerificationResult]::Failed,"Antimalware is not configured on the VM. Validated the status through ASC workspace query."); 
+					}
+					{
+						$controlResult.AddMessage([VerificationResult]::Manual, "VM is in deallocated state. We are not able to check Security Center workspace status. Please validate VM antimalware status manually.");
+					}
 				}
 			}
 			else {
