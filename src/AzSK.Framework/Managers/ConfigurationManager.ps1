@@ -25,10 +25,24 @@ class ConfigurationManager
     }
 	
 	hidden static [SVTConfig] GetSVTConfig([string] $fileName)
-    {        
-        $defaultConfigFile = [ConfigurationHelper]::LoadServerConfigFile($fileName, [ConfigurationManager]::GetAzSKSettings().UseOnlinePolicyStore, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore);
-        $extendedFileName = $fileName.Replace(".json",".ext.json");
-        $extendedConfigFile = [ConfigurationHelper]::LoadServerFileRaw($extendedFileName, [ConfigurationManager]::GetAzSKSettings().UseOnlinePolicyStore, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore);
+    {       
+		$usePolicyStore = [ConfigurationManager]::GetAzSKSettings().UseOnlinePolicyStore
+		$policyStoreUrlOrFolder = [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl
+		$useAADAuthForPolicyStore = [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore 
+        $defaultConfigFile = [ConfigurationHelper]::LoadServerConfigFile($fileName, $usePolicyStore, $policyStoreUrlOrFolder, $useAADAuthForPolicyStore) 
+		$extendedFileName = $fileName.Replace(".json",".ext.json");
+		$extendedConfigFile = $null
+		if(-not [ConfigurationHelper]::LocalPolicyEnabled) #Default/common case... i.e., not in local policy debug mode => get .ext.json file from server.
+		{		
+			$extendedConfigFile = [ConfigurationHelper]::LoadServerFileRaw($extendedFileName, $usePolicyStore, $policyStoreUrlOrFolder, $useAADAuthForPolicyStore) 
+		}
+		#Check if there is an .ext.json file in local org policy folder
+		elseif ([ConfigurationHelper]::IsPolicyPresentOnServer($extendedFileName, $usePolicyStore, $policyStoreUrlOrFolder, $useAADAuthForPolicyStore))
+		{
+			Write-Warning "########## Looking for .ext.json file locally..... ##########"
+			$extendedConfigFile = [ConfigurationHelper]::LoadOfflineConfigFile($extendedFileName, <#$parseJson#> $true, $policyStoreUrlOrFolder) 
+		}
+
         $finalObject = [SVTConfig] $defaultConfigFile;
         if(-not [string]::IsNullOrWhiteSpace($extendedConfigFile))
         {
@@ -56,15 +70,36 @@ class ConfigurationManager
 		if(-not ($extensionSVTClassName -as [type]))
 		{
 			$extensionSVTClassFileName = $svtClassName + ".ext.ps1";
-			try {
-				$extensionFilePath = [ConfigurationManager]::DownloadExtFile($extensionSVTClassFileName)
+
+			if(-not [ConfigurationHelper]::LocalPolicyEnabled)
+			{				
+				try {
+					$extensionFilePath = [ConfigurationManager]::DownloadExtFile($extensionSVTClassFileName)
+				}
+				catch {
+					[EventBase]::PublishGenericException($_);
+				}
 			}
-			catch {
-				[EventBase]::PublishGenericException($_);
+			#We are in org-policy debug mode, use local org policy folder to look for .ext.ps1 file
+			#Check if an ext file exists for this class...
+			elseif ([ConfigurationHelper]::IsPolicyPresentOnServer($extensionSVTClassFileName,[ConfigurationManager]::GetAzSKSettings().UseOnlinePolicyStore, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl,[ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore)) 
+			{
+				Write-Warning "########## Looking for .ext.ps1 file locally..... ##########"
+				$expectedExtFolder = Join-Path ([ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl) 'Config'
+				$expectedExtFile = Join-Path $expectedExtFolder $extensionSVTClassFileName
+
+				if (Test-Path $expectedExtFile)
+				{
+					$extensionFilePath = $expectedExtFile
+				}
+				else 
+				{	
+					[EventBase]::PublishGenericCustomMessage(("Could not find extension (.ext.ps1) file for [$svtClassName] in folder [$expectedExtFolder] in org-policy-debug mode."), [MessageType]::Error);
+				}
 			}
         }
         return $extensionFilePath
-    }	
+    }
 
 	hidden static [string[]] RegisterExtListenerFiles()
     {
@@ -108,7 +143,8 @@ class ConfigurationManager
 		if(-not [string]::IsNullOrWhiteSpace($extensionScriptCode))
         {
 			$extensionFilePath = Join-Path $([Constants]::AzSKExtensionsFolderPath) $fileName;
-            Out-File -InputObject $extensionScriptCode -Force -FilePath $extensionFilePath -Encoding utf8;       
+			Out-File -InputObject $extensionScriptCode -Force -FilePath $extensionFilePath -Encoding utf8;     
+			Set-ItemProperty -Path $extensionFilePath -Name IsReadOnly -Value $true
 		}
 
 		return $extensionFilePath

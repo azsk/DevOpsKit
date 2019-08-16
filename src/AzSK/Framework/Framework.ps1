@@ -12,8 +12,6 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 #Constants
 . $FrameworkPath\Helpers\Constants.ps1
-. $FrameworkPath\Helpers\OldConstants.ps1
-
 
 #Models
 . $FrameworkPath\Models\AzSKGenericEvent.ps1
@@ -21,16 +19,18 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Models\Exception\SuppressedException.ps1
 . $FrameworkPath\Models\RemoteReports\CsvOutputModel.ps1
 . $FrameworkPath\Models\FeatureFlight.ps1
+. $FrameworkPath\Models\AzSKEvent.ps1
 . $FrameworkPath\Helpers\CommandHelper.ps1
 . $FrameworkPath\Abstracts\EventBase.ps1
+. $FrameworkPath\Helpers\JsonHelper.ps1
 . $FrameworkPath\Helpers\Helpers.ps1
-
+. $FrameworkPath\Helpers\ContextHelper.ps1  
 #Helpers (independent of models)
 
 . $FrameworkPath\Helpers\ConfigurationHelper.ps1
 
 . $FrameworkPath\Models\AzSKConfig.ps1
-. $FrameworkPath\Models\AzSKEvent.ps1
+
 . $FrameworkPath\Models\AzSKSettings.ps1
 
 . $FrameworkPath\Models\SVT\SVTConfig.ps1
@@ -52,22 +52,24 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 #Helpers
 . $FrameworkPath\Helpers\Helpers.ps1
-
+. $FrameworkPath\Managers\ConfigurationManager.ps1
+. $PSScriptRoot\Helpers\ResourceHelper.ps1
 . $FrameworkPath\Helpers\WebRequestHelper.ps1
 . $FrameworkPath\Helpers\ActiveDirectoryHelper.ps1
-. $FrameworkPath\Helpers\RoleAssignmentHelper.ps1
-. $FrameworkPath\Helpers\SecurityCenterHelper.ps1
+. $PSScriptRoot\Helpers\RoleAssignmentHelper.ps1
+. $PSScriptRoot\Helpers\SecurityCenterHelper.ps1
 . $FrameworkPath\Helpers\SVTMapping.ps1
 . $FrameworkPath\Helpers\IdentityHelpers.ps1
 . $FrameworkPath\Helpers\ConfigOverride.ps1
+. $FrameworkPath\Helpers\ControlHelper.ps1
 
 . $FrameworkPath\Models\Common\ResourceInventory.ps1
 
 
 #Managers
-. $FrameworkPath\Managers\ConfigurationManager.ps1
+
 . $FrameworkPath\Managers\FeatureFlightingManager.ps1
-. $FrameworkPath\Helpers\AzHelper.ps1
+. $PSScriptRoot\Helpers\AzHelper.ps1
 . $FrameworkPath\Managers\ControlStateExtension.ps1
 . $FrameworkPath\Managers\AzSKPDFExtension.ps1
 . $FrameworkPath\Managers\PartialScanManager.ps1
@@ -75,24 +77,25 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Helpers\LogAnalyticsHelper.ps1
 . $FrameworkPath\Helpers\RemoteReportHelper.ps1
 . $FrameworkPath\Helpers\RemoteApiHelper.ps1
-. $PSScriptRoot\Core\PrivacyNotice.ps1
+. $FrameworkPath\Abstracts\PrivacyNotice.ps1
 
 
 #Abstracts
 . $FrameworkPath\Abstracts\AzSKRoot.ps1
 . $FrameworkPath\Abstracts\SVTBase.ps1
+. $PSScriptRoot\Abstracts\AzSVTBase.ps1
 
 . $FrameworkPath\Abstracts\FixControl\FixControlBase.ps1
 . $FrameworkPath\Abstracts\FixControl\FixServicesBase.ps1
-. $FrameworkPath\Abstracts\FixControl\FixSubscriptionBase.ps1
+. $PSScriptRoot\Abstracts\FixControl\FixSubscriptionBase.ps1
 
 . $FrameworkPath\Abstracts\ListenerBase.ps1
 . $FrameworkPath\Abstracts\FileOutputBase.ps1
 
-. $FrameworkPath\Helpers\ResourceHelper.ps1
-. $FrameworkPath\Helpers\UserSubscriptionDataHelper.ps1
-. $FrameworkPath\Abstracts\ComplianceBase.ps1
-. $FrameworkPath\Helpers\ComplianceReportHelper.ps1
+
+. $PSScriptRoot\Helpers\UserSubscriptionDataHelper.ps1
+. $PSScriptRoot\Abstracts\ComplianceBase.ps1
+. $PSScriptRoot\Helpers\ComplianceReportHelper.ps1
 
 #Listeners
 . $FrameworkPath\Listeners\UserReports\WriteFolderPath.ps1
@@ -111,14 +114,18 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Listeners\FixControl\WriteFixControlFiles.ps1
 . $FrameworkPath\Listeners\EventHub\EventHubOutput.ps1
 . $FrameworkPath\Listeners\Webhook\WebhookOutput.ps1
-. $FrameworkPath\Listeners\CA\WriteCAStatus.ps1
+. $PSScriptRoot\Listeners\CA\WriteCAStatus.ps1
 . $FrameworkPath\Listeners\GenericListener\GenericListener.ps1
-. $FrameworkPath\Listeners\SecurityRecommendationReport.ps1
+. $PSScriptRoot\Listeners\SecurityRecommendationReport.ps1
+. $PSScriptRoot\Listeners\AzResourceInventoryListener.ps1
 . $FrameworkPath\Listeners\ListenerHelper.ps1
+. $PSScriptRoot\Listeners\AzListenerHelper.ps1
 
 #Remaining Abstracts
 . $PSScriptRoot\Core\SVT\SVTControlAttestation.ps1
 . $FrameworkPath\Abstracts\CommandBase.ps1
+. $PSScriptRoot\Abstracts\AzCommandBase.ps1
+
 
 #SubscriptionSecurity
 . $PSScriptRoot\Core\SubscriptionSecurity\Alerts.ps1
@@ -129,7 +136,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 #Remaining Abstracts
 . $FrameworkPath\Abstracts\SVTCommandBase.ps1
-
+. $PSScriptRoot\Abstracts\AzSVTCommandBase.ps1
 #Core
 
 . $PSScriptRoot\Core\SVT\SVTIaasBase.ps1
@@ -141,6 +148,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
     ForEach-Object {
     . $_.FullName
 }
+
 . $PSScriptRoot\Core\SubscriptionSecurity\SubscriptionSecurity.ps1
 
 . $PSScriptRoot\Core\FixControl\FixControlConfigResolver.ps1
@@ -149,7 +157,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $PSScriptRoot\Core\SVT\SubscriptionCore\SubscriptionCore.ps1
 . $PSScriptRoot\Core\SVT\AzSKCfg\AzSKCfg.ps1
 . $PSScriptRoot\Core\SVT\SVTResourceResolver.ps1
-. $PSScriptRoot\Core\SVT\ServicesSecurityStatus.ps1
+. $FrameworkPath\Abstracts\ServicesSecurityStatus.ps1
 . $PSScriptRoot\Core\SVT\SubscriptionSecurityStatus.ps1
 . $PSScriptRoot\Core\SVT\SVTStatusReport.ps1
 . $PSScriptRoot\Core\AzSKInfo\SecurityRecommendationsReport.ps1
@@ -162,3 +170,5 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $PSScriptRoot\Core\PolicySetup\PolicySetup.ps1
 . $PSScriptRoot\Core\PIM\PIMScript.ps1
 . $PSScriptRoot\Core\CredHygiene\CredHygieneScript.ps1
+. $PSScriptRoot\Core\InClusterCA\ContinuousAssuranceForDatabricks.ps1
+. $PSScriptRoot\Core\InClusterCA\ContinuousAssuranceForHDInsight.ps1

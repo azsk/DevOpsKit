@@ -83,8 +83,10 @@ class Constants
 			[AttestationStatus]::NotAnIssue		="1";
 			[AttestationStatus]::WillNotFix		="2";
 			[AttestationStatus]::WillFixLater	="3";
-			[AttestationStatus]::NotApplicable	="4";
-			[AttestationStatus]::StateConfirmed ="5";
+			[AttestationStatus]::ApprovedException ="4";
+			[AttestationStatus]::NotApplicable	="5";
+			[AttestationStatus]::StateConfirmed ="6";
+			
 	}
 
 	static [string] $StorageAccountPreName= "azsk"
@@ -132,8 +134,6 @@ class Constants
 
 	static [int] $DefaultControlExpiryInDays = 90
 	static [int] $PartialScanMaxRetryCount = 3
-	static [string] $NewModuleName = "AzSK"
-	static [string] $OldModuleName = "AzSDK"
 
 	#CA variables names
 	static [string] $AppResourceGroupNames = "AppResourceGroupNames"
@@ -161,6 +161,15 @@ class Constants
 	#Constants for Org Policy
 	static [string] $OrgPolicyTagPrefix = "AzSKOrgName_"
 	static [int] $SASTokenExpiryReminderInDays = 30
+
+	static [string] $InstallOrgPolicyInstructionMsg = "This command will perform 4 important operations. It will:`r`n" + 
+					"   [1] Create resources needed to support org policy `r`n" +
+					"   [2] Upload (default/base) policies to the policy server `r`n" +
+					"   [3] Generate an org-specific installer ('iwr' command) for your org `r`n" +
+					"   [4] Create a monitoring dashboard for AzSK setup/operational health across your org `r`n"
+	static [string] $UpdateOrgPolicyInstructionMsg = "This command will perform 2 important operations. It will:`r`n" + 
+	"   [1] Upload policies to the policy server `r`n" +
+	"   [2] Generate an org-specific installer ('iwr' command) for your org `r`n"
 	# Local Subscription Report Constants
 	#static [string] $ComplianceReportContainerName = "compliance-state"
 	static [string] $ComplianceReportTableName = "ComplianceState"
@@ -172,6 +181,8 @@ class Constants
 	#Constants for credential rotation metadata
 	static [string] $RotationMetadataSubPath = (Join-Path "Temp" -ChildPath "RotationMetadata");
 	static [string] $RotationMetadataContainerName = "rotation-metadata"
+	static [string] $CredHygieneActionGroupName = "AzSKCredHygieneAG"
+	static [string] $CredHygieneActionGroupShortName = "azskchag"
 
 	static [void] SetAzSKModuleName($moduleName)
 	{
@@ -191,4 +202,13 @@ class Constants
 			[Constants]::AzSKCurrentModuleVersion = $moduleVersion;
 		}
 	}
+
+	# LogAnalytics view file name
+	static [string] $LogAnalyticsGenericView = "AZSK.AM.LogAnalytics.GenericView.V6.lawsview"
+	# Constants for in cluster CA scanning
+	static [string] $DatabricksScanJobConfigurationUrl = "https://azsdkossep.azureedge.net/incluster_configuration/DatabricksConfiguration.json"
+	static [string] $DatabricksCANotebookUrl = "https://azsdkossep.azureedge.net/incluster_configuration/AzSK_DB.ipynb"
+	static [string] $HDInsightCANotebookUrl = "https://azsdkossep.azureedge.net/incluster_configuration/AzSK_HDI.ipynb"
+	static [string] $AzSKPyInstallUrl = "https://azsdkossep.azureedge.net/incluster_configuration/pipinstall.sh"
+	static [string] $AzSKPyUninstallUrl = "https://azsdkossep.azureedge.net/incluster_configuration/uninstall.sh"
 }

@@ -3,7 +3,7 @@ using namespace Microsoft.Azure.Commands.Compute.Models
 using namespace Microsoft.Azure.Management.Compute.Models
 Set-StrictMode -Version Latest 
 
-class VirtualMachine: SVTBase
+class VirtualMachine: AzSVTBase
 {       
     hidden [PSVirtualMachine] $ResourceObject;
     hidden [PSNetworkInterface[]] $VMNICs = $null;
@@ -12,20 +12,6 @@ class VirtualMachine: SVTBase
 	hidden [VMDetails] $VMDetails = [VMDetails]::new()
 	hidden [PSObject] $VMControlSettings = $null;
 	hidden [string] $Workspace = "";
-
-    VirtualMachine([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-        Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-		$this.GetResourceObject();	
-		$this.GetVMDetails();
-		$metadata= [PSObject]::new();
-		$metadata| Add-Member -Name VMDetails -Value $this.VMDetails -MemberType NoteProperty;
-		if([FeatureFlightingManager]::GetFeatureStatus("EnableVMASCMetadataCapture",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-		{
-			$metadata| Add-Member -Name VMASCDetails -Value $this.ASCSettings -MemberType NoteProperty;
-		}				
-		$this.AddResourceMetadata($metadata);	
-    }
     
 	VirtualMachine([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -326,7 +312,38 @@ class VirtualMachine: SVTBase
 	hidden [ControlResult] CheckAntimalwareStatus([ControlResult] $controlResult)
 	{
 		#Do not check for deallocated status for the VM and directly show the status from ASC
-		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
+		
+		#Execute block if OS is Linux and WorkSpaceId is configured
+		if($this.VMDetails.OSType -eq [OperatingSystemTypes]::Linux -and [FeatureFlightingManager]::GetFeatureStatus("EnableLinuxAntimalwareCheck",$($this.SubscriptionContext.SubscriptionId))) 
+		{
+
+			if($this.Workspace)
+			{
+				$LinuxAntimalwareStatusWSQuery =[string]::Format($this.VMControlSettings.QueryForLinuxAntimalwareStatus,($this.ResourceContext.ResourceId).ToLower());
+				$queryStatusResult = [LogAnalyticsHelper]::QueryStatusfromWorkspace($this.Workspace, $LinuxAntimalwareStatusWSQuery);
+
+				if($queryStatusResult.Count -gt 0 )
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed,"Antimalware is configured correctly on the VM. Validated the status through ASC workspace query."); 
+				}
+				else {
+
+					if(-not $this.VMDetails.IsVMDeallocated)
+					{
+						$controlResult.AddMessage([VerificationResult]::Failed,"Antimalware is not configured on the VM. Validated the status through ASC workspace query."); 
+					}
+					else 
+					{
+						$controlResult.AddMessage([VerificationResult]::Manual, "VM is in deallocated state. We are not able to check Security Center workspace status. Please validate VM antimalware status manually.");
+					}
+				}
+			}
+			else {
+				$controlResult.AddMessage([VerificationResult]::Manual, "We are not able to check Security Center workspace status. Please validate VM antimalware status manually.");
+			}
+			
+		}
+		elseif($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
 			$antimalwareSetting = $null
 			if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
@@ -378,7 +395,7 @@ class VirtualMachine: SVTBase
 					$currentVulnExtensionVersion = $null
 					try {
 						$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
-						$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+						$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 						$header = "Bearer " + $AccessToken
 						$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
 						$propertiesToReplace = @{}
@@ -431,7 +448,7 @@ class VirtualMachine: SVTBase
 			
 			
             $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
-			$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+			$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			$header = "Bearer " + $AccessToken
 			$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
 			$propertiesToReplace = @{}
@@ -503,7 +520,7 @@ class VirtualMachine: SVTBase
 	{
 		$controlStatus = [VerificationResult]::Failed
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
-		$AccessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		$header = "Bearer " + $AccessToken
 		$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
 		$propertiesToReplace = @{}
@@ -548,6 +565,71 @@ class VirtualMachine: SVTBase
 				$controlResult.AddMessage("Not able to fetch guest configuration policy assignments details.");
 			}
 		
+		$controlResult.VerificationResult = $controlStatus
+		return $controlResult;
+	}
+
+	hidden [ControlResult] CheckRequiredExtensions([ControlResult] $controlResult)
+	{
+		if(-not $this.VMDetails.IsVMDeallocated)
+		{
+			$controlStatus = [VerificationResult]::Failed
+			$requiredExtensions  = $this.VMControlSettings.RequiredExtensions
+			
+			if($null -ne $requiredExtensions -and ($requiredExtensions | Measure-Object).Count -gt 0){
+				$unhealthyExtensions = @()
+				$missingExtensions = @()
+				$installedExtensions = @()
+				$hasControlFailed = $false
+				if([Helpers]::CheckMember($this.ResourceObject, "Extensions")){
+
+					$requiredExtensions | ForEach-Object {
+						$requiredExtension = $_
+						$installedExtension = $this.ResourceObject.Extensions | Where-Object {$_.VirtualMachineExtensionType -eq $requiredExtension.ExtensionType <# -and $_.Publisher -eq $requiredExtension.Publisher #> } 
+						if($null -eq $installedExtension){
+							$missingExtensions += $requiredExtension
+							$hasControlFailed = $true
+						}
+						elseif($installedExtension.ProvisioningState -eq "Succeeded"){
+							$installedExtensions += $requiredExtension
+						}else{
+							$unhealthyExtensions += $requiredExtension
+							$hasControlFailed = $true
+						}
+					}
+						
+					if(($installedExtensions | Measure-Object).Count -gt 0){
+						$controlResult.AddMessage("Following extensions are present in VM:",$installedExtensions);
+					}
+					if(($unhealthyExtensions | Measure-Object).Count -gt 0){
+						$controlResult.AddMessage("Following extensions are present in VM but are not healthy:",$unhealthyExtensions);
+					}
+					if(($missingExtensions | Measure-Object).Count -gt 0){
+						$controlResult.AddMessage("Following required extensions are not present in VM:",$missingExtensions);
+					}
+					
+					if($hasControlFailed){
+						$controlStatus = [VerificationResult]::Failed
+						$missingExtensions = $missingExtensions + $unhealthyExtensions
+						$controlResult.SetStateData("Missing or unhealthy extensions:", $missingExtensions);
+					}else{
+						$controlStatus = [VerificationResult]::Passed
+						$controlResult.AddMessage("All required extensions are present in VM.");
+					}
+
+				}else{
+					$controlResult.AddMessage("Following required extensions are not present in VM:",$requiredExtensions);
+				}
+			}else{
+				$controlStatus = [VerificationResult]::Passed
+				$controlResult.AddMessage("No mandatory extensions need to be deployed on VM.");
+			}
+		}
+		else
+		{
+			$controlStatus = [VerificationResult]::Verify
+			$controlResult.AddMessage("This VM is currently in a 'deallocated' state. Unable to check security controls on it.");
+		}
 		$controlResult.VerificationResult = $controlStatus
 		return $controlResult;
 	}
@@ -850,7 +932,7 @@ class VirtualMachine: SVTBase
 		$activeRecommendations = @()
 		$ASCWhitelistedRecommendations = @();
 		$ASCWhitelistedRecommendations += $this.VMControlSettings.ASCRecommendations;
-		#[Helpers]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
+		#[ResourceHelper]::RegisterResourceProviderIfNotRegistered([SecurityCenterHelper]::ProviderNamespace);
 		$tasks = [SecurityCenterHelper]::InvokeGetASCTasks($this.SubscriptionContext.SubscriptionId);
         $found = $false;
 		if($null -ne $ASCWhitelistedRecommendations -and $null -ne $tasks)
@@ -1102,6 +1184,8 @@ class VirtualMachine: SVTBase
 		}
 		return $vulnerableRules;
 	}
+
+	
 }
 
 

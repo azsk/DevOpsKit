@@ -1,13 +1,7 @@
 Set-StrictMode -Version Latest
-class CDN: SVTBase
+class CDN: AzSVTBase
 {
 	hidden [PSObject] $ResourceObject;
-
-	CDN([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
-        Base($subscriptionId, $resourceGroupName, $resourceName)
-    {
-        
-    }
 
     CDN([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId, $svtResource)

@@ -1,12 +1,7 @@
 Set-StrictMode -Version Latest 
-class LoadBalancer: SVTBase
+class LoadBalancer: AzSVTBase
 {       
     hidden [PSObject] $ResourceObject;
-
-    LoadBalancer([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName): 
-                 Base($subscriptionId, $resourceGroupName, $resourceName) 
-    { 
-    }
 
     LoadBalancer([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 

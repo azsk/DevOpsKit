@@ -29,38 +29,31 @@ class SVTBase: AzSKRoot
 	[string[]] $ExcludeControlIds = @();
 	[hashtable] $ResourceTags = @{}
 	[bool] $GenerateFixScript = $false;
+
 	[bool] $IncludeUserComments = $false;
 	[string] $PartialScanIdentifier = [string]::Empty
 	[ComplianceStateTableEntity[]] $ComplianceStateData = @();
 	[PSObject[]] $ChildSvtObjects = @();
 	#EndRegion
-    SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
-        Base($subscriptionId)
-    {		
-		$this.CreateInstance($svtResource);
-    }
 
 	SVTBase([string] $subscriptionId):
         Base($subscriptionId)
-    {
-		$this.CreateInstance();
-    }
+    {		
 
-	#Create instance for subscription scan
-	hidden [void] CreateInstance()
-	{
-		[Helpers]::AbstractClass($this, [SVTBase]);
-
-		$this.LoadSvtConfig([SVTMapping]::SubscriptionMapping.JsonFileName);
-		$this.ResourceId = $this.SubscriptionContext.Scope;
 	}
+	SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
+	Base($subscriptionId, [SVTResource] $svtResource)
+	{		
+		$this.CreateInstance($svtResource);
+	}
+
 
 	#Create instance for resource scan
 	hidden [void] CreateInstance([SVTResource] $svtResource)
 	{
 		[Helpers]::AbstractClass($this, [SVTBase]);
 
-		#Region: validation for resource object
+		#Region: validation for resource object 
 		if(-not $svtResource)
 		{
 			throw [System.ArgumentException] ("The argument 'svtResource' is null");
@@ -77,7 +70,7 @@ class SVTBase: AzSKRoot
 		}
 		#EndRegion
 
-		
+		#<TODO Framework: ResourceTypeMapping is already part of svtResource and populated from Resolver. Below validation is redudant.
 		if(-not $svtResource.ResourceTypeMapping)
 		{
 			$svtResource.ResourceTypeMapping = [SVTMapping]::Mapping |
@@ -104,15 +97,15 @@ class SVTBase: AzSKRoot
             ResourceName = $svtResource.ResourceName;
             ResourceType = $svtResource.ResourceTypeMapping.ResourceType;
 			ResourceTypeName = $svtResource.ResourceTypeMapping.ResourceTypeName;
-			ResourceId = $svtResource.ResourceId;
-			ResourceDetails = $svtResource.ResourceDetails;
-        };
+			ResourceId = $svtResource.ResourceId
+			ResourceDetails = $svtResource.ResourceDetails
+		};
 		
-		#<TODO Perf Issue: Fetch resource group details from resolver itself>
+		#<TODO Framework: Fetch resource group details from resolver itself>
 		$this.ResourceContext.ResourceGroupTags = $this.ResourceTags;
 	}
 
-    hidden [void] LoadSvtConfig([string] $controlsJsonFileName)
+   	hidden [void] LoadSvtConfig([string] $controlsJsonFileName)
     {
         $this.ControlSettings = $this.LoadServerConfigFile("ControlSettings.json");
 
@@ -124,20 +117,21 @@ class SVTBase: AzSKRoot
 				#Expand description and recommendation string if any dynamic values defined field using control settings
                 $_.Description = $global:ExecutionContext.InvokeCommand.ExpandString($_.Description)
                 $_.Recommendation = $global:ExecutionContext.InvokeCommand.ExpandString($_.Recommendation)
+				
 				$ControlSeverity = $_.ControlSeverity
 				#Check if ControlSeverity is customized/overridden using controlsettings configurations
                 if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverity"))
                 {
                     $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
                 }
-				else
-				{
-					$_.ControlSeverity = $ControlSeverity
-				}
+
+				#<TODO Framework: Do we really need to trim method name as it is defined by developer>
 				if(-not [string]::IsNullOrEmpty($_.MethodName))
 				{
 					$_.MethodName = $_.MethodName.Trim();
 				}
+
+				#Check if 
 				if($this.CheckBaselineControl($_.ControlID))
 				{
 					$_.IsBaselineControl = $true
@@ -150,67 +144,17 @@ class SVTBase: AzSKRoot
             }
         }
     }
-	#Add PreviewBaselineControls
+	#stub to be used when Baseline configuration exists 
 	hidden [bool] CheckBaselineControl($controlId)
 	{
-		if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"BaselineControls.ResourceTypeControlIdMappingList"))
-		{
-		  $baselineControl = $this.ControlSettings.BaselineControls.ResourceTypeControlIdMappingList | Where-Object {$_.ControlIds -contains $controlId}
-		   if(($baselineControl | Measure-Object).Count -gt 0 )
-			{
-				return $true
-			}
-		}
-
-		if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"BaselineControls.SubscriptionControlIdList"))
-		{
-		  $baselineControl = $this.ControlSettings.BaselineControls.SubscriptionControlIdList | Where-Object {$_ -eq $controlId}
-		   if(($baselineControl | Measure-Object).Count -gt 0 )
-			{
-				return $true
-			}
-		}
 		return $false
 	}
+	#stub to be used when PreviewBaseline configuration exists 
 	hidden [bool] CheckPreviewBaselineControl($controlId)
 	{
-		if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.ResourceTypeControlIdMappingList"))
-		{
-		  $PreviewBaselineControls = $this.ControlSettings.PreviewBaselineControls.ResourceTypeControlIdMappingList | Where-Object {$_.ControlIds -contains $controlId}
-		   if(($PreviewBaselineControls | Measure-Object).Count -gt 0 )
-			{
-				return $true
-			}
-		}
-
-		if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.SubscriptionControlIdList"))
-		{
-		  $PreviewBaselineControls = $this.ControlSettings.PreviewBaselineControls.SubscriptionControlIdList | Where-Object {$_ -eq $controlId}
-		   if(($PreviewBaselineControls | Measure-Object).Count -gt 0 )
-			{
-				return $true
-			}
-		}
 		return $false
 	}
 
-	hidden [void] GetResourceId()
-    {
-
-		try {
-
-			if ([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupTagTelemetry","*") -eq $true -and $this.ResourceId -and $this.ResourceContext -and $this.ResourceTags.Count -eq 0) {
-				
-					$tags = (Get-AzResourceGroup -Name $this.ResourceContext.ResourceGroupName).Tags
-					if( $tags -and ($tags | Measure-Object).Count -gt 0)
-					{
-						$this.ResourceTags = $tags
-					}			
-			}   
-		} catch {
-			# flow shouldn't break if there are errors in fetching tags eg. locked resource groups. <TODO: Add exception telemetry>
-		}
-    }
 
 	#Check if service is under mentainance and display maintenance warning message
     [bool] ValidateMaintenanceState()
@@ -358,8 +302,6 @@ class SVTBase: AzSKRoot
         return $resourceSecurityResult;
 	}
 
-	
-
 	[SVTEventContext[]] ComputeApplicableControlsWithContext()
     {
         [SVTEventContext[]] $contexts = @();
@@ -387,6 +329,7 @@ class SVTBase: AzSKRoot
 		}
 		$this.PostFeatureControlTelemetry()
 	}
+
 	[void] PostFeatureControlTelemetry()
 	{
 		#todo add check for latest module version
@@ -463,17 +406,6 @@ class SVTBase: AzSKRoot
 			#filters controls based on Severity
 			if($this.Severity.Count -ne 0 -and ($filterControlsById | Measure-Object).Count -gt 0)
 			{
-				if([Helpers]::CheckMember($this.ControlSettings, 'ControlSeverity'))
-				{
-					$AllowedSeverities = @();
-					$severityMapping = $this.ControlSettings.ControlSeverity
-					#Discard the severity values passed in parameter that do not have mapping in Org settings.
-                    foreach($sev in $severityMapping.psobject.properties)
-                    {                         
-                        $AllowedSeverities +=  $sev.value       
-					}
-					$this.Severity = $this.Severity | Where-Object{ $_ -in $AllowedSeverities}
-				}
 				$filterControlsById = $filterControlsById | Where-Object {$_.ControlSeverity -in $this.Severity };				
 			}
 
@@ -612,7 +544,8 @@ class SVTBase: AzSKRoot
         }
 
         return $automatedControlsResult;
-    }
+	}
+	
 	hidden [SVTEventContext[]] GetControlsStateResult()
     {
         [SVTEventContext[]] $automatedControlsResult = @();
@@ -639,7 +572,8 @@ class SVTBase: AzSKRoot
         }
 
         return $automatedControlsResult;
-    }
+	}
+	
     hidden [SVTEventContext] RunControl([ControlItem] $controlItem)
     {
 		[SVTEventContext] $singleControlResult = $this.CreateSVTEventContextObject();
@@ -699,30 +633,6 @@ class SVTBase: AzSKRoot
 			return $policyScanResult;
 		}
 	}
-	hidden [ControlResult] CheckPolicyCompliance([ControlItem] $controlItem, [ControlResult] $controlResult)
-	{
-		$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName
-		$defnResourceId = $this.ResourceId + $controlItem.PolicyDefnResourceIdSuffix
-		$policyState = Get-AzPolicyState -ResourceId $defnResourceId -Filter "PolicyDefinitionId eq '/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)' and PolicySetDefinitionName eq '$initiativeName'"
-		if($policyState)
-        {
-            $policyStateObject = $policyState | Select-Object ResourceId, PolicyAssignmentId, PolicyDefinitionId, PolicyAssignmentScope, PolicyDefinitionAction, PolicySetDefinitionName, IsCompliant
-		    if($policyState.IsCompliant)
-            {
-			    $controlResult.AddMessage([VerificationResult]::Passed,
-										    [MessageData]::new("Policy compliance data:", $policyStateObject));
-            }
-		    else
-            { 
-			    #$controlResult.EnableFixControl = $true;
-			    $controlResult.AddMessage([VerificationResult]::Failed,
-										    [MessageData]::new("Policy compliance data:", $policyStateObject));
-            }
-            return $controlResult;
-        }
-        return $null;
-    }
-	# Policy compliance methods end
 	
 	hidden [SVTEventContext] FetchControlState([ControlItem] $controlItem)
     {
@@ -742,7 +652,7 @@ class SVTBase: AzSKRoot
 					if($null -ne $currentControlStateValue)
 					{
 						#assign expiry date
-						$expiryIndays=$this.CalculateExpirationInDays($singleControlResult,$currentControlStateValue);
+						$expiryIndays = $this.CalculateExpirationInDays($singleControlResult,$currentControlStateValue);
 						if($expiryIndays -ne -1)
 						{
 							$currentControlStateValue.State.ExpiryDate = ($currentControlStateValue.State.AttestedDate.AddDays($expiryIndays)).ToString("MM/dd/yyyy");
@@ -940,7 +850,7 @@ class SVTBase: AzSKRoot
 								{
 									if($currentItem.StateManagement.CurrentStateData -and $null -ne $currentItem.StateManagement.CurrentStateData.DataObject)
 									{
-										$currentStateDataObject = [Helpers]::ConvertToJsonCustom($currentItem.StateManagement.CurrentStateData.DataObject) | ConvertFrom-Json
+										$currentStateDataObject = [JsonHelper]::ConvertToJsonCustom($currentItem.StateManagement.CurrentStateData.DataObject) | ConvertFrom-Json
 
 										try
 										{
@@ -1047,11 +957,12 @@ class SVTBase: AzSKRoot
 			}
 			else
 			{
-			    $controlState.State.ExpiryDate = ($controlState.State.AttestedDate.AddDays($expiryIndays)).ToString("MM/dd/yyyy");
+				$controlState.State.ExpiryDate = ($controlState.State.AttestedDate.AddDays($expiryIndays)).ToString("MM/dd/yyyy");
 				return $true
 			}
 		}
-		catch{
+		catch
+		{
 			#if any exception occurs while getting/validating expiry period, return true.
 			$this.EvaluationError($_);
 			return $true
@@ -1062,68 +973,83 @@ class SVTBase: AzSKRoot
 	{
 		try
 		{
-			#Get controls expiry period. Default value is zero
-			$controlAttestationExpiry = $eventcontext.controlItem.AttestationExpiryPeriodInDays
-			$controlSeverity = $eventcontext.controlItem.ControlSeverity
-			$controlSeverityExpiryPeriod = 0
-			$defaultAttestationExpiryInDays = [Constants]::DefaultControlExpiryInDays;
-			$expiryInDays=-1;
-			if(($eventcontext.ControlResults |Measure-Object).Count -gt 0)	
+			#For exempt controls, either the no. of days for expiry were provided at the time of attestation or a default of 6 motnhs was already considered,
+			#therefore skipping this flow and calculating days directly using the expiry date already saved.
+			if($controlState.AttestationStatus -ne [AttestationStatus]::ApprovedException)
 			{
-				$isControlInGrace=$eventcontext.ControlResults.IsControlInGrace;
-			}
-			else
-			{
-				$isControlInGrace=$true;
-			}
-			if([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays") `
-					-and [Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays,"Default") `
-					-and $this.ControlSettings.AttestationExpiryPeriodInDays.Default -gt 0)
-			{
-				$defaultAttestationExpiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.Default
-			}			
-			#Expiry in the case of WillFixLater or StateConfirmed/Recurring Attestation state will be based on Control Severity.
-			if($controlState.AttestationStatus -eq [AttestationStatus]::NotAnIssue -or $controlState.AttestationStatus -eq [AttestationStatus]::NotApplicable)
-			{
-				$expiryInDays=$defaultAttestationExpiryInDays;
-			}
-			else
-			{
-				# Expire WillFixLater if GracePeriod has expired
-				if(-not($isControlInGrace) -and $controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater)
+				#Get controls expiry period. Default value is zero
+				$controlAttestationExpiry = $eventcontext.controlItem.AttestationExpiryPeriodInDays
+				$controlSeverity = $eventcontext.controlItem.ControlSeverity
+				$controlSeverityExpiryPeriod = 0
+				$defaultAttestationExpiryInDays = [Constants]::DefaultControlExpiryInDays;
+				$expiryInDays=-1;
+	
+				if(($eventcontext.ControlResults |Measure-Object).Count -gt 0)	
 				{
-					$expiryInDays=0;
+					$isControlInGrace=$eventcontext.ControlResults.IsControlInGrace;
 				}
 				else
 				{
-					if($controlAttestationExpiry -ne 0)
+					$isControlInGrace=$true;
+				}
+				if([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays") `
+						-and [Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays,"Default") `
+						-and $this.ControlSettings.AttestationExpiryPeriodInDays.Default -gt 0)
+				{
+					$defaultAttestationExpiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.Default
+				}			
+				#Expiry in the case of WillFixLater or StateConfirmed/Recurring Attestation state will be based on Control Severity.
+				if($controlState.AttestationStatus -eq [AttestationStatus]::NotAnIssue -or $controlState.AttestationStatus -eq [AttestationStatus]::NotApplicable)
+				{
+					$expiryInDays=$defaultAttestationExpiryInDays;
+				}
+				else
+				{
+					# Expire WillFixLater if GracePeriod has expired
+					if(-not($isControlInGrace) -and $controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater)
 					{
-						$expiryInDays = $controlAttestationExpiry
+						$expiryInDays=0;
 					}
-					elseif([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays"))
-					{
-						$controlsev = $this.ControlSettings.ControlSeverity.PSobject.Properties | Where-Object Value -eq $controlSeverity | Select-Object -First 1
-                        $controlSeverity = $controlsev.name									
-						#Check if control severity has expiry period
-						if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
-						{
-							$expiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity.$controlSeverity
-						}
-						#If control item and severity does not contain expiry period, assign default value
-						else
-						{
-							$expiryInDays = $defaultAttestationExpiryInDays
-						}
-					}
-					#Return -1 when expiry is not defined
 					else
 					{
-						$expiryInDays = -1
+						if($controlAttestationExpiry -ne 0)
+						{
+							$expiryInDays = $controlAttestationExpiry
+						}
+						elseif([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays"))
+						{
+							$controlsev = $this.ControlSettings.ControlSeverity.PSobject.Properties | Where-Object Value -eq $controlSeverity | Select-Object -First 1
+							$controlSeverity = $controlsev.name									
+							#Check if control severity has expiry period
+							if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
+							{
+								$expiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity.$controlSeverity
+							}
+							#If control item and severity does not contain expiry period, assign default value
+							else
+							{
+								$expiryInDays = $defaultAttestationExpiryInDays
+							}
+						}
+						#Return -1 when expiry is not defined
+						else
+						{
+							$expiryInDays = -1
+						}
 					}
-				}
-			}		
+				}				
+			}
+			else
+			{				
+				#Calculating the expiry in days for exempt controls
+				
+				$expiryDate = [DateTime]$controlState.State.ExpiryDate
+				#Adding 1 explicitly to the days since the differnce below excludes the expiryDate and that also needs to be taken into account.
+				$expiryInDays = ($expiryDate - $controlState.State.AttestedDate).Days + 1
+			}								
 		}
-		catch{
+		catch
+		{
 			#if any exception occurs while getting/validating expiry period, return -1.
 			$this.EvaluationError($_);
 			$expiryInDays = -1
@@ -1131,287 +1057,6 @@ class SVTBase: AzSKRoot
 		return $expiryInDays
 	}
 
-	hidden [ControlResult] CheckDiagnosticsSettings([ControlResult] $controlResult)
-	{
-		$diagnostics = $Null
-		try
-		{
-			$diagnostics = Get-AzDiagnosticSetting -ResourceId $this.ResourceId -ErrorAction Stop -WarningAction SilentlyContinue
-		}
-		catch
-		{
-			if([Helpers]::CheckMember($_.Exception, "Response") -and ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
-			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "Diagnostics setting is disabled for resource - [$($this.ResourceContext.ResourceName)].");
-				return $controlResult
-			}
-			else
-			{
-				$this.PublishException($_);
-			}
-		}
-		if($Null -ne $diagnostics -and ($diagnostics.Logs | Measure-Object).Count -ne 0)
-		{
-			$nonCompliantLogs = $diagnostics.Logs |
-								Where-Object { -not ($_.Enabled -and
-											($_.RetentionPolicy.Days -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever -or
-											$_.RetentionPolicy.Days -ge $this.ControlSettings.Diagnostics_RetentionPeriod_Min))};
-
-			$selectedDiagnosticsProps = $diagnostics | Select-Object -Property Logs, Metrics, StorageAccountId, EventHubName, Name;
-
-			if(($nonCompliantLogs | Measure-Object).Count -eq 0)
-			{
-				$controlResult.AddMessage([VerificationResult]::Passed,
-					"Diagnostics settings are correctly configured for resource - [$($this.ResourceContext.ResourceName)]",
-					$selectedDiagnosticsProps);
-			}
-			else
-			{
-				$failStateDiagnostics = $nonCompliantLogs | Select-Object -Property Logs, Metrics, StorageAccountId, EventHubName, Name;
-				$controlResult.SetStateData("Non compliant resources are:", $failStateDiagnostics);
-				$controlResult.AddMessage([VerificationResult]::Failed,
-					"Diagnostics settings are either disabled OR not retaining logs for at least $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) days for resource - [$($this.ResourceContext.ResourceName)]",
-					$selectedDiagnosticsProps);
-			}
-		}
-		else
-		{
-			$controlResult.AddMessage([VerificationResult]::Failed, "Diagnostics setting is disabled for resource - [$($this.ResourceContext.ResourceName)].");
-		}
-
-		return $controlResult;
-	}
-
-	hidden [ControlResult] CheckRBACAccess([ControlResult] $controlResult)
-	{
-		$accessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.ResourceId, $false, $true);
-
-		return $this.CheckRBACAccess($controlResult, $accessList)
-	}
-
-	hidden [ControlResult] CheckRBACAccess([ControlResult] $controlResult, [PSObject] $accessList)
-	{
-		$resourceAccessList = $accessList | Where-Object { $_.Scope -eq $this.ResourceId };
-
-        $controlResult.VerificationResult = [VerificationResult]::Verify;
-
-		if(($resourceAccessList | Measure-Object).Count -ne 0)
-        {
-			$controlResult.SetStateData("Identities having RBAC access at resource level", ($resourceAccessList | Select-Object -Property ObjectId,RoleDefinitionId,RoleDefinitionName,Scope));
-
-            $controlResult.AddMessage("Validate that the following identities have explicitly provided with RBAC access to resource - [$($this.ResourceContext.ResourceName)]");
-            $controlResult.AddMessage([MessageData]::new($this.CreateRBACCountMessage($resourceAccessList), $resourceAccessList));
-        }
-        else
-        {
-            $controlResult.AddMessage("No identities have been explicitly provided with RBAC access to resource - [$($this.ResourceContext.ResourceName)]");
-        }
-
-        $inheritedAccessList = $accessList | Where-Object { $_.Scope -ne $this.ResourceId };
-
-		if(($inheritedAccessList | Measure-Object).Count -ne 0)
-        {
-            $controlResult.AddMessage("Note: " + $this.CreateRBACCountMessage($inheritedAccessList) + " have inherited RBAC access to resource. It's good practice to keep the RBAC access to minimum.");
-        }
-        else
-        {
-            $controlResult.AddMessage("No identities have inherited RBAC access to resource");
-        }
-
-		return $controlResult;
-	}
-
-	hidden [string] CreateRBACCountMessage([array] $resourceAccessList)
-	{
-		$nonNullObjectTypes = $resourceAccessList | Where-Object { -not [string]::IsNullOrEmpty($_.ObjectType) };
-		if(($nonNullObjectTypes | Measure-Object).Count -eq 0)
-		{
-			return "$($resourceAccessList.Count) identities";
-		}
-		else
-		{
-			$countBreakupString = [string]::Join(", ",
-									($nonNullObjectTypes |
-										Group-Object -Property ObjectType -NoElement |
-										ForEach-Object { "$($_.Name): $($_.Count)" }
-									));
-			return "$($resourceAccessList.Count) identities ($countBreakupString)";
-		}
-	}
-
-	hidden [bool] CheckMetricAlertConfiguration([PSObject[]] $metricSettings, [ControlResult] $controlResult, [string] $extendedResourceName)
-	{
-		$result = $false;
-		if($metricSettings -and $metricSettings.Count -ne 0)
-		{
-			$resId = $this.ResourceId + $extendedResourceName;
-			$resIdMessageString = "";
-			if(-not [string]::IsNullOrWhiteSpace($extendedResourceName))
-			{
-				$resIdMessageString = "for nested resource [$extendedResourceName]";
-			}
-
-			$resourceAlerts = @()
-            # get classic alerts
-			$resourceAlerts += (Get-AzAlertRule -ResourceGroup $this.ResourceContext.ResourceGroupName -WarningAction SilentlyContinue) |
-								Where-Object { $_.Condition -and $_.Condition.DataSource } |
-								Where-Object { $_.Condition.DataSource.ResourceUri -eq $resId };
-
-			# get non-classic alerts
-            try
-            {
-                $apiURL = "https://management.azure.com/subscriptions/{0}/providers/Microsoft.Insights/metricAlerts?api-version=2018-03-01&`$filter=targetResource eq '{1}'" -f $($this.SubscriptionContext.SubscriptionId), $resId
-				$v2Alerts = [WebRequestHelper]::InvokeGetWebRequest($apiURL) 
-                if(($v2Alerts | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($v2Alerts[0],"id"))
-                {
-                    $v2Alerts |  ForEach-Object {
-						if([Helpers]::CheckMember($_,"properties"))
-						{
-    
-							$alert = '{
-                                  "Condition":  {
-                                                    "DataSource":  {
-                                                                       "MetricName":  ""
-                                                                   },
-                                                    "OperatorProperty":  "",
-                                                    "Threshold": "" ,
-                                                    "TimeAggregation":  "",
-                                                    "WindowSize":  ""
-                                                },
-                                  "Actions"  :  null,
-                                  "Description" : "",
-                                  "IsEnabled":  "",
-                                  "Name" : "",
-								  "Type" : "",
-								  "AlertType" : "V2Alert"
-                            }' | ConvertFrom-Json
-							if([Helpers]::CheckMember($_,"properties.criteria.allOf"))
-							{
-								$alert.Condition.DataSource.MetricName = $_.properties.criteria.allOf.metricName
-								$alert.Condition.OperatorProperty = $_.properties.criteria.allOf.operator
-								$alert.Condition.Threshold = [int] $_.properties.criteria.allOf.threshold
-								$alert.Condition.TimeAggregation = $_.properties.criteria.allOf.timeAggregation
-							}
-							$alert.Condition.WindowSize = ([Xml.XmlConvert]::ToTimeSpan("$($_.properties.windowSize)")).ToString()
-							$alert.Actions = [System.Collections.Generic.List[Microsoft.Azure.Management.Monitor.Models.RuleAction]]::new()
-							if([Helpers]::CheckMember($_.properties,"Actions.actionGroupId"))
-							{
-								$actionGroupTemp = $_.properties.Actions.actionGroupId.Split("/")
-								$actionGroup = Get-AzActionGroup -ResourceGroupName $actionGroupTemp[4] -Name $actionGroupTemp[-1] -WarningAction SilentlyContinue
-								if($actionGroup.EmailReceivers.Status -eq [Microsoft.Azure.Management.Monitor.Models.ReceiverStatus]::Enabled)
-								{
-									if([Helpers]::CheckMember($actionGroup,"EmailReceivers.EmailAddress"))
-									{
-										$alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -CustomEmail $actionGroup.EmailReceivers.EmailAddress  -WarningAction SilentlyContinue));
-									}
-									else
-									{
-										$alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -WarningAction SilentlyContinue));
-									}	
-								}
-							}				
-							$alert.Description = $_.properties.description
-							$alert.IsEnabled = $_.properties.enabled
-							$alert.Name = $_.name
-							$alert.Type = $_.type
-                            if(($alert|Measure-Object).Count -gt 0)
-                            {
-                               $resourceAlerts += $alert 
-                            }
-						}
-                    }
-                }   
-            }
-            catch
-            {
-                $this.PublishException($_);
-            }
-
-			$nonConfiguredMetrices = @();
-			$misConfiguredMetrices = @();
-
-			$metricSettings	|
-			ForEach-Object {
-				$currentMetric = $_;
-				$matchedMetrices = @();
-				$matchedMetrices += $resourceAlerts |
-									Where-Object { $_.Condition.DataSource.MetricName -eq $currentMetric.Condition.DataSource.MetricName }
-
-				if($matchedMetrices.Count -eq 0)
-				{
-					$nonConfiguredMetrices += $currentMetric;
-				}
-				else
-				{
-					$misConfigured = @();
-					#$controlResult.AddMessage("Metric object", $matchedMetrices);
-					$matchedMetrices | ForEach-Object {
-						if([Helpers]::CompareObject($currentMetric, $_))
-						{
-							#$this.ControlSettings.MetricAlert.Actions
-							if(($_.Actions.GetType().GetMembers() | Where-Object { $_.MemberType -eq [System.Reflection.MemberTypes]::Property -and $_.Name -eq "Count" } | Measure-Object).Count -ne 0)
-							{
-								$isActionConfigured = $false;
-								foreach ($action in $_.Actions) {
-									if([Helpers]::CompareObject($this.ControlSettings.MetricAlert.Actions, $action))
-									{
-										$isActionConfigured = $true;
-										break;
-									}
-								}
-
-								if(-not $isActionConfigured)
-								{
-									$misConfigured += $_;
-								}
-							}
-							else
-							{
-								if(-not [Helpers]::CompareObject($this.ControlSettings.MetricAlert.Actions, $_.Actions))
-								{
-									$misConfigured += $_;
-								}
-							}
-						}
-						else
-						{
-							$misConfigured += $_;
-						}
-					};
-
-					if($misConfigured.Count -eq $matchedMetrices.Count)
-					{
-						$misConfiguredMetrices += $misConfigured;
-					}
-				}
-			}
-
-			$controlResult.AddMessage("Following metric alerts must be configured $resIdMessageString with settings mentioned below:", $metricSettings);
-			$controlResult.VerificationResult = [VerificationResult]::Failed;
-
-			if($nonConfiguredMetrices.Count -ne 0)
-			{
-				$controlResult.AddMessage("Following metric alerts are not configured $($resIdMessageString):", $nonConfiguredMetrices);
-			}
-
-			if($misConfiguredMetrices.Count -ne 0)
-			{
-				$controlResult.AddMessage("Following metric alerts are not correctly configured $resIdMessageString. Please update the metric settings in order to comply.", $misConfiguredMetrices);
-			}
-
-			if($nonConfiguredMetrices.Count -eq 0 -and $misConfiguredMetrices.Count -eq 0)
-			{
-				$result = $true;
-				$controlResult.AddMessage([VerificationResult]::Passed , "All mandatory metric alerts are correctly configured $resIdMessageString.");
-			}
-		}
-		else
-		{
-			throw [System.ArgumentException] ("The argument 'metricSettings' is null or empty");
-		}
-
-		return $result;
-	}
 
 	hidden AddResourceMetadata([PSObject] $metadataObj)
 	{
@@ -1439,7 +1084,6 @@ class SVTBase: AzSKRoot
 
 	}
 
-
 	hidden [SVTResource] CreateSVTResource([string] $ConnectionResourceId,[string] $ResourceGroupName, [string] $ConnectionResourceName, [string] $ResourceType, [string] $Location, [string] $MappingName)
 	{
 		$svtResource = [SVTResource]::new();
@@ -1455,72 +1099,11 @@ class SVTBase: AzSKRoot
 		return $svtResource;
 	}
   
+	#stub to be used when ComplianceState 
 	hidden [void] GetDataFromSubscriptionReport($singleControlResult)
-   	{   
-	   try
-	    {
-			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();	
-			$settingStoreComplianceSummaryInUserSubscriptions = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
-			#return if feature is turned off at server config
-			if(-not $azskConfig.StoreComplianceSummaryInUserSubscriptions -and -not $settingStoreComplianceSummaryInUserSubscriptions) {return;}
-
-	   		if(($this.ComplianceStateData | Measure-Object).Count -gt 0)
-			{
-				$ResourceData = @();
-				$PersistedControlScanResult=@();								
-			
-				#$ResourceScanResult=$ResourceData.ResourceScanResult
-				[ControlResult[]] $controlsResults = @();
-				$singleControlResult.ControlResults | ForEach-Object {
-					$currentControl=$_
-					$partsToHash = $singleControlResult.ControlItem.Id;
-					if(-not [string]::IsNullOrWhiteSpace($currentControl.ChildResourceName))
-					{
-						$partsToHash = $partsToHash + ":" + $currentControl.ChildResourceName;
-					}
-					$rowKey = [Helpers]::ComputeHash($partsToHash.ToLower());
-
-					$matchedControlResult = $this.ComplianceStateData | Where-Object { $_.RowKey -eq $rowKey}
-
-					# initialize default values
-					$currentControl.FirstScannedOn = [DateTime]::UtcNow
-					if($currentControl.ActualVerificationResult -ne [VerificationResult]::Passed)
-					{
-						$currentControl.FirstFailedOn = [DateTime]::UtcNow
-					}
-
-					if($null -ne $matchedControlResult -and ($matchedControlResult | Measure-Object).Count -gt 0)
-					{
-						$currentControl.UserComments = $matchedControlResult.UserComments
-						$currentControl.FirstFailedOn = [datetime] $matchedControlResult.FirstFailedOn
-						$currentControl.FirstScannedOn = [datetime] $matchedControlResult.FirstScannedOn						
-					}
-
-					$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
-
-					$currentControl.MaximumAllowedGraceDays = $this.CalculateGraceInDays($singleControlResult);
-
-					# Setting isControlInGrace Flag		
-					if($scanFromDays.Days -le $currentControl.MaximumAllowedGraceDays)
-					{
-						$currentControl.IsControlInGrace = $true
-					}
-					else
-					{
-						$currentControl.IsControlInGrace = $false
-					}
-					
-					$controlsResults+=$currentControl
-				}
-				$singleControlResult.ControlResults=$controlsResults 
-			}
-		}
-		catch
-		{
-		  $this.PublishException($_);
-		}
-    }
-
+   	{ 
+		
+	}
 
 	[int] hidden CalculateGraceInDays([SVTEventContext] $context)
 	{

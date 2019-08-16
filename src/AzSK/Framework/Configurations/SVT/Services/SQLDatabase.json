@@ -61,7 +61,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlServerThreatDetection",
       "Rationale": "Enabling threat detection helps generate alerts about suspicious activity that might indicate attacks such as SQL Injection, login from a new location, unusual usage patterns and related attacks in a timely manner.",
-      "Recommendation": "First run command 'Set-AzSqlServerAuditing -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountName '{StorageAccountName}' -State 'Enabled' -RetentionInDays 365'.Refer: https://docs.microsoft.com/en-us/powershell/module/az.sql/set-azsqlserverauditing. Then run command 'Set-AzSqlServerThreatDetectionPolicy -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountName '{StorageAccountName}' -EmailAdmins `$true -ExcludedDetectionType 'None''.",
+      "Recommendation": "First run command 'Set-AzSqlServerAudit -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountResourceId '{StorageAccountResourceId}' -BlobStorageTargetState 'Enabled' -RetentionInDays 365'.Refer: https://docs.microsoft.com/en-us/powershell/module/az.sql/set-azsqlserveraudit. Then run command 'Update-AzSqlServerAdvancedThreatProtectionSettings -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountName '{StorageAccountName}' -EmailAdmins `$true -ExcludedDetectionType 'None''.",
       "Tags": [
         "SDL",
         "TCP",
@@ -176,7 +176,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlServerAuditing",
       "Rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
-      "Recommendation": "Run command Set-AzSqlServerAuditing -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountName '{StorageAccountName}' -State 'Enabled' -RetentionInDays $($this.ControlSettings.SqlServer.AuditRetentionPeriod_Min). Refer: https://docs.microsoft.com/en-us/powershell/module/az.sql/set-azsqlserverauditing",
+      "Recommendation": "Run command Set-AzSqlServerAudit -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountResourceId '{StorageAccountResourceId}' -BlobStorageTargetState 'Enabled' -RetentionInDays $($this.ControlSettings.SqlServer.AuditRetentionPeriod_Min). Refer: https://docs.microsoft.com/en-us/powershell/module/az.sql/set-azsqlserveraudit",
       "Tags": [
         "SDL",
         "TCP",

@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class SubscriptionSecurityStatus: SVTCommandBase
+class SubscriptionSecurityStatus: AzSVTCommandBase
 {
 
 	SubscriptionSecurityStatus([string] $subscriptionId, [InvocationInfo] $invocationContext): 
@@ -40,6 +40,12 @@ class SubscriptionSecurityStatus: SVTCommandBase
 		if($svtObject)
 		{
 			$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule
+			$this.Severity = $this.ConvertToStringArray($this.Severity) # to handle case when no severity is passed to command
+			if($this.Severity)
+			{
+				$this.Severity = [ControlHelper]::CheckValidSeverities($this.Severity);				
+				 
+			}
 			$this.SetSVTBaseProperties($svtObject);
 			$result += $svtObject.$methodNameToCall();	
 			#$this.FetchRBACTelemetry($svtObject);
@@ -97,7 +103,7 @@ class SubscriptionSecurityStatus: SVTCommandBase
 				$this.PublishException($_);
 			}
 		}		
-		[ListenerHelper]::RegisterListeners();
+		[AzListenerHelper]::RegisterListeners();
 		
 		return $result;
 	}
@@ -110,6 +116,7 @@ class SubscriptionSecurityStatus: SVTCommandBase
 	{
 		return $this.RunForSubscription("FetchStateOfAllControls")
 	}
+	
 	#BaseLineControlFilter Function
 	[void] BaselineFilterCheck()
 	{
@@ -165,8 +172,10 @@ class SubscriptionSecurityStatus: SVTCommandBase
 				{
 					throw ([SuppressedException]::new(("There are no preview-baseline controls defined for your org. No controls will be scanned."), [SuppressedExceptionType]::Generic))
 				}
-				
 			}
 		}
 	}	
+
+	
+	
 }

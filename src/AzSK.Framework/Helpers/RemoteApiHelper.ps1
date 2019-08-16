@@ -4,9 +4,9 @@ class RemoteApiHelper {
     hidden static [string] $ApiBaseEndpoint = [ConfigurationManager]::GetAzSKConfigData().AzSKApiBaseURL; #"https://localhost:44348/api"
 
     hidden static [string] GetAccessToken() {
-        $rmContext = [Helpers]::GetCurrentRMContext();
+        $rmContext = [ContextHelper]::GetCurrentRMContext();
 		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-        return [Helpers]::GetAccessToken($ResourceAppIdURI);
+        return [ContextHelper]::GetAccessToken($ResourceAppIdURI);
     }
 
     hidden static [psobject] PostContent($uri, $content, $type) 
@@ -43,11 +43,11 @@ class RemoteApiHelper {
 
 
     hidden static [psobject] PostJsonContent($uri, $obj) {
-        $postContent = [Helpers]::ConvertToJsonCustomCompressed($obj)
+        $postContent = [JsonHelper]::ConvertToJsonCustomCompressed($obj)
         return [RemoteApiHelper]::PostContent($uri, $postContent, "application/json")
     }
     hidden static [psobject] GetJsonContent($uri, $obj) {
-        $postContent = [Helpers]::ConvertToJsonCustomCompressed($obj)
+        $postContent = [JsonHelper]::ConvertToJsonCustomCompressed($obj)
         return [RemoteApiHelper]::GetContent($uri, $postContent, "application/json")
     }
 

@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest
 
-class CosmosDb : SVTBase
+class CosmosDb : AzSVTBase
 {
 	hidden [PSObject] $Resource;
 
@@ -14,9 +14,10 @@ class CosmosDb : SVTBase
 	{
 		if(-not $this.Resource)
 		{
-			$this.Resource = Get-AzResource -Name $this.ResourceContext.ResourceName `
-											-ResourceGroupName $this.ResourceContext.ResourceGroupName `
-											-ResourceType $this.ResourceContext.ResourceType
+			$this.Resource =  Get-AzResource -Name $this.ResourceContext.ResourceName `
+			-ResourceGroupName $this.ResourceContext.ResourceGroupName `
+			-ResourceType $this.ResourceContext.ResourceType
+			
             if(-not $this.Resource)
             {
                 throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))

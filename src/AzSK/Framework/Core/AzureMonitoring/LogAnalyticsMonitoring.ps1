@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest 
 
-class LogAnalyticsMonitoring: CommandBase
+class LogAnalyticsMonitoring: AzCommandBase
 {
 	[string] $LAWSSampleViewTemplateFilepath;
 	[string] $LAWSSearchesTemplateFilepath;
@@ -49,17 +49,13 @@ class LogAnalyticsMonitoring: CommandBase
 		if ($input -eq "y") 
 		{
 			$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nStarted setting up AzSK Monitoring solution pack`r`n"+[Constants]::DoubleDashLine);
-		
-			$OptionalParameters = New-Object -TypeName Hashtable
-
 			$LAWSLogPath = Join-Path $([Constants]::AzSKTempFolderPath) "LogAnalytics";
 			if(-not (Test-Path -Path $LAWSLogPath))
 			{
 				New-Item -Path $LAWSLogPath -ItemType Directory -Force | Out-Null
 			}
-					
-			$genericViewTemplateFilepath = [ConfigurationManager]::LoadServerConfigFile("AZSK.AM.LogAnalytics.GenericView.V5.lawsview"); 				
-			$this.LAWSGenericTemplateFilepath = Join-Path $LAWSLogPath "AZSK.AM.LogAnalytics.GenericView.V5.lawsview";
+			$genericViewTemplateFilepath = [ConfigurationManager]::LoadServerConfigFile([Constants]::LogAnalyticsGenericView); 				
+			$this.LAWSGenericTemplateFilepath = Join-Path $LAWSLogPath ([Constants]::LogAnalyticsGenericView)
 			$genericViewTemplateFilepath | ConvertTo-Json -Depth 100 | Out-File $this.LAWSGenericTemplateFilepath
 			$this.PublishCustomMessage("`r`nSetting up AzSK Log Analytics generic view.");
 			$this.ConfigureGenericView($_viewName, $_validateOnly);	
@@ -82,14 +78,11 @@ class LogAnalyticsMonitoring: CommandBase
 		$this.PublishCustomMessage([MessageData]::new("Starting template deployment for Log Analytics generic view. Detailed logs are shown below."));
 		$ErrorMessages = @()
         if ($_validateOnly) {
-            $ErrorMessages =@()
-                Test-AzResourceGroupDeployment -ResourceGroupName $this.LAWSResourceGroup `
+			$ErrorMessages += Test-AzResourceGroupDeployment -ResourceGroupName $this.LAWSResourceGroup `
                                                     -TemplateFile $this.LAWSGenericTemplateFilepath `
                                                     -TemplateParameterObject $OptionalParameters -Verbose
 		}
         else {
-
-            $ErrorMessages =@()
 			$SubErrorMessages = @()
             New-AzResourceGroupDeployment -Name ((Get-ChildItem $this.LAWSGenericTemplateFilepath).BaseName + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
                                         -ResourceGroupName $this.LAWSResourceGroup `

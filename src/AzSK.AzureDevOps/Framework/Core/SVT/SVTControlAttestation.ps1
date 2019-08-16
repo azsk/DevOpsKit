@@ -33,8 +33,10 @@ class SVTControlAttestation
 			"1" { return [AttestationStatus]::NotAnIssue;}
 			"2" { return [AttestationStatus]::WillNotFix;}
 			"3" { return [AttestationStatus]::WillFixLater;}
-			"4" { return [AttestationStatus]::NotApplicable;}
-			"5" { return [AttestationStatus]::StateConfirmed;}
+			"4" { return [AttestationStatus]::ApprovedException;}
+			"5" { return [AttestationStatus]::NotApplicable;}
+			"6" { return [AttestationStatus]::StateConfirmed;}
+			
 			"9" { 
 					$this.abortProcess = $true;
 					return [AttestationStatus]::None;
@@ -79,7 +81,7 @@ class SVTControlAttestation
 		if($null -ne $tempCurrentStateObject -and $null -ne $tempCurrentStateObject.DataObject)
 		{
 			Write-Host "Configuration data to be attested:" -ForegroundColor Cyan
-			Write-Host "$([Helpers]::ConvertToPson($tempCurrentStateObject.DataObject))"
+			Write-Host "$([JsonHelper]::ConvertToPson($tempCurrentStateObject.DataObject))"
 		}
 
 		if($isPrevAttested -and ($this.AttestControlsChoice -eq [AttestControls]::All -or $this.AttestControlsChoice -eq [AttestControls]::AlreadyAttested))
@@ -156,6 +158,50 @@ class SVTControlAttestation
 					return $controlState;
 				}
 				
+				#Start: Exception approval for control
+				#Note: Will need to review this once the attestation functioanlity is enabled for AzSKDevOps - whether this option is required here or not!
+				#Please check the code block at line #242 - 247 as well
+				#In case when the user selects ApprovedException as the reason for attesting,
+				#they'll be prompted to provide the number of days till that approval expires.
+				$exceptionApprovalExpiryDate = ""
+				if($controlState.AttestationStatus -eq [AttestationStatus]::ApprovedException)
+				{
+					Write-Host "`nPlease provide the number of days for which the exception has been approved (max 180 days):" -ForegroundColor Cyan
+					$numberOfDays = Read-Host "No. of days (default 180)"
+
+					$maxAllowedExceptionApprovalExpiryDate = ([DateTime]::UtcNow).AddDays(180)					
+
+					try
+					{						
+						if(-not [string]::IsNullOrWhiteSpace($numberOfDays))
+						{
+							#$controlItem.ControlItem.AttestationExpiryPeriodInDays = $numberOfDays.Trim()							
+							$proposedExceptionApprovalExpiryDate = ([DateTime]::UtcNow).AddDays($numberOfDays.Trim())
+
+							if($proposedExceptionApprovalExpiryDate -gt $maxAllowedExceptionApprovalExpiryDate)
+							{
+								Write-Host "`nNote: The exception approval expiry will be set to 180 days from today.`n" -ForegroundColor Yellow
+								$exceptionApprovalExpiryDate = $maxAllowedExceptionApprovalExpiryDate								
+							}
+							else
+							{
+								$exceptionApprovalExpiryDate = $proposedExceptionApprovalExpiryDate
+							}
+						}
+						else
+						{
+							Write-Host "`nNote: The exception approval expiry will be set to 180 days from today.`n" -ForegroundColor Yellow
+							$exceptionApprovalExpiryDate = $maxAllowedExceptionApprovalExpiryDate
+						}
+					}
+					catch
+					{
+						Write-Host "`nThe days need to be an integer value." -ForegroundColor Red
+						throw $_.Exception
+					}
+				}
+				#End: Exception approval for control
+				
 				if($controlState.AttestationStatus -ne [AttestationStatus]::None)
 				{
 					$Justification = ""
@@ -187,10 +233,17 @@ class SVTControlAttestation
 					$controlState.State = [StateData]::new();
 				}
 
-				$controlState.State.AttestedBy = [Helpers]::GetCurrentSessionUser();
+				$controlState.State.AttestedBy = [ContextHelper]::GetCurrentSessionUser();
 				$controlState.State.AttestedDate = [DateTime]::UtcNow;
-				$controlState.State.Justification = $Justification				
-				
+				$controlState.State.Justification = $Justification
+
+				#In case of control exemption, calculating the exception approval(attestation) expiry date beforehand,
+				#based on the days entered by the user (default 6 months)
+				if($controlState.AttestationStatus -eq [AttestationStatus]::ApprovedException)
+				{
+					$controlState.State.ExpiryDate = $exceptionApprovalExpiryDate.ToString("MM/dd/yyyy");
+				}
+
 				break;
 			}
 			"2" #Clear Attestation
@@ -270,7 +323,7 @@ class SVTControlAttestation
 							$controlState.State = [StateData]::new();
 						}
 						$this.dirtyCommitState = $true
-						$controlState.State.AttestedBy = [Helpers]::GetCurrentSessionUser();
+						$controlState.State.AttestedBy = [ContextHelper]::GetCurrentSessionUser();
 						$controlState.State.AttestedDate = [DateTime]::UtcNow;
 						$controlState.State.Justification = $this.attestOptions.JustificationText				
 			}
@@ -519,7 +572,12 @@ class SVTControlAttestation
 		    }
 		}
 		$ValidAttestationStatesHashTable = [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -in $ValidAttestationStates } | Sort-Object value
-	    return $ValidAttestationStatesHashTable;
+		
+		if($this.attestOptions.IsExemptModeOn)
+		{
+			$ValidAttestationStatesHashTable += [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -eq [AttestationStatus]::ApprovedException }
+		}
+		
+		return $ValidAttestationStatesHashTable;
 	}
-
 }

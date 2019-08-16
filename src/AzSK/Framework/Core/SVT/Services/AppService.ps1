@@ -1,6 +1,6 @@
 #using namespace Microsoft.Azure.Commands.AppService.Models
 Set-StrictMode -Version Latest
-class AppService: SVTBase
+class AppService: AzSVTBase
 {
     hidden [PSObject] $ResourceObject;
 	hidden [PSObject] $WebAppDetails;
@@ -8,19 +8,11 @@ class AppService: SVTBase
 	hidden [PSObject] $AuthenticationSettings;
 	hidden [bool] $IsReaderRole;
 
-    AppService([string] $subscriptionId, [string] $resourceGroupName, [string] $resourceName):
-        Base($subscriptionId, $resourceGroupName, $resourceName)
-    {
-        $this.GetResourceObject();
-		$this.AddResourceMetadata($this.ResourceObject.Properties)
-
-    }
-
     AppService([string] $subscriptionId, [SVTResource] $svtResource):
         Base($subscriptionId, $svtResource)
     {
-        $this.GetResourceObject();
-		$this.AddResourceMetadata($this.ResourceObject.Properties)
+				$this.GetResourceObject();
+	    	$this.AddResourceMetadata($this.ResourceObject.Properties)
 
     }
 
@@ -69,6 +61,10 @@ class AppService: SVTBase
 
 				try{
 					$this.SiteConfigs = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType Microsoft.Web/sites/config -ResourceName $this.ResourceContext.ResourceName -ApiVersion 2018-02-01
+				  # Append SiteConfig to ResourceObject
+					if($null -ne $this.SiteConfigs -and [Helpers]::CheckMember($this.SiteConfigs,"Properties") -and [Helpers]::CheckMember($this.ResourceObject.Properties,"siteConfig", $false)){
+						$this.ResourceObject.Properties.siteConfig = $this.SiteConfigs.Properties
+					}
 				}catch{
 					$this.SiteConfigs = $null
 					# No need to break execution , null object is handled in respective controls
@@ -148,7 +144,7 @@ class AppService: SVTBase
 			if([Helpers]::CheckMember($this.ResourceObject, "Kind") -and ($this.ResourceObject.Kind -eq "functionapp"))
 			{
 				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+				$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 				$authorisationToken = "Bearer " + $accessToken
 				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
 
@@ -552,7 +548,7 @@ class AppService: SVTBase
 				else
 			{
 				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-				$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+				$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 				$authorisationToken = "Bearer " + $accessToken
 				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
 				if([Helpers]::CheckMember($this.WebAppDetails,"EnabledHostNames"))
@@ -710,7 +706,7 @@ class AppService: SVTBase
 		else
 		{
 		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-		$accessToken = [Helpers]::GetAccessToken($ResourceAppIdURI)
+		$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		$authorisationToken = "Bearer " + $accessToken
 		$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
 		if([Helpers]::CheckMember($this.WebAppDetails,"EnabledHostNames"))
@@ -904,7 +900,12 @@ class AppService: SVTBase
 
 		hidden [ControlResult] CheckAppServiceInstalledExtensions([ControlResult] $controlResult)
 		{	
-				$installedExtensions = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType Microsoft.Web/sites/siteextensions -ResourceName $this.ResourceContext.ResourceName -ApiVersion 2018-02-01
+			  try{
+					$installedExtensions = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType Microsoft.Web/sites/siteextensions -ResourceName $this.ResourceContext.ResourceName -ApiVersion 2018-02-01 -ErrorAction silentlycontinue
+				}
+				catch{
+					$installedExtensions = $null
+				}
 				if($installedExtensions -ne $null -and ($installedExtensions | Measure-Object).Count -gt 0)
 				{
 					$extensions = $installedExtensions | Select-Object "Name", "ResourceId"

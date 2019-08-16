@@ -143,7 +143,7 @@ Class LogAnalyticsHelper{
 			$out.IsLatestPSModule = $ControlResult.CurrentSessionContext.IsLatestPSModule
 			$out.PolicyOrgName = $AzSKContext.PolicyOrgName
 			$out.IsControlInGrace = $ControlResult.IsControlInGrace
-			$out.ScannedBy=[Helpers]::GetCurrentRMContext().Account
+			$out.ScannedBy=[ContextHelper]::GetCurrentRMContext().Account
 			#mapping the attestation properties
 			if($null -ne $ControlResult -and $null -ne $ControlResult.StateManagement -and $null -ne $ControlResult.StateManagement.AttestedStateData)
 			{
@@ -345,7 +345,7 @@ Class LogAnalyticsHelper{
 		try
 		{
 			$body = @{query=$query};
-			$url="https://api.loganalytics.io/beta/workspaces/" +$workspaceId+"/api/query?api-version=2017-01-01-preview"
+			$url="https://api.loganalytics.io/v1/workspaces/" +$workspaceId+"/query"
 			$response=[WebRequestHelper]::InvokePostWebRequest($url ,  $body);
 
 			# Formating the response obtained from querying workspace.
@@ -363,19 +363,24 @@ Class LogAnalyticsHelper{
 					{
 						foreach ($valuetable in $table) {
 							foreach ($row in $table.Rows) {
-								$i = 0;
-								$count=$valuetable.Columns.Count;
-								$properties = @{}            
-								foreach($col in $Columns)
+								#If timestamp/first column value is null means row is empty
+								if($row[0])
 								{
-									if($i -lt  $count)
+									$i = 0;
+									$count=$valuetable.Columns.Count;
+									$properties = @{}            
+									foreach($col in $Columns)
 									{
-										$properties[$col.ColumnName] = $row[$i];
+										if($i -lt  $count)
+										{
+											$properties[$col.Name] = $row[$i];
+										}
+										$i++;
 									}
-									$i++;
+									$objectView[$j] = (New-Object PSObject -Property $properties)
+									$j++;
 								}
-								$objectView[$j] = (New-Object PSObject -Property $properties)
-								$j++;
+								
 							}
 						}
 						$result=$objectView;
@@ -479,6 +484,14 @@ Class CommandModel{
 	[string] $MethodName
 	[string] $ModuleName
 	[string] $Parameters
+	[string] $SubscriptionId
+	[string] $SubscriptionName
+}
+class CredHygieneAlert{
+    [int] $ExpiryDueInDays
+	[bool] $IsExpired
+    [string] $CredentialName 
+    [string] $LastUpdatedBy
 	[string] $SubscriptionId
 	[string] $SubscriptionName
 }

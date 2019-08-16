@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class SVTStatusReport : SVTCommandBase
+class SVTStatusReport : AzSVTCommandBase
 {
 	[SVTResourceResolver] $ServicesResolver = $null;
 
@@ -33,6 +33,7 @@ class SVTStatusReport : SVTCommandBase
 				$sscore.ExcludeControlIdString = $this.ExcludeControlIdString;
 				$sscore.GenerateFixScript = $this.GenerateFixScript;
 				$sscore.AttestationOptions = $this.AttestationOptions;
+				$sscore.Severity = $this.Severity;
 
 				$result += $sscore.RunAllControls();
 				$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nCompleted Subscription security controls`r`n" + [Constants]::DoubleDashLine, [MessageType]::Update);
@@ -58,6 +59,7 @@ class SVTStatusReport : SVTCommandBase
 				$secStatus.ExcludeControlIdString = $this.ExcludeControlIdString;
 				$secStatus.GenerateFixScript = $this.GenerateFixScript;
 				$secStatus.AttestationOptions = $this.AttestationOptions;
+				$secStatus.Severity = $this.Severity;
 
 				$result += $secStatus.RunAllControls();
 				$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nCompleted Azure services security controls`r`n" + [Constants]::DoubleDashLine, [MessageType]::Update);

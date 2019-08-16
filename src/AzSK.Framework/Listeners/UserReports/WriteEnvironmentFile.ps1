@@ -74,7 +74,7 @@ class WriteEnvironmentFile: FileOutputBase
     } 
 
 	[void] CommandStartedAction([SubscriptionContext] $context)
-	{
+	{     
 		$this.SetFilePath($context, [FileOutputBase]::ETCFolderPath, "EnvironmentDetails.LOG");  	
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 
@@ -88,18 +88,18 @@ class WriteEnvironmentFile: FileOutputBase
 		$this.AddOutputLog([Helpers]::ConvertObjectToString($this.InvocationContext.BoundParameters, $false));
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 
-		$loadedModules = (Get-Module | Select-Object -Property Name, Path, Description, Version);
+		$loadedModules = (Get-Module | Select-Object -Property Name, Version, Path | Format-Table -AutoSize -Wrap | Out-String);
 		$this.AddOutputLog("Loaded PowerShell modules");
-		$this.AddOutputLog([Helpers]::ConvertObjectToString($loadedModules, $false));
+        $this.AddOutputLog([Helpers]::ConvertObjectToString($loadedModules, $false));      
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 
-		$rmContext = [Helpers]::GetCurrentRMContext()
+		$rmContext = [ContextHelper]::GetCurrentRMContext()
 
 		$this.AddOutputLog("Logged-in user context");
 		$this.AddOutputLog([Helpers]::ConvertObjectToString(($rmContext.Account | Select-Object -Property Id, Type, ExtendedProperties), $false));
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 
-		$this.AddOutputLog("AzureRM context");
+		$this.AddOutputLog("Az context");
 		$this.AddOutputLog([Helpers]::ConvertObjectToString(($rmContext | Select-Object -Property Environment, Subscription, Tenant), $false));
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 	}

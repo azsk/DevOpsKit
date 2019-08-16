@@ -1,11 +1,11 @@
 ﻿using namespace System.Management.Automation
 using namespace Microsoft.Azure.Commands.Management.Storage.Models
-using namespace Microsoft.WindowsAzure.Storage.Blob
+using namespace Microsoft.Azure.Storage.Blob
 using namespace Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel
 using namespace Newtonsoft.Json.Schema
 Set-StrictMode -Version Latest
 
-class PolicySetup: CommandBase
+class PolicySetup: AzCommandBase
 {
 	[StorageHelper] $StorageAccountInstance;
 	[AppInsightHelper] $AppInsightInstance;
@@ -43,11 +43,13 @@ class PolicySetup: CommandBase
 	hidden [string] $removeCommandName = "Remove-AzSKOrganizationPolicy"
 	hidden [string] $installCommandName = "Install-AzSKOrganizationPolicy"
 	hidden [string] $getCommandName = "Get-AzSKOrganizationPolicyStatus"
+	hidden [int] $msgCount = 0;
 	hidden [OverrideConfigurationType] $OverrideConfiguration = [OverrideConfigurationType]::None
 
 	PolicySetup([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $orgName, [string] $departmentName, [string] $resourceGroupName, [string] $storageAccountName, [string] $appInsightName, [string] $appInsightLocation, [string] $resourceGroupLocation,[string] $AzureEnvironment, [string] $MonitoringDashboardLocation, [string] $localPolicyFolderPath):
         Base($subscriptionId, $invocationContext)
     {
+		$this.DonotOpenOutputFolder = $true;
 		$this.CreateInstance($subscriptionId, $orgName, $departmentName, $AzureEnvironment, $resourceGroupName, $storageAccountName, $appInsightName, $appInsightLocation, $resourceGroupLocation,$MonitoringDashboardLocation, $localPolicyFolderPath);				
 	}
 
@@ -199,7 +201,7 @@ class PolicySetup: CommandBase
 		if((($askConfigFile | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::AzSKRootConfig)
 		{
 			$azskOverride = [ConfigOverride]::new("AzSK.json");
-			$azskOverride.UpdatePropertyValue("PolicyMessage", "Running $([Constants]::AzSKModuleName) cmdlet using $($this.OrgFullName) policy...");
+			$azskOverride.UpdatePropertyValue("PolicyMessage", "Running $([Constants]::AzSKModuleName) cmdlet using ***$($this.OrgFullName)*** policy...");
 			if(-not [string]::IsNullOrWhiteSpace($this.IWRCommand))
 			{
 				$azskOverride.UpdatePropertyValue("InstallationCommand", $this.IWRCommand);
@@ -303,7 +305,6 @@ class PolicySetup: CommandBase
 			$fileContent = Get-Content -Path $fileName;
 			$fileContent = $fileContent.Replace("#PolicyUrl#", $this.PolicyUrl);
 			$fileContent = $fileContent.Replace("#ModuleName#", $([Constants]::AzSKModuleName));
-			$fileContent = $fileContent.Replace("#OldModuleName#", [Constants]::OldModuleName);
 			$fileContent = $fileContent.Replace("#OrgName#", $this.OrgFullName);
 			$fileContent = $fileContent.Replace("#AzureEnv#", $this.AzureEnvironment);
 			$fileContent = $fileContent.Replace("#AzSKConfigURL#", $this.AzSKConfigURL);
@@ -341,13 +342,6 @@ class PolicySetup: CommandBase
 			{
 				$caFilePath = Join-Path (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName -ChildPath "Configurations" | Join-Path -ChildPath "ContinuousAssurance" | Join-Path -ChildPath "RunbookScanAgent.ps1";
 				Copy-Item ($caFilePath) (Join-Path $this.RunbookFolderPath "RunbookScanAgent.ps1") -Force
-				$fileName = Join-Path $this.RunbookFolderPath "RunbookScanAgent.ps1";
-				$policyStoreUrl	= [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl.Replace('$',"``$")
-				$fileContent = Get-Content -Path $fileName;
-				$fileContent = $fileContent.Replace("[#ScanAgentAzureRm#]", $this.PolicyUrl);
-				Out-File -InputObject $fileContent -Force -FilePath $fileName -Encoding utf8
-				$caFilePathbackup = Join-Path (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName "Configurations" | Join-Path -ChildPath "ContinuousAssurance" | Join-Path -ChildPath "RunbookScanAgentAzureRm.ps1"
-				Copy-Item ($caFilePath) (Join-Path $this.RunbookFolderPath  "RunbookScanAgentAzureRm.ps1") -Force
 			}
 
 			$RunbookCoreSetupFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetup.ps1" } | Select -First 1
@@ -361,8 +355,6 @@ class PolicySetup: CommandBase
 				{
 					$fileContent = Get-Content -Path $fileName;
 					$fileContent = $fileContent.Replace("#AzSKConfigURL#", $this.AzSKConfigURL);
-					$policyStoreUrl	= [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl.Replace('$',"``$")
-			        $fileContent = $fileContent.Replace("[#CoreSetupAzureRm#]", $this.PolicyUrl);
 					Out-File -InputObject $fileContent -Force -FilePath $(Join-Path $this.RunbookFolderPath "RunbookCoreSetup.ps1") -Encoding utf8
 				}
 			}
@@ -376,32 +368,6 @@ class PolicySetup: CommandBase
 				{
 					$RunbookCoreSetupContent = $RunbookCoreSetupContent.Replace($coreSetupAzSkVersionForOrgUrl,$this.AzSKConfigURL)
 					Out-File -InputObject $RunbookCoreSetupContent -Force -FilePath $($RunbookCoreSetupFile.FullName) -Encoding utf8
-				}
-			}
-			$RunbookCoreSetupAzureRmFile = Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.Name -eq "RunbookCoreSetupAzureRm.ps1" } | Select -First 1
-			if((($RunbookCoreSetupAzureRmFile | Measure-Object).Count -eq 0) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::CARunbooks)
-			{
-				$coreSetupFilePath = Join-Path (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName "Configurations" | Join-Path -ChildPath "ContinuousAssurance" | Join-Path -ChildPath "RunbookCoreSetupAzureRm.ps1"
-				Copy-Item ($coreSetupFilePath) (Join-Path $this.RunbookFolderPath "RunbookCoreSetupAzureRm.ps1") -Force
-				#Check for environment specific installer file
-				$fileName = Join-Path $this.RunbookFolderPath "RunbookCoreSetupAzureRm.ps1";
-				if(Test-Path -Path $fileName)
-				{
-					$fileContent = Get-Content -Path $fileName;
-					$fileContent = $fileContent.Replace("#AzSKConfigURL#", $this.AzSKConfigURL);
-					Out-File -InputObject $fileContent -Force -FilePath $(Join-Path $this.RunbookFolderPath "RunbookCoreSetupAzureRm.ps1") -Encoding utf8
-				}
-			}
-			#If RunbookCoreSetup already exists, check for SAS token expiry and update with latest token 
-			else {
-				$RunbookCoreSetupContent =  Get-Content -Path $RunbookCoreSetupAzureRmFile.FullName
-				#Validate AzSkVersionForOrgUrl command
-				$pattern = 'azskVersionForOrg = "(.*?)"'
-				$coreSetupAzSkVersionForOrgUrl = [Helpers]::GetSubString($RunbookCoreSetupContent,$pattern)
-				if(-not [string]::IsNullOrEmpty($coreSetupAzSkVersionForOrgUrl) -and [Helpers]::IsSASTokenUpdateRequired($coreSetupAzSkVersionForOrgUrl))
-				{
-					$RunbookCoreSetupContent = $RunbookCoreSetupContent.Replace($coreSetupAzSkVersionForOrgUrl,$this.AzSKConfigURL)
-					Out-File -InputObject $RunbookCoreSetupContent -Force -FilePath $($RunbookCoreSetupAzureRmFile.FullName) -Encoding utf8
 				}
 			}
 
@@ -434,10 +400,25 @@ class PolicySetup: CommandBase
 
 	[MessageData[]] InstallPolicy()
     {
+		$this.msgCount = 0
 		if($this.IsUpdateSwitchOn)
 		{
 			$this.ValidatePolicyExists()
+			$this.PublishCustomMessage([Constants]::UpdateOrgPolicyInstructionMsg);
 		}
+		else{
+			$this.PublishCustomMessage([Constants]::InstallOrgPolicyInstructionMsg);
+			$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
+			$this.msgCount=$this.msgCount + 1
+			$this.PublishCustomMessage("[$($this.msgCount)] Creating/Updating resources for supporting org policy in the policy host subscription...`n",[MessageType]::Warning)
+		}
+
+
+		
+
+
+		
+		
 
 		if($this.AzureEnvironment -eq "AzureCloud"){
 		$this.AppInsightInstance.CreateAppInsightIfNotExists();
@@ -454,6 +435,12 @@ class PolicySetup: CommandBase
 		{
 			$this.PolicyUrl = $container.CloudBlobContainer.Uri.AbsoluteUri + "/```$(```$Version)/```$(```$FileName)" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
 			$this.AzSKConfigURL = $container.CloudBlobContainer.Uri.AbsoluteUri + "/$($this.RunbookBaseVersion)/AzSK.Pre.json" + $this.StorageAccountInstance.GenerateSASToken($this.ConfigContainerName);
+
+			if(-not $this.IsUpdateSwitchOn)
+			{
+				$this.PublishCustomMessage("`nAll required resources created/updated successfully.",[MessageType]::Update)
+			}
+			
 		}
 
 		if(Test-Path -Path $this.ConfigFolderPath)
@@ -500,11 +487,15 @@ class PolicySetup: CommandBase
 					{
 						$this.PublishCustomMessage("Invalid schema for PS1 files: $($InvalidSchemaPSFiles -Join ','). Make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply)", [MessageType]::Error);
 					}
-					throw ([SuppressedException]::new("Invalid schema found. Please correct shema and reupload policies.", [SuppressedExceptionType]::Generic))
+					throw ([SuppressedException]::new("Invalid schema found. Please correct schema and reupload policies.", [SuppressedExceptionType]::Generic))
 				}
 			}
 		}
 		$this.ModifyInstaller();
+
+		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
+		$this.msgCount=$this.msgCount + 1
+		$this.PublishCustomMessage("[$($this.msgCount)] Uploading policy files to policy server...`n",[MessageType]::Warning)
 		$this.StorageAccountInstance.UploadFilesToBlob($this.InstallerContainerName, "", (Get-ChildItem -Path $this.InstallerFile));
 
 		$this.CopyRunbook();
@@ -532,8 +523,21 @@ class PolicySetup: CommandBase
 			$this.PublishCustomMessage(" `r`n.No configuration files found under folder [$($this.ConfigFolderPath)]", [MessageType]::Warning);
 		}
 		Copy-Item (Join-Path $PSScriptRoot "README.txt") (Join-Path $($This.FolderPath) "README.txt") -Force
+
+		$this.PublishCustomMessage("All policy files have been uploaded successfully.`n",[MessageType]::Update)
+		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
+		$this.msgCount=$this.msgCount + 1
+		$this.PublishCustomMessage("[$($this.msgCount)] Generating an org-specific installer ('iwr' command) for your org...`n",[MessageType]::Warning)
+		$this.PublishCustomMessage($($this.IWRCommand),[MessageType]::Info)
+		$this.PublishCustomMessage("Installer generated successfully. Run the 'iwr' command above to install Organization specific version.`n`n",[MessageType]::Update)
+		$this.PublishCustomMessage("`n")
+		$this.PublishCustomMessage("IMPORTANT: Make sure anyone in your org who needs to scan according to your policies uses the above 'iwr' command to install AzSK. (They should not use 'install-module AzSK' directly. Anyone using an incorrect setup will not get your custom '$($this.OrgFullName)' policy when they run any AzSK cmdlet.)",[MessageType]::Warning)
+		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
+		
+		
 		$this.CreateMonitoringDashboard()
-		$this.PublishCustomMessage(" `r`nThe setup has been completed and policies have been copied to [$($this.FolderPath)].`r`nRun the command below to install Organization specific version.`r`n$($this.IWRCommand)", [MessageType]::Update);
+		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
+		$this.PublishCustomMessage(" `r`nThe setup has been completed and policies have been copied to [$($this.FolderPath)].`r`n", [MessageType]::Update);
 		$this.PublishCustomMessage(" `r`nNote: This is a basic setup and uses a public access blob for storing your org's installer. Once you have richer org policies, consider using a location/end-point protected by your tenant authentication.", [MessageType]::Warning);
 		return @();
 	}
@@ -550,7 +554,9 @@ class PolicySetup: CommandBase
 		$dashboardResource = Get-AzResource -ResourceType "Microsoft.Portal/dashboards" -ResourceGroupName $($this.ResourceGroupName) -ErrorAction SilentlyContinue
 		if((($dashboardResource | Measure-Object).Count -eq 0 ) -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::All -or $this.OverrideConfiguration -eq [OverrideConfigurationType]::MonitoringDashboard) 
 		{
-			$this.PublishCustomMessage("Creating DevOps Kit ops monitoring dashboard in the policy host subscription...");
+			$this.msgCount=$this.msgCount + 1
+			$this.PublishCustomMessage("[$($this.msgCount)] Creating DevOps Kit ops monitoring dashboard in the policy host subscription...`n",[MessageType]::Warning)
+			#$this.PublishCustomMessage("Creating DevOps Kit ops monitoring dashboard in the policy host subscription...");
 			#Store dashboard template to temp location
 			$MonitoringDashboardTemplatePath = Join-Path $([Constants]::AzSKTempFolderPath) "MonitoringDashboard";
 			if(-not (Test-Path -Path $MonitoringDashboardTemplatePath))
@@ -574,8 +580,8 @@ class PolicySetup: CommandBase
 			$parameters.Add("DashboardTitle","DevOps Kit Monitoring Dashboard [$($this.OrgFullName)]")
 
 			New-AzResourceGroupDeployment -Name "MonitoringDashboard" -TemplateFile $MonitoringDashboardTemplatePath   -ResourceGroupName $($this.ResourceGroupName) -TemplateParameterObject $parameters   
-			$this.PublishCustomMessage("Successfully created monitoring dashboard. It lets you monitor the operations for various DevOps Kit workflows at your org.(e.g., CA issues, anomalous control drifts, evaluation errors, etc.). You can access it through this link: ", [MessageType]::Update);
-			$rmContext = [Helpers]::GetCurrentRMContext();
+			$this.PublishCustomMessage("Monitoring dashboard created successfully. It lets you monitor the operations for various DevOps Kit workflows at your org.(e.g., CA issues, anomalous control drifts, evaluation errors, etc.). You can access it through this link: ", [MessageType]::Update);
+			$rmContext = [ContextHelper]::GetCurrentRMContext();
 			$tenantId = $rmContext.Tenant.Id
 			$this.PublishCustomMessage("https://ms.portal.azure.com/#$($tenantId)/dashboard/arm/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($this.ResourceGroupName)/providers/microsoft.portal/dashboards/devopskitmonitoring",[MessageType]::Update)
 			$this.PublishCustomMessage('If you are not able to see monitoring dashboard with help of above link. You can navigate to below path `n Go to Azure Portal --> Select "Browse all dashboards" in dashboard dropdown --> Select type "Shared Dashboard" --> Select subscription where policy is setup -->Select "DevOps Kit Monitoring Dashboard [OrgName]"')
@@ -610,7 +616,7 @@ class PolicySetup: CommandBase
 		[PSObject] $PolicyScanOutput = @{}
 		$PolicyScanOutput.Resources = @{}
 		
-		$policyTempFolder = Join-Path $([Constants]::AzSKTempFolderPath) "Policies";
+		$policyTempFolder = Join-Path $([Constants]::AzSKTempFolderPath) -ChildPath $this.OrgFullName | Join-Path -ChildPath "Policies";
 		$orgPolicyOverallSummary = @()
 		$appInsight =$null
 
@@ -622,7 +628,7 @@ class PolicySetup: CommandBase
 		{
 			$PolicyScanOutput.Resources.ResourceGroup = $false
 			$failMsg = "Policy resource group[$($this.ResourceGroupName)] not found."			
-			$resolvemsg = "`r`nIf custom resource names used to create Org policy, pass parameters ResourceGroupName and StorageAccountName to command '$($this.getCommandName)'."
+			$resolvemsg = "Resolution: If custom resource names used to create Org policy, pass parameters ResourceGroupName and StorageAccountName to command '$($this.getCommandName)'."
 			$resultMsg = "$failMsg`r`n$resolvemsg"
 			$resultStatus = "Failed"
 			$shouldReturn = $true
@@ -680,7 +686,7 @@ class PolicySetup: CommandBase
 		else
 		{
 			$failMsg = "Missing mandatory resources: $($missingResources -join ",")"			
-			$resolvemsg = "To resolve this run command '$($this.installCommandName)'"
+			$resolvemsg = "Resolution: Run command '$($this.installCommandName)'"
 			$resultMsg = "$failMsg`r`n$resolvemsg"
 			$resultStatus = "Failed"
 			$shouldReturn = $false
@@ -791,7 +797,7 @@ class PolicySetup: CommandBase
 		else 
 		{
 			$failMsg = "Missing mandatory policies: $($missingPolicies -join ",") "			
-			$resolvemsg = "To resolve this please run command '$($this.updateCommandName)'"
+			$resolvemsg = "Resolution: Run '$($this.updateCommandName)'"
 			$resultMsg = "$failMsg`r`n$resolvemsg"
 			$resultStatus = "Failed"
 			$shouldReturn = $false
@@ -878,7 +884,7 @@ class PolicySetup: CommandBase
 				if([Helpers]::IsSASTokenUpdateRequired($InstallerPolicyUrl) -or [Helpers]::IsSASTokenUpdateRequired($InstallerAzSKPreUrl))
 				{
 					$failMsg = "SAS token for policy urls is getting expired in installer"			
-					$resolvemsg = "To resolve this please run command '$($this.updateCommandName)'."
+					$resolvemsg = "Resolution: Run command '$($this.updateCommandName)'."
 					$resultMsg = "$failMsg`r`n$resolvemsg"
 					$resultStatus = "Failed"
 					$shouldReturn = $false
@@ -892,8 +898,8 @@ class PolicySetup: CommandBase
 			}
 			else
 			{
-				$failMsg = "Missing configurations in installer: $($missingInstallerConfigurations -join ",") "			
-				$resolvemsg = "To resolve this please run command '$($this.updateCommandName)'."
+				$failMsg = "Did not find a reference to $($missingInstallerConfigurations -join ",")  in installer."			
+				$resolvemsg = "Resolution: Run '$($this.updateCommandName)' with the usual parameters."
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $false
@@ -937,8 +943,8 @@ class PolicySetup: CommandBase
 			{
 				$PolicyScanOutput.Configurations.AzSKPre.Status = $true
 				$PolicyScanOutput.Configurations.AzSKPre.CurrentVersionForOrg = $true				
-				$failMsg = "Currently Org policy is running with older AzSK version[$([Helpers]::IsStringEmpty($($AzSKPreConfigContent.CurrentVersionForOrg)))]."			
-				$resolvemsg = "Consider updating it to latest available version[$([Helpers]::IsStringEmpty($($LatestAzSKVersion)))]."
+				$failMsg = "Currently Org policy is running with older AzSK version [$([Helpers]::IsStringEmpty($($AzSKPreConfigContent.CurrentVersionForOrg)))]."			
+				$resolvemsg = "Resolution: Consider updating it to latest available version [$([Helpers]::IsStringEmpty($($LatestAzSKVersion)))]."
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Warning"
 				$shouldReturn = $false				
@@ -961,7 +967,7 @@ class PolicySetup: CommandBase
 		#region Check 05: Validate CoreSetup 
 		$PolicyScanOutput.Configurations.RunbookCoreSetup = @{}
 		$stepCount++		
-		$checkDescription = "Check continueous assurrance RunbookCoreSetup contains reference for Org version(RunbookCoreSetup.ps1)."
+		$checkDescription = "Continuous Assurance (CA) runbook must reference AzSK version in use for the org."
 		if($PolicyScanOutput.Policies.RunbookCoreSetup)
 		{
 		$RunbookCoreSetupPath =Get-ChildItem -Path $policyTempFolder -File "RunbookCoreSetup.ps1" -Recurse
@@ -970,6 +976,13 @@ class PolicySetup: CommandBase
 			#Validate AzSkVersionForOrgUrl command 
 			$pattern = 'azskVersionForOrg = "(.*?)"'
 			$coreSetupAzSkVersionForOrgUrl = [Helpers]::GetSubString($RunbookCoreSetupContent,$pattern)  
+			
+			#Recovery code for extra space included as part of coresetup update
+			if([string]::IsNullOrEmpty($coreSetupAzSkVersionForOrgUrl))
+			{
+				$pattern = 'azskVersionForOrg =  "(.*?)"'
+				$coreSetupAzSkVersionForOrgUrl = [Helpers]::GetSubString($RunbookCoreSetupContent,$pattern)  
+			}
 			
 			$AzSkVersionForOrgUrl = "Not Available"
 			if($policies.AzSKPre)
@@ -995,7 +1008,7 @@ class PolicySetup: CommandBase
 				if([Helpers]::IsSASTokenUpdateRequired($coreSetupAzSkVersionForOrgUrl) )
 				{
 					$failMsg = "SAS token for policy urls is getting expired in runbookCoreSetup"			
-					$resolvemsg = "To resolve this please run command '$($this.updateCommandName)'."
+					$resolvemsg = "Resolution: Run '$($this.updateCommandName)' with the usual parameters."
 					$resultMsg = "$failMsg`r`n$resolvemsg"
 					$resultStatus = "Failed"
 					$shouldReturn = $false
@@ -1011,8 +1024,8 @@ class PolicySetup: CommandBase
 			}
 			else
 			{
-				$failMsg = "Missing configurations in runbookCoreSetup: $($missingCoreSetupConfigurations -join ",")"			
-				$resolvemsg = "To resolve this please run command '$($this.updateCommandName)' with parameter '-OverrideBaseConfig CARunbooks'"
+				$failMsg = "Did not find a reference to: $($missingCoreSetupConfigurations -join ",") in the CA runbook in RunbookCoreSetup.ps1"			
+				$resolvemsg = "Resolution: Run '$($this.updateCommandName)' with the usual parameters + '-OverrideBaseConfig CARunbooks'"
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $false
@@ -1037,7 +1050,7 @@ class PolicySetup: CommandBase
 		#Check 06: Validate AzSKConfig
 		$PolicyScanOutput.Configurations.AzSKConfig = @{}
 		$stepCount++		
-		$checkDescription = "Check AzSKConfig configured with controlTelemetryKey, installation command, Org AzSK version refernce etc.(AzSK.json)."
+		$checkDescription = "Check AzSKConfig configured with controlTelemetryKey, installation command, Org AzSK version reference etc.(AzSK.json)."
 		$AzSKConfiguOutput = $PolicyScanOutput.Configurations.AzSKConfig
 		if($PolicyScanOutput.Policies.AzSKConfig)
 		{
@@ -1186,14 +1199,14 @@ class PolicySetup: CommandBase
 				$resolvemsg = [string]::Empty
 				if(($missingAzSKConfigurations | Measure-Object).Count -gt 0)
 				{
-					$failMsg = "Missing configurations in AzSKConfig: $($missingAzSKConfigurations -join ",")."			
-					$resolvemsg = "To resolve this please run command '$($this.updateCommandName)' with parameter '-OverrideBaseConfig AzSKRootConfig'"
+					$failMsg = "Did not find a reference to $($missingAzSKConfigurations -join ",") in AzSKConfig."			
+					$resolvemsg = "Resolution: Run '$($this.updateCommandName)' with the usual parameters + '-OverrideBaseConfig AzSKRootConfig'"
 				}
 				#Check after missing configuration if SAS update required
 				elseIf(($expiringSASTokenConfigurations | Measure-Object).Count -gt 0)
 				{
 					$failMsg = "SAS token for policy urls is getting expired in AzSKConfig: $($expiringSASTokenConfigurations -join ",")."			
-					$resolvemsg = "To resolve this please run command '$($this.updateCommandName)'"
+					$resolvemsg = "Resolution: '$($this.updateCommandName)' with the usual parameters"
 				}
 				
 				$resultMsg = "$failMsg`r`n$resolvemsg"
@@ -1235,7 +1248,7 @@ class PolicySetup: CommandBase
 			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
 			$validatedUri = $ResourceAppIdURI+"subscriptions/$subscriptionId/resourceGroups/$caResourceGroupName/providers/Microsoft.Automation/automationAccounts/$automationAccountName/runbooks/$runbookName/content?api-version=2015-10-31"
 			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-			$accessToken=[Helpers]::GetAccessToken($ResourceAppIdURI)
+			$accessToken=[ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			$serverFileContent = Invoke-RestMethod `
 												-Method GET `
 												-Uri $validatedUri `
@@ -1291,7 +1304,7 @@ class PolicySetup: CommandBase
 			else
 			{
 				$failMsg = "Installed CA runbook is not configured with Org policy url"			
-				$resolvemsg = "To resolve this please run command 'Update-AzSKContinuousAssurance -SubscriptionId <SubscriptionId>'."
+				$resolvemsg = "Resolution: Run 'Update-AzSKContinuousAssurance -SubscriptionId <SubscriptionId>'."
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $false
@@ -1422,7 +1435,7 @@ class PolicySetup: CommandBase
 				{
 					$failMsg +="PS1 files: $($InvalidSchemaPSFiles -Join ',')."
 				}						
-				$resolvemsg = "To resolve this, make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply. For more details about syntax issue, refer detail logs.)"
+				$resolvemsg = "Resolution: Make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply. For more details about syntax issue, refer detail logs.)"
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $false
@@ -1450,7 +1463,7 @@ class PolicySetup: CommandBase
 		if(-not $PolicyScanOutput.Resources.Status -or -not $PolicyScanOutput.Policies.Status -or -not $InstallOutput.Status -or -not $PolicyScanOutput.Configurations.AzSKPre.Status -or  -not $PolicyScanOutput.Configurations.RunbookCoreSetup.Status -or  -not $AzSKConfiguOutput.Status -or -not $PolicyScanOutput.SyntaxException.Status -or -not $CARunbookOutput.Status)
 		{
 			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Warning)
-			$this.PublishCustomMessage("Your Org policy configuration is not correctly setup..`nReview the failed check and follow the remedy suggested", [MessageType]::Warning) 
+			$this.PublishCustomMessage("Your Org policy configuration is not correctly setup..`nReview the failed checks and follow the recommendations suggested.", [MessageType]::Warning) 
 			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Warning)
 		}
 		else
@@ -1474,18 +1487,23 @@ class PolicySetup: CommandBase
 		$PolicyList =@()
 		$this.PublishCustomMessage("Downloading policies to location:[$($this.FolderPath)]...", [MessageType]::Info);	
 		$this.StorageAccountInstance.GetStorageAccountInstance()
-		$existingPolicyFolderContent= Get-ChildItem -Path $($this.FolderPath)
-		if(($existingPolicyFolderContent | Measure-Object).Count -gt 0)
+
+		if(Test-Path $this.FolderPath)
 		{
-			$this.PublishCustomMessage("Warning: Policy folder already contains files. Downloading policies can override existing files. `nDo you want to continue(Y/N):", $([MessageType]::Warning))
-			$answer= Read-Host
-			if($answer.ToLower() -ne "y" )
+			$existingPolicyFolderContent= Get-ChildItem -Path $($this.FolderPath) -ErrorAction SilentlyContinue
+			if(($existingPolicyFolderContent | Measure-Object).Count -gt 0)
 			{
-				$downloadPolicy = $false
-				$this.PublishCustomMessage("Skipped downloading policies.", [MessageType]::Update);
-				#return
+				$this.PublishCustomMessage("Warning: Policy folder already contains files. Downloading policies can override existing files. `nDo you want to continue(Y/N):", $([MessageType]::Warning))
+				$answer= Read-Host
+				if($answer.ToLower() -ne "y" )
+				{
+					$downloadPolicy = $false
+					$this.PublishCustomMessage("Skipped downloading policies.", [MessageType]::Update);
+					#return
+				}
 			}
 		}
+		
 		if($downloadPolicy)
 		{
 			#Downloading policies
@@ -1508,6 +1526,7 @@ class PolicySetup: CommandBase
 		$this.PublishCustomMessage("Completed downloading latest policy index file.", [MessageType]::Update);
 		#Get all extensions 
 		$include=@("*.ext.ps1","*.ext.json",[Constants]::ServerConfigMetadataFileName)
+		
 		$extensionFiles = Get-ChildItem -Path $this.FolderPath -Include $include -Recurse
 		if(($extensionFiles | Measure-Object).Count -gt 0)
 		{
@@ -1551,7 +1570,7 @@ class PolicySetup: CommandBase
 				{
 					$this.PublishCustomMessage("Invalid schema for PS1 files: $($InvalidSchemaPSFiles -Join ','). Make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply)", [MessageType]::Error);
 				}
-				throw ([SuppressedException]::new("Invalid schema found. Please correct shema and reupload extensions.", [SuppressedExceptionType]::Generic))
+				throw ([SuppressedException]::new("Invalid schema found. Please correct schema and reupload extensions.", [SuppressedExceptionType]::Generic))
 			}
 			$this.PublishCustomMessage("Completed validating sytax exception for extension files.", [MessageType]::Update);
 			$serverConfigMetadata = Get-Content -Path ($this.FolderPath + $([Constants]::ServerConfigMetadataFileName)) | ConvertFrom-Json

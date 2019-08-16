@@ -126,7 +126,6 @@
     <Compile Include="Framework\Core\SVT\Services\HDInsight.ps1" />
     <Compile Include="Framework\Core\SVT\Services\KubernetesService.ps1" />
     <Compile Include="Framework\Helpers\AliasHelper.ps1" />
-    <Compile Include="Framework\Helpers\OldConstants.ps1" />
     <Compile Include="Framework\Helpers\LogAnalyticsHelper.ps1" />
     <Compile Include="Framework\Helpers\ComplianceReportHelper.ps1" />
     <Compile Include="Framework\Helpers\UserSubscriptionDataHelper.ps1" />
@@ -250,7 +249,9 @@
     <Compile Include="Framework\Listeners\RemoteReports\TelemetryStrings.ps1" />
     <Compile Include="Framework\Listeners\RemoteReports\UsageTelemetry.ps1" />
     <Compile Include="Framework\Listeners\RemoteReports\RemoteReportsListener.ps1" />
+    <Compile Include="Framework\Listeners\RemoteReports\AzResourceInventoryListener.ps1" />
     <Compile Include="Framework\Listeners\ListenerHelper.ps1" />
+    <Compile Include="Framework\Listeners\AzListenerHelper.ps1" />
     <Compile Include="Framework\Listeners\LogAnalytics\LogAnalyticsOutput.ps1" />
     <Compile Include="Framework\Listeners\UserReports\WriteDataFile.ps1" />
     <Compile Include="Framework\Listeners\UserReports\WriteDetailedLog.ps1" />
