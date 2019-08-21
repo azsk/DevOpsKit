@@ -193,13 +193,13 @@ class BasicInfo: AzCommandBase
 		$this.AddConfigurationDetails('Continuous Assurance', $configuredVersion, $serverVersion, $serverVersion, $actionMessage)
 	}
 
-	AddConfigurationDetails([string] $ComponentName, [string] $CurrentVersion, [string] $LatestVersion, [string] $SupportedVesion, [string] $RequireAction)
+	AddConfigurationDetails([string] $ComponentName, [string] $CurrentVersion, [string] $LatestVersion, [string] $SupportedVersion, [string] $RequireAction)
 	{
 		$this.SubConfiguration = New-Object -TypeName PSObject
 		$this.SubConfiguration.ComponentName = $ComponentName
 		$this.SubConfiguration.InstalledVersion = $CurrentVersion
 		$this.SubConfiguration.ServerVersion = $LatestVersion
-		$this.SubConfiguration.SupportedVesion = ">= " + $SupportedVesion
+		$this.SubConfiguration.SupportedVersion = ">= " + $SupportedVersion
 		$this.SubConfiguration.Recommendation = $RequireAction
 		$this.Configurations += $this.SubConfiguration
 	}
@@ -211,6 +211,6 @@ class SubConfiguration
 	[string] $ComponentName = "" 
 	[string] $InstalledVersion = ""
 	[string] $ServerVersion = ""
-	[string] $SupportedVesion = ""
+	[string] $SupportedVersion = ""
 	[string] $Recommendation = ""
 }
