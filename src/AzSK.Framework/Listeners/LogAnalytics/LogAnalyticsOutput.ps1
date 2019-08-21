@@ -58,7 +58,7 @@ class LogAnalyticsOutput: ListenerBase
 						
 						if(-not [string]::IsNullOrEmpty($settings.AltLAWSId))
 						{
-							$currentInstance.PublishCustomMessage("AltWsId: $($settings.AltLAWSId)`n",[MessageType]::Info);
+							$currentInstance.PublishCustomMessage("AltWSId: $($settings.AltLAWSId)`n",[MessageType]::Info);
 							$currentInstance.PublishCustomMessage("`n");
 						}
 						else
