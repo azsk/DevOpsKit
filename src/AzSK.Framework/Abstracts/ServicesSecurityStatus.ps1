@@ -513,7 +513,8 @@ class ServicesSecurityStatus: AzSVTCommandBase
             #Infer resource type names from control ids 
             $allTargetResourceTypeNames = @($allTargetControlIds | ForEach-Object { ($_ -split '_')[1]})
             $allTargetResourceTypeNamesUnique = @($allTargetResourceTypeNames | Sort-Object -Unique)
-            $automatedResources = @($automatedResources | Where-Object {$allTargetResourceTypeNamesUnique -contains $_.ResourceTypeMapping.ResourceTypeName -or $_.ResourceType -match 'AzSKCfg' -or $_.ResourceTypeMapping.ResourceTypeName -match 'VirtualNetwork'})
+            #Match resources based on resource types. Here we have made exception for AzSKCfg to scan it every time and virtual network as its type name (VirtualNetwork) is different than controls type name (VNet) 
+            $automatedResources = @($automatedResources | Where-Object {$allTargetResourceTypeNamesUnique -contains $_.ResourceTypeMapping.ResourceTypeName -or $_.ResourceType -match 'AzSKCfg' -or ($_.ResourceTypeMapping.ResourceTypeName -match 'VirtualNetwork' -and $allTargetResourceTypeNamesUnique -contains "VNet")})
 		}
 		return $automatedResources
 	}
