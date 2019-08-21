@@ -1527,7 +1527,7 @@ class CCAutomation: AzCommandBase
 			else
 			{
 				$failMsg = "$azskModuleName module is not available in automation account."
-				$resolvemsg = "To resolve this please run command '$($this.removeCommandName)' followed by '$($this.installCommandName)'."
+				$resolvemsg = "To resolve this please run command '$($this.updateCommandName)' with -FixModules parameter ."
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $true
@@ -1603,7 +1603,7 @@ class CCAutomation: AzCommandBase
 					$missingModulesString = $missingModules -join ","
 					$detailedMsg = [MessageData]::new("Missing modules in the automation account:", $missingModules);
 					
-					$resolvemsg = "To resolve this please run command '$($this.removeCommandName)' followed by '$($this.installCommandName)'."
+					$resolvemsg = "To resolve this please run command '$($this.updateCommandName)' with -FixModules parameter ."
 					$failMsg = "One or more dependent module(s) are missing given below.`r`n$missingModulesString"
 			
 					$resultMsg = "$failMsg`r`n$resolvemsg"
