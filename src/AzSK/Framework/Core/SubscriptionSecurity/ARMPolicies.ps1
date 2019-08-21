@@ -71,8 +71,7 @@ class ARMPolicy: AzCommandBase
 				$startMessage = [MessageData]::new("Processing AzSK ARM policies. Total policies: $($this.GetApplicableARMPolicies().Count)");
 				$messages += $startMessage;
 				$this.PublishCustomMessage($startMessage);
-				$this.PublishCustomMessage("Note: Configuring ARM policies can take about 2-3 min...", [MessageType]::Warning);				
-
+				
 				$disabledPolicies = $this.GetApplicableARMPolicies() | Where-Object { -not $_.Enabled };
 				if(($disabledPolicies | Measure-Object).Count -ne 0)
 				{
