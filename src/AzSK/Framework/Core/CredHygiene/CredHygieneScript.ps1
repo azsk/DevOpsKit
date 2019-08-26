@@ -73,38 +73,38 @@ class CredHygiene : CommandBase{
 		return $resourceGroup;
 	}
 
-	[void] PrintDetails($credentialInfo){
+	[void] PrintDetails($credentialInfo,$messageType){
 		$this.PublishCustomMessage("`n")
 		$this.PublishCustomMessage("Settings for the AzSK tracked credential [$($credentialInfo.credName)] `n`n", [MessageType]::Info) 
 		$this.PublishCustomMessage("`n")
 
-		$this.PublishCustomMessage("Name:`t`t`t`t`t`t`t`t`t$($credentialInfo.credName)", [MessageType]::Default)
-		$this.PublishCustomMessage("Location:`t`t`t`t`t`t`t`t$($credentialInfo.credLocation)", [MessageType]::Default)
-		$this.PublishCustomMessage("Rotation interval (days):`t`t`t`t$($credentialInfo.rotationInt)", [MessageType]::Default)
-		$this.PublishCustomMessage("Alert email:`t`t`t`t`t`t`t$($credentialInfo.emailId)", [MessageType]::Default)
-		$this.PublishCustomMessage("Alert phone:`t`t`t`t`t`t`t$($credentialInfo.contactNumber)", [MessageType]::Default)
-		$this.PublishCustomMessage("Created on:`t`t`t`t`t`t`t`t$($credentialInfo.firstUpdatedOn)", [MessageType]::Default)
-		$this.PublishCustomMessage("Created by:`t`t`t`t`t`t`t`t$($credentialInfo.firstUpdatedBy)", [MessageType]::Default)
-		$this.PublishCustomMessage("Last update:`t`t`t`t`t`t`t$($credentialInfo.lastUpdatedOn)", [MessageType]::Default)
-		$this.PublishCustomMessage("Updated by:`t`t`t`t`t`t`t`t$($credentialInfo.lastUpdatedBy)", [MessageType]::Default)
-		$this.PublishCustomMessage("Comment:`t`t`t`t`t`t`t`t$($credentialInfo.comment)`n", [MessageType]::Default)
+		$this.PublishCustomMessage("Name:`t`t`t`t`t`t`t`t`t$($credentialInfo.credName)", $messageType)
+		$this.PublishCustomMessage("Location:`t`t`t`t`t`t`t`t$($credentialInfo.credLocation)", $messageType)
+		$this.PublishCustomMessage("Rotation interval (days):`t`t`t`t$($credentialInfo.rotationInt)", $messageType)
+		$this.PublishCustomMessage("Alert email:`t`t`t`t`t`t`t$($credentialInfo.emailId)", $messageType)
+		$this.PublishCustomMessage("Alert phone:`t`t`t`t`t`t`t$($credentialInfo.contactNumber)", $messageType)
+		$this.PublishCustomMessage("Created on:`t`t`t`t`t`t`t`t$($credentialInfo.firstUpdatedOn)", $messageType)
+		$this.PublishCustomMessage("Created by:`t`t`t`t`t`t`t`t$($credentialInfo.firstUpdatedBy)",$messageType)
+		$this.PublishCustomMessage("Last update:`t`t`t`t`t`t`t$($credentialInfo.lastUpdatedOn)", $messageType)
+		$this.PublishCustomMessage("Updated by:`t`t`t`t`t`t`t`t$($credentialInfo.lastUpdatedBy)", $messageType)
+		$this.PublishCustomMessage("Comment:`t`t`t`t`t`t`t`t$($credentialInfo.comment)`n", $messageType)
 
 		if($credentialInfo.credLocation -eq "AppService"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
 			$this.PublishCustomMessage("Credential Details:");
-			$this.PublishCustomMessage("AppService name:`t`t`t`t`t`t$($credentialInfo.resourceGroup)", [MessageType]::Default)
-			$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", [MessageType]::Default)
-			$this.PublishCustomMessage("AppService config type:`t`t`t`t`t$($credentialInfo.appConfigType)", [MessageType]::Default)
-			$this.PublishCustomMessage("AppService config name:`t`t`t`t`t$($credentialInfo.appConfigName)", [MessageType]::Default)
+			$this.PublishCustomMessage("AppService name:`t`t`t`t`t`t$($credentialInfo.resourceGroup)", $messageType)
+			$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", $messageType)
+			$this.PublishCustomMessage("AppService config type:`t`t`t`t`t$($credentialInfo.appConfigType)", $messageType)
+			$this.PublishCustomMessage("AppService config name:`t`t`t`t`t$($credentialInfo.appConfigName)", $messageType)
 		}
 		if($credentialInfo.credLocation -eq "KeyVault"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
 			$this.PublishCustomMessage("Credential Details:");
-			$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", [MessageType]::Default)
-			$this.PublishCustomMessage("Credential type:`t`t`t`t`t`t$($credentialInfo.kvCredType)", [MessageType]::Default)
-			$this.PublishCustomMessage("Credential name:`t`t`t`t`t`t$($credentialInfo.kvCredName)", [MessageType]::Default)
-			$this.PublishCustomMessage("Expiry time:`t`t`t`t`t`t`t$($credentialInfo.expiryTime)", [MessageType]::Default)
-			$this.PublishCustomMessage("Version:`t`t`t`t`t`t`t`t$($credentialInfo.Version)", [MessageType]::Default)
+			$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", $messageType)
+			$this.PublishCustomMessage("Credential type:`t`t`t`t`t`t$($credentialInfo.kvCredType)", $messageType)
+			$this.PublishCustomMessage("Credential name:`t`t`t`t`t`t$($credentialInfo.kvCredName)", $messageType)
+			$this.PublishCustomMessage("Expiry time:`t`t`t`t`t`t`t$($credentialInfo.expiryTime)", $messageType)
+			$this.PublishCustomMessage("Version:`t`t`t`t`t`t`t`t$($credentialInfo.Version)", $messageType)
 		}
 
 		$this.PublishCustomMessage("`n")		
@@ -163,14 +163,28 @@ class CredHygiene : CommandBase{
 				New-Item -ItemType Directory -Path "$($this.AzSKTemp)" -ErrorAction Stop | Out-Null
 			}
 		}
-        
+
+        $controlSettings = $this.LoadServerConfigFile("ControlSettings.json");
+
 		if($CredentialName){
 			$blobName = $CredentialName.ToLower() + ".json"
 			$blobContent = Get-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -Destination $file -Force -ErrorAction Ignore
 			if($blobContent){    
 				$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
 
-				$this.PrintDetails($credentialInfo);
+				$messageType = [MessageType]::Default
+				
+				$currentTime = [DateTime]::UtcNow;
+				$lastRotatedTime = $credentialInfo.lastUpdatedOn;
+				$expiryTime = $lastRotatedTime.AddDays($credentialInfo.rotationInt);
+				
+				if($expiryTime -le $currentTime.AddDays($controlSettings.SubscriptionCore.credHighTH)){ #Checking for expired/about to expire credentials
+					$messageType = [MessageType]::Critical
+				}
+				elseif(($expiryTime -gt $currentTime.AddDays($controlSettings.SubscriptionCore.credHighTH)) -and ($expiryTime -le $currentTime.AddDays($controlSettings.SubscriptionCore.credModerateTH))){ #Checking for credentials nearing expiry.
+					$messageType = [MessageType]::Warning
+				}
+				$this.PrintDetails($credentialInfo,$messageType);
 			}
 			else{
 				$this.PublishCustomMessage("Could not find an entry for credential [$CredentialName].",[MessageType]::Critical)
@@ -185,11 +199,32 @@ class CredHygiene : CommandBase{
 				$this.PublishCustomMessage("`n")
 				$this.PublishCustomMessage("`nListing settings for all the credentials `n`n",[MessageType]::Update)
 				$this.PublishCustomMessage("`n")
+				
+				# array to store cred info in ascending order of expiry time.
+
+				$sortedBlob = @();
+				
 				$blob | where {
 					$_ | Get-AzStorageBlobContent -Destination $file -Force | Out-Null
 					$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
+					$sortedBlob += $credentialInfo;
+				}
 
-					$this.PrintDetails($credentialInfo);
+				$sortedBlob = $sortedBlob | Sort-Object -Property @{Expression = {($_.lastUpdatedOn).AddDays($_.rotationInt)}; Descending = $False} 
+				
+				$currentTime = [DateTime]::UtcNow;
+				$sortedBlob | where{
+					$lastRotatedTime = $_.lastUpdatedOn;
+					$expiryTime = $lastRotatedTime.AddDays($_.rotationInt);
+					$messageType = [MessageType]::Default
+					if($expiryTime -le $currentTime.AddDays($controlSettings.SubscriptionCore.credHighTH)){ #Checking for expired/about to expire credentials
+						$messageType = [MessageType]::Critical
+					}
+					elseif(($expiryTime -gt $currentTime.AddDays($controlSettings.SubscriptionCore.credHighTH)) -and ($expiryTime -le $currentTime.AddDays($controlSettings.SubscriptionCore.credModerateTH))){ #Checking for credentials nearing expiry.
+						$messageType = [MessageType]::Warning
+					}
+
+					$this.PrintDetails($_,$messageType);
 				}
 			}
 			else{
