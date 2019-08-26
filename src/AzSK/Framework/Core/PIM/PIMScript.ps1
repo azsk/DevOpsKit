@@ -69,7 +69,7 @@ class PIM: AzCommandBase {
     }
 
     # This function resolves the resource that matches to parameters passed in command
-    hidden [PIMResource[]] PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName) {
+    hidden [PIMResource[]] PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $IsActivationRequest) {
         $this.AcquireToken();  
         $rtype = 'subscription'
         $selectedResourceName = $SubscriptionId.Trim()
@@ -86,43 +86,82 @@ class PIM: AzCommandBase {
             ResourceType = $rtype
             ResourceName = $selectedResourceName
         }
-        $resources = $this.ListResources($SubscriptionId, $item.ResourceType, $item.ResourceName);
         $resolvedResource = [PIMResource]::new()
-       if($item.ResourceType -eq 'resource')
+        if($IsActivationRequest)
         {
-            $resolvedResource = $resources | Where-Object { $_.ResourceName -eq $item.ResourceName}
-            #If context has access over resourcegroups or resources with same name, get a match based on Subscription and rg passed in param
-            if (($resolvedResource | Measure-Object).Count -gt 1) {       
-           
-                $resolvedResource = $resolvedResource | Where-Object { $_.ExternalId -match $SubscriptionId }
-                if (-not([string]::IsNullOrEmpty($ResourceGroupName))) {
-                    $resolvedResource = $resolvedResource | Where-Object { $_.ExternalId -match $ResourceGroupName }
+            $resolvedResources = ($this.MyJitAssignments() | Where-Object {$_.OriginalId -match $SubscriptionId})
+            $PIMResources = @();            
+            if(($resolvedResources | Measure-Object).Count -gt 0 )
+            {
+                 if( $item.ResourceType -eq 'subscription')
+                {
+                    $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq ("/subscriptions/$($SubscriptionId)") }
                 }
-        
+                if( $item.ResourceType -eq 'resourcegroup')
+                {
+                    $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -match $ResourceGroupName  }
+                 }
+                if( $item.ResourceType -eq 'resource'){
+                $resolvedResources = $resolvedResources | Where-Object{$_.ResourceName -eq $ResourceName }
+                }
+                if(($resolvedResources|Measure-Object).Count -gt 0)
+                {
+                    $resObj = [PIMResource]::new()
+                    foreach($res in $resolvedResources)
+                    {
+                        $resObj.ExternalId = $res.OriginalId
+                        $resObj.ResourceName = $res.ResourceName
+                        $resObj.ResourceId = $res.ResourceId
+                        $PIMResources += $resObj
+                    }
+                } 
             }
+            return $PIMResources;
+
         }
         else
         {
+            $resources = $this.ListResources($SubscriptionId, $item.ResourceType, $item.ResourceName);
             
-            if($item.ResourceType -eq 'subscription')
-            {
-                $resolvedResource.ExternalId = "/subscriptions/$($item.ResourceName)"
-            }
-            elseif($item.ResourceType -eq 'resourcegroup')
-            {
-                $resolvedResource.ExternalId = "/subscriptions/$($SubscriptionId.Trim())/resourceGroups/$($item.ResourceName)"
-            }
             
-            if($null -ne $resources)
+            if($item.ResourceType -eq 'resource')
             {
-                $temp = $resources | Where-Object { $_.ExternalId -eq $resolvedResource.ExternalId}
-                if(($temp| Measure-Object).Count -gt 0)
-                {
-                    $resolvedResource = $temp
+                $resolvedResource = $resources | Where-Object { $_.ResourceName -eq $item.ResourceName}
+                #If context has access over resourcegroups or resources with same name, get a match based on Subscription and rg passed in param
+                if (($resolvedResource | Measure-Object).Count -gt 1) {       
+            
+                    $resolvedResource = $resolvedResource | Where-Object { $_.ExternalId -match $SubscriptionId }
+                    if (-not([string]::IsNullOrEmpty($ResourceGroupName)) -and  ($resolvedResource | Measure-Object).Count -gt 0) {
+                        $resolvedResource = $resolvedResource | Where-Object { $_.ExternalId -match $ResourceGroupName }
+                    }
+            
                 }
             }
+            else
+            {
+                
+                if($item.ResourceType -eq 'subscription')
+                {
+                    $resolvedResource.ExternalId = "/subscriptions/$($item.ResourceName)"
+                }
+                elseif($item.ResourceType -eq 'resourcegroup')
+                {
+                    $resolvedResource.ExternalId = "/subscriptions/$($SubscriptionId.Trim())/resourceGroups/$($item.ResourceName)"
+                }
+                
+                if($null -ne $resources)
+                {
+                    $temp = $resources | Where-Object { $_.ExternalId -eq $resolvedResource.ExternalId}
+                    if(($temp| Measure-Object).Count -gt 0)
+                    {
+                        $resolvedResource = $temp
+                    }
+                }
+            }
+             return $resolvedResource   
         }
-        return $resolvedResource    
+
+        
     }
 
     #List all the resources accessible to context.
@@ -263,7 +302,7 @@ class PIM: AzCommandBase {
         $this.AcquireToken();
         $criticalRoles = @();
         $criticalRoles += $this.ConvertToStringArray($RoleNames)
-        $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName)
+        $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName,$false)
         if (($resources | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resources.ResourceId))) {       
             $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $CheckPermanent)
             if(-not [String]::IsNullOrEmpty($RoleNames))
@@ -290,7 +329,7 @@ class PIM: AzCommandBase {
             }
         }
         else {
-            $this.PublishCustomMessage("Unable to query request resource for the current logged in context.", [MessageType]::Warning )
+            $this.PublishCustomMessage("Unable to query requested resource for the current logged in context.", [MessageType]::Warning )
         }
         
     }
@@ -299,29 +338,36 @@ class PIM: AzCommandBase {
     hidden Activate($SubscriptionId, $ResourceGroupName, $ResourceName, $roleName, $Justification, $Duration) {
         $this.AcquireToken();
         $assignments = $this.MyJitAssignments()
-        $resource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName)
-
-        if (($assignments | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resource.ExternalId))) {
-            $matchingAssignment = $assignments | Where-Object { $_.OriginalId -eq $resource.ExternalId -and $_.RoleName -eq $roleName }
-            if (($matchingAssignment | Measure-Object).Count -gt 0) {
-                $this.PublishCustomMessage("Requesting activation of your [$($matchingAssignment.RoleName)] role on [$($matchingAssignment.ResourceName)]... ", [MessageType]::Info);
-                $resourceId = $matchingAssignment.ResourceId
-                $roleDefinitionId = $matchingAssignment.RoleId
-                $subjectId = $matchingAssignment.SubjectId
-                $RoleActivationurl = $this.APIroot + "/roleAssignmentRequests "
-                $postParams = '{"roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $subjectId + '","assignmentState":"Active","type":"UserAdd","reason":"' + $Justification + '","schedule":{"type":"Once","startDateTime":"' + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","duration":"PT' + $Duration + 'H"},"linkedEligibleRoleAssignmentId":"' + $matchingAssignment.IdGuid + '"}'
-                $response = [WebRequestHelper]::InvokeWebRequest('Post', $RoleActivationurl, $this.headerParams, $postParams, "application/json", $false, $true )
-                    if ($response.StatusCode -eq 201) {
-                        $this.PublishCustomMessage("Activation queued successfully. The role(s) should get activated in a few minutes.", [MessageType]::Update);
-                    }
+        $resource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $true)
+        if(($resource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resource.ExternalId)))
+        {
+            if (($assignments | Measure-Object).Count -gt 0 ) {
+                $matchingAssignment = $assignments | Where-Object { $_.OriginalId -in $resource.ExternalId -and $_.RoleName -eq $roleName }
+                if (($matchingAssignment | Measure-Object).Count -gt 0) {
+                    $this.PublishCustomMessage("Requesting activation of your [$($matchingAssignment.RoleName)] role on [$($matchingAssignment.ResourceName)]... ", [MessageType]::Info);
+                    $resourceId = $matchingAssignment.ResourceId
+                    $roleDefinitionId = $matchingAssignment.RoleId
+                    $subjectId = $matchingAssignment.SubjectId
+                    $RoleActivationurl = $this.APIroot + "/roleAssignmentRequests "
+                    $postParams = '{"roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $subjectId + '","assignmentState":"Active","type":"UserAdd","reason":"' + $Justification + '","schedule":{"type":"Once","startDateTime":"' + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","duration":"PT' + $Duration + 'H"},"linkedEligibleRoleAssignmentId":"' + $matchingAssignment.IdGuid + '"}'
+                    $response = [WebRequestHelper]::InvokeWebRequest('Post', $RoleActivationurl, $this.headerParams, $postParams, "application/json", $false, $true )
+                        if ($response.StatusCode -eq 201) {
+                            $this.PublishCustomMessage("Activation queued successfully. The role(s) should get activated in a few minutes.", [MessageType]::Update);
+                        }
+                }
+                else {
+                    $this.PublishCustomMessage("No matching eligible role found for the current context", [MessageType]::Warning)
+                }
             }
             else {
-                $this.PublishCustomMessage("No matching eligible role found for the current context", [MessageType]::Warning)
-            }
-        }    
-        else {
-            $this.PublishCustomMessage("No eligible role found for the current context", [MessageType]::Warning)
+                $this.PublishCustomMessage("No eligible role found for the current context", [MessageType]::Warning)
+            }    
+        }  
+        else
+        {
+            $this.PublishCustomMessage("No matching eligible assignment found for the current context", [MessageType]::Warning)
         }
+    
     }
 
     #Deactivates the activated assignment for user
@@ -330,7 +376,7 @@ class PIM: AzCommandBase {
         $assignments = $this.MyJitAssignments() 
         if(($assignments| Measure-Object).Count -gt 0) {
             $assignments = $assignments|Where-Object { -not [string]::IsNullorEmpty($_.ExpirationDate) }
-            $resource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName)
+            $resource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName,$false)
 
             if (($assignments | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resource.ExternalId))) {
                 $matchingAssignment = $assignments | Where-Object { $_.OriginalId -eq $resource.ExternalId -and $_.RoleName -eq $roleName }
@@ -363,7 +409,7 @@ class PIM: AzCommandBase {
     #Assign a user to Eligible Role
     hidden AssignPIMRole($subscriptionId, $resourcegroupName, $resourceName, $roleName, $PrincipalName, $duration) {
         $this.AcquireToken();
-        $resolvedResources = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName)
+        $resolvedResources = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName,$false)
         if (($resolvedResources | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResources.ResourceId))) {
            # if there is same resource name inside and rg for multiple resources, we follow the AzSK standard approach to assign role on both resources
             foreach($resolvedResource in $resolvedResources)
@@ -437,7 +483,7 @@ class PIM: AzCommandBase {
     # Below method is intended to assign equivalent PIM eligible roles for permanent assignments for a given role on a particular resource
     hidden AssignPIMforPermanentAssignemnts($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $Force) 
     {
-        $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName)
+        $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName,$false)
         if (($resolvedResource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResource.ResourceId))) {    
             $resourceId = $resolvedResource.ResourceId
             $roles = $this.ListRoles($resourceId)
@@ -514,7 +560,7 @@ class PIM: AzCommandBase {
     # Remove permanent assignments for a particular role on a given resource
     hidden RemovePermanentAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $Force) {
         $this.AcquireToken();
-        $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName)
+        $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName,$false)
         if(-not [String]::IsNullOrEmpty($resolvedResource.ResourceId))
         {
             $resourceId = ($resolvedResource).ResourceId 
@@ -586,7 +632,7 @@ class PIM: AzCommandBase {
         $criticalRoles = @();
         $soonToExpireAssignments = @();
         $criticalRoles += $this.ConvertToStringArray($RoleNames)
-        $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName)
+        $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
         if(($resources | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resources.ResourceId)))
         {
             $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $false)
