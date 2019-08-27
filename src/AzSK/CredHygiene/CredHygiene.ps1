@@ -90,15 +90,14 @@ function New-AzSKTrackedCredential {
                     Write-Host "`nProvide the following details for the app service: `n"
                     $ResourceName = Read-Host "App service name"
                     $ResourceGroupName = Read-Host "Resource group"
-                    
-                    Write-Host "`nEnter"
-                    Write-Host "1 for 'Application Settings'"
-                    Write-Host "2 for 'Connection Strings'`n"
+
+                    Write-Host "`nPlease select app config type from below: `n[1]: Application Settings`n[2]: Connection Strings" -ForegroundColor Cyan
 
                     $input = Read-Host "App config type"
                     
                     while(($input -ne 1) -and ($input -ne 2)){
-                        Write-Host "Incorrect value supplied. Please enter '1' for Application Settings or '2' for Connection Strings." -ForegroundColor Red
+                        Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+                        Write-Host "Please select app config type from below: `n[1]: Application Settings`n[2]: Connection Strings" -ForegroundColor Cyan
                         $input = Read-Host "App config type"
                     }
                     
@@ -117,14 +116,13 @@ function New-AzSKTrackedCredential {
                 elseif($CredentialLocation -eq "KeyVault"){
                     Write-Host "`nProvide the following details for the key vault: `n"
                     $KVName = Read-Host "Key Vault name"
-                    Write-Host "`nEnter"
-                    Write-Host "1 for 'Key'"
-                    Write-Host "2 for 'Secret'`n"
                    
+                    Write-Host "`nPlease select key vault credential type from below: `n[1]: Key`n[2]: Secret" -ForegroundColor Cyan
                     $input = Read-Host "`Key Vault credential type"
                    
                     while(($input -ne 1) -and ($input -ne 2)){
-                        Write-Host "Incorrect value supplied. Please enter '1' for Key or '2' for Secret." -ForegroundColor Red
+                        Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+                        Write-Host "Please select key vault credential type from below: `n[1]: Key`n[2]: Secret" -ForegroundColor Cyan
                         $input = Read-Host "Key Vault credential type"
                     }
 
