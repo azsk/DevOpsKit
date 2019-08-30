@@ -613,7 +613,7 @@ class CredHygiene : CommandBase{
 						$body.properties.action.aznsAction.actionGroup[0] = $ag
 							
 						$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
-						$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($laWS.ResourceGroupName)/providers/microsoft.insights/scheduledQueryRules/credHygieneQueryRule?api-version=2018-04-16"
+						$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($laWS.ResourceGroupName)/providers/microsoft.insights/scheduledQueryRules/AzSK_CredHygiene_Alert?api-version=2018-04-16"
 								
 						[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
 					}
