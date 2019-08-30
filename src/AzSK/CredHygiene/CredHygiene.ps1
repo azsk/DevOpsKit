@@ -28,39 +28,39 @@ function New-AzSKTrackedCredential {
 
 	#>
     Param(
-        [Parameter(Mandatory = $true, ParameterSetName = "Other", Position=0, HelpMessage = "Provide the subscription id")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Custom", Position=0, HelpMessage = "Provide the subscription id")]
         [string]
         [ValidateNotNullOrEmpty()]
         [Alias("s")]
         $SubscriptionId,
 
-        [Parameter(Mandatory = $true, ParameterSetName = "Other", Position=1, HelpMessage = "Provide the credential location")]
-        [ValidateSet("Other", "AppService", "KeyVault")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Custom", Position=1, HelpMessage = "Provide the credential location")]
+        [ValidateSet("Custom", "AppService", "KeyVault")]
         [string]
 		[Alias("cl")]
         $CredentialLocation,
 
-        [Parameter(Mandatory = $true, ParameterSetName = "Other", Position=2, HelpMessage = "Provide the credential name")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Custom", Position=2, HelpMessage = "Provide the credential name")]
         [string]
 		[Alias("cn")]
         $CredentialName,
 
-        [Parameter(Mandatory = $true, ParameterSetName = "Other", HelpMessage = "Provide the rotation interval in days")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Custom", HelpMessage = "Provide the rotation interval in days")]
         [int]
 		[Alias("rint")]
         $RotationIntervalInDays,
 
-        [Parameter(Mandatory = $true, ParameterSetName = "Other", HelpMessage = "Provide the email id for alert")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Custom", HelpMessage = "Provide the email id for alert")]
         [string]
 		[Alias("aem")]
         $AlertEmail,
 
-        [Parameter(Mandatory = $false, ParameterSetName = "Other", HelpMessage = "Provide the contact number for alert")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Provide the contact number for alert")]
         [string]
 		[Alias("acn")]
         $AlertSMS,
 
-        [Parameter(Mandatory = $true, ParameterSetName = "Other", HelpMessage = "Provide the comment for the credential")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Custom", HelpMessage = "Provide the comment for the credential")]
         [string]
 		[Alias("cmt")]
         $Comment
@@ -83,7 +83,7 @@ function New-AzSKTrackedCredential {
                 }
                 $cred.comment = $Comment
 
-                if($CredentialLocation -eq "Other"){
+                if($CredentialLocation -eq "Custom"){
                     $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation, $null, $null, $null, $null, $null, $null, $null))
                 }
                 elseif($CredentialLocation -eq "AppService"){
