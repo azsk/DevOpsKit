@@ -34,16 +34,16 @@ function New-AzSKTrackedCredential {
         [Alias("s")]
         $SubscriptionId,
 
-        [Parameter(Mandatory = $true, ParameterSetName = "Other", Position=1, HelpMessage = "Provide the credential name")]
-        [string]
-		[Alias("cn")]
-        $CredentialName,
-
-        [Parameter(Mandatory = $true, ParameterSetName = "Other", HelpMessage = "Provide the credential location")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Other", Position=1, HelpMessage = "Provide the credential location")]
         [ValidateSet("Other", "AppService", "KeyVault")]
         [string]
 		[Alias("cl")]
         $CredentialLocation,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "Other", Position=2, HelpMessage = "Provide the credential name")]
+        [string]
+		[Alias("cn")]
+        $CredentialName,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Other", HelpMessage = "Provide the rotation interval in days")]
         [int]
