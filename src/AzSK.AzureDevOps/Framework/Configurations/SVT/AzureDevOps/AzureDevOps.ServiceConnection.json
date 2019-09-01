@@ -1,93 +1,129 @@
 {
-    "FeatureName":  "ServiceConnection",
-    "Reference":  "aka.ms/azsktcp/ServiceConnection",
-    "IsMaintenanceMode":  false,
-  "Controls": [
-    {
-      "ControlID": "AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN",
-      "Description": "Azure Active Directory applications, which used in pipeline, must use certificate based authentication",
-      "Id": "ServiceConnection110",
-      "ControlSeverity": "High",
-      "Automated": "Yes",
-      "MethodName": "CheckSPNAuthenticationCertificate",
-      "Rationale": "Password/shared secret credentials can be easily shared and hence can be easily compromised. Certificate credentials offer better security.",
-      "Recommendation": "Remove any password credentials from Azure AD Applications and use certificate credentials instead. Configure certificate details against service connection. Run command Remove-AzureADApplicationPasswordCredential -InformationAction '{ActionPreference}' -InformationVariable '{InformationVariable}' -KeyId '{KeyId}' -ObjectId '{ObjectId}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azuread/remove-azureadapplicationpasswordcredential?view=azureadps-2.0, https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-certificate-credentials#register-your-certificate-with-azure-ad",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Manual",
-        "AuthZ",
-        "RBAC"
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "AzureDevOps_ServiceConnection_AuthZ_RG_Level",
-      "Description": "Service Connection should not be provided access at subscription level",
-      "Id": "ServiceConnection120",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckServiceConnectionAccess",
-      "Recommendation": "Make sure you add SPN at the specific permission scope and role required for your scenario. For example, sometimes 'Contributor' access at 'Resource Group' scope might work. Exact permission will vary based on your use case. If you want to remove the SPN, run command Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
-      "Tags": [
-        "SDL",
-        "Manual",
-        "TCP",
-        "AuthZ"       
-      ],
-      "Enabled": true,
-      "Rationale": "Just like AD-based service accounts, SPNs have a single credential and most scenarios that use them cannot support multi-factor authentication. As a result, adding SPNs to a subscription in 'Owners' or 'Contributors' roles is risky."
-    },
-     {
-        "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Justify_Connection_Admin",
-        "Description": "Justify all identities that are granted with admin/user access for extensions.",
-        "Id": "ServiceConnection130",
-        "ControlSeverity": "High",
-        "Automated": "No",
-        "MethodName": "CheckServiceConnectionAdmins",
-        "Rationale": "Accounts with admin access can install/manage extensions for Organization. Members with this access without a legitimate business reason increase the risk for Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
-        "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Servicie Connections --> Roles --> Verify connection admin and users",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Manual",
-          "AuthZ"
-        ],
-        "Enabled": true
-      },
-      {
-        "ControlID": "AzureDevOps_ServiceConnection_Audit_RequestHistory",
-        "Description": "Request history must be reviewed validate request is coming from legitimate build/release defination",
-        "Id": "ServiceConnection140",
-        "ControlSeverity": "High",
-        "Automated": "No",
-        "MethodName": "",
-        "Rationale": "Periodic reviews of request history logs ensures that sevice connection been used from legitimate build definations and avoid major compromise.",
-        "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Servicie Connections --> Request History --> Validate connection is been used from legitimate build/release definations only",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Manual",
-          "Audit"
-        ],
-        "Enabled": true
-      },
-    {
-      "ControlID": "AzureDevOps_ServiceConnection_Authz_Dont_Use_Classic_Connections",
-      "Description": "Do not use any classic resources on a subscription",
-      "Id": "ServiceConnection150",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckClassConnections",
-      "Recommendation": "Migrate each v1/ASM-based service connections to a corresponding v2/ARM-based connection. Refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/migration-classic-resource-manager-overview",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Manual",
-        "Authz"
-      ],
-      "Enabled": true,
-      "Rationale": "You should use new ARM/v2 resources as the ARM model provides several security enhancements such as: stronger access control (RBAC), better auditing, ARM-based deployment/governance, access to managed identities, access to key vault for secrets, AAD-based authentication, support for tags and resource groups for easier security management, etc."
-    }
+  "FeatureName":  "ServiceConnection",
+  "Reference":  "aka.ms/azsktcp/ServiceConnection",
+  "IsMaintenanceMode":  false,
+"Controls": [
+  {
+    "ControlID": "AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN",
+    "Description": "Azure Active Directory applications, which used in pipeline, must use certificate based authentication",
+    "Id": "ServiceConnection110",
+    "ControlSeverity": "High",
+    "Automated": "Yes",
+    "MethodName": "CheckSPNAuthenticationCertificate",
+    "Rationale": "Password/shared secret credentials can be easily shared and hence can be easily compromised. Certificate credentials offer better security.",
+    "Recommendation": "Remove any password credentials from Azure AD Applications and use certificate credentials instead. Configure certificate details against service connection. Run command Remove-AzureADApplicationPasswordCredential -InformationAction '{ActionPreference}' -InformationVariable '{InformationVariable}' -KeyId '{KeyId}' -ObjectId '{ObjectId}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azuread/remove-azureadapplicationpasswordcredential?view=azureadps-2.0, https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-certificate-credentials#register-your-certificate-with-azure-ad",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Manual",
+      "AuthZ",
+      "RBAC"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_ServiceConnection_AuthZ_RG_Level",
+    "Description": "Service Connection should not be provided access at subscription level",
+    "Id": "ServiceConnection120",
+    "ControlSeverity": "Medium",
+    "Automated": "Yes",
+    "MethodName": "CheckServiceConnectionAccess",
+    "Rationale": "Just like AD-based service accounts, SPNs have a single credential and most scenarios that use them cannot support multi-factor authentication. As a result, adding SPNs to a subscription in 'Owners' or 'Contributors' roles is risky.",
+    "Recommendation": "Make sure you add SPN at the specific permission scope and role required for your scenario. For example, sometimes 'Contributor' access at 'Resource Group' scope might work. Exact permission will vary based on your use case. If you want to remove the SPN, run command Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
+    "Tags": [
+      "SDL",
+      "Manual",
+      "TCP",
+      "AuthZ"       
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Justify_Connection_Admin",
+    "Description": "Justify all identities that are granted with admin/user access for extensions.",
+    "Id": "ServiceConnection130",
+    "ControlSeverity": "High",
+    "Automated": "No",
+    "MethodName": "CheckServiceConnectionAdmins",
+    "Rationale": "Accounts with admin access can install/manage extensions for Organization. Members with this access without a legitimate business reason increase the risk for Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
+    "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Servicie Connections --> Roles --> Verify connection admin and users",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Manual",
+      "AuthZ"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_ServiceConnection_Audit_RequestHistory",
+    "Description": "Request history must be reviewed validate request is coming from legitimate build/release definition",
+    "Id": "ServiceConnection140",
+    "ControlSeverity": "High",
+    "Automated": "No",
+    "MethodName": "",
+    "Rationale": "Periodic reviews of request history logs ensures that sevice connection been used from legitimate build definitions and avoid major compromise.",
+    "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Servicie Connections --> Request History --> Validate connection is been used from legitimate build/release definitions only",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Manual",
+      "Audit"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_ServiceConnection_Authz_Dont_Use_Classic_Connections",
+    "Description": "Do not use any classic resources on a subscription",
+    "Id": "ServiceConnection150",
+    "ControlSeverity": "Medium",
+    "Automated": "Yes",
+    "MethodName": "CheckClassConnections",
+    "Rationale": "You should use new ARM/v2 resources as the ARM model provides several security enhancements such as: stronger access control (RBAC), better auditing, ARM-based deployment/governance, access to managed identities, access to key vault for secrets, AAD-based authentication, support for tags and resource groups for easier security management, etc.",
+    "Recommendation": "Migrate each v1/ASM-based service connections to a corresponding v2/ARM-based connection. Refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/migration-classic-resource-manager-overview",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Manual",
+      "Authz"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions",
+    "Description": "Do not allow inherited permissions on service connections",
+    "Id": "ServiceConnection160",
+    "ControlSeverity": "High",
+    "Automated": "Yes",
+    "MethodName": "CheckRBACInheritPermissions",
+    "Rationale": "Service connections represent credentials of various services/repositories accessed by your project's build/release process. You should exercise fine-grained control over who can access them. Removing inherited access ensures that individuals beyond your control do not get access.",
+    "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> select Roles from the menu -> Inheritance -> OFF.",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Automated",
+      "AuthZ",
+      "RBAC"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_SecurityGroups",
+    "Description": "Do not grant global security groups access to service connections",
+    "Id": "ServiceConnection170",
+    "ControlSeverity": "High",
+    "Automated": "No",
+    "MethodName": "CheckGlobalGroupsAddedToServiceConnections",
+    "Rationale": "Global security groups are maintained at organization and project level and may contain users at a very broad scope (e.g., all users in the organization). Granting elevated permissions to these groups can risk exposure of service connections to unwarranted individuals.",
+    "Recommendation": "Refer detailed log files for the list of non compliant service connections. To remediate this follow steps given here: 1. Navigate to the project settings page 2. Select service connection under pipelines category  3. Select your service connection from the list 4. Select Roles from the menu 5. Check for a global security group - (a) global security group added as a User (b) global security group added as an Administrator 6. Remove all global security groups. 7. Save changes and refresh the page to confirm that your changes have been saved. Note: Global security groups are the groups maintained at organization and project level and may contain users at a very broad scope (e.g., all users in the organization). For more information, refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops#secure-a-service-connection",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Automated",
+      "AuthZ",
+      "RBAC"
+    ],
+    "Enabled": true
+  }
 ]
 }

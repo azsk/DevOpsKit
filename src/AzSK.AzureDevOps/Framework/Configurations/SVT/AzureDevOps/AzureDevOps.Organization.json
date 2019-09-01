@@ -74,7 +74,7 @@
       {
         "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Guest_Identities",
         "Description": "Justify all guest identities that are granted access on Organization. ",
-        "Id": "Organization170",
+        "Id": "Organization150",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckGuestIdentities",
@@ -89,9 +89,9 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_SI_Review_Extensions",
+        "ControlID": "AzureDevOps_Organization_SI_Review_Installed_Extensions",
         "Description": "Extensions must be installed from a trustworthy source",
-        "Id": "Organization150",
+        "Id": "Organization160",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "ValidateInstalledExtensions",
@@ -106,9 +106,26 @@
         "Enabled": true
       },
       {
+        "ControlID": "AzureDevOps_Organization_SI_Review_Shared_Extensions",
+        "Description": "Verify shared extensions are from a trustworthy source",
+        "Id": "Organization170",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "ValidateSharedExtensions",
+        "Rationale": "Running extensions from untrusted source can lead to all type of attacks and loss of sensitive enterprise data.",
+        "Recommendation": "Go to Organization Settings --> Extensions --> Review all shared extnesions in Organization",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
         "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Extension_Managers",
         "Description": "Justify all identities that are granted with manager access for extensions.",
-        "Id": "Organization190",
+        "Id": "Organization180",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckExtensionManagers",
@@ -125,7 +142,7 @@
       {
         "ControlID": "AzureDevOps_Organization_SI_Review_InActive_Users",
         "Description": "Unintended/inactive user access must be revoked",
-        "Id": "Organization160",
+        "Id": "Organization190",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckInActiveUsers",
@@ -142,7 +159,7 @@
       {
         "ControlID": "AzureDevOps_Organization_AuthZ_Min_RBAC_Access",
         "Description": "All teams/groups must be granted minimum required permissions on Organization",
-        "Id": "Organization180",
+        "Id": "Organization200",
         "ControlSeverity": "High",
         "Automated": "No",
         "MethodName": "",
@@ -159,7 +176,7 @@
       {
         "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Group_Members",
         "Description": "Justify all identities that are granted with member access on groups and teams.",
-        "Id": "Organization190",
+        "Id": "Organization210",
         "ControlSeverity": "High",
         "Automated": "No",
         "MethodName": "",
@@ -176,7 +193,7 @@
       {
         "ControlID": "AzureDevOps_Organization_Audit_Configure_Critical_Alerts",
         "Description": "Alerts must be configured for critical actions on Organization",
-        "Id": "Organization111",
+        "Id": "Organization220",
         "ControlSeverity": "Low",
         "Automated": "No",
         "MethodName": "",
@@ -187,6 +204,40 @@
           "TCP",
           "Manual",
           "Audit"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_AuthZ_Dont_Use_SVC_Accounts_No_MFA",
+        "Description": "Service accounts cannot support MFA and should not be used for Org activity",
+        "Id": "Organization220",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Service accounts are typically not multi-factor authentication capable. Quite often, teams who own these accounts don't exercise due care (e.g., someone may login interactively on servers using a service account exposing their credentials to attacks such as pass-the-hash, phishing, etc.) As a result, using service accounts in any privileged role in a AzureDevOps exposes the Organization data to 'credential theft'-related attack vectors. (In effect, the Organization data becomes accessible after just one factor (password) is compromised...this defeats the whole purpose of imposing the MFA requirement for Organizations.)",
+        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/notifications/concepts-events-and-notifications?view=vsts",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "Authz"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_AuthZ_Use_SC-ALT_Accounts",
+        "Description": " Smart Card Alt(SC-ALT) accounts must be used on Secure Admin Workstation(SAW) for privileged roles used for Org activity",
+        "Id": "Organization230",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "<TODO>",
+        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/notifications/concepts-events-and-notifications?view=vsts",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "Authz"
         ],
         "Enabled": true
       }

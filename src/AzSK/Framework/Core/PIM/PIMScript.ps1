@@ -19,7 +19,7 @@ class PIM: AzCommandBase {
     AcquireToken() {
         # Using helper method to get current context and access token   
         $ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-        [ContextHelper]::ResetCurrentRMContext
+        [ContextHelper]::ResetCurrentContext
         $this.AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI);
         $this.headerParams = @{'Authorization' = "Bearer $($this.AccessToken)" }
         $this.AccountId = [ContextHelper]::GetCurrentSessionUser()
@@ -528,7 +528,7 @@ class PIM: AzCommandBase {
             if (($permanentRoles | Measure-Object).Count -gt 0) {
                 $permanentRolesForTransition = $permanentRoles | Where-Object {($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group') -and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
                 $successfullyassignedRoles = @();
-                $currentContext = [ContextHelper]::GetCurrentRmContext();
+                $currentContext = [ContextHelper]::GetCurrentContext();
                 $permanentRolesForTransition = $permanentRolesForTransition | Where-Object { $_.PrincipalName -ne $currentContext.Account.Id }
                 if ($RemoveAssignmentFor -ne "AllExceptMe") {
                     $eligibleAssignments | ForEach-Object {

@@ -8,7 +8,10 @@
 using namespace System.Management.Automation
 Set-StrictMode -Version Latest
 class AzSVTCommandBase: SVTCommandBase {
-    
+
+    hidden [ControlStateExtension] $ControlStateExt;
+    hidden [ComplianceBase] $ComplianceBase = $null;
+    hidden [ComplianceReportHelper] $ComplianceReportHelper = $null;
     #Region Constructor
     AzSVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
@@ -190,5 +193,12 @@ class AzSVTCommandBase: SVTCommandBase {
 				throw [SuppressedException] ("Multiple controlIds specified. `nBulk attestation mode supports only one controlId at a time.`n")
 			}	
         }
+    }
+
+    hidden [void] SetSVTBasePropertiesExt($svtObject)
+    {
+        # ToDo: Utilize exiting functions
+        $svtObject.ControlStateExt = $this.ControlStateExt;
+        $svtObject.ComplianceStateData = $this.FetchComplianceStateData($resourceId);
     }
 }

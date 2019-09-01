@@ -274,7 +274,7 @@ class AIOrgTelemetry: ListenerBase {
 				# No need to break execution
 			}
             try {
-                $azureContext = [ContextHelper]::GetCurrentRMContext()
+                $azureContext = [ContextHelper]::GetCurrentContext()
                 try {
                     $telemetryEvent.properties.Add([TelemetryKeys]::SubscriptionId, $azureContext.Subscription.Id)
                 }

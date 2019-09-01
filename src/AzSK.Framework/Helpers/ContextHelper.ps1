@@ -1,11 +1,11 @@
 class ContextHelper : EventBase
 {
-    static hidden [PSObject] $currentRMContext;
+    static hidden [PSObject] $currentContext;
     
 
-    hidden static [PSObject] GetCurrentRMContext()
+    hidden static [PSObject] GetCurrentContext()
 	{
-		if (-not [ContextHelper]::currentRMContext)
+		if (-not [ContextHelper]::currentContext)
 		{
 			$rmContext = Get-AzContext -ErrorAction Stop
 
@@ -35,21 +35,21 @@ class ContextHelper : EventBase
                     $rmContext = $rmLogin.Context;	
 				}
             }
-            [ContextHelper]::currentRMContext = $rmContext
+            [ContextHelper]::currentContext = $rmContext
 		}
 
-		return [ContextHelper]::currentRMContext
+		return [ContextHelper]::currentContext
 	}
 
-	hidden static [void] ResetCurrentRMContext()
+	hidden static [void] ResetCurrentContext()
 	{
-		[ContextHelper]::currentRMContext = $null
+		[ContextHelper]::currentContext = $null
     }
     
     
     static [string] GetAccessToken([string] $resourceAppIdUri, [string] $tenantId) 
     {
-        $rmContext = [ContextHelper]::GetCurrentRMContext()
+        $rmContext = [ContextHelper]::GetCurrentContext()
         if (-not $rmContext) {
         throw ([SuppressedException]::new(("No Azure login found"), [SuppressedExceptionType]::InvalidOperation))
         }
@@ -78,7 +78,7 @@ class ContextHelper : EventBase
     }
 
     static [string] GetCurrentSessionUser() {
-        $context = [ContextHelper]::GetCurrentRMContext()
+        $context = [ContextHelper]::GetCurrentContext()
         if ($null -ne $context) {
             return $context.Account.Id
         }
@@ -106,7 +106,7 @@ class ContextHelper : EventBase
 			throw [SuppressedException] ("Subscription Id [$subscriptionId] is malformed. Subscription Id should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).")
 		}
 
-		$currentContext = [ContextHelper]::GetCurrentRMContext()
+		$currentContext = [ContextHelper]::GetCurrentContext()
 
         if((-not $currentContext) -or ($currentContext -and ((-not $currentContext.Subscription -and ($SubscriptionContext.SubscriptionId -ne [Constants]::BlankSubscriptionId)) `
 				-or -not $currentContext.Account)))
@@ -146,8 +146,8 @@ class ContextHelper : EventBase
 				{
 					throw [SuppressedException] ("Invalid Subscription Id [" + $SubscriptionContext.SubscriptionId + "]") 
 				}
-				[ContextHelper]::ResetCurrentRMContext()
-				[ContextHelper]::GetCurrentRMContext()
+				[ContextHelper]::ResetCurrentContext()
+				[ContextHelper]::GetCurrentContext()
 			}
 			elseif(($currentContext.Subscription.Id -ne $SubscriptionContext.SubscriptionId) -and ($SubscriptionContext.SubscriptionId -eq [Constants]::BlankSubscriptionId))
 			{

@@ -30,7 +30,7 @@ class SubscriptionCore: AzSVTBase
 	hidden [void] GetResourceObject()
 	{
 		$this.ASCSettings = [AzureSecurityCenter]::new()
-		$this.CurrentContext = [ContextHelper]::GetCurrentRMContext();
+		$this.CurrentContext = [ContextHelper]::GetCurrentContext();
 		$this.MandatoryAccounts = $null
 		$this.RoleAssignments = $null
 		$this.ApprovedAdmins = $null

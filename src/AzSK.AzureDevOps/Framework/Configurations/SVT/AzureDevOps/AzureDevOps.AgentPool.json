@@ -1,0 +1,77 @@
+{
+    "FeatureName":  "AgentPool",
+    "Reference":  "aka.ms/azsktcp/AgentPool",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+      "ControlID": "AzureDevOps_AgentPool_AuthZ_Grant_Min_RBAC_Access",
+      "Description": "All teams/groups must be granted minimum required permissions on agent pool",
+      "Id": "AgentPool110",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckRBACAccess",
+      "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/policies/permissions?view=vsts",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_AgentPool_SI_Missing_OS_Patch",
+      "Description": "Non-hosted agent virtual machine must have all the required OS patches installed.",
+      "Id": "AgentPool120",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "Un-patched VMs are easy targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in operating systems and related software.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-apply-system-update",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "SI"
+      ],
+      "Enabled": true
+    },
+    {
+        "ControlID": "AzureDevOps_AgentPool_SI_Lockdown_Machine",
+        "Description": "Use a security hardened, locked down OS image for agent pool",
+        "Id": "AgentPool130",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "The connector machine is serving as a 'gateway' into the corporate environment allowing internet based client endpoints access to enterprise data. Using a locked-down, secure baseline configuration ensures that this machine does not get leveraged as an entry point to attack the applications/corporate network.",
+        "Recommendation": "Use a locked down OS configuration. Ensure that the system is always fully patched, has real-time malware protection enabled, OS firewall and disk encryption turned on, etc. Also, monitor this VM just like you'd monitor a high-value asset.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+    },
+    {
+        "ControlID": "AzureDevOps_AgentPool_AuthZ_Disable_InheritPermissions",
+        "Description": "Do not allow inherited permission on agent pool",
+        "Id": "AgentPool140",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckInheritPermissions",
+        "Rationale": "Disabling inherit permissions lets you finely control access to various operations at the agent level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
+        "Recommendation": "To disable inheritance follow the steps given here: 1.Navigate to the agent pool. 2. Open roles. 3. Add the service lead & service owner as Users with Allow permissions for each permission line item. 4. Select “Off” under Inheritance. 5. Add users/groups to agent and provide only required access. As best practice, All teams/groups must be granted minimum required permissions on agent pool.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthZ",
+          "RBAC"
+        ],
+        "Enabled": true
+      }
+  ]
+  }

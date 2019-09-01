@@ -7,7 +7,7 @@
 #>
 using namespace System.Management.Automation
 Set-StrictMode -Version Latest
-class SVTCommandBase: AzCommandBase {
+class SVTCommandBase: CommandBase {
 
     #Region: Properties 
     [string[]] $ExcludeTags = @();
@@ -21,13 +21,11 @@ class SVTCommandBase: AzCommandBase {
     [bool] $UsePreviewBaselineControls;
     [PSObject] $CentralStorageAccount;
 	[string] $PartialScanIdentifier = [string]::Empty;
-    hidden [ControlStateExtension] $ControlStateExt;
     hidden [bool] $UserHasStateAccess = $false;
     [bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
     [AttestationOptions] $AttestationOptions;
-    hidden [ComplianceReportHelper] $ComplianceReportHelper = $null;
-    hidden [ComplianceBase] $ComplianceBase = $null;
+    
     hidden [string] $AttestationUniqueRunId;
     #EndRegion
 
@@ -117,7 +115,6 @@ class SVTCommandBase: AzCommandBase {
         $svtObject.InvocationContext = $this.InvocationContext;
         # ToDo: Assumption: usercomment will only work when storage report feature flag is enable
         $resourceId = $svtObject.ResourceId; 
-		$svtObject.ComplianceStateData = $this.FetchComplianceStateData($resourceId);
 
         #Include Server Side Exclude Tags
         $svtObject.ExcludeTags += [ConfigurationManager]::GetAzSKConfigData().DefaultControlExculdeTags
@@ -130,8 +127,8 @@ class SVTCommandBase: AzCommandBase {
 		{
 			$svtObject.PartialScanIdentifier =$this.PartialScanIdentifier
 		}
-		
-        # ToDo: Utilize exiting functions
-        $svtObject.ControlStateExt = $this.ControlStateExt;
+        
+        $this.InvokeExtensionMethod($svtObject)
+        
     }
 }

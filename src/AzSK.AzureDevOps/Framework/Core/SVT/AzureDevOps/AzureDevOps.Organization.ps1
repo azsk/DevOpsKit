@@ -25,13 +25,13 @@ class Organization: SVTBase
     {
 
         $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-        $inputbody =  '{"contributionIds":["ms.vss-tfs-web.enterprise-navigation-data-provider"],"dataProviderContext":{"properties":{}}}' | ConvertFrom-Json
+        $inputbody =  '{"contributionIds":["ms.vss-admin-web.organization-admin-aad-component","ms.vss-admin-web.organization-admin-aad-data-provider"],"dataProviderContext":{"properties":{}}}' | ConvertFrom-Json
         $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
 
-        if([Helpers]::CheckMember($responseObj,"dataProviders") -and $responseObj.dataProviders.'ms.vss-tfs-web.enterprise-navigation-data-provider' -and $responseObj.dataProviders.'ms.vss-tfs-web.enterprise-navigation-data-provider'.name)
+        if([Helpers]::CheckMember($responseObj,"dataProviders") -and $responseObj.dataProviders.'ms.vss-admin-web.organization-admin-aad-data-provider' -and [Helpers]::CheckMember($responseObj.dataProviders.'ms.vss-admin-web.organization-admin-aad-data-provider'.orgnizationTenantData,"displayName"))
         {
             $controlResult.AddMessage([VerificationResult]::Passed,
-                                                "AAD is configured ($($responseObj.dataProviders.'ms.vss-tfs-web.enterprise-navigation-data-provider'.name)) on Org");
+                                                "Organization is configured with ($($responseObj.dataProviders.'ms.vss-admin-web.organization-admin-aad-data-provider'.orgnizationTenantData.displayName)) directory");
         }
         else {
             $controlResult.AddMessage([VerificationResult]::Failed,
@@ -114,13 +114,41 @@ class Organization: SVTBase
         if(($responseObj | Measure-Object).Count -gt 0 )
         {
                 $controlResult.AddMessage("No. of extensions installed:" + $responseObj.Count)
-                $extensionList =  $responseObj | Select-Object extensionName,publisherId,publisherName,version 
+                $extensionList =  $responseObj | Select-Object extensionName,publisherName,version 
                 $controlResult.AddMessage([VerificationResult]::Verify,
                                                 "Verify below installed extensions",$extensionList);          
         }
         else {
             $controlResult.AddMessage([VerificationResult]::Passed,
                                                 "No extensions found");
+        }
+        return $controlResult
+    }
+
+    hidden [ControlResult] ValidateSharedExtensions([ControlResult] $controlResult)
+    {
+        $apiURL = "https://{0}.extmgmt.visualstudio.com/_apis/Contribution/dataProviders/query?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+        $inputbody =  '{
+                "contributionIds": [
+                "ms.vss-extmgmt-web.ems-service-context",
+                "ms.vss-extmgmt-web.manageExtensions-collection-data-provider",
+                "ms.vss-extmgmt-web.manageExtensions-collection-scopes-data-provider"
+            ]
+        }' | ConvertFrom-Json
+        $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+
+        if([Helpers]::CheckMember($responseObj,"data") -and $responseObj.data.'ms.vss-extmgmt-web.manageExtensions-collection-data-provider')
+        {
+            $sharedExtensions = $responseObj.data.'ms.vss-extmgmt-web.manageExtensions-collection-data-provider'.sharedExtensions
+
+            if(($sharedExtensions | Measure-Object).Count -gt 0)
+            {
+                $controlResult.AddMessage("No. of shared installed:" + $sharedExtensions.Count)
+                $extensionList =  $sharedExtensions | Select-Object extensionName,displayName,@{ Name = 'publisherName'; Expression = {  $_. publisher.displayName}} 
+                $controlResult.AddMessage([VerificationResult]::Verify,
+                                                "Review below shared extensions",$extensionList);  
+
+            }
         }
         return $controlResult
     }
@@ -134,7 +162,7 @@ class Organization: SVTBase
             if(($responseObj.members | Measure-Object).Count -gt 0)
             {
                 $controlResult.AddMessage("No. of guest identities present:" + $responseObj.members.Count)
-                $extensionList =  $responseObj.members | Select-Object @{Name="IdenityType"; Expression = {$_.user.subjectKind}},@{Name="DisplayName"; Expression = {$_.user.displayName}}, @{Name="MailAddress"; Expression = {$_.user.mailAddress}},@{Name="AccessLevel"; Expression = {$_.accessLevel.licenseDisplayName}},@{Name="LastAccessedDate"; Expression = {$_.lastAccessedDate}} 
+                $extensionList =  $responseObj.members | Select-Object @{Name="IdenityType"; Expression = {$_.user.subjectKind}},@{Name="DisplayName"; Expression = {$_.user.displayName}}, @{Name="MailAddress"; Expression = {$_.user.mailAddress}},@{Name="AccessLevel"; Expression = {$_.accessLevel.licenseDisplayName}},@{Name="LastAccessedDate"; Expression = {$_.lastAccessedDate}} | Format-Table
                 $controlResult.AddMessage([VerificationResult]::Verify,
                                                 "Verify below guest identities",$extensionList);          
             }

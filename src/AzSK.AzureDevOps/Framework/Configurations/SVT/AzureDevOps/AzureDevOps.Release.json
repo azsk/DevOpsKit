@@ -1,59 +1,130 @@
 {
-    "FeatureName":  "Release",
-    "Reference":  "aka.ms/azsktcp/Release",
-    "IsMaintenanceMode":  false,
-  "Controls": [
-    {
-      "ControlID": "AzureDevOps_Release_AuthZ_Min_RBAC_Access",
-      "Description": "All teams/groups must be granted minimum required permissions on release defination",
-      "Id": "Release110",
-      "ControlSeverity": "High",
-      "Automated": "No",
-      "MethodName": "",
-      "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/policies/permissions?view=vsts",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Manual",
-        "AuthZ",
-        "RBAC"
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "AzureDevOps_Release_DP_No_PlainText_Secrets_In_Defination",
-      "Description": "Secrets and keys must not be stored as plain text in release variables/task parameters",
-      "Id": "Release120",
-      "ControlSeverity": "High",
-      "Automated": "Yes",
-      "MethodName": "CheckCredInVariables",
-      "Rationale": "Keeping secrets such as connection strings, passwords, keys, etc. in clear text can lead to easy compromise. Making them secret type variables ensures that they are protected at rest.",
-      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=vsts&tabs=yaml%2Cbatch#secret-variables",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "DP"       
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "AzureDevOps_Release_SI_Review_InActive_Release",
-      "Description": " Inactive release must be removed",
-      "Id": "Release130",
-      "ControlSeverity": "Low",
-      "Automated": "Yes",
-      "MethodName": "CheckInActiveRelease",
-      "Rationale": "Each additional release having access at repositories increases the attack surface. To minimize this risk ensure that only activite and legitimate release resources present in Organization",
-      "Recommendation": "https://docs.microsoft.com/en-us/rest/api/azure/devops/release/definitions/delete?view=azure-devops-rest-5.0",
-      "Tags": [
-        "SDL",
-        "Best Practice",
-        "Manual",
-        "SI"
-      ],
-      "Enabled": true
-    }
-    ]
+  "FeatureName":  "Release",
+  "Reference":  "aka.ms/azsktcp/Release",
+  "IsMaintenanceMode":  false,
+"Controls": [
+  {
+    "ControlID": "AzureDevOps_Release_AuthZ_Grant_Min_RBAC_Access",
+    "Description": "All teams/groups must be granted minimum required permissions on release definition",
+    "Id": "Release110",
+    "ControlSeverity": "High",
+    "Automated": "Yes",
+    "MethodName": "CheckRBACAccess",
+    "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+    "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/policies/permissions?view=vsts and https://microsoftit.visualstudio.com/OneITVSO/_wiki/wikis/OneITVSO.wiki?wikiVersion=GBwikiMaster&pagePath=%2FEngineering%20Guide%2FOneITVSO%2FDevelopment%2FRelease%2FHow%20To%20Secure%20Your%20Release%20Definition&pageId=2419&anchor=desired-state",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Manual",
+      "AuthZ",
+      "RBAC"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_Release_DP_No_PlainText_Secrets_In_Definition",
+    "Description": "Secrets and keys must not be stored as plain text in release variables/task parameters",
+    "Id": "Release120",
+    "ControlSeverity": "High",
+    "Automated": "Yes",
+    "MethodName": "CheckCredInVariables",
+    "Rationale": "Keeping secrets such as connection strings, passwords, keys, etc. in clear text can lead to easy compromise. Making them secret type variables ensures that they are protected at rest.",
+    "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=vsts&tabs=yaml%2Cbatch#secret-variables",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Automated",
+      "DP"       
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_Release_SI_Review_InActive_Release",
+    "Description": "Inactive release must be removed",
+    "Id": "Release130",
+    "ControlSeverity": "Low",
+    "Automated": "Yes",
+    "MethodName": "CheckInActiveRelease",
+    "Rationale": "Each additional release having access at repositories increases the attack surface. To minimize this risk ensure that only activite and legitimate release resources present in Organization",
+    "Recommendation": "https://docs.microsoft.com/en-us/rest/api/azure/devops/release/definitions/delete?view=azure-devops-rest-5.0",
+    "Tags": [
+      "SDL",
+      "Best Practice",
+      "Manual",
+      "SI"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_Release_AuthZ_Disable_InheritPermissions",
+    "Description": "Do not allow inherited permission on release definitions",
+    "Id": "Release140",
+    "ControlSeverity": "High",
+    "Automated": "Yes",
+    "MethodName": "CheckInheritPermissions",
+    "Rationale": "Disabling inherit permissions lets you finely control access to various operations at the release level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
+    "Recommendation": "To disable permission inheritance within a release pipeline follow these steps: 1.Navigate to the release pipeline. 2. Open up the Security dialog for the release. 3. Add the service lead & service owner as Users with Allow permissions for each permission line item. 4. Select “Off” under Inheritance. 5. Add users/groups to your release definition and provide only required access. As best practice, All teams/groups must be granted minimum required permissions on release definition.",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Automated",
+      "AuthZ",
+      "RBAC"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_Release_AuthN_Enable_PreDeployment_Approval_Requests",
+    "Description": "Releases pipeline for production deployments must require pre-deployment approval",
+    "Id": "Release150",
+    "ControlSeverity": "High",
+    "Automated": "Yes",
+    "MethodName": "CheckPreDeploymentApproval",
+    "Rationale": "Pre-deployment approvals give you an additional layer of defense against inadvertent (or possibly malicious) changes to your production environment.",
+    "Recommendation": "To enable pre-deployment approval within a release pipeline follow the steps mentioned here: https://docs.microsoft.com/en-us/azure/devops/pipelines/release/define-multistage-release-process?view=azure-devops#add-approvals-within-a-release-pipeline.",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Best Practice",
+      "Automated",
+      "AuthN"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_Release_AuthZ_Review_PreDeployment_Approvers",
+    "Description": "Only legitimate users should be added as approvers within a release pipeline",
+    "Id": "Release160",
+    "ControlSeverity": "Medium",
+    "Automated": "Yes",
+    "MethodName": "CheckPreDeploymentApprovers",
+    "Rationale": "Periodic review of approvers list for production releases ensures that only appropriate people are members of such a critical role. As team composition/membership changes, this privilege may need to be revoked from members who have moved on.",
+    "Recommendation": "Refer detailed log file to review the list of approvers.",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Automated",
+      "AuthZ",
+      "RBAC"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_Release_SI_Use_Good_Branch_Hygiene",
+    "Description": "All releases to Production or pre-Production stages must be done from one and only one (main) branch.",
+    "Id": "Release170",
+    "ControlSeverity": "Medium",
+    "Automated": "No",
+    "MethodName": "",
+    "Rationale": "You should ensure that production releases are always done from one and only one (main) branch. The main branch should have the tightest access controls and approval standards.`n Any changes in the source code should be tested first on a development branch before merging in the main branch. The source code in the main branch should correspond to production bits at all times. This helps in maintaining stable source code and helps prevent deployment of breaking changes (and potential security bugs) into the production environment.",
+    "Recommendation": "You can choose a specific branch as the main branch for production releases (most teams use 'master'). When adding the source/artifact for a release configuration for a production release (as in steps at https://docs.microsoft.com/en-us/azure/devops/pipelines/release/artifacts?view=azure-devops#sources, make sure you use the designated branch as the source.",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Manual",
+      "SI"
+    ],
+    "Enabled": true
+  }
+  ]
 }

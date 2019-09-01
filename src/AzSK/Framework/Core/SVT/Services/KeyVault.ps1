@@ -31,7 +31,7 @@ class KeyVault: AzSVTBase
 	hidden [void] CheckCurrentContextPermissionsOnVaultObjects()
 	{
 
-		$currentContext=[ContextHelper]::GetCurrentRMContext();
+		$currentContext=[ContextHelper]::GetCurrentContext();
 		$CurrentContextId=$currentContext.Account.Id;
 		$CurrentContextObjectId=$null
 		try{

@@ -84,7 +84,7 @@ class CommandBase: AzSKRoot {
     }
 
     # Dummy function declaration to define the function signature
-    [void] PostCommandCompletedAction([MessageData[]] $messages)
+    [void] PostCommandCompletedAction([SVTEventContext[]] $arguments)
 	{ }
 	#EndRegion
 
@@ -100,7 +100,7 @@ class CommandBase: AzSKRoot {
         }
 
 		# Reset cached context <TODO Framework: Fix Dependancy on RM module>
-		[ContextHelper]::ResetCurrentRMContext()
+		[ContextHelper]::ResetCurrentContext()
 
 		# Publish runidentifier(YYYYMMDD_HHMMSS) used by all listener as identifier for scan,creating log folder 
 		$this.PublishRunIdentifier($this.InvocationContext);

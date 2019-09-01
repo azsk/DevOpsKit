@@ -5,7 +5,7 @@ class AzSKPDFExtension
 	static [void] GeneratePDF([string] $reportFolderPath, [PSObject] $subscriptionObject, [PSObject] $dataObject, [bool] $isLandscape)
 	{
 		# Get Context Info
-		$executedBy = ([ContextHelper]::GetCurrentRMContext()).Account
+		$executedBy = ([ContextHelper]::GetCurrentContext()).Account
 
 		# Verify whether word is installed on machine
 

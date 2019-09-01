@@ -12,6 +12,7 @@ class AzListenerHelper : ListenerHelper
         [ListenerHelper]:: RegisterListeners();
         [WriteCAStatus]::GetInstance().RegisterEvents();
         [AzResourceInventoryListener]::GetInstance().RegisterEvents();
+        [SecurityRecommendationReport]::GetInstance().RegisterEvents();
 
     }
 
@@ -20,5 +21,6 @@ class AzListenerHelper : ListenerHelper
         [ListenerHelper]:: UnRegisterListeners();
         [WriteCAStatus]::GetInstance().UnRegisterEvents();
         [AzResourceInventoryListener]::GetInstance().UnRegisterEvents();
+        [SecurityRecommendationReport]::GetInstance().UnregisterEvents();
     }	
 }

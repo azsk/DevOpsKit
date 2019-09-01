@@ -31,7 +31,7 @@ class ConfigurationHelper {
 		}
         #If file not present in App folder load settings from Configurations in Module folder 
         if (!$filePath) {
-            $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName "AzSK" | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
+            $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName $([Constants]::AzSKModuleName) | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
 			
 			$filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
         }
@@ -291,7 +291,7 @@ class ConfigurationHelper {
 		{
 			if($enableAADAuthForOnlinePolicyStore)
 			{		
-			$rmContext = [ContextHelper]::GetCurrentRMContext();
+			$rmContext = [ContextHelper]::GetCurrentContext();
 			if(-not [string]::IsNullOrWhiteSpace($rmContext.Environment.Name) -and $rmContext.Environment.Name -ne [Constants]::DefaultAzureEnvironment)
 		     {
 				   $ResourceAppIdURI = $rmContext.Environment.ServiceManagementUrl

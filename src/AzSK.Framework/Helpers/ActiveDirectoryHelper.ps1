@@ -3,7 +3,7 @@ class ActiveDirectoryHelper {
 
 		static [PSObject] GetADAppServicePrincipalByAppId($ApplicationId)
 		{
-			$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
+			$TenantId = ([ContextHelper]::GetCurrentContext()).Tenant.Id
 			$ApiVersion = "1.6"
 			$GraphApiUrl = [WebRequestHelper]::GraphApiUri + $TenantId + "/servicePrincipals/{0}?api-version=$ApiVersion"
 			$uri = [string]::Format($GraphApiUrl + "&`$filter=(appId eq '{1}')", [string]::Empty , $ApplicationId);
@@ -34,7 +34,7 @@ class ActiveDirectoryHelper {
 		)
 		{
 			#Initialization
-			$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
+			$TenantId = ([ContextHelper]::GetCurrentContext()).Tenant.Id
 			$ApiVersion = "1.6"
 			$GraphApiUrl = [WebRequestHelper]::GraphApiUri + $TenantId + "/servicePrincipals/{0}?api-version=$ApiVersion"
 			$addMode = $False;
@@ -125,7 +125,7 @@ class ActiveDirectoryHelper {
 
 		static [PSObject] GetADAppByAppId($ApplicationId)
 		{
-			$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
+			$TenantId = ([ContextHelper]::GetCurrentContext()).Tenant.Id
 			$ApiVersion = "1.6"
 			$GraphApiUrl = [WebRequestHelper]::GraphApiUri + $TenantId + "/applications/{0}?api-version=$ApiVersion"
 			$uri = [string]::Format($GraphApiUrl + "&`$filter=(appId eq '{1}')", [string]::Empty , $ApplicationId);
@@ -156,7 +156,7 @@ class ActiveDirectoryHelper {
 		)
 		{
 			#Initialization
-			$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
+			$TenantId = ([ContextHelper]::GetCurrentContext()).Tenant.Id
 			$ApiVersion = "1.6"
 			$GraphApiUrl = [WebRequestHelper]::GraphApiUri + $TenantId + "/applications/{0}?api-version=$ApiVersion"
 			$startDateString = $NotBefore.ToString("O");

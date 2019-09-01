@@ -232,7 +232,7 @@
   "AppService": {
     "Backup_RetentionPeriod_Min": 365,
     "Backup_RetentionPeriod_Forever": 0,
-    "LatestDotNetFrameworkVersionNumber": "v4.7",
+    "LatestDotNetFrameworkVersionNumber": "v4.0",
     "Minimum_Instance_Count": 2,
     "AADAuthAPIVersion": "2016-08-01",
     "LoadCertAppSettings": "WEBSITE_LOAD_CERTIFICATES"
@@ -331,12 +331,41 @@
     "Low": "Low"
   },
   "Build":{
-    "BuildHistoryPeriodInDays": 180
+    "BuildHistoryPeriodInDays": 180,
+    "WhitelistedUserIdentities":[
+      {
+        "Domain" : "Build",
+        "DisplayName" : [
+          "OneITVSO Build Service (MicrosoftIT)",
+          "Project Collection Build Service (MicrosoftIT)"
+        ]
+      }
+    ]
   },
   "Release":{
-    "ReleaseHistoryPeriodInDays": 180
+    "ReleaseHistoryPeriodInDays": 180,
+    "WhitelistedUserIdentities":[
+      {
+        "Domain" : "Build",
+        "DisplayName" : [
+          "OneITVSO Build Service (MicrosoftIT)",
+          "Project Collection Build Service (MicrosoftIT)"
+        ]
+      }
+    ],
+    "RequirePreDeployApprovals": [
+      "Production",
+      "Pre-Production",
+      "Prod",
+      "Pre-Prod"
+    ]
   },
   "Organization":{
     "InActiveUserActivityLogsPeriodInDays": 365
+  },
+  "ServiceConnection":{
+    "WhitelistedGroupIdentities": [
+      "Endpoint Administrators"
+    ]
   }
 }

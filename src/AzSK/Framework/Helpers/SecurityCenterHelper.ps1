@@ -45,7 +45,7 @@ class SecurityCenterHelper
 		
 		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
 		#[SecurityCenterHelper]::RegisterResourceProvider();
-	    $rmContext = [ContextHelper]::GetCurrentRMContext();
+	    $rmContext = [ContextHelper]::GetCurrentContext();
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 		$uri = $ResourceAppIdURI + "subscriptions/$subscriptionId/providers/$([SecurityCenterHelper]::ProviderNamespace)/$($apiType)$($apiVersion)";
         return [WebRequestHelper]::InvokeGetWebRequest($uri);
@@ -60,7 +60,7 @@ class SecurityCenterHelper
 
 		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
 		#[SecurityCenterHelper]::RegisterResourceProvider();
-        $rmContext = [ContextHelper]::GetCurrentRMContext();
+        $rmContext = [ContextHelper]::GetCurrentContext();
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 		$uri = $ResourceAppIdURI.TrimEnd("/") + $resourceId + $apiVersion;
 		return [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
@@ -72,7 +72,7 @@ class SecurityCenterHelper
 		{ 	
 			if((-not [string]::IsNullOrEmpty($subscriptionId)) -and (-not [String]::IsNullOrEmpty($resourceId))) 
 			{
-				$rmContext = [ContextHelper]::GetCurrentRMContext();
+				$rmContext = [ContextHelper]::GetCurrentContext();
 		        $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
 				$uri = [System.String]::Format("{0}subscriptions/{1}/providers/microsoft.Security/securityStatuses?api-version=2015-06-01-preview&`$filter=tolower(Id)%20eq%20tolower('{2}/providers/Microsoft.Security/securityStatuses/{3}')", $ResourceAppIdURI, $subscriptionId, $resourceId, $resourceId.Split("/")[-1])
 				$result = [WebRequestHelper]::InvokeGetWebRequest($uri);					

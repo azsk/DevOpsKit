@@ -21,7 +21,7 @@ class EnvironmentInfo: CommandBase
 		$this.PublishCustomMessage([Helpers]::ConvertObjectToString($loadedModules, $true), [MessageType]::Default);
 		$this.PublishCustomMessage("`r`n" +[Constants]::DoubleDashLine, [MessageType]::Default);
 		$this.PublishCustomMessage("`n`n");
-		$rmContext = [ContextHelper]::GetCurrentRMContext();
+		$rmContext = [ContextHelper]::GetCurrentContext();
 		$this.PublishCustomMessage("Logged-in user context", [MessageType]::Default);
 		$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
 		$this.PublishCustomMessage([Helpers]::ConvertObjectToString(($rmContext.Account | Select-Object -Property Id, Type), $true), [MessageType]::Default);

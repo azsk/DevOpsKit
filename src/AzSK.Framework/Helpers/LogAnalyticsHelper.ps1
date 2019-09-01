@@ -143,7 +143,7 @@ Class LogAnalyticsHelper{
 			$out.IsLatestPSModule = $ControlResult.CurrentSessionContext.IsLatestPSModule
 			$out.PolicyOrgName = $AzSKContext.PolicyOrgName
 			$out.IsControlInGrace = $ControlResult.IsControlInGrace
-			$out.ScannedBy=[ContextHelper]::GetCurrentRMContext().Account
+			$out.ScannedBy=[ContextHelper]::GetCurrentContext().Account
 			#mapping the attestation properties
 			if($null -ne $ControlResult -and $null -ne $ControlResult.StateManagement -and $null -ne $ControlResult.StateManagement.AttestedStateData)
 			{

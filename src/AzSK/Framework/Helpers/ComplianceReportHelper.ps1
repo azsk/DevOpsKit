@@ -236,7 +236,7 @@ class ComplianceReportHelper: ComplianceBase
 			}
 			
 			$scanResult.IsControlInGrace=$currentSVTResult.IsControlInGrace
-			$scanResult.ScannedBy = [ContextHelper]::GetCurrentRMContext().Account
+			$scanResult.ScannedBy = [ContextHelper]::GetCurrentContext().Account
 			$scanResult.ScanSource = $this.ScanSource
 			$scanResult.ScannerVersion = $this.ScannerVersion
 			#TODO check in the case sub control					
@@ -369,11 +369,86 @@ class ComplianceReportHelper: ComplianceBase
 			$group = $_;
 			$results = $_.Group;
 			#MERGE batch req sample
-			[WebRequestHelper]::InvokeTableStorageBatchWebRequest($storageInstance.ResourceGroupName,$storageInstance.StorageAccountName,$this.ComplianceTableName,$results,$true, $storageInstance.AccessKey)
+			[ComplianceReportHelper]::InvokeTableStorageBatchWebRequest($storageInstance.ResourceGroupName,$storageInstance.StorageAccountName,$this.ComplianceTableName,$results,$true, $storageInstance.AccessKey)
 			#POST batch req sample
 			#[WebRequestHelper]::InvokeTableStorageBatchWebRequest($storageInstance.ResourceGroupName,$storageInstance.StorageAccountName,$this.ComplianceTableName,$results,$false)
 		}		
-    }
+	}
+	
+
+	static [System.Object[]] InvokeTableStorageBatchWebRequest([string] $RGName, [string] $StorageAccountName, [string] $TableName,[PSObject[]]$Data,[bool]$IsMergeOperation, [string] $AccessKey) 
+	{		
+		$uri="https://$StorageAccountName.table.core.windows.net/`$batch"
+		$boundary = "batch_$([guid]::NewGuid())"
+		$Verb = "POST"
+		$ContentMD5 = ""
+		$ContentType = "multipart/mixed; boundary=$boundary"
+		$Date = [DateTime]::UtcNow.ToString('r')
+		$CanonicalizedResource = "/$StorageAccountName/`$batch"
+		$SigningParts=@($Verb,$ContentMD5,$ContentType,$Date,$CanonicalizedResource)
+		$StringToSign = [String]::Join("`n",$SigningParts)
+		$sharedKey = [StorageHelper]::CreateStorageAccountSharedKey($StringToSign,$StorageAccountName,$AccessKey)
+
+		$xmsdate = $Date
+		$changeset = "changeset_$([guid]::NewGuid().ToString())"
+		$contentBody = ""
+        $miniDataTemplateForPost = @'
+--{0}
+Content-Type: application/http
+Content-Transfer-Encoding: binary
+
+POST https://{1}.table.core.windows.net/{2}() HTTP/1.1
+Accept: application/json;odata=minimalmetadata
+Content-Type: application/json
+Prefer: return-no-content
+DataServiceVersion: 3.0
+
+{3}
+        
+'@
+		$miniDataTemplateForMerge = @'
+--{0}
+Content-Type: application/http
+Content-Transfer-Encoding: binary
+
+MERGE https://{1}.table.core.windows.net/{2}(PartitionKey='{3}', RowKey='{4}') HTTP/1.1
+Accept: application/json;odata=minimalmetadata
+Content-Type: application/json
+Prefer: return-no-content
+DataServiceVersion: 3.0
+
+{5}
+        
+'@
+        $template = @'
+--{0}
+Content-Type: multipart/mixed; boundary={1}
+
+{2}
+--{1}--
+--{0}--
+'@
+		if($IsMergeOperation)
+		{
+			$data | ForEach-Object{
+				$row =  $_;
+				$contentBody = $contentBody + ($miniDataTemplateForMerge -f $changeset, $StorageAccountName, $TableName, $row.PartitionKey, $row.RowKey, ($row | ConvertTo-Json -Depth 10))
+			}
+		}
+		else
+		{
+			$data | ForEach-Object{
+				$row =  $_;
+				$contentBody = $contentBody + ($miniDataTemplateForPost -f $changeset, $StorageAccountName, $TableName, ($row | ConvertTo-Json -Depth 10))
+			}
+		}
+	
+        $requestBody = $template -f $Boundary, $changeset, $contentBody
+		$headers = @{"x-ms-date"=$xmsdate;"Authorization"="SharedKey $sharedKey";"x-ms-version"="2018-03-28"}
+
+		return ([WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Post, [string] $uri, [Hashtable] $headers, [System.Object] $requestBody, [string] $contentType))
+	}
+
 	hidden [void] StoreComplianceDataInUserSubscription([SVTEventContext[]] $currentScanResult)
 	{
 		$finalScanReport = $this.MergeSVTScanResult($currentScanResult)

@@ -11,8 +11,6 @@ class SVTBase: AzSKRoot
     [ResourceContext] $ResourceContext = $null;
     hidden [SVTConfig] $SVTConfig
     hidden [PSObject] $ControlSettings
-
-	hidden [ControlStateExtension] $ControlStateExt;
 	
 	hidden [ControlState[]] $ResourceState;
 	hidden [ControlState[]] $DirtyResourceStates;
@@ -42,7 +40,7 @@ class SVTBase: AzSKRoot
 
 	}
 	SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
-	Base($subscriptionId, [SVTResource] $svtResource)
+	Base($subscriptionId)
 	{		
 		$this.CreateInstance($svtResource);
 	}
@@ -57,11 +55,6 @@ class SVTBase: AzSKRoot
 		if(-not $svtResource)
 		{
 			throw [System.ArgumentException] ("The argument 'svtResource' is null");
-		}
-
-		if([string]::IsNullOrEmpty($svtResource.ResourceGroupName))
-		{
-			throw [System.ArgumentException] ("The argument 'ResourceGroupName' is null or empty");
 		}
 
 		if([string]::IsNullOrEmpty($svtResource.ResourceName))
@@ -295,7 +288,8 @@ class SVTBase: AzSKRoot
 				$this.EvaluationStarted();	
 				$resourceSecurityResult += $this.GetAutomatedSecurityStatus();
 				$resourceSecurityResult += $this.GetManualSecurityStatus();			
-				$this.PostEvaluationCompleted($resourceSecurityResult);
+				
+				$this.InvokeExtensionMethod($resourceSecurityResult)
 				$this.EvaluationCompleted($resourceSecurityResult);
 			}
         }
@@ -344,27 +338,6 @@ class SVTBase: AzSKRoot
 			$customData.Value = $ResourceObject;
 			$this.PublishCustomData($customData);		
 		}
-	}
-
-	[SVTEventContext[]] FetchStateOfAllControls()
-    {
-        [SVTEventContext[]] $resourceSecurityResult = @();
-        if (-not $this.ValidateMaintenanceState()) {
-			if($this.GetApplicableControls().Count -eq 0)
-			{
-				$this.PublishCustomMessage("No security controls match the input criteria specified", [MessageType]::Warning);
-			}
-			else
-			{
-				$this.EvaluationStarted();
-				$resourceSecurityResult += $this.GetControlsStateResult();
-				if(($resourceSecurityResult | Measure-Object).Count -gt 0)
-				{
-					$this.EvaluationCompleted($resourceSecurityResult);
-				}
-			}
-        }
-        return $resourceSecurityResult;
 	}
 
 	[ControlItem[]] ApplyServiceFilters([ControlItem[]] $controls)
@@ -510,7 +483,7 @@ class SVTBase: AzSKRoot
 
 				$arg.ControlResults += $control
 				
-				$this.PostProcessData($arg);
+				$this.InvokeExtensionMethod($arg);
 
                 $manualControlsResult += $arg;
             }
@@ -535,34 +508,6 @@ class SVTBase: AzSKRoot
 				if($null -ne $eventContext -and $eventcontext.ControlResults.Length -gt 0)
 				{
 					$automatedControlsResult += $eventContext;
-				}
-            };
-        }
-        catch
-        {
-            $this.EvaluationError($_);
-        }
-
-        return $automatedControlsResult;
-	}
-	
-	hidden [SVTEventContext[]] GetControlsStateResult()
-    {
-        [SVTEventContext[]] $automatedControlsResult = @();
-		$this.DirtyResourceStates = @();
-        try
-        {
-            $this.GetApplicableControls() |
-            ForEach-Object {
-                $eventContext = $this.FetchControlState($_);
-				#filter controls if there is no state found
-				if($eventContext)
-				{
-					$eventContext.ControlResults = $eventContext.ControlResults | Where-Object{$_.AttestationStatus -ne [AttestationStatus]::None}
-					if($eventContext.ControlResults)
-					{
-						$automatedControlsResult += $eventContext;
-					}
 				}
             };
         }
@@ -600,7 +545,8 @@ class SVTBase: AzSKRoot
 				$singleControlResult.ControlResults += $azskScanResult
                 $this.ControlError($controlItem, $_);
 			}
-			$this.PostProcessData($singleControlResult);
+
+			$this.InvokeExtensionMethod($singleControlResult);
 
 			# Check for the control which requires elevated permission to modify 'Recommendation' so that user can know it is actually automated if they have the right permission
 			if($singleControlResult.ControlItem.Automated -eq "Yes")
@@ -634,430 +580,6 @@ class SVTBase: AzSKRoot
 		}
 	}
 	
-	hidden [SVTEventContext] FetchControlState([ControlItem] $controlItem)
-    {
-		[SVTEventContext] $singleControlResult = $this.CreateSVTEventContextObject();
-        $singleControlResult.ControlItem = $controlItem;
-
-		$controlState = @();
-		$controlStateValue = @();
-		try
-		{
-			$resourceStates = $this.GetResourceState();
-			if(($resourceStates | Measure-Object).Count -ne 0)
-			{
-				$controlStateValue += $resourceStates | Where-Object { $_.InternalId -eq $singleControlResult.ControlItem.Id };
-				$controlStateValue | ForEach-Object {
-					$currentControlStateValue = $_;
-					if($null -ne $currentControlStateValue)
-					{
-						#assign expiry date
-						$expiryIndays = $this.CalculateExpirationInDays($singleControlResult,$currentControlStateValue);
-						if($expiryIndays -ne -1)
-						{
-							$currentControlStateValue.State.ExpiryDate = ($currentControlStateValue.State.AttestedDate.AddDays($expiryIndays)).ToString("MM/dd/yyyy");
-						}
-						$controlState += $currentControlStateValue;
-					}
-				}
-			}
-		}
-		catch
-		{
-			$this.EvaluationError($_);
-		}
-		if(($controlState|Measure-Object).Count -gt 0)
-		{
-			$this.ControlStarted($singleControlResult);
-			if($controlItem.Enabled -eq $false)
-			{
-				$this.ControlDisabled($singleControlResult);
-			}
-			else
-			{
-				$controlResult = $this.CreateControlResult($controlItem.FixControl);
-				$singleControlResult.ControlResults += $controlResult;          
-				$singleControlResult.ControlResults | 
-				ForEach-Object {
-					try
-					{
-						$currentItem = $_;
-
-						if($controlState.Count -ne 0)
-						{
-							# Process the state if it's available
-							$childResourceState = $controlState | Where-Object { $_.ChildResourceName -eq  $currentItem.ChildResourceName } | Select-Object -First 1;
-							if($childResourceState)
-							{
-								$currentItem.StateManagement.AttestedStateData = $childResourceState.State;
-								$currentItem.AttestationStatus = $childResourceState.AttestationStatus;
-								$currentItem.ActualVerificationResult = $childResourceState.ActualVerificationResult;
-								$currentItem.VerificationResult = [VerificationResult]::NotScanned
-							}
-						}
-					}
-					catch
-					{
-						$this.EvaluationError($_);
-					}
-				};
-
-			}
-			$this.ControlCompleted($singleControlResult);
-		}
-
-        return $singleControlResult;
-    }
-	hidden [void] PostEvaluationCompleted([SVTEventContext[]] $ControlResults)
-	{
-	    # If ResourceType is Databricks, reverting security protocol 
-		if([Helpers]::CheckMember($this.ResourceContext, "ResourceType") -and $this.ResourceContext.ResourceType -eq "Microsoft.Databricks/workspaces")
-		{
-		  [Net.ServicePointManager]::SecurityProtocol = $this.currentSecurityProtocol 
-		}
-		$this.UpdateControlStates($ControlResults);
-	}
-
-	hidden [void] UpdateControlStates([SVTEventContext[]] $ControlResults)
-	{
-		if($null -ne $this.ControlStateExt -and $this.ControlStateExt.HasControlStateWriteAccessPermissions() -and ($ControlResults | Measure-Object).Count -gt 0 -and ($this.ResourceState | Measure-Object).Count -gt 0)
-		{
-			$effectiveResourceStates = @();
-			if(($this.DirtyResourceStates | Measure-Object).Count -gt 0)
-			{
-				$this.ResourceState | ForEach-Object {
-					$controlState = $_;
-					if(($this.DirtyResourceStates | Where-Object { $_.InternalId -eq $controlState.InternalId -and $_.ChildResourceName -eq $controlState.ChildResourceName } | Measure-Object).Count -eq 0)
-					{
-						$effectiveResourceStates += $controlState;
-					}
-				}
-			}
-			else
-			{
-				#If no dirty states found then no action needed.
-				return;
-			}
-
-			#get the uniqueid from the first control result. Here we can take first as it would come here for each resource.
-			$id = $ControlResults[0].GetUniqueId();
-
-			$this.ControlStateExt.SetControlState($id, $effectiveResourceStates, $true)
-		}
-	}
-
-	hidden [void] PostProcessData([SVTEventContext] $eventContext)
-	{
-		$tempHasRequiredAccess = $true;
-		$controlState = @();
-		$controlStateValue = @();
-		try
-		{
-			# Get policy compliance if org-level flag is enabled and policy is found 
-			#TODO: set flag in a variable once and reuse it
-			
-			if([FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-			{
-				if(-not [string]::IsNullOrWhiteSpace($eventContext.ControlItem.PolicyDefinitionGuid))
-				{
-					#create default controlresult
-					$policyScanResult = $this.CreateControlResult($eventContext.ControlItem.FixControl);
-					#update default controlresult with policy compliance state
-					$policyScanResult = $this.CheckPolicyCompliance($eventContext.ControlItem, $policyScanResult);
-					#todo: currently excluding child controls
-					if($eventContext.ControlResults.Count -eq 1 -and $Null -ne $policyScanResult)
-					{
-						$finalScanResult = $this.ComputeFinalScanResult($eventContext.ControlResults[0],$policyScanResult)
-						$eventContext.ControlResults[0] = $finalScanResult
-					}
-				}
-			}
-			
-			$this.GetDataFromSubscriptionReport($eventContext);
-
-			$resourceStates = $this.GetResourceState()			
-			if(($resourceStates | Measure-Object).Count -ne 0)
-			{
-				$controlStateValue += $resourceStates | Where-Object { $_.InternalId -eq $eventContext.ControlItem.Id };
-				$controlStateValue | ForEach-Object {
-					$currentControlStateValue = $_;
-					if($null -ne $currentControlStateValue)
-					{
-						if($this.IsStateActive($eventContext, $currentControlStateValue))
-						{
-							$controlState += $currentControlStateValue;
-						}
-						else
-						{
-							#add to the dirty state list so that it can be removed later
-							$this.DirtyResourceStates += $currentControlStateValue;
-						}
-					}
-				}
-			}
-			elseif($null -eq $resourceStates)
-			{
-				$tempHasRequiredAccess = $false;
-			}
-		}
-		catch
-		{
-			$this.EvaluationError($_);
-		}
-
-		$eventContext.ControlResults |
-		ForEach-Object {
-			try
-			{
-				$currentItem = $_;
-				# Copy the current result to Actual Result field
-				$currentItem.ActualVerificationResult = $currentItem.VerificationResult;
-
-				#Logic to append the control result with the permissions metadata
-				[SessionContext] $sc = $currentItem.CurrentSessionContext;
-				$sc.Permissions.HasAttestationWritePermissions = $this.ControlStateExt.HasControlStateWriteAccessPermissions();
-				$sc.Permissions.HasAttestationReadPermissions = $this.ControlStateExt.HasControlStateReadAccessPermissions();
-				# marking the required access as false if there was any error reading the attestation data
-				$sc.Permissions.HasRequiredAccess = $sc.Permissions.HasRequiredAccess -and $tempHasRequiredAccess;
-
-				# Disable the fix control feature
-				if(-not $this.GenerateFixScript)
-				{
-					$currentItem.EnableFixControl = $false;
-				}
-
-				if($currentItem.StateManagement.CurrentStateData -and $currentItem.StateManagement.CurrentStateData.DataObject -and $eventContext.ControlItem.DataObjectProperties)
-				{
-					$currentItem.StateManagement.CurrentStateData.DataObject = [Helpers]::SelectMembers($currentItem.StateManagement.CurrentStateData.DataObject, $eventContext.ControlItem.DataObjectProperties);
-				}
-
-				if($controlState.Count -ne 0)
-				{
-					# Process the state if its available
-					$childResourceState = $controlState | Where-Object { $_.ChildResourceName -eq  $currentItem.ChildResourceName } | Select-Object -First 1;
-					if($childResourceState)
-					{
-						# Skip passed ones from State Management
-						if($currentItem.ActualVerificationResult -ne [VerificationResult]::Passed)
-						{
-							#compare the states
-							if(($childResourceState.ActualVerificationResult -eq $currentItem.ActualVerificationResult) -and $childResourceState.State)
-							{
-								$currentItem.StateManagement.AttestedStateData = $childResourceState.State;
-
-								# Compare dataobject property of State
-								if($null -ne $childResourceState.State.DataObject)
-								{
-									if($currentItem.StateManagement.CurrentStateData -and $null -ne $currentItem.StateManagement.CurrentStateData.DataObject)
-									{
-										$currentStateDataObject = [JsonHelper]::ConvertToJsonCustom($currentItem.StateManagement.CurrentStateData.DataObject) | ConvertFrom-Json
-
-										try
-										{
-											# Objects match, change result based on attestation status
-											if($eventContext.ControlItem.AttestComparisionType -and $eventContext.ControlItem.AttestComparisionType -eq [ComparisionType]::NumLesserOrEqual)
-											{
-												if([Helpers]::CompareObject($childResourceState.State.DataObject, $currentStateDataObject, $true,$eventContext.ControlItem.AttestComparisionType))
-												{
-													$this.ModifyControlResult($currentItem, $childResourceState);
-												}
-												
-											}
-											else
-											{
-												if([Helpers]::CompareObject($childResourceState.State.DataObject, $currentStateDataObject, $true))
-												{
-														$this.ModifyControlResult($currentItem, $childResourceState);
-												}
-											}
-										}
-										catch
-										{
-											$this.EvaluationError($_);
-										}
-									}
-								}
-								else
-								{
-									if($currentItem.StateManagement.CurrentStateData)
-									{
-										if($null -eq $currentItem.StateManagement.CurrentStateData.DataObject)
-										{
-											# No object is persisted, change result based on attestation status
-											$this.ModifyControlResult($currentItem, $childResourceState);
-										}
-									}
-									else
-									{
-										# No object is persisted, change result based on attestation status
-										$this.ModifyControlResult($currentItem, $childResourceState);
-									}
-								}
-							}
-						}
-						else
-						{
-							#add to the dirty state list so that it can be removed later
-							$this.DirtyResourceStates += $childResourceState
-						}
-					}
-				}
-			}
-			catch
-			{
-				$this.EvaluationError($_);
-			}
-		};
-	}
-
-	# State Machine implementation of modifying verification result
-	hidden [void] ModifyControlResult([ControlResult] $controlResult, [ControlState] $controlState)
-	{
-		# No action required if Attestation status is None OR verification result is Passed
-		if($controlState.AttestationStatus -ne [AttestationStatus]::None -or $controlResult.VerificationResult -ne [VerificationResult]::Passed)
-		{
-			$controlResult.AttestationStatus = $controlState.AttestationStatus;
-			$controlResult.VerificationResult = [Helpers]::EvaluateVerificationResult($controlResult.VerificationResult, $controlState.AttestationStatus);
-		}
-	}
-
-	hidden [ControlState[]] GetResourceState()
-	{
-		if($null -eq $this.ResourceState)
-		{
-			$this.ResourceState = @();
-			if($this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadAccessPermissions())
-			{
-				$resourceStates = $this.ControlStateExt.GetControlState($this.ResourceId)
-				if($null -ne $resourceStates)
-				{
-					$this.ResourceState += $resourceStates
-				}
-				else
-				{
-					return $null;
-				}				
-			}
-		}
-
-		return $this.ResourceState;
-	}
-
-	#Function to validate attestation data expiry validation
-	hidden [bool] IsStateActive([SVTEventContext] $eventcontext,[ControlState] $controlState)
-	{
-		try
-		{
-			$expiryIndays = $this.CalculateExpirationInDays([SVTEventContext] $eventcontext,[ControlState] $controlState);
-			#Validate if expiry period is passed
-			#Added a condition so as to expire attested controls that were in 'Error' state.
-			if(($expiryIndays -ne -1 -and $controlState.State.AttestedDate.AddDays($expiryIndays) -lt [DateTime]::UtcNow) -or ($controlState.ActualVerificationResult -eq [VerificationResult]::Error))
-			{
-				return $false
-			}
-			else
-			{
-				$controlState.State.ExpiryDate = ($controlState.State.AttestedDate.AddDays($expiryIndays)).ToString("MM/dd/yyyy");
-				return $true
-			}
-		}
-		catch
-		{
-			#if any exception occurs while getting/validating expiry period, return true.
-			$this.EvaluationError($_);
-			return $true
-		}
-	}
-
-	hidden [int] CalculateExpirationInDays([SVTEventContext] $eventcontext,[ControlState] $controlState)
-	{
-		try
-		{
-			#For exempt controls, either the no. of days for expiry were provided at the time of attestation or a default of 6 motnhs was already considered,
-			#therefore skipping this flow and calculating days directly using the expiry date already saved.
-			if($controlState.AttestationStatus -ne [AttestationStatus]::ApprovedException)
-			{
-				#Get controls expiry period. Default value is zero
-				$controlAttestationExpiry = $eventcontext.controlItem.AttestationExpiryPeriodInDays
-				$controlSeverity = $eventcontext.controlItem.ControlSeverity
-				$controlSeverityExpiryPeriod = 0
-				$defaultAttestationExpiryInDays = [Constants]::DefaultControlExpiryInDays;
-				$expiryInDays=-1;
-	
-				if(($eventcontext.ControlResults |Measure-Object).Count -gt 0)	
-				{
-					$isControlInGrace=$eventcontext.ControlResults.IsControlInGrace;
-				}
-				else
-				{
-					$isControlInGrace=$true;
-				}
-				if([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays") `
-						-and [Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays,"Default") `
-						-and $this.ControlSettings.AttestationExpiryPeriodInDays.Default -gt 0)
-				{
-					$defaultAttestationExpiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.Default
-				}			
-				#Expiry in the case of WillFixLater or StateConfirmed/Recurring Attestation state will be based on Control Severity.
-				if($controlState.AttestationStatus -eq [AttestationStatus]::NotAnIssue -or $controlState.AttestationStatus -eq [AttestationStatus]::NotApplicable)
-				{
-					$expiryInDays=$defaultAttestationExpiryInDays;
-				}
-				else
-				{
-					# Expire WillFixLater if GracePeriod has expired
-					if(-not($isControlInGrace) -and $controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater)
-					{
-						$expiryInDays=0;
-					}
-					else
-					{
-						if($controlAttestationExpiry -ne 0)
-						{
-							$expiryInDays = $controlAttestationExpiry
-						}
-						elseif([Helpers]::CheckMember($this.ControlSettings,"AttestationExpiryPeriodInDays"))
-						{
-							$controlsev = $this.ControlSettings.ControlSeverity.PSobject.Properties | Where-Object Value -eq $controlSeverity | Select-Object -First 1
-							$controlSeverity = $controlsev.name									
-							#Check if control severity has expiry period
-							if([Helpers]::CheckMember($this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity,$controlSeverity) )
-							{
-								$expiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.ControlSeverity.$controlSeverity
-							}
-							#If control item and severity does not contain expiry period, assign default value
-							else
-							{
-								$expiryInDays = $defaultAttestationExpiryInDays
-							}
-						}
-						#Return -1 when expiry is not defined
-						else
-						{
-							$expiryInDays = -1
-						}
-					}
-				}				
-			}
-			else
-			{				
-				#Calculating the expiry in days for exempt controls
-				
-				$expiryDate = [DateTime]$controlState.State.ExpiryDate
-				#Adding 1 explicitly to the days since the differnce below excludes the expiryDate and that also needs to be taken into account.
-				$expiryInDays = ($expiryDate - $controlState.State.AttestedDate).Days + 1
-			}								
-		}
-		catch
-		{
-			#if any exception occurs while getting/validating expiry period, return -1.
-			$this.EvaluationError($_);
-			$expiryInDays = -1
-		}
-		return $expiryInDays
-	}
-
-
 	hidden AddResourceMetadata([PSObject] $metadataObj)
 	{
 		[hashtable] $resourceMetadata = New-Object -TypeName Hashtable;

@@ -54,7 +54,18 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		[Parameter(HelpMessage="Release names for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("rn")]
-		$ReleaseNames
+		$ReleaseNames,
+
+		[string]
+		[Parameter(HelpMessage="Release names for which the security evaluation has to be performed.")]
+		[ValidateNotNullOrEmpty()]
+		[Alias("ap")]
+		$AgentPoolNames,
+
+		[switch]
+		[Parameter(HelpMessage="Scan all supported artificats present under organization like build, release, projects etc.")]
+		[Alias("sa")]
+		$ScanAllArtifacts
 	)
 	Begin
 	{
@@ -66,7 +77,7 @@ function Get-AzSKAzureDevOpsSecurityStatus
 	{
 	try 
 		{
-			$resolver = [AzureDevOpsResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames);
+			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames,$ScanAllArtifacts);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
