@@ -78,33 +78,39 @@ class CredHygiene : CommandBase{
 		$this.PublishCustomMessage("Settings for the AzSK tracked credential [$($credentialInfo.credName)] `n`n", [MessageType]::Info) 
 		$this.PublishCustomMessage("`n")
 
-		$this.PublishCustomMessage("Name:`t`t`t`t`t`t`t`t`t$($credentialInfo.credName)", $messageType)
-		$this.PublishCustomMessage("Location:`t`t`t`t`t`t`t`t$($credentialInfo.credLocation)", $messageType)
-		$this.PublishCustomMessage("Rotation interval (days):`t`t`t`t$($credentialInfo.rotationInt)", $messageType)
-		$this.PublishCustomMessage("Alert email:`t`t`t`t`t`t`t$($credentialInfo.emailId)", $messageType)
-		$this.PublishCustomMessage("Alert phone:`t`t`t`t`t`t`t$($credentialInfo.contactNumber)", $messageType)
-		$this.PublishCustomMessage("Created on:`t`t`t`t`t`t`t`t$($credentialInfo.firstUpdatedOn)", $messageType)
-		$this.PublishCustomMessage("Created by:`t`t`t`t`t`t`t`t$($credentialInfo.firstUpdatedBy)",$messageType)
-		$this.PublishCustomMessage("Last update:`t`t`t`t`t`t`t$($credentialInfo.lastUpdatedOn)", $messageType)
-		$this.PublishCustomMessage("Updated by:`t`t`t`t`t`t`t`t$($credentialInfo.lastUpdatedBy)", $messageType)
-		$this.PublishCustomMessage("Comment:`t`t`t`t`t`t`t`t$($credentialInfo.comment)`n", $messageType)
+		$table = $credentialInfo | Format-List @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }}, @{Label = "Created on"; Expression = { $_.firstUpdatedOn }}, @{Label = "Created by"; Expression = { $_.firstUpdatedBy }}, @{Label = "Last update"; Expression = { $_.lastUpdatedOn }}, @{Label = "Updated by"; Expression = { $_.lastUpdatedBy }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
+		$this.PublishCustomMessage($table, $messageType)
+		#$this.PublishCustomMessage("Name:`t`t`t`t`t`t`t`t`t$($credentialInfo.credName)", $messageType)
+		#$this.PublishCustomMessage("Location:`t`t`t`t`t`t`t`t$($credentialInfo.credLocation)", $messageType)
+		#$this.PublishCustomMessage("Rotation interval (days):`t`t`t`t$($credentialInfo.rotationInt)", $messageType)
+		#$this.PublishCustomMessage("Alert email:`t`t`t`t`t`t`t$($credentialInfo.emailId)", $messageType)
+		#$this.PublishCustomMessage("Alert phone:`t`t`t`t`t`t`t$($credentialInfo.contactNumber)", $messageType)
+		#$this.PublishCustomMessage("Created on:`t`t`t`t`t`t`t`t$($credentialInfo.firstUpdatedOn)", $messageType)
+		#$this.PublishCustomMessage("Created by:`t`t`t`t`t`t`t`t$($credentialInfo.firstUpdatedBy)",$messageType)
+		#$this.PublishCustomMessage("Last update:`t`t`t`t`t`t`t$($credentialInfo.lastUpdatedOn)", $messageType)
+		#$this.PublishCustomMessage("Updated by:`t`t`t`t`t`t`t`t$($credentialInfo.lastUpdatedBy)", $messageType)
+		#$this.PublishCustomMessage("Comment:`t`t`t`t`t`t`t`t$($credentialInfo.comment)`n", $messageType)
 
 		if($credentialInfo.credLocation -eq "AppService"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
-			$this.PublishCustomMessage("Credential Details:");
-			$this.PublishCustomMessage("AppService name:`t`t`t`t`t`t$($credentialInfo.resourceGroup)", $messageType)
-			$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", $messageType)
-			$this.PublishCustomMessage("AppService config type:`t`t`t`t`t$($credentialInfo.appConfigType)", $messageType)
-			$this.PublishCustomMessage("AppService config name:`t`t`t`t`t$($credentialInfo.appConfigName)", $messageType)
+			$this.PublishCustomMessage("Additional Details:");
+			$table = $credentialInfo | Format-List @{Label = "AppService Name"; Expression = { $_.resourceName }} , @{Label = "AppService config type"; Expression = { $_.appConfigType }}, @{Label = "AppService config name"; Expression = { $_.appConfigName }} | Out-String
+			$this.PublishCustomMessage($table, $messageType)
+			#$this.PublishCustomMessage("AppService name:`t`t`t`t`t`t$($credentialInfo.resourceGroup)", $messageType)
+			#$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", $messageType)
+			#$this.PublishCustomMessage("AppService config type:`t`t`t`t`t$($credentialInfo.appConfigType)", $messageType)
+			#$this.PublishCustomMessage("AppService config name:`t`t`t`t`t$($credentialInfo.appConfigName)", $messageType)
 		}
 		if($credentialInfo.credLocation -eq "KeyVault"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
-			$this.PublishCustomMessage("Credential Details:");
-			$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", $messageType)
-			$this.PublishCustomMessage("Credential type:`t`t`t`t`t`t$($credentialInfo.kvCredType)", $messageType)
-			$this.PublishCustomMessage("Credential name:`t`t`t`t`t`t$($credentialInfo.kvCredName)", $messageType)
-			$this.PublishCustomMessage("Expiry time:`t`t`t`t`t`t`t$($credentialInfo.expiryTime)", $messageType)
-			$this.PublishCustomMessage("Version:`t`t`t`t`t`t`t`t$($credentialInfo.Version)", $messageType)
+			$this.PublishCustomMessage("Additional Details:");
+			$table = $credentialInfo | Format-List @{Label = "Key vault Name"; Expression = { $_.kvName }} , @{Label = "Credential type"; Expression = { $_.kvCredType }}, @{Label = "Credential name"; Expression = { $_.kvCredName }}, @{Label = "Expiry time"; Expression = { $_.expiryTime }}, @{Label = "Version"; Expression = { $_.version }} | Out-String
+			$this.PublishCustomMessage($table, $messageType)
+			#$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", $messageType)
+			#$this.PublishCustomMessage("Credential type:`t`t`t`t`t`t$($credentialInfo.kvCredType)", $messageType)
+			#$this.PublishCustomMessage("Credential name:`t`t`t`t`t`t$($credentialInfo.kvCredName)", $messageType)
+			#$this.PublishCustomMessage("Expiry time:`t`t`t`t`t`t`t$($credentialInfo.expiryTime)", $messageType)
+			#$this.PublishCustomMessage("Version:`t`t`t`t`t`t`t`t$($credentialInfo.Version)", $messageType)
 		}
 
 		$this.PublishCustomMessage("`n")		
@@ -114,36 +120,42 @@ class CredHygiene : CommandBase{
 		$this.PublishCustomMessage("`n")
 		$this.PublishCustomMessage("Settings for the AzSK tracked credential [$($credentialInfo.credName)] `n`n", [MessageType]::Info) 
 		$this.PublishCustomMessage("`n")
+		$table = $credentialInfo | Format-List @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
+		$this.PublishCustomMessage($table, [MessageType]::Default)
 
-		$this.PublishCustomMessage("Name:`t`t`t`t`t`t`t`t`t$($credentialInfo.credName)", [MessageType]::Default)
-		$this.PublishCustomMessage("Location:`t`t`t`t`t`t`t`t$($credentialInfo.credLocation)", [MessageType]::Default)
-		$this.PublishCustomMessage("Rotation interval (days):`t`t`t`t$($credentialInfo.rotationInt)", [MessageType]::Default)
-		$this.PublishCustomMessage("Alert email:`t`t`t`t`t`t`t$($credentialInfo.emailId)", [MessageType]::Default)
-		$this.PublishCustomMessage("Alert phone:`t`t`t`t`t`t`t$($credentialInfo.contactNumber)", [MessageType]::Default)
-		$this.PublishCustomMessage("Comment:`t`t`t`t`t`t`t`t$($credentialInfo.comment)`n", [MessageType]::Default)
+		#$this.PublishCustomMessage("Name:`t`t`t`t`t`t`t`t`t$($credentialInfo.credName)", [MessageType]::Default)
+		#$this.PublishCustomMessage("Location:`t`t`t`t`t`t`t`t$($credentialInfo.credLocation)", [MessageType]::Default)
+		#$this.PublishCustomMessage("Rotation interval (days):`t`t`t`t$($credentialInfo.rotationInt)", [MessageType]::Default)
+		#$this.PublishCustomMessage("Alert email:`t`t`t`t`t`t`t$($credentialInfo.emailId)", [MessageType]::Default)
+		#$this.PublishCustomMessage("Alert phone:`t`t`t`t`t`t`t$($credentialInfo.contactNumber)", [MessageType]::Default)
+		#$this.PublishCustomMessage("Comment:`t`t`t`t`t`t`t`t$($credentialInfo.comment)`n", [MessageType]::Default)
 
 		if($credentialInfo.credLocation -eq "AppService"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
-			$this.PublishCustomMessage("Credential Details:");
-			$this.PublishCustomMessage("AppService name:`t`t`t`t`t`t$($credentialInfo.resourceGroup)", [MessageType]::Default)
-			$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", [MessageType]::Default)
-			$this.PublishCustomMessage("AppService config type:`t`t`t`t`t$($credentialInfo.appConfigType)", [MessageType]::Default)
-			$this.PublishCustomMessage("AppService config name:`t`t`t`t`t$($credentialInfo.appConfigName)", [MessageType]::Default)
+			$this.PublishCustomMessage("Additional Details:");
+			$table = $credentialInfo | Format-List @{Label = "AppService Name"; Expression = { $_.resourceName }} , @{Label = "AppService config type"; Expression = { $_.appConfigType }}, @{Label = "AppService config name"; Expression = { $_.appConfigName }} | Out-String
+			$this.PublishCustomMessage($table, [MessageType]::Default)
+			#$this.PublishCustomMessage("AppService name:`t`t`t`t`t`t$($credentialInfo.resourceGroup)", [MessageType]::Default)
+			#$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", [MessageType]::Default)
+			#$this.PublishCustomMessage("AppService config type:`t`t`t`t`t$($credentialInfo.appConfigType)", [MessageType]::Default)
+			#$this.PublishCustomMessage("AppService config name:`t`t`t`t`t$($credentialInfo.appConfigName)", [MessageType]::Default)
 		}
 		if($credentialInfo.credLocation -eq "KeyVault"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
-			$this.PublishCustomMessage("Credential Details:");
-			$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", [MessageType]::Default)
-			$this.PublishCustomMessage("Credential type:`t`t`t`t`t`t$($credentialInfo.kvCredType)", [MessageType]::Default)
-			$this.PublishCustomMessage("Credential name:`t`t`t`t`t`t$($credentialInfo.kvCredName)", [MessageType]::Default)
-			$this.PublishCustomMessage("Expiry time:`t`t`t`t`t`t`t$($credentialInfo.expiryTime)", [MessageType]::Default)
-			$this.PublishCustomMessage("Version:`t`t`t`t`t`t`t`t$($credentialInfo.Version)", [MessageType]::Default)
+			$this.PublishCustomMessage("Additional Details:");
+			$table = $credentialInfo | Format-List @{Label = "Key vault Name"; Expression = { $_.kvName }} , @{Label = "Credential type"; Expression = { $_.kvCredType }}, @{Label = "Credential name"; Expression = { $_.kvCredName }}, @{Label = "Expiry time"; Expression = { $_.expiryTime }}, @{Label = "Version"; Expression = { $_.version }} | Out-String
+			$this.PublishCustomMessage($table, [MessageType]::Default)
+			#$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", [MessageType]::Default)
+			#$this.PublishCustomMessage("Credential type:`t`t`t`t`t`t$($credentialInfo.kvCredType)", [MessageType]::Default)
+			#$this.PublishCustomMessage("Credential name:`t`t`t`t`t`t$($credentialInfo.kvCredName)", [MessageType]::Default)
+			#$this.PublishCustomMessage("Expiry time:`t`t`t`t`t`t`t$($credentialInfo.expiryTime)", [MessageType]::Default)
+			#$this.PublishCustomMessage("Version:`t`t`t`t`t`t`t`t$($credentialInfo.Version)", [MessageType]::Default)
 		}
 
 		$this.PublishCustomMessage("`n")		
 	}
 
-    [void] GetAlert($CredentialName)
+    [void] GetAlert($CredentialName,$DetailedView)
 	{           
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $CredentialName
 		$file += ".json"
@@ -213,18 +225,25 @@ class CredHygiene : CommandBase{
 				$sortedBlob = $sortedBlob | Sort-Object -Property @{Expression = {($_.lastUpdatedOn).AddDays($_.rotationInt)}; Descending = $False} 
 				
 				$currentTime = [DateTime]::UtcNow;
-				$sortedBlob | where{
-					$lastRotatedTime = $_.lastUpdatedOn;
-					$expiryTime = $lastRotatedTime.AddDays($_.rotationInt);
-					$messageType = [MessageType]::Default
-					if($expiryTime -le $currentTime.AddDays($controlSettings.SubscriptionCore.credHighTH)){ #Checking for expired/about to expire credentials
-						$messageType = [MessageType]::Critical
-					}
-					elseif(($expiryTime -gt $currentTime.AddDays($controlSettings.SubscriptionCore.credHighTH)) -and ($expiryTime -le $currentTime.AddDays($controlSettings.SubscriptionCore.credModerateTH))){ #Checking for credentials nearing expiry.
-						$messageType = [MessageType]::Warning
-					}
 
-					$this.PrintDetails($_,$messageType);
+				if($DetailedView){
+					$sortedBlob | where{
+						$lastRotatedTime = $_.lastUpdatedOn;
+						$expiryTime = $lastRotatedTime.AddDays($_.rotationInt);
+						$messageType = [MessageType]::Default
+						if($expiryTime -le $currentTime.AddDays($controlSettings.SubscriptionCore.credHighTH)){ #Checking for expired/about to expire credentials
+							$messageType = [MessageType]::Critical
+						}
+						elseif(($expiryTime -gt $currentTime.AddDays($controlSettings.SubscriptionCore.credHighTH)) -and ($expiryTime -le $currentTime.AddDays($controlSettings.SubscriptionCore.credModerateTH))){ #Checking for credentials nearing expiry.
+							$messageType = [MessageType]::Warning
+						}
+
+						$this.PrintDetails($_,$messageType);
+					}
+				}
+				else{
+					$table = $sortedBlob | Format-Table -AutoSize -Wrap @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }}, @{Label = "Created on"; Expression = { $_.firstUpdatedOn }}, @{Label = "Created by"; Expression = { $_.firstUpdatedBy }}, @{Label = "Last update"; Expression = { $_.lastUpdatedOn }}, @{Label = "Updated by"; Expression = { $_.lastUpdatedBy }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
+					$this.PublishCustomMessage($table, [MessageType]::Default)
 				}
 			}
 			else{

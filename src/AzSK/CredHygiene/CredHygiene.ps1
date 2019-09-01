@@ -50,7 +50,7 @@ function New-AzSKTrackedCredential {
 		[Alias("rint")]
         $RotationIntervalInDays,
 
-        [Parameter(Mandatory = $true, ParameterSetName = "Custom", HelpMessage = "Provide the email id for alert")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Provide the email id for alert")]
         [string]
 		[Alias("aem")]
         $AlertEmail,
@@ -175,7 +175,12 @@ function Get-AzSKTrackedCredential {
         [Parameter(Mandatory = $false, HelpMessage = "Provide the credential name")]
         [string]
 		[Alias("cn")]
-        $CredentialName
+        $CredentialName,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Switch for printing detailed information about the credential.")]
+        [switch]
+		[Alias("dtl")]
+        $DetailedView
     
     )
     Begin {
@@ -188,10 +193,10 @@ function Get-AzSKTrackedCredential {
             $cred = [CredHygiene]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){
                 if($CredentialName){
-                    $cred.InvokeFunction($cred.GetAlert, @($CredentialName))
+                    $cred.InvokeFunction($cred.GetAlert, @($CredentialName,$DetailedView))
                 }
                 else {
-                    $cred.InvokeFunction($cred.GetAlert, @($null))
+                    $cred.InvokeFunction($cred.GetAlert, @($null,$DetailedView))
                 }            
             }
 	
