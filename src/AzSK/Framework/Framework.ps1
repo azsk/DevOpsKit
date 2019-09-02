@@ -11,7 +11,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Models\Enums.ps1
 
 #Constants
-. $FrameworkPath\Helpers\Constants.ps1
+. $PSScriptRoot\Helpers\Constants.ps1
 
 #Models
 . $FrameworkPath\Models\AzSKGenericEvent.ps1
@@ -24,7 +24,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Abstracts\EventBase.ps1
 . $FrameworkPath\Helpers\JsonHelper.ps1
 . $FrameworkPath\Helpers\Helpers.ps1
-. $FrameworkPath\Helpers\ContextHelper.ps1  
+. $PSScriptRoot\Helpers\ContextHelper.ps1  
 #Helpers (independent of models)
 
 . $FrameworkPath\Helpers\ConfigurationHelper.ps1
@@ -55,10 +55,10 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Managers\ConfigurationManager.ps1
 . $PSScriptRoot\Helpers\ResourceHelper.ps1
 . $FrameworkPath\Helpers\WebRequestHelper.ps1
-. $FrameworkPath\Helpers\ActiveDirectoryHelper.ps1
+. $PSScriptRoot\Helpers\ActiveDirectoryHelper.ps1
 . $PSScriptRoot\Helpers\RoleAssignmentHelper.ps1
 . $PSScriptRoot\Helpers\SecurityCenterHelper.ps1
-. $FrameworkPath\Helpers\SVTMapping.ps1
+. $PSScriptRoot\Helpers\SVTMapping.ps1
 . $FrameworkPath\Helpers\IdentityHelpers.ps1
 . $FrameworkPath\Helpers\ConfigOverride.ps1
 . $FrameworkPath\Helpers\ControlHelper.ps1
@@ -70,7 +70,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 . $FrameworkPath\Managers\FeatureFlightingManager.ps1
 . $PSScriptRoot\Helpers\AzHelper.ps1
-. $FrameworkPath\Managers\ControlStateExtension.ps1
+. $PSScriptRoot\Managers\ControlStateExtension.ps1
 . $FrameworkPath\Managers\AzSKPDFExtension.ps1
 . $FrameworkPath\Managers\PartialScanManager.ps1
 
