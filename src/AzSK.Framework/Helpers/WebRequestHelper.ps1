@@ -15,9 +15,53 @@ class WebRequestHelper {
         return [WebRequestHelper]::InvokeGetWebRequest($uri, [WebRequestHelper]::GetAuthHeaderFromUri($uri));
 	}
 	
+	hidden static [string] GetApplicationInsightsEndPoint()
+	{
+		$rmContext = [ContextHelper]::GetCurrentRMContext();
+		$azureEnv= $rmContext.Environment.Name 
+		if($azureEnv = "AzureUSGovernment")
+		{
+            return "https://dc.applicationinsights.us/v2/track"
+		}
+		elseif ($azureEnv = "AzureChinaCloud" ) {
+			return "https://dc.applicationinsights.azure.cn/v2/track"
+		}
+		else {
+			return "https://dc.services.visualstudio.com/v2/track"
+		}
+	}
+
+	hidden static [string] GetLADataCollectorAPI()
+	{
+		$rmContext = [ContextHelper]::GetCurrentRMContext();
+		$azureEnv= $rmContext.Environment.Name 
+		if($azureEnv = "AzureUSGovernment")
+		{
+            return ".ods.opinsights.azure.us"
+		}
+		elseif ($azureEnv = "AzureChinaCloud" ) {
+			return ".ods.opinsights.azure.cn"
+		}
+		else {
+			return ".ods.opinsights.azure.com"
+		}
+	}
+
+	hidden static [string] GetGraphUrl()
+	{
+		$rmContext = [ContextHelper]::GetCurrentRMContext();
+		$azureEnv= $rmContext.Environment.Name 
+		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne [Constants]::DefaultAzureEnvironment))
+		{
+		return [ContextHelper]::GetCurrentRMContext().Environment.GraphUrl
+		}
+		return "https://graph.windows.net/"
+	}
+
 	hidden static [string] GetResourceManagerUrl()
 	{
-		$azureEnv= [AzSKSettings]::GetInstance().AzureEnvironment
+		$rmContext = [ContextHelper]::GetCurrentRMContext();
+		$azureEnv= $rmContext.Environment.Name 
 		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne [Constants]::DefaultAzureEnvironment))
 		{
 		return [ContextHelper]::GetCurrentRMContext().Environment.ResourceManagerUrl
@@ -27,7 +71,8 @@ class WebRequestHelper {
 
 	hidden static [string] GetServiceManagementUrl()
 	{
-		$azureEnv= [AzSKSettings]::GetInstance().AzureEnvironment
+		$rmContext = [ContextHelper]::GetCurrentRMContext();
+		$azureEnv= $rmContext.Environment.Name 
 		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne [Constants]::DefaultAzureEnvironment))
 		{
 		return [ContextHelper]::GetCurrentRMContext().Environment.ServiceManagementUrl

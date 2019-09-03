@@ -328,21 +328,25 @@ class APIManagement: AzSVTBase
 		if(($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
 			$Result = @()
-			$MaxOpenSocketcount = 800
+			$MaxApiCount = 10
 			$SleepTime = 30
 			if([Helpers]::CheckMember($this.ControlSettings,"SleepTime"))
 			{
 				$SleepTime = $this.ControlSettings.SleepTime
 			}
-			if([Helpers]::CheckMember($this.ControlSettings,"MaxOpenSocketcount"))
+			if([Helpers]::CheckMember($this.ControlSettings,"MaxApiCount"))
 			{
-				$MaxOpenSocketcount = $this.ControlSettings.MaxOpenSocketcount
+				$MaxApiCount = $this.ControlSettings.MaxApiCount
 			}
+			$Counter = 0
 			$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
 			    #Policy Scope: API
-                if((Get-NetTCPConnection).count -ge $MaxOpenSocketcount)
+				#if((Get-NetTCPConnection).count -ge $MaxOpenSocketcount)
+
+				if($Counter -ge $MaxApiCount)
                 {
-                sleep($SleepTime)
+				sleep($SleepTime)
+				$Counter = 0
                 }
 				$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
 				$AllowedOrigins = ""
@@ -454,23 +458,25 @@ class APIManagement: AzSVTBase
 			}
 			#Policy Scope: API
 			#Policy Scope: Operation
-			$MaxOpenSocketcount = 800
+			$MaxApiCount = 10
 			$SleepTime = 30
 			if([Helpers]::CheckMember($this.ControlSettings,"SleepTime"))
 			{
 				$SleepTime = $this.ControlSettings.SleepTime
 			}
-			if([Helpers]::CheckMember($this.ControlSettings,"MaxOpenSocketcount"))
+			if([Helpers]::CheckMember($this.ControlSettings,"MaxApiCount"))
 			{
-				$MaxOpenSocketcount = $this.ControlSettings.MaxOpenSocketcount
+				$MaxApiCount = $this.ControlSettings.MaxApiCount
 			}
+			$Counter = 0
 			if($null -ne $this.APIMAPIs)
 			{
 				$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
 					#Policy Scope: API
-                    if((Get-NetTCPConnection).count -ge $MaxOpenSocketcount)
+                    if($Counter -ge $MaxApiCount)
                     {
-                        sleep($SleepTime)
+						sleep($SleepTime)
+						$Counter = 0
                     }
 					$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
 					$RestrictedIPs = ""
