@@ -346,7 +346,8 @@ class APIManagement: AzSVTBase
                 {
 				sleep($SleepTime)
 				$Counter = 0
-                }
+				}
+				$Counter ++
 				$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
 				$AllowedOrigins = ""
 			    $AllowedOrigins = $APIPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
@@ -476,7 +477,8 @@ class APIManagement: AzSVTBase
                     {
 						sleep($SleepTime)
 						$Counter = 0
-                    }
+					}
+					$Counter ++
 					$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
 					$RestrictedIPs = ""
 					$RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
