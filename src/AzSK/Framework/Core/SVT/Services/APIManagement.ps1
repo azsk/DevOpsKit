@@ -341,8 +341,7 @@ class APIManagement: AzSVTBase
 			$Counter = 0
 			$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
 			    #Policy Scope: API
-				#if((Get-NetTCPConnection).count -ge $MaxOpenSocketcount)
-
+			
 				if($Counter -ge $MaxApiCount)
                 {
 				sleep($SleepTime)
