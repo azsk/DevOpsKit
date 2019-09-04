@@ -28,7 +28,7 @@
         "Id": "DBforPostgreSQL120",
         "ControlSeverity": "High",
         "Automated": "Yes",
-        "MethodName": "CheckSSLConnection",
+        "MethodName": "CheckPSQLServerSSLConnection",
         "Rationale": "Enforcing SSL connections between your database server and your client applications helps protect against 'man-in-the-middle' attacks by encrypting the data stream between the server and your application.",
         "Recommendation": "To enable SSL connection for Azure Database for PostgreSQL server, refer https://docs.microsoft.com/en-us/azure/postgresql/concepts-ssl-connection-security.",
         "Tags": [
@@ -140,7 +140,7 @@
           "Id": "DBforPostgreSQL180",
           "ControlSeverity": "Medium",
           "Automated": "Yes",
-          "MethodName": "CheckDiagnosticsSettings",
+          "MethodName": "CheckPSQLServerDiagnosticsSettings",
           "Rationale": "Logs should be retained for a long enough period so that activity trail can be recreated when investigations are required in the event of an incident or a compromise. A period of 1 year is typical for several compliance requirements as well.",
           "Recommendation": "You can change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal",
           "Tags": [
