@@ -13,6 +13,9 @@
     "AuditRetentionPeriod_Min": 365,
     "AuditRetentionPeriod_Forever": 0
   },
+  "DBforPostgreSQL": {
+    "LogRetentionPeriod_Min": 3
+  },
   "AnalysisService": {
     "Max_Admin_Count": 2
   },

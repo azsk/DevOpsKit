@@ -1,0 +1,213 @@
+{
+    "FeatureName":  "DBforPostgreSQL",
+    "Reference":  "aka.ms/azsktcp/dbforpostgresql",
+    "IsMaintenanceMode":  false,
+    "Controls": [
+        {
+            "ControlID": "Azure_DBforPostgreSQL_AuthZ_Grant_Min_Access",
+            "Description": "Access to Azure Database for PostgreSQL Servers must be granted in accordance with the principle of least privilege",
+            "Id": "DBforPostgreSQL110",
+            "ControlSeverity": "High",
+            "Automated": "No",
+            "MethodName": "",
+            "Rationale": "Granting minimum access ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+            "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/postgresql/howto-create-users#how-to-create-database-users-in-azure-database-for-postgresql",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Manual",
+                "AuthZ",
+                "RBAC",
+                "SingleServer"
+            ],
+            "Enabled": true
+        },
+        {
+        "ControlID": "Azure_DBforPostgreSQL_AuthZ_Enable_SSL_Connection",
+        "Description": "SSL connection must be enabled for Azure Database for PostgreSQL",
+        "Id": "DBforPostgreSQL120",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckSSLConnection",
+        "Rationale": "Enforcing SSL connections between your database server and your client applications helps protect against 'man-in-the-middle' attacks by encrypting the data stream between the server and your application.",
+        "Recommendation": "To enable SSL connection for Azure Database for PostgreSQL server, refer https://docs.microsoft.com/en-us/azure/postgresql/concepts-ssl-connection-security.",
+        "Tags": [
+            "SDL",
+            "TCP",
+            "AuthZ",
+            "Automated",
+            "SingleServer"
+        ],
+        "Enabled": true
+        },
+        {
+            "ControlID": "Azure_DBforPostgreSQL_AuthZ_Verify_IP_Range",
+            "Description": "Configure only the required IP addresses on PostgreSQL server. Do not use Any-to-Any IP range $($this.ControlSettings.UniversalIPRange) and 0.0.0.0 - 0.0.0.0",
+            "Id": "DBforPostgreSQL130",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "CheckPSQLServerFirewallIpRange",
+            "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios.",
+            "Recommendation": "Do not configure Any to Any firewall IP address. Refer: https://docs.microsoft.com/en-us/azure/postgresql/concepts-firewall-rules.",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "AuthZ",
+                "Automated",
+                "SingleServer"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_DBforPostgreSQL_AuthZ_Firewall_Deny_Access_AzureServices",
+            "Description": "Use the 'Allow access to Azure services' flag only if required",
+            "Id": "DBforPostgreSQL140",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "CheckPSQLServerFirewallAccessAzureService",
+            "Rationale": "The 'Allow access to Azure services' setting configures a very broad range of IP addresses from Azure as permitted to access the PostgreSQL Server. Please make sure your scenario really requires this setting before enabling it. Turning it ON exposes your PostgreSQL Server to risk of attacks from resources (IPs) owned by others in the Azure region.",
+            "Recommendation": "Turn off the allow access to Azure services flag. Refer: https://docs.microsoft.com/en-us/azure/postgresql/concepts-firewall-rules#connecting-from-azure",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "AuthZ",
+                "Automated",
+                "SingleServer"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_DBforPostgreSQL_BCDR_Plan",
+            "Description": "Backup and Disaster Recovery must be planned for the default Azure Database for PostgreSQL service",
+            "Id": "DBforPostgreSQL150",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckPSQLServerBCDRStatus",
+            "Rationale": "Azure Database for PostgreSQL offers backup/disaster recovery up to 35 days. It also provides the flexibility to choose between locally redundant or geo-redundant backup storage. When processing critical workloads, a team must have adequate backups of the data.",
+            "Recommendation": "Ensure the critical business data in the Azure Database for PostgreSQL has been backed up from a BC-DR standpoint.",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "BCDR",
+                "Automated",
+                "SingleServer"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_DBforPostgreSQL_Audit_Enable_ATP",
+            "Description": "Advanced Threat Protection must be enabled for Azure Database for PostgreSQL",
+            "Id": "DBforPostgreSQL160",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "CheckATPSetting",
+            "Rationale": "Advanced Threat Protection for Azure Database for PostgreSQL provides a layer of security, which enables customers to detect and respond to potential threats as they occur by providing security alerts on anomalous activities.",
+            "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/postgresql/concepts-data-access-and-security-threat-protection",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Audit",
+                "Automated",
+                "SingleServer",
+                "GeneralPurpose",
+                "MemoryOptimized"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_DBforPostgreSQL_NetSec_Configure_VNet_Rules",
+            "Description": "Consider using virtual network rules for improved isolation",
+            "Id": "DBforPostgreSQL170",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckPSQLServerVnetRules",
+            "Rationale": "Virtual network rule provides isolation for your Azure Database for PostgreSQL.",
+            "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/postgresql/concepts-data-access-and-security-vnet",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "NetSec",
+                "Automated",
+                "SingleServer",
+                "GeneralPurpose",
+                "MemoryOptimized"
+            ],
+            "Enabled": true
+        },
+        {
+          "ControlID": "Azure_DBforPostgreSQL_Audit_Enable_Diagnostics_Log",
+          "Description": "Diagnostics logs must be enabled with a retention period of at least $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) days.",
+          "Id": "DBforPostgreSQL180",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckDiagnosticsSettings",
+          "Rationale": "Logs should be retained for a long enough period so that activity trail can be recreated when investigations are required in the event of an incident or a compromise. A period of 1 year is typical for several compliance requirements as well.",
+          "Recommendation": "You can change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "Audit",
+            "Diagnostics",
+            "SingleServer",
+            "DBforPostgreSQL"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "Azure_DBforPostgreSQL_Audit_Review_Logs",
+          "Description": "Diagnostic and activity logs for Azure Database for PostgreSQL should be reviewed periodically",
+          "Id": "DBforPostgreSQL190",
+          "ControlSeverity": "Medium",
+          "Automated": "No",
+          "MethodName": "",
+          "Rationale": "Periodic reviews of diagnostics, activity and audit logs ensures that anomalous activity can be identified early enough instead of after a major compromise.",
+          "Recommendation": "Review diagnostic/activity logs to check activities on the resource. Refer: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-overview-of-diagnostic-logs and https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-overview-activity-logs",
+          "Tags": [
+            "SDL",
+            "Best Practice",
+            "Manual",
+            "Audit",
+            "SingleServer",
+            "DBforPostgreSQL"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "Azure_DBforPostgreSQL_Audit_Enable_Logging_On_Server",
+          "Description": "Enable PostgreSQL Server logging with selected event types and retention period of minimum $($this.ControlSettings.DBforPostgreSQL.LogRetentionPeriod_Min) days",
+          "Id": "DBforPostgreSQL200",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckPSQLServerLoggingParameters",
+          "Rationale": "PostgreSQL sever logging parameters enable log collection of important system events pertinent to security. Regular monitoring of logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
+          "Recommendation": "To configure logging for your server, go to Server Parameters --> Set following log parameter: a) 'log_checkpoints': 'ON' b) 'log_connections': 'ON' c) 'log_disconnections': 'ON' d) 'log_duration': 'ON' e) 'log_retention_days': greater than $($this.ControlSettings.DBforPostgreSQL.LogRetentionPeriod_Min) days. Refer: https://docs.microsoft.com/en-us/azure/postgresql/concepts-server-logs#configure-logging",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Audit",
+            "Automated",
+            "SingleServer"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "Azure_DBforPostgreSQL_AuthN_Enable_Connection_Throttling",
+          "Description": "Ensure server parameter 'connection_throttling' is set to 'ON'",
+          "Id": "DBforPostgreSQL210",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckConnectionThrottlingServerParameter",
+          "Rationale": "Connection throttling protects your server against password guessing and brute force attacks.",
+          "Recommendation": "The 'connection_throttling' server parameter enables temporary connection throttling per IP for too many invalid password login failures. Go to Server parameter --> Turn 'ON' connection_throttling.",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "AuthN",
+            "Automated",
+            "SingleServer"
+          ],
+          "Enabled": true
+        }
+  ]
+}
