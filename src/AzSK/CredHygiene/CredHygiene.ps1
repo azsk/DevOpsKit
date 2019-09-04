@@ -50,6 +50,11 @@ function New-AzSKTrackedCredential {
 		[Alias("rint")]
         $RotationIntervalInDays,
 
+        [Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Provide the credential group for alert")]
+        [string]
+		[Alias("cgp")]
+        $CredentialGroup,
+
         [Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Provide the email id for alert")]
         [string]
 		[Alias("aem")]
@@ -82,62 +87,7 @@ function New-AzSKTrackedCredential {
                     $cred.alertPhoneNumber = $AlertSMS
                 }
                 $cred.comment = $Comment
-
-                if($CredentialLocation -eq "Custom"){
-                    $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation, $null, $null, $null, $null, $null, $null, $null))
-                }
-                elseif($CredentialLocation -eq "AppService"){
-                    Write-Host "`nProvide the following details for the app service: `n"
-                    $ResourceName = Read-Host "App service name"
-                    $ResourceGroupName = Read-Host "Resource group"
-
-                    Write-Host "`nPlease select app config type from below: `n[1]: Application Settings`n[2]: Connection Strings" -ForegroundColor Cyan
-
-                    $input = Read-Host "App config type"
-                    
-                    while(($input -ne 1) -and ($input -ne 2)){
-                        Write-Host "`nIncorrect value supplied." -ForegroundColor Red
-                        Write-Host "Please select app config type from below: `n[1]: Application Settings`n[2]: Connection Strings" -ForegroundColor Cyan
-                        $input = Read-Host "App config type"
-                    }
-                    
-                    if($input -eq 1)
-                    {
-                        $AppConfigType = "Application Settings"
-                    }
-                    elseif($input -eq 2)
-                    {
-                        $AppConfigType = "Connection Strings"
-                    }
-            
-                    $AppConfigName = Read-Host "App config name"      
-                    $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation, $ResourceGroupName, $ResourceName, $AppConfigType, $AppConfigName, $null, $null, $null))
-                }
-                elseif($CredentialLocation -eq "KeyVault"){
-                    Write-Host "`nProvide the following details for the key vault: `n"
-                    $KVName = Read-Host "Key Vault name"
-                   
-                    Write-Host "`nPlease select key vault credential type from below: `n[1]: Key`n[2]: Secret" -ForegroundColor Cyan
-                    $input = Read-Host "`Key Vault credential type"
-                   
-                    while(($input -ne 1) -and ($input -ne 2)){
-                        Write-Host "`nIncorrect value supplied." -ForegroundColor Red
-                        Write-Host "Please select key vault credential type from below: `n[1]: Key`n[2]: Secret" -ForegroundColor Cyan
-                        $input = Read-Host "Key Vault credential type"
-                    }
-
-                    if($input -eq 1)
-                    {
-                        $KVCredentialType = "Key"
-                    }
-                    elseif($input -eq 2)
-                    {
-                        $KVCredentialType = "Secret"
-                    }
-                    $KVCredentialName = Read-Host "Key Vault credential name"                    
-                    $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation, $null, $null, $null, $null, $KVName, $KVCredentialType, $KVCredentialName))
-                }
-                
+                $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation))                
             }
 			
         }
@@ -311,6 +261,11 @@ function Update-AzSKTrackedCredential {
         [int]
 		[Alias("rint")]
         $RotationIntervalInDays,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Provide the credential group for alert")]
+        [string]
+		[Alias("cgp")]
+        $CredentialGroup,
 
         [Parameter(Mandatory = $false, HelpMessage = "Provide the email id for alert")]
         [string]

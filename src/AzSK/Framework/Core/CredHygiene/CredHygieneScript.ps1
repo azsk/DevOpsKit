@@ -257,7 +257,7 @@ class CredHygiene : CommandBase{
 		}
 	}
 
-	[void] NewAlert($CredentialLocation, $ResourceGroupName, $ResourceName, $AppConfigType, $AppConfigName, $KVName, $KVCredentialType, $KVCredentialName)
+	[void] NewAlert($CredentialLocation)
 	{           
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $($this.credName)
 		$file += ".json"
@@ -303,65 +303,163 @@ class CredHygiene : CommandBase{
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name lastUpdatedBy -Value $user
 
             if($CredentialLocation -eq "AppService"){
-                Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name resourceGroup -Value $ResourceGroupName
+
+				$appsvc = Get-AzWebApp -ErrorAction Ignore
+				
+				Write-Host "`nPlease select app service name from below:" -ForegroundColor Cyan
+
+				$i=0;
+				$appsvc | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+				
+				$choice = Read-Host "App service name choice"
+				while($choice -notin 0..($i-1)){
+					Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+					Write-Host "Please select app service name from below:" -ForegroundColor Cyan
+
+					$i=0;
+					$appsvc | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+					$choice = Read-Host "App service name choice"
+				}
+
+				$ResourceName = $appsvc[$choice].Name
+				$rsc = Get-AzWebApp -Name $ResourceName
+				
+				$appConfig = $null
+				$AppConfigType = $null
+				Write-Host "`nPlease select app config type from below: `n[1]: Application Settings`n[2]: Connection Strings" -ForegroundColor Cyan
+
+				$input = Read-Host "App config type"
+				
+				while(($input -ne 1) -and ($input -ne 2)){
+					Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+					Write-Host "Please select app config type from below: `n[1]: Application Settings`n[2]: Connection Strings" -ForegroundColor Cyan
+					$input = Read-Host "App config type"
+				}
+				
+				if($input -eq 1)
+				{
+					$AppConfigType = "Application Settings"
+					$appConfig = $rsc.SiteConfig.AppSettings
+				}
+				elseif($input -eq 2)
+				{
+					$AppConfigType = "Connection Strings"
+					$appConfig = $rsc.SiteConfig.ConnectionStrings
+				}
+				
+				Write-Host "`nPlease select app config name from below:" -ForegroundColor Cyan
+				$i=0;
+				$appConfig | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+				$choice = Read-Host "App config name"
+				while($choice -notin 0..($i-1)){
+					Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+					Write-Host "Please select app config name from below:" -ForegroundColor Cyan
+					$i=0;
+					$appConfig | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+					$choice = Read-Host "App config name"
+				}
+				$AppConfigName = $appConfig[$choice].Name       
+
                 Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name resourceName -Value $ResourceName
                 Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name appConfigType -Value $AppConfigType
                 Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name appConfigName -Value $AppConfigName
 
-				$resource = Get-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName -ErrorAction Ignore
-				if(-not $resource){
-					$found = $false;
-					$this.PublishCustomMessage("Could not find app service [$ResourceName] and/or resource group [$ResourceGroupName]. Please check the names.",[MessageType]::Error)
-				}
-				else{
-					if($AppConfigType -eq "Application Settings")
-					{
-						if(-not ($resource.SiteConfig.AppSettings.Name | where-object{$_ -eq $AppConfigName})){
-							$found = $false;
-							$this.PublishCustomMessage("Could not find app setting [$AppConfigName] in the app service [$ResourceName]. Please check the name.",[MessageType]::Error)
-						}
-					}
-					elseif($AppConfigType -eq "Connection Strings")
-					{
-						if(-not ($resource.SiteConfig.ConnectionStrings.Name | where-object{$_ -eq $AppConfigName})){
-							$found = $false;
-							$this.PublishCustomMessage("Could not find connection string [$AppConfigName] in the app service [$ResourceName]. Please check the name.",[MessageType]::Error)
-						}
-					}		
-							
-				}
             }
 
             if($CredentialLocation -eq "KeyVault"){
+
+				$keyVault = Get-AzKeyVault -ErrorAction Ignore
+				
+				Write-Host "`nPlease select key vault name from below:" -ForegroundColor Cyan
+
+				$i=0;
+				$keyVault | where{Write-Host "[$i] $($_.VaultName)" -ForegroundColor Cyan; $i++}
+				
+				$choice = Read-Host "Key vault name choice"
+				while($choice -notin 0..($i-1)){
+					Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+					Write-Host "Please select key vault name from below:" -ForegroundColor Cyan
+
+					$i=0;
+					$keyVault | where{Write-Host "[$i] $($_.VaultName)" -ForegroundColor Cyan; $i++}
+					$choice = Read-Host "Key vault name choice"
+				}
+				$KVName = $keyVault[$choice].VaultName
                 Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvName -Value $KVName
-                Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvCredType -Value $KVCredentialType
-                Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvCredName -Value $KVCredentialName
-                
-                if($KVCredentialType -eq "Key")
+				
+				$KVCredentialType = $null
+				$KVCredentialName = $null
+
+				Write-Host "`nPlease select key vault credential type from below: `n[1]: Key`n[2]: Secret" -ForegroundColor Cyan
+                $input = Read-Host "`Key Vault credential type"
+                   
+                while(($input -ne 1) -and ($input -ne 2)){
+                    Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+                    Write-Host "Please select key vault credential type from below: `n[1]: Key`n[2]: Secret" -ForegroundColor Cyan
+                    $input = Read-Host "Key Vault credential type"
+                }
+
+                if($input -eq 1)
                 {
-                    $key = Get-AzKeyVaultKey -VaultName $KVName -Name $KVCredentialName -ErrorAction Ignore
-					if($key){
+					$KVCredentialType = "Key"
+					Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvCredType -Value $KVCredentialType
+					$keys = Get-AzKeyVaultKey -VaultName $KVName -ErrorAction Ignore
+					if($keys){
+						Write-Host "`nPlease select key name from below:" -ForegroundColor Cyan
+						$i=0;
+						$keys | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+						$choice = Read-Host "Key name choice"
+						while($choice -notin 0..($i-1)){
+							Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+							Write-Host "Please select key name from below:" -ForegroundColor Cyan
+		
+							$i=0;
+							$keys | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+							$choice = Read-Host "Key name choice"
+						}
+						$KVCredentialName = $keys[$choice].Name
+						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvCredName -Value $KVCredentialName
+						$key = Get-AzKeyVaultKey -VaultName $KVName -Name $KVCredentialName -ErrorAction Ignore
 						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name expiryTime -Value $key.Expires
                     	Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name version -Value $key.Version
-					}
-                    else{
-						$found = $false;
-						$this.PublishCustomMessage("Could not find key [$KVCredentialName] in key vault [$KVName]. Please check the names.",[MessageType]::Error)
-					}
-                }
-                elseif($KVCredentialType -eq "Secret")
-                {
-                    $secret = Get-AzKeyVaultSecret -VaultName $KVName -Name $KVCredentialName -ErrorAction Ignore
-					if($secret){
-	                    Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name expiryTime -Value $secret.Expires
-    	                Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name version -Value $secret.Version
+
 					}
 					else{
 						$found = $false;
-						$this.PublishCustomMessage("Could not find secret [$KVCredentialName] in key vault [$KVName]. Please check the names.",[MessageType]::Error)
+						$this.PublishCustomMessage("Either there are no keys in the key vault [$KVName] or you do not have sufficient permissions to access them.",[MessageType]::Error)
 					}
                 }
-            }
+                elseif($input -eq 2)
+                {
+					$KVCredentialType = "Secret"
+					Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvCredType -Value $KVCredentialType
+					$secrets = Get-AzKeyVaultSecret -VaultName $KVName -ErrorAction Ignore
+					if($secrets){
+						Write-Host "`nPlease select secret name from below:" -ForegroundColor Cyan
+						$i=0;
+						$secrets | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+						$choice = Read-Host "Secret name choice"
+						while($choice -notin 0..($i-1)){
+							Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+							Write-Host "Please select secret name from below:" -ForegroundColor Cyan
+		
+							$i=0;
+							$secrets | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+							$choice = Read-Host "Secret name choice"
+						}
+						$KVCredentialName = $secrets[$choice].Name
+						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvCredName -Value $KVCredentialName
+						$secret = Get-AzKeyVaultSecret -VaultName $KVName -Name $KVCredentialName -ErrorAction Ignore
+						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name expiryTime -Value $secret.Expires
+                    	Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name version -Value $secret.Version
+
+					}
+					else{
+						$found = $false;
+						$this.PublishCustomMessage("Either there are no secrets in the key vault [$KVName] or you do not have sufficient permissions to access them.",[MessageType]::Error)
+					}
+                }	
+			}
 
 			if($found){
 				$credentialInfo | ConvertTo-Json -Depth 10 | Out-File $file -Force
@@ -490,7 +588,7 @@ class CredHygiene : CommandBase{
 			
 				if($credentialInfo.credLocation -eq "AppService"){
 					
-					$resource = Get-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName
+					$resource = Get-AzWebApp -Name $credentialInfo.resourceName
 					
 					$hash = @{}
 
@@ -526,11 +624,11 @@ class CredHygiene : CommandBase{
 					}
 
 					if($credentialInfo.appConfigType -eq "Application Settings"){
-						Set-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName -AppSettings $hash | Out-Null
+						Set-AzWebApp -Name $credentialInfo.resourceName -AppSettings $hash | Out-Null
 						$this.PublishCustomMessage("Successfully updated the application setting [$($credentialInfo.appConfigName)] in the app service [$($credentialInfo.resourceName)]", [MessageType]::Update)
 					}
 					elseif($credentialInfo.appConfigType -eq "Connection Strings"){
-						Set-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName -ConnectionStrings $hash | Out-Null
+						Set-AzWebApp -Name $credentialInfo.resourceName -ConnectionStrings $hash | Out-Null
 						$this.PublishCustomMessage("Successfully updated connection string [$($credentialInfo.appConfigName)] in the app service [$($credentialInfo.resourceName)]", [MessageType]::Update)
 					}
 					
