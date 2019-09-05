@@ -87,7 +87,7 @@ function New-AzSKTrackedCredential {
                     $cred.alertPhoneNumber = $AlertSMS
                 }
                 $cred.comment = $Comment
-                $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation))                
+                $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation,$CredentialGroup))                
             }
 			
         }

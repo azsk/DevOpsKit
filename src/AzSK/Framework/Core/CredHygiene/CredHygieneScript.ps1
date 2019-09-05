@@ -78,39 +78,20 @@ class CredHygiene : CommandBase{
 		$this.PublishCustomMessage("Settings for the AzSK tracked credential [$($credentialInfo.credName)] `n`n", [MessageType]::Info) 
 		$this.PublishCustomMessage("`n")
 
-		$table = $credentialInfo | Format-List @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }}, @{Label = "Created on"; Expression = { $_.firstUpdatedOn }}, @{Label = "Created by"; Expression = { $_.firstUpdatedBy }}, @{Label = "Last update"; Expression = { $_.lastUpdatedOn }}, @{Label = "Updated by"; Expression = { $_.lastUpdatedBy }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
+		$table = $credentialInfo | Format-List @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }}, @{Label = "Credential Group"; Expression = { $_.credGroup }}, @{Label = "Created on"; Expression = { $_.firstUpdatedOn }}, @{Label = "Created by"; Expression = { $_.firstUpdatedBy }}, @{Label = "Last update"; Expression = { $_.lastUpdatedOn }}, @{Label = "Updated by"; Expression = { $_.lastUpdatedBy }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
 		$this.PublishCustomMessage($table, $messageType)
-		#$this.PublishCustomMessage("Name:`t`t`t`t`t`t`t`t`t$($credentialInfo.credName)", $messageType)
-		#$this.PublishCustomMessage("Location:`t`t`t`t`t`t`t`t$($credentialInfo.credLocation)", $messageType)
-		#$this.PublishCustomMessage("Rotation interval (days):`t`t`t`t$($credentialInfo.rotationInt)", $messageType)
-		#$this.PublishCustomMessage("Alert email:`t`t`t`t`t`t`t$($credentialInfo.emailId)", $messageType)
-		#$this.PublishCustomMessage("Alert phone:`t`t`t`t`t`t`t$($credentialInfo.contactNumber)", $messageType)
-		#$this.PublishCustomMessage("Created on:`t`t`t`t`t`t`t`t$($credentialInfo.firstUpdatedOn)", $messageType)
-		#$this.PublishCustomMessage("Created by:`t`t`t`t`t`t`t`t$($credentialInfo.firstUpdatedBy)",$messageType)
-		#$this.PublishCustomMessage("Last update:`t`t`t`t`t`t`t$($credentialInfo.lastUpdatedOn)", $messageType)
-		#$this.PublishCustomMessage("Updated by:`t`t`t`t`t`t`t`t$($credentialInfo.lastUpdatedBy)", $messageType)
-		#$this.PublishCustomMessage("Comment:`t`t`t`t`t`t`t`t$($credentialInfo.comment)`n", $messageType)
 
 		if($credentialInfo.credLocation -eq "AppService"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
 			$this.PublishCustomMessage("Additional Details:");
 			$table = $credentialInfo | Format-List @{Label = "AppService Name"; Expression = { $_.resourceName }} , @{Label = "AppService config type"; Expression = { $_.appConfigType }}, @{Label = "AppService config name"; Expression = { $_.appConfigName }} | Out-String
 			$this.PublishCustomMessage($table, $messageType)
-			#$this.PublishCustomMessage("AppService name:`t`t`t`t`t`t$($credentialInfo.resourceGroup)", $messageType)
-			#$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", $messageType)
-			#$this.PublishCustomMessage("AppService config type:`t`t`t`t`t$($credentialInfo.appConfigType)", $messageType)
-			#$this.PublishCustomMessage("AppService config name:`t`t`t`t`t$($credentialInfo.appConfigName)", $messageType)
 		}
 		if($credentialInfo.credLocation -eq "KeyVault"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
 			$this.PublishCustomMessage("Additional Details:");
 			$table = $credentialInfo | Format-List @{Label = "Key vault Name"; Expression = { $_.kvName }} , @{Label = "Credential type"; Expression = { $_.kvCredType }}, @{Label = "Credential name"; Expression = { $_.kvCredName }}, @{Label = "Expiry time"; Expression = { $_.expiryTime }}, @{Label = "Version"; Expression = { $_.version }} | Out-String
 			$this.PublishCustomMessage($table, $messageType)
-			#$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", $messageType)
-			#$this.PublishCustomMessage("Credential type:`t`t`t`t`t`t$($credentialInfo.kvCredType)", $messageType)
-			#$this.PublishCustomMessage("Credential name:`t`t`t`t`t`t$($credentialInfo.kvCredName)", $messageType)
-			#$this.PublishCustomMessage("Expiry time:`t`t`t`t`t`t`t$($credentialInfo.expiryTime)", $messageType)
-			#$this.PublishCustomMessage("Version:`t`t`t`t`t`t`t`t$($credentialInfo.Version)", $messageType)
 		}
 
 		$this.PublishCustomMessage("`n")		
@@ -120,36 +101,20 @@ class CredHygiene : CommandBase{
 		$this.PublishCustomMessage("`n")
 		$this.PublishCustomMessage("Settings for the AzSK tracked credential [$($credentialInfo.credName)] `n`n", [MessageType]::Info) 
 		$this.PublishCustomMessage("`n")
-		$table = $credentialInfo | Format-List @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
+		$table = $credentialInfo | Format-List @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }}, @{Label = "Credential Group"; Expression = { $_.credGroup }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
 		$this.PublishCustomMessage($table, [MessageType]::Default)
-
-		#$this.PublishCustomMessage("Name:`t`t`t`t`t`t`t`t`t$($credentialInfo.credName)", [MessageType]::Default)
-		#$this.PublishCustomMessage("Location:`t`t`t`t`t`t`t`t$($credentialInfo.credLocation)", [MessageType]::Default)
-		#$this.PublishCustomMessage("Rotation interval (days):`t`t`t`t$($credentialInfo.rotationInt)", [MessageType]::Default)
-		#$this.PublishCustomMessage("Alert email:`t`t`t`t`t`t`t$($credentialInfo.emailId)", [MessageType]::Default)
-		#$this.PublishCustomMessage("Alert phone:`t`t`t`t`t`t`t$($credentialInfo.contactNumber)", [MessageType]::Default)
-		#$this.PublishCustomMessage("Comment:`t`t`t`t`t`t`t`t$($credentialInfo.comment)`n", [MessageType]::Default)
 
 		if($credentialInfo.credLocation -eq "AppService"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
 			$this.PublishCustomMessage("Additional Details:");
 			$table = $credentialInfo | Format-List @{Label = "AppService Name"; Expression = { $_.resourceName }} , @{Label = "AppService config type"; Expression = { $_.appConfigType }}, @{Label = "AppService config name"; Expression = { $_.appConfigName }} | Out-String
 			$this.PublishCustomMessage($table, [MessageType]::Default)
-			#$this.PublishCustomMessage("AppService name:`t`t`t`t`t`t$($credentialInfo.resourceGroup)", [MessageType]::Default)
-			#$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", [MessageType]::Default)
-			#$this.PublishCustomMessage("AppService config type:`t`t`t`t`t$($credentialInfo.appConfigType)", [MessageType]::Default)
-			#$this.PublishCustomMessage("AppService config name:`t`t`t`t`t$($credentialInfo.appConfigName)", [MessageType]::Default)
 		}
 		if($credentialInfo.credLocation -eq "KeyVault"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
 			$this.PublishCustomMessage("Additional Details:");
 			$table = $credentialInfo | Format-List @{Label = "Key vault Name"; Expression = { $_.kvName }} , @{Label = "Credential type"; Expression = { $_.kvCredType }}, @{Label = "Credential name"; Expression = { $_.kvCredName }}, @{Label = "Expiry time"; Expression = { $_.expiryTime }}, @{Label = "Version"; Expression = { $_.version }} | Out-String
 			$this.PublishCustomMessage($table, [MessageType]::Default)
-			#$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", [MessageType]::Default)
-			#$this.PublishCustomMessage("Credential type:`t`t`t`t`t`t$($credentialInfo.kvCredType)", [MessageType]::Default)
-			#$this.PublishCustomMessage("Credential name:`t`t`t`t`t`t$($credentialInfo.kvCredName)", [MessageType]::Default)
-			#$this.PublishCustomMessage("Expiry time:`t`t`t`t`t`t`t$($credentialInfo.expiryTime)", [MessageType]::Default)
-			#$this.PublishCustomMessage("Version:`t`t`t`t`t`t`t`t$($credentialInfo.Version)", [MessageType]::Default)
 		}
 
 		$this.PublishCustomMessage("`n")		
@@ -257,7 +222,7 @@ class CredHygiene : CommandBase{
 		}
 	}
 
-	[void] NewAlert($CredentialLocation)
+	[void] NewAlert($CredentialLocation,$CredentialGroup)
 	{           
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $($this.credName)
 		$file += ".json"
@@ -460,6 +425,32 @@ class CredHygiene : CommandBase{
 					}
                 }	
 			}
+
+			$ag = $null;
+			if($CredentialGroup){
+				$actionGroups = Get-AzActionGroup -ErrorAction Ignore -WarningAction Ignore
+				$ag = $actionGroups | where{$_.Name -eq $CredentialGroup}
+				
+				if(-not $ag){
+					$this.PublishCustomMessage("The action group [$CredentialGroup] does not exist in the subscription.",[MessageType]::Error)
+					Write-Host "`nPlease select action group name from below:" -ForegroundColor Cyan
+					$i=0;
+					$actionGroups | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+					$choice = Read-Host "Credential group choice"
+					while($choice -notin 0..($i-1)){
+						Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+						Write-Host "Please select action group name from below:" -ForegroundColor Cyan
+						$i=0;
+						$actionGroups | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+						$choice = Read-Host "Credential group choice"
+					}
+					$ag = $actionGroups[$choice]
+					$CredentialGroup = $ag.Name
+				}
+			}
+
+			$this.InstallCredentialGroupAlert($ag);
+			Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name credGroup -Value $CredentialGroup
 
 			if($found){
 				$credentialInfo | ConvertTo-Json -Depth 10 | Out-File $file -Force
@@ -757,4 +748,64 @@ class CredHygiene : CommandBase{
 		}
 	}	 
 
+	[void] InstallCredentialGroupAlert($actionGroup)
+	{
+		$queryRules = Get-AzScheduledQueryRule -ErrorAction Ignore -WarningAction Ignore
+		$queryRules = $queryRules.Name
+		$qr = "AzSK_CredHygiene_Alert_$($actionGroup.GroupShortName)"
+
+		if($queryRules -contains $qr){
+			$this.PublishCustomMessage("Alert for the credential group [$($actionGroup.Name)] is already configured.");
+		}
+		else {
+			
+			$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+
+			# We are using LAWS from the same sub for Alert REST API call.
+			$automationAccDetails= Get-AzAutomationAccount -ResourceGroupName $rgName -ErrorAction SilentlyContinue 
+			if($automationAccDetails)
+			{
+				#Fetch LAWS Id from CA variables
+				$laWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "LAWSId" -ErrorAction SilentlyContinue
+				if($laWSId){
+					$laWS = Get-AzOperationalInsightsWorkspace | where{$_.CustomerId -eq $laWSId.Value} # Verify whether the LA resource ith the WS id exists.
+					if($laWS){
+						
+						$body = [ConfigurationManager]::LoadServerConfigFile("CredentialHygieneAlert_CredentialGroup.json");
+						$dataSourceId = $body.properties.source.dataSourceId | ConvertTo-Json -Depth 10
+						$dataSourceId = $dataSourceId.Replace("{0}",$this.SubscriptionContext.SubscriptionId).Replace("{1}",$laWS.ResourceGroupName).Replace("{2}",$laWS.CustomerId) | ConvertFrom-Json
+						$body.properties.source.dataSourceId = $dataSourceId
+						
+						$ag = $body.properties.action.aznsAction.actionGroup[0] | ConvertTo-Json -Depth 10
+						$ag = $ag.Replace("{3}",$actionGroup.Id) | ConvertFrom-Json
+						$body.properties.action.aznsAction.actionGroup[0] = $ag
+
+						$cg = $body.properties.source.query | ConvertTo-Json -Depth 10
+						$cg = $cg.Replace("{4}",$actionGroup.Name) | ConvertFrom-Json
+						$body.properties.source.query = $cg
+							
+						$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
+						$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($laWS.ResourceGroupName)/providers/microsoft.insights/scheduledQueryRules/AzSK_CredHygiene_Alert_$($actionGroup.GroupShortName)?api-version=2018-04-16"
+									
+						[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
+						$this.PublishCustomMessage("Alert for the credential group [$($actionGroup.Name)] is successfully configured.");
+					}
+					else{ # LA resource not found.
+						$this.PublishCustomMessage("Log analytics resource with workspace id [$($laWSId.Value)] provided in the CA automation account variables doesn't exist. Please verify the value of log analytics workspace id.", [MessageType]::Error)
+						$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
+						$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the log analytics workspace id with the correct value in the CA automation account.")
+					}
+				}
+				else{ # LAWS id variable not found.
+					$this.PublishCustomMessage("Log analytics workspace id not found in the CA automation account variables.", [MessageType]::Error)
+					$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
+					$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the log analytics workspace id with the correct value in the CA automation account.")
+				}
+			}
+			else{ # CA setup not found.
+				$this.PublishCustomMessage("Continuous Assurance setup was not found in the current subscription.", [MessageType]::Error)
+				$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
+			}
+		}	
+	}	 
 }
