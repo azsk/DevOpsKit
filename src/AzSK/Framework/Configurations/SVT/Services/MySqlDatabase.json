@@ -1,0 +1,131 @@
+{
+    "FeatureName":  "MySql",
+    "Reference":  "aka.ms/azsktcp/mysql",
+    "IsMaintenanceMode":  false,
+    "Controls": [
+     {
+      "ControlID": "Azure_MySQL_AuthZ_Firewall_Deny_Access_AzureServices",
+      "Description": "Use the 'Allow access to Azure services' flag only if required.",
+      "Id": "MySql380",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "The 'Allow access to Azure services' setting configures a very broad range of IP addresses from Azure as permitted to access the MySql server. Please make sure your scenario really requires this setting before enabling it. Turning it ON exposes your MySql Server to risk of attacks from resources (IPs) owned by others in the Azure region.",
+      "Recommendation": "",
+      "Tags": [
+        "SDL",
+        "Best Practice",
+        "Automated",
+        "AuthZ",
+        "SOX"
+        ],
+      "Enabled": true
+    },
+    {
+    "ControlID": "Azure_MySql_AuthZ_Use_IP_Firewall_Rules",
+    "Description": "Setup firewall rules to restrict access from only a specific set up of IPs",
+    "Id": "SQLDatabase190",
+    "ControlSeverity": "High",
+    "Automated": "No",
+    "MethodName": "",
+    "Rationale": "Using the IP firewall rules ensures that access to the data or the service is restricted to a specific set of IPs. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios.",
+    "Recommendation": "",
+    "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "AuthZ",
+        "SqlDatabase"
+    ],
+    "Enabled": true
+    },
+    {
+    "ControlID": "Azure_MySQLDatabase_Audit_Enable_Threat_Detection_Server",
+    "Description": "Enable MySQL Server threat detection with email admins option. Do not exclude any detection types",
+    "Id": "MySQLDatabase160",
+    "ControlSeverity": "High",
+    "Automated": "No",
+    "MethodName": "",
+    "Rationale": "Enabling threat detection helps generate alerts about suspicious activity that might indicate attacks such as SQL Injection, login from a new location, unusual usage patterns and related attacks in a timely manner.",
+    "Recommendation": "",
+    "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "Audit",
+        "SOX"
+    ],
+    "Enabled": true
+    },
+    {
+    "ControlID": "Azure_MySQLDatabase_Authz_Enforce_SSL_Connection",
+    "Description": "Avoid disabling the SSL option whenever possible",
+    "Id": "MySQLDatabase",
+    "ControlSeverity": "High",
+    "Automated": "No",
+    "MethodName": "",
+    "Rationale": "Enforcing SSL connections between your database server and your client applications helps protect against "man in the middle" attacks by encrypting the data stream between the server and your application.",
+    "Recommendation": "",
+    "Tags":[
+
+    ],
+    "Enabled": true
+    },
+    {
+    "ControlID": "Azure_MYSQLDatabase_AuthZ_Configure_IP_Range",
+    "Description": "Configure only the required IP addresses on SQL firewall. Do not use Any-to-Any IP range $($this.ControlSettings.UniversalIPRange)",
+    "Id": "SQLDatabase360",
+    "ControlSeverity": "High",
+    "Automated": "No",
+    "MethodName": "",
+    "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios.",
+    "Recommendation": "Do not configure Any to Any firewall IP address.",
+    "Tags": [
+        "SDL",
+        "Best Practice",
+        "Automated",
+        "AuthZ",
+        "SOX"
+        ],
+    "Enabled": true
+    }, 
+    {
+    "ControlID": "Azure_DBforPostgreSQL_NetSec_Configure_VNet_Rules",
+    "Description": "Consider using virtual network rules for improved isolation",
+    "Id": "DBforMYSQL",
+    "ControlSeverity": "Medium",
+    "Automated": "No",
+    "MethodName": "CheckPSQLServerVnetRules",
+    "Rationale": "Virtual network rule provides isolation for your Azure Database for PostgreSQL.",
+    "Recommendation": "",
+    "Tags": [
+        "SDL",
+        "TCP",
+        "NetSec",
+        "Automated",
+        "SingleServer",
+        "GeneralPurpose",
+        "MemoryOptimized"
+        ],
+    "Enabled": true
+    }, 
+    {
+    "ControlID": "Azure_MySQLDatabase_Backup_And_Disaster_Recovery",
+    "Description": "Backup and Disaster Recovery must be planned at the time of creation of Azure Database for MySql service",
+    "Id": "MySQLDatabase150",
+    "ControlSeverity": "Medium",
+    "Automated": "No",
+    "MethodName": "",
+    "Rationale": "Azure Database for MySQL offers default backup/disaster recovery for 7 days that can be extended up to 35 days. You can choose between locally redundant or geo-redundant backup storage. When processing critical workloads, a team must have adequate backups of the data.",
+    "Recommendation": "Ensure the critical business data in the Azure Database for MySQL has been backed up.The type of backup once selected cannot be changed in future.",
+    "Tags": [
+        "SDL",
+        "TCP",
+        "BCDR",
+        "Automated",
+        "SingleServer"
+    ],
+    "Enabled": true
+    }
+  ]
+}
