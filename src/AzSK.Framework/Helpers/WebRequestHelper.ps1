@@ -277,7 +277,7 @@ Content-Type: multipart/mixed; boundary={1}
 					{
 						$requestResult = Invoke-WebRequest -Method $method -Uri $validatedUri -Headers $headers -UseBasicParsing
 					}
-					elseif ($method -eq [Microsoft.PowerShell.Commands.WebRequestMethod]::Post -or $method -eq [Microsoft.PowerShell.Commands.WebRequestMethod]::Put) 
+					elseif ($method -eq [Microsoft.PowerShell.Commands.WebRequestMethod]::Post -or $method -eq [Microsoft.PowerShell.Commands.WebRequestMethod]::Put -or [Microsoft.PowerShell.Commands.WebRequestMethod]::Patch) 
 					{
 						if($uri.EndsWith("`$batch"))
 						{
