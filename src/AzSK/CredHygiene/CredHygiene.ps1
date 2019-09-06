@@ -13,13 +13,11 @@ function New-AzSKTrackedCredential {
 	.PARAMETER CredentialLocation
 		Provide the credential location.
 	.PARAMETER CredentialName
-		Provide the credential name.
+        Provide the credential name.
+    .PARAMETER CredentialGroup
+		Provide the credential group.    
 	.PARAMETER RotationInterval
 		Provide the rotation interval.
-	.PARAMETER AlertEmail
-		Provide the email id for alert.
-	.PARAMETER AlertSMS
-		Provide the contact number for alert.
     .PARAMETER Comment
 		Provide the comment for the credential.
 	
@@ -55,16 +53,6 @@ function New-AzSKTrackedCredential {
 		[Alias("cgp")]
         $CredentialGroup,
 
-        [Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Provide the email id for alert")]
-        [string]
-		[Alias("aem")]
-        $AlertEmail,
-
-        [Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Provide the contact number for alert")]
-        [string]
-		[Alias("acn")]
-        $AlertSMS,
-
         [Parameter(Mandatory = $true, ParameterSetName = "Custom", HelpMessage = "Provide the comment for the credential")]
         [string]
 		[Alias("cmt")]
@@ -82,10 +70,6 @@ function New-AzSKTrackedCredential {
                 $cred.credName = $CredentialName
                 $cred.credLocation = $CredentialLocation
                 $cred.rotationInt = $RotationIntervalInDays
-                $cred.alertEmail = $AlertEmail
-                if($AlertSMS){
-                    $cred.alertPhoneNumber = $AlertSMS
-                }
                 $cred.comment = $Comment
                 $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation,$CredentialGroup))                
             }
@@ -111,7 +95,9 @@ function Get-AzSKTrackedCredential {
 	.PARAMETER SubscriptionId
 		Provide the subscription id.
 	.PARAMETER CredentialName
-		Provide the credential name.	
+        Provide the credential name.
+    .PARAMETER DetailedView
+		Switch for detailed metadata information about the credential.	
 	.LINK
 	https://aka.ms/azskossdocs
 
@@ -232,13 +218,11 @@ function Update-AzSKTrackedCredential {
 	.PARAMETER SubscriptionId
 		Provide the subscription id.
 	.PARAMETER CredentialName
-		Provide the credential name.
+        Provide the credential name.
+    .PARAMETER CredentialGroup
+		Provide the credential group.
 	.PARAMETER RotationInterval
 		Provide the rotation interval.
-	.PARAMETER AlertEmail
-		Provide the email id for alert.
-	.PARAMETER AlertSMS
-		Provide the contact number for alert.
     .PARAMETER Comment
 		Provide the comment for the credential.
 	
@@ -262,25 +246,10 @@ function Update-AzSKTrackedCredential {
 		[Alias("rint")]
         $RotationIntervalInDays,
 
-        [Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Provide the credential group for alert")]
+        [Parameter(Mandatory = $false, HelpMessage = "Provide the credential group for alert")]
         [string]
 		[Alias("cgp")]
         $CredentialGroup,
-
-        [Parameter(Mandatory = $false, HelpMessage = "Provide the email id for alert")]
-        [string]
-		[Alias("aem")]
-        $AlertEmail,
-
-        [Parameter(Mandatory = $false, HelpMessage = "Provide the contact number for alert")]
-        [string]
-		[Alias("acn")]
-        $AlertSMS,
-
-        [Parameter(Mandatory = $true, HelpMessage = "Provide the comment for the credential")]
-        [string]
-		[Alias("cmt")]
-        $Comment,
 
         [Parameter(Mandatory = $false, HelpMessage = "Switch for rotating credential at source.")]
         [switch]
@@ -290,7 +259,12 @@ function Update-AzSKTrackedCredential {
         [Parameter(Mandatory = $false, HelpMessage = "Switch for rotating credential at source.")]
         [switch]
 		[Alias("uc")]
-        $UpdateCredential
+        $UpdateCredential,
+
+        [Parameter(Mandatory = $true, HelpMessage = "Provide the comment for the credential")]
+        [string]
+		[Alias("cmt")]
+        $Comment
 
     )
     Begin {
@@ -314,7 +288,7 @@ function Update-AzSKTrackedCredential {
                     $resetcred = $true;
                 }
                 
-                $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$updatecred,$resetcred)) 
+                $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$CredentialGroup,$updatecred,$resetcred,$Comment)) 
                            
             }
 	

@@ -207,7 +207,7 @@ class CredHygiene : CommandBase{
 					}
 				}
 				else{
-					$table = $sortedBlob | Format-Table -AutoSize -Wrap @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }}, @{Label = "Created on"; Expression = { $_.firstUpdatedOn }}, @{Label = "Created by"; Expression = { $_.firstUpdatedBy }}, @{Label = "Last update"; Expression = { $_.lastUpdatedOn }}, @{Label = "Updated by"; Expression = { $_.lastUpdatedBy }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
+					$table = $sortedBlob | Format-Table -AutoSize -Wrap @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }}, @{Label = "Credential Group"; Expression = { $_.credGroup }}, @{Label = "Created on"; Expression = { $_.firstUpdatedOn }}, @{Label = "Created by"; Expression = { $_.firstUpdatedBy }}, @{Label = "Last update"; Expression = { $_.lastUpdatedOn }}, @{Label = "Updated by"; Expression = { $_.lastUpdatedBy }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
 					$this.PublishCustomMessage($table, [MessageType]::Default)
 				}
 			}
@@ -532,7 +532,7 @@ class CredHygiene : CommandBase{
 		}
 	}
 	
-	[void] UpdateAlert($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$UpdateCredential,$ResetLastUpdate)
+	[void] UpdateAlert($CredentialName,$RotationIntervalInDays,$CredentialGroup,$UpdateCredential,$ResetLastUpdate,$Comment)
 	{           
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $CredentialName
 		$file += ".json"
@@ -565,14 +565,30 @@ class CredHygiene : CommandBase{
 				$credentialInfo.rotationInt = $RotationIntervalInDays;
 			}
 
-			if ($AlertEmail)
-			{
-				$credentialInfo.emailId = $AlertEmail;
-			}
+			$ag = $null;
+			if($CredentialGroup){
+				$actionGroups = Get-AzActionGroup -ErrorAction Ignore -WarningAction Ignore
+				$ag = $actionGroups | where{$_.Name -eq $CredentialGroup}
+				
+				if(-not $ag){
+					$this.PublishCustomMessage("The action group [$CredentialGroup] does not exist in the subscription.",[MessageType]::Error)
+					Write-Host "`nPlease select action group name from below:" -ForegroundColor Cyan
+					$i=0;
+					$actionGroups | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+					$choice = Read-Host "Credential group choice"
+					while($choice -notin 0..($i-1)){
+						Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+						Write-Host "Please select action group name from below:" -ForegroundColor Cyan
+						$i=0;
+						$actionGroups | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+						$choice = Read-Host "Credential group choice"
+					}
+					$ag = $actionGroups[$choice]
+					$CredentialGroup = $ag.Name
+				}
 
-			if ($AlertSMS)
-			{
-				$credentialInfo.contactNumber = $AlertSMS;
+				$this.InstallCredentialGroupAlert($ag);
+				$credentialInfo.credGroup = $CredentialGroup
 			}
 
 			if($UpdateCredential){
@@ -615,11 +631,11 @@ class CredHygiene : CommandBase{
 					}
 
 					if($credentialInfo.appConfigType -eq "Application Settings"){
-						Set-AzWebApp -Name $credentialInfo.resourceName -AppSettings $hash | Out-Null
+						Set-AzWebApp -Name $credentialInfo.resourceName -ResourceGroupName $resource.ResourceGroup -AppSettings $hash | Out-Null
 						$this.PublishCustomMessage("Successfully updated the application setting [$($credentialInfo.appConfigName)] in the app service [$($credentialInfo.resourceName)]", [MessageType]::Update)
 					}
 					elseif($credentialInfo.appConfigType -eq "Connection Strings"){
-						Set-AzWebApp -Name $credentialInfo.resourceName -ConnectionStrings $hash | Out-Null
+						Set-AzWebApp -Name $credentialInfo.resourceName -ResourceGroupName $resource.ResourceGroup -ConnectionStrings $hash | Out-Null
 						$this.PublishCustomMessage("Successfully updated connection string [$($credentialInfo.appConfigName)] in the app service [$($credentialInfo.resourceName)]", [MessageType]::Update)
 					}
 					
