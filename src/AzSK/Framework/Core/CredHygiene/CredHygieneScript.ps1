@@ -559,6 +559,7 @@ class CredHygiene : CommandBase{
 			$this.PublishCustomMessage("Updating settings for AzSK tracked credential [$CredentialName]", [MessageType]::Default) 
 			$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
 			$user = ([ContextHelper]::GetCurrentRMContext()).Account.Id;
+			$currentTime = [DateTime]::UtcNow
 
 			if ($RotationIntervalInDays)
 			{
@@ -648,7 +649,6 @@ class CredHygiene : CommandBase{
 						$currentKey = Get-AzKeyVaultKey -VaultName $credentialInfo.kvName -Name $credentialInfo.kvCredName -ErrorAction SilentlyContinue
 						if(($currentKey | Measure-Object).Count -ne 0)
 						{
-							$currentTime = [DateTime]::UtcNow
 							$expiryTime = $currentTime.AddDays($credentialInfo.rotationInt)
 
 							$this.PublishCustomMessage("Updating the key [$($credentialInfo.kvCredName)] in the key vault [$($credentialInfo.kvName)]", [MessageType]::Default)
@@ -665,7 +665,6 @@ class CredHygiene : CommandBase{
 						$currentSecret = Get-AzKeyVaultSecret -VaultName $credentialInfo.kvName -Name $credentialInfo.kvCredName -ErrorAction SilentlyContinue
 						if(($currentSecret | Measure-Object).Count -ne 0)
 						{
-							$currentTime = [DateTime]::UtcNow
 							$expiryTime = $currentTime.AddDays($credentialInfo.rotationInt)
 
 							$this.PublishCustomMessage("Updating the secret [$($credentialInfo.kvCredName)] in the key vault [$($credentialInfo.kvName)]", [MessageType]::Default)
@@ -682,12 +681,12 @@ class CredHygiene : CommandBase{
 					$this.PublishCustomMessage("If you are using key/secret URLs with specific version identifier in them, please update to the new version before disabling it.")
 				}
 
-				$credentialInfo.lastUpdatedOn = [DateTime]::UtcNow
+				$credentialInfo.lastUpdatedOn = $currentTime
 				$credentialInfo.lastUpdatedBy = $user
 			}
 			else{
 				if($ResetLastUpdate){
-					$credentialInfo.lastUpdatedOn = [DateTime]::UtcNow
+					$credentialInfo.lastUpdatedOn = $currentTime
 					$credentialInfo.lastUpdatedBy = $user
 				}
 			}
