@@ -202,6 +202,20 @@
           "data": {
             "value": false
           }
+        },
+        {
+          "id": "RedisCache140",
+          "controlId": "Azure_RedisCache_BCDR_Use_RDB_Backup",
+          "isEnabled": true,
+          "description": "Redis Data Persistence should be enabled to back up Redis Cache data",
+          "rationale": "Enabling backup on Redis Cache ensures that there is always a previous snapshot of data that can be leveraged towards recovery scenarios.",
+          "recommendation": "Configure data persistence. Refer: https://docs.microsoft.com/en-us/azure/redis-cache/cache-configure#redis-data-persistence",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.redisConfiguration.rdb-backup-enabled" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": true
+          }
         }
       ]
     },
@@ -394,6 +408,21 @@
           "jsonPath": [ "$.properties.supportsHttpsTrafficOnly" ],
           "matchType": "Boolean",
           "data": { "value": true }
+        },
+        {
+          "id": "AzureStorage250",
+          "controlId": "Azure_Storage_DP_Restrict_CORS_Access",
+          "isEnabled": true,
+          "description": "Ensure that CORS access is granted to a minimal set of trusted origins and only required verbs are supported.",
+          "rationale": "CORS enables applications running under one domain to access a resource under another domain. Using '*' (allow all) for CORS setting means that an application running under any domain can have access to your application's resources and data. Restricting allowed origins to the specific set that needs access aligns with the principle of least privilege.",
+          "recommendation": "Go to Azure Portal --> your Storage service --> Settings --> CORS --> for each of the Storage services  i.e. Blob/File/Table/Queue --> Add --> Provide the specific domain names and other CORS details that should be allowed to make cross-origin calls. Note: No action is needed if you are not using CORS for your service.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.cors.corsRules" ],
+          "matchType": "ItemCount",
+          "data": {
+            "type": "Equals",
+            "value": 0
+          }
         }
       ]
     },
@@ -1005,6 +1034,27 @@
             "type": "GreaterThanOrEqual",
             "value": "3.6.0",
             "isCaseSensitive": false
+          }
+        }
+      ]
+    },
+    {
+      "featureName": "AnalysisService",
+      "supportedResourceTypes": [ "Microsoft.AnalysisServices/servers" ],
+      "controls": [
+        {
+          "id": "AnalysisServices170",
+          "controlId": "Azure_AnalysisServices_BCDR_Plan",
+          "isEnabled": true,
+          "description": "Backup and Disaster Recovery must be planned for Analysis Services",
+          "rationale": "Azure Analysis Service does not offer features to cover backup/disaster recovery out-of-the-box. As a result, when processing critical workloads, a team must have adequate backups of the data.",
+          "recommendation": "Go To Azure Portal => Analysis Services => Select Analysis Service => Go To Settings => Select Backups => Select Storage account details and enable backups, Refer: https://docs.microsoft.com/en-us/azure/analysis-services/analysis-services-backup",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.backupBlobContainerUri" ],
+          "matchType": "ItemCount",
+          "data": {
+            "type": "GreaterThan",
+            "value": 0
           }
         }
       ]
