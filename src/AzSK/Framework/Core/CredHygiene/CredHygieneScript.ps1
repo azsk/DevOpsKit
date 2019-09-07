@@ -757,6 +757,7 @@ class CredHygiene : CommandBase{
 						$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($laWS.ResourceGroupName)/providers/microsoft.insights/scheduledQueryRules/AzSK_CredHygiene_Alert?api-version=2018-04-16"
 								
 						[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
+						$this.PublishCustomMessage("Alert for the credential group [$credHygieneAGName] is successfully configured.");
 					}
 					else{ # LA resource not found.
 						$this.PublishCustomMessage("Log analytics resource with workspace id [$($laWSId.Value)] provided in the CA automation account variables doesn't exist. Please verify the value of log analytics workspace id.", [MessageType]::Error)
