@@ -3,9 +3,8 @@ Set-StrictMode -Version Latest
 class CredHygiene : CommandBase{
     [string] $credName;
     [string] $credLocation;
-    [int] $rotationInt;
-    [string] $alertPhoneNumber = "";
-	[string] $alertEmail;
+	[int] $rotationInt;
+	[int] $nextExpiry;
     [string] $comment;
     hidden [string] $AzSKTemp = (Join-Path $([Constants]::AzSKAppFolderPath) $([Constants]::RotationMetadataSubPath)); 
     hidden [PSObject] $AzSKResourceGroup = $null;
@@ -258,14 +257,17 @@ class CredHygiene : CommandBase{
             $credentialInfo = New-Object PSObject
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name credLocation -Value $this.credLocation
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name credName -Value $this.credName
-            Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name rotationInt -Value $this.rotationInt
-            Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name emailId -Value $this.alertEmail
-            Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name contactNumber -Value $this.alertPhoneNumber
+			Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name rotationInt -Value $this.rotationInt
+			Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name nextExpiry -Value $this.nextExpiry
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name firstUpdatedOn -Value $startTime
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name lastUpdatedOn -Value $startTime
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name comment -Value $this.comment
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name firstUpdatedBy -Value $user
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name lastUpdatedBy -Value $user
+
+			if($credentialInfo.rotationInt -gt $credentialInfo.nextExpiry){
+				$credentialInfo.lastUpdatedOn = ($credentialInfo.lastUpdatedOn).AddDays($credentialInfo.nextExpiry - $credentialInfo.rotationInt) 
+			}
 
             if($CredentialLocation -eq "AppService"){
 
@@ -386,6 +388,14 @@ class CredHygiene : CommandBase{
 						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvCredName -Value $KVCredentialName
 						$key = Get-AzKeyVaultKey -VaultName $KVName -Name $KVCredentialName -ErrorAction Ignore
 						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name expiryTime -Value $key.Expires
+						if($key.Expires){
+							if($startTime.AddDays($credentialInfo.rotationInt) -gt $key.Expires){
+								$credentialInfo.lastUpdatedOn = ($key.Expires).AddDays(-($credentialInfo.rotationInt))
+							}
+							else{
+								$credentialInfo.lastUpdatedOn = $startTime
+							}
+						}
                     	Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name version -Value $key.Version
 
 					}
@@ -416,6 +426,14 @@ class CredHygiene : CommandBase{
 						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvCredName -Value $KVCredentialName
 						$secret = Get-AzKeyVaultSecret -VaultName $KVName -Name $KVCredentialName -ErrorAction Ignore
 						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name expiryTime -Value $secret.Expires
+						if($secret.Expires){
+							if($startTime.AddDays($credentialInfo.rotationInt) -gt $secret.Expires){
+								$credentialInfo.lastUpdatedOn = ($secret.Expires).AddDays(-($credentialInfo.rotationInt))
+							}
+							else{
+								$credentialInfo.lastUpdatedOn = $startTime
+							}
+						}
                     	Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name version -Value $secret.Version
 
 					}

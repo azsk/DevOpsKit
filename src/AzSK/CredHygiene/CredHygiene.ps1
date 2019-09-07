@@ -48,6 +48,11 @@ function New-AzSKTrackedCredential {
 		[Alias("rint")]
         $RotationIntervalInDays,
 
+        [Parameter(Mandatory = $true, ParameterSetName = "Custom", HelpMessage = "Provide the next expiry due in days")]
+        [int]
+		[Alias("nexp")]
+        $NextExpiryInDays,
+
         [Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Provide the credential group for alert")]
         [string]
 		[Alias("cgp")]
@@ -70,6 +75,7 @@ function New-AzSKTrackedCredential {
                 $cred.credName = $CredentialName
                 $cred.credLocation = $CredentialLocation
                 $cred.rotationInt = $RotationIntervalInDays
+                $cred.nextExpiry = $NextExpiryInDays
                 $cred.comment = $Comment
                 $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation,$CredentialGroup))                
             }
