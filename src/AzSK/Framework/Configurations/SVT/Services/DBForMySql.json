@@ -8,10 +8,10 @@
       "Description": "Use the 'Allow access to Azure services' flag or IP range only if required",
       "Id": "DBforMySql100",
       "ControlSeverity": "High",
-      "Automated": "No",
-      "MethodName": "",
+      "Automated": "Yes",
+      "MethodName": "CheckMySQLFirewallAccessAzureService",
       "Rationale": "The 'Allow access to Azure services' setting configures a very broad range of IP addresses from Azure as permitted to access the MySQL Server. Please make sure your scenario really requires this setting before enabling it. Turning it ON exposes your MySQL Server to risk of attacks from resources (IPs) owned by others in the Azure region.",
-      "Recommendation": "",
+      "Recommendation": "1. Turn 'OFF' the 'Allow access to Azure services' setting. 2. Remove IP range from firewall rules. Refer: https://docs.microsoft.com/en-us/azure/mysql/concepts-firewall-rules#connecting-from-azure",
       "Tags": [
         "SDL",
         "TCP",
@@ -103,7 +103,7 @@
     },
     {
         "ControlID": "Azure_DBforMySQL_Audit_Enable_Diagnostics_Log",
-        "Description": "Diagnostics logs must be enabled with a retention period of at least days.",
+        "Description": "Diagnostics logs must be enabled with a retention period of at least365 days.",
         "Id": "DBforMySQL180",
         "ControlSeverity": "Medium",
         "Automated": "No",
@@ -136,6 +136,42 @@
           "DBforMySQL"
         ],
         "Enabled": true
-      }
+      },
+      {
+        "ControlID": "Azure_DBforMySQL_AuthZ_Grant_Min_Access",
+        "Description": "Access to Azure Database for MySQL Servers must be granted in accordance with the principle of least privilege",
+        "Id": "DBforMySQL200",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Granting minimum access ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/mysql/howto-create-users#how-to-create-database-users-in-azure-database-for-mysql",
+        "Tags": [
+            "SDL",
+            "TCP",
+            "Manual",
+            "AuthZ",
+            "RBAC"
+        ],
+        "Enabled": true
+    },
+    
+    {
+      "ControlID": "Azure_DBforMySQL_BCDR_Plan",
+      "Description": "Backup and Disaster Recovery must be planned for the default Azure Database for MySQL service",
+      "Id": "DBforMySQL210",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckMySQLBCDRStatus",
+      "Rationale": "Azure Database for MySQL offers backup/disaster recovery up to 35 days. It also provides the flexibility to choose between locally redundant or geo-redundant backup storage. When processing critical workloads, a team must have adequate backups of the data.",
+      "Recommendation": "Ensure the critical business data in the Azure Database for MySQL has been backed up from a BC-DR standpoint.",
+      "Tags": [
+          "SDL",
+          "TCP",
+          "BCDR",
+          "Automated"
+      ],
+      "Enabled": true
+  }
   ]
 }
