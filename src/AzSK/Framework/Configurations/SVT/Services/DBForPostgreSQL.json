@@ -60,13 +60,13 @@
       },
       {
           "ControlID": "Azure_DBforPostgreSQL_AuthZ_Review_AzureServices_Access",
-          "Description": "Use the 'Allow access to Azure services' flag or $($this.ControlSettings.DBforPostgreSQL.AllowAllWindowsAzureIps) IP range only if required",
+          "Description": "Use the 'Allow access to Azure services' flag only if required",
           "Id": "DBforPostgreSQL140",
           "ControlSeverity": "High",
           "Automated": "Yes",
           "MethodName": "CheckPostgreSQLFirewallAccessAzureService",
           "Rationale": "The 'Allow access to Azure services' setting configures a very broad range of IP addresses from Azure as permitted to access the PostgreSQL Server. Please make sure your scenario really requires this setting before enabling it. Turning it ON exposes your PostgreSQL Server to risk of attacks from resources (IPs) owned by others in the Azure region.",
-          "Recommendation": "1. Turn 'OFF' the 'Allow access to Azure services' setting. 2. Remove $($this.ControlSettings.DBforPostgreSQL.AllowAllWindowsAzureIps) IP range from firewall rules. Refer: https://docs.microsoft.com/en-us/azure/postgresql/concepts-firewall-rules#connecting-from-azure",
+          "Recommendation": "Turn 'OFF' the 'Allow access to Azure services' setting. Refer: https://docs.microsoft.com/en-us/azure/postgresql/concepts-firewall-rules#connecting-from-azure",
           "Tags": [
               "SDL",
               "TCP",
@@ -102,7 +102,7 @@
           "Automated": "Yes",
           "MethodName": "CheckPostgreSQLATPSetting",
           "Rationale": "Advanced Threat Protection for Azure Database for PostgreSQL provides a layer of security, which enables customers to detect and respond to potential threats as they occur by providing security alerts on anomalous activities.",
-          "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/postgresql/concepts-data-access-and-security-threat-protection",
+          "Recommendation": "Go to your Azure Database for PostgreSQL server --> Enable Advanced Threat Protection on the server --> Tick the checkbox to 'send email notification to admins and subscription owners'. Refer: https://docs.microsoft.com/en-us/azure/postgresql/howto-database-threat-protection-portal",
           "Tags": [
               "SDL",
               "TCP",
@@ -179,7 +179,7 @@
         "Automated": "Yes",
         "MethodName": "CheckPostgreSQLLoggingParameters",
         "Rationale": "PostgreSQL sever logging parameters enable log collection of important system events pertinent to security. Regular monitoring of logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
-        "Recommendation": "To configure logging for your server, go to Server Parameters --> Set following log parameter: a) 'log_checkpoints': 'ON' b) 'log_connections': 'ON' c) 'log_disconnections': 'ON' d) 'log_duration': 'ON' e) 'log_retention_days': greater than $($this.ControlSettings.DBforPostgreSQL.LogRetentionPeriod_Min) days. Refer: https://docs.microsoft.com/en-us/azure/postgresql/concepts-server-logs#configure-logging",
+        "Recommendation": "To configure logging for your server, go to Server Parameters --> Set following log parameter: a) 'log_connections': 'ON' b) 'log_disconnections': 'ON' . Refer: https://docs.microsoft.com/en-us/azure/postgresql/concepts-server-logs#configure-logging",
         "Tags": [
           "SDL",
           "TCP",
