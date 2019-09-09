@@ -473,21 +473,79 @@ class CredHygiene : CommandBase{
 					if(-not $ag){
 						$this.PublishCustomMessage("The action group [$CredentialGroup] does not exist in the subscription.",[MessageType]::Error)
 						Write-Host "`nPlease select action group name from below:" -ForegroundColor Cyan
-						$i=0;
+						Write-Host "[0] Create new credential group" -ForegroundColor Cyan
+						$i=1;
 						$actionGroups | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
 						$choice = Read-Host "Credential group choice"
-						while($choice -notin 0..($i-1)){
+						while($choice -notin 0..$i){
 							Write-Host "`nIncorrect value supplied." -ForegroundColor Red
 							Write-Host "Please select action group name from below:" -ForegroundColor Cyan
-							$i=0;
+							Write-Host "[0] Create new credential group" -ForegroundColor Cyan
+							$i=1;
 							$actionGroups | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
 							$choice = Read-Host "Credential group choice"
 						}
-						$ag = $actionGroups[$choice]
-						$CredentialGroup = $ag.Name
+						if($choice -ne 0){
+							$ag = $actionGroups[$choice-1]
+							$CredentialGroup = $ag.Name
+						}
+						elseif($choice -eq 0){
+							$emailR = $null;
+							$countryCodeR = $null;
+							$phoneR = $null;
+							$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+
+							Write-Host "`nInitiating flow for creating a new credential group..." -ForegroundColor Yellow
+							$name = Read-Host "Please enter the name of the credential group"
+							$shortName = Read-Host "Please enter the short name (less than 12 characters) of the credential group"
+							
+							Write-Host "`nPlease enter: `n[0]: to skip email configuration `n[1]: to configure email for the credential group" -ForegroundColor Cyan
+							$choice = Read-Host "User choice"
+							while($choice -notin 0..1){
+								Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+								Write-Host "`nPlease enter: `n[0]: to skip email configuration `n[1]: to configure email for the credential group" -ForegroundColor Cyan
+								$choice = Read-Host "User choice"
+							}
+							if($choice -eq 1){
+								$email = Read-Host "Enter a valid email address"
+								$emailR = New-AzActionGroupReceiver -Name 'email' -EmailReceiver -EmailAddress $email -ErrorAction Ignore
+							}
+
+							Write-Host "`nPlease enter: `n[0]: to skip SMS configuration `n[1]: to configure SMS for the credential group" -ForegroundColor Cyan
+							$choice = Read-Host "User choice"
+							while($choice -notin 0..1){
+								Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+								Write-Host "`nPlease enter: `n[0]: to skip SMS configuration `n[1]: to configure SMS for the credential group" -ForegroundColor Cyan
+								$choice = Read-Host "User choice"
+							}
+							if($choice -eq 1){
+								$countryCode = Read-Host "Enter a valid country code"
+								$phone = Read-Host "Enter a valid contact number"
+								$phoneR = New-AzActionGroupReceiver -Name 'SMS' -SmsReceiver -CountryCode $countryCode -PhoneNumber $phone -ErrorAction Ignore
+							}
+
+							if($emailR -and $phoneR){
+								$ag = Set-AzActionGroup -Name $name -ResourceGroupName $rgName -ShortName $shortName -Receiver $emailR,$phoneR -ErrorAction Ignore -WarningAction Ignore
+							}
+							elseif($emailR){
+								$ag = Set-AzActionGroup -Name $name -ResourceGroupName $rgName -ShortName $shortName -Receiver $emailR -ErrorAction Ignore -WarningAction Ignore
+							}
+							elseif($phoneR) {
+								$ag = Set-AzActionGroup -Name $name -ResourceGroupName $rgName -ShortName $shortName -Receiver $phoneR -ErrorAction Ignore -WarningAction Ignore
+							}
+						}
+						
 					}
-					$this.InstallCredentialGroupAlert($ag);
-					Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name credGroup -Value $CredentialGroup
+
+					if($ag){
+						$CredentialGroup = $ag.Name
+						$this.InstallCredentialGroupAlert($ag);
+						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name credGroup -Value $CredentialGroup
+					}
+					else{
+						$this.PublishCustomMessage("Error occured while creating the new credential group.", [MessageType]::Error)
+					}
+					
 				}	
 				else{
 					$found = $false
