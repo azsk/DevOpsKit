@@ -173,7 +173,7 @@
       },
       {
         "ControlID": "Azure_DBforPostgreSQL_Audit_Enable_Logging_On_Server",
-        "Description": "Enable PostgreSQL Server logging with selected event types and retention period of minimum $($this.ControlSettings.DBforPostgreSQL.LogRetentionPeriod_Min) days",
+        "Description": "Enable PostgreSQL Server logging with selected event types.",
         "Id": "DBforPostgreSQL200",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
