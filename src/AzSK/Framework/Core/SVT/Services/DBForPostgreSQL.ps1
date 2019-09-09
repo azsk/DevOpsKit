@@ -114,7 +114,7 @@ class DBForPostgreSQL: AzSVTBase
         }
         else
         {
-          if(($firewallRules | Measure-Object ).Count -gt 0)
+          if([Helpers]::CheckMember($firewallRules, "id"))
           {
             $firewallRulesForAzure = $firewallRules | Where-Object { $_.name -eq "AllowAllWindowsAzureIps" }
             if(($firewallRulesForAzure | Measure-Object ).Count -gt 0)
@@ -239,7 +239,7 @@ class DBForPostgreSQL: AzSVTBase
                         ($_.RetentionPolicy.Days -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever -or
                         $_.RetentionPolicy.Days -ge $this.ControlSettings.Diagnostics_RetentionPeriod_Min))};
 
-        $selectedDiagnosticsProps = $diagnostics | Where-Object {$_.Category -eq 'PostgreSQLLogs'} | Select-Object -Property Logs, Metrics, StorageAccountId, EventHubName, Name;
+        $selectedDiagnosticsProps = $diagnostics | Where-Object {$_.Logs.Category -eq 'PostgreSQLLogs'} | Select-Object -Property Logs, Metrics, StorageAccountId, EventHubName, Name;
 
         if(($nonCompliantLogs | Measure-Object).Count -eq 0)
         {
