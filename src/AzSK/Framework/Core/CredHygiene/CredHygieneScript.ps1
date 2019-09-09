@@ -581,7 +581,7 @@ class CredHygiene : CommandBase{
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $CredentialName
 		$file += ".json"
         $this.GetAzSKRotationMetadatContainer()
-        $blobName = $CredentialName.ToLower() + ".json"
+		$blobName = $CredentialName.ToLower() + ".json"
 
 		$tempSubPath = Join-Path $($this.AzSKTemp) $($this.SubscriptionContext.SubscriptionId)
 
@@ -613,27 +613,38 @@ class CredHygiene : CommandBase{
 			$ag = $null;
 			if($CredentialGroup){
 				$actionGroups = Get-AzActionGroup -ErrorAction Ignore -WarningAction Ignore
-				$ag = $actionGroups | where{$_.Name -eq $CredentialGroup}
-				
-				if(-not $ag){
-					$this.PublishCustomMessage("The action group [$CredentialGroup] does not exist in the subscription.",[MessageType]::Error)
-					Write-Host "`nPlease select action group name from below:" -ForegroundColor Cyan
-					$i=0;
-					$actionGroups | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
-					$choice = Read-Host "Credential group choice"
-					while($choice -notin 0..($i-1)){
-						Write-Host "`nIncorrect value supplied." -ForegroundColor Red
-						Write-Host "Please select action group name from below:" -ForegroundColor Cyan
+				if(($actionGroups|Measure-Object).Count -gt 0){
+					$ag = $actionGroups | where{$_.Name -eq $CredentialGroup}
+					
+					if(-not $ag){
+						$this.PublishCustomMessage("The action group [$CredentialGroup] does not exist in the subscription.",[MessageType]::Error)
+						Write-Host "`nPlease select action group name from below:" -ForegroundColor Cyan
 						$i=0;
 						$actionGroups | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
 						$choice = Read-Host "Credential group choice"
+						while($choice -notin 0..($i-1)){
+							Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+							Write-Host "Please select action group name from below:" -ForegroundColor Cyan
+							$i=0;
+							$actionGroups | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+							$choice = Read-Host "Credential group choice"
+						}
+						$ag = $actionGroups[$choice]
+						$CredentialGroup = $ag.Name
 					}
-					$ag = $actionGroups[$choice]
-					$CredentialGroup = $ag.Name
-				}
 
-				$this.InstallCredentialGroupAlert($ag);
-				$credentialInfo.credGroup = $CredentialGroup
+					$this.InstallCredentialGroupAlert($ag);
+					if([Helpers]::CheckMember($credentialInfo,"credGroup")){
+						$credentialInfo.credGroup = $CredentialGroup
+					}
+					else{
+						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name credGroup -Value $CredentialGroup
+					}
+				}
+				else{
+					$this.PublishCustomMessage("Could not update the credential group for the credential [$CredentialName] as there are no action groups in your subscription.", [MessageType]::Error)
+				}
+				
 			}
 
 			if($UpdateCredential){
