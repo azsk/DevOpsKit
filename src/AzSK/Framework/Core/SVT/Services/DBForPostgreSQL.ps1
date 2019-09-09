@@ -239,7 +239,7 @@ class DBForPostgreSQL: AzSVTBase
                         ($_.RetentionPolicy.Days -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever -or
                         $_.RetentionPolicy.Days -ge $this.ControlSettings.Diagnostics_RetentionPeriod_Min))};
 
-        $selectedDiagnosticsProps = $diagnostics | Where-Object {$_.Logs.Category -eq 'PostgreSQLLogs'} | Select-Object -Property Logs, Metrics, StorageAccountId, EventHubName, Name;
+        $selectedDiagnosticsProps = $diagnostics | Select-Object -Property @{ Name = "Logs"; Expression = {$_.Logs |  Where-Object {$_.Category -eq 'PostgreSQLLogs'}}}, StorageAccountId, EventHubName, Name;
 
         if(($nonCompliantLogs | Measure-Object).Count -eq 0)
         {
@@ -249,7 +249,7 @@ class DBForPostgreSQL: AzSVTBase
         }
         else
         {
-          $failStateDiagnostics = $nonCompliantLogs | Select-Object -Property Logs, Metrics, StorageAccountId, EventHubName, Name;
+          $failStateDiagnostics = $nonCompliantLogs | Select-Object -Property @{ Name = "Logs"; Expression = {$_.Logs |  Where-Object {$_.Category -eq 'PostgreSQLLogs'}}}, StorageAccountId, EventHubName, Name;
           $controlResult.SetStateData("Non compliant resources are:", $failStateDiagnostics);
           $controlResult.AddMessage([VerificationResult]::Failed,
             "Diagnostics settings are either disabled OR not retaining logs for at least $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) days for resource - [$($this.ResourceContext.ResourceName)]",
