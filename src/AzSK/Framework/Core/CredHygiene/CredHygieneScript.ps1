@@ -491,7 +491,6 @@ class CredHygiene : CommandBase{
 						}
 						elseif($choice -eq 0){
 							$emailR = $null;
-							$countryCodeR = $null;
 							$phoneR = $null;
 							$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
 
@@ -553,7 +552,6 @@ class CredHygiene : CommandBase{
 
 					if($choice -eq 0){
 						$emailR = $null;
-						$countryCodeR = $null;
 						$phoneR = $null;
 						$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
 
@@ -594,7 +592,7 @@ class CredHygiene : CommandBase{
 						elseif($phoneR) {
 							$ag = Set-AzActionGroup -Name $name -ResourceGroupName $rgName -ShortName $shortName -Receiver $phoneR -ErrorAction Ignore -WarningAction Ignore
 						}
-						
+
 						if($ag){
 							$CredentialGroup = $ag.Name
 							$this.InstallCredentialGroupAlert($ag);
