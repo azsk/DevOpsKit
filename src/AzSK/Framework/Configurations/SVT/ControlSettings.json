@@ -13,10 +13,6 @@
     "AuditRetentionPeriod_Min": 365,
     "AuditRetentionPeriod_Forever": 0
   },
-  "DBforPostgreSQL": {
-    "LogRetentionPeriod_Min": 3,
-    "AllowAllWindowsAzureIps" : "0.0.0.0-0.0.0.0"
-  },
   "AnalysisService": {
     "Max_Admin_Count": 2
   },
