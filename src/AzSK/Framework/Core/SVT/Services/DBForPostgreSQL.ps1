@@ -46,7 +46,7 @@ class DBForPostgreSQL: AzSVTBase
     {
         if ($null -eq $this.PostgreSQLFirewallRules)
         {
-             # List PostgreSQL firewall rules
+             # List firewall rules for Azure Database for PostgreSQL
             $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
             $uri=[system.string]::Format($ResourceAppIdURI+"/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DBforPostgreSQL/servers/{2}/firewallRules?api-version=2017-12-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
             try
@@ -135,6 +135,7 @@ class DBForPostgreSQL: AzSVTBase
       return $controlResult
     }
 
+    # This is a verify control. As the backup is by default enabled, the customer must verify backup settings from a BC-DR standpoint.
     hidden [ControlResult] CheckPostgreSQLBCDRStatus([ControlResult] $controlResult)
     {
       $backupSettings = @{ 
@@ -151,7 +152,7 @@ class DBForPostgreSQL: AzSVTBase
     hidden [ControlResult] CheckPostgreSQLATPSetting([ControlResult] $controlResult)
     {
       $securityAlertPolicies = ""
-      # Get postgresql advanced threat protection settings
+      # Get advanced threat protection settings for Azure Database of PostgreSQL
       $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
       $uri=[system.string]::Format($ResourceAppIdURI+"/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DBforPostgreSQL/servers/{2}/securityAlertPolicies/Default?api-version=2017-12-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
 
@@ -186,7 +187,7 @@ class DBForPostgreSQL: AzSVTBase
     hidden [ControlResult] CheckPostgreSQLVnetRules([ControlResult] $controlResult)
     {
       $virtualNetworkRules = ''
-      # Get virtual network rules
+      # Get virtual network rules for Azure Database of PostgreSQL
       $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
       $uri=[system.string]::Format($ResourceAppIdURI+"/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DBforPostgreSQL/servers/{2}/virtualNetworkRules?api-version=2017-12-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)      
 
@@ -214,6 +215,8 @@ class DBForPostgreSQL: AzSVTBase
       return $controlResult
     }
 
+    # This function checks for a specific category of log.
+    # We have created this custom function since log category based filter is not available in the default 'CheckDiagnosticsSettings' function.
     hidden [ControlResult] CheckPostgreSQLDiagnosticsSettings([ControlResult] $controlResult) {
       $diagnostics = $Null
       try
