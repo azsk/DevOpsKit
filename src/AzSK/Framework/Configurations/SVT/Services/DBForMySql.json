@@ -15,7 +15,8 @@
       "Tags": [
         "SDL",
         "TCP",
-        "AuthZ"
+        "AuthZ",
+        "Automated"
         ],
       "Enabled": true
     },
@@ -27,18 +28,19 @@
     "Automated": "Yes",
     "MethodName": "CheckMySQLFirewallIpRange",
     "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios.",
-    "Recommendation": "",
+    "Recommendation": "Do not configure 'Any to Any' firewall IP address. Refer: https://docs.microsoft.com/en-us/azure/mysql/concepts-firewall-rules.",
     "Tags": [
         "SDL",
         "TCP",
-        "AuthZ"
+        "AuthZ",
+        "Automated"
     ],
     "Enabled": true
     },
     {
     "ControlID": "Azure_DBforMySQL_Authz_Enable_SSL_Connection",
     "Description": "SSL connection must be enabled for Azure Database for MySQL",
-    "Id": "DBforMySQL130",
+    "Id": "DBforMySQL120",
     "ControlSeverity": "High",
     "Automated": "Yes",
     "MethodName": "CheckMySQLSSLConnection",
@@ -55,7 +57,7 @@
     {
     "ControlID": "Azure_DBforMySQL_NetSec_Configure_VNet_Rules",
     "Description": "Consider using virtual network rules for improved isolation",
-    "Id": "DBforMySQL150",
+    "Id": "DBforMySQL130",
     "ControlSeverity": "Medium",
     "Automated": "Yes",
     "MethodName": "CheckMySQLServerVnetRules",
@@ -72,7 +74,7 @@
     {
     "ControlID": "Azure_DBforMySQL_BCDR_Plan",
     "Description": "Backup and Disaster Recovery must be planned at the time of creation of Azure Database for MySql service",
-    "Id": "DBforMySQL160",
+    "Id": "DBforMySQL140",
     "ControlSeverity": "Medium",
     "Automated": "Yes",
     "MethodName": "CheckMySQLBCDRStatus",
@@ -81,14 +83,15 @@
     "Tags": [
         "SDL",
         "TCP",
-        "BCDR"
+        "BCDR",
+        "Automated"
     ],
     "Enabled": true
     },
     {
         "ControlID": "Azure_DBforMySQL_Audit_Enable_ATP",
         "Description": "Advanced Threat Protection must be enabled for Azure Database for MySQL",
-        "Id": "DBforMySQL170",
+        "Id": "DBforMySQL150",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckMySQLServerATP",
@@ -97,14 +100,15 @@
         "Tags": [
             "SDL",
             "TCP",
-            "Audit"
+            "Audit",
+            "Automated"
         ],
         "Enabled": true
     },
     {
         "ControlID": "Azure_DBforMySQL_Audit_Enable_Diagnostics_Log",
         "Description": "Diagnostics logs must be enabled with a retention period of at least365 days.",
-        "Id": "DBforMySQL180",
+        "Id": "DBforMySQL160",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckDiagnosticsSettings",
@@ -115,14 +119,15 @@
           "TCP",
           "Audit",
           "Diagnostics",
-          "DBforMySQL"
+          "DBforMySQL",
+          "Automated"
         ],
         "Enabled": true
       },
       {
         "ControlID": "Azure_DBforMySQL_Audit_Review_Logs",
         "Description": "Diagnostic and activity logs for Azure Database for MySQL should be reviewed periodically",
-        "Id": "DBforMySQL190",
+        "Id": "DBforMySQL170",
         "ControlSeverity": "Medium",
         "Automated": "No",
         "MethodName": "",
@@ -140,7 +145,7 @@
       {
         "ControlID": "Azure_DBforMySQL_AuthZ_Grant_Min_Access",
         "Description": "Access to Azure Database for MySQL Servers must be granted in accordance with the principle of least privilege",
-        "Id": "DBforMySQL200",
+        "Id": "DBforMySQL180",
         "ControlSeverity": "High",
         "Automated": "No",
         "MethodName": "",

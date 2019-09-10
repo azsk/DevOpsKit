@@ -158,56 +158,7 @@ class DBForMySql: AzSVTBase
       }
       return $controlResult
     }
-   <# hidden [ControlResult] CheckMySQLDiagnosticsSettings([ControlResult] $controlResult) {
-      $diagnostics = $Null
-      try
-      {
-        $diagnostics = Get-AzDiagnosticSetting -ResourceId $this.ResourceId -ErrorAction Stop -WarningAction SilentlyContinue
-      }
-      catch
-      {
-        if([Helpers]::CheckMember($_.Exception, "Response") -and ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
-        {
-          $controlResult.AddMessage([VerificationResult]::Failed, "Diagnostics setting is disabled for resource - [$($this.ResourceContext.ResourceName)].");
-          return $controlResult
-        }
-        else
-        {
-          $this.PublishException($_);
-        }
-      }
-      if($Null -ne $diagnostics -and ($diagnostics.Logs | Measure-Object).Count -ne 0)
-      {
-        $nonCompliantLogs = $diagnostics.Logs | Where-Object {$_.Category -eq 'MYSQLLogs'} |
-                  Where-Object { -not ($_.Enabled -and
-                        ($_.RetentionPolicy.Days -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever -or
-                        $_.RetentionPolicy.Days -ge $this.ControlSettings.Diagnostics_RetentionPeriod_Min))};
-
-        $selectedDiagnosticsProps = $diagnostics | Select-Object -Property @{ Name = "Logs"; Expression = {$_.Logs |  Where-Object {$_.Category -eq 'MYSQLLogs'}}}, StorageAccountId, EventHubName, Name;
-
-        if(($nonCompliantLogs | Measure-Object).Count -eq 0)
-        {
-          $controlResult.AddMessage([VerificationResult]::Passed,
-            "Diagnostics settings are correctly configured for resource - [$($this.ResourceContext.ResourceName)]",
-            $selectedDiagnosticsProps);
-        }
-        else
-        {
-          $failStateDiagnostics = $nonCompliantLogs | Select-Object -Property @{ Name = "Logs"; Expression = {$_.Logs |  Where-Object {$_.Category -eq 'MYSQLLogs'}}}, StorageAccountId, EventHubName, Name;
-          $controlResult.SetStateData("Non compliant resources are:", $failStateDiagnostics);
-          $controlResult.AddMessage([VerificationResult]::Failed,
-            "Diagnostics settings are either disabled OR not retaining logs for at least $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) days for resource - [$($this.ResourceContext.ResourceName)]",
-            $selectedDiagnosticsProps);
-        }
-      }
-      else
-      {
-        $controlResult.AddMessage([VerificationResult]::Failed, "Diagnostics setting is disabled for resource - [$($this.ResourceContext.ResourceName)].");
-      }
-      return $controlResult
-    }
-#>
-
+   
     [PSObject] GetFirewallRules()
     {
         if ($null -eq $this.MySQLFirewallRules)
