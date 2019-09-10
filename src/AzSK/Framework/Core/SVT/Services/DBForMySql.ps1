@@ -12,15 +12,14 @@ class DBForMySql: AzSVTBase {
 	   
         $this.GetResourceObject();
         $this.ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	 
-        $this.AccessToken = [ContextHelper]::GetAccessToken($this.ResourceAppIdURI)
-        $this.header = "Bearer " + $this.AccessToken
-        $this.headers = @{"Authorization" = $this.header; "Content-Type" = "application/json"; }
+        
     }
 	
     hidden [PSObject] GetResourceObject() {
         if (-not $this.ResourceObject) {
+            
             $this.ResourceObject = Get-AzResource -ResourceId $this.ResourceContext.ResourceId
-
+            
             if (-not $this.ResourceObject) {
                 throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))
             }
@@ -29,14 +28,14 @@ class DBForMySql: AzSVTBase {
     }
 
     hidden [ControlResult] CheckMySQLSSLConnection([ControlResult] $controlResult) {
-        try {
-            #Fetching ssl Object
+     
+        if (([Helpers]::CheckMember($this.ResourceObject.properties, "sslEnforcement"))) {
             $ssl_option = $this.ResourceObject.properties.sslEnforcement
         }
-        catch {
-            $ssl_option = 'error'
+        else{
+          $ssl_option = 'error'
         }
-        #checking ssl is enabled or disabled
+        
         if ($ssl_option -eq 'error') {
             $controlResult.AddMessage([VerificationResult]::Manual, "Unable to get SSL details for - [$($this.ResourceContext.ResourceName)]");
         }
@@ -94,7 +93,7 @@ class DBForMySql: AzSVTBase {
     hidden [ControlResult] CheckMySQLServerATP([ControlResult] $controlResult) {
         $uri = [system.string]::Format($this.ResourceAppIdURI + "/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DBforMySQL/servers/{2}/securityAlertPolicies/Default?api-version=2017-12-01", $this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)      
         try {
-            $response = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $this.headers, $null); 
+            $response = [WebRequestHelper]::InvokeGetWebRequest($uri); 
             if ([Helpers]::CheckMember($response[0], "properties.state")) {
                 if ($response[0].properties.state.ToLower() -eq "enabled") {
                     $controlResult.AddMessage([VerificationResult]::Passed, "Advanced threat protection is enabled.");
@@ -115,7 +114,7 @@ class DBForMySql: AzSVTBase {
     hidden [ControlResult] CheckMySQLFirewallAccessAzureService([ControlResult] $controlResult) {
         $uri = [system.string]::Format($this.ResourceAppIdURI + "/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DBforMySQL/servers/{2}/firewallRules/AllowAllWindowsAzureIps?api-version=2017-12-01", $this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)      
         try {
-            $response = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $this.headers, $null); 
+            $response = [WebRequestHelper]::InvokeGetWebRequest($uri); 
             if ($null -ne $response) {
                 if ([Helpers]::CheckMember($response[0], "name")) {
                     if ($response[0].name.ToLower() -eq "allowallwindowsazureips") {
