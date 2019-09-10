@@ -19,11 +19,11 @@ class WebRequestHelper {
 	{
 		$rmContext = [ContextHelper]::GetCurrentRMContext();
 		$azureEnv= $rmContext.Environment.Name 
-		if($azureEnv = "AzureUSGovernment")
+		if($azureEnv -eq "AzureUSGovernment")
 		{
             return "https://dc.applicationinsights.us/v2/track"
 		}
-		elseif ($azureEnv = "AzureChinaCloud" ) {
+		elseif ($azureEnv -eq "AzureChinaCloud" ) {
 			return "https://dc.applicationinsights.azure.cn/v2/track"
 		}
 		else {
@@ -35,11 +35,11 @@ class WebRequestHelper {
 	{
 		$rmContext = [ContextHelper]::GetCurrentRMContext();
 		$azureEnv= $rmContext.Environment.Name 
-		if($azureEnv = "AzureUSGovernment")
+		if($azureEnv -eq "AzureUSGovernment")
 		{
             return ".ods.opinsights.azure.us"
 		}
-		elseif ($azureEnv = "AzureChinaCloud" ) {
+		elseif ($azureEnv -eq "AzureChinaCloud" ) {
 			return ".ods.opinsights.azure.cn"
 		}
 		else {
