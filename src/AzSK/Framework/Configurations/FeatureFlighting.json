@@ -44,7 +44,7 @@
       "EnabledForSubs": [],
       "DisabledForSubs": [],      
       "UnderPreview" : false,
-      "IsEnabled": false
+      "IsEnabled": true
     },
     {
       "Name": "EnableListenerReset",
