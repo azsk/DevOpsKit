@@ -1345,22 +1345,25 @@ class SubscriptionCore: AzSVTBase
 							$item.DisplayName = $roleAssignment.subject.displayName
 							$item.ObjectType=$roleAssignment.subject.type;
 							$item.MemberType = $roleAssignment.memberType;
-							if($roleAssignment.IsPermanent -eq $false)
-							{
-								#If roleAssignment is non permanent and not active
-								$item.IsPIMEnabled=$true;
-								if($roleAssignment.assignmentState -eq "Eligible")
+							if($roleAssignment.memberType -ne 'Inherited')
 								{
-									$this.PIMAssignments.Add($item);
-								}
-							}
-							else
-							{
-								#If roleAssignment is permanent
-								$item.IsPIMEnabled=$false;
-								$this.permanentAssignments.Add($item);
+									if($roleAssignment.IsPermanent -eq $false)
+									{
+										#If roleAssignment is non permanent and not active
+										$item.IsPIMEnabled=$true;
+										if($roleAssignment.assignmentState -eq "Eligible")
+										{
+											$this.PIMAssignments.Add($item);
+										}
+									}
+									else
+									{
+										#If roleAssignment is permanent
+										$item.IsPIMEnabled=$false;
+										$this.permanentAssignments.Add($item);
 
-							}
+									}
+								}
 						}
 						
 					}
