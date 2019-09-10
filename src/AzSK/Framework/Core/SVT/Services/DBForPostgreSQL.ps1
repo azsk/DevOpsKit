@@ -168,12 +168,12 @@ class DBForPostgreSQL: AzSVTBase
       {
         if(($securityAlertPolicies.properties.state -eq 'Enabled') -and ($securityAlertPolicies.properties.emailAccountAdmins -eq 'true')) 
         {
-          $controlResult.AddMessage([VerificationResult]::Passed, "'Advanced Threat Protection; is enabled");
+          $controlResult.AddMessage([VerificationResult]::Passed, "Advanced Threat Protection is enabled.");
         }
         else
         {
           $result = @{ 'securityAlertPolicies' = @{'State' = $securityAlertPolicies.properties.state; 'emailAccountAdmins' = $securityAlertPolicies.properties.emailAccountAdmins }}
-          $controlResult.AddMessage([VerificationResult]::Failed, "Advanced Threat Protection or 'send email notification to admins and subscription owners' is disabled.", $result);
+          $controlResult.AddMessage([VerificationResult]::Failed, "Advanced Threat Protection is disabled.", $result);
           $controlResult.SetStateData("Advanced Threat Protection setting:", $result);
         }
       }

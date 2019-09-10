@@ -173,7 +173,7 @@
     },
     {
       "ControlID": "Azure_DBforPostgreSQL_Audit_Enable_Logging_On_Server",
-      "Description": "Enable PostgreSQL server logging for parameters log_connections and log_disconnections.",
+      "Description": "Enable PostgreSQL server parameters log_connections and log_disconnections",
       "Id": "DBforPostgreSQL200",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
