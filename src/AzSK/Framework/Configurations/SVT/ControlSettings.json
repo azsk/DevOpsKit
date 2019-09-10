@@ -216,15 +216,17 @@
     "Storage": [
       {
         "Condition": {
-          "DataSource": {
-            "MetricName": "AnonymousSuccess"
-          },
+          "MetricName": "Transactions",
           "OperatorProperty": "GreaterThan",
           "Threshold": 0,
           "TimeAggregation": "Total",
-          "WindowSize": "01:00:00"
-        },
-        "IsEnabled": true
+          "Dimensions":{
+              "Name" : "Authentication",
+              "OperatorProperty" : "Include",
+              "Values" : "Anonymous"
+            },
+            "IsEnabled": true
+        }
       }
     ],
     "StreamAnalytics": [
