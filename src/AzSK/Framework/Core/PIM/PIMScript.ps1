@@ -715,7 +715,7 @@ class PIM: AzCommandBase {
                     $this.PublishCustomMessage( "Updation request for [$rolename] role setting queued successfully.  ", [MessageType]::Update) 
                 }                  
                 elseif ($result.StatusCode -eq 401) {
-                    $this.PublishCustomMessage("You are not eligible to extend a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
+                    $this.PublishCustomMessage("You are not eligible to configure role settings. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
                 }
                 else
                 {
