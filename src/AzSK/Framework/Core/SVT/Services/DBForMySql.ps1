@@ -9,7 +9,7 @@ class DBForMySql: AzSVTBase
    hidden [PSObject] $ResourceObject;
    hidden [PSObject] $MySQLFirewallRules;
     DBForMySql([string] $subscriptionId, [SVTResource] $svtResource): 
-        Base($subscriptionId, $svtResource) 
+    Base($subscriptionId, $svtResource) 
     { 
 	   
     $this.GetResourceObject();
@@ -17,45 +17,48 @@ class DBForMySql: AzSVTBase
     $this.AccessToken = [ContextHelper]::GetAccessToken($this.ResourceAppIdURI)
     $this.header = "Bearer " + $this.AccessToken
     $this.headers = @{"Authorization"=$this.header;"Content-Type"="application/json";}
-	}
+	  }
 	
     hidden [PSObject] GetResourceObject()
     {
-        if (-not $this.ResourceObject) {
-            $this.ResourceObject =  Get-AzResource -ResourceId $this.ResourceContext.ResourceId
+      if (-not $this.ResourceObject) 
+      {
+        $this.ResourceObject =  Get-AzResource -ResourceId $this.ResourceContext.ResourceId
 
-            if(-not $this.ResourceObject)
-            {
-                throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))
-            }
-        }
+         if(-not $this.ResourceObject)
+          {
+            throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))
+          }
+      }
         return $this.ResourceObject;
     }
 
-	hidden [ControlResult] CheckMySQLSSLConnection([ControlResult] $controlResult)
+	  hidden [ControlResult] CheckMySQLSSLConnection([ControlResult] $controlResult)
     {
-      try{
+      try
+      {
         #Fetching ssl Object
         $ssl_option = $this.ResourceObject.properties.sslEnforcement
-       }
-      catch{
+      }
+      catch
+      {
         $ssl_option= 'error'
-        }
+      }
         #checking ssl is enabled or disabled
-        if ($ssl_option -eq 'error')
+      if ($ssl_option -eq 'error')
       {
         $controlResult.AddMessage([VerificationResult]::Manual, "Unable to get SSL details for - [$($this.ResourceContext.ResourceName)]");
       }
-       else 
+      else 
        {
          if($ssl_option.ToLower() -eq 'enabled')
-        {
-          $controlResult.AddMessage([VerificationResult]::Passed, "SSL connection is enabled.");
-        }
-        else 
-        {
-          $controlResult.AddMessage([VerificationResult]::Failed, "SSL connection is disabled.");
-        }
+          {
+            $controlResult.AddMessage([VerificationResult]::Passed, "SSL connection is enabled.");
+          }
+          else 
+          {
+            $controlResult.AddMessage([VerificationResult]::Failed, "SSL connection is disabled.");
+          }
        }
     
       #return
@@ -64,10 +67,11 @@ class DBForMySql: AzSVTBase
 
     hidden [ControlResult] CheckMySQLBCDRStatus([ControlResult] $controlResult)
     {
+      #fetching backup details
       $backupSettings = @{ 
         "backupRetentionDays" = $this.ResourceObject.properties.storageProfile.backupRetentionDays;
         "geoRedundantBackup" =  $this.ResourceObject.properties.storageProfile.geoRedundantBackup
-     }
+      }
 
     $controlResult.AddMessage([VerificationResult]::Verify, "Verify that the critical business data in the MySQL server has been backed up from a BC-DR standpoint.",$backupSettings);
     $controlResult.SetStateData("Backup setting:", $backupSettings);
@@ -88,11 +92,11 @@ class DBForMySql: AzSVTBase
       {
         $controlResult.AddMessage([VerificationResult]::Manual, "Unable to fetch details of functions.");
       }
-      if ([Helpers]::CheckMember($virtualNetworkRules,"id")) {
-            
+      if ([Helpers]::CheckMember($virtualNetworkRules,"id"))
+      {   
         $vnetRules = $virtualNetworkRules | ForEach-Object {
             @{ 'name'="$($_.name)"; 'id'="$($_.id)"; 'virtualNetworkSubnetId'="$($_.properties.virtualNetworkSubnetId)" }
-        }
+          }
         $controlResult.AddMessage([VerificationResult]::Passed, "The enabled virtual network rules are:",$vnetRules);
         $controlResult.SetStateData("Configured virtual network rules:", $vnetRules);
       }
@@ -109,14 +113,16 @@ class DBForMySql: AzSVTBase
     {
       $uri=[system.string]::Format($this.ResourceAppIdURI+"/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DBforMySQL/servers/{2}/securityAlertPolicies/Default?api-version=2017-12-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)      
       try
-
       {
         $response = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $this.headers, $null); 
-        if([Helpers]::CheckMember($response[0], "properties.state")){
-          if($response[0].properties.state.ToLower() -eq "enabled"){
+        if([Helpers]::CheckMember($response[0], "properties.state"))
+        {
+          if($response[0].properties.state.ToLower() -eq "enabled")
+          {
             $controlResult.AddMessage([VerificationResult]::Passed, "Advanced threat protection is enabled.");
           }
-          else{
+          else
+          {
             $controlResult.AddMessage([VerificationResult]::Failed, "Advanced threat protection is disabled.");
           }
         }
@@ -136,23 +142,30 @@ class DBForMySql: AzSVTBase
       try
       {
         $response = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $this.headers, $null); 
-        if($null -ne $response){
-          if([Helpers]::CheckMember($response[0], "name")){
-            if($response[0].name.ToLower() -eq "allowallwindowsazureips"){
+        if($null -ne $response)
+        {
+          if([Helpers]::CheckMember($response[0], "name"))
+          {
+            if($response[0].name.ToLower() -eq "allowallwindowsazureips")
+            {
               $controlResult.AddMessage([VerificationResult]::Verify, "Setting 'Allow Access to Azure Services' is enabled. Please verify if your scenario really requires it.");
             }
-            else{
+            else
+            {
               $controlResult.AddMessage([VerificationResult]::Passed, "Setting 'Allow Access to Azure Services' is disabled.");
             }
           }
         }
-        else{
+        else
+        {
           $controlResult.AddMessage([VerificationResult]::Passed, "Setting 'Allow Access to Azure Services' is disabled.");
         }
       }
       catch
-      {
-        if(([Helpers]::CheckMember($_.Exception,"ExceptionType") -and  ($_.Exception).ExceptionType.ToString().ToLower() -eq "invalidoperation")){
+      { 
+        #API call throws an exception when allow Access to Azure Service is disabled
+        if(([Helpers]::CheckMember($_.Exception,"ExceptionType") -and  ($_.Exception).ExceptionType.ToString().ToLower() -eq "invalidoperation"))
+        {
           $controlResult.AddMessage([VerificationResult]::Passed, "Setting 'Allow Access to Azure Services' is disabled.");
         }    
       }
@@ -161,26 +174,23 @@ class DBForMySql: AzSVTBase
    
     [PSObject] GetFirewallRules()
     {
-        if ($null -eq $this.MySQLFirewallRules)
+      if ($null -eq $this.MySQLFirewallRules)
+      {
+        $uri=[system.string]::Format($this.ResourceAppIdURI+"/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DBforMySQL/servers/{2}/firewallRules?api-version=2017-12-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName) 
+        try
         {
-          
-            #$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
-            $uri=[system.string]::Format($this.ResourceAppIdURI+"/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DBforMySQL/servers/{2}/firewallRules?api-version=2017-12-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName) 
-            try
-            {
-                $this.MySQLFirewallRules = [WebRequestHelper]::InvokeGetWebRequest($uri);
-            }
-            catch
-            {
-                $this.MySQLFirewallRules = 'error'
-            }
+          $this.MySQLFirewallRules = [WebRequestHelper]::InvokeGetWebRequest($uri);
         }
-        return $this.MySQLFirewallRules
+        catch
+        {
+           $this.MySQLFirewallRules = 'error'
+        }
+      }
+      return $this.MySQLFirewallRules
     }
 
     hidden [ControlResult] CheckMySQLFirewallIpRange([ControlResult] $controlResult)
     {
-     
       $firewallRules = $this.GetFirewallRules()
       if ($firewallRules -eq 'error')
       {
