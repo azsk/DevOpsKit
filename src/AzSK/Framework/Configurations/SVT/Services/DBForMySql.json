@@ -79,7 +79,7 @@
     "Automated": "Yes",
     "MethodName": "CheckMySQLBCDRStatus",
     "Rationale": "Azure Database for MySQL offers default backup/disaster recovery for 7 days that can be extended up to 35 days. You can choose between locally redundant or geo-redundant backup storage. When processing critical workloads, a team must have adequate backups of the data.",
-    "Recommendation": "Ensure the critical business data in the Azure Database for MySQL has been backed up. The type of backup once selected cannot be changed in future.",
+    "Recommendation": "Ensure back up settings for Azure Database for MySQL have been set from a BC-DR standpoint.",
     "Tags": [
         "SDL",
         "TCP",
