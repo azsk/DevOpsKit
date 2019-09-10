@@ -59,7 +59,7 @@ class DBForMySql: AzSVTBase {
             "geoRedundantBackup"  = $this.ResourceObject.properties.storageProfile.geoRedundantBackup
         }
 
-        $controlResult.AddMessage([VerificationResult]::Verify, "Verify that the critical business data in the MySQL server has been backed up from a BC-DR standpoint.", $backupSettings);
+        $controlResult.AddMessage([VerificationResult]::Verify, "Verify backup settings for MySql server", $backupSettings);
         $controlResult.SetStateData("Backup setting:", $backupSettings);
 
         return $controlResult;
