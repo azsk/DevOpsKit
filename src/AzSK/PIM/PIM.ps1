@@ -35,6 +35,11 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignments", HelpMessage = "This switch is required to extend an expring PIM eligible role.")]
         [Alias("exa")]
         $ExtendExpiringAssignments,
+
+        [switch]
+        [Parameter(Mandatory = $true, ParameterSetName = "ConfigureRoleSettings", HelpMessage = "This switch is used to configure role settings for a role on a resource.")]
+        [Alias("crs")]
+        $ConfigureRoleSettings,
       
 
         [Parameter(Mandatory = $true, ParameterSetName = "Default")]
@@ -44,6 +49,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignments")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ConfigureRoleSettings")]
         [ValidateNotNullOrEmpty()]
         [Alias("sid")]
         [string]
@@ -55,6 +61,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringAssignments")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
         [ValidateNotNullOrEmpty()]
         [Alias("rgn")]
         [string]
@@ -66,6 +73,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringAssignments")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
         [ValidateNotNullOrEmpty()]
         [Alias("rn")]
         [string]
@@ -99,6 +107,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $true, ParameterSetName = "Deactivate")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ConfigureRoleSettings")]
         [ValidateNotNullOrEmpty()]
 	    [Alias("rln")]
         [string]
@@ -126,6 +135,23 @@ function Set-AzSKPIMConfiguration {
 	    [Alias("raf")]
         [string]
         $RemoveAssignmentFor,
+
+
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
+        [int]
+        $ExpireEligibleAssignmentsInDays,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
+        [bool]
+        $RequireJustificationOnActivation = $true,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
+        [int]
+        $MaximumActivationDuration = 8, 
+
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
+        [bool]
+        $RequireMFAOnActivation,
 
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
@@ -164,6 +190,10 @@ function Set-AzSKPIMConfiguration {
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'ExtendExpiringAssignments') {
                 $pimconfig.InvokeFunction($pimconfig.ExtendSoonToExpireAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $Force))
+            }
+            elseif ($PSCmdlet.ParameterSetName -eq 'ConfigureRoleSettings')
+            {
+                $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $RequireMFAOnActivation))
             }			
             else {
                 Write-Output("Invalid Parameter Set")	
