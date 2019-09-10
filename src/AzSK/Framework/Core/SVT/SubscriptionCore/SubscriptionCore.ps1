@@ -1582,7 +1582,13 @@ class SubscriptionCore: AzSVTBase
 					else{
 						$credAlert.IsExpired = $false
 					}
+					
 					$credAlert.CredentialName = $credentialInfo.credName
+					
+					if([Helpers]::CheckMember($credentialInfo,"credGroup")){
+						$credAlert.CredentialGroup = $credentialInfo.credGroup
+					}
+					
 					$credAlert.LastUpdatedBy = $credentialInfo.lastUpdatedBy
 					$credAlert.SubscriptionId = $this.SubscriptionContext.SubscriptionId
 					$credAlert.SubscriptionName = $this.SubscriptionContext.SubscriptionName

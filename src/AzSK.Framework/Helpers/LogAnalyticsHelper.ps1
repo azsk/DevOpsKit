@@ -490,7 +490,8 @@ Class CommandModel{
 class CredHygieneAlert{
     [int] $ExpiryDueInDays
 	[bool] $IsExpired
-    [string] $CredentialName 
+	[string] $CredentialName 
+	[string] $CredentialGroup
     [string] $LastUpdatedBy
 	[string] $SubscriptionId
 	[string] $SubscriptionName
