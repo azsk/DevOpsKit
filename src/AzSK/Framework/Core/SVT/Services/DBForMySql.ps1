@@ -136,7 +136,7 @@ class DBForMySql: AzSVTBase {
                 $controlResult.AddMessage([VerificationResult]::Passed, "Setting 'Allow Access to Azure Services' is disabled.");
             } 
             else {
-              $controlResult.AddMessage([VerificationResult]::Manual, "Enable to verify setting 'Allow Access to Azure Services'.");
+              $controlResult.AddMessage([VerificationResult]::Manual, "Unable to verify setting 'Allow Access to Azure Services'.");
             }   
         }
         return $controlResult
