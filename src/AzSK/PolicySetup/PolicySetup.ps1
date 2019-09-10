@@ -64,6 +64,7 @@ function Install-AzSKOrganizationPolicy
 		[Alias("ae")]
         $AzureEnvironment = "AzureCloud",
 
+		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "Custom")]
         [string]
 		[Alias("ail")]

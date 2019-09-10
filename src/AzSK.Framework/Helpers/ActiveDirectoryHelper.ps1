@@ -5,7 +5,8 @@ class ActiveDirectoryHelper {
 		{
 			$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
 			$ApiVersion = "1.6"
-			$GraphApiUrl = [WebRequestHelper]::GraphApiUri + $TenantId + "/servicePrincipals/{0}?api-version=$ApiVersion"
+			$GraphUri = [WebRequestHelper]::GetGraphUrl()
+			$GraphApiUrl = $GraphUri + $TenantId + "/servicePrincipals/{0}?api-version=$ApiVersion"
 			$uri = [string]::Format($GraphApiUrl + "&`$filter=(appId eq '{1}')", [string]::Empty , $ApplicationId);
 			$resultObject = [WebRequestHelper]::InvokeGetWebRequest($uri);
 			
@@ -36,7 +37,8 @@ class ActiveDirectoryHelper {
 			#Initialization
 			$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
 			$ApiVersion = "1.6"
-			$GraphApiUrl = [WebRequestHelper]::GraphApiUri + $TenantId + "/servicePrincipals/{0}?api-version=$ApiVersion"
+			$GraphUri = [WebRequestHelper]::GetGraphUrl()
+			$GraphApiUrl = $GraphUri + $TenantId + "/servicePrincipals/{0}?api-version=$ApiVersion"
 			$addMode = $False;
 			$startDateString = $NotBefore.ToString("O");
 			$endDateString = $NotAfter.ToString("O");
@@ -97,7 +99,8 @@ class ActiveDirectoryHelper {
 			$body = ConvertTo-Json -InputObject $servicePrincipal
 			$operation = [string]::Empty;
 			$requestUri = [string]::Empty;
-			$GraphAPIAccessToken = Get-AzSKAccessToken -ResourceAppIdURI "https://graph.windows.net/";
+			$ResourceAppIdURI = [WebRequestHelper]::GetGraphUrl()
+			$GraphAPIAccessToken = Get-AzSKAccessToken -ResourceAppIdURI $ResourceAppIdURI;
 			if($addMode)
 			{
 				$operation = "POST";
@@ -127,7 +130,8 @@ class ActiveDirectoryHelper {
 		{
 			$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
 			$ApiVersion = "1.6"
-			$GraphApiUrl = [WebRequestHelper]::GraphApiUri + $TenantId + "/applications/{0}?api-version=$ApiVersion"
+			$GraphUri = [WebRequestHelper]::GetGraphUrl()
+			$GraphApiUrl = $GraphUri + $TenantId + "/applications/{0}?api-version=$ApiVersion"
 			$uri = [string]::Format($GraphApiUrl + "&`$filter=(appId eq '{1}')", [string]::Empty , $ApplicationId);
 			$resultObject = [WebRequestHelper]::InvokeGetWebRequest($uri);
 			
@@ -158,7 +162,8 @@ class ActiveDirectoryHelper {
 			#Initialization
 			$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
 			$ApiVersion = "1.6"
-			$GraphApiUrl = [WebRequestHelper]::GraphApiUri + $TenantId + "/applications/{0}?api-version=$ApiVersion"
+			$GraphUri = [WebRequestHelper]::GetGraphUrl()
+			$GraphApiUrl = $GraphUri + $TenantId + "/applications/{0}?api-version=$ApiVersion"
 			$startDateString = $NotBefore.ToString("O");
 			$endDateString = $NotAfter.ToString("O");
 
@@ -208,7 +213,8 @@ class ActiveDirectoryHelper {
 			$body = ConvertTo-Json -InputObject $finalCredsObject 
 			$operation = [string]::Empty;
 			$requestUri = [string]::Empty;
-			$GraphAPIAccessToken = Get-AzSKAccessToken -ResourceAppIdURI "https://graph.windows.net/";
+			$ResourceAppIdURI = [WebRequestHelper]::GetGraphUrl()
+			$GraphAPIAccessToken = Get-AzSKAccessToken -ResourceAppIdURI $ResourceAppIdURI;
 			$operation = "PATCH";
 			$requestUri = [string]::Format($GraphApiUrl, $ADApplication.objectId);
 			$updateResult = Invoke-RestMethod `

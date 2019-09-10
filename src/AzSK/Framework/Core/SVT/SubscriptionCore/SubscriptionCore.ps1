@@ -353,7 +353,8 @@ class SubscriptionCore: AzSVTBase
 			$serviceAccounts = @()
 			if($null -ne $this.CurrentContext)
 			{
-				$GraphAccessToken = [ContextHelper]::GetAccessToken([WebRequestHelper]::GraphAPIUri)
+				$GraphUri = [WebRequestHelper]::GetGraphUrl()
+				$GraphAccessToken = [ContextHelper]::GetAccessToken($GraphUri)
 			}
 
 			$uniqueUsers = @();

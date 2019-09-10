@@ -412,17 +412,10 @@ class PolicySetup: AzCommandBase
 			$this.msgCount=$this.msgCount + 1
 			$this.PublishCustomMessage("[$($this.msgCount)] Creating/Updating resources for supporting org policy in the policy host subscription...`n",[MessageType]::Warning)
 		}
-
-
-		
-
-
-		
-		
-
-		if($this.AzureEnvironment -eq "AzureCloud"){
-		$this.AppInsightInstance.CreateAppInsightIfNotExists();
-	    }
+		$this.AppInsightInstance.CreateAppInsightIfNotExists()
+		# if($this.AzureEnvironment -eq "AzureCloud"){
+		# $this.AppInsightInstance.CreateAppInsightIfNotExists();
+	    # }
 		$container = $this.StorageAccountInstance.CreateStorageContainerIfNotExists($this.InstallerContainerName, [BlobContainerPublicAccessType]::Blob);
 		if($container -and $container.CloudBlobContainer)
 		{
