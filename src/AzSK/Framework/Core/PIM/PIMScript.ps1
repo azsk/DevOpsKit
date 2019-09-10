@@ -669,18 +669,18 @@ class PIM: AzCommandBase {
     hidden [void] ExtendSoonToExpireAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $force)
     {
         $soonToExpireAssignments = $this.ListSoonToExpireAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays);
-        $AssignmetntCount = ($soonToExpireAssignments | Measure-Object).Count
+        $AssignmentCount = ($soonToExpireAssignments | Measure-Object).Count
         $ts =$DurationInDays
         $url = $this.APIroot +"/roleAssignmentRequests "
         # get maximum number of days an assigment 
-        $urlrole = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($soonToExpireAssignments[0].ResourceId)%27)+and+(roleDefinition/id+eq+%27$($soonToExpireAssignments[0].RoleId)%27)"
+        $urlrole = $this.APIroot+"/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($soonToExpireAssignments[0].ResourceId)%27)+and+(roleDefinition/id+eq+%27$($soonToExpireAssignments[0].RoleId)%27)"
         $rolesettings = [WebRequestHelper]::InvokeWebRequest("Get", $urlrole, $this.headerParams, $null, [string]::Empty, $false, $false )
         $maxAllowedDays = (($($rolesettings.adminEligibleSettings| Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting| ConvertFrom-Json).maximumGrantPeriodInMinutes)/60
-        if($AssignmetntCount -gt 0)
+        if($AssignmentCount -gt 0)
         {
             # If force switch is used extend to expire without any prompt
             $this.PublishCustomMessage("");
-            $this.PublishCustomMessage("Initiating assignment extension for [$AssignmetntCount] PIM assignments..."); #TODO: Check the color
+            $this.PublishCustomMessage("Initiating assignment extension for [$AssignmentCount] PIM assignments..."); #TODO: Check the color
             $UserResponse = 'N' 
             [int] $i =1
             $soonToExpireAssignments | ForEach-Object{
@@ -688,12 +688,12 @@ class PIM: AzCommandBase {
                     {
                         $this.PublishCustomMessage("");
                         $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
-                        $this.PublishCustomMessage("[$i/$AssignmetntCount] Do you want to extend assignment for [$($_.PrincipalName)]. Please confirm (Y/N):", [MessageType]::Warning); #TODO: Check the color
+                        $this.PublishCustomMessage("[$i/$AssignmentCount] Do you want to extend assignment for [$($_.PrincipalName)]. Please confirm (Y/N):", [MessageType]::Warning); #TODO: Check the color
                         $UserResponse = Read-Host
                     }
                     else
                     {
-                        $this.PublishCustomMessage("[$i/$AssignmetntCount] Requesting assignment extension for [$($_.PrincipalName)] by $DurationInDays days",[MessageType]::Default)
+                        $this.PublishCustomMessage("[$i/$AssignmentCount] Requesting assignment extension for [$($_.PrincipalName)] by $DurationInDays days",[MessageType]::Default)
                     }
 
                     if($force -or ($UserResponse -eq 'Y'))
@@ -707,7 +707,7 @@ class PIM: AzCommandBase {
                         $postParams = '{"roleDefinitionId":"'+ $_.RoleId+'","resourceId":"'+$_.ResourceId+'","subjectId":"'+ $_.SubjectId+'","assignmentState":"Eligible","type":"AdminExtend","reason":"Admin Extend by '+$this.AccountId+'","schedule":{"type":"Once","startDateTime":"'+ ((get-date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))+'","endDateTime":"'+($extendedDate)+'"}}'
                         $response = [WebRequestHelper]::InvokeWebRequest('Post', $url, $this.headerParams, $postParams, "application/json", $false, $true )
                         if ($response.StatusCode -eq 201) {
-                            $this.PublishCustomMessage("[$i/$AssignmetntCount] Assignment extension request for [$($_.PrincipalName)] for the [$($_.RoleName)] role queued successfully.", [MessageType]::Update);
+                            $this.PublishCustomMessage("[$i/$AssignmentCount] Assignment extension request for [$($_.PrincipalName)] for the [$($_.RoleName)] role queued successfully.", [MessageType]::Update);
                         }  
                         elseif ($response.StatusCode -eq 401) {
                             $this.PublishCustomMessage("You are not eligible to extend a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
@@ -732,7 +732,7 @@ class PIM: AzCommandBase {
     hidden [void] ConfigureRoleSettings($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsAfter, $RequireJustificationOnActivation, $MaximumActivationDuration, $RequireMFAOnActivation)
     {
         #  1) get PIM resource id for the resource provided
-        $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName)
+        $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName, $false)
        
         #  2) get PIM identifier for the particular role on resource identified in 1
         if (($resolvedResource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResource.ResourceId))) {
@@ -741,7 +741,7 @@ class PIM: AzCommandBase {
        
             if(($roleforResource|Measure-Object).Count -gt 0)
             {
-                $url = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resolvedResource.ResourceId)%27)+and+(roleDefinition/id+eq+%27$($roleforResource.RoleDefinitionId)%27)"
+                $url = $this.APIroot+"/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resolvedResource.ResourceId)%27)+and+(roleDefinition/id+eq+%27$($roleforResource.RoleDefinitionId)%27)"
                 $rolesettings = [WebRequestHelper]::InvokeWebRequest("Get", $url, $this.headerParams, $null, [string]::Empty, $false, $false )
                 $updatedroleSetting  = $rolesettings
            
@@ -749,12 +749,22 @@ class PIM: AzCommandBase {
            
                $isPermanentAdminEligible = ($($updatedroleSetting.adminEligibleSettings | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).permanentAssignment
                $isPermanentuserMember = ($($updatedroleSetting.userMemberSettings| Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting| ConvertFrom-Json).permanentAssignment
+               if($MaximumActivationDuration -eq -1)
+               {
+                    $MaximumActivationDuration =($($updatedroleSetting.userMemberSettings | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes
+               }
+               if($ExpireEligibleAssignmentsAfter -eq -1)
+               {
+                   $ExpireEligibleAssignmentsAfter = ($($updatedroleSetting.adminEligibleSettings | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes
+               }
+
+               $roleSettingId = $updatedroleSetting.id
        
         #  5) Create json body for patch request  
                 $body = '{"adminEligibleSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter*24*60+'}"}],"userMemberSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration*60+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$RequireMFAOnActivation+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]}'
                 $body = $body -replace "True" ,"true" # the api does not accept "True" so need to lower the casing
                 $body = $body -replace "False", "false"                
-                $updateUrl = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettings/$roleSettingId"
+                $updateUrl = $this.APIroot+"/roleSettings/$roleSettingId"
                 $result = [WebRequestHelper]::InvokeWebRequest('PATCH', $updateUrl, $this.headerParams, $body, "application/json", $false, $true )
                 if($result.StatusCode -eq 204)
                 {
