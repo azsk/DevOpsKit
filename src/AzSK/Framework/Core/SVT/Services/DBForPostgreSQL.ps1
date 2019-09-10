@@ -120,11 +120,11 @@ class DBForPostgreSQL: AzSVTBase
             if(($firewallRulesForAzure | Measure-Object ).Count -gt 0)
             {
               $controlResult.AddMessage([VerificationResult]::Verify,
-                                          [MessageData]::new("'Allow access to Azure services' is turned 'ON'. This option configures the firewall to allow all connections from Azure including connections from the subscriptions of other customers."));
+                                          [MessageData]::new("'Allow access to Azure services' is turned ON."));
             }	
             else
             {
-              $controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("'Allow access to Azure services' is turned 'OFF'"));
+              $controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("'Allow access to Azure services' is turned OFF."));
             }
           }
           else
@@ -143,7 +143,7 @@ class DBForPostgreSQL: AzSVTBase
                             "geoRedundantBackup" =  $this.ResourceObject.properties.storageProfile.geoRedundantBackup
                          }
 
-      $controlResult.AddMessage([VerificationResult]::Verify, "Verify that the critical business data in the PostgreSQL server has been backed up from a BC-DR standpoint.",$backupSettings);
+      $controlResult.AddMessage([VerificationResult]::Verify, "Verify back up settings for PostgreSQL server.",$backupSettings);
       $controlResult.SetStateData("Backup setting:", $backupSettings);
 
       return $controlResult;
@@ -173,7 +173,7 @@ class DBForPostgreSQL: AzSVTBase
         else
         {
           $result = @{ 'securityAlertPolicies' = @{'State' = $securityAlertPolicies.properties.state; 'emailAccountAdmins' = $securityAlertPolicies.properties.emailAccountAdmins }}
-          $controlResult.AddMessage([VerificationResult]::Failed, "Either Advanced Threat Protection or the option to 'send email notification to admins and subscription owners' is disabled.", $result);
+          $controlResult.AddMessage([VerificationResult]::Failed, "Advanced Threat Protection or 'send email notification to admins and subscription owners' is disabled.", $result);
           $controlResult.SetStateData("Advanced Threat Protection setting:", $result);
         }
       }
@@ -204,8 +204,7 @@ class DBForPostgreSQL: AzSVTBase
         $vnetRules = $virtualNetworkRules | ForEach-Object {
             @{ 'name'="$($_.name)"; 'id'="$($_.id)"; 'virtualNetworkSubnetId'="$($_.properties.virtualNetworkSubnetId)" }
         }
-        $controlResult.AddMessage([VerificationResult]::Manual, "The enabled virtual network rules are:",$vnetRules);
-        $controlResult.SetStateData("Configured virtual network rules:", $vnetRules);
+        $controlResult.AddMessage([VerificationResult]::Passed, "The enabled virtual network rules are:",$vnetRules);
       }
       else
       {
