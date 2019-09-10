@@ -6,7 +6,8 @@ class DBForMySql: AzSVTBase
   hidden [PSObject] $AccessToken = $null;
   hidden [PSObject] $header = $null;
   hidden [PSObject] $headers = $null;
- 	hidden [PSObject] $ResourceObject;
+   hidden [PSObject] $ResourceObject;
+   hidden [PSObject] $MySQLFirewallRules;
     DBForMySql([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
     { 
@@ -36,9 +37,18 @@ class DBForMySql: AzSVTBase
       try{
         #Fetching ssl Object
         $ssl_option = $this.ResourceObject.properties.sslEnforcement
-
+       }
+      catch{
+        $ssl_option= 'error'
+        }
         #checking ssl is enabled or disabled
-        if($ssl_option.ToLower() -eq 'enabled')
+        if ($ssl_option -eq 'error')
+      {
+        $controlResult.AddMessage([VerificationResult]::Manual, "Unable to get SSL details for - [$($this.ResourceContext.ResourceName)]");
+      }
+       else 
+       {
+         if($ssl_option.ToLower() -eq 'enabled')
         {
           $controlResult.AddMessage([VerificationResult]::Passed, "SSL connection is enabled.");
         }
@@ -46,57 +56,53 @@ class DBForMySql: AzSVTBase
         {
           $controlResult.AddMessage([VerificationResult]::Failed, "SSL connection is disabled.");
         }
-      }
-      catch{
-
-      }
+       }
+    
       #return
       return $controlResult
     }
 
     hidden [ControlResult] CheckMySQLBCDRStatus([ControlResult] $controlResult)
     {
-      try{
-        if([Helpers]::CheckMember($this.ResourceObject, "StorageProfile.backupRetentionDays")){
-          $backupDays = $this.ResourceObject.properties.StorageProfile.backupRetentionDays
+      $backupSettings = @{ 
+        "backupRetentionDays" = $this.ResourceObject.properties.storageProfile.backupRetentionDays;
+        "geoRedundantBackup" =  $this.ResourceObject.properties.storageProfile.geoRedundantBackup
+     }
 
-          #checking ssl is enabled or disabled
-          if($backupDays -eq 35)
-          {
-            $controlResult.AddMessage([VerificationResult]::Passed, "Backup is enabled.");
-          }
-          else 
-          {
-            $controlResult.AddMessage([VerificationResult]::Failed, "Backup is disabled.");
-          }
-        }
-        else{
-          $controlResult.AddMessage([VerificationResult]::Failed, "Backup is disabled.");
-        }
-        
-      }
-      catch{
+    $controlResult.AddMessage([VerificationResult]::Verify, "Verify that the critical business data in the MySQL server has been backed up from a BC-DR standpoint.",$backupSettings);
+    $controlResult.SetStateData("Backup setting:", $backupSettings);
 
-      }
-      #return
-      return $controlResult
+    return $controlResult;
     }
 	
     hidden [ControlResult] CheckMySQLServerVnetRules([ControlResult] $controlResult)
     {
-      $uri=[system.string]::Format($this.ResourceAppIdURI+"/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DBforMySQL/servers/{2}/virtualNetworkRules/VnetRule?api-version=2017-12-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)      
+      $virtualNetworkRules=''
+      $uri=[system.string]::Format($this.ResourceAppIdURI+"/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DBforMySQL/servers/{2}/virtualNetworkRules/?api-version=2017-12-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)      
+      
       try
-
       {
-        $response = [WebRequestHelper]::InvokeWebRequest( $uri, $this.headers); 
+        $virtualNetworkRules = [WebRequestHelper]::InvokeGetWebRequest($uri);
       }
-
       catch
       {
-        $controlResult.AddMessage([VerificationResult]::Manual, "Add message.");
+        $controlResult.AddMessage([VerificationResult]::Manual, "Unable to fetch details of functions.");
       }
+      if ([Helpers]::CheckMember($virtualNetworkRules,"id")) {
+            
+        $vnetRules = $virtualNetworkRules | ForEach-Object {
+            @{ 'name'="$($_.name)"; 'id'="$($_.id)"; 'virtualNetworkSubnetId'="$($_.properties.virtualNetworkSubnetId)" }
+        }
+        $controlResult.AddMessage([VerificationResult]::Passed, "The enabled virtual network rules are:",$vnetRules);
+        $controlResult.SetStateData("Configured virtual network rules:", $vnetRules);
+      }
+      else
+      {
+          $controlResult.AddMessage([VerificationResult]::Verify, "There are no virtual network rules enabled for '$($this.ResourceContext.ResourceName)' server. Consider using virtual network rules for improved isolation.");
+      }
+      
       return $controlResult
-
+    
     }
 
     hidden [ControlResult] CheckMySQLServerATP([ControlResult] $controlResult)
@@ -152,5 +158,120 @@ class DBForMySql: AzSVTBase
       }
       return $controlResult
     }
+   <# hidden [ControlResult] CheckMySQLDiagnosticsSettings([ControlResult] $controlResult) {
+      $diagnostics = $Null
+      try
+      {
+        $diagnostics = Get-AzDiagnosticSetting -ResourceId $this.ResourceId -ErrorAction Stop -WarningAction SilentlyContinue
+      }
+      catch
+      {
+        if([Helpers]::CheckMember($_.Exception, "Response") -and ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound)
+        {
+          $controlResult.AddMessage([VerificationResult]::Failed, "Diagnostics setting is disabled for resource - [$($this.ResourceContext.ResourceName)].");
+          return $controlResult
+        }
+        else
+        {
+          $this.PublishException($_);
+        }
+      }
+      if($Null -ne $diagnostics -and ($diagnostics.Logs | Measure-Object).Count -ne 0)
+      {
+        $nonCompliantLogs = $diagnostics.Logs | Where-Object {$_.Category -eq 'MYSQLLogs'} |
+                  Where-Object { -not ($_.Enabled -and
+                        ($_.RetentionPolicy.Days -eq $this.ControlSettings.Diagnostics_RetentionPeriod_Forever -or
+                        $_.RetentionPolicy.Days -ge $this.ControlSettings.Diagnostics_RetentionPeriod_Min))};
+
+        $selectedDiagnosticsProps = $diagnostics | Select-Object -Property @{ Name = "Logs"; Expression = {$_.Logs |  Where-Object {$_.Category -eq 'MYSQLLogs'}}}, StorageAccountId, EventHubName, Name;
+
+        if(($nonCompliantLogs | Measure-Object).Count -eq 0)
+        {
+          $controlResult.AddMessage([VerificationResult]::Passed,
+            "Diagnostics settings are correctly configured for resource - [$($this.ResourceContext.ResourceName)]",
+            $selectedDiagnosticsProps);
+        }
+        else
+        {
+          $failStateDiagnostics = $nonCompliantLogs | Select-Object -Property @{ Name = "Logs"; Expression = {$_.Logs |  Where-Object {$_.Category -eq 'MYSQLLogs'}}}, StorageAccountId, EventHubName, Name;
+          $controlResult.SetStateData("Non compliant resources are:", $failStateDiagnostics);
+          $controlResult.AddMessage([VerificationResult]::Failed,
+            "Diagnostics settings are either disabled OR not retaining logs for at least $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) days for resource - [$($this.ResourceContext.ResourceName)]",
+            $selectedDiagnosticsProps);
+        }
+      }
+      else
+      {
+        $controlResult.AddMessage([VerificationResult]::Failed, "Diagnostics setting is disabled for resource - [$($this.ResourceContext.ResourceName)].");
+      }
+      return $controlResult
+    }
+#>
+
+    [PSObject] GetFirewallRules()
+    {
+        if ($null -eq $this.MySQLFirewallRules)
+        {
+          
+            #$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
+            $uri=[system.string]::Format($this.ResourceAppIdURI+"/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DBforMySQL/servers/{2}/firewallRules?api-version=2017-12-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName) 
+            try
+            {
+                $this.MySQLFirewallRules = [WebRequestHelper]::InvokeGetWebRequest($uri);
+            }
+            catch
+            {
+                $this.MySQLFirewallRules = 'error'
+            }
+        }
+        return $this.MySQLFirewallRules
+    }
+
+    hidden [ControlResult] CheckMySQLFirewallIpRange([ControlResult] $controlResult)
+    {
+     
+      $firewallRules = $this.GetFirewallRules()
+      if ($firewallRules -eq 'error')
+      {
+        $controlResult.AddMessage([VerificationResult]::Manual, "Unable to get firewall rules for - [$($this.ResourceContext.ResourceName)]");
+      }
+      else
+      {
+        if([Helpers]::CheckMember($firewallRules,"id"))
+        {
+          $firewallRulesForAzure = $firewallRules | Where-Object { $_.name -ne "AllowAllWindowsAzureIps" }
+          if(($firewallRulesForAzure | Measure-Object ).Count -eq 0)
+          {
+            $controlResult.AddMessage([VerificationResult]::Passed, "No custom firewall rules found.");
+            return $controlResult
+          }
+
+          $controlResult.AddMessage([MessageData]::new("Current firewall settings for - ["+ $this.ResourceContext.ResourceName +"]",
+                                                        $firewallRulesForAzure));
+
+          $anyToAnyRule =  $firewallRulesForAzure | Where-Object { $_.properties.StartIpAddress -eq $this.ControlSettings.IPRangeStartIP -and $_.properties.EndIpAddress -eq  $this.ControlSettings.IPRangeEndIP}
+          if (($anyToAnyRule | Measure-Object).Count -gt 0)
+          {
+              $controlResult.AddMessage([VerificationResult]::Failed,
+                                          [MessageData]::new("Firewall rule covering all IPs (Start IP address: $($this.ControlSettings.IPRangeStartIP) To End IP Address: $($this.ControlSettings.IPRangeEndIP)) is defined."));
+          }
+          else
+          {
+              $controlResult.VerificationResult = [VerificationResult]::Verify
+          }
+          $controlResult.SetStateData("Firewall IP addresses", $firewallRules);
+        }
+        else
+        {
+          $controlResult.AddMessage([VerificationResult]::Passed, "No custom firewall rules found.");  
+        }
+          
+      }
+
+      return $controlResult;
+    }
+
+   
+
 
 }

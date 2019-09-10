@@ -24,8 +24,8 @@
     "Description": "Configure only the required IP addresses on MySQL server. Do not use 'Any-to-Any' IP range.",
     "Id": "DBforMySql110",
     "ControlSeverity": "High",
-    "Automated": "No",
-    "MethodName": "",
+    "Automated": "Yes",
+    "MethodName": "CheckMySQLFirewallIpRange",
     "Rationale": "Using the firewall feature ensures that access to the data or the service is restricted to a specific set/group of clients. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios.",
     "Recommendation": "",
     "Tags": [
@@ -74,8 +74,8 @@
     "Description": "Backup and Disaster Recovery must be planned at the time of creation of Azure Database for MySql service",
     "Id": "DBforMySQL160",
     "ControlSeverity": "Medium",
-    "Automated": "No",
-    "MethodName": "",
+    "Automated": "Yes",
+    "MethodName": "CheckMySQLBCDRStatus",
     "Rationale": "Azure Database for MySQL offers default backup/disaster recovery for 7 days that can be extended up to 35 days. You can choose between locally redundant or geo-redundant backup storage. When processing critical workloads, a team must have adequate backups of the data.",
     "Recommendation": "Ensure the critical business data in the Azure Database for MySQL has been backed up.The type of backup once selected cannot be changed in future.",
     "Tags": [
@@ -106,8 +106,8 @@
         "Description": "Diagnostics logs must be enabled with a retention period of at least365 days.",
         "Id": "DBforMySQL180",
         "ControlSeverity": "Medium",
-        "Automated": "No",
-        "MethodName": "",
+        "Automated": "Yes",
+        "MethodName": "CheckDiagnosticsSettings",
         "Rationale": "Logs should be retained for a long enough period so that activity trail can be recreated when investigations are required in the event of an incident or a compromise. A period of 1 year is typical for several compliance requirements as well.",
         "Recommendation": "You can change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal",
         "Tags": [
@@ -154,24 +154,8 @@
             "RBAC"
         ],
         "Enabled": true
-    },
+    }
     
-    {
-      "ControlID": "Azure_DBforMySQL_BCDR_Plan",
-      "Description": "Backup and Disaster Recovery must be planned for the default Azure Database for MySQL service",
-      "Id": "DBforMySQL210",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckMySQLBCDRStatus",
-      "Rationale": "Azure Database for MySQL offers backup/disaster recovery up to 35 days. It also provides the flexibility to choose between locally redundant or geo-redundant backup storage. When processing critical workloads, a team must have adequate backups of the data.",
-      "Recommendation": "Ensure the critical business data in the Azure Database for MySQL has been backed up from a BC-DR standpoint.",
-      "Tags": [
-          "SDL",
-          "TCP",
-          "BCDR",
-          "Automated"
-      ],
-      "Enabled": true
-  }
+    
   ]
 }
