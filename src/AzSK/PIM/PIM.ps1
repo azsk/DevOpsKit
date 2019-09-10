@@ -139,7 +139,7 @@ function Set-AzSKPIMConfiguration {
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
         [int]
-        $ExpireEligibleAssignmentsInDays,
+        $ExpireEligibleAssignmentsInDays =-1,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
         [bool]
@@ -147,7 +147,7 @@ function Set-AzSKPIMConfiguration {
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
         [int]
-        $MaximumActivationDuration = 8, 
+        $MaximumActivationDuration = -1, 
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
         [bool]
