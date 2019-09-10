@@ -538,11 +538,13 @@ class Storage: AzSVTBase
 			 if($nonConfiguredMetrices.Count -ne 0)
 			 {
 				 $controlResult.AddMessage("Following metric alerts are not configured :", $nonConfiguredMetrices);
+				 $controlResult.SetStateData("Alert settings for storage : ", $nonConfiguredMetrices);
 			 }
  
 			 if($misConfiguredMetrices.Count -ne 0)
 			 {
 				 $controlResult.AddMessage("Following metric alerts are not correctly configured . Please update the metric settings in order to comply.", $misConfiguredMetrices);
+				 $controlResult.SetStateData("Alert settings for storage : ", $misConfiguredMetrices);
 			 }
  
 			 if($nonConfiguredMetrices.Count -eq 0 -and $misConfiguredMetrices.Count -eq 0)
