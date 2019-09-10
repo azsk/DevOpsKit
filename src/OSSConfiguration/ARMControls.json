@@ -838,7 +838,7 @@
           "Description": "NSG should be used for subnets in a virtual network to permit traffic only on required inbound/outbound ports. NSGs should not have a rule to allow any-to-any traffic",
           "Rationale":  "Restricting inbound and outbound traffic via NSGs limits the network exposure of the subnets within a virtual network and limits the attack surface.",
           "Recommendation": "Configure NSG rules to be as restrictive as possible via: (a) Azure Portal -> Network security groups -> <Your NSG> -> Inbound security rules -> Edit 'Allow' action rules. (b) Azure Portal -> Network security groups. -> <Your NSG> -> Outbound security rules -> Edit 'Allow' action rules.",
-          "Severity": "High",
+          "Severity": "Medium",
           "jsonPath": [ "$.properties.networkSecurityGroup.id" ],
           "matchType": "StringWhitespace",
           "data": {
