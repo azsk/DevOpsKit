@@ -20,9 +20,9 @@ function Set-AzSKPIMConfiguration {
 
 		
         [switch]
-        [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignemnts", HelpMessage = "This switch is required to assign a PIM eligible role.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignments", HelpMessage = "This switch is required to assign a PIM eligible role.")]
         [Alias("cpa")]
-        $AssignEligibleforPermanentAssignemnts,
+        $AssignEligibleforPermanentAssignments,
 
 
         [switch]
@@ -41,7 +41,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $true, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
-        [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignemnts")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignments")]
         [ValidateNotNullOrEmpty()]
@@ -52,7 +52,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Assign")]
-        [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignemnts")]
+        [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringAssignments")]
         [ValidateNotNullOrEmpty()]
@@ -63,7 +63,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Assign")]
-        [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignemnts")]
+        [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringAssignments")]
         [ValidateNotNullOrEmpty()]
@@ -78,7 +78,7 @@ function Set-AzSKPIMConfiguration {
 	    $DurationInHours,
 		
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
-        [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignemnts")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignments")]
         [ValidateNotNullOrEmpty()]
         [Alias("did")]
@@ -104,7 +104,7 @@ function Set-AzSKPIMConfiguration {
         [string]
         $RoleName,
 
-        [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignemnts")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignments")]
         [ValidateNotNullOrEmpty()]
@@ -128,7 +128,7 @@ function Set-AzSKPIMConfiguration {
         $RemoveAssignmentFor,
 
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
-        [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignemnts")]
+        [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringAssignments")]		
 		[switch]
 		[Alias("f")]
@@ -156,7 +156,7 @@ function Set-AzSKPIMConfiguration {
             elseif ($PSCmdlet.ParameterSetName -eq 'Assign') {				
                 $pimconfig.InvokeFunction($pimconfig.AssignPIMRole, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalName, $DurationInDays))
             }
-            elseif ($PSCmdlet.ParameterSetName -eq 'AssignEligibleforPermanentAssignemnts') {
+            elseif ($PSCmdlet.ParameterSetName -eq 'AssignEligibleforPermanentAssignments') {
                 $pimconfig.InvokeFunction($pimconfig.AssignPIMforPermanentAssignemnts, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $Force))
             }	
             elseif ($PSCmdlet.ParameterSetName -eq 'RemovePermanentAssignment') {
