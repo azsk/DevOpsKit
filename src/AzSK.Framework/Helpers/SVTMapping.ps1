@@ -275,6 +275,12 @@ class SVTMapping
 			ClassName = "KubernetesService";
 			JsonFileName = "KubernetesService.json";
 			ResourceTypeName = "KubernetesService";
+        },
+	 [ResourceTypeMapping]@{
+            ResourceType = "Microsoft.DBforMySQL/servers";
+			ClassName = "DBForMySql";
+			JsonFileName = "DBForMySql.json";
+			ResourceTypeName = "DBForMySql";
         }
     );
 
