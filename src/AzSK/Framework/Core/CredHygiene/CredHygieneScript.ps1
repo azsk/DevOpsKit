@@ -206,7 +206,7 @@ class CredHygiene : CommandBase{
 					}
 				}
 				else{
-					$table = $sortedBlob | Format-Table -AutoSize -Wrap @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }}, @{Label = "Credential Group"; Expression = { $_.credGroup }}, @{Label = "Created on"; Expression = { $_.firstUpdatedOn }}, @{Label = "Created by"; Expression = { $_.firstUpdatedBy }}, @{Label = "Last update"; Expression = { $_.lastUpdatedOn }}, @{Label = "Updated by"; Expression = { $_.lastUpdatedBy }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
+					$table = $sortedBlob | Format-Table -AutoSize -Wrap @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }; align='left'}, @{Label = "Credential Group"; Expression = { $_.credGroup }}, @{Label = "Created on"; Expression = { $_.firstUpdatedOn }}, @{Label = "Created by"; Expression = { $_.firstUpdatedBy }}, @{Label = "Last update"; Expression = { $_.lastUpdatedOn }}, @{Label = "Updated by"; Expression = { $_.lastUpdatedBy }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
 					$this.PublishCustomMessage($table, [MessageType]::Default)
 				}
 			}
