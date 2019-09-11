@@ -84,7 +84,8 @@ class KubernetesService: AzSVTBase
 	{
 		if(([Helpers]::CheckMember($this.ResourceObject,"Properties")) -and [Helpers]::CheckMember($this.ResourceObject.Properties,"kubernetesVersion"))
 		{
-		    $requiredKubernetsVersion = $null
+			$requiredKubernetesVersion = $null
+			<#
 		    $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
             $AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			$header = "Bearer " + $AccessToken
@@ -114,13 +115,15 @@ class KubernetesService: AzSVTBase
 				#If any exception occurs, get required kubernetes version from config
 				$requiredKubernetsVersion = [System.Version] $this.ControlSettings.KubernetesService.kubernetesVersion
 			}
-			$resourceKubernetVersion = [System.Version] $this.ResourceObject.Properties.kubernetesVersion
-			if($resourceKubernetVersion -lt $requiredKubernetsVersion)
+			#>
+			$requiredKubernetesVersion = [System.Version] $this.ControlSettings.KubernetesService.kubernetesVersion
+			$resourceKubernetesVersion = [System.Version] $this.ResourceObject.Properties.kubernetesVersion
+			if($resourceKubernetesVersion -lt $requiredKubernetesVersion)
 			{
 				$controlResult.AddMessage([VerificationResult]::Failed,
 										[MessageData]::new("AKS cluster is not running on latest Kubernetes version."));
-				$controlResult.AddMessage([MessageData]::new("Current Kubernetes version: ", $resourceKubernetVersion.ToString()));
-				$controlResult.AddMessage([MessageData]::new("Latest Kubernetes version: ", $requiredKubernetsVersion.ToString()));
+				$controlResult.AddMessage([MessageData]::new("Current Kubernetes version: ", $resourceKubernetesVersion.ToString()));
+				$controlResult.AddMessage([MessageData]::new("Latest Kubernetes version: ", $requiredKubernetesVersion.ToString()));
 
 			}
 			else
