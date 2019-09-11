@@ -181,8 +181,8 @@ class Constants
 	#Constants for credential rotation metadata
 	static [string] $RotationMetadataSubPath = (Join-Path "Temp" -ChildPath "RotationMetadata");
 	static [string] $RotationMetadataContainerName = "rotation-metadata"
-	static [string] $CredHygieneActionGroupName = "AzSKCredHygieneAG"
-	static [string] $CredHygieneActionGroupShortName = "azskchag"
+	static [string] $CredHygieneActionGroupName = "AzSKCredHygieneActionGroup"
+	static [string] $CredHygieneActionGroupShortName = "AzSKCredHyg"
 
 	static [void] SetAzSKModuleName($moduleName)
 	{

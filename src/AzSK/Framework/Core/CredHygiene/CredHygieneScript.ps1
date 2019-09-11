@@ -3,9 +3,8 @@ Set-StrictMode -Version Latest
 class CredHygiene : CommandBase{
     [string] $credName;
     [string] $credLocation;
-    [int] $rotationInt;
-    [string] $alertPhoneNumber = "";
-	[string] $alertEmail;
+	[int] $rotationInt;
+	[int] $nextExpiry;
     [string] $comment;
     hidden [string] $AzSKTemp = (Join-Path $([Constants]::AzSKAppFolderPath) $([Constants]::RotationMetadataSubPath)); 
     hidden [PSObject] $AzSKResourceGroup = $null;
@@ -73,38 +72,25 @@ class CredHygiene : CommandBase{
 		return $resourceGroup;
 	}
 
-	[void] PrintDetails($credentialInfo){
+	[void] PrintDetails($credentialInfo,$messageType){
 		$this.PublishCustomMessage("`n")
 		$this.PublishCustomMessage("Settings for the AzSK tracked credential [$($credentialInfo.credName)] `n`n", [MessageType]::Info) 
 		$this.PublishCustomMessage("`n")
 
-		$this.PublishCustomMessage("Name:`t`t`t`t`t`t`t`t`t$($credentialInfo.credName)", [MessageType]::Default)
-		$this.PublishCustomMessage("Location:`t`t`t`t`t`t`t`t$($credentialInfo.credLocation)", [MessageType]::Default)
-		$this.PublishCustomMessage("Rotation interval (days):`t`t`t`t$($credentialInfo.rotationInt)", [MessageType]::Default)
-		$this.PublishCustomMessage("Alert email:`t`t`t`t`t`t`t$($credentialInfo.emailId)", [MessageType]::Default)
-		$this.PublishCustomMessage("Alert phone:`t`t`t`t`t`t`t$($credentialInfo.contactNumber)", [MessageType]::Default)
-		$this.PublishCustomMessage("Created on:`t`t`t`t`t`t`t`t$($credentialInfo.firstUpdatedOn)", [MessageType]::Default)
-		$this.PublishCustomMessage("Created by:`t`t`t`t`t`t`t`t$($credentialInfo.firstUpdatedBy)", [MessageType]::Default)
-		$this.PublishCustomMessage("Last update:`t`t`t`t`t`t`t$($credentialInfo.lastUpdatedOn)", [MessageType]::Default)
-		$this.PublishCustomMessage("Updated by:`t`t`t`t`t`t`t`t$($credentialInfo.lastUpdatedBy)", [MessageType]::Default)
-		$this.PublishCustomMessage("Comment:`t`t`t`t`t`t`t`t$($credentialInfo.comment)`n", [MessageType]::Default)
+		$table = $credentialInfo | Format-List @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }}, @{Label = "Credential Group"; Expression = { $_.credGroup }}, @{Label = "Created on"; Expression = { $_.firstUpdatedOn }}, @{Label = "Created by"; Expression = { $_.firstUpdatedBy }}, @{Label = "Last update"; Expression = { $_.lastUpdatedOn }}, @{Label = "Updated by"; Expression = { $_.lastUpdatedBy }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
+		$this.PublishCustomMessage($table, $messageType)
 
 		if($credentialInfo.credLocation -eq "AppService"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
-			$this.PublishCustomMessage("Credential Details:");
-			$this.PublishCustomMessage("AppService name:`t`t`t`t`t`t$($credentialInfo.resourceGroup)", [MessageType]::Default)
-			$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", [MessageType]::Default)
-			$this.PublishCustomMessage("AppService config type:`t`t`t`t`t$($credentialInfo.appConfigType)", [MessageType]::Default)
-			$this.PublishCustomMessage("AppService config name:`t`t`t`t`t$($credentialInfo.appConfigName)", [MessageType]::Default)
+			$this.PublishCustomMessage("Additional Details:");
+			$table = $credentialInfo | Format-List @{Label = "AppService Name"; Expression = { $_.resourceName }} , @{Label = "AppService config type"; Expression = { $_.appConfigType }}, @{Label = "AppService config name"; Expression = { $_.appConfigName }} | Out-String
+			$this.PublishCustomMessage($table, $messageType)
 		}
 		if($credentialInfo.credLocation -eq "KeyVault"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
-			$this.PublishCustomMessage("Credential Details:");
-			$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", [MessageType]::Default)
-			$this.PublishCustomMessage("Credential type:`t`t`t`t`t`t$($credentialInfo.kvCredType)", [MessageType]::Default)
-			$this.PublishCustomMessage("Credential name:`t`t`t`t`t`t$($credentialInfo.kvCredName)", [MessageType]::Default)
-			$this.PublishCustomMessage("Expiry time:`t`t`t`t`t`t`t$($credentialInfo.expiryTime)", [MessageType]::Default)
-			$this.PublishCustomMessage("Version:`t`t`t`t`t`t`t`t$($credentialInfo.Version)", [MessageType]::Default)
+			$this.PublishCustomMessage("Additional Details:");
+			$table = $credentialInfo | Format-List @{Label = "Key vault Name"; Expression = { $_.kvName }} , @{Label = "Credential type"; Expression = { $_.kvCredType }}, @{Label = "Credential name"; Expression = { $_.kvCredName }}, @{Label = "Expiry time"; Expression = { $_.expiryTime }}, @{Label = "Version"; Expression = { $_.version }} | Out-String
+			$this.PublishCustomMessage($table, $messageType)
 		}
 
 		$this.PublishCustomMessage("`n")		
@@ -114,37 +100,27 @@ class CredHygiene : CommandBase{
 		$this.PublishCustomMessage("`n")
 		$this.PublishCustomMessage("Settings for the AzSK tracked credential [$($credentialInfo.credName)] `n`n", [MessageType]::Info) 
 		$this.PublishCustomMessage("`n")
-
-		$this.PublishCustomMessage("Name:`t`t`t`t`t`t`t`t`t$($credentialInfo.credName)", [MessageType]::Default)
-		$this.PublishCustomMessage("Location:`t`t`t`t`t`t`t`t$($credentialInfo.credLocation)", [MessageType]::Default)
-		$this.PublishCustomMessage("Rotation interval (days):`t`t`t`t$($credentialInfo.rotationInt)", [MessageType]::Default)
-		$this.PublishCustomMessage("Alert email:`t`t`t`t`t`t`t$($credentialInfo.emailId)", [MessageType]::Default)
-		$this.PublishCustomMessage("Alert phone:`t`t`t`t`t`t`t$($credentialInfo.contactNumber)", [MessageType]::Default)
-		$this.PublishCustomMessage("Comment:`t`t`t`t`t`t`t`t$($credentialInfo.comment)`n", [MessageType]::Default)
+		$table = $credentialInfo | Format-List @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }}, @{Label = "Credential Group"; Expression = { $_.credGroup }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
+		$this.PublishCustomMessage($table, [MessageType]::Default)
 
 		if($credentialInfo.credLocation -eq "AppService"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
-			$this.PublishCustomMessage("Credential Details:");
-			$this.PublishCustomMessage("AppService name:`t`t`t`t`t`t$($credentialInfo.resourceGroup)", [MessageType]::Default)
-			$this.PublishCustomMessage("Resource group:`t`t`t`t`t`t`t$($credentialInfo.resourceName)", [MessageType]::Default)
-			$this.PublishCustomMessage("AppService config type:`t`t`t`t`t$($credentialInfo.appConfigType)", [MessageType]::Default)
-			$this.PublishCustomMessage("AppService config name:`t`t`t`t`t$($credentialInfo.appConfigName)", [MessageType]::Default)
+			$this.PublishCustomMessage("Additional Details:");
+			$table = $credentialInfo | Format-List @{Label = "AppService Name"; Expression = { $_.resourceName }} , @{Label = "AppService config type"; Expression = { $_.appConfigType }}, @{Label = "AppService config name"; Expression = { $_.appConfigName }} | Out-String
+			$this.PublishCustomMessage($table, [MessageType]::Default)
 		}
 		if($credentialInfo.credLocation -eq "KeyVault"){
 			$this.PublishCustomMessage([Constants]::SingleDashLine);
-			$this.PublishCustomMessage("Credential Details:");
-			$this.PublishCustomMessage("Key vault name:`t`t`t`t`t`t`t$($credentialInfo.kvName)", [MessageType]::Default)
-			$this.PublishCustomMessage("Credential type:`t`t`t`t`t`t$($credentialInfo.kvCredType)", [MessageType]::Default)
-			$this.PublishCustomMessage("Credential name:`t`t`t`t`t`t$($credentialInfo.kvCredName)", [MessageType]::Default)
-			$this.PublishCustomMessage("Expiry time:`t`t`t`t`t`t`t$($credentialInfo.expiryTime)", [MessageType]::Default)
-			$this.PublishCustomMessage("Version:`t`t`t`t`t`t`t`t$($credentialInfo.Version)", [MessageType]::Default)
+			$this.PublishCustomMessage("Additional Details:");
+			$table = $credentialInfo | Format-List @{Label = "Key vault Name"; Expression = { $_.kvName }} , @{Label = "Credential type"; Expression = { $_.kvCredType }}, @{Label = "Credential name"; Expression = { $_.kvCredName }}, @{Label = "Expiry time"; Expression = { $_.expiryTime }}, @{Label = "Version"; Expression = { $_.version }} | Out-String
+			$this.PublishCustomMessage($table, [MessageType]::Default)
 		}
 
 		$this.PublishCustomMessage("`n")		
 	}
 
-    [void] GetAlert($CredentialName)
-	{           
+    [void] GetAlert($CredentialName,$DetailedView)
+	{          
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $CredentialName
 		$file += ".json"
         $this.GetAzSKRotationMetadatContainer()
@@ -163,14 +139,28 @@ class CredHygiene : CommandBase{
 				New-Item -ItemType Directory -Path "$($this.AzSKTemp)" -ErrorAction Stop | Out-Null
 			}
 		}
-        
+
+        $controlSettings = $this.LoadServerConfigFile("ControlSettings.json");
+
 		if($CredentialName){
 			$blobName = $CredentialName.ToLower() + ".json"
 			$blobContent = Get-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -Destination $file -Force -ErrorAction Ignore
 			if($blobContent){    
 				$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
 
-				$this.PrintDetails($credentialInfo);
+				$messageType = [MessageType]::Default
+				
+				$currentTime = [DateTime]::UtcNow;
+				$lastRotatedTime = $credentialInfo.lastUpdatedOn;
+				$expiryTime = $lastRotatedTime.AddDays($credentialInfo.rotationInt);
+				
+				if($expiryTime -le $currentTime.AddDays($controlSettings.SubscriptionCore.credHighTH)){ #Checking for expired/about to expire credentials
+					$messageType = [MessageType]::Critical
+				}
+				elseif(($expiryTime -gt $currentTime.AddDays($controlSettings.SubscriptionCore.credHighTH)) -and ($expiryTime -le $currentTime.AddDays($controlSettings.SubscriptionCore.credModerateTH))){ #Checking for credentials nearing expiry.
+					$messageType = [MessageType]::Warning
+				}
+				$this.PrintDetails($credentialInfo,$messageType);
 			}
 			else{
 				$this.PublishCustomMessage("Could not find an entry for credential [$CredentialName].",[MessageType]::Critical)
@@ -185,11 +175,39 @@ class CredHygiene : CommandBase{
 				$this.PublishCustomMessage("`n")
 				$this.PublishCustomMessage("`nListing settings for all the credentials `n`n",[MessageType]::Update)
 				$this.PublishCustomMessage("`n")
+				
+				# array to store cred info in ascending order of expiry time.
+
+				$sortedBlob = @();
+				
 				$blob | where {
 					$_ | Get-AzStorageBlobContent -Destination $file -Force | Out-Null
 					$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
+					$sortedBlob += $credentialInfo;
+				}
 
-					$this.PrintDetails($credentialInfo);
+				$sortedBlob = $sortedBlob | Sort-Object -Property @{Expression = {($_.lastUpdatedOn).AddDays($_.rotationInt)}; Descending = $False} 
+				
+				$currentTime = [DateTime]::UtcNow;
+
+				if($DetailedView){
+					$sortedBlob | where{
+						$lastRotatedTime = $_.lastUpdatedOn;
+						$expiryTime = $lastRotatedTime.AddDays($_.rotationInt);
+						$messageType = [MessageType]::Default
+						if($expiryTime -le $currentTime.AddDays($controlSettings.SubscriptionCore.credHighTH)){ #Checking for expired/about to expire credentials
+							$messageType = [MessageType]::Critical
+						}
+						elseif(($expiryTime -gt $currentTime.AddDays($controlSettings.SubscriptionCore.credHighTH)) -and ($expiryTime -le $currentTime.AddDays($controlSettings.SubscriptionCore.credModerateTH))){ #Checking for credentials nearing expiry.
+							$messageType = [MessageType]::Warning
+						}
+
+						$this.PrintDetails($_,$messageType);
+					}
+				}
+				else{
+					$table = $sortedBlob | Format-Table -AutoSize -Wrap @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }}, @{Label = "Credential Group"; Expression = { $_.credGroup }}, @{Label = "Created on"; Expression = { $_.firstUpdatedOn }}, @{Label = "Created by"; Expression = { $_.firstUpdatedBy }}, @{Label = "Last update"; Expression = { $_.lastUpdatedOn }}, @{Label = "Updated by"; Expression = { $_.lastUpdatedBy }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
+					$this.PublishCustomMessage($table, [MessageType]::Default)
 				}
 			}
 			else{
@@ -203,8 +221,8 @@ class CredHygiene : CommandBase{
 		}
 	}
 
-	[void] NewAlert($CredentialLocation, $ResourceGroupName, $ResourceName, $AppConfigType, $AppConfigName, $KVName, $KVCredentialType, $KVCredentialName)
-	{           
+	[void] NewAlert($CredentialLocation,$CredentialGroup)
+	{
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $($this.credName)
 		$file += ".json"
         $this.GetAzSKRotationMetadatContainer()
@@ -239,76 +257,358 @@ class CredHygiene : CommandBase{
             $credentialInfo = New-Object PSObject
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name credLocation -Value $this.credLocation
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name credName -Value $this.credName
-            Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name rotationInt -Value $this.rotationInt
-            Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name emailId -Value $this.alertEmail
-            Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name contactNumber -Value $this.alertPhoneNumber
+			Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name rotationInt -Value $this.rotationInt
+			Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name nextExpiry -Value $this.nextExpiry
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name firstUpdatedOn -Value $startTime
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name lastUpdatedOn -Value $startTime
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name comment -Value $this.comment
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name firstUpdatedBy -Value $user
             Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name lastUpdatedBy -Value $user
 
-            if($CredentialLocation -eq "AppService"){
-                Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name resourceGroup -Value $ResourceGroupName
-                Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name resourceName -Value $ResourceName
-                Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name appConfigType -Value $AppConfigType
-                Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name appConfigName -Value $AppConfigName
+			if($credentialInfo.rotationInt -gt $credentialInfo.nextExpiry){
+				$credentialInfo.lastUpdatedOn = ($credentialInfo.lastUpdatedOn).AddDays($credentialInfo.nextExpiry - $credentialInfo.rotationInt) 
+			}
 
-				$resource = Get-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName -ErrorAction Ignore
-				if(-not $resource){
-					$found = $false;
-					$this.PublishCustomMessage("Could not find app service [$ResourceName] and/or resource group [$ResourceGroupName]. Please check the names.",[MessageType]::Error)
+            if($CredentialLocation -eq "AppService"){
+
+				$appsvc = Get-AzWebApp -ErrorAction Ignore
+
+				if(($appsvc|Measure-Object).Count -gt 0){
+
+					Write-Host "`nPlease select app service name from below:" -ForegroundColor Cyan
+
+					$i=0;
+					$appsvc | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+					
+					$choice = Read-Host "App service name choice"
+					while($choice -notin 0..($i-1)){
+						Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+						Write-Host "Please select app service name from below:" -ForegroundColor Cyan
+
+						$i=0;
+						$appsvc | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+						$choice = Read-Host "App service name choice"
+					}
+
+					$ResourceName = $appsvc[$choice].Name
+					$rsc = Get-AzWebApp -Name $ResourceName
+					
+					$appConfig = $null
+					$AppConfigType = $null
+					Write-Host "`nPlease select app config type from below: `n[1]: Application Settings`n[2]: Connection Strings" -ForegroundColor Cyan
+
+					$input = Read-Host "App config type"
+					
+					while(($input -ne 1) -and ($input -ne 2)){
+						Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+						Write-Host "Please select app config type from below: `n[1]: Application Settings`n[2]: Connection Strings" -ForegroundColor Cyan
+						$input = Read-Host "App config type"
+					}
+					
+					if($input -eq 1)
+					{
+						$AppConfigType = "Application Settings"
+						$appConfig = $rsc.SiteConfig.AppSettings
+					}
+					elseif($input -eq 2)
+					{
+						$AppConfigType = "Connection Strings"
+						$appConfig = $rsc.SiteConfig.ConnectionStrings
+					}
+					
+					if(($appConfig|Measure-Object).Count -gt 0){
+						Write-Host "`nPlease select app config name from below:" -ForegroundColor Cyan
+						$i=0;
+						$appConfig | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+						$choice = Read-Host "App config name"
+						while($choice -notin 0..($i-1)){
+							Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+							Write-Host "Please select app config name from below:" -ForegroundColor Cyan
+							$i=0;
+							$appConfig | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+							$choice = Read-Host "App config name"
+						}
+						$AppConfigName = $appConfig[$choice].Name       
+
+						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name resourceName -Value $ResourceName
+						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name appConfigType -Value $AppConfigType
+						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name appConfigName -Value $AppConfigName
+					}	
+					else{
+						$found = $false
+						$this.PublishCustomMessage("There are no $AppConfigType in the app service [$ResourceName].", [MessageType]::Error)
+					}
 				}
 				else{
-					if($AppConfigType -eq "Application Settings")
-					{
-						if(-not ($resource.SiteConfig.AppSettings.Name | where-object{$_ -eq $AppConfigName})){
-							$found = $false;
-							$this.PublishCustomMessage("Could not find app setting [$AppConfigName] in the app service [$ResourceName]. Please check the name.",[MessageType]::Error)
-						}
-					}
-					elseif($AppConfigType -eq "Connection Strings")
-					{
-						if(-not ($resource.SiteConfig.ConnectionStrings.Name | where-object{$_ -eq $AppConfigName})){
-							$found = $false;
-							$this.PublishCustomMessage("Could not find connection string [$AppConfigName] in the app service [$ResourceName]. Please check the name.",[MessageType]::Error)
-						}
-					}		
-							
+					$found = $false
+					$this.PublishCustomMessage("There are no app services in your subscription.", [MessageType]::Error)
 				}
+
             }
 
             if($CredentialLocation -eq "KeyVault"){
-                Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvName -Value $KVName
-                Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvCredType -Value $KVCredentialType
-                Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvCredName -Value $KVCredentialName
-                
-                if($KVCredentialType -eq "Key")
-                {
-                    $key = Get-AzKeyVaultKey -VaultName $KVName -Name $KVCredentialName -ErrorAction Ignore
-					if($key){
-						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name expiryTime -Value $key.Expires
-                    	Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name version -Value $key.Version
+
+				$keyVault = Get-AzKeyVault -ErrorAction Ignore
+
+				if(($keyVault|Measure-Object).Count -gt 0){
+					Write-Host "`nPlease select key vault name from below:" -ForegroundColor Cyan
+
+					$i=0;
+					$keyVault | where{Write-Host "[$i] $($_.VaultName)" -ForegroundColor Cyan; $i++}
+					
+					$choice = Read-Host "Key vault name choice"
+					while($choice -notin 0..($i-1)){
+						Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+						Write-Host "Please select key vault name from below:" -ForegroundColor Cyan
+
+						$i=0;
+						$keyVault | where{Write-Host "[$i] $($_.VaultName)" -ForegroundColor Cyan; $i++}
+						$choice = Read-Host "Key vault name choice"
 					}
-                    else{
-						$found = $false;
-						$this.PublishCustomMessage("Could not find key [$KVCredentialName] in key vault [$KVName]. Please check the names.",[MessageType]::Error)
+					$KVName = $keyVault[$choice].VaultName
+					Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvName -Value $KVName
+					
+					$KVCredentialType = $null
+					$KVCredentialName = $null
+
+					Write-Host "`nPlease select key vault credential type from below: `n[1]: Key`n[2]: Secret" -ForegroundColor Cyan
+					$input = Read-Host "`Key Vault credential type"
+					
+					while(($input -ne 1) -and ($input -ne 2)){
+						Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+						Write-Host "Please select key vault credential type from below: `n[1]: Key`n[2]: Secret" -ForegroundColor Cyan
+						$input = Read-Host "Key Vault credential type"
 					}
-                }
-                elseif($KVCredentialType -eq "Secret")
-                {
-                    $secret = Get-AzKeyVaultSecret -VaultName $KVName -Name $KVCredentialName -ErrorAction Ignore
-					if($secret){
-	                    Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name expiryTime -Value $secret.Expires
-    	                Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name version -Value $secret.Version
+
+					if($input -eq 1)
+					{
+						$KVCredentialType = "Key"
+						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvCredType -Value $KVCredentialType
+						$keys = Get-AzKeyVaultKey -VaultName $KVName -ErrorAction Ignore
+						if($keys){
+							Write-Host "`nPlease select key name from below:" -ForegroundColor Cyan
+							$i=0;
+							$keys | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+							$choice = Read-Host "Key name choice"
+							while($choice -notin 0..($i-1)){
+								Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+								Write-Host "Please select key name from below:" -ForegroundColor Cyan
+			
+								$i=0;
+								$keys | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+								$choice = Read-Host "Key name choice"
+							}
+							$KVCredentialName = $keys[$choice].Name
+							Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvCredName -Value $KVCredentialName
+							$key = Get-AzKeyVaultKey -VaultName $KVName -Name $KVCredentialName -ErrorAction Ignore
+							Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name expiryTime -Value $key.Expires
+							if($key.Expires){
+								if($startTime.AddDays($credentialInfo.rotationInt) -gt $key.Expires){
+									$credentialInfo.lastUpdatedOn = ($key.Expires).AddDays(-($credentialInfo.rotationInt))
+								}
+								else{
+									$credentialInfo.lastUpdatedOn = $startTime
+								}
+							}
+							Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name version -Value $key.Version
+
+						}
+						else{
+							$found = $false;
+							$this.PublishCustomMessage("Either there are no keys in the key vault [$KVName] or you do not have sufficient permissions to access them.",[MessageType]::Error)
+						}
+					}
+					elseif($input -eq 2)
+					{
+						$KVCredentialType = "Secret"
+						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvCredType -Value $KVCredentialType
+						$secrets = Get-AzKeyVaultSecret -VaultName $KVName -ErrorAction Ignore
+						if($secrets){
+							Write-Host "`nPlease select secret name from below:" -ForegroundColor Cyan
+							$i=0;
+							$secrets | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+							$choice = Read-Host "Secret name choice"
+							while($choice -notin 0..($i-1)){
+								Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+								Write-Host "Please select secret name from below:" -ForegroundColor Cyan
+			
+								$i=0;
+								$secrets | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+								$choice = Read-Host "Secret name choice"
+							}
+							$KVCredentialName = $secrets[$choice].Name
+							Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name kvCredName -Value $KVCredentialName
+							$secret = Get-AzKeyVaultSecret -VaultName $KVName -Name $KVCredentialName -ErrorAction Ignore
+							Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name expiryTime -Value $secret.Expires
+							if($secret.Expires){
+								if($startTime.AddDays($credentialInfo.rotationInt) -gt $secret.Expires){
+									$credentialInfo.lastUpdatedOn = ($secret.Expires).AddDays(-($credentialInfo.rotationInt))
+								}
+								else{
+									$credentialInfo.lastUpdatedOn = $startTime
+								}
+							}
+							Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name version -Value $secret.Version
+
+						}
+						else{
+							$found = $false;
+							$this.PublishCustomMessage("Either there are no secrets in the key vault [$KVName] or you do not have sufficient permissions to access them.",[MessageType]::Error)
+						}
+					}
+				}		
+				else{
+					$found = $false
+					$this.PublishCustomMessage("There are no key vaults in your subscription.", [MessageType]::Error)
+				}
+			}
+
+			$ag = $null;
+			if($found -and $CredentialGroup){
+				$actionGroups = Get-AzActionGroup -ErrorAction Ignore -WarningAction Ignore
+
+				if(($actionGroups|Measure-Object).Count -gt 0){
+					$ag = $actionGroups | where{$_.Name -eq $CredentialGroup}
+					
+					if(-not $ag){
+						$this.PublishCustomMessage("The action group [$CredentialGroup] does not exist in the subscription.",[MessageType]::Error)
+						Write-Host "`nPlease select action group name from below:" -ForegroundColor Cyan
+						Write-Host "[0] Create new credential group" -ForegroundColor Cyan
+						$i=1;
+						$actionGroups | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+						$choice = Read-Host "Credential group choice"
+						while($choice -notin 0..$i){
+							Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+							Write-Host "Please select action group name from below:" -ForegroundColor Cyan
+							Write-Host "[0] Create new credential group" -ForegroundColor Cyan
+							$i=1;
+							$actionGroups | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+							$choice = Read-Host "Credential group choice"
+						}
+						if($choice -ne 0){
+							$ag = $actionGroups[$choice-1]
+							$CredentialGroup = $ag.Name
+						}
+						elseif($choice -eq 0){
+							$emailR = $null;
+							$phoneR = $null;
+							$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+
+							Write-Host "`nInitiating flow for creating a new credential group..." -ForegroundColor Yellow
+							$name = Read-Host "Please enter the name of the credential group"
+							$shortName = Read-Host "Please enter the short name (less than 12 characters) of the credential group"
+							
+							Write-Host "`nPlease enter: `n[0]: to skip email configuration `n[1]: to configure email for the credential group" -ForegroundColor Cyan
+							$choice = Read-Host "User choice"
+							while($choice -notin 0..1){
+								Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+								Write-Host "`nPlease enter: `n[0]: to skip email configuration `n[1]: to configure email for the credential group" -ForegroundColor Cyan
+								$choice = Read-Host "User choice"
+							}
+							if($choice -eq 1){
+								$email = Read-Host "Enter a valid email address"
+								$emailR = New-AzActionGroupReceiver -Name 'email' -EmailReceiver -EmailAddress $email -ErrorAction Ignore
+							}
+
+							Write-Host "`nPlease enter: `n[0]: to skip SMS configuration `n[1]: to configure SMS for the credential group" -ForegroundColor Cyan
+							$choice = Read-Host "User choice"
+							while($choice -notin 0..1){
+								Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+								Write-Host "`nPlease enter: `n[0]: to skip SMS configuration `n[1]: to configure SMS for the credential group" -ForegroundColor Cyan
+								$choice = Read-Host "User choice"
+							}
+							if($choice -eq 1){
+								$countryCode = Read-Host "Enter a valid country code"
+								$phone = Read-Host "Enter a valid contact number"
+								$phoneR = New-AzActionGroupReceiver -Name 'SMS' -SmsReceiver -CountryCode $countryCode -PhoneNumber $phone -ErrorAction Ignore
+							}
+
+							if($emailR -and $phoneR){
+								$ag = Set-AzActionGroup -Name $name -ResourceGroupName $rgName -ShortName $shortName -Receiver $emailR,$phoneR -ErrorAction Ignore -WarningAction Ignore
+							}
+							elseif($emailR){
+								$ag = Set-AzActionGroup -Name $name -ResourceGroupName $rgName -ShortName $shortName -Receiver $emailR -ErrorAction Ignore -WarningAction Ignore
+							}
+							elseif($phoneR) {
+								$ag = Set-AzActionGroup -Name $name -ResourceGroupName $rgName -ShortName $shortName -Receiver $phoneR -ErrorAction Ignore -WarningAction Ignore
+							}
+						}
+						
+					}
+
+					if($ag){
+						$CredentialGroup = $ag.Name
+						$this.InstallCredentialGroupAlert($ag);
+						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name credGroup -Value $CredentialGroup
 					}
 					else{
-						$found = $false;
-						$this.PublishCustomMessage("Could not find secret [$KVCredentialName] in key vault [$KVName]. Please check the names.",[MessageType]::Error)
+						$this.PublishCustomMessage("Error occured while creating the new credential group.", [MessageType]::Error)
 					}
-                }
-            }
+					
+				}	
+				else{
+					Write-Host "`nPlease enter [0] to create a new credential group" -ForegroundColor Cyan
+					$choice = Read-Host "User choice"
 
+					if($choice -eq 0){
+						$emailR = $null;
+						$phoneR = $null;
+						$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+
+						Write-Host "`nInitiating flow for creating a new credential group..." -ForegroundColor Yellow
+						$name = Read-Host "Please enter the name of the credential group"
+						$shortName = Read-Host "Please enter the short name (less than 12 characters) of the credential group"
+							
+						Write-Host "`nPlease enter: `n[0]: to skip email configuration `n[1]: to configure email for the credential group" -ForegroundColor Cyan
+						$choice = Read-Host "User choice"
+						while($choice -notin 0..1){
+							Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+							Write-Host "`nPlease enter: `n[0]: to skip email configuration `n[1]: to configure email for the credential group" -ForegroundColor Cyan
+							$choice = Read-Host "User choice"
+						}
+						if($choice -eq 1){
+							$email = Read-Host "Enter a valid email address"
+							$emailR = New-AzActionGroupReceiver -Name 'email' -EmailReceiver -EmailAddress $email -ErrorAction Ignore
+						}
+						Write-Host "`nPlease enter: `n[0]: to skip SMS configuration `n[1]: to configure SMS for the credential group" -ForegroundColor Cyan
+						$choice = Read-Host "User choice"
+						while($choice -notin 0..1){
+							Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+							Write-Host "`nPlease enter: `n[0]: to skip SMS configuration `n[1]: to configure SMS for the credential group" -ForegroundColor Cyan
+							$choice = Read-Host "User choice"
+						}
+						if($choice -eq 1){
+							$countryCode = Read-Host "Enter a valid country code"
+							$phone = Read-Host "Enter a valid contact number"
+							$phoneR = New-AzActionGroupReceiver -Name 'SMS' -SmsReceiver -CountryCode $countryCode -PhoneNumber $phone -ErrorAction Ignore
+						}
+
+						if($emailR -and $phoneR){
+							$ag = Set-AzActionGroup -Name $name -ResourceGroupName $rgName -ShortName $shortName -Receiver $emailR,$phoneR -ErrorAction Ignore -WarningAction Ignore
+						}
+						elseif($emailR){
+							$ag = Set-AzActionGroup -Name $name -ResourceGroupName $rgName -ShortName $shortName -Receiver $emailR -ErrorAction Ignore -WarningAction Ignore
+						}
+						elseif($phoneR) {
+							$ag = Set-AzActionGroup -Name $name -ResourceGroupName $rgName -ShortName $shortName -Receiver $phoneR -ErrorAction Ignore -WarningAction Ignore
+						}
+
+						if($ag){
+							$CredentialGroup = $ag.Name
+							$this.InstallCredentialGroupAlert($ag);
+							Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name credGroup -Value $CredentialGroup
+						}
+						else{
+							$this.PublishCustomMessage("Error occured while creating the new credential group.", [MessageType]::Error)
+						}
+					}
+					else{
+						$this.PublishCustomMessage("There are no action groups in your subscription.", [MessageType]::Error)
+					}
+				}	
+			}
+
+			
 			if($found){
 				$credentialInfo | ConvertTo-Json -Depth 10 | Out-File $file -Force
 				Set-AzStorageBlobContent -Blob $blobName -Container $this.RotationMetadataContainerName -Context $this.AzSKStorageAccount.Context -File $file -Force | Out-Null
@@ -389,12 +689,12 @@ class CredHygiene : CommandBase{
 		}
 	}
 	
-	[void] UpdateAlert($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$UpdateCredential,$ResetLastUpdate)
+	[void] UpdateAlert($CredentialName,$RotationIntervalInDays,$CredentialGroup,$UpdateCredential,$ResetLastUpdate,$Comment)
 	{           
         $file = Join-Path $($this.AzSKTemp) -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $CredentialName
 		$file += ".json"
         $this.GetAzSKRotationMetadatContainer()
-        $blobName = $CredentialName.ToLower() + ".json"
+		$blobName = $CredentialName.ToLower() + ".json"
 
 		$tempSubPath = Join-Path $($this.AzSKTemp) $($this.SubscriptionContext.SubscriptionId)
 
@@ -416,27 +716,55 @@ class CredHygiene : CommandBase{
 			$this.PublishCustomMessage("Updating settings for AzSK tracked credential [$CredentialName]", [MessageType]::Default) 
 			$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
 			$user = ([ContextHelper]::GetCurrentRMContext()).Account.Id;
+			$currentTime = [DateTime]::UtcNow
 
 			if ($RotationIntervalInDays)
 			{
 				$credentialInfo.rotationInt = $RotationIntervalInDays;
 			}
 
-			if ($AlertEmail)
-			{
-				$credentialInfo.emailId = $AlertEmail;
-			}
+			$ag = $null;
+			if($CredentialGroup){
+				$actionGroups = Get-AzActionGroup -ErrorAction Ignore -WarningAction Ignore
+				if(($actionGroups|Measure-Object).Count -gt 0){
+					$ag = $actionGroups | where{$_.Name -eq $CredentialGroup}
+					
+					if(-not $ag){
+						$this.PublishCustomMessage("The action group [$CredentialGroup] does not exist in the subscription.",[MessageType]::Error)
+						Write-Host "`nPlease select action group name from below:" -ForegroundColor Cyan
+						$i=0;
+						$actionGroups | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+						$choice = Read-Host "Credential group choice"
+						while($choice -notin 0..($i-1)){
+							Write-Host "`nIncorrect value supplied." -ForegroundColor Red
+							Write-Host "Please select action group name from below:" -ForegroundColor Cyan
+							$i=0;
+							$actionGroups | where{Write-Host "[$i] $($_.Name)" -ForegroundColor Cyan; $i++}
+							$choice = Read-Host "Credential group choice"
+						}
+						$ag = $actionGroups[$choice]
+						$CredentialGroup = $ag.Name
+					}
 
-			if ($AlertSMS)
-			{
-				$credentialInfo.contactNumber = $AlertSMS;
+					$this.InstallCredentialGroupAlert($ag);
+					if([Helpers]::CheckMember($credentialInfo,"credGroup")){
+						$credentialInfo.credGroup = $CredentialGroup
+					}
+					else{
+						Add-Member -InputObject $credentialInfo -MemberType NoteProperty -Name credGroup -Value $CredentialGroup
+					}
+				}
+				else{
+					$this.PublishCustomMessage("Could not update the credential group for the credential [$CredentialName] as there are no action groups in your subscription.", [MessageType]::Error)
+				}
+				
 			}
 
 			if($UpdateCredential){
 			
 				if($credentialInfo.credLocation -eq "AppService"){
 					
-					$resource = Get-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName
+					$resource = Get-AzWebApp -Name $credentialInfo.resourceName
 					
 					$hash = @{}
 
@@ -472,11 +800,11 @@ class CredHygiene : CommandBase{
 					}
 
 					if($credentialInfo.appConfigType -eq "Application Settings"){
-						Set-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName -AppSettings $hash | Out-Null
+						Set-AzWebApp -Name $credentialInfo.resourceName -ResourceGroupName $resource.ResourceGroup -AppSettings $hash | Out-Null
 						$this.PublishCustomMessage("Successfully updated the application setting [$($credentialInfo.appConfigName)] in the app service [$($credentialInfo.resourceName)]", [MessageType]::Update)
 					}
 					elseif($credentialInfo.appConfigType -eq "Connection Strings"){
-						Set-AzWebApp -ResourceGroupName $credentialInfo.resourceGroup -Name $credentialInfo.resourceName -ConnectionStrings $hash | Out-Null
+						Set-AzWebApp -Name $credentialInfo.resourceName -ResourceGroupName $resource.ResourceGroup -ConnectionStrings $hash | Out-Null
 						$this.PublishCustomMessage("Successfully updated connection string [$($credentialInfo.appConfigName)] in the app service [$($credentialInfo.resourceName)]", [MessageType]::Update)
 					}
 					
@@ -489,7 +817,6 @@ class CredHygiene : CommandBase{
 						$currentKey = Get-AzKeyVaultKey -VaultName $credentialInfo.kvName -Name $credentialInfo.kvCredName -ErrorAction SilentlyContinue
 						if(($currentKey | Measure-Object).Count -ne 0)
 						{
-							$currentTime = [DateTime]::UtcNow
 							$expiryTime = $currentTime.AddDays($credentialInfo.rotationInt)
 
 							$this.PublishCustomMessage("Updating the key [$($credentialInfo.kvCredName)] in the key vault [$($credentialInfo.kvName)]", [MessageType]::Default)
@@ -506,7 +833,6 @@ class CredHygiene : CommandBase{
 						$currentSecret = Get-AzKeyVaultSecret -VaultName $credentialInfo.kvName -Name $credentialInfo.kvCredName -ErrorAction SilentlyContinue
 						if(($currentSecret | Measure-Object).Count -ne 0)
 						{
-							$currentTime = [DateTime]::UtcNow
 							$expiryTime = $currentTime.AddDays($credentialInfo.rotationInt)
 
 							$this.PublishCustomMessage("Updating the secret [$($credentialInfo.kvCredName)] in the key vault [$($credentialInfo.kvName)]", [MessageType]::Default)
@@ -523,12 +849,12 @@ class CredHygiene : CommandBase{
 					$this.PublishCustomMessage("If you are using key/secret URLs with specific version identifier in them, please update to the new version before disabling it.")
 				}
 
-				$credentialInfo.lastUpdatedOn = [DateTime]::UtcNow
+				$credentialInfo.lastUpdatedOn = $currentTime
 				$credentialInfo.lastUpdatedBy = $user
 			}
 			else{
 				if($ResetLastUpdate){
-					$credentialInfo.lastUpdatedOn = [DateTime]::UtcNow
+					$credentialInfo.lastUpdatedOn = $currentTime
 					$credentialInfo.lastUpdatedBy = $user
 				}
 			}
@@ -578,9 +904,10 @@ class CredHygiene : CommandBase{
 						$body.properties.action.aznsAction.actionGroup[0] = $ag
 							
 						$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
-						$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($laWS.ResourceGroupName)/providers/microsoft.insights/scheduledQueryRules/credHygieneQueryRule?api-version=2018-04-16"
+						$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($laWS.ResourceGroupName)/providers/microsoft.insights/scheduledQueryRules/AzSK_CredHygiene_Alert?api-version=2018-04-16"
 								
 						[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
+						$this.PublishCustomMessage("Alert for the credential group [$credHygieneAGName] is successfully configured.");
 					}
 					else{ # LA resource not found.
 						$this.PublishCustomMessage("Log analytics resource with workspace id [$($laWSId.Value)] provided in the CA automation account variables doesn't exist. Please verify the value of log analytics workspace id.", [MessageType]::Error)
@@ -605,4 +932,64 @@ class CredHygiene : CommandBase{
 		}
 	}	 
 
+	[void] InstallCredentialGroupAlert($actionGroup)
+	{
+		$queryRules = Get-AzScheduledQueryRule -ErrorAction Ignore -WarningAction Ignore
+		$queryRules = $queryRules.Name
+		$qr = "AzSK_CredHygiene_Alert_$($actionGroup.GroupShortName)"
+
+		if($queryRules -contains $qr){
+			$this.PublishCustomMessage("Alert for the credential group [$($actionGroup.Name)] is already configured.");
+		}
+		else {
+			
+			$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+
+			# We are using LAWS from the same sub for Alert REST API call.
+			$automationAccDetails= Get-AzAutomationAccount -ResourceGroupName $rgName -ErrorAction SilentlyContinue 
+			if($automationAccDetails)
+			{
+				#Fetch LAWS Id from CA variables
+				$laWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "LAWSId" -ErrorAction SilentlyContinue
+				if($laWSId){
+					$laWS = Get-AzOperationalInsightsWorkspace | where{$_.CustomerId -eq $laWSId.Value} # Verify whether the LA resource ith the WS id exists.
+					if($laWS){
+						
+						$body = [ConfigurationManager]::LoadServerConfigFile("CredentialHygieneAlert_CredentialGroup.json");
+						$dataSourceId = $body.properties.source.dataSourceId | ConvertTo-Json -Depth 10
+						$dataSourceId = $dataSourceId.Replace("{0}",$this.SubscriptionContext.SubscriptionId).Replace("{1}",$laWS.ResourceGroupName).Replace("{2}",$laWS.CustomerId) | ConvertFrom-Json
+						$body.properties.source.dataSourceId = $dataSourceId
+						
+						$ag = $body.properties.action.aznsAction.actionGroup[0] | ConvertTo-Json -Depth 10
+						$ag = $ag.Replace("{3}",$actionGroup.Id) | ConvertFrom-Json
+						$body.properties.action.aznsAction.actionGroup[0] = $ag
+
+						$cg = $body.properties.source.query | ConvertTo-Json -Depth 10
+						$cg = $cg.Replace("{4}",$actionGroup.Name) | ConvertFrom-Json
+						$body.properties.source.query = $cg
+							
+						$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
+						$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($laWS.ResourceGroupName)/providers/microsoft.insights/scheduledQueryRules/AzSK_CredHygiene_Alert_$($actionGroup.GroupShortName)?api-version=2018-04-16"
+									
+						[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
+						$this.PublishCustomMessage("Alert for the credential group [$($actionGroup.Name)] is successfully configured.");
+					}
+					else{ # LA resource not found.
+						$this.PublishCustomMessage("Log analytics resource with workspace id [$($laWSId.Value)] provided in the CA automation account variables doesn't exist. Please verify the value of log analytics workspace id.", [MessageType]::Error)
+						$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
+						$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the log analytics workspace id with the correct value in the CA automation account.")
+					}
+				}
+				else{ # LAWS id variable not found.
+					$this.PublishCustomMessage("Log analytics workspace id not found in the CA automation account variables.", [MessageType]::Error)
+					$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
+					$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the log analytics workspace id with the correct value in the CA automation account.")
+				}
+			}
+			else{ # CA setup not found.
+				$this.PublishCustomMessage("Continuous Assurance setup was not found in the current subscription.", [MessageType]::Error)
+				$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
+			}
+		}	
+	}	 
 }

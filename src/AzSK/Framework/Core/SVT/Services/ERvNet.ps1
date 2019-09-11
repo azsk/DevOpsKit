@@ -393,12 +393,13 @@ class ERvNet : SVTIaasBase
 
             if(($sdoPolicies | Measure-Object).Count -gt 0)
             {
+                $configuredPolicies = Get-AzPolicyAssignment -IncludeDescendent
                 $sdoPolicies | ForEach-Object{
                     Set-Variable -Name pol -Scope Local -Value $_
                     Set-Variable -Name policyDefinitionName -Scope Local -Value $_.policyDefinitionName
                     Set-Variable -Name tags -Scope Local -Value $_.tags
 
-                    $foundPolicies = [array](Get-AzPolicyAssignment | Where-Object {$_.Name -eq $policyDefinitionName})
+                    $foundPolicies = [array]($configuredPolicies | Where-Object {$_.Name -like $policyDefinitionName})
                     if($null -ne $foundPolicies)
                     {
                         if($foundPolicies.Length -gt 0)

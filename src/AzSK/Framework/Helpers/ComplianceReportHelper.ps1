@@ -449,7 +449,7 @@ class ComplianceReportHelper: ComplianceBase
 				$StateData.Justification = $item.Justification
 				$CResult.StateManagement.AttestedStateData=$StateData
 				$controlDetails.ControlId=$item.ControlId
-				$CResult.CurrentSessionContext.IsLatestPSModule = $this.azskStorageInstance.RunningLatestPSModule
+				$CResult.CurrentSessionContext.IsLatestPSModule = $true
 				$CResult.CurrentSessionContext.Permissions.HasRequiredAccess = $true
 				$CResult.CurrentSessionContext.Permissions.HasAttestationWritePermissions = $this.azskStorageInstance.HaveWritePermissions
 				$CResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions = $this.azskStorageInstance.HaveWritePermissions 
@@ -464,8 +464,6 @@ class ComplianceReportHelper: ComplianceBase
 				{
 					$controlDetails.IsBaselineControl=$false				
 				}
-
-				#<TODO: Currently remote API does not return PreviewBaselineControl flag. Disabling below code>
 				if($item.IsPreviewBaselineControl)
 				{
 					$controlDetails.IsPreviewBaselineControl=$true
