@@ -74,7 +74,17 @@ function New-AzSKTrackedCredential {
             if($cred){
                 $cred.credName = $CredentialName
                 $cred.credLocation = $CredentialLocation
+                
+                while($RotationIntervalInDays -le 0){
+                    Write-Host 'Rotation interval (in days) should be greater than 0'
+                    $RotationIntervalInDays = Read-Host 'Enter rotation interval (> 0 days)'
+                }
                 $cred.rotationInt = $RotationIntervalInDays
+                
+                if($NextExpiryInDays -lt 0){
+                    $NextExpiryInDays = 0;
+                }
+                
                 $cred.nextExpiry = $NextExpiryInDays
                 $cred.comment = $Comment
                 $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation,$CredentialGroup))                
@@ -292,6 +302,11 @@ function Update-AzSKTrackedCredential {
                 
                 if($ResetLastUpdate){
                     $resetcred = $true;
+                }
+
+                while($RotationIntervalInDays -le 0){
+                    Write-Host 'Rotation interval (in days) should be greater than 0'
+                    $RotationIntervalInDays = Read-Host 'Enter rotation interval (> 0 days)'
                 }
                 
                 $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$CredentialGroup,$updatecred,$resetcred,$Comment)) 
