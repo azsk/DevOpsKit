@@ -38,7 +38,7 @@
       "Automated": "Yes",
       "MethodName": "CheckStorageMetricAlert",
       "Rationale": "Alert rules for anonymous authentication requests enable you to detect any suspicious and malicious activity early and respond in a timely manner.",
-      "Recommendation": "Run command 'Add-AzMetricAlertRule -MetricName 'AnonymousSuccess' -Operator 'GreaterThan' -Threshold '<Threshold count>' -TimeAggregationOperator 'Total' -WindowSize '<Duration window>' -Action '<New-AzAlertRuleEmail -SendToServiceOwner>' -Name '<AlertName>' -ResourceGroup '<RGName>' -TargetResourceId '<TargetResourceId>' -Location '<Location>''. TargetResourceId format is '<StorageResourceId>/services/<blob/file/queue/table>'. Run 'Get-Help Add-AzMetricAlertRule -full' for more help. Note: You will need to enable this for all service types within Storage (Blob, File, Table, Queue, etc.) even if you are only using one of them.",
+      "Recommendation": "To setup alert rule for 'Anonymous' events: (1) Go to Storage Account -> 'Alerts' -> 'New alert rule' -> 'Add condition' (2) Select Signal type as 'Transactions' -> Select Dimension as 'Authentication'-> Select Dimension Value as 'Anonymous'-> Select a. Operator =  'Greater Than' b. Aggregation type = 'Total' c. Threshold value = '0' (3) Select an existing Action Group or create a new one of type 'Email/SMS/Push/Voice'. Select 'Email' option and specify the email id.",
       "Tags": [
         "SDL",
         "TCP",
@@ -48,7 +48,7 @@
         "GeneralPurposeStorage",
         "BlobStorage"
       ],
-      "Enabled": false,
+      "Enabled": true,
       "FixControl": {
         "FixMethodName": "SetupAlertsForAuthNRequest",
         "FixControlImpact": "Low"
