@@ -173,8 +173,7 @@ class CredHygiene : CommandBase{
 
 			if($blob){
 				$this.PublishCustomMessage("`n")
-				$this.PublishCustomMessage("`nListing settings for all the credentials `n`n",[MessageType]::Update)
-				$this.PublishCustomMessage("`n")
+				$this.PublishCustomMessage("`nListing settings for all the credentials `n",[MessageType]::Update)
 				
 				# array to store cred info in ascending order of expiry time.
 
@@ -206,7 +205,7 @@ class CredHygiene : CommandBase{
 					}
 				}
 				else{
-					$table = $sortedBlob | Format-Table -AutoSize -Wrap @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }}, @{Label = "Credential Group"; Expression = { $_.credGroup }}, @{Label = "Created on"; Expression = { $_.firstUpdatedOn }}, @{Label = "Created by"; Expression = { $_.firstUpdatedBy }}, @{Label = "Last update"; Expression = { $_.lastUpdatedOn }}, @{Label = "Updated by"; Expression = { $_.lastUpdatedBy }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
+					$table = $sortedBlob | Format-Table -AutoSize -Wrap @{Label = "Name"; Expression = { $_.credName }} , @{Label = "Location"; Expression = { $_.credLocation }}, @{Label = "Rotation interval (days)"; Expression = { $_.rotationInt }; align='left'}, @{Label = "Credential Group"; Expression = { $_.credGroup }}, @{Label = "Created on"; Expression = { $_.firstUpdatedOn }}, @{Label = "Created by"; Expression = { $_.firstUpdatedBy }}, @{Label = "Last update"; Expression = { $_.lastUpdatedOn }}, @{Label = "Updated by"; Expression = { $_.lastUpdatedBy }}, @{Label = "Comment"; Expression = { $_.comment }} | Out-String
 					$this.PublishCustomMessage($table, [MessageType]::Default)
 				}
 			}
@@ -856,6 +855,11 @@ class CredHygiene : CommandBase{
 				if($ResetLastUpdate){
 					$credentialInfo.lastUpdatedOn = $currentTime
 					$credentialInfo.lastUpdatedBy = $user
+				}
+				if([Helpers]::CheckMember($credentialInfo,'expiryTime')){
+					if($credentialInfo.expiryTime){
+						$credentialInfo.lastUpdatedOn = ($credentialInfo.expiryTime).AddDays(-$credentialInfo.rotationInt)
+					}
 				}
 			}
 
