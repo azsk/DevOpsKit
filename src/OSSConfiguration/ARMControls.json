@@ -593,7 +593,7 @@
           "matchType": "VersionSingleToken",
           "data": {
             "type": "GreaterThanOrEqual",
-            "value": "1.14.0",
+            "value": "1.14.6",
             "isCaseSensitive": false
           }
         },

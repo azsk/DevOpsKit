@@ -23,7 +23,7 @@
     "Tenant_Domain": "microsoft.com"
   },
   "KubernetesService": {
-    "kubernetesVersion": "1.12.6"
+    "kubernetesVersion": "1.14.6"
   },
   "APIManagement": {
     "AllowedIdentityProvider": [
