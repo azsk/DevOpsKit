@@ -856,6 +856,11 @@ class CredHygiene : CommandBase{
 					$credentialInfo.lastUpdatedOn = $currentTime
 					$credentialInfo.lastUpdatedBy = $user
 				}
+				if([Helpers]::CheckMember($credentialInfo,'expiryTime')){
+					if($credentialInfo.expiryTime){
+						$credentialInfo.lastUpdatedOn = ($credentialInfo.expiryTime).AddDays(-$credentialInfo.rotationInt)
+					}
+				}
 			}
 
 			$credentialInfo.comment = $Comment
