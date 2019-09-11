@@ -173,8 +173,7 @@ class CredHygiene : CommandBase{
 
 			if($blob){
 				$this.PublishCustomMessage("`n")
-				$this.PublishCustomMessage("`nListing settings for all the credentials `n`n",[MessageType]::Update)
-				$this.PublishCustomMessage("`n")
+				$this.PublishCustomMessage("`nListing settings for all the credentials `n",[MessageType]::Update)
 				
 				# array to store cred info in ascending order of expiry time.
 
