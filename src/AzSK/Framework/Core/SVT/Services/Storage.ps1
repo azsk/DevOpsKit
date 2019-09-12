@@ -414,7 +414,7 @@ class Storage: AzSVTBase
 				 $currentMetric = $_;
 				 $matchedMetrices = @();
 				 $matchedMetrices += $resourceAlerts | 
-									 Where-Object { ($_.Criteria.MetricName -eq $currentMetric.Condition.MetricName) -and ( $_.Enabled -eq '$true' ) -and ($_.TargetResourceId -match $this.ResourceContext.ResourceName)}
+									 Where-Object { ($_.Criteria.MetricName -eq $currentMetric.Condition.MetricName) -and ( $_.Enabled -eq '$true' ) -and ($_.Scopes -match $this.ResourceContext.ResourceName)}
  
 				 if($matchedMetrices.Count -eq 0)
 				 {
@@ -424,70 +424,70 @@ class Storage: AzSVTBase
 				 {
 					 $misConfigured = @();
 					 $matchedMetrices | ForEach-Object {
-						 $alert = '{
-							 "Condition":  {
-											  "MetricName":  "",
-											   "OperatorProperty":  "",
-											   "Threshold": "" ,
-											   "TimeAggregation":  "",
-											   "Dimensions":{
-												 "Name" : "",
-												 "OperatorProperty" : "",
-												 "Values" : ""
-											   },
-										   "IsEnabled": "true"
-										   },
-										 "Actions"  :  "",
-										 "Name" : "",
-										 "Type" : "",
-										 "AlertType" : "V2Alert"
-										 }' | ConvertFrom-Json
- 
-						 
-						 $alert.Condition.MetricName = $_.Criteria.MetricName
-						 $alert.Condition.OperatorProperty = $_.Criteria.OperatorProperty
-						 $alert.Condition.Threshold = [int] $_.Criteria.Threshold
-						 $alert.Condition.TimeAggregation = $_.Criteria.TimeAggregation
-						 
-						 $dimLength = $_.Criteria.Dimensions | Measure-Object
-						 if(($dimLength).Count -gt 0)
-						 {
-							 for( $i = 0; $i -lt $dimLength.Count ; $i++)
-							 { 
-								 if(($_.Criteria.Dimensions[$i].Name -eq $currentMetric.Condition.Dimensions.Name) -and ($_.Criteria.Dimensions[$i].Values -match $currentMetric.Condition.Dimensions.Values))
-								 {
-									 $alert.Condition.Dimensions.Name = $_.Criteria.Dimensions[$i].Name
-									 $alert.Condition.Dimensions.OperatorProperty = $_.Criteria.Dimensions[$i].OperatorProperty
-									 $alert.Condition.Dimensions.Values = $currentMetric.Condition.Dimensions.Values
-								 }
-							 }
-						 }
- 
-						 $alert.Actions = [System.Collections.Generic.List[Microsoft.Azure.Management.Monitor.Models.RuleAction]]::new()
-							 if([Helpers]::CheckMember($_,"Actions.actionGroupId"))
-							 {
-								 $actionGroupTemp = $_.Actions.actionGroupId.Split("/")
-								 $actionGroup = Get-AzActionGroup -ResourceGroupName $actionGroupTemp[4] -Name $actionGroupTemp[-1] -WarningAction SilentlyContinue
-								 if($actionGroup.EmailReceivers.Status -eq [Microsoft.Azure.Management.Monitor.Models.ReceiverStatus]::Enabled)
-								 {
-									 if([Helpers]::CheckMember($actionGroup,"EmailReceivers.EmailAddress"))
-									 {
-										 $alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -CustomEmail $actionGroup.EmailReceivers.EmailAddress  -WarningAction SilentlyContinue));
-									 }
-									 else
-									 {
-										 $alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -WarningAction SilentlyContinue));
-									 }	
-								 }
-							 }				
-							 $alert.Name = $_.Name
-							 $alert.Type = $_.Type
- 
-						 if(($alert|Measure-Object).Count -gt 0)
-							 {
-								 $alertsConfiguration += $alert 
-							 }
-					 }
+						 if ((($_.Criteria | Measure-Object).Count -eq 1 ) -and (($_.Criteria.Dimensions | Measure-Object).Count -eq 1 )) {
+							$alert = '{
+								"Condition":  {
+												"MetricName":  "",
+												"OperatorProperty":  "",
+												"Threshold": "" ,
+												"TimeAggregation":  "",
+												"Dimensions":{
+													"Name" : "",
+													"OperatorProperty" : "",
+													"Values" : ""
+												},
+												"WindowSize": "",
+												"Frequency": "",
+												"IsEnabled": "true"
+											},
+											"Actions"  :  "",
+											"Name" : "",
+											"Type" : "",
+											"AlertType" : "V2Alert"
+											}' | ConvertFrom-Json
+	
+							
+							$alert.Condition.MetricName = $_.Criteria.MetricName
+							$alert.Condition.OperatorProperty = $_.Criteria.OperatorProperty
+							$alert.Condition.Threshold = [int] $_.Criteria.Threshold
+							$alert.Condition.TimeAggregation = $_.Criteria.TimeAggregation
+							$alert.Condition.WindowSize = [string] $_.EvaluationFrequency
+							$alert.Condition.Frequency = [string] $_.WindowSize
+							$alert.Condition.Dimensions.Name = $_.Criteria.Dimensions.Name
+							$alert.Condition.Dimensions.OperatorProperty = $_.Criteria.Dimensions.OperatorProperty
+							$alert.Condition.Dimensions.Values = $_.Criteria.Dimensions.Values
+								
+							$alert.Actions = [System.Collections.Generic.List[Microsoft.Azure.Management.Monitor.Models.RuleAction]]::new()
+								if([Helpers]::CheckMember($_,"Actions.actionGroupId"))
+								{
+									$_.Actions | ForEach-Object {
+										$actionGroupTemp = $_.actionGroupId.Split("/")
+										$actionGroup = Get-AzActionGroup -ResourceGroupName $actionGroupTemp[4] -Name $actionGroupTemp[-1] -WarningAction SilentlyContinue
+										if([Helpers]::CheckMember($actionGroup,"EmailReceivers.Status"))
+										{
+											if($actionGroup.EmailReceivers.Status -eq [Microsoft.Azure.Management.Monitor.Models.ReceiverStatus]::Enabled)
+											{
+												if([Helpers]::CheckMember($actionGroup,"EmailReceivers.EmailAddress"))
+												{
+													$alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -CustomEmail $actionGroup.EmailReceivers.EmailAddress  -WarningAction SilentlyContinue));
+												}
+												else
+												{
+													$alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -WarningAction SilentlyContinue));
+												}	
+											}
+										}	
+									}
+								}			
+								$alert.Name = $_.Name
+								$alert.Type = $_.Type
+	
+							if(($alert|Measure-Object).Count -gt 0)
+								{
+									$alertsConfiguration += $alert 
+								}
+						}
+					}
 						 
 					 if(($alertsConfiguration|Measure-Object).Count -gt 0)
 					 {

@@ -225,6 +225,8 @@
               "OperatorProperty" : "Include",
               "Values" : "Anonymous"
             },
+            "WindowSize": "01:00:00",
+            "Frequency": "01:00:00",
             "IsEnabled": true
         }
       }
