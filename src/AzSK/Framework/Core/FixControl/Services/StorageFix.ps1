@@ -45,7 +45,7 @@ class StorageFix: FixServicesBase
 			{
 				$targetId = $storageObject.Id
 
-				$alertName = $this.ResourceName + $_ + "alert"
+				$alertName = $this.ResourceName + "alert"
 				
 				$email = New-AzActionGroupReceiver -EmailReceiver
 				$actionGrp = Set-AzActionGroup -Receiver $email -ResourceGroupName $storageObject.ResourceGroupName
