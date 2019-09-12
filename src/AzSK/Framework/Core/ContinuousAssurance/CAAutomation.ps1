@@ -3248,6 +3248,7 @@ class CCAutomation: AzCommandBase
 		$telemetryKey = ""
 		$AzureEnv = [ConfigurationManager]::GetAzSKSettings().AzureEnvironment
 		$ManagementUri =[WebRequestHelper]::GetServiceManagementUrl() 
+		$Appinsightsuri = [WebRequestHelper]::GetApplicationInsightsEndPoint()	
 		if([RemoteReportHelper]::IsAIOrgTelemetryEnabled())
 		{
 			$telemetryKey = [RemoteReportHelper]::GetAIOrgTelemetryKey()
@@ -3262,7 +3263,8 @@ class CCAutomation: AzCommandBase
 			$temp7 = $temp6 -replace "\[#telemetryKey#\]",$telemetryKey;
 			$temp8 = $temp7 -replace "\[#AzureEnvironment#\]",$AzureEnv;
 			$temp9 = $temp8 -replace "\[#ManagementUri#\]",$ManagementUri;
-			$temp9 -replace "\[#runbookVersion#\]",$AzSKCARunbookVersion;
+			$temp10 = $temp9 -replace "\[#Appinsightsuri#\]",$Appinsightsuri;
+			$temp10 -replace "\[#runbookVersion#\]",$AzSKCARunbookVersion;
 		}  | Out-File $outputFilePath
 		
 		return $outputFilePath
