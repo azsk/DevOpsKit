@@ -328,7 +328,7 @@ class ARMPolicy: AzCommandBase
 							$errorCount += 1;
 						}
 
-						$this.CommandProgress($enabledPolicies.Count, $currentCount, 2);
+						
 					};
 
 					[MessageData[]] $resultMessages = @();
@@ -338,11 +338,12 @@ class ARMPolicy: AzCommandBase
 						$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
 						[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::ARMPolicyConfigVersionTagName=$this.ARMPolicyObj.Version}, $true)
 						
+						$this.CommandProgress($enabledPolicies.Count, $currentCount, 2);
 						$resultMessages += [MessageData]::new("All ARM policies have been removed from the subscription successfully`r`n" + [Constants]::SingleDashLine, [MessageType]::Update);
 					}
 					elseif($errorCount -eq $enabledPolicies.Count)
 					{
-						$resultMessages += [MessageData]::new("No ARM policies have been removed from the subscription due to error occurred. Please remove the ARM policies manually.`r`n" + [Constants]::SingleDashLine, [MessageType]::Error);
+						$resultMessages += [MessageData]::new("No ARM policies have been removed from the subscription due to error( AuthorizationFailed ) occurred. Please remove the ARM policies manually.`r`n" + [Constants]::SingleDashLine, [MessageType]::Error);
 					}
 					else
 					{
