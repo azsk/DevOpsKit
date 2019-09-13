@@ -57,8 +57,8 @@ class StorageFix: FixServicesBase
 					-Condition $condition `
 					-Name $alertName `
 					-ResourceGroupName $storageObject.ResourceGroupName `
-					-WindowSize 00:05:00 `
-					-Frequency 00:05:00 `
+					-WindowSize 01:00:00 `
+					-Frequency 01:00:00 `
 					-TargetResourceId $targetId `
 					-Severity 3 `
 					-WarningAction SilentlyContinue `
