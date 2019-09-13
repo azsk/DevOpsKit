@@ -1010,13 +1010,12 @@ class SubscriptionCore: AzSVTBase
 				}
 				else 
 				{
-					$controlResult.AddMessage([VerificationResult]::Passed)
+					$controlResult.AddMessage([VerificationResult]::Passed, "No critical permanent assignments found at the scope.")
 				}
 			}
 			else
 			{	
-				$controlResult.AddMessage([VerificationResult]::Passed)
-				
+				$controlResult.AddMessage([VerificationResult]::Passed, "No critical permanent assignments found at the scope.")
 			}
 	
 		}
@@ -1065,12 +1064,12 @@ class SubscriptionCore: AzSVTBase
 				}
 				else 
 				{
-					$controlResult.AddMessage([VerificationResult]::Passed)
+					$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found at the scope.")
 				}
 			}
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Passed)
+				$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found at the scope.")
 				
 			}		
 		
