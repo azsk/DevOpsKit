@@ -316,8 +316,9 @@ class PIM: AzCommandBase {
                 $roleAssignments = $roleAssignments | Where-Object { $_.MemberType -ne 'Inherited' -and ($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group') }
             }
             if (($roleAssignments | Measure-Object).Count -gt 0) {
-                $roleAssignments = $roleAssignments | Sort-Object -Property RoleName, Name 
+                $roleAssignments = $roleAssignments | Sort-Object -Property RoleName, Name, AssignmentState
                 $this.PublishCustomMessage("")
+                $this.PublishCustomMessage("Note: The assignments listed below do not include 'inherited' assignments for the scope.", [MessageType]::Warning)
                 $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
                 $this.PublishCustomMessage($($roleAssignments | Format-Table -Property @{Label = "Role"; Expression = { $_.RoleName } }, PrincipalName, AssignmentState, @{Label = "Type"; Expression = { $_.SubjectType } } | Out-String), [MessageType]::Default)
             }
@@ -639,10 +640,8 @@ class PIM: AzCommandBase {
         {
             $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $false)
             $roleAssignments = $roleAssignments | Where-Object{$_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group' -and $_.memberType -ne 'Inherited'}
-            if(($roleAssignments | Measure-Object).Count)
+            if(($roleAssignments | Measure-Object).Count -gt 0)
             {
-                
-                
                 [int]$soonToExpireWindow = $ExpiringInDays;
                 $soonToExpireAssignments += $roleAssignments | Where-Object {([DateTime]::UTCNow).AddDays($soonToExpireWindow) -gt $_.ExpirationDate -and $_.RoleName -in $criticalRoles -and $_.AssignmentState -eq 'Eligible'}
                 if(($soonToExpireAssignments| Measure-Object).Count -gt 0)
@@ -651,12 +650,12 @@ class PIM: AzCommandBase {
                 }
                 else 
                 {
-                    $this.PublishCustomMessage("No assignment found for `"$($criticalRoles -join ", ")`" role(s) expiring in $ExpiringInDays days. ",[MessageType]::Error)
+                    $this.PublishCustomMessage("No assignment found for `"$($criticalRoles -join ", ")`" role expiring in $ExpiringInDays days. ",[MessageType]::Error)
                 }
             }
             else 
             {
-                $this.PublishCustomMessage("No eligible assignments found for the provided scope and role(s). ",[MessageType]::Error)
+                $this.PublishCustomMessage("No eligible assignments found for the provided scope and role. ",[MessageType]::Error)
             }
 
         }
@@ -672,14 +671,16 @@ class PIM: AzCommandBase {
     {
         $soonToExpireAssignments = $this.ListSoonToExpireAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays);
         $AssignmentCount = ($soonToExpireAssignments | Measure-Object).Count
-        $ts =$DurationInDays
-        $url = $this.APIroot +"/roleAssignmentRequests "
-        # get maximum number of days an assigment 
-        $urlrole = $this.APIroot+"/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($soonToExpireAssignments[0].ResourceId)%27)+and+(roleDefinition/id+eq+%27$($soonToExpireAssignments[0].RoleId)%27)"
-        $rolesettings = [WebRequestHelper]::InvokeWebRequest("Get", $urlrole, $this.headerParams, $null, [string]::Empty, $false, $false )
-        $maxAllowedDays = (($($rolesettings.adminEligibleSettings| Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting| ConvertFrom-Json).maximumGrantPeriodInMinutes)/60
         if($AssignmentCount -gt 0)
         {
+            $ts =$DurationInDays
+            $url = $this.APIroot +"/roleAssignmentRequests "
+            # get maximum number of days an assigment 
+
+            $urlrole = $this.APIroot+"/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($soonToExpireAssignments[0].ResourceId)%27)+and+(roleDefinition/id+eq+%27$($soonToExpireAssignments[0].RoleId)%27)"
+            $rolesettings = [WebRequestHelper]::InvokeWebRequest("Get", $urlrole, $this.headerParams, $null, [string]::Empty, $false, $false )
+            $maxAllowedDays = ((($($rolesettings.adminEligibleSettings| Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting| ConvertFrom-Json).maximumGrantPeriodInMinutes)/60)/24       
+           
             # If force switch is used extend to expire without any prompt
             $this.PublishCustomMessage("");
             $this.PublishCustomMessage("Initiating assignment extension for [$AssignmentCount] PIM assignments..."); #TODO: Check the color
@@ -690,7 +691,7 @@ class PIM: AzCommandBase {
                     {
                         $this.PublishCustomMessage("");
                         $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
-                        $this.PublishCustomMessage("[$i/$AssignmentCount] Do you want to extend assignment for [$($_.PrincipalName)]. Please confirm (Y/N):", [MessageType]::Warning); #TODO: Check the color
+                        Write-Host "[$i/$AssignmentCount] Do you want to extend assignment for [$($_.PrincipalName)]? `nPlease confirm (Y/N): " -ForegroundColor Yellow -NoNewline #TODO: Check the color
                         $UserResponse = Read-Host
                     }
                     else
@@ -722,11 +723,8 @@ class PIM: AzCommandBase {
                     ++$i;
                 }
            
-        }
-        else
-        {
-            $this.PublishCustomMessage("No assignments found expiring in $ExpiringInDays days. ",[MessageType]::Error)
-        }
+        }# in case no assignments it would error while fetching
+       
        
     }
 
