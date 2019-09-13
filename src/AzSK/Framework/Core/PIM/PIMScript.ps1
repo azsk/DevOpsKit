@@ -316,8 +316,9 @@ class PIM: AzCommandBase {
                 $roleAssignments = $roleAssignments | Where-Object { $_.MemberType -ne 'Inherited' -and ($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group') }
             }
             if (($roleAssignments | Measure-Object).Count -gt 0) {
-                $roleAssignments = $roleAssignments | Sort-Object -Property RoleName, Name 
+                $roleAssignments = $roleAssignments | Sort-Object -Property RoleName, Name, AssignmentState
                 $this.PublishCustomMessage("")
+                $this.PublishCustomMessage("Note: The assignments listed below do not include 'inherited' assignments for the scope.", [MessageType]::Warning)
                 $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
                 $this.PublishCustomMessage($($roleAssignments | Format-Table -Property @{Label = "Role"; Expression = { $_.RoleName } }, PrincipalName, AssignmentState, @{Label = "Type"; Expression = { $_.SubjectType } } | Out-String), [MessageType]::Default)
             }
