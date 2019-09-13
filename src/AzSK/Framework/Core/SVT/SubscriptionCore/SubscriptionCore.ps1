@@ -1010,12 +1010,12 @@ class SubscriptionCore: AzSVTBase
 				}
 				else 
 				{
-					$controlResult.AddMessage([VerificationResult]::Passed, "No critical permanent assignments found at the scope.")
+					$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at subscription scope:`n`r $($criticalRoles -join ',')")
 				}
 			}
 			else
 			{	
-				$controlResult.AddMessage([VerificationResult]::Passed, "No critical permanent assignments found at the scope.")
+				$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at subscription scope:`n`r $($criticalRoles -join ',')")
 			}
 	
 		}
@@ -1064,12 +1064,12 @@ class SubscriptionCore: AzSVTBase
 				}
 				else 
 				{
-					$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found at the scope.")
+					$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at resource group scope:`n`r $($criticalRoles -join ', ')")
 				}
 			}
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found at the scope.")
+				$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at resource group scope:`n`r $($criticalRoles -join ', ')")
 				
 			}		
 		
