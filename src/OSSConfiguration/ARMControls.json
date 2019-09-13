@@ -412,7 +412,7 @@
         {
           "id": "AzureStorage250",
           "controlId": "Azure_Storage_DP_Restrict_CORS_Access",
-          "isEnabled": true,
+          "isEnabled": false,
           "description": "Ensure that CORS access is granted to a minimal set of trusted origins and only required verbs are supported.",
           "rationale": "CORS enables applications running under one domain to access a resource under another domain. Using '*' (allow all) for CORS setting means that an application running under any domain can have access to your application's resources and data. Restricting allowed origins to the specific set that needs access aligns with the principle of least privilege.",
           "recommendation": "Go to Azure Portal --> your Storage service --> Settings --> CORS --> for each of the Storage services  i.e. Blob/File/Table/Queue --> Add --> Provide the specific domain names and other CORS details that should be allowed to make cross-origin calls. Note: No action is needed if you are not using CORS for your service.",
