@@ -339,9 +339,10 @@
           "recommendation": "",
           "severity": "High",
           "jsonPath": [ "$.properties.emailAddresses" ],
-          "matchType": "StringWhitespace",
+          "matchType": "ItemCount",
           "data": {
-            "value": false
+            "type": "GreaterThanOrEqual",
+            "value": 1
           }
         },
         {
