@@ -393,11 +393,9 @@ class CCAutomation: AzCommandBase
 									else
 									{
 										#apply tags
-										$timestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
+										#$timestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
 										$this.reportStorageTags += @{
-										"AzSKFeature" = "ContinuousAssuranceStorage";
-										"CreationTime"=$timestamp;
-										"LastModified"=$timestamp
+										"AzSKFeature" = "ContinuousAssuranceStorage"
 										}
 										[ResourceHelper]::SetResourceTags($newStorage.Id, $this.reportStorageTags, $false, $true);
 									} 
