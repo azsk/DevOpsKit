@@ -563,7 +563,7 @@ class VirtualMachine: AzSVTBase
 				
 				if([Helpers]::CheckMember($_,"Exception.Message") -and $_.Exception.Message -imatch "404"){
 					$controlStatus = [VerificationResult]::Passed
-					$controlResult.AddMessage("No Assignment has been found for this resource.");
+					$controlResult.AddMessage("No guest configuration policy assignment has been found for this resource.");
 				}else{
 					$controlStatus = [VerificationResult]::Verify
 					$controlResult.AddMessage("Not able to fetch guest configuration policy assignments details.");
