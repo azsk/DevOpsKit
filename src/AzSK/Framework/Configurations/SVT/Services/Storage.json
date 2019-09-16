@@ -48,7 +48,7 @@
         "GeneralPurposeStorage",
         "BlobStorage"
       ],
-      "Enabled": true,
+      "Enabled": false,
       "FixControl": {
         "FixMethodName": "SetupAlertsForAuthNRequest",
         "FixControlImpact": "Low"
