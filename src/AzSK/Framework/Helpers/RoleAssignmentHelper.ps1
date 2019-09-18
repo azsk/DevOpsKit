@@ -252,8 +252,8 @@ class RoleAssignmentHelper
 	{
 		$rmContext = [ContextHelper]::GetCurrentRMContext();
 		$tenantId = $rmContext.Tenant.Id
-
-		$uri = [WebRequestHelper]::GraphApiUri + "$tenantId/getObjectsByObjectIds?api-version=1.6"
+        $GraphUri = [WebRequestHelper]::GetGraphUrl()
+		$uri = $GraphUri + "$tenantId/getObjectsByObjectIds?api-version=1.6"
 		$body = "{`"objectIds`":" + ($objectIds | ConvertTo-Json ) + "}";
 		$webResponse = @();
 		
@@ -273,8 +273,8 @@ class RoleAssignmentHelper
 		$hasAccess = $false;
 		$rmContext = [ContextHelper]::GetCurrentRMContext()
 		$tenantId = $rmContext.Tenant.Id
-	
-		$uri = [WebRequestHelper]::GraphApiUri + "$tenantId/users?`$top=1&api-version=1.6"
+	    $GraphUri = [WebRequestHelper]::GetGraphUrl()
+		$uri = $GraphUri + "$tenantId/users?`$top=1&api-version=1.6"
 		$webResponse = @();
 		
 		try

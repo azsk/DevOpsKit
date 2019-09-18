@@ -38,6 +38,15 @@
       "IsEnabled": false
     },
     {
+      "Name": "UseAzCommandForFunctionAppDetails",
+      "Description" : "",
+      "Sources" : ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],      
+      "UnderPreview" : false,
+      "IsEnabled": true
+    },
+    {
       "Name": "EnableListenerReset",
       "Description" : "",
       "Sources" : ["*"],

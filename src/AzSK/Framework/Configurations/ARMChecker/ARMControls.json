@@ -202,6 +202,20 @@
           "data": {
             "value": false
           }
+        },
+        {
+          "id": "RedisCache140",
+          "controlId": "Azure_RedisCache_BCDR_Use_RDB_Backup",
+          "isEnabled": true,
+          "description": "Redis Data Persistence should be enabled to back up Redis Cache data",
+          "rationale": "Enabling backup on Redis Cache ensures that there is always a previous snapshot of data that can be leveraged towards recovery scenarios.",
+          "recommendation": "Configure data persistence. Refer: https://docs.microsoft.com/en-us/azure/redis-cache/cache-configure#redis-data-persistence",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.redisConfiguration.rdb-backup-enabled" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": true
+          }
         }
       ]
     },
@@ -394,6 +408,21 @@
           "jsonPath": [ "$.properties.supportsHttpsTrafficOnly" ],
           "matchType": "Boolean",
           "data": { "value": true }
+        },
+        {
+          "id": "AzureStorage250",
+          "controlId": "Azure_Storage_DP_Restrict_CORS_Access",
+          "isEnabled": false,
+          "description": "Ensure that CORS access is granted to a minimal set of trusted origins and only required verbs are supported.",
+          "rationale": "CORS enables applications running under one domain to access a resource under another domain. Using '*' (allow all) for CORS setting means that an application running under any domain can have access to your application's resources and data. Restricting allowed origins to the specific set that needs access aligns with the principle of least privilege.",
+          "recommendation": "Go to Azure Portal --> your Storage service --> Settings --> CORS --> for each of the Storage services  i.e. Blob/File/Table/Queue --> Add --> Provide the specific domain names and other CORS details that should be allowed to make cross-origin calls. Note: No action is needed if you are not using CORS for your service.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.cors.corsRules" ],
+          "matchType": "ItemCount",
+          "data": {
+            "type": "Equals",
+            "value": 0
+          }
         }
       ]
     },
@@ -574,6 +603,23 @@
             "value": "SystemAssigned",
             "isCaseSensitive": false
           }
+        },
+        {
+          "id": "AppService420",
+          "apiVersions": [ "2016-08-01" ],
+          "controlId": "Azure_AppService_DP_Use_Approved_TLS_Version",
+          "isEnabled": true,
+          "description": "Use approved version of TLS for the App Service",
+          "rationale": "TLS provides privacy and data integrity between client and server. Using approved TLS version significantly reduces risks from security design issues and security bugs that may be present in older versions.",
+          "recommendation": "Go to Azure Portal --> your App Service --> Settings --> TLS/SSL --> Minimum TLS version --> set to org approved version (see detailed logs).",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.siteConfig.minTlsVersion", "$.properties.minTlsVersion" ],
+          "matchType": "VersionSingleToken",
+          "data": {
+            "type": "GreaterThanOrEqual",
+            "value": "1.2",
+            "isCaseSensitive": false
+          }
         }
       ]
     },
@@ -593,7 +639,7 @@
           "matchType": "VersionSingleToken",
           "data": {
             "type": "GreaterThanOrEqual",
-            "value": "1.14.0",
+            "value": "1.14.6",
             "isCaseSensitive": false
           }
         },
@@ -674,7 +720,7 @@
     },
     {
       "featureName": "ContainerRegistry",
-      "supportedResourceTypes": [ "Microsoft.ContainerRegistry/registries" ],
+      "supportedResourceTypes": [ "Microsoft.ContainerRegistry/registries","Microsoft.ContainerRegistry/registries/webhooks" ],
       "controls": [
         {
           "id": "ContainerRegistry110",
@@ -688,6 +734,42 @@
           "matchType": "Boolean",
           "data": {
             "value": false
+          }
+        },
+        {
+          "id": "ContainerRegistry150",
+          "controlId": "Azure_ContainerRegistry_Configure_Webhook_For_Vuln_Scan",
+          "isEnabled": true,
+          "description": "Image vulnerability scan should be configured through webhook when images are pushed to Container Registry",
+          "rationale": "Container image(s) having vulnerabilities (e.g., missing OS patches in base image, open ports, etc.) can lead to attacks and subsequent loss of sensitive enterprise data.",
+          "recommendation": "Configure a vulnerability scanner using guidance here: https://github.com/Azure/acr/blob/master/docs/acr-roadmap.md#vulnerability-scanning-integration, https://docs.microsoft.com/en-in/azure/container-registry/container-registry-webhook",
+          "severity": "Medium",
+          "jsonPath": [
+            "$.type"
+          ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "Microsoft.ContainerRegistry/registries/webhooks",
+            "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "ContainerRegistry170",
+          "controlId": "Azure_ContainerRegistry_DP_Enable_Content_Trust",
+          "isEnabled": true,
+          "description": "Content trust must be enabled for the Container Registry",
+          "rationale": "Content trust gives the ability to verify both the integrity and the publisher of all the image content received from a registry over any channel. If a container image is served from an untrusted registry, the image itself may not be trustworthy/stable. Running such a compromised image can lead to loss of sensitive enterprise data.",
+          "recommendation": "Go to Azure Portal --> your Container Registry --> Content Trust --> Enabled. This feature is currently available only in Premium SKU. After enabling Content Trust, push only trusted images in the repositories. Refer: https://aka.ms/acr/content-trust.",
+          "severity": "Medium",
+          "jsonPath": [
+            "$.properties.policies.trustPolicy.status"
+          ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "enabled",
+            "isCaseSensitive": false
           }
         }
       ]
@@ -768,8 +850,8 @@
       ]
     },
     {
-      "featureName": "VirtualNetwork",
-      "supportedResourceTypes": [ "Microsoft.Network/networkInterfaces" ],
+      "featureName": "VirtualNetworkInterface",
+      "supportedResourceTypes": [ "Microsoft.Network/networkInterfaces"],
       "controls": [
         {
           "id": "VirtualNetwork120",
@@ -783,6 +865,41 @@
           "matchType": "Boolean",
           "data": {
             "value": false
+          }
+        },
+        {
+          "id": "VirtualNetwork130",
+          "controlId": "Azure_VNet_NetSec_Configure_NSG",
+          "isEnabled": true,
+          "Description": "NSG should be used for subnets in a virtual network to permit traffic only on required inbound/outbound ports. NSGs should not have a rule to allow any-to-any traffic",
+          "Rationale":  "Restricting inbound and outbound traffic via NSGs limits the network exposure of the subnets within a virtual network and limits the attack surface.",
+          "Recommendation": "Configure NSG rules to be as restrictive as possible via: (a) Azure Portal -> Network security groups -> <Your NSG> -> Inbound security rules -> Edit 'Allow' action rules. (b) Azure Portal -> Network security groups. -> <Your NSG> -> Outbound security rules -> Edit 'Allow' action rules.",
+          "Severity": "Medium",
+          "jsonPath": [ "$.properties.networkSecurityGroup.id" ],
+          "matchType": "StringWhitespace",
+          "data": {
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "featureName": "VirtualNetwork",
+      "supportedResourceTypes": ["Microsoft.Network/virtualNetworks" ],
+      "controls": [
+        {
+          "id": "VirtualNetwork130",
+          "controlId": "Azure_VNet_NetSec_Justify_Peering",
+          "isEnabled": true,
+          "Description": "Use of any virtual network peerings should be justified",
+          "Rationale": "Resources in the peered virtual networks can communicate with each other directly. If the two peered networks are on different sides of a security boundary (e.g., corpnet v. private vNet), this can lead to exposure of corporate data. Hence any VNet peerings should be closely scrutinized and approved by the network security team",
+          "Recommendation": "You can remove any virtual network peerings using the Remove-AzVirtualNetworkPeering command (unless their presence has been approved by network security team). Run 'Get-Help Remove-AzVirtualNetworkPeering -full' for more help.",
+          "Severity": "High",
+          "jsonPath": [ "$.properties.virtualNetworkPeerings" ],
+          "matchType": "ItemCount",
+          "data": {
+              "type": "Equals",
+              "value": 0
           }
         }
       ]
@@ -861,7 +978,24 @@
             "type": "GreaterThan",
             "value": 2
           }
+        },
+        {
+         "id": "Search190",
+          "controlId": "Azure_Search_AuthN_Use_Managed_Service_Identity",
+          "isEnabled": true,
+          "description": "Use Managed Service Identity (MSI) for accessing other AAD-protected resources from the search service.",
+          "rationale": "Managed Service Identity (MSI) allows your app to easily access other AAD-protected resources such as Azure Key Vault. The identity is managed by the Azure platform and eliminates the need to provision/manage/rotate any secrets thus reducing the overall risk.",
+          "recommendation": "Go to Azure Portal --> your Search Service --> Settings --> Identity --> Status --> ON",
+          "severity": "Medium",
+          "jsonPath": [ "$.identity.type" ],
+          "matchType": "StringSingleToken",
+          "data": {
+            "type": "Allow",
+            "value": "SystemAssigned",
+            "isCaseSensitive": false
+          }
         }
+
       ]
     },
     {
@@ -936,6 +1070,27 @@
             "type": "GreaterThanOrEqual",
             "value": "3.6.0",
             "isCaseSensitive": false
+          }
+        }
+      ]
+    },
+    {
+      "featureName": "AnalysisService",
+      "supportedResourceTypes": [ "Microsoft.AnalysisServices/servers" ],
+      "controls": [
+        {
+          "id": "AnalysisServices170",
+          "controlId": "Azure_AnalysisServices_BCDR_Plan",
+          "isEnabled": true,
+          "description": "Backup and Disaster Recovery must be planned for Analysis Services",
+          "rationale": "Azure Analysis Service does not offer features to cover backup/disaster recovery out-of-the-box. As a result, when processing critical workloads, a team must have adequate backups of the data.",
+          "recommendation": "Go To Azure Portal => Analysis Services => Select Analysis Service => Go To Settings => Select Backups => Select Storage account details and enable backups, Refer: https://docs.microsoft.com/en-us/azure/analysis-services/analysis-services-backup",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.backupBlobContainerUri" ],
+          "matchType": "ItemCount",
+          "data": {
+            "type": "GreaterThan",
+            "value": 0
           }
         }
       ]

@@ -305,12 +305,19 @@ class SVTResourceResolver: AzSKRoot
 		{
 			$result += $expressionResult
 		}
-					 
-		if((-not [string]::IsNullOrEmpty($this.TagName)) -and (-not [string]::IsNullOrEmpty($this.TagValue) -and ($this.TagValue | Measure-Object).Count -gt 0))
+		
+		#To filter result based on just TagName if TagValue is not provided
+		if(-not [string]::IsNullOrEmpty($this.TagName))
 		{
-				$this.TagValue= $this.ConvertToStringArray($this.TagValue)
 				$result = $result | Where-Object {$null -ne $_.Tags -and ($null -ne $_.Tags.Keys )}
-				$result = $result | Where-Object{($_.Tags.GetEnumerator() | Where-Object {$_.Key -eq $this.TagName -and $_.Value -in $this.TagValue })}
+				if ([string]::IsNullOrEmpty($this.TagValue))
+				{
+					$result = $result | Where-Object{($_.Tags.GetEnumerator() | Where-Object {$_.Key -eq $this.TagName })}
+				}
+				else {
+					$this.TagValue= $this.ConvertToStringArray($this.TagValue)
+					$result = $result | Where-Object{($_.Tags.GetEnumerator() | Where-Object {$_.Key -eq $this.TagName -and $_.Value -in $this.TagValue })}
+				}
 		}		
 		 
 		return $result;

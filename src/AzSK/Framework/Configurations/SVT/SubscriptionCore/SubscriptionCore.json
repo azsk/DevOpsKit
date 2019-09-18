@@ -42,6 +42,7 @@
         "Owners.RoleDefinitionId",
         "Owners.RoleDefinitionName",
         "Owners.Scope",
+        "Owners.SignInName",
         "CoAdmins.RoleDefinitionName",
         "CoAdmins.Scope",
         "CoAdmins.SignInName"

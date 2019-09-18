@@ -71,8 +71,7 @@ class ARMPolicy: AzCommandBase
 				$startMessage = [MessageData]::new("Processing AzSK ARM policies. Total policies: $($this.GetApplicableARMPolicies().Count)");
 				$messages += $startMessage;
 				$this.PublishCustomMessage($startMessage);
-				$this.PublishCustomMessage("Note: Configuring ARM policies can take about 2-3 min...", [MessageType]::Warning);				
-
+				
 				$disabledPolicies = $this.GetApplicableARMPolicies() | Where-Object { -not $_.Enabled };
 				if(($disabledPolicies | Measure-Object).Count -ne 0)
 				{
@@ -328,7 +327,7 @@ class ARMPolicy: AzCommandBase
 							$errorCount += 1;
 						}
 
-						$this.CommandProgress($enabledPolicies.Count, $currentCount, 2);
+						
 					};
 
 					[MessageData[]] $resultMessages = @();
@@ -338,6 +337,7 @@ class ARMPolicy: AzCommandBase
 						$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
 						[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::ARMPolicyConfigVersionTagName=$this.ARMPolicyObj.Version}, $true)
 						
+						$this.CommandProgress($enabledPolicies.Count, $currentCount, 2);
 						$resultMessages += [MessageData]::new("All ARM policies have been removed from the subscription successfully`r`n" + [Constants]::SingleDashLine, [MessageType]::Update);
 					}
 					elseif($errorCount -eq $enabledPolicies.Count)

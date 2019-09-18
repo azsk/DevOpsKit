@@ -13,12 +13,15 @@ class IdentityHelpers
 		$output = $null
 		if($ObjectType -eq "User")
 		{
+			$ResourceAppIdURI = [WebRequestHelper]::GetGraphUrl()
 			if($null -ne $ObjectId -and [System.Guid]::Empty -ne $ObjectId)
 			{
-				$uri = [string]::Format("https://graph.windows.net/{0}/users/{1}?api-version=1.6",$RMContext.Tenant.Id, $ObjectId)
+				$uri = [string]::Format("{0}{1}/users/{2}?api-version=1.6",$ResourceAppIdURI,$RMContext.Tenant.Id, $ObjectId)
+				#$uri = [string]::Format("https://graph.windows.net/{0}/users/{1}?api-version=1.6",$RMContext.Tenant.Id, $ObjectId)
 			}
 			elseif ($null -ne $SignInName) {
-				$uri = [string]::Format("https://graph.windows.net/{0}/users/{1}?api-version=1.6",$RMContext.Tenant.Id, $SignInName)        
+				$uri = [string]::Format("{0}{1}/users/{2}?api-version=1.6",$ResourceAppIdURI,$RMContext.Tenant.Id, $SignInName)
+				#$uri = [string]::Format("https://graph.windows.net/{0}/users/{1}?api-version=1.6",$RMContext.Tenant.Id, $SignInName)        
 			}
 			else {
 				return $false

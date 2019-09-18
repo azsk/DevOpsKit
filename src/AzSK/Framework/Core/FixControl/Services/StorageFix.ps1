@@ -43,23 +43,26 @@ class StorageFix: FixServicesBase
         
 			if($serviceMapping)
 			{
-				$emailAction = New-AzAlertRuleEmail -SendToServiceOwner -WarningAction SilentlyContinue
-				$serviceMapping.Services | 
-				ForEach-Object {
-					$targetId = $storageObject.Id + "/services/" + $_
+				$targetId = $storageObject.Id
 
-					$alertName = $this.ResourceName + $_ + "alert"
-					Add-AzMetricAlertRule -Location $storageObject.Location `
-						-MetricName AnonymousSuccess `
-						-Name $alertName `
-						-Operator GreaterThan `
-						-ResourceGroup $storageObject.ResourceGroupName `
-						-TargetResourceId $targetId `
-						-Threshold 0 -TimeAggregationOperator Total -WindowSize 01:00:00  `
-						-Action $emailAction `
-						-WarningAction SilentlyContinue `
-						-ErrorAction Stop
-				}
+				$alertName = $this.ResourceName + "alert"
+				
+				$email = New-AzActionGroupReceiver -EmailReceiver
+				$actionGrp = Set-AzActionGroup -Receiver $email -ResourceGroupName $storageObject.ResourceGroupName
+				$actionGrpId = New-AzActionGroup -ActionGroupId $actionGrp.Id
+				$dimension = New-AzMetricAlertRuleV2DimensionSelection -DimensionName "Authentication" -ValuesToInclude "Anonymous"
+				$condition = New-AzMetricAlertRuleV2Criteria -MetricName "Transactions" -DimensionSelection $dimension -TimeAggregation Total -Operator GreaterThan -Threshold 0 -MetricNamespace "Microsoft.Storage/storageAccounts"
+				
+				Add-AzMetricAlertRuleV2  -ActionGroup $actionGrpId `
+					-Condition $condition `
+					-Name $alertName `
+					-ResourceGroupName $storageObject.ResourceGroupName `
+					-WindowSize 01:00:00 `
+					-Frequency 01:00:00 `
+					-TargetResourceId $targetId `
+					-Severity 3 `
+					-WarningAction SilentlyContinue `
+					-ErrorAction Stop
 			}
 
 			$detailedLogs += [MessageData]::new("Alerts for anonymous authentication requests have been set up on storage [$($this.ResourceName)]");

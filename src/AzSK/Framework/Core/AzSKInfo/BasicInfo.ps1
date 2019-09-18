@@ -21,9 +21,18 @@ class BasicInfo: AzCommandBase
 	
 	GetBasicInfo()
 	{
-
-		$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nExamining " + $this.InvocationContext.MyCommand.ModuleName +" components for subscription: " + $this.SubscriptionContext.SubscriptionId + " ("+ $this.SubscriptionContext.SubscriptionName +")" +"`r`n" + [Constants]::SingleDashLine, [MessageType]::Default);
+		$rmContext = [ContextHelper]::GetCurrentRMContext();
+		$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nList of subscriptions that " + $rmContext.Account.Type.toLower() + " [" + $rmContext.Account +"] has access to`r`n" + [Constants]::SingleDashLine, [MessageType]::Default);
 		
+		$subscriptions = Get-AzSubscription
+		$this.PublishCustomMessage(($subscriptions | Select-Object @{N='Subscription Id'; E={$_.Id}}, @{N='Subscription Name'; E={$_.Name}} | Format-Table | Out-String), [MessageType]::Default)
+		$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`n",[MessageType]::Default);
+		$this.PublishCustomMessage("Fetching AzSK Info for subscription...`r`n" + [Constants]::SingleDashLine, [MessageType]::Default);
+        $this.PublishCustomMessage("SubscriptionId: " + "[$($this.SubscriptionContext.SubscriptionId)]" + "`r`n" ,[MessageType]::Default);
+		$this.PublishCustomMessage("Name: "+  "[$($this.SubscriptionContext.SubscriptionName)]" + "`r`n" , [MessageType]::Default);
+
+		$this.PublishCustomMessage([Constants]::SingleDashLine+ "`r`n" + "Version details of various AzSK components:" + "`r`n" + "`r`n" , [MessageType]::Default);
+
 		$this.GetAzSKVersion()
 		$this.GetAzSKAlertVersion()
 		$this.GetAzSKARMPolicyVersion()
@@ -47,7 +56,7 @@ class BasicInfo: AzCommandBase
 			if([System.Version]$serverVersion -gt [System.Version]$configuredVersion)
 			{
 				$updateAvailable = $true;
-				$actionMessage = "Use 'Update-AzSKSubscriptionSecurity' to update Alert"
+				$actionMessage = "Use 'Update-AzSKSubscriptionSecurity' to update Alerts"
 			}
 			else
 			{
@@ -193,13 +202,13 @@ class BasicInfo: AzCommandBase
 		$this.AddConfigurationDetails('Continuous Assurance', $configuredVersion, $serverVersion, $serverVersion, $actionMessage)
 	}
 
-	AddConfigurationDetails([string] $ComponentName, [string] $CurrentVersion, [string] $LatestVersion, [string] $SupportedVesion, [string] $RequireAction)
+	AddConfigurationDetails([string] $ComponentName, [string] $CurrentVersion, [string] $LatestVersion, [string] $SupportedVersion, [string] $RequireAction)
 	{
 		$this.SubConfiguration = New-Object -TypeName PSObject
 		$this.SubConfiguration.ComponentName = $ComponentName
 		$this.SubConfiguration.InstalledVersion = $CurrentVersion
 		$this.SubConfiguration.ServerVersion = $LatestVersion
-		$this.SubConfiguration.SupportedVesion = ">= " + $SupportedVesion
+		$this.SubConfiguration.SupportedVersion = ">= " + $SupportedVersion
 		$this.SubConfiguration.Recommendation = $RequireAction
 		$this.Configurations += $this.SubConfiguration
 	}
@@ -211,6 +220,6 @@ class SubConfiguration
 	[string] $ComponentName = "" 
 	[string] $InstalledVersion = ""
 	[string] $ServerVersion = ""
-	[string] $SupportedVesion = ""
+	[string] $SupportedVersion = ""
 	[string] $Recommendation = ""
 }

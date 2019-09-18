@@ -20,7 +20,8 @@ Class LogAnalyticsHelper{
 				$rfc1123date = [System.DateTime]::UtcNow.ToString("r")
 				[int] $contentLength = $body.Length
 				[string] $signature = [LogAnalyticsHelper]::GetLAWSSignature($workspaceId , $sharedKey , $rfc1123date ,$contentLength ,$method ,$contentType ,$resource)
-				[string] $uri = "https://" + $workspaceId + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
+				$LADataCollectorAPI = [WebRequestHelper]::GetLADataCollectorAPI()	
+				[string] $uri = "https://" + $workspaceId + $LADataCollectorAPI + $resource + "?api-version=2016-04-01"
 				[DateTime] $TimeStampField = [System.DateTime]::UtcNow
 				$headers = @{
 					"Authorization" = $signature;
@@ -490,7 +491,8 @@ Class CommandModel{
 class CredHygieneAlert{
     [int] $ExpiryDueInDays
 	[bool] $IsExpired
-    [string] $CredentialName 
+	[string] $CredentialName 
+	[string] $CredentialGroup
     [string] $LastUpdatedBy
 	[string] $SubscriptionId
 	[string] $SubscriptionName

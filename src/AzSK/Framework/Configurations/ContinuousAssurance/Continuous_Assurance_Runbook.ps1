@@ -68,8 +68,8 @@ function PublishEvent([string] $EventName, [hashtable] $Properties, [hashtable] 
         }
 
         $eventJson = ConvertTo-Json $eventObj -Depth 100 -Compress
-
-        Invoke-WebRequest -Uri "https://dc.services.visualstudio.com/v2/track" `
+        $Appinsightsuri = "[#Appinsightsuri#]"
+        Invoke-WebRequest -Uri $Appinsightsuri `
             -Method Post `
             -ContentType "application/x-json-stream" `
             -Body $eventJson `

@@ -609,7 +609,8 @@
           "DP",
           "OwnerAccess",
           "FunctionApp",
-          "Windows"
+          "Windows",
+          "Linux"
         ],
        "Enabled": true
       },

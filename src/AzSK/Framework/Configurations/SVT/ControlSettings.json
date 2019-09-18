@@ -23,7 +23,7 @@
     "Tenant_Domain": "microsoft.com"
   },
   "KubernetesService": {
-    "kubernetesVersion": "1.12.6"
+    "kubernetesVersion": ["1.13.10", "1.14.6"]
   },
   "APIManagement": {
     "AllowedIdentityProvider": [
@@ -216,15 +216,19 @@
     "Storage": [
       {
         "Condition": {
-          "DataSource": {
-            "MetricName": "AnonymousSuccess"
-          },
+          "MetricName": "Transactions",
           "OperatorProperty": "GreaterThan",
           "Threshold": 0,
           "TimeAggregation": "Total",
-          "WindowSize": "01:00:00"
-        },
-        "IsEnabled": true
+          "Dimensions":{
+              "Name" : "Authentication",
+              "OperatorProperty" : "Include",
+              "Values" : "Anonymous"
+            },
+            "WindowSize": "01:00:00",
+            "Frequency": "01:00:00",
+            "IsEnabled": true
+        }
       }
     ],
     "StreamAnalytics": [

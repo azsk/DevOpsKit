@@ -328,11 +328,12 @@ class AIOrgTelemetryHelper {
 
 			$eventJson = ConvertTo-Json $eventObj -Depth 100 -Compress
 
-			Invoke-WebRequest -Uri "https://dc.services.visualstudio.com/v2/track" `
-				-Method Post `
-				-ContentType "application/x-json-stream" `
-				-Body $eventJson `
-				-UseBasicParsing | Out-Null
+            $uri = [WebRequestHelper]::GetApplicationInsightsEndPoint()	
+            Invoke-WebRequest -Uri $uri `
+                -Method Post `
+                -ContentType "application/x-json-stream" `
+                -Body $eventJson `
+                -UseBasicParsing | Out-Null
 		}
 		catch {
 			# Eat the current exception which typically happens when network or other API issue while sending telemetry events 
@@ -495,11 +496,22 @@ static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryE
 
         $eventJson = ConvertTo-Json $eventlist -Depth 100 -Compress
 
-        Invoke-WebRequest -Uri "https://dc.services.visualstudio.com/v2/track" `
+        if($type -eq "Usage")
+        {
+            Invoke-WebRequest -Uri "https://dc.services.visualstudio.com/v2/track" `
             -Method Post `
             -ContentType "application/x-json-stream" `
             -Body $eventJson `
             -UseBasicParsing | Out-Null
+        }
+        else {
+                $uri = [WebRequestHelper]::GetApplicationInsightsEndPoint()	
+                Invoke-WebRequest -Uri $uri `
+                -Method Post `
+                -ContentType "application/x-json-stream" `
+                -Body $eventJson `
+                -UseBasicParsing | Out-Null
+        }
     }
     catch {
 		# Left blank intentionally

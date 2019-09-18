@@ -13,13 +13,11 @@ function New-AzSKTrackedCredential {
 	.PARAMETER CredentialLocation
 		Provide the credential location.
 	.PARAMETER CredentialName
-		Provide the credential name.
+        Provide the credential name.
+    .PARAMETER CredentialGroup
+		Provide the credential group.    
 	.PARAMETER RotationInterval
 		Provide the rotation interval.
-	.PARAMETER AlertEmail
-		Provide the email id for alert.
-	.PARAMETER AlertSMS
-		Provide the contact number for alert.
     .PARAMETER Comment
 		Provide the comment for the credential.
 	
@@ -28,39 +26,39 @@ function New-AzSKTrackedCredential {
 
 	#>
     Param(
-        [Parameter(Mandatory = $true, ParameterSetName = "Other", Position=0, HelpMessage = "Provide the subscription id")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Custom", Position=0, HelpMessage = "Provide the subscription id")]
         [string]
         [ValidateNotNullOrEmpty()]
         [Alias("s")]
         $SubscriptionId,
 
-        [Parameter(Mandatory = $true, ParameterSetName = "Other", Position=1, HelpMessage = "Provide the credential name")]
-        [string]
-		[Alias("cn")]
-        $CredentialName,
-
-        [Parameter(Mandatory = $true, ParameterSetName = "Other", HelpMessage = "Provide the credential location")]
-        [ValidateSet("Other", "AppService", "KeyVault")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Custom", Position=1, HelpMessage = "Provide the credential location")]
+        [ValidateSet("Custom", "AppService", "KeyVault")]
         [string]
 		[Alias("cl")]
         $CredentialLocation,
 
-        [Parameter(Mandatory = $true, ParameterSetName = "Other", HelpMessage = "Provide the rotation interval in days")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Custom", Position=2, HelpMessage = "Provide the credential name")]
+        [string]
+		[Alias("cn")]
+        $CredentialName,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "Custom", HelpMessage = "Provide the rotation interval in days")]
         [int]
 		[Alias("rint")]
         $RotationIntervalInDays,
 
-        [Parameter(Mandatory = $true, ParameterSetName = "Other", HelpMessage = "Provide the email id for alert")]
-        [string]
-		[Alias("aem")]
-        $AlertEmail,
+        [Parameter(Mandatory = $true, ParameterSetName = "Custom", HelpMessage = "Provide the next expiry due in days")]
+        [int]
+		[Alias("nexp")]
+        $NextExpiryInDays,
 
-        [Parameter(Mandatory = $false, ParameterSetName = "Other", HelpMessage = "Provide the contact number for alert")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Custom", HelpMessage = "Provide the credential group for alert")]
         [string]
-		[Alias("acn")]
-        $AlertSMS,
+		[Alias("cgp")]
+        $CredentialGroup,
 
-        [Parameter(Mandatory = $true, ParameterSetName = "Other", HelpMessage = "Provide the comment for the credential")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Custom", HelpMessage = "Provide the comment for the credential")]
         [string]
 		[Alias("cmt")]
         $Comment
@@ -76,70 +74,20 @@ function New-AzSKTrackedCredential {
             if($cred){
                 $cred.credName = $CredentialName
                 $cred.credLocation = $CredentialLocation
+                
+                while($RotationIntervalInDays -le 0){
+                    Write-Host 'Rotation interval (in days) should be greater than 0'
+                    $RotationIntervalInDays = Read-Host 'Enter rotation interval (> 0 days)'
+                }
                 $cred.rotationInt = $RotationIntervalInDays
-                $cred.alertEmail = $AlertEmail
-                if($AlertSMS){
-                    $cred.alertPhoneNumber = $AlertSMS
-                }
-                $cred.comment = $Comment
-
-                if($CredentialLocation -eq "Other"){
-                    $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation, $null, $null, $null, $null, $null, $null, $null))
-                }
-                elseif($CredentialLocation -eq "AppService"){
-                    Write-Host "`nProvide the following details for the app service: `n"
-                    $ResourceName = Read-Host "App service name"
-                    $ResourceGroupName = Read-Host "Resource group"
-                    
-                    Write-Host "`nEnter"
-                    Write-Host "1 for 'Application Settings'"
-                    Write-Host "2 for 'Connection Strings'`n"
-
-                    $input = Read-Host "App config type"
-                    
-                    while(($input -ne 1) -and ($input -ne 2)){
-                        Write-Host "Incorrect value supplied. Please enter '1' for Application Settings or '2' for Connection Strings." -ForegroundColor Red
-                        $input = Read-Host "App config type"
-                    }
-                    
-                    if($input -eq 1)
-                    {
-                        $AppConfigType = "Application Settings"
-                    }
-                    elseif($input -eq 2)
-                    {
-                        $AppConfigType = "Connection Strings"
-                    }
-            
-                    $AppConfigName = Read-Host "App config name"      
-                    $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation, $ResourceGroupName, $ResourceName, $AppConfigType, $AppConfigName, $null, $null, $null))
-                }
-                elseif($CredentialLocation -eq "KeyVault"){
-                    Write-Host "`nProvide the following details for the key vault: `n"
-                    $KVName = Read-Host "Key Vault name"
-                    Write-Host "`nEnter"
-                    Write-Host "1 for 'Key'"
-                    Write-Host "2 for 'Secret'`n"
-                   
-                    $input = Read-Host "`Key Vault credential type"
-                   
-                    while(($input -ne 1) -and ($input -ne 2)){
-                        Write-Host "Incorrect value supplied. Please enter '1' for Key or '2' for Secret." -ForegroundColor Red
-                        $input = Read-Host "Key Vault credential type"
-                    }
-
-                    if($input -eq 1)
-                    {
-                        $KVCredentialType = "Key"
-                    }
-                    elseif($input -eq 2)
-                    {
-                        $KVCredentialType = "Secret"
-                    }
-                    $KVCredentialName = Read-Host "Key Vault credential name"                    
-                    $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation, $null, $null, $null, $null, $KVName, $KVCredentialType, $KVCredentialName))
+                
+                if($NextExpiryInDays -lt 0){
+                    $NextExpiryInDays = 0;
                 }
                 
+                $cred.nextExpiry = $NextExpiryInDays
+                $cred.comment = $Comment
+                $cred.InvokeFunction($cred.NewAlert, @($CredentialLocation,$CredentialGroup))                
             }
 			
         }
@@ -163,7 +111,9 @@ function Get-AzSKTrackedCredential {
 	.PARAMETER SubscriptionId
 		Provide the subscription id.
 	.PARAMETER CredentialName
-		Provide the credential name.	
+        Provide the credential name.
+    .PARAMETER DetailedView
+		Switch for detailed metadata information about the credential.	
 	.LINK
 	https://aka.ms/azskossdocs
 
@@ -177,7 +127,12 @@ function Get-AzSKTrackedCredential {
         [Parameter(Mandatory = $false, HelpMessage = "Provide the credential name")]
         [string]
 		[Alias("cn")]
-        $CredentialName
+        $CredentialName,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Switch for printing detailed information about the credential.")]
+        [switch]
+		[Alias("dtl")]
+        $DetailedView
     
     )
     Begin {
@@ -190,10 +145,10 @@ function Get-AzSKTrackedCredential {
             $cred = [CredHygiene]::new($SubscriptionId, $PSCmdlet.MyInvocation);
             if($cred){
                 if($CredentialName){
-                    $cred.InvokeFunction($cred.GetAlert, @($CredentialName))
+                    $cred.InvokeFunction($cred.GetAlert, @($CredentialName,$DetailedView))
                 }
                 else {
-                    $cred.InvokeFunction($cred.GetAlert, @($null))
+                    $cred.InvokeFunction($cred.GetAlert, @($null,$DetailedView))
                 }            
             }
 	
@@ -279,13 +234,11 @@ function Update-AzSKTrackedCredential {
 	.PARAMETER SubscriptionId
 		Provide the subscription id.
 	.PARAMETER CredentialName
-		Provide the credential name.
+        Provide the credential name.
+    .PARAMETER CredentialGroup
+		Provide the credential group.
 	.PARAMETER RotationInterval
 		Provide the rotation interval.
-	.PARAMETER AlertEmail
-		Provide the email id for alert.
-	.PARAMETER AlertSMS
-		Provide the contact number for alert.
     .PARAMETER Comment
 		Provide the comment for the credential.
 	
@@ -309,20 +262,10 @@ function Update-AzSKTrackedCredential {
 		[Alias("rint")]
         $RotationIntervalInDays,
 
-        [Parameter(Mandatory = $false, HelpMessage = "Provide the email id for alert")]
+        [Parameter(Mandatory = $false, HelpMessage = "Provide the credential group for alert")]
         [string]
-		[Alias("aem")]
-        $AlertEmail,
-
-        [Parameter(Mandatory = $false, HelpMessage = "Provide the contact number for alert")]
-        [string]
-		[Alias("acn")]
-        $AlertSMS,
-
-        [Parameter(Mandatory = $true, HelpMessage = "Provide the comment for the credential")]
-        [string]
-		[Alias("cmt")]
-        $Comment,
+		[Alias("cgp")]
+        $CredentialGroup,
 
         [Parameter(Mandatory = $false, HelpMessage = "Switch for rotating credential at source.")]
         [switch]
@@ -332,7 +275,12 @@ function Update-AzSKTrackedCredential {
         [Parameter(Mandatory = $false, HelpMessage = "Switch for rotating credential at source.")]
         [switch]
 		[Alias("uc")]
-        $UpdateCredential
+        $UpdateCredential,
+
+        [Parameter(Mandatory = $true, HelpMessage = "Provide the comment for the credential")]
+        [string]
+		[Alias("cmt")]
+        $Comment
 
     )
     Begin {
@@ -355,8 +303,13 @@ function Update-AzSKTrackedCredential {
                 if($ResetLastUpdate){
                     $resetcred = $true;
                 }
+
+                while($RotationIntervalInDays -le 0){
+                    Write-Host 'Rotation interval (in days) should be greater than 0'
+                    $RotationIntervalInDays = Read-Host 'Enter rotation interval (> 0 days)'
+                }
                 
-                $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$AlertEmail,$AlertSMS,$Comment,$updatecred,$resetcred)) 
+                $cred.InvokeFunction($cred.UpdateAlert, @($CredentialName,$RotationIntervalInDays,$CredentialGroup,$updatecred,$resetcred,$Comment)) 
                            
             }
 	

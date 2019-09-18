@@ -367,10 +367,7 @@ class Storage: AzSVTBase
         $result = $true;
 		
 		try {
-			$serviceMapping.Services | 
-			ForEach-Object {
-            	$result = $this.CheckMetricAlertConfiguration($this.ControlSettings.MetricAlert.Storage, $controlResult, ("/services/" + $_)) -and $result ;
-        	}	
+            $result = $this.CheckStorageMetricAlertConfiguration($this.ControlSettings.MetricAlert.Storage, $controlResult) -and $result ;
 		}
 		catch {
 			if(([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden) -or $this.LockExists)
@@ -398,6 +395,170 @@ class Storage: AzSVTBase
 		}
 
 		return $controlResult;  
+	 }
+
+	 hidden [bool] CheckStorageMetricAlertConfiguration([PSObject[]] $metricSettings, [ControlResult] $controlResult)
+	 {
+		 $result = $false;
+		 if($metricSettings -and $metricSettings.Count -ne 0)
+		 {
+			 $resourceAlerts = @()
+			 $resourceAlerts += Get-AzMetricAlertRuleV2 -ResourceGroup $this.ResourceContext.ResourceGroupName -WarningAction SilentlyContinue
+			 
+			 $alertsConfiguration = @();
+			 $nonConfiguredMetrices = @();
+			 $misConfiguredMetrices = @();
+ 
+			 $metricSettings	|
+			 ForEach-Object {
+				 $currentMetric = $_;
+				 $matchedMetrices = @();
+				 $matchedMetrices += $resourceAlerts | 
+									 Where-Object { ($_.Criteria.MetricName -eq $currentMetric.Condition.MetricName) -and ( $_.Enabled -eq '$true' ) -and ($_.Scopes -match $this.ResourceContext.ResourceName)}
+ 
+				 if($matchedMetrices.Count -eq 0)
+				 {
+					 $nonConfiguredMetrices += $currentMetric;
+				 }
+				 else
+				 {
+					 $misConfigured = @();
+					 $matchedMetrices | ForEach-Object {
+						 if ((($_.Criteria | Measure-Object).Count -eq 1 ) -and (($_.Criteria.Dimensions | Measure-Object).Count -eq 1 )) {
+							$alert = '{
+								"Condition":  {
+												"MetricName":  "",
+												"OperatorProperty":  "",
+												"Threshold": "" ,
+												"TimeAggregation":  "",
+												"Dimensions":{
+													"Name" : "",
+													"OperatorProperty" : "",
+													"Values" : ""
+												},
+												"WindowSize": "",
+												"Frequency": "",
+												"IsEnabled": "true"
+											},
+											"Actions"  :  "",
+											"Name" : "",
+											"Type" : "",
+											"AlertType" : "V2Alert"
+											}' | ConvertFrom-Json
+	
+							
+							$alert.Condition.MetricName = $_.Criteria.MetricName
+							$alert.Condition.OperatorProperty = $_.Criteria.OperatorProperty
+							$alert.Condition.Threshold = [int] $_.Criteria.Threshold
+							$alert.Condition.TimeAggregation = $_.Criteria.TimeAggregation
+							$alert.Condition.WindowSize = [string] $_.EvaluationFrequency
+							$alert.Condition.Frequency = [string] $_.WindowSize
+							$alert.Condition.Dimensions.Name = $_.Criteria.Dimensions.Name
+							$alert.Condition.Dimensions.OperatorProperty = $_.Criteria.Dimensions.OperatorProperty
+							$alert.Condition.Dimensions.Values = $_.Criteria.Dimensions.Values
+								
+							$alert.Actions = [System.Collections.Generic.List[Microsoft.Azure.Management.Monitor.Models.RuleAction]]::new()
+								if([Helpers]::CheckMember($_,"Actions.actionGroupId"))
+								{
+									$_.Actions | ForEach-Object {
+										$actionGroupTemp = $_.actionGroupId.Split("/")
+										$actionGroup = Get-AzActionGroup -ResourceGroupName $actionGroupTemp[4] -Name $actionGroupTemp[-1] -WarningAction SilentlyContinue
+										if([Helpers]::CheckMember($actionGroup,"EmailReceivers.Status"))
+										{
+											if($actionGroup.EmailReceivers.Status -eq [Microsoft.Azure.Management.Monitor.Models.ReceiverStatus]::Enabled)
+											{
+												if([Helpers]::CheckMember($actionGroup,"EmailReceivers.EmailAddress"))
+												{
+													$alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -CustomEmail $actionGroup.EmailReceivers.EmailAddress  -WarningAction SilentlyContinue));
+												}
+												else
+												{
+													$alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -WarningAction SilentlyContinue));
+												}	
+											}
+										}	
+									}
+								}			
+								$alert.Name = $_.Name
+								$alert.Type = $_.Type
+	
+							if(($alert|Measure-Object).Count -gt 0)
+								{
+									$alertsConfiguration += $alert 
+								}
+						}
+					}
+						 
+					 if(($alertsConfiguration|Measure-Object).Count -gt 0)
+					 {
+						 $alertsConfiguration | ForEach-Object {
+						 if([Helpers]::CompareObject($currentMetric, $_))
+						 {
+							 if(($_.Actions.GetType().GetMembers() | Where-Object { $_.MemberType -eq [System.Reflection.MemberTypes]::Property -and $_.Name -eq "Count" } | Measure-Object).Count -ne 0)
+							 {
+								 $isActionConfigured = $false;
+								 foreach ($action in $_.Actions) {
+									 if([Helpers]::CompareObject($this.ControlSettings.MetricAlert.Actions, $action))
+									 {
+										 $isActionConfigured = $true;
+										 break;
+									 }
+								 }
+ 
+								 if(-not $isActionConfigured)
+								 {
+									 $misConfigured += $_;
+								 }
+							 }
+							 else
+							 {
+								 if(-not [Helpers]::CompareObject($this.ControlSettings.MetricAlert.Actions, $_.Actions))
+								 {
+									 $misConfigured += $_;
+								 }
+							 }
+						 }
+						 else
+						 {
+							 $misConfigured += $_;
+						 }
+					 }
+				 }
+ 
+					 if($misConfigured.Count -eq $matchedMetrices.Count)
+					 {
+						 $misConfiguredMetrices += $misConfigured;
+					 }
+				 }
+			 }
+ 
+			 $controlResult.AddMessage("Following metric alerts must be configured with settings mentioned below:", $metricSettings);
+			 $controlResult.VerificationResult = [VerificationResult]::Failed;
+ 
+			 if($nonConfiguredMetrices.Count -ne 0)
+			 {
+				 $controlResult.AddMessage("Following metric alerts are not configured :", $nonConfiguredMetrices);
+				 $controlResult.SetStateData("Alert settings for storage : ", $nonConfiguredMetrices);
+			 }
+ 
+			 if($misConfiguredMetrices.Count -ne 0)
+			 {
+				 $controlResult.AddMessage("Following metric alerts are not correctly configured . Please update the metric settings in order to comply.", $misConfiguredMetrices);
+				 $controlResult.SetStateData("Alert settings for storage : ", $misConfiguredMetrices);
+			 }
+ 
+			 if($nonConfiguredMetrices.Count -eq 0 -and $misConfiguredMetrices.Count -eq 0)
+			 {
+				 $result = $true;
+				 $controlResult.AddMessage([VerificationResult]::Passed , "All mandatory metric alerts are correctly configured .");
+			 }
+		 }
+		 else
+		 {
+			 throw [System.ArgumentException] ("The argument 'metricSettings' is null or empty");
+		 }
+ 
+		 return $result;
 	 }
 
 	hidden [boolean] GetServiceLoggingProperty([string] $serviceType, [ControlResult] $controlResult)
