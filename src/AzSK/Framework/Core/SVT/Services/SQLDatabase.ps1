@@ -91,7 +91,7 @@ class SQLDatabase: AzSVTBase
 
 		if($null -ne $serverAudit){
 				$isCompliant = (($serverAudit.BlobStorageTargetState -eq [AuditStateType]::Enabled) `
-                               -and ($serverAudit.RetentionInDays -eq $this.ControlSettings.SqlServer.AuditRetentionPeriod_Min -or $serverAudit.RetentionInDays -eq $this.ControlSettings.SqlServer.AuditRetentionPeriod_Forever))
+                               -and ($serverAudit.RetentionInDays -ge $this.ControlSettings.SqlServer.AuditRetentionPeriod_Min -or $serverAudit.RetentionInDays -eq $this.ControlSettings.SqlServer.AuditRetentionPeriod_Forever))
 
 				if ($isCompliant){
 				   		$controlResult.VerificationResult = [VerificationResult]::Passed
