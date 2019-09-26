@@ -304,7 +304,7 @@ function Update-AzSKTrackedCredential {
                     $resetcred = $true;
                 }
 
-                while($RotationIntervalInDays -le 0){
+                while($RotationIntervalInDays -lt 0){
                     Write-Host 'Rotation interval (in days) should be greater than 0'
                     $RotationIntervalInDays = Read-Host 'Enter rotation interval (> 0 days)'
                 }
