@@ -77,22 +77,29 @@ class AzCommandBase: CommandBase {
 					$OrgName =$SubOrgTag.Name.Split("_")[1]		
 					if(-not [string]::IsNullOrWhiteSpace($OrgName) -and  $OrgName -ne $AzSKConfigData.PolicyOrgName)
 					{
-						if($AzSKConfigData.PolicyOrgName -eq "org-neutral")
+						if($AzSKConfigData.PolicyOrgName -eq [Constants]::OrgNameOSS)
 						{
-							throw [SuppressedException]::new("The current subscription has been configured with DevOps kit policy for the '$OrgName' Org, However the DevOps kit command is running with a different ('$($AzSKConfigData.PolicyOrgName)') Org policy. `nPlease review FAQ at: https://aka.ms/devopskit/orgpolicy/faq and correct this condition depending upon which context(manual,CICD,CA scan) you are seeing this error. If FAQ does not help to resolve the issue, please contact your Org policy Owner ($($SubOrgTag.Value)).",[SuppressedExceptionType]::Generic)
+							throw [SuppressedException]::new(([Constants]::PolicyMismatchMsgOSS -f $OrgName, $AzSKConfigData.PolicyOrgName, $SubOrgTag.Value),[SuppressedExceptionType]::Generic)
 							
 						}
 						else
 						{	
 							if(-not $Force)
 							{
-								$this.PublishCustomMessage("Warning: The current subscription has been configured with DevOps kit policy for the '$OrgName' Org, However the DevOps kit command is running with a different ('$($AzSKConfigData.PolicyOrgName)') Org policy. `nPlease review FAQ at: https://aka.ms/devopskit/orgpolicy/faq and correct this condition depending upon which context(manual,CICD,CA scan) you are seeing this error. If FAQ does not help to resolve the issue, please contact your Org policy Owner ($($SubOrgTag.Value)).",[MessageType]::Warning);
+								if ($AzSKConfigData.PolicyOrgName -eq [Constants]::OrgNameCSEO) 
+								{
+									$this.PublishCustomMessage(([Constants]::PolicyMismatchMsgCSE -f $SubOrgTag.Value), [MessageType]::Warning);
+								}
+								else 
+								{
+									$this.PublishCustomMessage(([Constants]::PolicyMismatchMsg -f $OrgName, $AzSKConfigData.PolicyOrgName, $SubOrgTag.Value), [MessageType]::Warning);
+								}
 								$IsTagSettingRequired = $false
 							}					
 						}
 					}              
 				}
-				elseif($AzSKConfigData.PolicyOrgName -ne "org-neutral"){				
+				elseif($AzSKConfigData.PolicyOrgName -ne [Constants]::OrgNameOSS){				
 					$IsTagSettingRequired =$true			
 				}			 
 			}
