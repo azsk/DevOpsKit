@@ -110,16 +110,14 @@ class KubernetesClusterCA : AzCommandBase {
             (Get-Content $filePath) -replace '\#RGName\#', $this.ResourceGroupName | Set-Content $filePath -Force
             (Get-Content $filePath) -replace '\#ResourceName\#', $this.ResourceName | Set-Content $filePath -Force
             (Get-Content $filePath) -replace '\#SubscriptionID\#', $this.SubscriptionContext.SubscriptionId | Set-Content $filePath -Force
-            
-            
+                 
             # craete ca scan job
             
             $this.PublishCustomMessage("Setting up AzSK Continuous Assurance in Kubernetes cluster...", [MessageType]::Warning)
         
-            # kubectl apply -f $filePath
+            kubectl apply -f $filePath
             
             # Check if job created successfully
-            
             
             $jobName = kubectl get cronjob $this.cronJobName --namespace $this.nameSpace -o jsonpath='{.metadata.name}' 
             if($null -ne $jobName)
@@ -195,31 +193,40 @@ class KubernetesClusterCA : AzCommandBase {
             
                 if($DownloadJobLogs -eq "Yes"){
                     $response = kubectl get pods --namespace $this.nameSpace -o json
-                    $allJObPods = $response | ConvertFrom-Json | Select-Object -ExpandProperty items
-                    $jobPodsCount =    ($allJObPods | Measure-Object).Count
-                    if($jobPodsCount -gt 0){
-                        $moduleName = $this.GetModuleName();
-                        $this.PublishCustomMessage("Downloading existing job's log to local machine..." , [MessageType]::Warning)
-                        $baseFolder = Join-Path $($Env:LOCALAPPDATA) "Microsoft" | Join-Path -ChildPath $($moduleName) | Join-Path -ChildPath "Logs\ClusterScans\Kubernetes"| Join-Path -ChildPath $($this.SubscriptionContext.SubscriptionId )| Join-Path -ChildPath $($this.ResourceGroupName)| Join-Path -ChildPath $($this.ResourceName)
-                        #$baseFolder =  $Env:LOCALAPPDATA + "\Microsoft\" + $moduleName + "Logs\ClusterScans\Kubernetes\"+ $this.SubscriptionContext.SubscriptionId +"\"+  $this.ResourceGroupName +"\"+ $this.ResourceName+ "\" ; 
-                        If(!(test-path $baseFolder))
-                        {
-                            New-Item -ItemType Directory -Force -Path $baseFolder | Out-Null
+                    if($null -ne $response){
+                        $allJObPods = $response | ConvertFrom-Json | Select-Object -ExpandProperty items
+                        $jobPodsCount =    ($allJObPods | Measure-Object).Count
+                        if($jobPodsCount -gt 0){
+                            $moduleName = $this.GetModuleName();
+                            $this.PublishCustomMessage("Downloading existing job's log to local machine..." , [MessageType]::Warning)
+                            $baseFolder = Join-Path $($Env:LOCALAPPDATA) "Microsoft" | Join-Path -ChildPath $($moduleName) | Join-Path -ChildPath "Logs\ClusterScans\Kubernetes"| Join-Path -ChildPath $($this.SubscriptionContext.SubscriptionId )| Join-Path -ChildPath $($this.ResourceGroupName)| Join-Path -ChildPath $($this.ResourceName)
+                            #$baseFolder =  $Env:LOCALAPPDATA + "\Microsoft\" + $moduleName + "Logs\ClusterScans\Kubernetes\"+ $this.SubscriptionContext.SubscriptionId +"\"+  $this.ResourceGroupName +"\"+ $this.ResourceName+ "\" ; 
+                            If(!(test-path $baseFolder))
+                            {
+                                New-Item -ItemType Directory -Force -Path $baseFolder | Out-Null
+                            }
+                            $allJObPods | ForEach-Object {
+                            $jobPodName = $_.metadata.name
+                            $jobTimeStamp = $_.metadata.creationTimestamp
+                            $dateTime = $jobTimeStamp.split("T")
+                            $date = $dateTime[0]
+                            $time = $dateTime[1]
+                            $fileName = $date.Replace("-","")+"_"+ $time.Replace(":","") + ".txt"
+                            $fileName = Join-Path $baseFolder $fileName
+                            Kubectl logs $jobPodName --namespace $this.nameSpace| Out-File $fileName -Force
+                            }
+                            $this.PublishCustomMessage("All previous job logs have been exported to: $($baseFolder)" , [MessageType]::Update)
+                        }else{
+                            $this.PublishCustomMessage("No previous job's log found." , [MessageType]::Warning)
                         }
-                        $allJObPods | ForEach-Object {
-                        $jobPodName = $_.metadata.name
-                        $jobTimeStamp = $_.metadata.creationTimestamp
-                        $dateTime = $jobTimeStamp.split("T")
-                        $date = $dateTime[0]
-                        $time = $dateTime[1]
-                        $fileName = $date.Replace("-","")+"_"+ $time.Replace(":","") + ".txt"
-                        $fileName = Join-Path $baseFolder $fileName
-                        Kubectl logs $jobPodName --namespace $this.nameSpace| Out-File $fileName -Force
-                        }
-                        $this.PublishCustomMessage("All previous job logs have been exported to: $($baseFolder)" , [MessageType]::Update)
                     }else{
-                        $this.PublishCustomMessage("No previous job's log found." , [MessageType]::Warning)
+                        $this.PublishCustomMessage("Some error occurred while fetching previous job logs." , [MessageType]::Error)
+                        $choice = Read-Host -Prompt 'Do you want to remove AzSK Continuous Assurance from cluster without downloading previous logs "Y/N"'
+                        if($choice -ne "Y"){
+                            return;
+                        }
                     }
+
                 }
                 else
                 {
@@ -228,9 +235,13 @@ class KubernetesClusterCA : AzCommandBase {
             
                 $this.PublishCustomMessage("Removing AzSK Continuous Assurance from cluster..."  , [MessageType]::Warning)
             
-                #kubectl delete -f $deploymentFileUrl
-            
-                $this.PublishCustomMessage("Successfully removed AzSK Continuous Assurance from cluster."  , [MessageType]::Update)
+                $response = kubectl delete -f $deploymentFileUrl
+
+                if($null -ne $response){
+                    $this.PublishCustomMessage("Successfully removed AzSK Continuous Assurance from cluster."  , [MessageType]::Update)
+                }else{
+                    $this.PublishCustomMessage("Some error occurred while removing AzSK Continuous Assurance from cluster." , [MessageType]::Error)
+                }
             
             }
             
@@ -240,78 +251,99 @@ class KubernetesClusterCA : AzCommandBase {
         {
             $this.PublishCustomMessage("`nCheck 01: Presence of required configuration settings.",[MessageType]::Info)
             $configJson = kubectl get configmaps $this.configMapName --namespace $this.nameSpace -o json
-            $configJson = $configJson| ConvertFrom-Json | Select-Object data
-            $configMaps = $configJson.data
-        
-            $presentConfig = @{
-            "AppInsightKey    " = $configMaps.APP_INSIGHT_KEY
-            "SubscriptionId   " = $configMaps.SUBSCRIPTION_ID
-            "ResourceName     " = $configMaps.RESOURCE_NAME
-            "ResourceGroupName" = $configMaps.RG_NAME
-            }
-        
-            if($null -eq $configMaps){     
-                $this.PublishCustomMessage("`nConfiguration settings for your cluster are missing.",[MessageType]::Error)
+            if($null -ne $configJson){
+                $configJson = $configJson| ConvertFrom-Json | Select-Object data
+                $configMaps = $configJson.data
+                $presentConfig = $null
+                if($null -eq $configMaps){     
+                    $this.PublishCustomMessage("`nConfiguration settings for your cluster are missing.",[MessageType]::Error)
+                }else{
+                        $presentConfig = @{
+                        "AppInsightKey    " = $configMaps.APP_INSIGHT_KEY
+                        "SubscriptionId   " = $configMaps.SUBSCRIPTION_ID
+                        "ResourceName     " = $configMaps.RESOURCE_NAME
+                        "ResourceGroupName" = $configMaps.RG_NAME
+                        }
+                        $this.PublishCustomMessage("Configuration settings for your cluster are as follows:")
+                        foreach($key in $presentConfig.keys)
+                        {
+                            Write-Host "$($key) : $($presentConfig.Item($key))" -ForegroundColor Yellow
+                        }
+                }
+            
+                if($null -eq $presentConfig["AppInsightKey"]){
+                    $this.PublishCustomMessage("`nApplication Inight key is not present. Scan logs will not be sent to telelmetry.",[MessageType]::Warning)
+                }else{
+                    $this.PublishCustomMessage("`nScan logs will be sent to Application Insight: $($presentConfig['AppInsightKey'])",[MessageType]::Update)
+                }
             }else{
-                    $this.PublishCustomMessage("Configuration settings for your cluster are as follows:")
-                    foreach($key in $presentConfig.keys)
-                    {
-                        Write-Host "$($key) : $($presentConfig.Item($key))" -ForegroundColor Yellow
-                    }
+                $this.PublishCustomMessage("Unable to fetch Cluster's Configuration settings.",[MessageType]::Error)
             }
-        
-            if($null -eq $presentConfig["AppInsightKey"]){
-                $this.PublishCustomMessage("`nApplication Inight key is not present. Scan logs will not be sent to telelmetry.",[MessageType]::Warning)
-            }else{
-                $this.PublishCustomMessage("`nScan logs will be sent to Application Insight: $($presentConfig['AppInsightKey'])",[MessageType]::Update)
-            }
+
         
             $this.PublishCustomMessage("`nCheck 02: Validate runtime permissions to scan cluster.",[MessageType]::Info)
-            $svcAccountJson = kubectl get ServiceAccount $this.serviceAccountName --namespace $this.nameSpace -o json
-            $svcAccountJson = $svcAccountJson | ConvertFrom-Json | Select-Object metadata
-            $svcAccountUID = $svcAccountJson.metadata.uid
             $isRuntimeAccountValid = $true
-        
-            if($null -eq $svcAccountUID){
-                $this.PublishCustomMessage("Service account is not present.",[MessageType]::Error)
+            $svcAccountJson = kubectl get ServiceAccount $this.serviceAccountName --namespace $this.nameSpace -o json
+            if($null -ne $svcAccountJson){
+                $svcAccountJson = $svcAccountJson | ConvertFrom-Json | Select-Object metadata
+                $svcAccountUID = $svcAccountJson.metadata.uid
+                if($null -eq $svcAccountUID){
+                    $this.PublishCustomMessage("Service account is not present.",[MessageType]::Error)
+                    $isRuntimeAccountValid = $false
+                }
+            }else{
+                $this.PublishCustomMessage("Unable to fetch Service account details.",[MessageType]::Error)
                 $isRuntimeAccountValid = $false
             }
+         
         
             $requiredApiGroups = "*"
             $requiredResources = @("pods","deployments","nodes","serviceaccounts","configmaps","clusterrolebindings")
             $requiredVerbs = @("get","watch","list")
         
             $clusterRoleJson = kubectl get ClusterRole $this.clusterRoleName --namespace $this.nameSpace -o json
-            $clusterRoleJson = $clusterRoleJson | ConvertFrom-Json | Select-Object rules
-            $clusterRoleRules = $clusterRoleJson.rules
-        
-            if(Compare-Object $clusterRoleRules.resources $requiredResources){
-                $this.PublishCustomMessage("Required resources permission is not correctly configured.",[MessageType]::Error)
+            if($null -ne $clusterRoleJson){
+                $clusterRoleJson = $clusterRoleJson | ConvertFrom-Json | Select-Object rules
+                $clusterRoleRules = $clusterRoleJson.rules
+            
+                if(Compare-Object $clusterRoleRules.resources $requiredResources){
+                    $this.PublishCustomMessage("Required resources permission is not correctly configured.",[MessageType]::Error)
+                    $isRuntimeAccountValid = $false
+                }
+                if(Compare-Object $clusterRoleRules.verbs  $requiredVerbs){
+                    $this.PublishCustomMessage("Required verbs permission is not correctly configured.",[MessageType]::Error)
+                    $isRuntimeAccountValid = $false
+                }
+                if(Compare-Object $clusterRoleRules.apiGroups  $requiredApiGroups){
+                    $this.PublishCustomMessage("Required api groups permission is not correctly configured.",[MessageType]::Error)
+                    $isRuntimeAccountValid = $false
+                }
+            }else{
+                $this.PublishCustomMessage("Unable to fetch Cluster role details.",[MessageType]::Error)
                 $isRuntimeAccountValid = $false
             }
-            if(Compare-Object $clusterRoleRules.verbs  $requiredVerbs){
-                $this.PublishCustomMessage("Required verbs permission is not correctly configured.",[MessageType]::Error)
-                $isRuntimeAccountValid = $false
-            }
-            if(Compare-Object $clusterRoleRules.apiGroups  $requiredApiGroups){
-                $this.PublishCustomMessage("Required api groups permission is not correctly configured.",[MessageType]::Error)
-                $isRuntimeAccountValid = $false
-            }
+
         
             $roleBindingJson = kubectl get ClusterRoleBinding $this.clusterRoleBindingName --namespace $this.nameSpace -o json
-            $roleBindingJson  = $roleBindingJson  | ConvertFrom-Json | Select-Object roleRef, subjects
-            $roleRef = $roleBindingJson.roleRef
-            $subjects = $roleBindingJson.subjects
-        
-            if($roleRef.kind -ne "ClusterRole" -or $roleRef.name -ne $this.clusterRoleName ){
-                $this.PublishCustomMessage("Required Cluster role binding is not properly configured. ",[MessageType]::Error)
+            if($null -ne  $roleBindingJson){
+                $roleBindingJson  = $roleBindingJson  | ConvertFrom-Json | Select-Object roleRef, subjects
+                $roleRef = $roleBindingJson.roleRef
+                $subjects = $roleBindingJson.subjects
+            
+                if($roleRef.kind -ne "ClusterRole" -or $roleRef.name -ne $this.clusterRoleName ){
+                    $this.PublishCustomMessage("Required Cluster role binding is not properly configured. ",[MessageType]::Error)
+                    $isRuntimeAccountValid = $false
+                }
+            
+                if($subjects.kind -ne "ServiceAccount" -or $subjects.name -ne $this.serviceAccountName){
+                    $this.PublishCustomMessage("Required Cluster role binding is not properly configured. ",[MessageType]::Error)
+                    $isRuntimeAccountValid = $false
+                }
+            }else{
+                $this.PublishCustomMessage("Unable to fetch Cluster role details.",[MessageType]::Error)
                 $isRuntimeAccountValid = $false
             }
-        
-            if($subjects.kind -ne "ServiceAccount" -or $subjects.name -ne $this.serviceAccountName){
-                $this.PublishCustomMessage("Required Cluster role binding is not properly configured. ",[MessageType]::Error)
-                $isRuntimeAccountValid = $false
-            }
+
         
             if($isRuntimeAccountValid){
                 $this.PublishCustomMessage("Required runtime account for scanning cluste is properly configured.", [MessageType]::Update)
@@ -395,8 +427,12 @@ class KubernetesClusterCA : AzCommandBase {
                 # update ca scan job runtime account
                 $this.PublishCustomMessage("Upadting AzSK Continuous Assurance job runtime account...",[MessageType]::Warning)
                 $response = kubectl apply -f $filePath
-                $this.PublishCustomMessage("Successfully Upadted AzSK Continuous Assurance job runtime account.",[MessageType]::Update)
-        
+                if($null -ne $response){
+                    $this.PublishCustomMessage("Successfully Upadted AzSK Continuous Assurance job runtime account.",[MessageType]::Update)
+                }else{
+                    $this.PublishCustomMessage("Some error occurred while updating AzSK Continuous Assurance job runtime account. See logs above for details.",[MessageType]::Error)
+                }
+
             }
             
             if($LogRetentionInDays -gt 0 -or $ScanIntervalInHours -gt 0 -or -not [string]::IsNullOrEmpty($ImageTag)){
@@ -434,7 +470,12 @@ class KubernetesClusterCA : AzCommandBase {
                     # update ca job configuration like scan interval, job history limit etc.
                     $this.PublishCustomMessage("Upadting AzSK Continuous Assurance job configuration...",[MessageType]::Warning)
                     $response = kubectl apply -f $filePath
-                    $this.PublishCustomMessage("Successfully Upadted AzSK Continuous Assurance job configuration.",[MessageType]::Update)
+                    if($null -ne $response){
+                        $this.PublishCustomMessage("Successfully Upadted AzSK Continuous Assurance job configuration.",[MessageType]::Update)
+                    }else{
+                        $this.PublishCustomMessage("Some error occurred while updating AzSK Continuous Assurance job configuration. See logs above for details.",[MessageType]::Error)
+                    }
+                  
             
             }
         }
