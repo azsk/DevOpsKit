@@ -753,7 +753,7 @@ class PIM: AzCommandBase {
                 $soonToExpireAssignments += $roleAssignments | Where-Object {([DateTime]::UTCNow).AddDays($soonToExpireWindow) -gt $_.ExpirationDate -and $_.RoleName -in $criticalRoles -and $_.AssignmentState -eq 'Eligible'}
                 if(($soonToExpireAssignments| Measure-Object).Count -gt 0)
                 {
-                    $this.PublishCustomMessage($($soonToExpireAssignments | Format-Table  -Wrap 'SubjectId', 'PrincipalName', 'SubjectType', 'ExpirationDate'|  Out-String), [MessageType]::Default)
+                    $this.PublishCustomMessage($($soonToExpireAssignments | Format-Table  -Wrap 'SubjectId', 'PrincipalName', 'SubjectType', @{Label = "ExpiringInDays"; Expression = { [math]::Round((([DateTime]$_.ExpirationDate).ToUniversalTime().Subtract([DateTime](get-date).ToUniversalTime())).TotalDays) } } |  Out-String), [MessageType]::Default)
                 }
                 else 
                 {
