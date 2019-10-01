@@ -902,7 +902,7 @@ class AppService: AzSVTBase
 		hidden [ControlResult] CheckAppServiceTLSVersion([ControlResult] $controlResult)
 		{	
 				$requiredVersion = [System.Version] $this.ControlSettings.AppService.TLS_Version
-			
+	
         if($null -ne $this.SiteConfigs -and [Helpers]::CheckMember($this.SiteConfigs.Properties,"minTlsVersion")){
 					  $minTlsVersion = [System.Version]	$this.SiteConfigs.Properties.minTlsVersion
 						if($minTlsVersion -ge $requiredVersion)
@@ -913,6 +913,7 @@ class AppService: AzSVTBase
 						{
 							$controlResult.VerificationResult = [VerificationResult]::Failed
 							$controlResult.AddMessage("Current Minimum TLS Version: $($minTlsVersion), Required Minimum TLS Version: $($requiredVersion)");
+							$controlResult.SetStateData("Current Minimum TLS Version",$minTlsVersion.ToString());
 						}
 				}else{
 						$controlResult.VerificationResult = [VerificationResult]::Manual
