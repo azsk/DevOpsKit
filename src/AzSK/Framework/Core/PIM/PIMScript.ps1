@@ -876,15 +876,23 @@ class PIM: AzCommandBase {
                {
                     $MaximumActivationDuration =($($updatedroleSetting.userMemberSettings | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes
                }
+               else 
+               {
+                $MaximumActivationDuration = $MaximumActivationDuration*60
+               }
                if($ExpireEligibleAssignmentsAfter -eq -1)
                {
                    $ExpireEligibleAssignmentsAfter = ($($updatedroleSetting.adminEligibleSettings | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes
+               }
+               else 
+               {
+                    $ExpireEligibleAssignmentsAfter =$ExpireEligibleAssignmentsAfter*24*60
                }
 
                $roleSettingId = $updatedroleSetting.id
        
         #  5) Create json body for patch request  
-                $body = '{"adminEligibleSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter*24*60+'}"}],"userMemberSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration*60+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$RequireMFAOnActivation+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]}'
+                $body = '{"adminEligibleSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}],"userMemberSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$RequireMFAOnActivation+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]}'
                 $body = $body -replace "True" ,"true" # the api does not accept "True" so need to lower the casing
                 $body = $body -replace "False", "false"                
                 $updateUrl = $this.APIroot+"/roleSettings/$roleSettingId"
