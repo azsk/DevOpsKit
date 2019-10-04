@@ -914,15 +914,15 @@ class CredHygiene : CommandBase{
 						$this.PublishCustomMessage("Alert for the credential group [$credHygieneAGName] is successfully configured.");
 					}
 					else{ # LA resource not found.
-						$this.PublishCustomMessage("Log analytics resource with workspace id [$($laWSId.Value)] provided in the CA automation account variables doesn't exist. Please verify the value of log analytics workspace id.", [MessageType]::Error)
+						$this.PublishCustomMessage("Log Analytics resource with workspace Id [$($laWSId.Value)] provided in the CA automation account variables doesn't exist. Please verify the value of Log Analytics workspace Id.", [MessageType]::Error)
 						$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
-						$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the log analytics workspace id with the correct value in the CA automation account.")
+						$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the Log Analytics workspace Id with the correct value in the CA automation account.")
 					}
 				}
 				else{ # LAWS id variable not found.
-					$this.PublishCustomMessage("Log analytics workspace id not found in the CA automation account variables.", [MessageType]::Error)
+					$this.PublishCustomMessage("Log Analytics workspace Id not found in the CA automation account variables.", [MessageType]::Error)
 					$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
-					$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the log analytics workspace id with the correct value in the CA automation account.")
+					$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the Log Analytics workspace Id with the correct value in the CA automation account.")
 				}
 			}
 			else{ # CA setup not found.
@@ -970,15 +970,15 @@ class CredHygiene : CommandBase{
 					$this.PublishCustomMessage("Alert for the credential group [$($actionGroup.Name)] is successfully configured.");
 				}
 				else{ # LA resource not found.
-					$this.PublishCustomMessage("Log analytics resource with workspace id [$($laWSId.Value)] provided in the CA automation account variables doesn't exist. Please verify the value of log analytics workspace id.", [MessageType]::Error)
+					$this.PublishCustomMessage("Log Analytics resource with workspace Id [$($laWSId.Value)] provided in the CA automation account variables doesn't exist. Please verify the value of Log Analytics workspace id.", [MessageType]::Error)
 					$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
-					$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the log analytics workspace id with the correct value in the CA automation account.")
+					$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the Log Analytics workspace Id with the correct value in the CA automation account.")
 				}
 			}
 			else{ # LAWS id variable not found.
-				$this.PublishCustomMessage("Log analytics workspace id not found in the CA automation account variables.", [MessageType]::Error)
+				$this.PublishCustomMessage("Log Analytics workspace Id not found in the CA automation account variables.", [MessageType]::Error)
 				$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
-				$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the log analytics workspace id with the correct value in the CA automation account.")
+				$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the Log Analytics workspace Id with the correct value in the CA automation account.")
 			}
 		}
 		else{ # CA setup not found.
