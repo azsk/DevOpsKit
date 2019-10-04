@@ -11,10 +11,9 @@ namespace AzSK.ARMChecker.Lib
         LesserThanOrEqual,
         Contains,
         NotContains,
-        admincount,
         All,
         StringNotMatched,
-        limit,
-        IpRange
+        limit
+        
     }
 }
