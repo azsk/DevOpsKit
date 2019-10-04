@@ -914,15 +914,15 @@ class CredHygiene : CommandBase{
 						$this.PublishCustomMessage("Alert for the credential group [$credHygieneAGName] is successfully configured.");
 					}
 					else{ # LA resource not found.
-						$this.PublishCustomMessage("Log analytics resource with workspace id [$($laWSId.Value)] provided in the CA automation account variables doesn't exist. Please verify the value of log analytics workspace id.", [MessageType]::Error)
+						$this.PublishCustomMessage("Log Analytics resource with workspace Id [$($laWSId.Value)] provided in the CA automation account variables doesn't exist. Please verify the value of Log Analytics workspace Id.", [MessageType]::Error)
 						$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
-						$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the log analytics workspace id with the correct value in the CA automation account.")
+						$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the Log Analytics workspace Id with the correct value in the CA automation account.")
 					}
 				}
 				else{ # LAWS id variable not found.
-					$this.PublishCustomMessage("Log analytics workspace id not found in the CA automation account variables.", [MessageType]::Error)
+					$this.PublishCustomMessage("Log Analytics workspace Id not found in the CA automation account variables.", [MessageType]::Error)
 					$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
-					$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the log analytics workspace id with the correct value in the CA automation account.")
+					$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the Log Analytics workspace Id with the correct value in the CA automation account.")
 				}
 			}
 			else{ # CA setup not found.
@@ -937,63 +937,53 @@ class CredHygiene : CommandBase{
 	}	 
 
 	[void] InstallCredentialGroupAlert($actionGroup)
-	{
-		$queryRules = Get-AzScheduledQueryRule -ErrorAction Ignore -WarningAction Ignore
-		$queryRules = $queryRules.Name
-		$qr = "AzSK_CredHygiene_Alert_$($actionGroup.GroupShortName)"
+	{	
+		$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
 
-		if($queryRules -contains $qr){
-			$this.PublishCustomMessage("Alert for the credential group [$($actionGroup.Name)] is already configured.");
-		}
-		else {
-			
-			$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-
-			# We are using LAWS from the same sub for Alert REST API call.
-			$automationAccDetails= Get-AzAutomationAccount -ResourceGroupName $rgName -ErrorAction SilentlyContinue 
-			if($automationAccDetails)
-			{
-				#Fetch LAWS Id from CA variables
-				$laWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "LAWSId" -ErrorAction SilentlyContinue
-				if($laWSId){
-					$laWS = Get-AzOperationalInsightsWorkspace | where{$_.CustomerId -eq $laWSId.Value} # Verify whether the LA resource ith the WS id exists.
-					if($laWS){
+		# We are using LAWS from the same sub for Alert REST API call.
+		$automationAccDetails= Get-AzAutomationAccount -ResourceGroupName $rgName -ErrorAction SilentlyContinue 
+		if($automationAccDetails)
+		{
+			#Fetch LAWS Id from CA variables
+			$laWSId = Get-AzAutomationVariable -ResourceGroupName $automationAccDetails.ResourceGroupName -AutomationAccountName $automationAccDetails.AutomationAccountName -Name "LAWSId" -ErrorAction SilentlyContinue
+			if($laWSId){
+				$laWS = Get-AzOperationalInsightsWorkspace | where{$_.CustomerId -eq $laWSId.Value} # Verify whether the LA resource ith the WS id exists.
+				if($laWS){
+					
+					$body = [ConfigurationManager]::LoadServerConfigFile("CredentialHygieneAlert_CredentialGroup.json");
+					$dataSourceId = $body.properties.source.dataSourceId | ConvertTo-Json -Depth 10
+					$dataSourceId = $dataSourceId.Replace("{0}",$this.SubscriptionContext.SubscriptionId).Replace("{1}",$laWS.ResourceGroupName).Replace("{2}",$laWS.CustomerId) | ConvertFrom-Json
+					$body.properties.source.dataSourceId = $dataSourceId
+					
+					$ag = $body.properties.action.aznsAction.actionGroup[0] | ConvertTo-Json -Depth 10
+					$ag = $ag.Replace("{3}",$actionGroup.Id) | ConvertFrom-Json
+					$body.properties.action.aznsAction.actionGroup[0] = $ag
+					
+					$cg = $body.properties.source.query | ConvertTo-Json -Depth 10
+					$cg = $cg.Replace("{4}",$actionGroup.Name) | ConvertFrom-Json
+					$body.properties.source.query = $cg
 						
-						$body = [ConfigurationManager]::LoadServerConfigFile("CredentialHygieneAlert_CredentialGroup.json");
-						$dataSourceId = $body.properties.source.dataSourceId | ConvertTo-Json -Depth 10
-						$dataSourceId = $dataSourceId.Replace("{0}",$this.SubscriptionContext.SubscriptionId).Replace("{1}",$laWS.ResourceGroupName).Replace("{2}",$laWS.CustomerId) | ConvertFrom-Json
-						$body.properties.source.dataSourceId = $dataSourceId
-						
-						$ag = $body.properties.action.aznsAction.actionGroup[0] | ConvertTo-Json -Depth 10
-						$ag = $ag.Replace("{3}",$actionGroup.Id) | ConvertFrom-Json
-						$body.properties.action.aznsAction.actionGroup[0] = $ag
-
-						$cg = $body.properties.source.query | ConvertTo-Json -Depth 10
-						$cg = $cg.Replace("{4}",$actionGroup.Name) | ConvertFrom-Json
-						$body.properties.source.query = $cg
-							
-						$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
-						$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($laWS.ResourceGroupName)/providers/microsoft.insights/scheduledQueryRules/AzSK_CredHygiene_Alert_$($actionGroup.GroupShortName)?api-version=2018-04-16"
-									
-						[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
-						$this.PublishCustomMessage("Alert for the credential group [$($actionGroup.Name)] is successfully configured.");
-					}
-					else{ # LA resource not found.
-						$this.PublishCustomMessage("Log analytics resource with workspace id [$($laWSId.Value)] provided in the CA automation account variables doesn't exist. Please verify the value of log analytics workspace id.", [MessageType]::Error)
-						$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
-						$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the log analytics workspace id with the correct value in the CA automation account.")
-					}
+					$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
+					$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($laWS.ResourceGroupName)/providers/microsoft.insights/scheduledQueryRules/AzSK_CredHygiene_Alert_$($actionGroup.GroupShortName)?api-version=2018-04-16"
+								
+					[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $uri, $body);
+					$this.PublishCustomMessage("Alert for the credential group [$($actionGroup.Name)] is successfully configured.");
 				}
-				else{ # LAWS id variable not found.
-					$this.PublishCustomMessage("Log analytics workspace id not found in the CA automation account variables.", [MessageType]::Error)
+				else{ # LA resource not found.
+					$this.PublishCustomMessage("Log Analytics resource with workspace Id [$($laWSId.Value)] provided in the CA automation account variables doesn't exist. Please verify the value of Log Analytics workspace Id.", [MessageType]::Error)
 					$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
-					$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the log analytics workspace id with the correct value in the CA automation account.")
+					$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the Log Analytics workspace Id with the correct value in the CA automation account.")
 				}
 			}
-			else{ # CA setup not found.
-				$this.PublishCustomMessage("Continuous Assurance setup was not found in the current subscription.", [MessageType]::Error)
+			else{ # LAWS id variable not found.
+				$this.PublishCustomMessage("Log Analytics workspace Id not found in the CA automation account variables.", [MessageType]::Error)
 				$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
+				$this.PublishCustomMessage("Run Update-AzSKContinuousAssurance to update the Log Analytics workspace Id with the correct value in the CA automation account.")
 			}
+		}
+		else{ # CA setup not found.
+			$this.PublishCustomMessage("Continuous Assurance setup was not found in the current subscription.", [MessageType]::Error)
+			$this.PublishCustomMessage("Couldn't create credential hygiene alert for the current subscription.", [MessageType]::Error)
 		}	
 	}	 
 }
