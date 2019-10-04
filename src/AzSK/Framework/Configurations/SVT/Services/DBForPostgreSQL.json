@@ -1,5 +1,5 @@
 {
-  "FeatureName":  "DBforPostgreSQL",
+  "FeatureName":  "DBForPostgreSQL",
   "Reference":  "aka.ms/azsktcp/dbforpostgresql",
   "IsMaintenanceMode":  false,
   "Controls": [
