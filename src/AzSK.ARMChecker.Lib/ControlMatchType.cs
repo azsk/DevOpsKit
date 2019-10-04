@@ -18,7 +18,7 @@ namespace AzSK.ARMChecker.Lib
 		VerifiableMultiToken, // Multi Tokens
 		Custom, // Multi Tokens
         NullableSingleToken, //Single Tokens
-        VersionSingleToken //Single Tokens
+        VersionSingleToken, //Single Tokens
 	BooleanVerify //Single Tokens
 
     }
