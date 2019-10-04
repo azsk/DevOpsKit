@@ -65,8 +65,10 @@ namespace AzSK.ARMChecker.Lib
                 case ControlMatchType.VersionSingleToken:
                     return EvaluateSingleVersionToken(control, resource);
                 case ControlMatchType.BooleanVerify:
-                    return EvaluateBooleanVerifystate(control, resource);
-             default:
+                    return EvaluateBooleanVerify(control, resource);
+                case ControlMatchType.IntegerValueLimit:
+                    return EvaluateIntegerValueLimit(control, resource);
+                default:
                     throw new ArgumentOutOfRangeException();
             }
         }
@@ -84,7 +86,7 @@ namespace AzSK.ARMChecker.Lib
             return result;
         }
 
-        private static ControlResult EvaluateBooleanVerifystate(ResourceControl control, JObject resource)
+        private static ControlResult EvaluateBooleanVerify(ResourceControl control, JObject resource)
         {
             var result = ExtractSingleToken(control, resource, out bool actual, out BooleanControlData match);
             result.ExpectedValue = "'" + match.Value.ToString() + "'";
@@ -142,17 +144,32 @@ namespace AzSK.ARMChecker.Lib
                 case ControlDataMatchType.Equals:
                     if (count == match.Value) result.VerificationResult = VerificationResult.Passed;
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            return result;
+        }
+
+        private static ControlResult EvaluateIntegerValueLimit(ResourceControl control, JObject resource)
+        {
+            var result = ExtractMultiToken(control, resource, out IEnumerable<object> actual, out IntegerValueControlData match);
+            result.ExpectedValue = "Count " + match.Type.ToString() + " " + match.Value.ToString();
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
+            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
+            var count = actual.Count();
+            switch (match.Type)
+            {
                 case ControlDataMatchType.limit:
-                    if ((count >= 0)  && (count<= match.Value)) result.VerificationResult = VerificationResult.Verify;
+                    if ((count >= 0) && (count <= match.Value)) result.VerificationResult = VerificationResult.Verify;
                     break;
                 case ControlDataMatchType.All:
-                    string temp=null;
+                    string temporarytoken = null;
                     foreach (var obj in actual)
                     {
-                        temp= obj.ToString();
+                        temporarytoken = obj.ToString();
                         break;
                     }
-                    if (count > match.Value && temp.Equals("*"))
+                    if (count > match.Value && temporarytoken.Equals("*"))
                     {
                         result.VerificationResult = VerificationResult.Failed;
                     }
