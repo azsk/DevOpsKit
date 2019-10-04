@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
@@ -64,7 +64,9 @@ namespace AzSK.ARMChecker.Lib
                     return EvaluateNullableSingleToken(control, resource);
                 case ControlMatchType.VersionSingleToken:
                     return EvaluateSingleVersionToken(control, resource);
-                default:
+                case ControlMatchType.BooleanVerify:
+                    return EvaluateBooleanVerifystate(control, resource);
+             default:
                     throw new ArgumentOutOfRangeException();
             }
         }
@@ -78,6 +80,23 @@ namespace AzSK.ARMChecker.Lib
             if (actual == match.Value)
             {
                 result.VerificationResult = VerificationResult.Passed;
+            }
+            return result;
+        }
+
+        private static ControlResult EvaluateBooleanVerifystate(ResourceControl control, JObject resource)
+        {
+            var result = ExtractSingleToken(control, resource, out bool actual, out BooleanControlData match);
+            result.ExpectedValue = "'" + match.Value.ToString() + "'";
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
+            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
+            if (actual == match.Value)
+            {
+                result.VerificationResult = VerificationResult.Passed;
+            }
+            else
+            {
+                result.VerificationResult = VerificationResult.Verify;
             }
             return result;
         }
@@ -122,6 +141,25 @@ namespace AzSK.ARMChecker.Lib
                     break;
                 case ControlDataMatchType.Equals:
                     if (count == match.Value) result.VerificationResult = VerificationResult.Passed;
+                    break;
+                case ControlDataMatchType.limit:
+                    if ((count >= 0)  && (count<= match.Value)) result.VerificationResult = VerificationResult.Verify;
+                    break;
+                case ControlDataMatchType.All:
+                    string temp=null;
+                    foreach (var obj in actual)
+                    {
+                        temp= obj.ToString();
+                        break;
+                    }
+                    if (count > match.Value && temp.Equals("*"))
+                    {
+                        result.VerificationResult = VerificationResult.Failed;
+                    }
+                    else
+                    {
+                        result.VerificationResult = VerificationResult.Verify;
+                    }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -235,6 +273,7 @@ namespace AzSK.ARMChecker.Lib
                 {
                     result.VerificationResult = VerificationResult.Passed;
                 }
+
             }
             else
             {
@@ -242,10 +281,13 @@ namespace AzSK.ARMChecker.Lib
                 {
                     result.VerificationResult = VerificationResult.Passed;
                 }
+                if (match.Type == ControlDataMatchType.StringNotMatched)
+                {
+                    result.VerificationResult = VerificationResult.Verify;
+                }
             }
             return result;
         }
-
         private static ControlResult EvaluateRegExpressionSingleToken(ResourceControl control, JObject resource)
         {
             var result = ExtractSingleToken(control, resource, out string actual, out RegExpressionSingleTokenControlData match);
@@ -439,7 +481,6 @@ namespace AzSK.ARMChecker.Lib
                     }
                     actual = tokenValue;
                 }
-                
             }
             catch (Exception)
             {
@@ -517,6 +558,7 @@ namespace AzSK.ARMChecker.Lib
                 result.IsTokenNotValid = true;
             }
             match = control.Data.ToObject<TM>();
+
             return result;
         }
 
