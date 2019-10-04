@@ -1,4 +1,4 @@
-﻿namespace AzSK.ARMChecker.Lib
+namespace AzSK.ARMChecker.Lib
 {
 	public enum ControlMatchType
 	{
