@@ -3,6 +3,8 @@ class KubernetesClusterCA : AzCommandBase {
     [PSObject] $ResourceObject;
     [string]  $ResourceGroupName;
     [string]  $ResourceName;
+    [string]  $LAWorkspaceId;
+    [string]  $LASharedSecret;
     [string]  $ResourceType = "Microsoft.ContainerService/managedClusters";
     [string]  $nameSpace = "azsk-scanner"
     [string]  $serviceAccountName = "azsk-scanner-account"
@@ -31,7 +33,7 @@ class KubernetesClusterCA : AzCommandBase {
             {
                 $this.ResourceName = $ResourceName;
             }
-            
+
             $this.CheckPrerequisites();
             $this.GetResourceObject();
             $this.SetKubernetesContext();
@@ -92,8 +94,9 @@ class KubernetesClusterCA : AzCommandBase {
             return $this.ResourceObject;
         }
 
-        [Void] InstallKubernetesContinuousAssurance()
+        [Void] InstallKubernetesContinuousAssurance($LAWorkspaceId, $LASharedSecret)
         {
+            # Get the App Insight Key
             $AppInsightKey = [RemoteReportHelper]::GetAIOrgTelemetryKey()
             if([string]::IsNullOrWhiteSpace($AppInsightKey))
             {
@@ -103,6 +106,34 @@ class KubernetesClusterCA : AzCommandBase {
                 $AppInsightKey = $AppInsightKey.Trim()
             }
             
+            # Check if LAWorkspaceId and LASharedSecret param are passed by user 
+            if(-not [string]::IsNullOrWhiteSpace($LAWorkspaceId) -and -not [string]::IsNullOrWhiteSpace($LASharedSecret))
+            {
+                $this.LAWorkspaceId = $LAWorkspaceId
+                $this.LASharedSecret = $LASharedSecret
+            }else{
+               # Get values from local settings file 
+                $this.GetLASettings()
+            }
+           
+            # Check if LA ID and Keys are non-empty 
+
+            if([string]::IsNullOrWhiteSpace($this.LAWorkspaceId))
+            {
+                $this.LAWorkspaceId = 'None'
+            }else
+            {
+                $this.LAWorkspaceId = $this.LAWorkspaceId.Trim()
+            }
+
+            if([string]::IsNullOrWhiteSpace($this.LASharedSecret))
+            {
+                $this.LASharedSecret = 'None'
+            }else
+            {
+                $this.LASharedSecret = $this.LASharedSecret.Trim()
+            }
+
             # Prepare job schedule
             $Schedule = '"0 #h#/24 * * *"' 
             $jobHrs = ((Get-Date).ToUniversalTime().Hour + 1)%24
@@ -111,6 +142,9 @@ class KubernetesClusterCA : AzCommandBase {
             # Download deployment file from server and store it in temp location
             $deploymentFileUrl =  $this.deploymentFileBaseUrl + $this.deploymentFileName
             $InClusterCATempFolderPath = Join-Path $([Constants]::AzSKTempFolderPath) "InClusterCA";
+            if(-not (Test-Path -Path $InClusterCATempFolderPath -PathType Container)){
+                New-Item -ItemType Directory -Force -Path $InClusterCATempFolderPath
+            }
             $filePath = Join-Path $($InClusterCATempFolderPath)  $($this.deploymentFileName)
             Invoke-RestMethod  -Method Get -Uri $deploymentFileUrl -OutFile $filePath 
             
@@ -121,8 +155,10 @@ class KubernetesClusterCA : AzCommandBase {
             (Get-Content $filePath) -replace '\#RGName\#', $this.ResourceGroupName | Set-Content $filePath -Force
             (Get-Content $filePath) -replace '\#ResourceName\#', $this.ResourceName | Set-Content $filePath -Force
             (Get-Content $filePath) -replace '\#SubscriptionID\#', $this.SubscriptionContext.SubscriptionId | Set-Content $filePath -Force
-                 
-            # craete ca scan job
+            (Get-Content $filePath) -replace '\#LAWSId\#', $this.LAWorkspaceId | Set-Content $filePath -Force
+            (Get-Content $filePath) -replace '\#LAWSSharedKey\#', $this.LASharedSecret | Set-Content $filePath -Force   
+
+            # create ca scan job
             
             $this.PublishCustomMessage("Setting up AzSK Continuous Assurance in Kubernetes cluster...", [MessageType]::Warning)
         
@@ -186,6 +222,14 @@ class KubernetesClusterCA : AzCommandBase {
         
         }
         
+        [void] GetLASettings() {
+            # Get LA settings if not passed
+            [LogAnalyticsHelper]::SetLAWSDetails()
+            $settings = [ConfigurationManager]::GetAzSKSettings()
+            $this.LAWorkspaceId = $settings.LAWSId
+            $this.LASharedSecret = $settings.LAWSSharedKey
+        }
+
         [Void] RemoveKubernetesContinuousAssurance($DownloadJobLogs, $Force)
         {
 
@@ -286,6 +330,13 @@ class KubernetesClusterCA : AzCommandBase {
                 }else{
                     $this.PublishCustomMessage("`nScan logs will be sent to Application Insight: $($configMaps.APP_INSIGHT_KEY)",[MessageType]::Update)
                 }
+
+                if($null -eq $configMaps -or $null -eq $configMaps.LA_WS_ID -or $null -eq $configMaps.LA_WS_SHAREDKEY){
+                    $this.PublishCustomMessage("`nLA Workspace details are not present. Scan logs will not be sent to LA workspace.",[MessageType]::Warning)
+                }else{
+                    $this.PublishCustomMessage("`nScan logs will be sent to LA workspace: $($configMaps.LA_WS_ID)",[MessageType]::Update)
+                }
+
             }else{
                 $this.PublishCustomMessage("Unable to fetch Cluster's Configuration settings.",[MessageType]::Error)
             }
@@ -407,20 +458,60 @@ class KubernetesClusterCA : AzCommandBase {
             $this.PublishCustomMessage("Log retention period: $($jobSpec.successfulJobsHistoryLimit)" , [MessageType]::Update)
         }
         
-        [Void] UpdateKubernetesContinuousAssurance($AppInsightKey, $FixRuntimeAccount, $LogRetentionInDays,  $ScanIntervalInHours, $ImageTag)
+        [Void] UpdateKubernetesContinuousAssurance($AppInsightKey, $LAWorkspaceId, $LASharedSecret, $FixRuntimeAccount, $LogRetentionInDays,  $ScanIntervalInHours, $ImageTag)
         {
+            $updateConfigDetails = -not ( [String]::IsNullOrEmpty($LAWorkspaceId) -and [String]::IsNullOrEmpty($AppInsightKey) -and [String]::IsNullOrEmpty($LASharedSecret))
         
-            if(-not [String]::IsNullOrEmpty($AppInsightKey)){
+            if($updateConfigDetails){
             
-                # Download deployment file from server and store it in temp location
-                $deploymentFileUrl =  $this.deploymentFileBaseUrl +  $this.configMapFileName
-                $InClusterCATempFolderPath = Join-Path $([Constants]::AzSKTempFolderPath) "InClusterCA";
-                $filePath = Join-Path $($InClusterCATempFolderPath) $this.configMapFileName
-                Invoke-RestMethod  -Method Get -Uri $deploymentFileUrl -OutFile $filePath 
-                (Get-Content $filePath) -replace '\#AppInsightKey\#', $AppInsightKey | Set-Content $filePath -Force
-                (Get-Content $filePath) -replace '\#RGName\#', $this.ResourceGroupName | Set-Content $filePath -Force
-                (Get-Content $filePath) -replace '\#ResourceName\#', $this.ResourceName | Set-Content $filePath -Force
-                (Get-Content $filePath) -replace '\#SubscriptionID\#', $this.SubscriptionContext.SubscriptionId | Set-Content $filePath -Force
+                $configJson = kubectl get configmaps $this.configMapName --namespace $this.nameSpace -o json
+                if($null -ne $configJson){
+                    $configJson = $configJson| ConvertFrom-Json | Select-Object data
+                    $configMaps = $configJson.data
+                    
+                    if(-not [String]::IsNullOrEmpty($AppInsightKey)){
+                        $newAppInsightKey = $AppInsightKey
+                    }elseif ($null -ne $configMaps -and $null -ne $configMaps.APP_INSIGHT_KEY) {
+                        $newAppInsightKey =   $configMaps.APP_INSIGHT_KEY
+                    }
+                    else{        
+                        $newAppInsightKey = 'None'
+                    }
+                    
+                    if(-not [String]::IsNullOrEmpty($LAWorkspaceId)){
+                        $newLAWSId = $LAWorkspaceId
+                    }elseif ($null -ne $configMaps -and $null -ne $configMaps.LA_WS_ID) {
+                        $newLAWSId =   $configMaps.LA_WS_ID
+                    }
+                    else{        
+                        $newLAWSId = 'None'
+                    }
+
+                    if(-not [String]::IsNullOrEmpty($LASharedSecret)){
+                        $newLAWSKey = $LAWorkspaceId
+                    }elseif ($null -ne $configMaps -and $null -ne $configMaps.LA_WS_SHAREDKEY) {
+                        $newLAWSKey =   $configMaps.LA_WS_SHAREDKEY
+                    }
+                    else{        
+                        $newLAWSKey = 'None'
+                    }
+
+                    # Download deployment file from server and store it in temp location
+                    $deploymentFileUrl =  $this.deploymentFileBaseUrl +  $this.configMapFileName
+                    $InClusterCATempFolderPath = Join-Path $([Constants]::AzSKTempFolderPath) "InClusterCA";
+                    if(-not (Test-Path -Path $InClusterCATempFolderPath -PathType Container)){
+                        New-Item -ItemType Directory -Force -Path $InClusterCATempFolderPath
+                    }
+
+                    $filePath = Join-Path $($InClusterCATempFolderPath) $this.configMapFileName
+                    Invoke-RestMethod  -Method Get -Uri $deploymentFileUrl -OutFile $filePath 
+                    (Get-Content $filePath) -replace '\#AppInsightKey\#', $newAppInsightKey | Set-Content $filePath -Force
+                    (Get-Content $filePath) -replace '\#RGName\#', $this.ResourceGroupName | Set-Content $filePath -Force
+                    (Get-Content $filePath) -replace '\#ResourceName\#', $this.ResourceName | Set-Content $filePath -Force
+                    (Get-Content $filePath) -replace '\#SubscriptionID\#', $this.SubscriptionContext.SubscriptionId | Set-Content $filePath -Force
+                    (Get-Content $filePath) -replace '\#LAWSId\#', $newLAWSId | Set-Content $filePath -Force
+                    (Get-Content $filePath) -replace '\#LAWSSharedKey\#', $newLAWSKey | Set-Content $filePath -Force  
+                    
                     # update ca config maps like App Insight key
                     $this.PublishCustomMessage("Upadting App Insight Key...",[MessageType]::Warning)
                     $response = kubectl apply -f $filePath
@@ -429,6 +520,11 @@ class KubernetesClusterCA : AzCommandBase {
                     }else{
                         $this.PublishCustomMessage("Some error occurred while updating App Insight Key. See logs above for details.",[MessageType]::Error)
                     }
+                }else{
+                    $this.PublishCustomMessage("Some error occurred while updating App Insight Key/Log Analytics workspace details. See logs above for details.",[MessageType]::Error)
+                }
+
+              
                       
             }
             
@@ -437,6 +533,9 @@ class KubernetesClusterCA : AzCommandBase {
                 # Download deployment file from server and store it in temp location
                 $deploymentFileUrl =  $this.deploymentFileBaseUrl +  $this.runtimeAccountFileName
                 $InClusterCATempFolderPath = Join-Path $([Constants]::AzSKTempFolderPath) "InClusterCA";
+                if(-not (Test-Path -Path $InClusterCATempFolderPath -PathType Container)){
+                    New-Item -ItemType Directory -Force -Path $InClusterCATempFolderPath
+                }
                 $filePath = Join-Path $($InClusterCATempFolderPath) $this.runtimeAccountFileName
                 Invoke-RestMethod  -Method Get -Uri $deploymentFileUrl -OutFile $filePath 
                 # update ca scan job runtime account
@@ -478,6 +577,9 @@ class KubernetesClusterCA : AzCommandBase {
                     # Download deployment file from server and store it in temp location
                     $deploymentFileUrl =  $this.deploymentFileBaseUrl +  $this.jobSpecificationsFileName
                     $InClusterCATempFolderPath = Join-Path $([Constants]::AzSKTempFolderPath) "InClusterCA";
+                    if(-not (Test-Path -Path $InClusterCATempFolderPath -PathType Container)){
+                        New-Item -ItemType Directory -Force -Path $InClusterCATempFolderPath
+                    }
                     $filePath = Join-Path $($InClusterCATempFolderPath) $this.jobSpecificationsFileName
                     Invoke-RestMethod  -Method Get -Uri $deploymentFileUrl -OutFile $filePath 
                     (Get-Content $filePath) -replace '\#Schedule\#', $Schedule | Set-Content $filePath -Force
