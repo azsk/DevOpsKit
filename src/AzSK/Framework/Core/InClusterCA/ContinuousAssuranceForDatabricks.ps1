@@ -121,6 +121,8 @@ class DatabricksClusterCA : CommandBase {
         $res = $res -and ($this.CheckSecretPresence("Resource Name", "res_name" , $response))
         $res = $res -and ($this.CheckSecretPresence("Resource Group Name", "rg_name" , $response))
         $res = $res -and ($this.CheckSecretPresence("Subscription ID", "sid" , $response))
+        $res = $res -and ($this.CheckSecretPresence("Log Analytics Workspace Id", "LAWorkspaceId" , $response))
+        $res = $res -and ($this.CheckSecretPresence("Log Analytics Secret", "LASharedSecret" , $response))
         $foo = $this.CheckSecretPresence("Application Insight Key", "AzSK_AppInsight_Key", $response)
         $CAScanJob = $this.CheckAzSKJobExists()
         if (-not $CAScanJob) {
