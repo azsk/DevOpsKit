@@ -17,7 +17,11 @@
     "Max_Admin_Count": 2
   },
   "ERvNet": {
-    "ResourceLockLevel": "ReadOnly"
+    "ResourceLockLevel": "ReadOnly",
+    "WhiteListedRGs" : ["ERNetwork-LAB"],
+    "WhiteListedRemoteVirtualNetworkId" : "/subscriptions/45a7f642-6aac-4fc2-914b-0b2eeb1c7974/*",
+    "WhiteListedaddressPrefix" : "0.0.0.0/0",
+    "WhiteListednextHopType": "VirtualAppliance"
   },
   "Databricks": {
     "Tenant_Domain": "microsoft.com"

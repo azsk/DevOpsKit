@@ -105,11 +105,28 @@ class ERvNet : SVTIaasBase
 
 	hidden [ControlResult] CheckVnetPeering([ControlResult] $controlResult)
     {
+        $whiteListedRGs = $this.ControlSettings.ERvNet.WhiteListedRGs
+        $whiteListedRemoteVirtualNetworkId = $this.ControlSettings.ERvNet.WhiteListedRemoteVirtualNetworkId
+        
         $vnetPeerings = Get-AzVirtualNetworkPeering -VirtualNetworkName $this.ResourceContext.ResourceName -ResourceGroupName $this.ResourceContext.ResourceGroupName
         if($null -ne $vnetPeerings -and ($vnetPeerings|Measure-Object).count -gt 0)
         {
-			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Below peering found on ERVNet", $vnetPeerings));
-			$controlResult.SetStateData("Peering found on ERVNet", $vnetPeerings);
+            $filteredVnetPeerings = @()
+            if((($whiteListedRemoteVirtualNetworkId | Measure-Object).Count -gt 0) -and (($whiteListedRGs | Measure-Object).Count -gt 0) -and ($whiteListedRGs -contains $this.ResourceContext.ResourceGroupName))
+            {
+                $filteredVnetPeerings += $vnetPeerings | Where-Object { $_.RemoteVirtualNetwork.id -notlike $whiteListedRemoteVirtualNetworkId }
+            }else{
+                $filteredVnetPeerings = $vnetPeerings
+            }
+
+            if($null -ne $filteredVnetPeerings -and ($filteredVnetPeerings|Measure-Object).count -gt 0)
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Below peering found on ERVNet", $vnetPeerings));
+                $controlResult.SetStateData("Peering found on ERVNet", $vnetPeerings);
+            }else{
+                $controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No additional VNet peerings found on ERVNet", $vnetPeerings));
+            }
+
         }
         else
         {
@@ -187,12 +204,52 @@ class ERvNet : SVTIaasBase
 
 	hidden [ControlResult] CheckUDRAddedOnSubnet([ControlResult] $controlResult)
     {
+
+        $whiteListedRGs = $this.ControlSettings.ERvNet.WhiteListedRGs
+        $whiteListedaddressPrefix =  $this.ControlSettings.ERvNet.WhiteListedaddressPrefix
+        $whiteListednextHopType =  $this.ControlSettings.ERvNet.WhiteListednextHopType
+      
         $subnetsWithUDRs = $this.ResourceObject.Subnets | Where-Object {$null -ne $_.RouteTable -and -not [System.String]::IsNullOrWhiteSpace($_.RouteTable.Id)}
 
         if($null -ne $subnetsWithUDRs -and ($subnetsWithUDRs | Measure-Object).count -gt 0)
         {
-			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new(($subnetsWithUDRs | Select-Object Name, RouteTableText)));
-			$controlResult.SetStateData("UDRs found on any Subnet of ERVNet", $subnetsWithUDRs);
+            $nonCompliantSubnetsWithUDRs = @()
+            if(($whiteListedRGs | Measure-Object).Count -gt 0 -and ($whiteListedRGs -contains $this.ResourceContext.ResourceGroupName)){
+                $subnetsWithUDRs | Foreach-Object {
+                    $IsUDRPermitted = $true
+                    try{
+                        $routeTableResourceId = $_.RouteTable.Id
+                        $routeTable = Get-AzResource -ResourceId $routeTableResourceId -ErrorAction SilentlyContinue
+                        if($null -ne  $routeTable -and ($whiteListedRGs -contains $routeTable.ResourceGroupName) -and [Helpers]::CheckMember($routeTable,"Properties.routes")){
+                            $routes =  $routeTable.Properties.routes
+                            $routes | ForEach-Object {
+                                $addressPrefix =  $_.properties.addressPrefix
+                                $nextHopType  = $_.properties.nextHopType
+                                if(-not($addressPrefix -eq $whiteListedaddressPrefix -and $nextHopType -eq $whiteListednextHopType)){
+                                    $IsUDRPermitted = $false
+                                }
+                            }
+                        }else{
+                            $IsUDRPermitted = $false
+                        }
+                    }catch{
+                        $IsUDRPermitted = $false
+                    }
+                    if(-not $IsUDRPermitted){
+                        $nonCompliantSubnetsWithUDRs += $_
+                    }
+                }
+            }else{
+                $nonCompliantSubnetsWithUDRs = $subnetsWithUDRs
+            }
+
+            if($null -ne $nonCompliantSubnetsWithUDRs -and ($nonCompliantSubnetsWithUDRs | Measure-Object).count -gt 0){
+                $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new(($subnetsWithUDRs | Select-Object Name, RouteTableText)));
+                $controlResult.SetStateData("UDRs found on any Subnet of ERVNet", $subnetsWithUDRs);
+            }else{
+                $controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No additional UDRs found on any Subnet of ERVNet"));
+            }
+
         }
         else
         {
@@ -374,6 +431,8 @@ class ERvNet : SVTIaasBase
 		$controlSettings = $this.LoadServerConfigFile("Subscription.ARMPolicies.json");
         $output = @()
         $missingPolicies = @()
+        $subscriptionId = $this.SubscriptionContext.SubscriptionId 
+        $resourceGroupName = $this.ResourceContext.ResourceGroupName
         if($null -ne $controlSettings -and [Helpers]::CheckMember($controlSettings,"Policies"))
         {
             $policies = $controlSettings.Policies
@@ -398,8 +457,10 @@ class ERvNet : SVTIaasBase
                     Set-Variable -Name pol -Scope Local -Value $_
                     Set-Variable -Name policyDefinitionName -Scope Local -Value $_.policyDefinitionName
                     Set-Variable -Name tags -Scope Local -Value $_.tags
-
-                    $foundPolicies = [array]($configuredPolicies | Where-Object {$_.Name -like $policyDefinitionName})
+                    $policyScope =  ( $_.scope -replace "subscriptionId",$subscriptionId ) -replace "resourceGroupName" , $resourceGroupName
+                      
+                    $foundPolicies = [array]($configuredPolicies | Where-Object {$_.Name -like $policyDefinitionName -and $_.properties.scope -eq $policyScope})
+                
                     if($null -ne $foundPolicies)
                     {
                         if($foundPolicies.Length -gt 0)
