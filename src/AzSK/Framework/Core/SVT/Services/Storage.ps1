@@ -673,4 +673,78 @@ class Storage: AzSVTBase
 		  }
 		return $controlResult;
 		}
+
+	hidden [ControlResult] CheckStorageNetworkAccess([ControlResult] $controlResult)
+		{	 
+			$DefaultAction = $this.ResourceObject.NetworkRuleSet.DefaultAction
+			$NetworkRule = $this.ResourceObject.NetworkRuleSet
+
+			if($DefaultAction -eq "Allow")
+			{
+				$controlResult.AddMessage([VerificationResult]::Verify, "No Firewall and Virtual Network restrictions are defined for this storage : " + $this.ResourceContext.ResourceName);
+			}
+			elseif ($DefaultAction -eq "Deny")
+			{
+				$controlResult.AddMessage([VerificationResult]::Verify, "Firewall and Virtual Network restrictions are defined for this storage : " + $this.ResourceContext.ResourceName);
+			}
+
+			$controlResult.SetStateData("Firewall and Virtual Network restrictions defined for this storage:",$NetworkRule );
+
+			return $controlResult;
+		}
+		
+		hidden [ControlResult] CheckStorageSoftDelete([ControlResult] $controlResult)
+		{	
+			try
+			{
+				$property = $this.ResourceObject | Get-AzStorageServiceProperty -ServiceType Blob
+				$isSoftDeleteEnable = $property.DeleteRetentionPolicy.Enabled
+
+				if($isSoftDeleteEnable -eq $true)
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed,	[MessageData]::new("Soft delete is enabled for this Storage account")); 
+				}
+				else
+				{
+					$controlResult.AddMessage([VerificationResult]::Verify,	[MessageData]::new("Soft delete is disabled for this Storage account")); 
+				}
+			}
+			catch
+			{
+		   		#With Reader Role exception will be thrown.
+				if(([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden) -or $this.LockExists)
+				{
+					#As control does not have the required permissions
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+					$controlResult.AddMessage(($_.Exception).Message);
+					return $controlResult
+				}
+				else
+				{
+					throw $_
+				}
+			}
+			return $controlResult;
+		}
+
+		hidden [controlresult[]] CheckStorageMsiAccess([controlresult] $controlresult)
+		{
+			$accessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.ResourceId, $false, $true);
+			$resourceAccessList = $accessList | Where-Object { ($_.Scope -eq $this.ResourceId) -and ($_.ObjectType -ne "User") };
+			
+			$controlResult.VerificationResult = [VerificationResult]::Verify
+
+			if(($resourceAccessList | Measure-Object).Count -ne 0)
+        	{
+				$controlResult.SetStateData("SPN/MSI have access at resource level", ($resourceAccessList | Select-Object -Property ObjectId,RoleDefinitionId,RoleDefinitionName,Scope));
+				$controlResult.AddMessage([MessageData]::new("Validate that the following SPN/MSI have explicitly provided with access to resource - [$($this.ResourceContext.ResourceName)] ", $resourceAccessList));
+			}
+			else
+			{
+				$controlResult.AddMessage("No SPN/MSI has been explicitly provided with access to resource - [$($this.ResourceContext.ResourceName)]");
+			}
+			
+			return $controlResult;
+		}
+
 }
