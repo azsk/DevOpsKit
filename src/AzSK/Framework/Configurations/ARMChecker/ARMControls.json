@@ -650,7 +650,7 @@
           "matchType": "IntegerValueLimit",
           "data": {
             "type": "All",
-            "value": "*"
+            "value": 0
           }
         }
       ]
