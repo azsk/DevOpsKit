@@ -631,7 +631,7 @@
           "recommendation": "Go to Azure Portal --> your App Service --> API --> CORS --> Request Credentials --> Review if you need to enable 'Access-Control-Allow-Credentials'. Note: No action is needed if you are not using CORS for your app.",
           "severity": "Medium",
           "jsonPath": [ "$.properties.cors.supportCredentials" ],
-          "matchType": "BooleanVerify",
+          "matchType": "VerifiableBooleanSingleToken",
           "data": {
             "value": "false"
           }
@@ -647,7 +647,7 @@
           "recommendation": "Go to Azure Portal --> your App Service --> API --> CORS --> Provide the specific domain names that should be allowed to make cross-origin calls. Note: No action is needed if you are not using CORS for your app.",
           "severity": "Medium",
           "jsonPath": [ "$.properties.cors.allowedOrigins" ],
-          "matchType": "IntegerValueLimit",
+          "matchType": "VerifiableItemCount",
           "data": {
             "type": "All",
             "value": 0
@@ -1135,9 +1135,9 @@
           "recommendation": "Minimize the number of Analysis Service admins. Run command Set-AzAnalysisServicesServer -Name '{AnalysisServicesServerName}' -ResourceGroupName '{ResourceGroupName}' -Administrator '{Administrator}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.analy sisservices/Set-AzAnalysisServicesServer",
           "severity": "Medium",
           "jsonPath": [ "$.properties.asAdministrators.members" ],
-          "matchType": "IntegerValueLimit",
+          "matchType": "VerifiableItemCount",
           "data": {
-            "type": "limit",
+            "type": "Limit",
             "value": 2
           }
         }
@@ -1159,7 +1159,7 @@
           "recommendation": "To enable and configure workspace access control, refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/workspace-acl.html",
           "severity": "Medium",
           "jsonPath": [ "$.sku.name" ],
-          "matchType": "StringSingleToken",
+          "matchType": "MatchStringSingleToken",
           "data": {
             "type": "StringNotMatched",
             "value": "standard",
@@ -1176,7 +1176,7 @@
           "recommendation": "To enable and configure cluster access control, refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/cluster-acl.html",
           "severity": "Medium",
           "jsonPath": [ "$.sku.name" ],
-          "matchType": "StringSingleToken",
+          "matchType": "MatchStringSingleToken",
           "data": {
             "type": "StringNotMatched",
             "value": "standard",
@@ -1193,7 +1193,7 @@
           "recommendation": "To enable and configure job access control, refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/jobs-acl.html",
           "severity": "Medium",
           "jsonPath": [ "$.sku.name" ],
-          "matchType": "StringSingleToken",
+          "matchType": "MatchStringSingleToken",
           "data": {
             "type": "StringNotMatched",
             "value": "standard",
