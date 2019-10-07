@@ -112,7 +112,7 @@ class ERvNet : SVTIaasBase
         if($null -ne $vnetPeerings -and ($vnetPeerings|Measure-Object).count -gt 0)
         {
             $filteredVnetPeerings = @()
-            if((($whiteListedRemoteVirtualNetworkId | Measure-Object).Count -gt 0) -and (($whiteListedRGs | Measure-Object).Count -gt 0) -and ($whiteListedRGs -contains $this.ResourceContext.ResourceGroupName))
+            if((-not [string]::IsNullOrEmpty($whiteListedRemoteVirtualNetworkId)) -and (($whiteListedRGs | Measure-Object).Count -gt 0) -and ($whiteListedRGs -contains $this.ResourceContext.ResourceGroupName))
             {
                 $filteredVnetPeerings += $vnetPeerings | Where-Object { $_.RemoteVirtualNetwork.id -notlike $whiteListedRemoteVirtualNetworkId }
             }else{
