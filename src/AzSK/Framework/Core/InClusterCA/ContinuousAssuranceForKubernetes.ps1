@@ -110,7 +110,8 @@ class KubernetesClusterCA : AzCommandBase {
             
             # Download deployment file from server and store it in temp location
             $deploymentFileUrl =  $this.deploymentFileBaseUrl + $this.deploymentFileName
-            $filePath = Join-Path $($env:TEMP)  $($this.deploymentFileName)
+            $InClusterCATempFolderPath = Join-Path $([Constants]::AzSKTempFolderPath) "InClusterCA";
+            $filePath = Join-Path $($InClusterCATempFolderPath)  $($this.deploymentFileName)
             Invoke-RestMethod  -Method Get -Uri $deploymentFileUrl -OutFile $filePath 
             
             # Bootstrap basic properties like App Insight Key and job schedule in deployment file
@@ -209,8 +210,7 @@ class KubernetesClusterCA : AzCommandBase {
                         if($jobPodsCount -gt 0){
                             $moduleName = $this.GetModuleName();
                             $this.PublishCustomMessage("Downloading existing job's log to local machine..." , [MessageType]::Warning)
-                            $baseFolder = Join-Path $($Env:LOCALAPPDATA) "Microsoft" | Join-Path -ChildPath $($moduleName) | Join-Path -ChildPath "Logs\ClusterScans\Kubernetes"| Join-Path -ChildPath $($this.SubscriptionContext.SubscriptionId )| Join-Path -ChildPath $($this.ResourceGroupName)| Join-Path -ChildPath $($this.ResourceName)
-                            #$baseFolder =  $Env:LOCALAPPDATA + "\Microsoft\" + $moduleName + "Logs\ClusterScans\Kubernetes\"+ $this.SubscriptionContext.SubscriptionId +"\"+  $this.ResourceGroupName +"\"+ $this.ResourceName+ "\" ; 
+                            $baseFolder = Join-Path $([Constants]::AzSKAppFolderPath) "Logs" | Join-Path -ChildPath "ClusterScans\Kubernetes"| Join-Path -ChildPath $($this.SubscriptionContext.SubscriptionId )| Join-Path -ChildPath $($this.ResourceGroupName)| Join-Path -ChildPath $($this.ResourceName)
                             If(!(test-path $baseFolder))
                             {
                                 New-Item -ItemType Directory -Force -Path $baseFolder | Out-Null
@@ -414,7 +414,8 @@ class KubernetesClusterCA : AzCommandBase {
             
                 # Download deployment file from server and store it in temp location
                 $deploymentFileUrl =  $this.deploymentFileBaseUrl +  $this.configMapFileName
-                $filePath = Join-Path $($env:TEMP) $this.configMapFileName
+                $InClusterCATempFolderPath = Join-Path $([Constants]::AzSKTempFolderPath) "InClusterCA";
+                $filePath = Join-Path $($InClusterCATempFolderPath) $this.configMapFileName
                 Invoke-RestMethod  -Method Get -Uri $deploymentFileUrl -OutFile $filePath 
                 (Get-Content $filePath) -replace '\#AppInsightKey\#', $AppInsightKey | Set-Content $filePath -Force
                 (Get-Content $filePath) -replace '\#RGName\#', $this.ResourceGroupName | Set-Content $filePath -Force
@@ -435,7 +436,8 @@ class KubernetesClusterCA : AzCommandBase {
         
                 # Download deployment file from server and store it in temp location
                 $deploymentFileUrl =  $this.deploymentFileBaseUrl +  $this.runtimeAccountFileName
-                $filePath = Join-Path $($env:TEMP) $this.runtimeAccountFileName
+                $InClusterCATempFolderPath = Join-Path $([Constants]::AzSKTempFolderPath) "InClusterCA";
+                $filePath = Join-Path $($InClusterCATempFolderPath) $this.runtimeAccountFileName
                 Invoke-RestMethod  -Method Get -Uri $deploymentFileUrl -OutFile $filePath 
                 # update ca scan job runtime account
                 $this.PublishCustomMessage("Upadting AzSK Continuous Assurance job runtime account...",[MessageType]::Warning)
@@ -475,7 +477,8 @@ class KubernetesClusterCA : AzCommandBase {
             
                     # Download deployment file from server and store it in temp location
                     $deploymentFileUrl =  $this.deploymentFileBaseUrl +  $this.jobSpecificationsFileName
-                    $filePath = Join-Path $($env:TEMP) $this.jobSpecificationsFileName
+                    $InClusterCATempFolderPath = Join-Path $([Constants]::AzSKTempFolderPath) "InClusterCA";
+                    $filePath = Join-Path $($InClusterCATempFolderPath) $this.jobSpecificationsFileName
                     Invoke-RestMethod  -Method Get -Uri $deploymentFileUrl -OutFile $filePath 
                     (Get-Content $filePath) -replace '\#Schedule\#', $Schedule | Set-Content $filePath -Force
                     (Get-Content $filePath) -replace '\#JobHistoryLimit\#', $JobHistoryLimit | Set-Content $filePath -Force
