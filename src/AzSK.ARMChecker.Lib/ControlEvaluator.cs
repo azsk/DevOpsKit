@@ -65,7 +65,7 @@ namespace AzSK.ARMChecker.Lib
                 case ControlMatchType.VersionSingleToken:
                     return EvaluateSingleVersionToken(control, resource);
                 case ControlMatchType.VerifiableBooleanSingleToken:
-                    return VerifiableBooleanSingleToken(control, resource);
+                    return EvaluateVerifiableBooleanSingleToken(control, resource);
                 case ControlMatchType.VerifiableItemCount:
                     return EvaluateVerifiableItemCount(control, resource);
                 case ControlMatchType.MatchStringSingleToken:
