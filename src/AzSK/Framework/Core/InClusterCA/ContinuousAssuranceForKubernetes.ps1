@@ -41,17 +41,27 @@ class KubernetesClusterCA : AzCommandBase {
         {
             # This method verifies that if both Azure CLI and Kubernetes CLI are installed or not
             $IsPrerequisitesPresent = $false
-            $azCliCmdOutput  = az --help --ouput json
-            $aksliCmdOuput = kubectl help
+            try{
+                $azCliCmdOutput  = az --help --ouput json
+            }catch{
+                $azCliCmdOutput = $null
+            }
+            
+            try{
+                $aksCliCmdOuput = kubectl help
+            }catch{
+                $aksCliCmdOuput = $null
+            }
+            
 
-            if($null -ne $azCliCmdOutput -and $null -ne $aksliCmdOuput ){
+            if($null -ne $azCliCmdOutput -and $null -ne $aksCliCmdOuput ){
                 $IsPrerequisitesPresent = $true
             }else{
                 if($null -eq $azCliCmdOutput){
                     $IsPrerequisitesPresent = $false
                     $this.PublishCustomMessage("Azure CLI is not presnet in machine, you need to install Azure CLI. To install, please refer: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest", [MessageType]::Warning)         
                 }
-                if($null -eq $aksliCmdOuput){
+                if($null -eq $aksCliCmdOuput){
                     $IsPrerequisitesPresent = $false
                     $this.PublishCustomMessage( "The Kubernetes command-line client 'kubectl' is not present in machine, it is required to connect to the Kubernetes cluster. To install, please run command: 'az aks install-cli' ", [MessageType]::Warning)
                 }
@@ -271,10 +281,10 @@ class KubernetesClusterCA : AzCommandBase {
                         }
                 }
             
-                if($null -eq $presentConfig["AppInsightKey"]){
+                if($null -eq $configMaps -or $null -eq $configMaps.APP_INSIGHT_KEY){
                     $this.PublishCustomMessage("`nApplication Inight key is not present. Scan logs will not be sent to telelmetry.",[MessageType]::Warning)
                 }else{
-                    $this.PublishCustomMessage("`nScan logs will be sent to Application Insight: $($presentConfig['AppInsightKey'])",[MessageType]::Update)
+                    $this.PublishCustomMessage("`nScan logs will be sent to Application Insight: $($configMaps.APP_INSIGHT_KEY)",[MessageType]::Update)
                 }
             }else{
                 $this.PublishCustomMessage("Unable to fetch Cluster's Configuration settings.",[MessageType]::Error)
@@ -346,9 +356,9 @@ class KubernetesClusterCA : AzCommandBase {
 
         
             if($isRuntimeAccountValid){
-                $this.PublishCustomMessage("Required runtime account for scanning cluste is properly configured.", [MessageType]::Update)
+                $this.PublishCustomMessage("Required runtime account for scanning cluster is properly configured.", [MessageType]::Update)
             }else{
-                $this.PublishCustomMessage("Required runtime account for scanning cluste is not properly configured.",[MessageType]::Error)
+                $this.PublishCustomMessage("Required runtime account for scanning cluster is not properly configured.",[MessageType]::Error)
             }
         
             $this.PublishCustomMessage("`ncheck 03: Check if latest image is used.",[MessageType]::Info)
@@ -387,9 +397,12 @@ class KubernetesClusterCA : AzCommandBase {
             $this.PublishCustomMessage("Current scan interval for job is:  $($jobSchedule)" , [MessageType]::Update)
             
             $this.PublishCustomMessage("`nCheck 05: Job's recent schdeule.",[MessageType]::Info)
-            $this.PublishCustomMessage("Job's last scheduled time: $($cronJobJson.status.lastScheduleTime)"  , [MessageType]::Update)
+            $lastScheduleTime = "NA"
+            if([Helpers]::CheckMember($cronJobJson,"status.lastScheduleTime")){
+                $lastScheduleTime = $cronJobJson.status.lastScheduleTime
+            }
+            $this.PublishCustomMessage("Job's last scheduled time: $($lastScheduleTime)"  , [MessageType]::Update)
             
-        
             $this.PublishCustomMessage("`nCheck 06: Log retention.",[MessageType]::Info)
             $this.PublishCustomMessage("Log retention period: $($jobSpec.successfulJobsHistoryLimit)" , [MessageType]::Update)
         }
