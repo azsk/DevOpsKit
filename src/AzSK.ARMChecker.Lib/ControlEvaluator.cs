@@ -64,10 +64,12 @@ namespace AzSK.ARMChecker.Lib
                     return EvaluateNullableSingleToken(control, resource);
                 case ControlMatchType.VersionSingleToken:
                     return EvaluateSingleVersionToken(control, resource);
-                case ControlMatchType.BooleanVerify:
-                    return EvaluateBooleanVerify(control, resource);
-                case ControlMatchType.IntegerValueLimit:
-                    return EvaluateIntegerValueLimit(control, resource);
+                case ControlMatchType.VerifiableBooleanSingleToken:
+                    return VerifiableBooleanSingleToken(control, resource);
+                case ControlMatchType.VerifiableItemCount:
+                    return EvaluateVerifiableItemCount(control, resource);
+                case ControlMatchType.MatchStringSingleToken:
+                    return EvaluateMatchStringSingleToken(control, resource);
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -86,7 +88,7 @@ namespace AzSK.ARMChecker.Lib
             return result;
         }
 
-        private static ControlResult EvaluateBooleanVerify(ResourceControl control, JObject resource)
+        private static ControlResult EvaluateVerifiableBooleanSingleToken(ResourceControl control, JObject resource)
         {
             var result = ExtractSingleToken(control, resource, out bool actual, out BooleanControlData match);
             result.ExpectedValue = "'" + match.Value.ToString() + "'";
@@ -150,7 +152,7 @@ namespace AzSK.ARMChecker.Lib
             return result;
         }
 
-        private static ControlResult EvaluateIntegerValueLimit(ResourceControl control, JObject resource)
+        private static ControlResult EvaluateVerifiableItemCount(ResourceControl control, JObject resource)
         {
             var result = ExtractMultiToken(control, resource, out IEnumerable<object> actual, out IntegerValueControlData match);
             result.ExpectedValue = "Count " + match.Type.ToString() + " " + match.Value.ToString();
@@ -159,7 +161,7 @@ namespace AzSK.ARMChecker.Lib
             var count = actual.Count();
             switch (match.Type)
             {
-                case ControlDataMatchType.limit:
+                case ControlDataMatchType.Limit:
                     if ((count >= 0) && (count <= match.Value)) result.VerificationResult = VerificationResult.Verify;
                     break;
                 case ControlDataMatchType.All:
@@ -301,6 +303,26 @@ namespace AzSK.ARMChecker.Lib
                 if (match.Type == ControlDataMatchType.StringNotMatched)
                 {
                     result.VerificationResult = VerificationResult.Verify;
+                }
+            }
+            return result;
+        }
+        private static ControlResult EvaluateMatchStringSingleToken(ResourceControl control, JObject resource)
+        {
+            var result = ExtractSingleToken(control, resource, out string actual, out StringSingleTokenControlData match);
+            result.ExpectedValue = match.Type + " '" + match.Value + "'";
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
+            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
+            if (match.Value.Equals(actual,
+                match.IsCaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
+            {
+                return result;
+            }
+            else
+            {
+                if (match.Type == ControlDataMatchType.StringNotMatched)
+                {
+                 result.VerificationResult = VerificationResult.Verify;
                 }
             }
             return result;
