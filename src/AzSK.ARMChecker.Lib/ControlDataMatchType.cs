@@ -13,7 +13,7 @@ namespace AzSK.ARMChecker.Lib
         NotContains,
         All,
         StringNotMatched,
-        limit
+        Limit
         
     }
 }
