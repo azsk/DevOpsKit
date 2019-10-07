@@ -647,7 +647,7 @@
           "recommendation": "Go to Azure Portal --> your App Service --> API --> CORS --> Provide the specific domain names that should be allowed to make cross-origin calls. Note: No action is needed if you are not using CORS for your app.",
           "severity": "Medium",
           "jsonPath": [ "$.properties.cors.allowedOrigins" ],
-          "matchType": "ItemCount",
+          "matchType": "IntegerValueLimit",
           "data": {
             "type": "All",
             "value": "*"
@@ -1135,7 +1135,7 @@
           "recommendation": "Minimize the number of Analysis Service admins. Run command Set-AzAnalysisServicesServer -Name '{AnalysisServicesServerName}' -ResourceGroupName '{ResourceGroupName}' -Administrator '{Administrator}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.analy sisservices/Set-AzAnalysisServicesServer",
           "severity": "Medium",
           "jsonPath": [ "$.properties.asAdministrators.members" ],
-          "matchType": "ItemCount",
+          "matchType": "IntegerValueLimit",
           "data": {
             "type": "limit",
             "value": 2
