@@ -76,9 +76,8 @@ class DatabricksClusterCA : CommandBase {
             }
             return $response
         } catch {
-            Write-Host $_
             $this.PublishCustomMessage($ErrorMessage, [MessageType]::Error)
-            throw $_
+            throw ([SuppressedException]::new((""), [SuppressedExceptionType]::Generic))
         }
     }
 
