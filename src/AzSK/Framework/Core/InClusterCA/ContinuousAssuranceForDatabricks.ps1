@@ -106,6 +106,15 @@ class DatabricksClusterCA : CommandBase {
         }
     }
 
+    [void] PrintGCASummary() {
+        $SummaryEP = "/api/2.0/dbfs/read?path=/AzSK_Meta/meta.json"
+        $response = $this.InvokeRestAPICall($SummaryEP, "GET", $null, 
+                                "Unable to fetch summary. Please check if CA instance is present and running")
+        $decoded = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($response.data))
+        $jsonSummary = $decoded | ConvertFrom-Json
+        $this.PublishCustomMessage([Helpers]::ConvertObjectToString($jsonSummary, $true))
+    }
+
     [void] GetCA() {
         # check secret scope exist
         if(-not $this.CheckAzSKSecretScopeExists()){
@@ -129,6 +138,8 @@ class DatabricksClusterCA : CommandBase {
             $this.PublishCustomMessage("CA Scan Job is absent", [MessageType]::Error)
             $fail = $true
         }
+
+        $this.PrintGCASummary();
         if ($res -and -not $fail) {
             $this.PublishCustomMessage("All required permissions and files present. CA Health OK")
         } else {
@@ -315,7 +326,7 @@ class DatabricksClusterCA : CommandBase {
         if ([string]::IsNullOrEmpty($this.ResourceContext.InstrumentationKey)) {
             $this.PublishCustomMessage("Skipping AppInsight installation, no Instrumentation Key passed")
         } else {
-            $this.InsertDataIntoDB($this.AzSKSecretScopeName, $IKKey, $this.ResourceContext.InstrumentationKey)
+            $this.InsertDataIntoDB($IKKey, $this.ResourceContext.InstrumentationKey)
         }
         
 
