@@ -1,4 +1,4 @@
-﻿namespace AzSK.ARMChecker.Lib
+namespace AzSK.ARMChecker.Lib
 {
 	public enum ControlDataMatchType
 	{
@@ -10,7 +10,10 @@
         GreaterThanOrEqual,
         LesserThanOrEqual,
         Contains,
-        NotContains
-    
+        NotContains,
+        All,
+        StringNotMatched,
+        Limit
+        
     }
 }

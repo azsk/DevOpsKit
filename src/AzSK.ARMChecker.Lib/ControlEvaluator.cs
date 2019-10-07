@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
@@ -64,6 +64,12 @@ namespace AzSK.ARMChecker.Lib
                     return EvaluateNullableSingleToken(control, resource);
                 case ControlMatchType.VersionSingleToken:
                     return EvaluateSingleVersionToken(control, resource);
+                case ControlMatchType.VerifiableBooleanSingleToken:
+                    return EvaluateVerifiableBooleanSingleToken(control, resource);
+                case ControlMatchType.VerifiableItemCount:
+                    return EvaluateVerifiableItemCount(control, resource);
+                case ControlMatchType.MatchStringSingleToken:
+                    return EvaluateMatchStringSingleToken(control, resource);
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -78,6 +84,23 @@ namespace AzSK.ARMChecker.Lib
             if (actual == match.Value)
             {
                 result.VerificationResult = VerificationResult.Passed;
+            }
+            return result;
+        }
+
+        private static ControlResult EvaluateVerifiableBooleanSingleToken(ResourceControl control, JObject resource)
+        {
+            var result = ExtractSingleToken(control, resource, out bool actual, out BooleanControlData match);
+            result.ExpectedValue = "'" + match.Value.ToString() + "'";
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
+            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
+            if (actual == match.Value)
+            {
+                result.VerificationResult = VerificationResult.Passed;
+            }
+            else
+            {
+                result.VerificationResult = VerificationResult.Verify;
             }
             return result;
         }
@@ -122,6 +145,40 @@ namespace AzSK.ARMChecker.Lib
                     break;
                 case ControlDataMatchType.Equals:
                     if (count == match.Value) result.VerificationResult = VerificationResult.Passed;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            return result;
+        }
+
+        private static ControlResult EvaluateVerifiableItemCount(ResourceControl control, JObject resource)
+        {
+            var result = ExtractMultiToken(control, resource, out IEnumerable<object> actual, out IntegerValueControlData match);
+            result.ExpectedValue = "Count " + match.Type.ToString() + " " + match.Value.ToString();
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
+            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
+            var count = actual.Count();
+            switch (match.Type)
+            {
+                case ControlDataMatchType.Limit:
+                    if ((count >= 0) && (count <= match.Value)) result.VerificationResult = VerificationResult.Verify;
+                    break;
+                case ControlDataMatchType.All:
+                    string temporarytoken = null;
+                    foreach (var obj in actual)
+                    {
+                        temporarytoken = obj.ToString();
+                        break;
+                    }
+                    if (count > match.Value && temporarytoken.Equals("*"))
+                    {
+                        result.VerificationResult = VerificationResult.Failed;
+                    }
+                    else
+                    {
+                        result.VerificationResult = VerificationResult.Verify;
+                    }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -235,6 +292,7 @@ namespace AzSK.ARMChecker.Lib
                 {
                     result.VerificationResult = VerificationResult.Passed;
                 }
+
             }
             else
             {
@@ -242,10 +300,33 @@ namespace AzSK.ARMChecker.Lib
                 {
                     result.VerificationResult = VerificationResult.Passed;
                 }
+                if (match.Type == ControlDataMatchType.StringNotMatched)
+                {
+                    result.VerificationResult = VerificationResult.Verify;
+                }
             }
             return result;
         }
-
+        private static ControlResult EvaluateMatchStringSingleToken(ResourceControl control, JObject resource)
+        {
+            var result = ExtractSingleToken(control, resource, out string actual, out StringSingleTokenControlData match);
+            result.ExpectedValue = match.Type + " '" + match.Value + "'";
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
+            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
+            if (match.Value.Equals(actual,
+                match.IsCaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
+            {
+                return result;
+            }
+            else
+            {
+                if (match.Type == ControlDataMatchType.StringNotMatched)
+                {
+                 result.VerificationResult = VerificationResult.Verify;
+                }
+            }
+            return result;
+        }
         private static ControlResult EvaluateRegExpressionSingleToken(ResourceControl control, JObject resource)
         {
             var result = ExtractSingleToken(control, resource, out string actual, out RegExpressionSingleTokenControlData match);
@@ -439,7 +520,6 @@ namespace AzSK.ARMChecker.Lib
                     }
                     actual = tokenValue;
                 }
-                
             }
             catch (Exception)
             {
@@ -517,6 +597,7 @@ namespace AzSK.ARMChecker.Lib
                 result.IsTokenNotValid = true;
             }
             match = control.Data.ToObject<TM>();
+
             return result;
         }
 

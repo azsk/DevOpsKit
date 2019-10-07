@@ -1,4 +1,4 @@
-﻿namespace AzSK.ARMChecker.Lib
+namespace AzSK.ARMChecker.Lib
 {
 	public enum ControlMatchType
 	{
@@ -18,7 +18,10 @@
 		VerifiableMultiToken, // Multi Tokens
 		Custom, // Multi Tokens
         NullableSingleToken, //Single Tokens
-        VersionSingleToken //Single Tokens
+        VersionSingleToken, //Single Tokens
+	VerifiableBooleanSingleToken, //Single Tokens
+	MatchStringSingleToken, //Single Token
+	VerifiableItemCount //Multi Token
 
     }
 }

@@ -187,7 +187,7 @@
     },
     {
       "featureName": "RedisCache",
-      "supportedResourceTypes": [ "Microsoft.Cache/Redis" ],
+      "supportedResourceTypes": [ "Microsoft.Cache/Redis" ,"Microsoft.Cache/Redis/firewallRules"],
       "controls": [
         {
           "id": "RedisCache150",
@@ -619,6 +619,38 @@
             "type": "GreaterThanOrEqual",
             "value": "1.2",
             "isCaseSensitive": false
+          }
+        },
+        {
+          "id": "AppService450",
+          "apiVersions": [ "2016-08-01" ],
+          "controlId": "Azure_AppService_DP_Review_CORS_Request_Credential",
+          "isEnabled": true,
+          "description": "Review use of credentials in CORS request for App Service",
+          "rationale": "CORS enables applications running under one domain to access a resource under another domain. Allowing cross-origin credentials is a security risk. A website at another domain can send a signed-in user's credentials to the app on the user's behalf without the user's knowledge.",
+          "recommendation": "Go to Azure Portal --> your App Service --> API --> CORS --> Request Credentials --> Review if you need to enable 'Access-Control-Allow-Credentials'. Note: No action is needed if you are not using CORS for your app.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.cors.supportCredentials" ],
+          "matchType": "VerifiableBooleanSingleToken",
+          "data": {
+            "value": "false"
+          }
+        },
+
+        {
+          "id": "AppService380",
+          "apiVersions": [ "2016-08-01" ],
+          "controlId": "Azure_AppService_DP_Restrict_CORS_Access",
+          "isEnabled": true,
+          "description": "Ensure that CORS access is granted to a limited set of trusted origins.",
+          "rationale": "CORS enables applications running under one domain to access a resource under another domain. Using '*' (allow all) for CORS setting means that an application running under any domain can have access to your application's resources and data. Restricting allowed origins to the specific set that needs access aligns with the principle of least privilege.",
+          "recommendation": "Go to Azure Portal --> your App Service --> API --> CORS --> Provide the specific domain names that should be allowed to make cross-origin calls. Note: No action is needed if you are not using CORS for your app.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.cors.allowedOrigins" ],
+          "matchType": "VerifiableItemCount",
+          "data": {
+            "type": "All",
+            "value": 0
           }
         }
       ]
@@ -1092,8 +1124,85 @@
             "type": "GreaterThan",
             "value": 0
           }
+        },
+
+        {
+          "id": "AnalysisServices120",
+          "controlId": "Azure_AnalysisServices_AuthZ_Min_Admin",
+          "isEnabled": true,
+          "description": "Backup and Disaster Recovery must be planned for Analysis Services",
+          "rationale": "Analysis Service admins have full access on the server to perform any operation. Each additional person in the admin role increases the attack surface for the server. The number of members in these roles should be kept to as low as possible.",
+          "recommendation": "Minimize the number of Analysis Service admins. Run command Set-AzAnalysisServicesServer -Name '{AnalysisServicesServerName}' -ResourceGroupName '{ResourceGroupName}' -Administrator '{Administrator}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.analy sisservices/Set-AzAnalysisServicesServer",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.asAdministrators.members" ],
+          "matchType": "VerifiableItemCount",
+          "data": {
+            "type": "Limit",
+            "value": 2
+          }
         }
+
+      ]
+    },
+
+
+    {
+      "featureName": "DataBricks",
+      "supportedResourceTypes": [ "Microsoft.Databricks/workspaces" ],
+      "controls": [
+        {
+          "id": "DataBricks180",
+          "controlId": "Azure_Databricks_AuthZ_Enable_Workspace_Access_Control",
+          "isEnabled": true,
+          "description": "Workspace access control should be enabled",
+          "rationale": "Enabling workspace access control allows an admin to manage fine-grained user permissions and ensures that users can perform only intended operations. This minimizes exposure of data in case of user account compromise.",
+          "recommendation": "To enable and configure workspace access control, refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/workspace-acl.html",
+          "severity": "Medium",
+          "jsonPath": [ "$.sku.name" ],
+          "matchType": "MatchStringSingleToken",
+          "data": {
+            "type": "StringNotMatched",
+            "value": "standard",
+            "isCaseSensitive": false
+          }
+        },
+
+        {
+          "id": "DataBricks190",
+          "controlId": "Azure_Databricks_AuthZ_Enable_Cluster_Access_Control",
+          "isEnabled": true,
+          "description": "Cluster access control should be enabled",
+          "rationale": "Enabling cluster access control allows admin to provide restricted access to user over cluster so that users can perform only intended operations. This minimizes exposure of data in case of user/service account compromise.",
+          "recommendation": "To enable and configure cluster access control, refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/cluster-acl.html",
+          "severity": "Medium",
+          "jsonPath": [ "$.sku.name" ],
+          "matchType": "MatchStringSingleToken",
+          "data": {
+            "type": "StringNotMatched",
+            "value": "standard",
+            "isCaseSensitive": false
+          }
+        },
+
+        {
+          "id": "DataBricks200",
+          "controlId": "Azure_Databricks_AuthZ_Enable_Job_Access_Control",
+          "isEnabled": true,
+          "description": "Job access control should be enabled",
+          "rationale": "Enabling job access control ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of data in case of user/service account compromise.",
+          "recommendation": "To enable and configure job access control, refer: https://docs.azuredatabricks.net/administration-guide/admin-settings/jobs-acl.html",
+          "severity": "Medium",
+          "jsonPath": [ "$.sku.name" ],
+          "matchType": "MatchStringSingleToken",
+          "data": {
+            "type": "StringNotMatched",
+            "value": "standard",
+            "isCaseSensitive": false
+          }
+        }
+
       ]
     }
+
   ]
 }
