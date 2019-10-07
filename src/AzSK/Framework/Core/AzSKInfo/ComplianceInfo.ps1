@@ -145,7 +145,6 @@ class ComplianceInfo: AzCommandBase {
         $previewBaselineFailedControlCount = 0
         $previewBaselineFailedControlCountWithGrace = 0
 
-        $attestedControlCount = 0
         $totalControlCount = 0
         $baselineControlCount = 0
         $baselineControlCountWithGrace = 0
@@ -153,7 +152,6 @@ class ComplianceInfo: AzCommandBase {
 		
         $previewBaselineControlCount = 0
         $previewBaselineControlCountWithGrace = 0
-        $attestedControlCount = 0
         $gracePeriodControlCount = 0
         $totalComplianceWithGrace = 0.0
 
@@ -218,9 +216,7 @@ class ComplianceInfo: AzCommandBase {
                         }
                     }
                 }
-                if (-not [string]::IsNullOrEmpty($result.AttestationStatus) -and ($result.AttestationStatus -ne [AttestationStatus]::None)) {
-                    $attestedControlCount++
-                }
+
                 if ($result.IsControlInGrace -eq $true) {
                     $gracePeriodControlCount++
                 }
@@ -280,7 +276,6 @@ class ComplianceInfo: AzCommandBase {
 				$this.PublishCustomMessage(($ComplianceStats | Format-Table | Out-String  -Width 2048), [MessageType]::Default)
 				$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
 				$this.PublishCustomMessage($summary, [MessageType]::Default)
-				$this.PublishCustomMessage("`r`nAttested controls:       " + $attestedControlCount , [MessageType]::Default);
                 $this.PublishCustomMessage("`r`nControls in grace:       " + $gracePeriodControlCount , [MessageType]::Default);
                 $this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
                 $this.PublishCustomMessage("`r`n`r`n`r`nDisclaimer: Compliance summary/control counts may differ slightly from the central telemetry/dashboard due to various timing/sync lags.", [MessageType]::Default);
