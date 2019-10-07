@@ -42,7 +42,7 @@ class KubernetesClusterCA : AzCommandBase {
             # This method verifies that if both Azure CLI and Kubernetes CLI are installed or not
             $IsPrerequisitesPresent = $false
             try{
-                $azCliCmdOutput  = az --help --ouput json
+                $azCliCmdOutput  = az --help --output json
             }catch{
                 $azCliCmdOutput = $null
             }
