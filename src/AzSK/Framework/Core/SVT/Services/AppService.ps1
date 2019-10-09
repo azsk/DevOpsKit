@@ -864,18 +864,16 @@ class AppService: AzSVTBase
 			  }  	  
 			  if(($null -ne $json) -and (($json | Measure-Object).Count -gt 0))
 			  {
-			     if(([Helpers]::CheckMember($json[0],"Identity")) -and ($json[0].Identity.type -eq "SystemAssigned"))
-				 {
-				   
-				    $controlResult.AddMessage([VerificationResult]::Verify,
-										 [MessageData]::new("Your app service is using Managed Service Identity(MSI). It is specifically turned On."));
-				   
-				 }
-				 else
-			     {
-			       $controlResult.AddMessage([VerificationResult]::Verify,
-										 [MessageData]::new("Your app service is not using Managed Service Identity(MSI). It is specifically turned Off."));
-			     }
+			     if(([Helpers]::CheckMember($json[0],"Identity")) -and ($json[0].Identity.type -eq "SystemAssigned" -or $json[0].Identity.type -eq "UserAssigned"))
+                 		{                  
+                    		 $controlResult.AddMessage([VerificationResult]::Passed,
+                                 [MessageData]::new("Your app service is using Managed Service Identity(MSI). It is specifically turned On."));
+                  		}
+                	     else
+                 	        {
+                  		 $controlResult.AddMessage([VerificationResult]::Failed,
+                                 [MessageData]::new("Your app service is not using Managed Service Identity(MSI). It is specifically turned Off."));
+                 		}
 			  }
 			  else
 			  {
