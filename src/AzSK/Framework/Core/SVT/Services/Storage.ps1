@@ -683,9 +683,15 @@ class Storage: AzSVTBase
 			{
 				$controlResult.AddMessage([VerificationResult]::Verify, "No Firewall and Virtual Network restrictions are defined for this storage : " + $this.ResourceContext.ResourceName);
 			}
+		
 			elseif ($DefaultAction -eq "Deny")
 			{
-				$controlResult.AddMessage([VerificationResult]::Verify, "Firewall and Virtual Network restrictions are defined for this storage : " + $this.ResourceContext.ResourceName);
+				$controlResult.AddMessage([VerificationResult]::Verify, "Firewall and Virtual Network restrictions are defined for this storage : " + $NetworkRule.IpRules.IpAddressOrRange);
+
+				if($this.ResourceObject.NetworkRuleSet.IpRules.IpAddressOrRange -contains $this.ControlSettings.UniversalIPRange)
+				{
+					$controlResult.AddMessage([VerificationResult]::Failed, "IP range $($this.ControlSettings.UniversalIPRange) must be removed from triggers IP ranges" + $NetworkRule);
+				}
 			}
 
 			$controlResult.SetStateData("Firewall and Virtual Network restrictions defined for this storage:",$NetworkRule );
@@ -698,15 +704,18 @@ class Storage: AzSVTBase
 			try
 			{
 				$property = $this.ResourceObject | Get-AzStorageServiceProperty -ServiceType Blob
-				$isSoftDeleteEnable = $property.DeleteRetentionPolicy.Enabled
+				if([Helpers]::CheckMember($property, "DeleteRetentionPolicy" ))
+				{
+					$isSoftDeleteEnable = $property.DeleteRetentionPolicy.Enabled
 
-				if($isSoftDeleteEnable -eq $true)
-				{
-					$controlResult.AddMessage([VerificationResult]::Passed,	[MessageData]::new("Soft delete is enabled for this Storage account")); 
-				}
-				else
-				{
-					$controlResult.AddMessage([VerificationResult]::Verify,	[MessageData]::new("Soft delete is disabled for this Storage account")); 
+					if($isSoftDeleteEnable -eq $true)
+					{
+						$controlResult.AddMessage([VerificationResult]::Passed,	[MessageData]::new("Soft delete is enabled for this Storage account")); 
+					}
+					else
+					{
+						$controlResult.AddMessage([VerificationResult]::Verify,	[MessageData]::new("Soft delete is disabled for this Storage account")); 
+					}
 				}
 			}
 			catch
