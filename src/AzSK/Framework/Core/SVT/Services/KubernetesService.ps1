@@ -333,4 +333,23 @@ class KubernetesService: AzSVTBase
 		}
 		return $vulnerableRules;
 	}
+
+	hidden [controlresult[]] CheckHTTPAppRouting([controlresult] $controlresult)
+	{
+        if([Helpers]::CheckMember($this.ResourceObject,"Properties"))
+		{
+			if([Helpers]::CheckMember($this.ResourceObject.Properties,"Addonprofiles.httpApplicationRouting") -and $this.ResourceObject.Properties.Addonprofiles.httpApplicationRouting.enabled -eq $true)
+			{
+				
+				$controlResult.AddMessage([VerificationResult]::Failed, "HTTP application routing is 'Enabled' for this cluster.");
+				
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "HTTP application routing is 'Disabled' for this cluster.");
+			}
+		}
+
+		return $controlResult;
+	}
 }

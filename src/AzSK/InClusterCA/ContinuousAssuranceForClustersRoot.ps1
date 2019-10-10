@@ -129,10 +129,10 @@ function Install-AzSKContinuousAssuranceForCluster{
                 $CAInstance = [HDInsightClusterCA]::new($ResourceContext, $MyInvocation)
                 $CAInstance.InvokeFunction($CAInstance.InstallCA)
             } elseif($ResourceType -eq "Kubernetes") {
-                $CAInstance = [KubernetesClusterCA]::new($SubscriptionId, $ResourceGroupName, $ClusterName, $MyInvocation);
+                $CAInstance = [KubernetesClusterCA]::new($SubscriptionId, $ResourceGroupName, $ClusterName,  $MyInvocation);
                 if ($CAInstance) 
                 {				
-                    return $CAInstance.InvokeFunction($CAInstance.InstallKubernetesContinuousAssurance);
+                    return $CAInstance.InvokeFunction($CAInstance.InstallKubernetesContinuousAssurance,@($LAWorkspaceId, $LASharedSecret));
                 }
             }
         }
@@ -244,7 +244,7 @@ function Update-AzSKContinuousAssuranceForCluster{
                 $CAInstance = [KubernetesClusterCA]::new($SubscriptionId, $ResourceGroupName, $ClusterName, $MyInvocation);
                 if ($CAInstance) 
                 {				
-                    return $CAInstance.InvokeFunction($CAInstance.UpdateKubernetesContinuousAssurance,@($NewAppInsightKey, $FixRuntimeAccount,$LogRetentionInDays,$ScanIntervalInHours, $SpecificImageVersion));
+                    return $CAInstance.InvokeFunction($CAInstance.UpdateKubernetesContinuousAssurance,@($NewAppInsightKey, $NewLAWorkspaceId, $NewLASharedSecret, $FixRuntimeAccount,$LogRetentionInDays,$ScanIntervalInHours, $SpecificImageVersion));
                 }
             }
         } catch {

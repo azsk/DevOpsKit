@@ -456,5 +456,11 @@
   "MandatoryTags":[
 
   ],
-  "WhitelistedResourceGroups": []
+  "WhitelistedResourceGroups": [],
+  "InClusterCA": {
+    "AKS":{
+      "RequiredImagePath": "azsktest/akstest",
+      "RequiredImageTag": "latest"
+    }
+  }
 }
