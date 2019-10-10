@@ -867,7 +867,7 @@ class AppService: AzSVTBase
 			     if(([Helpers]::CheckMember($json[0],"Identity")) -and ($json[0].Identity.type -eq "SystemAssigned" -or $json[0].Identity.type -eq "UserAssigned"))
                  		{                  
                     		 $controlResult.AddMessage([VerificationResult]::Passed,
-                                 [MessageData]::new("Your app service is using Managed Service Identity (MSI). It is specifically turned on."));
+                                 [MessageData]::new("Your app service is using Managed Service Identity (MSI). It is specifically turned on. Make sure this MSI identity is used to access the resources."));
                   		}
                 	     else
                  	        {
