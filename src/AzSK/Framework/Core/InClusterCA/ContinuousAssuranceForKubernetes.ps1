@@ -12,7 +12,7 @@ class KubernetesClusterCA : AzCommandBase {
     [string]  $configMapName = "azsk-config"
     [string]  $clusterRoleBindingName = "azsk-scanner-rolebinding"
     [string]  $cronJobName = "azsk-ca-job"
-    [string]  $deploymentFileBaseUrl = "https://azsdkdataoss.blob.core.windows.net/azsdk-configurations/recmnds/"
+    [string]  $deploymentFileBaseUrl = ""
     [string]  $deploymentFileName =  "deploy_azsk_ca_job.yml"
     [string]  $configMapFileName =  "update_azsk_ca_job_configmap.yml"
     [string]  $runtimeAccountFileName = "update_azsk_ca_job_runtime.yml"
@@ -37,6 +37,7 @@ class KubernetesClusterCA : AzCommandBase {
             $this.CheckPrerequisites();
             $this.GetResourceObject();
             $this.SetKubernetesContext();
+            $this.deploymentFileBaseUrl = [Constants]::AKSBaseConfigurationUrl
         }
 
         hidden [bool] CheckPrerequisites()

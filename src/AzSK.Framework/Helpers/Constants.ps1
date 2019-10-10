@@ -211,4 +211,5 @@ class Constants
 	static [string] $HDInsightCANotebookUrl = "https://azsdkossep.azureedge.net/incluster_configuration/AzSK_HDI.ipynb"
 	static [string] $AzSKPyInstallUrl = "https://azsdkossep.azureedge.net/incluster_configuration/pipinstall.sh"
 	static [string] $AzSKPyUninstallUrl = "https://azsdkossep.azureedge.net/incluster_configuration/uninstall.sh"
+	static [string] $AKSBaseConfigurationUrl = "https://azsdkossep.azureedge.net/incluster_configuration/"
 }
