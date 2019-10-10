@@ -112,13 +112,16 @@ class ERvNet : SVTIaasBase
         if($null -ne $vnetPeerings -and ($vnetPeerings|Measure-Object).count -gt 0)
         {
             $filteredVnetPeerings = @()
+            # Filter whitelisted vNet peerings, if resource is in whitelisted RG
             if((-not [string]::IsNullOrEmpty($whiteListedRemoteVirtualNetworkId)) -and (($whiteListedRGs | Measure-Object).Count -gt 0) -and ($whiteListedRGs -contains $this.ResourceContext.ResourceGroupName))
             {
                 $filteredVnetPeerings += $vnetPeerings | Where-Object { $_.RemoteVirtualNetwork.id -notlike $whiteListedRemoteVirtualNetworkId }
             }else{
+                # All vNet peering are non-compliant, if resource is not in whitelisted RG
                 $filteredVnetPeerings = $vnetPeerings
             }
 
+            # If there is any non-compliant vNet peering fail the control
             if($null -ne $filteredVnetPeerings -and ($filteredVnetPeerings|Measure-Object).count -gt 0)
             {
                 $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Below peering found on ERVNet", $vnetPeerings));
@@ -214,6 +217,7 @@ class ERvNet : SVTIaasBase
         if($null -ne $subnetsWithUDRs -and ($subnetsWithUDRs | Measure-Object).count -gt 0)
         {
             $nonCompliantSubnetsWithUDRs = @()
+            # Filter whitelisted UDR's, if resource is in whitelisted RG
             if(($whiteListedRGs | Measure-Object).Count -gt 0 -and ($whiteListedRGs -contains $this.ResourceContext.ResourceGroupName)){
                 $subnetsWithUDRs | Foreach-Object {
                     $IsUDRPermitted = $true
@@ -240,9 +244,11 @@ class ERvNet : SVTIaasBase
                     }
                 }
             }else{
+                # All UDR's are non-compliant, if resource is not in whitelisted RG
                 $nonCompliantSubnetsWithUDRs = $subnetsWithUDRs
             }
 
+            # If there is any non-compliant UDR fail the control
             if($null -ne $nonCompliantSubnetsWithUDRs -and ($nonCompliantSubnetsWithUDRs | Measure-Object).count -gt 0){
                 $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new(($subnetsWithUDRs | Select-Object Name, RouteTableText)));
                 $controlResult.SetStateData("UDRs found on any Subnet of ERVNet", $subnetsWithUDRs);
