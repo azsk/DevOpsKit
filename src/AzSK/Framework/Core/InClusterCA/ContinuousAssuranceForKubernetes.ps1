@@ -414,7 +414,10 @@ class KubernetesClusterCA : AzCommandBase {
             }
         
             $this.PublishCustomMessage("`ncheck 03: Check if latest image is used.",[MessageType]::Info)
-            $requiredImage = "azsktest/akstest:latest"
+            $controlSettings = $this.LoadServerConfigFile("ControlSettings.json");
+            $requiredImagePath = $controlSettings.InClusterCA.AKS.RequiredImagePath
+            $reuiredImageTag = $controlSettings.InClusterCA.AKS.RequiredImageTag
+            $requiredImage = $requiredImagePath + ":"+ $reuiredImageTag
             $cronJobJson = kubectl get CronJob $this.cronJobName --namespace $this.nameSpace -o json | ConvertFrom-Json
         
             if($null -ne $cronJobJson){
@@ -568,11 +571,14 @@ class KubernetesClusterCA : AzCommandBase {
                         $Schedule = $Schedule -replace '\#i\#', 24 
                     }
                     
-                    $ImagePath = "azsktest/akstest:"
+                    $controlSettings = $this.LoadServerConfigFile("ControlSettings.json");
+                    $requiredImagePath = $controlSettings.InClusterCA.AKS.RequiredImagePath
+                    $reuiredImageTag = $controlSettings.InClusterCA.AKS.RequiredImageTag
+
                     if([string]::IsNullOrEmpty($ImageTag)){
-                        $ImagePath =  $ImagePath + "latest"
+                        $ImagePath =  $requiredImagePath + ":" + $reuiredImageTag
                     }else{
-                    $ImagePath =  $ImagePath + $ImageTag
+                        $ImagePath =  $requiredImagePath + ":" + $ImageTag
                     }
             
                     # Download deployment file from server and store it in temp location
