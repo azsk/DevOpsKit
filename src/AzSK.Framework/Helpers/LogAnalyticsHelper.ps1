@@ -83,7 +83,22 @@ Class LogAnalyticsHelper{
 
 	static [PSObject[]] GetLAWSBodyObjects([SVTEventContext] $eventContext,[AzSKContextDetails] $AzSKContext)
 	{
-		[PSObject[]] $output = @();		
+		[PSObject[]] $output = @();
+
+		# Here we are utilizing the RG tag mapping that is done while sending the ResourceInventory telemetry event.
+		# Hence, this works only when scan source is 'CA'
+		if ([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupTagTelemetry", "*") -eq $true)
+		{
+			if (([ResourceInventory]::ResourcesWithTagMapping | Measure-Object).Count -gt 0)
+			{
+				$resourceTag = [ResourceInventory]::ResourcesWithTagMapping | Where-Object { $_.ResourceId -eq $($eventContext.ResourceContext.ResourceId) }
+				if (($resourceTag | Measure-Object).Count -eq 1)
+				{
+					$eventContext.ResourceContext.ResourceGroupTags = @{ "Env" = $($resourceTag.RGEnv) ; "ComponentID" = $($resourceTag.RGComponentID) };
+				}
+			}
+		}
+				
 		[array] $eventContext.ControlResults | ForEach-Object{
 			Set-Variable -Name ControlResult -Value $_ -Scope Local
 			$out = [LAWSModel]::new() 
