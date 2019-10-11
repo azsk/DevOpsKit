@@ -101,8 +101,16 @@ class SVTBase: AzSKRoot
 			ResourceDetails = $svtResource.ResourceDetails
 		};
 		
-		#<TODO Framework: Fetch resource group details from resolver itself>
-		$this.ResourceContext.ResourceGroupTags = $this.ResourceTags;
+		# Here we are utilizing the RG tag mapping that is done while sending the ResourceInventory telemetry event.
+		# Hence, this works only when scan source is 'CA'
+		if (([ResourceInventory]::ResourcesWithTagMapping | Measure-Object).Count -gt 0)
+		{
+			$resourceTag = [ResourceInventory]::ResourcesWithTagMapping | Where-Object { $_.ResourceId -eq $($this.ResourceContext.ResourceId) }
+			if(($resourceTag | Measure-Object).Count -eq 1)
+			{
+				$this.ResourceContext.ResourceGroupTags = @{ "Env" = $($resourceTag.RGEnv) ; "ComponentID" = $($resourceTag.RGComponentID) };
+			}
+		}
 	}
 
    	hidden [void] LoadSvtConfig([string] $controlsJsonFileName)
