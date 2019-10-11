@@ -290,8 +290,8 @@
       "Id": "AzureStorage290",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
-      "MethodName": "CheckStorageMsiAccess",
-      "Rationale": "Where possible, use AAD-based identities (SPNs/groups) to grant access to storage accounts. Where the client supports it, the SPN-type used should be a 'Managed Service Identity'(MSI). The identity is managed by the Azure platform and eliminates the need to provision/manage/rotate any secrets thus reducing the overall risk. Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.",
+      "MethodName": "CheckStorageAADBasedAccess",
+      "Rationale": "Where possible, use AAD-based identities (SPNs/groups/Users) to grant access to storage accounts using minimum RBAC roles. Wherever the client supports it, the SPN-type used should be a 'Managed Service Identity'(MSI). The identity is managed by the Azure platform and eliminates the need to provision/manage/rotate any secrets thus reducing the overall risk. Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.",
       "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview, https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-msi ",
       "Tags": [
         "SDL",

@@ -681,16 +681,16 @@ class Storage: AzSVTBase
 
 			if($DefaultAction -eq "Allow")
 			{
-				$controlResult.AddMessage([VerificationResult]::Verify, "No Firewall and Virtual Network restrictions are defined for this storage : " + $this.ResourceContext.ResourceName);
+				$controlResult.AddMessage([VerificationResult]::Verify, "No Firewall and Virtual Network restrictions are defined for this storage") ;
 			}
 		
 			elseif ($DefaultAction -eq "Deny")
 			{
-				$controlResult.AddMessage([VerificationResult]::Verify, "Firewall and Virtual Network restrictions are defined for this storage : " + $NetworkRule.IpRules.IpAddressOrRange);
+				$controlResult.AddMessage([VerificationResult]::Verify, "Firewall and Virtual Network restrictions are defined for this storage : " + $NetworkRule);
 
 				if($this.ResourceObject.NetworkRuleSet.IpRules.IpAddressOrRange -contains $this.ControlSettings.UniversalIPRange)
 				{
-					$controlResult.AddMessage([VerificationResult]::Failed, "IP range $($this.ControlSettings.UniversalIPRange) must be removed from triggers IP ranges" + $NetworkRule);
+					$controlResult.AddMessage([VerificationResult]::Failed, "IP range $($this.ControlSettings.UniversalIPRange) must be removed from triggers IP ranges" + $NetworkRule.IpRules.IpAddressOrRange);
 				}
 			}
 
@@ -736,21 +736,21 @@ class Storage: AzSVTBase
 			return $controlResult;
 		}
 
-		hidden [controlresult[]] CheckStorageMsiAccess([controlresult] $controlresult)
+		hidden [controlresult[]] CheckStorageAADBasedAccess([controlresult] $controlresult)
 		{
 			$accessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.ResourceId, $false, $true);
-			$resourceAccessList = $accessList | Where-Object { ($_.Scope -eq $this.ResourceId) -and ($_.ObjectType -ne "User") };
+			$resourceAccessList = $accessList | Where-Object { ($_.Scope -eq $this.ResourceId) -and ($_.RoleDefinitionName -contains "Storage")};
 			
 			$controlResult.VerificationResult = [VerificationResult]::Verify
 
 			if(($resourceAccessList | Measure-Object).Count -ne 0)
         	{
-				$controlResult.SetStateData("SPN/MSI have access at resource level", ($resourceAccessList | Select-Object -Property ObjectId,RoleDefinitionId,RoleDefinitionName,Scope));
-				$controlResult.AddMessage([MessageData]::new("Validate that the following SPN/MSI have explicitly provided with access to resource - [$($this.ResourceContext.ResourceName)] ", $resourceAccessList));
+				$controlResult.SetStateData("SPN/MSI/User have access at resource level", ($resourceAccessList | Select-Object -Property ObjectId,RoleDefinitionId,RoleDefinitionName,Scope));
+				$controlResult.AddMessage([MessageData]::new("Validate that the following SPN/MSI/User have explicitly provided with Storage RBAC access to this resource ", $resourceAccessList));
 			}
 			else
 			{
-				$controlResult.AddMessage("No SPN/MSI has been explicitly provided with access to resource - [$($this.ResourceContext.ResourceName)]");
+				$controlResult.AddMessage("No SPN/MSI/User has been explicitly provided with Storage RBAC access to this resource");
 			}
 			
 			return $controlResult;
