@@ -217,6 +217,93 @@
          "ResourceLocked"
       ],
       "Enabled": true
+    },
+    {
+      "ControlID": "Azure_Storage_AuthZ_Restrict_Network_Access",
+      "Description": "Ensure that Firewall and Virtual Network access is granted to a minimal set of trusted origins",
+      "Id": "AzureStorage260",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckStorageNetworkAccess",
+      "Rationale": "Restricting access using firewall/virtual network config reduces network exposure of a storage account by limiting access only to expected range/set of clients. Note that this depends on the overall service architecture and may not be possible to implement in all scenarios.",
+      "Recommendation": "Go to Azure Portal --> your Storage service --> Settings --> Firewalls and virtual networks --> Selected Network. Provide the specific IP address and Virtual Network details that should be allowed to access storage account.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "StandardSku",
+        "GeneralPurposeStorage",
+        "BlobStorage",
+        "PremiumSku"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_Storage_BCDR_Enable_Soft_Delete",
+      "Description": "Soft delete should be enabled to allow recovery of deleted blobs or blob snapshots",
+      "Id": "AzureStorage270",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckStorageSoftDelete",
+      "Rationale": "Enabling soft delete feature on Storage acts as a safety measure to recover inadvertently or maliciously deleted blobs or blob snapshots. If your data is critical, this can be a valuable BC/DR mechanism.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-soft-delete to enable soft delete feature on Storage.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "BCDR",
+        "StandardSku",
+        "PremiumSku",
+        "GeneralPurposeStorage",
+        "BlobStorage",
+        "ResourceLocked",
+        "OwnerAccess"
+      ],
+      "Enabled": true
+   },
+    {
+      "ControlID": "Azure_Storage_AuthZ_Grant_Min_RBAC_Access",
+      "Description": "All users/identities must be granted minimum required permissions using Role Based Access Control (RBAC)",
+      "Id": "AzureStorage280",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckRBACAccess",
+      "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+      "Recommendation": "Remove any excessive privileges granted on the Search service. Run command: Remove-AzRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC",
+        "BlobStorage",
+        "StandardSku",
+        "PremiumSku",
+        "GeneralPurposeStorage"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "Azure_Storage_AuthN_Use_AAD_Based_Access",
+      "Description": "Use AAD-based access for storage account",
+      "Id": "AzureStorage290",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckStorageAADBasedAccess",
+      "Rationale": "Where possible, use AAD-based identities (SPNs/groups/Users) to grant access to storage accounts using minimum RBAC roles. Wherever the client supports it, the SPN-type used should be a 'Managed Service Identity'(MSI). The identity is managed by the Azure platform and eliminates the need to provision/manage/rotate any secrets thus reducing the overall risk. Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview, https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-msi ",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthN",
+        "StandardSku",
+        "PremiumSku",
+        "GeneralPurposeStorage",
+        "BlobStorage"
+      ],
+      "Enabled": true
     }
 
   ]

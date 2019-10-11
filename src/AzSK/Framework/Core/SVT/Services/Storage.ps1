@@ -673,4 +673,87 @@ class Storage: AzSVTBase
 		  }
 		return $controlResult;
 		}
+
+	hidden [ControlResult] CheckStorageNetworkAccess([ControlResult] $controlResult)
+		{	 
+			$DefaultAction = $this.ResourceObject.NetworkRuleSet.DefaultAction
+			$NetworkRule = $this.ResourceObject.NetworkRuleSet
+
+			if($DefaultAction -eq "Allow")
+			{
+				$controlResult.AddMessage([VerificationResult]::Verify, "No Firewall and Virtual Network restrictions are defined for this storage") ;
+			}
+		
+			elseif ($DefaultAction -eq "Deny")
+			{
+				$controlResult.AddMessage([VerificationResult]::Verify, "Firewall and Virtual Network restrictions are defined for this storage : " + $NetworkRule);
+
+				if($this.ResourceObject.NetworkRuleSet.IpRules.IpAddressOrRange -contains $this.ControlSettings.UniversalIPRange)
+				{
+					$controlResult.AddMessage([VerificationResult]::Failed, "IP range $($this.ControlSettings.UniversalIPRange) must be removed from triggers IP ranges" + $NetworkRule.IpRules.IpAddressOrRange);
+				}
+			}
+
+			$controlResult.SetStateData("Firewall and Virtual Network restrictions defined for this storage:",$NetworkRule );
+
+			return $controlResult;
+		}
+		
+		hidden [ControlResult] CheckStorageSoftDelete([ControlResult] $controlResult)
+		{	
+			try
+			{
+				$property = $this.ResourceObject | Get-AzStorageServiceProperty -ServiceType Blob
+				if([Helpers]::CheckMember($property, "DeleteRetentionPolicy" ))
+				{
+					$isSoftDeleteEnable = $property.DeleteRetentionPolicy.Enabled
+
+					if($isSoftDeleteEnable -eq $true)
+					{
+						$controlResult.AddMessage([VerificationResult]::Passed,	[MessageData]::new("Soft delete is enabled for this Storage account")); 
+					}
+					else
+					{
+						$controlResult.AddMessage([VerificationResult]::Verify,	[MessageData]::new("Soft delete is disabled for this Storage account")); 
+					}
+				}
+			}
+			catch
+			{
+		   		#With Reader Role exception will be thrown.
+				if(([Helpers]::CheckMember($_.Exception,"Response") -and  ($_.Exception).Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden) -or $this.LockExists)
+				{
+					#As control does not have the required permissions
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+					$controlResult.AddMessage(($_.Exception).Message);
+					return $controlResult
+				}
+				else
+				{
+					throw $_
+				}
+			}
+			return $controlResult;
+		}
+
+		hidden [controlresult[]] CheckStorageAADBasedAccess([controlresult] $controlresult)
+		{
+			$accessList = [RoleAssignmentHelper]::GetAzSKRoleAssignmentByScope($this.ResourceId, $false, $true);
+			$resourceAccessList = $accessList | Where-Object { ($_.Scope -eq $this.ResourceId) -and ($_.RoleDefinitionName -contains "Storage")};
+			
+			$controlResult.VerificationResult = [VerificationResult]::Verify
+
+			if(($resourceAccessList | Measure-Object).Count -ne 0)
+        	{
+				$controlResult.SetStateData("SPN/MSI/User have access at resource level", ($resourceAccessList | Select-Object -Property ObjectId,RoleDefinitionId,RoleDefinitionName,Scope));
+				$controlResult.AddMessage([MessageData]::new("Validate that the following SPN/MSI/User have explicitly provided with Storage RBAC access to this resource ", $resourceAccessList));
+			}
+			else
+			{
+				$controlResult.AddMessage("No SPN/MSI/User has been explicitly provided with Storage RBAC access to this resource");
+			}
+			
+			return $controlResult;
+		}
+
 }
