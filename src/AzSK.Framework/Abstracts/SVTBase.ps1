@@ -101,6 +101,9 @@ class SVTBase: AzSKRoot
 			ResourceDetails = $svtResource.ResourceDetails
 		};
 		
+		#<TODO Framework: Fetch resource group details from resolver itself>
+		$this.ResourceContext.ResourceGroupTags = $this.ResourceTags;
+
 	}
 
    	hidden [void] LoadSvtConfig([string] $controlsJsonFileName)
