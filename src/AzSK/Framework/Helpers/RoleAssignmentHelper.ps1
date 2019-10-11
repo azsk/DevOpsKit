@@ -50,6 +50,7 @@ class RoleAssignmentHelper
 		}
         catch
         {
+			# Handling the cloud exception in case of CSP subs
             if([Helpers]::CheckMember($_, "CategoryInfo.Reason"))
             {
                 if($_.CategoryInfo.Reason.ToString().ToLower() -eq "cloudexception")
@@ -83,6 +84,7 @@ class RoleAssignmentHelper
 		}
         catch
         {
+			# Handling the cloud exception in case of CSP subs
             if([Helpers]::CheckMember($_, "CategoryInfo.Reason"))
             {
                 if($_.CategoryInfo.Reason.ToString().ToLower() -eq "cloudexception")
@@ -117,6 +119,7 @@ class RoleAssignmentHelper
 		}
         catch
         {
+			# Handling the cloud exception in case of CSP subs
             if([Helpers]::CheckMember($_, "CategoryInfo.Reason"))
             {
                 if($_.CategoryInfo.Reason.ToString().ToLower() -eq "cloudexception")
