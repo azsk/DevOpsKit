@@ -48,10 +48,19 @@ class RoleAssignmentHelper
 			}
 			return $roleAssignments;
 		}
-		catch
-		{ 
-			# Eat the current exception which typically happens when the caller doesn't have access to GraphAPI. It will fall back to the below custom API based approach.
-		}
+        catch
+        {
+			# Handling the cloud exception in case of CSP subs
+            if([Helpers]::CheckMember($_, "CategoryInfo.Reason"))
+            {
+                if($_.CategoryInfo.Reason.ToString().ToLower() -eq "cloudexception")
+                {
+
+                    $roleAssignments = Get-AzRoleAssignment -ErrorAction Stop;
+                    return $roleAssignments;
+                }
+            }
+        }
 
 		$roleAssignments = [RoleAssignmentHelper]::GetAzSKRoleAssignment("", "", "", $recurse, $includeClassicAdministrators);
 		
@@ -73,10 +82,19 @@ class RoleAssignmentHelper
 			}
 			return $roleAssignments;
 		}
-		catch
-		{ 
-			# Eat the current exception which typically happens when the caller doesn't have access to GraphAPI. It will fall back to the below custom API based approach.
-		}
+        catch
+        {
+			# Handling the cloud exception in case of CSP subs
+            if([Helpers]::CheckMember($_, "CategoryInfo.Reason"))
+            {
+                if($_.CategoryInfo.Reason.ToString().ToLower() -eq "cloudexception")
+                {
+
+                    $roleAssignments = Get-AzRoleAssignment -ErrorAction Stop;
+                    return $roleAssignments;
+                }
+            }
+        }
 
 		$roleAssignments = [RoleAssignmentHelper]::GetAzSKRoleAssignment($resourceGroupName, "", "", $recurse, $includeClassicAdministrators);
 		
@@ -99,10 +117,19 @@ class RoleAssignmentHelper
 
 			return $roleAssignments;
 		}
-		catch
-		{ 
-			# Eat the current exception which typically happens when the caller doesn't have access to GraphAPI. It will fall back to the below custom API based approach.
-		}
+        catch
+        {
+			# Handling the cloud exception in case of CSP subs
+            if([Helpers]::CheckMember($_, "CategoryInfo.Reason"))
+            {
+                if($_.CategoryInfo.Reason.ToString().ToLower() -eq "cloudexception")
+                {
+
+                    $roleAssignments = Get-AzRoleAssignment -ErrorAction Stop;
+                    return $roleAssignments;
+                }
+            }
+        }
 
 		$currentContext = [ContextHelper]::GetCurrentRMContext();
         $subscriptionId = $currentContext.Subscription.Id;
