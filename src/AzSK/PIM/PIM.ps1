@@ -129,9 +129,8 @@ function Set-AzSKPIMConfiguration {
 
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignmentForUsers")]
-        [Alias("GroupName")]
         [ValidateNotNullOrEmpty()]
-	    [Alias("pn")]
+	    [Alias("pn","PrincipalName","GroupName")]
         [string[]]
         $PrincipalNames,
 
