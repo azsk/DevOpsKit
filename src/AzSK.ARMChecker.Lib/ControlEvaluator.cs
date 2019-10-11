@@ -316,14 +316,14 @@ namespace AzSK.ARMChecker.Lib
             if (match.Value.Equals(actual,
                 match.IsCaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
             {
-                return result;
+               if (match.Type == ControlDataMatchType.StringNotMatched)
+                    {
+                        result.VerificationResult = VerificationResult.Verify;
+                    }
             }
             else
             {
-                if (match.Type == ControlDataMatchType.StringNotMatched)
-                {
-                 result.VerificationResult = VerificationResult.Verify;
-                }
+              result.VerificationResult = VerificationResult.Failed;
             }
             return result;
         }
