@@ -67,7 +67,7 @@ class AKSBaseControlTest:
 		self.RG_NAME = cluster_config.resources['RG_NAME']
 		self.RESOURCE_NAME = cluster_config.resources['RESOURCE_NAME']
 		self.detailed_logs = {'desc':               "", 'control_id': "", 'non_compliant_containers': [],
-							  'service_accounts':   [], 'non_compliant_pods': [], 'pods_with_secrets': []}
+							  'service_accounts':   [], 'non_compliant_pods': [], 'pods_with_secrets': [],'container_images' : [], 'non_compliant_services':[]}
 
 	def test(self) -> str:
 		raise NotImplementedError
@@ -368,6 +368,7 @@ class CheckResourcesWithSecrets(AKSBaseControlTest):
 
 				if not is_secret_mounted:
 					for container in pod.spec.containers:
+						secret_key_refs = []
 						if container.env != None and len(container.env) > 0:
 							secret_key_refs = list(
 								filter(lambda x: x.value_from != None and x.value_from.secret_key_ref != None,
@@ -406,7 +407,7 @@ class CheckKubernetesVersion(AKSBaseControlTest):
 				node = nodes[0]
 				cur_version = node.status.node_info.kubelet_version
 				cur_version = cur_version.replace("v", "")
-				req_version = '1.12.7'
+				req_version = '1.14.6'
 				if StrictVersion(req_version) > StrictVersion(cur_version):
 					return ("Failed")
 				else:
@@ -418,3 +419,61 @@ class CheckKubernetesVersion(AKSBaseControlTest):
 		else:
 			return ("Manual")
 
+class CheckMountedImages(AKSBaseControlTest):
+	name = "Review_Mounted_Images_Source"
+
+	def __init__(self):
+		super().__init__()
+		self.desc = ("Make sure container images deployed in cluster are trustworthy")
+
+	@fail_with_manual
+	def test(self):
+		config.load_incluster_config()
+		v1 = client.CoreV1Api()
+		res = v1.list_node(watch=False)
+		nodes = list(res.items)
+		image_list = []
+		whitelisted_sources = ['k8s.gcr.io','microsoft']
+		for node in nodes:
+			images = node.status.images
+			for image in images:
+				image_list.append(image.names)
+		
+		images = [image for sublist in image_list for image in sublist if '@sha' not in image]
+        # Filter whitelisted images 
+		images = [image for image in images if image.split('/')[0] not in whitelisted_sources]
+
+		if len(images) > 0:
+			self.detailed_logs[
+			'desc'] = self.desc + "\nFollowing container images are mounted in Cluster:"
+			self.detailed_logs['container_images'] = images
+
+		return ("Verify")
+
+
+class CheckExternalServices(AKSBaseControlTest):
+	name = "Review_Publicly_Exposed_Services"
+
+	def __init__(self):
+		super().__init__()
+		self.desc = ("Review services with external IP")
+
+	@fail_with_manual
+	def test(self):
+		config.load_incluster_config()
+		try:
+			v1 = client.CoreV1Api()
+			res = v1.list_service_for_all_namespaces(watch=False)
+			services = list(res.items)
+			services_with_external_ip = [service for service in services if service.spec.type.lower() == 'loadbalancer']
+			if len(services_with_external_ip) == 0:
+				return('Passed')
+			else:
+				non_compliant_services = [(service.metadata.namespace, service.metadata.name) for service in services_with_external_ip]
+				self.detailed_logs['desc'] = self.desc + "\nFollowing service(s) have external IP configured:"
+				self.detailed_logs['non_compliant_services'] = non_compliant_services
+				return("Verify")
+		except:
+			return("Manual")
+
+		
