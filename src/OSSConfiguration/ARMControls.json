@@ -1162,7 +1162,7 @@
           "matchType": "MatchStringSingleToken",
           "data": {
             "type": "StringNotMatched",
-            "value": "standard",
+            "value": "premium",
             "isCaseSensitive": false
           }
         },
@@ -1179,7 +1179,7 @@
           "matchType": "MatchStringSingleToken",
           "data": {
             "type": "StringNotMatched",
-            "value": "standard",
+            "value": "premium",
             "isCaseSensitive": false
           }
         },
@@ -1196,7 +1196,7 @@
           "matchType": "MatchStringSingleToken",
           "data": {
             "type": "StringNotMatched",
-            "value": "standard",
+            "value": "premium",
             "isCaseSensitive": false
           }
         }
