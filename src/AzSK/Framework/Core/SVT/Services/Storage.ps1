@@ -686,7 +686,7 @@ class Storage: AzSVTBase
 		
 			elseif ($DefaultAction -eq "Deny")
 			{
-				$controlResult.AddMessage([VerificationResult]::Verify, "Firewall and Virtual Network restrictions are defined for this storage : " + $NetworkRule);
+				$controlResult.AddMessage([VerificationResult]::Verify, "Firewall and Virtual Network restrictions are defined for this storage : " + ($NetworkRule | ConvertTo-Json));
 
 				if($this.ResourceObject.NetworkRuleSet.IpRules.IpAddressOrRange -contains $this.ControlSettings.UniversalIPRange)
 				{
@@ -694,7 +694,7 @@ class Storage: AzSVTBase
 				}
 			}
 
-			$controlResult.SetStateData("Firewall and Virtual Network restrictions defined for this storage:",$NetworkRule );
+			#$controlResult.SetStateData("Firewall and Virtual Network restrictions defined for this storage:",$NetworkRule );
 
 			return $controlResult;
 		}
