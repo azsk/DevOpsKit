@@ -288,7 +288,7 @@ function Remove-AzSKContinuousAssuranceForCluster {
         $PersonalAccessToken,
 
         [ValidateSet("Yes","No")] 
-        [Parameter(Mandatory = $true, HelpMessage="This provides the capability to download all previous job logs to local before removing AzSK Continuous Assurance from cluster.")]
+        [Parameter(Mandatory = $false, HelpMessage="This provides the capability to download all previous job logs to local before removing AzSK Continuous Assurance from cluster.")]
 		[Alias("djl")]
 		$DownloadJobLogs,
 

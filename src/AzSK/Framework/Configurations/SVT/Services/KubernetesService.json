@@ -278,7 +278,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "Azure_KubernetesService_DP_Dont_Enable_HTTP_Application_Routing",
+      "ControlID": "Azure_KubernetesService_DP_Disable_HTTP_Application_Routing",
       "Description": "HTTP application routing should be disabled in Kubernetes Service",
       "Id": "KubernetesService260",
       "ControlSeverity": "Medium",
