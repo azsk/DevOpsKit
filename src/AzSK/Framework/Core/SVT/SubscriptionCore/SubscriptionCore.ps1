@@ -1099,7 +1099,7 @@ class SubscriptionCore: AzSVTBase
 									$this.ControlSettings.MandatoryTags | ForEach-Object {
 													$tagObject = $_
 													
-													$controlResult.AddMessage("`nPolicy Requirement: `n`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpected Values: '$($tagObject.Values)'")
+													$controlResult.AddMessage("`nPolicy Requirement: `n`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpected Values: '$($tagObject.Values)' `n`tExpected Type: '$($tagObject.Type)'")
 
 													#Step1 Validate if tag present on RG                                        
 													$rgListwithoutTags = $resourceGroups | Where-Object { [string]::IsNullOrWhiteSpace($_.Tags) -or (-not ($_.Tags.Keys -icontains $tagObject.Name))}
@@ -1179,22 +1179,78 @@ class SubscriptionCore: AzSVTBase
 	hidden [ControlResult] CheckASCTier ([ControlResult] $controlResult)
 	{
 		$ascTierContentDetails = $this.SecurityCenterInstance.ASCTier;
+		
+		$VMASCTier = $this.SecurityCenterInstance.VMASCTier;
+		$SQLASCTier = $this.SecurityCenterInstance.SQLASCTier;
+		$AppSvcASCTier = $this.SecurityCenterInstance.AppSvcASCTier;
+		$StorageASCTier = $this.SecurityCenterInstance.StorageASCTier;
 
 		if(-not [string]::IsNullOrWhiteSpace($ascTierContentDetails))		
 		{
+			[bool] $bool = $true;
+			
 			$ascTier = "Standard"
+
 			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ASCTier"))
 			{
-				$ascTier = $this.ControlSettings.SubscriptionCore.ASCTier
-			}
-			
-			if($ascTierContentDetails -eq $ascTier)			
-			{
-				$controlResult.AddMessage([VerificationResult]::Passed, "Expected '$ascTier' tier is configured for ASC" )
+				$bool = $bool -and ($this.ControlSettings.SubscriptionCore.ASCTier -contains $ascTierContentDetails)
 			}
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "Expected '$ascTier' tier is not configured for ASC" )
+				$bool = $bool -and ($ascTier -eq $ascTierContentDetails)
+			}
+
+			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ResourceTypeASCTier.VirtualMachines"))
+			{
+				$VM = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.VirtualMachines -contains $VMASCTier)
+				if(-not $VM)
+				{
+					$controlResult.AddMessage("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.VirtualMachines) pricing tier is not configured for virtual machines.")
+				}
+				
+				$bool = $bool -and $VM
+			}
+
+			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ResourceTypeASCTier.SqlServers"))
+			{
+				$SQL = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.SqlServers -contains $SQLASCTier)
+				if(-not $SQL)
+				{
+					$controlResult.AddMessage("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.SqlServers) pricing tier is not configured for SQL servers.")
+				}
+				
+				$bool = $bool -and $SQL
+			}
+
+			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ResourceTypeASCTier.AppServices"))
+			{
+				$AppSvc = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.AppServices -contains $AppSvcASCTier)
+				if(-not $AppSvc)
+				{
+					$controlResult.AddMessage("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.AppServices) pricing tier is not configured for app services.")
+				}
+
+				$bool = $bool -and $AppSvc
+			}
+
+			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ResourceTypeASCTier.StorageAccounts"))
+			{
+				$Storage = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.StorageAccounts -contains $StorageASCTier)
+				if(-not $Storage)
+				{
+					$controlResult.AddMessage("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.StorageAccounts) pricing tier is not configured for storage accounts.")
+				}
+				
+				$bool = $bool -and $Storage
+			}
+
+			if($bool)			
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "Expected pricing tier is configured for ASC." )
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed, "`nExpected pricing tier is not configured for ASC. `n" )
 			}
 		}
 		return $controlResult

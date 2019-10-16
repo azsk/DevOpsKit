@@ -656,10 +656,18 @@ class CCAutomation: AzCommandBase
 						$ADApp = Get-AzADApplication -ApplicationId $existingAppId -ErrorAction SilentlyContinue
 						if($this.IsCentralScanModeOn)
 						{
-							if(-not ($null -ne $ADApp -and $ADApp.DisplayName -like "$($this.AzSKCentralSPNFormatString)*"))
+							if(($null -ne $ADApp))
 							{
-								#Null out the ADApp if it is in central scan mode mode and the spn is not in central format
-								$ADApp = $null
+                                # if RemoveCheckForSPNNameFormat feature flag is enabled, do not check the SP name format thus '-not'
+                                # to enable name format check disable the feature flag 
+								if(-not ([FeatureFlightingManager]::GetFeatureStatus("RemoveCheckForSPNNameFormat","*")))
+								{
+									#Null out the ADApp if it is in central scan mode mode and the spn is not in central format
+									if(-not ($ADApp.DisplayName -like "$($this.AzSKCentralSPNFormatString)*"))
+									{
+										$ADApp = $null
+									}
+								}
 							}
 						}
 						$ServicePrincipal = Get-AzADServicePrincipal -ServicePrincipalName $existingAppId -ErrorAction SilentlyContinue

@@ -276,6 +276,24 @@
         "KubernetesService"
       ],
       "Enabled": true
+    },
+    {
+      "ControlID": "Azure_KubernetesService_DP_Disable_HTTP_Application_Routing",
+      "Description": "HTTP application routing should be disabled in Kubernetes Service",
+      "Id": "KubernetesService260",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckHTTPAppRouting",
+      "Rationale": "Enabling HTTP application routing creates publicly accessible DNS names for application endpoints which makes applications deployed to your cluster vulnerable to various network attacks.",
+      "Recommendation": "Go to Azure Portal --> your Kubernetes Service --> Settings --> Networking --> Network options --> HTTP application routing --> Click Disabled.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "DP",
+        "KubernetesService"
+      ],
+      "Enabled": true
     }
   ]
 }

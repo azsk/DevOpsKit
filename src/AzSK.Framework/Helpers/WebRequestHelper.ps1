@@ -382,8 +382,16 @@ Content-Type: multipart/mixed; boundary={1}
 					if($retryCount -eq 0)
 					{
 						if ($uri.Contains("mspim") -and [Helpers]::CheckMember($_,"ErrorDetails.Message")){
+							if($returnRawResponse)
+							{
+								throw $_;
+							}
+							else 
+							{
 							$err = $_.ErrorDetails.Message| ConvertFrom-Json
 							throw ([SuppressedException]::new(($err.error.message), [SuppressedExceptionType]::Generic))
+							
+							}
 							
 						}
 						elseif([Helpers]::CheckMember($_,"Exception.Response.StatusCode") -and  $_.Exception.Response.StatusCode -eq "Forbidden"){

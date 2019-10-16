@@ -291,6 +291,10 @@ class WriteSummaryFile: FileOutputBase
 							{
 								$csvItem.AttestationExpiryDate =  $_.StateManagement.AttestedStateData.ExpiryDate
 							}
+							if(![string]::IsNullOrWhiteSpace($_.StateManagement.AttestedStateData.AttestedDate))
+							{
+								$csvItem.AttestedOn=  $_.StateManagement.AttestedStateData.AttestedDate
+							}
 						}
 					}
 					if($_.IsControlInGrace -eq $true)

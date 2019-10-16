@@ -17,7 +17,11 @@
     "Max_Admin_Count": 2
   },
   "ERvNet": {
-    "ResourceLockLevel": "ReadOnly"
+    "ResourceLockLevel": "ReadOnly",
+    "WhiteListedRGs" : ["ERNetwork-LAB"],
+    "WhiteListedRemoteVirtualNetworkId" : "",
+    "WhiteListedaddressPrefix" : "0.0.0.0/0",
+    "WhiteListednextHopType": "VirtualAppliance"
   },
   "Databricks": {
     "Tenant_Domain": "microsoft.com"
@@ -400,7 +404,13 @@
   },
   "SubscriptionCore": {
     "EnableV1AlertFailure": false,
-    "ASCTier": "Standard",
+    "ASCTier": ["Standard"],
+    "ResourceTypeASCTier":{
+      "VirtualMachines" : ["Standard"],
+      "SqlServers" : ["Standard"],
+      "AppServices" : ["Standard"],
+      "StorageAccounts" : ["Standard"]
+    },
     "credHighTH": 7,
     "credModerateTH": 30,
     "NonADIdentitiesPatterns" : ["(.)*#ext#@(.)*.onmicrosoft.com"],
@@ -446,5 +456,11 @@
   "MandatoryTags":[
 
   ],
-  "WhitelistedResourceGroups": []
+  "WhitelistedResourceGroups": [],
+  "InClusterCA": {
+    "AKS":{
+      "RequiredImagePath": "azsktest/akstest",
+      "RequiredImageTag": "latest"
+    }
+  }
 }

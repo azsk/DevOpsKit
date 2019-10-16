@@ -76,9 +76,8 @@ class DatabricksClusterCA : CommandBase {
             }
             return $response
         } catch {
-            Write-Host $_
             $this.PublishCustomMessage($ErrorMessage, [MessageType]::Error)
-            throw $_
+            throw ([SuppressedException]::new((""), [SuppressedExceptionType]::Generic))
         }
     }
 
@@ -106,6 +105,15 @@ class DatabricksClusterCA : CommandBase {
         }
     }
 
+    [void] PrintGCASummary() {
+        $SummaryEP = "/api/2.0/dbfs/read?path=/AzSK_Meta/meta.json"
+        $response = $this.InvokeRestAPICall($SummaryEP, "GET", $null, 
+                                "Unable to fetch summary. Please check if CA instance is present and running")
+        $decoded = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($response.data))
+        $jsonSummary = $decoded | ConvertFrom-Json
+        $this.PublishCustomMessage([Helpers]::ConvertObjectToString($jsonSummary, $true))
+    }
+
     [void] GetCA() {
         # check secret scope exist
         if(-not $this.CheckAzSKSecretScopeExists()){
@@ -121,12 +129,16 @@ class DatabricksClusterCA : CommandBase {
         $res = $res -and ($this.CheckSecretPresence("Resource Name", "res_name" , $response))
         $res = $res -and ($this.CheckSecretPresence("Resource Group Name", "rg_name" , $response))
         $res = $res -and ($this.CheckSecretPresence("Subscription ID", "sid" , $response))
+        $res = $res -and ($this.CheckSecretPresence("Log Analytics Workspace Id", "LAWorkspaceId" , $response))
+        $res = $res -and ($this.CheckSecretPresence("Log Analytics Secret", "LASharedSecret" , $response))
         $foo = $this.CheckSecretPresence("Application Insight Key", "AzSK_AppInsight_Key", $response)
         $CAScanJob = $this.CheckAzSKJobExists()
         if (-not $CAScanJob) {
             $this.PublishCustomMessage("CA Scan Job is absent", [MessageType]::Error)
             $fail = $true
         }
+
+        $this.PrintGCASummary();
         if ($res -and -not $fail) {
             $this.PublishCustomMessage("All required permissions and files present. CA Health OK")
         } else {
@@ -313,7 +325,7 @@ class DatabricksClusterCA : CommandBase {
         if ([string]::IsNullOrEmpty($this.ResourceContext.InstrumentationKey)) {
             $this.PublishCustomMessage("Skipping AppInsight installation, no Instrumentation Key passed")
         } else {
-            $this.InsertDataIntoDB($this.AzSKSecretScopeName, $IKKey, $this.ResourceContext.InstrumentationKey)
+            $this.InsertDataIntoDB($IKKey, $this.ResourceContext.InstrumentationKey)
         }
         
 

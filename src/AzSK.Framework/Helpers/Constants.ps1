@@ -45,6 +45,10 @@ class Constants
 					"   Get information on PS console         : Use any of above command with additional -Verbose argument`r`n";
 
     static [string] $OfflineModeWarning = "Running in offline policy mode. Commands will run against local JSON files!"
+	static [string] $PolicyMismatchMsgOSS = "The current subscription has been configured with DevOps kit policy for the '{0}' Org, However the DevOps kit command is running with a different ('{1}') Org policy. `nPlease review FAQ at: https://aka.ms/devopskit/orgpolicy/faq and correct this condition depending upon which context(manual,CICD,CA scan) you are seeing this error. If FAQ does not help to resolve the issue, please contact your Org policy owner ('{2}')."
+	static [string] $PolicyMismatchMsgCSE = "Warning: Make sure you have installed AzSK as per steps specified at https://aka.ms/devopskit/onboarding. `nPlease review FAQ at: https://aka.ms/devopskit/orgpolicy/faq and correct this condition depending upon which context(manual,CICD,CA scan) you are seeing this error. If FAQ does not help to resolve the issue, please contact your Org policy owner ({0})."
+	static [string] $PolicyMismatchMsg = "Warning: The current subscription has been configured with DevOps kit policy for the '{0}' Org, However the DevOps kit command is running with a different ('{1}') Org policy. `nPlease review FAQ at: https://aka.ms/devopskit/orgpolicy/faq and correct this condition depending upon which context(manual,CICD,CA scan) you are seeing this error. If FAQ does not help to resolve the issue, please contact your Org policy owner ('{2}')."
+
 	#Constants for AzSKConfig
 	   static [string] $AutomationAccount = "AzSKContinuousAssurance"
        static [string] $RunbookName = "Continuous_Assurance_Runbook"
@@ -105,6 +109,8 @@ class Constants
 	static [string] $ARMControlsFileURI = "https://azsdkossep.azureedge.net/1.0.0/ARMControls.json";
 	static [string] $RecommendationURI = "https://azsdkossep.azureedge.net/recmnds/r.json ";
 	static [string] $AttestationReadMsg = "`r`nControl results may not reflect attestation if you do not have permissions to read attestation data from "
+	static [string] $OrgNameCSEO= "CSE"
+	static [string] $OrgNameOSS= "org-neutral"
 	#V1 alert RG name constant is temporary and added for backward compatibility	
 	static [string] $AlertActionGroupName = "AzSKAlertActionGroup"
 	static [string] $CriticalAlertActionGroupName = "AzSKCriticalAlertActionGroup"
@@ -211,4 +217,5 @@ class Constants
 	static [string] $HDInsightCANotebookUrl = "https://azsdkossep.azureedge.net/incluster_configuration/AzSK_HDI.ipynb"
 	static [string] $AzSKPyInstallUrl = "https://azsdkossep.azureedge.net/incluster_configuration/pipinstall.sh"
 	static [string] $AzSKPyUninstallUrl = "https://azsdkossep.azureedge.net/incluster_configuration/uninstall.sh"
+	static [string] $AKSBaseConfigurationUrl = "https://azsdkossep.azureedge.net/incluster_configuration/"
 }

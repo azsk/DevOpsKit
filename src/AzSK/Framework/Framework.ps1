@@ -172,3 +172,4 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $PSScriptRoot\Core\CredHygiene\CredHygieneScript.ps1
 . $PSScriptRoot\Core\InClusterCA\ContinuousAssuranceForDatabricks.ps1
 . $PSScriptRoot\Core\InClusterCA\ContinuousAssuranceForHDInsight.ps1
+. $PSScriptRoot\Core\InClusterCA\ContinuousAssuranceForKubernetes.ps1
