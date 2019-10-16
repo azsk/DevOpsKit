@@ -630,7 +630,7 @@
           "rationale": "CORS enables applications running under one domain to access a resource under another domain. Allowing cross-origin credentials is a security risk. A website at another domain can send a signed-in user's credentials to the app on the user's behalf without the user's knowledge.",
           "recommendation": "Go to Azure Portal --> your App Service --> API --> CORS --> Request Credentials --> Review if you need to enable 'Access-Control-Allow-Credentials'. Note: No action is needed if you are not using CORS for your app.",
           "severity": "Medium",
-          "jsonPath": [ "$.properties.siteConfig.cors.supportCredentials", "$.properties.cors.supportCredentials" ],
+          "jsonPath": [ "$.properties.cors.supportCredentials" ],
           "matchType": "VerifiableBooleanSingleToken",
           "data": {
             "value": "false"
