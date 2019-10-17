@@ -499,8 +499,8 @@ class VirtualMachine: AzSVTBase
         
 
 			# Check if Managed System Identity is enabled on VM
-
-			if([Helpers]::CheckMember($this.ResourceObject, "Identity") -and $this.ResourceObject.Identity.Type -eq "SystemAssigned"){
+            # Using like "*SystemAssigned*" to get correct status, if both MSI and User Assigned Identity are enabled 
+			if([Helpers]::CheckMember($this.ResourceObject, "Identity") -and $this.ResourceObject.Identity.Type -like "*SystemAssigned*"){
 				$controlResult.AddMessage("SystemAssigned managed identity is enabled on VM.");
 			}else{
 				$controlStatus = [VerificationResult]::Failed
