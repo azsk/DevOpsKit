@@ -93,7 +93,11 @@ namespace AzSK.ARMChecker.Lib
             var result = ExtractSingleToken(control, resource, out bool actual, out BooleanControlData match);
             result.ExpectedValue = "'" + match.Value.ToString() + "'";
             result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
-            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
+            if (result.IsTokenNotFound || result.IsTokenNotValid)
+            {
+                result.VerificationResult = VerificationResult.Passed;
+                return result;
+            }
             if (actual == match.Value)
             {
                 result.VerificationResult = VerificationResult.Passed;
