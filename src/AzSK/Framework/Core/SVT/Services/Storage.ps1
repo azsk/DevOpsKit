@@ -676,26 +676,30 @@ class Storage: AzSVTBase
 
 	hidden [ControlResult] CheckStorageNetworkAccess([ControlResult] $controlResult)
 		{	 
-			$DefaultAction = $this.ResourceObject.NetworkRuleSet.DefaultAction
-			$NetworkRule = $this.ResourceObject.NetworkRuleSet
+			$ruleSettings = New-Object System.Object
+			$ruleSettings | Add-Member -type NoteProperty -name DefaultAction -Value $this.ResourceObject.NetworkRuleSet.DefaultAction
+			$controlMessage = ""
 
-			if($DefaultAction -eq "Allow")
-			{
+			if($ruleSettings.DefaultAction -eq "Allow")	{
 				$controlResult.AddMessage([VerificationResult]::Verify, "No Firewall and Virtual Network restrictions are defined for this storage") ;
 			}
-		
-			elseif ($DefaultAction -eq "Deny")
-			{
-				$controlResult.AddMessage([VerificationResult]::Verify, "Firewall and Virtual Network restrictions are defined for this storage : " + ($NetworkRule | ConvertTo-Json));
+			elseif ($ruleSettings.DefaultAction -eq "Deny")	{
+				$controlResult.VerificationResult = [VerificationResult]::Verify;
+				$controlMessage = "Firewall and Virtual Network restrictions are defined for this storage :"
 
-				if($this.ResourceObject.NetworkRuleSet.IpRules.IpAddressOrRange -contains $this.ControlSettings.UniversalIPRange)
-				{
-					$controlResult.AddMessage([VerificationResult]::Failed, "IP range $($this.ControlSettings.UniversalIPRange) must be removed from triggers IP ranges" + $NetworkRule.IpRules.IpAddressOrRange);
+				if([Helpers]::CheckMember($this.ResourceObject.NetworkRuleSet, "VirtualNetworkRules.VirtualNetworkResourceId")) {				
+					$ruleSettings | Add-Member -type NoteProperty -name VirtualNetworkRules -Value $this.ResourceObject.NetworkRuleSet.VirtualNetworkRules.VirtualNetworkResourceId
 				}
+				if([Helpers]::CheckMember($this.ResourceObject.NetworkRuleSet, "IpRules.IpAddressOrRange")) {
+					$ruleSettings | Add-Member -type NoteProperty -name IpAddressOrRange -Value $this.ResourceObject.NetworkRuleSet.IpRules.IpAddressOrRange
+					if($ruleSettings.IpAddressOrRange -contains $this.ControlSettings.UniversalIPRange) {
+						$controlResult.VerificationResult = [VerificationResult]::Failed;
+						$controlMessage = "IP range $($this.ControlSettings.UniversalIPRange) must be removed from triggers IP ranges"
+					}
+				}
+				$controlResult.AddMessage([MessageData]::new("$controlMessage", $ruleSettings))
+				$controlResult.SetStateData("Firewall and Virtual Network restrictions defined for this storage:",$ruleSettings);
 			}
-
-			#$controlResult.SetStateData("Firewall and Virtual Network restrictions defined for this storage:",$NetworkRule );
-
 			return $controlResult;
 		}
 		
