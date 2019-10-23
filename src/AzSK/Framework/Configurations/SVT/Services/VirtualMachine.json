@@ -20,7 +20,8 @@
              "Windows",
              "Linux",
              "ERvNet",
-             "VirtualMachine"
+             "VirtualMachine",
+             "Test"
           ],
           "Enabled": true
        },
