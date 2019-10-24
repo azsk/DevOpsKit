@@ -381,8 +381,9 @@ Content-Type: multipart/mixed; boundary={1}
 					#eat the exception until it is in retry mode and throw once the retry is done
 					if($retryCount -eq 0)
 					{
-						if ($uri.Contains("mspim") -and [Helpers]::CheckMember($_,"ErrorDetails.Message")){
-							if( -not $returnRawResponse -and ([Helpers]::CheckMember($_, ".ErrorDetails.Message")))
+						if ($uri.Contains("mspim") -and [Helpers]::CheckMember($_,"ErrorDetails.Message"))
+						{
+							if( -not $returnRawResponse)
 							{
 								
 									$err = $_.ErrorDetails.Message| ConvertFrom-Json
