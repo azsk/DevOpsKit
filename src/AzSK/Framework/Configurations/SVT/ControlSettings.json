@@ -155,8 +155,8 @@
     "Subscription" : [ "Owner", "Contributor", "User Access Administrator" ],
     "ResourceGroup" : [ "Owner", "User Access Administrator" ]
   },
-  "CheckPIMCAPolicyTags": true,
-  "PIMCAPolicyTags":["urn:microsoft:req1"],
+  "CheckPIMCAPolicyTags": false,
+  "PIMCAPolicyTags":[],
   "ASCAlertsSeverityLevels": [ "High" ],
   "ASCAlertsThresholdInDays": 30,
   "WhitelistedMgmtCerts": {
