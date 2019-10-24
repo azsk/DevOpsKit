@@ -93,10 +93,30 @@ namespace AzSK.ARMChecker.Lib
             var result = ExtractSingleToken(control, resource, out bool actual, out BooleanControlData match);
             result.ExpectedValue = "'" + match.Value.ToString() + "'";
             result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
-            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
-            if (actual == match.Value)
+            if (result.IsTokenNotFound || result.IsTokenNotValid)
+            {
+                if (match.IfNoPropertyFound == "Passed")
+                {
+                    result.VerificationResult = VerificationResult.Passed;
+                }
+                else if (match.IfNoPropertyFound == "Failed")
+                {
+                    result.VerificationResult = VerificationResult.Failed;
+                }
+                else if (match.IfNoPropertyFound == "Verify")
+                {
+                    result.VerificationResult = VerificationResult.Verify;
+                }
+
+            }
+           //additionaldesiredstate: if everything is fine as security point of view.
+            else if (actual == match.Value && match.ControlDesiredState == "Passed")
             {
                 result.VerificationResult = VerificationResult.Passed;
+            }
+            else if (actual == match.Value && match.ControlDesiredState == "Failed")
+            {
+                result.VerificationResult = VerificationResult.Failed;
             }
             else
             {
