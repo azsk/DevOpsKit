@@ -20,6 +20,7 @@ class SubscriptionCore: AzSVTBase
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $RGLevelPIMAssignments;
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $RGLevelPermanentAssignments;
 	hidden [CustomData] $CustomObject;
+	hidden $SubscriptionExtId;
 
 	SubscriptionCore([string] $subscriptionId):
         Base($subscriptionId)
@@ -1398,8 +1399,8 @@ class SubscriptionCore: AzSVTBase
 					#Get external id for the current subscription
 					$response=[WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
 					$subId=$this.SubscriptionContext.SubscriptionId;
-					$extID=$response| Where-Object{$_.externalId.split('/') -contains $subId}
-					$resourceID=$extID.id;
+					$this.SubscriptionExtId = $response| Where-Object{$_.externalId.split('/') -contains $subId}
+					$resourceID=$this.SubscriptionExtId.id;
 					$this.PIMAssignments=@();
 					$this.permanentAssignments=@();
 					if($null -ne $response -and $null -ne $resourceID)
@@ -1421,20 +1422,21 @@ class SubscriptionCore: AzSVTBase
 							$item.MemberType = $roleAssignment.memberType;
 							if($roleAssignment.memberType -ne 'Inherited')
 								{
-									if($roleAssignment.IsPermanent -eq $false)
+									if($roleAssignment.assignmentState -eq 'Eligible')
 									{
-										#If roleAssignment is non permanent and not active
+										#If roleAssignment is non permanent, even the active PIM assignments would appear in this list
 										$item.IsPIMEnabled=$true;
-										if($roleAssignment.assignmentState -eq "Eligible")
-										{
-											$this.PIMAssignments.Add($item);
-										}
+										$this.PIMAssignments.Add($item);
+										
 									}
 									else
 									{
-										#If roleAssignment is permanent
-										$item.IsPIMEnabled=$false;
-										$this.permanentAssignments.Add($item);
+										#If roleAssignment is permanent the linkedEligbibleRoleAssignmentId would be null when the assignment is permanently Active
+										if([string]::IsNullOrEmpty($roleAssignment.linkedEligibleRoleAssignmentId))
+										{
+											$item.IsPIMEnabled=$false;
+											$this.permanentAssignments.Add($item);
+										}
 
 									}
 								}
@@ -1504,20 +1506,23 @@ class SubscriptionCore: AzSVTBase
 								$item.MemberType = $roleAssignment.memberType;
 								if($roleAssignment.memberType -ne 'Inherited')
 								{
-									if($roleAssignment.IsPermanent -eq $false)
+									if($roleAssignment.assignmentState -eq "Eligible")
 									{
 										#If roleAssignment is non permanent and not active
 										$item.IsPIMEnabled=$true;
-										if($roleAssignment.assignmentState -eq "Eligible")
-										{
-											$this.RGLevelPIMAssignments.Add($item);
-										}
+										$this.RGLevelPIMAssignments.Add($item);
+										
 									}
 									else
 									{
-										#If roleAssignment is permanent
-										$item.IsPIMEnabled=$false;
-										$this.RGLevelpermanentAssignments.Add($item);
+										#If roleAssignment is permanent the linkedEligbibleRoleAssignmentId would be null when the assignment is permanently Active
+										if([string]::IsNullOrEmpty($roleAssignment.linkedEligibleRoleAssignmentId))
+										{
+											$item.IsPIMEnabled=$false;
+											$this.RGLevelpermanentAssignments.Add($item);
+										}
+										
+										
 									}
 								}
 							}
@@ -1712,6 +1717,99 @@ class SubscriptionCore: AzSVTBase
 			$controlResult.AddMessage([VerificationResult]::Manual, [MessageData]::new("Insufficient permissions to read credential metadata."))
 		}	
 		return $controlResult
-    }
+	}
+	
+
+	# Control in json to be added in Org Policy if the Org wants to enforce conditional access policy on PIM activation for critical roles
+	hidden [ControlResult] CheckPIMCATag([ControlResult] $controlResult)
+	{
+		$resourceId = $this.SubscriptionExtId.id;		
+		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
+		$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
+		$authorisationToken = "Bearer " + $accessToken
+		$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
+		if([string]::IsNullOrEmpty($resourceId))
+		{
+			
+				$uri=[Constants]::PIMAPIUri +"?`$filter=type%20eq%20%27subscription%27&`$orderby=displayName"
+				try
+				{
+					#Get external id for the current subscription
+					$response=[WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
+					$subId=$this.SubscriptionContext.SubscriptionId;
+					$this.SubscriptionExtId = ($response| Where-Object{$_.externalId.split('/') -contains $subId}).id
+					$resourceId=$this.SubscriptionExtId;
+				}
+				catch
+				{
+					$controlResult.AddMessage($_);
+				}
+		}
+		$roleurl = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/resources/" + $resourceId + "/roleDefinitions?`$select=id,displayName,type,templateId,resourceId,externalId,subjectCount,eligibleAssignmentCount,activeAssignmentCount&`$orderby=activeAssignmentCount%20desc"
+		$roles = [WebRequestHelper]::InvokeGetWebRequest($roleurl, $headers)
+		$roles= $roles | Where-Object{$_.DisplayName -in $this.ControlSettings.CriticalPIMRoles.Subscription}
+		$missingCAPolicyOnRoles = @();
+		$validRoles = @();
+		$invalidRoles = @();
+		$nonCompliantPIMCAPolicyTagRoles = @();
+		foreach($role in $roles)
+		{
+			$url ="https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resourceId)%27)+and+(roleDefinition/id+eq+%27$($role.id)%27)"
+			$rolesettings = [WebRequestHelper]::InvokeGetWebRequest($url, $headers)
+			$CAPolicyOnRoles = ($($rolesettings.userMemberSettings | Where-Object{$_.RuleIdentifier -eq 'AcrsRule'}).setting) | ConvertFrom-Json
+			if($CAPolicyOnRoles.acrsRequired)
+			{
+				$validRoles +=$role
+				if([Helpers]::CheckMember($this.ControlSettings,"CheckPIMCAPolicyTags"))
+				{
+					if([Helpers]::CheckMember($this.ControlSettings,"PIMCAPolicyTags"))
+					{
+						if($CAPolicyOnRoles.acrs -notin $this.ControlSettings.PIMCAPolicyTags)
+						{
+							$nonCompliantPIMCAPolicyTagRoles +=$role;
+						}
+					}
+				}
+			}
+			else 
+			{
+					$invalidRoles +=$role
+			}
+
+			
+		}	
+		if([Helpers]::CheckMember($this.ControlSettings,"CheckPIMCAPolicyTags"))
+		{
+			if($missingCAPolicyOnRoles.Count -gt 0)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Failed
+				$controlResult.AddMessage("Roles that donot have required CA policy tags $($this.ControlSetting,"PIMCAPolicyTags" -join ',') `n $($missingCAPolicyOnRoles | Format-List) ");
+			}
+			elseif($invalidRoles.Count -gt 0)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Failed
+				$controlResult.AddMessage("Role with Acr required turned off `n $($invalidRoles | Format-List | Out-String) ");
+				
+			}
+			else
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Passed	
+			}		
+		}
+		else {
+			if($invalidRoles.Count -gt 0)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Failed
+				$controlResult.AddMessage("Role with Acr required turned off `n $($invalidRoles | Format-List | Out-String) ");
+				
+			}
+			else
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Passed	
+			}
+		}
+	
+		return $controlResult;
+	}
 }
 
