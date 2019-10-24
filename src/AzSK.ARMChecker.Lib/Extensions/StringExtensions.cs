@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -129,6 +130,113 @@ namespace AzSK.ARMChecker.Lib.Extensions
             }
         }
 
+        public static bool CheckIsVariable(this string input)
+        {
+            if (input.CheckIsFunction())
+            {
+                input = input.Remove(0, 1).Trim();
+                input = input.Remove(input.Length - 1, 1).Trim();
+                if (input.StartsWith("variables(", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public static bool CheckIsConcat(this string input)
+        {
+            if (input.CheckIsFunction())
+            {
+                input = input.Remove(0, 1).Trim();
+                input = input.Remove(input.Length - 1, 1).Trim();
+                if (input.StartsWith("concat(", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public static bool CheckIsSubString(this string input)
+        {
+            if (input.CheckIsFunction())
+            {
+                input = input.Remove(0, 1).Trim();
+                input = input.Remove(input.Length - 1, 1).Trim();
+                if (input.StartsWith("substring(", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+
+        //wip
+        public static string CheckingFunctionType(this string input)
+        {
+            if (input.CheckIsFunction())
+            {
+                input = input.Remove(0, 1).Trim();
+                input = input.Remove(input.Length - 1, 1).Trim();
+                if (input.StartsWith("parameters(", StringComparison.OrdinalIgnoreCase))
+                {
+                    return "parameters";
+                }
+                else if (input.StartsWith("variables(", StringComparison.OrdinalIgnoreCase))
+                {
+                    return "variables";
+                }
+                else if (input.StartsWith("concat(", StringComparison.OrdinalIgnoreCase))
+                {
+                    return "concat";
+                }
+                else if (input.StartsWith("substring(", StringComparison.OrdinalIgnoreCase))
+                {
+                    return "substring";
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+
+        //wip
+
+
+
+
         public static string GetParameterKey(this string input)
         {
             var match = Regex.Match(input, @"parameters\(\'(.*)\'\)");
@@ -141,6 +249,54 @@ namespace AzSK.ARMChecker.Lib.Extensions
                 return null;
             }
             
+        }
+
+        public static string GetVariableKey(this string input)
+        {
+            var match = Regex.Match(input, @"variables\(\'(.*)\'\)");
+           // var match = Regex.Match(input, @"parameters\(\'(.*)\'\)");
+           // var match = Regex.Match(input, @"(?<=(?<open>\()).*(?=(?<close-open>\)))");
+           // var match = Regex.Match(input, @"parameters\(\'(.*)\'\)");
+            if (match.Success)
+            {
+                return match.Groups[1].Value;
+            }
+            else
+            {
+                return null;
+            }
+
+        }
+
+        public static string GetConcatKey(this string input)
+        {
+            //var match = Regex.Match(input, @"concat\(\'(.*)\'\)");
+            // var match = Regex.Match(input, @"parameters\(\'(.*)\'\)");
+             var match = Regex.Match(input, @"(?<=(?<open>\()).*(?=(?<close-open>\)))");
+            // var match = Regex.Match(input, @"parameters\(\'(.*)\'\)");
+            if (match.Success)
+            {
+                return match.Groups[0].Value;
+            }
+            else
+            {
+                return null;
+            }
+
+        }
+
+        public static string GetSubStringKey(this string input)
+        {
+            var match = Regex.Match(input, @"(?<=(?<open>\()).*(?=(?<close-open>\)))");
+            if (match.Success)
+            {
+                return match.Groups[0].Value;
+            }
+            else
+            {
+                return null;
+            }
+
         }
     }
 }

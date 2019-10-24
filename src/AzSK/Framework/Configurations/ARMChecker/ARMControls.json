@@ -395,7 +395,7 @@
     },
     {
       "featureName": "Storage",
-      "supportedResourceTypes": [ "Microsoft.Storage/storageAccounts" ],
+      "supportedResourceTypes": [ "Microsoft.Storage/storageAccounts", "Microsoft.Storage/storageAccounts/blobServices" ],
       "controls": [
         {
           "id": "AzureStorage160",
@@ -422,6 +422,23 @@
           "data": {
             "type": "Equals",
             "value": 0
+          }
+        },
+        {
+          "id": "AzureStorage270",
+          "controlId": "Azure_Storage_BCDR_Enable_Soft_Delete",
+          "isEnabled": true,
+          "description": "Soft delete should be enabled to allow recovery of deleted blobs or blob snapshots",
+          "rationale": "Enabling soft delete feature on Storage acts as a safety measure to recover inadvertently or maliciously deleted blobs or blob snapshots. If your data is critical, this can be a valuable BC/DR mechanism.",
+          "recommendation": "Refer: https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-soft-delete to enable soft delete feature on Storage.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.deleteRetentionPolicy.enabled" ],
+          "matchType": "VerifiableBooleanSingleToken",
+          "data": {
+            "value": "true",
+            "Type": "",
+            "IfNoPropertyFound": "Verify",
+            "ControlDesiredState": "Passed"
           }
         }
       ]
@@ -633,7 +650,10 @@
           "jsonPath": [ "$.properties.siteConfig.cors.supportCredentials", "$.properties.cors.supportCredentials" ],
           "matchType": "VerifiableBooleanSingleToken",
           "data": {
-            "value": "false"
+            "value": "false",
+            "Type": "",
+            "IfNoPropertyFound": "Passed",
+            "ControlDesiredState": "Passed"
           }
         },
 
