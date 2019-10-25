@@ -5,6 +5,8 @@ using Newtonsoft.Json.Linq;
 using AzSK.ARMChecker.Lib.Extensions;
 using System.Collections;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace AzSK.ARMChecker.Lib
 {
@@ -93,10 +95,30 @@ namespace AzSK.ARMChecker.Lib
             var result = ExtractSingleToken(control, resource, out bool actual, out BooleanControlData match);
             result.ExpectedValue = "'" + match.Value.ToString() + "'";
             result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
-            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
-            if (actual == match.Value)
+            if (result.IsTokenNotFound || result.IsTokenNotValid)
+            {
+                if (match.IfNoPropertyFound == "Passed")
+                {
+                    result.VerificationResult = VerificationResult.Passed;
+                }
+                else if (match.IfNoPropertyFound == "Failed")
+                {
+                    result.VerificationResult = VerificationResult.Failed;
+                }
+                else if (match.IfNoPropertyFound == "Verify")
+                {
+                    result.VerificationResult = VerificationResult.Verify;
+                }
+
+            }
+           //additionaldesiredstate: if everything is fine as security point of view.
+            else if (actual == match.Value && match.ControlDesiredState == "Passed")
             {
                 result.VerificationResult = VerificationResult.Passed;
+            }
+            else if (actual == match.Value && match.ControlDesiredState == "Failed")
+            {
+                result.VerificationResult = VerificationResult.Failed;
             }
             else
             {
@@ -201,7 +223,7 @@ namespace AzSK.ARMChecker.Lib
                     keyValueFound = true;
                     break;
                 }
-            } 
+            }
             if(keyValueFound)
             {
                 result.VerificationResult = VerificationResult.Passed;
@@ -315,16 +337,16 @@ namespace AzSK.ARMChecker.Lib
             if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
             if (match.Value.Equals(actual,
                 match.IsCaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
-            {
-               if (match.Type == ControlDataMatchType.StringNotMatched)
+                {
+                    if (match.Type == ControlDataMatchType.StringNotMatched)
                     {
                         result.VerificationResult = VerificationResult.Verify;
                     }
-            }
-            else
-            {
-              result.VerificationResult = VerificationResult.Failed;
-            }
+                }
+                else
+                {
+                    result.VerificationResult = VerificationResult.Failed;
+                }
             return result;
         }
         private static ControlResult EvaluateRegExpressionSingleToken(ResourceControl control, JObject resource)
@@ -378,16 +400,16 @@ namespace AzSK.ARMChecker.Lib
             var actualVersion = new Version(actual);
             var requiredVersion = new Version(match.Value);
             switch (match.Type)
-             {
-                 case ControlDataMatchType.GreaterThan:
-                     if (actualVersion >requiredVersion) result.VerificationResult = VerificationResult.Passed;
-                     break;
-                 case ControlDataMatchType.LesserThan:
-                     if (actualVersion < requiredVersion) result.VerificationResult = VerificationResult.Passed;
-                     break;
-                 case ControlDataMatchType.Equals:
-                     if (actualVersion == requiredVersion) result.VerificationResult = VerificationResult.Passed;
-                     break;
+            {
+                case ControlDataMatchType.GreaterThan:
+                    if (actualVersion >requiredVersion) result.VerificationResult = VerificationResult.Passed;
+                    break;
+                case ControlDataMatchType.LesserThan:
+                    if (actualVersion < requiredVersion) result.VerificationResult = VerificationResult.Passed;
+                    break;
+                case ControlDataMatchType.Equals:
+                    if (actualVersion == requiredVersion) result.VerificationResult = VerificationResult.Passed;
+                    break;
                 case ControlDataMatchType.GreaterThanOrEqual:
                     if (actualVersion >= requiredVersion) result.VerificationResult = VerificationResult.Passed;
                     break;
@@ -395,8 +417,8 @@ namespace AzSK.ARMChecker.Lib
                     if (actualVersion <= requiredVersion) result.VerificationResult = VerificationResult.Passed;
                     break;
                 default:
-                     throw new ArgumentOutOfRangeException();
-             }
+                    throw new ArgumentOutOfRangeException();
+            }
             return result;
         }
         private static ControlResult EvaluateSecureParam(ResourceControl control, JObject resource)
@@ -425,12 +447,12 @@ namespace AzSK.ARMChecker.Lib
             }
             catch(Exception)
             {
-                 parameterType = null;
+                parameterType = null;
                 // No need to block execution, mark control as fail
             }
             if(parameterType.IsNotNullOrWhiteSpace() && parameterType.Equals("SecureString", StringComparison.OrdinalIgnoreCase))
             {
-               result.VerificationResult = VerificationResult.Passed;
+                result.VerificationResult = VerificationResult.Passed;
             }
             return result;
         }
@@ -444,7 +466,7 @@ namespace AzSK.ARMChecker.Lib
             result.VerificationResult = VerificationResult.Verify;
             return result;
         }
-    
+
         private static ControlResult EvaluateNullableSingleToken(ResourceControl control, JObject resource)
         {
             var result = ExtractSingleToken(control, resource, out object actual, out BooleanControlData match);
@@ -459,7 +481,7 @@ namespace AzSK.ARMChecker.Lib
                 result.VerificationResult = VerificationResult.Verify;
             }
             return result;
-          
+
         }
 
         private static ControlResult ExtractSingleToken<TV, TM>(ResourceControl control, JObject resource, out TV actual,
@@ -486,37 +508,24 @@ namespace AzSK.ARMChecker.Lib
                 else
                 {
                     var tokenValue = default(TV);
-                    bool paramterValueFound = false;
-                    // Check if current token is parameter 
-                    if (validateParameters && token.Value<String>().CheckIsParameter())
+                    string ARMtemplateFunctionType = token.Value<String>().CheckingFunctionType();
+                    switch (ARMtemplateFunctionType)
                     {
-                        var parameterKey = token.Value<String>().GetParameterKey();
-                        if (parameterKey != null)
-                        {
-                            // Check if parameter value is present in external parameter file
-                            if (_externalParametersDict.ContainsKey("parameters"))
-                            {
-                                JObject externalParameters = _externalParametersDict["parameters"].Value<JObject>();
-                                var externalParamValue = externalParameters.Properties().Where(p => p.Name == parameterKey).Select(p => p.Value["value"].Value<TV>());
-                                if (externalParamValue != null && externalParamValue.Count() > 0)
-                                {
-                                    paramterValueFound = true;
-                                    tokenValue = externalParamValue.First();
-                                }
-
-                            }
-                            // If parameter value is not present in external parameter file, check for default value
-                            if (!paramterValueFound)
-                            {
-                                JObject innerParameters = _armTemplate["parameters"].Value<JObject>();
-                                tokenValue = innerParameters.Properties().Where(p => p.Name == parameterKey).Select(p => p.Value["defaultValue"].Value<TV>()).FirstOrDefault();
-                            }
-                        }
-                    }
-                    else
-                    {
-                        tokenValue = token.Value<TV>();
-              
+                        case "parameters":
+                            tokenValue = functionParameters(validateParameters, token, tokenValue);
+                            break;
+                        case "variables":
+                            tokenValue = functionVariables(validateParameters, token, tokenValue);
+                            break;
+                        case "concat":
+                            tokenValue = functionConcat(validateParameters, token, tokenValue);
+                            break;
+                        case "substring":
+                            tokenValue = functionSubString(validateParameters, token, tokenValue);
+                            break;
+                        default:
+                            tokenValue = token.Value<TV>();
+                            break;
                     }
                     actual = tokenValue;
                 }
@@ -555,38 +564,28 @@ namespace AzSK.ARMChecker.Lib
                 else
                 {
                     var tokenValues = default(IEnumerable<TV>);
-                    bool paramterValueFound = false;
+                   
+
+                    string ARMtemplateFunctionType = null;
+                    if (tokens.Values<TV>().FirstOrDefault() != null)
+                    {
+                        ARMtemplateFunctionType = tokens.Values<TV>().First().ToString().CheckingFunctionType();
+                    }
+                    switch (ARMtemplateFunctionType)
+                    {
+                        case "parameters":
+                            tokenValues = functionMultiParameters(tokens, tokenValues);
+                            break;
+                        case "variables":
+                            tokenValues = functionMultiVariables(tokens, tokenValues);
+                            break;
+                        default:
+                            tokenValues = tokens.Values<TV>();
+                            break;
+                    }
+
                     // Check if current token is parameter 
-                    if (tokens.Values<TV>().FirstOrDefault() != null && tokens.Values<TV>().First().ToString().CheckIsParameter())
-                    {
-                        var parameterKey = tokens.Values<String>().First().GetParameterKey();
-                        if (parameterKey != null)
-                        {
-                            // Check if parameter value is present in external parameter file
-                            if (_externalParametersDict.ContainsKey("parameters"))
-                            {
-                                JObject externalParameters = _externalParametersDict["parameters"].Value<JObject>();
-                                var externalParamValue = externalParameters.Properties().Where(p => p.Name == parameterKey).Select(p => p.Value["value"].Values<TV>());
-                                if (externalParamValue != null && externalParamValue.Count() > 0)
-                                {
-                                    paramterValueFound = true;
-                                    tokenValues = externalParamValue.First();
-                                }
-
-                            }
-                            // If parameter value is not present in external parameter file, check for default value
-                            if (!paramterValueFound)
-                            {
-                                JObject innerParameters = _armTemplate["parameters"].Value<JObject>();
-                                tokenValues = innerParameters.Properties().Where(p => p.Name == parameterKey).Select(p => p.Value["defaultValue"].Values<TV>()).FirstOrDefault();
-                            }
-                        }
-                    }
-                    else
-                    {
-                        tokenValues = tokens.Values<TV>();
-
-                    }
+                    
                     actual = tokenValues;
                 }
                 //actual = tokenNotFound ? default(IEnumerable<TV>) : tokens.Values<TV>();
@@ -601,6 +600,225 @@ namespace AzSK.ARMChecker.Lib
             return result;
         }
 
-       
+        private static TV functionParameters<TV>(bool validateParameters, JToken token, TV tokenValue, bool paramterValueFound = false)
+        {
+            if (validateParameters && token.Value<String>().CheckIsParameter())
+            {
+                var parameterKey = token.Value<String>().GetParameterKey();
+                if (parameterKey != null)
+                {
+                    // Check if parameter value is present in external parameter file
+                    if (_externalParametersDict.ContainsKey("parameters"))
+                    {
+                        JObject externalParameters = _externalParametersDict["parameters"].Value<JObject>();
+                        var externalParamValue = externalParameters.Properties().Where(p => p.Name == parameterKey).Select(p => p.Value["value"].Value<TV>());
+                        if (externalParamValue != null && externalParamValue.Count() > 0)
+                        {
+                            paramterValueFound = true;
+                            tokenValue = externalParamValue.First();
+                        }
+
+                    }
+                    // If parameter value is not present in external parameter file, check for default value
+                    if (!paramterValueFound)
+                    {
+                        JObject innerParameters = _armTemplate["parameters"].Value<JObject>();
+                        tokenValue = innerParameters.Properties().Where(p => p.Name == parameterKey).Select(p => p.Value["defaultValue"].Value<TV>()).FirstOrDefault();
+                    }
+                }
+            }
+            else
+            {
+                tokenValue = token.Value<TV>();
+            }
+
+            return tokenValue;
+        }
+
+        private static TV functionVariables<TV>(bool validateParameters, JToken token, TV tokenValue, bool variableValueFound = false)
+        {
+            if (validateParameters && token.Value<String>().CheckIsVariable())
+            {
+                var variableKey = token.Value<String>().GetVariableKey();
+                if (variableKey != null)
+                {
+                    // Check if parameter value is present in external parameter file
+                    if (_externalParametersDict.ContainsKey("variables"))
+                    {
+                        JObject externalParameters = _externalParametersDict["variables"].Value<JObject>();
+                        var externalParamValue = externalParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value["value"].Value<TV>());
+                        if (externalParamValue != null && externalParamValue.Count() > 0)
+                        {
+                            variableValueFound = true;
+                            tokenValue = externalParamValue.First();
+                        }
+                    }
+                    // If parameter value is not present in external parameter file, check for default value
+                    if (!variableValueFound)
+                    {
+                        JObject innerParameters = _armTemplate["variables"].Value<JObject>();
+                        tokenValue = innerParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value["defaultValue"].Value<TV>()).FirstOrDefault();
+                    }
+                }
+            }
+            else
+            {
+                tokenValue = token.Value<TV>();
+            }
+            return tokenValue;
+        }
+
+        private static TV functionConcat<TV>(bool validateParameters, JToken token, TV tokenValue, bool concateValueFound = false)
+        {
+            TV currentTokenValue;
+            if (validateParameters && token.Value<String>().CheckIsConcat())
+            {
+                var concatKey = token.Value<String>().GetConcatKey();
+                string[] splitedConcatKey = concatKey.Split(',');
+                string joinSplitedString="";
+                foreach (var splitedKey in splitedConcatKey)
+                {
+                    if (splitedKey.StartsWith("parameters(", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var addBracketToSplitedKey = "[" + splitedKey + "]";
+                        currentTokenValue = functionParameters(validateParameters, addBracketToSplitedKey, tokenValue);
+                        joinSplitedString = joinSplitedString + currentTokenValue.ToString().Trim('"');
+                    }
+                    else if (splitedKey.StartsWith("variables(", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var addBracketToSplitedKey = "[" + splitedKey + "]";
+                        currentTokenValue = functionVariables(validateParameters, addBracketToSplitedKey, tokenValue);
+                        joinSplitedString = joinSplitedString + currentTokenValue.ToString().Trim('"');
+                    }
+                    else
+                    {
+                        joinSplitedString = joinSplitedString + splitedKey.Replace("'","").Trim();
+                    }
+                }
+                Type stringtype = typeof(string);
+                tokenValue = (TV)Convert.ChangeType(joinSplitedString,stringtype);
+               
+            }
+            else
+            {
+                tokenValue = token.Value<TV>();
+            }
+            return tokenValue;
+        }
+
+        private static TV functionSubString<TV>(bool validateParameters, JToken token, TV tokenValue, bool subStringValueFound = false)
+        {
+            TV currentTokenValue;
+            if (validateParameters && token.Value<String>().CheckIsSubString())
+            {
+                var SubStringKey = token.Value<String>().GetSubStringKey();
+                string[] splitedSubStringKey = SubStringKey.Split(',');
+                string stringToConvertSubString = splitedSubStringKey[0];
+                int startIndexOFString = Convert.ToInt32(splitedSubStringKey[1]);
+                int lengthOfSubString = Convert.ToInt32(splitedSubStringKey[2]);
+                
+                    if (stringToConvertSubString.StartsWith("parameters(", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var addBracketToSplitedKey = "[" + stringToConvertSubString + "]";
+                        currentTokenValue = functionParameters(validateParameters, addBracketToSplitedKey, tokenValue);
+                         stringToConvertSubString = currentTokenValue.ToString().Trim('"');
+                    }
+                    else if (stringToConvertSubString.StartsWith("variables(", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var addBracketToSplitedKey = "[" + stringToConvertSubString + "]";
+                        currentTokenValue = functionVariables(validateParameters, addBracketToSplitedKey, tokenValue);
+                        stringToConvertSubString = currentTokenValue.ToString().Trim('"');
+                    }
+                    else
+                    {
+                        stringToConvertSubString = stringToConvertSubString.Trim('"');
+                    }
+
+                String obtainSubStringFromString = stringToConvertSubString.Substring(startIndexOFString,lengthOfSubString);
+                Type stringType = typeof(string);
+                tokenValue = (TV)Convert.ChangeType(obtainSubStringFromString, stringType);
+
+            }
+            else
+            {
+                tokenValue = token.Value<TV>();
+            }
+            return tokenValue;
+        }
+
+
+        private static IEnumerable<TV> functionMultiParameters<TV>(IEnumerable<JToken> tokens, IEnumerable<TV> tokenValues, bool paramterValueFound = false)
+        {
+            if (tokens.Values<TV>().FirstOrDefault() != null && tokens.Values<TV>().First().ToString().CheckIsParameter())
+            {
+                var parameterKey = tokens.Values<String>().First().GetParameterKey();
+                if (parameterKey != null)
+                {
+                    // Check if parameter value is present in external parameter file
+                    if (_externalParametersDict.ContainsKey("parameters"))
+                    {
+                        JObject externalParameters = _externalParametersDict["parameters"].Value<JObject>();
+                        var externalParamValue = externalParameters.Properties().Where(p => p.Name == parameterKey).Select(p => p.Value["value"].Values<TV>());
+                        if (externalParamValue != null && externalParamValue.Count() > 0)
+                        {
+                            paramterValueFound = true;
+                            tokenValues = externalParamValue.First();
+                        }
+
+                    }
+                    // If parameter value is not present in external parameter file, check for default value
+                    if (!paramterValueFound)
+                    {
+                        JObject innerParameters = _armTemplate["parameters"].Value<JObject>();
+                        tokenValues = innerParameters.Properties().Where(p => p.Name == parameterKey).Select(p => p.Value["defaultValue"].Values<TV>()).FirstOrDefault();
+                    }
+                }
+            }
+            else
+            {
+                tokenValues = tokens.Values<TV>();
+
+            }
+
+            return tokenValues;
+        }
+
+        private static IEnumerable<TV> functionMultiVariables<TV>(IEnumerable<JToken> tokens, IEnumerable<TV> tokenValues, bool variableValueFound = false)
+        {
+            if (tokens.Values<TV>().FirstOrDefault() != null && tokens.Values<TV>().First().ToString().CheckIsVariable())
+            {
+                var variableKey = tokens.Values<String>().First().GetVariableKey();
+                if (variableKey != null)
+                {
+                    // Check if parameter value is present in external parameter file
+                    if (_externalParametersDict.ContainsKey("variables"))
+                    {
+                        JObject externalParameters = _externalParametersDict["variables"].Value<JObject>();
+                        var externalParamValue = externalParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value["value"].Values<TV>());
+                        if (externalParamValue != null && externalParamValue.Count() > 0)
+                        {
+                            variableValueFound = true;
+                            tokenValues = externalParamValue.First();
+                        }
+
+                    }
+                    // If parameter value is not present in external parameter file, check for default value
+                    if (!variableValueFound)
+                    {
+                        JObject innerParameters = _armTemplate["variables"].Value<JObject>();
+                        tokenValues = innerParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value["defaultValue"].Values<TV>()).FirstOrDefault();
+                    }
+                }
+            }
+            else
+            {
+                tokenValues = tokens.Values<TV>();
+            }
+            return tokenValues;
+        }
+
+        
+
+
     }
 }
