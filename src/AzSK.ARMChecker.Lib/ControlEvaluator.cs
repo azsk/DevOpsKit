@@ -626,6 +626,12 @@ namespace AzSK.ARMChecker.Lib
                         tokenValue = innerParameters.Properties().Where(p => p.Name == parameterKey).Select(p => p.Value["defaultValue"].Value<TV>()).FirstOrDefault();
                     }
                 }
+                else if (parameterKey==null)
+                {
+                    parameterKey = token.Value<String>().getParameterKeyFromInsideFunction();//here is variable function inside parameter function
+                    parameterKey = "[" + parameterKey + "]";
+                    tokenValue = functionVariables(validateParameters, parameterKey, tokenValue);
+                }
             }
             else
             {
@@ -659,6 +665,12 @@ namespace AzSK.ARMChecker.Lib
                         JObject innerParameters = _armTemplate["variables"].Value<JObject>();
                         tokenValue = innerParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value["defaultValue"].Value<TV>()).FirstOrDefault();
                     }
+                }
+                else if (variableKey == null)
+                {
+                    variableKey = token.Value<String>().getVariablesKeyFromInsideFunction();
+                    variableKey = "[" + variableKey + "]";
+                    tokenValue = functionParameters(validateParameters, variableKey, tokenValue);
                 }
             }
             else
