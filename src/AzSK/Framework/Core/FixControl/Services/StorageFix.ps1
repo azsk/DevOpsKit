@@ -40,29 +40,55 @@ class StorageFix: FixServicesBase
 		if($storageObject)
 		{
 			$serviceMapping = $this.ControlSettings.StorageKindMapping | Where-Object { $_.Kind -eq $storageObject.Kind } | Select-Object -First 1;
-        
+			$actionGrpId = ""
+
 			if($serviceMapping)
 			{
 				$targetId = $storageObject.Id
 
-				$alertName = $this.ResourceName + "alert"
+				Write-Host "Please enter alert name: " -ForegroundColor Cyan
+				$alertName = Read-Host "Alert Name"
+				$alertName = $alertName.Trim();
 				
-				$email = New-AzActionGroupReceiver -EmailReceiver
-				$actionGrp = Set-AzActionGroup -Receiver $email -ResourceGroupName $storageObject.ResourceGroupName
-				$actionGrpId = New-AzActionGroup -ActionGroupId $actionGrp.Id
-				$dimension = New-AzMetricAlertRuleV2DimensionSelection -DimensionName "Authentication" -ValuesToInclude "Anonymous"
-				$condition = New-AzMetricAlertRuleV2Criteria -MetricName "Transactions" -DimensionSelection $dimension -TimeAggregation Total -Operator GreaterThan -Threshold 0 -MetricNamespace "Microsoft.Storage/storageAccounts"
+				Write-Host "Please provide action group id: `n[0]: Create New action group`n[1]: Use existing action group" -ForegroundColor Cyan
+				$userChoice = Read-Host "User Choice"
+				$userChoice = $userChoice.Trim();
 				
-				Add-AzMetricAlertRuleV2  -ActionGroup $actionGrpId `
-					-Condition $condition `
-					-Name $alertName `
-					-ResourceGroupName $storageObject.ResourceGroupName `
-					-WindowSize 01:00:00 `
-					-Frequency 01:00:00 `
-					-TargetResourceId $targetId `
-					-Severity 3 `
-					-WarningAction SilentlyContinue `
-					-ErrorAction Stop
+				if([string]::IsNullOrWhiteSpace($userChoice) -or ($userChoice.Trim() -ne '0' -and $userChoice.Trim() -ne '1'))
+				{
+					Write-Host "Invalid option." -ForegroundColor Yellow
+				}
+				if ($userChoice.Trim() -eq '0' -or $userChoice.Trim() -eq '1')
+				{
+					if($userChoice.Trim() -eq '1')
+					{
+						Write-Host "Existing action group name for this resource group: " -ForegroundColor Cyan
+						$actionGrpName = Read-Host "Action Group Name"
+						$actionGrpName = $actionGrpName.Trim();
+						$actionGrp = Get-AzActionGroup -Name $actionGrpName -ResourceGroupName $storageObject.ResourceGroupName
+						$actionGrpId = New-AzActionGroup -ActionGroupId $actionGrp.Id
+					}
+					elseif($userChoice.Trim() -eq '0')
+					{
+						$email = New-AzActionGroupReceiver -EmailReceiver
+						$actionGrp = Set-AzActionGroup -Receiver $email -ResourceGroupName $storageObject.ResourceGroupName
+						$actionGrpId = New-AzActionGroup -ActionGroupId $actionGrp.Id
+					}
+
+					$dimension = New-AzMetricAlertRuleV2DimensionSelection -DimensionName "Authentication" -ValuesToInclude "Anonymous"
+					$condition = New-AzMetricAlertRuleV2Criteria -MetricName "Transactions" -DimensionSelection $dimension -TimeAggregation Total -Operator GreaterThan -Threshold 0 -MetricNamespace "Microsoft.Storage/storageAccounts"
+					
+					Add-AzMetricAlertRuleV2  -ActionGroup $actionGrpId `
+						-Condition $condition `
+						-Name $alertName `
+						-ResourceGroupName $storageObject.ResourceGroupName `
+						-WindowSize 01:00:00 `
+						-Frequency 01:00:00 `
+						-TargetResourceId $targetId `
+						-Severity 3 `
+						-WarningAction SilentlyContinue `
+						-ErrorAction Stop
+				}
 			}
 
 			$detailedLogs += [MessageData]::new("Alerts for anonymous authentication requests have been set up on storage [$($this.ResourceName)]");
