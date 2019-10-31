@@ -348,7 +348,7 @@ class PIM: AzCommandBase {
         if(($resource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resource.ExternalId)))
         {
             if (($assignments | Measure-Object).Count -gt 0 ) {
-                $matchingAssignment = $assignments | Where-Object { $_.OriginalId -in $resource.ExternalId -and $_.RoleName -eq $roleName -and $_.AssignmentState -eq 'Eligible' }
+                $matchingAssignment = $assignments | Where-Object { $_.OriginalId -in $resource.ExternalId -and $_.RoleName -eq $roleName }
                 if (($matchingAssignment | Measure-Object).Count -gt 0) {
                     $this.PublishCustomMessage("Requesting activation of your [$($matchingAssignment.RoleName)] role on [$($matchingAssignment.ResourceName)]... ", [MessageType]::Info);
                     $resourceId = $matchingAssignment.ResourceId
