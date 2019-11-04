@@ -143,7 +143,7 @@ class HDInsightClusterCA : CommandBase {
         if ($list.Count -eq 0) {
             $this.PublishCustomMessage("Required information not found. Please check if AzSK CA is installed on the cluster", [MessageType]::Error)
         } else {
-            $sortedList = $list | Sort LastModified -Descending
+            $sortedList = $list | Sort-Object LastModified -Descending
             $res = Get-AzStorageBlobContent -Blob $sortedList[0].Name -Container $this.ResourceContext.Container -Context $this.ResourceContext.StorageAccountContext -Destination $metapath -Force
             $json = (Get-Content -Path $metapath)
             $json = $json | ConvertFrom-Json
