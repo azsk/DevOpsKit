@@ -133,31 +133,33 @@ class APIManagement: AzSVTBase
 	
 	hidden [ControlResult] CheckAPIMProtocolsAndCiphersConfiguration([ControlResult] $controlResult)
     {
-		# TLS 1.2 is always enabled in case on APIM
 		$isNonCompliant = $false
-		$config_arr = @()
-		if( $null -ne $this.APIMContext)
-		{	
-		    $this.ResourceObject.properties.customProperties | Get-Member -MemberType Properties | `
+	    $nonCompliantConfigurations = @()
+		# TLS 1.2 is always enabled in case on APIM
+		# Here we check if old, unsecure protocol configurations are enabled
+		if ([Helpers]::CheckMember($this.ResourceObject, "properties.customProperties"))
+		{
+			$this.ResourceObject.properties.customProperties | Get-Member -MemberType Properties | `
 			Where-Object { $($this.ControlSettings.APIManagement.UnsecureProtocolsAndCiphersConfiguration) -contains $_.Name } | ` 
 			ForEach-Object {
-			    if ($this.ResourceObject.properties.customProperties."$($_.Name)" -eq 'true')
+				if ($this.ResourceObject.properties.customProperties."$($_.Name)" -eq 'true')
 				{
-				    $config_arr += @{ $_.Name = $this.ResourceObject.properties.customProperties."$($_.Name)" }
+					$nonCompliantConfigurations += @{ $_.Name = $this.ResourceObject.properties.customProperties."$($_.Name)" }
 					$isNonCompliant = $true
 				}
 			}
 
-		    if($isNonCompliant)
+			if($isNonCompliant)
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "TLS 1.2 is the latest and most secure protocol. Ensure that 3DES Ciphers, TLS protocols (1.1 and 1.0) and SSL 3.0 are disabled.", $($config_arr))
-				$controlResult.SetStateData("Enabled protocols and ciphers configuration", $config_arr);
+				$controlResult.AddMessage([VerificationResult]::Failed, "Ensure that protocols and ciphers configuration below are disabled.", $($nonCompliantConfigurations))
+				$controlResult.SetStateData("Below protocols and ciphers configuration are enabled", $($nonCompliantConfigurations));
 			}
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Passed, "3DES Ciphers, TLS protocols (1.1 and 1.0) and SSL 3.0 are disabled.")
+				$controlResult.AddMessage([VerificationResult]::Passed, "The old versions of protocols and ciphers configuration are disabled.")
 			}
 		}
+		
 		return $controlResult;
     }
     
