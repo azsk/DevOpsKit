@@ -18,7 +18,9 @@ class APIManagement: AzSVTBase
 	 hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = $this.ResourceContext.ResourceDetails
+            $this.ResourceObject = $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
+                                    -ResourceType $this.ResourceContext.ResourceType `
+                                    -ResourceGroupName $this.ResourceContext.ResourceGroupName
             if(-not $this.ResourceObject)
             {
                 throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))
@@ -101,6 +103,7 @@ class APIManagement: AzSVTBase
 		return $controlResult;
     }
 
+
     hidden [ControlResult] CheckSecretNamedValues([ControlResult] $controlResult)
     {
 		if( $null -ne $this.APIMContext)
@@ -123,6 +126,35 @@ class APIManagement: AzSVTBase
 			    {
 			        $controlResult.AddMessage([VerificationResult]::Passed, "")
 			    }
+			}
+		}
+		return $controlResult;
+	}
+	
+	hidden [ControlResult] CheckAPIMProtocolsAndCiphersConfiguration([ControlResult] $controlResult)
+    {
+		$isNonCompliant = $false
+		$config_arr = @()
+		if( $null -ne $this.APIMContext)
+		{	
+		    $this.ResourceObject.properties.customProperties | Get-Member -MemberType Properties | `
+			Where-Object { $($this.ControlSettings.APIManagement.UnsecureProtocolsAndCiphersConfiguration) -contains $_.Name } | ` 
+			ForEach-Object {
+			    if ($this.ResourceObject.properties.customProperties."$($_.Name)" -eq 'true')
+				{
+				    $config_arr += @{ $_.Name = $this.ResourceObject.properties.customProperties."$($_.Name)" }
+					$isNonCompliant = $true
+				}
+			}
+
+		    if($isNonCompliant)
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed, "TLS 1.2 is the latest and most secure protocol. Ensure that 3DES Ciphers, TLS protocols (1.1 and 1.0) and SSL 3.0 are disabled.", $($config_arr))
+				$controlResult.SetStateData("Enabled protocols and ciphers configuration", $config_arr);
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "3DES Ciphers, TLS protocols (1.1 and 1.0) and SSL 3.0 are disabled.")
 			}
 		}
 		return $controlResult;

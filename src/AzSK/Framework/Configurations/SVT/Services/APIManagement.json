@@ -110,7 +110,7 @@
                 "DeveloperSku",
                 "BasicSku",
                 "StandardSku",
-                "PremiumSku",                
+                "PremiumSku",
                 "APIManagement"
             ],
             "Enabled": true
@@ -142,14 +142,14 @@
             "Description": "Ensure that only the most secure and up to date version of TLS is enabled on the API gateway",
             "Id": "APIManagement170",
             "ControlSeverity": "High",
-            "Automated": "No",
-            "MethodName": "",
+            "Automated": "Yes",
+            "MethodName": "CheckAPIMProtocolsAndCiphersConfiguration",
             "Rationale": "TLS 1.2 is the latest and most secure protocol. Using 3DES Ciphers, TLS protocols (1.1 and 1.0) and SSL 3.0 exposes the API to meet-in-the-middle attack, chosen-plaintext or known-plaintext attacks.",
             "Recommendation": "Ensure that secure protocol versions are used between the client and the gateway *and* between the gateway and the backend APIs. Go to Azure Portal --> your API management instance --> Settings --> Protocol settings --> Turn OFF 3DES Ciphers, TLS protocols (1.1 and 1.0) and SSL 3.0 Protocols.",
             "Tags": [
                 "SDL",
                 "TCP",
-                "Manual",
+                "Automated",
                 "DP",
                 "DeveloperSku",
                 "BasicSku",
@@ -424,7 +424,7 @@
                 "APIManagement"
             ],
             "Enabled": true
-        },        
+        },
         {
             "ControlID": "Azure_APIManagement_DP_Dont_Checkin_Secrets_In_Source",
             "Description": "Do not include secrets directly in API configuration and policies",
@@ -548,16 +548,16 @@
             "Rationale": "Enabling 'Requires Approval' ensures that only users approved by API publisher can subscribe to a product.",
             "Recommendation": "To enable 'Requires Approval' go to Azure Portal --> your API management instance --> Products --> Settings --> Select 'Requires Approval'. Refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-subscriptions.",
             "Tags": [
-            "SDL",
-            "TCP",
-            "Manual",
-            "AuthZ",
-            "DeveloperSku",
-            "BasicSku",
-            "StandardSku",
-            "PremiumSku",
-            "APIManagement",
-            "APIMProducts"
+                "SDL",
+                "TCP",
+                "Manual",
+                "AuthZ",
+                "DeveloperSku",
+                "BasicSku",
+                "StandardSku",
+                "PremiumSku",
+                "APIManagement",
+                "APIMProducts"
             ],
             "Enabled": true
         }
