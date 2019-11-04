@@ -83,7 +83,7 @@
       "ControlSeverity": "High",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.�Incautious use of storage key in�AdlCopy command may result into exposure of the key to unauthorized users.",
+      "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks. Incautious use of storage key in AdlCopy command may result into exposure of the key to unauthorized users.",
       "Recommendation": "Use HTTPS URL for blob storage endpoint.",
       "Tags": [
         "SDL",
