@@ -48,6 +48,7 @@ class RoleAssignmentHelper
 
 			if($includeClassicAdministrators)
 			{
+
 				#Checking feature flighting status for CSP subs validating and accordingly making another attempt skipping -IncludeClassicAdministrators
 				if([FeatureFlightingManager]::GetFeatureStatus("EnableCSPSubsValidation",$subscriptionId) -eq $true)
 				{
@@ -63,6 +64,7 @@ class RoleAssignmentHelper
 					# If feature flighting is disabled, use existing code path
 					$roleAssignments = Get-AzRoleAssignment -IncludeClassicAdministrators -ErrorAction Stop;
 				}
+
 			}
 			else
 			{
@@ -70,7 +72,8 @@ class RoleAssignmentHelper
 			}
 			return $roleAssignments;
 		}
-        catch
+
+       catch
         {
 			# CA Scans running with SPN (which doesn't have graph API access) will always throw an exception 
 			# We absorb that and fall back to below custom API based approach.
@@ -121,6 +124,7 @@ class RoleAssignmentHelper
 			# We absorb that and fall back to below custom API based approach.
         }
 
+
 		$roleAssignments = [RoleAssignmentHelper]::GetAzSKRoleAssignment($resourceGroupName, "", "", $recurse, $includeClassicAdministrators);
 		
 		return $roleAssignments;
@@ -136,6 +140,7 @@ class RoleAssignmentHelper
 			$subscriptionId = $currentContext.Subscription.Id
 			if($includeClassicAdministrators)
 			{
+
 				#Checking feature flighting status for CSP subs validating and accordingly making another attempt skipping -IncludeClassicAdministrators
 				if([FeatureFlightingManager]::GetFeatureStatus("EnableCSPSubsValidation",$subscriptionId) -eq $true)
 				{
@@ -151,6 +156,7 @@ class RoleAssignmentHelper
 					# If feature flighting is disabled, use existing code path
 					$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ResourceName $resourceName -ResourceType $resourceType -IncludeClassicAdministrators -ErrorAction Stop;
 				}
+
 			}
 			else
 			{
@@ -158,11 +164,12 @@ class RoleAssignmentHelper
 			}
 			return $roleAssignments;
 		}
-        catch
+     catch
         {
 						# CA Scans running with SPN (which doesn't have graph API access) will always throw an exception 
 			# We absorb that and fall back to below custom API based approach.
         }
+
 
 		$currentContext = [ContextHelper]::GetCurrentRMContext();
         $subscriptionId = $currentContext.Subscription.Id;
