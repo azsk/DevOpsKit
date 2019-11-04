@@ -18,7 +18,7 @@ class APIManagement: AzSVTBase
 	 hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
+            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
                                     -ResourceType $this.ResourceContext.ResourceType `
                                     -ResourceGroupName $this.ResourceContext.ResourceGroupName
             if(-not $this.ResourceObject)
@@ -133,6 +133,7 @@ class APIManagement: AzSVTBase
 	
 	hidden [ControlResult] CheckAPIMProtocolsAndCiphersConfiguration([ControlResult] $controlResult)
     {
+		# TLS 1.2 is always enabled in case on APIM
 		$isNonCompliant = $false
 		$config_arr = @()
 		if( $null -ne $this.APIMContext)
