@@ -147,7 +147,65 @@
       "ResourceDetailsKeys": {
         "WorkspaceId": "Reporting workspace customer id"
       }
-    }
+    },
+    "ExcludeControlsForServices" : 
+      [
+        {
+          "FilterTag" : "FilterServiceFabric",
+          "ResourceTag": "resourceType",
+          "ResourceValue" :"Service Fabric",
+          "ServiceType" : "ServiceFabric"
+        },
+        {
+          "FilterTag" : "FilterKubernetes",
+          "ResourceTag": "Orchestrator",
+          "ResourceValue" :"Kubernetes",
+          "ServiceType" : "Kubernetes"
+        }
+     ]
+  },
+  "VirtualMachineScaleSet": {
+    "Windows": {
+      "SupportedSkuList": [],
+      "ManagementPortList": [
+        {
+          "Name": "RDP",
+          "Port": 3389
+        },
+        {
+          "Name": "WINRM",
+          "Port": 5985
+        }
+      ]
+    },
+    "Linux": {
+      "SupportedSkuList": [],
+      "ManagementPortList": [
+        {
+          "Name": "RDP",
+          "Port": 3389
+        },
+        {
+          "Name": "SSH",
+          "Port": 22
+        }
+      ]
+    },
+    "ExcludeControlsForServices" : 
+      [
+        {
+          "FilterTag" : "ExcludeForServiceFabric",
+          "ResourceTag": "resourceType",
+          "ResourceTagValue" :"Service Fabric",
+          "ServiceType" : "ServiceFabric"
+        },
+        {
+          "FilterTag" : "ExcludeKubernetes",
+          "ResourceTag": "Orchestrator",
+          "ResourceTagValue" :"Kubernetes",
+          "ServiceType" : "Kubernetes"
+        }
+     ]
   },
   "NoOfApprovedAdmins": 5,
   "NoOfClassicAdminsLimit": 2,

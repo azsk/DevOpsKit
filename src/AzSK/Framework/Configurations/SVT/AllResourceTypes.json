@@ -3,6 +3,7 @@
   "Microsoft.Storage/storageAccounts",
   "Microsoft.Web/sites",
   "Microsoft.Compute/virtualMachines",
+  "Microsoft.Compute/virtualMachineScaleSets",
   "Microsoft.Sql/servers",
   "Microsoft.ServiceBus/namespaces",
   "microsoft.insights/webtests",

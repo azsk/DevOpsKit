@@ -287,6 +287,12 @@ class SVTMapping
 			ClassName = "DBForMySql";
 			JsonFileName = "DBForMySql.json";
 			ResourceTypeName = "DBForMySql";
+    },
+    [ResourceTypeMapping]@{
+        ResourceType = "Microsoft.Compute/virtualMachineScaleSets";
+        JsonFileName = "VirtualMachineScaleSet.json";
+        ClassName = "VirtualMachineScaleSet";
+        ResourceTypeName = "VirtualMachineScaleSet";
     }
     );
 

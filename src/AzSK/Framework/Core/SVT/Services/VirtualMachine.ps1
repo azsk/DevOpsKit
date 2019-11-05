@@ -45,10 +45,11 @@ class VirtualMachine: AzSVTBase
 		{
 			$result += $controls | Where-Object { $_.Tags -contains "Windows" };;
 		}
-		if($this.VMDetails.IsVMConnectedToERvNet -and ($result | Where-Object { $_.Tags -contains "ERvNet" } | Measure-Object).Count -gt 0)
+		if($this.VMSSDetails.IsVMConnectedToERvNet -and ($result | Where-Object { $_.Tags -contains "ERvNet" } | Measure-Object).Count -gt 0)
 		{
 			$result=$result | Where-Object { $_.Tags -contains "ERvNet" };
 		}
+
 		# Applying filter to exclude certain controls for Databricks locked RG resources
 		if([Helpers]::CheckMember($this.ControlSettings, "DataBricksFilters.TagName") -and [Helpers]::CheckMember($this.ControlSettings, "DataBricksFilters.TagValue")){
 			if([Helpers]::CheckMember($this.ResourceObject, "Tags") -and $this.ResourceObject.Tags[$this.ControlSettings.DataBricksFilters.TagName] -eq $this.ControlSettings.DataBricksFilters.TagValue){
