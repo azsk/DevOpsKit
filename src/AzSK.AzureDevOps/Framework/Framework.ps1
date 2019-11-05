@@ -63,7 +63,6 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 . $PSScriptRoot\Helpers\RemoteReportHelper.ps1
 . $PSScriptRoot\Helpers\RemoteApiHelper.ps1
 . $PSScriptRoot\Core\PrivacyNotice.ps1
-. $PSScriptRoot\Helpers\RoleAssignmentHelper.ps1
 
 
 #Abstracts
