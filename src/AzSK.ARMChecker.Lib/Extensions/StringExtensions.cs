@@ -254,9 +254,6 @@ namespace AzSK.ARMChecker.Lib.Extensions
         public static string GetVariableKey(this string input)
         {
             var match = Regex.Match(input, @"variables\(\'(.*)\'\)");
-           // var match = Regex.Match(input, @"parameters\(\'(.*)\'\)");
-           // var match = Regex.Match(input, @"(?<=(?<open>\()).*(?=(?<close-open>\)))");
-           // var match = Regex.Match(input, @"parameters\(\'(.*)\'\)");
             if (match.Success)
             {
                 return match.Groups[1].Value;
@@ -270,10 +267,7 @@ namespace AzSK.ARMChecker.Lib.Extensions
 
         public static string GetConcatKey(this string input)
         {
-            //var match = Regex.Match(input, @"concat\(\'(.*)\'\)");
-            // var match = Regex.Match(input, @"parameters\(\'(.*)\'\)");
-             var match = Regex.Match(input, @"(?<=(?<open>\()).*(?=(?<close-open>\)))");
-            // var match = Regex.Match(input, @"parameters\(\'(.*)\'\)");
+            var match = Regex.Match(input, @"(?<=(?<open>\()).*(?=(?<close-open>\)))");
             if (match.Success)
             {
                 return match.Groups[0].Value;

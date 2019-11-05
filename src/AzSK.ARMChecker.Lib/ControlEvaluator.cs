@@ -179,7 +179,24 @@ namespace AzSK.ARMChecker.Lib
             var result = ExtractMultiToken(control, resource, out IEnumerable<object> actual, out IntegerValueControlData match);
             result.ExpectedValue = "Count " + match.Type.ToString() + " " + match.Value.ToString();
             result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
-            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
+            if (result.IsTokenNotFound || result.IsTokenNotValid)
+            {
+                if (match.IfNoPropertyFound == "Passed")
+                {
+                    result.VerificationResult = VerificationResult.Passed;
+                }
+                else if (match.IfNoPropertyFound == "Failed")
+                {
+                    result.VerificationResult = VerificationResult.Failed;
+                }
+                else if (match.IfNoPropertyFound == "Verify")
+                {
+                    result.VerificationResult = VerificationResult.Verify;
+                }
+
+            }
+            else
+            {
             var count = actual.Count();
             switch (match.Type)
             {
@@ -204,6 +221,7 @@ namespace AzSK.ARMChecker.Lib
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
             }
             return result;
         }

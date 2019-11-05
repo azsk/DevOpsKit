@@ -670,7 +670,8 @@
           "matchType": "VerifiableItemCount",
           "data": {
             "type": "All",
-            "value": 0
+            "value": 0,
+            "IfNoPropertyFound": "Verify"
           }
         }
       ]

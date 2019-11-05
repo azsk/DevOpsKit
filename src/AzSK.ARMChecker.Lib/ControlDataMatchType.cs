@@ -14,8 +14,9 @@ namespace AzSK.ARMChecker.Lib
         All,
         StringNotMatched,
         Limit,
-        BooleanPassIfNoProperty,
-        BooleanFailIfNoProperty,
-        BooleanVerifyIfNoProperty
+        PassIfPropertyNotFound,
+        FailIfPropertyNotFound,
+        VerifyIfPropertyNotFound,
+        
     }
 }
