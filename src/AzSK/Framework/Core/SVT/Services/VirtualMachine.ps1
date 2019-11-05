@@ -45,7 +45,7 @@ class VirtualMachine: AzSVTBase
 		{
 			$result += $controls | Where-Object { $_.Tags -contains "Windows" };;
 		}
-		if($this.VMSSDetails.IsVMConnectedToERvNet -and ($result | Where-Object { $_.Tags -contains "ERvNet" } | Measure-Object).Count -gt 0)
+		if($this.VMDetails.IsVMConnectedToERvNet -and ($result | Where-Object { $_.Tags -contains "ERvNet" } | Measure-Object).Count -gt 0)
 		{
 			$result=$result | Where-Object { $_.Tags -contains "ERvNet" };
 		}
