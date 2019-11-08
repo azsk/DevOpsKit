@@ -167,7 +167,7 @@
             "Windows",
             "Linux",
             "ERvNet",
-            "VirtualMachine"
+            "VirtualMachineScaleSet"
          ],
          "Enabled": true
       },
