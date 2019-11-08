@@ -111,7 +111,7 @@ namespace AzSK.ARMChecker.Lib
                 }
 
             }
-           //additionaldesiredstate: if everything is fine as security point of view.
+           // Control State to mark if desired property state is found.
             else if (actual == match.Value && match.ControlDesiredState == "Passed")
             {
                 result.VerificationResult = VerificationResult.Passed;
@@ -527,6 +527,7 @@ namespace AzSK.ARMChecker.Lib
                 {
                     var tokenValue = default(TV);
                     string ARMtemplateFunctionType = token.Value<String>().GetFunctionType();
+                    // Switch Case to call particular function on the basis of its function type which may be parameters(), variables(),concat() and Substring(). 
                     switch (ARMtemplateFunctionType)
                     {
                         case "parameters":
