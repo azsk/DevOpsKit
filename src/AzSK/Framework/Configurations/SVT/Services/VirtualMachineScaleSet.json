@@ -76,7 +76,7 @@
          "ControlSeverity": "Low",
          "Automated": "Yes",
          "MethodName": "CheckVMSSAppHealthMonitoring",
-         "Rationale": "",
+         "Rationale": "Monitoring health of applications deployed to VMSS is important for managing and upgrading instances, various upgrade features like automatic OS image upgarde rely on health monitoring of individual instances.",
          "Recommendation": "Go to Azure Portal --> VM Scale Set --> Settings -> Health & Repair -> Monitor Application health -> click on 'Enabled'. For more help, please refer: https://docs.microsoft.com/en-in/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-health-extension",
          "Tags": [
             "SDL",
@@ -120,7 +120,7 @@
          "ControlSeverity": "High",
          "Automated": "Yes",
          "MethodName": "CheckVMSSInstancesStatus",
-         "Rationale": "",
+         "Rationale": "All the security configurations applied on VM Scale set will be effective only if all the individual VM instances in Scale Set is up-to-date with the latest overall Scale Set model",
          "Recommendation": "Please refer: https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-upgrade-scale-set#how-to-bring-vms-up-to-date-with-the-latest-scale-set-model.",
          "Tags": [
             "SDL",
