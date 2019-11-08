@@ -1186,6 +1186,8 @@ class SubscriptionCore: AzSVTBase
 		$AppSvcASCTier = $this.SecurityCenterInstance.AppSvcASCTier;
 		$StorageASCTier = $this.SecurityCenterInstance.StorageASCTier;
 
+		[string[]] $MisconfiguredASCTier = @(); #This will store information of all the misconfigured ASC pricing tier for individual resource types.
+
 		if(-not [string]::IsNullOrWhiteSpace($ascTierContentDetails))		
 		{
 			[bool] $bool = $true;
@@ -1206,7 +1208,7 @@ class SubscriptionCore: AzSVTBase
 				$VM = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.VirtualMachines -contains $VMASCTier)
 				if(-not $VM)
 				{
-					$controlResult.AddMessage("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.VirtualMachines) pricing tier is not configured for virtual machines.")
+					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.VirtualMachines) pricing tier is not configured for virtual machines.")	
 				}
 				
 				$bool = $bool -and $VM
@@ -1217,7 +1219,7 @@ class SubscriptionCore: AzSVTBase
 				$SQL = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.SqlServers -contains $SQLASCTier)
 				if(-not $SQL)
 				{
-					$controlResult.AddMessage("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.SqlServers) pricing tier is not configured for SQL servers.")
+					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.SqlServers) pricing tier is not configured for SQL servers.")
 				}
 				
 				$bool = $bool -and $SQL
@@ -1228,7 +1230,7 @@ class SubscriptionCore: AzSVTBase
 				$AppSvc = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.AppServices -contains $AppSvcASCTier)
 				if(-not $AppSvc)
 				{
-					$controlResult.AddMessage("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.AppServices) pricing tier is not configured for app services.")
+					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.AppServices) pricing tier is not configured for app services.")
 				}
 
 				$bool = $bool -and $AppSvc
@@ -1239,19 +1241,21 @@ class SubscriptionCore: AzSVTBase
 				$Storage = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.StorageAccounts -contains $StorageASCTier)
 				if(-not $Storage)
 				{
-					$controlResult.AddMessage("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.StorageAccounts) pricing tier is not configured for storage accounts.")
+					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.StorageAccounts) pricing tier is not configured for storage accounts.")
 				}
 				
 				$bool = $bool -and $Storage
 			}
 
+			$this.SubscriptionContext.SubscriptionMetadata.Add("MisconfiguredASCTier",$MisconfiguredASCTier); #Adding misconfigured ASC tier in the metadata.
 			if($bool)			
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed, "Expected pricing tier is configured for ASC." )
 			}
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "`nExpected pricing tier is not configured for ASC. `n" )
+				$controlResult.SetStateData("Expected pricing tier is not configured for ASC.", $MisconfiguredASCTier);
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Expected pricing tier is not configured for ASC.", $MisconfiguredASCTier));
 			}
 		}
 		return $controlResult
