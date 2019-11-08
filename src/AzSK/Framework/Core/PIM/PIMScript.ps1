@@ -913,6 +913,10 @@ class PIM: AzCommandBase {
                         $policyString= '{"ruleIdentifier":"AcrsRule","setting":"{\"acrsRequired\":true,\"acrs\":\"'+$policyTag+'\"}"}'
                         
                     }
+                    else
+                    {
+                        $policyString= '{"ruleIdentifier":"AcrsRule","setting":"{\"acrsRequired\":false,\"acrs\":\"'+$policyTag+'\"}"}'
+                    }
                }
                if($null -ne $RequireMFAOnActivation)
                {
@@ -922,6 +926,7 @@ class PIM: AzCommandBase {
                           $policyString= '{"ruleIdentifier":"AcrsRule","setting":"{\"acrsRequired\":false,\"acrs\":\"'+$policyTag+'\"}"}'
                         
                     }
+                  
                }
         #  5) Create json body for patch request  
                $body=""
