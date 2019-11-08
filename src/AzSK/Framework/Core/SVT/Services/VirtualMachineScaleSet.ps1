@@ -62,13 +62,13 @@ class VirtualMachineScaleSet: AzSVTBase
 
 	hidden  GetVMSSDetails()
 	{
-		if([Helpers]::CheckMember($this.ResourceObject.VirtualMachineProfile.StorageProfile,"OsDisk.OsType"))
+		if([Helpers]::CheckMember($this.ResourceObject,"VirtualMachineProfile.StorageProfile") -and [Helpers]::CheckMember($this.ResourceObject.VirtualMachineProfile.StorageProfile,"OsDisk.OsType"))
 		{
 			$this.VMSSDetails.OSType = $this.ResourceObject.StorageProfile.OsDisk.OsType
 		}
 		else
 		{
-			if($this.ResourceObject.VirtualMachineProfile.OSProfile -and $this.ResourceObject.VirtualMachineProfile.OSProfile.LinuxConfiguration)
+			if([Helpers]::CheckMember($this.ResourceObject,"VirtualMachineProfile.OSProfile") -and $this.ResourceObject.VirtualMachineProfile.OSProfile.LinuxConfiguration)
 			{
 				$this.VMSSDetails.OSType = [OperatingSystemTypes]::Linux
 			}
@@ -78,7 +78,7 @@ class VirtualMachineScaleSet: AzSVTBase
 			}
 		}
 
-		if($this.ResourceObject.VirtualMachineProfile.StorageProfile -and $this.ResourceObject.VirtualMachineProfile.StorageProfile.ImageReference)
+		if([Helpers]::CheckMember($this.ResourceObject,"VirtualMachineProfile.StorageProfile") -and $this.ResourceObject.VirtualMachineProfile.StorageProfile.ImageReference)
 		{
 			$this.VMSSDetails.Sku =  $this.ResourceObject.VirtualMachineProfile.StorageProfile.ImageReference.Sku
 			$this.VMSSDetails.Offer = $this.ResourceObject.VirtualMachineProfile.StorageProfile.ImageReference.Offer
@@ -333,8 +333,13 @@ class VirtualMachineScaleSet: AzSVTBase
 				}
 
 			}else {
-				$controlResult.VerificationResult = [VerificationResult]::Failed
-				$controlResult.AddMessage("Disk encryption is not enabled for VM Scale Set.")
+				if([Helpers]::CheckMember($this.ResourceObject,"VirtualMachineProfile.StorageProfile") ){
+					$controlResult.VerificationResult = [VerificationResult]::Failed
+					$controlResult.AddMessage("Disk encryption is not enabled for VM Scale Set.")
+				}else{
+					$controlResult.VerificationResult = [VerificationResult]::Manual
+					$controlResult.AddMessage("Not able to fetch 'Encryption' state for OS and Data disks. Please verify manually that both Data and OS disks should be encrypted.");
+				}
 			}
 		}else{
 			$controlResult.VerificationResult = [VerificationResult]::Manual
@@ -386,27 +391,32 @@ class VirtualMachineScaleSet: AzSVTBase
 	hidden [ControlResult] CheckVMSSPublicIP([ControlResult] $controlResult)
 	{	
 		$publicIps = @();
-		$vmssPublicIPs = Get-AzPublicIpAddress -ResourceGroupName $this.ResourceContext.ResourceGroupName -VirtualMachineScaleSetName $this.ResourceContext.ResourceName  -WarningAction SilentlyContinue 
-		if($null -ne $vmssPublicIPs -and ($vmssPublicIPs | Measure-Object).Count -gt 0){
-			$publicIps = $vmssPublicIPs |  Select-Object "Name", "ResourceGroupName", "PublicIpAllocationMethod", "IpAddress", "Id"
-		}
-		if($this.VMSSDetails.IsVMSSConnectedToERvNet)
-		{
-			$controlResult.AddMessage("This VMSS is part of an ExpressRoute connected virtual network. You must not have any Public IP assigned to such VMSS.");
-		}
-		if($publicIps.Count -gt 0 -and $this.VMSSDetails.IsVMSSConnectedToERvNet)
-		{              
-			$controlResult.AddMessage([VerificationResult]::Failed, "Following Public IPs are configured on VMSS", $publicIps);  
-			#$controlResult.SetStateData("Public IP(s) associated with Virtual Machine Scale Set", $publicIps);
-		}
-		elseif($publicIps.Count -gt 0)
-		{
-			$controlResult.AddMessage([VerificationResult]::Verify, "Validate Public IP(s) associated with Virtual Machine Scale Set. Total - $($publicIps.Count)", $publicIps);  
-			#$controlResult.SetStateData("Public IP(s) associated with Virtual Machine Scale Set", $publicIps);
-		}
-		else
-		{
-			$controlResult.AddMessage([VerificationResult]::Passed, "No Public IP is associated with Virtual Machine Scale Set.");
+		if([Helpers]::CheckMember($this.ResourceObject,"VirtualMachineProfile.NetworkProfile")){
+			$vmssPublicIPs = Get-AzPublicIpAddress -ResourceGroupName $this.ResourceContext.ResourceGroupName -VirtualMachineScaleSetName $this.ResourceContext.ResourceName  -WarningAction SilentlyContinue 
+			if($null -ne $vmssPublicIPs -and ($vmssPublicIPs | Measure-Object).Count -gt 0){
+				$publicIps = $vmssPublicIPs |  Select-Object "Name", "ResourceGroupName", "PublicIpAllocationMethod", "IpAddress", "Id"
+			}
+			if($this.VMSSDetails.IsVMSSConnectedToERvNet)
+			{
+				$controlResult.AddMessage("This VMSS is part of an ExpressRoute connected virtual network. You must not have any Public IP assigned to such VMSS.");
+			}
+			if($publicIps.Count -gt 0 -and $this.VMSSDetails.IsVMSSConnectedToERvNet)
+			{              
+				$controlResult.AddMessage([VerificationResult]::Failed, "Following Public IPs are configured on VMSS", $publicIps);  
+				#$controlResult.SetStateData("Public IP(s) associated with Virtual Machine Scale Set", $publicIps);
+			}
+			elseif($publicIps.Count -gt 0)
+			{
+				$controlResult.AddMessage([VerificationResult]::Verify, "Validate Public IP(s) associated with Virtual Machine Scale Set. Total - $($publicIps.Count)", $publicIps);  
+				#$controlResult.SetStateData("Public IP(s) associated with Virtual Machine Scale Set", $publicIps);
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "No Public IP is associated with Virtual Machine Scale Set.");
+			}
+		}else{
+			$controlResult.VerificationResult = [VerificationResult]::Manual;
+			$controlResult.AddMessage("Not able to fetch Network configurations for VM Scale Set.");	
 		}
 		return $controlResult;
 	}
