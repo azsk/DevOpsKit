@@ -179,7 +179,7 @@
     "ExcludeControlsForServices" : 
       [
         {
-          "FilterTag" : "ExcludeForServiceFabric",
+          "FilterTag" : "ExcludeServiceFabric",
           "ResourceTag": "resourceType",
           "ResourceTagValue" :"Service Fabric",
           "ServiceType" : "ServiceFabric"
