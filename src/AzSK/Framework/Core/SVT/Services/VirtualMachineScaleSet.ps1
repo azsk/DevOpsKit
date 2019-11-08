@@ -48,11 +48,11 @@ class VirtualMachineScaleSet: AzSVTBase
 			$result=$result | Where-Object { $_.Tags -contains "ERvNet" };
 		}
 		# Applying filter to exclude certain controls based on Tag Key-Value 
-		if([Helpers]::CheckMember($this.ControlSettings.VirtualMachineScaleSet, "ExcludeControlsForServices") -and [Helpers]::CheckMember($this.ResourceObject, "Tags")){
-			$this.ControlSettings.VirtualMachineScaleSet.ExcludeControlsForServices | ForEach-Object {
+		if([Helpers]::CheckMember($this.ControlSettings.VirtualMachineScaleSet, "ControlExclusionsByService") -and [Helpers]::CheckMember($this.ResourceObject, "Tags")){
+			$this.ControlSettings.VirtualMachineScaleSet.ControlExclusionsByService | ForEach-Object {
 				if($this.ResourceObject.Tags[$_.ResourceTag] -like $_.ResourceTagValue){
-					$filterTag = $_.FilterTag
-					$result=$result | Where-Object { $_.Tags -notcontains $filterTag };
+					$controlTag = $_.ControlTag
+					$result=$result | Where-Object { $_.Tags -notcontains $controlTag };
 				}
 			}
 		}

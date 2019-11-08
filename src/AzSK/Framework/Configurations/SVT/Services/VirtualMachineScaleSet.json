@@ -41,6 +41,8 @@
             "Windows",
             "SI",
             "ERvNet",
+            "ExcludeServiceFabric",
+            "ExcludeKubernetes",
             "VirtualMachineScaleSet"
          ],
          "Enabled": true
@@ -84,6 +86,8 @@
             "Windows",
             "Linux",
             "ERvNet",
+            "ExcludeServiceFabric",
+            "ExcludeKubernetes",
             "VirtualMachineScaleSet"
          ],
          "Enabled": true
@@ -104,6 +108,7 @@
             "DP",
             "Windows",
             "ERvNet",
+            "ExcludeKubernetes",
             "VirtualMachineScaleSet"
          ],
          "Enabled": true
@@ -125,6 +130,8 @@
             "Linux",
             "Windows",
             "ERvNet",
+            "ExcludeServiceFabric",
+            "ExcludeKubernetes",
             "VirtualMachineScaleSet"
          ],
          "Enabled": true

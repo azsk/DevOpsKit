@@ -176,16 +176,16 @@
         }
       ]
     },
-    "ExcludeControlsForServices" : 
+    "ControlExclusionsByService" : 
       [
         {
-          "FilterTag" : "ExcludeServiceFabric",
+          "ControlTag" : "ExcludeServiceFabric",
           "ResourceTag": "resourceType",
           "ResourceTagValue" :"Service Fabric",
           "ServiceType" : "ServiceFabric"
         },
         {
-          "FilterTag" : "ExcludeKubernetes",
+          "ControlTag" : "ExcludeKubernetes",
           "ResourceTag": "Orchestrator",
           "ResourceTagValue" :"Kubernetes*",
           "ServiceType" : "Kubernetes"
