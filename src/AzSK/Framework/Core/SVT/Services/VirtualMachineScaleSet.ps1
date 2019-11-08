@@ -11,7 +11,7 @@ class VirtualMachineScaleSet: AzSVTBase
 	hidden [PSVirtualMachineScaleSetVMList] $VMInstances;
 	hidden [PSNetworkInterface[]] $VMNICs = $null;
 	hidden [PSObject] $ASCSettings = $null;
-	hidden [bool] $IsVMDeallocated = $false
+	hidden [bool] $IsVMSSDeallocated = $false
 	hidden [VMSSDetails] $VMSSDetails = [VMSSDetails]::new()
 	hidden [PSObject] $VMSSControlSettings = $null;
 	hidden [string] $Workspace = "";
@@ -107,7 +107,8 @@ class VirtualMachineScaleSet: AzSVTBase
             }
 			
 			#compute ASC object for VMSS
-			$this.ASCSettings = $this.GetASCSettings();
+			# Commenting this as we are not using any ASC data for now
+			#$this.ASCSettings = $this.GetASCSettings();
         }
         return $this.ResourceObject;
     }
