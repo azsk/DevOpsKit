@@ -526,7 +526,7 @@ namespace AzSK.ARMChecker.Lib
                 else
                 {
                     var tokenValue = default(TV);
-                    string ARMtemplateFunctionType = token.Value<String>().CheckingFunctionType();
+                    string ARMtemplateFunctionType = token.Value<String>().GetFunctionType();
                     switch (ARMtemplateFunctionType)
                     {
                         case "parameters":
@@ -587,7 +587,7 @@ namespace AzSK.ARMChecker.Lib
                     string ARMtemplateFunctionType = null;
                     if (tokens.Values<TV>().FirstOrDefault() != null)
                     {
-                        ARMtemplateFunctionType = tokens.Values<TV>().First().ToString().CheckingFunctionType();
+                        ARMtemplateFunctionType = tokens.Values<TV>().First().ToString().GetFunctionType();
                     }
                     switch (ARMtemplateFunctionType)
                     {
@@ -646,7 +646,7 @@ namespace AzSK.ARMChecker.Lib
                 }
                 else if (parameterKey==null)
                 {
-                    parameterKey = token.Value<String>().getParameterKeyFromInsideFunction();//here is variable function inside parameter function
+                    parameterKey = token.Value<String>().GetParameterKeyFromInsideFunction();//here is variable function inside parameter function
                     parameterKey = "[" + parameterKey + "]";
                     tokenValue = functionVariables(validateParameters, parameterKey, tokenValue);
                 }
@@ -666,7 +666,7 @@ namespace AzSK.ARMChecker.Lib
                 var variableKey = token.Value<String>().GetVariableKey();
                 if (variableKey != null)
                 {
-                    // Check if parameter value is present in external parameter file
+                    // Check if variable value is present in external parameter file
                     if (_externalParametersDict.ContainsKey("variables"))
                     {
                         JObject externalParameters = _externalParametersDict["variables"].Value<JObject>();
@@ -677,7 +677,7 @@ namespace AzSK.ARMChecker.Lib
                             tokenValue = externalParamValue.First();
                         }
                     }
-                    // If parameter value is not present in external parameter file, check for default value
+                    // If variable value is not present in external parameter file, check for default value
                     if (!variableValueFound)
                     {
                         JObject innerParameters = _armTemplate["variables"].Value<JObject>();
@@ -686,7 +686,7 @@ namespace AzSK.ARMChecker.Lib
                 }
                 else if (variableKey == null)
                 {
-                    variableKey = token.Value<String>().getVariablesKeyFromInsideFunction();
+                    variableKey = token.Value<String>().GetVariablesKeyFromInsideFunction();
                     variableKey = "[" + variableKey + "]";
                     tokenValue = functionParameters(validateParameters, variableKey, tokenValue);
                 }
@@ -820,7 +820,7 @@ namespace AzSK.ARMChecker.Lib
                 var variableKey = tokens.Values<String>().First().GetVariableKey();
                 if (variableKey != null)
                 {
-                    // Check if parameter value is present in external parameter file
+                    // Check if variable value is present in external parameter file
                     if (_externalParametersDict.ContainsKey("variables"))
                     {
                         JObject externalParameters = _externalParametersDict["variables"].Value<JObject>();
@@ -832,7 +832,7 @@ namespace AzSK.ARMChecker.Lib
                         }
 
                     }
-                    // If parameter value is not present in external parameter file, check for default value
+                    // If variable value is not present in external parameter file, check for default value
                     if (!variableValueFound)
                     {
                         JObject innerParameters = _armTemplate["variables"].Value<JObject>();
