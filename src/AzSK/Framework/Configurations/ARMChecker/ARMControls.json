@@ -661,7 +661,7 @@
           "id": "AppService380",
           "apiVersions": [ "2016-08-01" ],
           "controlId": "Azure_AppService_DP_Restrict_CORS_Access",
-          "isEnabled": true,
+          "isEnabled": false,
           "description": "Ensure that CORS access is granted to a limited set of trusted origins.",
           "rationale": "CORS enables applications running under one domain to access a resource under another domain. Using '*' (allow all) for CORS setting means that an application running under any domain can have access to your application's resources and data. Restricting allowed origins to the specific set that needs access aligns with the principle of least privilege.",
           "recommendation": "Go to Azure Portal --> your App Service --> API --> CORS --> Provide the specific domain names that should be allowed to make cross-origin calls. Note: No action is needed if you are not using CORS for your app.",
@@ -1218,6 +1218,55 @@
           "data": {
             "type": "StringNotMatched",
             "value": "premium",
+            "isCaseSensitive": false
+          }
+        }
+
+      ]
+    },
+    {
+      "featureName": "DBforPostgreSQL",
+      "supportedResourceTypes": [ "Microsoft.DBforPostgreSQL/servers" , "Microsoft.DBforPostgreSQL/servers/configurations" ],
+      "controls": [
+        {
+          "id": "DBforPostgreSQL120",
+          "controlId": "Azure_DBforPostgreSQL_AuthZ_Enable_SSL_Connection",
+          "isEnabled": true,
+          "description": "SSL connection must be enabled for Azure Database for PostgreSQL",
+          "rationale": "Enforcing SSL connections between your database server and your client applications helps protect against 'man-in-the-middle' attacks by encrypting the data stream between the server and your application.",
+          "recommendation": "To enable SSL connection for Azure Database for PostgreSQL server, refer https://docs.microsoft.com/en-us/azure/postgresql/concepts-ssl-connection-security.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.sslEnforcement" ],
+          "matchType": "MatchStringSingleToken",
+          "data": {
+            "value": "Enabled",
+            "Type": "StringMatched",
+            "IfNoPropertyFound": "Passed",
+            "isCaseSensitive": false
+          }
+        }
+
+      ]
+    },
+
+    {
+      "featureName": "DBforMySQL",
+      "supportedResourceTypes": [ "Microsoft.DBforMySQL/servers" ],
+      "controls": [
+        {
+          "id": "DBforMySQL120",
+          "controlId": "Azure_DBforMySQL_Authz_Enable_SSL_Connection",
+          "isEnabled": true,
+          "description": "SSL connection must be enabled for Azure Database for MySQL",
+          "rationale": "Enforcing SSL connections between your database server and your client applications helps protect against 'man in the middle' attacks by encrypting the data stream between the server and your application.",
+          "recommendation": "To enable SSL connection for Azure Database for MySQL server, refer https://docs.microsoft.com/en-us/azure/mysql/concepts-ssl-connection-security.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.sslEnforcement" ],
+          "matchType": "MatchStringSingleToken",
+          "data": {
+            "value": "Enabled",
+            "Type": "StringMatched",
+            "IfNoPropertyFound": "Passed",
             "isCaseSensitive": false
           }
         }

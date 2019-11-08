@@ -96,9 +96,10 @@ namespace AzSK.ARMChecker.Lib.Extensions
             return result; ;
         }
 
-        public static bool CheckIsFunction(this string input)
+        // Checking inputFunction string is an function or not. 
+        public static bool CheckIsFunction(this string inputFunction)
         {
-            if (input.StartsWith("[") && input.EndsWith("]"))
+            if (inputFunction.StartsWith("[") && inputFunction.EndsWith("]"))
             {
                 return true;
             }
@@ -108,35 +109,14 @@ namespace AzSK.ARMChecker.Lib.Extensions
             }
         }
 
-        public static bool CheckIsParameter(this string input)
+        // Checking inputParameters string is an parameters() type function.
+        public static bool CheckIsParameter(this string inputParameters)
         {
-            if (input.CheckIsFunction())
+            if (inputParameters.CheckIsFunction())
             {
-                input = input.Remove(0, 1).Trim();
-                input = input.Remove(input.Length - 1, 1).Trim();
-                if(input.StartsWith("parameters(", StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
- 
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        public static bool CheckIsVariable(this string input)
-        {
-            if (input.CheckIsFunction())
-            {
-                input = input.Remove(0, 1).Trim();
-                input = input.Remove(input.Length - 1, 1).Trim();
-                if (input.StartsWith("variables(", StringComparison.OrdinalIgnoreCase))
+                inputParameters = inputParameters.Remove(0, 1).Trim();
+                inputParameters = inputParameters.Remove(inputParameters.Length - 1, 1).Trim();
+                if (inputParameters.StartsWith("parameters(", StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -152,13 +132,14 @@ namespace AzSK.ARMChecker.Lib.Extensions
             }
         }
 
-        public static bool CheckIsConcat(this string input)
+        // Checking inputVariables string is an variables() type function.
+        public static bool CheckIsVariable(this string inputVariables)
         {
-            if (input.CheckIsFunction())
+            if (inputVariables.CheckIsFunction())
             {
-                input = input.Remove(0, 1).Trim();
-                input = input.Remove(input.Length - 1, 1).Trim();
-                if (input.StartsWith("concat(", StringComparison.OrdinalIgnoreCase))
+                inputVariables = inputVariables.Remove(0, 1).Trim();
+                inputVariables = inputVariables.Remove(inputVariables.Length - 1, 1).Trim();
+                if (inputVariables.StartsWith("variables(", StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -174,13 +155,14 @@ namespace AzSK.ARMChecker.Lib.Extensions
             }
         }
 
-        public static bool CheckIsSubString(this string input)
+        // Checking inputConcat string is an concat() type function.
+        public static bool CheckIsConcat(this string inputConcat)
         {
-            if (input.CheckIsFunction())
+            if (inputConcat.CheckIsFunction())
             {
-                input = input.Remove(0, 1).Trim();
-                input = input.Remove(input.Length - 1, 1).Trim();
-                if (input.StartsWith("substring(", StringComparison.OrdinalIgnoreCase))
+                inputConcat = inputConcat.Remove(0, 1).Trim();
+                inputConcat = inputConcat.Remove(inputConcat.Length - 1, 1).Trim();
+                if (inputConcat.StartsWith("concat(", StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -196,27 +178,49 @@ namespace AzSK.ARMChecker.Lib.Extensions
             }
         }
 
-
-        //wip
-        public static string CheckingFunctionType(this string input)
+        // Checking inputSubstring string is an Substring() type function.
+        public static bool CheckIsSubString(this string inputSubstring)
         {
-            if (input.CheckIsFunction())
+            if (inputSubstring.CheckIsFunction())
             {
-                input = input.Remove(0, 1).Trim();
-                input = input.Remove(input.Length - 1, 1).Trim();
-                if (input.StartsWith("parameters(", StringComparison.OrdinalIgnoreCase))
+                inputSubstring = inputSubstring.Remove(0, 1).Trim();
+                inputSubstring = inputSubstring.Remove(inputSubstring.Length - 1, 1).Trim();
+                if (inputSubstring.StartsWith("substring(", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        // Checking function type of checkingInputFunctionType string, its function type may be is parameters(), variables(), concat() or substring().
+        public static string CheckingFunctionType(this string checkingInputFunctionType)
+        {
+            if (checkingInputFunctionType.CheckIsFunction())
+            {
+                checkingInputFunctionType = checkingInputFunctionType.Remove(0, 1).Trim();
+                checkingInputFunctionType = checkingInputFunctionType.Remove(checkingInputFunctionType.Length - 1, 1).Trim();
+                if (checkingInputFunctionType.StartsWith("parameters(", StringComparison.OrdinalIgnoreCase))
                 {
                     return "parameters";
                 }
-                else if (input.StartsWith("variables(", StringComparison.OrdinalIgnoreCase))
+                else if (checkingInputFunctionType.StartsWith("variables(", StringComparison.OrdinalIgnoreCase))
                 {
                     return "variables";
                 }
-                else if (input.StartsWith("concat(", StringComparison.OrdinalIgnoreCase))
+                else if (checkingInputFunctionType.StartsWith("concat(", StringComparison.OrdinalIgnoreCase))
                 {
                     return "concat";
                 }
-                else if (input.StartsWith("substring(", StringComparison.OrdinalIgnoreCase))
+                else if (checkingInputFunctionType.StartsWith("substring(", StringComparison.OrdinalIgnoreCase))
                 {
                     return "substring";
                 }
@@ -231,29 +235,10 @@ namespace AzSK.ARMChecker.Lib.Extensions
             }
         }
 
-
-        //wip
-
-
-
-
-        public static string GetParameterKey(this string input)
+        // Here inputParameters hold parameters() function, Getting key value from inputParameters string. 
+        public static string GetParameterKey(this string inputParameters)
         {
-            var match = Regex.Match(input, @"parameters\(\'(.*)\'\)");
-            if(match.Success)
-            {
-                return match.Groups[1].Value;
-            }
-            else
-            {
-                return null;
-            }
-            
-        }
-
-        public static string GetVariableKey(this string input)
-        {
-            var match = Regex.Match(input, @"variables\(\'(.*)\'\)");
+            var match = Regex.Match(inputParameters, @"parameters\(\'(.*)\'\)");
             if (match.Success)
             {
                 return match.Groups[1].Value;
@@ -265,7 +250,66 @@ namespace AzSK.ARMChecker.Lib.Extensions
 
         }
 
-        public static string GetConcatKey(this string input)
+        // Here inputVariables hold variables() function, Getting key value from inputVariables string.
+        public static string GetVariableKey(this string inputVariables)
+        {
+            var match = Regex.Match(inputVariables, @"variables\(\'(.*)\'\)");
+            if (match.Success)
+            {
+                return match.Groups[1].Value;
+            }
+            else
+            {
+                return null;
+            }
+
+        }
+
+        // Here inputConcat hold concat() function, Getting key value from inputConcat string.
+        public static string GetConcatKey(this string inputConcat)
+        {
+            var match = Regex.Match(inputConcat, @"(?<=(?<open>\()).*(?=(?<close-open>\)))");
+            if (match.Success)
+            {
+                return match.Groups[0].Value;
+            }
+            else
+            {
+                return null;
+            }
+
+        }
+
+        // Here inputSubstring holdsubstring() function, Getting key value from inputSubstring string.
+        public static string GetSubStringKey(this string inputSubstring)
+        {
+            var match = Regex.Match(inputSubstring, @"(?<=(?<open>\()).*(?=(?<close-open>\)))");
+            if (match.Success)
+            {
+                return match.Groups[0].Value;
+            }
+            else
+            {
+                return null;
+            }
+
+        }
+        // Get variables() key from parameters() function E.g. parameters(variables("some value"))
+        public static string getVariablesKeyFromInsideFunction(this string input)
+        {
+            var match = Regex.Match(input, @"(?<=(?<open>\()).*(?=(?<close-open>\)))");
+            if (match.Success)
+            {
+                return match.Groups[0].Value;
+            }
+            else
+            {
+                return null;
+            }
+
+        }
+        // Get parameters() key from variables() function E.g. variables(parameters("some value"));
+        public static string getParameterKeyFromInsideFunction(this string input)
         {
             var match = Regex.Match(input, @"(?<=(?<open>\()).*(?=(?<close-open>\)))");
             if (match.Success)
@@ -279,18 +323,6 @@ namespace AzSK.ARMChecker.Lib.Extensions
 
         }
 
-        public static string GetSubStringKey(this string input)
-        {
-            var match = Regex.Match(input, @"(?<=(?<open>\()).*(?=(?<close-open>\)))");
-            if (match.Success)
-            {
-                return match.Groups[0].Value;
-            }
-            else
-            {
-                return null;
-            }
 
-        }
     }
 }
