@@ -147,22 +147,7 @@
       "ResourceDetailsKeys": {
         "WorkspaceId": "Reporting workspace customer id"
       }
-    },
-    "ExcludeControlsForServices" : 
-      [
-        {
-          "FilterTag" : "FilterServiceFabric",
-          "ResourceTag": "resourceType",
-          "ResourceValue" :"Service Fabric",
-          "ServiceType" : "ServiceFabric"
-        },
-        {
-          "FilterTag" : "FilterKubernetes",
-          "ResourceTag": "Orchestrator",
-          "ResourceValue" :"Kubernetes",
-          "ServiceType" : "Kubernetes"
-        }
-     ]
+    }
   },
   "VirtualMachineScaleSet": {
     "Windows": {
