@@ -293,7 +293,10 @@ function Remove-AzSKContinuousAssuranceForCluster {
 		$DownloadJobLogs,
 
         [switch]
-		$Force
+        $Force,
+        
+        [switch]
+        $RemoveLogs
     )
     Begin{
         [CommandHelper]::BeginCommand($MyInvocation);
@@ -304,10 +307,12 @@ function Remove-AzSKContinuousAssuranceForCluster {
             if ($ResourceType -eq "Databricks") {
                 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
                 $ResourceContext = [DatabricksClusterCA]::GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName, $PersonalAccessToken)
+                $ResourceContext.RemoveLogs = $RemoveLogs
                 $CAInstance = [DatabricksClusterCA]::new($ResourceContext, $MyInvocation)
                 $CAInstance.InvokeFunction($CAInstance.RemoveCA)              
             } elseif ($ResourceType -eq "HDInsight") {
                 $ResourceContext = [HDInsightClusterCA]::GetParameters($SubscriptionId, $ClusterName, $ResourceGroupName)
+                $ResourceContext.RemoveLogs = $RemoveLogs
                 $CAInstance = [HDInsightClusterCA]::new($ResourceContext, $MyInvocation)
                 $CAInstance.InvokeFunction($CAInstance.RemoveCA)  
             } elseif($ResourceType -eq "Kubernetes") {

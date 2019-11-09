@@ -208,6 +208,22 @@ class DatabricksClusterCA : CommandBase {
         }
     }
 
+    [void] RemoveLogs() {
+        $EndPoint = "/api/2.0/dbfs/delete"
+        $BodyJson = @{
+            "path" = "/AzSK_Meta";
+            "recursive" = "true"
+        } | ConvertTo-Json
+        $ResponseObject = $this.InvokeRestAPICall($endPoint, "POST", $BodyJson, 
+            "Unable to delete meta, remaining steps will be skipped.")
+        $BodyJson = @{
+            "path" = "/AzSK_Logs";
+            "recursive" = "true"
+        } | ConvertTo-Json
+        $ResponseObject = $this.InvokeRestAPICall($endPoint, "POST", $BodyJson, 
+            "Unable to delete logs, remaining steps will be skipped.")    
+    }
+
     [bool] CheckAzSKWorkspaceExist() {
         $workspace = "/api/2.0/workspace/list?path=/"
         $response = $this.InvokeRestAPICall($workspace, "GET", $null, "Unable to fetch workspace.")
@@ -421,6 +437,11 @@ class DatabricksClusterCA : CommandBase {
         } else {
             $this.PublishCustomMessage("AzSK scan job not found. Please ensure the CA is installed.",
                                        [MessageType]::Error)
+        }
+        # remove logs if the switch is passed
+        if ($this.ResourceContext.RemoveLogs) {
+            $this.RemoveLogs()
+            $this.PublishCustomMessage("AzSK scan logs and meta data removed.")
         }
     }
 }
