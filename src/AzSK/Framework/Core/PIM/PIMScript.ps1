@@ -719,13 +719,29 @@ class PIM: AzCommandBase {
                     $i = 0
                     $this.PublishCustomMessage("Initiating removal of [$totalRemovableAssignments] permanent assignments...")
                     foreach ($user in $users) {
-                        $i++;
-                        $this.PublishCustomMessage([Constants]::SingleDashLine);
-                        Remove-AzRoleAssignment -SignInName $user.PrincipalName -RoleDefinitionName $user.RoleName -Scope $user.OriginalId
-                        $this.PublishCustomMessage("[$i`/$totalRemovableAssignments]Successfully removed permanent assignment", [MessageType]::Update )                
-                        $this.PublishCustomMessage([Constants]::SingleDashLine);
+                        try
+                        {
+                            $i++;
+                            $this.PublishCustomMessage([Constants]::SingleDashLine);
+                            Remove-AzRoleAssignment -SignInName $user.PrincipalName -RoleDefinitionName $user.RoleName -Scope $user.OriginalId -ErrorAction Stop
+                            $this.PublishCustomMessage("[$i`/$totalRemovableAssignments]Successfully removed permanent assignment", [MessageType]::Update )                
+                            $this.PublishCustomMessage([Constants]::SingleDashLine);
+                        }
+                        catch
+                        {
+                            if ([Helpers]::CheckMember($_.Exception, "Response.StatusCode") -and $_.Exception.Response.StatusCode -eq '403')
+                            {
+                                $this.PublishCustomMessage("[$i`/$totalRemovableAssignments] You do not have the authorization to delete role assignments or the scope is invalid. If access was recently granted, please refresh your credentials.", [MessageType]::Error)
+                            }
+                            else
+                            {
+                                $this.PublishCustomMessage("[$i`/$totalRemovableAssignments] $($_.Exception.Message)", [MessageType]::Error)
+                            }
+                            break;                        
+                        }
+                        
 
-                    }
+                    } #foreach end
                 }
             }
             else {
