@@ -678,28 +678,21 @@ class Storage: AzSVTBase
 		{	 
 			$ruleSettings = New-Object System.Object
 			$ruleSettings | Add-Member -type NoteProperty -name DefaultAction -Value $this.ResourceObject.NetworkRuleSet.DefaultAction
-			$controlMessage = ""
 
 			if($ruleSettings.DefaultAction -eq "Allow")	{
 				$controlResult.AddMessage([VerificationResult]::Verify, "No Firewall and Virtual Network restrictions are defined for this storage") ;
 			}
 			elseif ($ruleSettings.DefaultAction -eq "Deny")	{
-				$controlResult.VerificationResult = [VerificationResult]::Verify;
-				$controlMessage = "Firewall and Virtual Network restrictions are defined for this storage :"
-
 				if([Helpers]::CheckMember($this.ResourceObject.NetworkRuleSet, "VirtualNetworkRules.VirtualNetworkResourceId")) {				
 					$ruleSettings | Add-Member -type NoteProperty -name VirtualNetworkRules -Value $this.ResourceObject.NetworkRuleSet.VirtualNetworkRules.VirtualNetworkResourceId
 				}
 				if([Helpers]::CheckMember($this.ResourceObject.NetworkRuleSet, "IpRules.IpAddressOrRange")) {
 					$ruleSettings | Add-Member -type NoteProperty -name IpAddressOrRange -Value $this.ResourceObject.NetworkRuleSet.IpRules.IpAddressOrRange
-					if($ruleSettings.IpAddressOrRange -contains $this.ControlSettings.UniversalIPRange) {
-						$controlResult.VerificationResult = [VerificationResult]::Failed;
-						$controlMessage = "IP range $($this.ControlSettings.UniversalIPRange) must be removed from triggers IP ranges"
-					}
 				}
-				$controlResult.AddMessage([MessageData]::new("$controlMessage", $ruleSettings))
-				$controlResult.SetStateData("Firewall and Virtual Network restrictions defined for this storage:",$ruleSettings);
+				# Check for Universal IP is not included here, as /0 has by default not allowed in CIDR block here 
+				$controlResult.AddMessage([VerificationResult]::Verify, "Firewall and Virtual Network restrictions are defined for this storage :", $ruleSettings)
 			}
+			$controlResult.SetStateData("Firewall and Virtual Network restrictions defined for this storage:",$ruleSettings);
 			return $controlResult;
 		}
 		
@@ -711,7 +704,7 @@ class Storage: AzSVTBase
 				if([Helpers]::CheckMember($property, "DeleteRetentionPolicy" ))
 				{
 					$isSoftDeleteEnable = $property.DeleteRetentionPolicy.Enabled
-
+ 
 					if($isSoftDeleteEnable -eq $true)
 					{
 						$controlResult.AddMessage([VerificationResult]::Passed,	[MessageData]::new("Soft delete is enabled for this Storage account")); 
