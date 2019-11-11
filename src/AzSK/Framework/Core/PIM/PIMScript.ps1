@@ -715,17 +715,40 @@ class PIM: AzCommandBase {
                     Write-Host "The above listed role assignments will be removed. `nPlease confirm (Y/N): " -ForegroundColor Yellow -NoNewline
                     $userResp = Read-Host
                 } 
-                if ($userResp -eq 'y' -or $Force) {
+                if ($userResp -eq 'y' -or $Force)
+                {
                     $i = 0
                     $this.PublishCustomMessage("Initiating removal of [$totalRemovableAssignments] permanent assignments...")
-                    foreach ($user in $users) {
-                        $i++;
-                        $this.PublishCustomMessage([Constants]::SingleDashLine);
-                        Remove-AzRoleAssignment -SignInName $user.PrincipalName -RoleDefinitionName $user.RoleName -Scope $user.OriginalId
-                        $this.PublishCustomMessage("[$i`/$totalRemovableAssignments]Successfully removed permanent assignment", [MessageType]::Update )                
-                        $this.PublishCustomMessage([Constants]::SingleDashLine);
+                    # Remove permanent assignments of specified roles, at the specified scope
+                    foreach ($user in $users)
+                    {
+                        try
+                        {
+                            $i++;
+                            $this.PublishCustomMessage([Constants]::SingleDashLine);
+                            Remove-AzRoleAssignment -SignInName $user.PrincipalName -RoleDefinitionName $user.RoleName -Scope $user.OriginalId -ErrorAction Stop
+                            $this.PublishCustomMessage("[$i`/$totalRemovableAssignments]Successfully removed permanent assignment", [MessageType]::Update )                
+                            $this.PublishCustomMessage([Constants]::SingleDashLine);
+                        }
+                        catch
+                        {
+                            # This code block is to capture any exception while removing role assignment at a specified scope
+                            # If exception is captured, stop the command after printing the error message
+                            if ([Helpers]::CheckMember($_.Exception, "Response.StatusCode") -and $_.Exception.Response.StatusCode -eq '403')
+                            {
+                                # Authorization denied exception 
+                                $this.PublishCustomMessage("[$i`/$totalRemovableAssignments] You do not have the authorization to delete role assignments or the scope is invalid. If access was recently granted, please refresh your credentials.", [MessageType]::Error)
+                            }
+                            else
+                            {
+                                # Other exception
+                                $this.PublishCustomMessage("[$i`/$totalRemovableAssignments] $($_.Exception.Message)", [MessageType]::Error)
+                            }
+                            break;                        
+                        }
+                        
 
-                    }
+                    } #foreach end
                 }
             }
             else {
