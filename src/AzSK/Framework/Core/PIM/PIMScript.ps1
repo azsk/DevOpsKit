@@ -21,7 +21,17 @@ class PIM: AzCommandBase {
         # Using helper method to get current context and access token   
         $ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
         [ContextHelper]::ResetCurrentRMContext
-        $this.AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI);
+        if([Helpers]::CheckMember($this.ControlSettings,'PIMAppId'))
+        {
+            if(-not ([string]::IsNullOrEmpty))
+            {
+                $this.AccessToken = [ContextHelper]::GetAccessToken($this.ControlSettings.PIMAppId);
+            }
+        }
+        else
+        {
+            $this.AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI);
+        }
         $this.headerParams = @{'Authorization' = "Bearer $($this.AccessToken)" }
         $this.AccountId = [ContextHelper]::GetCurrentSessionUser()
         $ADUserDetails = Get-AzADUser -UserPrincipalName  $this.AccountId
@@ -38,7 +48,7 @@ class PIM: AzCommandBase {
         $this.AcquireToken();  
         if( -not [string]::IsNullOrEmpty($this.UserId))
         {  
-            $urlme = $this.APIroot + "/roleAssignments?`$expand=linkedEligibleRoleAssignment,subject,roleDefinition(`$expand=resource)&`$filter=(subject/id%20eq%20%27$($this.UserId)%27)"
+            $urlme = $this.APIroot + "/roleAssignments?`$expand=linkedEligibleRoleAssignment,subject,roleDefinition(`$expand=resource)&`$filter=(subject/id%20eq%20%27$($this.UserId)%27)+and+(assignmentState%20eq%20'Eligible')"
             $assignments = [WebRequestHelper]::InvokeWebRequest('Get', $urlme, $this.headerParams, $null, [string]::Empty, $false, $false )
             $assignments = $assignments | Sort-Object  roleDefinition.resource.type , roleDefinition.resource.displayName
             $obj = @()        
