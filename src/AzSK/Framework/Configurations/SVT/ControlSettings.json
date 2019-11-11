@@ -158,6 +158,49 @@
       }
     }
   },
+  "VirtualMachineScaleSet": {
+    "Windows": {
+      "SupportedSkuList": [],
+      "ManagementPortList": [
+        {
+          "Name": "RDP",
+          "Port": 3389
+        },
+        {
+          "Name": "WINRM",
+          "Port": 5985
+        }
+      ]
+    },
+    "Linux": {
+      "SupportedSkuList": [],
+      "ManagementPortList": [
+        {
+          "Name": "RDP",
+          "Port": 3389
+        },
+        {
+          "Name": "SSH",
+          "Port": 22
+        }
+      ]
+    },
+    "ControlExclusionsByService" : 
+      [
+        {
+          "ControlTag" : "ExcludeServiceFabric",
+          "ResourceTag": "resourceType",
+          "ResourceTagValue" :"Service Fabric",
+          "ServiceType" : "ServiceFabric"
+        },
+        {
+          "ControlTag" : "ExcludeKubernetes",
+          "ResourceTag": "Orchestrator",
+          "ResourceTagValue" :"Kubernetes*",
+          "ServiceType" : "Kubernetes"
+        }
+     ]
+  },
   "NoOfApprovedAdmins": 5,
   "NoOfClassicAdminsLimit": 2,
   "CriticalPIMRoles": { 
