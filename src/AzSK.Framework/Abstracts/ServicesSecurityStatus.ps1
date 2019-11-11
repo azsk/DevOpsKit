@@ -436,12 +436,6 @@ class ServicesSecurityStatus: AzSVTCommandBase
 					# Get list of non-scanned active resources
 					$nonScannedResourcesList = $partialScanMngr.GetNonScannedResources();
 					$this.PublishCustomMessage("Resuming scan from last commit. $(($nonScannedResourcesList | Measure-Object).Count) out of $(($allResourcesList | Measure-Object).Count) resources will be scanned.", [MessageType]::Warning);
-					if ($nonScannedResourcesList){
-						$nonScannedResourceIdList = $nonScannedResourcesList | Select-Object Id | ForEach-Object { $_.Id}
-					}
-					else {
-						$nonScannedResourceIdList = ""
-					}
 					$nonScannedResourceIdList = $nonScannedResourcesList | Select-Object Id | ForEach-Object { $_.Id}
 					#Filter SVT resources based on master resources list available and scan completed
 					#Commenting telemtry here to include PartialScanIdentifier
@@ -459,10 +453,34 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				$this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
 				
 				#Telemetry with addition for Subscription Id, PartialScanIdentifier and correction in count of resources
-				$scanCount = ""
-				$resourcesScanCounts = $partialScanMngr.GetAllListedResources() | Group-Object -Property State | Select-Object Name,Count| ForEach-Object{$_.Name,$_.Count}
-				$scanCount = [system.String]::Join(",",$resourcesScanCounts);	
-				[AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details", @{"TotalSVTResources"= $($this.Resolver.SVTResources | Where-Object { $_.ResourceTypeMapping } | Measure-Object).Count;"UnscannedResource"=$(($nonScannedResourcesList | Measure-Object).Count); "ResourceToBeScanned" = ($this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList } | Measure-Object).Count;"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"PartialScanIdentifier"=$this.PartialScanIdentifier; "ResourcesScanCounts" = $scanCount},$null)
+				$numberOfTotalResources = 0;
+                $numberOfResourcesToBeScanned = 0;
+                $numberOfResourcesScanned =0;
+
+				try{
+					$numberOfTotalResources = $(( $partialScanMngr.GetAllListedResources()| Measure-Object).Count)
+					try{
+						#State "INIT" from ResourceScanTracker.json file represnts resource is yet to be scanned 
+						$numberOfResourcesToBeScanned = $numberOfTotalResources |  Group-Object -Property State | Where-Object { $_.Name -eq "INIT"} | Select-Object "Count"
+					}
+					catch{
+						$numberOfResourcesToBeScanned = 0;
+					}
+					try{
+						#State "COMP" from ResourceScanTracker.json file represnts resource is scanned 
+						$numberOfResourcesScanned = $partialScanMngr.ResourceScanTrackerObj.ResourceMapTable| Group-Object -Property State | Where-Object { $_.Name -eq "COMP"} | Select-Object "Count"
+					}
+					catch{
+						$numberOfResourcesScanned = 0 
+					}
+				}
+				catch{
+					#error reading ResourceScanTracker.json
+					$numberOfTotalResources = 0;
+					$numberOfResourcesScanned = 0;
+					$numberOfResourcesToBeScanned = 0;
+				}
+				[AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details", @{"TotalSVTResources"= $($this.Resolver.SVTResources | Where-Object { $_.ResourceTypeMapping } | Measure-Object).Count;"UnscannedResource"=$(($nonScannedResourcesList | Measure-Object).Count); "ResourceToBeScanned" = ($this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList } | Measure-Object).Count;"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"PartialScanIdentifier"=$this.PartialScanIdentifier; "TotalNumberOfResources"= $numberOfTotalResources;"NumberOfResourcesToBeScanned"= $numberOfResourcesToBeScanned;"NumberOfResourcesScanned"=$numberOfResourcesScanned},$null)
 		}
 }
 
