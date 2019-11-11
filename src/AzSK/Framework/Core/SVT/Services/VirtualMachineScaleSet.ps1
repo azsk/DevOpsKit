@@ -8,7 +8,7 @@ Set-StrictMode -Version Latest
 class VirtualMachineScaleSet: AzSVTBase
 {       
 	hidden [PSVirtualMachineScaleSet] $ResourceObject;
-	hidden [PSVirtualMachineScaleSetVMList] $VMInstances;
+	hidden [PSObject] $VMInstances;
 	hidden [PSNetworkInterface[]] $VMNICs = $null;
 	hidden [PSObject] $ASCSettings = $null;
 	hidden [bool] $IsVMSSDeallocated = $false
@@ -89,7 +89,7 @@ class VirtualMachineScaleSet: AzSVTBase
 
 	}
 
-	hidden [PSVirtualMachineScaleSetVMList] GetVMSSInstances(){
+	hidden [PSObject] GetVMSSInstances(){
 		if(-not $this.VMInstances){
 			$this.VMInstances = Get-AzVmssVM -ResourceGroupName $this.ResourceContext.ResourceGroupName -VMScaleSetName $this.ResourceContext.ResourceName
 		}
@@ -116,7 +116,6 @@ class VirtualMachineScaleSet: AzSVTBase
     hidden [PSObject] GetASCSettings()
 	{
 		$result = $null;
-		# Commenting this as it's costly call and expected to happen in Set-ASC/SSS/USS 
 		try 
 		{ 	
 			$result = [SecurityCenterHelper]::InvokeSecurityCenterSecurityStatus($this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceId);
