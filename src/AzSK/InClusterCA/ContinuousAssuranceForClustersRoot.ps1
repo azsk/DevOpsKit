@@ -17,7 +17,7 @@ function Get-AzSKContinuousAssuranceForCluster {
         
         [string]
         [Alias("cn","ResourceName")]
-        [Parameter(Mandatory = $true, HelpMessage="Resource Name of the cluster for which AzSK Continuous Assurance will be installed.")]
+        [Parameter(Mandatory = $false, HelpMessage="Resource Name of the cluster for which AzSK Continuous Assurance will be installed.")]
         $ClusterName,
 
         [string]
@@ -82,7 +82,7 @@ function Install-AzSKContinuousAssuranceForCluster{
 
         [string]
         [Alias("cn","ResourceName")]
-        [Parameter(Mandatory = $true, HelpMessage="Resource Name of the cluster for which AzSK Continuous Assurance will be installed.")]
+        [Parameter(Mandatory = $false, HelpMessage="Resource Name of the cluster for which AzSK Continuous Assurance will be installed.")]
         $ClusterName,
 
         [string]
@@ -164,7 +164,7 @@ function Update-AzSKContinuousAssuranceForCluster{
 
         [string]
         [Alias("cn","ResourceName")]
-        [Parameter(Mandatory = $true, HelpMessage="Resource Name of the cluster for which AzSK Continuous Assurance will be installed.")]
+        [Parameter(Mandatory = $false, HelpMessage="Resource Name of the cluster for which AzSK Continuous Assurance will be installed.")]
         $ClusterName,
 
         [string]
@@ -275,7 +275,7 @@ function Remove-AzSKContinuousAssuranceForCluster {
 
         [string]
         [Alias("cn","ResourceName")]
-        [Parameter(Mandatory = $true, HelpMessage="Resource Name of the cluster for which AzSK Continuous Assurance will be installed.")]
+        [Parameter(Mandatory = $false, HelpMessage="Resource Name of the cluster for which AzSK Continuous Assurance will be installed.")]
         $ClusterName,
 
         [string]
