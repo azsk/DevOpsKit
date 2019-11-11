@@ -161,7 +161,7 @@ function Set-AzSKPIMConfiguration {
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
         [bool]
-        $RequireConditionalAccessOnActivation,
+        $ApplyConditonalAccessPolicyForRoleActivation,
 
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
@@ -203,9 +203,9 @@ function Set-AzSKPIMConfiguration {
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'ConfigureRoleSettings')
             {
-                if($null -ne $PSCmdlet.MyInvocation.BoundParameters["RequireMFAOnActivation"] -and $null -ne $PSCmdlet.MyInvocation.BoundParameters["RequireConditionalAccessOnActivation"])
+                if($null -ne $PSCmdlet.MyInvocation.BoundParameters["RequireMFAOnActivation"] -and $null -ne $PSCmdlet.MyInvocation.BoundParameters["ApplyConditonalAccessPolicyForRoleActivation"])
                 {
-                    throw [SuppressedException] "'RequireMFAOnActivation' and 'RequireConditionalAccessOnActivation' are exclusive parameters. Please use one of them in the command"   
+                    throw [SuppressedException] "'RequireMFAOnActivation' and 'ApplyConditonalAccessPolicyForRoleActivation' are exclusive switches. Please use only one of them in the command"   
                     return;
                 }
                 elseif ($null -ne $PSCmdlet.MyInvocation.BoundParameters["RequireMFAOnActivation"]) 
@@ -220,9 +220,9 @@ function Set-AzSKPIMConfiguration {
                         $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration,  $false, $null));
                     }  
                 }
-                elseif ($null -ne $PSCmdlet.MyInvocation.BoundParameters["RequireConditionalAccessOnActivation"])
+                elseif ($null -ne $PSCmdlet.MyInvocation.BoundParameters["ApplyConditonalAccessPolicyForRoleActivation"])
                 {
-                    if($RequireConditionalAccessOnActivation)
+                    if($ApplyConditonalAccessPolicyForRoleActivation)
                     {
                       #Both Conditional Access policy and MFA can not be applied simultaneously      
                      $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $true));

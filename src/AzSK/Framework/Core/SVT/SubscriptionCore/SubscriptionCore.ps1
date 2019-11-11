@@ -1727,7 +1727,11 @@ class SubscriptionCore: AzSVTBase
 	# Control in json to be added in Org Policy if the Org wants to enforce conditional access policy on PIM activation for critical roles
 	hidden [ControlResult] CheckPIMCATag([ControlResult] $controlResult)
 	{
-		$resourceId = $this.SubscriptionExtId.id;		
+		$resourceId = ""
+		if([Helpers]::CheckMember($this.SubscriptionExtId,'id'))
+		{
+			$resourceId = $this.SubscriptionExtId.id;
+		}
 		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
 		$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 		$authorisationToken = "Bearer " + $accessToken

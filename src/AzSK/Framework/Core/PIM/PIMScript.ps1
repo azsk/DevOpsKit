@@ -40,7 +40,6 @@ class PIM: AzCommandBase {
         {  
             $urlme = $this.APIroot + "/roleAssignments?`$expand=linkedEligibleRoleAssignment,subject,roleDefinition(`$expand=resource)&`$filter=(subject/id%20eq%20%27$($this.UserId)%27)"
             $assignments = [WebRequestHelper]::InvokeWebRequest('Get', $urlme, $this.headerParams, $null, [string]::Empty, $false, $false )
-            $assignments = $assignments | Where-Object {$_.IsPermanent -eq $false}
             $assignments = $assignments | Sort-Object  roleDefinition.resource.type , roleDefinition.resource.displayName
             $obj = @()        
             if (($assignments | Measure-Object).Count -gt 0) {
@@ -936,6 +935,10 @@ class PIM: AzCommandBase {
                         $policyString= '{"ruleIdentifier":"AcrsRule","setting":"{\"acrsRequired\":true,\"acrs\":\"'+$policyTag+'\"}"}'
                         
                     }
+                    else
+                    {
+                        $policyString= '{"ruleIdentifier":"AcrsRule","setting":"{\"acrsRequired\":false,\"acrs\":\"'+$policyTag+'\"}"}'
+                    }
                }
                if($null -ne $RequireMFAOnActivation)
                {
@@ -945,6 +948,7 @@ class PIM: AzCommandBase {
                           $policyString= '{"ruleIdentifier":"AcrsRule","setting":"{\"acrsRequired\":false,\"acrs\":\"'+$policyTag+'\"}"}'
                         
                     }
+                  
                }
         #  5) Create json body for patch request  
                $body=""
