@@ -459,10 +459,24 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				$this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
 				
 				#Telemetry with addition for Subscription Id, PartialScanIdentifier and correction in count of resources
-				$scanCount = ""
-				$resourcesScanCounts = $partialScanMngr.GetAllListedResources() | Group-Object -Property State | Select-Object Name,Count| ForEach-Object{$_.Name,$_.Count}
-				$scanCount = [system.String]::Join(",",$resourcesScanCounts);	
-				[AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details", @{"TotalSVTResources"= $($this.Resolver.SVTResources | Where-Object { $_.ResourceTypeMapping } | Measure-Object).Count;"UnscannedResource"=$(($nonScannedResourcesList | Measure-Object).Count); "ResourceToBeScanned" = ($this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList } | Measure-Object).Count;"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"PartialScanIdentifier"=$this.PartialScanIdentifier; "ResourcesScanCounts" = $scanCount},$null)
+				$scanCount= [System.Collections.ArrayList]::new()
+				
+				try{
+					$resourcesScanCounts = $partialScanMngr.GetAllListedResources() | Group-Object -Property State | Select-Object Name,Count| ForEach-Object{
+							$scanTypeEvent = "" | Select-Object ScanStatus, Count
+							$scanTypeEvent.ScanStatus = $_.Name
+							$scanTypeEvent.Count = $_.Count	
+							$scanCount.Add($scanTypeEvent)	
+							
+					}	
+					
+				}
+				catch{
+					$scanCount = ''
+				}
+				
+
+				[AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details", @{"TotalSVTResources"= $($this.Resolver.SVTResources | Where-Object { $_.ResourceTypeMapping } | Measure-Object).Count;"UnscannedResource"=$(($nonScannedResourcesList | Measure-Object).Count); "ResourceToBeScanned" = ($this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList } | Measure-Object).Count;"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"PartialScanIdentifier"=$this.PartialScanIdentifier; "ResourcesScanCounts" = $scanCount|Out-String},$null)
 		}
 }
 
