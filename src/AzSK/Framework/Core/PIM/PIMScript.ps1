@@ -23,9 +23,9 @@ class PIM: AzCommandBase {
         [ContextHelper]::ResetCurrentRMContext
         if([Helpers]::CheckMember($this.ControlSettings,'PIMAppId'))
         {
-            if(-not ([string]::IsNullOrEmpty))
+            if(-not ([string]::IsNullOrEmpty($this.ControlSettings.PIMAppId)))
             {
-                $this.AccessToken = [ContextHelper]::GetAccessToken($this.ControlSettings.PIMAppId);
+                $this.AccessToken = Get-AzSKAccessToken -ResourceAppIdURI $this.ControlSettings.PIMAppId;
             }
         }
         else
@@ -48,7 +48,7 @@ class PIM: AzCommandBase {
         $this.AcquireToken();  
         if( -not [string]::IsNullOrEmpty($this.UserId))
         {  
-            $urlme = $this.APIroot + "/roleAssignments?`$expand=linkedEligibleRoleAssignment,subject,roleDefinition(`$expand=resource)&`$filter=(subject/id%20eq%20%27$($this.UserId)%27)+and+(assignmentState%20eq%20'Eligible')"
+            $urlme = $this.APIroot + "/roleAssignments?`$expand=linkedEligibleRoleAssignment,subject,roleDefinition(`$expand=resource)&`$filter=(subject/id%20eq%20%27$($this.UserId)%27)"
             $assignments = [WebRequestHelper]::InvokeWebRequest('Get', $urlme, $this.headerParams, $null, [string]::Empty, $false, $false )
             $assignments = $assignments | Sort-Object  roleDefinition.resource.type , roleDefinition.resource.displayName
             $obj = @()        
