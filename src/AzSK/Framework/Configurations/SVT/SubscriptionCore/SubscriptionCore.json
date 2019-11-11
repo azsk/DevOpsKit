@@ -335,7 +335,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckCriticalAlertsPresence",
-      "Recommendation": "Run command 'Set-AzSKAlerts'. Run 'Get-Help Set-AzSKAlerts -full' for more help.",
+      "Recommendation": "Run command 'Set-AzSKAlerts -Force'. Run 'Get-Help Set-AzSKAlerts -full' for more help.",
       "Tags": [
         "SDL",
         "Best Practice",

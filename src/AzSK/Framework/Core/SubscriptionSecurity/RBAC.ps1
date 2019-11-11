@@ -298,9 +298,7 @@ class RBAC: AzCommandBase
 	[MessageData[]] RemoveRBACAccounts()
     {	
 		[MessageData[]] $messages = @();
-		# Why we need to check version tag, -force is fine and we can actually emit warning and ask for approval in case Force is not passed
-		if($this.Force -or -not ([ResourceGroupHelper]::IsLatestVersionConfiguredOnSub($this.Policy.DeprecatedAccountsVersion,[Constants]::DeprecatedRBACVersionTagName,"DeprecatedRBAC")))
-		{
+		
 			#setting the tag at AzSKRG
 			$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
 			[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::DeprecatedRBACVersionTagName=$this.Policy.DeprecatedAccountsVersion}, $false)			
@@ -347,7 +345,7 @@ class RBAC: AzCommandBase
 			# Remove deprecated accounts
 			$depAccounts = $this.GetMatchedDeprecatedAccounts(([ref]$messages));
 			$messages += $this.RemoveRBACAccounts($depAccounts);
-		}
+		
 
 		return $messages;
     }
