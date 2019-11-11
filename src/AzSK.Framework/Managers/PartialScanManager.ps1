@@ -375,7 +375,7 @@ class PartialScanManager
 	{
 		if($null -eq $this.AzSKStorageAccount -or $null -eq $this.ScanProgressSnapshotsContainer)
 		{
-		 $this.GetAzSKScanProgressSnapshotsContainer();
+			$this.GetAzSKScanProgressSnapshotsContainer();
 		}
 		if($null -ne $this.ControlSettings.BaselineControls)
 		{
