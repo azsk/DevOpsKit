@@ -29,6 +29,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 . $FrameworkPath\Helpers\ConfigurationHelper.ps1
 
+
 . $FrameworkPath\Models\AzSKConfig.ps1
 
 . $FrameworkPath\Models\AzSKSettings.ps1
@@ -56,6 +57,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $PSScriptRoot\Helpers\ResourceHelper.ps1
 . $FrameworkPath\Helpers\WebRequestHelper.ps1
 . $FrameworkPath\Helpers\ActiveDirectoryHelper.ps1
+. $FrameworkPath\Managers\FeatureFlightingManager.ps1
 . $PSScriptRoot\Helpers\RoleAssignmentHelper.ps1
 . $PSScriptRoot\Helpers\SecurityCenterHelper.ps1
 . $FrameworkPath\Helpers\SVTMapping.ps1
@@ -68,7 +70,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 #Managers
 
-. $FrameworkPath\Managers\FeatureFlightingManager.ps1
+
 . $PSScriptRoot\Helpers\AzHelper.ps1
 . $FrameworkPath\Managers\ControlStateExtension.ps1
 . $FrameworkPath\Managers\AzSKPDFExtension.ps1

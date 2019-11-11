@@ -30,6 +30,7 @@ class ControlResultBase {
     [string] $Justification;
     [string] $AttestedState;
     [string] $CurrentState;
+    [DateTime] $AttestationExpiryDate = [Constants]::AzSKDefaultDateTime;
     [bool] $IsBaselineControl;
     # add PreviewBaselineFlag
     [string] $UserComments;
