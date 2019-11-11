@@ -70,29 +70,6 @@
          "Enabled": true
       },
       {
-         "ControlID": "Azure_VirtualMachineScaleSet_Deploy_Application_Health_Extension",
-         "Description": "Application Health extension should be installed on Virtual Machine Scale Set",
-         "Id": "VirtualMachineScaleSet140",
-         "ControlSeverity": "Low",
-         "Automated": "Yes",
-         "MethodName": "CheckVMSSAppHealthMonitoring",
-         "Rationale": "Monitoring health of applications deployed to VMSS is important for managing and upgrading instances, various upgrade features like automatic OS image upgarde rely on health monitoring of individual instances.",
-         "Recommendation": "Go to Azure Portal --> VM Scale Set --> Settings -> Health & Repair -> Monitor Application health -> click on 'Enabled'. For more help, please refer: https://docs.microsoft.com/en-in/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-health-extension",
-         "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "Deploy",
-            "Windows",
-            "Linux",
-            "ERvNet",
-            "ExcludeServiceFabric",
-            "ExcludeKubernetes",
-            "VirtualMachineScaleSet"
-         ],
-         "Enabled": true
-      },
-      {
          "ControlID": "Azure_VirtualMachineScaleSet_DP_Enable_Disk_Encryption",
          "Description": "Disk encryption must be enabled on both OS and data disks for Windows Virtual Machine Scale Set",
          "Id": "VirtualMachineScaleSet150",
@@ -120,7 +97,7 @@
          "ControlSeverity": "High",
          "Automated": "Yes",
          "MethodName": "CheckVMSSInstancesStatus",
-         "Rationale": "All the security configurations applied on VM Scale set will be effective only if all the individual VM instances in Scale Set is up-to-date with the latest overall Scale Set model",
+         "Rationale": "All the security configurations applied on VM Scale Set will be effective only if all the individual VM instances in Scale Set is up-to-date with the latest overall Scale Set model",
          "Recommendation": "Please refer: https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-upgrade-scale-set#how-to-bring-vms-up-to-date-with-the-latest-scale-set-model.",
          "Tags": [
             "SDL",
