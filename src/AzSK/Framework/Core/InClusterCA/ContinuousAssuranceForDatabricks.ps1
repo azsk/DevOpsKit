@@ -417,7 +417,7 @@ class DatabricksClusterCA : CommandBase {
             $this.RemoveAzSKWorkspace()
             $this.PublishCustomMessage("AzSK Workspace removed.")
         } else {
-            $this.PublishCustomMessage("AzSK workspace not found. Please ensure the CA is installed. Note that *one* scan needs to be completed for population of metadata.",
+            $this.PublishCustomMessage("AzSK workspace not found. Please ensure the CA is installed. Note: *one* scan needs to be completed for the population of metadata.",
                                        [MessageType]::Error)
             return
         }
