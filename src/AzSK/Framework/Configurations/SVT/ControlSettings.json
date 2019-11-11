@@ -209,6 +209,7 @@
   },
   "CheckPIMCAPolicyTags": false,
   "PIMCAPolicyTags":[],
+  "PIMAppId":"",
   "ASCAlertsSeverityLevels": [ "High" ],
   "ASCAlertsThresholdInDays": 30,
   "WhitelistedMgmtCerts": {
