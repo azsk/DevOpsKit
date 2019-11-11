@@ -395,7 +395,7 @@
     },
     {
       "featureName": "Storage",
-      "supportedResourceTypes": [ "Microsoft.Storage/storageAccounts" ],
+      "supportedResourceTypes": [ "Microsoft.Storage/storageAccounts", "Microsoft.Storage/storageAccounts/blobServices" ],
       "controls": [
         {
           "id": "AzureStorage160",
@@ -422,6 +422,23 @@
           "data": {
             "type": "Equals",
             "value": 0
+          }
+        },
+        {
+          "id": "AzureStorage270",
+          "controlId": "Azure_Storage_BCDR_Enable_Soft_Delete",
+          "isEnabled": true,
+          "description": "Soft delete should be enabled to allow recovery of deleted blobs or blob snapshots",
+          "rationale": "Enabling soft delete feature on Storage acts as a safety measure to recover inadvertently or maliciously deleted blobs or blob snapshots. If your data is critical, this can be a valuable BC/DR mechanism.",
+          "recommendation": "Refer: https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-soft-delete to enable soft delete feature on Storage.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.deleteRetentionPolicy.enabled" ],
+          "matchType": "VerifiableBooleanSingleToken",
+          "data": {
+            "value": "true",
+            "Type": "",
+            "IfNoPropertyFound": "Verify",
+            "ControlDesiredState": "Passed"
           }
         }
       ]
@@ -625,15 +642,18 @@
           "id": "AppService450",
           "apiVersions": [ "2016-08-01" ],
           "controlId": "Azure_AppService_DP_Review_CORS_Request_Credential",
-          "isEnabled": false,
+          "isEnabled": true,
           "description": "Review use of credentials in CORS request for App Service",
           "rationale": "CORS enables applications running under one domain to access a resource under another domain. Allowing cross-origin credentials is a security risk. A website at another domain can send a signed-in user's credentials to the app on the user's behalf without the user's knowledge.",
           "recommendation": "Go to Azure Portal --> your App Service --> API --> CORS --> Request Credentials --> Review if you need to enable 'Access-Control-Allow-Credentials'. Note: No action is needed if you are not using CORS for your app.",
           "severity": "Medium",
-          "jsonPath": [ "$.properties.cors.supportCredentials" ],
+          "jsonPath": [ "$.properties.siteConfig.cors.supportCredentials", "$.properties.cors.supportCredentials" ],
           "matchType": "VerifiableBooleanSingleToken",
           "data": {
-            "value": "false"
+            "value": "false",
+            "Type": "",
+            "IfNoPropertyFound": "Passed",
+            "ControlDesiredState": "Passed"
           }
         },
 
@@ -650,7 +670,8 @@
           "matchType": "VerifiableItemCount",
           "data": {
             "type": "All",
-            "value": 0
+            "value": 0,
+            "IfNoPropertyFound": "Verify"
           }
         }
       ]
@@ -816,7 +837,7 @@
           "isEnabled": true,
           "Description": "All Key Vault access policies must be defined with minimum required permissions to keys and secrets",
           "Rationale": "Granting minimum access by defining Key Vault access policies ensures that applications/users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-          "Recommendation": "Use command Set-AzKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}'  -PermissionsToKeys '{PermissionsToKeys}' -PermissionsToSecrets '{PermissionsToSecrets}'  -PermissionsToCertificates '{PermissionsToCertificates}' -ObjectId '{ObjectId}'. Refer:  https://docs.microsoft.com/en-us/powershell/module/az.keyvault/Set-AzKeyVaultAccessPolicy",
+          "Recommendation": "Use command Set-AzKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}' -PermissionsToKeys '{PermissionsToKeys}' -PermissionsToSecrets '{PermissionsToSecrets}' -PermissionsToCertificates '{PermissionsToCertificates}' -ObjectId '{ObjectId}'. Refer:  https://docs.microsoft.com/en-us/powershell/module/az.keyvault/Set-AzKeyVaultAccessPolicy",
           "severity": "High",
           "jsonPath": [ "$.properties.accessPolicies" ],
           "matchType": "VerifiableSingleToken",
@@ -1197,6 +1218,55 @@
           "data": {
             "type": "StringNotMatched",
             "value": "premium",
+            "isCaseSensitive": false
+          }
+        }
+
+      ]
+    },
+    {
+      "featureName": "DBforPostgreSQL",
+      "supportedResourceTypes": [ "Microsoft.DBforPostgreSQL/servers" , "Microsoft.DBforPostgreSQL/servers/configurations" ],
+      "controls": [
+        {
+          "id": "DBforPostgreSQL120",
+          "controlId": "Azure_DBforPostgreSQL_AuthZ_Enable_SSL_Connection",
+          "isEnabled": true,
+          "description": "SSL connection must be enabled for Azure Database for PostgreSQL",
+          "rationale": "Enforcing SSL connections between your database server and your client applications helps protect against 'man-in-the-middle' attacks by encrypting the data stream between the server and your application.",
+          "recommendation": "To enable SSL connection for Azure Database for PostgreSQL server, refer https://docs.microsoft.com/en-us/azure/postgresql/concepts-ssl-connection-security.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.sslEnforcement" ],
+          "matchType": "MatchStringSingleToken",
+          "data": {
+            "value": "Enabled",
+            "Type": "StringMatched",
+            "IfNoPropertyFound": "Passed",
+            "isCaseSensitive": false
+          }
+        }
+
+      ]
+    },
+
+    {
+      "featureName": "DBforMySQL",
+      "supportedResourceTypes": [ "Microsoft.DBforMySQL/servers" ],
+      "controls": [
+        {
+          "id": "DBforMySQL120",
+          "controlId": "Azure_DBforMySQL_Authz_Enable_SSL_Connection",
+          "isEnabled": true,
+          "description": "SSL connection must be enabled for Azure Database for MySQL",
+          "rationale": "Enforcing SSL connections between your database server and your client applications helps protect against 'man in the middle' attacks by encrypting the data stream between the server and your application.",
+          "recommendation": "To enable SSL connection for Azure Database for MySQL server, refer https://docs.microsoft.com/en-us/azure/mysql/concepts-ssl-connection-security.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.sslEnforcement" ],
+          "matchType": "MatchStringSingleToken",
+          "data": {
+            "value": "Enabled",
+            "Type": "StringMatched",
+            "IfNoPropertyFound": "Passed",
             "isCaseSensitive": false
           }
         }
