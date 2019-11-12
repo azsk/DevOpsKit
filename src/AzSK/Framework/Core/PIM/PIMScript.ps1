@@ -111,7 +111,8 @@ class PIM: AzCommandBase {
                 }
                 if( $item.ResourceType -eq 'resourcegroup')
                 {
-                    $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -match $ResourceGroupName  }
+                    $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
+                    $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq $rgId }
                  }
                 if( $item.ResourceType -eq 'resource'){
                 $resolvedResources = $resolvedResources | Where-Object{$_.ResourceName -eq $ResourceName }
@@ -357,7 +358,7 @@ class PIM: AzCommandBase {
         if(($resource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resource.ExternalId)))
         {
             if (($assignments | Measure-Object).Count -gt 0 ) {
-                $matchingAssignment = $assignments | Where-Object { $_.OriginalId -in $resource.ExternalId -and $_.RoleName -eq $roleName }
+                $matchingAssignment = $assignments | Where-Object { $_.OriginalId -in $resource.ExternalId -and $_.RoleName -eq $roleName -and $_.AssignmentState -eq 'Eligible' }
                 if (($matchingAssignment | Measure-Object).Count -gt 0) {
                     $this.PublishCustomMessage("Requesting activation of your [$($matchingAssignment.RoleName)] role on [$($matchingAssignment.ResourceName)]... ", [MessageType]::Info);
                     $resourceId = $matchingAssignment.ResourceId
