@@ -85,7 +85,7 @@
              "Linux",
              "ERvNet",
              "VirtualMachine",
-             "FilterDatabricks"
+             "ExcludeDatabricks"
           ],
           "Enabled": true,
           "DataObjectProperties": [
@@ -239,6 +239,8 @@
           "Linux",
           "SI",
           "ERvNet",
+          "ExcludeDatabricks",
+          "ExcludeKubernetes",
           "VirtualMachine"
         ],
         "Enabled": true

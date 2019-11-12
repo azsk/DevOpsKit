@@ -147,7 +147,22 @@
       "ResourceDetailsKeys": {
         "WorkspaceId": "Reporting workspace customer id"
       }
-    }
+    },
+    "ControlExclusionsByService" : 
+     [
+        {
+          "ControlTag" : "ExcludeDatabricks",
+          "ResourceTag": "Vendor",
+          "ResourceTagValue" :"Databricks",
+          "ServiceType" : "Databricks"
+        },
+        {
+          "ControlTag" : "ExcludeKubernetes",
+          "ResourceTag": "orchestrator",
+          "ResourceTagValue" :"Kubernetes*",
+          "ServiceType" : "Kubernetes"
+        }
+     ]
   },
   "VirtualMachineScaleSet": {
     "Windows": {
@@ -186,7 +201,7 @@
         },
         {
           "ControlTag" : "ExcludeKubernetes",
-          "ResourceTag": "Orchestrator",
+          "ResourceTag": "orchestrator",
           "ResourceTagValue" :"Kubernetes*",
           "ServiceType" : "Kubernetes"
         }
