@@ -1,5 +1,8 @@
 ﻿using namespace Microsoft.Azure.Commands.Resources.Models.Authorization
 Set-StrictMode -Version Latest 
+
+# Changes to any of the functions should be thoroughly tested in both SDL as well as CA modes (i.e. SPN permissions) in all configurations.
+
 class RoleAssignmentHelper
 {
 	static [PSRoleAssignment[]] GetAzSKRoleAssignmentByScope([string] $scope, [bool] $recurse, [bool] $includeClassicAdministrators)
@@ -36,11 +39,32 @@ class RoleAssignmentHelper
 	static [PSRoleAssignment[]] GetAzSKRoleAssignment([bool] $recurse, [bool] $includeClassicAdministrators)
 	{
 		[PSRoleAssignment[]] $roleAssignments = @();
+
 		try
 		{
+			# Fetching subscription id only for feature flighting, this needs to be removed when we remove feature flighting.
+			$currentContext = [ContextHelper]::GetCurrentRMContext();
+			$subscriptionId = $currentContext.Subscription.Id;
+
 			if($includeClassicAdministrators)
 			{
-				$roleAssignments = Get-AzRoleAssignment -IncludeClassicAdministrators -ErrorAction Stop;
+
+				#Checking feature flighting status for CSP subs validating and accordingly making another attempt skipping -IncludeClassicAdministrators
+				if([FeatureFlightingManager]::GetFeatureStatus("EnableCSPSubsValidation",$subscriptionId) -eq $true)
+				{
+					try{
+						$roleAssignments = Get-AzRoleAssignment -IncludeClassicAdministrators -ErrorAction Stop;
+					}
+					catch{
+						# Assuming -IncludeClassicAdministrators not supported for CSP subs, giving another try
+						$roleAssignments = Get-AzRoleAssignment -ErrorAction Stop;
+					}
+				}
+				else{
+					# If feature flighting is disabled, use existing code path
+					$roleAssignments = Get-AzRoleAssignment -IncludeClassicAdministrators -ErrorAction Stop;
+				}
+
 			}
 			else
 			{
@@ -48,10 +72,13 @@ class RoleAssignmentHelper
 			}
 			return $roleAssignments;
 		}
-		catch
-		{ 
-			# Eat the current exception which typically happens when the caller doesn't have access to GraphAPI. It will fall back to the below custom API based approach.
-		}
+
+       catch
+        {
+			# CA Scans running with SPN (which doesn't have graph API access) will always throw an exception 
+			# We absorb that and fall back to below custom API based approach.
+			
+        }
 
 		$roleAssignments = [RoleAssignmentHelper]::GetAzSKRoleAssignment("", "", "", $recurse, $includeClassicAdministrators);
 		
@@ -61,11 +88,29 @@ class RoleAssignmentHelper
 	static [PSRoleAssignment[]] GetAzSKRoleAssignment([string] $resourceGroupName, [bool] $recurse, [bool] $includeClassicAdministrators)
 	{
 		[PSRoleAssignment[]] $roleAssignments = @();
+
 		try
 		{
+			# Fetching subscription id only for feature flighting, this needs to be removed when we remove feature flighting.
+			$currentContext = [ContextHelper]::GetCurrentRMContext();
+			$subscriptionId = $currentContext.Subscription.Id;
 			if($includeClassicAdministrators)
 			{
-				$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -IncludeClassicAdministrators -ErrorAction Stop;
+				#Checking feature flighting status for CSP subs validating and accordingly making another attempt skipping -IncludeClassicAdministrators
+				if([FeatureFlightingManager]::GetFeatureStatus("EnableCSPSubsValidation",$subscriptionId) -eq $true)
+				{
+					try{
+						$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -IncludeClassicAdministrators -ErrorAction Stop;
+					}
+					catch{
+						# Assuming -IncludeClassicAdministrators not supported for CSP subs, giving another try
+						$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ErrorAction Stop;
+					}
+				}
+				else{
+					# If feature flighting is disabled, use existing code path
+					$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -IncludeClassicAdministrators -ErrorAction Stop;
+				}
 			}
 			else
 			{
@@ -73,10 +118,12 @@ class RoleAssignmentHelper
 			}
 			return $roleAssignments;
 		}
-		catch
-		{ 
-			# Eat the current exception which typically happens when the caller doesn't have access to GraphAPI. It will fall back to the below custom API based approach.
-		}
+        catch
+        {
+			# CA Scans running with SPN (which doesn't have graph API access) will always throw an exception 
+			# We absorb that and fall back to below custom API based approach.
+        }
+
 
 		$roleAssignments = [RoleAssignmentHelper]::GetAzSKRoleAssignment($resourceGroupName, "", "", $recurse, $includeClassicAdministrators);
 		
@@ -88,21 +135,41 @@ class RoleAssignmentHelper
 		[PSRoleAssignment[]] $roleAssignments = @();
 		try
 		{
+			# Fetching subscription id only for feature flighting, this needs to be removed when we remove feature flighting.
+			$currentContext = [ContextHelper]::GetCurrentRMContext();
+			$subscriptionId = $currentContext.Subscription.Id
 			if($includeClassicAdministrators)
 			{
-				$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ResourceName $resourceName -ResourceType $resourceType -IncludeClassicAdministrators -ErrorAction Stop;
+
+				#Checking feature flighting status for CSP subs validating and accordingly making another attempt skipping -IncludeClassicAdministrators
+				if([FeatureFlightingManager]::GetFeatureStatus("EnableCSPSubsValidation",$subscriptionId) -eq $true)
+				{
+					try{
+						$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ResourceName $resourceName -ResourceType $resourceType -IncludeClassicAdministrators -ErrorAction Stop;
+					}
+					catch{
+						# Assuming -IncludeClassicAdministrators not supported for CSP subs, giving another try
+						$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ResourceName $resourceName -ResourceType $resourceType -ErrorAction Stop;
+					}
+				}
+				else{
+					# If feature flighting is disabled, use existing code path
+					$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ResourceName $resourceName -ResourceType $resourceType -IncludeClassicAdministrators -ErrorAction Stop;
+				}
+
 			}
 			else
 			{
 				$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ResourceName $resourceName -ResourceType $resourceType -ErrorAction Stop;
 			}
-
 			return $roleAssignments;
 		}
-		catch
-		{ 
-			# Eat the current exception which typically happens when the caller doesn't have access to GraphAPI. It will fall back to the below custom API based approach.
-		}
+     catch
+        {
+						# CA Scans running with SPN (which doesn't have graph API access) will always throw an exception 
+			# We absorb that and fall back to below custom API based approach.
+        }
+
 
 		$currentContext = [ContextHelper]::GetCurrentRMContext();
         $subscriptionId = $currentContext.Subscription.Id;

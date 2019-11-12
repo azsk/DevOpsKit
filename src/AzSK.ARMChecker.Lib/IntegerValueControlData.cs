@@ -4,5 +4,6 @@
 	{
 		public ControlDataMatchType Type { get; set; }
 		public int Value { get; set; }
+		public string IfNoPropertyFound { get; set; }
 	}
 }

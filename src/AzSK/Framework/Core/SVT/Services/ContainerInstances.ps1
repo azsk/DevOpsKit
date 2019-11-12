@@ -17,7 +17,7 @@ class ContainerInstances: AzSVTBase
 											#-ResourceGroupName $this.ResourceContext.ResourceGroupName -ErrorAction SilentlyContinue
 
             $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName `
-											-ResourceGroupName $this.ResourceContext.ResourceGroupName -ExpandProperties
+											-ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType $this.ResourceContext.ResourceType -ExpandProperties
 
             if(-not $this.ResourceObject)
             {
