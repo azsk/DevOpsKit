@@ -32,6 +32,15 @@
   "APIManagement": {
     "AllowedIdentityProvider": [
       "Aad"
+    ],
+    "UnsecureProtocolsAndCiphersConfiguration": [
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Ssl30",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168"
     ]
   },
   "VirtualMachine": {
@@ -213,6 +222,9 @@
     "Subscription" : [ "Owner", "Contributor", "User Access Administrator" ],
     "ResourceGroup" : [ "Owner", "User Access Administrator" ]
   },
+  "CheckPIMCAPolicyTags": false,
+  "PIMCAPolicyTags":[],
+  "PIMAppId":"",
   "ASCAlertsSeverityLevels": [ "High" ],
   "ASCAlertsThresholdInDays": 30,
   "WhitelistedMgmtCerts": {
