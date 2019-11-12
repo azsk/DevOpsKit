@@ -23,9 +23,9 @@ class PIM: AzCommandBase {
         [ContextHelper]::ResetCurrentRMContext
         if([Helpers]::CheckMember($this.ControlSettings,'PIMAppId'))
         {
-            if(-not ([string]::IsNullOrEmpty))
+            if(-not ([string]::IsNullOrEmpty($this.ControlSettings.PIMAppId)))
             {
-                $this.AccessToken = [ContextHelper]::GetAccessToken($this.ControlSettings.PIMAppId);
+                $this.AccessToken = Get-AzSKAccessToken -ResourceAppIdURI $this.ControlSettings.PIMAppId;
             }
         }
         else
@@ -48,7 +48,7 @@ class PIM: AzCommandBase {
         $this.AcquireToken();  
         if( -not [string]::IsNullOrEmpty($this.UserId))
         {  
-            $urlme = $this.APIroot + "/roleAssignments?`$expand=linkedEligibleRoleAssignment,subject,roleDefinition(`$expand=resource)&`$filter=(subject/id%20eq%20%27$($this.UserId)%27)+and+(assignmentState%20eq%20'Eligible')"
+            $urlme = $this.APIroot + "/roleAssignments?`$expand=linkedEligibleRoleAssignment,subject,roleDefinition(`$expand=resource)&`$filter=(subject/id%20eq%20%27$($this.UserId)%27)"
             $assignments = [WebRequestHelper]::InvokeWebRequest('Get', $urlme, $this.headerParams, $null, [string]::Empty, $false, $false )
             $assignments = $assignments | Sort-Object  roleDefinition.resource.type , roleDefinition.resource.displayName
             $obj = @()        
@@ -111,7 +111,8 @@ class PIM: AzCommandBase {
                 }
                 if( $item.ResourceType -eq 'resourcegroup')
                 {
-                    $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -match $ResourceGroupName  }
+                    $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
+                    $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq $rgId }
                  }
                 if( $item.ResourceType -eq 'resource'){
                 $resolvedResources = $resolvedResources | Where-Object{$_.ResourceName -eq $ResourceName }
@@ -357,7 +358,7 @@ class PIM: AzCommandBase {
         if(($resource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resource.ExternalId)))
         {
             if (($assignments | Measure-Object).Count -gt 0 ) {
-                $matchingAssignment = $assignments | Where-Object { $_.OriginalId -in $resource.ExternalId -and $_.RoleName -eq $roleName }
+                $matchingAssignment = $assignments | Where-Object { $_.OriginalId -in $resource.ExternalId -and $_.RoleName -eq $roleName -and $_.AssignmentState -eq 'Eligible' }
                 if (($matchingAssignment | Measure-Object).Count -gt 0) {
                     $this.PublishCustomMessage("Requesting activation of your [$($matchingAssignment.RoleName)] role on [$($matchingAssignment.ResourceName)]... ", [MessageType]::Info);
                     $resourceId = $matchingAssignment.ResourceId
