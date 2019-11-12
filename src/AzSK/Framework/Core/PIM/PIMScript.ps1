@@ -478,7 +478,7 @@ class PIM: AzCommandBase {
                 try 
                 {
                     $users += Get-AzADUser -UserPrincipalName $_
-                    if($null -eq $users )
+                    if(($users | Measure-Object).Count -eq 0)
                     {
                         $users += Get-AzADGroup -DisplayName $_
                         
