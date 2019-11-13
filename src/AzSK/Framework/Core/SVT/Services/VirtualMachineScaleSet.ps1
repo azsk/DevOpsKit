@@ -91,7 +91,7 @@ class VirtualMachineScaleSet: AzSVTBase
 
 	hidden [PSObject] GetVMSSInstances(){
 		if(-not $this.VMInstances){
-			$this.VMInstances = Get-AzVmssVM -ResourceGroupName $this.ResourceContext.ResourceGroupName -VMScaleSetName $this.ResourceContext.ResourceName
+			$this.VMInstances = Get-AzVmssVM -ResourceGroupName $this.ResourceContext.ResourceGroupName -VMScaleSetName $this.ResourceContext.ResourceName -ErrorAction SilentlyContinue
 		}
 		return $this.VMInstances;
 	}
