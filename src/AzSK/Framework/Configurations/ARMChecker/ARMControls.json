@@ -624,7 +624,7 @@
         {
           "id": "AppService420",
           "apiVersions": [ "2016-08-01" ],
-          "controlId": "Azure_AppService_DP_Use_Approved_TLS_Version",
+          "controlId": "Azure_AppService_DP_Use_Secured_TLS_Version",
           "isEnabled": true,
           "description": "Use approved version of TLS for the App Service",
           "rationale": "TLS provides privacy and data integrity between client and server. Using approved TLS version significantly reduces risks from security design issues and security bugs that may be present in older versions.",
