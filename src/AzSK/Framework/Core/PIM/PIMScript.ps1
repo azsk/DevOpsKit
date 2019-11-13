@@ -552,11 +552,11 @@ class PIM: AzCommandBase {
                     $url = $this.APIroot + "/roleAssignmentRequests"
                     $ts = New-TimeSpan -Days $duration
                     $postParams = '{"assignmentState":"Eligible","type":"AdminAdd","reason":"Assign","roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $_.Id + '","schedule":{"startDateTime":"' + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","endDateTime":"' + ((get-date) + $ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","type":"Once"}}'
-                    $this.PublishCustomMessage("Requesting assignment for [$($_.UserPrincipalName)] on [$($resolvedResource.ResourceName)] for [$RoleName] role...")
+                    #$this.PublishCustomMessage("Requesting assignment on [$($resolvedResource.ResourceName)] for [$RoleName] role...")
                     try{
                     $response = [WebRequestHelper]::InvokeWebRequest('Post', $url, $this.headerParams, $postParams, "application/json", $false, $true )
                         if ($response.StatusCode -eq 201) {
-                            $this.PublishCustomMessage("Assignment request for [$($_.UserPrincipalName)] for the [$RoleName] role on [$($resolvedResource.ResourceName)] queued successfully.", [MessageType]::Update);
+                            $this.PublishCustomMessage("Assignment request queued successfully.", [MessageType]::Update);
                             $this.PublishCustomMessage("");
                         }  
                         elseif ($response.StatusCode -eq 401) {
