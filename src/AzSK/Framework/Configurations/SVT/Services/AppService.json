@@ -615,7 +615,7 @@
        "Enabled": true
       },
       {
-        "ControlID": "Azure_AppService_DP_Use_Secured_TLS_Version",
+        "ControlID": "Azure_AppService_DP_Use_Secure_TLS_Version",
         "Description": "Use approved version of TLS for the App Service",
         "Id": "AppService420",
         "ControlSeverity": "High",
