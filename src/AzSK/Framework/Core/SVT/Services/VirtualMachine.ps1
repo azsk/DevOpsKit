@@ -338,7 +338,7 @@ class VirtualMachine: AzSVTBase
 					}
 					else 
 					{
-						if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+						if([FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
 							#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
 							$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
 						}
@@ -347,7 +347,7 @@ class VirtualMachine: AzSVTBase
 				}
 			}
 			else {
-				if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+				if([FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
 					#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
 					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
 				} 
@@ -381,7 +381,7 @@ class VirtualMachine: AzSVTBase
 				elseif($antimalwareSetting.assessmentResult -eq 'None')
 				{	
 					# Generally ASC shows NA status if VM is in deallocated state
-					if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+					if([FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
 						#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
 						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
 					} 		
@@ -395,7 +395,7 @@ class VirtualMachine: AzSVTBase
 		}
 		else
 		{
-			if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+			if([FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
 				#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
 				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
 			} 
@@ -431,7 +431,7 @@ class VirtualMachine: AzSVTBase
 					}
 					if($null -eq $currentVulnExtensionVersion )
 					{
-						if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+						if([FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
 							#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
 							$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
 						} 
@@ -456,7 +456,7 @@ class VirtualMachine: AzSVTBase
 		}
 		else
 		{
-			if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+			if([FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
 				#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
 				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
 			} 
@@ -538,7 +538,7 @@ class VirtualMachine: AzSVTBase
 		}
 		else
 		{
-			if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+			if([FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
 				#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
 				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
 			} 
@@ -588,7 +588,7 @@ class VirtualMachine: AzSVTBase
 					}
 					
 				}else{
-					if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+					if([FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
 						#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
 						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
 					} 
@@ -602,7 +602,7 @@ class VirtualMachine: AzSVTBase
 					$controlStatus = [VerificationResult]::Passed
 					$controlResult.AddMessage("No guest configuration policy assignment has been found for this resource.");
 				}else{
-					if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+					if([FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
 						#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
 						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
 					} 
@@ -674,7 +674,7 @@ class VirtualMachine: AzSVTBase
 		}
 		else
 		{
-			if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+			if([FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
 				#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
 				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
 			} 

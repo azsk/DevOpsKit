@@ -137,7 +137,7 @@
       "IsEnabled": true
     },
     {
-      "Name": "MarkHasRequiredAccessFalseForVM",
+      "Name": "DisableHasRequiredAccessForDeallocatedVM",
       "Description": "",
       "Sources": ["*"],
       "EnabledForSubs": [],
