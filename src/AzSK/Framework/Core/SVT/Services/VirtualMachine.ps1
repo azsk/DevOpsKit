@@ -338,11 +338,19 @@ class VirtualMachine: AzSVTBase
 					}
 					else 
 					{
+						if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+							#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
+							$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
+						}
 						$controlResult.AddMessage([VerificationResult]::Manual, "VM is in deallocated state. We are not able to check Security Center workspace status. Please validate VM antimalware status manually.");
 					}
 				}
 			}
 			else {
+				if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+					#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
+				} 
 				$controlResult.AddMessage([VerificationResult]::Manual, "We are not able to check Security Center workspace status. Please validate VM antimalware status manually.");
 			}
 			
@@ -371,7 +379,12 @@ class VirtualMachine: AzSVTBase
 					$controlResult.AddMessage([VerificationResult]::Verify,"Validate configurations of antimalware using ASC."); 
 				}
 				elseif($antimalwareSetting.assessmentResult -eq 'None')
-				{					
+				{	
+					# Generally ASC shows NA status if VM is in deallocated state
+					if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+						#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
+						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
+					} 		
 					$controlResult.AddMessage([VerificationResult]::Manual, "The control is not applicable due to the ASC current policy."); 
 				}
 				else
@@ -382,6 +395,10 @@ class VirtualMachine: AzSVTBase
 		}
 		else
 		{
+			if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+				#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
+			} 
 			$controlResult.AddMessage([VerificationResult]::Manual, "We are not able to check Security Center status right now. Please validate manually.");
 		}
 		return $controlResult;
@@ -414,6 +431,10 @@ class VirtualMachine: AzSVTBase
 					}
 					if($null -eq $currentVulnExtensionVersion )
 					{
+						if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+							#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
+							$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
+						} 
 						$controlResult.AddMessage([VerificationResult]::Manual, "Not able to fetch details of vulnerability assessment extension '$($requiredVulnExtension)'.");
 					}
 					elseif($currentVulnExtensionVersion -lt $requiredVulnExtensionVersion){
@@ -435,6 +456,10 @@ class VirtualMachine: AzSVTBase
 		}
 		else
 		{
+			if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+				#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
+			} 
 			$controlResult.AddMessage([VerificationResult]::Verify, "This VM is currently in a 'deallocated' state. Unable to check security controls on it.");
 		}
 		return $controlResult;
@@ -513,6 +538,10 @@ class VirtualMachine: AzSVTBase
 		}
 		else
 		{
+			if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+				#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
+			} 
 			$controlStatus = [VerificationResult]::Verify
 			$controlResult.AddMessage("This VM is currently in a 'deallocated' state. Unable to check security controls on it.");
 		}
@@ -559,6 +588,10 @@ class VirtualMachine: AzSVTBase
 					}
 					
 				}else{
+					if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+						#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
+						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
+					} 
 					$controlStatus = [VerificationResult]::Verify
 					$controlResult.AddMessage("No guest configuration policy assignment found.");
 				}
@@ -569,6 +602,10 @@ class VirtualMachine: AzSVTBase
 					$controlStatus = [VerificationResult]::Passed
 					$controlResult.AddMessage("No guest configuration policy assignment has been found for this resource.");
 				}else{
+					if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+						#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
+						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
+					} 
 					$controlStatus = [VerificationResult]::Verify
 					$controlResult.AddMessage("Not able to fetch guest configuration policy assignments details.");
 				}
@@ -637,6 +674,10 @@ class VirtualMachine: AzSVTBase
 		}
 		else
 		{
+			if([FeatureFlightingManager]::GetFeatureStatus("MarkHasRequiredAccessFalseForVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+				#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
+			} 
 			$controlStatus = [VerificationResult]::Verify
 			$controlResult.AddMessage("This VM is currently in a 'deallocated' state. Unable to check security controls on it.");
 		}
