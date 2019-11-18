@@ -395,7 +395,7 @@
     },
     {
       "featureName": "Storage",
-      "supportedResourceTypes": [ "Microsoft.Storage/storageAccounts" ],
+      "supportedResourceTypes": [ "Microsoft.Storage/storageAccounts", "Microsoft.Storage/storageAccounts/blobServices" ],
       "controls": [
         {
           "id": "AzureStorage160",
@@ -422,6 +422,23 @@
           "data": {
             "type": "Equals",
             "value": 0
+          }
+        },
+        {
+          "id": "AzureStorage270",
+          "controlId": "Azure_Storage_BCDR_Enable_Soft_Delete",
+          "isEnabled": true,
+          "description": "Soft delete should be enabled to allow recovery of deleted blobs or blob snapshots",
+          "rationale": "Enabling soft delete feature on Storage acts as a safety measure to recover inadvertently or maliciously deleted blobs or blob snapshots. If your data is critical, this can be a valuable BC/DR mechanism.",
+          "recommendation": "Refer: https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-soft-delete to enable soft delete feature on Storage.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.deleteRetentionPolicy.enabled" ],
+          "matchType": "VerifiableBooleanSingleToken",
+          "data": {
+            "value": "true",
+            "Type": "",
+            "IfNoPropertyFound": "Verify",
+            "ControlDesiredState": "Passed"
           }
         }
       ]
@@ -607,12 +624,12 @@
         {
           "id": "AppService420",
           "apiVersions": [ "2016-08-01" ],
-          "controlId": "Azure_AppService_DP_Use_Approved_TLS_Version",
+          "controlId": "Azure_AppService_DP_Use_Secure_TLS_Version",
           "isEnabled": true,
           "description": "Use approved version of TLS for the App Service",
           "rationale": "TLS provides privacy and data integrity between client and server. Using approved TLS version significantly reduces risks from security design issues and security bugs that may be present in older versions.",
           "recommendation": "Go to Azure Portal --> your App Service --> Settings --> TLS/SSL --> Minimum TLS version --> set to org approved version (see detailed logs).",
-          "severity": "Medium",
+          "severity": "High",
           "jsonPath": [ "$.properties.siteConfig.minTlsVersion", "$.properties.minTlsVersion" ],
           "matchType": "VersionSingleToken",
           "data": {
@@ -630,10 +647,13 @@
           "rationale": "CORS enables applications running under one domain to access a resource under another domain. Allowing cross-origin credentials is a security risk. A website at another domain can send a signed-in user's credentials to the app on the user's behalf without the user's knowledge.",
           "recommendation": "Go to Azure Portal --> your App Service --> API --> CORS --> Request Credentials --> Review if you need to enable 'Access-Control-Allow-Credentials'. Note: No action is needed if you are not using CORS for your app.",
           "severity": "Medium",
-          "jsonPath": [ "$.properties.cors.supportCredentials" ],
+          "jsonPath": [ "$.properties.siteConfig.cors.supportCredentials", "$.properties.cors.supportCredentials" ],
           "matchType": "VerifiableBooleanSingleToken",
           "data": {
-            "value": "false"
+            "value": "false",
+            "Type": "",
+            "IfNoPropertyFound": "Passed",
+            "ControlDesiredState": "Passed"
           }
         },
 
@@ -641,7 +661,7 @@
           "id": "AppService380",
           "apiVersions": [ "2016-08-01" ],
           "controlId": "Azure_AppService_DP_Restrict_CORS_Access",
-          "isEnabled": true,
+          "isEnabled": false,
           "description": "Ensure that CORS access is granted to a limited set of trusted origins.",
           "rationale": "CORS enables applications running under one domain to access a resource under another domain. Using '*' (allow all) for CORS setting means that an application running under any domain can have access to your application's resources and data. Restricting allowed origins to the specific set that needs access aligns with the principle of least privilege.",
           "recommendation": "Go to Azure Portal --> your App Service --> API --> CORS --> Provide the specific domain names that should be allowed to make cross-origin calls. Note: No action is needed if you are not using CORS for your app.",
@@ -650,7 +670,8 @@
           "matchType": "VerifiableItemCount",
           "data": {
             "type": "All",
-            "value": 0
+            "value": 0,
+            "IfNoPropertyFound": "Verify"
           }
         }
       ]
@@ -1197,6 +1218,55 @@
           "data": {
             "type": "StringNotMatched",
             "value": "premium",
+            "isCaseSensitive": false
+          }
+        }
+
+      ]
+    },
+    {
+      "featureName": "DBforPostgreSQL",
+      "supportedResourceTypes": [ "Microsoft.DBforPostgreSQL/servers" , "Microsoft.DBforPostgreSQL/servers/configurations" ],
+      "controls": [
+        {
+          "id": "DBforPostgreSQL120",
+          "controlId": "Azure_DBforPostgreSQL_AuthZ_Enable_SSL_Connection",
+          "isEnabled": true,
+          "description": "SSL connection must be enabled for Azure Database for PostgreSQL",
+          "rationale": "Enforcing SSL connections between your database server and your client applications helps protect against 'man-in-the-middle' attacks by encrypting the data stream between the server and your application.",
+          "recommendation": "To enable SSL connection for Azure Database for PostgreSQL server, refer https://docs.microsoft.com/en-us/azure/postgresql/concepts-ssl-connection-security.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.sslEnforcement" ],
+          "matchType": "MatchStringSingleToken",
+          "data": {
+            "value": "Enabled",
+            "Type": "StringMatched",
+            "IfNoPropertyFound": "Passed",
+            "isCaseSensitive": false
+          }
+        }
+
+      ]
+    },
+
+    {
+      "featureName": "DBforMySQL",
+      "supportedResourceTypes": [ "Microsoft.DBforMySQL/servers" ],
+      "controls": [
+        {
+          "id": "DBforMySQL120",
+          "controlId": "Azure_DBforMySQL_Authz_Enable_SSL_Connection",
+          "isEnabled": true,
+          "description": "SSL connection must be enabled for Azure Database for MySQL",
+          "rationale": "Enforcing SSL connections between your database server and your client applications helps protect against 'man in the middle' attacks by encrypting the data stream between the server and your application.",
+          "recommendation": "To enable SSL connection for Azure Database for MySQL server, refer https://docs.microsoft.com/en-us/azure/mysql/concepts-ssl-connection-security.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.sslEnforcement" ],
+          "matchType": "MatchStringSingleToken",
+          "data": {
+            "value": "Enabled",
+            "Type": "StringMatched",
+            "IfNoPropertyFound": "Passed",
             "isCaseSensitive": false
           }
         }

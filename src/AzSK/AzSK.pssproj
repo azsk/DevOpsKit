@@ -209,6 +209,7 @@
     <Compile Include="Framework\Configurations\SVT\Services\SQLDatabase.json" />
     <Compile Include="Framework\Configurations\SVT\Services\Storage.json" />
     <Compile Include="Framework\Configurations\SVT\Services\VirtualMachine.json" />
+    <Compile Include="Framework\Configurations\SVT\Services\VirtualMachineScaleSet.json" />
     <Compile Include="Framework\Configurations\SVT\Services\VirtualNetwork.json" />
     <Compile Include="Framework\Core\SVT\ServicesSecurityStatus.ps1" />
     <Compile Include="Framework\Core\SVT\Services\DataLakeAnalytics.ps1" />
@@ -224,6 +225,7 @@
     <Compile Include="Framework\Core\SVT\Services\SQLDatabase.ps1" />
     <Compile Include="Framework\Core\SVT\Services\Storage.ps1" />
     <Compile Include="Framework\Core\SVT\Services\VirtualMachine.ps1" />
+    <Compile Include="Framework\Core\SVT\Services\VirtualMachineScaleSet.ps1" />
     <Compile Include="Framework\Core\SVT\Services\VirtualNetwork.ps1" />
     <Compile Include="Framework\Core\SVT\SVTResourceResolver.ps1" />
     <Compile Include="Framework\Framework.ps1" />

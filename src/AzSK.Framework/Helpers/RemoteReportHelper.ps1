@@ -119,6 +119,7 @@ class RemoteReportHelper
 			$result.Justification = $controlResult.StateManagement.AttestedStateData.Justification
 			$result.AttestedState = [JsonHelper]::ConvertToJsonCustomCompressed($controlResult.StateManagement.AttestedStateData.DataObject)
 			$result.AttestedDate = $controlResult.StateManagement.AttestedStateData.AttestedDate
+			$result.AttestationExpiryDate = $controlResult.StateManagement.AttestedStateData.ExpiryDate
 
 		}
 		if($null -ne $controlResult.StateManagement -and $null -ne $controlResult.StateManagement.CurrentStateData) {
@@ -161,6 +162,7 @@ class RemoteReportHelper
 			$result.Justification = $controlResult.StateManagement.AttestedStateData.Justification
 			$result.AttestedState = [JsonHelper]::ConvertToJsonCustomCompressed($controlResult.StateManagement.AttestedStateData.DataObject)
 			$result.AttestedDate = $controlResult.StateManagement.AttestedStateData.AttestedDate
+			$result.AttestationExpiryDate = $controlResult.StateManagement.AttestedStateData.ExpiryDate
 		}
 		if($null -ne $controlResult.StateManagement -and $null -ne $controlResult.StateManagement.CurrentStateData) {
 			$result.CurrentState = [JsonHelper]::ConvertToJsonCustomCompressed($controlResult.StateManagement.CurrentStateData.DataObject)

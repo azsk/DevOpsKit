@@ -615,10 +615,10 @@
        "Enabled": true
       },
       {
-        "ControlID": "Azure_AppService_DP_Use_Approved_TLS_Version",
+        "ControlID": "Azure_AppService_DP_Use_Secure_TLS_Version",
         "Description": "Use approved version of TLS for the App Service",
         "Id": "AppService420",
-        "ControlSeverity": "Medium",
+        "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckAppServiceTLSVersion",
         "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> TLS/SSL --> Minimum TLS version --> set to org approved version (see detailed logs).",

@@ -32,11 +32,6 @@ function Set-AzSKSubscriptionRBAC
 		[string] 
 		[Parameter(Mandatory = $false, HelpMessage = "Provide tag names for processing specific policies. Comma separated values are supported.")]
 		$Tags,
-		
-		[switch]
-		[Parameter(Mandatory = $false, HelpMessage = "Switch to apply RBAC forcefully regardless of latest RBAC already present on subscription.")]
-		[Alias("f")]
-		$Force,
 
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder containing all security evaluation report or not.")]

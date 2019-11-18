@@ -49,10 +49,14 @@ class VirtualMachine: AzSVTBase
 		{
 			$result=$result | Where-Object { $_.Tags -contains "ERvNet" };
 		}
-		# Applying filter to exclude certain controls for Databricks locked RG resources
-		if([Helpers]::CheckMember($this.ControlSettings, "DataBricksFilters.TagName") -and [Helpers]::CheckMember($this.ControlSettings, "DataBricksFilters.TagValue")){
-			if([Helpers]::CheckMember($this.ResourceObject, "Tags") -and $this.ResourceObject.Tags[$this.ControlSettings.DataBricksFilters.TagName] -eq $this.ControlSettings.DataBricksFilters.TagValue){
-				$result=$result | Where-Object { $_.Tags -notcontains "FilterDatabricks" };
+        
+		# Applying filter to exclude certain controls based on Tag Key-Value 
+		if([Helpers]::CheckMember($this.ControlSettings.VirtualMachine, "ControlExclusionsByService") -and [Helpers]::CheckMember($this.ResourceObject, "Tags")){
+			$this.ControlSettings.VirtualMachine.ControlExclusionsByService | ForEach-Object {
+				if($this.ResourceObject.Tags[$_.ResourceTag] -like $_.ResourceTagValue){
+					$controlTag = $_.ControlTag
+					$result=$result | Where-Object { $_.Tags -notcontains $controlTag };
+				}
 			}
 		}
 		
@@ -499,8 +503,8 @@ class VirtualMachine: AzSVTBase
         
 
 			# Check if Managed System Identity is enabled on VM
-
-			if([Helpers]::CheckMember($this.ResourceObject, "Identity") -and $this.ResourceObject.Identity.Type -eq "SystemAssigned"){
+            # Using like "*SystemAssigned*" to get correct status, if both MSI and User Assigned Identity are enabled 
+			if([Helpers]::CheckMember($this.ResourceObject, "Identity") -and $this.ResourceObject.Identity.Type -like "*SystemAssigned*"){
 				$controlResult.AddMessage("SystemAssigned managed identity is enabled on VM.");
 			}else{
 				$controlStatus = [VerificationResult]::Failed
