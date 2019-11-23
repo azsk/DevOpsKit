@@ -123,6 +123,9 @@ class KubernetesService: AzSVTBase
                 if($resourceKubernetesVersion -eq [System.Version] $_){
 					$requiredKubernetesVersionPresent = $true
 				}
+				elseif ($null -eq $this.ResourceObject.Properties.kubernetesVersion) {
+					$requiredKubernetesVersionPresent = $true
+				}
 			}
 
 			if(-not $requiredKubernetesVersionPresent)
