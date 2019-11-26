@@ -148,8 +148,7 @@ class AppServiceFix: FixServicesBase
     {
 			[MessageData[]] $detailedLogs = @();
 			
-			$detailedLogs += [MessageData]::new("Setting up minimum TLS Version
-			to $($this.ControlSettings.AppService.TLS_Version) for app service [$($this.ResourceName)]...");
+			$detailedLogs += [MessageData]::new("Setting up minimum TLS Version to $($this.ControlSettings.AppService.TLS_Version) for app service [$($this.ResourceName)]...");
 		
 			$params = @{
 					ApiVersion        = '2018-02-01'
