@@ -2,8 +2,9 @@
 {
     public class CustomTokenControlData
     {
-        public string Key { get; set; }
+        public string KeyPath { get; set; }
         public string Value { get; set; }
-  
+        public ControlDataMatchType Type { get; set; }
+
     }
 }
