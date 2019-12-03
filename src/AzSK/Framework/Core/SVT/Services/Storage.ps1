@@ -426,7 +426,7 @@ class Storage: AzSVTBase
 				 {
 					 $misConfigured = @();
 					 $matchedMetrices | ForEach-Object {
-						 if (($_.Criteria | Measure-Object).Count -eq 1 ) {
+						 if (($_.Criteria | Measure-Object).Count -gt 0 ) {
 
 							$condition = New-Object -TypeName PSObject
 
@@ -434,8 +434,8 @@ class Storage: AzSVTBase
 							Add-Member -InputObject $condition -Name "OperatorProperty" -MemberType NoteProperty -Value $_.Criteria.OperatorProperty
 							Add-Member -InputObject $condition -Name "Threshold" -MemberType NoteProperty -Value $_.Criteria.Threshold
 							Add-Member -InputObject $condition -Name "TimeAggregation" -MemberType NoteProperty -Value $_.Criteria.TimeAggregation
-							Add-Member -InputObject $condition -Name "WindowSize" -MemberType NoteProperty -Value  $_.EvaluationFrequency.ToString()
-							Add-Member -InputObject $condition -Name "Frequency" -MemberType NoteProperty -Value $_.WindowSize.ToString()
+							Add-Member -InputObject $condition -Name "Frequency" -MemberType NoteProperty -Value  $_.EvaluationFrequency.ToString()
+							Add-Member -InputObject $condition -Name "WindowSize" -MemberType NoteProperty -Value $_.WindowSize.ToString()
 							Add-Member -InputObject $condition -Name "IsEnabled" -MemberType NoteProperty -Value $True
 
 							$_.Criteria.Dimensions | ForEach-Object {
@@ -468,16 +468,12 @@ class Storage: AzSVTBase
 										{
 											if([Helpers]::CheckMember($actionGroup,"EmailReceivers.EmailAddress"))
 											{
-												$actions += New-AzAlertRuleEmail -SendToServiceOwner -CustomEmail $actionGroup.EmailReceivers.EmailAddress  -WarningAction SilentlyContinue
+											 $actions += $actionGroup
 											}
-											else
-											{
-												$actions += New-AzAlertRuleEmail -SendToServiceOwner -WarningAction SilentlyContinue
-											}	
 										}
 									}	
 								}
-							}		
+							}	
 							Add-Member -InputObject $alert -Name "Actions" -MemberType NoteProperty -Value $actions
 							Add-Member -InputObject $alert -Name "AlertName" -MemberType NoteProperty -Value $_.Name
 							Add-Member -InputObject $alert -Name "AlertType" -MemberType NoteProperty -Value $_.Type
@@ -486,49 +482,34 @@ class Storage: AzSVTBase
 								{
 									$alertsConfiguration += $alert 
 								}
+							}
 						}
 					}
 						 
-					 if(($alertsConfiguration|Measure-Object).Count -gt 0)
-					 {
-						 $alertsConfiguration | ForEach-Object {
-						 if([Helpers]::CompareObject($currentMetric, $_))
-						 {
-							 if(($_.Actions.GetType().GetMembers() | Where-Object { $_.MemberType -eq [System.Reflection.MemberTypes]::Property -and $_.Name -eq "Count" } | Measure-Object).Count -ne 0)
-							 {
-								 $isActionConfigured = $false;
-								 foreach ($action in $_.Actions) {
-									 if([Helpers]::CompareObject($this.ControlSettings.MetricAlert.Actions, $action))
-									 {
-										 $isActionConfigured = $true;
-										 break;
-									 }
-								 }
+					if(($alertsConfiguration|Measure-Object).Count -gt 0)
+					{
+						$alertsConfiguration | ForEach-Object {
+							if([Helpers]::CompareObject($currentMetric.Condition, $_.Condition))
+							{
+								$isActionConfigured = $false;
+								if (($_.Actions | Measure-Object).Count -gt 0 ) {
+									$isActionConfigured = $true;
+								}
+								if(-not $isActionConfigured)
+								{
+									$misConfigured += $_.Condition;
+								}
+							}
+							else
+							{
+								$misConfigured += $_.Condition
+							}
+						};
  
-								 if(-not $isActionConfigured)
-								 {
-									 $misConfigured += $_;
-								 }
-							 }
-							 else
-							 {
-								 if(-not [Helpers]::CompareObject($this.ControlSettings.MetricAlert.Actions, $_.Actions))
-								 {
-									 $misConfigured += $_;
-								 }
-							 }
-						 }
-						 else
-						 {
-							 $misConfigured += $_;
-						 }
-					 }
-				 }
- 
-					 if($misConfigured.Count -eq $matchedMetrices.Count)
-					 {
-						 $misConfiguredMetrices += $misConfigured;
-					 }
+						if($misConfigured.Count -eq $matchedMetrices.Count)
+						{
+							$misConfiguredMetrices += $misConfigured;
+						}
 				 }
 			 }
  
