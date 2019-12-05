@@ -534,11 +534,11 @@ namespace AzSK.ARMChecker.Lib
         {
             var result = ExtractAllSingleToken(control, resource, out List<string> actual, out StringSingleTokenControlData match);
 
-            result.ExpectedValue = match.Type + " '" + "Provided IP range must not equal to " +match.startIP + "" + match.endIP;
+            result.ExpectedValue = match.Type + " '" + "Provided IP range must not equal to " +match.StartIP + "" + match.EndIP;
             result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
 
-            IPAddress matchStartIP = IPAddress.Parse(match.startIP);
-            IPAddress matchEndIP = IPAddress.Parse(match.endIP);
+            IPAddress matchStartIP = IPAddress.Parse(match.StartIP);
+            IPAddress matchEndIP = IPAddress.Parse(match.EndIP);
             
             if (result.IsTokenNotFound || result.IsTokenNotValid)
             {
