@@ -165,10 +165,25 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		$totalResources = $automatedResources.Count;
 		[int] $currentCount = 0;
 		$childResources = @();
+		$scanSource = [AzSKSettings]::GetInstance().GetScanSource()
 		$automatedResources | ForEach-Object {
 			$exceptionMessage = "Exception for resource: [ResourceType: $($_.ResourceTypeMapping.ResourceTypeName)] [ResourceGroupName: $($_.ResourceGroupName)] [ResourceName: $($_.ResourceName)]"
             try
             {
+				# adding resource scan started telemetry event for tracking whether resource scan is successful
+				$resourceDetails=@{
+				ResourceId = $_.ResourceId
+				ResourceName = $_.ResourceName
+				ResourceType = $_.ResourceType
+				Location = $_.Location
+				ResourceGroupName = $_.ResourceGroupName
+				SubscriptionId = $this.SubscriptionContext.SubscriptionId
+				PartialScanIdentifier = $this.PartialScanIdentifier
+				RunIdentifier = $this.RunIdentifier
+				ScanSource = $scanSource
+				}
+				[AIOrgTelemetryHelper]::TrackEvent( "Resource Scan Started",$resourceDetails, $null)
+
 				$currentCount += 1;
 				if($totalResources -gt 1)
 				{
@@ -263,7 +278,8 @@ class ServicesSecurityStatus: AzSVTCommandBase
             {
 				$this.PublishCustomMessage($exceptionMessage);
 				$this.CommandError($_);
-            }
+			}
+			[AIOrgTelemetryHelper]::PublishEvent( "Resource Scan Ended",$resourceDetails, $null)	
 		}
 		if(($childResources | Measure-Object).Count -gt 0)
 		{
@@ -283,7 +299,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 			{
 				$this.PublishCustomMessage($_);
 				
-			}
+			}			
 		}
 		
 		
@@ -450,8 +466,26 @@ class ServicesSecurityStatus: AzSVTCommandBase
                     $nonScannedResourcesList = $partialScanMngr.GetNonScannedResources();
                 }
                 #Set unique partial scan indentifier 
-                $this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
-                
+				$this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
+
+				#Posting ResourceScanTracker to get insights about suspended CA mode subscriptions
+				if([FeatureFlightingManager]::GetFeatureStatus("EnableResourceScanTrackerTelemetry",$this.SubscriptionContext.SubscriptionId) -eq $true)
+				{
+					try{
+					$resourceScanTrackerContent = [JsonHelper]::ConvertToJsonCustomCompressed($partialScanMngr.ResourceScanTrackerObj)
+					$partialScanTrackerDetails=@{
+						ResourceScanTrackerContent= $resourceScanTrackerContent
+						SubscriptionId = $this.SubscriptionContext.SubscriptionId
+						PartialScanIdentifier = $this.PartialScanIdentifier
+						RunIdentifier = $this.RunIdentifier
+				    }
+					[AIOrgTelemetryHelper]::TrackEvent( "Resource Scan Tracker",$partialScanTrackerDetails, $null)
+					}
+					catch{
+						#in case of exception , nothing needs to be done 
+					}
+				}
+				
                 #Telemetry with addition for Subscription Id, PartialScanIdentifier and correction in count of resources
                 #Need optimization for calcuations done for total resources.
                 try{
