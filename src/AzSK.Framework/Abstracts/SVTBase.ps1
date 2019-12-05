@@ -303,6 +303,42 @@ class SVTBase: AzSKRoot
         return $resourceSecurityResult;
 	}
 
+	[SVTEventContext[]] RescanAndPostAttestationData()
+    {
+		[SVTEventContext[]] $resourceScanResult = @();
+		[SVTEventContext[]] $stateResult = @();
+		[ControlItem[]] $controlsToBeEvaluated = @();
+
+		$this.PostTelemetry();
+		$this.EvaluationStarted();	
+		#Fetch attested controls list from Blob
+		$stateResult = $this.GetControlsStateResult()
+		If (($stateResult | Measure-Object).Count -gt 0 )
+		{
+			#Get controls list which were attested in last 24 hours
+			$attestedControlsinBlob = $stateResult | Where-Object {$_.ControlResults.StateManagement.AttestedStateData.AttestedDate -gt ((Get-Date).AddDays(-1))}
+			if (($attestedControlsinBlob | Measure-Object).Count -gt 0 )
+			{
+				$attestedControlsinBlob | ForEach-Object {
+					$controlsToBeEvaluated += $_.ControlItem
+				};
+				$this.ApplicableControls = @($controlsToBeEvaluated);
+				$resourceScanResult += $this.GetAutomatedSecurityStatus();
+				$resourceScanResult += $this.GetManualSecurityStatus();
+
+				$this.PostEvaluationCompleted($resourceScanResult);
+				$this.EvaluationCompleted($resourceScanResult);
+			}
+			else {
+				Write-Host "No attested control found.`n$([Constants]::SingleDashLine)" 
+			}
+		}
+		else {
+			Write-Host "No attested control found.`n$([Constants]::SingleDashLine)" 
+		}
+         return $resourceScanResult;
+	}
+
 	[SVTEventContext[]] ComputeApplicableControlsWithContext()
     {
         [SVTEventContext[]] $contexts = @();
@@ -546,7 +582,7 @@ class SVTBase: AzSKRoot
 
         return $automatedControlsResult;
 	}
-	
+
 	hidden [SVTEventContext[]] GetControlsStateResult()
     {
         [SVTEventContext[]] $automatedControlsResult = @();
@@ -579,8 +615,8 @@ class SVTBase: AzSKRoot
     {
 		[SVTEventContext] $singleControlResult = $this.CreateSVTEventContextObject();
         $singleControlResult.ControlItem = $controlItem;
-
-        $this.ControlStarted($singleControlResult);
+			
+		$this.ControlStarted($singleControlResult);
 		if($controlItem.Enabled -eq $false)
         {
             $this.ControlDisabled($singleControlResult);
@@ -620,7 +656,7 @@ class SVTBase: AzSKRoot
 		$this.ControlCompleted($singleControlResult);
 
         return $singleControlResult;
-    }
+	}
 	
 	# Policy compliance methods begin
 	hidden [ControlResult] ComputeFinalScanResult([ControlResult] $azskScanResult, [ControlResult] $policyScanResult)
@@ -669,7 +705,10 @@ class SVTBase: AzSKRoot
 		}
 		if(($controlState|Measure-Object).Count -gt 0)
 		{
-			$this.ControlStarted($singleControlResult);
+			if (!(Test-Path variable:global:AttestationValue))
+			{
+				$this.ControlStarted($singleControlResult);
+			}
 			if($controlItem.Enabled -eq $false)
 			{
 				$this.ControlDisabled($singleControlResult);
