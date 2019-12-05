@@ -542,19 +542,20 @@ namespace AzSK.ARMChecker.Lib
             
             if (result.IsTokenNotFound || result.IsTokenNotValid)
             {
-                if (match.IfNoPropertyFound == "Passed")
+                switch (match.IfNoPropertyFound)
                 {
-                    result.VerificationResult = VerificationResult.Passed;
+                    case "Passed":
+                        result.VerificationResult = VerificationResult.Passed;
+                        break;
+                    case "Failed":
+                        result.VerificationResult = VerificationResult.Failed;
+                        break;
+                    case "Verify":
+                        result.VerificationResult = VerificationResult.Verify;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
-                else if (match.IfNoPropertyFound == "Failed")
-                {
-                    result.VerificationResult = VerificationResult.Failed;
-                }
-                else if (match.IfNoPropertyFound == "Verify")
-                {
-                    result.VerificationResult = VerificationResult.Verify;
-                }
-
             }
             else
             {
@@ -564,17 +565,19 @@ namespace AzSK.ARMChecker.Lib
 
                 if (actualStartIP.Equals(matchStartIP) && actualEndIP.Equals(matchEndIP))
                 {
-                    if (match.ControlDesiredState == "Passed")
+                    switch (match.ControlDesiredState)
                     {
-                        result.VerificationResult = VerificationResult.Passed;
-                    }
-                    else if (match.ControlDesiredState == "Verify")
-                    {
-                        result.VerificationResult = VerificationResult.Verify;
-                    }
-                    else if (match.ControlDesiredState == "Failed")
-                    {
-                        result.VerificationResult = VerificationResult.Failed;
+                        case "Passed":
+                            result.VerificationResult = VerificationResult.Passed;
+                            break;
+                        case "Verify":
+                            result.VerificationResult = VerificationResult.Verify;
+                            break;
+                        case "Failed":
+                            result.VerificationResult = VerificationResult.Failed;
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
                     }
                 }
                 else
@@ -589,22 +592,21 @@ namespace AzSK.ARMChecker.Lib
         private static ControlResult ExtractAllSingleToken<TV, TM>(ResourceControl control, JObject resource, out List<TV> actual,
             out TM match, bool validateParameters = true)
         {
-
+            bool tokenNotFound = false;
             List<JToken> tokens = new List<JToken>();
             foreach (var jsonPath in control.JsonPath)
             {
-                tokens.Add(resource.SelectToken(jsonPath));
-            }
-            bool tokenNotFound = false;
-            foreach (var tokenfound in tokens)
-            {
-                if (tokenfound == null)
+                if (resource.SelectToken(jsonPath) != null)
+                {
+                    tokens.Add(resource.SelectToken(jsonPath));
+                }
+                else
                 {
                     tokenNotFound = true;
+                    break;
                 }
             }
 
-            //var tokenNotFound = token.Count == 0;
             var result = ControlResult.Build(control, resource, tokens, tokenNotFound, VerificationResult.Failed);
             if (tokenNotFound) result.IsTokenNotValid = true;
             actual = new List<TV>();
@@ -616,9 +618,7 @@ namespace AzSK.ARMChecker.Lib
                 }
                 else
                 {
-                    //var tokenValue = default(TV);
-                    List<TV> tokenValue = new List<TV>();
-                    //tokenValue.add(default(TV));
+                    List<TV> tokenValues = new List<TV>();
                     for (int i = 0; i < tokens.Count; i++)
                     {
                         string ARMtemplateFunctionType = tokens[i].Value<String>().GetFunctionType();
@@ -626,22 +626,22 @@ namespace AzSK.ARMChecker.Lib
                         switch (ARMtemplateFunctionType)
                         {
                             case "parameters":
-                                tokenValue = functionParameters(validateParameters, tokens[i], tokenValue);
+                                tokenValues = functionParameters(validateParameters, tokens[i], tokenValues);
                                 break;
                             case "variables":
-                                tokenValue = functionVariables(validateParameters, tokens[i], tokenValue);
+                                tokenValues = functionVariables(validateParameters, tokens[i], tokenValues);
                                 break;
                             case "concat":
-                                tokenValue = functionConcat(validateParameters, tokens[i], tokenValue);
+                                tokenValues = functionConcat(validateParameters, tokens[i], tokenValues);
                                 break;
                             case "substring":
-                                tokenValue = functionSubString(validateParameters, tokens[i], tokenValue);
+                                tokenValues = functionSubString(validateParameters, tokens[i], tokenValues);
                                 break;
                             default:
-                                tokenValue.Add(tokens[i].Value<TV>());
+                                tokenValues.Add(tokens[i].Value<TV>());
                                 break;
                         }
-                        actual = tokenValue;
+                        actual = tokenValues;
                     }
                 }
             }
@@ -824,8 +824,7 @@ namespace AzSK.ARMChecker.Lib
                     if (!variableValueFound)
                     {
                         JObject innerParameters = _armTemplate["variables"].Value<JObject>();
-                        var tempTokenValue = innerParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value).FirstOrDefault();
-                        tokenValue = tempTokenValue.Value<TV>();
+                        tokenValue = (innerParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value).FirstOrDefault()).Value<TV>();
                     }
                 }
                 else if (variableKey == null)
@@ -964,13 +963,11 @@ namespace AzSK.ARMChecker.Lib
                 var variableKey = tokens.Values<String>().First().GetVariableKey();
                 if (variableKey != null)
                 {
-
-                    // If parameter value is not present in external parameter file, check for default value
+                // Get value from variables function.
                     if (!variableValueFound)
                     {
                         JObject innerParameters = _armTemplate["variables"].Value<JObject>();
-                        var tempTokenValue = innerParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value).FirstOrDefault();
-                        tokenValues = tempTokenValue.Values<TV>();
+                        tokenValues = (innerParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value).FirstOrDefault()).Values<TV>();
                     }
                 }
             }
