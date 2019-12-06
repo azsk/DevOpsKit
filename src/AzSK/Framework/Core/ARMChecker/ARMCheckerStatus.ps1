@@ -660,7 +660,6 @@ class ARMCheckerStatus: EventBase
 		 # Load Offline File
          }
 	   }
-	   $serverFileContent = $null
 	   if($null -eq $serverFileContent)
 	   {
 	     $serverFileContent = [ConfigurationHelper]::LoadOfflineConfigFile("ARMControls.json", $false);
