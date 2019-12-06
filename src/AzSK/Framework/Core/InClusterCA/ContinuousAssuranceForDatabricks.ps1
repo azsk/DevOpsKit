@@ -11,11 +11,10 @@ class DatabricksClusterCA : CommandBase {
         $this.ResourceContext = $ResourceContext
     }
 
-    static [PSObject] GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName, $PAT) {
+    static [PSObject] GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName) {
         if([string]::IsNullOrEmpty($SubscriptionId) -or 
             [string]::IsNullOrEmpty($WorkspaceName) -or
-            [string]::IsNullOrEmpty($ResourceGroupName) -or
-            [string]::IsNullOrEmpty($PAT)) {
+            [string]::IsNullOrEmpty($ResourceGroupName)) {
             Write-Host "Input the following parameters"
             if ([string]::IsNullOrEmpty($SubscriptionId)) {
                 $SubscriptionId = [Helpers]::ReadInput("Subscription ID")
@@ -26,10 +25,8 @@ class DatabricksClusterCA : CommandBase {
             if ([string]::IsNullOrEmpty($ResourceGroupName)) {
                 $ResourceGroupName = [Helpers]::ReadInput("Databricks Resource Group Name")
             }
-            if ([string]::IsNullOrEmpty($PAT)) {
-                $PAT = [Helpers]::ReadInput("Personal Access Token(PAT)")
-            }
         }
+        $PAT = [Helpers]::ReadInput("Personal Access Token(PAT)")
         Set-AzContext -SubscriptionId $SubscriptionId *> $null
         $response = Get-AzResource -Name $WorkspaceName -ResourceGroupName $ResourceGroupName
         $response = $response | Where-Object{$_.ResourceType -eq "Microsoft.Databricks/workspaces"}
