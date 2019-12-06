@@ -197,7 +197,8 @@ class ControlStateExtension
 		}
 
 		#Cache code: Fetch index file only if index file is null and it is present on storage blob
-		if(-not $this.ControlStateIndexer -and $this.IsControlStateIndexerPresent)
+		#if(-not $this.ControlStateIndexer -and $this.IsControlStateIndexerPresent)
+		if($this.IsControlStateIndexerPresent)
 		{
 
 			$StorageAccount = $this.AzSKStorageAccount;
