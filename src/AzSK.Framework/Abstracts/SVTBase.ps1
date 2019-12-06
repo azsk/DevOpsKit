@@ -706,7 +706,7 @@ class SVTBase: AzSKRoot
 		}
 		if(($controlState|Measure-Object).Count -gt 0)
 		{
-			if (!(Test-Path variable:global:AttestationValue))
+			if (! $Global:AttestationValue)
 			{
 				$this.ControlStarted($singleControlResult);
 			}

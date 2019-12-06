@@ -327,9 +327,9 @@ class ServicesSecurityStatus: AzSVTCommandBase
 	hidden [SVTEventContext[]] ScanAttestedControls()
 	{
 		[ControlStateExtension] $ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
-		$ControlStateExt.UniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
+		$ControlStateExt.UniqueRunId = $this.ControlStateExt.UniqueRunId;
 		$ControlStateExt.Initialize($false);
-		$attestationFound = $ControlStateExt.ComputeControlStateIndexer();
+		$ControlStateExt.ComputeControlStateIndexer();
 		$resourcesAttestedinCurrentScan = @()
 		if(($null -ne $ControlStateExt.ControlStateIndexer) -and ([Helpers]::CheckMember($ControlStateExt.ControlStateIndexer, "ResourceId")))
 		{
