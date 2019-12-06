@@ -376,19 +376,10 @@ namespace AzSK.ARMChecker.Lib
                 if (match.Value.Equals(actual,
                     match.IsCaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
                 {
-                    if (match.Type == ControlDataMatchType.StringMatched && match.ControlDesiredState == "Verify")
+                    if (match.Type == ControlDataMatchType.StringMatched)
                     {
                         result.VerificationResult = VerificationResult.Verify;
                     }
-                    else if (match.Type == ControlDataMatchType.StringMatched && match.ControlDesiredState == "Passed")
-                    {
-                        result.VerificationResult = VerificationResult.Passed;
-                    }
-                    else if(match.Type == ControlDataMatchType.StringMatched && match.ControlDesiredState == "Failed")
-                    {
-                        result.VerificationResult = VerificationResult.Failed;
-                    }
-
                 }
                 else
                 {
