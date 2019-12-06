@@ -453,7 +453,7 @@
           "matchType": "MatchStringSingleToken",
           "data": {
             "value": "Allow",
-            "Type": "StringNotMatched",
+            "Type": "StringMatched",
             "IfNoPropertyFound": "Verify",
             "ControlDesiredState": "Verify"
           }
@@ -1260,7 +1260,7 @@
           "matchType": "MatchStringSingleToken",
           "data": {
             "value": "Enabled",
-            "Type": "StringMatched",
+            "Type": "",
             "IfNoPropertyFound": "Passed",
             "isCaseSensitive": false,
             "ControlDesiredState": "Passed"
@@ -1320,7 +1320,7 @@
           "matchType": "MatchStringSingleToken",
           "data": {
             "value": "Enabled",
-            "Type": "StringMatched",
+            "Type": "",
             "IfNoPropertyFound": "Passed",
             "isCaseSensitive": false,
             "ControlDesiredState": "Passed"
