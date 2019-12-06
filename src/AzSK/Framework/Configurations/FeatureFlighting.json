@@ -137,6 +137,24 @@
       "IsEnabled": true
     },
     {
+      "Name": "FetchRGPIMControlStatusFromComplianceState",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+    {
+      "Name": "DisableHasRequiredAccessForDeallocatedVM",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+     {
       "Name": "EnableScanAfterAttestation",
       "Description": "",
       "Sources": ["*"],

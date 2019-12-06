@@ -341,7 +341,7 @@ class ARMCheckerStatus: EventBase
 						[bool] $flag = $true;
 						foreach($cr in $csvResults)
 						{
-							if($cr.ExpectedProperty -eq $csvResultItem.ExpectedProperty -and $cr.ControlId -eq $csvResultItem.ControlId -and $cr.LineNumber -eq $csvResultItem.LineNumber -and $cr.ResourceLineNumber -eq $csvResultItem.ResourceLineNumber -and $cr.FilePath -eq $csvResultItem.FilePath)
+							if($cr.ExpectedProperty -eq $csvResultItem.ExpectedProperty -and $cr.ControlId -eq $csvResultItem.ControlId -and $cr.LineNumber -eq $csvResultItem.LineNumber -and $cr.ResourceLineNumber -eq $csvResultItem.ResourceLineNumber -and $cr.FilePath -eq $csvResultItem.FilePath -and $cr.ExpectedValue -eq $csvResultItem.ExpectedValue)
 							{
 								$flag = $false;
 								break;

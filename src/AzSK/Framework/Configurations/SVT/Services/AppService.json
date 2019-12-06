@@ -632,6 +632,10 @@
           "Windows",
           "Linux"
         ],
+        "FixControl": {
+          "FixMethodName": "SetMinTLSVersion",
+          "FixControlImpact": "High"
+        },	
         "Enabled": true,
         "Rationale": "TLS provides privacy and data integrity between client and server. Using approved TLS version significantly reduces risks from security design issues and security bugs that may be present in older versions."
       }, 
