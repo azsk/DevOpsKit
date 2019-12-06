@@ -909,6 +909,7 @@ class AppService: AzSVTBase
 						}
 						else
 						{
+							$controlResult.EnableFixControl = $true;
 							$controlResult.VerificationResult = [VerificationResult]::Failed
 							$controlResult.AddMessage("Current Minimum TLS Version: $($minTlsVersion), Required Minimum TLS Version: $($requiredVersion)");
 							$controlResult.SetStateData("Current Minimum TLS Version",$minTlsVersion.ToString());
