@@ -347,10 +347,6 @@ class VirtualMachine: AzSVTBase
 				}
 			}
 			else {
-				if([FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
-					#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
-					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
-				} 
 				$controlResult.AddMessage([VerificationResult]::Manual, "We are not able to check Security Center workspace status. Please validate VM antimalware status manually.");
 			}
 			
