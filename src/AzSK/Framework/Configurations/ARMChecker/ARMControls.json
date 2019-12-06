@@ -453,7 +453,7 @@
           "matchType": "MatchStringSingleToken",
           "data": {
             "value": "Allow",
-            "Type": "StringNotMatched",
+            "Type": "StringMatched",
             "IfNoPropertyFound": "Verify",
             "ControlDesiredState": "Verify"
           }
@@ -1199,7 +1199,7 @@
           "jsonPath": [ "$.sku.name" ],
           "matchType": "MatchStringSingleToken",
           "data": {
-            "type": "StringMatched",
+            "type": "",
             "value": "premium",
             "isCaseSensitive": false,
             "ControlDesiredState": "Verify"
@@ -1217,7 +1217,7 @@
           "jsonPath": [ "$.sku.name" ],
           "matchType": "MatchStringSingleToken",
           "data": {
-            "type": "StringMatched",
+            "type": "",
             "value": "premium",
             "isCaseSensitive": false,
             "ControlDesiredState": "Verify"
@@ -1235,7 +1235,7 @@
           "jsonPath": [ "$.sku.name" ],
           "matchType": "MatchStringSingleToken",
           "data": {
-            "type": "StringMatched",
+            "type": "",
             "value": "premium",
             "isCaseSensitive": false,
             "ControlDesiredState": "Verify"
