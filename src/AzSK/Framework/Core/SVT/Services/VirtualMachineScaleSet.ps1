@@ -636,6 +636,28 @@ class VirtualMachineScaleSet: AzSVTBase
 		}		
 		return $controlResult;
 	} 
+	
+	
+	hidden [controlresult[]] CheckVMSSAutoOSUpgrade([controlresult] $controlresult)
+	{
+		# First Get Upgrade Policy defined for VMSS
+		if([Helpers]::CheckMember($this.ResourceObject,"UpgradePolicy")){
+			if([Helpers]::CheckMember($this.ResourceObject.UpgradePolicy,"automaticOSUpgradePolicy.enableAutomaticOSUpgrade") -and $this.ResourceObject.UpgradePolicy.automaticOSUpgradePolicy.enableAutomaticOSUpgrade -eq $true){
+				# Set control status to 'Passed' if automaticOSUpgradePolicy.enableAutomaticOSUpgrade property is set to true in the scale set model definition
+				$controlResult.VerificationResult = [VerificationResult]::Passed
+				$controlResult.AddMessage("Automatic OS image upgrade is configured for VM Scale Set.");	
+			}else{
+				# Set control status to 'Failed' if automaticOSUpgradePolicy.enableAutomaticOSUpgrade property is missing or set to false in the scale set model definition
+				$controlResult.VerificationResult = [VerificationResult]::Failed
+				$controlResult.AddMessage("Automatic OS image upgrade is not configured for VM Scale Set.");
+			}
+		}else{
+			# If not able to fetch Upgrade Policy defined for VMSS (for any reason), mark control as 'Manual'
+	        $controlResult.VerificationResult = [VerificationResult]::Manual
+			$controlResult.AddMessage("Not able to fetch Upgrade Policy details for VM Scale Set.");	
+		}
+		return $controlResult;
+	}
 
 	# Helper method to check if specific port is opened in NSG
 	hidden [PSObject] CheckIfPortIsOpened([PSObject] $effectiveNSG,[int] $port )
@@ -671,6 +693,8 @@ class VirtualMachineScaleSet: AzSVTBase
 		}
 		return $vulnerableRules;
 	}
+
+	
 }
 
 
