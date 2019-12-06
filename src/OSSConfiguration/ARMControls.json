@@ -1199,9 +1199,10 @@
           "jsonPath": [ "$.sku.name" ],
           "matchType": "MatchStringSingleToken",
           "data": {
-            "type": "StringNotMatched",
+            "type": "StringMatched",
             "value": "premium",
-            "isCaseSensitive": false
+            "isCaseSensitive": false,
+            "ControlDesiredState": "Verify"
           }
         },
 
@@ -1216,9 +1217,10 @@
           "jsonPath": [ "$.sku.name" ],
           "matchType": "MatchStringSingleToken",
           "data": {
-            "type": "StringNotMatched",
+            "type": "StringMatched",
             "value": "premium",
-            "isCaseSensitive": false
+            "isCaseSensitive": false,
+            "ControlDesiredState": "Verify"
           }
         },
 
@@ -1233,9 +1235,10 @@
           "jsonPath": [ "$.sku.name" ],
           "matchType": "MatchStringSingleToken",
           "data": {
-            "type": "StringNotMatched",
+            "type": "StringMatched",
             "value": "premium",
-            "isCaseSensitive": false
+            "isCaseSensitive": false,
+            "ControlDesiredState": "Verify"
           }
         }
 
@@ -1259,7 +1262,8 @@
             "value": "Enabled",
             "Type": "StringMatched",
             "IfNoPropertyFound": "Passed",
-            "isCaseSensitive": false
+            "isCaseSensitive": false,
+            "ControlDesiredState": "Passed"
           }
         },
         {
@@ -1318,7 +1322,8 @@
             "value": "Enabled",
             "Type": "StringMatched",
             "IfNoPropertyFound": "Passed",
-            "isCaseSensitive": false
+            "isCaseSensitive": false,
+            "ControlDesiredState": "Passed"
           }
         },
         {
