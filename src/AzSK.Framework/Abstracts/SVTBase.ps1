@@ -310,6 +310,7 @@ class SVTBase: AzSKRoot
 		[ControlItem[]] $controlsToBeEvaluated = @();
 
 		$this.PostTelemetry();
+		#Publish event to display host message to indicate start of resource scan 
 		$this.EvaluationStarted();	
 		#Fetch attested controls list from Blob
 		$stateResult = $this.GetControlsStateResult()
