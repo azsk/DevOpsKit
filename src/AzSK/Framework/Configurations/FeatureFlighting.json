@@ -137,7 +137,11 @@
       "IsEnabled": true
     },
     {
+<<<<<<< HEAD
       "Name": "DisableHasRequiredAccessForDeallocatedVM",
+=======
+      "Name": "FetchRGPIMControlStatusFromComplianceState",
+>>>>>>> 1824f6d542ee832215590a8f4a6ce9d1bda9fe6c
       "Description": "",
       "Sources": ["*"],
       "EnabledForSubs": [],
@@ -145,5 +149,6 @@
       "UnderPreview": false,
       "IsEnabled": true
     }
+    
   ]
 }

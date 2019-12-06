@@ -229,19 +229,39 @@ namespace AzSK.ARMChecker.Lib
         private static ControlResult EvaluateItemProperties(ResourceControl control, JObject resource)
         {
             var result = ExtractMultiToken(control, resource, out IEnumerable<object> actual, out CustomTokenControlData match);
-            result.ExpectedValue = " '"+match.Key+" ':" + " '" + match.Value + "'";
+            result.ExpectedValue = " '"+match.KeyPath+" ':" + " '" + match.Value + "'";
             result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
             if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
             bool keyValueFound = false;
+            string nestedTokenValue = null;
             foreach (JObject obj in actual)
             {
-                var dictObject = obj.ToObject<Dictionary<string, string>>();
-                if(dictObject.ContainsKey(match.Key) && dictObject[match.Key] == match.Value)
+                var nestedToken = obj.SelectToken(match.KeyPath);
+                if(nestedToken != null)
                 {
-                    keyValueFound = true;
-                    break;
+                    nestedTokenValue = nestedToken.Value<string>();
+                    if (match.Value.Equals(nestedTokenValue))
+                    {
+                        if (match.Type == ControlDataMatchType.Allow)
+                        {
+                            keyValueFound = true;
+                            break;
+                        }
+
+                    }
+                    else
+                    {
+                        if (match.Type == ControlDataMatchType.NotAllow)
+                        {
+                            keyValueFound = true;
+                            break;
+                        }
+                        
+                    }
+                    
                 }
             }
+
             if(keyValueFound)
             {
                 result.VerificationResult = VerificationResult.Passed;
