@@ -423,7 +423,7 @@ class DatabricksClusterCA : CommandBase {
         # validation- CA scan job should already exist
         if (-not [string]::IsNullOrEmpty($NewSchedule)) {
             if (-not $this.CheckAzSKJobExists()) {
-                $this.PublishCustomMessage("CA scan job is abset. Please ensure the CA is installed.", 
+                $this.PublishCustomMessage("CA scan job is absent. Please ensure the CA is installed.", 
                                            [MessageType]::Error)
                 return
             } else {
