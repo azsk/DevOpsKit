@@ -376,16 +376,29 @@ namespace AzSK.ARMChecker.Lib
                 if (match.Value.Equals(actual,
                     match.IsCaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
                 {
-                    if (match.Type == ControlDataMatchType.StringNotMatched)
+                    if (match.Type == ControlDataMatchType.StringMatched && match.ControlDesiredState == "Verify")
                     {
                         result.VerificationResult = VerificationResult.Verify;
                     }
+                    else if (match.Type == ControlDataMatchType.StringMatched && match.ControlDesiredState == "Passed")
+                    {
+                        result.VerificationResult = VerificationResult.Passed;
+                    }
+                    else if(match.Type == ControlDataMatchType.StringMatched && match.ControlDesiredState == "Failed")
+                    {
+                        result.VerificationResult = VerificationResult.Failed;
+                    }
+
                 }
                 else
                 {
                     if (match.ControlDesiredState == "Verify")
                     {
                         result.VerificationResult = VerificationResult.Verify;
+                    }
+                    else if (match.ControlDesiredState == "Passed")
+                    {
+                        result.VerificationResult = VerificationResult.Passed;
                     }
                     else
                     {
@@ -534,11 +547,11 @@ namespace AzSK.ARMChecker.Lib
         {
             var result = ExtractAllSingleToken(control, resource, out List<string> actual, out StringSingleTokenControlData match);
 
-            result.ExpectedValue = match.Type + " '" + "Provided IP range must not equal to " +match.StartIP + "" + match.EndIP;
+            result.ExpectedValue = match.Type + " '" + "Provided IP range must not equal to " +match.startIP + "" + match.endIP;
             result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
 
-            IPAddress matchStartIP = IPAddress.Parse(match.StartIP);
-            IPAddress matchEndIP = IPAddress.Parse(match.EndIP);
+            IPAddress matchStartIP = IPAddress.Parse(match.startIP);
+            IPAddress matchEndIP = IPAddress.Parse(match.endIP);
             
             if (result.IsTokenNotFound || result.IsTokenNotValid)
             {
