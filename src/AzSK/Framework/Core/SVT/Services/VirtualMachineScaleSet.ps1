@@ -393,7 +393,7 @@ class VirtualMachineScaleSet: AzSVTBase
 		if([Helpers]::CheckMember($this.ResourceObject,"VirtualMachineProfile.NetworkProfile")){
 			$vmssPublicIPs = Get-AzPublicIpAddress -ResourceGroupName $this.ResourceContext.ResourceGroupName -VirtualMachineScaleSetName $this.ResourceContext.ResourceName  -WarningAction SilentlyContinue 
 			if($null -ne $vmssPublicIPs -and ($vmssPublicIPs | Measure-Object).Count -gt 0){
-				$publicIps = $vmssPublicIPs |  Select-Object "Name", "ResourceGroupName", "PublicIpAllocationMethod", "IpAddress", "Id"
+				$publicIps += $vmssPublicIPs |  Select-Object "Name", "ResourceGroupName", "PublicIpAllocationMethod", "IpAddress", "Id"
 			}
 			if($this.VMSSDetails.IsVMSSConnectedToERvNet)
 			{
