@@ -122,59 +122,8 @@ class AIOrgTelemetry: ListenerBase {
             }
 		});
 		
-		$this.RegisterEvent([SVTEvent]::ResourceScanStarted, {
-			$currentInstance = [AIOrgTelemetry]::GetInstance();
-			try
-			{
-				$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-				$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
-				$featureGroup = [RemoteReportHelper]::GetFeatureGroup($SVTEventContexts)
-				$resourceDetails=@{
-					ResourceId = $_.ResourceId
-					ResourceName = $_.ResourceName
-					ResourceType = $_.ResourceType
-					Location = $_.Location
-					ResourceGroupName = $_.ResourceGroupName
-					SubscriptionId = $this.SubscriptionContext.SubscriptionId
-					PartialScanIdentifier = $this.PartialScanIdentifier
-					RunIdentifier = $this.RunIdentifier
-					Feature = $featureGroup
-				}
-				[AIOrgTelemetryHelper]::TrackEvent("Resource Scan Started",$resourceDetails, $null)	
-			}
-			catch
-			{
-				$currentInstance.PublishException($_);
-			}
-		});
-	
 
-	$this.RegisterEvent([SVTEvent]::ResourceScanEnded, {
-		$currentInstance = [AIOrgTelemetry]::GetInstance();
-		try
-		{
-			$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-			$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
-			$featureGroup = [RemoteReportHelper]::GetFeatureGroup($SVTEventContexts)
-			$resourceDetails=@{
-				ResourceId = $_.ResourceId
-				ResourceName = $_.ResourceName
-				ResourceType = $_.ResourceType
-				Location = $_.Location
-				ResourceGroupName = $_.ResourceGroupName
-				SubscriptionId = $this.SubscriptionContext.SubscriptionId
-				PartialScanIdentifier = $this.PartialScanIdentifier
-				RunIdentifier = $this.RunIdentifier
-				ScanSource = $scanSource
-			}
-			[AIOrgTelemetryHelper]::TrackEvent( "Resource Scan Ended",$resourceDetails, $null)	
-		}
-		catch
-		{
-			$currentInstance.PublishException($_);
-		}
-	});
-}
+    }
 
 	hidden [void] PushSubscriptionScanResults([SVTEventContext[]] $SVTEventContexts)
 	{

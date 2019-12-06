@@ -1248,6 +1248,7 @@
 
       ]
     },
+
     {
       "featureName": "DBforMySQL",
       "supportedResourceTypes": [ "Microsoft.DBforMySQL/servers" ],
@@ -1270,76 +1271,6 @@
           }
         }
 
-      ]
-    },
-    {
-      "featureName": "VirtualMachineScaleSet",
-      "supportedResourceTypes": [ "Microsoft.Compute/virtualMachineScaleSets" ],
-      "controls": [
-        {
-          "id": "VirtualMachineScaleSet110",
-          "controlId": "Azure_VirtualMachineScaleSet_Deploy_Monitoring_Agent",
-          "isEnabled": true,
-          "description": "Log analytics agent should be installed on Virtual Machine Scale Set",
-          "rationale": "Installing the Log Analytics extension for Windows and Linux allows Azure Monitor to collect data from your Azure VM Scale Sets which can be used for detailed analysis and correlation of events.",
-          "recommendation": "Run following commands: 1- `$allVersions= (Get-AzVMExtensionImage -Location 'eastus' -PublisherName 'Microsoft.EnterpriseCloud.Monitoring' -Type 'MicrosoftMonitoringAgent or OmsAgentForLinux').Version 2- `$versionString = `$allVersions[(`$allVersions.count)-1].Split('.')[0] + '.' + `$allVersions[(`$allVersions.count)-1].Split('.')[1] 3- `$VMSS = Get-AzVmss -ResourceGroupName <VMSS RG Name> -VMScaleSetName <VMSS Name> 4- Add-AzVmssExtension -VirtualMachineScaleSet `$VMSS -Name 'MicrosoftMonitoringAgent' -Publisher 'Microsoft.EnterpriseCloud.Monitoring' -Type 'MicrosoftMonitoringAgent or OmsAgentForLinux' -TypeHandlerVersion `$versionString -Setting '{'workspaceId': '<your workspace ID here>'}' -ProtectedSetting '{'workspaceKey': '<your workspace key here>'}' 5- Update-AzVmss -ResourceGroupName <VMSS RG Name> -Name <VMSS Name> -VirtualMachineScaleSet `$VMSS ",
-          "severity": "Medium",
-          "jsonPath": [ "$.properties.virtualMachineProfile.extensionProfile.extensions" ],
-          "matchType": "ItemProperties",
-          "data": {
-            "KeyPath": "$.properties.type",
-            "value": "MicrosoftMonitoringAgent",
-            "type":  "Allow"
-          }
-        },
-        {
-          "id": "VirtualMachineScaleSet110",
-          "controlId": "Azure_VirtualMachineScaleSet_Deploy_Monitoring_Agent",
-          "isEnabled": true,
-          "description": "Log analytics agent should be installed on Virtual Machine Scale Set",
-          "rationale": "Installing the Log Analytics extension for Windows and Linux allows Azure Monitor to collect data from your Azure VM Scale Sets which can be used for detailed analysis and correlation of events.",
-          "recommendation": "Run following commands: 1- `$allVersions= (Get-AzVMExtensionImage -Location 'eastus' -PublisherName 'Microsoft.EnterpriseCloud.Monitoring' -Type 'MicrosoftMonitoringAgent or OmsAgentForLinux').Version 2- `$versionString = `$allVersions[(`$allVersions.count)-1].Split('.')[0] + '.' + `$allVersions[(`$allVersions.count)-1].Split('.')[1] 3- `$VMSS = Get-AzVmss -ResourceGroupName <VMSS RG Name> -VMScaleSetName <VMSS Name> 4- Add-AzVmssExtension -VirtualMachineScaleSet `$VMSS -Name 'MicrosoftMonitoringAgent' -Publisher 'Microsoft.EnterpriseCloud.Monitoring' -Type 'MicrosoftMonitoringAgent or OmsAgentForLinux' -TypeHandlerVersion `$versionString -Setting '{'workspaceId': '<your workspace ID here>'}' -ProtectedSetting '{'workspaceKey': '<your workspace key here>'}' 5- Update-AzVmss -ResourceGroupName <VMSS RG Name> -Name <VMSS Name> -VirtualMachineScaleSet `$VMSS ",
-          "severity": "Medium",
-          "jsonPath": [ "$.properties.virtualMachineProfile.extensionProfile.extensions" ],
-          "matchType": "ItemProperties",
-          "data": {
-            "KeyPath": "$.properties.publisher",
-            "value": "Microsoft.EnterpriseCloud.Monitoring",
-            "type": "Allow"
-          }
-        },
-        {
-          "id": "VirtualMachineScaleSet120",
-          "controlId": "Azure_VirtualMachineScaleSet_SI_Enable_Antimalware",
-          "isEnabled": true,
-          "description": "Antimalware must be enabled with real time protection on Virtual Machine Scale Set",
-          "rationale": "Installing the Log Analytics extension for Windows and Linux allows Azure Monitor to collect data from your Azure VM Scale Sets which can be used for detailed analysis and correlation of events.",
-          "recommendation": "To install antimalware, Go to Azure Portal --> VMSS --> Settings --> Extensions --> Add 'Microsoft Antimalware' --> Enable Real-Time Protection and Scheduled Scan --> Click Ok. To turn on antimalware using powershell,refer: https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-faq#how-do-i-turn-on-antimalware-in-my-virtual-machine-scale-set",
-          "severity": "High",
-          "jsonPath": [ "$.properties.virtualMachineProfile.extensionProfile.extensions" ],
-          "matchType": "ItemProperties",
-          "data": {
-            "KeyPath": "$.properties.type",
-            "value": "IaaSAntimalware",
-            "type":  "Allow"
-          }
-        },
-        {
-          "id": "VirtualMachineScaleSet120",
-          "controlId": "Azure_VirtualMachineScaleSet_SI_Enable_Antimalware",
-          "isEnabled": true,
-          "description": "Antimalware must be enabled with real time protection on Virtual Machine Scale Set",
-          "rationale": "Installing the Log Analytics extension for Windows and Linux allows Azure Monitor to collect data from your Azure VM Scale Sets which can be used for detailed analysis and correlation of events.",
-          "recommendation": "To install antimalware, Go to Azure Portal --> VMSS --> Settings --> Extensions --> Add 'Microsoft Antimalware' --> Enable Real-Time Protection and Scheduled Scan --> Click Ok. To turn on antimalware using powershell,refer: https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-faq#how-do-i-turn-on-antimalware-in-my-virtual-machine-scale-set",
-          "severity": "High",
-          "jsonPath": [ "$.properties.virtualMachineProfile.extensionProfile.extensions" ],
-          "matchType": "ItemProperties",
-          "data": {
-            "KeyPath": "$.properties.publisher",
-            "value": "Microsoft.Azure.Security",
-            "type": "Allow"
-          }
-        }
       ]
     }
 

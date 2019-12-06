@@ -195,28 +195,6 @@
             "VirtualMachineScaleSet"
          ],
          "Enabled": true
-      },
-      {
-         "ControlID": "Azure_VirtualMachineScaleSet_SI_Enable_Auto_OS_Upgrade",
-         "Description": "Enable automatic OS image upgrade on Virtual Machine Scale Set",
-         "Id": "VirtualMachineScaleSet210",
-         "ControlSeverity": "Medium",
-         "Automated": "Yes",
-         "MethodName": "CheckVMSSAutoOSUpgrade",
-         "Rationale": "Being on the latest OS version significantly reduces risks from security design issues and security bugs that may be present in previous versions.",
-         "Recommendation": "To configure auto OS image upgarde on VM Scale Set, please refer: https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-automatic-upgrade",
-         "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "Windows",
-            "SI",
-            "Linux",
-            "ERvNet",  
-            "ExcludeKubernetes",
-            "VirtualMachineScaleSet"
-         ],
-         "Enabled": true
       }
     ]
  }

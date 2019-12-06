@@ -11,10 +11,11 @@ class DatabricksClusterCA : CommandBase {
         $this.ResourceContext = $ResourceContext
     }
 
-    static [PSObject] GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName) {
+    static [PSObject] GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName, $PAT) {
         if([string]::IsNullOrEmpty($SubscriptionId) -or 
             [string]::IsNullOrEmpty($WorkspaceName) -or
-            [string]::IsNullOrEmpty($ResourceGroupName)) {
+            [string]::IsNullOrEmpty($ResourceGroupName) -or
+            [string]::IsNullOrEmpty($PAT)) {
             Write-Host "Input the following parameters"
             if ([string]::IsNullOrEmpty($SubscriptionId)) {
                 $SubscriptionId = [Helpers]::ReadInput("Subscription ID")
@@ -25,8 +26,10 @@ class DatabricksClusterCA : CommandBase {
             if ([string]::IsNullOrEmpty($ResourceGroupName)) {
                 $ResourceGroupName = [Helpers]::ReadInput("Databricks Resource Group Name")
             }
+            if ([string]::IsNullOrEmpty($PAT)) {
+                $PAT = [Helpers]::ReadInput("Personal Access Token(PAT)")
+            }
         }
-        $PAT = [Helpers]::ReadInput("Personal Access Token(PAT)")
         Set-AzContext -SubscriptionId $SubscriptionId *> $null
         $response = Get-AzResource -Name $WorkspaceName -ResourceGroupName $ResourceGroupName
         $response = $response | Where-Object{$_.ResourceType -eq "Microsoft.Databricks/workspaces"}
@@ -191,23 +194,6 @@ class DatabricksClusterCA : CommandBase {
         return $JobAlreadyExists;
     }
 
-    [PSObject] GetAzSKScanJobID() {
-        $EndPoint = "/api/2.0/jobs/list"
-        $JobList = $this.InvokeRestAPICall($EndPoint, "GET", $null,
-            "Unable to list jobs in workspace, remaining steps will be skipped.")
-        if (-not [string]::IsNullOrEmpty($JobList) `
-                -and ("jobs" -in $JobList.PSobject.Properties.Name) `
-                -and ($JobList.jobs | Measure-object).Count -gt 0) {
-            $AzSKJobs = $JobList.jobs | where { $_.settings.name -eq 'AzSK_CA_Scan_Job' }
-            if ($AzSKJobs -ne $null -and ( $AzSKJobs | Measure-Object).count -gt 0) {
-                # there exists a job, get the ID
-                return $AzSKJobs[0].job_id
-            }
-        }
-        # couldn't find anything
-        return -1;
-    }
-
     [void] RemoveAzSKScanJob() {
         $EndPoint = "/api/2.0/jobs/list"
         $JobList = $this.InvokeRestAPICall($EndPoint, "GET", $null, 
@@ -286,42 +272,28 @@ class DatabricksClusterCA : CommandBase {
         $ResponseObject = $this.InvokeRestAPICall($endPoint, "POST", $BodyJson, "Unable to import notebook in workspace, remaining steps will be skipped.")
     }
 
-    [void] CreateAzSKScanJob() {
+    [void] CreateAzSKScanJob($Frequency) {
         $JobConfigServerUrl = [Constants]::DatabricksScanJobConfigurationUrl
-        $jobHrs = ((Get-Date).ToUniversalTime().Hour + 1) % 24
-        $Schedule = "0 0 $jobHrs * * ?"
+        # if frequency is not mentioned, create the job with 24 hr interval at a
+        # time one hour after the scan job is created
+        if ([string]::IsNullOrEmpty($Frequency)) {
+            $jobHrs = ((Get-Date).ToUniversalTime().Hour + 1) % 24
+            $Schedule = "0 0 $jobHrs * * ?"
+        } else {
+            # if frequency is mentioned then run the
+            # scan job once every $Frequency hours
+            $Schedule = "0 0 */$Frequency * * ?"           
+        }
         # schedule expects a single quote around it
         $Schedule = '"' + $Schedule + '"'
         # Create job
         $this.PublishCustomMessage("Creating Job 'AzSK_CA_Scan_Job' in the workspace")
+        $filePath = $env:TEMP + "\DatabricksCAScanJobConfig.json"
         $configuration = Invoke-RestMethod -Uri $JobConfigServerUrl -Method "GET"
         $configuration = $configuration -Replace  '#Schedule#', $Schedule
         $EndPoint = "/api/2.0/jobs/create"
         $ResponseObject = $this.InvokeRestAPICall($EndPoint, "POST", $configuration, "Unable to create AzSK_CA_Scan_Job in workspace.")
-        $this.PublishCustomMessage("Successfully created 'AzSK_CA_Scan_Job' with ID: $($ResponseObject.job_id).")
-    }
-
-    [void] UpdateAzSKScanJob($Frequency) {
-        $JobConfigServerUrl = [Constants]::DatabricksUpdateScanJobConfigurationUrl
-        # if frequency is not mentioned, create the job with 24 hr interval at a
-        # time one hour after the scan job is created
-        $AzSKScanJobID = $this.GetAzSKScanJobID()
-        if ($AzSKScanJobID -eq -1) {
-            $this.PublishCustomMessage("Couldn't find AzSK scan job. Please make sure it's installed.", [MessageType]::Error)
-            return
-        }
-        $AzSKScanJobID = '"' + $AzSKScanJobID + '"'
-        $Schedule = "0 0 */$Frequency * * ?"
-        # schedule expects a single quote around it
-        $Schedule = '"' + $Schedule + '"'
-        # Create job
-        $this.PublishCustomMessage("Updating 'AzSK_CA_Scan_Job' in the workspace")
-        $configuration = Invoke-RestMethod -Uri $JobConfigServerUrl -Method "GET"
-        $configuration = $configuration -Replace  '#Schedule#', $Schedule
-        $configuration = $configuration -Replace '#JobID#', $AzSKScanJobID
-        $EndPoint = "/api/2.0/jobs/reset"
-        $ResponseObject = $this.InvokeRestAPICall($EndPoint, "POST", $configuration, "Unable to create AzSK_CA_Scan_Job in workspace.")
-        $this.PublishCustomMessage("Successfully updated 'AzSK_CA_Scan_Job' with ID: $AzSKScanJobID.")
+        $this.PublishCustomMessage("Successfully created job 'AzSK_CA_Scan_Job' with Job ID: $($ResponseObject.job_id).")
     }
 
     [void] InstallCA() {
@@ -420,12 +392,13 @@ class DatabricksClusterCA : CommandBase {
         # validation- CA scan job should already exist
         if (-not [string]::IsNullOrEmpty($NewSchedule)) {
             if (-not $this.CheckAzSKJobExists()) {
-                $this.PublishCustomMessage("CA scan job is absent. Please ensure the CA is installed.", 
+                $this.PublishCustomMessage("CA scan job is abset. Please ensure the CA is installed.", 
                                            [MessageType]::Error)
                 return
             } else {
-                $this.UpdateAzSKScanJob($NewSchedule)
-            }         
+                $this.RemoveAzSKScanJob()
+            }
+            $this.CreateAzSKScanJob($NewSchedule)
         }
     }
 

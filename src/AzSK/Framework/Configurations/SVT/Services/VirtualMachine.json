@@ -20,9 +20,7 @@
              "Windows",
              "Linux",
              "ERvNet",
-             "VirtualMachine",
-             "ExcludeKubernetes",
-             "ExcludeDatabricks"
+             "VirtualMachine"
           ],
           "Enabled": true
        },
@@ -45,8 +43,7 @@
              "SOX",
              "SI",
              "ERvNet",
-             "VirtualMachine",
-             "ExcludeDatabricks"
+             "VirtualMachine"
           ],
           "Enabled": true
        },
@@ -66,8 +63,7 @@
          "Config",
          "Windows",
          "Linux",
-         "VirtualMachine",
-         "ExcludeDatabricks"
+         "VirtualMachine"
        ],
        "Enabled": true
      },
@@ -135,8 +131,7 @@
              "Audit",
              "Windows",
              "Linux",
-             "VirtualMachine",
-             "ExcludeDatabricks"
+             "VirtualMachine"
           ],
           "Enabled": true
        },
@@ -201,8 +196,7 @@
              "Windows",
              "Linux",
              "ERvNet",
-             "VirtualMachine",
-             "ExcludeDatabricks"
+             "VirtualMachine"
           ],
           "Enabled": true
        },
@@ -269,8 +263,7 @@
            "Linux",
            "SI",
            "ERvNet",
-           "VirtualMachine",
-           "ExcludeDatabricks"
+           "VirtualMachine"
          ],
          "Enabled": true
        },
@@ -292,8 +285,7 @@
            "Linux",
            "SI",
            "ERvNet",
-           "VirtualMachine",
-           "ExcludeDatabricks"
+           "VirtualMachine"
          ],
          "Enabled": true
        },
@@ -315,8 +307,7 @@
            "Linux",
            "SI",
            "ERvNet",
-           "VirtualMachine",
-           "ExcludeDatabricks"
+           "VirtualMachine"
          ],
          "Enabled": true
        }
