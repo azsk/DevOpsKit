@@ -17,6 +17,7 @@ namespace AzSK.ARMChecker.Lib
         PassIfPropertyNotFound,
         FailIfPropertyNotFound,
         VerifyIfPropertyNotFound,
+	StringNotMatched
         
     }
 }
