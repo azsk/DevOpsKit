@@ -1363,11 +1363,12 @@
           "recommendation": "Please refer: https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-upgrade-scale-set#how-to-bring-vms-up-to-date-with-the-latest-scale-set-model.",
           "severity": "High",
           "jsonPath": [ "$.properties.upgradePolicy.mode" ],
-          "matchType": "StringSingleToken",
+          "matchType": "MatchStringSingleToken",
           "data": {
-            "type": "NotAllow",
             "value": "Manual",
-            "isCaseSensitive": false
+            "type": "NotAllow",
+            "isCaseSensitive": false,
+            "ControlDesiredState": "Passed"
           }
         }
       ]
