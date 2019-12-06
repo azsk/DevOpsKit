@@ -144,5 +144,24 @@ class AppServiceFix: FixServicesBase
 		return $detailedLogs;
     }
 
-	 
+		[MessageData[]] SetMinTLSVersion([PSObject] $parameters)
+    {
+			[MessageData[]] $detailedLogs = @();
+			
+			$detailedLogs += [MessageData]::new("Setting up minimum TLS Version to $($this.ControlSettings.AppService.TLS_Version) for app service [$($this.ResourceName)]...");
+		
+			$params = @{
+					ApiVersion        = '2018-02-01'
+					ResourceName      = '{0}/web' -f $this.ResourceName
+					ResourceGroupName = $this.ResourceGroupName
+					PropertyObject    = @{ minTlsVersion = $this.ControlSettings.AppService.TLS_Version }
+					ResourceType      = 'Microsoft.Web/sites/config'
+				}
+				
+			$result = Set-AzResource @params -ErrorAction Stop
+
+			$detailedLogs += [MessageData]::new("Minimum TLS Version has been set to $($this.ControlSettings.AppService.TLS_Version) for app service [$($this.ResourceName)]", $result);
+		
+			return $detailedLogs;
+    }
 }
