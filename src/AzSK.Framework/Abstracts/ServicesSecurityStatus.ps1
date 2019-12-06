@@ -165,28 +165,29 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		$totalResources = $automatedResources.Count;
 		[int] $currentCount = 0;
 		$childResources = @();
-		$scanSource = [AzSKSettings]::GetInstance().GetScanSource()
 		$automatedResources | ForEach-Object {
 			$exceptionMessage = "Exception for resource: [ResourceType: $($_.ResourceTypeMapping.ResourceTypeName)] [ResourceGroupName: $($_.ResourceGroupName)] [ResourceName: $($_.ResourceName)]"
             try
             {
 				# adding resource scan started telemetry event for tracking whether resource scan is successful
-				try{
-					$resourceDetails=@{
-						ResourceId = $_.ResourceId
-						ResourceName = $_.ResourceName
-						ResourceType = $_.ResourceType
-						Location = $_.Location
-						ResourceGroupName = $_.ResourceGroupName
-						SubscriptionId = $this.SubscriptionContext.SubscriptionId
-						PartialScanIdentifier = $this.PartialScanIdentifier
-						RunIdentifier = $this.RunIdentifier
-						ScanSource = $scanSource
+				if([FeatureFlightingManager]::GetFeatureStatus("EnableResourceScanStartEndTelemetry",$this.SubscriptionContext.SubscriptionId) -eq $true)
+				{
+					try{
+						$resourceDetails=@{
+							ResourceId = $_.ResourceId
+							ResourceName = $_.ResourceName
+							ResourceType = $_.ResourceType
+							Location = $_.Location
+							ResourceGroupName = $_.ResourceGroupName
+							SubscriptionId = $this.SubscriptionContext.SubscriptionId
+							PartialScanIdentifier = $this.PartialScanIdentifier
+							RunIdentifier = $this.RunIdentifier
+						}
+						[AIOrgTelemetryHelper]::TrackEvent( "Resource Scan Started",$resourceDetails, $null)
 					}
-					[AIOrgTelemetryHelper]::TrackEvent( "Resource Scan Started",$resourceDetails, $null)
-				}
-				catch{
+					catch{
 					# if telemetry fails, no action is required
+					}
 				}
 				$currentCount += 1;
 				if($totalResources -gt 1)
@@ -283,12 +284,25 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				$this.PublishCustomMessage($exceptionMessage);
 				$this.CommandError($_);
 			}
-			try{
-				[AIOrgTelemetryHelper]::PublishEvent( "Resource Scan Ended",$resourceDetails, $null)
-			}
-			catch{
+			if([FeatureFlightingManager]::GetFeatureStatus("EnableResourceScanStartEndTelemetry",$this.SubscriptionContext.SubscriptionId) -eq $true)
+				{
+					try{
+						$resourceDetails=@{
+							ResourceId = $_.ResourceId
+							ResourceName = $_.ResourceName
+							ResourceType = $_.ResourceType
+							Location = $_.Location
+							ResourceGroupName = $_.ResourceGroupName
+							SubscriptionId = $this.SubscriptionContext.SubscriptionId
+							PartialScanIdentifier = $this.PartialScanIdentifier
+							RunIdentifier = $this.RunIdentifier
+						}
+						[AIOrgTelemetryHelper]::TrackEvent( "Resource Scan Ended",$resourceDetails, $null)
+					}
+					catch{
 					# if telemetry fails, no action is required
-			}	
+					}
+				}
 		}
 		if(($childResources | Measure-Object).Count -gt 0)
 		{
