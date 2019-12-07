@@ -326,7 +326,9 @@ class AKSControlTester:
 						 CheckDefaultSvcRoleBinding,
 						 CheckDefaultNamespaceResources,
 						 CheckResourcesWithSecrets,
-						 CheckKubernetesVersion]
+						 CheckKubernetesVersion,
+						 CheckExternalServices,
+						 CheckMountedImages]
 
 	def run(self):
 		print("DevOps Kit (AzSK) for Cluster Security v", __version__)
@@ -418,6 +420,22 @@ class AKSControlTester:
 				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
 				df = pd.DataFrame(list(detailed_logs_item['pods_with_secrets']))
 				print("   {0: <25}{1: <50}".format("Namespace", "Pod"))
+				for indx, x in df.iterrows():
+					print("{0: <3}{1: <25}{2: <50}".format(indx + 1, x[0], x[1]))
+				self.line()
+			elif len(detailed_logs_item['container_images']) > 0:
+				detailed_log_printed = True
+				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
+				df = pd.DataFrame(list(detailed_logs_item['container_images']))
+				for indx, x in df.iterrows():
+					print("{0: <3}{1: <25}".format(indx + 1, x[0]))
+				self.line()
+			elif len(detailed_logs_item['non_compliant_services']) > 0:
+				detailed_log_printed = True
+				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
+				df = pd.DataFrame(list(detailed_logs_item['non_compliant_services']),
+								  columns=['NameSpace','ServiceName'])
+				print("   {0: <25}{1: <50}".format("Namespace", "Service Name"))
 				for indx, x in df.iterrows():
 					print("{0: <3}{1: <25}{2: <50}".format(indx + 1, x[0], x[1]))
 				self.line()
