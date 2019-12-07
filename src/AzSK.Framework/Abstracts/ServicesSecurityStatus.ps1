@@ -175,6 +175,9 @@ class ServicesSecurityStatus: AzSVTCommandBase
 					$this.PublishCustomMessage(" `r`nChecking resource [$currentCount/$totalResources] ");
 				}
 				
+				#resource scan start AI telemetry
+				$this.ResourceScan($_,"Resource Scan Started");	
+
 				#Update resource scan retry count in scan snapshot in storage if user partial commit switch is on
 				if($this.UsePartialCommits)
 				{
@@ -263,7 +266,9 @@ class ServicesSecurityStatus: AzSVTCommandBase
             {
 				$this.PublishCustomMessage($exceptionMessage);
 				$this.CommandError($_);
-            }
+			}
+			#resource scan start AI telemetry
+			$this.ResourceScan($_,"Resource Scan Ended");
 		}
 		if(($childResources | Measure-Object).Count -gt 0)
 		{
@@ -451,7 +456,23 @@ class ServicesSecurityStatus: AzSVTCommandBase
                 }
                 #Set unique partial scan indentifier 
                 $this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
-                
+                #Posting ResourceScanTracker to get insights about suspended CA mode subscriptions
+				if([FeatureFlightingManager]::GetFeatureStatus("EnableResourceScanTrackerTelemetry",$this.SubscriptionContext.SubscriptionId) -eq $true)
+				{
+					try{
+					$resourceScanTrackerContent = [JsonHelper]::ConvertToJsonCustomCompressed($partialScanMngr.ResourceScanTrackerObj)
+ 						$partialScanTrackerDetails=@{
+						ResourceScanTrackerContent= $resourceScanTrackerContent
+						SubscriptionId = $this.SubscriptionContext.SubscriptionId
+						PartialScanIdentifier = $this.PartialScanIdentifier
+						RunIdentifier = $this.RunIdentifier
+				    }
+					[AIOrgTelemetryHelper]::TrackEvent( "Resource Scan Tracker",$partialScanTrackerDetails, $null)
+					}
+					catch{
+						#in case of exception , nothing needs to be done 
+					}
+				}
                 #Telemetry with addition for Subscription Id, PartialScanIdentifier and correction in count of resources
                 #Need optimization for calcuations done for total resources.
                 try{
