@@ -1339,6 +1339,37 @@
             "value": "Microsoft.Azure.Security",
             "type": "Allow"
           }
+        },
+        {
+          "id": "VirtualMachineScaleSet210",
+          "controlId": "Azure_VirtualMachineScaleSet_SI_Enable_Auto_OS_Upgrade",
+          "isEnabled": true,
+          "description": "Enable automatic OS image upgrade on Virtual Machine Scale Set",
+          "rationale": "Being on the latest OS version significantly reduces risks from security design issues and security bugs that may be present in previous versions.",
+          "recommendation": "To configure auto OS image upgarde on VM Scale Set, please refer: https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-automatic-upgrade",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.upgradePolicy.automaticOSUpgradePolicy.enableAutomaticOSUpgrade" ],
+          "matchType": "Boolean",
+          "data": {
+            "value": true
+          }
+        },
+        {
+          "id": "VirtualMachineScaleSet160",
+          "controlId": "Azure_VirtualMachineScaleSet_SI_Latest_Model_Applied",
+          "isEnabled": true,
+          "description": "All VMs in VM Scale Set must be up-to-date with the latest scale set model",
+          "rationale": "All the security configurations applied on VM Scale Set will be effective only if all the individual VM instances in Scale Set is up-to-date with the latest overall Scale Set model.",
+          "recommendation": "Please refer: https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-upgrade-scale-set#how-to-bring-vms-up-to-date-with-the-latest-scale-set-model.",
+          "severity": "High",
+          "jsonPath": [ "$.properties.upgradePolicy.mode" ],
+          "matchType": "MatchStringSingleToken",
+          "data": {
+            "value": "Manual",
+            "type": "NotAllow",
+            "isCaseSensitive": false,
+            "ControlDesiredState": "Passed"
+          }
         }
       ]
     }
