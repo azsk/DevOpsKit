@@ -324,7 +324,20 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		}
 	}
 
-
+	hidden [SVTEventContext[]] ScanAttestedControls()
+	{
+		[ControlStateExtension] $ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
+		$ControlStateExt.UniqueRunId = $this.ControlStateExt.UniqueRunId;
+		$ControlStateExt.Initialize($false);
+		$ControlStateExt.ComputeControlStateIndexer();
+		$resourcesAttestedinCurrentScan = @()
+		if(($null -ne $ControlStateExt.ControlStateIndexer) -and ([Helpers]::CheckMember($ControlStateExt.ControlStateIndexer, "ResourceId")))
+		{
+			$resourcesAttestedinCurrentScan = $this.Resolver.SVTResources | Where-Object {$ControlStateExt.ControlStateIndexer.ResourceId -contains $_.ResourceId}
+		}
+		return $this.RunForAllResources("RescanAndPostAttestationData",$false,$resourcesAttestedinCurrentScan)
+	}
+	
 	#BaseLine Control Filter Function
 	[void] BaselineFilterCheck()
 	{
