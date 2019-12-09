@@ -155,6 +155,7 @@
       "IsEnabled": true
     },
     {
+
       "Name": "EnableScanAfterAttestation",
       "Description": "",
       "Sources": ["*"],
