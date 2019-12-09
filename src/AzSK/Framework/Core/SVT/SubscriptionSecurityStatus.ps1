@@ -116,7 +116,10 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 	{
 		return $this.RunForSubscription("FetchStateOfAllControls")
 	}
-	
+	hidden [SVTEventContext[]] ScanAttestedControls()
+	{
+		return $this.RunForSubscription("RescanAndPostAttestationData")
+	}
 	#BaseLineControlFilter Function
 	[void] BaselineFilterCheck()
 	{
