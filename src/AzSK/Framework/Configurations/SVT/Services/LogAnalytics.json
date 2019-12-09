@@ -24,7 +24,7 @@
       },
       {
         "ControlID": "Azure_LogAnalytics_AuthZ_Verify_Linked_AutomationAccounts_SPNs_Access",
-        "Description": "Service Principal Names (SPNs) should not be Owners or Contributors on the subscription",
+        "Description": "Service Principal Names (SPNs) access for the automation account should be limited to required operations",
         "Id": "LogAnalytics120",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
@@ -78,27 +78,9 @@
         "Enabled": true
       },
       {
-        "ControlID": "Azure_LogAnalytics_DP_Use_ExpressRoute_To_Secure_Data_In_Transit",
-        "Description": "ExpressRoute should be used when sending sensitive/critical events to the workspace from agents installed in on-premise servers.",
-        "Id": "LogAnalytics150",
-        "ControlSeverity": "Medium",
-        "Automated": "No",
-        "MethodName": "",
-        "Rationale": "Sending data from on-premise servers over the open internet network can expose it to all types of attack over the internet.",
-        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/data-security#2-send-data-from-agents. (Note: ExpressRoute may be required only in specific scenarios such as when sending sensitive data to Microsoft Azure datacenters. It is up to you and your company to ultimately determine the strategy with which you will handle your private data)",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Automated",
-          "DP",
-          "LogAnalytics"
-        ],
-        "Enabled": true
-      },
-      {
         "ControlID": "Azure_LogAnalytics_DP_Use_Secure_TLS_Version",
         "Description": "The agent must be configured to use the most secure and up to date version of Transport Layer Security (TLS).",
-        "Id": "LogAnalytics160",
+        "Id": "LogAnalytics150",
         "ControlSeverity": "High",
         "Automated": "No",
         "MethodName": "",
