@@ -174,9 +174,6 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				{
 					$this.PublishCustomMessage(" `r`nChecking resource [$currentCount/$totalResources] ");
 				}
-				
-				#resource scan start AI telemetry
-				$this.ResourceScan($_,"Resource Scan Started");	
 
 				#Update resource scan retry count in scan snapshot in storage if user partial commit switch is on
 				if($this.UsePartialCommits)
@@ -267,8 +264,6 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				$this.PublishCustomMessage($exceptionMessage);
 				$this.CommandError($_);
 			}
-			#resource scan start AI telemetry
-			$this.ResourceScan($_,"Resource Scan Ended");
 		}
 		if(($childResources | Measure-Object).Count -gt 0)
 		{
