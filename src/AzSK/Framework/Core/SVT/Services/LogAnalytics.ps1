@@ -71,7 +71,7 @@ class LogAnalytics: AzSVTBase
 	# This function lists the data retention period for your logs
 	hidden [ControlResult] CheckDataRetentionPeriod([ControlResult] $controlResult)
 	{
-		#TODO: Pass if 365 days
+
 		$controlResult.VerificationResult = [VerificationResult]::Verify;
 		# Default retention - Applicable at workspace level
 		$controlResult.AddMessage("The default data log retention period is: $($this.ResourceObject.Properties.retentionInDays)");
@@ -139,7 +139,7 @@ class LogAnalytics: AzSVTBase
 					"x-ms-path-query" = $pathQuery
 				}
 				$uri = "https://management.azure.com/api/invoke"
-				
+
 				# Rest API to fetch linked solutions' detail
 				$linkedSolutionDetail = [WebRequestHelper]::InvokeGetWebRequest($uri, $headers);
 				if (($linkedSolutionDetail | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($linkedSolutionDetail, "id"))
