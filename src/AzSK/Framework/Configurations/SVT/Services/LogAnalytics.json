@@ -11,7 +11,7 @@
         "Automated": "Yes",
         "MethodName": "CheckResourceRBACAccess",
         "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-        "Recommendation": "1. Configure the workspace access control mode to 'Use resource or workspace permissions'. 2. Use Table level and Resource centric RBAC model to regulate access to monitoring data and settings. Refer: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/manage-access",
+        "Recommendation": "1. Configure the workspace access control mode to 'Use resource or workspace permissions'. 2. Use Table level and Resource centric RBAC model to regulate access to monitoring data and settings. Refer: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/manage-access 3. Review control plane access (see detailed log file)",
         "Tags": [
           "SDL",
           "TCP",
@@ -29,8 +29,8 @@
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckLinkedAutomationAccountSPNsRBAC",
-        "Rationale": "Granting elevated access to the Run As Account of the Automation Account linked to your Log Analytics workspace increases the probability of exposure of the resources in case of service account compromise.",
-        "Recommendation": " If Log Analytics workspace is linked to Automation Account, make sure you add Run as Account's SPN at the specific permission scope and role required for your scenario. For example, sometimes 'Contributor' access at 'Resource Group' scope might work. In other scenarios you may need 'Reader' access at 'Subscription' scope. Exact permission will vary based on your use case. If you want to remove the SPN, run command Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
+        "Rationale": "Granting elevated access to the Run As Account (SPN) of the Automation Account linked to your Log Analytics workspace increases the probability of exposure of the resources. This is because attacker can use this access to run custom logic on your subscription.",
+        "Recommendation": "If Log Analytics workspace is linked to Automation Account, make sure you add Run as Account's SPN at the specific permission scope and role required for your scenario. For example, sometimes 'Contributor' access at 'Resource Group' scope might work. In other scenarios you may need 'Reader' access at 'Subscription' scope. Exact permission will vary based on your use case. If you want to remove the SPN, run command Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
         "Tags": [
           "SDL",
           "TCP",
@@ -43,13 +43,13 @@
       },
       {
         "ControlID": "Azure_LogAnalytics_Audit_Configure_Data_Retention_Period",
-        "Description": "Configuring an apt data retention period for data log is important for effective security audit",
+        "Description": "Data retention period should be configured for any security logs present in your workspace",
         "Id": "LogAnalytics130",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckDataRetentionPeriod",
-        "Rationale": "Data retention period enables log collection of important system events pertinent to security.",
-        "Recommendation": "The default data retention period of Log Analytics 31 days (if not using a free tier). Based on your requirement this period can be increased upto 730 days. For effective logging, refer: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/manage-cost-storage#change-the-data-retention-period",
+        "Rationale": "Data retention period enables you to perform effective auditing.",
+        "Recommendation": "Based on your requirement, you can choose to purge your data after a specificed duration. This duration/data retention period can be set from 31 days to 730 days. You can also specify different retention settings for individual data types. For effective logging, refer: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/manage-cost-storage#change-the-data-retention-period",
         "Tags": [
           "SDL",
           "TCP",
@@ -61,13 +61,13 @@
       },
       {
         "ControlID": "Azure_LogAnalytics_DP_Review_Monitoring_Solutions",
-        "Description": "Ensure that the monitoring solutions added to your log analytics workspace is published by an authorised provider",
+        "Description": "Ensure that the monitoring solutions added to your log analytics workspace is published by a trusted provider",
         "Id": "LogAnalytics140",
-        "ControlSeverity": "Medium",
+        "ControlSeverity": "High",
         "Automated": "Yes",
-        "MethodName": "CheckConfiguredSolutions",
+        "MethodName": "CheckSolutionsLinkedToWorkspace",
         "Rationale": "Monitoring solutions enables the author of the solution to capture sensitive data and execute custom code on your subscription. This can lead to a compromise of corporate data.",
-        "Recommendation": "Go to Azure Portal --> your Log Analytics workspace --> Solutions --> For each added solution, verify the endpoints and azure resources accessed by the solution (see detailed logs).",
+        "Recommendation": "Go to Azure Portal --> your Log Analytics workspace --> Solutions --> For each added solution: a. Check if the publisher is trusted b. Check the use of contained resources c. Check the use of referenced resources. For example, if your workspace is referencing a runbook, check if it is accessing any foriegn link, if it is performing any remote api call or executing any custom code (see detailed logs for the list of solutions).",
         "Tags": [
           "SDL",
           "TCP",
@@ -78,26 +78,26 @@
         "Enabled": true
       },
       {
-        "ControlID": "Azure_LogAnalytics_NetSec_Use_ExpressRoute_For_Additional_Security_Of_Data",
-        "Description": "Use ExpressRoute for additional security when using Operation Management server or Direct-Connected Agents",
+        "ControlID": "Azure_LogAnalytics_DP_Use_ExpressRoute_To_Secure_Data_In_Transit",
+        "Description": "ExpressRoute should be used when sending sensitive/critical events to the workspace from agents installed in on-premise servers.",
         "Id": "LogAnalytics150",
         "ControlSeverity": "Medium",
         "Automated": "No",
         "MethodName": "",
-        "Rationale": "Data from the management server or direct-connected agents is sent over SSL to Microsoft Azure datacenters. Optionally, you can use ExpressRoute to provide additional security for the data. ExpressRoute is a way to directly connect to Azure from your existing WAN network, such as a multi-protocol label switching (MPLS) VPN, provided by a network service provider. (Note: ExpressRoute may be required only in advanced scenarios such as when sending sensitive data to Microsoft Azure datacenters. It is up to you and your company to ultimately determine the strategy with which you will handle your private data)",
-        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/data-security#2-send-data-from-agents",
+        "Rationale": "Sending data from on-premise servers over the open internet network can expose it to all types of attack over the internet.",
+        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/data-security#2-send-data-from-agents. (Note: ExpressRoute may be required only in specific scenarios such as when sending sensitive data to Microsoft Azure datacenters. It is up to you and your company to ultimately determine the strategy with which you will handle your private data)",
         "Tags": [
           "SDL",
           "TCP",
           "Automated",
-          "NetSec",
+          "DP",
           "LogAnalytics"
         ],
         "Enabled": true
       },
       {
         "ControlID": "Azure_LogAnalytics_DP_Use_Secure_TLS_Version",
-        "Description": "To insure the security of data in transit to Log Analytics, configure the agent to use the most secure and up to date version of Transport Layer Security (TLS).",
+        "Description": "The agent must be configured to use the most secure and up to date version of Transport Layer Security (TLS).",
         "Id": "LogAnalytics160",
         "ControlSeverity": "High",
         "Automated": "No",
