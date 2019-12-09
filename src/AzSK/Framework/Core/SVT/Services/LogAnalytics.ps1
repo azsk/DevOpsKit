@@ -35,7 +35,7 @@ class LogAnalytics: AzSVTBase
 		elseif ($this.ResourceObject.Properties.features.enableLogAccessUsingOnlyResourcePermissions -eq "false")
 		{
 			$controlResult.VerificationResult = [VerificationResult]::Failed;
-			$controlResult.AddMessage("The access control mode is set to 'Require workspace permissions'. Switch to Resource-specific mode for granular RBAC management.");
+			$controlResult.AddMessage("The currently configured access control mode is 'Require workspace permissions'. Switch to Resource-specific mode for granular RBAC management.");
 		}
 		return $controlResult;
 	}
@@ -90,7 +90,7 @@ class LogAnalytics: AzSVTBase
 
 		$controlResult.VerificationResult = [VerificationResult]::Verify;
 		# workspace retention period 
-		$controlResult.AddMessage("The currently set log retention period is: $($this.ResourceObject.Properties.retentionInDays)");
+		$controlResult.AddMessage("The currently configured log retention period is: $($this.ResourceObject.Properties.retentionInDays)");
 
 		# Retention by data type
 		$AzureManagementUri = [WebRequestHelper]::GetResourceManagerUrl()
@@ -121,12 +121,12 @@ class LogAnalytics: AzSVTBase
 				
 				if (($ListOfDataTypeWithRetention | Measure-Object).Count -gt 0)
 				{
-					$controlResult.AddMessage("Below is the list of data type (tables) where retention period is set:", $ListOfDataTypeWithRetention);
+					$controlResult.AddMessage("Below is the list of data type (tables) where retention period is configured:", $ListOfDataTypeWithRetention);
 				}
 				
 				if (($ListOfDataTypeWithoutRetention | Measure-Object).Count -gt 0)
 				{
-					$controlResult.AddMessage("Below is the list of data type (tables) where retention period is not set (workspace level retention period is applicable for these tables):", $ListOfDataTypeWithoutRetention.DataTypeName);
+					$controlResult.AddMessage("Below is the list of data type (tables) where retention period is not configured (workspace level retention period is applicable for these tables):", $ListOfDataTypeWithoutRetention.DataTypeName);
 				}
 			}
 		}
