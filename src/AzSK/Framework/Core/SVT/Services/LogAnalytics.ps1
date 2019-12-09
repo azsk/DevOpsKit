@@ -43,20 +43,36 @@ class LogAnalytics: AzSVTBase
 	# This function lists the automation account connected to your workspace
 	hidden [ControlResult] CheckLinkedAutomationAccountSPNsRBAC([ControlResult] $controlResult)
 	{	
-		$AzureManagementUri = [WebRequestHelper]::GetResourceManagerUrl()
-		# Rest API to fetch linked automation account
-		$uri = [system.string]::Format($AzureManagementUri + "subscriptions/{0}/resourcegroups/{1}/providers/microsoft.operationalinsights/workspaces/{2}/LinkedServices/Automation?api-version=2015-11-01-preview", $this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
 		try
 		{
-			$linkedServiceDetail = [WebRequestHelper]::InvokeGetWebRequest($uri);
-			if (($linkedServiceDetail | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($linkedServiceDetail, "properties.resourceId"))
-			{ 
-				$AutomationAccountName = $linkedServiceDetail.properties.resourceId.Split(" / ")[-1]
-				$controlResult.AddMessage([VerificationResult]::Verify, "Log analytics workspaces in linked to [$($AutomationAccountName)] automation account. Verify the RBAC access granted to its Run as Account.");
+			$AzureManagementUri = [WebRequestHelper]::GetResourceManagerUrl()
+
+			# Rest API to fetch linked automation account
+			$uri = [system.string]::Format($AzureManagementUri + "subscriptions/{0}/resourcegroups/{1}/providers/microsoft.operationalinsights/workspaces/{2}/LinkedServices/Automation?api-version=2015-11-01-preview", $this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
+
+			# InvokeGetWebRequest enters infinite loop when response status code is 200, but the response content is null.
+			# Due to this, temporarily, we are fetching raw content.
+			$accessToken = [ContextHelper]::GetAccessToken($AzureManagementUri)
+			$authorisationToken = "Bearer " + $accessToken
+			$headers = @{
+				"Authorization" = $authorisationToken
 			}
-			else
+			$contentType = "application/json"
+			$linkedServiceDetail = $null
+			$requestResult = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $contentType, $false, $true)
+			if ($null -ne $requestResult -and $requestResult.StatusCode -eq 200)
 			{
-				$controlResult.AddMessage([VerificationResult]::Passed, "No linked automation account found for - [$($this.ResourceContext.ResourceName)].");
+				$linkedServiceDetail = ConvertFrom-Json $requestResult.Content
+
+				if (($linkedServiceDetail | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($linkedServiceDetail, "properties.resourceId"))
+				{ 
+					$AutomationAccountName = $linkedServiceDetail.properties.resourceId.Split(" / ")[-1]
+					$controlResult.AddMessage([VerificationResult]::Verify, "Log analytics workspaces in linked to [$($AutomationAccountName)] automation account. Verify the RBAC access granted to its Run as Account.");
+				}
+				else
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed, "No automation account is linked to this workspace.");
+				}
 			}
 		}
 		catch
