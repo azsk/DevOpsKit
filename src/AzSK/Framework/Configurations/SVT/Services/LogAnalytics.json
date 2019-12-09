@@ -67,7 +67,7 @@
         "Automated": "Yes",
         "MethodName": "CheckSolutionsLinkedToWorkspace",
         "Rationale": "Monitoring solutions enables the author of the solution to capture sensitive data and execute custom code on your subscription. This can lead to a compromise of corporate data.",
-        "Recommendation": "Go to Azure Portal --> your Log Analytics workspace --> Solutions --> For each added solution: a. Check if the publisher is trusted b. Check the use of contained resources c. Check the use of referenced resources. For example, if your workspace is referencing a runbook, check if it is accessing any foriegn link, if it is performing any remote api call or executing any custom code (see detailed logs for the list of solutions).",
+        "Recommendation": "Go to Azure Portal --> your Log Analytics workspace --> Solutions --> For each added solution: a. Check if the publisher is trusted b. Check the use of contained resources c. Check the use of referenced resources. For example, if your workspace is referencing a runbook, check if it is accessing any foreign link, if it is performing any remote api call or executing any custom code (see detailed logs for the list of solutions).",
         "Tags": [
           "SDL",
           "TCP",
