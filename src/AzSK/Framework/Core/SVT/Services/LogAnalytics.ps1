@@ -89,8 +89,8 @@ class LogAnalytics: AzSVTBase
 	{
 
 		$controlResult.VerificationResult = [VerificationResult]::Verify;
-		# Default retention - Applicable at workspace level
-		$controlResult.AddMessage("The default data log retention period is: $($this.ResourceObject.Properties.retentionInDays)");
+		# workspace retention period 
+		$controlResult.AddMessage("The currently set log retention period is: $($this.ResourceObject.Properties.retentionInDays)");
 
 		# Retention by data type
 		$AzureManagementUri = [WebRequestHelper]::GetResourceManagerUrl()
@@ -126,7 +126,7 @@ class LogAnalytics: AzSVTBase
 				
 				if (($ListOfDataTypeWithoutRetention | Measure-Object).Count -gt 0)
 				{
-					$controlResult.AddMessage("Below is the list of data type (tables) where retention period is not set (default retention period is applicable for these tables):", $ListOfDataTypeWithoutRetention.DataTypeName);
+					$controlResult.AddMessage("Below is the list of data type (tables) where retention period is not set (workspace level retention period is applicable for these tables):", $ListOfDataTypeWithoutRetention.DataTypeName);
 				}
 			}
 		}
