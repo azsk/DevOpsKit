@@ -154,7 +154,15 @@
       "UnderPreview": false,
       "IsEnabled": true
     },
-    {
+      "Name": "EnableScanAfterAttestation",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+   {
       "Name": "EnableResourceScanTrackerTelemetry",
       "Description": "",
       "Sources": ["*"],
