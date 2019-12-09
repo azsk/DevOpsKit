@@ -97,8 +97,14 @@ class CommandBase: AzSKRoot {
     [string] InvokeFunction([PSMethod] $methodToCall, [System.Object[]] $arguments) {
         if (-not $methodToCall) {
             throw [System.ArgumentException] ("The argument 'methodToCall' is null. Pass the reference of method to call. e.g.: [YourClass]::new().YourMethod");
-        }
-
+		}
+		if ($arguments -eq $null)
+		{
+			$folderPath = $this.GetOutputFolderPath();
+			$methodResult = $methodToCall.Invoke(@());
+		}
+else {
+	
 		# Reset cached context <TODO Framework: Fix Dependancy on RM module>
 		[ContextHelper]::ResetCurrentRMContext()
 
@@ -177,6 +183,7 @@ class CommandBase: AzSKRoot {
 					#ignore if any exception occurs
 				}
 			}
+		}
 		}
         return $folderPath;
 	}

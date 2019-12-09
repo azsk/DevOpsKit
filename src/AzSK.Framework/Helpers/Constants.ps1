@@ -69,6 +69,7 @@ class Constants
     static [string] $CompletedAnalysisSub = [Constants]::SingleDashLine + "`r`nCompleted analysis: [FeatureName: {0}] [SubscriptionName: {1}] [SubscriptionId: {2}] `r`n" + [Constants]::DoubleDashLine
 	static [string] $PIMAPIUri="https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/resources";
 	#Constants for Attestation
+	static [string] $AttestedControlsScanMsg = "Attested workflow is almost done. We will trigger another scan to post attested data."
 	static [string] $ModuleAttestStartHeading = [Constants]::DoubleDashLine +
     "`r`nInfo: Starting attestation [{3}/{4}]- [FeatureName: {0}] [ResourceGroupName: {1}] [ResourceName: {2}] `r`n" + [Constants]::SingleDashLine
 	 static [string] $ModuleAttestStartHeadingSub = [Constants]::DoubleDashLine +

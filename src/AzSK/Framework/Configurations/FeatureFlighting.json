@@ -154,6 +154,7 @@
       "UnderPreview": false,
       "IsEnabled": true
     },
+    {
       "Name": "EnableScanAfterAttestation",
       "Description": "",
       "Sources": ["*"],
