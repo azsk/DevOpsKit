@@ -23,9 +23,9 @@ class LogAnalytics: AzSVTBase
 		return $this.ResourceObject;
 	}
 
+	# This functions checks for both control level and resource level RBAC
 	hidden [ControlResult] CheckResourceRBACAccess([ControlResult] $controlResult)
 	{	
-		#TODO: Control plane RBAC and data plan RBAC
 		$controlResult = $this.CheckRBACAccess($controlResult)
 		
 		if (-not [Helpers]::CheckMember($this.ResourceObject, "Properties.features.enableLogAccessUsingOnlyResourcePermissions"))
@@ -44,6 +44,7 @@ class LogAnalytics: AzSVTBase
 	hidden [ControlResult] CheckLinkedAutomationAccountSPNsRBAC([ControlResult] $controlResult)
 	{	
 		$AzureManagementUri = [WebRequestHelper]::GetResourceManagerUrl()
+		# Rest API to fetch linked automation account
 		$uri = [system.string]::Format($AzureManagementUri + "subscriptions/{0}/resourcegroups/{1}/providers/microsoft.operationalinsights/workspaces/{2}/LinkedServices/Automation?api-version=2015-11-01-preview", $this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
 		try
 		{
@@ -77,6 +78,7 @@ class LogAnalytics: AzSVTBase
 
 		# Retention by data type
 		$AzureManagementUri = [WebRequestHelper]::GetResourceManagerUrl()
+		# Rest API to fetch retention period of all data type
 		$uri = [system.string]::Format($AzureManagementUri + "subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.OperationalInsights/workspaces/{2}/Tables?api-version=2017-04-26-preview", $this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
 		try
 		{
@@ -137,6 +139,8 @@ class LogAnalytics: AzSVTBase
 					"x-ms-path-query" = $pathQuery
 				}
 				$uri = "https://management.azure.com/api/invoke"
+				
+				# Rest API to fetch linked solutions' detail
 				$linkedSolutionDetail = [WebRequestHelper]::InvokeGetWebRequest($uri, $headers);
 				if (($linkedSolutionDetail | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($linkedSolutionDetail, "id"))
 				{
