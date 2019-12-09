@@ -45,12 +45,75 @@ class AIOrgTelemetry: ListenerBase {
 					$currentInstance.PushServiceScanResults($SVTEventContexts)
 				}else{
 				}
+				try {
+					$isResourceScanStartEndTelemetryEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableResourceScanStartEndTelemetry", $($Event.SourceArgs[0].SubscriptionContext.SubscriptionId))
+					$resourceContext = $Event.SourceArgs[0].ResourceContext
+					#specifying NA so that it is easily identifiable in app sights query
+					if([string]::IsNullOrEmpty($Event.SourceArgs[0].PartialScanIdentifier)){
+						$partialScanIdentifier = "NA"
+					}
+					else
+					{
+						$partialScanIdentifier = $Event.SourceArgs[0].PartialScanIdentifier
+					}
+					if ($isResourceScanStartEndTelemetryEnabled) {
+						if ($resourceContext -ne $null) {
+							$resourceDetails = @{
+								ResourceId            = $resourceContext.ResourceId
+								ResourceName          = $resourceContext.ResourceName
+								ResourceType          = $resourceContext.ResourceType
+								Location              = $resourceContext.Location
+								ResourceGroupName     = $resourceContext.ResourceGroupName
+								SubscriptionId        = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
+								PartialScanIdentifier = $partialScanIdentifier
+							}
+							[AIOrgTelemetryHelper]::TrackEvent("Resource Scan Ended", $resourceDetails, $null)
+						}
+					}
+				}
+				catch {
+					$currentInstance.PublishException($_);
+				}
 			}
+				
 			catch
 			{
 				$currentInstance.PublishException($_);
 			}
 		});
+
+		$this.RegisterEvent([SVTEvent]::EvaluationStarted, {
+			$currentInstance = [AIOrgTelemetry]::GetInstance();
+			try {
+					$isResourceScanStartEndTelemetryEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableResourceScanStartEndTelemetry", $($Event.SourceArgs[0].SubscriptionContext.SubscriptionId))
+					$resourceContext = $Event.SourceArgs[0].ResourceContext
+					#specifying NA so that it is easily identifiable in app sights query
+					if([string]::IsNullOrEmpty($Event.SourceArgs[0].PartialScanIdentifier)){
+						$partialScanIdentifier = "NA"
+					}
+					else
+					{
+						$partialScanIdentifier = $Event.SourceArgs[0].PartialScanIdentifier
+					}
+					if ($isResourceScanStartEndTelemetryEnabled) {
+						if ($resourceContext -ne $null) {
+							$resourceDetails = @{
+								ResourceId            = $resourceContext.ResourceId
+								ResourceName          = $resourceContext.ResourceName
+								ResourceType          = $resourceContext.ResourceType
+								Location              = $resourceContext.Location
+								ResourceGroupName     = $resourceContext.ResourceGroupName
+								SubscriptionId        = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
+								PartialScanIdentifier = $partialScanIdentifier
+							}
+							[AIOrgTelemetryHelper]::TrackEvent("Resource Scan Started", $resourceDetails, $null)
+						}
+					}
+				}
+				catch {
+					$currentInstance.PublishException($_);
+				}			
+			});
 
 		$this.RegisterEvent([AzSKGenericEvent]::Exception, {
             $currentInstance = [AIOrgTelemetry]::GetInstance();
@@ -121,10 +184,10 @@ class AIOrgTelemetry: ListenerBase {
 				# No need to break execution
             }
 		});
+
 		
-
-    }
-
+	 }
+	
 	hidden [void] PushSubscriptionScanResults([SVTEventContext[]] $SVTEventContexts)
 	{
 		$SVTEventContextFirst = $SVTEventContexts[0]
