@@ -1094,17 +1094,18 @@ class SubscriptionCore: AzSVTBase
 				
 				switch($result)
 				{
-					"Passed" {
-						$controlResult.AddMessage([VerificationResult]::Passed,"")
-					} 
-					"Failed"{
-						$controlResult.AddMessage([VerificationResult]::Failed,"")
-					}
-					"Default"
-					{
-						$controlResult.AddMessage("Unable to query compliance state results")
+					
+					"Manual"{
 						$controlResult.AddMessage([VerificationResult]::Manual,"")
+						$controlResult.AddMessage("Unable to query compliance state results")
 					}
+                    Default
+                    {
+                        
+                        $controlResult.AddMessage([VerificationResult]::$result,"")
+					
+                    }
+					
 				} 
 				
 			}
