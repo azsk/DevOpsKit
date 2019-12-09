@@ -293,6 +293,12 @@ class SVTMapping
         JsonFileName = "VirtualMachineScaleSet.json";
         ClassName = "VirtualMachineScaleSet";
         ResourceTypeName = "VirtualMachineScaleSet";
+    },
+    [ResourceTypeMapping]@{
+        ResourceType     = "Microsoft.OperationalInsights/workspaces";
+        JsonFileName     = "LogAnalytics.json";
+        ClassName        = "LogAnalytics";
+        ResourceTypeName = "LogAnalytics";
     }
     );
 

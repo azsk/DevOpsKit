@@ -1,0 +1,117 @@
+  {
+    "FeatureName": "LogAnalytics",
+    "Reference": "aka.ms/azsktcp/LogAnalytics",
+    "IsMaintenanceMode": false,
+    "Controls": [
+      {
+        "ControlID": "Azure_LogAnalytics_AuthZ_Grant_Min_RBAC_Access",
+        "Description": "All users/identities must be granted minimum required permissions using Role Based Access Control (RBAC)",
+        "Id": "LogAnalytics110",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckResourceRBACAccess",
+        "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+        "Recommendation": "1. Configure the workspace access control mode to 'Use resource or workspace permissions'. 2. Use Table level and Resource centric RBAC model to regulate access to monitoring data and settings. Refer: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/manage-access",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthZ",
+          "RBAC",
+          "LogAnalytics"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_LogAnalytics_AuthZ_Verify_Linked_AutomationAccounts_SPNs_Access",
+        "Description": "Service Principal Names (SPNs) should not be Owners or Contributors on the subscription",
+        "Id": "LogAnalytics120",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckLinkedAutomationAccountSPNsRBAC",
+        "Rationale": "Granting elevated access to the Run As Account of the Automation Account linked to your Log Analytics workspace increases the probability of exposure of the resources in case of service account compromise.",
+        "Recommendation": " If Log Analytics workspace is linked to Automation Account, make sure you add Run as Account's SPN at the specific permission scope and role required for your scenario. For example, sometimes 'Contributor' access at 'Resource Group' scope might work. In other scenarios you may need 'Reader' access at 'Subscription' scope. Exact permission will vary based on your use case. If you want to remove the SPN, run command Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthZ",
+          "RBAC",
+          "LogAnalytics"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_LogAnalytics_Audit_Configure_Data_Retention_Period",
+        "Description": "Configuring an apt data retention period for data log is important for effective security audit",
+        "Id": "LogAnalytics130",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckDataRetentionPeriod",
+        "Rationale": "Data retention period enables log collection of important system events pertinent to security.",
+        "Recommendation": "The default data retention period of Log Analytics 31 days (if not using a free tier). Based on your requirement this period can be increased upto 730 days. For effective logging, refer: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/manage-cost-storage#change-the-data-retention-period",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "Audit",
+          "LogAnalytics"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_LogAnalytics_DP_Review_Monitoring_Solutions",
+        "Description": "Ensure that the monitoring solutions added to your log analytics workspace is published by an authorised provider",
+        "Id": "LogAnalytics140",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckConfiguredSolutions",
+        "Rationale": "Monitoring solutions enables the author of the solution to capture sensitive data and execute custom code on your subscription. This can lead to a compromise of corporate data.",
+        "Recommendation": "Go to Azure Portal --> your Log Analytics workspace --> Solutions --> For each added solution, verify the endpoints and azure resources accessed by the solution (see detailed logs).",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "DP",
+          "LogAnalytics"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_LogAnalytics_NetSec_Use_ExpressRoute_For_Additional_Security_Of_Data",
+        "Description": "Use ExpressRoute for additional security when using Operation Management server or Direct-Connected Agents",
+        "Id": "LogAnalytics150",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Data from the management server or direct-connected agents is sent over SSL to Microsoft Azure datacenters. Optionally, you can use ExpressRoute to provide additional security for the data. ExpressRoute is a way to directly connect to Azure from your existing WAN network, such as a multi-protocol label switching (MPLS) VPN, provided by a network service provider. (Note: ExpressRoute may be required only in advanced scenarios such as when sending sensitive data to Microsoft Azure datacenters. It is up to you and your company to ultimately determine the strategy with which you will handle your private data)",
+        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/data-security#2-send-data-from-agents",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "NetSec",
+          "LogAnalytics"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "Azure_LogAnalytics_DP_Use_Secure_TLS_Version",
+        "Description": "To insure the security of data in transit to Log Analytics, configure the agent to use the most secure and up to date version of Transport Layer Security (TLS).",
+        "Id": "LogAnalytics160",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "TLS provides privacy and data integrity between client and server. Using secure TLS version significantly reduces risks from security design issues and security bugs that may be present in older versions.",
+        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/data-security#sending-data-securely-using-tls-12",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "DP",
+          "LogAnalytics"
+        ],
+        "Enabled": true
+      }
+    ]
+  }
