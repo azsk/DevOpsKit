@@ -35,7 +35,7 @@ class LogAnalytics: AzSVTBase
 		elseif ($this.ResourceObject.Properties.features.enableLogAccessUsingOnlyResourcePermissions -eq "false")
 		{
 			$controlResult.VerificationResult = [VerificationResult]::Failed;
-			$controlResult.AddMessage("The access control mode is set to 'Require workspace permissions'. Switch to Resource-specific mode for granular RBAC management.");
+			$controlResult.AddMessage("The currently configured access control mode is 'Require workspace permissions'. Switch to Resource-specific mode for granular RBAC management.");
 		}
 		return $controlResult;
 	}
@@ -43,20 +43,36 @@ class LogAnalytics: AzSVTBase
 	# This function lists the automation account connected to your workspace
 	hidden [ControlResult] CheckLinkedAutomationAccountSPNsRBAC([ControlResult] $controlResult)
 	{	
-		$AzureManagementUri = [WebRequestHelper]::GetResourceManagerUrl()
-		# Rest API to fetch linked automation account
-		$uri = [system.string]::Format($AzureManagementUri + "subscriptions/{0}/resourcegroups/{1}/providers/microsoft.operationalinsights/workspaces/{2}/LinkedServices/Automation?api-version=2015-11-01-preview", $this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
 		try
 		{
-			$linkedServiceDetail = [WebRequestHelper]::InvokeGetWebRequest($uri);
-			if (($linkedServiceDetail | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($linkedServiceDetail, "properties.resourceId"))
-			{ 
-				$AutomationAccountName = $linkedServiceDetail.properties.resourceId.Split(" / ")[-1]
-				$controlResult.AddMessage([VerificationResult]::Verify, "Log analytics workspaces in linked to [$($AutomationAccountName)] automation account. Verify the RBAC access granted to its Run as Account.");
+			$AzureManagementUri = [WebRequestHelper]::GetResourceManagerUrl()
+
+			# Rest API to fetch linked automation account
+			$uri = [system.string]::Format($AzureManagementUri + "subscriptions/{0}/resourcegroups/{1}/providers/microsoft.operationalinsights/workspaces/{2}/LinkedServices/Automation?api-version=2015-11-01-preview", $this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
+
+			# InvokeGetWebRequest enters infinite loop when response status code is 200, but the response content is null.
+			# Due to this, temporarily, we are fetching raw content.
+			$accessToken = [ContextHelper]::GetAccessToken($AzureManagementUri)
+			$authorisationToken = "Bearer " + $accessToken
+			$headers = @{
+				"Authorization" = $authorisationToken
 			}
-			else
+			$contentType = "application/json"
+			$linkedServiceDetail = $null
+			$requestResult = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $contentType, $false, $true)
+			if ($null -ne $requestResult -and $requestResult.StatusCode -eq 200)
 			{
-				$controlResult.AddMessage([VerificationResult]::Passed, "No linked automation account found for - [$($this.ResourceContext.ResourceName)].");
+				$linkedServiceDetail = ConvertFrom-Json $requestResult.Content
+
+				if (($linkedServiceDetail | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($linkedServiceDetail, "properties.resourceId"))
+				{ 
+					$AutomationAccountName = $linkedServiceDetail.properties.resourceId.Split(" / ")[-1]
+					$controlResult.AddMessage([VerificationResult]::Verify, "Log analytics workspaces in linked to [$($AutomationAccountName)] automation account. Verify the RBAC access granted to its Run as Account.");
+				}
+				else
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed, "No automation account is linked to this workspace.");
+				}
 			}
 		}
 		catch
@@ -71,10 +87,10 @@ class LogAnalytics: AzSVTBase
 	# This function lists the data retention period for your logs
 	hidden [ControlResult] CheckDataRetentionPeriod([ControlResult] $controlResult)
 	{
-		#TODO: Pass if 365 days
+
 		$controlResult.VerificationResult = [VerificationResult]::Verify;
-		# Default retention - Applicable at workspace level
-		$controlResult.AddMessage("The default data log retention period is: $($this.ResourceObject.Properties.retentionInDays)");
+		# workspace retention period 
+		$controlResult.AddMessage("The currently configured log retention period is: $($this.ResourceObject.Properties.retentionInDays)");
 
 		# Retention by data type
 		$AzureManagementUri = [WebRequestHelper]::GetResourceManagerUrl()
@@ -105,12 +121,12 @@ class LogAnalytics: AzSVTBase
 				
 				if (($ListOfDataTypeWithRetention | Measure-Object).Count -gt 0)
 				{
-					$controlResult.AddMessage("Below is the list of data type (tables) where retention period is set:", $ListOfDataTypeWithRetention);
+					$controlResult.AddMessage("Below is the list of data type (tables) where retention period is configured:", $ListOfDataTypeWithRetention);
 				}
 				
 				if (($ListOfDataTypeWithoutRetention | Measure-Object).Count -gt 0)
 				{
-					$controlResult.AddMessage("Below is the list of data type (tables) where retention period is not set (default retention period is applicable for these tables):", $ListOfDataTypeWithoutRetention.DataTypeName);
+					$controlResult.AddMessage("Below is the list of data type (tables) where retention period is not configured (workspace level retention period is applicable for these tables):", $ListOfDataTypeWithoutRetention.DataTypeName);
 				}
 			}
 		}
@@ -139,7 +155,7 @@ class LogAnalytics: AzSVTBase
 					"x-ms-path-query" = $pathQuery
 				}
 				$uri = "https://management.azure.com/api/invoke"
-				
+
 				# Rest API to fetch linked solutions' detail
 				$linkedSolutionDetail = [WebRequestHelper]::InvokeGetWebRequest($uri, $headers);
 				if (($linkedSolutionDetail | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($linkedSolutionDetail, "id"))
