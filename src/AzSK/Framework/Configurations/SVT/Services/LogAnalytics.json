@@ -49,7 +49,7 @@
         "Automated": "Yes",
         "MethodName": "CheckDataRetentionPeriod",
         "Rationale": "Data retention period enables you to perform effective auditing.",
-        "Recommendation": "Based on your requirement, you can choose to purge your data after a specificed duration. This duration/data retention period can be set from 31 days to 730 days. You can also specify different retention settings for individual data types. For effective logging, refer: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/manage-cost-storage#change-the-data-retention-period",
+        "Recommendation": "Based on your requirement, you can choose to purge your data after a specified duration. This duration/data retention period can be set from 31 days to 730 days. You can also specify different retention settings for individual data types. For effective logging, refer: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/manage-cost-storage#change-the-data-retention-period",
         "Tags": [
           "SDL",
           "TCP",
