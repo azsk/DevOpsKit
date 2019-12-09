@@ -48,6 +48,14 @@ class AIOrgTelemetry: ListenerBase {
 				try {
 					$isResourceScanStartEndTelemetryEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableResourceScanStartEndTelemetry", $($Event.SourceArgs[0].SubscriptionContext.SubscriptionId))
 					$resourceContext = $Event.SourceArgs[0].ResourceContext
+					#specifying NA so that it is easily identifiable in app sights query
+					if([string]::IsNullOrEmpty($Event.SourceArgs[0].PartialScanIdentifier)){
+						$partialScanIdentifier = "NA"
+					}
+					else
+					{
+						$partialScanIdentifier = $Event.SourceArgs[0].PartialScanIdentifier
+					}
 					if ($isResourceScanStartEndTelemetryEnabled) {
 						if ($resourceContext -ne $null) {
 							$resourceDetails = @{
@@ -57,7 +65,7 @@ class AIOrgTelemetry: ListenerBase {
 								Location              = $resourceContext.Location
 								ResourceGroupName     = $resourceContext.ResourceGroupName
 								SubscriptionId        = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
-								PartialScanIdentifier = $Event.SourceArgs[0].PartialScanIdentifier
+								PartialScanIdentifier = $partialScanIdentifier
 							}
 							[AIOrgTelemetryHelper]::TrackEvent("Resource Scan Ended", $resourceDetails, $null)
 						}
@@ -79,6 +87,14 @@ class AIOrgTelemetry: ListenerBase {
 			try {
 					$isResourceScanStartEndTelemetryEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableResourceScanStartEndTelemetry", $($Event.SourceArgs[0].SubscriptionContext.SubscriptionId))
 					$resourceContext = $Event.SourceArgs[0].ResourceContext
+					#specifying NA so that it is easily identifiable in app sights query
+					if([string]::IsNullOrEmpty($Event.SourceArgs[0].PartialScanIdentifier)){
+						$partialScanIdentifier = "NA"
+					}
+					else
+					{
+						$partialScanIdentifier = $Event.SourceArgs[0].PartialScanIdentifier
+					}
 					if ($isResourceScanStartEndTelemetryEnabled) {
 						if ($resourceContext -ne $null) {
 							$resourceDetails = @{
@@ -88,7 +104,7 @@ class AIOrgTelemetry: ListenerBase {
 								Location              = $resourceContext.Location
 								ResourceGroupName     = $resourceContext.ResourceGroupName
 								SubscriptionId        = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
-								PartialScanIdentifier = $Event.SourceArgs[0].PartialScanIdentifier
+								PartialScanIdentifier = $partialScanIdentifier
 							}
 							[AIOrgTelemetryHelper]::TrackEvent("Resource Scan Started", $resourceDetails, $null)
 						}

@@ -191,27 +191,4 @@ class AzSVTCommandBase: SVTCommandBase {
 			}	
         }
     }
-    hidden [void] ResourceScan([psobject]$resource,[string]$eventName) {
-        $isResourceScanStartEndTelemetryEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableResourceScanStartEndTelemetry",$($this.SubscriptionContext.SubscriptionId))
-        if($isResourceScanStartEndTelemetryEnabled)
-        {
-            try{
-            $resourceDetails=@{
-						ResourceId = $resource.ResourceId
-						ResourceName = $resource.ResourceName
-						ResourceType = $resource.ResourceType
-						Location = $resource.Location
-						ResourceGroupName = $resource.ResourceGroupName
-						SubscriptionId = $this.SubscriptionContext.SubscriptionId
-						PartialScanIdentifier = $this.PartialScanIdentifier
-						RunIdentifier = $this.RunIdentifier
-					}
-                [AIOrgTelemetryHelper]::TrackEvent($eventName,$resourceDetails, $null)
-            }
-            catch{
-                # telemetry send fails
-            }
-        }	
-        
-    }
 }
