@@ -453,7 +453,7 @@
           "matchType": "MatchStringSingleToken",
           "data": {
             "value": "Allow",
-            "Type": "StringNotMatched",
+            "Type": "Allow",
             "IfNoPropertyFound": "Verify",
             "ControlDesiredState": "Verify"
           }
@@ -1199,9 +1199,10 @@
           "jsonPath": [ "$.sku.name" ],
           "matchType": "MatchStringSingleToken",
           "data": {
-            "type": "StringNotMatched",
+            "type": "Allow",
             "value": "premium",
-            "isCaseSensitive": false
+            "isCaseSensitive": false,
+            "ControlDesiredState": "Verify"
           }
         },
 
@@ -1216,9 +1217,10 @@
           "jsonPath": [ "$.sku.name" ],
           "matchType": "MatchStringSingleToken",
           "data": {
-            "type": "StringNotMatched",
+            "type": "Allow",
             "value": "premium",
-            "isCaseSensitive": false
+            "isCaseSensitive": false,
+            "ControlDesiredState": "Verify"
           }
         },
 
@@ -1233,9 +1235,10 @@
           "jsonPath": [ "$.sku.name" ],
           "matchType": "MatchStringSingleToken",
           "data": {
-            "type": "StringNotMatched",
+            "type": "Allow",
             "value": "premium",
-            "isCaseSensitive": false
+            "isCaseSensitive": false,
+            "ControlDesiredState": "Verify"
           }
         }
 
@@ -1257,9 +1260,10 @@
           "matchType": "MatchStringSingleToken",
           "data": {
             "value": "Enabled",
-            "Type": "StringMatched",
+            "Type": "Allow",
             "IfNoPropertyFound": "Passed",
-            "isCaseSensitive": false
+            "isCaseSensitive": false,
+            "ControlDesiredState": "Passed"
           }
         },
         {
@@ -1316,9 +1320,10 @@
           "matchType": "MatchStringSingleToken",
           "data": {
             "value": "Enabled",
-            "Type": "StringMatched",
+            "Type": "Allow",
             "IfNoPropertyFound": "Passed",
-            "isCaseSensitive": false
+            "isCaseSensitive": false,
+            "ControlDesiredState": "Passed"
           }
         },
         {

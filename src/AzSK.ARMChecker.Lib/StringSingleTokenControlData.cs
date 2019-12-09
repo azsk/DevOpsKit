@@ -7,6 +7,7 @@
 		public bool IsCaseSensitive { get; set; }
 		public string IfNoPropertyFound { get; set; }
 		public string startIP { get; set; }
-        public string endIP { get; set; }
+                public string endIP { get; set; }
+		public string ControlDesiredState { get; set; }
 	}
 }

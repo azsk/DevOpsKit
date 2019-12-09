@@ -370,26 +370,50 @@ namespace AzSK.ARMChecker.Lib
                 {
                     result.VerificationResult = VerificationResult.Verify;
                 }
+
             }
             else
             {
                 if (match.Value.Equals(actual,
                     match.IsCaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
                 {
-                    if (match.Type == ControlDataMatchType.StringNotMatched)
+                    if (match.Type == ControlDataMatchType.Allow)
+                    {
+                        
+                        if (match.ControlDesiredState == "Verify")
+                        {
+                            result.VerificationResult = VerificationResult.Verify;
+                        }
+                        else if (match.ControlDesiredState == "Passed")
+                        {
+                            result.VerificationResult = VerificationResult.Passed;
+                        }
+                        else
+                        {
+                            result.VerificationResult = VerificationResult.Failed;
+                        }
+                    }
+                    else
                     {
                         result.VerificationResult = VerificationResult.Verify;
                     }
                 }
                 else
                 {
-                    if (match.ControlDesiredState == "Verify")
+                    if (match.Type == ControlDataMatchType.NotAllow)
                     {
-                        result.VerificationResult = VerificationResult.Verify;
-                    }
-                    else
-                    {
-                        result.VerificationResult = VerificationResult.Failed;
+                        if (match.ControlDesiredState == "Verify")
+                        {
+                            result.VerificationResult = VerificationResult.Verify;
+                        }
+                        else if (match.ControlDesiredState == "Passed")
+                        {
+                            result.VerificationResult = VerificationResult.Passed;
+                        }
+                        else
+                        {
+                            result.VerificationResult = VerificationResult.Failed;
+                        }
                     }
                 }
             }
@@ -592,22 +616,21 @@ namespace AzSK.ARMChecker.Lib
         private static ControlResult ExtractAllSingleToken<TV, TM>(ResourceControl control, JObject resource, out List<TV> actual,
             out TM match, bool validateParameters = true)
         {
-
+            bool tokenNotFound = false;
             List<JToken> tokens = new List<JToken>();
             foreach (var jsonPath in control.JsonPath)
             {
-                tokens.Add(resource.SelectToken(jsonPath));
-            }
-            bool tokenNotFound = false;
-            foreach (var tokenfound in tokens)
-            {
-                if (tokenfound == null)
+                if (resource.SelectToken(jsonPath) != null)
+                {
+                    tokens.Add(resource.SelectToken(jsonPath));
+                }
+                else
                 {
                     tokenNotFound = true;
+                    break;
                 }
             }
 
-            //var tokenNotFound = token.Count == 0;
             var result = ControlResult.Build(control, resource, tokens, tokenNotFound, VerificationResult.Failed);
             if (tokenNotFound) result.IsTokenNotValid = true;
             actual = new List<TV>();
@@ -619,9 +642,7 @@ namespace AzSK.ARMChecker.Lib
                 }
                 else
                 {
-                    //var tokenValue = default(TV);
                     List<TV> tokenValues = new List<TV>();
-                    //tokenValue.add(default(TV));
                     for (int i = 0; i < tokens.Count; i++)
                     {
                         string ARMtemplateFunctionType = tokens[i].Value<String>().GetFunctionType();
