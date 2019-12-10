@@ -243,23 +243,7 @@ function BootstrapInstaller {
 	}
 
 }
-function EnableSecurityProtocol
-{
-    Write-Host "Configuring Security Protocol (Tls1.2)... " -ForegroundColor Yellow
-    try 
-    {
-        $currentSecurityProtocol = [Net.ServicePointManager]::SecurityProtocol | Out-String
-        if (! $currentSecurityProtocol.Contains('Tls12')) {
-            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        }
-    }
-    catch
-    {
-        Write-Host "Error setting security protocol. Error:" $_ -ForegroundColor Red
-        break;
-    }
-    Write-Host "Completed setting security protocol." -ForegroundColor Green
-}
+
 function CheckPrerequsites {
     Write-Host "Checking Prerequisites... " -ForegroundColor Yellow
     CheckPSVersion
@@ -268,7 +252,6 @@ function CheckPrerequsites {
 
 function Init {
     CheckPrerequsites
-    EnableSecurityProtocol
     BootstrapInstaller    
 }
 
