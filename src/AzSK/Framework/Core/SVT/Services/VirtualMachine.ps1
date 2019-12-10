@@ -376,8 +376,9 @@ class VirtualMachine: AzSVTBase
 				}
 				elseif($antimalwareSetting.assessmentResult -eq 'None')
 				{	
+					# Check if VM is in deallocated state
 					# Generally ASC shows NA status if VM is in deallocated state
-					if([FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+					if($this.VMDetails.IsVMDeallocated -and [FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
 						#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
 						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
 					} 		
@@ -584,7 +585,7 @@ class VirtualMachine: AzSVTBase
 					}
 					
 				}else{
-					if([FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+					if($this.VMDetails.IsVMDeallocated -and [FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
 						#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
 						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
 					} 
@@ -598,7 +599,7 @@ class VirtualMachine: AzSVTBase
 					$controlStatus = [VerificationResult]::Passed
 					$controlResult.AddMessage("No guest configuration policy assignment has been found for this resource.");
 				}else{
-					if([FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
+					if($this.VMDetails.IsVMDeallocated -and [FeatureFlightingManager]::GetFeatureStatus("DisableHasRequiredAccessForDeallocatedVM",$($this.SubscriptionContext.SubscriptionId)) -eq $true){
 						#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
 						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
 					} 
