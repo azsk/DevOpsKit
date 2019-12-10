@@ -364,10 +364,7 @@ namespace AzSK.ARMChecker.Lib
                 {
                     result.VerificationResult = VerificationResult.Passed;
                 }
-                if (match.Type == ControlDataMatchType.StringNotMatched)
-                {
-                    result.VerificationResult = VerificationResult.Verify;
-                }
+                
             }
             return result;
         }
