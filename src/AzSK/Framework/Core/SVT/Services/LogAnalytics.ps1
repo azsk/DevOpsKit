@@ -28,11 +28,7 @@ class LogAnalytics: AzSVTBase
 	{	
 		$controlResult = $this.CheckRBACAccess($controlResult)
 		
-		if (-not [Helpers]::CheckMember($this.ResourceObject, "Properties.features.enableLogAccessUsingOnlyResourcePermissions"))
-		{
-			$controlResult.AddMessage("Unable to read access control mode of this workspace. Please follow the recommendation to verify this setting.");
-		}
-		elseif ($this.ResourceObject.Properties.features.enableLogAccessUsingOnlyResourcePermissions -eq "false")
+		if ( -not ([Helpers]::CheckMember($this.ResourceObject, "Properties.features.enableLogAccessUsingOnlyResourcePermissions") -and $this.ResourceObject.Properties.features.enableLogAccessUsingOnlyResourcePermissions -eq $true))
 		{
 			$controlResult.VerificationResult = [VerificationResult]::Failed;
 			$controlResult.AddMessage("The currently configured access control mode is 'Require workspace permissions'. Switch to Resource-specific mode for granular RBAC management.");
