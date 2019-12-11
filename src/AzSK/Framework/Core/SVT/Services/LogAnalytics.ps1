@@ -86,7 +86,7 @@ class LogAnalytics: AzSVTBase
 
 		$controlResult.VerificationResult = [VerificationResult]::Verify;
 		# workspace retention period 
-		$controlResult.AddMessage("The currently configured log retention period is: $($this.ResourceObject.Properties.retentionInDays)");
+		$controlResult.AddMessage("The currently configured log retention period at workspace level is: $($this.ResourceObject.Properties.retentionInDays)");
 
 		# Retention by data type
 		$AzureManagementUri = [WebRequestHelper]::GetResourceManagerUrl()
@@ -175,6 +175,7 @@ class LogAnalytics: AzSVTBase
 
 					}
 					$controlResult.AddMessage([VerificationResult]::Verify, "Verify the endpoints and azure resources accessed by the solution connected to your workspace.", $linkedSolutionDetailCustomObj);
+					$controlResult.SetStateData("List of linked solutions and resources connected to it:", $linkedSolutionDetailCustomObj);
 				}
 				else
 				{
