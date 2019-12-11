@@ -23,12 +23,12 @@
         "Enabled": true
       },
       {
-        "ControlID": "Azure_LogAnalytics_AuthZ_Verify_Linked_AutomationAccounts_SPNs_Access",
+        "ControlID": "Azure_LogAnalytics_AuthZ_Linked_Accounts_SPN_Access",
         "Description": "Service Principal Names (SPNs) access for the automation account should be limited to required operations",
         "Id": "LogAnalytics120",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
-        "MethodName": "CheckLinkedAutomationAccountSPNsRBAC",
+        "MethodName": "CheckAccountsLinkedToWorkspace",
         "Rationale": "Granting elevated access to the Run As Account (SPN) of the Automation Account linked to your Log Analytics workspace increases the probability of exposure of the resources. This is because attacker can use this access to run custom logic on your subscription.",
         "Recommendation": "If Log Analytics workspace is linked to Automation Account, make sure you add Run as Account's SPN at the specific permission scope and role required for your scenario. For example, sometimes 'Contributor' access at 'Resource Group' scope might work. In other scenarios you may need 'Reader' access at 'Subscription' scope. Exact permission will vary based on your use case. If you want to remove the SPN, run command Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
         "Tags": [
@@ -36,7 +36,6 @@
           "TCP",
           "Automated",
           "AuthZ",
-          "RBAC",
           "LogAnalytics"
         ],
         "Enabled": true
