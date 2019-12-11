@@ -37,7 +37,7 @@ class LogAnalytics: AzSVTBase
 	}
 
 	# This function lists the automation account connected to your workspace
-	hidden [ControlResult] CheckLinkedAutomationAccountSPNsRBAC([ControlResult] $controlResult)
+	hidden [ControlResult] CheckAccountsLinkedToWorkspace([ControlResult] $controlResult)
 	{	
 		try
 		{
