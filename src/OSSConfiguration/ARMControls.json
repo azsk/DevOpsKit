@@ -444,7 +444,7 @@
         {
           "id": "AzureStorage260",
           "controlId": "Azure_Storage_AuthZ_Restrict_Network_Access",
-          "isEnabled": true,
+          "isEnabled": False,
           "description": "Ensure that Firewall and Virtual Network access is granted to a minimal set of trusted origins",
           "rationale": "Restricting access using firewall/virtual network config reduces network exposure of a storage account by limiting access only to expected range/set of clients. Note that this depends on the overall service architecture and may not be possible to implement in all scenarios.",
           "recommendation": "Go to Azure Portal --> your Storage service --> Settings --> Firewalls and virtual networks --> Selected Network. Provide the specific IP address and Virtual Network details that should be allowed to access storage account.",
