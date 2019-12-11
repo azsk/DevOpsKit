@@ -1857,7 +1857,7 @@ class SubscriptionCore: AzSVTBase
 
 	hidden [string] GetControlStatusFromComplianceState([string]$controlId)
 	{
-		$verificationResult = ""
+		$verificationResult = "Manual"
 		if(($this.ComplianceStateData | Measure-Object).Count -gt 0)
 		{
 			
