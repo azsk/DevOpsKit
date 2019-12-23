@@ -275,7 +275,25 @@ class SVTMapping
 			ClassName = "KubernetesService";
 			JsonFileName = "KubernetesService.json";
 			ResourceTypeName = "KubernetesService";
-        }
+        },
+     [ResourceTypeMapping]@{
+            ResourceType = "Microsoft.DBforPostgreSQL/servers";
+			ClassName = "DBForPostgreSQL";
+			JsonFileName = "DBForPostgreSQL.json";
+            ResourceTypeName = "DBForPostgreSQL";
+    },
+	 [ResourceTypeMapping]@{
+            ResourceType = "Microsoft.DBforMySQL/servers";
+			ClassName = "DBForMySql";
+			JsonFileName = "DBForMySql.json";
+			ResourceTypeName = "DBForMySql";
+    },
+    [ResourceTypeMapping]@{
+        ResourceType = "Microsoft.Compute/virtualMachineScaleSets";
+        JsonFileName = "VirtualMachineScaleSet.json";
+        ClassName = "VirtualMachineScaleSet";
+        ResourceTypeName = "VirtualMachineScaleSet";
+    }
     );
 
 	static [SubscriptionMapping] $SubscriptionMapping =	@{

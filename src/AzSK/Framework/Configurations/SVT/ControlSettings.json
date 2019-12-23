@@ -17,17 +17,30 @@
     "Max_Admin_Count": 2
   },
   "ERvNet": {
-    "ResourceLockLevel": "ReadOnly"
+    "ResourceLockLevel": "ReadOnly",
+    "WhiteListedRGs" : ["ERNetwork-LAB"],
+    "WhiteListedRemoteVirtualNetworkId" : "",
+    "WhiteListedaddressPrefix" : "0.0.0.0/0",
+    "WhiteListednextHopType": "VirtualAppliance"
   },
   "Databricks": {
     "Tenant_Domain": "microsoft.com"
   },
   "KubernetesService": {
-    "kubernetesVersion": "1.12.6"
+    "kubernetesVersion": ["1.13.10", "1.14.6"]
   },
   "APIManagement": {
     "AllowedIdentityProvider": [
       "Aad"
+    ],
+    "UnsecureProtocolsAndCiphersConfiguration": [
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Ssl30",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168"
     ]
   },
   "VirtualMachine": {
@@ -143,7 +156,65 @@
       "ResourceDetailsKeys": {
         "WorkspaceId": "Reporting workspace customer id"
       }
-    }
+    },
+    "ControlExclusionsByService" : 
+     [
+        {
+          "ControlTag" : "ExcludeDatabricks",
+          "ResourceTag": "Vendor",
+          "ResourceTagValue" :"Databricks",
+          "ServiceType" : "Databricks"
+        },
+        {
+          "ControlTag" : "ExcludeKubernetes",
+          "ResourceTag": "orchestrator",
+          "ResourceTagValue" :"Kubernetes*",
+          "ServiceType" : "Kubernetes"
+        }
+     ]
+  },
+  "VirtualMachineScaleSet": {
+    "Windows": {
+      "SupportedSkuList": [],
+      "ManagementPortList": [
+        {
+          "Name": "RDP",
+          "Port": 3389
+        },
+        {
+          "Name": "WINRM",
+          "Port": 5985
+        }
+      ]
+    },
+    "Linux": {
+      "SupportedSkuList": [],
+      "ManagementPortList": [
+        {
+          "Name": "RDP",
+          "Port": 3389
+        },
+        {
+          "Name": "SSH",
+          "Port": 22
+        }
+      ]
+    },
+    "ControlExclusionsByService" : 
+      [
+        {
+          "ControlTag" : "ExcludeServiceFabric",
+          "ResourceTag": "resourceType",
+          "ResourceTagValue" :"Service Fabric",
+          "ServiceType" : "ServiceFabric"
+        },
+        {
+          "ControlTag" : "ExcludeKubernetes",
+          "ResourceTag": "orchestrator",
+          "ResourceTagValue" :"Kubernetes*",
+          "ServiceType" : "Kubernetes"
+        }
+     ]
   },
   "NoOfApprovedAdmins": 5,
   "NoOfClassicAdminsLimit": 2,
@@ -151,6 +222,9 @@
     "Subscription" : [ "Owner", "Contributor", "User Access Administrator" ],
     "ResourceGroup" : [ "Owner", "User Access Administrator" ]
   },
+  "CheckPIMCAPolicyTags": false,
+  "PIMCAPolicyTags":[],
+  "PIMAppId":"",
   "ASCAlertsSeverityLevels": [ "High" ],
   "ASCAlertsThresholdInDays": 30,
   "WhitelistedMgmtCerts": {
@@ -216,15 +290,19 @@
     "Storage": [
       {
         "Condition": {
-          "DataSource": {
-            "MetricName": "AnonymousSuccess"
-          },
+          "MetricName": "Transactions",
           "OperatorProperty": "GreaterThan",
           "Threshold": 0,
           "TimeAggregation": "Total",
-          "WindowSize": "01:00:00"
-        },
-        "IsEnabled": true
+          "Dimensions":{
+              "Name" : "Authentication",
+              "OperatorProperty" : "Include",
+              "Values" : "Anonymous"
+            },
+            "WindowSize": "01:00:00",
+            "Frequency": "01:00:00",
+            "IsEnabled": true
+        }
       }
     ],
     "StreamAnalytics": [
@@ -396,7 +474,13 @@
   },
   "SubscriptionCore": {
     "EnableV1AlertFailure": false,
-    "ASCTier": "Standard",
+    "ASCTier": ["Standard"],
+    "ResourceTypeASCTier":{
+      "VirtualMachines" : ["Standard"],
+      "SqlServers" : ["Standard"],
+      "AppServices" : ["Standard"],
+      "StorageAccounts" : ["Standard"]
+    },
     "credHighTH": 7,
     "credModerateTH": 30,
     "NonADIdentitiesPatterns" : ["(.)*#ext#@(.)*.onmicrosoft.com"],
@@ -442,5 +526,11 @@
   "MandatoryTags":[
 
   ],
-  "WhitelistedResourceGroups": []
+  "WhitelistedResourceGroups": [],
+  "InClusterCA": {
+    "AKS":{
+      "RequiredImagePath": "azsktest/akstest",
+      "RequiredImageTag": "latest"
+    }
+  }
 }

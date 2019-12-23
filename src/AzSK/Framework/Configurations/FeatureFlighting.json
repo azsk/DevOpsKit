@@ -38,6 +38,15 @@
       "IsEnabled": false
     },
     {
+      "Name": "UseAzCommandForFunctionAppDetails",
+      "Description" : "",
+      "Sources" : ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],      
+      "UnderPreview" : false,
+      "IsEnabled": true
+    },
+    {
       "Name": "EnableListenerReset",
       "Description" : "",
       "Sources" : ["*"],
@@ -102,6 +111,24 @@
     },
     {
       "Name": "EnableLinuxAntimalwareCheck",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+    {
+      "Name": "RemoveCheckForSPNNameFormat",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+    {
+      "Name": "EnableCSPSubsValidation",
       "Description": "",
       "Sources": ["*"],
       "EnabledForSubs": [],

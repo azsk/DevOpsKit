@@ -13,6 +13,11 @@ class SecurityCenter: AzSKRoot
 	[string] $AlertAdminStatus;
 	[string] $AutoProvisioningSettings = "";
 	[string] $ASCTier = "";
+	[string] $VMASCTier = "";
+	[string] $SQLASCTier = "";
+	[string] $AppSvcASCTier = "";
+	[string] $StorageASCTier = "";
+
 	SecurityCenter([string] $subscriptionId,[bool]$registerASCProvider): 
         Base($subscriptionId)
     { 		
@@ -266,6 +271,32 @@ class SecurityCenter: AzSKRoot
 		{
 			$this.ASCTier = $ascTierContentDetails.properties.pricingTier
 		}
+
+		$validatedUri = "$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings?api-version=2018-06-01"
+		$ascTierResourceWiseDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+
+        foreach($resourceDetails in $ascTierResourceWiseDetails)
+        {
+            if([Helpers]::CheckMember($resourceDetails,"name"))
+            {
+                if([Helpers]::CheckMember($resourceDetails,"properties.pricingTier"))
+                {
+                    if($resourceDetails.name -eq 'VirtualMachines'){
+                        $this.VMASCTier = $resourceDetails.properties.pricingTier
+                    }
+                    elseif($resourceDetails.name -eq 'SqlServers'){
+                        $this.SQLASCTier = $resourceDetails.properties.pricingTier
+                    }
+                    elseif($resourceDetails.name -eq 'AppServices'){
+                        $this.AppSvcASCTier = $resourceDetails.properties.pricingTier
+                    }
+                    elseif($resourceDetails.name -eq 'StorageAccounts'){
+                        $this.StorageASCTier = $resourceDetails.properties.pricingTier
+                    }
+                }
+            }
+        }   
+
 	}
 	
 	[MessageData[]] SetSecurityPolicySettings()
@@ -299,27 +330,34 @@ class SecurityCenter: AzSKRoot
 
 
 				$this.CurrentPolicyObject | where{
-					$currentPolicyObj = $_.Properties.parameters #For each ASC policy assignment, we will set the policies in $defaultDisabledPoliciesNames to 'Disabled' effect so that overall effect across sub is 'Disabled'.
-					$defaultDisabledPoliciesNames | where{
-						$policyName = $_;
-						if([Helpers]::CheckMember($currentPolicyObj,$policyName) -and ($currentPolicyObj.$policyName.value -ne $configuredPolicyObject.$policyName.value))
-                		{
-                    		$currentPolicyObj.$policyName.value = $configuredPolicyObject.$policyName.value
+					if($_.ResourceType -eq 'Microsoft.Authorization/policyAssignments' -and (-not [Helpers]::CheckMember($_,'ResourceGroupName'))) #Filtering out ASC policy assignments only at subscription scope. We are currently skipping MG & RG level scoped assignments.
+					{
+						$currentPolicyObj = $_.Properties.parameters #For each ASC policy assignment, we will set the policies in $defaultDisabledPoliciesNames to 'Disabled' effect so that overall effect across sub is 'Disabled'.
+						$defaultDisabledPoliciesNames | where{
+							$policyName = $_;
+							if([Helpers]::CheckMember($currentPolicyObj,$policyName) -and ($currentPolicyObj.$policyName.value -ne $configuredPolicyObject.$policyName.value))
+							{
+								$currentPolicyObj.$policyName.value = $configuredPolicyObject.$policyName.value
+							}
 						}
+
+						
+						$_.Properties.parameters = $currentPolicyObj;
+						$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments/$($_.Name)$([SecurityCenterHelper]::ApiVersionLatest)";
+
+						$body = New-Object PSObject
+						$body | Add-Member -NotePropertyName sku -NotePropertyValue $_.sku
+						$body | Add-Member -NotePropertyName id -NotePropertyValue $_.PolicyAssignmentId
+						$body | Add-Member -NotePropertyName type -NotePropertyValue $_.ResourceType
+						$body | Add-Member -NotePropertyName name -NotePropertyValue $_.Name
+						$body | Add-Member -NotePropertyName properties -NotePropertyValue $_.properties
+
+						[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
 					}
-
-					
-					$_.Properties.parameters = $currentPolicyObj;
-					$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($_.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments/$($_.Name)$([SecurityCenterHelper]::ApiVersionLatest)";
-
-					$body = New-Object PSObject
-					$body | Add-Member -NotePropertyName sku -NotePropertyValue $_.sku
-					$body | Add-Member -NotePropertyName id -NotePropertyValue $_.PolicyAssignmentId
-					$body | Add-Member -NotePropertyName type -NotePropertyValue $_.ResourceType
-					$body | Add-Member -NotePropertyName name -NotePropertyValue $_.Name
-					$body | Add-Member -NotePropertyName properties -NotePropertyValue $_.properties
-
-					[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
+					else
+					{
+						$this.PublishCustomMessage("Skipping policy validation & update for the assignment [$($_.ResourceId)]. This support will be added in an upcoming release." , [MessageType]::Warning);
+					}
 				}
 			} 
 		}
@@ -357,26 +395,33 @@ class SecurityCenter: AzSKRoot
 				}
 
 				$this.CurrentPolicyObject | where{
-					$currentPolicyObj = $_.Properties.parameters #For each ASC policy assignment, we will set the policies in $optionalDisabledPoliciesNames to 'Disabled' effect so that overall effect across sub is 'Disabled'.
-					$optionalDisabledPoliciesNames | where{
-						$policyName = $_;
-						if([Helpers]::CheckMember($currentPolicyObj,$policyName) -and ($currentPolicyObj.$policyName.value -ne $configuredOptionalPolicyObject.$policyName.value))
-                		{
-                    		$currentPolicyObj.$policyName.value = $configuredOptionalPolicyObject.$policyName.value
+					if($_.ResourceType -eq 'Microsoft.Authorization/policyAssignments' -and (-not [Helpers]::CheckMember($_,'ResourceGroupName'))) #Filtering out ASC policy assignments only at subscription scope. We are currently skipping MG & RG level scoped assignments.
+					{
+						$currentPolicyObj = $_.Properties.parameters #For each ASC policy assignment, we will set the policies in $optionalDisabledPoliciesNames to 'Disabled' effect so that overall effect across sub is 'Disabled'.
+						$optionalDisabledPoliciesNames | where{
+							$policyName = $_;
+							if([Helpers]::CheckMember($currentPolicyObj,$policyName) -and ($currentPolicyObj.$policyName.value -ne $configuredOptionalPolicyObject.$policyName.value))
+							{
+								$currentPolicyObj.$policyName.value = $configuredOptionalPolicyObject.$policyName.value
+							}
 						}
+
+						$_.Properties.parameters = $currentPolicyObj;
+						$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments/$($_.Name)$([SecurityCenterHelper]::ApiVersionLatest)";
+
+						$body = New-Object PSObject
+						$body | Add-Member -NotePropertyName sku -NotePropertyValue $_.sku
+						$body | Add-Member -NotePropertyName id -NotePropertyValue $_.PolicyAssignmentId
+						$body | Add-Member -NotePropertyName type -NotePropertyValue $_.ResourceType
+						$body | Add-Member -NotePropertyName name -NotePropertyValue $_.Name
+						$body | Add-Member -NotePropertyName properties -NotePropertyValue $_.properties
+
+						[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
 					}
-
-					$_.Properties.parameters = $currentPolicyObj;
-					$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($_.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments/$($_.Name)$([SecurityCenterHelper]::ApiVersionLatest)";
-
-					$body = New-Object PSObject
-					$body | Add-Member -NotePropertyName sku -NotePropertyValue $_.sku
-					$body | Add-Member -NotePropertyName id -NotePropertyValue $_.PolicyAssignmentId
-					$body | Add-Member -NotePropertyName type -NotePropertyValue $_.ResourceType
-					$body | Add-Member -NotePropertyName name -NotePropertyValue $_.Name
-					$body | Add-Member -NotePropertyName properties -NotePropertyValue $_.properties
-
-					[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
+					else
+					{
+						$this.PublishCustomMessage("Skipping policy validation & update for the assignment [$($_.ResourceId)]. This support will be added in an upcoming release." , [MessageType]::Warning);
+					}
 				}
 			}   
 		}
@@ -462,7 +507,8 @@ class SecurityCenter: AzSKRoot
 
 		if($null -ne $this.CurrentPolicyObject -and $null -ne $this.PolicyObject.policySettings)
 		{
-			$assignCount = ($this.CurrentPolicyObject | Measure-Object).Count # Total no. of ASC initiative assignments (duplicates).
+			$subPolicy = $this.CurrentPolicyObject | where {$_.ResourceType -eq 'Microsoft.Authorization/policyAssignments' -and (-not [Helpers]::CheckMember($_,'ResourceGroupName'))} #Filtering out ASC policy assignments only at subscription scope. We are currently skipping MG & RG level scoped assignments.
+			$assignCount = ($subPolicy | Measure-Object).Count # Total no. of ASC initiative assignments (duplicates).
 			$defaultPoliciesNames = Get-Member -InputObject $this.PolicyObject.policySettings.properties.parameters -MemberType NoteProperty | Select-Object Name
 			$configuredPolicyObject = $this.PolicyObject.policySettings.properties.parameters;
 
@@ -473,7 +519,7 @@ class SecurityCenter: AzSKRoot
 
 				if($configuredPolicyObject.$policyName.value -ne "Disabled")				# If the desired effect of a policy is not "Disabled" i.e. "Audit/AuditIfNotExists", then atleast one initiative assignment should have the correct effect so that the policy is correctly configured on the sub.
 				{
-					$enabledAssignments = $this.CurrentPolicyObject | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -eq $configuredPolicyObject.$policyName.value}	
+					$enabledAssignments = $subPolicy | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -eq $configuredPolicyObject.$policyName.value}	
 					$counter = ($enabledAssignments | Measure-Object).Count
 
 					if($counter -eq 0) # If policy is absent/misconfigured in all the assignments, then the overall effect of the policy is opposite of what is required (Here "Audit/AuditIfNotExists").
@@ -485,7 +531,7 @@ class SecurityCenter: AzSKRoot
 				elseif($configuredPolicyObject.$policyName.value -eq "Disabled")           # If the desired effect of a policy is "Disabled", then no initiative assignments should have a stronger effect (Audit / AuditIfNotExists) for the policy under consideration.
 				{
 		
-					$enabledAssignments = $this.CurrentPolicyObject | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -ne $configuredPolicyObject.$policyName.value}	
+					$enabledAssignments = $subPolicy | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -ne $configuredPolicyObject.$policyName.value}	
 					$counter = ($enabledAssignments | Measure-Object).Count
 
 					if($counter -gt 0)		# This means in atleast one assignment, the effect is not 'Disabled', i.e it is "Audit/AuditIfNotExists" making the stronger effect win.
@@ -494,7 +540,7 @@ class SecurityCenter: AzSKRoot
 					}
 					else					# This means either the policy is absent in all the assignments or it is configured correctly wherever present.
 					{
-						$absentAssignments = $this.CurrentPolicyObject | where{-not [Helpers]::CheckMember($_.Properties.parameters,$policyName)}
+						$absentAssignments = $subPolicy | where{-not [Helpers]::CheckMember($_.Properties.parameters,$policyName)}
 						$polNotFoundCounter = ($absentAssignments | Measure-Object).Count
 						if($polNotFoundCounter -eq $assignCount)		# This means policy is absent across all assignments meaning it is not in effect on the sub.
 						{
@@ -526,7 +572,8 @@ class SecurityCenter: AzSKRoot
 
 		if($null -ne $this.CurrentPolicyObject -and $null -ne $this.PolicyObject.optionalPolicySettings)
 		{
-			$assignCount = ($this.CurrentPolicyObject | Measure-Object).Count 				# Total no. of ASC initiative assignments (duplicates).
+			$subPolicy = $this.CurrentPolicyObject | where {$_.ResourceType -eq 'Microsoft.Authorization/policyAssignments' -and (-not [Helpers]::CheckMember($_,'ResourceGroupName'))} #Filtering out ASC policy assignments only at subscription scope. We are currently skipping MG & RG level scoped assignments.
+			$assignCount = ($subPolicy | Measure-Object).Count 				# Total no. of ASC initiative assignments (duplicates).
 			$optionalPoliciesNames = Get-Member -InputObject $this.PolicyObject.optionalPolicySettings.properties.parameters -MemberType NoteProperty | Select-Object Name
 			$configuredOptionalPolicyObject = $this.PolicyObject.optionalPolicySettings.properties.parameters;
 
@@ -539,7 +586,7 @@ class SecurityCenter: AzSKRoot
 				if($configuredOptionalPolicyObject.$policyName.value -ne "Disabled")		# If the desired effect of a policy is not "Disabled" i.e. "Audit/AuditIfNotExists", then atleast one initiative assignment should have the correct effect so that the policy is correctly configured on the sub.
 				{
 
-					$enabledAssignments = $this.CurrentPolicyObject | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -eq $configuredOptionalPolicyObject.$policyName.value}	
+					$enabledAssignments = $subPolicy | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -eq $configuredOptionalPolicyObject.$policyName.value}	
 					$counter = ($enabledAssignments | Measure-Object).Count
 
 					if($counter -eq 0)			# If policy is absent/misconfigured in all the assignments, then the overall effect of the policy is opposite of what is required (Here "Audit/AuditIfNotExists").
@@ -551,7 +598,7 @@ class SecurityCenter: AzSKRoot
 				elseif($configuredOptionalPolicyObject.$policyName.value -eq "Disabled")    # If the desired effect of a policy is "Disabled", then no initiative assignments should have a stronger effect (Audit / AuditIfNotExists) for the policy under consideration.
 				{
 	
-					$enabledAssignments = $this.CurrentPolicyObject | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -ne $configuredOptionalPolicyObject.$policyName.value}	
+					$enabledAssignments = $subPolicy | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -ne $configuredOptionalPolicyObject.$policyName.value}	
 					$counter = ($enabledAssignments | Measure-Object).Count
 
 					if($counter -gt 0)				# This means in atleast one assignment, the effect is not 'Disabled', i.e it is "Audit/AuditIfNotExists" making the stronger effect win.
@@ -560,7 +607,7 @@ class SecurityCenter: AzSKRoot
 					}
 					else							# This means either the policy is absent in all the assignments or it is configured correctly wherever present.
 					{
-						$absentAssignments = $this.CurrentPolicyObject | where{-not [Helpers]::CheckMember($_.Properties.parameters,$policyName)}
+						$absentAssignments = $subPolicy | where{-not [Helpers]::CheckMember($_.Properties.parameters,$policyName)}
 						$polNotFoundCounter = ($absentAssignments | Measure-Object).Count
 
 						if($polNotFoundCounter -eq $assignCount)		# This means policy is absent across all assignments meaning it is not in effect on the sub.

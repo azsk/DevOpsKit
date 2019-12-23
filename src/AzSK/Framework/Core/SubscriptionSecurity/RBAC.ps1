@@ -123,14 +123,14 @@ class RBAC: AzCommandBase
 		[MessageData[]] $resultMessages = @();
 		[CCAutomation] $caAutomation = [CCAutomation]::new($this.SubscriptionContext.SubscriptionId, $this.InvocationContext);
 		$caAutomation.RecoverCASPN();
-		if($this.Force -or -not ([ResourceGroupHelper]::IsLatestVersionConfiguredOnSub($this.Policy.ActiveCentralAccountsVersion,[Constants]::CentralRBACVersionTagName,"CentralRBAC")))
-		{
+		
 			#setting the tag at AzSKRG
 			$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
 			[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{"CentralRBACVersion"=$this.Policy.ActiveCentralAccountsVersion},$false)
 
 			#set the tag on subscription based on server tag	
 			# Set Active accounts
+			# removed check for force parameter and version tag for RBAC
 			$nonConfiguredActiveAccounts = $this.GetNonConfiguredActiveAccounts(([ref]$messages));
 			if($nonConfiguredActiveAccounts.Count -ne 0)
 			{
@@ -189,7 +189,7 @@ class RBAC: AzCommandBase
 					$messages += [MessageData]::new($messageText, $nonProvisionAccounts);
 					$this.PublishCustomMessage($messageText);
 				}
-			}
+			
 		}
 		
 		return $messages;
@@ -298,8 +298,7 @@ class RBAC: AzCommandBase
 	[MessageData[]] RemoveRBACAccounts()
     {	
 		[MessageData[]] $messages = @();
-		if($this.Force -or -not ([ResourceGroupHelper]::IsLatestVersionConfiguredOnSub($this.Policy.DeprecatedAccountsVersion,[Constants]::DeprecatedRBACVersionTagName,"DeprecatedRBAC")))
-		{
+		
 			#setting the tag at AzSKRG
 			$azskRGName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
 			[ResourceGroupHelper]::SetResourceGroupTags($azskRGName,@{[Constants]::DeprecatedRBACVersionTagName=$this.Policy.DeprecatedAccountsVersion}, $false)			
@@ -346,7 +345,7 @@ class RBAC: AzCommandBase
 			# Remove deprecated accounts
 			$depAccounts = $this.GetMatchedDeprecatedAccounts(([ref]$messages));
 			$messages += $this.RemoveRBACAccounts($depAccounts);
-		}
+		
 
 		return $messages;
     }

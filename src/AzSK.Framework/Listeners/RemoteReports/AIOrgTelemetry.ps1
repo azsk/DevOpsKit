@@ -142,6 +142,15 @@ class AIOrgTelemetry: ListenerBase {
 	hidden [void] PushServiceScanResults([SVTEventContext[]] $SVTEventContexts)
 	{
 		$SVTEventContextFirst = $SVTEventContexts[0]
+		# PartialScanIdentifier for each control scanned event to get idea about all resources scanned for a subscription in case of partial run 
+		$PartialScanIdentifier = ""
+		# try catch for cases if partial scan is not applicable 
+		try{
+			$PartialScanIdentifier = $SVTEventContextFirst.PartialSCanIdentifier
+		} 
+		catch{
+			$PartialScanIdentifier = ""
+		}
 		$baseProperties = @{
 			"RunIdentifier" = $this.RunIdentifier;
 			[TelemetryKeys]::FeatureGroup = [FeatureGroup]::Service;
@@ -153,6 +162,7 @@ class AIOrgTelemetry: ListenerBase {
 			"ResourceName" = $SVTEventContextFirst.ResourceContext.ResourceName;
 			"ResourceId" = $SVTEventContextFirst.ResourceContext.ResourceId;
 			"ResourceMetadata" = [JsonHelper]::ConvertToJsonCustomCompressed($SVTEventContextFirst.ResourceContext.ResourceMetadata);
+			"PartialScanIdentifier" = $PartialScanIdentifier 
 		}
 		$this.PushControlResults($SVTEventContexts, $baseProperties)
 	}

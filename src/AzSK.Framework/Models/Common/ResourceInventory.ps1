@@ -2,7 +2,8 @@ Set-StrictMode -Version Latest
 class ResourceInventory
 {
     static [PSObject[]] $RawResources;
-    static [PSObject[]] $FilteredResources;    
+    static [PSObject[]] $FilteredResources;
+    static [PSObject[]] $ResourcesWithTagMapping;
 
     static [void] FetchResources()
     {
@@ -21,11 +22,21 @@ class ResourceInventory
             }
         }                      
     }
+    
+	# This function is to save the result of resource to rg tag mapping that is done while sending the ResourceInventory telemetry event.
+    static [void] SetResourceToTagMapping($resourceDetails)
+    {
+        if($null -eq [ResourceInventory]::ResourcesWithTagMapping)       
+        {
+            [ResourceInventory]::ResourcesWithTagMapping = $resourceDetails;
+        }
+    }
 
     static [void] Clear()
     {
         [ResourceInventory]::RawResources = $null;
         [ResourceInventory]::FilteredResources = $null;
+		[ResourceInventory]::ResourcesWithTagMapping = $null;
     }
 
 }

@@ -76,9 +76,8 @@ class DatabricksClusterCA : CommandBase {
             }
             return $response
         } catch {
-            Write-Host $_
             $this.PublishCustomMessage($ErrorMessage, [MessageType]::Error)
-            throw $_
+            throw ([SuppressedException]::new((""), [SuppressedExceptionType]::Generic))
         }
     }
 
@@ -106,6 +105,15 @@ class DatabricksClusterCA : CommandBase {
         }
     }
 
+    [void] PrintGCASummary() {
+        $SummaryEP = "/api/2.0/dbfs/read?path=/AzSK_Meta/meta.json"
+        $response = $this.InvokeRestAPICall($SummaryEP, "GET", $null, 
+                                "Unable to fetch summary. Please check if CA instance is present and running")
+        $decoded = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($response.data))
+        $jsonSummary = $decoded | ConvertFrom-Json
+        $this.PublishCustomMessage([Helpers]::ConvertObjectToString($jsonSummary, $true))
+    }
+
     [void] GetCA() {
         # check secret scope exist
         if(-not $this.CheckAzSKSecretScopeExists()){
@@ -121,12 +129,16 @@ class DatabricksClusterCA : CommandBase {
         $res = $res -and ($this.CheckSecretPresence("Resource Name", "res_name" , $response))
         $res = $res -and ($this.CheckSecretPresence("Resource Group Name", "rg_name" , $response))
         $res = $res -and ($this.CheckSecretPresence("Subscription ID", "sid" , $response))
+        $res = $res -and ($this.CheckSecretPresence("Log Analytics Workspace Id", "LAWorkspaceId" , $response))
+        $res = $res -and ($this.CheckSecretPresence("Log Analytics Secret", "LASharedSecret" , $response))
         $foo = $this.CheckSecretPresence("Application Insight Key", "AzSK_AppInsight_Key", $response)
         $CAScanJob = $this.CheckAzSKJobExists()
         if (-not $CAScanJob) {
             $this.PublishCustomMessage("CA Scan Job is absent", [MessageType]::Error)
             $fail = $true
         }
+
+        $this.PrintGCASummary();
         if ($res -and -not $fail) {
             $this.PublishCustomMessage("All required permissions and files present. CA Health OK")
         } else {
@@ -194,6 +206,22 @@ class DatabricksClusterCA : CommandBase {
             $jid = @{"job_id" = "$($job.job_id)"} | ConvertTo-Json
             $this.InvokeRestAPICall($DeleteEndPoint, "POST", $jid, "Unable to delete job") 
         }
+    }
+
+    [void] RemoveLogs() {
+        $EndPoint = "/api/2.0/dbfs/delete"
+        $BodyJson = @{
+            "path" = "/AzSK_Meta";
+            "recursive" = "true"
+        } | ConvertTo-Json
+        $ResponseObject = $this.InvokeRestAPICall($endPoint, "POST", $BodyJson, 
+            "Unable to delete meta, remaining steps will be skipped.")
+        $BodyJson = @{
+            "path" = "/AzSK_Logs";
+            "recursive" = "true"
+        } | ConvertTo-Json
+        $ResponseObject = $this.InvokeRestAPICall($endPoint, "POST", $BodyJson, 
+            "Unable to delete logs, remaining steps will be skipped.")    
     }
 
     [bool] CheckAzSKWorkspaceExist() {
@@ -313,7 +341,7 @@ class DatabricksClusterCA : CommandBase {
         if ([string]::IsNullOrEmpty($this.ResourceContext.InstrumentationKey)) {
             $this.PublishCustomMessage("Skipping AppInsight installation, no Instrumentation Key passed")
         } else {
-            $this.InsertDataIntoDB($this.AzSKSecretScopeName, $IKKey, $this.ResourceContext.InstrumentationKey)
+            $this.InsertDataIntoDB($IKKey, $this.ResourceContext.InstrumentationKey)
         }
         
 
@@ -389,7 +417,7 @@ class DatabricksClusterCA : CommandBase {
             $this.RemoveAzSKWorkspace()
             $this.PublishCustomMessage("AzSK Workspace removed.")
         } else {
-            $this.PublishCustomMessage("AzSK workspace not found. Please ensure the CA is installed.",
+            $this.PublishCustomMessage("AzSK workspace not found. Please ensure the CA is installed. Note: *one* scan needs to be completed for the population of metadata.",
                                        [MessageType]::Error)
             return
         }
@@ -409,6 +437,11 @@ class DatabricksClusterCA : CommandBase {
         } else {
             $this.PublishCustomMessage("AzSK scan job not found. Please ensure the CA is installed.",
                                        [MessageType]::Error)
+        }
+        # remove logs if the switch is passed
+        if ($this.ResourceContext.RemoveLogs) {
+            $this.RemoveLogs()
+            $this.PublishCustomMessage("AzSK scan logs and meta data removed.")
         }
     }
 }

@@ -20,6 +20,7 @@ class SubscriptionCore: AzSVTBase
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $RGLevelPIMAssignments;
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $RGLevelPermanentAssignments;
 	hidden [CustomData] $CustomObject;
+	hidden $SubscriptionExtId;
 
 	SubscriptionCore([string] $subscriptionId):
         Base($subscriptionId)
@@ -353,7 +354,8 @@ class SubscriptionCore: AzSVTBase
 			$serviceAccounts = @()
 			if($null -ne $this.CurrentContext)
 			{
-				$GraphAccessToken = [ContextHelper]::GetAccessToken([WebRequestHelper]::GraphAPIUri)
+				$GraphUri = [WebRequestHelper]::GetGraphUrl()
+				$GraphAccessToken = [ContextHelper]::GetAccessToken($GraphUri)
 			}
 
 			$uniqueUsers = @();
@@ -977,39 +979,46 @@ class SubscriptionCore: AzSVTBase
 		{
 			$message=$this.GetPIMRoles();
 		}
-		
-		$criticalRoles = $this.ControlSettings.CriticalPIMRoles.Subscription;
-		$permanentRoles = $this.permanentAssignments;
-		if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
+		if($message -ne 'OK') # if there is some while making request message will contain exception
 		{
-			$whitelistedPermanentRoles = $this.ControlSettings.whitelistedPermanentRoles
+
+				$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+				$controlResult.AddMessage($message);
 		}
-		
-		if(($permanentRoles | measure-object).Count -gt 0 )
+		else 
 		{
-			
-			$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles -and ($_.ObjectType -eq 'User' -or $_.ObjectType -eq 'Group')}
-			if($null -ne $whitelistedPermanentRoles)
+			$criticalRoles = $this.ControlSettings.CriticalPIMRoles.Subscription;
+			$permanentRoles = $this.permanentAssignments;
+			if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
 			{
-				$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}
+				$whitelistedPermanentRoles = $this.ControlSettings.whitelistedPermanentRoles
 			}
-			if(($criticalPermanentRoles| measure-object).Count -gt 0)
+			if(($permanentRoles | measure-object).Count -gt 0 )
 			{
-				$controlResult.SetStateData("Permanent role assignments present on subscription",$criticalPermanentRoles)
-				$controlResult.AddMessage([VerificationResult]::Failed, "Subscription contains permanent role assignment for critical roles : $criticalRoles")
-				$permanentRolesbyRoleDefinition=$criticalPermanentRoles|Sort-Object -Property RoleDefinitionName
-				$controlResult.AddMessage($permanentRolesbyRoleDefinition);
 				
+				$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles -and ($_.ObjectType -eq 'User' -or $_.ObjectType -eq 'Group')}
+				if($null -ne $whitelistedPermanentRoles)
+				{
+					$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}
+				}
+				if(($criticalPermanentRoles| measure-object).Count -gt 0)
+				{
+					$controlResult.SetStateData("Permanent role assignments present on subscription",$criticalPermanentRoles)
+					$controlResult.AddMessage([VerificationResult]::Failed, "Subscription contains permanent role assignment for critical roles : $criticalRoles")
+					$permanentRolesbyRoleDefinition=$criticalPermanentRoles|Sort-Object -Property RoleDefinitionName
+					$controlResult.AddMessage($permanentRolesbyRoleDefinition);
+					
+				}
+				else 
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at subscription scope: $($criticalRoles -join ', ')")
+				}
 			}
-			else 
-			{
-				$controlResult.AddMessage([VerificationResult]::Passed)
+			else
+			{	
+				$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at subscription scope: $($criticalRoles -join ', ')")
 			}
-		}
-		else
-		{
-			$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
-			$controlResult.AddMessage($message);
+	
 		}
 
 		return $controlResult
@@ -1019,42 +1028,52 @@ class SubscriptionCore: AzSVTBase
 	# This function evaluates permanent role assignments at resource group level.
 	hidden [ControlResult] CheckRGLevelPermanentRoleAssignments([ControlResult] $controlResult)
 	{
-		$message = '';
+		
 		$whitelistedPermanentRoles = $null
 		$message=$this.GetRGLevelPIMRoles();
-		
-		# 'Owner' and 'User Access Administrator' are high privileged roles. These roles should not be give permanent access at resource group level.
-		$criticalRoles = $this.ControlSettings.CriticalPIMRoles.ResourceGroup;
-		$permanentRoles = $this.RGLevelPermanentAssignments;
-		if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
+		if($message -ne 'OK') # if there is some while making request message will contain exception
 		{
-			$whitelistedPermanentRoles = $this.ControlSettings.whitelistedPermanentRoles
-		}
-		
-		if(($permanentRoles | measure-object).Count -gt 0 )
-		{
-			$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles -and ($_.ObjectType -eq 'User' -or $_.ObjectType -eq 'Group')}
-			if($null -ne $whitelistedPermanentRoles)
-			{
-				$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}
-			}
-			if(($criticalPermanentRoles| measure-object).Count -gt 0)
-			{
-				$controlResult.SetStateData("Permanent role assignments present on resource groups",$criticalPermanentRoles)
-				$controlResult.AddMessage([VerificationResult]::Failed, "Resource groups contains permanent role assignment for critical roles : $($criticalRoles -join ',')")
-				$permanentRolesbyRoleDefinition=$criticalPermanentRoles|Sort-Object -Property RoleDefinitionName | Select-Object SubscriptionId, @{Name="ResourceGroupName"; Expression={$_.Scope.Split("/")[-1]}}, DisplayName, ObjectType, RoleDefinitionName | Format-List | Out-String
-				$controlResult.AddMessage($permanentRolesbyRoleDefinition);
-				
-			}
-			else 
-			{
-				$controlResult.AddMessage([VerificationResult]::Passed)
-			}
+
+			$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+			$controlResult.AddMessage($message);
+			return $controlResult;
 		}
 		else
 		{
-			$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
-			$controlResult.AddMessage($message);
+		# 'Owner' and 'User Access Administrator' are high privileged roles. These roles should not be give permanent access at resource group level.
+			$criticalRoles = $this.ControlSettings.CriticalPIMRoles.ResourceGroup;
+			$permanentRoles = $this.RGLevelPermanentAssignments;
+			if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
+			{
+				$whitelistedPermanentRoles = $this.ControlSettings.whitelistedPermanentRoles
+			}
+			
+			if(($permanentRoles | measure-object).Count -gt 0 )
+			{
+				$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles -and ($_.ObjectType -eq 'User' -or $_.ObjectType -eq 'Group')}
+				if($null -ne $whitelistedPermanentRoles)
+				{
+					$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}
+				}
+				if(($criticalPermanentRoles| measure-object).Count -gt 0)
+				{
+					$controlResult.SetStateData("Permanent role assignments present on resource groups",$criticalPermanentRoles)
+					$controlResult.AddMessage([VerificationResult]::Failed, "Resource groups contains permanent role assignment for critical roles : $($criticalRoles -join ',')")
+					$permanentRolesbyRoleDefinition=$criticalPermanentRoles|Sort-Object -Property RoleDefinitionName | Select-Object SubscriptionId, @{Name="ResourceGroupName"; Expression={$_.Scope.Split("/")[-1]}}, DisplayName, ObjectType, RoleDefinitionName | Format-List | Out-String
+					$controlResult.AddMessage($permanentRolesbyRoleDefinition);
+					
+				}
+				else 
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at resource group scope: $($criticalRoles -join ', ')")
+				}
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at resource group scope: $($criticalRoles -join ', ')")
+				
+			}		
+		
 		}
 
 		return $controlResult
@@ -1081,7 +1100,7 @@ class SubscriptionCore: AzSVTBase
 									$this.ControlSettings.MandatoryTags | ForEach-Object {
 													$tagObject = $_
 													
-													$controlResult.AddMessage("`nPolicy Requirement: `n`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpected Values: '$($tagObject.Values)'")
+													$controlResult.AddMessage("`nPolicy Requirement: `n`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpected Values: '$($tagObject.Values)' `n`tExpected Type: '$($tagObject.Type)'")
 
 													#Step1 Validate if tag present on RG                                        
 													$rgListwithoutTags = $resourceGroups | Where-Object { [string]::IsNullOrWhiteSpace($_.Tags) -or (-not ($_.Tags.Keys -icontains $tagObject.Name))}
@@ -1161,22 +1180,82 @@ class SubscriptionCore: AzSVTBase
 	hidden [ControlResult] CheckASCTier ([ControlResult] $controlResult)
 	{
 		$ascTierContentDetails = $this.SecurityCenterInstance.ASCTier;
+		
+		$VMASCTier = $this.SecurityCenterInstance.VMASCTier;
+		$SQLASCTier = $this.SecurityCenterInstance.SQLASCTier;
+		$AppSvcASCTier = $this.SecurityCenterInstance.AppSvcASCTier;
+		$StorageASCTier = $this.SecurityCenterInstance.StorageASCTier;
+
+		[string[]] $MisconfiguredASCTier = @(); #This will store information of all the misconfigured ASC pricing tier for individual resource types.
 
 		if(-not [string]::IsNullOrWhiteSpace($ascTierContentDetails))		
 		{
+			[bool] $bool = $true;
+			
 			$ascTier = "Standard"
+
 			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ASCTier"))
 			{
-				$ascTier = $this.ControlSettings.SubscriptionCore.ASCTier
-			}
-			
-			if($ascTierContentDetails -eq $ascTier)			
-			{
-				$controlResult.AddMessage([VerificationResult]::Passed, "Expected '$ascTier' tier is configured for ASC" )
+				$bool = $bool -and ($this.ControlSettings.SubscriptionCore.ASCTier -contains $ascTierContentDetails)
 			}
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "Expected '$ascTier' tier is not configured for ASC" )
+				$bool = $bool -and ($ascTier -eq $ascTierContentDetails)
+			}
+
+			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ResourceTypeASCTier.VirtualMachines"))
+			{
+				$VM = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.VirtualMachines -contains $VMASCTier)
+				if(-not $VM)
+				{
+					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.VirtualMachines) pricing tier is not configured for virtual machines.")	
+				}
+				
+				$bool = $bool -and $VM
+			}
+
+			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ResourceTypeASCTier.SqlServers"))
+			{
+				$SQL = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.SqlServers -contains $SQLASCTier)
+				if(-not $SQL)
+				{
+					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.SqlServers) pricing tier is not configured for SQL servers.")
+				}
+				
+				$bool = $bool -and $SQL
+			}
+
+			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ResourceTypeASCTier.AppServices"))
+			{
+				$AppSvc = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.AppServices -contains $AppSvcASCTier)
+				if(-not $AppSvc)
+				{
+					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.AppServices) pricing tier is not configured for app services.")
+				}
+
+				$bool = $bool -and $AppSvc
+			}
+
+			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ResourceTypeASCTier.StorageAccounts"))
+			{
+				$Storage = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.StorageAccounts -contains $StorageASCTier)
+				if(-not $Storage)
+				{
+					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.StorageAccounts) pricing tier is not configured for storage accounts.")
+				}
+				
+				$bool = $bool -and $Storage
+			}
+
+			$this.SubscriptionContext.SubscriptionMetadata.Add("MisconfiguredASCTier",$MisconfiguredASCTier); #Adding misconfigured ASC tier in the metadata.
+			if($bool)			
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "Expected pricing tier is configured for ASC." )
+			}
+			else
+			{
+				$controlResult.SetStateData("Expected pricing tier is not configured for ASC.", $MisconfiguredASCTier);
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Expected pricing tier is not configured for ASC.", $MisconfiguredASCTier));
 			}
 		}
 		return $controlResult
@@ -1324,8 +1403,8 @@ class SubscriptionCore: AzSVTBase
 					#Get external id for the current subscription
 					$response=[WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
 					$subId=$this.SubscriptionContext.SubscriptionId;
-					$extID=$response| Where-Object{$_.externalId.split('/') -contains $subId}
-					$resourceID=$extID.id;
+					$this.SubscriptionExtId = $response| Where-Object{$_.externalId.split('/') -contains $subId}
+					$resourceID=$this.SubscriptionExtId.id;
 					$this.PIMAssignments=@();
 					$this.permanentAssignments=@();
 					if($null -ne $response -and $null -ne $resourceID)
@@ -1345,22 +1424,26 @@ class SubscriptionCore: AzSVTBase
 							$item.DisplayName = $roleAssignment.subject.displayName
 							$item.ObjectType=$roleAssignment.subject.type;
 							$item.MemberType = $roleAssignment.memberType;
-							if($roleAssignment.IsPermanent -eq $false)
-							{
-								#If roleAssignment is non permanent and not active
-								$item.IsPIMEnabled=$true;
-								if($roleAssignment.assignmentState -eq "Eligible")
+							if($roleAssignment.memberType -ne 'Inherited')
 								{
-									$this.PIMAssignments.Add($item);
-								}
-							}
-							else
-							{
-								#If roleAssignment is permanent
-								$item.IsPIMEnabled=$false;
-								$this.permanentAssignments.Add($item);
+									if($roleAssignment.assignmentState -eq 'Eligible')
+									{
+										#If roleAssignment is non permanent, even the active PIM assignments would appear in this list
+										$item.IsPIMEnabled=$true;
+										$this.PIMAssignments.Add($item);
+										
+									}
+									else
+									{
+										#If roleAssignment is permanent the linkedEligbibleRoleAssignmentId would be null when the assignment is permanently Active
+										if([string]::IsNullOrEmpty($roleAssignment.linkedEligibleRoleAssignmentId))
+										{
+											$item.IsPIMEnabled=$false;
+											$this.permanentAssignments.Add($item);
+										}
 
-							}
+									}
+								}
 						}
 						
 					}
@@ -1427,20 +1510,23 @@ class SubscriptionCore: AzSVTBase
 								$item.MemberType = $roleAssignment.memberType;
 								if($roleAssignment.memberType -ne 'Inherited')
 								{
-									if($roleAssignment.IsPermanent -eq $false)
+									if($roleAssignment.assignmentState -eq "Eligible")
 									{
 										#If roleAssignment is non permanent and not active
 										$item.IsPIMEnabled=$true;
-										if($roleAssignment.assignmentState -eq "Eligible")
-										{
-											$this.RGLevelPIMAssignments.Add($item);
-										}
+										$this.RGLevelPIMAssignments.Add($item);
+										
 									}
 									else
 									{
-										#If roleAssignment is permanent
-										$item.IsPIMEnabled=$false;
-										$this.RGLevelpermanentAssignments.Add($item);
+										#If roleAssignment is permanent the linkedEligbibleRoleAssignmentId would be null when the assignment is permanently Active
+										if([string]::IsNullOrEmpty($roleAssignment.linkedEligibleRoleAssignmentId))
+										{
+											$item.IsPIMEnabled=$false;
+											$this.RGLevelpermanentAssignments.Add($item);
+										}
+										
+										
 									}
 								}
 							}
@@ -1582,7 +1668,13 @@ class SubscriptionCore: AzSVTBase
 					else{
 						$credAlert.IsExpired = $false
 					}
+					
 					$credAlert.CredentialName = $credentialInfo.credName
+					
+					if([Helpers]::CheckMember($credentialInfo,"credGroup")){
+						$credAlert.CredentialGroup = $credentialInfo.credGroup
+					}
+					
 					$credAlert.LastUpdatedBy = $credentialInfo.lastUpdatedBy
 					$credAlert.SubscriptionId = $this.SubscriptionContext.SubscriptionId
 					$credAlert.SubscriptionName = $this.SubscriptionContext.SubscriptionName
@@ -1629,6 +1721,103 @@ class SubscriptionCore: AzSVTBase
 			$controlResult.AddMessage([VerificationResult]::Manual, [MessageData]::new("Insufficient permissions to read credential metadata."))
 		}	
 		return $controlResult
-    }
+	}
+	
+
+	# Control in json to be added in Org Policy if the Org wants to enforce conditional access policy on PIM activation for critical roles
+	hidden [ControlResult] CheckPIMCATag([ControlResult] $controlResult)
+	{
+		$resourceId = ""
+		if([Helpers]::CheckMember($this.SubscriptionExtId,'id'))
+		{
+			$resourceId = $this.SubscriptionExtId.id;
+		}
+		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
+		$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
+		$authorisationToken = "Bearer " + $accessToken
+		$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
+		if([string]::IsNullOrEmpty($resourceId))
+		{
+			
+				$uri=[Constants]::PIMAPIUri +"?`$filter=type%20eq%20%27subscription%27&`$orderby=displayName"
+				try
+				{
+					#Get external id for the current subscription
+					$response=[WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
+					$subId=$this.SubscriptionContext.SubscriptionId;
+					$this.SubscriptionExtId = ($response| Where-Object{$_.externalId.split('/') -contains $subId}).id
+					$resourceId=$this.SubscriptionExtId;
+				}
+				catch
+				{
+					$controlResult.AddMessage($_);
+				}
+		}
+		$roleurl = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/resources/" + $resourceId + "/roleDefinitions?`$select=id,displayName,type,templateId,resourceId,externalId,subjectCount,eligibleAssignmentCount,activeAssignmentCount&`$orderby=activeAssignmentCount%20desc"
+		$roles = [WebRequestHelper]::InvokeGetWebRequest($roleurl, $headers)
+		$roles= $roles | Where-Object{$_.DisplayName -in $this.ControlSettings.CriticalPIMRoles.Subscription}
+		$missingCAPolicyOnRoles = @();
+		$validRoles = @();
+		$invalidRoles = @();
+		$nonCompliantPIMCAPolicyTagRoles = @();
+		foreach($role in $roles)
+		{
+			$url ="https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resourceId)%27)+and+(roleDefinition/id+eq+%27$($role.id)%27)"
+			$rolesettings = [WebRequestHelper]::InvokeGetWebRequest($url, $headers)
+			$CAPolicyOnRoles = ($($rolesettings.userMemberSettings | Where-Object{$_.RuleIdentifier -eq 'AcrsRule'}).setting) | ConvertFrom-Json
+			if($CAPolicyOnRoles.acrsRequired)
+			{
+				$validRoles +=$role
+				if([Helpers]::CheckMember($this.ControlSettings,"CheckPIMCAPolicyTags"))
+				{
+					if([Helpers]::CheckMember($this.ControlSettings,"PIMCAPolicyTags"))
+					{
+						if($CAPolicyOnRoles.acrs -notin $this.ControlSettings.PIMCAPolicyTags)
+						{
+							$nonCompliantPIMCAPolicyTagRoles +=$role;
+						}
+					}
+				}
+			}
+			else 
+			{
+					$invalidRoles +=$role
+			}
+
+			
+		}	
+		if([Helpers]::CheckMember($this.ControlSettings,"CheckPIMCAPolicyTags"))
+		{
+			if($missingCAPolicyOnRoles.Count -gt 0)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Failed
+				$controlResult.AddMessage("Roles that donot have required CA policy tags $($this.ControlSetting,"PIMCAPolicyTags" -join ',') `n $($missingCAPolicyOnRoles | Format-List) ");
+			}
+			elseif($invalidRoles.Count -gt 0)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Failed
+				$controlResult.AddMessage("Role with Acr required turned off `n $($invalidRoles | Format-List | Out-String) ");
+				
+			}
+			else
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Passed	
+			}		
+		}
+		else {
+			if($invalidRoles.Count -gt 0)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Failed
+				$controlResult.AddMessage("Role with Acr required turned off `n $($invalidRoles | Format-List | Out-String) ");
+				
+			}
+			else
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Passed	
+			}
+		}
+	
+		return $controlResult;
+	}
 }
 

@@ -278,7 +278,7 @@ class PolicySetup: AzCommandBase
 		}
 		else {
 			$metadataFileNames += Get-ChildItem $this.ConfigFolderPath -Recurse -Force |
-								Where-Object { $_.mode -match "-a---" -and $_.Name -ne [Constants]::ServerConfigMetadataFileName } |
+								Where-Object { $_.mode -match "^-..--" -and $_.Name -ne [Constants]::ServerConfigMetadataFileName } |
 								Select-Object -Property Name | Select-Object -ExpandProperty Name |								
 								Select-Object @{ Label="Name"; Expression={ $_ } };
 			}
@@ -412,17 +412,10 @@ class PolicySetup: AzCommandBase
 			$this.msgCount=$this.msgCount + 1
 			$this.PublishCustomMessage("[$($this.msgCount)] Creating/Updating resources for supporting org policy in the policy host subscription...`n",[MessageType]::Warning)
 		}
-
-
-		
-
-
-		
-		
-
-		if($this.AzureEnvironment -eq "AzureCloud"){
-		$this.AppInsightInstance.CreateAppInsightIfNotExists();
-	    }
+		$this.AppInsightInstance.CreateAppInsightIfNotExists()
+		# if($this.AzureEnvironment -eq "AzureCloud"){
+		# $this.AppInsightInstance.CreateAppInsightIfNotExists();
+	    # }
 		$container = $this.StorageAccountInstance.CreateStorageContainerIfNotExists($this.InstallerContainerName, [BlobContainerPublicAccessType]::Blob);
 		if($container -and $container.CloudBlobContainer)
 		{
@@ -506,13 +499,13 @@ class PolicySetup: AzCommandBase
 		$this.ModifyConfigs();
 		# Uploading Runbook files to container
 		$allCAFiles = @();
-		$allCAFiles += Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.mode -match "-a---" }
+		$allCAFiles += Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.mode -match "^-..--" }
 		if($allCAFiles.Count -ne 0)
 		{
 	    	$this.StorageAccountInstance.UploadFilesToBlob($this.ConfigContainerName, $this.RunbookBaseVersion, $allCAFiles);
 		}
 		$allFiles = @();
-		$allFiles += Get-ChildItem $this.ConfigFolderPath -Recurse -Force | Where-Object { $_.mode -match "-a---" }
+		$allFiles += Get-ChildItem $this.ConfigFolderPath -Recurse -Force | Where-Object { $_.mode -match "^-..--" }
 
 		if($allFiles.Count -ne 0)
 		{
@@ -538,6 +531,7 @@ class PolicySetup: AzCommandBase
 		$this.CreateMonitoringDashboard()
 		$this.PublishCustomMessage([Constants]::SingleDashLine,[MessageType]::Info)
 		$this.PublishCustomMessage(" `r`nThe setup has been completed and policies have been copied to [$($this.FolderPath)].`r`n", [MessageType]::Update);
+		$this.PublishCustomMessage("If you happen to lose/forget them, you can always re-download using Get-AzSKOrganizationPolicyStatus with -DownloadPolicy parameter.");
 		$this.PublishCustomMessage(" `r`nNote: This is a basic setup and uses a public access blob for storing your org's installer. Once you have richer org policies, consider using a location/end-point protected by your tenant authentication.", [MessageType]::Warning);
 		return @();
 	}
@@ -1573,7 +1567,8 @@ class PolicySetup: AzCommandBase
 				throw ([SuppressedException]::new("Invalid schema found. Please correct schema and reupload extensions.", [SuppressedExceptionType]::Generic))
 			}
 			$this.PublishCustomMessage("Completed validating sytax exception for extension files.", [MessageType]::Update);
-			$serverConfigMetadata = Get-Content -Path ($this.FolderPath + $([Constants]::ServerConfigMetadataFileName)) | ConvertFrom-Json
+			$serverConfigMetadataPath = Join-Path $this.FolderPath $([Constants]::ServerConfigMetadataFileName) 
+			$serverConfigMetadata = Get-Content -Path $serverConfigMetadataPath | ConvertFrom-Json
 
 			# Dynamically get list of files available in folder
 			# TODO: Need to optimize the logic to calculate ServerConfigMetadataFileContent

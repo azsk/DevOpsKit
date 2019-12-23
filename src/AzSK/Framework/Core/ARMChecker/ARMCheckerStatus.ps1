@@ -15,9 +15,11 @@ class ARMCheckerStatus: EventBase
 		{
             throw [System.ArgumentException] ("The argument 'invocationContext' is null. Pass the `$PSCmdlet.MyInvocation from PowerShell command.");
         }
-        $this.InvocationContext = $invocationContext;
-
-		#load config file here.
+		$this.InvocationContext = $invocationContext;
+		# Set current Module name and Version
+		$this.SetAzSKModuleName($this.invocationContext);
+		$this.SetCurrentAzSKModuleVersion($this.invocationContext);
+		# Load config file here.
 		$this.ARMControls=$this.LoadARMControlsFile();
 		if([string]::IsNullOrWhiteSpace($this.ARMControls))
 		{
@@ -30,8 +32,24 @@ class ARMCheckerStatus: EventBase
 		}
 	}
 
-	hidden [void] CommandStartedAction()
+	hidden [void] SetAzSKModuleName([InvocationInfo] $invocationContext)
 	{
+		if($invocationContext)
+		{
+			[Constants]::SetAzSKModuleName($invocationContext.MyCommand.Module.Name);
+		}
+	}
+
+	hidden [void] SetCurrentAzSKModuleVersion([InvocationInfo] $invocationContext)
+	{
+		if($invocationContext)
+		{
+			[Constants]::SetAzSKCurrentModuleVersion($invocationContext.MyCommand.Version);
+		}
+	}
+
+	hidden [void] CommandStartedAction()
+	{   
 		$currentVersion = $this.GetCurrentModuleVersion();
 		$moduleName = $this.GetModuleName();
 		$methodName = $this.InvocationContext.InvocationName;
@@ -53,6 +71,7 @@ class ARMCheckerStatus: EventBase
 
 	[string] EvaluateStatus([string] $armTemplatePath, [string] $parameterFilePath ,[Boolean]  $isRecurse,[string] $exemptControlListPath,[string] $ExcludeFiles, [string] $ExcludeControlIds, [string] $ControlIds,[Boolean] $UseBaselineControls,[Boolean] $UsePreviewBaselineControls, [string[]]$Severity)
 	{
+        $this.CommandStartedAction();
 	    if(-not (Test-Path -path $armTemplatePath))
 		{
 			$this.WriteMessage("ARMTemplate file path or folder path is empty, verify that the path is correct and try again", [MessageType]::Error);
@@ -118,7 +137,7 @@ class ARMCheckerStatus: EventBase
 		[System.IO.Directory]::CreateDirectory($resultsFolder) | Out-Null
 		$this.PSLogPath = Join-Path $resultsFolder "PowerShellOutput.LOG";
 		$this.SFLogPath = Join-Path $resultsFolder "SkippedFiles.LOG";
-		$this.CommandStartedAction();
+		
 		$csvResults = @();
 		$armcheckerscantelemetryEvents = [System.Collections.ArrayList]::new()
 		$scannedFileCount = 0
@@ -646,10 +665,25 @@ class ARMCheckerStatus: EventBase
 	     $serverFileContent = [ConfigurationHelper]::LoadOfflineConfigFile("ARMControls.json", $false);
 	   }
 	   #Check if extension file is present on server
+	   $extFileName = "ARMControls.ext.json"
 	   $extFileContent = $null
-       if($checkExtensionFile -eq $true){
-		$extFileContent = [ConfigurationManager]::LoadServerFileRaw("ARMControls.ext.json");
+	   $usePolicyStore = [ConfigurationManager]::GetAzSKSettings().UseOnlinePolicyStore
+	   $policyStoreUrlOrFolder = [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl
+	   $useAADAuthForPolicyStore = [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore
+	   #Check if not in local policy debug mode then get .ext.json file from server.
+	   if(-not [ConfigurationHelper]::LocalPolicyEnabled) 
+	   {
+			if($checkExtensionFile -eq $true)
+			{
+			   $extFileContent = [ConfigurationManager]::LoadServerFileRaw($extFileName);
+			}
 	   }
+	   #Check if there is an .ext.json file in local org policy folder
+	   elseif ([ConfigurationHelper]::IsPolicyPresentOnServer($extFileName, $usePolicyStore, $policyStoreUrlOrFolder, $useAADAuthForPolicyStore))
+	   {
+		   Write-Warning "########## Looking for [$extFileName] locally..... ##########"
+		   $extFileContent = [ConfigurationHelper]::LoadOfflineConfigFile($extFileName, <#$parseJson#> $true, $policyStoreUrlOrFolder)
+	   }	  
 	   if($null -ne $extFileContent ){
 		$serverFileContent = $this.MergeExtensionFile($serverFileContent, $extFileContent )
 	   }

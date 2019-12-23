@@ -108,10 +108,10 @@ Repair-AzSKSubscriptionSecurity `
         $this.SetFilePath($subContext, [WriteFixControlFiles]::FixFolderPath, "FixControlConfig.json");
 				
 		$parentFolderPath = (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName;
-		$parentFolderPath += [WriteFixControlFiles]::FixFilePath;
+		$parentFolderPath = (Join-Path $parentFolderPath $([WriteFixControlFiles]::FixFilePath))
 		$fixControlFileNames | ForEach-Object {
 			New-Item -ItemType Directory -Path (Join-Path $this.FolderPath "Services") | Out-Null
-			Copy-Item ($parentFolderPath + $_) (Join-Path $this.FolderPath "Services" | Join-Path -ChildPath $_)
+			Copy-Item (Join-Path $parentFolderPath $_) (Join-Path $this.FolderPath "Services" | Join-Path -ChildPath $_)
 		};
 	}
 

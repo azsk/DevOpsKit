@@ -84,7 +84,9 @@ class KubernetesService: AzSVTBase
 	{
 		if(([Helpers]::CheckMember($this.ResourceObject,"Properties")) -and [Helpers]::CheckMember($this.ResourceObject.Properties,"kubernetesVersion"))
 		{
-		    $requiredKubernetsVersion = $null
+			$requiredKubernetesVersion = $null
+			$requiredKubernetesVersionPresent = $false
+			<#
 		    $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
             $AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
 			$header = "Bearer " + $AccessToken
@@ -114,13 +116,21 @@ class KubernetesService: AzSVTBase
 				#If any exception occurs, get required kubernetes version from config
 				$requiredKubernetsVersion = [System.Version] $this.ControlSettings.KubernetesService.kubernetesVersion
 			}
-			$resourceKubernetVersion = [System.Version] $this.ResourceObject.Properties.kubernetesVersion
-			if($resourceKubernetVersion -lt $requiredKubernetsVersion)
+			#>
+			$supportedKubernetesVersion = $this.ControlSettings.KubernetesService.kubernetesVersion
+			$resourceKubernetesVersion = [System.Version] $this.ResourceObject.Properties.kubernetesVersion
+			$supportedKubernetesVersion | ForEach-Object {
+                if($resourceKubernetesVersion -eq [System.Version] $_){
+					$requiredKubernetesVersionPresent = $true
+				}
+			}
+
+			if(-not $requiredKubernetesVersionPresent)
 			{
 				$controlResult.AddMessage([VerificationResult]::Failed,
-										[MessageData]::new("AKS cluster is not running on latest Kubernetes version."));
-				$controlResult.AddMessage([MessageData]::new("Current Kubernetes version: ", $resourceKubernetVersion.ToString()));
-				$controlResult.AddMessage([MessageData]::new("Latest Kubernetes version: ", $requiredKubernetsVersion.ToString()));
+										[MessageData]::new("AKS cluster is not running on required Kubernetes version."));
+				$controlResult.AddMessage([MessageData]::new("Current Kubernetes version: ", $resourceKubernetesVersion.ToString()));
+				$controlResult.AddMessage([MessageData]::new("Kubernetes cluster must be running on any one of the following versions: ", $supportedKubernetesVersion));
 
 			}
 			else
@@ -322,5 +332,24 @@ class KubernetesService: AzSVTBase
 			}
 		}
 		return $vulnerableRules;
+	}
+
+	hidden [controlresult[]] CheckHTTPAppRouting([controlresult] $controlresult)
+	{
+        if([Helpers]::CheckMember($this.ResourceObject,"Properties"))
+		{
+			if([Helpers]::CheckMember($this.ResourceObject.Properties,"Addonprofiles.httpApplicationRouting") -and $this.ResourceObject.Properties.Addonprofiles.httpApplicationRouting.enabled -eq $true)
+			{
+				
+				$controlResult.AddMessage([VerificationResult]::Failed, "HTTP application routing is 'Enabled' for this cluster.");
+				
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "HTTP application routing is 'Disabled' for this cluster.");
+			}
+		}
+
+		return $controlResult;
 	}
 }

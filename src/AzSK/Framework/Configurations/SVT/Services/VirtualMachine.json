@@ -85,7 +85,7 @@
              "Linux",
              "ERvNet",
              "VirtualMachine",
-             "FilterDatabricks"
+             "ExcludeDatabricks"
           ],
           "Enabled": true,
           "DataObjectProperties": [
@@ -239,6 +239,8 @@
           "Linux",
           "SI",
           "ERvNet",
+          "ExcludeDatabricks",
+          "ExcludeKubernetes",
           "VirtualMachine"
         ],
         "Enabled": true
@@ -288,7 +290,7 @@
          "Enabled": true
        },
        {
-         "ControlID": "Azure_VirtualMachine_SI_Deploy_Required_Extension",
+         "ControlID": "Azure_VirtualMachine_SI_Deploy_Required_Extensions",
          "Description": "All VM extensions required as per your Org policy must be deployed to the VM",
          "Id": "VirtualMachine230",
          "ControlSeverity": "Medium",

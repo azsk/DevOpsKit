@@ -12,6 +12,7 @@
 	"ServiceFabric": [ "Web Front End", "APIs", "Backend Processing" ],
 	"Search": [ "APIs", "Backend Processing" ],
 	"VirtualMachine": [ "Web Front End", "APIs", "Backend Processing", "DataProcessing" ],
+	"VirtualMachineScaleSet": [ "Web Front End", "APIs", "Backend Processing", "DataProcessing" ],
 	"ContainerRegistry": [ "Web Front End", "APIs", "Backend Processing", "DataProcessing" ],
 	"VirtualNetwork": [ "Network Isolation", "Hybrid" ],
 	"AnalysisServices": [ "DataProcessing", "Reporting" ],

@@ -384,16 +384,35 @@ class Databricks: AzSVTBase
 
 	hidden [string] ReadAccessToken()
 	{ 
-	     $scanSource = [RemoteReportHelper]::GetScanSource();
-         if($scanSource -eq [ScanSource]::SpotCheck)
+	   $scanSource = [RemoteReportHelper]::GetScanSource();
+     if($scanSource -eq [ScanSource]::SpotCheck)
 		 { 
-		   $input = ""
-		   $input = Read-Host "Enter PAT (personal access token) for '$($this.ResourceContext.ResourceName)' Databricks workspace"
-		   if($null -ne $input)
-		   {
-			 $input = $input.Trim()
-		   }  
-		   return $input;
+			$wsName = $this.ResourceContext.ResourceName
+			# If variable 'adbpatsforazsk' is set in session
+			# Then skip the prompt to input PAT, and read value of PAT from variable 
+			if ($adbpatsVar = Get-Variable 'adbpatsforazsk' -Scope Global -ErrorAction 'Ignore')
+			{
+				$this.PublishCustomMessage("Reading value of PAT(personal access token) for '$($wsName)' Databricks workspace from local variable 'adbpatsforazsk'.", [MessageType]::Warning);
+				if ($adbpatsVar.Value -eq '*')
+				{
+					return $null 
+				}
+				else
+				{
+					$pat = ($adbpatsVar.Value)[$wsName]
+					return $pat
+				}
+			}
+	    else{
+				$input = ""
+				$input = Read-Host "Enter PAT (personal access token) for '$($this.ResourceContext.ResourceName)' Databricks workspace"
+				if($null -ne $input)
+				{
+					$input = $input.Trim()
+				}  
+				return $input;
+			}
+			
 		 }
 		 else
 		 { 

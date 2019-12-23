@@ -66,6 +66,7 @@ class AzResourceInventoryListener: ListenerBase
                     }
                 [AIOrgTelemetryHelper]::TrackEvents($telemetryEvents);
                 [RemoteApiHelper]::PostResourceFlatInventory($resourceDetails)
+				[ResourceInventory]::SetResourceToTagMapping($resourceDetails)
         }
         catch{
             $currentInstance.PublishException($_);

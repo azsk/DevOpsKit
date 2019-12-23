@@ -20,7 +20,8 @@ Class LogAnalyticsHelper{
 				$rfc1123date = [System.DateTime]::UtcNow.ToString("r")
 				[int] $contentLength = $body.Length
 				[string] $signature = [LogAnalyticsHelper]::GetLAWSSignature($workspaceId , $sharedKey , $rfc1123date ,$contentLength ,$method ,$contentType ,$resource)
-				[string] $uri = "https://" + $workspaceId + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
+				$LADataCollectorAPI = [WebRequestHelper]::GetLADataCollectorAPI()	
+				[string] $uri = "https://" + $workspaceId + $LADataCollectorAPI + $resource + "?api-version=2016-04-01"
 				[DateTime] $TimeStampField = [System.DateTime]::UtcNow
 				$headers = @{
 					"Authorization" = $signature;
@@ -82,7 +83,28 @@ Class LogAnalyticsHelper{
 
 	static [PSObject[]] GetLAWSBodyObjects([SVTEventContext] $eventContext,[AzSKContextDetails] $AzSKContext)
 	{
-		[PSObject[]] $output = @();		
+		[PSObject[]] $output = @();
+
+		# Here we are utilizing the RG tag mapping that is done while sending the ResourceInventory telemetry event.
+		# Hence, this works only when scan source is 'CA'
+		if (([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupTagTelemetry", "*") -eq $true) `
+				-and (([ResourceInventory]::ResourcesWithTagMapping | Measure-Object).Count -gt 0) `
+				-and ($eventContext.IsResource()))
+		{
+			try
+			{
+				$resourceTag = [ResourceInventory]::ResourcesWithTagMapping | Where-Object { $_.ResourceId -eq $($eventContext.ResourceContext.ResourceId) }
+				if (($resourceTag | Measure-Object).Count -eq 1)
+				{
+					$eventContext.ResourceContext.ResourceGroupTags = @{ "Env" = $($resourceTag.RGEnv) ; "ComponentID" = $($resourceTag.RGComponentID) };
+				}
+			}
+			catch
+			{
+				# Exception occurred during setting tag. This is kept blank intentionaly to avoid flow break
+			}
+		}
+				
 		[array] $eventContext.ControlResults | ForEach-Object{
 			Set-Variable -Name ControlResult -Value $_ -Scope Local
 			$out = [LAWSModel]::new() 
@@ -490,7 +512,8 @@ Class CommandModel{
 class CredHygieneAlert{
     [int] $ExpiryDueInDays
 	[bool] $IsExpired
-    [string] $CredentialName 
+	[string] $CredentialName 
+	[string] $CredentialGroup
     [string] $LastUpdatedBy
 	[string] $SubscriptionId
 	[string] $SubscriptionName

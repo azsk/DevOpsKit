@@ -18,7 +18,9 @@ class APIManagement: AzSVTBase
 	 hidden [PSObject] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
-            $this.ResourceObject = $this.ResourceContext.ResourceDetails
+            $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
+                                    -ResourceType $this.ResourceContext.ResourceType `
+                                    -ResourceGroupName $this.ResourceContext.ResourceGroupName
             if(-not $this.ResourceObject)
             {
                 throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))
@@ -101,6 +103,7 @@ class APIManagement: AzSVTBase
 		return $controlResult;
     }
 
+
     hidden [ControlResult] CheckSecretNamedValues([ControlResult] $controlResult)
     {
 		if( $null -ne $this.APIMContext)
@@ -125,6 +128,38 @@ class APIManagement: AzSVTBase
 			    }
 			}
 		}
+		return $controlResult;
+	}
+	
+	hidden [ControlResult] CheckAPIMProtocolsAndCiphersConfiguration([ControlResult] $controlResult)
+    {
+		$isNonCompliant = $false
+	    $nonCompliantConfigurations = @()
+		# TLS 1.2 is always enabled in case on APIM
+		# Here we check if old, unsecure protocol configurations are enabled
+		if ([Helpers]::CheckMember($this.ResourceObject, "properties.customProperties"))
+		{
+			$this.ResourceObject.properties.customProperties | Get-Member -MemberType Properties | `
+			Where-Object { $($this.ControlSettings.APIManagement.UnsecureProtocolsAndCiphersConfiguration) -contains $_.Name } | ` 
+			ForEach-Object {
+				if ($this.ResourceObject.properties.customProperties."$($_.Name)" -eq 'true')
+				{
+					$nonCompliantConfigurations += @{ $_.Name = $this.ResourceObject.properties.customProperties."$($_.Name)" }
+					$isNonCompliant = $true
+				}
+			}
+
+			if($isNonCompliant)
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed, "Ensure that protocols and ciphers configuration below are disabled.", $($nonCompliantConfigurations))
+				$controlResult.SetStateData("Below protocols and ciphers configuration are enabled", $($nonCompliantConfigurations));
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, "The old versions of protocols and ciphers configuration are disabled.")
+			}
+		}
+		
 		return $controlResult;
     }
     
@@ -328,22 +363,26 @@ class APIManagement: AzSVTBase
 		if(($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
 			$Result = @()
-			$MaxOpenSocketcount = 800
+			$MaxApiCount = 10
 			$SleepTime = 30
 			if([Helpers]::CheckMember($this.ControlSettings,"SleepTime"))
 			{
 				$SleepTime = $this.ControlSettings.SleepTime
 			}
-			if([Helpers]::CheckMember($this.ControlSettings,"MaxOpenSocketcount"))
+			if([Helpers]::CheckMember($this.ControlSettings,"MaxApiCount"))
 			{
-				$MaxOpenSocketcount = $this.ControlSettings.MaxOpenSocketcount
+				$MaxApiCount = $this.ControlSettings.MaxApiCount
 			}
+			$Counter = 0
 			$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
 			    #Policy Scope: API
-                if((Get-NetTCPConnection).count -ge $MaxOpenSocketcount)
+			
+				if($Counter -ge $MaxApiCount)
                 {
-                sleep($SleepTime)
-                }
+				sleep($SleepTime)
+				$Counter = 0
+				}
+				$Counter ++
 				$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
 				$AllowedOrigins = ""
 			    $AllowedOrigins = $APIPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
@@ -454,24 +493,27 @@ class APIManagement: AzSVTBase
 			}
 			#Policy Scope: API
 			#Policy Scope: Operation
-			$MaxOpenSocketcount = 800
+			$MaxApiCount = 10
 			$SleepTime = 30
 			if([Helpers]::CheckMember($this.ControlSettings,"SleepTime"))
 			{
 				$SleepTime = $this.ControlSettings.SleepTime
 			}
-			if([Helpers]::CheckMember($this.ControlSettings,"MaxOpenSocketcount"))
+			if([Helpers]::CheckMember($this.ControlSettings,"MaxApiCount"))
 			{
-				$MaxOpenSocketcount = $this.ControlSettings.MaxOpenSocketcount
+				$MaxApiCount = $this.ControlSettings.MaxApiCount
 			}
+			$Counter = 0
 			if($null -ne $this.APIMAPIs)
 			{
 				$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
 					#Policy Scope: API
-                    if((Get-NetTCPConnection).count -ge $MaxOpenSocketcount)
+                    if($Counter -ge $MaxApiCount)
                     {
-                        sleep($SleepTime)
-                    }
+						sleep($SleepTime)
+						$Counter = 0
+					}
+					$Counter ++
 					$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
 					$RestrictedIPs = ""
 					$RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }

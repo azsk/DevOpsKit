@@ -29,6 +29,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 . $FrameworkPath\Helpers\ConfigurationHelper.ps1
 
+
 . $FrameworkPath\Models\AzSKConfig.ps1
 
 . $FrameworkPath\Models\AzSKSettings.ps1
@@ -55,7 +56,8 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Managers\ConfigurationManager.ps1
 . $PSScriptRoot\Helpers\ResourceHelper.ps1
 . $FrameworkPath\Helpers\WebRequestHelper.ps1
-. $PSScriptRoot\Helpers\ActiveDirectoryHelper.ps1
+. $FrameworkPath\Helpers\ActiveDirectoryHelper.ps1
+. $FrameworkPath\Managers\FeatureFlightingManager.ps1
 . $PSScriptRoot\Helpers\RoleAssignmentHelper.ps1
 . $PSScriptRoot\Helpers\SecurityCenterHelper.ps1
 . $PSScriptRoot\Helpers\SVTMapping.ps1
@@ -68,7 +70,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 #Managers
 
-. $FrameworkPath\Managers\FeatureFlightingManager.ps1
+
 . $PSScriptRoot\Helpers\AzHelper.ps1
 . $PSScriptRoot\Managers\ControlStateExtension.ps1
 . $FrameworkPath\Managers\AzSKPDFExtension.ps1
@@ -172,3 +174,4 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $PSScriptRoot\Core\CredHygiene\CredHygieneScript.ps1
 . $PSScriptRoot\Core\InClusterCA\ContinuousAssuranceForDatabricks.ps1
 . $PSScriptRoot\Core\InClusterCA\ContinuousAssuranceForHDInsight.ps1
+. $PSScriptRoot\Core\InClusterCA\ContinuousAssuranceForKubernetes.ps1

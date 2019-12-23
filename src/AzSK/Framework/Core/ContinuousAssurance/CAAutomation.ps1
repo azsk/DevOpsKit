@@ -393,11 +393,9 @@ class CCAutomation: AzCommandBase
 									else
 									{
 										#apply tags
-										$timestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
+										#$timestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
 										$this.reportStorageTags += @{
-										"AzSKFeature" = "ContinuousAssuranceStorage";
-										"CreationTime"=$timestamp;
-										"LastModified"=$timestamp
+										"AzSKFeature" = "ContinuousAssuranceStorage"
 										}
 										[ResourceHelper]::SetResourceTags($newStorage.Id, $this.reportStorageTags, $false, $true);
 									} 
@@ -658,10 +656,18 @@ class CCAutomation: AzCommandBase
 						$ADApp = Get-AzADApplication -ApplicationId $existingAppId -ErrorAction SilentlyContinue
 						if($this.IsCentralScanModeOn)
 						{
-							if(-not ($null -ne $ADApp -and $ADApp.DisplayName -like "$($this.AzSKCentralSPNFormatString)*"))
+							if(($null -ne $ADApp))
 							{
-								#Null out the ADApp if it is in central scan mode mode and the spn is not in central format
-								$ADApp = $null
+                                # if RemoveCheckForSPNNameFormat feature flag is enabled, do not check the SP name format thus '-not'
+                                # to enable name format check disable the feature flag 
+								if(-not ([FeatureFlightingManager]::GetFeatureStatus("RemoveCheckForSPNNameFormat","*")))
+								{
+									#Null out the ADApp if it is in central scan mode mode and the spn is not in central format
+									if(-not ($ADApp.DisplayName -like "$($this.AzSKCentralSPNFormatString)*"))
+									{
+										$ADApp = $null
+									}
+								}
 							}
 						}
 						$ServicePrincipal = Get-AzADServicePrincipal -ServicePrincipalName $existingAppId -ErrorAction SilentlyContinue
@@ -1527,7 +1533,7 @@ class CCAutomation: AzCommandBase
 			else
 			{
 				$failMsg = "$azskModuleName module is not available in automation account."
-				$resolvemsg = "To resolve this please run command '$($this.removeCommandName)' followed by '$($this.installCommandName)'."
+				$resolvemsg = "To resolve this please run command '$($this.updateCommandName)' with -FixModules parameter ."
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $true
@@ -1603,7 +1609,7 @@ class CCAutomation: AzCommandBase
 					$missingModulesString = $missingModules -join ","
 					$detailedMsg = [MessageData]::new("Missing modules in the automation account:", $missingModules);
 					
-					$resolvemsg = "To resolve this please run command '$($this.removeCommandName)' followed by '$($this.installCommandName)'."
+					$resolvemsg = "To resolve this please run command '$($this.updateCommandName)' with -FixModules parameter ."
 					$failMsg = "One or more dependent module(s) are missing given below.`r`n$missingModulesString"
 			
 					$resultMsg = "$failMsg`r`n$resolvemsg"
@@ -3248,6 +3254,7 @@ class CCAutomation: AzCommandBase
 		$telemetryKey = ""
 		$AzureEnv = [ConfigurationManager]::GetAzSKSettings().AzureEnvironment
 		$ManagementUri =[WebRequestHelper]::GetServiceManagementUrl() 
+		$Appinsightsuri = [WebRequestHelper]::GetApplicationInsightsEndPoint()	
 		if([RemoteReportHelper]::IsAIOrgTelemetryEnabled())
 		{
 			$telemetryKey = [RemoteReportHelper]::GetAIOrgTelemetryKey()
@@ -3262,7 +3269,8 @@ class CCAutomation: AzCommandBase
 			$temp7 = $temp6 -replace "\[#telemetryKey#\]",$telemetryKey;
 			$temp8 = $temp7 -replace "\[#AzureEnvironment#\]",$AzureEnv;
 			$temp9 = $temp8 -replace "\[#ManagementUri#\]",$ManagementUri;
-			$temp9 -replace "\[#runbookVersion#\]",$AzSKCARunbookVersion;
+			$temp10 = $temp9 -replace "\[#Appinsightsuri#\]",$Appinsightsuri;
+			$temp10 -replace "\[#runbookVersion#\]",$AzSKCARunbookVersion;
 		}  | Out-File $outputFilePath
 		
 		return $outputFilePath

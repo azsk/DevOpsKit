@@ -1,0 +1,201 @@
+{
+   "FeatureName": "VirtualMachineScaleSet",
+   "Reference": "aka.ms/azsktcp/virtualmachinescaleset",
+   "IsMaintenanceMode": false,
+    "Controls": [
+      {
+         "ControlID": "Azure_VirtualMachineScaleSet_Deploy_Monitoring_Agent",
+         "Description": "Log analytics agent should be installed on Virtual Machine Scale Set",
+         "Id": "VirtualMachineScaleSet110",
+         "ControlSeverity": "Medium",
+         "Automated": "Yes",
+         "MethodName": "CheckVMSSMonitoringAgent",
+         "Rationale": "Installing the Log Analytics extension for Windows and Linux allows Azure Monitor to collect data from your Azure VM Scale Sets which can be used for detailed analysis and correlation of events.",
+         "Recommendation": "Run following commands: 1- `$allVersions= (Get-AzVMExtensionImage -Location 'eastus' -PublisherName 'Microsoft.EnterpriseCloud.Monitoring' -Type 'MicrosoftMonitoringAgent or OmsAgentForLinux').Version 2- `$versionString = `$allVersions[(`$allVersions.count)-1].Split('.')[0] + '.' + `$allVersions[(`$allVersions.count)-1].Split('.')[1] 3- `$VMSS = Get-AzVmss -ResourceGroupName <VMSS RG Name> -VMScaleSetName <VMSS Name> 4- Add-AzVmssExtension -VirtualMachineScaleSet `$VMSS -Name 'MicrosoftMonitoringAgent' -Publisher 'Microsoft.EnterpriseCloud.Monitoring' -Type 'MicrosoftMonitoringAgent or OmsAgentForLinux' -TypeHandlerVersion `$versionString -Setting '{'workspaceId': '<your workspace ID here>'}' -ProtectedSetting '{'workspaceKey': '<your workspace key here>'}' 5- Update-AzVmss -ResourceGroupName <VMSS RG Name> -Name <VMSS Name> -VirtualMachineScaleSet `$VMSS ",
+         "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "Deploy",
+            "Windows",
+            "Linux",
+            "ERvNet",
+            "VirtualMachineScaleSet"
+         ],
+         "Enabled": true
+      },
+      {
+         "ControlID": "Azure_VirtualMachineScaleSet_SI_Enable_Antimalware",
+         "Description": "Antimalware must be enabled with real time protection on Virtual Machine Scale Set",
+         "Id": "VirtualMachineScaleSet120",
+         "ControlSeverity": "High",
+         "Automated": "Yes",
+         "MethodName": "CheckVMSSAntimalwareStatus",
+         "Rationale": "Enabling antimalware protection minimizes the risks from existing and new attacks from various types of malware. Microsoft Antimalware provide real-time protection, scheduled scanning, malware remediation, signature updates, engine updates, samples reporting, exclusion event collection etc.",
+         "Recommendation": "To install antimalware, Go to Azure Portal --> VMSS --> Settings --> Extensions --> Add 'Microsoft Antimalware' --> Enable Real-Time Protection and Scheduled Scan --> Click Ok. To turn on antimalware using powershell,refer: https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-faq#how-do-i-turn-on-antimalware-in-my-virtual-machine-scale-set",
+         "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "Config",
+            "Windows",
+            "SI",
+            "ERvNet",
+            "ExcludeServiceFabric",
+            "ExcludeKubernetes",
+            "VirtualMachineScaleSet"
+         ],
+         "Enabled": true
+      },
+      {
+         "ControlID": "Azure_VirtualMachineScaleSet_Audit_Enable_Diagnostics",
+         "Description": "Diagnostics (IaaSDiagnostics extension on Windows; LinuxDiagnostic extension on Linux) must be enabled on Virtual Machine Scale Set",
+         "Id": "VirtualMachineScaleSet130",
+         "ControlSeverity": "Medium",
+         "Automated": "Yes",
+         "MethodName": "CheckVMSSDiagnostics",
+         "Rationale": "Diagnostics logs are needed for creating activity trail while investigating an incident or a compromise.",
+         "Recommendation": "Refer: https://docs.microsoft.com/en-us/cli/azure/vmss/diagnostics?view=azure-cli-latest",
+         "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "Audit",
+            "Windows",
+            "Linux",
+            "ERvNet",
+            "ExcludeServiceFabric",
+            "VirtualMachineScaleSet"
+         ],
+         "Enabled": true
+      },
+      {
+         "ControlID": "Azure_VirtualMachineScaleSet_DP_Enable_Disk_Encryption",
+         "Description": "Disk encryption must be enabled on both OS and data disks for Windows Virtual Machine Scale Set",
+         "Id": "VirtualMachineScaleSet150",
+         "ControlSeverity": "High",
+         "Automated": "Yes",
+         "MethodName": "CheckVMSSDiskEncryption",
+         "Rationale": "Using this feature ensures that sensitive data is stored encrypted at rest. This minimizes the risk of data loss from physical theft and also helps meet regulatory compliance requirements. In the case of VM Scale Set, both OS and data disks may contain sensitive information that needs to be protected at rest. Hence disk encryption must be enabled for both.",
+         "Recommendation": "Refer: https://docs.microsoft.com/en-in/azure/virtual-machine-scale-sets/disk-encryption-powershell",
+         "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "DP",
+            "Windows",
+            "ERvNet",
+            "ExcludeKubernetes",
+            "VirtualMachineScaleSet"
+         ],
+         "Enabled": true
+      },
+      {
+         "ControlID": "Azure_VirtualMachineScaleSet_SI_Latest_Model_Applied",
+         "Description": "All VMs in VM Scale Set must be up-to-date with the latest scale set model",
+         "Id": "VirtualMachineScaleSet160",
+         "ControlSeverity": "High",
+         "Automated": "Yes",
+         "MethodName": "CheckVMSSInstancesStatus",
+         "Rationale": "All the security configurations applied on VM Scale Set will be effective only if all the individual VM instances in Scale Set is up-to-date with the latest overall Scale Set model",
+         "Recommendation": "Please refer: https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-upgrade-scale-set#how-to-bring-vms-up-to-date-with-the-latest-scale-set-model.",
+         "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "SI",
+            "Linux",
+            "Windows",
+            "ERvNet",
+            "ExcludeServiceFabric",
+            "ExcludeKubernetes",
+            "VirtualMachineScaleSet"
+         ],
+         "Enabled": true
+      },
+      {
+         "ControlID": "Azure_VirtualMachineScaleSet_AuthZ_Grant_Min_RBAC_Access",
+         "Description": "All users/identities must be granted minimum required permissions using Role Based Access Control (RBAC)",
+         "Id": "VirtualMachineScaleSet170",
+         "ControlSeverity": "Medium",
+         "Automated": "Yes",
+         "MethodName": "CheckRBACAccess",
+         "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+         "Recommendation": "Remove any excessive privileges granted on the Virtual Machine Scale Set. Run command: Remove-AzRoleAssignment -SignInName '<SignInName>' -Scope '<Scope>' RoleDefinitionName '<RoleDefinitionName>'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
+         "Tags": [
+           "SDL",
+           "TCP",
+           "Automated",
+           "AuthZ",
+           "RBAC",
+           "Linux",
+           "Windows",
+           "VirtualMachineScaleSet"
+         ],
+         "Enabled": true
+      },
+      {
+         "ControlID": "Azure_VirtualMachineScaleSet_NetSec_Justify_PublicIPs",
+         "Description": "Public IPs on a Virtual Machine Scale Set instances should be carefully reviewed",
+         "Id": "VirtualMachineScaleSet180",
+         "ControlSeverity": "High",
+         "Automated": "Yes",
+         "MethodName": "CheckVMSSPublicIP",
+         "Rationale": "Public IPs provide direct access over the internet exposing the VMSS instance to attacks over the public network. Hence each public IP on a VMSS instance must be reviewed carefully.",
+         "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-networking#public-ipv4-per-virtual-machine",
+         "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "NetSec",
+            "Windows",
+            "Linux",
+            "ERvNet",
+            "VirtualMachineScaleSet"
+         ],
+         "Enabled": true
+      },
+      {
+      "ControlID": "Azure_VirtualMachineScaleSet_Config_Enable_NSG",
+      "Description": "NSG must be configured for Virtual Machine Scale Set",
+      "Id": "VirtualMachineScaleSet190",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckVMSSNSGConfig",
+      "Rationale": "Restricting inbound and outbound traffic via NSGs limits the network exposure of a VM Scale Set by reducing the attack surface.",
+      "Recommendation": "To apply NSG at scale set, refer: https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-networking#nsg--asgs-per-scale-set or to apply NSG at subnet level, refer: https://docs.microsoft.com/en-us/azure/virtual-network/tutorial-filter-network-traffic#associate-network-security-group-to-subnet",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "Config",
+        "Windows",
+        "Linux",
+        "ExcludeServiceFabric",
+        "VirtualMachineScaleSet"
+      ],
+      "Enabled": true
+      },
+      {
+         "ControlID": "Azure_VirtualMachineScaleSet_NetSec_Dont_Open_Management_Ports",
+         "Description": "Do not leave management ports open on Virtual Machine Scale Set",
+         "Id": "VirtualMachineScaleSet200",
+         "ControlSeverity": "High",
+         "Automated": "Yes",
+         "MethodName": "CheckVMSSOpenPorts",
+         "Rationale": "Open remote management ports expose a VMSS instance/compute node to a high level of risk from internet-based attacks that attempt to brute force credentials to gain admin access to the machine.",
+         "Recommendation": "Go to Azure Portal --> VM Scale Set --> Settings --> Networking --> Inbound security rules --> Select security rule which allows management ports (e.g. RDP-3389, WINRM-5985, SSH-22) --> Click 'Delete' under Action --> Click Save.",
+         "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "NetSec",
+            "Windows",
+            "Linux",
+            "VirtualMachineScaleSet"
+         ],
+         "Enabled": true
+      }
+    ]
+ }
+ 
