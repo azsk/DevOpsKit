@@ -1,73 +1,73 @@
-Set-StrictMode -Version Latest 
+Set-StrictMode -Version Latest
 class ServiceConnection: SVTBase
-{    
-    [PSObject] $ServiceEndPointsObj = $null
-    ServiceConnection([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
-    { 
-        
-        $apiURL = "https://dev.azure.com/{0}/{1}/_apis/serviceendpoint/endpoints?api-version=4.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$($this.ResourceContext.ResourceGroupName);
-        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-	    $this.ServiceEndPointsObj = $responseObj
+{
+    hidden [PSObject] $ServiceEndpointsObj = $null;
+    hidden [string] $SecurityNamespaceId;
+    hidden [PSObject] $ProjectId;
+
+    ServiceConnection([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource)
+    {
+        # Get project id
+        $apiURL = "https://dev.azure.com/{0}/_apis/projects/{1}?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName), $($this.ResourceContext.ResourceGroupName);
+        $projectObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        $this.ProjectId = $projectObj.id
+
+        # Get security namespace identifier of service endpoints.
+        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
+        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ServiceEndpoints")}).namespaceId
+
+        # Get service connection details
+        # $apiURL = "https://dev.azure.com/{0}/{1}/_apis/serviceendpoint/endpoints?api-version=4.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$($this.ResourceContext.ResourceGroupName);
+        # $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        $this.ServiceEndpointsObj = $this.ResourceContext.ResourceDetails
+
+        if(($this.ServiceEndpointsObj | Measure-Object).Count -eq 0)
+        {
+            throw [SuppressedException] "Unable to find active service connection(s) under [$($this.ResourceContext.ResourceGroupName)] project."
+        }
     }
 
     hidden [ControlResult] CheckServiceConnectionAccess([ControlResult] $controlResult)
 	{
-       $azureRMEndpoints = $this.ServiceEndPointsObj | Where-Object { $_.type -eq "azurerm" }
-       
-        if(($azureRMEndpoints | Measure-Object).Count -gt 0)
+        $Endpoint = $this.ServiceEndpointsObj
+        if([Helpers]::CheckMember($Endpoint, "data.scopeLevel") )
         {
-            $subLevelSPNList = @()
-            $azureRMEndpoints| ForEach-Object{
-                $Endpoint = $_
-                if([Helpers]::CheckMember($Endpoint, "data.scopeLevel") )
-                {
-                    if($Endpoint.data.scopeLevel -eq "Subscription")
-                    {
-                        $AuthType = ""
-                        if([Helpers]::CheckMember($Endpoint,"authorization.parameters.authenticationType"))
-                        {
-                            $AuthType = $Endpoint.authorization.parameters.authenticationType
-                        }
-                        $subLevelSPNList  += @{EndPointName= $Endpoint.Name; Creator = $Endpoint.createdBy.displayName; AuthType=$AuthType }
-                    }                 
-                }
-                else
-                {
-                  $subLevelSPNList += @{EndPointName= $Endpoint.Name; Creator = $Endpoint.createdBy.displayName}
-                }
-              }
-            if($subLevelSPNList.Count -eq 0 )
+            if($Endpoint.data.scopeLevel -eq "Subscription")
             {
-                $controlResult.AddMessage([VerificationResult]::Passed,
-                                            "All service endpoints are configured with RG level scope");
-            }
-            else {
                 $controlResult.AddMessage([VerificationResult]::Failed,
-                                            "Define RG level scope for below service endpoints",$subLevelSPNList);
+                                        "Define RG level scope for below service endpoints");
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Passed,
+                                        "Service endpoints is configured with RG level scope");
             }
         }
-        else {
-            $controlResult.AddMessage([VerificationResult]::Passed,
-                                            "No AzureRM Service Endpoints found");
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Verify,
+                                        "Service endpoint details not found. Verify connection access is scoped at RG level");
         }
-        
         return $controlResult;
     }
 
     hidden [ControlResult] CheckClassConnections([ControlResult] $controlResult)
 	{
-       $classicEndpoints = $this.ServiceEndPointsObj | Where-Object { $_.type -eq "azure" }
-       
-        if(($classicEndpoints | Measure-Object).Count -gt 0)
+        if([Helpers]::CheckMember($this.ServiceEndpointsObj,"type"))
         {
-                $classicConnectionList = @()
-                $classicConnectionList  += $classicEndpoints | Select-Object @{Name="EndPointName"; Expression = {$_.Name}},@{Name="Creator"; Expression = {$_.createdBy.displayName}}
-                $controlResult.AddMessage([VerificationResult]::Failed,
-                                            "Found below classic service endpoints",$classicConnectionList);
+            if($this.ServiceEndpointsObj.type -eq "azure")
+            {
+                    $controlResult.AddMessage([VerificationResult]::Failed,
+                                                "Found below classic service endpoints");
+            }
+            else {
+                $controlResult.AddMessage([VerificationResult]::Passed,
+                                                "No Classic Endpoint found");
+            }
         }
-        else {
-            $controlResult.AddMessage([VerificationResult]::Passed,
-                                            "No Classic Endpoints found");
+        else{
+            $controlResult.AddMessage([VerificationResult]::Manual,
+                                                "Connection type not found");
         }
         return $controlResult;
     }
@@ -75,42 +75,20 @@ class ServiceConnection: SVTBase
 
     hidden [ControlResult] CheckSPNAuthenticationCertificate([ControlResult] $controlResult)
 	{
-
-        $azureRMEndpoints = $this.ServiceEndPointsObj | Where-Object { $_.type -eq "azurerm" }
-       
-        if(($azureRMEndpoints | Measure-Object).Count -gt 0)
+        $Endpoint = $this.ServiceEndpointsObj 
+        if([Helpers]::CheckMember($Endpoint, "authorization.parameters.authenticationType"))
         {
-            
-            $keybasedSPNList = @()
-
-            $azureRMEndpoints | ForEach-Object{
-    
-                $Endpoint = $_
-            
-                if([Helpers]::CheckMember($Endpoint, "authorization.parameters.authenticationType"))
-                {
-                    $keybasedSPNList += @{EndPointName= $Endpoint.Name; Creator = $Endpoint.createdBy.displayName; AuthType=$Endpoint.authorization.parameters.authenticationType }
-                }
-                else
-                {
-                $keybasedSPNList += @{EndPointName= $Endpoint.Name; Creator = $Endpoint.createdBy.displayName}
-                }
+            if( $Endpoint.authorization.parameters.authenticationType -eq "spnKey")
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed,
+                                        "Endpoint is used with secret based auth");
             }
-
-                if($keybasedSPNList.Count -eq 0 )
-                {
-                    $controlResult.AddMessage([VerificationResult]::Passed,
-                                                "All Service Endpoints are Cert based authenticated");
-                }
-                else {
-                    $controlResult.AddMessage([VerificationResult]::Failed,
-                                                "Below endpoints are used with secret based auth",$keybasedSPNList);
-                }
-            }
-            else {
+            else
+            {
                 $controlResult.AddMessage([VerificationResult]::Passed,
-                                                "No AzureRM Service Endpoints found");
+                                            "Service Endpoints is Cert based authenticated");
             }
+        }
         return $controlResult;
     }
 
@@ -118,32 +96,226 @@ class ServiceConnection: SVTBase
     hidden [ControlResult] CheckInactiveEndpoints([ControlResult] $controlResult)
 	{
 
-        $inactiveEnpoints = @()
+        $Endpoint = $this.ServiceEndpointsObj
+        $apiURL = "https://dev.azure.com/organization/project/_apis/serviceendpoint/$($Endpoint.Id)/executionhistory/?api-version=4.1-preview.1"
+        $serverFileContent = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 
-        $this.ServiceEndPointsObj | ForEach-Object{
-  
-            $Endpoint = $_
-            $apiURL = "https://dev.azure.com/organization/project/_apis/serviceendpoint/$($Endpoint.Id)/executionhistory/?api-version=4.1-preview.1" 
-            $serverFileContent = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-
-            if($serverFileContent.Count -gt 0)
-            {
-                if([DateTime]$serverFileContent[0].value[0].data.startTime -gt (Get-Date).AddDays(-180))
-                {
-                    $inactiveEnpoints += @{EndPointName= $Endpoint.Name; Creator = $Endpoint.createdBy.displayName; LastAccessDate=$serverFileContent[0].value[0].data.startTime }
-                }                
-            }
-          }
-
-        if($inactiveEnpoints.Count -eq 0 )
+        if($serverFileContent.Count -gt 0)
         {
-            $controlResult.AddMessage([VerificationResult]::Passed,
-                                        "All Service Endpoints are Cert based authenticated");
+            if([DateTime]$serverFileContent[0].value[0].data.startTime -gt (Get-Date).AddDays(-180))
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed,
+                                    "Endpoint used with secret based auth");
+            }
+            else {
+                $controlResult.AddMessage([VerificationResult]::Passed,
+                "Endpoint used with Cert based authenticated");
+            }
         }
-        else {
-            $controlResult.AddMessage([VerificationResult]::Failed,
-                                        "Below endpoints are used with secret based auth",$inactiveEnpoints);
+          
+        return $controlResult;
+    }
+
+    hidden [ControlResult] CheckRBACInheritPermissions ([ControlResult] $controlResult)
+	{
+        $failMsg = $null
+        try
+        {
+            $Endpoint = $this.ServiceEndpointsObj
+            $apiURL = "https://dev.azure.com/{0}/_apis/accesscontrollists/{1}?token=endpoints/{2}/{3}&api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName),$($this.SecurityNamespaceId),$($this.ProjectId),$($Endpoint.id);
+            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+            if(($responseObj | Measure-Object).Count -eq 0)
+            {
+                $inheritPermissionsEnabled += @{EndPointName= $Endpoint.Name; Creator = $Endpoint.createdBy.displayName; inheritPermissions="Unable to fetch permissions inheritance details." }
+            }
+            elseif([Helpers]::CheckMember($responseObj,"inheritPermissions") -and $responseObj.inheritPermissions -eq $true)
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed,"Found service connection with inherit permissions turned ON.");
+            }
+            else {
+                $controlResult.AddMessage([VerificationResult]::Passed,"");
+            }
+            
+            
+        }
+        catch {
+            $failMsg = $_
+        }
+
+        if(![string]::IsNullOrEmpty($failMsg))
+        {
+            $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch service connections details. $($failMsg)Please verify from portal that permission inheritance is turned OFF for all the service connections");
         }
         return $controlResult;
     }
+
+    hidden [ControlResult] CheckGlobalGroupsAddedToServiceConnections ([ControlResult] $controlResult)
+	{
+        # Any identity other than teams identity needs to be verified manually as it's details cannot be retrived using API
+        $failMsg = $null
+        try
+        {
+            $Endpoint = $this.ServiceEndpointsObj
+            $IsGlobalSecurityGroupPermitted = $false
+            $apiURL = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.serviceendpointrole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId),$($Endpoint.id);
+            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+            $nonCompliantIdentities = @();
+            if((($responseObj | Measure-Object).Count -gt 0) -and [Helpers]::CheckMember($responseObj,"identity"))
+            {
+                $responseObj.identity | ForEach-Object {
+                    $identity = $_
+                    try
+                    {
+                        $apiURL = "https://vssps.dev.azure.com/e/Microsoft/_apis/Identities/{0}" -f $($identity.id)
+                        $identityObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+                        if(($identityObj | Measure-Object).Count -gt 0 ) {
+                            $IsGroup = [Helpers]::CheckMember($identityObj,"Properties.SchemaClassName") -and ($identityObj.Properties.SchemaClassName -eq "Group")
+                            $IsGlobalSecurityGroup = [Helpers]::CheckMember($identityObj,"Properties.ScopeName") -and `
+                                                    (($identityObj.Properties.ScopeName -eq $($this.ResourceContext.ResourceGroupName)) -or ($identityObj.Properties.ScopeName -eq $($this.SubscriptionContext.SubscriptionName)))
+                            $IsWhitelisted = ($this.ControlSettings.ServiceConnection.WhitelistedGroupIdentities -contains $identityObj.Properties.Account)
+                            if($IsGroup -and $IsGlobalSecurityGroup -and (-not $IsWhitelisted))
+                            {
+                                $IsGlobalSecurityGroupPermitted = $true
+                                $nonCompliantIdentities += $identity
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        $otherIdentities += @{ ServiceConnectionName = $($Endpoint.name); Identity = $($identity)}
+                    }
+                }
+                if($IsGlobalSecurityGroupPermitted -eq $true)
+                {
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global security groups access to service connections. Granting elevated permissions to these groups can risk exposure of service connections to unwarranted individuals.");
+                    $controlResult.AddMessage("List of service connections granting access to global security groups:",$nonCompliantIdentities)
+                }
+                else{
+                    $controlResult.AddMessage([VerificationResult]::Passed,"");
+                }
+            }
+        }
+        catch {
+            $failMsg = $_
+        }
+
+        if(![string]::IsNullOrEmpty($failMsg))
+        {
+            $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch service connections details. $($failMsg)Please verify from portal that you are not granting global security groups access to service connections");
+        }
+        return $controlResult;
+    }
+
+    
+
+
+    hidden [ControlResult] CheckBuildServiceAccountAccess([ControlResult] $controlResult)
+	{
+        # Any identity other than teams identity needs to be verified manually as it's details cannot be retrived using API
+        $failMsg = $null
+        try
+        {
+            $Endpoint = $this.ServiceEndpointsObj
+            $IsGlobalSecurityGroupPermitted = $false
+            $apiURL = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.serviceendpointrole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId),$($Endpoint.id);
+            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+            $nonCompliantIdentities = @();
+            if((($responseObj | Measure-Object).Count -gt 0) -and [Helpers]::CheckMember($responseObj,"identity"))
+            {
+                $responseObj.identity | ForEach-Object {
+                    $identity = $_
+                    try
+                    {
+                        if ($responseObj.identity.uniqueName -contains 'Project Collection Build Service') {
+                             $IsGlobalSecurityGroupPermitted = $true;
+                            }
+                      # $apiURL = "https://vssps.dev.azure.com/e/Microsoft/_apis/Identities/{0}" -f $($identity.id)
+                      # $identityObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+                      # if(($identityObj | Measure-Object).Count -gt 0 ) {
+                      #     $IsGroup = [Helpers]::CheckMember($identityObj,"Properties.SchemaClassName") -and ($identityObj.Properties.SchemaClassName -eq "Group")
+                      #     $IsGlobalSecurityGroup = [Helpers]::CheckMember($identityObj,"Properties.ScopeName") -and `
+                      #                             (($identityObj.Properties.ScopeName -eq $($this.ResourceContext.ResourceGroupName)) -or ($identityObj.Properties.ScopeName -eq $($this.SubscriptionContext.SubscriptionName)))
+                      #     $IsWhitelisted = ($this.ControlSettings.ServiceConnection.WhitelistedGroupIdentities -contains $identityObj.Properties.Account)
+                      #     if($IsGroup -and $IsGlobalSecurityGroup -and (-not $IsWhitelisted))
+                      #     {
+                      #         $IsGlobalSecurityGroupPermitted = $true
+                      #         $nonCompliantIdentities += $identity
+                      #     }
+                      # }
+                    }
+                    catch
+                    {
+                        $otherIdentities += @{ ServiceConnectionName = $($Endpoint.name); Identity = $($identity)}
+                    }
+                }
+                if($IsGlobalSecurityGroupPermitted -eq $true)
+                {
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global security groups access to service connections. Granting elevated permissions to these groups can risk exposure of service connections to unwarranted individuals.");
+                    $controlResult.AddMessage("List of service connections granting access to global security groups:",$nonCompliantIdentities)
+                }
+                else{
+                    $controlResult.AddMessage([VerificationResult]::Passed,"");
+                }
+            }
+        }
+        catch {
+            $failMsg = $_
+        }
+
+        if(![string]::IsNullOrEmpty($failMsg))
+        {
+            $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch service connections details. $($failMsg)Please verify from portal that you are not granting global security groups access to service connections");
+        }
+        return $controlResult;
+    }
+
+    hidden [ControlResult] CheckServiceConnectionBuildAccess([ControlResult] $controlResult)
+    {
+        # Any identity other than teams identity needs to be verified manually as it's details cannot be retrived using API
+        $failMsg=$null;
+        try
+           {
+               $Endpoint = $this.ServiceEndpointsObj;
+               $IsGlobalSecurityGroupPermitted = $false;
+               $nonCompliantIdentities = @();
+               
+               if ($Endpoint.isShared) {
+                $IsGlobalSecurityGroupPermitted = $true;
+               }
+               if($IsGlobalSecurityGroupPermitted -eq $true) {
+                $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global security groups access to service connections. Granting elevated permissions to these groups can risk exposure of service connections to unwarranted individuals.");
+                $controlResult.AddMessage("List of service connections granting access to global security groups:",$nonCompliantIdentities)
+               }
+               else {
+                $controlResult.AddMessage([VerificationResult]::Passed,"");
+               }
+           }
+        catch {
+               $failMsg=$_
+        }
+         
+        if(![string]::IsNullOrEmpty($failMsg)) {
+                  $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch service connections details. $($failMsg)Please verify from portal that you are not granting global security groups access to service connections");
+        }
+
+        return $controlResult;
+    }
+
+    hidden [ControlResult] CheckServiceConnectionForPATOrAuth([ControlResult] $controlResult)
+    {
+        $Endpoint = $this.ServiceEndpointsObj 
+        if([Helpers]::CheckMember($Endpoint, "authorization.scheme"))
+        {
+            if( $Endpoint.authorization.scheme -eq "OAuth")
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Endpoint is used with secret based auth");
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Service Endpoints should use secret auth");
+            }
+        }
+        return $controlResult;
+    }
+
 }
