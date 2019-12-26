@@ -303,9 +303,9 @@ class SVTResourceResolver: AzSKRoot
                     }
                     if($this.AgentPools -eq "*")
                     {
-                        #$agentPoolsDefnURL = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName),$projectName;
+                        $agentPoolsDefnURL = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName),$projectName;
                         #TODO: comment above line added below line for testing. previously above commented line was in use, below line is also working fine.
-                        $agentPoolsDefnURL = "https://dev.azure.com/{0}/{1}/_settings/agentqueues?__rt=fps&__ver=2 " -f $($this.SubscriptionContext.SubscriptionName),$projectName;
+                        #$agentPoolsDefnURL = "https://dev.azure.com/{0}/{1}/_settings/agentqueues?__rt=fps&__ver=2 " -f $($this.SubscriptionContext.SubscriptionName),$projectName;
                         
                         try {
                       

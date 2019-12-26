@@ -8,7 +8,7 @@ class Organization: SVTBase
     Organization([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     { 
         #TODO: testing
-        $this.Test();
+       # $this.Test();
         $this.GetOrgPolicyObject()
     }
 
@@ -30,35 +30,17 @@ class Organization: SVTBase
     }
 
     #TODO:   
-    hidden Test()
+  <#   hidden Test()
     {
-        <# 
-        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
-        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
 
-        # Get build object
-        $apiURL = $this.ResourceContext.ResourceId
-        $this.BuildObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-
-        if(($this.BuildObj | Measure-Object).Count -gt 0)
-        {
-           if($this.BuildObj.repository.type -eq 'TfsGit'){
-               Write-Output 'internal'
-           }
-        } #>
 
        $auditapi ="https://auditservice.dev.azure.com/{0}/_apis/audit/auditlog?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($auditapi);
 
         $url= "https:/.dev.azure.com/{0}/_apis/notification/eventtypes?api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName);
         $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);
-
-       <# if($responseObj.principalName -contains 'Project Collection Service Accounts'){
-        #$controlResult.AddMessage([VerificationResult]::Failed, "Organization is configured with Project Collection Service Accounts.");
-        Write-Output 'found';
-       }  #>     
-    }
+  
+    } #>
 
     #TODO:   
     hidden [ControlResult] CheckProCollSerAcc([ControlResult] $controlResult)

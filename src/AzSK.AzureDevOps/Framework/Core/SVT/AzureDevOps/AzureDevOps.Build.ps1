@@ -23,7 +23,7 @@ class Build: SVTBase
     }
 
     #TODO: find external repository
-    hidden Test()
+    <# hidden Test()
     {
 
         $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
@@ -40,7 +40,7 @@ class Build: SVTBase
                Write-Output 'internal'
            }
         }
-    }
+    } #>
 
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
 	{
