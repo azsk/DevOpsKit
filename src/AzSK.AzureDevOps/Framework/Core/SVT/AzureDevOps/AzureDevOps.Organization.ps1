@@ -7,8 +7,6 @@ class Organization: SVTBase
     hidden [string] $SecurityNamespaceId;
     Organization([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     { 
-        #TODO: testing
-       # $this.Test();
         $this.GetOrgPolicyObject()
     }
 
@@ -29,86 +27,21 @@ class Organization: SVTBase
         }
     }
 
-    #TODO:   
-  <#   hidden Test()
-    {
-
-
-       $auditapi ="https://auditservice.dev.azure.com/{0}/_apis/audit/auditlog?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-       $responseObj = [WebRequestHelper]::InvokeGetWebRequest($auditapi);
-
-        $url= "https:/.dev.azure.com/{0}/_apis/notification/eventtypes?api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName);
-        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);
-  
-    } #>
-
-    #TODO:   
     hidden [ControlResult] CheckProCollSerAcc([ControlResult] $controlResult)
     {
-
-       # $apiURL2 = "https://{0}.vsaex.visualstudio.com/_apis/Contribution/dataProviders/query?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-       # $apiURL3 ="https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-       # #TODO: testing adding below line commenting above line
-       # #$apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-
-       # $orgUrl2 = "https://{0}.visualstudio.com" -f $($this.SubscriptionContext.SubscriptionName);
-       # $orgUrl3 = "https://dev.azure.com/{0}/_settings/groups" -f $($this.SubscriptionContext.SubscriptionName);
-       # 
-       # $inputbody2 =  "{'contributionIds':['ms.vss-org-web.collection-admin-groups-data-provider'],'context':{'properties':{'sourcePage':{'url':'$orgUrl2/_settings/groups','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'groups','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
-        
         $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
         $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);
 
-       if($responseObj.principalName -contains 'Project Collection Service Accounts'){
-        $controlResult.AddMessage([VerificationResult]::Failed, "Organization is configured with Project Collection Service Accounts.");
+        $accname = ('['+ $this.SubscriptionContext.SubscriptionName + ']\' + 'Project Collection Service Accounts'); #Enterprise Service Accounts
+       if($responseObj.principalName -contains $accname ){
+           if([Helpers]::CheckMember($responseObj._links.memberships,"member")  -and $responseObj._links.memberships.member -eq 'Enterprise Service Accounts'){
+             $controlResult.AddMessage([VerificationResult]::Verify, "Organization is configured with Project Collection Service Accounts.");            
+           }
        }
        else {
-        $controlResult.AddMessage([VerificationResult]::Passed, "Project Collection Service Accounts does not hass access to Organization.");
+        $controlResult.AddMessage([VerificationResult]::Manual, "Project Collection Service Accounts does not hass access to Organization.");
 
        }
-<# 
-        $inputbody3 =  "{
-            'contributionIds':['ms.vss-admin-web.org-admin-permissions-pivot-data-provider'],
-            'context':{
-            'properties':{
-                'sourcePage':{
-                    'url':'$orgUrl3/_settings/groups',
-                    'routeId':'ms.vss-admin-web.collection-admin-hub-route',
-                    'routeValues':{
-                        'adminPivot':'permissions',
-                        'controller':'ContributedPage',
-                        'action':'Execute'
-                        }}}}}"
-
-                        try {
-                            $responseObj2 = [WebRequestHelper]::InvokePostWebRequest($apiURL2,$inputbody2);
-                            $responseObj2 = [WebRequestHelper]::InvokePostWebRequest($apiURL2,$inputbody3);
-                        }
-                        catch {
-                            try {
-                                $urlll = "https://dev.azure.com/{0}/_settings/permissions?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName);
-                                $responseObj2 = [WebRequestHelper]::InvokeGetWebRequest($urlll);
-                                Write-Host $responseObj2;
-                            }
-                            catch {
-                                $urr = "https://dev.azure.com/{0}/_settings/groups?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName);
-                               try {
-                                $responseObj2 = [WebRequestHelper]::InvokeGetWebRequest($urr);
-                               }
-                               catch {
-                                $responseObj2 = [WebRequestHelper]::InvokePostWebRequest($apiURL3,$inputbody3);
-                               }
-                               
-                              
-                            }
-                           
-                        } #>
-        
-
-        if([Helpers]::CheckMember($responseObj,"data") -and $responseObj.data.'ms.vss-org-web.collection-admin-policy-data-provider')
-        {
-            $this.OrgPolicyObj = $responseObj.data.'ms.vss-org-web.collection-admin-policy-data-provider'.policies
-        }
 
         return $controlResult
     }

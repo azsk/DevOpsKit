@@ -257,6 +257,23 @@
           "Authz"
         ],
         "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Review_Default_Account_Access",
+        "Description": "ADO has a misleadingly group called Project Collection Service Accounts. By inheritance, Project Collection Service Accounts are also Project Collection Administrators",
+        "Id": "Organization240",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckProCollSerAcc",
+        "Rationale": "ADO has a misleadingly group called Project Collection Service Accounts. By inheritance, Project Collection Service Accounts are also Project Collection Administrators. It is found that multiple build agent user accounts across Microsoft were members of Project Collection Service Accounts. An adversary that executes code in a pipeline assigned to one of these build agents can take over the entire ADO organization",
+        "Recommendation": "Go to Organization Settings --> Security --> Permission --> Project Collection Service Accounts --> Validate all the members.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
       }
     ]
     }

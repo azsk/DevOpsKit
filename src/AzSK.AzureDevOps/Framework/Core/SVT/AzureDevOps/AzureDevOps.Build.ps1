@@ -22,26 +22,6 @@ class Build: SVTBase
         }
     }
 
-    #TODO: find external repository
-    <# hidden Test()
-    {
-
-        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
-        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
-
-        # Get build object
-        $apiURL = $this.ResourceContext.ResourceId
-        $this.BuildObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-
-        if(($this.BuildObj | Measure-Object).Count -gt 0)
-        {
-           if($this.BuildObj.repository.type -eq 'TfsGit'){
-               Write-Output 'internal'
-           }
-        }
-    } #>
-
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
 	{
         
@@ -83,6 +63,9 @@ class Build: SVTBase
         {
             $controlResult.AddMessage([VerificationResult]::Failed,
             "Found credentials in build definition. Total credentials found: $noOfCredFound");
+        }
+        else {
+            $controlResult.AddMessage([VerificationResult]::Verify, "No credentials found in build definition.");
         }
     }    
         return $controlResult;
@@ -270,13 +253,13 @@ class Build: SVTBase
     hidden [ControlResult] CheckSettableAtQueueTime([ControlResult] $controlResult)
 	{
       try {
-        $controlResult.AddMessage([VerificationResult]::Passed,"Settable at queue time is not allowd for pipeline variables");    
+        $controlResult.AddMessage([VerificationResult]::Failed,"Settable at queue time is not allowd for pipeline variables");    
         if([Helpers]::CheckMember($this.BuildObj,"variables")) 
         {
          Get-Member -InputObject $this.BuildObj.variables -MemberType Properties | ForEach-Object {
            if([Helpers]::CheckMember($this.BuildObj.variables.$($_.Name),"allowOverride") )
            {
-            $controlResult.AddMessage([VerificationResult]::Failed,"Settable at queue time is allowd for pipeline variables");   
+            $controlResult.AddMessage([VerificationResult]::Passed,"Settable at queue time is allowd for pipeline variables");   
            }
          }
         }  
@@ -285,6 +268,35 @@ class Build: SVTBase
            $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch build pipeline details. Please verify from portal.");   
        }
      return $controlResult;
+    }
+
+    hidden [ControlResult] ExternalSourceSelfHostedBuild([ControlResult] $controlResult)
+    {
+
+        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
+        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
+
+        # Get build object
+        $apiURL = $this.ResourceContext.ResourceId
+        $this.BuildObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+
+        if(($this.BuildObj | Measure-Object).Count -gt 0)
+        {
+           if( $this.BuildObj.repository.type -eq 'Git' -or $this.BuildObj.repository.type -eq 'GitHub'){
+               if (!$this.BuildObj.process.target.agentSpecification -eq 'identifier=vs2017-win2016') {
+                $controlResult.AddMessage([VerificationResult]::Failed,"Pipelines build code is from external sources.");   
+               }
+               else {
+                $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines build code not from external sources.");   
+               }
+           }
+           else {
+            $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines build code not from external sources.");   
+           }
+        }
+
+        return $controlResult;
     }
 
 

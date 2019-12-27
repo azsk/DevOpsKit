@@ -7,7 +7,7 @@ class ServiceConnection: SVTBase
 
     ServiceConnection([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource)
     {
-        # Get project id
+        # Get project id 
         $apiURL = "https://dev.azure.com/{0}/_apis/projects/{1}?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName), $($this.ResourceContext.ResourceGroupName);
         $projectObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
         $this.ProjectId = $projectObj.id
@@ -17,7 +17,7 @@ class ServiceConnection: SVTBase
         $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
         $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ServiceEndpoints")}).namespaceId
 
-        # Get service connection details
+        # Get service connection details https://dev.azure.com/{organization}/{project}/_admin/_services
         # $apiURL = "https://dev.azure.com/{0}/{1}/_apis/serviceendpoint/endpoints?api-version=4.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$($this.ResourceContext.ResourceGroupName);
         # $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
         $this.ServiceEndpointsObj = $this.ResourceContext.ResourceDetails
