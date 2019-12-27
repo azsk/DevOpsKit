@@ -272,19 +272,10 @@ class Build: SVTBase
 
     hidden [ControlResult] ExternalSourceSelfHostedBuild([ControlResult] $controlResult)
     {
-
-        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
-        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
-
-        # Get build object
-        $apiURL = $this.ResourceContext.ResourceId
-        $this.BuildObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-
         if(($this.BuildObj | Measure-Object).Count -gt 0)
         {
            if( $this.BuildObj.repository.type -eq 'Git' -or $this.BuildObj.repository.type -eq 'GitHub'){
-               if (!$this.BuildObj.process.target.agentSpecification -eq 'identifier=vs2017-win2016') {
+            if (!($this.BuildObj.queue.name -eq 'Azure Pipelines')) {
                 $controlResult.AddMessage([VerificationResult]::Failed,"Pipelines build code is from external sources.");   
                }
                else {
