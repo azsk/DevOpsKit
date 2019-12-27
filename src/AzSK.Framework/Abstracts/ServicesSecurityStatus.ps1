@@ -174,7 +174,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				{
 					$this.PublishCustomMessage(" `r`nChecking resource [$currentCount/$totalResources] ");
 				}
-				
+
 				#Update resource scan retry count in scan snapshot in storage if user partial commit switch is on
 				if($this.UsePartialCommits)
 				{
@@ -263,7 +263,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
             {
 				$this.PublishCustomMessage($exceptionMessage);
 				$this.CommandError($_);
-            }
+			}
 		}
 		if(($childResources | Measure-Object).Count -gt 0)
 		{
@@ -324,7 +324,20 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		}
 	}
 
-
+	hidden [SVTEventContext[]] ScanAttestedControls()
+	{
+		[ControlStateExtension] $ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
+		$ControlStateExt.UniqueRunId = $this.ControlStateExt.UniqueRunId;
+		$ControlStateExt.Initialize($false);
+		$ControlStateExt.ComputeControlStateIndexer();
+		$resourcesAttestedinCurrentScan = @()
+		if(($null -ne $ControlStateExt.ControlStateIndexer) -and ([Helpers]::CheckMember($ControlStateExt.ControlStateIndexer, "ResourceId")))
+		{
+			$resourcesAttestedinCurrentScan = $this.Resolver.SVTResources | Where-Object {$ControlStateExt.ControlStateIndexer.ResourceId -contains $_.ResourceId}
+		}
+		return $this.RunForAllResources("RescanAndPostAttestationData",$false,$resourcesAttestedinCurrentScan)
+	}
+	
 	#BaseLine Control Filter Function
 	[void] BaselineFilterCheck()
 	{
@@ -451,7 +464,6 @@ class ServicesSecurityStatus: AzSVTCommandBase
                 }
                 #Set unique partial scan indentifier 
                 $this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
-                
                 #Telemetry with addition for Subscription Id, PartialScanIdentifier and correction in count of resources
                 #Need optimization for calcuations done for total resources.
                 try{

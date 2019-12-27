@@ -23,11 +23,7 @@ function Get-AzSKContinuousAssuranceForCluster {
         [string]
         [Alias("rgn")]
         [Parameter(Mandatory = $true, HelpMessage="ResourceGroup Name of the cluster for which AzSK Continuous Assurance will be installed.")]
-        $ResourceGroupName,
-
-        [string]
-        [Alias("pat")]
-        $PersonalAccessToken
+        $ResourceGroupName
     )
 
     Begin{
@@ -38,7 +34,7 @@ function Get-AzSKContinuousAssuranceForCluster {
         try {
             if ($ResourceType -eq "Databricks") {
                 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
-                $ResourceContext = [DatabricksClusterCA]::GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName, $PersonalAccessToken)
+                $ResourceContext = [DatabricksClusterCA]::GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName)
                 $CAInstance = [DatabricksClusterCA]::new($ResourceContext, $MyInvocation)
                 $CAInstance.InvokeFunction($CAInstance.GetCA)
             } elseif($ResourceType -eq "HDInsight") {
@@ -91,10 +87,6 @@ function Install-AzSKContinuousAssuranceForCluster{
         $ResourceGroupName,
 
         [string]
-        [Alias("pat")]
-        $PersonalAccessToken,
-
-        [string]
         [Alias("aik")]
         [Parameter(Mandatory = $false, HelpMessage= "Instrumention key of Application Insight where security scan results will be populated.")]
 		[ValidateNotNullOrEmpty()]
@@ -117,7 +109,7 @@ function Install-AzSKContinuousAssuranceForCluster{
         try {
             if ($ResourceType -eq "Databricks") {
                 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
-                $ResourceContext = [DatabricksClusterCA]::GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName, $PersonalAccessToken)
+                $ResourceContext = [DatabricksClusterCA]::GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName)
                 $ResourceContext.InstrumentationKey = $InstrumentationKey
                 $ResourceContext.LAWorkspaceId = $LAWorkspaceId
                 $ResourceContext.LASharedSecret = $LASharedSecret
@@ -173,10 +165,6 @@ function Update-AzSKContinuousAssuranceForCluster{
         $ResourceGroupName,
 
         [string]
-        [Alias("pat")]
-        $PersonalAccessToken,
-
-        [string]
         [Alias("npat")]
         $NewPersonalAccessToken,
 
@@ -229,7 +217,7 @@ function Update-AzSKContinuousAssuranceForCluster{
         try {
             if ($ResourceType -eq "Databricks") {
                 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
-                $ResourceContext = [DatabricksClusterCA]::GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName, $PersonalAccessToken)
+                $ResourceContext = [DatabricksClusterCA]::GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName)
                 $CAInstance = [DatabricksClusterCA]::new($ResourceContext, $MyInvocation)
                 $CAInstance.InvokeFunction($CAInstance.UpdateCA, @($NewPersonalAccessToken, 
                                         $NewAppInsightKey, $NewSchedule))
@@ -283,10 +271,6 @@ function Remove-AzSKContinuousAssuranceForCluster {
         [Parameter(Mandatory = $true, HelpMessage="ResourceGroup Name of the cluster for which AzSK Continuous Assurance will be installed.")]
         $ResourceGroupName,
 
-        [string]
-        [Alias("pat")]
-        $PersonalAccessToken,
-
         [ValidateSet("Yes","No")] 
         [Parameter(Mandatory = $false, HelpMessage="This provides the capability to download all previous job logs to local before removing AzSK Continuous Assurance from cluster.")]
 		[Alias("djl")]
@@ -306,7 +290,7 @@ function Remove-AzSKContinuousAssuranceForCluster {
         try {
             if ($ResourceType -eq "Databricks") {
                 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
-                $ResourceContext = [DatabricksClusterCA]::GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName, $PersonalAccessToken)
+                $ResourceContext = [DatabricksClusterCA]::GetParameters($SubscriptionId, $WorkspaceName, $ResourceGroupName)
                 $ResourceContext.RemoveLogs = $RemoveLogs
                 $CAInstance = [DatabricksClusterCA]::new($ResourceContext, $MyInvocation)
                 $CAInstance.InvokeFunction($CAInstance.RemoveCA)              
