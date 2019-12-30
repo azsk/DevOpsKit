@@ -309,5 +309,52 @@ class Organization: SVTBase
         return $controlResult;
     }
 
+    hidden [ControlResult] CheckRBACAccess([ControlResult] $controlResult)
+    {
+        $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+        $groupsObj = [WebRequestHelper]::InvokeGetWebRequest($url);
+
+        $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/UserEntitlements?top=50&filter=&sortOption=lastAccessDate+ascending" -f $($this.SubscriptionContext.SubscriptionName);
+        $usersObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+
+        $Users =  @()
+        $usersObj[0].items | ForEach-Object { 
+                $Users+= $_   
+        }
+
+        $groups = ($groupsObj | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="mailAddress"; Expression = {$_.mailAddress}});
+        
+        $UsersNames = ($Users | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}})
+
+        if ( (($groups | Measure-Object).Count -gt 0) -or (($UsersNames | Measure-Object).Count -gt 0)) {
+            $controlResult.AddMessage([VerificationResult]::Verify, "Verify users and groups present on Organization");
+
+            $controlResult.AddMessage("Verify groups present on Organization", $groups); 
+            $controlResult.AddMessage("Verify users present on Organization", $UsersNames); 
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,  "No users or groups found");
+        }
+
+        return $controlResult
+    }
+
+    hidden [ControlResult] JustifyGroupMember([ControlResult] $controlResult)
+    {      
+        $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+        $groupsObj = [WebRequestHelper]::InvokeGetWebRequest($url);
+         
+        $apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview" -f $($this.SubscriptionContext.SubscriptionName);
+
+        Foreach ($group in $groupsObj){
+         $descriptor = $group.descriptor;
+         $inputbody =  ('{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://dev.azure.com/{1}/_settings/groups?subjectDescriptor={2}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' -f $group.descriptor,$this.SubscriptionContext.SubscriptionName, $group.descriptor) | ConvertFrom-Json
+         $usersObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+        }
+
+        return $controlResult
+    }
+
     
 }

@@ -142,6 +142,24 @@
       "RBAC"
     ],
     "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_Build_Check_Mixing_GitHub_And_ADO_Sources",
+    "Description": "Pipelines mixing GitHub and ADO sources in the same pipeline.",
+    "Id": "Build200",
+    "ControlSeverity": "High",
+    "Automated": "Yes",
+    "MethodName": "CheckMixingGitHubAndADOSources",
+    "Rationale": "Pipelines build code from untrusted external sources (e.g. GitHub) are Building GitHub repos and ADO sources in the same pipeline.",
+    "Recommendation": "Building GitHub repos and ADO sources in the same pipeline.",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Manual",
+      "AuthZ",
+      "RBAC"
+    ],
+    "Enabled": true
   }
 ]
 }
