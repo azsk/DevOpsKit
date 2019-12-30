@@ -19,7 +19,7 @@ class ConfigurationHelper {
 		return [ConfigurationHelper]::LoadOfflineConfigFile($fileName, $true,$rootConfigPath);
 	}
     hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson, $path) {
-		#Load file from AzSK App folder
+		#Load file from AzSK App folder"
 		$rootConfigPath = $path ;	
         
 		$extension = [System.IO.Path]::GetExtension($fileName);
