@@ -1,0 +1,58 @@
+{
+    "FeatureName":  "ServicePrincipal",
+    "Reference":  "aka.ms/azsktcp/serviceprincipal",
+    "IsMaintenanceMode":  false,
+    "Controls": [
+        {
+          "ControlID": "AAD_ServicePrincipal_Use_Cert_Credentials",
+          "Description": "SPNs must not use password creds - use cert creds instead",
+          "Id": "SPN110",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckSPNPasswordCredentials",
+          "Rationale": "Password credentials tend to be easier to compromise via various attacks. They are also symmetric leading to attack vectors on both ends of the flow. Use of certificate credentials alleviates these shortcomings.",
+          "Recommendation": "Refer: TODO",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_ServicePrincipal_Review_Legacy_SPN",
+          "Description": "SPNs of type legacy should be carefully reviewed",
+          "Id": "SPN120",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "ReviewLegacySPN",
+          "Rationale": "The 'Legacy' SPN type is only for backward compatibility. Ensure that all such entries are carefully reviewed and purged where appropriate.",
+          "Recommendation": "Refer: TODO",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_ServicePrincipal_Check_Key_Expiry",
+          "Description": "SPN key credentials should be renewed before expiry",
+          "Id": "SPN130",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckCertNearingExpiry",
+          "Rationale": "SPN credentials should be rotated in a timely manner to ensure availability of the app/service that is using the SPN.",
+          "Recommendation": "Refer: TODO",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        }
+  ]
+}
