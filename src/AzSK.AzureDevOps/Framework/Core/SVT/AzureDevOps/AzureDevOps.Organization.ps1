@@ -341,16 +341,37 @@ class Organization: SVTBase
     }
 
     hidden [ControlResult] JustifyGroupMember([ControlResult] $controlResult)
-    {      
+    {   
+        $grpmember = @();   
         $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
         $groupsObj = [WebRequestHelper]::InvokeGetWebRequest($url);
          
         $apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview" -f $($this.SubscriptionContext.SubscriptionName);
 
+        $groupmember = @();
         Foreach ($group in $groupsObj){
          $descriptor = $group.descriptor;
-         $inputbody =  ('{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://dev.azure.com/{1}/_settings/groups?subjectDescriptor={2}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' -f $group.descriptor,$this.SubscriptionContext.SubscriptionName, $group.descriptor) | ConvertFrom-Json
+         $inputbody =  '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"","sourcePage":{"url":"","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' | ConvertFrom-Json
+        
+         $inputbody.dataProviderContext.properties.subjectDescriptor = $descriptor;
+         $inputbody.dataProviderContext.properties.sourcePage.url = "https://dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/_settings/groups?subjectDescriptor=$($descriptor)";
          $usersObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+
+         $usersObj.dataProviders."ms.vss-admin-web.org-admin-members-data-provider".identities  | ForEach-Object {
+            $groupmember += $_;
+        }  
+
+        $grpmember = ($groupmember | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="mailAddress"; Expression = {$_.mailAddress}});
+
+        }
+
+        if ( ($grpmember | Measure-Object).Count -gt 0)  {
+            $controlResult.AddMessage([VerificationResult]::Verify, "Verify users of groups present on Organization");
+            $controlResult.AddMessage("Verify users present on Organization", $grpmember); 
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,  "No users or groups found");
         }
 
         return $controlResult
