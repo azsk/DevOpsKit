@@ -22,26 +22,6 @@ class Build: SVTBase
         }
     }
 
-      #TODO: 
-      hidden Test()
-      {
-  
-          $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
-          $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-          $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
-  
-          # Get build object
-          $apiURL = $this.ResourceContext.ResourceId
-          $this.BuildObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-  
-          if(($this.BuildObj | Measure-Object).Count -gt 0)
-          {
-             if($this.BuildObj.repository.type -eq 'TfsGit'){
-                 Write-Output 'internal'
-             }
-          }
-      }
-
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
 	{
         
@@ -296,27 +276,6 @@ class Build: SVTBase
         {
            if( $this.BuildObj.repository.type -eq 'Git' -or $this.BuildObj.repository.type -eq 'GitHub'){
             if (!($this.BuildObj.queue.name -eq 'Azure Pipelines')) {
-                $controlResult.AddMessage([VerificationResult]::Failed,"Pipelines build code is from external sources.");   
-               }
-               else {
-                $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines build code not from external sources.");   
-               }
-           }
-           else {
-            $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines build code not from external sources.");   
-           }
-        }
-
-        return $controlResult;
-    }
-
-    hidden [ControlResult] CheckMixingGitHubAndADOSources([ControlResult] $controlResult)
-    {
-        #queue.name = "Azure Pipelines" if not than self host, ER-Network Connected not found
-        if(($this.BuildObj | Measure-Object).Count -gt 0)
-        {
-           if( $this.BuildObj.repository.type -eq 'Git' -or $this.BuildObj.repository.type -eq 'GitHub'){
-               if (!($this.BuildObj.queue.name -eq 'Azure Pipelines')) {
                 $controlResult.AddMessage([VerificationResult]::Failed,"Pipelines build code is from external sources.");   
                }
                else {
