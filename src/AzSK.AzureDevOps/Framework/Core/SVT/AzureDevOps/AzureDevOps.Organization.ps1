@@ -13,8 +13,6 @@ class Organization: SVTBase
     GetOrgPolicyObject()
     {
         $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/Contribution/dataProviders/query?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-        #TODO: testing adding below line commenting above line
-        #$apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
 
         $orgUrl = "https://{0}.visualstudio.com" -f $($this.SubscriptionContext.SubscriptionName);
         $inputbody =  "{'contributionIds':['ms.vss-org-web.collection-admin-policy-data-provider'],'context':{'properties':{'sourcePage':{'url':'$orgUrl/_settings/policy','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'policy','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
@@ -348,8 +346,9 @@ class Organization: SVTBase
          
         $apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview" -f $($this.SubscriptionContext.SubscriptionName);
 
-        $groupmember = @();
+        $membercount =0;
         Foreach ($group in $groupsObj){
+         $groupmember = @();    
          $descriptor = $group.descriptor;
          $inputbody =  '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"","sourcePage":{"url":"","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' | ConvertFrom-Json
         
@@ -362,12 +361,14 @@ class Organization: SVTBase
         }  
 
         $grpmember = ($groupmember | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="mailAddress"; Expression = {$_.mailAddress}});
-
+        if ($grpmember -ne $null) {
+            $membercount= $membercount + 1
+            $controlResult.AddMessage("Verify below members of the group: '$($group.principalname)', Description: $($group.description)", $grpmember); 
+        }
         }
 
-        if ( ($grpmember | Measure-Object).Count -gt 0)  {
-            $controlResult.AddMessage([VerificationResult]::Verify, "Verify users of groups present on Organization");
-            $controlResult.AddMessage("Verify users present on Organization", $grpmember); 
+        if ( $membercount  -gt 0)  {
+            $controlResult.AddMessage([VerificationResult]::Verify, "Verify members of groups present on Organization");
         }
         else
         {
