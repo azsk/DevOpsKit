@@ -31,3 +31,10 @@ class EnvironmentDetails {
 class Tenant{
     [string] $Id
 }
+
+enum CommandType
+{
+	Azure
+	AzureDevOps
+	AAD
+}

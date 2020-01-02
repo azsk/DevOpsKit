@@ -1,0 +1,165 @@
+{
+    "FeatureName":  "Application",
+    "Reference":  "aka.ms/azsktcp/Application",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+      "ControlID": "AAD_Application_Remove_Test_Demo_Apps",
+      "Description": "Old test/demo apps should be removed from the tenant",
+      "Id": "App120",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckOldTestDemoApps",
+      "Rationale": "Demo apps are usually short-term projects that do not go through the full engineering process and due diligence required for enterprise apps. As a result, it is important to constantly review and prune demo app entries from the tenant.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_ReturnURLs_Use_HTTPS",
+      "Description": "All return URLs configured for an application must be HTTPS endpoints",
+      "Id": "App130",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckReturnURLsAreHTTPS",
+      "Rationale": "Return URLs of an application are particularly sensitive because many authentication flows involve posting the token to the returnURL after successful authentication. If such a URL does not use HTTPS, it leads to disclosure of the token on the network in clear text.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_Review_Orphaned_Apps",
+      "Description": "Do not permit orphaned apps (i.e., apps with no owners) in the tenant",
+      "Id": "App140",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckOrphanedApp",
+      "Rationale": "From a governance standpoint, it is important that every application has one or more owners who are responsible for the upkeep of the application's record in the tenant, rotating credentials, etc.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_Require_FTE_Owner",
+      "Description": "At least one of the owners of an app must be an FTE",
+      "Id": "App150",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckAppFTEOwner",
+      "Rationale": "Guest users in a tenant are often transient. Ensuring that at least one FTE owner is accountable for managing the app, rotating credentials, etc. leads to better app governance.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_Minimize_Resource_Access_Requested",
+      "Description": "Apps should request the least permissions needed to various resources",
+      "Id": "App160",
+      "ControlSeverity": "Medium",
+      "Automated": "No",
+      "MethodName": "TBD-Later",
+      "Rationale": "Ensuring that an app requests only those permissions that it needs to function properly in keeping with the principle of least privilege ensures that in the event of a compromise, the damage can be contained.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_HomePage_Use_HTTPS",
+      "Description": "The home page URL for an application must be an HTTPS endpoint",
+      "Id": "App170",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckHomePageIsHTTPS",
+      "Rationale": "Using HTTPS ensures that sensitive data is not disclosed during transit and that the application's clients are not spoofed by rogue endpoint posing as the application.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_LogoutURLs_Use_HTTPS",
+      "Description": "The logout URL configured for an application must be an HTTPS endpoint",
+      "Id": "App180",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckLogoutURLIsHTTPS",
+      "Rationale": "The logout URL for an application is used during authentication flows. Not using an HTTPS URL for this may lead to disclosure of authentication info/tokens.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthN",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_Must_Have_Privacy_Disclosure",
+      "Description": "All enterprise apps must use a privacy disclosure statement",
+      "Id": "App190",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckPrivacyDisclosure",
+      "Rationale": "Adding an appropriate and uniform privacy disclosure for all enterprise apps helps users make correct privacy-related choices when deciding to use the applications. This is also a regulatory requirement in most jurisdictions.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "Privacy"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Application_Must_Restrict_To_Tenant",
+      "Description": "Enterprise (line of business) apps should be tenant scope only",
+      "Id": "App200",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckAppIsCurrentTenantOnly",
+      "Rationale": "Line of business (LOB) applications are usually written to meet a specific company's business needs. Such applications should be restricted to the current tenant only (i.e., the tenant where they are registered).",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated"
+      ],
+      "Enabled": true
+    }
+  ]
+}
