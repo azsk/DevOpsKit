@@ -95,12 +95,16 @@ class SQLDatabase: AzSVTBase
 
 				if ($isCompliant){
 				   		$controlResult.VerificationResult = [VerificationResult]::Passed
-					}
+				}elseif (($serverAudit.EventHubTargetState -eq [AuditStateType]::Enabled) -or ($serverAudit.LogAnalyticsTargetState -eq [AuditStateType]::Enabled)) {
+					#Mark control as 'Verify' if Audit settings other than Storage is enabled as in such case log retention data is not available
+					$controlResult.AddMessage([VerificationResult]::Verify,
+												"Please verify that audit logs are retained for at least $($this.ControlSettings.SqlServer.AuditRetentionPeriod_Min) days for SQL server - [$($this.ResourceContext.ResourceName)]");
+				}
 				else{
 						$controlResult.EnableFixControl = $true;
 						$controlResult.AddMessage([VerificationResult]::Failed,
 					                              "Audit settings are either disabled OR not retaining logs for at least $($this.ControlSettings.SqlServer.AuditRetentionPeriod_Min) days for SQL server - [$($this.ResourceContext.ResourceName)]");
-					}
+				}
 
 		}
 		else{
@@ -208,7 +212,7 @@ class SQLDatabase: AzSVTBase
 
 		if($null -ne $serverAudit){
 			#Check if Audit is Enabled 
-				if($serverAudit.BlobStorageTargetState -eq [AuditStateType]::Enabled){
+				if(($serverAudit.BlobStorageTargetState -eq [AuditStateType]::Enabled) -or ($serverAudit.EventHubTargetState -eq [AuditStateType]::Enabled) -or ($serverAudit.LogAnalyticsTargetState -eq [AuditStateType]::Enabled)){
 					# TODO: We are temporarily suppressing the alias deprecation warning message given by the below Az.SQL cmdlet.
 						$serverThreat = Get-AzSqlServerAdvancedThreatProtectionSettings `
 									-ResourceGroupName $this.ResourceContext.ResourceGroupName `
