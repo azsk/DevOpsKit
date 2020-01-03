@@ -334,7 +334,7 @@ class AIOrgTelemetryHelper {
                 -ContentType "application/x-json-stream" `
                 -Body $eventJson `
                 -UseBasicParsing | Out-Null
-		}
+            }
 		catch {
 			# Eat the current exception which typically happens when network or other API issue while sending telemetry events 
 			# No need to break execution
@@ -498,19 +498,38 @@ static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryE
 
         if($type -eq "Usage")
         {
-            Invoke-WebRequest -Uri "https://dc.services.visualstudio.com/v2/track" `
-            -Method Post `
-            -ContentType "application/x-json-stream" `
-            -Body $eventJson `
-            -UseBasicParsing | Out-Null
+            if( ([FeatureFlightingManager]::GetFeatureStatus("EnableUTF8Encoding","*"))) { 
+                Invoke-WebRequest -Uri "https://dc.services.visualstudio.com/v2/track" `
+                -Method Post `
+                -ContentType "application/x-json-stream" `
+                -Body ([System.Text.Encoding]::UTF8.GetBytes($eventJson)) `
+                -UseBasicParsing | Out-Null
+            }
+            else {
+                 Invoke-WebRequest -Uri "https://dc.services.visualstudio.com/v2/track" `
+                -Method Post `
+                -ContentType "application/x-json-stream" `
+                -Body $eventJson `
+                -UseBasicParsing | Out-Null
+            }
         }
         else {
+            if( ([FeatureFlightingManager]::GetFeatureStatus("EnableUTF8Encoding","*"))) { 
+                $uri = [WebRequestHelper]::GetApplicationInsightsEndPoint()	
+                Invoke-WebRequest -Uri $uri `
+                -Method Post `
+                -ContentType "application/x-json-stream" `
+                -Body ([System.Text.Encoding]::UTF8.GetBytes($eventJson)) `
+                -UseBasicParsing | Out-Null
+            }
+            else{
                 $uri = [WebRequestHelper]::GetApplicationInsightsEndPoint()	
                 Invoke-WebRequest -Uri $uri `
                 -Method Post `
                 -ContentType "application/x-json-stream" `
                 -Body $eventJson `
                 -UseBasicParsing | Out-Null
+            }
         }
     }
     catch {

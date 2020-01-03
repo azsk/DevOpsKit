@@ -13,12 +13,22 @@ class RemoteApiHelper {
     {
             try {
                 $accessToken = [RemoteApiHelper]::GetAccessToken()
-                $result = Invoke-WebRequest -Uri $([RemoteApiHelper]::ApiBaseEndpoint + $uri) `
+                if( ([FeatureFlightingManager]::GetFeatureStatus("EnableUTF8Encoding","*"))) { 
+                    $result = Invoke-WebRequest -Uri $([RemoteApiHelper]::ApiBaseEndpoint + $uri) `
+                    -Method Post `
+                    -Body  ([System.Text.Encoding]::UTF8.GetBytes($content)) `
+                    -ContentType $type `
+                    -Headers @{"Authorization" = "Bearer $accessToken"} `
+                    -UseBasicParsing
+                }
+                else {
+                    $result = Invoke-WebRequest -Uri $([RemoteApiHelper]::ApiBaseEndpoint + $uri) `
                     -Method Post `
                     -Body $content `
                     -ContentType $type `
                     -Headers @{"Authorization" = "Bearer $accessToken"} `
                     -UseBasicParsing
+                }
                 return $result
             }
             catch {
