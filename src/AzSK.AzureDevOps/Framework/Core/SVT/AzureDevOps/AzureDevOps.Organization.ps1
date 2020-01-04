@@ -33,15 +33,35 @@ class Organization: SVTBase
         $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);
 
         $accname = ('['+ $this.SubscriptionContext.SubscriptionName + ']\' + 'Project Collection Service Accounts'); #Enterprise Service Accounts
-       if($responseObj.principalName -contains $accname ){
-           if([Helpers]::CheckMember($responseObj._links.memberships,"member")  -and $responseObj._links.memberships.member -eq 'Enterprise Service Accounts'){
-             $controlResult.AddMessage([VerificationResult]::Verify, "Organization is configured with Project Collection Service Accounts.");            
-           }
-       }
-       else {
-        $controlResult.AddMessage([VerificationResult]::Manual, "Project Collection Service Accounts does not hass access to Organization.");
+        $x = $responseObj | where {$_.principalName -eq $accname}
 
-       }
+        $u = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+        $inputbody =  '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://{1}.visualstudio.com/_settings/groups?subjectDescriptor={0}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute","serviceHost":"71a9589d-73d1-47cd-9d00-b6aee2a787ae ({1})"}}}}}'
+        $inputbody = $inputbody.Replace("{0}",$x.descriptor)
+        $inputbody = $inputbody.Replace("{1}",$this.SubscriptionContext.SubscriptionName) | ConvertFrom-Json
+       
+        try{
+            $w = [WebRequestHelper]::InvokePostWebRequest($u,$inputbody);
+            $v = $w.dataProviders.'ms.vss-admin-web.org-admin-members-data-provider'.identities
+            if(($v | Measure-Object).Count -gt 0){
+                $controlResult.AddMessage([VerificationResult]::Verify, "Please verify the members of the group Project Collection Service Accounts", $v);   
+                $controlResult.SetStateData("Members of the Project Collection Service Accounts Group ", $v);     
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Manual, "Project Collection Service Accounts group member can not be fetched.");
+            }
+        }
+        catch{}
+
+       #if($responseObj.principalName -contains $accname ){
+        #   if([Helpers]::CheckMember($responseObj._links.memberships,"member")  -and $responseObj._links.memberships.member -eq 'Enterprise Service Accounts'){
+        #     $controlResult.AddMessage([VerificationResult]::Verify, "Organization is configured with Project Collection Service Accounts.");            
+        #   }
+       #}
+       #else {
+       # $controlResult.AddMessage([VerificationResult]::Manual, "Project Collection Service Accounts does not hass access to Organization.");
+
+       #}
 
         return $controlResult
     }
