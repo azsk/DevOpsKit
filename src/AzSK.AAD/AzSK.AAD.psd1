@@ -49,8 +49,8 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules        = @(
-            @{ModuleName = 'Az.Accounts'; RequiredVersion = '1.7.0'}
-            @{ModuleName = 'AzureAD'; RequiredVersion = '1.1.139.0'}
+        @{ModuleName = 'Az.Accounts'; RequiredVersion = '1.2.1'}
+        @{ModuleName = 'AzureAD'; RequiredVersion = '2.0.2.4'}
         )
 
     # Assemblies that must be loaded prior to importing this module
