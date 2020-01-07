@@ -18,7 +18,12 @@ class AzCommandBase: CommandBase {
 		[Helpers]::AbstractClass($this, [AzCommandBase]);
 
 		#Validate if command is getting run with correct Org Policy
-		$IsTagSettingRequired = $this.ValidateOrgPolicyOnSubscription($this.Force)
+		$IsTagSettingRequired = $false
+		if ([Constants]::ValidateOrgPolicyCount -eq 0)
+		{
+			[Constants]::ValidateOrgPolicyCount = [Constants]::ValidateOrgPolicyCount + 1;
+			$IsTagSettingRequired = $this.ValidateOrgPolicyOnSubscription($this.Force)
+		}
 		
 		#Validate if policy url token is getting expired 
 		$onlinePolicyStoreUrl = [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl

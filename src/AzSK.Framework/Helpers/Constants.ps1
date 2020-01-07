@@ -68,6 +68,8 @@ class Constants
     static [string] $CompletedAnalysis = [Constants]::SingleDashLine + "`r`nCompleted analysis: [FeatureName: {0}] [ResourceGroupName: {1}] [ResourceName: {2}] `r`n" + [Constants]::DoubleDashLine
     static [string] $CompletedAnalysisSub = [Constants]::SingleDashLine + "`r`nCompleted analysis: [FeatureName: {0}] [SubscriptionName: {1}] [SubscriptionId: {2}] `r`n" + [Constants]::DoubleDashLine
 	static [string] $PIMAPIUri="https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/resources";
+	# Counter to check number of times org policy has been checked.
+	static [int] $ValidateOrgPolicyCount = 0
 	#Constants for Attestation
 	static [string] $AttestedControlsScanMsg = "You are almost done...we will perform a quick scan of controls attested within the last 24 hrs so that the backend will get the latest control status."
 	static [string] $ModuleAttestStartHeading = [Constants]::DoubleDashLine +
