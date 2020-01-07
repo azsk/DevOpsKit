@@ -12,7 +12,7 @@
     RootModule             = '.\AzSK.AAD.psm1'
 
     # Version number of this module.
-    ModuleVersion          = '0.8.13'
+    ModuleVersion          = '0.8.14'
 
     # ID used to uniquely identify this module
     GUID                   = 'b9bba5c3-9036-4163-b0b0-6d4e83519b0a'
