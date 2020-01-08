@@ -102,6 +102,15 @@ class CommandBase: AzSKRoot {
 		{
 			$folderPath = $this.GetOutputFolderPath();
 			$methodResult = $methodToCall.Invoke(@());
+
+			if((-not $this.DoNotOpenOutputFolder) -and (-not [string]::IsNullOrEmpty($folderPath)))	{
+				try	{
+					Invoke-Item -Path $folderPath;
+				}
+				catch {
+					#ignore if any exception occurs
+				}
+			}
 		}
 else {
 	
@@ -147,43 +156,54 @@ else {
 
 		# <TODO Framework: Move PDF generation method based on listener>
         #Generate PDF report
-        $GeneratePDFReport = $this.InvocationContext.BoundParameters["GeneratePDF"];
-        try {
-            if (-not [string]::IsNullOrEmpty($folderpath)) {
-                switch ($GeneratePDFReport) {
-                    None {
-                        # Do nothing
-                    }
-                    Landscape {
-                        [AzSKPDFExtension]::GeneratePDF($folderpath, $this.SubscriptionContext, $this.InvocationContext, $true);
-                    }
-                    Portrait {
-                        [AzSKPDFExtension]::GeneratePDF($folderpath, $this.SubscriptionContext, $this.InvocationContext, $false);
-                    }
-                }
-            }
-        }
-        catch {
-            # Unwrapping the first layer of exception which is added by Invoke function
-            $this.CommandError($_);
-        }
+			$GeneratePDFReport = $this.InvocationContext.BoundParameters["GeneratePDF"];
+			try {
+				if (-not [string]::IsNullOrEmpty($folderpath)) {
+					switch ($GeneratePDFReport) {
+						None {
+							# Do nothing
+						}
+						Landscape {
+							[AzSKPDFExtension]::GeneratePDF($folderpath, $this.SubscriptionContext, $this.InvocationContext, $true);
+						}
+						Portrait {
+							[AzSKPDFExtension]::GeneratePDF($folderpath, $this.SubscriptionContext, $this.InvocationContext, $false);
+						}
+					}
+				}
+			}
+			catch {
+				# Unwrapping the first layer of exception which is added by Invoke function
+				$this.CommandError($_);
+			}
 
 		# 
         $AttestControlParamFound = $this.InvocationContext.BoundParameters["AttestControls"];
 		if($null -eq $AttestControlParamFound)
 		{
-			if((-not $this.DoNotOpenOutputFolder) -and (-not [string]::IsNullOrEmpty($folderPath)))
+			#If controls are attested then open folder when rescan of attested controls is complete
+			$controlAttested = $false
+			if (Get-Variable AttestationValue -Scope Global){
+			 	if ( $Global:AttestationValue){
+					 $controlAttested = $true
+				 }
+			}
+
+			if ( !$controlAttested)
 			{
-				try
+				if((-not $this.DoNotOpenOutputFolder) -and (-not [string]::IsNullOrEmpty($folderPath)))
 				{
-					Invoke-Item -Path $folderPath;
-				}
-				catch
-				{
-					#ignore if any exception occurs
+					try
+					{
+						Invoke-Item -Path $folderPath;
+					}
+					catch
+					{
+						#ignore if any exception occurs
+					}
 				}
 			}
-		}
+			}
 		}
         return $folderPath;
 	}
