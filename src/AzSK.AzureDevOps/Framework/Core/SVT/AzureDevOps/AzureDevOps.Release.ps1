@@ -323,7 +323,7 @@ class Release: SVTBase
 
     hidden [ControlResult] CheckMixingGitHubAndADOSources([ControlResult] $controlResult)
     {
-        #queue.name 
+        #TODO: queue.name 
         if(($this.ReleaseObj | Measure-Object).Count -gt 0)
         {
             if( ($this.ReleaseObj.artifacts | Measure-Object).Count -gt 0){
@@ -331,7 +331,7 @@ class Release: SVTBase
                 $this.ReleaseObj.artifacts  | ForEach-Object {
                     $sourcetypes += $_.type;
                 } 
-               if (($sourcetypes | Measure-Object).Count -gt 1)  {
+               if (( ($sourcetypes | Measure-Object).Count -gt 1) -and ($sourcetypes -contains 'Git' -or  $sourcetypes -contains 'Github') ){
                 $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines build code is from external sources.");   
                }
                else {
