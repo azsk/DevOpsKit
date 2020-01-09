@@ -485,7 +485,37 @@ class ServicesSecurityStatus: AzSVTCommandBase
                         }
                           
                     }   
-                    [AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details",@{"TotalSVTResources"= $($ScanResourcesList |Measure-Object).Count;"ScanCompletedResourcesCount"=$CompletedResources; "NonScannedResourcesCount" = $IncompleteScans;"ErrorStateResourcesCount"= $InErrorResources;"SubscriptionId"=$this.SubscriptionContext.SubscriptionId;"PartialScanIdentifier"=$this.PartialScanIdentifier;}, $null)
+					[AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details",@{"TotalSVTResources"= $($ScanResourcesList |Measure-Object).Count;"ScanCompletedResourcesCount"=$CompletedResources; "NonScannedResourcesCount" = $IncompleteScans;"ErrorStateResourcesCount"= $InErrorResources;"SubscriptionId"=$this.SubscriptionContext.SubscriptionId;"PartialScanIdentifier"=$this.PartialScanIdentifier;}, $null)
+					
+					#By default below detail partial scan tracker telemetry will be in disabled state 
+					# and only be enabled using feature flag for perticular subscriptions to analaze the CA scan issues
+					# Register/Deregister all listeners to cleanup the memory
+					if([FeatureFlightingManager]::GetFeatureStatus("EnableDetailedResourceTrackerTelemetry",$this.SubscriptionContext.SubscriptionId) -eq $true)
+					{
+						$resourceTrackerEvents = [System.Collections.ArrayList]::new()
+						#Loop through all resource list present in tracker and prepare array of events with common properties like RunIdentifier, SubId,etc
+						foreach($resource in $ScanResourcesList){
+							$resourceEvent = "" | Select-Object Name, Properties, Metrics
+							#RunIdentifier value is not set at this stage. Its value is default. 
+							#Investigation needs to be done base don partialScanIdentifier 
+							#"RunIdentifier" = $this.RunIdentifier; 
+							$Properties = @{
+								"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;
+								"PartialScanIdentifier"=$this.PartialScanIdentifier;
+								"ResourceId" = $resource.Id;
+								"ScanRetryCount" = $resource.ScanRetryCount;
+								"State" = $resource.State;
+								"StateModifiedDate" = $resource.ModifiedDate
+								"TrackerId" = $partialScanMngr.ResourceScanTrackerObj.Id
+							}
+								$resourceEvent.Name = "Partial Tracker Resource Details"
+								$resourceEvent.Properties = $properties
+								$resourceTrackerEvents.Add($resourceEvent) | Out-Null
+						}
+						#Push array of resourcelist to AI telemetry
+						[AIOrgTelemetryHelper]::TrackEvents($resourceTrackerEvents);
+					}
+
                 }
                 catch{
                     #Continue exexution if telemetry is not sent 
