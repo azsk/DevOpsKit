@@ -161,9 +161,10 @@ function Get-AzSKAzureServicesSecurityStatus
 		$DoNotOpenOutputFolder,
 
 		[GeneratePDF]
+		[ValidateSet("Landscape", "portrait")]
         [Parameter(Mandatory = $false)]
 		[Alias("gpdf","pdf")]
-		$GeneratePDF = [GeneratePDF]::None,
+		$GeneratePDF = [GeneratePDF]::portrait,
 
 		[switch]
 		[Parameter(Mandatory = $false)]
@@ -379,9 +380,10 @@ function Get-AzSKSubscriptionSecurityStatus
 		$DoNotOpenOutputFolder,
 		
 		[GeneratePDF]
+		[ValidateSet("Landscape", "portrait")]
         [Parameter(Mandatory = $false)]
 		[Alias("gpdf","pdf")]
-		$GeneratePDF = [GeneratePDF]::None,
+		$GeneratePDF = [GeneratePDF]::portrait,
 
 		[switch]
 		[Parameter(Mandatory = $false)]
