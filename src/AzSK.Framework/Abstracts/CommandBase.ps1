@@ -103,12 +103,9 @@ class CommandBase: AzSKRoot {
 			$folderPath = $this.GetOutputFolderPath();
 			$methodResult = $methodToCall.Invoke(@());
 
-			if((-not $this.DoNotOpenOutputFolder) -and (-not [string]::IsNullOrEmpty($folderPath)))	{
-				try	{
+			if(-not $this.DoNotOpenOutputFolder) {
+				if (Test-Path $folderPath) {
 					Invoke-Item -Path $folderPath;
-				}
-				catch {
-					#ignore if any exception occurs
 				}
 			}
 		}
@@ -184,10 +181,12 @@ else {
 
 			#If controls are attested then open folder when rescan of attested controls is complete
 			$controlAttested = $false
-			if (Get-Variable AttestationValue -Scope Global){
-			 	if ( $Global:AttestationValue){
-					 $controlAttested = $true
-				 }
+			if( ([FeatureFlightingManager]::GetFeatureStatus("EnableScanAfterAttestation","*"))) { 
+				if (Get-Variable AttestationValue -Scope Global){
+					if ( $Global:AttestationValue){
+						$controlAttested = $true
+					}
+				}
 			}
 
 			if ( !$controlAttested){
