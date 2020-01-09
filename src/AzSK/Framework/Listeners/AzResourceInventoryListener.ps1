@@ -33,11 +33,16 @@ class AzResourceInventoryListener: ListenerBase
         try
         {
             $scanSource = [RemoteReportHelper]::GetScanSource();
-            if($scanSource -ne [ScanSource]::Runbook) { return; }
+             if($scanSource -ne [ScanSource]::Runbook -or $event.Sender.InvocationContext.MyCommand.Name -ne 'Get-AzSKAzureServicesSecurityStatus') { return; }
             $SubscriptionId = ([ContextHelper]::GetCurrentRMContext()).Subscription.Id;
             [ResourceInventory]::FetchResources();
             [AzResourceInventoryListener]::PostAzResourceInventory();            
             $resources= [ResourceInventory]::RawResources
+            if($resources.Count -gt 5000)
+            {
+                 $resources= [ResourceInventory]::FilteredResources
+                 [AIOrgTelemetryHelper]::TrackEvent("Raw Resource Inventory Aborted", $resources.Count, $null)
+            }
             $resourceGroups = Get-AzResourceGroup
             $resourceDetails = @();
             $telemetryEvents = [System.Collections.ArrayList]::new()
