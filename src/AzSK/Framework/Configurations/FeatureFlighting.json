@@ -172,6 +172,15 @@
       "DisabledForSubs": [],
       "UnderPreview": false,
       "IsEnabled": true
+    },
+    {
+      "Name": "EnableStorageBlobPersistPerResource",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": ["254ad434-e2e6-45c0-a32b-34bf24cb7479","0e265216-bc29-40b0-8759-07d7cb75497f"],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
     }
   ]
 }
