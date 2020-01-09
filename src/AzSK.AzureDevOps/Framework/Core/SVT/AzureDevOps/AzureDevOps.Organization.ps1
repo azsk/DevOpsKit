@@ -378,5 +378,37 @@ class Organization: SVTBase
         return $controlResult
     }
 
+    hidden [ControlResult] AutoInjectedExtension([ControlResult] $controlResult)
+    {   
+     try {
+        $url ="https://extmgmt.dev.azure.com/{0}/_apis/extensionmanagement/installedextensions?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);     
+        $member = @();
+        foreach($obj in $responseObj) {
+           foreach($cn in $obj.contributions) {
+            if ([Helpers]::CheckMember($cn,"type")) {
+                 if($cn.type -eq "ms.azure-pipelines.pipeline-decorator")
+                 {
+                   $member +=  ($obj | Select-Object -Property @{Name="Name"; Expression = {$_.extensionName}},@{Name="Publisher"; Expression = {$_.PublisherName}})
+                   break;
+                 }
+             }  
+            }     
+        }
+        if (($member | Measure-Object).Count -gt 0) {
+            $controlResult.AddMessage([VerificationResult]::Verify,"Verify below extension which includes auto injection task:", $member);
+        }
+        else {
+            $controlResult.AddMessage([VerificationResult]::Passed,"No extension found which contains auto injection task");
+        }
+                   
+     }
+     catch {
+        $controlResult.AddMessage([VerificationResult]::Manual,"Could not evaluate extension.");     
+     }
+
+        return $controlResult
+    }
+
     
 }

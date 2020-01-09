@@ -161,7 +161,7 @@
         "Description": "All teams/groups must be granted minimum required permissions on Organization",
         "Id": "Organization200",
         "ControlSeverity": "High",
-        "Automated": "Yes",
+        "Automated": "No",
         "MethodName": "CheckRBACAccess",
         "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
         "Recommendation": "Go to Organization Settings --> Security --> Select team/group --> Validate Permissions",
@@ -178,7 +178,7 @@
         "Description": "Justify all identities that are granted with member access on groups and teams.",
         "Id": "Organization210",
         "ControlSeverity": "High",
-        "Automated": "Yes",
+        "Automated": "No",
         "MethodName": "JustifyGroupMember",
         "Rationale": "Accounts that are a member of these groups without a legitimate business reason increase the risk for your Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
         "Recommendation": "Go to Organization Settings --> Security --> Validate all group memebers",
@@ -250,6 +250,23 @@
         "MethodName": "CheckProCollSerAcc",
         "Rationale": "ADO has a misleadingly group called Project Collection Service Accounts. By inheritance, Project Collection Service Accounts are also Project Collection Administrators. It is found that multiple build agent user accounts across Microsoft were members of Project Collection Service Accounts. An adversary that executes code in a pipeline assigned to one of these build agents can take over the entire ADO organization",
         "Recommendation": "Go to Organization Settings --> Security --> Permission --> Project Collection Service Accounts --> Validate all the members.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Review_Auto_Injected_Extension",
+        "Description": "ADO allow Auto Injected Extension in pipeline",
+        "Id": "Organization250",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "AutoInjectedExtension",
+        "Rationale": "ADO allow Auto Injected Extension in pipeline",
+        "Recommendation": "Go to Organization Settings --> Extensions",
         "Tags": [
           "SDL",
           "TCP",
