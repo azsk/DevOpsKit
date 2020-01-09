@@ -91,12 +91,20 @@ function Get-AzSKAzureDevOpsSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames,$ScanAllArtifacts,$PATToken,$ResourceTypeName);
-			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
-			if ($secStatus) 
-			{		
-				return $secStatus.EvaluateControlStatus();
-			}    
+			$AzSK = Get-Module | Where-Object { $_.Name -eq 'AzSK' };
+			if (!$AzSK) {
+				$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames,$ScanAllArtifacts,$PATToken,$ResourceTypeName);
+			    $secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
+			    if ($secStatus) 
+			    {		
+			    	return $secStatus.EvaluateControlStatus();
+			    }  
+			}
+			else {
+				Write-Error "Please make sure you have imported only the AzSK.AzureDevOps module in the PS session. It seems that there are other AzSK modules also present in PS session memory. Please run the command in the new session.";
+				[ListenerHelper]::UnregisterListeners();
+			}
+			  
 		}
 		catch 
 		{
@@ -168,12 +176,19 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 	{
 	try 
 		{
+		 $AzSK = Get-Module | Where-Object { $_.Name -eq 'AzSK' };
+		 if (!$AzSK) {
 			$resolver = [SVTResourceResolver]::new($OrganizationName,$null,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Organization);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
 				return $secStatus.EvaluateControlStatus();
-			}    
+			}
+		 }
+		 else {
+		 	Write-Error "Please make sure you have imported only the AzSK.AzureDevOps module in the PS session. It seems that there are other AzSK modules also present in PS session memory. Please run the command in the new session.";
+		 	[ListenerHelper]::UnregisterListeners();
+		 }    
 		}
 		catch 
 		{
@@ -250,12 +265,19 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 	{
 	try 
 		{
+		 $AzSK = Get-Module | Where-Object { $_.Name -eq 'AzSK' };
+		 if (!$AzSK) {
 			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Project);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
 				return $secStatus.EvaluateControlStatus();
-			}    
+			}
+		 }
+		 else {
+		 	Write-Error "Please make sure you have imported only the AzSK.AzureDevOps module in the PS session. It seems that there are other AzSK modules also present in PS session memory. Please run the command in the new session.";
+		 	[ListenerHelper]::UnregisterListeners();
+		 }    
 		}
 		catch 
 		{
@@ -338,12 +360,19 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 	{
 	try 
 		{
+		 $AzSK = Get-Module | Where-Object { $_.Name -eq 'AzSK' };
+		 if (!$AzSK) {
 			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$null,$null,$null,$PATToken,[ResourceTypeName]::Build);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
 				return $secStatus.EvaluateControlStatus();
-			}    
+			} 
+		 }
+		 else {
+		 	Write-Error "Please make sure you have imported only the AzSK.AzureDevOps module in the PS session. It seems that there are other AzSK modules also present in PS session memory. Please run the command in the new session.";
+		 	[ListenerHelper]::UnregisterListeners();
+		 }   
 		}
 		catch 
 		{
@@ -428,12 +457,19 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 	{
 	try 
 		{
+		 $AzSK = Get-Module | Where-Object { $_.Name -eq 'AzSK' };
+		 if (!$AzSK) {
 			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$null,$ReleaseNames,$null,$null,$PATToken,[ResourceTypeName]::Release);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
 				return $secStatus.EvaluateControlStatus();
-			}    
+			}
+		 }
+		 else {
+		 	Write-Error "Please make sure you have imported only the AzSK.AzureDevOps module in the PS session. It seems that there are other AzSK modules also present in PS session memory. Please run the command in the new session.";
+		 	[ListenerHelper]::UnregisterListeners();
+		 }    
 		}
 		catch 
 		{
