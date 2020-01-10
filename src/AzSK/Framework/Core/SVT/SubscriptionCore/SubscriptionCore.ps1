@@ -612,9 +612,9 @@ class SubscriptionCore: AzSVTBase
 
         if($foundLocks)
         {
-			$controlResult.SetStateData("Resource Locks on subscription", $lockDtls);
+			$controlResult.SetStateData("Resource Locks on subscription", ($lockDtls | Select-Object @{Name="LockLevel";Expression={$_.Properties.level}}, LockId))
 			#$controlResult.AddMessage([VerificationResult]::Verify, "Subscription lock details :", ($lockDtls | Select-Object Name,  @{Name="Lock Level";Expression={$_.Properties.level}}, LockId, @{Name="Notes";Expression={$_.Properties.notes}} ), $true, "SubscriptionLocks")
-			$controlResult.AddMessage([VerificationResult]::Verify, "Subscription lock details :", ($lockDtls | Select-Object Name,  @{Name="Lock Level";Expression={$_.Properties.level}}, LockId, @{Name="Notes";Expression={$_.Properties.notes}} ))
+			$controlResult.AddMessage([VerificationResult]::Verify, "Subscription lock details :", ($lockDtls | Select-Object @{Name="LockLevel";Expression={$_.Properties.level}}, LockId))
         }
         else
         {

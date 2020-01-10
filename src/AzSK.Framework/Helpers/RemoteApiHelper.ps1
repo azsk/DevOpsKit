@@ -22,9 +22,33 @@ class RemoteApiHelper {
                 return $result
             }
             catch {
+                #Error while sending events to Database. Encode content to UTF8 and make API call again to handle BOM/special characters
+                if (($null -ne $content)-and ($content.length -gt 0)) {
+                    if([Helpers]::CheckMember($_.Exception,"Response.StatusCode")){
+                        if ($_.Exception.Response.StatusCode -eq "BadRequest") {
+                            [RemoteApiHelper]::PostUTF8Content($uri, $content, "application/json")
+                        }
+                    }
+                }
                 return "ERROR"
             }
     }  
+    hidden static [psobject] PostUTF8Content($uri, $content, $type) 
+    {
+            try {
+                $accessToken = [RemoteApiHelper]::GetAccessToken()
+                $result = Invoke-WebRequest -Uri $([RemoteApiHelper]::ApiBaseEndpoint + $uri) `
+                    -Method Post `
+                    -Body ([System.Text.Encoding]::UTF8.GetBytes($content)) `
+                    -ContentType $type `
+                    -Headers @{"Authorization" = "Bearer $accessToken"} `
+                    -UseBasicParsing
+                return $result
+            }
+            catch {
+                return "ERROR"
+            }
+    }
     
     hidden static [psobject] GetContent($uri, $content, $type) 
     {
