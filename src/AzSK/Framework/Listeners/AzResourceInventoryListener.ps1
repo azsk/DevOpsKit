@@ -38,7 +38,9 @@ class AzResourceInventoryListener: ListenerBase
             [ResourceInventory]::FetchResources();
             [AzResourceInventoryListener]::PostAzResourceInventory();            
             $resources= [ResourceInventory]::RawResources
-            if($resources.Count -gt 5000)
+            $controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+            $maxResourceCount = $controlSettings.MaxResourceInventoryObjectsCount
+            if($resources.Count -gt $maxResourceCount)
             {
                  $resources= [ResourceInventory]::FilteredResources
                  [AIOrgTelemetryHelper]::TrackEvent("Raw Resource Inventory Aborted", $resources.Count, $null)

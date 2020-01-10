@@ -99,14 +99,13 @@ class SVTIaasBase: AzSVTBase
 				$this.vNetPIPIssues = @();
 				$tempVNetNICS = [array]($vNetNics)
 				$tempVNetNICS | ForEach-Object{
-					Set-Variable -Name nic -Scope Local -Value $_
-					Set-Variable -Name nicproperties -Scope Local -Value $_.Properties
 					try
 					{
+						Set-Variable -Name nic -Scope Local -Value $_
 						$out = ""| Select-Object NICName, VMName, VMId, PrimaryStatus, NetworkSecurityGroupName,NetworkSecurityGroupId, PublicIpAddress, PrivateIpAddress,  EnableIPForwarding, IpConfigurations
 						$out.NICName = $nic.Name
-						$out.IpConfigurations = $nicproperties.IpConfigurations
-						$out.EnableIPForwarding = $nicproperties.EnableIPForwarding
+						$out.IpConfigurations = $nic.IpConfigurations
+						$out.EnableIPForwarding = $nic.EnableIPForwarding
 						$PublicIpAddresses = @()
 						$PrivateIpAddresses = @()
 						if([FeatureFlightingManager]::GetFeatureStatus("EnableVnetFixForSub",$($this.SubscriptionContext.SubscriptionId)))

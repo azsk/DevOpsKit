@@ -532,5 +532,6 @@
       "RequiredImagePath": "azsktest/akstest",
       "RequiredImageTag": "latest"
     }
-  }
+  },
+  "MaxResourceInventoryObjectsCount": 5000
 }
