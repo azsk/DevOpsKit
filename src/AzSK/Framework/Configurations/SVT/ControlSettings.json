@@ -41,8 +41,7 @@
       "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11",
       "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30",
       "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168"
-    ],
-    "MaxAllowedAPICount": 30
+    ]
   },
   "VirtualMachine": {
     "Windows": {
@@ -227,7 +226,11 @@
   "PIMCAPolicyTags":[],
   "PIMAppId":"01fc33a7-78ba-4d2f-a4b7-768e336e890e",
   "ASCAlertsSeverityLevels": [ "High" ],
-  "ASCAlertsThresholdInDays": 30,
+  "ASCAlertsThresholdInDays": {
+    "High": 0,
+    "Medium": 30  
+   
+  },
   "WhitelistedMgmtCerts": {
     "Thumbprints": [],
     "ApprovedValidityRangeInDays": 732
@@ -534,5 +537,6 @@
       "RequiredImageTag": "latest"
     }
   },
-  "MaxResourceInventoryObjectsCount": 20000
+  "MaxResourceInventoryObjectsCount": 20000,
+  "AlernateAccountRegularExpressionForOrg": ""
 }
