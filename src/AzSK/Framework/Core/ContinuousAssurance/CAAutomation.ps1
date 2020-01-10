@@ -4020,7 +4020,7 @@ class CCAutomation: AzCommandBase
 		# Get AzSK storage of the current master sub
 		$CAScanDataBlobObject = $null
 		$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-		if($null -ne $reportsStorageAccount){
+		if($null -ne $reportsStorageAccount -and ($reportsStorageAccount | Measure-Object).Count -eq 1){
 			$keys = Get-AzStorageAccountKey -ResourceGroupName $reportsStorageAccount.ResourceGroupName -Name $reportsStorageAccount.Name
 			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
 			$CAScanDataBlobObject = Get-AzStorageBlob -Container $containerName  -Prefix $scanLogsPrefixPattern -Context $currentContext -ErrorAction SilentlyContinue
