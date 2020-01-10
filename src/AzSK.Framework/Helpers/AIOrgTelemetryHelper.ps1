@@ -498,24 +498,46 @@ static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryE
 
         if($type -eq "Usage")
         {
-            Invoke-WebRequest -Uri "https://dc.services.visualstudio.com/v2/track" `
+            $uri = "https://dc.services.visualstudio.com/v2/track"
+        }
+        else {
+            $uri = [WebRequestHelper]::GetApplicationInsightsEndPoint()	
+        }
+
+        try {
+            Invoke-WebRequest -Uri $uri `
             -Method Post `
             -ContentType "application/x-json-stream" `
             -Body $eventJson `
             -UseBasicParsing | Out-Null
         }
-        else {
-                $uri = [WebRequestHelper]::GetApplicationInsightsEndPoint()	
-                Invoke-WebRequest -Uri $uri `
-                -Method Post `
-                -ContentType "application/x-json-stream" `
-                -Body $eventJson `
-                -UseBasicParsing | Out-Null
+        catch{
+            # Error while sending events to telemetry. Encode content to UTF8 and make API call again to handle BOM/special characters
+            if (($null -ne $eventJson)-and ($eventJson.length -gt 0)) {
+                if([Helpers]::CheckMember($_.Exception,"Response.StatusCode")){
+                    if ($_.Exception.Response.StatusCode -eq "BadRequest") {
+                        [AIOrgTelemetryHelper]::PostUTF8Content($uri, $eventJson);
+                    }
+                }
+            }
         }
     }
     catch {
 		# Left blank intentionally
 		# Error while sending CA events to telemetry. No need to break the execution.
+    }
+}
+hidden static PostUTF8Content($uri, $eventJson) 
+{
+    try {
+        Invoke-WebRequest -Uri $uri `
+            -Method Post `
+            -Body ([System.Text.Encoding]::UTF8.GetBytes($eventJson)) `
+            -ContentType "application/x-json-stream" `
+            -UseBasicParsing
+    }
+    catch {
+        # Error while sending events to telemetry after UTF8 encoding.
     }
 }
 
