@@ -2187,9 +2187,6 @@ class CCAutomation: AzCommandBase
 							# Get Scan logs from storage
 							$scanLogsPrefixPattern = $this.AutomationAccount.ResourceGroup + "/" + "$($tgtSubStorageAccount.TargetSubscriptionId)" + "/"
 							$CAScanDataBlobObject = $this.GetScanLogsFromStorageAccount($this.CAScanOutputLogsContainerName,$scanLogsPrefixPattern)
-							if($null -ne $CAScanDataBlobObject -and ($CAScanDataBlobObject| Measure-Object).Count -gt 0){
-								$CAScanDataBlobObject = $CAScanDataBlobObject | Where-Object { $_.LastModified.UtcDateTime -ge [DateTime]::UtcNow.AddDays(-3)}
-							}
 							if($null -ne $CAScanDataBlobObject -and ($CAScanDataBlobObject| Measure-Object).Count -gt 0)
 							{
 								# Scan logs found in storage for last 3 days
@@ -2233,9 +2230,6 @@ class CCAutomation: AzCommandBase
 			# Get AzSK storage of the current sub
 			$scanLogsPrefixPattern = $this.AutomationAccount.ResourceGroup + "/" + "$($this.SubscriptionContext.SubscriptionId)" + "/"
 			$CAScanDataBlobObject = $this.GetScanLogsFromStorageAccount($this.CAScanOutputLogsContainerName,$scanLogsPrefixPattern)
-			if($null -ne $CAScanDataBlobObject -and ($CAScanDataBlobObject| Measure-Object).Count -gt 0){
-				$CAScanDataBlobObject = $CAScanDataBlobObject | Where-Object { $_.LastModified.UtcDateTime -ge [DateTime]::UtcNow.AddDays(-3)}
-			}
 			if($null -ne $CAScanDataBlobObject -and ($CAScanDataBlobObject| Measure-Object).Count -gt 0)
 			{
 				$isScanLogsPresent = $true
@@ -4018,14 +4012,21 @@ class CCAutomation: AzCommandBase
 	hidden [PSObject] GetScanLogsFromStorageAccount($containerName, $scanLogsPrefixPattern)
 	{
 		# Get AzSK storage of the current master sub
-		$CAScanDataBlobObject = $null
+		$recentCAScanDataBlobObject = $null
 		$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 		if($null -ne $reportsStorageAccount -and ($reportsStorageAccount | Measure-Object).Count -eq 1){
+			$recentLogLimitInDays = 3
+			$dayCounter = 1
 			$keys = Get-AzStorageAccountKey -ResourceGroupName $reportsStorageAccount.ResourceGroupName -Name $reportsStorageAccount.Name
 			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
-			$CAScanDataBlobObject = Get-AzStorageBlob -Container $containerName  -Prefix $scanLogsPrefixPattern -Context $currentContext -ErrorAction SilentlyContinue
+			while($dayCounter -le $recentLogLimitInDays -and $recentCAScanDataBlobObject -eq $null){
+				$date = [DateTime]::UtcNow.AddDays(-$counter).ToString("yyyyMMdd")
+				$recentLogsPath = $scanLogsPrefixPattern + "AutomationLogs_" + $date
+				$recentCAScanDataBlobObject = Get-AzStorageBlob -Container $containerName -Prefix $recentLogsPath -Context $currentContext -ErrorAction SilentlyContinue
+				$dayCounter += 1
+			 }
 		}
-		return $CAScanDataBlobObject
+		return $recentCAScanDataBlobObject
 	}
 
 	#get App RGs
