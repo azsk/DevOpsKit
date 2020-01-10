@@ -2240,7 +2240,7 @@ class CCAutomation: AzCommandBase
 		$resolveMsg = "Please contact AzSK support team for a resolution."
 		if($isScanLogsPresent)
 		{
-			$resultMsg = "Scan logs are present in storage account for last 3 days."
+			$resultMsg = "AzSK storage account contains logs for recent jobs."
 			$resultStatus = "OK"				
 		}
 		else
@@ -4020,7 +4020,7 @@ class CCAutomation: AzCommandBase
 			$keys = Get-AzStorageAccountKey -ResourceGroupName $reportsStorageAccount.ResourceGroupName -Name $reportsStorageAccount.Name
 			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
 			while($dayCounter -le $recentLogLimitInDays -and $recentCAScanDataBlobObject -eq $null){
-				$date = [DateTime]::UtcNow.AddDays(-$counter).ToString("yyyyMMdd")
+				$date = [DateTime]::UtcNow.AddDays(-$dayCounter).ToString("yyyyMMdd")
 				$recentLogsPath = $scanLogsPrefixPattern + "AutomationLogs_" + $date
 				$recentCAScanDataBlobObject = Get-AzStorageBlob -Container $containerName -Prefix $recentLogsPath -Context $currentContext -ErrorAction SilentlyContinue
 				$dayCounter += 1
