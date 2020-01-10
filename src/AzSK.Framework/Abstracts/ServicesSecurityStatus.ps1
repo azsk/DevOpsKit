@@ -599,7 +599,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		#If Scan source is in supported sources or UsePartialCommits switch is available
 		if ($this.UsePartialCommits -or ($baselineControlsDetails.SupportedSources -contains $scanSource))
 		{
-			$partialScanMngr.UpdateResourceScanRetryCount($_.ResourceId);
+			$partialScanMngr.UpdateResourceScanRetryCount($_.ResourceId,$this.SubscriptionContext.SubscriptionId);
 		}
 	}
 
