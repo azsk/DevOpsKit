@@ -503,6 +503,7 @@ static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryE
         else {
             $uri = [WebRequestHelper]::GetApplicationInsightsEndPoint()	
         }
+
         try {
             Invoke-WebRequest -Uri $uri `
             -Method Post `
@@ -511,10 +512,12 @@ static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryE
             -UseBasicParsing | Out-Null
         }
         catch{
-            # Error while sending events to telemetry. Encode content to UTF8 and make API call again
+            # Error while sending events to telemetry. Encode content to UTF8 and make API call again to handle BOM/special characters
             if (($null -ne $eventJson)-and ($eventJson.length -gt 0)) {
-                if ($_.Exception.Response.StatusCode -eq "BadRequest") {
-                    [AIOrgTelemetryHelper]::PostUTF8Content($uri, $eventJson);
+                if([Helpers]::CheckMember($_.Exception,"Response.StatusCode")){
+                    if ($_.Exception.Response.StatusCode -eq "BadRequest") {
+                        [AIOrgTelemetryHelper]::PostUTF8Content($uri, $eventJson);
+                    }
                 }
             }
         }
@@ -534,6 +537,7 @@ hidden static PostUTF8Content($uri, $eventJson)
             -UseBasicParsing
     }
     catch {
+        # Error while sending events to telemetry after UTF8 encoding.
     }
 }
 
