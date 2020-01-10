@@ -4016,7 +4016,7 @@ class CCAutomation: AzCommandBase
 		$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 		if($null -ne $reportsStorageAccount -and ($reportsStorageAccount | Measure-Object).Count -eq 1){
 			$recentLogLimitInDays = 3
-			$dayCounter = 1
+			$dayCounter = 0
 			$keys = Get-AzStorageAccountKey -ResourceGroupName $reportsStorageAccount.ResourceGroupName -Name $reportsStorageAccount.Name
 			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
 			while($dayCounter -le $recentLogLimitInDays -and $recentCAScanDataBlobObject -eq $null){
