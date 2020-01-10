@@ -1518,6 +1518,7 @@ class SubscriptionCore: AzSVTBase
 	hidden [ControlResult] CheckNonAlternateAccountsinPIMAccess([ControlResult] $controlResult)
     {
 		$AltAccountRegX = [string]::Empty;
+		$message = [string]::Empty;
 		if($null -eq $this.PIMAssignments)
 		{
 			$message=$this.GetPIMRoles();
