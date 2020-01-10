@@ -40,7 +40,7 @@ class AzSKPDFExtension
 				$selection.Style = "No Spacing"
 
 				# Region Front Page
-				[AzSKPDFExtension]::WriteText($selection, 'DevSecOps Kit for Azure (AzSK)','Title', $true, $true, $false)
+				[AzSKPDFExtension]::WriteText($selection, 'Secure DevOps Kit for Azure (AzSK)','Title', $true, $true, $false)
 				[AzSKPDFExtension]::WriteText($selection, 'Security Report','TOC Heading', $true, $true, $false)
 				$selection.InsertBreak(6)
 				$selection.InsertBreak(6)
