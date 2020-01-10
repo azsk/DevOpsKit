@@ -86,14 +86,16 @@ class SQLDatabase: AzSVTBase
     hidden [ControlResult] CheckSqlServerAuditing([ControlResult] $controlResult)
     {
 		$serverAudit = $null
-		try {
+		try
+		{
 			$serverAudit = Get-AzSqlServerAudit -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop	
 			$controlResult.AddMessage([MessageData]::new("Current audit status for SQL server [$($this.ResourceContext.ResourceName)]:", $serverAudit))
 		}
 		catch
 		{
+			# This block is the catch execption when the storage configured for audit is not found. It either does not exist, associated with a different subscription or you do not have the appropriate credentials to access it.
 			$controlResult.AddMessage("$($_.Exception.Message)")
-			$controlResult.AddMessage([VerificationResult]::Verify, "");
+			$controlResult.VerificationResult = [VerificationResult]::Verify;
 		}
         
 		if($null -ne $serverAudit){
