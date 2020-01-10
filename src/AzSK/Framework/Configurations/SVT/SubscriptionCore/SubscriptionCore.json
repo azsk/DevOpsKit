@@ -528,6 +528,24 @@
       ],
       "Enabled": true,     
       "Rationale": "Periodic credential rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks. Credential expiry can also impact availability of existing apps."
+    },
+    {
+      "ControlID": "Azure_Subscription_Check_NonAlternate_Critical_PIM_Assignments",
+      "Description": "Ensure non alternate accounts are not assigned critical roles in the subscription.",
+      "Id": "SubscriptionCore320",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckNonAlternateAccountsinPIMAccess",
+      "Recommendation": "Go to Azure portal -> Priviledged Identity Management -> Azure Resources -> Select the scope -> Members-> Eligible roles. Remove non alternate accounts that have critical roles assigned in the subscription.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "SubscriptionCore"
+      ],
+      "Enabled": true,     
+      "Rationale": ""
     }
   ]
 }

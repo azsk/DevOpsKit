@@ -529,11 +529,12 @@ class SubscriptionCore: AzSVTBase
 		$activeAlerts = ($this.ASCSettings.Alerts | Where-Object {$_.State -eq "Active" })
 		if(($activeAlerts | Measure-Object).Count -gt 0 )
 		{
-			  if( [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsThresholdInDays') -and [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsSeverityLevels'))
+			  if( [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsThresholdInDays')  )
 			  {
 				 $AlertDaysCheck = $this.ControlSettings.ASCAlertsThresholdInDays
-				 $AlertSeverityCheck = $this.ControlSettings.ASCAlertsSeverityLevels				
-				 $activeAlerts = $activeAlerts | Where-Object{ ( [System.DateTime]::Parse($_.ReportedTimeUTC).AddDays($AlertDaysCheck) -ge ([System.DateTime]::UtcNow)) -and $_.ReportedSeverity -in $AlertSeverityCheck}
+				 $AlertSeverityCheck = $this.ControlSettings.ASCAlertsThresholdInDays.PSObject.Properties.Name;	
+				 $activeAlerts = $activeAlerts | Where-Object {$_.ReportedSeverity -in $AlertSeverityCheck}			
+				 $activeAlerts = $activeAlerts | Where-Object{ ( [System.DateTime]::Parse($_.ReportedTimeUTC).AddDays($AlertDaysCheck.($_.ReportedSeverity)) -le ([System.DateTime]::UtcNow)) }
 				 if(($activeAlerts | Measure-Object).Count -gt 0)
 				 {
 					$controlResult.SetStateData("Active alert in Security Center", ($activeAlerts | Select-Object AlertName, ReportedTimeUTC));
@@ -1511,6 +1512,63 @@ class SubscriptionCore: AzSVTBase
 			$controlResult.VerificationResult = [VerificationResult]::Manual
 		}
 		return $controlResult;
+	}
+
+
+	hidden [ControlResult] CheckNonAlternateAccountsinPIMAccess([ControlResult] $controlResult)
+    {
+		$AltAccountRegX = [string]::Empty;
+		if($null -eq $this.PIMAssignments)
+		{
+			$message=$this.GetPIMRoles();
+		}
+		if($message -ne 'OK') # if there is some while making request message will contain exception
+		{
+
+				$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+				$controlResult.AddMessage($message);
+				return $controlResult;
+		}
+		# get the altenate account pattern from org policy control settings
+		if( [Helpers]::CheckMember($this.ControlSettings,"AlernateAccountRegularExpressionForOrg"))
+		{
+			$AltAccountRegX = $this.ControlSettings.AlernateAccountRegularExpressionForOrg
+		}
+		else
+		{
+			# if unable to get the altenate account pattern from policy control settings, let the control be manual 
+			$controlResult.AddMessage("Unable to get the alternate account pattern for your org. Please verify manually")
+			return $controlResult;
+		}
+		if(($this.PIMAssignments| Measure-Object).Count -gt 0)
+		{
+			# get pim assignments for critical roles at subscription level
+			$PIMAssignmentsForCriticalRoles = $this.PIMAssignments | Where-Object {$_.RoleDefinitionName -in $this.ControlSettings.CriticalPIMRoles.Subscription}
+			if(($PIMAssignmentsForCriticalRoles | Measure-Object).Count -gt 0)
+			{
+				$IdentityName= $PIMAssignmentsForCriticalRoles.DisplayName | Get-Unique
+				$Users = @();
+				# we currently do not have principal names stored in the PIMAssignments object thus need to get the principal name explicitly
+				$IdentityName | ForEach-Object{
+					$Users += Get-AzADUser -DisplayName $_
+				}
+
+				
+				$nonAltPIMAccounts = $Users | Where-Object{$_.UserPrincipalName -notmatch $AltAccountRegX}
+				if(($nonAltPIMAccounts | Measure-Object).Count -gt 0)
+				{
+					$nonAltPIMAccountsWithRoles = $PIMAssignmentsForCriticalRoles | Where-Object{$_.DisplayName -in $nonAltPIMAccounts.DisplayName}
+					$controlResult.AddMessage([VerificationResult]::Failed, "Non alternate accounts are assigned critical roles")
+					$controlResult.AddMessage($nonAltPIMAccountsWithRoles)
+				}
+				else
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed, "No Non alternate accounts are assigned critical roles")
+				}
+			}
+		}
+
+	return $controlResult;
 	}
 	hidden [void] LoadRBACConfig()
 	{
