@@ -85,10 +85,19 @@ class SQLDatabase: AzSVTBase
 
     hidden [ControlResult] CheckSqlServerAuditing([ControlResult] $controlResult)
     {
-        $serverAudit = Get-AzSqlServerAudit -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
-
-		$controlResult.AddMessage([MessageData]::new("Current audit status for SQL server [$($this.ResourceContext.ResourceName)]:", $serverAudit))
-
+		$serverAudit = $null
+		try
+		{
+			$serverAudit = Get-AzSqlServerAudit -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop	
+			$controlResult.AddMessage([MessageData]::new("Current audit status for SQL server [$($this.ResourceContext.ResourceName)]:", $serverAudit))
+		}
+		catch
+		{
+			# This block is the catch execption when the storage configured for audit is not found. It either does not exist, associated with a different subscription or you do not have the appropriate credentials to access it.
+			$controlResult.AddMessage("$($_.Exception.Message)")
+			$controlResult.VerificationResult = [VerificationResult]::Verify;
+		}
+        
 		if($null -ne $serverAudit){
 				$isCompliant = (($serverAudit.BlobStorageTargetState -eq [AuditStateType]::Enabled) `
                                -and ($serverAudit.RetentionInDays -eq $this.ControlSettings.SqlServer.AuditRetentionPeriod_Min -or $serverAudit.RetentionInDays -eq $this.ControlSettings.SqlServer.AuditRetentionPeriod_Forever))
@@ -108,7 +117,7 @@ class SQLDatabase: AzSVTBase
 
 		}
 		else{
-			$controlResult.AddMessage("Unable to get audit details for SQL server [$($this.ResourceContext.ResourceName)]");
+			$controlResult.AddMessage("Unable to get audit details for SQL server [$($this.ResourceContext.ResourceName)].");
 		}
 
         return $controlResult;
@@ -206,10 +215,18 @@ class SQLDatabase: AzSVTBase
     hidden [ControlResult] CheckSqlServerThreatDetection([ControlResult] $controlResult)
     {
         $isCompliant = $false
-
+		$serverAudit = $null
 		#First check if the server auditing is enabled, without which TD does not work
-	    $serverAudit = Get-AzSqlServerAudit -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName.ToLower() -ErrorAction Stop
-
+		try
+		{
+			$serverAudit = Get-AzSqlServerAudit -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName.ToLower() -ErrorAction Stop
+		}
+		catch
+		{
+			$controlResult.AddMessage("$($_.Exception.Message)")
+			$controlResult.AddMessage([VerificationResult]::Verify, "");
+		}
+	    
 		if($null -ne $serverAudit){
 			#Check if Audit is Enabled 
 				if(($serverAudit.BlobStorageTargetState -eq [AuditStateType]::Enabled) -or ($serverAudit.EventHubTargetState -eq [AuditStateType]::Enabled) -or ($serverAudit.LogAnalyticsTargetState -eq [AuditStateType]::Enabled)){
@@ -403,26 +420,6 @@ class SQLDatabase: AzSVTBase
 
 		return $controlResult;
 	}
-
-	# TODO: This function is not being called. We can delete this function if not being used. 
-	hidden [bool] IsServerThreatDetectionEnabled(){
-			$isCompliant = $false
-			$serverAudit = Get-AzSqlServerAudit -ResourceGroupName $this.ResourceContext.ResourceGroupName -ServerName $this.ResourceContext.ResourceName -ErrorAction Stop
-			if($null -ne $serverAudit){
-				if($serverAudit.BlobStorageTargetState -eq 'Enabled'){
-					# TODO: We are temporarily suppressing the alias deprecation warning message given by the below Az.SQL cmdlet.
-							$serverThreat = Get-AzSqlServerAdvancedThreatProtectionSettings `
-                                			-ResourceGroupName $this.ResourceContext.ResourceGroupName `
-                                			-ServerName $this.ResourceContext.ResourceName `
-                                			-ErrorAction Stop -WarningAction SilentlyContinue
-							$excludedTypeCount = ($serverThreat.ExcludedDetectionTypes | Measure-Object ).Count
-							$isCompliant =  (($serverThreat.ThreatDetectionState -eq [ThreatDetectionStateType]::Enabled) `
-                                			-and ($excludedTypeCount -eq 0) `
-                                			-and (($serverThreat.EmailAdmins  -eq $True) -or ($null -ne $serverThreat.NotificationRecipientsEmails)))
-					}
-				}
-		return $isCompliant
-}
 
 	hidden 	[PSObject[]] GetSqlServerFirewallRules()
 	{
