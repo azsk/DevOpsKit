@@ -213,7 +213,7 @@
             "Automated": "Yes",
             "MethodName": "CheckAPIManagementCORSAllowed",
             "Rationale": "CORS enables an operation or an API to allow cross-domain calls from browser-based clients. Using '*' (allow all) for CORS setting means that all cross-origin requests are allowed. Restricting allowed origins to the specific set that needs access aligns with the principle of least privilege.",
-            "Recommendation": "For steps to add CORS policy to API's inbound policies please refer https://docs.microsoft.com/en-us/azure/api-management/api-management-cross-domain-policies#CORS. Note: No action is needed if you are not using CORS for your service.",
+            "Recommendation": "Run command 'Get-AzApiManagementPolicy' to check CORS setting for your APIM service. For steps to update CORS policy to API's inbound policies please refer https://docs.microsoft.com/en-us/azure/api-management/api-management-cross-domain-policies#CORS. Note: No action is needed if you are not using CORS for your service.",
             "Tags": [
                 "SDL",
                 "TCP",
@@ -323,7 +323,7 @@
             "Automated": "Yes",
             "MethodName": "CheckRestrictedCallerIPs",
             "Rationale": "Using the IP filter policy feature ensures that access to the backend service is restricted to a specific set/group of clients. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios.",
-            "Recommendation": "Use 'ip-filter' policy filters to allow and deny calls from specific IP addresses and/or address ranges. Do not add IP range $($this.ControlSettings.UniversalIPRange) as that allows access to all possible IPs. Please refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-access-restriction-policies#RestrictCallerIPs",
+            "Recommendation": "a) Run command 'Get-AzApiManagementPolicy' to check IP addresses filter configured in your APIM service. b) Use 'ip-filter' policy filters to allow and deny calls from specific IP addresses and/or address ranges. c) Do not add IP range $($this.ControlSettings.UniversalIPRange) as that allows access to all possible IPs. Please refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-access-restriction-policies#RestrictCallerIPs",
             "Tags": [
                 "SDL",
                 "TCP",

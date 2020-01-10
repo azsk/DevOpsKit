@@ -18,16 +18,21 @@
   },
   "ERvNet": {
     "ResourceLockLevel": "ReadOnly",
-    "WhiteListedRGs" : ["ERNetwork-LAB"],
-    "WhiteListedRemoteVirtualNetworkId" : "",
-    "WhiteListedaddressPrefix" : "0.0.0.0/0",
+    "WhiteListedRGs": [
+      "ERNetwork-LAB"
+    ],
+    "WhiteListedRemoteVirtualNetworkId": "",
+    "WhiteListedaddressPrefix": "0.0.0.0/0",
     "WhiteListednextHopType": "VirtualAppliance"
   },
   "Databricks": {
     "Tenant_Domain": "microsoft.com"
   },
   "KubernetesService": {
-    "kubernetesVersion": ["1.13.12", "1.14.8"]
+    "kubernetesVersion": [
+      "1.13.12",
+      "1.14.8"
+    ]
   },
   "APIManagement": {
     "AllowedIdentityProvider": [
@@ -41,7 +46,8 @@
       "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11",
       "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30",
       "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168"
-    ]
+    ],
+    "MaxAllowedAPICount": "30"
   },
   "VirtualMachine": {
     "Windows": {
@@ -57,20 +63,32 @@
         }
       ],
       "BaselineIds": [],
-      "ASCRecommendations": [ "EncryptionOnVm", "InstallAntimalware", "VulnerabilityAssessmentDeployment" ],
-      "ASCApprovedPatchingHealthStatuses": [ "Healthy" ],
-      "ASCApprovedBaselineStatuses": [ "Healthy" ],
-      "QueryforBaselineRule": [ "SecurityBaseline | where TimeGenerated >ago(1d) | where ResourceId ==\"{0}\" | summarize arg_max(TimeGenerated,*)by Description| where AnalyzeResult == \"Failed\" " ],
-      "QueryforMissingPatches": [ "Update | where TimeGenerated >ago(1d) |where OSType != \"Linux\" and UpdateState =~ \"Needed\" and iff(isnotnull(toint(Optional)), Optional == false, Optional == \"false\") == true and iff(isnotnull(toint(Approved)), Approved != false, Approved != \"false\") == true and (Classification == \"Security Updates\" or Classification == \"Critical Updates\") and ResourceId ==\"{0}\"| summarize AggregatedValue =dcount(UpdateID) by UpdateID,Title |limit  1000000000 " ],
-      "VulnAssessmentSolution":{
+      "ASCRecommendations": [
+        "EncryptionOnVm",
+        "InstallAntimalware",
+        "VulnerabilityAssessmentDeployment"
+      ],
+      "ASCApprovedPatchingHealthStatuses": [
+        "Healthy"
+      ],
+      "ASCApprovedBaselineStatuses": [
+        "Healthy"
+      ],
+      "QueryforBaselineRule": [
+        "SecurityBaseline | where TimeGenerated >ago(1d) | where ResourceId ==\"{0}\" | summarize arg_max(TimeGenerated,*)by Description| where AnalyzeResult == \"Failed\" "
+      ],
+      "QueryforMissingPatches": [
+        "Update | where TimeGenerated >ago(1d) |where OSType != \"Linux\" and UpdateState =~ \"Needed\" and iff(isnotnull(toint(Optional)), Optional == false, Optional == \"false\") == true and iff(isnotnull(toint(Approved)), Approved != false, Approved != \"false\") == true and (Classification == \"Security Updates\" or Classification == \"Critical Updates\") and ResourceId ==\"{0}\"| summarize AggregatedValue =dcount(UpdateID) by UpdateID,Title |limit  1000000000 "
+      ],
+      "VulnAssessmentSolution": {
         "AgentName": "QualysAgent",
-        "RequiredVersion":"1.6.4.9"
+        "RequiredVersion": "1.6.4.9"
       },
       "GuestExtension": {
         "Name": "ConfigurationForWindows",
         "RequiredVersion": "1.11.0.0",
-        "AssignmentName" : "SMSClientStatus",
-        "CheckPolicyAssignment":false
+        "AssignmentName": "SMSClientStatus",
+        "CheckPolicyAssignment": false
       },
       "RequiredExtensions": [
         {
@@ -105,11 +123,21 @@
       ],
       "BaselineIds": [],
       "ASCRecommendations": [],
-      "ASCApprovedPatchingHealthStatuses": [ "Healthy" ],
-      "ASCApprovedBaselineStatuses": [ "Healthy" ],
-      "QueryforBaselineRule": [ "SecurityBaseline | where TimeGenerated >ago(1d) | where ResourceId ==\"{0}\" | summarize arg_max(TimeGenerated,*)by Description| where AnalyzeResult == \"Failed\" " ],
-      "QueryforMissingPatches": [ "Update | where TimeGenerated >ago(1d) |where OSType == \"Linux\" and UpdateState =~ \"Needed\" and iff(isnotnull(toint(Optional)), Optional == false, Optional == \"false\") == true and iff(isnotnull(toint(Approved)), Approved != false, Approved != \"false\") == true and (Classification == \"Security Updates\" or Classification == \"Critical Updates\") and ResourceId ==\"{0}\"| summarize AggregatedValue =dcount(UpdateID) by UpdateID,Title |limit  1000000000 " ],
-      "QueryForLinuxAntimalwareStatus": ["ProtectionStatus | where TimeGenerated > ago(2d) and TypeofProtection == \"Sophos Anti-Virus\" and ProtectionStatus =~ \"Real Time Protection\"  and ResourceId contains \"{0}\" | summarize arg_max(TimeGenerated, *)"],
+      "ASCApprovedPatchingHealthStatuses": [
+        "Healthy"
+      ],
+      "ASCApprovedBaselineStatuses": [
+        "Healthy"
+      ],
+      "QueryforBaselineRule": [
+        "SecurityBaseline | where TimeGenerated >ago(1d) | where ResourceId ==\"{0}\" | summarize arg_max(TimeGenerated,*)by Description| where AnalyzeResult == \"Failed\" "
+      ],
+      "QueryforMissingPatches": [
+        "Update | where TimeGenerated >ago(1d) |where OSType == \"Linux\" and UpdateState =~ \"Needed\" and iff(isnotnull(toint(Optional)), Optional == false, Optional == \"false\") == true and iff(isnotnull(toint(Approved)), Approved != false, Approved != \"false\") == true and (Classification == \"Security Updates\" or Classification == \"Critical Updates\") and ResourceId ==\"{0}\"| summarize AggregatedValue =dcount(UpdateID) by UpdateID,Title |limit  1000000000 "
+      ],
+      "QueryForLinuxAntimalwareStatus": [
+        "ProtectionStatus | where TimeGenerated > ago(2d) and TypeofProtection == \"Sophos Anti-Virus\" and ProtectionStatus =~ \"Real Time Protection\"  and ResourceId contains \"{0}\" | summarize arg_max(TimeGenerated, *)"
+      ],
       "VulnAssessmentSolution": {
         "AgentName": "QualysAgentLinux",
         "RequiredVersion": "1.6.0.96"
@@ -117,7 +145,7 @@
       "GuestExtension": {
         "Name": "ConfigurationForLinux",
         "RequiredVersion": "1.9.0",
-        "AssignmentName" : "SMSClientStatus",
+        "AssignmentName": "SMSClientStatus",
         "CheckPolicyAssignment": false
       },
       "RequiredExtensions": [
@@ -157,21 +185,20 @@
         "WorkspaceId": "Reporting workspace customer id"
       }
     },
-    "ControlExclusionsByService" : 
-     [
-        {
-          "ControlTag" : "ExcludeDatabricks",
-          "ResourceTag": "Vendor",
-          "ResourceTagValue" :"Databricks",
-          "ServiceType" : "Databricks"
-        },
-        {
-          "ControlTag" : "ExcludeKubernetes",
-          "ResourceTag": "orchestrator",
-          "ResourceTagValue" :"Kubernetes*",
-          "ServiceType" : "Kubernetes"
-        }
-     ]
+    "ControlExclusionsByService": [
+      {
+        "ControlTag": "ExcludeDatabricks",
+        "ResourceTag": "Vendor",
+        "ResourceTagValue": "Databricks",
+        "ServiceType": "Databricks"
+      },
+      {
+        "ControlTag": "ExcludeKubernetes",
+        "ResourceTag": "orchestrator",
+        "ResourceTagValue": "Kubernetes*",
+        "ServiceType": "Kubernetes"
+      }
+    ]
   },
   "VirtualMachineScaleSet": {
     "Windows": {
@@ -200,32 +227,40 @@
         }
       ]
     },
-    "ControlExclusionsByService" : 
-      [
-        {
-          "ControlTag" : "ExcludeServiceFabric",
-          "ResourceTag": "resourceType",
-          "ResourceTagValue" :"Service Fabric",
-          "ServiceType" : "ServiceFabric"
-        },
-        {
-          "ControlTag" : "ExcludeKubernetes",
-          "ResourceTag": "orchestrator",
-          "ResourceTagValue" :"Kubernetes*",
-          "ServiceType" : "Kubernetes"
-        }
-     ]
+    "ControlExclusionsByService": [
+      {
+        "ControlTag": "ExcludeServiceFabric",
+        "ResourceTag": "resourceType",
+        "ResourceTagValue": "Service Fabric",
+        "ServiceType": "ServiceFabric"
+      },
+      {
+        "ControlTag": "ExcludeKubernetes",
+        "ResourceTag": "orchestrator",
+        "ResourceTagValue": "Kubernetes*",
+        "ServiceType": "Kubernetes"
+      }
+    ]
   },
   "NoOfApprovedAdmins": 5,
   "NoOfClassicAdminsLimit": 2,
-  "CriticalPIMRoles": { 
-    "Subscription" : [ "Owner", "Contributor", "User Access Administrator" ],
-    "ResourceGroup" : [ "Owner", "User Access Administrator" ]
+  "CriticalPIMRoles": {
+    "Subscription": [
+      "Owner",
+      "Contributor",
+      "User Access Administrator"
+    ],
+    "ResourceGroup": [
+      "Owner",
+      "User Access Administrator"
+    ]
   },
   "CheckPIMCAPolicyTags": false,
-  "PIMCAPolicyTags":[],
-  "PIMAppId":"",
-  "ASCAlertsSeverityLevels": [ "High" ],
+  "PIMCAPolicyTags": [],
+  "PIMAppId": "",
+  "ASCAlertsSeverityLevels": [
+    "High"
+  ],
   "ASCAlertsThresholdInDays": 30,
   "WhitelistedMgmtCerts": {
     "Thumbprints": [],
@@ -236,7 +271,7 @@
       "DisplayName": "MS-PIM"
     }
   ],
- "WhitelistedCustomRBACRoles": [
+  "WhitelistedCustomRBACRoles": [
     {
       "Id": "21d96096-b162-414a-8302-d8354f9d91b2",
       "Name": "Azure Service Deploy Release Management Contributor"
@@ -294,14 +329,14 @@
           "OperatorProperty": "GreaterThan",
           "Threshold": 0,
           "TimeAggregation": "Total",
-          "Dimensions":{
-              "Name" : "Authentication",
-              "OperatorProperty" : "Include",
-              "Values" : "Anonymous"
-            },
-            "WindowSize": "01:00:00",
-            "Frequency": "01:00:00",
-            "IsEnabled": true
+          "Dimensions": {
+            "Name": "Authentication",
+            "OperatorProperty": "Include",
+            "Values": "Anonymous"
+          },
+          "WindowSize": "01:00:00",
+          "Frequency": "01:00:00",
+          "IsEnabled": true
         }
       }
     ],
@@ -390,7 +425,7 @@
     "Backup_RetentionPeriod_Forever": 0,
     "LatestDotNetFrameworkVersionNumber": "v4.0",
     "Minimum_Instance_Count": 2,
-    "TLS_Version" : "1.2",
+    "TLS_Version": "1.2",
     "AADAuthAPIVersion": "2016-08-01",
     "LoadCertAppSettings": "WEBSITE_LOAD_CERTIFICATES",
     "NonAADAuthProperties": [
@@ -400,8 +435,8 @@
       "microsoftAccountClientId"
     ]
   },
-  "DataBricksFilters":{
-   "TagName": "Vendor",
+  "DataBricksFilters": {
+    "TagName": "Vendor",
     "TagValue": "Databricks"
   },
   "StorageDiagnosticsSkuMapping": [
@@ -421,8 +456,8 @@
   ],
   "LockedResourcesTags": [
     {
-       "TagName": "application",
-       "TagValue": "databricks"
+      "TagName": "application",
+      "TagValue": "databricks"
     }
   ],
   "RedisCache": {
@@ -441,27 +476,44 @@
   },
   "Automation": {
     "WebhookValidityInDays": 60,
-    "variablesToSkip": ["AppResourceGroupNames", "ReportsStorageAccountName", "UpdateToLatestAzSKVersion", "OMSSharedKey", "OMSWorkspaceId", "AltOMSWorkspaceId", "AltOMSSharedKey", "LAWSId", "LAWSSharedKey", "AltLAWSId", "AltLAWSSharedKey", "WebhookAuthZHeaderName", "WebhookUrl"]
+    "variablesToSkip": [
+      "AppResourceGroupNames",
+      "ReportsStorageAccountName",
+      "UpdateToLatestAzSKVersion",
+      "OMSSharedKey",
+      "OMSWorkspaceId",
+      "AltOMSWorkspaceId",
+      "AltOMSSharedKey",
+      "LAWSId",
+      "LAWSSharedKey",
+      "AltLAWSId",
+      "AltLAWSSharedKey",
+      "WebhookAuthZHeaderName",
+      "WebhookUrl"
+    ]
   },
-  "AllowedResourceTypesForMetadataCapture":["AppService", "VirtualMachine","DataFactory","DataFactoryV2"],
+  "AllowedResourceTypesForMetadataCapture": [
+    "AppService",
+    "VirtualMachine",
+    "DataFactory",
+    "DataFactoryV2"
+  ],
   "BaselineControls": {
-    "ResourceTypeControlIdMappingList": [
-
-    ],
+    "ResourceTypeControlIdMappingList": [],
     "SubscriptionControlIdList": [],
     "ExpiryInDays": 2,
     "SupportedSources": []
   },
   "PreviewBaselineControls": {
-    "ResourceTypeControlIdMappingList": [
-    ],
-    "SubscriptionControlIdList": [
-    ],
+    "ResourceTypeControlIdMappingList": [],
+    "SubscriptionControlIdList": [],
     "ExpiryInDays": 2,
     "SupportedSources": []
   },
   "CloudService": {
-    "LatestOSSKUIDs": [ "WA-GUEST-OS-4.44_201707-01" ]
+    "LatestOSSKUIDs": [
+      "WA-GUEST-OS-4.44_201707-01"
+    ]
   },
   "AttestationExpiryPeriodInDays": {
     "Default": 90,
@@ -474,17 +526,29 @@
   },
   "SubscriptionCore": {
     "EnableV1AlertFailure": false,
-    "ASCTier": ["Standard"],
-    "ResourceTypeASCTier":{
-      "VirtualMachines" : ["Standard"],
-      "SqlServers" : ["Standard"],
-      "AppServices" : ["Standard"],
-      "StorageAccounts" : ["Standard"]
+    "ASCTier": [
+      "Standard"
+    ],
+    "ResourceTypeASCTier": {
+      "VirtualMachines": [
+        "Standard"
+      ],
+      "SqlServers": [
+        "Standard"
+      ],
+      "AppServices": [
+        "Standard"
+      ],
+      "StorageAccounts": [
+        "Standard"
+      ]
     },
     "credHighTH": 7,
     "credModerateTH": 30,
-    "NonADIdentitiesPatterns" : ["(.)*#ext#@(.)*.onmicrosoft.com"],
-    "WhitelistedNonADIndentitiesPatterns" : []
+    "NonADIdentitiesPatterns": [
+      "(.)*#ext#@(.)*.onmicrosoft.com"
+    ],
+    "WhitelistedNonADIndentitiesPatterns": []
   },
   "HDInsight": {
     "MinSupportedClusterVersion": "3.6.0"
@@ -494,7 +558,11 @@
     "TimeOut": 60,
     "APIVersion": "2014-01"
   },
-  "DefaultValidAttestationStates": [ "NotAnIssue", "WillFixLater", "WillNotFix" ],
+  "DefaultValidAttestationStates": [
+    "NotAnIssue",
+    "WillFixLater",
+    "WillNotFix"
+  ],
   "NewControlGracePeriodInDays": {
     "Default": 30,
     "ControlSeverity": {
@@ -523,12 +591,10 @@
     "Medium": "Medium",
     "Low": "Low"
   },
-  "MandatoryTags":[
-
-  ],
+  "MandatoryTags": [],
   "WhitelistedResourceGroups": [],
   "InClusterCA": {
-    "AKS":{
+    "AKS": {
       "RequiredImagePath": "azsktest/akstest",
       "RequiredImageTag": "latest"
     }
