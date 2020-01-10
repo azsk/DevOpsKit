@@ -4018,11 +4018,13 @@ class CCAutomation: AzCommandBase
 	hidden [PSObject] GetScanLogsFromStorageAccount($containerName, $scanLogsPrefixPattern)
 	{
 		# Get AzSK storage of the current master sub
+		$CAScanDataBlobObject = $null
 		$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-		$keys = Get-AzStorageAccountKey -ResourceGroupName $reportsStorageAccount.ResourceGroupName -Name $reportsStorageAccount.Name
-		$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
-		#$scanLogsPrefixPattern = $this.AutomationAccount.CoreResourceGroup + "/" + "$($this.SubscriptionContext.SubscriptionId)" + "/"
-		$CAScanDataBlobObject = Get-AzStorageBlob -Container $containerName  -Prefix $scanLogsPrefixPattern -Context $currentContext -ErrorAction SilentlyContinue
+		if($null -ne $reportsStorageAccount){
+			$keys = Get-AzStorageAccountKey -ResourceGroupName $reportsStorageAccount.ResourceGroupName -Name $reportsStorageAccount.Name
+			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
+			$CAScanDataBlobObject = Get-AzStorageBlob -Container $containerName  -Prefix $scanLogsPrefixPattern -Context $currentContext -ErrorAction SilentlyContinue
+		}
 		return $CAScanDataBlobObject
 	}
 
