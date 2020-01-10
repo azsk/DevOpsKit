@@ -343,7 +343,8 @@ class APIManagement: AzSVTBase
 					$apiPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_ -ErrorAction Stop
 				}
 				catch {
-					# This block has been intentionally left blank to avoid breaking the code flow
+					# Eat the current exception which typically happens when the command to fetch policy fails due to network issue or if the policy is not accessible from portal 
+					# No need to break execution
 				}
 				$certThumbprint = $null
 				if (-not [String]::IsNullOrEmpty($apiPolicy)) {
@@ -413,7 +414,8 @@ class APIManagement: AzSVTBase
 					}
 					catch
 					{
-						# This block has been intentionally left blank to avoid breaking the code flow
+						# Eat the current exception which typically happens when the command to fetch policy fails due to network issue or if the policy is not accessible from portal 
+						# No need to break execution
 					}
 					
 					$AllowedOrigins = $null
@@ -441,7 +443,8 @@ class APIManagement: AzSVTBase
 						}
 						catch
 						{
-							# This block has been intentionally left blank to avoid breaking the code flow
+							# Eat the current exception which typically happens when the command to fetch policy fails due to network issue or if the policy is not accessible from portal 
+							# No need to break execution
 						}
 						
 						$AllowedOrigins = $null
@@ -503,7 +506,8 @@ class APIManagement: AzSVTBase
 			}
 			catch
 			{
-				# This block has been intentionally left blank to avoid breaking the code flow
+				# Eat the current exception which typically happens when the command to fetch policy fails due to network issue or if the policy is not accessible from portal 
+				# No need to break execution
 			}
 			
 			$RestrictedIPs = $null
@@ -520,12 +524,12 @@ class APIManagement: AzSVTBase
 				$Policy.AddressRange = $RestrictedIPs | Select-Object Address, Address-Range
 				$Policy.Status = 'Enabled'
 				$RestrictedCallerIPsInfo += $Policy
-				$Message += "[$($Index)] Scope: Global;`tIsCallerIPRestrictionConfigured: True"
+				$Message += "[$($Index)] Scope: Global;`tIsIPRestrictionConfigured: True"
 
 			}
 			else
 			{
-				$Message += "[$($Index)] Scope: Global;`tIsCallerIPRestrictionConfigured: False"
+				$Message += "[$($Index)] Scope: Global;`tIsIPRestrictionConfigured: False"
 			}
 			
 			#Policy Scope: Product
@@ -541,7 +545,8 @@ class APIManagement: AzSVTBase
 					}
 					catch
 					{
-						# This block has been intentionally left blank to avoid breaking the code flow
+						# Eat the current exception which typically happens when the command to fetch policy fails due to network issue or if the policy is not accessible from portal 
+						# No need to break execution
 					}
 					
 					$RestrictedIPs = $null
@@ -569,11 +574,11 @@ class APIManagement: AzSVTBase
 				$Index = $Index + 1
 				if ($ProductsWithIPFilter -gt 0)
 				{
-					$Message += "`n`r[$($Index)] Scope: Product;`tIsCallerIPRestrictionConfigured: True;`tTotalProducts: $($TotalProduct);`tProductsWithIPRestriction: $($ProductsWithIPFilter)"
+					$Message += "`n`r[$($Index)] Scope: Product;`tIsIPRestrictionConfigured: True;`tTotalProducts: $($TotalProduct);`tProductsWithIPRestriction: $($ProductsWithIPFilter)"
 				}
 				else
 				{
-					$Message += "`n`r[$($Index)] Scope: Product;`tIsCallerIPRestrictionConfigured: False;`tTotalProducts: $($TotalProduct);`tProductsWithIPRestriction: $($ProductsWithIPFilter)"
+					$Message += "`n`r[$($Index)] Scope: Product;`tIsIPRestrictionConfigured: False;`tTotalProducts: $($TotalProduct);`tProductsWithIPRestriction: $($ProductsWithIPFilter)"
 				}
 			}
 
@@ -585,8 +590,8 @@ class APIManagement: AzSVTBase
 				# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
 				$IsAPILevelPolicyEvaluated = $false
 				$Index = $Index + 1
-				$Message += "`n`r[$($Index)] Scope: API;`tIsCallerIPRestrictionConfigured: Not evaluated;`tTotalApis: $($TotalApis)";
-				$Message += "`n`rVerify all the IP range configured at API and Operation level. IP range $($this.ControlSettings.UniversalIPRange) must not be used as this allows access to all possible IPs."
+				$Message += "`n`r[$($Index)] Scope: API;`tIsIPRestrictionConfigured: Not evaluated;`tTotalApis: $($TotalApis)";
+				$Message += "`n`rThe control could not be evaluated at API and Operations level due to high number of APIs. You will need to verify policies manually."
 			}
 			else
 			{
@@ -624,7 +629,8 @@ class APIManagement: AzSVTBase
 						}
 						catch
 						{
-							# This block has been intentionally left blank to avoid breaking the code flow
+							# Eat the current exception which typically happens when the command to fetch policy fails due to network issue or if the policy is not accessible from portal 
+							# No need to break execution
 						}
 						
 						$RestrictedIPs = $null
@@ -657,7 +663,8 @@ class APIManagement: AzSVTBase
 							}
 							catch
 							{
-								# This block has been intentionally left blank to avoid breaking the code flow
+								# Eat the current exception which typically happens when the command to fetch policy fails due to network issue or if the policy is not accessible from portal 
+								# No need to break execution
 							}
 							
 							$RestrictedIPs = $null
@@ -684,21 +691,21 @@ class APIManagement: AzSVTBase
 					$Index = $Index + 1
 					if (($APIsWithIPRestriction | Measure-Object).Count -gt 0)
 					{
-						$Message += "`n`r[$($Index)] Scope: API;`tIsCallerIPRestrictionConfigured: True;`tTotalApis: $($TotalApis);`tAPIsWithIPRestriction: $($APIsWithIPRestriction)"	
+						$Message += "`n`r[$($Index)] Scope: API;`tIsIPRestrictionConfigured: True;`tTotalApis: $($TotalApis);`tAPIsWithIPRestriction: $($APIsWithIPRestriction)"	
 					}
 					else
 					{
-						$Message += "`n`r[$($Index)] Scope: API;`tIsCallerIPRestrictionConfigured: False;`tTotalApis: $($TotalApis);`tAPIsWithIPRestriction: $($APIsWithIPRestriction)"	
+						$Message += "`n`r[$($Index)] Scope: API;`tIsIPRestrictionConfigured: False;`tTotalApis: $($TotalApis);`tAPIsWithIPRestriction: $($APIsWithIPRestriction)"	
 					}
 
 					$Index = $Index + 1
 					if (($OperationsWithIPRestriction | Measure-Object).Count -gt 0)
 					{
-						$Message += "`n`r[$($Index)] Scope: Operation;`tIsCallerIPRestrictionConfigured: True;`tTotalOperations: $($TotalOperations);`tOperationsWithIPRestriction: $($OperationsWithIPRestriction)"	
+						$Message += "`n`r[$($Index)] Scope: Operation;`tIsIPRestrictionConfigured: True;`tTotalOperations: $($TotalOperations);`tOperationsWithIPRestriction: $($OperationsWithIPRestriction)"	
 					}
 					else
 					{
-						$Message += "`n`r[$($Index)] Scope: Operation;`tIsCallerIPRestrictionConfigured: False;`tTotalOperations: $($TotalOperations);`tOperationsWithIPRestriction: $($OperationsWithIPRestriction)"	
+						$Message += "`n`r[$($Index)] Scope: Operation;`tIsIPRestrictionConfigured: False;`tTotalOperations: $($TotalOperations);`tOperationsWithIPRestriction: $($OperationsWithIPRestriction)"	
 					}
 				}
 			}
@@ -731,6 +738,7 @@ class APIManagement: AzSVTBase
 			}
 			elseif ((($RestrictedCallerIPsInfo | Measure-Object).Count -gt 0) -or $($IsAPILevelPolicyEvaluated -eq $false))
 			{
+				$controlResult.AddMessage("Following are the IP policies at various scopes in this APIM instance:")
 				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new($Message))
 			}
 			else
@@ -865,7 +873,8 @@ class APIManagement: AzSVTBase
 					$apiPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -ErrorAction Stop
 				}
 				catch {
-					# This block has been intentionally left blank to avoid breaking the code flow
+					# Eat the current exception which typically happens when the command to fetch policy fails due to network issue or if the policy is not accessible from portal 
+					# No need to break execution
 				}
 
 				$IsPolicyEnabled = $null
@@ -913,6 +922,7 @@ class APIManagement: AzSVTBase
 				$this.APIUserAuth.Enabled = @()
 				$this.APIUserAuth.Disabled = @()
 				$this.APIMAPIs | ForEach-Object {
+					# REST API to fetch user authorization setting at API level
 					$uri=[system.string]::Format($ResourceAppIdURI+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.ApiManagement/service/{2}/apis/{3}?api-version=2018-06-01-preview",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName,$_.ApiId)
 					$json=$null;
 					try 
