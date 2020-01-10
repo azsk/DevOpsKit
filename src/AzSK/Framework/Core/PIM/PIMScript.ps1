@@ -958,10 +958,11 @@ class PIM: AzCommandBase {
                {
                     if($RequireMFAOnActivation)
                     {
-                        
-                          $policyString= '{"ruleIdentifier":"AcrsRule","setting":"{\"acrsRequired\":false,\"acrs\":\"'+$policyTag+'\"}"}'
+                        # TODO: if we turn on MFA on activation CA policy cannot be simultaneously applied. Need to check if the API still throws the error
+                          $policyString= ''
                         
                     }
+                    
                   
                }
         #  5) Create json body for patch request  

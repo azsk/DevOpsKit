@@ -224,7 +224,7 @@
   },
   "CheckPIMCAPolicyTags": false,
   "PIMCAPolicyTags":[],
-  "PIMAppId":"",
+  "PIMAppId":"01fc33a7-78ba-4d2f-a4b7-768e336e890e",
   "ASCAlertsSeverityLevels": [ "High" ],
   "ASCAlertsThresholdInDays": 30,
   "WhitelistedMgmtCerts": {
@@ -532,5 +532,6 @@
       "RequiredImagePath": "azsktest/akstest",
       "RequiredImageTag": "latest"
     }
-  }
+  },
+  "MaxResourceInventoryObjectsCount": 20000
 }
