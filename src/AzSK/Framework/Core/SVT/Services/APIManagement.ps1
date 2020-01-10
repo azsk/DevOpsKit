@@ -6,6 +6,7 @@ class APIManagement: AzSVTBase
 	hidden [PSObject] $APIMInstance = $null;
 	hidden [PSObject] $APIMAPIs = $null;
 	hidden [PSObject] $APIMProducts = $null;
+	hidden [PSObject] $APIUserAuth = $null;
 
 	hidden [PSObject] $ResourceObject;
 
@@ -173,8 +174,8 @@ class APIManagement: AzSVTBase
 			$Product = $this.APIMProducts | Where-Object { ($_.State -eq [Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models.PsApiManagementProductState]::Published) -and ($_.SubscriptionRequired -eq $false )}
 			if(($Product | Measure-Object).Count -gt 0)
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "'Requires Subscription' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $Product )
-				$controlResult.SetStateData("API product(s) open for public access without the requirement of subscriptions", $Product);
+				$controlResult.AddMessage([VerificationResult]::Failed, "'Requires Subscription' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $Product.ProductId )
+				$controlResult.SetStateData("API product(s) open for public access without the requirement of subscriptions", $Product.ProductId);
 			}
 			else
 			{
@@ -193,8 +194,8 @@ class APIManagement: AzSVTBase
 			if(($null -ne $Product) -and ($Product.ApprovalRequired -contains $false))
 			{
 				$Product = $Product | Where-Object { $_.ApprovalRequired -eq $false}
-				$controlResult.AddMessage([VerificationResult]::Verify, "'Requires Approval' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $Product)
-				$controlResult.SetStateData("API product(s) where subscription attempts are auto-approved", $Product);
+				$controlResult.AddMessage([VerificationResult]::Verify, "'Requires Approval' option is turned OFF for below Products in '$($this.ResourceContext.ResourceName)' API Management instance.", $Product.ProductId)
+				$controlResult.SetStateData("API product(s) where subscription attempts are auto-approved", $Product.ProductId);
 			}
 			else
 			{
@@ -321,8 +322,8 @@ class APIManagement: AzSVTBase
 			$Product = $this.APIMProducts | Where-Object { ($_.ProductId -eq 'starter') -or ($_.ProductId -eq 'unlimited') }
 			if(($Product | Measure-Object).Count -gt 0)
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "APIM contains sample products. Delete the two sample products: Starter and Unlimited.",$Product) 
-				$controlResult.SetStateData("APIM service sample product", $Product);
+				$controlResult.AddMessage([VerificationResult]::Failed, "APIM contains sample products. Delete the two sample products: Starter and Unlimited.", $Product.ProductId) 
+				$controlResult.SetStateData("APIM service sample product", $Product.ProductId);
 			}
 			else
 			{
@@ -337,8 +338,17 @@ class APIManagement: AzSVTBase
 		if(($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
 			$ClientCertAuthDisabledInAPIs = ($this.APIMAPIs).ApiId | ForEach-Object {
-				$apiPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_
-				$certThumbprint = $apiPolicy | Select-Xml -XPath "//inbound//authentication-certificate" | foreach { $_.Node.thumbprint }
+				$apiPolicy = $null
+				try {
+					$apiPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_ -ErrorAction Stop
+				}
+				catch {
+					# This block has been intentionally left blank to avoid breaking the code flow
+				}
+				$certThumbprint = $null
+				if (-not [String]::IsNullOrEmpty($apiPolicy)) {
+					$certThumbprint = $apiPolicy | Select-Xml -XPath "//inbound//authentication-certificate" | foreach { $_.Node.thumbprint }	
+				}
 			    if($certThumbprint -eq $null)
 			    {
 			        $_
@@ -374,226 +384,358 @@ class APIManagement: AzSVTBase
 				$MaxApiCount = $this.ControlSettings.MaxApiCount
 			}
 			$Counter = 0
-			$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
-			    #Policy Scope: API
-			
-				if($Counter -ge $MaxApiCount)
-                {
-				sleep($SleepTime)
-				$Counter = 0
-				}
-				$Counter ++
-				$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
-				$AllowedOrigins = ""
-			    $AllowedOrigins = $APIPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
-			    if($null -ne $AllowedOrigins)
-				{
-					$Policy = "" | Select-Object Scope, Name, Id, AllowedOrigins
-					$Policy.Scope = "API"
-					$Policy.Name = $_.Name
-					$Policy.Id = $_.ApiId
-					$Policy.AllowedOrigins = $($AllowedOrigins -join ",")
-
-					$Result += $Policy
-				}
-			    
-			    #Policy Scope: Operation
-			    Get-AzApiManagementOperation -Context $this.APIMContext -ApiId $_.ApiId | ForEach-Object {
-			        $OperationPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -OperationId $_.OperationId
-					$AllowedOrigins = ""
-			        $AllowedOrigins = $OperationPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
-			        if($null -ne $AllowedOrigins)
-			        {
-			            $Policy = "" | Select-Object Scope, ScopeName, ScopeId, AllowedOrigins
-			            $Policy.Scope = "Operation"
-				    	$Policy.ScopeName = $_.Name
-				    	$Policy.ScopeId = $_.OperationId
-						$Policy.AllowedOrigins = $($AllowedOrigins -join ",")
-
-			            $Result += $Policy
-			        }
-			    }
-			}
-
-			$FailedResult = $Result | Where-Object { $_.AllowedOrigins.Split(",") -contains "*" }
-
-			if(($FailedResult | Measure-Object).Count -gt 0)
+			if ( ($this.APIMAPIs | Measure-Object).Count -gt $this.ControlSettings.APIManagement.MaxAllowedAPICount)
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed  , 
-				                      [MessageData]::new("CORS is enabled in APIM with access from all domains ('*') " + $this.ResourceContext.ResourceName, $FailedResult));
-				$controlResult.SetStateData("CORS setting Allowed Origins", $FailedResult);
-			}
-			elseif(($Result | Measure-Object).Count -gt 0)
-			{
+				# If number of APIs is higher than MaxAllowedAPICount, the control is marked as Verify.
+				# This check has been implemented because of the execution time of control in case of large subscription
+				# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
+				
 				$controlResult.AddMessage([VerificationResult]::Verify,
-					[MessageData]::new("CORS is enabled in APIM with access from below custom domains."),$Result);
-				$controlResult.SetStateData("CORS setting Allowed Origins",$Result);
+					[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rVerify that CORS access is granted to a minimal set of trusted origins and only required verbs are supported.`n`rEnsure that CORS is not enabled in APIM with access from all domains ('*'). Using '*' (allow all) for CORS setting means that all cross-origin requests are allowed."));
 			}
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Manual,
-			                          [MessageData]::new("No CORS settings found for "+$this.ResourceContext.ResourceName));
+				#Policy Scope: API
+				#Policy Scope: Operation
+				$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
+					#Policy Scope: API
+
+					if($Counter -ge $MaxApiCount)
+					{
+						sleep($SleepTime)
+						$Counter = 0
+					}
+					$Counter ++
+					$APIPolicy = $null
+					try
+					{
+						$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -ErrorAction Stop
+					}
+					catch
+					{
+						# This block has been intentionally left blank to avoid breaking the code flow
+					}
+					
+					$AllowedOrigins = $null
+					if (-not [String]::IsNullOrEmpty($APIPolicy))
+					{
+						$AllowedOrigins = $APIPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
+					}
+					if($null -ne $AllowedOrigins)
+					{
+						$Policy = "" | Select-Object Scope, Name, Id, AllowedOrigins
+						$Policy.Scope = "API"
+						$Policy.Name = $_.Name
+						$Policy.Id = $_.ApiId
+						$Policy.AllowedOrigins = $($AllowedOrigins -join ",")
+
+						$Result += $Policy
+					}
+			    
+					#Policy Scope: Operation
+					Get-AzApiManagementOperation -Context $this.APIMContext -ApiId $_.ApiId | ForEach-Object {
+						$OperationPolicy = $null
+						try
+						{
+							$OperationPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -OperationId $_.OperationId -ErrorAction Stop
+						}
+						catch
+						{
+							# This block has been intentionally left blank to avoid breaking the code flow
+						}
+						
+						$AllowedOrigins = $null
+						if (-not [String]::IsNullOrEmpty($OperationPolicy))
+						{
+							$AllowedOrigins = $OperationPolicy | Select-Xml -XPath "//inbound//cors//origin" | foreach { $_.Node.InnerXML }
+						}
+						if ($null -ne $AllowedOrigins)
+						{
+							$Policy = "" | Select-Object Scope, ScopeName, ScopeId, AllowedOrigins
+							$Policy.Scope = "Operation"
+							$Policy.ScopeName = $_.Name
+							$Policy.ScopeId = $_.OperationId
+							$Policy.AllowedOrigins = $($AllowedOrigins -join ",")
+
+							$Result += $Policy
+						}
+					}
+				}
+
+				$FailedResult = $Result | Where-Object { $_.AllowedOrigins.Split(",") -contains "*" }
+
+				if(($FailedResult | Measure-Object).Count -gt 0)
+				{
+					$controlResult.AddMessage([VerificationResult]::Failed  , 
+										[MessageData]::new("CORS is enabled in APIM with access from all domains ('*') " + $this.ResourceContext.ResourceName, $FailedResult));
+					$controlResult.SetStateData("CORS setting Allowed Origins", $FailedResult);
+				}
+				elseif(($Result | Measure-Object).Count -gt 0)
+				{
+					$controlResult.AddMessage([VerificationResult]::Verify,
+						[MessageData]::new("CORS is enabled in APIM with access from below custom domains."),$Result);
+					$controlResult.SetStateData("CORS setting Allowed Origins",$Result);
+				}
+				else
+				{
+					$controlResult.AddMessage([VerificationResult]::Manual,
+										[MessageData]::new("No CORS settings found for "+$this.ResourceContext.ResourceName));
+				}
 			}
+			
 		}
 		return $controlResult;
     }
 
 	hidden [ControlResult] CheckRestrictedCallerIPs([ControlResult] $controlResult)
     {
-		if( $null -ne $this.APIMContext)
+		if ( $null -ne $this.APIMContext)
 		{
-			$Result = @()
+			$IsAPILevelPolicyEvaluated = $false
+			$Message = ""
+			$Index = 1
+			$RestrictedCallerIPsInfo = @()
 			#Policy Scope: Gobal
-			$GlobalPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext
-			$RestrictedIPs = ""
-			$RestrictedIPs = $GlobalPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
-			$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AddressRange, Status
-			$Policy.Scope = "Global"
-			$Policy.ScopeName = "NA"
-			$Policy.ScopeId = "NA"
-			$Policy.Action = ""
-			$Policy.AddressRange = ""
-			if($null -ne $RestrictedIPs)
+			$GlobalPolicy = $null
+			try
 			{
-			    $Policy.Action = $RestrictedIPs.Action
-			    $Policy.AddressRange = $RestrictedIPs | Select-Object Address, Address-Range
-			    $Policy.Status = 'Enabled'
+				$GlobalPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ErrorAction Stop
+			}
+			catch
+			{
+				# This block has been intentionally left blank to avoid breaking the code flow
+			}
+			
+			$RestrictedIPs = $null
+			if (-not [String]::IsNullOrEmpty($GlobalPolicy))
+			{
+				$RestrictedIPs = $GlobalPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
+			}
+			
+			if ($null -ne $RestrictedIPs)
+			{
+				$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AddressRange, Status
+				$Policy.Scope = "Global"
+				$Policy.Action = $RestrictedIPs.Action
+				$Policy.AddressRange = $RestrictedIPs | Select-Object Address, Address-Range
+				$Policy.Status = 'Enabled'
+				$RestrictedCallerIPsInfo += $Policy
+				$Message += "[$($Index)] Scope: Global;`tIsCallerIPRestrictionConfigured: True"
+
 			}
 			else
 			{
-			    $Policy.Status = 'Not Enabled'
+				$Message += "[$($Index)] Scope: Global;`tIsCallerIPRestrictionConfigured: False"
 			}
-			$Result += $Policy
+			
 			#Policy Scope: Product
-			if($null -ne $this.APIMProducts)
+			if ($null -ne $this.APIMProducts)
 			{
+				$TotalProduct = ($this.APIMProducts | Measure-Object).Count
+				$ProductsWithIPFilter = 0
 				$this.APIMProducts | ForEach-Object {
-			    $ProductPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ProductId $_.ProductId
-			    $RestrictedIPs = ""
-			    $RestrictedIPs = $ProductPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
+					$ProductPolicy = $null
+					try
+					{
+						$ProductPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ProductId $_.ProductId -ErrorAction Stop
+					}
+					catch
+					{
+						# This block has been intentionally left blank to avoid breaking the code flow
+					}
+					
+					$RestrictedIPs = $null
+					if (-not [String]::IsNullOrEmpty($ProductPolicy))
+					{
+						$RestrictedIPs = $ProductPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
+					}
 			    
-				$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AddressRange, Status
-			    $Policy.Scope = "Product"
-			    $Policy.ScopeName = $_.Title
-			    $Policy.ScopeId = $_.ProductId
-				$Policy.Action = ""
-				$Policy.AddressRange = ""
-			    if($null -ne $RestrictedIPs)
-			    {
-			        $Policy.Action = $RestrictedIPs.Action
-			        $Policy.AddressRange = $RestrictedIPs | Select-Object Address, Address-Range
-					$Policy.Status = 'Enabled'
-			    }
+					if ($null -ne $RestrictedIPs)
+					{
+						$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AddressRange, Status
+						$Policy.Scope = "Product"
+						$Policy.ScopeName = $_.Title
+						$Policy.ScopeId = $_.ProductId
+						$Policy.Action = $RestrictedIPs.Action
+						$Policy.AddressRange = $RestrictedIPs | Select-Object Address, Address-Range
+						$Policy.Status = 'Enabled'
+						$ProductWithIPFilter = $ProductWithIPFilter + 1
+
+						$RestrictedCallerIPsInfo += $Policy
+					}
+					
+				}
+
+				$Index = $Index + 1
+				if ($ProductsWithIPFilter -gt 0)
+				{
+					$Message += "`n`r[$($Index)] Scope: Product;`tIsCallerIPRestrictionConfigured: True;`tTotalProducts: $($TotalProduct);`tProductsWithIPRestriction: $($ProductsWithIPFilter)"
+				}
 				else
 				{
-					$Policy.Status = 'Not Enabled'
-				}
-				$Result += $Policy
-			}
-			}
-			#Policy Scope: API
-			#Policy Scope: Operation
-			$MaxApiCount = 10
-			$SleepTime = 30
-			if([Helpers]::CheckMember($this.ControlSettings,"SleepTime"))
-			{
-				$SleepTime = $this.ControlSettings.SleepTime
-			}
-			if([Helpers]::CheckMember($this.ControlSettings,"MaxApiCount"))
-			{
-				$MaxApiCount = $this.ControlSettings.MaxApiCount
-			}
-			$Counter = 0
-			if($null -ne $this.APIMAPIs)
-			{
-				$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
-					#Policy Scope: API
-                    if($Counter -ge $MaxApiCount)
-                    {
-						sleep($SleepTime)
-						$Counter = 0
-					}
-					$Counter ++
-					$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
-					$RestrictedIPs = ""
-					$RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
-					$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AddressRange, Status
-					$Policy.Scope = "API"
-					$Policy.ScopeName = $_.Name
-					$Policy.ScopeId = $_.ApiId
-					$Policy.Action = ""
-					$Policy.AddressRange = ""
-					if($null -ne $RestrictedIPs)
-					{
-					    $Policy.Action = $RestrictedIPs.Action
-					    $Policy.AddressRange = $RestrictedIPs | Select-Object Address, Address-Range
-						$Policy.Status = 'Enabled'
-					}
-					else
-					{
-						$Policy.Status = 'Not Enabled'
-					}
-					$Result += $Policy
-					
-					#Policy Scope: Operation
-					Get-AzApiManagementOperation -Context $this.APIMContext -ApiId $_.ApiId | ForEach-Object {
-						$OperationPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -OperationId $_.OperationId
-						$RestrictedIPs = ""
-						$RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
-						$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AddressRange, Status
-						$Policy.Scope = "Operation"
-						$Policy.ScopeName = $_.Name
-						$Policy.ScopeId = $_.OperationId
-						$Policy.Action = ""
-						$Policy.AddressRange = ""
-						if($null -ne $RestrictedIPs)
-						{
-						    $Policy.Action = $RestrictedIPs.Action
-						    $Policy.AddressRange = $RestrictedIPs | Select-Object Address, Address-Range
-							$Policy.Status = 'Enabled'
-						}
-						else
-						{
-							$Policy.Status = 'Not Enabled'
-						}
-						$Result += $Policy
-					}
+					$Message += "`n`r[$($Index)] Scope: Product;`tIsCallerIPRestrictionConfigured: False;`tTotalProducts: $($TotalProduct);`tProductsWithIPRestriction: $($ProductsWithIPFilter)"
 				}
 			}
 
+			$TotalApis = ($this.APIMAPIs | Measure-Object).Count
+			if ( $TotalApis -gt $this.ControlSettings.APIManagement.MaxAllowedAPICount)
+			{
+				# If number of APIs is higher than MaxAllowedAPICount, the control is marked as Verify.
+				# This check has been implemented because of the execution time of control in case of large subscription
+				# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
+				$IsAPILevelPolicyEvaluated = $false
+				$Index = $Index + 1
+				$Message += "`n`r[$($Index)] Scope: API;`tIsCallerIPRestrictionConfigured: Not evaluated;`tTotalApis: $($TotalApis)";
+				$Message += "`n`rVerify all the IP range configured at API and Operation level. IP range $($this.ControlSettings.UniversalIPRange) must not be used as this allows access to all possible IPs."
+			}
+			else
+			{
+				#Policy Scope: API
+				#Policy Scope: Operation
+				$IsAPILevelPolicyEvaluated = $true
+				$APIsWithIPRestriction = 0
+				$OperationsWithIPRestriction = 0
+				$TotalOperations = 0
+				$MaxApiCount = 10
+				$SleepTime = 30
+				if ([Helpers]::CheckMember($this.ControlSettings, "SleepTime"))
+				{
+					$SleepTime = $this.ControlSettings.SleepTime
+				}
+				if ([Helpers]::CheckMember($this.ControlSettings, "MaxApiCount"))
+				{
+					$MaxApiCount = $this.ControlSettings.MaxApiCount
+				}
+				$Counter = 0
+				if ($null -ne $this.APIMAPIs)
+				{
+					$this.APIMAPIs | Select-Object ApiId, Name | ForEach-Object {
+						#Policy Scope: API
+						if ($Counter -ge $MaxApiCount)
+						{
+							sleep($SleepTime)
+							$Counter = 0
+						}
+						$Counter ++
+						$APIPolicy = $null
+						try
+						{
+							$APIPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -ErrorAction Stop
+						}
+						catch
+						{
+							# This block has been intentionally left blank to avoid breaking the code flow
+						}
+						
+						$RestrictedIPs = $null
+						if (-not [String]::IsNullOrEmpty($APIPolicy))
+						{
+							$RestrictedIPs = $APIPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
+						}
+						if ($null -ne $RestrictedIPs)
+						{
+							$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AddressRange, Status
+							$Policy.Scope = "API"
+							$Policy.ScopeName = $_.Name
+							$Policy.ScopeId = $_.ApiId
+							$Policy.Action = $RestrictedIPs.Action
+							$Policy.AddressRange = $RestrictedIPs | Select-Object Address, Address-Range
+							$Policy.Status = 'Enabled'
+							$APIsWithIPRestriction = $APIsWithIPRestriction + 1
+
+							$RestrictedCallerIPsInfo += $Policy
+						}
+					
+						#Policy Scope: Operation
+						$Operations = Get-AzApiManagementOperation -Context $this.APIMContext -ApiId $_.ApiId
+						$TotalOperations = $TotalOperations + ($Operations | Measure-Object).Count 
+						$Operations | ForEach-Object {
+							$OperationPolicy = $null
+							try
+							{
+								$OperationPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -OperationId $_.OperationId -ErrorAction Stop
+							}
+							catch
+							{
+								# This block has been intentionally left blank to avoid breaking the code flow
+							}
+							
+							$RestrictedIPs = $null
+							if (-not [String]::IsNullOrEmpty($OperationPolicy))
+							{
+								$RestrictedIPs =  $OperationPolicy | Select-Xml -XPath "//inbound//ip-filter" | foreach { $_.Node }
+							}
+							if ($null -ne $RestrictedIPs)
+							{
+								$Policy = "" | Select Scope, ScopeName, ScopeId, Action, AddressRange, Status
+								$Policy.Scope = "Operation"
+								$Policy.ScopeName = $_.Name
+								$Policy.ScopeId = $_.OperationId
+								$Policy.Action = $RestrictedIPs.Action
+								$Policy.AddressRange = $RestrictedIPs | Select-Object Address, Address-Range
+								$Policy.Status = 'Enabled'
+								$OperationsWithIPRestriction = $OperationsWithIPRestriction + 1
+
+								$RestrictedCallerIPsInfo += $Policy
+							}
+						}
+					}
+
+					$Index = $Index + 1
+					if (($APIsWithIPRestriction | Measure-Object).Count -gt 0)
+					{
+						$Message += "`n`r[$($Index)] Scope: API;`tIsCallerIPRestrictionConfigured: True;`tTotalApis: $($TotalApis);`tAPIsWithIPRestriction: $($APIsWithIPRestriction)"	
+					}
+					else
+					{
+						$Message += "`n`r[$($Index)] Scope: API;`tIsCallerIPRestrictionConfigured: False;`tTotalApis: $($TotalApis);`tAPIsWithIPRestriction: $($APIsWithIPRestriction)"	
+					}
+
+					$Index = $Index + 1
+					if (($OperationsWithIPRestriction | Measure-Object).Count -gt 0)
+					{
+						$Message += "`n`r[$($Index)] Scope: Operation;`tIsCallerIPRestrictionConfigured: True;`tTotalOperations: $($TotalOperations);`tOperationsWithIPRestriction: $($OperationsWithIPRestriction)"	
+					}
+					else
+					{
+						$Message += "`n`r[$($Index)] Scope: Operation;`tIsCallerIPRestrictionConfigured: False;`tTotalOperations: $($TotalOperations);`tOperationsWithIPRestriction: $($OperationsWithIPRestriction)"	
+					}
+				}
+			}
+			
+
 			#Fail control if universal address range 0.0.0.0-255.255.255.255 is used
 			$anyToAnyIPFilter = @()
-			$allowedIPRange = $Result | Where-Object { $_.Action -eq 'Allow' }
-			if(($allowedIPRange | Measure-Object).Count -gt 0)
+			$allowedIPRange = $RestrictedCallerIPsInfo | Where-Object { $_.Action -eq 'Allow' }
+			if (($allowedIPRange | Measure-Object).Count -gt 0)
 			{
 				$anyToAnyIPFilter = $allowedIPRange | ForEach-Object {
 					$AddressRange = $_.AddressRange[0].'address-range' | Where-Object { 
-						if(($_ | Measure-Object).Count -gt 0)
+						if (($_ | Measure-Object).Count -gt 0)
 						{
 							(($_.from -eq $this.ControlSettings.IPRangeStartIP -and $_.to -eq $this.ControlSettings.IPRangeEndIP) -or `
-							($_.from -eq $this.ControlSettings.IPRangeEndIP -and $_.to -eq $this.ControlSettings.IPRangeStartIP))
+								($_.from -eq $this.ControlSettings.IPRangeEndIP -and $_.to -eq $this.ControlSettings.IPRangeStartIP))
 						}
 					}; 
-					if($AddressRange)
+					if ($AddressRange)
 					{
 						return $_
 					}
 				}
 			}
 
-			if(($anyToAnyIPFilter | Measure-Object).Count -gt 0)
+			if (($anyToAnyIPFilter | Measure-Object).Count -gt 0)
 			{
 				$controlResult.AddMessage([VerificationResult]::Failed, "Below IP restriction(s) are configured in $($this.ResourceContext.ResourceName) API management instance.", $anyToAnyIPFilter)
-				$controlResult.SetStateData("Restricted caller IPs",$anyToAnyIPFilter);
+				$controlResult.SetStateData("Restricted caller IPs", $anyToAnyIPFilter);
 			}
-			elseif(($Result | Measure-Object).Count -gt 0)
+			elseif ((($RestrictedCallerIPsInfo | Measure-Object).Count -gt 0) -or $($IsAPILevelPolicyEvaluated -eq $false))
 			{
-				$controlResult.AddMessage([VerificationResult]::Verify, "Below IP restriction(s) are configured in $($this.ResourceContext.ResourceName) API management instance.", $Result)
-				$controlResult.SetStateData("Restricted caller IPs",$Result);
+				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new($Message))
 			}
 			else
 			{
-			    $controlResult.AddMessage([VerificationResult]::Verify,"Unable to validate control. Please verify from portal that IP restirction is enabled for APIs.")
+				$controlResult.AddMessage([VerificationResult]::Verify, "Unable to validate control. Please verify from portal that IP restirction is enabled for APIs.")
 			}
 		}	
 		return $controlResult;
@@ -623,7 +765,8 @@ class APIManagement: AzSVTBase
 		if(($null -ne $this.APIMContext) -and ($null -ne $this.APIMProducts))
 		{
 			$GuestGroupUsedInProductList = $this.APIMProducts | ForEach-Object {
-			    if((Get-AzApiManagementGroup -Context $this.APIMContext -ProductId $_.ProductId).GroupId -contains 'guests')
+				$GroupDetails = Get-AzApiManagementGroup -Context $this.APIMContext -ProductId $_.ProductId
+			    if([Helpers]::CheckMember($GroupDetails,"GroupId") -and $GroupDetails.GroupId -contains 'guests')
 			    {
 			        $_
 			    }
@@ -631,8 +774,8 @@ class APIManagement: AzSVTBase
 
 			if($null -ne $GuestGroupUsedInProductList)
 			{
-				$controlResult.AddMessage([VerificationResult]::Verify, "Guest groups is added to below products access control.", $GuestGroupUsedInProductList) 
-				$controlResult.SetStateData("Products open to Guest users",$GuestGroupUsedInProductList);
+				$controlResult.AddMessage([VerificationResult]::Verify, "Guest groups is added to below products access control.", $GuestGroupUsedInProductList.ProductId) 
+				$controlResult.SetStateData("Products open to Guest users",$GuestGroupUsedInProductList.ProductId);
 			}
 			else
 			{
@@ -696,11 +839,12 @@ class APIManagement: AzSVTBase
 	
 	hidden [ControlResult] CheckUserAuthorizationSettingInAPI([ControlResult] $controlResult)
     {       
-		$APIUserAuth = $this.CheckUserAuthorizationSettingEnabledinAPI();
-		if(($APIUserAuth.Disabled | Measure-Object).Count -gt 0)
+		$this.APIUserAuth = $this.CheckUserAuthorizationSettingEnabledinAPI();
+		if(($this.APIUserAuth.Disabled | Measure-Object).Count -gt 0)
 		{
-			$controlResult.AddMessage([VerificationResult]::Failed, "User Authorization : OAuth 2.0 or OpenID connect is not enabled in below APIs.", $APIUserAuth.Disabled)
-			$controlResult.SetStateData("User Authorization not enabled in APIs",$APIUserAuth.Disabled);
+			$APIListWithDisabledUserAuth = $this.APIUserAuth.Disabled | Select ApiId, ServiceUrl
+			$controlResult.AddMessage([VerificationResult]::Failed, "User Authorization : OAuth 2.0 or OpenID connect is not enabled in below APIs.", $APIListWithDisabledUserAuth)
+			$controlResult.SetStateData("User Authorization not enabled in APIs", $APIListWithDisabledUserAuth);
 		}
 		else
 		{
@@ -711,32 +855,44 @@ class APIManagement: AzSVTBase
 
 	hidden [ControlResult] CheckJWTValidatePolicyInAPI([ControlResult] $controlResult)
     {       
-		$APIUserAuth = $this.CheckUserAuthorizationSettingEnabledinAPI();
+		$this.APIUserAuth = $this.CheckUserAuthorizationSettingEnabledinAPI();
 		$JWTValidatePolicyNotFound = @()
-		if(($APIUserAuth -ne 'ResourceNotFound') -and ($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
+		if(($this.APIUserAuth -ne 'ResourceNotFound') -and ($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
-			$JWTValidatePolicyNotFound =  $this.APIMAPIs | ForEach-Object {		
-				$apiPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId
-				$IsPolicyEnabled = $apiPolicy | Select-Xml -XPath "//inbound//validate-jwt"
+			$this.APIMAPIs | ForEach-Object {
+				$apiPolicy = $null
+				try {
+					$apiPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -ErrorAction Stop
+				}
+				catch {
+					# This block has been intentionally left blank to avoid breaking the code flow
+				}
+
+				$IsPolicyEnabled = $null
+				if (-not [String]::IsNullOrEmpty($apiPolicy)) {
+					$IsPolicyEnabled = $apiPolicy | Select-Xml -XPath "//inbound//validate-jwt"	
+				}
 				if($null -eq $IsPolicyEnabled)
 				{
-					$_
+					$JWTValidatePolicyNotFound += $_
 				}
 			}
-			$Temp = @()
-			if(($JWTValidatePolicyNotFound | Measure-Object).Count -gt 0 -and ($APIUserAuth.Enabled | Measure-Object).Count -gt 0)
+			# FailedApiList here is the list of API Ids for which user authentication is enabled but jwt validation is added in policy
+			$FailedApiList = @()
+			if(($JWTValidatePolicyNotFound | Measure-Object).Count -gt 0 -and ($this.APIUserAuth.Enabled | Measure-Object).Count -gt 0)
 			{
-				$Temp = Compare-Object -ReferenceObject $APIUserAuth.Enabled.ApiID -DifferenceObject $JWTValidatePolicyNotFound.ApiId -IncludeEqual | Where-Object { $_.SideIndicator -eq "==" }
+				$FailedApiList = Compare-Object -ReferenceObject $this.APIUserAuth.Enabled.ApiID -DifferenceObject $JWTValidatePolicyNotFound.ApiId -IncludeEqual | Where-Object { $_.SideIndicator -eq "==" }
 			}
-			if(($JWTValidatePolicyNotFound | Measure-Object).Count -gt 0 -and ($APIUserAuth.Enabled | Measure-Object).Count -gt 0 -and ($Temp | Measure-Object).Count -gt 0)
+			if(($JWTValidatePolicyNotFound | Measure-Object).Count -gt 0 -and ($this.APIUserAuth.Enabled | Measure-Object).Count -gt 0 -and ($FailedApiList | Measure-Object).Count -gt 0)
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "JWT Token validation not found for OAuth/OpenID connect authorization.", $Temp)
-				$controlResult.SetStateData("JWT Token validation not found",$Temp);
+				$controlResult.AddMessage([VerificationResult]::Failed, "JWT Token validation not found for OAuth/OpenID connect authorization.", $FailedApiList)
+				$controlResult.SetStateData("JWT Token validation not found",$FailedApiList);
 			}
 			elseif(($JWTValidatePolicyNotFound| Measure-Object).Count -gt 0)
 			{
-			    $controlResult.AddMessage([VerificationResult]::Verify,"The 'validate-jwt' policy is not configured in below APIs.", $JWTValidatePolicyNotFound)
-				$controlResult.SetStateData("JWT Token validation not found",$JWTValidatePolicyNotFound);
+				$JWTNotFoundReturnObj = $JWTValidatePolicyNotFound | Select-Object ApiId, ServiceUrl
+			    $controlResult.AddMessage([VerificationResult]::Verify,"The 'validate-jwt' policy is not configured in below APIs.", $JWTNotFoundReturnObj)
+				$controlResult.SetStateData("JWT Token validation not found", $JWTNotFoundReturnObj);
 			}
 			else
 			{
@@ -750,34 +906,38 @@ class APIManagement: AzSVTBase
     {
 		if( $null -ne $this.APIMContext -and ($null -ne $this.APIMAPIs))
 		{
-			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-			$APIUserAuth = "" | Select-Object Enabled, Disabled
-			$APIUserAuth.Enabled = @()
-			$APIUserAuth.Disabled = @()
-			$this.APIMAPIs | ForEach-Object {
-				$uri=[system.string]::Format($ResourceAppIdURI+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.ApiManagement/service/{2}/apis/{3}?api-version=2018-06-01-preview",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName,$_.ApiId)
-				$json=$null;
-				try 
-				{ 	
-					$json=[WebRequestHelper]::InvokeGetWebRequest($uri);
-				} 
-				catch
-				{ 
+			if ($null -eq $this.APIUserAuth)
+			{
+				$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
+				$this.APIUserAuth = "" | Select-Object Enabled, Disabled
+				$this.APIUserAuth.Enabled = @()
+				$this.APIUserAuth.Disabled = @()
+				$this.APIMAPIs | ForEach-Object {
+					$uri=[system.string]::Format($ResourceAppIdURI+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.ApiManagement/service/{2}/apis/{3}?api-version=2018-06-01-preview",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName,$_.ApiId)
 					$json=$null;
-				}
-				if(($null -ne $json) -and (($json | Measure-Object).Count -gt 0))
-				{
-					if(([Helpers]::CheckMember($json[0],"properties.authenticationSettings")) -and ([Helpers]::CheckMember($json, "properties.authenticationSettings.oAuth2") -or [Helpers]::CheckMember($json, "properties.authenticationSettings.openid")))
-					{
-						$APIUserAuth.Enabled += $_
+					try 
+					{ 	
+						$json=[WebRequestHelper]::InvokeGetWebRequest($uri);
+					} 
+					catch
+					{ 
+						$json=$null;
 					}
-					else
+					if(($null -ne $json) -and (($json | Measure-Object).Count -gt 0))
 					{
-						$APIUserAuth.Disabled += $_
+						if(([Helpers]::CheckMember($json[0],"properties.authenticationSettings")) -and ([Helpers]::CheckMember($json, "properties.authenticationSettings.oAuth2") -or [Helpers]::CheckMember($json, "properties.authenticationSettings.openid")))
+						{
+							$this.APIUserAuth.Enabled += $_
+						}
+						else
+						{
+							$this.APIUserAuth.Disabled += $_
+						}
 					}
 				}
 			}
-			return $APIUserAuth;
+
+			return $this.APIUserAuth;
 		}
 		else
 		{
