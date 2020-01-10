@@ -183,7 +183,8 @@ else {
 			$controlAttested = $false
 			if( ([FeatureFlightingManager]::GetFeatureStatus("EnableScanAfterAttestation","*"))) { 
 				#Global variable "AttestationValue" is set to true when one or more controls are attested in current scan
-				if (Get-Variable AttestationValue -Scope Global){
+				#Ignore if variable AttestationValue is not found
+				if (Get-Variable AttestationValue -Scope Global -ErrorAction Ignore){
 					if ( $Global:AttestationValue){
 						$controlAttested = $true
 					}
