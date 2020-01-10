@@ -533,5 +533,5 @@
       "RequiredImageTag": "latest"
     }
   },
-  "MaxResourceInventoryObjectsCount": 5000
+  "MaxResourceInventoryObjectsCount": 20000
 }
