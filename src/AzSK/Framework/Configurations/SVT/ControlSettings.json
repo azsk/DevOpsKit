@@ -42,7 +42,7 @@
       "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30",
       "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168"
     ],
-    "MaxAllowedAPICount": "30"
+    "MaxAllowedAPICount": 30
   },
   "VirtualMachine": {
     "Windows": {
