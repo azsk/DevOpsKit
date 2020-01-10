@@ -226,8 +226,7 @@
   "CheckPIMCAPolicyTags": false,
   "PIMCAPolicyTags":[],
   "PIMAppId":"01fc33a7-78ba-4d2f-a4b7-768e336e890e",
-  "ASCAlertsSeverityLevels": [ "High" ],
-  "ASCAlertsThresholdInDays": {
+   "ASCAlertsThresholdInDays": {
     "High": 0,
     "Medium": 30  
    
