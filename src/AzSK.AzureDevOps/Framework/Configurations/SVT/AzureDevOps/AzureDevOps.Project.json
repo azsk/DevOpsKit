@@ -53,6 +53,74 @@
           "AuthZ"
         ],
         "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Project_Disable_Anonymous_Access_To_Badges",
+        "Description": "Anonymous access to status badge API for parallel pipelines should be disabled.",
+        "Id": "Project1000",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckBadgeAnonAccess",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Disable anonymous access to badges'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Project_Limit_Variables_Settable_At_Queue_Time",
+        "Description": "Only those variables explicitly marked settable at queue time can be set.",
+        "Id": "Project1010",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckSetQueueTime",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Limit variables that can be set at queue time.'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Project_Limit_Job_Authorization_Scope_To_Current_Project",
+        "Description": "Scope of access of all pipelines should be restricted to current project.",
+        "Id": "Project1020",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckJobAuthnScope",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current scope.'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Project_Publish_Metadata_From_Pipeline",
+        "Description": "Allows pipelines to record metadata. Evaluate artifact check can be configured to define policies using the metadata recorded.",
+        "Id": "Project1030",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckPublishMetadata",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Publish metadata from pipelines'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
       }
 ]
 }
