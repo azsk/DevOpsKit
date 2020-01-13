@@ -514,11 +514,7 @@ static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryE
         catch{
             # Error while sending events to telemetry. Encode content to UTF8 and make API call again to handle BOM/special characters
             if (($null -ne $eventJson)-and ($eventJson.length -gt 0)) {
-                if([Helpers]::CheckMember($_.Exception,"Response.StatusCode")){
-                    if ($_.Exception.Response.StatusCode -eq "BadRequest") {
-                        [AIOrgTelemetryHelper]::PostUTF8Content($uri, $eventJson);
-                    }
-                }
+                [AIOrgTelemetryHelper]::PostUTF8Content($uri, $eventJson);
             }
         }
     }

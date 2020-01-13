@@ -24,11 +24,7 @@ class RemoteApiHelper {
             catch {
                 #Error while sending events to Database. Encode content to UTF8 and make API call again to handle BOM/special characters
                 if (($null -ne $content)-and ($content.length -gt 0)) {
-                    if([Helpers]::CheckMember($_.Exception,"Response.StatusCode")){
-                        if ($_.Exception.Response.StatusCode -eq "BadRequest") {
-                            [RemoteApiHelper]::PostUTF8Content($uri, $content, "application/json")
-                        }
-                    }
+                    return [RemoteApiHelper]::PostUTF8Content($uri, $content, "application/json")
                 }
                 return "ERROR"
             }
