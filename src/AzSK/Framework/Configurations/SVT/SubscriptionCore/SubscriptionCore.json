@@ -533,7 +533,7 @@
       "ControlID": "Azure_Subscription_Use_Only_Alt_Credentials",
       "Description": "Ensure that critical operations in the subscription are conducted using alternate (ALT) credentials",
       "Id": "SubscriptionCore320",
-      "ControlSeverity": "High",
+      "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckNonAlternateAccountsinPIMAccess",
       "Recommendation": "Go to Azure portal -> Priviledged Identity Management -> Azure Resources -> Select the scope -> Members-> Eligible roles and verify the non alernate accounts. Ensure that only alternate accounts are used as members of critical roles in the subscription. Do not use day to day user accounts.",
