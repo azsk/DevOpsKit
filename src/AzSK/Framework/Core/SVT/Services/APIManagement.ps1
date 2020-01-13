@@ -564,7 +564,7 @@ class APIManagement: AzSVTBase
 						$Policy.Action = $RestrictedIPs.Action
 						$Policy.AddressRange = $RestrictedIPs | Select-Object Address, Address-Range
 						$Policy.Status = 'Enabled'
-						$ProductWithIPFilter = $ProductWithIPFilter + 1
+						$ProductsWithIPFilter = $ProductsWithIPFilter + 1
 
 						$RestrictedCallerIPsInfo += $Policy
 					}
