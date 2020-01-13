@@ -43,7 +43,7 @@ class AzResourceInventoryListener: ListenerBase
             if($resources.Count -gt $maxResourceCount)
             {
                  $resources= [ResourceInventory]::FilteredResources
-                 [AIOrgTelemetryHelper]::TrackEvent("Raw Resource Inventory Aborted", $resources.Count, $null)
+                 [AIOrgTelemetryHelper]::PublishEvent( "Raw Resource Inventory Aborted",@{"TotalResources"= $([ResourceInventory]::RawResources |Measure-Object).Count;"AzSKScanableResources"=$(([ResourceInventory]::FilteredResources| Measure-Object).Count); "SubscriptionId"=$SubscriptionId;"PartialScanIdentifier"=$this.PartialScanIdentifier;}, $null)
             }
             $resourceGroups = Get-AzResourceGroup
             $resourceDetails = @();
