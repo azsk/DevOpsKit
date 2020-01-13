@@ -39,7 +39,7 @@
     },
     {
       "ControlID": "AzureDevOps_User_DP_Info_Token_Expiration",
-      "Description": "Personal access tokens (PAT) near to expiration",
+      "Description": "Personal access tokens (PAT) which are near to expire withing 7 days.",
       "Id": "User121",
       "ControlSeverity": "Medium",
       "Automated": "Yes",

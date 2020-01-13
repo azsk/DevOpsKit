@@ -330,16 +330,24 @@ class Release: SVTBase
                 $sourcetypes = @();
                 $this.ReleaseObj.artifacts  | ForEach-Object {
                     $sourcetypes += $_.type;
-                } 
+                }
                if (( ($sourcetypes | Measure-Object).Count -gt 1) -and ($sourcetypes -contains 'Git' -or  $sourcetypes -contains 'Github') ){
-                $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines build code is from external sources.");   
+                
+                $adoresource = $sourcetypes | Where-Object { $_ -ne 'Git' -and $_ -ne 'Github'} ;
+               if( ($adoresource | Measure-Object).Count -gt 0){
+                   $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines mixing code with external sources.");    
                }
                else {
-                $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines build code not from external sources.");   
+                $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines is not mixing code with external sources.");   
+               }
+               
+               }
+               else {
+                $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines code not from external sources.");   
                }
            }S
            else {
-            $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines build code not from external sources.");   
+            $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines code not from external sources.");   
            } 
         }
 
