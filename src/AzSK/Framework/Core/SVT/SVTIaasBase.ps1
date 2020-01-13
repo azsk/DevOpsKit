@@ -47,7 +47,7 @@ class SVTIaasBase: AzSVTBase
 		
 				if($null -ne $ipc -and ($ipc.IpConfigurations | Measure-Object).Count -gt 0)
 				{
-					$this.vNetNics = $nics| Where-Object{($_.IpConfigurations.Id) -in  $ipc.IpConfigurations.Id}
+					$this.vNetNics = $nics | Where-Object{($_.IpConfigurations.Id) -in $ipc.IpConfigurations.Id }
 				}
 			}
 
@@ -102,7 +102,7 @@ class SVTIaasBase: AzSVTBase
 					try
 					{
 						Set-Variable -Name nic -Scope Local -Value $_
-						$out = ""| Select-Object NICName, VMName, VMId, PrimaryStatus, NetworkSecurityGroupName,NetworkSecurityGroupId, PublicIpAddress, PrivateIpAddress,  EnableIPForwarding, IpConfigurations
+                       	$out = ""| Select-Object NICName, VMName, VMId, PrimaryStatus, NetworkSecurityGroupName,NetworkSecurityGroupId, PublicIpAddress, PrivateIpAddress,  EnableIPForwarding, IpConfigurations
 						$out.NICName = $nic.Name
 						$out.IpConfigurations = $nic.IpConfigurations
 						$out.EnableIPForwarding = $nic.EnableIPForwarding
@@ -114,8 +114,7 @@ class SVTIaasBase: AzSVTBase
 			
 							$NICPublicIpAddresses =  $nic.ipconfigurations.PublicIpAddress
 							$PrivateIpAddresses = $nic.ipconfigurations.PrivateIpAddress
-							$PublicIpAddresses =@()
-							if(($PublicIpAddresses |Measure-Object).Count -gt 0)
+							if(($NICPublicIpAddresses |Measure-Object).Count -gt 0)
 							{
 								$NICPublicIpAddresses | ForEach-Object{
 									try
@@ -139,7 +138,7 @@ class SVTIaasBase: AzSVTBase
 						}
 						else
 						{
-							$nicproperties.IpConfigurations | ForEach-Object{
+							$nic.IpConfigurations | ForEach-Object{
 								Set-Variable -Name ipconfiguration -Scope Local -Value $_
 								try
 								{
@@ -161,24 +160,25 @@ class SVTIaasBase: AzSVTBase
 						$out.PrivateIpAddress = ([System.String]::Join(";",$PrivateIpAddresses))
 						
 
-						if(($nicproperties | Get-Member -Name "VirtualMachine") -and $nicproperties.VirtualMachine )
+						if(($nic | Get-Member -Name "VirtualMachine") -and $nic.VirtualMachine )
 						{
-							$vmresource = Get-AzResource -ResourceId $nicproperties.VirtualMachine.Id
+							$vmresource = Get-AzResource -ResourceId $nic.VirtualMachine.Id
 							$out.VMName = $vmresource.Name
 						}
 						else {
 							$out.VMName = ""
 						}
-						if($null -ne ($nicproperties | Get-Member primary))
+						if($null -ne ($nic | Get-Member primary))
 						{
-							$out.PrimaryStatus = $nicproperties.primary
+							$out.PrimaryStatus = $nic.primary
 						}
 
-						if(($nicproperties | Get-Member -Name "NetworkSecurityGroup") -and $nicproperties.NetworkSecurityGroup)
+						if(($nic | Get-Member -Name "NetworkSecurityGroup") -and $nic.NetworkSecurityGroup)
 						{
-							$nsgresource = Get-AzResource -ResourceId $nicproperties.NetworkSecurityGroup.Id
+							$nsgresource = Get-AzResource -ResourceId $nic.NetworkSecurityGroup.Id
 							$out.NetworkSecurityGroupName = $nsgresource.Name
 						}
+
 						$this.vNetNicsOutput += $out
 					}
 					catch

@@ -1517,56 +1517,65 @@ class SubscriptionCore: AzSVTBase
 
 	hidden [ControlResult] CheckNonAlternateAccountsinPIMAccess([ControlResult] $controlResult)
     {
-		$AltAccountRegX = [string]::Empty;
-		$message = [string]::Empty;
-		if($null -eq $this.PIMAssignments)
+		if($this.HasGraphAPIAccess)
 		{
-			$message=$this.GetPIMRoles();
-		}
-		if($message -ne 'OK') # if there is some while making request message will contain exception
-		{
+			$AltAccountRegX = [string]::Empty;
+			$message = [string]::Empty;
+			if($null -eq $this.PIMAssignments)
+			{
+				$message=$this.GetPIMRoles();
+			}
+			if($message -ne 'OK') # if there is some while making request message will contain exception
+			{
 
-				$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
-				$controlResult.AddMessage($message);
+					$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+					$controlResult.AddMessage($message);
+					return $controlResult;
+			}
+			# get the altenate account pattern from org policy control settings
+			if( [Helpers]::CheckMember($this.ControlSettings,"AlernateAccountRegularExpressionForOrg"))
+			{
+				$AltAccountRegX = $this.ControlSettings.AlernateAccountRegularExpressionForOrg
+			}
+			else
+			{
+				# if unable to get the altenate account pattern from policy control settings, let the control be manual 
+				$controlResult.AddMessage("Unable to get the alternate account pattern for your org. Please verify manually")
 				return $controlResult;
-		}
-		# get the altenate account pattern from org policy control settings
-		if( [Helpers]::CheckMember($this.ControlSettings,"AlernateAccountRegularExpressionForOrg"))
-		{
-			$AltAccountRegX = $this.ControlSettings.AlernateAccountRegularExpressionForOrg
+			}
+			if(($this.PIMAssignments| Measure-Object).Count -gt 0)
+			{
+				# get pim assignments for critical roles at subscription level
+				$PIMAssignmentsForCriticalRoles = $this.PIMAssignments | Where-Object {$_.RoleDefinitionName -in $this.ControlSettings.CriticalPIMRoles.Subscription}
+				if(($PIMAssignmentsForCriticalRoles | Measure-Object).Count -gt 0)
+				{
+					$IdentityName= $PIMAssignmentsForCriticalRoles.DisplayName | Get-Unique
+					$Users = @();
+					# we currently do not have principal names stored in the PIMAssignments object thus need to get the principal name explicitly
+					$IdentityName | ForEach-Object{
+						
+						$Users += Get-AzADUser -DisplayName $_
+					}
+
+					
+					$nonAltPIMAccounts = $Users | Where-Object{$_.UserPrincipalName -notmatch $AltAccountRegX}
+					if(($nonAltPIMAccounts | Measure-Object).Count -gt 0)
+					{
+						$nonAltPIMAccountsWithRoles = $PIMAssignmentsForCriticalRoles | Where-Object{$_.DisplayName -in $nonAltPIMAccounts.DisplayName}
+						$controlResult.AddMessage([VerificationResult]::Failed, "Non alternate accounts are assigned critical roles")
+						$controlResult.AddMessage($nonAltPIMAccountsWithRoles)
+					}
+					else
+					{
+						$controlResult.AddMessage([VerificationResult]::Passed, "No Non alternate accounts are assigned critical roles")
+					}
+				}
+			}
 		}
 		else
 		{
-			# if unable to get the altenate account pattern from policy control settings, let the control be manual 
-			$controlResult.AddMessage("Unable to get the alternate account pattern for your org. Please verify manually")
-			return $controlResult;
-		}
-		if(($this.PIMAssignments| Measure-Object).Count -gt 0)
-		{
-			# get pim assignments for critical roles at subscription level
-			$PIMAssignmentsForCriticalRoles = $this.PIMAssignments | Where-Object {$_.RoleDefinitionName -in $this.ControlSettings.CriticalPIMRoles.Subscription}
-			if(($PIMAssignmentsForCriticalRoles | Measure-Object).Count -gt 0)
-			{
-				$IdentityName= $PIMAssignmentsForCriticalRoles.DisplayName | Get-Unique
-				$Users = @();
-				# we currently do not have principal names stored in the PIMAssignments object thus need to get the principal name explicitly
-				$IdentityName | ForEach-Object{
-					$Users += Get-AzADUser -DisplayName $_
-				}
-
-				
-				$nonAltPIMAccounts = $Users | Where-Object{$_.UserPrincipalName -notmatch $AltAccountRegX}
-				if(($nonAltPIMAccounts | Measure-Object).Count -gt 0)
-				{
-					$nonAltPIMAccountsWithRoles = $PIMAssignmentsForCriticalRoles | Where-Object{$_.DisplayName -in $nonAltPIMAccounts.DisplayName}
-					$controlResult.AddMessage([VerificationResult]::Failed, "Non alternate accounts are assigned critical roles")
-					$controlResult.AddMessage($nonAltPIMAccountsWithRoles)
-				}
-				else
-				{
-					$controlResult.AddMessage([VerificationResult]::Passed, "No Non alternate accounts are assigned critical roles")
-				}
-			}
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			$controlResult.AddMessage([VerificationResult]::Manual, "Not able to query Graph API. Please verify manually.");
 		}
 
 	return $controlResult;
