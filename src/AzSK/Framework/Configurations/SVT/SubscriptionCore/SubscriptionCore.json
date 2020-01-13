@@ -530,13 +530,13 @@
       "Rationale": "Periodic credential rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks. Credential expiry can also impact availability of existing apps."
     },
     {
-      "ControlID": "Azure_Subscription_Check_NonAlternate_Critical_PIM_Assignments",
-      "Description": "Ensure non alternate accounts are not assigned critical roles in the subscription.",
+      "ControlID": "Azure_Subscription_Use_Only_Alt_Credentials",
+      "Description": "Ensure that critical operations in the subscription are conducted using alternate (ALT) credentials",
       "Id": "SubscriptionCore320",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckNonAlternateAccountsinPIMAccess",
-      "Recommendation": "Go to Azure portal -> Priviledged Identity Management -> Azure Resources -> Select the scope -> Members-> Eligible roles. Remove non alternate accounts that have critical roles assigned in the subscription.",
+      "Recommendation": "Go to Azure portal -> Priviledged Identity Management -> Azure Resources -> Select the scope -> Members-> Eligible roles and verify the non alernate accounts. Ensure that only alternate accounts are used as members of critical roles in the subscription. Do not use day to day user accounts.",
       "Tags": [
         "SDL",
         "TCP",
@@ -545,7 +545,7 @@
         "SubscriptionCore"
       ],
       "Enabled": true,     
-      "Rationale": ""
+      "Rationale": "The regular / day to day use accounts are subject to a lot of credential theft attacks due to various activities that a user conducts using such accounts (e.g., browsing the web, clicking on email links, etc.). A user account that gets compromised (say via a phishing attack) immediately subjects the entire cloud subscription to risk if it is a member of critical roles in the subscription. Use of smartcard-backed alternate (SC-ALT) accounts instead protects the cloud subscriptions from this risk. Moreover, for complete protection, all sensitive access must be done using a secure admin workstation (SAW) and Azure Privileged Identity Management (PIM)."
     }
   ]
 }
