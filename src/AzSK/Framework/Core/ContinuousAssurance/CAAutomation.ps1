@@ -2126,7 +2126,7 @@ class CCAutomation: AzCommandBase
 			}
 			#Check 12.2 Suspended job in last 3 days
 			elseif($null -ne $suspendedJobs -and ($suspendedJobs|Measure-Object).Count -gt 0){
-				$failMsg = "One or more CA scanning automation runbook (job) has been in suspended state in the last 3 days."
+				$failMsg = "One or more automation runbook jobs have been suspended in the last 3 days."
 				$resolvemsg = "Please contact AzSK support team for a resolution."
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Warning"
@@ -2159,7 +2159,7 @@ class CCAutomation: AzCommandBase
 
 		#region: Step 13: Check if storage account rec'd scan logs in last 3 days 
 		$stepCount++
-		$checkDescription = "Inspecting AzSK storage account contains logs for recent jobs."
+		$checkDescription = "Inspecting AzSK storage account for scan logs from recent jobs."
 		$tgtSubsLogsStatus = @()
 		$isScanLogsPresent = $true
 		if($this.IsCentralScanModeOn)
@@ -2240,12 +2240,12 @@ class CCAutomation: AzCommandBase
 		$resolveMsg = "Please contact AzSK support team for a resolution."
 		if($isScanLogsPresent)
 		{
-			$resultMsg = "AzSK storage account contains logs for recent jobs."
+			$resultMsg = "AzSK storage account contains scan logs for recent jobs as expected."
 			$resultStatus = "OK"				
 		}
 		else
 		{
-			$failMsg = "Scan logs are missing in storage account for last 3 days."
+			$failMsg = "CA scan logs are missing in storage account for last 3 days."
 			$resultMsg = "$failMsg`r`n$resolvemsg"
 			$resultStatus = "Failed"
 			$shouldReturn = $true
