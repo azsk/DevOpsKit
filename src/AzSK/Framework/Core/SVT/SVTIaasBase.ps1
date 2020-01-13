@@ -44,10 +44,13 @@ class SVTIaasBase: AzSVTBase
 			{
 			 $nics =  Get-AzNetworkInterface #-ResourceGroupName $rgname
         	 $ipc = $VNetSubnets| Select-Object -Property 'IpConfigurations' -ExpandProperty 'IpConfigurations' 
-		
+			
+				
 				if($null -ne $ipc -and ($ipc.IpConfigurations | Measure-Object).Count -gt 0)
 				{
-					$this.vNetNics += $nics| Where-Object{($_.IpConfigurations.Id) -in $ipc.IpConfigurations.Id }
+					$NICIpConfigs = $ipc.IpConfigurations.Id | Where-Object{$_ -in $nics.IpConfigurations.Id}
+					$resId = ($nics | Select-Object @{Name= 'ResourceId'; Expression = {$_.Id}}, @{Name="IpConfigurationId"; Expression={ $_.IpConfigurations | Select-Object Id }} |Select-Object -Property * -ExcludeProperty IpConfigurations -ExpandProperty IpConfigurationId | Where-Object{$_.Id -in $NICIpConfigs}).ResourceId
+					$this.VNetNics += $nics | Where-Object{$_.Id -in $resId}
 				}
 			}
 
@@ -110,24 +113,24 @@ class SVTIaasBase: AzSVTBase
 						$PrivateIpAddresses = @()
 						if([FeatureFlightingManager]::GetFeatureStatus("EnableVnetFixForSub",$($this.SubscriptionContext.SubscriptionId)))
 						{
-			
-			
-							$NICPublicIpAddresses =  $nic.ipconfigurations.PublicIpAddress
-							$PrivateIpAddresses = $nic.ipconfigurations.PrivateIpAddress
+							
+							$NICPublicIpAddresses = @();
+							$NICPublicIpAddresses +=  $nic.ipconfigurations | Where-Object {$null -ne $_.PublicIpAddress}
+							$PrivateIpAddresses += $nic.ipconfigurations.PrivateIpAddress
 							if(($NICPublicIpAddresses |Measure-Object).Count -gt 0)
 							{
 								$NICPublicIpAddresses | ForEach-Object{
 									try
 									{
 					
-									$IPResource = Get-AzResource -ResourceId $_.Id
+									$IPResource = Get-AzResource -ResourceId $_.PublicIpAddress.Id
 									$pubResourceName = Get-AzPublicIpAddress -Name $IPResource.Name -ResourceGroupName $IPResource.ResourceGroupName
 									$PublicIpAddresses += $pubResourceName.IpAddress
 									}
 									catch
 									{
 										
-										$this.vNetPIPIssues += $nic
+										$this.vNetPIPIssues += $nic.IpConfigurations
 									}
 											
 								
