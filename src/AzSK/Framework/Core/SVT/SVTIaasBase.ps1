@@ -47,7 +47,7 @@ class SVTIaasBase: AzSVTBase
 		
 				if($null -ne $ipc -and ($ipc.IpConfigurations | Measure-Object).Count -gt 0)
 				{
-					$this.vNetNics = $nics | Where-Object{($_.IpConfigurations.Id) -in $ipc.IpConfigurations.Id }
+					$this.vNetNics += $nics| Where-Object{($_.IpConfigurations.Id) -in $ipc.IpConfigurations.Id }
 				}
 			}
 
