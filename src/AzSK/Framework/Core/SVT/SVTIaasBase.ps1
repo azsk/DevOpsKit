@@ -49,8 +49,12 @@ class SVTIaasBase: AzSVTBase
 				if($null -ne $ipc -and ($ipc.IpConfigurations | Measure-Object).Count -gt 0)
 				{
 					$NICIpConfigs = $ipc.IpConfigurations.Id | Where-Object{$_ -in $nics.IpConfigurations.Id}
-					$resId = ($nics | Select-Object @{Name= 'ResourceId'; Expression = {$_.Id}}, @{Name="IpConfigurationId"; Expression={ $_.IpConfigurations | Select-Object Id }} |Select-Object -Property * -ExcludeProperty IpConfigurations -ExpandProperty IpConfigurationId | Where-Object{$_.Id -in $NICIpConfigs}).ResourceId
-					$this.VNetNics += $nics | Where-Object{$_.Id -in $resId}
+					$NICresources = ($nics | Select-Object @{Name= 'ResourceId'; Expression = {$_.Id}}, @{Name="IpConfigurationId"; Expression={ $_.IpConfigurations | Select-Object Id }} |Select-Object -Property * -ExcludeProperty IpConfigurations -ExpandProperty IpConfigurationId | Where-Object{$_.Id -in $NICIpConfigs})
+					if(($NICresources | Measure-Object).Count -gt 0)
+					{
+						$resourceIds = $NICresources.ResourceId
+						$this.VNetNics += $nics | Where-Object{$_.Id -in $resourceIds}
+					}
 				}
 			}
 
