@@ -156,8 +156,9 @@ else {
         $GeneratePDFReport = $this.InvocationContext.BoundParameters["GeneratePDF"];
         try {
             if (-not [string]::IsNullOrEmpty($folderpath)) {
+
                 switch ($GeneratePDFReport) {
-                    None {
+					None {
                         # Do nothing
                     }
                     Landscape {

@@ -92,6 +92,7 @@ enum MonitoringSolutionInstallationOption
 
 enum GeneratePDF
 {
+	None
 	Landscape
 	Portrait
 }
