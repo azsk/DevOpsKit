@@ -152,7 +152,9 @@ else {
             if (-not [string]::IsNullOrEmpty($folderpath)) {
 
                 switch ($GeneratePDFReport) {
-					
+					None {
+                        # Do nothing
+                    }
                     Landscape {
                         [AzSKPDFExtension]::GeneratePDF($folderpath, $this.SubscriptionContext, $this.InvocationContext, $true);
                     }
