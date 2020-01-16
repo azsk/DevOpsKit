@@ -161,10 +161,10 @@ function Get-AzSKAzureServicesSecurityStatus
 		$DoNotOpenOutputFolder,
 
 		[GeneratePDF]
-		[ValidateSet("Landscape", "portrait")]
+		[ValidateSet("Landscape", "Portrait")]
         [Parameter(Mandatory = $false)]
 		[Alias("gpdf","pdf")]
-		$GeneratePDF = [GeneratePDF]::portrait,
+		$GeneratePDF = [GeneratePDF]::Portrait,
 
 		[switch]
 		[Parameter(Mandatory = $false)]
@@ -380,10 +380,10 @@ function Get-AzSKSubscriptionSecurityStatus
 		$DoNotOpenOutputFolder,
 		
 		[GeneratePDF]
-		[ValidateSet("Landscape", "portrait")]
+		[ValidateSet("Landscape", "Portrait")]
         [Parameter(Mandatory = $false)]
 		[Alias("gpdf","pdf")]
-		$GeneratePDF = [GeneratePDF]::portrait,
+		$GeneratePDF = [GeneratePDF]::Portrait,
 
 		[switch]
 		[Parameter(Mandatory = $false)]
@@ -548,10 +548,10 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 		$DoNotOpenOutputFolder,
 
 		[GeneratePDF]
-		[ValidateSet("Landscape", "portrait")]
+		[ValidateSet("Landscape", "Portrait")]
         [Parameter(Mandatory = $false)]
 		[Alias("gpdf","pdf")]
-		$GeneratePDF = [GeneratePDF]::portrait,
+		$GeneratePDF = [GeneratePDF]::Portrait,
 
 		
 		[switch]
@@ -748,10 +748,10 @@ function Get-AzSKControlsStatus
 		$DoNotOpenOutputFolder,
 
 		[GeneratePDF]
-		[ValidateSet("Landscape", "portrait")]
+		[ValidateSet("Landscape", "Portrait")]
         [Parameter(Mandatory = $false)]
 		[Alias("gpdf","pdf")]
-		$GeneratePDF = [GeneratePDF]::portrait,
+		$GeneratePDF = [GeneratePDF]::Portrait,
 
 
 		[switch]
