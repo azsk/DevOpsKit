@@ -161,10 +161,9 @@ function Get-AzSKAzureServicesSecurityStatus
 		$DoNotOpenOutputFolder,
 
 		[GeneratePDF]
-		[ValidateSet("Landscape", "Portrait")]
         [Parameter(Mandatory = $false)]
 		[Alias("gpdf","pdf")]
-		$GeneratePDF = [GeneratePDF]::Portrait,
+		$GeneratePDF = [GeneratePDF]::None,
 
 		[switch]
 		[Parameter(Mandatory = $false)]
@@ -380,10 +379,9 @@ function Get-AzSKSubscriptionSecurityStatus
 		$DoNotOpenOutputFolder,
 		
 		[GeneratePDF]
-		[ValidateSet("Landscape", "Portrait")]
         [Parameter(Mandatory = $false)]
 		[Alias("gpdf","pdf")]
-		$GeneratePDF = [GeneratePDF]::Portrait,
+		$GeneratePDF = [GeneratePDF]::None,
 
 		[switch]
 		[Parameter(Mandatory = $false)]
@@ -548,10 +546,9 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 		$DoNotOpenOutputFolder,
 
 		[GeneratePDF]
-		[ValidateSet("Landscape", "Portrait")]
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, HelpMessage = "Enables users to generate PDF file for reports.")]
 		[Alias("gpdf","pdf")]
-		$GeneratePDF = [GeneratePDF]::Portrait,
+		$GeneratePDF  = [GeneratePDF]::None,
 
 		
 		[switch]
@@ -590,9 +587,10 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 
 		}
 	}
-
+	
 	Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionId -ResourceGroupNames $erResourceGroups -ResourceName $ResourceName `
 			-ResourceTypeName ([SVTMapping]::ERvNetTypeName) -ControlIds $ControlIds -FilterTags $FilterTags -ExcludeTags $ExcludeTags -DoNotOpenOutputFolder:$DoNotOpenOutputFolder -AttestControls $ControlsToAttest -GeneratePDF $GeneratePDF -GenerateFixScript:$GenerateFixScript -ExcludeControlIds $ExcludeControlIds
+	
 }
 
 function Get-AzSKControlsStatus
@@ -748,10 +746,9 @@ function Get-AzSKControlsStatus
 		$DoNotOpenOutputFolder,
 
 		[GeneratePDF]
-		[ValidateSet("Landscape", "Portrait")]
         [Parameter(Mandatory = $false)]
 		[Alias("gpdf","pdf")]
-		$GeneratePDF = [GeneratePDF]::Portrait,
+		$GeneratePDF  = [GeneratePDF]::None,
 
 
 		[switch]
