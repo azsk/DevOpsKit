@@ -417,7 +417,6 @@ class Organization: SVTBase
         return $controlResult
     }
 
-<<<<<<< HEAD
     hidden [ControlResult] CheckOAuthAppAccess([ControlResult] $controlResult)
     {
        if([Helpers]::CheckMember($this.OrgPolicyObj,"applicationConnection"))
