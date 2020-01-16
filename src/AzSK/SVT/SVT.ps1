@@ -548,9 +548,11 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 		$DoNotOpenOutputFolder,
 
 		[GeneratePDF]
-        [Parameter(Mandatory = $false, HelpMessage = "Enables users to generate PDF file for reports.")]
+		[ValidateSet("Landscape", "portrait")]
+        [Parameter(Mandatory = $false)]
 		[Alias("gpdf","pdf")]
-		$GeneratePDF  = [GeneratePDF]::None,
+		$GeneratePDF = [GeneratePDF]::portrait,
+
 		
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to generate script to fix the control or not.")]
@@ -746,9 +748,11 @@ function Get-AzSKControlsStatus
 		$DoNotOpenOutputFolder,
 
 		[GeneratePDF]
+		[ValidateSet("Landscape", "portrait")]
         [Parameter(Mandatory = $false)]
 		[Alias("gpdf","pdf")]
-		$GeneratePDF  = [GeneratePDF]::None,
+		$GeneratePDF = [GeneratePDF]::portrait,
+
 
 		[switch]
 		[Parameter(Mandatory = $false)]
