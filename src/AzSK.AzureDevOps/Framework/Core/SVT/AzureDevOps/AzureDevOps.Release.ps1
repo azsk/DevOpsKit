@@ -320,4 +320,29 @@ class Release: SVTBase
         }       
         return $controlResult
     }
+
+    hidden [ControlResult] CheckMixingGitHubAndADOSources([ControlResult] $controlResult)
+    {
+        #TODO: queue.name 
+        if(($this.ReleaseObj | Measure-Object).Count -gt 0)
+        {
+            if( ($this.ReleaseObj.artifacts | Measure-Object).Count -gt 0){
+                $sourcetypes = @();
+                $this.ReleaseObj.artifacts  | ForEach-Object {
+                    $sourcetypes += $_.type;
+                } 
+               if (( ($sourcetypes | Measure-Object).Count -gt 1) -and ($sourcetypes -contains 'Git' -or  $sourcetypes -contains 'Github') ){
+                $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines build code is from external sources.");   
+               }
+               else {
+                $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines build code not from external sources.");   
+               }
+           }S
+           else {
+            $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines build code not from external sources.");   
+           } 
+        }
+
+        return $controlResult;
+    }
 }

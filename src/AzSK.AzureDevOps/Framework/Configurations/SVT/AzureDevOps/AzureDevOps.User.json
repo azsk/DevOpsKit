@@ -25,10 +25,27 @@
       "Description": "Personal access tokens (PAT) must have a shortest possible validity period",
       "Id": "User120",
       "ControlSeverity": "Medium",
-      "Automated": "No",
-      "MethodName": "",
+      "Automated": "Yes",
+      "MethodName": "ValidatePATExpiryPeriod",
       "Rationale": "If a personal access token (PAT) gets compromised, the Azure DevOps assets accessible to the user can be accessed/manipulated by unauthorized users. Minimizing the validity period of the PAT ensures that the window of time available to an attacker in the event of compromise is small.",
       "Recommendation": "Go to User Profile --> Security --> Personel Access Token --> Validate expiry periods of PAT tokens",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_User_DP_Info_Token_Expiration",
+      "Description": "Personal access tokens (PAT) near to expiration",
+      "Id": "User121",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckPATExpiration",
+      "Rationale": "Personal access tokens (PAT) near to expiration",
+      "Recommendation": "Go to User Profile --> Security --> Personel Access Token --> Edit",
       "Tags": [
         "SDL",
         "TCP",

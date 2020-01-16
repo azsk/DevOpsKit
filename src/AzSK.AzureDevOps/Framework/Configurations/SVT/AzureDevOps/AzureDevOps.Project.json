@@ -26,7 +26,7 @@
         "Id": "Project120",
         "ControlSeverity": "High",
         "Automated": "No",
-        "MethodName": "",
+        "MethodName": "CheckRBACAccess",
         "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
         "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/organizations/security/set-project-collection-level-permissions?view=vsts&tabs=new-nav",
         "Tags": [
@@ -43,7 +43,7 @@
         "Id": "Project130",
         "ControlSeverity": "High",
         "Automated": "No",
-        "MethodName": "",
+        "MethodName": "JustifyGroupMember",
         "Rationale": "Accounts that are a member of these groups without a legitimate business reason increase the risk for your Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
         "Recommendation": "Go to Project Settings --> Security --> Select Teams/Group --> Verify Members",
         "Tags": [

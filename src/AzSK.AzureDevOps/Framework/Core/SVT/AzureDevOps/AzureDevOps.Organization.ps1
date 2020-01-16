@@ -15,8 +15,6 @@ class Organization: SVTBase
     GetOrgPolicyObject()
     {
         $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/Contribution/dataProviders/query?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-        #TODO: testing adding below line commenting above line
-        #$apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
 
         $orgUrl = "https://{0}.visualstudio.com" -f $($this.SubscriptionContext.SubscriptionName);
         $inputbody =  "{'contributionIds':['ms.vss-org-web.collection-admin-policy-data-provider'],'context':{'properties':{'sourcePage':{'url':'$orgUrl/_settings/policy','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'policy','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
@@ -387,8 +385,9 @@ class Organization: SVTBase
          
         $apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview" -f $($this.SubscriptionContext.SubscriptionName);
 
-        $groupmember = @();
+        $membercount =0;
         Foreach ($group in $groupsObj){
+         $groupmember = @();    
          $descriptor = $group.descriptor;
          $inputbody =  '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"","sourcePage":{"url":"","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' | ConvertFrom-Json
         
@@ -401,12 +400,14 @@ class Organization: SVTBase
         }  
 
         $grpmember = ($groupmember | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="mailAddress"; Expression = {$_.mailAddress}});
-
+        if ($grpmember -ne $null) {
+            $membercount= $membercount + 1
+            $controlResult.AddMessage("Verify below members of the group: '$($group.principalname)', Description: $($group.description)", $grpmember); 
+        }
         }
 
-        if ( ($grpmember | Measure-Object).Count -gt 0)  {
-            $controlResult.AddMessage([VerificationResult]::Verify, "Verify users of groups present on Organization");
-            $controlResult.AddMessage("Verify users present on Organization", $grpmember); 
+        if ( $membercount  -gt 0)  {
+            $controlResult.AddMessage([VerificationResult]::Verify, "Verify members of groups present on Organization");
         }
         else
         {
@@ -416,6 +417,7 @@ class Organization: SVTBase
         return $controlResult
     }
 
+<<<<<<< HEAD
     hidden [ControlResult] CheckOAuthAppAccess([ControlResult] $controlResult)
     {
        if([Helpers]::CheckMember($this.OrgPolicyObj,"applicationConnection"))
@@ -547,5 +549,36 @@ class Organization: SVTBase
        }
         return $controlResult
     }
+    
+    hidden [ControlResult] AutoInjectedExtension([ControlResult] $controlResult)
+    {   
+     try {
+        $url ="https://extmgmt.dev.azure.com/{0}/_apis/extensionmanagement/installedextensions?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);     
+        $member = @();
+        foreach($obj in $responseObj) {
+           foreach($cn in $obj.contributions) {
+            if ([Helpers]::CheckMember($cn,"type")) {
+                 if($cn.type -eq "ms.azure-pipelines.pipeline-decorator")
+                 {
+                   $member +=  ($obj | Select-Object -Property @{Name="Name"; Expression = {$_.extensionName}},@{Name="Publisher"; Expression = {$_.PublisherName}})
+                   break;
+                 }
+             }  
+            }     
+        }
+        if (($member | Measure-Object).Count -gt 0) {
+            $controlResult.AddMessage([VerificationResult]::Verify,"Verify below extension which includes auto injection task:", $member);
+        }
+        else {
+            $controlResult.AddMessage([VerificationResult]::Passed,"No extension found which contains auto injection task");
+        }
+                   
+     }
+     catch {
+        $controlResult.AddMessage([VerificationResult]::Manual,"Could not evaluate extension.");     
+     }
 
+        return $controlResult
+    }
 }
