@@ -17,7 +17,7 @@ class WebRequestHelper {
 	
 	hidden static [string] GetApplicationInsightsEndPoint()
 	{
-		$rmContext = [ContextHelper]::GetCurrentRMContext();
+		$rmContext = [ContextHelper]::GetCurrentContext();
 		$azureEnv= $rmContext.Environment.Name 
 		if($azureEnv -eq "AzureUSGovernment")
 		{
@@ -33,7 +33,7 @@ class WebRequestHelper {
 
 	hidden static [string] GetLADataCollectorAPI()
 	{
-		$rmContext = [ContextHelper]::GetCurrentRMContext();
+		$rmContext = [ContextHelper]::GetCurrentContext();
 		$azureEnv= $rmContext.Environment.Name 
 		if($azureEnv -eq "AzureUSGovernment")
 		{
@@ -49,18 +49,18 @@ class WebRequestHelper {
 
 	hidden static [string] GetGraphUrl()
 	{
-		$rmContext = [ContextHelper]::GetCurrentRMContext();
+		$rmContext = [ContextHelper]::GetCurrentContext();
 		$azureEnv= $rmContext.Environment.Name 
 		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne [Constants]::DefaultAzureEnvironment))
 		{
-		return [ContextHelper]::GetCurrentRMContext().Environment.GraphUrl
+		return [ContextHelper]::GetCurrentContext().Environment.GraphUrl
 		}
 		return "https://graph.windows.net/"
 	}
 
 	hidden static [string] GetResourceManagerUrl()
 	{
-		$rmContext = [ContextHelper]::GetCurrentRMContext();
+		$rmContext = [ContextHelper]::GetCurrentContext();
 		$azureEnv= $rmContext.Environment.Name 
 		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne [Constants]::DefaultAzureEnvironment))
 		{
@@ -71,7 +71,7 @@ class WebRequestHelper {
 
 	hidden static [string] GetServiceManagementUrl()
 	{
-		$rmContext = [ContextHelper]::GetCurrentRMContext();
+		$rmContext = [ContextHelper]::GetCurrentContext();
 		$azureEnv= $rmContext.Environment.Name 
 		if(-not [string]::IsNullOrWhiteSpace($azureEnv) -and ($azureEnv -ne [Constants]::DefaultAzureEnvironment))
 		{

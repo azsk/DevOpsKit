@@ -260,7 +260,8 @@ Class LogAnalyticsHelper{
 		{
 			$rgName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
 			#Step 2: Validate if CA is enabled on subscription
-			$automationAccDetails= Get-AzAutomationAccount -ResourceGroupName $rgName -ErrorAction SilentlyContinue 
+			$automationAccDetails = $null
+			#$automationAccDetails= Get-AzAutomationAccount -ResourceGroupName $rgName -ErrorAction SilentlyContinue 
 			if($automationAccDetails)
 			{
 				if([string]::IsNullOrWhiteSpace($settings.LAWSId))
