@@ -274,6 +274,23 @@
           "SI"
         ],
         "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Auditing_Backup",
+        "Description": "Audit logs are stored for 90 days and then they’re deleted. Back up audit logs to an external location to keep the data for longer than the 90-day period.",
+        "Id": "Organization260",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Auditing contains many changes that occur throughout an Azure DevOps organization. Changes occur when a user or service identity within the organization edits the state of an artifact. In some limited cases, it can also include accessing an artifact. Think permissions changes, resource deletion, branch policy changes, accessing the auditing feature, and much more.",
+        "Recommendation": "Go to Organization Settings --> Auditing -- Download> ",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "Audit"
+        ],
+        "Enabled": true
       }
     ]
     }

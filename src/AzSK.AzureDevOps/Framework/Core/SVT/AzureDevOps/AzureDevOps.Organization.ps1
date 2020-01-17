@@ -25,24 +25,56 @@ class Organization: SVTBase
         }
     }
 
-    hidden [ControlResult] CheckProCollSerAcc([ControlResult] $controlResult)
-    {
-        $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);
+   #Arv Code
+   #hidden [ControlResult] CheckProCollSerAcc([ControlResult] $controlResult)
+   #{
+   #    $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+   #    $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);
 
-        $accname = ('['+ $this.SubscriptionContext.SubscriptionName + ']\' + 'Project Collection Service Accounts'); #Enterprise Service Accounts
-       if($responseObj.principalName -contains $accname ){
-           if([Helpers]::CheckMember($responseObj._links.memberships,"member")  -and $responseObj._links.memberships.member -eq 'Enterprise Service Accounts'){
-             $controlResult.AddMessage([VerificationResult]::Verify, "Organization is configured with Project Collection Service Accounts.");            
-           }
+   #    $accname = ('['+ $this.SubscriptionContext.SubscriptionName + ']\' + 'Project Collection Service Accounts'); #Enterprise Service Accounts
+   #   if($responseObj.principalName -contains $accname ){
+   #       if([Helpers]::CheckMember($responseObj._links.memberships,"member")  -and $responseObj._links.memberships.member -eq 'Enterprise Service Accounts'){
+   #         $controlResult.AddMessage([VerificationResult]::Verify, "Organization is configured with Project Collection Service Accounts.");            
+   #       }
+   #   }
+   #   else {
+   #    $controlResult.AddMessage([VerificationResult]::Manual, "Project Collection Service Accounts does not hass access to Organization.");
+
+   #   }
+
+   #    return $controlResult
+   #}
+    
+     hidden [ControlResult] CheckProCollSerAcc([ControlResult] $controlResult)
+     {
+       $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+       $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);
+       
+       $accname = ('['+ $this.SubscriptionContext.SubscriptionName + ']\' + 'Project Collection Service Accounts'); #Enterprise Service Accounts
+       $prcollobj = $responseObj | where {$_.principalName -eq $accname}
+       
+       $prmemberurl = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+       $inputbody = '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://{1}.visualstudio.com/_settings/groups?subjectDescriptor={0}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}'
+       $inputbody = $inputbody.Replace("{0}",$prcollobj.descriptor)
+       $inputbody = $inputbody.Replace("{1}",$this.SubscriptionContext.SubscriptionName) | ConvertFrom-Json
+       
+       try{
+       $responsePrCollObj = [WebRequestHelper]::InvokePostWebRequest($prmemberurl,$inputbody);
+       $responsePrCollData = $responsePrCollObj.dataProviders.'ms.vss-admin-web.org-admin-members-data-provider'.identities
+       if(($responsePrCollData | Measure-Object).Count -gt 0){
+       $controlResult.AddMessage([VerificationResult]::Verify, "Please verify the members of the group Project Collection Service Accounts", $responsePrCollData); 
+       $controlResult.SetStateData("Members of the Project Collection Service Accounts Group ", $responsePrCollData); 
        }
-       else {
-        $controlResult.AddMessage([VerificationResult]::Manual, "Project Collection Service Accounts does not hass access to Organization.");
-
+       else{
+       $controlResult.AddMessage([VerificationResult]::Manual, "Project Collection Service Accounts group members can not be fetched.");
        }
-
-        return $controlResult
-    }
+       }
+       catch{
+          $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch list of groups in the organization.");
+       }
+       
+         return $controlResult
+     }
 
     hidden [ControlResult] CheckAADConfiguration([ControlResult] $controlResult)
     {
@@ -396,15 +428,15 @@ class Organization: SVTBase
             }     
         }
         if (($member | Measure-Object).Count -gt 0) {
-            $controlResult.AddMessage([VerificationResult]::Verify,"Verify below extension which includes auto injection task:", $member);
+            $controlResult.AddMessage([VerificationResult]::Verify,"Verify the below auto-injected tasks at organization level:", $member);
         }
         else {
-            $controlResult.AddMessage([VerificationResult]::Passed,"No extension found which contains auto injection task");
+            $controlResult.AddMessage([VerificationResult]::Passed,"No auto-injected tasks found at organization level");
         }
                    
      }
      catch {
-        $controlResult.AddMessage([VerificationResult]::Manual,"Could not evaluate extension.");     
+        $controlResult.AddMessage([VerificationResult]::Manual,"Couldn't fetch the list of deployed extensions in the organization.");     
      }
 
         return $controlResult

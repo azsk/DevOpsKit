@@ -323,19 +323,21 @@ class Release: SVTBase
 
     hidden [ControlResult] CheckMixingGitHubAndADOSources([ControlResult] $controlResult)
     {
-        #TODO: queue.name 
+        #TODO: queue.name   $_.type -eq "azurerm" -or $_.type -eq "azure" 
         if(($this.ReleaseObj | Measure-Object).Count -gt 0)
         {
             if( ($this.ReleaseObj.artifacts | Measure-Object).Count -gt 0){
                 $sourcetypes = @();
+
                 $this.ReleaseObj.artifacts  | ForEach-Object {
                     $sourcetypes += $_.type;
                 }
-               if (( ($sourcetypes | Measure-Object).Count -gt 1) -and ($sourcetypes -contains 'Git' -or  $sourcetypes -contains 'Github') ){
+
+               if (( ($sourcetypes | Measure-Object).Count -gt 0) ){
                 
-                $adoresource = $sourcetypes | Where-Object { $_ -ne 'Git' -and $_ -ne 'Github'} ;
+                $adoresource = $sourcetypes | Where-Object { $_ -ne 'Git'} ;
                if( ($adoresource | Measure-Object).Count -gt 0){
-                   $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines mixing code with external sources.");    
+                   $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines contains artifact from the below external sources.");    
                }
                else {
                 $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines is not mixing code with external sources.");   

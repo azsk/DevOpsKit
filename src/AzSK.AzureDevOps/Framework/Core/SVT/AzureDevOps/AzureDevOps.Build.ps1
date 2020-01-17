@@ -65,7 +65,7 @@ class Build: SVTBase
             "Found credentials in build definition. Total credentials found: $noOfCredFound");
         }
         else {
-            $controlResult.AddMessage([VerificationResult]::Verify, "No credentials found in build definition.");
+            $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in build definition.");
         }
     }    
         return $controlResult;
@@ -252,20 +252,29 @@ class Build: SVTBase
 
     hidden [ControlResult] CheckSettableAtQueueTime([ControlResult] $controlResult)
 	{
-      try {
-        $controlResult.AddMessage([VerificationResult]::Failed,"Settable at queue time is not allowd for pipeline variables");    
+      try { 
+       
         if([Helpers]::CheckMember($this.BuildObj,"variables")) 
         {
-         Get-Member -InputObject $this.BuildObj.variables -MemberType Properties | ForEach-Object {
-           if([Helpers]::CheckMember($this.BuildObj.variables.$($_.Name),"allowOverride") )
-           {
-            $controlResult.AddMessage([VerificationResult]::Passed,"Settable at queue time is allowd for pipeline variables");   
-           }
-         }
-        }  
-       }
+           $setablevar =@();
+           $nonsetablevar =@();
+          
+           Get-Member -InputObject $this.BuildObj.variables -MemberType Properties | ForEach-Object {
+            if([Helpers]::CheckMember($this.BuildObj.variables.$($_.Name),"allowOverride") )
+            {
+                $setablevar +=  $_.Name;
+            }
+            else {
+                $nonsetablevar +=$_.Name;  
+            }
+           } 
+
+            $controlResult.AddMessage([VerificationResult]::Verify,"The below variables are settable at queue time",$setablevar);   
+            $controlResult.AddMessage("The below variables are not settable at queue time",$nonsetablevar);     
+        }
+       }  
        catch {
-           $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch build pipeline details. Please verify from portal.");   
+           $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch build pipeline variables.");   
        }
      return $controlResult;
     }
@@ -274,16 +283,16 @@ class Build: SVTBase
     {
         if(($this.BuildObj | Measure-Object).Count -gt 0)
         {
-           if( $this.BuildObj.repository.type -eq 'Git' -or $this.BuildObj.repository.type -eq 'GitHub'){
-            if (!($this.BuildObj.queue.name -eq 'Azure Pipelines')) {
-                $controlResult.AddMessage([VerificationResult]::Failed,"Pipelines build code is from external sources.");   
+           if( $this.BuildObj.repository.type -eq 'Git'){
+            if (($this.BuildObj.queue.name -eq 'Azure Pipelines' -or $this.BuildObj.queue.name -eq 'Hosted')) {
+                $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline code is built on a hosted agent from trusted source.", $this.BuildObj.queue.name); #TODO  
                }
                else {
-                $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines build code not from external sources.");   
+                $controlResult.AddMessage([VerificationResult]::Verify,"Pipeline code is built on a self hosted agent from untrusted external source.", $this.BuildObj.queue.name);   
                }
            }
            else {
-            $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines build code not from external sources.");   
+            $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines build code is from external sources.");   
            }
         }
 
