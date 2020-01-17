@@ -78,18 +78,24 @@ class Organization: SVTBase
     hidden [ControlResult] CheckAADConfiguration([ControlResult] $controlResult)
     {
 
-        $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-        $inputbody =  '{"contributionIds":["ms.vss-admin-web.organization-admin-aad-component","ms.vss-admin-web.organization-admin-aad-data-provider"],"dataProviderContext":{"properties":{}}}' | ConvertFrom-Json
-        $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
-
-        if([Helpers]::CheckMember($responseObj,"dataProviders") -and $responseObj.dataProviders.'ms.vss-admin-web.organization-admin-aad-data-provider' -and [Helpers]::CheckMember($responseObj.dataProviders.'ms.vss-admin-web.organization-admin-aad-data-provider'.orgnizationTenantData,"displayName"))
-        {
-            $controlResult.AddMessage([VerificationResult]::Passed,
-                                                "Organization is configured with ($($responseObj.dataProviders.'ms.vss-admin-web.organization-admin-aad-data-provider'.orgnizationTenantData.displayName)) directory");
+        try {
+            $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+            $inputbody =  '{"contributionIds":["ms.vss-admin-web.organization-admin-aad-component","ms.vss-admin-web.organization-admin-aad-data-provider"],"dataProviderContext":{"properties":{}}}' | ConvertFrom-Json
+            $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+    
+            if([Helpers]::CheckMember($responseObj,"dataProviders") -and $responseObj.dataProviders.'ms.vss-admin-web.organization-admin-aad-data-provider' -and [Helpers]::CheckMember($responseObj.dataProviders.'ms.vss-admin-web.organization-admin-aad-data-provider'.orgnizationTenantData,"displayName"))
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed,
+                                                    "Organization is configured with ($($responseObj.dataProviders.'ms.vss-admin-web.organization-admin-aad-data-provider'.orgnizationTenantData.displayName)) directory");
+            }
+            else {
+                $controlResult.AddMessage([VerificationResult]::Failed,
+                                                    "AAD is not configured on Organization");
+            }
         }
-        else {
-            $controlResult.AddMessage([VerificationResult]::Failed,
-                                                "AAD is not configured on Organization");
+        catch {
+            $controlResult.AddMessage([VerificationResult]::Manual,
+            "Could not able to fetch configuration.");
         }
         return $controlResult
     }

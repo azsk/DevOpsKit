@@ -328,16 +328,18 @@ class Release: SVTBase
         {
             if( ($this.ReleaseObj.artifacts | Measure-Object).Count -gt 0){
                 $sourcetypes = @();
-
+                $sourcedetails = @();
                 $this.ReleaseObj.artifacts  | ForEach-Object {
-                    $sourcetypes += $_.type;
+                    $sourcetypes += $_;
                 }
 
                if (( ($sourcetypes | Measure-Object).Count -gt 0) ){
                 
-                $adoresource = $sourcetypes | Where-Object { $_ -ne 'Git'} ;
+                $adoresource = $sourcetypes | Where-Object { $_.type -ne 'Git'} ;
+               
                if( ($adoresource | Measure-Object).Count -gt 0){
-                   $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines contains artifact from the below external sources.");    
+                   $adoresource = $adoresource | Select-Object -Property @{Name="alias"; Expression = {$_.alias}},@{Name="Type"; Expression = {$_.type}} | Format-Table
+                   $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines contains artifact from the below external sources.", $adoresource);    
                }
                else {
                 $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines is not mixing code with external sources.");   
