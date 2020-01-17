@@ -1487,8 +1487,8 @@ class PolicySetup: AzCommandBase
 			$existingPolicyFolderContent= Get-ChildItem -Path $($this.FolderPath) -ErrorAction SilentlyContinue
 			if(($existingPolicyFolderContent | Measure-Object).Count -gt 0)
 			{
-				$this.PublishCustomMessage("Warning: Policy folder already contains files. Downloading policies can override existing files. `nDo you want to continue(Y/N):", $([MessageType]::Warning))
-				$answer= Read-Host
+				$this.PublishCustomMessage("Warning: Policy folder already contains files. Downloading policies can override existing files.", $([MessageType]::Warning))
+				$answer= Read-Host "Do you want to continue(Y/N)"
 				if($answer.ToLower() -ne "y" )
 				{
 					$downloadPolicy = $false

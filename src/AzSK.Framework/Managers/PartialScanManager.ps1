@@ -156,7 +156,7 @@ class PartialScanManager
 		}
 	}
 
-	[void] UpdateResourceScanRetryCount([string] $resourceId)
+	[void] UpdateResourceScanRetryCount([string] $resourceId,[string] $subscriptionId)
 	{
 		$resourceValues = @();
 		$this.GetResourceScanTrackerObject();
@@ -171,7 +171,11 @@ class PartialScanManager
 				{
 					$resourceValue.State = [ScanState]::ERR
 				}
-				#$this.PersistStorageBlob();
+				if([FeatureFlightingManager]::GetFeatureStatus("EnableStorageBlobPersistPerResource",$($subscriptionId)) -eq $true)
+				{
+					$this.PersistStorageBlob();
+				}
+				
 			}
 			else
 			{

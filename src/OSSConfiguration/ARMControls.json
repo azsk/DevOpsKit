@@ -529,10 +529,10 @@
           "recommendation": "Run command 'Set-AzWebApp -Name '<WebAppName>' -ResourceGroupName '<RGName>' -NetFrameworkVersion 'v4.7''. Run 'Get-Help Set-AzWebApp -full' for more help.",
           "severity": "Low",
           "jsonPath": [ "$.properties.siteConfig.netFrameworkVersion", "$.properties.netFrameworkVersion" ],
-          "matchType": "StringSingleToken",
+          "matchType": "RegExpressionSingleToken",
           "data": {
             "type": "Allow",
-            "value": "v4.7",
+            "pattern": "^(v4.0|v4.7)$",
             "isCaseSensitive": false
           }
         },
