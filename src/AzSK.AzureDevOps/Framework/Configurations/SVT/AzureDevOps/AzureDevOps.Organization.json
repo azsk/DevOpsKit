@@ -277,13 +277,13 @@
       },
       { 
         "ControlID": "AzureDevOps_Organization_Review_Auto_Injected_Extension",
-        "Description": "ADO allow Auto Injected Extension in pipeline",
+        "Description": "Auto-injected pipeline tasks have features/vulnerabilities that make them code execution sinks.",
         "Id": "Organization250",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "AutoInjectedExtension",
-        "Rationale": "ADO allow Auto Injected Extension in pipeline",
-        "Recommendation": "Go to Organization Settings --> Extensions",
+        "Rationale": "ADAuto-injected pipeline tasks have features/vulnerabilities that make them code execution sinks.",
+        "Recommendation": "Go to Organization Settings --> Extensions -> Verify the auto-injected extensions.",
         "Tags": [
           "SDL",
           "TCP",
