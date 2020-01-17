@@ -323,35 +323,23 @@ class Release: SVTBase
 
     hidden [ControlResult] CheckMixingGitHubAndADOSources([ControlResult] $controlResult)
     {
-        #TODO: queue.name   $_.type -eq "azurerm" -or $_.type -eq "azure" 
         if(($this.ReleaseObj | Measure-Object).Count -gt 0)
         {
             if( ($this.ReleaseObj.artifacts | Measure-Object).Count -gt 0){
                 $sourcetypes = @();
-                $sourcedetails = @();
-                $this.ReleaseObj.artifacts  | ForEach-Object {
-                    $sourcetypes += $_;
-                }
-
-               if (( ($sourcetypes | Measure-Object).Count -gt 0) ){
-                
-                $adoresource = $sourcetypes | Where-Object { $_.type -ne 'Git'} ;
+                $sourcetypes = $this.ReleaseObj.artifacts;
+                $nonadoresource = $sourcetypes | Where-Object { $_.type -ne 'Git'} ;
                
-               if( ($adoresource | Measure-Object).Count -gt 0){
-                   $adoresource = $adoresource | Select-Object -Property @{Name="alias"; Expression = {$_.alias}},@{Name="Type"; Expression = {$_.type}} | Format-Table
-                   $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines contains artifact from the below external sources.", $adoresource);    
+               if( ($nonadoresource | Measure-Object).Count -gt 0){
+                   $nonadoresource = $nonadoresource | Select-Object -Property @{Name="alias"; Expression = {$_.alias}},@{Name="Type"; Expression = {$_.type}} | Format-Table
+                   $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines contains artifact from the below external sources.", $nonadoresource);    
                }
                else {
-                $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines is not mixing code with external sources.");   
-               }
-               
-               }
-               else {
-                $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines code not from external sources.");   
+                $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline does not contain artifacts from external sources");   
                }
            }
            else {
-            $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines code not from external sources.");   
+            $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline does not contain any source repositories");   
            } 
         }
 
