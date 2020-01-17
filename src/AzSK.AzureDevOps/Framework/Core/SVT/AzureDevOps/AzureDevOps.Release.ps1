@@ -349,7 +349,7 @@ class Release: SVTBase
                else {
                 $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines code not from external sources.");   
                }
-           }S
+           }
            else {
             $controlResult.AddMessage([VerificationResult]::Passed,"Pipelines code not from external sources.");   
            } 
