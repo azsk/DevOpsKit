@@ -129,8 +129,12 @@ class User: SVTBase
                  $PATList =($AccessPATList | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="ValidFrom"; Expression = {$_.validfrom}},@{Name="ValidTo"; Expression = {$_.validto}},@{Name="Remaining"; Expression = {([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days}});    
                  $controlResult.AddMessage([VerificationResult]::Failed, "PAT tokens which expire within 7 days",$PATList)  
                 }
+                elseif((($responseObj | Where-Object {(([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days) -lt 31}) | Measure-Object).Count -gt 0) {
+                    $PATList =($AccessPATList | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="ValidFrom"; Expression = {$_.validfrom}},@{Name="ValidTo"; Expression = {$_.validto}},@{Name="Remaining"; Expression = {([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days}});    
+                    $controlResult.AddMessage([VerificationResult]::Verify, "PAT tokens found which expire within 30 days",  $PATList)
+                }
                 else {
-                    $controlResult.AddMessage([VerificationResult]::Passed, "No PAT tokens found which expire within 7 days")
+                    $controlResult.AddMessage([VerificationResult]::Passed, "No PAT tokens found which expire within 30 days")
                 }
             }
             else {

@@ -276,18 +276,12 @@ class ServiceConnection: SVTBase
         try
            {
                $Endpoint = $this.ServiceEndpointsObj;
-               $IsGlobalSecurityGroupPermitted = $false;
-               $nonCompliantIdentities = @();
-               
-               if ($Endpoint.isShared) {
-                $IsGlobalSecurityGroupPermitted = $true;
-               }
-               if($IsGlobalSecurityGroupPermitted -eq $true) {
+
+               if($Endpoint.isShared) {
                 $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global security groups access to service connections. Granting elevated permissions to these groups can risk exposure of service connections to unwarranted individuals.");
-                $controlResult.AddMessage("List of service connections granting access to global security groups:",$nonCompliantIdentities)
-               }
+                }
                else {
-                $controlResult.AddMessage([VerificationResult]::Passed,"");
+                $controlResult.AddMessage([VerificationResult]::Passed);
                }
            }
         catch {
@@ -295,7 +289,7 @@ class ServiceConnection: SVTBase
         }
          
         if(![string]::IsNullOrEmpty($failMsg)) {
-                  $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch service connections details. $($failMsg)Please verify from portal that you are not granting global security groups access to service connections");
+                  $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch service connection details. $($failMsg)Please verify from portal that you are not granting global security groups access to service connections");
         }
 
         return $controlResult;
@@ -308,11 +302,11 @@ class ServiceConnection: SVTBase
         {
             if( $Endpoint.authorization.scheme -eq "OAuth")
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "Endpoint is used with secret based auth");
+                $controlResult.AddMessage([VerificationResult]::Passed, "Service connection $($Endpoint.name) is authenticated via $($Endpoint.authorization.scheme)");
             }
             else
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "Service Endpoints should use secret auth");
+                $controlResult.AddMessage([VerificationResult]::Failed, "Service connection $($Endpoint.name) is authenticated via $($Endpoint.authorization.scheme)");
             }
         }
         return $controlResult;

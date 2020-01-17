@@ -268,9 +268,14 @@ class Build: SVTBase
                 $nonsetablevar +=$_.Name;  
             }
            } 
-
+           if($setablevar -or $nonsetablevar){
             $controlResult.AddMessage([VerificationResult]::Verify,"The below variables are settable at queue time",$setablevar);   
-            $controlResult.AddMessage("The below variables are not settable at queue time",$nonsetablevar);     
+            $controlResult.AddMessage("The below variables are not settable at queue time",$nonsetablevar);
+           }
+                 
+        }
+        else {
+            $controlResult.AddMessage([VerificationResult]::Passed,"No variables are found in the build pipeline");   
         }
        }  
        catch {
@@ -284,11 +289,14 @@ class Build: SVTBase
         if(($this.BuildObj | Measure-Object).Count -gt 0)
         {
            if( $this.BuildObj.repository.type -eq 'Git'){
-            if (($this.BuildObj.queue.name -eq 'Azure Pipelines' -or $this.BuildObj.queue.name -eq 'Hosted')) {
-                $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline code is built on a hosted agent from trusted source.", $this.BuildObj.queue.name); #TODO  
+               
+              $sourceobj = $this.BuildObj.repository | Select-Object -Property @{Name="Name"; Expression = {$_.Name}},@{Name="Type"; Expression = {$_.type}} | Format-Table
+
+              if (($this.BuildObj.queue.name -eq 'Azure Pipelines' -or $this.BuildObj.queue.name -eq 'Hosted')) {
+                $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline code is built on a hosted agent from trusted source.",  $sourceobj); 
                }
                else {
-                $controlResult.AddMessage([VerificationResult]::Verify,"Pipeline code is built on a self hosted agent from untrusted external source.", $this.BuildObj.queue.name);   
+                $controlResult.AddMessage([VerificationResult]::Verify,"Pipeline code is built on a self hosted agent from untrusted external source.", $sourceobj );   
                }
            }
            else {
