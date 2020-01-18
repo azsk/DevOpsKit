@@ -17,9 +17,7 @@ class ServiceConnection: SVTBase
         $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
         $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ServiceEndpoints")}).namespaceId
 
-        # Get service connection details https://dev.azure.com/{organization}/{project}/_admin/_services
-        # $apiURL = "https://dev.azure.com/{0}/{1}/_apis/serviceendpoint/endpoints?api-version=4.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$($this.ResourceContext.ResourceGroupName);
-        # $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        # Get service connection details https://dev.azure.com/{organization}/{project}/_admin/_services 
         $this.ServiceEndpointsObj = $this.ResourceContext.ResourceDetails
 
         if(($this.ServiceEndpointsObj | Measure-Object).Count -eq 0)
@@ -271,27 +269,27 @@ class ServiceConnection: SVTBase
 
     hidden [ControlResult] CheckServiceConnectionBuildAccess([ControlResult] $controlResult)
     {
-        # Any identity other than teams identity needs to be verified manually as it's details cannot be retrived using API
-        $failMsg=$null;
         try
            {
-               $Endpoint = $this.ServiceEndpointsObj;
+               $apiURL = "https://dev.azure.com/{0}/{1}/_apis/pipelines/pipelinePermissions/endpoint/{2}?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$($this.ProjectId),$($this.ServiceEndpointsObj.id) ;
+               $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 
-               if($Endpoint.isShared) {
-                $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global security groups access to service connections. Granting elevated permissions to these groups can risk exposure of service connections to unwarranted individuals.");
+               if([Helpers]::CheckMember($responseObj,"allPipelines")) {
+                   if($responseObj.allPipelines.authorized){
+                      $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global security access to all pipeline.");
+                   } 
+                   else {
+                      $controlResult.AddMessage([VerificationResult]::Passed,"Service connection is not granted access to all pipeline");
+                   }             
                 }
                else {
-                $controlResult.AddMessage([VerificationResult]::Passed);
+                $controlResult.AddMessage([VerificationResult]::Passed, "Service connection is not granted access to all pipeline");
                }
            }
         catch {
-               $failMsg=$_
+            $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch service connection details. $($_) Please verify from portal that you are not granting all pipeline access to service connections");
         }
          
-        if(![string]::IsNullOrEmpty($failMsg)) {
-                  $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch service connection details. $($failMsg)Please verify from portal that you are not granting global security groups access to service connections");
-        }
-
         return $controlResult;
     }
 
