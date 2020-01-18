@@ -269,8 +269,14 @@ class Build: SVTBase
             }
            } 
            if($setablevar -or $nonsetablevar){
-            $controlResult.AddMessage([VerificationResult]::Verify,"The below variables are settable at queue time",$setablevar);   
-            $controlResult.AddMessage("The below variables are not settable at queue time",$nonsetablevar);
+            $controlResult.AddMessage([VerificationResult]::Verify);
+              if($setablevar)  { 
+                $controlResult.AddMessage("The below variables are settable at queue time",$setablevar);   
+              }
+              if ($nonsetablevar) {
+                $controlResult.AddMessage("The below variables are not settable at queue time",$nonsetablevar);      
+              }
+            
            }
                  
         }
@@ -289,8 +295,8 @@ class Build: SVTBase
         if(($this.BuildObj | Measure-Object).Count -gt 0)
         {
            if( $this.BuildObj.repository.type -eq 'Git'){
-               
-              $sourceobj = $this.BuildObj.repository | Select-Object -Property @{Name="Name"; Expression = {$_.Name}},@{Name="Type"; Expression = {$_.type}} | Format-Table
+
+              $sourceobj = $this.BuildObj.repository | Select-Object -Property @{Name="Name"; Expression = {$_.Name}},@{Name="Type"; Expression = {$_.type}}, @{Name="Agent"; Expression = {$this.BuildObj.queue.name}} | Format-Table
 
               if (($this.BuildObj.queue.name -eq 'Azure Pipelines' -or $this.BuildObj.queue.name -eq 'Hosted')) {
                 $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline code is built on a hosted agent from trusted source.",  $sourceobj); 
