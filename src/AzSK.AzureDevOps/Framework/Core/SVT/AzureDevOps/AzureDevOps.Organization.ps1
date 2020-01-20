@@ -80,14 +80,17 @@ class Organization: SVTBase
     {
 
         try {
-            $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-            $inputbody =  '{"contributionIds":["ms.vss-admin-web.organization-admin-aad-component","ms.vss-admin-web.organization-admin-aad-data-provider"],"dataProviderContext":{"properties":{}}}' | ConvertFrom-Json
-            $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
-    
-            if([Helpers]::CheckMember($responseObj,"dataProviders") -and $responseObj.dataProviders.'ms.vss-admin-web.organization-admin-aad-data-provider' -and [Helpers]::CheckMember($responseObj.dataProviders.'ms.vss-admin-web.organization-admin-aad-data-provider'.orgnizationTenantData,"displayName"))
+            #$apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+            $apiURL = "https://dev.azure.com/{0}/_settings/organizationAad?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName);
+            #$inputbody =  '{"contributionIds":["ms.vss-admin-web.organization-admin-aad-component","ms.vss-admin-web.organization-admin-aad-data-provider"],"dataProviderContext":{"properties":{}}}' | ConvertFrom-Json
+            #$responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+
+            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+            
+            if(([Helpers]::CheckMember($responseObj,"fps.dataProviders.data") ) -and  (($responseObj.fps.dataProviders.data."ms.vss-admin-web.organization-admin-aad-data-provider") -and $responseObj.fps.dataProviders.data."ms.vss-admin-web.organization-admin-aad-data-provider".orgnizationTenantData))
             {
                 $controlResult.AddMessage([VerificationResult]::Passed,
-                                                    "Organization is configured with ($($responseObj.dataProviders.'ms.vss-admin-web.organization-admin-aad-data-provider'.orgnizationTenantData.displayName)) directory");
+                                                    "Organization is configured with ($($responseObj.fps.dataProviders.data.'ms.vss-admin-web.organization-admin-aad-data-provider'.orgnizationTenantData.displayName)) directory");
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Failed,
