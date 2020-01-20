@@ -269,7 +269,7 @@ class Build: SVTBase
             }
            } 
            if($setablevar -or $nonsetablevar){
-            $controlResult.AddMessage([VerificationResult]::Verify);
+            $controlResult.AddMessage([VerificationResult]::Verify,"");
               if($setablevar)  { 
                 $controlResult.AddMessage("The below variables are settable at queue time",$setablevar);   
               }
