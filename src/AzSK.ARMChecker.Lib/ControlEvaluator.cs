@@ -7,6 +7,7 @@ using System.Collections;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.Runtime.InteropServices.ComTypes;
+using System.Net;
 
 namespace AzSK.ARMChecker.Lib
 {
@@ -16,6 +17,7 @@ namespace AzSK.ARMChecker.Lib
         private  readonly JObject _externalParameters;
         private  static JObject _externalParametersDict;
         private static JObject _armTemplate;
+        
 
         public ControlEvaluator(JObject template, JObject externalParameters)
         {
@@ -72,6 +74,8 @@ namespace AzSK.ARMChecker.Lib
                     return EvaluateVerifiableItemCount(control, resource);
                 case ControlMatchType.MatchStringSingleToken:
                     return EvaluateMatchStringSingleToken(control, resource);
+                case ControlMatchType.ValidateIPRangeSingleTokens:
+                    return EvaluateValidateIPRangeSingleTokens(control, resource);
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -229,19 +233,39 @@ namespace AzSK.ARMChecker.Lib
         private static ControlResult EvaluateItemProperties(ResourceControl control, JObject resource)
         {
             var result = ExtractMultiToken(control, resource, out IEnumerable<object> actual, out CustomTokenControlData match);
-            result.ExpectedValue = " '"+match.Key+" ':" + " '" + match.Value + "'";
+            result.ExpectedValue = " '"+match.KeyPath+" ':" + " '" + match.Value + "'";
             result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
             if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
             bool keyValueFound = false;
+            string nestedTokenValue = null;
             foreach (JObject obj in actual)
             {
-                var dictObject = obj.ToObject<Dictionary<string, string>>();
-                if(dictObject.ContainsKey(match.Key) && dictObject[match.Key] == match.Value)
+                var nestedToken = obj.SelectToken(match.KeyPath);
+                if(nestedToken != null)
                 {
-                    keyValueFound = true;
-                    break;
+                    nestedTokenValue = nestedToken.Value<string>();
+                    if (match.Value.Equals(nestedTokenValue))
+                    {
+                        if (match.Type == ControlDataMatchType.Allow)
+                        {
+                            keyValueFound = true;
+                            break;
+                        }
+
+                    }
+                    else
+                    {
+                        if (match.Type == ControlDataMatchType.NotAllow)
+                        {
+                            keyValueFound = true;
+                            break;
+                        }
+                        
+                    }
+                    
                 }
             }
+
             if(keyValueFound)
             {
                 result.VerificationResult = VerificationResult.Passed;
@@ -340,10 +364,7 @@ namespace AzSK.ARMChecker.Lib
                 {
                     result.VerificationResult = VerificationResult.Passed;
                 }
-                if (match.Type == ControlDataMatchType.StringNotMatched)
-                {
-                    result.VerificationResult = VerificationResult.Verify;
-                }
+                
             }
             return result;
         }
@@ -352,19 +373,67 @@ namespace AzSK.ARMChecker.Lib
             var result = ExtractSingleToken(control, resource, out string actual, out StringSingleTokenControlData match);
             result.ExpectedValue = match.Type + " '" + match.Value + "'";
             result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
-            if (result.IsTokenNotFound || result.IsTokenNotValid) return result;
-            if (match.Value.Equals(actual,
-                match.IsCaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
+            if (result.IsTokenNotFound || result.IsTokenNotValid)
+            {
+                if (match.IfNoPropertyFound == "Passed")
                 {
-                    if (match.Type == ControlDataMatchType.StringNotMatched)
+                    result.VerificationResult = VerificationResult.Passed;
+                }
+                else if (match.IfNoPropertyFound == "Failed")
+                {
+                    result.VerificationResult = VerificationResult.Failed;
+                }
+                else if (match.IfNoPropertyFound == "Verify")
+                {
+                    result.VerificationResult = VerificationResult.Verify;
+                }
+
+            }
+            else
+            {
+                if (match.Value.Equals(actual,
+                    match.IsCaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
+                {
+                    if (match.Type == ControlDataMatchType.Allow)
+                    {
+                        
+                        if (match.ControlDesiredState == "Verify")
+                        {
+                            result.VerificationResult = VerificationResult.Verify;
+                        }
+                        else if (match.ControlDesiredState == "Passed")
+                        {
+                            result.VerificationResult = VerificationResult.Passed;
+                        }
+                        else
+                        {
+                            result.VerificationResult = VerificationResult.Failed;
+                        }
+                    }
+                    else
                     {
                         result.VerificationResult = VerificationResult.Verify;
                     }
                 }
                 else
                 {
-                    result.VerificationResult = VerificationResult.Failed;
+                    if (match.Type == ControlDataMatchType.NotAllow)
+                    {
+                        if (match.ControlDesiredState == "Verify")
+                        {
+                            result.VerificationResult = VerificationResult.Verify;
+                        }
+                        else if (match.ControlDesiredState == "Passed")
+                        {
+                            result.VerificationResult = VerificationResult.Passed;
+                        }
+                        else
+                        {
+                            result.VerificationResult = VerificationResult.Failed;
+                        }
+                    }
                 }
+            }
             return result;
         }
         private static ControlResult EvaluateRegExpressionSingleToken(ResourceControl control, JObject resource)
@@ -502,6 +571,131 @@ namespace AzSK.ARMChecker.Lib
 
         }
 
+        private static ControlResult EvaluateValidateIPRangeSingleTokens(ResourceControl control, JObject resource)
+        {
+            var result = ExtractAllSingleToken(control, resource, out List<string> actual, out StringSingleTokenControlData match);
+
+            result.ExpectedValue = match.Type + " '" + "Provided IP range must not equal to " +match.startIP + "" + match.endIP;
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
+
+            IPAddress matchStartIP = IPAddress.Parse(match.startIP);
+            IPAddress matchEndIP = IPAddress.Parse(match.endIP);
+            
+            if (result.IsTokenNotFound || result.IsTokenNotValid)
+            {
+                switch (match.IfNoPropertyFound)
+                {
+                    case "Passed":
+                        result.VerificationResult = VerificationResult.Passed;
+                        break;
+                    case "Failed":
+                        result.VerificationResult = VerificationResult.Failed;
+                        break;
+                    case "Verify":
+                        result.VerificationResult = VerificationResult.Verify;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+            else
+            {
+                actual.Sort();
+                IPAddress actualStartIP = IPAddress.Parse(actual[0]);
+                IPAddress actualEndIP = IPAddress.Parse(actual[1]);
+
+                if (actualStartIP.Equals(matchStartIP) && actualEndIP.Equals(matchEndIP))
+                {
+                    switch (match.ControlDesiredState)
+                    {
+                        case "Passed":
+                            result.VerificationResult = VerificationResult.Passed;
+                            break;
+                        case "Verify":
+                            result.VerificationResult = VerificationResult.Verify;
+                            break;
+                        case "Failed":
+                            result.VerificationResult = VerificationResult.Failed;
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                }
+                else
+                {
+                    result.VerificationResult = VerificationResult.Verify;
+                }
+            }
+
+            return result;
+        }
+
+        private static ControlResult ExtractAllSingleToken<TV, TM>(ResourceControl control, JObject resource, out List<TV> actual,
+            out TM match, bool validateParameters = true)
+        {
+            bool tokenNotFound = false;
+            List<JToken> tokens = new List<JToken>();
+            foreach (var jsonPath in control.JsonPath)
+            {
+                if (resource.SelectToken(jsonPath) != null)
+                {
+                    tokens.Add(resource.SelectToken(jsonPath));
+                }
+                else
+                {
+                    tokenNotFound = true;
+                    break;
+                }
+            }
+
+            var result = ControlResult.Build(control, resource, tokens, tokenNotFound, VerificationResult.Failed);
+            if (tokenNotFound) result.IsTokenNotValid = true;
+            actual = new List<TV>();
+            try
+            {
+                if (tokenNotFound)
+                {
+                    actual = null;
+                }
+                else
+                {
+                    List<TV> tokenValues = new List<TV>();
+                    for (int i = 0; i < tokens.Count; i++)
+                    {
+                        string ARMtemplateFunctionType = tokens[i].Value<String>().GetFunctionType();
+
+                        switch (ARMtemplateFunctionType)
+                        {
+                            case "parameters":
+                                tokenValues = functionParameters(validateParameters, tokens[i], tokenValues);
+                                break;
+                            case "variables":
+                                tokenValues = functionVariables(validateParameters, tokens[i], tokenValues);
+                                break;
+                            case "concat":
+                                tokenValues = functionConcat(validateParameters, tokens[i], tokenValues);
+                                break;
+                            case "substring":
+                                tokenValues = functionSubString(validateParameters, tokens[i], tokenValues);
+                                break;
+                            default:
+                                tokenValues.Add(tokens[i].Value<TV>());
+                                break;
+                        }
+                        actual = tokenValues;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                actual = null;
+                result.IsTokenNotValid = true;
+            }
+            match = control.Data.ToObject<TM>();
+
+            return result;
+        }
+
         private static ControlResult ExtractSingleToken<TV, TM>(ResourceControl control, JObject resource, out TV actual,
             out TM match, bool validateParameters = true)
         {
@@ -527,7 +721,7 @@ namespace AzSK.ARMChecker.Lib
                 {
                     var tokenValue = default(TV);
                     string ARMtemplateFunctionType = token.Value<String>().GetFunctionType();
-                    // Switch Case to call particular function on the basis of its function type which may be parameters(), variables(),concat() and Substring(). 
+                    // Switch Case to call particular function on the basis of its function type which may be parameters(), variables(),concat() and Substring().
                     switch (ARMtemplateFunctionType)
                     {
                         case "parameters":
@@ -667,22 +861,11 @@ namespace AzSK.ARMChecker.Lib
                 var variableKey = token.Value<String>().GetVariableKey();
                 if (variableKey != null)
                 {
-                    // Check if variable value is present in external parameter file
-                    if (_externalParametersDict.ContainsKey("variables"))
-                    {
-                        JObject externalParameters = _externalParametersDict["variables"].Value<JObject>();
-                        var externalParamValue = externalParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value["value"].Value<TV>());
-                        if (externalParamValue != null && externalParamValue.Count() > 0)
-                        {
-                            variableValueFound = true;
-                            tokenValue = externalParamValue.First();
-                        }
-                    }
-                    // If variable value is not present in external parameter file, check for default value
+                    // Get value from variables function. 
                     if (!variableValueFound)
                     {
                         JObject innerParameters = _armTemplate["variables"].Value<JObject>();
-                        tokenValue = innerParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value["defaultValue"].Value<TV>()).FirstOrDefault();
+                        tokenValue = (innerParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value).FirstOrDefault()).Value<TV>();
                     }
                 }
                 else if (variableKey == null)
@@ -821,23 +1004,11 @@ namespace AzSK.ARMChecker.Lib
                 var variableKey = tokens.Values<String>().First().GetVariableKey();
                 if (variableKey != null)
                 {
-                    // Check if variable value is present in external parameter file
-                    if (_externalParametersDict.ContainsKey("variables"))
-                    {
-                        JObject externalParameters = _externalParametersDict["variables"].Value<JObject>();
-                        var externalParamValue = externalParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value["value"].Values<TV>());
-                        if (externalParamValue != null && externalParamValue.Count() > 0)
-                        {
-                            variableValueFound = true;
-                            tokenValues = externalParamValue.First();
-                        }
-
-                    }
-                    // If variable value is not present in external parameter file, check for default value
+                // Get value from variables function.
                     if (!variableValueFound)
                     {
                         JObject innerParameters = _armTemplate["variables"].Value<JObject>();
-                        tokenValues = innerParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value["defaultValue"].Values<TV>()).FirstOrDefault();
+                        tokenValues = (innerParameters.Properties().Where(p => p.Name == variableKey).Select(p => p.Value).FirstOrDefault()).Values<TV>();
                     }
                 }
             }
@@ -848,7 +1019,7 @@ namespace AzSK.ARMChecker.Lib
             return tokenValues;
         }
 
-        
+
 
 
     }

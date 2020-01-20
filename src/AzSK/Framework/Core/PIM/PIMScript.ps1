@@ -782,7 +782,7 @@ class PIM: AzCommandBase {
         if(($resources | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resources.ResourceId)))
         {
             $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $false)
-            $roleAssignments = $roleAssignments | Where-Object{($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group') -and $_.memberType -ne 'Inherited'}
+            $roleAssignments = $roleAssignments | Where-Object{($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group') -and $_.memberType -ne 'Inherited' -and -not([string]::IsNullOrEmpty($_.ExpirationDate))}
             if(($roleAssignments | Measure-Object).Count -gt 0)
             {
                 [int]$soonToExpireWindow = $ExpiringInDays;
@@ -847,35 +847,38 @@ class PIM: AzCommandBase {
                     if($force -or ($UserResponse -eq 'Y'))
                     {
                         [DateTime]$startDate = $_.ExpirationDate
-                        $extendedDate = (($startDate).AddDays($ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))
-                        if($extendedDate -gt ((get-date).AddDays($maxAllowedDays).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")))
+                        if($null -ne $startDate)
                         {
-                            $extendedDate = ((get-date).AddDays($maxAllowedDays).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))
-                        }
-                        $postParams = '{"roleDefinitionId":"'+ $_.RoleId+'","resourceId":"'+$_.ResourceId+'","subjectId":"'+ $_.SubjectId+'","assignmentState":"Eligible","type":"AdminExtend","reason":"Admin Extend by '+$this.AccountId+'","schedule":{"type":"Once","startDateTime":"'+ ((get-date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))+'","endDateTime":"'+($extendedDate)+'"}}'
-                        try{
-                            $response = [WebRequestHelper]::InvokeWebRequest('Post', $url, $this.headerParams, $postParams, "application/json", $false, $true )
-                            if ($response.StatusCode -eq 201) {
-                                $this.PublishCustomMessage("[$i/$AssignmentCount] Assignment extension request for [$($_.PrincipalName)] for the [$($_.RoleName)] role queued successfully.", [MessageType]::Update);
-                            }  
-                            elseif ($response.StatusCode -eq 401) {
-                                $this.PublishCustomMessage("You are not eligible to extend a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
-                            }
-                            else
+                            $extendedDate = (($startDate).AddDays($ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))
+                            if($extendedDate -gt ((get-date).AddDays($maxAllowedDays).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")))
                             {
-                                $this.PublishCustomMessage($response, [MessageType]::Error);
+                                $extendedDate = ((get-date).AddDays($maxAllowedDays).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))
                             }
-                        }
-                        catch
-                        {
-                            if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
-                            {
-                                $err = $_ | ConvertFrom-Json
-                                $this.PublishCustomMessage($err.error.message,[MessageType]::Error)
+                            $postParams = '{"roleDefinitionId":"'+ $_.RoleId+'","resourceId":"'+$_.ResourceId+'","subjectId":"'+ $_.SubjectId+'","assignmentState":"Eligible","type":"AdminExtend","reason":"Admin Extend by '+$this.AccountId+'","schedule":{"type":"Once","startDateTime":"'+ ((get-date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))+'","endDateTime":"'+($extendedDate)+'"}}'
+                            try{
+                                $response = [WebRequestHelper]::InvokeWebRequest('Post', $url, $this.headerParams, $postParams, "application/json", $false, $true )
+                                if ($response.StatusCode -eq 201) {
+                                    $this.PublishCustomMessage("[$i/$AssignmentCount] Assignment extension request for [$($_.PrincipalName)] for the [$($_.RoleName)] role queued successfully.", [MessageType]::Update);
+                                }  
+                                elseif ($response.StatusCode -eq 401) {
+                                    $this.PublishCustomMessage("You are not eligible to extend a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
+                                }
+                                else
+                                {
+                                    $this.PublishCustomMessage($response, [MessageType]::Error);
+                                }
                             }
-                            else
+                            catch
                             {
-                                $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                                if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
+                                {
+                                    $err = $_ | ConvertFrom-Json
+                                    $this.PublishCustomMessage($err.error.message,[MessageType]::Error)
+                                }
+                                else
+                                {
+                                    $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                                }
                             }
                         }
                     }
@@ -955,10 +958,11 @@ class PIM: AzCommandBase {
                {
                     if($RequireMFAOnActivation)
                     {
-                        
-                          $policyString= '{"ruleIdentifier":"AcrsRule","setting":"{\"acrsRequired\":false,\"acrs\":\"'+$policyTag+'\"}"}'
+                        # TODO: if we turn on MFA on activation CA policy cannot be simultaneously applied. Need to check if the API still throws the error
+                          $policyString= ''
                         
                     }
+                    
                   
                }
         #  5) Create json body for patch request  

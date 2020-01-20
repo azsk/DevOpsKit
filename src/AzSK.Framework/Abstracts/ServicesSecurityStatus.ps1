@@ -174,7 +174,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				{
 					$this.PublishCustomMessage(" `r`nChecking resource [$currentCount/$totalResources] ");
 				}
-				
+
 				#Update resource scan retry count in scan snapshot in storage if user partial commit switch is on
 				if($this.UsePartialCommits)
 				{
@@ -263,7 +263,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
             {
 				$this.PublishCustomMessage($exceptionMessage);
 				$this.CommandError($_);
-            }
+			}
 		}
 		if(($childResources | Measure-Object).Count -gt 0)
 		{
@@ -324,7 +324,20 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		}
 	}
 
-
+	hidden [SVTEventContext[]] ScanAttestedControls()
+	{
+		[ControlStateExtension] $ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
+		$ControlStateExt.UniqueRunId = $this.ControlStateExt.UniqueRunId;
+		$ControlStateExt.Initialize($false);
+		$ControlStateExt.ComputeControlStateIndexer();
+		$resourcesAttestedinCurrentScan = @()
+		if(($null -ne $ControlStateExt.ControlStateIndexer) -and ([Helpers]::CheckMember($ControlStateExt.ControlStateIndexer, "ResourceId")))
+		{
+			$resourcesAttestedinCurrentScan = $this.Resolver.SVTResources | Where-Object {$ControlStateExt.ControlStateIndexer.ResourceId -contains $_.ResourceId}
+		}
+		return $this.RunForAllResources("RescanAndPostAttestationData",$false,$resourcesAttestedinCurrentScan)
+	}
+	
 	#BaseLine Control Filter Function
 	[void] BaselineFilterCheck()
 	{
@@ -451,7 +464,6 @@ class ServicesSecurityStatus: AzSVTCommandBase
                 }
                 #Set unique partial scan indentifier 
                 $this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
-                
                 #Telemetry with addition for Subscription Id, PartialScanIdentifier and correction in count of resources
                 #Need optimization for calcuations done for total resources.
                 try{
@@ -473,7 +485,37 @@ class ServicesSecurityStatus: AzSVTCommandBase
                         }
                           
                     }   
-                    [AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details",@{"TotalSVTResources"= $($ScanResourcesList |Measure-Object).Count;"ScanCompletedResourcesCount"=$CompletedResources; "NonScannedResourcesCount" = $IncompleteScans;"ErrorStateResourcesCount"= $InErrorResources;"SubscriptionId"=$this.SubscriptionContext.SubscriptionId;"PartialScanIdentifier"=$this.PartialScanIdentifier;}, $null)
+					[AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details",@{"TotalSVTResources"= $($ScanResourcesList |Measure-Object).Count;"ScanCompletedResourcesCount"=$CompletedResources; "NonScannedResourcesCount" = $IncompleteScans;"ErrorStateResourcesCount"= $InErrorResources;"SubscriptionId"=$this.SubscriptionContext.SubscriptionId;"PartialScanIdentifier"=$this.PartialScanIdentifier;}, $null)
+					
+					#By default below detail partial scan tracker telemetry will be in disabled state 
+					# and only be enabled using feature flag for perticular subscriptions to analaze the CA scan issues
+					# Register/Deregister all listeners to cleanup the memory
+					if([FeatureFlightingManager]::GetFeatureStatus("EnableDetailedResourceTrackerTelemetry",$this.SubscriptionContext.SubscriptionId) -eq $true)
+					{
+						$resourceTrackerEvents = [System.Collections.ArrayList]::new()
+						#Loop through all resource list present in tracker and prepare array of events with common properties like RunIdentifier, SubId,etc
+						foreach($resource in $ScanResourcesList){
+							$resourceEvent = "" | Select-Object Name, Properties, Metrics
+							#RunIdentifier value is not set at this stage. Its value is default. 
+							#Investigation needs to be done base don partialScanIdentifier 
+							#"RunIdentifier" = $this.RunIdentifier; 
+							$Properties = @{
+								"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;
+								"PartialScanIdentifier"=$this.PartialScanIdentifier;
+								"ResourceId" = $resource.Id;
+								"ScanRetryCount" = $resource.ScanRetryCount;
+								"State" = $resource.State;
+								"StateModifiedDate" = $resource.ModifiedDate
+								"TrackerId" = $partialScanMngr.ResourceScanTrackerObj.Id
+							}
+								$resourceEvent.Name = "Partial Tracker Resource Details"
+								$resourceEvent.Properties = $properties
+								$resourceTrackerEvents.Add($resourceEvent) | Out-Null
+						}
+						#Push array of resourcelist to AI telemetry
+						[AIOrgTelemetryHelper]::TrackEvents($resourceTrackerEvents);
+					}
+
                 }
                 catch{
                     #Continue exexution if telemetry is not sent 
@@ -557,7 +599,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		#If Scan source is in supported sources or UsePartialCommits switch is available
 		if ($this.UsePartialCommits -or ($baselineControlsDetails.SupportedSources -contains $scanSource))
 		{
-			$partialScanMngr.UpdateResourceScanRetryCount($_.ResourceId);
+			$partialScanMngr.UpdateResourceScanRetryCount($_.ResourceId,$this.SubscriptionContext.SubscriptionId);
 		}
 	}
 

@@ -2087,7 +2087,7 @@ class CCAutomation: AzCommandBase
 			$resultMsg = "Active job schedule(s) found."
 			$resultStatus = "OK"
 		}
-		$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))				
+		$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))				
 		if($shouldReturn)
 		{
 			return $messages
@@ -2095,19 +2095,28 @@ class CCAutomation: AzCommandBase
 		$detailedMsg = $Null	
 		#endregion	
 
+
 		#region: Step 12: Check if last job is not successful or job hasn't run in last 2 days
-		$stepCount++		
-		$recentJobs = Get-AzAutomationJob -ResourceGroupName $this.AutomationAccount.ResourceGroup `
+		$stepCount++	
+		$recentJobs = $null	
+		$allJobs = Get-AzAutomationJob -ResourceGroupName $this.AutomationAccount.ResourceGroup `
 		-AutomationAccountName $this.AutomationAccount.Name `
-		-RunbookName $this.RunbookName | 
-		Sort-Object LastModifiedTime -Descending |
-		Select-Object -First 10
+		-RunbookName $this.RunbookName 
+		if($null -ne $allJobs -and ($allJobs | Measure-Object).Count -gt 0){
+			$recentJobs = $allJobs | Sort-Object LastModifiedTime -Descending | Where-Object {$_.LastModifiedTime.UtcDateTime -ge [DateTime]::UtcNow.AddDays(-3)}
+		}
+
 		if(($recentJobs|Measure-Object).Count -gt 0)
 		{
+			$checkDescription = "Inspecting CA executed jobs."
+			#Get the last job 
 			$lastJob = $recentJobs[0]
+			#Get suspended job in last 3 days
+			$suspendedJobs = $recentJobs  | Where-Object { $_.Status -eq 'Suspended'}
+			
+			#Check 12.1 Last job run in last 48 hrs
 			if(($(get-date).ToUniversalTime() - $lastJob.LastModifiedTime.UtcDateTime).TotalHours -gt 48)
 			{
-				$checkDescription = "Inspecting CA executed jobs."
 				$failMsg = "The CA scanning automation runbook (job) has not run in the last 48 hours. In normal functioning, CA scans run once every $($this.defaultScanIntervalInHours) hours by default."
 				$resolvemsg = "Please contact AzSK support team for a resolution."
 				$resultMsg = "$failMsg`r`n$resolvemsg"
@@ -2115,8 +2124,20 @@ class CCAutomation: AzCommandBase
 				$shouldReturn = $true
 				$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))	
 			}
+			#Check 12.2 Suspended job in last 3 days
+			elseif($null -ne $suspendedJobs -and ($suspendedJobs|Measure-Object).Count -gt 0){
+				$failMsg = "One or more automation runbook jobs have been suspended in the last 3 days."
+				$resolvemsg = "Please contact AzSK support team for a resolution."
+				$resultMsg = "$failMsg`r`n$resolvemsg"
+				$resultStatus = "Warning"
+				$shouldReturn = $false
+				$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))	
+			}
 			else 
 			{
+				$resultStatus = "OK" 
+				$resultMsg = "CA jobs are functioning normal."
+				$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))
 				#display job summary
 				$jobSummary = $recentJobs | Format-Table Status,@{Label="Duration (in Minutes)"; Expression={[math]::Round(($_.EndTime - $_.StartTime).TotalMinutes)}} | Out-String
 				$messages += [MessageData]::new("Summary of recent jobs ($($this.RunbookName)):", $jobSummary);	
@@ -2126,8 +2147,120 @@ class CCAutomation: AzCommandBase
 		{
 			$messages += [MessageData]::new("Job history not found.");
 		}
-		
+
+		if($shouldReturn)
+		{
+			return $messages
+		}
+
+		$detailedMsg = $Null
 		#endregion
+				
+
+		#region: Step 13: Check if storage account rec'd scan logs in last 3 days 
+		$stepCount++
+		$checkDescription = "Inspecting AzSK storage account for scan logs from recent jobs."
+		$tgtSubsLogsStatus = @()
+		$isScanLogsPresent = $true
+		if($this.IsCentralScanModeOn)
+		{
+			try
+			{
+				if(-not [string]::IsNullOrWhiteSpace($this.TargetSubscriptionIds))
+				{
+					$scanobjects | ForEach-Object {
+						try
+						{
+							$tgtSubStorageAccount = "" | Select-Object TargetSubscriptionId, LoggingOption, IsScanLogsPresent
+							$tgtSubStorageAccount.TargetSubscriptionId = $_.SubscriptionId;
+							$tgtSubStorageAccount.LoggingOption = $_.LoggingOption;
+							$tgtSubStorageAccount.IsScanLogsPresent = $false
+			
+							if($_.LoggingOption -eq [CAReportsLocation]::IndividualSubs)
+							{
+								# Set context for target sub
+								Set-AzContext -SubscriptionId $tgtSubStorageAccount.TargetSubscriptionId  | Out-Null
+							}else{
+								# Set context for master sub
+								Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null
+							}
+							# Get Scan logs from storage
+							$scanLogsPrefixPattern = $this.AutomationAccount.ResourceGroup + "/" + "$($tgtSubStorageAccount.TargetSubscriptionId)" + "/"
+							$CAScanDataBlobObject = $this.GetScanLogsFromStorageAccount($this.CAScanOutputLogsContainerName,$scanLogsPrefixPattern)
+							if($null -ne $CAScanDataBlobObject -and ($CAScanDataBlobObject| Measure-Object).Count -gt 0)
+							{
+								# Scan logs found in storage for last 3 days
+								$tgtSubStorageAccount.IsScanLogsPresent = $true
+							}else{
+								# No scan logs found in storage for last 3 days
+								$tgtSubStorageAccount.IsScanLogsPresent = $false
+								$isScanLogsPresent = $false
+							}
+							$tgtSubsLogsStatus += $tgtSubStorageAccount
+					
+						}
+						catch
+						{		
+							$isScanLogsPresent = $false
+							$tgtSubsLogsStorage += $tgtSubStorageAccount					
+							$currentMessage = [MessageData]::new("Failed to fetch the storage account details $($this.SubscriptionContext.SubscriptionId)");
+							$messages += $currentMessage;
+							$this.PublishCustomMessage($currentMessage);
+							$this.PublishException($_)
+							
+						}
+					}
+
+				}
+			}
+			catch
+			{
+				$this.PublishException($_)
+				$isScanLogsPresent = $false
+			}
+			finally
+			{
+				#setting the context back to the parent subscription
+				Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
+			}
+			$detailedMsg = [MessageData]::new("Target Subscriptions scan logs details:", $tgtSubsLogsStatus);
+		}
+		else
+		{
+			# Get AzSK storage of the current sub
+			$scanLogsPrefixPattern = $this.AutomationAccount.ResourceGroup + "/" + "$($this.SubscriptionContext.SubscriptionId)" + "/"
+			$CAScanDataBlobObject = $this.GetScanLogsFromStorageAccount($this.CAScanOutputLogsContainerName,$scanLogsPrefixPattern)
+			if($null -ne $CAScanDataBlobObject -and ($CAScanDataBlobObject| Measure-Object).Count -gt 0)
+			{
+				$isScanLogsPresent = $true
+			}else{
+				$isScanLogsPresent = $false
+			}
+		}
+		$resolveMsg = "Please contact AzSK support team for a resolution."
+		if($isScanLogsPresent)
+		{
+			$resultMsg = "AzSK storage account contains scan logs for recent jobs as expected."
+			$resultStatus = "OK"				
+		}
+		else
+		{
+			$failMsg = "CA scan logs are missing in storage account for last 3 days."
+			$resultMsg = "$failMsg`r`n$resolvemsg"
+			$resultStatus = "Failed"
+			$shouldReturn = $true
+		}
+
+		$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
+
+		if($shouldReturn)
+		{
+			return $messages
+		}
+	
+		$detailedMsg = $Null	
+		#endregion	
+
 
 		if($this.ExhaustiveCheck)
 		{			
@@ -3874,6 +4007,28 @@ class CCAutomation: AzCommandBase
 			return $null
 		}
 	}
+
+	#get scan logs from storage 
+	hidden [PSObject] GetScanLogsFromStorageAccount($containerName, $scanLogsPrefixPattern)
+	{
+		# Get AzSK storage of the current master sub
+		$recentCAScanDataBlobObject = $null
+		$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+		if($null -ne $reportsStorageAccount -and ($reportsStorageAccount | Measure-Object).Count -eq 1){
+			$recentLogLimitInDays = 3
+			$dayCounter = 0
+			$keys = Get-AzStorageAccountKey -ResourceGroupName $reportsStorageAccount.ResourceGroupName -Name $reportsStorageAccount.Name
+			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
+			while($dayCounter -le $recentLogLimitInDays -and $recentCAScanDataBlobObject -eq $null){
+				$date = [DateTime]::UtcNow.AddDays(-$dayCounter).ToString("yyyyMMdd")
+				$recentLogsPath = $scanLogsPrefixPattern + "AutomationLogs_" + $date
+				$recentCAScanDataBlobObject = Get-AzStorageBlob -Container $containerName -Prefix $recentLogsPath -Context $currentContext -ErrorAction SilentlyContinue
+				$dayCounter += 1
+			 }
+		}
+		return $recentCAScanDataBlobObject
+	}
+
 	#get App RGs
 	hidden [PSObject] GetAppRGs()
 	{

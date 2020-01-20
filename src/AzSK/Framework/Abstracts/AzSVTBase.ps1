@@ -221,89 +221,18 @@ class AzSVTBase: SVTBase{
 		$result = $false;
 		if($metricSettings -and $metricSettings.Count -ne 0)
 		{
-			$resId = $this.ResourceId + $extendedResourceName;
 			$resIdMessageString = "";
 			if(-not [string]::IsNullOrWhiteSpace($extendedResourceName))
 			{
 				$resIdMessageString = "for nested resource [$extendedResourceName]";
 			}
 
+			$resourceGrpAlerts = @()
 			$resourceAlerts = @()
-            # get classic alerts
-			$resourceAlerts += (Get-AzAlertRule -ResourceGroup $this.ResourceContext.ResourceGroupName -WarningAction SilentlyContinue) |
-								Where-Object { $_.Condition -and $_.Condition.DataSource } |
-								Where-Object { $_.Condition.DataSource.ResourceUri -eq $resId };
-
-			# get non-classic alerts
-            try
-            {
-                $apiURL = "https://management.azure.com/subscriptions/{0}/providers/Microsoft.Insights/metricAlerts?api-version=2018-03-01&`$filter=targetResource eq '{1}'" -f $($this.SubscriptionContext.SubscriptionId), $resId
-				$v2Alerts = [WebRequestHelper]::InvokeGetWebRequest($apiURL) 
-                if(($v2Alerts | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($v2Alerts[0],"id"))
-                {
-                    $v2Alerts |  ForEach-Object {
-						if([Helpers]::CheckMember($_,"properties"))
-						{
-    
-							$alert = '{
-                                  "Condition":  {
-                                                    "DataSource":  {
-                                                                       "MetricName":  ""
-                                                                   },
-                                                    "OperatorProperty":  "",
-                                                    "Threshold": "" ,
-                                                    "TimeAggregation":  "",
-                                                    "WindowSize":  ""
-                                                },
-                                  "Actions"  :  null,
-                                  "Description" : "",
-                                  "IsEnabled":  "",
-                                  "Name" : "",
-								  "Type" : "",
-								  "AlertType" : "V2Alert"
-                            }' | ConvertFrom-Json
-							if([Helpers]::CheckMember($_,"properties.criteria.allOf"))
-							{
-								$alert.Condition.DataSource.MetricName = $_.properties.criteria.allOf.metricName
-								$alert.Condition.OperatorProperty = $_.properties.criteria.allOf.operator
-								$alert.Condition.Threshold = [int] $_.properties.criteria.allOf.threshold
-								$alert.Condition.TimeAggregation = $_.properties.criteria.allOf.timeAggregation
-							}
-							$alert.Condition.WindowSize = ([Xml.XmlConvert]::ToTimeSpan("$($_.properties.windowSize)")).ToString()
-							$alert.Actions = [System.Collections.Generic.List[Microsoft.Azure.Management.Monitor.Models.RuleAction]]::new()
-							if([Helpers]::CheckMember($_.properties,"Actions.actionGroupId"))
-							{
-								$actionGroupTemp = $_.properties.Actions.actionGroupId.Split("/")
-								$actionGroup = Get-AzActionGroup -ResourceGroupName $actionGroupTemp[4] -Name $actionGroupTemp[-1] -WarningAction SilentlyContinue
-								if($actionGroup.EmailReceivers.Status -eq [Microsoft.Azure.Management.Monitor.Models.ReceiverStatus]::Enabled)
-								{
-									if([Helpers]::CheckMember($actionGroup,"EmailReceivers.EmailAddress"))
-									{
-										$alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -CustomEmail $actionGroup.EmailReceivers.EmailAddress  -WarningAction SilentlyContinue));
-									}
-									else
-									{
-										$alert.Actions.Add($(New-AzAlertRuleEmail -SendToServiceOwner -WarningAction SilentlyContinue));
-									}	
-								}
-							}				
-							$alert.Description = $_.properties.description
-							$alert.IsEnabled = $_.properties.enabled
-							$alert.Name = $_.name
-							$alert.Type = $_.type
-                            if(($alert|Measure-Object).Count -gt 0)
-                            {
-                               $resourceAlerts += $alert 
-                            }
-						}
-                    }
-                }   
-            }
-            catch
-            {
-                $this.PublishException($_);
-            }
-
+			$resourceGrpAlerts += Get-AzMetricAlertRuleV2 -ResourceGroup $this.ResourceContext.ResourceGroupName -WarningAction SilentlyContinue
+			$resourceAlerts += $resourceGrpAlerts |  Where-Object { ($_.Scopes -eq $this.ResourceId) -and ( $_.Enabled -eq '$true' ) }
+			 
+			$alertsConfiguration = @();
 			$nonConfiguredMetrices = @();
 			$misConfiguredMetrices = @();
 
@@ -311,8 +240,9 @@ class AzSVTBase: SVTBase{
 			ForEach-Object {
 				$currentMetric = $_;
 				$matchedMetrices = @();
+				$alertsConfiguration = @();
 				$matchedMetrices += $resourceAlerts |
-									Where-Object { $_.Condition.DataSource.MetricName -eq $currentMetric.Condition.DataSource.MetricName }
+									Where-Object { ($_.Criteria.MetricName -eq $currentMetric.Condition.DataSource.MetricName) }
 
 				if($matchedMetrices.Count -eq 0)
 				{
@@ -321,38 +251,69 @@ class AzSVTBase: SVTBase{
 				else
 				{
 					$misConfigured = @();
-					#$controlResult.AddMessage("Metric object", $matchedMetrices);
-					$matchedMetrices | ForEach-Object {
-						if([Helpers]::CompareObject($currentMetric, $_))
-						{
-							#$this.ControlSettings.MetricAlert.Actions
-							if(($_.Actions.GetType().GetMembers() | Where-Object { $_.MemberType -eq [System.Reflection.MemberTypes]::Property -and $_.Name -eq "Count" } | Measure-Object).Count -ne 0)
-							{
-								$isActionConfigured = $false;
-								foreach ($action in $_.Actions) {
-									if([Helpers]::CompareObject($this.ControlSettings.MetricAlert.Actions, $action))
-									{
-										$isActionConfigured = $true;
-										break;
-									}
-								}
 
-								if(-not $isActionConfigured)
-								{
-									$misConfigured += $_;
-								}
-							}
-							else
+					$matchedMetrices | ForEach-Object {
+						if (($_.Criteria | Measure-Object).Count -gt 0 ) {
+
+						   $condition = New-Object -TypeName PSObject
+
+						   Add-Member -InputObject $condition -Name "OperatorProperty" -MemberType NoteProperty -Value $_.Criteria.OperatorProperty
+						   Add-Member -InputObject $condition -Name "Threshold" -MemberType NoteProperty -Value $_.Criteria.Threshold
+						   Add-Member -InputObject $condition -Name "TimeAggregation" -MemberType NoteProperty -Value $_.Criteria.TimeAggregation
+						   Add-Member -InputObject $condition -Name "WindowSize" -MemberType NoteProperty -Value  $_.WindowSize.ToString()
+						   $obj= [PSCustomObject]@{MetricName = $_.Criteria.MetricName}
+						   Add-Member -InputObject $condition -Name "DataSource" -MemberType NoteProperty -Value $obj
+								
+						   $alert = New-Object -TypeName PSObject		
+						   Add-Member -InputObject $alert -Name "Condition" -MemberType NoteProperty -Value $condition
+
+						   $actions=@();
+						   if([Helpers]::CheckMember($_,"Actions.actionGroupId"))
+						   {
+							   $_.Actions | ForEach-Object {
+								   $actionGroupTemp = $_.actionGroupId.Split("/")
+								   $actionGroup = Get-AzActionGroup -ResourceGroupName $actionGroupTemp[4] -Name $actionGroupTemp[-1] -WarningAction SilentlyContinue
+								   if([Helpers]::CheckMember($actionGroup,"EmailReceivers.Status"))
+								   {
+									   if($actionGroup.EmailReceivers.Status -eq [Microsoft.Azure.Management.Monitor.Models.ReceiverStatus]::Enabled)
+									   {
+										   if([Helpers]::CheckMember($actionGroup,"EmailReceivers.EmailAddress"))
+										   {
+											$actions += $actionGroup
+										   }
+									   }
+								   }	
+							   }
+						   }		
+						   Add-Member -InputObject $alert -Name "Actions" -MemberType NoteProperty -Value $actions
+						   Add-Member -InputObject $alert -Name "AlertName" -MemberType NoteProperty -Value $_.Name
+						   Add-Member -InputObject $alert -Name "AlertType" -MemberType NoteProperty -Value $_.Type
+   
+						   if(($alert|Measure-Object).Count -gt 0)
 							{
-								if(-not [Helpers]::CompareObject($this.ControlSettings.MetricAlert.Actions, $_.Actions))
-								{
-									$misConfigured += $_;
-								}
+								$alertsConfiguration += $alert 
+							}
+					   }
+				   }
+				}
+
+				if(($alertsConfiguration|Measure-Object).Count -gt 0)
+				{
+					$alertsConfiguration | ForEach-Object {
+						if([Helpers]::CompareObject($currentMetric.Condition, $_.Condition))
+						{
+							$isActionConfigured = $false;
+							if (($_.Actions | Measure-Object).Count -gt 0 ) {
+								$isActionConfigured = $true;
+							}
+							if(-not $isActionConfigured)
+							{
+								$misConfigured += $_.Condition;
 							}
 						}
 						else
 						{
-							$misConfigured += $_;
+							$misConfigured += $_.Condition
 						}
 					};
 

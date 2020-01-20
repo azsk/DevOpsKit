@@ -12,11 +12,11 @@ namespace AzSK.ARMChecker.Lib
         Contains,
         NotContains,
         All,
-        StringNotMatched,
+        StringMatched,
         Limit,
         PassIfPropertyNotFound,
         FailIfPropertyNotFound,
-        VerifyIfPropertyNotFound,
+        VerifyIfPropertyNotFound
         
     }
 }
