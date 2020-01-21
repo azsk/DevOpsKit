@@ -19,6 +19,8 @@ class SubscriptionCore: AzSVTBase
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $permanentAssignments;
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $RGLevelPIMAssignments;
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $RGLevelPermanentAssignments;
+	hidden [System.Collections.Generic.List[TelemetryRBACExtended]] $PIMAssignmentswithPName = @();
+	hidden [System.Collections.Generic.List[TelemetryRBACExtended]] $PIMRGLevelAssignmentswithPName = @();
 	hidden [CustomData] $CustomObject;
 	hidden $SubscriptionExtId;
 
@@ -1517,8 +1519,6 @@ class SubscriptionCore: AzSVTBase
 
 	hidden [ControlResult] CheckNonAlternateAccountsinPIMAccess([ControlResult] $controlResult)
     {
-		if($this.HasGraphAPIAccess)
-		{
 			$AltAccountRegX = [string]::Empty;
 			$message = [string]::Empty;
 			if($null -eq $this.PIMAssignments)
@@ -1543,27 +1543,19 @@ class SubscriptionCore: AzSVTBase
 				$controlResult.AddMessage("Unable to get the alternate account pattern for your org. Please verify manually")
 				return $controlResult;
 			}
-			if(($this.PIMAssignments| Measure-Object).Count -gt 0)
+			if(($this.PIMAssignmentswithPName| Measure-Object).Count -gt 0)
 			{
 				# get pim assignments for critical roles at subscription level
-				$PIMAssignmentsForCriticalRoles = $this.PIMAssignments | Where-Object {$_.RoleDefinitionName -in $this.ControlSettings.CriticalPIMRoles.Subscription}
+				$PIMAssignmentsForCriticalRoles = $this.PIMAssignmentswithPName | Where-Object {$_.RoleDefinitionName -in $this.ControlSettings.CriticalPIMRoles.Subscription}
 				if(($PIMAssignmentsForCriticalRoles | Measure-Object).Count -gt 0)
 				{
-					$IdentityName= $PIMAssignmentsForCriticalRoles.DisplayName | Get-Unique
-					$Users = @();
-					# we currently do not have principal names stored in the PIMAssignments object thus need to get the principal name explicitly
-					$IdentityName | ForEach-Object{
-						
-						$Users += Get-AzADUser -DisplayName $_
-					}
-
-					
-					$nonAltPIMAccounts = $Users | Where-Object{$_.UserPrincipalName -notmatch $AltAccountRegX}
+										
+					$nonAltPIMAccounts = $PIMAssignmentsForCriticalRoles | Where-Object{$_.PrincipalName -notmatch $AltAccountRegX}
 					if(($nonAltPIMAccounts | Measure-Object).Count -gt 0)
 					{
 						$nonAltPIMAccountsWithRoles = $PIMAssignmentsForCriticalRoles | Where-Object{$_.DisplayName -in $nonAltPIMAccounts.DisplayName}
 						$controlResult.AddMessage([VerificationResult]::Failed, "Non alternate accounts are assigned critical roles")
-						$controlResult.AddMessage($nonAltPIMAccountsWithRoles)
+						$controlResult.AddMessage($($nonAltPIMAccountsWithRoles | Select-Object -Property "PrincipalName", "RoleDefinitionName","Scope","ObjectType" ))
 					}
 					else
 					{
@@ -1571,12 +1563,8 @@ class SubscriptionCore: AzSVTBase
 					}
 				}
 			}
-		}
-		else
-		{
-			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-			$controlResult.AddMessage([VerificationResult]::Manual, "Not able to query Graph API. Please verify manually.");
-		}
+		
+		
 
 	return $controlResult;
 	}
@@ -1750,7 +1738,8 @@ class SubscriptionCore: AzSVTBase
 										#If roleAssignment is non permanent, even the active PIM assignments would appear in this list
 										$item.IsPIMEnabled=$true;
 										$this.PIMAssignments.Add($item);
-										
+										$tempRBExtendObject = [TelemetryRBACExtended]::new($item, $roleAssignment.subject.principalName)
+										$this.PIMAssignmentswithPName.Add($tempRBExtendObject);
 									}
 									else
 									{
@@ -1834,6 +1823,8 @@ class SubscriptionCore: AzSVTBase
 										#If roleAssignment is non permanent and not active
 										$item.IsPIMEnabled=$true;
 										$this.RGLevelPIMAssignments.Add($item);
+										$tempRBExtendObject = [TelemetryRBACExtended]::new($item, $roleAssignment.subject.principalName)
+										$this.PIMRGLevelAssignmentswithPName.Add($tempRBExtendObject);
 										
 									}
 									else
