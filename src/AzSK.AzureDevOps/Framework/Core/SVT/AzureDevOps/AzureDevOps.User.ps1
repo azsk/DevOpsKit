@@ -142,10 +142,10 @@ class User: SVTBase
                 }
                 if(($PATExpri7Days | Measure-Object).Count -gt 0)
                 {
-                    $controlResult.AddMessage([VerificationResult]::Failed)
+                    $controlResult.AddMessage([VerificationResult]::Failed,"")
                 }
                 elseif(($PATExpri30Days | Measure-Object).Count -gt 0) {
-                    $controlResult.AddMessage([VerificationResult]::Verify)
+                    $controlResult.AddMessage([VerificationResult]::Verify,"")
                 }
                 else {
                     $controlResult.AddMessage([VerificationResult]::Passed, "No PAT tokens found which expire within 30 days")
