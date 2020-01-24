@@ -56,16 +56,16 @@ class AgentPool: SVTBase
             $agentPools =@();
             if([Helpers]::CheckMember($agentPoolsObj,"fps.dataProviders.data") -and $agentPoolsObj.fps.dataProviders.data."ms.vss-build-web.agent-pools-data-provider" -and ($agentPoolsObj.fps.dataProviders.data."ms.vss-build-web.agent-pools-data-provider".taskAgentPools.Count -gt 0 ))
             {
-                  $agentPools = ($agentPoolsObj.fps.dataProviders.data."ms.vss-build-web.agent-pools-data-provider".taskAgentPools | Where-Object { ($_.autoProvision -eq $true) }) | Select-Object @{Name = "Name"; Expression = {$_.Name}}
+                  $agentPools = ($agentPoolsObj.fps.dataProviders.data."ms.vss-build-web.agent-pools-data-provider".taskAgentPools | Where-Object { ($_.autoProvision -eq $true -and $_.Name -eq $this.ResourceContext.resourcename) }) #| Select-Object @{Name = "Name"; Expression = {$_.Name}}
                   if (($agentPools | Measure-Object).Count -gt 0 ) {
-                    $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provision is enabled for below agent pools:", $agentPools);
+                    $controlResult.AddMessage([VerificationResult]::Passed,"Auto-provision is enabled for the $($agentPools) agent pools.");
                   }
                   else {
-                    $controlResult.AddMessage([VerificationResult]::Passed,"Auto-provision is not enabled for any agent pool.");
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provision is not enabled for the agent pool.");
                    }
             }
             else {
-                $controlResult.AddMessage([VerificationResult]::Passed,"Auto-provision is not enabled for any agent pool.");
+                $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provision is not enabled for the agent pool.");
             }
         }
         catch{
@@ -74,23 +74,27 @@ class AgentPool: SVTBase
         return $controlResult
     }
 
-    #hidden [ControlResult] CheckPrjAgtAutoProvisioning([ControlResult] $controlResult)
-    #{
-    #    try {
-    #        $agentPoolsURL = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName),'ArvTestDevOps';
-    #        $agentPoolsObj = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsURL);
-    #                               
-    #         if([Helpers]::CheckMember($agentPoolsObj,"fps.dataProviders.data") -and $agentPoolsObj.fps.dataProviders.data."ms.vss-build-web.agent-pools-data-provider" )
-    #        {
-    #            Write-Information $agentPoolsObj.fps.dataProviders.data."ms.vss-build-web.agent-pools-data-provider"
-    #        }
-    #        else {
-    #            Write-Information $agentPoolsObj.fps.dataProviders.data
-    #        }
-    #    }
-    #    catch{
-    #        Write-Error $_  
-    #    }
-    #    return $controlResult
-    #}
+    hidden [ControlResult] CheckPrjAllPipelineAccess([ControlResult] $controlResult)
+    {
+        try {
+            $projectId = $this.ResourceContext.ResourceId.Split('/')[-1].Split('_')[0];
+            $agtPoolId = $this.ResourceContext.ResourceId.Split('/')[-1].Split('_')[1];
+
+            $agentPoolsURL = "https://dev.azure.com/{0}/{1}/_apis/build/authorizedresources?type=queue&id={2}" -f $($this.SubscriptionContext.SubscriptionName),$projectId ,$agtPoolId;
+            $agentPoolsObj = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsURL);
+                                   
+             if([Helpers]::CheckMember($agentPoolsObj,"authorized") -and $agentPoolsObj.authorized)
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed,"Access permission to all pipeline is enabled for the agent pool.");
+            }
+            else {
+                $controlResult.AddMessage([VerificationResult]::Passed,"Access permission to all pipeline is not enabled for the agent pool.");
+            }
+        }
+        catch{
+            $controlResult.AddMessage($_); 
+            $controlResult.AddMessage([VerificationResult]::Manual,"could not able to fetch agent pool details.");
+        }
+        return $controlResult
+    }
 }
