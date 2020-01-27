@@ -144,7 +144,7 @@ class ERvNet : SVTIaasBase
 		$VMNics = @()
 		if($null -ne $this.vNetNicsOutput)
 		{
-			$vNetNicsMultiVM = $this.vNetNicsOutput | Group-Object VMId | Where-Object {-not [System.String]::IsNullOrWhiteSpace($_.Name) -and $_.Count -gt 1}
+			$vNetNicsMultiVM = $this.vNetNicsOutput | Group-Object VMName | Where-Object {-not [System.String]::IsNullOrWhiteSpace($_.Name) -and $_.Count -gt 1}
 
 			$hasTCPPassed = $true
 			if($null -ne $vNetNicsMultiVM)
@@ -164,6 +164,8 @@ class ERvNet : SVTIaasBase
 									Set-Variable -Name tempIPConfig -Value $_
 									if($null -ne $tempIPConfig.properties.Subnet)
 									{
+                                        #This check will always 'pass' TCP
+                                        #While network interfaces in the same VM can be connected to different subnets within a virtual network, the network interfaces must all be connected to the same virtual network.
 										if(-not $tempIPConfig.properties.Subnet.Id.StartsWith($this.ResourceObject.Id,"CurrentCultureIgnoreCase"))
 										{
 											$hasTCPPassed = $false
