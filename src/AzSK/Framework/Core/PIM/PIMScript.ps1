@@ -452,7 +452,7 @@ class PIM: AzCommandBase {
     }
 
     #Assign a user to Eligible Role
-    hidden AssignExtendPIMRoleForUser($subscriptionId, $resourcegroupName, $resourceName, $roleName, $PrincipalName, $duration,$isExtnensionRequest) {
+    hidden AssignExtendPIMRoleForUser($subscriptionId, $resourcegroupName, $resourceName, $roleName, $PrincipalName, $duration, $isExtnensionRequest, $force, $isRemoveAssignmentReq) {
         $this.AcquireToken();
         $PrincipalName = $this.ConvertToStringArray($PrincipalName);
         $resolvedResources = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName,$false)
@@ -494,6 +494,8 @@ class PIM: AzCommandBase {
                           $this.PublishCustomMessage("Unable to fetch details of the principal name provided.", [MessageType]::Error)
                     return;
                 }            
+                
+				#"If" block will exceute when -ExtendExpiringAssignments parameter is used  
                 if($isExtnensionRequest)
                 {
                     $roleAssignments = $this.ListAssignmentsWithFilter($resourceId, $false)
@@ -546,6 +548,55 @@ class PIM: AzCommandBase {
                     }
             
                 }
+
+                #"ElseIf" block will exceute when -RemoveRole parameter is used  
+                elseif ($isRemoveAssignmentReq)
+                 {
+                    $userResp = ''
+                    $users | ForEach-Object{
+                        $this.PublishCustomMessage(($_ | Format-Table  -AutoSize -Wrap -Property UserPrincipalName, DisplayName | Out-String), [MessageType]::Default)
+                        if(!$Force)
+                        {
+                            Write-Host "The above role assignments will be removed. `nPlease confirm (Y/N): " -ForegroundColor Yellow -NoNewline
+                            $userResp = Read-Host
+                        } 
+                        if ($userResp -eq 'y' -or $Force)
+                        {
+                            $url = $this.APIroot + "/roleAssignmentRequests"
+                            $postParams = '{"assignmentState":"Eligible","type":"AdminRemove","roleDefinitionId":"' + $roleDefinitionId + '","scopedResourceId": null ,"resourceId":"' + $resourceId + '","subjectId":"' + $_.Id + '"}'
+
+                            $this.PublishCustomMessage("Initiating removal of assignment on [$($resolvedResource.ResourceName)] for [$RoleName] role...")
+                            $this.PublishCustomMessage([Constants]::SingleDashLine)
+
+                            try{
+                            $response = [WebRequestHelper]::InvokeWebRequest('Post', $url, $this.headerParams, $postParams, "application/json", $false, $true )
+                                if ($response.StatusCode -eq 201) {
+                                    $this.PublishCustomMessage("Assignment removal request queued successfully.", [MessageType]::Update);
+                                }  
+                                elseif ($response.StatusCode -eq 401) {
+                                    $this.PublishCustomMessage("You are not eligible to revoke a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
+                                }
+                            }
+                            catch
+                            {
+                                if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
+                                {
+                                    $err = $_ | ConvertFrom-Json
+                                    $this.PublishCustomMessage($err.error.message,[MessageType]::Error)
+                                }
+                                else
+                                {
+                                    $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                                }
+        
+                            }
+                            $this.PublishCustomMessage([Constants]::SingleDashLine)
+                            $this.PublishCustomMessage("");
+                        }
+                    }
+                }
+
+                #"Else" block will exceute when -AssignRole parameter is used  
                 else 
                 {
                     $users | ForEach-Object{
