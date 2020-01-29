@@ -10,6 +10,9 @@ function Get-AzSKAADSecurityStatusTenant
 	
 	.PARAMETER TenantId
 	(Optional) TenantId of the AAD tenant for which security checks need to be performed.
+
+	.PARAMETER ControlIds
+	(Optional) Comma separated control ids to filter the security controls.
 	
 	
 
@@ -36,6 +39,10 @@ function Get-AzSKAADSecurityStatusTenant
 		[Alias("otp")]
 		[ValidateSet("All","Application", "Device", "Group", "ServicePrincipal", "User", "None")]
 		$ObjectTypes = @("All"),
+
+		[string] 
+		[AllowEmptyString()]
+		$ControlIds,
 
 		[int]
 		[Parameter(Position = 2, Mandatory = $false, HelpMessage="Max # of objects to check. Default is 3 (for preview release).")]
@@ -64,6 +71,7 @@ function Get-AzSKAADSecurityStatusTenant
 			$secStatus = [ServicesSecurityStatus]::new($TenantId, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
+				$secStatus.ControlIdString = $ControlIds;
 				return $secStatus.EvaluateControlStatus();
 			}    
 		}
@@ -94,7 +102,9 @@ function Get-AzSKAADSecurityStatusUser
 	.PARAMETER TenantId
 	(Optional) TenantId of the AAD tenant for which security checks need to be performed.
 	
-	
+	.PARAMETER ControlIds
+	(Optional) Comma separated control ids to filter the security controls.
+
 	.NOTES
 	This command scans various user-created or user-owned objects in an AAD tenant for security settings and best practices.
 
@@ -144,6 +154,7 @@ function Get-AzSKAADSecurityStatusUser
 			$secStatus = [ServicesSecurityStatus]::new($TenantId, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
+				$secStatus.ControlIdString = $ControlIds;
 				return $secStatus.EvaluateControlStatus();
 			}    
 		}
