@@ -1451,9 +1451,17 @@ class SubscriptionCore: AzSVTBase
 			$nonCompliantPIMCAPolicyTagRoles = @();
 			foreach($role in $roles)
 			{
-				$url ="https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resourceId)%27)+and+(roleDefinition/id+eq+%27$($role.id)%27)"
-				$rolesettings = [WebRequestHelper]::InvokeGetWebRequest($url, $headers)
-				$CAPolicyOnRoles = ($($rolesettings.userMemberSettings | Where-Object{$_.RuleIdentifier -eq 'AcrsRule'}).setting) | ConvertFrom-Json
+				if( ([FeatureFlightingManager]::GetFeatureStatus("UseV2apiforPIMRoleSetting","*"))) { 
+					$url ="https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettingsV2?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resourceId)%27)+and+(roleDefinition/id+eq+%27$($role.id)%27)"
+					$rolesettings = [WebRequestHelper]::InvokeGetWebRequest($url, $headers)
+					$CAPolicyOnRoles = ($($($rolesettings.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'AcrsRule'}).setting | ConvertFrom-Json
+				}
+				else {
+					$url ="https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resourceId)%27)+and+(roleDefinition/id+eq+%27$($role.id)%27)"
+					$rolesettings = [WebRequestHelper]::InvokeGetWebRequest($url, $headers)
+					$CAPolicyOnRoles = ($($rolesettings.userMemberSettings | Where-Object{$_.RuleIdentifier -eq 'AcrsRule'}).setting) | ConvertFrom-Json
+				}
+				
 				if($CAPolicyOnRoles.acrsRequired)
 				{
 					$validRoles +=$role
