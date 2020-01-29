@@ -24,7 +24,7 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
  
 #Helpers (independent of models)
 . $PSScriptRoot\Helpers\ContextHelper.ps1  
-. $PSScriptRoot\Helpers\IdentityHelpers.ps1 
+#. $PSScriptRoot\Helpers\IdentityHelpers.ps1 
 . $FrameworkPath\Helpers\ConfigurationHelper.ps1
 
 . $FrameworkPath\Models\AzSKConfig.ps1
