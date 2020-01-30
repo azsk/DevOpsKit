@@ -1,0 +1,20 @@
+﻿{
+   "MaintenanceMessage": "WARNING: We are making some improvements to the {0} module. It is currently unavailable but will be back in action soon.",
+   "PublicPSGalleryUrl": "https://www.powershellgallery.com",
+   "SubscriptionMandatoryTags": [
+      "Mandatory"
+   ],
+   "DefaultControlExculdeTags": [ "Information" ],
+   "DefaultControlFiltersTags": [],
+   "ControlTelemetryKey": "00000000-0000-0000-0000-000000000000",
+   "EnableControlTelemetry": false,
+   "PolicyMessage": "Running AzSK.PowerPlatform cmdlet using a generic (org-neutral) policy...",
+   "InstallationCommand": "Install-Module -Name AzSK.PowerPlatform -Scope CurrentUser -AllowClobber -Force",
+   "OutputFolderPath": "",
+   "BackwardCompatibleVersionCount": 2,
+   "ConfigSchemaBaseVersion": "1.0.0",
+   "PrivacyAcceptedSources": [],
+   "AzSKConfigURL": "",
+   "SupportDL": "azsksupext@microsoft.com",
+  "PolicyOrgName": "org-neutral"
+}

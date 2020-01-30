@@ -1,0 +1,41 @@
+{
+    "FeatureName":  "Tenant",
+    "Reference":  "aka.ms/azskpp/tenant",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+      "ControlID": "PowerPlatform_Organization_AuthN_Use_AAD_Auth",
+      "Description": "Organization must be configured to authenticate users using Azure Active Directory backed credentials.",
+      "Id": "Tenant110",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckAADConfiguration",
+      "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/access-with-azure-ad?view=vsts",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthN"
+      ],
+      "Enabled": true
+    },
+    {
+        "ControlID": "PowerPlatform_Tenant_AuthN_Disable_External_Guest_Users",
+        "Description": "Permissions to external accounts (i.e., accounts outside the native directory for the Tenant) must be disabled",
+        "Id": "Tenant120",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Non-AD accounts (such as xyz@hotmail.com, pqr@outlook.com, etc.) present at any scope within a Tenant subject your assets to undue risk. These accounts are not managed to the same standards as enterprise tenant identities. They don't have multi-factor authentication enabled. Etc.",
+        "Recommendation": "Go to Organization Settings --> Policy --> Security Policies --> Turn 'Off' external guest access",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthN"
+        ],
+        "Enabled": true
+      }
+    ]
+    }

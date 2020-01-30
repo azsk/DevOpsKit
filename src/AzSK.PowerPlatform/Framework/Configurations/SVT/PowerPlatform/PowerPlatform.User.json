@@ -1,0 +1,41 @@
+{
+  "FeatureName":  "User",
+  "Reference":  "aka.ms/azskpp/user",
+  "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+        "ControlID": "PowerPlatform_User_AuthZ_PAT_Min_Access",
+        "Description": "Personal access tokens (PAT) must be defined with minimum required permissions to resources",
+        "Id": "User110",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckPATAccessLevel",
+        "Rationale": "Granting minimum access ensures that PAT is granted with just enough permissions to perform required tasks. This minimizes exposure of the resources in case of PAT compromise.",
+        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=vsts#revoke-personal-access-tokens-to-remove-access",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "AuthZ"
+        ],
+        "Enabled": true
+    },
+    {
+      "ControlID": "PowerPlatform_User_DP_Minimal_Token_Validity",
+      "Description": "Personal access tokens (PAT) must have a shortest possible validity period",
+      "Id": "User120",
+      "ControlSeverity": "High",
+      "Automated": "No",
+      "MethodName": "",
+      "Rationale": "If a personal access token (PAT) gets compromised, the Azure DevOps assets accessible to the user can be accessed/manipulated by unauthorized users. Minimizing the validity period of the PAT ensures that the window of time available to an attacker in the event of compromise is small.",
+      "Recommendation": "Go to User Profile --> Security --> Personel Access Token --> Validate expiry periods of PAT tokens",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "DP"
+      ],
+      "Enabled": true
+    }
+  ]
+}
