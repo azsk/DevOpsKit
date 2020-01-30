@@ -926,6 +926,8 @@ class PIM: AzCommandBase {
                 $existingroleSetting  = $rolesettings
            
         # 4) Modify the role settings obtained above by the parameters passed in cmdlet
+            $MaxActivationDurationConstant = 60 #To convert hours to minutes
+            $ExpireEligibleAssignmentsAfterConstant = 24*60 #To convert days to minutes
 
                 if( ([FeatureFlightingManager]::GetFeatureStatus("UseV2apiforPIMRoleSetting","*"))) { 
                     $isPermanentAdminEligible = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Eligible'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).permanentAssignment
@@ -936,7 +938,7 @@ class PIM: AzCommandBase {
                     }
                     else 
                     {
-                        $MaximumActivationDuration = $MaximumActivationDuration*60
+                        $MaximumActivationDuration = $MaximumActivationDuration*$MaxActivationDurationConstant
                     }
                     if($ExpireEligibleAssignmentsAfter -eq -1)
                     {
@@ -944,7 +946,7 @@ class PIM: AzCommandBase {
                     }
                     else 
                     {
-                            $ExpireEligibleAssignmentsAfter =$ExpireEligibleAssignmentsAfter*24*60
+                            $ExpireEligibleAssignmentsAfter =$ExpireEligibleAssignmentsAfter*$ExpireEligibleAssignmentsAfterConstant
                     }
                 }
                 else {
@@ -956,7 +958,7 @@ class PIM: AzCommandBase {
                     }
                     else 
                     {
-                        $MaximumActivationDuration = $MaximumActivationDuration*60
+                        $MaximumActivationDuration = $MaximumActivationDuration*$MaxActivationDurationConstant
                     }
                     if($ExpireEligibleAssignmentsAfter -eq -1)
                     {
@@ -964,7 +966,7 @@ class PIM: AzCommandBase {
                     }
                     else 
                     {
-                            $ExpireEligibleAssignmentsAfter =$ExpireEligibleAssignmentsAfter*24*60
+                            $ExpireEligibleAssignmentsAfter =$ExpireEligibleAssignmentsAfter*$ExpireEligibleAssignmentsAfterConstant
                     }
                 }
                # Check for the conditional policy enforcement in Org settings, if applied to accordingly
