@@ -27,6 +27,70 @@ class Project: SVTBase
         return $controlResult;
     }
 
+    hidden [ControlResult] CheckBadgeAnonAccess([ControlResult] $controlResult)
+    {
+       if($this.PipelineSettingsObj)
+       {
+            
+            if($this.PipelineSettingsObj.statusBadgesArePrivate.enabled -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Anonymous access to status badge API is disabled. It is set as '$($this.PipelineSettingsObj.statusBadgesArePrivate.orgEnabled)' at organization scope.");
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Failed, "Anonymous access to status badge API is enabled. It is set as '$($this.PipelineSettingsObj.statusBadgesArePrivate.orgEnabled)' at organization scope.");
+            }       
+       }
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckSetQueueTime([ControlResult] $controlResult)
+    {
+       if($this.PipelineSettingsObj)
+       {
+            
+            if($this.PipelineSettingsObj.enforceSettableVar.enabled -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Only limited variables can be set at queue time. It is set as '$($this.PipelineSettingsObj.enforceSettableVar.orgEnabled)' at organization scope.");
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Failed, "All variables can be set at queue time. It is set as '$($this.PipelineSettingsObj.enforceSettableVar.orgEnabled)' at organization scope.");
+            }       
+       }
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckJobAuthnScope([ControlResult] $controlResult)
+    {
+       if($this.PipelineSettingsObj)
+       {
+            
+            if($this.PipelineSettingsObj.enforceJobAuthScope.enabled -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Scope of access of all pipelines is restricted to current project. It is set as '$($this.PipelineSettingsObj.enforceJobAuthScope.orgEnabled)' at organization scope.");
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Failed, "Scope of access of all pipelines is set to project collection. It is set as '$($this.PipelineSettingsObj.enforceJobAuthScope.orgEnabled)' at organization scope.");
+            }       
+       }
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckPublishMetadata([ControlResult] $controlResult)
+    {
+       if($this.PipelineSettingsObj)
+       {
+            
+            if($this.PipelineSettingsObj.publishPipelineMetadata.enabled -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Publishing metadata from pipeline is enabled. It is set as '$($this.PipelineSettingsObj.publishPipelineMetadata.orgEnabled)' at organization scope.");
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Failed, "Publishing metadata from pipeline is disabled. It is set as '$($this.PipelineSettingsObj.publishPipelineMetadata.orgEnabled)' at organization scope.");
+            }       
+       }
+        return $controlResult
+    }
+
     hidden [ControlResult] CheckRBACAccess([ControlResult] $controlResult)
     {
         $url = 'https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1' -f $($this.SubscriptionContext.SubscriptionName);
