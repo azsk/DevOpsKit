@@ -12,13 +12,16 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		Organization name for which the security evaluation has to be performed.
 	
 	.PARAMETER ProjectNames
-		Organization name for which the security evaluation has to be performed.
+		Project name for which the security evaluation has to be performed.
 
 	.PARAMETER BuildNames
-		Organization name for which the security evaluation has to be performed.
+		Build name for which the security evaluation has to be performed.
 
 	.PARAMETER ReleaseNames
-		Organization name for which the security evaluation has to be performed.
+		Release name for which the security evaluation has to be performed.
+
+	.PARAMETER AgentPoolNames
+	   Agent name for which the security evaluation has to be performed.	
 
 	.NOTES
 	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
@@ -57,10 +60,17 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		$ReleaseNames,
 
 		[string]
-		[Parameter(HelpMessage="Release names for which the security evaluation has to be performed.")]
+		[Parameter(HelpMessage="Agent Pool names for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("ap")]
 		$AgentPoolNames,
+
+		
+		[string]
+		[Parameter(HelpMessage="Service connection names for which the security evaluation has to be performed.")]
+		[ValidateNotNullOrEmpty()]
+		[Alias("sc")]
+		$ServiceConnectionNames,
 
 		[switch]
 		[Parameter(HelpMessage="Scan all supported artificats present under organization like build, release, projects etc.")]
@@ -91,20 +101,12 @@ function Get-AzSKAzureDevOpsSecurityStatus
 	{
 	try 
 		{
-			$AzSK = Get-Module | Where-Object { $_.Name -eq 'AzSK' };
-			if (!$AzSK) {
-				$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames,$ScanAllArtifacts,$PATToken,$ResourceTypeName);
+				$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames, $ServiceConnectionNames, $ScanAllArtifacts,$PATToken,$ResourceTypeName);
 			    $secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			    if ($secStatus) 
 			    {		
 			    	return $secStatus.EvaluateControlStatus();
-			    }  
-			}
-			else {
-				Write-Error "Please make sure you have imported only the AzSK.AzureDevOps module in the PS session. It seems that there are other AzSK modules also present in PS session memory. Please run the command in the new session.";
-				[ListenerHelper]::UnregisterListeners();
-			}
-			  
+			    }    
 		}
 		catch 
 		{

@@ -325,9 +325,9 @@ class Release: SVTBase
     {
         if(($this.ReleaseObj | Measure-Object).Count -gt 0)
         {
-            if( ($this.ReleaseObj.artifacts | Measure-Object).Count -gt 0){
+            if( [Helpers]::CheckMember($this.ReleaseObj[0],"artifacts") -and ($this.ReleaseObj[0].artifacts | Measure-Object).Count -gt 0){
                 $sourcetypes = @();
-                $sourcetypes = $this.ReleaseObj.artifacts;
+                $sourcetypes = $this.ReleaseObj[0].artifacts;
                 $nonadoresource = $sourcetypes | Where-Object { $_.type -ne 'Git'} ;
                
                if( ($nonadoresource | Measure-Object).Count -gt 0){

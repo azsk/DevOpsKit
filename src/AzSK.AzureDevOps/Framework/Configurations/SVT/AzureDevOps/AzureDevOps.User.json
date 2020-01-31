@@ -21,7 +21,7 @@
         "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_User_DP_Minimal_Token_Validity",
+      "ControlID": "AzureDevOps_User_AuthZ_Minimal_Token_Validity",
       "Description": "Personal access tokens (PAT) must have a shortest possible validity period",
       "Id": "User120",
       "ControlSeverity": "Medium",
@@ -38,7 +38,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_User_DP_Info_Token_Expiration",
+      "ControlID": "AzureDevOps_User_AuthZ_Review_Token_Expiration",
       "Description": "Personal access tokens (PAT) which are near to expire withing 7 days.",
       "Id": "User121",
       "ControlSeverity": "Medium",
@@ -55,8 +55,8 @@
       "Enabled": true
     },
     {
-        "ControlID": "AzureDevOps_User_AuthN_Disable_Alternate_Cred",
-        "Description": "Alternate credential must be disabled",
+        "ControlID": "AzureDevOps_User_AuthN_Disable_Alternate_Credentials",
+        "Description": "Alternate credentials must be disabled",
         "Id": "User130",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
