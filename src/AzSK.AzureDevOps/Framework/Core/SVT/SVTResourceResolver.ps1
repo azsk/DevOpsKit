@@ -25,11 +25,35 @@ class SVTResourceResolver: AzSKRoot
     hidden [string[]] $BuildNames = @();
     hidden [string[]] $ReleaseNames = @();
     hidden [string[]] $AgentPools = @();
+    hidden [string[]] $ServiceConnections = @();
     SVTResourceResolver([string]$organizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPools,$ScanAllArtifacts,$PATToken,$ResourceTypeName): Base($organizationName,$PATToken)
+	{
+        $this.SetallTheParamValues($organizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPools,$ScanAllArtifacts,$PATToken,$ResourceTypeName);
+    }
+
+    SVTResourceResolver([string]$organizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPools, $ServiceConnectionNames, $ScanAllArtifacts,$PATToken,$ResourceTypeName): Base($organizationName,$PATToken)
+	{
+        $this.SetallTheParamValues($organizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPools,$ScanAllArtifacts,$PATToken,$ResourceTypeName);
+        if(-not [string]::IsNullOrEmpty($ServiceConnectionNames))
+        {
+			$this.ServiceConnections += $this.ConvertToStringArray($ServiceConnectionNames);
+
+			if ($this.ServiceConnections.Count -eq 0)
+			{
+				throw [SuppressedException] "The parameter 'ServiceConnectionNames' does not contain any string."
+			}
+        }	
+
+        if($ScanAllArtifacts)
+        {
+            $this.ServiceConnections = "*"
+        }        
+    }
+
+    [void] SetallTheParamValues([string]$organizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPools,$ScanAllArtifacts,$PATToken,$ResourceTypeName)
 	{
         $this.organizationName = $organizationName
         $this.ResourceTypeName = $ResourceTypeName
-        
 
         if(-not [string]::IsNullOrEmpty($ProjectNames))
         {
@@ -74,7 +98,7 @@ class SVTResourceResolver: AzSKRoot
             $this.BuildNames = "*"
             $this.ReleaseNames = "*"
             $this.AgentPools = "*"
-        }        
+        }  
     }
 
     [void] LoadAzureResources()
@@ -149,7 +173,7 @@ class SVTResourceResolver: AzSKRoot
                 {
                     # Currently get only Azure Connections as all controls are applicable for same
                     #TODO: temp added git in the where
-                    $azureConnections = $serviceEndpointObj | Where-Object { $_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github"} #-or $_.type -eq "git" -or $_.type -eq "git"
+                    $azureConnections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github") -and (($this.ServiceConnections -contains $_.name) -or ($this.ServiceConnections -eq "*")) } #-or $_.type -eq "git" -or $_.type -eq "git"
 
                     $azureConnections | ForEach-Object {
                         $connectionObject = $_
@@ -295,31 +319,27 @@ class SVTResourceResolver: AzSKRoot
                     }
                 }
                 
-                if($this.AgentPools.Count -gt 0)
+                if($this.AgentPools.Count -gt 0 -and ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::AgentPool))
                 {
                     if($this.AgentPools -ne "*")
                     {
                         $this.PublishCustomMessage("Getting agent pools configurations...");
                     }
-                    if($this.AgentPools -eq "*")
-                    {
+                   # if($this.AgentPools -eq "*")
+                   # {
                         $agentPoolsDefnURL = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName),$projectName;
-                        #TODO: comment above line added below line for testing. previously above commented line was in use, below line is also working fine.
-                        #$agentPoolsDefnURL = "https://dev.azure.com/{0}/{1}/_settings/agentqueues?__rt=fps&__ver=2 " -f $($this.SubscriptionContext.SubscriptionName),$projectName;
-                        
                         try {
                       
-                                $agentPoolsDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsDefnURL);
-                           
-                        
+                            $agentPoolsDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsDefnURL);
+                                                   
                              if(([Helpers]::CheckMember($agentPoolsDefnsObj,"fps.dataProviders.data") ) -and  (($agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider") -and $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues))
                             {
-                                $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues  | ForEach-Object {
+                                $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues | Where-Object {  (($this.AgentPools -contains $_.name) -or ($this.AgentPools -eq "*"))  } | ForEach-Object {
                                     $svtResource = [SVTResource]::new();
                                     $svtResource.ResourceName = $_.name;
                                     $svtResource.ResourceGroupName =$projectName;
                                     $svtResource.ResourceType = "AzureDevOps.AgentPool";
-                                    $svtResource.ResourceId = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.agentqueuerole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName),$($_.projectId), $_.id
+                                    $svtResource.ResourceId = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.agentqueuerole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName),$($_.projectId), $_.id   
                                     $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                                                     Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                                                     Select-Object -First 1)
@@ -328,11 +348,11 @@ class SVTResourceResolver: AzSKRoot
                             }
                         }
                         catch {
-                           #Write-Warning "Insufficient Privileges. You do not have the level of access necessary to perform the scan.";
+                           Write-Error "Insufficient Privileges. You do not have the level of access to perform the scan.";
                            #Write-Error -Exception ([System.UnauthorizedAccessException]::new("Insufficient Privileges. You do not have the level of access necessary to perform the scan."));
                            Write-Error $_.Exception.Message;
                         }              
-                    }
+                    #}
                 }
 
             }
