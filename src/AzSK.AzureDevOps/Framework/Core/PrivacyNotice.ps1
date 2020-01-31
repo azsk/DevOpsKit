@@ -19,7 +19,7 @@ class PrivacyNotice {
 				[ConfigurationManager]::UpdateAzSKSettings($appSettings)
 				return;
 			}
-			Write-Host " `nAzSK: EULA and Privacy Disclosure: `nPlease review the following:`n`tEULA (http://aka.ms/azskeula)`n`tPrivacy Disclosure (http://aka.ms/azskpd)`n" -ForegroundColor Yellow;
+			Write-Host " `nAzSK.AzureDevOps: EULA and Privacy Disclosure: `nPlease review the following:`n`tEULA (http://aka.ms/azskeula)`n`tPrivacy Disclosure (http://aka.ms/azskpd)`n" -ForegroundColor Yellow;
             $input = ""
             while ($input -ne "y" -and $input -ne "n") {
                 if (-not [string]::IsNullOrEmpty($input)) {
