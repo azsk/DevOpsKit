@@ -48,7 +48,7 @@
     ProcessorArchitecture  = 'None'
 
     # Modules that must be imported into the global environment prior to importing this module
-    RequiredModules        = @('Microsoft.PowerApps.Administration.PowerShell','Microsoft.PowerApps.PowerShell')
+    RequiredModules        = @()#'Microsoft.PowerApps.Administration.PowerShell','Microsoft.PowerApps.PowerShell')
 
     # Assemblies that must be loaded prior to importing this module
     RequiredAssemblies = @('.\Lib\Newtonsoft.Json.dll','.\Lib\Microsoft.ApplicationInsights.dll','.\Lib\Microsoft.IdentityModel.Clients.ActiveDirectory.dll')
