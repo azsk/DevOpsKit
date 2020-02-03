@@ -1091,7 +1091,7 @@ class SubscriptionCore: AzSVTBase
 			if([FeatureFlightingManager]::GetFeatureStatus("FetchRGPIMControlStatusFromComplianceState",$($this.SubscriptionContext.SubscriptionId)) )
 			{
 				#[string] $controlId = $controlItem.ControlID;
-				$controlResult.AddMessage("Note: `n By default, this control is not evaluated in manual scan mode. The control status is based on the previous CA runbook scan for this control. To determine why this control has failed, you can look at the detailed log in the CA scan logs in the storage account in AzSKRG under a container named ca-scan-logs `n To force a manual scan, you can use the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG '")
+				$controlResult.AddMessage("Note: `n By default, this control is not evaluated in manual scan mode. The control status is based on the previous CA runbook scan for this control. To determine why this control has failed, you can look at the detailed log files in the storage account in AzSKRG under a container named 'ca-scan-logs' `n To force a manual scan, you can use the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG '")
 				$result = $this.GetControlStatusFromComplianceState('Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG');
 				# since this control has actually only two states 'Passed' and 'Failed', but in case we are not able to read attestation data we need to tell the reason for the same
 				
