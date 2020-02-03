@@ -71,7 +71,7 @@ class SVTResourceResolver: AzSKRoot
         return $this.ObjectTypesToScan -contains $objType
     }
 
-    [void] LoadAzureResources()
+    [void] LoadResources()
 	{
         $tenantInfoMsg = [ContextHelper]::GetCurrentTenantInfo();
         #Write-Host -ForegroundColor Green $tenantInfoMsg  #TODO: Need to do with PublishCustomMessage...just before #-of-resources...etc.?

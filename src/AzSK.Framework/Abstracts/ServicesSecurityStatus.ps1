@@ -11,7 +11,7 @@ class ServicesSecurityStatus: SVTCommandBase
 		}
 
 		$this.Resolver = $resolver;
-		$this.Resolver.LoadAzureResources();
+		$this.Resolver.LoadResources();
 
 		#BaseLineControlFilter with control ids
 		$this.UseBaselineControls = $invocationContext.BoundParameters["UseBaselineControls"];
