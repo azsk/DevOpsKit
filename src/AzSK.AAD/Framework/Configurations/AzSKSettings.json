@@ -4,5 +4,6 @@
    "EnableAADAuthForOnlinePolicyStore": false,
    "UsageTelemetryLevel": "Anonymous",
    "LocalControlTelemetryKey": "00000000-0000-0000-0000-000000000000",
-   "LocalEnableControlTelemetry": false
+   "LocalEnableControlTelemetry": false,
+   "AutoUpdateCommand": "Install-Module AzSK.AAD -AllowClobber -Scope CurrentUser -Force"
 }
