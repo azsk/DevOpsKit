@@ -77,7 +77,7 @@ class SVTResourceResolver: AzSKRoot
         }        
     }
 
-    [void] LoadResources()
+    [void] LoadResourcesForScan()
 	{
         
         #Call APIS for Organization,User/Builds/Releases/ServiceConnections 
