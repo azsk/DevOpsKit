@@ -1,45 +1,15 @@
 {
-  "Diagnostics_RetentionPeriod_Min": 365,
-  "Diagnostics_RetentionPeriod_Forever": 0, 
-
-  "UniversalIPRange": "0.0.0.0-255.255.255.255",
-  "IPRangeStartIP": "0.0.0.0",
-  "IPRangeEndIP": "255.255.255.255",
-
   "MinGlobalAdmins": 3,
-
-  "DefaultValidAttestationStates": [ "NotAnIssue", "WillFixLater", "WillNotFix" ],
-  "NewControlGracePeriodInDays": {
-    "Default": 60,
-    "ControlSeverity": {
-      "Critical": 7,
-      "High": 30,
-      "Medium": 60,
-      "Low": 90
-    }
-  },
-  "AttestationPeriodInDays": {
-    "Default": 90,
-    "ControlSeverity": {
-      "Critical": 7,
-      "High": 30,
-      "Medium": 60,
-      "Low": 90
-    }
-  },
-
   "ResultComplianceInDays": {
     "DefaultControls": 3,
     "OwnerAccessControls": 90
   },
-
   "ControlSeverity": {
     "Critical": "Critical",
     "High": "High",
     "Medium": "Medium",
     "Low": "Low"
   },
-
   "Tenant":{
     "RecommendedMinGlobalAdmins": 3,
     "RecommendedMaxDevicePerUserLimit": 20,
