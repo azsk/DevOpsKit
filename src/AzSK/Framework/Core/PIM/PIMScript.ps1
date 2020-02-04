@@ -914,9 +914,13 @@ class PIM: AzCommandBase {
           $roleforResource = @($this.ListRoles($resolvedResource.ResourceId)) | Where-Object {$_.RoleName -eq $RoleName}
         #  3) Get json object for role setting
        
+        $featureFlightEnabled = $false
+        if( ([FeatureFlightingManager]::GetFeatureStatus("UseV2apiforPIMRoleSetting","*"))) {
+            $featureFlightEnabled = $true
+        }
             if(($roleforResource|Measure-Object).Count -gt 0)
             {
-                if( ([FeatureFlightingManager]::GetFeatureStatus("UseV2apiforPIMRoleSetting","*"))) { 
+                if($featureFlightEnabled) { 
                     $url = $this.APIroot+"/roleSettingsV2?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resolvedResource.ResourceId)%27)+and+(roleDefinition/id+eq+%27$($roleforResource.RoleDefinitionId)%27)"
                 }
                 else {
@@ -929,7 +933,7 @@ class PIM: AzCommandBase {
             $MaxActivationDurationConstant = 60 #To convert hours to minutes
             $ExpireEligibleAssignmentsAfterConstant = 24*60 #To convert days to minutes
 
-                if( ([FeatureFlightingManager]::GetFeatureStatus("UseV2apiforPIMRoleSetting","*"))) { 
+                if($featureFlightEnabled) { 
                     $isPermanentAdminEligible = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Eligible'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).permanentAssignment
                     $isPermanentuserMember = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).permanentAssignment
                     if($MaximumActivationDuration -eq -1)
@@ -973,35 +977,46 @@ class PIM: AzCommandBase {
                $roleSettingId = $existingroleSetting.id
                $policyString = [string]::Empty
                $policyTag= [string]::Empty
-               if($null -ne $RequireConditionalAccessOnActivation)
-               {
-                    if($RequireConditionalAccessOnActivation)
+               $setFlag = $false  #flag to identify if both $RequireConditionalAccessOnActivation and $RequireMFAOnActivation to remain unchanged
+
+               if ($RequireConditionalAccessOnActivation -eq $false -and $RequireMFAOnActivation -eq $false){
+                    $setFlag = $true
+                    $RequireConditionalAccessOnActivation = $null
+                    $RequireMFAOnActivation = $null
+                }
+                if($setFlag -eq $false)
+                {
+                    if($null -ne $RequireConditionalAccessOnActivation)
                     {
-                        
-                        if([Helpers]::CheckMember($this.ControlSettings,"PIMCAPolicyTags"))
-                        {
-                            $policyTag = $this.ControlSettings.PIMCAPolicyTags
-                            
-                        }
-                        else 
-                        {
-                            $this.PublishCustomMessage("Enter the CA policy tag name to be applied for the role")
-                            $policyTag = Read-Host 
-                        }
-                        $policyString= '{"ruleIdentifier":"AcrsRule","setting":"{\"acrsRequired\":true,\"acrs\":\"'+$policyTag+'\"}"}'
-                        
+                            if($RequireConditionalAccessOnActivation)
+                            {
+                                
+                                if([Helpers]::CheckMember($this.ControlSettings,"PIMCAPolicyTags"))
+                                {
+                                    $policyTag = $this.ControlSettings.PIMCAPolicyTags
+                                    
+                                }
+                                else 
+                                {
+                                    $this.PublishCustomMessage("Enter the CA policy tag name to be applied for the role")
+                                    $policyTag = Read-Host 
+                                }
+                                $policyString= '{"ruleIdentifier":"AcrsRule","setting":"{\"acrsRequired\":true,\"acrs\":\"'+$policyTag+'\"}"}'
+                                
+                            }
+                            else
+                            {
+                                $policyString= '{"ruleIdentifier":"AcrsRule","setting":"{\"acrsRequired\":false,\"acrs\":\"'+$policyTag+'\"}"}'
+                            }
                     }
-                    else
-                    {
-                        $policyString= '{"ruleIdentifier":"AcrsRule","setting":"{\"acrsRequired\":false,\"acrs\":\"'+$policyTag+'\"}"}'
-                    }
-               }
                if($null -ne $RequireMFAOnActivation)
                {
                     if($RequireMFAOnActivation)
                     {
+                        {
                         # TODO: if we turn on MFA on activation CA policy cannot be simultaneously applied. Need to check if the API still throws the error
                           $policyString= ''
+                        }
                         
                     }
                     
@@ -1010,14 +1025,19 @@ class PIM: AzCommandBase {
         #  5) Create json body for patch request  
                $body=""
                $updateUrl=""
-               if( ([FeatureFlightingManager]::GetFeatureStatus("UseV2apiforPIMRoleSetting","*"))) { 
+               if($featureFlightEnabled) { 
                     if(-not [string]::IsNullOrEmpty($policyString))
                     {
-                        $body='{"id": "'+$roleSettingId+'","lifeCycleManagement": [{"caller":"Admin","level":"Eligible","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}]},{"caller": "Admin","level": "Member","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$false+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"},'+$policyString+']}],"roleDefinition":{"id":"'+$rolesettings.roleDefinitionId+'"}}'
+                        $body='{"id": "'+$roleSettingId+'","lifeCycleManagement": [{"caller":"Admin","level":"Eligible","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}]},{"caller": "EndUser","level": "Member","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$false+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"},'+$policyString+']}],"roleDefinition":{"id":"'+$rolesettings.roleDefinitionId+'"}}'
                     }
                     else
                     {
-                        $body='{"id": "'+$roleSettingId+'","lifeCycleManagement": [{"caller":"Admin","level":"Eligible","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}]},{"caller": "Admin","level": "Member","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$RequireMFAOnActivation+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]}],"roleDefinition":{"id":"'+$rolesettings.roleDefinitionId+'"}}'
+                        if($setFlag) {
+                            $body='{"id": "'+$roleSettingId+'","lifeCycleManagement": [{"caller":"Admin","level":"Eligible","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}]},{"caller": "EndUser","level": "Member","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]}],"roleDefinition":{"id":"'+$rolesettings.roleDefinitionId+'"}}'
+                        }
+                        else {
+                            $body='{"id": "'+$roleSettingId+'","lifeCycleManagement": [{"caller":"Admin","level":"Eligible","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}]},{"caller": "EndUser","level": "Member","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$RequireMFAOnActivation+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]}],"roleDefinition":{"id":"'+$rolesettings.roleDefinitionId+'"}}'
+                        }
                     }
                     $updateUrl = $this.APIroot+"/roleSettingsV2/$roleSettingId"
                }
@@ -1028,7 +1048,12 @@ class PIM: AzCommandBase {
                     }
                     else
                     {
-                        $body = '{"adminEligibleSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}],"userMemberSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$RequireMFAOnActivation+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]}'
+                        if($setFlag) {
+                            $body = '{"adminEligibleSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}],"userMemberSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]}'
+                        }
+                        else {
+                            $body = '{"adminEligibleSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}],"userMemberSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$RequireMFAOnActivation+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]}'
+                        }
                     }
                     $updateUrl = $this.APIroot+"/roleSettings/$roleSettingId"
                 }

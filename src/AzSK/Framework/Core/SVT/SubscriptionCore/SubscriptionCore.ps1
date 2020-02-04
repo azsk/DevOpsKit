@@ -1451,6 +1451,7 @@ class SubscriptionCore: AzSVTBase
 			$nonCompliantPIMCAPolicyTagRoles = @();
 			foreach($role in $roles)
 			{
+				#API call to fetch existing role settings with respect to ACRS Rule
 				if( ([FeatureFlightingManager]::GetFeatureStatus("UseV2apiforPIMRoleSetting","*"))) { 
 					$url ="https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettingsV2?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resourceId)%27)+and+(roleDefinition/id+eq+%27$($role.id)%27)"
 					$rolesettings = [WebRequestHelper]::InvokeGetWebRequest($url, $headers)
