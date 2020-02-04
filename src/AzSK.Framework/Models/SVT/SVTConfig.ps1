@@ -31,15 +31,20 @@ class ControlItem
     [string] $Recommendation = ""   
     [string] $Rationale = ""   
     hidden [string[]] $DataObjectProperties = @()
-	hidden [string] $AttestComparisionType = ""
+    hidden [string] $AttestComparisionType = ""
     hidden [FixControl] $FixControl = $null;
-	[int] $AttestationExpiryPeriodInDays
+
+    # Parameters to prevent attestation drift 
+    [bool] $IsAttestationDriftExpected = $false
+    [ActionOnAttestationDrift] $ActionOnAttestationDrift = $null
+
+    [int] $AttestationExpiryPeriodInDays
     [bool] $IsBaselineControl
     #add PreviewBaselineFlag
-	[bool] $IsPreviewBaselineControl;
-	[DateTime] $GraceExpiryDate
-	[int] $NewControlGracePeriodInDays
-	[int] $AttestationPeriodInDays
+    [bool] $IsPreviewBaselineControl;
+    [DateTime] $GraceExpiryDate
+    [int] $NewControlGracePeriodInDays
+    [int] $AttestationPeriodInDays
     [string[]] $ValidAttestationStates
     [string] $PolicyDefinitionGuid 
     [string] $PolicyDefnResourceIdSuffix
@@ -59,4 +64,18 @@ enum FixControlImpact
 	High
 	Medium
 	Low
+}
+
+class ActionOnAttestationDrift
+{
+    [string] $MinReqdAttestationVersion;
+    [int] $AttestationExpiryPeriodInDays = 90;
+    [Action] $Action = [Action]::None;
+}
+
+enum Action {
+    IgnoreDuplicateEntry
+    RespectDefaultAttestationExpiryPeriod
+    ExpireBeforeDefaultAttestationExpiryPeriod
+    None
 }
