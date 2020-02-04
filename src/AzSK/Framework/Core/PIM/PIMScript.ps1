@@ -913,7 +913,7 @@ class PIM: AzCommandBase {
         if (($resolvedResource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResource.ResourceId))) {
           $roleforResource = @($this.ListRoles($resolvedResource.ResourceId)) | Where-Object {$_.RoleName -eq $RoleName}
         #  3) Get json object for role setting
-       
+        $rolesettings = [string]::Empty
         $featureFlightEnabled = $false
         if( ([FeatureFlightingManager]::GetFeatureStatus("UseV2apiforPIMRoleSetting","*"))) {
             $featureFlightEnabled = $true
@@ -926,8 +926,22 @@ class PIM: AzCommandBase {
                 else {
                     $url = $this.APIroot+"/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resolvedResource.ResourceId)%27)+and+(roleDefinition/id+eq+%27$($roleforResource.RoleDefinitionId)%27)"
                 }
-                $rolesettings = [WebRequestHelper]::InvokeWebRequest("Get", $url, $this.headerParams, $null, [string]::Empty, $false, $false )
-                $existingroleSetting  = $rolesettings
+                try {
+                    $rolesettings = [WebRequestHelper]::InvokeWebRequest("Get", $url, $this.headerParams, $null, [string]::Empty, $false, $false )
+                }
+                catch {
+                    if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
+                    {
+                        $err = $_ | ConvertFrom-Json
+                        $this.PublishCustomMessage($err.error.message,[MessageType]::Error)
+                    }
+                    else
+                    {
+                        $this.PublishCustomMessage("Unable to retrieve existing role settings for provided role. Please verify you have required permissions to view requested role for the given scope.", [MessageType]::Error)
+                    }
+                    return
+                }
+            $existingroleSetting  = $rolesettings
            
         # 4) Modify the role settings obtained above by the parameters passed in cmdlet
             $MaxActivationDurationConstant = 60 #To convert hours to minutes
@@ -1020,7 +1034,7 @@ class PIM: AzCommandBase {
                         
                     }
                     
-                  
+                  }
                }
         #  5) Create json body for patch request  
                $body=""
