@@ -871,7 +871,6 @@ class SVTBase: AzSKRoot
 				{
 					$currentItem.StateManagement.CurrentStateData.DataObject = [Helpers]::SelectMembers($currentItem.StateManagement.CurrentStateData.DataObject, $eventContext.ControlItem.DataObjectProperties);
 				}
-				
 				if($controlState.Count -ne 0)
 				{
 					# Process the state if its available
@@ -958,7 +957,7 @@ class SVTBase: AzSKRoot
 											# Check if minimum required attestation verification is greater than attested version.
 											if ([System.Version] $eventcontext.controlItem.ActionOnAttestationDrift.MinReqdAttestationVersion -gt [System.Version] $childResourceState.Version)
 											{	
-												# Check action to be taken on drift for a specific control
+												# Check action to be taken on drift
 												if (($eventcontext.controlItem.ActionOnAttestationDrift.Action -eq [Action]::RespectDefaultAttestationExpiryPeriod) -or `
 													($eventcontext.controlItem.ActionOnAttestationDrift.Action -eq [Action]::ExpireBeforeDefaultAttestationExpiryPeriod))
 												{
