@@ -333,19 +333,22 @@ class ServiceFabric : AzSVTBase
 					$loadBalancerBackendPorts += $loadBalancingRule.BackendPort;
 				};  
 				if($loadBalancerBackendPorts.Count -gt 0)
-			    {   
-				
-				  if([Helpers]::CheckMember($loadBalancerResource.BackendAddressPools,"BackendIpConfigurations") -and  ($loadBalancerResource.BackendAddressPools.BackendIpConfigurations | Measure-Object).Count -gt 0){
-					$backEndIpConfiguration = $loadBalancerResource.BackendAddressPools.BackendIpConfigurations | Select -First 1
-					$pattern = "providers/Microsoft.Compute/virtualMachineScaleSets/(.*?)/"
-					$result = [regex]::match($backEndIpConfiguration.Id, $pattern)
-					if($result.Success){
-						$nodeName = $result.Groups[1].Value
-						$lbWithBackendPorts.Add($nodeName, $loadBalancerBackendPorts)
-					}
+			    {
+					$loadBalancerResource.BackendAddressPools | ForEach-Object {
+						$BackendAddressPools = $_
+						if ([Helpers]::CheckMember($BackendAddressPools, "BackendIpConfigurations") -and ($BackendAddressPools.BackendIpConfigurations | Measure-Object).Count -gt 0)
+						{
+							$backEndIpConfiguration = $BackendAddressPools.BackendIpConfigurations | Select -First 1
+							$pattern = "providers/Microsoft.Compute/virtualMachineScaleSets/(.*?)/"
+							$result = [regex]::match($backEndIpConfiguration.Id, $pattern)
+							if ($result.Success)
+							{
+								$nodeName = $result.Groups[1].Value
+								$lbWithBackendPorts.Add($nodeName, $loadBalancerBackendPorts)
+							}
 
+				  		}
 				  }
-				  
 			    } 
 			}
 			#If no ports open, Pass the TCP
