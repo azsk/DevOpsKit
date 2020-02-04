@@ -581,10 +581,20 @@ class WritePsConsole: FileOutputBase
                 $ky = $item.Alias
                 $vl = $item.Value
 
-				if($vl -eq $true)
-                {
-                    $vl = ""
-                }
+				
+				if($vl.GetType().Name -in @('String','String[]'))
+				{
+					$vl = '"' + $vl + '"'
+				}
+				elseif($vl -in @($true, $false) -and $vl.GetType().Name -ne 'SwitchParameter' )
+				{
+					$vl = '$'+$vl.ToString().ToLower()
+				}
+				elseif($vl.GetType().Name -eq 'SwitchParameter')
+				{
+					$vl = ""
+				}
+				
                 if($ky)
                 {
                     $cmID += "-$ky $vl "

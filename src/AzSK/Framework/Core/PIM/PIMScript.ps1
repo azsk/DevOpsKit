@@ -329,11 +329,11 @@ class PIM: AzCommandBase {
                 $roleAssignments = $roleAssignments | Where-Object { $_.MemberType -ne 'Inherited' -and ($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group') }
             }
             if (($roleAssignments | Measure-Object).Count -gt 0) {
-                $roleAssignments = $roleAssignments | Sort-Object -Property RoleName, Name, AssignmentState
+                $roleAssignments = $roleAssignments | Sort-Object -Property RoleName, Name, AssignmentState, ResourceId
                 $this.PublishCustomMessage("")
                 $this.PublishCustomMessage("Note: The assignments listed below do not include 'inherited' assignments for the scope.", [MessageType]::Warning)
                 $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
-                $this.PublishCustomMessage($($roleAssignments | Format-Table -Property @{Label = "Role"; Expression = { $_.RoleName } }, PrincipalName, AssignmentState, @{Label = "Type"; Expression = { $_.SubjectType } } | Out-String), [MessageType]::Default)
+                $this.PublishCustomMessage($($roleAssignments | Format-Table -Property PrincipalName, @{Label = "Role"; Expression = { $_.RoleName } },  AssignmentState, @{Label = "Type"; Expression = { $_.SubjectType } } | Out-String), [MessageType]::Default)
             }
             else {
                 if ($CheckPermanent) {
@@ -617,8 +617,9 @@ class PIM: AzCommandBase {
     }
 
     # Below method is intended to assign equivalent PIM eligible roles for permanent assignments for a given role on a particular resource
-    hidden AssignPIMforPermanentAssignemnts($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $Force) 
+    hidden AssignPIMforPermanentAssignemnts($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $PrincipalNames, $Force) 
     {
+        $principalTransitioned = @();
         $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName,$false)
         if (($resolvedResource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResource.ResourceId))) {    
             $resourceId = $resolvedResource.ResourceId
@@ -627,8 +628,25 @@ class PIM: AzCommandBase {
             $CriticalRoles = $roles.RoleName 
             $this.PublishCustomMessage("Fetching permanent assignment for [$(($criticalRoles) -join ", ")] role on $($resolvedResource.Type) [$($resolvedResource.ResourceName)]...",[MessageType]::Info)
             $permanentRoles = $this.ListAssignmentsWithFilter($resourceId, $true)
+            $permanentRolesForTransition = @();
             if (($permanentRoles | Measure-Object).Count -gt 0) {
-                $permanentRolesForTransition = $permanentRoles | Where-Object { ($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group'  )-and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
+                $permanentRoles = $permanentRoles | Where-Object { ($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group'  )-and $_.MemberType -ne 'Inherited' -and $_.RoleName -in $CriticalRoles }
+                if(($PrincipalNames | Measure-Object).Count -gt 0) # checking if assignment only for certain UPNs are to be removed
+                {
+                    $principalNames = $principalNames.Split(',').Trim()
+                    $permanentRolesForTransition += $permanentRoles | Where-Object {$_.PrincipalName -in $principalNames}
+                    if( ($permanentRolesForTransition | Measure-Object).Count -eq 0)
+                    {
+                        $this.PublishCustomMessage("Unable to find matching permanent assignments for the principal names provided in `$PrincipalNames parameter.",[MessageType]::Warning)
+                        return;
+                    }
+                    
+                    
+                }
+                else
+                {
+                    $permanentRolesForTransition += $permanentRoles
+                }
                 if (($permanentRolesForTransition | Measure-Object).Count -gt 0) {
                     $ToContinue = ''
                     if(!$Force)
@@ -638,7 +656,8 @@ class PIM: AzCommandBase {
                         Write-Host "The above role assignments will be moved from 'permanent' to 'PIM'. `nPlease confirm (Y/N): " -ForegroundColor Yellow -NoNewline
                         $ToContinue = Read-Host
                     }
-                    if ($ToContinue -eq 'y' -or $Force) {               
+                    if ($ToContinue -eq 'y' -or $Force) 
+                    {               
                         $Assignmenturl = $this.APIroot + "/roleAssignmentRequests"
                         $roles = $this.ListRoles($resourceId)  
                         $ts = $DurationInDays;
@@ -657,6 +676,7 @@ class PIM: AzCommandBase {
                                 $response = Invoke-WebRequest -UseBasicParsing -Headers $this.headerParams -Uri $Assignmenturl -Method Post -ContentType "application/json" -Body $postParams
                                 if ($response.StatusCode -eq 201) {
                                     $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] Successfully requested PIM assignment for [$PrincipalName]", [MessageType]::Update);
+                                    $principalTransitioned += $PrincipalName
                                 }
                                 $this.PublishCustomMessage([Constants]::SingleDashLine)
                           
@@ -666,6 +686,7 @@ class PIM: AzCommandBase {
                                     $err = $_ | ConvertFrom-Json
                                     if ($err.error.code -eq "RoleAssignmentExists") {
                                         $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] PIM Assignment for [$PrincipalName] already exists.", [MessageType]::Warning)
+                                        $principalTransitioned += $PrincipalName
                                     }
                                     else {
                                         $this.PublishCustomMessage("[$i`/$totalPermanentAssignments] $($err.error.message)", [MessageType]::Error)
@@ -674,10 +695,23 @@ class PIM: AzCommandBase {
                             }         
                             $i++;
                         }#foreach  
+                        [string] $cmdmsg = ""
+                        $cmdmsg += "To remove the permanent assignments, please run `n setpim -RemovePermanentAssignments -SubscriptionId $SubscriptionId"
+                        if(-not [string]::IsNullOrEmpty($ResourceGroupName))
+                            { $cmdmsg += " -ResourceGroupName $ResourceGroupName "}
+                        if(-not [string]::IsNullOrEmpty($ResourceName))
+                            { $cmdmsg += " -ResourceName $ResourceName "}
+                        $cmdmsg += '-RoleNames "'+($Rolenames)+ '"'
+                        if(-not [string]::IsNullOrEmpty($PrincipalNames))
+                            {$cmdmsg += '-PrincipalNames "'+($principalTransitioned -join ', ')+ '"'}
+                            $this.PublishCustomMessage("")
+                        $this.PublishCustomMessage("This command will assign equivelant eligible role assignments for the above permanent assignments. $cmdmsg", [MessageType]::Warning)
+                        
                     }
                     else {
                         return;
                     }
+
                 }
                 else {
                     $this.PublishCustomMessage("No permanent assignments eligible for PIM assignment found.", [MessageType]::Warning);       
@@ -694,7 +728,7 @@ class PIM: AzCommandBase {
     }
 
     # Remove permanent assignments for a particular role on a given resource
-    hidden RemovePermanentAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $Force) {
+    hidden RemovePermanentAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $PrincipalNames, $Force) {
         $this.AcquireToken();
         $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName,$false)
         if(-not [String]::IsNullOrEmpty($resolvedResource.ResourceId))
@@ -712,6 +746,17 @@ class PIM: AzCommandBase {
                 $successfullyassignedRoles = @();
                 $currentContext = [ContextHelper]::GetCurrentRmContext();
                 $permanentRolesForTransition = $permanentRolesForTransition | Where-Object { $_.PrincipalName -ne $currentContext.Account.Id }
+                if(($PrincipalNames |Measure-Object).Count -gt 0) # checking if assignment only for certain UPNs are to be removed
+                {
+                    $PrincipalNames = $PrincipalNames.Split(',').Trim()
+                    $permanentRolesForTransition =  $permanentRolesForTransition | Where-Object{$_.PrincipalName -in $PrincipalNames}
+                    if( ($permanentRolesForTransition | Measure-Object).Count -eq 0)
+                    {
+                        $this.PublishCustomMessage("Permanent assignments matching with principal names provided in `$PrincipalNames parameter are not found.",[MessageType]::Warning)
+                        return;
+                    }
+                }
+                
                 if ($RemoveAssignmentFor -ne "AllExceptMe") {
                     $eligibleAssignments | ForEach-Object {
                         $allUser = $_;
@@ -748,8 +793,8 @@ class PIM: AzCommandBase {
                         try
                         {
                             $i++;
-                            $this.PublishCustomMessage([Constants]::SingleDashLine);
-                            Remove-AzRoleAssignment -SignInName $user.PrincipalName -RoleDefinitionName $user.RoleName -Scope $user.OriginalId -ErrorAction Stop
+                            $this.PublishCustomMessage([Constants]::SingleDashLine);                            
+                            Remove-AzRoleAssignment -ObjectId $user.SubjectId -RoleDefinitionName $user.RoleName -Scope $user.OriginalId -ErrorAction Stop                             
                             $this.PublishCustomMessage("[$i`/$totalRemovableAssignments]Successfully removed permanent assignment", [MessageType]::Update )                
                             $this.PublishCustomMessage([Constants]::SingleDashLine);
                         }
@@ -783,6 +828,8 @@ class PIM: AzCommandBase {
             $this.PublishCustomMessage("No matching resource found for the current context.", [MessageType]::Warning)
         }
     }
+
+    
 
     # Get the assignments that are expiring in n days
     hidden  [PSObject] ListSoonToExpireAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays)
