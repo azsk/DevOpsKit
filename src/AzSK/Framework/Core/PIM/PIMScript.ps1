@@ -1013,10 +1013,10 @@ class PIM: AzCommandBase {
                {
                     if($RequireMFAOnActivation)
                     {
-                        {
+                        
                         # TODO: if we turn on MFA on activation CA policy cannot be simultaneously applied. Need to check if the API still throws the error
                           $policyString= ''
-                        }
+                        
                         
                     }
                     
