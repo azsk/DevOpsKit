@@ -32,7 +32,8 @@ class ConfigurationHelper {
         #If file not present in App folder load settings from Configurations in Module folder 
         if (!$filePath) {
 			# Update as per module name here
-            $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName "AzSK" | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
+			$moduleName = $([Constants]::AzSKModuleName)
+            $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName $moduleName | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
 			
 			$filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
         }
@@ -327,8 +328,8 @@ class ConfigurationHelper {
 
 	#Need to rethink on this function logic
 	hidden static [PSObject] LoadModuleJsonFile([string] $fileName) {
-	
-	 $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName "AzSK" | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
+	 $moduleName = $([Constants]::AzSKModuleName)
+	 $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName $moduleName | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
      $filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
 	 if ($filePath) {
             $fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) | ConvertFrom-Json
@@ -341,7 +342,8 @@ class ConfigurationHelper {
 
 	hidden static [PSObject] LoadModuleRawFile([string] $fileName) {
 	
-	 $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName "AzSK" | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
+	 $moduleName = $([Constants]::AzSKModuleName)
+	 $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName $moduleName | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
 
      $filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
 	 if ($filePath) {
