@@ -146,7 +146,7 @@ class ERvNet : SVTIaasBase
 		$VMNics = @()
 		if($null -ne $this.vNetNicsOutput)
 		{
-			$vNetNicsMultiVM = $this.vNetNicsOutput | Group-Object VMId | Where-Object {-not [System.String]::IsNullOrWhiteSpace($_.Name) -and $_.Count -gt 1}
+			$vNetNicsMultiVM = $this.vNetNicsOutput | Group-Object VMName | Where-Object {-not [System.String]::IsNullOrWhiteSpace($_.Name) -and $_.Count -gt 1}
 
 			$hasTCPPassed = $true
 			if($null -ne $vNetNicsMultiVM)

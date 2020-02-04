@@ -104,6 +104,7 @@ class SVTIaasBase: AzSVTBase
 		}
     }
 
+<<<<<<< HEAD
 	hidden [PSObject[]] GetvnetNicsProperties($vNetNics)
 	{
 		if([FeatureFlightingManager]::GetFeatureStatus("EnableVnetFixForSub",$($this.SubscriptionContext.SubscriptionId)))
@@ -133,6 +134,61 @@ class SVTIaasBase: AzSVTBase
 										$IPResource = Get-AzResource -ResourceId $ipconfiguration.Properties.PublicIpAddress.Id
 										$pubResourceName = Get-AzPublicIpAddress -Name $IPResource.Name -ResourceGroupName $IPResource.ResourceGroupName
 										$PublicIpAddresses += $pubResourceName.IpAddress
+=======
+	hidden [ControlResult] CheckNSGUseonGatewaySubnet([ControlResult] $controlResult)
+    {
+        $gateWaySubnet = $this.ResourceObject.Subnets | Where-Object {$_.Name -eq "GatewaySubnet"}
+        if($null -ne $gateWaySubnet)
+        {
+            if($null-ne $gateWaySubnet.NetworkSecurityGroup  -and -not [System.String]::IsNullOrWhiteSpace($gateWaySubnet.NetworkSecurityGroup.Id))
+            {
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("NSG is configured on the Gateway Subnet of VNet", ($gateWaySubnet | Select-Object Name, NetworkSecurityGroupText)));
+				$controlResult.SetStateData("Gateway subnet of VNet", ($gateWaySubnet | Select-Object Name, NetworkSecurityGroup));
+            }
+            else
+            {
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("There are no NSG's configured on the Gateway subnet of VNet"));
+            }
+        }
+        else
+        {
+			$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No Gateway subnet found on the VNet"));
+        }
+
+        return $controlResult;
+    }
+
+	hidden [ControlResult] CheckNSGConfigured([ControlResult] $controlResult)
+    {
+        $hasTCPPassed = $true
+        if($null -ne $this.ResourceObject.Subnets)
+        {
+            $subnetsWithoutNSG = $this.ResourceObject.Subnets | Where-Object {$null -eq $_.NetworkSecurityGroup -and $_.Name.ToLower() -ne "gatewaysubnet"}
+            $subnetsWithNSG = $this.ResourceObject.Subnets | Where-Object {$null -ne $_.NetworkSecurityGroup -and $_.Name.ToLower() -ne "gatewaysubnet"}
+
+            if($null-ne $subnetsWithoutNSG  -and ($subnetsWithoutNSG | Measure-Object).count -gt 0)
+            {
+				$hasTCPPassed = $false
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("NSG is not configured for below subnet(s) of VNet", ($subnetsWithoutNSG | Select-Object Name, Id)));
+            }
+            if($null-ne $subnetsWithNSG  -and ($subnetsWithNSG | Measure-Object).Count -gt 0)
+            {
+                # Invalid NSG rules list for whole vNet
+                $InvalidRulesList = @()
+                $subnetsWithNSG | ForEach-Object{
+                            # Invalid NSG rules list for current subnet
+                            $InvalidRulesListForSubnet = @()
+							$nsgid = $_.NetworkSecurityGroup.Id
+							$nsglist = Get-AzResource -ResourceId $nsgid
+
+							$nsglist | ForEach-Object{
+								$rules = $_.Properties.SecurityRules
+								$rules | ForEach-Object{
+									$ruleproperties = $_.Properties
+									if((($ruleproperties.Direction -eq "outbound") -or ($ruleproperties.Direction -eq "inbound")) -and (([Helpers]::CheckMember($ruleproperties,"SourceAddressPrefix")) -and $ruleproperties.SourceAddressPrefix -eq '*') -and $ruleproperties.DestinationAddressPrefix -eq '*' -and $ruleproperties.Access -eq "allow")
+									{
+										$InvalidRulesListForSubnet += $_ | Select-Object Id, Properties
+>>>>>>> 4583f1488ecf243f9b6b4c7e515fee21bc872f53
 									}
 									$PrivateIpAddresses += $ipconfiguration.Properties.PrivateIpAddress
 								}
@@ -141,8 +197,29 @@ class SVTIaasBase: AzSVTBase
 									$this.vNetPIPIssues += $ipconfiguration
 								}
 							}
+<<<<<<< HEAD
 							$out.PublicIpAddress = ([System.String]::Join(";",$PublicIpAddresses))
 							$out.PrivateIpAddress = ([System.String]::Join(";",$PrivateIpAddresses))
+=======
+					$currentsubnet=$_
+                    if(($InvalidRulesListForSubnet | Measure-Object).Count -gt 0)
+                    {
+                        $InvalidRulesList += $InvalidRulesListForSubnet
+						$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Potentially dangerous any to any outbound/inbound security rule(s) found in subnet - ["+ $currentsubnet.Name +"]", $InvalidRulesListForSubnet));
+                    }
+                }
+                if(($InvalidRulesList | Measure-Object).Count -gt 0)
+                {
+                    $hasTCPPassed = $false
+                    $controlResult.SetStateData("Potentially dangerous any to any outbound/inbound security rule(s) found in vNet", $InvalidRulesList);
+                }
+            }
+        }
+        else
+        {
+			$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No subnets found on VNet"));
+        }
+>>>>>>> 4583f1488ecf243f9b6b4c7e515fee21bc872f53
 
 							if(($nicproperties | Get-Member -Name "VirtualMachine") -and $nicproperties.VirtualMachine )
 							{
