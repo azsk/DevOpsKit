@@ -36,7 +36,7 @@ class ControlItem
 
     # Parameters to prevent attestation drift 
     [bool] $IsAttestationDriftExpected = $false
-    [ActionOnAttestationDrift] $ActionOnAttestationDrift = $null
+    [OnAttestationDrift] $OnAttestationDrift = $null
 
     [int] $AttestationExpiryPeriodInDays
     [bool] $IsBaselineControl
@@ -66,14 +66,14 @@ enum FixControlImpact
 	Low
 }
 
-class ActionOnAttestationDrift
+class OnAttestationDrift
 {
     [string] $MinReqdAttestationVersion;
     [int] $AttestationExpiryPeriodInDays = 90;
-    [Action] $Action = [Action]::None;
+    [ActionOnAttestationDrift] $ActionOnAttestationDrift = [ActionOnAttestationDrift]::None;
 }
 
-enum Action {
+enum ActionOnAttestationDrift {
     IgnoreDuplicateEntry
     RespectDefaultAttestationExpiryPeriod
     ExpireBeforeDefaultAttestationExpiryPeriod

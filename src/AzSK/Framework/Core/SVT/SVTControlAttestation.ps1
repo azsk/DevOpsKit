@@ -454,7 +454,7 @@ class SVTControlAttestation
 									
 									#Default attestation version is 1.0
 									$Version = '1.0'
-									if ( ([FeatureFlightingManager]::GetFeatureStatus("PreventStateDriftDueToDevChanges", "*")))
+									if ( ([FeatureFlightingManager]::GetFeatureStatus("PreventAttestationStateDrift", "*")))
 									{
 										if ($this.InvocationContext)
 										{

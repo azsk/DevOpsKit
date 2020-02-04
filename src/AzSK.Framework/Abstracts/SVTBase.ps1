@@ -884,7 +884,7 @@ class SVTBase: AzSKRoot
 							if(($childResourceState.ActualVerificationResult -eq $currentItem.ActualVerificationResult) -and $childResourceState.State)
 							{
 								
-								if ( ([FeatureFlightingManager]::GetFeatureStatus("PreventStateDriftDueToDevChanges", "*")))
+								if ( ([FeatureFlightingManager]::GetFeatureStatus("PreventAttestationStateDrift", "*")))
 								{
 									#Check only selected properties to compare state
 									if ($childResourceState.State -and $childResourceState.State.DataObject -and $eventContext.ControlItem.DataObjectProperties)
@@ -946,26 +946,26 @@ class SVTBase: AzSKRoot
 
 
 								#region: Prevent attestation drift due to dev changes
-								if ( ([FeatureFlightingManager]::GetFeatureStatus("PreventStateDriftDueToDevChanges", "*")))
+								if ( ([FeatureFlightingManager]::GetFeatureStatus("PreventAttestationStateDrift", "*")))
 								{
 									# Check if drift is expected
 									if ($eventContext.ControlItem.IsAttestationDriftExpected -eq $true)
 									{
-										if ($eventcontext.controlItem.ActionOnAttestationDrift -and `
-											(-not [String]::IsNullOrEmpty($eventcontext.controlItem.ActionOnAttestationDrift.MinReqdAttestationVersion)))
+										if ($eventcontext.controlItem.OnAttestationDrift -and `
+											(-not [String]::IsNullOrEmpty($eventcontext.controlItem.OnAttestationDrift.MinReqdAttestationVersion)))
 										{							
-											# Check if minimum required attestation verification is greater than attested version.
-											if ([System.Version] $eventcontext.controlItem.ActionOnAttestationDrift.MinReqdAttestationVersion -gt [System.Version] $childResourceState.Version)
+											# Check if minimum required attestation version is greater than attested version.
+											if ([System.Version] $eventcontext.controlItem.OnAttestationDrift.MinReqdAttestationVersion -gt [System.Version] $childResourceState.Version)
 											{	
 												# Check action to be taken on drift
-												if (($eventcontext.controlItem.ActionOnAttestationDrift.Action -eq [Action]::RespectDefaultAttestationExpiryPeriod) -or `
-													($eventcontext.controlItem.ActionOnAttestationDrift.Action -eq [Action]::ExpireBeforeDefaultAttestationExpiryPeriod))
+												if (($eventcontext.controlItem.OnAttestationDrift.ActionOnAttestationDrift -eq [ActionOnAttestationDrift]::RespectDefaultAttestationExpiryPeriod) -or `
+													($eventcontext.controlItem.OnAttestationDrift.ActionOnAttestationDrift -eq [ActionOnAttestationDrift]::ExpireBeforeDefaultAttestationExpiryPeriod))
 												{
 													# Don't fail attestation
 													#This will repect attestation for a limited period; Default is 90 days
 													$this.ModifyControlResult($currentItem, $childResourceState)
 												}
-												elseif (($eventcontext.controlItem.ActionOnAttestationDrift.Action -eq [Action]::IgnoreDuplicateEntry))
+												elseif (($eventcontext.controlItem.OnAttestationDrift.ActionOnAttestationDrift -eq [ActionOnAttestationDrift]::IgnoreDuplicateEntry))
 												{
 													# Don't fail attestation if current state data object is a subset of attested state data object
 													# Compare dataobject property of State
@@ -1174,25 +1174,25 @@ class SVTBase: AzSKRoot
 		}
 
 		# Check if attestation drift is expected
-		if ( ([FeatureFlightingManager]::GetFeatureStatus("PreventStateDriftDueToDevChanges", "*")))
+		if ( ([FeatureFlightingManager]::GetFeatureStatus("PreventAttestationStateDrift", "*")))
 		{
 			if (($eventcontext.controlItem.IsAttestationDriftExpected -eq $true) -and ($expiryInDays -ne -1))
 			{
 				# Check action to be taken on drift for a specific control
-				if ($eventcontext.controlItem.ActionOnAttestationDrift -and `
-					(-not [String]::IsNullOrEmpty($eventcontext.controlItem.ActionOnAttestationDrift.MinReqdAttestationVersion)) -and `
-					(-not [String]::IsNullOrEmpty($eventcontext.controlItem.ActionOnAttestationDrift.AttestationExpiryPeriodInDays)) -and `
-					($eventcontext.controlItem.ActionOnAttestationDrift.Action -eq [Action]::ExpireBeforeDefaultAttestationExpiryPeriod))
+				if ($eventcontext.controlItem.OnAttestationDrift -and `
+					(-not [String]::IsNullOrEmpty($eventcontext.controlItem.OnAttestationDrift.MinReqdAttestationVersion)) -and `
+					(-not [String]::IsNullOrEmpty($eventcontext.controlItem.OnAttestationDrift.AttestationExpiryPeriodInDays)) -and `
+					($eventcontext.controlItem.OnAttestationDrift.ActionOnAttestationDrift -eq [ActionOnAttestationDrift]::ExpireBeforeDefaultAttestationExpiryPeriod))
 				{
 					#TODO: Set 'MinReqdAttestationVersion' at control settings level instead of control level
 					# Check if minimum required attestation version is greater than last attested version
-					if ([System.Version] $eventcontext.controlItem.ActionOnAttestationDrift.MinReqdAttestationVersion -gt [System.Version] $controlState.Version)
+					if ([System.Version] $eventcontext.controlItem.OnAttestationDrift.MinReqdAttestationVersion -gt [System.Version] $controlState.Version)
 					{
 						# Change attestation expiry period if number of days left for control to expire is greater than custom attestation expiry period
 						# This sets the attestation to expire before the original expiry period
-						if ($expiryInDays -gt $eventcontext.controlItem.ActionOnAttestationDrift.AttestationExpiryPeriodInDays)
+						if ($expiryInDays -gt $eventcontext.controlItem.OnAttestationDrift.AttestationExpiryPeriodInDays)
 						{
-							$expiryInDays = $eventcontext.controlItem.ActionOnAttestationDrift.AttestationExpiryPeriodInDays
+							$expiryInDays = $eventcontext.controlItem.OnAttestationDrift.AttestationExpiryPeriodInDays
 						}
 					}
 					

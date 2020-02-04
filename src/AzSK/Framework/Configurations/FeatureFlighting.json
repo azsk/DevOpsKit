@@ -201,7 +201,7 @@
       "IsEnabled": true
     },
     {
-      "Name": "PreventStateDriftDueToDevChanges",
+      "Name": "PreventAttestationStateDrift",
       "Description": "",
       "Sources": ["*"],
       "EnabledForSubs": [],
