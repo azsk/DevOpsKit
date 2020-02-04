@@ -33,11 +33,6 @@ class ControlItem
     hidden [string[]] $DataObjectProperties = @()
     hidden [string] $AttestComparisionType = ""
     hidden [FixControl] $FixControl = $null;
-
-    # Parameters to prevent attestation drift 
-    [bool] $IsAttestationDriftExpected = $false
-    [OnAttestationDrift] $OnAttestationDrift = $null
-
     [int] $AttestationExpiryPeriodInDays
     [bool] $IsBaselineControl
     #add PreviewBaselineFlag
@@ -49,6 +44,10 @@ class ControlItem
     [string] $PolicyDefinitionGuid 
     [string] $PolicyDefnResourceIdSuffix
     [string] $policyDefinitionId
+
+    # Parameters to prevent attestation drift 
+    [bool] $IsAttestationDriftExpected = $false
+    [OnAttestationDrift] $OnAttestationDrift = $null
 }
 
 class FixControl
