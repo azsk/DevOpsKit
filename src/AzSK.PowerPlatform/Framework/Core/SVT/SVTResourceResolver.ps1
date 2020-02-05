@@ -42,7 +42,7 @@ class SVTResourceResolver: AzSKRoot
         }        
     }
 
-    [void] LoadAzureResources()
+    [void] LoadResourcesForScan()
 	{
         $svtResource = [SVTResource]::new();
         $svtResource.ResourceName = $this.environmentName;
