@@ -2,12 +2,14 @@ Set-StrictMode -Version Latest
 class Organization: SVTBase
 {    
     [PSObject] $ServiceEndPointsObj = $null
+    [PSObject] $PipelineSettingsObj = $null
     [PSObject] $OrgPolicyObj = $null
     #TODO: testing below line
     hidden [string] $SecurityNamespaceId;
     Organization([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     { 
         $this.GetOrgPolicyObject()
+        $this.GetPipelineSettingsObj()
     }
 
     GetOrgPolicyObject()
@@ -24,26 +26,23 @@ class Organization: SVTBase
             $this.OrgPolicyObj = $responseObj.data.'ms.vss-org-web.collection-admin-policy-data-provider'.policies
         }
     }
+    
+    GetPipelineSettingsObj()
+    {
+        $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+        #TODO: testing adding below line commenting above line
+        #$apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
 
-   #Arv Code
-   #hidden [ControlResult] CheckProCollSerAcc([ControlResult] $controlResult)
-   #{
-   #    $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-   #    $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);
-
-   #    $accname = ('['+ $this.SubscriptionContext.SubscriptionName + ']\' + 'Project Collection Service Accounts'); #Enterprise Service Accounts
-   #   if($responseObj.principalName -contains $accname ){
-   #       if([Helpers]::CheckMember($responseObj._links.memberships,"member")  -and $responseObj._links.memberships.member -eq 'Enterprise Service Accounts'){
-   #         $controlResult.AddMessage([VerificationResult]::Verify, "Organization is configured with Project Collection Service Accounts.");            
-   #       }
-   #   }
-   #   else {
-   #    $controlResult.AddMessage([VerificationResult]::Manual, "Project Collection Service Accounts does not hass access to Organization.");
-
-   #   }
-
-   #    return $controlResult
-   #}
+        $orgUrl = "https://{0}.visualstudio.com" -f $($this.SubscriptionContext.SubscriptionName);
+        #$inputbody =  "{'contributionIds':['ms.vss-org-web.collection-admin-policy-data-provider'],'context':{'properties':{'sourcePage':{'url':'$orgUrl/_settings/policy','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'policy','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
+        $inputbody = "{'contributionIds':['ms.vss-build-web.pipelines-org-settings-data-provider'],'dataProviderContext':{'properties':{'sourcePage':{'url':'$orgUrl/_settings/pipelinessettings','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'pipelinessettings','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
+        $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+      
+        if([Helpers]::CheckMember($responseObj,"dataProviders") -and $responseObj.dataProviders.'ms.vss-build-web.pipelines-org-settings-data-provider')
+        {
+            $this.PipelineSettingsObj = $responseObj.dataProviders.'ms.vss-build-web.pipelines-org-settings-data-provider'
+        }
+    }
     
      hidden [ControlResult] CheckProCollSerAcc([ControlResult] $controlResult)
      {
@@ -419,6 +418,138 @@ class Organization: SVTBase
         return $controlResult
     }
 
+    hidden [ControlResult] CheckOAuthAppAccess([ControlResult] $controlResult)
+    {
+       if([Helpers]::CheckMember($this.OrgPolicyObj,"applicationConnection"))
+       {
+            $OAuthObj = $this.OrgPolicyObj.applicationConnection | Where-Object {$_.Policy.Name -eq "Policy.DisallowOAuthAuthentication"}
+            if(($OAuthObj | Measure-Object).Count -gt 0)
+            {
+                if($OAuthObj.policy.effectiveValue -eq $true )
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed,
+                                                "OAuth is enabled for third-party application access.");
+                }
+                else {
+                    $controlResult.AddMessage([VerificationResult]::Failed,
+                                                "OAuth is enabled for third-party application access.");
+                }
+            }
+       }
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckSSHAuthn([ControlResult] $controlResult)
+    {
+       if([Helpers]::CheckMember($this.OrgPolicyObj,"applicationConnection"))
+       {
+            $SSHAuthObj = $this.OrgPolicyObj.applicationConnection | Where-Object {$_.Policy.Name -eq "Policy.DisallowSecureShell"}
+            if(($SSHAuthObj | Measure-Object).Count -gt 0)
+            {
+                if($SSHAuthObj.policy.effectiveValue -eq $true )
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed,
+                                                "SSH authentication is enabled for application connection policies.");
+                }
+                else {
+                    $controlResult.AddMessage([VerificationResult]::Failed,
+                                                "SSH authentication is disabled for application connection policies");
+                }
+            }
+       }
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckEnterpriseAccess([ControlResult] $controlResult)
+    {
+       if([Helpers]::CheckMember($this.OrgPolicyObj,"security"))
+       {
+            $CAPObj = $this.OrgPolicyObj.security | Where-Object {$_.Policy.Name -eq "Policy.AllowOrgAccess"}
+            if(($CAPObj | Measure-Object).Count -gt 0)
+            {
+                if($CAPObj.policy.effectiveValue -eq $true )
+                {
+                    $controlResult.AddMessage([VerificationResult]::Verify,
+                                                "Enterprise access to projects is enabled.");
+                }
+                else {
+                    $controlResult.AddMessage([VerificationResult]::Passed,
+                                                "Enterprise access to projects is disabled.");
+                }
+            }
+       }
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckCAP([ControlResult] $controlResult)
+    {
+       if([Helpers]::CheckMember($this.OrgPolicyObj,"security"))
+       {
+            $CAPObj = $this.OrgPolicyObj.security | Where-Object {$_.Policy.Name -eq "Policy.EnforceAADConditionalAccess"}
+            if(($CAPObj | Measure-Object).Count -gt 0)
+            {
+                if($CAPObj.policy.effectiveValue -eq $true )
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed,
+                                                "AAD conditional access policy validation is enabled.");
+                }
+                else {
+                    $controlResult.AddMessage([VerificationResult]::Failed,
+                                                "AAD conditional access policy validation is disabled.");
+                }
+            }
+       }
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckBadgeAnonAccess([ControlResult] $controlResult)
+    {
+       if($this.PipelineSettingsObj)
+       {
+            
+            if($this.PipelineSettingsObj.statusBadgesArePrivate -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Anonymous access to status badge API is disabled.");
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Failed, "Anonymous access to status badge API is enabled.");
+            }       
+       }
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckSetQueueTime([ControlResult] $controlResult)
+    {
+       if($this.PipelineSettingsObj)
+       {
+            
+            if($this.PipelineSettingsObj.enforceSettableVar -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Only limited variables can be set at queue time.");
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Failed, "All variables can be set at queue time.");
+            }       
+       }
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckJobAuthnScope([ControlResult] $controlResult)
+    {
+       if($this.PipelineSettingsObj)
+       {
+            
+            if($this.PipelineSettingsObj.enforceJobAuthScope -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Scope of access of all pipelines is restricted to current project.");
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Failed, "Scope of access of all pipelines is set to project collection.");
+            }       
+       }
+        return $controlResult
+    }
+    
     hidden [ControlResult] AutoInjectedExtension([ControlResult] $controlResult)
     {   
      try {
@@ -450,6 +581,4 @@ class Organization: SVTBase
 
         return $controlResult
     }
-
-    
 }

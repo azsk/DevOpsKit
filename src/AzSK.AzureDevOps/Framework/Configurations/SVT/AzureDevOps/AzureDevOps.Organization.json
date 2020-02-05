@@ -259,14 +259,150 @@
         "Enabled": true
       },
       {
+        "ControlID": "AzureDevOps_Organization_Enable_App_Access_OAuth",
+        "Description": "OAuth should be enabled for third party application access",
+        "Id": "Organization1000",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckOAuthAppAccess",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Organization Settings --> Security --> Policies --> Application connection policies --> Enable Third-party application access via OAuth",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
         "ControlID": "AzureDevOps_Organization_Review_Auto_Injected_Extensions",
         "Description": "Auto-injected pipeline tasks have features/vulnerabilities that make them code execution sinks.",
         "Id": "Organization250",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "AutoInjectedExtension",
-        "Rationale": "ADO allow Auto Injected Extension in pipeline",
-        "Recommendation": "Go to Organization Settings --> Extensions",
+        "Rationale": "ADAuto-injected pipeline tasks have features/vulnerabilities that make them code execution sinks.",
+        "Recommendation": "Go to Organization Settings --> Extensions -> Verify the auto-injected extensions.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Enable_SSH_Auth",
+        "Description": "SSH authentication should be enabled for Application connection policies",
+        "Id": "Organization1010",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckSSHAuthn",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Organization Settings --> Security --> Policies --> Application connection policies --> Enable SSH Authentication",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Verify_Enterprise_Access_To_Projects",
+        "Description": "Enterprise access to projects should be verified.",
+        "Id": "Organization1020",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckEnterpriseAccess",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Organization Settings --> Security --> Policies --> Security policies --> Disable Enterprise access to projects",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Enable_AAD_Conditional_Access_Policy",
+        "Description": "AAD Conditional Access Policy should be enabled.",
+        "Id": "Organization1030",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckCAP",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Organization Settings --> Security --> Policies --> Security policies --> Enable Azure Active Directory Conditional Access Policy Validation.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Disable_Anonymous_Access_To_Badges",
+        "Description": "Anonymous access to status badge API for parallel pipelines should be disabled.",
+        "Id": "Organization1040",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckBadgeAnonAccess",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Organization Settings --> Pipelines --> Settings --> Enable 'Disable anonymous access to badges'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Limit_Variables_Settable_At_Queue_Time",
+        "Description": "Only those variables explicitly marked settable at queue time can be set.",
+        "Id": "Organization1050",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckSetQueueTime",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Organization Settings --> Pipelines --> Settings --> Enable 'Limit variables that can be set at queue time.'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Limit_Job_Authorization_Scope_To_Current_Project",
+        "Description": "Scope of access of all pipelines should be restricted to current project.",
+        "Id": "Organization1060",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckJobAuthnScope",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Organization Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current scope.'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Group_Members",
+        "Description": "Justify all identities that are granted with member access on groups and teams.",
+        "Id": "Organization210",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Accounts that are a member of these groups without a legitimate business reason increase the risk for your Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
+        "Recommendation": "Go to Organization Settings --> Security --> Validate all group memebers",
         "Tags": [
           "SDL",
           "TCP",
@@ -288,9 +424,10 @@
           "SDL",
           "TCP",
           "Manual",
+          "AuthZ",
           "Audit"
         ],
         "Enabled": true
       }
     ]
-    }
+  }

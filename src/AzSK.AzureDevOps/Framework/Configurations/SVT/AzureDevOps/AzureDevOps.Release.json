@@ -128,13 +128,13 @@
   },
   {
     "ControlID": "AzureDevOps_Release_Review_Mixing_GitHub_And_ADO_Sources",
-    "Description": "Pipelines mixing GitHub and ADO sources in the same pipeline.",
+    "Description": "Pipelines build code from untrusted external sources (e.g. GitHub) via Continuous Integration or Scheduled Builds, giving the public internet access to a Project/Project Collection Build Service token.",
     "Id": "Release180",
     "ControlSeverity": "Medium",
     "Automated": "Yes",
     "MethodName": "CheckMixingGitHubAndADOSources",
-    "Rationale": "Pipelines build code from untrusted external sources (e.g. GitHub) are Building GitHub repos and ADO sources in the same pipeline.",
-    "Recommendation": "Building GitHub repos and ADO sources in the same pipeline.",
+    "Rationale": "Pipelines build code from untrusted external sources (e.g. GitHub) via Continuous Integration or Scheduled Builds, giving the public internet access to a Project/Project Collection Build Service token.",
+    "Recommendation": "Validate all the source repos in the release definition.",
     "Tags": [
       "SDL",
       "TCP",
