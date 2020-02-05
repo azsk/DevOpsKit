@@ -31,9 +31,19 @@ class ConfigurationHelper {
 		}
         #If file not present in App folder load settings from Configurations in Module folder 
         if (!$filePath) {
-			# Update as per module name here
+
 			$moduleName = $([Constants]::AzSKModuleName)
-            $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName $moduleName | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
+			$moduleVersion = $([Constants]::AzSKCurrentModuleVersion)
+			if ($moduleVersion -eq "1.0.0.0") #hard-coded version for Dev-Test, here the \Framework folder is parallel to \ModuleName folder
+			{
+				$basePath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName $moduleName | Join-Path -ChildPath "Framework"
+			}
+			else #In installed modules folder, the basepath is different.
+			{
+				$basePath = (Get-Item $PSScriptRoot).Parent.FullName	
+			}
+			
+            $rootConfigPath = $basePath | Join-Path -ChildPath "Configurations";
 			
 			$filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
         }
