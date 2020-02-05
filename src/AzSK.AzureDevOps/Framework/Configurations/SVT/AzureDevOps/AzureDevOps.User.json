@@ -39,12 +39,12 @@
     },
     {
       "ControlID": "AzureDevOps_User_AuthZ_Review_Token_Expiration",
-      "Description": "Personal access tokens (PAT) which are near to expire withing 7 days.",
+      "Description": "Personal access tokens (PAT) near expiry should be renewed.",
       "Id": "User121",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckPATExpiration",
-      "Rationale": "Personal access tokens (PAT) near to expiration",
+      "Rationale": "Personal access tokens (PAT) near expiry should be renewed.",
       "Recommendation": "Go to User Profile --> Security --> Personel Access Token --> Edit",
       "Tags": [
         "SDL",

@@ -1,6 +1,7 @@
 Set-StrictMode -Version Latest 
 class Project: SVTBase
 {    
+    [PSObject] $PipelineSettingsObj = $null
 
     [PSObject] $PipelineSettingsObj = $null
     Project([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
@@ -204,5 +205,4 @@ class Project: SVTBase
 
         return $controlResult
     }
-
 }

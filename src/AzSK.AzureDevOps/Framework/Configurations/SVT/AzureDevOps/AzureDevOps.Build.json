@@ -114,8 +114,8 @@
     "ControlSeverity": "High",
     "Automated": "Yes",
     "MethodName": "CheckSettableAtQueueTime",
-    "Rationale": "Pipelinr variables not marked settable at queue time can only be changed by someone with elevated permissions. These variables (reasonably) used in ways that make code injection possible.",
-    "Recommendation": "To check settable at queue time for pipeline variables follow the steps given here: 1.Navigate to the build pipeline. 2. Select variables. 4. Verify 'settable at queue time' property for each variable.",
+    "Rationale": "Pipeline variables not marked settable at queue time can only be changed by someone with elevated permissions. These variables (reasonably) used in ways that make code injection possible.",
+    "Recommendation": "To uncheck settable at queue time follow the steps given here: 1.Navigate to the build pipeline. 2. Open up the build pipeline. 3. Select variables. 4. Uncheck settable at queue time.",
     "Tags": [
       "SDL",
       "TCP",
@@ -133,7 +133,7 @@
     "Automated": "Yes",
     "MethodName": "ExternalSourceSelfHostedBuild",
     "Rationale": "Builds execute attacker-controlled code by-design (e.g. solution files contain build command lines to invoke, unit tests compile into DLLs that are loaded and executed by a harness, etc). Building code from untrusted external sources is effectively allowing external parties to execute arbitrary code on your computer.",
-    "Recommendation": "To uncheck settable at queue time follow the steps given here: 1.Navigate to the build pipeline. 2. Open up the build pipeline. 3. Select variables. 4. Uncheck settable at queue time.",
+    "Recommendation": "Validate the external source repo and self-hosted agents for vulnerabilities.",
     "Tags": [
       "SDL",
       "TCP",

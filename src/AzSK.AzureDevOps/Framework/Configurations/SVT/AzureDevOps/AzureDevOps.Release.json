@@ -134,7 +134,7 @@
     "Automated": "Yes",
     "MethodName": "CheckMixingGitHubAndADOSources",
     "Rationale": "Pipelines build code from untrusted external sources (e.g. GitHub) via Continuous Integration or Scheduled Builds, giving the public internet access to a Project/Project Collection Build Service token.",
-    "Recommendation": "Validate & review all the external source repos in the release definition.",
+    "Recommendation": "Validate all the source repos in the release definition.",
     "Tags": [
       "SDL",
       "TCP",
