@@ -3,7 +3,6 @@ class Project: SVTBase
 {    
     [PSObject] $PipelineSettingsObj = $null
 
-    [PSObject] $PipelineSettingsObj = $null
     Project([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     {
         $this.GetPipelineSettingsObj()
