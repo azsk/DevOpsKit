@@ -47,27 +47,34 @@ class Organization: SVTBase
     
      hidden [ControlResult] CheckProCollSerAcc([ControlResult] $controlResult)
      {
+       try{
        $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);
        
-       $accname = ('['+ $this.SubscriptionContext.SubscriptionName + ']\' + 'Project Collection Service Accounts'); #Enterprise Service Accounts
-       $prcollobj = $responseObj | where {$_.principalName -eq $accname}
+       $accname = "Project Collection Service Accounts"; #Enterprise Service Accounts
+       $prcollobj = $responseObj | where {$_.displayName -eq $accname}
        
-       $prmemberurl = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-       $inputbody = '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://{1}.visualstudio.com/_settings/groups?subjectDescriptor={0}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}'
-       $inputbody = $inputbody.Replace("{0}",$prcollobj.descriptor)
-       $inputbody = $inputbody.Replace("{1}",$this.SubscriptionContext.SubscriptionName) | ConvertFrom-Json
-       
-       try{
-       $responsePrCollObj = [WebRequestHelper]::InvokePostWebRequest($prmemberurl,$inputbody);
-       $responsePrCollData = $responsePrCollObj.dataProviders.'ms.vss-admin-web.org-admin-members-data-provider'.identities
-       if(($responsePrCollData | Measure-Object).Count -gt 0){
-       $controlResult.AddMessage([VerificationResult]::Verify, "Please verify the members of the group Project Collection Service Accounts", $responsePrCollData); 
-       $controlResult.SetStateData("Members of the Project Collection Service Accounts Group ", $responsePrCollData); 
-       }
-       else{
-       $controlResult.AddMessage([VerificationResult]::Manual, "Project Collection Service Accounts group members can not be fetched.");
-       }
+       if(($prcollobj | Measure-Object).Count -gt 0){
+
+            $prmemberurl = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+            $inputbody = '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://{1}.visualstudio.com/_settings/groups?subjectDescriptor={0}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}'
+            $inputbody = $inputbody.Replace("{0}",$prcollobj.descriptor)
+            $inputbody = $inputbody.Replace("{1}",$this.SubscriptionContext.SubscriptionName) | ConvertFrom-Json
+            
+            $responsePrCollObj = [WebRequestHelper]::InvokePostWebRequest($prmemberurl,$inputbody);
+            $responsePrCollData = $responsePrCollObj.dataProviders.'ms.vss-admin-web.org-admin-members-data-provider'.identities
+           
+            if(($responsePrCollData | Measure-Object).Count -gt 0){
+            $controlResult.AddMessage([VerificationResult]::Verify, "Please verify the members of the group Project Collection Service Accounts", $responsePrCollData); 
+            $controlResult.SetStateData("Members of the Project Collection Service Accounts Group ", $responsePrCollData); 
+            }
+            else{
+            $controlResult.AddMessage([VerificationResult]::Manual, "Project Collection Service Accounts group members can not be fetched.");
+            }
+        }
+        else{
+            $controlResult.AddMessage([VerificationResult]::Manual, "Project Collection Service Accounts group can not be fetched.");
+            }
        }
        catch{
           $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch list of groups in the organization.");
