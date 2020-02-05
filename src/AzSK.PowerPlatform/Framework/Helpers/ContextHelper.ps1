@@ -7,8 +7,8 @@ using namespace Microsoft.IdentityModel.Clients.ActiveDirectory
 
 class ContextHelper {
     
-    #static hidden [Context] $currentContext;
-    static hidden [PSObject] $currentPPContext = $null;
+    static hidden [Context] $currentPPContext;
+    #static hidden [PSObject] $currentPPContext = $null;
 
     hidden static [PSObject] GetCurrentContext()
     {
@@ -19,7 +19,7 @@ class ContextHelper {
             {
                 Add-PowerAppsAccount
             }
-            [ContextHelper]::currentPPContext = $Global:currentSession
+            [ContextHelper]::currentPPContext = [ContextHelper]::ConvertToContextObject($Global:currentSession)
             Set-StrictMode -Version Latest
         }
 
@@ -67,14 +67,14 @@ class ContextHelper {
         
     }
 
-    hidden static ConvertToContextObject([PSObject] $context)
+    hidden static [Context] ConvertToContextObject([PSObject] $ppSession)
     {
-        #TODO-PP: fix
         $contextObj = [Context]::new()
-        $contextObj.Account.Id = $context.UserInfo.DisplayableId
-        $contextObj.Tenant.Id = $context.TenantId 
-        $contextObj.AccessToken = $context.AccessToken
-        #$contextObj.AccessToken =  ConvertTo-SecureString -String $context.AccessToken -asplaintext -Force
-        [ContextHelper]::currentPPContext = $contextObj
+        $contextObj.Account.Id = $ppSession.upn 
+        $contextObj.Tenant.Id = $ppSession.TenantId 
+        $contextObj.AccessToken = $ppSession.idToken  #TODO-PP: there is also refreshToken in the ppSesssion plus resourceTokens.
+            #$ppSession.resourceTokens."https://service.powerapps.com/".accessToken #TODO-PP: This starts with Azure-mgmt, but also collects PP-API token.
+        return $contextObj
+        
     }
 }

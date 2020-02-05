@@ -14,11 +14,39 @@
         "Recommendation": "Refer: TBD",
         "Tags": [
           "SDL",
-          "TCP",
-          "Manual",
-          "AuthZ"
+          "TCP"
         ],
         "Enabled": true
+    },
+    {
+      "ControlID": "PowerPlatform_Environment_Remove_GitHub_Connections",
+      "Description": "GitHub connections should be removed from the environment",
+      "Id": "Environment120",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckGitHubConnections",
+      "Rationale": "GitHub connections can lead to compromise of corporate data and are not considered safe currently.",
+      "Recommendation": "Refer: TBD",
+      "Tags": [
+        "SDL",
+        "TCP"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "PowerPlatform_Environment_Remove_Sql_Connections",
+      "Description": "Sql connections should be removed from the environment",
+      "Id": "Environment130",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckSqlConnections",
+      "Rationale": "Sql connections can lead to compromise of corporate data and are not considered safe currently.",
+      "Recommendation": "Refer: TBD",
+      "Tags": [
+        "SDL",
+        "TCP" 
+      ],
+      "Enabled": true
     }
   ]
 }

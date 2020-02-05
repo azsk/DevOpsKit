@@ -30,8 +30,12 @@ function Get-AzSKPowerPlatformSecurityStatus
 		$EnvironmentName,
 
 		[switch]
-		[Parameter(HelpMessage="Scan all supported artificats present under the environment.")]
-		[Alias("sa")]
+		[Parameter(Mandatory=$false, HelpMessage="Switch to indicate if scan should run as environment admin. (Default is user.)")]
+		$Admin=$false,
+
+		[switch]
+		[Parameter( Mandatory = $false, HelpMessage="Scan all supported artificats present under the environment.")]
+		[Alias("saa")]
 		$ScanAllArtifacts
 	)
 	Begin
@@ -45,11 +49,28 @@ function Get-AzSKPowerPlatformSecurityStatus
 	try 
 		{
 			#If envtName is not passed, use default environment.
-			if ($EnvironmentName -eq $null)
+			#TODO-PP: Need to move to post-login stage?
+			if ([String]::IsNullOrEmpty($EnvironmentName))
 			{
-				$EnvironmentName = '~default'
+				$EnvironmentName = (Get-PowerAppEnvironment -Default).EnvironmentName #Can also use '~default'
 			}
-			$resolver = [SVTResourceResolver]::new($EnvironmentName,$ScanAllArtifacts);
+            $Script:AsAdmin = $false
+			if ($Admin -eq $true) #Check that user has privilege to scan desired envt as admin
+			{
+				$adminEnvForUser = @(Get-AdminPowerAppEnvironment)
+
+				$isAdminForThisEnv = ( (@($adminEnvForUser | ? {$_.Environmentname -match $EnvironmentName})).Count -eq 1)
+
+				if ($isAdminForThisEnv)
+				{
+					$Script:AsAdmin = $Admin 
+				}
+				else 
+				{
+					Write-Warning("You do not have admin access to envt: $($EnvironmentName).`nScan will run as regular user.")
+				}
+			}
+			$resolver = [SVTResourceResolver]::new($EnvironmentName, $Script:AsAdmin, $ScanAllArtifacts);
 			$secStatus = [ServicesSecurityStatus]::new($EnvironmentName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
