@@ -12,7 +12,7 @@
     RootModule             = '.\AzSK.AAD.psm1'
 
     # Version number of this module.
-    ModuleVersion          = '0.8.9'
+    ModuleVersion          = '1.0.0.0'
 
     # ID used to uniquely identify this module
     GUID                   = 'b9bba5c3-9036-4163-b0b0-6d4e83519b0a'
@@ -49,8 +49,8 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules        = @(
-            @{ModuleName = 'Az.Accounts'; RequiredVersion = '1.2.1'}
-            @{ModuleName = 'AzureAD'; RequiredVersion = '2.0.2.4'}
+        @{ModuleName = 'Az.Accounts'; RequiredVersion = '1.7.0'}
+        @{ModuleName = 'AzureAD'; RequiredVersion = '1.1.139.0'}
         )
 
     # Assemblies that must be loaded prior to importing this module

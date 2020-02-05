@@ -72,7 +72,7 @@ class Constants
     static [string] $CompletedAttestAnalysis = [Constants]::SingleDashLine + "`r`nCompleted attestation: [FeatureName: {0}] [ResourceGroupName: {1}] [ResourceName: {2}] `r`n" + [Constants]::DoubleDashLine
     static [string] $CompletedAttestAnalysisSub = [Constants]::SingleDashLine + "`r`nCompleted attestation: [FeatureName: {0}] [TenantName: {1}] [tenantId: {2}] `r`n" + [Constants]::DoubleDashLine
 	static [System.Version] $AzSKCurrentModuleVersion=[System.Version]::new()
-	static [string] $AzSKModuleName = "AzSK";
+	static [string] $AzSKModuleName = "AzSK.AAD";
 	static [string] $AttestationDataContainerName = "attestation-data"
 	static [string] $CAMultiSubScanConfigContainerName = "ca-multisubscan-config"
 	static [string] $CAScanProgressSnapshotsContainerName = "ca-scan-checkpoints"

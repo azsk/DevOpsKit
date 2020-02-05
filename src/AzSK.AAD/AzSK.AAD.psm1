@@ -232,8 +232,8 @@ function Set-AzSKMonitoringSettings
 			{
 				if(-not [string]::IsNullOrWhiteSpace($OMSWorkspaceID) -and -not [string]::IsNullOrWhiteSpace($OMSSharedKey))
 				{
-					$appSettings.OMSWorkspaceId = $OMSWorkspaceID
-					$appSettings.OMSSharedKey = $OMSSharedKey
+					$appSettings.LAWSId = $OMSWorkspaceID
+					$appSettings.LAWSSharedKey = $OMSSharedKey
 				}
 				elseif(([string]::IsNullOrWhiteSpace($OMSWorkspaceID) -and -not [string]::IsNullOrWhiteSpace($OMSSharedKey)) `
 						-and (-not [string]::IsNullOrWhiteSpace($OMSWorkspaceID) -and [string]::IsNullOrWhiteSpace($OMSSharedKey)))
@@ -243,8 +243,8 @@ function Set-AzSKMonitoringSettings
 				}
 				if(-not [string]::IsNullOrWhiteSpace($AltOMSWorkspaceID) -and -not [string]::IsNullOrWhiteSpace($AltOMSSharedKey))
 				{
-					$appSettings.AltOMSWorkspaceId = $AltOMSWorkspaceID
-					$appSettings.AltOMSSharedKey = $AltOMSSharedKey
+					$appSettings.AltLAWSId = $AltOMSWorkspaceID
+					$appSettings.AltLAWSSharedKey = $AltOMSSharedKey
 				}
 				elseif(([string]::IsNullOrWhiteSpace($AltOMSWorkspaceID) -and -not [string]::IsNullOrWhiteSpace($AltOMSSharedKey)) `
 						-and (-not [string]::IsNullOrWhiteSpace($AltOMSWorkspaceID) -and [string]::IsNullOrWhiteSpace($AltOMSSharedKey)))
@@ -254,20 +254,20 @@ function Set-AzSKMonitoringSettings
 				}
 			}
 			else {
-				$appSettings.OMSWorkspaceId = ""
-				$appSettings.OMSSharedKey = ""
-				$appSettings.AltOMSWorkspaceId = ""
-				$appSettings.AltOMSSharedKey = ""
+				$appSettings.LAWSId = ""
+				$appSettings.LAWSSharedKey = ""
+				$appSettings.AltLAWSId = ""
+				$appSettings.AltLAWSSharedKey = ""
 			}
 			if(-not [string]::IsNullOrWhiteSpace($Source))
 			{				
-				$appSettings.OMSSource = $Source
+				$appSettings.LASource = $Source
 			}
 			else
 			{
-				$appSettings.OMSSource = "SDL"
+				$appSettings.LASource = "SDL"
 			}
-			$appSettings.OMSType = [OMSHelper]::DefaultOMSType
+			$appSettings.LAType = [LogAnalyticsHelper]::DefaultLAType
 			[ConfigurationManager]::UpdateAzSKSettings($appSettings);
 			[EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine + "`r`nWe have added new queries for the Monitoring solution. These will help reflect the aggregate control pass/fail status more accurately. Please go here to get them:  https://aka.ms/devopskit/omsqueries `r`n",[MessageType]::Warning);
 			[EventBase]::PublishGenericCustomMessage("Successfully changed policy settings");
