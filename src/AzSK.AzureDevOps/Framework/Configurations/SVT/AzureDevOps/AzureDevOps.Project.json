@@ -4,8 +4,8 @@
     "IsMaintenanceMode":  false,
   "Controls": [
     {
-      "ControlID": "AzureDevOps_Project_AuthN_Set_Visibility_Private",
-      "Description": "Projects visibility must be set to private",
+      "ControlID": "AzureDevOps_Project_AuthZ_Set_Visibility_Private",
+      "Description": "Ensure that project visibility is set to private",
       "Id": "Project110",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -22,7 +22,7 @@
     },
     {
         "ControlID": "AzureDevOps_Project_AuthZ_Min_RBAC_Access",
-        "Description": "All teams/groups must be granted minimum required permissions on project",
+        "Description": "All teams/groups must be granted minimum required permissions on the project",
         "Id": "Project120",
         "ControlSeverity": "High",
         "Automated": "No",
@@ -58,7 +58,7 @@
         "ControlID": "AzureDevOps_Project_Disable_Anonymous_Access_To_Badges",
         "Description": "Anonymous access to status badge API for parallel pipelines should be disabled.",
         "Id": "Project1000",
-        "ControlSeverity": "Medium",
+        "ControlSeverity": "Low",
         "Automated": "Yes",
         "MethodName": "CheckBadgeAnonAccess",
         "Rationale": "TBD",
@@ -72,8 +72,8 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Project_Limit_Variables_Settable_At_Queue_Time",
-        "Description": "Only those variables explicitly marked settable at queue time can be set.",
+        "ControlID": "AzureDevOps_Project_SI_Limit_Variables_Settable_At_Queue_Time",
+        "Description": "Do not permit all pipeline variables to be settable by default.",
         "Id": "Project1010",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
@@ -89,7 +89,7 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Project_Limit_Job_Authorization_Scope_To_Current_Project",
+        "ControlID": "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project",
         "Description": "Scope of access of all pipelines should be restricted to current project.",
         "Id": "Project1020",
         "ControlSeverity": "Medium",
@@ -106,13 +106,13 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Project_Publish_Metadata_From_Pipeline",
-        "Description": "Allows pipelines to record metadata. Evaluate artifact check can be configured to define policies using the metadata recorded.",
+        "ControlID": "AzureDevOps_Project_AuthZ_Publish_Metadata_From_Pipeline",
+        "Description": "Consider using artifact evaluation for fine-grained control over pipeline stages",
         "Id": "Project1030",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckPublishMetadata",
-        "Rationale": "TBD",
+        "Rationale": "Allows pipelines to record metadata. Evaluate artifact check can be configured to define policies using the metadata recorded.",
         "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Publish metadata from pipelines'.",
         "Tags": [
           "SDL",

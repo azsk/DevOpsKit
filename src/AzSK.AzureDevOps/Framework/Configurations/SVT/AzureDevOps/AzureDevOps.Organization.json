@@ -22,7 +22,7 @@
     },
     {
         "ControlID": "AzureDevOps_Organization_AuthN_Disable_External_Guest_Users",
-        "Description": "Permissions to external accounts (i.e., accounts outside the native directory for the Organization) must be disabled",
+        "Description": "Do not grant access to external users (users with accounts outside your native directory) to your organization",
         "Id": "Organization120",
         "ControlSeverity": "High",
         "Automated": "Yes",
@@ -56,7 +56,7 @@
       },
       {
         "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Guest_Identities",
-        "Description": "Justify all guest identities that are granted access on Organization. ",
+        "Description": "Justify all guest identities that have been granted access to your organization.",
         "Id": "Organization150",
         "ControlSeverity": "High",
         "Automated": "Yes",
@@ -73,7 +73,7 @@
       },
       {
         "ControlID": "AzureDevOps_Organization_SI_Review_Installed_Extensions",
-        "Description": "Extensions must be installed from a trustworthy source",
+        "Description": "Ensure that extensions enabled for your organization are trustworthy",
         "Id": "Organization160",
         "ControlSeverity": "High",
         "Automated": "Yes",
@@ -90,7 +90,7 @@
       },
       {
         "ControlID": "AzureDevOps_Organization_SI_Review_Shared_Extensions",
-        "Description": "Verify shared extensions are from a trustworthy source",
+        "Description": "Exercise due care when installing (private) shared extensions for your organization",
         "Id": "Organization170",
         "ControlSeverity": "High",
         "Automated": "Yes",
@@ -107,7 +107,7 @@
       },
       {
         "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Extension_Managers",
-        "Description": "Justify all identities that are granted with manager access for extensions.",
+        "Description": "Review the list of users who have permission to manage extensions",
         "Id": "Organization180",
         "ControlSeverity": "High",
         "Automated": "Yes",
@@ -123,8 +123,8 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_SI_Review_InActive_Users",
-        "Description": "Unintended/inactive user access must be revoked",
+        "ControlID": "AzureDevOps_Organization_SI_Review_Inactive_Users",
+        "Description": "Consider revoking access for inactive users",
         "Id": "Organization190",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
@@ -141,7 +141,7 @@
       },
       {
         "ControlID": "AzureDevOps_Organization_AuthZ_Deleted_AD_DisconnectedUser_Access",
-        "Description": "Active directory disconnected users access must be revoked from Org.",
+        "Description": "Remove access entries for users whose accounts have been deleted/disconnecte from Azure Active Directory.",
         "Id": "Organization191",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
@@ -242,10 +242,10 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_Review_Default_Account_Access",
-        "Description": "ADO has a misleadingly group called Project Collection Service Accounts. By inheritance, Project Collection Service Accounts are also Project Collection Administrators",
+        "ControlID": "AzureDevOps_Organization_Review_Project_Collection_Accounts",
+        "Description": "Minimize and reviews service accounts that are members of the Project Collection Service Accounts group.",
         "Id": "Organization240",
-        "ControlSeverity": "Medium",
+        "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckProCollSerAcc",
         "Rationale": "ADO has a misleadingly group called Project Collection Service Accounts. By inheritance, Project Collection Service Accounts are also Project Collection Administrators. It is found that multiple build agent user accounts across Microsoft were members of Project Collection Service Accounts. An adversary that executes code in a pipeline assigned to one of these build agents can take over the entire ADO organization",
@@ -275,8 +275,8 @@
         ],
         "Enabled": true
       },
-      { 
-        "ControlID": "AzureDevOps_Organization_Review_Auto_Injected_Extension",
+      {
+        "ControlID": "AzureDevOps_Organization_Review_Auto_Injected_Extensions",
         "Description": "Auto-injected pipeline tasks have features/vulnerabilities that make them code execution sinks.",
         "Id": "Organization250",
         "ControlSeverity": "Medium",

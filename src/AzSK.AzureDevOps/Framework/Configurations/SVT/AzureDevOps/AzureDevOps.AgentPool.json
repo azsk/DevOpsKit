@@ -59,7 +59,7 @@
         "ControlID": "AzureDevOps_AgentPool_AuthZ_Disable_InheritPermissions",
         "Description": "Do not allow inherited permission on agent pool",
         "Id": "AgentPool140",
-        "ControlSeverity": "High",
+        "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckInheritPermissions",
         "Rationale": "Disabling inherit permissions lets you finely control access to various operations at the agent level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
@@ -74,14 +74,32 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_AgentPool_AuthZ_Agent_Auto_Provisioning",
+        "ControlID": "AzureDevOps_AgentPool_AuthZ_Org_Auto_Provisioning",
         "Description": "Do not allow Auto-provision enables on agent pool",
         "Id": "AgentPool150",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckOrgAgtAutoProvisioning",
         "Rationale": "By enabling the 'Auto-provision' The organization agent pool is imported in all your new team projects and is accessible there immediately.",
-        "Recommendation": "To disable inheritance follow the steps given here: 1.Navigate to the Organization settings. 2. Open agent pool. 3. Select Settings. 4. Off 'Auto-provision this agent pools in new projects'",
+        "Recommendation": "To enable auto-provision follow the steps given here: 1.Navigate to the Organization settings. 2. Open agent pool. 3. Select Settings. 4. enable 'Auto-provision this agent pools in new projects'",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthZ",
+          "RBAC"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_AgentPool_AuthZ_Prj_Grant_All_Pipeline_Access",
+        "Description": "Do not grant access permission to all pipeline on agent pool",
+        "Id": "AgentPool160",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckPrjAllPipelineAccess",
+        "Rationale": "By enabling the 'Grant access permission to all pipelines' The agent pool is imported in all your pipeline in the current project and is accessible there immediately.",
+        "Recommendation": "To disable 'Grant access permission to all pipelines' follow the steps given here: 1.Navigate to the project settings. 2. Open agent pool. 3. Select Security. 4. Off 'Grant access permission to all pipeline'",
         "Tags": [
           "SDL",
           "TCP",

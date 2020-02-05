@@ -272,7 +272,60 @@
   },
   "BaselineControls": {
     "ResourceTypeControlIdMappingList": [
+      {
+        "ResourceType": "Organization",
+        "ControlIds": [
+          "AzureDevOps_Organization_AuthN_Use_AAD_Auth",
+          "AzureDevOps_Organization_AuthN_Disable_External_Guest_Users",
+          "AzureDevOps_Organization_AuthZ_Justify_Guest_Identities",
+          "AzureDevOps_Organization_SI_Review_Installed_Extensions",
+          "AzureDevOps_Organization_SI_Review_Shared_Extensions",
+          "AzureDevOps_Organization_AuthZ_Justify_Extension_Managers",
+          "AzureDevOps_Organization_Review_Default_Account_Access",
+          "AzureDevOps_Organization_Review_Auto_Injected_Extension"
+  
+        ]
+     },
+     {
+      "ResourceType": "Project",
+      "ControlIds": [
+        "AzureDevOps_Project_AuthN_Set_Visibility_Private",
+        "AzureDevOps_Project_Limit_Job_Authorization_Scope_To_Current_Project"
+      ]
+     },
+     {
+      "ResourceType": "ServiceConnection",
+      "ControlIds": [
+         "AzureDevOps_ServiceConnection_Authz_Dont_Use_Classic_Connections",
+         "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions",
+         "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Build",
+         "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_SecurityGroups"
 
+      ]
+     },
+     {
+      "ResourceType": "Build",
+      "ControlIds": [
+        "AzureDevOps_Build_DP_No_PlainText_Secrets_In_Definition",
+        "AzureDevOps_Build_AuthZ_Disable_InheritPermissions"
+      ]
+     },
+     {
+      "ResourceType": "Release",
+      "ControlIds": [
+        "AzureDevOps_Release_DP_No_PlainText_Secrets_In_Definition",
+        "AzureDevOps_Release_AuthZ_Disable_InheritPermissions",
+        "AzureDevOps_Release_Review_Mixing_GitHub_And_ADO_Sources"
+      ]
+     },
+     {
+      "ResourceType": "AgentPool",
+      "ControlIds": [
+        "AzureDevOps_AgentPool_AuthZ_Disable_InheritPermissions",
+        "AzureDevOps_AgentPool_AuthZ_Prj_Grant_All_Pipeline_Access"
+        
+      ]
+     }
     ],
     "SubscriptionControlIdList": [],
     "ExpiryInDays": 2,

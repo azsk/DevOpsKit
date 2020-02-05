@@ -24,7 +24,7 @@ class Build: SVTBase
 
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
 	{
-        
+      try {      
         if([Helpers]::CheckMember($this.BuildObj,"variables")) 
         {
 
@@ -58,15 +58,20 @@ class Build: SVTBase
                     
                     }
                       
-        }
-        if($noOfCredFound -gt 0)
-        {
-            $controlResult.AddMessage([VerificationResult]::Failed,
-            "Found credentials in build definition. Total credentials found: $noOfCredFound");
-        }
+            }
+            if($noOfCredFound -gt 0)
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed,
+                "Found credentials in build definition. Total credentials found: $noOfCredFound");
+            }
         else {
             $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in build definition.");
         }
+        }
+    }
+    catch {
+        $controlResult.AddMessage([VerificationResult]::Manual, "Could not evaluated build definition.");
+        $controlResult.AddMessage($_);
     }    
         return $controlResult;
     }

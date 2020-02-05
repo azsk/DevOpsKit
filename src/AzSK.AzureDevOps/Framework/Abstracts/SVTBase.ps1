@@ -140,6 +140,14 @@ class SVTBase: AzSKRoot
 	#stub to be used when Baseline configuration exists 
 	hidden [bool] CheckBaselineControl($controlId)
 	{
+		if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings,"BaselineControls.ResourceTypeControlIdMappingList"))
+		{
+		  $baselineControl = $this.ControlSettings.BaselineControls.ResourceTypeControlIdMappingList | Where-Object {$_.ControlIds -contains $controlId}
+		   if(($baselineControl | Measure-Object).Count -gt 0 )
+			{
+				return $true
+			}
+		}
 		return $false
 	}
 	#stub to be used when PreviewBaseline configuration exists 
