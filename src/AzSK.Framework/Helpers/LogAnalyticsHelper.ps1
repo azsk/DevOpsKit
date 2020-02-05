@@ -255,6 +255,7 @@ Class LogAnalyticsHelper{
 	{
 		#Check if Settings already contain details of Log Analytics workspace
 		$settings = [ConfigurationManager]::GetAzSKSettings()
+		#Can we add one flag in 'AzSKSettings' or 'ControlSettings.json' to control this 
 		#Step 1: if Log Analytics workspace details are not present on machine
 		if([string]::IsNullOrWhiteSpace($settings.LAWSId) -or [string]::IsNullOrWhiteSpace($settings.AltLAWSId))
 		{

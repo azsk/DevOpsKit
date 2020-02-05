@@ -191,7 +191,7 @@ class RemoteReportHelper
 	{
 		$settings = [ConfigurationManager]::GetAzSKConfigData();
 		$telemetryKey = $settings.ControlTelemetryKey
-		[guid]$key = [guid]::NewGuid()
+		[guid]$key =  [guid]::Empty
 		if([guid]::TryParse($telemetryKey, [ref] $key) -and ![guid]::Empty.Equals($key))
 		{
 			return $telemetryKey;
@@ -203,7 +203,7 @@ class RemoteReportHelper
 	{
 		$settings = [ConfigurationManager]::GetAzSKConfigData();
 		$telemetryKey = $settings.ControlTelemetryKey
-		[guid]$key = [guid]::NewGuid()
+		[guid]$key =  [guid]::Empty
 		if([guid]::TryParse($telemetryKey, [ref] $key) -and ![guid]::Empty.Equals($key))
 		{
 			return $settings.EnableControlTelemetry;
