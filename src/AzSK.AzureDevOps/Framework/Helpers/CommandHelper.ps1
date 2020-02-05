@@ -222,7 +222,9 @@ class CommandHelper
 	{
 		# Validate required module version dependency
 	    try
-		{			
+		{
+		$AzSK = Get-Module | Where-Object { $_.Name -eq 'AzSK' };
+		if (!$AzSK) {			
 			#Loop through all required modules list
 			$invocationContext.MyCommand.Module.RequiredModules | ForEach-Object {				
 				$requiredModule = $_
@@ -246,7 +248,12 @@ class CommandHelper
 					# Continue execution without any error or warning
 					Write-Debug ($requiredModule.Name + " module version dependency validation successful")
 				}			
-			};		
+			};	
+		 }	
+		 else {
+				Write-Error "Please make sure you have imported only the AzSK.AzureDevOps module in the PS session. It seems that there are other AzSK modules also present in PS session memory. Please run the command in the new session.";
+				#[ListenerHelper]::UnregisterListeners();
+			}
 		}
 		catch
 		{

@@ -22,14 +22,14 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_AgentPool_SI_Missing_OS_Patch",
-      "Description": "Non-hosted agent virtual machine must have all the required OS patches installed.",
+      "ControlID": "AzureDevOps_AgentPool_SI_Apply_Security_Patches",
+      "Description": "Non-hosted agent virtual machine must have all the required security patches installed.",
       "Id": "AgentPool120",
       "ControlSeverity": "High",
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Un-patched VMs are easy targets for compromise from various malware/trojan attacks that exploit known vulnerabilities in operating systems and related software.",
-      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/security-center/security-center-apply-system-update",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/automation/automation-tutorial-update-management",
       "Tags": [
         "SDL",
         "TCP",
@@ -40,7 +40,7 @@
     },
     {
         "ControlID": "AzureDevOps_AgentPool_SI_Lockdown_Machine",
-        "Description": "Use a security hardened, locked down OS image for agent pool",
+        "Description": "Use a security hardened, locked down OS image for self-hosted VMs in agent pool.",
         "Id": "AgentPool130",
         "ControlSeverity": "Medium",
         "Automated": "No",
@@ -56,7 +56,7 @@
         "Enabled": true
     },
     {
-        "ControlID": "AzureDevOps_AgentPool_AuthZ_Disable_InheritPermissions",
+        "ControlID": "AzureDevOps_AgentPool_AuthZ_Disable_Inherited_Permissions",
         "Description": "Do not allow inherited permission on agent pool",
         "Id": "AgentPool140",
         "ControlSeverity": "Medium",
@@ -92,14 +92,14 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_AgentPool_AuthZ_Prj_Grant_All_Pipeline_Access",
-        "Description": "Do not grant access permission to all pipeline on agent pool",
+        "ControlID": "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access",
+        "Description": "Do not make agent pool accesible to all pipelines in the project.",
         "Id": "AgentPool160",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckPrjAllPipelineAccess",
         "Rationale": "By enabling the 'Grant access permission to all pipelines' The agent pool is imported in all your pipeline in the current project and is accessible there immediately.",
-        "Recommendation": "To disable 'Grant access permission to all pipelines' follow the steps given here: 1.Navigate to the project settings. 2. Open agent pool. 3. Select Security. 4. Off 'Grant access permission to all pipeline'",
+        "Recommendation": "Go to 'Project settings' --> 'Agent pools' --> Select the agent pool --> Security --> Disable 'Grant access permission to all pipeline'.",
         "Tags": [
           "SDL",
           "TCP",

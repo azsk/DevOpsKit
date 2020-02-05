@@ -77,6 +77,31 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		[Alias("sa")]
 		$ScanAllArtifacts,
 
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("cids")]
+		$ControlIds,
+
+		[switch]
+		[Parameter(Mandatory = $false)]
+		[Alias("ubc")]
+		$UseBaselineControls,
+
+		[switch]
+		[Parameter(Mandatory = $false)]
+		[Alias("upbc")]
+		$UsePreviewBaselineControls,
+
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage="Specify the severity of controls to be scanned. Example `"High, Medium`"")]
+		[Alias("ControlSeverity")]
+		$Severity,
+
+		[int]
+		[Parameter(Mandatory = $false, HelpMessage="Max # of objects to check. Default is 0 which means scan all.")]
+		[Alias("mo")]
+		$MaxObj = 0,
+
 		[System.Security.SecureString]
 		[Parameter(HelpMessage="Token to run scan in non-interactive mode")]
 		[Alias("tk")]
@@ -90,6 +115,7 @@ function Get-AzSKAzureDevOpsSecurityStatus
         [Parameter(Mandatory = $false)]
 		[Alias("dnof")]
 		$DoNotOpenOutputFolder
+
 	)
 	Begin
 	{
@@ -101,10 +127,14 @@ function Get-AzSKAzureDevOpsSecurityStatus
 	{
 	try 
 		{
-				$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames, $ServiceConnectionNames, $ScanAllArtifacts,$PATToken,$ResourceTypeName);
+				$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames, $ServiceConnectionNames, $MaxObj, $ScanAllArtifacts, $PATToken,$ResourceTypeName);
 			    $secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			    if ($secStatus) 
 			    {		
+					$secStatus.ControlIdString = $ControlIds;
+					$secStatus.Severity = $Severity;
+					$secStatus.UseBaselineControls = $UseBaselineControls;
+					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
 			    	return $secStatus.EvaluateControlStatus();
 			    }    
 		}
@@ -157,7 +187,26 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 		[Alias("oz")]
 		$OrganizationName,
 
-		
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("cids")]
+		$ControlIds,
+
+		[switch]
+		[Parameter(Mandatory = $false)]
+		[Alias("ubc")]
+		$UseBaselineControls,
+
+		[switch]
+		[Parameter(Mandatory = $false)]
+		[Alias("upbc")]
+		$UsePreviewBaselineControls,
+
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage="Specify the severity of controls to be scanned. Example `"High, Medium`"")]
+		[Alias("ControlSeverity")]
+		$Severity,
+
 		[System.Security.SecureString]
 		[Parameter(HelpMessage="Token to run scan in non-interactive mode")]
 		[Alias("tk")]
@@ -167,6 +216,7 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
         [Parameter(Mandatory = $false)]
 		[Alias("dnof")]
 		$DoNotOpenOutputFolder
+
 	)
 	Begin
 	{
@@ -178,19 +228,17 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 	{
 	try 
 		{
-		 $AzSK = Get-Module | Where-Object { $_.Name -eq 'AzSK' };
-		 if (!$AzSK) {
 			$resolver = [SVTResourceResolver]::new($OrganizationName,$null,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Organization);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
+				$secStatus.ControlIdString = $ControlIds;
+					$secStatus.Severity = $Severity;
+					$secStatus.UseBaselineControls = $UseBaselineControls;
+					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
+
 				return $secStatus.EvaluateControlStatus();
-			}
-		 }
-		 else {
-		 	Write-Error "Please make sure you have imported only the AzSK.AzureDevOps module in the PS session. It seems that there are other AzSK modules also present in PS session memory. Please run the command in the new session.";
-		 	[ListenerHelper]::UnregisterListeners();
-		 }    
+			}   
 		}
 		catch 
 		{
@@ -247,6 +295,26 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 		[Alias("pn")]
 		$ProjectNames,
 
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("cids")]
+		$ControlIds,
+
+		[switch]
+		[Parameter(Mandatory = $false)]
+		[Alias("ubc")]
+		$UseBaselineControls,
+
+		[switch]
+		[Parameter(Mandatory = $false)]
+		[Alias("upbc")]
+		$UsePreviewBaselineControls,
+
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage="Specify the severity of controls to be scanned. Example `"High, Medium`"")]
+		[Alias("ControlSeverity")]
+		$Severity,
+
 		[System.Security.SecureString]
 		[Parameter(HelpMessage="Token to run scan in non-interactive mode")]
 		[Alias("tk")]
@@ -256,6 +324,7 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
         [Parameter(Mandatory = $false)]
 		[Alias("dnof")]
 		$DoNotOpenOutputFolder
+
 	)
 	Begin
 	{
@@ -267,19 +336,17 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 	{
 	try 
 		{
-		 $AzSK = Get-Module | Where-Object { $_.Name -eq 'AzSK' };
-		 if (!$AzSK) {
 			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Project);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
+				$secStatus.ControlIdString = $ControlIds;
+					$secStatus.Severity = $Severity;
+					$secStatus.UseBaselineControls = $UseBaselineControls;
+					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
+
 				return $secStatus.EvaluateControlStatus();
 			}
-		 }
-		 else {
-		 	Write-Error "Please make sure you have imported only the AzSK.AzureDevOps module in the PS session. It seems that there are other AzSK modules also present in PS session memory. Please run the command in the new session.";
-		 	[ListenerHelper]::UnregisterListeners();
-		 }    
 		}
 		catch 
 		{
@@ -342,6 +409,26 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 		[Alias("bn")]
 		$BuildNames,
 
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("cids")]
+		$ControlIds,
+
+		[switch]
+		[Parameter(Mandatory = $false)]
+		[Alias("ubc")]
+		$UseBaselineControls,
+
+		[switch]
+		[Parameter(Mandatory = $false)]
+		[Alias("upbc")]
+		$UsePreviewBaselineControls,
+
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage="Specify the severity of controls to be scanned. Example `"High, Medium`"")]
+		[Alias("ControlSeverity")]
+		$Severity,
+
 		[System.Security.SecureString]
 		[Parameter(HelpMessage="Token to run scan in non-interactive mode")]
 		[Alias("tk")]
@@ -351,6 +438,7 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
         [Parameter(Mandatory = $false)]
 		[Alias("dnof")]
 		$DoNotOpenOutputFolder
+
 	)
 	Begin
 	{
@@ -362,19 +450,17 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 	{
 	try 
 		{
-		 $AzSK = Get-Module | Where-Object { $_.Name -eq 'AzSK' };
-		 if (!$AzSK) {
 			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$null,$null,$null,$PATToken,[ResourceTypeName]::Build);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
+				$secStatus.ControlIdString = $ControlIds;
+					$secStatus.Severity = $Severity;
+					$secStatus.UseBaselineControls = $UseBaselineControls;
+					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
+
 				return $secStatus.EvaluateControlStatus();
 			} 
-		 }
-		 else {
-		 	Write-Error "Please make sure you have imported only the AzSK.AzureDevOps module in the PS session. It seems that there are other AzSK modules also present in PS session memory. Please run the command in the new session.";
-		 	[ListenerHelper]::UnregisterListeners();
-		 }   
 		}
 		catch 
 		{
@@ -440,6 +526,26 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 		[Alias("rn")]
 		$ReleaseNames,
 
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("cids")]
+		$ControlIds,
+
+		[switch]
+		[Parameter(Mandatory = $false)]
+		[Alias("ubc")]
+		$UseBaselineControls,
+
+		[switch]
+		[Parameter(Mandatory = $false)]
+		[Alias("upbc")]
+		$UsePreviewBaselineControls,
+
+		[string] 
+		[Parameter(Mandatory = $false, HelpMessage="Specify the severity of controls to be scanned. Example `"High, Medium`"")]
+		[Alias("ControlSeverity")]
+		$Severity,
+
 		[System.Security.SecureString]
 		[Parameter(HelpMessage="Token to run scan in non-interactive mode")]
 		[Alias("tk")]
@@ -449,6 +555,7 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
         [Parameter(Mandatory = $false)]
 		[Alias("dnof")]
 		$DoNotOpenOutputFolder
+
 	)
 	Begin
 	{
@@ -459,19 +566,17 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 	{
 	try 
 		{
-		 $AzSK = Get-Module | Where-Object { $_.Name -eq 'AzSK' };
-		 if (!$AzSK) {
 			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$null,$ReleaseNames,$null,$null,$PATToken,[ResourceTypeName]::Release);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
+				$secStatus.ControlIdString = $ControlIds;
+					$secStatus.Severity = $Severity;
+					$secStatus.UseBaselineControls = $UseBaselineControls;
+					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
+					
 				return $secStatus.EvaluateControlStatus();
-			}
-		 }
-		 else {
-		 	Write-Error "Please make sure you have imported only the AzSK.AzureDevOps module in the PS session. It seems that there are other AzSK modules also present in PS session memory. Please run the command in the new session.";
-		 	[ListenerHelper]::UnregisterListeners();
-		 }    
+			}    
 		}
 		catch 
 		{

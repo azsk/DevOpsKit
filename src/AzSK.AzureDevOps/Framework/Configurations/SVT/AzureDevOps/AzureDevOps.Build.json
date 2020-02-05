@@ -39,8 +39,8 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_Build_Config_Add_StaticCodeAnalyzer",
-    "Description": "Static code analyzer must be enabled on build",
+    "ControlID": "AzureDevOps_Build_Config_Add_Static_Code_Analyzer",
+    "Description": "Consider adding static code analysis step in your pipelines.",
     "Id": "Build140",
     "ControlSeverity": "High",
     "Automated": "No",
@@ -73,14 +73,14 @@
       "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_Build_SI_Review_InActive_Build",
-    "Description": "Inactive build must be removed",
+    "ControlID": "AzureDevOps_Build_SI_Review_Inactive_Build",
+    "Description": "Inactive build pipelines must be removed if no more required.",
     "Id": "Build160",
     "ControlSeverity": "Low",
     "Automated": "Yes",
     "MethodName": "CheckInActiveBuild",
     "Rationale": "Each additional build having access at repositories increases the attack surface. To minimize this risk ensure that only activite and legitimate build resources present in Organization",
-    "Recommendation": "https://docs.microsoft.com/en-us/rest/api/azure/devops/build/definitions/delete?view=azure-devops-rest-5.0",
+    "Recommendation": "To remove inactive build pipelines follow the steps given here: 1.Navigate to the build pipeline. 2. Select a build pipeline. 3. Select three dots (present in right top). 4. Click on Delete. (https://www.azuredevopslabs.com/labs/devopsserver/build/)",
     "Tags": [
       "SDL",
       "Best Practice",
@@ -90,7 +90,7 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_Build_AuthZ_Disable_InheritPermissions",
+    "ControlID": "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions",
     "Description": "Do not allow inherited permission on build definitions",
     "Id": "Build170",
     "ControlSeverity": "High",
@@ -108,8 +108,8 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_Build_Check_Config_Settable_At_Queue_Time",
-    "Description": "Enforce settable at queue time should not be enabled for pipeline variables",
+    "ControlID": "AzureDevOps_Build_SI_Review_Settable_At_Queue_Time",
+    "Description": "Pipeline variables marked settable at queue time should be carefully reviewed.",
     "Id": "Build180",
     "ControlSeverity": "High",
     "Automated": "Yes",
