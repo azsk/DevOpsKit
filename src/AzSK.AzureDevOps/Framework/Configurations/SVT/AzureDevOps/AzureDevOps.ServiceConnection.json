@@ -40,7 +40,7 @@
   },
   {
     "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Justify_Connection_Admin",
-    "Description": "Justify all identities that are granted with admin/user access for extensions.",
+    "Description": "Justify all users/groups that have access to the service connection.",
     "Id": "ServiceConnection130",
     "ControlSeverity": "High",
     "Automated": "No",
@@ -56,14 +56,14 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_ServiceConnection_Audit_RequestHistory",
-    "Description": "Request history must be reviewed validate request is coming from legitimate build/release definition",
+    "ControlID": "AzureDevOps_ServiceConnection_Audit_Usage_History",
+    "Description": "Periodically review usage history of service connection to validate use from legitimate pipelines.",
     "Id": "ServiceConnection140",
     "ControlSeverity": "High",
     "Automated": "No",
     "MethodName": "",
     "Rationale": "Periodic reviews of request history logs ensures that sevice connection been used from legitimate build definitions and avoid major compromise.",
-    "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Servicie Connections --> Request History --> Validate connection is been used from legitimate build/release definitions only",
+    "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Service Connections --> Usage History --> Validate connection is been used from legitimate build/release definitions only",
     "Tags": [
       "SDL",
       "TCP",
@@ -144,8 +144,8 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Build",
-    "Description": "Service connection access must not be granted to all build definitions",
+    "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
+    "Description": "Do not make service connections accessible to all pipelines.",
     "Id": "ServiceConnection190",
     "ControlSeverity": "High",
     "Automated": "Yes",
