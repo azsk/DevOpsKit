@@ -18,7 +18,11 @@ function Set-AzSKPIMConfiguration {
         [Alias("ar")]
 	    $AssignRole,
 
-		
+		[switch]
+        [Parameter(Mandatory = $false, ParameterSetName = "Remove", HelpMessage = "This switch is required to remove a PIM eligible role.")]
+        [Alias("rr")]
+        $RemoveRole,
+
         [switch]
         [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignments", HelpMessage = "This switch is required to assign a PIM eligible role.")]
         [Alias("cpa")]
@@ -47,6 +51,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $true, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Remove")]
         [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignments")]
@@ -60,6 +65,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Assign")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Remove")]
         [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringAssignments")]
@@ -73,6 +79,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Assign")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Remove")]
         [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringAssignments")]
@@ -110,6 +117,7 @@ function Set-AzSKPIMConfiguration {
         $Justification,
         
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Remove")]
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $true, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ConfigureRoleSettings")]
@@ -128,6 +136,7 @@ function Set-AzSKPIMConfiguration {
         $RoleNames,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Remove")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignmentForUsers")]
         [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
@@ -169,6 +178,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringAssignments")]		
+        [Parameter(Mandatory = $false, ParameterSetName = "Remove")]
 		[switch]
 		[Alias("f")]
         $Force,
@@ -193,7 +203,10 @@ function Set-AzSKPIMConfiguration {
                 $pimconfig.InvokeFunction($pimconfig.Deactivate, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName))
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'Assign') {				
-                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false))
+                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false, $false, $false))
+            }
+            elseif ($PSCmdlet.ParameterSetName -eq 'Remove') {				
+                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false, $Force, $true))
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'AssignEligibleforPermanentAssignments') {
                 $pimconfig.InvokeFunction($pimconfig.AssignPIMforPermanentAssignemnts, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $PrincipalNames, $Force))
@@ -245,7 +258,7 @@ function Set-AzSKPIMConfiguration {
             }	
             elseif($PSCmdlet.ParameterSetName -eq'ExtendExpiringAssignmentForUsers')
             {
-                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $true))
+                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $true ,$false, $false))
             }		
             else {
                 Write-Output("Invalid Parameter Set")	
