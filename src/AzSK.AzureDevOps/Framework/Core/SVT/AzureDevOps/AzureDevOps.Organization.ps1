@@ -36,11 +36,22 @@ class Organization: SVTBase
         $orgUrl = "https://{0}.visualstudio.com" -f $($this.SubscriptionContext.SubscriptionName);
         #$inputbody =  "{'contributionIds':['ms.vss-org-web.collection-admin-policy-data-provider'],'context':{'properties':{'sourcePage':{'url':'$orgUrl/_settings/policy','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'policy','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
         $inputbody = "{'contributionIds':['ms.vss-build-web.pipelines-org-settings-data-provider'],'dataProviderContext':{'properties':{'sourcePage':{'url':'$orgUrl/_settings/pipelinessettings','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'pipelinessettings','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
-        $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+        
+        $responseObj = $null 
+
+        try{
+            $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+        }
+        catch{
+            Write-Host "Pipeline settings for the organization [$($this.SubscriptionContext.SubscriptionName)] can not be fetched."
+        }
+        
       
-        if([Helpers]::CheckMember($responseObj,"dataProviders") -and $responseObj.dataProviders.'ms.vss-build-web.pipelines-org-settings-data-provider')
+        if([Helpers]::CheckMember($responseObj,"dataProviders"))
         {
-            $this.PipelineSettingsObj = $responseObj.dataProviders.'ms.vss-build-web.pipelines-org-settings-data-provider'
+            if([Helpers]::CheckMember($responseObj.dataProviders,"ms.vss-build-web.pipelines-org-settings-data-provider") -and $responseObj.dataProviders.'ms.vss-build-web.pipelines-org-settings-data-provider'){
+                $this.PipelineSettingsObj = $responseObj.dataProviders.'ms.vss-build-web.pipelines-org-settings-data-provider'
+            }
         }
     }
     
@@ -522,6 +533,9 @@ class Organization: SVTBase
                 $controlResult.AddMessage([VerificationResult]::Failed, "Anonymous access to status badge API is enabled.");
             }       
        }
+       else{
+            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings object could not be fetched due to insufficient permissions at organization scope.");
+       }
         return $controlResult
     }
 
@@ -538,6 +552,9 @@ class Organization: SVTBase
                 $controlResult.AddMessage([VerificationResult]::Failed, "All variables can be set at queue time.");
             }       
        }
+       else{
+            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings object could not be fetched due to insufficient permissions at organization scope.");
+        }
         return $controlResult
     }
 
@@ -554,6 +571,9 @@ class Organization: SVTBase
                 $controlResult.AddMessage([VerificationResult]::Failed, "Scope of access of all pipelines is set to project collection.");
             }       
        }
+       else{
+             $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings object could not be fetched due to insufficient permissions at organization scope.");
+       }       
         return $controlResult
     }
     
