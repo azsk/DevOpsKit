@@ -36,7 +36,7 @@ class ContextHelper {
         if([ContextHelper]::currentPPContext)
         {
             #ConvertFrom-SecureString
-            return  [ContextHelper]::currentPPContext.idToken
+            return  [ContextHelper]::currentPPContext.AccessToken
         }
         else
         {

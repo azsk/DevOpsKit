@@ -50,26 +50,20 @@ class Environment: SVTBase
         return $controlResult;
     }
 
-    hidden [ControlResult] CheckGitHubConnections([ControlResult] $controlResult)
-	{
-
-        $connectorName = "shared_github"
-        $connectorNameFilter = "*shared_github" #doesn't work with just "shared_github" so whatever! 
-
-        $env = $this.EnvName
-
+    hidden [ControlResult] CheckConnectionsForConnector([ControlResult] $controlResult, [string] $connectorName, [string] $env)
+    {
+        $connectorNameFilter = "*$($connectorName)" #E.g."*shared_github" #doesn't work with just "shared_github" so whatever! 
+        $connector =  Get-PowerAppConnector -EnvironmentName $env -ConnectorName $connectorName
         if ($Script:AsAdmin)
         {
-            $connector =  Get-AdminPowerAppConnector -EnvironmentName $env -ConnectorName $connectorName
             $connections = @(Get-AdminPowerAppConnection -EnvironmentName $env -ConnectorName $connectorName)
         }
         else 
         {
-            $connector =  Get-PowerAppConnector -EnvironmentName $env -ConnectorName $connectorName
             $connections = @(Get-PowerAppConnection -EnvironmentName $env -ConnectorNameFilter $connectorNameFilter)
         }
 
-        #                $controlResult.SetStateData("Build pipeline access list: ", $accessList);
+        # $controlResult.SetStateData("Build pipeline access list: ", $accessList);
 
         if($connections.Count -gt 0)
         {
@@ -88,32 +82,15 @@ class Environment: SVTBase
         }
         return $controlResult;
     }
+    hidden [ControlResult] CheckGitHubConnections([ControlResult] $controlResult)
+	{
+        $connectorName = "shared_github"
+        return $this.CheckConnectionsForConnector($controlResult, $connectorName, $this.EnvName)
+    }
 
     hidden [ControlResult] CheckSqlConnections([ControlResult] $controlResult)
 	{  
         $connectorName = "shared_sql"
-        if ($Script:AsAdmin)
-        {
-
-
-        }
-        else 
-        {
-            
-
-        }
-
-        if($false)
-        {
-                $controlResult.AddMessage([VerificationResult]::Failed,
-                                        "Bleh");
-        }
-        else
-        {
-            $controlResult.AddMessage([VerificationResult]::Passed,
-                                        "Wow!");
-        }
-        
-        return $controlResult;
+        return $this.CheckConnectionsForConnector($controlResult, $connectorName, $this.EnvName)
     }
 }
