@@ -1,0 +1,16 @@
+{
+  "BaselineControls": {
+    "ResourceTypeControlIdMappingList": [
+
+    ],
+    "SubscriptionControlIdList": [],
+    "ExpiryInDays": 2,
+    "SupportedSources": []
+  },
+  "ControlSeverity": {
+    "Critical": "Critical",
+    "High": "High",
+    "Medium": "Medium",
+    "Low": "Low"
+  }
+}

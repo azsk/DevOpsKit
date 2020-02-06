@@ -1,0 +1,24 @@
+{
+  "FeatureName":  "Environment",
+  "Reference":  "aka.ms/azskpp/environment",
+  "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+        "ControlID": "PowerPlatform_Environment_Limit_Demo_Apps",
+        "Description": "Minimize the number of test/demo apps owned by you",
+        "Id": "Environment110",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckDemoAppsLimit",
+        "Rationale": "Demo apps are usually a risk to the environment.",
+        "Recommendation": "Refer: TBD",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "AuthZ"
+        ],
+        "Enabled": true
+    }
+  ]
+}
