@@ -26,8 +26,7 @@ class ContinuousAssurance: AzCommandBase
     [string] $LAWSId, `
     [string] $LAWSSharedKey, `
     [string] $AltLAWSId, `
-    [string] $AltLAWSSharedKey, `
-    [bool] $UpdateScheduler) : Base($subscriptionId, $invocationContext)
+    [string] $AltLAWSSharedKey) : Base($subscriptionId, $invocationContext)
     {
         $this.PublishCustomMessage([Constants]::SingleDashLine+"`r`nWarning: You are running a preview command`r`n"+[Constants]::SingleDashLine, [MessageType]::Warning)
         $this.ResourceGroupNames = $ResourceGroupNames
@@ -36,13 +35,50 @@ class ContinuousAssurance: AzCommandBase
         $this.ContainerName = [UserSubscriptionDataHelper]::GetContainerName()
         $this.FunctionAppPrefix = "azskcasheduler" #Needs to change
         $this.ContainerImage = [Constants]::AzSKContainerImage
-        $this.UpdateScheduler = $UpdateScheduler
         # if(-not [string]::IsNullOrWhiteSpace($CALocation))
         # {
         #     $this.CALocation = $CALocation
         # }
         $this.SetEnvironmentVariables($ResourceGroupNames, $LAWSId, $LAWSSharedKey, $AltLAWSId, $AltLAWSSharedKey)
 	  
+    }
+
+    ContinuousAssurance(
+	[string] $subscriptionId, `
+    [InvocationInfo] $invocationContext, `
+    [string] $ResourceGroupNames, `
+    [string] $LAWSId, `
+    [string] $LAWSSharedKey, `
+    [string] $AltLAWSId, `
+    [string] $AltLAWSSharedKey, `
+    [bool] $UpdateScheduler) : Base($subscriptionId, $invocationContext)
+    {
+        $this.PublishCustomMessage([Constants]::SingleDashLine+"`r`nWarning: You are running a preview command`r`n"+[Constants]::SingleDashLine, [MessageType]::Warning)
+        $this.CALocation = [UserSubscriptionDataHelper]::GetUserSubscriptionRGLocation()
+        if(-not [string]::IsNullOrWhiteSpace($ResourceGroupNames))
+        {
+            $this.ResourceGroupNames = $ResourceGroupNames
+        }
+        if(-not [string]::IsNullOrWhiteSpace($LAWSId))
+        {
+            $this.LAWSId = $LAWSId
+        }
+        if(-not [string]::IsNullOrWhiteSpace($LAWSSharedKey))
+        {
+            $this.LAWSSharedKey = $LAWSSharedKey
+        }
+        if(-not [string]::IsNullOrWhiteSpace($AltLAWSId))
+        {
+            $this.AltLAWSId = $AltLAWSId
+        }
+        if(-not [string]::IsNullOrWhiteSpace($AltLAWSSharedKey))
+        {
+            $this.AltLAWSSharedKey = $AltLAWSSharedKey
+        }
+        $this.ResourceGroup = [UserSubscriptionDataHelper]::GetUserSubscriptionRGName()
+        $this.ContainerName = [UserSubscriptionDataHelper]::GetContainerName()
+        $this.FunctionAppPrefix = "azskcasheduler"
+        $this.ContainerImage = [Constants]::AzSKContainerImage
     }
 
     ContinuousAssurance(
@@ -54,7 +90,6 @@ class ContinuousAssurance: AzCommandBase
         $this.ResourceGroup = [UserSubscriptionDataHelper]::GetUserSubscriptionRGName()
         $this.ContainerName = [UserSubscriptionDataHelper]::GetContainerName()
         $this.FunctionAppPrefix = "azskcasheduler"
-        #$this.FunctionAppName = "azskcasheduler" #+ (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss")
         $this.ContainerImage = [Constants]::AzSKContainerImage
     }
     
@@ -80,6 +115,36 @@ class ContinuousAssurance: AzCommandBase
     {
         #register resource provider if not registered
 		[ResourceHelper]::RegisterResourceProviderIfNotRegistered("Microsoft.ContainerInstance")
+        $AzSKContainer = New-AzContainerGroup -ResourceGroupName $this.ResourceGroup -Name $this.ContainerName  -Image $this.ContainerImage -AssignIdentity -RestartPolicy OnFailure `
+        -EnvironmentVariable $this.EnvironmentVariables -Location $this.CALocation
+        #Stop the container as it starts immediately after the creation
+        Invoke-AzResourceAction -ResourceGroupName $this.ResourceGroup -ResourceName $this.ContainerName -Action Stop -ResourceType Microsoft.ContainerInstance/containerGroups -Force
+        $this.ContainerMSI = $AzSKContainer.Identity.PrincipalId
+    }
+    # Can add more parameters if required
+    hidden [void] UpdateAzSKContainer($ContainerVariables)
+    {
+        $this.EnvironmentVariables = $ContainerVariables
+        if(-not [string]::IsNullOrWhiteSpace($this.ResourceGroupNames))
+        {
+            $this.EnvironmentVariables['ResourceGroupNames'] = $this.ResourceGroupNames
+        }
+        if(-not [string]::IsNullOrWhiteSpace($this.LAWSId))
+        {
+            $this.EnvironmentVariables['LAWSId'] = $this.LAWSId
+        }
+        if(-not [string]::IsNullOrWhiteSpace($this.LAWSSharedKey))
+        {
+            $this.EnvironmentVariables['LAWSSharedKey'] = $this.LAWSSharedKey
+        }
+        if(-not [string]::IsNullOrWhiteSpace($this.AltLAWSId))
+        {
+            $this.EnvironmentVariables['AltLAWSId'] = $this.AltLAWSId
+        }
+        if(-not [string]::IsNullOrWhiteSpace($this.AltLAWSSharedKey))
+        {
+            $this.EnvironmentVariables['AltLAWSSharedKey'] = $this.AltLAWSSharedKey
+        }
         $AzSKContainer = New-AzContainerGroup -ResourceGroupName $this.ResourceGroup -Name $this.ContainerName  -Image $this.ContainerImage -AssignIdentity -RestartPolicy OnFailure `
         -EnvironmentVariable $this.EnvironmentVariables -Location $this.CALocation
         #Stop the container as it starts immediately after the creation
@@ -289,7 +354,55 @@ class ContinuousAssurance: AzCommandBase
         $this.SetFunctionAppMSIAccess()
     }
 
-    
+    [void] UpdateAzSKContinuousAssurancewithACI()
+    {
+        $ContainerIntstance = $this.GetCAContainerInstance()
+        if(($ContainerIntstance|Measure-Object).Count -eq 0)
+        {
+            throw ([SuppressedException]::new(("Continuous Assurance(CA) is not configured in this subscription. Please install with required parameters."), [SuppressedExceptionType]::InvalidOperation))
+        }
+        #create storage account if not exists
+        $ExistingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+        if(($ExistingStorage|Measure-Object).Count -gt 0)
+        {
+            $this.PublishCustomMessage("Found existing AzSK storage account: ["+ $ExistingStorage.Name +"]")
+            $this.StorageAccountName = $ExistingStorage.Name
+            #make storage compliant to azsk
+            $this.ResolveStorageCompliance($ExistingStorage.Name, $ExistingStorage.ResourceId, $this.ResourceGroup,$this.CAScanOutputLogsContainerName)
+        }
+        else {
+            #create default storage
+            $newStorageName = ("azsk" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"))				
+            $this.PublishCustomMessage("Creating Storage Account: [$newStorageName] for storing reports from CA scans.")
+            $this.StorageAccountName = $newStorageName
+            $newStorage = [StorageHelper]::NewAzskCompliantStorage($newStorageName, $this.ResourceGroup, $this.CALocation) 
+            if(!$newStorage)
+            {
+                throw ([SuppressedException]::new(($this.exceptionMsg + "Failed to create storage account."), [SuppressedExceptionType]::Generic))
+            } 
+            else {
+                #apply tags
+                $timestamp = $(get-date).ToUniversalTime().ToString("yyyyMMdd_HHmmss")
+                $this.reportStorageTags += @{
+                "CreationTime"=$timestamp;
+                "LastModified"=$timestamp
+                }
+                Set-AzStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
+            }
+        }
+        $this.EnvironmentVariables.Add('StorageAccountName', $this.StorageAccountName)
+        $this.PublishCustomMessage("Updating Azure container instance: [" + $this.ContainerName + "]")
+        $ContainerVariables = $ContainerIntstance.Containers[0].EnvironmentVariables
+        $this.UpdateAzSKContainer($ContainerVariables)
+        # To update the daily scan time
+        if($this.UpdateScheduler)
+        {
+            $this.PublishCustomMessage("Updating CA scan scheduler time")
+            #TBD: take time as i/p vs current time
+            $this.UpdateAzSKFunctionApp()
+            $this.SetFunctionAppMSIAccess()
+        }
+    }
 
     [void] GetAzSKContinuousAssurancewithACI()
     {
