@@ -110,6 +110,18 @@ class SVTResourceResolver: AzSKRoot
         #Call APIS for Organization,User/Builds/Releases/ServiceConnections 
         if($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::Organization)
         {
+            #Checking if org name is correct 
+            $apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.organizationName);
+
+            $inputbody = "{'contributionIds':['ms.vss-features.my-organizations-data-provider'],'dataProviderContext':{'properties':{'sourcePage':{'url':'https://dev.azure.com/$($this.organizationName)','routeId':'ms.vss-tfs-web.suite-me-page-route','routeValues':{'view':'projects','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
+            #try {
+                $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+           # }
+            #catch {
+            #    Write-Error 'Organization not found: Incorrect organization name or you do not have neccessary permission to access the organization.'
+             #   [ListenerHelper]::UnregisterListeners();
+            #}
+           
             #Select Org/User by default...
             $svtResource = [SVTResource]::new();
             $svtResource.ResourceName = $this.organizationName;
@@ -120,7 +132,6 @@ class SVTResourceResolver: AzSKRoot
                                             Select-Object -First 1)
             $this.SVTResources +=$svtResource
         }
-        
 
         if($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::User)
         {
