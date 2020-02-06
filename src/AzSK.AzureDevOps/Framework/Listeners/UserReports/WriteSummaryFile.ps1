@@ -268,14 +268,15 @@ class WriteSummaryFile: FileOutputBase
 					{
 						$csvItem.ResourceName = $item.ResourceContext.ResourceName;
 						$csvItem.ResourceGroupName = $item.ResourceContext.ResourceGroupName;
-						#TODO: ResourceId
-						if($item.ResourceContext.ResourceTypeName -eq "Organization")
+						# Creating ResourceId as link
+						try {
+							if($item.ResourceContext.ResourceTypeName -eq "Organization")
 						{
 							$csvItem.ResourceId = $item.ResourceContext.ResourceId.Replace('Organization','https://dev.azure.com') + "_settings/";
 						}
 						elseif($item.ResourceContext.ResourceTypeName -eq "Project")
 						{
-							$csvItem.ResourceId = $item.ResourceContext.ResourceId.Replace('_apis/Project/',$item.ResourceContext.ResourceName) + '_settings/';
+							$csvItem.ResourceId = $item.ResourceContext.ResourceId.Replace('/_apis/projects','') + '/_settings/';
 						}						
 						elseif($item.ResourceContext.ResourceTypeName -eq "ServiceConnection")
 						{
@@ -283,26 +284,29 @@ class WriteSummaryFile: FileOutputBase
 						}
 						elseif($item.ResourceContext.ResourceTypeName -eq "Build")
 						{
-							$separator = "_apis";
-							$resource = $item.ResourceContext.ResourceId -split $separator;
-							$csvItem.ResourceId = $resource[0] + '_build?definitionId=';
+							#$separator = "_apis";
+							#$resource = $item.ResourceContext.ResourceId -split $separator;
+							$res = $item.ResourceContext.ResourceId.replace('_apis/build/Definitions','_build?definitionId=').split('?')[0]
+
+							$csvItem.ResourceId = $res; 
 						}
 						elseif($item.ResourceContext.ResourceTypeName -eq "Release")
 						{
-							
-							try{
-								$csvItem.ResourceId = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $item.SubscriptionContext.SubscriptionName,$item.ResourceContext.ResourceGroupName,$item.ResourceContext.ResourceId.split('/')[-1];
-							}
-							catch{
-								$csvItem.ResourceId = $item.ResourceContext.ResourceId;
-							}
+							$csvItem.ResourceId = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $item.SubscriptionContext.SubscriptionName,$item.ResourceContext.ResourceGroupName,$item.ResourceContext.ResourceId.split('/')[-1];
+						}
+						elseif($item.ResourceContext.ResourceTypeName -eq "User")
+						{
+							$csvItem.ResourceId = $item.ResourceContext.ResourceId.Replace('Organization','https://dev.azure.com').Replace('User','_settings/users');
 						}
 						else {
 							$csvItem.ResourceId = $item.ResourceContext.ResourceId;
 						}
-						$csvItem.DetailedLogFile = "/$([Helpers]::SanitizeFolderName($item.ResourceContext.ResourceGroupName))/$($item.FeatureName).LOG";
-
+						}
+						catch {
+							$csvItem.ResourceId = $item.ResourceContext.ResourceId;
+						}
 						
+						$csvItem.DetailedLogFile = "/$([Helpers]::SanitizeFolderName($item.ResourceContext.ResourceGroupName))/$($item.FeatureName).LOG";					
 					}
 					else
 					{
