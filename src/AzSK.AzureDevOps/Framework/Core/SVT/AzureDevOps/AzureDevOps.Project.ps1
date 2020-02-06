@@ -30,7 +30,7 @@ class Project: SVTBase
         if($responseObj){
             if([Helpers]::CheckMember($responseObj,"dataProviders"))
             {
-                if([Helpers]::CheckMember($responseObj.dataProviders,"ms.vss-build-web.pipelines-general-settings-data-provider") -and $responseObj.dataProviders.'ms.vss-build-web.pipelines-general-settings-data-provider'){
+                if((Get-Member -InputObject $responseObj.dataProviders -MemberType NoteProperty | where {$_.Name -eq 'ms.vss-build-web.pipelines-general-settings-data-provider'}) -and $responseObj.dataProviders.'ms.vss-build-web.pipelines-general-settings-data-provider'){
                     $this.PipelineSettingsObj = $responseObj.dataProviders.'ms.vss-build-web.pipelines-general-settings-data-provider'
                 }
             }
