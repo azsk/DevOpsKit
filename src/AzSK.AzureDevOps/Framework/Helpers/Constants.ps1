@@ -12,7 +12,7 @@ class Constants
 "        a) If the control has passed, no action is necessary.`r`n" +
 "        b) If the control has failed, look at the control evaluation detail in the LOG file to understand why.`r`n" +
 "        c) If the control status says 'Verify', it means that human judgement is required to determine the final control status. Look at the control evaluation output in the LOG file to make a determination.`r`n" +
-"        d) If the control status says 'Manual', it means that AzSK (currently) does not cover the control via automation OR AzSK is not able to fetch the data. You need to manually implement/verify it.`r`n" +
+"        d) If the control status says 'Manual', it means that AzSK.AzureDevOps (currently) does not cover the control via automation OR AzSK.AzureDevOps is not able to fetch the data. You need to manually implement/verify it.`r`n" +
 "`r`nNote: The 'Recommendation' column in the CSV file provides basic (generic) guidance that can help you fix a failed control. You can also use standard Azure product documentation. You should carefully consider the implications of making the required change in the context of your application. `r`n"
 
     static [string] $RemediationMsgForARMChekcer = "** Next steps **`r`n" + 
