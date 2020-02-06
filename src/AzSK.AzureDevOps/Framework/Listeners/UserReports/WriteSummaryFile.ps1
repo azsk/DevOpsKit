@@ -298,6 +298,10 @@ class WriteSummaryFile: FileOutputBase
 						{
 							$csvItem.ResourceId = $item.ResourceContext.ResourceId.Replace('Organization','https://dev.azure.com').Replace('User','_settings/users');
 						}
+						elseif($item.ResourceContext.ResourceTypeName -eq "AgentPool")
+						{
+							$csvItem.ResourceId = "https://dev.azure.com/{0}/{1}/_settings/agentqueues?queueId={2}&view=jobs" -f $item.SubscriptionContext.SubscriptionName,$item.ResourceContext.ResourceGroupName,$item.ResourceContext.ResourceId.split('_')[-1] 
+						}
 						else {
 							$csvItem.ResourceId = $item.ResourceContext.ResourceId;
 						}
