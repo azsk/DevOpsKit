@@ -32,17 +32,7 @@ class ConfigurationHelper {
         #If file not present in App folder load settings from Configurations in Module folder 
         if (!$filePath) {
 
-			$moduleName = $([Constants]::AzSKModuleName)
-			$moduleVersion = $([Constants]::AzSKCurrentModuleVersion)
-			if ($moduleVersion -eq "1.0.0.0") #hard-coded version for Dev-Test, here the \Framework folder is parallel to \ModuleName folder
-			{
-				$basePath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName $moduleName | Join-Path -ChildPath "Framework"
-			}
-			else #In installed modules folder, the basepath is different.
-			{
-				$basePath = (Get-Item $PSScriptRoot).Parent.FullName	
-			}
-			
+			$basePath= [ConfigurationHelper]::GetBaseFrameworkPath()
             $rootConfigPath = $basePath | Join-Path -ChildPath "Configurations";
 			
 			$filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
@@ -338,8 +328,8 @@ class ConfigurationHelper {
 
 	#Need to rethink on this function logic
 	hidden static [PSObject] LoadModuleJsonFile([string] $fileName) {
-	 $moduleName = $([Constants]::AzSKModuleName)
-	 $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName $moduleName | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
+	 $basePath= [ConfigurationHelper]::GetBaseFrameworkPath()
+	 $rootConfigPath = Join-Path $basePath | Join-Path -ChildPath "Configurations";
      $filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
 	 if ($filePath) {
             $fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) | ConvertFrom-Json
@@ -352,8 +342,8 @@ class ConfigurationHelper {
 
 	hidden static [PSObject] LoadModuleRawFile([string] $fileName) {
 	
-	 $moduleName = $([Constants]::AzSKModuleName)
-	 $rootConfigPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName $moduleName | Join-Path -ChildPath "Framework" | Join-Path -ChildPath "Configurations";
+	 $basePath = [ConfigurationHelper]::GetBaseFrameworkPath()
+	 $rootConfigPath = Join-Path $basePath | Join-Path -ChildPath "Configurations";
 
      $filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
 	 if ($filePath) {
@@ -420,6 +410,21 @@ class ConfigurationHelper {
 		}
 	}
 	
+	#Helper function to get base Framework folder path
+
+	hidden static [PSObject] GetBaseFrameworkPath(){
+		$moduleName = $([Constants]::AzSKModuleName)
+	    $isDebugModeOn = $([Constants]::AzSKDebugModeOn)
+		if ($true -eq $isDebugModeOn) # If Dev-Test mode is on, here the \Framework folder is parallel to \ModuleName folder
+		{
+			$basePath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName $moduleName | Join-Path -ChildPath "Framework"
+		}
+		else #In installed modules folder, the basepath is different.
+		{
+			$basePath = (Get-Item $PSScriptRoot).Parent.FullName	
+		}
+		return $basePath
+	}
 }
 
 #Model to store online policy file content with name. 

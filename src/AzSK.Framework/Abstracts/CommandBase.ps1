@@ -211,7 +211,7 @@ class CommandBase: AzSKRoot {
 			$latestVersionList = $serverVersions | Where-Object {$_ -gt $currentModuleVersion}
 			if(($latestVersionList | Measure-Object).Count -gt [ConfigurationManager]::GetAzSKConfigData().BackwardCompatibleVersionCount)
 			{
-				throw ([SuppressedException]::new(("Your version of AzSK is too old. Please update now!"),[SuppressedExceptionType]::Generic))
+				throw ([SuppressedException]::new(("Your version of $([Constants]::AzSKModuleName) is too old. Please update now!"),[SuppressedExceptionType]::Generic))
 			}
 		}
 		

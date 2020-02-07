@@ -306,7 +306,8 @@ class CommandHelper
 		# Validate Command Prerequisites like Az multiple version load issue
 		[CommandHelper]::CheckCommandPrerequisites($invocationContext);
 		[CommandHelper]::SetAzSKModuleName($invocationContext);
-		[CommandHelper]::SetCurrentAzSKModuleVersion($invocationContext);
+        [CommandHelper]::SetCurrentAzSKModuleVersion($invocationContext);
+        [CommandHelper]::SetAzSKEnvironmentMode($invocationContext);
 	}
 
 	static CheckCommandPrerequisites([InvocationInfo] $invocationContext)
@@ -358,6 +359,14 @@ class CommandHelper
 		if($invocationContext)
 		{
 			[Constants]::SetAzSKCurrentModuleVersion($invocationContext.MyCommand.Version);
+		}
+    }
+    
+    static [void] SetAzSKEnvironmentMode([InvocationInfo] $invocationContext)
+	{
+		if($invocationContext)
+		{
+			[Constants]::SetAzSKCurrentEnvironmentMode($invocationContext.MyCommand.Version);
 		}
 	}
 }
