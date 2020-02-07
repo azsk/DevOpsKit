@@ -737,6 +737,11 @@ function Remove-AzSKContinuousAssurance
 		[Alias("f")]
 		$Force,
 
+		[Parameter(Mandatory = $false, HelpMessage="Switch to use container instead of automation account for AzSK CA.")]
+		[switch]
+		[Alias("uc")]
+		$UseContainers,
+
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		[Alias("dnof")]
@@ -751,17 +756,26 @@ function Remove-AzSKContinuousAssurance
 	{
 	try 
 		{
-			$ccAccount = [CCAutomation]::new($SubscriptionId, $AutomationAccountRGName, $AutomationAccountName, $PSCmdlet.MyInvocation);
-
-			if ($ccAccount) 
+			if($UseContainers)
 			{
-				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
+				$CAwithACI = [ContinuousAssurance]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+				if ($CAwithACI) 
 				{
-					$ccAccount.IsCentralScanModeOn = $true;
-					$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
+					return $CAwithACI.InvokeFunction($CAwithACI.RemoveAzSKContinuousAssurancewithACI);
 				}
-				
-				return $ccAccount.InvokeFunction($ccAccount.RemoveAzSKContinuousAssurance,@($DeleteStorageReports, $Force));
+			}
+			else {
+				$ccAccount = [CCAutomation]::new($SubscriptionId, $AutomationAccountRGName, $AutomationAccountName, $PSCmdlet.MyInvocation);
+				if ($ccAccount) 
+				{
+					if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
+					{
+						$ccAccount.IsCentralScanModeOn = $true;
+						$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
+					}
+					
+					return $ccAccount.InvokeFunction($ccAccount.RemoveAzSKContinuousAssurance,@($DeleteStorageReports, $Force));
+				}
 			}
 			
 		}

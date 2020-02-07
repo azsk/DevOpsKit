@@ -398,7 +398,16 @@ class ContinuousAssurance: AzCommandBase
         if($this.UpdateScheduler)
         {
             $this.PublishCustomMessage("Updating CA scan scheduler time")
-            #TBD: take time as i/p vs current time
+            $FunctionAppInstance = $this.GetFnAppInstance()
+            if($FunctionAppInstance)
+            {
+                $this.FunctionAppName = $FunctionAppInstance.Name
+            }
+            else {
+            $this.FunctionAppName = "azskcasheduler" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss")
+            $this.PublishCustomMessage("AzSK CA function app is not present. Creating it", [MessageType]::Info)
+            }
+            #TBD: take time as i/p instead of current time
             $this.UpdateAzSKFunctionApp()
             $this.SetFunctionAppMSIAccess()
         }
@@ -464,6 +473,21 @@ class ContinuousAssurance: AzCommandBase
         }
         else {
             $this.PublishCustomMessage("AzSK reports storage account does not exist.", [MessageType]::Error)
+        }
+    }
+
+    [void] RemoveAzSKContinuousAssurancewithACI()
+    {
+        $this.PublishCustomMessage("This command will delete resources in your subscription which were installed by AzSK Continuous Assurance using containers",[MessageType]::Warning);
+        Remove-AzContainerGroup -ResourceGroupName $this.ResourceGroup -Name $this.ContainerName
+        $this.PublishCustomMessage("Removed Container instance : [$($this.ContainerName)] from resource group: [$($this.ResourceGroup)]")
+        $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Info)
+        $FunctionAppInstance = $this.GetFnAppInstance()
+		if($FunctionAppInstance)
+        {
+            $this.FunctionAppName = $FunctionAppInstance.Name
+            Remove-AzWebApp -ResourceGroupName $this.ResourceGroup -Name $this.FunctionAppName -Force
+            $this.PublishCustomMessage("Removed Function app : [$($this.FunctionAppName)] from resource group: [$($this.ResourceGroup)]")
         }
     }
 }
