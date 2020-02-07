@@ -176,6 +176,9 @@ class Constants
 	static [string] $AADAPIUrl = "https://main.iam.ad.ext.azure.com"
 	static [string] $RegExForValidURL = "(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})"
 
+	#Constants for Debug mode
+	static [bool] $AzSKDebugModeOn = $false
+
 
 	static [void] SetAzSKModuleName($moduleName)
 	{
@@ -191,6 +194,15 @@ class Constants
 		if(-not [string]::IsNullOrWhiteSpace($moduleVersion))
 		{
 			[Constants]::AzSKCurrentModuleVersion = $moduleVersion;
+		}
+	}
+
+	static [void] SetAzSKCurrentEnvironmentMode($moduleVersion)
+	{
+		#1.0.0.0 is hard-coded version for Dev-Test , which means kit is running in Debug mode 
+		if(-not [string]::IsNullOrWhiteSpace($moduleVersion) -and ($moduleVersion -eq "1.0.0.0"))
+		{
+			[Constants]::AzSKDebugModeOn = $true;
 		}
 	}
 }
