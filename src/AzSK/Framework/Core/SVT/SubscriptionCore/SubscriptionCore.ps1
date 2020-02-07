@@ -12,7 +12,11 @@ class SubscriptionCore: AzSVTBase
 	hidden [PSObject] $CurrentContext;
 	hidden [bool] $HasGraphAPIAccess;
 	hidden [PSObject] $MisConfiguredASCPolicies;
+	hidden [PSObject] $ASCTierDetails;
 	hidden [PSObject] $MisConfiguredOptionalASCPolicies;
+	hidden [PSObject] $MisConfiguredSecurityPolicySettings;
+	hidden [PSObject] $MisConfiguredAutoProvisioningSettings;
+	hidden [PSObject] $MisConfiguredSecurityContactDetails;
 	hidden [SecurityCenter] $SecurityCenterInstance;
 	hidden [string[]] $SubscriptionMandatoryTags = @();
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $PIMAssignments;
@@ -43,8 +47,11 @@ class SubscriptionCore: AzSVTBase
 		
 		#Compute the policies ahead to get the security Contact Phone number and email id
 		$this.SecurityCenterInstance = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId,$false);
-		$this.MisConfiguredASCPolicies = $this.SecurityCenterInstance.CheckASCCompliance();
 		$this.MisConfiguredOptionalASCPolicies = $this.SecurityCenterInstance.CheckOptionalSecurityPolicySettings();
+		$this.ASCTierDetails = $this.SecurityCenterInstance.CheckASCTierSettings();
+		$this.MisConfiguredSecurityPolicySettings = $this.SecurityCenterInstance.CheckSecurityPolicySettings();
+		$this.MisConfiguredAutoProvisioningSettings = $this.SecurityCenterInstance.CheckAutoProvisioningSettings();
+		$this.MisConfiguredSecurityContactDetails = $this.SecurityCenterInstance.CheckSecurityContactSettings();
 
 		#Fetch AzSKRGTags
 		$azskRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
@@ -485,42 +492,6 @@ class SubscriptionCore: AzSVTBase
             {
                 throw $_
             }			
-		}
-		return $controlResult
-	}
-
-	hidden [ControlResult] CheckAzureSecurityCenterSettings([ControlResult] $controlResult)
-	{
-		if ($this.SecurityCenterInstance)
-		{
-			#$controlResult.AddMessage([MessageData]::new("Security center policies must be configured with settings mentioned below:", $this.SecurityCenterInstance.Policy.properties));			
-
-			$this.SubscriptionContext.SubscriptionMetadata.Add("MissingOptionalASCPolicies",$this.MisConfiguredOptionalASCPolicies);
-			$this.SubscriptionContext.SubscriptionMetadata.Add("MissingMandatoryASCPolicies",$this.MisConfiguredASCPolicies);
-
-			if(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0)
-			{
-				$controlResult.EnableFixControl = $true;
-
-				$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredASCPolicies);
-				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredASCPolicies));
-			}
-			# elseif(-not $this.SecurityCenterInstance.IsLatestVersion -and $this.SecurityCenterInstance.IsValidVersion)
-			# {
-			# 	$this.PublishCustomMessage("WARNING: The Azure Security Center policies in your subscription are out of date.`nPlease update to the latest version by running command Update-AzSKSubscriptionSecurity.", [MessageType]::Warning);
-			# 	$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Current security center policies are configured as per older policy. To update as per latest configuration, run command Update-AzSKSubscriptionSecurity."));
-			# }
-			# elseif(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0)
-			# {
-			# 	$controlResult.EnableFixControl = $true;
-
-			# 	$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredASCPolicies);
-			# 	$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredASCPolicies));
-			# }
-			else
-			{
-				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("All security center policies are correctly configured."));
-			}
 		}
 		return $controlResult
 	}
@@ -1942,6 +1913,68 @@ class SubscriptionCore: AzSVTBase
 			}
 		}
 		return $verificationResult
+	}
+	hidden [ControlResult] CheckSecurityPolicy([ControlResult] $controlResult)
+	{
+		if ($this.SecurityCenterInstance)
+		{
+			$this.SubscriptionContext.SubscriptionMetadata.Add("MissingOptionalASCPolicies",$this.MisConfiguredOptionalASCPolicies);
+			$this.SubscriptionContext.SubscriptionMetadata.Add("MissingMandatorySecurityPolicies",$this.MisConfiguredSecurityPolicySettings);
+
+			if(($this.MisConfiguredSecurityPolicySettings | Measure-Object).Count -ne 0)
+			{
+				$controlResult.EnableFixControl = $true;
+
+				$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredSecurityPolicySettings);
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredSecurityPolicySettings));
+			}
+			
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("All security center policies are correctly configured."));
+			}
+		}
+		return $controlResult
+	}
+
+	hidden [ControlResult] CheckAutoProvisioningForSecurity([ControlResult] $controlResult)
+	{
+		if ($this.SecurityCenterInstance)
+		{
+			$this.SubscriptionContext.SubscriptionMetadata.Add("MissingAutoProvisioningPolicies",$this.MisConfiguredAutoProvisioningSettings);
+
+			if(-not [string]::IsNullOrWhiteSpace($this.MisConfiguredAutoProvisioningSettings))
+		      {
+			     $controlResult.SetStateData("Misconfigured AutoProvisioning Policy", $this.MisConfiguredAutoProvisioningSettings);
+			     $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("AutoProvisioning setting is not configured. Please update the setting in order to comply", $this.MisConfiguredAutoProvisioningSettings));
+			  }
+			
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("AutoProvisioning is correctly configured."));
+			}
+		}
+		return $controlResult
+	}
+
+	hidden [ControlResult] CheckSecurityContactDetails([ControlResult] $controlResult)
+	{
+		if ($this.SecurityCenterInstance)
+		{
+			$this.SubscriptionContext.SubscriptionMetadata.Add("MissingSecurityContactDetails",$this.MisConfiguredSecurityContactDetails);
+
+			if(-not [string]::IsNullOrWhiteSpace($this.MisConfiguredSecurityContactDetails))
+		      {
+			     $controlResult.SetStateData("Misconfigured Security Contact Details", $this.MisConfiguredSecurityContactDetails);
+			     $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Security Contacts are not configured. Please update the setting in order to comply", $this.MisConfiguredSecurityContactDetails));
+		      }
+			
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Security Contacts are correctly configured."));
+			}
+		}
+		return $controlResult
 	}
 }
 
