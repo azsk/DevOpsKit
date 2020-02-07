@@ -198,3 +198,5 @@ ModelManifest.xml
 /src/AzSK.Debug
 /src/AzSK/AzSK.sln
 /src/AzSK.PowerPlatform/.vscode/launch.json
+/src/AzSK.PowerPlatform/MyScript.ps1
+/src/AzSK.AzureDevOps/.vscode/launch.json

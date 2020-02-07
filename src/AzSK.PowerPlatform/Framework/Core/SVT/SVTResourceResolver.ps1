@@ -21,13 +21,15 @@ class SVTResourceResolver: AzSKRoot
     
     [string] $ResourcePath;
     [string] $environmentName;
+    [bool] $AdminScan;
     hidden [string[]] $ProjectNames = @();
     hidden [string[]] $BuildNames = @();
     hidden [string[]] $ReleaseNames = @();
     hidden [string[]] $AgentPools = @();
-    SVTResourceResolver([string]$environmentName,$ScanAllArtifacts): Base($environmentName)
+    SVTResourceResolver([string]$environmentName, $Admin, $ScanAllArtifacts): Base($environmentName)
 	{
         $this.environmentName = $environmentName
+        $this.AdminScan = $Admin
 
         if($ScanAllArtifacts)
         {
@@ -40,7 +42,7 @@ class SVTResourceResolver: AzSKRoot
         }        
     }
 
-    [void] LoadAzureResources()
+    [void] LoadResourcesForScan()
 	{
         $svtResource = [SVTResource]::new();
         $svtResource.ResourceName = $this.environmentName;
