@@ -457,7 +457,7 @@ class PIM: AzCommandBase {
     }
 
     #Assign a user to Eligible Role
-    hidden AssignExtendPIMRoleForUser($subscriptionId, $resourcegroupName, $resourceName, $roleName, $PrincipalName, $duration,$isExtnensionRequest, $force, $isRemoveAssignmentReq) {
+    hidden AssignExtendPIMRoleForUser($subscriptionId, $resourcegroupName, $resourceName, $roleName, $PrincipalName, $duration,$isExtensionRequest, $force, $isRemoveAssignmentRequest) {
         $this.AcquireToken();
         $PrincipalName = $this.ConvertToStringArray($PrincipalName);
         $resolvedResources = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName,$false)
@@ -501,7 +501,7 @@ class PIM: AzCommandBase {
                 }            
                 
                 #"If" block will exceute when -ExtendExpiringAssignments parameter is used  
-                if($isExtnensionRequest)
+                if($isExtensionRequest)
                 {
                     $roleAssignments = $this.ListAssignmentsWithFilter($resourceId, $false)
                     $roleAssignments = $roleAssignments | Where-Object{$_.SubjectId -in $subjectId -and $_.RoleName -eq $roleName -and $_.MemberType -ne 'Inherited'}
@@ -563,7 +563,7 @@ class PIM: AzCommandBase {
                 }
                 
                 #"ElseIf" block will exceute when -RemoveRole parameter is used  
-                elseif ($isRemoveAssignmentReq)
+                elseif ($isRemoveAssignmentRequest)
                  {
                     $userResp = ''
                     $users | ForEach-Object{
