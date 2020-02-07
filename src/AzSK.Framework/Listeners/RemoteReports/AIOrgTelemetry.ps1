@@ -292,6 +292,21 @@ class AIOrgTelemetry: ListenerBase {
 				if(($null -ne $results[0].StateManagement) -and ($null -ne $results[0].StateManagement.CurrentStateData)) {
 					$properties.Add("CurrentState", [JsonHelper]::ConvertToJsonCustomCompressed($results[0].StateManagement.CurrentStateData.DataObject))
 				}
+
+				$IsPolicyBasedScanFeatureEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan", "$($context.SubscriptionContext.SubscriptionId)")
+				if ($IsPolicyBasedScanFeatureEnabled)
+				{
+					if ($null -ne $results[0].PolicyVerificationResult)
+					{
+						$properties.Add("PolicyVerificationResult", $results[0].PolicyVerificationResult)
+						# TODO: Add feature flight after discussion
+						if (($null -ne $results[0].PolicyStateManagement) -and ($null -ne $results[0].PolicyStateManagement.DataObject))
+						{
+							$properties.Add("CurrentPolicyComplianceState", [JsonHelper]::ConvertToJsonCustomCompressed($results[0].PolicyStateManagement.DataObject))
+						}
+					}
+				}
+				
 				$propertiesArray.Add($properties) | Out-Null
 			}elseif($results.Count -gt 1){
 				$properties.Add("IsNestedResource", 'Yes')
@@ -307,11 +322,26 @@ class AIOrgTelemetry: ListenerBase {
 						$propertiesIn.Add("Justification", $result.StateManagement.AttestedStateData.Justification)
 						$propertiesIn.Add("AttestedState", [JsonHelper]::ConvertToJsonCustomCompressed($result.StateManagement.AttestedStateData.DataObject))
 						$propertiesIn.Add("AttestedDate", ($result.StateManagement.AttestedStateData.AttestedDate).Tostring("yyyy_MM_dd_hh_mm"))
-					    $propertiesIn.Add("ExpiryDate", ([DateTime]$result.StateManagement.AttestedStateData.ExpiryDate).Tostring("yyyy_MM_dd_hh_mm"))
+						$propertiesIn.Add("ExpiryDate", ([DateTime]$result.StateManagement.AttestedStateData.ExpiryDate).Tostring("yyyy_MM_dd_hh_mm"))
 					}
 					if(($null -ne $result.StateManagement) -and ($null -ne $result.StateManagement.CurrentStateData)) {
 						$propertiesIn.Add("CurrentState", [JsonHelper]::ConvertToJsonCustomCompressed($result.StateManagement.CurrentStateData.DataObject))
 					}
+
+					$IsPolicyBasedScanFeatureEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan", "$($context.SubscriptionContext.SubscriptionId)")
+					if ($IsPolicyBasedScanFeatureEnabled)
+					{
+						if ($null -ne $result.PolicyVerificationResult)
+						{
+							$propertiesIn.Add("PolicyVerificationResult", $result.PolicyVerificationResult)
+							# TODO: Add feature flight after discussion
+							if (($null -ne $result.PolicyStateManagement) -and ($null -ne $result.PolicyStateManagement.DataObject))
+							{
+								$propertiesIn.Add("CurrentPolicyComplianceState", [JsonHelper]::ConvertToJsonCustomCompressed($result.PolicyStateManagement.DataObject))
+							}
+						}
+					}
+
 					$propertiesArray.Add($propertiesIn) | Out-Null
 				}
 			}

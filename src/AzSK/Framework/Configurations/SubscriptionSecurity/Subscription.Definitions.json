@@ -1,0 +1,78 @@
+﻿{
+  "Version": "1.1.0",         
+  "Name" : "AzSKDefinitions-Preview",
+  "DisplayName" : "AzSK Definitions-Preview",
+  "Description" : "Custom definitions to check compliance of azure services",
+  "CustomDefinitions" : [
+	{
+		"featureName": "AppService",
+		"Controls": [
+			{
+				"ControlId": "Azure_AppService_Deploy_Use_Latest_Version",
+				"Description": "The latest version of .NET framework version should be used for App Service",
+				"PolicyDefinition": {
+					"policyRule": {
+						"if": {
+							"allOf": [
+								{
+									"field": "type",
+									"equals": "Microsoft.Web/sites/config"
+								},
+								{
+									"field": "name",
+									"equals": "web"
+								},
+								{
+									"field": "Microsoft.Web/sites/config/netFrameworkVersion",
+									"notLike": "[concat(parameters('latestNetVersion'), '*')]"
+								}
+							]
+						},
+						"then": {
+							"effect": "audit"
+						}
+					},
+					"parameters": {
+						"latestNetVersion": {
+							"type": "String",
+							"metadata": {
+								"displayName": "Latest .Net Version",
+								"description": "The latest .Net version that must be used (e.g. 'v4.0'). Note that 'v4.7' in the Portal maps to 'v4.0' in the API."
+							}
+						}
+					}
+				}
+			},
+			{
+				"ControlId": "Azure_AppService_Config_Disable_Remote_Debugging",
+				"Description": "Remote debugging must be turned off for App Service",
+				"PolicyDefinition": {
+					"policyRule": {
+						"if": {
+							"allOf": [
+								{
+									"field": "type",
+									"equals": "Microsoft.Web/sites/config"
+								},
+								{
+									"field": "name",
+									"equals": "web"
+								},
+								{
+									"field": "Microsoft.Web/sites/config/remoteDebuggingEnabled",
+									"notequals": "false"
+								}
+							]
+						},
+						"then": {
+							"effect": "audit"
+						}
+					},
+					"parameters": {}
+				}
+			}
+		]
+	}
+	
+  ]
+}

@@ -424,9 +424,134 @@ class ARMPolicy: AzCommandBase
 		}
 	}	    
 
+	[void] CreateCustomDefinitions()
+	{ 
+		# Read custom definitions from Subscription.Definitions.json
+		# TODO: Upload file
+		$subscriptionId = $this.SubscriptionContext.SubscriptionId
+		$scope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"		
+		$policyDefinitionsDetails = [ConfigurationHelper]::LoadServerConfigFile("Subscription.Definitions.json", $true, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore)
+		if ($policyDefinitionsDetails -and [Helpers]::CheckMember($policyDefinitionsDetails, "CustomDefinitions"))
+		{
+			$policyDefinitionsDetails.CustomDefinitions | ForEach-Object {
+				# Fetch feature wise controls
+				$_.Controls | ForEach-Object {
+
+					# 1. Read defintion name and description
+					$policyObj = "" | Select-Object ControlId, Description, DefinitionName, PolicyRule, Parameters
+					$policyObj.ControlId = $_.ControlId
+					$policyObj.Description = $_.Description
+					# Use user defined custom definition name, if specified
+					if ($_ | Get-Member CustomDefinitionName)
+					{
+						$policyObj.DefinitionName = $_.CustomDefinitionName # TODO: Not required anymore - [PolicyContextHelper]::GetCustomDefinitionName($controlId)
+					}
+					# Else use control id as definition name
+					else
+					{
+						$policyObj.DefinitionName = $_.ControlId
+					}
+					
+
+					# 2. Fetch policy definitions rules and parameter
+					$policyContent = $_.PolicyDefinition;
+					if ($policyContent | Get-Member -Name policyRule)
+					{
+						$policyRule = ($policyContent.policyRule | ConvertTo-Json -Depth 10).ToString()
+						$policyObj.PolicyRule = $policyRule
+					}
+
+					if ($policyContent | Get-Member -Name parameters)
+					{
+						$parameters = ($policyContent.parameters | ConvertTo-Json -Depth 10).ToString()
+						$policyObj.Parameters = $parameters
+					}
+
+					# 3. Create definition
+					if (-not [String]::IsNullOrEmpty($Scope) -and -not [String]::IsNullOrEmpty($policyObj.PolicyRule) -and -not [String]::IsNullOrEmpty($policyObj.DefinitionName))
+					{
+						
+						try
+						{
+							if (-not [String]::IsNullOrEmpty($policyObj.Parameters))
+							{
+								New-AzPolicyDefinition -Mode All -Name $policyObj.DefinitionName `
+									-DisplayName $policyObj.DefinitionName `
+									-Description $policyObj.Description `
+									-Policy $policyObj.PolicyRule `
+									-Parameter $policyObj.Parameters `
+									-SubscriptionId $SubscriptionId `
+									-ErrorAction Stop | Out-Null
+							}
+							else
+							{
+								New-AzPolicyDefinition -Mode All -Name $policyObj.DefinitionName `
+									-DisplayName $policyObj.DefinitionName `
+									-Description $policyObj.Description `
+									-Policy $policyObj.PolicyRule `
+									-SubscriptionId $SubscriptionId `
+									-ErrorAction Stop | Out-Null
+							}
+						}
+						catch
+						{
+							#TODO: Add comment
+						}
+					}
+
+				}#foreach end
+			}#foreach end
+		}		
+	}
+
+	[void] UpdateCustomDefinitionsList()
+	{
+		if ($null -ne $this.SubPolicyInitiative.CustomPolicies)
+		{
+			$successfullyCreatedDefinitions = @()
+			$failedToReadDefinitionDetails = @()
+			$this.SubPolicyInitiative.CustomPolicies |
+			ForEach-Object {
+				$_.policyDefinitionId = $_.policyDefinitionId.Replace("{0}", $this.SubscriptionContext.SubscriptionId)
+				if (-not [String]::IsNullOrEmpty($_.policyDefinitionId))
+				{
+					try
+					{
+						$definition = Get-AzPolicyDefinition -Id "$($_.policyDefinitionId)" -ErrorAction Stop
+						if ($definition)
+						{
+							$successfullyCreatedDefinitions += $_
+						}
+						else
+						{
+							$failedToReadDefinitionDetails += $_
+							#TODO: Add print statement for this object
+						}
+					}
+					catch
+					{
+						#TODO: Add comment - eat exception
+					}
+				}		
+			} #foreach end
+
+			# Updating custom policies with the list of existing definition
+			if ($successfullyCreatedDefinitions)
+			{
+				$this.SubPolicyInitiative.CustomPolicies = $successfullyCreatedDefinitions
+			}
+		}
+	}
+
 	[MessageData[]] SetPolicyInitiative()
 	{	
 		[MessageData[]] $messages = @();
+        if([FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+		{
+			$this.CreateCustomDefinitions()
+			$this.UpdateCustomDefinitionsList()
+			# TODO: Add function to delete definitions - $this.RemoveDeprecatedInitiatives();
+		}
 		#$isPolicyInitiativeEnabled = [ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan;
 		$isPolicyInitiativeEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId))
 		try{
@@ -458,15 +583,42 @@ class ARMPolicy: AzCommandBase
 					$scope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"
 					if($null -eq $initiative)
 					{
-						$this.PublishCustomMessage("Creating new AzSK Initiative...", [MessageType]::Update);		
-						$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
+						$this.PublishCustomMessage("Creating new AzSK Initiative...", [MessageType]::Update);
+						if([FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+						{
+							$PolicyDefnitions = @()
+							$PolicyDefnitions += $this.SubPolicyInitiative.Policies
+							if($this.SubPolicyInitiative.CustomPolicies)
+							{
+								$PolicyDefnitions += $this.SubPolicyInitiative.CustomPolicies
+							}
+							$PolicyDefnitions = $PolicyDefnitions | ConvertTo-Json -depth 10 | Out-String
+						}
+						else
+						{
+							$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
+						}	
 						New-AzPolicySetDefinition -Name $initiativeName -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions | Out-Null
 						Start-Sleep -Seconds 15
 						
 					}
 					elseif($this.UpdateInitiative) {
 						$this.PublishCustomMessage("Updating AzSK Initiative...", [MessageType]::Update);
-						$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
+                        
+						if([FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+						{
+							$PolicyDefnitions = @()
+							$PolicyDefnitions += $this.SubPolicyInitiative.Policies
+							if($this.SubPolicyInitiative.CustomPolicies)
+							{
+								$PolicyDefnitions += $this.SubPolicyInitiative.CustomPolicies
+							}
+							$PolicyDefnitions = $PolicyDefnitions | ConvertTo-Json -depth 10 | Out-String
+						}
+						else
+						{
+							$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
+						}						
 						Set-AzPolicySetDefinition -Name $this.SubPolicyInitiative.Name -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions | Out-Null
 						Start-Sleep -Seconds 15						
 					}
@@ -580,4 +732,5 @@ class PolicyInitiative
 	[string] $Description;
 	[PSObject[]] $Policies;	
 	[string[]] $DeprecatedInitiatives;
+	[PSObject[]] $CustomPolicies;
 }

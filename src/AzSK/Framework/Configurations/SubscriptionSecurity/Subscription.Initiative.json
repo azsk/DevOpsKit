@@ -27,5 +27,19 @@
                        }
     }
   ],
-  "DeprecatedInitiatives" : []   
+  "DeprecatedInitiatives" : [],
+  "CustomPolicies" : [
+    {
+      "policyDefinitionId": "/subscriptions/{0}/providers/Microsoft.Authorization/policyDefinitions/Azure_AppService_Deploy_Use_Latest_Version",
+      "parameters": {
+        "latestNetVersion": {
+          "value":"v4.7"
+        }
+      }
+    },
+    {
+      "policyDefinitionId": "/subscriptions/{0}/providers/Microsoft.Authorization/policyDefinitions/Azure_AppService_Config_Disable_Remote_Debugging",
+      "parameters": {}
+    }
+  ]  
 }

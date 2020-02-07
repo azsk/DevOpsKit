@@ -58,6 +58,10 @@ class ControlResult
 	[String] $UserComments	
     [MessageData[]] $Messages = @();
 
+	# To store azure policy compliance result
+	[PolicyVerificationResult] $PolicyVerificationResult = [PolicyVerificationResult]::Manual;
+	[PolicyStateManagement] $PolicyStateManagement = [PolicyStateManagement]::new();
+
     [void] AddMessage([MessageData] $messageData)
     {
         if((-not [string]::IsNullOrEmpty($messageData.Message)) -or ($null -ne $messageData.DataObject))
@@ -184,4 +188,9 @@ class SVTEventContext: AzSKRootEventArgument
 
 		return $uniqueId;
 	}
+}
+
+class PolicyStateManagement
+{
+	[PSObject] $DataObject;
 }
