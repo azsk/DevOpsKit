@@ -199,6 +199,15 @@
       "DisabledForSubs": [],
       "UnderPreview": false,
       "IsEnabled": true
+    },
+    {
+      "Name": "ExcludeControlForLargeAPIM",
+      "Description": "",
+      "Sources": ["CA"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
     }
   ]
 }
