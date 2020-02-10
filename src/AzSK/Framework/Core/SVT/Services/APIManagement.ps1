@@ -337,6 +337,19 @@ class APIManagement: AzSVTBase
     {
 		if(($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
+			if ( ($this.APIMAPIs | Measure-Object).Count -gt $this.ControlSettings.APIManagement.MaxAllowedAPICount)
+			{
+				$scanSource = [RemoteReportHelper]::GetScanSource();
+				if($scanSource -eq [ScanSource]::Runbook)
+				{
+				# If number of APIs is higher than MaxAllowedAPICount, the control is marked as Verify in CA mode.
+				# This check has been implemented because of the execution time of control as well as socket and memory limit exhaustion in case of APIMs with large number of APIs
+				# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+					$controlResult.AddMessage([VerificationResult]::Verify,[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rPlease use client certificates to secure access to the back-end service of an API and protects data in transit from network layer.To enable client certificate authentication from Azure portal please refer https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates and https://docs.microsoft.com/en-us/azure/api-management/api-management-authentication-policies."));
+				}
+			}
+			else{
 			$ClientCertAuthDisabledInAPIs = ($this.APIMAPIs).ApiId | ForEach-Object {
 				$apiPolicy = $null
 				try {
@@ -366,6 +379,7 @@ class APIManagement: AzSVTBase
 			    $controlResult.AddMessage([VerificationResult]::Passed,"")
 			}
 		}
+		}
 		return $controlResult;
     }
 
@@ -390,7 +404,7 @@ class APIManagement: AzSVTBase
 				# If number of APIs is higher than MaxAllowedAPICount, the control is marked as Verify.
 				# This check has been implemented because of the execution time of control in case of large subscription
 				# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
-				
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 				$controlResult.AddMessage([VerificationResult]::Verify,
 					[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rVerify that CORS access is granted to a minimal set of trusted origins and only required verbs are supported.`n`rEnsure that CORS is not enabled in APIM with access from all domains ('*'). Using '*' (allow all) for CORS setting means that all cross-origin requests are allowed."));
 			}
@@ -494,12 +508,27 @@ class APIManagement: AzSVTBase
     {
 		if ( $null -ne $this.APIMContext)
 		{
+			if ( ($this.APIMAPIs | Measure-Object).Count -gt $this.ControlSettings.APIManagement.MaxAllowedAPICount)
+			{
+				$scanSource = [RemoteReportHelper]::GetScanSource();
+				if($scanSource -eq [ScanSource]::Runbook)
+				{
+					# If number of APIs is higher than MaxAllowedAPICount, the control is marked as Verify in CA mode.
+					# This check has been implemented because of the execution time of control as well as socket and memory limit exhaustion in case of APIMs with large number of APIs
+					# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+					$controlResult.AddMessage([VerificationResult]::Verify,
+					[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rPlease ensure IP filter policy is configured for APIM.a) Run command 'Get-AzApiManagementPolicy' to check IP addresses filter configured in your APIM service. b) Use 'ip-filter' policy filters to allow and deny calls from specific IP addresses and/or address ranges. c) Do not add IP range $($this.ControlSettings.UniversalIPRange) as that allows access to all possible IPs. Please refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-access-restriction-policies#RestrictCallerIPs"));
+				}
+			}
+			else{
 			$IsAPILevelPolicyEvaluated = $false
 			$Message = ""
 			$Index = 1
 			$RestrictedCallerIPsInfo = @()
 			#Policy Scope: Gobal
 			$GlobalPolicy = $null
+
 			try
 			{
 				$GlobalPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ErrorAction Stop
@@ -745,7 +774,8 @@ class APIManagement: AzSVTBase
 			{
 				$controlResult.AddMessage([VerificationResult]::Verify, "Unable to validate control. Please verify from portal that IP restirction is enabled for APIs.")
 			}
-		}	
+		} 
+	}	
 		return $controlResult;
     }
 
@@ -867,7 +897,21 @@ class APIManagement: AzSVTBase
 		$JWTValidatePolicyNotFound = @()
 		if(($this.APIUserAuth -ne 'ResourceNotFound') -and ($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
-			$this.APIMAPIs | ForEach-Object {
+			if ( ($this.APIMAPIs | Measure-Object).Count -gt $this.ControlSettings.APIManagement.MaxAllowedAPICount)
+			{
+				$scanSource = [RemoteReportHelper]::GetScanSource();
+				if($scanSource -eq [ScanSource]::Runbook)
+				{
+					# If number of APIs is higher than MaxAllowedAPICount, the control is marked as Verify in CA mode.
+					# This check has been implemented because of the execution time of control as well as socket and memory limit exhaustion in case of APIMs with large number of APIs
+					# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+					$controlResult.AddMessage([VerificationResult]::Verify,
+					[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rPlease ensure that 'validate-jwt' policy is configured for APIM.For steps to add JWT Validate Token policy please refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-access-restriction-policies#ValidateJWT and https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-protect-backend-with-aad#configure-a-jwt-validation-policy-to-pre-authorize-requests"));
+				}
+			}
+			else{
+			$this.APIMAPIs | ForEach-Object{
 				$apiPolicy = $null
 				try {
 					$apiPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -ErrorAction Stop
@@ -908,6 +952,7 @@ class APIManagement: AzSVTBase
 				$controlResult.AddMessage([VerificationResult]::Passed,"")
 			}
 		}
+	}
 		return $controlResult;
     }
 
