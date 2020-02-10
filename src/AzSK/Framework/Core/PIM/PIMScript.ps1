@@ -378,7 +378,7 @@ class PIM: AzCommandBase {
                         {
                             $err = $_ | ConvertFrom-Json
                             if ($err.error.Code -eq "RoleAssignmentRequestAcrsValidationFailed"){
-                                $this.PublishCustomMessage("A Conditional access policy is enabled on this resource. The provided credentials do not meet the criteria to access the resource. ",[MessageType]::Error)
+                                $this.PublishCustomMessage("A Conditional Access policy is enabled for this resource. Your current sign-in does not meet the required criteria.",[MessageType]::Error)
                             }
                             else {
                                 $this.PublishCustomMessage($err.error.message,[MessageType]::Error)
