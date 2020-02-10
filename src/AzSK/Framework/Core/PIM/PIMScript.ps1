@@ -105,17 +105,49 @@ class PIM: AzCommandBase {
             $PIMResources = @();            
             if(($resolvedResources | Measure-Object).Count -gt 0 )
             {
-                 if( $item.ResourceType -eq 'subscription')
-                {
-                    $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq ("/subscriptions/$($SubscriptionId)") }
-                }
-                if( $item.ResourceType -eq 'resourcegroup')
-                {
-                    $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
-                    $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq $rgId }
-                 }
-                if( $item.ResourceType -eq 'resource'){
-                $resolvedResources = $resolvedResources | Where-Object{$_.ResourceName -eq $ResourceName }
+                    if( $item.ResourceType -eq 'subscription')
+                    {
+                        $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq ("/subscriptions/$($SubscriptionId)") }
+                    }
+                    if( $item.ResourceType -eq 'resourcegroup')
+                    {
+                        $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
+                        $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq $rgId }
+                    }
+                    if( $item.ResourceType -eq 'resource'){
+                        $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
+                        $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -like "$rgId*" -and $_.ResourceName-eq $ResourceName }
+                        # if multiple resources with same name under one rg are found, ask the end user to choose the resource
+                        if(($resolvedResources|Measure-Object).Count -gt 1)
+                        {   $counter=0; $tempres = @();
+                            foreach ($resource in $resolvedResources)
+                            {
+                                $item = New-Object psobject -Property @{
+                                id = ++$counter
+                                ResourceName =  $resource.ResourceName
+                                OriginalId =  $resource.OriginalId
+                                }
+                                $tempres+=$item
+                            }
+                            [int]$choice = -1;
+                            $this.PublishCustomMessage("Multiple resources with same resource name are found. ")                            
+                            $this.PublishCustomMessage(($tempres | Format-Table Id, OriginalId | Out-String))
+                            Write-Host "Please enter 'Id' from the above table for the resource you want to activate your assignment on." -ForegroundColor Yellow
+                            try{ 
+                                $choice = Read-Host
+                                if($choice -notin $tempres.Id)
+                                {
+                                    throw "Invalid Input provided";
+                                }
+                            }
+                            catch
+                            {
+                                 throw "Invalid Input provided";
+                                
+                            }
+                           $resolvedResources= $resolvedResources | Where-Object{$_.OriginalId -eq $tempres[$choice-1].OriginalId }
+                            
+                        }
                 }
                 if(($resolvedResources|Measure-Object).Count -gt 0)
                 {
@@ -171,6 +203,7 @@ class PIM: AzCommandBase {
                     }
                 }
             }
+            
              return $resolvedResource   
         }
 
