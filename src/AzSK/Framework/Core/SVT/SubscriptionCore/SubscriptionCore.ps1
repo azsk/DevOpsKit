@@ -19,6 +19,8 @@ class SubscriptionCore: AzSVTBase
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $permanentAssignments;
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $RGLevelPIMAssignments;
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $RGLevelPermanentAssignments;
+	hidden [System.Collections.Generic.List[TelemetryRBACExtended]] $PIMAssignmentswithPName = @();
+	hidden [System.Collections.Generic.List[TelemetryRBACExtended]] $PIMRGLevelAssignmentswithPName = @();
 	hidden [CustomData] $CustomObject;
 	hidden $SubscriptionExtId;
 
@@ -529,11 +531,12 @@ class SubscriptionCore: AzSVTBase
 		$activeAlerts = ($this.ASCSettings.Alerts | Where-Object {$_.State -eq "Active" })
 		if(($activeAlerts | Measure-Object).Count -gt 0 )
 		{
-			  if( [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsThresholdInDays') -and [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsSeverityLevels'))
+			  if( [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsThresholdInDays')  )
 			  {
 				 $AlertDaysCheck = $this.ControlSettings.ASCAlertsThresholdInDays
-				 $AlertSeverityCheck = $this.ControlSettings.ASCAlertsSeverityLevels				
-				 $activeAlerts = $activeAlerts | Where-Object{ ( [System.DateTime]::Parse($_.ReportedTimeUTC).AddDays($AlertDaysCheck) -ge ([System.DateTime]::UtcNow)) -and $_.ReportedSeverity -in $AlertSeverityCheck}
+				 $AlertSeverityCheck = $this.ControlSettings.ASCAlertsThresholdInDays.PSObject.Properties.Name;	
+				 $activeAlerts = $activeAlerts | Where-Object {$_.ReportedSeverity -in $AlertSeverityCheck}			
+				 $activeAlerts = $activeAlerts | Where-Object{ ( [System.DateTime]::Parse($_.ReportedTimeUTC).AddDays($AlertDaysCheck.($_.ReportedSeverity)) -le ([System.DateTime]::UtcNow)) }
 				 if(($activeAlerts | Measure-Object).Count -gt 0)
 				 {
 					$controlResult.SetStateData("Active alert in Security Center", ($activeAlerts | Select-Object AlertName, ReportedTimeUTC));
@@ -611,9 +614,9 @@ class SubscriptionCore: AzSVTBase
 
         if($foundLocks)
         {
-			$controlResult.SetStateData("Resource Locks on subscription", $lockDtls);
+			$controlResult.SetStateData("Resource Locks on subscription", ($lockDtls | Select-Object @{Name="LockLevel";Expression={$_.Properties.level}}, LockId))
 			#$controlResult.AddMessage([VerificationResult]::Verify, "Subscription lock details :", ($lockDtls | Select-Object Name,  @{Name="Lock Level";Expression={$_.Properties.level}}, LockId, @{Name="Notes";Expression={$_.Properties.notes}} ), $true, "SubscriptionLocks")
-			$controlResult.AddMessage([VerificationResult]::Verify, "Subscription lock details :", ($lockDtls | Select-Object Name,  @{Name="Lock Level";Expression={$_.Properties.level}}, LockId, @{Name="Notes";Expression={$_.Properties.notes}} ))
+			$controlResult.AddMessage([VerificationResult]::Verify, "Subscription lock details :", ($lockDtls | Select-Object @{Name="LockLevel";Expression={$_.Properties.level}}, LockId))
         }
         else
         {
@@ -1088,7 +1091,7 @@ class SubscriptionCore: AzSVTBase
 			if([FeatureFlightingManager]::GetFeatureStatus("FetchRGPIMControlStatusFromComplianceState",$($this.SubscriptionContext.SubscriptionId)) )
 			{
 				#[string] $controlId = $controlItem.ControlID;
-				$controlResult.AddMessage("Note: `n By default, this control is not evaluated in manual scan mode. The control status is based on the previous CA runbook scan for this control. To determine why this control has failed, you can look at the detailed log in the CA scan logs in the storage account in AzSKRG under a container named ca-scan-logs `n To force a manual scan, you can use the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG '")
+				$controlResult.AddMessage("Note: `n By default, this control is not evaluated in manual scan mode. The control status is based on the previous CA runbook scan for this control. To determine why this control has failed, you can look at the detailed log files in the storage account in AzSKRG under a container named 'ca-scan-logs' `n To force a manual scan, you can use the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG '")
 				$result = $this.GetControlStatusFromComplianceState('Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG');
 				# since this control has actually only two states 'Passed' and 'Failed', but in case we are not able to read attestation data we need to tell the reason for the same
 				
@@ -1450,9 +1453,18 @@ class SubscriptionCore: AzSVTBase
 			$nonCompliantPIMCAPolicyTagRoles = @();
 			foreach($role in $roles)
 			{
-				$url ="https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resourceId)%27)+and+(roleDefinition/id+eq+%27$($role.id)%27)"
-				$rolesettings = [WebRequestHelper]::InvokeGetWebRequest($url, $headers)
-				$CAPolicyOnRoles = ($($rolesettings.userMemberSettings | Where-Object{$_.RuleIdentifier -eq 'AcrsRule'}).setting) | ConvertFrom-Json
+				#API call to fetch existing role settings with respect to ACRS Rule
+				if( ([FeatureFlightingManager]::GetFeatureStatus("UseV2apiforPIMRoleSetting","*"))) { 
+					$url ="https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettingsV2?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resourceId)%27)+and+(roleDefinition/id+eq+%27$($role.id)%27)"
+					$rolesettings = [WebRequestHelper]::InvokeGetWebRequest($url, $headers)
+					$CAPolicyOnRoles = ($($($rolesettings.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'AcrsRule'}).setting | ConvertFrom-Json
+				}
+				else {
+					$url ="https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resourceId)%27)+and+(roleDefinition/id+eq+%27$($role.id)%27)"
+					$rolesettings = [WebRequestHelper]::InvokeGetWebRequest($url, $headers)
+					$CAPolicyOnRoles = ($($rolesettings.userMemberSettings | Where-Object{$_.RuleIdentifier -eq 'AcrsRule'}).setting) | ConvertFrom-Json
+				}
+				
 				if($CAPolicyOnRoles.acrsRequired)
 				{
 					$validRoles +=$role
@@ -1511,6 +1523,59 @@ class SubscriptionCore: AzSVTBase
 			$controlResult.VerificationResult = [VerificationResult]::Manual
 		}
 		return $controlResult;
+	}
+
+
+	hidden [ControlResult] CheckNonAlternateAccountsinPIMAccess([ControlResult] $controlResult)
+    {
+			$AltAccountRegX = [string]::Empty;
+			$message = [string]::Empty;
+			if($null -eq $this.PIMAssignments)
+			{
+				$message=$this.GetPIMRoles();
+			}
+			if($message -ne 'OK') # if there is some while making request message will contain exception
+			{
+
+					$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+					$controlResult.AddMessage($message);
+					return $controlResult;
+			}
+			# get the altenate account pattern from org policy control settings
+			if( [Helpers]::CheckMember($this.ControlSettings,"AlernateAccountRegularExpressionForOrg"))
+			{
+				$AltAccountRegX = $this.ControlSettings.AlernateAccountRegularExpressionForOrg
+			}
+			else
+			{
+				# if unable to get the altenate account pattern from policy control settings, let the control be manual 
+				$controlResult.AddMessage("Unable to get the alternate account pattern for your org. Please verify manually")
+				return $controlResult;
+			}
+			if(($this.PIMAssignmentswithPName| Measure-Object).Count -gt 0)
+			{
+				# get pim assignments for critical roles at subscription level
+				$PIMAssignmentsForCriticalRoles = $this.PIMAssignmentswithPName | Where-Object {$_.RoleDefinitionName -in $this.ControlSettings.CriticalPIMRoles.Subscription}
+				if(($PIMAssignmentsForCriticalRoles | Measure-Object).Count -gt 0)
+				{
+										
+					$nonAltPIMAccounts = $PIMAssignmentsForCriticalRoles | Where-Object{$_.PrincipalName -notmatch $AltAccountRegX}
+					if(($nonAltPIMAccounts | Measure-Object).Count -gt 0)
+					{
+						$nonAltPIMAccountsWithRoles = $PIMAssignmentsForCriticalRoles | Where-Object{$_.DisplayName -in $nonAltPIMAccounts.DisplayName}
+						$controlResult.AddMessage([VerificationResult]::Failed, "Non alternate accounts are assigned critical roles")
+						$controlResult.AddMessage($($nonAltPIMAccountsWithRoles | Select-Object -Property "PrincipalName", "RoleDefinitionName","Scope","ObjectType" ))
+					}
+					else
+					{
+						$controlResult.AddMessage([VerificationResult]::Passed, "No Non alternate accounts are assigned critical roles")
+					}
+				}
+			}
+		
+		
+
+	return $controlResult;
 	}
 	hidden [void] LoadRBACConfig()
 	{
@@ -1682,7 +1747,8 @@ class SubscriptionCore: AzSVTBase
 										#If roleAssignment is non permanent, even the active PIM assignments would appear in this list
 										$item.IsPIMEnabled=$true;
 										$this.PIMAssignments.Add($item);
-										
+										$tempRBExtendObject = [TelemetryRBACExtended]::new($item, $roleAssignment.subject.principalName)
+										$this.PIMAssignmentswithPName.Add($tempRBExtendObject);
 									}
 									else
 									{
@@ -1766,6 +1832,8 @@ class SubscriptionCore: AzSVTBase
 										#If roleAssignment is non permanent and not active
 										$item.IsPIMEnabled=$true;
 										$this.RGLevelPIMAssignments.Add($item);
+										$tempRBExtendObject = [TelemetryRBACExtended]::new($item, $roleAssignment.subject.principalName)
+										$this.PIMRGLevelAssignmentswithPName.Add($tempRBExtendObject);
 										
 									}
 									else

@@ -102,6 +102,12 @@ class CommandBase: AzSKRoot {
 		{
 			$folderPath = $this.GetOutputFolderPath();
 			$methodResult = $methodToCall.Invoke(@());
+
+			if(-not $this.DoNotOpenOutputFolder) {
+				if (Test-Path $folderPath) {
+					Invoke-Item -Path $folderPath;
+				}
+			}
 		}
 else {
 	
@@ -150,8 +156,9 @@ else {
         $GeneratePDFReport = $this.InvocationContext.BoundParameters["GeneratePDF"];
         try {
             if (-not [string]::IsNullOrEmpty($folderpath)) {
+
                 switch ($GeneratePDFReport) {
-                    None {
+					None {
                         # Do nothing
                     }
                     Landscape {
@@ -172,6 +179,20 @@ else {
         $AttestControlParamFound = $this.InvocationContext.BoundParameters["AttestControls"];
 		if($null -eq $AttestControlParamFound)
 		{
+
+			#If controls are attested then open folder when rescan of attested controls is complete
+			$controlAttested = $false
+			if( ([FeatureFlightingManager]::GetFeatureStatus("EnableScanAfterAttestation","*"))) { 
+				#Global variable "AttestationValue" is set to true when one or more controls are attested in current scan
+				#Ignore if variable AttestationValue is not found
+				if (Get-Variable AttestationValue -Scope Global -ErrorAction Ignore){
+					if ( $Global:AttestationValue){
+						$controlAttested = $true
+					}
+				}
+			}
+
+			if ( !$controlAttested){
 			if((-not $this.DoNotOpenOutputFolder) -and (-not [string]::IsNullOrEmpty($folderPath)))
 			{
 				try
@@ -182,6 +203,7 @@ else {
 				{
 					#ignore if any exception occurs
 				}
+			}
 			}
 		}
 		}

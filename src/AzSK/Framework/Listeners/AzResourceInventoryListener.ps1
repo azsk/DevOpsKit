@@ -33,11 +33,18 @@ class AzResourceInventoryListener: ListenerBase
         try
         {
             $scanSource = [RemoteReportHelper]::GetScanSource();
-            if($scanSource -ne [ScanSource]::Runbook) { return; }
+             if($scanSource -ne [ScanSource]::Runbook -or $event.Sender.InvocationContext.MyCommand.Name -ne 'Get-AzSKAzureServicesSecurityStatus') { return; }
             $SubscriptionId = ([ContextHelper]::GetCurrentRMContext()).Subscription.Id;
             [ResourceInventory]::FetchResources();
             [AzResourceInventoryListener]::PostAzResourceInventory();            
             $resources= [ResourceInventory]::RawResources
+            $controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+            $maxResourceCount = $controlSettings.MaxResourceInventoryObjectsCount
+            if($resources.Count -gt $maxResourceCount)
+            {
+                 $resources= [ResourceInventory]::FilteredResources
+                 [AIOrgTelemetryHelper]::PublishEvent( "Raw Resource Inventory Aborted",@{"TotalResources"= $([ResourceInventory]::RawResources |Measure-Object).Count;"AzSKScanableResources"=$(([ResourceInventory]::FilteredResources| Measure-Object).Count); "SubscriptionId"=$SubscriptionId;"PartialScanIdentifier"=$this.PartialScanIdentifier;}, $null)
+            }
             $resourceGroups = Get-AzResourceGroup
             $resourceDetails = @();
             $telemetryEvents = [System.Collections.ArrayList]::new()
