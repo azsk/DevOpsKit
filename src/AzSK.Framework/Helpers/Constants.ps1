@@ -138,7 +138,9 @@ class Constants
 	static [string] $AutomationWebhookName="WebhookForAlertRunbook"
 	static [string] $AutomationAccountName="AzSKContinuousAssurance"
 	static [int] $AlertWebhookUriExpiryInDays = 60	
-
+	static [string] $AzSKContainerName = "azsk-ca-container"
+	static [string] $AzSKFunctionAppName = "azskcasheduler"
+	static [string] $AzSKContainerImage = "azskteam/azsk:latest"
 	static [int] $DefaultControlExpiryInDays = 90
 	static [int] $PartialScanMaxRetryCount = 3
 
