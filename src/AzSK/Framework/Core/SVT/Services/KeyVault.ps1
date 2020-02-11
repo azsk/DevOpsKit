@@ -736,7 +736,7 @@ class KeyVault: AzSVTBase
 					[MessageData]::new("Firewall is not enabled to deny requests from unknown hosts"))
 			}
 		} catch {
-			$controlResult.AddMessage([VerificationResult]::Failed, 
+			$controlResult.AddMessage([VerificationResult]::Manual, 
 					[MessageData]::new("Unable to check if the firewall was setup."))
 		}
 		return $controlResult
