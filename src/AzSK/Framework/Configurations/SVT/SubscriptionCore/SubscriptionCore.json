@@ -515,7 +515,7 @@
       "ControlID": "Azure_Subscription_Config_ASC_Security_Policy",
       "Description": "Azure Security Center (ASC) policies must be correctly configured on the subscription.",
       "Id": "SubscriptionCore330",
-      "ControlSeverity": "Medium",
+      "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSecurityPolicy",
       "Recommendation": "Run command 'Set-AzSKAzureSecurityCenterPolicies -SubscriptionId '<SubscriptionId>'. Run 'Get-Help Set-AzSKAzureSecurityCenterPolicies -full' for more help. You can also manage your policy settings from azure portal https://portal.azure.com for more details, visit https://docs.microsoft.com/en-us/azure/security-center/tutorial-security-policy ",
@@ -539,11 +539,7 @@
       ],
       "FixControl": {
         "FixMethodName": "ConfigureSecurityCenter",
-        "FixControlImpact": "Medium",
-        "Parameters": {
-          "SecurityContactEmails": "",
-          "SecurityPhoneNumber": ""
-        }
+        "FixControlImpact": "Medium"
       },
       "Rationale": "ASC security policies define the desired configuration of your workloads and helps ensure you're complying with the security requirements of your company or regulators. It provides key policy settings (e.g., is patching configured for VMs?, is threat detection enabled for SQL?, etc.) and alerts about resources which are not compliant to those policy settings. Correctly configuring ASC is critical as it gives a baseline layer of protection for the subscription and commonly used resource types."
     },
@@ -575,11 +571,7 @@
       ],
       "FixControl": {
         "FixMethodName": "ConfigureSecurityCenter",
-        "FixControlImpact": "Medium",
-        "Parameters": {
-          "SecurityContactEmails": "",
-          "SecurityPhoneNumber": ""
-        }
+        "FixControlImpact": "Medium"
       },
       "Rationale": "ASC monitors various security parameters on a VM such as missing updates, OS security settings, endpoint protection status, and health and threat detections, etc using a monitoring agent. This agent needs to be provisioned and running on VMs for the monitoring work. When automatic provisioning is ON, ASC provisions the Microsoft Monitoring Agent (MMA) on all supported Azure VMs and any new ones that are created."
     },
@@ -610,7 +602,7 @@
         "properties.securityContactConfiguration.sendToAdminOn"
       ],
       "FixControl": {
-        "FixMethodName": "ConfigureSecurityCenter",
+        "FixMethodName": "ConfigureSecurityContact",
         "FixControlImpact": "Medium",
         "Parameters": {
           "SecurityContactEmails": "",

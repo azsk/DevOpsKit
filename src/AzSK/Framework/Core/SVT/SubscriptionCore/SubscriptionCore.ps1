@@ -1924,7 +1924,6 @@ class SubscriptionCore: AzSVTBase
 			if(($this.MisConfiguredSecurityPolicySettings | Measure-Object).Count -ne 0)
 			{
 				$controlResult.EnableFixControl = $true;
-
 				$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredSecurityPolicySettings);
 				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredSecurityPolicySettings));
 			}
@@ -1945,13 +1944,14 @@ class SubscriptionCore: AzSVTBase
 
 			if(-not [string]::IsNullOrWhiteSpace($this.MisConfiguredAutoProvisioningSettings))
 		      {
+				 $controlResult.EnableFixControl = $true;
 			     $controlResult.SetStateData("Misconfigured AutoProvisioning Policy", $this.MisConfiguredAutoProvisioningSettings);
-			     $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("AutoProvisioning setting is not configured. Please update the setting in order to comply", $this.MisConfiguredAutoProvisioningSettings));
+			     $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("AutoProvisioning setting is disabled.", $this.MisConfiguredAutoProvisioningSettings));
 			  }
 			
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("AutoProvisioning is correctly configured."));
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("AutoProvisioning is enabled."));
 			}
 		}
 		return $controlResult
@@ -1965,13 +1965,14 @@ class SubscriptionCore: AzSVTBase
 
 			if(-not [string]::IsNullOrWhiteSpace($this.MisConfiguredSecurityContactDetails))
 		      {
+				 $controlResult.EnableFixControl = $true;
 			     $controlResult.SetStateData("Misconfigured Security Contact Details", $this.MisConfiguredSecurityContactDetails);
-			     $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Security Contacts are not configured. Please update the setting in order to comply", $this.MisConfiguredSecurityContactDetails));
+			     $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Security contacts are not configured.", $this.MisConfiguredSecurityContactDetails));
 		      }
 			
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Security Contacts are correctly configured."));
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Security contacts are correctly configured."));
 			}
 		}
 		return $controlResult
