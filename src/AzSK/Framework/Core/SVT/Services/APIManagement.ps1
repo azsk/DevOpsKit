@@ -344,7 +344,7 @@ class APIManagement: AzSVTBase
 				# This check has been implemented because of the execution time of control as well as socket and memory limit exhaustion in case of APIMs with large number of APIs
 				# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
 					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-					$controlResult.AddMessage([VerificationResult]::Verify,[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rPlease use client certificates to secure access to the back-end service of an API and protects data in transit from network layer.To enable client certificate authentication from Azure portal please refer https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates and https://docs.microsoft.com/en-us/azure/api-management/api-management-authentication-policies."));
+					$controlResult.AddMessage([VerificationResult]::Verify,[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rTotal API count for the current instance exceeded maximum limit allowed in CA scan.Please scan the control in SDL mode."));
 			
 			}
 			else{
@@ -515,7 +515,7 @@ class APIManagement: AzSVTBase
 					# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
 					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 					$controlResult.AddMessage([VerificationResult]::Verify,
-					[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rPlease ensure IP filter policy is configured for APIM.a) Run command 'Get-AzApiManagementPolicy' to check IP addresses filter configured in your APIM service. b) Use 'ip-filter' policy filters to allow and deny calls from specific IP addresses and/or address ranges. c) Do not add IP range $($this.ControlSettings.UniversalIPRange) as that allows access to all possible IPs. Please refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-access-restriction-policies#RestrictCallerIPs"));
+					[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rTotal API count for the current instance exceeded maximum limit allowed in CA scan.Please scan the control in SDL mode."));
 				
 			}
 			else{
@@ -902,7 +902,7 @@ class APIManagement: AzSVTBase
 					# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
 					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 					$controlResult.AddMessage([VerificationResult]::Verify,
-					[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rPlease ensure that 'validate-jwt' policy is configured for APIM.For steps to add JWT Validate Token policy please refer: https://docs.microsoft.com/en-us/azure/api-management/api-management-access-restriction-policies#ValidateJWT and https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-protect-backend-with-aad#configure-a-jwt-validation-policy-to-pre-authorize-requests"));
+					[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rTotal API count for the current instance exceeded maximum limit allowed in CA scan.Please scan the control in SDL mode."));
 				
 			}
 			else{
