@@ -114,13 +114,14 @@ class SVTResourceResolver: AzSKRoot
             $apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.organizationName);
 
             $inputbody = "{'contributionIds':['ms.vss-features.my-organizations-data-provider'],'dataProviderContext':{'properties':{'sourcePage':{'url':'https://dev.azure.com/$($this.organizationName)','routeId':'ms.vss-tfs-web.suite-me-page-route','routeValues':{'view':'projects','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
-            #try {
+            try {
                 $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
-           # }
-            #catch {
-            #    Write-Error 'Organization not found: Incorrect organization name or you do not have neccessary permission to access the organization.'
-             #   [ListenerHelper]::UnregisterListeners();
-            #}
+            }
+            catch {
+                Write-Error 'Organization not found: Incorrect organization name or you do not have neccessary permission to access the organization.'
+                #[ListenerHelper]::UnregisterListeners();
+                throw;
+            }
            
             #Select Org/User by default...
             $svtResource = [SVTResource]::new();
