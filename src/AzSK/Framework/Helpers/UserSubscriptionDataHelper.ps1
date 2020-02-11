@@ -5,6 +5,8 @@ class UserSubscriptionDataHelper: AzSKRoot
 	hidden static [string] $ResourceGroupName = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
 	hidden static [string] $ResourceGroupLocation = [ConfigurationManager]::GetAzSKConfigData().AzSKLocation
 	hidden static [string] $AutomationAccountName = [Constants]::AutomationAccountName
+	hidden static [string] $AzSKContainerName = [Constants]::AzSKContainerName
+	hidden static [string] $AzSKFunctionAppName = [Constants]::AzSKFunctionAppName
 	hidden static [string] $StorageResourceType = "Microsoft.Storage/storageAccounts";
 
 	UserSubscriptionDataHelper([string] $subscriptionId):
@@ -68,6 +70,16 @@ class UserSubscriptionDataHelper: AzSKRoot
 	static [string] GetCAName()
 	{
 		return [UserSubscriptionDataHelper]::AutomationAccountName
+	}
+
+	static [string] GetContainerName()
+	{
+		return [UserSubscriptionDataHelper]::AzSKContainerName
+	}
+# Remove
+	static [string] GetFunctionAppName()
+	{
+		return [UserSubscriptionDataHelper]::AzSKFunctionAppName
 	}
 	
 	static [PSObject] UpgradeBlobToV2Storage() 

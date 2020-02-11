@@ -235,6 +235,39 @@ class ARMPolicy: AzCommandBase
 		}
 	}
 
+	[void] RemoveDeprecatedDefinitions()
+	{
+		if ($null -ne $this.SubPolicyInitiative -and ($this.SubPolicyInitiative.DeprecatedDefinitions | Measure-Object).Count -gt 0)
+		{
+			$retainDefinitions = @()
+			$isInitiativeResetSuccessful= $true;
+			$this.SubPolicyInitiative.DeprecatedDefinitions = $this.SubPolicyInitiative.DeprecatedDefinitions.Replace("{0}", $($this.SubscriptionContext.SubscriptionId)) 
+			$InitiativeName = $this.SubPolicyInitiative.Name;
+			$Initiative = Get-AzPolicySetDefinition -Name $InitiativeName -ErrorAction SilentlyContinue
+			# Remove deprecated definitions from initiative
+			if ($null -ne $Initiative)
+			{
+				$retainDefinitions = $initiative.Properties.policyDefinitions | Where-Object { $_.policyDefinitionId -notin $this.SubPolicyInitiative.DeprecatedDefinitions } | Select-Object policyDefinitionId, parameters
+				$retainDefinitions = $($retainDefinitions | ConvertTo-Json -depth 10 | Out-String)
+				try
+				{
+					Set-AzPolicySetDefinition -Name $initiativeName -PolicyDefinition $retainDefinitions -ErrorAction Stop | Out-Null	
+				}
+				catch
+				{
+					$isInitiativeResetSuccessful = $false
+				}
+			}
+			Start-Sleep -Seconds 15
+			if ($isInitiativeResetSuccessful) {
+				$this.SubPolicyInitiative.DeprecatedDefinitions | ForEach-Object {
+					$definitionId = $_
+					Remove-AzPolicyDefinition -Id $definitionId -Force -ErrorAction SilentlyContinue
+				}
+			}
+		}
+	}
+
 	[void] RemoveDeprecatedInitiatives()
 	{
 		if($null -ne $this.SubPolicyInitiative -and ($this.SubPolicyInitiative.DeprecatedInitiatives | Measure-Object).Count -gt 0)
@@ -424,6 +457,121 @@ class ARMPolicy: AzCommandBase
 		}
 	}	    
 
+	[void] CreateCustomDefinitions()
+	{ 
+		# Read custom definitions from Subscription.Definitions.json
+		$subscriptionId = $this.SubscriptionContext.SubscriptionId
+		$scope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"		
+		$policyDefinitionsDetails = [ConfigurationHelper]::LoadServerConfigFile("Subscription.Definitions.json", $true, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore)
+		if ($policyDefinitionsDetails -and [Helpers]::CheckMember($policyDefinitionsDetails, "CustomDefinitions"))
+		{
+			$policyDefinitionsDetails.CustomDefinitions | ForEach-Object {
+				# Fetch feature wise controls
+				$_.Controls | ForEach-Object {
+
+					# 1. Read defintion name and description
+					$policyObj = "" | Select-Object ControlId, Description, DefinitionName, PolicyRule, Parameters
+					$policyObj.ControlId = $_.ControlId
+					$policyObj.Description = $_.Description
+					$policyObj.DefinitionName = $_.CustomDefinitionName	# Here internal control id should be used as definition name eg., AppService240		
+
+					# 2. Fetch policy definitions rules and parameter
+					$policyContent = $_.PolicyDefinition;
+					if ($policyContent | Get-Member -Name policyRule)
+					{
+						$policyRule = ($policyContent.policyRule | ConvertTo-Json -Depth 10).ToString()
+						$policyObj.PolicyRule = $policyRule
+					}
+
+					if ($policyContent | Get-Member -Name parameters)
+					{
+						$parameters = ($policyContent.parameters | ConvertTo-Json -Depth 10).ToString()
+						$policyObj.Parameters = $parameters
+					}
+
+					# 3. Create definition
+					if (-not [String]::IsNullOrEmpty($Scope) -and -not [String]::IsNullOrEmpty($policyObj.PolicyRule) -and -not [String]::IsNullOrEmpty($policyObj.DefinitionName))
+					{
+						
+						try
+						{
+							if (-not [String]::IsNullOrEmpty($policyObj.Parameters))
+							{
+								New-AzPolicyDefinition -Mode All -Name $policyObj.DefinitionName `
+									-DisplayName $policyObj.ControlId `
+									-Description $policyObj.Description `
+									-Policy $policyObj.PolicyRule `
+									-Parameter $policyObj.Parameters `
+									-SubscriptionId $SubscriptionId `
+									-ErrorAction Stop | Out-Null
+							}
+							else
+							{
+								New-AzPolicyDefinition -Mode All -Name $policyObj.DefinitionName `
+									-DisplayName $policyObj.ControlId `
+									-Description $policyObj.Description `
+									-Policy $policyObj.PolicyRule `
+									-SubscriptionId $SubscriptionId `
+									-ErrorAction Stop | Out-Null
+							}
+						}
+						catch
+						{
+							#eat exception if definition failed to get created to avoid breaking code flow.
+						}
+					}
+
+				}#foreach end
+			}#foreach end
+		}		
+	}
+
+	[MessageData[]] UpdateCustomDefinitionsList()
+	{
+		[MessageData[]] $messages = @();
+		if ($null -ne $this.SubPolicyInitiative.CustomPolicies)
+		{
+			$successfullyCreatedDefinitions = @()
+			$failedToReadDefinitionDetails = @()
+			$this.SubPolicyInitiative.CustomPolicies |
+			ForEach-Object {
+				$_.policyDefinitionId = $_.policyDefinitionId.Replace("{0}", $this.SubscriptionContext.SubscriptionId)
+				if (-not [String]::IsNullOrEmpty($_.policyDefinitionId))
+				{
+					try
+					{
+						$definition = Get-AzPolicyDefinition -Id "$($_.policyDefinitionId)" -ErrorAction Stop
+						if ($definition)
+						{
+							$successfullyCreatedDefinitions += $_
+						}
+						else
+						{
+							$failedToReadDefinitionDetails += $_
+						}
+					}
+					catch
+					{
+						#eat exception if failure occur while reading definition details
+					}
+				}		
+			} #foreach end
+			
+
+			# Updating custom policies with the list of existing definition
+			if ($successfullyCreatedDefinitions)
+			{
+				$messages += [MessageData]::new([Constants]::SingleDashLine + "`r`nAdding following policy definitions to the subscription. Total policies: $($($successfullyCreatedDefinitions | Measure-Object).Count)", $successfullyCreatedDefinitions);
+				$this.SubPolicyInitiative.CustomPolicies = $successfullyCreatedDefinitions
+			}
+			if ($failedToReadDefinitionDetails)
+			{
+				$messages += [MessageData]::new([Constants]::SingleDashLine + "`r`nFailed to add following policy definitions to the subscription. Total policies: $($($failedToReadDefinitionDetails | Measure-Object).Count)", $failedToReadDefinitionDetails);
+			}
+		}
+		return $messages
+	}
+
 	[MessageData[]] SetPolicyInitiative()
 	{	
 		[MessageData[]] $messages = @();
@@ -435,7 +583,7 @@ class ARMPolicy: AzCommandBase
 			$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName
 			if($null -ne $this.SubPolicyInitiative)
 			{
-				$this.RemoveDeprecatedInitiatives();
+				$this.RemoveDeprecatedInitiatives();			
 				if($this.SubPolicyInitiative.Name -eq $initiativeName -and ($this.SubPolicyInitiative.Policies | Measure-Object).Count -gt 0)
 				{		
 					$initiative = $null;
@@ -458,15 +606,63 @@ class ARMPolicy: AzCommandBase
 					$scope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"
 					if($null -eq $initiative)
 					{
-						$this.PublishCustomMessage("Creating new AzSK Initiative...", [MessageType]::Update);		
-						$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
+						$this.PublishCustomMessage("Creating new AzSK Initiative...", [MessageType]::Update);
+						if([FeatureFlightingManager]::GetFeatureStatus("AllowCustomDefinitionsForPolicyScan", $($this.SubscriptionContext.SubscriptionId)) -eq $true)
+						{
+							try
+							{
+								$this.RemoveDeprecatedDefinitions();
+								$this.CreateCustomDefinitions();
+								$messages += $this.UpdateCustomDefinitionsList()
+								$PolicyDefnitions = @()
+								$PolicyDefnitions += $this.SubPolicyInitiative.Policies
+								if($this.SubPolicyInitiative.CustomPolicies)
+								{
+									$PolicyDefnitions += $this.SubPolicyInitiative.CustomPolicies
+								}
+								$PolicyDefnitions = $PolicyDefnitions | ConvertTo-Json -depth 10 | Out-String
+							}
+							# If error occurs while execution of custom policies, continue with built-in policies normal flow
+							catch
+							{
+								$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
+							}							
+						}
+						else
+						{
+							$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
+						}	
 						New-AzPolicySetDefinition -Name $initiativeName -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions | Out-Null
 						Start-Sleep -Seconds 15
 						
 					}
 					elseif($this.UpdateInitiative) {
 						$this.PublishCustomMessage("Updating AzSK Initiative...", [MessageType]::Update);
-						$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
+						if([FeatureFlightingManager]::GetFeatureStatus("AllowCustomDefinitionsForPolicyScan", $($this.SubscriptionContext.SubscriptionId)) -eq $true)
+						{
+							try
+							{
+								$PolicyDefnitions = @()
+								$this.RemoveDeprecatedDefinitions();
+								$this.CreateCustomDefinitions();
+								$messages += $this.UpdateCustomDefinitionsList()
+								$PolicyDefnitions += $this.SubPolicyInitiative.Policies
+								if($this.SubPolicyInitiative.CustomPolicies)
+								{
+									$PolicyDefnitions += $this.SubPolicyInitiative.CustomPolicies
+								}
+								$PolicyDefnitions = $PolicyDefnitions | ConvertTo-Json -depth 10 | Out-String
+							}
+							# If error occurs while execution of custom policies, continue with built-in policies normal flow
+							catch
+							{
+								$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
+							}
+						}
+						else
+						{
+							$PolicyDefnitions = $this.SubPolicyInitiative.Policies | ConvertTo-Json -depth 10 | Out-String
+						}						
 						Set-AzPolicySetDefinition -Name $this.SubPolicyInitiative.Name -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions | Out-Null
 						Start-Sleep -Seconds 15						
 					}
@@ -580,4 +776,6 @@ class PolicyInitiative
 	[string] $Description;
 	[PSObject[]] $Policies;	
 	[string[]] $DeprecatedInitiatives;
+	[PSObject[]] $CustomPolicies;
+	[string[]] $DeprecatedDefinitions;
 }

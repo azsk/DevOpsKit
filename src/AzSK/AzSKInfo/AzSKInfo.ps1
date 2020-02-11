@@ -96,10 +96,7 @@ function Get-AzSKInfo
 		[Alias("cidc")]
 		$ControlIdContains,
 
-		[switch]
-		[Alias("sc")]
-		$Sync,
-		
+				
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
 		[Alias("dnof")]
@@ -215,14 +212,7 @@ function Get-AzSKInfo
 							
 						if ($complianceInfo) 
 						{
-								if($Sync)
-								{
-								return $complianceInfo.InvokeFunction($complianceInfo.UpdateStorageComplianceData);
-								}
-								else
-								{	
 									return $complianceInfo.InvokeFunction($complianceInfo.GetComplianceInfo, @($UseBaselineControls, $UsePreviewBaselineControls));
-								}	
 						}
 						
 					}

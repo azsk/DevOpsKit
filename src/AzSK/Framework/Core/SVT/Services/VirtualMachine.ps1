@@ -12,6 +12,7 @@ class VirtualMachine: AzSVTBase
 	hidden [VMDetails] $VMDetails = [VMDetails]::new()
 	hidden [PSObject] $VMControlSettings = $null;
 	hidden [string] $Workspace = "";
+	hidden [string] $WorkspaceResourceId = "";
     
 	VirtualMachine([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -24,6 +25,13 @@ class VirtualMachine: AzSVTBase
 		{
 			$metadata| Add-Member -Name VMASCDetails -Value $this.ASCSettings -MemberType NoteProperty;
 		}
+		# Add Installed Extensions deatils to resource metadata of VM 
+		if([Helpers]::CheckMember($this.ResourceObject, "Extensions") -and ($this.ResourceObject.Extensions | Measure-Object).Count -gt 0)
+		{
+			$vmExtensionList = $this.ResourceObject.Extensions | Select-Object "Publisher", "VirtualMachineExtensionType", "TypeHandlerVersion" 
+			$metadata| Add-Member -Name VMExtensions -Value $vmExtensionList -MemberType NoteProperty;
+		}
+
 		$this.AddResourceMetadata($metadata);		
 		
 		#OS type must always be present in configuration setting file
@@ -195,6 +203,12 @@ class VirtualMachine: AzSVTBase
 			{
 				$this.Workspace = $laWSSetting.value;
 			}
+
+			$laWSResourceId = $this.ASCSettings.properties.resourceDetails | Where-Object {$_.name -eq $this.ControlSettings.VirtualMachine.ASCPolicies.ResourceDetailsKeys.WorkspaceResourceId };
+			if($null -ne $laWSResourceId)
+			{
+				$this.WorkspaceResourceId = $laWSResourceId.value;
+			}
 		}
 
         return $this.ResourceObject;
@@ -326,7 +340,7 @@ class VirtualMachine: AzSVTBase
 				$LinuxAntimalwareStatusWSQuery =[string]::Format($this.VMControlSettings.QueryForLinuxAntimalwareStatus,($this.ResourceContext.ResourceId).ToLower());
 				$queryStatusResult = [LogAnalyticsHelper]::QueryStatusfromWorkspace($this.Workspace, $LinuxAntimalwareStatusWSQuery);
 
-				if($queryStatusResult -ne $null -and ($queryStatusResult | Measure-Object).Count -gt 0 )
+				if($queryStatusResult -ne $null -and $queryStatusResult.Count -gt 0)
 				{
 					$controlResult.AddMessage([VerificationResult]::Passed,"Antimalware is configured correctly on the VM. Validated the status through ASC workspace query."); 
 				}
@@ -641,15 +655,18 @@ class VirtualMachine: AzSVTBase
 							$hasControlFailed = $true
 						}
 					}
-						
-					if(($installedExtensions | Measure-Object).Count -gt 0){
-						$controlResult.AddMessage("Following extensions are present in VM:",$installedExtensions);
+					
+					if($hasControlFailed){
+						$controlResult.AddMessage("Listing issues with VM extensions (extensions that are missing or *not healthy*)");
+					}
+					if(($missingExtensions | Measure-Object).Count -gt 0){
+						$controlResult.AddMessage("Following required extensions are not present in VM:",$missingExtensions);
 					}
 					if(($unhealthyExtensions | Measure-Object).Count -gt 0){
 						$controlResult.AddMessage("Following extensions are present in VM but are not healthy:",$unhealthyExtensions);
 					}
-					if(($missingExtensions | Measure-Object).Count -gt 0){
-						$controlResult.AddMessage("Following required extensions are not present in VM:",$missingExtensions);
+					if(($installedExtensions | Measure-Object).Count -gt 0){
+						$controlResult.AddMessage("Following extensions are present and are in healthy state:",$installedExtensions);
 					}
 					
 					if($hasControlFailed){
@@ -959,7 +976,8 @@ class VirtualMachine: AzSVTBase
 				{
 					$controlResult.VerificationResult=[VerificationResult]::Verify;
 					$controlResult.AddMessage("Details of missing patches can be obtained from the following workspace");
-					$controlResult.AddMessage("Workspace : ",$workspaceId);
+					$controlResult.AddMessage("Workspace ResourceId: ",($this.WorkspaceResourceId));
+					$controlResult.AddMessage("Workspace Id: ",$workspaceId);
 					$controlResult.AddMessage("The following query can be used to obtain patch details:");
 					$controlResult.AddMessage("Query : ",$queryforPatchDetails);
 				}				
@@ -1060,7 +1078,9 @@ class VirtualMachine: AzSVTBase
 			{
 				$controlResult.VerificationResult = [VerificationResult]::Verify
 				$controlResult.AddMessage("Unable to validate baseline status from workspace.Please verify.");
-				$controlResult.AddMessage("Details of failing baseline rules can be obtained from Log Analytics workspace :" ,$workspaceId);
+				$controlResult.AddMessage("Details of failing baseline rules can be obtained from Log Analytics workspace.");
+				$controlResult.AddMessage("Workspace ResourceId: ",($this.WorkspaceResourceId));
+				$controlResult.AddMessage("Workspace Id: ",$workspaceId);
 				$controlResult.AddMessage("The following query can be used to obtain failing baseline rules :  ",$queryforFailingBaseline);
 			}
 		}

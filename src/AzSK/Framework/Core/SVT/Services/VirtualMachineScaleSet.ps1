@@ -21,11 +21,14 @@ class VirtualMachineScaleSet: AzSVTBase
     { 
 		$this.GetResourceObject();
 		$this.GetVMSSDetails();
-		
 		#OS type must always be present in configuration setting file
 		if([Helpers]::CheckMember($this.ControlSettings.VirtualMachineScaleSet, $this.VMSSDetails.OSType)){
 			$this.VMSSControlSettings = $this.ControlSettings.VirtualMachineScaleSet.$($this.VMSSDetails.OSType);
 		}
+		# Add VMSS resource meta data details to telemetry
+		$metadata= [PSObject]::new();
+		$metadata| Add-Member -Name VMSSDetails -Value $this.VMSSDetails -MemberType NoteProperty;
+		$this.AddResourceMetadata($metadata);
     }
 
 	[ControlItem[]] ApplyServiceFilters([ControlItem[]] $controls)
@@ -84,6 +87,10 @@ class VirtualMachineScaleSet: AzSVTBase
 			$this.VMSSDetails.Offer = $this.ResourceObject.VirtualMachineProfile.StorageProfile.ImageReference.Offer
 		}		
 
+		if([Helpers]::CheckMember($this.ResourceObject,"Sku.Capacity")){
+			$this.VMSSDetails.Capacity = $this.ResourceObject.Sku.Capacity
+		}
+		
 		#Get if VM is connected to ERvNet
 		$this.VMSSDetails.IsVMSSConnectedToERvNet = $this.IsVMSSConnectedToERvNet()
 
@@ -704,4 +711,5 @@ Class VMSSDetails{
 [string] $Sku
 [bool] $IsVMSSConnectedToERvNet
 [bool] $IsVMSSDeallocated
+[int] $Capacity
 }

@@ -801,6 +801,14 @@ class SVTBase: AzSKRoot
 			{
 				if(-not [string]::IsNullOrWhiteSpace($eventContext.ControlItem.PolicyDefinitionGuid))
 				{
+					
+					#update with policy compliance state result; This result will be captured in AI telemetry data
+					#todo: currently excluding child controls
+					$policyScanResult = $this.CheckPolicyCompliance($eventContext.ControlItem, $eventContext.ControlResults[0]);
+
+					#TODO: Remove this block if new logic of policy compliance check works as expected
+					# This block can be reused if we want to replace control scanned result with policy complaince state
+					<#
 					#create default controlresult
 					$policyScanResult = $this.CreateControlResult($eventContext.ControlItem.FixControl);
 					#update default controlresult with policy compliance state
@@ -811,6 +819,7 @@ class SVTBase: AzSKRoot
 						$finalScanResult = $this.ComputeFinalScanResult($eventContext.ControlResults[0],$policyScanResult)
 						$eventContext.ControlResults[0] = $finalScanResult
 					}
+					#>				
 				}
 			}
 			
