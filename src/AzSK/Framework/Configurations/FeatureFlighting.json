@@ -1,30 +1,30 @@
-﻿{
+﻿{  
   "Version": "3.1810.0",
-  "Features": [
+  "Features": [   
     {
       "Name": "EnableAzurePolicyBasedScan",
       "Description" : "",
       "Sources" : ["*"],
       "EnabledForSubs": [],
-      "DisabledForSubs": [],
+      "DisabledForSubs": [],      
       "UnderPreview" : false,
-      "IsEnabled": false
+      "IsEnabled": false      
     },
     {
       "Name": "IsSetAzStorageBlobAvailable",
       "Description" : "",
       "Sources" : ["*"],
       "EnabledForSubs": [],
-      "DisabledForSubs": [],
+      "DisabledForSubs": [],      
       "UnderPreview" : false,
-      "IsEnabled": true
+      "IsEnabled": true      
     },
     {
       "Name": "EnableAnonymousAccessCheckUsingAPI",
       "Description" : "",
       "Sources" : ["*"],
       "EnabledForSubs": [],
-      "DisabledForSubs": [],
+      "DisabledForSubs": [],      
       "UnderPreview" : false,
       "IsEnabled": true
     },
@@ -33,7 +33,7 @@
       "Description" : "",
       "Sources" : ["*"],
       "EnabledForSubs": [],
-      "DisabledForSubs": [],
+      "DisabledForSubs": [],      
       "UnderPreview" : false,
       "IsEnabled": false
     },
@@ -42,7 +42,7 @@
       "Description" : "",
       "Sources" : ["*"],
       "EnabledForSubs": [],
-      "DisabledForSubs": [],
+      "DisabledForSubs": [],      
       "UnderPreview" : false,
       "IsEnabled": true
     },
@@ -51,23 +51,23 @@
       "Description" : "",
       "Sources" : ["*"],
       "EnabledForSubs": [],
-      "DisabledForSubs": [],
+      "DisabledForSubs": [],      
       "UnderPreview" : false,
       "IsEnabled": false
     },
     {
       "Name": "EnableResourceGroupTagTelemetry",
       "Description" : "",
-      "Sources": ["*"],
+      "Sources" : ["*"],
       "EnabledForSubs": [],
-      "DisabledForSubs": [],
+      "DisabledForSubs": [],      
       "UnderPreview" : false,
       "IsEnabled": false
     },
     {
       "Name": "EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",
       "Description": "",
-      "Sources" : ["*"],
+      "Sources": ["*"],
       "EnabledForSubs": [],
       "DisabledForSubs": [],
       "UnderPreview": false,
@@ -75,10 +75,10 @@
     },
     {
       "Name": "EnableResourceGroupPersistentAccessCheck",
-      "Description": "",
+      "Description" : "",
       "Sources" : ["CA"],
       "EnabledForSubs": [],
-      "DisabledForSubs": [],
+      "DisabledForSubs": [],      
       "UnderPreview" : false,
       "IsEnabled": true
     },
@@ -176,7 +176,7 @@
     {
       "Name": "EnableVnetFixForSub",
       "Description": "",
-      "Sources": ["*"],
+      "Sources": [ "*" ],
       "EnabledForSubs": [],
       "DisabledForSubs": [],
       "UnderPreview": false,
@@ -212,20 +212,11 @@
     {
       "Name": "ExcludeControlForLargeAPIM",
       "Description": "",
-      "Sources": [ "CA" ],
+      "Sources": ["CA"],
       "EnabledForSubs": [],
       "DisabledForSubs": [],
       "UnderPreview": false,
       "IsEnabled": true
-    },
-    {
-      "Name": "AllowCustomDefinitionsForPolicyScan",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": false
     }
   ]
 }
