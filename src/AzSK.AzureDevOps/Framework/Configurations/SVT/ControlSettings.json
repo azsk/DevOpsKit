@@ -270,6 +270,7 @@
     "WebhookValidityInDays": 60,
     "variablesToSkip": []
   },
+  "PreviewBaselineControls":{ "ResourceTypeControlIdMappingList": []},
   "BaselineControls": {
     "ResourceTypeControlIdMappingList": [
       {
