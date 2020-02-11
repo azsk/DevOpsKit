@@ -296,13 +296,13 @@ class AIOrgTelemetry: ListenerBase {
 				$IsPolicyBasedScanFeatureEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan", "$($context.SubscriptionContext.SubscriptionId)")
 				if ($IsPolicyBasedScanFeatureEnabled)
 				{
-					if ($null -ne $results[0].PolicyVerificationResult)
+					if ($null -ne $results[0].PolicyState)
 					{
-						$properties.Add("PolicyVerificationResult", $results[0].PolicyVerificationResult)
+						$properties.Add("PolicyState.PolicyVerificationResult", $results[0].PolicyState.PolicyVerificationResult)
 						# TODO: Add feature flight after discussion
-						if (($null -ne $results[0].PolicyStateManagement) -and ($null -ne $results[0].PolicyStateManagement.DataObject))
+						if (($null -ne $results[0].PolicyState) -and ($null -ne $results[0].PolicyState.DataObject))
 						{
-							$properties.Add("CurrentPolicyComplianceState", [JsonHelper]::ConvertToJsonCustomCompressed($results[0].PolicyStateManagement.DataObject))
+							$properties.Add("PolicyState.CurrentPolicyComplianceState", [JsonHelper]::ConvertToJsonCustomCompressed($results[0].PolicyState.DataObject))
 						}
 					}
 				}
@@ -331,13 +331,13 @@ class AIOrgTelemetry: ListenerBase {
 					$IsPolicyBasedScanFeatureEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan", "$($context.SubscriptionContext.SubscriptionId)")
 					if ($IsPolicyBasedScanFeatureEnabled)
 					{
-						if ($null -ne $result.PolicyVerificationResult)
+						if ($null -ne $result.PolicyState)
 						{
-							$propertiesIn.Add("PolicyVerificationResult", $result.PolicyVerificationResult)
+							$propertiesIn.Add("PolicyState.PolicyVerificationResult", $result.PolicyState.PolicyVerificationResult)
 							# TODO: Add feature flight after discussion
-							if (($null -ne $result.PolicyStateManagement) -and ($null -ne $result.PolicyStateManagement.DataObject))
+							if (($null -ne $result.PolicyState) -and ($null -ne $result.PolicyState.DataObject))
 							{
-								$propertiesIn.Add("CurrentPolicyComplianceState", [JsonHelper]::ConvertToJsonCustomCompressed($result.PolicyStateManagement.DataObject))
+								$propertiesIn.Add("PolicyState.CurrentPolicyComplianceState", [JsonHelper]::ConvertToJsonCustomCompressed($result.PolicyState.DataObject))
 							}
 						}
 					}

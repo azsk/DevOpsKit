@@ -16,13 +16,15 @@ enum VerificationResult
 
 enum PolicyVerificationResult
 {
+	NotScanned
 	Passed 
 	Failed
-	Manual
+	Verify
 	Error
 	NoResponse
 	DefinitionNotFound
 	AssignmentNotFound
+	DefinitionNotInInitiative
 }
 
 enum AttestationStatus

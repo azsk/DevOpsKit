@@ -41,10 +41,10 @@ class ResourceContext
 
 class ControlResult
 {
-    [string] $ChildResourceName = "";
+	[string] $ChildResourceName = "";
 
-    [VerificationResult] $VerificationResult = [VerificationResult]::Manual;
-    [VerificationResult] $ActualVerificationResult = [VerificationResult]::Manual;
+	[VerificationResult] $VerificationResult = [VerificationResult]::Manual;
+	[VerificationResult] $ActualVerificationResult = [VerificationResult]::Manual;
 	[SessionContext] $CurrentSessionContext = [SessionContext]::new();
 	[AttestationStatus] $AttestationStatus = [AttestationStatus]::None;
 
@@ -56,50 +56,50 @@ class ControlResult
 	[DateTime] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
 	[int] $MaximumAllowedGraceDays=0;
 	[String] $UserComments	
-    [MessageData[]] $Messages = @();
+	[MessageData[]] $Messages = @();
 
 	# To store azure policy compliance result
-	[PolicyVerificationResult] $PolicyVerificationResult = [PolicyVerificationResult]::Manual;
-	[PolicyStateManagement] $PolicyStateManagement = [PolicyStateManagement]::new();
+	[PolicyState] $PolicyState = $null;
+	
 
-    [void] AddMessage([MessageData] $messageData)
-    {
-        if((-not [string]::IsNullOrEmpty($messageData.Message)) -or ($null -ne $messageData.DataObject))
-        {
-            $this.Messages += $messageData;
-        }
-    }
+	[void] AddMessage([MessageData] $messageData)
+ {
+		if((-not [string]::IsNullOrEmpty($messageData.Message)) -or ($null -ne $messageData.DataObject))
+		{
+			$this.Messages += $messageData;
+		}
+	}
 
-    [void] AddMessage([VerificationResult] $result, [MessageData] $messageData)
-    {
-        $this.VerificationResult = $result;
-        $this.AddMessage($messageData);
-    }
+	[void] AddMessage([VerificationResult] $result, [MessageData] $messageData)
+ {
+		$this.VerificationResult = $result;
+		$this.AddMessage($messageData);
+	}
 
-    [void] AddMessage([VerificationResult] $result, [string] $message, [PSObject] $dataObject)
-    {
-        $this.VerificationResult = $result;
-        $this.AddMessage([MessageData]::new($message, $dataObject));
-    }
+	[void] AddMessage([VerificationResult] $result, [string] $message, [PSObject] $dataObject)
+ {
+		$this.VerificationResult = $result;
+		$this.AddMessage([MessageData]::new($message, $dataObject));
+	}
 
 	[void] AddMessage([string] $message, [PSObject] $dataObject)
-    {
-        $this.AddMessage([MessageData]::new($message, $dataObject));
-    }
+ {
+		$this.AddMessage([MessageData]::new($message, $dataObject));
+	}
 
 	[void] AddMessage([PSObject] $dataObject)
-    {
-        $this.AddMessage([MessageData]::new($dataObject));
-    }
+ {
+		$this.AddMessage([MessageData]::new($dataObject));
+	}
 	[void] AddMessage([string] $message)
-    {
-        $this.AddMessage([MessageData]::new($message));
-    }
+ {
+		$this.AddMessage([MessageData]::new($message));
+	}
 
-    [void] AddError([System.Management.Automation.ErrorRecord] $exception)
-    {
-        $this.AddMessage([MessageData]::new($exception, [MessageType]::Error));
-    }
+	[void] AddError([System.Management.Automation.ErrorRecord] $exception)
+ {
+		$this.AddMessage([MessageData]::new($exception, [MessageType]::Error));
+	}
 
 	[void] SetStateData([string] $message, [PSObject] $dataObject)
 	{
@@ -190,7 +190,8 @@ class SVTEventContext: AzSKRootEventArgument
 	}
 }
 
-class PolicyStateManagement
+class PolicyState
 {
+	[PolicyVerificationResult] $PolicyVerificationResult = [PolicyVerificationResult]::NotScanned;
 	[PSObject] $DataObject;
 }
