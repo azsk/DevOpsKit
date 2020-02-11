@@ -460,7 +460,6 @@ class ARMPolicy: AzCommandBase
 	[void] CreateCustomDefinitions()
 	{ 
 		# Read custom definitions from Subscription.Definitions.json
-		# TODO: Upload file
 		$subscriptionId = $this.SubscriptionContext.SubscriptionId
 		$scope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"		
 		$policyDefinitionsDetails = [ConfigurationHelper]::LoadServerConfigFile("Subscription.Definitions.json", $true, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore)
@@ -518,7 +517,7 @@ class ARMPolicy: AzCommandBase
 						}
 						catch
 						{
-							#TODO: Add comment
+							#eat exception if definition failed to get created to avoid breaking code flow.
 						}
 					}
 
@@ -567,7 +566,7 @@ class ARMPolicy: AzCommandBase
 			}
 			if ($failedToReadDefinitionDetails)
 			{
-				$messages += [MessageData]::new([Constants]::SingleDashLine + "`r`nAdding following policy definitiond to the subscription. Total policies: $($($failedToReadDefinitionDetails | Measure-Object).Count)", $failedToReadDefinitionDetails);
+				$messages += [MessageData]::new([Constants]::SingleDashLine + "`r`nFailed to add following policy definitions to the subscription. Total policies: $($($failedToReadDefinitionDetails | Measure-Object).Count)", $failedToReadDefinitionDetails);
 			}
 		}
 		return $messages

@@ -298,11 +298,10 @@ class AIOrgTelemetry: ListenerBase {
 				{
 					if ($null -ne $results[0].PolicyState)
 					{
-						$properties.Add("PolicyState.PolicyVerificationResult", $results[0].PolicyState.PolicyVerificationResult)
-						# TODO: Add feature flight after discussion
+						$properties.Add("PolicyVerificationResult", $results[0].PolicyState.PolicyVerificationResult)
 						if (($null -ne $results[0].PolicyState) -and ($null -ne $results[0].PolicyState.DataObject))
 						{
-							$properties.Add("PolicyState.CurrentPolicyComplianceState", [JsonHelper]::ConvertToJsonCustomCompressed($results[0].PolicyState.DataObject))
+							$properties.Add("PolicyComplianceState", [JsonHelper]::ConvertToJsonCustomCompressed($results[0].PolicyState.DataObject))
 						}
 					}
 				}
@@ -333,11 +332,10 @@ class AIOrgTelemetry: ListenerBase {
 					{
 						if ($null -ne $result.PolicyState)
 						{
-							$propertiesIn.Add("PolicyState.PolicyVerificationResult", $result.PolicyState.PolicyVerificationResult)
-							# TODO: Add feature flight after discussion
+							$propertiesIn.Add("PolicyVerificationResult", $result.PolicyState.PolicyVerificationResult)
 							if (($null -ne $result.PolicyState) -and ($null -ne $result.PolicyState.DataObject))
 							{
-								$propertiesIn.Add("PolicyState.CurrentPolicyComplianceState", [JsonHelper]::ConvertToJsonCustomCompressed($result.PolicyState.DataObject))
+								$propertiesIn.Add("PolicyComplianceState", [JsonHelper]::ConvertToJsonCustomCompressed($result.PolicyState.DataObject))
 							}
 						}
 					}
