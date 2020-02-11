@@ -367,6 +367,9 @@ class PIM: AzCommandBase {
                 $this.PublishCustomMessage("Note: The assignments listed below do not include 'inherited' assignments for the scope.", [MessageType]::Warning)
                 $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
                 $this.PublishCustomMessage($($roleAssignments | Format-Table -Property PrincipalName, @{Label = "Role"; Expression = { $_.RoleName } },  AssignmentState, @{Label = "Type"; Expression = { $_.SubjectType } } | Out-String), [MessageType]::Default)
+                
+                $objectToExport = $roleAssignments | Select-Object RoleName, PrincipalName, UserName, ResourceType, ResourceName, SubjectType, AssignmentState,	IsPermanent
+                $this.ExportCSV($objectToExport)
             }
             else {
                 if ($CheckPermanent) {
@@ -694,6 +697,9 @@ class PIM: AzCommandBase {
             $this.PublishCustomMessage(($assignments | Format-Table -AutoSize -Wrap @{Label = "ResourceId"; Expression = { $_.OriginalId }}, ResourceName, RoleName,  ResourceType, AssignmentState, ExpirationDate | Out-String), [MessageType]::Default)
             $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
             $this.PublishCustomMessage("");
+                        
+            $objectToExport = $assignments | Select-Object @{Label = "ResourceId"; Expression = { $_.OriginalId } }, ResourceName, ResourceType, RoleName, AssignmentState
+            $this.ExportCSV($objectToExport)
         }
         else {
             $this.PublishCustomMessage("No eligible roles found for the current login.", [MessageType]::Warning);
@@ -934,6 +940,8 @@ class PIM: AzCommandBase {
                 if(($soonToExpireAssignments| Measure-Object).Count -gt 0)
                 {
                     $this.PublishCustomMessage($($soonToExpireAssignments | Sort-Object -Property ExpirationDate | Format-Table  -Wrap 'SubjectId', 'PrincipalName', 'SubjectType', @{Label = "ExpiringInDays"; Expression = { [math]::Round((([DateTime]$_.ExpirationDate).ToUniversalTime().Subtract([DateTime](get-date).ToUniversalTime())).TotalDays) } } |  Out-String), [MessageType]::Default)
+                    $objectToExport = $soonToExpireAssignments | Select-Object RoleName, PrincipalName, UserName, ResourceType, ResourceName, SubjectType, AssignmentState,	IsPermanent, @{Label = "ExpiringInDays"; Expression = { [math]::Round((([DateTime]$_.ExpirationDate).ToUniversalTime().Subtract([DateTime](get-date).ToUniversalTime())).TotalDays) } }
+                    $this.ExportCSV($objectToExport)
                 }
                 else 
                 {
@@ -1248,6 +1256,16 @@ class PIM: AzCommandBase {
         
       
       
+    }
+    hidden [void] ExportCSV($exportObject)
+    {
+        $assignmentsCSV = New-Object -TypeName WriteCSVData
+        $assignmentsCSV.FileName = 'SecurityReport-' + $this.RunIdentifier
+        $assignmentsCSV.FileExtension = 'csv'
+        $assignmentsCSV.FolderPath = ''
+        $assignmentsCSV.MessageData = $exportObject
+
+        $this.PublishAzSKRootEvent([AzSKRootEvent]::WriteCSV, $assignmentsCSV);
     }
 }
 
