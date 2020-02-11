@@ -1,0 +1,7 @@
+﻿{
+  "Version": "1.1.0",         
+  "Name" : "AzSKDefinitions-Preview",
+  "DisplayName" : "AzSK Definitions-Preview",
+  "Description" : "Custom definitions to check compliance of azure services",
+  "CustomDefinitions" : []
+}

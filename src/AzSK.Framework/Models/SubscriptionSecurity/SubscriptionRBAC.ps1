@@ -38,6 +38,38 @@ class TelemetryRBAC
 	[string] $RoleDefinitionId="";
 	[string] $RoleDefinitionName="";
 	[bool] $IsPIMEnabled;
+
+
+	TelemetryRBAC()
+	{
+	}
+	TelemetryRBAC([TelemetryRBAC] $RoleAssignment)
+	{
+		$this.SubscriptionId = $RoleAssignment.SubscriptionId
+		$this.Scope = $RoleAssignment.Scope;
+		$this.DisplayName = $RoleAssignment.DisplayName;
+		$this.MemberType = $RoleAssignment.MemberType;
+		$this.ObjectId = $RoleAssignment.ObjectId;
+		$this.ObjectType = $RoleAssignment.ObjectType;
+		$this.RoleAssignmentId = $RoleAssignment.RoleAssignmentId
+		$this.RoleDefinitionId = $RoleAssignment.RoleDefinitionId
+		$this.RoleDefinitionName = $RoleAssignment.RoleDefinitionName
+		$this.IsPIMEnabled = $RoleAssignment.IsPIMEnabled;
+
+	}
+	
+}
+class TelemetryRBACExtended : TelemetryRBAC
+{
+	[string] $PrincipalName= [string]::Empty
+
+	TelemetryRBACExtended([TelemetryRBAC] $RoleAssignment,[string] $PrincipalName):
+	Base([TelemetryRBAC] $RoleAssignment)
+	{
+	
+		$this.PrincipalName = $PrincipalName
+
+	}
 	
 }
 enum RBACAccountType

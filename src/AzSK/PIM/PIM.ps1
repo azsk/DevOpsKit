@@ -1,6 +1,65 @@
 Set-StrictMode -Version Latest
 
 function Set-AzSKPIMConfiguration { 
+    <#
+    	  .SYNOPSIS
+            This command enables to manage access, roles and assignments on azure resources
+        .DESCRIPTION
+            This command provides a quicker way to perform Privileged Identity Management (PIM) operations and enables you to manage access to important Azure subscriptions, resource groups and resources. 
+        .PARAMETER ActivateMyRole
+            Use this switch to activate your own PIM role on specific Subscription/ ResourceGroup/ Resource
+        .PARAMETER ApplyConditionalAccessPolicyForRoleActivation
+            Use this parameter to enable/disable ConditionalAccess policies for a role
+        .PARAMETER AssignEligibleforPermanentAssignments
+            Use this switch to convert permanent access to PIM at Subscription/ ResourceGroup/ Resource level. Using this switch will only mirror existing permanent assignments for a given role on a scope. To remove the permanents assignments, run Set-AzSKPIMConfiguration -RemovePermanentAssignments -Subscription $subid  -RoleName $role 
+        .PARAMETER AssignRole
+            Use this switch to assign PIM role on specific Subscription/ ResourceGroup/ Resource by providing UPNS in '-PrincipalName'. Make sure you have admin privileges for assigning role.
+        .PARAMETER ConfigureRoleSettings
+            Use this switch to modify settings specific to a role. For example, ExpireEligibleAssignmentsInDays, RequireJustificationOnActivation, RequireMFAOnActivation, MaximumActivationDuration. Make sure you have admin privileges for updating  role settings.
+        .PARAMETER DeactivateMyRole
+            Use this switch to deactivate PIM activated role on specific Subscription/ ResourceGroup/ Resource
+        .PARAMETER DoNotOpenOutputFolder
+            Use this switch to  specify whether to open output folder or not.
+        .PARAMETER DurationInDays 
+            Use this parameter while assigning or extending PIM roles to specify number of days assignment should be available or extended.
+        .PARAMETER DurationInHours 
+            Use this parameter while activating PIM to provide duration for role activation.
+        .PARAMETER ExpireEligibleAssignmentsInDays 
+            Use this parameter along with -ConfigureRoleSettings to configure maximum number of days of expiry for a role for which PIM assignment can be done for the given role on the scope .
+        .PARAMETER ExpiringInDays 
+            Use this parameter with ListSoonToExpireAssignments, ExtendExpiringAssignments to filter result based on number of days
+        .PARAMETER ExtendExpiringAssignments
+            Switch to extend PIM assignments for a role.
+        .PARAMETER Force
+            Bypass consent to modify PIM access on Azure resources.
+        .PARAMETER Justification 
+            Use this option to provide an apt justification with proper business reason.
+        .PARAMETER MaximumActivationDuration 
+            Use this switch along with -ConfigureRoleSettings to configure maximum number of hours for activation of a role.
+        .PARAMETER PrincipalNames 
+            PrincipalNames is for providing user's principal name.
+        .PARAMETER RemoveAssignmentFor 
+            Use this switch by providing value "AllExceptMe" or "MatchingEligibleAssignments" to remove permamnet assignment. 
+        .PARAMETER RemovePermanentAssignments
+            Enables users to convert permanent assignment to PIM role.
+        .PARAMETER RemovePIMAssignment
+            Enables users to remove assigned PIM role on specific Subscription/ ResourceGroup/ Resource by providing PrincipalName.
+        .PARAMETER RequireJustificationOnActivation 
+            Use this switch along with -ConfigureRoleSettings to configure if justification is required for activating PIM role.
+        .PARAMETER RequireMFAOnActivation
+            Use this switch along with -ConfigureRoleSettings to configure if user requires Azure MFA for activating PIM role.
+        .PARAMETER ResourceGroupName
+            ResourceGroups for which the security evaluation has to be performed. Comma separated values are supported. Wildcards are not permitted. By default, the command gets all resources in the subscription.
+        .PARAMETER ResourceName
+            Gets a resource with the specified name. Comma separated values are supported. Wildcards/like searches are not permitted. By default, the command gets all resources in the subscription.
+        .PARAMETER RoleName 
+            This parameter is required to filter results based on rolename, only single role name can be passed in the parameter.
+        .PARAMETER RoleNames 
+            This parameter is required to filter results based on roles, this parameter is used where multiple role names can be passed for the given combination of parameters.
+        .PARAMETER SubscriptionId
+            Subscription id for which the security evaluation has to be performed.
+	    
+    #>
     Param
     (
         [switch]
@@ -18,7 +77,11 @@ function Set-AzSKPIMConfiguration {
         [Alias("ar")]
 	    $AssignRole,
 
-		
+	[switch]
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePIMAssignment", HelpMessage = "This switch is required to remove a PIM eligible role.")]
+        [Alias("ras")]
+        $RemovePIMAssignment,
+
         [switch]
         [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignments", HelpMessage = "This switch is required to assign a PIM eligible role.")]
         [Alias("cpa")]
@@ -47,6 +110,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $true, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
+        [Parameter(Mandatory = $true, ParameterSetName = "RemovePIMAssignment")]
         [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignments")]
@@ -60,6 +124,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Assign")]
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePIMAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringAssignments")]
@@ -73,6 +138,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $false, ParameterSetName = "Assign")]
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePIMAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringAssignments")]
@@ -110,6 +176,7 @@ function Set-AzSKPIMConfiguration {
         $Justification,
         
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
+        [Parameter(Mandatory = $true, ParameterSetName = "RemovePIMAssignment")]
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
         [Parameter(Mandatory = $true, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ConfigureRoleSettings")]
@@ -128,7 +195,10 @@ function Set-AzSKPIMConfiguration {
         $RoleNames,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
+        [Parameter(Mandatory = $true, ParameterSetName = "RemovePIMAssignment")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignmentForUsers")]
+        [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [ValidateNotNullOrEmpty()]
 	    [Alias("pn","PrincipalName","GroupName")]
         [string[]]
@@ -167,6 +237,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringAssignments")]		
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePIMAssignment")]
 		[switch]
 		[Alias("f")]
         $Force,
@@ -191,13 +262,16 @@ function Set-AzSKPIMConfiguration {
                 $pimconfig.InvokeFunction($pimconfig.Deactivate, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName))
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'Assign') {				
-                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false))
+                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false, $false, $false))
+            }
+            elseif ($PSCmdlet.ParameterSetName -eq 'RemovePIMAssignment') {				
+                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false, $Force, $true))
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'AssignEligibleforPermanentAssignments') {
-                $pimconfig.InvokeFunction($pimconfig.AssignPIMforPermanentAssignemnts, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $Force))
+                $pimconfig.InvokeFunction($pimconfig.AssignPIMforPermanentAssignemnts, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $PrincipalNames, $Force))
             }	
             elseif ($PSCmdlet.ParameterSetName -eq 'RemovePermanentAssignment') {
-                $pimconfig.InvokeFunction($pimconfig.RemovePermanentAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $Force))
+                $pimconfig.InvokeFunction($pimconfig.RemovePermanentAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $PrincipalNames, $Force))
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'ExtendExpiringAssignments') {
                 $pimconfig.InvokeFunction($pimconfig.ExtendSoonToExpireAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $Force))
@@ -236,14 +310,14 @@ function Set-AzSKPIMConfiguration {
                     
                 else 
                 {
-                    $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $null, $null))
+                    $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $false))
                 }
                                
                 
             }	
             elseif($PSCmdlet.ParameterSetName -eq'ExtendExpiringAssignmentForUsers')
             {
-                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $true))
+                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $true ,$false, $false))
             }		
             else {
                 Write-Output("Invalid Parameter Set")	
@@ -259,7 +333,33 @@ function Set-AzSKPIMConfiguration {
     }
 
 }
-function Get-AzSKPIMConfiguration {	
+function Get-AzSKPIMConfiguration {
+    <#
+    	    .SYNOPSIS
+                This command enables to manage access, roles and assignments on azure resources
+            .DESCRIPTION
+                This command provides a quicker way to perform Privileged Identity Management (PIM) operations and enables you to manage access to important Azure subscriptions, resource groups and resources. 
+	    .PARAMETER DoNotOpenOutputFolder
+	        Use this switch to  specify whether to open output folder or not.
+	    .PARAMETER ExpiringInDays 
+	        Use this switch with ListSoonToExpireAssignments, ExtendExpiringAssignments to filter result based on number of days
+	    .PARAMETER ListMyEligibleRoles
+	        This switch provides list all PIM eligible roles assigned to you.
+	    .PARAMETER ListPermanentAssignments
+	        This switch is required to list all permanent assignment.
+	    .PARAMETER ListPIMAssignments
+	       This switch is required to list all PIM eligible assignment.
+	    .PARAMETER ListSoonToExpireAssignments
+	       This switch is required to list PIM eligible assignment that are about to expire in n days.
+	    .PARAMETER ResourceGroupName
+	        ResourceGroups for which the security evaluation has to be performed. Comma separated values are supported. Wildcards are not permitted. By default, the command gets all resources in the subscription.
+	    .PARAMETER ResourceName
+	        Gets a resource with the specified name. Comma separated values are supported. Wildcards/like searches are not permitted. By default, the command gets all resources in the subscription.
+	    .PARAMETER RoleNames 
+	        This parameter is required to filter results based on roles, this parameter is used where multiple role names can be passed for the given combination of parameters.
+	    .PARAMETER SubscriptionId
+	        Subscription id for which the security evaluation has to be performed.
+    #>
     Param
     (
         [switch]

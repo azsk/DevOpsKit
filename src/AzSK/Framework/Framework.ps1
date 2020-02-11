@@ -135,6 +135,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 #CA
 . $PSScriptRoot\Core\ContinuousAssurance\CAAutomation.ps1
+. $PSScriptRoot\Core\CAwithACI\ContinuousAssurance.ps1
 
 #Remaining Abstracts
 . $FrameworkPath\Abstracts\SVTCommandBase.ps1
