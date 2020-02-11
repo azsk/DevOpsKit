@@ -549,6 +549,7 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
         [Parameter(Mandatory = $false, HelpMessage = "Enables users to generate PDF file for reports.")]
 		[Alias("gpdf","pdf")]
 		$GeneratePDF  = [GeneratePDF]::None,
+
 		
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to generate script to fix the control or not.")]
@@ -586,9 +587,10 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 
 		}
 	}
-
+	
 	Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionId -ResourceGroupNames $erResourceGroups -ResourceName $ResourceName `
 			-ResourceTypeName ([SVTMapping]::ERvNetTypeName) -ControlIds $ControlIds -FilterTags $FilterTags -ExcludeTags $ExcludeTags -DoNotOpenOutputFolder:$DoNotOpenOutputFolder -AttestControls $ControlsToAttest -GeneratePDF $GeneratePDF -GenerateFixScript:$GenerateFixScript -ExcludeControlIds $ExcludeControlIds
+	
 }
 
 function Get-AzSKControlsStatus
@@ -747,6 +749,7 @@ function Get-AzSKControlsStatus
         [Parameter(Mandatory = $false)]
 		[Alias("gpdf","pdf")]
 		$GeneratePDF  = [GeneratePDF]::None,
+
 
 		[switch]
 		[Parameter(Mandatory = $false)]

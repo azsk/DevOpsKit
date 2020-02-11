@@ -199,29 +199,29 @@ class ServiceBus: AzSVTBase
 		{
 			$controlResult.VerificationResult = [VerificationResult]::Failed;
 
-			$faliedClients = New-Object -TypeName PSObject 
+			$failedClients = New-Object -TypeName PSObject 
 			if(($fullPermissionQueues | Measure-Object).count -gt 0)
 			{
-				$faliedClients | Add-Member -NotePropertyName FailedQueues -NotePropertyValue $fullPermissionQueues
+				$failedClients | Add-Member -NotePropertyName FailedQueuesWithFullPermission -NotePropertyValue $fullPermissionQueues
 				$controlResult.AddMessage([MessageData]::new("Validate the authorization rules for the Queue are defined with limited permissions.", $fullPermissionQueues));
 			}
 			if(($noPolicyQueues | Measure-Object).count -gt 0)
 			{
-				$faliedClients | Add-Member -NotePropertyName FailedQueues -NotePropertyValue $noPolicyQueues
+				$failedClients | Add-Member -NotePropertyName FailedQueuesWithNoAccessPolicy -NotePropertyValue $noPolicyQueues
 				$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for following Queue. Either Queue is not in use or namespace level access policy is used. Applications (senders/receivers) must not use access policies defined at Service Bus namespace level.", $noPolicyQueues));
 			}
 			if(($fullPermissionTopics | Measure-Object).count -gt 0)
 			{
-				$faliedClients | Add-Member -NotePropertyName FailedQueues -NotePropertyValue $fullPermissionTopics
+				$failedClients | Add-Member -NotePropertyName FailedTopicsWithFullPermission -NotePropertyValue $fullPermissionTopics
 				$controlResult.AddMessage([MessageData]::new("Validate the authorization rules for the Topic are defined with limited permissions.", $fullPermissionTopics));
 			}
 			if(($noPolicyTopics | Measure-Object).count -gt 0)
 			{
-				$faliedClients | Add-Member -NotePropertyName FailedQueues -NotePropertyValue $noPolicyTopics
+				$failedClients | Add-Member -NotePropertyName FailedTopicsWithNoAccessPolicy -NotePropertyValue $noPolicyTopics
 				$controlResult.AddMessage([MessageData]::new("No Authorization rules defined for following Topic. Either Topic is not in use or namespace level access policy is used. Applications (senders/receivers) must not use access policies defined at Service Bus namespace level.", $noPolicyTopics));
 			}
 
-			$controlResult.SetStateData("Access policy with minimum required permission must be defined for the Queue/Topic", $faliedClients);
+			$controlResult.SetStateData("Access policy with minimum required permission must be defined for the Queue/Topic", $failedClients);
 		}
 		else
 		{

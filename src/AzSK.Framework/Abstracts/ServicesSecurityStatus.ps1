@@ -174,7 +174,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				{
 					$this.PublishCustomMessage(" `r`nChecking resource [$currentCount/$totalResources] ");
 				}
-				
+
 				#Update resource scan retry count in scan snapshot in storage if user partial commit switch is on
 				if($this.UsePartialCommits)
 				{
@@ -263,7 +263,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
             {
 				$this.PublishCustomMessage($exceptionMessage);
 				$this.CommandError($_);
-            }
+			}
 		}
 		if(($childResources | Measure-Object).Count -gt 0)
 		{
@@ -324,7 +324,20 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		}
 	}
 
-
+	hidden [SVTEventContext[]] ScanAttestedControls()
+	{
+		[ControlStateExtension] $ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
+		$ControlStateExt.UniqueRunId = $this.ControlStateExt.UniqueRunId;
+		$ControlStateExt.Initialize($false);
+		$ControlStateExt.ComputeControlStateIndexer();
+		$resourcesAttestedinCurrentScan = @()
+		if(($null -ne $ControlStateExt.ControlStateIndexer) -and ([Helpers]::CheckMember($ControlStateExt.ControlStateIndexer, "ResourceId")))
+		{
+			$resourcesAttestedinCurrentScan = $this.Resolver.SVTResources | Where-Object {$ControlStateExt.ControlStateIndexer.ResourceId -contains $_.ResourceId}
+		}
+		return $this.RunForAllResources("RescanAndPostAttestationData",$false,$resourcesAttestedinCurrentScan)
+	}
+	
 	#BaseLine Control Filter Function
 	[void] BaselineFilterCheck()
 	{
@@ -414,42 +427,101 @@ class ServicesSecurityStatus: AzSVTCommandBase
 	}
 
 	[void] UsePartialCommitsCheck()
-	{
-			#If Scan source is in supported sources or UsePartialCommits switch is available
-			if ($this.UsePartialCommits)
-			{
-				#Load ControlSetting Resource Types and Filter resources
-				if($this.CentralStorageAccount){
-					[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance($this.CentralStorageAccount, $this.SubscriptionContext.SubscriptionId);	
-				}
-				else{
-					[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
-				}
-				#$this.PublishCustomMessage("Running cmdlet under transactional mode. This will scan resources and store intermittent scan progress to Storage. It resume scan in next run if something breaks inbetween.", [MessageType]::Warning);
-				#Validate if active resources list already available in store
-				#If list not available in store. Get resources filtered by baseline resource types and store it storage
-				if(($partialScanMngr.IsMasterListActive() -eq [ActiveStatus]::Yes)  )
-				{
-					$this.IsPartialCommitScanActive = $true;
-					$allResourcesList = $partialScanMngr.GetAllListedResources()
-					# Get list of non-scanned active resources
-					$nonScannedResourcesList = $partialScanMngr.GetNonScannedResources();
-					$this.PublishCustomMessage("Resuming scan from last commit. $(($nonScannedResourcesList | Measure-Object).Count) out of $(($allResourcesList | Measure-Object).Count) resources will be scanned.", [MessageType]::Warning);
-					$nonScannedResourceIdList = $nonScannedResourcesList | Select-Object Id | ForEach-Object { $_.Id}
-					#Filter SVT resources based on master resources list available and scan completed
-					[AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details", @{"TotalSVTResources"= $($this.Resolver.SVTResources | Where-Object { $_.ResourceTypeMapping } | Measure-Object).Count;"UnscannedResource"=$(($nonScannedResourcesList | Measure-Object).Count); "ResourceToBeScanned" = ($this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList } | Measure-Object).Count},$null)
-					$this.Resolver.SVTResources = $this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList }				
-				}
-				else{
-					$this.IsPartialCommitScanActive = $false;
-					$resourceIdList =  $this.Resolver.SVTResources| Where-Object {$null -ne $_.ResourceTypeMapping} | Select ResourceId | ForEach-Object {  $_.ResourceId }
-					$partialScanMngr.CreateResourceMasterList($resourceIdList);
-				}
-				#Set unique partial scan indentifier 
-				$this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
+    {
+            #If Scan source is in supported sources or UsePartialCommits switch is available
+            if ($this.UsePartialCommits)
+            {
+                #Load ControlSetting Resource Types and Filter resources
+                if($this.CentralStorageAccount){
+                    [PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance($this.CentralStorageAccount, $this.SubscriptionContext.SubscriptionId);   
+                }
+                else{
+                    [PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
+                }
+                #$this.PublishCustomMessage("Running cmdlet under transactional mode. This will scan resources and store intermittent scan progress to Storage. It resume scan in next run if something breaks inbetween.", [MessageType]::Warning);
+                #Validate if active resources list already available in store
+                #If list not available in store. Get resources filtered by baseline resource types and store it storage
+                $nonScannedResourcesList = @();
+                if(($partialScanMngr.IsMasterListActive() -eq [ActiveStatus]::Yes)  )
+                {
+                    $this.IsPartialCommitScanActive = $true;
+                    $allResourcesList = $partialScanMngr.GetAllListedResources()
+                    # Get list of non-scanned active resources
+                    $nonScannedResourcesList = $partialScanMngr.GetNonScannedResources();
+                    $this.PublishCustomMessage("Resuming scan from last commit. $(($nonScannedResourcesList | Measure-Object).Count) out of $(($allResourcesList | Measure-Object).Count) resources will be scanned.", [MessageType]::Warning);
+                    $nonScannedResourceIdList = $nonScannedResourcesList | Select-Object Id | ForEach-Object { $_.Id}
+                    #Filter SVT resources based on master resources list available and scan completed
+                    #Commenting telemtry here to include PartialScanIdentifier
+                    #[AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details", @{"TotalSVTResources"= $($this.Resolver.SVTResources | Where-Object { $_.ResourceTypeMapping } | Measure-Object).Count;"UnscannedResource"=$(($nonScannedResourcesList | Measure-Object).Count); "ResourceToBeScanned" = ($this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList } | Measure-Object).Count;},$null)
+                    $this.Resolver.SVTResources = $this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList }             
+                }
+                else{
+                    $this.IsPartialCommitScanActive = $false;
+                    $resourceIdList =  $this.Resolver.SVTResources| Where-Object {$null -ne $_.ResourceTypeMapping} | Select ResourceId | ForEach-Object {  $_.ResourceId }
+                    $partialScanMngr.CreateResourceMasterList($resourceIdList);
+                    #This should fetch full list of resources to be scanned 
+                    $nonScannedResourcesList = $partialScanMngr.GetNonScannedResources();
+                }
+                #Set unique partial scan indentifier 
+                $this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
+                #Telemetry with addition for Subscription Id, PartialScanIdentifier and correction in count of resources
+                #Need optimization for calcuations done for total resources.
+                try{
+                    $CompletedResources  = 0;
+                    $IncompleteScans = 0;
+                    $InErrorResources = 0;
+                    $ScanResourcesList = $partialScanMngr.GetAllListedResources() 
+                    
+                    $ScanResourcesList | Group-Object -Property State | Select-Object Name,Count | ForEach-Object{
+                        if($_.Name -eq "COMP")
+                        {
+                            $CompletedResources = $_.Count
+                        }
+                        elseif ($_.Name -eq "INIT") {
+                            $IncompleteScans = $_.Count
+                        }
+                        elseif ($_.Name -eq "ERR") {
+                            $InErrorResources = $_.Count
+                        }
+                          
+                    }   
+					[AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details",@{"TotalSVTResources"= $($ScanResourcesList |Measure-Object).Count;"ScanCompletedResourcesCount"=$CompletedResources; "NonScannedResourcesCount" = $IncompleteScans;"ErrorStateResourcesCount"= $InErrorResources;"SubscriptionId"=$this.SubscriptionContext.SubscriptionId;"PartialScanIdentifier"=$this.PartialScanIdentifier;}, $null)
+					
+					#By default below detail partial scan tracker telemetry will be in disabled state 
+					# and only be enabled using feature flag for perticular subscriptions to analaze the CA scan issues
+					# Register/Deregister all listeners to cleanup the memory
+					if([FeatureFlightingManager]::GetFeatureStatus("EnableDetailedResourceTrackerTelemetry",$this.SubscriptionContext.SubscriptionId) -eq $true)
+					{
+						$resourceTrackerEvents = [System.Collections.ArrayList]::new()
+						#Loop through all resource list present in tracker and prepare array of events with common properties like RunIdentifier, SubId,etc
+						foreach($resource in $ScanResourcesList){
+							$resourceEvent = "" | Select-Object Name, Properties, Metrics
+							#RunIdentifier value is not set at this stage. Its value is default. 
+							#Investigation needs to be done base don partialScanIdentifier 
+							#"RunIdentifier" = $this.RunIdentifier; 
+							$Properties = @{
+								"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;
+								"PartialScanIdentifier"=$this.PartialScanIdentifier;
+								"ResourceId" = $resource.Id;
+								"ScanRetryCount" = $resource.ScanRetryCount;
+								"State" = $resource.State;
+								"StateModifiedDate" = $resource.ModifiedDate
+								"TrackerId" = $partialScanMngr.ResourceScanTrackerObj.Id
+							}
+								$resourceEvent.Name = "Partial Tracker Resource Details"
+								$resourceEvent.Properties = $properties
+								$resourceTrackerEvents.Add($resourceEvent) | Out-Null
+						}
+						#Push array of resourcelist to AI telemetry
+						[AIOrgTelemetryHelper]::TrackEvents($resourceTrackerEvents);
+					}
 
-			}
-	}
+                }
+                catch{
+                    #Continue exexution if telemetry is not sent 
+                }            
+        }
+}
 
 	#Get list of controlIds based control tags like OwnerAccess, GraphAccess,RBAC, Authz, SOX etc.
 	[void] MapTagsToControlIds()
@@ -527,7 +599,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 		#If Scan source is in supported sources or UsePartialCommits switch is available
 		if ($this.UsePartialCommits -or ($baselineControlsDetails.SupportedSources -contains $scanSource))
 		{
-			$partialScanMngr.UpdateResourceScanRetryCount($_.ResourceId);
+			$partialScanMngr.UpdateResourceScanRetryCount($_.ResourceId,$this.SubscriptionContext.SubscriptionId);
 		}
 	}
 

@@ -20,6 +20,7 @@ class SubscriptionCore: AzSVTBase
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $RGLevelPIMAssignments;
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $RGLevelPermanentAssignments;
 	hidden [CustomData] $CustomObject;
+	hidden $SubscriptionExtId;
 
 	SubscriptionCore([string] $subscriptionId):
         Base($subscriptionId)
@@ -528,11 +529,12 @@ class SubscriptionCore: AzSVTBase
 		$activeAlerts = ($this.ASCSettings.Alerts | Where-Object {$_.State -eq "Active" })
 		if(($activeAlerts | Measure-Object).Count -gt 0 )
 		{
-			  if( [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsThresholdInDays') -and [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsSeverityLevels'))
+			  if( [Helpers]::CheckMember($this.ControlSettings, 'ASCAlertsThresholdInDays')  )
 			  {
 				 $AlertDaysCheck = $this.ControlSettings.ASCAlertsThresholdInDays
-				 $AlertSeverityCheck = $this.ControlSettings.ASCAlertsSeverityLevels				
-				 $activeAlerts = $activeAlerts | Where-Object{ ( [System.DateTime]::Parse($_.ReportedTimeUTC).AddDays($AlertDaysCheck) -ge ([System.DateTime]::UtcNow)) -and $_.ReportedSeverity -in $AlertSeverityCheck}
+				 $AlertSeverityCheck = $this.ControlSettings.ASCAlertsThresholdInDays.PSObject.Properties.Name;	
+				 $activeAlerts = $activeAlerts | Where-Object {$_.ReportedSeverity -in $AlertSeverityCheck}			
+				 $activeAlerts = $activeAlerts | Where-Object{ ( [System.DateTime]::Parse($_.ReportedTimeUTC).AddDays($AlertDaysCheck.($_.ReportedSeverity)) -le ([System.DateTime]::UtcNow)) }
 				 if(($activeAlerts | Measure-Object).Count -gt 0)
 				 {
 					$controlResult.SetStateData("Active alert in Security Center", ($activeAlerts | Select-Object AlertName, ReportedTimeUTC));
@@ -610,9 +612,9 @@ class SubscriptionCore: AzSVTBase
 
         if($foundLocks)
         {
-			$controlResult.SetStateData("Resource Locks on subscription", $lockDtls);
+			$controlResult.SetStateData("Resource Locks on subscription", ($lockDtls | Select-Object @{Name="LockLevel";Expression={$_.Properties.level}}, LockId))
 			#$controlResult.AddMessage([VerificationResult]::Verify, "Subscription lock details :", ($lockDtls | Select-Object Name,  @{Name="Lock Level";Expression={$_.Properties.level}}, LockId, @{Name="Notes";Expression={$_.Properties.notes}} ), $true, "SubscriptionLocks")
-			$controlResult.AddMessage([VerificationResult]::Verify, "Subscription lock details :", ($lockDtls | Select-Object Name,  @{Name="Lock Level";Expression={$_.Properties.level}}, LockId, @{Name="Notes";Expression={$_.Properties.notes}} ))
+			$controlResult.AddMessage([VerificationResult]::Verify, "Subscription lock details :", ($lockDtls | Select-Object @{Name="LockLevel";Expression={$_.Properties.level}}, LockId))
         }
         else
         {
@@ -1027,52 +1029,87 @@ class SubscriptionCore: AzSVTBase
 	# This function evaluates permanent role assignments at resource group level.
 	hidden [ControlResult] CheckRGLevelPermanentRoleAssignments([ControlResult] $controlResult)
 	{
-		
-		$whitelistedPermanentRoles = $null
-		$message=$this.GetRGLevelPIMRoles();
-		if($message -ne 'OK') # if there is some while making request message will contain exception
+		$criticalRoles = $this.ControlSettings.CriticalPIMRoles.ResourceGroup;
+		# Check if the scan is run in  CA mode or in SDL mode explicity ran for this control or user is getting into an attestation mode
+		# The logic being this control is only scanned in CA mode and if user needs to attest then they would otherwise need to manually set scan source in client as 'CA'
+		if(-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest'])) -or [AzSKSettings]::GetInstance().GetScanSource() -eq 'CA')
 		{
+			$whitelistedPermanentRoles = $null
+			$message=$this.GetRGLevelPIMRoles();
+			if($message -ne 'OK') # if there is some while making request message will contain exception
+			{
 
-			$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
-			$controlResult.AddMessage($message);
-			return $controlResult;
-		}
-		else
-		{
-		# 'Owner' and 'User Access Administrator' are high privileged roles. These roles should not be give permanent access at resource group level.
-			$criticalRoles = $this.ControlSettings.CriticalPIMRoles.ResourceGroup;
-			$permanentRoles = $this.RGLevelPermanentAssignments;
-			if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
-			{
-				$whitelistedPermanentRoles = $this.ControlSettings.whitelistedPermanentRoles
-			}
-			
-			if(($permanentRoles | measure-object).Count -gt 0 )
-			{
-				$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles -and ($_.ObjectType -eq 'User' -or $_.ObjectType -eq 'Group')}
-				if($null -ne $whitelistedPermanentRoles)
-				{
-					$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}
-				}
-				if(($criticalPermanentRoles| measure-object).Count -gt 0)
-				{
-					$controlResult.SetStateData("Permanent role assignments present on resource groups",$criticalPermanentRoles)
-					$controlResult.AddMessage([VerificationResult]::Failed, "Resource groups contains permanent role assignment for critical roles : $($criticalRoles -join ',')")
-					$permanentRolesbyRoleDefinition=$criticalPermanentRoles|Sort-Object -Property RoleDefinitionName | Select-Object SubscriptionId, @{Name="ResourceGroupName"; Expression={$_.Scope.Split("/")[-1]}}, DisplayName, ObjectType, RoleDefinitionName | Format-List | Out-String
-					$controlResult.AddMessage($permanentRolesbyRoleDefinition);
-					
-				}
-				else 
-				{
-					$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at resource group scope: $($criticalRoles -join ', ')")
-				}
+				$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+				$controlResult.AddMessage($message);
+				return $controlResult;
 			}
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at resource group scope: $($criticalRoles -join ', ')")
+			# 'Owner' and 'User Access Administrator' are high privileged roles. These roles should not be give permanent access at resource group level.
+				$permanentRoles = $this.RGLevelPermanentAssignments;
+				if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
+				{
+					$whitelistedPermanentRoles = $this.ControlSettings.whitelistedPermanentRoles
+				}				
+				if(($permanentRoles | measure-object).Count -gt 0 )
+				{
+					$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles -and ($_.ObjectType -eq 'User' -or $_.ObjectType -eq 'Group')}
+					if($null -ne $whitelistedPermanentRoles)
+					{
+						$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}
+						
+					}
+					if(($criticalPermanentRoles| measure-object).Count -gt 0)
+					{
+						$controlResult.SetStateData("Permanent role assignments present on resource groups",$criticalPermanentRoles)
+						$controlResult.AddMessage([VerificationResult]::Failed, "Resource groups contains permanent role assignment for critical roles : $($criticalRoles -join ',')")
+						$permanentRolesbyRoleDefinition=$criticalPermanentRoles|Sort-Object -Property RoleDefinitionName | Select-Object SubscriptionId, @{Name="ResourceGroupName"; Expression={$_.Scope.Split("/")[-1]}}, DisplayName, ObjectType, RoleDefinitionName | Format-List | Out-String
+						$controlResult.AddMessage($permanentRolesbyRoleDefinition);
+						
+					}
+					else 
+					{
+						$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at resource group scope: $($criticalRoles -join ', ')")
+					}
+				}
+				else
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at resource group scope: $($criticalRoles -join ', ')")
+					
+				}		
+			
 				
-			}		
-		
+			}
+		}
+		else
+		{
+			# If full GSS scan run is non CA mode, attestation switch not being passed, the control will read result from compliance state table
+			# Since actually control is not evaluated in this code path, we need to put the 'HasRequiredAccess' flag as false, so that this result does not count for compliance
+ 			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			if([FeatureFlightingManager]::GetFeatureStatus("FetchRGPIMControlStatusFromComplianceState",$($this.SubscriptionContext.SubscriptionId)) )
+			{
+				#[string] $controlId = $controlItem.ControlID;
+				$controlResult.AddMessage("Note: `n By default, this control is not evaluated in manual scan mode. The control status is based on the previous CA runbook scan for this control. To determine why this control has failed, you can look at the detailed log in the CA scan logs in the storage account in AzSKRG under a container named ca-scan-logs `n To force a manual scan, you can use the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG '")
+				$result = $this.GetControlStatusFromComplianceState('Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG');
+				# since this control has actually only two states 'Passed' and 'Failed', but in case we are not able to read attestation data we need to tell the reason for the same
+				
+				switch($result)
+				{
+					
+					"Manual"{
+						$controlResult.AddMessage([VerificationResult]::Manual,"")
+						$controlResult.AddMessage("Unable to query compliance state results")
+					}
+                    Default
+                    {
+                        
+                        $controlResult.AddMessage([VerificationResult]::$result,"")
+					
+                    }
+					
+				} 
+				
+			}
 		}
 
 		return $controlResult
@@ -1185,6 +1222,8 @@ class SubscriptionCore: AzSVTBase
 		$AppSvcASCTier = $this.SecurityCenterInstance.AppSvcASCTier;
 		$StorageASCTier = $this.SecurityCenterInstance.StorageASCTier;
 
+		[string[]] $MisconfiguredASCTier = @(); #This will store information of all the misconfigured ASC pricing tier for individual resource types.
+
 		if(-not [string]::IsNullOrWhiteSpace($ascTierContentDetails))		
 		{
 			[bool] $bool = $true;
@@ -1205,7 +1244,7 @@ class SubscriptionCore: AzSVTBase
 				$VM = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.VirtualMachines -contains $VMASCTier)
 				if(-not $VM)
 				{
-					$controlResult.AddMessage("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.VirtualMachines) pricing tier is not configured for virtual machines.")
+					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.VirtualMachines) pricing tier is not configured for virtual machines.")	
 				}
 				
 				$bool = $bool -and $VM
@@ -1216,7 +1255,7 @@ class SubscriptionCore: AzSVTBase
 				$SQL = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.SqlServers -contains $SQLASCTier)
 				if(-not $SQL)
 				{
-					$controlResult.AddMessage("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.SqlServers) pricing tier is not configured for SQL servers.")
+					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.SqlServers) pricing tier is not configured for SQL servers.")
 				}
 				
 				$bool = $bool -and $SQL
@@ -1227,7 +1266,7 @@ class SubscriptionCore: AzSVTBase
 				$AppSvc = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.AppServices -contains $AppSvcASCTier)
 				if(-not $AppSvc)
 				{
-					$controlResult.AddMessage("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.AppServices) pricing tier is not configured for app services.")
+					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.AppServices) pricing tier is not configured for app services.")
 				}
 
 				$bool = $bool -and $AppSvc
@@ -1238,24 +1277,309 @@ class SubscriptionCore: AzSVTBase
 				$Storage = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.StorageAccounts -contains $StorageASCTier)
 				if(-not $Storage)
 				{
-					$controlResult.AddMessage("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.StorageAccounts) pricing tier is not configured for storage accounts.")
+					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.StorageAccounts) pricing tier is not configured for storage accounts.")
 				}
 				
 				$bool = $bool -and $Storage
 			}
 
+			$this.SubscriptionContext.SubscriptionMetadata.Add("MisconfiguredASCTier",$MisconfiguredASCTier); #Adding misconfigured ASC tier in the metadata.
 			if($bool)			
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed, "Expected pricing tier is configured for ASC." )
 			}
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Failed, "`nExpected pricing tier is not configured for ASC. `n" )
+				$controlResult.SetStateData("Expected pricing tier is not configured for ASC.", $MisconfiguredASCTier);
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Expected pricing tier is not configured for ASC.", $MisconfiguredASCTier));
 			}
 		}
 		return $controlResult
 	}
 
+	hidden [ControlResult] CheckCredentialHygiene([ControlResult] $controlResult)
+    {
+        $AzSKRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+        $containerName = [Constants]::RotationMetadataContainerName
+        $StorageAccount = Get-AzStorageAccount -ResourceGroupName $AzSKRG -ErrorAction SilentlyContinue | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction SilentlyContinue
+        $keys = $null;
+		
+		if($StorageAccount){
+			$keys = Get-AzStorageAccountKey -ResourceGroupName $AzSKRG -Name $StorageAccount.StorageAccountName -ErrorAction SilentlyContinue
+		}
+		
+		if($keys) #Adequate permissions to read credential metadata
+		{
+			$context = New-AzStorageContext -StorageAccountName $StorageAccount.StorageAccountName -StorageAccountKey $keys.Value[0]
+			$container = Get-AzStorageContainer -Name $containerName -Context $context -ErrorAction Ignore
+			
+			if($container){
+				$credBlobs = $container | Get-AzStorageBlob
+
+				$expiredCount = 0; # Count of credentials near to expiry (< 7d)/have expired
+				$aboutToExpireCount = 0; # Count of credentials approaching expiry (7d < expiry < 30d)
+				$healthyCount = 0; # Count of credentials far from expiry (> 30d)
+				[PSObject] $expiredCredentials = @(); # List of credentials near to expiry (< 7d)/have expired
+				[PSObject] $aboutToExpireCredentials = @(); # List of credentials approaching expiry (7d < expiry < 30d)
+				[PSObject] $healthyCredentials = @(); # List of credentials far from expiry (> 30d)
+				[CredHygieneAlert[]] $credAlertObject = @(); # Array of cred alert objects
+
+				$AzSKTemp = (Join-Path $([Constants]::AzSKAppFolderPath) $([Constants]::RotationMetadataSubPath)); 
+
+				$tempSubPath = Join-Path $AzSKTemp $($this.SubscriptionContext.SubscriptionId)
+
+				if(![string]::isnullorwhitespace($this.SubscriptionContext.SubscriptionId)){
+					if(-not (Test-Path $tempSubPath))
+					{
+						New-Item -ItemType Directory -Path $tempSubPath -ErrorAction Stop | Out-Null
+					}	
+				}
+				else{
+					if(-not (Test-Path $AzSKTemp))
+					{
+						New-Item -ItemType Directory -Path $AzSKTemp -ErrorAction Stop | Out-Null
+					}
+				}
+
+				$credBlobs | ForEach-Object{
+					$file = Join-Path $AzSKTemp -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $($_.Name)
+					
+					$blobContent = Get-AzStorageBlobContent -Blob $_.Name -Container $container.Name -Context $context -Destination $file -Force -ErrorAction Ignore    
+					$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
+
+					$currentTime = [DateTime]::UtcNow;
+					$lastRotatedTime = $credentialInfo.lastUpdatedOn;
+					$expiryTime = $lastRotatedTime.AddDays($credentialInfo.rotationInt);
+
+					# Preparing array of cred alert objects to send to LA.	
+					$credAlert = [CredHygieneAlert]::new()
+					$credAlert.ExpiryDueInDays = ($expiryTime - $currentTime).Days
+					if($credAlert.ExpiryDueInDays -le 0){
+						$credAlert.IsExpired = $true
+						$credAlert.ExpiryDueInDays = 0
+					}
+					else{
+						$credAlert.IsExpired = $false
+					}
+					
+					$credAlert.CredentialName = $credentialInfo.credName
+					
+					if([Helpers]::CheckMember($credentialInfo,"credGroup")){
+						$credAlert.CredentialGroup = $credentialInfo.credGroup
+					}
+					
+					$credAlert.LastUpdatedBy = $credentialInfo.lastUpdatedBy
+					$credAlert.SubscriptionId = $this.SubscriptionContext.SubscriptionId
+					$credAlert.SubscriptionName = $this.SubscriptionContext.SubscriptionName
+					$credAlertObject += $credAlert;
+					
+					if($expiryTime -le $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credHighTH)){ #Checking for expired/about to expire credentials
+						$expiredCount += 1;
+						$expiredCredentials += $credentialInfo;
+					}
+					elseif(($expiryTime -gt $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credHighTH)) -and ($expiryTime -le $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credModerateTH))){ #Checking for credentials nearing expiry.
+						$aboutToExpireCount +=1;
+						$aboutToExpireCredentials += $credentialInfo;
+					}
+					else{#Checking for healthy credentials
+						$healthyCount +=1;
+						$healthyCredentials += $credentialInfo;
+					}
+				}
+
+				$this.PublishEvent([SVTEvent]::PostCredHygiene, $credAlertObject)
+
+				$controlResult.AddMessage("`nCredentials that have expired or are very close to expiry: $expiredCount `n", $expiredCredentials)
+				$controlResult.AddMessage("`nCredentials that are approaching expiry: $aboutToExpireCount `n", $aboutToExpireCredentials)
+				$controlResult.AddMessage("`nCredentials that are not near expiry: $healthyCount `n", $healthyCredentials)
+
+				if($expiredCount -gt 0){ # Fail the control if any expired/about to expire credential found
+					$controlResult.VerificationResult = [VerificationResult]::Failed;
+					$controlResult.AddMessage("`nPlease update them soon using the cmd Update-AzSKTrackedCredential with the 'ResetLastUpdate' switch with other required parameters (Subscription Id, credential name, etc.).`n")
+				}
+				elseif($aboutToExpireCount -gt 0){ # Verify the control if any credential approaching expiry found
+					$controlResult.VerificationResult = [VerificationResult]::Verify
+				}
+				else{ # No expired/about-to-expire credentials
+					$controlResult.VerificationResult = [VerificationResult]::Passed
+				}
+			}
+			else{ # No tracked credentials.
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("There are no AzSK-tracked credentials in the subscription."))
+			}
+		}	
+		else
+		{
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			$controlResult.AddMessage([VerificationResult]::Manual, [MessageData]::new("Insufficient permissions to read credential metadata."))
+		}	
+		return $controlResult
+	}
+	
+
+	# Control in json to be added in Org Policy if the Org wants to enforce conditional access policy on PIM activation for critical roles
+	hidden [ControlResult] CheckPIMCATag([ControlResult] $controlResult)
+	{
+		$resourceId = ""
+		if([Helpers]::CheckMember($this.SubscriptionExtId,'id'))
+		{
+			$resourceId = $this.SubscriptionExtId.id;
+		}
+		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
+		$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
+		$authorisationToken = "Bearer " + $accessToken
+		$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
+		try
+		{
+			if([string]::IsNullOrEmpty($resourceId))
+			{
+				
+				$uri=[Constants]::PIMAPIUri +"?`$filter=type%20eq%20%27subscription%27&`$orderby=displayName"			
+				#Get external id for the current subscription
+				$response=[WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
+				$subId=$this.SubscriptionContext.SubscriptionId;
+				$this.SubscriptionExtId = ($response| Where-Object{$_.externalId.split('/') -contains $subId}).id
+				$resourceId=$this.SubscriptionExtId;
+			
+			}
+			$roleurl = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/resources/" + $resourceId + "/roleDefinitions?`$select=id,displayName,type,templateId,resourceId,externalId,subjectCount,eligibleAssignmentCount,activeAssignmentCount&`$orderby=activeAssignmentCount%20desc"
+			$roles = [WebRequestHelper]::InvokeGetWebRequest($roleurl, $headers)
+			$roles= $roles | Where-Object{$_.DisplayName -in $this.ControlSettings.CriticalPIMRoles.Subscription}
+			$missingCAPolicyOnRoles = @();
+			$validRoles = @();
+			$invalidRoles = @();
+			$nonCompliantPIMCAPolicyTagRoles = @();
+			foreach($role in $roles)
+			{
+				$url ="https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resourceId)%27)+and+(roleDefinition/id+eq+%27$($role.id)%27)"
+				$rolesettings = [WebRequestHelper]::InvokeGetWebRequest($url, $headers)
+				$CAPolicyOnRoles = ($($rolesettings.userMemberSettings | Where-Object{$_.RuleIdentifier -eq 'AcrsRule'}).setting) | ConvertFrom-Json
+				if($CAPolicyOnRoles.acrsRequired)
+				{
+					$validRoles +=$role
+					if([Helpers]::CheckMember($this.ControlSettings,"CheckPIMCAPolicyTags"))
+					{
+						if([Helpers]::CheckMember($this.ControlSettings,"PIMCAPolicyTags"))
+						{
+							if($CAPolicyOnRoles.acrs -notin $this.ControlSettings.PIMCAPolicyTags)
+							{
+								$nonCompliantPIMCAPolicyTagRoles +=$role;
+							}
+						}
+					}
+				}
+				else 
+				{
+						$invalidRoles +=$role
+				}
+
+				
+			}	
+			if([Helpers]::CheckMember($this.ControlSettings,"CheckPIMCAPolicyTags"))
+			{
+				if($missingCAPolicyOnRoles.Count -gt 0)
+				{
+					$controlResult.VerificationResult = [VerificationResult]::Failed
+					$controlResult.AddMessage("Roles that donot have required CA policy tags $($this.ControlSetting,"PIMCAPolicyTags" -join ',') `n $($missingCAPolicyOnRoles | Format-List) ");
+				}
+				elseif($invalidRoles.Count -gt 0)
+				{
+					$controlResult.VerificationResult = [VerificationResult]::Failed
+					$controlResult.AddMessage("Role with Acr required turned off `n $($invalidRoles | Format-List | Out-String) ");
+					
+				}
+				else
+				{
+					$controlResult.VerificationResult = [VerificationResult]::Passed	
+				}		
+			}
+			else {
+				if($invalidRoles.Count -gt 0)
+				{
+					$controlResult.VerificationResult = [VerificationResult]::Failed
+					$controlResult.AddMessage("Role with Acr required turned off `n $($invalidRoles | Format-List | Out-String) ");
+					
+				}
+				else
+				{
+					$controlResult.VerificationResult = [VerificationResult]::Passed	
+				}
+			}
+		}
+		catch
+		{
+			$controlResult.AddMessage($_);
+			$controlResult.VerificationResult = [VerificationResult]::Manual
+		}
+		return $controlResult;
+	}
+
+
+	hidden [ControlResult] CheckNonAlternateAccountsinPIMAccess([ControlResult] $controlResult)
+    {
+		if($this.HasGraphAPIAccess)
+		{
+			$AltAccountRegX = [string]::Empty;
+			$message = [string]::Empty;
+			if($null -eq $this.PIMAssignments)
+			{
+				$message=$this.GetPIMRoles();
+			}
+			if($message -ne 'OK') # if there is some while making request message will contain exception
+			{
+
+					$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+					$controlResult.AddMessage($message);
+					return $controlResult;
+			}
+			# get the altenate account pattern from org policy control settings
+			if( [Helpers]::CheckMember($this.ControlSettings,"AlernateAccountRegularExpressionForOrg"))
+			{
+				$AltAccountRegX = $this.ControlSettings.AlernateAccountRegularExpressionForOrg
+			}
+			else
+			{
+				# if unable to get the altenate account pattern from policy control settings, let the control be manual 
+				$controlResult.AddMessage("Unable to get the alternate account pattern for your org. Please verify manually")
+				return $controlResult;
+			}
+			if(($this.PIMAssignments| Measure-Object).Count -gt 0)
+			{
+				# get pim assignments for critical roles at subscription level
+				$PIMAssignmentsForCriticalRoles = $this.PIMAssignments | Where-Object {$_.RoleDefinitionName -in $this.ControlSettings.CriticalPIMRoles.Subscription}
+				if(($PIMAssignmentsForCriticalRoles | Measure-Object).Count -gt 0)
+				{
+					$IdentityName= $PIMAssignmentsForCriticalRoles.DisplayName | Get-Unique
+					$Users = @();
+					# we currently do not have principal names stored in the PIMAssignments object thus need to get the principal name explicitly
+					$IdentityName | ForEach-Object{
+						
+						$Users += Get-AzADUser -DisplayName $_
+					}
+
+					
+					$nonAltPIMAccounts = $Users | Where-Object{$_.UserPrincipalName -notmatch $AltAccountRegX}
+					if(($nonAltPIMAccounts | Measure-Object).Count -gt 0)
+					{
+						$nonAltPIMAccountsWithRoles = $PIMAssignmentsForCriticalRoles | Where-Object{$_.DisplayName -in $nonAltPIMAccounts.DisplayName}
+						$controlResult.AddMessage([VerificationResult]::Failed, "Non alternate accounts are assigned critical roles")
+						$controlResult.AddMessage($nonAltPIMAccountsWithRoles)
+					}
+					else
+					{
+						$controlResult.AddMessage([VerificationResult]::Passed, "No Non alternate accounts are assigned critical roles")
+					}
+				}
+			}
+		}
+		else
+		{
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			$controlResult.AddMessage([VerificationResult]::Manual, "Not able to query Graph API. Please verify manually.");
+		}
+
+	return $controlResult;
+	}
 	hidden [void] LoadRBACConfig()
 	{
 		if(($this.MandatoryAccounts | Measure-Object).Count -eq 0 `
@@ -1398,8 +1722,8 @@ class SubscriptionCore: AzSVTBase
 					#Get external id for the current subscription
 					$response=[WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
 					$subId=$this.SubscriptionContext.SubscriptionId;
-					$extID=$response| Where-Object{$_.externalId.split('/') -contains $subId}
-					$resourceID=$extID.id;
+					$this.SubscriptionExtId = $response| Where-Object{$_.externalId.split('/') -contains $subId}
+					$resourceID=$this.SubscriptionExtId.id;
 					$this.PIMAssignments=@();
 					$this.permanentAssignments=@();
 					if($null -ne $response -and $null -ne $resourceID)
@@ -1421,20 +1745,21 @@ class SubscriptionCore: AzSVTBase
 							$item.MemberType = $roleAssignment.memberType;
 							if($roleAssignment.memberType -ne 'Inherited')
 								{
-									if($roleAssignment.IsPermanent -eq $false)
+									if($roleAssignment.assignmentState -eq 'Eligible')
 									{
-										#If roleAssignment is non permanent and not active
+										#If roleAssignment is non permanent, even the active PIM assignments would appear in this list
 										$item.IsPIMEnabled=$true;
-										if($roleAssignment.assignmentState -eq "Eligible")
-										{
-											$this.PIMAssignments.Add($item);
-										}
+										$this.PIMAssignments.Add($item);
+										
 									}
 									else
 									{
-										#If roleAssignment is permanent
-										$item.IsPIMEnabled=$false;
-										$this.permanentAssignments.Add($item);
+										#If roleAssignment is permanent the linkedEligbibleRoleAssignmentId would be null when the assignment is permanently Active
+										if([string]::IsNullOrEmpty($roleAssignment.linkedEligibleRoleAssignmentId))
+										{
+											$item.IsPIMEnabled=$false;
+											$this.permanentAssignments.Add($item);
+										}
 
 									}
 								}
@@ -1504,20 +1829,23 @@ class SubscriptionCore: AzSVTBase
 								$item.MemberType = $roleAssignment.memberType;
 								if($roleAssignment.memberType -ne 'Inherited')
 								{
-									if($roleAssignment.IsPermanent -eq $false)
+									if($roleAssignment.assignmentState -eq "Eligible")
 									{
 										#If roleAssignment is non permanent and not active
 										$item.IsPIMEnabled=$true;
-										if($roleAssignment.assignmentState -eq "Eligible")
-										{
-											$this.RGLevelPIMAssignments.Add($item);
-										}
+										$this.RGLevelPIMAssignments.Add($item);
+										
 									}
 									else
 									{
-										#If roleAssignment is permanent
-										$item.IsPIMEnabled=$false;
-										$this.RGLevelpermanentAssignments.Add($item);
+										#If roleAssignment is permanent the linkedEligbibleRoleAssignmentId would be null when the assignment is permanently Active
+										if([string]::IsNullOrEmpty($roleAssignment.linkedEligibleRoleAssignmentId))
+										{
+											$item.IsPIMEnabled=$false;
+											$this.RGLevelpermanentAssignments.Add($item);
+										}
+										
+										
 									}
 								}
 							}
@@ -1595,123 +1923,25 @@ class SubscriptionCore: AzSVTBase
 	
 	}
 
-	hidden [ControlResult] CheckCredentialHygiene([ControlResult] $controlResult)
-    {
-        $AzSKRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-        $containerName = [Constants]::RotationMetadataContainerName
-        $StorageAccount = Get-AzStorageAccount -ResourceGroupName $AzSKRG -ErrorAction SilentlyContinue | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction SilentlyContinue
-        $keys = $null;
-		
-		if($StorageAccount){
-			$keys = Get-AzStorageAccountKey -ResourceGroupName $AzSKRG -Name $StorageAccount.StorageAccountName -ErrorAction SilentlyContinue
-		}
-		
-		if($keys) #Adequate permissions to read credential metadata
+	hidden [string] GetControlStatusFromComplianceState([string]$controlId)
+	{
+		$verificationResult = "Manual"
+		if(($this.ComplianceStateData | Measure-Object).Count -gt 0)
 		{
-			$context = New-AzStorageContext -StorageAccountName $StorageAccount.StorageAccountName -StorageAccountKey $keys.Value[0]
-			$container = Get-AzStorageContainer -Name $containerName -Context $context -ErrorAction Ignore
 			
-			if($container){
-				$credBlobs = $container | Get-AzStorageBlob
-
-				$expiredCount = 0; # Count of credentials near to expiry (< 7d)/have expired
-				$aboutToExpireCount = 0; # Count of credentials approaching expiry (7d < expiry < 30d)
-				$healthyCount = 0; # Count of credentials far from expiry (> 30d)
-				[PSObject] $expiredCredentials = @(); # List of credentials near to expiry (< 7d)/have expired
-				[PSObject] $aboutToExpireCredentials = @(); # List of credentials approaching expiry (7d < expiry < 30d)
-				[PSObject] $healthyCredentials = @(); # List of credentials far from expiry (> 30d)
-				[CredHygieneAlert[]] $credAlertObject = @(); # Array of cred alert objects
-
-				$AzSKTemp = (Join-Path $([Constants]::AzSKAppFolderPath) $([Constants]::RotationMetadataSubPath)); 
-
-				$tempSubPath = Join-Path $AzSKTemp $($this.SubscriptionContext.SubscriptionId)
-
-				if(![string]::isnullorwhitespace($this.SubscriptionContext.SubscriptionId)){
-					if(-not (Test-Path $tempSubPath))
-					{
-						New-Item -ItemType Directory -Path $tempSubPath -ErrorAction Stop | Out-Null
-					}	
-				}
-				else{
-					if(-not (Test-Path $AzSKTemp))
-					{
-						New-Item -ItemType Directory -Path $AzSKTemp -ErrorAction Stop | Out-Null
-					}
-				}
-
-				$credBlobs | ForEach-Object{
-					$file = Join-Path $AzSKTemp -ChildPath $($this.SubscriptionContext.SubscriptionId) | Join-Path -ChildPath $($_.Name)
-					
-					$blobContent = Get-AzStorageBlobContent -Blob $_.Name -Container $container.Name -Context $context -Destination $file -Force -ErrorAction Ignore    
-					$credentialInfo = Get-ChildItem -Path $file -Force | Get-Content | ConvertFrom-Json
-
-					$currentTime = [DateTime]::UtcNow;
-					$lastRotatedTime = $credentialInfo.lastUpdatedOn;
-					$expiryTime = $lastRotatedTime.AddDays($credentialInfo.rotationInt);
-
-					# Preparing array of cred alert objects to send to LA.	
-					$credAlert = [CredHygieneAlert]::new()
-					$credAlert.ExpiryDueInDays = ($expiryTime - $currentTime).Days
-					if($credAlert.ExpiryDueInDays -le 0){
-						$credAlert.IsExpired = $true
-						$credAlert.ExpiryDueInDays = 0
-					}
-					else{
-						$credAlert.IsExpired = $false
-					}
-					
-					$credAlert.CredentialName = $credentialInfo.credName
-					
-					if([Helpers]::CheckMember($credentialInfo,"credGroup")){
-						$credAlert.CredentialGroup = $credentialInfo.credGroup
-					}
-					
-					$credAlert.LastUpdatedBy = $credentialInfo.lastUpdatedBy
-					$credAlert.SubscriptionId = $this.SubscriptionContext.SubscriptionId
-					$credAlert.SubscriptionName = $this.SubscriptionContext.SubscriptionName
-					$credAlertObject += $credAlert;
-					
-					if($expiryTime -le $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credHighTH)){ #Checking for expired/about to expire credentials
-						$expiredCount += 1;
-						$expiredCredentials += $credentialInfo;
-					}
-					elseif(($expiryTime -gt $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credHighTH)) -and ($expiryTime -le $currentTime.AddDays($this.ControlSettings.SubscriptionCore.credModerateTH))){ #Checking for credentials nearing expiry.
-						$aboutToExpireCount +=1;
-						$aboutToExpireCredentials += $credentialInfo;
-					}
-					else{#Checking for healthy credentials
-						$healthyCount +=1;
-						$healthyCredentials += $credentialInfo;
-					}
-				}
-
-				$this.PublishEvent([SVTEvent]::PostCredHygiene, $credAlertObject)
-
-				$controlResult.AddMessage("`nCredentials that have expired or are very close to expiry: $expiredCount `n", $expiredCredentials)
-				$controlResult.AddMessage("`nCredentials that are approaching expiry: $aboutToExpireCount `n", $aboutToExpireCredentials)
-				$controlResult.AddMessage("`nCredentials that are not near expiry: $healthyCount `n", $healthyCredentials)
-
-				if($expiredCount -gt 0){ # Fail the control if any expired/about to expire credential found
-					$controlResult.VerificationResult = [VerificationResult]::Failed;
-					$controlResult.AddMessage("`nPlease update them soon using the cmd Update-AzSKTrackedCredential with the 'ResetLastUpdate' switch with other required parameters (Subscription Id, credential name, etc.).`n")
-				}
-				elseif($aboutToExpireCount -gt 0){ # Verify the control if any credential approaching expiry found
-					$controlResult.VerificationResult = [VerificationResult]::Verify
-				}
-				else{ # No expired/about-to-expire credentials
-					$controlResult.VerificationResult = [VerificationResult]::Passed
-				}
+			$controlComplianceData = ($this.ComplianceStateData | Where-Object{$_.ControlID -eq $controlId})
+			if($null -ne $controlComplianceData)
+			{
+				
+				$verificationResult = $controlComplianceData.VerificationResult
+				
 			}
-			else{ # No tracked credentials.
-				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("There are no AzSK-tracked credentials in the subscription."))
+			else 
+			{
+				$verificationResult = "Manual"
 			}
-		}	
-		else
-		{
-			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-			$controlResult.AddMessage([VerificationResult]::Manual, [MessageData]::new("Insufficient permissions to read credential metadata."))
-		}	
-		return $controlResult
-    }
+		}
+		return $verificationResult
+	}
 }
 

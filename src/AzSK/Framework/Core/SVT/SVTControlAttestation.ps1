@@ -340,7 +340,7 @@ class SVTControlAttestation
 	[void] StartControlAttestation()
 	{
 	
-		
+		$Global:AttestationValue = $false
 		try
 		{
 			#user provided justification text would be available only in bulk attestation mode.
@@ -493,6 +493,7 @@ class SVTControlAttestation
 					{
 						if(($resourceControlStates | Measure-Object).Count -gt 0)
 						{
+							$Global:AttestationValue = $true
 							Write-Host "Attestation summary for this resource:" -ForegroundColor Cyan
 							$output = @()
 							$resourceControlStates | ForEach-Object {

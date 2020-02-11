@@ -27,7 +27,7 @@
     Copyright              = '(c) 2017 Microsoft Corporation. All rights reserved.'
 
     # Description of the functionality provided by this module
-    Description            = 'DevSecOps Kit for AzureDevOps(AzSK) - Preview'
+    Description            = 'DevSecOps Kit for AzureDevOps (AzSK) - Preview'
 
     # Minimum version of the Windows PowerShell engine required by this module
     PowerShellVersion      = '5.0'

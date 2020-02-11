@@ -357,7 +357,7 @@ class StorageHelper: ResourceGroupHelper
 
     static [object] GetStorageBlobContent([string] $folderName, [string] $fileName, [string] $blobName, [string] $containerName, [object] $stgCtx)
 	{
-             $fileName = $folderName.TrimEnd("\")+ "\" + $fileName
+             $fileName = Join-Path $folderName.TrimEnd([IO.Path]::DirectorySeparatorChar) $fileName
              return [StorageHelper]::GetStorageBlobContent($fileName, $blobName, $containerName, $stgCtx)
     }
 

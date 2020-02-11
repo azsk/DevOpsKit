@@ -27,12 +27,22 @@
     "Tenant_Domain": "microsoft.com"
   },
   "KubernetesService": {
-    "kubernetesVersion": ["1.13.10", "1.14.6"]
+    "kubernetesVersion": ["1.13.12", "1.14.8"]
   },
   "APIManagement": {
     "AllowedIdentityProvider": [
       "Aad"
-    ]
+    ],
+    "UnsecureProtocolsAndCiphersConfiguration": [
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Ssl30",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30",
+      "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168"
+    ],
+    "MaxAllowedAPICount": 30
   },
   "VirtualMachine": {
     "Windows": {
@@ -147,7 +157,65 @@
       "ResourceDetailsKeys": {
         "WorkspaceId": "Reporting workspace customer id"
       }
-    }
+    },
+    "ControlExclusionsByService" : 
+     [
+        {
+          "ControlTag" : "ExcludeDatabricks",
+          "ResourceTag": "Vendor",
+          "ResourceTagValue" :"Databricks",
+          "ServiceType" : "Databricks"
+        },
+        {
+          "ControlTag" : "ExcludeKubernetes",
+          "ResourceTag": "orchestrator",
+          "ResourceTagValue" :"Kubernetes*",
+          "ServiceType" : "Kubernetes"
+        }
+     ]
+  },
+  "VirtualMachineScaleSet": {
+    "Windows": {
+      "SupportedSkuList": [],
+      "ManagementPortList": [
+        {
+          "Name": "RDP",
+          "Port": 3389
+        },
+        {
+          "Name": "WINRM",
+          "Port": 5985
+        }
+      ]
+    },
+    "Linux": {
+      "SupportedSkuList": [],
+      "ManagementPortList": [
+        {
+          "Name": "RDP",
+          "Port": 3389
+        },
+        {
+          "Name": "SSH",
+          "Port": 22
+        }
+      ]
+    },
+    "ControlExclusionsByService" : 
+      [
+        {
+          "ControlTag" : "ExcludeServiceFabric",
+          "ResourceTag": "resourceType",
+          "ResourceTagValue" :"Service Fabric",
+          "ServiceType" : "ServiceFabric"
+        },
+        {
+          "ControlTag" : "ExcludeKubernetes",
+          "ResourceTag": "orchestrator",
+          "ResourceTagValue" :"Kubernetes*",
+          "ServiceType" : "Kubernetes"
+        }
+     ]
   },
   "NoOfApprovedAdmins": 5,
   "NoOfClassicAdminsLimit": 2,
@@ -155,8 +223,15 @@
     "Subscription" : [ "Owner", "Contributor", "User Access Administrator" ],
     "ResourceGroup" : [ "Owner", "User Access Administrator" ]
   },
+  "CheckPIMCAPolicyTags": false,
+  "PIMCAPolicyTags":[],
+  "PIMAppId":"01fc33a7-78ba-4d2f-a4b7-768e336e890e",
   "ASCAlertsSeverityLevels": [ "High" ],
-  "ASCAlertsThresholdInDays": 30,
+  "ASCAlertsThresholdInDays": {
+    "High": 0,
+    "Medium": 30  
+   
+  },
   "WhitelistedMgmtCerts": {
     "Thumbprints": [],
     "ApprovedValidityRangeInDays": 732
@@ -462,5 +537,7 @@
       "RequiredImagePath": "azsktest/akstest",
       "RequiredImageTag": "latest"
     }
-  }
+  },
+  "MaxResourceInventoryObjectsCount": 20000,
+  "AlernateAccountRegularExpressionForOrg": ""
 }

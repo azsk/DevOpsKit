@@ -278,7 +278,7 @@ class PolicySetup: AzCommandBase
 		}
 		else {
 			$metadataFileNames += Get-ChildItem $this.ConfigFolderPath -Recurse -Force |
-								Where-Object { $_.mode -match "-a---" -and $_.Name -ne [Constants]::ServerConfigMetadataFileName } |
+								Where-Object { $_.mode -match "^-..--" -and $_.Name -ne [Constants]::ServerConfigMetadataFileName } |
 								Select-Object -Property Name | Select-Object -ExpandProperty Name |								
 								Select-Object @{ Label="Name"; Expression={ $_ } };
 			}
@@ -499,13 +499,13 @@ class PolicySetup: AzCommandBase
 		$this.ModifyConfigs();
 		# Uploading Runbook files to container
 		$allCAFiles = @();
-		$allCAFiles += Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.mode -match "-a---" }
+		$allCAFiles += Get-ChildItem $this.RunbookFolderPath -Force | Where-Object { $_.mode -match "^-..--" }
 		if($allCAFiles.Count -ne 0)
 		{
 	    	$this.StorageAccountInstance.UploadFilesToBlob($this.ConfigContainerName, $this.RunbookBaseVersion, $allCAFiles);
 		}
 		$allFiles = @();
-		$allFiles += Get-ChildItem $this.ConfigFolderPath -Recurse -Force | Where-Object { $_.mode -match "-a---" }
+		$allFiles += Get-ChildItem $this.ConfigFolderPath -Recurse -Force | Where-Object { $_.mode -match "^-..--" }
 
 		if($allFiles.Count -ne 0)
 		{
@@ -1487,8 +1487,8 @@ class PolicySetup: AzCommandBase
 			$existingPolicyFolderContent= Get-ChildItem -Path $($this.FolderPath) -ErrorAction SilentlyContinue
 			if(($existingPolicyFolderContent | Measure-Object).Count -gt 0)
 			{
-				$this.PublishCustomMessage("Warning: Policy folder already contains files. Downloading policies can override existing files. `nDo you want to continue(Y/N):", $([MessageType]::Warning))
-				$answer= Read-Host
+				$this.PublishCustomMessage("Warning: Policy folder already contains files. Downloading policies can override existing files.", $([MessageType]::Warning))
+				$answer= Read-Host "Do you want to continue(Y/N)"
 				if($answer.ToLower() -ne "y" )
 				{
 					$downloadPolicy = $false
@@ -1567,7 +1567,8 @@ class PolicySetup: AzCommandBase
 				throw ([SuppressedException]::new("Invalid schema found. Please correct schema and reupload extensions.", [SuppressedExceptionType]::Generic))
 			}
 			$this.PublishCustomMessage("Completed validating sytax exception for extension files.", [MessageType]::Update);
-			$serverConfigMetadata = Get-Content -Path ($this.FolderPath + $([Constants]::ServerConfigMetadataFileName)) | ConvertFrom-Json
+			$serverConfigMetadataPath = Join-Path $this.FolderPath $([Constants]::ServerConfigMetadataFileName) 
+			$serverConfigMetadata = Get-Content -Path $serverConfigMetadataPath | ConvertFrom-Json
 
 			# Dynamically get list of files available in folder
 			# TODO: Need to optimize the logic to calculate ServerConfigMetadataFileContent

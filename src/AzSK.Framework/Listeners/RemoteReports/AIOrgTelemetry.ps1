@@ -45,12 +45,75 @@ class AIOrgTelemetry: ListenerBase {
 					$currentInstance.PushServiceScanResults($SVTEventContexts)
 				}else{
 				}
+				try {
+					$isResourceScanStartEndTelemetryEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableResourceScanStartEndTelemetry", $($Event.SourceArgs[0].SubscriptionContext.SubscriptionId))
+					$resourceContext = $Event.SourceArgs[0].ResourceContext
+					#specifying NA so that it is easily identifiable in app sights query
+					if([string]::IsNullOrEmpty($Event.SourceArgs[0].PartialScanIdentifier)){
+						$partialScanIdentifier = "NA"
+					}
+					else
+					{
+						$partialScanIdentifier = $Event.SourceArgs[0].PartialScanIdentifier
+					}
+					if ($isResourceScanStartEndTelemetryEnabled) {
+						if ($resourceContext -ne $null) {
+							$resourceDetails = @{
+								ResourceId            = $resourceContext.ResourceId
+								ResourceName          = $resourceContext.ResourceName
+								ResourceType          = $resourceContext.ResourceType
+								Location              = $resourceContext.Location
+								ResourceGroupName     = $resourceContext.ResourceGroupName
+								SubscriptionId        = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
+								PartialScanIdentifier = $partialScanIdentifier
+							}
+							[AIOrgTelemetryHelper]::TrackEvent("Resource Scan Ended", $resourceDetails, $null)
+						}
+					}
+				}
+				catch {
+					$currentInstance.PublishException($_);
+				}
 			}
+				
 			catch
 			{
 				$currentInstance.PublishException($_);
 			}
 		});
+
+		$this.RegisterEvent([SVTEvent]::EvaluationStarted, {
+			$currentInstance = [AIOrgTelemetry]::GetInstance();
+			try {
+					$isResourceScanStartEndTelemetryEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableResourceScanStartEndTelemetry", $($Event.SourceArgs[0].SubscriptionContext.SubscriptionId))
+					$resourceContext = $Event.SourceArgs[0].ResourceContext
+					#specifying NA so that it is easily identifiable in app sights query
+					if([string]::IsNullOrEmpty($Event.SourceArgs[0].PartialScanIdentifier)){
+						$partialScanIdentifier = "NA"
+					}
+					else
+					{
+						$partialScanIdentifier = $Event.SourceArgs[0].PartialScanIdentifier
+					}
+					if ($isResourceScanStartEndTelemetryEnabled) {
+						if ($resourceContext -ne $null) {
+							$resourceDetails = @{
+								ResourceId            = $resourceContext.ResourceId
+								ResourceName          = $resourceContext.ResourceName
+								ResourceType          = $resourceContext.ResourceType
+								Location              = $resourceContext.Location
+								ResourceGroupName     = $resourceContext.ResourceGroupName
+								SubscriptionId        = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
+								PartialScanIdentifier = $partialScanIdentifier
+							}
+							[AIOrgTelemetryHelper]::TrackEvent("Resource Scan Started", $resourceDetails, $null)
+						}
+					}
+				}
+				catch {
+					$currentInstance.PublishException($_);
+				}			
+			});
 
 		$this.RegisterEvent([AzSKGenericEvent]::Exception, {
             $currentInstance = [AIOrgTelemetry]::GetInstance();
@@ -121,10 +184,10 @@ class AIOrgTelemetry: ListenerBase {
 				# No need to break execution
             }
 		});
+
 		
-
-    }
-
+	 }
+	
 	hidden [void] PushSubscriptionScanResults([SVTEventContext[]] $SVTEventContexts)
 	{
 		$SVTEventContextFirst = $SVTEventContexts[0]
@@ -142,6 +205,15 @@ class AIOrgTelemetry: ListenerBase {
 	hidden [void] PushServiceScanResults([SVTEventContext[]] $SVTEventContexts)
 	{
 		$SVTEventContextFirst = $SVTEventContexts[0]
+		# PartialScanIdentifier for each control scanned event to get idea about all resources scanned for a subscription in case of partial run 
+		$PartialScanIdentifier = ""
+		# try catch for cases if partial scan is not applicable 
+		try{
+			$PartialScanIdentifier = $SVTEventContextFirst.PartialSCanIdentifier
+		} 
+		catch{
+			$PartialScanIdentifier = ""
+		}
 		$baseProperties = @{
 			"RunIdentifier" = $this.RunIdentifier;
 			[TelemetryKeys]::FeatureGroup = [FeatureGroup]::Service;
@@ -153,6 +225,7 @@ class AIOrgTelemetry: ListenerBase {
 			"ResourceName" = $SVTEventContextFirst.ResourceContext.ResourceName;
 			"ResourceId" = $SVTEventContextFirst.ResourceContext.ResourceId;
 			"ResourceMetadata" = [JsonHelper]::ConvertToJsonCustomCompressed($SVTEventContextFirst.ResourceContext.ResourceMetadata);
+			"PartialScanIdentifier" = $PartialScanIdentifier 
 		}
 		$this.PushControlResults($SVTEventContexts, $baseProperties)
 	}
