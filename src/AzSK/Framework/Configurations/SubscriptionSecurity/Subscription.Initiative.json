@@ -2,7 +2,7 @@
   "Version": "3.1809.0",         
   "Name" : "AzSKInitiative-Preview",
   "DisplayName" : "AzSK Initiative-Preview",
-  "Description" : "Test Description",
+  "Description" : "Initiative for azure policy compliance check.",
   "Policies" : [
     {        
         "policyDefinitionId":  "/providers/Microsoft.Authorization/policyDefinitions/752c6934-9bcc-4749-b004-655e676ae2ac",
@@ -27,5 +27,9 @@
                        }
     }
   ],
-  "DeprecatedInitiatives" : []   
+  "DeprecatedInitiatives" : [],
+  "CustomPolicies" : [
+  ],
+  "DeprecatedDefinitions": [
+  ]
 }
