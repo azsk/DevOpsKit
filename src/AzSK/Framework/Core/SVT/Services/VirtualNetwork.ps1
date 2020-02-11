@@ -12,13 +12,14 @@ class VirtualNetwork: SVTIaasBase
     {
         if($null -ne $this.vNetNicsOutput)
         {
+            $PublicIps = @();
 			$controlResult.AddMessage([MessageData]::new("Analyzing all the NICs configured in the VNet"));
-            $PublicIpCount = (($this.vNetNicsOutput | Where-Object {!([System.String]::IsNullOrWhiteSpace($_.PublicIpAddress))}) | Measure-Object).count
-            if($PublicIpCount -gt 0)
+            $PublicIps += ($this.vNetNicsOutput | Where-Object {!([System.String]::IsNullOrWhiteSpace($_.PublicIpAddress))})
+            if($PublicIps.Count -gt 0)
             {
 				$publicIPList = @()
 				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Verify below Public IP(s) on the Vnet"));
-                $this.vNetNicsOutput | ForEach-Object{
+                $PublicIps | ForEach-Object{
                     Set-Variable -Name nic -Scope Local -Value $_
 					$publicIP = $nic | Select-Object NICName, VMName, PrimaryStatus, NetworkSecurityGroupName, PublicIpAddress, PrivateIpAddress
 					$publicIPList += $publicIP
@@ -40,7 +41,7 @@ class VirtualNetwork: SVTIaasBase
         return $controlResult;
     }
 
-	hidden [ControlResult] CheckIPForwardingforNICs([ControlResult] $controlResult)
+    hidden [ControlResult] CheckIPForwardingforNICs([ControlResult] $controlResult)
     {
         if($null -ne $this.vNetNicsOutput -and ($this.vNetNicsOutput | Measure-Object).count -gt 0)
 		{
