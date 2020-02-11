@@ -129,6 +129,8 @@ function Set-AzSKPIMConfiguration {
 
         [Parameter(Mandatory = $true, ParameterSetName = "Assign")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignmentForUsers")]
+        [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [ValidateNotNullOrEmpty()]
 	    [Alias("pn","PrincipalName","GroupName")]
         [string[]]
@@ -194,10 +196,10 @@ function Set-AzSKPIMConfiguration {
                 $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false))
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'AssignEligibleforPermanentAssignments') {
-                $pimconfig.InvokeFunction($pimconfig.AssignPIMforPermanentAssignemnts, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $Force))
+                $pimconfig.InvokeFunction($pimconfig.AssignPIMforPermanentAssignemnts, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $PrincipalNames, $Force))
             }	
             elseif ($PSCmdlet.ParameterSetName -eq 'RemovePermanentAssignment') {
-                $pimconfig.InvokeFunction($pimconfig.RemovePermanentAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $Force))
+                $pimconfig.InvokeFunction($pimconfig.RemovePermanentAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $PrincipalNames, $Force))
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'ExtendExpiringAssignments') {
                 $pimconfig.InvokeFunction($pimconfig.ExtendSoonToExpireAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $Force))
@@ -236,7 +238,7 @@ function Set-AzSKPIMConfiguration {
                     
                 else 
                 {
-                    $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $null, $null))
+                    $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $false))
                 }
                                
                 
