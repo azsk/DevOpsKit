@@ -103,9 +103,11 @@ class VirtualNetwork: SVTIaasBase
             }
             if($null-ne $subnetsWithNSG  -and ($subnetsWithNSG | Measure-Object).Count -gt 0)
             {
-                #$checkSubnets = @()
+                # Invalid NSG rules list for whole vNet
                 $InvalidRulesList = @()
                 $subnetsWithNSG | ForEach-Object{
+                            # Invalid NSG rules list for current subnet
+                            $InvalidRulesListForSubnet = @()
 							$nsgid = $_.NetworkSecurityGroup.Id
 							$nsglist = Get-AzResource -ResourceId $nsgid
 
@@ -115,17 +117,21 @@ class VirtualNetwork: SVTIaasBase
 									$ruleproperties = $_.Properties
 									if((($ruleproperties.Direction -eq "outbound") -or ($ruleproperties.Direction -eq "inbound")) -and (([Helpers]::CheckMember($ruleproperties,"SourceAddressPrefix")) -and $ruleproperties.SourceAddressPrefix -eq '*') -and $ruleproperties.DestinationAddressPrefix -eq '*' -and $ruleproperties.Access -eq "allow")
 									{
-										$InvalidRulesList += $_ | Select-Object Id, Properties
+										$InvalidRulesListForSubnet += $_ | Select-Object Id, Properties
 									}
 								}
 							}
 					$currentsubnet=$_
-                    if(($InvalidRulesList | Measure-Object).Count -gt 0)
+                    if(($InvalidRulesListForSubnet | Measure-Object).Count -gt 0)
                     {
-						$controlResult.SetStateData("Potentially dangerous any to any outbound security rule(s) found in subnet - ["+ $_.Name +"]", $InvalidRulesList);
-						$hasTCPPassed = $false
-						$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Potentially dangerous any to any outbound security rule(s) found in subnet - ["+ $_.Name +"]", $InvalidRulesList));
+                        $InvalidRulesList += $InvalidRulesListForSubnet
+						$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Potentially dangerous any to any outbound/inbound security rule(s) found in subnet - ["+ $currentsubnet.Name +"]", $InvalidRulesListForSubnet));
                     }
+                }
+                if(($InvalidRulesList | Measure-Object).Count -gt 0)
+                {
+                    $hasTCPPassed = $false
+                    $controlResult.SetStateData("Potentially dangerous any to any outbound/inbound security rule(s) found in vNet", $InvalidRulesList);
                 }
             }
         }
