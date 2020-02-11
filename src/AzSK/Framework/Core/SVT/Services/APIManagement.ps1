@@ -405,7 +405,7 @@ class APIManagement: AzSVTBase
 				# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
 				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 				$controlResult.AddMessage([VerificationResult]::Verify,
-					[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rVerify that CORS access is granted to a minimal set of trusted origins and only required verbs are supported.`n`rEnsure that CORS is not enabled in APIM with access from all domains ('*'). Using '*' (allow all) for CORS setting means that all cross-origin requests are allowed."));
+					[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rTotal API count for the current instance exceeded maximum limit allowed in CA scan.Please scan the control in SDL mode."));
 			}
 			else
 			{
