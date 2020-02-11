@@ -217,6 +217,24 @@
       "DisabledForSubs": [],
       "UnderPreview": false,
       "IsEnabled": true
+    },
+    {
+      "Name": "AllowCustomDefinitionsForPolicyScan",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": false
+    },
+    {
+      "Name": "PreventAttestationStateDrift",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
     }
   ]
 }
