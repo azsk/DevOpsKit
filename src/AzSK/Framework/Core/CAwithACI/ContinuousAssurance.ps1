@@ -271,8 +271,7 @@ class ContinuousAssurance: AzCommandBase
         $AzSKFunctionApp = Set-AzWebApp -Name $this.FunctionAppName -ResourceGroupName $this.ResourceGroup -AppSettings $AppSettings -AssignIdentity $true -HttpsOnly $true								
         Start-Sleep -Seconds 10
         $this.FunctionAppMSI = $AzSKFunctionApp.Identity.PrincipalId
-        #TBD
-        #$zipFilePath = "C:\Users\AKALETI\Desktop\mclass\AzSK-Containerization\temp.zip";
+       
         $zipFilePath = Join-Path (Get-Item -Path $PSScriptRoot).Parent.Parent.FullName -ChildPath "Configurations" | Join-Path -ChildPath "ContinuousAssurance" | Join-Path -ChildPath "FunctionApp.zip";
         $pub = $this.FunctionAppName + '/publishingcredentials';
         $pubCredResourceType = "Microsoft.Web/sites/config";
