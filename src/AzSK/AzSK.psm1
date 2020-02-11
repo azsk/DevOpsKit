@@ -5,7 +5,7 @@ Import-Module Az.Accounts -RequiredVersion 1.6.0 -WarningAction SilentlyContinue
 . $PSScriptRoot\Framework\Framework.ps1
 
 
-@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring", "$PSScriptRoot\SubscriptionSecurity", "$PSScriptRoot\ContinuousAssurance" , "$PSScriptRoot\AzSKInfo", "$PSScriptRoot\PolicySetup", "$PSScriptRoot\ARMChecker","$PSScriptRoot\PIM","$PSScriptRoot\CredHygiene", "$PSScriptRoot\InClusterCA", "$PSScriptRoot\CAwithACI") |
+@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring", "$PSScriptRoot\SubscriptionSecurity", "$PSScriptRoot\ContinuousAssurance" , "$PSScriptRoot\AzSKInfo", "$PSScriptRoot\PolicySetup", "$PSScriptRoot\ARMChecker","$PSScriptRoot\PIM","$PSScriptRoot\CredHygiene", "$PSScriptRoot\InClusterCA") |
     ForEach-Object {
     (Get-ChildItem -Path $_ -Recurse -File -Include "*.ps1") |
         ForEach-Object {
