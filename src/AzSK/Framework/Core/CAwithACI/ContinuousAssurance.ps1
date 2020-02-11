@@ -347,7 +347,7 @@ class ContinuousAssurance: AzCommandBase
         }
         #Use class variable
         $this.FunctionAppName = "azskcasheduler" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss")
-        $this.PublishCustomMessage("Creating Azure function app: [" + $this.FunctionAppName + "]")
+        $this.PublishCustomMessage("Creating Azure function app: [$($this.FunctionAppName)] ")
         $this.UpdateAzSKFunctionApp()
         $this.PublishCustomMessage("Configuring permissions for AzSK function app MSI...")
         $this.SetFunctionAppMSIAccess()
