@@ -459,10 +459,10 @@ class ARMPolicy: AzCommandBase
 
 	[void] CreateCustomDefinitions()
 	{ 
-		# Read custom definitions from Subscription.Definitions.json
+		# Read custom definitions from PolicyDefinitions.json
 		$subscriptionId = $this.SubscriptionContext.SubscriptionId
 		$scope = "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"		
-		$policyDefinitionsDetails = [ConfigurationHelper]::LoadServerConfigFile("Subscription.Definitions.json", $true, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore)
+		$policyDefinitionsDetails = [ConfigurationHelper]::LoadServerConfigFile("PolicyDefinitions.json", $true, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore)
 		if ($policyDefinitionsDetails -and [Helpers]::CheckMember($policyDefinitionsDetails, "CustomDefinitions"))
 		{
 			$policyDefinitionsDetails.CustomDefinitions | ForEach-Object {
