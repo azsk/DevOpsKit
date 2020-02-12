@@ -295,6 +295,12 @@ class ContinuousAssurance: AzCommandBase
 
     [void] InstallAzSKContinuousAssurancewithACI()
     {
+        #Using a trick to exclude non CSEO users..To be removed
+        if(-not [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore)
+        {
+            $this.PublishCustomMessage("Container based CA is currently not available to your org ", [MessageType]::Error)
+            return
+        }
         #create AzSKRG resource group if not exists
         [ResourceGroupHelper]::CreateNewResourceGroupIfNotExists($this.ResourceGroup, $this.CALocation,$this.GetCurrentModuleVersion())
         #create storage account if not exists
@@ -355,6 +361,12 @@ class ContinuousAssurance: AzCommandBase
 
     [void] UpdateAzSKContinuousAssurancewithACI()
     {
+        #Using a trick to exclude non CSEO users..To be removed
+        if(-not [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore)
+        {
+            $this.PublishCustomMessage("Container based CA is currently not available to your org ", [MessageType]::Error)
+            return
+        }
         $ContainerIntstance = $this.GetCAContainerInstance()
         if(($ContainerIntstance|Measure-Object).Count -eq 0)
         {
@@ -414,6 +426,12 @@ class ContinuousAssurance: AzCommandBase
 
     [void] GetAzSKContinuousAssurancewithACI()
     {
+        #Using a trick to exclude non CSEO users..To be removed
+        if(-not [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore)
+        {
+            $this.PublishCustomMessage("Container based CA is currently not available to your org ", [MessageType]::Error)
+            return
+        }
         $currentMessage = [MessageData]::new([Constants]::DoubleDashLine + "`r`nStarted validating your AzSK Continuous Assurance (CA) setup...`r`n"+[Constants]::DoubleDashLine);
         $this.PublishCustomMessage($currentMessage); 
         # validate container  
@@ -477,6 +495,12 @@ class ContinuousAssurance: AzCommandBase
 
     [void] RemoveAzSKContinuousAssurancewithACI()
     {
+        #Using a trick to exclude non CSEO users..To be removed
+        if(-not [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore)
+        {
+            $this.PublishCustomMessage("Container based CA is currently not available to your org ", [MessageType]::Error)
+            return
+        }
         $this.PublishCustomMessage("This command will delete resources in your subscription which were installed by AzSK Continuous Assurance using containers",[MessageType]::Warning);
         Remove-AzContainerGroup -ResourceGroupName $this.ResourceGroup -Name $this.ContainerName
         $this.PublishCustomMessage("Removed Container instance : [$($this.ContainerName)] from resource group: [$($this.ResourceGroup)]")
