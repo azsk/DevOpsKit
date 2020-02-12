@@ -350,7 +350,7 @@ function Update-AzSKContinuousAssurance
         
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
-		[Parameter(Position = 1, Mandatory = $true, ParameterSetName = "ContainerMode")]
+		[Parameter(Position = 1, Mandatory = $false, ParameterSetName = "ContainerMode")]
         [ValidateNotNullOrEmpty()]
         [string]
 		[Alias("rgns")]
