@@ -25,11 +25,15 @@ class VirtualMachine: AzSVTBase
 		{
 			$metadata| Add-Member -Name VMASCDetails -Value $this.ASCSettings -MemberType NoteProperty;
 		}
+
 		# Add Installed Extensions deatils to resource metadata of VM 
-		if([Helpers]::CheckMember($this.ResourceObject, "Extensions") -and ($this.ResourceObject.Extensions | Measure-Object).Count -gt 0)
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableVMExtensionMetadataCapture",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
 		{
-			$vmExtensionList = $this.ResourceObject.Extensions | Select-Object "Publisher", "VirtualMachineExtensionType", "TypeHandlerVersion" 
-			$metadata| Add-Member -Name VMExtensions -Value $vmExtensionList -MemberType NoteProperty;
+			if([Helpers]::CheckMember($this.ResourceObject, "Extensions") -and ($this.ResourceObject.Extensions | Measure-Object).Count -gt 0)
+			{
+				$vmExtensionList = $this.ResourceObject.Extensions | Select-Object "Publisher", "VirtualMachineExtensionType", "TypeHandlerVersion" 
+				$metadata| Add-Member -Name VMExtensions -Value $vmExtensionList -MemberType NoteProperty;
+			}
 		}
 
 		$this.AddResourceMetadata($metadata);		
