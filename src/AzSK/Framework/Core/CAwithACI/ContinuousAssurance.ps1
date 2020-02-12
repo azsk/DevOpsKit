@@ -10,6 +10,7 @@ class ContinuousAssurance: AzCommandBase
     hidden [string] $ResourceGroupNames
     hidden [string] $StorageAccountName
     hidden $EnvironmentVariables = @{}
+    hidden [Hashtable] $reportStorageTags = @{}
     hidden [string] $LAWSId
     hidden [string] $LAWSSharedKey
     hidden [string] $AltLAWSId
