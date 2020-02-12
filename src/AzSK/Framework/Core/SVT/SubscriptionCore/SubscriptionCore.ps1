@@ -1062,7 +1062,7 @@ class SubscriptionCore: AzSVTBase
 			if([FeatureFlightingManager]::GetFeatureStatus("FetchRGPIMControlStatusFromComplianceState",$($this.SubscriptionContext.SubscriptionId)) )
 			{
 				#[string] $controlId = $controlItem.ControlID;
-				$controlResult.AddMessage("Note: `n By default, this control is not evaluated in manual scan mode. The control status is based on the previous CA runbook scan for this control. To determine why this control has failed, you can look at the detailed log files in the storage account in AzSKRG under a container named 'ca-scan-logs' `n To force a manual scan, you can use the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG '")
+				$controlResult.AddMessage("Note: `n By default, this control is not evaluated in manual scan mode. The control status is based on the previous CA runbook scan for this control. To determine why this control has failed, you can look at the detailed log files in the AzSK storage account under a container named 'ca-scan-logs'. `n To force a manual scan, you can use the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG '")
 				$result = $this.GetControlStatusFromComplianceState('Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG');
 				# since this control has actually only two states 'Passed' and 'Failed', but in case we are not able to read attestation data we need to tell the reason for the same
 				
@@ -1499,6 +1499,9 @@ class SubscriptionCore: AzSVTBase
 
 	hidden [ControlResult] CheckNonAlternateAccountsinPIMAccess([ControlResult] $controlResult)
     {
+		if(-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest'])) -or [AzSKSettings]::GetInstance().GetScanSource() -eq 'CA')
+		{
+		
 			$AltAccountRegX = [string]::Empty;
 			$message = [string]::Empty;
 			$messageSub=$this.GetRGLevelPIMRoles();
@@ -1556,7 +1559,44 @@ class SubscriptionCore: AzSVTBase
 				}
 			
 		
-
+		}
+		else
+		{
+			# If full GSS scan run is non CA mode, attestation switch not being passed, the control will read result from compliance state table
+			# Since actually control is not evaluated in this code path, we need to put the 'HasRequiredAccess' flag as false, so that this result does not count for compliance
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			if([FeatureFlightingManager]::GetFeatureStatus("FetchRGPIMControlStatusFromComplianceState",$($this.SubscriptionContext.SubscriptionId)) )
+			{
+				#[string] $controlId = $controlItem.ControlID;
+				$controlResult.AddMessage("Note: `n By default, this control is not evaluated in manual scan mode. The control status is based on the previous CA runbook scan for this control. To determine why this control has failed, you can look at the detailed log files in the AzSK storage account under a container named 'ca-scan-logs' `n To force a manual scan, you can use the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_Use_Only_Alt_Credentials '")
+				$result = $this.GetControlStatusFromComplianceState('Azure_Subscription_Use_Only_Alt_Credentials');
+				# since this control has actually only two states 'Passed' and 'Failed', but in case we are not able to read attestation data we need to tell the reason for the same
+				if(($result | Measure-Object).Count -eq 1)
+				{
+					switch($result)
+					{
+						
+						"Manual"{
+							$controlResult.AddMessage([VerificationResult]::Manual,"")
+							$controlResult.AddMessage("Unable to query compliance state results")
+						}
+						Default
+						{
+							
+							$controlResult.AddMessage([VerificationResult]::$result,"")
+						
+						}
+						
+					} 
+				}
+				else
+				{
+					$controlResult.AddMessage([VerificationResult]::Manual,"")
+					$controlResult.AddMessage("Unable to query compliance state results")
+				}
+				
+			}
+		}
 		return $controlResult;
 	}
 	hidden [void] LoadRBACConfig()
