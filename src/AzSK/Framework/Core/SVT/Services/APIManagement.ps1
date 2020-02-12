@@ -337,6 +337,17 @@ class APIManagement: AzSVTBase
     {
 		if(($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
+			$isExcludeControlForLargeAPIM = [FeatureFlightingManager]::GetFeatureStatus("ExcludeControlForLargeAPIM",$($this.SubscriptionContext.SubscriptionId))
+			if ($isExcludeControlForLargeAPIM -and (($this.APIMAPIs | Measure-Object).Count -gt $this.ControlSettings.APIManagement.MaxAllowedAPICount))
+			{
+				# If number of APIs is higher than MaxAllowedAPICount, the control is marked as Verify in CA mode.
+				# This check has been implemented because of the execution time of control as well as socket and memory limit exhaustion in case of APIMs with large number of APIs
+				# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+					$controlResult.AddMessage([VerificationResult]::Verify,[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rTotal API count for the current instance exceeded maximum limit allowed in CA scan.Please scan the control in SDL mode."));
+			
+			}
+			else{
 			$ClientCertAuthDisabledInAPIs = ($this.APIMAPIs).ApiId | ForEach-Object {
 				$apiPolicy = $null
 				try {
@@ -366,6 +377,7 @@ class APIManagement: AzSVTBase
 			    $controlResult.AddMessage([VerificationResult]::Passed,"")
 			}
 		}
+		}
 		return $controlResult;
     }
 
@@ -385,14 +397,15 @@ class APIManagement: AzSVTBase
 				$MaxApiCount = $this.ControlSettings.MaxApiCount
 			}
 			$Counter = 0
-			if ( ($this.APIMAPIs | Measure-Object).Count -gt $this.ControlSettings.APIManagement.MaxAllowedAPICount)
+			$isExcludeControlForLargeAPIM = [FeatureFlightingManager]::GetFeatureStatus("ExcludeControlForLargeAPIM",$($this.SubscriptionContext.SubscriptionId))
+			if ($isExcludeControlForLargeAPIM -and (($this.APIMAPIs | Measure-Object).Count -gt $this.ControlSettings.APIManagement.MaxAllowedAPICount))
 			{
 				# If number of APIs is higher than MaxAllowedAPICount, the control is marked as Verify.
 				# This check has been implemented because of the execution time of control in case of large subscription
 				# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
-				
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 				$controlResult.AddMessage([VerificationResult]::Verify,
-					[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rVerify that CORS access is granted to a minimal set of trusted origins and only required verbs are supported.`n`rEnsure that CORS is not enabled in APIM with access from all domains ('*'). Using '*' (allow all) for CORS setting means that all cross-origin requests are allowed."));
+					[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rTotal API count for the current instance exceeded maximum limit allowed in CA scan.Please scan the control in SDL mode."));
 			}
 			else
 			{
@@ -494,12 +507,25 @@ class APIManagement: AzSVTBase
     {
 		if ( $null -ne $this.APIMContext)
 		{
+			$isExcludeControlForLargeAPIM = [FeatureFlightingManager]::GetFeatureStatus("ExcludeControlForLargeAPIM",$($this.SubscriptionContext.SubscriptionId))
+			if ($isExcludeControlForLargeAPIM -and (($this.APIMAPIs | Measure-Object).Count -gt $this.ControlSettings.APIManagement.MaxAllowedAPICount))
+			{
+					# If number of APIs is higher than MaxAllowedAPICount, the control is marked as Verify in CA mode.
+					# This check has been implemented because of the execution time of control as well as socket and memory limit exhaustion in case of APIMs with large number of APIs
+					# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+					$controlResult.AddMessage([VerificationResult]::Verify,
+					[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rTotal API count for the current instance exceeded maximum limit allowed in CA scan.Please scan the control in SDL mode."));
+				
+			}
+			else{
 			$IsAPILevelPolicyEvaluated = $false
 			$Message = ""
 			$Index = 1
 			$RestrictedCallerIPsInfo = @()
 			#Policy Scope: Gobal
 			$GlobalPolicy = $null
+
 			try
 			{
 				$GlobalPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ErrorAction Stop
@@ -745,7 +771,8 @@ class APIManagement: AzSVTBase
 			{
 				$controlResult.AddMessage([VerificationResult]::Verify, "Unable to validate control. Please verify from portal that IP restirction is enabled for APIs.")
 			}
-		}	
+		} 
+	}	
 		return $controlResult;
     }
 
@@ -867,7 +894,19 @@ class APIManagement: AzSVTBase
 		$JWTValidatePolicyNotFound = @()
 		if(($this.APIUserAuth -ne 'ResourceNotFound') -and ($null -ne $this.APIMContext) -and ($null -ne $this.APIMAPIs))
 		{
-			$this.APIMAPIs | ForEach-Object {
+			$isExcludeControlForLargeAPIM = [FeatureFlightingManager]::GetFeatureStatus("ExcludeControlForLargeAPIM",$($this.SubscriptionContext.SubscriptionId))
+			if ($isExcludeControlForLargeAPIM -and (($this.APIMAPIs | Measure-Object).Count -gt $this.ControlSettings.APIManagement.MaxAllowedAPICount))
+			{
+					# If number of APIs is higher than MaxAllowedAPICount, the control is marked as Verify in CA mode.
+					# This check has been implemented because of the execution time of control as well as socket and memory limit exhaustion in case of APIMs with large number of APIs
+					# In this case, user must follow the FAQ provided in recommendation to check API/Operation level policy
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+					$controlResult.AddMessage([VerificationResult]::Verify,
+					[MessageData]::new("Total API count: $(($this.APIMAPIs | Measure-Object).Count)`n`rTotal API count for the current instance exceeded maximum limit allowed in CA scan.Please scan the control in SDL mode."));
+				
+			}
+			else{
+			$this.APIMAPIs | ForEach-Object{
 				$apiPolicy = $null
 				try {
 					$apiPolicy = Get-AzApiManagementPolicy -Context $this.APIMContext -ApiId $_.ApiId -ErrorAction Stop
@@ -908,6 +947,7 @@ class APIManagement: AzSVTBase
 				$controlResult.AddMessage([VerificationResult]::Passed,"")
 			}
 		}
+	}
 		return $controlResult;
     }
 

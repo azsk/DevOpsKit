@@ -349,26 +349,7 @@ class ComplianceInfo: AzCommandBase {
         $ComplianceMessage.ComplianceCount = $ComplianceCount
         $this.ComplianceMessageSummary += $ComplianceMessage
     }
-    hidden [void] UpdateStorageComplianceData() {
-        $azskConfig = [ConfigurationManager]::GetAzSKConfigData();	
-        $settingStoreComplianceSummaryInUserSubscriptions = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
-        if (-not $azskConfig.StoreComplianceSummaryInUserSubscriptions -and -not $settingStoreComplianceSummaryInUserSubscriptions) {
-            $this.PublishCustomMessage("NOTE: This feature is currently disabled in your environment. Please contact the cloud security team for your org. ", [MessageType]::Warning);	
-            return;
-        }		
-        $ComplianceRptHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion());
-        $this.PublishCustomMessage("Fetching data from backend. This may take a while...");
-        try {
-            $message = $ComplianceRptHelper.FetchComplianceStateFromDb();
-            $this.PublishCustomMessage($message);
-			
-
-        }
-        catch {
-            [EventBase]::PublishGenericException($_);
-        }
-
-    }
+    
 }
 
 class ComplianceMessageSummary {

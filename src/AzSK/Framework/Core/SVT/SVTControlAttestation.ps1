@@ -451,8 +451,17 @@ class SVTControlAttestation
 								foreach( $controlResult in $controlItem.ControlResults)
 								{
 									$controlStatus = $controlResult.ActualVerificationResult;
-								
-									[ControlState] $controlState = [ControlState]::new($controlId,$controlItem.ControlItem.Id,$controlResult.ChildResourceName,$controlStatus,"1.0");
+									
+									#Default attestation version is 1.0
+									$Version = '1.0'
+									if ( ([FeatureFlightingManager]::GetFeatureStatus("PreventAttestationStateDrift", $SubscriptionId)))
+									{
+										if ($this.InvocationContext)
+										{
+											$Version = [System.Version] ($this.InvocationContext.MyCommand.Version);
+										}
+									}
+									[ControlState] $controlState = [ControlState]::new($controlId,$controlItem.ControlItem.Id,$controlResult.ChildResourceName,$controlStatus,$Version);
 									if($null -ne $controlResult.StateManagement -and $null -ne $controlResult.StateManagement.AttestedStateData)
 									{								
 										$controlState.State = $controlResult.StateManagement.AttestedStateData

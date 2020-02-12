@@ -105,17 +105,49 @@ class PIM: AzCommandBase {
             $PIMResources = @();            
             if(($resolvedResources | Measure-Object).Count -gt 0 )
             {
-                 if( $item.ResourceType -eq 'subscription')
-                {
-                    $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq ("/subscriptions/$($SubscriptionId)") }
-                }
-                if( $item.ResourceType -eq 'resourcegroup')
-                {
-                    $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
-                    $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq $rgId }
-                 }
-                if( $item.ResourceType -eq 'resource'){
-                $resolvedResources = $resolvedResources | Where-Object{$_.ResourceName -eq $ResourceName }
+                    if( $item.ResourceType -eq 'subscription')
+                    {
+                        $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq ("/subscriptions/$($SubscriptionId)") }
+                    }
+                    if( $item.ResourceType -eq 'resourcegroup')
+                    {
+                        $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
+                        $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq $rgId }
+                    }
+                    if( $item.ResourceType -eq 'resource'){
+                        $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
+                        $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -like "$rgId*" -and $_.ResourceName-eq $ResourceName }
+                        # if multiple resources with same name under one rg are found, ask the end user to choose the resource
+                        if(($resolvedResources|Measure-Object).Count -gt 1)
+                        {   $counter=0; $tempres = @();
+                            foreach ($resource in $resolvedResources)
+                            {
+                                $item = New-Object psobject -Property @{
+                                id = ++$counter
+                                ResourceName =  $resource.ResourceName
+                                OriginalId =  $resource.OriginalId
+                                }
+                                $tempres+=$item
+                            }
+                            [int]$choice = -1;
+                            $this.PublishCustomMessage("Multiple resources with same resource name are found. ")                            
+                            $this.PublishCustomMessage(($tempres | Format-Table Id, OriginalId | Out-String))
+                            Write-Host "Please enter 'Id' from the above table for the resource you want to activate your assignment on." -ForegroundColor Yellow
+                            try{ 
+                                $choice = Read-Host
+                                if($choice -notin $tempres.Id)
+                                {
+                                    throw "Invalid Input provided";
+                                }
+                            }
+                            catch
+                            {
+                                 throw "Invalid Input provided";
+                                
+                            }
+                           $resolvedResources= $resolvedResources | Where-Object{$_.OriginalId -eq $tempres[$choice-1].OriginalId }
+                            
+                        }
                 }
                 if(($resolvedResources|Measure-Object).Count -gt 0)
                 {
@@ -171,6 +203,7 @@ class PIM: AzCommandBase {
                     }
                 }
             }
+            
              return $resolvedResource   
         }
 
@@ -334,6 +367,9 @@ class PIM: AzCommandBase {
                 $this.PublishCustomMessage("Note: The assignments listed below do not include 'inherited' assignments for the scope.", [MessageType]::Warning)
                 $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
                 $this.PublishCustomMessage($($roleAssignments | Format-Table -Property PrincipalName, @{Label = "Role"; Expression = { $_.RoleName } },  AssignmentState, @{Label = "Type"; Expression = { $_.SubjectType } } | Out-String), [MessageType]::Default)
+                
+                $objectToExport = $roleAssignments | Select-Object RoleName, PrincipalName, UserName, ResourceType, ResourceName, SubjectType, AssignmentState,	IsPermanent
+                $this.ExportCSV($objectToExport)
             }
             else {
                 if ($CheckPermanent) {
@@ -378,7 +414,7 @@ class PIM: AzCommandBase {
                         {
                             $err = $_ | ConvertFrom-Json
                             if ($err.error.Code -eq "RoleAssignmentRequestAcrsValidationFailed"){
-                                $this.PublishCustomMessage("A Conditional access policy is enabled on this resource. The provided credentials do not meet the criteria to access the resource. ",[MessageType]::Error)
+                                $this.PublishCustomMessage("A Conditional Access policy is enabled for this resource. Your current sign-in does not meet the required criteria.",[MessageType]::Error)
                             }
                             else {
                                 $this.PublishCustomMessage($err.error.message,[MessageType]::Error)
@@ -457,7 +493,7 @@ class PIM: AzCommandBase {
     }
 
     #Assign a user to Eligible Role
-    hidden AssignExtendPIMRoleForUser($subscriptionId, $resourcegroupName, $resourceName, $roleName, $PrincipalName, $duration,$isExtnensionRequest) {
+    hidden AssignExtendPIMRoleForUser($subscriptionId, $resourcegroupName, $resourceName, $roleName, $PrincipalName, $duration,$isExtensionRequest, $force, $isRemoveAssignmentRequest) {
         $this.AcquireToken();
         $PrincipalName = $this.ConvertToStringArray($PrincipalName);
         $resolvedResources = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName,$false)
@@ -499,7 +535,9 @@ class PIM: AzCommandBase {
                           $this.PublishCustomMessage("Unable to fetch details of the principal name provided.", [MessageType]::Error)
                     return;
                 }            
-                if($isExtnensionRequest)
+                
+                #"If" block will exceute when -ExtendExpiringAssignments parameter is used  
+                if($isExtensionRequest)
                 {
                     $roleAssignments = $this.ListAssignmentsWithFilter($resourceId, $false)
                     $roleAssignments = $roleAssignments | Where-Object{$_.SubjectId -in $subjectId -and $_.RoleName -eq $roleName -and $_.MemberType -ne 'Inherited'}
@@ -559,6 +597,55 @@ class PIM: AzCommandBase {
                     }
             
                 }
+                
+                #"ElseIf" block will exceute when -RemoveRole parameter is used  
+                elseif ($isRemoveAssignmentRequest)
+                 {
+                    $userResp = ''
+                    $users | ForEach-Object{
+                        $this.PublishCustomMessage(($_ | Format-Table  -AutoSize -Wrap -Property UserPrincipalName, DisplayName | Out-String), [MessageType]::Default)
+                        if(!$Force)
+                        {
+                            Write-Host "The above role assignments will be removed. `nPlease confirm (Y/N): " -ForegroundColor Yellow -NoNewline
+                            $userResp = Read-Host
+                        } 
+                        if ($userResp -eq 'y' -or $Force)
+                        {
+                            $url = $this.APIroot + "/roleAssignmentRequests"
+                            $postParams = '{"assignmentState":"Eligible","type":"AdminRemove","roleDefinitionId":"' + $roleDefinitionId + '","scopedResourceId": null ,"resourceId":"' + $resourceId + '","subjectId":"' + $_.Id + '"}'
+
+                            $this.PublishCustomMessage("Initiating removal of assignment on [$($resolvedResource.ResourceName)] for [$RoleName] role...")
+                            $this.PublishCustomMessage([Constants]::SingleDashLine)
+
+                            try{
+                            $response = [WebRequestHelper]::InvokeWebRequest('Post', $url, $this.headerParams, $postParams, "application/json", $false, $true )
+                                if ($response.StatusCode -eq 201) {
+                                    $this.PublishCustomMessage("Assignment removal request queued successfully.", [MessageType]::Update);
+                                }  
+                                elseif ($response.StatusCode -eq 401) {
+                                    $this.PublishCustomMessage("You are not eligible to revoke a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
+                                }
+                            }
+                            catch
+                            {
+                                if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
+                                {
+                                    $err = $_ | ConvertFrom-Json
+                                    $this.PublishCustomMessage($err.error.message,[MessageType]::Error)
+                                }
+                                else
+                                {
+                                    $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                                }
+        
+                            }
+                            $this.PublishCustomMessage([Constants]::SingleDashLine)
+                            $this.PublishCustomMessage("");
+                        }
+                    }
+                }
+
+                #"Else" block will exceute when -AssignRole parameter is used  
                 else 
                 {
                     $users | ForEach-Object{
@@ -610,6 +697,9 @@ class PIM: AzCommandBase {
             $this.PublishCustomMessage(($assignments | Format-Table -AutoSize -Wrap @{Label = "ResourceId"; Expression = { $_.OriginalId }}, ResourceName, RoleName,  ResourceType, AssignmentState, ExpirationDate | Out-String), [MessageType]::Default)
             $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
             $this.PublishCustomMessage("");
+                        
+            $objectToExport = $assignments | Select-Object @{Label = "ResourceId"; Expression = { $_.OriginalId } }, ResourceName, ResourceType, RoleName, AssignmentState
+            $this.ExportCSV($objectToExport)
         }
         else {
             $this.PublishCustomMessage("No eligible roles found for the current login.", [MessageType]::Warning);
@@ -850,6 +940,8 @@ class PIM: AzCommandBase {
                 if(($soonToExpireAssignments| Measure-Object).Count -gt 0)
                 {
                     $this.PublishCustomMessage($($soonToExpireAssignments | Sort-Object -Property ExpirationDate | Format-Table  -Wrap 'SubjectId', 'PrincipalName', 'SubjectType', @{Label = "ExpiringInDays"; Expression = { [math]::Round((([DateTime]$_.ExpirationDate).ToUniversalTime().Subtract([DateTime](get-date).ToUniversalTime())).TotalDays) } } |  Out-String), [MessageType]::Default)
+                    $objectToExport = $soonToExpireAssignments | Select-Object RoleName, PrincipalName, UserName, ResourceType, ResourceName, SubjectType, AssignmentState,	IsPermanent, @{Label = "ExpiringInDays"; Expression = { [math]::Round((([DateTime]$_.ExpirationDate).ToUniversalTime().Subtract([DateTime](get-date).ToUniversalTime())).TotalDays) } }
+                    $this.ExportCSV($objectToExport)
                 }
                 else 
                 {
@@ -1164,6 +1256,16 @@ class PIM: AzCommandBase {
         
       
       
+    }
+    hidden [void] ExportCSV($exportObject)
+    {
+        $assignmentsCSV = New-Object -TypeName WriteCSVData
+        $assignmentsCSV.FileName = 'SecurityReport-' + $this.RunIdentifier
+        $assignmentsCSV.FileExtension = 'csv'
+        $assignmentsCSV.FolderPath = ''
+        $assignmentsCSV.MessageData = $exportObject
+
+        $this.PublishAzSKRootEvent([AzSKRootEvent]::WriteCSV, $assignmentsCSV);
     }
 }
 

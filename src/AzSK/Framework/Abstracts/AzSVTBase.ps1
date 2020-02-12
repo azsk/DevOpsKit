@@ -85,29 +85,145 @@ class AzSVTBase: SVTBase{
 		}
     }
 
-    hidden [ControlResult] CheckPolicyCompliance([ControlItem] $controlItem, [ControlResult] $controlResult)
+	<# TODO: Remove this block if new logic for policy complaince is working seemlessly
+		 hidden [ControlResult] CheckPolicyCompliance([ControlItem] $controlItem, [ControlResult] $controlResult)
+		 {
+		 	$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName
+		 	$defnResourceId = $this.ResourceId + $controlItem.PolicyDefnResourceIdSuffix
+		 	$policyState = Get-AzPolicyState -ResourceId $defnResourceId -Filter "PolicyDefinitionId eq '/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)' and PolicySetDefinitionName eq '$initiativeName'"
+		 	if($policyState)
+		     {
+		         $policyStateObject = $policyState | Select-Object ResourceId, PolicyAssignmentId, PolicyDefinitionId, PolicyAssignmentScope, PolicyDefinitionAction, PolicySetDefinitionName, IsCompliant
+		 	    if($policyState.IsCompliant)
+		         {
+		 		    $controlResult.AddMessage([VerificationResult]::Passed,
+		 									    [MessageData]::new("Policy compliance data:", $policyStateObject));
+		         }
+		 	    else
+		         { 
+		 		    #$controlResult.EnableFixControl = $true;
+		 		    $controlResult.AddMessage([VerificationResult]::Failed,
+		 									    [MessageData]::new("Policy compliance data:", $policyStateObject));
+		         }
+		         return $controlResult;
+		     }
+		     return $null;
+		 }
+	#>
+
+	hidden [void] CheckPolicyCompliance([ControlItem] $controlItem, [ControlResult] $controlResult)
 	{
-		$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName
-		$defnResourceId = $this.ResourceId + $controlItem.PolicyDefnResourceIdSuffix
-		$policyState = Get-AzPolicyState -ResourceId $defnResourceId -Filter "PolicyDefinitionId eq '/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)' and PolicySetDefinitionName eq '$initiativeName'"
-		if($policyState)
-        {
-            $policyStateObject = $policyState | Select-Object ResourceId, PolicyAssignmentId, PolicyDefinitionId, PolicyAssignmentScope, PolicyDefinitionAction, PolicySetDefinitionName, IsCompliant
-		    if($policyState.IsCompliant)
-            {
-			    $controlResult.AddMessage([VerificationResult]::Passed,
-										    [MessageData]::new("Policy compliance data:", $policyStateObject));
-            }
-		    else
-            { 
-			    #$controlResult.EnableFixControl = $true;
-			    $controlResult.AddMessage([VerificationResult]::Failed,
-										    [MessageData]::new("Policy compliance data:", $policyStateObject));
-            }
-            return $controlResult;
-        }
-        return $null;
-    }
+		try
+		{
+			$controlResult.PolicyState = [PolicyState]::new()
+			$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName
+			$securityCenterInitiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKSecurityCenterInitiativeName.Replace("{0}", $this.SubscriptionContext.SubscriptionId)
+			$defnResourceId = $this.ResourceId + $controlItem.PolicyDefnResourceIdSuffix
+			$policyState = Get-AzPolicyState -ResourceId $defnResourceId -Filter "PolicyDefinitionId eq '/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)' and (PolicySetDefinitionName eq '$initiativeName' or PolicySetDefinitionName eq '$securityCenterInitiativeName')" -ErrorAction Stop
+			if ($policyState)
+			{
+				$groupResultByComplianceState = $policyState | Group-Object -Property ComplianceState
+				if (($groupResultByComplianceState | Measure-Object).Count -eq 1)
+				{
+					# Select first when multiple assignment are found for the same definition at subscription scope
+					$policyState = $policyState | Select-Object -First 1
+					$policyStateObject = $policyState | Select-Object ResourceId, PolicyAssignmentId, PolicyAssignmentScope, PolicyDefinitionAction, IsCompliant
+					if ($policyState.IsCompliant)
+					{
+						$controlResult.PolicyState.PolicyVerificationResult = [PolicyVerificationResult]::Passed;
+						$controlResult.PolicyState.DataObject = $policyStateObject;
+					}
+					else
+					{
+						$controlResult.PolicyState.PolicyVerificationResult = [PolicyVerificationResult]::Failed;
+						$controlResult.PolicyState.DataObject = $policyStateObject;
+					}
+
+				}
+				else
+				{
+					$policyStateObject = @()
+					$policyState | ForEach-Object {
+						$AssignmentDetails = "" | Select-Object PolicyAssignmentId, PolicyAssignmentScope, PolicyDefinitionAction, IsCompliant, Parameters
+						$assignmentdetails.PolicyAssignmentId = $_.PolicyAssignmentId
+						$assignmentdetails.PolicyAssignmentScope = $_.PolicyAssignmentScope
+						$assignmentdetails.PolicyDefinitionAction = $_.PolicyDefinitionAction
+						$assignmentdetails.IsCompliant = $_.IsCompliant
+
+						$assignment = Get-AzPolicyAssignment -Id $($_.PolicyAssignmentId) -ErrorAction SilentlyContinue
+						if ($assignment)
+						{
+							$assignmentdetails.Parameters = $assignment.parameters
+						}
+						
+						$policyStateObject += $assignmentdetails
+						
+					}
+
+					# Mark policy verification result as Verify if control is found to be both compliance and non-compliant
+					$controlResult.PolicyState.PolicyVerificationResult = [PolicyVerificationResult]::Verify
+					$controlResult.PolicyState.DataObject = $policyStateObject;
+					
+				}
+			}
+			else
+			{
+				#Check if definition is created in portal for this respective control
+				$definition = Get-AzPolicyDefinition -Id "/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)" -ErrorAction Stop
+				# TODO: Move this to a common place, where it is called only once
+				$initiative = @()
+				$initiative += Get-AzPolicySetDefinition -Name $initiativeName -ErrorAction Stop
+				$initiative += Get-AzPolicySetDefinition -Name $securityCenterInitiativeName -ErrorAction Stop
+				# Definition is present, and compliance result not found
+				if ($definition)
+				{
+					# Definition is present, and is added to the initiative
+					if ($initiative.Properties.policyDefinitions.policyDefinitionId -contains $definition.PolicyDefinitionId)
+					{
+						# TODO: Move this to a common place, where it is called only once
+						$assignment = Get-AzPolicyAssignment -PolicyDefinitionId $($initiative.PolicySetDefinitionId) -ErrorAction Stop
+						# Assignment is present; compliance state not found for this resource
+						if ($assignment)
+						{
+							$controlResult.PolicyState.PolicyVerificationResult = [PolicyVerificationResult]::NoResponse
+						}
+						# Assignment not found
+						else
+						{
+							$controlResult.PolicyState.PolicyVerificationResult = [PolicyVerificationResult]::AssignmentNotFound
+						}
+					}
+					# Definition is present, and is not added to the initiative
+					else
+					{
+						$controlResult.PolicyState.PolicyVerificationResult = [PolicyVerificationResult]::DefinitionNotInInitiative
+					}
+					
+				}
+				# Definition is not present
+				else
+				{
+					$controlResult.PolicyState.PolicyVerificationResult = [PolicyVerificationResult]::DefinitionNotFound
+				}
+			}
+		}
+		catch
+		{
+			$controlResult.PolicyState.PolicyVerificationResult = [PolicyVerificationResult]::Error
+			if ([Helpers]::CheckMember($_, "Exception.Message"))
+			{
+				$ErrorDetails = "" | Select-Object OuterMessage
+				$ErrorDetails.OuterMessage = $_.Exception.Message
+ 				$controlResult.PolicyState.DataObject = $ErrorDetails
+			}
+			else
+			{
+				$ErrorDetails = "" | Select-Object StackTrace
+				$ErrorDetails.StackTrace = $_
+ 				$controlResult.PolicyState.DataObject = $ErrorDetails
+			}
+		}
+	}
 	# Policy compliance methods end
 	hidden [ControlResult] CheckDiagnosticsSettings([ControlResult] $controlResult)
 	{

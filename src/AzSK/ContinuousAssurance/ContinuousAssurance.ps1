@@ -58,6 +58,7 @@ function Install-AzSKContinuousAssurance
 	Param(
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Default", HelpMessage="Id of the subscription in which Automation Account needs to be installed.")]
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Id of the subscription in which Automation Account needs to be installed.")]
+		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "ContainerMode", HelpMessage="Id of the subscription in which Automation Account needs to be installed.")]
         [string]
 		[Alias("sid", "HostSubscriptionId", "hsid")]
 		$SubscriptionId ,
@@ -86,7 +87,8 @@ function Install-AzSKContinuousAssurance
 		$AutomationAccountName,
 
         [Parameter(Position = 1, Mandatory = $true, ParameterSetName = "CentralScanMode")]
-        [Parameter(Position = 1, Mandatory = $true, ParameterSetName = "Default")]
+		[Parameter(Position = 1, Mandatory = $true, ParameterSetName = "Default")]
+		[Parameter(Position = 1, Mandatory = $true, ParameterSetName = "ContainerMode")]
         [string]
 		[ValidateNotNullOrEmpty()]
 		[Alias("rgns")]
@@ -94,6 +96,7 @@ function Install-AzSKContinuousAssurance
 
         [Parameter(Position = 2, Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Workspace ID of Log Analytics workspace where security scan results will be populated.")]
         [Parameter(Position = 2, Mandatory = $true, ParameterSetName = "Default", HelpMessage="Workspace ID of Log Analytics workspace where security scan results will be populated.")]
+        [Parameter(Position = 2, Mandatory = $true, ParameterSetName = "ContainerMode", HelpMessage="Workspace ID of Log Analytics workspace where security scan results will be populated.")]
         [string]
 		[ValidateNotNullOrEmpty()]
 		[Alias("lwid","wid","OMSWorkspaceId")]
@@ -101,6 +104,7 @@ function Install-AzSKContinuousAssurance
 
         [Parameter(Position = 3, Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Shared key of Log Analytics workspace which is used to monitor security scan results.")]
         [Parameter(Position = 3, Mandatory = $true, ParameterSetName = "Default", HelpMessage="Shared key of Log Analytics workspace which is used to monitor security scan results.")]
+        [Parameter(Position = 3, Mandatory = $true, ParameterSetName = "ContainerMode", HelpMessage="Shared key of Log Analytics workspace which is used to monitor security scan results.")]
         [string]
 		[ValidateNotNullOrEmpty()]
 		[Alias("lwkey","wkey","OMSSharedKey")]
@@ -108,6 +112,7 @@ function Install-AzSKContinuousAssurance
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
+		[Parameter(Mandatory = $false, ParameterSetName = "ContainerMode")]
 		[ValidateNotNullOrEmpty()]
         [string]
 		[Alias("alwid","awid","AltOMSWorkspaceId")]
@@ -115,6 +120,7 @@ function Install-AzSKContinuousAssurance
 
         [Parameter(Mandatory = $false, ParameterSetName = "Default")]
         [Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
+		[Parameter(Mandatory = $false, ParameterSetName = "ContainerMode")]
 		[ValidateNotNullOrEmpty()]
         [string]
 		[Alias("alkey","awkey","AltOMSSharedKey")]
@@ -165,6 +171,11 @@ function Install-AzSKContinuousAssurance
 		[Alias("stsc")]
 		$SkipTargetSubscriptionConfig,
 
+		[Parameter(Mandatory = $true, ParameterSetName = "ContainerMode", HelpMessage="Switch to use container instead of automation account for AzSK CA.")]
+		[switch]
+		[Alias("uc")]
+		$UseContainers,
+
 		[Parameter(Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="This enables AzSK CA in central scanning mode. Use this switch along with TargetSubscriptionIds param to register target subscriptions in the central CA.")]
 		[switch]
 		[Alias("csm")]
@@ -189,54 +200,66 @@ function Install-AzSKContinuousAssurance
 	{
 		try 
 		{
-			$isDefaultRGNameUsed = ![string]::IsNullOrWhiteSpace($AutomationAccountRGName) -and $AutomationAccountRGName -eq [UserSubscriptionDataHelper]::GetUserSubscriptionRGName()
-			$isDefaultCANameUsed = ![string]::IsNullOrWhiteSpace($AutomationAccountName) -and $AutomationAccountName -eq [UserSubscriptionDataHelper]::GetCAName()
-			$errMsg = ""
-			if($isDefaultRGNameUsed)
+			if($PSCmdlet.ParameterSetName -eq "ContainerMode")
 			{
-				$errMsg = "The specified 'AutomationAccountRGName' parameter value is reserved for toolkit use."
-			}
-			if($isDefaultCANameUsed)
-			{
-				$errMsg += "`r`nThe specified 'AutomationAccountName' parameter value is reserved for toolkit use."
-			}
-			if(![string]::IsNullOrWhiteSpace($errMsg))
-			{
-				$errMsg += "`r`nPlease use different (unique) names for CA account and/or resource group."
-				throw ([SuppressedException]::new(($errMsg), [SuppressedExceptionType]::InvalidOperation))
-			}
-			$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation,`
-				$AutomationAccountLocation, $AutomationAccountRGName, $AutomationAccountName, $ResourceGroupNames,`
-				$AzureADAppName, $ScanIntervalInHours);
-			#set the Log Analytics workspace settings
-			$ccAccount.SetLAWSSettings($LAWSId, $LAWSSharedKey, $AltLAWSId, $AltLAWSSharedKey);
-
-			#set the Webhook settings
-			$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
-			
-
-			if ($ccAccount) 
-			{
-				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
-
-				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
+				$CAwithACI = [ContinuousAssurance]::new($SubscriptionId, $PSCmdlet.MyInvocation,`
+				$ResourceGroupNames, $LAWSId, $LAWSSharedKey, $AltLAWSId, $AltLAWSSharedKey);
+				if ($CAwithACI) 
 				{
-					$ccAccount.IsCentralScanModeOn = $true;
-					$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
-					$ccAccount.SkipTargetSubscriptionConfig = $SkipTargetSubscriptionConfig;
-					if($null -eq $LoggingOption)
-					{
-						$ccAccount.LoggingOption = [CAReportsLocation]::CentralSub;
-					}
-					else
-					{
-						$ccAccount.LoggingOption = $LoggingOption;
-					}
+					return $CAwithACI.InvokeFunction($CAwithACI.InstallAzSKContinuousAssurancewithACI);
 				}
-
+			}
+			else {
+				$isDefaultRGNameUsed = ![string]::IsNullOrWhiteSpace($AutomationAccountRGName) -and $AutomationAccountRGName -eq [UserSubscriptionDataHelper]::GetUserSubscriptionRGName()
+				$isDefaultCANameUsed = ![string]::IsNullOrWhiteSpace($AutomationAccountName) -and $AutomationAccountName -eq [UserSubscriptionDataHelper]::GetCAName()
+				$errMsg = ""
+				if($isDefaultRGNameUsed)
+				{
+					$errMsg = "The specified 'AutomationAccountRGName' parameter value is reserved for toolkit use."
+				}
+				if($isDefaultCANameUsed)
+				{
+					$errMsg += "`r`nThe specified 'AutomationAccountName' parameter value is reserved for toolkit use."
+				}
+				if(![string]::IsNullOrWhiteSpace($errMsg))
+				{
+					$errMsg += "`r`nPlease use different (unique) names for CA account and/or resource group."
+					throw ([SuppressedException]::new(($errMsg), [SuppressedExceptionType]::InvalidOperation))
+				}
+				$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation,`
+					$AutomationAccountLocation, $AutomationAccountRGName, $AutomationAccountName, $ResourceGroupNames,`
+					$AzureADAppName, $ScanIntervalInHours);
+				#set the Log Analytics workspace settings
+				$ccAccount.SetLAWSSettings($LAWSId, $LAWSSharedKey, $AltLAWSId, $AltLAWSSharedKey);
+	
+				#set the Webhook settings
+				$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
 				
-				return $ccAccount.InvokeFunction($ccAccount.InstallAzSKContinuousAssurance);
-			}			
+	
+				if ($ccAccount) 
+				{
+					$ccAccount.ScanOnDeployment = $ScanOnDeployment;
+	
+					if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
+					{
+						$ccAccount.IsCentralScanModeOn = $true;
+						$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
+						$ccAccount.SkipTargetSubscriptionConfig = $SkipTargetSubscriptionConfig;
+						if($null -eq $LoggingOption)
+						{
+							$ccAccount.LoggingOption = [CAReportsLocation]::CentralSub;
+						}
+						else
+						{
+							$ccAccount.LoggingOption = $LoggingOption;
+						}
+					}
+	
+					
+					return $ccAccount.InvokeFunction($ccAccount.InstallAzSKContinuousAssurance);
+				}			
+			}
+			
 		}
 		catch 
 		{
@@ -315,7 +338,8 @@ function Update-AzSKContinuousAssurance
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Default", HelpMessage="Subscription id in which Automation Account exists")]
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="Subscription id in which Automation Account exists")]
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "RemoveSettings", HelpMessage="Subscription id in which Automation Account exists")]
-		[string]
+		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "ContainerMode", HelpMessage="Id of the subscription in which Automation Account needs to be installed.")]
+        [string]
 		[Alias("sid", "HostSubscriptionId", "hsid")]
 		$SubscriptionId,
 
@@ -326,7 +350,8 @@ function Update-AzSKContinuousAssurance
         
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
-		[ValidateNotNullOrEmpty()]
+		[Parameter(Position = 1, Mandatory = $true, ParameterSetName = "ContainerMode")]
+        [ValidateNotNullOrEmpty()]
         [string]
 		[Alias("rgns")]
 		$ResourceGroupNames,
@@ -345,20 +370,23 @@ function Update-AzSKContinuousAssurance
 		
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
-		[ValidateNotNullOrEmpty()]	
+		[Parameter(Mandatory = $false, ParameterSetName = "ContainerMode", HelpMessage="Workspace ID of Log Analytics workspace where security scan results will be populated.")]
+        [ValidateNotNullOrEmpty()]	
         [string]
 		[Alias("lwid","wid","OMSWorkspaceId")]
 		$LAWSId,
 
         [Parameter(Mandatory = $false, ParameterSetName = "Default")]
         [Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
-		[ValidateNotNullOrEmpty()]
+		[Parameter(Mandatory = $false, ParameterSetName = "ContainerMode", HelpMessage="Shared key of Log Analytics workspace which is used to monitor security scan results.")]
+        [ValidateNotNullOrEmpty()]
         [string]
 		[Alias("lwkey","wkey","OMSSharedKey")]
 		$LAWSSharedKey,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
+		[Parameter(Mandatory = $false, ParameterSetName = "ContainerMode")]
 		[ValidateNotNullOrEmpty()]
         [string]
 		[Alias("alwid","awid","AltOMSWorkspaceId")]
@@ -366,10 +394,21 @@ function Update-AzSKContinuousAssurance
 
         [Parameter(Mandatory = $false, ParameterSetName = "Default")]
         [Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
+		[Parameter(Mandatory = $false, ParameterSetName = "ContainerMode")]
 		[ValidateNotNullOrEmpty()]
         [string]
 		[Alias("alkey","awkey","AltOMSSharedKey")]
 		$AltLAWSSharedKey,
+
+		[Parameter(Mandatory = $true, ParameterSetName = "ContainerMode", HelpMessage="Switch to use container instead of automation account for AzSK CA.")]
+		[switch]
+		[Alias("uc")]
+		$UseContainers,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "ContainerMode", HelpMessage = "Switch to update the daily scan scheduler time")]
+		[switch]
+		[Alias("us")]
+		$UpdateScheduler,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
@@ -468,8 +507,18 @@ function Update-AzSKContinuousAssurance
 	{
 	try 
 		{
-				$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation, $null, $AutomationAccountRGName, $AutomationAccountName, `
-				$ResourceGroupNames, $AzureADAppName, $ScanIntervalInHours);
+			if($UseContainers)
+			{
+				$CAwithACI = [ContinuousAssurance]::new($SubscriptionId, $PSCmdlet.MyInvocation,`
+				$ResourceGroupNames, $LAWSId, $LAWSSharedKey, $AltLAWSId, $AltLAWSSharedKey, $UpdateScheduler);
+				if ($CAwithACI) 
+				{
+					return $CAwithACI.InvokeFunction($CAwithACI.UpdateAzSKContinuousAssurancewithACI);
+				}
+			}
+			else {
+			$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation, $null, $AutomationAccountRGName, $AutomationAccountName, `
+			$ResourceGroupNames, $AzureADAppName, $ScanIntervalInHours);
 			if($PSCmdlet.ParameterSetName -eq "RemoveSettings")
 			{
 				switch($Remove)
@@ -488,12 +537,11 @@ function Update-AzSKContinuousAssurance
 						}
 				}
 					
-
 			}
 			else
 			{
-					#set the Log Analytics workspace settings
-					$ccAccount.SetLAWSSettings($LAWSId, $LAWSSharedKey, $AltLAWSId, $AltLAWSSharedKey);
+			#set the Log Analytics workspace settings
+			$ccAccount.SetLAWSSettings($LAWSId, $LAWSSharedKey, $AltLAWSId, $AltLAWSSharedKey);
 
 			#set the Webhook settings
 			$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
@@ -502,24 +550,24 @@ function Update-AzSKContinuousAssurance
 			{
 				$ccAccount.ScanOnDeployment = $ScanOnDeployment;
 
-					if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
+				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
+				{
+					$ccAccount.IsCentralScanModeOn = $true;
+					$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
+					$ccAccount.SkipTargetSubscriptionConfig = $SkipTargetSubscriptionConfig;
+					if($null -eq $LoggingOption)
 					{
-						$ccAccount.IsCentralScanModeOn = $true;
-						$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
-						$ccAccount.SkipTargetSubscriptionConfig = $SkipTargetSubscriptionConfig;
-						if($null -eq $LoggingOption)
-						{
-							$ccAccount.LoggingOption = [CAReportsLocation]::CentralSub;
-						}
-						else
-						{
-							$ccAccount.LoggingOption = $LoggingOption;
-						}
+						$ccAccount.LoggingOption = [CAReportsLocation]::CentralSub;
 					}
-					return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules));
+					else
+					{
+						$ccAccount.LoggingOption = $LoggingOption;
+					}
 				}
+				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules));
 			}
-			
+			}
+			}
 		}
 		catch 
 		{
@@ -574,6 +622,11 @@ function Get-AzSKContinuousAssurance
 		[Alias("ec")]
 		$ExhaustiveCheck,
 
+		[Parameter(Mandatory = $false, HelpMessage="Switch to use container instead of automation account for AzSK CA.")]
+		[switch]
+		[Alias("uc")]
+		$UseContainers,
+
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		[Alias("dnof")]
@@ -588,12 +641,21 @@ function Get-AzSKContinuousAssurance
 	{
 	try 
 		{
-			$ccAccount = [CCAutomation]::new($SubscriptionId, $AutomationAccountRGName, $AutomationAccountName, $PSCmdlet.MyInvocation);
-
-			if ($ccAccount) 
-			{				
-				$ccAccount.ExhaustiveCheck = $ExhaustiveCheck;
-				return $ccAccount.InvokeFunction($ccAccount.GetAzSKContinuousAssurance);
+			if($UseContainers)
+			{
+				$CAwithACI = [ContinuousAssurance]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+				if ($CAwithACI) 
+				{
+					return $CAwithACI.InvokeFunction($CAwithACI.GetAzSKContinuousAssurancewithACI);
+				}
+			}
+			else {
+				$ccAccount = [CCAutomation]::new($SubscriptionId, $AutomationAccountRGName, $AutomationAccountName, $PSCmdlet.MyInvocation);
+				if ($ccAccount) 
+				{				
+					$ccAccount.ExhaustiveCheck = $ExhaustiveCheck;
+					return $ccAccount.InvokeFunction($ccAccount.GetAzSKContinuousAssurance);
+				}	
 			}
 		}
 		catch 
@@ -675,6 +737,11 @@ function Remove-AzSKContinuousAssurance
 		[Alias("f")]
 		$Force,
 
+		[Parameter(Mandatory = $false, HelpMessage="Switch to use container instead of automation account for AzSK CA.")]
+		[switch]
+		[Alias("uc")]
+		$UseContainers,
+
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		[Alias("dnof")]
@@ -689,17 +756,26 @@ function Remove-AzSKContinuousAssurance
 	{
 	try 
 		{
-			$ccAccount = [CCAutomation]::new($SubscriptionId, $AutomationAccountRGName, $AutomationAccountName, $PSCmdlet.MyInvocation);
-
-			if ($ccAccount) 
+			if($UseContainers)
 			{
-				if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
+				$CAwithACI = [ContinuousAssurance]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+				if ($CAwithACI) 
 				{
-					$ccAccount.IsCentralScanModeOn = $true;
-					$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
+					return $CAwithACI.InvokeFunction($CAwithACI.RemoveAzSKContinuousAssurancewithACI);
 				}
-				
-				return $ccAccount.InvokeFunction($ccAccount.RemoveAzSKContinuousAssurance,@($DeleteStorageReports, $Force));
+			}
+			else {
+				$ccAccount = [CCAutomation]::new($SubscriptionId, $AutomationAccountRGName, $AutomationAccountName, $PSCmdlet.MyInvocation);
+				if ($ccAccount) 
+				{
+					if($PSCmdlet.ParameterSetName -eq "CentralScanMode")
+					{
+						$ccAccount.IsCentralScanModeOn = $true;
+						$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
+					}
+					
+					return $ccAccount.InvokeFunction($ccAccount.RemoveAzSKContinuousAssurance,@($DeleteStorageReports, $Force));
+				}
 			}
 			
 		}

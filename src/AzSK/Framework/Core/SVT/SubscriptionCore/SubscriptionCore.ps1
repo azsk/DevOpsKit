@@ -12,7 +12,11 @@ class SubscriptionCore: AzSVTBase
 	hidden [PSObject] $CurrentContext;
 	hidden [bool] $HasGraphAPIAccess;
 	hidden [PSObject] $MisConfiguredASCPolicies;
+	hidden [PSObject] $ASCTierDetails;
 	hidden [PSObject] $MisConfiguredOptionalASCPolicies;
+	hidden [PSObject] $MisConfiguredSecurityPolicySettings;
+	hidden [PSObject] $MisConfiguredAutoProvisioningSettings;
+	hidden [PSObject] $MisConfiguredSecurityContactDetails;
 	hidden [SecurityCenter] $SecurityCenterInstance;
 	hidden [string[]] $SubscriptionMandatoryTags = @();
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $PIMAssignments;
@@ -43,8 +47,11 @@ class SubscriptionCore: AzSVTBase
 		
 		#Compute the policies ahead to get the security Contact Phone number and email id
 		$this.SecurityCenterInstance = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId,$false);
-		$this.MisConfiguredASCPolicies = $this.SecurityCenterInstance.CheckASCCompliance();
 		$this.MisConfiguredOptionalASCPolicies = $this.SecurityCenterInstance.CheckOptionalSecurityPolicySettings();
+		$this.ASCTierDetails = $this.SecurityCenterInstance.CheckASCTierSettings();
+		$this.MisConfiguredSecurityPolicySettings = $this.SecurityCenterInstance.CheckSecurityPolicySettings();
+		$this.MisConfiguredAutoProvisioningSettings = $this.SecurityCenterInstance.CheckAutoProvisioningSettings();
+		$this.MisConfiguredSecurityContactDetails = $this.SecurityCenterInstance.CheckSecurityContactSettings();
 
 		#Fetch AzSKRGTags
 		$azskRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
@@ -485,42 +492,6 @@ class SubscriptionCore: AzSVTBase
             {
                 throw $_
             }			
-		}
-		return $controlResult
-	}
-
-	hidden [ControlResult] CheckAzureSecurityCenterSettings([ControlResult] $controlResult)
-	{
-		if ($this.SecurityCenterInstance)
-		{
-			#$controlResult.AddMessage([MessageData]::new("Security center policies must be configured with settings mentioned below:", $this.SecurityCenterInstance.Policy.properties));			
-
-			$this.SubscriptionContext.SubscriptionMetadata.Add("MissingOptionalASCPolicies",$this.MisConfiguredOptionalASCPolicies);
-			$this.SubscriptionContext.SubscriptionMetadata.Add("MissingMandatoryASCPolicies",$this.MisConfiguredASCPolicies);
-
-			if(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0)
-			{
-				$controlResult.EnableFixControl = $true;
-
-				$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredASCPolicies);
-				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredASCPolicies));
-			}
-			# elseif(-not $this.SecurityCenterInstance.IsLatestVersion -and $this.SecurityCenterInstance.IsValidVersion)
-			# {
-			# 	$this.PublishCustomMessage("WARNING: The Azure Security Center policies in your subscription are out of date.`nPlease update to the latest version by running command Update-AzSKSubscriptionSecurity.", [MessageType]::Warning);
-			# 	$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Current security center policies are configured as per older policy. To update as per latest configuration, run command Update-AzSKSubscriptionSecurity."));
-			# }
-			# elseif(($this.MisConfiguredASCPolicies | Measure-Object).Count -ne 0)
-			# {
-			# 	$controlResult.EnableFixControl = $true;
-
-			# 	$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredASCPolicies);
-			# 	$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredASCPolicies));
-			# }
-			else
-			{
-				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("All security center policies are correctly configured."));
-			}
 		}
 		return $controlResult
 	}
@@ -1530,17 +1501,20 @@ class SubscriptionCore: AzSVTBase
     {
 			$AltAccountRegX = [string]::Empty;
 			$message = [string]::Empty;
-			if($null -eq $this.PIMAssignments)
+			$messageSub=$this.GetRGLevelPIMRoles();
+			$messageRG=$this.GetPIMRoles();
+			$AssignmentsAtSubAndRGLevel = New-Object "System.Collections.Generic.List[TelemetryRBACExtended]"
+			$AssignmentsForCriticalRoles =  @();
+			if($null -ne $this.PIMAssignmentswithPName)
 			{
-				$message=$this.GetPIMRoles();
+				#$AssignmentsAtSubAndRGLevel.Add($this.PIMAssignmentswithPName)
+				$AssignmentsForCriticalRoles += $this.PIMAssignmentswithPName | Where-Object {$_.RoleDefinitionName -in $this.ControlSettings.CriticalPIMRoles.Subscription}
 			}
-			if($message -ne 'OK') # if there is some while making request message will contain exception
+			if($null -ne $this.PIMRGLevelAssignmentswithPName)
 			{
-
-					$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
-					$controlResult.AddMessage($message);
-					return $controlResult;
+				$AssignmentsForCriticalRoles += $this.PIMRGLevelAssignmentswithPName | Where-Object {$_.RoleDefinitionName -in $this.ControlSettings.CriticalPIMRoles.ResourceGroup}
 			}
+			
 			# get the altenate account pattern from org policy control settings
 			if( [Helpers]::CheckMember($this.ControlSettings,"AlernateAccountRegularExpressionForOrg"))
 			{
@@ -1552,17 +1526,13 @@ class SubscriptionCore: AzSVTBase
 				$controlResult.AddMessage("Unable to get the alternate account pattern for your org. Please verify manually")
 				return $controlResult;
 			}
-			if(($this.PIMAssignmentswithPName| Measure-Object).Count -gt 0)
-			{
-				# get pim assignments for critical roles at subscription level
-				$PIMAssignmentsForCriticalRoles = $this.PIMAssignmentswithPName | Where-Object {$_.RoleDefinitionName -in $this.ControlSettings.CriticalPIMRoles.Subscription}
-				if(($PIMAssignmentsForCriticalRoles | Measure-Object).Count -gt 0)
+			if(($AssignmentsForCriticalRoles | Measure-Object).Count -gt 0)
 				{
 										
-					$nonAltPIMAccounts = $PIMAssignmentsForCriticalRoles | Where-Object{$_.PrincipalName -notmatch $AltAccountRegX}
+					$nonAltPIMAccounts = $AssignmentsForCriticalRoles | Where-Object{$_.ObjectType -eq 'User' -and $_.PrincipalName -notmatch $AltAccountRegX}
 					if(($nonAltPIMAccounts | Measure-Object).Count -gt 0)
 					{
-						$nonAltPIMAccountsWithRoles = $PIMAssignmentsForCriticalRoles | Where-Object{$_.DisplayName -in $nonAltPIMAccounts.DisplayName}
+						$nonAltPIMAccountsWithRoles = $AssignmentsForCriticalRoles | Where-Object{$_.DisplayName -in $nonAltPIMAccounts.DisplayName}
 						$controlResult.AddMessage([VerificationResult]::Failed, "Non alternate accounts are assigned critical roles")
 						$controlResult.AddMessage($($nonAltPIMAccountsWithRoles | Select-Object -Property "PrincipalName", "RoleDefinitionName","Scope","ObjectType" ))
 					}
@@ -1571,11 +1541,23 @@ class SubscriptionCore: AzSVTBase
 						$controlResult.AddMessage([VerificationResult]::Passed, "No Non alternate accounts are assigned critical roles")
 					}
 				}
-			}
-		
+				else
+				{
+					if($messageSub -ne 'OK' -or $messageRG -ne 'OK' )
+					{
+						$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+						$controlResult.AddMessage($message);
+						return $controlResult;
+					}
+					else
+					{
+						$controlResult.AddMessage([VerificationResult]::Passed,"No assignments for critical found at subscription and resource group level")
+					}
+				}
+			
 		
 
-	return $controlResult;
+		return $controlResult;
 	}
 	hidden [void] LoadRBACConfig()
 	{
@@ -1757,6 +1739,8 @@ class SubscriptionCore: AzSVTBase
 										{
 											$item.IsPIMEnabled=$false;
 											$this.permanentAssignments.Add($item);
+											$tempRBExtendObject = [TelemetryRBACExtended]::new($item, $roleAssignment.subject.principalName)
+											$this.PIMAssignmentswithPName.Add($tempRBExtendObject);
 										}
 
 									}
@@ -1843,6 +1827,8 @@ class SubscriptionCore: AzSVTBase
 										{
 											$item.IsPIMEnabled=$false;
 											$this.RGLevelpermanentAssignments.Add($item);
+											$tempRBExtendObject = [TelemetryRBACExtended]::new($item, $roleAssignment.subject.principalName)
+											$this.PIMRGLevelAssignmentswithPName.Add($tempRBExtendObject);
 										}
 										
 										
@@ -1865,8 +1851,9 @@ class SubscriptionCore: AzSVTBase
 
 	hidden [void] PublishRBACTelemetryData()
 	{
-		$AccessRoles= $this.RoleAssignments;
-		$PIMRoles=$this.PIMAssignments
+		$AccessRoles= $this.RoleAssignments | Where-Object{(($_.scope).split('/') | Measure-Object).Count -gt 5} ; # restrict the Get-AzRoleAssignment only for resource level
+		# Other assignments will be obtained from PIM API
+		$PIMRoles=$this.PIMAssignments;
 		
 		if($AccessRoles -ne $null)
 		{
@@ -1892,7 +1879,7 @@ class SubscriptionCore: AzSVTBase
 						$matchingObject=$PIMRoles| Where-Object{$_.ObjectId -eq $RBACTelemetry.ObjectId -and $_.RoleDefinitionId -eq $RBACTelemetry.RoleDefinitionId -and $_.Scope -eq $RBACTelemetry.Scope}
 						if($null -ne $matchingObject)
 						{
-							$RBACTelemetry.IsPIMEnabled=$true;	
+							$RBACTelemetry.IsPIMEnabled= $matchingObject.IsPIMEnabled;	# take the PIMEligibility from PIM assignments
 							
 						}
 					}
@@ -1905,7 +1892,10 @@ class SubscriptionCore: AzSVTBase
 			if($null -ne $PIMRoles){
 				$RBACAssignment.AddRange($PIMRoles);
 			}
-			
+			if($null -ne $this.permanentAssignments)
+			{
+				$RBACAssignment.AddRange($PIMRoles);
+			}
 			if($null -ne $this.RGLevelPermanentAssignments)
 			{
 				$RBACAssignment.AddRange($this.RGLevelPermanentAssignments);
@@ -1914,6 +1904,8 @@ class SubscriptionCore: AzSVTBase
 			{
 				$RBACAssignment.AddRange($this.RGLevelPIMAssignments);
 			}
+			
+			
 				
 			$this.CustomObject=New-Object CustomData;
 			$this.CustomObject.Value=$RBACAssignment;
@@ -1942,6 +1934,69 @@ class SubscriptionCore: AzSVTBase
 			}
 		}
 		return $verificationResult
+	}
+	hidden [ControlResult] CheckSecurityPolicy([ControlResult] $controlResult)
+	{
+		if ($this.SecurityCenterInstance)
+		{
+			$this.SubscriptionContext.SubscriptionMetadata.Add("MissingOptionalASCPolicies",$this.MisConfiguredOptionalASCPolicies);
+			$this.SubscriptionContext.SubscriptionMetadata.Add("MissingMandatorySecurityPolicies",$this.MisConfiguredSecurityPolicySettings);
+
+			if(($this.MisConfiguredSecurityPolicySettings | Measure-Object).Count -ne 0)
+			{
+				$controlResult.EnableFixControl = $true;
+				$controlResult.SetStateData("Security Center misconfigured policies", $this.MisConfiguredSecurityPolicySettings);
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Following security center policies are not correctly configured. Please update the policies in order to comply.", $this.MisConfiguredSecurityPolicySettings));
+			}
+			
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("All security center policies are correctly configured."));
+			}
+		}
+		return $controlResult
+	}
+
+	hidden [ControlResult] CheckAutoProvisioningForSecurity([ControlResult] $controlResult)
+	{
+		if ($this.SecurityCenterInstance)
+		{
+			$this.SubscriptionContext.SubscriptionMetadata.Add("MissingAutoProvisioningPolicies",$this.MisConfiguredAutoProvisioningSettings);
+
+			if(-not [string]::IsNullOrWhiteSpace($this.MisConfiguredAutoProvisioningSettings))
+		      {
+				 $controlResult.EnableFixControl = $true;
+			     $controlResult.SetStateData("Misconfigured AutoProvisioning Policy", $this.MisConfiguredAutoProvisioningSettings);
+			     $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("AutoProvisioning setting is disabled.", $this.MisConfiguredAutoProvisioningSettings));
+			  }
+			
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("AutoProvisioning is enabled."));
+			}
+		}
+		return $controlResult
+	}
+
+	hidden [ControlResult] CheckSecurityContactDetails([ControlResult] $controlResult)
+	{
+		if ($this.SecurityCenterInstance)
+		{
+			$this.SubscriptionContext.SubscriptionMetadata.Add("MissingSecurityContactDetails",$this.MisConfiguredSecurityContactDetails);
+
+			if(-not [string]::IsNullOrWhiteSpace($this.MisConfiguredSecurityContactDetails))
+		      {
+				 $controlResult.EnableFixControl = $true;
+			     $controlResult.SetStateData("Misconfigured Security Contact Details", $this.MisConfiguredSecurityContactDetails);
+			     $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Security contacts are not configured.", $this.MisConfiguredSecurityContactDetails));
+		      }
+			
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Security contacts are correctly configured."));
+			}
+		}
+		return $controlResult
 	}
 }
 
