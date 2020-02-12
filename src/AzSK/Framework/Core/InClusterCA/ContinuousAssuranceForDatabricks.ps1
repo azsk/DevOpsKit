@@ -382,8 +382,8 @@ class DatabricksClusterCA : CommandBase {
         if ($this.CheckAzSKJobExists()) {
             $this.PublishCustomMessage("AzSK job already exists. We'll reuse it.", [MessageType]::Warning)
         } else {
-            # passing null will create a job with 24hr frequency
-            $this.CreateAzSKScanJob($null)
+            # Create a job with 24 hr frequency
+            $this.CreateAzSKScanJob()
         }
 
         # print log analytics settings
