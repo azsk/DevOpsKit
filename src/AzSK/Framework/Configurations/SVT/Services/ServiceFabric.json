@@ -364,7 +364,8 @@
         "ServiceFabric",
         "Windows"
       ],
-      "Enabled": true
+      "Enabled": true,
+      "PolicyDefinitionGuid": "ServiceFabric290"
     },
     {
       "ControlID": "Azure_ServiceFabric_SI_Set_Auto_Update_Cluster",

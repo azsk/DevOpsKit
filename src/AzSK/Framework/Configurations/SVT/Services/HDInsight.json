@@ -19,7 +19,8 @@
             "SI",
             "HDInsight"
          ],
-         "Enabled": true
+         "Enabled": true,
+         "PolicyDefinitionGuid": "HDInsight110"
       },
       {
         "ControlID": "Azure_HDInsight_AuthN_Use_SSH_Keys_For_Login",

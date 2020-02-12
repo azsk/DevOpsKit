@@ -58,7 +58,8 @@
             "Config",
             "CosmosDB"
          ],
-         "Enabled": true
+         "Enabled": true,
+         "PolicyDefinitionGuid": "CosmosDb130"
       },
       {
          "ControlID": "Azure_CosmosDB_Deploy_Use_Replication",

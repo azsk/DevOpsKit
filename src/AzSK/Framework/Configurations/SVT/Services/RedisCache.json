@@ -97,7 +97,8 @@
       "FixControl": {
          "FixMethodName": "DisableNon_SSLport_RedisCache",
          "FixControlImpact": "High"
-      }
+      },
+      "PolicyDefinitionGuid": "22bee202-a82f-4305-9a2a-6d7f44d4dedb"
    },
     {
       "ControlID": "Azure_RedisCache_DP_Rotate_Keys",

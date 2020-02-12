@@ -119,7 +119,7 @@ class AzSVTBase: SVTBase{
 			$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName
 			$securityCenterInitiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKSecurityCenterInitiativeName.Replace("{0}", $this.SubscriptionContext.SubscriptionId)
 			$defnResourceId = $this.ResourceId + $controlItem.PolicyDefnResourceIdSuffix
-			$policyState = Get-AzPolicyState -ResourceId $defnResourceId -Filter "PolicyDefinitionId eq '/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)' and (PolicySetDefinitionName eq '$initiativeName' or PolicySetDefinitionName eq '$securityCenterInitiativeName')" -ErrorAction Stop
+			$policyState = Get-AzPolicyState -ResourceId $defnResourceId -Filter "((PolicyDefinitionId eq '/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)') or (PolicyDefinitionId eq '/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)')) and (PolicySetDefinitionName eq '$initiativeName' or PolicySetDefinitionName eq '$securityCenterInitiativeName')" -ErrorAction Stop
 			if ($policyState)
 			{
 				$groupResultByComplianceState = $policyState | Group-Object -Property ComplianceState
@@ -169,7 +169,7 @@ class AzSVTBase: SVTBase{
 			else
 			{
 				#Check if definition is created in portal for this respective control
-				$definition = Get-AzPolicyDefinition -Id "/providers/microsoft.authorization/policydefinitions/$($controlItem.PolicyDefinitionGuid)" -ErrorAction Stop
+				$definition = Get-AzPolicyDefinition -Name $($controlItem.PolicyDefinitionGuid) -ErrorAction Stop
 				# TODO: Move this to a common place, where it is called only once
 				$initiative = @()
 				$initiative += Get-AzPolicySetDefinition -Name $initiativeName -ErrorAction Stop

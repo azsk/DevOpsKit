@@ -165,7 +165,8 @@
         "DP",
         "DataLakeAnalytics"
       ],
-      "Enabled": true
+      "Enabled": true,
+      "PolicyDefinitionGuid": "DataLakeAnalytics190"
     },
     {
       "ControlID": "Azure_DataLakeAnalytics_DP_Encrypt_In_Transit",

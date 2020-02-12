@@ -74,7 +74,8 @@
       "FixControl": {
         "FixMethodName": "EnableHttpsProtocol",
         "FixControlImpact": "Medium"
-      }
+      },
+      "PolicyDefinitionGuid": "CDN140"
     },
     {
       "ControlID": "Azure_CDN_DP_Use_Only_For_Public_Data",

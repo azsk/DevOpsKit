@@ -92,7 +92,8 @@
         "AuthZ",
         "NotificationHub"
       ],
-      "Enabled": true
+      "Enabled": true,
+      "PolicyDefinitionGuid": "NotificationHub160"
     },
     {
       "ControlID": "Azure_NotificationHub_Deploy_Reg_Mngt_Not_From_Native_Device_App",
