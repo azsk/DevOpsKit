@@ -192,7 +192,8 @@
           "Windows",
           "Linux"
         ],
-        "Enabled": true
+        "Enabled": true,
+        "PolicyDefinitionGuid": "e9c8d085-d9cc-4b17-9cdc-059f1f01f19e"
       },
       {
         "ControlID": "Azure_AppService_Config_Disable_Web_Sockets",
@@ -217,7 +218,8 @@
         "FixControl": {
           "FixMethodName": "DisableWebSocket",
           "FixControlImpact": "High"
-        }
+        },
+        "PolicyDefinitionGuid": "AppService220"
       },
       {
         "ControlID": "Azure_AppService_BCDR_Use_AlwaysOn",
@@ -400,7 +402,8 @@
         "FixControl": {
           "FixMethodName": "EnableHttpsFlag",
           "FixControlImpact": "High"
-        }
+        },
+        "PolicyDefinitionGuid": "a4af4a39-4135-47fb-b175-47fbdf85311d"
       },
      
       {
@@ -612,7 +615,8 @@
           "Windows",
           "Linux"
         ],
-       "Enabled": true
+       "Enabled": true,
+       "PolicyDefinitionGuid": "6d555dd1-86f2-4f1c-8ed7-5abae7c6cbab"
       },
       {
         "ControlID": "Azure_AppService_DP_Use_Secure_TLS_Version",

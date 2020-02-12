@@ -23,7 +23,8 @@
         "FixControl": {
           "FixMethodName": "DisableAdminAccount",
           "FixControlImpact": "High"
-        }
+        },
+        "PolicyDefinitionGuid": "ContainerRegistry110"
       },
       {
         "ControlID": "Azure_ContainerRegistry_AuthZ_Use_SPN_For_Registry_Access",

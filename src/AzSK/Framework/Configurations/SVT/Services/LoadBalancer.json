@@ -63,7 +63,8 @@
             "IpConfiguration",
             "Id",
             "DnsSettings"
-         ]
+         ],
+         "PolicyDefinitionGuid": "LoadBalancer130"
       }
    ]
 }

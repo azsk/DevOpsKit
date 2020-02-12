@@ -83,7 +83,8 @@
         "ResourceGroupName",
         "Value",
         "Automation"
-      ]
+      ],
+      "PolicyDefinitionGuid": "3657f5a0-770e-44a3-b44e-9431ba1e9735"
 
     },
     {

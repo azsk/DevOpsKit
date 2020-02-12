@@ -28,7 +28,8 @@
       "FixControl": {
          "FixMethodName": "DisableAnonymousAccessOnContainers",
          "FixControlImpact": "High"
-      }
+      },
+      "PolicyDefinitionGuid": "34c877ad-507e-4c82-993e-3452a6e0ad3c"
    },
     {
       "ControlID": "Azure_Storage_Audit_Issue_Alert_AuthN_Req",

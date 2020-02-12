@@ -19,6 +19,7 @@
         "AuthZ"
       ],
       "Enabled": true,
+      "PolicyDefinitionGuid": "1f314764-cb73-4fc9-b863-8eca98ac36e9",
       "FixControl": {
         "FixMethodName": "FixADAdmin",
         "FixControlImpact": "High",
@@ -70,8 +71,8 @@
         "SOX"
       ],
       "Enabled": true,
-      "PolicyDefinitionGuid":"36d49e87-48c4-4f2e-beed-ba4ed02b71f5",
-      "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/36d49e87-48c4-4f2e-beed-ba4ed02b71f5",
+      "PolicyDefinitionGuid":"abfb4388-5bf4-4ad7-ba82-2cd2f41ceae9",
+      "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/abfb4388-5bf4-4ad7-ba82-2cd2f41ceae9",
       "FixControl": {
         "FixMethodName": "EnableServerThreatDetection",
         "FixControlImpact": "Low",
