@@ -27,7 +27,7 @@ class SubscriptionCoreFix: FixSubscriptionBase
 		return $detailedLogs;
     }
 
-	[MessageData[]] ConfigureSecurityCenter([PSObject] $parameters)
+	[MessageData[]] ConfigureSecurityContact([PSObject] $parameters)
     {
 		[MessageData[]] $detailedLogs = @();
 		$detailedLogs += [MessageData]::new("Configuring Security Center using AzSK command...");
@@ -68,6 +68,19 @@ class SubscriptionCoreFix: FixSubscriptionBase
 			-DoNotOpenOutputFolder
 		
 		$detailedLogs += [MessageData]::new("Alerts have been configured", [MessageType]::Update);
+		return $detailedLogs;
+    }
+
+	[MessageData[]] ConfigureSecurityCenter([PSObject] $parameters)
+    {
+		[MessageData[]] $detailedLogs = @();
+		$detailedLogs += [MessageData]::new("Configuring Security Center using AzSK command...");
+		
+		Set-AzSKAzureSecurityCenterPolicies `
+			-SubscriptionId $this.SubscriptionContext.SubscriptionId `
+			-DoNotOpenOutputFolder
+		
+		$detailedLogs += [MessageData]::new("Security Center has been configured", [MessageType]::Update);
 		return $detailedLogs;
     }
 }

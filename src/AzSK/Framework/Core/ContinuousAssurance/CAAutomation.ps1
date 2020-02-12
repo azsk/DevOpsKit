@@ -2160,99 +2160,121 @@ class CCAutomation: AzCommandBase
 		#region: Step 13: Check if storage account rec'd scan logs in last 3 days 
 		$stepCount++
 		$checkDescription = "Inspecting AzSK storage account for scan logs from recent jobs."
-		$tgtSubsLogsStatus = @()
-		$isScanLogsPresent = $true
-		if($this.IsCentralScanModeOn)
-		{
-			try
+		$caUpdatedTimeInterval= $null
+		try{
+			$automationTags = $caAutomationAccount.Tags
+			if($automationTags.ContainsKey("LastModified"))
 			{
-				if(-not [string]::IsNullOrWhiteSpace($this.TargetSubscriptionIds))
-				{
-					$scanobjects | ForEach-Object {
-						try
-						{
-							$tgtSubStorageAccount = "" | Select-Object TargetSubscriptionId, LoggingOption, IsScanLogsPresent
-							$tgtSubStorageAccount.TargetSubscriptionId = $_.SubscriptionId;
-							$tgtSubStorageAccount.LoggingOption = $_.LoggingOption;
-							$tgtSubStorageAccount.IsScanLogsPresent = $false
+				$modifiedTimestamp =  $automationTags["LastModified"]
+				$lastModifiedDate = [datetime]::ParseExact($modifiedTimestamp, "yyyyMMdd_HHmmss", $null)
+				$caUpdatedTimeInterval = ($(get-date).ToUniversalTime() - $lastModifiedDate.ToUniversalTime()).Days
 			
-							if($_.LoggingOption -eq [CAReportsLocation]::IndividualSubs)
-							{
-								# Set context for target sub
-								Set-AzContext -SubscriptionId $tgtSubStorageAccount.TargetSubscriptionId  | Out-Null
-							}else{
-								# Set context for master sub
-								Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null
-							}
-							# Get Scan logs from storage
-							$scanLogsPrefixPattern = $this.AutomationAccount.ResourceGroup + "/" + "$($tgtSubStorageAccount.TargetSubscriptionId)" + "/"
-							$CAScanDataBlobObject = $this.GetScanLogsFromStorageAccount($this.CAScanOutputLogsContainerName,$scanLogsPrefixPattern)
-							if($null -ne $CAScanDataBlobObject -and ($CAScanDataBlobObject| Measure-Object).Count -gt 0)
-							{
-								# Scan logs found in storage for last 3 days
-								$tgtSubStorageAccount.IsScanLogsPresent = $true
-							}else{
-								# No scan logs found in storage for last 3 days
-								$tgtSubStorageAccount.IsScanLogsPresent = $false
-								$isScanLogsPresent = $false
-							}
-							$tgtSubsLogsStatus += $tgtSubStorageAccount
-					
-						}
-						catch
-						{		
-							$isScanLogsPresent = $false
-							$tgtSubsLogsStorage += $tgtSubStorageAccount					
-							$currentMessage = [MessageData]::new("Failed to fetch the storage account details $($this.SubscriptionContext.SubscriptionId)");
-							$messages += $currentMessage;
-							$this.PublishCustomMessage($currentMessage);
-							$this.PublishException($_)
-							
-						}
-					}
+			}
+		}
+		catch{
+			$caUpdatedTimeInterval = $null
+		}
 
+		if($caUpdatedTimeInterval -ne $null -and $caUpdatedTimeInterval -le 3){
+			$resultMsg = "This check will be performed only after 3 days of CA installation/updation."
+			$resultStatus = "Skipped"
+			$shouldReturn = $false
+		}else{
+			$tgtSubsLogsStatus = @()
+			$isScanLogsPresent = $true
+			if($this.IsCentralScanModeOn)
+			{
+				try
+				{
+					if(-not [string]::IsNullOrWhiteSpace($this.TargetSubscriptionIds))
+					{
+						$scanobjects | ForEach-Object {
+							try
+							{
+								$tgtSubStorageAccount = "" | Select-Object TargetSubscriptionId, LoggingOption, IsScanLogsPresent
+								$tgtSubStorageAccount.TargetSubscriptionId = $_.SubscriptionId;
+								$tgtSubStorageAccount.LoggingOption = $_.LoggingOption;
+								$tgtSubStorageAccount.IsScanLogsPresent = $false
+				
+								if($_.LoggingOption -eq [CAReportsLocation]::IndividualSubs)
+								{
+									# Set context for target sub
+									Set-AzContext -SubscriptionId $tgtSubStorageAccount.TargetSubscriptionId  | Out-Null
+								}else{
+									# Set context for master sub
+									Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null
+								}
+								# Get Scan logs from storage
+								$scanLogsPrefixPattern = $this.AutomationAccount.ResourceGroup + "/" + "$($tgtSubStorageAccount.TargetSubscriptionId)" + "/"
+								$CAScanDataBlobObject = $this.GetScanLogsFromStorageAccount($this.CAScanOutputLogsContainerName,$scanLogsPrefixPattern)
+								if($null -ne $CAScanDataBlobObject -and ($CAScanDataBlobObject| Measure-Object).Count -gt 0)
+								{
+									# Scan logs found in storage for last 3 days
+									$tgtSubStorageAccount.IsScanLogsPresent = $true
+								}else{
+									# No scan logs found in storage for last 3 days
+									$tgtSubStorageAccount.IsScanLogsPresent = $false
+									$isScanLogsPresent = $false
+								}
+								$tgtSubsLogsStatus += $tgtSubStorageAccount
+						
+							}
+							catch
+							{		
+								$isScanLogsPresent = $false
+								$tgtSubsLogsStorage += $tgtSubStorageAccount					
+								$currentMessage = [MessageData]::new("Failed to fetch the storage account details $($this.SubscriptionContext.SubscriptionId)");
+								$messages += $currentMessage;
+								$this.PublishCustomMessage($currentMessage);
+								$this.PublishException($_)
+								
+							}
+						}
+	
+					}
+				}
+				catch
+				{
+					$this.PublishException($_)
+					$isScanLogsPresent = $false
+				}
+				finally
+				{
+					#setting the context back to the parent subscription
+					Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
+				}
+				$detailedMsg = [MessageData]::new("Target Subscriptions scan logs details:", $tgtSubsLogsStatus);
+			}
+			else
+			{
+				# Get AzSK storage of the current sub
+				$scanLogsPrefixPattern = $this.AutomationAccount.ResourceGroup + "/" + "$($this.SubscriptionContext.SubscriptionId)" + "/"
+				$CAScanDataBlobObject = $this.GetScanLogsFromStorageAccount($this.CAScanOutputLogsContainerName,$scanLogsPrefixPattern)
+				if($null -ne $CAScanDataBlobObject -and ($CAScanDataBlobObject| Measure-Object).Count -gt 0)
+				{
+					$isScanLogsPresent = $true
+				}else{
+					$isScanLogsPresent = $false
 				}
 			}
-			catch
+			$resolveMsg = "Please contact AzSK support team for a resolution."
+			if($isScanLogsPresent)
 			{
-				$this.PublishException($_)
-				$isScanLogsPresent = $false
+				$resultMsg = "AzSK storage account contains scan logs for recent jobs as expected."
+				$resultStatus = "OK"				
 			}
-			finally
+			else
 			{
-				#setting the context back to the parent subscription
-				Set-AzContext -SubscriptionId $this.SubscriptionContext.SubscriptionId | Out-Null	
+				$failMsg = "CA scan logs are missing in storage account for last 3 days."
+				$resultMsg = "$failMsg`r`n$resolvemsg"
+				$resultStatus = "Failed"
+				$shouldReturn = $true
 			}
-			$detailedMsg = [MessageData]::new("Target Subscriptions scan logs details:", $tgtSubsLogsStatus);
-		}
-		else
-		{
-			# Get AzSK storage of the current sub
-			$scanLogsPrefixPattern = $this.AutomationAccount.ResourceGroup + "/" + "$($this.SubscriptionContext.SubscriptionId)" + "/"
-			$CAScanDataBlobObject = $this.GetScanLogsFromStorageAccount($this.CAScanOutputLogsContainerName,$scanLogsPrefixPattern)
-			if($null -ne $CAScanDataBlobObject -and ($CAScanDataBlobObject| Measure-Object).Count -gt 0)
-			{
-				$isScanLogsPresent = $true
-			}else{
-				$isScanLogsPresent = $false
-			}
-		}
-		$resolveMsg = "Please contact AzSK support team for a resolution."
-		if($isScanLogsPresent)
-		{
-			$resultMsg = "AzSK storage account contains scan logs for recent jobs as expected."
-			$resultStatus = "OK"				
-		}
-		else
-		{
-			$failMsg = "CA scan logs are missing in storage account for last 3 days."
-			$resultMsg = "$failMsg`r`n$resolvemsg"
-			$resultStatus = "Failed"
-			$shouldReturn = $true
-		}
 
-		$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))		
-
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))
+		
+		}
+		
 		if($shouldReturn)
 		{
 			return $messages

@@ -64,32 +64,6 @@ class SecurityCenter: AzSKRoot
 		$this.CheckASCTierSettings();
 	}
 
-
-	hidden [string[]] CheckASCCompliance()
-	{
-		$statuses = @();
-		$response = $this.CheckAutoProvisioningSettings();
-		if(-not [string]::IsNullOrWhiteSpace($response))
-		{
-			$statuses += $response;
-		}
-		$response = $this.CheckSecurityContactSettings();
-		if(-not [string]::IsNullOrWhiteSpace($response))
-		{
-			$statuses += $response;
-		}
-
-		$response = $this.CheckSecurityPolicySettings();
-		if(($response | Measure-Object).Count -gt 0)
-		{
-			$statuses += $response;
-		}
-
-		$this.CheckASCTierSettings();
-
-		return $statuses;
-	}
-
 	hidden [void] LoadCurrentPolicy()
 	{
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.policySettings)

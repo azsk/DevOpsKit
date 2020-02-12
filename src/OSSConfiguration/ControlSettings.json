@@ -183,7 +183,6 @@
       "Azure_Subscription_AuthZ_Remove_Deprecated_Accounts",
       "Azure_Subscription_AuthZ_Dont_Use_NonAD_Identities",
       "Azure_Subscription_AuthZ_Remove_Management_Certs",
-      "Azure_Subscription_Config_Azure_Security_Center",
       "Azure_Subscription_Config_ARM_Policy",
       "Azure_Subscription_Audit_Configure_Critical_Alerts",
       "Azure_Subscription_Audit_Resolve_Azure_Security_Center_Alerts",
@@ -191,7 +190,10 @@
       "Azure_Subscription_Config_Add_Required_Tags",
       "Azure_Subscription_SI_Classic_Resources",
       "Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access",
-      "Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG"
+      "Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG",
+      "Azure_Subscription_Config_ASC_Security_Policy",
+      "Azure_Subscription_Config_ASC_Enable_AutoProvisioning",
+      "Azure_Subscription_Config_ASC_Setup_SecurityContacts"
     ],
     "ExpiryInDays": 2,
     "SupportedSources": [ "NA" ]
