@@ -92,7 +92,8 @@
                 "APIManagement",
                 "APIMAPIs"
             ],
-            "Enabled": true
+            "Enabled": true,
+            "PolicyDefinitionGuid": "APIManagement140"
         },
         {
             "ControlID": "Azure_APIManagement_BCDR_Backup_Periodically",
@@ -401,7 +402,8 @@
                 "PremiumSku",
                 "APIManagement"
             ],
-            "Enabled": true
+            "Enabled": true,
+            "PolicyDefinitionGuid": "APIManagement280"
         },
         {
             "ControlID": "Azure_APIManagement_DP_Dont_Reveal_Backend_Info",
