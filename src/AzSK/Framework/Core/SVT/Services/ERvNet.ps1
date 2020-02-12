@@ -17,7 +17,7 @@ class ERvNet : SVTIaasBase
             if($PublicIps.Count -gt 0)
             {
 				$publicIPList = @()
-				$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Verify below Public IP(s) on the Vnet"));
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Verify below Public IP(s) on the ErVnet"));
                 $PublicIps | ForEach-Object{
                     Set-Variable -Name nic -Scope Local -Value $_
 					$publicIP = $nic | Select-Object NICName, VMName, PrimaryStatus, NetworkSecurityGroupName, PublicIpAddress, PrivateIpAddress
