@@ -106,6 +106,7 @@
         "FixControlImpact": "Medium",
         "FixMethodName": "RemoveDeprecatedAccounts"
       },
+      "PolicyDefinitionGuid": "6b1cbf55-e8b6-442f-ba4c-7246b6381474",
       "Rationale": "Deprecated accounts are ones that were once deployed to your subscription for some trial/pilot initiative (or some other purpose). These are not required any more and are a standing risk if present in any role on the subscription."
     },
     {
@@ -250,6 +251,7 @@
         "SubscriptionCore"
       ],
       "Enabled": true,
+      "PolicyDefinitionGuid": "SubscriptionCore190",
       "Rationale": "Based on the policies that are enabled in the subscription, Azure Security Center raises alerts (which are typically indicative of resources that ASC suspects might be under attack or needing immediate attention). It is important that these alerts/actions are resolved promptly in order to eliminate the exposure to attacks."
     },
     {
@@ -358,6 +360,7 @@
           "Tags": ""
         }
       },
+      "PolicyDefinitionGuid": "SubscriptionCore240",
       "Rationale": "The AzSK subscription security setup configures Insights-based alerts for sensitive operations in the subscription. These alerts notify the configured security point of contact about various sensitive activities on the subscription and its resources (for instance, adding a new member to subscription 'Owners' group or deleting a firewall setting or creating a new web app deployment, etc.)"
     },
     {
@@ -395,6 +398,7 @@
       ],
       "AttestComparisionType": "NumLesserOrEqual",
       "Enabled": true,
+      "PolicyDefinitionGuid": "37e0d2fe-28a5-43d6-a273-67d37d1f5606",
       "Rationale": "You should use new ARM/v2 resources as the ARM model provides several security enhancements such as: stronger access control (RBAC), better auditing, ARM-based deployment/governance, access to managed identities, access to key vault for secrets, AAD-based authentication, support for tags and resource groups for easier security management, etc."
     },
     {

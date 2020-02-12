@@ -517,7 +517,7 @@ class ARMPolicy: AzCommandBase
 						}
 						catch
 						{
-							#eat exception if definition failed to get created to avoid breaking code flow.
+							#eat exception if definition fails to get created to avoid breaking code flow.
 						}
 					}
 

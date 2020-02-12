@@ -20,7 +20,8 @@
         "RBAC",
         "KubernetesService"
       ],
-      "Enabled": true
+      "Enabled": true,
+      "PolicyDefinitionGuid": "ac4a19c2-fa67-49b4-8ae5-0b2e78c49457"
     },
     {
       "ControlID": "Azure_KubernetesService_AuthN_Enabled_AAD",
