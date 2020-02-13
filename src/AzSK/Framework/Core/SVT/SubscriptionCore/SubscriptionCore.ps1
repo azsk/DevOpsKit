@@ -998,7 +998,6 @@ class SubscriptionCore: AzSVTBase
 		return $controlResult
 
 	}
-
 	# This function evaluates permanent role assignments at resource group level.
 	hidden [ControlResult] CheckRGLevelPermanentRoleAssignments([ControlResult] $controlResult)
 	{
@@ -1007,94 +1006,83 @@ class SubscriptionCore: AzSVTBase
 		# The logic being this control is only scanned in CA mode and if user needs to attest then they would otherwise need to manually set scan source in client as 'CA'
 		if(-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest'])) -or [AzSKSettings]::GetInstance().GetScanSource() -eq 'CA')
 		{
-			if([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupPersistentAccessCheck",$($this.SubscriptionContext.SubscriptionId)))
+			$whitelistedPermanentRoles = $null
+			$message=$this.GetRGLevelPIMRoles();
+			if($message -ne 'OK') # if there is some while making request message will contain exception
 			{
-				$whitelistedPermanentRoles = $null
-				$message=$this.GetRGLevelPIMRoles();
-				if($message -ne 'OK') # if there is some while making request message will contain exception
-				{
 
-					$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
-					$controlResult.AddMessage($message);
-					return $controlResult;
-				}
-				else
-				{
-				# 'Owner' and 'User Access Administrator' are high privileged roles. These roles should not be give permanent access at resource group level.
-					$permanentRoles = $this.RGLevelPermanentAssignments;
-					if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
-					{
-						$whitelistedPermanentRoles = $this.ControlSettings.whitelistedPermanentRoles
-					}				
-					if(($permanentRoles | measure-object).Count -gt 0 )
-					{
-						$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles -and ($_.ObjectType -eq 'User' -or $_.ObjectType -eq 'Group')}
-						if($null -ne $whitelistedPermanentRoles)
-						{
-							$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}
-							
-						}
-						if(($criticalPermanentRoles| measure-object).Count -gt 0)
-						{
-							$controlResult.SetStateData("Permanent role assignments present on resource groups",$criticalPermanentRoles)
-							$controlResult.AddMessage([VerificationResult]::Failed, "Resource groups contains permanent role assignment for critical roles : $($criticalRoles -join ',')")
-							$permanentRolesbyRoleDefinition=$criticalPermanentRoles|Sort-Object -Property RoleDefinitionName | Select-Object SubscriptionId, @{Name="ResourceGroupName"; Expression={$_.Scope.Split("/")[-1]}}, DisplayName, ObjectType, RoleDefinitionName | Format-List | Out-String
-							$controlResult.AddMessage($permanentRolesbyRoleDefinition);
-							
-						}
-						else 
-						{
-							$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at resource group scope: $($criticalRoles -join ', ')")
-						}
-					}
-					else
-					{
-						$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at resource group scope: $($criticalRoles -join ', ')")
-						
-					}		
-				
-					
-				}
-			
-				else
-				{
-					# If full GSS scan run is non CA mode, attestation switch not being passed, the control will read result from compliance state table
-					# Since actually control is not evaluated in this code path, we need to put the 'HasRequiredAccess' flag as false, so that this result does not count for compliance
-					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-					if([FeatureFlightingManager]::GetFeatureStatus("FetchRGPIMControlStatusFromComplianceState",$($this.SubscriptionContext.SubscriptionId)) )
-					{
-						#[string] $controlId = $controlItem.ControlID;
-						$controlResult.AddMessage("By default, this control is not evaluated in manual scan mode as it takes substantial amount of time to scan. The control status in this CSV is based on the previous CA runbook scan for the control. To determine why the control has failed, you can look at the detailed log files in the AzSK storage account in AzSKRG under a container named 'ca-scan-logs' `n If you would like to override this behavior and evaluate the control from PS console, you can specify the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG'")
-						$result = $this.GetControlStatusFromComplianceState('Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG');
-						# since this control has actually only two states 'Passed' and 'Failed', but in case we are not able to read attestation data we need to tell the reason for the same
-						
-						switch($result)
-						{
-							
-							"Manual"{
-								$controlResult.AddMessage([VerificationResult]::Manual,"")
-								$controlResult.AddMessage("Unable to query compliance state results")
-							}
-							Default
-							{
-								
-								$controlResult.AddMessage([VerificationResult]::$result,"")
-							
-							}
-							
-						} 
-						
-					}
-				}
+				$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+				$controlResult.AddMessage($message);
+				return $controlResult;
 			}
 			else
 			{
-				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-				$controlResult.AddMessage([VerificationResult]::Manual,"")
-								$controlResult.AddMessage("The scan for this control is currently disabled. Please verify manually")
+			# 'Owner' and 'User Access Administrator' are high privileged roles. These roles should not be give permanent access at resource group level.
+				$permanentRoles = $this.RGLevelPermanentAssignments;
+				if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
+				{
+					$whitelistedPermanentRoles = $this.ControlSettings.whitelistedPermanentRoles
+				}				
+				if(($permanentRoles | measure-object).Count -gt 0 )
+				{
+					$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles -and ($_.ObjectType -eq 'User' -or $_.ObjectType -eq 'Group')}
+					if($null -ne $whitelistedPermanentRoles)
+					{
+						$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}
+						
+					}
+					if(($criticalPermanentRoles| measure-object).Count -gt 0)
+					{
+						$controlResult.SetStateData("Permanent role assignments present on resource groups",$criticalPermanentRoles)
+						$controlResult.AddMessage([VerificationResult]::Failed, "Resource groups contains permanent role assignment for critical roles : $($criticalRoles -join ',')")
+						$permanentRolesbyRoleDefinition=$criticalPermanentRoles|Sort-Object -Property RoleDefinitionName | Select-Object SubscriptionId, @{Name="ResourceGroupName"; Expression={$_.Scope.Split("/")[-1]}}, DisplayName, ObjectType, RoleDefinitionName | Format-List | Out-String
+						$controlResult.AddMessage($permanentRolesbyRoleDefinition);
+						
+					}
+					else 
+					{
+						$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at resource group scope: $($criticalRoles -join ', ')")
+					}
+				}
+				else
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed, "No permanent assignments found for the following roles at resource group scope: $($criticalRoles -join ', ')")
+					
+				}		
+			
+				
 			}
 		}
-
+		else
+		{
+			# If full GSS scan run is non CA mode, attestation switch not being passed, the control will read result from compliance state table
+			# Since actually control is not evaluated in this code path, we need to put the 'HasRequiredAccess' flag as false, so that this result does not count for compliance
+ 			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			if([FeatureFlightingManager]::GetFeatureStatus("FetchRGPIMControlStatusFromComplianceState",$($this.SubscriptionContext.SubscriptionId)) )
+			{
+				#[string] $controlId = $controlItem.ControlID;
+				$controlResult.AddMessage("Note: `n By default, this control is not evaluated in manual scan mode as it takes substantial amount of time to scan. The control status in this CSV is based on the previous CA runbook scan for the control. To determine why the control has failed, you can look at the detailed log files in the AzSK storage account in AzSKRG under a container named 'ca-scan-logs' `n If you would like to override this behavior and evaluate the control from PS console, you can specify the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG '")
+				$result = $this.GetControlStatusFromComplianceState('Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG');
+				# since this control has actually only two states 'Passed' and 'Failed', but in case we are not able to read attestation data we need to tell the reason for the same
+				
+				switch($result)
+				{
+					
+					"Manual"{
+						$controlResult.AddMessage([VerificationResult]::Manual,"")
+						$controlResult.AddMessage("Unable to query compliance state results")
+					}
+                    Default
+                    {
+                        
+                        $controlResult.AddMessage([VerificationResult]::$result,"")
+					
+                    }
+					
+				} 
+				
+			}
+		}
 
 		return $controlResult
 
@@ -1909,10 +1897,10 @@ class SubscriptionCore: AzSVTBase
 		$AccessRoles= $this.RoleAssignments | Where-Object{(($_.scope).split('/') | Measure-Object).Count -gt 5} ; # restrict the Get-AzRoleAssignment only for resource level
 		# Other assignments will be obtained from PIM API
 		$PIMRoles=$this.PIMAssignments;
-		
+		$RBACAssignment = New-Object "System.Collections.Generic.List[TelemetryRBAC]"
 		if($AccessRoles -ne $null)
 		{
-			$RBACAssignment = New-Object "System.Collections.Generic.List[TelemetryRBAC]"
+			
 			$subId=$this.SubscriptionContext.SubscriptionId;
 				 foreach($item in $AccessRoles)
 				{  	$matchingAssignment=New-Object TelemetryRBAC;
@@ -1942,14 +1930,14 @@ class SubscriptionCore: AzSVTBase
 				
 				
 				}
-		
+		}
 		
 			if($null -ne $PIMRoles){
 				$RBACAssignment.AddRange($PIMRoles);
 			}
 			if($null -ne $this.permanentAssignments)
 			{
-				$RBACAssignment.AddRange($PIMRoles);
+				$RBACAssignment.AddRange($this.permanentAssignments);
 			}
 			if($null -ne $this.RGLevelPermanentAssignments)
 			{
@@ -1966,7 +1954,7 @@ class SubscriptionCore: AzSVTBase
 			$this.CustomObject.Value=$RBACAssignment;
 			$this.CustomObject.Name="RBACTelemetry";
 			
-		}	
+			
 	
 	}
 
