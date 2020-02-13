@@ -588,7 +588,13 @@ class WritePsConsole: FileOutputBase
 				}
 				elseif($vl -in @($true, $false) -and $vl.GetType().Name -ne 'SwitchParameter' )
 				{
-					$vl = '$'+$vl.ToString().ToLower()
+					try
+					{
+						$vl = '$'+$vl.ToString().ToLower()
+					}
+					catch
+					{
+					}
 				}
 				elseif($vl.GetType().Name -eq 'SwitchParameter')
 				{
