@@ -607,6 +607,7 @@ class ARMPolicy: AzCommandBase
 					if($null -eq $initiative)
 					{
 						$this.PublishCustomMessage("Creating new AzSK Initiative...", [MessageType]::Update);
+						$this.PublishCustomMessage("Creating custom definitions...", [MessageType]::Update);
 						if([FeatureFlightingManager]::GetFeatureStatus("AllowCustomDefinitionsForPolicyScan", $($this.SubscriptionContext.SubscriptionId)) -eq $true)
 						{
 							try
@@ -636,8 +637,9 @@ class ARMPolicy: AzCommandBase
 						Start-Sleep -Seconds 15
 						
 					}
-					elseif($this.UpdateInitiative) {
+					else {
 						$this.PublishCustomMessage("Updating AzSK Initiative...", [MessageType]::Update);
+						$this.PublishCustomMessage("Updating custom definitions...", [MessageType]::Update);
 						if([FeatureFlightingManager]::GetFeatureStatus("AllowCustomDefinitionsForPolicyScan", $($this.SubscriptionContext.SubscriptionId)) -eq $true)
 						{
 							try
@@ -666,10 +668,7 @@ class ARMPolicy: AzCommandBase
 						Set-AzPolicySetDefinition -Name $this.SubPolicyInitiative.Name -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions | Out-Null
 						Start-Sleep -Seconds 15						
 					}
-					elseif($null -ne $initiative)
-					{
-						$this.PublishCustomMessage("Found existing AzSK Initiative.", [MessageType]::Update);	
-					}	
+	
 					if($null -eq $initiativeAssignment)
 					{
 						$setDefnObj = Get-AzPolicySetDefinition -Name $initiativeName -ErrorAction SilentlyContinue;
