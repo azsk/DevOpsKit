@@ -1897,10 +1897,10 @@ class SubscriptionCore: AzSVTBase
 		$AccessRoles= $this.RoleAssignments | Where-Object{(($_.scope).split('/') | Measure-Object).Count -gt 5} ; # restrict the Get-AzRoleAssignment only for resource level
 		# Other assignments will be obtained from PIM API
 		$PIMRoles=$this.PIMAssignments;
-		
+		$RBACAssignment = New-Object "System.Collections.Generic.List[TelemetryRBAC]"
 		if($AccessRoles -ne $null)
 		{
-			$RBACAssignment = New-Object "System.Collections.Generic.List[TelemetryRBAC]"
+			
 			$subId=$this.SubscriptionContext.SubscriptionId;
 				 foreach($item in $AccessRoles)
 				{  	$matchingAssignment=New-Object TelemetryRBAC;

@@ -594,6 +594,8 @@ class WritePsConsole: FileOutputBase
 					}
 					catch
 					{
+						# catch will be executed when the object type is PSObject as if PsObject contains values $vl -in @($true, $false) this returns true
+						#eat exception to not show anything in logs and console
 					}
 				}
 				elseif($vl.GetType().Name -eq 'SwitchParameter')
