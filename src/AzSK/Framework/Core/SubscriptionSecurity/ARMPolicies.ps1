@@ -465,6 +465,7 @@ class ARMPolicy: AzCommandBase
 		$policyDefinitionsDetails = [ConfigurationHelper]::LoadServerConfigFile("PolicyDefinitions.json", $true, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore)
 		if ($policyDefinitionsDetails -and [Helpers]::CheckMember($policyDefinitionsDetails, "CustomDefinitions"))
 		{
+			$this.PublishCustomMessage("Creating custom definitions...", [MessageType]::Update);
 			$policyDefinitionsDetails.CustomDefinitions | ForEach-Object {
 				# Fetch feature wise controls
 				$_.Controls | ForEach-Object {
@@ -636,7 +637,7 @@ class ARMPolicy: AzCommandBase
 						Start-Sleep -Seconds 15
 						
 					}
-					elseif($this.UpdateInitiative) {
+					else {
 						$this.PublishCustomMessage("Updating AzSK Initiative...", [MessageType]::Update);
 						if([FeatureFlightingManager]::GetFeatureStatus("AllowCustomDefinitionsForPolicyScan", $($this.SubscriptionContext.SubscriptionId)) -eq $true)
 						{
@@ -666,10 +667,7 @@ class ARMPolicy: AzCommandBase
 						Set-AzPolicySetDefinition -Name $this.SubPolicyInitiative.Name -DisplayName $this.SubPolicyInitiative.DisplayName -Description $this.SubPolicyInitiative.Description -PolicyDefinition $PolicyDefnitions | Out-Null
 						Start-Sleep -Seconds 15						
 					}
-					elseif($null -ne $initiative)
-					{
-						$this.PublishCustomMessage("Found existing AzSK Initiative.", [MessageType]::Update);	
-					}	
+	
 					if($null -eq $initiativeAssignment)
 					{
 						$setDefnObj = Get-AzPolicySetDefinition -Name $initiativeName -ErrorAction SilentlyContinue;
