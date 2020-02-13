@@ -465,7 +465,6 @@ class ARMPolicy: AzCommandBase
 		$policyDefinitionsDetails = [ConfigurationHelper]::LoadServerConfigFile("PolicyDefinitions.json", $true, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore)
 		if ($policyDefinitionsDetails -and [Helpers]::CheckMember($policyDefinitionsDetails, "CustomDefinitions"))
 		{
-			$this.PublishCustomMessage("Creating custom definitions...", [MessageType]::Update);
 			$policyDefinitionsDetails.CustomDefinitions | ForEach-Object {
 				# Fetch feature wise controls
 				$_.Controls | ForEach-Object {
@@ -608,6 +607,7 @@ class ARMPolicy: AzCommandBase
 					if($null -eq $initiative)
 					{
 						$this.PublishCustomMessage("Creating new AzSK Initiative...", [MessageType]::Update);
+						$this.PublishCustomMessage("Creating custom definitions...", [MessageType]::Update);
 						if([FeatureFlightingManager]::GetFeatureStatus("AllowCustomDefinitionsForPolicyScan", $($this.SubscriptionContext.SubscriptionId)) -eq $true)
 						{
 							try
@@ -639,6 +639,7 @@ class ARMPolicy: AzCommandBase
 					}
 					else {
 						$this.PublishCustomMessage("Updating AzSK Initiative...", [MessageType]::Update);
+						$this.PublishCustomMessage("Updating custom definitions...", [MessageType]::Update);
 						if([FeatureFlightingManager]::GetFeatureStatus("AllowCustomDefinitionsForPolicyScan", $($this.SubscriptionContext.SubscriptionId)) -eq $true)
 						{
 							try
