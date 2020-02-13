@@ -285,7 +285,7 @@ class ContinuousAssurance: AzCommandBase
             $pubpwd = $pubCreds[0].Properties.PublishingPassword;
             $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $pubName,$pubpwd)))
             $apiUrl = "https://"+$($this.FunctionAppName)+".scm.azurewebsites.net/api/zipdeploy";  
-            $this.PublishCustomMessage("Adding/updating scanner function on [$this.FunctionAppName] function app...")         
+            $this.PublishCustomMessage("Adding/updating scanner function on [$($this.FunctionAppName)] function app...")         
             Invoke-RestMethod -Uri $apiUrl -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Method PUT -InFile $zipFilePath -ContentType "multipart/form-data";
         }
         else
