@@ -1930,14 +1930,14 @@ class SubscriptionCore: AzSVTBase
 				
 				
 				}
-		
+		}
 		
 			if($null -ne $PIMRoles){
 				$RBACAssignment.AddRange($PIMRoles);
 			}
 			if($null -ne $this.permanentAssignments)
 			{
-				$RBACAssignment.AddRange($PIMRoles);
+				$RBACAssignment.AddRange($this.permanentAssignments);
 			}
 			if($null -ne $this.RGLevelPermanentAssignments)
 			{
@@ -1954,7 +1954,7 @@ class SubscriptionCore: AzSVTBase
 			$this.CustomObject.Value=$RBACAssignment;
 			$this.CustomObject.Name="RBACTelemetry";
 			
-		}	
+			
 	
 	}
 
