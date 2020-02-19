@@ -60,14 +60,12 @@ class AppService: AzSVTBase
 				}
 
 				try{
-					$this.SiteConfigs = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType Microsoft.Web/sites/config -ResourceName $this.ResourceContext.ResourceName -ApiVersion 2018-02-01
 				  # Append SiteConfig to ResourceObject
-					if($null -ne $this.SiteConfigs -and [Helpers]::CheckMember($this.SiteConfigs,"Properties") -and [Helpers]::CheckMember($this.ResourceObject.Properties,"siteConfig", $false)){
+					if($null -ne $this.WebAppDetails -and [Helpers]::CheckMember($this.WebAppDetails,"siteConfig") -and [Helpers]::CheckMember($this.ResourceObject.Properties,"siteConfig", $false)){
 						$this.ResourceObject.Properties.siteConfig = $this.SiteConfigs.Properties
 					}
 				}catch{
-					$this.SiteConfigs = $null
-					# No need to break execution , null object is handled in respective controls
+					# No need to break execution
 				}
 		}
         return $this.ResourceObject;
@@ -805,7 +803,7 @@ class AppService: AzSVTBase
 		}
 		else
 		{
-             $corsSettings=$this.WebAppDetails.SiteConfig.Cors
+            $corsSettings=$this.WebAppDetails.SiteConfig.Cors
 			if([Helpers]::CheckMember($corsSettings,"AllowedOrigins") -and ($corsSettings.AllowedOrigins | Measure-Object).Count -ne 0)
 			{
 			 
@@ -897,107 +895,106 @@ class AppService: AzSVTBase
 		return $controlResult;
     }
 		 
-		hidden [ControlResult] CheckAppServiceTLSVersion([ControlResult] $controlResult)
-		{	
-				$requiredVersion = [System.Version] $this.ControlSettings.AppService.TLS_Version
-	
-        if($null -ne $this.SiteConfigs -and [Helpers]::CheckMember($this.SiteConfigs.Properties,"minTlsVersion")){
-					  $minTlsVersion = [System.Version]	$this.SiteConfigs.Properties.minTlsVersion
-						if($minTlsVersion -ge $requiredVersion)
-						{
-							$controlResult.VerificationResult = [VerificationResult]::Passed
-						}
-						else
-						{
-							$controlResult.EnableFixControl = $true;
-							$controlResult.VerificationResult = [VerificationResult]::Failed
-							$controlResult.AddMessage("Current Minimum TLS Version: $($minTlsVersion), Required Minimum TLS Version: $($requiredVersion)");
-							$controlResult.SetStateData("Current Minimum TLS Version",$minTlsVersion.ToString());
-						}
-				}else{
-						#Setting this property ensures that this control result wont be considered for the central telemetry. 
-						#As we are not able to fetch siteconfig details required to validate control 
-						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-						$controlResult.VerificationResult = [VerificationResult]::Manual
-						$controlResult.AddMessage("Unable to fetch TLS settings.");
-				}
-				return $controlResult;
-		}
+	hidden [ControlResult] CheckAppServiceTLSVersion([ControlResult] $controlResult)
+	{	
+		$requiredVersion = [System.Version] $this.ControlSettings.AppService.TLS_Version
+		if($null -ne $this.WebAppDetails -and [Helpers]::CheckMember($this.WebAppDetails,"SiteConfig.minTlsVersion")){
+			$minTlsVersion = [System.Version]	$this.WebAppDetails.SiteConfig.minTlsVersion
+			if($minTlsVersion -ge $requiredVersion)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Passed
+			}
+			else
+			{
+				$controlResult.EnableFixControl = $true;
+				$controlResult.VerificationResult = [VerificationResult]::Failed
+				$controlResult.AddMessage("Current Minimum TLS Version: $($minTlsVersion), Required Minimum TLS Version: $($requiredVersion)");
+				$controlResult.SetStateData("Current Minimum TLS Version",$minTlsVersion.ToString());
+			}
+		}else{
+			#Setting this property ensures that this control result wont be considered for the central telemetry. 
+			#As we are not able to fetch siteconfig details required to validate control 
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			$controlResult.VerificationResult = [VerificationResult]::Manual
+			$controlResult.AddMessage("Unable to fetch TLS settings.");
+			}
+		return $controlResult;
+	}
 
-		hidden [ControlResult] CheckAppServiceInstalledExtensions([ControlResult] $controlResult)
-		{	
-			  try{
-					$installedExtensions = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType Microsoft.Web/sites/siteextensions -ResourceName $this.ResourceContext.ResourceName -ApiVersion 2018-02-01 -ErrorAction silentlycontinue
-				}
-				catch{
-					$installedExtensions = $null
-				}
-				if($installedExtensions -ne $null -and ($installedExtensions | Measure-Object).Count -gt 0)
-				{
-					$extensions = $installedExtensions | Select-Object "Name", "ResourceId"
-					$controlResult.AddMessage([VerificationResult]::Verify,
-					[MessageData]::new("Following extensions are installed on resource:",$installedExtensions));
-          $controlResult.SetStateData("Installed extensions",$extensions);
-				}
-				else
-				{
-					$controlResult.AddMessage([VerificationResult]::Passed,[MessageData]::new("No extension is installed on resource " +$this.ResourceContext.ResourceName));
-					
-				}
-				return $controlResult;
-		}
+	hidden [ControlResult] CheckAppServiceInstalledExtensions([ControlResult] $controlResult)
+	{	
+			try{
+				$installedExtensions = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceType Microsoft.Web/sites/siteextensions -ResourceName $this.ResourceContext.ResourceName -ApiVersion 2018-02-01 -ErrorAction silentlycontinue
+			}
+			catch{
+				$installedExtensions = $null
+			}
+			if($installedExtensions -ne $null -and ($installedExtensions | Measure-Object).Count -gt 0)
+			{
+				$extensions = $installedExtensions | Select-Object "Name", "ResourceId"
+				$controlResult.AddMessage([VerificationResult]::Verify,
+				[MessageData]::new("Following extensions are installed on resource:",$installedExtensions));
+				$controlResult.SetStateData("Installed extensions",$extensions);
+			}
+			else
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed,[MessageData]::new("No extension is installed on resource " +$this.ResourceContext.ResourceName));
+				
+			}
+			return $controlResult;
+	}
 
-		hidden [ControlResult] CheckAppServiceAccessRestriction([ControlResult] $controlResult)
-		{	
-				$ipSecurityRestrictions = $false
-				$scmIpSecurityRestrictions = 	$false
-				if($null -ne $this.SiteConfigs -and [Helpers]::CheckMember($this.SiteConfigs,"Properties")){
-					$controlResult.VerificationResult = [VerificationResult]::Verify
-					$scmIpSecurityRestrictionsUseMain = $this.SiteConfigs.Properties.scmIpSecurityRestrictionsUseMain
-					# Check IP restrictions for main website
-					if($null -eq $this.SiteConfigs.Properties.ipSecurityRestrictions){
-						$controlResult.AddMessage("IP rule based access restriction is not set up for app: " +$this.ResourceContext.ResourceName);
-					}else{
-						$ipSecurityRestrictions = $true
-						$controlResult.AddMessage("Following IP rule based access restriction is cofigured for app: "+$this.ResourceContext.ResourceName);
-						$controlResult.AddMessage($this.SiteConfigs.Properties.ipSecurityRestrictions);
-					}
-					# Check IP restrictions for scm website
-					if($scmIpSecurityRestrictionsUseMain -eq $true){
-						$scmIpSecurityRestrictions = $ipSecurityRestrictions
-						$controlResult.AddMessage("IP based access restriction rules are same for both scm site and main app.");
-					}elseif($null -eq $this.SiteConfigs.Properties.scmIpSecurityRestrictions){
-						$scmIpSecurityRestrictions = 	$false
-						$controlResult.AddMessage("IP based access restriction is not set up for scm site used by app.");
-					}else{
-						$ipSecurityRestrictions = $true
-						$controlResult.AddMessage("Following IP based access restriction is configured for scm site used by app:");
-						$controlResult.AddMessage($this.SiteConfigs.Properties.scmIpSecurityRestrictions);
-					}
-				}else{
-					#Setting this property ensures that this control result wont be considered for the central telemetry. 
-					#As we are not able to fetch siteconfig details required to validate control 
-					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-					$controlResult.VerificationResult = [VerificationResult]::Manual
-					$controlResult.AddMessage("Unable to fetch IP based security restrictions settings.");
-				}
-			
-				return $controlResult;
-		}
-
-		hidden [ControlResult] CheckAppServiceCORSCredential([ControlResult] $controlResult)
-		{	
-				$supportCredentials = $false
+	hidden [ControlResult] CheckAppServiceAccessRestriction([ControlResult] $controlResult)
+	{	
+			$ipSecurityRestrictions = $false
+			$scmIpSecurityRestrictions = 	$false
+			if($null -ne $this.WebAppDetails -and [Helpers]::CheckMember($this.WebAppDetails,"SiteConfig")){
 				$controlResult.VerificationResult = [VerificationResult]::Verify
-				if($null -ne $this.SiteConfigs -and [Helpers]::CheckMember( $this.SiteConfigs.Properties,"cors.supportCredentials") -and $this.SiteConfigs.Properties.cors.supportCredentials){
-					 $supportCredentials = $true	
-					 $controlResult.AddMessage("CORS Response header 'Access-Control-Allow-Credentials' is enabled for resource.");
+				$scmIpSecurityRestrictionsUseMain = $this.WebAppDetails.SiteConfig.scmIpSecurityRestrictionsUseMain
+				# Check IP restrictions for main website
+				if($null -eq $this.WebAppDetails.SiteConfig.ipSecurityRestrictions){
+					$controlResult.AddMessage("IP rule based access restriction is not set up for app: " +$this.ResourceContext.ResourceName);
 				}else{
-				   $controlResult.VerificationResult = [VerificationResult]::Passed
-				   $controlResult.AddMessage("CORS Response header 'Access-Control-Allow-Credentials' is disabled for resource.");
+					$ipSecurityRestrictions = $true
+					$controlResult.AddMessage("Following IP rule based access restriction is cofigured for app: "+$this.ResourceContext.ResourceName);
+					$controlResult.AddMessage($this.WebAppDetails.SiteConfig.ipSecurityRestrictions);
 				}
-				$controlResult.SetStateData("Response header 'Access-Control-Allow-Credentials' is set to: ",$supportCredentials);
-				return $controlResult;
-		}
+				# Check IP restrictions for scm website
+				if($scmIpSecurityRestrictionsUseMain -eq $true){
+					$scmIpSecurityRestrictions = $ipSecurityRestrictions
+					$controlResult.AddMessage("IP based access restriction rules are same for both scm site and main app.");
+				}elseif($null -eq $this.WebAppDetails.SiteConfig.scmIpSecurityRestrictions){
+					$scmIpSecurityRestrictions = 	$false
+					$controlResult.AddMessage("IP based access restriction is not set up for scm site used by app.");
+				}else{
+					$ipSecurityRestrictions = $true
+					$controlResult.AddMessage("Following IP based access restriction is configured for scm site used by app:");
+					$controlResult.AddMessage($this.WebAppDetails.SiteConfig.scmIpSecurityRestrictions);
+				}
+			}else{
+				#Setting this property ensures that this control result wont be considered for the central telemetry. 
+				#As we are not able to fetch siteconfig details required to validate control 
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+				$controlResult.VerificationResult = [VerificationResult]::Manual
+				$controlResult.AddMessage("Unable to fetch IP based security restrictions settings.");
+			}
+		
+			return $controlResult;
+	}
+
+	hidden [ControlResult] CheckAppServiceCORSCredential([ControlResult] $controlResult)
+	{	
+			$supportCredentials = $false
+			$controlResult.VerificationResult = [VerificationResult]::Verify
+			if($null -ne $this.WebAppDetails -and [Helpers]::CheckMember( $this.WebAppDetails,"SiteConfig.Cors") -and $this.WebAppDetails.SiteConfig.Cors.SupportCredentials){
+					$supportCredentials = $true	
+					$controlResult.AddMessage("CORS Response header 'Access-Control-Allow-Credentials' is enabled for resource.");
+			}else{
+				$controlResult.VerificationResult = [VerificationResult]::Passed
+				$controlResult.AddMessage("CORS Response header 'Access-Control-Allow-Credentials' is disabled for resource.");
+			}
+			$controlResult.SetStateData("Response header 'Access-Control-Allow-Credentials' is set to: ",$supportCredentials);
+			return $controlResult;
+	}
 
 }
