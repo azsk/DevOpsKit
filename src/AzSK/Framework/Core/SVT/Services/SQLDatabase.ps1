@@ -231,7 +231,7 @@ class SQLDatabase: AzSVTBase
 			#Check if Audit is Enabled 
 				if(($serverAudit.BlobStorageTargetState -eq [AuditStateType]::Enabled) -or ($serverAudit.EventHubTargetState -eq [AuditStateType]::Enabled) -or ($serverAudit.LogAnalyticsTargetState -eq [AuditStateType]::Enabled)){
 					# TODO: We are temporarily suppressing the alias deprecation warning message given by the below Az.SQL cmdlet.
-						$serverThreat = Get-AzSqlServerAdvancedThreatProtectionSettings `
+						$serverThreat = Get-AzSqlServerAdvancedThreatProtectionSetting `
 									-ResourceGroupName $this.ResourceContext.ResourceGroupName `
 									-ServerName $this.ResourceContext.ResourceName.ToLower() `
 									-ErrorAction Stop -WarningAction SilentlyContinue

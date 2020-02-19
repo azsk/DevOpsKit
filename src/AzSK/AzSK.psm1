@@ -1,6 +1,6 @@
 ﻿Set-StrictMode -Version Latest
 Write-Host "Importing Az modules. This may take a while..." -ForegroundColor Yellow
-Import-Module Az.Accounts -RequiredVersion 1.6.0 -WarningAction SilentlyContinue
+Import-Module Az.Accounts -RequiredVersion 1.7.1 -WarningAction SilentlyContinue
 
 . $PSScriptRoot\Framework\Framework.ps1
 

@@ -143,7 +143,7 @@ class SQLDatabaseFix: FixServicesBase
 		}
 
 		# TODO: We are temporarily suppressing the alias deprecation warning message given by the below Az.SQL cmdlet.
-        Update-AzSqlServerAdvancedThreatProtectionSettings `
+        Update-AzSqlServerAdvancedThreatProtectionSetting `
 				-ResourceGroupName $this.ResourceGroupName `
 				-ServerName $this.ResourceName `
 				-StorageAccountName $storageAccountName `
@@ -172,7 +172,7 @@ class SQLDatabaseFix: FixServicesBase
 		}
 
 		# TODO: We are temporarily suppressing the alias deprecation warning message given by the below Az.SQL cmdlet.
-		Update-AzSqlDatabaseAdvancedThreatProtectionSettings `
+		Update-AzSqlDatabaseAdvancedThreatProtectionSetting `
 				-ResourceGroupName $this.ResourceGroupName `
 				-ServerName $this.ResourceName `
 				-DatabaseName $databaseName `
