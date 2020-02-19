@@ -62,7 +62,7 @@ class AppService: AzSVTBase
 				try{
 				  # Append SiteConfig to ResourceObject
 					if($null -ne $this.WebAppDetails -and [Helpers]::CheckMember($this.WebAppDetails,"siteConfig") -and [Helpers]::CheckMember($this.ResourceObject.Properties,"siteConfig", $false)){
-						$this.ResourceObject.Properties.siteConfig = $this.SiteConfigs.Properties
+						$this.ResourceObject.Properties.siteConfig = $this.WebAppDetails.siteConfig
 					}
 				}catch{
 					# No need to break execution
