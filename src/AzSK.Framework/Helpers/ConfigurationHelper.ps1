@@ -414,7 +414,9 @@ class ConfigurationHelper {
 
 	hidden static [PSObject] GetBaseFrameworkPath(){
 		$moduleName = $([Constants]::AzSKModuleName)
-	    $isDebugModeOn = $([Constants]::AzSKDebugModeOn)
+		$isDebugModeOn = $([Constants]::AzSKDebugModeOn)
+		#Remove Staging from module name before forming config base path
+		$moduleName = $moduleName -replace "Staging",""
 		if ($true -eq $isDebugModeOn) # If Dev-Test mode is on, here the \Framework folder is parallel to \ModuleName folder
 		{
 			$basePath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName $moduleName | Join-Path -ChildPath "Framework"

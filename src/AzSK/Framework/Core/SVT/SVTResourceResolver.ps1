@@ -94,7 +94,7 @@ class SVTResourceResolver: AzSKRoot
 		
 	}
 
-	[void] LoadAzureResources()
+	[void] LoadResourcesForScan()
 	{
 		#Lazy load the SVT resource array
 		if($this.SVTResources.Count -eq 0)

@@ -190,6 +190,9 @@ class Constants
 	static [string] $CredHygieneActionGroupName = "AzSKCredHygieneActionGroup"
 	static [string] $CredHygieneActionGroupShortName = "AzSKCredHyg"
 
+	#Constants for Debug mode
+	static [bool] $AzSKDebugModeOn = $false
+
 	static [void] SetAzSKModuleName($moduleName)
 	{
 		if(-not [string]::IsNullOrWhiteSpace($moduleName))
@@ -206,6 +209,15 @@ class Constants
 		if(-not [string]::IsNullOrWhiteSpace($moduleVersion))
 		{
 			[Constants]::AzSKCurrentModuleVersion = $moduleVersion;
+		}
+	}
+
+	static [void] SetAzSKCurrentEnvironmentMode($moduleVersion)
+	{
+		#1.0.0.0 is hard-coded version for Dev-Test , which means kit is running in Debug mode 
+		if(-not [string]::IsNullOrWhiteSpace($moduleVersion) -and ($moduleVersion -eq "4.6.0.0"))
+		{
+			[Constants]::AzSKDebugModeOn = $true;
 		}
 	}
 

@@ -106,10 +106,10 @@ class ContextHelper : EventBase
 			throw [SuppressedException] ("Subscription Id [$subscriptionId] is malformed. Subscription Id should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).")
 		}
 
-		$currentContext = [ContextHelper]::GetCurrentContext()
+		$currentAzContext = [ContextHelper]::GetCurrentContext()
 
-        if((-not $currentContext) -or ($currentContext -and ((-not $currentContext.Subscription -and ($SubscriptionContext.SubscriptionId -ne [Constants]::BlankSubscriptionId)) `
-				-or -not $currentContext.Account)))
+        if((-not $currentAzContext) -or ($currentAzContext -and ((-not $currentAzContext.Subscription -and ($SubscriptionContext.SubscriptionId -ne [Constants]::BlankSubscriptionId)) `
+				-or -not $currentAzContext.Account)))
         {
             $this.PublishCustomMessage("No active Azure login session found. Initiating login flow...", [MessageType]::Warning);
 
@@ -124,39 +124,39 @@ class ContextHelper : EventBase
             
 			if($rmLogin)
 			{
-				$currentContext = $rmLogin.Context;
+				$currentAzContext = $rmLogin.Context;
 			}
         }
 
-		if($currentContext -and $currentContext.Subscription -and $currentContext.Subscription.Id)
+		if($currentAzContext -and $currentAzContext.Subscription -and $currentAzContext.Subscription.Id)
 		{
-		    if(($currentContext.Subscription.Id -ne $SubscriptionContext.SubscriptionId) -and ($SubscriptionContext.SubscriptionId -ne [Constants]::BlankSubscriptionId))
+		    if(($currentAzContext.Subscription.Id -ne $SubscriptionContext.SubscriptionId) -and ($SubscriptionContext.SubscriptionId -ne [Constants]::BlankSubscriptionId))
 			{
 				try 
 				{
-					$currentContext = Set-AzContext -SubscriptionId $SubscriptionContext.SubscriptionId -ErrorAction Stop   
+					$currentAzContext = Set-AzContext -SubscriptionId $SubscriptionContext.SubscriptionId -ErrorAction Stop   
 				}
 				catch 
 				{
 					throw [SuppressedException] ("Please provide a valid tenant or a valid subscription.`nNote: If you are using Privileged Identity Management (PIM), make sure you have activated your access.") 
 				}
 				    
-				# $currentContext will contain the desired subscription (or $null if id is wrong or no permission)
-				if ($null -eq $currentContext)
+				# $currentAzContext will contain the desired subscription (or $null if id is wrong or no permission)
+				if ($null -eq $currentAzContext)
 				{
 					throw [SuppressedException] ("Invalid Subscription Id [" + $SubscriptionContext.SubscriptionId + "]") 
 				}
 				[ContextHelper]::ResetCurrentContext()
 				[ContextHelper]::GetCurrentContext()
 			}
-			elseif(($currentContext.Subscription.Id -ne $SubscriptionContext.SubscriptionId) -and ($SubscriptionContext.SubscriptionId -eq [Constants]::BlankSubscriptionId))
+			elseif(($currentAzContext.Subscription.Id -ne $SubscriptionContext.SubscriptionId) -and ($SubscriptionContext.SubscriptionId -eq [Constants]::BlankSubscriptionId))
 			{
-				$SubscriptionContext.SubscriptionId = $currentContext.Subscription.Id
-				$SubscriptionContext.SubscriptionName = $currentContext.Subscription.Name
-				$SubscriptionContext.Scope = "/subscriptions/" +$currentContext.Subscription.Id
+				$SubscriptionContext.SubscriptionId = $currentAzContext.Subscription.Id
+				$SubscriptionContext.SubscriptionName = $currentAzContext.Subscription.Name
+				$SubscriptionContext.Scope = "/subscriptions/" +$currentAzContext.Subscription.Id
 			}
 		}
-		elseif($null -ne $currentContext -and ($SubscriptionContext.SubscriptionId -eq [Constants]::BlankSubscriptionId))
+		elseif($null -ne $currentAzContext -and ($SubscriptionContext.SubscriptionId -eq [Constants]::BlankSubscriptionId))
 		{
 			$SubscriptionContext.SubscriptionName = [Constants]::BlankSubscriptionName
 		}
@@ -165,9 +165,9 @@ class ContextHelper : EventBase
             throw [SuppressedException] ("Subscription Id [" + $SubscriptionContext.SubscriptionId + "] is invalid or you may not have permissions.")
 		}
 
-        if ($null -ne $currentContext -and [Helpers]::CheckMember($currentContext, "Subscription"))
+        if ($null -ne $currentAzContext -and [Helpers]::CheckMember($currentAzContext, "Subscription"))
         {
-            $SubscriptionContext.SubscriptionName = $currentContext.Subscription.Name;
+            $SubscriptionContext.SubscriptionName = $currentAzContext.Subscription.Name;
 		}
 
 		return $SubscriptionContext

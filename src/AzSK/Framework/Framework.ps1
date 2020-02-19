@@ -56,7 +56,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Managers\ConfigurationManager.ps1
 . $PSScriptRoot\Helpers\ResourceHelper.ps1
 . $FrameworkPath\Helpers\WebRequestHelper.ps1
-. $FrameworkPath\Helpers\ActiveDirectoryHelper.ps1
+. $PSScriptRoot\Helpers\ActiveDirectoryHelper.ps1
 . $FrameworkPath\Managers\FeatureFlightingManager.ps1
 . $PSScriptRoot\Helpers\RoleAssignmentHelper.ps1
 . $PSScriptRoot\Helpers\SecurityCenterHelper.ps1
