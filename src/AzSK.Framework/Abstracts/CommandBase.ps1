@@ -40,6 +40,9 @@ class CommandBase: AzSKRoot {
 		{
 			$this.Force = $this.InvocationContext.BoundParameters["Force"];
 		}
+
+		#Check multiple AzSK* module should not be loaded in same session
+		$this.CheckMultipleAzSKModuleLoaded();	
 	}
 	#EndRegion
 
@@ -328,6 +331,13 @@ class CommandBase: AzSKRoot {
 		catch
 		{
 			$this.CommandError($_.Exception.InnerException.ErrorRecord);
+		}
+	}
+
+	[void] CheckMultipleAzSKModuleLoaded(){
+		$loadedAzSKModules= Get-Module | Where-Object { $_.Name -like "AzSK*"};
+		if($null -ne $loadedAzSKModules -and ($loadedAzSKModules| Measure-Object).Count -gt 1){
+			throw [SuppressedException]::new("ERROR: Multiple AzSK modules loaded in same session, this will lead to issues when running AzSK cmdlets.",[SuppressedExceptionType]::Generic)
 		}
 	}
 }
