@@ -247,55 +247,62 @@ class ServiceFabric : AzSVTBase
 		$diagnosticsEnabledScaleSet = @{};
 		$diagnosticsDisabledScaleSet = @{};
 		$vmssResources = $this.GetLinkedResources("Microsoft.Compute/virtualMachineScaleSets")
-		#Iterate through cluster linked vmss resources             
-		$vmssResources | ForEach-Object{
-			$VMScaleSetName = $_.Name	
-			$nodeTypeResource = Get-AzVMss -ResourceGroupName  $_.ResourceGroupName -VMScaleSetName  $VMScaleSetName
+		if($null -ne $vmssResources -and ($vmssResources | Measure-Object).Count -gt 0){
+			#Iterate through cluster linked vmss resources             
+			$vmssResources | ForEach-Object{
+				$VMScaleSetName = $_.Name	
+				$nodeTypeResource = Get-AzVMss -ResourceGroupName  $_.ResourceGroupName -VMScaleSetName  $VMScaleSetName
 
-			# Fetch diagnostics settings based on OS 
-			if($this.ResourceObject.Properties.vmImage -eq "Linux")
+				# Fetch diagnostics settings based on OS 
+				if($this.ResourceObject.Properties.vmImage -eq "Linux")
+				{
+					$diagnosticsSettings = $nodeTypeResource.VirtualMachineProfile.ExtensionProfile.Extensions  | ? { $_.Type -eq "LinuxDiagnostic" -and $_.Publisher -eq "Microsoft.OSTCExtensions" }				
+				}
+				else
+				{
+					$diagnosticsSettings = $nodeTypeResource.VirtualMachineProfile.ExtensionProfile.Extensions  | ? { $_.Type -eq "IaaSDiagnostics" -and $_.Publisher -eq "Microsoft.Azure.Diagnostics" }
+				}
+				#Validate if diagnostics is enabled on vmss 
+				if($null -ne $diagnosticsSettings )
+				{
+					$diagnosticsEnabledScaleSet.Add($VMScaleSetName, $diagnosticsSettings)		
+				}
+				else
+				{
+					$isPassed = $false;
+					$diagnosticsDisabledScaleSet.Add($VMScaleSetName, $diagnosticsSettings)		
+				} 
+			}
+
+			if($diagnosticsEnabledScaleSet.Keys.Count -gt 0)
 			{
-				$diagnosticsSettings = $nodeTypeResource.VirtualMachineProfile.ExtensionProfile.Extensions  | ? { $_.Type -eq "LinuxDiagnostic" -and $_.Publisher -eq "Microsoft.OSTCExtensions" }				
+				$diagnosticsEnabledScaleSet.Keys  | Foreach-Object {
+					$controlResult.AddMessage("Diagnostics is enabled on Vmss '$_'",$diagnosticsEnabledScaleSet[$_]);
+				}
+			}
+
+			if($diagnosticsDisabledScaleSet.Keys.Count -gt 0)
+			{
+				$diagnosticsDisabledScaleSet.Keys  | Foreach-Object {
+					$controlResult.AddMessage("Diagnostics is disabled on Vmss '$_'",$diagnosticsDisabledScaleSet[$_]);
+				}
+			}
+
+			if($isPassed)
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Passed;
 			}
 			else
 			{
-       			$diagnosticsSettings = $nodeTypeResource.VirtualMachineProfile.ExtensionProfile.Extensions  | ? { $_.Type -eq "IaaSDiagnostics" -and $_.Publisher -eq "Microsoft.Azure.Diagnostics" }
+				$controlResult.VerificationResult = [VerificationResult]::Failed;
+				$controlResult.SetStateData("Diagnostics is disabled on Vmss", $diagnosticsDisabledScaleSet);
 			}
-			#Validate if diagnostics is enabled on vmss 
-			if($null -ne $diagnosticsSettings )
-			{
-				$diagnosticsEnabledScaleSet.Add($VMScaleSetName, $diagnosticsSettings)		
-			}
-			else
-			{
-				$isPassed = $false;
-				$diagnosticsDisabledScaleSet.Add($VMScaleSetName, $diagnosticsSettings)		
-			} 
+		}else{
+			$controlResult.AddMessage("Not able to fetch details of VM Scale Sets resources linked with cluster.");
+			$controlResult.AddMessage("Manually verify that Diagnostics is enabled.");
+			$controlResult.VerificationResult = [VerificationResult]::Manual;
 		}
-
-		if($diagnosticsEnabledScaleSet.Keys.Count -gt 0)
-		{
-			$diagnosticsEnabledScaleSet.Keys  | Foreach-Object {
-				$controlResult.AddMessage("Diagnostics is enabled on Vmss '$_'",$diagnosticsEnabledScaleSet[$_]);
-			}
-		}
-
-		if($diagnosticsDisabledScaleSet.Keys.Count -gt 0)
-		{
-			$diagnosticsDisabledScaleSet.Keys  | Foreach-Object {
-				$controlResult.AddMessage("Diagnostics is disabled on Vmss '$_'",$diagnosticsDisabledScaleSet[$_]);
-			}
-		}
-
-		if($isPassed)
-		{
-			$controlResult.VerificationResult = [VerificationResult]::Passed;
-		}
-		else
-		{
-			$controlResult.VerificationResult = [VerificationResult]::Failed;
-			$controlResult.SetStateData("Diagnostics is disabled on Vmss", $diagnosticsDisabledScaleSet);
-		}
+		
 		return $controlResult        
 	}
 	hidden [ControlResult[]] CheckReverseProxyPort([ControlResult] $controlResult)
@@ -321,64 +328,72 @@ class ServiceFabric : AzSVTBase
 		{
 			$lbWithBackendPorts = @{}
 			$loadBalancerResources = $this.GetLinkedResources("Microsoft.Network/loadBalancers")
-			#Collect all open ports on load balancer  
-			$loadBalancerResources | ForEach-Object{
-			    $loadBalancerBackendPorts = @()
-				$loadBalancerResource = Get-AzLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
-				$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
-			
-				$loadBalancingRules | ForEach-Object {
-					$loadBalancingRuleId = $_.Id;
-					$loadBalancingRule = $loadBalancerResource.LoadBalancingRules | ? { $_.Id -eq  $loadBalancingRuleId } | Select-Object -First 1
-					$loadBalancerBackendPorts += $loadBalancingRule.BackendPort;
-				};  
-				if($loadBalancerBackendPorts.Count -gt 0)
-			    {
-					$loadBalancerResource.BackendAddressPools | ForEach-Object {
-						$BackendAddressPools = $_
-						if ([Helpers]::CheckMember($BackendAddressPools, "BackendIpConfigurations") -and ($BackendAddressPools.BackendIpConfigurations | Measure-Object).Count -gt 0)
-						{
-							$backEndIpConfiguration = $BackendAddressPools.BackendIpConfigurations | Select -First 1
-							$pattern = "providers/Microsoft.Compute/virtualMachineScaleSets/(.*?)/"
-							$result = [regex]::match($backEndIpConfiguration.Id, $pattern)
-							if ($result.Success)
-							{
-								$nodeName = $result.Groups[1].Value
-								$lbWithBackendPorts.Add($nodeName, $loadBalancerBackendPorts)
-							}
-
-				  		}
-				  }
-			    } 
-			}
-			#If no ports open, Pass the TCP
-			if($lbWithBackendPorts.Count -eq 0)
-			{
-				$controlResult.AddMessage("No ports enabled in load balancer.")  
-				$controlResultList += $controlResult      
-			}
-			#If Ports are open for public in load balancer, check if any reverse proxy port is exposed
-			else
-			{
-				$reverseProxyEnabledNode.Keys  | Foreach-Object {
-				    $loadBalancerBackendPorts = @()
-				    $nodeName = $_
-				    $lbWithBackendPorts.Keys | ForEach-Object{
-						if($_ -eq $nodeName){
-							$loadBalancerBackendPorts = $lbWithBackendPorts[$_]
-						}
-					}
-					if($loadBalancerBackendPorts.Count -gt 0 -and  $loadBalancerBackendPorts.Contains( [Int32] $reverseProxyEnabledNode[$_]))
+			if($null -ne $loadBalancerResources -and ($loadBalancerResources | Measure-Object).Count -gt 0 ){
+				#Collect all open ports on load balancer  
+				$loadBalancerResources | ForEach-Object{
+					$loadBalancerBackendPorts = @()
+					$loadBalancerResource = Get-AzLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
+					$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
+				
+					$loadBalancingRules | ForEach-Object {
+						$loadBalancingRuleId = $_.Id;
+						$loadBalancingRule = $loadBalancerResource.LoadBalancingRules | ? { $_.Id -eq  $loadBalancingRuleId } | Select-Object -First 1
+						$loadBalancerBackendPorts += $loadBalancingRule.BackendPort;
+					};  
+					if($loadBalancerBackendPorts.Count -gt 0)
 					{
-						$isPassed = $false;
-						$controlResult.AddMessage("Reverse proxy port is publicly exposed for node '$_'");
-						$reverseProxyExposedNode.Add($_, $reverseProxyEnabledNode[$_])
-					}else{
-						$controlResult.AddMessage("Reverse proxy port is not publicly exposed for node '$_'.") 
+						$loadBalancerResource.BackendAddressPools | ForEach-Object {
+							$BackendAddressPools = $_
+							if ([Helpers]::CheckMember($BackendAddressPools, "BackendIpConfigurations") -and ($BackendAddressPools.BackendIpConfigurations | Measure-Object).Count -gt 0)
+							{
+								$backEndIpConfiguration = $BackendAddressPools.BackendIpConfigurations | Select -First 1
+								$pattern = "providers/Microsoft.Compute/virtualMachineScaleSets/(.*?)/"
+								$result = [regex]::match($backEndIpConfiguration.Id, $pattern)
+								if ($result.Success)
+								{
+									$nodeName = $result.Groups[1].Value
+									$lbWithBackendPorts.Add($nodeName, $loadBalancerBackendPorts)
+								}
+
+							}
 					}
-					
+					} 
 				}
+				#If no ports open, Pass the TCP
+				if($lbWithBackendPorts.Count -eq 0)
+				{
+					$controlResult.AddMessage("No ports enabled in load balancer.")  
+					$controlResultList += $controlResult      
+				}
+				#If Ports are open for public in load balancer, check if any reverse proxy port is exposed
+				else
+				{
+					$reverseProxyEnabledNode.Keys  | Foreach-Object {
+						$loadBalancerBackendPorts = @()
+						$nodeName = $_
+						$lbWithBackendPorts.Keys | ForEach-Object{
+							if($_ -eq $nodeName){
+								$loadBalancerBackendPorts = $lbWithBackendPorts[$_]
+							}
+						}
+						if($loadBalancerBackendPorts.Count -gt 0 -and  $loadBalancerBackendPorts.Contains( [Int32] $reverseProxyEnabledNode[$_]))
+						{
+							$isPassed = $false;
+							$controlResult.AddMessage("Reverse proxy port is publicly exposed for node '$_'");
+							$reverseProxyExposedNode.Add($_, $reverseProxyEnabledNode[$_])
+						}else{
+							$controlResult.AddMessage("Reverse proxy port is not publicly exposed for node '$_'.") 
+						}
+						
+					}
+				}
+			}else{
+				$controlResult.AddMessage("Not able to fetch details of Load Balancer resources linked with cluster.");
+				$controlResult.AddMessage("Manually verify that Reverse proxy port is not publicly exposed for any node.");
+				$controlResult.VerificationResult = [VerificationResult]::Manual;
+				return $controlResult
 			}
+		
 		}else{
 			$controlResult.AddMessage("Reverse proxy service is not enabled in cluster.") 
 		}
@@ -802,122 +817,129 @@ class ServiceFabric : AzSVTBase
 
 			$loadBalancerBackendPorts = @()
 			$loadBalancerResources = $this.GetLinkedResources("Microsoft.Network/loadBalancers")
-			#Collect all open ports on load balancer  
-			$loadBalancerResources | ForEach-Object{
-				$loadBalancerResource = Get-AzLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
-				$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
-			
-				$loadBalancingRules | ForEach-Object {
-					$loadBalancingRuleId = $_.Id;
-					$loadBalancingRule = $loadBalancerResource.LoadBalancingRules | ? { $_.Id -eq  $loadBalancingRuleId } | Select-Object -First 1
-					$loadBalancerBackendPorts += $loadBalancingRule.BackendPort;
-				};   
-			}
-			
-			#If no ports open, Pass the TCP
-			if($loadBalancerBackendPorts.Count -eq 0)
-			{
-				$controlResult.AddMessage("No ports enabled.")       
-			}
-			#If Ports are open for public in load balancer, map load balancer ports with application endpoint ports and validate if SSL is enabled.
-			else
-			{
-		
-			   if($isConnectionSuccessful -eq $false)
-			   {
-					$isManual = $true;
-					$controlResult.AddMessage("Cannot connect with Service Fabric cluster.")
-					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-			   }
-			   elseif($this.ApplicationList)
+			if($null -ne $loadBalancerResources -and ($loadBalancerResources|Measure-Object) -gt 0){
+				#Collect all open ports on load balancer  
+				$loadBalancerResources | ForEach-Object{
+					$loadBalancerResource = Get-AzLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
+					$loadBalancingRules = @($loadBalancerResource.FrontendIpConfigurations | ? { $null -ne $_.PublicIpAddress } | ForEach-Object { $_.LoadBalancingRules })
+				
+					$loadBalancingRules | ForEach-Object {
+						$loadBalancingRuleId = $_.Id;
+						$loadBalancingRule = $loadBalancerResource.LoadBalancingRules | ? { $_.Id -eq  $loadBalancingRuleId } | Select-Object -First 1
+						$loadBalancerBackendPorts += $loadBalancingRule.BackendPort;
+					};   
+				}
+				
+				#If no ports open, Pass the TCP
+				if($loadBalancerBackendPorts.Count -eq 0)
 				{
-					$controlResult.AddMessage("List of publicly exposed port",$loadBalancerBackendPorts) 
+					$controlResult.AddMessage("No ports enabled.")       
+				}
+				#If Ports are open for public in load balancer, map load balancer ports with application endpoint ports and validate if SSL is enabled.
+				else
+				{
+			
+				if($isConnectionSuccessful -eq $false)
+				{
+						$isManual = $true;
+						$controlResult.AddMessage("Cannot connect with Service Fabric cluster.")
+						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+				}
+				elseif($this.ApplicationList)
+					{
+						$controlResult.AddMessage("List of publicly exposed port",$loadBalancerBackendPorts) 
 
-					$this.ApplicationList | 
-					ForEach-Object{
-						$serviceFabricApplication = $_
-						Get-ServiceFabricServiceType -ApplicationTypeName $serviceFabricApplication.ApplicationTypeName -ApplicationTypeVersion $serviceFabricApplication.ApplicationTypeVersion | 
+						$this.ApplicationList | 
 						ForEach-Object{
-							$currentService = $_
-							$serviceManifest = [xml](Get-ServiceFabricServiceManifest -ApplicationTypeName $serviceFabricApplication.ApplicationTypeName -ApplicationTypeVersion $serviceFabricApplication.ApplicationTypeVersion -ServiceManifestName $_.ServiceManifestName)
-							if([Helpers]::CheckMember($serviceManifest.ServiceManifest,"Resources.Endpoints"))
-							{
-								$serviceManifest.ServiceManifest.Resources.Endpoints.ChildNodes | 
-								ForEach-Object{
-									$endpoint = $_
-									$serviceTypeName = $currentService.ServiceTypeName
-							
-									if(-not [Helpers]::CheckMember($endpoint,"Port"))
-									{
-										#Add message
-										#$childControlResult.AddMessage([VerificationResult]::Passed) 
-									}
-									else
-									{
-										if($loadBalancerBackendPorts.Contains([Int32] $endpoint.Port) )
-										{                      
-											if([Helpers]::CheckMember($endpoint,"Protocol") -and $endpoint.Protocol -eq "https"){  
-												$compliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port) 
-												
-											 }
-											elseif([Helpers]::CheckMember($endpoint,"Protocol") -and $endpoint.Protocol -eq "http"){  
-												$isPassed = $false;
-										
-												$nonCompliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port) 
-											}
-											else {  
-												$isPassed = $false;
-												$nonCompliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port) 
-											
-											 }                            
+							$serviceFabricApplication = $_
+							Get-ServiceFabricServiceType -ApplicationTypeName $serviceFabricApplication.ApplicationTypeName -ApplicationTypeVersion $serviceFabricApplication.ApplicationTypeVersion | 
+							ForEach-Object{
+								$currentService = $_
+								$serviceManifest = [xml](Get-ServiceFabricServiceManifest -ApplicationTypeName $serviceFabricApplication.ApplicationTypeName -ApplicationTypeVersion $serviceFabricApplication.ApplicationTypeVersion -ServiceManifestName $_.ServiceManifestName)
+								if([Helpers]::CheckMember($serviceManifest.ServiceManifest,"Resources.Endpoints"))
+								{
+									$serviceManifest.ServiceManifest.Resources.Endpoints.ChildNodes | 
+									ForEach-Object{
+										$endpoint = $_
+										$serviceTypeName = $currentService.ServiceTypeName
+								
+										if(-not [Helpers]::CheckMember($endpoint,"Port"))
+										{
+											#Add message
+											#$childControlResult.AddMessage([VerificationResult]::Passed) 
 										}
 										else
-										{   
-											$compliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port)                     
+										{
+											if($loadBalancerBackendPorts.Contains([Int32] $endpoint.Port) )
+											{                      
+												if([Helpers]::CheckMember($endpoint,"Protocol") -and $endpoint.Protocol -eq "https"){  
+													$compliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port) 
+													
+												}
+												elseif([Helpers]::CheckMember($endpoint,"Protocol") -and $endpoint.Protocol -eq "http"){  
+													$isPassed = $false;
 											
-										}
-									} 							
-								} 
+													$nonCompliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port) 
+												}
+												else {  
+													$isPassed = $false;
+													$nonCompliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port) 
+												
+												}                            
+											}
+											else
+											{   
+												$compliantPort.Add($serviceFabricApplication.ApplicationName.OriginalString + "/" + $serviceTypeName + "/"+$endpoint.Name,  $endpoint.Port)                     
+												
+											}
+										} 							
+									} 
+								}
+											
 							}
-							              
-						}
-					}             
+						}             
+					}
+					else
+					{
+						$controlResult.AddMessage("No service found.")
+					}    
+				} 	
+
+				if($compliantPort.Keys.Count -gt 0)
+				{
+					$controlResult.AddMessage("Following endpoint(s) are compliant");
+					$compliantPort.Keys  | Foreach-Object {
+						$controlResult.AddMessage("Endpoint: '$_' Port: $($compliantPort[$_])");
+					}
+				}
+
+				if($nonCompliantPort.Keys.Count -gt 0)
+				{
+					$controlResult.AddMessage("Following publicly exposed endpoint(s) are not secured using SSL");
+					$nonCompliantPort.Keys  | Foreach-Object {
+						$controlResult.AddMessage("EndPoint: '$_' Port: $($nonCompliantPort[$_])");
+					}
+				}
+
+				if($isManual)
+				{
+					$controlResult.VerificationResult = [VerificationResult]::Manual;
+				}
+				elseif($isPassed)
+				{
+					$controlResult.VerificationResult = [VerificationResult]::Passed;
 				}
 				else
 				{
-					$controlResult.AddMessage("No service found.")
-				}    
-			} 	
-
-            if($compliantPort.Keys.Count -gt 0)
-			{
-				$controlResult.AddMessage("Following endpoint(s) are compliant");
-				$compliantPort.Keys  | Foreach-Object {
-					$controlResult.AddMessage("Endpoint: '$_' Port: $($compliantPort[$_])");
+					$controlResult.VerificationResult = [VerificationResult]::Failed;
+					$controlResult.SetStateData("Following ports are non-complaint", $nonCompliantPort);
 				}
-			}
-
-			if($nonCompliantPort.Keys.Count -gt 0)
-			{
-				$controlResult.AddMessage("Following publicly exposed endpoint(s) are not secured using SSL");
-				$nonCompliantPort.Keys  | Foreach-Object {
-					$controlResult.AddMessage("EndPoint: '$_' Port: $($nonCompliantPort[$_])");
-				}
-			}
-
-			if($isManual)
-			{
+			}else{
+				$controlResult.AddMessage("Not able to fetch details of Load Balancer resources linked with cluster.");
+				$controlResult.AddMessage("Manually verify that all publicly exposed endpoint(s) are secured using SSL");
 				$controlResult.VerificationResult = [VerificationResult]::Manual;
 			}
-			elseif($isPassed)
-			{
-				$controlResult.VerificationResult = [VerificationResult]::Passed;
-			}
-			else
-			{
-				$controlResult.VerificationResult = [VerificationResult]::Failed;
-				$controlResult.SetStateData("Following ports are non-complaint", $nonCompliantPort);
-			}
+			
 		}else{
 			
 			$scanSource = [RemoteReportHelper]::GetScanSource();
