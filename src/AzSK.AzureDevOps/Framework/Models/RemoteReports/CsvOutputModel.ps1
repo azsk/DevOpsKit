@@ -23,5 +23,6 @@ class CsvOutputItem
     [string] $Recommendation = ""
 	[string] $ResourceId = ""
     [string] $DetailedLogFile = ""
-	[string] $UserComments = ""
+    [string] $UserComments = ""
+    [string] $ResourceLink = ""
 }

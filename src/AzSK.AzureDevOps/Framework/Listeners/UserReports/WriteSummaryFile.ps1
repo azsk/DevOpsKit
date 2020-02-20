@@ -220,7 +220,7 @@ class WriteSummaryFile: FileOutputBase
                         FeatureName = $item.FeatureName;
                         ChildResourceName = $_.ChildResourceName;
 						Recommendation = $item.ControlItem.Recommendation;	
-				
+				       
                     };
 					if($_.VerificationResult -ne [VerificationResult]::NotScanned)
 					{
@@ -269,39 +269,41 @@ class WriteSummaryFile: FileOutputBase
 						$csvItem.ResourceName = $item.ResourceContext.ResourceName;
 						$csvItem.ResourceGroupName = $item.ResourceContext.ResourceGroupName;
 						# Creating ResourceId as link
+						
 						try {
-							if($item.ResourceContext.ResourceTypeName -eq "Organization")
-						{
-							$csvItem.ResourceId = $item.ResourceContext.ResourceId.Replace('Organization','https://dev.azure.com') + "_settings/";
-						}
-						elseif($item.ResourceContext.ResourceTypeName -eq "Project")
-						{
-							$csvItem.ResourceId = $item.ResourceContext.ResourceId.Replace('/_apis/projects','') + '/_settings/';
-						}						
-						elseif($item.ResourceContext.ResourceTypeName -eq "ServiceConnection")
-						{
-							$csvItem.ResourceId = $item.ResourceContext.ResourceId.Replace('Organization','https://dev.azure.com').Replace('Project/','').Replace( $item.ResourceContext.ResourceName,"_settings/adminservices?resourceId=$($item.ResourceContext.ResourceDetails.id)") ;
-						}
-						elseif($item.ResourceContext.ResourceTypeName -eq "Build")
-						{
-							#$separator = "_apis";
-							#$resource = $item.ResourceContext.ResourceId -split $separator;
-							$res = $item.ResourceContext.ResourceId.replace('_apis/build/Definitions','_build?definitionId=').split('?')[0]
+							if($item.ResourceContext.ResourceDetails -ne $null -and ([Helpers]::CheckMember($item.ResourceContext.ResourceDetails,"ResourceLink")))
+						    {
+						    	$csvItem.ResourceLink = $item.ResourceContext.ResourceDetails.ResourceLink;
+						    }
 
-							$csvItem.ResourceId = $res; 
-						}
-						elseif($item.ResourceContext.ResourceTypeName -eq "Release")
-						{
-							$csvItem.ResourceId = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $item.SubscriptionContext.SubscriptionName,$item.ResourceContext.ResourceGroupName,$item.ResourceContext.ResourceId.split('/')[-1];
-						}
-						elseif($item.ResourceContext.ResourceTypeName -eq "User")
-						{
-							$csvItem.ResourceId = $item.ResourceContext.ResourceId.Replace('Organization','https://dev.azure.com').Replace('User','_settings/users');
-						}
-						elseif($item.ResourceContext.ResourceTypeName -eq "AgentPool")
-						{
-							$csvItem.ResourceId = "https://dev.azure.com/{0}/{1}/_settings/agentqueues?queueId={2}&view=jobs" -f $item.SubscriptionContext.SubscriptionName,$item.ResourceContext.ResourceGroupName,$item.ResourceContext.ResourceId.split('_')[-1] 
-						}
+						#if($item.ResourceContext.ResourceTypeName -eq "Project")
+						#{
+						#	$csvItem.ResourceId = $item.ResourceContext.ResourceId.Replace('/_apis/projects','') + '/_settings/';
+						#}						
+						#elseif($item.ResourceContext.ResourceTypeName -eq "ServiceConnection")
+						#{
+						#	$csvItem.ResourceId = $item.ResourceContext.ResourceId.Replace('Organization','https://dev.azure.com').Replace('Project/','').Replace( $item.ResourceContext.ResourceName,"_settings/adminservices?resourceId=$($item.ResourceContext.ResourceDetails.id)") ;
+						#}
+						#elseif($item.ResourceContext.ResourceTypeName -eq "Build")
+						#{
+						#	#$separator = "_apis";
+						#	#$resource = $item.ResourceContext.ResourceId -split $separator;
+						#	$res = $item.ResourceContext.ResourceId.replace('_apis/build/Definitions','_build?definitionId=').split('?')[0]
+#
+						#	$csvItem.ResourceId = $res; 
+						#}
+						#elseif($item.ResourceContext.ResourceTypeName -eq "Release")
+						#{
+						#	$csvItem.ResourceId = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $item.SubscriptionContext.SubscriptionName,$item.ResourceContext.ResourceGroupName,$item.ResourceContext.ResourceId.split('/')[-1];
+						#}
+						#elseif($item.ResourceContext.ResourceTypeName -eq "User")
+						#{
+						#	$csvItem.ResourceId = $item.ResourceContext.ResourceId.Replace('Organization','https://dev.azure.com').Replace('User','_settings/users');
+						#}
+						#elseif($item.ResourceContext.ResourceTypeName -eq "AgentPool")
+						#{
+						#	$csvItem.ResourceId = "https://dev.azure.com/{0}/{1}/_settings/agentqueues?queueId={2}&view=jobs" -f $item.SubscriptionContext.SubscriptionName,$item.ResourceContext.ResourceGroupName,$item.ResourceContext.ResourceId.split('_')[-1] 
+						#}
 						else {
 							$csvItem.ResourceId = $item.ResourceContext.ResourceId;
 						}

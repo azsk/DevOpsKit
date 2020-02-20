@@ -55,6 +55,20 @@ class SVTResourceResolver: AzSKRoot
 
     [void] SetallTheParamValues([string]$organizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPools,$ScanAllArtifacts,$PATToken,$ResourceTypeName)
 	{
+        #TODO: storage
+        try {
+            $api = 'https://extmgmt.dev.azure.com/v-arbagh/_apis/ExtensionManagement/InstalledExtensions/ArvTestAzSK/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/MyCollection/Documents?api-version=5.1-preview.1'
+
+           # $api = "https://extmgmt.dev.azure.com/$organizationName/_apis/ExtensionManagement/InstalledExtensions/DevSec/ADOSecurityScanner/Data/Scopes/User/Me/Collections/settings/Documents?api-version=5.1-preview.1"  
+                 # "https://extmgmt.dev.azure.com/$organizationName/_apis/extensionmanagement/installedextensions/$publisherName/$extensionName/Data/Scopes/Default/Current/Collections/MyCollection/Documents?api-version=5.1-preview.1"
+           # $responseObj = [WebRequestHelper]::InvokeGetWebRequest($api) ;
+         
+        }
+        catch {
+           Write-Error $_; 
+        }
+        #END TODO
+        
         $this.organizationName = $organizationName
         $this.ResourceTypeName = $ResourceTypeName
 
@@ -131,7 +145,10 @@ class SVTResourceResolver: AzSKRoot
             $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                             Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                             Select-Object -First 1)
+
+            $svtResource.ResourceDetails  = New-Object -TypeName psobject -Property @{ ResourceLink = $svtResource.ResourceId.Replace('Organization','https://dev.azure.com') + "_settings/"; }
             $this.SVTResources +=$svtResource
+            
         }
 
         if($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::User)
@@ -143,6 +160,8 @@ class SVTResourceResolver: AzSKRoot
             $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                             Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                             Select-Object -First 1)
+           
+            $svtResource.ResourceDetails  = New-Object -TypeName psobject -Property @{ ResourceLink = ($svtResource.ResourceId.Replace('Organization','https://dev.azure.com') + "_settings/users") }
             $this.SVTResources +=$svtResource
         }
 
@@ -177,6 +196,8 @@ class SVTResourceResolver: AzSKRoot
                                                 Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                                 Select-Object -First 1)
                 
+               
+                $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = ($svtResource.ResourceId.Replace('/_apis/projects','') + '/_settings/') }
                 $this.SVTResources +=$svtResource
             }
 
@@ -195,7 +216,7 @@ class SVTResourceResolver: AzSKRoot
                 {
                     # Currently get only Azure Connections as all controls are applicable for same
                     #TODO: temp added git in the where
-                    $azureConnections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github") -and (($this.ServiceConnections -contains $_.name) -or ($this.ServiceConnections -eq "*")) } #-or $_.type -eq "git" -or $_.type -eq "git"
+                    $azureConnections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github") -and (($this.ServiceConnections -eq $_.name) -or ($this.ServiceConnections -eq "*")) } #-or $_.type -eq "git" -or $_.type -eq "git"
 
                     $nObj = $this.MaxObjectsToScan
                     foreach ($connectionObject in $azureConnections)
@@ -208,7 +229,11 @@ class SVTResourceResolver: AzSKRoot
                         $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                                         Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                                         Select-Object -First 1)
+                        
+                        
                         $svtResource.ResourceDetails = $connectionObject
+                        $link = $svtResource.ResourceId.Replace('Organization','https://dev.azure.com').Replace('Project/','').Replace( $connectionObject.Name,"_settings/adminservices?resourceId=$($svtResource.ResourceDetails.id)") ;
+                        $svtResource.ResourceDetails  | Add-Member -Name 'ResourceLink' -Type NoteProperty -Value $link;
                         $this.SVTResources +=$svtResource
 
                         if (--$nObj -eq 0) {break;}
