@@ -54,21 +54,7 @@ class SVTResourceResolver: AzSKRoot
     }
 
     [void] SetallTheParamValues([string]$organizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPools,$ScanAllArtifacts,$PATToken,$ResourceTypeName)
-	{
-        #TODO: storage
-        try {
-            $api = 'https://extmgmt.dev.azure.com/v-arbagh/_apis/ExtensionManagement/InstalledExtensions/ArvTestAzSK/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/MyCollection/Documents?api-version=5.1-preview.1'
-
-           # $api = "https://extmgmt.dev.azure.com/$organizationName/_apis/ExtensionManagement/InstalledExtensions/DevSec/ADOSecurityScanner/Data/Scopes/User/Me/Collections/settings/Documents?api-version=5.1-preview.1"  
-                 # "https://extmgmt.dev.azure.com/$organizationName/_apis/extensionmanagement/installedextensions/$publisherName/$extensionName/Data/Scopes/Default/Current/Collections/MyCollection/Documents?api-version=5.1-preview.1"
-           # $responseObj = [WebRequestHelper]::InvokeGetWebRequest($api) ;
-         
-        }
-        catch {
-           Write-Error $_; 
-        }
-        #END TODO
-        
+	{      
         $this.organizationName = $organizationName
         $this.ResourceTypeName = $ResourceTypeName
 
