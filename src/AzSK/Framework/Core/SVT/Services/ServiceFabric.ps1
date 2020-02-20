@@ -817,7 +817,7 @@ class ServiceFabric : AzSVTBase
 
 			$loadBalancerBackendPorts = @()
 			$loadBalancerResources = $this.GetLinkedResources("Microsoft.Network/loadBalancers")
-			if($null -ne $loadBalancerResources -and ($loadBalancerResources|Measure-Object) -gt 0){
+			if($null -ne $loadBalancerResources -and ($loadBalancerResources|Measure-Object).Count -gt 0){
 				#Collect all open ports on load balancer  
 				$loadBalancerResources | ForEach-Object{
 					$loadBalancerResource = Get-AzLoadBalancer -Name $_.Name -ResourceGroupName $_.ResourceGroupName
