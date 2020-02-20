@@ -142,7 +142,6 @@ class SQLDatabaseFix: FixServicesBase
 			$detailedLogs += $this.EnableServerAuditingPolicy($parameters)
 		}
 
-		# TODO: We are temporarily suppressing the alias deprecation warning message given by the below Az.SQL cmdlet.
         Update-AzSqlServerAdvancedThreatProtectionSetting `
 				-ResourceGroupName $this.ResourceGroupName `
 				-ServerName $this.ResourceName `
@@ -150,8 +149,7 @@ class SQLDatabaseFix: FixServicesBase
 				-EmailAdmins $true `
 				-NotificationRecipientsEmails $securityContactEmails `
 				-RetentionInDays 0 `
-				-ErrorAction Stop `
-				-WarningAction SilentlyContinue
+				-ErrorAction Stop 
 
 		$detailedLogs += [MessageData]::new("Threat detection has been set up for server [$($this.ResourceName)]");
 		return $detailedLogs;
@@ -171,7 +169,6 @@ class SQLDatabaseFix: FixServicesBase
 			$detailedLogs += $this.EnableDatabaseAuditingPolicy($parameters, $databaseName);
 		}
 
-		# TODO: We are temporarily suppressing the alias deprecation warning message given by the below Az.SQL cmdlet.
 		Update-AzSqlDatabaseAdvancedThreatProtectionSetting `
 				-ResourceGroupName $this.ResourceGroupName `
 				-ServerName $this.ResourceName `
@@ -180,7 +177,7 @@ class SQLDatabaseFix: FixServicesBase
 				-EmailAdmins $true `
 				-NotificationRecipientsEmails $securityContactEmails `
 				-RetentionInDays 0 `
-				-ErrorAction Stop -WarningAction SilentlyContinue
+				-ErrorAction Stop 
 		
 		$detailedLogs += [MessageData]::new("Threat detection has been set up for database [$databaseName]");
 		return $detailedLogs;
