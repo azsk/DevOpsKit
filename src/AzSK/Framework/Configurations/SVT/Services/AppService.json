@@ -193,7 +193,8 @@
           "Linux"
         ],
         "Enabled": true,
-        "PolicyDefinitionGuid": "e9c8d085-d9cc-4b17-9cdc-059f1f01f19e"
+        "PolicyDefinitionGuid": "e9c8d085-d9cc-4b17-9cdc-059f1f01f19e",
+        "PolicyDefnResourceIdSuffix": "/config/web"
       },
       {
         "ControlID": "Azure_AppService_Config_Disable_Web_Sockets",
@@ -219,7 +220,8 @@
           "FixMethodName": "DisableWebSocket",
           "FixControlImpact": "High"
         },
-        "PolicyDefinitionGuid": "AppService220"
+        "PolicyDefinitionGuid": "AppService220",
+        "PolicyDefnResourceIdSuffix": "/config/web"
       },
       {
         "ControlID": "Azure_AppService_BCDR_Use_AlwaysOn",
