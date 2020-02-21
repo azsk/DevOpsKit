@@ -20,7 +20,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Models\RemoteReports\CsvOutputModel.ps1
 . $FrameworkPath\Models\FeatureFlight.ps1
 . $FrameworkPath\Models\AzSKEvent.ps1
-. $FrameworkPath\Helpers\CommandHelper.ps1
+. $PSScriptRoot\Helpers\CommandHelper.ps1
 . $FrameworkPath\Abstracts\EventBase.ps1
 . $FrameworkPath\Helpers\JsonHelper.ps1
 . $FrameworkPath\Helpers\Helpers.ps1
@@ -56,7 +56,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Managers\ConfigurationManager.ps1
 . $PSScriptRoot\Helpers\ResourceHelper.ps1
 . $FrameworkPath\Helpers\WebRequestHelper.ps1
-. $FrameworkPath\Helpers\ActiveDirectoryHelper.ps1
+. $PSScriptRoot\Helpers\ActiveDirectoryHelper.ps1
 . $FrameworkPath\Managers\FeatureFlightingManager.ps1
 . $PSScriptRoot\Helpers\RoleAssignmentHelper.ps1
 . $PSScriptRoot\Helpers\SecurityCenterHelper.ps1

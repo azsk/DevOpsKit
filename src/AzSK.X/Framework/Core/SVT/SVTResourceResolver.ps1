@@ -26,7 +26,7 @@ class SVTResourceResolver: AzSKRoot
         $this.SampleResourceName = $sampleResourceName
     }
 
-    [void] LoadAzureResources()
+    [void] LoadResourcesForScan()
 	{
         
         #Call APIS for Organization,User/Builds/Releases/ServiceConnections 

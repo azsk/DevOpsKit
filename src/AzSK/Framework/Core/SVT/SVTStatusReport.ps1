@@ -12,7 +12,7 @@ class SVTStatusReport : AzSVTCommandBase
 		}
 
 		$this.ServicesResolver = $resolver;
-		$this.ServicesResolver.LoadAzureResources();
+		$this.ServicesResolver.LoadResourcesForScan();
 	}
 
 	hidden [SVTEventContext[]] RunAllControls()

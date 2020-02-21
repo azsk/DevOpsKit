@@ -11,7 +11,7 @@ class AzServicesSecurityStatus: ServicesSecurityStatus
 		}
 
 		$this.Resolver = $resolver;
-		$this.Resolver.LoadAzureResources();
+		$this.Resolver.LoadResourcesForScan();
 
 		#BaseLineControlFilter with control ids
 		$this.UsePartialCommits =$invocationContext.BoundParameters["UsePartialCommits"];
