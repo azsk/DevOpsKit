@@ -68,7 +68,12 @@
     # Functions to export from this module
     FunctionsToExport      = @(
         'Get-AzSKAzureDevOpsSecurityStatus',
-        'Set-AzSKAzureDevOpsPolicySettings'
+        'Get-AzSKAzureDevOpsOrgSecurityStatus',
+        'Get-AzSKAzureDevOpsProjectSecurityStatus',
+        'Get-AzSKAzureDevOpsBuildSecurityStatus',
+        'Get-AzSKAzureDevOpsReleaseSecurityStatus',
+        'Set-AzSKAzureDevOpsPolicySettings',
+        'Set-AzSKPrivacyNoticeResponse'
     )
 
     # Cmdlets to export from this module
