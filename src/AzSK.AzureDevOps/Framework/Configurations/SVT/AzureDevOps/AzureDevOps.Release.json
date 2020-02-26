@@ -39,14 +39,14 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_Release_SI_Review_InActive_Release",
-    "Description": "Inactive release must be removed",
+    "ControlID": "AzureDevOps_Release_SI_Review_Inactive_Release",
+    "Description": "Inactive release pipelines must be removed if no more required.",
     "Id": "Release130",
     "ControlSeverity": "Low",
     "Automated": "Yes",
     "MethodName": "CheckInActiveRelease",
     "Rationale": "Each additional release having access at repositories increases the attack surface. To minimize this risk ensure that only activite and legitimate release resources present in Organization",
-    "Recommendation": "https://docs.microsoft.com/en-us/rest/api/azure/devops/release/definitions/delete?view=azure-devops-rest-5.0",
+    "Recommendation": "To remove inactive release pipeline follow these steps: 1.Navigate to the release pipeline. 2. Select a release pipeline. 3. Select three dots (present in right top). 4. Click on Delete.",
     "Tags": [
       "SDL",
       "Best Practice",
@@ -56,7 +56,7 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_Release_AuthZ_Disable_InheritPermissions",
+    "ControlID": "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions",
     "Description": "Do not allow inherited permission on release definitions",
     "Id": "Release140",
     "ControlSeverity": "High",
@@ -74,8 +74,8 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_Release_AuthN_Enable_PreDeployment_Approval_Requests",
-    "Description": "Releases pipeline for production deployments must require pre-deployment approval",
+    "ControlID": "AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals",
+    "Description": "Releases pipeline for production deployments must have pre-deployment approval enabled.",
     "Id": "Release150",
     "ControlSeverity": "High",
     "Automated": "Yes",
@@ -93,7 +93,7 @@
   },
   {
     "ControlID": "AzureDevOps_Release_AuthZ_Review_PreDeployment_Approvers",
-    "Description": "Only legitimate users should be added as approvers within a release pipeline",
+    "Description": "Only legitimate users should be added as approvers for a release pipeline",
     "Id": "Release160",
     "ControlSeverity": "Medium",
     "Automated": "Yes",
@@ -118,6 +118,23 @@
     "MethodName": "",
     "Rationale": "You should ensure that production releases are always done from one and only one (main) branch. The main branch should have the tightest access controls and approval standards.`n Any changes in the source code should be tested first on a development branch before merging in the main branch. The source code in the main branch should correspond to production bits at all times. This helps in maintaining stable source code and helps prevent deployment of breaking changes (and potential security bugs) into the production environment.",
     "Recommendation": "You can choose a specific branch as the main branch for production releases (most teams use 'master'). When adding the source/artifact for a release configuration for a production release (as in steps at https://docs.microsoft.com/en-us/azure/devops/pipelines/release/artifacts?view=azure-devops#sources, make sure you use the designated branch as the source.",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Manual",
+      "SI"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_Release_Review_External_Sources",
+    "Description": "Ensure that release pipelines consume artifacts from trustworthy repos.",
+    "Id": "Release180",
+    "ControlSeverity": "Medium",
+    "Automated": "Yes",
+    "MethodName": "CheckMixingGitHubAndADOSources",
+    "Rationale": "Pipelines build code from untrusted external sources (e.g. GitHub) via Continuous Integration or Scheduled Builds, giving the public internet access to a Project/Project Collection Build Service token.",
+    "Recommendation": "Validate all the source repos in the release definition.",
     "Tags": [
       "SDL",
       "TCP",

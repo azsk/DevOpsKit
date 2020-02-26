@@ -22,30 +22,13 @@
     },
     {
         "ControlID": "AzureDevOps_Organization_AuthN_Disable_External_Guest_Users",
-        "Description": "Permissions to external accounts (i.e., accounts outside the native directory for the Organization) must be disabled",
+        "Description": "Do not grant access to external users (users with accounts outside your native directory) to your organization",
         "Id": "Organization120",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckExternalUserPolicy",
         "Rationale": "Non-AD accounts (such as xyz@hotmail.com, pqr@outlook.com, etc.) present at any scope within a Organization subject your assets to undue risk. These accounts are not managed to the same standards as enterprise tenant identities. They don't have multi-factor authentication enabled. Etc.",
         "Recommendation": "Go to Organization Settings --> Policy --> Security Policies --> Turn 'Off' external guest access",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Automated",
-          "AuthN"
-        ],
-        "Enabled": true
-      },
-      {
-        "ControlID": "AzureDevOps_Organization_AuthN_Disable_Alternate_Cred",
-        "Description": "Alternate credential must be disabled for users",
-        "Id": "Organization130",
-        "ControlSeverity": "High",
-        "Automated": "Yes",
-        "MethodName": "CheckAltAuthSettings",
-        "Rationale": "Alternate credential allows user to create username and password to access Git repositories.Login with these credentials doesn't expire and can't be scoped to limit access to your Azure DevOps Services data.",
-        "Recommendation": "Go to Organization Settings --> Policy --> Application Connection Policies --> Turn 'Off' external guest alternate authentication credentials. Refer: https://docs.microsoft.com/en-us/azure/devops/repos/git/auth-overview?view=vsts#alternate-credentials",
         "Tags": [
           "SDL",
           "TCP",
@@ -73,7 +56,7 @@
       },
       {
         "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Guest_Identities",
-        "Description": "Justify all guest identities that are granted access on Organization. ",
+        "Description": "Justify all guest identities that have been granted access to your organization.",
         "Id": "Organization150",
         "ControlSeverity": "High",
         "Automated": "Yes",
@@ -90,7 +73,7 @@
       },
       {
         "ControlID": "AzureDevOps_Organization_SI_Review_Installed_Extensions",
-        "Description": "Extensions must be installed from a trustworthy source",
+        "Description": "Ensure that extensions enabled for your organization are trustworthy",
         "Id": "Organization160",
         "ControlSeverity": "High",
         "Automated": "Yes",
@@ -107,7 +90,7 @@
       },
       {
         "ControlID": "AzureDevOps_Organization_SI_Review_Shared_Extensions",
-        "Description": "Verify shared extensions are from a trustworthy source",
+        "Description": "Exercise due care when installing (private) shared extensions for your organization",
         "Id": "Organization170",
         "ControlSeverity": "High",
         "Automated": "Yes",
@@ -124,7 +107,7 @@
       },
       {
         "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Extension_Managers",
-        "Description": "Justify all identities that are granted with manager access for extensions.",
+        "Description": "Review the list of users who have permission to manage extensions",
         "Id": "Organization180",
         "ControlSeverity": "High",
         "Automated": "Yes",
@@ -140,10 +123,10 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_SI_Review_InActive_Users",
-        "Description": "Unintended/inactive user access must be revoked",
+        "ControlID": "AzureDevOps_Organization_SI_Review_Inactive_Users",
+        "Description": "Consider revoking access for inactive users",
         "Id": "Organization190",
-        "ControlSeverity": "High",
+        "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckInActiveUsers",
         "Rationale": "Each additional person having access at Organization level increases the attack surface for the entire resources. To minimize this risk ensure that critical resources present in Organization are accessed only by the legitimate users when required.",
@@ -157,12 +140,29 @@
         "Enabled": true
       },
       {
+        "ControlID": "AzureDevOps_Organization_AuthZ_Deleted_AD_DisconnectedUser_Access",
+        "Description": "Remove access entries for users whose accounts have been deleted/disconnecte from Azure Active Directory.",
+        "Id": "Organization191",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckDisconnectedIdentities",
+        "Rationale": "AD disconnected accounts present at any scope within a Organization are unknown guid access.",
+        "Recommendation": "Go to Organization Settings --> Azure Active Directory --> It will have notification for disconnected users on AD --> Click on Resolve",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthZ"
+        ],
+        "Enabled": true
+      },
+      {
         "ControlID": "AzureDevOps_Organization_AuthZ_Min_RBAC_Access",
         "Description": "All teams/groups must be granted minimum required permissions on Organization",
         "Id": "Organization200",
         "ControlSeverity": "High",
         "Automated": "No",
-        "MethodName": "",
+        "MethodName": "CheckRBACAccess",
         "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
         "Recommendation": "Go to Organization Settings --> Security --> Select team/group --> Validate Permissions",
         "Tags": [
@@ -179,7 +179,7 @@
         "Id": "Organization210",
         "ControlSeverity": "High",
         "Automated": "No",
-        "MethodName": "",
+        "MethodName": "JustifyGroupMember",
         "Rationale": "Accounts that are a member of these groups without a legitimate business reason increase the risk for your Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
         "Recommendation": "Go to Organization Settings --> Security --> Validate all group memebers",
         "Tags": [
@@ -194,7 +194,7 @@
         "ControlID": "AzureDevOps_Organization_Audit_Configure_Critical_Alerts",
         "Description": "Alerts must be configured for critical actions on Organization",
         "Id": "Organization220",
-        "ControlSeverity": "Low",
+        "ControlSeverity": "Medium",
         "Automated": "No",
         "MethodName": "",
         "Rationale": "Alerts notify the configured security point of contact about various sensitive activities on the Organization and its resources (for instance, external Extensions have been installed/modified etc.)",
@@ -240,6 +240,194 @@
           "Authz"
         ],
         "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Review_Project_Collection_Accounts",
+        "Description": "Minimize and reviews service accounts that are members of the Project Collection Service Accounts group.",
+        "Id": "Organization240",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckProCollSerAcc",
+        "Rationale": "ADO has a misleadingly group called Project Collection Service Accounts. By inheritance, Project Collection Service Accounts are also Project Collection Administrators. It is found that multiple build agent user accounts across Microsoft were members of Project Collection Service Accounts. An adversary that executes code in a pipeline assigned to one of these build agents can take over the entire ADO organization",
+        "Recommendation": "Go to Organization Settings --> Security --> Permission --> Project Collection Service Accounts --> Validate all the members.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Enable_App_Access_OAuth",
+        "Description": "OAuth should be enabled for third party application access",
+        "Id": "Organization1000",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckOAuthAppAccess",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Organization Settings --> Security --> Policies --> Application connection policies --> Enable Third-party application access via OAuth",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Review_Auto_Injected_Extensions",
+        "Description": "Auto-injected pipeline tasks have features/vulnerabilities that make them code execution sinks.",
+        "Id": "Organization250",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "AutoInjectedExtension",
+        "Rationale": "ADAuto-injected pipeline tasks have features/vulnerabilities that make them code execution sinks.",
+        "Recommendation": "Go to Organization Settings --> Extensions -> Verify the auto-injected extensions.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Enable_SSH_Auth",
+        "Description": "SSH authentication should be enabled for Application connection policies",
+        "Id": "Organization1010",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckSSHAuthn",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Organization Settings --> Security --> Policies --> Application connection policies --> Enable SSH Authentication",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Verify_Enterprise_Access_To_Projects",
+        "Description": "Enterprise access to projects should be verified.",
+        "Id": "Organization1020",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckEnterpriseAccess",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Organization Settings --> Security --> Policies --> Security policies --> Disable Enterprise access to projects",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Enable_AAD_Conditional_Access_Policy",
+        "Description": "AAD Conditional Access Policy should be enabled.",
+        "Id": "Organization1030",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckCAP",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Organization Settings --> Security --> Policies --> Security policies --> Enable Azure Active Directory Conditional Access Policy Validation.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Disable_Anonymous_Access_To_Badges",
+        "Description": "Anonymous access to status badge API for parallel pipelines should be disabled.",
+        "Id": "Organization1040",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckBadgeAnonAccess",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Organization Settings --> Pipelines --> Settings --> Enable 'Disable anonymous access to badges'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Limit_Variables_Settable_At_Queue_Time",
+        "Description": "Only those variables explicitly marked settable at queue time can be set.",
+        "Id": "Organization1050",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckSetQueueTime",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Organization Settings --> Pipelines --> Settings --> Enable 'Limit variables that can be set at queue time.'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Limit_Job_Authorization_Scope_To_Current_Project",
+        "Description": "Scope of access of all pipelines should be restricted to current project.",
+        "Id": "Organization1060",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckJobAuthnScope",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Organization Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current scope.'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Group_Members",
+        "Description": "Justify all identities that are granted with member access on groups and teams.",
+        "Id": "Organization210",
+        "ControlSeverity": "High",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Accounts that are a member of these groups without a legitimate business reason increase the risk for your Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
+        "Recommendation": "Go to Organization Settings --> Security --> Validate all group memebers",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Organization_Auditing_Backup",
+        "Description": "Audit logs are stored for 90 days and then they’re deleted. Back up audit logs to an external location to keep the data for longer than the 90-day period.",
+        "Id": "Organization260",
+        "ControlSeverity": "Medium",
+        "Automated": "No",
+        "MethodName": "",
+        "Rationale": "Auditing contains many changes that occur throughout an Azure DevOps organization. Changes occur when a user or service identity within the organization edits the state of an artifact. In some limited cases, it can also include accessing an artifact. Think permissions changes, resource deletion, branch policy changes, accessing the auditing feature, and much more.",
+        "Recommendation": "Go to Organization Settings --> Auditing -- Download> ",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "AuthZ",
+          "Audit"
+        ],
+        "Enabled": true
       }
     ]
-    }
+  }

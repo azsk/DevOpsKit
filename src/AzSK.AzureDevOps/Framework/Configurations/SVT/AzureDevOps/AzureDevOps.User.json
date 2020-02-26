@@ -7,7 +7,7 @@
         "ControlID": "AzureDevOps_User_AuthZ_PAT_Min_Access",
         "Description": "Personal access tokens (PAT) must be defined with minimum required permissions to resources",
         "Id": "User110",
-        "ControlSeverity": "High",
+        "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckPATAccessLevel",
         "Rationale": "Granting minimum access ensures that PAT is granted with just enough permissions to perform required tasks. This minimizes exposure of the resources in case of PAT compromise.",
@@ -21,12 +21,12 @@
         "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_User_DP_Minimal_Token_Validity",
+      "ControlID": "AzureDevOps_User_AuthZ_Minimal_Token_Validity",
       "Description": "Personal access tokens (PAT) must have a shortest possible validity period",
       "Id": "User120",
-      "ControlSeverity": "High",
-      "Automated": "No",
-      "MethodName": "",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "ValidatePATExpiryPeriod",
       "Rationale": "If a personal access token (PAT) gets compromised, the Azure DevOps assets accessible to the user can be accessed/manipulated by unauthorized users. Minimizing the validity period of the PAT ensures that the window of time available to an attacker in the event of compromise is small.",
       "Recommendation": "Go to User Profile --> Security --> Personel Access Token --> Validate expiry periods of PAT tokens",
       "Tags": [
@@ -38,10 +38,27 @@
       "Enabled": true
     },
     {
-        "ControlID": "AzureDevOps_User_AuthN_Disable_Alternate_Cred",
-        "Description": "Alternate credential must be disabled",
+      "ControlID": "AzureDevOps_User_AuthZ_Review_Token_Expiration",
+      "Description": "Personal access tokens (PAT) near expiry should be renewed.",
+      "Id": "User121",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckPATExpiration",
+      "Rationale": "Personal access tokens (PAT) near expiry should be renewed.",
+      "Recommendation": "Go to User Profile --> Security --> Personel Access Token --> Edit",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "DP"
+      ],
+      "Enabled": true
+    },
+    {
+        "ControlID": "AzureDevOps_User_AuthN_Disable_Alternate_Credentials",
+        "Description": "Alternate credentials must be disabled",
         "Id": "User130",
-        "ControlSeverity": "High",
+        "ControlSeverity": "Medium",
         "Automated": "Yes",
       "MethodName": "CheckAltCred",
         "Rationale": "Alternate credential allows user to create username and password to access your Git repository.Login with these credentials doesn't expire and can't be scoped to limit access to your Azure DevOps Services data.",

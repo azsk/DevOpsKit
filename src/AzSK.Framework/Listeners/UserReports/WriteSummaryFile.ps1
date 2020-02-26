@@ -268,7 +268,18 @@ class WriteSummaryFile: FileOutputBase
 					{
 						$csvItem.ResourceName = $item.ResourceContext.ResourceName;
                         $csvItem.ResourceGroupName = $item.ResourceContext.ResourceGroupName;
-						$csvItem.ResourceId = $item.ResourceContext.ResourceId;
+						try {
+							if($item.ResourceContext.ResourceDetails -ne $null -and ([Helpers]::CheckMember($item.ResourceContext.ResourceDetails,"ResourceLink")))
+						    {
+						    	$csvItem.ResourceLink = $item.ResourceContext.ResourceDetails.ResourceLink;
+							}
+							else {
+								$csvItem.ResourceId = $item.ResourceContext.ResourceId;
+							}
+						}
+						catch {
+							$csvItem.ResourceId = $item.ResourceContext.ResourceId;
+						}
 						$csvItem.DetailedLogFile = "/$([Helpers]::SanitizeFolderName($item.ResourceContext.ResourceGroupName))/$($item.FeatureName).LOG";
 
 						

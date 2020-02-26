@@ -39,8 +39,8 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_Build_Config_Add_StaticCodeAnalyzer",
-    "Description": "Static code analyzer must be enabled on build",
+    "ControlID": "AzureDevOps_Build_Config_Add_Static_Code_Analyzer",
+    "Description": "Consider adding static code analysis step in your pipelines.",
     "Id": "Build140",
     "ControlSeverity": "High",
     "Automated": "No",
@@ -73,14 +73,14 @@
       "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_Build_SI_Review_InActive_Build",
-    "Description": "Inactive build must be removed",
+    "ControlID": "AzureDevOps_Build_SI_Review_Inactive_Build",
+    "Description": "Inactive build pipelines must be removed if no more required.",
     "Id": "Build160",
     "ControlSeverity": "Low",
     "Automated": "Yes",
     "MethodName": "CheckInActiveBuild",
     "Rationale": "Each additional build having access at repositories increases the attack surface. To minimize this risk ensure that only activite and legitimate build resources present in Organization",
-    "Recommendation": "https://docs.microsoft.com/en-us/rest/api/azure/devops/build/definitions/delete?view=azure-devops-rest-5.0",
+    "Recommendation": "To remove inactive build pipelines follow the steps given here: 1.Navigate to the build pipeline. 2. Select a build pipeline. 3. Select three dots (present in right top). 4. Click on Delete. (https://www.azuredevopslabs.com/labs/devopsserver/build/)",
     "Tags": [
       "SDL",
       "Best Practice",
@@ -90,7 +90,7 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_Build_AuthZ_Disable_InheritPermissions",
+    "ControlID": "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions",
     "Description": "Do not allow inherited permission on build definitions",
     "Id": "Build170",
     "ControlSeverity": "High",
@@ -98,6 +98,42 @@
     "MethodName": "CheckInheritPermissions",
     "Rationale": "Disabling inherit permissions lets you finely control access to various operations at the build level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
     "Recommendation": "To disable inheritance follow the steps given here: 1.Navigate to the build pipeline. 2. Open up the Security dialog for the build. 3. Add the service lead & service owner as Users with Allow permissions for each permission line item. 4. Select “Off” under Inheritance. 5. Add users/groups to your build definition and provide only required access. As best practice, All teams/groups must be granted minimum required permissions on build definition.",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Automated",
+      "AuthZ",
+      "RBAC"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_Build_SI_Review_Settable_At_Queue_Time",
+    "Description": "Pipeline variables marked settable at queue time should be carefully reviewed.",
+    "Id": "Build180",
+    "ControlSeverity": "High",
+    "Automated": "Yes",
+    "MethodName": "CheckSettableAtQueueTime",
+    "Rationale": "Pipeline variables not marked settable at queue time can only be changed by someone with elevated permissions. These variables (reasonably) used in ways that make code injection possible.",
+    "Recommendation": "To uncheck settable at queue time follow the steps given here: 1.Navigate to the build pipeline. 2. Open up the build pipeline. 3. Select variables. 4. Uncheck settable at queue time.",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Automated",
+      "AuthZ",
+      "RBAC"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_Build_Check_External_Source_Self_Hosted_Build",
+    "Description": "Building code from untrusted external sources is effectively allowing external parties to execute arbitrary code on your computer.",
+    "Id": "Build190",
+    "ControlSeverity": "High",
+    "Automated": "Yes",
+    "MethodName": "ExternalSourceSelfHostedBuild",
+    "Rationale": "Builds execute attacker-controlled code by-design (e.g. solution files contain build command lines to invoke, unit tests compile into DLLs that are loaded and executed by a harness, etc). Building code from untrusted external sources is effectively allowing external parties to execute arbitrary code on your computer.",
+    "Recommendation": "Validate the external source repo and self-hosted agents for vulnerabilities.",
     "Tags": [
       "SDL",
       "TCP",

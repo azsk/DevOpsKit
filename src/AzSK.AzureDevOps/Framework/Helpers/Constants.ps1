@@ -1,4 +1,4 @@
-﻿Set-StrictMode -Version Latest 
+Set-StrictMode -Version Latest 
 class Constants
 {
     #All constant used across all modules Defined Here.
@@ -12,7 +12,7 @@ class Constants
 "        a) If the control has passed, no action is necessary.`r`n" +
 "        b) If the control has failed, look at the control evaluation detail in the LOG file to understand why.`r`n" +
 "        c) If the control status says 'Verify', it means that human judgement is required to determine the final control status. Look at the control evaluation output in the LOG file to make a determination.`r`n" +
-"        d) If the control status says 'Manual', it means that AzSK (currently) does not cover the control via automation OR AzSK is not able to fetch the data. You need to manually implement/verify it.`r`n" +
+"        d) If the control status says 'Manual', it means that AzSK.AzureDevOps (currently) does not cover the control via automation OR AzSK.AzureDevOps is not able to fetch the data. You need to manually implement/verify it.`r`n" +
 "`r`nNote: The 'Recommendation' column in the CSV file provides basic (generic) guidance that can help you fix a failed control. You can also use standard Azure product documentation. You should carefully consider the implications of making the required change in the context of your application. `r`n"
 
     static [string] $RemediationMsgForARMChekcer = "** Next steps **`r`n" + 
@@ -95,14 +95,14 @@ class Constants
 	static [string] $AzSKTempFolderPath = [Environment]::GetFolderPath('LocalApplicationData') + "/Temp" + "/" + [Constants]::AzSKModuleName + "/"
 	static [string] $AzSKExtensionsFolderPath = [Environment]::GetFolderPath('LocalApplicationData') + "/Microsoft/" + [Constants]::AzSKModuleName + "/Extensions"
 	static [string] $ARMManagementUri = "https://management.azure.com/";	
-	static [string] $VersionCheckMessage = "A newer version of AzSK is available: Version {0} `r`nTo update, run the command below in a fresh PS window:`r`n" ;
-	static [string] $VersionWarningMessage = ("Using the latest version ensures that AzSK security commands you run use the latest, most up-to-date controls. `r`nResults from the current version should not be considered towards compliance requirements.`r`n" + [Constants]::DoubleDashLine);
+	static [string] $VersionCheckMessage = "A newer version of AzSK.AzureDevOps is available: Version {0} `r`nTo update, run the command below in a fresh PS window:`r`n" ;
+	static [string] $VersionWarningMessage = ("Using the latest version ensures that AzSK.AzureDevOps security commands you run use the latest, most up-to-date controls. `r`nResults from the current version should not be considered towards compliance requirements.`r`n" + [Constants]::DoubleDashLine);
 	static [string] $UsageTelemetryKey = "cf4c5e1a-d68d-4ea1-9901-37b67f58a192";
 	static [string] $AzSKRGLocation = "eastus2";
 	static [string] $LAWSRequestURI = "https://management.azure.com/{0}?api-version=2015-03-20";
 	static [string] $NewStorageSku = "Standard_LRS";
 	static [string] $NewStorageKind = "BlobStorage";
-	static [string] $ARMControlsFileURI = "https://azsdkossep.azureedge.net/1.0.0/ARMControls.json";
+	static [string] $ARMControlsFileURI = "https://azsdkossepstaging.azureedge.net/1.0.0/ARMControls.json";
 	static [string] $RecommendationURI = "https://azsdkossep.azureedge.net/recmnds/r.json ";
 	static [string] $AttestationReadMsg = "`r`nControl results may not reflect attestation if you do not have permissions to read attestation data from "
 	#V1 alert RG name constant is temporary and added for backward compatibility	
@@ -192,7 +192,7 @@ class Constants
 
 	#Constants for Debug mode
 	static [bool] $AzSKDebugModeOn = $false
-	
+
 	static [void] SetAzSKModuleName($moduleName)
 	{
 		if(-not [string]::IsNullOrWhiteSpace($moduleName))
@@ -220,7 +220,7 @@ class Constants
 			[Constants]::AzSKDebugModeOn = $true;
 		}
 	}
-
+	
 	# LogAnalytics view file name
 	static [string] $LogAnalyticsGenericView = "AZSK.AM.LogAnalytics.GenericView.V6.lawsview"
 	# Constants for in cluster CA scanning

@@ -178,7 +178,7 @@ class Release: SVTBase
 
     hidden [ControlResult] CheckPreDeploymentApproval ([ControlResult] $controlResult)
     {
-        $releaseStages = $this.ReleaseObj.environments | Where-Object { $this.ControlSettings.Release.RequirePreDeployApprovals -contains $_.name.Trim()}
+        $releaseStages = $this.ReleaseObj.environments;# | Where-Object { $this.ControlSettings.Release.RequirePreDeployApprovals -contains $_.name.Trim()}
         if($releaseStages)
         {
             $nonComplaintStages = $releaseStages | ForEach-Object { 
@@ -319,5 +319,30 @@ class Release: SVTBase
             $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch release pipeline details. $($failMsg)Please verify from portal all teams/groups are granted minimum required permissions on release definition.");
         }       
         return $controlResult
+    }
+
+    hidden [ControlResult] CheckMixingGitHubAndADOSources([ControlResult] $controlResult)
+    {
+        if(($this.ReleaseObj | Measure-Object).Count -gt 0)
+        {
+            if( [Helpers]::CheckMember($this.ReleaseObj[0],"artifacts") -and ($this.ReleaseObj[0].artifacts | Measure-Object).Count -gt 0){
+                $sourcetypes = @();
+                $sourcetypes = $this.ReleaseObj[0].artifacts;
+                $nonadoresource = $sourcetypes | Where-Object { $_.type -ne 'Git'} ;
+               
+               if( ($nonadoresource | Measure-Object).Count -gt 0){
+                   $nonadoresource = $nonadoresource | Select-Object -Property @{Name="alias"; Expression = {$_.alias}},@{Name="Type"; Expression = {$_.type}} | Format-Table
+                   $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines contains artifact from the below external sources.", $nonadoresource);    
+               }
+               else {
+                $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline does not contain artifacts from external sources");   
+               }
+           }
+           else {
+            $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline does not contain any source repositories");   
+           } 
+        }
+
+        return $controlResult;
     }
 }

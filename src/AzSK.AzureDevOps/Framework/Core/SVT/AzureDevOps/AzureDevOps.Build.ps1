@@ -24,7 +24,7 @@ class Build: SVTBase
 
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
 	{
-        
+      try {      
         if([Helpers]::CheckMember($this.BuildObj,"variables")) 
         {
 
@@ -58,12 +58,20 @@ class Build: SVTBase
                     
                     }
                       
+            }
+            if($noOfCredFound -gt 0)
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed,
+                "Found credentials in build definition. Total credentials found: $noOfCredFound");
+            }
+        else {
+            $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in build definition.");
         }
-        if($noOfCredFound -gt 0)
-        {
-            $controlResult.AddMessage([VerificationResult]::Failed,
-            "Found credentials in build definition. Total credentials found: $noOfCredFound");
         }
+    }
+    catch {
+        $controlResult.AddMessage([VerificationResult]::Manual, "Could not evaluated build definition.");
+        $controlResult.AddMessage($_);
     }    
         return $controlResult;
     }
@@ -84,7 +92,7 @@ class Build: SVTBase
                         'view': 'buildsHistory',
                         'hubQuery': 'true',
                         'sourcePage': {
-                            'url': 'https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/AzSDKDemoRepo/_build?definitionId=$($this.BuildObj.id)',
+                            'url': 'https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/$($this.BuildObj.project.name)/_build?definitionId=$($this.BuildObj.id)',
                             'routeId': 'ms.vss-build-web.ci-definitions-hub-route',
                             'routeValues': {
                                 'project': '$($this.BuildObj.project.name)',
@@ -168,6 +176,8 @@ class Build: SVTBase
         }
         catch
         {
+            #TODO: added temporarily to check 
+            Write-Error $_.Exception.Message;             
             $failMsg = $_
         }
         
@@ -244,4 +254,69 @@ class Build: SVTBase
 
         return $controlResult
     }
+
+    hidden [ControlResult] CheckSettableAtQueueTime([ControlResult] $controlResult)
+	{
+      try { 
+       
+        if([Helpers]::CheckMember($this.BuildObj,"variables")) 
+        {
+           $setablevar =@();
+           $nonsetablevar =@();
+          
+           Get-Member -InputObject $this.BuildObj.variables -MemberType Properties | ForEach-Object {
+            if([Helpers]::CheckMember($this.BuildObj.variables.$($_.Name),"allowOverride") )
+            {
+                $setablevar +=  $_.Name;
+            }
+            else {
+                $nonsetablevar +=$_.Name;  
+            }
+           } 
+           if($setablevar -or $nonsetablevar){
+            $controlResult.AddMessage([VerificationResult]::Verify,"");
+              if($setablevar)  { 
+                $controlResult.AddMessage("The below variables are settable at queue time",$setablevar);   
+              }
+              if ($nonsetablevar) {
+                $controlResult.AddMessage("The below variables are not settable at queue time",$nonsetablevar);      
+              }
+            
+           }
+                 
+        }
+        else {
+            $controlResult.AddMessage([VerificationResult]::Passed,"No variables are found in the build pipeline");   
+        }
+       }  
+       catch {
+           $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch build pipeline variables.");   
+       }
+     return $controlResult;
+    }
+
+    hidden [ControlResult] ExternalSourceSelfHostedBuild([ControlResult] $controlResult)
+    {
+        if(($this.BuildObj | Measure-Object).Count -gt 0)
+        {
+           if( $this.BuildObj.repository.type -eq 'Git'){
+
+              $sourceobj = $this.BuildObj.repository | Select-Object -Property @{Name="Name"; Expression = {$_.Name}},@{Name="Type"; Expression = {$_.type}}, @{Name="Agent"; Expression = {$this.BuildObj.queue.name}} | Format-Table
+
+              if (($this.BuildObj.queue.name -eq 'Azure Pipelines' -or $this.BuildObj.queue.name -eq 'Hosted')) {
+                $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline code is built on a hosted agent from trusted source.",  $sourceobj); 
+               }
+               else {
+                $controlResult.AddMessage([VerificationResult]::Verify,"Pipeline code is built on a self hosted agent from untrusted external source.", $sourceobj );   
+               }
+           }
+           else {
+            $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines build code is from external sources.");   
+           }
+        }
+
+        return $controlResult;
+    }
+
+
 }

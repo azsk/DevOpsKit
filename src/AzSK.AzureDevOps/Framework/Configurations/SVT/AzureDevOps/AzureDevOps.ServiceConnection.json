@@ -25,7 +25,7 @@
     "ControlID": "AzureDevOps_ServiceConnection_AuthZ_RG_Level",
     "Description": "Service Connection should not be provided access at subscription level",
     "Id": "ServiceConnection120",
-    "ControlSeverity": "Medium",
+    "ControlSeverity": "High",
     "Automated": "Yes",
     "MethodName": "CheckServiceConnectionAccess",
     "Rationale": "Just like AD-based service accounts, SPNs have a single credential and most scenarios that use them cannot support multi-factor authentication. As a result, adding SPNs to a subscription in 'Owners' or 'Contributors' roles is risky.",
@@ -40,7 +40,7 @@
   },
   {
     "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Justify_Connection_Admin",
-    "Description": "Justify all identities that are granted with admin/user access for extensions.",
+    "Description": "Justify all users/groups that have access to the service connection.",
     "Id": "ServiceConnection130",
     "ControlSeverity": "High",
     "Automated": "No",
@@ -56,14 +56,14 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_ServiceConnection_Audit_RequestHistory",
-    "Description": "Request history must be reviewed validate request is coming from legitimate build/release definition",
+    "ControlID": "AzureDevOps_ServiceConnection_Audit_Usage_History",
+    "Description": "Periodically review usage history of service connection to validate use from legitimate pipelines.",
     "Id": "ServiceConnection140",
     "ControlSeverity": "High",
     "Automated": "No",
     "MethodName": "",
     "Rationale": "Periodic reviews of request history logs ensures that sevice connection been used from legitimate build definitions and avoid major compromise.",
-    "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Servicie Connections --> Request History --> Validate connection is been used from legitimate build/release definitions only",
+    "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Service Connections --> Usage History --> Validate connection is been used from legitimate build/release definitions only",
     "Tags": [
       "SDL",
       "TCP",
@@ -76,7 +76,7 @@
     "ControlID": "AzureDevOps_ServiceConnection_Authz_Dont_Use_Classic_Connections",
     "Description": "Do not use any classic resources on a subscription",
     "Id": "ServiceConnection150",
-    "ControlSeverity": "Medium",
+    "ControlSeverity": "High",
     "Automated": "Yes",
     "MethodName": "CheckClassConnections",
     "Rationale": "You should use new ARM/v2 resources as the ARM model provides several security enhancements such as: stronger access control (RBAC), better auditing, ARM-based deployment/governance, access to managed identities, access to key vault for secrets, AAD-based authentication, support for tags and resource groups for easier security management, etc.",
@@ -122,6 +122,59 @@
       "Automated",
       "AuthZ",
       "RBAC"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_BuildServAcc_Permission",
+    "Description": "Do not grant Build Service Account access for connections",
+    "Id": "ServiceConnection180",
+    "ControlSeverity": "High",
+    "Automated": "Yes",
+    "MethodName": "CheckBuildServiceAccountAccess",
+    "Rationale": "Build service account is default identity used as part every build in project. Providing access to this common service account will expose connection details to all build definition under project.",
+    "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> select security -> remove 'Project Collection Build Service Accounts' access from user permission.",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Automated",
+      "AuthZ",
+      "RBAC"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
+    "Description": "Do not make service connections accessible to all pipelines.",
+    "Id": "ServiceConnection190",
+    "ControlSeverity": "High",
+    "Automated": "Yes",
+    "MethodName": "CheckServiceConnectionBuildAccess",
+    "Rationale": "To support security of the pipeline operations, Connections must not be granted to access for all pipeline",
+    "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Edit -> uncheck 'Grant access permission to all pipelines'.",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Automated",
+      "AuthZ",
+      "RBAC"
+    ],
+    "Enabled": true
+  },
+  {
+    "ControlID": "AzureDevOps_ServiceConnection_AuthZ_PAT_Or_Auth",
+    "Description": "Justify GitHub service connections are authenticated with full scope GitHub PATs instead of the OAuth flow.",
+    "Id": "ServiceConnection200",
+    "ControlSeverity": "High",
+    "Automated": "Yes",
+    "MethodName": "CheckServiceConnectionForPATOrAuth",
+    "Rationale": "Full scope PAT is equivalent to full account compromise. The OAuth flow creates a token that only allows source code and webhook read/write access on GitHub. The impact of losing control of a scoped OAuth token is far lower.",
+    "Recommendation": "Go to Project Settings --> Service Connections --> Select Servicie Connections --> Verify connection authentication type.",
+    "Tags": [
+      "SDL",
+      "TCP",
+      "Manual",
+      "AuthZ"
     ],
     "Enabled": true
   }

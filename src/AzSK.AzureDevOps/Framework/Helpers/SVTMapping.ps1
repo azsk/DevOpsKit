@@ -6,7 +6,7 @@ class SVTMapping
 
 	static [string] GetResourceTypeEnumItems()
 	{
-		return ([SVTMapping]::Mapping |
+		return ([SVTMapping]::AzSKDevOpsResourceMapping |
 					Where-Object { -not [string]::IsNullOrEmpty($_.ResourceTypeName) } |
 					ForEach-Object { "$($_.ResourceTypeName.Replace(' ', '')) `r`n" } |
 					Sort-Object);

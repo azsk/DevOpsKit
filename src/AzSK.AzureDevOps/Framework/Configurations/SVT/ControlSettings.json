@@ -1,4 +1,382 @@
 {
+  "Diagnostics_RetentionPeriod_Min": 365,
+  "Diagnostics_RetentionPeriod_Forever": 0,
+  "KeyVault": {
+    "KeyRotationDuration_Days": 365,
+    "SecretRotationDuration_Days": 180,
+    "KeyType": "RSA-HSM",
+    "ADAppCredentialTypeCrt": "AsymmetricX509Cert",
+    "ADAppCredentialTypePwd": "Password"
+  },
+  "SqlServer": {
+    "AuditRetentionPeriod_Min": 365,
+    "AuditRetentionPeriod_Forever": 0
+  },
+  "AnalysisService": {
+    "Max_Admin_Count": 2
+  },
+  "ERvNet": {
+    "ResourceLockLevel": "ReadOnly"
+  },
+  "Databricks": {
+    "Tenant_Domain": "microsoft.com"
+  },
+  "KubernetesService": {
+    "kubernetesVersion": "1.11.5"
+  },
+  "VirtualMachine": {
+    "Windows": {
+      "SupportedSkuList": [],
+      "ManagementPortList": [
+        {
+          "Name": "RDP",
+          "Port": 3389
+        },
+        {
+          "Name": "WINRM",
+          "Port": 5985
+        }
+      ],
+      "BaselineIds": [],
+      "ASCRecommendations": [ "EncryptionOnVm", "InstallAntimalware", "VulnerabilityAssessmentDeployment" ],
+      "ASCApprovedPatchingHealthStatuses": [ "Healthy" ],
+      "ASCApprovedBaselineStatuses": [ "Healthy" ],
+      "QueryforBaselineRule": [ "SecurityBaseline | where TimeGenerated >ago(1d) | where ResourceId ==\"{0}\" | summarize arg_max(TimeGenerated,*)by Description| where AnalyzeResult == \"Failed\" " ],
+      "QueryforMissingPatches": [ "Update | where TimeGenerated >ago(1d) |where OSType != \"Linux\" and UpdateState =~ \"Needed\" and iff(isnotnull(toint(Optional)), Optional == false, Optional == \"false\") == true and iff(isnotnull(toint(Approved)), Approved != false, Approved != \"false\") == true and (Classification == \"Security Updates\" or Classification == \"Critical Updates\") and ResourceId ==\"{0}\"| summarize AggregatedValue =dcount(UpdateID) by UpdateID,Title |limit  1000000000 " ]
+    },
+    "Linux": {
+      "SupportedSkuList": [],
+      "ManagementPortList": [
+        {
+          "Name": "RDP",
+          "Port": 3389
+        },
+        {
+          "Name": "SSH",
+          "Port": 22
+        }
+      ],
+      "BaselineIds": [],
+      "ASCRecommendations": [],
+      "ASCApprovedPatchingHealthStatuses": [ "Healthy" ],
+      "ASCApprovedBaselineStatuses": [ "Healthy" ],
+      "QueryforBaselineRule": [ "SecurityBaseline | where TimeGenerated >ago(1d) | where ResourceId ==\"{0}\" | summarize arg_max(TimeGenerated,*)by Description| where AnalyzeResult == \"Failed\" " ],
+      "QueryforMissingPatches": [ "Update | where TimeGenerated >ago(1d) |where OSType == \"Linux\" and UpdateState =~ \"Needed\" and iff(isnotnull(toint(Optional)), Optional == false, Optional == \"false\") == true and iff(isnotnull(toint(Approved)), Approved != false, Approved != \"false\") == true and (Classification == \"Security Updates\" or Classification == \"Critical Updates\") and ResourceId ==\"{0}\"| summarize AggregatedValue =dcount(UpdateID) by UpdateID,Title |limit  1000000000 " ]
+    },
+    "Windows_OS_Baseline_Ids": [],
+    "ASCPolicies": {
+      "PolicyAssignment": {
+        "EndpointProtection": "Install endpoint protection solution on your machines",
+        "DiskEncryption": "Apply Disk Encryption on your virtual machines",
+        "VulnerabilityScan": "Remediate vulnerabilities in security configuration on your machines",
+        "OSUpdates": "Install system updates on your machines",
+        "MonitoringAgent": "Install monitoring agent on your machines"
+      },
+      "ResourceDetailsKeys": {
+        "WorkspaceId": "Reporting workspace customer id"
+      }
+    }
+  },
+  "NoOfApprovedAdmins": 5,
+  "NoOfClassicAdminsLimit": 2,
+  "CriticalPIMRoles": [ "Owner", "Contributor" ],
+  "WhitelistedMgmtCerts": {
+    "Thumbprints": [],
+    "ApprovedValidityRangeInDays": 732
+  },
+  "WhitelistedCustomRBACRoles": [
+    {
+      "Id": "21d96096-b162-414a-8302-d8354f9d91b2",
+      "Name": "Azure Service Deploy Release Management Contributor"
+    },
+    {
+      "Id": "9f15f5f5-77bd-413a-aa88-4b9c68b1e7bc",
+      "Name": "GenevaWarmPathResourceContributor"
+    },
+    {
+      "Id": "7fd64851-3279-459b-b614-e2b2ba760f5b",
+      "Name": "Office DevOps"
+    },
+    {
+      "Id": "a48d7796-14b4-4889-afef-fbb65a93e5a2",
+      "Name": "masterreader"
+    }
+  ],
+  "UniversalIPRange": "0.0.0.0-255.255.255.255",
+  "IPRangeStartIP": "0.0.0.0",
+  "IPRangeEndIP": "255.255.255.255",
+  "MetricAlert": {
+    "Actions": {
+      "SendToServiceOwners": true
+    },
+    "Batch": [
+      {
+        "Condition": {
+          "DataSource": {
+            "MetricName": "PoolDeleteCompleteEvent"
+          },
+          "OperatorProperty": "GreaterThan",
+          "Threshold": 0,
+          "TimeAggregation": "Total",
+          "WindowSize": "01:00:00"
+        },
+        "IsEnabled": true
+      },
+      {
+        "Condition": {
+          "DataSource": {
+            "MetricName": "PoolDeleteStartEvent"
+          },
+          "OperatorProperty": "GreaterThan",
+          "Threshold": 0,
+          "TimeAggregation": "Total",
+          "WindowSize": "01:00:00"
+        },
+        "IsEnabled": true
+      }
+    ],
+    "Storage": [
+      {
+        "Condition": {
+          "DataSource": {
+            "MetricName": "AnonymousSuccess"
+          },
+          "OperatorProperty": "GreaterThan",
+          "Threshold": 0,
+          "TimeAggregation": "Total",
+          "WindowSize": "01:00:00"
+        },
+        "IsEnabled": true
+      }
+    ],
+    "StreamAnalytics": [
+      {
+        "Condition": {
+          "DataSource": {
+            "MetricName": "AMLCalloutFailedRequests"
+          },
+          "OperatorProperty": "GreaterThan",
+          "Threshold": 0,
+          "TimeAggregation": "Total",
+          "WindowSize": "00:05:00"
+        },
+        "IsEnabled": true
+      },
+      {
+        "Condition": {
+          "DataSource": {
+            "MetricName": "Errors"
+          },
+          "OperatorProperty": "GreaterThan",
+          "Threshold": 0,
+          "TimeAggregation": "Total",
+          "WindowSize": "00:05:00"
+        },
+        "IsEnabled": true
+      }
+    ],
+    "APIManagement": [
+      {
+        "Condition": {
+          "DataSource": {
+            "MetricName": "UnauthorizedRequests"
+          },
+          "OperatorProperty": "GreaterThan",
+          "Threshold": 0,
+          "TimeAggregation": "Total",
+          "WindowSize": "01:00:00"
+        },
+        "IsEnabled": true
+      }
+    ]
+  },
+  "StorageKindMapping": [
+    {
+      "Kind": "BlobStorage",
+      "Services": [
+        "blob"
+      ],
+      "DiagnosticsLogServices": [
+        "blob"
+      ]
+    },
+    {
+      "Kind": "Storage",
+      "Services": [
+        "blob",
+        "file",
+        "queue",
+        "table"
+      ],
+      "DiagnosticsLogServices": [
+        "blob",
+        "queue",
+        "table"
+      ]
+    },
+    {
+      "Kind": "StorageV2",
+      "Services": [
+        "blob",
+        "file",
+        "queue",
+        "table"
+      ],
+      "DiagnosticsLogServices": [
+        "blob",
+        "queue",
+        "table"
+      ]
+    }
+  ],
+  "AppService": {
+    "Backup_RetentionPeriod_Min": 365,
+    "Backup_RetentionPeriod_Forever": 0,
+    "LatestDotNetFrameworkVersionNumber": "v4.0",
+    "Minimum_Instance_Count": 2,
+    "AADAuthAPIVersion": "2016-08-01",
+    "LoadCertAppSettings": "WEBSITE_LOAD_CERTIFICATES"
+  },
+  "StorageDiagnosticsSkuMapping": [
+    "StandardGRS",
+    "StandardLRS",
+    "StandardRAGRS",
+    "StandardZRS"
+  ],
+  "StorageAlertSkuMapping": [
+    "StandardGRS",
+    "StandardLRS",
+    "StandardRAGRS"
+  ],
+  "StorageGeoRedundantSku": [
+    "StandardGRS",
+    "StandardRAGRS"
+  ],
+  "RedisCache": {
+    "FirewallApplicableSku": [
+      "Premium"
+    ],
+    "RDBBackApplicableSku": [
+      "Premium"
+    ]
+  },
+  "CosmosDb": {
+    "Firewall": {
+      "IpLimitPerDb": 2048,
+      "IpLimitPerRange": 256
+    }
+  },
+  "Automation": {
+    "WebhookValidityInDays": 60,
+    "variablesToSkip": []
+  },
+  "BaselineControls": {
+    "ResourceTypeControlIdMappingList": [
+      {
+        "ResourceType": "Organization",
+        "ControlIds": [
+          "AzureDevOps_Organization_AuthN_Use_AAD_Auth",
+          "AzureDevOps_Organization_AuthN_Disable_External_Guest_Users",
+          "AzureDevOps_Organization_AuthZ_Justify_Guest_Identities",
+          "AzureDevOps_Organization_SI_Review_Installed_Extensions",
+          "AzureDevOps_Organization_SI_Review_Shared_Extensions",
+          "AzureDevOps_Organization_AuthZ_Justify_Extension_Managers",
+          "AzureDevOps_Organization_Review_Project_Collection_Accounts",
+          "AzureDevOps_Organization_Review_Auto_Injected_Extensions"
+  
+        ]
+     },
+     {
+      "ResourceType": "Project",
+      "ControlIds": [
+        "AzureDevOps_Project_AuthZ_Set_Visibility_Private",
+        "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project"
+      ]
+     },
+     {
+      "ResourceType": "ServiceConnection",
+      "ControlIds": [
+         "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections",
+         "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions",
+         "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
+         "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_SecurityGroups"
+
+      ]
+     },
+     {
+      "ResourceType": "Build",
+      "ControlIds": [
+        "AzureDevOps_Build_DP_No_PlainText_Secrets_In_Definition",
+        "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions"
+      ]
+     },
+     {
+      "ResourceType": "Release",
+      "ControlIds": [
+        "AzureDevOps_Release_DP_No_PlainText_Secrets_In_Definition",
+        "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions",
+        "AzureDevOps_Release_Review_External_Sources"
+      ]
+     },
+     {
+      "ResourceType": "AgentPool",
+      "ControlIds": [
+        "AzureDevOps_AgentPool_AuthZ_Disable_Inherited_Permissions",
+        "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access"
+        
+      ]
+     }
+    ],
+    "SubscriptionControlIdList": [],
+    "ExpiryInDays": 2,
+    "SupportedSources": []
+  },
+  "CloudService": {
+    "LatestOSSKUIDs": [ "WA-GUEST-OS-4.44_201707-01" ]
+  },
+  "AttestationExpiryPeriodInDays": {
+    "Default": 90,
+    "ControlSeverity": {
+      "Critical": 7,
+      "High": 30,
+      "Medium": 60,
+      "Low": 90
+    }
+  },
+  "SubscriptionCore": {
+    "EnableV1AlertFailure": false
+  },
+  "HDInsight": {
+    "MinSupportedClusterVersion": "3.6.0"
+  },
+  "EventHubOutput": {
+    "TokenTimeOut": 1800,
+    "TimeOut": 60,
+    "APIVersion": "2014-01"
+  },
+  "DefaultValidAttestationStates": [ "NotAnIssue", "WillFixLater", "WillNotFix" ],
+  "NewControlGracePeriodInDays": {
+    "Default": 60,
+    "ControlSeverity": {
+      "Critical": 7,
+      "High": 30,
+      "Medium": 60,
+      "Low": 90
+    }
+  },
+  "AttestationPeriodInDays": {
+    "Default": 90,
+    "ControlSeverity": {
+      "Critical": 7,
+      "High": 30,
+      "Medium": 60,
+      "Low": 90
+    }
+  },
+  "ResultComplianceInDays": {
+    "DefaultControls": 3,
+    "OwnerAccessControls": 90
+  },
   "ControlSeverity": {
     "Critical": "Critical",
     "High": "High",
@@ -36,7 +414,11 @@
     ]
   },
   "Organization":{
-    "InActiveUserActivityLogsPeriodInDays": 365
+    "InActiveUserActivityLogsPeriodInDays": 365,
+    "WhitelistedExtensionPublishers":[
+      "Microsoft",
+      "Microsoft DevLabs"
+    ]
   },
   "ServiceConnection":{
     "WhitelistedGroupIdentities": [

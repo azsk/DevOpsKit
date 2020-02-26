@@ -31,6 +31,15 @@ class ContextHelper {
         return [ContextHelper]::currentContext
     }
     
+    hidden static [PSObject] GetCurrentContext([System.Security.SecureString] $PATToken)
+    {
+        if(-not [ContextHelper]::currentContext)
+        {
+            [ContextHelper]::ConvertToContextObject($PATToken)
+        }
+        return [ContextHelper]::currentContext
+    }
+
     static [string] GetAccessToken([string] $resourceAppIdUri) {
             return [ContextHelper]::GetAccessToken()   
     }
@@ -67,6 +76,24 @@ class ContextHelper {
         return $SubscriptionContext;
     }
 
+    hidden [SubscriptionContext] SetContext([string] $subscriptionId, [System.Security.SecureString] $PATToken)
+    {
+        if((-not [string]::IsNullOrEmpty($subscriptionId)))
+		{
+			$SubscriptionContext = [SubscriptionContext]@{
+				SubscriptionId = $subscriptionId;
+				Scope = "/Organization/$subscriptionId";
+				SubscriptionName = $subscriptionId;
+			};
+			[ContextHelper]::GetCurrentContext($PATToken)		
+		}
+		else
+		{
+			throw [SuppressedException] ("OrganizationName name [$subscriptionId] is either malformed or incorrect.")
+        }
+        return $SubscriptionContext;
+    }
+
     static [void] ResetCurrentContext()
     {
         
@@ -78,6 +105,18 @@ class ContextHelper {
         $contextObj.Account.Id = $context.UserInfo.DisplayableId
         $contextObj.Tenant.Id = $context.TenantId 
         $contextObj.AccessToken = $context.AccessToken
+        #$contextObj.AccessToken =  ConvertTo-SecureString -String $context.AccessToken -asplaintext -Force
+        [ContextHelper]::currentContext = $contextObj
+    }
+
+    hidden static ConvertToContextObject([System.Security.SecureString] $patToken)
+    {
+        $contextObj = [Context]::new()
+        $contextObj.Account.Id = [string]::Empty
+        $contextObj.Tenant.Id =  [string]::Empty
+        $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($patToken)
+        $contextObj.AccessToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+        #$contextObj.AccessToken = $patToken
         #$contextObj.AccessToken =  ConvertTo-SecureString -String $context.AccessToken -asplaintext -Force
         [ContextHelper]::currentContext = $contextObj
     }

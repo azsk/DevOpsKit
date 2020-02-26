@@ -4,8 +4,8 @@
     "IsMaintenanceMode":  false,
   "Controls": [
     {
-      "ControlID": "AzureDevOps_Project_AuthN_Set_Visibility_Private",
-      "Description": "Projects visibility must be set to private",
+      "ControlID": "AzureDevOps_Project_AuthZ_Set_Visibility_Private",
+      "Description": "Ensure that project visibility is set to private",
       "Id": "Project110",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -22,11 +22,11 @@
     },
     {
         "ControlID": "AzureDevOps_Project_AuthZ_Min_RBAC_Access",
-        "Description": "All teams/groups must be granted minimum required permissions on project",
+        "Description": "All teams/groups must be granted minimum required permissions on the project",
         "Id": "Project120",
         "ControlSeverity": "High",
         "Automated": "No",
-        "MethodName": "",
+        "MethodName": "CheckRBACAccess",
         "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
         "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/organizations/security/set-project-collection-level-permissions?view=vsts&tabs=new-nav",
         "Tags": [
@@ -43,7 +43,7 @@
         "Id": "Project130",
         "ControlSeverity": "High",
         "Automated": "No",
-        "MethodName": "",
+        "MethodName": "JustifyGroupMember",
         "Rationale": "Accounts that are a member of these groups without a legitimate business reason increase the risk for your Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
         "Recommendation": "Go to Project Settings --> Security --> Select Teams/Group --> Verify Members",
         "Tags": [
@@ -51,6 +51,74 @@
           "TCP",
           "Manual",
           "AuthZ"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Project_Disable_Anonymous_Access_To_Badges",
+        "Description": "Anonymous access to status badge API for parallel pipelines should be disabled.",
+        "Id": "Project1000",
+        "ControlSeverity": "Low",
+        "Automated": "Yes",
+        "MethodName": "CheckBadgeAnonAccess",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Disable anonymous access to badges'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Project_SI_Limit_Variables_Settable_At_Queue_Time",
+        "Description": "Do not permit all pipeline variables to be settable by default.",
+        "Id": "Project1010",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckSetQueueTime",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Limit variables that can be set at queue time.'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project",
+        "Description": "Scope of access of all pipelines should be restricted to current project.",
+        "Id": "Project1020",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckJobAuthnScope",
+        "Rationale": "TBD",
+        "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current scope.'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
+        ],
+        "Enabled": true
+      },
+      {
+        "ControlID": "AzureDevOps_Project_AuthZ_Publish_Metadata_From_Pipeline",
+        "Description": "Consider using artifact evaluation for fine-grained control over pipeline stages",
+        "Id": "Project1030",
+        "ControlSeverity": "Medium",
+        "Automated": "Yes",
+        "MethodName": "CheckPublishMetadata",
+        "Rationale": "Allows pipelines to record metadata. Evaluate artifact check can be configured to define policies using the metadata recorded.",
+        "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Publish metadata from pipelines'.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Manual",
+          "SI"
         ],
         "Enabled": true
       }

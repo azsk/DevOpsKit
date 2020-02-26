@@ -20,6 +20,20 @@ class AzSKRoot: EventBase
         $ContextHelper = [ContextHelper]::new()
         $this.SubscriptionContext = $ContextHelper.SetContext($subscriptionId)
     }
+
+    AzSKRoot([string] $subscriptionId, [System.Security.SecureString] $PATToken)
+    {
+        #Initialize context 
+        $ContextHelper = [ContextHelper]::new()
+        if($PATToken)
+        {
+            $this.SubscriptionContext = $ContextHelper.SetContext($subscriptionId,$PATToken)
+        }
+        else {
+            $this.SubscriptionContext = $ContextHelper.SetContext($subscriptionId)
+        }
+    }
+    
     #EndRegion
     
     #Function to load server configuration file
