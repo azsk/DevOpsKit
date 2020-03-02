@@ -509,6 +509,11 @@ function Set-AzSKPrivacyNoticeResponse {
                 $azskSettings.PrivacyNoticeAccepted = $false
                 $azskSettings.UsageTelemetryLevel = "None"
             }
+
+            if([Environment]::OSVersion.VersionString.Contains('Windows') -and (Get-WmiObject -Class Win32_ComputerSystem).Domain -eq "SAW.MSFT.NET")
+            {
+                $azskSettings.IsSAW = $true
+            }
             [ConfigurationManager]::UpdateAzSKSettings($azskSettings)
             [EventBase]::PublishGenericCustomMessage("Successfully updated privacy settings.");
         }
