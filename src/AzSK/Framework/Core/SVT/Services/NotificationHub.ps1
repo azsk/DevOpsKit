@@ -33,7 +33,7 @@ class NotificationHub: AzSVTBase
         $accessPolicieswithManageRights =  (Get-AzNotificationHubAuthorizationRules `
                                                 -ResourceGroup $this.ResourceContext.ResourceGroupName `
                                                 -Namespace $this.NamespaceObject.Name `
-                                                -NotificationHub $resourceName) `
+                                                -NotificationHub $resourceName -WarningAction SilentlyContinue) `
                                                 | Where-Object Rights -Contains "Manage" `
                                                 | Select-Object -Property Name, Rights  
         if((($accessPolicieswithManageRights | Measure-Object).Count -eq 1) -and ($accessPolicieswithManageRights.Name -eq "DefaultFullSharedAccessSignature")) {
