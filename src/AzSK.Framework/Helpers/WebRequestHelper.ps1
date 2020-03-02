@@ -85,11 +85,26 @@ class WebRequestHelper {
 		[System.Uri] $validatedUri = $null;
         if([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri))
 		{
-			return @{
-				"Authorization"= ("Bearer " + [ContextHelper]::GetAccessToken($validatedUri.GetLeftPart([System.UriPartial]::Authority))); 
-				"Content-Type"="application/json"
-			};
 
+			$token = [ContextHelper]::GetAccessToken($validatedUri.GetLeftPart([System.UriPartial]::Authority));
+
+			# Validate if token is PAT using lenght (PAT has lengh of 52) else go with default bearer token
+			if($token.length -eq 52)
+			{
+				$user = ""
+				$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$token)))
+				return @{
+					"Authorization"= ("Basic " + $base64AuthInfo); 
+					"Content-Type"="application/json"
+				};
+			}
+			else {
+				return @{
+					"Authorization"= ("Bearer " + $token); 
+					"Content-Type"="application/json"
+				};
+			}
+			
 		}
 		
 		return @{ "Content-Type"="application/json" };
