@@ -98,7 +98,7 @@ class CommandBase: AzSKRoot {
         if (-not $methodToCall) {
             throw [System.ArgumentException] ("The argument 'methodToCall' is null. Pass the reference of method to call. e.g.: [YourClass]::new().YourMethod");
 		}
-		if ($arguments -eq $null)
+		if ($null -eq $arguments)
 		{
 			$folderPath = $this.GetOutputFolderPath();
 			$methodResult = $methodToCall.Invoke(@());
