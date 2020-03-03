@@ -75,13 +75,51 @@ class PIM: AzCommandBase {
             return $obj
         }
         else {
-            $this.PublishCustomMessage("Unable to retrieve details for the current context.",[MessageType]::Error)
             return $null
         }
     }
 
+    # this method is an overlaod of existing PIMResolver method, this is to facilitate a seperate flow for pim operations at management group scope
+    hidden [PIMResource[]] PIMResourceResolver($ManagementGroupId, $IsActivationRequest)
+    {
+        $resolvedResource =  @()
+        if($IsActivationRequest)
+        {
+            
+            $resolvedResource = [array][PIMResource]::new()
+            $eligibleAssignments = $this.MyJitAssignments();
+            $resolvedResources = @();
+            if($null -ne $eligibleAssignments)
+            {
+                $resolvedResources = $eligibleAssignments | Where-Object{$_.OriginalId -eq ("/providers/Microsoft.Management/managementGroups/$ManagementGroupId") }
+            
+                foreach($res in $resolvedResources)
+                {
+                    $resObj = [PIMResource]::new()
+                    $resObj.ExternalId = $res.OriginalId
+                    $resObj.ResourceName = $res.ResourceName
+                    $resObj.ResourceId = $res.ResourceId
+                    $resolvedResource += $resObj
+                }
+            }
+            else
+            {
+                $this.PublishCustomMessage("No PIM Eligible assignment found for the current context: $($this.AccountId).",[MessageType]::Warning)
+            }
+            
+                                                                     
+
+        }
+        else
+        {
+            $resources = $this.ListResources($null, "managementgroup", $ManagementGroupId);
+            $resolvedResource = $resources | Where-Object {$_.ExternalId -eq "/providers/Microsoft.Management/managementGroups/$($ManagementGroupId)"}
+        }
+        return $resolvedResource;
+    }
+
     # This function resolves the resource that matches to parameters passed in command
-    hidden [PIMResource[]] PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $IsActivationRequest) {
+    hidden [PIMResource[]] PIMResourceResolver( $SubscriptionId, $ResourceGroupName, $ResourceName, $IsActivationRequest) {
         $this.AcquireToken();  
         $rtype = 'subscription'
         $selectedResourceName = $SubscriptionId.Trim()
@@ -101,67 +139,76 @@ class PIM: AzCommandBase {
         $resolvedResource = [PIMResource]::new()
         if($IsActivationRequest)
         {
-            $resolvedResources = ($this.MyJitAssignments() | Where-Object {$_.OriginalId -match $SubscriptionId})
-            $PIMResources = @();            
-            if(($resolvedResources | Measure-Object).Count -gt 0 )
+            $myAssignments = $this.MyJitAssignments();
+            if($null -ne $myAssignments)
             {
-                    if( $item.ResourceType -eq 'subscription')
-                    {
-                        $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq ("/subscriptions/$($SubscriptionId)") }
-                    }
-                    if( $item.ResourceType -eq 'resourcegroup')
-                    {
-                        $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
-                        $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq $rgId }
-                    }
-                    if( $item.ResourceType -eq 'resource'){
-                        $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
-                        $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -like "$rgId*" -and $_.ResourceName-eq $ResourceName }
-                        # if multiple resources with same name under one rg are found, ask the end user to choose the resource
-                        if(($resolvedResources|Measure-Object).Count -gt 1)
-                        {   $counter=0; $tempres = @();
-                            foreach ($resource in $resolvedResources)
-                            {
-                                $item = New-Object psobject -Property @{
-                                id = ++$counter
-                                ResourceName =  $resource.ResourceName
-                                OriginalId =  $resource.OriginalId
+                $resolvedResources = ($myAssignments | Where-Object {$_.OriginalId -match $SubscriptionId})
+                $PIMResources = @();            
+                if(($resolvedResources | Measure-Object).Count -gt 0 )
+                {
+                        if( $item.ResourceType -eq 'subscription')
+                        {
+                            $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq ("/subscriptions/$($SubscriptionId)") }
+                        }
+                        if( $item.ResourceType -eq 'resourcegroup')
+                        {
+                            $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
+                            $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq $rgId }
+                        }
+                        if( $item.ResourceType -eq 'resource'){
+                            $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
+                            $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -like "$rgId*" -and $_.ResourceName-eq $ResourceName }
+                            # if multiple resources with same name under one rg are found, ask the end user to choose the resource
+                            if(($resolvedResources|Measure-Object).Count -gt 1)
+                            {   $counter=0; $tempres = @();
+                                foreach ($resource in $resolvedResources)
+                                {
+                                    $item = New-Object psobject -Property @{
+                                    id = ++$counter
+                                    ResourceName =  $resource.ResourceName
+                                    OriginalId =  $resource.OriginalId
+                                    }
+                                    $tempres+=$item
                                 }
-                                $tempres+=$item
-                            }
-                            [int]$choice = -1;
-                            $this.PublishCustomMessage("Multiple resources with same resource name are found. ")                            
-                            $this.PublishCustomMessage(($tempres | Format-Table Id, OriginalId | Out-String))
-                            Write-Host "Please enter 'Id' from the above table for the resource you want to activate your assignment on." -ForegroundColor Yellow
-                            try{ 
-                                $choice = Read-Host
-                                if($choice -notin $tempres.Id)
+                                [int]$choice = -1;
+                                $this.PublishCustomMessage("Multiple resources with same resource name are found. ")                            
+                                $this.PublishCustomMessage(($tempres | Format-Table Id, OriginalId | Out-String))
+                                Write-Host "Please enter 'Id' from the above table for the resource you want to activate your assignment on." -ForegroundColor Yellow
+                                try{ 
+                                    $choice = Read-Host
+                                    if($choice -notin $tempres.Id)
+                                    {
+                                        throw "Invalid Input provided";
+                                    }
+                                }
+                                catch
                                 {
                                     throw "Invalid Input provided";
+                                    
                                 }
-                            }
-                            catch
-                            {
-                                 throw "Invalid Input provided";
+                            $resolvedResources= $resolvedResources | Where-Object{$_.OriginalId -eq $tempres[$choice-1].OriginalId }
                                 
                             }
-                           $resolvedResources= $resolvedResources | Where-Object{$_.OriginalId -eq $tempres[$choice-1].OriginalId }
-                            
-                        }
-                }
-                if(($resolvedResources|Measure-Object).Count -gt 0)
-                {
-                    $resObj = [PIMResource]::new()
-                    foreach($res in $resolvedResources)
-                    {
-                        $resObj.ExternalId = $res.OriginalId
-                        $resObj.ResourceName = $res.ResourceName
-                        $resObj.ResourceId = $res.ResourceId
-                        $PIMResources += $resObj
                     }
-                } 
+                    if(($resolvedResources|Measure-Object).Count -gt 0)
+                    {
+                        $resObj = [PIMResource]::new()
+                        foreach($res in $resolvedResources)
+                        {
+                            $resObj.ExternalId = $res.OriginalId
+                            $resObj.ResourceName = $res.ResourceName
+                            $resObj.ResourceId = $res.ResourceId
+                            $PIMResources += $resObj
+                        }
+                    } 
+                }
+                return $PIMResources;
             }
-            return $PIMResources;
+            else
+            {
+                $this.PublishCustomMessage("No PIM Eligible assignments found for the current context: $($this.AccountId).",[MessageType]::Warning)
+                return $null
+            }
 
         }
         else
@@ -211,14 +258,22 @@ class PIM: AzCommandBase {
     }
 
     #List all the resources accessible to context.
-    hidden [System.Collections.Generic.List[PIMResource]] ListResources($subscriptionId, $type, $resourceName) {
+    hidden [System.Collections.Generic.List[PIMResource]] ListResources($Guid, $type, $resourceName) {
         $this.AcquireToken();
         $resources = $null
         $resourceUrl = $null
-        Set-AzContext -SubscriptionId $SubscriptionId | Out-Null 
+        if($type -ne'managementGroup')
+        {
+            Set-AzContext -SubscriptionId $Guid | Out-Null 
+        }
         # This seperation is required due to nature of API, it operates in paging/batching manner when we query for all types
         # Note: At present, we do not provide PIM operation management for management group. However, if needed in the future, it can be added in the else statement. >> $filter=(type%20eq%20%27managementgroup%27)
         
+        if($type -eq 'managementGroup')
+        {
+            # Fetch PIM details of the all subscriptions user has access to
+            $resourceUrl = $this.APIroot + "/resources?`$filter=(type%20eq%20%27managementgroup%27)&`$orderby=type"
+        }
         if($type -eq 'subscription')
         {
             # Fetch PIM details of the all subscriptions user has access to
@@ -346,11 +401,21 @@ class PIM: AzCommandBase {
     }
 
     #List Permanent or PIM assignment for a resource
-    hidden ListAssignment($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $CheckPermanent) {
+    hidden ListAssignment($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $CheckPermanent) {
         $this.AcquireToken();
         $criticalRoles = @();
+        $resources = $null
         $criticalRoles += $this.ConvertToStringArray($RoleNames)
-        $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName,$false)
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            
+            $resources = $this.PIMResourceResolver($ManagementGroupId, $false);
+        
+        }
+        else 
+        {
+            $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName,$false)   
+        }
         if (($resources | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resources.ResourceId))) {       
             $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $CheckPermanent)
             if(-not [String]::IsNullOrEmpty($RoleNames))
@@ -386,11 +451,26 @@ class PIM: AzCommandBase {
         
     }
 
+    hidden GetRoleSettings($PIMResourceGuid, $RoleName)
+    {
+       
+    }
     #Activates the user assignment for a role
-    hidden Activate($SubscriptionId, $ResourceGroupName, $ResourceName, $roleName, $Justification, $Duration) {
+    hidden Activate($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $roleName, $Justification, $Duration) {
         $this.AcquireToken();
         $assignments = $this.MyJitAssignments()
-        $resource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $true)
+        $resource = $null
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            
+            $resource = $this.PIMResourceResolver($ManagementGroupId,$true);
+        
+        }
+        else 
+        {
+            $resource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $true)
+        }
+        
         if(($resource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resource.ExternalId)))
         {
             if (($assignments | Measure-Object).Count -gt 0 ) {
@@ -431,7 +511,7 @@ class PIM: AzCommandBase {
                 }
             }
             else {
-                $this.PublishCustomMessage("No eligible role found for the current context", [MessageType]::Warning)
+                $this.PublishCustomMessage("No PIM Eligible assignments found for the current context: $($this.AccountId).",[MessageType]::Warning)
             }    
         }  
         else
@@ -442,13 +522,23 @@ class PIM: AzCommandBase {
     }
 
     #Deactivates the activated assignment for user
-    hidden Deactivate($SubscriptionId, $ResourceGroupName, $ResourceName, $roleName) {
+    hidden Deactivate($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $roleName) {
         $this.AcquireToken();
         $assignments = $this.MyJitAssignments() 
-        if(($assignments| Measure-Object).Count -gt 0) {
+        $resource = $null
+        if(($assignments| Measure-Object).Count -gt 0) 
+        {
             $assignments = $assignments|Where-Object { -not [string]::IsNullorEmpty($_.ExpirationDate) }
-            $resource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName,$false)
-
+            if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+            {
+                
+                $resource = $this.PIMResourceResolver($ManagementGroupId, $false);
+            
+            }
+            else 
+            {
+                $resource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+            }
             if (($assignments | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resource.ExternalId))) {
                 $matchingAssignment = $assignments | Where-Object { $_.OriginalId -eq $resource.ExternalId -and $_.RoleName -eq $roleName -and $_.AssignmentState -eq 'Active' }
                 if (($matchingAssignment | Measure-Object).Count -gt 0)
@@ -489,14 +579,28 @@ class PIM: AzCommandBase {
                 $this.PublishCustomMessage("No active assignments found for the current context.", [MessageType]::Warning);
             }
         }
+        else {
+            $this.PublishCustomMessage("No PIM Eligible assignments found for the current context: $($this.AccountId).",[MessageType]::Warning)
+        }
 
     }
 
     #Assign a user to Eligible Role
-    hidden AssignExtendPIMRoleForUser($subscriptionId, $resourcegroupName, $resourceName, $roleName, $PrincipalName, $duration,$isExtensionRequest, $force, $isRemoveAssignmentRequest) {
+    hidden AssignExtendPIMRoleForUser($ManagementGroupId, $subscriptionId, $resourcegroupName, $resourceName, $roleName, $PrincipalName, $duration,$isExtensionRequest, $force, $isRemoveAssignmentRequest) {
         $this.AcquireToken();
         $PrincipalName = $this.ConvertToStringArray($PrincipalName);
-        $resolvedResources = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName,$false)
+        $resolvedResources = $null;
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            
+            $resolvedResources = $this.PIMResourceResolver($ManagementGroupId, $false);
+        
+        }
+        else 
+        {
+            $resolvedResources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+        }
+       
         if (($resolvedResources | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResources.ResourceId))) {
            # if there is same resource name inside and rg for multiple resources, we follow the AzSK standard approach to assign role on both resources
             foreach($resolvedResource in $resolvedResources)
@@ -694,7 +798,7 @@ class PIM: AzCommandBase {
             $this.PublishCustomMessage("Your eligible role assignments:", [MessageType]::Default)
             $this.PublishCustomMessage("");
             $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
-            $this.PublishCustomMessage(($assignments | Format-Table -AutoSize -Wrap @{Label = "ResourceId"; Expression = { $_.OriginalId }}, ResourceName, RoleName,  ResourceType, AssignmentState, ExpirationDate | Out-String), [MessageType]::Default)
+            $this.PublishCustomMessage(($assignments | Format-Table  -Wrap @{Label = "ResourceId"; Expression = { $_.OriginalId }; Width =52}, ResourceName, RoleName,  ResourceType, AssignmentState, ExpirationDate | Out-String), [MessageType]::Default)
             $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
             $this.PublishCustomMessage("");
                         
@@ -702,15 +806,25 @@ class PIM: AzCommandBase {
             $this.ExportCSV($objectToExport)
         }
         else {
-            $this.PublishCustomMessage("No eligible roles found for the current login.", [MessageType]::Warning);
+            $this.PublishCustomMessage("No PIM Eligible assignments found for the current context: $($this.AccountId).",[MessageType]::Warning)
         }
     }
 
     # Below method is intended to assign equivalent PIM eligible roles for permanent assignments for a given role on a particular resource
-    hidden AssignPIMforPermanentAssignemnts($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $PrincipalNames, $Force) 
+    hidden AssignPIMforPermanentAssignemnts($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $PrincipalNames, $Force) 
     {
-        $principalTransitioned = @();
-        $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName,$false)
+        $principalTransitioned = @();        
+        $resolvedResource = $null;
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            
+            $resolvedResource = $this.PIMResourceResolver($ManagementGroupId, $false);
+        
+        }
+        else 
+        {
+            $resolvedResource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+        }
         if (($resolvedResource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResource.ResourceId))) {    
             $resourceId = $resolvedResource.ResourceId
             $roles = $this.ListRoles($resourceId)
@@ -818,9 +932,19 @@ class PIM: AzCommandBase {
     }
 
     # Remove permanent assignments for a particular role on a given resource
-    hidden RemovePermanentAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $PrincipalNames, $Force) {
+    hidden RemovePermanentAssignments($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $PrincipalNames, $Force) {
         $this.AcquireToken();
-        $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName,$false)
+        $resolvedResource = $null;
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            
+            $resolvedResource = $this.PIMResourceResolver($ManagementGroupId, $false);
+        
+        }
+        else 
+        {
+            $resolvedResource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+        }
         if(-not [String]::IsNullOrEmpty($resolvedResource.ResourceId))
         {
             $resourceId = ($resolvedResource).ResourceId 
@@ -922,13 +1046,23 @@ class PIM: AzCommandBase {
     
 
     # Get the assignments that are expiring in n days
-    hidden  [PSObject] ListSoonToExpireAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays)
+    hidden  [PSObject] ListSoonToExpireAssignments($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays)
     {
         $this.AcquireToken();
         $criticalRoles = @();
         $soonToExpireAssignments = @();
         $criticalRoles += $this.ConvertToStringArray($RoleNames)
-        $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+        $resources = $null;
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            
+            $resources = $this.PIMResourceResolver($ManagementGroupId, $false);
+        
+        }
+        else 
+        {
+            $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+        }
         if(($resources | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resources.ResourceId)))
         {
             $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $false)
@@ -939,7 +1073,7 @@ class PIM: AzCommandBase {
                 $soonToExpireAssignments += $roleAssignments | Where-Object {([DateTime]::UTCNow).AddDays($soonToExpireWindow) -gt $_.ExpirationDate -and $_.RoleName -in $criticalRoles -and $_.AssignmentState -eq 'Eligible'}
                 if(($soonToExpireAssignments| Measure-Object).Count -gt 0)
                 {
-                    $this.PublishCustomMessage($($soonToExpireAssignments | Sort-Object -Property ExpirationDate | Format-Table  -Wrap 'SubjectId', 'PrincipalName', 'SubjectType', @{Label = "ExpiringInDays"; Expression = { [math]::Round((([DateTime]$_.ExpirationDate).ToUniversalTime().Subtract([DateTime](get-date).ToUniversalTime())).TotalDays) } } |  Out-String), [MessageType]::Default)
+                    $this.PublishCustomMessage($($soonToExpireAssignments | Sort-Object -Property ExpirationDate | Format-Table  -Wrap 'SubjectId', 'PrincipalName', 'SubjectType','RoleName', @{Label = "ExpiringInDays"; Expression = { [math]::Round((([DateTime]$_.ExpirationDate).ToUniversalTime().Subtract([DateTime](get-date).ToUniversalTime())).TotalDays) } } |  Out-String), [MessageType]::Default)
                     $objectToExport = $soonToExpireAssignments | Select-Object RoleName, PrincipalName, UserName, ResourceType, ResourceName, SubjectType, AssignmentState,	IsPermanent, @{Label = "ExpiringInDays"; Expression = { [math]::Round((([DateTime]$_.ExpirationDate).ToUniversalTime().Subtract([DateTime](get-date).ToUniversalTime())).TotalDays) } }
                     $this.ExportCSV($objectToExport)
                 }
@@ -1043,10 +1177,20 @@ class PIM: AzCommandBase {
     }
 
     # configure PIM role settings for a particular role on a resource 
-    hidden [void] ConfigureRoleSettings($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsAfter, $RequireJustificationOnActivation, $MaximumActivationDuration, $RequireMFAOnActivation,$RequireConditionalAccessOnActivation)
+    hidden [void] ConfigureRoleSettings($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsAfter, $RequireJustificationOnActivation, $MaximumActivationDuration, $RequireMFAOnActivation,$RequireConditionalAccessOnActivation)
     {
         #  1) get PIM resource id for the resource provided
-        $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName, $false)
+        $resolvedResource = $null;
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            
+            $resolvedResource = $this.PIMResourceResolver($ManagementGroupId);
+        
+        }
+        else 
+        {
+            $resolvedResource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+        }
        
         #  2) get PIM identifier for the particular role on resource identified in 1
         if (($resolvedResource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResource.ResourceId))) {
