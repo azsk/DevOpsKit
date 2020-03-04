@@ -1096,10 +1096,18 @@ class PIM: AzCommandBase {
     }
 
     # Extend assignments for roles by n days from expiration date
-    hidden [void] ExtendSoonToExpireAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $force)
+    hidden [void] ExtendSoonToExpireAssignments($managementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $force)
     {
-        $soonToExpireAssignments = $this.ListSoonToExpireAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays);
-        $AssignmentCount = ($soonToExpireAssignments | Measure-Object).Count
+        $soonToExpireAssignments = @();
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+          $soonToExpireAssignments = $this.ListSoonToExpireAssignments($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays);
+        }
+        else
+        {
+            $soonToExpireAssignments = $this.ListSoonToExpireAssignments($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays);
+        }
+          $AssignmentCount = ($soonToExpireAssignments | Measure-Object).Count
         if($AssignmentCount -gt 0)
         {
             $ts =$DurationInDays
