@@ -1460,6 +1460,24 @@
             "isCaseSensitive": false,
             "ControlDesiredState": "Passed"
           }
+        },
+        {
+          "id": "VirtualMachineScaleSet170",
+          "controlId": "Azure_VirtualMachineScaleSet_ManagedIdentityExtension",
+          "isEnabled": true,
+          "description": "ManagedIdentityExtension For Windows/Linux uses the credentials for the managed identity, to request an access token from Azure AD",
+          "rationale": "The managed identity VM extension has been deprecated in favor of using the equivalent endpoint in the Azure Instance Metadata Service (IMDS)",
+          "recommendation": "Should use Azure instance Metadata Service(IMDS) in place ManagedIdentityExtension For Windows/Linux Please refer https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/howto-migrate-vm-extension.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.type" ],
+          "matchType": "MatchMultiStringSingleToken",
+          "data": {
+            "value": [ "ManagedIdentityExtensionForWindows", "ManagedIdentityExtensionForLinux" ],
+            "type": "NotAllow",
+            "IfNoPropertyFound": "Passed",
+            "ControlDesiredState": "Passed",
+            "isCaseSensitive": false
+          }
         }
       ]
     }

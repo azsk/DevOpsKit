@@ -187,7 +187,7 @@
     },
     {
       "featureName": "RedisCache",
-      "supportedResourceTypes": [ "Microsoft.Cache/Redis" ,"Microsoft.Cache/Redis/firewallRules"],
+      "supportedResourceTypes": [ "Microsoft.Cache/Redis", "Microsoft.Cache/Redis/firewallRules" ],
       "controls": [
         {
           "id": "RedisCache150",
@@ -790,7 +790,7 @@
     },
     {
       "featureName": "ContainerRegistry",
-      "supportedResourceTypes": [ "Microsoft.ContainerRegistry/registries","Microsoft.ContainerRegistry/registries/webhooks" ],
+      "supportedResourceTypes": [ "Microsoft.ContainerRegistry/registries", "Microsoft.ContainerRegistry/registries/webhooks" ],
       "controls": [
         {
           "id": "ContainerRegistry110",
@@ -921,7 +921,7 @@
     },
     {
       "featureName": "VirtualNetworkInterface",
-      "supportedResourceTypes": [ "Microsoft.Network/networkInterfaces"],
+      "supportedResourceTypes": [ "Microsoft.Network/networkInterfaces" ],
       "controls": [
         {
           "id": "VirtualNetwork120",
@@ -942,7 +942,7 @@
           "controlId": "Azure_VNet_NetSec_Configure_NSG",
           "isEnabled": true,
           "Description": "NSG should be used for subnets in a virtual network to permit traffic only on required inbound/outbound ports. NSGs should not have a rule to allow any-to-any traffic",
-          "Rationale":  "Restricting inbound and outbound traffic via NSGs limits the network exposure of the subnets within a virtual network and limits the attack surface.",
+          "Rationale": "Restricting inbound and outbound traffic via NSGs limits the network exposure of the subnets within a virtual network and limits the attack surface.",
           "Recommendation": "Configure NSG rules to be as restrictive as possible via: (a) Azure Portal -> Network security groups -> <Your NSG> -> Inbound security rules -> Edit 'Allow' action rules. (b) Azure Portal -> Network security groups. -> <Your NSG> -> Outbound security rules -> Edit 'Allow' action rules.",
           "Severity": "Medium",
           "jsonPath": [ "$.properties.networkSecurityGroup.id" ],
@@ -955,7 +955,7 @@
     },
     {
       "featureName": "VirtualNetwork",
-      "supportedResourceTypes": ["Microsoft.Network/virtualNetworks" ],
+      "supportedResourceTypes": [ "Microsoft.Network/virtualNetworks" ],
       "controls": [
         {
           "id": "VirtualNetwork130",
@@ -968,8 +968,8 @@
           "jsonPath": [ "$.properties.virtualNetworkPeerings" ],
           "matchType": "ItemCount",
           "data": {
-              "type": "Equals",
-              "value": 0
+            "type": "Equals",
+            "value": 0
           }
         }
       ]
@@ -978,38 +978,38 @@
       "featureName": "ContainerInstances",
       "supportedResourceTypes": [ "Microsoft.ContainerInstance/containerGroups" ],
       "controls": [
-          {
-              "Id": "ContainerInstances110",
-              "ControlID": "Azure_ContainerInstances_NetSec_Justify_PublicIP_and_Ports",
-              "isEnabled": true,
-              "Description": "Use of public IP address and ports should be carefully reviewed",
-              "Rationale": "Public IP address provides direct access over the internet exposing the container to all type of attacks over the public network.",
-              "Recommendation": "Add public IP address and ports to a container only as required. Ensure that the resulting data flows are carefully reviewed.",
-              "Severity": "High",
-              "jsonPath": [ "$.properties.ipAddress" ],
-              "matchType": "NullableSingleToken",
-              "data": {}
-          },
-          {
-              "Id": "ContainerInstances140",
-              "ControlID": "Azure_ContainerInstances_AuthZ_Container_Segregation",
-              "isEnabled": true,
-              "Description": "A container group must contain only containers which trust each other",
-              "Rationale": "Containers hosted in the same container group can monitor traffic of other containers within the group and can also access the file system of the host OS. Hence a container group must not host containers which do not trust each other. In other words, do not mix containers across trust boundaries in the same group.",
-              "Recommendation": "Carefully review the role and privileges required by each container in a container group. If the privilege levels and access requirements are different, then consider segregating the containers into separate groups.",
-              "Severity": "High",
-              "jsonPath": [ "$.properties.containers" ],
-              "matchType": "ItemCount",
-              "data": {
-                  "type": "LesserThan",
-                  "value": 2
-              }
+        {
+          "Id": "ContainerInstances110",
+          "ControlID": "Azure_ContainerInstances_NetSec_Justify_PublicIP_and_Ports",
+          "isEnabled": true,
+          "Description": "Use of public IP address and ports should be carefully reviewed",
+          "Rationale": "Public IP address provides direct access over the internet exposing the container to all type of attacks over the public network.",
+          "Recommendation": "Add public IP address and ports to a container only as required. Ensure that the resulting data flows are carefully reviewed.",
+          "Severity": "High",
+          "jsonPath": [ "$.properties.ipAddress" ],
+          "matchType": "NullableSingleToken",
+          "data": {}
+        },
+        {
+          "Id": "ContainerInstances140",
+          "ControlID": "Azure_ContainerInstances_AuthZ_Container_Segregation",
+          "isEnabled": true,
+          "Description": "A container group must contain only containers which trust each other",
+          "Rationale": "Containers hosted in the same container group can monitor traffic of other containers within the group and can also access the file system of the host OS. Hence a container group must not host containers which do not trust each other. In other words, do not mix containers across trust boundaries in the same group.",
+          "Recommendation": "Carefully review the role and privileges required by each container in a container group. If the privilege levels and access requirements are different, then consider segregating the containers into separate groups.",
+          "Severity": "High",
+          "jsonPath": [ "$.properties.containers" ],
+          "matchType": "ItemCount",
+          "data": {
+            "type": "LesserThan",
+            "value": 2
           }
+        }
       ]
     },
     {
       "featureName": "EventHub",
-      "supportedResourceTypes": [ "Microsoft.EventHub/namespaces","Microsoft.EventHub/namespaces/AuthorizationRules","Microsoft.EventHub/namespaces/eventhubs/authorizationRules" ],
+      "supportedResourceTypes": [ "Microsoft.EventHub/namespaces", "Microsoft.EventHub/namespaces/AuthorizationRules", "Microsoft.EventHub/namespaces/eventhubs/authorizationRules" ],
       "controls": [
         {
           "ControlID": "Azure_EventHub_AuthZ_Use_Min_Permissions_Access_Policies",
@@ -1019,16 +1019,16 @@
           "Automated": "Yes",
           "MethodName": "CheckEventHubAuthorizationRule",
           "Rationale": "Granting minimum access ensures that users are granted just enough permissions to perform their tasks. This minimizes the set of operations that can be preformed on the resource by an attacker in case of access policy key compromise.",
-          "Recommendation": "Ensure that client apps use shared access policies with the least required privilege and at the Event Hub scope. For instance, if the client app is only reading events from the event hub (as opposed to sending), then the policy used must only include the 'Listen' claim. Refer: https://docs.microsoft.com/en-us/azure/event-hubs/event-hubs-authentication-and-security-model-overview",  
+          "Recommendation": "Ensure that client apps use shared access policies with the least required privilege and at the Event Hub scope. For instance, if the client app is only reading events from the event hub (as opposed to sending), then the policy used must only include the 'Listen' claim. Refer: https://docs.microsoft.com/en-us/azure/event-hubs/event-hubs-authentication-and-security-model-overview",
           "severity": "Medium",
           "jsonPath": [ "$.properties.rights" ],
           "matchType": "ItemCount",
           "data": {
-            "type":"LesserThan",
-            "value":2
+            "type": "LesserThan",
+            "value": 2
           }
         }
-     ]
+      ]
     },
     {
       "featureName": "Search",
@@ -1050,7 +1050,7 @@
           }
         },
         {
-         "id": "Search190",
+          "id": "Search190",
           "controlId": "Azure_Search_AuthN_Use_Managed_Service_Identity",
           "isEnabled": true,
           "description": "Use Managed Service Identity (MSI) for accessing other AAD-protected resources from the search service.",
@@ -1070,7 +1070,7 @@
     },
     {
       "featureName": "APIManagement",
-      "supportedResourceTypes": [ "Microsoft.ApiManagement/service",  "Microsoft.ApiManagement/service/apis"],
+      "supportedResourceTypes": [ "Microsoft.ApiManagement/service", "Microsoft.ApiManagement/service/apis" ],
       "controls": [
         {
           "id": "APIManagement220",
@@ -1102,7 +1102,7 @@
             "type": "Allow",
             "value": "SystemAssigned",
             "isCaseSensitive": false
-          }   
+          }
         },
         {
           "id": "APIManagement140",
@@ -1116,7 +1116,7 @@
           "matchType": "StringMultiToken",
           "data": {
             "type": "Equals",
-            "value": ["https"],
+            "value": [ "https" ],
             "isCaseSensitive": false
           }
         }
@@ -1246,7 +1246,7 @@
     },
     {
       "featureName": "DBforPostgreSQL",
-      "supportedResourceTypes": [ "Microsoft.DBforPostgreSQL/servers" , "Microsoft.DBforPostgreSQL/servers/configurations" , "Microsoft.DBforPostgreSQL/servers/firewallRules"],
+      "supportedResourceTypes": [ "Microsoft.DBforPostgreSQL/servers", "Microsoft.DBforPostgreSQL/servers/configurations", "Microsoft.DBforPostgreSQL/servers/firewallRules" ],
       "controls": [
         {
           "id": "DBforPostgreSQL120",
@@ -1278,7 +1278,7 @@
           "matchType": "ValidateIPRangeSingleTokens",
           "data": {
             "startIP": "0.0.0.0",
-            "endIP" : "255.255.255.255",
+            "endIP": "255.255.255.255",
             "IfNoPropertyFound": "Passed",
             "ControlDesiredState": "Failed"
           }
@@ -1295,7 +1295,7 @@
           "matchType": "ValidateIPRangeSingleTokens",
           "data": {
             "startIP": "0.0.0.0",
-            "endIP" : "0.0.0.0",
+            "endIP": "0.0.0.0",
             "IfNoPropertyFound": "Passed",
             "ControlDesiredState": "Verify"
           }
@@ -1306,7 +1306,7 @@
 
     {
       "featureName": "DBforMySQL",
-      "supportedResourceTypes": [ "Microsoft.DBforMySQL/servers" , "Microsoft.DBforMySQL/servers/firewallRules" ],
+      "supportedResourceTypes": [ "Microsoft.DBforMySQL/servers", "Microsoft.DBforMySQL/servers/firewallRules" ],
       "controls": [
         {
           "id": "DBforMySQL120",
@@ -1338,7 +1338,7 @@
           "matchType": "ValidateIPRangeSingleTokens",
           "data": {
             "startIP": "0.0.0.0",
-            "endIP" : "255.255.255.255",
+            "endIP": "255.255.255.255",
             "IfNoPropertyFound": "Passed",
             "ControlDesiredState": "Failed"
           }
@@ -1355,7 +1355,7 @@
           "matchType": "ValidateIPRangeSingleTokens",
           "data": {
             "startIP": "0.0.0.0",
-            "endIP" : "0.0.0.0",
+            "endIP": "0.0.0.0",
             "IfNoPropertyFound": "Passed",
             "ControlDesiredState": "Verify"
           }
@@ -1380,7 +1380,7 @@
           "data": {
             "KeyPath": "$.properties.type",
             "value": "MicrosoftMonitoringAgent",
-            "type":  "Allow"
+            "type": "Allow"
           }
         },
         {
@@ -1412,7 +1412,7 @@
           "data": {
             "KeyPath": "$.properties.type",
             "value": "IaaSAntimalware",
-            "type":  "Allow"
+            "type": "Allow"
           }
         },
         {
@@ -1461,9 +1461,29 @@
             "isCaseSensitive": false,
             "ControlDesiredState": "Passed"
           }
+        },
+        {
+          "id": "VirtualMachineScaleSet170",
+          "controlId": "Azure_VirtualMachineScaleSet_ManagedIdentityExtension",
+          "isEnabled": true,
+          "description": "ManagedIdentityExtension For Windows/Linux uses the credentials for the managed identity, to request an access token from Azure AD",
+          "rationale": "The managed identity VM extension has been deprecated in favor of using the equivalent endpoint in the Azure Instance Metadata Service (IMDS)",
+          "recommendation": "Should use Azure instance Metadata Service(IMDS) in place ManagedIdentityExtension For Windows/Linux Please refer https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/howto-migrate-vm-extension.",
+          "severity": "Medium",
+          "jsonPath": [ "$.properties.type" ],
+          "matchType": "MatchMultiStringSingleToken",
+          "data": {
+            "value": [ "ManagedIdentityExtensionForWindows", "ManagedIdentityExtensionForLinux" ],
+            "type": "NotAllow",
+            "IfNoPropertyFound": "Passed",
+            "ControlDesiredState": "Passed",
+            "isCaseSensitive": false
+          }
         }
+
       ]
     }
 
   ]
 }
+
