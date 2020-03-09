@@ -22,6 +22,7 @@ namespace AzSK.ARMChecker.Lib
         VerifiableBooleanSingleToken,//single Token
         MatchStringSingleToken, //Single Token
         VerifiableItemCount, // Multi token
-		ValidateIPRangeSingleTokens // Single token
+		ValidateIPRangeSingleTokens, // Single token
+        MatchMultiStringSingleToken // Multi String single token
     }
 }

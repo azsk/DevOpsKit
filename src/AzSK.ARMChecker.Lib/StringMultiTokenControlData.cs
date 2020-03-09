@@ -10,5 +10,6 @@ namespace AzSK.ARMChecker.Lib
         public string[] Value { get; set; }
         public bool IsCaseSensitive { get; set; }
         public string IfNoPropertyFound { get; set; }
+        public string ControlDesiredState { get; set; }
     }
 }

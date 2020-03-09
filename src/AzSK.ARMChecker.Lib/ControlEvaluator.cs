@@ -76,6 +76,8 @@ namespace AzSK.ARMChecker.Lib
                     return EvaluateMatchStringSingleToken(control, resource);
                 case ControlMatchType.ValidateIPRangeSingleTokens:
                     return EvaluateValidateIPRangeSingleTokens(control, resource);
+                case ControlMatchType.MatchMultiStringSingleToken:
+                    return EvaluateMatchMultiStringSingleToken(control, resource);
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -436,6 +438,75 @@ namespace AzSK.ARMChecker.Lib
             }
             return result;
         }
+
+        private static ControlResult EvaluateMatchMultiStringSingleToken(ResourceControl control, JObject resource)
+        {
+            var result = ExtractSingleToken(control, resource, out string actual, out StringMultiTokenControlData match);
+            result.ExpectedValue = match.Type + " '" + match.Value + "'";
+            result.ExpectedProperty = control.JsonPath.ToSingleString(" | ");
+            if (result.IsTokenNotFound || result.IsTokenNotValid)
+            {
+                if (match.IfNoPropertyFound == "Passed")
+                {
+                    result.VerificationResult = VerificationResult.Passed;
+                }
+                else if (match.IfNoPropertyFound == "Failed")
+                {
+                    result.VerificationResult = VerificationResult.Failed;
+                }
+                else if (match.IfNoPropertyFound == "Verify")
+                {
+                    result.VerificationResult = VerificationResult.Verify;
+                }
+
+            }
+            else
+            {
+                if (match.Value.Contains(actual))
+                {
+                    if (match.Type == ControlDataMatchType.Allow)
+                    {
+
+                        if (match.ControlDesiredState == "Verify")
+                        {
+                            result.VerificationResult = VerificationResult.Verify;
+                        }
+                        else if (match.ControlDesiredState == "Passed")
+                        {
+                            result.VerificationResult = VerificationResult.Passed;
+                        }
+                        else
+                        {
+                            result.VerificationResult = VerificationResult.Failed;
+                        }
+                    }
+                    else
+                    {
+                        result.VerificationResult = VerificationResult.Verify;
+                    }
+                }
+                else
+                {
+                    if (match.Type == ControlDataMatchType.NotAllow)
+                    {
+                        if (match.ControlDesiredState == "Verify")
+                        {
+                            result.VerificationResult = VerificationResult.Verify;
+                        }
+                        else if (match.ControlDesiredState == "Passed")
+                        {
+                            result.VerificationResult = VerificationResult.Passed;
+                        }
+                        else
+                        {
+                            result.VerificationResult = VerificationResult.Failed;
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+
         private static ControlResult EvaluateRegExpressionSingleToken(ResourceControl control, JObject resource)
         {
             var result = ExtractSingleToken(control, resource, out string actual, out RegExpressionSingleTokenControlData match);
