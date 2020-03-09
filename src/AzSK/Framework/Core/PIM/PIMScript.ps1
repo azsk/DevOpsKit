@@ -277,7 +277,8 @@ class PIM: AzCommandBase {
         if($type -eq 'subscription')
         {
             # Fetch PIM details of the all subscriptions user has access to
-            $resourceUrl = $this.APIroot + "/resources?`$filter=(type%20eq%20%27subscription%27)&`$orderby=type"
+            $resourceUrl = $this.APIroot + "/resources?/discovery?`$filter=(registeredDateTime%20ne%20null%20and%20type%20eq%20%27subscription%27)"
+            #$filter=(type%20eq%20%27subscription%27)&`$orderby=type"
         }
         elseif($type -eq 'resourcegroup')
         {
@@ -945,7 +946,7 @@ class PIM: AzCommandBase {
         {
             $resolvedResource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
         }
-        if(-not [String]::IsNullOrEmpty($resolvedResource.ResourceId))
+        if($null -ne $resolvedResource -and (-not [String]::IsNullOrEmpty($resolvedResource.ResourceId)))
         {
             $resourceId = ($resolvedResource).ResourceId 
             $users = @();
@@ -1039,11 +1040,10 @@ class PIM: AzCommandBase {
         }
         else
         {
-            $this.PublishCustomMessage("No matching resource found for the current context.", [MessageType]::Warning)
+            $this.PublishCustomMessage("Unable to find matching resource. Please make sure that you have admin privileges on the resource.", [MessageType]::Warning)
         }
     }
-
-    
+   
 
     # Get the assignments that are expiring in n days
     hidden  [PSObject] ListSoonToExpireAssignments($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays)
