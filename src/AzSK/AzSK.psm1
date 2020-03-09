@@ -157,6 +157,10 @@ function Set-AzSKPolicySettings {
 		[switch]
         $EnableCentralScanMode,
 
+        [Parameter(Mandatory = $false)]
+		[switch]
+        $IsSAW,
+
         [Parameter(Mandatory = $false, HelpMessage = "Provide the flag to disable org-policy check for current session")]
         [switch]
         [Alias("dopc")]
@@ -233,6 +237,10 @@ function Set-AzSKPolicySettings {
 			if($EnableCentralScanMode)
 			{
 				 $azskSettings.IsCentralScanModeOn = $EnableCentralScanMode
+            }
+            if($IsSAW)
+            {
+                $azskSettings.IsSAW = $true
             }
             if ($AzureEnvironment) {
                 $azskSettings.AzureEnvironment = $AzureEnvironment
@@ -508,11 +516,6 @@ function Set-AzSKPrivacyNoticeResponse {
             if ($AcceptPrivacyNotice -eq "no") {
                 $azskSettings.PrivacyNoticeAccepted = $false
                 $azskSettings.UsageTelemetryLevel = "None"
-            }
-
-            if([Environment]::OSVersion.VersionString.Contains('Windows') -and (Get-WmiObject -Class Win32_ComputerSystem).Domain -eq "SAW.MSFT.NET")
-            {
-                $azskSettings.IsSAW = $true
             }
             [ConfigurationManager]::UpdateAzSKSettings($azskSettings)
             [EventBase]::PublishGenericCustomMessage("Successfully updated privacy settings.");
