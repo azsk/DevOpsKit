@@ -1365,7 +1365,7 @@
     },
     {
       "featureName": "VirtualMachineScaleSet",
-      "supportedResourceTypes": [ "Microsoft.Compute/virtualMachineScaleSets" ],
+      "supportedResourceTypes": [ "Microsoft.Compute/virtualMachineScaleSets","Microsoft.Compute/virtualMachineScaleSets/extensions" ],
       "controls": [
         {
           "id": "VirtualMachineScaleSet110",
