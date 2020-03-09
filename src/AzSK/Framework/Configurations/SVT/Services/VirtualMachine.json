@@ -48,7 +48,8 @@
              "VirtualMachine",
              "ExcludeDatabricks"
           ],
-          "Enabled": true
+          "Enabled": true,
+          "PolicyDefinitionGuid": "af6cd1bd-1635-48cb-bde7-5b15693900b9"
        },
        {
        "ControlID": "Azure_VirtualMachine_Config_Enable_NSG",
@@ -117,7 +118,8 @@
              "ERvNet",
              "VirtualMachine"
           ],
-          "Enabled": true
+          "Enabled": true,
+          "PolicyDefinitionGuid": "0961003e-5a0a-4549-abde-af6a37f2724d"
        },
        {
           "ControlID": "Azure_VirtualMachine_SI_ASC_OS_Vulnerabilities",
@@ -249,7 +251,8 @@
           "ExcludeKubernetes",
           "VirtualMachine"
         ],
-        "Enabled": true
+        "Enabled": true,
+        "PolicyDefinitionGuid": "760a85ff-6162-42b3-8d70-698e268f64"
       },
       {
          "ControlID": "Azure_VirtualMachine_SI_Deploy_GuestConfig_Extension",

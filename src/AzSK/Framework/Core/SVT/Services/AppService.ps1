@@ -915,6 +915,9 @@ class AppService: AzSVTBase
 							$controlResult.SetStateData("Current Minimum TLS Version",$minTlsVersion.ToString());
 						}
 				}else{
+						#Setting this property ensures that this control result wont be considered for the central telemetry. 
+						#As we are not able to fetch siteconfig details required to validate control 
+						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 						$controlResult.VerificationResult = [VerificationResult]::Manual
 						$controlResult.AddMessage("Unable to fetch TLS settings.");
 				}
@@ -948,28 +951,37 @@ class AppService: AzSVTBase
 		{	
 				$ipSecurityRestrictions = $false
 				$scmIpSecurityRestrictions = 	$false
-				$controlResult.VerificationResult = [VerificationResult]::Verify
-				$scmIpSecurityRestrictionsUseMain = $this.SiteConfigs.Properties.scmIpSecurityRestrictionsUseMain
-				# Check IP restrictions for main website
-				if($null -eq $this.SiteConfigs.Properties.ipSecurityRestrictions){
-					$controlResult.AddMessage("IP rule based access restriction is not set up for app: " +$this.ResourceContext.ResourceName);
+				if($null -ne $this.SiteConfigs -and [Helpers]::CheckMember($this.SiteConfigs,"Properties")){
+					$controlResult.VerificationResult = [VerificationResult]::Verify
+					$scmIpSecurityRestrictionsUseMain = $this.SiteConfigs.Properties.scmIpSecurityRestrictionsUseMain
+					# Check IP restrictions for main website
+					if($null -eq $this.SiteConfigs.Properties.ipSecurityRestrictions){
+						$controlResult.AddMessage("IP rule based access restriction is not set up for app: " +$this.ResourceContext.ResourceName);
+					}else{
+						$ipSecurityRestrictions = $true
+						$controlResult.AddMessage("Following IP rule based access restriction is cofigured for app: "+$this.ResourceContext.ResourceName);
+						$controlResult.AddMessage($this.SiteConfigs.Properties.ipSecurityRestrictions);
+					}
+					# Check IP restrictions for scm website
+					if($scmIpSecurityRestrictionsUseMain -eq $true){
+						$scmIpSecurityRestrictions = $ipSecurityRestrictions
+						$controlResult.AddMessage("IP based access restriction rules are same for both scm site and main app.");
+					}elseif($null -eq $this.SiteConfigs.Properties.scmIpSecurityRestrictions){
+						$scmIpSecurityRestrictions = 	$false
+						$controlResult.AddMessage("IP based access restriction is not set up for scm site used by app.");
+					}else{
+						$ipSecurityRestrictions = $true
+						$controlResult.AddMessage("Following IP based access restriction is configured for scm site used by app:");
+						$controlResult.AddMessage($this.SiteConfigs.Properties.scmIpSecurityRestrictions);
+					}
 				}else{
-					$ipSecurityRestrictions = $true
-					$controlResult.AddMessage("Following IP rule based access restriction is cofigured for app: "+$this.ResourceContext.ResourceName);
-					$controlResult.AddMessage($this.SiteConfigs.Properties.ipSecurityRestrictions);
+					#Setting this property ensures that this control result wont be considered for the central telemetry. 
+					#As we are not able to fetch siteconfig details required to validate control 
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+					$controlResult.VerificationResult = [VerificationResult]::Manual
+					$controlResult.AddMessage("Unable to fetch IP based security restrictions settings.");
 				}
-				# Check IP restrictions for scm website
-				if($scmIpSecurityRestrictionsUseMain -eq $true){
-					$scmIpSecurityRestrictions = $ipSecurityRestrictions
-					$controlResult.AddMessage("IP based access restriction rules are same for both scm site and main app.");
-				}elseif($null -eq $this.SiteConfigs.Properties.scmIpSecurityRestrictions){
-					$scmIpSecurityRestrictions = 	$false
-					$controlResult.AddMessage("IP based access restriction is not set up for scm site used by app.");
-				}else{
-					$ipSecurityRestrictions = $true
-					$controlResult.AddMessage("Following IP based access restriction is configured for scm site used by app:");
-					$controlResult.AddMessage($this.SiteConfigs.Properties.scmIpSecurityRestrictions);
-				}
+			
 				return $controlResult;
 		}
 

@@ -2,9 +2,9 @@ Set-StrictMode -Version Latest
 enum VerificationResult
 {
 	Passed 
-    Failed
-    Verify
-    Manual
+	Failed
+	Verify
+	Manual
 	RiskAck
 	Error
 	Disabled
@@ -12,6 +12,19 @@ enum VerificationResult
 	Remediate
 	Skipped
 	NotScanned
+}
+
+enum PolicyVerificationResult
+{
+	NotScanned
+	Passed 
+	Failed
+	Verify
+	Error
+	NoResponse
+	DefinitionNotFound
+	AssignmentNotFound
+	DefinitionNotInInitiative
 }
 
 enum AttestationStatus

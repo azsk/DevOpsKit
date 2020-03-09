@@ -9,20 +9,22 @@ class ERvNet : SVTIaasBase
 
 	hidden [ControlResult] CheckPublicIps([ControlResult] $controlResult)
     {
-        if($null -ne $this.vNetNicsOutput )
+        if($null -ne $this.vNetNicsOutput)
         {
+            $PublicIps = @();
 			$controlResult.AddMessage([MessageData]::new("Analyzing all the NICs configured in the VNet"));
-            $publicIpCount = (($this.vNetNicsOutput | Where-Object {!([System.String]::IsNullOrWhiteSpace($_.PublicIpAddress))}) | Measure-Object).count
-            if($publicIpCount -gt 0)
+            $PublicIps += ($this.vNetNicsOutput | Where-Object {!([System.String]::IsNullOrWhiteSpace($_.PublicIpAddress))})
+            if($PublicIps.Count -gt 0)
             {
 				$publicIPList = @()
-				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Below Public IP(s) on the  ERVnet"));
-                $this.vNetNicsOutput | ForEach-Object{
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Verify below Public IP(s) on the ErVnet"));
+                $PublicIps | ForEach-Object{
                     Set-Variable -Name nic -Scope Local -Value $_
 					$publicIP = $nic | Select-Object NICName, VMName, PrimaryStatus, NetworkSecurityGroupName, PublicIpAddress, PrivateIpAddress
 					$publicIPList += $publicIP
 					$controlResult.AddMessage([MessageData]::new($publicIP));
                 }
+
 				$controlResult.SetStateData("Public IP(s) on the  ERVnet", $publicIPList);
             }
             else
@@ -144,7 +146,7 @@ class ERvNet : SVTIaasBase
 		$VMNics = @()
 		if($null -ne $this.vNetNicsOutput)
 		{
-			$vNetNicsMultiVM = $this.vNetNicsOutput | Group-Object VMId | Where-Object {-not [System.String]::IsNullOrWhiteSpace($_.Name) -and $_.Count -gt 1}
+			$vNetNicsMultiVM = $this.vNetNicsOutput | Group-Object VMName | Where-Object {-not [System.String]::IsNullOrWhiteSpace($_.Name) -and $_.Count -gt 1}
 
 			$hasTCPPassed = $true
 			if($null -ne $vNetNicsMultiVM)

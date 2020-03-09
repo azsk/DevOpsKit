@@ -27,7 +27,8 @@
         "NetworkSecurityGroupName",
         "PublicIpAddress",
         "PrivateIpAddress"
-      ]
+      ],
+      "PolicyDefinitionGuid": "ERvNet110"
     },
     {
       "ControlID": "Azure_ERvNet_NetSec_Dont_Use_Multi_NIC_VMs",
@@ -67,7 +68,8 @@
       "DataObjectProperties": [
         "NICName",
         "EnableIPForwarding"
-      ]
+      ],
+      "PolicyDefinitionGuid": "ERvNet130"
     },
     {
       "ControlID": "Azure_ERvNet_NetSec_Dont_Use_NSGs_on_GatewaySubnet",
@@ -111,7 +113,8 @@
       "DataObjectProperties": [
         "Name",
         "RouteTable"
-      ]
+      ],
+      "PolicyDefinitionGuid": "ERvNet150"
     },
     {
       "ControlID": "Azure_ERvNet_NetSec_Dont_Add_VPN_Gateways",
@@ -129,7 +132,8 @@
         "NetSec",
         "ERvNet"
       ],
-      "Enabled": true
+      "Enabled": true,
+      "PolicyDefinitionGuid": "ERvNet160"
     },
     {
       "ControlID": "Azure_ERvNet_NetSec_Dont_Use_VNet_Peerings",
@@ -147,7 +151,8 @@
         "NetSec",
         "ERvNet"
       ],
-      "Enabled": true
+      "Enabled": true,
+      "PolicyDefinitionGuid": "ERvNet170"
     },
     {
       "ControlID": "Azure_ERvNet_NetSec_Use_Only_Internal_Load_Balancers",
@@ -165,7 +170,8 @@
         "NetSec",
         "ERvNet"
       ],
-      "Enabled": true
+      "Enabled": true,
+      "PolicyDefinitionGuid": "ERvNet180"
     },
     {
       "ControlID": "Azure_ERvNet_SI_Add_Only_Network_Resources",
@@ -205,7 +211,8 @@
         "SI",
         "ERvNet"
       ],
-      "Enabled": false
+      "Enabled": false,
+      "PolicyDefinitionGuid": "ERvNet200"
     },
     {
       "ControlID": "Azure_ERvNet_SI_Dont_Remove_ARM_Policy",

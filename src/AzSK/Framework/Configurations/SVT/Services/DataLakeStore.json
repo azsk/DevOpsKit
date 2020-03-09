@@ -128,7 +128,8 @@
         "DP",
         "DataLakeStore"
       ],
-      "Enabled": true
+      "Enabled": true,
+      "PolicyDefinitionGuid": "DataLakeStore180"
     },
     {
       "ControlID": "Azure_DataLakeStore_DP_Encrypt_In_Transit",

@@ -19,6 +19,8 @@ function Set-AzSKAzureSecurityCenterPolicies
 			Provide a security contact international information phone number including the country code (for example, +1-425-1234567)
 	.PARAMETER EnableOptionalPolicies
 			Switch to specify whether to set the optional ASC policies.
+	
+
 
 	.LINK
 	https://aka.ms/azskossdocs 
@@ -67,14 +69,24 @@ function Set-AzSKAzureSecurityCenterPolicies
 			$secCenter = [SecurityCenterStatus]::new($SubscriptionId, $PSCmdlet.MyInvocation);
 			if ($secCenter) 
 			{
-				$secCenter.SecurityContactEmails = $SecurityContactEmails;
-				$secCenter.SecurityPhoneNumber = $SecurityPhoneNumber;
 				$setOptionalPolicy = $false;
 
 				if ($EnableOptionalPolicies){
 					$setOptionalPolicy = $true;
+				} 
+
+				$updateSecurityContacts = $false;
+				if(-not [string]::IsNullOrWhiteSpace($SecurityPhoneNumber) -or -not [string]::IsNullOrWhiteSpace($SecurityContactEmails))
+				{
+					$secCenter.SecurityContactEmails = $SecurityContactEmails;
+					$secCenter.SecurityPhoneNumber = $SecurityPhoneNumber;
+					$updateSecurityContacts =$true;
+					
 				}
-				return $secCenter.SetPolicies($setOptionalPolicy);
+				
+				
+				
+				return $secCenter.SetPolicies($updateSecurityContacts,$setOptionalPolicy);
 			}
 		}
 		catch 

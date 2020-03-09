@@ -581,10 +581,28 @@ class WritePsConsole: FileOutputBase
                 $ky = $item.Alias
                 $vl = $item.Value
 
-				if($vl -eq $true)
-                {
-                    $vl = ""
-                }
+				
+				if($vl.GetType().Name -in @('String','String[]'))
+				{
+					$vl = '"' + $vl + '"'
+				}
+				elseif($vl -in @($true, $false) -and $vl.GetType().Name -ne 'SwitchParameter' )
+				{
+					try
+					{
+						$vl = '$'+$vl.ToString().ToLower()
+					}
+					catch
+					{
+						# catch will be executed when the object type is PSObject as if PsObject contains values $vl -in @($true, $false) this returns true
+						#eat exception to not show anything in logs and console
+					}
+				}
+				elseif($vl.GetType().Name -eq 'SwitchParameter')
+				{
+					$vl = ""
+				}
+				
                 if($ky)
                 {
                     $cmID += "-$ky $vl "
