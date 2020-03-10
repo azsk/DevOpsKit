@@ -34,7 +34,7 @@ class SVTResourceResolver: AzSKRoot
 
     SVTResourceResolver([string]$organizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPools, $ServiceConnectionNames, $MaxObj, $ScanAllArtifacts,$PATToken,$ResourceTypeName): Base($organizationName,$PATToken)
 	{
-        $this.MaxObjectsToScan = $MaxObj #default = 0 => scan all if "*" specified.
+        $this.MaxObjectsToScan = $MaxObj #default = 0 => scan all if "*" specified...
 
         $this.SetallTheParamValues($organizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPools,$ScanAllArtifacts,$PATToken,$ResourceTypeName);
         if(-not [string]::IsNullOrEmpty($ServiceConnectionNames))
