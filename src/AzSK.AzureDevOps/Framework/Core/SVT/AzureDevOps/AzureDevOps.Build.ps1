@@ -12,6 +12,7 @@ class Build: SVTBase
         $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
         $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
 
+        $securityNamespacesObj = $null;
         # Get build object
         $apiURL = $this.ResourceContext.ResourceId
         $this.BuildObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
@@ -45,8 +46,9 @@ class Build: SVTBase
                         $patterns.RegexList = [Helpers]::MergeObjects($patterns.RegexList, $custPatternsRegList.RegexList)	   
                         #$patterns.RegexList = $patterns.RegexList | select -Unique;  
                      }
+                     $ControlSettings = $null;
                 }
-                
+                $resObj = $null;
                 }
                 catch {
                     $controlResult.AddMessage($_);
@@ -74,6 +76,7 @@ class Build: SVTBase
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in build definition.");
             }
+            $patterns = $null;
             }
         }
         catch {
@@ -139,13 +142,15 @@ class Build: SVTBase
                     $controlResult.AddMessage([VerificationResult]::Failed,
                     "No recent build history found in last $($this.ControlSettings.Build.BuildHistoryPeriodInDays) days");
                 }
+                $recentBuilds = $null;
             }
             else
             {
                 $controlResult.AddMessage([VerificationResult]::Failed,
                 "No build history found.");
             }
-           
+            $builds = $null;
+            $responseObj = $null;
         }
         else {
             $controlResult.AddMessage([VerificationResult]::Failed,
@@ -179,6 +184,8 @@ class Build: SVTBase
                 {
                     $controlResult.AddMessage([VerificationResult]::Passed,"Inherited permissions are disabled on release pipeline.");    
                 }
+                $header = $null;
+                $responseObj = $null;
             }
         }
         catch
@@ -248,6 +255,8 @@ class Build: SVTBase
                 $controlResult.AddMessage([VerificationResult]::Passed,"No identities have been explicitly provided with RBAC access to [$($this.ResourceContext.ResourceName)] other than build pipeline owner and default groups");
                 $controlResult.AddMessage("List of whitelisted user identities:",$whitelistedUserIdentities)
             } 
+            $accessList = $null;
+            $responseObj = $null;
         }
         catch
         {
@@ -316,6 +325,7 @@ class Build: SVTBase
                else {
                 $controlResult.AddMessage([VerificationResult]::Verify,"Pipeline code is built on a self hosted agent from untrusted external source.", $sourceobj );   
                }
+               $sourceobj = $null;
            }
            else {
             $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines build code is from external sources.");   

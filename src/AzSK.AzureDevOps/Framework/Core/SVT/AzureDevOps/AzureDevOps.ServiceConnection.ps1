@@ -12,10 +12,14 @@ class ServiceConnection: SVTBase
         $projectObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
         $this.ProjectId = $projectObj.id
 
+        $projectObj = $null;
+
         # Get security namespace identifier of service endpoints.
         $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
         $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
         $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ServiceEndpoints")}).namespaceId
+
+        $securityNamespacesObj = $null;
 
         # Get service connection details https://dev.azure.com/{organization}/{project}/_admin/_services 
         $this.ServiceEndpointsObj = $this.ResourceContext.ResourceDetails
@@ -28,10 +32,9 @@ class ServiceConnection: SVTBase
 
     hidden [ControlResult] CheckServiceConnectionAccess([ControlResult] $controlResult)
 	{
-        $Endpoint = $this.ServiceEndpointsObj
-        if([Helpers]::CheckMember($Endpoint, "data.scopeLevel") )
+        if([Helpers]::CheckMember($this.ServiceEndpointsObj, "data.scopeLevel") )
         {
-            if($Endpoint.data.scopeLevel -eq "Subscription")
+            if($this.ServiceEndpointsObj.data.scopeLevel -eq "Subscription")
             {
                 $controlResult.AddMessage([VerificationResult]::Failed,
                                         "Define RG level scope for below service endpoints");
@@ -73,8 +76,7 @@ class ServiceConnection: SVTBase
 
     hidden [ControlResult] CheckSPNAuthenticationCertificate([ControlResult] $controlResult)
 	{
-        $Endpoint = $this.ServiceEndpointsObj 
-        if([Helpers]::CheckMember($Endpoint, "authorization.parameters.authenticationType"))
+        if([Helpers]::CheckMember($this.ServiceEndpointsObj, "authorization.parameters.authenticationType"))
         {
             if( $Endpoint.authorization.parameters.authenticationType -eq "spnKey")
             {
@@ -93,9 +95,7 @@ class ServiceConnection: SVTBase
 
     hidden [ControlResult] CheckInactiveEndpoints([ControlResult] $controlResult)
 	{
-
-        $Endpoint = $this.ServiceEndpointsObj
-        $apiURL = "https://dev.azure.com/organization/project/_apis/serviceendpoint/$($Endpoint.Id)/executionhistory/?api-version=4.1-preview.1"
+        $apiURL = "https://dev.azure.com/organization/project/_apis/serviceendpoint/$($this.ServiceEndpointsObj.Id)/executionhistory/?api-version=4.1-preview.1"
         $serverFileContent = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 
         if($serverFileContent.Count -gt 0)
@@ -110,7 +110,7 @@ class ServiceConnection: SVTBase
                 "Endpoint used with Cert based authenticated");
             }
         }
-          
+        $serverFileContent = $null;
         return $controlResult;
     }
 
@@ -134,7 +134,8 @@ class ServiceConnection: SVTBase
                 $controlResult.AddMessage([VerificationResult]::Passed,"");
             }
             
-            
+            $Endpoint = $null; 
+            $responseObj = $null; 
         }
         catch {
             $failMsg = $_
@@ -153,9 +154,8 @@ class ServiceConnection: SVTBase
         $failMsg = $null
         try
         {
-            $Endpoint = $this.ServiceEndpointsObj
             $IsGlobalSecurityGroupPermitted = $false
-            $apiURL = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.serviceendpointrole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId),$($Endpoint.id);
+            $apiURL = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.serviceendpointrole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId),$($this.ServiceEndpointsObj.id);
             $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
             $nonCompliantIdentities = @();
             if((($responseObj | Measure-Object).Count -gt 0) -and [Helpers]::CheckMember($responseObj,"identity"))
@@ -177,11 +177,13 @@ class ServiceConnection: SVTBase
                                 $nonCompliantIdentities += $identity
                             }
                         }
+                        $identityObj = $null;
                     }
                     catch
                     {
-                        $otherIdentities += @{ ServiceConnectionName = $($Endpoint.name); Identity = $($identity)}
+                        $otherIdentities += @{ ServiceConnectionName = $($this.ServiceEndpointsObj.name); Identity = $($identity)}
                     }
+                    $identity = $null;
                 }
                 if($IsGlobalSecurityGroupPermitted -eq $true)
                 {
@@ -192,6 +194,8 @@ class ServiceConnection: SVTBase
                     $controlResult.AddMessage([VerificationResult]::Passed,"");
                 }
             }
+            $responseObj = $null;
+            $nonCompliantIdentities = $null;
         }
         catch {
             $failMsg = $_
@@ -213,9 +217,8 @@ class ServiceConnection: SVTBase
         $failMsg = $null
         try
         {
-            $Endpoint = $this.ServiceEndpointsObj
             $IsGlobalSecurityGroupPermitted = $false
-            $apiURL = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.serviceendpointrole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId),$($Endpoint.id);
+            $apiURL = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.serviceendpointrole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId),$($this.ServiceEndpointsObj.id);
             $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
             $nonCompliantIdentities = @();
             if((($responseObj | Measure-Object).Count -gt 0) -and [Helpers]::CheckMember($responseObj,"identity"))
@@ -243,8 +246,9 @@ class ServiceConnection: SVTBase
                     }
                     catch
                     {
-                        $otherIdentities += @{ ServiceConnectionName = $($Endpoint.name); Identity = $($identity)}
+                        $otherIdentities += @{ ServiceConnectionName = $($this.ServiceEndpointsObj.name); Identity = $($identity)}
                     }
+                    $identity = $null;
                 }
                 if($IsGlobalSecurityGroupPermitted -eq $true)
                 {
@@ -255,6 +259,7 @@ class ServiceConnection: SVTBase
                     $controlResult.AddMessage([VerificationResult]::Passed,"");
                 }
             }
+            $responseObj = $null;
         }
         catch {
             $failMsg = $_
@@ -285,6 +290,7 @@ class ServiceConnection: SVTBase
                else {
                 $controlResult.AddMessage([VerificationResult]::Passed, "Service connection is not granted access to all pipeline");
                }
+               $responseObj = $null;
            }
         catch {
             $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch service connection details. $($_) Please verify from portal that you are not granting all pipeline access to service connections");
@@ -295,16 +301,15 @@ class ServiceConnection: SVTBase
 
     hidden [ControlResult] CheckServiceConnectionForPATOrAuth([ControlResult] $controlResult)
     {
-        $Endpoint = $this.ServiceEndpointsObj 
-        if([Helpers]::CheckMember($Endpoint, "authorization.scheme"))
+        if([Helpers]::CheckMember($this.ServiceEndpointsObj, "authorization.scheme"))
         {
-            if( $Endpoint.authorization.scheme -eq "OAuth")
+            if( $this.ServiceEndpointsObj.authorization.scheme -eq "OAuth")
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "Service connection $($Endpoint.name) is authenticated via $($Endpoint.authorization.scheme)");
+                $controlResult.AddMessage([VerificationResult]::Passed, "Service connection $($this.ServiceEndpointsObj.name) is authenticated via $($this.ServiceEndpointsObj.authorization.scheme)");
             }
             else
             {
-                $controlResult.AddMessage([VerificationResult]::Failed, "Service connection $($Endpoint.name) is authenticated via $($Endpoint.authorization.scheme)");
+                $controlResult.AddMessage([VerificationResult]::Failed, "Service connection $($this.ServiceEndpointsObj.name) is authenticated via $($this.ServiceEndpointsObj.authorization.scheme)");
             }
         }
         return $controlResult;

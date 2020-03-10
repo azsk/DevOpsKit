@@ -67,6 +67,7 @@ class AgentPool: SVTBase
             else {
                 $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provision is not enabled for the agent pool.");
             }
+            $agentPoolsObj =$null;
         }
         catch{
             $controlResult.AddMessage([VerificationResult]::Manual,"could not able to fetch agent pool details.");
@@ -90,6 +91,7 @@ class AgentPool: SVTBase
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed,"Access permission to all pipeline is not enabled for the agent pool.");
             }
+            $agentPoolsObj =$null;
         }
         catch{
             $controlResult.AddMessage($_); 
