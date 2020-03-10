@@ -24,56 +24,63 @@ class Build: SVTBase
 
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
 	{
-      try {      
-        if([Helpers]::CheckMember($this.BuildObj,"variables")) 
-        {
-
-            $CredPatternList = @();
-            $noOfCredFound =0;
-            [xml] $patterns = [ConfigurationManager]::LoadServerConfigFile("CredentialPatterns.xml")
-
-            if([Helpers]::CheckMember($patterns,"ArrayOfContentSearcher.ContentSearcher"))
+          try {      
+            if([Helpers]::CheckMember($this.BuildObj,"variables")) 
             {
-                $patterns.ArrayOfContentSearcher.ContentSearcher |   where {$_.ResourceMatchPattern -like '*json*'} | % {
-                    $_.ContentSearchPatterns | Foreach-Object { $CredPatternList+= $_.string}} 
-                    #$CredPatternList = (('^' + (($CredPatternList |foreach {[regex]::escape($_)}) -join '|') + '$')) -replace '[\\]',''
-                    Get-Member -InputObject $this.BuildObj.variables  -MemberType Properties | ForEach-Object {
-                    if([Helpers]::CheckMember($this.BuildObj.variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.BuildObj.variables.$($_.Name),"isSecret")))
-                    {
-
-                        $propertyName = $_.Name
-                        $CredPatternList | %{
-                            $pattern = $_
-                            if($this.BuildObj.variables.$($propertyName).value -match $pattern)
-                            {
-                                $noOfCredFound +=1
-                            }
+                $varList = @();
+                $noOfCredFound = 0;     
+                $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "Build"} | Select-Object -Property RegexList;
+    
+            try {
+                $apiURL = "https://extmgmt.dev.azure.com/{0}/_apis/ExtensionManagement/InstalledExtensions/ADOScanner/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/MyCollection/Documents/ControlSettings.json?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+                $resObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL); 
+                 
+                if($resObj -and [Helpers]::CheckMember($resObj,"ControlSettings")){
+                    $ControlSettings = $resObj.ControlSettings | ConvertFrom-Json;;
+            
+                    if( ($ControlSettings) -and ([Helpers]::CheckMember($ControlSettings,"Patterns")) ){
+        
+                        $custPatternsRegList = $ControlSettings.Patterns | where {$_.RegexCode -eq "Build"} | Select-Object -Property RegexList
+                        #$patterns.RegexList += $custPatternsRegList.RegexList;     
+                        $patterns.RegexList = [Helpers]::MergeObjects($patterns.RegexList, $custPatternsRegList.RegexList)	   
+                        #$patterns.RegexList = $patterns.RegexList | select -Unique;  
+                     }
+                }
+                
+                }
+                catch {
+                    $controlResult.AddMessage($_);
+                }
+                
+                Get-Member -InputObject $this.BuildObj.variables -MemberType Properties | ForEach-Object {
+                if([Helpers]::CheckMember($this.BuildObj.variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.BuildObj.variables.$($_.Name),"isSecret")))
+                {
+                   $propertyName = $_.Name
+                  for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
+                    if ($this.BuildObj.variables.$($propertyName).value -match $patterns.RegexList[$i]) { 
+                        $noOfCredFound +=1
+                        $varList += "$propertyName ";   
+                        break  
                         }
-                        
-                        # if($this.BuildObj.variables.$($_.Name).value -match $CredPatternList)
-                        # {
-                        #     $noOfCredFound +=1
-                        # }
                     }
-                    
-                    }
-                      
+                } 
+                }
+                if($noOfCredFound -gt 0)
+                {
+                    $varList = $varList | select -Unique
+                    $controlResult.AddMessage([VerificationResult]::Failed,
+                    "Found credentials in build definition. Variables names: $varList" );
+                }
+            else {
+                $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in build definition.");
             }
-            if($noOfCredFound -gt 0)
-            {
-                $controlResult.AddMessage([VerificationResult]::Failed,
-                "Found credentials in build definition. Total credentials found: $noOfCredFound");
             }
-        else {
-            $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in build definition.");
         }
-        }
-    }
-    catch {
-        $controlResult.AddMessage([VerificationResult]::Manual, "Could not evaluated build definition.");
-        $controlResult.AddMessage($_);
-    }    
-        return $controlResult;
+        catch {
+            $controlResult.AddMessage([VerificationResult]::Manual, "Could not evaluated build definition.");
+            $controlResult.AddMessage($_);
+        }    
+            return $controlResult;
     }
 
     hidden [ControlResult] CheckInActiveBuild([ControlResult] $controlResult)
