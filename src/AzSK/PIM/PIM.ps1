@@ -371,7 +371,7 @@ function Set-AzSKPIMConfiguration {
             elseif ($PSCmdlet.ParameterSetName -eq 'ExtendExpiringAssignments'-or $PSCmdlet.ParameterSetName -eq 'ExtendExpiringForManagementGroup') {
                 if([string]::IsNullOrEmpty($ManagementGroupId))
                 {
-                    $pimconfig.InvokeFunction($pimconfig.RemovePermanentAssignments, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $PrincipalNames, $Force))
+                    $pimconfig.InvokeFunction($pimconfig.ExtendSoonToExpireAssignments, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $Force))
                 }
                 else
                 { 
