@@ -18,6 +18,7 @@ class SubscriptionCore: AzSVTBase
 	hidden [PSObject] $MisConfiguredAutoProvisioningSettings;
 	hidden [PSObject] $MisConfiguredSecurityContactDetails;
 	hidden [SecurityCenter] $SecurityCenterInstance;
+	hidden [hashtable] $ResourceTier;
 	hidden [string[]] $SubscriptionMandatoryTags = @();
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $PIMAssignments;
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $permanentAssignments;
@@ -1188,20 +1189,14 @@ class SubscriptionCore: AzSVTBase
 	hidden [ControlResult] CheckASCTier ([ControlResult] $controlResult)
 	{
 		$ascTierContentDetails = $this.SecurityCenterInstance.ASCTier;
-		
-		$VMASCTier = $this.SecurityCenterInstance.VMASCTier;
-		$SQLASCTier = $this.SecurityCenterInstance.SQLASCTier;
-		$AppSvcASCTier = $this.SecurityCenterInstance.AppSvcASCTier;
-		$StorageASCTier = $this.SecurityCenterInstance.StorageASCTier;
-
+		$this.ResourceTier = $this.ASCTierDetails;
+		[string[]] $standard = @();
 		[string[]] $MisconfiguredASCTier = @(); #This will store information of all the misconfigured ASC pricing tier for individual resource types.
 
 		if(-not [string]::IsNullOrWhiteSpace($ascTierContentDetails))		
 		{
 			[bool] $bool = $true;
-			
 			$ascTier = "Standard"
-
 			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ASCTier"))
 			{
 				$bool = $bool -and ($this.ControlSettings.SubscriptionCore.ASCTier -contains $ascTierContentDetails)
@@ -1210,51 +1205,24 @@ class SubscriptionCore: AzSVTBase
 			{
 				$bool = $bool -and ($ascTier -eq $ascTierContentDetails)
 			}
-
-			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ResourceTypeASCTier.VirtualMachines"))
+			if( -not $bool)
 			{
-				$VM = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.VirtualMachines -contains $VMASCTier)
-				if(-not $VM)
-				{
-					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.VirtualMachines) pricing tier is not configured for virtual machines.")	
-				}
-				
-				$bool = $bool -and $VM
+				$MisconfiguredASCTier += ("Free pricing tier is configured for the subscription.")
 			}
-
-			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ResourceTypeASCTier.SqlServers"))
-			{
-				$SQL = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.SqlServers -contains $SQLASCTier)
-				if(-not $SQL)
-				{
-					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.SqlServers) pricing tier is not configured for SQL servers.")
-				}
-				
-				$bool = $bool -and $SQL
+			$standard= $this.ControlSettings.SubscriptionCore.Standard
+			$this.ResourceTier.GetEnumerator() | Where-Object {$_.Value -eq "Free"} | ForEach-Object { #this fetches the list of all resources for which free tier is enabled on portal and checks if that resource should have standard tier enforced.
+				foreach($std in $standard)
+					{
+						if($std -eq $_.Key) 
+						{
+							$bool = $false -and $bool
+							$MisconfiguredASCTier += ("Standard pricing tier is not configured for [$($_.Key)].")	
+						}
+						else{
+							$bool = $true -and $bool
+						}
+					}
 			}
-
-			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ResourceTypeASCTier.AppServices"))
-			{
-				$AppSvc = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.AppServices -contains $AppSvcASCTier)
-				if(-not $AppSvc)
-				{
-					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.AppServices) pricing tier is not configured for app services.")
-				}
-
-				$bool = $bool -and $AppSvc
-			}
-
-			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ResourceTypeASCTier.StorageAccounts"))
-			{
-				$Storage = ($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.StorageAccounts -contains $StorageASCTier)
-				if(-not $Storage)
-				{
-					$MisconfiguredASCTier += ("$($this.ControlSettings.SubscriptionCore.ResourceTypeASCTier.StorageAccounts) pricing tier is not configured for storage accounts.")
-				}
-				
-				$bool = $bool -and $Storage
-			}
-
 			$this.SubscriptionContext.SubscriptionMetadata.Add("MisconfiguredASCTier",$MisconfiguredASCTier); #Adding misconfigured ASC tier in the metadata.
 			if($bool)			
 			{

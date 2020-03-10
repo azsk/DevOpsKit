@@ -235,8 +235,11 @@ class SecurityCenter: AzSKRoot
 		return $null;
 	}
 
-	[void] CheckASCTierSettings()
+	[hashtable] CheckASCTierSettings()
 	{
+		[string[]] $ResourceASCTier = @();
+		[string[]] $resourceName = @();
+		[hashtable] $hashvalue = @{}
 		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
 		$validatedUri ="$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings/default?api-version=2017-08-01-preview"
 		$ascTierContentDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
@@ -251,26 +254,15 @@ class SecurityCenter: AzSKRoot
 
         foreach($resourceDetails in $ascTierResourceWiseDetails)
         {
-            if([Helpers]::CheckMember($resourceDetails,"name"))
+            if([Helpers]::CheckMember($resourceDetails,"properties.pricingTier"))
             {
-                if([Helpers]::CheckMember($resourceDetails,"properties.pricingTier"))
-                {
-                    if($resourceDetails.name -eq 'VirtualMachines'){
-                        $this.VMASCTier = $resourceDetails.properties.pricingTier
-                    }
-                    elseif($resourceDetails.name -eq 'SqlServers'){
-                        $this.SQLASCTier = $resourceDetails.properties.pricingTier
-                    }
-                    elseif($resourceDetails.name -eq 'AppServices'){
-                        $this.AppSvcASCTier = $resourceDetails.properties.pricingTier
-                    }
-                    elseif($resourceDetails.name -eq 'StorageAccounts'){
-                        $this.StorageASCTier = $resourceDetails.properties.pricingTier
-                    }
-                }
+				$resourceName = $resourceDetails.name
+				$ResourceASCTier = $resourceDetails.properties.pricingTier
+				$hashvalue.Add($resourceName,$ResourceASCTier)
             }
-        }   
-
+            
+		}  
+		return $hashvalue
 	}
 	
 	[MessageData[]] SetSecurityPolicySettings()
