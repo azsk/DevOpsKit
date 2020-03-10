@@ -170,18 +170,28 @@ class AzSVTBase: SVTBase{
 			{
 				#Check if definition is created in portal for this respective control
 				$definition = Get-AzPolicyDefinition -Name $($controlItem.PolicyDefinitionGuid) -ErrorAction Stop
+				$assignment = $null
+
 				# TODO: Move this to a common place, where it is called only once
 				$initiative = @()
-				$initiative += Get-AzPolicySetDefinition -Name $initiativeName -ErrorAction Stop
+				# Get azsk policy initiative
+				$azskpolicyinitiative = Get-AzPolicySetDefinition -Name $initiativeName -ErrorAction Stop
+				if ($azskpolicyinitiative)
+				{
+					$assignment = Get-AzPolicyAssignment -PolicyDefinitionId $($azskpolicyinitiative.PolicySetDefinitionId) -ErrorAction Stop
+					$initiative += $azskpolicyinitiative
+				}
+				# Get security center initiative
 				$initiative += Get-AzPolicySetDefinition -Name $securityCenterInitiativeName -ErrorAction Stop
+
 				# Definition is present, and compliance result not found
 				if ($definition)
 				{
 					# Definition is present, and is added to the initiative
-					if ($initiative.Properties.policyDefinitions.policyDefinitionId -contains $definition.PolicyDefinitionId)
+					if ( ($initiative | Measure-Object).Count -gt 0 `
+					  -and [Helpers]::CheckMember($initiative[0], "Properties.policyDefinitions.policyDefinitionId") `
+					  -and $initiative.Properties.policyDefinitions.policyDefinitionId -contains $definition.PolicyDefinitionId)
 					{
-						# TODO: Move this to a common place, where it is called only once
-						$assignment = Get-AzPolicyAssignment -PolicyDefinitionId $($initiative.PolicySetDefinitionId) -ErrorAction Stop
 						# Assignment is present; compliance state not found for this resource
 						if ($assignment)
 						{
