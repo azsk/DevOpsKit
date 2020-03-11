@@ -17,6 +17,7 @@ class SubscriptionCore: AzSVTBase
 	hidden [PSObject] $MisConfiguredSecurityPolicySettings;
 	hidden [PSObject] $MisConfiguredAutoProvisioningSettings;
 	hidden [PSObject] $MisConfiguredSecurityContactDetails;
+	hidden [PSObject] $ASCSecuritySolutionDetails;
 	hidden [SecurityCenter] $SecurityCenterInstance;
 	hidden [hashtable] $ResourceTier;
 	hidden [string[]] $SubscriptionMandatoryTags = @();
@@ -53,8 +54,11 @@ class SubscriptionCore: AzSVTBase
 		$this.MisConfiguredSecurityPolicySettings = $this.SecurityCenterInstance.CheckSecurityPolicySettings();
 		$this.MisConfiguredAutoProvisioningSettings = $this.SecurityCenterInstance.CheckAutoProvisioningSettings();
 		$this.MisConfiguredSecurityContactDetails = $this.SecurityCenterInstance.CheckSecurityContactSettings();
-
-		#Fetch AzSKRGTags
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableSecuritySolutionsDataCapture",$($this.SubscriptionContext.SubscriptionId)))
+		{
+			$this.ASCSecuritySolutionDetails = $this.SecurityCenterInstance.GetASCSecuritySolutionsDetails();
+		
+		}	#Fetch AzSKRGTags
 		$azskRG = [ConfigurationManager]::GetAzSKConfigData().AzSKRGName;
 		$azskRGTags = [ResourceGroupHelper]::GetResourceGroupTags($azskRG) ;
 
@@ -63,6 +67,7 @@ class SubscriptionCore: AzSVTBase
 		$subscriptionMetada.Add("ASCSecurityContactEmailIds", $this.SecurityCenterInstance.ContactEmail);
 		$subscriptionMetada.Add("ASCSecurityContactPhoneNumber", $this.SecurityCenterInstance.ContactPhoneNumber);
 		$subscriptionMetada.Add("FeatureVersions", $azskRGTags);
+		$subscriptionMetada.Add("SecuritySolutions", $this.ASCSecuritySolutionDetails);
 		$this.SubscriptionContext.SubscriptionMetadata = $subscriptionMetada;
 		$this.SubscriptionMandatoryTags += [ConfigurationManager]::GetAzSKConfigData().SubscriptionMandatoryTags;
 

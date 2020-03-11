@@ -600,4 +600,21 @@ class SecurityCenter: AzSKRoot
 	
 	 	return $MisConfiguredOptionalPolicies;		
 	}	
+
+	# Get SecurtiySolution details for the subscription
+	[PSObject] GetASCSecuritySolutionsDetails()
+	{
+		$SecuritySolutionsDetails = $null;
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
+		$securitySolutionsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/securitySolutions?api-version=2015-06-01-preview";
+		try
+		{
+			$SecuritySolutionsDetails = [WebRequestHelper]::InvokeWebRequest("Get", $securitySolutionsUri, $null);
+		}
+		catch
+		{
+			#eat exception, do not break existing flow
+		}
+		return $SecuritySolutionsDetails;
+	}
 }

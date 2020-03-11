@@ -84,7 +84,7 @@ function Set-AzSKPIMConfiguration {
 
 	    [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePIMAssignment", HelpMessage = "This switch is required to remove a PIM eligible role.")]
-        [Parameter(Mandatory = $false, ParameterSetName = "RemovePIMForManagementGroup", HelpMessage = "This switch is required to remove a PIM eligible role")]
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePIMAssignmentForManagementGroup", HelpMessage = "This switch is required to remove a PIM eligible role")]
         [Alias("ras")]
         $RemovePIMAssignment,
 
@@ -216,7 +216,6 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "ActivateForManagementGroup")]
         [Parameter(Mandatory = $true, ParameterSetName = "DeactivateForManagementGroup")]
         [Parameter(Mandatory = $true, ParameterSetName = "ConfigureRoleForManagementGroup")]
-        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringForManagementGroup")]
         [ValidateNotNullOrEmpty()]
 	    [Alias("rln")]
         [string]
@@ -227,6 +226,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignments")]
         [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleForManagementGroup")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringForManagementGroup")]
         [ValidateNotNullOrEmpty()]
 	    [Alias("rlns")]
         [string[]]
@@ -338,7 +338,7 @@ function Set-AzSKPIMConfiguration {
                     $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($ManagementGroupId, $null, $null, $null, $RoleName, $PrincipalNames, $DurationInDays, $false, $false, $false))
                 }
             }
-            elseif ($PSCmdlet.ParameterSetName -eq 'RemovePIMAssignment' -or $PSCmdlet.ParameterSetName -eq 'RemovePIMForManagementGroup' ) {	
+            elseif ($PSCmdlet.ParameterSetName -eq 'RemovePIMAssignment' -or $PSCmdlet.ParameterSetName -eq 'RemovePIMAssignmentForManagementGroup' ) {	
                 if([string]::IsNullOrEmpty($ManagementGroupId))
                 {		
                   $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false, $Force, $true))
