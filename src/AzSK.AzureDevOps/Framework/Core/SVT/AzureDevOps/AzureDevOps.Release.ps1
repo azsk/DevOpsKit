@@ -31,7 +31,6 @@ class Release: SVTBase
 
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
 	{
-        
         if([Helpers]::CheckMember([ConfigurationManager]::GetAzSKSettings(),"ScanToolPath"))
         {
             $ToolFolderPath =  [ConfigurationManager]::GetAzSKSettings().ScanToolPath
@@ -85,8 +84,69 @@ class Release: SVTBase
         }
 
         }
+       else
+       {
+            try {      
+                if([Helpers]::CheckMember($this.ReleaseObj,"variables")) 
+                {
+                    $varList = @();
+                    $noOfCredFound = 0;     
+                    $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "Release"} | Select-Object -Property RegexList;
         
-        
+                try {
+                    $apiURL = "https://extmgmt.dev.azure.com/{0}/_apis/ExtensionManagement/InstalledExtensions/ADOScanner/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/MyCollection/Documents/ControlSettings.json?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+                    $resObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL); 
+                     
+                    if($resObj -and [Helpers]::CheckMember($resObj,"ControlSettings")){
+                        $ControlSettings = $resObj.ControlSettings | ConvertFrom-Json;;
+                
+                        if( ($ControlSettings) -and ([Helpers]::CheckMember($ControlSettings,"Patterns")) ){
+            
+                            $custPatternsRegList = $ControlSettings.Patterns | where {$_.RegexCode -eq "Release"} | Select-Object -Property RegexList
+                            #$patterns.RegexList += $custPatternsRegList.RegexList;     
+                            $patterns.RegexList = [Helpers]::MergeObjects($patterns.RegexList, $custPatternsRegList.RegexList)	   
+                            #$patterns.RegexList = $patterns.RegexList | select -Unique;  
+                         }
+                         $ControlSettings = $null;
+                    }
+                    $resObj = $null;
+                    }
+                    catch {
+                        $controlResult.AddMessage($_);
+                    }
+                    
+                    Get-Member -InputObject $this.ReleaseObj.variables -MemberType Properties | ForEach-Object {
+                    if([Helpers]::CheckMember($this.ReleaseObj.variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.ReleaseObj.variables.$($_.Name),"isSecret")))
+                    {
+                       $propertyName = $_.Name
+                      for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
+                        if ($this.ReleaseObj.variables.$($propertyName).value -match $patterns.RegexList[$i]) { 
+                            $noOfCredFound +=1
+                            $varList += "$propertyName ";   
+                            break  
+                            }
+                        }
+                    } 
+                    }
+                    if($noOfCredFound -gt 0)
+                    {
+                        $varList = $varList | select -Unique
+                        $controlResult.AddMessage([VerificationResult]::Failed,
+                        "Found credentials in release definition. Variables names: $varList" );
+                    }
+                else {
+                    $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in release definition.");
+                }
+                $patterns = $null;
+                }
+            }
+            catch {
+                $controlResult.AddMessage([VerificationResult]::Manual, "Could not evaluated release definition.");
+                $controlResult.AddMessage($_);
+            }    
+
+         }
+     
         return $controlResult;
     }
 
