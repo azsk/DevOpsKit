@@ -314,14 +314,12 @@
      {
       "ResourceType": "Build",
       "ControlIds": [
-        
         "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions"
       ]
      },
      {
       "ResourceType": "Release",
       "ControlIds": [
-        "AzureDevOps_Release_DP_No_PlainText_Secrets_In_Definition",
         "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions",
         "AzureDevOps_Release_Review_External_Sources"
       ]
