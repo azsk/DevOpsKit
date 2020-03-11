@@ -57,39 +57,47 @@ function Set-AzSKPIMConfiguration {
         .PARAMETER RoleNames 
             This parameter is required to filter results based on roles, this parameter is used where multiple role names can be passed for the given combination of parameters.
         .PARAMETER SubscriptionId
-            Subscription id for which the security evaluation has to be performed.
+            Subscription GUID for which the PIM operation has to be performed.
+	    .PARAMETER ManagementGroupId
+            ManagementGroupId for which the PIM operation has to be performed.
 	    
     #>
     Param
     (
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "Activate", HelpMessage = "This switch is required to activate a PIM eligible role.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ActivateForManagementGroup", HelpMessage = "This switch is required to activate a PIM eligible role.")]
         [Alias("amr")]
 	    $ActivateMyRole,
 
         [switch]
-        [Parameter(Mandatory = $false, ParameterSetName = "Deactivate", HelpMessage = "This switch is required to activate a PIM eligible role.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Deactivate", HelpMessage = "This switch is required to deactivate a PIM eligible role.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "DeactivateForManagementGroup", HelpMessage = "This switch is required to deactivate a PIM eligible role.")]
         [Alias("dmr")]
 	    $DeactivateMyRole,
 
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "Assign", HelpMessage = "This switch is required to assign a PIM eligible role.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "AssignForManagementGroup", HelpMessage = "This switch is required to assign a PIM eligible role")]
         [Alias("ar")]
 	    $AssignRole,
 
-	[switch]
+	    [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePIMAssignment", HelpMessage = "This switch is required to remove a PIM eligible role.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePIMForManagementGroup", HelpMessage = "This switch is required to remove a PIM eligible role")]
         [Alias("ras")]
         $RemovePIMAssignment,
 
         [switch]
-        [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignments", HelpMessage = "This switch is required to assign a PIM eligible role.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignments", HelpMessage = "This switch is required to assign a PIM eligible role for existing permanent assignments.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleForManagementGroup", HelpMessage = "This switch is required to assign a PIM eligible role for existing permanent assignments")]
         [Alias("cpa")]
         $AssignEligibleforPermanentAssignments,
 
 
         [switch]
-        [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment", HelpMessage = "This switch is required to assign a PIM eligible role.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment", HelpMessage = "This switch is required to remove permanent assignments for the given scope.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentForManagementGroup", HelpMessage = "This switch is required to remove perament assignments for the given scope.")]
         [Alias("rpa")]
 	    $RemovePermanentAssignments,
 
@@ -97,14 +105,28 @@ function Set-AzSKPIMConfiguration {
         [switch]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignments", HelpMessage = "This switch is required to extend an expring PIM eligible role.")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignmentForUsers", HelpMessage = "This switch is required to extend an expring PIM eligible role.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringForManagementGroup", HelpMessage = "This switch is required to extend an expiring PIM eligible role")]
         [Alias("exa")]
         $ExtendExpiringAssignments,
 
         [switch]
         [Parameter(Mandatory = $true, ParameterSetName = "ConfigureRoleSettings", HelpMessage = "This switch is used to configure role settings for a role on a resource.")]
+       
         [Alias("crs")]
         $ConfigureRoleSettings,
       
+        [Parameter(Mandatory = $true, ParameterSetName = "Default")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ActivateForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "DeactivateForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "RemovePIMAssignmentForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringForManagementGroup")]
+        [ValidateNotNullOrEmpty()]
+        [Alias("mgmtgrpid")]
+        [string]
+        $ManagementGroupId,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Default")]
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
@@ -150,6 +172,7 @@ function Set-AzSKPIMConfiguration {
         $ResourceName,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ActivateForManagementGroup")]
         [ValidateNotNullOrEmpty()]
         [int]
 	    [Alias("dih")]
@@ -159,17 +182,24 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignments")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignmentForUsers")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringForManagementGroup")]
+        
         [ValidateNotNullOrEmpty()]
         [Alias("did")]
 	    [int]
         $DurationInDays,
 
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignments")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringForManagementGroup")]
+        
         [int]
         [Alias("eid")]
         $ExpiringInDays,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Activate")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ActivateForManagementGroup")]
         [ValidateNotNullOrEmpty()]
         [Alias("jst")]
 	    [string]
@@ -181,6 +211,12 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ConfigureRoleSettings")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignmentForUsers")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "RemovePIMAssignmentForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ActivateForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "DeactivateForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ConfigureRoleForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringForManagementGroup")]
         [ValidateNotNullOrEmpty()]
 	    [Alias("rln")]
         [string]
@@ -189,6 +225,8 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignments")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentForManagementGroup")]
         [ValidateNotNullOrEmpty()]
 	    [Alias("rlns")]
         [string[]]
@@ -199,6 +237,10 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignmentForUsers")]
         [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
+        [Parameter(Mandatory = $true, ParameterSetName = "AssignForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "RemovePIMAssignmentForManagementGroup")]
+        [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleForManagementGroup")]
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentForManagementGroup")]
         [ValidateNotNullOrEmpty()]
 	    [Alias("pn","PrincipalName","GroupName")]
         [string[]]
@@ -206,6 +248,7 @@ function Set-AzSKPIMConfiguration {
 
         
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentForManagementGroup")]
         [ValidateNotNullOrEmpty()]
         [ValidateSet("MatchingEligibleAssignments", "AllExceptMe")]
 	    [Alias("raf")]
@@ -214,22 +257,27 @@ function Set-AzSKPIMConfiguration {
 
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleForManagementGroup")]
         [int]
         $ExpireEligibleAssignmentsInDays =-1,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
-        [bool]
-        $RequireJustificationOnActivation = $true,
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleForManagementGroup")]
+        [string]
+        $RequireJustificationOnActivation,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleForManagementGroup")]
         [int]
         $MaximumActivationDuration = -1, 
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
-        [bool]
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleForManagementGroup")]
+        [string]
         $RequireMFAOnActivation,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleForManagementGroup")]
         [bool]
         $ApplyConditionalAccessPolicyForRoleActivation,
         [Alias("ApplyConditonalAccessPolicyForRoleActivation")]
@@ -237,7 +285,11 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentAssignment")]
         [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringAssignments")]		
-        [Parameter(Mandatory = $false, ParameterSetName = "RemovePIMAssignment")]
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePIMAssignment")]        
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePermanentForManagementGroup")]
+        [Parameter(Mandatory = $false, ParameterSetName = "AssignEligibleForManagementGroup")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ExtendExpiringForManagementGroup")]		
+        [Parameter(Mandatory = $false, ParameterSetName = "RemovePIMAssignmentForManagementGroup")]
 		[switch]
 		[Alias("f")]
         $Force,
@@ -255,26 +307,76 @@ function Set-AzSKPIMConfiguration {
         try {
 			
             $pimconfig = [PIM]::new([Constants]::BlankSubscriptionId, $MyInvocation);
-            if ($PSCmdlet.ParameterSetName -eq 'Activate') {
-                $pimconfig.InvokeFunction($pimconfig.Activate, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $Justification, $DurationInHours))
+           
+            if ($PSCmdlet.ParameterSetName -eq 'Activate' -or $PSCmdlet.ParameterSetName -eq 'ActivateForManagementGroup') {
+                if([string]::IsNullOrEmpty($ManagementGroupId))
+                {
+                    $pimconfig.InvokeFunction($pimconfig.Activate, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $Justification, $DurationInHours))
+                }
+                else
+                {
+                    $pimconfig.InvokeFunction($pimconfig.Activate, @($ManagementGroupId, $null, $null, $null, $RoleName, $Justification, $DurationInHours))
+                }
             }
-            elseif ($PSCmdlet.ParameterSetName -eq 'Deactivate') {	
-                $pimconfig.InvokeFunction($pimconfig.Deactivate, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName))
+            elseif ($PSCmdlet.ParameterSetName -eq 'Deactivate' -or $PSCmdlet.ParameterSetName -eq 'DeactivateForManagementGroup' ) {	
+                if([string]::IsNullOrEmpty($ManagementGroupId))
+                {
+                    $pimconfig.InvokeFunction($pimconfig.Deactivate, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName))
+                }
+                else
+                {
+                    $pimconfig.InvokeFunction($pimconfig.Deactivate, @($ManagementGroupId, $null, $null, $null, $RoleName))
+                }
             }
-            elseif ($PSCmdlet.ParameterSetName -eq 'Assign') {				
-                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false, $false, $false))
+            elseif ($PSCmdlet.ParameterSetName -eq 'Assign' -or $PSCmdlet.ParameterSetName -eq 'AssignForManagementGroup') {				
+                if([string]::IsNullOrEmpty($ManagementGroupId))
+                {
+                    $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false, $false, $false))
+                }
+                else
+                {
+                    $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($ManagementGroupId, $null, $null, $null, $RoleName, $PrincipalNames, $DurationInDays, $false, $false, $false))
+                }
             }
-            elseif ($PSCmdlet.ParameterSetName -eq 'RemovePIMAssignment') {				
-                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false, $Force, $true))
+            elseif ($PSCmdlet.ParameterSetName -eq 'RemovePIMAssignment' -or $PSCmdlet.ParameterSetName -eq 'RemovePIMForManagementGroup' ) {	
+                if([string]::IsNullOrEmpty($ManagementGroupId))
+                {		
+                  $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false, $Force, $true))
+                }
+                else
+                {
+                    $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($ManagementGroupId, $null, $null, $null, $RoleName, $PrincipalNames, $DurationInDays, $false, $Force, $true)) 
+                }
             }
-            elseif ($PSCmdlet.ParameterSetName -eq 'AssignEligibleforPermanentAssignments') {
-                $pimconfig.InvokeFunction($pimconfig.AssignPIMforPermanentAssignemnts, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $PrincipalNames, $Force))
+            elseif ($PSCmdlet.ParameterSetName -eq 'AssignEligibleforPermanentAssignments' -or $PSCmdlet.ParameterSetName -eq 'AssignEligibleForManagementGroup' ) {
+                if([string]::IsNullOrEmpty($ManagementGroupId))
+                {	
+                    $pimconfig.InvokeFunction($pimconfig.AssignPIMforPermanentAssignemnts, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $PrincipalNames, $Force))
+                }
+                else
+                {
+                    $pimconfig.InvokeFunction($pimconfig.AssignPIMforPermanentAssignemnts, @($ManagementGroupId, $null, $null, $null, $RoleNames, $DurationInDays, $PrincipalNames, $Force))
+                }
             }	
-            elseif ($PSCmdlet.ParameterSetName -eq 'RemovePermanentAssignment') {
-                $pimconfig.InvokeFunction($pimconfig.RemovePermanentAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $PrincipalNames, $Force))
+            elseif ($PSCmdlet.ParameterSetName -eq 'RemovePermanentAssignment'-or $PSCmdlet.ParameterSetName -eq 'RemovePermanentForManagementGroup') {
+                if([string]::IsNullOrEmpty($ManagementGroupId))
+                {
+                    $pimconfig.InvokeFunction($pimconfig.RemovePermanentAssignments, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $PrincipalNames, $Force))
+                }
+                else
+                {
+                    $pimconfig.InvokeFunction($pimconfig.RemovePermanentAssignments, @($ManagementGroupId, $null, $null, $null, $RoleNames, $RemoveAssignmentFor, $PrincipalNames, $Force))
+                }
             }
-            elseif ($PSCmdlet.ParameterSetName -eq 'ExtendExpiringAssignments') {
-                $pimconfig.InvokeFunction($pimconfig.ExtendSoonToExpireAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $Force))
+            elseif ($PSCmdlet.ParameterSetName -eq 'ExtendExpiringAssignments'-or $PSCmdlet.ParameterSetName -eq 'ExtendExpiringForManagementGroup') {
+                if([string]::IsNullOrEmpty($ManagementGroupId))
+                {
+                    $pimconfig.InvokeFunction($pimconfig.ExtendSoonToExpireAssignments, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $Force))
+                }
+                else
+                { 
+                    $pimconfig.InvokeFunction($pimconfig.ExtendSoonToExpireAssignments, @($ManagementGroupId, $null, $null, $null, $RoleNames, $ExpiringInDays, $DurationInDays, $Force))
+                }
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'ConfigureRoleSettings')
             {
@@ -287,12 +389,12 @@ function Set-AzSKPIMConfiguration {
                 {
                     if($RequireMFAOnActivation)
                     {
-                      #Both CA and MFA can not be applied simultaneously      
-                     $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $true, $false));
+                        #Both CA and MFA can not be applied simultaneously      
+                         $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $true, $false));
                     }  
                     else 
                     {
-                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration,  $false, $null));
+                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration,  $false, $null));
                     }  
                 }
                 elseif ($null -ne $PSCmdlet.MyInvocation.BoundParameters["ApplyConditionalAccessPolicyForRoleActivation"])
@@ -300,24 +402,24 @@ function Set-AzSKPIMConfiguration {
                     if($ApplyConditionalAccessPolicyForRoleActivation)
                     {
                       #Both Conditional Access policy and MFA can not be applied simultaneously      
-                     $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $true));
+                     $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $true));
                     }  
                     else 
                     {
-                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $null, $false));
+                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $null, $false));
                     }  
                 }
                     
                 else 
                 {
-                    $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $false))
+                    $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $false))
                 }
                                
                 
             }	
             elseif($PSCmdlet.ParameterSetName -eq'ExtendExpiringAssignmentForUsers')
             {
-                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $true ,$false, $false))
+                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $true ,$false, $false))
             }		
             else {
                 Write-Output("Invalid Parameter Set")	
@@ -358,7 +460,9 @@ function Get-AzSKPIMConfiguration {
 	    .PARAMETER RoleNames 
 	        This parameter is required to filter results based on roles, this parameter is used where multiple role names can be passed for the given combination of parameters.
 	    .PARAMETER SubscriptionId
-	        Subscription id for which the security evaluation has to be performed.
+            Subscription GUID for which the PIM operation has to be performed.
+        .PARAMETER ManagementGroupId
+            ManagementGroupId for which the PIM operation has to be performed.
     #>
     Param
     (
@@ -373,6 +477,13 @@ function Get-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "ListSoonToExpireAssignments")]
         [Alias("sid")]
         $SubscriptionId,
+
+        [string]
+        [Parameter(Mandatory = $true, ParameterSetName = "ListPermanentAssignmentsForManagementGroup", HelpMessage = "This switch is required to list all permanent assignment.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ListPIMAssignmentsForManagementGroup", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ListSoonToExpireAssignmentsForManagementGroup")]
+        [Alias("mgmtgrpid")]
+        $ManagementGroupId,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
@@ -391,22 +502,28 @@ function Get-AzSKPIMConfiguration {
 
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignmentsForManagementGroup", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Alias("lpa")]
 	    $ListPermanentAssignments,
 
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignmentsForManagementGroup", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         [Alias("lpima")]
 	    $ListPIMAssignments,
 
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments", HelpMessage = "This switch is required to list PIM eligible assignment that are about to expire in n days.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignmentsForManagementGroup", HelpMessage = "This switch is required to list PIM eligible assignment that are about to expire in n days.")]
         [Alias("lsea")]
         $ListSoonToExpireAssignments,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         [Parameter(Mandatory = $true, ParameterSetName = "ListSoonToExpireAssignments")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignmentsForManagementGroup", HelpMessage = "This switch is required to list all permanent assignment.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignmentsForManagementGroup", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ListSoonToExpireAssignmentsForManagementGroup")]
         [ValidateNotNullOrEmpty()]
         [Alias("rlns")]
         [string[]]
@@ -418,6 +535,7 @@ function Get-AzSKPIMConfiguration {
 	    $DoNotOpenOutputFolder,
         
         [Parameter(Mandatory = $true, ParameterSetName = "ListSoonToExpireAssignments")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ListSoonToExpireAssignmentsForManagementGroup")]
         [int]
         [Alias("eid")]
         $ExpiringInDays
@@ -436,14 +554,35 @@ function Get-AzSKPIMConfiguration {
             if ($PSCmdlet.ParameterSetName -eq 'ListMyRole') {
 				$pimconfig.InvokeFunction($pimconfig.ListMyEligibleRoles)		
             }
-            elseif ($PSCmdlet.ParameterSetName -eq 'ListPermanentAssignments') {
-                $pimconfig.InvokeFunction($pimconfig.ListAssignment, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $true))
+            elseif ($PSCmdlet.ParameterSetName -eq 'ListPermanentAssignments' -or $PSCmdlet.ParameterSetName -eq 'ListPermanentAssignmentsForManagementGroup') {
+                if([string]::IsNullOrEmpty($ManagementGroupId))
+                {
+                    $pimconfig.InvokeFunction($pimconfig.ListAssignment, @($null,$SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $true))
+                }
+                else
+                {
+                    $pimconfig.InvokeFunction($pimconfig.ListAssignment, @($ManagementGroupId, $null, $null, $null, $RoleNames, $true))
+                }
             }
-            elseif ($PSCmdlet.ParameterSetName -eq 'ListPIMAssignments') {
-                $pimconfig.InvokeFunction($pimconfig.ListAssignment, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $false))
+            elseif ($PSCmdlet.ParameterSetName -eq 'ListPIMAssignments' -or $PSCmdlet.ParameterSetName -eq 'ListPIMAssignmentsForManagementGroup') {
+                if([string]::IsNullOrEmpty($ManagementGroupId))
+                {
+                    $pimconfig.InvokeFunction($pimconfig.ListAssignment, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $false))
+                }
+                else
+                {
+                    $pimconfig.InvokeFunction($pimconfig.ListAssignment, @($ManagementGroupId, $null, $null, $null, $RoleNames, $false))
+                }
             }
-            elseif ($PSCmdlet.ParameterSetName -eq 'ListSoonToExpireAssignments') {
-                $pimconfig.InvokeFunction($pimconfig.ListSoonToExpireAssignments, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays))
+            elseif ($PSCmdlet.ParameterSetName -eq 'ListSoonToExpireAssignments' -or $PSCmdlet.ParameterSetName -eq 'ListSoonToExpireAssignmentsForManagementGroup') {
+                if([string]::IsNullOrEmpty($ManagementGroupId))
+                {
+                    $pimconfig.InvokeFunction($pimconfig.ListSoonToExpireAssignments, @($null,$SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays))
+                }
+                else
+                {
+                    $pimconfig.InvokeFunction($pimconfig.ListSoonToExpireAssignments, @($ManagementGroupId, $null, $null, $null, $RoleNames, $ExpiringInDays))
+                }
             }
             else {
 				

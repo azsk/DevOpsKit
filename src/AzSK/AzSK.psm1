@@ -1,6 +1,6 @@
 ﻿Set-StrictMode -Version Latest
 Write-Host "Importing Az modules. This may take a while..." -ForegroundColor Yellow
-Import-Module Az.Accounts -RequiredVersion 1.6.0 -WarningAction SilentlyContinue
+Import-Module Az.Accounts -RequiredVersion 1.7.1 -WarningAction SilentlyContinue
 
 . $PSScriptRoot\Framework\Framework.ps1
 
@@ -157,6 +157,10 @@ function Set-AzSKPolicySettings {
 		[switch]
         $EnableCentralScanMode,
 
+        [Parameter(Mandatory = $false)]
+		[switch]
+        $IsSAW,
+
         [Parameter(Mandatory = $false, HelpMessage = "Provide the flag to disable org-policy check for current session")]
         [switch]
         [Alias("dopc")]
@@ -233,6 +237,10 @@ function Set-AzSKPolicySettings {
 			if($EnableCentralScanMode)
 			{
 				 $azskSettings.IsCentralScanModeOn = $EnableCentralScanMode
+            }
+            if($IsSAW)
+            {
+                $azskSettings.IsSAW = $true
             }
             if ($AzureEnvironment) {
                 $azskSettings.AzureEnvironment = $AzureEnvironment

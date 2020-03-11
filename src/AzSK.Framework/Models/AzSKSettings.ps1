@@ -33,13 +33,14 @@ class AzSKSettings {
 	[string] $LocalControlTelemetryKey;
 	[bool] $LocalEnableControlTelemetry;
 	[bool] $PrivacyNoticeAccepted = $false;
+	[bool] $IsSAW = $false;
 	[bool] $IsCentralScanModeOn = $false;
     hidden static [AzSKSettings] $Instance = $null;
 	hidden static [string] $FileName = "AzSKSettings.json";
 	[bool] $StoreComplianceSummaryInUserSubscriptions;	
 
 	hidden static SetDefaultSettings([AzSKSettings] $settings) {
-		if($null -ne  $settings -and [string]::IsNullOrWhiteSpace( $settings.AzureEnvironment))
+		if($null -ne  $settings -and [string]::IsNullOrWhiteSpace($settings.AzureEnvironment))
 		{
             $settings.AzureEnvironment = [Constants]::DefaultAzureEnvironment
 		}

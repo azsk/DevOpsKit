@@ -75,13 +75,51 @@ class PIM: AzCommandBase {
             return $obj
         }
         else {
-            $this.PublishCustomMessage("Unable to retrieve details for the current context.",[MessageType]::Error)
             return $null
         }
     }
 
+    # this method is an overlaod of existing PIMResolver method, this is to facilitate a seperate flow for pim operations at management group scope
+    hidden [PIMResource[]] PIMResourceResolver($ManagementGroupId, $IsActivationRequest)
+    {
+        $resolvedResource =  @()
+        if($IsActivationRequest)
+        {
+            
+            $resolvedResource = [array][PIMResource]::new()
+            $eligibleAssignments = $this.MyJitAssignments();
+            $resolvedResources = @();
+            if($null -ne $eligibleAssignments)
+            {
+                $resolvedResources = $eligibleAssignments | Where-Object{$_.OriginalId -eq ("/providers/Microsoft.Management/managementGroups/$ManagementGroupId") }
+            
+                foreach($res in $resolvedResources)
+                {
+                    $resObj = [PIMResource]::new()
+                    $resObj.ExternalId = $res.OriginalId
+                    $resObj.ResourceName = $res.ResourceName
+                    $resObj.ResourceId = $res.ResourceId
+                    $resolvedResource += $resObj
+                }
+            }
+            else
+            {
+                $this.PublishCustomMessage("No PIM Eligible assignment found for the current context: $($this.AccountId).",[MessageType]::Warning)
+            }
+            
+                                                                     
+
+        }
+        else
+        {
+            $resources = $this.ListResources($null, "managementgroup", $ManagementGroupId);
+            $resolvedResource = $resources | Where-Object {$_.ExternalId -eq "/providers/Microsoft.Management/managementGroups/$($ManagementGroupId)"}
+        }
+        return $resolvedResource;
+    }
+
     # This function resolves the resource that matches to parameters passed in command
-    hidden [PIMResource[]] PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $IsActivationRequest) {
+    hidden [PIMResource[]] PIMResourceResolver( $SubscriptionId, $ResourceGroupName, $ResourceName, $IsActivationRequest) {
         $this.AcquireToken();  
         $rtype = 'subscription'
         $selectedResourceName = $SubscriptionId.Trim()
@@ -101,67 +139,76 @@ class PIM: AzCommandBase {
         $resolvedResource = [PIMResource]::new()
         if($IsActivationRequest)
         {
-            $resolvedResources = ($this.MyJitAssignments() | Where-Object {$_.OriginalId -match $SubscriptionId})
-            $PIMResources = @();            
-            if(($resolvedResources | Measure-Object).Count -gt 0 )
+            $myAssignments = $this.MyJitAssignments();
+            if($null -ne $myAssignments)
             {
-                    if( $item.ResourceType -eq 'subscription')
-                    {
-                        $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq ("/subscriptions/$($SubscriptionId)") }
-                    }
-                    if( $item.ResourceType -eq 'resourcegroup')
-                    {
-                        $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
-                        $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq $rgId }
-                    }
-                    if( $item.ResourceType -eq 'resource'){
-                        $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
-                        $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -like "$rgId*" -and $_.ResourceName-eq $ResourceName }
-                        # if multiple resources with same name under one rg are found, ask the end user to choose the resource
-                        if(($resolvedResources|Measure-Object).Count -gt 1)
-                        {   $counter=0; $tempres = @();
-                            foreach ($resource in $resolvedResources)
-                            {
-                                $item = New-Object psobject -Property @{
-                                id = ++$counter
-                                ResourceName =  $resource.ResourceName
-                                OriginalId =  $resource.OriginalId
+                $resolvedResources = ($myAssignments | Where-Object {$_.OriginalId -match $SubscriptionId})
+                $PIMResources = @();            
+                if(($resolvedResources | Measure-Object).Count -gt 0 )
+                {
+                        if( $item.ResourceType -eq 'subscription')
+                        {
+                            $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq ("/subscriptions/$($SubscriptionId)") }
+                        }
+                        if( $item.ResourceType -eq 'resourcegroup')
+                        {
+                            $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
+                            $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -eq $rgId }
+                        }
+                        if( $item.ResourceType -eq 'resource'){
+                            $rgId  = [string]::Format("/subscriptions/{0}/resourceGroups/{1}",$SubscriptionId,$ResourceGroupName)
+                            $resolvedResources = $resolvedResources | Where-Object{$_.OriginalId -like "$rgId*" -and $_.ResourceName-eq $ResourceName }
+                            # if multiple resources with same name under one rg are found, ask the end user to choose the resource
+                            if(($resolvedResources|Measure-Object).Count -gt 1)
+                            {   $counter=0; $tempres = @();
+                                foreach ($resource in $resolvedResources)
+                                {
+                                    $item = New-Object psobject -Property @{
+                                    id = ++$counter
+                                    ResourceName =  $resource.ResourceName
+                                    OriginalId =  $resource.OriginalId
+                                    }
+                                    $tempres+=$item
                                 }
-                                $tempres+=$item
-                            }
-                            [int]$choice = -1;
-                            $this.PublishCustomMessage("Multiple resources with same resource name are found. ")                            
-                            $this.PublishCustomMessage(($tempres | Format-Table Id, OriginalId | Out-String))
-                            Write-Host "Please enter 'Id' from the above table for the resource you want to activate your assignment on." -ForegroundColor Yellow
-                            try{ 
-                                $choice = Read-Host
-                                if($choice -notin $tempres.Id)
+                                [int]$choice = -1;
+                                $this.PublishCustomMessage("Multiple resources with same resource name are found. ")                            
+                                $this.PublishCustomMessage(($tempres | Format-Table Id, OriginalId | Out-String))
+                                Write-Host "Please enter 'Id' from the above table for the resource you want to activate your assignment on." -ForegroundColor Yellow
+                                try{ 
+                                    $choice = Read-Host
+                                    if($choice -notin $tempres.Id)
+                                    {
+                                        throw "Invalid Input provided";
+                                    }
+                                }
+                                catch
                                 {
                                     throw "Invalid Input provided";
+                                    
                                 }
-                            }
-                            catch
-                            {
-                                 throw "Invalid Input provided";
+                            $resolvedResources= $resolvedResources | Where-Object{$_.OriginalId -eq $tempres[$choice-1].OriginalId }
                                 
                             }
-                           $resolvedResources= $resolvedResources | Where-Object{$_.OriginalId -eq $tempres[$choice-1].OriginalId }
-                            
-                        }
-                }
-                if(($resolvedResources|Measure-Object).Count -gt 0)
-                {
-                    $resObj = [PIMResource]::new()
-                    foreach($res in $resolvedResources)
-                    {
-                        $resObj.ExternalId = $res.OriginalId
-                        $resObj.ResourceName = $res.ResourceName
-                        $resObj.ResourceId = $res.ResourceId
-                        $PIMResources += $resObj
                     }
-                } 
+                    if(($resolvedResources|Measure-Object).Count -gt 0)
+                    {
+                        $resObj = [PIMResource]::new()
+                        foreach($res in $resolvedResources)
+                        {
+                            $resObj.ExternalId = $res.OriginalId
+                            $resObj.ResourceName = $res.ResourceName
+                            $resObj.ResourceId = $res.ResourceId
+                            $PIMResources += $resObj
+                        }
+                    } 
+                }
+                return $PIMResources;
             }
-            return $PIMResources;
+            else
+            {
+                $this.PublishCustomMessage("No PIM Eligible assignments found for the current context: $($this.AccountId).",[MessageType]::Warning)
+                return $null
+            }
 
         }
         else
@@ -211,18 +258,27 @@ class PIM: AzCommandBase {
     }
 
     #List all the resources accessible to context.
-    hidden [System.Collections.Generic.List[PIMResource]] ListResources($subscriptionId, $type, $resourceName) {
+    hidden [System.Collections.Generic.List[PIMResource]] ListResources($Guid, $type, $resourceName) {
         $this.AcquireToken();
         $resources = $null
         $resourceUrl = $null
-        Set-AzContext -SubscriptionId $SubscriptionId | Out-Null 
+        if($type -ne'managementGroup')
+        {
+            Set-AzContext -SubscriptionId $Guid | Out-Null 
+        }
         # This seperation is required due to nature of API, it operates in paging/batching manner when we query for all types
         # Note: At present, we do not provide PIM operation management for management group. However, if needed in the future, it can be added in the else statement. >> $filter=(type%20eq%20%27managementgroup%27)
         
+        if($type -eq 'managementGroup')
+        {
+            # Fetch PIM details of the all subscriptions user has access to
+            $resourceUrl = $this.APIroot + "/resources?`$filter=(type%20eq%20%27managementgroup%27)&`$orderby=type"
+        }
         if($type -eq 'subscription')
         {
             # Fetch PIM details of the all subscriptions user has access to
-            $resourceUrl = $this.APIroot + "/resources?`$filter=(type%20eq%20%27subscription%27)&`$orderby=type"
+            $resourceUrl = $this.APIroot + "/resources?/discovery?`$filter=(registeredDateTime%20ne%20null%20and%20type%20eq%20%27subscription%27)"
+            #$filter=(type%20eq%20%27subscription%27)&`$orderby=type"
         }
         elseif($type -eq 'resourcegroup')
         {
@@ -346,51 +402,88 @@ class PIM: AzCommandBase {
     }
 
     #List Permanent or PIM assignment for a resource
-    hidden ListAssignment($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $CheckPermanent) {
+    hidden ListAssignment($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $CheckPermanent) {
         $this.AcquireToken();
         $criticalRoles = @();
+        $resources = $null
         $criticalRoles += $this.ConvertToStringArray($RoleNames)
-        $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName,$false)
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            
+            $resources = $this.PIMResourceResolver($ManagementGroupId, $false);
+        
+        }
+        else 
+        {
+            $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName,$false)   
+        }
         if (($resources | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resources.ResourceId))) {       
             $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $CheckPermanent)
-            if(-not [String]::IsNullOrEmpty($RoleNames))
-            {
-                $roleAssignments = $roleAssignments | Where-Object { $_.RoleName -in $criticalRoles -and $_.MemberType -ne 'Inherited' -and ($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group') }
+            if(($roleAssignments | Measure-Object).Count -gt 0)
+            {    if(-not [String]::IsNullOrEmpty($RoleNames))
+                {
+                    $roleAssignments = $roleAssignments | Where-Object { $_.RoleName -in $criticalRoles -and $_.MemberType -ne 'Inherited' -and ($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group') }
+                }
+                else
+                {
+                    $roleAssignments = $roleAssignments | Where-Object { $_.MemberType -ne 'Inherited' -and ($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group') }
+                }
+                if (($roleAssignments | Measure-Object).Count -gt 0) {
+                    $roleAssignments = $roleAssignments | Sort-Object -Property RoleName, Name, AssignmentState, ResourceId
+                    $this.PublishCustomMessage("")
+                    $this.PublishCustomMessage("Note: The assignments listed below do not include 'inherited' assignments for the scope.", [MessageType]::Warning)
+                    $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
+                    $this.PublishCustomMessage($($roleAssignments | Format-Table -Property PrincipalName, @{Label = "Role"; Expression = { $_.RoleName } },  AssignmentState, @{Label = "Type"; Expression = { $_.SubjectType } } | Out-String), [MessageType]::Default)
+                    
+                    $objectToExport = $roleAssignments | Select-Object RoleName, PrincipalName, UserName, ResourceType, ResourceName, SubjectType, AssignmentState,	IsPermanent
+                    $this.ExportCSV($objectToExport)
+                }
+                else {
+                    if ($CheckPermanent) {
+                        $this.PublishCustomMessage("No permanent assignments found for the current context on the resource for the $($RoleNames -join ', ').", [MessageType]::Warning);
+                    }
+                    else {
+                        $this.PublishCustomMessage("No PIM eligible assignments found for the current context on the resource for the $($RoleNames -join ', ').", [MessageType]::Warning);
+                    }    
+                }
             }
             else
             {
-                $roleAssignments = $roleAssignments | Where-Object { $_.MemberType -ne 'Inherited' -and ($_.SubjectType -eq 'User' -or $_.SubjectType -eq 'Group') }
-            }
-            if (($roleAssignments | Measure-Object).Count -gt 0) {
-                $roleAssignments = $roleAssignments | Sort-Object -Property RoleName, Name, AssignmentState, ResourceId
-                $this.PublishCustomMessage("")
-                $this.PublishCustomMessage("Note: The assignments listed below do not include 'inherited' assignments for the scope.", [MessageType]::Warning)
-                $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
-                $this.PublishCustomMessage($($roleAssignments | Format-Table -Property PrincipalName, @{Label = "Role"; Expression = { $_.RoleName } },  AssignmentState, @{Label = "Type"; Expression = { $_.SubjectType } } | Out-String), [MessageType]::Default)
-                
-                $objectToExport = $roleAssignments | Select-Object RoleName, PrincipalName, UserName, ResourceType, ResourceName, SubjectType, AssignmentState,	IsPermanent
-                $this.ExportCSV($objectToExport)
-            }
-            else {
                 if ($CheckPermanent) {
-                    $this.PublishCustomMessage("No permanent assignments found for this combination.", [MessageType]::Warning);
+                    $this.PublishCustomMessage("No permanent assignments found for the provided scope and role. ",[MessageType]::Error)
                 }
                 else {
-                    $this.PublishCustomMessage("No PIM eligible assignments found for this combination.", [MessageType]::Warning);
+                    $this.PublishCustomMessage("No PIM eligible assignments found  for the provided scope and role.", [MessageType]::Warning);
                 }    
             }
         }
         else {
-            $this.PublishCustomMessage("Unable to query requested resource for the current logged in context.", [MessageType]::Warning )
+            $this.PublishCustomMessage( "Unable to find resource on which assignment was requested. Either the resource does not exist or you may not have permissions for the requested operation.", [MessageType]::Error)
+            $this.DisplayActivationHelpMessage($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName)
         }
         
     }
 
+    hidden GetRoleSettings($PIMResourceGuid, $RoleName)
+    {
+       
+    }
     #Activates the user assignment for a role
-    hidden Activate($SubscriptionId, $ResourceGroupName, $ResourceName, $roleName, $Justification, $Duration) {
+    hidden Activate($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $roleName, $Justification, $Duration) {
         $this.AcquireToken();
         $assignments = $this.MyJitAssignments()
-        $resource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $true)
+        $resource = $null
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            
+            $resource = $this.PIMResourceResolver($ManagementGroupId,$true);
+        
+        }
+        else 
+        {
+            $resource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $true)
+        }
+        
         if(($resource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resource.ExternalId)))
         {
             if (($assignments | Measure-Object).Count -gt 0 ) {
@@ -431,24 +524,35 @@ class PIM: AzCommandBase {
                 }
             }
             else {
-                $this.PublishCustomMessage("No eligible role found for the current context", [MessageType]::Warning)
+                $this.PublishCustomMessage("No PIM Eligible assignments found for the current context: $($this.AccountId).",[MessageType]::Warning)
             }    
         }  
         else
         {
-            $this.PublishCustomMessage("No matching eligible assignment found for the current context", [MessageType]::Warning)
+            $this.PublishCustomMessage( "Unable to find resource on which activation was requested. Make sure you have PIM eligible assignment on the resource.", [MessageType]::Error)
+            #$this.DisplayActivationHelpMessage($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName)
         }
     
     }
 
     #Deactivates the activated assignment for user
-    hidden Deactivate($SubscriptionId, $ResourceGroupName, $ResourceName, $roleName) {
+    hidden Deactivate($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $roleName) {
         $this.AcquireToken();
         $assignments = $this.MyJitAssignments() 
-        if(($assignments| Measure-Object).Count -gt 0) {
+        $resource = $null
+        if(($assignments| Measure-Object).Count -gt 0) 
+        {
             $assignments = $assignments|Where-Object { -not [string]::IsNullorEmpty($_.ExpirationDate) }
-            $resource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName,$false)
-
+            if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+            {
+                
+                $resource = $this.PIMResourceResolver($ManagementGroupId, $false);
+            
+            }
+            else 
+            {
+                $resource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+            }
             if (($assignments | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resource.ExternalId))) {
                 $matchingAssignment = $assignments | Where-Object { $_.OriginalId -eq $resource.ExternalId -and $_.RoleName -eq $roleName -and $_.AssignmentState -eq 'Active' }
                 if (($matchingAssignment | Measure-Object).Count -gt 0)
@@ -489,14 +593,28 @@ class PIM: AzCommandBase {
                 $this.PublishCustomMessage("No active assignments found for the current context.", [MessageType]::Warning);
             }
         }
+        else {
+            $this.PublishCustomMessage("No PIM Eligible assignments found for the current context: $($this.AccountId).",[MessageType]::Warning)
+        }
 
     }
 
     #Assign a user to Eligible Role
-    hidden AssignExtendPIMRoleForUser($subscriptionId, $resourcegroupName, $resourceName, $roleName, $PrincipalName, $duration,$isExtensionRequest, $force, $isRemoveAssignmentRequest) {
+    hidden AssignExtendPIMRoleForUser($ManagementGroupId, $subscriptionId, $resourcegroupName, $resourceName, $roleName, $PrincipalName, $duration,$isExtensionRequest, $force, $isRemoveAssignmentRequest) {
         $this.AcquireToken();
         $PrincipalName = $this.ConvertToStringArray($PrincipalName);
-        $resolvedResources = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName,$false)
+        $resolvedResources = $null;
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            
+            $resolvedResources = $this.PIMResourceResolver($ManagementGroupId, $false);
+        
+        }
+        else 
+        {
+            $resolvedResources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+        }
+       
         if (($resolvedResources | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResources.ResourceId))) {
            # if there is same resource name inside and rg for multiple resources, we follow the AzSK standard approach to assign role on both resources
             foreach($resolvedResource in $resolvedResources)
@@ -540,60 +658,69 @@ class PIM: AzCommandBase {
                 if($isExtensionRequest)
                 {
                     $roleAssignments = $this.ListAssignmentsWithFilter($resourceId, $false)
-                    $roleAssignments = $roleAssignments | Where-Object{$_.SubjectId -in $subjectId -and $_.RoleName -eq $roleName -and $_.MemberType -ne 'Inherited'}
                     if(($roleAssignments| Measure-Object).Count -gt 0)
                     {
-                        if( ([FeatureFlightingManager]::GetFeatureStatus("UseV2apiforPIMRoleSetting","*"))) { 
-							$urlrole = $this.APIroot+"/roleSettingsV2?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resourceId)%27)+and+(roleDefinition/id+eq+%27$($roleAssignments[0].RoleId)%27)"
-							$rolesettings = [WebRequestHelper]::InvokeWebRequest("Get", $urlrole, $this.headerParams, $null, [string]::Empty, $false, $false )
+                        $roleAssignments = $roleAssignments | Where-Object{$_.SubjectId -in $subjectId -and $_.RoleName -eq $roleName -and $_.MemberType -ne 'Inherited'}
+                        if(($roleAssignments| Measure-Object).Count -gt 0)
+                        {
+                            $urlrole = $this.APIroot+"/roleSettingsV2?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resourceId)%27)+and+(roleDefinition/id+eq+%27$($roleAssignments[0].RoleId)%27)"
+                            $rolesettings = [WebRequestHelper]::InvokeWebRequest("Get", $urlrole, $this.headerParams, $null, [string]::Empty, $false, $false )
                             $maxAllowedDays = ((($($($($rolesettings.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Eligible'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes)/60)/24   
-                        }
-                        else {
-							$urlrole = $this.APIroot+"/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resourceId)%27)+and+(roleDefinition/id+eq+%27$($roleAssignments[0].RoleId)%27)"
-							$rolesettings = [WebRequestHelper]::InvokeWebRequest("Get", $urlrole, $this.headerParams, $null, [string]::Empty, $false, $false )
-                            $maxAllowedDays = ((($($rolesettings.adminEligibleSettings| Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting| ConvertFrom-Json).maximumGrantPeriodInMinutes)/60)/24       
-                        }
 
-                        $roleAssignments | ForEach-Object{
-                            $days= $DurationInDays
-                            [DateTime]$startDate = $_.ExpirationDate
-                            $extendedDate = (($startDate).AddDays($DurationInDays).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))
-                            if($extendedDate -gt ((get-date).AddDays($maxAllowedDays).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")))
-                            {
-                                $days = $maxAllowedDays
-                                $extendedDate = ((get-date).AddDays($maxAllowedDays).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))
-                            }
-                            $url = $this.APIroot +"/roleAssignmentRequests "
-                            $postParams = '{"roleDefinitionId":"'+ $_.RoleId+'","resourceId":"'+$_.ResourceId+'","subjectId":"'+ $_.SubjectId+'","assignmentState":"Eligible","type":"AdminExtend","reason":"Admin Extend by '+$this.AccountId+'","schedule":{"type":"Once","startDateTime":"'+ ((get-date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))+'","endDateTime":"'+($extendedDate)+'"}}'
-                            $this.PublishCustomMessage("Requesting assignment extension for [$($_.PrincipalName)] by $days days...")
-                            try
-                            {
-                                $extresponse = [WebRequestHelper]::InvokeWebRequest('Post', $url, $this.headerParams, $postParams, "application/json", $false, $true )
-                                if ($extresponse.StatusCode -eq 201) {
-                                    $this.PublishCustomMessage("Assignment extension request for [$($_.PrincipalName)] for the [$RoleName] role on [$($_.ResourceName)] queued successfully.", [MessageType]::Update);
-                                }  
-                                elseif ($extresponse.StatusCode -eq 401) {
-                                    $this.PublishCustomMessage("You are not eligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
-                                }
-                            }
-                            catch
-                            {
-                                if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
+                            $roleAssignments | ForEach-Object{
+                                $days= $DurationInDays
+                                [DateTime]$startDate = $_.ExpirationDate
+                                $extendedDate = (($startDate).AddDays($DurationInDays).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))
+                                $activeForDays = [math]::Round((([DateTime]$startDate).ToUniversalTime().Subtract([DateTime](get-date).ToUniversalTime())).TotalDays)
+
+                                if($extendedDate -gt ((get-date).AddDays($maxAllowedDays).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")))
                                 {
-                                    $err = $_ | ConvertFrom-Json
-                                    $this.PublishCustomMessage($err.error.message,[MessageType]::Error)
+                                    $days = $maxAllowedDays
+                                    $extendedDate = ((get-date).AddDays($maxAllowedDays).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))
                                 }
-                                else
-                                {
-                                    $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                                $url = $this.APIroot +"/roleAssignmentRequests "
+                                $postParams = '{"roleDefinitionId":"'+ $_.RoleId+'","resourceId":"'+$_.ResourceId+'","subjectId":"'+ $_.SubjectId+'","assignmentState":"Eligible","type":"AdminExtend","reason":"Admin Extend by '+$this.AccountId+'","schedule":{"type":"Once","startDateTime":"'+ ((get-date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))+'","endDateTime":"'+($extendedDate)+'"}}'
+                                $this.PublishCustomMessage("Requesting assignment extension for [$($_.PrincipalName)] by $days days...")
+
+                                if(($null -ne $startDate) -and ($activeForDays -ne $maxAllowedDays)){
+                                    try
+                                    {
+                                        $extresponse = [WebRequestHelper]::InvokeWebRequest('Post', $url, $this.headerParams, $postParams, "application/json", $false, $true )
+                                        if ($extresponse.StatusCode -eq 201) {
+                                            $this.PublishCustomMessage("Assignment extension request for [$($_.PrincipalName)] for the [$RoleName] role on [$($_.ResourceName)] queued successfully.", [MessageType]::Update);
+                                        }  
+                                        elseif ($extresponse.StatusCode -eq 401) {
+                                            $this.PublishCustomMessage("You are not eligible to assign a role. If you have recently elevated/activated your permissions, please run Connect-AzAccount and re-run the script.", [MessageType]::Error);
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
+                                        {
+                                            $err = $_ | ConvertFrom-Json
+                                            $this.PublishCustomMessage($err.error.message,[MessageType]::Error)
+                                        }
+                                        else
+                                        {
+                                            $this.PublishCustomMessage($_.Exception, [MessageType]::Error)
+                                        }
+                                    }
+                                $this.PublishCustomMessage("");
+                                }
+                                else{
+                                    $this.PublishCustomMessage("Assignment of [$($_.PrincipalName)] for the [$($_.RoleName)] role is already set to its maximum limit.", [MessageType]::Warning);
+                                    $this.PublishCustomMessage("");
                                 }
                             }
-                            $this.PublishCustomMessage("");
+                        }
+                        else
+                        {
+                            $this.PublishCustomMessage("No PIM eligible roles found for the principalName(s) provided",[MessageType]::Warning)
                         }
                     }
                     else
                     {
-                        $this.PublishCustomMessage("No eligible roles found for the principalName(s) provided",[MessageType]::Warning)
+                        $this.PublishCustomMessage("No PIM eligible roles found on the resource",[MessageType]::Warning)
                     }
             
                 }
@@ -684,7 +811,8 @@ class PIM: AzCommandBase {
             }   
         }
         else {
-            $this.PublishCustomMessage( "Unable to find resource on which assignment was requested. Either the resource does not exist or you may not have permissions for assigning a role on it", [MessageType]::Warning)
+            $this.PublishCustomMessage( "Unable to find resource on which assignment was requested. Either the resource does not exist or you may not have permissions for assigning a role on it.", [MessageType]::Error)
+            $this.DisplayActivationHelpMessage($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName)
         }
     }
 
@@ -694,7 +822,7 @@ class PIM: AzCommandBase {
             $this.PublishCustomMessage("Your eligible role assignments:", [MessageType]::Default)
             $this.PublishCustomMessage("");
             $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
-            $this.PublishCustomMessage(($assignments | Format-Table -AutoSize -Wrap @{Label = "ResourceId"; Expression = { $_.OriginalId }}, ResourceName, RoleName,  ResourceType, AssignmentState, ExpirationDate | Out-String), [MessageType]::Default)
+            $this.PublishCustomMessage(($assignments | Format-Table  -Wrap @{Label = "ResourceId"; Expression = { $_.OriginalId }; Width =52}, ResourceName, RoleName,  ResourceType, AssignmentState, ExpirationDate | Out-String), [MessageType]::Default)
             $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default)
             $this.PublishCustomMessage("");
                         
@@ -702,15 +830,25 @@ class PIM: AzCommandBase {
             $this.ExportCSV($objectToExport)
         }
         else {
-            $this.PublishCustomMessage("No eligible roles found for the current login.", [MessageType]::Warning);
+            $this.PublishCustomMessage("No PIM Eligible assignments found for the current context: $($this.AccountId).",[MessageType]::Warning)
         }
     }
 
     # Below method is intended to assign equivalent PIM eligible roles for permanent assignments for a given role on a particular resource
-    hidden AssignPIMforPermanentAssignemnts($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $PrincipalNames, $Force) 
+    hidden AssignPIMforPermanentAssignemnts($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $DurationInDays, $PrincipalNames, $Force) 
     {
-        $principalTransitioned = @();
-        $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName,$false)
+        $principalTransitioned = @();        
+        $resolvedResource = $null;
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            
+            $resolvedResource = $this.PIMResourceResolver($ManagementGroupId, $false);
+        
+        }
+        else 
+        {
+            $resolvedResource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+        }
         if (($resolvedResource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResource.ResourceId))) {    
             $resourceId = $resolvedResource.ResourceId
             $roles = $this.ListRoles($resourceId)
@@ -808,20 +946,31 @@ class PIM: AzCommandBase {
                 }
             }
             else {
-                $this.PublishCustomMessage("No permanent assignments found for this resource.", [MessageType]::Warning);       
+                $this.PublishCustomMessage("No permanent assignments found on the requested resource.", [MessageType]::Warning);       
             }
         }
         else
         {
-            $this.PublishCustomMessage("No matching resource found for the current context.", [MessageType]::Warning)
+            $this.PublishCustomMessage( "Unable to find resource on which assignment was requested. Either the resource does not exist or you may not have permissions for assigning a role on it.", [MessageType]::Error)
+            $this.DisplayActivationHelpMessage($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName)
         }
     }
 
     # Remove permanent assignments for a particular role on a given resource
-    hidden RemovePermanentAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $PrincipalNames, $Force) {
+    hidden RemovePermanentAssignments($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $RemoveAssignmentFor, $PrincipalNames, $Force) {
         $this.AcquireToken();
-        $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName,$false)
-        if(-not [String]::IsNullOrEmpty($resolvedResource.ResourceId))
+        $resolvedResource = $null;
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            
+            $resolvedResource = $this.PIMResourceResolver($ManagementGroupId, $false);
+        
+        }
+        else 
+        {
+            $resolvedResource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+        }
+        if($null -ne $resolvedResource -and (-not [String]::IsNullOrEmpty($resolvedResource.ResourceId)))
         {
             $resourceId = ($resolvedResource).ResourceId 
             $users = @();
@@ -863,7 +1012,9 @@ class PIM: AzCommandBase {
                     $users = $permanentRolesForTransition
                 }
             }
-        
+            else {
+                $this.PublishCustomMessage("No PIM eligible assignments found on the requested resource.", [MessageType]::Warning);  
+            }
             if (($users | Measure-Object).Count -gt 0) {
                 $userResp = ''
                 $totalRemovableAssignments = ($users | Measure-Object).Count
@@ -915,20 +1066,30 @@ class PIM: AzCommandBase {
         }
         else
         {
-            $this.PublishCustomMessage("No matching resource found for the current context.", [MessageType]::Warning)
+            $this.PublishCustomMessage( "Unable to find resource on which assignment was requested. Either the resource does not exist or you may not have active permissions for the assignment removal", [MessageType]::Error)
+            $this.DisplayActivationHelpMessage($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName)
         }
     }
-
-    
+   
 
     # Get the assignments that are expiring in n days
-    hidden  [PSObject] ListSoonToExpireAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays)
+    hidden  [PSObject] ListSoonToExpireAssignments($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays)
     {
         $this.AcquireToken();
         $criticalRoles = @();
         $soonToExpireAssignments = @();
         $criticalRoles += $this.ConvertToStringArray($RoleNames)
-        $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+        $resources = $null;
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            
+            $resources = $this.PIMResourceResolver($ManagementGroupId, $false);
+        
+        }
+        else 
+        {
+            $resources = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+        }
         if(($resources | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resources.ResourceId)))
         {
             $roleAssignments = $this.ListAssignmentsWithFilter($resources.ResourceId, $false)
@@ -939,7 +1100,7 @@ class PIM: AzCommandBase {
                 $soonToExpireAssignments += $roleAssignments | Where-Object {([DateTime]::UTCNow).AddDays($soonToExpireWindow) -gt $_.ExpirationDate -and $_.RoleName -in $criticalRoles -and $_.AssignmentState -eq 'Eligible'}
                 if(($soonToExpireAssignments| Measure-Object).Count -gt 0)
                 {
-                    $this.PublishCustomMessage($($soonToExpireAssignments | Sort-Object -Property ExpirationDate | Format-Table  -Wrap 'SubjectId', 'PrincipalName', 'SubjectType', @{Label = "ExpiringInDays"; Expression = { [math]::Round((([DateTime]$_.ExpirationDate).ToUniversalTime().Subtract([DateTime](get-date).ToUniversalTime())).TotalDays) } } |  Out-String), [MessageType]::Default)
+                    $this.PublishCustomMessage($($soonToExpireAssignments | Sort-Object -Property ExpirationDate | Format-Table  -Wrap 'SubjectId', 'PrincipalName', 'SubjectType','RoleName', @{Label = "ExpiringInDays"; Expression = { [math]::Round((([DateTime]$_.ExpirationDate).ToUniversalTime().Subtract([DateTime](get-date).ToUniversalTime())).TotalDays) } } |  Out-String), [MessageType]::Default)
                     $objectToExport = $soonToExpireAssignments | Select-Object RoleName, PrincipalName, UserName, ResourceType, ResourceName, SubjectType, AssignmentState,	IsPermanent, @{Label = "ExpiringInDays"; Expression = { [math]::Round((([DateTime]$_.ExpirationDate).ToUniversalTime().Subtract([DateTime](get-date).ToUniversalTime())).TotalDays) } }
                     $this.ExportCSV($objectToExport)
                 }
@@ -956,16 +1117,25 @@ class PIM: AzCommandBase {
         }
         else
         {
-            $this.PublishCustomMessage( "Unable to find resource on which assignment was requested. Either the resource does not exist or you may not have permissions for assigning a role on it", [MessageType]::Warning)
+            $this.PublishCustomMessage( "Unable to find resource on which assignment was requested. Either the resource does not exist or you may not have permissions for assigning a role on it", [MessageType]::Error)
+            $this.DisplayActivationHelpMessage($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName)
         }
        return $soonToExpireAssignments
     }
 
     # Extend assignments for roles by n days from expiration date
-    hidden [void] ExtendSoonToExpireAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $force)
+    hidden [void] ExtendSoonToExpireAssignments($managementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $force)
     {
-        $soonToExpireAssignments = $this.ListSoonToExpireAssignments($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays);
-        $AssignmentCount = ($soonToExpireAssignments | Measure-Object).Count
+        $soonToExpireAssignments = @();
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+          $soonToExpireAssignments = $this.ListSoonToExpireAssignments($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays);
+        }
+        else
+        {
+            $soonToExpireAssignments = $this.ListSoonToExpireAssignments($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays);
+        }
+          $AssignmentCount = ($soonToExpireAssignments | Measure-Object).Count
         if($AssignmentCount -gt 0)
         {
             $ts =$DurationInDays
@@ -999,7 +1169,10 @@ class PIM: AzCommandBase {
                     if($force -or ($UserResponse -eq 'Y'))
                     {
                         [DateTime]$startDate = $_.ExpirationDate
-                        if($null -ne $startDate)
+                        $activeForDays = [math]::Round((([DateTime]$startDate).ToUniversalTime().Subtract([DateTime](get-date).ToUniversalTime())).TotalDays)
+                        
+                        #If Block executes for the condition when Assignment days of User are less than Maximum Assignment Days for the Role  
+                        if(($null -ne $startDate) -and ($activeForDays -ne $maxAllowedDays))
                         {
                             $extendedDate = (($startDate).AddDays($ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))
                             if($extendedDate -gt ((get-date).AddDays($maxAllowedDays).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")))
@@ -1033,6 +1206,10 @@ class PIM: AzCommandBase {
                                 }
                             }
                         }
+                        else # To notify user that Assignment of User is already equal to maximum Assignment for the Role 
+                        {
+                            $this.PublishCustomMessage("Assignment of [$($_.PrincipalName)] for the [$($_.RoleName)] role is already set to its maximum limit.")
+                        }
                     }
                     ++$i;
                 }
@@ -1043,29 +1220,31 @@ class PIM: AzCommandBase {
     }
 
     # configure PIM role settings for a particular role on a resource 
-    hidden [void] ConfigureRoleSettings($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsAfter, $RequireJustificationOnActivation, $MaximumActivationDuration, $RequireMFAOnActivation,$RequireConditionalAccessOnActivation)
+    hidden [void] ConfigureRoleSettings($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsAfter, $RequireJustificationOnActivation, $MaximumActivationDuration, $RequireMFAOnActivation,$RequireConditionalAccessOnActivation)
     {
         #  1) get PIM resource id for the resource provided
-        $resolvedResource = $this.PIMResourceResolver($subscriptionId, $resourcegroupName, $resourceName, $false)
+        $resolvedResource = $null;
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            
+            $resolvedResource = $this.PIMResourceResolver($ManagementGroupId);
+        
+        }
+        else 
+        {
+            $resolvedResource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+        }
        
         #  2) get PIM identifier for the particular role on resource identified in 1
         if (($resolvedResource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResource.ResourceId))) {
           $roleforResource = @($this.ListRoles($resolvedResource.ResourceId)) | Where-Object {$_.RoleName -eq $RoleName}
         #  3) Get json object for role setting
         $rolesettings = [string]::Empty
-        $featureFlightEnabled = $false
-        if( ([FeatureFlightingManager]::GetFeatureStatus("UseV2apiforPIMRoleSetting","*"))) {
-            $featureFlightEnabled = $true
-        }
+        
             if(($roleforResource|Measure-Object).Count -gt 0)
             {
-                if($featureFlightEnabled) { 
-                    $url = $this.APIroot+"/roleSettingsV2?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resolvedResource.ResourceId)%27)+and+(roleDefinition/id+eq+%27$($roleforResource.RoleDefinitionId)%27)"
-                }
-                else {
-                    $url = $this.APIroot+"/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resolvedResource.ResourceId)%27)+and+(roleDefinition/id+eq+%27$($roleforResource.RoleDefinitionId)%27)"
-                }
                 try {
+                    $url = $this.APIroot+"/roleSettingsV2?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resolvedResource.ResourceId)%27)+and+(roleDefinition/id+eq+%27$($roleforResource.RoleDefinitionId)%27)"
                     $rolesettings = [WebRequestHelper]::InvokeWebRequest("Get", $url, $this.headerParams, $null, [string]::Empty, $false, $false )
                 }
                 catch {
@@ -1083,10 +1262,15 @@ class PIM: AzCommandBase {
             $existingroleSetting  = $rolesettings
            
         # 4) Modify the role settings obtained above by the parameters passed in cmdlet
+            if( [string]::IsNullOrEmpty($RequireJustificationOnActivation)){
+                $RequireJustificationOnActivation = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'JustificationRule'}).setting | ConvertFrom-Json).required
+            }
+            if( [string]::IsNullOrEmpty($RequireMFAOnActivation)){
+                $RequireJustificationOnActivation = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'MfaRule'}).setting | ConvertFrom-Json).mfaRequired
+            }
             $MaxActivationDurationConstant = 60 #To convert hours to minutes
             $ExpireEligibleAssignmentsAfterConstant = 24*60 #To convert days to minutes
 
-                if($featureFlightEnabled) { 
                     $isPermanentAdminEligible = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Eligible'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).permanentAssignment
                     $isPermanentuserMember = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).permanentAssignment
                     if($MaximumActivationDuration -eq -1)
@@ -1105,27 +1289,7 @@ class PIM: AzCommandBase {
                     {
                             $ExpireEligibleAssignmentsAfter =$ExpireEligibleAssignmentsAfter*$ExpireEligibleAssignmentsAfterConstant
                     }
-                }
-                else {
-                    $isPermanentAdminEligible = ($($existingroleSetting.adminEligibleSettings | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).permanentAssignment
-                    $isPermanentuserMember = ($($existingroleSetting.userMemberSettings| Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting| ConvertFrom-Json).permanentAssignment
-                    if($MaximumActivationDuration -eq -1)
-                    {
-                            $MaximumActivationDuration =($($existingroleSetting.userMemberSettings | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes
-                    }
-                    else 
-                    {
-                        $MaximumActivationDuration = $MaximumActivationDuration*$MaxActivationDurationConstant
-                    }
-                    if($ExpireEligibleAssignmentsAfter -eq -1)
-                    {
-                        $ExpireEligibleAssignmentsAfter = ($($existingroleSetting.adminEligibleSettings | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes
-                    }
-                    else 
-                    {
-                            $ExpireEligibleAssignmentsAfter =$ExpireEligibleAssignmentsAfter*$ExpireEligibleAssignmentsAfterConstant
-                    }
-                }
+                
                # Check for the conditional policy enforcement in Org settings, if applied to accordingly
                $roleSettingId = $existingroleSetting.id
                $policyString = [string]::Empty
@@ -1178,7 +1342,6 @@ class PIM: AzCommandBase {
         #  5) Create json body for patch request  
                $body=""
                $updateUrl=""
-               if($featureFlightEnabled) { 
                     if(-not [string]::IsNullOrEmpty($policyString))
                     {
                         $body='{"id": "'+$roleSettingId+'","lifeCycleManagement": [{"caller":"Admin","level":"Eligible","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}]},{"caller": "EndUser","level": "Member","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$false+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"},'+$policyString+']}],"roleDefinition":{"id":"'+$rolesettings.roleDefinitionId+'"}}'
@@ -1193,23 +1356,6 @@ class PIM: AzCommandBase {
                         }
                     }
                     $updateUrl = $this.APIroot+"/roleSettingsV2/$roleSettingId"
-               }
-               else {
-                    if(-not [string]::IsNullOrEmpty($policyString))
-                    {
-                        $body='{"adminEligibleSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}],"userMemberSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$false+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"},'+$policyString+']}'
-                    }
-                    else
-                    {
-                        if($setFlag) {
-                            $body = '{"adminEligibleSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}],"userMemberSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]}'
-                        }
-                        else {
-                            $body = '{"adminEligibleSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}],"userMemberSettings":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$RequireMFAOnActivation+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]}'
-                        }
-                    }
-                    $updateUrl = $this.APIroot+"/roleSettings/$roleSettingId"
-                }
                 
                 $body = $body -replace "True" ,"true" # the api does not accept "True" so need to lower the casing
                 $body = $body -replace "False", "false"                
@@ -1251,7 +1397,8 @@ class PIM: AzCommandBase {
         }
         else
         {
-            $this.PublishCustomMessage( "Unable to find resource on which role configuration was requested. Either the resource does not exist or you may not have permissions for configuring role settings on it", [MessageType]::Warning) 
+            $this.PublishCustomMessage( "Unable to find resource on which role configuration was requested. Either the resource does not exist or you may not have permissions for configuring role settings on it", [MessageType]::Error) 
+            $this.DisplayActivationHelpMessage($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName)
         }
         
       
@@ -1266,6 +1413,24 @@ class PIM: AzCommandBase {
         $assignmentsCSV.MessageData = $exportObject
 
         $this.PublishAzSKRootEvent([AzSKRootEvent]::WriteCSV, $assignmentsCSV);
+    }
+    hidden [void] DisplayActivationHelpMessage($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName)
+    {
+        [string] $cmdmsg = ""
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            $cmdmsg = "-ManagementGroupId $ManagementGroupId"           
+        }
+        else
+        {
+            $cmdmsg += "-SubscriptionId $SubscriptionId"
+                        if(-not [string]::IsNullOrEmpty($ResourceGroupName))
+                            { $cmdmsg += " -ResourceGroupName $ResourceGroupName "}
+                        if(-not [string]::IsNullOrEmpty($ResourceName))
+                            { $cmdmsg += " -ResourceName $ResourceName "}
+           
+        }
+        $this.PublishCustomMessage("Note: If you have PIM eligible role on the resource, make sure you have activated your access before running the above command. Use setpim -ActivateMyRole "+$cmdmsg+"  -DurationInHours `$durationinHrs -Justification `$justification -RoleName `$roleDefinitionName ",[MessageType]::Warning)
     }
 }
 

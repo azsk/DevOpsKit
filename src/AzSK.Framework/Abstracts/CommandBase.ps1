@@ -98,7 +98,7 @@ class CommandBase: AzSKRoot {
         if (-not $methodToCall) {
             throw [System.ArgumentException] ("The argument 'methodToCall' is null. Pass the reference of method to call. e.g.: [YourClass]::new().YourMethod");
 		}
-		if ($arguments -eq $null)
+		if ($null -eq $arguments)
 		{
 			$folderPath = $this.GetOutputFolderPath();
 			$methodResult = $methodToCall.Invoke(@());
@@ -220,7 +220,10 @@ else {
 	# <TODO Framework: Move to module helper class>
 	# Function to validate module version based on Org policy and showcase warning for update or block commands if version is less than last two minor version
     [void] CheckModuleVersion() {
-		 
+		if([ConfigurationManager]::GetAzSKSettings().IsSAW -eq $true)
+		{
+			return
+		}
 		$currentModuleVersion = [System.Version] $this.GetCurrentModuleVersion()
 		$serverVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($this.GetModuleName()));
 		$currentModuleVersion = [System.Version] $this.GetCurrentModuleVersion() 
