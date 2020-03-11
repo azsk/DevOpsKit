@@ -263,8 +263,8 @@ function Set-AzSKPIMConfiguration {
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleForManagementGroup")]
-        [bool]
-        $RequireJustificationOnActivation = $true,
+        [string]
+        $RequireJustificationOnActivation,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleForManagementGroup")]
@@ -273,7 +273,7 @@ function Set-AzSKPIMConfiguration {
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleForManagementGroup")]
-        [bool]
+        [string]
         $RequireMFAOnActivation,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
