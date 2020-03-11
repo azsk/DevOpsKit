@@ -9,6 +9,7 @@ class Release: SVTBase
     
     Release([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     {
+        [system.gc]::Collect();
         # Get release object
         $apiURL = $this.ResourceContext.ResourceId
         $this.ReleaseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
@@ -24,6 +25,8 @@ class Release: SVTBase
         $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
         $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
         $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ReleaseManagement") -and ($_.actions.name -contains "ViewReleaseDefinition")}).namespaceId
+
+        $securityNamespacesObj = $null;
     }
 
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
@@ -154,6 +157,7 @@ class Release: SVTBase
             $controlResult.AddMessage([VerificationResult]::Failed,
                                                 "No release history found. release is inactive.");
         }
+        $responseObj = $null;
     } 
         return $controlResult
     }
@@ -173,6 +177,8 @@ class Release: SVTBase
         {
             $controlResult.AddMessage([VerificationResult]::Passed,"Inherited permissions are disabled on release pipeline.");
         }
+        $header = $null;
+        $responseObj = $null;
         return $controlResult
     }
 
@@ -200,7 +206,9 @@ class Release: SVTBase
                     return  $($releaseStage | Select-Object id,name, @{Name = "Owner"; Expression = {$_.owner.displayName}})
                 }
                 $controlResult.AddMessage([VerificationResult]::Passed,"Pre-deployment approvals is enabled for following release stages.",($complaintStages | Format-Table));
+                $complaintStages = $null;
             }
+            $nonComplaintStages =$null;
         }
         else
         {
@@ -219,7 +227,9 @@ class Release: SVTBase
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed,"No release stage found matching to $($this.ControlSettings.Release.RequirePreDeployApprovals -join ", ") in [$($this.ReleaseObj.name)] pipeline.  Found pre-deployment approval is enabled for present environments.");
             }
+            $otherStages =$null;
         }
+        $releaseStages = $null;
         return $controlResult
     }
 
@@ -247,12 +257,13 @@ class Release: SVTBase
                 $controlResult.AddMessage([VerificationResult]::Verify,"Validate users/groups added as approver within release pipeline.",$approversList);
                 $controlResult.SetStateData("List of approvers for each release stage: ", $approversList);
             }
+            $approversList = $null;
         }
         else
         {
             $controlResult.AddMessage([VerificationResult]::Passed,"No release stage found matching to $($this.ControlSettings.Release.RequirePreDeployApprovals -join ", ") in [$($this.ReleaseObj.name)] pipeline.");
         }
-        
+        $releaseStages = $null;
         return $controlResult
     }
 
@@ -309,6 +320,10 @@ class Release: SVTBase
                 $controlResult.AddMessage([VerificationResult]::Passed,"No identities have been explicitly provided with RBAC access to [$($this.ResourceContext.ResourceName)] pipeline other than release pipeline owner and default groups");
                 $controlResult.AddMessage("List of whitelisted user identities:",$whitelistedUserIdentities)
             }
+
+            $accessList = $null;
+            $whitelistedUserIdentities =$null;
+            $responseObj = $null;
         }
         catch
         {
@@ -326,7 +341,7 @@ class Release: SVTBase
         if(($this.ReleaseObj | Measure-Object).Count -gt 0)
         {
             if( [Helpers]::CheckMember($this.ReleaseObj[0],"artifacts") -and ($this.ReleaseObj[0].artifacts | Measure-Object).Count -gt 0){
-                $sourcetypes = @();
+               # $sourcetypes = @();
                 $sourcetypes = $this.ReleaseObj[0].artifacts;
                 $nonadoresource = $sourcetypes | Where-Object { $_.type -ne 'Git'} ;
                
@@ -337,6 +352,8 @@ class Release: SVTBase
                else {
                 $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline does not contain artifacts from external sources");   
                }
+               $sourcetypes = $null;
+               $nonadoresource = $null;
            }
            else {
             $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline does not contain any source repositories");   

@@ -270,6 +270,14 @@
     "WebhookValidityInDays": 60,
     "variablesToSkip": []
   },
+
+  "Patterns" : [ 
+    {"RegexCode": "Build", "RegexList": ["^(?=[^\\d_].*?\\d)\\w(\\w|[!@#$%]){7,20}",
+                                "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+                                "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))"
+                                ] }
+   ],
+
   "BaselineControls": {
     "ResourceTypeControlIdMappingList": [
       {
@@ -306,7 +314,7 @@
      {
       "ResourceType": "Build",
       "ControlIds": [
-        "AzureDevOps_Build_DP_No_PlainText_Secrets_In_Definition",
+        
         "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions"
       ]
      },
