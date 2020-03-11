@@ -78,7 +78,7 @@ class ServiceConnection: SVTBase
 	{
         if([Helpers]::CheckMember($this.ServiceEndpointsObj, "authorization.parameters.authenticationType"))
         {
-            if( $Endpoint.authorization.parameters.authenticationType -eq "spnKey")
+            if( $this.ServiceEndpointsObj.authorization.parameters.authenticationType -eq "spnKey")
             {
                 $controlResult.AddMessage([VerificationResult]::Failed,
                                         "Endpoint is used with secret based auth");
