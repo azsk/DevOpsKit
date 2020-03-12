@@ -3254,7 +3254,7 @@ class CCAutomation: AzCommandBase
 
 			#create new SP
 			$this.PublishCustomMessage("Creating new service principal (SPN) for the AAD application. This will be used as the runtime account for AzSK CA")
-			New-AzADServicePrincipal -ApplicationId $aadApplication.ApplicationId -ErrorAction Stop | Out-Null   
+			New-AzADServicePrincipal -ApplicationId $aadApplication.ApplicationId -SkipAssignment -ErrorAction Stop | Out-Null   
 				
 			Start-Sleep -Seconds 30                         
 		}
