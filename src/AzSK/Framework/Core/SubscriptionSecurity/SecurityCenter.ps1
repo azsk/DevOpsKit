@@ -602,14 +602,14 @@ class SecurityCenter: AzSKRoot
 	}	
 
 	# Get SecurtiySolution details for the subscription
-	[PSObject] GetASCSecuritySolutionsDetails()
+	[PSObject[]] GetASCSecuritySolutionsDetails()
 	{
-		$SecuritySolutionsDetails = $null;
+		$SecuritySolutionsDetails = @();
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
 		$securitySolutionsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/securitySolutions?api-version=2015-06-01-preview";
 		try
 		{
-			$SecuritySolutionsDetails = [WebRequestHelper]::InvokeWebRequest("Get", $securitySolutionsUri, $null);
+			$SecuritySolutionsDetails += [WebRequestHelper]::InvokeWebRequest("Get", $securitySolutionsUri, $null);
 		}
 		catch
 		{

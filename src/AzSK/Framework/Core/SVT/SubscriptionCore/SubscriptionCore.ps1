@@ -17,7 +17,7 @@ class SubscriptionCore: AzSVTBase
 	hidden [PSObject] $MisConfiguredSecurityPolicySettings;
 	hidden [PSObject] $MisConfiguredAutoProvisioningSettings;
 	hidden [PSObject] $MisConfiguredSecurityContactDetails;
-	hidden [PSObject] $ASCSecuritySolutionDetails;
+	hidden [PSObject[]] $ASCSecuritySolutionDetails;
 	hidden [SecurityCenter] $SecurityCenterInstance;
 	hidden [hashtable] $ResourceTier;
 	hidden [string[]] $SubscriptionMandatoryTags = @();
