@@ -733,7 +733,7 @@ class PIM: AzCommandBase {
                         $this.PublishCustomMessage(($_ | Format-Table  -AutoSize -Wrap -Property UserPrincipalName, DisplayName | Out-String), [MessageType]::Default)
                         if(!$Force)
                         {
-                            Write-Host "The above role assignments will be removed. `nPlease confirm (Y/N): " -ForegroundColor Yellow -NoNewline
+                            Write-Host "The above PIM eligible assignments will be removed. `nPlease confirm (Y/N): " -ForegroundColor Yellow -NoNewline
                             $userResp = Read-Host
                         } 
                         if ($userResp -eq 'y' -or $Force)
@@ -923,16 +923,24 @@ class PIM: AzCommandBase {
                             }         
                             $i++;
                         }#foreach  
-                        [string] $cmdmsg = ""
-                        $cmdmsg += "To remove the permanent assignments, please run `n setpim -RemovePermanentAssignments -SubscriptionId $SubscriptionId"
-                        if(-not [string]::IsNullOrEmpty($ResourceGroupName))
-                            { $cmdmsg += " -ResourceGroupName $ResourceGroupName "}
-                        if(-not [string]::IsNullOrEmpty($ResourceName))
-                            { $cmdmsg += " -ResourceName $ResourceName "}
+                        [string] $cmdmsg = "To remove the permanent assignments, please run `n setpim -RemovePermanentAssignments"
+                        if([string]::IsNullOrEmpty($ManagementGroupId))
+                        {
+                            $cmdmsg += " -SubscriptionId $SubscriptionId"
+                            if(-not [string]::IsNullOrEmpty($ResourceGroupName))
+                                { $cmdmsg += " -ResourceGroupName $ResourceGroupName "}
+                            if(-not [string]::IsNullOrEmpty($ResourceName))
+                                { $cmdmsg += " -ResourceName $ResourceName "}
+                           
+                        }
+                        else
+                        {
+                            $cmdmsg += " -ManagementGroupId $ManagementGroupId  "                        
+                        }
                         $cmdmsg += '-RoleNames "'+($Rolenames)+ '"'
                         if(-not [string]::IsNullOrEmpty($PrincipalNames))
-                            {$cmdmsg += '-PrincipalNames "'+($principalTransitioned -join ', ')+ '"'}
-                            $this.PublishCustomMessage("")
+                        {$cmdmsg += '-PrincipalNames "'+($principalTransitioned -join ', ')+ '"'}
+                        $this.PublishCustomMessage("")
                         $this.PublishCustomMessage("This command will assign equivelant eligible role assignments for the above permanent assignments. $cmdmsg", [MessageType]::Warning)
                         
                     }
