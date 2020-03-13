@@ -1323,8 +1323,9 @@ class PIM: AzCommandBase {
                                 }
                                 else 
                                 {
-                                    $this.PublishCustomMessage("Enter the CA policy tag name to be applied for the role")
-                                    $policyTag = Read-Host 
+                                    $this.PublishCustomMessage("Error: Conditional Access policy tag was not found.",[MessageType]::Error)
+                                    $this.PublishCustomMessage("This could happen because DevOps Kit is not configured with the correct org policy. Make sure you install DevOps Kit using the correct `"iwr`" command for your organization. ", [MessageType]::Warning)
+                                    return
                                 }
                                 $policyString= '{"ruleIdentifier":"AcrsRule","setting":"{\"acrsRequired\":true,\"acrs\":\"'+$policyTag+'\"}"}'
                                 
