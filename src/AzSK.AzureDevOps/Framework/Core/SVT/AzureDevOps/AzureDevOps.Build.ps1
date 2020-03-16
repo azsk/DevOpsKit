@@ -25,6 +25,59 @@ class Build: SVTBase
 
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
 	{
+        if([Helpers]::CheckMember([ConfigurationManager]::GetAzSKSettings(),"ScanToolPath"))
+        {
+            $ToolFolderPath =  [ConfigurationManager]::GetAzSKSettings().ScanToolPath
+        $ScanToolName = [ConfigurationManager]::GetAzSKSettings().ScanToolName
+        if((-not [string]::IsNullOrEmpty($ToolFolderPath)) -and (Test-Path $ToolFolderPath) -and (-not [string]::IsNullOrEmpty($ScanToolName)))
+        {
+            $ToolPath = Get-ChildItem -Path $ToolFolderPath -File -Filter $ScanToolName -Recurse 
+            if($ToolPath)
+            { 
+                if($this.BuildObj)
+                {
+                    try
+                    {
+                        $buildDefFileName = $($this.ResourceContext.ResourceName).Replace(" ","")
+                        $buildDefPath = [Constants]::AzSKTempFolderPath + "\Builds\"+ $buildDefFileName + "\";
+                        if(-not (Test-Path -Path $buildDefPath))
+                        {
+                            mkdir -Path $buildDefPath -Force | Out-Null
+                        }
+
+                        $this.BuildObj | ConvertTo-Json -Depth 5 | Out-File "$buildDefPath\$buildDefFileName.json"
+                        $searcherPath = Get-ChildItem -Path $($ToolPath.Directory.FullName) -Include "buildsearchers.xml" -Recurse
+                        ."$($Toolpath.FullName)" -I $buildDefPath -S "$($searcherPath.FullName)" -f csv -Ve 1 -O "$buildDefPath\Scan"    
+                        
+                        $scanResultPath = Get-ChildItem -Path $buildDefPath -File -Include "*.csv"
+                        
+                        if($scanResultPath -and (Test-Path $scanResultPath.FullName))
+                        {
+                            $credList = Get-Content -Path $scanResultPath.FullName | ConvertFrom-Csv 
+                            if(($credList | Measure-Object).Count -gt 0)
+                            {
+                                $controlResult.AddMessage("No. of credentials found:" + ($credList | Measure-Object).Count )
+                                $controlResult.AddMessage([VerificationResult]::Failed,"Found credentials in variables")
+                            }
+                            else {
+                                $controlResult.AddMessage([VerificationResult]::Passed,"No credentials found in variables")
+                            }
+                        }
+                    }
+                    catch {
+                        #Publish Exception
+                        $this.PublishException($_);
+                    }
+                    finally
+                    {
+                        #Clean temp folders 
+                        Remove-ITem -Path $buildDefPath -Recurse
+                    }
+                }
+            }
+         }
+        }
+        else {
           try {      
             if([Helpers]::CheckMember($this.BuildObj,"variables")) 
             {
@@ -71,7 +124,7 @@ class Build: SVTBase
                 {
                     $varList = $varList | select -Unique
                     $controlResult.AddMessage([VerificationResult]::Failed,
-                    "Found credentials in build definition. Variables names: $varList" );
+                    "Found credentials in build definition. Variables name: $varList" );
                 }
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in build definition.");
@@ -80,10 +133,11 @@ class Build: SVTBase
             }
         }
         catch {
-            $controlResult.AddMessage([VerificationResult]::Manual, "Could not evaluated build definition.");
+            $controlResult.AddMessage([VerificationResult]::Manual, "Could not evaluate build definition.");
             $controlResult.AddMessage($_);
         }    
-            return $controlResult;
+      } 
+     return $controlResult;
     }
 
     hidden [ControlResult] CheckInActiveBuild([ControlResult] $controlResult)
@@ -255,7 +309,7 @@ class Build: SVTBase
                 $controlResult.AddMessage([VerificationResult]::Passed,"No identities have been explicitly provided with RBAC access to [$($this.ResourceContext.ResourceName)] other than build pipeline owner and default groups");
                 $controlResult.AddMessage("List of whitelisted user identities:",$whitelistedUserIdentities)
             } 
-            $accessList = $null;
+           # $accessList = $null;
             $responseObj = $null;
         }
         catch
