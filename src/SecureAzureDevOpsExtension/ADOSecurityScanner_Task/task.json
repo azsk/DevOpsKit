@@ -1,0 +1,92 @@
+{
+  "id": "0f42e73b-1b51-41b9-8bd2-c1a864393316",
+  "name": "ADOSecurityScanner",
+  "friendlyName": "Azure DevOps (ADO) Security Scanner",
+  "description": "Scan Azure DevOps components for security issues.",
+  "helpMarkDown": "[More Information](http://aka.ms/devopskit/ADOSecurity)",
+  "category": "Build",
+  "visibility": [
+    "Build"
+  ],
+  "author": "ADOScanner",
+  "version": {
+    "Major": 1,
+    "Minor": 0,
+    "Patch": 30
+  },
+  "demands": [
+  ],
+  "minimumAgentVersion": "1.20.0",
+  "instanceNameFormat": "ADO Security Scanner",
+  "inputs": [
+    {
+      "name": "AzureDevOpsConnectionName",
+      "type": "connectedService:externaltfs",
+      "label": "Azure DevOps Connection",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "Azure DevOps connection required to access resources"
+    },
+    {
+      "name": "OrgName",
+      "type": "string",
+      "label": "Organization Name",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "Org name for which scan needs to be performed."
+    },
+    {
+      "name": "ProjectNames",
+      "type": "string",
+      "label": "Project Names",
+      "defaultValue": "*",
+      "required": true,
+      "helpMarkDown": "Comma-separated list of projects against which Security Verification should be run."
+    },
+    {
+      "name": "BuildNames",
+      "type": "string",
+      "label": "Build Names",
+      "defaultValue": "*",
+      "required": true,
+      "helpMarkDown": "Comma-separated list of builds against which Security Verification should be run."
+    },
+    {
+      "name": "ReleaseNames",
+      "type": "string",
+      "label": "Release Names",
+      "defaultValue": "*",
+      "required": true,
+      "helpMarkDown": "Comma-separated list of releases against which Security Verification Tests (SVTs) should be run."
+    },
+    {
+      "name": "ServiceConnectionNames",
+      "type": "string",
+      "label": "Service Connection Names",
+      "defaultValue": "*",
+      "required": false,
+      "helpMarkDown": "Comma-separated list of service connections against which Security Verification Tests (SVTs) should be run."
+    },
+    {
+      "name": "AgentPoolNames",
+      "type": "string",
+      "label": "Agent Pool Names",
+      "defaultValue": "*",
+      "required": false,
+      "helpMarkDown": "Comma-separated list of agent pools against which Security Verification Tests (SVTs) should be run."
+    },
+    {
+      "name": "isBaseline",
+      "type": "boolean",
+      "label": "Scan baseline controls only",
+      "defaultValue": true,
+      "required": false,
+      "helpMarkDown": ""
+    }
+  ],
+  "execution": {
+    "PowerShell3": {
+      "target": "ADOSecurityScannerSVTRuntime.ps1"
+    }
+  }
+}

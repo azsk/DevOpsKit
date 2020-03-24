@@ -1,0 +1,191 @@
+{
+    "manifestVersion": 1,
+    "id": "ADOSecurityScanner",
+    "publisher": "ADOScanner",
+    "public": false,
+    "version": "0.1.116",
+    "name": "ADO Security Scanner",
+    "description": "ADO Security Scanner provide security guidelines for devops components like Org, Project, Build, Release etc.",
+    "categories": ["Azure Boards","Azure Pipelines"],
+    "icons": {
+        "default": "images/Icon.png"
+    },
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],
+    "tags": [
+        "Security",
+        "ADO Security",
+        "Azure DevOps",
+        "ADO Scanner"
+    ],
+    "content": {
+        "details": {
+            "path": "overview.md"
+        }
+    },
+    "links": {
+        "getstarted": {
+          "uri": "https://github.com/azsk/DevOpsKit-docs/blob/master/03-Security-In-CICD/Readme.md#security-verification-tests-svts-in-VSTS-pipeline"
+        },
+        "repository": {
+          "uri": "https://github.com/azsk/DevOpsKit-docs/"
+        },
+        "license": {
+          "uri": "https://github.com/azsk/DevOpsKit-docs/blob/master/LICENSE"
+        },
+        "support": {
+          "uri": "https://github.com/azsk/DevOpsKit-docs#references"
+        }
+      },
+    "contributions": [
+        {
+            "id": "custom-build-task",
+            "type": "ms.vss-distributed-task.task",
+            "targets": [
+                "ms.vss-distributed-task.tasks"
+            ],
+            "properties": {
+                "name": "ADOSecurityScanner_Task"
+            }
+        },
+        {
+            "id": "OrgLevelSecurityScanSummary",
+            "type": "ms.vss-dashboards-web.widget",
+            "targets": [
+                "ms.vss-dashboards-web.widget-catalog"
+            ],
+            "properties": {
+                "name": "ADO Security Org Security View",
+                "description": "Displays security configuration status for organization and project level controls",
+                "catalogIconUrl": "images/Icon.png",
+                "previewImageUrl": "images/Icon.png",                            
+                "uri": "OrgLevelSecurityScanSummary.html",   
+                "Sizes": [
+                    {
+                           "rowSpan": 6,
+                           "columnSpan": 6
+                       }
+                   ],          
+                "supportedSizes": [
+                     {
+                            "rowSpan": 6,
+                            "columnSpan": 6
+                        }
+                    ],
+                "supportedScopes": ["project_team"]
+            }
+        },
+        {
+            "id": "ProjectComponentSecurityScanSummary",
+            "type": "ms.vss-dashboards-web.widget",
+            "targets": [
+                "ms.vss-dashboards-web.widget-catalog"
+            ],
+            "properties": {
+                "name": "ADO Security Project Components Security View",
+                "description": "Displays security configuration status for project components (Build/Release/Connections/AgentPool)",
+                "catalogIconUrl": "images/Icon.png",
+                "previewImageUrl": "images/Icon.png",                            
+                "uri": "ProjectComponentSecurityScanSummary.html",
+                "Sizes": [
+                    {
+                           "rowSpan": 10,
+                           "columnSpan": 10
+                       }
+                   ],          
+                "supportedSizes": [
+                     {
+                            "rowSpan":10,
+                            "columnSpan": 10
+                        }
+                    ],
+                "supportedScopes": ["project_team"]
+            }
+        },
+        {
+            "id": "OrgLevelTemp",
+            "type": "ms.vss-dashboards-web.widget",
+            "targets": [
+                "ms.vss-dashboards-web.widget-catalog"
+            ],
+            "properties": {
+                "name": "ADO Security Temp",
+                "description": "Displays security configuration status for organization and project level controls",
+                "catalogIconUrl": "images/Icon.png",
+                "previewImageUrl": "images/Icon.png",                            
+                "uri": "OrgLevelTemp.html",   
+                "Sizes": [
+                    {
+                           "rowSpan": 4,
+                           "columnSpan": 6
+                       }
+                   ],          
+                "supportedSizes": [
+                     {
+                            "rowSpan": 4,
+                            "columnSpan": 6
+                        }
+                    ],
+                "supportedScopes": ["project_team"]
+            }
+        },
+        {
+            "id": "collection-level-admin-hub",
+            "type": "ms.vss-web.hub",
+            "description": "ADO Scanner Policy",
+            "targets": [
+                "ms.vss-web.collection-admin-hub-group"
+            ],
+            "restrictedTo": [
+                "member"
+              ],
+            "properties": {
+                "name": " ADO Scanner Policy",
+                "order": 101,
+                "uri": "OrgPolicyHub.html",
+                "icon": "images/Icon.png"
+            }
+        }
+
+    ],
+    "files": [
+        {
+            "path": "scripts",
+            "addressable": true
+        },
+        {
+            "path": "ADOSecurityScanner_Task"
+        },
+        {
+            "path": "images",
+            "addressable": true
+        },
+        {
+            "path": "ProjectComponentSecurityScanSummary.html",
+            "addressable": true
+        },
+        {
+            "path": "OrgLevelSecurityScanSummary.html",
+            "addressable": true
+        },
+        {
+            "path": "OrgPolicyHub.html",
+            "addressable": true
+        },
+        {
+            "path": "node_modules/vss-web-extension-sdk/lib",
+            "addressable": true,
+            "packagePath": "lib"
+        },
+        {
+            "path": "Styles",
+            "addressable": true
+        }
+    ],
+    "scopes": [
+        "vso.project"
+    ]
+}
