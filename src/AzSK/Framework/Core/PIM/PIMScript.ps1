@@ -106,8 +106,8 @@ class PIM: AzCommandBase {
             {
                 $this.PublishCustomMessage("No PIM Eligible assignment found for the current context: $($this.AccountId).",[MessageType]::Warning)
             }
-            
-                                                                     
+
+
 
         }
         else
@@ -277,8 +277,7 @@ class PIM: AzCommandBase {
         if($type -eq 'subscription')
         {
             # Fetch PIM details of the all subscriptions user has access to
-            $resourceUrl = $this.APIroot + "/resources?/discovery?`$filter=(registeredDateTime%20ne%20null%20and%20type%20eq%20%27subscription%27)"
-            #$filter=(type%20eq%20%27subscription%27)&`$orderby=type"
+            $resourceUrl = $this.APIroot + "/resources?`$filter=(type%20eq%20%27subscription%27)&`$orderby=type"
         }
         elseif($type -eq 'resourcegroup')
         {
@@ -1150,10 +1149,16 @@ class PIM: AzCommandBase {
             $url = $this.APIroot +"/roleAssignmentRequests "
             # get maximum number of days an assigment 
 
-            $urlrole = $this.APIroot+"/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($soonToExpireAssignments[0].ResourceId)%27)+and+(roleDefinition/id+eq+%27$($soonToExpireAssignments[0].RoleId)%27)"
-            $rolesettings = [WebRequestHelper]::InvokeWebRequest("Get", $urlrole, $this.headerParams, $null, [string]::Empty, $false, $false )
-            $maxAllowedDays = ((($($rolesettings.adminEligibleSettings| Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting| ConvertFrom-Json).maximumGrantPeriodInMinutes)/60)/24       
-           
+            if( ([FeatureFlightingManager]::GetFeatureStatus("UseV2apiforPIMRoleSetting","*"))) {
+                $urlrole = $this.APIroot+"/roleSettingsV2?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($soonToExpireAssignments[0].ResourceId)%27)+and+(roleDefinition/id+eq+%27$($soonToExpireAssignments[0].RoleId)%27)"
+                $rolesettings = [WebRequestHelper]::InvokeWebRequest("Get", $urlrole, $this.headerParams, $null, [string]::Empty, $false, $false )
+                $maxAllowedDays= ((($($($($roleSettings.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Eligible'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes)/60)/24 
+            }
+            else{
+                $urlrole = $this.APIroot+"/roleSettings?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($soonToExpireAssignments[0].ResourceId)%27)+and+(roleDefinition/id+eq+%27$($soonToExpireAssignments[0].RoleId)%27)"
+                $rolesettings = [WebRequestHelper]::InvokeWebRequest("Get", $urlrole, $this.headerParams, $null, [string]::Empty, $false, $false )
+                $maxAllowedDays = ((($($rolesettings.adminEligibleSettings| Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting| ConvertFrom-Json).maximumGrantPeriodInMinutes)/60)/24       
+            }
             # If force switch is used extend to expire without any prompt
             $this.PublishCustomMessage("");
             $this.PublishCustomMessage("Initiating assignment extension for [$AssignmentCount] PIM assignments..."); #TODO: Check the color
@@ -1234,9 +1239,7 @@ class PIM: AzCommandBase {
         $resolvedResource = $null;
         if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
         {
-            
-            $resolvedResource = $this.PIMResourceResolver($ManagementGroupId);
-        
+            $resolvedResource = $this.PIMResourceResolver($ManagementGroupId, $false);
         }
         else 
         {
@@ -1440,6 +1443,64 @@ class PIM: AzCommandBase {
            
         }
         $this.PublishCustomMessage("Note: If you have PIM eligible role on the resource, make sure you have activated your access before running the above command. Use setpim -ActivateMyRole "+$cmdmsg+"  -DurationInHours `$durationinHrs -Justification `$justification -RoleName `$roleDefinitionName ",[MessageType]::Warning)
+    }
+
+    hidden [void] ListRoleSettings($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName)
+    {
+        $resolvedResource = $null;
+        
+        $resolvedResource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+
+        if (($resolvedResource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResource.ResourceId))) {
+          $roleforResource = @($this.ListRoles($resolvedResource.ResourceId)) | Where-Object {$_.RoleName -eq $RoleName}
+            $rolesettings = [string]::Empty
+        
+            if(($roleforResource|Measure-Object).Count -gt 0)
+            {
+               
+                try {
+                    $url = $this.APIroot+"/roleSettingsV2?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resolvedResource.ResourceId)%27)+and+(roleDefinition/id+eq+%27$($roleforResource.RoleDefinitionId)%27)"
+                    $existingroleSetting = [WebRequestHelper]::InvokeWebRequest("Get", $url, $this.headerParams, $null, [string]::Empty, $false, $false )
+                }
+                catch {
+                    if([Helpers]::CheckMember($_,"ErrorDetails.Message"))
+                    {
+                        $err = $_ | ConvertFrom-Json
+                        $this.PublishCustomMessage($err.error.message,[MessageType]::Error)
+                    }
+                    else
+                    {
+                        $this.PublishCustomMessage("Unable to retrieve existing role settings for provided role. Please verify you have required permissions to view requested role for the given scope.", [MessageType]::Error)
+                    }
+                    return
+                }
+                $ExpireEligibleAssignmentsSetting = ((($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Eligible'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes)/60)/24 
+                $MaximumActivationDurationSetting = (($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes )/60
+                $JustificationOnActivationSetting = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'JustificationRule'}).setting | ConvertFrom-Json).required
+                $MFAOnActivationSetting = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'MfaRule'}).setting | ConvertFrom-Json).mfaRequired
+                $ConditionalAccessSetting = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'acrsRule'}).setting | ConvertFrom-Json).acrsRequired
+                
+				if($MFAOnActivationSetting -eq $true) { $MFAOnActivationSetting = "Yes"}
+                else { $MFAOnActivationSetting = "No"}
+                
+				if($ConditionalAccessSetting -eq $true) { $ConditionalAccessSetting = "Yes"}
+                else { $ConditionalAccessSetting = "No"}
+                
+				if($JustificationOnActivationSetting -eq $true) { $JustificationOnActivationSetting = "Yes"}
+                else { $JustificationOnActivationSetting = "No"}
+
+                $item = New-Object psobject -Property @{
+                    "Activation maximum duration (hours)" = $MaximumActivationDurationSetting
+                    "Require justification on activation" =  $JustificationOnActivationSetting
+                    "On activation, require Azure MFA" = $MFAOnActivationSetting
+                    "On activation, require conditional access" = $ConditionalAccessSetting
+                    "Expire eligible assignments after (days)" = $ExpireEligibleAssignmentsSetting
+                }
+
+                $obj = $item| Format-List | Out-String
+                $this.PublishCustomMessage($obj)    
+            }
+        }
     }
 }
 

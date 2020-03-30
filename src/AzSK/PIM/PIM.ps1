@@ -111,7 +111,7 @@ function Set-AzSKPIMConfiguration {
 
         [switch]
         [Parameter(Mandatory = $true, ParameterSetName = "ConfigureRoleSettings", HelpMessage = "This switch is used to configure role settings for a role on a resource.")]
-       
+        [Parameter(Mandatory = $true, ParameterSetName = "ConfigureRoleForManagementGroup", HelpMessage = "This switch is used to configure role settings for a role on a resource.")]
         [Alias("crs")]
         $ConfigureRoleSettings,
       
@@ -123,6 +123,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleForManagementGroup")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentForManagementGroup")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ConfigureRoleForManagementGroup")]
         [ValidateNotNullOrEmpty()]
         [Alias("mgmtgrpid")]
         [string]
@@ -378,44 +379,79 @@ function Set-AzSKPIMConfiguration {
                     $pimconfig.InvokeFunction($pimconfig.ExtendSoonToExpireAssignments, @($ManagementGroupId, $null, $null, $null, $RoleNames, $ExpiringInDays, $DurationInDays, $Force))
                 }
             }
-            elseif ($PSCmdlet.ParameterSetName -eq 'ConfigureRoleSettings')
+            elseif ($PSCmdlet.ParameterSetName -eq 'ConfigureRoleSettings' -or $PSCmdlet.ParameterSetName -eq 'ConfigureRoleForManagementGroup')
             {
                 if($null -ne $PSCmdlet.MyInvocation.BoundParameters["RequireMFAOnActivation"] -and $null -ne $PSCmdlet.MyInvocation.BoundParameters["ApplyConditionalAccessPolicyForRoleActivation"])
-                {
-                    throw [SuppressedException] "'RequireMFAOnActivation' and 'ApplyConditionalAccessPolicyForRoleActivation' are exclusive switches. Please use only one of them in the command"   
-                    return;
-                }
-                elseif ($null -ne $PSCmdlet.MyInvocation.BoundParameters["RequireMFAOnActivation"]) 
-                {
-                    if($RequireMFAOnActivation)
                     {
-                        #Both CA and MFA can not be applied simultaneously      
-                         $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $true, $false));
-                    }  
+                        throw [SuppressedException] "'RequireMFAOnActivation' and 'ApplyConditionalAccessPolicyForRoleActivation' are exclusive switches. Please use only one of them in the command"   
+                        return;
+                    }
+                elseif(![string]::IsNullOrEmpty($ManagementGroupId))
+                {
+                    if ($null -ne $PSCmdlet.MyInvocation.BoundParameters["RequireMFAOnActivation"]) 
+                    {
+                        if($RequireMFAOnActivation)
+                        {
+                            #Both CA and MFA can not be applied simultaneously      
+                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $true, $false));
+                        }  
+                        else 
+                        {
+                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration,  $false, $null));
+                        }  
+                    }
+                    elseif ($null -ne $PSCmdlet.MyInvocation.BoundParameters["ApplyConditionalAccessPolicyForRoleActivation"])
+                    {
+                        if($ApplyConditionalAccessPolicyForRoleActivation)
+                        {
+                        #Both Conditional Access policy and MFA can not be applied simultaneously      
+                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $true));
+                        }  
+                        else 
+                        {
+                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $null, $false));
+                        }  
+                    }
+                        
                     else 
                     {
-                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration,  $false, $null));
-                    }  
+                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $false))
+                    }
                 }
-                elseif ($null -ne $PSCmdlet.MyInvocation.BoundParameters["ApplyConditionalAccessPolicyForRoleActivation"])
-                {
-                    if($ApplyConditionalAccessPolicyForRoleActivation)
+                else{ #for subscriptionid
+
+                    if ($null -ne $PSCmdlet.MyInvocation.BoundParameters["RequireMFAOnActivation"]) 
                     {
-                      #Both Conditional Access policy and MFA can not be applied simultaneously      
-                     $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $true));
-                    }  
+                        if($RequireMFAOnActivation)
+                        {
+                            #Both CA and MFA can not be applied simultaneously      
+                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $true, $false));
+                        }  
+                        else 
+                        {
+                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration,  $false, $null));
+                        }  
+                    }
+                    elseif ($null -ne $PSCmdlet.MyInvocation.BoundParameters["ApplyConditionalAccessPolicyForRoleActivation"])
+                    {
+                        if($ApplyConditionalAccessPolicyForRoleActivation)
+                        {
+                        #Both Conditional Access policy and MFA can not be applied simultaneously      
+                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $true));
+                        }  
+                        else 
+                        {
+                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $null, $false));
+                        }  
+                    }
+                        
                     else 
                     {
-                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $null, $false));
-                    }  
-                }
-                    
-                else 
-                {
-                    $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $false))
-                }
-                               
+                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $false))
+                    }
+                }             
                 
+
             }	
             elseif($PSCmdlet.ParameterSetName -eq'ExtendExpiringAssignmentForUsers')
             {
@@ -469,12 +505,18 @@ function Get-AzSKPIMConfiguration {
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "ListMyRole", HelpMessage = "This switch is required to activate a PIM eligible role.")]
         [Alias("lmer")]
-	    $ListMyEligibleRoles,
+        $ListMyEligibleRoles,
+        
+        [switch]
+        [Parameter(Mandatory = $false, ParameterSetName = "ListRoleSettings", HelpMessage = "This switch is required to get existing role settings of a particular role.")]
+        [Alias("rset")]
+	    $ListRoleSettings,
 
         [string]
         [Parameter(Mandatory = $true, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $true, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         [Parameter(Mandatory = $true, ParameterSetName = "ListSoonToExpireAssignments")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ListRoleSettings")]
         [Alias("sid")]
         $SubscriptionId,
 
@@ -488,6 +530,7 @@ function Get-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ListRoleSettings")]
         [ValidateNotNullOrEmpty()]
         [Alias("rgn")]
         [string]
@@ -496,6 +539,7 @@ function Get-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "ListPermanentAssignments", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListPIMAssignments", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         [Parameter(Mandatory = $false, ParameterSetName = "ListSoonToExpireAssignments")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ListRoleSettings")]
         [Alias("rn")]
         [string]
         $ResourceName,
@@ -528,6 +572,12 @@ function Get-AzSKPIMConfiguration {
         [Alias("rlns")]
         [string[]]
         $RoleNames,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "ListRoleSettings")]
+        [ValidateNotNullOrEmpty()]
+        [Alias("rln")]
+        [string[]]
+        $RoleName,
         
         [switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
@@ -584,6 +634,10 @@ function Get-AzSKPIMConfiguration {
                     $pimconfig.InvokeFunction($pimconfig.ListSoonToExpireAssignments, @($ManagementGroupId, $null, $null, $null, $RoleNames, $ExpiringInDays))
                 }
             }
+            elseif ($PSCmdlet.ParameterSetName -eq 'ListRoleSettings'){
+                $pimconfig.InvokeFunction($pimconfig.ListRoleSettings, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName))
+            }
+
             else {
 				
             }
