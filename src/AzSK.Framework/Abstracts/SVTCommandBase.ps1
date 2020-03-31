@@ -25,6 +25,7 @@ class SVTCommandBase: CommandBase {
     [bool] $GenerateFixScript = $false;
 	[bool] $IncludeUserComments = $false;
     [AttestationOptions] $AttestationOptions;
+    hidden [ControlStateExtension] $ControlStateExt;
     
     hidden [string] $AttestationUniqueRunId;
     #EndRegion
@@ -128,7 +129,8 @@ class SVTCommandBase: CommandBase {
 			$svtObject.PartialScanIdentifier =$this.PartialScanIdentifier
 		}
         
-        $this.InvokeExtensionMethod($svtObject)
+        #$this.InvokeExtensionMethod($svtObject);
+        $svtObject.ControlStateExt = $this.ControlStateExt;
         
     }
 }

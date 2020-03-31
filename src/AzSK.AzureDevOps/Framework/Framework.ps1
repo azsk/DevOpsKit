@@ -60,7 +60,7 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 
 
 #Managers
-
+. $PSScriptRoot\Helpers\ADOHelper.ps1
 . $FrameworkPath\Managers\FeatureFlightingManager.ps1
 . $PSScriptRoot\Managers\ControlStateExtension.ps1
 . $FrameworkPath\Managers\AzSKPDFExtension.ps1
@@ -75,6 +75,7 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 #Abstracts
 . $FrameworkPath\Abstracts\AzSKRoot.ps1
 . $FrameworkPath\Abstracts\SVTBase.ps1
+. $PSScriptRoot\Abstracts\ADOSVTBase.ps1
 
 . $FrameworkPath\Abstracts\FixControl\FixControlBase.ps1
 . $FrameworkPath\Abstracts\FixControl\FixServicesBase.ps1

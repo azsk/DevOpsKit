@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class Build: SVTBase
+class Build: ADOSVTBase
 {    
 
     hidden [PSObject] $BuildObj;
@@ -124,7 +124,7 @@ class Build: SVTBase
                 {
                     $varList = $varList | select -Unique
                     $controlResult.AddMessage([VerificationResult]::Failed,
-                    "Found credentials in build definition. Variables name: $varList" );
+                    "Found credentials in build definition. Variables names: $varList" );
                 }
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in build definition.");
@@ -133,7 +133,7 @@ class Build: SVTBase
             }
         }
         catch {
-            $controlResult.AddMessage([VerificationResult]::Manual, "Could not evaluate build definition.");
+            $controlResult.AddMessage([VerificationResult]::Manual, "Could not evaluated build definition.");
             $controlResult.AddMessage($_);
         }    
       } 

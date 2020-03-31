@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class Release: SVTBase
+class Release: ADOSVTBase
 {   
 
     hidden [PSObject] $ReleaseObj;
@@ -132,7 +132,7 @@ class Release: SVTBase
                     {
                         $varList = $varList | select -Unique
                         $controlResult.AddMessage([VerificationResult]::Failed,
-                        "Found credentials in release definition. Variables name: $varList" );
+                        "Found credentials in release definition. Variables names: $varList" );
                     }
                 else {
                     $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in release definition.");
@@ -141,7 +141,7 @@ class Release: SVTBase
                 }
             }
             catch {
-                $controlResult.AddMessage([VerificationResult]::Manual, "Could not evaluate release definition.");
+                $controlResult.AddMessage([VerificationResult]::Manual, "Could not evaluated release definition.");
                 $controlResult.AddMessage($_);
             }    
 

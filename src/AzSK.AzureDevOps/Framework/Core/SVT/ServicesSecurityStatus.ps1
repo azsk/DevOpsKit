@@ -226,19 +226,19 @@ class ServicesSecurityStatus: SVTCommandBase
 	{
 		return $this.RunForAllResources("EvaluateAllControls",$true,$this.Resolver.SVTResources)
 	}
-	# hidden [SVTEventContext[]] FetchAttestationInfo()
-	# {
-	# 	[ControlStateExtension] $ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
-	# 	$ControlStateExt.UniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
-	# 	$ControlStateExt.Initialize($false);
-	# 	$attestationFound = $ControlStateExt.ComputeControlStateIndexer();
-	# 	$attestedResources = @()
-	# 	if(($null -ne $ControlStateExt.ControlStateIndexer) -and ([Helpers]::CheckMember($ControlStateExt.ControlStateIndexer, "ResourceId")))
-	# 	{
-	# 		$attestedResources = $this.Resolver.SVTResources | Where-Object {$ControlStateExt.ControlStateIndexer.ResourceId -contains $_.ResourceId}
-	# 	}
-	# 	return $this.RunForAllResources("FetchStateOfAllControls",$false,$attestedResources)
-	# }
+	 hidden [SVTEventContext[]] FetchAttestationInfo()
+	 {
+	 	[ControlStateExtension] $ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
+	 	$ControlStateExt.UniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
+	 	$ControlStateExt.Initialize($false);
+	 	$attestationFound = $ControlStateExt.ComputeControlStateIndexer();
+	 	$attestedResources = @()
+	 	if(($null -ne $ControlStateExt.ControlStateIndexer) -and ([Helpers]::CheckMember($ControlStateExt.ControlStateIndexer, "ResourceId")))
+	 	{
+	 		$attestedResources = $this.Resolver.SVTResources | Where-Object {$ControlStateExt.ControlStateIndexer.ResourceId -contains $_.ResourceId}
+	 	}
+	 	return $this.RunForAllResources("FetchStateOfAllControls",$false,$attestedResources)
+	 }
 
 	hidden [void] ReportNonAutomatedResources()
 	{

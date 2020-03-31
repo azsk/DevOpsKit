@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest
-class ServiceConnection: SVTBase
+class ServiceConnection: ADOSVTBase
 {
     hidden [PSObject] $ServiceEndpointsObj = $null;
     hidden [string] $SecurityNamespaceId;

@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class Project: SVTBase
+class Project: ADOSVTBase
 {    
     [PSObject] $PipelineSettingsObj = $null
 

@@ -99,12 +99,12 @@ class ADOSVTCommandBase: SVTCommandBase {
 	}
 
     [void] InitializeControlState() {
-       #if (-not $this.ControlStateExt) {
-       #   # $this.ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
-       #    $this.ControlStateExt.UniqueRunId = $this.AttestationUniqueRunId
-       #    $this.ControlStateExt.Initialize($false);
-       #    $this.UserHasStateAccess = $this.ControlStateExt.HasControlStateReadAccessPermissions();
-       #}
+      if (-not $this.ControlStateExt) {
+          $this.ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
+          $this.ControlStateExt.UniqueRunId = $this.AttestationUniqueRunId
+          $this.ControlStateExt.Initialize($false);
+          $this.UserHasStateAccess = $this.ControlStateExt.HasControlStateReadAccessPermissions();
+      }
     }
 
     [void] PostCommandCompletedAction([SVTEventContext[]] $arguments) {

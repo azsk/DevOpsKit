@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class Organization: SVTBase
+class Organization: ADOSVTBase
 {    
     [PSObject] $ServiceEndPointsObj = $null
     [PSObject] $PipelineSettingsObj = $null
