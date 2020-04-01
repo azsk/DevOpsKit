@@ -263,7 +263,8 @@
         "AuthN",
         "ServiceFabric",
         "Windows",
-        "Linux"
+        "Linux",
+        "NetSec"
       ],
       "Enabled": true
     },
@@ -324,7 +325,8 @@
         "Audit",
         "ServiceFabric",
         "Windows",
-        "Linux"
+        "Linux",
+        "NetSec"
       ],
       "Enabled": true
     },
@@ -362,7 +364,8 @@
         "Automated",
         "DP",
         "ServiceFabric",
-        "Windows"
+        "Windows",
+        "NetSec"
       ],
       "Enabled": true,
       "PolicyDefinitionGuid": "ServiceFabric290"

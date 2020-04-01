@@ -49,7 +49,8 @@
         "Automated",
         "Classic",
         "OwnerAccess",
-        "SI"
+        "SI",
+        "NetSec"
       ],
       "Enabled": true,
       "MethodName": "CheckCloudServiceInstanceEndpoints"
@@ -66,7 +67,8 @@
         "SDL",
         "Automated",
         "SI",
-        "Classic"
+        "Classic",
+        "NetSec"
       ],
       "Enabled": true,
       "MethodName": "CheckCloudServiceInputEndpoints"
@@ -154,7 +156,8 @@
         "Automated",
         "Classic",
         "OwnerAccess",
-        "SI"
+        "SI",
+        "NetSec"
       ],
       "Enabled": true,
       "MethodName": "CheckCloudServiceRemoteDesktopAccess"

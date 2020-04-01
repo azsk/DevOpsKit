@@ -334,7 +334,8 @@
           "BasicSku",
           "StandardSku",
           "PremiumSku",
-          "APIManagement"
+          "APIManagement",
+          "NetSec"
         ],
         "Enabled": true
       },

@@ -127,7 +127,8 @@
         "PremiumSku",
         "GeneralPurposeStorage",
         "BlobStorage",
-        "PremiumFileShareStorage"
+        "PremiumFileShareStorage",
+        "NetSec"
       ],
       "Enabled": true
     },
@@ -236,7 +237,8 @@
         "StandardSku",
         "GeneralPurposeStorage",
         "BlobStorage",
-        "PremiumSku"
+        "PremiumSku",
+        "NetSec"
       ],
       "Enabled": true
     },
