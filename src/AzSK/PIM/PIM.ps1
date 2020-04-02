@@ -298,7 +298,7 @@ function Set-AzSKPIMConfiguration {
         [switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		[Alias("dnof")]
-		$DoNotOpenOutputFolder
+        $DoNotOpenOutputFolder
     )
     Begin {
         [CommandHelper]::BeginCommand($MyInvocation);
@@ -390,7 +390,7 @@ function Set-AzSKPIMConfiguration {
                 {
                     if ($null -ne $PSCmdlet.MyInvocation.BoundParameters["RequireMFAOnActivation"]) 
                     {
-                        if($RequireMFAOnActivation)
+                        if($RequireMFAOnActivation -eq $true)
                         {
                             #Both CA and MFA can not be applied simultaneously      
                             $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $true, $false));
@@ -402,7 +402,7 @@ function Set-AzSKPIMConfiguration {
                     }
                     elseif ($null -ne $PSCmdlet.MyInvocation.BoundParameters["ApplyConditionalAccessPolicyForRoleActivation"])
                     {
-                        if($ApplyConditionalAccessPolicyForRoleActivation)
+                        if($ApplyConditionalAccessPolicyForRoleActivation -eq $true)
                         {
                         #Both Conditional Access policy and MFA can not be applied simultaneously      
                         $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $true));
@@ -422,7 +422,7 @@ function Set-AzSKPIMConfiguration {
 
                     if ($null -ne $PSCmdlet.MyInvocation.BoundParameters["RequireMFAOnActivation"]) 
                     {
-                        if($RequireMFAOnActivation)
+                        if($RequireMFAOnActivation -eq $true)
                         {
                             #Both CA and MFA can not be applied simultaneously      
                             $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $true, $false));
@@ -434,7 +434,7 @@ function Set-AzSKPIMConfiguration {
                     }
                     elseif ($null -ne $PSCmdlet.MyInvocation.BoundParameters["ApplyConditionalAccessPolicyForRoleActivation"])
                     {
-                        if($ApplyConditionalAccessPolicyForRoleActivation)
+                        if($ApplyConditionalAccessPolicyForRoleActivation -eq $true)
                         {
                         #Both Conditional Access policy and MFA can not be applied simultaneously      
                         $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $true));
