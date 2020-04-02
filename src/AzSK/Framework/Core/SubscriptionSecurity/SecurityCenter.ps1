@@ -279,7 +279,7 @@ class SecurityCenter: AzSKRoot
 			$this.UpdatePolicyObject();
 			$policyLocation = $null
 
-			#Get existing Policysetting to check if Location parameter is avialable
+			#Get existing Policysetting to check if Location parameter is available (since policies set via Portal have an extra Location parameter)
 			try{
 				$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments$([SecurityCenterHelper]::ApiVersionLatest)";
 				$existingsettings = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $policySettingsUri, $null )

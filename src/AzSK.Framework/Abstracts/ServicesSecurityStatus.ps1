@@ -558,8 +558,8 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				{
 					#If controlids are already present in the object then intersection of controlids should be scanned
 					$controlIdsWithFilterTagList = $controlIdsWithFilterTagList | where {$this.ControlIds -Contains $_}
-					$this.ControlIds = $controlIdsWithFilterTagList
 				}
+				$this.ControlIds = $controlIdsWithFilterTagList
 			}
 
 			#********** Commentiing Exclude tags logic as this will not require perf optimization as excludeTags mostly will result in most of the resources
