@@ -1445,6 +1445,7 @@ class PIM: AzCommandBase {
         $this.PublishCustomMessage("Note: If you have PIM eligible role on the resource, make sure you have activated your access before running the above command. Use setpim -ActivateMyRole "+$cmdmsg+"  -DurationInHours `$durationinHrs -Justification `$justification -RoleName `$roleDefinitionName ",[MessageType]::Warning)
     }
 
+    #List exixting settings for a specific role
     hidden [void] ListRoleSettings($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName)
     {
         $resolvedResource = $null;
@@ -1457,7 +1458,7 @@ class PIM: AzCommandBase {
         
             if(($roleforResource|Measure-Object).Count -gt 0)
             {
-               
+                #API call to get existing role settings
                 try {
                     $url = $this.APIroot+"/roleSettingsV2?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($resolvedResource.ResourceId)%27)+and+(roleDefinition/id+eq+%27$($roleforResource.RoleDefinitionId)%27)"
                     $existingroleSetting = [WebRequestHelper]::InvokeWebRequest("Get", $url, $this.headerParams, $null, [string]::Empty, $false, $false )
@@ -1474,6 +1475,7 @@ class PIM: AzCommandBase {
                     }
                     return
                 }
+                #Fetch the role settings :ExpireEligibleAssignmentsInDays, RequireJustificationOnActivation, RequireMFAOnActivation, MaximumActivationDuration, ConditionalAccess
                 $ExpireEligibleAssignmentsSetting = ((($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Eligible'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes)/60)/24 
                 $MaximumActivationDurationSetting = (($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes )/60
                 $JustificationOnActivationSetting = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'JustificationRule'}).setting | ConvertFrom-Json).required
@@ -1497,6 +1499,7 @@ class PIM: AzCommandBase {
                     "Expire eligible assignments after (days)" = $ExpireEligibleAssignmentsSetting
                 }
 
+                #Display existing role settings on host
                 $obj = $item| Format-List | Out-String
                 $this.PublishCustomMessage($obj)    
             }
