@@ -11,6 +11,35 @@
       "IsEnabled": false      
     },
     {
+      "Name": "CheckMissingAzurePolicyDefinition",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": false
+    },
+    {
+      "Name": "EnableSetupOfAzurePolicyInitiative",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": false
+    },
+    {
+      "Name": "EnableSetupOfCustomPolicyDefinitions",
+      "Description": "",
+      "Sources": [
+        "*"
+      ],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": false
+    },
+    {
       "Name": "IsSetAzStorageBlobAvailable",
       "Description" : "",
       "Sources" : ["*"],
@@ -217,15 +246,6 @@
       "DisabledForSubs": [],
       "UnderPreview": false,
       "IsEnabled": true
-    },
-    {
-      "Name": "AllowCustomDefinitionsForPolicyScan",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": false
     },
     {
       "Name": "PreventAttestationStateDrift",

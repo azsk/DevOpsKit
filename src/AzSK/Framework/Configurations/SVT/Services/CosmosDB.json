@@ -18,7 +18,8 @@
             "Automated",
             "AuthZ",
             "CosmosDB",
-            "Firewall"
+            "Firewall",
+            "NetSec"
          ],
          "Enabled": true
       },
@@ -38,7 +39,8 @@
             "StateManagement",
             "AuthZ",
             "CosmosDB",
-            "Firewall"
+            "Firewall",
+            "NetSec"
          ],
          "Enabled": true
       },

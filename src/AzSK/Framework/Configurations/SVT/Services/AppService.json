@@ -681,7 +681,8 @@
           "AppService",
           "FunctionApp",
           "Windows",
-          "Linux"
+          "Linux",
+          "NetSec"
         ],
         "Enabled": true,
         "Rationale": "Using the IP/VNet subnet rules based access restriction ensures that access to the data or the service is restricted to a specific set of IPs. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios."

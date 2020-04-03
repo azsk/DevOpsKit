@@ -16,7 +16,8 @@ class ARMPolicy: AzCommandBase
         Base($subscriptionId, $invocationContext)
     { 
 		$this.ARMPolicyObj = [ARMPolicyModel] $this.LoadServerConfigFile("Subscription.ARMPolicies.json"); 
-		$isPolicyInitiativeEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId))
+		$isPolicyInitiativeEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableSetupOfAzurePolicyInitiative",$($this.SubscriptionContext.SubscriptionId)) -or `
+									 [FeatureFlightingManager]::GetFeatureStatus("CheckMissingAzurePolicyDefinition",$($this.SubscriptionContext.SubscriptionId))
 		if($isPolicyInitiativeEnabled)
 		{
 			$this.SubPolicyInitiative = [PolicyInitiative] $this.LoadServerConfigFile("Subscription.Initiative.json"); 
@@ -576,7 +577,7 @@ class ARMPolicy: AzCommandBase
 	{	
 		[MessageData[]] $messages = @();
 		#$isPolicyInitiativeEnabled = [ConfigurationManager]::GetAzSKConfigData().EnableAzurePolicyBasedScan;
-		$isPolicyInitiativeEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId))
+		$isPolicyInitiativeEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableSetupOfAzurePolicyInitiative",$($this.SubscriptionContext.SubscriptionId))
 		try{
 			if($isPolicyInitiativeEnabled)
 		{
@@ -608,7 +609,7 @@ class ARMPolicy: AzCommandBase
 					{
 						$this.PublishCustomMessage("Creating new AzSK Initiative...", [MessageType]::Update);
 						$this.PublishCustomMessage("Creating custom definitions...", [MessageType]::Update);
-						if([FeatureFlightingManager]::GetFeatureStatus("AllowCustomDefinitionsForPolicyScan", $($this.SubscriptionContext.SubscriptionId)) -eq $true)
+						if([FeatureFlightingManager]::GetFeatureStatus("EnableSetupOfCustomPolicyDefinitions", $($this.SubscriptionContext.SubscriptionId)) -eq $true)
 						{
 							try
 							{
@@ -640,7 +641,7 @@ class ARMPolicy: AzCommandBase
 					else {
 						$this.PublishCustomMessage("Updating AzSK Initiative...", [MessageType]::Update);
 						$this.PublishCustomMessage("Updating custom definitions...", [MessageType]::Update);
-						if([FeatureFlightingManager]::GetFeatureStatus("AllowCustomDefinitionsForPolicyScan", $($this.SubscriptionContext.SubscriptionId)) -eq $true)
+						if([FeatureFlightingManager]::GetFeatureStatus("EnableSetupOfCustomPolicyDefinitions", $($this.SubscriptionContext.SubscriptionId)) -eq $true)
 						{
 							try
 							{
@@ -724,7 +725,7 @@ class ARMPolicy: AzCommandBase
 			}	
 		}
 
-		$isPolicyInitiativeEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId))
+		$isPolicyInitiativeEnabled = [FeatureFlightingManager]::GetFeatureStatus("CheckMissingAzurePolicyDefinition",$($this.SubscriptionContext.SubscriptionId))
 		if($isPolicyInitiativeEnabled)
 		{
 			$initiativeName = [ConfigurationManager]::GetAzSKConfigData().AzSKInitiativeName		

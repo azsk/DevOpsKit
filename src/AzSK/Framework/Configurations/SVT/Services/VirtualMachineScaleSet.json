@@ -172,7 +172,8 @@
         "Windows",
         "Linux",
         "ExcludeServiceFabric",
-        "VirtualMachineScaleSet"
+        "VirtualMachineScaleSet",
+        "NetSec"
       ],
       "Enabled": true
       },
