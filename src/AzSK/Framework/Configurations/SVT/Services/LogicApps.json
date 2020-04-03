@@ -68,7 +68,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthZ"
+        "AuthZ",
+        "NetSec"
       ],
       "Enabled": true
     },
@@ -85,7 +86,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthZ"
+        "AuthZ",
+        "NetSec"
       ],
       "Enabled": true
     },

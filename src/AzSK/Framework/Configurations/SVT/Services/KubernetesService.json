@@ -292,7 +292,8 @@
         "TCP",
         "Automated",
         "DP",
-        "KubernetesService"
+        "KubernetesService",
+        "NetSec"
       ],
       "Enabled": true
     }

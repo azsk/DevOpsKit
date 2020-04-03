@@ -68,7 +68,8 @@
          "Windows",
          "Linux",
          "VirtualMachine",
-         "ExcludeDatabricks"
+         "ExcludeDatabricks",
+         "NetSec"
        ],
        "Enabled": true
      },
