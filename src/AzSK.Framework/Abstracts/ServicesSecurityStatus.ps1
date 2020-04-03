@@ -554,6 +554,11 @@ class ServicesSecurityStatus: AzSVTCommandBase
 					$controlIdsWithFilterTagList += $controlList | Where-Object{ $tagName -in $_.Tags  } | ForEach-Object{ $_.ControlId}
 				}
 				#Assign filtered control Id with tag name 
+				if(($this.ControlIds | Measure-Object).Count -gt 0)
+				{
+					#If controlids are already present in the object then intersection of controlids should be scanned
+					$controlIdsWithFilterTagList = $controlIdsWithFilterTagList | where {$this.ControlIds -Contains $_}
+				}
 				$this.ControlIds = $controlIdsWithFilterTagList
 			}
 
