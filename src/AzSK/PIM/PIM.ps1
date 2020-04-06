@@ -298,7 +298,13 @@ function Set-AzSKPIMConfiguration {
         [switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		[Alias("dnof")]
-        $DoNotOpenOutputFolder
+        $DoNotOpenOutputFolder,
+
+        [ValidateSet("Eligible", "Active")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Assign")]
+        [Parameter(Mandatory = $false, ParameterSetName = "AssignForManagementGroup")]
+        [Alias("at")]
+		$AssignmentType = [AssignmentType]::Eligible
     )
     Begin {
         [CommandHelper]::BeginCommand($MyInvocation);
@@ -332,21 +338,21 @@ function Set-AzSKPIMConfiguration {
             elseif ($PSCmdlet.ParameterSetName -eq 'Assign' -or $PSCmdlet.ParameterSetName -eq 'AssignForManagementGroup') {				
                 if([string]::IsNullOrEmpty($ManagementGroupId))
                 {
-                    $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false, $false, $false))
+                    $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false, $false, $false, $AssignmentType))
                 }
                 else
                 {
-                    $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($ManagementGroupId, $null, $null, $null, $RoleName, $PrincipalNames, $DurationInDays, $false, $false, $false))
+                    $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($ManagementGroupId, $null, $null, $null, $RoleName, $PrincipalNames, $DurationInDays, $false, $false, $false, $AssignmentType))
                 }
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'RemovePIMAssignment' -or $PSCmdlet.ParameterSetName -eq 'RemovePIMAssignmentForManagementGroup' ) {	
                 if([string]::IsNullOrEmpty($ManagementGroupId))
                 {		
-                  $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false, $Force, $true))
+                    $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $false, $Force, $true,$null))
                 }
                 else
                 {
-                    $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($ManagementGroupId, $null, $null, $null, $RoleName, $PrincipalNames, $DurationInDays, $false, $Force, $true)) 
+                    $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($ManagementGroupId, $null, $null, $null, $RoleName, $PrincipalNames, $DurationInDays, $false, $Force, $true, $null)) 
                 }
             }
             elseif ($PSCmdlet.ParameterSetName -eq 'AssignEligibleforPermanentAssignments' -or $PSCmdlet.ParameterSetName -eq 'AssignEligibleForManagementGroup' ) {
@@ -455,7 +461,7 @@ function Set-AzSKPIMConfiguration {
             }	
             elseif($PSCmdlet.ParameterSetName -eq'ExtendExpiringAssignmentForUsers')
             {
-                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $true ,$false, $false))
+                $pimconfig.InvokeFunction($pimconfig.AssignExtendPIMRoleForUser, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $PrincipalNames, $DurationInDays, $true ,$false, $false, $null))
             }		
             else {
                 Write-Output("Invalid Parameter Set")	
