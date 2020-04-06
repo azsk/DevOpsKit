@@ -962,7 +962,7 @@ class SubscriptionCore: AzSVTBase
 		if($message -ne 'OK') # if there is some while making request message will contain exception
 		{
 
-				$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+				$controlResult.AddMessage("Unable to fetch PIM data.")
 				$controlResult.AddMessage($message);
 		}
 		else 
@@ -1017,7 +1017,7 @@ class SubscriptionCore: AzSVTBase
 			if($message -ne 'OK') # if there is some while making request message will contain exception
 			{
 
-				$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+				$controlResult.AddMessage("Unable to fetch PIM data.")
 				$controlResult.AddMessage($message);
 				return $controlResult;
 			}
@@ -1768,7 +1768,7 @@ class SubscriptionCore: AzSVTBase
 				}
 				catch
 				{
-					$message=$_;
+					$message="Please make sure your subscription has onboarded Privileged Identity Management (PIM).";
 				}
 			}
 		}
@@ -1857,7 +1857,7 @@ class SubscriptionCore: AzSVTBase
 				}
 				catch
 				{
-					$message=$_;
+					$message="Please make sure your subscription has onboarded Privileged Identity Management (PIM).";
 				}
 			}
 		}
