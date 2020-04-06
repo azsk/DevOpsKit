@@ -169,9 +169,3 @@ enum RemoveConfiguredCASetting
 	AltLAWSSettings
 	WebhookSettings
 }
-
-enum AssignmentType 
-{
-	Eligible
-	Active
-}

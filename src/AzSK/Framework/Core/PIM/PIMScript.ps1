@@ -277,24 +277,7 @@ class PIM: AzCommandBase {
         if($type -eq 'subscription')
         {
             # Fetch PIM details of the all subscriptions user has access to
-            
-            $useDiscoveryAPI = $false
-            # If environment variable AzSKPIMLatencyIssue is set to true then use Discovery API to handle latency issue
-            if (Test-Path env:AzSKPIMLatencyIssue ){
-                if ($Env:AzSKPIMLatencyIssue -eq $true)
-                {
-                    $useDiscoveryAPI = $true
-                }
-            }
-
-            if ($useDiscoveryAPI){
-                $resourceUrl = $this.APIroot + "/resources?/discovery?`$filter=(registeredDateTime%20ne%20null%20and%20type%20eq%20%27subscription%27)"
-                #$filter=(type%20eq%20%27subscription%27)&`$orderby=type"
-            }
-            else
-            {
-                $resourceUrl = $this.APIroot + "/resources?`$filter=(type%20eq%20%27subscription%27)&`$orderby=type"
-            }
+            $resourceUrl = $this.APIroot + "/resources?`$filter=(type%20eq%20%27subscription%27)&`$orderby=type"
         }
         elseif($type -eq 'resourcegroup')
         {
@@ -616,7 +599,7 @@ class PIM: AzCommandBase {
     }
 
     #Assign a user to Eligible Role
-    hidden AssignExtendPIMRoleForUser($ManagementGroupId, $subscriptionId, $resourcegroupName, $resourceName, $roleName, $PrincipalName, $duration,$isExtensionRequest, $force, $isRemoveAssignmentRequest, $assignmentType) {
+    hidden AssignExtendPIMRoleForUser($ManagementGroupId, $subscriptionId, $resourcegroupName, $resourceName, $roleName, $PrincipalName, $duration,$isExtensionRequest, $force, $isRemoveAssignmentRequest) {
         $this.AcquireToken();
         $PrincipalName = $this.ConvertToStringArray($PrincipalName);
         $resolvedResources = $null;
@@ -794,16 +777,7 @@ class PIM: AzCommandBase {
                     $users | ForEach-Object{
                     $url = $this.APIroot + "/roleAssignmentRequests"
                     $ts = New-TimeSpan -Days $duration
-                    
-                    #Assign Role based on selected Assignment Type (Eligible by default)
-                    if($assignmentType -eq "Active") {
-                        $assignmentState = "Active" #AssignmentState is case sensitive in request body
-                    }
-                    else{
-                        $assignmentState = 'Eligible'
-                    }
-
-                    $postParams = '{"assignmentState":"' + $assignmentState + '","type":"AdminAdd","reason":"Assign","roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $_.Id + '","schedule":{"startDateTime":"' + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","endDateTime":"' + ((get-date) + $ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","type":"Once"}}'
+                    $postParams = '{"assignmentState":"Eligible","type":"AdminAdd","reason":"Assign","roleDefinitionId":"' + $roleDefinitionId + '","resourceId":"' + $resourceId + '","subjectId":"' + $_.Id + '","schedule":{"startDateTime":"' + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","endDateTime":"' + ((get-date) + $ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + '","type":"Once"}}'
                     $this.PublishCustomMessage("Requesting assignment on [$($resolvedResource.ResourceName)] for [$RoleName] role...")
                     try{
                     $response = [WebRequestHelper]::InvokeWebRequest('Post', $url, $this.headerParams, $postParams, "application/json", $false, $true )
