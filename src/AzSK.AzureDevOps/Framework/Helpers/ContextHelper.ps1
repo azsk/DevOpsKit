@@ -120,4 +120,14 @@ class ContextHelper {
         #$contextObj.AccessToken =  ConvertTo-SecureString -String $context.AccessToken -asplaintext -Force
         [ContextHelper]::currentContext = $contextObj
     }
+
+    static [string] GetCurrentSessionUser() {
+        $context = [ContextHelper]::GetCurrentContext()
+        if ($null -ne $context) {
+            return $context.Account.Id
+        }
+        else {
+            return "NO_ACTIVE_SESSION"
+        }
+    }
 }

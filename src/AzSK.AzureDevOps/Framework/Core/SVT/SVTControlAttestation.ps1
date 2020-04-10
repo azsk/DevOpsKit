@@ -229,7 +229,7 @@ class SVTControlAttestation
 				}
 				#TODO
 				$test =[ContextHelper]::GetCurrentContext();
-				$controlState.State.AttestedBy ="";  # [ContextHelper]::GetCurrentSessionUser();
+				$controlState.State.AttestedBy = [ContextHelper]::GetCurrentSessionUser();
 				$controlState.State.AttestedDate = [DateTime]::UtcNow;
 				$controlState.State.Justification = $Justification	
 
@@ -363,9 +363,22 @@ class SVTControlAttestation
 			#filtering the controls - Removing all the passed controls
 			#Step1 Group By IDs		
 
+			#added below where condition to filter only for org and project. so only org and projec controll go into attestation
+			
 			$filteredControlResults = @()
-			$filteredControlResults += $this.ControlResults | Group-Object { $_.GetUniqueId() }
+			$allowedResourcesToAttest = @()
 
+			if($null -ne $this.ControlSettings.AllowAttestationResourceType){
+				$allowedResourcesToAttest = $this.ControlSettings.AllowAttestationResourceType
+				$attNonEnabledResource = $this.ControlResults | Where {$_.FeatureName -notin $allowedResourcesToAttest }
+			    if( $null -ne $attNonEnabledResource -and ($attNonEnabledResource | Measure-Object).Count -gt 0 )
+			    {
+					$allowedResources = ($allowedResourcesToAttest -join ", ")
+			        Write-Host ("$([Constants]::SingleDashLine)`nOnly $($allowedResources) controls are allow for the attestation.`n$([Constants]::SingleDashLine)") -ForegroundColor Yellow
+			    }
+			}
+			
+			$filteredControlResults += ($this.ControlResults | Where {$_.FeatureName -in $allowedResourcesToAttest }) | Group-Object { $_.GetUniqueId() }
 			if((($filteredControlResults | Measure-Object).Count -eq 1 -and ($filteredControlResults[0].Group | Measure-Object).Count -gt 0 -and $null -ne $filteredControlResults[0].Group[0].ResourceContext) `
 				-or ($filteredControlResults | Measure-Object).Count -gt 1)
 			{
@@ -436,12 +449,15 @@ class SVTControlAttestation
 							$filteredControlItems += $controlItem;
 						}
 					}
+					#Added below variable to supply in setcontrol to send in controlstateextension to verify resourcetype
+					$FeatureName = "";
 					if($count -gt 0)
 					{
 						Write-Host "No. of controls that need to be attested: $count" -ForegroundColor Cyan
 
 						 foreach( $controlItem in $filteredControlItems)
 						 {
+							$FeatureName = $controlItem.FeatureName
 							$controlId = $controlItem.ControlItem.ControlID
 							$controlSeverity = $controlItem.ControlItem.ControlSeverity
 							$controlResult = $null;
@@ -508,7 +524,7 @@ class SVTControlAttestation
 						}
 
 						Write-Host "Committing the attestation details for this resource..." -ForegroundColor Cyan
-						$this.controlStateExtension.SetControlState($resourceValueKey, $resourceControlStates, $false)
+						$this.controlStateExtension.SetControlState($resourceValueKey, $resourceControlStates, $false, $FeatureName )
 						Write-Host "Commit succeeded." -ForegroundColor Cyan
 					}
 					

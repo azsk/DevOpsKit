@@ -291,6 +291,8 @@ class SVTBase: AzSKRoot
 				$resourceSecurityResult += $this.GetManualSecurityStatus();			
 				
 				$this.InvokeExtensionMethod($resourceSecurityResult)
+                #Added below line, it was not here in ADO, but is there in azsk. line is used to read teestation data while scaning. 
+				$this.PostEvaluationCompleted($resourceSecurityResult);
 				$this.EvaluationCompleted($resourceSecurityResult);
 			}
         }

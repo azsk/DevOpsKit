@@ -281,7 +281,7 @@
                                   "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))"
                                   ] }                         
    ],
-
+   
   "BaselineControls": {
     "ResourceTypeControlIdMappingList": [
       {
@@ -333,7 +333,7 @@
       "ControlIds": [
         "AzureDevOps_AgentPool_AuthZ_Disable_Inherited_Permissions",
         "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access"
-        
+    
       ]
      }
     ],
@@ -341,9 +341,17 @@
     "ExpiryInDays": 2,
     "SupportedSources": []
   },
+  "PreviewBaselineControls": {
+    "ResourceTypeControlIdMappingList": [
+    ]
+  },
   "CloudService": {
     "LatestOSSKUIDs": [ "WA-GUEST-OS-4.44_201707-01" ]
   },
+  "AllowAttestationResourceType": [
+    "Organization",
+    "Project"
+   ],
   "AttestationExpiryPeriodInDays": {
     "Default": 90,
     "ControlSeverity": {
@@ -353,6 +361,15 @@
       "Low": 90
     }
   },
+  "AllowAttestationByGroups": [
+    {
+      "ResourceType": "Organization",
+      "GroupNames": [
+        "Project Collection Administrators",
+        "Project Administrators"
+      ]
+   }
+  ],
   "SubscriptionCore": {
     "EnableV1AlertFailure": false
   },

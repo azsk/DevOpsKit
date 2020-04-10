@@ -3,9 +3,6 @@ Set-StrictMode -Version Latest
 
 class ControlStateExtension
 {
-	hidden [PSObject] $AzSKResourceGroup = $null;
-	hidden [PSObject] $AzSKStorageAccount = $null;
-	hidden [PSObject] $AzSKStorageContainer = $null;
 	#Static attestation index file object. 
 	#This gets cashed for every scan and reset for every fresh scan command in servicessecurity status 
 	[PSObject] $ControlStateIndexer = $null;
@@ -19,12 +16,15 @@ class ControlStateExtension
 	hidden [string] $UniqueRunId;
 
 	hidden [SubscriptionContext] $SubscriptionContext;
-    hidden [InvocationInfo] $InvocationContext;
+	hidden [InvocationInfo] $InvocationContext;
+	hidden [PSObject] $ControlSettings; 
+	hidden [PSObject] $resourceType;
 
 	ControlStateExtension([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
 		$this.SubscriptionContext = $subscriptionContext;
-		$this.InvocationContext = $invocationContext;		
+		$this.InvocationContext = $invocationContext;	
+		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");	
 	}
 
 	hidden [void] Initialize([bool] $CreateResourcesIfNotExists)
@@ -33,153 +33,58 @@ class ControlStateExtension
 		{
 			$this.UniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
 		}
-		$this.GetAzSKControlStateContainer($CreateResourcesIfNotExists)
+
+		# this function to check and set access permission
+		$this.SetControlStatePermission();
+
 		#Reset attestation index file and set attestation index file present flag to get fresh index file from storage
 		$this.ControlStateIndexer = $null;
 		$this.IsControlStateIndexerPresent = $true
 	}
 
-	hidden [PSObject] GetAzSKRG([bool] $createIfNotExists)
+	# check user group and set acccess permission 
+	hidden [void] SetControlStatePermission()
 	{
-		#$resourceGroup = Get-AzResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
-		#if($createIfNotExists -and ($null -eq $resourceGroup -or ($resourceGroup | Measure-Object).Count -eq 0))
-		#{
-		#	if([ResourceGroupHelper]::NewAzSKResourceGroup($azSKConfigData.AzSKRGName, $azSKConfigData.AzSKLocation, ""))
-		#	{
-		#		$resourceGroup = Get-AzResourceGroup -Name $azSKConfigData.AzSKRGName -ErrorAction SilentlyContinue
-		#	}
-		#}
-		#$this.AzSKResourceGroup = $resourceGroup
-		return $null;
-	}
-
-	hidden [void] GetAzSKStorageAccount($createIfNotExists)
-	{
-	    $azSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
-		if($null -eq $this.AzSKResourceGroup)
-		{
-			$this.GetAzSKRG($createIfNotExists);
-		}
-		if($null -ne $this.AzSKResourceGroup)
-		{
-			$StorageAccount  = $null;
-			$loopValue = $this.retryCount;
-			while($loopValue -gt 0)
-			{
-				$loopValue = $loopValue - 1;
-				try
-				{
-					$StorageAccount = Get-AzStorageAccount -ResourceGroupName $this.AzSKResourceGroup.ResourceGroupName -ErrorAction Stop | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction Stop 
-					$loopValue = 0;
-				}
-				catch
-				{
-					#eat this exception and retry
-				}
-			}			
-
-			#if no storage account found then it assumes that there is no control state feature is not used and if there are more than one storage account found it assumes the same
-			if($createIfNotExists -and ($null -eq $StorageAccount -or ($StorageAccount | Measure-Object).Count -eq 0))
-			{
-			#	$storageAccountName = ("azsk" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"));	
-			#	$storageObject = [StorageHelper]::NewAzskCompliantStorage($storageAccountName, $this.AzSKResourceGroup.ResourceGroupName, $azSKConfigData.AzSKLocation)
-			#	if($null -ne $storageObject -and ($storageObject | Measure-Object).Count -gt 0)
-			#	{
-			#		$loopValue = $this.retryCount;
-			#		while($loopValue -gt 0)
-			#		{
-			#			$loopValue = $loopValue - 1;
-			#			try
-			#			{
-			#				$StorageAccount = Get-AzStorageAccount -ResourceGroupName $this.AzSKResourceGroup.ResourceGroupName -ErrorAction Stop | Where-Object {$_.StorageAccountName -like 'azsk*'} -ErrorAction Stop 					
-			#				$loopValue = 0;
-			#			}
-			#			catch
-			#			{
-			#				#eat this exception and retry
-			#			}
-			#		}					
-			#	}					
-			}
-			$this.AzSKStorageAccount = $StorageAccount;
-		}
-	}
-
-	hidden [void] GetAzSKControlStateContainer([bool] $createIfNotExists)
-	{
-		#TODO: this create attestation-data in container
-		$ContainerName = [Constants]::AttestationDataContainerName;
-		if($null -eq $this.AzSKStorageAccount)
-		{
-			$this.GetAzSKStorageAccount($createIfNotExists)
-		}
-		if($null -eq $this.AzSKStorageAccount)
-		{
-			#No storage account => no permissions at all
-			$this.HasControlStateReadPermissions = 0
-			$this.HasControlStateWritePermissions = 0
-			return;
-		}
-
-		
-		$this.HasControlStateReadPermissions = 0					
-		$this.HasControlStateWritePermissions = 0
-		$writeTestContainerName = "wt" + $(get-date).ToUniversalTime().ToString("yyyyMMddHHmmss");
-
-		#see if user can create the test container in the storage account. If yes then user have both RW permissions. 
-		try
-		{
-			$containerObject = Get-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $writeTestContainerName -ErrorAction SilentlyContinue
-			if($null -ne $containerObject)
-			{
-				Remove-AzStorageContainer -Name $writeTestContainerName -Context  $this.AzSKStorageAccount.Context -ErrorAction Stop -Force
-				$this.HasControlStateWritePermissions = 1
-				$this.HasControlStateReadPermissions = 1
-			}
-			else
-			{
-				New-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $writeTestContainerName -ErrorAction Stop
-				$this.HasControlStateWritePermissions = 1
-				$this.HasControlStateReadPermissions = 1
-				Remove-AzStorageContainer -Name $writeTestContainerName -Context  $this.AzSKStorageAccount.Context -ErrorAction SilentlyContinue -Force
-			}				
-		}
-		catch
-		{
-			$this.HasControlStateWritePermissions = 0
-		}
-		if($this.HasControlStateWritePermissions -eq 1)
-		{
-			try
-			{
-				if($createIfNotExists)
-				{
-					New-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $ContainerName -ErrorAction SilentlyContinue
-				}
-				$containerObject = Get-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $ContainerName -ErrorAction SilentlyContinue
-				$this.AzSKStorageContainer = $containerObject;					
-			}
-			catch
-			{
-				# Add retry logic, after 3 unsuccessful attempt throw the exception.
-			}
-		}
-		else
-		{
-			# If user doesn't have write permission, check at least user have read permission
-			try
-			{
-				#Able to read the container then read permissions are good
-				$containerObject = Get-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $ContainerName -ErrorAction Stop
-				$this.AzSKStorageContainer = $containerObject;
-				$this.HasControlStateReadPermissions = 1
-			}
-			catch
-			{
-				#Resetting permissions in the case of exception
-				$this.HasControlStateReadPermissions = 0			
-			}	
-		}		
+	    try
+	      {	
+	    	$this.HasControlStateWritePermissions = 0
+	    	$this.HasControlStateReadPermissions = 0
+     
+            $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+            $groupsObj = [WebRequestHelper]::InvokeGetWebRequest($url);
+	    	$allowedGrpForAtt = $this.ControlSettings.AllowAttestationByGroups | where { $_.ResourceType -eq "Organization" } | select-object -property GroupNames #@("Project Collection Administrators","Project Administrators") #$this.ControlSettings.AllowAttestation.GroupNames;
+	    	
+	    	$groupsObj = $groupsObj | where { $allowedGrpForAtt.GroupNames -contains $_.displayName }
+    
+            $apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview" -f $($this.SubscriptionContext.SubscriptionName);
+    
+	    	foreach ($group in $groupsObj)
+	    	{ 
+             $descriptor = $group.descriptor;
+             $inputbody =  '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"","sourcePage":{"url":"","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' | ConvertFrom-Json
+            
+             $inputbody.dataProviderContext.properties.subjectDescriptor = $descriptor;
+             $inputbody.dataProviderContext.properties.sourcePage.url = "https://dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/_settings/groups?subjectDescriptor=$($descriptor)";
+	    	 $groupMembersObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+	    	 $users = $groupMembersObj.dataProviders."ms.vss-admin-web.org-admin-members-data-provider".identities | where {$_.subjectKind -eq "user"}
+    
+	    	 #TODO: 
+	    	 if($null -ne $users){
+	    	 	$currentUser = "v-arbagh@microsoft.com";# [ContextHelper]::GetCurrentSessionUser();
+                 $grpmember = ($users | where { $_.mailAddress -eq $currentUser } );
+                 if ($null -ne $grpmember ) {
+	    	 	     $this.HasControlStateWritePermissions = 1
+	    	 	     $this.HasControlStateReadPermissions = 1
+	    	 	     return;
+                 }	
+	    	 }
+	    			
+	    	}
+	      }
+	      catch
+	      {
+	      	$this.HasControlStateWritePermissions = 0
+	      }
 	}
 	
 	hidden [bool] ComputeControlStateIndexer()
@@ -223,7 +128,7 @@ class ControlStateExtension
 				   
 					try
 					{
-					   $uri = "https://extmgmt.dev.azure.com/{0}/_apis/extensionmanagement/installedextensions/ADOScanner/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/MyCollection/Documents/{1}?api-version=5.1-preview.1" -f $this.SubscriptionContext.subscriptionid , $this.IndexerBlobName
+					   $uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $this.SubscriptionContext.subscriptionid, $this.IndexerBlobName 
 					   $webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
 					   $indexerObject =  $webRequestResult.value.value | ConvertFrom-Json;
 					}
@@ -245,10 +150,11 @@ class ControlStateExtension
 		return $true;
 	}
 
-	hidden [PSObject] GetControlState([string] $id)
+	hidden [PSObject] GetControlState([string] $id, [string] $resourceType, [string] $resourceName)
 	{
 		try
 		{
+			$this.resourceType = $resourceType;
 			[ControlState[]] $controlStates = @();
 			$retVal = $this.ComputeControlStateIndexer();
 
@@ -264,32 +170,6 @@ class ControlStateExtension
 					$hashId = $selectedIndex.HashId | Select-Object -Unique
 					$controlStateBlobName = $hashId + ".json"
 
-					#$loopValue = $this.retryCount;
-					#$controlStateBlob = $null;
-					#while($loopValue -gt 0 -and $null -eq $controlStateBlob)
-					#{
-					#	$loopValue = $loopValue - 1;
-					#	#$controlStateBlob = Get-AzStorageBlob -Container $ContainerName -Blob $controlStateBlobName -Context $StorageAccount.Context -ErrorAction SilentlyContinue
-					#}
-#
-					#$loopValue = $this.retryCount;
-					
-					#while($loopValue -gt 0)
-					#{
-					#	$loopValue = $loopValue - 1;
-					#	try
-					#	{
-#					#		[ADOHelper]::GetStorageBlobContent($AzSKTemp,$controlStateBlobName ,$controlStateBlobName , $containerName ,$StorageAccount.Context)
-					#		#Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination $AzSKTemp -Force -ErrorAction Stop
-					#		$loopValue = 0;
-#
-					#		$ControlStatesJson = 
-					#	}
-					#	catch
-					#	{
-					#		#eat this exception and retry
-					#	}
-					#}
 					$ControlStatesJson = $null;
 					$ControlStatesJson = $this.GetExtStorageContent($controlStateBlobName) | ConvertFrom-Json;
 					if($ControlStatesJson )
@@ -332,15 +212,9 @@ class ControlStateExtension
 		}
 	}
 
-	hidden [void] SetControlState([string] $id, [ControlState[]] $controlStates, [bool] $Override)
-	{		
-
-		#$rmContext = [ContextHelper]::GetCurrentContext();
-		#$user = "";
-		#$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
-		#$secureString = ConvertTo-SecureString $base64AuthInfo -AsPlainText -Force
-		#$context =  [ContextHelper]::GetCurrentContext();
-
+	hidden [void] SetControlState([string] $id, [ControlState[]] $controlStates, [bool] $Override, $resourceType)
+	{	
+		$this.resourceType = $resourceType;	
 		$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState";				
 		if(-not (Test-Path $(Join-Path $AzSKTemp "ControlState")))
 		{
@@ -393,26 +267,16 @@ class ControlStateExtension
 			[JsonHelper]::ConvertToJsonCustom($this.ControlStateIndexer) | Out-File $indexerPath -Force
 			$controlStateArray = Get-ChildItem -Path (Join-Path $AzSKTemp "ControlState")
 			$controlStateArray | ForEach-Object {
-				$state = $_;
-				$loopValue = $this.retryCount;
-				#while($loopValue -gt 0)
-				#{
-					$loopValue = $loopValue - 1;
-					try
-					{
-						#[ADOHelper]::UploadStorageBlobContent($state.FullName , $state.Name , $ContainerName, $StorageAccount.Context)
-						#Set-AzStorageBlobContent -File $state.FullName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
-						
-						#TODO:
-						$this.UploadExtStorage($state.FullName);
-						$loopValue = 0;
-					}
-					catch
-					{
-						$_
-						#eat this exception and retry
-					}
-				#}
+			    $state = $_;
+			    try
+			    {
+			    	$this.UploadExtStorage($state.FullName);
+			    }
+			    catch
+			    {
+			    	$_
+			    	#eat this exception and retry
+			    }
 			}
 		}
 		#else
@@ -427,16 +291,26 @@ class ControlStateExtension
 	[void] UploadExtStorage( $FullName )
 	{
 		$fileContent = Get-Content -Path $FullName -raw  
+		$fileName = $FullName.split('\')[-1];
+		 
+		$collectionName = "";
+		if($this.resourceType -eq "Organization" -or $fileName -eq $this.IndexerBlobName)
+		{
+			$collectionName = $this.SubscriptionContext.subscriptionid;
+		}
+		else {
+			$collectionName = $this.invocationContext.BoundParameters["ProjectNames"];
+		}
 
 		$rmContext = [ContextHelper]::GetCurrentContext();
-		$fileName = $FullName.split('\')[-1];
 		$user = "";
 		$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
 	   
 		$body = @{"id" = "$fileName"; "__etag" = -1; "value"= $fileContent;} | ConvertTo-Json
-		$uri = "https://extmgmt.dev.azure.com/{0}/_apis/extensionmanagement/installedextensions/ADOScanner/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/MyCollection/Documents/{1}?api-version=5.1-preview.1" -f $this.SubscriptionContext.subscriptionid, $fileName;
+		$uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $collectionName, $fileName  
 		try {
 		$webRequestResult = Invoke-RestMethod -Uri $uri -Method Put -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $body
+		#TODO: remove below line in final commit
 		Write-Host "Sending attestation to extension storage"
 	   
 		if ($fileName -eq "Resource.index.json") {
@@ -448,19 +322,51 @@ class ControlStateExtension
 
 	[PSObject] GetExtStorageContent($fileName)
 	{
+		$collectionName = "";
+		if($this.resourceType -eq "Organization" -or $fileName -eq $this.IndexerBlobName)
+		{
+			$collectionName = $this.SubscriptionContext.subscriptionid;
+		}
+		else {
+			$collectionName = $this.invocationContext.BoundParameters["ProjectNames"];
+		}
+
 		$rmContext = [ContextHelper]::GetCurrentContext();
 		$user = "";
 		$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
 		
 		try
 		{
-		   $uri = "https://extmgmt.dev.azure.com/{0}/_apis/extensionmanagement/installedextensions/ADOScanner/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/MyCollection/Documents/{1}?api-version=5.1-preview.1" -f $this.SubscriptionContext.subscriptionid, $fileName
+		   $uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $collectionName, $fileName 
 		   $webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
 		   return $webRequestResult.value.value
 		}
 		catch{
-			$_
 			return $null;
+		}
+	}
+
+	[void] RemoveExtStorageContent($fileName)
+	{
+		$collectionName = "";
+		if($this.resourceType -eq "Organization" -or $fileName -eq $this.IndexerBlobName)
+		{
+			$collectionName = $this.SubscriptionContext.subscriptionid;
+		}
+		else {
+			$collectionName = $this.invocationContext.BoundParameters["ProjectNames"];
+		}
+
+		$rmContext = [ContextHelper]::GetCurrentContext();
+		$user = "";
+		$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
+		
+		try
+		{
+		   $uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $collectionName, $fileName 
+		   $webRequestResult = Invoke-RestMethod -Uri $uri -Method Delete -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+		}
+		catch{
 		}
 	}
 
@@ -479,13 +385,6 @@ class ControlStateExtension
 		$hash = [Helpers]::ComputeHash($id);
 		$indexerPath = Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath $this.IndexerBlobName ;
 		$fileName = Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath ("$hash.json");
-		$StorageAccount = $this.AzSKStorageAccount;						
-		$containerObject = $this.AzSKStorageContainer
-		$ContainerName = ""
-		if($null -ne $this.AzSKStorageContainer)
-		{
-			$ContainerName = $this.AzSKStorageContainer.Name
-		}
 		
 		$this.UpdateControlIndexer($id, $null, $true);
 		if($null -ne $this.ControlStateIndexer)
@@ -494,37 +393,31 @@ class ControlStateExtension
 			$controlStateArray = Get-ChildItem -Path (Join-Path $AzSKTemp "ControlState");				
 			$controlStateArray | ForEach-Object {
 				$state = $_
-				$loopValue = $this.retryCount;
-				while($loopValue -gt 0)
-				{
-					$loopValue = $loopValue - 1;
+				#$loopValue = $this.retryCount;
+				#while($loopValue -gt 0)
+				#{
+				#	$loopValue = $loopValue - 1;
 					try
 					{
-#						[ADOHelper]::UploadStorageBlobContent($state.FullName, $state.Name , $ContainerName, $StorageAccount.Context)
-						#Set-AzStorageBlobContent -File $state.FullName -Container $ContainerName -BlobType Block -Context $StorageAccount.Context -Force -ErrorAction Stop
-						$loopValue = 0;
+						$this.UploadExtStorage($state.FullName);
+						#$loopValue = 0;
 					}
 					catch
 					{
 						#eat this exception and retry
 					}
-				}
+				#}
 			}
 		}
-		$loopValue = $this.retryCount;
-		while($loopValue -gt 0)
+		try
 		{
-			$loopValue = $loopValue - 1;
-			try
-			{
-				Remove-AzStorageBlob -Blob "$hash.json" -Context $StorageAccount.Context -Container $ContainerName -Force -ErrorAction Stop
-				$loopValue = 0;
-			}
-			catch
-			{
-				#eat this exception and retry
-			}
-		}		
+			$hashFile = "$hash.json";
+			$this.RemoveExtStorageContent($hashFile)
+		}
+		catch
+		{
+			#eat this exception and retry
+		}	
 	}
 
 	hidden [ControlState[]] GetPersistedControlStates([string] $controlStateBlobName)
@@ -534,35 +427,25 @@ class ControlStateExtension
 		{
 			New-Item -ItemType Directory -Path (Join-Path $AzSKTemp "ExistingControlStates") -ErrorAction Stop | Out-Null
 		}
-		$StorageAccount = $this.AzSKStorageAccount;						
-		$containerObject = $this.AzSKStorageContainer
-		$ContainerName = ""
-		if($null -ne $this.AzSKStorageContainer)
-		{
-			$ContainerName = $this.AzSKStorageContainer.Name
-		}
+	
 		[ControlState[]] $ControlStatesJson = @()
 
-		$loopValue = $this.retryCount;
-		while($loopValue -gt 0)
-		{
-			$loopValue = $loopValue - 1;
+		#$loopValue = $this.retryCount;
+		#while($loopValue -gt 0)
+		#{
+		#	$loopValue = $loopValue - 1;
 			try
 			{
-				#$controlStateBlob = Get-AzStorageBlob -Container $ContainerName -Blob $controlStateBlobName -Context $StorageAccount.Context -ErrorAction Stop
-				#Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $StorageAccount.Context -Destination (Join-Path $AzSKTemp "ExistingControlStates") -Force -ErrorAction Stop
-				#$ControlStatesJson = Get-ChildItem -Path (Join-Path $AzSKTemp "ExistingControlStates" | Join-Path -ChildPath $controlStateBlobName) -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json 
-				#TODO:
-				$ControlStatesJson = @()
+				#$ControlStatesJson = @()
 				$ControlStatesJson = $this.GetExtStorageContent($controlStateBlobName) | ConvertFrom-Json;
-				$loopValue = 0;
+				#$loopValue = 0;
 			}
 			catch
 			{
-				$ControlStatesJson = @()
+				#$ControlStatesJson = @()
 				#eat this exception and retry
 			}
-		}
+		#}
 			
         if(($ControlStatesJson | Measure-Object).Count -gt 0)
         {
@@ -628,7 +511,7 @@ class ControlStateExtension
 						$currentIndexObject = $filteredIndexerObject | Select-Object -Last 1
 					}					
 					$currentIndexObject.ExpiryTime = [DateTime]::UtcNow.AddMonths(3);
-					$currentIndexObject.AttestedBy = ""; #TODO: [ContextHelper]::GetCurrentSessionUser();
+					$currentIndexObject.AttestedBy = [ContextHelper]::GetCurrentSessionUser();
 					$currentIndexObject.AttestedDate = [DateTime]::UtcNow;
 					$currentIndexObject.Version = "1.0";
 				}
@@ -638,7 +521,7 @@ class ControlStateExtension
 					$currentIndexObject.ResourceId = $id
 					$currentIndexObject.HashId = $tempHash;
 					$currentIndexObject.ExpiryTime = [DateTime]::UtcNow.AddMonths(3);
-					$currentIndexObject.AttestedBy = ""; #TODO: [ContextHelper]::GetCurrentSessionUser();
+					$currentIndexObject.AttestedBy = [ContextHelper]::GetCurrentSessionUser();
 					$currentIndexObject.AttestedDate = [DateTime]::UtcNow;
 					$currentIndexObject.Version = "1.0";
 				}

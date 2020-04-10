@@ -90,9 +90,9 @@ class Constants
 	}
 
 	#Ext Storage
-	static [string] $ExtPublisher= "ADOScanner"
-	static [string] $StorageUri= "https://extmgmt.dev.azure.com/{0}/_apis/extensionmanagement/installedextensions/ADOScanner/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/MyCollection/Documents/{1}?api-version=5.1-preview.1" 
-	
+	static [string] $StorageUri = "https://extmgmt.dev.azure.com/{0}/_apis/extensionmanagement/installedextensions/ADOScanner/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/{1}/Documents/{2}?api-version=5.1-preview.1" 
+	static [string] $AutoUpdateMessage = "Auto-update for AzSK.AzureDevops is currently not enabled for your machine. To set it, run the command below: `nSet-AzSKPolicySettings -AutoUpdate On`n"
+
 	static [string] $StorageAccountPreName= "azsk"
 	static [string] $AzSKAppFolderPath = [Environment]::GetFolderPath('LocalApplicationData') + "/Microsoft/" + [Constants]::AzSKModuleName
 	static [string] $AzSKLogFolderPath = [Environment]::GetFolderPath('LocalApplicationData') + "/Microsoft/"

@@ -480,8 +480,9 @@ class ADOSVTBase: SVTBase{
 
 			#get the uniqueid from the first control result. Here we can take first as it would come here for each resource.
 			$id = $ControlResults[0].GetUniqueId();
+			$resourceType = $ControlResults[0].FeatureName
 
-			$this.ControlStateExt.SetControlState($id, $effectiveResourceStates, $true)
+			$this.ControlStateExt.SetControlState($id, $effectiveResourceStates, $true, $resourceType)
 		}
 	}
 
@@ -490,9 +491,13 @@ class ADOSVTBase: SVTBase{
 		if($null -eq $this.ResourceState)
 		{
 			$this.ResourceState = @();
-			#if($this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadAccessPermissions())
-			#{
-				$resourceStates = $this.ControlStateExt.GetControlState($this.ResourceId)
+			if($this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadAccessPermissions())
+			{
+				$resourceType = "";
+				if($this.ResourceContext){
+				   $resourceType = $this.ResourceContext.ResourceTypeName
+				}
+				$resourceStates = $this.ControlStateExt.GetControlState($this.ResourceId, $resourceType, $this.ResourceContext.ResourceName)
 				if($null -ne $resourceStates)
 				{
 					$this.ResourceState += $resourceStates
@@ -501,7 +506,7 @@ class ADOSVTBase: SVTBase{
 				{
 					return $null;
 				}				
-			#}
+			}
 		}
 
 		return $this.ResourceState;

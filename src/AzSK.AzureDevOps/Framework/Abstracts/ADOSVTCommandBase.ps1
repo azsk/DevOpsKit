@@ -112,7 +112,7 @@ class ADOSVTCommandBase: SVTCommandBase {
             try {
                 [SVTControlAttestation] $svtControlAttestation = [SVTControlAttestation]::new($arguments, $this.AttestationOptions, $this.SubscriptionContext, $this.InvocationContext);
                 #The current context user would be able to read the storage blob only if he has minimum of contributor access.
-               # if ($svtControlAttestation.controlStateExtension.HasControlStateReadAccessPermissions()) {
+                if ($svtControlAttestation.controlStateExtension.HasControlStateWriteAccessPermissions()) {
                     if (-not [string]::IsNullOrWhiteSpace($this.AttestationOptions.JustificationText) -or $this.AttestationOptions.IsBulkClearModeOn) {
                         $this.PublishCustomMessage([Constants]::HashLine + "`n`nStarting Control Attestation workflow in bulk mode...`n`n");
                     }
@@ -137,14 +137,14 @@ class ADOSVTCommandBase: SVTCommandBase {
                     else {
                         $this.PublishCustomMessage("Exiting the control attestation process.")
                     }
-                #}
-               # else {
-               #     [MessageData] $data = [MessageData]@{
-               #         Message     = "You don't have the required permissions to perform control attestation. If you'd like to perform control attestation, please request your subscription owner to grant you 'Contributor' access to the '$([ConfigurationManager]::GetAzSKConfigData().AzSKRGName)' resource group. `nNote: If your permissions were elevated recently, please run the 'DisConnect-AzAccount' command to clear the Azure cache and try again.";
-               #         MessageType = [MessageType]::Error;
-               #     };
-               #     $this.PublishCustomMessage($data)
-               # }
+                }
+               else {
+                   [MessageData] $data = [MessageData]@{
+                       Message     = "You don't have the required permissions to perform control attestation. If you'd like to perform control attestation, please request your organization administrator to grant you 'Administrator' access.";
+                       MessageType = [MessageType]::Error;
+                   };
+                   $this.PublishCustomMessage($data)
+               }
             }
             catch {
                 $this.CommandError($_);
