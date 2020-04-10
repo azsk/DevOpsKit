@@ -30,8 +30,6 @@ class Organization: ADOSVTBase
     GetPipelineSettingsObj()
     {
         $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-        #TODO: testing adding below line commenting above line
-        #$apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
 
         $orgUrl = "https://{0}.visualstudio.com" -f $($this.SubscriptionContext.SubscriptionName);
         #$inputbody =  "{'contributionIds':['ms.vss-org-web.collection-admin-policy-data-provider'],'context':{'properties':{'sourcePage':{'url':'$orgUrl/_settings/policy','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'policy','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
@@ -49,9 +47,16 @@ class Organization: ADOSVTBase
       
         if([Helpers]::CheckMember($responseObj,"dataProviders"))
         {
-            if([Helpers]::CheckMember($responseObj.dataProviders,"ms.vss-build-web.pipelines-org-settings-data-provider") -and $responseObj.dataProviders.'ms.vss-build-web.pipelines-org-settings-data-provider'){
-                $this.PipelineSettingsObj = $responseObj.dataProviders.'ms.vss-build-web.pipelines-org-settings-data-provider'
+            try {
+             if($responseObj.dataProviders.'ms.vss-build-web.pipelines-org-settings-data-provider') 
+              { 
+                  $this.PipelineSettingsObj = $responseObj.dataProviders.'ms.vss-build-web.pipelines-org-settings-data-provider'
+              }
             }
+            catch {
+                Write-Host "Pipeline settings for the organization [$($this.SubscriptionContext.SubscriptionName)] can not be fetched."
+            }
+            
         }
     }
     
@@ -78,8 +83,8 @@ class Organization: ADOSVTBase
             $controlResult.AddMessage([VerificationResult]::Verify, "Please verify the members of the group Project Collection Service Accounts", $responsePrCollData); 
             $controlResult.SetStateData("Members of the Project Collection Service Accounts Group ", $responsePrCollData); 
             }
-            else{
-            $controlResult.AddMessage([VerificationResult]::Manual, "Project Collection Service Accounts group members can not be fetched.");
+            else{ #count is 0 then there is no member in the prj coll ser acc group
+            $controlResult.AddMessage([VerificationResult]::Passed, "Project Collection Service Accounts does not have any member.");
             }
         }
         else{
