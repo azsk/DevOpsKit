@@ -63,7 +63,7 @@
         "Automated": "Yes",
         "MethodName": "CheckInheritPermissions",
         "Rationale": "Disabling inherit permissions lets you finely control access to various operations at the agent level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
-        "Recommendation": "To disable inheritance follow the steps given here: 1.Navigate to the agent pool. 2. Open roles. 3. Add the service lead & service owner as Users with Allow permissions for each permission line item. 4. Select “Off” under Inheritance. 5. Add users/groups to agent and provide only required access. As best practice, All teams/groups must be granted minimum required permissions on agent pool.",
+        "Recommendation": "To disable inheritance follow the steps given here: 1.Navigate to the agent pool. 2. Open roles. 3. Add the service lead & service owner as Users with Allow permissions for each permission line item. 4. Select Off under Inheritance. 5. Add users/groups to agent and provide only required access. As best practice, All teams/groups must be granted minimum required permissions on agent pool.",
         "Tags": [
           "SDL",
           "TCP",

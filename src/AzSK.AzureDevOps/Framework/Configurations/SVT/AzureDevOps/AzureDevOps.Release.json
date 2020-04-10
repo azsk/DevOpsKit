@@ -63,7 +63,7 @@
     "Automated": "Yes",
     "MethodName": "CheckInheritPermissions",
     "Rationale": "Disabling inherit permissions lets you finely control access to various operations at the release level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
-    "Recommendation": "To disable permission inheritance within a release pipeline follow these steps: 1.Navigate to the release pipeline. 2. Open up the Security dialog for the release. 3. Add the service lead & service owner as Users with Allow permissions for each permission line item. 4. Select “Off” under Inheritance. 5. Add users/groups to your release definition and provide only required access. As best practice, All teams/groups must be granted minimum required permissions on release definition.",
+    "Recommendation": "To disable permission inheritance within a release pipeline follow these steps: 1.Navigate to the release pipeline. 2. Open up the Security dialog for the release. 3. Add the service lead & service owner as Users with Allow permissions for each permission line item. 4. Select Off under Inheritance. 5. Add users/groups to your release definition and provide only required access. As best practice, All teams/groups must be granted minimum required permissions on release definition.",
     "Tags": [
       "SDL",
       "TCP",
