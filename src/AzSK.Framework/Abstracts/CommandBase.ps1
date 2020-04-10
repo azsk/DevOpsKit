@@ -247,8 +247,9 @@ class CommandBase: AzSKRoot {
 		{
 			if($AutoUpdateSwitch -eq [AutoUpdate]::NotSet)
 			{
-				Write-Host "Auto-update for AzSK is currently not enabled for your machine. To set it, run the command below:" -ForegroundColor Yellow
-				Write-Host "Set-AzSKPolicySettings -AutoUpdate On`n" -ForegroundColor Green
+				$AutoUpdateMsg = [Constants]::AutoUpdateMessage 
+				Write-Host $AutoUpdateMsg -ForegroundColor Yellow
+				#Write-Host "Set-AzSKPolicySettings -AutoUpdate On`n" -ForegroundColor Green
 			}
 			return;
 		}
