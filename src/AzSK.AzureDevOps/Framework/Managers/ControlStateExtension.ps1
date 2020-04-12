@@ -8,7 +8,7 @@ class ControlStateExtension
 	[PSObject] $ControlStateIndexer = $null;
 	#Property indicates if Attestation index file is present in blob 
 	[bool] $IsControlStateIndexerPresent = $true;
-	hidden [int] $HasControlStateReadPermissions = -1;
+	hidden [int] $HasControlStateReadPermissions = 1;
 	hidden [int] $HasControlStateWritePermissions = -1;
 	hidden [string]	$IndexerBlobName ="Resource.index.json"
 
@@ -48,7 +48,7 @@ class ControlStateExtension
 	    try
 	      {	
 	    	$this.HasControlStateWritePermissions = 0
-	    	$this.HasControlStateReadPermissions = 0
+	    	#$this.HasControlStateReadPermissions = 0
      
             $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
             $groupsObj = [WebRequestHelper]::InvokeGetWebRequest($url);
@@ -73,7 +73,6 @@ class ControlStateExtension
                  $grpmember = ($users | where { $_.mailAddress -eq $currentUser } );
                  if ($null -ne $grpmember ) {
 	    	 	     $this.HasControlStateWritePermissions = 1
-	    	 	     $this.HasControlStateReadPermissions = 1
 	    	 	     return;
                  }	
 	    	 }
@@ -115,10 +114,10 @@ class ControlStateExtension
 			}
 
 			$indexerObject = @();
-			#$loopValue = $this.retryCount;
-			#while($loopValue -gt 0)
-			#{
-				#$loopValue = $loopValue - 1;
+			$loopValue = $this.retryCount;
+			while($loopValue -gt 0)
+			{
+				$loopValue = $loopValue - 1;
 				try
 				{
 					$rmContext = [ContextHelper]::GetCurrentContext();
@@ -130,19 +129,20 @@ class ControlStateExtension
 					   $uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $this.SubscriptionContext.subscriptionid, $this.IndexerBlobName 
 					   $webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
 					   $indexerObject =  $webRequestResult.value.value | ConvertFrom-Json;
+					   $loopValue = 0;
 					}
 					catch{
 						#Attestation index blob is not preset then return
 						$this.IsControlStateIndexerPresent = $false
 						return $true;
 					}
-					#$loopValue = 0;
+					
 				}
 				catch
 				{
 					#eat this exception and retry
 				}
-			#}
+			}
 			$this.ControlStateIndexer += $indexerObject;
 		}
 		
@@ -205,9 +205,8 @@ class ControlStateExtension
 			}
 			return $controlStates;
 		}
-		finally{
-			$folderpath = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId ;
-			[Helpers]::CleanupLocalFolder($folderpath);
+		catch{
+			[EventBase]::PublishGenericException($_);
 		}
 	}
 
@@ -385,20 +384,20 @@ class ControlStateExtension
 			$controlStateArray = Get-ChildItem -Path (Join-Path $AzSKTemp "ControlState");				
 			$controlStateArray | ForEach-Object {
 				$state = $_
-				#$loopValue = $this.retryCount;
-				#while($loopValue -gt 0)
-				#{
-				#	$loopValue = $loopValue - 1;
+				$loopValue = $this.retryCount;
+				while($loopValue -gt 0)
+				{
+					$loopValue = $loopValue - 1;
 					try
 					{
 						$this.UploadExtStorage($state.FullName);
-						#$loopValue = 0;
+						$loopValue = 0;
 					}
 					catch
 					{
 						#eat this exception and retry
 					}
-				#}
+				}
 			}
 		}
 		try
@@ -422,22 +421,22 @@ class ControlStateExtension
 	
 		[ControlState[]] $ControlStatesJson = @()
 
-		#$loopValue = $this.retryCount;
-		#while($loopValue -gt 0)
-		#{
-		#	$loopValue = $loopValue - 1;
+		$loopValue = $this.retryCount;
+		while($loopValue -gt 0)
+		{
+			$loopValue = $loopValue - 1;
 			try
 			{
 				#$ControlStatesJson = @()
 				$ControlStatesJson = $this.GetExtStorageContent($controlStateBlobName) | ConvertFrom-Json;
-				#$loopValue = 0;
+				$loopValue = 0;
 			}
 			catch
 			{
 				#$ControlStatesJson = @()
 				#eat this exception and retry
 			}
-		#}
+		}
 			
         if(($ControlStatesJson | Measure-Object).Count -gt 0)
         {

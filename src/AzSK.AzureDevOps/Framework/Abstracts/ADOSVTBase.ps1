@@ -17,7 +17,7 @@ class ADOSVTBase: SVTBase{
 	{		
 		$this.CreateInstance($svtResource);
 	}
-	 #Create instance for subscription scan 
+	 #Create instance for organization scan 
 	 hidden [void] CreateInstance()
 	 {
 		 [Helpers]::AbstractClass($this, [SVTBase]);
@@ -70,22 +70,7 @@ class ADOSVTBase: SVTBase{
 		return $false
 	}
 
-	hidden [void] GetResourceId()
-    {
 
-		try {
-			if ([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupTagTelemetry","*") -eq $true -and $this.ResourceId -and $this.ResourceContext -and $this.ResourceTags.Count -eq 0) {
-				
-					$tags = (Get-AzResourceGroup -Name $this.ResourceContext.ResourceGroupName).Tags
-					if( $tags -and ($tags | Measure-Object).Count -gt 0)
-					{
-						$this.ResourceTags = $tags
-					}			
-			}   
-		} catch {
-			# flow shouldn't break if there are errors in fetching tags eg. locked resource groups. <TODO: Add exception telemetry>
-		}
-    }
 
     hidden [ControlResult] CheckPolicyCompliance([ControlItem] $controlItem, [ControlResult] $controlResult)
 	{
