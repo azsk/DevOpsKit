@@ -42,7 +42,7 @@ class ControlStateExtension
 		$this.IsControlStateIndexerPresent = $true
 	}
 
-	# check user group and set acccess permission 
+	# fetch allowed group for attestation from setting file and check user is member of this group and set acccess permission 
 	hidden [void] SetControlStatePermission()
 	{
 	    try
@@ -52,7 +52,7 @@ class ControlStateExtension
      
             $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
             $groupsObj = [WebRequestHelper]::InvokeGetWebRequest($url);
-	    	$allowedGrpForAtt = $this.ControlSettings.AllowAttestationByGroups | where { $_.ResourceType -eq "Organization" } | select-object -property GroupNames #@("Project Collection Administrators","Project Administrators") #$this.ControlSettings.AllowAttestation.GroupNames;
+	    	$allowedGrpForAtt = $this.ControlSettings.AllowAttestationByGroups | where { $_.ResourceType -eq "Organization" } | select-object -property GroupNames 
 	    	
 	    	$groupsObj = $groupsObj | where { $allowedGrpForAtt.GroupNames -contains $_.displayName }
     
@@ -68,9 +68,8 @@ class ControlStateExtension
 	    	 $groupMembersObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
 	    	 $users = $groupMembersObj.dataProviders."ms.vss-admin-web.org-admin-members-data-provider".identities | where {$_.subjectKind -eq "user"}
     
-	    	 #TODO: 
 	    	 if($null -ne $users){
-	    	 	$currentUser = "v-arbagh@microsoft.com";# [ContextHelper]::GetCurrentSessionUser();
+	    	 	$currentUser = [ContextHelper]::GetCurrentSessionUser();
                  $grpmember = ($users | where { $_.mailAddress -eq $currentUser } );
                  if ($null -ne $grpmember ) {
 	    	 	     $this.HasControlStateWritePermissions = 1
@@ -279,13 +278,6 @@ class ControlStateExtension
 			    }
 			}
 		}
-		#else
-		#{
-		#	#clean up the container as there is no indexer
-		#	if($ContainerName -and  $StorageAccount){
-		#	Get-AzStorageBlob -Container $ContainerName -Context $StorageAccount.Context | Remove-AzStorageBlob  
-		#	}
-		#}
 	}
 
 	[void] UploadExtStorage( $FullName )
@@ -310,10 +302,10 @@ class ControlStateExtension
 		$uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $collectionName, $fileName  
 		try {
 		$webRequestResult = Invoke-RestMethod -Uri $uri -Method Put -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $body
-		#TODO: remove below line in final commit
-		Write-Host "Sending attestation to extension storage"
+
+		Write-Host "Saving the attestation details to extension storage."
 	   
-		if ($fileName -eq "Resource.index.json") {
+		if ($fileName -eq $this.IndexerBlobName) {
 		   $this.IsControlStateIndexerPresent = $true;
 		 }   
 	   }

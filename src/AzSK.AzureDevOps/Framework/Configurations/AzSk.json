@@ -18,7 +18,7 @@
     "PublishVulnDataToApi":  false,
     "ControlTelemetryKey":  "00000000-0000-0000-0000-000000000000",
     "EnableControlTelemetry":  false,
-    "PolicyMessage":  "",
+    "PolicyMessage":  "Running AzSK.AzureDevOps cmdlet...",
     "UpdateCompatibleCCVersion":  "1.0.0",
     "AzSKCAMinReqdRunbookVersion":  "2.1709.0",
     "AzSKAlertsMinReqdVersion":  "2.1709.0",

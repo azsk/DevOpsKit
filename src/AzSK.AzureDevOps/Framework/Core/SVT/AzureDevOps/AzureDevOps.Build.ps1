@@ -133,7 +133,7 @@ class Build: ADOSVTBase
             }
         }
         catch {
-            $controlResult.AddMessage([VerificationResult]::Manual, "Could not evaluated build definition.");
+            $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch the build definition.");
             $controlResult.AddMessage($_);
         }    
       } 

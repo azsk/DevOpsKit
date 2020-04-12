@@ -84,7 +84,7 @@ class Organization: ADOSVTBase
             $controlResult.SetStateData("Members of the Project Collection Service Accounts Group ", $responsePrCollData); 
             }
             else{ #count is 0 then there is no member in the prj coll ser acc group
-            $controlResult.AddMessage([VerificationResult]::Passed, "Project Collection Service Accounts does not have any member.");
+            $controlResult.AddMessage([VerificationResult]::Passed, "Project Collection Service Accounts group does not have any member.");
             }
         }
         else{
