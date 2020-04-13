@@ -15,7 +15,7 @@ class ADOSVTCommandBase: SVTCommandBase {
 
         [Helpers]::AbstractClass($this, [ADOSVTCommandBase]);
         
-        $this.CheckAndDisableAzTelemetry()
+        #$this.CheckAndDisableAzTelemetry()
        
         $this.AttestationUniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
         #Fetching the resourceInventory once for each SVT command execution
@@ -41,46 +41,40 @@ class ADOSVTCommandBase: SVTCommandBase {
     }
     #EndRegion
 
-    hidden [void] ClearSingletons()
-    {
-        #clear ASC security status
-        #[SecurityCenterHelper]::ASCSecurityStatus = $null;
-       # [SecurityCenterHelper]::Recommendations = $null;
-    }
 
     #Az Related command started events 
      [void] CommandStartedExt() {
          
         $this.ValidateAttestationParameters();
         #<TODO Framework: Find the purpose of function and move to respective place
-        $this.ClearSingletons();
+        #$this.ClearSingletons();
 
         $this.InitializeControlState();
     }
 
 	[void] PostCommandStartedAction()
 	{
-		$isPolicyInitiativeEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId))
-        if($isPolicyInitiativeEnabled)
-        {
-            $this.PostPolicyComplianceTelemetry()        
-        }
+		#$isPolicyInitiativeEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId))
+        #if($isPolicyInitiativeEnabled)
+        #{
+        #    $this.PostPolicyComplianceTelemetry()        
+        #}
 	}
     [void] PostPolicyComplianceTelemetry()
 	{
-		[CustomData] $customData = [CustomData]::new();
-		$customData.Name = "PolicyComplianceTelemetry";		
-		$customData.Value = $this.SubscriptionContext.SubscriptionId;
-		$this.PublishCustomData($customData);			
+	#	[CustomData] $customData = [CustomData]::new();
+	#	$customData.Name = "PolicyComplianceTelemetry";		
+	#	$customData.Value = $this.SubscriptionContext.SubscriptionId;
+	#	$this.PublishCustomData($customData);			
     }
     
-    [void] CommandErrorExt([System.Management.Automation.ErrorRecord] $exception) {
-        $this.CheckAndEnableAzTelemetry()
-    }
+    #[void] CommandErrorExt([System.Management.Automation.ErrorRecord] $exception) {
+    #    #$this.CheckAndEnableAzTelemetry()
+    #}
 
-    [void] CommandCompletedExt([SVTEventContext[]] $arguments) {
-        $this.CheckAndEnableAzTelemetry()
-    }
+    #[void] CommandCompletedExt([SVTEventContext[]] $arguments) {
+    #    #$this.CheckAndEnableAzTelemetry()
+    #}
 
     [ComplianceStateTableEntity[]] FetchComplianceStateData([string] $resourceId)
 	{
@@ -152,20 +146,20 @@ class ADOSVTCommandBase: SVTCommandBase {
         }
     }
 
-    hidden [void] CheckAndDisableAzTelemetry()
-	{
-		#Disable Az telemetry setting until scan is completed.
-		#This has been added to improve the performarnce of scan commands
-		#Telemetry will be re-enabled once scan is completed
-        Disable-AzDataCollection  | Out-Null
-
-    }
+    #hidden [void] CheckAndDisableAzTelemetry()
+	#{
+	#	#Disable Az telemetry setting until scan is completed.
+	#	#This has been added to improve the performarnce of scan commands
+	#	#Telemetry will be re-enabled once scan is completed
+    #    Disable-AzDataCollection  | Out-Null
+#
+    #}
     
-    hidden [void] CheckAndEnableAzTelemetry()
-    {
-        #Enabled Az telemetry which got disabled at the start of command
-        Enable-AzDataCollection  | Out-Null
-    }
+    #hidden [void] CheckAndEnableAzTelemetry()
+    #{
+    #    #Enabled Az telemetry which got disabled at the start of command
+    #    Enable-AzDataCollection  | Out-Null
+    #}
 
     #Function to validate attestations parameters for BulkClear, multiple Control Ids, and baseline controls flag
     hidden [void] ValidateAttestationParameters()

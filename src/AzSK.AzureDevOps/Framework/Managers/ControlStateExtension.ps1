@@ -186,13 +186,6 @@ class ControlStateExtension
 							try
 							{
 								$controlState = [ControlState] $_
-
-								#this can be removed after we check there is no value for attestationstatus coming to azsktm database
-								if($controlState.AttestationStatus -eq [AttestationStatus]::NotFixed)
-								{
-									$controlState.AttestationStatus = [AttestationStatus]::WillNotFix
-								}
-
 								$controlStates += $controlState;								
 							}
 							catch 
@@ -438,18 +431,6 @@ class ControlStateExtension
 				#eat this exception and retry
 			}
 		}
-			
-        if(($ControlStatesJson | Measure-Object).Count -gt 0)
-        {
-		    $ControlStatesJson | ForEach-Object {
-			    $ControlState = $_;
-			    #this can be removed after we check there is no value for attestationstatus coming to azsktm database
-			    if($ControlState.AttestationStatus -eq [AttestationStatus]::NotFixed)
-			    {
-				    $ControlState.AttestationStatus = [AttestationStatus]::WillNotFix
-			    }
-		    }
-        }
 
 		return $ControlStatesJson
 	}

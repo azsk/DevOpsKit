@@ -87,11 +87,7 @@ class SVTControlAttestation
 		{
 			#Compute the effective attestation status for support backward compatibility
 			$tempAttestationStatus = $controlState.AttestationStatus
-			#ToDo: Check in DB if 'NotFixed' exists; Capture Timestamp; Remove following if condition code
-			if($controlState.AttestationStatus -eq [AttestationStatus]::NotFixed)
-			{
-				$tempAttestationStatus = [AttestationStatus]::WillNotFix;
-			}
+			
 			while($userChoice -ne '0' -and $userChoice -ne '1' -and $userChoice -ne '2' -and $userChoice -ne '9' )
 			{
 				Write-Host "Existing attestation details:" -ForegroundColor Cyan
@@ -285,10 +281,7 @@ class SVTControlAttestation
 				$this.dirtyCommitState = $true
 				#Compute the effective attestation status for support backward compatibility
 				$tempAttestationStatus = $controlState.AttestationStatus
-				if($controlState.AttestationStatus -eq [AttestationStatus]::NotFixed)
-				{
-					$tempAttestationStatus = [AttestationStatus]::WillNotFix;
-				}
+				
 				Write-Host "Existing attestation details:" -ForegroundColor Cyan
 				Write-Host "Attestation Status: $tempAttestationStatus`nVerificationResult: $($controlState.EffectiveVerificationResult)`nAttested By       : $($controlState.State.AttestedBy)`nJustification     : $($controlState.State.Justification)`n"
 			}			
