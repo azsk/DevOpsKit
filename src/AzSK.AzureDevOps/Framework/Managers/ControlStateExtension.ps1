@@ -49,37 +49,6 @@ class ControlStateExtension
 	    try
 	      {	
 	    	$this.HasControlStateWritePermissions = 1
-	    	#$this.HasControlStateReadPermissions = 0
-     
-           #$url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-           #$groupsObj = [WebRequestHelper]::InvokeGetWebRequest($url);
-	    	#$allowedGrpForAtt = $this.ControlSettings.AllowAttestationByGroups | where { $_.ResourceType -eq "Organization" } | select-object -property GroupNames 
-	    	#
-	    	#$groupsObj = $groupsObj | where { $allowedGrpForAtt.GroupNames -contains $_.displayName }
-    
-           #$apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview" -f $($this.SubscriptionContext.SubscriptionName);
-    
-	    	#foreach ($group in $groupsObj)
-	    	#{ 
-           # $descriptor = $group.descriptor;
-           # $inputbody =  '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"","sourcePage":{"url":"","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' | ConvertFrom-Json
-           #
-           # $inputbody.dataProviderContext.properties.subjectDescriptor = $descriptor;
-           # $inputbody.dataProviderContext.properties.sourcePage.url = "https://dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/_settings/groups?subjectDescriptor=$($descriptor)";
-	    	# $groupMembersObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
-	    	# $users = $groupMembersObj.dataProviders."ms.vss-admin-web.org-admin-members-data-provider".identities | where {$_.subjectKind -eq "user"}
-			# $this.HasControlStateWritePermissions = 1
-			# return;
-	    	# if($null -ne $users){
-	    	# 	$currentUser = "v-arbagh@microsoft.com" #[ContextHelper]::GetCurrentSessionUser();
-           #     $grpmember = ($users | where { $_.mailAddress -eq $currentUser } );
-           #     if ($null -ne $grpmember ) {
-	    	# 	     $this.HasControlStateWritePermissions = 1
-	    	# 	     return;
-           #     }	
-	    	# }
-	    	#		
-	    	#}
 	      }
 	      catch
 	      {
