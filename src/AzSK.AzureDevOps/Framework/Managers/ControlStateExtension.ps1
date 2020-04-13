@@ -207,6 +207,7 @@ class ControlStateExtension
 		}
 		catch{
 			[EventBase]::PublishGenericException($_);
+			return $null;
 		}
 	}
 
