@@ -478,6 +478,7 @@
       "Low": 90
     }
   },
+
   "SubscriptionCore": {
     "EnableV1AlertFailure": false,
     "ASCTier": ["Standard"],
@@ -514,6 +515,7 @@
       "Low": 90
     }
   },
+  "DefaultAttestationPeriodForExemptControl": 180,
   "ResultComplianceInDays": {
     "DefaultControls": 3,
     "OwnerAccessControls": 90
