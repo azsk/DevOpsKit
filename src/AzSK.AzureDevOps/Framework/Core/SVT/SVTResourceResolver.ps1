@@ -54,7 +54,7 @@ class SVTResourceResolver: AzSKRoot
     }
 
     [void] SetallTheParamValues([string]$organizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPools,$ScanAllArtifacts,$PATToken,$ResourceTypeName)
-	{      
+	{ 
         $this.organizationName = $organizationName
         $this.ResourceTypeName = $ResourceTypeName
 
@@ -163,10 +163,10 @@ class SVTResourceResolver: AzSKRoot
             $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL) ;
 
             $projects = $responseObj  | Where-Object {  (($this.ProjectNames -contains $_.name) -or ($this.ProjectNames -eq "*"))  } #| ForEach-Object {
-               
+            
             $responseObj = $null;  
             Remove-Variable responseObj;
-
+            
             $nProj = $this.MaxObjectsToScan;
             if(!$projects)  
             {
@@ -205,7 +205,7 @@ class SVTResourceResolver: AzSKRoot
                 if(([Helpers]::CheckMember($serviceEndpointObj,"count") -and $serviceEndpointObj[0].count -gt 0) -or  (($serviceEndpointObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($serviceEndpointObj[0],"name")))
                 {
                     # Currently get only Azure Connections as all controls are applicable for same
-                    #TODO: temp added git in the where
+                   
                     $azureConnections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github") -and (($this.ServiceConnections -eq $_.name) -or ($this.ServiceConnections -eq "*")) } #-or $_.type -eq "git" -or $_.type -eq "git"
 
                     $serviceEndpointObj =$null;
@@ -286,10 +286,10 @@ class SVTResourceResolver: AzSKRoot
                                     $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                                                     Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                                                     Select-Object -First 1)
-                                    
+
                                     $link = $svtResource.ResourceId.replace('_apis/build/Definitions','_build?definitionId=').split('?')[0];
                                     $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $link }
-                                                                    
+                                                                                                     
                                     $this.SVTResources +=$svtResource
                                 }
                                 $buildDefnsObj = $null;
@@ -322,10 +322,10 @@ class SVTResourceResolver: AzSKRoot
                                 $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                                                 Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                                                 Select-Object -First 1)
-                                
+
                                 $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName,$projectName,$svtResource.ResourceId.split('/')[-1];
                                 $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $link }
-                                 
+                                                                
                                 $this.SVTResources +=$svtResource
 
                                 if (--$nObj -eq 0) { break;} 
@@ -336,10 +336,6 @@ class SVTResourceResolver: AzSKRoot
                     else
                     {
                         try {
-                            #TODO: temporary added
-                           # $releaseDefnURL2 = "https://vsrm.dev.azure.com/{0}/{1}/_apis/release/definitions?api-version=4.1-preview.3" -f $($this.SubscriptionContext.SubscriptionName), $projectName;
-                           # $releaseDefnsObj2 = [WebRequestHelper]::InvokeGetWebRequest($releaseDefnURL);
-
                         $this.ReleaseNames | ForEach-Object {
                             $resleaseName = $_
                             $releaseDefnURL = "https://{0}.vsrm.visualstudio.com/_apis/Contribution/HierarchyQuery/project/{1}?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName), $projectName;
@@ -373,7 +369,7 @@ class SVTResourceResolver: AzSKRoot
                                     $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                                                     Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                                                     Select-Object -First 1)
-                                    
+
                                     $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName,$projectName,$svtResource.ResourceId.split('/')[-1];
                                     $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $link }
                                                                     
