@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class AgentPool: SVTBase
+class AgentPool: ADOSVTBase
 {    
 
     hidden [PSObject] $AgentObj;

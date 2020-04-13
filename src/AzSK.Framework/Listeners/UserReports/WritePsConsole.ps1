@@ -244,7 +244,7 @@ class WritePsConsole: FileOutputBase
 					{
 						$currentInstance.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info)
 						$currentInstance.WriteMessage([Constants]::RemediationMsg, [MessageType]::Info)
-						$currentInstance.WriteMessage([Constants]::AttestationReadMsg + [ConfigurationManager]::GetAzSKConfigData().AzSKRGName, [MessageType]::Info)
+						#$currentInstance.WriteMessage([Constants]::AttestationReadMsg + [ConfigurationManager]::GetAzSKConfigData().AzSKRGName, [MessageType]::Info)
 						
 					}
 					$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)

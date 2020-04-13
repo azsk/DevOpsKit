@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class Build: SVTBase
+class Build: ADOSVTBase
 {    
 
     hidden [PSObject] $BuildObj;
@@ -133,7 +133,7 @@ class Build: SVTBase
             }
         }
         catch {
-            $controlResult.AddMessage([VerificationResult]::Manual, "Could not evaluate build definition.");
+            $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch the build definition.");
             $controlResult.AddMessage($_);
         }    
       } 

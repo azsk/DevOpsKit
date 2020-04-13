@@ -291,6 +291,8 @@ class SVTBase: AzSKRoot
 				$resourceSecurityResult += $this.GetManualSecurityStatus();			
 				
 				$this.InvokeExtensionMethod($resourceSecurityResult)
+                #Call the ADOSVTBase PostEvaluationCompleted method which read the attestation data and modify conntrol result.
+				$this.PostEvaluationCompleted($resourceSecurityResult);
 				$this.EvaluationCompleted($resourceSecurityResult);
 			}
         }
@@ -547,6 +549,8 @@ class SVTBase: AzSKRoot
                 $this.ControlError($controlItem, $_);
 			}
 
+			$this.PostProcessData($singleControlResult);
+
 			$this.InvokeExtensionMethod($singleControlResult);
 
 			# Check for the control which requires elevated permission to modify 'Recommendation' so that user can know it is actually automated if they have the right permission
@@ -566,7 +570,8 @@ class SVTBase: AzSKRoot
 		$this.ControlCompleted($singleControlResult);
 
         return $singleControlResult;
-    }
+	}
+	
 	
 	# Policy compliance methods begin
 	hidden [ControlResult] ComputeFinalScanResult([ControlResult] $azskScanResult, [ControlResult] $policyScanResult)

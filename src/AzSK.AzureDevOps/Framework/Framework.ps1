@@ -60,8 +60,8 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 
 
 #Managers
-
 . $FrameworkPath\Managers\FeatureFlightingManager.ps1
+. $PSScriptRoot\Managers\ControlStateExtension.ps1
 . $FrameworkPath\Managers\AzSKPDFExtension.ps1
 . $FrameworkPath\Managers\PartialScanManager.ps1
 
@@ -74,6 +74,7 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 #Abstracts
 . $FrameworkPath\Abstracts\AzSKRoot.ps1
 . $FrameworkPath\Abstracts\SVTBase.ps1
+. $PSScriptRoot\Abstracts\ADOSVTBase.ps1
 
 . $FrameworkPath\Abstracts\FixControl\FixControlBase.ps1
 . $FrameworkPath\Abstracts\FixControl\FixServicesBase.ps1
@@ -103,10 +104,13 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 . $FrameworkPath\Listeners\ListenerHelper.ps1
 
 #Remaining Abstracts
+. $PSScriptRoot\Core\SVT\SVTControlAttestation.ps1
 . $FrameworkPath\Abstracts\CommandBase.ps1
 
 #Remaining Abstracts
 . $FrameworkPath\Abstracts\SVTCommandBase.ps1
+. $PSScriptRoot\Abstracts\ADOSVTCommandBase.ps1
+
 #Core
 
 (Get-ChildItem -Path "$PSScriptRoot\Core\SVT\AzureDevOps\" -Recurse -File) |

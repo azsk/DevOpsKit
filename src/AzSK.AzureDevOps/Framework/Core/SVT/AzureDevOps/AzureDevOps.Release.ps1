@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class Release: SVTBase
+class Release: ADOSVTBase
 {   
 
     hidden [PSObject] $ReleaseObj;

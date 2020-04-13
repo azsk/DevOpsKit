@@ -1,5 +1,5 @@
 ﻿Set-StrictMode -Version Latest
-class ServicesSecurityStatus: SVTCommandBase
+class ServicesSecurityStatus: ADOSVTCommandBase
 {
 	[SVTResourceResolver] $Resolver = $null;
 	ServicesSecurityStatus([string] $subscriptionId, [InvocationInfo] $invocationContext, [SVTResourceResolver] $resolver):
