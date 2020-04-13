@@ -68,13 +68,13 @@ class ADOSVTCommandBase: SVTCommandBase {
 	#	$this.PublishCustomData($customData);			
     }
     
-    #[void] CommandErrorExt([System.Management.Automation.ErrorRecord] $exception) {
-    #    #$this.CheckAndEnableAzTelemetry()
-    #}
+    [void] CommandErrorExt([System.Management.Automation.ErrorRecord] $exception) {
+        #$this.CheckAndEnableAzTelemetry()
+    }
 
-    #[void] CommandCompletedExt([SVTEventContext[]] $arguments) {
-    #    #$this.CheckAndEnableAzTelemetry()
-    #}
+    [void] CommandCompletedExt([SVTEventContext[]] $arguments) {
+        #$this.CheckAndEnableAzTelemetry()
+    }
 
     [ComplianceStateTableEntity[]] FetchComplianceStateData([string] $resourceId)
 	{

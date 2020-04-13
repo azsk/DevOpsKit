@@ -106,25 +106,6 @@ class ADOSVTBase: SVTBase {
 		$controlState = @();
 		$controlStateValue = @();
 		try {
-			# Get policy compliance if org-level flag is enabled and policy is found 
-			#TODO: set flag in a variable once and reuse it
-			
-			if ([FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan", $($this.SubscriptionContext.SubscriptionId)) -eq $true) {
-				if (-not [string]::IsNullOrWhiteSpace($eventContext.ControlItem.PolicyDefinitionGuid)) {
-					#create default controlresult
-					$policyScanResult = $this.CreateControlResult($eventContext.ControlItem.FixControl);
-					#update default controlresult with policy compliance state
-					$policyScanResult = $this.CheckPolicyCompliance($eventContext.ControlItem, $policyScanResult);
-					#todo: currently excluding child controls
-					if ($eventContext.ControlResults.Count -eq 1 -and $Null -ne $policyScanResult) {
-						$finalScanResult = $this.ComputeFinalScanResult($eventContext.ControlResults[0], $policyScanResult)
-						$eventContext.ControlResults[0] = $finalScanResult
-					}
-				}
-			}
-			
-			#$this.GetDataFromSubscriptionReport($eventContext);
-
 			$resourceStates = $this.GetResourceState()			
 			if (($resourceStates | Measure-Object).Count -ne 0) {
 				$controlStateValue += $resourceStates | Where-Object { $_.InternalId -eq $eventContext.ControlItem.Id };
