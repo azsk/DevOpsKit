@@ -435,13 +435,13 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 		$OrganizationName,
 
 		[string]
-		[Parameter( HelpMessage="Project names for which the security evaluation has to be performed.")]
+		[Parameter(Position = 1, Mandatory = $true, HelpMessage="Project names for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("pn")]
 		$ProjectNames,
 
 		[string]
-		[Parameter(HelpMessage="Build names for which the security evaluation has to be performed.")]
+		[Parameter(Position = 2, Mandatory = $true,HelpMessage="Build names for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("bn")]
 		$BuildNames,
@@ -552,13 +552,13 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 		$OrganizationName,
 
 		[string]
-		[Parameter( HelpMessage="Project names for which the security evaluation has to be performed.")]
+		[Parameter(Position = 1, Mandatory = $true, HelpMessage="Project names for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("pn")]
 		$ProjectNames,
 
 		[string]
-		[Parameter(HelpMessage="Release names for which the security evaluation has to be performed.")]
+		[Parameter(Position = 2, Mandatory = $true, HelpMessage="Release names for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("rn")]
 		$ReleaseNames,
