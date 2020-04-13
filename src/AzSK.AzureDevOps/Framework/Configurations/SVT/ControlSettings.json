@@ -365,10 +365,16 @@
     {
       "ResourceType": "Organization",
       "GroupNames": [
-        "Project Collection Administrators",
-        "Project Administrators"
+        "Project Collection Administrators"
       ]
-   }
+   },
+   {
+    "ResourceType": "Project",
+    "GroupNames": [
+      "Project Collection Administrators",
+      "Project Administrators"
+    ]
+ }
   ],
   "SubscriptionCore": {
     "EnableV1AlertFailure": false

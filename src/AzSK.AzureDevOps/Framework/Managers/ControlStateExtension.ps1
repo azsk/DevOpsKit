@@ -19,6 +19,7 @@ class ControlStateExtension
 	hidden [InvocationInfo] $InvocationContext;
 	hidden [PSObject] $ControlSettings; 
 	hidden [PSObject] $resourceType;
+	hidden [PSObject] $resourceName;
 
 	ControlStateExtension([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
@@ -47,37 +48,38 @@ class ControlStateExtension
 	{
 	    try
 	      {	
-	    	$this.HasControlStateWritePermissions = 0
+	    	$this.HasControlStateWritePermissions = 1
 	    	#$this.HasControlStateReadPermissions = 0
      
-            $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-            $groupsObj = [WebRequestHelper]::InvokeGetWebRequest($url);
-	    	$allowedGrpForAtt = $this.ControlSettings.AllowAttestationByGroups | where { $_.ResourceType -eq "Organization" } | select-object -property GroupNames 
-	    	
-	    	$groupsObj = $groupsObj | where { $allowedGrpForAtt.GroupNames -contains $_.displayName }
+           #$url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+           #$groupsObj = [WebRequestHelper]::InvokeGetWebRequest($url);
+	    	#$allowedGrpForAtt = $this.ControlSettings.AllowAttestationByGroups | where { $_.ResourceType -eq "Organization" } | select-object -property GroupNames 
+	    	#
+	    	#$groupsObj = $groupsObj | where { $allowedGrpForAtt.GroupNames -contains $_.displayName }
     
-            $apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview" -f $($this.SubscriptionContext.SubscriptionName);
+           #$apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview" -f $($this.SubscriptionContext.SubscriptionName);
     
-	    	foreach ($group in $groupsObj)
-	    	{ 
-             $descriptor = $group.descriptor;
-             $inputbody =  '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"","sourcePage":{"url":"","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' | ConvertFrom-Json
-            
-             $inputbody.dataProviderContext.properties.subjectDescriptor = $descriptor;
-             $inputbody.dataProviderContext.properties.sourcePage.url = "https://dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/_settings/groups?subjectDescriptor=$($descriptor)";
-	    	 $groupMembersObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
-	    	 $users = $groupMembersObj.dataProviders."ms.vss-admin-web.org-admin-members-data-provider".identities | where {$_.subjectKind -eq "user"}
-    
-	    	 if($null -ne $users){
-	    	 	$currentUser = [ContextHelper]::GetCurrentSessionUser();
-                 $grpmember = ($users | where { $_.mailAddress -eq $currentUser } );
-                 if ($null -ne $grpmember ) {
-	    	 	     $this.HasControlStateWritePermissions = 1
-	    	 	     return;
-                 }	
-	    	 }
-	    			
-	    	}
+	    	#foreach ($group in $groupsObj)
+	    	#{ 
+           # $descriptor = $group.descriptor;
+           # $inputbody =  '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"","sourcePage":{"url":"","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' | ConvertFrom-Json
+           #
+           # $inputbody.dataProviderContext.properties.subjectDescriptor = $descriptor;
+           # $inputbody.dataProviderContext.properties.sourcePage.url = "https://dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/_settings/groups?subjectDescriptor=$($descriptor)";
+	    	# $groupMembersObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+	    	# $users = $groupMembersObj.dataProviders."ms.vss-admin-web.org-admin-members-data-provider".identities | where {$_.subjectKind -eq "user"}
+			# $this.HasControlStateWritePermissions = 1
+			# return;
+	    	# if($null -ne $users){
+	    	# 	$currentUser = "v-arbagh@microsoft.com" #[ContextHelper]::GetCurrentSessionUser();
+           #     $grpmember = ($users | where { $_.mailAddress -eq $currentUser } );
+           #     if ($null -ne $grpmember ) {
+	    	# 	     $this.HasControlStateWritePermissions = 1
+	    	# 	     return;
+           #     }	
+	    	# }
+	    	#		
+	    	#}
 	      }
 	      catch
 	      {
@@ -154,6 +156,7 @@ class ControlStateExtension
 		try
 		{
 			$this.resourceType = $resourceType;
+			$this.resourceName = $resourceName
 			[ControlState[]] $controlStates = @();
 			$retVal = $this.ComputeControlStateIndexer();
 
@@ -204,9 +207,10 @@ class ControlStateExtension
 		}
 	}
 
-	hidden [void] SetControlState([string] $id, [ControlState[]] $controlStates, [bool] $Override, $resourceType)
+	hidden [void] SetControlState([string] $id, [ControlState[]] $controlStates, [bool] $Override, [string] $resourceType, [string] $resourceName)
 	{	
 		$this.resourceType = $resourceType;	
+		$this.resourceName = $resourceName;
 		$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState";				
 		if(-not (Test-Path $(Join-Path $AzSKTemp "ControlState")))
 		{
@@ -284,7 +288,7 @@ class ControlStateExtension
 			$collectionName = $this.SubscriptionContext.subscriptionid;
 		}
 		else {
-			$collectionName = $this.invocationContext.BoundParameters["ProjectNames"];
+			$collectionName = $this.resourceName 
 		}
 
 		$rmContext = [ContextHelper]::GetCurrentContext();
@@ -296,8 +300,6 @@ class ControlStateExtension
 		try {
 		$webRequestResult = Invoke-RestMethod -Uri $uri -Method Put -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $body
 
-		Write-Host "Saving the attestation details to extension storage."
-	   
 		if ($fileName -eq $this.IndexerBlobName) {
 		   $this.IsControlStateIndexerPresent = $true;
 		 }   
@@ -313,7 +315,7 @@ class ControlStateExtension
 			$collectionName = $this.SubscriptionContext.subscriptionid;
 		}
 		else {
-			$collectionName = $this.invocationContext.BoundParameters["ProjectNames"];
+			$collectionName = $this.resourceName  
 		}
 
 		$rmContext = [ContextHelper]::GetCurrentContext();
@@ -339,7 +341,7 @@ class ControlStateExtension
 			$collectionName = $this.SubscriptionContext.subscriptionid;
 		}
 		else {
-			$collectionName = $this.invocationContext.BoundParameters["ProjectNames"];
+			$collectionName = $this.resourceName  
 		}
 
 		$rmContext = [ContextHelper]::GetCurrentContext();
@@ -537,6 +539,86 @@ class ControlStateExtension
 		else
 		{
 			return $true;
+		}
+	}
+
+	[bool] GetControlStatePermission([string] $featureName, [string] $resourceName)
+	{
+	    try
+	      {	
+	    	$this.HasControlStateWritePermissions = 0
+	 
+			$allowedGrpForOrgAtt = $this.ControlSettings.AllowAttestationByGroups | where { $_.ResourceType -eq "Organization" } | select-object -property GroupNames 
+	    	
+            $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+			$groupsOrgObj = [WebRequestHelper]::InvokeGetWebRequest($url);
+			$groupsOrgObj = $groupsOrgObj | where { $allowedGrpForOrgAtt.GroupNames -contains $_.displayName }
+
+			if($this.CheckGroupMember($groupsOrgObj.descriptor)){
+				return $true;
+			}
+
+			if($featureName -ne "Organization")
+			{
+			   $allowedGrpForAtt = $this.ControlSettings.AllowAttestationByGroups | where { $_.ResourceType -eq $featureName } | select-object -property GroupNames 	    	
+			   $url = 'https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1' -f $($this.SubscriptionContext.SubscriptionName);
+               $inputbody = '{"contributionIds":["ms.vss-admin-web.org-admin-groups-data-provider"],"dataProviderContext":{"properties":{"sourcePage":{"url":"","routeId":"ms.vss-admin-web.project-admin-hub-route","routeValues":{"project":"","adminPivot":"permissions","controller":"ContributedPage","action":"Execute"}}}}}' | ConvertFrom-Json
+               $inputbody.dataProviderContext.properties.sourcePage.url = "https://dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/$($resourceName)/_settings/permissions";
+               $inputbody.dataProviderContext.properties.sourcePage.routeValues.Project =$resourceName;
+       
+			   $groupsObj = [WebRequestHelper]::InvokePostWebRequest($url,$inputbody); 
+			   $groupsObj = $groupsObj.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where { $allowedGrpForAtt.GroupNames -contains $_.displayName }
+
+	    	   foreach ($group in $groupsObj)
+	    	   { 
+                if($this.CheckGroupMember($group.descriptor)){
+					return $true;
+				}	
+			   }
+			}
+			if($this.HasControlStateWritePermissions -gt 0)
+			{
+		      return $true
+			}
+			else
+			{
+				return $false
+			}
+	      }
+	      catch
+	      {
+			  $this.HasControlStateWritePermissions = 0
+			  return $false;
+	      }
+	}
+
+	[bool] CheckGroupMember($descriptor)
+	{
+		$inputbody =  '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"","sourcePage":{"url":"","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' | ConvertFrom-Json
+	   
+		$inputbody.dataProviderContext.properties.subjectDescriptor = $descriptor;
+		$inputbody.dataProviderContext.properties.sourcePage.url = "https://dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/_settings/groups?subjectDescriptor=$($descriptor)";
+	   
+		$apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview" -f $($this.SubscriptionContext.SubscriptionName);
+
+		$groupMembersObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+		$users = $groupMembersObj.dataProviders."ms.vss-admin-web.org-admin-members-data-provider".identities | where {$_.subjectKind -eq "user"}
+
+		if($null -ne $users){
+			$currentUser = [ContextHelper]::GetCurrentSessionUser();
+			$grpmember = ($users | where { $_.mailAddress -eq $currentUser } );
+			if ($null -ne $grpmember ) {
+				 $this.HasControlStateWritePermissions = 1
+				 return $true;
+			}	
+		}
+		if($this.HasControlStateWritePermissions -gt 0)
+		{
+		  return $true
+		}
+		else
+		{
+			return $false
 		}
 	}
 }

@@ -367,7 +367,7 @@ class SVTControlAttestation
 			    if( $null -ne $attNonEnabledResource -and ($attNonEnabledResource | Measure-Object).Count -gt 0 )
 			    {
 					$allowedResources = ($allowedResourcesToAttest -join ", ")
-			        Write-Host ("$([Constants]::SingleDashLine)`nOnly $($allowedResources) controls are allow for the attestation.`n$([Constants]::SingleDashLine)") -ForegroundColor Yellow
+			        Write-Host ("$([Constants]::SingleDashLine)`n Currently, attestation is supported only for [$($allowedResources)] controls.`n$([Constants]::SingleDashLine)") -ForegroundColor Yellow
 			    }
 			}
 			
@@ -401,7 +401,9 @@ class SVTControlAttestation
 						$isSubscriptionScan = $true;
 						Write-Host $([String]::Format([Constants]::ModuleAttestStartHeadingSub, $resourceValue[0].FeatureName, $resourceValue[0].SubscriptionContext.SubscriptionName, $resourceValue[0].SubscriptionContext.SubscriptionId)) -ForegroundColor Cyan
 					}	
-					
+
+					if($this.controlStateExtension.GetControlStatePermission($resourceValue[0].FeatureName, $resourceValue[0].ResourceContext.ResourceName) )
+					{
 					[ControlState[]] $resourceControlStates = @()
 					$count = 0;
 					[SVTEventContext[]] $filteredControlItems = @()
@@ -444,6 +446,7 @@ class SVTControlAttestation
 					}
 					#Added below variable to supply in setcontrol to send in controlstateextension to verify resourcetype
 					$FeatureName = "";
+					$resourceName = "";
 					if($count -gt 0)
 					{
 						Write-Host "No. of controls that need to be attested: $count" -ForegroundColor Cyan
@@ -451,6 +454,7 @@ class SVTControlAttestation
 						 foreach( $controlItem in $filteredControlItems)
 						 {
 							$FeatureName = $controlItem.FeatureName
+							$resourceName = $controlItem.ResourceContext.ResourceName
 							$controlId = $controlItem.ControlItem.ControlID
 							$controlSeverity = $controlItem.ControlItem.ControlSeverity
 							$controlResult = $null;
@@ -517,7 +521,7 @@ class SVTControlAttestation
 						}
 
 						Write-Host "Committing the attestation details for this resource..." -ForegroundColor Cyan
-						$this.controlStateExtension.SetControlState($resourceValueKey, $resourceControlStates, $false, $FeatureName )
+						$this.controlStateExtension.SetControlState($resourceValueKey, $resourceControlStates, $false, $FeatureName, $resourceName )
 						Write-Host "Commit succeeded." -ForegroundColor Cyan
 					}
 					
@@ -531,6 +535,11 @@ class SVTControlAttestation
 						$isSubscriptionScan = $true;
 						Write-Host $([String]::Format([Constants]::CompletedAttestAnalysisSub, $resourceValue[0].FeatureName, $resourceValue[0].SubscriptionContext.SubscriptionName, $resourceValue[0].SubscriptionContext.SubscriptionId)) -ForegroundColor Cyan
 					}	
+				 }
+				 else
+				 {
+					Write-Host "You are currently logged in using PAT or you don't have the required permissions to perform control attestation. Control attestation using PAT is currently not supported. If you'd like to perform control attestation, please request your organization administrator to grant you 'Administrator' access." -ForegroundColor yellow 
+				 }
 				}
 			
 			}

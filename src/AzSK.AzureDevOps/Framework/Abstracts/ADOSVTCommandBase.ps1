@@ -134,7 +134,7 @@ class ADOSVTCommandBase: SVTCommandBase {
                 }
                else {
                    [MessageData] $data = [MessageData]@{
-                       Message     = "You don't have the required permissions to perform control attestation. If you'd like to perform control attestation, please request your organization administrator to grant you 'Administrator' access.";
+                       Message     = "You are currently logged in using PAT or you don't have the required permissions to perform control attestation. Control attestation using PAT is currently not supported. If you'd like to perform control attestation, please request your organization administrator to grant you 'Administrator' access.";
                        MessageType = [MessageType]::Error;
                    };
                    $this.PublishCustomMessage($data)

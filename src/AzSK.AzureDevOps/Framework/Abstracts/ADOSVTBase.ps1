@@ -75,8 +75,9 @@ class ADOSVTBase: SVTBase {
 			#get the uniqueid from the first control result. Here we can take first as it would come here for each resource.
 			$id = $ControlResults[0].GetUniqueId();
 			$resourceType = $ControlResults[0].FeatureName
+			$resourceName = $ControlResults[0].ResourceContext.ResourceName
 
-			$this.ControlStateExt.SetControlState($id, $effectiveResourceStates, $true, $resourceType)
+			$this.ControlStateExt.SetControlState($id, $effectiveResourceStates, $true, $resourceType, $resourceName)
 		}
 	}
 
