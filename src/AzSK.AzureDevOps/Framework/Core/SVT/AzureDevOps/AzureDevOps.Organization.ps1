@@ -112,16 +112,16 @@ class Organization: ADOSVTBase
             if(([Helpers]::CheckMember($responseObj,"fps.dataProviders.data") ) -and  (($responseObj.fps.dataProviders.data."ms.vss-admin-web.organization-admin-aad-data-provider") -and $responseObj.fps.dataProviders.data."ms.vss-admin-web.organization-admin-aad-data-provider".orgnizationTenantData))
             {
                 $controlResult.AddMessage([VerificationResult]::Passed,
-                                                    "Organization is configured with ($($responseObj.fps.dataProviders.data.'ms.vss-admin-web.organization-admin-aad-data-provider'.orgnizationTenantData.displayName)) directory");
+                                                    "Organization is configured with ($($responseObj.fps.dataProviders.data.'ms.vss-admin-web.organization-admin-aad-data-provider'.orgnizationTenantData.displayName)) directory.");
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Failed,
-                                                    "AAD is not configured on Organization");
+                                                    "Organization is not configured with AAD.");
             }
         }
         catch {
             $controlResult.AddMessage([VerificationResult]::Manual,
-            "Could not able to fetch configuration.");
+            "Could not fetch the AAD configuration.");
         }
         return $controlResult
     }
@@ -166,11 +166,11 @@ class Organization: ADOSVTBase
                 if($guestAuthObj.policy.effectiveValue -eq $false )
                 {
                     $controlResult.AddMessage([VerificationResult]::Passed,
-                                                "External guest access is disabled on Organization");
+                                                "External guest access is disabled in the organization.");
                 }
                 else {
                     $controlResult.AddMessage([VerificationResult]::Failed,
-                                                "External guest access enabled on Organization");
+                                                "External guest access is enabled in the organization.");
                 }
             }
        }
@@ -187,11 +187,11 @@ class Organization: ADOSVTBase
                 if($guestAuthObj.policy.effectiveValue -eq $false )
                 {
                     $controlResult.AddMessage([VerificationResult]::Passed,
-                                                "Public projects are disabled on Organization");
+                                                "Public projects are disabled in the organization.");
                 }
                 else {
                     $controlResult.AddMessage([VerificationResult]::Failed,
-                                                "Public projects are enabled on Organization");
+                                                "Public projects are enabled in the organization.");
                 }
             }
        }
@@ -220,7 +220,7 @@ class Organization: ADOSVTBase
 
         }
         else {
-            $controlResult.AddMessage([VerificationResult]::Passed, "No extensions found");
+            $controlResult.AddMessage([VerificationResult]::Passed, "No extensions found.");
         }
 
        }

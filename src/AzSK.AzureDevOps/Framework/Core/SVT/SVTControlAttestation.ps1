@@ -367,7 +367,7 @@ class SVTControlAttestation
 			    if( $null -ne $attNonEnabledResource -and ($attNonEnabledResource | Measure-Object).Count -gt 0 )
 			    {
 					$allowedResources = ($allowedResourcesToAttest -join ", ")
-			        Write-Host ("$([Constants]::SingleDashLine)`n Currently, attestation is supported only for [$($allowedResources)] controls.`n$([Constants]::SingleDashLine)") -ForegroundColor Yellow
+			        Write-Host ("$([Constants]::SingleDashLine)`n Currently, attestation is supported only for [$($allowedResources)] controls.`n$([Constants]::SingleDashLine)") -ForegroundColor Red
 			    }
 			}
 			
@@ -538,7 +538,7 @@ class SVTControlAttestation
 				 }
 				 else
 				 {
-					Write-Host "You are currently logged in using PAT or you don't have the required permissions to perform control attestation. Control attestation using PAT is currently not supported. If you'd like to perform control attestation, please request your organization administrator to grant you 'Administrator' access." -ForegroundColor yellow 
+					Write-Host "Error: Attestation denied.`nThis may be because: `n  (a) you are attempting to attest controls for areas you do not have RBAC permission to.`n  (b) you are logged in using PAT Token (currently not supported for attestation)." -ForegroundColor red 
 				 }
 				}
 			
