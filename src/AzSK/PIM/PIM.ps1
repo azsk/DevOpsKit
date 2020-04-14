@@ -398,11 +398,12 @@ function Set-AzSKPIMConfiguration {
                     {
                         if($RequireMFAOnActivation -eq $true)
                         {
-                            #Both CA and MFA can not be applied simultaneously      
+                            #Both CA and MFA can not be applied simultaneously. Therefore, if MFA is set to true then CA is set to false.     
                             $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $true, $false));
                         }  
                         else 
                         {
+                            #If MFA is set to false then CA settings should remain unchanged. Hence sending null in CA parameter 
                             $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration,  $false, $null));
                         }  
                     }
@@ -410,17 +411,19 @@ function Set-AzSKPIMConfiguration {
                     {
                         if($ApplyConditionalAccessPolicyForRoleActivation -eq $true)
                         {
-                        #Both Conditional Access policy and MFA can not be applied simultaneously      
-                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $true));
+                            #Both Conditional Access policy and MFA can not be applied simultaneously. Therefore, if CA is set to true then MFA is set to false.     
+                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $true));
                         }  
                         else 
                         {
+                            #If CA is set to false then MFA settings should remain unchanged. Hence sending null in MFA parameter 
                             $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $null, $false));
                         }  
                     }
                         
                     else 
                     {
+                        #If neither CA nor MFA parameter is passed in command then both should remain unchanged. Identifying this case in code by sending false for both CA and MFA 
                         $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $false))
                     }
                 }
@@ -582,7 +585,7 @@ function Get-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "ListRoleSettings")]
         [ValidateNotNullOrEmpty()]
         [Alias("rln")]
-        [string[]]
+        [string]
         $RoleName,
         
         [switch]
