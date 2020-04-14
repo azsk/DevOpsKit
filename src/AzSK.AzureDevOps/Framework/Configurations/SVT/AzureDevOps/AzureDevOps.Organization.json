@@ -395,23 +395,6 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Group_Members",
-        "Description": "Justify all identities that are granted with member access on groups and teams.",
-        "Id": "Organization210",
-        "ControlSeverity": "High",
-        "Automated": "No",
-        "MethodName": "",
-        "Rationale": "Accounts that are a member of these groups without a legitimate business reason increase the risk for your Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
-        "Recommendation": "Go to Organization Settings --> Security --> Validate all group memebers",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Manual",
-          "SI"
-        ],
-        "Enabled": true
-      },
-      {
         "ControlID": "AzureDevOps_Organization_Auditing_Backup",
         "Description": "Audit logs are stored for 90 days and then they’re deleted. Back up audit logs to an external location to keep the data for longer than the 90-day period.",
         "Id": "Organization260",
