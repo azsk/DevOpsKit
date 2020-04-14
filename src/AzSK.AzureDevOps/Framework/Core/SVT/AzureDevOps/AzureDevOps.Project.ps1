@@ -51,13 +51,13 @@ class Project: ADOSVTBase
             if($responseObj.visibility -eq "Private")
             {
                 $controlResult.AddMessage([VerificationResult]::Passed,
-                                                "Project visibility is set to private"); 
+                                                "Project visibility is set to private."); 
 
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Failed,
-                                                "Project visibility is set to public");
-            }              
+                                                "Project visibility is not set to private.");
+            }
         }
         return $controlResult;
     }
