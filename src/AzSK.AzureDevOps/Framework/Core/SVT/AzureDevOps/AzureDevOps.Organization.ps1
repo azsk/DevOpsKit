@@ -217,17 +217,15 @@ class Organization: ADOSVTBase
             $controlResult.AddMessage("Whitelisted extensions (from trusted publisher)", $whiteListedExtensions);
             $controlResult.AddMessage("Non-Whitelisted extensions", $NonwhiteListedExtensions);
 
-            #$stateData = @{
-            #    Whitelisted_Extensions = @();
-            #    NonWhitelisted_Extensions = @();
-            #};
+            $stateData = @{
+                Whitelisted_Extensions = @();
+                NonWhitelisted_Extensions = @();
+            };
 
-            #$stateData.Whitelisted_Extensions += $whiteListedExtensions
-            #$stateData.NonWhitelisted_Extensions += $NonwhiteListedExtensions
+            $stateData.Whitelisted_Extensions += $whiteListedExtensions
+            $stateData.NonWhitelisted_Extensions += $NonwhiteListedExtensions
 
-            #$controlResult.SetStateData("Installed extensions list: ", $stateData);
-            #$controlResult.SetStateData("Installed extensions list: ", $extensionList);
-
+            $controlResult.SetStateData("Installed extensions list: ", $stateData);
         }
         else {
             $controlResult.AddMessage([VerificationResult]::Passed, "No installed extensions found.");
