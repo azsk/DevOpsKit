@@ -208,19 +208,29 @@ class Organization: ADOSVTBase
         
         if(($responseObj | Measure-Object).Count -gt 0 )
         {
-                $controlResult.AddMessage("No. of extensions installed:" + $responseObj.Count)
-                $extensionList =  $responseObj | Select-Object extensionName,publisherName,version 
-                $whiteListedExtensions = $extensionList | Where-Object {$_.publisherName -in $this.ControlSettings.Organization.WhitelistedExtensionPublishers }
-                $NonwhiteListedExtensions = $extensionList | Where-Object {$_.publisherName -notin $this.ControlSettings.Organization.WhitelistedExtensionPublishers }
+            $controlResult.AddMessage("No. of extensions installed:" + $responseObj.Count)
+            $extensionList =  $responseObj | Select-Object extensionName,publisherName,version 
+            $whiteListedExtensions = $extensionList | Where-Object {$_.publisherName -in $this.ControlSettings.Organization.WhitelistedExtensionPublishers }
+            $NonwhiteListedExtensions = $extensionList | Where-Object {$_.publisherName -notin $this.ControlSettings.Organization.WhitelistedExtensionPublishers }
                 
             $controlResult.AddMessage([VerificationResult]::Verify, "Verify below installed extensions");  
-            $controlResult.AddMessage("Whitelisted extensions (from trustred publisher)", $whiteListedExtensions);
-
+            $controlResult.AddMessage("Whitelisted extensions (from trusted publisher)", $whiteListedExtensions);
             $controlResult.AddMessage("Non-Whitelisted extensions", $NonwhiteListedExtensions);
+
+            #$stateData = @{
+            #    Whitelisted_Extensions = @();
+            #    NonWhitelisted_Extensions = @();
+            #};
+
+            #$stateData.Whitelisted_Extensions += $whiteListedExtensions
+            #$stateData.NonWhitelisted_Extensions += $NonwhiteListedExtensions
+
+            #$controlResult.SetStateData("Installed extensions list: ", $stateData);
+            #$controlResult.SetStateData("Installed extensions list: ", $extensionList);
 
         }
         else {
-            $controlResult.AddMessage([VerificationResult]::Passed, "No extensions found.");
+            $controlResult.AddMessage([VerificationResult]::Passed, "No installed extensions found.");
         }
 
        }
@@ -253,7 +263,11 @@ class Organization: ADOSVTBase
                 $extensionList =  $sharedExtensions | Select-Object extensionName,displayName,@{ Name = 'publisherName'; Expression = {  $_. publisher.displayName}} 
                 $controlResult.AddMessage([VerificationResult]::Verify,
                                                 "Review below shared extensions",$extensionList);  
+                $controlResult.SetStateData("Shared extensions list: ", $extensionList);
 
+            }
+            else {
+                $controlResult.AddMessage([VerificationResult]::Passed, "No shared extensions found.");
             }
         }
         return $controlResult
@@ -271,7 +285,8 @@ class Organization: ADOSVTBase
                   {
                       $controlResult.AddMessage("No. of guest identities present:" + $responseObj.members.Count)
                       $extensionList =  $responseObj.members | Select-Object @{Name="IdenityType"; Expression = {$_.user.subjectKind}},@{Name="DisplayName"; Expression = {$_.user.displayName}}, @{Name="MailAddress"; Expression = {$_.user.mailAddress}},@{Name="AccessLevel"; Expression = {$_.accessLevel.licenseDisplayName}},@{Name="LastAccessedDate"; Expression = {$_.lastAccessedDate}} | Format-Table
-                      $controlResult.AddMessage([VerificationResult]::Verify, "Verify below guest identities",$extensionList);          
+                      $controlResult.AddMessage([VerificationResult]::Verify, "Verify below guest identities",$extensionList);      
+                      $controlResult.SetStateData("Guest identities list: ", $extensionList);    
                   }
                   else {
                       $controlResult.AddMessage([VerificationResult]::Passed, "No guest identities found");
@@ -293,9 +308,10 @@ class Organization: ADOSVTBase
         if(($responseObj | Measure-Object).Count -gt 0 )
         {
                 $controlResult.AddMessage("No. of extension managers present:" + $responseObj.Count)
-                $extentionManagerList =  $responseObj | Select-Object @{Name="IdentityName"; Expression = {$_.identity.displayName}},@{Name="Role"; Expression = {$_.role.displayName}}
+                $extensionManagerList =  $responseObj | Select-Object @{Name="IdentityName"; Expression = {$_.identity.displayName}},@{Name="Role"; Expression = {$_.role.displayName}}
                 $controlResult.AddMessage([VerificationResult]::Verify,
-                                                "Verify below extension managers",$extentionManagerList);          
+                                                "Verify below extension managers",$extensionManagerList);        
+                $controlResult.SetStateData("Extension managers list: ", $extensionManagerList);   
         }
         else {
             $controlResult.AddMessage([VerificationResult]::Passed,
@@ -321,13 +337,14 @@ class Organization: ADOSVTBase
             }
             if(($inactiveUsers | Measure-Object).Count -gt 0)
             {
-                if($inactiveUsers.Count -eq 50)
+                if($inactiveUsers.Count -gt 50)
                 {
                     $controlResult.AddMessage("Displaying top 50 inactive users")
                 }
                 $inactiveUsersNames = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}})
                 $controlResult.AddMessage([VerificationResult]::Failed,
-                                        "Review inactive users present on Organization",$inactiveUsersNames);
+                                        "Review inactive users present in the organization",$inactiveUsersNames);
+                $controlResult.SetStateData("Inactive users list: ", $inactiveUsersNames);
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed,
@@ -354,16 +371,17 @@ class Organization: ADOSVTBase
                {
         
                        $UsersNames = ($responseObj.users | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="mailAddress"; Expression = {$_.preferredEmailAddress}})
-                       $controlResult.AddMessage([VerificationResult]::Failed, "Remove below disconnected user access from Organization",$UsersNames);  
+                       $controlResult.AddMessage([VerificationResult]::Failed, "Remove access from the organization for below disconnected users",$UsersNames);  
+                       $controlResult.SetStateData("Disconnected users list: ", $UsersNames);
                }
                else
                {
-                   $controlResult.AddMessage([VerificationResult]::Passed, "No diconnected users found");
+                   $controlResult.AddMessage([VerificationResult]::Passed, "No disconnected users found.");
                }   
               } 
         }
         catch {
-            $controlResult.AddMessage([VerificationResult]::Passed, "No diconnected users found");
+            $controlResult.AddMessage([VerificationResult]::Passed, "No disconnected users found.");
         }
         
        
@@ -601,6 +619,8 @@ class Organization: ADOSVTBase
         }
         if (($member | Measure-Object).Count -gt 0) {
             $controlResult.AddMessage([VerificationResult]::Verify,"Verify the below auto-injected tasks at organization level:", $member);
+            $controlResult.SetStateData("Auto-injected tasks list: ", $member); 
+            
         }
         else {
             $controlResult.AddMessage([VerificationResult]::Passed,"No auto-injected tasks found at organization level");
