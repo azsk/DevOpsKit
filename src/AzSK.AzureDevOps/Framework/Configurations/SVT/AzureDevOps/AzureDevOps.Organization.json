@@ -79,7 +79,7 @@
         "Automated": "Yes",
         "MethodName": "ValidateInstalledExtensions",
         "Rationale": "Running extensions from untrusted source can lead to all type of attacks and loss of sensitive enterprise data.",
-        "Recommendation": "Go to Organization Settings --> Extensions --> Review all installed extnesions in Organization",
+        "Recommendation": "Go to Organization Settings --> Extensions --> Review all installed extensions in Organization",
         "Tags": [
           "SDL",
           "TCP",
@@ -96,7 +96,7 @@
         "Automated": "Yes",
         "MethodName": "ValidateSharedExtensions",
         "Rationale": "Running extensions from untrusted source can lead to all type of attacks and loss of sensitive enterprise data.",
-        "Recommendation": "Go to Organization Settings --> Extensions --> Review all shared extnesions in Organization",
+        "Recommendation": "Go to Organization Settings --> Extensions --> Review all shared extensions in Organization",
         "Tags": [
           "SDL",
           "TCP",
