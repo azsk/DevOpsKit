@@ -225,7 +225,7 @@ class Organization: ADOSVTBase
             $stateData.Whitelisted_Extensions += $whiteListedExtensions
             $stateData.NonWhitelisted_Extensions += $NonwhiteListedExtensions
 
-            $controlResult.SetStateData("Installed extensions list: ", $stateData);
+            #$controlResult.SetStateData("Installed extensions list: ", $stateData);
         }
         else {
             $controlResult.AddMessage([VerificationResult]::Passed, "No installed extensions found.");
@@ -261,7 +261,7 @@ class Organization: ADOSVTBase
                 $extensionList =  $sharedExtensions | Select-Object extensionName,displayName,@{ Name = 'publisherName'; Expression = {  $_. publisher.displayName}} 
                 $controlResult.AddMessage([VerificationResult]::Verify,
                                                 "Review below shared extensions",$extensionList);  
-                $controlResult.SetStateData("Shared extensions list: ", $extensionList);
+                #$controlResult.SetStateData("Shared extensions list: ", $extensionList);
 
             }
             else {
@@ -309,7 +309,7 @@ class Organization: ADOSVTBase
                 $extensionManagerList =  $responseObj | Select-Object @{Name="IdentityName"; Expression = {$_.identity.displayName}},@{Name="Role"; Expression = {$_.role.displayName}}
                 $controlResult.AddMessage([VerificationResult]::Verify,
                                                 "Verify below extension managers",$extensionManagerList);        
-                $controlResult.SetStateData("Extension managers list: ", $extensionManagerList);   
+                #$controlResult.SetStateData("Extension managers list: ", $extensionManagerList);   
         }
         else {
             $controlResult.AddMessage([VerificationResult]::Passed,
