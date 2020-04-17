@@ -18,7 +18,7 @@ $varPrjName = Get-VstsTaskVariable -Name system.teamProject;
 $varBuildId = Get-VstsTaskVariable -Name system.definitionId;
 
 $extensionName = "ADOSecurityScanner"
-$publisherName = "ADOScanner"
+$publisherName = "azsdktm"
 $AzSKModuleName = Get-VstsTaskVariable -Name ModuleName
 $AzSKExtendedCommand = Get-VstsTaskVariable -Name "ExtendedCommand"
 
@@ -193,7 +193,7 @@ try {
 	if(($null -ne $ReportFolderPath) -and (Test-Path $ReportFolderPath))
     {
 		Compress-Archive -Path $ReportFolderPath -CompressionLevel Optimal -DestinationPath $ArchiveFileName
-		#Write-Host "##vso[task.uploadfile]$ArchiveFileName" 
+		Write-Host "##vso[task.uploadfile]$ArchiveFileName" 
 		$SecurityReport = Get-ChildItem -Path $ReportFolderPath -Recurse -Include "SecurityReport*.csv"
 
 		if($SecurityReport)
@@ -204,25 +204,18 @@ try {
 			$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$plaintoken)))
 			$uri = "https://extmgmt.dev.azure.com/$OrgName/_apis/extensionmanagement/installedextensions/$publisherName/$extensionName/Data/Scopes/Default/Current/Collections/MyCollection/Documents?api-version=5.1-preview.1";
 			
-			Write-Host $uri    
-			$scanResultId = $varPrjName + "_BuilbId_" + $varBuildId + "_" + $(get-date -f dd-MM-yyyy_HH_mm_ss)
-			Write-Host $scanResultId  
+			#Write-Host $uri    
+			$scanResultId = $varPrjName + "_BuildId_" + $varBuildId + "_" + $(get-date -f dd-MM-yyyy-HH-mm-ss)
+			#Write-Host $scanResultId  
 			$body = @{"id" = "$scanResultId"; "__etag" = -1; "value"= $SVTResult;} | ConvertTo-Json
 
-			Write-Host $body
+			#Write-Host $body
 			try {
 			$webRequestResult = Invoke-RestMethod -Uri $uri -Method Put -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $body
 			Write-Host "Completed sending scan report to extension storage"
 			}
 			catch {
-					try{
-					   $webRequestResult = Invoke-RestMethod -Uri $uri -Method Post -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $body
-					   Write-Host "Completed sending scan report to extension storage"
-					}
-					catch
-					{
-						Write-Error $_
-					}
+			Write-Error $_
 			}
 			
 		}

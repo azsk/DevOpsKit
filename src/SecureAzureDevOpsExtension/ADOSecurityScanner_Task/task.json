@@ -8,11 +8,11 @@
   "visibility": [
     "Build"
   ],
-  "author": "ADOScanner",
+  "author": "azsdktm",
   "version": {
     "Major": 1,
     "Minor": 0,
-    "Patch": 30
+    "Patch": 31
   },
   "demands": [
   ],

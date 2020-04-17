@@ -58,18 +58,18 @@
     }
 
     .bubble-verify {
-      background-color: #F58B1F;
+      background-color: #FFFF00;
     }
   </style>
 
 
   <script type="text/javascript">
-    var arrdata = { Passed: 0, Failed: 0, Verify: 0 };
-    var Releasedata = { Passed: 0, Failed: 0, Verify: 0 };
-    var Conndata = { Passed: 0, Failed: 0, Verify: 0 };
-    var AgentPooldata = { Passed: 0, Failed: 0, Verify: 0 };
+   // var arrdata = { Passed: 0, Failed: 0, Verify: 0 };
+   // var Releasedata = { Passed: 0, Failed: 0, Verify: 0 };
+   // var Conndata = { Passed: 0, Failed: 0, Verify: 0 };
+   // var AgentPooldata = { Passed: 0, Failed: 0, Verify: 0 };
 
-    var context = VSS.getWebContext();
+    // var context = VSS.getWebContext();
 
     VSS.init({
       explicitNotifyLoaded: true,
@@ -80,56 +80,60 @@
       VSS.ready(() => {
         context = VSS.getWebContext();
         VSS.getService(VSS.ServiceIds.ExtensionData).then(function (dataService) {
-          // Get all document under the collection
-
+          // Get all document under the collection                 
           dataService.getDocuments("MyCollection").then(function (docs) {
             var sel = document.getElementById('resultVersion');
+            var datelist= [];
             for (var i = 0; i < docs.length; i++) {
               if (docs[i].id.indexOf(context.project.name) !== -1) {
                 var opt = document.createElement('option');
                 opt.innerHTML = docs[i].id;
                 opt.value = docs[i].id;
                 sel.appendChild(opt);
+
+                try {
+								     datelist.push(docs[i].id.split("BuildId")[1].split('_')[2]);
+								} catch (error) {
+									
+								}
               }
             }
+             datelist.sort(); 
+						 var lastresultdate = datelist[datelist.length -1];
+             var lastresult ='';
+						 for (var i = 0; i < docs.length; i++) {
+                  if (docs[i].id.indexOf(lastresultdate) != -1) {
+						     	lastresult = docs[i]
+                 }
+						 }
+	
+						 $("#resultVersion").val(lastresult.id);
+						 bindTables(lastresult.value);
+						 lastresult = null;
+						 docs = null;
           });
         });
       });
     }
     catch (ex) { }
 
-    function openModel(ControlID, scanType) {
-      try {
-        /* debugger;Arv
-        if(scanType =="ServiceConnection"){
-        $("#spnsSanType").text("Connection Name");
+    VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
+      WidgetHelpers.IncludeWidgetStyles();
+      VSS.register("ProjectComponentSecurityScanSummary", function () {
+        return {
+          load: function (widgetSettings) {
+            return WidgetHelpers.WidgetStatusHelper.Success();
+          }
         }
-        else if(scanType =="Buils"){
-        $("#scanType").text("Build Name");
-        }
-        else{
-        $("#scanType").text("Release Name");
-        } */
+      });
+      VSS.notifyLoadSucceeded();
+    });
 
-        $('#spnFailedControl').html(ControlID);
-        getDataForChart(versionId).then(function (chartdata) {
-          //ControlID ="AzureDevOps_Build_DP_No_PlainText_Secrets_In_Definition"; scanType ="Build";
-          var locdata = chartdata.filter(function (data) {
-            return (data.ControlID == ControlID && data.FeatureName == scanType && data.Status == "Failed");
-          });
-          $('#tblControlFailDetails tbody').empty();
-          locdata.forEach(function (e) {
-            $('#tblControlFailDetails').find('tbody')
-              .append('<tr>').append('<td width="30%" ><span class="text-primary">' + e.ResourceGroupName + '</span></td>')
-              .append('<td width="30%" >' + e.ResourceName + '</td>')
-              .append('<td width="30%">-</td>')
-              .append('</tr>');
-          });
-        });
-        $('#btnSendNotification').focus()
-      }
-      catch (ex) { console.log(ex); }
-    }
+    function sortFunction(a, b) {  
+                var dateA = new Date(a.date)
+                var dateB = new Date(b.date)
+                return dateA > dateB ? 1 : -1;  
+         };
 
     function delay(ms) { // takes amount of milliseconds
       //Arv: returns a new promise
@@ -140,440 +144,26 @@
       });
     }
 
-    var data;
     function getDataForChart(resultId) {
-      debugger;
-      console.log(resultId);
       // we're RETURNING the promise, remember, a promise is a wrapper over our value
       return delay(1).then(function () { // when the promise is ready	context.project.name
         return VSS.getService(VSS.ServiceIds.ExtensionData).then(function (dataService) {
-          if (resultId == null || resultId == "") {
-            return dataService.getDocument("MyCollection").then(function (doc) {
-
-              var result = doc.value.filter(function (item) {
-                return item.id.includes(context.project.name + '_BuilbId');
-              });
-              data = result;
-              return result[result.length - 1].value;
-            });
-          }
-          else {
-            return dataService.getDocument("MyCollection", resultId).then(function (doc) {
-              return doc.value;
-            });
-          }
+          return dataService.getDocument("MyCollection", resultId).then(function (doc) {
+            return doc.value;
+          });
         });
-      })
-    }
-
-    // Get data service
-    //	VSS.getService(VSS.ServiceIds.ExtensionData).then(function (dataService) {
-    //		// Get all document under the collection
-    //
-    //		dataService.getDocuments("MyCollection").then(function (docs) {
-    //			var sel = document.getElementById('resultVersion');
-    //			for (var i = 0; i < docs.length; i++) {
-    //				if (docs[i].id.indexOf(context.project.name) !== -1) {
-    //					var opt = document.createElement('option');
-    //					opt.innerHTML = docs[i].id;
-    //					opt.value = docs[i].id;
-    //					sel.appendChild(opt);
-    //				}
-    //			}
-    //		});
-    //	});
-
-    var versions = document.getElementById('resultVersion')
-    versionId = "";
-    if (versions != null) {
-      versionId = versions.value;
-    }
-
-    VSS.require(["TFS/Dashboards/WidgetHelpers", "Charts/Services"], function (WidgetHelpers, Services) {
-      WidgetHelpers.IncludeWidgetStyles();
-      WidgetHelpers.IncludeWidgetConfigurationStyles();
-
-      VSS.register("ProjectComponentSecurityScanSummary", function () {
-        return {
-          load: function () {
-            return Services.ChartsService.getService().then(function (chartService) {
-
-              getDataForChart(versionId).then(function (chartdata) {
-                Buildcounter = 0;
-                Releasecounter = 0;
-                Connectioncounter = 0;
-                AgentPoolcounter = 0;
-
-                // Service Connection 
-                AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN = 0;
-                AzureDevOps_ServiceConnection_AuthZ_RG_Level = 0;
-                AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections = 0;
-                AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions = 0;
-
-                // Build:
-                AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions = 0;
-                AzureDevOps_Build_SI_Review_Inactive_Build = 0;
-
-                // Release:
-                AzureDevOps_Release_SI_Review_Inactive_Release = 0;
-                AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions = 0;
-                AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals = 0;
-
-                const build = chartdata.filter(function (name) {
-                  return name.FeatureName == 'Build';
-                }).map(x => x.ResourceName);
-
-                Buildcounter = build.unique().length;
-
-                const locrelease = chartdata.filter(function (name) {
-                  return name.FeatureName == 'Release';
-                }).map(x => x.ResourceName);
-                Releasecounter = locrelease.unique().length;
-
-                const locconnections = chartdata.filter(function (name) {
-                  return name.FeatureName == 'ServiceConnection';
-                }).map(x => x.ResourceId);
-                Connectioncounter = locconnections.unique().length;
-
-                const locagentpool = chartdata.filter(function (name) {
-                  return name.FeatureName == 'AgentPool';
-                }).map(x => x.ResourceId);
-                AgentPoolcounter = locconnections.unique().length
-
-
-
-               // var ttlbuild = [];
-                // TODO: keeping globlal data to reduce api call on failur control box clock
-                //glblDataForcontrollDetails = chartdata;
-
-                chartdata.forEach(function (e) {
-                  var bulbClass = 'bubble-manual';
-                  if (e.FeatureName == "Build") {
-                    //Buildcounter = Buildcounter + 1;
-
-                  //  ttlbuild.push(e.ResourceName);
-                    if (e.Status == "Passed") {
-                      arrdata.Passed = arrdata.Passed + 1;
-                      bulbClass = 'bubble-passed';
-                    }
-                    if (e.Status == "Failed") {
-                      arrdata.Failed = arrdata.Failed + 1;
-                      bulbClass = 'bubble-failed';
-                      if (e.ControlID == "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions") {
-                        AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions = AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions + 1;
-                      }
-                      if (e.ControlID == "AzureDevOps_Build_SI_Review_Inactive_Build") {
-                        AzureDevOps_Build_SI_Review_Inactive_Build = AzureDevOps_Build_SI_Review_Inactive_Build + 1;
-                      }
-                    }
-                    if (e.Status == "Verify") {
-                      arrdata.Verify = arrdata.Verify + 1;
-                      bulbClass = 'bubble-verify';
-                    }
-                    $('#tblScanResultBuild').find('tbody')
-                      .append('<tr>').append('<td width="40%" ><span class="text-primary">' + e.Description + '</span></td>')
-                      .append('<td width="20%" >' + e.ControlSeverity + '</td>')
-                      .append('<td width="20%" >' + e.ResourceName + '</td>')
-                      .append('<td width="20%" > <span class="btn ' + bulbClass + ' btn-circle btn-circle-sm"></span>&nbsp;' + e.Status + '</td>')
-                      .append('<td width="20%" > <a href=' + e.ResourceLink + ' target="_blank">Click to find resource</a></td>')
-                      .append('</tr>');
-                  }
-
-                  if (e.FeatureName == "Release") {
-                    //Releasecounter = Releasecounter + 1;
-
-                    if (e.Status == "Passed") {
-                      Releasedata.Passed = Releasedata.Passed + 1;
-                      bulbClass = 'bubble-passed';
-                    }
-                    if (e.Status == "Failed") {
-                      Releasedata.Failed = Releasedata.Failed + 1;
-                      bulbClass = 'bubble-failed';
-
-                      if (e.ControlID == "AzureDevOps_Release_SI_Review_Inactive_Release") {
-                        AzureDevOps_Release_SI_Review_Inactive_Release = AzureDevOps_Release_SI_Review_Inactive_Release + 1;
-                      }
-                      if (e.ControlID == "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions") {
-                        AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions = AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions + 1;
-                      }
-                      if (e.ControlID == "AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals") {
-                        AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals = AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals + 1;
-                      }
-                    }
-                    if (e.Status == "Verify") {
-                      Releasedata.Verify = Releasedata.Verify + 1;
-                      bulbClass = 'bubble-verify';
-                    }
-                    $('#tblScanResultRelease').find('tbody')
-                      .append('<tr>').append('<td width="40%" ><span class="text-primary">' + e.Description + '</span></td>')
-                      .append('<td width="20%" >' + e.ControlSeverity + '</td>')
-                      .append('<td width="20%" >' + e.ResourceName + '</td>')
-                      .append('<td width="20%" > <span class="btn ' + bulbClass + ' btn-circle btn-circle-sm"></span>&nbsp;' + e.Status + '</td>')
-                      .append('<td width="20%" > <a href=' + e.ResourceLink + ' target="_blank">Click to find resource</a></td>')
-                      .append('</tr>');
-                  }
-
-                  if (e.FeatureName == "ServiceConnection") {
-                    //Connectioncounter = Connectioncounter + 1;
-
-                    if (e.Status == "Passed") {
-                      Conndata.Passed = Conndata.Passed + 1;
-                      bulbClass = 'bubble-passed';
-                    }
-                    if (e.Status == "Failed") {
-                      Conndata.Failed = Conndata.Failed + 1;
-                      bulbClass = 'bubble-failed';
-
-                      if (e.ControlID == "AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN") {
-                        AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN = AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN + 1;
-                      }
-                      if (e.ControlID == "AzureDevOps_ServiceConnection_AuthZ_RG_Level") {
-                        AzureDevOps_ServiceConnection_AuthZ_RG_Level = AzureDevOps_ServiceConnection_AuthZ_RG_Level + 1;
-                      }
-                      if (e.ControlID == "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections") {
-                        AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections = AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections + 1;
-                      }
-                      if (e.ControlID == "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions") {
-                        AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions = AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions + 1;
-                      }
-                    }
-                    if (e.Status == "Verify") {
-                      Conndata.Verify = Conndata.Verify + 1;
-                      bulbClass = 'bubble-verify';
-                    }
-                    $('#tblScanResultConnection').find('tbody')
-                      .append('<tr>').append('<td width="40%" ><span class="text-primary">' + e.Description + '</span></td>')
-                      .append('<td width="20%" >' + e.ControlSeverity + '</td>')
-                      .append('<td width="20%" >' + e.ResourceName + '</td>')
-                      .append('<td width="20%" > <span class="btn ' + bulbClass + ' btn-circle btn-circle-sm"></span>&nbsp;' + e.Status + '</td>')
-                      .append('<td width="20%" > <a href=' + e.ResourceLink + ' target="_blank">Click to find resource</a></td>')
-                      .append('</tr>');
-
-                  }
-
-                  //AgentPool
-                  if (e.FeatureName == "AgentPool") {
-                    //Releasecounter = Releasecounter + 1;
-
-                    if (e.Status == "Passed") {
-                      AgentPooldata.Passed = AgentPooldata.Passed + 1;
-                      bulbClass = 'bubble-passed';
-                    }
-                    if (e.Status == "Failed") {
-                      AgentPooldata.Failed = AgentPooldata.Failed + 1;
-                      bulbClass = 'bubble-failed';
-                    }
-                    if (e.Status == "Verify") {
-                      AgentPooldata.Verify = AgentPooldata.Verify + 1;
-                      bulbClass = 'bubble-verify';
-                    }
-                    $('#tblScanResultAgentPool').find('tbody')
-                      .append('<tr>').append('<td width="40%" ><span class="text-primary">' + e.Description + '</span></td>')
-                      .append('<td width="20%" >' + e.ControlSeverity + '</td>')
-                      .append('<td width="20%" >' + e.ResourceName + '</td>')
-                      .append('<td width="20%" > <span class="btn ' + bulbClass + ' btn-circle btn-circle-sm"></span>&nbsp;' + e.Status + '</td>')
-                      .append('<td width="20%" > <a href=' + e.ResourceLink + ' target="_blank">Click to find resource</a></td>')
-                      .append('</tr>');
-                  }
-
-                });
-
-                document.getElementById("BuildWidget").innerHTML = Buildcounter;
-                document.getElementById("ReleaseWidget").innerHTML = Releasecounter;
-                document.getElementById("ConnectionWidget").innerHTML = Connectioncounter;
-                document.getElementById("AgentPoolWidget").innerHTML = AgentPoolcounter;
-
-                try {
-                  //Connections
-                  document.getElementById("AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN").innerHTML = AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN;
-                  document.getElementById("AzureDevOps_ServiceConnection_AuthZ_RG_Level").innerHTML = AzureDevOps_ServiceConnection_AuthZ_RG_Level;
-                  document.getElementById("AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections").innerHTML = AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections;
-                  document.getElementById("AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions").innerHTML = AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions;
-
-                  // build
-                  document.getElementById("AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions").innerHTML = AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions;
-                  document.getElementById("AzureDevOps_Build_SI_Review_Inactive_Build").innerHTML = AzureDevOps_Build_SI_Review_Inactive_Build;
-
-                  // release
-                  document.getElementById("AzureDevOps_Release_SI_Review_Inactive_Release").innerHTML = AzureDevOps_Release_SI_Review_Inactive_Release;
-                  document.getElementById("AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions").innerHTML = AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions;
-                  document.getElementById("AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals").innerHTML = AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals;
-                }
-                catch (ex) { console.log(ex); }
-
-                var container = $('#Chart-ContainerBuild');
-                var chartOptions = {
-                  "hostOptions": {
-                    "height": "220",
-                    "width": "300"
-                  },
-                  "chartType": "pie",
-                  "series": [{
-                    "data": Object.values(arrdata)
-                  }],
-                  "xAxis": {
-                    "labelValues": ["Passed", "Failed", "Verify"]
-                  },
-                  "colorCustomizationOptions": {
-                    "customColors": [
-                      { backgroundColor: "#339947", value: "Passed" },//#FF0000
-                      { backgroundColor: "#FF0000", value: "Failed" },
-                      { backgroundColor: "#F58B1F", value: "Verify" }
-                    ]
-                  },
-                  "specializedOptions": {
-                    "showLabels": "true",
-                    "size": 175
-                  }
-                };
-                chartService.createChart(container, chartOptions);
-
-                var containerRelease = $('#Chart-ContainerRelease');
-                var chartOptionsRelease = {
-                  "hostOptions": {
-                    "height": "220",
-                    "width": "300"
-                  },
-                  "chartType": "pie",
-                  "series": [{
-                    "data": Object.values(Releasedata)
-                  }],
-                  "xAxis": {
-                    "labelValues": ["Passed", "Failed", "Verify"]
-                  },
-                  "colorCustomizationOptions": {
-                    "customColors": [
-                      { backgroundColor: "#339947", value: "Passed" },//#FF0000
-                      { backgroundColor: "#FF0000", value: "Failed" },
-                      { backgroundColor: "#F58B1F", value: "Verify" }
-                    ]
-                  },
-                  "specializedOptions": {
-                    "showLabels": "true",
-                    "size": 175
-                  }
-                };
-                chartService.createChart(containerRelease, chartOptionsRelease);
-
-                var containerConn = $('#Chart-ContainerConnection');
-                var chartOptionsConn = {
-                  "hostOptions": {
-                    "height": "220",
-                    "width": "300"
-                  },
-                  "chartType": "pie",
-                  "series": [{
-                    "data": Object.values(Conndata)
-                  }],
-                  "xAxis": {
-                    "labelValues": ["Passed", "Failed", "Verify"]
-                  },
-                  "colorCustomizationOptions": {
-                    "customColors": [
-                      { backgroundColor: "#339947", value: "Passed" },//#FF0000
-                      { backgroundColor: "#FF0000", value: "Failed" },
-                      { backgroundColor: "#F58B1F", value: "Verify" }
-                    ]
-                  },
-                  "specializedOptions": {
-                    "showLabels": "true",
-                    "size": 175
-                  }
-                };
-                chartService.createChart(containerConn, chartOptionsConn);
-
-                //AgentPool
-                var containerAgentPool = $('#Chart-ContainerAgentPool');
-                var chartOptionsAgentPool = {
-                  "hostOptions": {
-                    "height": "220",
-                    "width": "300"
-                  },
-                  "chartType": "pie",
-                  "series": [{
-                    "data": Object.values(AgentPooldata)
-                  }],
-                  "xAxis": {
-                    "labelValues": ["Passed", "Failed", "Verify"]
-                  },
-                  "colorCustomizationOptions": {
-                    "customColors": [
-                      { backgroundColor: "#339947", value: "Passed" },//#FF0000
-                      { backgroundColor: "#FF0000", value: "Failed" },
-                      { backgroundColor: "#F58B1F", value: "Verify" }
-                    ]
-                  },
-                  "specializedOptions": {
-                    "showLabels": "true",
-                    "size": 175
-                  }
-                };
-                chartService.createChart(containerAgentPool, chartOptionsAgentPool);
-
-                return WidgetHelpers.WidgetStatusHelper.Success();
-
-
-              });
-
-            });
-          }
-        }
       });
-      VSS.notifyLoadSucceeded();
-    });
-
-
-    Array.prototype.unique = function () {
-      return this.filter(function (value, index, self) {
-        return self.indexOf(value) === index;
-      });
-    };
-
+    }
 
     function bindData() {
       debugger;
       var versionId = document.getElementById('resultVersion').value;
       if (versionId != null && versionId != "") {
         try {
+          document.getElementById('dvScanResult').style.display = "block";
           //bind table with new data
-          bindTables(data.filter(function (item) { return item.id == versionId }));
-
-          VSS.require(["Charts/Services"], function (Services) {
-            console.log('xyz3');
-            return {
-              load: function () {
-                return Services.ChartsService.getService().then(function (chartService) {
-                  console.log('xyz4');
-                  var $container = $('#Chart-ContainerBuild');
-                  var chartOptions = {
-                    "hostOptions": {
-                      "height": "220",
-                      "width": "300"
-                    },
-                    "chartType": "pie",
-                    "series": [{
-                      "data": Object.values(arrdata)
-                    }],
-                    "xAxis": {
-                      "labelValues": ["Passed", "Failed", "Verify"]
-                    },
-                    "colorCustomizationOptions": {
-                      "customColors": [
-                        { backgroundColor: "#339947", value: "Passed" },//#FF0000
-                        { backgroundColor: "#FF0000", value: "Failed" },
-                        { backgroundColor: "#F58B1F", value: "Verify" }
-                      ]
-                    },
-                    "specializedOptions": {
-                      "showLabels": "true",
-                      "size": 175
-                    }
-                  };
-
-                  chartService.createChart($container, chartOptions);
-                });
-              }
-            }
+          getDataForChart(versionId).then(function (chartdata) {
+            bindTables(chartdata);
           });
         }
         catch (ex) {
@@ -582,12 +172,17 @@
       }
     }
 
-
     function bindTables(chartdata) {
+      document.getElementById('dvScanResult').style.display = "block";
+      $("#tblScanResultConnection > tbody").html("");
       $("#tblScanResultBuild > tbody").html("");
       $("#tblScanResultRelease > tbody").html("");
-      $("#tblScanResultConnection > tbody").html("");
       $("#tblScanResultAgentPool > tbody").html("");
+      
+      var arrdata = { Passed: 0, Failed: 0, Verify: 0 };
+      var Releasedata = { Passed: 0, Failed: 0, Verify: 0 };
+      var Conndata = { Passed: 0, Failed: 0, Verify: 0 };
+      var AgentPooldata = { Passed: 0, Failed: 0, Verify: 0 };
 
       Buildcounter = 0;
       Releasecounter = 0;
@@ -609,103 +204,42 @@
       AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions = 0;
       AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals = 0;
 
-      const build = chartdata[0].value.filter(function (name) {
-        return name.FeatureName == 'Build';
-      }).map(x => x.ResourceName);
+      //AgentPool
+      AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access = 0;
 
-      Buildcounter = build.unique().length;
+       const build = chartdata.filter(function (name) {
+         return name.FeatureName == 'Build';
+       }).map(x => x.ResourceName);
+       Buildcounter = build.unique().length;
 
-      const locrelease = chartdata[0].value.filter(function (name) {
-        return name.FeatureName == 'Release';
-      }).map(x => x.ResourceName);
-      Releasecounter = locrelease.unique().length;
+       const locrelease = chartdata.filter(function (name) {
+         return name.FeatureName == 'Release';
+       }).map(x => x.ResourceName);
+       Releasecounter = locrelease.unique().length;
 
-      const locconnections = chartdata[0].value.filter(function (name) {
-        return name.FeatureName == 'ServiceConnection';
-      }).map(x => x.ResourceId);
-      Connectioncounter = locconnections.unique().length;
+       const locconnections = chartdata.filter(function (name) {
+         return name.FeatureName == 'ServiceConnection';
+       }).map(x => x.ResourceId);
+       Connectioncounter = locconnections.unique().length;
 
-      const locagentpool = chartdata[0].value.filter(function (name) {
-        return name.FeatureName == 'AgentPool';
-      }).map(x => x.ResourceId);
-      AgentPoolcounter = locconnections.unique().length
+       const locagentpool = chartdata.filter(function (name) {
+         return name.FeatureName == 'AgentPool';
+       }).map(x => x.ResourceId);
+       AgentPoolcounter = locagentpool.unique().length;
 
-
-      chartdata[0].value.forEach(function (e) {
+      chartdata.forEach(function (e) {
         var bulbClass = 'bubble-manual';
-        if (e.FeatureName == "Build") {
-          //Buildcounter = Buildcounter + 1;
-
-         // ttlbuild.push(e.ResourceName);
-          if (e.Status == "Passed") {
-            arrdata.Passed = arrdata.Passed + 1;
-            bulbClass = 'bubble-passed';
-          }
-          if (e.Status == "Failed") {
-            arrdata.Failed = arrdata.Failed + 1;
-            bulbClass = 'bubble-failed';
-            if (e.ControlID == "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions") {
-              AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions = AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions + 1;
-            }
-            if (e.ControlID == "AzureDevOps_Build_SI_Review_Inactive_Build") {
-              AzureDevOps_Build_SI_Review_Inactive_Build = AzureDevOps_Build_SI_Review_Inactive_Build + 1;
-            }
-          }
-          if (e.Status == "Verify") {
-            arrdata.Verify = arrdata.Verify + 1;
-            bulbClass = 'bubble-verify';
-          }
-          $('#tblScanResultBuild').find('tbody')
-            .append('<tr>').append('<td width="40%" ><span class="text-primary">' + e.Description + '</span></td>')
-            .append('<td width="20%" >' + e.ControlSeverity + '</td>')
-            .append('<td width="20%" >' + e.ResourceName + '</td>')
-            .append('<td width="20%" > <span class="btn ' + bulbClass + ' btn-circle btn-circle-sm"></span>&nbsp;' + e.Status + '</td>')
-            .append('<td width="20%" > <a href=' + e.ResourceLink + ' target="_blank">Click to find resource</a></td>')
-            .append('</tr>');
-        }
-
-        if (e.FeatureName == "Release") {
-          //Releasecounter = Releasecounter + 1;
-
-          if (e.Status == "Passed") {
-            Releasedata.Passed = Releasedata.Passed + 1;
-            bulbClass = 'bubble-passed';
-          }
-          if (e.Status == "Failed") {
-            Releasedata.Failed = Releasedata.Failed + 1;
-            bulbClass = 'bubble-failed';
-
-            if (e.ControlID == "AzureDevOps_Release_SI_Review_Inactive_Release") {
-              AzureDevOps_Release_SI_Review_Inactive_Release = AzureDevOps_Release_SI_Review_Inactive_Release + 1;
-            }
-            if (e.ControlID == "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions") {
-              AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions = AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions + 1;
-            }
-            if (e.ControlID == "AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals") {
-              AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals = AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals + 1;
-            }
-          }
-          if (e.Status == "Verify") {
-            Releasedata.Verify = Releasedata.Verify + 1;
-            bulbClass = 'bubble-verify';
-          }
-          $('#tblScanResultRelease').find('tbody')
-            .append('<tr>').append('<td width="40%" ><span class="text-primary">' + e.Description + '</span></td>')
-            .append('<td width="20%" >' + e.ControlSeverity + '</td>')
-            .append('<td width="20%" >' + e.ResourceName + '</td>')
-            .append('<td width="20%" > <span class="btn ' + bulbClass + ' btn-circle btn-circle-sm"></span>&nbsp;' + e.Status + '</td>')
-            .append('<td width="20%" > <a href=' + e.ResourceLink + ' target="_blank">Click to find resource</a></td>')
-            .append('</tr>');
-        }
 
         if (e.FeatureName == "ServiceConnection") {
-          //Connectioncounter = Connectioncounter + 1;
-
           if (e.Status == "Passed") {
             Conndata.Passed = Conndata.Passed + 1;
             bulbClass = 'bubble-passed';
           }
-          if (e.Status == "Failed") {
+          else if (e.Status == "Verify") {
+            Conndata.Verify = Conndata.Verify + 1;
+            bulbClass = 'bubble-verify';
+          }
+          else if (e.Status == "Failed") {
             Conndata.Failed = Conndata.Failed + 1;
             bulbClass = 'bubble-failed';
 
@@ -722,11 +256,38 @@
               AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions = AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions + 1;
             }
           }
-          if (e.Status == "Verify") {
-            Conndata.Verify = Conndata.Verify + 1;
+         
+          $('#tblScanResultConnection').find('tbody')
+            .append('<tr>').append('<td width="40%" ><span class="text-primary">' + e.Description + '</span></td>')
+            .append('<td width="20%" >' + e.ControlSeverity + '</td>')
+            .append('<td width="20%" >' + e.ResourceName + '</td>')
+            .append('<td width="20%" > <span class="btn ' + bulbClass + ' btn-circle btn-circle-sm"></span>&nbsp;' + e.Status + '</td>')
+            .append('<td width="20%" > <a href=' + e.ResourceLink + ' target="_blank">Click to find resource</a></td>')
+            .append('</tr>');
+              
+        }
+
+        else if (e.FeatureName == "Build") {
+          if (e.Status == "Passed") {
+            arrdata.Passed = arrdata.Passed + 1;
+            bulbClass = 'bubble-passed';
+          }
+          else if (e.Status == "Verify") {
+            arrdata.Verify = arrdata.Verify + 1;
             bulbClass = 'bubble-verify';
           }
-          $('#tblScanResultConnection').find('tbody')
+          else if (e.Status == "Failed") {
+            arrdata.Failed = arrdata.Failed + 1;
+            bulbClass = 'bubble-failed';
+            if (e.ControlID == "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions") {
+              AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions = AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions + 1;
+            }
+            if (e.ControlID == "AzureDevOps_Build_SI_Review_Inactive_Build") {
+              AzureDevOps_Build_SI_Review_Inactive_Build = AzureDevOps_Build_SI_Review_Inactive_Build + 1;
+            }
+          }
+
+          $('#tblScanResultBuild').find('tbody')
             .append('<tr>').append('<td width="40%" ><span class="text-primary">' + e.Description + '</span></td>')
             .append('<td width="20%" >' + e.ControlSeverity + '</td>')
             .append('<td width="20%" >' + e.ResourceName + '</td>')
@@ -736,21 +297,53 @@
 
         }
 
-        //AgentPool
-        if (e.FeatureName == "AgentPool") {
-          //Releasecounter = Releasecounter + 1;
+        else if (e.FeatureName == "Release") {
+          if (e.Status == "Passed") {
+            Releasedata.Passed = Releasedata.Passed + 1;
+            bulbClass = 'bubble-passed';
+          }
+         else if (e.Status == "Verify") {
+            Releasedata.Verify = Releasedata.Verify + 1;
+            bulbClass = 'bubble-verify';
+          }
+         else if (e.Status == "Failed") {
+            Releasedata.Failed = Releasedata.Failed + 1;
+            bulbClass = 'bubble-failed';
 
+            if (e.ControlID == "AzureDevOps_Release_SI_Review_Inactive_Release") {
+              AzureDevOps_Release_SI_Review_Inactive_Release = AzureDevOps_Release_SI_Review_Inactive_Release + 1;
+            }
+            if (e.ControlID == "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions") {
+              AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions = AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions + 1;
+            }
+            if (e.ControlID == "AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals") {
+              AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals = AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals + 1;
+            }
+          }
+          
+          $('#tblScanResultRelease').find('tbody')
+            .append('<tr>').append('<td width="40%" ><span class="text-primary">' + e.Description + '</span></td>')
+            .append('<td width="20%" >' + e.ControlSeverity + '</td>')
+            .append('<td width="20%" >' + e.ResourceName + '</td>')
+            .append('<td width="20%" > <span class="btn ' + bulbClass + ' btn-circle btn-circle-sm"></span>&nbsp;' + e.Status + '</td>')
+            .append('<td width="20%" > <a href=' + e.ResourceLink + ' target="_blank">Click to find resource</a></td>')
+            .append('</tr>');
+        } 
+        else if (e.FeatureName == "AgentPool") {
           if (e.Status == "Passed") {
             AgentPooldata.Passed = AgentPooldata.Passed + 1;
             bulbClass = 'bubble-passed';
           }
-          if (e.Status == "Failed") {
-            AgentPooldata.Failed = AgentPooldata.Failed + 1;
-            bulbClass = 'bubble-failed';
-          }
-          if (e.Status == "Verify") {
+         else if (e.Status == "Verify") {
             AgentPooldata.Verify = AgentPooldata.Verify + 1;
             bulbClass = 'bubble-verify';
+          }
+         else if (e.Status == "Failed") {
+            AgentPooldata.Failed = AgentPooldata.Failed + 1;
+            bulbClass = 'bubble-failed';
+            if (e.ControlID == "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access") {
+            AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access = AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access + 1;
+            }
           }
           $('#tblScanResultAgentPool').find('tbody')
             .append('<tr>').append('<td width="40%" ><span class="text-primary">' + e.Description + '</span></td>')
@@ -761,32 +354,106 @@
             .append('</tr>');
         }
 
-        document.getElementById("BuildWidget").innerHTML = Buildcounter;
-        document.getElementById("ReleaseWidget").innerHTML = Releasecounter;
-        document.getElementById("ConnectionWidget").innerHTML = Connectioncounter;
-        document.getElementById("AgentPoolWidget").innerHTML = AgentPoolcounter;
+      });
 
-        try {
-          //Connections
-          document.getElementById("AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN").innerHTML = AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN;
-          document.getElementById("AzureDevOps_ServiceConnection_AuthZ_RG_Level").innerHTML = AzureDevOps_ServiceConnection_AuthZ_RG_Level;
-          document.getElementById("AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections").innerHTML = AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections;
-          document.getElementById("AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions").innerHTML = AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions;
+      document.getElementById("BuildWidget").innerHTML = Buildcounter;
+      document.getElementById("ReleaseWidget").innerHTML = Releasecounter;
+      document.getElementById("ConnectionWidget").innerHTML = Connectioncounter;
+      document.getElementById("AgentPoolWidget").innerHTML = AgentPoolcounter;
 
-          // build
-          document.getElementById("AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions").innerHTML = AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions;
-          document.getElementById("AzureDevOps_Build_SI_Review_Inactive_Build").innerHTML = AzureDevOps_Build_SI_Review_Inactive_Build;
+      try {
+        //Connections
+        document.getElementById("AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN").innerHTML = AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN;
+        document.getElementById("AzureDevOps_ServiceConnection_AuthZ_RG_Level").innerHTML = AzureDevOps_ServiceConnection_AuthZ_RG_Level;
+        document.getElementById("AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections").innerHTML = AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections;
+        document.getElementById("AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions").innerHTML = AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions;
 
-          // release
-          document.getElementById("AzureDevOps_Release_SI_Review_Inactive_Release").innerHTML = AzureDevOps_Release_SI_Review_Inactive_Release;
-          document.getElementById("AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions").innerHTML = AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions;
-          document.getElementById("AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals").innerHTML = AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals;
-        }
-        catch (ex) {
-          console.log(ex);
-        }
+        // build
+        document.getElementById("AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions").innerHTML = AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions;
+        document.getElementById("AzureDevOps_Build_SI_Review_Inactive_Build").innerHTML = AzureDevOps_Build_SI_Review_Inactive_Build;
+
+        // release
+        document.getElementById("AzureDevOps_Release_SI_Review_Inactive_Release").innerHTML = AzureDevOps_Release_SI_Review_Inactive_Release;
+        document.getElementById("AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions").innerHTML = AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions;
+        document.getElementById("AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals").innerHTML = AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals;
+
+        //Agent Pool
+        document.getElementById("AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access").innerHTML = AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access;
+      }
+      catch (ex) { console.log(ex); }
+
+      createChart('Chart-ContainerConnection', Conndata, 'Connection Scan Result');
+      createChart('Chart-ContainerBuild', arrdata, 'Build Scan Result');
+      createChart('Chart-ContainerRelease', Releasedata, 'Release Scan Result');
+      createChart('Chart-ContainerAgentPool', AgentPooldata, 'AgentPool Scan Result');
+    }
+
+    //Create chart
+    function createChart(container, dataforchart, charttitle) {
+      Highcharts.chart(container, {
+        title: {
+          text: charttitle
+        },
+        chart: {
+          type: 'pie'
+        },
+        credits: {
+          enabled: false
+        },
+        plotOptions: {
+          pie: {
+            dataLabels: {
+              enabled: true,
+              format: '<b>{point.name}</b><br>Count: {point.y}',
+            }
+          }
+        },
+        xAxis: {
+          categories: ['Passed', 'Failed', 'Verify']
+        },
+        legend: {
+          layout: 'horizontal',
+          verticalAlign: 'bottom',
+          labelFormat: '{name} ({y})'
+        },
+        series: [{
+          name: 'Control',
+          data: [{ name: 'Passed', y: dataforchart.Passed, color: '#339947' }, { name: 'Failed', y: dataforchart.Failed, color: '#FF0000' }, { name: 'Verify', y: dataforchart.Verify, color: '#FFFF00' }],
+          innerSize: '45%',
+          showInLegend: true
+        }]
       });
     }
+
+    Array.prototype.unique = function () {
+      return this.filter(function (value, index, self) {
+        return self.indexOf(value) === index;
+      });
+    };
+
+    //open model bind data
+    function openModel(ControlID, scanType) {
+    try {
+
+      $('#spnFailedControl').html(ControlID);
+      var versionId = document.getElementById('resultVersion').value;
+      getDataForChart(versionId).then(function (chartdata) {
+        //ControlID ="AzureDevOps_Build_DP_No_PlainText_Secrets_In_Definition"; scanType ="Build";
+        var locdata = chartdata.filter(function (data) {
+          return (data.ControlID == ControlID && data.FeatureName == scanType && data.Status == "Failed");
+        });
+        $('#tblControlFailDetails tbody').empty();
+        locdata.forEach(function (e) {
+          $('#tblControlFailDetails').find('tbody')
+            .append('<tr>').append('<td width="30%" ><span class="text-primary">' + e.ResourceGroupName + '</span></td>')
+            .append('<td width="30%" >' + e.ResourceName + '</td>')
+            .append('<td width="30%">-</td>')
+            .append('</tr>');
+        });
+      });
+    }
+    catch (ex) { console.log(ex); }
+  }
 
   </script>
 </head>
@@ -799,15 +466,13 @@
         <div class="card" align="left" style="align-items: left;">
           <div class="card-header" style="text-align: left;">
             <strong>
-              <h2>ADO Security Scanner Scan Summary for Build/Release/Connections. </h2>
+              <h2>ADO Security Scanner: Scan Summary for Build/Release/Connections/AgentPools. </h2>
             </strong>
             <a href="http://aka.ms/devopskit/ADOSecurity">ADO Security Scanner </a>
           </div>
           <div class="card-body">
             <!--   <button type="button" onclick="openModel()" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal">Open Modal</button> -->
-            The "ADO Security Scanner Kit" is a collection of scripts, tools, extensions, automations, etc.
-            that caters to the end to end Azure DevOps resources security needs for dev ops teams using extensive
-            automation and smoothly integrating security into native workflows helping accomplish secure dev ops.
+            The ADO Security Scanner toolkit helps with secure configuration of your organization/project/build/release artifacts in ADO. You can run this toolkit using PowerShell on your local machine or as an extension task in an ADO pipeline.
             <div class="row">
               <div class="col-sm-2">Select Version : </div>
               <div class="col-sm-6">
@@ -822,6 +487,8 @@
       </div>
     </div>
 
+    <div id="dvScanResult" style="display: none;">
+    <!--  Service Connection -->
     <div class="row border" style="margin-top: 0.4em; padding: 0.4em;">
 
       <div class="col-sm-1" style="max-height: 150px; margin-top: 0.2em">
@@ -836,10 +503,7 @@
         <!--/.col-->
         <div class="card">
           <div class="card-body">
-            <!-- <div class="chart-wrapper">	 -->
-            <h4 class="card-title">Connection Scan Result </h4>
-            <div id="Chart-ContainerConnection"></div>
-            <!-- 	</div> -->
+            <div id="Chart-ContainerConnection" style="margin: 0 auto; height:300px;"></div>
           </div>
         </div>
       </div>
@@ -902,44 +566,6 @@
           </div>
 
         </div>
-        <!-- To change the direction of the modal animation change .right class -->
-        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
-          aria-hidden="true">
-
-          <!-- Add class .modal-side and then add class .modal-top-right (or other classes from list above) to set a position to the modal -->
-          <div class="modal-dialog modal-lg modal-side modal-top-right" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h2 class="modal-title w-100" id="myModalLabel">Control Failure Details for <span id="spnFailedControl">
-                  </span></h2>
-                <button type="button" id="btnSendNotification" class="btn btn-primary" style="height:38px;">Send
-                  Notification</button>
-                <!--  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button> -->
-              </div>
-              <div class="modal-body" style="overflow:scroll;max-height:350px;width:100%;overflow:auto">
-                <table id="tblControlFailDetails" class="table table-borderless table-sm">
-                  <thead style="border-bottom:solid; border-width: 1px;">
-                    <tr>
-                      <th width="25%">Project Name</th>
-                      <th width="25%"><span id="spnScanType"> </span> Resource Name</th>
-                      <th width="25%">Created By</th>
-                    </tr>
-                  </thead>
-                  <tbody class="table table-borderless">
-                  </tbody>
-                </table>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="height:38px;">
-                  Close</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Side Modal Top Right -->
-
       </div>
 
       <div class="col-sm-5" style="overflow:scroll;height:320px;width:100%;overflow:auto">
@@ -979,10 +605,7 @@
         <!--/.col-->
         <div class="card">
           <div class="card-body">
-            <!-- <div class="chart-wrapper">	 -->
-            <h4 class="card-title">Build Scan Result </h4>
-            <div id="Chart-ContainerBuild"></div>
-            <!-- 	</div> -->
+            <div id="Chart-ContainerBuild" style="margin: 0 auto; height:300px;"></div>
           </div>
         </div>
       </div>
@@ -1019,11 +642,7 @@
         </div>
       </div>
 
-
       <div class="col-sm-5" style="overflow:scroll;height:320px;width:100%;overflow:auto">
-
-
-
         <div class="media-body">
           <h2 class="text-blue">Scan Report</h2>
           <table id="tblScanResultBuild" class="table table-borderless table-sm">
@@ -1060,10 +679,7 @@
         <!--/.col-->
         <div class="card">
           <div class="card-body">
-            <!-- <div class="chart-wrapper">	 -->
-            <h4 class="card-title">Release Scan Result </h4>
-            <div id="Chart-ContainerRelease"></div>
-            <!-- 	</div> -->
+            <div id="Chart-ContainerRelease" style="margin: 0 auto; height:300px;"></div>
           </div>
         </div>
       </div>
@@ -1071,12 +687,6 @@
       <div class="col-sm-2">
         <div class="row">
 
-          <!-- <div class="card text-white" style="max-width:110px; max-height:120px;background-color:#ff4444">
-                                     <div class="card-body">
-                                       <span class="card-title">InActive Release</span>
-                                       <p class="card-text" id="AzureDevOps_Release_SI_Review_Inactive_Release">0 </p>
-                                     </div>
-                                   </div> -->
           <div class="boxcss" onclick="openModel('AzureDevOps_Release_SI_Review_Inactive_Release', 'Release')"
             data-toggle="modal" data-target="#myModal">
             <font size="2">InActive Release &nbsp;&nbsp;</font><br><br>
@@ -1084,12 +694,6 @@
                 id="AzureDevOps_Release_SI_Review_Inactive_Release">- </span> </font>
           </div>
 
-          <!-- <div class="card text-white" style="max-width:110px; max-height:120px;background-color:#ff4444">
-                                     <div class="card-body">
-                                       <span class="card-title">Disable InheritPerm</span>
-                                       <div class="card-text" id="AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions">0</div>
-                                     </div>
-                                   </div> -->
           <div class="boxcss" onclick="openModel('AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions', 'Release')"
             data-toggle="modal" data-target="#myModal">
             <font size="2">Inheritted Permis. allowed </font><br>
@@ -1097,12 +701,6 @@
                 id="AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions">- </span> </font>
           </div>
 
-          <!-- <div class="card text-white" style="max-width:110px; max-height:120px;background-color:#ff4444">
-                                        <div class="card-body">
-                                          <span class="card-title">Pre Depl App Req</span>
-                                          <div class="card-text" id="AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals">0</div>
-                                        </div>
-                                      </div> -->
           <div class="boxcss" onclick="openModel('AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals', 'Release')"
             data-toggle="modal" data-target="#myModal">
             <font size="2">Pre Depl App Req </font><br><br>
@@ -1112,7 +710,6 @@
 
         </div>
       </div>
-
 
       <div class="col-sm-5" style="overflow:scroll;height:320px;width:100%;overflow:auto">
         <div class="media-body">
@@ -1148,21 +745,18 @@
         <!--/.col-->
         <div class="card">
           <div class="card-body">
-            <!-- <div class="chart-wrapper">	 -->
-            <h4 class="card-title">AgentPool Scan Result </h4>
-            <div id="Chart-ContainerAgentPool"></div>
-            <!-- 	</div> -->
+            <div id="Chart-ContainerAgentPool" style="margin: 0 auto; height:300px;"></div>
           </div>
         </div>
       </div>
 
       <div class="col-sm-2">
         <div class="row">
-          <div class="boxcss" onclick="openModel('AzureDevOps_Release_SI_Review_Inactive_Release', 'Release')"
+          <div class="boxcss" onclick="openModel('AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access', 'AgentPool')"
             data-toggle="modal" data-target="#myModal">
-            <font size="2">InActive AgentPool &nbsp;&nbsp;</font><br><br>
+            <font size="2">Don't Grant All PipeLine Access </font><br><br>
             <font size="12"> <span style="cursor:pointer" class="text-primary"
-                id="AzureDevOps_Release_SI_Review_Inactive_Release">- </span> </font>
+                id="AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access">- </span> </font>
           </div>
 
         </div>
@@ -1187,8 +781,41 @@
         </div>
       </div>
     </div>
+   </div>
+    <!-- To change the direction of the modal animation change .right class -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  
+    <!-- Add class .modal-side and then add class .modal-top-right (or other classes from list above) to set a position to the modal -->
+    <div class="modal-dialog modal-lg modal-side modal-top-right" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title w-100" id="myModalLabel">Control Failure Details for <span id="spnFailedControl">
+            </span></h2>
+        </div>
+        <div class="modal-body" style="overflow:scroll;max-height:350px;width:100%;overflow:auto">
+          <table id="tblControlFailDetails" class="table table-borderless table-sm">
+            <thead style="border-bottom:solid; border-width: 1px;">
+              <tr>
+                <th width="25%">Project Name</th>
+                <th width="25%"><span id="spnScanType"> </span> Resource Name</th>
+                <th width="25%">Created By</th>
+              </tr>
+            </thead>
+            <tbody class="table table-borderless">
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" style="height:38px;">
+            Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Side Modal Top Right -->
 
   </div>
 </body>
+<script src="https://code.highcharts.com/highcharts.js"></script>
 
 </html>

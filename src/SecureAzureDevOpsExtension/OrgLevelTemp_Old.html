@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<link href="Styles/bootstrap.min.css" rel="stylesheet">
+	</link>
+	<style>
+		.btn-circle {
+			width: 12px;
+			height: 12px;
+			line-height: 12px;
+			text-align: center;
+			padding: 0;
+			border-radius: 50%;
+		}
+
+		.btn-circle i {
+			position: relative;
+			top: -1px;
+		}
+
+		.btn-circle-sm {
+			width: 8px;
+			height: 8px;
+		}
+
+		.text-primary {
+			color: #305f92 !important;
+		}
+
+		.bubble-manual {
+			background-color: #6c757d;
+		}
+
+		.bubble-passed {
+			background-color: #339947;
+		}
+
+		.bubble-failed {
+			background-color: #FF0000;
+		}
+
+		.bubble-verify {
+			background-color: #FFFF00;  
+		}
+
+		.bubble-exception {
+			background-color: #F58B1F;  
+		}
+
+		.shadow {
+			-webkit-box-shadow: 0 10px 6px -6px #999;
+			-moz-box-shadow: 0 10px 6px -6px #999;
+			box-shadow: 0 10px 6px -12px #999;
+		}
+	</style>
+	</style>
+	<script src="lib/VSS.SDK.min.js"></script>
+	<script src="scripts/jquery-3.4.1.min.js"></script>
+	<script src="scripts/bootstrap.min.js"></script>
+	<script src="https://code.highcharts.com/highcharts.js"></script>
+	<script type="text/javascript">
+		var arrdata = { Passed: 0, Failed: 0, Verify: 0, Exception: 0 };
+		var Prjarrdata = { Passed: 0, Failed: 0, Verify: 0, Exception: 0 };
+		var lastScanData;
+		VSS.init({
+			explicitNotifyLoaded: true,
+			usePlatformStyles: true
+		});
+		try {
+			VSS.ready(() => {
+				context = VSS.getWebContext();
+				VSS.getService(VSS.ServiceIds.ExtensionData).then(function (dataService) {
+					// Get all document under the collection                 
+					dataService.getDocuments("MyCollection").then(function (docs) {
+						var sel = document.getElementById('resultVersion');
+						var datelist= [];
+						for (var i = 0; i < docs.length; i++) {
+							if (docs[i].id.indexOf(context.project.name) !== -1) {
+								
+								var opt = document.createElement('option');
+								opt.innerHTML = docs[i].id;
+								opt.value = docs[i].id;
+								sel.appendChild(opt);
+							}
+							try {
+								datelist.push(docs[i].id.split("BuildId")[1].split('_')[2]);
+								} catch (error) {
+									
+								}
+						}
+						datelist.sort(); 
+						var lastresultdate = datelist[datelist.length -1];
+                        var lastresult ='';
+						for (var i = 0; i < docs.length; i++) {
+                            if (docs[i].id.indexOf(lastresultdate) != -1) {
+						    	lastresult = docs[i]
+                            }
+						}
+				
+						$("#resultVersion").val(lastresult.id);
+						bindTables(lastresult.value);
+						lastresult = null;
+						docs = null;
+					});
+				});
+			});
+		}
+		catch (ex) { }
+		// Get widget load
+		VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
+			WidgetHelpers.IncludeWidgetStyles();
+			VSS.register("OrgLevelTemp_Old", function () {
+				return {
+					load: function (widgetSettings) {
+						return WidgetHelpers.WidgetStatusHelper.Success();
+					}
+				}
+			});
+			VSS.notifyLoadSucceeded();
+		});
+
+		function sortFunction(a, b) {  
+                var dateA = new Date(a.date)
+                var dateB = new Date(b.date)
+                return dateA > dateB ? 1 : -1;  
+         };  
+		// Get data service handle promise
+		function delay(ms) { // takes amount of milliseconds
+			// returns a new promise
+			return new Promise(function (resolve, reject) {
+				setTimeout(function () { // when the time is up
+					resolve(); // change the promise to the fulfilled state
+				}, ms);
+			});
+		}
+		// Get data service
+		function getDataForChart(resultId) {
+			// we're RETURNING the promise, remember, a promise is a wrapper over our value
+			return delay(1).then(function () { // when the promise is ready	context.project.name
+				return VSS.getService(VSS.ServiceIds.ExtensionData).then(function (dataService) {
+					return dataService.getDocument("MyCollection", resultId).then(function (doc) {
+						return doc.value;
+					});
+				});
+			});
+		}
+		// Bind data to table and chart
+		function bindData() {
+			try{
+			arrdata.Passed = 0; 
+			arrdata.Failed = 0;
+			arrdata.Verify = 0;
+			arrdata.Exception = 0;
+			Prjarrdata.Passed = 0; 
+			Prjarrdata.Failed = 0;
+			Prjarrdata.Verify = 0;
+			Prjarrdata.Exception = 0;
+			}
+			catch (ex) {}
+		
+			var versionId = document.getElementById('resultVersion').value;
+			if (versionId != null && versionId != "") {
+				try {
+					//bind table with new data
+					getDataForChart(versionId).then(function (chartdata) {
+						bindTables(chartdata);
+					});
+				}
+				catch (ex) {
+					console.log(ex)
+				}
+			}
+		}
+		function bindTables(chartdata) {
+			document.getElementById('dvScanResult').style.display = "block";
+	
+			$("#tblScanResultOrganizaiton > tbody").html("");
+			$("#tblScanResultProject > tbody").html("");
+			chartdata.forEach(function (e) {
+				var bulbClass = 'bubble-manual';
+				if (e.FeatureName == "Organization") {
+					if (e.Status == "Passed") {
+						arrdata.Passed = arrdata.Passed + 1;
+						bulbClass = 'bubble-passed';
+					}
+					if (e.Status == "Failed") {
+						arrdata.Failed = arrdata.Failed + 1;
+						bulbClass = 'bubble-failed';
+					}
+					if (e.Status == "Verify") {
+						arrdata.Verify = arrdata.Verify + 1;
+						bulbClass = 'bubble-verify';
+					} 
+					if (e.Status == "Exception") {
+						arrdata.Exception = arrdata.Exception + 1;
+						bulbClass = 'bubble-exception';
+					}
+					$('#tblScanResultOrganizaiton').find('tbody')
+						.append('<tr>').append('<td width="40%"><span class="text-primary" >' + e.Description + '</span></td>')
+						//a href="#" onclick = "openModel(\''+e.Description+'\',\''+e.ControlID+'\',\''+e.ResourceGroupName+'\',\''+e.ResourceName+'\',\''+e.Status+'\',\''+e.Recommendation+'\')" data-toggle="modal" data-target="#myModal"
+						.append('<td width="20%" >' + e.ControlSeverity + '</td>')
+						.append('<td width="20%" > <span class="btn ' + bulbClass + ' btn-circle btn-circle-sm"></span>&nbsp;' + e.Status + '</td>')
+						.append('<td width="20%" > <a href=' + e.ResourceLink + ' target="_blank">Click to find resource</a></td>')
+						.append('</tr>');
+				}
+				if (e.FeatureName == "Project") {
+					if (e.Status == "Passed") {
+						Prjarrdata.Passed = Prjarrdata.Passed + 1;
+						bulbClass = 'bubble-passed';
+					}
+					if (e.Status == "Failed") {
+						Prjarrdata.Failed = Prjarrdata.Failed + 1;
+						bulbClass = 'bubble-failed';
+					}
+					if (e.Status == "Verify") {
+						Prjarrdata.Verify = Prjarrdata.Verify + 1;
+						bulbClass = 'bubble-verify';
+					}
+					if (e.Status == "Exception") {
+						Prjarrdata.Exception = Prjarrdata.Exception + 1;
+						bulbClass = 'bubble-exception';
+					}
+					$('#tblScanResultProject').find('tbody')
+						.append('<tr>').append('<td width="40%" ><span class="text-primary">' + e.Description + '</span></td>')
+						.append('<td width="20%" >' + e.ControlSeverity + '</td>')
+						.append('<td width="20%" >' + e.ResourceName + '</td>')
+						.append('<td width="20%" > <span class="btn ' + bulbClass + ' btn-circle btn-circle-sm"></span>&nbsp;' + e.Status + '</td>')
+						.append('<td width="20%" > <a href=' + e.ResourceLink + ' target="_blank">Click to find resource</a></td>')
+						.append('</tr>');
+				}
+			});
+			createChart('Chart-ContainerOrganizaiton', arrdata, 'Organization Scan Result');
+			createChart('Chart-ContainerProject', Prjarrdata, 'Project Scan Result');
+		}
+		function createChart(container, dataforchart, charttitle) {
+			
+			Highcharts.chart(container, {
+				title: {
+					text: charttitle
+				},
+				chart: {
+					type: 'pie'
+				},
+				credits: {
+					enabled: false
+				},
+				plotOptions: {
+					pie: {
+						dataLabels: {
+							enabled: true,
+							format: '<b>{point.name}</b><br>Count: {point.y}',
+						}
+					}
+				},
+				xAxis: {
+					categories: ['Passed', 'Failed', 'Verify', 'Exception']
+				},
+				legend: {
+					layout: 'horizontal',
+					verticalAlign: 'bottom',
+					labelFormat: '{name} ({y})'
+				},
+				series: [{
+					name: 'Control',
+					data: [{ name: 'Passed', y: dataforchart.Passed, color: '#339947' }, { name: 'Failed', y: dataforchart.Failed, color: '#FF0000' }, { name: 'Verify', y: dataforchart.Verify, color: '#FFFF00' }, { name: 'Exception', y: dataforchart.Exception, color: '#F58B1F' }],
+					innerSize: '45%',
+					showInLegend: true
+				}]
+			});
+		}
+	</script>
+</head>
+
+<body style="width: 100%; height: 100%;">
+	<div class="widget">
+		<!-- style="overflow-y: scroll; overflow-x: hidden;" -->
+		<div class="row">
+			<div class="col-sm-11">
+				<div class="card" align="left" style="align-items: left;">
+					<div class="card-header" style="text-align: left;">
+						<strong>
+							<h3> ADO Security Scanner: Scan Summary for Organization and Project.</h3>
+						</strong>
+						<a href="http://aka.ms/devopskit/ADOSecurity">ADO security scanner</a>
+					</div>
+					<div class="card-body">
+						The ADO Security Scanner toolkit helps with secure configuration of your organization/project/build/release artifacts in ADO. You can run this toolkit using PowerShell on your local machine or as an extension task in an ADO pipeline.
+						<div class="row">
+							<div class="col-sm-2">Select Version : </div>
+							<div class="col-sm-6">
+								<select id="resultVersion" class="form-control" onchange="bindData()" width="300px">
+									<option value="" width="300px">Select</option>
+								</select>
+							</div>
+						</div>
+					</div>
+				</div><!-- /# card -->
+			</div>
+		</div>
+		<div id="dvScanResult" style="display: none;">
+			<div class="row" style="margin-top: 0.2em; padding: 0.2em;">
+				<div class="col-sm-5">
+					<!--/.col-->
+					<div class="card">
+						<div class="card-body" style="padding: 4px;">
+							<!-- <div class="chart-wrapper">	 -->
+							<div id="Chart-ContainerOrganizaiton" style="margin: 0 auto; height:300px;"></div>
+							<!-- 	</div> -->
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-7" style="overflow:scroll;height:280px;width:100%;overflow:auto">
+					<div class="media-body">
+						<h2 class="text-blue">Organization Scan Report </h2>
+						<table id="tblScanResultOrganizaiton" class="table table-borderless table-sm">
+							<thead style="border-bottom:solid; border-width: 1px;">
+								<tr>
+									<th width="40%">Description</th>
+									<th width="20%">Severity</th>
+									<th width="20%">Status</th>
+									<th width="20%">Resource</th>
+								</tr>
+							</thead>
+							<tbody class="table table-borderless">
+								<!-- 	<tr>
+														<td width="40%" ><a href="#" onclick = "openModel('e')" data-toggle="modal" data-target="#myModal">descr</a></td>
+														 <td width="20%" ></td>
+														 <td width="20%" ></td>
+														 <td width="20%" ></td>
+												</tr>	 -->
+							</tbody>
+						</table>
+					</div>
+				</div>
+				<!-- To change the direction of the modal animation change .right class -->
+				<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+					aria-hidden="true">
+
+					<!-- Add class .modal-side and then add class .modal-top-right (or other classes from list above) to set a position to the modal -->
+					<div class="modal-dialog modal-lg modal-side modal-top-right" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h2 class="modal-title w-100" id="myModalLabel">Details for <span id="spnFailedControl">
+									</span></h2>
+								<button type="button" id="btnSendNotification" class="btn btn-primary"
+									style="height:38px;">Send Notification</button>
+								<!--  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button> -->
+							</div>
+							<div class="modal-body" style="overflow:scroll;max-height:350px;width:100%;overflow:auto">
+								<div class="card-body shadow">Description: <span id="spnDescription"> </span> </div>
+								<div class="card-body shadow">Resource Name: <span id="spnResourceName"> </span> </div>
+								<div class="card-body shadow">Resource Group Name: <span id="spnResourceGroupName">
+									</span>
+								</div>
+								<div class="card-body shadow">Status: <span id="spnStatus"> </span> </div>
+								<div class="card-body shadow">Recommendation: <span id="spnRecommendation"> </span>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-dismiss="modal"
+									style="height:38px;">
+									Close</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- Side Modal Top Right -->
+			</div>
+			<div class="row" style="margin-top: 0.2em; padding: 0.2em;">
+				<div class="col-sm-5">
+					<!--/.col-->
+					<div class="card">
+						<div class="card-body" style="padding: 4px;">
+							<!-- <div class="chart-wrapper">	 -->
+							<div id="Chart-ContainerProject" style="padding:0px;margin:0px; height:300px;"></div>
+							<!-- 	</div> -->
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-7" style="overflow:scroll;height:250px;width:100%;overflow:auto">
+					<div class="media-body">
+						<h2 class="text-blue" style="margin-bottom: 5px;">Project Scan Report</h2>
+						<table id="tblScanResultProject" class="table table-borderless table-sm">
+							<thead style="border-bottom:solid; border-width: 1px;">
+								<tr>
+									<th width="40%">Description</th>
+									<th width="20%">Severity</th>
+									<th width="20%">Resource Name</th>
+									<th width="20%">Status</th>
+									<th width="20%">Resource </th>
+								</tr>
+							</thead>
+							<tbody class="table table-borderless">
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</body>
+
+</html>

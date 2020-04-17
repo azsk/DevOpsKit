@@ -1,9 +1,9 @@
 {
     "manifestVersion": 1,
     "id": "ADOSecurityScanner",
-    "publisher": "ADOScanner",
-    "public": false,
-    "version": "0.1.116",
+    "publisher": "azsdktm",
+    "public": true,
+    "version": "0.9.12",
     "name": "ADO Security Scanner",
     "description": "ADO Security Scanner provide security guidelines for devops components like Org, Project, Build, Release etc.",
     "categories": ["Azure Boards","Azure Pipelines"],
@@ -52,7 +52,7 @@
             }
         },
         {
-            "id": "OrgLevelSecurityScanSummary",
+            "id": "OrgLevelTemp_Old",
             "type": "ms.vss-dashboards-web.widget",
             "targets": [
                 "ms.vss-dashboards-web.widget-catalog"
@@ -62,7 +62,7 @@
                 "description": "Displays security configuration status for organization and project level controls",
                 "catalogIconUrl": "images/Icon.png",
                 "previewImageUrl": "images/Icon.png",                            
-                "uri": "OrgLevelSecurityScanSummary.html",   
+                "uri": "OrgLevelTemp_Old.html",   
                 "Sizes": [
                     {
                            "rowSpan": 6,
@@ -106,33 +106,6 @@
             }
         },
         {
-            "id": "OrgLevelTemp",
-            "type": "ms.vss-dashboards-web.widget",
-            "targets": [
-                "ms.vss-dashboards-web.widget-catalog"
-            ],
-            "properties": {
-                "name": "ADO Security Temp",
-                "description": "Displays security configuration status for organization and project level controls",
-                "catalogIconUrl": "images/Icon.png",
-                "previewImageUrl": "images/Icon.png",                            
-                "uri": "OrgLevelTemp.html",   
-                "Sizes": [
-                    {
-                           "rowSpan": 4,
-                           "columnSpan": 6
-                       }
-                   ],          
-                "supportedSizes": [
-                     {
-                            "rowSpan": 4,
-                            "columnSpan": 6
-                        }
-                    ],
-                "supportedScopes": ["project_team"]
-            }
-        },
-        {
             "id": "collection-level-admin-hub",
             "type": "ms.vss-web.hub",
             "description": "ADO Scanner Policy",
@@ -168,7 +141,7 @@
             "addressable": true
         },
         {
-            "path": "OrgLevelSecurityScanSummary.html",
+            "path": "OrgLevelTemp_Old.html",
             "addressable": true
         },
         {
