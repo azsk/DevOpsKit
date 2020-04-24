@@ -293,7 +293,7 @@ class Organization: ADOSVTBase
               }
             }
             catch {
-                $controlResult.AddMessage([VerificationResult]::Manual, "Could not detch list of guest identities.");
+                $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch list of guest identities.");
             } 
 
         return $controlResult
