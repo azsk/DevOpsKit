@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckAADConfiguration",
       "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
-      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/access-with-azure-ad?view=vsts",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/connect-organization-to-azure-ad?view=azure-devops#connect-your-organization-to-azure-ad",
       "Tags": [
         "SDL",
         "TCP",
@@ -22,12 +22,12 @@
     },
     {
         "ControlID": "AzureDevOps_Organization_AuthN_Disable_External_Guest_Users",
-        "Description": "Do not grant access to external users (users with accounts outside your native directory) to your organization",
+        "Description": "Do not grant access to external users (users with accounts outside your native directory) to your organization.",
         "Id": "Organization120",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckExternalUserPolicy",
-        "Rationale": "Non-AD accounts (such as xyz@hotmail.com, pqr@outlook.com, etc.) present at any scope within a Organization subject your assets to undue risk. These accounts are not managed to the same standards as enterprise tenant identities. They don't have multi-factor authentication enabled. Etc.",
+        "Rationale": "Non-AD accounts (such as xyz@hotmail.com, pqr@outlook.com, etc.) present at any scope within a organization subject your assets to undue risk. These accounts are not managed to the same standards as enterprise tenant identities. They don't have multi-factor authentication enabled.",
         "Recommendation": "Go to Organization Settings --> Policy --> Security Policies --> Turn 'Off' external guest access",
         "Tags": [
           "SDL",
@@ -73,13 +73,13 @@
       },
       {
         "ControlID": "AzureDevOps_Organization_SI_Review_Installed_Extensions",
-        "Description": "Ensure that extensions enabled for your organization are trustworthy",
+        "Description": "Ensure that extensions enabled for your organization are trustworthy.",
         "Id": "Organization160",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "ValidateInstalledExtensions",
         "Rationale": "Running extensions from untrusted source can lead to all type of attacks and loss of sensitive enterprise data.",
-        "Recommendation": "Go to Organization Settings --> Extensions --> Review all installed extensions in Organization",
+        "Recommendation": "Go to Organization Settings --> Extensions --> Review all installed extensions in Organization.",
         "Tags": [
           "SDL",
           "TCP",
@@ -96,7 +96,7 @@
         "Automated": "Yes",
         "MethodName": "ValidateSharedExtensions",
         "Rationale": "Running extensions from untrusted source can lead to all type of attacks and loss of sensitive enterprise data.",
-        "Recommendation": "Go to Organization Settings --> Extensions --> Review all shared extensions in Organization",
+        "Recommendation": "Go to Organization Settings --> Extensions --> Review all shared extensions in Organization.",
         "Tags": [
           "SDL",
           "TCP",
@@ -113,7 +113,7 @@
         "Automated": "Yes",
         "MethodName": "CheckExtensionManagers",
         "Rationale": "Accounts with extension manager access can install/manage extensions for Organization. Members with this access without a legitimate business reason increase the risk for Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
-        "Recommendation": "Go to Organization Settings --> Extensions --> Security --> Review indentities with manager role assigned",
+        "Recommendation": "Go to Organization Settings --> Extensions --> Security --> Review indentities with manager role assigned.",
         "Tags": [
           "SDL",
           "TCP",
@@ -402,7 +402,7 @@
         "Automated": "No",
         "MethodName": "",
         "Rationale": "Auditing contains many changes that occur throughout an Azure DevOps organization. Changes occur when a user or service identity within the organization edits the state of an artifact. In some limited cases, it can also include accessing an artifact. Think permissions changes, resource deletion, branch policy changes, accessing the auditing feature, and much more.",
-        "Recommendation": "Go to Organization Settings --> Auditing -- Download> ",
+        "Recommendation": "Go to Organization Settings --> Auditing --> Download",
         "Tags": [
           "SDL",
           "TCP",
