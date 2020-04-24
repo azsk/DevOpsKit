@@ -57,7 +57,7 @@
       {
         "ControlID": "AzureDevOps_Project_Disable_Anonymous_Access_To_Badges",
         "Description": "Anonymous access to status badge API for parallel pipelines should be disabled.",
-        "Id": "Project1000",
+        "Id": "Project140",
         "ControlSeverity": "Low",
         "Automated": "Yes",
         "MethodName": "CheckBadgeAnonAccess",
@@ -74,7 +74,7 @@
       {
         "ControlID": "AzureDevOps_Project_SI_Limit_Variables_Settable_At_Queue_Time",
         "Description": "Do not permit all pipeline variables to be settable by default.",
-        "Id": "Project1010",
+        "Id": "Project150",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckSetQueueTime",
@@ -91,7 +91,7 @@
       {
         "ControlID": "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project",
         "Description": "Scope of access of all pipelines should be restricted to current project.",
-        "Id": "Project1020",
+        "Id": "Project160",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckJobAuthnScope",
@@ -108,7 +108,7 @@
       {
         "ControlID": "AzureDevOps_Project_AuthZ_Publish_Metadata_From_Pipeline",
         "Description": "Consider using artifact evaluation for fine-grained control over pipeline stages",
-        "Id": "Project1030",
+        "Id": "Project170",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckPublishMetadata",

@@ -40,7 +40,7 @@
       {
         "ControlID": "AzureDevOps_Organization_DP_Dont_Allow_Public_Projects",
         "Description": "Public projects must be turned off for Organization",
-        "Id": "Organization140",
+        "Id": "Organization130",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckPublicProjectPolicy",
@@ -57,7 +57,7 @@
       {
         "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Guest_Identities",
         "Description": "Justify all guest identities that have been granted access to your organization.",
-        "Id": "Organization150",
+        "Id": "Organization140",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckGuestIdentities",
@@ -74,7 +74,7 @@
       {
         "ControlID": "AzureDevOps_Organization_SI_Review_Installed_Extensions",
         "Description": "Ensure that extensions enabled for your organization are trustworthy.",
-        "Id": "Organization160",
+        "Id": "Organization150",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "ValidateInstalledExtensions",
@@ -91,7 +91,7 @@
       {
         "ControlID": "AzureDevOps_Organization_SI_Review_Shared_Extensions",
         "Description": "Exercise due care when installing (private) shared extensions for your organization",
-        "Id": "Organization170",
+        "Id": "Organization160",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "ValidateSharedExtensions",
@@ -108,7 +108,7 @@
       {
         "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Extension_Managers",
         "Description": "Review the list of users who have permission to manage extensions",
-        "Id": "Organization180",
+        "Id": "Organization170",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckExtensionManagers",
@@ -125,7 +125,7 @@
       {
         "ControlID": "AzureDevOps_Organization_SI_Review_Inactive_Users",
         "Description": "Consider revoking access for inactive users",
-        "Id": "Organization190",
+        "Id": "Organization180",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckInActiveUsers",
@@ -142,7 +142,7 @@
       {
         "ControlID": "AzureDevOps_Organization_AuthZ_Deleted_AD_DisconnectedUser_Access",
         "Description": "Remove access entries for users whose accounts have been deleted/disconnecte from Azure Active Directory.",
-        "Id": "Organization191",
+        "Id": "Organization190",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckDisconnectedIdentities",
@@ -210,7 +210,7 @@
       {
         "ControlID": "AzureDevOps_Organization_AuthZ_Dont_Use_SVC_Accounts_No_MFA",
         "Description": "Service accounts cannot support MFA and should not be used for Org activity",
-        "Id": "Organization220",
+        "Id": "Organization230",
         "ControlSeverity": "High",
         "Automated": "No",
         "MethodName": "",
@@ -227,7 +227,7 @@
       {
         "ControlID": "AzureDevOps_Organization_AuthZ_Use_SC-ALT_Accounts",
         "Description": " Smart Card Alt(SC-ALT) accounts must be used on Secure Admin Workstation(SAW) for privileged roles used for Org activity",
-        "Id": "Organization230",
+        "Id": "Organization240",
         "ControlSeverity": "High",
         "Automated": "No",
         "MethodName": "",
@@ -244,7 +244,7 @@
       {
         "ControlID": "AzureDevOps_Organization_Review_Project_Collection_Accounts",
         "Description": "Minimize and reviews service accounts that are members of the Project Collection Service Accounts group.",
-        "Id": "Organization240",
+        "Id": "Organization250",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckProCollSerAcc",
@@ -261,7 +261,7 @@
       {
         "ControlID": "AzureDevOps_Organization_Enable_App_Access_OAuth",
         "Description": "OAuth should be enabled for third party application access",
-        "Id": "Organization1000",
+        "Id": "Organization260",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckOAuthAppAccess",
@@ -278,7 +278,7 @@
       {
         "ControlID": "AzureDevOps_Organization_Review_Auto_Injected_Extensions",
         "Description": "Auto-injected pipeline tasks have features/vulnerabilities that make them code execution sinks.",
-        "Id": "Organization250",
+        "Id": "Organization270",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "AutoInjectedExtension",
@@ -295,7 +295,7 @@
       {
         "ControlID": "AzureDevOps_Organization_Enable_SSH_Auth",
         "Description": "SSH authentication should be enabled for Application connection policies",
-        "Id": "Organization1010",
+        "Id": "Organization280",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckSSHAuthn",
@@ -312,7 +312,7 @@
       {
         "ControlID": "AzureDevOps_Organization_Verify_Enterprise_Access_To_Projects",
         "Description": "Enterprise access to projects should be verified.",
-        "Id": "Organization1020",
+        "Id": "Organization290",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckEnterpriseAccess",
@@ -329,7 +329,7 @@
       {
         "ControlID": "AzureDevOps_Organization_Enable_AAD_Conditional_Access_Policy",
         "Description": "AAD Conditional Access Policy should be enabled.",
-        "Id": "Organization1030",
+        "Id": "Organization300",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckCAP",
@@ -346,7 +346,7 @@
       {
         "ControlID": "AzureDevOps_Organization_Disable_Anonymous_Access_To_Badges",
         "Description": "Anonymous access to status badge API for parallel pipelines should be disabled.",
-        "Id": "Organization1040",
+        "Id": "Organization310",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckBadgeAnonAccess",
@@ -363,7 +363,7 @@
       {
         "ControlID": "AzureDevOps_Organization_Limit_Variables_Settable_At_Queue_Time",
         "Description": "Only those variables explicitly marked settable at queue time can be set.",
-        "Id": "Organization1050",
+        "Id": "Organization320",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckSetQueueTime",
@@ -380,7 +380,7 @@
       {
         "ControlID": "AzureDevOps_Organization_Limit_Job_Authorization_Scope_To_Current_Project",
         "Description": "Scope of access of all pipelines should be restricted to current project.",
-        "Id": "Organization1060",
+        "Id": "Organization330",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckJobAuthnScope",
@@ -397,7 +397,7 @@
       {
         "ControlID": "AzureDevOps_Organization_Auditing_Backup",
         "Description": "Audit logs are stored for 90 days and then they’re deleted. Back up audit logs to an external location to keep the data for longer than the 90-day period.",
-        "Id": "Organization260",
+        "Id": "Organization340",
         "ControlSeverity": "Medium",
         "Automated": "No",
         "MethodName": "",
