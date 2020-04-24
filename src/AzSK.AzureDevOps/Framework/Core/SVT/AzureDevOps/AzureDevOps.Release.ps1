@@ -257,7 +257,7 @@ class Release: ADOSVTBase
 
             if(($nonComplaintStages | Measure-Object).Count -gt 0)
             {
-                $controlResult.AddMessage([VerificationResult]::Failed,"Pre-deployment approvals is not enabled for following release stages in [$($this.ReleaseObj.name)] pipeline.", ($nonComplaintStages| Format-Table));
+                $controlResult.AddMessage([VerificationResult]::Failed,"Pre-deployment approvals is not enabled for following release stages in [$($this.ReleaseObj.name)] pipeline.", $nonComplaintStages);
             }
             else 
             {
@@ -265,7 +265,7 @@ class Release: ADOSVTBase
                     $releaseStage = $_
                     return  $($releaseStage | Select-Object id,name, @{Name = "Owner"; Expression = {$_.owner.displayName}})
                 }
-                $controlResult.AddMessage([VerificationResult]::Passed,"Pre-deployment approvals is enabled for following release stages.",($complaintStages | Format-Table));
+                $controlResult.AddMessage([VerificationResult]::Passed,"Pre-deployment approvals is enabled for following release stages.", $complaintStages);
                 $complaintStages = $null;
             }
             $nonComplaintStages =$null;
@@ -282,7 +282,7 @@ class Release: ADOSVTBase
             
             if ($otherStages) {
                 $controlResult.AddMessage([VerificationResult]::Verify,"No release stage found matching to $($this.ControlSettings.Release.RequirePreDeployApprovals -join ", ") in [$($this.ReleaseObj.name)] pipeline.  Verify that pre-deployment approval is enabled for below found environments.");
-                $controlResult.AddMessage(($otherStages | Format-Table))
+                $controlResult.AddMessage($otherStages)
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed,"No release stage found matching to $($this.ControlSettings.Release.RequirePreDeployApprovals -join ", ") in [$($this.ReleaseObj.name)] pipeline.  Found pre-deployment approval is enabled for present environments.");
@@ -371,7 +371,7 @@ class Release: ADOSVTBase
             
             if(($accessList | Measure-Object).Count -ne 0)
             {
-                $accessList= $accessList | Select-Object -Property @{Name="IdentityName"; Expression = {$_.IdentityName}},@{Name="IdentityType"; Expression = {$_.IdentityType}},@{Name="Permissions"; Expression = {$_.Permissions}} | Format-Table
+                $accessList= $accessList | Select-Object -Property @{Name="IdentityName"; Expression = {$_.IdentityName}},@{Name="IdentityType"; Expression = {$_.IdentityType}},@{Name="Permissions"; Expression = {$_.Permissions}}
                 $controlResult.AddMessage([VerificationResult]::Verify,"Validate that the following identities have been provided with minimum RBAC access to [$($this.ResourceContext.ResourceName)] pipeline", $accessList);
                 $controlResult.SetStateData("Release pipeline access list: ", $accessList);
             }
@@ -406,7 +406,7 @@ class Release: ADOSVTBase
                 $nonadoresource = $sourcetypes | Where-Object { $_.type -ne 'Git'} ;
                
                if( ($nonadoresource | Measure-Object).Count -gt 0){
-                   $nonadoresource = $nonadoresource | Select-Object -Property @{Name="alias"; Expression = {$_.alias}},@{Name="Type"; Expression = {$_.type}} | Format-Table
+                   $nonadoresource = $nonadoresource | Select-Object -Property @{Name="alias"; Expression = {$_.alias}},@{Name="Type"; Expression = {$_.type}}
                    $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines contains artifact from the below external sources.", $nonadoresource);    
                }
                else {

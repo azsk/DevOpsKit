@@ -80,15 +80,16 @@ class Organization: ADOSVTBase
             $responsePrCollData = $responsePrCollObj.dataProviders.'ms.vss-admin-web.org-admin-members-data-provider'.identities
            
             if(($responsePrCollData | Measure-Object).Count -gt 0){
-            $controlResult.AddMessage([VerificationResult]::Verify, "Please verify the members of the group Project Collection Service Accounts", $responsePrCollData); 
-            $controlResult.SetStateData("Members of the Project Collection Service Accounts Group ", $responsePrCollData); 
+                $responsePrCollData = $responsePrCollData | Select-Object displayName,mailAddress,subjectKind
+                $controlResult.AddMessage([VerificationResult]::Verify, "Please verify the members of the group Project Collection Service Accounts", $responsePrCollData); 
+                $controlResult.SetStateData("Members of the Project Collection Service Accounts Group ", $responsePrCollData); 
             }
             else{ #count is 0 then there is no member in the prj coll ser acc group
-            $controlResult.AddMessage([VerificationResult]::Passed, "Project Collection Service Accounts group does not have any member.");
+                $controlResult.AddMessage([VerificationResult]::Passed, "Project Collection Service Accounts group does not have any member.");
             }
         }
         else{
-            $controlResult.AddMessage([VerificationResult]::Manual, "Project Collection Service Accounts group can not be fetched.");
+                $controlResult.AddMessage([VerificationResult]::Manual, "Project Collection Service Accounts group could not be fetched.");
             }
        }
        catch{
@@ -139,17 +140,17 @@ class Organization: ADOSVTBase
                      if($altAuthObj.policy.effectiveValue -eq $false )
                      {
                          $controlResult.AddMessage([VerificationResult]::Passed,
-                                                     "Alternate authentication is disabled on Organization");
+                                                     "Alternate authentication is disabled in organization.");
                      }
                      else {
                          $controlResult.AddMessage([VerificationResult]::Failed,
-                                                     "Alternate authentication is enabled on Organization");
+                                                     "Alternate authentication is enabled in organization.");
                      }
                  }
              }
              catch {
                 $controlResult.AddMessage([VerificationResult]::Passed,
-                "Alternate authentication is no longer supported in devops");
+                "Alternate authentication is no longer supported in Azure DevOps.");
              }
         }
 
@@ -258,7 +259,7 @@ class Organization: ADOSVTBase
             if(($sharedExtensions | Measure-Object).Count -gt 0)
             {
                 $controlResult.AddMessage("No. of shared installed:" + $sharedExtensions.Count)
-                $extensionList =  $sharedExtensions | Select-Object extensionName,displayName,@{ Name = 'publisherName'; Expression = {  $_. publisher.displayName}} 
+                $extensionList =  $sharedExtensions | Select-Object extensionName,displayName,@{ Name = 'publisherName'; Expression = {  $_.publisher.displayName}},@{ Name = 'version'; Expression = {  $_.versions.version}}  
                 $controlResult.AddMessage([VerificationResult]::Verify,
                                                 "Review below shared extensions",$extensionList);  
                 #$controlResult.SetStateData("Shared extensions list: ", $extensionList);
@@ -282,9 +283,9 @@ class Organization: ADOSVTBase
                   if( [Helpers]::CheckMember($responseObj[0], 'members') -and  ($responseObj.members | Measure-Object).Count -gt 0)
                   {
                       $controlResult.AddMessage("No. of guest identities present:" + $responseObj.members.Count)
-                      $extensionList =  $responseObj.members | Select-Object @{Name="IdenityType"; Expression = {$_.user.subjectKind}},@{Name="DisplayName"; Expression = {$_.user.displayName}}, @{Name="MailAddress"; Expression = {$_.user.mailAddress}},@{Name="AccessLevel"; Expression = {$_.accessLevel.licenseDisplayName}},@{Name="LastAccessedDate"; Expression = {$_.lastAccessedDate}} | Format-Table
-                      $controlResult.AddMessage([VerificationResult]::Verify, "Verify below guest identities",$extensionList);      
-                      $controlResult.SetStateData("Guest identities list: ", $extensionList);    
+                      $guestList =  $responseObj.members | Select-Object @{Name="IdentityType"; Expression = {$_.user.subjectKind}},@{Name="DisplayName"; Expression = {$_.user.displayName}}, @{Name="MailAddress"; Expression = {$_.user.mailAddress}},@{Name="AccessLevel"; Expression = {$_.accessLevel.licenseDisplayName}},@{Name="LastAccessedDate"; Expression = {$_.lastAccessedDate}}
+                      $controlResult.AddMessage([VerificationResult]::Verify, "Verify below guest identities",$guestList);      
+                      $controlResult.SetStateData("Guest identities list: ", $guestList);    
                   }
                   else {
                       $controlResult.AddMessage([VerificationResult]::Passed, "No guest identities found");
@@ -292,7 +293,7 @@ class Organization: ADOSVTBase
               }
             }
             catch {
-                $controlResult.AddMessage([VerificationResult]::Manual, "No guest identities found");
+                $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch list of guest identities.");
             } 
 
         return $controlResult
@@ -609,7 +610,7 @@ class Organization: ADOSVTBase
             if ([Helpers]::CheckMember($cn,"type")) {
                  if($cn.type -eq "ms.azure-pipelines.pipeline-decorator")
                  {
-                   $member +=  ($obj | Select-Object -Property @{Name="Name"; Expression = {$_.extensionName}},@{Name="Publisher"; Expression = {$_.PublisherName}})
+                   $member +=  ($obj | Select-Object -Property @{Name="Name"; Expression = {$_.extensionName}},@{Name="Publisher"; Expression = {$_.PublisherName}},@{Name="Version"; Expression = {$_.version}})
                    break;
                  }
              }  

@@ -41,7 +41,7 @@
   {
     "ControlID": "AzureDevOps_Build_Config_Add_Static_Code_Analyzer",
     "Description": "Consider adding static code analysis step in your pipelines.",
-    "Id": "Build140",
+    "Id": "Build130",
     "ControlSeverity": "High",
     "Automated": "No",
     "MethodName": "",
@@ -58,7 +58,7 @@
   {
       "ControlID": "AzureDevOps_Build_DP_Store_SecretFiles_in_Secure_Library",
       "Description": " Secure Files library must be used to store secret files such as signing certificates, Apple Provisioning Profiles, Android KeyStore files, and SSH keys",
-      "Id": "Build150",
+      "Id": "Build140",
       "ControlSeverity": "Medium",
       "Automated": "No",
       "MethodName": "",
@@ -75,7 +75,7 @@
   {
     "ControlID": "AzureDevOps_Build_SI_Review_Inactive_Build",
     "Description": "Inactive build pipelines must be removed if no more required.",
-    "Id": "Build160",
+    "Id": "Build150",
     "ControlSeverity": "Low",
     "Automated": "Yes",
     "MethodName": "CheckInActiveBuild",
@@ -92,7 +92,7 @@
   {
     "ControlID": "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions",
     "Description": "Do not allow inherited permission on build definitions",
-    "Id": "Build170",
+    "Id": "Build160",
     "ControlSeverity": "High",
     "Automated": "Yes",
     "MethodName": "CheckInheritPermissions",
@@ -110,7 +110,7 @@
   {
     "ControlID": "AzureDevOps_Build_SI_Review_Settable_At_Queue_Time",
     "Description": "Pipeline variables marked settable at queue time should be carefully reviewed.",
-    "Id": "Build180",
+    "Id": "Build170",
     "ControlSeverity": "High",
     "Automated": "Yes",
     "MethodName": "CheckSettableAtQueueTime",
@@ -128,7 +128,7 @@
   {
     "ControlID": "AzureDevOps_Build_Check_External_Source_Self_Hosted_Build",
     "Description": "Building code from untrusted external sources is effectively allowing external parties to execute arbitrary code on your computer.",
-    "Id": "Build190",
+    "Id": "Build180",
     "ControlSeverity": "High",
     "Automated": "Yes",
     "MethodName": "ExternalSourceSelfHostedBuild",

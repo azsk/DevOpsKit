@@ -300,7 +300,7 @@ class Build: ADOSVTBase
             }
             if(($accessList | Measure-Object).Count -ne 0)
             {
-                $accessList= $accessList | Select-Object -Property @{Name="IdentityName"; Expression = {$_.IdentityName}},@{Name="IdentityType"; Expression = {$_.IdentityType}},@{Name="Permissions"; Expression = {$_.Permissions}} | Format-Table
+                $accessList= $accessList | Select-Object -Property @{Name="IdentityName"; Expression = {$_.IdentityName}},@{Name="IdentityType"; Expression = {$_.IdentityType}},@{Name="Permissions"; Expression = {$_.Permissions}}
                 $controlResult.AddMessage([VerificationResult]::Verify,"Validate that the following identities have been provided with minimum RBAC access to [$($this.ResourceContext.ResourceName)] pipeline.", $accessList);
                 $controlResult.SetStateData("Build pipeline access list: ", $accessList);
             }
@@ -371,7 +371,7 @@ class Build: ADOSVTBase
         {
            if( $this.BuildObj.repository.type -eq 'Git'){
 
-              $sourceobj = $this.BuildObj.repository | Select-Object -Property @{Name="Name"; Expression = {$_.Name}},@{Name="Type"; Expression = {$_.type}}, @{Name="Agent"; Expression = {$this.BuildObj.queue.name}} | Format-Table
+              $sourceobj = $this.BuildObj.repository | Select-Object -Property @{Name="Name"; Expression = {$_.Name}},@{Name="Type"; Expression = {$_.type}}, @{Name="Agent"; Expression = {$this.BuildObj.queue.name}}
 
               if (($this.BuildObj.queue.name -eq 'Azure Pipelines' -or $this.BuildObj.queue.name -eq 'Hosted')) {
                 $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline code is built on a hosted agent from trusted source.",  $sourceobj); 
