@@ -574,16 +574,12 @@ class AppService: AzSVTBase
 						
 					$functionDetail = $null
 					#$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
-					if( [FeatureFlightingManager]::GetFeatureStatus("UseAzCommandForFunctionAppDetails",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+					$functionAppDetails = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceName $this.ResourceContext.ResourceName -ResourceType 'Microsoft.Web/sites/functions' -ApiVersion '2015-08-01' -ErrorAction SilentlyContinue
+					if($null -ne $functionAppDetails -and [Helpers]::CheckMember($functionAppDetails,"Properties"))
 					{
-						$functionAppDetails = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceName $this.ResourceContext.ResourceName -ResourceType 'Microsoft.Web/sites/functions' -ApiVersion '2015-08-01' -ErrorAction SilentlyContinue
-						if($null -ne $functionAppDetails -and [Helpers]::CheckMember($functionAppDetails,"Properties"))
-						{
-							$functionDetail = $functionAppDetails | ForEach-Object{ $_.Properties } 
-						}
-					}else{
-						$functionDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
+						$functionDetail = $functionAppDetails | ForEach-Object{ $_.Properties } 
 					}
+					
 					
 						#check if functions are present in FunctionApp	
 						if($null -ne $functionDetail -and [Helpers]::CheckMember($functionDetail,"config"))
@@ -743,16 +739,12 @@ class AppService: AzSVTBase
 		}
 		$functionDetail = $null
 		#$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
-		if([FeatureFlightingManager]::GetFeatureStatus("UseAzCommandForFunctionAppDetails",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-    {
-			$functionAppDetails = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceName $this.ResourceContext.ResourceName -ResourceType 'Microsoft.Web/sites/functions' -ApiVersion '2015-08-01' -ErrorAction SilentlyContinue
-			if($null -ne $functionAppDetails -and [Helpers]::CheckMember($functionAppDetails,"Properties"))
-			{
-				$functionDetail = $functionAppDetails | ForEach-Object{ $_.Properties } 
-			}
-    }else{
-			$functionDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
+		$functionAppDetails = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceName $this.ResourceContext.ResourceName -ResourceType 'Microsoft.Web/sites/functions' -ApiVersion '2015-08-01' -ErrorAction SilentlyContinue
+		if($null -ne $functionAppDetails -and [Helpers]::CheckMember($functionAppDetails,"Properties"))
+		{
+			$functionDetail = $functionAppDetails | ForEach-Object{ $_.Properties } 
 		}
+    
 		#check if functions are present in FunctionApp	
 		if($null -ne $functionDetail -and [Helpers]::CheckMember($functionDetail,"config"))
 		{
