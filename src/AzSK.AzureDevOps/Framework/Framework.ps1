@@ -24,11 +24,11 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 . $PSScriptRoot\Helpers\ContextHelper.ps1  
 #Helpers (independent of models)
 
-. $FrameworkPath\Helpers\ConfigurationHelper.ps1
+. $PSScriptRoot\Helpers\ConfigurationHelper.ps1
 
 . $FrameworkPath\Models\AzSKConfig.ps1
 
-. $FrameworkPath\Models\AzSKSettings.ps1
+. $PSScriptRoot\Models\AzSKSettings.ps1
 
 . $FrameworkPath\Models\SVT\SVTConfig.ps1
 . $FrameworkPath\Models\SVT\SVTEvent.ps1

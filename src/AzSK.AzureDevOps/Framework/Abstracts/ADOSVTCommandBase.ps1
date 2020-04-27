@@ -94,6 +94,7 @@ class ADOSVTCommandBase: SVTCommandBase {
 
     [void] InitializeControlState() {
       if (-not $this.ControlStateExt) {
+          $settings = [AzSKSettings]::new($this.SubscriptionContext, $this.InvocationContext);
           $this.ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
           $this.ControlStateExt.UniqueRunId = $this.AttestationUniqueRunId
           $this.ControlStateExt.Initialize($false);
