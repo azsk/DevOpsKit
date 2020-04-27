@@ -67,15 +67,6 @@
       "IsEnabled": false
     },
     {
-      "Name": "UseAzCommandForFunctionAppDetails",
-      "Description" : "",
-      "Sources" : ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],      
-      "UnderPreview" : false,
-      "IsEnabled": true
-    },
-    {
       "Name": "EnableListenerReset",
       "Description" : "",
       "Sources" : ["*"],
@@ -167,15 +158,6 @@
     },
     {
       "Name": "FetchRGPIMControlStatusFromComplianceState",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
-    },
-    {
-      "Name": "DisableHasRequiredAccessForDeallocatedVM",
       "Description": "",
       "Sources": ["*"],
       "EnabledForSubs": [],
