@@ -155,6 +155,12 @@ function Get-AzSKAzureServicesSecurityStatus
 		[Alias("as")]
 		$AttestationStatus = [AttestationStatus]::None,
 
+		[Parameter(Mandatory = $false, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater, NotApplicable, StateConfirmed(if valid for the control))")]
+		[Alias("aee")]
+		[int]
+		[ValidateRange(1,180)]
+		$ApprovedExpExpiryDays,
+
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("dnof")]
@@ -262,7 +268,8 @@ function Get-AzSKAzureServicesSecurityStatus
 				$attestationOptions.AttestationStatus = $AttestationStatus
 				$attestationOptions.IsBulkClearModeOn = $BulkClear
 				$attestationOptions.IsExemptModeOn = $AddException
-				$secStatus.AttestationOptions = $attestationOptions;		
+				$secStatus.AttestationOptions = $attestationOptions;
+				$attestationOptions.ApprovedExceptionExpiryDays =  $ApprovedExpExpiryDays		
 
 				return $secStatus.EvaluateControlStatus();
 			}    
@@ -373,6 +380,12 @@ function Get-AzSKSubscriptionSecurityStatus
 		[Alias("as")]
 		$AttestationStatus = [AttestationStatus]::None,
 			
+		[Parameter(Mandatory = $false, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater, NotApplicable, StateConfirmed(if valid for the control))")]
+		[Alias("aee")]
+		[int]
+		[ValidateRange(1,180)]
+		$ApprovedExpExpiryDays,
+		
 		[switch]
 		[Parameter(Mandatory = $false)]
 		[Alias("dnof")]
@@ -446,6 +459,7 @@ function Get-AzSKSubscriptionSecurityStatus
 				$attestationOptions.AttestationStatus = $AttestationStatus
 				$attestationOptions.IsBulkClearModeOn = $BulkClear
 				$attestationOptions.IsExemptModeOn = $AddException
+				$attestationOptions.ApprovedExceptionExpiryDays =  $ApprovedExpExpiryDays
 				$sscore.AttestationOptions = $attestationOptions;				
 				
 				$sscore.GenerateFixScript = $GenerateFixScript
@@ -740,6 +754,12 @@ function Get-AzSKControlsStatus
 		[Alias("as")]
 		$AttestationStatus = [AttestationStatus]::None,
 
+		[Parameter(Mandatory = $false, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater, NotApplicable, StateConfirmed(if valid for the control))")]
+		[Alias("aee")]
+		[int]
+		[ValidateRange(1,180)]
+		$ApprovedExpExpiryDays,
+
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("dnof")]
@@ -846,6 +866,7 @@ function Get-AzSKControlsStatus
 				$attestationOptions.AttestationStatus = $AttestationStatus
 				$attestationOptions.IsBulkClearModeOn = $BulkClear
 				$attestationOptions.IsExemptModeOn = $AddException
+				$attestationOptions.ApprovedExceptionExpiryDays =  $ApprovedExpExpiryDays
 				$controlReport.AttestationOptions = $attestationOptions;	
 
 				return $controlReport.EvaluateControlStatus();

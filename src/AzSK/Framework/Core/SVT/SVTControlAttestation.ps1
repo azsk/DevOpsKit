@@ -162,8 +162,8 @@ class SVTControlAttestation
 				if($controlState.AttestationStatus -eq [AttestationStatus]::ApprovedException)
 				{
 					Write-Host "`nPlease provide the number of days for which the exception has been approved (max 180 days):" -ForegroundColor Cyan
-					$numberOfDays = Read-Host "No. of days (default 180)"
-
+					#$numberOfDays = Read-Host "No. of days (default 180)"
+					$numberOfDays = $this.attestOptions.ApprovedExceptionExpiryDays
 					$maxAllowedExceptionApprovalExpiryDate = ([DateTime]::UtcNow).AddDays(180)					
 
 					try
@@ -171,7 +171,7 @@ class SVTControlAttestation
 						if(-not [string]::IsNullOrWhiteSpace($numberOfDays))
 						{
 							#$controlItem.ControlItem.AttestationExpiryPeriodInDays = $numberOfDays.Trim()							
-							$proposedExceptionApprovalExpiryDate = ([DateTime]::UtcNow).AddDays($numberOfDays.Trim())
+							$proposedExceptionApprovalExpiryDate = ([DateTime]::UtcNow).AddDays($numberOfDays)
 
 							if($proposedExceptionApprovalExpiryDate -gt $maxAllowedExceptionApprovalExpiryDate)
 							{
@@ -313,8 +313,8 @@ class SVTControlAttestation
 				if($controlState.AttestationStatus -eq "ApprovedException")
 				{
 					Write-Host "`nPlease provide the number of days for which the exception has been approved (max 180 days):" -ForegroundColor Cyan
-					$numberOfDays = Read-Host "No. of days (default 180)"
-
+					#$numberOfDays = Read-Host "No. of days (default 180)"
+					$numberOfDays = $this.attestOptions.ApprovedExceptionExpiryDays
 					$maxAllowedExceptionApprovalExpiryDate = ([DateTime]::UtcNow).AddDays($this.ControlSettings.DefaultAttestationPeriodForExemptControl)					
 
 					try
@@ -322,7 +322,7 @@ class SVTControlAttestation
 						if(-not [string]::IsNullOrWhiteSpace($numberOfDays))
 						{
 							#$controlItem.ControlItem.AttestationExpiryPeriodInDays = $numberOfDays.Trim()							
-							$proposedExceptionApprovalExpiryDate = ([DateTime]::UtcNow).AddDays($numberOfDays.Trim())
+							$proposedExceptionApprovalExpiryDate = ([DateTime]::UtcNow).AddDays($numberOfDays)
 
 							if($proposedExceptionApprovalExpiryDate -gt $maxAllowedExceptionApprovalExpiryDate)
 							{
@@ -627,6 +627,9 @@ class SVTControlAttestation
 		
 		if($this.attestOptions.IsExemptModeOn)
 		{
+			$ValidAttestationStatesHashTable += [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -eq [AttestationStatus]::ApprovedException }
+		}
+		else{
 			$ValidAttestationStatesHashTable += [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -eq [AttestationStatus]::ApprovedException }
 		}
 		

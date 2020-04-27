@@ -125,6 +125,9 @@ class AzSVTCommandBase: SVTCommandBase {
                     };
                     $this.PublishCustomMessage($data)
                     $response = ""
+                    if ($this.AttestationOptions.AttestationStatus -eq "ApprovedException" -and $this.AttestationOptions.IsExemptModeOn) {
+                        $response = "Y"
+                    }
                     while ($response.Trim() -ne "y" -and $response.Trim() -ne "n") {
                         if (-not [string]::IsNullOrEmpty($response)) {
                             Write-Host "Please select appropriate option."
