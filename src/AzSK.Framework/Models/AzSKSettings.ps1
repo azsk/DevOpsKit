@@ -1,3 +1,4 @@
+using namespace System.Management.Automation
 Set-StrictMode -Version Latest
 class AzSKSettings {
     [string] $LAWSId;
