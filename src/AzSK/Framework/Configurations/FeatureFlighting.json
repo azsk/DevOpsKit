@@ -239,15 +239,6 @@
       "IsEnabled": true
     },
     {
-      "Name": "EnableVMExtensionMetadataCapture",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
-    },
-    {
       "Name": "EnableSecuritySolutionsDataCapture",
       "Description": "",
       "Sources": ["*"],

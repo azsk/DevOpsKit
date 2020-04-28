@@ -27,15 +27,12 @@ class VirtualMachine: AzSVTBase
 		}
 
 		# Add Installed Extensions deatils to resource metadata of VM 
-		if([FeatureFlightingManager]::GetFeatureStatus("EnableVMExtensionMetadataCapture",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-		{
-			if([Helpers]::CheckMember($this.ResourceObject, "Extensions") -and ($this.ResourceObject.Extensions | Measure-Object).Count -gt 0)
+		if([Helpers]::CheckMember($this.ResourceObject, "Extensions") -and ($this.ResourceObject.Extensions | Measure-Object).Count -gt 0)
 			{
 				$vmExtensionList = $this.ResourceObject.Extensions | Select-Object "Publisher", "VirtualMachineExtensionType", "TypeHandlerVersion" 
 				$metadata| Add-Member -Name VMExtensions -Value $vmExtensionList -MemberType NoteProperty;
 			}
-		}
-
+		
 		$this.AddResourceMetadata($metadata);		
 		
 		#OS type must always be present in configuration setting file
