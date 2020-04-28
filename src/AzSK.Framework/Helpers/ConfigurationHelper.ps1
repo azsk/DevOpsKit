@@ -256,7 +256,6 @@ class ConfigurationHelper {
 			return $webRequestResult;
 		}
 		catch {
-			#Write-Host "Custome policy is not defined." -ForegroundColor Cyan
 			return $null;
 		}
 		return $null;
@@ -343,10 +342,6 @@ class ConfigurationHelper {
 		$moduleName = $moduleName -replace "Staging", ""
 		if ($true -eq $isDebugModeOn) { # If Dev-Test mode is on, here the \Framework folder is parallel to \ModuleName folder
 			$basePath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName $moduleName | Join-Path -ChildPath "Framework"
-			$rootPath = $PSScriptRoot;
-			if($rootPath -like "*AzSK.AzureDevOps*"){
-				$basePath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.Parent.FullName $moduleName | Join-Path -ChildPath "Framework"
-			}
 			
 		}
 		else { #In installed modules folder, the basepath is different.
