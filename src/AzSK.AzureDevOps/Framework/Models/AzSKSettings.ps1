@@ -40,6 +40,7 @@ class AzSKSettings {
 	[bool] $StoreComplianceSummaryInUserSubscriptions;	
 	static [SubscriptionContext] $SubscriptionContext
 	static [InvocationInfo] $InvocationContext
+	[string] $BranchName;
 
 	AzSKSettings()
 	{	
@@ -161,7 +162,11 @@ class AzSKSettings {
 					$projectName = [AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"].split(',')[0];
 				}
 				$repoName = [Constants]::OrgPolicyRepo + $projectName;
-			    $parsedSettings.OnlinePolicyStoreUrl = $parsedSettings.OnlinePolicyStoreUrl -f [AzSKSettings]::SubscriptionContext.SubscriptionName, $projectName, $repoName
+				
+				if(!$parsedSettings.BranchName){
+					$parsedSettings.BranchName = "master";
+				}
+			    $parsedSettings.OnlinePolicyStoreUrl = $parsedSettings.OnlinePolicyStoreUrl -f [AzSKSettings]::SubscriptionContext.SubscriptionName, $projectName, $repoName, $parsedSettings.BranchName
 
 				[bool] $_useOnlinePolicyStore = $parsedSettings.UseOnlinePolicyStore;
 				[string] $_onlineStoreUri = $parsedSettings.OnlinePolicyStoreUrl;
