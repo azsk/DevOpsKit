@@ -7,6 +7,6 @@ class AttestationOptions
 	[string] $JustificationText;
 	[AttestationStatus] $AttestationStatus;
 	[bool] $IsExemptModeOn = $false;
-	[int] $ApprovedExceptionExpiryDays;
+	[string] $ApprovedExceptionExpiryDate;
 
 }
