@@ -97,21 +97,21 @@ class SVTCommandBase: AzCommandBase {
 
     [string] EvaluateControlStatus() {
         $startScan = ([CommandBase]$this).InvokeFunction($this.RunAllControls);
-        if( ([FeatureFlightingManager]::GetFeatureStatus("EnableScanAfterAttestation","*"))) { 
-            if (($this.AttestationOptions.AttestControls -eq "NotAttested") -or ($this.AttestationOptions.AttestControls -eq "All")) {
-                if (Get-Variable AttestationValue -Scope Global){
-                    if ($Global:AttestationValue) {
+         
+        if (($this.AttestationOptions.AttestControls -eq "NotAttested") -or ($this.AttestationOptions.AttestControls -eq "All")) {
+            if (Get-Variable AttestationValue -Scope Global){
+                if ($Global:AttestationValue) {
 
-                        $this.PublishCustomMessage(([Constants]::DoubleDashLine))
-                        $this.PublishCustomMessage(([Constants]::HashLine))
-                        $this.PublishCustomMessage(([Constants]::AttestedControlsScanMsg))
-                        $this.PublishCustomMessage(([Constants]::DoubleDashLine))
+                    $this.PublishCustomMessage(([Constants]::DoubleDashLine))
+                    $this.PublishCustomMessage(([Constants]::HashLine))
+                    $this.PublishCustomMessage(([Constants]::AttestedControlsScanMsg))
+                    $this.PublishCustomMessage(([Constants]::DoubleDashLine))
 
-                        ([CommandBase]$this).InvokeFunction($this.ScanAttestedControls,$null);
-                    }
+                    ([CommandBase]$this).InvokeFunction($this.ScanAttestedControls,$null);
                 }
             }
         }
+        
         return $startScan
     }
 
