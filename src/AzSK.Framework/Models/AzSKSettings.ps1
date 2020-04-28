@@ -156,14 +156,14 @@ class AzSKSettings {
 			if(-not $loadUserCopy)
 			{
 				$projectName = "";
-				if([AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"])
+				$orgName = "";
+				if([AzSKSettings]::InvocationContext)
 				{
 					$projectName = [AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"].split(',')[0];
+					$orgName = [AzSKSettings]::SubscriptionContext.SubscriptionName;
 				}
 				$repoName = [Constants]::OrgPolicyRepo + $projectName;
-				
-				
-			    $parsedSettings.OnlinePolicyStoreUrl = $parsedSettings.OnlinePolicyStoreUrl -f [AzSKSettings]::SubscriptionContext.SubscriptionName, $projectName, $repoName
+			    $parsedSettings.OnlinePolicyStoreUrl = $parsedSettings.OnlinePolicyStoreUrl -f $orgName, $projectName, $repoName
 
 				[bool] $_useOnlinePolicyStore = $parsedSettings.UseOnlinePolicyStore;
 				[string] $_onlineStoreUri = $parsedSettings.OnlinePolicyStoreUrl;
