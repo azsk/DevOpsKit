@@ -329,7 +329,7 @@ class SVTControlAttestation
 						break;
 					}
 					else{
-						
+
 						try
 						{						
 							[datetime]$ExpiryDate = $this.attestOptions.ApprovedExceptionExpiryDate
@@ -645,9 +645,6 @@ class SVTControlAttestation
 		
 		if($this.attestOptions.IsExemptModeOn)
 		{
-			$ValidAttestationStatesHashTable += [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -eq [AttestationStatus]::ApprovedException }
-		}
-		else{
 			$ValidAttestationStatesHashTable += [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -eq [AttestationStatus]::ApprovedException }
 		}
 		
