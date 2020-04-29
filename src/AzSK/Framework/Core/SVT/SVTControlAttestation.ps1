@@ -165,16 +165,15 @@ class SVTControlAttestation
 					#$numberOfDays = Read-Host "No. of days (default 180)"
 					if([string]::IsNullOrWhiteSpace($this.attestOptions.ApprovedExceptionExpiryDate))
 					{
-						Write-Host "To attest ypur control using ApprovedException status add ApprovedExceptionExpiryDate parameter. Please provide this param in the command with mm/dd/yy date format. For example: 11/25/20" -ForegroundColor Yellow;
+						Write-Host "To attest control using ApprovedException status add ApprovedExceptionExpiryDate parameter. Please provide this param in the command with mm/dd/yy date format. For example: -ApprovedExceptionExpiryDate '11/25/20'" -ForegroundColor Yellow;
 						break;
 					}
 					else{
-
-						[datetime]$ExpiryDate = $this.attestOptions.ApprovedExceptionExpiryDate
-						$maxAllowedExceptionApprovalExpiryDate = ([DateTime]::UtcNow).AddDays(180)					
-
 						try
-						{						
+						{					
+							[datetime]$ExpiryDate = $this.attestOptions.ApprovedExceptionExpiryDate
+							$maxAllowedExceptionApprovalExpiryDate = ([DateTime]::UtcNow).AddDays($this.ControlSettings.DefaultAttestationPeriodForExemptControl)	
+
 							if(-not [string]::IsNullOrWhiteSpace($ExpiryDate))
 							{
 								#$controlItem.ControlItem.AttestationExpiryPeriodInDays = $numberOfDays.Trim()							
@@ -199,7 +198,7 @@ class SVTControlAttestation
 						}
 						catch
 						{
-							Write-Host "`nThe days need to be an integer value." -ForegroundColor Red
+							Write-Host "`nThe date need to be in  mm/dd/yy format. For example: 11/25/20." -ForegroundColor Red
 							throw $_.Exception
 						}
 					}
@@ -326,16 +325,16 @@ class SVTControlAttestation
 
 					if([string]::IsNullOrWhiteSpace($this.attestOptions.ApprovedExceptionExpiryDate))
 					{
-						Write-Host "To attest ypur control using ApprovedException status add ApprovedExceptionExpiryDate parameter. Please provide this param in the command with mm/dd/yy date format. For example: 11/25/20" -ForegroundColor Yellow;
+						Write-Host "To attest control using ApprovedException status add ApprovedExceptionExpiryDate parameter. Please provide this param in the command with mm/dd/yy date format. For example: -ApprovedExceptionExpiryDate '11/25/20'" -ForegroundColor Yellow;
 						break;
 					}
 					else{
-
-						[datetime]$ExpiryDate = $this.attestOptions.ApprovedExceptionExpiryDate
-						$maxAllowedExceptionApprovalExpiryDate = ([DateTime]::UtcNow).AddDays($this.ControlSettings.DefaultAttestationPeriodForExemptControl)					
-
+						
 						try
 						{						
+							[datetime]$ExpiryDate = $this.attestOptions.ApprovedExceptionExpiryDate
+							$maxAllowedExceptionApprovalExpiryDate = ([DateTime]::UtcNow).AddDays($this.ControlSettings.DefaultAttestationPeriodForExemptControl)
+
 							if(-not [string]::IsNullOrWhiteSpace($ExpiryDate))
 							{
 								#$controlItem.ControlItem.AttestationExpiryPeriodInDays = $numberOfDays.Trim()							
@@ -360,7 +359,7 @@ class SVTControlAttestation
 						}
 						catch
 						{
-							Write-Host "`nThe days need to be an integer value." -ForegroundColor Red
+							Write-Host "`nThe date need to be in  mm/dd/yy format. For example: 11/25/20." -ForegroundColor Red
 							throw $_.Exception
 						}
 					}

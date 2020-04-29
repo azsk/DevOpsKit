@@ -226,7 +226,7 @@ function Get-AzSKAzureServicesSecurityStatus
 		[Alias("aex")]
 		$AddException,
 
-		[string]
+		[Datetime]
 		[Parameter(Mandatory = $false)]
 		[Alias("aee")]
 		$ApprovedExceptionExpiryDate
@@ -425,7 +425,7 @@ function Get-AzSKSubscriptionSecurityStatus
 		[Alias("aex")]
 		$AddException,
 
-		[string]
+		[Datetime]
 		[Parameter(Mandatory = $false)]
 		[Alias("aee")]
 		$ApprovedExceptionExpiryDate
@@ -825,7 +825,7 @@ function Get-AzSKControlsStatus
 		[Alias("aex")]
 		$AddException,
 
-		[string]
+		[Datetime]
 		[Parameter(Mandatory = $false)]
 		[Alias("aee")]
 		$ApprovedExceptionExpiryDate
