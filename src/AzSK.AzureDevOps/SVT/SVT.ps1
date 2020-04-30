@@ -252,7 +252,34 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("dnof")]
-		$DoNotOpenOutputFolder
+		$DoNotOpenOutputFolder,
+
+		[ValidateSet("All","AlreadyAttested","NotAttested","None")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+		[Alias("AttestControls","cta")]
+		$ControlsToAttest = [AttestControls]::None,
+
+		[switch]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Use this option if you want to clear the attestation for multiple resources in bulk, for a specified controlId.")]
+		[Alias("bc")]
+		$BulkClear,
+
+		[string] 
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Use this option to provide an apt justification with proper business reason.")]
+		[Alias("jt")]
+		$JustificationText,
+
+		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater","NotApplicable","StateConfirmed","ApprovedException")] 
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater, NotApplicable, StateConfirmed(if valid for the control))")]
+		[Alias("as")]
+		$AttestationStatus = [AttestationStatus]::None,
+		
+		[switch]
+        [Parameter(Mandatory = $false)]
+		[Alias("aex")]
+		$AddException
 
 	)
 	Begin
@@ -273,6 +300,16 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
 					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
+
+					#build the attestation options object
+				    [AttestationOptions] $attestationOptions = [AttestationOptions]::new();
+				    $attestationOptions.AttestControls = $ControlsToAttest				
+				    $attestationOptions.JustificationText = $JustificationText
+				    $attestationOptions.AttestationStatus = $AttestationStatus
+				    $attestationOptions.IsBulkClearModeOn = $BulkClear
+				    $attestationOptions.IsExemptModeOn = $AddException
+				    $secStatus.AttestationOptions = $attestationOptions;	
+
 
 				return $secStatus.EvaluateControlStatus();
 			}   
@@ -327,7 +364,7 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 		$OrganizationName,
 
 		[string]
-		[Parameter( HelpMessage="Project names for which the security evaluation has to be performed.")]
+		[Parameter(Position = 1, Mandatory = $true, HelpMessage="Project names for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("pn")]
 		$ProjectNames,
@@ -360,7 +397,34 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("dnof")]
-		$DoNotOpenOutputFolder
+		$DoNotOpenOutputFolder,
+
+		[ValidateSet("All","AlreadyAttested","NotAttested","None")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+		[Alias("AttestControls","cta")]
+		$ControlsToAttest = [AttestControls]::None,
+
+		[switch]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Use this option if you want to clear the attestation for multiple resources in bulk, for a specified controlId.")]
+		[Alias("bc")]
+		$BulkClear,
+
+		[string] 
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Use this option to provide an apt justification with proper business reason.")]
+		[Alias("jt")]
+		$JustificationText,
+
+		[ValidateSet("NotAnIssue", "WillNotFix", "WillFixLater","NotApplicable","StateConfirmed","ApprovedException")] 
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater, NotApplicable, StateConfirmed(if valid for the control))")]
+		[Alias("as")]
+		$AttestationStatus = [AttestationStatus]::None,
+		
+		[switch]
+        [Parameter(Mandatory = $false)]
+		[Alias("aex")]
+		$AddException
 
 	)
 	Begin
@@ -381,6 +445,16 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
 					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
+
+					#build the attestation options object
+				    [AttestationOptions] $attestationOptions = [AttestationOptions]::new();
+				    $attestationOptions.AttestControls = $ControlsToAttest				
+				    $attestationOptions.JustificationText = $JustificationText
+				    $attestationOptions.AttestationStatus = $AttestationStatus
+				    $attestationOptions.IsBulkClearModeOn = $BulkClear
+				    $attestationOptions.IsExemptModeOn = $AddException
+				    $secStatus.AttestationOptions = $attestationOptions;	
+
 
 				return $secStatus.EvaluateControlStatus();
 			}
