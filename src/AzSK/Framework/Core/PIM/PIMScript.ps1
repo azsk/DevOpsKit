@@ -1258,7 +1258,7 @@ class PIM: AzCommandBase {
     }
 
     # configure PIM role settings for a particular role on a resource 
-    hidden [void] ConfigureRoleSettings($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsAfter, $RequireJustificationOnActivation, $MaximumActivationDuration, $RequireMFAOnActivation,$RequireConditionalAccessOnActivation)
+    hidden [void] ConfigureRoleSettings($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $RoleSettingsRawInput, $RequireMFAOnActivation,$RequireConditionalAccessOnActivation)
     {
         #  1) get PIM resource id for the resource provided
         $resolvedResource = $null;
@@ -1296,36 +1296,67 @@ class PIM: AzCommandBase {
                     return
                 }
             $existingroleSetting  = $rolesettings
-           
+            $RequireJustificationOnActivation = $null;
         # 4) Modify the role settings obtained above by the parameters passed in cmdlet
-            if( [string]::IsNullOrEmpty($RequireJustificationOnActivation)){
+            if( [string]::IsNullOrEmpty($RoleSettingsRawInput.RequireJustificationOnActivation)){
                 $RequireJustificationOnActivation = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'JustificationRule'}).setting | ConvertFrom-Json).required
+            }
+            else
+            {
+                $RequireJustificationOnActivation = $RoleSettingsRawInput.RequireJustificationOnActivation
             }
             if( [string]::IsNullOrEmpty($RequireMFAOnActivation)){
                 $RequireJustificationOnActivation = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'MfaRule'}).setting | ConvertFrom-Json).mfaRequired
             }
+
+            $MaximumActivationDuration = $null;
+            $ExpireEligibleAssignmentsAfter = $null;
             $MaxActivationDurationConstant = 60 #To convert hours to minutes
             $ExpireEligibleAssignmentsAfterConstant = 24*60 #To convert days to minutes
 
                     $isPermanentAdminEligible = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Eligible'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).permanentAssignment
                     $isPermanentuserMember = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).permanentAssignment
-                    if($MaximumActivationDuration -eq -1)
+                    if($RoleSettingsRawInput.MaximumActivationDuration -eq -1)
                     {
                             $MaximumActivationDuration = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes
                     }
                     else 
                     {
-                        $MaximumActivationDuration = $MaximumActivationDuration*$MaxActivationDurationConstant
+                        $MaximumActivationDuration = $RoleSettingsRawInput.MaximumActivationDuration*$MaxActivationDurationConstant
                     }
-                    if($ExpireEligibleAssignmentsAfter -eq -1)
+                    if($RoleSettingsRawInput.ExpireEligibleAssignmentsAfter -eq -1)
                     {
                             $ExpireEligibleAssignmentsAfter = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Eligible'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes
                     }
                     else 
                     {
-                            $ExpireEligibleAssignmentsAfter =$ExpireEligibleAssignmentsAfter*$ExpireEligibleAssignmentsAfterConstant
+                            $ExpireEligibleAssignmentsAfter =$RoleSettingsRawInput.ExpireEligibleAssignmentsAfter*$ExpireEligibleAssignmentsAfterConstant
                     }
-                
+                    $ExpireActiveAssignmentsAfter = $null;
+                    if( [string]::IsNullOrEmpty($RoleSettingsRawInput.ExpireActiveAssignmentsAfter)){
+                        $ExpireActiveAssignmentsAfter = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes
+                    }
+                    else{
+                        # converting input duration into minutes
+                        $ExpireActiveAssignmentsAfter = $RoleSettingsRawInput.ExpireActiveAssignmentsAfter*$ExpireEligibleAssignmentsAfterConstant
+                    }
+
+                    $RequireMFAOnActiveAssignment = $null;
+                    if( [string]::IsNullOrEmpty($RoleSettingsRawInput.RequireMFAOnActiveAssignment)){
+                        $RequireMFAOnActiveAssignment = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'MfaRule'}).setting | ConvertFrom-Json).mfaRequired
+                    }
+                    else{
+                        $RequireMFAOnActiveAssignment =$RoleSettingsRawInput.RequireMFAOnActiveAssignment
+                    }
+
+                    $RequireJustificationOnActiveAssignment = $null;
+                    if( [string]::IsNullOrEmpty($RoleSettingsRawInput.RequireJustificationOnActiveAssignment)){
+                        $RequireJustificationOnActiveAssignment = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes
+                    }
+                    else{
+                        $RequireJustificationOnActiveAssignment =$RoleSettingsRawInput.RequireJustificationOnActiveAssignment
+                    }
+
                # Check for the conditional policy enforcement in Org settings, if applied to accordingly
                $roleSettingId = $existingroleSetting.id
                $policyString = [string]::Empty
@@ -1381,15 +1412,20 @@ class PIM: AzCommandBase {
                $updateUrl=""
                     if(-not [string]::IsNullOrEmpty($policyString))
                     {
-                        $body='{"id": "'+$roleSettingId+'","lifeCycleManagement": [{"caller":"Admin","level":"Eligible","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}]},{"caller": "EndUser","level": "Member","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$false+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"},'+$policyString+']}],"roleDefinition":{"id":"'+$rolesettings.roleDefinitionId+'"}}'
+                        $body= '{"id": "'+$roleSettingId+'","lifeCycleManagement": [{"caller":"Admin","level":"Eligible","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}]},{"caller": "EndUser","level": "Member","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$false+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"},'+$policyString+']},    
+                        {"caller":"Admin","level":"Member","operation": "ALL","value":[{"ruleIdentifier": "ExpirationRule","setting": "{\"permanentAssignment\":false,\"maximumGrantPeriodInMinutes\":'+$ExpireActiveAssignmentsAfter+'}"},{"ruleIdentifier": "MfaRule","setting": "{\"mfaRequired\":'+$RequireMFAOnActiveAssignment+'}"},{"ruleIdentifier": "JustificationRule","setting": "{\"required\":'+ $RequireJustificationOnActiveAssignment+'}"}]}],"roleDefinition":{"id":"'+$rolesettings.roleDefinitionId+'"}}'
                     }
                     else
                     {
                         if($setFlag) {
-                            $body='{"id": "'+$roleSettingId+'","lifeCycleManagement": [{"caller":"Admin","level":"Eligible","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}]},{"caller": "EndUser","level": "Member","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]}],"roleDefinition":{"id":"'+$rolesettings.roleDefinitionId+'"}}'
+                            $body='{"id": "'+$roleSettingId+'","lifeCycleManagement": [{"caller":"Admin","level":"Eligible","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}]},{"caller": "EndUser","level": "Member","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]},
+                            {"caller":"Admin","level":"Member","operation": "ALL","value":[{"ruleIdentifier": "ExpirationRule","setting": "{\"permanentAssignment\":false,\"maximumGrantPeriodInMinutes\":'+$ExpireActiveAssignmentsAfter+'}"},{"ruleIdentifier": "MfaRule","setting": "{\"mfaRequired\":'+$RequireMFAOnActiveAssignment+'}"},{"ruleIdentifier": "JustificationRule","setting": "{\"required\":'+ $RequireJustificationOnActiveAssignment+'}"}]}],"roleDefinition":{"id":"'+$rolesettings.roleDefinitionId+'"}}'
+
                         }
                         else {
-                            $body='{"id": "'+$roleSettingId+'","lifeCycleManagement": [{"caller":"Admin","level":"Eligible","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}]},{"caller": "EndUser","level": "Member","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$RequireMFAOnActivation+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]}],"roleDefinition":{"id":"'+$rolesettings.roleDefinitionId+'"}}'
+                            $body='{"id": "'+$roleSettingId+'","lifeCycleManagement": [{"caller":"Admin","level":"Eligible","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentAdminEligible+',\"maximumGrantPeriodInMinutes\":'+$ExpireEligibleAssignmentsAfter+'}"}]},{"caller": "EndUser","level": "Member","operation": "ALL","value":[{"ruleIdentifier":"ExpirationRule","setting":"{\"permanentAssignment\":'+$isPermanentuserMember+',\"maximumGrantPeriodInMinutes\":'+$MaximumActivationDuration+'}"},{"ruleIdentifier":"MfaRule","setting":"{\"mfaRequired\":'+$RequireMFAOnActivation+'}"},{"ruleIdentifier":"JustificationRule","setting":"{\"required\":'+$RequireJustificationOnActivation+'}"}]},
+                            {"caller":"Admin","level":"Member","operation": "ALL","value":[{"ruleIdentifier": "ExpirationRule","setting": "{\"permanentAssignment\":false,\"maximumGrantPeriodInMinutes\":'+$ExpireActiveAssignmentsAfter+'}"},{"ruleIdentifier": "MfaRule","setting": "{\"mfaRequired\":'+$RequireMFAOnActiveAssignment+'}"},{"ruleIdentifier": "JustificationRule","setting": "{\"required\":'+ $RequireJustificationOnActiveAssignment+'}"}]}],"roleDefinition":{"id":"'+$rolesettings.roleDefinitionId+'"}}'
+
                         }
                     }
                     $updateUrl = $this.APIroot+"/roleSettingsV2/$roleSettingId"
