@@ -97,6 +97,10 @@ class ARMPolicy: AzCommandBase
 							try{
 						    $temp = $_;		
 							$armpolicyassignment = Get-AzPolicyAssignment -Name $policyName
+							if($null -eq $armpolicyassignment)
+							{
+								$armPoliciesDefns.Add($temp,$armPolicy);
+							}
 							}
 							catch{
 							$armPoliciesDefns.Add($temp,$armPolicy);
