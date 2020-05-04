@@ -68,7 +68,8 @@
          "Windows",
          "Linux",
          "VirtualMachine",
-         "ExcludeDatabricks"
+         "ExcludeDatabricks",
+         "NetSec"
        ],
        "Enabled": true
      },
@@ -252,7 +253,7 @@
           "VirtualMachine"
         ],
         "Enabled": true,
-        "PolicyDefinitionGuid": "760a85ff-6162-42b3-8d70-698e268f64"
+        "PolicyDefinitionGuid": "760a85ff-6162-42b3-8d70-698e268f648c"
       },
       {
          "ControlID": "Azure_VirtualMachine_SI_Deploy_GuestConfig_Extension",

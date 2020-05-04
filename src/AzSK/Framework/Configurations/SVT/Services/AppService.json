@@ -193,7 +193,8 @@
           "Linux"
         ],
         "Enabled": true,
-        "PolicyDefinitionGuid": "e9c8d085-d9cc-4b17-9cdc-059f1f01f19e"
+        "PolicyDefinitionGuid": "e9c8d085-d9cc-4b17-9cdc-059f1f01f19e",
+        "PolicyDefnResourceIdSuffix": "/config/web"
       },
       {
         "ControlID": "Azure_AppService_Config_Disable_Web_Sockets",
@@ -219,7 +220,8 @@
           "FixMethodName": "DisableWebSocket",
           "FixControlImpact": "High"
         },
-        "PolicyDefinitionGuid": "AppService220"
+        "PolicyDefinitionGuid": "AppService220",
+        "PolicyDefnResourceIdSuffix": "/config/web"
       },
       {
         "ControlID": "Azure_AppService_BCDR_Use_AlwaysOn",
@@ -679,7 +681,8 @@
           "AppService",
           "FunctionApp",
           "Windows",
-          "Linux"
+          "Linux",
+          "NetSec"
         ],
         "Enabled": true,
         "Rationale": "Using the IP/VNet subnet rules based access restriction ensures that access to the data or the service is restricted to a specific set of IPs. NOTE: While this control does provide an extra layer of access control protection, it may not always be feasible to implement in all scenarios."

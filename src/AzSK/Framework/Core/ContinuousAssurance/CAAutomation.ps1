@@ -518,6 +518,11 @@ class CCAutomation: AzCommandBase
 		[MessageData[]] $messages = @();
 		try
 		{
+			if([ConfigurationManager]::GetAzSKSettings().IsSAW -eq $true -and $FixModules)
+			{
+				$this.PublishCustomMessage("Warning: Fix modules option is not supported on SAW",[MessageType]::Warning)
+				return $messages
+			}
 			#Validate if command is running with local policy
 			$this.ValidateIfLocalPolicyIsEnabled()
 
@@ -1287,11 +1292,22 @@ class CCAutomation: AzCommandBase
 		$detailedMsg = $null
 		$resultStatus = ""
 		$shouldReturn = $false
+		if([ConfigurationManager]::GetAzSKSettings().IsSAW -eq $true -and $this.ExhaustiveCheck)
+		{
+			$checkDescription = "Checking the host environment"
+			$resultMsg = "-ExhaustiveCheck option is not supported on SAW"
+			$resultStatus = "Warning"
+			$shouldReturn = $true
+		}
 
 		$currentMessage = [MessageData]::new([Constants]::DoubleDashLine + "`r`nStarted validating your AzSK Continuous Assurance (CA) setup...`r`n"+[Constants]::DoubleDashLine);
 		$messages += $currentMessage;
 		$this.PublishCustomMessage($currentMessage);
-		
+		if($shouldReturn)
+		{
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg))		
+			return $messages
+		}
 		#region:Step 1: Check if Automation Account with name "AzSKContinuousAssurance" exists in "AzSKRG", if no then display error message and quit, if yes proceed further
 		$stepCount++
 		$checkDescription = "Presence of CA Automation Account."
@@ -3238,7 +3254,7 @@ class CCAutomation: AzCommandBase
 
 			#create new SP
 			$this.PublishCustomMessage("Creating new service principal (SPN) for the AAD application. This will be used as the runtime account for AzSK CA")
-			New-AzADServicePrincipal -ApplicationId $aadApplication.ApplicationId -ErrorAction Stop | Out-Null   
+			New-AzADServicePrincipal -ApplicationId $aadApplication.ApplicationId -SkipAssignment -ErrorAction Stop | Out-Null   
 				
 			Start-Sleep -Seconds 30                         
 		}

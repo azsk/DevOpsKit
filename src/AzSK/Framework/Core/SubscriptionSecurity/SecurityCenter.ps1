@@ -235,8 +235,11 @@ class SecurityCenter: AzSKRoot
 		return $null;
 	}
 
-	[void] CheckASCTierSettings()
+	[hashtable] CheckASCTierSettings()
 	{
+		[string[]] $ResourceASCTier = @();
+		[string[]] $resourceName = @();
+		[hashtable] $hashvalue = @{}
 		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
 		$validatedUri ="$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings/default?api-version=2017-08-01-preview"
 		$ascTierContentDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
@@ -251,26 +254,15 @@ class SecurityCenter: AzSKRoot
 
         foreach($resourceDetails in $ascTierResourceWiseDetails)
         {
-            if([Helpers]::CheckMember($resourceDetails,"name"))
+            if([Helpers]::CheckMember($resourceDetails,"properties.pricingTier"))
             {
-                if([Helpers]::CheckMember($resourceDetails,"properties.pricingTier"))
-                {
-                    if($resourceDetails.name -eq 'VirtualMachines'){
-                        $this.VMASCTier = $resourceDetails.properties.pricingTier
-                    }
-                    elseif($resourceDetails.name -eq 'SqlServers'){
-                        $this.SQLASCTier = $resourceDetails.properties.pricingTier
-                    }
-                    elseif($resourceDetails.name -eq 'AppServices'){
-                        $this.AppSvcASCTier = $resourceDetails.properties.pricingTier
-                    }
-                    elseif($resourceDetails.name -eq 'StorageAccounts'){
-                        $this.StorageASCTier = $resourceDetails.properties.pricingTier
-                    }
-                }
+				$resourceName = $resourceDetails.name
+				$ResourceASCTier = $resourceDetails.properties.pricingTier
+				$hashvalue.Add($resourceName,$ResourceASCTier)
             }
-        }   
-
+            
+		}  
+		return $hashvalue
 	}
 	
 	[MessageData[]] SetSecurityPolicySettings()
@@ -285,10 +277,39 @@ class SecurityCenter: AzSKRoot
 			$configuredPolicyObject = $this.PolicyObject.policySettings.properties.parameters;	
 
 			$this.UpdatePolicyObject();
-			
+			$policyLocation = $null
+
+			#Get existing Policysetting to check if Location parameter is available (since policies set via Portal have an extra Location parameter)
+            if( ([FeatureFlightingManager]::GetFeatureStatus("AddPolicyAssignmentsLocation","*"))) {
+				try{
+					$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments$([SecurityCenterHelper]::ApiVersionLatest)";
+					$existingsettings = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $policySettingsUri, $null )
+					$scInitiative = [ConfigurationManager]::GetAzSKConfigData().AzSKSecurityCenterInitiativeName
+
+					foreach ($setting in $existingsettings) {
+						if($setting.properties.policyDefinitionId -match $scInitiative){
+							if([Helpers]::CheckMember($setting,'Location')) {
+								$policyLocation = $setting.Location
+							}
+						}
+					}
+				}
+				catch{
+					#eat exception, do not break existing flow
+				}
+			}
+
 			$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments/SecurityCenterBuiltIn$([SecurityCenterHelper]::ApiVersionLatest)";
 			$body = $this.PolicyObject.policySettings | ConvertTo-Json -Depth 10
 			$body = $body.Replace("{0}",$this.SubscriptionContext.SubscriptionId) | ConvertFrom-Json;
+
+			#If Location parameter is present in policy then append the property in the request body
+            if( ([FeatureFlightingManager]::GetFeatureStatus("AddPolicyAssignmentsLocation","*"))) {
+				if ($null -ne $policyLocation) {
+					$body | Add-Member -Name "Location" -value $policyLocation -MemberType NoteProperty
+				}
+			}
+			
 		  	[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
 
 			if($null -ne $this.CurrentPolicyObject)
@@ -325,6 +346,15 @@ class SecurityCenter: AzSKRoot
 						$body | Add-Member -NotePropertyName type -NotePropertyValue $_.ResourceType
 						$body | Add-Member -NotePropertyName name -NotePropertyValue $_.Name
 						$body | Add-Member -NotePropertyName properties -NotePropertyValue $_.properties
+
+						#If Location parameter is present in policy then append the property in the request body
+						if( ([FeatureFlightingManager]::GetFeatureStatus("AddPolicyAssignmentsLocation","*"))) {
+							if($body.properties.policyDefinitionId -match $scInitiative) {
+								if ($null -ne $policyLocation) {
+									$body | Add-Member -NotePropertyName Location -NotePropertyValue $policyLocation
+								}
+							}
+						}
 
 						[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
 					}
@@ -608,4 +638,21 @@ class SecurityCenter: AzSKRoot
 	
 	 	return $MisConfiguredOptionalPolicies;		
 	}	
+
+	# Get SecurtiySolution details for the subscription
+	[PSObject[]] GetASCSecuritySolutionsDetails()
+	{
+		$SecuritySolutionsDetails = @();
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
+		$securitySolutionsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/securitySolutions?api-version=2015-06-01-preview";
+		try
+		{
+			$SecuritySolutionsDetails += [WebRequestHelper]::InvokeWebRequest("Get", $securitySolutionsUri, $null);
+		}
+		catch
+		{
+			#eat exception, do not break existing flow
+		}
+		return $SecuritySolutionsDetails;
+	}
 }

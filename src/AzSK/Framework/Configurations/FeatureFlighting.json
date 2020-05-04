@@ -11,6 +11,35 @@
       "IsEnabled": false      
     },
     {
+      "Name": "CheckMissingAzurePolicyDefinition",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": false
+    },
+    {
+      "Name": "EnableSetupOfAzurePolicyInitiative",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": false
+    },
+    {
+      "Name": "EnableSetupOfCustomPolicyDefinitions",
+      "Description": "",
+      "Sources": [
+        "*"
+      ],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": false
+    },
+    {
       "Name": "IsSetAzStorageBlobAvailable",
       "Description" : "",
       "Sources" : ["*"],
@@ -219,15 +248,6 @@
       "IsEnabled": true
     },
     {
-      "Name": "AllowCustomDefinitionsForPolicyScan",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": false
-    },
-    {
       "Name": "PreventAttestationStateDrift",
       "Description": "",
       "Sources": ["*"],
@@ -238,6 +258,24 @@
     },
     {
       "Name": "EnableVMExtensionMetadataCapture",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+    {
+      "Name": "EnableSecuritySolutionsDataCapture",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+    {
+      "Name": "AddPolicyAssignmentsLocation",
       "Description": "",
       "Sources": ["*"],
       "EnabledForSubs": [],

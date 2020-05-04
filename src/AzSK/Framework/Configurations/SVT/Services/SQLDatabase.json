@@ -62,7 +62,7 @@
       "Automated": "Yes",
       "MethodName": "CheckSqlServerThreatDetection",
       "Rationale": "Enabling threat detection helps generate alerts about suspicious activity that might indicate attacks such as SQL Injection, login from a new location, unusual usage patterns and related attacks in a timely manner.",
-      "Recommendation": "First run command 'Set-AzSqlServerAudit -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountResourceId '{StorageAccountResourceId}' -BlobStorageTargetState 'Enabled' -RetentionInDays 365'.Refer: https://docs.microsoft.com/en-us/powershell/module/az.sql/set-azsqlserveraudit. Then run command 'Update-AzSqlServerAdvancedThreatProtectionSettings -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountName '{StorageAccountName}' -EmailAdmins `$true -ExcludedDetectionType 'None''.",
+      "Recommendation": "First run command 'Set-AzSqlServerAudit -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountResourceId '{StorageAccountResourceId}' -BlobStorageTargetState 'Enabled' -RetentionInDays 365'.Refer: https://docs.microsoft.com/en-us/powershell/module/az.sql/set-azsqlserveraudit. Then run command 'Update-AzSqlServerAdvancedThreatProtectionSetting -ResourceGroupName '{ResourceGroupName}' -ServerName '{ServerName}' -StorageAccountName '{StorageAccountName}' -EmailAdmins `$true -ExcludedDetectionType 'None''.",
       "Tags": [
         "SDL",
         "TCP",
@@ -96,7 +96,8 @@
         "TCP",
         "Manual",
         "AuthZ",
-        "SqlDatabase"
+        "SqlDatabase",
+        "NetSec"
       ],
       "Enabled": true
     },
@@ -165,7 +166,8 @@
         "Best Practice",
         "Automated",
         "AuthZ",
-        "SOX"
+        "SOX",
+        "NetSec"
       ],
       "Enabled": true
     },
@@ -244,7 +246,8 @@
         "Best Practice",
         "Automated",
         "AuthZ",
-        "SOX"
+        "SOX",
+        "NetSec"
       ],
       "Enabled": true
     }

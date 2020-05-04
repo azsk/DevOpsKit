@@ -166,7 +166,12 @@
         "ResourceType": "VirtualMachine",
         "ControlIds": [
           "Azure_VirtualMachine_DP_Enable_Disk_Encryption",
-          "Azure_VirtualMachine_NetSec_Justify_PublicIPs"
+          "Azure_VirtualMachine_NetSec_Justify_PublicIPs",
+          "Azure_VirtualMachine_SI_Deploy_GuestConfig_Extension",
+          "Azure_VirtualMachine_SI_GuestConfig_Policy_Health",
+          "Azure_VirtualMachine_SI_Enable_Antimalware",
+          "Azure_VirtualMachine_SI_Enable_Vuln_Solution",
+          "Azure_VirtualMachine_SI_Deploy_Required_Extensions"
         ]
       },
       {
@@ -193,26 +198,18 @@
       "Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG",
       "Azure_Subscription_Config_ASC_Security_Policy",
       "Azure_Subscription_Config_ASC_Enable_AutoProvisioning",
-      "Azure_Subscription_Config_ASC_Setup_SecurityContacts"
+      "Azure_Subscription_Config_ASC_Setup_SecurityContacts",
+      "Azure_Subscription_Config_ASC_Tier"
     ],
     "ExpiryInDays": 2,
     "SupportedSources": [ "NA" ]
   },
   "PreviewBaselineControls": {
     "ResourceTypeControlIdMappingList": [
-      {
-        "ResourceType": "VirtualMachine",
-        "ControlIds": [
-          "Azure_VirtualMachine_SI_Deploy_GuestConfig_Extension",
-          "Azure_VirtualMachine_SI_GuestConfig_Policy_Health",
-          "Azure_VirtualMachine_SI_Enable_Antimalware",
-          "Azure_VirtualMachine_SI_Enable_Vuln_Solution",
-          "Azure_VirtualMachine_SI_Deploy_Required_Extensions"
-        ]
-      }
+     
     ],
     "SubscriptionControlIdList": [
-      "Azure_Subscription_Config_ASC_Tier"
+
     ],
     "ExpiryInDays": 2,
     "SupportedSources": [ "NA" ]

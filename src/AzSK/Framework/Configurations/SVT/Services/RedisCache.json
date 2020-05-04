@@ -55,7 +55,8 @@
         "Best Practice",
         "Automated",
         "AuthZ",
-        "RedisCache"
+        "RedisCache",
+        "NetSec"
       ],
       "Enabled": true
     },

@@ -478,15 +478,11 @@
       "Low": 90
     }
   },
+
   "SubscriptionCore": {
     "EnableV1AlertFailure": false,
     "ASCTier": ["Standard"],
-    "ResourceTypeASCTier":{
-      "VirtualMachines" : ["Standard"],
-      "SqlServers" : ["Standard"],
-      "AppServices" : ["Standard"],
-      "StorageAccounts" : ["Standard"]
-    },
+    "Standard" : ["VirtualMachines","SqlServers","AppServices","StorageAccounts"],
     "credHighTH": 7,
     "credModerateTH": 30,
     "NonADIdentitiesPatterns" : ["(.)*#ext#@(.)*.onmicrosoft.com"],
@@ -519,6 +515,7 @@
       "Low": 90
     }
   },
+  "DefaultAttestationPeriodForExemptControl": 180,
   "ResultComplianceInDays": {
     "DefaultControls": 3,
     "OwnerAccessControls": 90

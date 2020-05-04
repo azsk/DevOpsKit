@@ -54,7 +54,8 @@
           "TCP",
           "Manual",
           "AuthZ",
-          "HDInsight"
+          "HDInsight",
+          "NetSec"
         ],
         "Enabled": true
       },
@@ -126,7 +127,8 @@
            "TCP",
            "Manual",
            "AuthZ",
-           "HDInsight"
+           "HDInsight",
+           "NetSec"
         ],
         "Enabled": true
      },
