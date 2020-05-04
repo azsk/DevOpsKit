@@ -200,14 +200,13 @@ class ControlStateExtension
 			$fetchIndexFile = $true
 		}
 
-		if( ([FeatureFlightingManager]::GetFeatureStatus("EnableScanAfterAttestation","*"))) { 
-			if($this.IsControlStateIndexerPresent ){ 
+		if($this.IsControlStateIndexerPresent ){ 
 				$fetchIndexFile = $true
 			}
 			else{
 				$fetchIndexFile = $false
 			}
-		}
+		
 		
 		#Cache code: Fetch index file only if index file is null and it is present on storage blob
 		#if(-not $this.ControlStateIndexer -and $this.IsControlStateIndexerPresent)
