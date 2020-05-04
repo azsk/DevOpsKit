@@ -263,6 +263,25 @@ class SVTControlAttestation
 
 	[ControlState] ComputeEffectiveControlStateInBulkMode([ControlState] $controlState, [string] $ControlSeverity, [bool] $isSubscriptionControl, [SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
+        #to make controlId mandatory for approved exception
+                	
+                if($controlState.AttestationStatus -eq "ApprovedException")
+                {
+                    while($null -eq $controlState.ControlId)
+					{
+                        Write-Host "Please provide a controlId"
+                        Write-Host "ControlId:"
+						$ControlIds = Read-Host "ControlId"
+						try
+						{
+							$controlState.ControlId = $ControlIds;
+						}
+						catch
+						{ 
+							# If the justification text
+                        }
+                     }
+                   }	
 		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan		
 		Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"
 		if(-not $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess)
@@ -289,7 +308,9 @@ class SVTControlAttestation
 				}
 				Write-Host "Existing attestation details:" -ForegroundColor Cyan
 				Write-Host "Attestation Status: $tempAttestationStatus`nVerificationResult: $($controlState.EffectiveVerificationResult)`nAttested By       : $($controlState.State.AttestedBy)`nJustification     : $($controlState.State.Justification)`n"
-			}			
+			}
+
+            			
 			#Clears the control state. This overrides the previous attested controlstate.
 			$controlState.State = $null;
 			$controlState.EffectiveVerificationResult = $controlState.ActualVerificationResult
