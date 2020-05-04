@@ -660,7 +660,7 @@ class PIM: AzCommandBase {
                     $subjectId +=$users.Id
                 }
                 catch {
-                    $this.PublishCustomMessage("Unable to fetch details of the principal name provided.", [MessageType]::Warning)
+                    $this.PublishCustomMessage("Unable to find provided UPN. If it corresponds to an AD group, use Display name instead of principal name", [MessageType]::Warning)
                     return;
                 }
                 }
