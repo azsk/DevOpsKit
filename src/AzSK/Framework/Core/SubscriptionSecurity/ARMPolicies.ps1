@@ -719,16 +719,11 @@ class ARMPolicy: AzCommandBase
 					$tassignment = Get-AzPolicyAssignment -PolicyDefinitionId $defn.policyDefinitionId  -ErrorAction SilentlyContinue
 
 					# Checking if the policy is actually enforced (i.e. enforcement mode is 'Default' instead of 'DoNotEnforce')
-					if($null -ne $tassignment -and [Helpers]::CheckMember($tassignment,"Properties.enforcementMode"))
+					if($null -eq $tassignment -or -not ([Helpers]::CheckMember($tassignment,"Properties.enforcementMode")) -or ($tassignment.Properties.enforcementMode -ne "Default") )
 					{
-						if($tassignment.Properties.enforcementMode -ne "Default")
-						{
-							$NonCompliantObjects += ("Policy :[" + $defn.Name + "]");
-						}
+						$NonCompliantObjects += ("Policy :[" + $defn.Name + "]");
 					}
-					else{
-							$NonCompliantObjects += ("Policy :[" + $defn.Name + "]");
-					}
+
 				}																		
 			}	
 		}
