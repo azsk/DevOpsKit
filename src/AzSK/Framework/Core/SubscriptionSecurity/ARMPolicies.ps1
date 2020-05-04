@@ -717,9 +717,17 @@ class ARMPolicy: AzCommandBase
 				$RequiredPolicyDefns | ForEach-Object {
 					$defn = $_;
 					$tassignment = Get-AzPolicyAssignment -PolicyDefinitionId $defn.policyDefinitionId  -ErrorAction SilentlyContinue
-					if($null -eq $tassignment)
+
+					# Checking if the policy is actually enforced (i.e. enforcement mode is 'Default' instead of 'DoNotEnforce')
+					if($null -ne $tassignment -and [Helpers]::CheckMember($tassignment,"Properties.enforcementMode"))
 					{
-						$NonCompliantObjects += ("Policy :[" + $defn.Name + "]");
+						if($tassignment.Properties.enforcementMode -ne "Default")
+						{
+							$NonCompliantObjects += ("Policy :[" + $defn.Name + "]");
+						}
+					}
+					else{
+							$NonCompliantObjects += ("Policy :[" + $defn.Name + "]");
 					}
 				}																		
 			}	
