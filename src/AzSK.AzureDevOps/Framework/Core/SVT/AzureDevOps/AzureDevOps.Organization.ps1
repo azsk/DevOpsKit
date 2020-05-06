@@ -208,10 +208,10 @@ class Organization: ADOSVTBase
         
         if(($responseObj | Measure-Object).Count -gt 0 )
         {
-            $controlResult.AddMessage("No. of extensions installed:" + $responseObj.Count)
-            $extensionList =  $responseObj | Select-Object extensionName,publisherName,version 
-            $whiteListedExtensions = $extensionList | Where-Object {$_.publisherName -in $this.ControlSettings.Organization.WhitelistedExtensionPublishers }
-            $NonwhiteListedExtensions = $extensionList | Where-Object {$_.publisherName -notin $this.ControlSettings.Organization.WhitelistedExtensionPublishers }
+            $extensionList =  $responseObj | Select-Object extensionName,publisherName,version,flags  
+            $controlResult.AddMessage("No. of extensions installed:" + (($extensionList | Where-Object {$_.flags -notlike "*builtin*" }) | Measure-Object ).Count)
+            $whiteListedExtensions = $extensionList | Where-Object {$_.publisherName -in $this.ControlSettings.Organization.WhitelistedExtensionPublishers -and $_.flags -notlike "*builtin*" }
+            $NonwhiteListedExtensions = $extensionList | Where-Object {$_.publisherName -notin $this.ControlSettings.Organization.WhitelistedExtensionPublishers -and $_.flags -notlike "*builtin*" }
                 
             $controlResult.AddMessage([VerificationResult]::Verify, "Verify below installed extensions");  
             $controlResult.AddMessage("Whitelisted extensions (from trusted publisher)", $whiteListedExtensions);

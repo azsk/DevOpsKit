@@ -120,7 +120,7 @@ class SVTResourceResolver: AzSKRoot
                 Remove-Variable inputbody;
             }
             catch {
-                Write-Error 'Organization not found: Incorrect organization name or you do not have neccessary permission to access the organization.'
+                Write-Host 'Organization not found: Incorrect organization name or you do not have neccessary permission to access the organization.' -ForegroundColor Red
                 throw;
             }
            
@@ -160,8 +160,15 @@ class SVTResourceResolver: AzSKRoot
             $this.PublishCustomMessage("Getting project configurations...");
 
             $apiURL = "https://dev.azure.com/{0}/_apis/projects?api-version=4.1" -f $($this.SubscriptionContext.SubscriptionName);
-            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL) ;
-
+            $responseObj = "";
+            try
+            { 
+               $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL) ;
+            }
+            catch {
+                Write-Host 'Project not found: Incorrect organization or project name or you do not have neccessary permission to access the organization.' -ForegroundColor Red
+                throw;
+            }
             $projects = $responseObj  | Where-Object {  (($this.ProjectNames -contains $_.name) -or ($this.ProjectNames -eq "*"))  } #| ForEach-Object {
             
             $responseObj = $null;  
@@ -170,7 +177,7 @@ class SVTResourceResolver: AzSKRoot
             $nProj = $this.MaxObjectsToScan;
             if(!$projects)  
             {
-                Write-Warning 'No project found to perform the scan.';
+                Write-Host 'No project found to perform the scan.' -ForegroundColor Red
             }
            foreach ($thisProj in $projects)
            {
