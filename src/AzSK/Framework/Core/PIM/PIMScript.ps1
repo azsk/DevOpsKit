@@ -1300,7 +1300,7 @@ class PIM: AzCommandBase {
                 $RequireJustificationOnActivation = $RoleSettingsRawInput.RequireJustificationOnActivation
             }
             if( [string]::IsNullOrEmpty($RequireMFAOnActivation)){
-                $RequireJustificationOnActivation = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'MfaRule'}).setting | ConvertFrom-Json).mfaRequired
+                $RequireMFAOnActivation = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'MfaRule'}).setting | ConvertFrom-Json).mfaRequired
             }
 
             $MaximumActivationDuration = $null;
@@ -1327,7 +1327,7 @@ class PIM: AzCommandBase {
                             $ExpireEligibleAssignmentsAfter =$RoleSettingsRawInput.ExpireEligibleAssignmentsAfter*$ExpireEligibleAssignmentsAfterConstant
                     }
                     $ExpireActiveAssignmentsAfter = $null;
-                    if( [string]::IsNullOrEmpty($RoleSettingsRawInput.ExpireActiveAssignmentsAfter)){
+                    if($RoleSettingsRawInput.ExpireActiveAssignmentsAfter -eq -1){ 
                         $ExpireActiveAssignmentsAfter = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes
                     }
                     else{
@@ -1399,8 +1399,8 @@ class PIM: AzCommandBase {
                         
                     }
                     
-                  }
-               }
+                }
+            }
         #  5) Create json body for patch request  
                $body=""
                $updateUrl=""
