@@ -224,7 +224,12 @@ function Get-AzSKAzureServicesSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("aex")]
-		$AddException
+		$AddException,
+
+		[Datetime]
+		[Parameter(Mandatory = $false)]
+		[Alias("aee")]
+		$ApprovedExceptionExpiryDate
     )
 
 	Begin
@@ -262,7 +267,8 @@ function Get-AzSKAzureServicesSecurityStatus
 				$attestationOptions.AttestationStatus = $AttestationStatus
 				$attestationOptions.IsBulkClearModeOn = $BulkClear
 				$attestationOptions.IsExemptModeOn = $AddException
-				$secStatus.AttestationOptions = $attestationOptions;		
+				$secStatus.AttestationOptions = $attestationOptions;
+				$attestationOptions.ApprovedExceptionExpiryDate =  $ApprovedExceptionExpiryDate		
 
 				return $secStatus.EvaluateControlStatus();
 			}    
@@ -372,7 +378,7 @@ function Get-AzSKSubscriptionSecurityStatus
         [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Attester must select one of the attestation reasons (NotAnIssue, WillNotFix, WillFixLater, NotApplicable, StateConfirmed(if valid for the control))")]
 		[Alias("as")]
 		$AttestationStatus = [AttestationStatus]::None,
-			
+		
 		[switch]
 		[Parameter(Mandatory = $false)]
 		[Alias("dnof")]
@@ -417,7 +423,12 @@ function Get-AzSKSubscriptionSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("aex")]
-		$AddException
+		$AddException,
+
+		[Datetime]
+		[Parameter(Mandatory = $false)]
+		[Alias("aee")]
+		$ApprovedExceptionExpiryDate
 	)
 	Begin
 	{
@@ -446,6 +457,7 @@ function Get-AzSKSubscriptionSecurityStatus
 				$attestationOptions.AttestationStatus = $AttestationStatus
 				$attestationOptions.IsBulkClearModeOn = $BulkClear
 				$attestationOptions.IsExemptModeOn = $AddException
+				$attestationOptions.ApprovedExceptionExpiryDate =  $ApprovedExceptionExpiryDate
 				$sscore.AttestationOptions = $attestationOptions;				
 				
 				$sscore.GenerateFixScript = $GenerateFixScript
@@ -811,7 +823,12 @@ function Get-AzSKControlsStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("aex")]
-		$AddException
+		$AddException,
+
+		[Datetime]
+		[Parameter(Mandatory = $false)]
+		[Alias("aee")]
+		$ApprovedExceptionExpiryDate
     )
 	Begin
 	{
@@ -846,6 +863,7 @@ function Get-AzSKControlsStatus
 				$attestationOptions.AttestationStatus = $AttestationStatus
 				$attestationOptions.IsBulkClearModeOn = $BulkClear
 				$attestationOptions.IsExemptModeOn = $AddException
+				$attestationOptions.ApprovedExceptionExpiryDate =  $ApprovedExceptionExpiryDate
 				$controlReport.AttestationOptions = $attestationOptions;	
 
 				return $controlReport.EvaluateControlStatus();
