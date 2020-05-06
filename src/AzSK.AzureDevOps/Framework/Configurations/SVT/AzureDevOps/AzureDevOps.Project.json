@@ -16,7 +16,7 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthN"
+        "AuthZ"
       ],
       "Enabled": true
     },
@@ -38,7 +38,7 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Project_AuthZ_Justify_Group_Members",
+        "ControlID": "AzureDevOps_Project_AuthZ_Review_Group_Members",
         "Description": "Justify all identities that are granted with member access on group and teams.",
         "Id": "Project130",
         "ControlSeverity": "High",
@@ -55,7 +55,7 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Project_Disable_Anonymous_Access_To_Badges",
+        "ControlID": "AzureDevOps_Project_DP_Disable_Anonymous_Access_To_Badges",
         "Description": "Anonymous access to status badge API for parallel pipelines should be disabled.",
         "Id": "Project140",
         "ControlSeverity": "Low",
@@ -66,13 +66,13 @@
         "Tags": [
           "SDL",
           "TCP",
-          "Manual",
-          "SI"
+          "Automated",
+          "DP"
         ],
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Project_SI_Limit_Variables_Settable_At_Queue_Time",
+        "ControlID": "AzureDevOps_Project_DP_Limit_Variables_Settable_At_Queue_Time",
         "Description": "Do not permit all pipeline variables to be settable by default.",
         "Id": "Project150",
         "ControlSeverity": "Medium",
@@ -83,8 +83,8 @@
         "Tags": [
           "SDL",
           "TCP",
-          "Manual",
-          "SI"
+          "Automated",
+          "DP"
         ],
         "Enabled": true
       },
@@ -95,18 +95,18 @@
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckJobAuthnScope",
-        "Rationale": "TBD",
-        "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current scope.'.",
+        "Rationale": "This ensures pipeline execution happens using a token scoped to the current project abiding with principle of least privilege.",
+        "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current project.'.",
         "Tags": [
           "SDL",
           "TCP",
-          "Manual",
-          "SI"
+          "Automated",
+          "AuthZ"
         ],
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Project_AuthZ_Publish_Metadata_From_Pipeline",
+        "ControlID": "AzureDevOps_Project_DP_Publish_Metadata_From_Pipeline",
         "Description": "Consider using artifact evaluation for fine-grained control over pipeline stages",
         "Id": "Project170",
         "ControlSeverity": "Medium",
@@ -117,8 +117,8 @@
         "Tags": [
           "SDL",
           "TCP",
-          "Manual",
-          "SI"
+          "Automated",
+          "DP"
         ],
         "Enabled": true
       }

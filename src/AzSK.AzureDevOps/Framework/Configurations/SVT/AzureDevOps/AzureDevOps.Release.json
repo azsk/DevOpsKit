@@ -15,7 +15,7 @@
     "Tags": [
       "SDL",
       "TCP",
-      "Manual",
+      "Automated",
       "AuthZ",
       "RBAC"
     ],
@@ -50,7 +50,7 @@
     "Tags": [
       "SDL",
       "Best Practice",
-      "Manual",
+      "Automated",
       "SI"
     ],
     "Enabled": true
@@ -127,7 +127,7 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_Release_Review_External_Sources",
+    "ControlID": "AzureDevOps_Release_SI_Review_External_Sources",
     "Description": "Ensure that release pipelines consume artifacts from trustworthy repos.",
     "Id": "Release180",
     "ControlSeverity": "Medium",
@@ -138,7 +138,7 @@
     "Tags": [
       "SDL",
       "TCP",
-      "Manual",
+      "Automated",
       "SI"
     ],
     "Enabled": true

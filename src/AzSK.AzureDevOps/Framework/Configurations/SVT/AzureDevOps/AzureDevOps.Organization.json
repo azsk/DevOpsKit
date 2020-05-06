@@ -106,7 +106,7 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Extension_Managers",
+        "ControlID": "AzureDevOps_Organization_AuthZ_Review_Extension_Managers",
         "Description": "Review the list of users who have permission to manage extensions",
         "Id": "Organization170",
         "ControlSeverity": "High",
@@ -134,7 +134,7 @@
         "Tags": [
           "SDL",
           "TCP",
-          "Manual",
+          "Automated",
           "SI"
         ],
         "Enabled": true
@@ -174,7 +174,7 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Group_Members",
+        "ControlID": "AzureDevOps_Organization_AuthZ_Review_Group_Members",
         "Description": "Justify all identities that are granted with member access on groups and teams.",
         "Id": "Organization210",
         "ControlSeverity": "High",
@@ -220,7 +220,7 @@
           "SDL",
           "TCP",
           "Manual",
-          "Authz"
+          "AuthZ"
         ],
         "Enabled": true
       },
@@ -237,29 +237,29 @@
           "SDL",
           "TCP",
           "Manual",
-          "Authz"
+          "AuthZ"
         ],
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_Review_Project_Collection_Accounts",
+        "ControlID": "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
         "Description": "Minimize and reviews service accounts that are members of the Project Collection Service Accounts group.",
         "Id": "Organization250",
         "ControlSeverity": "High",
         "Automated": "Yes",
         "MethodName": "CheckProCollSerAcc",
-        "Rationale": "ADO has a misleadingly group called Project Collection Service Accounts. By inheritance, Project Collection Service Accounts are also Project Collection Administrators. It is found that multiple build agent user accounts across Microsoft were members of Project Collection Service Accounts. An adversary that executes code in a pipeline assigned to one of these build agents can take over the entire ADO organization",
+        "Rationale": "ADO has a misleading group called Project Collection Service Accounts. By inheritance, Project Collection Service Accounts are also Project Collection Administrators. It is found that multiple build agent user accounts across Microsoft were members of Project Collection Service Accounts. An adversary that executes code in a pipeline assigned to one of these build agents can take over the entire ADO organization",
         "Recommendation": "Go to Organization Settings --> Security --> Permission --> Project Collection Service Accounts --> Validate all the members.",
         "Tags": [
           "SDL",
           "TCP",
-          "Manual",
-          "SI"
+          "Automated",
+          "AuthZ"
         ],
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_Enable_App_Access_OAuth",
+        "ControlID": "AzureDevOps_Organization_AuthN_Enable_App_Access_OAuth",
         "Description": "OAuth should be enabled for third party application access",
         "Id": "Organization260",
         "ControlSeverity": "Medium",
@@ -270,30 +270,30 @@
         "Tags": [
           "SDL",
           "TCP",
-          "Manual",
-          "SI"
+          "Automated",
+          "AuthN"
         ],
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_Review_Auto_Injected_Extensions",
-        "Description": "Auto-injected pipeline tasks have features/vulnerabilities that make them code execution sinks.",
+        "ControlID": "AzureDevOps_Organization_SI_Review_Auto_Injected_Extensions",
+        "Description": "Set of auto-injected pipeline tasks should be carefully scrutinized.",
         "Id": "Organization270",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "AutoInjectedExtension",
-        "Rationale": "ADAuto-injected pipeline tasks have features/vulnerabilities that make them code execution sinks.",
+        "Rationale": "Auto-injected pipeline tasks will run in every pipeline. If an attacker can change/influence the task logic/code, it can have catastrophic consequences for the entire organization.",
         "Recommendation": "Go to Organization Settings --> Extensions -> Verify the auto-injected extensions.",
         "Tags": [
           "SDL",
           "TCP",
-          "Manual",
+          "Automated",
           "SI"
         ],
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_Enable_SSH_Auth",
+        "ControlID": "AzureDevOps_Organization_AuthN_Enable_SSH_Auth",
         "Description": "SSH authentication should be enabled for Application connection policies",
         "Id": "Organization280",
         "ControlSeverity": "Medium",
@@ -304,13 +304,13 @@
         "Tags": [
           "SDL",
           "TCP",
-          "Manual",
-          "SI"
+          "Automated",
+          "AuthN"
         ],
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_Verify_Enterprise_Access_To_Projects",
+        "ControlID": "AzureDevOps_Organization_AuthZ_Verify_Enterprise_Access_To_Projects",
         "Description": "Enterprise access to projects should be verified.",
         "Id": "Organization290",
         "ControlSeverity": "Medium",
@@ -321,13 +321,13 @@
         "Tags": [
           "SDL",
           "TCP",
-          "Manual",
-          "SI"
+          "Automated",
+          "AuthZ"
         ],
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_Enable_AAD_Conditional_Access_Policy",
+        "ControlID": "AzureDevOps_Organization_AuthZ_Enable_AAD_Conditional_Access_Policy",
         "Description": "AAD Conditional Access Policy should be enabled.",
         "Id": "Organization300",
         "ControlSeverity": "Medium",
@@ -338,13 +338,13 @@
         "Tags": [
           "SDL",
           "TCP",
-          "Manual",
-          "SI"
+          "Automated",
+          "AuthZ"
         ],
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_Disable_Anonymous_Access_To_Badges",
+        "ControlID": "AzureDevOps_Organization_DP_Disable_Anonymous_Access_To_Badges",
         "Description": "Anonymous access to status badge API for parallel pipelines should be disabled.",
         "Id": "Organization310",
         "ControlSeverity": "Medium",
@@ -355,13 +355,13 @@
         "Tags": [
           "SDL",
           "TCP",
-          "Manual",
-          "SI"
+          "Automated",
+          "DP"
         ],
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_Limit_Variables_Settable_At_Queue_Time",
+        "ControlID": "AzureDevOps_Organization_DP_Limit_Variables_Settable_At_Queue_Time",
         "Description": "Only those variables explicitly marked settable at queue time can be set.",
         "Id": "Organization320",
         "ControlSeverity": "Medium",
@@ -372,25 +372,25 @@
         "Tags": [
           "SDL",
           "TCP",
-          "Manual",
-          "SI"
+          "Automated",
+          "DP"
         ],
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_Limit_Job_Authorization_Scope_To_Current_Project",
+        "ControlID": "AzureDevOps_Organization_AuthZ_Limit_Job_Authorization_Scope_To_Current_Project",
         "Description": "Scope of access of all pipelines should be restricted to current project.",
         "Id": "Organization330",
         "ControlSeverity": "Medium",
         "Automated": "Yes",
         "MethodName": "CheckJobAuthnScope",
-        "Rationale": "TBD",
-        "Recommendation": "Go to Organization Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current scope.'.",
+        "Rationale": "This ensures pipeline execution happens using a token scoped to the current project abiding with principle of least privilege.",
+        "Recommendation": "Go to Organization Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current project.'.",
         "Tags": [
           "SDL",
           "TCP",
-          "Manual",
-          "SI"
+          "Automated",
+          "AuthZ"
         ],
         "Enabled": true
       },
@@ -407,7 +407,6 @@
           "SDL",
           "TCP",
           "Manual",
-          "AuthZ",
           "Audit"
         ],
         "Enabled": true

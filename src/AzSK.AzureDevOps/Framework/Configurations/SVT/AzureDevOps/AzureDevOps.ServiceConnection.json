@@ -15,8 +15,8 @@
     "Tags": [
       "SDL",
       "TCP",
-      "Manual",
-      "AuthZ",
+      "Automated",
+      "AuthN",
       "RBAC"
     ],
     "Enabled": true
@@ -32,7 +32,7 @@
     "Recommendation": "Make sure you add SPN at the specific permission scope and role required for your scenario. For example, sometimes 'Contributor' access at 'Resource Group' scope might work. Exact permission will vary based on your use case. If you want to remove the SPN, run command Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
     "Tags": [
       "SDL",
-      "Manual",
+      "Automated",
       "TCP",
       "AuthZ"       
     ],
@@ -73,7 +73,7 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_ServiceConnection_Authz_Dont_Use_Classic_Connections",
+    "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections",
     "Description": "Do not use any classic resources on a subscription",
     "Id": "ServiceConnection150",
     "ControlSeverity": "High",
@@ -84,8 +84,8 @@
     "Tags": [
       "SDL",
       "TCP",
-      "Manual",
-      "Authz"
+      "Automated",
+      "AuthZ"
     ],
     "Enabled": true
   },
@@ -173,7 +173,7 @@
     "Tags": [
       "SDL",
       "TCP",
-      "Manual",
+      "Automated",
       "AuthZ"
     ],
     "Enabled": true

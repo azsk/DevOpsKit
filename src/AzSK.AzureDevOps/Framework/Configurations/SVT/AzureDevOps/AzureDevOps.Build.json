@@ -33,8 +33,8 @@
     "Tags": [
       "SDL",
       "TCP",
-      "Manual",
-      "Audit"       
+      "Automated",
+      "DP"       
     ],
     "Enabled": true
   },
@@ -50,7 +50,7 @@
     "Tags": [
       "SDL",
       "TCP",
-      "Automated",
+      "Manual",
       "Config"
     ],
     "Enabled": true
@@ -84,7 +84,7 @@
     "Tags": [
       "SDL",
       "Best Practice",
-      "Manual",
+      "Automated",
       "SI"
     ],
     "Enabled": true
@@ -108,7 +108,7 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_Build_SI_Review_Settable_At_Queue_Time",
+    "ControlID": "AzureDevOps_Build_DP_Review_Settable_At_Queue_Time",
     "Description": "Pipeline variables marked settable at queue time should be carefully reviewed.",
     "Id": "Build170",
     "ControlSeverity": "High",
@@ -120,13 +120,12 @@
       "SDL",
       "TCP",
       "Automated",
-      "AuthZ",
-      "RBAC"
+      "DP"
     ],
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_Build_Check_External_Source_Self_Hosted_Build",
+    "ControlID": "AzureDevOps_Build_SI_Check_External_Source_Self_Hosted_Build",
     "Description": "Building code from untrusted external sources is effectively allowing external parties to execute arbitrary code on your computer.",
     "Id": "Build180",
     "ControlSeverity": "High",
@@ -138,8 +137,7 @@
       "SDL",
       "TCP",
       "Automated",
-      "AuthZ",
-      "RBAC"
+      "SI"
     ],
     "Enabled": true
   }
