@@ -90,7 +90,11 @@
           "ExtensionType": "MicrosoftMonitoringAgent",
           "Publisher": "Microsoft.EnterpriseCloud.Monitoring"
         }
-      ]
+      ],
+      "RequiredGuestConfigPolicies":{
+        "RequiredPolicyDefinitionIds" : [],
+        "RequiredPolicySetDefinitionIds" : []
+      }
     },
     "Linux": {
       "SupportedSkuList": [],
@@ -138,7 +142,11 @@
           "ExtensionType": "OmsAgentForLinux",
           "Publisher": "Microsoft.EnterpriseCloud.Monitoring"
         }
-      ]
+      ],
+      "RequiredGuestConfigPolicies":{
+        "RequiredPolicyDefinitionIds" : [],
+        "RequiredPolicySetDefinitionIds" : []
+      }
     },
     "Windows_OS_Baseline_Ids": [],
     "ASCPolicies": {

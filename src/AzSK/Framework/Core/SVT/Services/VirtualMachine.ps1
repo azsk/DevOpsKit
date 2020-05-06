@@ -555,62 +555,95 @@ class VirtualMachine: AzSVTBase
 	hidden [ControlResult] CheckGuestConfigPolicyStatus([ControlResult] $controlResult)
 	{
 		$controlStatus = [VerificationResult]::Failed
-		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl();
-		$AccessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
-		$header = "Bearer " + $AccessToken
-		$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
-		$propertiesToReplace = @{}
-		$propertiesToReplace.Add("httpapplicationroutingzonename", "_httpapplicationroutingzonename")
-		$policyAssignments = @();
-		try {
-				$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/providers/Microsoft.GuestConfiguration/guestConfigurationAssignments?api-version=2018-06-30-preview",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
-				$response = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
-				if($response -ne $null -and ($response|Measure-Object).Count -gt 0)
-				{
-					foreach($assignment in $response){
-						if([Helpers]::CheckMember($assignment, "name") -and [Helpers]::CheckMember($assignment, "properties.complianceStatus")){
-						$assignmentObject = "" | Select-Object "assignmentName", "complianceStatus" 
-						$assignmentObject.assignmentName = $assignment.name
-						$assignmentObject.complianceStatus = $assignment.properties.complianceStatus
-						$policyAssignments += $assignmentObject
+		$requiredGuestConfigPolicies = $this.VMControlSettings.RequiredGuestConfigPolicies
+
+		$requiredPolicyDefList = @()
+		$requiredPolicySetDefList = @()
+		$mandatoryPolicyAssignmentReq = $false
+		$mandatoryPolicySetAssignmentReq = $false
+		if([Helpers]::CheckMember($this.VMControlSettings.RequiredGuestConfigPolicies, "RequiredPolicyDefinitionIds")){
+			$mandatoryPolicyAssignmentReq = $true
+			$requiredGuestConfigPolicies.RequiredPolicyDefinitionIds | Foreach-Object {
+				$policyDefinitionId = $_
+				$policyDefStr = "(PolicyDefinitionId eq '/providers/microsoft.authorization/policydefinitions/$($policyDefinitionId)')"
+				$requiredPolicyDefList += $policyDefStr
+			}
+		}
+
+		if([Helpers]::CheckMember($this.VMControlSettings.RequiredGuestConfigPolicies, "RequiredPolicySetDefinitionIds")){
+			$mandatoryPolicySetAssignmentReq = $true
+			$requiredGuestConfigPolicies.RequiredPolicySetDefinitionIds | Foreach-Object {
+				$policyDefinitionSetId = $_
+				$policyDefStr = "(PolicySetDefinitionId eq '/providers/Microsoft.Authorization/policySetDefinitions/$($policyDefinitionSetId)')"
+				$requiredPolicySetDefList += $policyDefStr
+			}
+		}
+
+		$requiredPolicyList = $requiredPolicyDefList + $requiredPolicySetDefList
+		if(($requiredPolicyList| Measure-Object).Count -gt 0){
+			$filterQuery = $requiredPolicyList  -join " or "
+			$policyState = Get-AzPolicyState -ResourceId  $this.ResourceContext.ResourceId -Filter $filterQuery
+			if($policyState){
+				$missingPolicyAssignments = @()
+				$nonCompliantPolicies = @()
+				if($mandatoryPolicyAssignmentReq){
+					$requiredGuestConfigPolicies.RequiredPolicyDefinitionIds | ForEach-Object{
+						$currRequiredPolicyId = $_
+						$requiredPolicyStatus = @()
+						$requiredPolicyStatus += $policyState | Where-Object {$_.PolicyDefinitionId.EndsWith($currRequiredPolicyId)}
+						if($requiredPolicyStatus){
+							$nonCompliantPolicy = $requiredPolicyStatus | Where-Object {$_.IsCompliant -eq $false}
+							if($nonCompliantPolicy){
+								$nonCompliantPolicies += $nonCompliantPolicy | Select-Object PolicyDefinitionId, PolicyAssignmentId, PolicyAssignmentScope, PolicyDefinitionAction, IsCompliant
+							}
+						}else{
+							$missingPolicyAssignments += $_
 						}
-
 					}
 				}
-				if(($policyAssignments | Measure-Object).Count -gt 0){
-
-					$nonCompliantPolicyAssignment = $policyAssignments | Where-Object { $_.complianceStatus -ne "Compliant"}
-					if($null -ne $nonCompliantPolicyAssignment -and ( $nonCompliantPolicyAssignment | Measure-Object).Count -gt 0 ){
-						$controlStatus = [VerificationResult]::Failed
-						$controlResult.AddMessage("For following guest configuration assignment, compliance status is 'NonCompliant' or  'Pending'.");
-						$controlResult.AddMessage($nonCompliantPolicyAssignment);
-					}else{
-						$controlStatus = [VerificationResult]::Passed
-						$controlResult.AddMessage("For all guest configuration assignment, compliance status is 'Compliant'.");
-						$controlResult.AddMessage($policyAssignments);
-					}
-					
-				}else{
-					#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
-					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
-					$controlStatus = [VerificationResult]::Verify
-					$controlResult.AddMessage("No guest configuration policy assignment found.");
-				}
-			}
-			catch {
 				
-				if([Helpers]::CheckMember($_,"Exception.Message") -and $_.Exception.Message -imatch "404"){
-					$controlStatus = [VerificationResult]::Passed
-					$controlResult.AddMessage("No guest configuration policy assignment has been found for this resource.");
-				}else{
-					#Setting this property ensures that this control result wont be considered for the central telemetry. As control doesnt have the required permissions
-					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false; 
-					$controlStatus = [VerificationResult]::Verify
-					$controlResult.AddMessage("Not able to fetch guest configuration policy assignments details.");
+				if($mandatoryPolicySetAssignmentReq){
+					$requiredGuestConfigPolicies.RequiredPolicySetDefinitionIds  | ForEach-Object{
+						$currRequiredPolicySetId = $_
+						$requiredPolicyStatus = @()
+						$requiredPolicyStatus += $policyState | Where-Object {$_.PolicySetDefinitionId.EndsWith($currRequiredPolicySetId)}
+						if($requiredPolicyStatus){
+							$nonCompliantPolicy = $requiredPolicyStatus | Where-Object {$_.IsCompliant -eq $false}
+							if($nonCompliantPolicy){
+								$nonCompliantPolicies += $nonCompliantPolicy | Select-Object PolicySetDefinitionId, PolicyDefinitionId, PolicyAssignmentId, PolicyAssignmentScope, PolicyDefinitionAction, IsCompliant
+							}
+						}else{
+							$missingPolicyAssignments += $_
+						}
+					}
+				}
+				
+
+				$hasControlFailed = $false
+				if(($missingPolicyAssignments | Measure-object).Count -gt 0){
+					$hasControlFailed = $true
+					$controlResult.AddMessage("Assignment is missing for following mandatory policy:",$missingPolicyAssignments);
 				}
 
+				if(($nonCompliantPolicies | Measure-object).Count -gt 0){
+					$hasControlFailed = $true
+					$controlResult.AddMessage("Following policies are in non compliant state:",$nonCompliantPolicies);
+				}
+
+				if(-not $hasControlFailed){
+					$controlStatus = [VerificationResult]::Passed
+					$controlResult.AddMessage("All required guest config policies are configured and are in complinat state.");
+				}
+
+			}else{
+				$controlStatus = [VerificationResult]::Failed
+				$controlResult.AddMessage("Assignment is missing for following policy:",$requiredPolicyList);
 			}
-		
+		}else{
+			$controlStatus = [VerificationResult]::Passed
+			$controlResult.AddMessage("No mandatory Guest Config Policy is required to be configured.");
+		}
+
 		$controlResult.VerificationResult = $controlStatus
 		return $controlResult;
 	}
