@@ -108,7 +108,7 @@
     "Enabled": true
   },
   {
-    "ControlID": "AzureDevOps_Build_DP_Review_Settable_At_Queue_Time",
+    "ControlID": "AzureDevOps_Build_SI_Review_Settable_At_Queue_Time",
     "Description": "Pipeline variables marked settable at queue time should be carefully reviewed.",
     "Id": "Build170",
     "ControlSeverity": "High",
@@ -120,7 +120,7 @@
       "SDL",
       "TCP",
       "Automated",
-      "DP"
+      "SI"
     ],
     "Enabled": true
   },

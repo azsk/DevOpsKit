@@ -72,7 +72,7 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Project_DP_Limit_Variables_Settable_At_Queue_Time",
+        "ControlID": "AzureDevOps_Project_SI_Limit_Variables_Settable_At_Queue_Time",
         "Description": "Do not permit all pipeline variables to be settable by default.",
         "Id": "Project150",
         "ControlSeverity": "Medium",
@@ -84,7 +84,7 @@
           "SDL",
           "TCP",
           "Automated",
-          "DP"
+          "SI"
         ],
         "Enabled": true
       },

@@ -361,7 +361,7 @@
         "Enabled": true
       },
       {
-        "ControlID": "AzureDevOps_Organization_DP_Limit_Variables_Settable_At_Queue_Time",
+        "ControlID": "AzureDevOps_Organization_SI_Limit_Variables_Settable_At_Queue_Time",
         "Description": "Only those variables explicitly marked settable at queue time can be set.",
         "Id": "Organization320",
         "ControlSeverity": "Medium",
@@ -373,7 +373,7 @@
           "SDL",
           "TCP",
           "Automated",
-          "DP"
+          "SI"
         ],
         "Enabled": true
       },
