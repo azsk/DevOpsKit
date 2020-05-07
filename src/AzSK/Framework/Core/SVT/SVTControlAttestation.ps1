@@ -180,7 +180,12 @@ class SVTControlAttestation
 								$proposedExceptionApprovalExpiryDate = $ExpiryDate
 								#([DateTime]::UtcNow).AddDays($numberOfDays)
 
-								if($proposedExceptionApprovalExpiryDate -gt $maxAllowedExceptionApprovalExpiryDate)
+								if($proposedExceptionApprovalExpiryDate -le [DateTime]::UtcNow) 
+								{
+									Write-Host "ExpiryDate should be greater than current date. To attest control using ApprovedException status add ApprovedExceptionExpiryDate parameter. Please provide this param in the command with mm/dd/yy date format. For example: -ApprovedExceptionExpiryDate '11/25/20'" -ForegroundColor Yellow;
+									break;
+								}
+								elseif($proposedExceptionApprovalExpiryDate -gt $maxAllowedExceptionApprovalExpiryDate)
 								{
 									Write-Host "`nNote: The exception approval expiry will be set to 180 days from today.`n" -ForegroundColor Yellow
 									$exceptionApprovalExpiryDate = $maxAllowedExceptionApprovalExpiryDate								
@@ -341,7 +346,12 @@ class SVTControlAttestation
 								$proposedExceptionApprovalExpiryDate = $ExpiryDate
 								#([DateTime]::UtcNow).AddDays($numberOfDays)
 
-								if($proposedExceptionApprovalExpiryDate -gt $maxAllowedExceptionApprovalExpiryDate)
+								if($proposedExceptionApprovalExpiryDate -le [DateTime]::UtcNow) 
+								{
+									Write-Host "ExpiryDate should be greater than current date. To attest control using ApprovedException status add ApprovedExceptionExpiryDate parameter. Please provide this param in the command with mm/dd/yy date format. For example: -ApprovedExceptionExpiryDate '11/25/20'" -ForegroundColor Yellow;
+									break;
+								}
+								elseif($proposedExceptionApprovalExpiryDate -gt $maxAllowedExceptionApprovalExpiryDate)
 								{
 									Write-Host "`nNote: The exception approval expiry will be set to 180 days from today.`n" -ForegroundColor Yellow
 									$exceptionApprovalExpiryDate = $maxAllowedExceptionApprovalExpiryDate								
