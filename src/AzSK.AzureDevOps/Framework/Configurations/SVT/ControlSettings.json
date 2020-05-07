@@ -1,0 +1,175 @@
+{
+  "BaselineControls": {
+    "ResourceTypeControlIdMappingList": [
+      {
+        "ResourceType": "Organization",
+        "ControlIds": [
+          "AzureDevOps_Organization_AuthN_Use_AAD_Auth",
+          "AzureDevOps_Organization_AuthN_Disable_External_Guest_Users",
+          "AzureDevOps_Organization_AuthZ_Justify_Guest_Identities",
+          "AzureDevOps_Organization_SI_Review_Installed_Extensions",
+          "AzureDevOps_Organization_SI_Review_Shared_Extensions",
+          "AzureDevOps_Organization_AuthZ_Review_Extension_Managers",
+          "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
+          "AzureDevOps_Organization_SI_Review_Auto_Injected_Extensions"
+        ]
+      },
+      {
+        "ResourceType": "Project",
+        "ControlIds": [
+          "AzureDevOps_Project_AuthZ_Set_Visibility_Private",
+          "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project"
+        ]
+      },
+      {
+        "ResourceType": "ServiceConnection",
+        "ControlIds": [
+          "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections",
+          "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions",
+          "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
+          "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_SecurityGroups"
+        ]
+      },
+      {
+        "ResourceType": "Build",
+        "ControlIds": [
+          "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions"
+        ]
+      },
+      {
+        "ResourceType": "Release",
+        "ControlIds": [
+          "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions",
+          "AzureDevOps_Release_SI_Review_External_Sources"
+        ]
+      },
+      {
+        "ResourceType": "AgentPool",
+        "ControlIds": [
+          "AzureDevOps_AgentPool_AuthZ_Disable_Inherited_Permissions",
+          "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access"
+        ]
+      }
+    ]
+  },
+  "PreviewBaselineControls": {
+    "ResourceTypeControlIdMappingList": []
+  },
+  "AllowAttestationResourceType": [
+    "Organization",
+    "Project"
+  ],
+  "AttestationExpiryPeriodInDays": {
+    "Default": 90,
+    "ControlSeverity": {
+      "Critical": 7,
+      "High": 30,
+      "Medium": 60,
+      "Low": 90
+    }
+  },
+  "AllowAttestationByGroups": [
+    {
+      "ResourceType": "Organization",
+      "GroupNames": [
+        "Project Collection Administrators"
+      ]
+    },
+    {
+      "ResourceType": "Project",
+      "GroupNames": [
+        "Project Collection Administrators",
+        "Project Administrators"
+      ]
+    }
+  ],
+  "DefaultValidAttestationStates": [
+    "NotAnIssue",
+    "WillFixLater",
+    "WillNotFix"
+  ],
+  "NewControlGracePeriodInDays": {
+    "Default": 60,
+    "ControlSeverity": {
+      "Critical": 7,
+      "High": 30,
+      "Medium": 60,
+      "Low": 90
+    }
+  },
+  "AttestationPeriodInDays": {
+    "Default": 90,
+    "ControlSeverity": {
+      "Critical": 7,
+      "High": 30,
+      "Medium": 60,
+      "Low": 90
+    }
+  },
+  "ControlSeverity": {
+    "Critical": "Critical",
+    "High": "High",
+    "Medium": "Medium",
+    "Low": "Low"
+  },
+  "Build": {
+    "BuildHistoryPeriodInDays": 180,
+    "WhitelistedUserIdentities": [
+      {
+        "Domain": "Build",
+        "DisplayName": [
+          "OneITVSO Build Service (MicrosoftIT)",
+          "Project Collection Build Service (MicrosoftIT)"
+        ]
+      }
+    ]
+  },
+  "Release": {
+    "ReleaseHistoryPeriodInDays": 180,
+    "WhitelistedUserIdentities": [
+      {
+        "Domain": "Build",
+        "DisplayName": [
+          "OneITVSO Build Service (MicrosoftIT)",
+          "Project Collection Build Service (MicrosoftIT)"
+        ]
+      }
+    ],
+    "RequirePreDeployApprovals": [
+      "Production",
+      "Pre-Production",
+      "Prod",
+      "Pre-Prod"
+    ]
+  },
+  "Organization": {
+    "InActiveUserActivityLogsPeriodInDays": 365,
+    "WhitelistedExtensionPublishers": [
+      "Microsoft",
+      "Microsoft DevLabs"
+    ]
+  },
+  "ServiceConnection": {
+    "WhitelistedGroupIdentities": [
+      "Endpoint Administrators"
+    ]
+  },
+  "Patterns": [
+    {
+      "RegexCode": "Build",
+      "RegexList": [
+        "^(?=[^\\d_].*?\\d)\\w(\\w|[!@#$%]){7,20}",
+        "(?=^.{6,12}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+        "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))"
+      ]
+    },
+    {
+      "RegexCode": "Release",
+      "RegexList": [
+        "^(?=[^\\d_].*?\\d)\\w(\\w|[!@#$%]){7,20}",
+        "(?=^.{6,12}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+        "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))"
+      ]
+    }
+  ]
+}
