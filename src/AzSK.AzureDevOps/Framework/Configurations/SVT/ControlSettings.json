@@ -292,9 +292,9 @@
           "AzureDevOps_Organization_AuthZ_Justify_Guest_Identities",
           "AzureDevOps_Organization_SI_Review_Installed_Extensions",
           "AzureDevOps_Organization_SI_Review_Shared_Extensions",
-          "AzureDevOps_Organization_AuthZ_Justify_Extension_Managers",
-          "AzureDevOps_Organization_Review_Project_Collection_Accounts",
-          "AzureDevOps_Organization_Review_Auto_Injected_Extensions"
+          "AzureDevOps_Organization_AuthZ_Review_Extension_Managers",
+          "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
+          "AzureDevOps_Organization_SI_Review_Auto_Injected_Extensions"
   
         ]
      },
@@ -325,7 +325,7 @@
       "ResourceType": "Release",
       "ControlIds": [
         "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions",
-        "AzureDevOps_Release_Review_External_Sources"
+        "AzureDevOps_Release_SI_Review_External_Sources"
       ]
      },
      {
