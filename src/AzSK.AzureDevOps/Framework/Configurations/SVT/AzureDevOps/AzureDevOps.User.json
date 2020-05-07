@@ -1,24 +1,24 @@
 {
-    "FeatureName":  "User",
-    "Reference":  "aka.ms/azsktcp/user",
-    "IsMaintenanceMode":  false,
+  "FeatureName": "User",
+  "Reference": "aka.ms/azsktcp/user",
+  "IsMaintenanceMode": false,
   "Controls": [
     {
-        "ControlID": "AzureDevOps_User_AuthZ_PAT_Min_Access",
-        "Description": "Personal access tokens (PAT) must be defined with minimum required permissions to resources",
-        "Id": "User110",
-        "ControlSeverity": "Medium",
-        "Automated": "Yes",
-        "MethodName": "CheckPATAccessLevel",
-        "Rationale": "Granting minimum access ensures that PAT is granted with just enough permissions to perform required tasks. This minimizes exposure of the resources in case of PAT compromise.",
-        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=vsts#revoke-personal-access-tokens-to-remove-access",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Manual",
-          "AuthZ"
-        ],
-        "Enabled": true
+      "ControlID": "AzureDevOps_User_AuthZ_PAT_Min_Access",
+      "Description": "Personal access tokens (PAT) must be defined with minimum required permissions to resources",
+      "Id": "User110",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckPATAccessLevel",
+      "Rationale": "Granting minimum access ensures that PAT is granted with just enough permissions to perform required tasks. This minimizes exposure of the resources in case of PAT compromise.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=vsts#revoke-personal-access-tokens-to-remove-access",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ"
+      ],
+      "Enabled": true
     },
     {
       "ControlID": "AzureDevOps_User_AuthZ_Minimal_Token_Validity",
@@ -32,8 +32,8 @@
       "Tags": [
         "SDL",
         "TCP",
-        "Manual",
-        "DP"
+        "Automated",
+        "AuthZ"
       ],
       "Enabled": true
     },
@@ -49,28 +49,27 @@
       "Tags": [
         "SDL",
         "TCP",
-        "Manual",
-        "DP"
+        "Automated",
+        "AuthZ"
       ],
       "Enabled": true
     },
     {
-        "ControlID": "AzureDevOps_User_AuthN_Disable_Alternate_Credentials",
-        "Description": "Alternate credentials must be disabled",
-        "Id": "User130",
-        "ControlSeverity": "Medium",
-        "Automated": "Yes",
+      "ControlID": "AzureDevOps_User_AuthN_Disable_Alternate_Credentials",
+      "Description": "Alternate credentials must be disabled",
+      "Id": "User130",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
       "MethodName": "CheckAltCred",
-        "Rationale": "Alternate credential allows user to create username and password to access your Git repository.Login with these credentials doesn't expire and can't be scoped to limit access to your Azure DevOps Services data.",
-        "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/repos/git/auth-overview?view=vsts#alternate-credentials",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Manual",
-          "AuthN"
-        ],
-        "Enabled": true
-      }
-]
-
+      "Rationale": "Alternate credential allows user to create username and password to access your Git repository.Login with these credentials doesn't expire and can't be scoped to limit access to your Azure DevOps Services data.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/repos/git/auth-overview?view=vsts#alternate-credentials",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthN"
+      ],
+      "Enabled": true
+    }
+  ]
 }
