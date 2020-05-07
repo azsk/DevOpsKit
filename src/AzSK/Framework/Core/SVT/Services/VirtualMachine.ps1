@@ -561,6 +561,7 @@ class VirtualMachine: AzSVTBase
 		$requiredPolicySetDefList = @()
 		$mandatoryPolicyAssignmentReq = $false
 		$mandatoryPolicySetAssignmentReq = $false
+		# Check if there is any mandatory policyId defined in control settings
 		if([Helpers]::CheckMember($this.VMControlSettings.RequiredGuestConfigPolicies, "RequiredPolicyDefinitionIds")){
 			$mandatoryPolicyAssignmentReq = $true
 			$requiredGuestConfigPolicies.RequiredPolicyDefinitionIds | Foreach-Object {
@@ -569,7 +570,7 @@ class VirtualMachine: AzSVTBase
 				$requiredPolicyDefList += $policyDefStr
 			}
 		}
-
+		# Check if there is any mandatory policySetId defined in control settings
 		if([Helpers]::CheckMember($this.VMControlSettings.RequiredGuestConfigPolicies, "RequiredPolicySetDefinitionIds")){
 			$mandatoryPolicySetAssignmentReq = $true
 			$requiredGuestConfigPolicies.RequiredPolicySetDefinitionIds | Foreach-Object {
@@ -580,18 +581,24 @@ class VirtualMachine: AzSVTBase
 		}
 
 		$requiredPolicyList = $requiredPolicyDefList + $requiredPolicySetDefList
+		# If any required policy defined, check for compliance
 		if(($requiredPolicyList| Measure-Object).Count -gt 0){
 			$filterQuery = $requiredPolicyList  -join " or "
+			# Get Policy State for all reqiured policies
 			$policyState = Get-AzPolicyState -ResourceId  $this.ResourceContext.ResourceId -Filter $filterQuery
+			# If required policy state found for resource, Check assignment and complaince for each policy
 			if($policyState){
 				$missingPolicyAssignments = @()
 				$nonCompliantPolicies = @()
 				if($mandatoryPolicyAssignmentReq){
+					# Check if all assignment for all rquired policy Ids are present and compliant
 					$requiredGuestConfigPolicies.RequiredPolicyDefinitionIds | ForEach-Object{
 						$currRequiredPolicyId = $_
 						$requiredPolicyStatus = @()
 						$requiredPolicyStatus += $policyState | Where-Object {$_.PolicyDefinitionId.EndsWith($currRequiredPolicyId)}
+						# Check if required assignment is present for required policy
 						if($requiredPolicyStatus){
+							# Check compliance of policy , if required assignment is present for the policy
 							$nonCompliantPolicy = $requiredPolicyStatus | Where-Object {$_.IsCompliant -eq $false}
 							if($nonCompliantPolicy){
 								$nonCompliantPolicies += $nonCompliantPolicy | Select-Object PolicyDefinitionId, PolicyAssignmentId, PolicyAssignmentScope, PolicyDefinitionAction, IsCompliant
@@ -603,11 +610,14 @@ class VirtualMachine: AzSVTBase
 				}
 				
 				if($mandatoryPolicySetAssignmentReq){
+					# Check if all assignment for all rquired policy Set Ids are present and compliant
 					$requiredGuestConfigPolicies.RequiredPolicySetDefinitionIds  | ForEach-Object{
 						$currRequiredPolicySetId = $_
 						$requiredPolicyStatus = @()
 						$requiredPolicyStatus += $policyState | Where-Object {$_.PolicySetDefinitionId.EndsWith($currRequiredPolicySetId)}
+						# Check if required assignment is present for required policy set
 						if($requiredPolicyStatus){
+							# Check compliance of policy in the set, if required assignment is present for the policy set
 							$nonCompliantPolicy = $requiredPolicyStatus | Where-Object {$_.IsCompliant -eq $false}
 							if($nonCompliantPolicy){
 								$nonCompliantPolicies += $nonCompliantPolicy | Select-Object PolicySetDefinitionId, PolicyDefinitionId, PolicyAssignmentId, PolicyAssignmentScope, PolicyDefinitionAction, IsCompliant
@@ -620,26 +630,31 @@ class VirtualMachine: AzSVTBase
 				
 
 				$hasControlFailed = $false
+				# If assignment is missing for any required policy set or policy, set 'hasControlFailed' flag to true
 				if(($missingPolicyAssignments | Measure-object).Count -gt 0){
 					$hasControlFailed = $true
 					$controlResult.AddMessage("Assignment is missing for following mandatory policy:",$missingPolicyAssignments);
 				}
 
+				# If assignment is non-compliant for any required policy set or policy, set 'hasControlFailed' flag to true
 				if(($nonCompliantPolicies | Measure-object).Count -gt 0){
 					$hasControlFailed = $true
 					$controlResult.AddMessage("Following policies are in non compliant state:",$nonCompliantPolicies);
 				}
 
+				# Pass the control only if, $hasControlFailed flag is false
 				if(-not $hasControlFailed){
 					$controlStatus = [VerificationResult]::Passed
 					$controlResult.AddMessage("All required guest config policies are configured and are in complinat state.");
 				}
 
 			}else{
+				# If no policy state found for control, mark control as failed
 				$controlStatus = [VerificationResult]::Failed
 				$controlResult.AddMessage("Assignment is missing for following policy:",$requiredPolicyList);
 			}
 		}else{
+			# If no required mandatory policy defined, mark control status as 'Passed'
 			$controlStatus = [VerificationResult]::Passed
 			$controlResult.AddMessage("No mandatory Guest Config Policy is required to be configured.");
 		}
