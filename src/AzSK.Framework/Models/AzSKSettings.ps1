@@ -159,12 +159,16 @@ class AzSKSettings {
 				$orgName = "";
 				if([AzSKSettings]::InvocationContext)
 				{
-					$projectName = [AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"].split(',')[0];
-					$orgName = [AzSKSettings]::SubscriptionContext.SubscriptionName;
-				}
-				$repoName = [Constants]::OrgPolicyRepo + $projectName;
-			    $parsedSettings.OnlinePolicyStoreUrl = $parsedSettings.OnlinePolicyStoreUrl -f $orgName, $projectName, $repoName
+					if([AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"]){
+					  $projectName = [AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"].split(',')[0];
+					  $orgName = [AzSKSettings]::SubscriptionContext.SubscriptionName;
 
+					  $repoName = [Constants]::OrgPolicyRepo + $projectName;
+			          $parsedSettings.OnlinePolicyStoreUrl = $parsedSettings.OnlinePolicyStoreUrl -f $orgName, $projectName, $repoName
+
+					}
+				}
+				
 				[bool] $_useOnlinePolicyStore = $parsedSettings.UseOnlinePolicyStore;
 				[string] $_onlineStoreUri = $parsedSettings.OnlinePolicyStoreUrl;
 				[bool] $_enableAADAuthForOnlinePolicyStore = $parsedSettings.EnableAADAuthForOnlinePolicyStore;
