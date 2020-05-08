@@ -281,7 +281,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleForManagementGroup")]
         [int]
         [Alias("eaa")]
-        $ExpireActiveAssignmentsInDays,
+        $ExpireActiveAssignmentsInDays = -1,
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleForManagementGroup")]
